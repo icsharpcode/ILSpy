@@ -505,7 +505,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			ILInstruction value;
 			return block.Instructions.Count == 2
 				&& block.Instructions[0].MatchStLoc(out p, out value)
-				&& (p.Kind == VariableKind.PinnedLocal || p.Kind == VariableKind.Local)
+				&& p.Kind is VariableKind.PinnedLocal or VariableKind.Local
 				&& IsNullOrZero(value)
 				&& block.Instructions[1].MatchBranch(out targetBlock);
 		}
@@ -732,9 +732,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				ILVariable newVar = new(
 					VariableKind.PinnedRegionLocal,
 					new PointerType(elementType),
-					oldVar.Index);
-				newVar.Name = oldVar.Name;
-				newVar.HasGeneratedName = oldVar.HasGeneratedName;
+					oldVar.Index) {
+					Name = oldVar.Name,
+					HasGeneratedName = oldVar.HasGeneratedName
+				};
 				oldVar.Function.Variables.Add(newVar);
 				ReplacePinnedVar(oldVar, newVar, pinnedRegion);
 				UseExistingVariableForPinnedRegion(pinnedRegion);
@@ -792,9 +793,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			ILVariable newVar = new(
 				VariableKind.PinnedRegionLocal,
 				new PointerType(((ArrayType)oldVar.Type).ElementType),
-				oldVar.Index);
-			newVar.Name = oldVar.Name;
-			newVar.HasGeneratedName = oldVar.HasGeneratedName;
+				oldVar.Index) {
+				Name = oldVar.Name,
+				HasGeneratedName = oldVar.HasGeneratedName
+			};
 			oldVar.Function.Variables.Add(newVar);
 			pinnedRegion.Variable = newVar;
 			pinnedRegion.Init = new GetPinnableReference(pinnedRegion.Init, arrayToPointer.Method).WithILRange(arrayToPointer);
@@ -819,7 +821,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				{
 					stloc.Value = new Conv(stloc.Value, PrimitiveType.I, false, Sign.None);
 				}
-				if ((inst is LdLoc || inst is StLoc) && !IsSlotAcceptingBothManagedAndUnmanagedPointers(inst.SlotInfo) && oldVar.StackType != StackType.I)
+				if (inst is LdLoc or StLoc && !IsSlotAcceptingBothManagedAndUnmanagedPointers(inst.SlotInfo) && oldVar.StackType != StackType.I)
 				{
 					// wrap inst in Conv, so that the stack types match up
 					var children = inst.Parent.Children;
@@ -869,9 +871,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (pinnedRegion.Variable.AddressCount == 0 && pinnedRegion.Variable.LoadCount == 0)
 				{
 					var charPtr = new PointerType(context.TypeSystem.FindType(KnownTypeCode.Char));
-					newVar = new(VariableKind.PinnedRegionLocal, charPtr, pinnedRegion.Variable.Index);
-					newVar.Name = pinnedRegion.Variable.Name;
-					newVar.HasGeneratedName = pinnedRegion.Variable.HasGeneratedName;
+					newVar = new(VariableKind.PinnedRegionLocal, charPtr, pinnedRegion.Variable.Index) {
+						Name = pinnedRegion.Variable.Name,
+						HasGeneratedName = pinnedRegion.Variable.HasGeneratedName
+					};
 					pinnedRegion.Variable.Function.Variables.Add(newVar);
 					pinnedRegion.Variable = newVar;
 					pinnedRegion.Init = new GetPinnableReference(pinnedRegion.Init, null);
@@ -927,9 +930,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			if (nativeVar.Kind == VariableKind.Local)
 			{
-				newVar = new(VariableKind.PinnedRegionLocal, nativeVar.Type, nativeVar.Index);
-				newVar.Name = nativeVar.Name;
-				newVar.HasGeneratedName = nativeVar.HasGeneratedName;
+				newVar = new(VariableKind.PinnedRegionLocal, nativeVar.Type, nativeVar.Index) {
+					Name = nativeVar.Name,
+					HasGeneratedName = nativeVar.HasGeneratedName
+				};
 				nativeVar.Function.Variables.Add(newVar);
 				ReplacePinnedVar(nativeVar, newVar, pinnedRegion);
 			}

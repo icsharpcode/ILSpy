@@ -93,15 +93,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override string ToString()
 		{
-			switch (nullability)
-			{
-				case Nullability.Nullable:
-					return elementType.ToString() + NameSuffix + "?";
-				case Nullability.NotNullable:
-					return elementType.ToString() + NameSuffix + "!";
-				default:
-					return elementType.ToString() + NameSuffix;
-			}
+			return nullability switch {
+				Nullability.Nullable => elementType.ToString() + NameSuffix + "?",
+				Nullability.NotNullable => elementType.ToString() + NameSuffix + "!",
+				_ => elementType.ToString() + NameSuffix
+			};
 		}
 
 		public override IEnumerable<IType> DirectBaseTypes {

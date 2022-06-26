@@ -138,17 +138,13 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public bool GetTypeFromEntity(MetadataReader reader, EntityHandle handle, Unit genericContext = default, byte rawTypeKind = 0)
 		{
-			switch (handle.Kind)
-			{
-				case HandleKind.TypeReference:
-					return GetTypeFromReference(reader, (TypeReferenceHandle)handle, rawTypeKind);
-				case HandleKind.TypeDefinition:
-					return GetTypeFromDefinition(reader, (TypeDefinitionHandle)handle, rawTypeKind);
-				case HandleKind.TypeSpecification:
-					return GetTypeFromSpecification(reader, genericContext, (TypeSpecificationHandle)handle, rawTypeKind);
-				default:
-					return false;
-			}
+			return handle.Kind switch {
+				HandleKind.TypeReference => GetTypeFromReference(reader, (TypeReferenceHandle)handle, rawTypeKind),
+				HandleKind.TypeDefinition => GetTypeFromDefinition(reader, (TypeDefinitionHandle)handle, rawTypeKind),
+				HandleKind.TypeSpecification => GetTypeFromSpecification(reader, genericContext,
+					(TypeSpecificationHandle)handle, rawTypeKind),
+				_ => false
+			};
 		}
 	}
 }

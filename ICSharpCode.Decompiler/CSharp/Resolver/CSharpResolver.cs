@@ -295,7 +295,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			internal readonly ResolveResult initializedObject;
 			internal readonly ObjectInitializerContext prev;
 
-			public ObjectInitializerContext(ResolveResult initializedObject, CSharpResolver.ObjectInitializerContext prev)
+			public ObjectInitializerContext(ResolveResult initializedObject, ObjectInitializerContext prev)
 			{
 				this.initializedObject = initializedObject;
 				this.prev = prev;
@@ -462,7 +462,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					// C# 4.0 spec: §7.6.9 Postfix increment and decrement operators
 					// C# 4.0 spec: §7.7.5 Prefix increment and decrement operators
 					TypeCode code = ReflectionHelper.GetTypeCode(type);
-					if ((code >= TypeCode.Char && code <= TypeCode.Decimal) || type.Kind == TypeKind.Enum || type.Kind == TypeKind.Pointer || type.IsCSharpNativeIntegerType())
+					if ((code >= TypeCode.Char && code <= TypeCode.Decimal) || type.Kind is TypeKind.Enum or TypeKind.Pointer || type.IsCSharpNativeIntegerType())
 						return UnaryOperatorResolveResult(expression.Type, op, expression, isNullable);
 					else
 						return new ErrorResolveResult(expression.Type);
@@ -685,7 +685,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				isNullable = true;
 			}
-			if (op == BinaryOperatorType.ShiftLeft || op == BinaryOperatorType.ShiftRight)
+			if (op is BinaryOperatorType.ShiftLeft or BinaryOperatorType.ShiftRight)
 			{
 				// special case: the shift operators allow "var x = null << null", producing int?.
 				if (lhsType.Kind == TypeKind.Null && rhsType.Kind == TypeKind.Null)
@@ -696,7 +696,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			else
 			{
-				bool allowNullableConstants = op == BinaryOperatorType.Equality || op == BinaryOperatorType.InEquality;
+				bool allowNullableConstants = op is BinaryOperatorType.Equality or BinaryOperatorType.InEquality;
 				if (!BinaryNumericPromotion(isNullable, ref lhs, ref rhs, allowNullableConstants))
 					return new ErrorResolveResult(lhs.Type);
 			}
@@ -833,7 +833,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						else
 							return new ErrorResolveResult(compilation.FindType(KnownTypeCode.Boolean));
 					}
-					if (op == BinaryOperatorType.Equality || op == BinaryOperatorType.InEquality)
+					if (op is BinaryOperatorType.Equality or BinaryOperatorType.InEquality)
 					{
 						if (lhsType.IsReferenceType == true && rhsType.IsReferenceType == true)
 						{
@@ -851,29 +851,16 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 							return BinaryOperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean), lhs, op, rhs);
 						}
 					}
-					switch (op)
-					{
-						case BinaryOperatorType.Equality:
-							methodGroup = operators.ValueEqualityOperators;
-							break;
-						case BinaryOperatorType.InEquality:
-							methodGroup = operators.ValueInequalityOperators;
-							break;
-						case BinaryOperatorType.LessThan:
-							methodGroup = operators.LessThanOperators;
-							break;
-						case BinaryOperatorType.GreaterThan:
-							methodGroup = operators.GreaterThanOperators;
-							break;
-						case BinaryOperatorType.LessThanOrEqual:
-							methodGroup = operators.LessThanOrEqualOperators;
-							break;
-						case BinaryOperatorType.GreaterThanOrEqual:
-							methodGroup = operators.GreaterThanOrEqualOperators;
-							break;
-						default:
-							throw new InvalidOperationException();
-					}
+
+					methodGroup = op switch {
+						BinaryOperatorType.Equality => operators.ValueEqualityOperators,
+						BinaryOperatorType.InEquality => operators.ValueInequalityOperators,
+						BinaryOperatorType.LessThan => operators.LessThanOperators,
+						BinaryOperatorType.GreaterThan => operators.GreaterThanOperators,
+						BinaryOperatorType.LessThanOrEqual => operators.LessThanOrEqualOperators,
+						BinaryOperatorType.GreaterThanOrEqual => operators.GreaterThanOrEqualOperators,
+						_ => throw new InvalidOperationException()
+					};
 				}
 				break;
 				case BinaryOperatorType.BitwiseAnd:
@@ -898,20 +885,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						}
 					}
 
-					switch (op)
-					{
-						case BinaryOperatorType.BitwiseAnd:
-							methodGroup = operators.BitwiseAndOperators;
-							break;
-						case BinaryOperatorType.BitwiseOr:
-							methodGroup = operators.BitwiseOrOperators;
-							break;
-						case BinaryOperatorType.ExclusiveOr:
-							methodGroup = operators.BitwiseXorOperators;
-							break;
-						default:
-							throw new InvalidOperationException();
-					}
+					methodGroup = op switch {
+						BinaryOperatorType.BitwiseAnd => operators.BitwiseAndOperators,
+						BinaryOperatorType.BitwiseOr => operators.BitwiseOrOperators,
+						BinaryOperatorType.ExclusiveOr => operators.BitwiseXorOperators,
+						_ => throw new InvalidOperationException()
+					};
 				}
 				break;
 				case BinaryOperatorType.ConditionalAnd:
@@ -1133,8 +1112,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (lhsCode == TypeCode.Decimal || rhsCode == TypeCode.Decimal)
 				{
 					targetType = TypeCode.Decimal;
-					bindingError = (lhsCode == TypeCode.Single || lhsCode == TypeCode.Double
-									|| rhsCode == TypeCode.Single || rhsCode == TypeCode.Double);
+					bindingError = (lhsCode is TypeCode.Single or TypeCode.Double 
+					                || rhsCode is TypeCode.Single or TypeCode.Double);
 				}
 				else if (lhsCode == TypeCode.Double || rhsCode == TypeCode.Double)
 				{
@@ -1237,43 +1216,25 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#region GetOverloadableOperatorName
 		static string GetOverloadableOperatorName(BinaryOperatorType op)
 		{
-			switch (op)
-			{
-				case BinaryOperatorType.Add:
-					return "op_Addition";
-				case BinaryOperatorType.Subtract:
-					return "op_Subtraction";
-				case BinaryOperatorType.Multiply:
-					return "op_Multiply";
-				case BinaryOperatorType.Divide:
-					return "op_Division";
-				case BinaryOperatorType.Modulus:
-					return "op_Modulus";
-				case BinaryOperatorType.BitwiseAnd:
-					return "op_BitwiseAnd";
-				case BinaryOperatorType.BitwiseOr:
-					return "op_BitwiseOr";
-				case BinaryOperatorType.ExclusiveOr:
-					return "op_ExclusiveOr";
-				case BinaryOperatorType.ShiftLeft:
-					return "op_LeftShift";
-				case BinaryOperatorType.ShiftRight:
-					return "op_RightShift";
-				case BinaryOperatorType.Equality:
-					return "op_Equality";
-				case BinaryOperatorType.InEquality:
-					return "op_Inequality";
-				case BinaryOperatorType.GreaterThan:
-					return "op_GreaterThan";
-				case BinaryOperatorType.LessThan:
-					return "op_LessThan";
-				case BinaryOperatorType.GreaterThanOrEqual:
-					return "op_GreaterThanOrEqual";
-				case BinaryOperatorType.LessThanOrEqual:
-					return "op_LessThanOrEqual";
-				default:
-					return null;
-			}
+			return op switch {
+				BinaryOperatorType.Add => "op_Addition",
+				BinaryOperatorType.Subtract => "op_Subtraction",
+				BinaryOperatorType.Multiply => "op_Multiply",
+				BinaryOperatorType.Divide => "op_Division",
+				BinaryOperatorType.Modulus => "op_Modulus",
+				BinaryOperatorType.BitwiseAnd => "op_BitwiseAnd",
+				BinaryOperatorType.BitwiseOr => "op_BitwiseOr",
+				BinaryOperatorType.ExclusiveOr => "op_ExclusiveOr",
+				BinaryOperatorType.ShiftLeft => "op_LeftShift",
+				BinaryOperatorType.ShiftRight => "op_RightShift",
+				BinaryOperatorType.Equality => "op_Equality",
+				BinaryOperatorType.InEquality => "op_Inequality",
+				BinaryOperatorType.GreaterThan => "op_GreaterThan",
+				BinaryOperatorType.LessThan => "op_LessThan",
+				BinaryOperatorType.GreaterThanOrEqual => "op_GreaterThanOrEqual",
+				BinaryOperatorType.LessThanOrEqual => "op_LessThanOrEqual",
+				_ => null
+			};
 		}
 		#endregion
 
@@ -1451,12 +1412,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 				else if (code == TypeCode.String)
 				{
-					if (expression.ConstantValue == null || expression.ConstantValue is string)
+					if (expression.ConstantValue is null or string)
 						return new ConstantResolveResult(targetType, expression.ConstantValue);
 					else
 						return new ErrorResolveResult(targetType);
 				}
-				else if ((underlyingType.Kind == TypeKind.NInt || underlyingType.Kind == TypeKind.NUInt) && expression.ConstantValue != null)
+				else if (underlyingType.Kind is TypeKind.NInt or TypeKind.NUInt && expression.ConstantValue != null)
 				{
 					if (expression.ConstantValue is string)
 					{
@@ -1510,7 +1471,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			if (k == 0)
 			{
-				if (lookupMode == NameLookupMode.Expression || lookupMode == NameLookupMode.InvocationTarget)
+				if (lookupMode is NameLookupMode.Expression or NameLookupMode.InvocationTarget)
 				{
 					// Look in local variables
 					foreach (IVariable v in this.LocalVariables)
@@ -1555,18 +1516,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				bool foundInCache = false;
 				if (k == 0)
 				{
-					switch (lookupMode)
-					{
-						case NameLookupMode.Expression:
-							cache = currentTypeDefinitionCache.SimpleNameLookupCacheExpression;
-							break;
-						case NameLookupMode.InvocationTarget:
-							cache = currentTypeDefinitionCache.SimpleNameLookupCacheInvocationTarget;
-							break;
-						case NameLookupMode.Type:
-							cache = currentTypeDefinitionCache.SimpleTypeLookupCache;
-							break;
-					}
+					cache = lookupMode switch {
+						NameLookupMode.Expression => currentTypeDefinitionCache.SimpleNameLookupCacheExpression,
+						NameLookupMode.InvocationTarget => currentTypeDefinitionCache
+							.SimpleNameLookupCacheInvocationTarget,
+						NameLookupMode.Type => currentTypeDefinitionCache.SimpleTypeLookupCache,
+						_ => cache
+					};
 					if (cache != null)
 					{
 						lock (cache)
@@ -1630,7 +1586,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		public bool IsVariableReferenceWithSameType(ResolveResult rr, string identifier, out TypeResolveResult trr)
 		{
-			if (!(rr is MemberResolveResult || rr is LocalResolveResult))
+			if (!(rr is MemberResolveResult or LocalResolveResult))
 			{
 				trr = null;
 				return false;
@@ -1666,7 +1622,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 
 				ResolveResult r;
-				if (lookupMode == NameLookupMode.Expression || lookupMode == NameLookupMode.InvocationTarget)
+				if (lookupMode is NameLookupMode.Expression or NameLookupMode.InvocationTarget)
 				{
 					var targetResolveResult = (t == this.CurrentTypeDefinition ? ResolveThisReference() : new TypeResolveResult(t));
 					r = lookup.Lookup(targetResolveResult, identifier, typeArguments, lookupMode == NameLookupMode.InvocationTarget);
@@ -1947,7 +1903,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			ResolveResult getEnumeratorInvocation;
 			ResolveResult currentRR = null;
 			// C# 4.0 spec: §8.8.4 The foreach statement
-			if (expression.Type.Kind == TypeKind.Array || expression.Type.Kind == TypeKind.Dynamic)
+			if (expression.Type.Kind is TypeKind.Array or TypeKind.Dynamic)
 			{
 				collectionType = compilation.FindType(KnownTypeCode.IEnumerable);
 				enumeratorType = compilation.FindType(KnownTypeCode.IEnumerator);
@@ -2410,7 +2366,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				{
 					// argument might be a lambda or delegate type, so we have to try to guess the delegate type
 					IType type = arguments[i].Type;
-					if (type.Kind == TypeKind.Null || type.Kind == TypeKind.None)
+					if (type.Kind is TypeKind.Null or TypeKind.None)
 					{
 						list.Add(new DefaultParameter(compilation.FindType(KnownTypeCode.Object), argumentNames[i]));
 					}
@@ -2462,8 +2418,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		OverloadResolution CreateOverloadResolution(ResolveResult[] arguments, string[] argumentNames = null, IType[] typeArguments = null)
 		{
-			var or = new OverloadResolution(compilation, arguments, argumentNames, typeArguments, conversions);
-			or.CheckForOverflow = checkForOverflow;
+			var or = new OverloadResolution(compilation, arguments, argumentNames, typeArguments, conversions)
+				{
+					CheckForOverflow = checkForOverflow
+				};
 			return or;
 		}
 		#endregion
@@ -2855,37 +2813,23 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (typeDef == null)
 					return null;
 			}
-			switch (typeDef.KnownTypeCode)
-			{
-				case KnownTypeCode.Boolean:
-					return false;
-				case KnownTypeCode.Char:
-					return '\0';
-				case KnownTypeCode.SByte:
-					return (sbyte)0;
-				case KnownTypeCode.Byte:
-					return (byte)0;
-				case KnownTypeCode.Int16:
-					return (short)0;
-				case KnownTypeCode.UInt16:
-					return (ushort)0;
-				case KnownTypeCode.Int32:
-					return 0;
-				case KnownTypeCode.UInt32:
-					return 0U;
-				case KnownTypeCode.Int64:
-					return 0L;
-				case KnownTypeCode.UInt64:
-					return 0UL;
-				case KnownTypeCode.Single:
-					return 0f;
-				case KnownTypeCode.Double:
-					return 0.0;
-				case KnownTypeCode.Decimal:
-					return 0m;
-				default:
-					return null;
-			}
+
+			return typeDef.KnownTypeCode switch {
+				KnownTypeCode.Boolean => false,
+				KnownTypeCode.Char => '\0',
+				KnownTypeCode.SByte => 0,
+				KnownTypeCode.Byte => 0,
+				KnownTypeCode.Int16 => 0,
+				KnownTypeCode.UInt16 => 0,
+				KnownTypeCode.Int32 => 0,
+				KnownTypeCode.UInt32 => 0U,
+				KnownTypeCode.Int64 => 0L,
+				KnownTypeCode.UInt64 => 0UL,
+				KnownTypeCode.Single => 0f,
+				KnownTypeCode.Double => 0.0,
+				KnownTypeCode.Decimal => 0m,
+				_ => null
+			};
 		}
 		#endregion
 

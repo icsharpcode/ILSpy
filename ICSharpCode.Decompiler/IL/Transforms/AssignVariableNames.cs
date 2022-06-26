@@ -281,19 +281,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			foreach (var inst in function.Descendants)
 			{
-				LocalFunctionMethod localFunction;
-				switch (inst)
-				{
-					case Call call:
-						localFunction = call.Method as LocalFunctionMethod;
-						break;
-					case LdFtn ldftn:
-						localFunction = ldftn.Method as LocalFunctionMethod;
-						break;
-					default:
-						localFunction = null;
-						break;
-				}
+				LocalFunctionMethod localFunction = inst switch {
+					Call call => call.Method as LocalFunctionMethod,
+					LdFtn ldftn => ldftn.Method as LocalFunctionMethod,
+					_ => null
+				};
 				if (localFunction == null || !localFunctionMapping.TryGetValue((MethodDefinitionHandle)localFunction.MetadataToken, out var name))
 					continue;
 				localFunction.Name = name;
@@ -307,10 +299,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			switch (arg)
 			{
-				case LdObj _:
-				case LdFlda _:
-				case LdsFlda _:
-				case CallInstruction _:
+				case LdObj:
+				case LdFlda:
+				case LdsFlda:
+				case CallInstruction:
 					return true;
 				default:
 					return false;
@@ -319,7 +311,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool ConflictWithLocal(ILVariable v)
 		{
-			if (v.Kind == VariableKind.UsingLocal || v.Kind == VariableKind.ForeachLocal)
+			if (v.Kind is VariableKind.UsingLocal or VariableKind.ForeachLocal)
 			{
 				if (reservedVariableNames.ContainsKey(v.Name))
 					return true;
@@ -557,7 +549,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (p != null && !string.IsNullOrEmpty(p.Name))
 						return CleanUpVariableName(p.Name);
 					break;
-				case Leave _:
+				case Leave:
 					return "result";
 			}
 			return null;
@@ -577,7 +569,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		static string GetNameByType(IType type)
 		{
 			type = NullableType.GetUnderlyingType(type);
-			while (type is ModifiedType || type is PinnedType)
+			while (type is ModifiedType or PinnedType)
 			{
 				type = NullableType.GetUnderlyingType(((TypeWithElementType)type).ElementType);
 			}

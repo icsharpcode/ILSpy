@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.IL
 				handlerBlock.Blocks.Add(new());
 				handlerContainers.Add(handlerBlock.StartILOffset, handlerBlock);
 
-				if (eh.Kind == ExceptionRegionKind.Fault || eh.Kind == ExceptionRegionKind.Finally)
+				if (eh.Kind is ExceptionRegionKind.Fault or ExceptionRegionKind.Finally)
 				{
 					var tryBlock = new BlockContainer();
 					tryBlock.AddILRange(tryRange);
@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.IL
 				}
 
 				ILInstruction filter;
-				if (eh.Kind == System.Reflection.Metadata.ExceptionRegionKind.Filter)
+				if (eh.Kind == ExceptionRegionKind.Filter)
 				{
 					var filterBlock = new BlockContainer(expectedResultType: StackType.I4);
 					filterBlock.AddILRange(new Interval(eh.FilterOffset, eh.HandlerOffset));
@@ -322,8 +322,9 @@ namespace ICSharpCode.Decompiler.IL
 			if (!onErrorDispatchers.TryGetValue(tryCatch, out var dispatch))
 			{
 				var int32 = compilation.FindType(KnownTypeCode.Int32);
-				var newDispatchVar = new ILVariable(VariableKind.Local, int32, StackType.I4);
-				newDispatchVar.Name = $"try{tryCatch.StartILOffset:x4}_dispatch";
+				var newDispatchVar = new ILVariable(VariableKind.Local, int32, StackType.I4) {
+					Name = $"try{tryCatch.StartILOffset:x4}_dispatch"
+				};
 				dispatch = new(newDispatchVar);
 				onErrorDispatchers.Add(tryCatch, dispatch);
 			}

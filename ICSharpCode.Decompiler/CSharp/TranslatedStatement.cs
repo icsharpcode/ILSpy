@@ -8,7 +8,7 @@ using ICSharpCode.Decompiler.IL;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
-	[DebuggerDisplay("{Statement}")]
+	[DebuggerDisplay("{" + nameof(Statement) + "}")]
 	struct TranslatedStatement
 	{
 		public readonly Statement Statement;

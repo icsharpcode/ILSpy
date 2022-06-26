@@ -312,10 +312,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 					body.Offset = offset; // reset IL stream
 					WriteInstruction(output, metadata, s.MethodHandle, ref body, methodRva);
 					prevInstructionWasBranch = currentOpCode.IsBranch()
-						|| currentOpCode.IsReturn()
-						|| currentOpCode == ILOpCode.Throw
-						|| currentOpCode == ILOpCode.Rethrow
-						|| currentOpCode == ILOpCode.Switch;
+					                           || currentOpCode.IsReturn()
+					                           || currentOpCode is ILOpCode.Throw or ILOpCode.Rethrow or ILOpCode.Switch;
 				}
 				isFirstInstructionInStructure = false;
 			}
@@ -516,7 +514,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					case OperandType.Variable:
 						output.Write(' ');
 						int index = blob.ReadUInt16();
-						if (opCode == ILOpCode.Ldloc || opCode == ILOpCode.Ldloca || opCode == ILOpCode.Stloc)
+						if (opCode is ILOpCode.Ldloc or ILOpCode.Ldloca or ILOpCode.Stloc)
 						{
 							DisassemblerHelpers.WriteVariableReference(output, metadata, methodHandle, index);
 						}
@@ -528,7 +526,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					case OperandType.ShortVariable:
 						output.Write(' ');
 						index = blob.ReadByte();
-						if (opCode == ILOpCode.Ldloc_s || opCode == ILOpCode.Ldloca_s || opCode == ILOpCode.Stloc_s)
+						if (opCode is ILOpCode.Ldloc_s or ILOpCode.Ldloca_s or ILOpCode.Stloc_s)
 						{
 							DisassemblerHelpers.WriteVariableReference(output, metadata, methodHandle, index);
 						}

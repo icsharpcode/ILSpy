@@ -80,7 +80,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			}
 			else if (!string.IsNullOrWhiteSpace(fusionName))
 			{
-				return new(new string[] { UniversalAssemblyResolver.GetAssemblyInGac(Decompiler.Metadata.AssemblyNameReference.Parse(fusionName)) });
+				return new(new[] { UniversalAssemblyResolver.GetAssemblyInGac(AssemblyNameReference.Parse(fusionName)) });
 			}
 
 			return null;

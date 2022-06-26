@@ -316,7 +316,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			int callChainLength = GetCallChainLengthLimited(expr);
 			if (callChainLength < 3)
 				return 0;
-			if (expr.GetParent(n => n is Statement || n is LambdaExpression || n is InterpolatedStringContent) is InterpolatedStringContent)
+			if (expr.GetParent(n => n is Statement or LambdaExpression or InterpolatedStringContent) is InterpolatedStringContent)
 				return 0;
 			return callChainLength;
 		}
@@ -729,16 +729,16 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				switch (ex)
 				{
-					case NullReferenceExpression _:
-					case ThisReferenceExpression _:
-					case PrimitiveExpression _:
-					case IdentifierExpression _:
+					case NullReferenceExpression:
+					case ThisReferenceExpression:
+					case PrimitiveExpression:
+					case IdentifierExpression:
 					case MemberReferenceExpression
 					{
 						Target: ThisReferenceExpression
 							or IdentifierExpression
 							or BaseReferenceExpression
-					} _:
+					}:
 						return true;
 					default:
 						return false;
@@ -749,11 +749,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				switch (ex)
 				{
-					case AnonymousMethodExpression _:
-					case LambdaExpression _:
-					case AnonymousTypeCreateExpression _:
-					case ObjectCreateExpression _:
-					case NamedExpression _:
+					case AnonymousMethodExpression:
+					case LambdaExpression:
+					case AnonymousTypeCreateExpression:
+					case ObjectCreateExpression:
+					case NamedExpression:
 						return true;
 					default:
 						return false;
@@ -1281,10 +1281,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		static bool IsPostfixOperator(UnaryOperatorType op)
 		{
-			return op == UnaryOperatorType.PostIncrement
-				|| op == UnaryOperatorType.PostDecrement
-				|| op == UnaryOperatorType.NullConditional
-				|| op == UnaryOperatorType.SuppressNullableWarning;
+			return op is UnaryOperatorType.PostIncrement or UnaryOperatorType.PostDecrement or UnaryOperatorType.NullConditional or UnaryOperatorType.SuppressNullableWarning;
 		}
 
 		public virtual void VisitUncheckedExpression(UncheckedExpression uncheckedExpression)
@@ -1490,14 +1487,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteToken(Roles.RBracket);
 			switch (attributeSection.Parent)
 			{
-				case ParameterDeclaration _:
+				case ParameterDeclaration:
 					if (attributeSection.NextSibling is AttributeSection)
 						Space(policy.SpaceBetweenParameterAttributeSections);
 					else
 						Space();
 					break;
-				case TypeParameterDeclaration _:
-				case ComposedType _:
+				case TypeParameterDeclaration:
+				case ComposedType:
 					Space();
 					break;
 				default:
@@ -2535,8 +2532,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			WriteKeyword(OperatorDeclaration.OperatorKeywordRole);
 			Space();
-			if (operatorDeclaration.OperatorType == OperatorType.Explicit
-				|| operatorDeclaration.OperatorType == OperatorType.Implicit)
+			if (operatorDeclaration.OperatorType is OperatorType.Explicit or OperatorType.Implicit)
 			{
 				operatorDeclaration.ReturnType.AcceptVisitor(this);
 			}
@@ -2672,7 +2668,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			var nextSibling = node.NextSibling;
 
-			if ((node is UsingDeclaration || node is UsingAliasDeclaration) && !(nextSibling is UsingDeclaration || nextSibling is UsingAliasDeclaration))
+			if (node is UsingDeclaration or UsingAliasDeclaration && !(nextSibling is UsingDeclaration or UsingAliasDeclaration))
 			{
 				for (int i = 0; i < policy.MinimumBlankLinesAfterUsings; i++)
 					NewLine();
@@ -3079,7 +3075,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					}
 					WriteKeyword(OperatorDeclaration.OperatorKeywordRole);
 					Space();
-					if (opType == OperatorType.Explicit || opType == OperatorType.Implicit)
+					if (opType is OperatorType.Explicit or OperatorType.Implicit)
 					{
 						documentationReference.ConversionOperatorReturnType.AcceptVisitor(this);
 					}

@@ -95,49 +95,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static bool? SwitchOverNullableEnum(State? state)
 		{
-			switch (state)
-			{
-				case State.False:
-					return false;
-				case State.True:
-					return true;
-				case State.Null:
-					return null;
-				default:
-					throw new InvalidOperationException();
-			}
+			return state switch {
+				State.False => false,
+				State.True => true,
+				State.Null => null,
+				_ => throw new InvalidOperationException()
+			};
 		}
 
 		public static string SparseIntegerSwitch(int i)
 		{
 			Console.WriteLine("SparseIntegerSwitch: " + i);
-			switch (i)
-			{
-				case -10000000:
-					return "-10 mln";
-				case -100:
-					return "-hundred";
-				case -1:
-					return "-1";
-				case 0:
-					return "0";
-				case 1:
-					return "1";
-				case 2:
-					return "2";
-				case 4:
-					return "4";
-				case 100:
-					return "hundred";
-				case 10000:
-					return "ten thousand";
-				case 10001:
-					return "ten thousand and one";
-				case int.MaxValue:
-					return "int.MaxValue";
-				default:
-					return "something else";
-			}
+			return i switch {
+				-10000000 => "-10 mln",
+				-100 => "-hundred",
+				-1 => "-1",
+				0 => "0",
+				1 => "1",
+				2 => "2",
+				4 => "4",
+				100 => "hundred",
+				10000 => "ten thousand",
+				10001 => "ten thousand and one",
+				int.MaxValue => "int.MaxValue",
+				_ => "something else"
+			};
 		}
 
 		public static void SparseIntegerSwitch2(int i)
@@ -178,19 +160,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static string SwitchOverNullableInt(int? i)
 		{
-			switch (i)
-			{
-				case null:
-					return "null";
-				case 0:
-					return "zero";
-				case 5:
-					return "five";
-				case 10:
-					return "ten";
-				default:
-					return "large";
-			}
+			return i switch {
+				null => "null",
+				0 => "zero",
+				5 => "five",
+				10 => "ten",
+				_ => "large"
+			};
 		}
 
 		public static string SwitchOverNullableIntNullCaseCombined(int? i)
@@ -211,19 +187,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static string SwitchOverNullableIntShifted(int? i)
 		{
-			switch (i + 5)
-			{
-				case null:
-					return "null";
-				case 0:
-					return "zero";
-				case 5:
-					return "five";
-				case 10:
-					return "ten";
-				default:
-					return "large";
-			}
+			return (i + 5) switch {
+				null => "null",
+				0 => "zero",
+				5 => "five",
+				10 => "ten",
+				_ => "large"
+			};
 		}
 
 		public static string SwitchOverNullableIntShiftedNullCaseCombined(int? i)
@@ -244,32 +214,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static string SwitchOverNullableIntNoNullCase(int? i)
 		{
-			switch (i)
-			{
-				case 0:
-					return "zero";
-				case 5:
-					return "five";
-				case 10:
-					return "ten";
-				default:
-					return "other";
-			}
+			return i switch {
+				0 => "zero",
+				5 => "five",
+				10 => "ten",
+				_ => "other"
+			};
 		}
 
 		public static string SwitchOverNullableIntNoNullCaseShifted(int? i)
 		{
-			switch (i + 5)
-			{
-				case 0:
-					return "zero";
-				case 5:
-					return "five";
-				case 10:
-					return "ten";
-				default:
-					return "other";
-			}
+			return (i + 5) switch {
+				0 => "zero",
+				5 => "five",
+				10 => "ten",
+				_ => "other"
+			};
 		}
 
 		public static void SwitchOverInt(int i)
@@ -323,33 +283,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static string ShortSwitchOverString(string text)
 		{
 			Console.WriteLine("ShortSwitchOverString: " + text);
-			switch (text)
-			{
-				case "First case":
-					return "Text1";
-				case "Second case":
-					return "Text2";
-				case "Third case":
-					return "Text3";
-				default:
-					return "Default";
-			}
+			return text switch {
+				"First case" => "Text1",
+				"Second case" => "Text2",
+				"Third case" => "Text3",
+				_ => "Default"
+			};
 		}
 
 		public static string ShortSwitchOverStringWithNullCase(string text)
 		{
 			Console.WriteLine("ShortSwitchOverStringWithNullCase: " + text);
-			switch (text)
-			{
-				case "First case":
-					return "Text1";
-				case "Second case":
-					return "Text2";
-				case null:
-					return "null";
-				default:
-					return "Default";
-			}
+			return text switch {
+				"First case" => "Text1",
+				"Second case" => "Text2",
+				null => "null",
+				_ => "Default"
+			};
 		}
 
 		public static string SwitchOverString1(string text)
@@ -380,97 +330,58 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static string SwitchOverString2()
 		{
 			Console.WriteLine("SwitchOverString2:");
-			switch (Environment.UserName)
-			{
-				case "First case":
-					return "Text1";
-				case "Second case":
-					return "Text2";
-				case "Third case":
-					return "Text3";
-				case "Fourth case":
-					return "Text4";
-				case "Fifth case":
-					return "Text5";
-				case "Sixth case":
-					return "Text6";
-				case "Seventh case":
-					return "Text7";
-				case "Eighth case":
-					return "Text8";
-				case "Ninth case":
-					return "Text9";
-				case "Tenth case":
-					return "Text10";
-				case "Eleventh case":
-					return "Text11";
-				default:
-					return "Default";
-			}
+			return Environment.UserName switch {
+				"First case" => "Text1",
+				"Second case" => "Text2",
+				"Third case" => "Text3",
+				"Fourth case" => "Text4",
+				"Fifth case" => "Text5",
+				"Sixth case" => "Text6",
+				"Seventh case" => "Text7",
+				"Eighth case" => "Text8",
+				"Ninth case" => "Text9",
+				"Tenth case" => "Text10",
+				"Eleventh case" => "Text11",
+				_ => "Default"
+			};
 		}
 
 		public static string SwitchOverImplicitString(ImplicitString s)
 		{
 			// we emit an explicit cast, because the rules used by the C# compiler are counter-intuitive:
 			// The C# compiler does *not* take the type of the switch labels into account at all.
-			switch ((string)s)
-			{
-				case "First case":
-					return "Text1";
-				case "Second case":
-					return "Text2";
-				case "Third case":
-					return "Text3";
-				case "Fourth case":
-					return "Text4";
-				case "Fifth case":
-					return "Text5";
-				case "Sixth case":
-					return "Text6";
-				case "Seventh case":
-					return "Text7";
-				case "Eighth case":
-					return "Text8";
-				case "Ninth case":
-					return "Text9";
-				case "Tenth case":
-					return "Text10";
-				case "Eleventh case":
-					return "Text11";
-				default:
-					return "Default";
-			}
+			return (string)s switch {
+				"First case" => "Text1",
+				"Second case" => "Text2",
+				"Third case" => "Text3",
+				"Fourth case" => "Text4",
+				"Fifth case" => "Text5",
+				"Sixth case" => "Text6",
+				"Seventh case" => "Text7",
+				"Eighth case" => "Text8",
+				"Ninth case" => "Text9",
+				"Tenth case" => "Text10",
+				"Eleventh case" => "Text11",
+				_ => "Default"
+			};
 		}
 
 		public static string SwitchOverExplicitString(ExplicitString s)
 		{
-			switch ((string)s)
-			{
-				case "First case":
-					return "Text1";
-				case "Second case":
-					return "Text2";
-				case "Third case":
-					return "Text3";
-				case "Fourth case":
-					return "Text4";
-				case "Fifth case":
-					return "Text5";
-				case "Sixth case":
-					return "Text6";
-				case "Seventh case":
-					return "Text7";
-				case "Eighth case":
-					return "Text8";
-				case "Ninth case":
-					return "Text9";
-				case "Tenth case":
-					return "Text10";
-				case "Eleventh case":
-					return "Text11";
-				default:
-					return "Default";
-			}
+			return (string)s switch {
+				"First case" => "Text1",
+				"Second case" => "Text2",
+				"Third case" => "Text3",
+				"Fourth case" => "Text4",
+				"Fifth case" => "Text5",
+				"Sixth case" => "Text6",
+				"Seventh case" => "Text7",
+				"Eighth case" => "Text8",
+				"Ninth case" => "Text9",
+				"Tenth case" => "Text10",
+				"Eleventh case" => "Text11",
+				_ => "Default"
+			};
 		}
 
 #if !ROSLYN
@@ -1120,7 +1031,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SingleIf4(int i, bool a)
 		{
-			if (i == 1 || i == 2 || (i != 3 && a) || i != 4)
+			if (i is 1 or 2 || (i != 3 && a) || i != 4)
 			{
 				Console.WriteLine(1);
 			}
@@ -1388,27 +1299,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static int Issue1602(string x)
 		{
-			switch (x)
-			{
-				case null:
-					return 0;
-				case "":
-					return -1;
-				case "A":
-					return 65;
-				case "B":
-					return 66;
-				case "C":
-					return 67;
-				case "D":
-					return 68;
-				case "E":
-					return 69;
-				case "F":
-					return 70;
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+			return x switch {
+				null => 0,
+				"" => -1,
+				"A" => 65,
+				"B" => 66,
+				"C" => 67,
+				"D" => 68,
+				"E" => 69,
+				"F" => 70,
+				_ => throw new ArgumentOutOfRangeException()
+			};
 		}
 
 		public static void Issue1745(string aaa)
@@ -1434,45 +1335,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static bool DoNotRemoveAssignmentBeforeSwitch(string x, out ConsoleKey key)
 		{
-			key = (ConsoleKey)0;
-			switch (x)
-			{
-				case "A":
-					key = ConsoleKey.A;
-					break;
-				case "B":
-					key = ConsoleKey.B;
-					break;
-				case "C":
-					key = ConsoleKey.C;
-					break;
-			}
+			key = x switch {
+				"A" => ConsoleKey.A,
+				"B" => ConsoleKey.B,
+				"C" => ConsoleKey.C,
+				_ => 0
+			};
 			return key != (ConsoleKey)0;
 		}
 
 		public static void Issue1767(string s)
 		{
-			switch (s)
-			{
-				case "a":
-					ch1767 = s[0];
-					break;
-				case "b":
-					ch1767 = s[0];
-					break;
-				case "c":
-					ch1767 = s[0];
-					break;
-				case "d":
-					ch1767 = s[0];
-					break;
-				case "e":
-					ch1767 = s[0];
-					break;
-				case "f":
-					ch1767 = s[0];
-					break;
-			}
+			ch1767 = s switch {
+				"a" => s[0],
+				"b" => s[0],
+				"c" => s[0],
+				"d" => s[0],
+				"e" => s[0],
+				"f" => s[0],
+				_ => ch1767
+			};
 		}
 	}
 }

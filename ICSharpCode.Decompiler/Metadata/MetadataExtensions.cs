@@ -22,24 +22,17 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		static HashAlgorithm GetHashAlgorithm(this MetadataReader reader)
 		{
-			switch (reader.GetAssemblyDefinition().HashAlgorithm)
-			{
-				case AssemblyHashAlgorithm.None:
+			return reader.GetAssemblyDefinition().HashAlgorithm switch {
+				AssemblyHashAlgorithm.None =>
 					// only for multi-module assemblies?
-					return SHA1.Create();
-				case AssemblyHashAlgorithm.MD5:
-					return MD5.Create();
-				case AssemblyHashAlgorithm.Sha1:
-					return SHA1.Create();
-				case AssemblyHashAlgorithm.Sha256:
-					return SHA256.Create();
-				case AssemblyHashAlgorithm.Sha384:
-					return SHA384.Create();
-				case AssemblyHashAlgorithm.Sha512:
-					return SHA512.Create();
-				default:
-					return SHA1.Create(); // default?
-			}
+					SHA1.Create(),
+				AssemblyHashAlgorithm.MD5 => MD5.Create(),
+				AssemblyHashAlgorithm.Sha1 => SHA1.Create(),
+				AssemblyHashAlgorithm.Sha256 => SHA256.Create(),
+				AssemblyHashAlgorithm.Sha384 => SHA384.Create(),
+				AssemblyHashAlgorithm.Sha512 => SHA512.Create(),
+				_ => SHA1.Create()
+			};
 		}
 
 		static string CalculatePublicKeyToken(BlobHandle blob, MetadataReader reader)
@@ -245,7 +238,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			get => minimalCorlibTypeProvider;
 		}
 
-		public static ISignatureTypeProvider<IType, TypeSystem.GenericContext> MinimalSignatureTypeProvider {
+		public static ISignatureTypeProvider<IType, GenericContext> MinimalSignatureTypeProvider {
 			get => minimalCorlibTypeProvider;
 		}
 
@@ -255,92 +248,52 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// </summary>
 		public static PrimitiveTypeCode ToPrimitiveTypeCode(this KnownTypeCode typeCode)
 		{
-			switch (typeCode)
-			{
-				case KnownTypeCode.Object:
-					return PrimitiveTypeCode.Object;
-				case KnownTypeCode.Boolean:
-					return PrimitiveTypeCode.Boolean;
-				case KnownTypeCode.Char:
-					return PrimitiveTypeCode.Char;
-				case KnownTypeCode.SByte:
-					return PrimitiveTypeCode.SByte;
-				case KnownTypeCode.Byte:
-					return PrimitiveTypeCode.Byte;
-				case KnownTypeCode.Int16:
-					return PrimitiveTypeCode.Int16;
-				case KnownTypeCode.UInt16:
-					return PrimitiveTypeCode.UInt16;
-				case KnownTypeCode.Int32:
-					return PrimitiveTypeCode.Int32;
-				case KnownTypeCode.UInt32:
-					return PrimitiveTypeCode.UInt32;
-				case KnownTypeCode.Int64:
-					return PrimitiveTypeCode.Int64;
-				case KnownTypeCode.UInt64:
-					return PrimitiveTypeCode.UInt64;
-				case KnownTypeCode.Single:
-					return PrimitiveTypeCode.Single;
-				case KnownTypeCode.Double:
-					return PrimitiveTypeCode.Double;
-				case KnownTypeCode.String:
-					return PrimitiveTypeCode.String;
-				case KnownTypeCode.Void:
-					return PrimitiveTypeCode.Void;
-				case KnownTypeCode.TypedReference:
-					return PrimitiveTypeCode.TypedReference;
-				case KnownTypeCode.IntPtr:
-					return PrimitiveTypeCode.IntPtr;
-				case KnownTypeCode.UIntPtr:
-					return PrimitiveTypeCode.UIntPtr;
-				default:
-					return 0;
-			}
+			return typeCode switch {
+				KnownTypeCode.Object => PrimitiveTypeCode.Object,
+				KnownTypeCode.Boolean => PrimitiveTypeCode.Boolean,
+				KnownTypeCode.Char => PrimitiveTypeCode.Char,
+				KnownTypeCode.SByte => PrimitiveTypeCode.SByte,
+				KnownTypeCode.Byte => PrimitiveTypeCode.Byte,
+				KnownTypeCode.Int16 => PrimitiveTypeCode.Int16,
+				KnownTypeCode.UInt16 => PrimitiveTypeCode.UInt16,
+				KnownTypeCode.Int32 => PrimitiveTypeCode.Int32,
+				KnownTypeCode.UInt32 => PrimitiveTypeCode.UInt32,
+				KnownTypeCode.Int64 => PrimitiveTypeCode.Int64,
+				KnownTypeCode.UInt64 => PrimitiveTypeCode.UInt64,
+				KnownTypeCode.Single => PrimitiveTypeCode.Single,
+				KnownTypeCode.Double => PrimitiveTypeCode.Double,
+				KnownTypeCode.String => PrimitiveTypeCode.String,
+				KnownTypeCode.Void => PrimitiveTypeCode.Void,
+				KnownTypeCode.TypedReference => PrimitiveTypeCode.TypedReference,
+				KnownTypeCode.IntPtr => PrimitiveTypeCode.IntPtr,
+				KnownTypeCode.UIntPtr => PrimitiveTypeCode.UIntPtr,
+				_ => 0
+			};
 		}
 
 		public static KnownTypeCode ToKnownTypeCode(this PrimitiveTypeCode typeCode)
 		{
-			switch (typeCode)
-			{
-				case PrimitiveTypeCode.Boolean:
-					return KnownTypeCode.Boolean;
-				case PrimitiveTypeCode.Byte:
-					return KnownTypeCode.Byte;
-				case PrimitiveTypeCode.SByte:
-					return KnownTypeCode.SByte;
-				case PrimitiveTypeCode.Char:
-					return KnownTypeCode.Char;
-				case PrimitiveTypeCode.Int16:
-					return KnownTypeCode.Int16;
-				case PrimitiveTypeCode.UInt16:
-					return KnownTypeCode.UInt16;
-				case PrimitiveTypeCode.Int32:
-					return KnownTypeCode.Int32;
-				case PrimitiveTypeCode.UInt32:
-					return KnownTypeCode.UInt32;
-				case PrimitiveTypeCode.Int64:
-					return KnownTypeCode.Int64;
-				case PrimitiveTypeCode.UInt64:
-					return KnownTypeCode.UInt64;
-				case PrimitiveTypeCode.Single:
-					return KnownTypeCode.Single;
-				case PrimitiveTypeCode.Double:
-					return KnownTypeCode.Double;
-				case PrimitiveTypeCode.IntPtr:
-					return KnownTypeCode.IntPtr;
-				case PrimitiveTypeCode.UIntPtr:
-					return KnownTypeCode.UIntPtr;
-				case PrimitiveTypeCode.Object:
-					return KnownTypeCode.Object;
-				case PrimitiveTypeCode.String:
-					return KnownTypeCode.String;
-				case PrimitiveTypeCode.TypedReference:
-					return KnownTypeCode.TypedReference;
-				case PrimitiveTypeCode.Void:
-					return KnownTypeCode.Void;
-				default:
-					return KnownTypeCode.None;
-			}
+			return typeCode switch {
+				PrimitiveTypeCode.Boolean => KnownTypeCode.Boolean,
+				PrimitiveTypeCode.Byte => KnownTypeCode.Byte,
+				PrimitiveTypeCode.SByte => KnownTypeCode.SByte,
+				PrimitiveTypeCode.Char => KnownTypeCode.Char,
+				PrimitiveTypeCode.Int16 => KnownTypeCode.Int16,
+				PrimitiveTypeCode.UInt16 => KnownTypeCode.UInt16,
+				PrimitiveTypeCode.Int32 => KnownTypeCode.Int32,
+				PrimitiveTypeCode.UInt32 => KnownTypeCode.UInt32,
+				PrimitiveTypeCode.Int64 => KnownTypeCode.Int64,
+				PrimitiveTypeCode.UInt64 => KnownTypeCode.UInt64,
+				PrimitiveTypeCode.Single => KnownTypeCode.Single,
+				PrimitiveTypeCode.Double => KnownTypeCode.Double,
+				PrimitiveTypeCode.IntPtr => KnownTypeCode.IntPtr,
+				PrimitiveTypeCode.UIntPtr => KnownTypeCode.UIntPtr,
+				PrimitiveTypeCode.Object => KnownTypeCode.Object,
+				PrimitiveTypeCode.String => KnownTypeCode.String,
+				PrimitiveTypeCode.TypedReference => KnownTypeCode.TypedReference,
+				PrimitiveTypeCode.Void => KnownTypeCode.Void,
+				_ => KnownTypeCode.None
+			};
 		}
 
 		public static IEnumerable<ModuleReferenceHandle> GetModuleReferences(this MetadataReader metadata)

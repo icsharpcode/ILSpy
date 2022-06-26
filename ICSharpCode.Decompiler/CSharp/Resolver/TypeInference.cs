@@ -87,9 +87,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		TypeInference CreateNestedInstance()
 		{
-			TypeInference c = new(compilation, conversions);
-			c.algorithm = algorithm;
-			c.nestingLevel = nestingLevel + 1;
+			TypeInference c = new(compilation, conversions) {
+				algorithm = algorithm,
+				nestingLevel = nestingLevel + 1
+			};
 			return c;
 		}
 		#endregion
@@ -670,7 +671,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			ParameterizedType pU = U.TupleUnderlyingTypeOrSelf() as ParameterizedType;
 			ParameterizedType pV = V.TupleUnderlyingTypeOrSelf() as ParameterizedType;
 			if (pU != null && pV != null
-				&& object.Equals(pU.GenericType, pV.GenericType)
+				&& Equals(pU.GenericType, pV.GenericType)
 				&& pU.TypeParameterCount == pV.TypeParameterCount)
 			{
 				Log.Indent();
@@ -771,7 +772,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				foreach (IType baseU in U.GetAllBaseTypes())
 				{
 					ParameterizedType pU = baseU.TupleUnderlyingTypeOrSelf() as ParameterizedType;
-					if (pU != null && object.Equals(pU.GenericType, pV.GenericType) && pU.TypeParameterCount == pV.TypeParameterCount)
+					if (pU != null && Equals(pU.GenericType, pV.GenericType) && pU.TypeParameterCount == pV.TypeParameterCount)
 					{
 						if (uniqueBaseType == null)
 							uniqueBaseType = pU;
@@ -832,7 +833,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		static bool IsGenericInterfaceImplementedByArray(ParameterizedType rt)
 		{
-			if (rt == null || rt.TypeParameterCount != 1)
+			if (rt is not { TypeParameterCount: 1 })
 				return false;
 			switch (rt.GetDefinition()?.KnownTypeCode)
 			{
@@ -892,7 +893,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				foreach (IType baseV in V.GetAllBaseTypes())
 				{
 					ParameterizedType pV = baseV.TupleUnderlyingTypeOrSelf() as ParameterizedType;
-					if (pV != null && object.Equals(pU.GenericType, pV.GenericType) && pU.TypeParameterCount == pV.TypeParameterCount)
+					if (pV != null && Equals(pU.GenericType, pV.GenericType) && pU.TypeParameterCount == pV.TypeParameterCount)
 					{
 						if (uniqueBaseType == null)
 							uniqueBaseType = pV;
@@ -1081,7 +1082,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// that candidate.
 			// We also return the whole candidate list if we're not using the improved
 			// algorithm.
-			if (candidateTypes.Count == 1 || !(algorithm == TypeInferenceAlgorithm.Improved || algorithm == TypeInferenceAlgorithm.ImprovedReturnAllResults))
+			if (candidateTypes.Count == 1 || !(algorithm is TypeInferenceAlgorithm.Improved or TypeInferenceAlgorithm.ImprovedReturnAllResults))
 			{
 				return candidateTypes;
 			}

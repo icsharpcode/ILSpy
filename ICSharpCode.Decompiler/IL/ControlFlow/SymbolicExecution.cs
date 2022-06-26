@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		}
 		public override string ToString()
 		{
-			return string.Format("[SymbolicValue {0}: {1}]", this.Type, this.Constant);
+			return $"[SymbolicValue {this.Type}: {this.Constant}]";
 		}
 	}
 

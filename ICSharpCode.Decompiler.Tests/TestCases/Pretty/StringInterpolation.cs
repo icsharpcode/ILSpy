@@ -52,9 +52,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(string.Format("}a{{0", args.Length));
 			Console.WriteLine(string.Format("}{", args.Length));
 			Console.WriteLine(string.Format("{}", args.Length));
-			Console.WriteLine(string.Format("{0:}", args.Length));
+			Console.WriteLine($"{args.Length:}");
 			Console.WriteLine(string.Format("{0{a}0}", args.Length));
-			Console.WriteLine(string.Format("test: {0}", string.Join(",", args)));
+			Console.WriteLine($"test: {string.Join(",", args)}");
 			Console.WriteLine(string.Format("test: {0}}", args.Length));
 #pragma warning restore
 		}

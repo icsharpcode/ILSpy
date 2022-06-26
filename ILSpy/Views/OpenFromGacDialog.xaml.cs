@@ -162,7 +162,7 @@ namespace ICSharpCode.ILSpy
 				filterMethod = _ => true;
 			else
 			{
-				var elements = filterString.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+				var elements = filterString.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 				filterMethod = entry => elements.All(el => Contains(entry.FullName, el) || Contains(entry.FormattedVersion, el));
 			}
 

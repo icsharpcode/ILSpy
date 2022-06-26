@@ -231,7 +231,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			var container = branch.TargetContainer;
 			for (ILInstruction inst = branch; inst != container; inst = inst.Parent)
 			{
-				if (inst.Parent is TryFinally tryFinally && inst.SlotInfo == TryFinally.TryBlockSlot)
+				if (inst.Parent is TryFinally tryFinally && inst.SlotInfo == TryInstruction.TryBlockSlot)
 				{
 					// The branch will trigger the finally block.
 					// Moving the return block into the try is only possible if the finally block doesn't touch the return variable.

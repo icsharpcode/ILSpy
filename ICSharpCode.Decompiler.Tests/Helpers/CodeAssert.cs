@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		{
 			var collection1 = NormalizeAndSplitCode(input1, definedSymbols ?? new string[0]);
 			var collection2 = NormalizeAndSplitCode(input2, definedSymbols ?? new string[0]);
-			var diffSections = DiffLib.Diff.CalculateSections(
+			var diffSections = Diff.CalculateSections(
 				collection1, collection2, new CodeLineEqualityComparer(normalizeLine)
 			);
 			var alignedDiff = Diff.AlignElements(collection1, collection2, diffSections, new StringSimilarityDiffElementAligner());

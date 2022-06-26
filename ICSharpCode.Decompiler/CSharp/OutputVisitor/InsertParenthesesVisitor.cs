@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		static PrecedenceLevel GetPrecedence(Expression expr)
 		{
 			// Note: the operator precedence table on MSDN is incorrect
-			if (expr is QueryExpression || expr is LambdaExpression)
+			if (expr is QueryExpression or LambdaExpression)
 			{
 				// Not part of the table in the C# spec, but we need to ensure that queries within
 				// primary expressions get parenthesized.
@@ -151,9 +151,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			if (expr is SwitchExpression)
 				return PrecedenceLevel.Switch;
-			if (expr is IsExpression || expr is AsExpression)
+			if (expr is IsExpression or AsExpression)
 				return PrecedenceLevel.RelationalAndTypeTesting;
-			if (expr is ConditionalExpression || expr is DirectionExpression)
+			if (expr is ConditionalExpression or DirectionExpression)
 				return PrecedenceLevel.Conditional;
 			if (expr is AssignmentExpression)
 				return PrecedenceLevel.Assignment;
@@ -233,7 +233,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			// There's a nasty issue in the C# grammar: cast expressions including certain operators are ambiguous in some cases
 			// "(int)-1" is fine, but "(A)-b" is not a cast.
 			UnaryOperatorExpression uoe = castExpression.Expression as UnaryOperatorExpression;
-			if (uoe != null && !(uoe.Operator == UnaryOperatorType.BitNot || uoe.Operator == UnaryOperatorType.Not))
+			if (uoe != null && !(uoe.Operator is UnaryOperatorType.BitNot or UnaryOperatorType.Not))
 			{
 				if (TypeCanBeMisinterpretedAsExpression(castExpression.Type))
 				{
@@ -346,9 +346,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		static bool IsBitwise(BinaryOperatorType op)
 		{
-			return op == BinaryOperatorType.BitwiseAnd
-				|| op == BinaryOperatorType.BitwiseOr
-				|| op == BinaryOperatorType.ExclusiveOr;
+			return op is BinaryOperatorType.BitwiseAnd or BinaryOperatorType.BitwiseOr or BinaryOperatorType.ExclusiveOr;
 		}
 
 		BinaryOperatorType? GetBinaryOperatorType(Expression expr)
@@ -473,12 +471,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			if (expr.Role == BinaryOperatorExpression.LeftRole)
 				Parenthesize(expr);
-			if (expr.Parent is IsExpression || expr.Parent is AsExpression)
+			if (expr.Parent is IsExpression or AsExpression)
 				Parenthesize(expr);
 			if (InsertParenthesesForReadability)
 			{
 				// when readability is desired, always parenthesize query expressions within unary or binary operators
-				if (expr.Parent is UnaryOperatorExpression || expr.Parent is BinaryOperatorExpression)
+				if (expr.Parent is UnaryOperatorExpression or BinaryOperatorExpression)
 					Parenthesize(expr);
 			}
 		}

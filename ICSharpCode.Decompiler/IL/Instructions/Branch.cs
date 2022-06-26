@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public string TargetLabel {
-			get { return targetBlock != null ? targetBlock.Label : string.Format("IL_{0:x4}", TargetILOffset); }
+			get { return targetBlock != null ? targetBlock.Label : $"IL_{TargetILOffset:x4}"; }
 		}
 
 		/// <summary>
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			for (; inst != container && inst != null; inst = inst.Parent)
 			{
-				if (inst.Parent is TryFinally && inst.SlotInfo == TryFinally.TryBlockSlot)
+				if (inst.Parent is TryFinally && inst.SlotInfo == TryInstruction.TryBlockSlot)
 					return true;
 			}
 			return false;

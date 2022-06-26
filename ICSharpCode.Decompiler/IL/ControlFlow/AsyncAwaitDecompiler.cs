@@ -145,7 +145,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			TranslateCachedFieldsToLocals();
 
 			FinalizeInlineMoveNext(function);
-			if (methodType == AsyncMethodType.AsyncEnumerable || methodType == AsyncMethodType.AsyncEnumerator)
+			if (methodType is AsyncMethodType.AsyncEnumerable or AsyncMethodType.AsyncEnumerator)
 			{
 				((BlockContainer)function.Body).ExpectedResultType = StackType.Void;
 			}
@@ -397,7 +397,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		static bool MatchCall(ILInstruction inst, string name, out InstructionCollection<ILInstruction> args)
 		{
-			if (inst is CallInstruction call && (call.OpCode == OpCode.Call || call.OpCode == OpCode.CallVirt)
+			if (inst is CallInstruction call && call.OpCode is OpCode.Call or OpCode.CallVirt
 				&& call.Method.Name == name && !call.Method.IsStatic)
 			{
 				args = call.Arguments;
@@ -683,7 +683,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				throw new SymbolicAnalysisFailedException("too many blocks");
 		}
 
-		private bool IsAsyncEnumerator => methodType == AsyncMethodType.AsyncEnumerable || methodType == AsyncMethodType.AsyncEnumerator;
+		private bool IsAsyncEnumerator => methodType is AsyncMethodType.AsyncEnumerable or AsyncMethodType.AsyncEnumerator;
 
 		bool MatchYieldBlock(BlockContainer blockContainer, int pos)
 		{
@@ -966,7 +966,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		bool IsBuilderOrPromiseFieldOnThis(ILInstruction inst)
 		{
-			if (methodType == AsyncMethodType.AsyncEnumerable || methodType == AsyncMethodType.AsyncEnumerator)
+			if (methodType is AsyncMethodType.AsyncEnumerable or AsyncMethodType.AsyncEnumerator)
 			{
 				return true; // TODO: check against uses of promise fields in other methods?
 			}
@@ -1098,9 +1098,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			foreach (var container in function.Descendants.OfType<BlockContainer>())
 			{
 				// Use a separate state range analysis per container.
-				var sra = new StateRangeAnalysis(StateRangeAnalysisMode.AsyncMoveNext, stateField, cachedStateVar);
-				sra.CancellationToken = context.CancellationToken;
-				sra.doFinallyBodies = doFinallyBodies;
+				var sra = new StateRangeAnalysis(StateRangeAnalysisMode.AsyncMoveNext, stateField, cachedStateVar)
+					{
+						CancellationToken = context.CancellationToken,
+						doFinallyBodies = doFinallyBodies
+					};
 				sra.AssignStateRanges(container, LongSet.Universe);
 				var stateToBlockMap = sra.GetBlockStateSetMapping(container);
 
@@ -1534,9 +1536,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			block.Instructions.RemoveAt(block.Instructions.Count - 3); // remove getAwaiter call
 			block.Instructions.RemoveAt(block.Instructions.Count - 2); // remove if (isCompleted)
 			((Branch)block.Instructions.Last()).TargetBlock = completedBlock; // instead, directly jump to completed block
-			Await awaitInst = new(UnwrapConvUnknown(getAwaiterCall.Arguments.Single()));
-			awaitInst.GetResultMethod = getResultCall.Method;
-			awaitInst.GetAwaiterMethod = getAwaiterCall.Method;
+			Await awaitInst = new(UnwrapConvUnknown(getAwaiterCall.Arguments.Single())) {
+				GetResultMethod = getResultCall.Method,
+				GetAwaiterMethod = getAwaiterCall.Method
+			};
 			getResultCall.ReplaceWith(awaitInst);
 
 			// Remove useless reset of awaiterVar.
@@ -1611,7 +1614,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (block.Instructions[pos].MatchStFld(out target, out field, out value)
 				&& target.MatchLdThis()
 				&& field.Equals(awaiterField)
-				&& (value.OpCode == OpCode.DefaultValue || value.OpCode == OpCode.LdNull))
+				&& value.OpCode is OpCode.DefaultValue or OpCode.LdNull)
 			{
 				pos++;
 			}

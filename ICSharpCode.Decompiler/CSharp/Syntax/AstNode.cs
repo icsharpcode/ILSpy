@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode? other, Match match)
 			{
 				return other == null || other.IsNull;
 			}
@@ -82,16 +82,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		#endregion
 
 		#region PatternPlaceholder
-		public static implicit operator AstNode?(PatternMatching.Pattern? pattern)
+		public static implicit operator AstNode?(Pattern? pattern)
 		{
 			return pattern != null ? new PatternPlaceholder(pattern) : null;
 		}
 
 		sealed class PatternPlaceholder : AstNode, INode
 		{
-			readonly PatternMatching.Pattern child;
+			readonly Pattern child;
 
-			public PatternPlaceholder(PatternMatching.Pattern child)
+			public PatternPlaceholder(Pattern child)
 			{
 				this.child = child;
 			}
@@ -115,12 +115,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitPatternPlaceholder(this, child, data);
 			}
 
-			protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode? other, Match match)
 			{
 				return child.DoMatch(other, match);
 			}
 
-			bool PatternMatching.INode.DoMatchCollection(Role? role, PatternMatching.INode? pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
+			bool INode.DoMatchCollection(Role? role, INode? pos, Match match, BacktrackingInfo backtrackingInfo)
 			{
 				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
 			}
@@ -530,7 +530,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			// we perform a runtime test:
 			if (!this.Role.IsValid(newNode))
 			{
-				throw new ArgumentException(string.Format("The new node '{0}' is not valid in the role {1}", newNode.GetType().Name, this.Role.ToString()), nameof(newNode));
+				throw new ArgumentException(
+					$"The new node '{newNode.GetType().Name}' is not valid in the role {this.Role.ToString()}", nameof(newNode));
 			}
 			if (newNode.parent != null)
 			{
@@ -600,7 +601,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					throw new InvalidOperationException("replace function must return the root of a tree");
 				if (!oldRole.IsValid(replacement))
 				{
-					throw new InvalidOperationException(string.Format("The new node '{0}' is not valid in the role {1}", replacement.GetType().Name, oldRole.ToString()));
+					throw new InvalidOperationException(
+						$"The new node '{replacement.GetType().Name}' is not valid in the role {oldRole.ToString()}");
 				}
 
 				if (oldSuccessor != null)
@@ -652,29 +654,29 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		#region Pattern Matching
 		protected static bool MatchString(string? pattern, string? text)
 		{
-			return PatternMatching.Pattern.MatchString(pattern, text);
+			return Pattern.MatchString(pattern, text);
 		}
 
-		protected internal abstract bool DoMatch(AstNode? other, PatternMatching.Match match);
+		protected internal abstract bool DoMatch(AstNode? other, Match match);
 
-		bool PatternMatching.INode.DoMatch(PatternMatching.INode? other, PatternMatching.Match match)
+		bool INode.DoMatch(INode? other, Match match)
 		{
 			AstNode? o = other as AstNode;
 			// try matching if other is null, or if other is an AstNode
 			return (other == null || o != null) && DoMatch(o, match);
 		}
 
-		bool PatternMatching.INode.DoMatchCollection(Role? role, PatternMatching.INode? pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo? backtrackingInfo)
+		bool INode.DoMatchCollection(Role? role, INode? pos, Match match, BacktrackingInfo? backtrackingInfo)
 		{
 			AstNode? o = pos as AstNode;
 			return (pos == null || o != null) && DoMatch(o, match);
 		}
 
-		PatternMatching.INode? PatternMatching.INode.NextSibling {
+		INode? INode.NextSibling {
 			get { return nextSibling; }
 		}
 
-		PatternMatching.INode? PatternMatching.INode.FirstChild {
+		INode? INode.FirstChild {
 			get { return firstChild; }
 		}
 

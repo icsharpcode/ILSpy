@@ -208,21 +208,12 @@ namespace ICSharpCode.ILSpyX.Search
 			}
 			else if (searchTermLiteralType != TypeCode.Empty)
 			{
-				ILOpCode expectedCode;
-				switch (searchTermLiteralType)
-				{
-					case TypeCode.Single:
-						expectedCode = ILOpCode.Ldc_r4;
-						break;
-					case TypeCode.Double:
-						expectedCode = ILOpCode.Ldc_r8;
-						break;
-					case TypeCode.String:
-						expectedCode = ILOpCode.Ldstr;
-						break;
-					default:
-						throw new InvalidOperationException();
-				}
+				ILOpCode expectedCode = searchTermLiteralType switch {
+					TypeCode.Single => ILOpCode.Ldc_r4,
+					TypeCode.Double => ILOpCode.Ldc_r8,
+					TypeCode.String => ILOpCode.Ldstr,
+					_ => throw new InvalidOperationException()
+				};
 				while (blob.RemainingBytes > 0)
 				{
 					var code = ILParser.DecodeOpCode(ref blob);

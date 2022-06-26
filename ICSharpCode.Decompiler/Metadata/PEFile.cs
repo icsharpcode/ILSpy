@@ -45,8 +45,8 @@ namespace ICSharpCode.Decompiler.Metadata
 	/// system from multiple PEFiles. This allows the caches to be shared across multiple
 	/// decompiled type systems.
 	/// </remarks>
-	[DebuggerDisplay("{FileName}")]
-	public class PEFile : IDisposable, TypeSystem.IModuleReference
+	[DebuggerDisplay("{" + nameof(FileName) + "}")]
+	public class PEFile : IDisposable, IModuleReference
 	{
 		public string FileName { get; }
 		public PEReader Reader { get; }
@@ -108,7 +108,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		public TargetRuntime GetRuntime()
 		{
 			string version = Metadata.MetadataVersion;
-			if (version == null || version.Length <= 1)
+			if (version is not { Length: > 1 })
 				return TargetRuntime.Unknown;
 			switch (version[1])
 			{
@@ -225,17 +225,17 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public TypeSystem.IModuleReference WithOptions(TypeSystemOptions options)
+		public IModuleReference WithOptions(TypeSystemOptions options)
 		{
 			return new PEFileWithOptions(this, options);
 		}
 
-		IModule TypeSystem.IModuleReference.Resolve(ITypeResolveContext context)
+		IModule IModuleReference.Resolve(ITypeResolveContext context)
 		{
 			return new MetadataModule(context.Compilation, this, TypeSystemOptions.Default);
 		}
 
-		private class PEFileWithOptions : TypeSystem.IModuleReference
+		private class PEFileWithOptions : IModuleReference
 		{
 			readonly PEFile peFile;
 			readonly TypeSystemOptions options;
@@ -246,7 +246,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				this.options = options;
 			}
 
-			IModule TypeSystem.IModuleReference.Resolve(ITypeResolveContext context)
+			IModule IModuleReference.Resolve(ITypeResolveContext context)
 			{
 				return new MetadataModule(context.Compilation, peFile, options);
 			}

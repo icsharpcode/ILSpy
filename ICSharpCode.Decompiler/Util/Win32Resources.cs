@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.Util
 		}
 	}
 
-	[DebuggerDisplay("Directory: {Name}")]
+	[DebuggerDisplay("Directory: {" + nameof(Name) + "}")]
 	public sealed class Win32ResourceDirectory
 	{
 		#region Structure
@@ -154,7 +154,7 @@ namespace ICSharpCode.Decompiler.Util
 		}
 	}
 
-	[DebuggerDisplay("Data: {Name}")]
+	[DebuggerDisplay("Data: {" + nameof(Name) + "}")]
 	public sealed unsafe class Win32ResourceData
 	{
 		#region Structure

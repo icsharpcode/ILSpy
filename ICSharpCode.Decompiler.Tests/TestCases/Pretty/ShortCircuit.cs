@@ -261,7 +261,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void StmtComplex4(int i)
 		{
-			if (i > 1000 || (i >= 1 && i <= 8) || i == 42 || i == 23)
+			if (i > 1000 || (i >= 1 && i <= 8) || i is 42 or 23)
 			{
 				M1();
 			}

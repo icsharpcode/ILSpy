@@ -62,7 +62,7 @@ namespace ICSharpCode.ILSpy.Commands
 			}
 			else if (context.Reference?.Reference is IEntity entity)
 			{
-				if (MainWindow.Instance.FindTreeNode(entity) is ILSpyTreeNode node)
+				if (MainWindow.Instance.FindTreeNode(entity) is { } node)
 				{
 					return new[] { node };
 				}

@@ -107,7 +107,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static void LinqNullableMin(params int[] arr)
 		{
-			Print(string.Format("LinqNullableMin {0}:", arr.Length));
+			Print($"LinqNullableMin {arr.Length}:");
 			Print(arr.Min(v => (int?)v));
 		}
 	}

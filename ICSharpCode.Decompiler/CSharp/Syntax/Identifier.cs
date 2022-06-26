@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static Identifier Create(string name, TextLocation location)
 		{
 			if (string.IsNullOrEmpty(name))
-				return Identifier.Null;
+				return Null;
 			if (name[0] == '@')
 				return new(name.Substring(1), new(location.Line, location.Column + 1)) { IsVerbatim = true };
 			else
@@ -142,7 +142,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static Identifier Create(string name, TextLocation location, bool isVerbatim)
 		{
 			if (string.IsNullOrEmpty(name))
-				return Identifier.Null;
+				return Null;
 
 			if (isVerbatim)
 				return new(name, location) { IsVerbatim = true };

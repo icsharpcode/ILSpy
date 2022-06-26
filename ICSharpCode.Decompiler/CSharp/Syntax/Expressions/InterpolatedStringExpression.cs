@@ -70,14 +70,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode other, Match match)
 			{
 				return other == null || other.IsNull;
 			}
 		}
 		#endregion
 
-		public new static readonly Role<InterpolatedStringContent> Role = new("InterpolatedStringContent", Syntax.InterpolatedStringContent.Null);
+		public new static readonly Role<InterpolatedStringContent> Role = new("InterpolatedStringContent", Null);
 
 		public override NodeType NodeType => NodeType.Unknown;
 	}

@@ -222,17 +222,18 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		TypeSystemAstBuilder CreateAstBuilder()
 		{
-			TypeSystemAstBuilder astBuilder = new();
-			astBuilder.AddResolveResultAnnotations = true;
-			astBuilder.ShowTypeParametersForUnboundTypes = true;
-			astBuilder.ShowModifiers = (ConversionFlags & ConversionFlags.ShowModifiers) == ConversionFlags.ShowModifiers;
-			astBuilder.ShowAccessibility = (ConversionFlags & ConversionFlags.ShowAccessibility) == ConversionFlags.ShowAccessibility;
-			astBuilder.AlwaysUseShortTypeNames = (ConversionFlags & ConversionFlags.UseFullyQualifiedTypeNames) != ConversionFlags.UseFullyQualifiedTypeNames;
-			astBuilder.ShowParameterNames = (ConversionFlags & ConversionFlags.ShowParameterNames) == ConversionFlags.ShowParameterNames;
-			astBuilder.UseNullableSpecifierForValueTypes = (ConversionFlags & ConversionFlags.UseNullableSpecifierForValueTypes) != 0;
-			astBuilder.SupportInitAccessors = (ConversionFlags & ConversionFlags.SupportInitAccessors) != 0;
-			astBuilder.SupportRecordClasses = (ConversionFlags & ConversionFlags.SupportRecordClasses) != 0;
-			astBuilder.SupportRecordStructs = (ConversionFlags & ConversionFlags.SupportRecordStructs) != 0;
+			TypeSystemAstBuilder astBuilder = new() {
+				AddResolveResultAnnotations = true,
+				ShowTypeParametersForUnboundTypes = true,
+				ShowModifiers = (ConversionFlags & ConversionFlags.ShowModifiers) == ConversionFlags.ShowModifiers,
+				ShowAccessibility = (ConversionFlags & ConversionFlags.ShowAccessibility) == ConversionFlags.ShowAccessibility,
+				AlwaysUseShortTypeNames = (ConversionFlags & ConversionFlags.UseFullyQualifiedTypeNames) != ConversionFlags.UseFullyQualifiedTypeNames,
+				ShowParameterNames = (ConversionFlags & ConversionFlags.ShowParameterNames) == ConversionFlags.ShowParameterNames,
+				UseNullableSpecifierForValueTypes = (ConversionFlags & ConversionFlags.UseNullableSpecifierForValueTypes) != 0,
+				SupportInitAccessors = (ConversionFlags & ConversionFlags.SupportInitAccessors) != 0,
+				SupportRecordClasses = (ConversionFlags & ConversionFlags.SupportRecordClasses) != 0,
+				SupportRecordStructs = (ConversionFlags & ConversionFlags.SupportRecordStructs) != 0
+			};
 			return astBuilder;
 		}
 

@@ -130,7 +130,7 @@ namespace LightJson.Serialization
 			if (this.Read() != next)
 			{
 				throw new JsonParseException(
-					string.Format("Parser expected '{0}'", next),
+					$"Parser expected '{next}'",
 					ErrorType.InvalidOrUnexpectedCharacter,
 					errorPosition);
 			}
@@ -165,7 +165,7 @@ namespace LightJson.Serialization
 
 				default:
 					throw new JsonParseException(
-						string.Format("Parser expected '{0}'", this.Peek()),
+						$"Parser expected '{this.Peek()}'",
 						ErrorType.InvalidOrUnexpectedCharacter,
 						this.position);
 			}

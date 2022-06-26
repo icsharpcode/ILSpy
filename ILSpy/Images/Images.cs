@@ -198,36 +198,23 @@ namespace ICSharpCode.ILSpy
 		{
 			public TypeIconCache()
 			{
-				PreloadPublicIconToCache(TypeIcon.Class, Images.Class);
-				PreloadPublicIconToCache(TypeIcon.Enum, Images.Enum);
-				PreloadPublicIconToCache(TypeIcon.Struct, Images.Struct);
-				PreloadPublicIconToCache(TypeIcon.Interface, Images.Interface);
-				PreloadPublicIconToCache(TypeIcon.Delegate, Images.Delegate);
+				PreloadPublicIconToCache(TypeIcon.Class, Class);
+				PreloadPublicIconToCache(TypeIcon.Enum, Enum);
+				PreloadPublicIconToCache(TypeIcon.Struct, Struct);
+				PreloadPublicIconToCache(TypeIcon.Interface, Interface);
+				PreloadPublicIconToCache(TypeIcon.Delegate, Delegate);
 			}
 
 			protected override ImageSource GetBaseImage(TypeIcon icon)
 			{
-				ImageSource baseImage;
-				switch (icon)
-				{
-					case TypeIcon.Class:
-						baseImage = Images.Class;
-						break;
-					case TypeIcon.Enum:
-						baseImage = Images.Enum;
-						break;
-					case TypeIcon.Struct:
-						baseImage = Images.Struct;
-						break;
-					case TypeIcon.Interface:
-						baseImage = Images.Interface;
-						break;
-					case TypeIcon.Delegate:
-						baseImage = Images.Delegate;
-						break;
-					default:
-						throw new ArgumentOutOfRangeException(nameof(icon), $"TypeIcon.{icon} is not supported!");
-				}
+				ImageSource baseImage = icon switch {
+					TypeIcon.Class => Class,
+					TypeIcon.Enum => Enum,
+					TypeIcon.Struct => Struct,
+					TypeIcon.Interface => Interface,
+					TypeIcon.Delegate => Delegate,
+					_ => throw new ArgumentOutOfRangeException(nameof(icon), $"TypeIcon.{icon} is not supported!")
+				};
 
 				return baseImage;
 			}
@@ -237,68 +224,39 @@ namespace ICSharpCode.ILSpy
 		{
 			public MemberIconCache()
 			{
-				PreloadPublicIconToCache(MemberIcon.Field, Images.Field);
-				PreloadPublicIconToCache(MemberIcon.FieldReadOnly, Images.FieldReadOnly);
-				PreloadPublicIconToCache(MemberIcon.Literal, Images.Literal);
-				PreloadPublicIconToCache(MemberIcon.EnumValue, Images.EnumValue);
-				PreloadPublicIconToCache(MemberIcon.Property, Images.Property);
-				PreloadPublicIconToCache(MemberIcon.Indexer, Images.Indexer);
-				PreloadPublicIconToCache(MemberIcon.Method, Images.Method);
-				PreloadPublicIconToCache(MemberIcon.Constructor, Images.Constructor);
-				PreloadPublicIconToCache(MemberIcon.VirtualMethod, Images.VirtualMethod);
-				PreloadPublicIconToCache(MemberIcon.Operator, Images.Operator);
-				PreloadPublicIconToCache(MemberIcon.ExtensionMethod, Images.ExtensionMethod);
-				PreloadPublicIconToCache(MemberIcon.PInvokeMethod, Images.PInvokeMethod);
-				PreloadPublicIconToCache(MemberIcon.Event, Images.Event);
+				PreloadPublicIconToCache(MemberIcon.Field, Field);
+				PreloadPublicIconToCache(MemberIcon.FieldReadOnly, FieldReadOnly);
+				PreloadPublicIconToCache(MemberIcon.Literal, Literal);
+				PreloadPublicIconToCache(MemberIcon.EnumValue, EnumValue);
+				PreloadPublicIconToCache(MemberIcon.Property, Property);
+				PreloadPublicIconToCache(MemberIcon.Indexer, Indexer);
+				PreloadPublicIconToCache(MemberIcon.Method, Method);
+				PreloadPublicIconToCache(MemberIcon.Constructor, Constructor);
+				PreloadPublicIconToCache(MemberIcon.VirtualMethod, VirtualMethod);
+				PreloadPublicIconToCache(MemberIcon.Operator, Operator);
+				PreloadPublicIconToCache(MemberIcon.ExtensionMethod, ExtensionMethod);
+				PreloadPublicIconToCache(MemberIcon.PInvokeMethod, PInvokeMethod);
+				PreloadPublicIconToCache(MemberIcon.Event, Event);
 			}
 
 			protected override ImageSource GetBaseImage(MemberIcon icon)
 			{
-				ImageSource baseImage;
-				switch (icon)
-				{
-					case MemberIcon.Field:
-						baseImage = Images.Field;
-						break;
-					case MemberIcon.FieldReadOnly:
-						baseImage = Images.FieldReadOnly;
-						break;
-					case MemberIcon.Literal:
-						baseImage = Images.Literal;
-						break;
-					case MemberIcon.EnumValue:
-						baseImage = Images.EnumValue;
-						break;
-					case MemberIcon.Property:
-						baseImage = Images.Property;
-						break;
-					case MemberIcon.Indexer:
-						baseImage = Images.Indexer;
-						break;
-					case MemberIcon.Method:
-						baseImage = Images.Method;
-						break;
-					case MemberIcon.Constructor:
-						baseImage = Images.Constructor;
-						break;
-					case MemberIcon.VirtualMethod:
-						baseImage = Images.VirtualMethod;
-						break;
-					case MemberIcon.Operator:
-						baseImage = Images.Operator;
-						break;
-					case MemberIcon.ExtensionMethod:
-						baseImage = Images.ExtensionMethod;
-						break;
-					case MemberIcon.PInvokeMethod:
-						baseImage = Images.PInvokeMethod;
-						break;
-					case MemberIcon.Event:
-						baseImage = Images.Event;
-						break;
-					default:
-						throw new ArgumentOutOfRangeException(nameof(icon), $"MemberIcon.{icon} is not supported!");
-				}
+				ImageSource baseImage = icon switch {
+					MemberIcon.Field => Field,
+					MemberIcon.FieldReadOnly => FieldReadOnly,
+					MemberIcon.Literal => Literal,
+					MemberIcon.EnumValue => EnumValue,
+					MemberIcon.Property => Property,
+					MemberIcon.Indexer => Indexer,
+					MemberIcon.Method => Method,
+					MemberIcon.Constructor => Constructor,
+					MemberIcon.VirtualMethod => VirtualMethod,
+					MemberIcon.Operator => Operator,
+					MemberIcon.ExtensionMethod => ExtensionMethod,
+					MemberIcon.PInvokeMethod => PInvokeMethod,
+					MemberIcon.Event => Event,
+					_ => throw new ArgumentOutOfRangeException(nameof(icon), $"MemberIcon.{icon} is not supported!")
+				};
 
 				return baseImage;
 			}
@@ -341,33 +299,17 @@ namespace ICSharpCode.ILSpy
 
 			private static ImageSource GetOverlayImage(AccessOverlayIcon overlay)
 			{
-				ImageSource overlayImage;
-				switch (overlay)
-				{
-					case AccessOverlayIcon.Public:
-						overlayImage = null;
-						break;
-					case AccessOverlayIcon.Protected:
-						overlayImage = Images.OverlayProtected;
-						break;
-					case AccessOverlayIcon.Internal:
-						overlayImage = Images.OverlayInternal;
-						break;
-					case AccessOverlayIcon.ProtectedInternal:
-						overlayImage = Images.OverlayProtectedInternal;
-						break;
-					case AccessOverlayIcon.Private:
-						overlayImage = Images.OverlayPrivate;
-						break;
-					case AccessOverlayIcon.PrivateProtected:
-						overlayImage = Images.OverlayPrivateProtected;
-						break;
-					case AccessOverlayIcon.CompilerControlled:
-						overlayImage = Images.OverlayCompilerControlled;
-						break;
-					default:
-						throw new ArgumentOutOfRangeException(nameof(overlay), $"AccessOverlayIcon.{overlay} is not supported!");
-				}
+				ImageSource overlayImage = overlay switch {
+					AccessOverlayIcon.Public => null,
+					AccessOverlayIcon.Protected => OverlayProtected,
+					AccessOverlayIcon.Internal => OverlayInternal,
+					AccessOverlayIcon.ProtectedInternal => OverlayProtectedInternal,
+					AccessOverlayIcon.Private => OverlayPrivate,
+					AccessOverlayIcon.PrivateProtected => OverlayPrivateProtected,
+					AccessOverlayIcon.CompilerControlled => OverlayCompilerControlled,
+					_ => throw new ArgumentOutOfRangeException(nameof(overlay),
+						$"AccessOverlayIcon.{overlay} is not supported!")
+				};
 				return overlayImage;
 			}
 
@@ -393,7 +335,7 @@ namespace ICSharpCode.ILSpy
 
 				if (isStatic)
 				{
-					group.Children.Add(new ImageDrawing(Images.OverlayStatic, iconRect));
+					group.Children.Add(new ImageDrawing(OverlayStatic, iconRect));
 				}
 
 				var image = new DrawingImage(group);

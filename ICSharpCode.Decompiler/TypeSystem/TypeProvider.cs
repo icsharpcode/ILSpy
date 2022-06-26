@@ -117,15 +117,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		bool? IsReferenceType(SRM.MetadataReader reader, SRM.EntityHandle handle, byte rawTypeKind)
 		{
-			switch (reader.ResolveSignatureTypeKind(handle, rawTypeKind))
-			{
-				case SRM.SignatureTypeKind.ValueType:
-					return false;
-				case SRM.SignatureTypeKind.Class:
-					return true;
-				default:
-					return null;
-			}
+			return reader.ResolveSignatureTypeKind(handle, rawTypeKind) switch {
+				SRM.SignatureTypeKind.ValueType => false,
+				SRM.SignatureTypeKind.Class => true,
+				_ => null
+			};
 		}
 
 		public IType GetTypeFromDefinition(SRM.MetadataReader reader, SRM.TypeDefinitionHandle handle, byte rawTypeKind)

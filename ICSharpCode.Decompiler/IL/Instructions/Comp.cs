@@ -39,49 +39,33 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public static bool IsEqualityOrInequality(this ComparisonKind kind)
 		{
-			return kind == ComparisonKind.Equality || kind == ComparisonKind.Inequality;
+			return kind is ComparisonKind.Equality or ComparisonKind.Inequality;
 		}
 
 		public static ComparisonKind Negate(this ComparisonKind kind)
 		{
-			switch (kind)
-			{
-				case ComparisonKind.Equality:
-					return ComparisonKind.Inequality;
-				case ComparisonKind.Inequality:
-					return ComparisonKind.Equality;
-				case ComparisonKind.LessThan:
-					return ComparisonKind.GreaterThanOrEqual;
-				case ComparisonKind.LessThanOrEqual:
-					return ComparisonKind.GreaterThan;
-				case ComparisonKind.GreaterThan:
-					return ComparisonKind.LessThanOrEqual;
-				case ComparisonKind.GreaterThanOrEqual:
-					return ComparisonKind.LessThan;
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+			return kind switch {
+				ComparisonKind.Equality => ComparisonKind.Inequality,
+				ComparisonKind.Inequality => ComparisonKind.Equality,
+				ComparisonKind.LessThan => ComparisonKind.GreaterThanOrEqual,
+				ComparisonKind.LessThanOrEqual => ComparisonKind.GreaterThan,
+				ComparisonKind.GreaterThan => ComparisonKind.LessThanOrEqual,
+				ComparisonKind.GreaterThanOrEqual => ComparisonKind.LessThan,
+				_ => throw new ArgumentOutOfRangeException()
+			};
 		}
 
 		public static BinaryOperatorType ToBinaryOperatorType(this ComparisonKind kind)
 		{
-			switch (kind)
-			{
-				case ComparisonKind.Equality:
-					return BinaryOperatorType.Equality;
-				case ComparisonKind.Inequality:
-					return BinaryOperatorType.InEquality;
-				case ComparisonKind.LessThan:
-					return BinaryOperatorType.LessThan;
-				case ComparisonKind.LessThanOrEqual:
-					return BinaryOperatorType.LessThanOrEqual;
-				case ComparisonKind.GreaterThan:
-					return BinaryOperatorType.GreaterThan;
-				case ComparisonKind.GreaterThanOrEqual:
-					return BinaryOperatorType.GreaterThanOrEqual;
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+			return kind switch {
+				ComparisonKind.Equality => BinaryOperatorType.Equality,
+				ComparisonKind.Inequality => BinaryOperatorType.InEquality,
+				ComparisonKind.LessThan => BinaryOperatorType.LessThan,
+				ComparisonKind.LessThanOrEqual => BinaryOperatorType.LessThanOrEqual,
+				ComparisonKind.GreaterThan => BinaryOperatorType.GreaterThan,
+				ComparisonKind.GreaterThanOrEqual => BinaryOperatorType.GreaterThanOrEqual,
+				_ => throw new ArgumentOutOfRangeException()
+			};
 		}
 
 		public static string GetToken(this ComparisonKind kind)

@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						{
 							var arg = ctor.FixedArguments[0];
 							if (arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values
-								&& values.All(v => v.Value is string || v.Value == null))
+								&& values.All(v => v.Value is string or null))
 							{
 								tupleElementNames = values.SelectArray(v => (string)v.Value);
 							}
@@ -356,7 +356,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				else if (dynamicAttributeData[dynamicTypeIndex])
 					newType = SpecialType.Dynamic;
 			}
-			else if ((ktc == KnownTypeCode.IntPtr || ktc == KnownTypeCode.UIntPtr) && hasNativeIntegersAttribute)
+			else if (ktc is KnownTypeCode.IntPtr or KnownTypeCode.UIntPtr && hasNativeIntegersAttribute)
 			{
 				// native integers use the same indexing logic as 'dynamic'
 				if (nativeIntegersAttributeData == null || nativeIntTypeIndex >= nativeIntegersAttributeData.Length)

@@ -67,9 +67,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 					else
 					{
-						QueryContinuationClause continuation = new();
-						continuation.PrecedingQuery = innerQuery.Detach();
-						continuation.Identifier = fromClause.Identifier;
+						QueryContinuationClause continuation = new() {
+							PrecedingQuery = innerQuery.Detach(),
+							Identifier = fromClause.Identifier
+						};
 						continuation.CopyAnnotationsFrom(fromClause);
 						fromClause.ReplaceWith(continuation);
 					}

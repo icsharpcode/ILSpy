@@ -154,7 +154,7 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			if (this.DataContext is PaneModel model)
 			{
-				model.Title = currentTitle ?? ILSpy.Properties.Resources.Decompiling;
+				model.Title = currentTitle ?? Properties.Resources.Decompiling;
 			}
 		}
 
@@ -385,7 +385,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		object? GenerateTooltip(ReferenceSegment segment)
 		{
-			if (segment.Reference is ICSharpCode.Decompiler.Disassembler.OpCodeInfo code)
+			if (segment.Reference is Decompiler.Disassembler.OpCodeInfo code)
 			{
 				XmlDocumentationProvider docProvider = XmlDocLoader.MscorlibDocumentation;
 				DocumentationUIBuilder renderer = new(new CSharpAmbience(), MainWindow.Instance.CurrentLanguage.SyntaxHighlighting);
@@ -767,7 +767,7 @@ namespace ICSharpCode.ILSpy.TextView
 		DecompilationContext? nextDecompilationRun;
 
 		[Obsolete("Use DecompileAsync() instead")]
-		public void Decompile(ILSpy.Language language, IEnumerable<ILSpyTreeNode> treeNodes, DecompilationOptions options)
+		public void Decompile(Language language, IEnumerable<ILSpyTreeNode> treeNodes, DecompilationOptions options)
 		{
 			DecompileAsync(language, treeNodes, options).HandleExceptions();
 		}
@@ -778,7 +778,7 @@ namespace ICSharpCode.ILSpy.TextView
 		/// If any errors occur, the error message is displayed in the text view, and the task returned by this method completes successfully.
 		/// If the operation is cancelled (by starting another decompilation action); the returned task is marked as cancelled.
 		/// </summary>
-		public Task DecompileAsync(ILSpy.Language language, IEnumerable<ILSpyTreeNode> treeNodes, DecompilationOptions options)
+		public Task DecompileAsync(Language language, IEnumerable<ILSpyTreeNode> treeNodes, DecompilationOptions options)
 		{
 			// Some actions like loading an assembly list cause several selection changes in the tree view,
 			// and each of those will start a decompilation action.
@@ -805,12 +805,12 @@ namespace ICSharpCode.ILSpy.TextView
 
 		sealed class DecompilationContext
 		{
-			public readonly ILSpy.Language Language;
+			public readonly Language Language;
 			public readonly ILSpyTreeNode[] TreeNodes;
 			public readonly DecompilationOptions Options;
 			public readonly TaskCompletionSource<object?> TaskCompletionSource = new TaskCompletionSource<object?>();
 
-			public DecompilationContext(ILSpy.Language language, ILSpyTreeNode[] treeNodes, DecompilationOptions options)
+			public DecompilationContext(Language language, ILSpyTreeNode[] treeNodes, DecompilationOptions options)
 			{
 				this.Language = language;
 				this.TreeNodes = treeNodes;
@@ -863,8 +863,9 @@ namespace ICSharpCode.ILSpy.TextView
 				delegate {
 					try
 					{
-						AvalonEditTextOutput textOutput = new();
-						textOutput.LengthLimit = outputLengthLimit;
+						AvalonEditTextOutput textOutput = new() {
+							LengthLimit = outputLengthLimit
+						};
 						DecompileNodes(context, textOutput);
 						textOutput.PrepareDocument();
 						tcs.SetResult(textOutput);
@@ -1034,7 +1035,7 @@ namespace ICSharpCode.ILSpy.TextView
 		/// <summary>
 		/// Shows the 'save file dialog', prompting the user to save the decompiled nodes to disk.
 		/// </summary>
-		public void SaveToDisk(ILSpy.Language language, IEnumerable<ILSpyTreeNode> treeNodes, DecompilationOptions options)
+		public void SaveToDisk(Language language, IEnumerable<ILSpyTreeNode> treeNodes, DecompilationOptions options)
 		{
 			if (!treeNodes.Any())
 				return;
@@ -1049,7 +1050,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
-		public void SaveToDisk(ILSpy.Language language, IEnumerable<ILSpyTreeNode> treeNodes, DecompilationOptions options, string fileName)
+		public void SaveToDisk(Language language, IEnumerable<ILSpyTreeNode> treeNodes, DecompilationOptions options, string fileName)
 		{
 			SaveToDisk(new(language, treeNodes.ToArray(), options), fileName);
 		}

@@ -95,7 +95,7 @@ namespace ILSpy.BamlDecompiler.Baml
 			{
 				if (AssemblyIdMap.TryGetValue(id, out var assemblyRec))
 				{
-					var assemblyName = Metadata.AssemblyNameReference.Parse(assemblyRec.AssemblyFullName);
+					var assemblyName = AssemblyNameReference.Parse(assemblyRec.AssemblyFullName);
 
 					if (assemblyName.Name == TypeSystem.MainModule.AssemblyName)
 					{

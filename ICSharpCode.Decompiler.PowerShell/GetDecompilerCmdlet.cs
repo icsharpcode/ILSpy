@@ -46,8 +46,9 @@ namespace ICSharpCode.Decompiler.PowerShell
 					RemoveDeadStores = RemoveDeadStores,
 					UseDebugSymbols = debugInfo != null,
 					ShowDebugInfo = debugInfo != null,
-				});
-				decompiler.DebugInfoProvider = debugInfo;
+				}) {
+					DebugInfoProvider = debugInfo
+				};
 				WriteObject(decompiler);
 			}
 			catch (Exception e)

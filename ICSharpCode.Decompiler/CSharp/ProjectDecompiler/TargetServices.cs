@@ -46,25 +46,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				throw new ArgumentNullException(nameof(module));
 			}
 
-			int versionNumber;
-			switch (module.GetRuntime())
-			{
-				case TargetRuntime.Net_1_0:
-					versionNumber = 100;
-					break;
-
-				case TargetRuntime.Net_1_1:
-					versionNumber = 110;
-					break;
-
-				case TargetRuntime.Net_2_0:
-					versionNumber = 200;
-					break;
-
-				default:
-					versionNumber = 400;
-					break;
-			}
+			int versionNumber = module.GetRuntime() switch {
+				TargetRuntime.Net_1_0 => 100,
+				TargetRuntime.Net_1_1 => 110,
+				TargetRuntime.Net_2_0 => 200,
+				_ => 400
+			};
 
 			string targetFrameworkIdentifier = null;
 			string targetFrameworkProfile = null;

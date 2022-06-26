@@ -162,13 +162,13 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			Debug.Assert(sets.SetEquals(LongSet.Universe), "switch does not handle all possible cases");
 			Debug.Assert(!expectNullSection, "Lifted switch is missing 'case null'");
-			Debug.Assert(this.IsLifted ? (value.ResultType == StackType.O) : (value.ResultType == StackType.I4 || value.ResultType == StackType.I8));
+			Debug.Assert(this.IsLifted ? (value.ResultType == StackType.O) : value.ResultType is StackType.I4 or StackType.I8);
 		}
 
 		public SwitchSection GetDefaultSection()
 		{
 			// Pick the section with the most labels as default section.
-			IL.SwitchSection defaultSection = Sections.First();
+			SwitchSection defaultSection = Sections.First();
 			foreach (var section in Sections)
 			{
 				if (section.Labels.Count() > defaultSection.Labels.Count())

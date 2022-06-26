@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		readonly List<(ILFunction, DebugInfo.SequencePoint)> sequencePoints = new();
+		readonly List<(ILFunction, SequencePoint)> sequencePoints = new();
 		readonly HashSet<ILInstruction> mappedInstructions = new();
 
 		// Stack holding information for outer statements.
@@ -464,15 +464,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			if (inst.Parent == null)
 				return false;
-			return !(inst is BlockContainer || inst is Block);
+			return !(inst is BlockContainer or Block);
 		}
 
 		/// <summary>
 		/// Called after the visitor is done to return the results.
 		/// </summary>
-		internal Dictionary<ILFunction, List<DebugInfo.SequencePoint>> GetSequencePoints()
+		internal Dictionary<ILFunction, List<SequencePoint>> GetSequencePoints()
 		{
-			var dict = new Dictionary<ILFunction, List<DebugInfo.SequencePoint>>();
+			var dict = new Dictionary<ILFunction, List<SequencePoint>>();
 			foreach (var (function, sequencePoint) in this.sequencePoints)
 			{
 				if (!dict.TryGetValue(function, out var list))
@@ -485,10 +485,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			foreach (var (function, list) in dict.ToList())
 			{
 				// For each function, sort sequence points and fix overlaps
-				var newList = new List<DebugInfo.SequencePoint>();
+				var newList = new List<SequencePoint>();
 				int pos = 0;
-				IOrderedEnumerable<DebugInfo.SequencePoint> currFunctionSequencePoints = list.OrderBy(sp => sp.Offset).ThenBy(sp => sp.EndOffset);
-				foreach (DebugInfo.SequencePoint sequencePoint in currFunctionSequencePoints)
+				IOrderedEnumerable<SequencePoint> currFunctionSequencePoints = list.OrderBy(sp => sp.Offset).ThenBy(sp => sp.EndOffset);
+				foreach (SequencePoint sequencePoint in currFunctionSequencePoints)
 				{
 					if (sequencePoint.Offset < pos)
 					{
@@ -515,9 +515,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				// Add a hidden sequence point to account for the epilog of the function
 				if (pos < function.CodeSize)
 				{
-					var hidden = new DebugInfo.SequencePoint();
-					hidden.Offset = pos;
-					hidden.EndOffset = function.CodeSize;
+					var hidden = new SequencePoint {
+						Offset = pos,
+						EndOffset = function.CodeSize
+					};
 					hidden.SetHidden();
 					newList.Add(hidden);
 				}
@@ -528,8 +529,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				for (int i = 0; i < newList.Count - 1; i++)
 				{
-					DebugInfo.SequencePoint currSequencePoint = newList[i];
-					DebugInfo.SequencePoint nextSequencePoint = newList[i + 1];
+					SequencePoint currSequencePoint = newList[i];
+					SequencePoint nextSequencePoint = newList[i + 1];
 
 					// Adjust the end offset of the current sequence point to the closest sequence point candidate
 					// but do not create an overlapping sequence point. Moving the start of the current sequence

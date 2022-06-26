@@ -52,7 +52,7 @@ namespace ICSharpCode.ILSpyX
 	///   * a .nupkg file or .NET core bundle
 	///   * a file that is still being loaded in the background
 	/// </summary>
-	[DebuggerDisplay("[LoadedAssembly {shortName}]")]
+	[DebuggerDisplay("[LoadedAssembly {" + nameof(shortName) + "}]")]
 	public sealed class LoadedAssembly
 	{
 		/// <summary>
@@ -186,7 +186,7 @@ namespace ICSharpCode.ILSpyX
 			}
 			catch (Exception ex)
 			{
-				System.Diagnostics.Trace.TraceError(ex.ToString());
+				Trace.TraceError(ex.ToString());
 				return null;
 			}
 		}
@@ -204,7 +204,7 @@ namespace ICSharpCode.ILSpyX
 			}
 			catch (Exception ex)
 			{
-				System.Diagnostics.Trace.TraceError(ex.ToString());
+				Trace.TraceError(ex.ToString());
 				return null;
 			}
 		}
@@ -279,7 +279,7 @@ namespace ICSharpCode.ILSpyX
 					}
 					if (versionOrInfo == null)
 						return ShortName;
-					return string.Format("{0} ({1})", ShortName, versionOrInfo);
+					return $"{ShortName} ({versionOrInfo})";
 				}
 				else
 				{
@@ -337,10 +337,8 @@ namespace ICSharpCode.ILSpyX
 			Exception loadAssemblyException;
 			try
 			{
-				using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
-				{
-					return LoadAssembly(fileStream, PEStreamOptions.PrefetchEntireImage, applyWinRTProjections);
-				}
+				using var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+				return LoadAssembly(fileStream, PEStreamOptions.PrefetchEntireImage, applyWinRTProjections);
 			}
 			catch (PEFileNotSupportedException ex)
 			{
@@ -398,36 +396,32 @@ namespace ICSharpCode.ILSpyX
 		LoadResult LoadCompressedAssembly(string fileName)
 		{
 			const uint CompressedDataMagic = 0x5A4C4158; // Magic used for Xamarin compressed module header ('XALZ', little-endian)
-			using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
-			using (var fileReader = new BinaryReader(fileStream))
+			using var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+			using var fileReader = new BinaryReader(fileStream);
+			// Read compressed file header
+			var magic = fileReader.ReadUInt32();
+			if (magic != CompressedDataMagic)
+				throw new InvalidDataException($"Xamarin compressed module header magic {magic} does not match expected {CompressedDataMagic}");
+			_ = fileReader.ReadUInt32(); // skip index into descriptor table, unused
+			int uncompressedLength = (int)fileReader.ReadUInt32();
+			int compressedLength = (int)fileStream.Length;  // Ensure we read all of compressed data
+			ArrayPool<byte> pool = ArrayPool<byte>.Shared;
+			var src = pool.Rent(compressedLength);
+			var dst = pool.Rent(uncompressedLength);
+			try
 			{
-				// Read compressed file header
-				var magic = fileReader.ReadUInt32();
-				if (magic != CompressedDataMagic)
-					throw new InvalidDataException($"Xamarin compressed module header magic {magic} does not match expected {CompressedDataMagic}");
-				_ = fileReader.ReadUInt32(); // skip index into descriptor table, unused
-				int uncompressedLength = (int)fileReader.ReadUInt32();
-				int compressedLength = (int)fileStream.Length;  // Ensure we read all of compressed data
-				ArrayPool<byte> pool = ArrayPool<byte>.Shared;
-				var src = pool.Rent(compressedLength);
-				var dst = pool.Rent(uncompressedLength);
-				try
-				{
-					// fileReader stream position is now at compressed module data
-					fileStream.Read(src, 0, compressedLength);
-					// Decompress
-					LZ4Codec.Decode(src, 0, compressedLength, dst, 0, uncompressedLength);
-					// Load module from decompressed data buffer
-					using (var uncompressedStream = new MemoryStream(dst, writable: false))
-					{
-						return LoadAssembly(uncompressedStream, PEStreamOptions.PrefetchEntireImage, applyWinRTProjections);
-					}
-				}
-				finally
-				{
-					pool.Return(dst);
-					pool.Return(src);
-				}
+				// fileReader stream position is now at compressed module data
+				fileStream.Read(src, 0, compressedLength);
+				// Decompress
+				LZ4Codec.Decode(src, 0, compressedLength, dst, 0, uncompressedLength);
+				// Load module from decompressed data buffer
+				using var uncompressedStream = new MemoryStream(dst, writable: false);
+				return LoadAssembly(uncompressedStream, PEStreamOptions.PrefetchEntireImage, applyWinRTProjections);
+			}
+			finally
+			{
+				pool.Return(dst);
+				pool.Return(src);
 			}
 		}
 

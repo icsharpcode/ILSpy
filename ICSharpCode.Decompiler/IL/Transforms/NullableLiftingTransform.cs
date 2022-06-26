@@ -653,7 +653,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				// (v1 != null && ... && vn != null) ? call op_LessThan(lhs, rhs) : ldc.i4(0)
 				var liftedOperator = CSharp.Resolver.CSharpOperators.LiftUserDefinedOperator(call.Method);
-				if ((call.Method.Name == "op_Equality" || call.Method.Name == "op_Inequality") && nullableVars.Count != 1)
+				if (call.Method.Name is "op_Equality" or "op_Inequality" && nullableVars.Count != 1)
 				{
 					// Equality is special (returns true if both sides are null), only handle it
 					// in the normal code path if we're dealing with only a single nullable var

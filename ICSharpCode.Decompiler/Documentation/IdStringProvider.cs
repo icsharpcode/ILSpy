@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.Documentation
 				}
 				b.Append(')');
 			}
-			if (member.SymbolKind == SymbolKind.Operator && (member.Name == "op_Implicit" || member.Name == "op_Explicit"))
+			if (member.SymbolKind == SymbolKind.Operator && member.Name is "op_Implicit" or "op_Explicit")
 			{
 				b.Append('~');
 				AppendTypeName(b, member.ReturnType, false);

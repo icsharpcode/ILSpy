@@ -27,7 +27,7 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.ILSpy.Analyzers.Builtin
 {
-	using ICSharpCode.Decompiler.TypeSystem;
+	using Decompiler.TypeSystem;
 
 	/// <summary>
 	/// Finds all entities that expose a type.

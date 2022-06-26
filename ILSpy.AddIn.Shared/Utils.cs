@@ -58,7 +58,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			}
 		}
 
-		public static object[] GetProperties(EnvDTE.Properties properties, params string[] names)
+		public static object[] GetProperties(Properties properties, params string[] names)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -87,7 +87,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			return values;
 		}
 
-		public static List<(string, object)> GetAllProperties(EnvDTE.Properties properties)
+		public static List<(string, object)> GetAllProperties(Properties properties)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -96,7 +96,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			{
 				try
 				{
-					if (properties.Item(i) is Property p)
+					if (properties.Item(i) is { } p)
 					{
 						result.Add((p.Name, p.Value));
 					}

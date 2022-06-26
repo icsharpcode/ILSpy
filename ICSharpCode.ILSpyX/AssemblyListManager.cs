@@ -272,7 +272,7 @@ namespace ICSharpCode.ILSpyX
 					AddToListFromGAC("System.Xml.Linq, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 					AddToListFromGAC("Microsoft.CSharp, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
 					break;
-				case object _ when path != null:
+				case not null when path != null:
 					foreach (var file in Directory.GetFiles(path, "*.dll"))
 					{
 						var dllname = Path.GetFileName(file);
@@ -305,9 +305,7 @@ namespace ICSharpCode.ILSpyX
 					return false;
 				if (char.IsUpper(fileName[0]))
 					return true;
-				if (fileName == "netstandard.dll")
-					return true;
-				if (fileName == "mscorlib.dll")
+				if (fileName is "netstandard.dll" or "mscorlib.dll")
 					return true;
 				return false;
 			}

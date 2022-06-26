@@ -218,15 +218,15 @@ namespace ICSharpCode.ILSpyX
 		static bool CollectionChangeHasEffectOnSave(NotifyCollectionChangedEventArgs e)
 		{
 			// Auto-loading dependent assemblies shouldn't trigger saving the assembly list
-			switch (e.Action)
-			{
-				case NotifyCollectionChangedAction.Add:
-					return e.NewItems.EmptyIfNull().Cast<LoadedAssembly>().Any(asm => !asm.IsAutoLoaded);
-				case NotifyCollectionChangedAction.Remove:
-					return e.OldItems.EmptyIfNull().Cast<LoadedAssembly>().Any(asm => !asm.IsAutoLoaded);
-				default:
-					return true;
-			}
+			return e.Action switch {
+				NotifyCollectionChangedAction.Add => e.NewItems.EmptyIfNull()
+					.Cast<LoadedAssembly>()
+					.Any(asm => !asm.IsAutoLoaded),
+				NotifyCollectionChangedAction.Remove => e.OldItems.EmptyIfNull()
+					.Cast<LoadedAssembly>()
+					.Any(asm => !asm.IsAutoLoaded),
+				_ => true
+			};
 		}
 
 		internal void RefreshSave()
@@ -280,8 +280,10 @@ namespace ICSharpCode.ILSpyX
 		{
 			file = Path.GetFullPath(file);
 			return OpenAssembly(file, () => {
-				var newAsm = new LoadedAssembly(this, file, applyWinRTProjections: ApplyWinRTProjections, useDebugSymbols: UseDebugSymbols);
-				newAsm.IsAutoLoaded = isAutoLoaded;
+				var newAsm = new LoadedAssembly(this, file, applyWinRTProjections: ApplyWinRTProjections, useDebugSymbols: UseDebugSymbols)
+					{
+						IsAutoLoaded = isAutoLoaded
+					};
 				return newAsm;
 			});
 		}
@@ -294,8 +296,9 @@ namespace ICSharpCode.ILSpyX
 			file = Path.GetFullPath(file);
 			return OpenAssembly(file, () => {
 				var newAsm = new LoadedAssembly(this, file, stream: Task.FromResult(stream),
-					applyWinRTProjections: ApplyWinRTProjections, useDebugSymbols: UseDebugSymbols);
-				newAsm.IsAutoLoaded = isAutoLoaded;
+					applyWinRTProjections: ApplyWinRTProjections, useDebugSymbols: UseDebugSymbols) {
+					IsAutoLoaded = isAutoLoaded
+				};
 				return newAsm;
 			});
 		}
@@ -346,8 +349,9 @@ namespace ICSharpCode.ILSpyX
 					return null;
 
 				var newAsm = new LoadedAssembly(this, file, stream: Task.FromResult<Stream?>(stream),
-					applyWinRTProjections: ApplyWinRTProjections, useDebugSymbols: UseDebugSymbols);
-				newAsm.IsAutoLoaded = target.IsAutoLoaded;
+					applyWinRTProjections: ApplyWinRTProjections, useDebugSymbols: UseDebugSymbols) {
+					IsAutoLoaded = target.IsAutoLoaded
+				};
 
 				Debug.Assert(newAsm.FileName == file);
 				byFilename[file] = newAsm;
@@ -375,8 +379,9 @@ namespace ICSharpCode.ILSpyX
 			if (index < 0)
 				return null;
 			var newAsm = new LoadedAssembly(this, target.FileName, pdbFileName: target.PdbFileName,
-				applyWinRTProjections: ApplyWinRTProjections, useDebugSymbols: UseDebugSymbols);
-			newAsm.IsAutoLoaded = target.IsAutoLoaded;
+				applyWinRTProjections: ApplyWinRTProjections, useDebugSymbols: UseDebugSymbols) {
+				IsAutoLoaded = target.IsAutoLoaded
+			};
 			lock (lockObj)
 			{
 				this.assemblies.Remove(target);

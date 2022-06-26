@@ -44,8 +44,9 @@ namespace ILSpy.BamlDecompiler.Handlers
 			var typeName = ctx.ToString(parent.Xaml, type);
 			var key = (XamlResourceKey)node.Annotation;
 
-			var bamlElem = new BamlElement(node);
-			bamlElem.Xaml = new XElement(ctx.GetKnownNamespace("Key", XamlContext.KnownNamespace_Xaml, parent.Xaml));
+			var bamlElem = new BamlElement(node) {
+				Xaml = new XElement(ctx.GetKnownNamespace("Key", XamlContext.KnownNamespace_Xaml, parent.Xaml))
+			};
 			parent.Xaml.Element.Add(bamlElem.Xaml.Element);
 
 			var typeElem = new XElement(ctx.GetKnownNamespace("TypeExtension", XamlContext.KnownNamespace_Xaml, parent.Xaml));

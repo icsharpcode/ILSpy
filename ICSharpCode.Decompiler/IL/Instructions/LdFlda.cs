@@ -33,13 +33,12 @@ namespace ICSharpCode.Decompiler.IL
 						"Class fields can only be accessed with an object on the stack");
 					break;
 				case false:
-					Debug.Assert(target.ResultType == StackType.I || target.ResultType == StackType.Ref,
+					Debug.Assert(target.ResultType is StackType.I or StackType.Ref,
 						"Struct fields can only be accessed with a pointer on the stack");
 					break;
 				case null:
 					// field of unresolved type
-					Debug.Assert(target.ResultType == StackType.O || target.ResultType == StackType.I
-						|| target.ResultType == StackType.Ref || target.ResultType == StackType.Unknown,
+					Debug.Assert(target.ResultType is StackType.O or StackType.I or StackType.Ref or StackType.Unknown,
 						"Field of unresolved type with invalid target");
 					break;
 			}

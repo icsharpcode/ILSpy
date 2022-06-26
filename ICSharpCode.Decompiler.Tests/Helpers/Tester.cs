@@ -190,25 +190,24 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		{
 			if (asmOptions.HasFlag(AssemblerOptions.UseOwnDisassembler))
 			{
-				using (var peFileStream = new FileStream(sourceFileName, FileMode.Open, FileAccess.Read))
-				using (var peFile = new PEFile(sourceFileName, peFileStream))
-				using (var writer = new StringWriter())
-				{
-					var metadata = peFile.Metadata;
-					var output = new PlainTextOutput(writer);
-					ReflectionDisassembler rd = new(output, CancellationToken.None);
-					rd.AssemblyResolver = new UniversalAssemblyResolver(sourceFileName, true, null);
-					rd.DetectControlStructure = false;
-					rd.WriteAssemblyReferences(metadata);
-					if (metadata.IsAssembly)
-						rd.WriteAssemblyHeader(peFile);
-					output.WriteLine();
-					rd.WriteModuleHeader(peFile, skipMVID: true);
-					output.WriteLine();
-					rd.WriteModuleContents(peFile);
+				using var peFileStream = new FileStream(sourceFileName, FileMode.Open, FileAccess.Read);
+				using var peFile = new PEFile(sourceFileName, peFileStream);
+				using var writer = new StringWriter();
+				var metadata = peFile.Metadata;
+				var output = new PlainTextOutput(writer);
+				ReflectionDisassembler rd = new(output, CancellationToken.None) {
+					AssemblyResolver = new UniversalAssemblyResolver(sourceFileName, true, null),
+					DetectControlStructure = false
+				};
+				rd.WriteAssemblyReferences(metadata);
+				if (metadata.IsAssembly)
+					rd.WriteAssemblyHeader(peFile);
+				output.WriteLine();
+				rd.WriteModuleHeader(peFile, skipMVID: true);
+				output.WriteLine();
+				rd.WriteModuleContents(peFile);
 
-					File.WriteAllText(outputFile, ReplacePrivImplDetails(writer.ToString()));
-				}
+				File.WriteAllText(outputFile, ReplacePrivImplDetails(writer.ToString()));
 				return outputFile;
 			}
 
@@ -393,8 +392,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			if ((flags & CompilerOptions.UseMcsMask) == 0)
 			{
-				CompilerResults results = new();
-				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
+				CompilerResults results = new() {
+					PathToAssembly = outputFileName ?? Path.GetTempFileName()
+				};
 
 				var (roslynVersion, languageVersion) = (flags & CompilerOptions.UseRoslynMask) switch {
 					0 => ("legacy", "5"),
@@ -486,8 +486,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 			else
 			{
-				CompilerResults results = new();
-				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
+				CompilerResults results = new() {
+					PathToAssembly = outputFileName ?? Path.GetTempFileName()
+				};
 				string testBasePath = RoundtripAssembly.TestDir;
 				if (!Directory.Exists(testBasePath))
 				{
@@ -593,19 +594,17 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					allowUnsafe: true,
 					deterministic: true
 				));
-			using (FileStream peStream = File.Open(assemblyName + ".dll", FileMode.OpenOrCreate, FileAccess.ReadWrite))
-			using (FileStream pdbStream = File.Open(assemblyName + ".pdb", FileMode.OpenOrCreate, FileAccess.ReadWrite))
+			using FileStream peStream = File.Open(assemblyName + ".dll", FileMode.OpenOrCreate, FileAccess.ReadWrite);
+			using FileStream pdbStream = File.Open(assemblyName + ".pdb", FileMode.OpenOrCreate, FileAccess.ReadWrite);
+			var emitResult = compilation.Emit(peStream, pdbStream, options: new(debugInformationFormat: DebugInformationFormat.PortablePdb, pdbFilePath: assemblyName + ".pdb"), embeddedTexts: embeddedTexts);
+			if (!emitResult.Success)
 			{
-				var emitResult = compilation.Emit(peStream, pdbStream, options: new(debugInformationFormat: DebugInformationFormat.PortablePdb, pdbFilePath: assemblyName + ".pdb"), embeddedTexts: embeddedTexts);
-				if (!emitResult.Success)
+				StringBuilder b = new("Compiler error:");
+				foreach (var diag in emitResult.Diagnostics)
 				{
-					StringBuilder b = new("Compiler error:");
-					foreach (var diag in emitResult.Diagnostics)
-					{
-						b.AppendLine(diag.ToString());
-					}
-					throw new(b.ToString());
+					b.AppendLine(diag.ToString());
 				}
+				throw new(b.ToString());
 			}
 		}
 
@@ -661,34 +660,32 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		{
 			if (settings == null)
 				settings = new();
-			using (var file = new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read))
-			{
-				var module = new PEFile(assemblyFileName, file, PEStreamOptions.PrefetchEntireImage);
-				string targetFramework = module.Metadata.DetectTargetFrameworkId();
-				var resolver = new UniversalAssemblyResolver(assemblyFileName, false,
-					targetFramework, null, PEStreamOptions.PrefetchMetadata);
-				resolver.AddSearchDirectory(targetFramework.Contains(".NETFramework") ? RefAsmPath : coreRefAsmPath);
-				var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
-				CSharpDecompiler decompiler = new(typeSystem, settings);
-				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAttributes());
-				decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
-				decompiler.AstTransforms.Insert(0, new RemoveNamespaceMy());
-				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
-				var pdbFileName = Path.ChangeExtension(assemblyFileName, ".pdb");
-				if (File.Exists(pdbFileName))
-					decompiler.DebugInfoProvider = DebugInfoUtils.FromFile(module, pdbFileName);
-				var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile(sortTypes: true);
+			using var file = new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read);
+			var module = new PEFile(assemblyFileName, file, PEStreamOptions.PrefetchEntireImage);
+			string targetFramework = module.Metadata.DetectTargetFrameworkId();
+			var resolver = new UniversalAssemblyResolver(assemblyFileName, false,
+				targetFramework, null, PEStreamOptions.PrefetchMetadata);
+			resolver.AddSearchDirectory(targetFramework.Contains(".NETFramework") ? RefAsmPath : coreRefAsmPath);
+			var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
+			CSharpDecompiler decompiler = new(typeSystem, settings);
+			decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAttributes());
+			decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
+			decompiler.AstTransforms.Insert(0, new RemoveNamespaceMy());
+			decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
+			var pdbFileName = Path.ChangeExtension(assemblyFileName, ".pdb");
+			if (File.Exists(pdbFileName))
+				decompiler.DebugInfoProvider = DebugInfoUtils.FromFile(module, pdbFileName);
+			var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile(sortTypes: true);
 
-				StringWriter output = new();
-				CSharpFormattingOptions formattingPolicy = CreateFormattingPolicyForTests();
-				var visitor = new CSharpOutputVisitor(output, formattingPolicy);
-				syntaxTree.AcceptVisitor(visitor);
+			StringWriter output = new();
+			CSharpFormattingOptions formattingPolicy = CreateFormattingPolicyForTests();
+			var visitor = new CSharpOutputVisitor(output, formattingPolicy);
+			syntaxTree.AcceptVisitor(visitor);
 
-				string fileName = Path.GetTempFileName();
-				File.WriteAllText(fileName, output.ToString());
+			string fileName = Path.GetTempFileName();
+			File.WriteAllText(fileName, output.ToString());
 
-				return Task.FromResult(fileName);
-			}
+			return Task.FromResult(fileName);
 		}
 
 		private static CSharpFormattingOptions CreateFormattingPolicyForTests()

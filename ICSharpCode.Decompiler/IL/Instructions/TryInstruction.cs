@@ -251,15 +251,11 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return TryBlock;
-				case 1:
-					return finallyBlock;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => TryBlock,
+				1 => finallyBlock,
+				_ => throw new IndexOutOfRangeException()
+			};
 		}
 
 		protected override void SetChild(int index, ILInstruction value)
@@ -279,15 +275,11 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return TryBlockSlot;
-				case 1:
-					return FinallyBlockSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => TryBlockSlot,
+				1 => FinallyBlockSlot,
+				_ => throw new IndexOutOfRangeException()
+			};
 		}
 	}
 
@@ -346,15 +338,11 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return TryBlock;
-				case 1:
-					return faultBlock;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => TryBlock,
+				1 => faultBlock,
+				_ => throw new IndexOutOfRangeException()
+			};
 		}
 
 		protected override void SetChild(int index, ILInstruction value)
@@ -374,15 +362,11 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return TryBlockSlot;
-				case 1:
-					return FaultBlockSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => TryBlockSlot,
+				1 => FaultBlockSlot,
+				_ => throw new IndexOutOfRangeException()
+			};
 		}
 	}
 

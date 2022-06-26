@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			var headers = module.Reader.PEHeaders;
 			var header = headers.PEHeader;
 
-			var entries = new DataDirectoryEntry[] {
+			var entries = new[] {
 				new DataDirectoryEntry(headers, "Export Table", header.ExportTableDirectory),
 				new DataDirectoryEntry(headers, "Import Table", header.ImportTableDirectory),
 				new DataDirectoryEntry(headers, "Resource Table", header.ResourceTableDirectory),

@@ -146,19 +146,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				for (int i = 0; i < Arguments.Length; i++)
 				{
-					string inferredName;
-					switch (Arguments[i].Expression)
-					{
-						case IdentifierExpression identifier:
-							inferredName = identifier.Identifier;
-							break;
-						case MemberReferenceExpression member:
-							inferredName = member.MemberName;
-							break;
-						default:
-							inferredName = null;
-							break;
-					}
+					string inferredName = Arguments[i].Expression switch {
+						IdentifierExpression identifier => identifier.Identifier,
+						MemberReferenceExpression member => member.MemberName,
+						_ => null
+					};
 
 					if (inferredName != ExpectedParameters[i].Name)
 					{
@@ -302,8 +294,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				argumentList.AddNamesToPrimitiveValues = false;
 				argumentList.UseImplicitlyTypedOut = false;
 				int regularParameterCount = ((VarArgInstanceMethod)method).RegularParameterCount;
-				var argListArg = new UndocumentedExpression();
-				argListArg.UndocumentedExpressionType = UndocumentedExpressionType.ArgList;
+				var argListArg = new UndocumentedExpression {
+					UndocumentedExpressionType = UndocumentedExpressionType.ArgList
+				};
 				int paramIndex = regularParameterCount;
 				var builder = expressionBuilder;
 				Debug.Assert(argumentToParameterMap == null && argumentList.ArgumentNames == null);
@@ -499,7 +492,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			argumentList.UseImplicitlyTypedOut = false;
 			var transform = GetRequiredTransformationsForCall(expectedTargetDetails, method, ref unused,
 				ref argumentList, CallTransformation.None, out _);
-			Debug.Assert(transform == CallTransformation.None || transform == CallTransformation.NoOptionalArgumentAllowed);
+			Debug.Assert(transform is CallTransformation.None or CallTransformation.NoOptionalArgumentAllowed);
 
 			// Calls with only one argument do not need an array initializer expression to wrap them.
 			// Any special cases are handled by the caller (i.e., ExpressionBuilder.TranslateObjectAndCollectionInitializer)
@@ -879,7 +872,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				|| a.AttributeType.IsKnownType(KnownAttribute.CallerFilePath)
 				|| a.AttributeType.IsKnownType(KnownAttribute.CallerLineNumber)))
 				return false;
-			return object.Equals(parameter.GetConstantValue(), arg.ResolveResult.ConstantValue);
+			return Equals(parameter.GetConstantValue(), arg.ResolveResult.ConstantValue);
 		}
 
 		[Flags]
@@ -1115,7 +1108,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			foreach (var child in parent.Children)
 			{
-				if (child is LambdaExpression || child is AnonymousMethodExpression)
+				if (child is LambdaExpression or AnonymousMethodExpression)
 					continue;
 				if (child is ReturnStatement ret)
 				{
@@ -1133,7 +1126,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// We handle this as a special case to avoid inserting a cast to System.Delegate.
 			return method.IsOperator
 				&& method.DeclaringType.IsKnownType(KnownTypeCode.Delegate)
-				&& (method.Name == "op_Equality" || method.Name == "op_Inequality")
+				&& method.Name is "op_Equality" or "op_Inequality"
 				&& arguments.Count == 2
 				&& arguments[0].Type.Kind == TypeKind.Delegate
 				&& arguments[1].Type.Equals(arguments[0].Type);

@@ -451,7 +451,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void DoAssert()
 		{
 			ToCode(X(), () => field != C());
-			ToCode(X(), () => !object.ReferenceEquals(this, new ExpressionTrees()));
+			ToCode(X(), () => !ReferenceEquals(this, new ExpressionTrees()));
 			ToCode(X(), () => MyEquals(this) && !MyEquals(null));
 		}
 
@@ -478,7 +478,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ToCode(X(), () => new int[4] { 2000, 2004, 2008, 2012 }.All(set.Add));
 
 			Func<Func<object, object, bool>, bool> sink = (Func<object, object, bool> f) => f(null, null);
-			ToCode(X(), () => sink(object.Equals));
+			ToCode(X(), () => sink(Equals));
 		}
 
 		public void MultipleCasts()
@@ -598,7 +598,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void StaticCall()
 		{
-			ToCode(X(), () => object.Equals(3, 0));
+			ToCode(X(), () => Equals(3, 0));
 		}
 
 		public void ThisCall()
@@ -608,7 +608,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void ThisExplicit()
 		{
-			ToCode(X(), () => object.Equals(this, 3));
+			ToCode(X(), () => Equals(this, 3));
 		}
 
 		public void TypedConstant()
@@ -621,7 +621,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void StaticCallImplicitCast()
 		{
-			ToCode(X(), () => object.Equals(3, 0));
+			ToCode(X(), () => Equals(3, 0));
 		}
 
 		public void StaticMembers()

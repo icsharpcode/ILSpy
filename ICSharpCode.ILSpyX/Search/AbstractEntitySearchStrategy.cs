@@ -21,8 +21,8 @@ using System.Collections.Concurrent;
 
 namespace ICSharpCode.ILSpyX.Search
 {
-	using ICSharpCode.Decompiler.TypeSystem;
-	using ICSharpCode.ILSpyX.Abstractions;
+	using Decompiler.TypeSystem;
+	using Abstractions;
 
 	public abstract class AbstractEntitySearchStrategy : AbstractSearchStrategy
 	{
@@ -46,9 +46,7 @@ namespace ICSharpCode.ILSpyX.Search
 			{
 				if (apiVisibility == ApiVisibility.PublicOnly)
 				{
-					if (!(entity.Accessibility == Accessibility.Public ||
-						entity.Accessibility == Accessibility.Protected ||
-						entity.Accessibility == Accessibility.ProtectedOrInternal))
+					if (!(entity.Accessibility is Accessibility.Public or Accessibility.Protected or Accessibility.ProtectedOrInternal))
 						return false;
 				}
 				else if (apiVisibility == ApiVisibility.PublicAndInternal)

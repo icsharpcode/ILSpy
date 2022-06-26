@@ -226,7 +226,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		public override string ToString()
 		{
-			return string.Format("[{0} with {1} method(s)]", GetType().Name, this.Methods.Count());
+			return $"[{GetType().Name} with {this.Methods.Count()} method(s)]";
 		}
 
 		public OverloadResolution PerformOverloadResolution(ICompilation compilation, ResolveResult[] arguments, string[] argumentNames = null,
@@ -240,11 +240,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			Log.WriteCollection("  Arguments: ", arguments);
 
 			var typeArgumentArray = this.TypeArguments.ToArray();
-			OverloadResolution or = new(compilation, arguments, argumentNames, typeArgumentArray, conversions);
-			or.AllowExpandingParams = allowExpandingParams;
-			or.AllowOptionalParameters = allowOptionalParameters;
-			or.CheckForOverflow = checkForOverflow;
-			or.AllowImplicitIn = allowImplicitIn;
+			OverloadResolution or = new(compilation, arguments, argumentNames, typeArgumentArray, conversions)
+				{
+					AllowExpandingParams = allowExpandingParams,
+					AllowOptionalParameters = allowOptionalParameters,
+					CheckForOverflow = checkForOverflow,
+					AllowImplicitIn = allowImplicitIn
+				};
 
 			or.AddMethodLists(methodLists);
 
@@ -266,12 +268,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						extArgumentNames = new string[argumentNames.Length + 1];
 						argumentNames.CopyTo(extArgumentNames, 1);
 					}
-					var extOr = new OverloadResolution(compilation, extArguments, extArgumentNames, typeArgumentArray, conversions);
-					extOr.AllowExpandingParams = allowExpandingParams;
-					extOr.AllowOptionalParameters = allowOptionalParameters;
-					extOr.IsExtensionMethodInvocation = true;
-					extOr.CheckForOverflow = checkForOverflow;
-					extOr.AllowImplicitIn = allowImplicitIn;
+					var extOr = new OverloadResolution(compilation, extArguments, extArgumentNames, typeArgumentArray, conversions)
+						{
+							AllowExpandingParams = allowExpandingParams,
+							AllowOptionalParameters = allowOptionalParameters,
+							IsExtensionMethodInvocation = true,
+							CheckForOverflow = checkForOverflow,
+							AllowImplicitIn = allowImplicitIn
+						};
 
 					foreach (var g in extensionMethods)
 					{

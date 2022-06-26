@@ -28,17 +28,12 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public static CallInstruction Create(OpCode opCode, IMethod method)
 		{
-			switch (opCode)
-			{
-				case OpCode.Call:
-					return new Call(method);
-				case OpCode.CallVirt:
-					return new CallVirt(method);
-				case OpCode.NewObj:
-					return new NewObj(method);
-				default:
-					throw new ArgumentException("Not a valid call opcode");
-			}
+			return opCode switch {
+				OpCode.Call => new Call(method),
+				OpCode.CallVirt => new CallVirt(method),
+				OpCode.NewObj => new NewObj(method),
+				_ => throw new ArgumentException("Not a valid call opcode")
+			};
 		}
 
 		public readonly IMethod Method;
@@ -107,15 +102,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (type.Kind == TypeKind.TypeParameter)
 				return StackType.Ref;
-			switch (type.IsReferenceType)
-			{
-				case true:
-					return StackType.O;
-				case false:
-					return StackType.Ref;
-				default:
-					return StackType.Unknown;
-			}
+			return type.IsReferenceType switch {
+				true => StackType.O,
+				false => StackType.Ref,
+				_ => StackType.Unknown
+			};
 		}
 
 		internal override void CheckInvariant(ILPhase phase)
@@ -163,7 +154,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			CallInstruction? o = other as CallInstruction;
 			return o != null && this.OpCode == o.OpCode && this.Method.Equals(o.Method) && this.IsTail == o.IsTail
-				&& object.Equals(this.ConstrainedTo, o.ConstrainedTo)
+				&& Equals(this.ConstrainedTo, o.ConstrainedTo)
 				&& Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
 		}
 	}

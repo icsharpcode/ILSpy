@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				if (this.OperatorType != o.OperatorType)
 					return false;
-				if (this.OperatorType == OperatorType.Implicit || this.OperatorType == OperatorType.Explicit)
+				if (this.OperatorType is OperatorType.Implicit or OperatorType.Explicit)
 				{
 					if (!this.ConversionOperatorReturnType.DoMatch(o.ConversionOperatorReturnType, match))
 						return false;

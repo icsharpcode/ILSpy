@@ -57,45 +57,43 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 
 			var image = module.Reader.GetEntireImage();
 			this.debugInfo = new();
-			using (UnmanagedMemoryStream stream = new(image.Pointer, image.Length))
-			using (var moduleDef = ModuleDefinition.ReadModule(stream))
-			{
-				moduleDef.ReadSymbols(new PdbReaderProvider().GetSymbolReader(moduleDef, pdbFileName));
+			using UnmanagedMemoryStream stream = new(image.Pointer, image.Length);
+			using var moduleDef = ModuleDefinition.ReadModule(stream);
+			moduleDef.ReadSymbols(new PdbReaderProvider().GetSymbolReader(moduleDef, pdbFileName));
 
-				foreach (var method in module.Metadata.MethodDefinitions)
+			foreach (var method in module.Metadata.MethodDefinitions)
+			{
+				var cecilMethod = moduleDef.LookupToken(MetadataTokens.GetToken(method)) as MethodDefinition;
+				var debugInfo = cecilMethod?.DebugInformation;
+				if (debugInfo == null)
+					continue;
+				IList<SequencePoint> sequencePoints = EmptyList<SequencePoint>.Instance;
+				if (debugInfo.HasSequencePoints)
 				{
-					var cecilMethod = moduleDef.LookupToken(MetadataTokens.GetToken(method)) as MethodDefinition;
-					var debugInfo = cecilMethod?.DebugInformation;
-					if (debugInfo == null)
-						continue;
-					IList<SequencePoint> sequencePoints = EmptyList<SequencePoint>.Instance;
-					if (debugInfo.HasSequencePoints)
+					sequencePoints = new List<SequencePoint>(debugInfo.SequencePoints.Count);
+					foreach (var point in debugInfo.SequencePoints)
 					{
-						sequencePoints = new List<SequencePoint>(debugInfo.SequencePoints.Count);
-						foreach (var point in debugInfo.SequencePoints)
-						{
-							sequencePoints.Add(new() {
-								Offset = point.Offset,
-								StartLine = point.StartLine,
-								StartColumn = point.StartColumn,
-								EndLine = point.EndLine,
-								EndColumn = point.EndColumn,
-								DocumentUrl = point.Document.Url
-							});
-						}
+						sequencePoints.Add(new() {
+							Offset = point.Offset,
+							StartLine = point.StartLine,
+							StartColumn = point.StartColumn,
+							EndLine = point.EndLine,
+							EndColumn = point.EndColumn,
+							DocumentUrl = point.Document.Url
+						});
 					}
-					var variables = new List<Variable>();
-					foreach (var scope in debugInfo.GetScopes())
-					{
-						if (!scope.HasVariables)
-							continue;
-						foreach (var v in scope.Variables)
-						{
-							variables.Add(new(v.Index, v.Name));
-						}
-					}
-					this.debugInfo.Add(method, (sequencePoints, variables));
 				}
+				var variables = new List<Variable>();
+				foreach (var scope in debugInfo.GetScopes())
+				{
+					if (!scope.HasVariables)
+						continue;
+					foreach (var v in scope.Variables)
+					{
+						variables.Add(new(v.Index, v.Name));
+					}
+				}
+				this.debugInfo.Add(method, (sequencePoints, variables));
 			}
 		}
 

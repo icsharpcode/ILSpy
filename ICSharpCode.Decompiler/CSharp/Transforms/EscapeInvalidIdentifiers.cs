@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		string ReplaceInvalid(string s)
 		{
-			string name = string.Concat(s.Select(ch => IsValid(ch) ? ch.ToString() : string.Format("_{0:X4}", (int)ch)));
+			string name = string.Concat(s.Select(ch => IsValid(ch) ? ch.ToString() : $"_{(int)ch:X4}"));
 			if (name.Length >= 1 && !(char.IsLetter(name[0]) || name[0] == '_'))
 				name = "_" + name;
 			return name;
@@ -95,9 +95,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							{
 								if (arguments.Count != 1)
 									break;
-								if (!(arguments.First() is NamedExpression expr1) || expr1.Name != "WrapNonExceptionThrows")
+								if (!(arguments.First() is NamedExpression { Name: "WrapNonExceptionThrows" } expr1))
 									break;
-								if (!(expr1.Expression is PrimitiveExpression expr2) || !(expr2.Value is bool value) || value != true)
+								if (!(expr1.Expression is PrimitiveExpression { Value: bool and true }))
 									break;
 								attribute.Remove();
 								break;
@@ -111,11 +111,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							{
 								if (arguments.Count != 2)
 									break;
-								if (!(arguments.First() is MemberReferenceExpression expr1) || expr1.MemberName != "RequestMinimum")
+								if (!(arguments.First() is MemberReferenceExpression { MemberName: "RequestMinimum" } expr1))
 									break;
-								if (!(expr1.NextSibling is NamedExpression expr2) || expr2.Name != "SkipVerification")
+								if (!(expr1.NextSibling is NamedExpression { Name: "SkipVerification" } expr2))
 									break;
-								if (!(expr2.Expression is PrimitiveExpression expr3) || !(expr3.Value is bool value2) || value2 != true)
+								if (!(expr2.Expression is PrimitiveExpression { Value: bool and true }))
 									break;
 								attribute.Remove();
 								break;

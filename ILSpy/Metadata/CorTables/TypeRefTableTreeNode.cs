@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpy.Metadata
 							output.Write(metadata.GetString(moduleReference.Name));
 							break;
 						case HandleKind.AssemblyReference:
-							var asmRef = new Decompiler.Metadata.AssemblyReference(module, (AssemblyReferenceHandle)typeRef.ResolutionScope);
+							var asmRef = new AssemblyReference(module, (AssemblyReferenceHandle)typeRef.ResolutionScope);
 							output.Write(asmRef.ToString());
 							break;
 						default:

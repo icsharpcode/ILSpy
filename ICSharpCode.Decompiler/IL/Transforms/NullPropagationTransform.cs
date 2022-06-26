@@ -350,22 +350,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			bool IsValidEndOfChain()
 			{
-				switch (mode)
-				{
-					case Mode.ReferenceType:
+				return mode switch {
+					Mode.ReferenceType =>
 						// either reference type (expect: ldloc(testedVar)) or unconstrained generic type (expect: ldloca(testedVar)).
-						return inst.MatchLdLocRef(testedVar);
-					case Mode.NullableByValue:
-						return NullableLiftingTransform.MatchGetValueOrDefault(inst, testedVar);
-					case Mode.NullableByReference:
-						return NullableLiftingTransform.MatchGetValueOrDefault(inst, out ILInstruction arg)
-							&& arg.MatchLdLoc(testedVar);
-					case Mode.UnconstrainedType:
+						inst.MatchLdLocRef(testedVar),
+					Mode.NullableByValue => NullableLiftingTransform.MatchGetValueOrDefault(inst, testedVar),
+					Mode.NullableByReference => NullableLiftingTransform.MatchGetValueOrDefault(inst,
+						out ILInstruction arg) && arg.MatchLdLoc(testedVar),
+					Mode.UnconstrainedType =>
 						// unconstrained generic type (expect: ldloc(testedVar))
-						return inst.MatchLdLoc(testedVar);
-					default:
-						throw new ArgumentOutOfRangeException(nameof(mode));
-				}
+						inst.MatchLdLoc(testedVar),
+					_ => throw new ArgumentOutOfRangeException(nameof(mode))
+				};
 			}
 
 			bool CanTransformToExtensionMethodCall(CallInstruction call, ILTransformContext context)

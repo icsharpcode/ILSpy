@@ -123,8 +123,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static SwitchInstruction BuildLiftedSwitch(Block nullCaseBlock, SwitchInstruction switchInst, ILInstruction switchValue)
 		{
-			SwitchInstruction newSwitch = new(switchValue);
-			newSwitch.IsLifted = true;
+			SwitchInstruction newSwitch = new(switchValue) {
+				IsLifted = true
+			};
 			newSwitch.Sections.AddRange(switchInst.Sections);
 			newSwitch.Sections.Add(new() { Body = new Branch(nullCaseBlock), HasNullLabel = true });
 			return newSwitch;

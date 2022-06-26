@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write($"[{interval.Start:x4}..{interval.InclusiveEnd:x4}] ");
 		}
 
-		public static void WriteTo(this EntityHandle entity, PEFile module, ITextOutput output, Metadata.MetadataGenericContext genericContext, ILNameSyntax syntax = ILNameSyntax.Signature)
+		public static void WriteTo(this EntityHandle entity, PEFile module, ITextOutput output, MetadataGenericContext genericContext, ILNameSyntax syntax = ILNameSyntax.Signature)
 		{
 			if (entity.IsNil)
 			{
@@ -352,7 +352,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		static void WriteParent(ITextOutput output, PEFile module, MetadataReader metadata, EntityHandle parentHandle, Metadata.MetadataGenericContext genericContext, ILNameSyntax syntax)
+		static void WriteParent(ITextOutput output, PEFile module, MetadataReader metadata, EntityHandle parentHandle, MetadataGenericContext genericContext, ILNameSyntax syntax)
 		{
 			switch (parentHandle.Kind)
 			{

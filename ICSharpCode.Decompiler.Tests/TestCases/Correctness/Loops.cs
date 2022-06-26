@@ -219,28 +219,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("NoForeachDueToMultipleCurrentAccess:");
 			T result = default(T);
-			using (IEnumerator<T> enumerator = items.GetEnumerator())
+			using IEnumerator<T> enumerator = items.GetEnumerator();
+			while (enumerator.MoveNext())
 			{
-				while (enumerator.MoveNext())
-				{
-					result = enumerator.Current;
-					Console.WriteLine("result: " + result);
-				}
-				return enumerator.Current;
+				result = enumerator.Current;
+				Console.WriteLine("result: " + result);
 			}
+			return enumerator.Current;
 		}
 
 		public static T NoForeachCallWithSideEffect<T>(CustomClassEnumeratorWithIDisposable<T> items)
 		{
 			Console.WriteLine("NoForeachCallWithSideEffect:");
-			using (CustomClassEnumeratorWithIDisposable<T> enumerator = items.GetEnumerator())
+			using CustomClassEnumeratorWithIDisposable<T> enumerator = items.GetEnumerator();
+			while (enumerator.MoveNext())
 			{
-				while (enumerator.MoveNext())
-				{
-					T result = enumerator.Current;
-				}
-				return CallWithSideEffect<T>();
+				T result = enumerator.Current;
 			}
+			return CallWithSideEffect<T>();
 		}
 
 		static bool GetBool(string text)

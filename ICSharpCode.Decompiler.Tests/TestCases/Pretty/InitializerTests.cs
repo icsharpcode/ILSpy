@@ -745,9 +745,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		#region Object initializers
 		public C Test1()
 		{
-			C c = new();
-			c.L = new();
-			c.L.Add(new(1));
+			C c = new() {
+				L = new() { new(1) }
+			};
 			return c;
 		}
 
@@ -762,17 +762,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public C Test2()
 		{
-			C c = new();
-			c.Z = 1;
+			C c = new() {
+				Z = 1
+			};
 			c.Z = 2;
 			return c;
 		}
 
 		public C Test3()
 		{
-			C c = new();
-			c.Y = new(1);
-			c.Y.A = 2;
+			C c = new() {
+				Y = new(1) {
+					A = 2
+				}
+			};
 			return c;
 		}
 
@@ -804,8 +807,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public static void NotAnObjectInitializer()
 		{
-			Data data = new();
-			data.a = MyEnum.a;
+			Data data = new() {
+				a = MyEnum.a
+			};
 			X(Y(), data);
 		}
 
@@ -938,9 +942,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public static void NotAStructInitializer_ExplicitConstructor()
 		{
-			StructData structData = new(0);
-			structData.Field = 1;
-			structData.Property = 2;
+			StructData structData = new(0) {
+				Field = 1,
+				Property = 2
+			};
 			X(Y(), structData);
 		}
 
@@ -992,22 +997,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public OtherItem2 Issue1345()
 		{
-			OtherItem2 otherItem = new();
-			otherItem.Data.Nullable = 3m;
+			OtherItem2 otherItem = new() {
+				Data = {
+					Nullable = 3m
+				}
+			};
 			return otherItem;
 		}
 
 		public OtherItem2 Issue1345b()
 		{
-			OtherItem2 otherItem = new();
-			otherItem.Data2.Nullable = 3m;
+			OtherItem2 otherItem = new() {
+				Data2 = {
+					Nullable = 3m
+				}
+			};
 			return otherItem;
 		}
 #if CS60
 		public OtherItem2 Issue1345c()
 		{
-			OtherItem2 otherItem = new();
-			otherItem.Data3.Nullable = 3m;
+			OtherItem2 otherItem = new() {
+				Data3 = {
+					Nullable = 3m
+				}
+			};
 			return otherItem;
 		}
 
@@ -1051,8 +1065,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		{
 			if (p == 1)
 			{
-				Data data = new();
-				data.a = MyEnum.a;
+				Data data = new() {
+					a = MyEnum.a
+				};
 				data.TestEvent += Data_TestEvent;
 				return data;
 			}

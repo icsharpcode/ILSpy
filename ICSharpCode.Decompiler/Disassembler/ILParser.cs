@@ -92,20 +92,16 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public static int DecodeIndex(this ref BlobReader blob, ILOpCode opCode)
 		{
-			switch (opCode.GetOperandType())
-			{
-				case OperandType.ShortVariable:
-					return blob.ReadByte();
-				case OperandType.Variable:
-					return blob.ReadUInt16();
-				default:
-					throw new ArgumentException($"{opCode} not supported!");
-			}
+			return opCode.GetOperandType() switch {
+				OperandType.ShortVariable => blob.ReadByte(),
+				OperandType.Variable => blob.ReadUInt16(),
+				_ => throw new ArgumentException($"{opCode} not supported!")
+			};
 		}
 
 		public static bool IsReturn(this ILOpCode opCode)
 		{
-			return opCode == ILOpCode.Ret || opCode == ILOpCode.Endfilter || opCode == ILOpCode.Endfinally;
+			return opCode is ILOpCode.Ret or ILOpCode.Endfilter or ILOpCode.Endfinally;
 		}
 
 		public static int GetHeaderSize(BlobReader bodyBlockReader)

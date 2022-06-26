@@ -101,7 +101,7 @@ namespace ILSpy.BamlDecompiler
 						switch (exportedType.Implementation.Kind)
 						{
 							case HandleKind.AssemblyReference:
-								assemblyReferenceQueue.Enqueue((true, asm, new ICSharpCode.Decompiler.Metadata.AssemblyReference(asm, (AssemblyReferenceHandle)exportedType.Implementation)));
+								assemblyReferenceQueue.Enqueue((true, asm, new AssemblyReference(asm, (AssemblyReferenceHandle)exportedType.Implementation)));
 								break;
 							case HandleKind.AssemblyFile:
 								var file = metadata.GetAssemblyFile((AssemblyFileHandle)exportedType.Implementation);

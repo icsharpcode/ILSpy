@@ -388,11 +388,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				{
 					b.Append(((IFormattable)value).ToString(null, NumberFormatInfo.InvariantInfo));
 				}
-				if (value is uint || value is ulong)
+				if (value is uint or ulong)
 				{
 					b.Append("u");
 				}
-				if (value is long || value is ulong)
+				if (value is long or ulong)
 				{
 					b.Append("L");
 				}

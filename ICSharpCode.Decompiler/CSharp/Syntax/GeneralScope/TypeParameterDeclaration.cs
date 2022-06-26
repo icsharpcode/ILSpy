@@ -50,15 +50,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CSharpTokenNode VarianceToken {
 			get {
-				switch (Variance)
-				{
-					case VarianceModifier.Covariant:
-						return GetChildByRole(OutVarianceKeywordRole);
-					case VarianceModifier.Contravariant:
-						return GetChildByRole(InVarianceKeywordRole);
-					default:
-						return CSharpTokenNode.Null;
-				}
+				return Variance switch {
+					VarianceModifier.Covariant => GetChildByRole(OutVarianceKeywordRole),
+					VarianceModifier.Contravariant => GetChildByRole(InVarianceKeywordRole),
+					_ => CSharpTokenNode.Null
+				};
 			}
 		}
 

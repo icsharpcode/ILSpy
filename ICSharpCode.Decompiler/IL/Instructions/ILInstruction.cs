@@ -913,7 +913,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public ILVariable Extract(ILTransformContext context)
 		{
-			return Transforms.ExtractionContext.Extract(this, context);
+			return ExtractionContext.Extract(this, context);
 		}
 
 		/// <summary>
@@ -921,7 +921,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// This is the opposite of ILInlining. It may involve re-compiling high-level constructs into lower-level constructs.
 		/// </summary>
 		/// <returns>True if extraction is possible; false otherwise.</returns>
-		internal virtual bool PrepareExtract(int childIndex, Transforms.ExtractionContext ctx)
+		internal virtual bool PrepareExtract(int childIndex, ExtractionContext ctx)
 		{
 			if (!GetChildSlot(childIndex).CanInlineInto)
 			{

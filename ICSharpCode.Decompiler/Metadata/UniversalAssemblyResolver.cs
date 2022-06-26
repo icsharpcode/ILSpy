@@ -159,23 +159,13 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (string.IsNullOrEmpty(targetFramework))
 				return (TargetFrameworkIdentifier.NETFramework, ZeroVersion);
 			string[] tokens = targetFramework.Split(',');
-			TargetFrameworkIdentifier identifier;
 
-			switch (tokens[0].Trim().ToUpperInvariant())
-			{
-				case ".NETCOREAPP":
-					identifier = TargetFrameworkIdentifier.NETCoreApp;
-					break;
-				case ".NETSTANDARD":
-					identifier = TargetFrameworkIdentifier.NETStandard;
-					break;
-				case "SILVERLIGHT":
-					identifier = TargetFrameworkIdentifier.Silverlight;
-					break;
-				default:
-					identifier = TargetFrameworkIdentifier.NETFramework;
-					break;
-			}
+			TargetFrameworkIdentifier identifier = tokens[0].Trim().ToUpperInvariant() switch {
+				".NETCOREAPP" => TargetFrameworkIdentifier.NETCoreApp,
+				".NETSTANDARD" => TargetFrameworkIdentifier.NETStandard,
+				"SILVERLIGHT" => TargetFrameworkIdentifier.Silverlight,
+				_ => TargetFrameworkIdentifier.NETFramework
+			};
 
 			Version? version = null;
 
@@ -190,8 +180,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				{
 					case "VERSION":
 						var versionString = pair[1].TrimStart('v', ' ', '\t');
-						if (identifier == TargetFrameworkIdentifier.NETCoreApp ||
-							identifier == TargetFrameworkIdentifier.NETStandard)
+						if (identifier is TargetFrameworkIdentifier.NETCoreApp or TargetFrameworkIdentifier.NETStandard)
 						{
 							if (versionString.Length == 3)
 								versionString += ".0";

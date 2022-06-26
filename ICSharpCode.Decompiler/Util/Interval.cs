@@ -106,9 +106,9 @@ namespace ICSharpCode.Decompiler.Util
 		public override string ToString()
 		{
 			if (End == int.MinValue)
-				return string.Format("[{0}..int.MaxValue]", Start);
+				return $"[{Start}..int.MaxValue]";
 			else
-				return string.Format("[{0}..{1})", Start, End);
+				return $"[{Start}..{End})";
 		}
 
 		#region Equals and GetHashCode implementation

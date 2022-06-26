@@ -24,8 +24,8 @@ using ICSharpCode.Decompiler;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
-	using ICSharpCode.Decompiler.TypeSystem;
-	using ICSharpCode.ILSpyX;
+	using Decompiler.TypeSystem;
+	using ILSpyX;
 
 	/// <summary>
 	/// Represents an event in the TreeView.

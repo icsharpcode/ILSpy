@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </summary>
 		public static TypeParameterReference Create(SymbolKind ownerType, int index)
 		{
-			if (index >= 0 && index < 8 && (ownerType == SymbolKind.TypeDefinition || ownerType == SymbolKind.Method))
+			if (index >= 0 && index < 8 && ownerType is SymbolKind.TypeDefinition or SymbolKind.Method)
 			{
 				TypeParameterReference[] arr = (ownerType == SymbolKind.TypeDefinition) ? classTypeParameterReferences : methodTypeParameterReferences;
 				TypeParameterReference result = LazyInit.VolatileRead(ref arr[index]);

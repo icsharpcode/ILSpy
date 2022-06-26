@@ -96,10 +96,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			public static object Parse(string jsonString)
 			{
-				using (var instance = new Parser(jsonString))
-				{
-					return instance.ParseValue();
-				}
+				using var instance = new Parser(jsonString);
+				return instance.ParseValue();
 			}
 
 			public void Dispose()
@@ -197,25 +195,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			object ParseByToken(TOKEN token)
 			{
-				switch (token)
-				{
-					case TOKEN.STRING:
-						return ParseString();
-					case TOKEN.NUMBER:
-						return ParseNumber();
-					case TOKEN.CURLY_OPEN:
-						return ParseObject();
-					case TOKEN.SQUARED_OPEN:
-						return ParseArray();
-					case TOKEN.TRUE:
-						return true;
-					case TOKEN.FALSE:
-						return false;
-					case TOKEN.NULL:
-						return null;
-					default:
-						return null;
-				}
+				return token switch {
+					TOKEN.STRING => ParseString(),
+					TOKEN.NUMBER => ParseNumber(),
+					TOKEN.CURLY_OPEN => ParseObject(),
+					TOKEN.SQUARED_OPEN => ParseArray(),
+					TOKEN.TRUE => true,
+					TOKEN.FALSE => false,
+					TOKEN.NULL => null,
+					_ => null
+				};
 			}
 
 			string ParseString()
@@ -396,17 +385,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 							return TOKEN.NUMBER;
 					}
 
-					switch (NextWord)
-					{
-						case "false":
-							return TOKEN.FALSE;
-						case "true":
-							return TOKEN.TRUE;
-						case "null":
-							return TOKEN.NULL;
-					}
-
-					return TOKEN.NONE;
+					return NextWord switch {
+						"false" => TOKEN.FALSE,
+						"true" => TOKEN.TRUE,
+						"null" => TOKEN.NULL,
+						_ => TOKEN.NONE
+					};
 				}
 			}
 		}
@@ -579,19 +563,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				{
 					builder.Append(((float)value).ToString("R", System.Globalization.CultureInfo.InvariantCulture));
 				}
-				else if (value is int
-				  || value is uint
-				  || value is long
-				  || value is sbyte
-				  || value is byte
-				  || value is short
-				  || value is ushort
-				  || value is ulong)
+				else if (value is int or uint or long or sbyte or byte or short or ushort or ulong)
 				{
 					builder.Append(value);
 				}
-				else if (value is double
-				  || value is decimal)
+				else if (value is double or decimal)
 				{
 					builder.Append(Convert.ToDouble(value).ToString("R", System.Globalization.CultureInfo.InvariantCulture));
 				}

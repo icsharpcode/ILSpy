@@ -18,17 +18,17 @@ namespace CustomAttributeConflicts
 		{
 		}
 
-		[CustomAttributeConflicts.NS1.Simple]
+		[NS1.Simple]
 		public void Test2()
 		{
 		}
 
-		[CustomAttributeConflicts.NS2.Simple]
+		[NS2.Simple]
 		public void Test3()
 		{
 		}
 
-		[CustomAttributeConflicts.NS1.AttributeWithSameNameAsNormalType]
+		[NS1.AttributeWithSameNameAsNormalType]
 		public void Test4()
 		{
 		}
@@ -43,12 +43,12 @@ namespace CustomAttributeConflicts
 		{
 		}
 
-		[CustomAttributeConflicts.NSWithConflictingTypes2.@MyOther]
+		[NSWithConflictingTypes2.@MyOther]
 		public void Test7()
 		{
 		}
 
-		[CustomAttributeConflicts.NSWithConflictingTypes2.@MyOtherAttribute]
+		[NSWithConflictingTypes2.@MyOtherAttribute]
 		public void Test8()
 		{
 		}

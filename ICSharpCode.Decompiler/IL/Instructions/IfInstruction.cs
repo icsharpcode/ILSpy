@@ -124,9 +124,9 @@ namespace ICSharpCode.Decompiler.IL
 		internal static bool IsInConditionSlot(ILInstruction inst)
 		{
 			var slot = inst.SlotInfo;
-			if (slot == IfInstruction.ConditionSlot)
+			if (slot == ConditionSlot)
 				return true;
-			if (slot == IfInstruction.TrueInstSlot || slot == IfInstruction.FalseInstSlot || slot == NullCoalescingInstruction.FallbackInstSlot)
+			if (slot == TrueInstSlot || slot == FalseInstSlot || slot == NullCoalescingInstruction.FallbackInstSlot)
 				return IsInConditionSlot(inst.Parent!);
 			if (inst.Parent is Comp comp)
 			{

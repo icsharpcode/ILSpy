@@ -81,146 +81,86 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public static string GetModifierName(Modifiers modifier)
 		{
-			switch (modifier)
-			{
-				case Modifiers.Private:
-					return "private";
-				case Modifiers.Internal:
-					return "internal";
-				case Modifiers.Protected:
-					return "protected";
-				case Modifiers.Public:
-					return "public";
-				case Modifiers.Abstract:
-					return "abstract";
-				case Modifiers.Virtual:
-					return "virtual";
-				case Modifiers.Sealed:
-					return "sealed";
-				case Modifiers.Static:
-					return "static";
-				case Modifiers.Override:
-					return "override";
-				case Modifiers.Readonly:
-					return "readonly";
-				case Modifiers.Const:
-					return "const";
-				case Modifiers.New:
-					return "new";
-				case Modifiers.Partial:
-					return "partial";
-				case Modifiers.Extern:
-					return "extern";
-				case Modifiers.Volatile:
-					return "volatile";
-				case Modifiers.Unsafe:
-					return "unsafe";
-				case Modifiers.Async:
-					return "async";
-				case Modifiers.Ref:
-					return "ref";
-				case Modifiers.Any:
+			return modifier switch {
+				Modifiers.Private => "private",
+				Modifiers.Internal => "internal",
+				Modifiers.Protected => "protected",
+				Modifiers.Public => "public",
+				Modifiers.Abstract => "abstract",
+				Modifiers.Virtual => "virtual",
+				Modifiers.Sealed => "sealed",
+				Modifiers.Static => "static",
+				Modifiers.Override => "override",
+				Modifiers.Readonly => "readonly",
+				Modifiers.Const => "const",
+				Modifiers.New => "new",
+				Modifiers.Partial => "partial",
+				Modifiers.Extern => "extern",
+				Modifiers.Volatile => "volatile",
+				Modifiers.Unsafe => "unsafe",
+				Modifiers.Async => "async",
+				Modifiers.Ref => "ref",
+				Modifiers.Any =>
 					// even though it's used for pattern matching only, 'any' needs to be in this list to be usable in the AST
-					return "any";
-				default:
-					throw new NotSupportedException("Invalid value for Modifiers");
-			}
+					"any",
+				_ => throw new NotSupportedException("Invalid value for Modifiers")
+			};
 		}
 
 		public static int GetModifierLength(Modifiers modifier)
 		{
-			switch (modifier)
-			{
-				case Modifiers.Private:
-					return "private".Length;
-				case Modifiers.Internal:
-					return "internal".Length;
-				case Modifiers.Protected:
-					return "protected".Length;
-				case Modifiers.Public:
-					return "public".Length;
-				case Modifiers.Abstract:
-					return "abstract".Length;
-				case Modifiers.Virtual:
-					return "virtual".Length;
-				case Modifiers.Sealed:
-					return "sealed".Length;
-				case Modifiers.Static:
-					return "static".Length;
-				case Modifiers.Override:
-					return "override".Length;
-				case Modifiers.Readonly:
-					return "readonly".Length;
-				case Modifiers.Const:
-					return "const".Length;
-				case Modifiers.New:
-					return "new".Length;
-				case Modifiers.Partial:
-					return "partial".Length;
-				case Modifiers.Extern:
-					return "extern".Length;
-				case Modifiers.Volatile:
-					return "volatile".Length;
-				case Modifiers.Unsafe:
-					return "unsafe".Length;
-				case Modifiers.Async:
-					return "async".Length;
-				case Modifiers.Ref:
-					return "ref".Length;
-				case Modifiers.Any:
+			return modifier switch {
+				Modifiers.Private => "private".Length,
+				Modifiers.Internal => "internal".Length,
+				Modifiers.Protected => "protected".Length,
+				Modifiers.Public => "public".Length,
+				Modifiers.Abstract => "abstract".Length,
+				Modifiers.Virtual => "virtual".Length,
+				Modifiers.Sealed => "sealed".Length,
+				Modifiers.Static => "static".Length,
+				Modifiers.Override => "override".Length,
+				Modifiers.Readonly => "readonly".Length,
+				Modifiers.Const => "const".Length,
+				Modifiers.New => "new".Length,
+				Modifiers.Partial => "partial".Length,
+				Modifiers.Extern => "extern".Length,
+				Modifiers.Volatile => "volatile".Length,
+				Modifiers.Unsafe => "unsafe".Length,
+				Modifiers.Async => "async".Length,
+				Modifiers.Ref => "ref".Length,
+				Modifiers.Any =>
 					// even though it's used for pattern matching only, 'any' needs to be in this list to be usable in the AST
-					return "any".Length;
-				default:
-					throw new NotSupportedException("Invalid value for Modifiers");
-			}
+					"any".Length,
+				_ => throw new NotSupportedException("Invalid value for Modifiers")
+			};
 		}
 
 		public static Modifiers GetModifierValue(string modifier)
 		{
-			switch (modifier)
-			{
-				case "private":
-					return Modifiers.Private;
-				case "internal":
-					return Modifiers.Internal;
-				case "protected":
-					return Modifiers.Protected;
-				case "public":
-					return Modifiers.Public;
-				case "abstract":
-					return Modifiers.Abstract;
-				case "virtual":
-					return Modifiers.Virtual;
-				case "sealed":
-					return Modifiers.Sealed;
-				case "static":
-					return Modifiers.Static;
-				case "override":
-					return Modifiers.Override;
-				case "readonly":
-					return Modifiers.Readonly;
-				case "const":
-					return Modifiers.Const;
-				case "new":
-					return Modifiers.New;
-				case "partial":
-					return Modifiers.Partial;
-				case "extern":
-					return Modifiers.Extern;
-				case "volatile":
-					return Modifiers.Volatile;
-				case "unsafe":
-					return Modifiers.Unsafe;
-				case "async":
-					return Modifiers.Async;
-				case "ref":
-					return Modifiers.Ref;
-				case "any":
+			return modifier switch {
+				"private" => Modifiers.Private,
+				"internal" => Modifiers.Internal,
+				"protected" => Modifiers.Protected,
+				"public" => Modifiers.Public,
+				"abstract" => Modifiers.Abstract,
+				"virtual" => Modifiers.Virtual,
+				"sealed" => Modifiers.Sealed,
+				"static" => Modifiers.Static,
+				"override" => Modifiers.Override,
+				"readonly" => Modifiers.Readonly,
+				"const" => Modifiers.Const,
+				"new" => Modifiers.New,
+				"partial" => Modifiers.Partial,
+				"extern" => Modifiers.Extern,
+				"volatile" => Modifiers.Volatile,
+				"unsafe" => Modifiers.Unsafe,
+				"async" => Modifiers.Async,
+				"ref" => Modifiers.Ref,
+				"any" =>
 					// even though it's used for pattern matching only, 'any' needs to be in this list to be usable in the AST
-					return Modifiers.Any;
-				default:
-					throw new NotSupportedException("Invalid value for Modifiers");
-			}
+					Modifiers.Any,
+				_ => throw new NotSupportedException("Invalid value for Modifiers")
+			};
 		}
 	}
 }

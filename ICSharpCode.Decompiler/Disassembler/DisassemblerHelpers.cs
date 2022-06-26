@@ -56,12 +56,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public static string OffsetToString(int offset)
 		{
-			return string.Format("IL_{0:x4}", offset);
+			return $"IL_{offset:x4}";
 		}
 
 		public static string OffsetToString(long offset)
 		{
-			return string.Format("IL_{0:x4}", offset);
+			return $"IL_{offset:x4}";
 		}
 
 		public static void WriteOffsetReference(ITextOutput writer, int? offset)
@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				writer.WriteLocalReference(OffsetToString(offset.Value), offset);
 		}
 
-		public static void WriteTo(this SRM.ExceptionRegion exceptionHandler, Metadata.PEFile module, MetadataGenericContext context, ITextOutput writer)
+		public static void WriteTo(this ExceptionRegion exceptionHandler, PEFile module, MetadataGenericContext context, ITextOutput writer)
 		{
 			writer.Write(".try ");
 			WriteOffsetReference(writer, exceptionHandler.TryOffset);
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			// As a special case, .ctor and .cctor are valid despite starting with a dot
 			if (identifier[0] == '.')
-				return identifier == ".ctor" || identifier == ".cctor";
+				return identifier is ".ctor" or ".cctor";
 
 			if (identifier.Contains(".."))
 				return false;
@@ -332,43 +332,25 @@ namespace ICSharpCode.Decompiler.Disassembler
 		}
 		public static string PrimitiveTypeName(string fullName)
 		{
-			switch (fullName)
-			{
-				case "System.SByte":
-					return "int8";
-				case "System.Int16":
-					return "int16";
-				case "System.Int32":
-					return "int32";
-				case "System.Int64":
-					return "int64";
-				case "System.Byte":
-					return "uint8";
-				case "System.UInt16":
-					return "uint16";
-				case "System.UInt32":
-					return "uint32";
-				case "System.UInt64":
-					return "uint64";
-				case "System.Single":
-					return "float32";
-				case "System.Double":
-					return "float64";
-				case "System.Void":
-					return "void";
-				case "System.Boolean":
-					return "bool";
-				case "System.String":
-					return "string";
-				case "System.Char":
-					return "char";
-				case "System.Object":
-					return "object";
-				case "System.IntPtr":
-					return "native int";
-				default:
-					return null;
-			}
+			return fullName switch {
+				"System.SByte" => "int8",
+				"System.Int16" => "int16",
+				"System.Int32" => "int32",
+				"System.Int64" => "int64",
+				"System.Byte" => "uint8",
+				"System.UInt16" => "uint16",
+				"System.UInt32" => "uint32",
+				"System.UInt64" => "uint64",
+				"System.Single" => "float32",
+				"System.Double" => "float64",
+				"System.Void" => "void",
+				"System.Boolean" => "bool",
+				"System.String" => "string",
+				"System.Char" => "char",
+				"System.Object" => "object",
+				"System.IntPtr" => "native int",
+				_ => null
+			};
 		}
 	}
 }

@@ -100,8 +100,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public static ILVariable Extract(ILInstruction instToExtract, ILTransformContext context)
 		{
 			var function = instToExtract.Ancestors.OfType<ILFunction>().First();
-			ExtractionContext ctx = new(function, context);
-			ctx.FlagsBeingMoved = instToExtract.Flags;
+			ExtractionContext ctx = new(function, context) {
+				FlagsBeingMoved = instToExtract.Flags
+			};
 			ILInstruction inst = instToExtract;
 			while (inst != null)
 			{

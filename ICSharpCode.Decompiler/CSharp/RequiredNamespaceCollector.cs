@@ -15,7 +15,7 @@ namespace ICSharpCode.Decompiler.CSharp
 {
 	class RequiredNamespaceCollector
 	{
-		static readonly Decompiler.TypeSystem.GenericContext genericContext = default;
+		static readonly GenericContext genericContext = default;
 
 		readonly HashSet<string> namespaces;
 		readonly HashSet<IType> visitedTypes = new();

@@ -266,7 +266,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						methodsList.Add(module.GetDefinition(h));
 					}
 				}
-				if (this.Kind == TypeKind.Struct || this.Kind == TypeKind.Enum)
+				if (this.Kind is TypeKind.Struct or TypeKind.Enum)
 				{
 					methodsList.Add(FakeMethod.CreateDummyConstructor(Compilation, this, IsAbstract ? Accessibility.Protected : Accessibility.Public));
 				}
@@ -378,29 +378,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 
 			#region StructLayoutAttribute
-			LayoutKind layoutKind = LayoutKind.Auto;
-			switch (typeDefinition.Attributes & TypeAttributes.LayoutMask)
-			{
-				case TypeAttributes.SequentialLayout:
-					layoutKind = LayoutKind.Sequential;
-					break;
-				case TypeAttributes.ExplicitLayout:
-					layoutKind = LayoutKind.Explicit;
-					break;
-			}
-			CharSet charSet = CharSet.None;
-			switch (typeDefinition.Attributes & TypeAttributes.StringFormatMask)
-			{
-				case TypeAttributes.AnsiClass:
-					charSet = CharSet.Ansi;
-					break;
-				case TypeAttributes.AutoClass:
-					charSet = CharSet.Auto;
-					break;
-				case TypeAttributes.UnicodeClass:
-					charSet = CharSet.Unicode;
-					break;
-			}
+
+			LayoutKind layoutKind = (typeDefinition.Attributes & TypeAttributes.LayoutMask) switch {
+				TypeAttributes.SequentialLayout => LayoutKind.Sequential,
+				TypeAttributes.ExplicitLayout => LayoutKind.Explicit,
+				_ => LayoutKind.Auto
+			};
+			CharSet charSet = (typeDefinition.Attributes & TypeAttributes.StringFormatMask) switch {
+				TypeAttributes.AnsiClass => CharSet.Ansi,
+				TypeAttributes.AutoClass => CharSet.Auto,
+				TypeAttributes.UnicodeClass => CharSet.Unicode,
+				_ => CharSet.None
+			};
 			var layout = typeDefinition.GetLayout();
 			LayoutKind defaultLayoutKind = Kind == TypeKind.Struct ? LayoutKind.Sequential : LayoutKind.Auto;
 			if (layoutKind != defaultLayoutKind || charSet != CharSet.Ansi || layout.PackingSize > 0 || layout.Size > 0)
@@ -600,14 +589,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (ComHelper.IsComImport(this))
 			{
 				IType coClass = ComHelper.GetCoClass(this);
-				using (var busyLock = BusyManager.Enter(this))
+				using var busyLock = BusyManager.Enter(this);
+				if (busyLock.Success)
 				{
-					if (busyLock.Success)
-					{
-						return coClass.GetConstructors(filter, options)
-							.Select(m => new SpecializedMethod(m, m.Substitution) { DeclaringType = this });
-					}
+					return coClass.GetConstructors(filter, options)
+						.Select(m => new SpecializedMethod(m, m.Substitution) { DeclaringType = this });
 				}
+
 				return EmptyList<IMethod>.Instance;
 			}
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)

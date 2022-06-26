@@ -429,8 +429,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			dlg.Filter = language.Name + " project|*" + language.ProjectFileExtension + "|" + language.Name + " single file|*" + language.FileExtension + "|All files|*.*";
 			if (dlg.ShowDialog() == true)
 			{
-				DecompilationOptions options = new();
-				options.FullDecompilation = true;
+				DecompilationOptions options = new() {
+					FullDecompilation = true
+				};
 				if (dlg.FilterIndex == 1)
 				{
 					options.SaveAsProjectDirectory = Path.GetDirectoryName(dlg.FileName);

@@ -9,7 +9,7 @@ namespace LightJson
 	using System.Diagnostics.CodeAnalysis;
 	using System.Globalization;
 
-	using LightJson.Serialization;
+	using Serialization;
 
 	/// <summary>
 	/// A wrapper object that contains a valid JSON value.
@@ -43,7 +43,7 @@ namespace LightJson
 			}
 			else
 			{
-				this = JsonValue.Null;
+				this = Null;
 			}
 		}
 
@@ -63,7 +63,7 @@ namespace LightJson
 			}
 			else
 			{
-				this = JsonValue.Null;
+				this = Null;
 			}
 		}
 
@@ -83,7 +83,7 @@ namespace LightJson
 			}
 			else
 			{
-				this = JsonValue.Null;
+				this = Null;
 			}
 		}
 
@@ -103,7 +103,7 @@ namespace LightJson
 			}
 			else
 			{
-				this = JsonValue.Null;
+				this = Null;
 			}
 		}
 
@@ -123,7 +123,7 @@ namespace LightJson
 			}
 			else
 			{
-				this = JsonValue.Null;
+				this = Null;
 			}
 		}
 
@@ -331,22 +331,12 @@ namespace LightJson
 		/// <value>This value as a String type.</value>
 		public string AsString {
 			get {
-				switch (this.Type)
-				{
-					case JsonValueType.Boolean:
-						return (this.value == 1)
-							? "true"
-							: "false";
-
-					case JsonValueType.Number:
-						return this.value.ToString(CultureInfo.InvariantCulture);
-
-					case JsonValueType.String:
-						return (string)this.reference;
-
-					default:
-						return null;
-				}
+				return this.Type switch {
+					JsonValueType.Boolean => (this.value == 1) ? "true" : "false",
+					JsonValueType.Number => this.value.ToString(CultureInfo.InvariantCulture),
+					JsonValueType.String => (string)this.reference,
+					_ => null
+				};
 			}
 		}
 
@@ -535,7 +525,7 @@ namespace LightJson
 		{
 			if (value == null)
 			{
-				return JsonValue.Null;
+				return Null;
 			}
 
 			return new(value.Value.ToString("o"));

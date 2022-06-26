@@ -568,7 +568,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.IsFalse(tp.HasValueTypeConstraint);
 			Assert.IsFalse(tp.HasReferenceTypeConstraint);
 			Assert.IsTrue(tp.HasDefaultConstructorConstraint);
-			Assert.AreEqual(new string[] { "System.Collections.Generic.IComparer`1[[`1]]", "System.Object" },
+			Assert.AreEqual(new[] { "System.Collections.Generic.IComparer`1[[`1]]", "System.Object" },
 							tp.DirectBaseTypes.Select(t => t.ReflectionName).ToArray());
 		}
 
@@ -1705,7 +1705,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.AreSame(c2, c.DirectBaseTypes.First());
 
 			string[] superTypes = c.GetAllBaseTypes().Select(t => t.ReflectionName).ToArray();
-			Assert.AreEqual(new string[] {
+			Assert.AreEqual(new[] {
 								"System.Object",
 								"System.Runtime.Serialization.ISerializable", "System.Runtime.InteropServices._Exception",
 								"System.Exception", "System.SystemException"

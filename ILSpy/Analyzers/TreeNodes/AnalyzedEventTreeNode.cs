@@ -23,7 +23,7 @@ using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
-	using ICSharpCode.Decompiler.TypeSystem;
+	using Decompiler.TypeSystem;
 
 	internal sealed class AnalyzedEventTreeNode : AnalyzerEntityTreeNode
 	{

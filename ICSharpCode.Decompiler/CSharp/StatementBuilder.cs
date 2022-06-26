@@ -430,15 +430,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			var tryCatch = tryBlockConverted as TryCatchStatement;
 			if (tryCatch != null && tryCatch.FinallyBlock.IsNull)
 				return tryCatch; // extend existing try-catch
-			tryCatch = new();
-			tryCatch.TryBlock = tryBlockConverted as BlockStatement ?? new BlockStatement { tryBlockConverted };
+			tryCatch = new() {
+				TryBlock = tryBlockConverted as BlockStatement ?? new BlockStatement { tryBlockConverted }
+			};
 			return tryCatch;
 		}
 
 		protected internal override TranslatedStatement VisitTryCatch(TryCatch inst)
 		{
-			var tryCatch = new TryCatchStatement();
-			tryCatch.TryBlock = ConvertAsBlock(inst.TryBlock);
+			var tryCatch = new TryCatchStatement {
+				TryBlock = ConvertAsBlock(inst.TryBlock)
+			};
 			foreach (var handler in inst.Handlers)
 			{
 				var catchClause = new CatchClause();
@@ -474,8 +476,9 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedStatement VisitTryFault(TryFault inst)
 		{
-			var tryCatch = new TryCatchStatement();
-			tryCatch.TryBlock = ConvertAsBlock(inst.TryBlock);
+			var tryCatch = new TryCatchStatement {
+				TryBlock = ConvertAsBlock(inst.TryBlock)
+			};
 			var faultBlock = ConvertAsBlock(inst.FaultBlock);
 			faultBlock.InsertChildAfter(null, new("try-fault"), Roles.Comment);
 			faultBlock.Add(new ThrowStatement());
@@ -969,10 +972,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			ILInstruction inst = singleGetter;
 			// in some cases, i.e. foreach variable with explicit type different from the collection-item-type,
 			// the result of call get_Current is casted.
-			while (inst.Parent is UnboxAny || inst.Parent is CastClass)
+			while (inst.Parent is UnboxAny or CastClass)
 				inst = inst.Parent;
 			// One variable was found.
-			if (inst.Parent is StLoc stloc && (stloc.Variable.Kind == VariableKind.Local || stloc.Variable.Kind == VariableKind.StackSlot))
+			if (inst.Parent is StLoc stloc && stloc.Variable.Kind is VariableKind.Local or VariableKind.StackSlot)
 			{
 				// Must be a plain assignment expression and variable must only be used in 'body' + only assigned once.
 				if (stloc.Parent == loopBody && VariableIsOnlyUsedInBlock(stloc, usingContainer, loopContainer))
@@ -1015,7 +1018,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				expectedType = ((LdLoc)value).Variable.Type;
 				if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(v.Type, expectedType))
 					return false;
-				if (!(v.Kind == VariableKind.StackSlot || v.Kind == VariableKind.Local))
+				if (!(v.Kind is VariableKind.StackSlot or VariableKind.Local))
 					return false;
 				if (!VariableIsOnlyUsedInBlock((StLoc)item, usingContainer, loopContainer))
 					return false;
@@ -1083,13 +1086,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					var targetMethod = ((CallInstruction)inst.Parent).Method;
 					if (!targetMethod.IsAccessor || targetMethod.IsStatic)
 						return false;
-					switch (targetMethod.AccessorOwner)
-					{
-						case IProperty p:
-							return targetMethod.AccessorKind == System.Reflection.MethodSemanticsAttributes.Setter;
-						default:
-							return true;
-					}
+					return targetMethod.AccessorOwner switch {
+						IProperty p => targetMethod.AccessorKind == System.Reflection.MethodSemanticsAttributes.Setter,
+						_ => true
+					};
 				default:
 					return false;
 			}
@@ -1104,8 +1104,9 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedStatement VisitPinnedRegion(PinnedRegion inst)
 		{
-			var fixedStmt = new FixedStatement();
-			fixedStmt.Type = exprBuilder.ConvertType(inst.Variable.Type);
+			var fixedStmt = new FixedStatement {
+				Type = exprBuilder.ConvertType(inst.Variable.Type)
+			};
 			Expression initExpr;
 			if (inst.Init is GetPinnableReference gpr)
 			{
@@ -1152,9 +1153,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					//   fixed (int* ptr = &Unsafe.AsRef<int>(existing_ptr))
 					var asRefCall = exprBuilder.CallUnsafeIntrinsic(
 						name: "AsRef",
-						arguments: new Expression[] { initExpr },
+						arguments: new[] { initExpr },
 						returnType: brt.ElementType,
-						typeArguments: new IType[] { brt.ElementType }
+						typeArguments: new[] { brt.ElementType }
 					);
 					initExpr = new UnaryOperatorExpression(UnaryOperatorType.AddressOf, asRefCall)
 							.WithRR(new(inst.Variable.Type));

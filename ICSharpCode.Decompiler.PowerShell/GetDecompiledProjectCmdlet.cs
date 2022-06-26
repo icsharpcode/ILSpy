@@ -91,8 +91,9 @@ namespace ICSharpCode.Decompiler.PowerShell
 		{
 			PEFile module = Decompiler.TypeSystem.MainModule.PEFile;
 			var assemblyResolver = new UniversalAssemblyResolver(module.FileName, false, module.Metadata.DetectTargetFrameworkId());
-			WholeProjectDecompiler decompiler = new(assemblyResolver);
-			decompiler.ProgressIndicator = this;
+			WholeProjectDecompiler decompiler = new(assemblyResolver) {
+				ProgressIndicator = this
+			};
 			fileName = module.FileName;
 			completed = 0;
 			decompiler.DecompileProject(module, path);

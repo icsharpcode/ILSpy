@@ -128,43 +128,25 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public static KnownTypeCode GetTypeCodeForPrimitiveType(string keyword)
 		{
-			switch (keyword)
-			{
-				case "string":
-					return KnownTypeCode.String;
-				case "int":
-					return KnownTypeCode.Int32;
-				case "uint":
-					return KnownTypeCode.UInt32;
-				case "object":
-					return KnownTypeCode.Object;
-				case "bool":
-					return KnownTypeCode.Boolean;
-				case "sbyte":
-					return KnownTypeCode.SByte;
-				case "byte":
-					return KnownTypeCode.Byte;
-				case "short":
-					return KnownTypeCode.Int16;
-				case "ushort":
-					return KnownTypeCode.UInt16;
-				case "long":
-					return KnownTypeCode.Int64;
-				case "ulong":
-					return KnownTypeCode.UInt64;
-				case "float":
-					return KnownTypeCode.Single;
-				case "double":
-					return KnownTypeCode.Double;
-				case "decimal":
-					return KnownTypeCode.Decimal;
-				case "char":
-					return KnownTypeCode.Char;
-				case "void":
-					return KnownTypeCode.Void;
-				default:
-					return KnownTypeCode.None;
-			}
+			return keyword switch {
+				"string" => KnownTypeCode.String,
+				"int" => KnownTypeCode.Int32,
+				"uint" => KnownTypeCode.UInt32,
+				"object" => KnownTypeCode.Object,
+				"bool" => KnownTypeCode.Boolean,
+				"sbyte" => KnownTypeCode.SByte,
+				"byte" => KnownTypeCode.Byte,
+				"short" => KnownTypeCode.Int16,
+				"ushort" => KnownTypeCode.UInt16,
+				"long" => KnownTypeCode.Int64,
+				"ulong" => KnownTypeCode.UInt64,
+				"float" => KnownTypeCode.Single,
+				"double" => KnownTypeCode.Double,
+				"decimal" => KnownTypeCode.Decimal,
+				"char" => KnownTypeCode.Char,
+				"void" => KnownTypeCode.Void,
+				_ => KnownTypeCode.None
+			};
 		}
 	}
 }

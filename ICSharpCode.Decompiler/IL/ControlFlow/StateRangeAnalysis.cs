@@ -94,9 +94,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		internal StateRangeAnalysis CreateNestedAnalysis()
 		{
-			var sra = new StateRangeAnalysis(mode, stateField);
-			sra.doFinallyBodies = this.doFinallyBodies;
-			sra.skipFinallyBodies = this.skipFinallyBodies;
+			var sra = new StateRangeAnalysis(mode, stateField) {
+				doFinallyBodies = this.doFinallyBodies,
+				skipFinallyBodies = this.skipFinallyBodies
+			};
 			foreach (var v in this.evalContext.StateVariables)
 			{
 				sra.evalContext.AddStateVariable(v);

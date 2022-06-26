@@ -959,7 +959,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (updateAvailableDownloadUrl != null)
 			{
-				MainWindow.OpenLink(updateAvailableDownloadUrl);
+				OpenLink(updateAvailableDownloadUrl);
 			}
 			else
 			{
@@ -1008,9 +1008,10 @@ namespace ICSharpCode.ILSpy
 			this.assemblyList = assemblyList;
 			assemblyList.CollectionChanged += assemblyList_Assemblies_CollectionChanged;
 
-			assemblyListTreeNode = new(assemblyList);
-			assemblyListTreeNode.FilterSettings = filterSettings.Clone();
-			assemblyListTreeNode.Select = x => SelectNode(x, inNewTabPage: false);
+			assemblyListTreeNode = new(assemblyList) {
+				FilterSettings = filterSettings.Clone(),
+				Select = x => SelectNode(x, inNewTabPage: false)
+			};
 			AssemblyTreeView.Root = assemblyListTreeNode;
 
 			if (assemblyList.ListName == AssemblyListManager.DefaultListName)
@@ -1672,12 +1673,12 @@ namespace ICSharpCode.ILSpy
 		{
 			if (node == null)
 				return null;
-			while (!(node is TreeNodes.AssemblyTreeNode) && node.Parent != null)
+			while (!(node is AssemblyTreeNode) && node.Parent != null)
 			{
 				node = node.Parent;
 			}
 			//this should be an assembly node
-			var assyNode = node as TreeNodes.AssemblyTreeNode;
+			var assyNode = node as AssemblyTreeNode;
 			var loadedAssy = assyNode.LoadedAssembly;
 			if (!(loadedAssy.IsLoaded && loadedAssy.IsAutoLoaded))
 				return null;

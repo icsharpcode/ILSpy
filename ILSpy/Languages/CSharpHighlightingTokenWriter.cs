@@ -360,24 +360,14 @@ namespace ICSharpCode.ILSpy
 			switch (GetCurrentDefinition())
 			{
 				case ITypeDefinition t:
-					switch (t.Kind)
-					{
-						case TypeKind.Delegate:
-							color = delegateTypeColor;
-							break;
-						case TypeKind.Class:
-							color = referenceTypeColor;
-							break;
-						case TypeKind.Interface:
-							color = interfaceTypeColor;
-							break;
-						case TypeKind.Enum:
-							color = enumerationTypeColor;
-							break;
-						case TypeKind.Struct:
-							color = valueTypeColor;
-							break;
-					}
+					color = t.Kind switch {
+						TypeKind.Delegate => delegateTypeColor,
+						TypeKind.Class => referenceTypeColor,
+						TypeKind.Interface => interfaceTypeColor,
+						TypeKind.Enum => enumerationTypeColor,
+						TypeKind.Struct => valueTypeColor,
+						_ => color
+					};
 					break;
 				case IMethod m:
 					color = methodDeclarationColor;
@@ -389,24 +379,14 @@ namespace ICSharpCode.ILSpy
 			switch (GetCurrentMemberReference())
 			{
 				case IType t:
-					switch (t.Kind)
-					{
-						case TypeKind.Delegate:
-							color = delegateTypeColor;
-							break;
-						case TypeKind.Class:
-							color = referenceTypeColor;
-							break;
-						case TypeKind.Interface:
-							color = interfaceTypeColor;
-							break;
-						case TypeKind.Enum:
-							color = enumerationTypeColor;
-							break;
-						case TypeKind.Struct:
-							color = valueTypeColor;
-							break;
-					}
+					color = t.Kind switch {
+						TypeKind.Delegate => delegateTypeColor,
+						TypeKind.Class => referenceTypeColor,
+						TypeKind.Interface => interfaceTypeColor,
+						TypeKind.Enum => enumerationTypeColor,
+						TypeKind.Struct => valueTypeColor,
+						_ => color
+					};
 					break;
 				case IMethod m:
 					color = methodCallColor;
@@ -426,14 +406,14 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public override void WritePrimitiveValue(object value, Decompiler.CSharp.Syntax.LiteralFormat format)
+		public override void WritePrimitiveValue(object value, LiteralFormat format)
 		{
 			HighlightingColor color = null;
 			if (value is null)
 			{
 				color = valueKeywordColor;
 			}
-			if (value is true || value is false)
+			if (value is true or false)
 			{
 				color = trueKeywordColor;
 			}

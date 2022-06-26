@@ -277,7 +277,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		void Warn(string message)
 		{
-			Warnings.Add(string.Format("IL_{0:x4}: {1}", currentInstructionStart, message));
+			Warnings.Add($"IL_{currentInstructionStart:x4}: {message}");
 		}
 
 		ImmutableStack<ILVariable> MergeStacks(ImmutableStack<ILVariable> a, ImmutableStack<ILVariable> b)
@@ -479,10 +479,9 @@ namespace ICSharpCode.Decompiler.IL
 		private bool IsSequencePointInstruction(ILInstruction instruction)
 		{
 			if (instruction.OpCode == OpCode.Nop ||
-				(this.instructionBuilder.Count > 0 &&
-				this.instructionBuilder.Last().OpCode == OpCode.Call ||
-				this.instructionBuilder.Last().OpCode == OpCode.CallIndirect ||
-				this.instructionBuilder.Last().OpCode == OpCode.CallVirt))
+			    this.instructionBuilder.Count > 0 &&
+			    this.instructionBuilder.Last().OpCode == OpCode.Call ||
+			    this.instructionBuilder.Last().OpCode is OpCode.CallIndirect or OpCode.CallVirt)
 			{
 
 				return true;
@@ -566,7 +565,7 @@ namespace ICSharpCode.Decompiler.IL
 				inst.WriteTo(output, new());
 				output.WriteLine();
 			}
-			new Disassembler.MethodBodyDisassembler(output, cancellationToken) { DetectControlStructure = false }
+			new MethodBodyDisassembler(output, cancellationToken) { DetectControlStructure = false }
 				.WriteExceptionHandlers(module.PEFile, method, body);
 		}
 
@@ -1170,8 +1169,9 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Debug.Assert(inst.ResultType != StackType.Void);
 			IType type = compilation.FindType(inst.ResultType);
-			var v = new ILVariable(VariableKind.StackSlot, type, inst.ResultType);
-			v.HasGeneratedName = true;
+			var v = new ILVariable(VariableKind.StackSlot, type, inst.ResultType) {
+				HasGeneratedName = true
+			};
 			currentStack = currentStack.Push(v);
 			return new StLoc(v, inst);
 		}
@@ -1278,7 +1278,7 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				if (warnings != null)
 				{
-					warnings.Add(string.Format("IL_{0:x4}: {1}", ilOffset, message));
+					warnings.Add($"IL_{ilOffset:x4}: {message}");
 				}
 			}
 		}
@@ -1312,7 +1312,7 @@ namespace ICSharpCode.Decompiler.IL
 				default:
 					// field in unresolved type
 					var stackType = PeekStackType();
-					if (stackType == StackType.O || stackType == StackType.Unknown)
+					if (stackType is StackType.O or StackType.Unknown)
 						return Pop();
 					else
 						return PopPointer();
@@ -1346,9 +1346,9 @@ namespace ICSharpCode.Decompiler.IL
 		private ILInstruction Return()
 		{
 			if (methodReturnStackType == StackType.Void)
-				return new IL.Leave(mainContainer);
+				return new Leave(mainContainer);
 			else
-				return new IL.Leave(mainContainer, Pop(methodReturnStackType));
+				return new Leave(mainContainer, Pop(methodReturnStackType));
 		}
 
 		private ILInstruction DecodeLdstr()
@@ -1447,8 +1447,9 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILInstruction InitObj(ILInstruction target, IType type)
 		{
-			var value = new DefaultValue(type);
-			value.ILStackWasEmpty = currentStack.IsEmpty;
+			var value = new DefaultValue(type) {
+				ILStackWasEmpty = currentStack.IsEmpty
+			};
 			return new StObj(target, value, type);
 		}
 
@@ -1562,9 +1563,10 @@ namespace ICSharpCode.Decompiler.IL
 					// So we represent this call as "stobj Struct(target, newobj Struct.ctor(...))".
 					// This needs to happen early (not as a transform) because the StObj.TargetSlot has
 					// restricted inlining (doesn't accept ldflda when exceptions aren't delayed).
-					var newobj = new NewObj(method);
-					newobj.ILStackWasEmpty = currentStack.IsEmpty;
-					newobj.ConstrainedTo = constrainedPrefix;
+					var newobj = new NewObj(method) {
+						ILStackWasEmpty = currentStack.IsEmpty,
+						ConstrainedTo = constrainedPrefix
+					};
 					newobj.Arguments.AddRange(arguments.Skip(1));
 					return new StObj(arguments[0], newobj, method.DeclaringType);
 				}
@@ -1612,7 +1614,7 @@ namespace ICSharpCode.Decompiler.IL
 			var right = Pop();
 			var left = Pop();
 
-			if ((left.ResultType == StackType.O || left.ResultType == StackType.Ref) && right.ResultType.IsIntegerType())
+			if (left.ResultType is StackType.O or StackType.Ref && right.ResultType.IsIntegerType())
 			{
 				// C++/CLI sometimes compares object references with integers.
 				// Also happens with Ref==I in Unsafe.IsNullRef().
@@ -1623,7 +1625,7 @@ namespace ICSharpCode.Decompiler.IL
 				}
 				left = new Conv(left, right.ResultType.ToPrimitiveType(), false, Sign.None);
 			}
-			else if ((right.ResultType == StackType.O || right.ResultType == StackType.Ref) && left.ResultType.IsIntegerType())
+			else if (right.ResultType is StackType.O or StackType.Ref && left.ResultType.IsIntegerType())
 			{
 				if (left.ResultType == StackType.I4)
 				{
@@ -1798,8 +1800,9 @@ namespace ICSharpCode.Decompiler.IL
 
 			for (int i = 0; i < targets.Length; i++)
 			{
-				var section = new SwitchSection();
-				section.Labels = new(i);
+				var section = new SwitchSection {
+					Labels = new(i)
+				};
 				int target = targets[i];
 				if (!IsInvalidBranch(target))
 				{
@@ -1812,9 +1815,10 @@ namespace ICSharpCode.Decompiler.IL
 				}
 				instr.Sections.Add(section);
 			}
-			var defaultSection = new SwitchSection();
-			defaultSection.Labels = new LongSet(new LongInterval(0, targets.Length)).Invert();
-			defaultSection.Body = new Nop();
+			var defaultSection = new SwitchSection {
+				Labels = new LongSet(new LongInterval(0, targets.Length)).Invert(),
+				Body = new Nop()
+			};
 			instr.Sections.Add(defaultSection);
 			return instr;
 		}
@@ -1865,9 +1869,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			IMethod method = ReadAndDecodeMethodReference();
 			// Translate jmp into tail call:
-			Call call = new(method);
-			call.IsTail = true;
-			call.ILStackWasEmpty = true;
+			Call call = new(method) {
+				IsTail = true,
+				ILStackWasEmpty = true
+			};
 			if (!method.IsStatic)
 			{
 				call.Arguments.Add(Ldarg(0));

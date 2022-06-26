@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			XAttribute a = e.Attribute("DisassemblyFormat");
 			if (a == null)
 			{
-				return ReadyToRunOptions.intel;
+				return intel;
 			}
 			else
 			{

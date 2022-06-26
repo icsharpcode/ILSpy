@@ -737,17 +737,12 @@ namespace ICSharpCode.ILSpy.AddIn
 		public static TypeDeclarationSyntax WithModifiers(
 			this TypeDeclarationSyntax node, SyntaxTokenList modifiers)
 		{
-			switch (node.Kind())
-			{
-				case SyntaxKind.ClassDeclaration:
-					return ((ClassDeclarationSyntax)node).WithModifiers(modifiers);
-				case SyntaxKind.InterfaceDeclaration:
-					return ((InterfaceDeclarationSyntax)node).WithModifiers(modifiers);
-				case SyntaxKind.StructDeclaration:
-					return ((StructDeclarationSyntax)node).WithModifiers(modifiers);
-			}
-
-			throw new InvalidOperationException();
+			return node.Kind() switch {
+				SyntaxKind.ClassDeclaration => ((ClassDeclarationSyntax)node).WithModifiers(modifiers),
+				SyntaxKind.InterfaceDeclaration => ((InterfaceDeclarationSyntax)node).WithModifiers(modifiers),
+				SyntaxKind.StructDeclaration => ((StructDeclarationSyntax)node).WithModifiers(modifiers),
+				_ => throw new InvalidOperationException()
+			};
 		}
 
 		public static bool CheckTopLevel(this SyntaxNode node, TextSpan span)

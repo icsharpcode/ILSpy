@@ -33,10 +33,10 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 {
 	// assign short names to the fake reflection types
 	using C = Conversion;
-	using dynamic = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.Dynamic;
-	using nint = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.NInt;
-	using nuint = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.NUInt;
-	using Null = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.Null;
+	using dynamic = ReflectionHelper.Dynamic;
+	using nint = ReflectionHelper.NInt;
+	using nuint = ReflectionHelper.NUInt;
+	using Null = ReflectionHelper.Null;
 
 	[TestFixture, Parallelizable(ParallelScope.All)]
 	public unsafe class ConversionTest

@@ -50,8 +50,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (binaryOperatorExpression.Operator != BinaryOperatorType.LessThan)
 				return false;
 
-			var v = new GenericGrammarAmbiguityVisitor();
-			v.genericNestingLevel = 1;
+			var v = new GenericGrammarAmbiguityVisitor {
+				genericNestingLevel = 1
+			};
 
 			for (AstNode node = binaryOperatorExpression.Right; node != null; node = node.GetNextNode())
 			{

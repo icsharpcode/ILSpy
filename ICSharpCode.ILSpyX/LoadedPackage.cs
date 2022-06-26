@@ -77,7 +77,7 @@ namespace ICSharpCode.ILSpyX
 
 			static (string, string) SplitName(string filename)
 			{
-				int pos = filename.LastIndexOfAny(new char[] { '/', '\\' });
+				int pos = filename.LastIndexOfAny(new[] { '/', '\\' });
 				if (pos == -1)
 					return ("", filename); // file in root
 				else
@@ -118,8 +118,9 @@ namespace ICSharpCode.ILSpyX
 					return null;
 				var manifest = SingleFileBundle.ReadManifest(view, bundleHeaderOffset);
 				var entries = manifest.Entries.Select(e => new BundleEntry(fileName, view, e)).ToList();
-				var result = new LoadedPackage(PackageKind.Bundle, entries);
-				result.BundleHeader = manifest;
+				var result = new LoadedPackage(PackageKind.Bundle, entries) {
+					BundleHeader = manifest
+				};
 				view = null; // don't dispose the view, we're still using it in the bundle entries
 				return result;
 			}

@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy.Search
 
 			// Constructors and destructors always have the same name in IL:
 			// Use type name instead
-			if (member.SymbolKind == SymbolKind.Constructor || member.SymbolKind == SymbolKind.Destructor)
+			if (member.SymbolKind is SymbolKind.Constructor or SymbolKind.Destructor)
 			{
 				text = member.DeclaringType.Name;
 			}
@@ -60,40 +60,26 @@ namespace ICSharpCode.ILSpy.Search
 
 		string GetLanguageSpecificName(IEntity member)
 		{
-			switch (member)
-			{
-				case ITypeDefinition t:
-					return language.TypeToString(t, false);
-				case IField f:
-					return language.FieldToString(f, true, false, false);
-				case IProperty p:
-					return language.PropertyToString(p, true, false, false);
-				case IMethod m:
-					return language.MethodToString(m, true, false, false);
-				case IEvent e:
-					return language.EventToString(e, true, false, false);
-				default:
-					throw new NotSupportedException(member?.GetType() + " not supported!");
-			}
+			return member switch {
+				ITypeDefinition t => language.TypeToString(t, false),
+				IField f => language.FieldToString(f, true, false, false),
+				IProperty p => language.PropertyToString(p, true, false, false),
+				IMethod m => language.MethodToString(m, true, false, false),
+				IEvent e => language.EventToString(e, true, false, false),
+				_ => throw new NotSupportedException(member?.GetType() + " not supported!")
+			};
 		}
 
 		static ImageSource GetIcon(IEntity member)
 		{
-			switch (member)
-			{
-				case ITypeDefinition t:
-					return TypeTreeNode.GetIcon(t);
-				case IField f:
-					return FieldTreeNode.GetIcon(f);
-				case IProperty p:
-					return PropertyTreeNode.GetIcon(p);
-				case IMethod m:
-					return MethodTreeNode.GetIcon(m);
-				case IEvent e:
-					return EventTreeNode.GetIcon(e);
-				default:
-					throw new NotSupportedException(member?.GetType() + " not supported!");
-			}
+			return member switch {
+				ITypeDefinition t => TypeTreeNode.GetIcon(t),
+				IField f => FieldTreeNode.GetIcon(f),
+				IProperty p => PropertyTreeNode.GetIcon(p),
+				IMethod m => MethodTreeNode.GetIcon(m),
+				IEvent e => EventTreeNode.GetIcon(e),
+				_ => throw new NotSupportedException(member?.GetType() + " not supported!")
+			};
 		}
 
 		public MemberSearchResult Create(IEntity entity)

@@ -72,9 +72,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!parameterReferenceVar.IsSingleDefinition)
 				return false;
-			if (!(parameterReferenceVar.Kind == VariableKind.Local || parameterReferenceVar.Kind == VariableKind.StackSlot))
+			if (!(parameterReferenceVar.Kind is VariableKind.Local or VariableKind.StackSlot))
 				return false;
-			if (parameterReferenceVar.Type == null || parameterReferenceVar.Type.FullName != "System.Linq.Expressions.ParameterExpression")
+			if (parameterReferenceVar.Type is not { FullName: "System.Linq.Expressions.ParameterExpression" })
 				return false;
 			if (!(init is CallInstruction initCall && initCall.Arguments.Count == 2))
 				return false;
@@ -165,9 +165,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			container.AddILRange(instruction);
 			var functionType = instruction.Method.ReturnType.TypeArguments[0];
 			var returnType = functionType.GetDelegateInvokeMethod()?.ReturnType ?? SpecialType.UnknownType;
-			var function = new ILFunction(returnType, parameterList, context.Function.GenericContext, container, ILFunctionKind.ExpressionTree);
-			function.DelegateType = functionType;
-			function.Kind = IsExpressionTree(functionType) ? ILFunctionKind.ExpressionTree : ILFunctionKind.Delegate;
+			var function = new ILFunction(returnType, parameterList, context.Function.GenericContext, container, ILFunctionKind.ExpressionTree)
+				{
+					DelegateType = functionType,
+					Kind = IsExpressionTree(functionType) ? ILFunctionKind.ExpressionTree : ILFunctionKind.Delegate
+				};
 			function.Variables.AddRange(parameterVariablesList);
 			function.AddILRange(instruction);
 			lambdaStack.Push(function);
@@ -497,7 +499,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			switch (invocation.Arguments.Count)
 			{
 				case 2:
-					if (op == BinaryNumericOperator.ShiftLeft || op == BinaryNumericOperator.ShiftRight)
+					if (op is BinaryNumericOperator.ShiftLeft or BinaryNumericOperator.ShiftRight)
 					{
 						if (!NullableType.GetUnderlyingType(rightType).IsKnownType(KnownTypeCode.Int32))
 							return (null, SpecialType.UnknownType);
@@ -1043,8 +1045,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var function = lambdaStack.Peek();
 				var initializer = function.RegisterVariable(VariableKind.InitializerTarget, ctor.DeclaringType);
 
-				var initializerBlock = new Block(BlockKind.CollectionInitializer);
-				initializerBlock.FinalInstruction = new LdLoc(initializer);
+				var initializerBlock = new Block(BlockKind.CollectionInitializer) {
+					FinalInstruction = new LdLoc(initializer)
+				};
 				initializerBlock.Instructions.Add(new StLoc(initializer, newObj()));
 				initializerBlock.Instructions.AddRange(convertedArguments.Select(f => f(initializer)));
 

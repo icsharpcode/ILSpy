@@ -50,76 +50,51 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static string SparseIntegerSwitch(int i)
 		{
 			Console.WriteLine("SparseIntegerSwitch: " + i);
-			switch (i)
-			{
-				case -10000000:
-					return "-10 mln";
-				case -100:
-					return "-hundred";
-				case -1:
-					return "-1";
-				case 0:
-					return "0";
-				case 1:
-					return "1";
-				case 2:
-					return "2";
-				case 4:
-					return "4";
-				case 100:
-					return "hundred";
-				case 10000:
-					return "ten thousand";
-				case 10001:
-					return "ten thousand and one";
-				case int.MaxValue:
-					return "int.MaxValue";
-				default:
-					return "something else";
-			}
+			return i switch {
+				-10000000 => "-10 mln",
+				-100 => "-hundred",
+				-1 => "-1",
+				0 => "0",
+				1 => "1",
+				2 => "2",
+				4 => "4",
+				100 => "hundred",
+				10000 => "ten thousand",
+				10001 => "ten thousand and one",
+				int.MaxValue => "int.MaxValue",
+				_ => "something else"
+			};
 		}
 
 		public static string ShortSwitchOverString(string text)
 		{
 			Console.WriteLine("ShortSwitchOverString: " + text);
-			switch (text)
-			{
-				case "First case":
-					return "Text";
-				default:
-					return "Default";
-			}
+			return text switch {
+				"First case" => "Text",
+				_ => "Default"
+			};
 		}
 
 		public static string ShortSwitchOverString2(string text)
 		{
 			Console.WriteLine("ShortSwitchOverString2: " + text);
-			switch (text)
-			{
-				case "First case":
-					return "Text1";
-				case "Second case":
-					return "Text2";
-				case "Third case":
-					return "Text3";
-				default:
-					return "Default";
-			}
+			return text switch {
+				"First case" => "Text1",
+				"Second case" => "Text2",
+				"Third case" => "Text3",
+				_ => "Default"
+			};
 		}
 
 		public static string ShortSwitchOverStringNoExplicitDefault(string text)
 		{
 			Console.WriteLine("ShortSwitchOverStringNoExplicitDefault: " + text);
-			switch (text)
-			{
-				case "First case":
-					return "Text1";
-				case "Second case":
-					return "Text2";
-				case "Third case":
-					return "Text3";
-			}
-			return "Default";
+			return text switch {
+				"First case" => "Text1",
+				"Second case" => "Text2",
+				"Third case" => "Text3",
+				_ => "Default"
+			};
 		}
 
 		public static string SwitchOverString1(string text)
@@ -150,33 +125,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static string SwitchOverString2()
 		{
 			Console.WriteLine("SwitchOverString2:");
-			switch (Environment.UserName)
-			{
-				case "First case":
-					return "Text1";
-				case "Second case":
-					return "Text2";
-				case "Third case":
-					return "Text3";
-				case "Fourth case":
-					return "Text4";
-				case "Fifth case":
-					return "Text5";
-				case "Sixth case":
-					return "Text6";
-				case "Seventh case":
-					return "Text7";
-				case "Eighth case":
-					return "Text8";
-				case "Ninth case":
-					return "Text9";
-				case "Tenth case":
-					return "Text10";
-				case "Eleventh case":
-					return "Text11";
-				default:
-					return "Default";
-			}
+			return Environment.UserName switch {
+				"First case" => "Text1",
+				"Second case" => "Text2",
+				"Third case" => "Text3",
+				"Fourth case" => "Text4",
+				"Fifth case" => "Text5",
+				"Sixth case" => "Text6",
+				"Seventh case" => "Text7",
+				"Eighth case" => "Text8",
+				"Ninth case" => "Text9",
+				"Tenth case" => "Text10",
+				"Eleventh case" => "Text11",
+				_ => "Default"
+			};
 		}
 
 		public static string SwitchOverBool(bool b)

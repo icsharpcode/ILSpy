@@ -23,23 +23,19 @@ namespace ICSharpCode.Decompiler.Util
 
 		public static IEnumerable<(A?, B?)> ZipLongest<A, B>(this IEnumerable<A> input1, IEnumerable<B> input2)
 		{
-			using (var it1 = input1.GetEnumerator())
+			using var it1 = input1.GetEnumerator();
+			using var it2 = input2.GetEnumerator();
+			bool hasElements1 = true;
+			bool hasElements2 = true;
+			while (true)
 			{
-				using (var it2 = input2.GetEnumerator())
-				{
-					bool hasElements1 = true;
-					bool hasElements2 = true;
-					while (true)
-					{
-						if (hasElements1)
-							hasElements1 = it1.MoveNext();
-						if (hasElements2)
-							hasElements2 = it2.MoveNext();
-						if (!(hasElements1 || hasElements2))
-							break;
-						yield return ((hasElements1 ? it1.Current : default), (hasElements2 ? it2.Current : default));
-					}
-				}
+				if (hasElements1)
+					hasElements1 = it1.MoveNext();
+				if (hasElements2)
+					hasElements2 = it2.MoveNext();
+				if (!(hasElements1 || hasElements2))
+					break;
+				yield return ((hasElements1 ? it1.Current : default), (hasElements2 ? it2.Current : default));
 			}
 		}
 
@@ -234,34 +230,32 @@ namespace ICSharpCode.Decompiler.Util
 		/// </summary>
 		public static IEnumerable<T> Merge<T>(this IEnumerable<T> input1, IEnumerable<T> input2, Comparison<T> comparison)
 		{
-			using (var enumA = input1.GetEnumerator())
-			using (var enumB = input2.GetEnumerator())
+			using var enumA = input1.GetEnumerator();
+			using var enumB = input2.GetEnumerator();
+			bool moreA = enumA.MoveNext();
+			bool moreB = enumB.MoveNext();
+			while (moreA && moreB)
 			{
-				bool moreA = enumA.MoveNext();
-				bool moreB = enumB.MoveNext();
-				while (moreA && moreB)
-				{
-					if (comparison(enumA.Current, enumB.Current) <= 0)
-					{
-						yield return enumA.Current;
-						moreA = enumA.MoveNext();
-					}
-					else
-					{
-						yield return enumB.Current;
-						moreB = enumB.MoveNext();
-					}
-				}
-				while (moreA)
+				if (comparison(enumA.Current, enumB.Current) <= 0)
 				{
 					yield return enumA.Current;
 					moreA = enumA.MoveNext();
 				}
-				while (moreB)
+				else
 				{
 					yield return enumB.Current;
 					moreB = enumB.MoveNext();
 				}
+			}
+			while (moreA)
+			{
+				yield return enumA.Current;
+				moreA = enumA.MoveNext();
+			}
+			while (moreB)
+			{
+				yield return enumB.Current;
+				moreB = enumB.MoveNext();
 			}
 		}
 
@@ -286,24 +280,22 @@ namespace ICSharpCode.Decompiler.Util
 				throw new ArgumentNullException(nameof(keySelector));
 			if (keyComparer == null)
 				keyComparer = Comparer<K>.Default;
-			using (var enumerator = source.GetEnumerator())
+			using var enumerator = source.GetEnumerator();
+			if (!enumerator.MoveNext())
+				throw new InvalidOperationException("Sequence contains no elements");
+			T minElement = enumerator.Current;
+			K minKey = keySelector(minElement);
+			while (enumerator.MoveNext())
 			{
-				if (!enumerator.MoveNext())
-					throw new InvalidOperationException("Sequence contains no elements");
-				T minElement = enumerator.Current;
-				K minKey = keySelector(minElement);
-				while (enumerator.MoveNext())
+				T element = enumerator.Current;
+				K key = keySelector(element);
+				if (keyComparer.Compare(key, minKey) < 0)
 				{
-					T element = enumerator.Current;
-					K key = keySelector(element);
-					if (keyComparer.Compare(key, minKey) < 0)
-					{
-						minElement = element;
-						minKey = key;
-					}
+					minElement = element;
+					minKey = key;
 				}
-				return minElement;
 			}
+			return minElement;
 		}
 
 		/// <summary>
@@ -327,24 +319,22 @@ namespace ICSharpCode.Decompiler.Util
 				throw new ArgumentNullException(nameof(keySelector));
 			if (keyComparer == null)
 				keyComparer = Comparer<K>.Default;
-			using (var enumerator = source.GetEnumerator())
+			using var enumerator = source.GetEnumerator();
+			if (!enumerator.MoveNext())
+				throw new InvalidOperationException("Sequence contains no elements");
+			T maxElement = enumerator.Current;
+			K maxKey = keySelector(maxElement);
+			while (enumerator.MoveNext())
 			{
-				if (!enumerator.MoveNext())
-					throw new InvalidOperationException("Sequence contains no elements");
-				T maxElement = enumerator.Current;
-				K maxKey = keySelector(maxElement);
-				while (enumerator.MoveNext())
+				T element = enumerator.Current;
+				K key = keySelector(element);
+				if (keyComparer.Compare(key, maxKey) > 0)
 				{
-					T element = enumerator.Current;
-					K key = keySelector(element);
-					if (keyComparer.Compare(key, maxKey) > 0)
-					{
-						maxElement = element;
-						maxKey = key;
-					}
+					maxElement = element;
+					maxKey = key;
 				}
-				return maxElement;
 			}
+			return maxElement;
 		}
 
 		public static void RemoveLast<T>(this IList<T> list)

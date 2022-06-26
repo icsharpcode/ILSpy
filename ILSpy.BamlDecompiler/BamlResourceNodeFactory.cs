@@ -51,8 +51,9 @@ namespace ILSpy.BamlDecompiler
 			BamlDecompilerTypeSystem typeSystem = new(assembly.GetPEFileOrNull(), assembly.GetAssemblyResolver());
 			var decompiler = new XamlDecompiler(typeSystem, new() {
 				ThrowOnAssemblyResolveErrors = options.DecompilerSettings.ThrowOnAssemblyResolveErrors
-			});
-			decompiler.CancellationToken = options.CancellationToken;
+			}) {
+				CancellationToken = options.CancellationToken
+			};
 			fileName = Path.ChangeExtension(fileName, ".xaml");
 			var result = decompiler.Decompile(stream);
 			result.Xaml.Save(Path.Combine(options.SaveAsProjectDirectory, fileName));

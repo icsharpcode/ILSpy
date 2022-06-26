@@ -28,31 +28,31 @@ namespace ILSpy.Installer
 								  new DirFiles(Path.Combine(buildOutputDir, "*.config")),
 								  new DirFiles(Path.Combine(buildOutputDir, "*.json")),
 								  new Files(Path.Combine(buildOutputDir, "ILSpy.resources.dll")),
-								  new Files(Path.Combine(buildOutputDir, "ILSpy.ReadyToRun.Plugin.resources.dll"))));
-
-			project.GUID = new Guid("a12fdab1-731b-4a98-9749-d481ce8692ab");
-			project.Version = AppPackage.Version;
-			project.SourceBaseDir = Path.GetDirectoryName(Environment.CurrentDirectory);
-			project.InstallScope = InstallScope.perUser;
-			project.InstallPrivileges = InstallPrivileges.limited;
-			project.ControlPanelInfo.ProductIcon = @"..\ILSpy\Images\ILSpy.ico";
-			project.ControlPanelInfo.Manufacturer = "ICSharpCode Team";
-			project.LocalizationFile = Path.Combine(Environment.CurrentDirectory, "winui.wxl");
-			project.Encoding = Encoding.UTF8;
-
-			project.MajorUpgrade = new() {
-				Schedule = UpgradeSchedule.afterInstallInitialize,
-				AllowSameVersionUpgrades = true,
-				DowngradeErrorMessage = "A newer release of ILSpy is already installed on this system. Please uninstall it first to continue."
-			};
-
-			project.UI = WUI.WixUI_InstallDir;
-			project.CustomUI =
-				new DialogSequence()
-					.On(NativeDialogs.WelcomeDlg, Buttons.Next,
-						new ShowDialog(NativeDialogs.VerifyReadyDlg))
-					.On(NativeDialogs.VerifyReadyDlg, Buttons.Back,
-						new ShowDialog(NativeDialogs.WelcomeDlg));
+								  new Files(Path.Combine(buildOutputDir, "ILSpy.ReadyToRun.Plugin.resources.dll"))))
+				{
+					GUID = new Guid("a12fdab1-731b-4a98-9749-d481ce8692ab"),
+					Version = AppPackage.Version,
+					SourceBaseDir = Path.GetDirectoryName(Environment.CurrentDirectory),
+					InstallScope = InstallScope.perUser,
+					InstallPrivileges = InstallPrivileges.limited,
+					ControlPanelInfo = {
+						ProductIcon = @"..\ILSpy\Images\ILSpy.ico",
+						Manufacturer = "ICSharpCode Team"
+					},
+					LocalizationFile = Path.Combine(Environment.CurrentDirectory, "winui.wxl"),
+					Encoding = Encoding.UTF8,
+					MajorUpgrade = new() {
+						Schedule = UpgradeSchedule.afterInstallInitialize,
+						AllowSameVersionUpgrades = true,
+						DowngradeErrorMessage = "A newer release of ILSpy is already installed on this system. Please uninstall it first to continue."
+					},
+					UI = WUI.WixUI_InstallDir,
+					CustomUI = new DialogSequence()
+						.On(NativeDialogs.WelcomeDlg, Buttons.Next,
+							new ShowDialog(NativeDialogs.VerifyReadyDlg))
+						.On(NativeDialogs.VerifyReadyDlg, Buttons.Back,
+							new ShowDialog(NativeDialogs.WelcomeDlg))
+				};
 
 			project.ResolveWildCards().FindFile(f => f.Name.EndsWith("ILSpy.exe")).First()
 				.Shortcuts = new[] {

@@ -11,7 +11,7 @@ namespace LightJson
 	/// <summary>
 	/// Represents an ordered collection of JsonValues.
 	/// </summary>
-	[DebuggerDisplay("Count = {Count}")]
+	[DebuggerDisplay("Count = {" + nameof(Count) + "}")]
 	[DebuggerTypeProxy(typeof(JsonArrayDebugView))]
 	internal sealed class JsonArray : IEnumerable<JsonValue>
 	{

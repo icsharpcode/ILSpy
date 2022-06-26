@@ -47,9 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public static bool IsBitwise(this BinaryOperatorType operatorType)
 		{
-			return operatorType == BinaryOperatorType.BitwiseAnd
-				|| operatorType == BinaryOperatorType.BitwiseOr
-				|| operatorType == BinaryOperatorType.ExclusiveOr;
+			return operatorType is BinaryOperatorType.BitwiseAnd or BinaryOperatorType.BitwiseOr or BinaryOperatorType.ExclusiveOr;
 		}
 
 		public static Statement GetNextStatement(this Statement statement)
@@ -66,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return simpleType != null && simpleType.Identifier == "__arglist";
 		}
 
-		public static void AddNamedArgument(this Syntax.Attribute attribute, string name, Expression argument)
+		public static void AddNamedArgument(this Attribute attribute, string name, Expression argument)
 		{
 			attribute.Arguments.Add(new AssignmentExpression(new IdentifierExpression(name), argument));
 		}

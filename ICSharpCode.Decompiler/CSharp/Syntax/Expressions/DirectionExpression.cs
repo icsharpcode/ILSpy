@@ -51,15 +51,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CSharpTokenNode FieldDirectionToken {
 			get {
-				switch (FieldDirection)
-				{
-					case FieldDirection.Ref:
-						return GetChildByRole(RefKeywordRole);
-					case FieldDirection.In:
-						return GetChildByRole(InKeywordRole);
-					default:
-						return GetChildByRole(OutKeywordRole);
-				}
+				return FieldDirection switch {
+					FieldDirection.Ref => GetChildByRole(RefKeywordRole),
+					FieldDirection.In => GetChildByRole(InKeywordRole),
+					_ => GetChildByRole(OutKeywordRole)
+				};
 			}
 		}
 

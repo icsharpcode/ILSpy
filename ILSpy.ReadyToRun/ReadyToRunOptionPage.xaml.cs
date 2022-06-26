@@ -34,10 +34,11 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		public void Load(ILSpySettings settings)
 		{
-			Options s = new();
-			s.DisassemblyFormat = ReadyToRunOptions.GetDisassemblyFormat(settings);
-			s.IsShowUnwindInfo = ReadyToRunOptions.GetIsShowUnwindInfo(settings);
-			s.IsShowDebugInfo = ReadyToRunOptions.GetIsShowDebugInfo(settings);
+			Options s = new() {
+				DisassemblyFormat = ReadyToRunOptions.GetDisassemblyFormat(settings),
+				IsShowUnwindInfo = ReadyToRunOptions.GetIsShowUnwindInfo(settings),
+				IsShowDebugInfo = ReadyToRunOptions.GetIsShowDebugInfo(settings)
+			};
 
 			this.DataContext = s;
 		}

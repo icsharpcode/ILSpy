@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 
 			public CtorTestObj(int i, object item1, object item2)
-				: this(i, new object[] { item1, item2 })
+				: this(i, new[] { item1, item2 })
 			{
 				Console.WriteLine("CtorTestObj(int = " + i + ", item1 = " + item1 + ", item2 = " + item2);
 			}
@@ -356,7 +356,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			public static void M1(Issue2444 z)
 			{
-				Console.WriteLine(string.Format("#2444: M1({0})", z));
+				Console.WriteLine($"#2444: M1({z})");
 			}
 
 			public static void M2()

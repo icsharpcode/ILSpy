@@ -158,7 +158,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (inst)
 			{
-				case ILFunction _:
+				case ILFunction:
 					break; // assume inline ILFunctions are already transformed
 				case BlockContainer cont:
 					Visit(cont, continueTarget);
@@ -505,7 +505,7 @@ namespace ICSharpCode.Decompiler.IL
 						numStatements++; //always add a statement for a container in an expression
 
 					var containerBody = container.EntryPoint;
-					if (container.Kind == ContainerKind.For || container.Kind == ContainerKind.While)
+					if (container.Kind is ContainerKind.For or ContainerKind.While)
 					{
 						Debug.Assert(isStatement);
 
@@ -515,8 +515,8 @@ namespace ICSharpCode.Decompiler.IL
 
 					// don't count implicit leave. Can't avoid counting for loop initializers but close enough, for loops can have an extra statement of visual weight
 					var lastInst = containerBody.Instructions.Last();
-					if ((container.Kind == ContainerKind.For || container.Kind == ContainerKind.DoWhile) && lastInst.MatchBranch(container.Blocks.Last()) ||
-						(container.Kind == ContainerKind.Loop || container.Kind == ContainerKind.While) && lastInst.MatchBranch(container.Blocks[0]) ||
+					if (container.Kind is ContainerKind.For or ContainerKind.DoWhile && lastInst.MatchBranch(container.Blocks.Last()) ||
+						container.Kind is ContainerKind.Loop or ContainerKind.While && lastInst.MatchBranch(container.Blocks[0]) ||
 						 container.Kind == ContainerKind.Normal && lastInst.MatchLeave(container) ||
 						 container.Kind == ContainerKind.Switch) // SwitchInstructyion always counts as a statement anyway, so no need to count the container as well
 						numStatements--;

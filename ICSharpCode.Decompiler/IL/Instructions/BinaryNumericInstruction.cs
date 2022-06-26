@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.IL
 			// Based on Table 2: Binary Numeric Operations
 			// also works for Table 5: Integer Operations
 			// and for Table 7: Overflow Arithmetic Operations
-			if (left == right || op == BinaryNumericOperator.ShiftLeft || op == BinaryNumericOperator.ShiftRight)
+			if (left == right || op is BinaryNumericOperator.ShiftLeft or BinaryNumericOperator.ShiftRight)
 			{
 				// Shift op codes use Table 6
 				return left;
@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.IL
 				else
 				{
 					// add/sub with I or I4 and &
-					Debug.Assert(op == BinaryNumericOperator.Add || op == BinaryNumericOperator.Sub);
+					Debug.Assert(op is BinaryNumericOperator.Add or BinaryNumericOperator.Sub);
 					return StackType.Ref;
 				}
 			}
@@ -142,14 +142,14 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = base.ComputeFlags();
-			if (CheckForOverflow || (Operator == BinaryNumericOperator.Div || Operator == BinaryNumericOperator.Rem))
+			if (CheckForOverflow || Operator is BinaryNumericOperator.Div or BinaryNumericOperator.Rem)
 				flags |= InstructionFlags.MayThrow;
 			return flags;
 		}
 
 		public override InstructionFlags DirectFlags {
 			get {
-				if (CheckForOverflow || (Operator == BinaryNumericOperator.Div || Operator == BinaryNumericOperator.Rem))
+				if (CheckForOverflow || Operator is BinaryNumericOperator.Div or BinaryNumericOperator.Rem)
 					return base.DirectFlags | InstructionFlags.MayThrow;
 				return base.DirectFlags;
 			}
@@ -157,31 +157,19 @@ namespace ICSharpCode.Decompiler.IL
 
 		internal static string GetOperatorName(BinaryNumericOperator @operator)
 		{
-			switch (@operator)
-			{
-				case BinaryNumericOperator.Add:
-					return "add";
-				case BinaryNumericOperator.Sub:
-					return "sub";
-				case BinaryNumericOperator.Mul:
-					return "mul";
-				case BinaryNumericOperator.Div:
-					return "div";
-				case BinaryNumericOperator.Rem:
-					return "rem";
-				case BinaryNumericOperator.BitAnd:
-					return "bit.and";
-				case BinaryNumericOperator.BitOr:
-					return "bit.or";
-				case BinaryNumericOperator.BitXor:
-					return "bit.xor";
-				case BinaryNumericOperator.ShiftLeft:
-					return "bit.shl";
-				case BinaryNumericOperator.ShiftRight:
-					return "bit.shr";
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+			return @operator switch {
+				BinaryNumericOperator.Add => "add",
+				BinaryNumericOperator.Sub => "sub",
+				BinaryNumericOperator.Mul => "mul",
+				BinaryNumericOperator.Div => "div",
+				BinaryNumericOperator.Rem => "rem",
+				BinaryNumericOperator.BitAnd => "bit.and",
+				BinaryNumericOperator.BitOr => "bit.or",
+				BinaryNumericOperator.BitXor => "bit.xor",
+				BinaryNumericOperator.ShiftLeft => "bit.shl",
+				BinaryNumericOperator.ShiftRight => "bit.shr",
+				_ => throw new ArgumentOutOfRangeException()
+			};
 		}
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)

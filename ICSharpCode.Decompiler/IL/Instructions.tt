@@ -580,13 +580,13 @@ namespace ICSharpCode.Decompiler.IL
 
 		public OpCode(string originalName, string description, params Action<OpCode>[] traits)
 		{
-			this.OriginalName = originalName;
-			this.Name = MakeName(originalName);
-			this.Description = description;
+			OriginalName = originalName;
+			Name = MakeName(originalName);
+			Description = description;
 			foreach (var trait in traits)
 				trait(this);
-			if (this.BaseConstructorArguments.FirstOrDefault() != "opCode")
-				this.BaseConstructorArguments.Insert(0, "OpCode." + this.Name);
+			if (BaseConstructorArguments.FirstOrDefault() != "opCode")
+				BaseConstructorArguments.Insert(0, "OpCode." + Name);
 		}
 
 		public string ClassModifiers = "public sealed";
@@ -809,9 +809,9 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public ChildInfo(string name)
 		{
-			this.Name = name;
-			this.PropertyName = MakeName(name);
-			this.SlotName = this.PropertyName + "Slot";
+			Name = name;
+			PropertyName = MakeName(name);
+			SlotName = PropertyName + "Slot";
 		}
 		
 		public string GetSlotInit()
@@ -829,7 +829,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public ArgumentInfo(string name) : base(name)
 		{
-			this.CanInlineInto = true;
+			CanInlineInto = true;
 		}
 	}
 	

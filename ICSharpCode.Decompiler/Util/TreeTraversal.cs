@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// <returns>Iterator that enumerates the tree structure in pre-order.</returns>
 		public static IEnumerable<T> PreOrder<T>(T root, Func<T, IEnumerable<T>?> recursion)
 		{
-			return PreOrder(new T[] { root }, recursion);
+			return PreOrder(new[] { root }, recursion);
 		}
 
 		/// <summary>
@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// <returns>Iterator that enumerates the tree structure in post-order.</returns>
 		public static IEnumerable<T> PostOrder<T>(T root, Func<T, IEnumerable<T>?> recursion)
 		{
-			return PostOrder(new T[] { root }, recursion);
+			return PostOrder(new[] { root }, recursion);
 		}
 
 		/// <summary>

@@ -181,7 +181,7 @@ namespace ICSharpCode.Decompiler.IL
 				case VariableKind.ExceptionLocal:
 				case VariableKind.DisplayClassLocal:
 					// in range of LocalVariableSignature
-					Debug.Assert(Index == null || Index >= 0);
+					Debug.Assert(Index is null or >= 0);
 					break;
 				case VariableKind.Parameter:
 					// -1 for the "this" parameter
@@ -547,7 +547,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(" : ");
 			Type.WriteTo(output);
 			output.Write('(');
-			if (Kind == VariableKind.Parameter || Kind == VariableKind.Local || Kind == VariableKind.PinnedLocal || Kind == VariableKind.PinnedRegionLocal)
+			if (Kind is VariableKind.Parameter or VariableKind.Local or VariableKind.PinnedLocal or VariableKind.PinnedRegionLocal)
 			{
 				output.Write("Index={0}, ", Index);
 			}

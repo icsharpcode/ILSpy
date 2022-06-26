@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static void MakeTypedRef(object o)
 		{
 			TypedReference tr = __makeref(o);
-			UndocumentedExpressions.AcceptTypedRef(tr);
+			AcceptTypedRef(tr);
 		}
 
 		private static void AcceptTypedRef(TypedReference tr)

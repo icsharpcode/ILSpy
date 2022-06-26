@@ -91,15 +91,15 @@ namespace ICSharpCode.Decompiler.IL
 			switch (TargetKind)
 			{
 				case CompoundTargetKind.Address:
-					Debug.Assert(target.ResultType == StackType.Ref || target.ResultType == StackType.I);
+					Debug.Assert(target.ResultType is StackType.Ref or StackType.I);
 					break;
 				case CompoundTargetKind.Property:
-					Debug.Assert(target.OpCode == OpCode.Call || target.OpCode == OpCode.CallVirt);
+					Debug.Assert(target.OpCode is OpCode.Call or OpCode.CallVirt);
 					var owner = ((CallInstruction)target).Method.AccessorOwner as IProperty;
 					Debug.Assert(owner != null && owner.CanSet);
 					break;
 				case CompoundTargetKind.Dynamic:
-					Debug.Assert(target.OpCode == OpCode.DynamicGetMemberInstruction || target.OpCode == OpCode.DynamicGetIndexInstruction);
+					Debug.Assert(target.OpCode is OpCode.DynamicGetMemberInstruction or OpCode.DynamicGetIndexInstruction);
 					break;
 			}
 		}
@@ -166,7 +166,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.IsLifted = binary.IsLifted;
 			this.type = type;
 			this.AddILRange(binary);
-			Debug.Assert(evalMode == CompoundEvalMode.EvaluatesToNewValue || (Operator == BinaryNumericOperator.Add || Operator == BinaryNumericOperator.Sub));
+			Debug.Assert(evalMode == CompoundEvalMode.EvaluatesToNewValue || Operator is BinaryNumericOperator.Add or BinaryNumericOperator.Sub);
 			Debug.Assert(this.ResultType == (IsLifted ? StackType.O : UnderlyingResultType));
 		}
 
@@ -256,7 +256,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = Target.Flags | Value.Flags | InstructionFlags.SideEffect;
-			if (CheckForOverflow || (Operator == BinaryNumericOperator.Div || Operator == BinaryNumericOperator.Rem))
+			if (CheckForOverflow || Operator is BinaryNumericOperator.Div or BinaryNumericOperator.Rem)
 				flags |= InstructionFlags.MayThrow;
 			return flags;
 		}
@@ -264,7 +264,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override InstructionFlags DirectFlags {
 			get {
 				var flags = InstructionFlags.SideEffect;
-				if (CheckForOverflow || (Operator == BinaryNumericOperator.Div || Operator == BinaryNumericOperator.Rem))
+				if (CheckForOverflow || Operator is BinaryNumericOperator.Div or BinaryNumericOperator.Rem)
 					flags |= InstructionFlags.MayThrow;
 				return flags;
 			}
@@ -313,7 +313,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.Method = method;
 			Debug.Assert(Method.IsOperator || IsStringConcat(method));
-			Debug.Assert(evalMode == CompoundEvalMode.EvaluatesToNewValue || (Method.Name == "op_Increment" || Method.Name == "op_Decrement"));
+			Debug.Assert(evalMode == CompoundEvalMode.EvaluatesToNewValue || Method.Name is "op_Increment" or "op_Decrement");
 		}
 
 		public static bool IsStringConcat(IMethod method)
@@ -372,23 +372,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		internal static bool IsExpressionTypeSupported(ExpressionType type)
 		{
-			return type == ExpressionType.AddAssign
-				|| type == ExpressionType.AddAssignChecked
-				|| type == ExpressionType.AndAssign
-				|| type == ExpressionType.DivideAssign
-				|| type == ExpressionType.ExclusiveOrAssign
-				|| type == ExpressionType.LeftShiftAssign
-				|| type == ExpressionType.ModuloAssign
-				|| type == ExpressionType.MultiplyAssign
-				|| type == ExpressionType.MultiplyAssignChecked
-				|| type == ExpressionType.OrAssign
-				|| type == ExpressionType.PostDecrementAssign
-				|| type == ExpressionType.PostIncrementAssign
-				|| type == ExpressionType.PreDecrementAssign
-				|| type == ExpressionType.PreIncrementAssign
-				|| type == ExpressionType.RightShiftAssign
-				|| type == ExpressionType.SubtractAssign
-				|| type == ExpressionType.SubtractAssignChecked;
+			return type is ExpressionType.AddAssign or ExpressionType.AddAssignChecked or ExpressionType.AndAssign or ExpressionType.DivideAssign or ExpressionType.ExclusiveOrAssign or ExpressionType.LeftShiftAssign or ExpressionType.ModuloAssign or ExpressionType.MultiplyAssign or ExpressionType.MultiplyAssignChecked or ExpressionType.OrAssign or ExpressionType.PostDecrementAssign or ExpressionType.PostIncrementAssign or ExpressionType.PreDecrementAssign or ExpressionType.PreIncrementAssign or ExpressionType.RightShiftAssign or ExpressionType.SubtractAssign or ExpressionType.SubtractAssignChecked;
 		}
 
 		static CompoundEvalMode CompoundEvalModeFromOperation(ExpressionType op)

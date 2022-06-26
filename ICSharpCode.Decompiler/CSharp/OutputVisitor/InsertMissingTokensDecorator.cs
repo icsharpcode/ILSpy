@@ -94,8 +94,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					errorExpression.Location = locationProvider.Location;
 					break;
 				default:
-					CSharpTokenNode t = new(locationProvider.Location, (TokenRole)role);
-					t.Role = role;
+					CSharpTokenNode t = new(locationProvider.Location, (TokenRole)role) {
+						Role = role
+					};
 					currentList.Add(t);
 					break;
 			}

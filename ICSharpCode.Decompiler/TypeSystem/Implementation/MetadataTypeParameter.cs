@@ -92,15 +92,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		private static VarianceModifier GetVariance(GenericParameterAttributes attr)
 		{
-			switch (attr & GenericParameterAttributes.VarianceMask)
-			{
-				case GenericParameterAttributes.Contravariant:
-					return VarianceModifier.Contravariant;
-				case GenericParameterAttributes.Covariant:
-					return VarianceModifier.Covariant;
-				default:
-					return VarianceModifier.Invariant;
-			}
+			return (attr & GenericParameterAttributes.VarianceMask) switch {
+				GenericParameterAttributes.Contravariant => VarianceModifier.Contravariant,
+				GenericParameterAttributes.Covariant => VarianceModifier.Covariant,
+				_ => VarianceModifier.Invariant
+			};
 		}
 
 		public GenericParameterHandle MetadataToken => handle;

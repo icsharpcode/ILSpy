@@ -41,7 +41,7 @@ using ICSharpCode.ILSpyX.Extensions;
 
 namespace ICSharpCode.ILSpy
 {
-	using SequencePoint = ICSharpCode.Decompiler.DebugInfo.SequencePoint;
+	using SequencePoint = Decompiler.DebugInfo.SequencePoint;
 
 	[Export(typeof(Language))]
 	class CSharpILMixedLanguage : ILLanguage
@@ -65,8 +65,10 @@ namespace ICSharpCode.ILSpy
 
 		static CSharpDecompiler CreateDecompiler(PEFile module, DecompilationOptions options)
 		{
-			CSharpDecompiler decompiler = new(module, module.GetAssemblyResolver(), options.DecompilerSettings);
-			decompiler.CancellationToken = options.CancellationToken;
+			CSharpDecompiler decompiler = new(module, module.GetAssemblyResolver(), options.DecompilerSettings)
+				{
+					CancellationToken = options.CancellationToken
+				};
 			return decompiler;
 		}
 

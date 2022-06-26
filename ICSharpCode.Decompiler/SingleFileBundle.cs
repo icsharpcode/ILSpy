@@ -131,7 +131,7 @@ namespace ICSharpCode.Decompiler
 			header.MinorVersion = reader.ReadUInt32();
 
 			// Major versions 3, 4 and 5 were skipped to align bundle versioning with .NET versioning scheme
-			if (header.MajorVersion < 1 || header.MajorVersion > 6)
+			if (header.MajorVersion is < 1 or > 6)
 			{
 				throw new InvalidDataException($"Unsupported manifest version: {header.MajorVersion}.{header.MinorVersion}");
 			}

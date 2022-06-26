@@ -96,16 +96,20 @@ namespace ICSharpCode.ILSpy.Metadata
 	{
 		public static MultipleChoiceGroup CreateMultipleChoiceGroup(Type flagsType, string header = null, int mask = -1, int selectedValue = 0, bool includeAll = true)
 		{
-			MultipleChoiceGroup group = new(GetFlags(flagsType, mask, selectedValue, includeAll ? "<All>" : null));
-			group.Header = header;
-			group.SelectedFlags = selectedValue;
+			MultipleChoiceGroup group = new(GetFlags(flagsType, mask, selectedValue, includeAll ? "<All>" : null))
+				{
+					Header = header,
+					SelectedFlags = selectedValue
+				};
 			return group;
 		}
 
 		public static SingleChoiceGroup CreateSingleChoiceGroup(Type flagsType, string header = null, int mask = -1, int selectedValue = 0, Flag defaultFlag = default, bool includeAny = true)
 		{
-			var group = new SingleChoiceGroup(GetFlags(flagsType, mask, selectedValue, includeAny ? "<Any>" : null));
-			group.Header = header;
+			var group = new SingleChoiceGroup(GetFlags(flagsType, mask, selectedValue, includeAny ? "<Any>" : null))
+				{
+					Header = header
+				};
 			group.SelectedFlag = group.Flags.SingleOrDefault(f => f.Value == selectedValue);
 			if (group.SelectedFlag.Name == null)
 			{

@@ -466,9 +466,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool IsAssignment(ILInstruction inst)
 		{
-			if (inst is StLoc)
-				return true;
-			if (inst is CompoundAssignmentInstruction)
+			if (inst is StLoc or CompoundAssignmentInstruction)
 				return true;
 			return false;
 		}

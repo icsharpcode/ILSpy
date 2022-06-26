@@ -26,12 +26,9 @@ namespace ICSharpCode.Decompiler
 			=> (eventDefinition.Attributes & attribute) == attribute;
 
 		public static bool IsTypeKind(this HandleKind kind) =>
-			kind == HandleKind.TypeDefinition || kind == HandleKind.TypeReference
-			|| kind == HandleKind.TypeSpecification;
+			kind is HandleKind.TypeDefinition or HandleKind.TypeReference or HandleKind.TypeSpecification;
 		public static bool IsMemberKind(this HandleKind kind) =>
-			kind == HandleKind.MethodDefinition || kind == HandleKind.PropertyDefinition
-			|| kind == HandleKind.FieldDefinition || kind == HandleKind.EventDefinition
-			|| kind == HandleKind.MemberReference || kind == HandleKind.MethodSpecification;
+			kind is HandleKind.MethodDefinition or HandleKind.PropertyDefinition or HandleKind.FieldDefinition or HandleKind.EventDefinition or HandleKind.MemberReference or HandleKind.MethodSpecification;
 		public static bool IsEntityHandle(this Handle handle) =>
 			handle.IsNil || (byte)handle.Kind < 112;
 
@@ -152,7 +149,7 @@ namespace ICSharpCode.Decompiler
 				return default;
 			// Skip over the rawTypeKind: value type or class
 			var rawTypeKind = signature.ReadCompressedInteger();
-			if (rawTypeKind < 17 || rawTypeKind > 18)
+			if (rawTypeKind is < 17 or > 18)
 				return default;
 			// Only read the generic type, ignore the type arguments
 			return signature.ReadTypeHandle();
@@ -196,30 +193,22 @@ namespace ICSharpCode.Decompiler
 
 		public static TypeReferenceHandle GetDeclaringType(this in TypeReference tr)
 		{
-			switch (tr.ResolutionScope.Kind)
-			{
-				case HandleKind.TypeReference:
-					return (TypeReferenceHandle)tr.ResolutionScope;
-				default:
-					return default(TypeReferenceHandle);
-			}
+			return tr.ResolutionScope.Kind switch {
+				HandleKind.TypeReference => (TypeReferenceHandle)tr.ResolutionScope,
+				_ => default(TypeReferenceHandle)
+			};
 		}
 
 		public static FullTypeName GetFullTypeName(this EntityHandle handle, MetadataReader reader)
 		{
 			if (handle.IsNil)
 				throw new ArgumentNullException(nameof(handle));
-			switch (handle.Kind)
-			{
-				case HandleKind.TypeDefinition:
-					return ((TypeDefinitionHandle)handle).GetFullTypeName(reader);
-				case HandleKind.TypeReference:
-					return ((TypeReferenceHandle)handle).GetFullTypeName(reader);
-				case HandleKind.TypeSpecification:
-					return ((TypeSpecificationHandle)handle).GetFullTypeName(reader);
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+			return handle.Kind switch {
+				HandleKind.TypeDefinition => ((TypeDefinitionHandle)handle).GetFullTypeName(reader),
+				HandleKind.TypeReference => ((TypeReferenceHandle)handle).GetFullTypeName(reader),
+				HandleKind.TypeSpecification => ((TypeSpecificationHandle)handle).GetFullTypeName(reader),
+				_ => throw new ArgumentOutOfRangeException()
+			};
 		}
 
 		public static bool IsKnownType(this EntityHandle handle, MetadataReader reader,
@@ -549,7 +538,7 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets the type of the attribute.
 		/// </summary>
-		public static EntityHandle GetAttributeType(this SRM.CustomAttribute attribute, MetadataReader reader)
+		public static EntityHandle GetAttributeType(this CustomAttribute attribute, MetadataReader reader)
 		{
 			switch (attribute.Constructor.Kind)
 			{
@@ -577,7 +566,7 @@ namespace ICSharpCode.Decompiler
 			return false;
 		}
 
-		internal static bool IsKnownAttribute(this SRM.CustomAttribute attr, MetadataReader metadata,
+		internal static bool IsKnownAttribute(this CustomAttribute attr, MetadataReader metadata,
 			KnownAttribute attrType)
 		{
 			return attr.GetAttributeType(metadata).IsKnownType(metadata, attrType);

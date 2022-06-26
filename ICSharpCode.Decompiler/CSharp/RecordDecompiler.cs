@@ -320,13 +320,10 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal bool PropertyIsGenerated(IProperty property)
 		{
-			switch (property.Name)
-			{
-				case "EqualityContract" when !isStruct:
-					return IsGeneratedEqualityContract(property);
-				default:
-					return IsPropertyDeclaredByPrimaryConstructor(property);
-			}
+			return property.Name switch {
+				"EqualityContract" when !isStruct => IsGeneratedEqualityContract(property),
+				_ => IsPropertyDeclaredByPrimaryConstructor(property)
+			};
 		}
 
 		public bool IsPropertyDeclaredByPrimaryConstructor(IProperty property)
@@ -378,7 +375,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// First instruction is the base constructor call
 			if (!(body.Instructions[pos] is Call { Method: { IsConstructor: true } } baseCtorCall))
 				return false;
-			if (!object.Equals(baseCtorCall.Method.DeclaringType, baseClass))
+			if (!Equals(baseCtorCall.Method.DeclaringType, baseClass))
 				return false;
 			if (baseCtorCall.Arguments.Count != (isInheritedRecord ? 2 : 1))
 				return false;

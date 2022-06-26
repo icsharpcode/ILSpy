@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var callsToFix = new List<Call>();
 			foreach (var call in function.Descendants.OfType<Call>())
 			{
-				if (!(call.Method.IsOperator && (call.Method.Name == "op_Increment" || call.Method.Name == "op_Decrement")))
+				if (!(call.Method.IsOperator && call.Method.Name is "op_Increment" or "op_Decrement"))
 					continue;
 				if (call.Arguments.Count != 1)
 					continue;

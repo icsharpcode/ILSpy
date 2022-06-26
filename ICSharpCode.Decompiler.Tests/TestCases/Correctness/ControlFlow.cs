@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Test("none", ref result);
 			Test("test", ref result);
 			Console.WriteLine(result);
-			ForeachWithAssignment(new int[] { 1, 5, 25 });
+			ForeachWithAssignment(new[] { 1, 5, 25 });
 			BreakUnlessContinue(true);
 			BreakUnlessContinue(false);
 			TestConditionals();

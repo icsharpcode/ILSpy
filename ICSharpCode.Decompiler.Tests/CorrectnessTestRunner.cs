@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.Tests
 				.ToArray();
 			foreach (var file in new DirectoryInfo(TestCasePath).EnumerateFiles())
 			{
-				if (file.Extension == ".txt" || file.Extension == ".exe" || file.Extension == ".config")
+				if (file.Extension is ".txt" or ".exe" or ".config")
 					continue;
 				var testName = Path.GetFileNameWithoutExtension(file.Name);
 				Assert.Contains(testName, testNames);

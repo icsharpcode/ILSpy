@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			public override string ToString()
 			{
-				return string.Format("[{0} + {1}]", Blocks, Expressions);
+				return $"[{Blocks} + {Expressions}]";
 			}
 
 			/// <summary>
@@ -159,7 +159,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			readonly InsertedNode child1, child2;
 
-			public InsertedNodeList(AddCheckedBlocks.InsertedNode child1, AddCheckedBlocks.InsertedNode child2)
+			public InsertedNodeList(InsertedNode child1, InsertedNode child2)
 			{
 				this.child1 = child1;
 				this.child2 = child2;
@@ -316,7 +316,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				costUncheckedContextCheckedBlockOpen += stmtResult.CostInCheckedContext;
 				nodesUncheckedContextCheckedBlockOpen += stmtResult.NodesToInsertInCheckedContext;
 
-				if (statement is LabelStatement || statement is LocalFunctionDeclarationStatement)
+				if (statement is LabelStatement or LocalFunctionDeclarationStatement)
 				{
 					// We can't move labels into blocks because that might cause goto-statements
 					// to be unable to jump to the labels.

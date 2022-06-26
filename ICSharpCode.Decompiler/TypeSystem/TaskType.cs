@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (def.TypeParameterCount > 1)
 					return false;
 				var attribute = def.GetAttribute(KnownAttribute.AsyncMethodBuilder);
-				if (attribute == null || attribute.FixedArguments.Length != 1)
+				if (attribute is not { FixedArguments.Length: 1 })
 					return false;
 				var arg = attribute.FixedArguments[0];
 				if (!arg.Type.IsKnownType(KnownTypeCode.Type))

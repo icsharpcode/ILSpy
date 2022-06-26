@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!(condition is Call call && call.Method.IsOperator && call.Arguments.Count == 1 && !call.IsLifted))
 				return false;
 			name = call.Method.Name;
-			if (!(name == "op_True" || name == "op_False"))
+			if (!(name is "op_True" or "op_False"))
 				return false;
 			return call.Arguments[0].MatchLdLoc(out v);
 		}

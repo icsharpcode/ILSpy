@@ -236,7 +236,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				return this;
 			}
-			if (targetType.Kind == TypeKind.Void || targetType.Kind == TypeKind.None)
+			if (targetType.Kind is TypeKind.Void or TypeKind.None)
 			{
 				return this; // don't attempt to insert cast to '?' or 'void' as these are not valid.
 			}
@@ -477,7 +477,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					// We can't do this by going through a pointer type because that would temporarily stop GC tracking.
 					// Instead, emit `ref Unsafe.As<T>(ref expr)`
 					return expressionBuilder.CallUnsafeIntrinsic("As", new[] { this.Expression },
-						typeArguments: new IType[] { ((ByReferenceType)this.Type).ElementType, elementType },
+						typeArguments: new[] { ((ByReferenceType)this.Type).ElementType, elementType },
 						returnType: targetType);
 				}
 				// Convert from integer/pointer to reference.
@@ -615,8 +615,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				// If the cast was required for the old conversion, avoid making it implicit.
 				return false;
 			}
-			if (oldTargetType.Kind == TypeKind.NInt || oldTargetType.Kind == TypeKind.NUInt
-				|| newTargetType.Kind == TypeKind.NInt || newTargetType.Kind == TypeKind.NUInt)
+			if (oldTargetType.Kind is TypeKind.NInt or TypeKind.NUInt 
+			    || newTargetType.Kind is TypeKind.NInt or TypeKind.NUInt)
 			{
 				// nint has identity conversion with IntPtr, but the two have different implicit conversions
 				return false;

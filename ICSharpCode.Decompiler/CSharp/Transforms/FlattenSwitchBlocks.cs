@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			bool ContainsLocalDeclaration(AstNode node)
 			{
-				if (node is VariableDeclarationStatement || node is LocalFunctionDeclarationStatement || node is OutVarDeclarationExpression)
+				if (node is VariableDeclarationStatement or LocalFunctionDeclarationStatement or OutVarDeclarationExpression)
 					return true;
 				if (node is BlockStatement)
 					return false;

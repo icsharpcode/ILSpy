@@ -26,40 +26,36 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 	{
 		static string GetPathFromRegistry(string key, string valueName)
 		{
-			using (RegistryKey installRootKey = Registry.LocalMachine.OpenSubKey(key))
+			using RegistryKey installRootKey = Registry.LocalMachine.OpenSubKey(key);
+			if (installRootKey != null)
 			{
-				if (installRootKey != null)
+				object o = installRootKey.GetValue(valueName);
+				if (o != null)
 				{
-					object o = installRootKey.GetValue(valueName);
-					if (o != null)
-					{
-						string r = o.ToString();
-						if (!string.IsNullOrEmpty(r))
-							return r;
-					}
+					string r = o.ToString();
+					if (!string.IsNullOrEmpty(r))
+						return r;
 				}
 			}
+
 			return null;
 		}
 
 		static string GetPathFromRegistryX86(string key, string valueName)
 		{
-			using (RegistryKey baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32))
+			using RegistryKey baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32);
+			using RegistryKey installRootKey = baseKey.OpenSubKey(key);
+			if (installRootKey != null)
 			{
-				using (RegistryKey installRootKey = baseKey.OpenSubKey(key))
+				object o = installRootKey.GetValue(valueName);
+				if (o != null)
 				{
-					if (installRootKey != null)
-					{
-						object o = installRootKey.GetValue(valueName);
-						if (o != null)
-						{
-							string r = o.ToString();
-							if (!string.IsNullOrEmpty(r))
-								return r;
-						}
-					}
+					string r = o.ToString();
+					if (!string.IsNullOrEmpty(r))
+						return r;
 				}
 			}
+
 			return null;
 		}
 

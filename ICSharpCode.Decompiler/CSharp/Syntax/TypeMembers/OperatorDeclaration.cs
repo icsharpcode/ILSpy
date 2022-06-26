@@ -109,32 +109,32 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		static OperatorDeclaration()
 		{
 			names = new string[(int)OperatorType.Explicit + 1][];
-			names[(int)OperatorType.LogicalNot] = new string[] { "!", "op_LogicalNot" };
-			names[(int)OperatorType.OnesComplement] = new string[] { "~", "op_OnesComplement" };
-			names[(int)OperatorType.Increment] = new string[] { "++", "op_Increment" };
-			names[(int)OperatorType.Decrement] = new string[] { "--", "op_Decrement" };
-			names[(int)OperatorType.True] = new string[] { "true", "op_True" };
-			names[(int)OperatorType.False] = new string[] { "false", "op_False" };
-			names[(int)OperatorType.Addition] = new string[] { "+", "op_Addition" };
-			names[(int)OperatorType.Subtraction] = new string[] { "-", "op_Subtraction" };
-			names[(int)OperatorType.UnaryPlus] = new string[] { "+", "op_UnaryPlus" };
-			names[(int)OperatorType.UnaryNegation] = new string[] { "-", "op_UnaryNegation" };
-			names[(int)OperatorType.Multiply] = new string[] { "*", "op_Multiply" };
-			names[(int)OperatorType.Division] = new string[] { "/", "op_Division" };
-			names[(int)OperatorType.Modulus] = new string[] { "%", "op_Modulus" };
-			names[(int)OperatorType.BitwiseAnd] = new string[] { "&", "op_BitwiseAnd" };
-			names[(int)OperatorType.BitwiseOr] = new string[] { "|", "op_BitwiseOr" };
-			names[(int)OperatorType.ExclusiveOr] = new string[] { "^", "op_ExclusiveOr" };
-			names[(int)OperatorType.LeftShift] = new string[] { "<<", "op_LeftShift" };
-			names[(int)OperatorType.RightShift] = new string[] { ">>", "op_RightShift" };
-			names[(int)OperatorType.Equality] = new string[] { "==", "op_Equality" };
-			names[(int)OperatorType.Inequality] = new string[] { "!=", "op_Inequality" };
-			names[(int)OperatorType.GreaterThan] = new string[] { ">", "op_GreaterThan" };
-			names[(int)OperatorType.LessThan] = new string[] { "<", "op_LessThan" };
-			names[(int)OperatorType.GreaterThanOrEqual] = new string[] { ">=", "op_GreaterThanOrEqual" };
-			names[(int)OperatorType.LessThanOrEqual] = new string[] { "<=", "op_LessThanOrEqual" };
-			names[(int)OperatorType.Implicit] = new string[] { "implicit", "op_Implicit" };
-			names[(int)OperatorType.Explicit] = new string[] { "explicit", "op_Explicit" };
+			names[(int)OperatorType.LogicalNot] = new[] { "!", "op_LogicalNot" };
+			names[(int)OperatorType.OnesComplement] = new[] { "~", "op_OnesComplement" };
+			names[(int)OperatorType.Increment] = new[] { "++", "op_Increment" };
+			names[(int)OperatorType.Decrement] = new[] { "--", "op_Decrement" };
+			names[(int)OperatorType.True] = new[] { "true", "op_True" };
+			names[(int)OperatorType.False] = new[] { "false", "op_False" };
+			names[(int)OperatorType.Addition] = new[] { "+", "op_Addition" };
+			names[(int)OperatorType.Subtraction] = new[] { "-", "op_Subtraction" };
+			names[(int)OperatorType.UnaryPlus] = new[] { "+", "op_UnaryPlus" };
+			names[(int)OperatorType.UnaryNegation] = new[] { "-", "op_UnaryNegation" };
+			names[(int)OperatorType.Multiply] = new[] { "*", "op_Multiply" };
+			names[(int)OperatorType.Division] = new[] { "/", "op_Division" };
+			names[(int)OperatorType.Modulus] = new[] { "%", "op_Modulus" };
+			names[(int)OperatorType.BitwiseAnd] = new[] { "&", "op_BitwiseAnd" };
+			names[(int)OperatorType.BitwiseOr] = new[] { "|", "op_BitwiseOr" };
+			names[(int)OperatorType.ExclusiveOr] = new[] { "^", "op_ExclusiveOr" };
+			names[(int)OperatorType.LeftShift] = new[] { "<<", "op_LeftShift" };
+			names[(int)OperatorType.RightShift] = new[] { ">>", "op_RightShift" };
+			names[(int)OperatorType.Equality] = new[] { "==", "op_Equality" };
+			names[(int)OperatorType.Inequality] = new[] { "!=", "op_Inequality" };
+			names[(int)OperatorType.GreaterThan] = new[] { ">", "op_GreaterThan" };
+			names[(int)OperatorType.LessThan] = new[] { "<", "op_LessThan" };
+			names[(int)OperatorType.GreaterThanOrEqual] = new[] { ">=", "op_GreaterThanOrEqual" };
+			names[(int)OperatorType.LessThanOrEqual] = new[] { "<=", "op_LessThanOrEqual" };
+			names[(int)OperatorType.Implicit] = new[] { "implicit", "op_Implicit" };
+			names[(int)OperatorType.Explicit] = new[] { "explicit", "op_Explicit" };
 		}
 
 		public override SymbolKind SymbolKind {
@@ -249,7 +249,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return ExplicitRole;
 
 				default:
-					throw new System.ArgumentOutOfRangeException();
+					throw new ArgumentOutOfRangeException();
 			}
 		}
 

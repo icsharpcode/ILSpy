@@ -356,12 +356,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 				for (int i = 0; i < fpt.ParameterTypes.Length; i++)
 				{
-					var paramDecl = new ParameterDeclaration();
-					paramDecl.ParameterModifier = fpt.ParameterReferenceKinds[i] switch {
-						ReferenceKind.In => ParameterModifier.In,
-						ReferenceKind.Ref => ParameterModifier.Ref,
-						ReferenceKind.Out => ParameterModifier.Out,
-						_ => ParameterModifier.None,
+					var paramDecl = new ParameterDeclaration {
+						ParameterModifier = fpt.ParameterReferenceKinds[i] switch {
+							ReferenceKind.In => ParameterModifier.In,
+							ReferenceKind.Ref => ParameterModifier.Ref,
+							ReferenceKind.Out => ParameterModifier.Out,
+							_ => ParameterModifier.None,
+						}
 					};
 					IType parameterType = fpt.ParameterTypes[i];
 					if (paramDecl.ParameterModifier != ParameterModifier.None && parameterType is ByReferenceType brt)
@@ -396,8 +397,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				AstType astType;
 				switch (type)
 				{
-					case ITypeDefinition _:
-					case UnknownType _:
+					case ITypeDefinition:
+					case UnknownType:
 						if (type.IsUnbound())
 						{
 							if (ShowTypeParametersForUnboundTypes)
@@ -731,8 +732,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		#region Convert Attribute
 		public Attribute ConvertAttribute(IAttribute attribute)
 		{
-			Attribute attr = new();
-			attr.Type = ConvertAttributeType(attribute.AttributeType);
+			Attribute attr = new() {
+				Type = ConvertAttributeType(attribute.AttributeType)
+			};
 			switch (attr.Type)
 			{
 				case SimpleType st:
@@ -922,8 +924,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			else if (rr is ArrayCreateResolveResult acrr)
 			{
-				ArrayCreateExpression ace = new();
-				ace.Type = ConvertType(acrr.Type);
+				ArrayCreateExpression ace = new() {
+					Type = ConvertType(acrr.Type)
+				};
 				if (ace.Type is ComposedType composedType)
 				{
 					composedType.ArraySpecifiers.MoveTo(ace.AdditionalArraySpecifiers);
@@ -1014,8 +1017,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			else if (constantValue is ImmutableArray<System.Reflection.Metadata.CustomAttributeTypedArgument<IType>> arr)
 			{
 				var elementType = (type as ArrayType)?.ElementType ?? SpecialType.UnknownType;
-				var expr = new ArrayCreateExpression();
-				expr.Type = ConvertType(type);
+				var expr = new ArrayCreateExpression {
+					Type = ConvertType(type)
+				};
 				if (expr.Type is ComposedType composedType)
 				{
 					composedType.ArraySpecifiers.MoveTo(expr.AdditionalArraySpecifiers);
@@ -1310,7 +1314,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 			if (den == 1 || Math.Abs(num) == 1)
 				return true;
-			return Math.Abs(num) < den && new int[] { 2, 3, 5 }.Any(x => den % x == 0);
+			return Math.Abs(num) < den && new[] { 2, 3, 5 }.Any(x => den % x == 0);
 		}
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
@@ -1812,9 +1816,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					break;
 			}
 
-			var decl = new TypeDeclaration();
-			decl.ClassType = classType;
-			decl.Modifiers = modifiers;
+			var decl = new TypeDeclaration {
+				ClassType = classType,
+				Modifiers = modifiers
+			};
 			if (ShowAttributes)
 			{
 				decl.Attributes.AddRange(ConvertAttributes(typeDefinition.GetAttributes()));
@@ -1847,7 +1852,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 							decl.BaseTypes.Add(ConvertType(typeDefinition.EnumUnderlyingType));
 						}
 					}
-					else if ((typeDefinition.Kind == TypeKind.Struct || typeDefinition.Kind == TypeKind.Void) && baseType.IsKnownType(KnownTypeCode.ValueType))
+					else if (typeDefinition.Kind is TypeKind.Struct or TypeKind.Void && baseType.IsKnownType(KnownTypeCode.ValueType))
 					{
 						// if the declared type is a struct, ignore System.ValueType
 						continue;
@@ -1888,8 +1893,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			ITypeDefinition d = invokeMethod.DeclaringTypeDefinition;
 
-			DelegateDeclaration decl = new();
-			decl.Modifiers = modifiers & ~Modifiers.Sealed;
+			DelegateDeclaration decl = new() {
+				Modifiers = modifiers & ~Modifiers.Sealed
+			};
 			if (ShowAttributes)
 			{
 				decl.Attributes.AddRange(ConvertAttributes(d.GetAttributes()));
@@ -2047,8 +2053,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		PropertyDeclaration ConvertProperty(IProperty property)
 		{
-			PropertyDeclaration decl = new();
-			decl.Modifiers = GetMemberModifiers(property);
+			PropertyDeclaration decl = new() {
+				Modifiers = GetMemberModifiers(property)
+			};
 			if (ShowAttributes)
 			{
 				decl.Attributes.AddRange(ConvertAttributes(property.GetAttributes()));
@@ -2087,8 +2094,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		IndexerDeclaration ConvertIndexer(IProperty indexer)
 		{
-			IndexerDeclaration decl = new();
-			decl.Modifiers = GetMemberModifiers(indexer);
+			IndexerDeclaration decl = new() {
+				Modifiers = GetMemberModifiers(indexer)
+			};
 			if (ShowAttributes)
 			{
 				decl.Attributes.AddRange(ConvertAttributes(indexer.GetAttributes()));
@@ -2117,8 +2125,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (this.UseCustomEvents)
 			{
-				CustomEventDeclaration decl = new();
-				decl.Modifiers = GetMemberModifiers(ev);
+				CustomEventDeclaration decl = new() {
+					Modifiers = GetMemberModifiers(ev)
+				};
 				if (ShowAttributes)
 				{
 					decl.Attributes.AddRange(ConvertAttributes(ev.GetAttributes()));
@@ -2137,8 +2146,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			else
 			{
-				EventDeclaration decl = new();
-				decl.Modifiers = GetMemberModifiers(ev);
+				EventDeclaration decl = new() {
+					Modifiers = GetMemberModifiers(ev)
+				};
 				if (ShowAttributes)
 				{
 					decl.Attributes.AddRange(ConvertAttributes(ev.GetAttributes()));
@@ -2155,8 +2165,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		MethodDeclaration ConvertMethod(IMethod method)
 		{
-			MethodDeclaration decl = new();
-			decl.Modifiers = GetMemberModifiers(method);
+			MethodDeclaration decl = new() {
+				Modifiers = GetMemberModifiers(method)
+			};
 			if (ShowAttributes)
 			{
 				decl.Attributes.AddRange(ConvertAttributes(method.GetAttributes()));
@@ -2208,10 +2219,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (opType == null)
 				return ConvertMethod(op);
 
-			OperatorDeclaration decl = new();
-			decl.Modifiers = GetMemberModifiers(op);
-			decl.OperatorType = opType.Value;
-			decl.ReturnType = ConvertType(op.ReturnType);
+			OperatorDeclaration decl = new() {
+				Modifiers = GetMemberModifiers(op),
+				OperatorType = opType.Value,
+				ReturnType = ConvertType(op.ReturnType)
+			};
 			if (op.ReturnTypeIsRefReadOnly && decl.ReturnType is ComposedType ct && ct.HasRefSpecifier)
 			{
 				ct.HasReadOnlySpecifier = true;
@@ -2235,8 +2247,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		ConstructorDeclaration ConvertConstructor(IMethod ctor)
 		{
-			ConstructorDeclaration decl = new();
-			decl.Modifiers = GetMemberModifiers(ctor);
+			ConstructorDeclaration decl = new() {
+				Modifiers = GetMemberModifiers(ctor)
+			};
 			if (ShowAttributes)
 				decl.Attributes.AddRange(ConvertAttributes(ctor.GetAttributes()));
 			if (ctor.DeclaringTypeDefinition != null)
@@ -2272,23 +2285,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		#region Convert Modifiers
 		public static Modifiers ModifierFromAccessibility(Accessibility accessibility)
 		{
-			switch (accessibility)
-			{
-				case Accessibility.Private:
-					return Modifiers.Private;
-				case Accessibility.Public:
-					return Modifiers.Public;
-				case Accessibility.Protected:
-					return Modifiers.Protected;
-				case Accessibility.Internal:
-					return Modifiers.Internal;
-				case Accessibility.ProtectedOrInternal:
-					return Modifiers.Protected | Modifiers.Internal;
-				case Accessibility.ProtectedAndInternal:
-					return Modifiers.Private | Modifiers.Protected;
-				default:
-					return Modifiers.None;
-			}
+			return accessibility switch {
+				Accessibility.Private => Modifiers.Private,
+				Accessibility.Public => Modifiers.Public,
+				Accessibility.Protected => Modifiers.Protected,
+				Accessibility.Internal => Modifiers.Internal,
+				Accessibility.ProtectedOrInternal => Modifiers.Protected | Modifiers.Internal,
+				Accessibility.ProtectedAndInternal => Modifiers.Private | Modifiers.Protected,
+				_ => Modifiers.None
+			};
 		}
 
 		bool NeedsAccessibility(IMember member)
@@ -2307,7 +2312,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					{
 						return member.Accessibility != Accessibility.Public;
 					}
-					return member is not IMethod method || !method.IsLocalFunction;
+					return member is not IMethod { IsLocalFunction: true };
 			}
 		}
 
@@ -2371,9 +2376,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		#region Convert Type Parameter
 		internal TypeParameterDeclaration ConvertTypeParameter(ITypeParameter tp)
 		{
-			TypeParameterDeclaration decl = new();
-			decl.Variance = tp.Variance;
-			decl.Name = tp.Name;
+			TypeParameterDeclaration decl = new() {
+				Variance = tp.Variance,
+				Name = tp.Name
+			};
 			if (ShowAttributes)
 				decl.Attributes.AddRange(ConvertAttributes(tp.GetAttributes()));
 			return decl;
@@ -2385,8 +2391,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				return null;
 			}
-			Constraint c = new();
-			c.TypeParameter = MakeSimpleType(tp.Name);
+			Constraint c = new() {
+				TypeParameter = MakeSimpleType(tp.Name)
+			};
 			if (tp.HasReferenceTypeConstraint)
 			{
 				if (tp.NullabilityConstraint == Nullability.Nullable)
@@ -2440,16 +2447,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		static bool IsObjectOrValueType(IType type)
 		{
 			ITypeDefinition d = type.GetDefinition();
-			return d != null && (d.KnownTypeCode == KnownTypeCode.Object || d.KnownTypeCode == KnownTypeCode.ValueType);
+			return d != null && d.KnownTypeCode is KnownTypeCode.Object or KnownTypeCode.ValueType;
 		}
 		#endregion
 
 		#region Convert Variable
 		public VariableDeclarationStatement ConvertVariable(IVariable v)
 		{
-			VariableDeclarationStatement decl = new();
-			decl.Modifiers = v.IsConst ? Modifiers.Const : Modifiers.None;
-			decl.Type = ConvertType(v.Type);
+			VariableDeclarationStatement decl = new() {
+				Modifiers = v.IsConst ? Modifiers.Const : Modifiers.None,
+				Type = ConvertType(v.Type)
+			};
 			Expression initializer = null;
 			if (v.IsConst)
 			{

@@ -79,21 +79,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public Accessibility Accessibility {
 			get {
-				switch (attributes & FieldAttributes.FieldAccessMask)
-				{
-					case FieldAttributes.Public:
-						return Accessibility.Public;
-					case FieldAttributes.FamANDAssem:
-						return Accessibility.ProtectedAndInternal;
-					case FieldAttributes.Assembly:
-						return Accessibility.Internal;
-					case FieldAttributes.Family:
-						return Accessibility.Protected;
-					case FieldAttributes.FamORAssem:
-						return Accessibility.ProtectedOrInternal;
-					default:
-						return Accessibility.Private;
-				}
+				return (attributes & FieldAttributes.FieldAccessMask) switch {
+					FieldAttributes.Public => Accessibility.Public,
+					FieldAttributes.FamANDAssem => Accessibility.ProtectedAndInternal,
+					FieldAttributes.Assembly => Accessibility.Internal,
+					FieldAttributes.Family => Accessibility.Protected,
+					FieldAttributes.FamORAssem => Accessibility.ProtectedOrInternal,
+					_ => Accessibility.Private
+				};
 			}
 		}
 

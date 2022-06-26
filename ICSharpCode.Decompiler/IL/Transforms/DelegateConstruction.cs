@@ -93,8 +93,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					target = call.Arguments[0];
 					var opCode = call.Arguments[1].OpCode;
 					delegateType = call.Method.DeclaringType;
-					if (!(opCode == OpCode.LdFtn || opCode == OpCode.LdVirtFtn
-						|| (allowTransformed && opCode == OpCode.ILFunction)))
+					if (!(opCode is OpCode.LdFtn or OpCode.LdVirtFtn 
+					      || (allowTransformed && opCode == OpCode.ILFunction)))
 						return false;
 					targetMethod = ((IInstructionWithMethodOperand)call.Arguments[1]).Method;
 					break;
@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				default:
 					return false;
 			}
-			return delegateType.Kind == TypeKind.Delegate || delegateType.Kind == TypeKind.Unknown;
+			return delegateType.Kind is TypeKind.Delegate or TypeKind.Unknown;
 		}
 
 		static bool IsAnonymousMethod(ITypeDefinition decompiledTypeDefinition, IMethod method)
@@ -222,7 +222,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			switch (inst)
 			{
-				case LdNull _:
+				case LdNull:
 					return true;
 				case LdLoc ldloc:
 					return ldloc.Variable.IsSingleDefinition;
@@ -234,7 +234,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// TODO : ldfld chains must be validated more thoroughly, i.e., we should make sure
 					// that the value of the field is never changed.
 					ILInstruction target = ldobj;
-					while (target is LdObj || target is LdFlda)
+					while (target is LdObj or LdFlda)
 					{
 						if (target is LdObj o)
 						{

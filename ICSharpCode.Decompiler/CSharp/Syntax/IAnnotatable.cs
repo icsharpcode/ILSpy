@@ -271,7 +271,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				else
 				{
 					if (annotations != null)
-						return new object[] { annotations };
+						return new[] { annotations };
 					else
 						return Enumerable.Empty<object>();
 				}

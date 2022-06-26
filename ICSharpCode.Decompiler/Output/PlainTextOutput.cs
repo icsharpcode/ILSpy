@@ -107,7 +107,7 @@ namespace ICSharpCode.Decompiler
 			column = 1;
 		}
 
-		public void WriteReference(Disassembler.OpCodeInfo opCode, bool omitSuffix = false)
+		public void WriteReference(OpCodeInfo opCode, bool omitSuffix = false)
 		{
 			if (omitSuffix)
 			{

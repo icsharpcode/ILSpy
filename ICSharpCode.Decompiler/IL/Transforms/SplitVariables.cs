@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			switch (addressLoadingInstruction.Parent)
 			{
-				case LdObj _:
+				case LdObj:
 				case StObj stobj when stobj.Target == addressLoadingInstruction:
 					return AddressUse.Immediate;
 				case LdFlda ldflda:
@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return HandleCall(addressLoadingInstruction, targetVar, call);
 				case StLoc stloc when stloc.Variable.IsSingleDefinition:
 					// Address stored in local variable: also check all uses of that variable.
-					if (!(stloc.Variable.Kind == VariableKind.StackSlot || stloc.Variable.Kind == VariableKind.Local))
+					if (!(stloc.Variable.Kind is VariableKind.StackSlot or VariableKind.Local))
 						return AddressUse.Unknown;
 					var value = stloc.Value;
 					while (value is LdFlda ldFlda)
@@ -266,13 +266,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ILVariable v;
 				if (!newVariables.TryGetValue(representative, out v))
 				{
-					v = new(inst.Variable.Kind, inst.Variable.Type, inst.Variable.StackType, inst.Variable.Index);
-					v.Name = inst.Variable.Name;
-					v.HasGeneratedName = inst.Variable.HasGeneratedName;
-					v.StateMachineField = inst.Variable.StateMachineField;
-					v.InitialValueIsInitialized = inst.Variable.InitialValueIsInitialized;
-					v.UsesInitialValue = false; // we'll set UsesInitialValue when we encounter an uninit load
-					v.RemoveIfRedundant = inst.Variable.RemoveIfRedundant;
+					v = new(inst.Variable.Kind, inst.Variable.Type, inst.Variable.StackType, inst.Variable.Index) {
+						Name = inst.Variable.Name,
+						HasGeneratedName = inst.Variable.HasGeneratedName,
+						StateMachineField = inst.Variable.StateMachineField,
+						InitialValueIsInitialized = inst.Variable.InitialValueIsInitialized,
+						UsesInitialValue = false, // we'll set UsesInitialValue when we encounter an uninit load
+						RemoveIfRedundant = inst.Variable.RemoveIfRedundant
+					};
 					newVariables.Add(representative, v);
 					inst.Variable.Function.Variables.Add(v);
 				}

@@ -83,15 +83,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static bool PreferExpressionsOverStatements(ILFunction function)
 		{
-			switch (function.Kind)
-			{
-				case ILFunctionKind.Delegate:
-					return function.Parameters.Any(p => CSharp.CSharpDecompiler.IsTransparentIdentifier(p.Name));
-				case ILFunctionKind.ExpressionTree:
-					return true;
-				default:
-					return false;
-			}
+			return function.Kind switch {
+				ILFunctionKind.Delegate => function.Parameters.Any(p =>
+					CSharp.CSharpDecompiler.IsTransparentIdentifier(p.Name)),
+				ILFunctionKind.ExpressionTree => true,
+				_ => false
+			};
 		}
 
 		public static bool InlineAllInBlock(ILFunction function, Block block, ILTransformContext context)
@@ -235,7 +232,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		static bool DoInline(ILVariable v, ILInstruction inlinedExpression, ILInstruction next, InliningOptions options, ILTransformContext context)
 		{
 			var r = FindLoadInNext(next, v, inlinedExpression, options);
-			if (r.Type == FindResultType.Found || r.Type == FindResultType.NamedArgument)
+			if (r.Type is FindResultType.Found or FindResultType.NamedArgument)
 			{
 				var loadInst = r.LoadInst;
 				if (loadInst.OpCode == OpCode.LdLoca)
@@ -302,21 +299,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true;
 				}
 
-				switch (ClassifyExpression(inlinedExpression))
-				{
-					case ExpressionClassification.RValue:
+				return ClassifyExpression(inlinedExpression) switch {
+					ExpressionClassification.RValue =>
 						// For struct method calls on rvalues, the C# compiler always generates temporaries.
-						return true;
-					case ExpressionClassification.MutableLValue:
+						true,
+					ExpressionClassification.MutableLValue =>
 						// For struct method calls on mutable lvalues, the C# compiler never generates temporaries.
-						return false;
-					case ExpressionClassification.ReadonlyLValue:
+						false,
+					ExpressionClassification.ReadonlyLValue =>
 						// For struct method calls on readonly lvalues, the C# compiler
 						// only generates a temporary if it isn't a "readonly struct"
-						return MethodRequiresCopyForReadonlyLValue(method);
-					default:
-						throw new InvalidOperationException("invalid expression classification");
-				}
+						MethodRequiresCopyForReadonlyLValue(method),
+					_ => throw new InvalidOperationException("invalid expression classification")
+				};
 			}
 			else if (IsUsedAsThisPointerInFieldRead(loadInst))
 			{
@@ -418,8 +413,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case OpCode.StLoc:
 					ILVariable v = ((IInstructionWithVariableOperand)inst).Variable;
 					if (v.IsRefReadOnly
-						|| v.Kind == VariableKind.ForeachLocal
-						|| v.Kind == VariableKind.UsingLocal)
+					    || v.Kind is VariableKind.ForeachLocal or VariableKind.UsingLocal)
 					{
 						return ExpressionClassification.ReadonlyLValue;
 					}
@@ -467,27 +461,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		internal static bool IsReadonlyReference(ILInstruction addr)
 		{
-			switch (addr)
-			{
-				case LdFlda ldflda:
-					return ldflda.Field.IsReadOnly
-						|| (ldflda.Field.DeclaringType.Kind == TypeKind.Struct && IsReadonlyReference(ldflda.Target));
-				case LdsFlda ldsflda:
-					return ldsflda.Field.IsReadOnly;
-				case LdLoc ldloc:
-					return ldloc.Variable.IsRefReadOnly;
-				case Call call:
-					return call.Method.ReturnTypeIsRefReadOnly;
-				case CallVirt call:
-					return call.Method.ReturnTypeIsRefReadOnly;
-				case CallIndirect calli:
-					return calli.FunctionPointerType.ReturnIsRefReadOnly;
-				case AddressOf _:
+			return addr switch {
+				LdFlda ldflda => ldflda.Field.IsReadOnly || (ldflda.Field.DeclaringType.Kind == TypeKind.Struct &&
+				                                             IsReadonlyReference(ldflda.Target)),
+				LdsFlda ldsflda => ldsflda.Field.IsReadOnly,
+				LdLoc ldloc => ldloc.Variable.IsRefReadOnly,
+				Call call => call.Method.ReturnTypeIsRefReadOnly,
+				CallVirt call => call.Method.ReturnTypeIsRefReadOnly,
+				CallIndirect calli => calli.FunctionPointerType.ReturnIsRefReadOnly,
+				AddressOf =>
 					// C# doesn't allow mutation of value-type temporaries
-					return true;
-				default:
-					return false;
-			}
+					true,
+				_ => false
+			};
 		}
 
 		/// <summary>
@@ -673,13 +659,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			public static FindResult Found(ILInstruction loadInst)
 			{
-				Debug.Assert(loadInst.OpCode == OpCode.LdLoc || loadInst.OpCode == OpCode.LdLoca);
+				Debug.Assert(loadInst.OpCode is OpCode.LdLoc or OpCode.LdLoca);
 				return new(FindResultType.Found, loadInst, null);
 			}
 
 			public static FindResult NamedArgument(ILInstruction loadInst, ILInstruction callArg)
 			{
-				Debug.Assert(loadInst.OpCode == OpCode.LdLoc || loadInst.OpCode == OpCode.LdLoca);
+				Debug.Assert(loadInst.OpCode is OpCode.LdLoc or OpCode.LdLoca);
 				Debug.Assert(callArg.Parent is CallInstruction);
 				return new(FindResultType.NamedArgument, loadInst, callArg);
 			}

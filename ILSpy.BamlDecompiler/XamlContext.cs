@@ -58,12 +58,12 @@ namespace ILSpy.BamlDecompiler
 
 		public static XamlContext Construct(IDecompilerTypeSystem typeSystem, BamlDocument document, CancellationToken token, BamlDecompilerSettings bamlDecompilerOptions)
 		{
-			var ctx = new XamlContext(typeSystem);
-			ctx.CancellationToken = token;
-			ctx.Settings = bamlDecompilerOptions ?? new BamlDecompilerSettings();
-
-			ctx.Baml = BamlContext.ConstructContext(typeSystem, document, token);
-			ctx.RootNode = BamlNode.Parse(document, token);
+			var ctx = new XamlContext(typeSystem) {
+				CancellationToken = token,
+				Settings = bamlDecompilerOptions ?? new BamlDecompilerSettings(),
+				Baml = BamlContext.ConstructContext(typeSystem, document, token),
+				RootNode = BamlNode.Parse(document, token)
+			};
 
 			ctx.BuildPIMappings(document);
 			ctx.BuildNodeMap(ctx.RootNode as BamlBlockNode);

@@ -108,7 +108,7 @@ Examples:
 
 		private int OnExecute(CommandLineApplication app)
 		{
-			TextWriter output = System.Console.Out;
+			TextWriter output = Console.Out;
 			string outputDirectory = ResolveOutputDirectory(OutputDirectory);
 
 			if (outputDirectory != null)
@@ -283,8 +283,8 @@ Examples:
 				resolver.AddSearchDirectory(path);
 			}
 			var decompiler = new WholeProjectDecompiler(GetSettings(module), resolver, resolver, TryLoadPDB(module));
-			using (var projectFileWriter = new StreamWriter(File.OpenWrite(projectFileName)))
-				return decompiler.DecompileProject(module, Path.GetDirectoryName(projectFileName), projectFileWriter);
+			using var projectFileWriter = new StreamWriter(File.OpenWrite(projectFileName));
+			return decompiler.DecompileProject(module, Path.GetDirectoryName(projectFileName), projectFileWriter);
 		}
 
 		int Decompile(string assemblyFileName, TextWriter output, string typeName = null)
@@ -316,61 +316,53 @@ Examples:
 				return ProgramExitCodes.EX_DATAERR;
 			}
 
-			using (FileStream stream = new(pdbFileName, FileMode.OpenOrCreate, FileAccess.Write))
-			{
-				var decompiler = GetDecompiler(assemblyFileName);
-				PortablePdbWriter.WritePdb(module, decompiler, GetSettings(module), stream);
-			}
+			using FileStream stream = new(pdbFileName, FileMode.OpenOrCreate, FileAccess.Write);
+			var decompiler = GetDecompiler(assemblyFileName);
+			PortablePdbWriter.WritePdb(module, decompiler, GetSettings(module), stream);
 
 			return 0;
 		}
 
 		int DumpPackageAssemblies(string packageFileName, string outputDirectory, CommandLineApplication app)
 		{
-			using (var memoryMappedPackage = MemoryMappedFile.CreateFromFile(packageFileName, FileMode.Open, null, 0, MemoryMappedFileAccess.Read))
+			using var memoryMappedPackage = MemoryMappedFile.CreateFromFile(packageFileName, FileMode.Open, null, 0, MemoryMappedFileAccess.Read);
+			using var packageView = memoryMappedPackage.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read);
+			if (!SingleFileBundle.IsBundle(packageView, out long bundleHeaderOffset))
 			{
-				using (var packageView = memoryMappedPackage.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read))
+				app.Error.WriteLine($"Cannot dump assembiles for {packageFileName}, because it is not a single file bundle.");
+				return ProgramExitCodes.EX_DATAERR;
+			}
+
+			var manifest = SingleFileBundle.ReadManifest(packageView, bundleHeaderOffset);
+			foreach (var entry in manifest.Entries)
+			{
+				Stream contents;
+
+				if (entry.CompressedSize == 0)
 				{
-					if (!SingleFileBundle.IsBundle(packageView, out long bundleHeaderOffset))
+					contents = new UnmanagedMemoryStream(packageView.SafeMemoryMappedViewHandle, entry.Offset, entry.Size);
+				}
+				else
+				{
+					Stream compressedStream = new UnmanagedMemoryStream(packageView.SafeMemoryMappedViewHandle, entry.Offset, entry.CompressedSize);
+					Stream decompressedStream = new MemoryStream((int)entry.Size);
+					using (var deflateStream = new DeflateStream(compressedStream, CompressionMode.Decompress))
 					{
-						app.Error.WriteLine($"Cannot dump assembiles for {packageFileName}, because it is not a single file bundle.");
+						deflateStream.CopyTo(decompressedStream);
+					}
+
+					if (decompressedStream.Length != entry.Size)
+					{
+						app.Error.WriteLine($"Corrupted single-file entry '${entry.RelativePath}'. Declared decompressed size '${entry.Size}' is not the same as actual decompressed size '${decompressedStream.Length}'.");
 						return ProgramExitCodes.EX_DATAERR;
 					}
 
-					var manifest = SingleFileBundle.ReadManifest(packageView, bundleHeaderOffset);
-					foreach (var entry in manifest.Entries)
-					{
-						Stream contents;
-
-						if (entry.CompressedSize == 0)
-						{
-							contents = new UnmanagedMemoryStream(packageView.SafeMemoryMappedViewHandle, entry.Offset, entry.Size);
-						}
-						else
-						{
-							Stream compressedStream = new UnmanagedMemoryStream(packageView.SafeMemoryMappedViewHandle, entry.Offset, entry.CompressedSize);
-							Stream decompressedStream = new MemoryStream((int)entry.Size);
-							using (var deflateStream = new DeflateStream(compressedStream, CompressionMode.Decompress))
-							{
-								deflateStream.CopyTo(decompressedStream);
-							}
-
-							if (decompressedStream.Length != entry.Size)
-							{
-								app.Error.WriteLine($"Corrupted single-file entry '${entry.RelativePath}'. Declared decompressed size '${entry.Size}' is not the same as actual decompressed size '${decompressedStream.Length}'.");
-								return ProgramExitCodes.EX_DATAERR;
-							}
-
-							decompressedStream.Seek(0, SeekOrigin.Begin);
-							contents = decompressedStream;
-						}
-
-						using (var fileStream = File.Create(Path.Combine(outputDirectory, entry.RelativePath)))
-						{
-							contents.CopyTo(fileStream);
-						}
-					}
+					decompressedStream.Seek(0, SeekOrigin.Begin);
+					contents = decompressedStream;
 				}
+
+				using var fileStream = File.Create(Path.Combine(outputDirectory, entry.RelativePath));
+				contents.CopyTo(fileStream);
 			}
 
 			return 0;

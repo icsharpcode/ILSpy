@@ -19,9 +19,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			// Due to IType -> concrete type casts all over the type system, we can insert
 			// the NullabilityAnnotatedType wrapper only in some limited places.
 			Debug.Assert(type is ITypeDefinition
-				|| type.Kind == TypeKind.Dynamic
-				|| type.Kind == TypeKind.Unknown
-				|| (type is ITypeParameter && this is ITypeParameter));
+			             || type.Kind is TypeKind.Dynamic or TypeKind.Unknown 
+			             || (type is ITypeParameter && this is ITypeParameter));
 			this.nullability = nullability;
 		}
 

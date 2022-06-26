@@ -275,7 +275,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <param name="module">The module containing the member.</param>
 		/// <param name="member">The metadata token/handle of the member. Can be a TypeDef, MethodDef or FieldDef.</param>
 		/// <param name="settings">THe settings used to determine whether code should be hidden. E.g. if async methods are not transformed, async state machines are included in the decompiled code.</param>
-		public static bool MemberIsHidden(Metadata.PEFile module, EntityHandle member, DecompilerSettings settings)
+		public static bool MemberIsHidden(PEFile module, EntityHandle member, DecompilerSettings settings)
 		{
 			if (module == null || member.IsNil)
 				return false;
@@ -375,7 +375,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						// hide fields starting with '$$method'
 						if (name.StartsWith("$$method", StringComparison.Ordinal))
 							return true;
-						if (field.DecodeSignature(new Metadata.FullTypeNameSignatureDecoder(metadata), default).ToString().StartsWith("__StaticArrayInit", StringComparison.Ordinal))
+						if (field.DecodeSignature(new FullTypeNameSignatureDecoder(metadata), default).ToString().StartsWith("__StaticArrayInit", StringComparison.Ordinal))
 							return true;
 					}
 					return false;
@@ -384,7 +384,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return false;
 		}
 
-		static bool IsSwitchOnStringCache(SRM.FieldDefinition field, MetadataReader metadata)
+		static bool IsSwitchOnStringCache(FieldDefinition field, MetadataReader metadata)
 		{
 			return metadata.GetString(field.Name).StartsWith("<>f__switch", StringComparison.Ordinal);
 		}
@@ -410,13 +410,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			return false;
 		}
 
-		static bool IsAnonymousMethodCacheField(SRM.FieldDefinition field, MetadataReader metadata)
+		static bool IsAnonymousMethodCacheField(FieldDefinition field, MetadataReader metadata)
 		{
 			var name = metadata.GetString(field.Name);
 			return name.StartsWith("CS$<>", StringComparison.Ordinal) || name.StartsWith("<>f__am", StringComparison.Ordinal) || name.StartsWith("<>f__mg", StringComparison.Ordinal);
 		}
 
-		static bool IsClosureType(SRM.TypeDefinition type, MetadataReader metadata)
+		static bool IsClosureType(TypeDefinition type, MetadataReader metadata)
 		{
 			var name = metadata.GetString(type.Name);
 			if (!type.Name.IsGeneratedName(metadata) || !type.IsCompilerGenerated(metadata))
@@ -498,14 +498,15 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		static TypeSystemAstBuilder CreateAstBuilder(DecompilerSettings settings)
 		{
-			var typeSystemAstBuilder = new TypeSystemAstBuilder();
-			typeSystemAstBuilder.ShowAttributes = true;
-			typeSystemAstBuilder.AlwaysUseShortTypeNames = true;
-			typeSystemAstBuilder.AddResolveResultAnnotations = true;
-			typeSystemAstBuilder.UseNullableSpecifierForValueTypes = settings.LiftNullables;
-			typeSystemAstBuilder.SupportInitAccessors = settings.InitAccessors;
-			typeSystemAstBuilder.SupportRecordClasses = settings.RecordClasses;
-			typeSystemAstBuilder.SupportRecordStructs = settings.RecordStructs;
+			var typeSystemAstBuilder = new TypeSystemAstBuilder {
+				ShowAttributes = true,
+				AlwaysUseShortTypeNames = true,
+				AddResolveResultAnnotations = true,
+				UseNullableSpecifierForValueTypes = settings.LiftNullables,
+				SupportInitAccessors = settings.InitAccessors,
+				SupportRecordClasses = settings.RecordClasses,
+				SupportRecordStructs = settings.RecordStructs
+			};
 			return typeSystemAstBuilder;
 		}
 
@@ -575,19 +576,21 @@ namespace ICSharpCode.Decompiler.CSharp
 				foreach (var a in typeSystem.MainModule.GetAssemblyAttributes())
 				{
 					var astBuilder = CreateAstBuilder(decompileRun.Settings);
-					var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
-					attrSection.AttributeTarget = "assembly";
+					var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a)) {
+						AttributeTarget = "assembly"
+					};
 					syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
 				}
 				foreach (var a in typeSystem.MainModule.GetModuleAttributes())
 				{
 					var astBuilder = CreateAstBuilder(decompileRun.Settings);
-					var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
-					attrSection.AttributeTarget = "module";
+					var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a)) {
+						AttributeTarget = "module"
+					};
 					syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
 				}
 			}
-			catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException))
+			catch (Exception innerException) when (!(innerException is OperationCanceledException or DecompilerException))
 			{
 				throw new DecompilerException(module, null, innerException, "Error decompiling module and assembly attributes of " + module.AssemblyName);
 			}
@@ -1115,7 +1118,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				yield break; // cannot create forwarder for extern method
 			}
-			var genericContext = new Decompiler.TypeSystem.GenericContext(method);
+			var genericContext = new GenericContext(method);
 			var methodHandle = (MethodDefinitionHandle)method.MetadataToken;
 			foreach (var h in methodHandle.GetMethodImplementations(metadata))
 			{
@@ -1123,10 +1126,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				IMethod m = module.ResolveMethod(mi.MethodDeclaration, genericContext);
 				if (m == null || m.DeclaringType.Kind != TypeKind.Interface)
 					continue;
-				var methodDecl = new MethodDeclaration();
-				methodDecl.ReturnType = memberDecl.ReturnType.Clone();
-				methodDecl.PrivateImplementationType = astBuilder.ConvertType(m.DeclaringType);
-				methodDecl.Name = m.Name;
+				var methodDecl = new MethodDeclaration {
+					ReturnType = memberDecl.ReturnType.Clone(),
+					PrivateImplementationType = astBuilder.ConvertType(m.DeclaringType),
+					Name = m.Name
+				};
 				methodDecl.TypeParameters.AddRange(memberDecl.GetChildrenByRole(Roles.TypeParameter)
 												   .Select(n => (TypeParameterDeclaration)n.Clone()));
 				methodDecl.Parameters.AddRange(memberDecl.GetChildrenByRole(Roles.Parameter).Select(n => n.Clone()));
@@ -1155,15 +1159,11 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		Expression ForwardParameter(ParameterDeclaration p)
 		{
-			switch (p.ParameterModifier)
-			{
-				case ParameterModifier.Ref:
-					return new DirectionExpression(FieldDirection.Ref, new IdentifierExpression(p.Name));
-				case ParameterModifier.Out:
-					return new DirectionExpression(FieldDirection.Out, new IdentifierExpression(p.Name));
-				default:
-					return new IdentifierExpression(p.Name);
-			}
+			return p.ParameterModifier switch {
+				ParameterModifier.Ref => new DirectionExpression(FieldDirection.Ref, new IdentifierExpression(p.Name)),
+				ParameterModifier.Out => new DirectionExpression(FieldDirection.Out, new IdentifierExpression(p.Name)),
+				_ => new IdentifierExpression(p.Name)
+			};
 		}
 
 		/// <summary>
@@ -1179,9 +1179,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			// A constant, field, property, event, or type introduced in a class or struct hides all base class members with the same name.
 			bool hideBasedOnSignature = !(entity is ITypeDefinition
-				|| entity.SymbolKind == SymbolKind.Field
-				|| entity.SymbolKind == SymbolKind.Property
-				|| entity.SymbolKind == SymbolKind.Event);
+			                              || entity.SymbolKind is SymbolKind.Field or SymbolKind.Property or SymbolKind.Event);
 
 			const GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
 
@@ -1251,7 +1249,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		EntityDeclaration DoDecompile(ITypeDefinition typeDef, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentTypeDefinition == typeDef);
-			var watch = System.Diagnostics.Stopwatch.StartNew();
+			var watch = Stopwatch.StartNew();
 			var entityMap = new MultiDictionary<IEntity, EntityDeclaration>();
 			var workList = new Queue<IEntity>();
 			TypeSystemAstBuilder typeSystemAstBuilder;
@@ -1395,7 +1393,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				return typeDecl;
 			}
-			catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException))
+			catch (Exception innerException) when (!(innerException is OperationCanceledException or DecompilerException))
 			{
 				throw new DecompilerException(module, typeDef, innerException);
 			}
@@ -1541,7 +1539,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		EntityDeclaration DoDecompile(IMethod method, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == method);
-			var watch = System.Diagnostics.Stopwatch.StartNew();
+			var watch = Stopwatch.StartNew();
 			try
 			{
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
@@ -1713,7 +1711,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				CleanUpMethodDeclaration(entityDecl, body, function, localSettings.DecompileMemberBodies);
 			}
-			catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException))
+			catch (Exception innerException) when (!(innerException is OperationCanceledException or DecompilerException))
 			{
 				throw new DecompilerException(module, method, innerException);
 			}
@@ -1736,7 +1734,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (function.IsIterator)
 			{
-				if (decompileBody && !body.Descendants.Any(d => d is YieldReturnStatement || d is YieldBreakStatement))
+				if (decompileBody && !body.Descendants.Any(d => d is YieldReturnStatement or YieldBreakStatement))
 				{
 					body.Add(new YieldBreakStatement());
 				}
@@ -1824,7 +1822,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		EntityDeclaration DoDecompile(IField field, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == field);
-			var watch = System.Diagnostics.Stopwatch.StartNew();
+			var watch = Stopwatch.StartNew();
 			try
 			{
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
@@ -1846,7 +1844,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					enumDec.AddAnnotation(new MemberResolveResult(null, field));
 					return enumDec;
 				}
-				bool isMathPIOrE = ((field.Name == "PI" || field.Name == "E") && (field.DeclaringType.FullName == "System.Math" || field.DeclaringType.FullName == "System.MathF"));
+				bool isMathPIOrE = (field.Name is "PI" or "E" && field.DeclaringType.FullName is "System.Math" or "System.MathF");
 				typeSystemAstBuilder.UseSpecialConstants = !(field.DeclaringType.Equals(field.ReturnType) || isMathPIOrE);
 				var fieldDecl = typeSystemAstBuilder.ConvertEntity(field);
 				SetNewModifier(fieldDecl);
@@ -1872,7 +1870,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					try
 					{
 						var initVal = fieldDefinition.GetInitialValue(module.PEFile.Reader, TypeSystem);
-						message = string.Format(" Not supported: data({0}) ", BitConverter.ToString(initVal.ReadBytes(initVal.RemainingBytes)).Replace('-', ' '));
+						message =
+							$" Not supported: data({BitConverter.ToString(initVal.ReadBytes(initVal.RemainingBytes)).Replace('-', ' ')}) ";
 					}
 					catch (BadImageFormatException ex)
 					{
@@ -1882,7 +1881,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				return fieldDecl;
 			}
-			catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException))
+			catch (Exception innerException) when (!(innerException is OperationCanceledException or DecompilerException))
 			{
 				throw new DecompilerException(module, field, innerException);
 			}
@@ -1913,7 +1912,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		EntityDeclaration DoDecompile(IProperty property, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == property);
-			var watch = System.Diagnostics.Stopwatch.StartNew();
+			var watch = Stopwatch.StartNew();
 			try
 			{
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
@@ -1964,7 +1963,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				return propertyDecl;
 			}
-			catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException))
+			catch (Exception innerException) when (!(innerException is OperationCanceledException or DecompilerException))
 			{
 				throw new DecompilerException(module, property, innerException);
 			}
@@ -1978,7 +1977,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		EntityDeclaration DoDecompile(IEvent ev, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == ev);
-			var watch = System.Diagnostics.Stopwatch.StartNew();
+			var watch = Stopwatch.StartNew();
 			try
 			{
 				bool adderHasBody = ev.CanAdd && ev.AddAccessor.HasBody;
@@ -2013,7 +2012,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				return eventDecl;
 			}
-			catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException))
+			catch (Exception innerException) when (!(innerException is OperationCanceledException or DecompilerException))
 			{
 				throw new DecompilerException(module, ev, innerException);
 			}

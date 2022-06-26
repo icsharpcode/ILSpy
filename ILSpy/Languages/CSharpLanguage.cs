@@ -124,9 +124,11 @@ namespace ICSharpCode.ILSpy
 
 		CSharpDecompiler CreateDecompiler(PEFile module, DecompilationOptions options)
 		{
-			CSharpDecompiler decompiler = new(module, module.GetAssemblyResolver(), options.DecompilerSettings);
-			decompiler.CancellationToken = options.CancellationToken;
-			decompiler.DebugInfoProvider = module.GetDebugInfoOrNull();
+			CSharpDecompiler decompiler = new(module, module.GetAssemblyResolver(), options.DecompilerSettings)
+				{
+					CancellationToken = options.CancellationToken,
+					DebugInfoProvider = module.GetDebugInfoOrNull()
+				};
 			while (decompiler.AstTransforms.Count > transformCount)
 				decompiler.AstTransforms.RemoveAt(decompiler.AstTransforms.Count - 1);
 			if (options.EscapeInvalidIdentifiers)
@@ -477,8 +479,9 @@ namespace ICSharpCode.ILSpy
 				}
 				output.WriteLine();
 
-				CSharpDecompiler decompiler = new(typeSystem, options.DecompilerSettings);
-				decompiler.CancellationToken = options.CancellationToken;
+				CSharpDecompiler decompiler = new(typeSystem, options.DecompilerSettings) {
+					CancellationToken = options.CancellationToken
+				};
 				if (options.EscapeInvalidIdentifiers)
 				{
 					decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
@@ -526,9 +529,10 @@ namespace ICSharpCode.ILSpy
 
 		static CSharpAmbience CreateAmbience()
 		{
-			CSharpAmbience ambience = new();
-			// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewTypeFlags, if this ever changes.
-			ambience.ConversionFlags = ConversionFlags.ShowTypeParameterList | ConversionFlags.PlaceReturnTypeAfterParameterList;
+			CSharpAmbience ambience = new() {
+				// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewTypeFlags, if this ever changes.
+				ConversionFlags = ConversionFlags.ShowTypeParameterList | ConversionFlags.PlaceReturnTypeAfterParameterList
+			};
 			if (new DecompilationOptions().DecompilerSettings.LiftNullables)
 			{
 				ambience.ConversionFlags |= ConversionFlags.UseNullableSpecifierForValueTypes;

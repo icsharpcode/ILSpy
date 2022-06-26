@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			NeedsSkipInit
 		}
 
-		[DebuggerDisplay("VariableToDeclare(Name={Name})")]
+		[DebuggerDisplay("VariableToDeclare(Name={" + nameof(Name) + "})")]
 		class VariableToDeclare
 		{
 			public readonly ILVariable ILVariable;
@@ -240,10 +240,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			switch (expr)
 			{
-				case InvocationExpression _:
-				case ObjectCreateExpression _:
-				case AssignmentExpression _:
-				case ErrorExpression _:
+				case InvocationExpression:
+				case ObjectCreateExpression:
+				case AssignmentExpression:
+				case ErrorExpression:
 					return true;
 				case UnaryOperatorExpression uoe:
 					switch (uoe.Operator)
@@ -303,7 +303,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						FindInsertionPointForVariable(rr.Variable);
 					}
-					else if (identExpr.Annotation<ILFunction>() is ILFunction localFunction && localFunction.Kind == ILFunctionKind.LocalFunction)
+					else if (identExpr.Annotation<ILFunction>() is { } localFunction && localFunction.Kind == ILFunctionKind.LocalFunction)
 					{
 						foreach (var v in localFunction.CapturedVariables)
 						{
@@ -530,7 +530,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					var expectedType = ((LdLoc)value).Variable.Type;
 					if (!v.Type.Equals(expectedType))
 						return false;
-					if (!(v.Kind == VariableKind.StackSlot || v.Kind == VariableKind.Local))
+					if (!(v.Kind is VariableKind.StackSlot or VariableKind.Local))
 						return false;
 					return true;
 				}
@@ -719,7 +719,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		private bool CanBeDeclaredAsOutVariable(VariableToDeclare v, out DirectionExpression dirExpr)
 		{
 			dirExpr = v.FirstUse.Parent as DirectionExpression;
-			if (dirExpr == null || dirExpr.FieldDirection != FieldDirection.Out)
+			if (dirExpr is not { FieldDirection: FieldDirection.Out })
 				return false;
 			if (!context.Settings.OutVariables)
 				return false;
@@ -733,10 +733,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 				switch (node)
 				{
-					case IfElseStatement _:  // variable declared in if condition appears in parent scope
-					case ExpressionStatement _:
+					case IfElseStatement:  // variable declared in if condition appears in parent scope
+					case ExpressionStatement:
 						return node == v.InsertionPoint.nextNode;
-					case Statement _:
+					case Statement:
 						return false; // other statements (e.g. while) don't allow variables to be promoted to parent scope
 				}
 			}

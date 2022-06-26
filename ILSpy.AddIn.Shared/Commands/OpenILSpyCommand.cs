@@ -80,12 +80,10 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			var dict = new Dictionary<string, DetectedReference>();
 			foreach (var reference in parentProject.MetadataReferences)
 			{
-				using (var assemblyDef = AssemblyDefinition.ReadAssembly(reference.Display))
-				{
-					string assemblyName = assemblyDef.Name.Name;
-					string resolvedAssemblyFile = AssemblyFileFinder.FindAssemblyFile(assemblyDef, reference.Display);
-					dict.Add(assemblyName, new(assemblyName, resolvedAssemblyFile, false));
-				}
+				using var assemblyDef = AssemblyDefinition.ReadAssembly(reference.Display);
+				string assemblyName = assemblyDef.Name.Name;
+				string resolvedAssemblyFile = AssemblyFileFinder.FindAssemblyFile(assemblyDef, reference.Display);
+				dict.Add(assemblyName, new(assemblyName, resolvedAssemblyFile, false));
 			}
 			foreach (var projectReference in parentProject.ProjectReferences)
 			{

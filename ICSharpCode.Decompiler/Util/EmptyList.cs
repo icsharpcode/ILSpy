@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.Util
 			return this;
 		}
 
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+		IEnumerator IEnumerable.GetEnumerator()
 		{
 			return this;
 		}

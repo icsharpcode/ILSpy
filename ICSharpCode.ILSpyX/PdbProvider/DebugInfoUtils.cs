@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 					}
 				}
 			}
-			catch (Exception ex) when (ex is BadImageFormatException || ex is COMException)
+			catch (Exception ex) when (ex is BadImageFormatException or COMException)
 			{
 				// Ignore PDB load errors
 			}

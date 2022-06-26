@@ -22,7 +22,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 [assembly: ICSharpCode.Decompiler.Tests.TypeSystem.TypeTestAttribute(
-	42, typeof(System.Action<>), typeof(IDictionary<string, IList<NUnit.Framework.TestAttribute>>))]
+	42, typeof(Action<>), typeof(IDictionary<string, IList<NUnit.Framework.TestAttribute>>))]
 
 [assembly: TypeForwardedTo(typeof(Func<,>))]
 
@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 	{
 		public ParamsAttribute(params object[] x) { }
 
-		[Params(Property = new string[] { "a", "b" })]
+		[Params(Property = new[] { "a", "b" })]
 		public string[] Property {
 			[return: Params("Attribute on return type of getter")]
 			get { return null; }
@@ -234,9 +234,9 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			public Inner(OuterGeneric<X> referenceToOuter) { }
 		}
 
-		public OuterGeneric<X>.Inner Field1;
+		public Inner Field1;
 		public Inner Field2;
-		public OuterGeneric<OuterGeneric<X>.Inner>.Inner Field3;
+		public OuterGeneric<Inner>.Inner Field3;
 	}
 
 	public class ExplicitDisposableImplementation : IDisposable
@@ -277,13 +277,13 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 	{
 		partial void PartialMethodWithImplementation(int a);
 
-		partial void PartialMethodWithImplementation(System.Int32 a)
+		partial void PartialMethodWithImplementation(Int32 a)
 		{
 		}
 
 		partial void PartialMethodWithImplementation(string a);
 
-		partial void PartialMethodWithImplementation(System.String a)
+		partial void PartialMethodWithImplementation(String a)
 		{
 		}
 
@@ -292,11 +292,11 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 
 	public class ClassWithStaticAndNonStaticMembers
 	{
-		public static event System.EventHandler Event1 { add { } remove { } }
-		public event System.EventHandler Event2 { add { } remove { } }
+		public static event EventHandler Event1 { add { } remove { } }
+		public event EventHandler Event2 { add { } remove { } }
 #pragma warning disable 67
-		public static event System.EventHandler Event3;
-		public event System.EventHandler Event4;
+		public static event EventHandler Event3;
+		public event EventHandler Event4;
 
 		public static int Prop1 { get { return 0; } set { } }
 		public int Prop2 { get { return 0; } set { } }

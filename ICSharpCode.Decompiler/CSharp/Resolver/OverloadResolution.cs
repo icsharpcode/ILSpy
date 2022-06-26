@@ -672,7 +672,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					// AllowImplicitIn: `in` parameters can be filled implicitly without `in` DirectionExpression
 					// IsExtensionMethodInvocation: `this ref` and `this in` parameters can be filled implicitly
 					if (((paramRefKind == ReferenceKind.In && AllowImplicitIn)
-						|| (IsExtensionMethodInvocation && parameterIndex == 0 && (paramRefKind == ReferenceKind.In || paramRefKind == ReferenceKind.Ref))
+						|| (IsExtensionMethodInvocation && parameterIndex == 0 && paramRefKind is ReferenceKind.In or ReferenceKind.Ref)
 						) && candidate.ParameterTypes[parameterIndex].SkipModifiers() is ByReferenceType brt)
 					{
 						// Treat the parameter as if it was not declared "in" for the following steps

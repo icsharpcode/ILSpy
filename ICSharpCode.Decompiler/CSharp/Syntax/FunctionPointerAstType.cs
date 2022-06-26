@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class FunctionPointerAstType : AstType
 	{
 		public static readonly TokenRole PointerRole = new("*");
-		public static readonly Role<AstType> CallingConventionRole = new("CallConv", AstType.Null);
+		public static readonly Role<AstType> CallingConventionRole = new("CallConv", Null);
 
 		public bool HasUnmanagedCallingConvention { get; set; }
 

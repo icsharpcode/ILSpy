@@ -68,15 +68,11 @@ namespace ICSharpCode.ILSpy
 				return entity.Namespace;
 			if (context.SelectedTreeNodes?.Length != 1)
 				return null;
-			switch (context.SelectedTreeNodes[0])
-			{
-				case NamespaceTreeNode tn:
-					return tn.Name;
-				case IMemberTreeNode member:
-					return member.Member.Namespace;
-				default:
-					return null;
-			}
+			return context.SelectedTreeNodes[0] switch {
+				NamespaceTreeNode tn => tn.Name,
+				IMemberTreeNode member => member.Member.Namespace,
+				_ => null
+			};
 		}
 	}
 }

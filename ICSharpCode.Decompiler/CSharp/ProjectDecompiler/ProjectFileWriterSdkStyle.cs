@@ -69,11 +69,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			IEnumerable<(string itemType, string fileName)> files,
 			PEFile module)
 		{
-			using (XmlTextWriter xmlWriter = new(target))
-			{
-				xmlWriter.Formatting = Formatting.Indented;
-				Write(xmlWriter, project, files, module);
-			}
+			using XmlTextWriter xmlWriter = new(target);
+			xmlWriter.Formatting = Formatting.Indented;
+			Write(xmlWriter, project, files, module);
 		}
 
 		static void Write(XmlTextWriter xml, IProjectInfoProvider project, IEnumerable<(string itemType, string fileName)> files, PEFile module)

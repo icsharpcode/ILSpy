@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			memberRefExpr = null;
 			target = null;
 			firstArgument = null;
-			if (method == null || !method.IsExtensionMethod || !invocationExpression.Arguments.Any())
+			if (method is not { IsExtensionMethod: true } || !invocationExpression.Arguments.Any())
 				return false;
 			IReadOnlyList<IType> typeArguments;
 			switch (invocationExpression.Target)

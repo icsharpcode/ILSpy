@@ -34,9 +34,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public readonly static Role<Expression> ConditionRole = Roles.Condition;
 		public readonly static TokenRole QuestionMarkRole = new("?");
-		public readonly static Role<Expression> TrueRole = new("True", Expression.Null);
+		public readonly static Role<Expression> TrueRole = new("True", Null);
 		public readonly static TokenRole ColonRole = Roles.Colon;
-		public readonly static Role<Expression> FalseRole = new("False", Expression.Null);
+		public readonly static Role<Expression> FalseRole = new("False", Null);
 
 		public Expression Condition {
 			get { return GetChildByRole(ConditionRole); }

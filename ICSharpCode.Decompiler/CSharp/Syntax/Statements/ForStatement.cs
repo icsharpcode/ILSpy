@@ -33,8 +33,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class ForStatement : Statement
 	{
 		public static readonly TokenRole ForKeywordRole = new("for");
-		public readonly static Role<Statement> InitializerRole = new("Initializer", Statement.Null);
-		public readonly static Role<Statement> IteratorRole = new("Iterator", Statement.Null);
+		public readonly static Role<Statement> InitializerRole = new("Initializer", Null);
+		public readonly static Role<Statement> IteratorRole = new("Iterator", Null);
 
 		public CSharpTokenNode ForToken {
 			get { return GetChildByRole(ForKeywordRole); }

@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <summary>
 	/// Type system implementation for Metadata.PEFile.
 	/// </summary>
-	[DebuggerDisplay("<MetadataModule: {AssemblyName}>")]
+	[DebuggerDisplay("<MetadataModule: {" + nameof(AssemblyName) + "}>")]
 	public class MetadataModule : IModule
 	{
 		public ICompilation Compilation { get; }
@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		readonly MetadataEvent[] eventDefs;
 		readonly IModule[] referencedAssemblies;
 
-		internal MetadataModule(ICompilation compilation, Metadata.PEFile peFile, TypeSystemOptions options)
+		internal MetadataModule(ICompilation compilation, PEFile peFile, TypeSystemOptions options)
 		{
 			this.Compilation = compilation;
 			this.PEFile = peFile;
@@ -353,17 +353,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (handle.IsNil)
 				return null;
 			var tr = metadata.GetTypeReference(handle);
-			switch (tr.ResolutionScope.Kind)
-			{
-				case HandleKind.TypeReference:
-					return GetDeclaringModule((TypeReferenceHandle)tr.ResolutionScope);
-				case HandleKind.AssemblyReference:
-					return ResolveModule((AssemblyReferenceHandle)tr.ResolutionScope);
-				case HandleKind.ModuleReference:
-					return ResolveModule((ModuleReferenceHandle)tr.ResolutionScope);
-				default:
-					return this;
-			}
+			return tr.ResolutionScope.Kind switch {
+				HandleKind.TypeReference => GetDeclaringModule((TypeReferenceHandle)tr.ResolutionScope),
+				HandleKind.AssemblyReference => ResolveModule((AssemblyReferenceHandle)tr.ResolutionScope),
+				HandleKind.ModuleReference => ResolveModule((ModuleReferenceHandle)tr.ResolutionScope),
+				_ => this
+			};
 		}
 		#endregion
 
@@ -421,17 +416,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (methodReference.IsNil)
 				throw new ArgumentNullException(nameof(methodReference));
-			switch (methodReference.Kind)
-			{
-				case HandleKind.MethodDefinition:
-					return ResolveMethodDefinition((MethodDefinitionHandle)methodReference, expandVarArgs: true);
-				case HandleKind.MemberReference:
-					return ResolveMethodReference((MemberReferenceHandle)methodReference, context, expandVarArgs: true);
-				case HandleKind.MethodSpecification:
-					return ResolveMethodSpecification((MethodSpecificationHandle)methodReference, context, expandVarArgs: true);
-				default:
-					throw new BadImageFormatException("Metadata token must be either a methoddef, memberref or methodspec");
-			}
+			return methodReference.Kind switch {
+				HandleKind.MethodDefinition => ResolveMethodDefinition((MethodDefinitionHandle)methodReference,
+					expandVarArgs: true),
+				HandleKind.MemberReference => ResolveMethodReference((MemberReferenceHandle)methodReference, context,
+					expandVarArgs: true),
+				HandleKind.MethodSpecification => ResolveMethodSpecification((MethodSpecificationHandle)methodReference,
+					context, expandVarArgs: true),
+				_ => throw new BadImageFormatException(
+					"Metadata token must be either a methoddef, memberref or methodspec")
+			};
 		}
 
 		IMethod ResolveMethodDefinition(MethodDefinitionHandle methodDefHandle, bool expandVarArgs)
@@ -591,13 +585,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IMethod CreateFakeMethod(IType declaringType, string name, MethodSignature<IType> signature)
 		{
 			SymbolKind symbolKind = SymbolKind.Method;
-			if (name == ".ctor" || name == ".cctor")
+			if (name is ".ctor" or ".cctor")
 				symbolKind = SymbolKind.Constructor;
-			var m = new FakeMethod(Compilation, symbolKind);
-			m.DeclaringType = declaringType;
-			m.Name = name;
-			m.ReturnType = signature.ReturnType;
-			m.IsStatic = !signature.Header.IsInstance;
+			var m = new FakeMethod(Compilation, symbolKind) {
+				DeclaringType = declaringType,
+				Name = name,
+				ReturnType = signature.ReturnType,
+				IsStatic = !signature.Header.IsInstance
+			};
 
 			TypeParameterSubstitution substitution = null;
 			if (signature.GenericParameterCount > 0)
@@ -757,16 +752,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return ResolveType(entityHandle, context).GetDefinition();
 				case HandleKind.MemberReference:
 					var memberReferenceHandle = (MemberReferenceHandle)entityHandle;
-					switch (metadata.GetMemberReference(memberReferenceHandle).GetKind())
-					{
-						case MemberReferenceKind.Method:
+					return metadata.GetMemberReference(memberReferenceHandle).GetKind() switch {
+						MemberReferenceKind.Method =>
 							// for consistency with the MethodDefinition case, never expand varargs
-							return ResolveMethodReference(memberReferenceHandle, context, expandVarArgs: false);
-						case MemberReferenceKind.Field:
-							return ResolveFieldReference(memberReferenceHandle, context);
-						default:
-							throw new BadImageFormatException("Unknown MemberReferenceKind");
-					}
+							ResolveMethodReference(memberReferenceHandle, context, expandVarArgs: false),
+						MemberReferenceKind.Field => ResolveFieldReference(memberReferenceHandle, context),
+						_ => throw new BadImageFormatException("Unknown MemberReferenceKind")
+					};
 				case HandleKind.MethodDefinition:
 					return GetDefinition((MethodDefinitionHandle)entityHandle);
 				case HandleKind.MethodSpecification:
@@ -971,18 +963,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			att &= FieldAttributes.FieldAccessMask;
 			return IncludeInternalMembers
-				|| att == FieldAttributes.Public
-				|| att == FieldAttributes.Family
-				|| att == FieldAttributes.FamORAssem;
+			       || att is FieldAttributes.Public or FieldAttributes.Family or FieldAttributes.FamORAssem;
 		}
 
 		internal bool IsVisible(MethodAttributes att)
 		{
 			att &= MethodAttributes.MemberAccessMask;
 			return IncludeInternalMembers
-				|| att == MethodAttributes.Public
-				|| att == MethodAttributes.Family
-				|| att == MethodAttributes.FamORAssem;
+			       || att is MethodAttributes.Public or MethodAttributes.Family or MethodAttributes.FamORAssem;
 		}
 		#endregion
 
@@ -1000,7 +988,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					CustomAttributeValue<IType> value;
 					try
 					{
-						value = customAttribute.DecodeValue(Metadata.MetadataExtensions.MinimalAttributeTypeProvider);
+						value = customAttribute.DecodeValue(MetadataExtensions.MinimalAttributeTypeProvider);
 					}
 					catch (BadImageFormatException)
 					{

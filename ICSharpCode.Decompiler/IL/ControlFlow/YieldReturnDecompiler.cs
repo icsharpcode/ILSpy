@@ -379,7 +379,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (!newObj.Arguments[0].MatchLdcI4(out int initialState))
 				return false;
-			if (!(initialState == -2 || initialState == 0))
+			if (!(initialState is -2 or 0))
 				return false;
 			var handle = newObj.Method.MetadataToken;
 			enumeratorCtor = handle.IsNil || handle.Kind != HandleKind.MethodDefinition ? default : (MethodDefinitionHandle)handle;
@@ -688,9 +688,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// but those cannot contain any yield statements.
 			// So for reconstructing the control flow, we only consider the blocks directly within body.
 
-			var rangeAnalysis = new StateRangeAnalysis(StateRangeAnalysisMode.IteratorMoveNext, stateField);
-			rangeAnalysis.skipFinallyBodies = skipFinallyBodies;
-			rangeAnalysis.CancellationToken = context.CancellationToken;
+			var rangeAnalysis = new StateRangeAnalysis(StateRangeAnalysisMode.IteratorMoveNext, stateField)
+				{
+					skipFinallyBodies = skipFinallyBodies,
+					CancellationToken = context.CancellationToken
+				};
 			rangeAnalysis.AssignStateRanges(body, LongSet.Universe);
 			cachedStateVars = rangeAnalysis.CachedStateVars.ToHashSet();
 
@@ -961,7 +963,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						{
 							bool validYieldBreak = value.MatchLdcI4(0);
 							if (value.MatchLdLoc(out var v)
-								&& (v.Kind == VariableKind.Local || v.Kind == VariableKind.StackSlot)
+								&& v.Kind is VariableKind.Local or VariableKind.StackSlot
 								&& v.StoreInstructions.All(store => store is StLoc stloc && stloc.Value.MatchLdcI4(0)))
 							{
 								validYieldBreak = true;
@@ -1108,7 +1110,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				context.CancellationToken.ThrowIfCancellationRequested();
 				int oldState = blockState[block.ChildIndex];
 				BlockContainer container; // new container for the block
-				if (GetNewState(block) is int newState)
+				if (GetNewState(block) is { } newState)
 				{
 					// OK, state change
 					// Remove the state-changing instruction

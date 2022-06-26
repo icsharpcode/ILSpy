@@ -145,10 +145,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void Using1()
 		{
 			Console.WriteLine("Using:");
-			using (var x = new MutValueType())
-			{
-				x.Increment();
-			}
+			using var x = new MutValueType();
+			x.Increment();
 		}
 
 		static void Using2()

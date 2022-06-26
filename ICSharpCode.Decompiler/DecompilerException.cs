@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler
 		static string GetTypeName(Exception exception)
 		{
 			string type = exception.GetType().FullName;
-			if (exception is ExternalException || exception is IOException)
+			if (exception is ExternalException or IOException)
 				return type + " (" + Marshal.GetHRForException(exception).ToString("x8") + ")";
 			else
 				return type;

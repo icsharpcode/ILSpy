@@ -40,11 +40,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (member == null)
 				throw new ArgumentNullException(nameof(member));
 			// C# 4.0 spec, §7.4 member lookup
-			if (member is IEvent || member is IMethod)
+			if (member is IEvent or IMethod)
 				return true;
 			IType returnType = member.ReturnType;
-			return returnType.Kind == TypeKind.Dynamic || returnType.Kind == TypeKind.Delegate
-				|| returnType.Kind == TypeKind.FunctionPointer;
+			return returnType.Kind is TypeKind.Dynamic or TypeKind.Delegate or TypeKind.FunctionPointer;
 		}
 		#endregion
 

@@ -6,8 +6,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 	{
 		public static int Main(string[] args)
 		{
-			Index i = new();
-			i.AutoProp = "Name";
+			Index i = new() {
+				AutoProp = "Name"
+			};
 			Console.WriteLine("AutoProp set!");
 			i[0] = 5;
 			i[1] = 2;

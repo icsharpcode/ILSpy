@@ -157,19 +157,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				switch (body.Instructions[i + pos])
 				{
 					case CallInstruction call:
-						if (!(call is CallVirt || call is Call))
+						if (!(call is CallVirt or Call))
 							continue;
 						var newCall = call;
 						var newTarget = newCall.Arguments[0];
 						foreach (var load in newTarget.Descendants.OfType<IInstructionWithVariableOperand>())
-							if ((load is LdLoc || load is LdLoca) && load.Variable == v)
+							if (load is LdLoc or LdLoca && load.Variable == v)
 								load.Variable = finalSlot;
 						initializerBlock.Instructions.Add(newCall);
 						break;
 					case StObj stObj:
 						var newStObj = stObj;
 						foreach (var load in newStObj.Target.Descendants.OfType<IInstructionWithVariableOperand>())
-							if ((load is LdLoc || load is LdLoca) && load.Variable == v)
+							if (load is LdLoc or LdLoca && load.Variable == v)
 								load.Variable = finalSlot;
 						initializerBlock.Instructions.Add(newStObj);
 						break;
@@ -222,7 +222,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (!context.Settings.DictionaryInitializers)
 					return false;
-				if (stloc.Value.Descendants.OfType<IInstructionWithVariableOperand>().Any(ld => ld.Variable == target && (ld is LdLoc || ld is LdLoca)))
+				if (stloc.Value.Descendants.OfType<IInstructionWithVariableOperand>().Any(ld => ld.Variable == target && ld is LdLoc or LdLoca))
 					return false;
 				possibleIndexVariables.Add(stloc.Variable, (stloc.ChildIndex, stloc.Value));
 				return true;
@@ -324,7 +324,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				switch (instruction)
 				{
 					case CallInstruction call:
-						if (!(call is CallVirt || call is Call))
+						if (!(call is CallVirt or Call))
 							goto default;
 						method = call.Method;
 						if (resolveContext != null && !IsMethodApplicable(method, call.Arguments, rootType, resolveContext, settings))
@@ -413,7 +413,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						break;
 				}
 			}
-			if (kind != AccessPathKind.Invalid && values.SelectMany(v => v.Descendants).OfType<IInstructionWithVariableOperand>().Any(ld => ld.Variable == target && (ld is LdLoc || ld is LdLoca)))
+			if (kind != AccessPathKind.Invalid && values.SelectMany(v => v.Descendants).OfType<IInstructionWithVariableOperand>().Any(ld => ld.Variable == target && ld is LdLoc or LdLoca))
 				kind = AccessPathKind.Invalid;
 			return (kind, path, values, target);
 		}
@@ -474,7 +474,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			switch (instruction)
 			{
 				case CallInstruction call:
-					if (!(call is CallVirt || call is Call))
+					if (!(call is CallVirt or Call))
 						goto default;
 					return call.Method.ReturnType;
 				case LdObj ldobj:

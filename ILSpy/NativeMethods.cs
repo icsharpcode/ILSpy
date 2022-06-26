@@ -172,10 +172,8 @@ namespace ICSharpCode.ILSpy
 			GetWindowThreadProcessId(hWnd, &processId);
 			try
 			{
-				using (var p = Process.GetProcessById(processId))
-				{
-					return p.ProcessName;
-				}
+				using var p = Process.GetProcessById(processId);
+				return p.ProcessName;
 			}
 			catch (ArgumentException ex)
 			{

@@ -63,8 +63,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
-			BaseTypeCollector collector = new();
-			collector.SkipImplementedInterfaces = true;
+			BaseTypeCollector collector = new() {
+				SkipImplementedInterfaces = true
+			};
 			collector.CollectBaseTypes(type);
 			return collector;
 		}
@@ -217,7 +218,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
-			return (type is ITypeDefinition || type is UnknownType) && type.TypeParameterCount > 0;
+			return type is ITypeDefinition or UnknownType && type.TypeParameterCount > 0;
 		}
 
 		/// <summary>

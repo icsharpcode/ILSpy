@@ -167,7 +167,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			exceptionType = null;
 			exceptionSlot = null;
 			whenConditionBlock = null;
-			if (entryPoint == null || entryPoint.IncomingEdgeCount != 1)
+			if (entryPoint is not { IncomingEdgeCount: 1 })
 				return false;
 			if (entryPoint.Instructions.Count == 3)
 			{

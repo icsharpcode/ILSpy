@@ -79,11 +79,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void SimpleUsingExpressionStatementWithDeclaration()
 		{
-			using (MemoryStream memoryStream = new())
-			{
-				memoryStream.WriteByte(42);
-				Console.WriteLine("using-body: " + memoryStream.Position);
-			}
+			using MemoryStream memoryStream = new();
+			memoryStream.WriteByte(42);
+			Console.WriteLine("using-body: " + memoryStream.Position);
 		}
 
 		public void UsingStatementThatChangesTheVariable()
@@ -106,10 +104,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void UsingStatementOnStructWithVariable()
 		{
-			using (UsingStruct usingStruct = new(2))
-			{
-				Console.WriteLine("using-body: " + usingStruct);
-			}
+			using UsingStruct usingStruct = new(2);
+			Console.WriteLine("using-body: " + usingStruct);
 		}
 
 		private void UsingStatementOnNullableStruct(UsingStruct? us)

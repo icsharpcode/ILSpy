@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var rightWithoutConv = inst.Right.UnwrapConv(ConversionKind.SignExtend).UnwrapConv(ConversionKind.ZeroExtend);
 			if (rightWithoutConv.MatchLdcI4(0)
 				&& inst.Sign == Sign.Unsigned
-				&& (inst.Kind == ComparisonKind.GreaterThan || inst.Kind == ComparisonKind.LessThanOrEqual))
+				&& inst.Kind is ComparisonKind.GreaterThan or ComparisonKind.LessThanOrEqual)
 			{
 				if (inst.Kind == ComparisonKind.GreaterThan)
 				{
@@ -215,7 +215,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (index is Conv conv && conv.ResultType == StackType.I
 					&& (conv.Kind == ConversionKind.Truncate && conv.CheckForOverflow
-						|| conv.Kind == ConversionKind.ZeroExtend || conv.Kind == ConversionKind.SignExtend)
+					    || conv.Kind is ConversionKind.ZeroExtend or ConversionKind.SignExtend)
 				)
 				{
 					context.Step("Remove conv.i from array index", index);

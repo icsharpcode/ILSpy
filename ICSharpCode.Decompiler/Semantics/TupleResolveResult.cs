@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.Semantics
 
 		static IType GetTupleType(ICompilation compilation, ImmutableArray<ResolveResult> elements, ImmutableArray<string> elementNames, IModule valueTupleAssembly)
 		{
-			if (elements.Any(e => e.Type.Kind == TypeKind.None || e.Type.Kind == TypeKind.Null))
+			if (elements.Any(e => e.Type.Kind is TypeKind.None or TypeKind.Null))
 				return SpecialType.NoType;
 			else
 				return new TupleType(compilation, elements.Select(e => e.Type).ToImmutableArray(), elementNames, valueTupleAssembly);

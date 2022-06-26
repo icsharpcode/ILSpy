@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpyX.Search
 			if (typeSystem == null)
 				return;
 
-			if (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Type)
+			if (searchKind is MemberSearchKind.All or MemberSearchKind.Type)
 			{
 				foreach (var handle in metadata.TypeDefinitions)
 				{
@@ -59,7 +59,7 @@ namespace ICSharpCode.ILSpyX.Search
 				}
 			}
 
-			if (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Member || searchKind == MemberSearchKind.Method)
+			if (searchKind is MemberSearchKind.All or MemberSearchKind.Member or MemberSearchKind.Method)
 			{
 				foreach (var handle in metadata.MethodDefinitions)
 				{
@@ -74,7 +74,7 @@ namespace ICSharpCode.ILSpyX.Search
 				}
 			}
 
-			if (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Member || searchKind == MemberSearchKind.Field)
+			if (searchKind is MemberSearchKind.All or MemberSearchKind.Member or MemberSearchKind.Field)
 			{
 				foreach (var handle in metadata.FieldDefinitions)
 				{
@@ -89,7 +89,7 @@ namespace ICSharpCode.ILSpyX.Search
 				}
 			}
 
-			if (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Member || searchKind == MemberSearchKind.Property)
+			if (searchKind is MemberSearchKind.All or MemberSearchKind.Member or MemberSearchKind.Property)
 			{
 				foreach (var handle in metadata.PropertyDefinitions)
 				{
@@ -104,7 +104,7 @@ namespace ICSharpCode.ILSpyX.Search
 				}
 			}
 
-			if (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Member || searchKind == MemberSearchKind.Event)
+			if (searchKind is MemberSearchKind.All or MemberSearchKind.Member or MemberSearchKind.Event)
 			{
 				foreach (var handle in metadata.EventDefinitions)
 				{

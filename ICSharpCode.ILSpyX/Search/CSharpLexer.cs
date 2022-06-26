@@ -437,14 +437,14 @@ namespace ICSharpCode.ILSpyX.Search
 							else
 							{
 								HandleLineEnd(ch);
-								Error(y, x, String.Format("Unexpected char in Lexer.Next() : {0}", ch));
+								Error(y, x, $"Unexpected char in Lexer.Next() : {ch}");
 								continue;
 							}
 						}
 						break;
 					default: // non-ws chars are handled here
 						ch = (char)nextChar;
-						if (Char.IsLetter(ch) || ch == '_' || ch == '\\')
+						if (Char.IsLetter(ch) || ch is '_' or '\\')
 						{
 							int x = Col - 1; // Col was incremented above, but we want the start of the identifier
 							int y = Line;
@@ -572,7 +572,7 @@ namespace ICSharpCode.ILSpyX.Search
 					}
 					peek = (char)ReaderPeek();
 				}
-				else if (ch == '0' && (peek == 'x' || peek == 'X'))
+				else if (ch == '0' && peek is 'x' or 'X')
 				{
 					ReaderRead(); // skip 'x'
 					sb.Length = 0; // Remove '0' from 0x prefix from the stringvalue
@@ -625,12 +625,12 @@ namespace ICSharpCode.ILSpyX.Search
 					}
 				}
 
-				if (peek == 'e' || peek == 'E')
+				if (peek is 'e' or 'E')
 				{ // read exponent
 					isdouble = true;
 					sb.Append((char)ReaderRead());
 					peek = (char)ReaderPeek();
-					if (peek == '-' || peek == '+')
+					if (peek is '-' or '+')
 					{
 						sb.Append((char)ReaderRead());
 					}
@@ -642,19 +642,19 @@ namespace ICSharpCode.ILSpyX.Search
 					peek = (char)ReaderPeek();
 				}
 
-				if (peek == 'f' || peek == 'F')
+				if (peek is 'f' or 'F')
 				{ // float value
 					ReaderRead();
 					suffix = "f";
 					isfloat = true;
 				}
-				else if (peek == 'd' || peek == 'D')
+				else if (peek is 'd' or 'D')
 				{ // double type suffix (obsolete, double is default)
 					ReaderRead();
 					suffix = "d";
 					isdouble = true;
 				}
-				else if (peek == 'm' || peek == 'M')
+				else if (peek is 'm' or 'M')
 				{ // decimal value
 					ReaderRead();
 					suffix = "m";
@@ -662,7 +662,7 @@ namespace ICSharpCode.ILSpyX.Search
 				}
 				else if (!isdouble)
 				{
-					if (peek == 'u' || peek == 'U')
+					if (peek is 'u' or 'U')
 					{
 						ReaderRead();
 						suffix = "u";
@@ -670,12 +670,12 @@ namespace ICSharpCode.ILSpyX.Search
 						peek = (char)ReaderPeek();
 					}
 
-					if (peek == 'l' || peek == 'L')
+					if (peek is 'l' or 'L')
 					{
 						ReaderRead();
 						peek = (char)ReaderPeek();
 						islong = true;
-						if (!isunsigned && (peek == 'u' || peek == 'U'))
+						if (!isunsigned && peek is 'u' or 'U')
 						{
 							ReaderRead();
 							suffix = "Lu";
@@ -700,7 +700,7 @@ namespace ICSharpCode.ILSpyX.Search
 					}
 					else
 					{
-						Error(y, x, String.Format("Can't parse float {0}", digit));
+						Error(y, x, $"Can't parse float {digit}");
 						return new(stringValue, 0f, LiteralFormat.DecimalNumber);
 					}
 				}
@@ -713,7 +713,7 @@ namespace ICSharpCode.ILSpyX.Search
 					}
 					else
 					{
-						Error(y, x, String.Format("Can't parse decimal {0}", digit));
+						Error(y, x, $"Can't parse decimal {digit}");
 						return new(stringValue, 0m, LiteralFormat.DecimalNumber);
 					}
 				}
@@ -726,7 +726,7 @@ namespace ICSharpCode.ILSpyX.Search
 					}
 					else
 					{
-						Error(y, x, String.Format("Can't parse double {0}", digit));
+						Error(y, x, $"Can't parse double {digit}");
 						return new(stringValue, 0d, LiteralFormat.DecimalNumber);
 					}
 				}
@@ -737,7 +737,7 @@ namespace ICSharpCode.ILSpyX.Search
 				{
 					if (!ulong.TryParse(digit, NumberStyles.HexNumber, null, out result))
 					{
-						Error(y, x, String.Format("Can't parse hexadecimal constant {0}", digit));
+						Error(y, x, $"Can't parse hexadecimal constant {digit}");
 						return new(stringValue.ToString(), 0, LiteralFormat.HexadecimalNumber);
 					}
 				}
@@ -745,7 +745,7 @@ namespace ICSharpCode.ILSpyX.Search
 				{
 					if (!ulong.TryParse(digit, NumberStyles.Integer, null, out result))
 					{
-						Error(y, x, String.Format("Can't parse integral constant {0}", digit));
+						Error(y, x, $"Can't parse integral constant {digit}");
 						return new(stringValue.ToString(), 0, LiteralFormat.DecimalNumber);
 					}
 				}
@@ -778,7 +778,7 @@ namespace ICSharpCode.ILSpyX.Search
 						}
 						else
 						{
-							Error(y, x, String.Format("Can't parse unsigned long {0}", digit));
+							Error(y, x, $"Can't parse unsigned long {digit}");
 							token = new(stringValue, 0UL, literalFormat);
 						}
 					}
@@ -791,7 +791,7 @@ namespace ICSharpCode.ILSpyX.Search
 						}
 						else
 						{
-							Error(y, x, String.Format("Can't parse long {0}", digit));
+							Error(y, x, $"Can't parse long {digit}");
 							token = new(stringValue, 0L, literalFormat);
 						}
 					}
@@ -807,7 +807,7 @@ namespace ICSharpCode.ILSpyX.Search
 						}
 						else
 						{
-							Error(y, x, String.Format("Can't parse unsigned int {0}", digit));
+							Error(y, x, $"Can't parse unsigned int {digit}");
 							token = new(stringValue, (uint)0, literalFormat);
 						}
 					}
@@ -820,7 +820,7 @@ namespace ICSharpCode.ILSpyX.Search
 						}
 						else
 						{
-							Error(y, x, String.Format("Can't parse int {0}", digit));
+							Error(y, x, $"Can't parse int {digit}");
 							token = new(stringValue, 0, literalFormat);
 						}
 					}
@@ -998,7 +998,7 @@ namespace ICSharpCode.ILSpyX.Search
 
 					if (number < 0)
 					{
-						Error(Line, Col - 1, String.Format("Invalid char in literal : {0}", c));
+						Error(Line, Col - 1, $"Invalid char in literal : {c}");
 					}
 					for (int i = 0; i < 3; ++i)
 					{
@@ -1030,7 +1030,7 @@ namespace ICSharpCode.ILSpyX.Search
 						}
 						else
 						{
-							Error(Line, Col - 1, String.Format("Invalid char in literal : {0}", (char)ReaderPeek()));
+							Error(Line, Col - 1, $"Invalid char in literal : {(char)ReaderPeek()}");
 							break;
 						}
 					}
@@ -1045,7 +1045,7 @@ namespace ICSharpCode.ILSpyX.Search
 					}
 					break;
 				default:
-					Error(Line, Col, String.Format("Unexpected escape sequence : {0}", c));
+					Error(Line, Col, $"Unexpected escape sequence : {c}");
 					ch = '\0';
 					break;
 			}

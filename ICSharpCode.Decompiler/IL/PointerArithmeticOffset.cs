@@ -120,15 +120,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		internal static bool IsFixedVariable(ILInstruction inst)
 		{
-			switch (inst)
-			{
-				case LdLoca ldloca:
-					return ldloca.Variable.CaptureScope == null; // locals are fixed if uncaptured
-				case LdFlda ldflda:
-					return IsFixedVariable(ldflda.Target);
-				default:
-					return inst.ResultType == StackType.I;
-			}
+			return inst switch {
+				LdLoca ldloca => ldloca.Variable.CaptureScope == null // locals are fixed if uncaptured
+				,
+				LdFlda ldflda => IsFixedVariable(ldflda.Target),
+				_ => inst.ResultType == StackType.I
+			};
 		}
 	}
 }

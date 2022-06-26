@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("OutsideLoopOverArray:");
 			var functions = new List<Func<int>>();
-			var array = new int[] { 1, 2, 3 };
+			var array = new[] { 1, 2, 3 };
 			int val; // declared outside loop
 					 // The decompiler cannot convert this to a foreach-loop without
 					 // changing the lambda capture semantics.
@@ -158,7 +158,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("OutsideLoopOverArray2:");
 			var functions = new List<Func<int>>();
-			var array = new int[] { 1, 2, 3 };
+			var array = new[] { 1, 2, 3 };
 			int val; // declared outside loop
 					 // The decompiler can convert this to a foreach-loop, but the 'val'
 					 // variable must be declared outside.
@@ -178,7 +178,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("InsideLoopOverArray2:");
 			var functions = new List<Func<int>>();
-			var array = new int[] { 1, 2, 3 };
+			var array = new[] { 1, 2, 3 };
 			for (int i = 0; i < array.Length; ++i)
 			{
 				int element = array[i];

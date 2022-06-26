@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// All stores for a single variable occupy a contiguous segment of the `allStores` array (and thus also of the `state`),
 		/// which allows us to efficient clear out all stores that get overwritten by a new store.
 		/// </remarks>
-		[DebuggerDisplay("{bits}")]
+		[DebuggerDisplay("{" + nameof(bits) + "}")]
 		public struct State : IDataFlowState<State>
 		{
 			/// <summary>

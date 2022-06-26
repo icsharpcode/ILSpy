@@ -82,31 +82,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public static AssignmentOperatorType GetAssignmentOperatorForBinaryOperator(BinaryOperatorType bop)
 		{
-			switch (bop)
-			{
-				case BinaryOperatorType.Add:
-					return AssignmentOperatorType.Add;
-				case BinaryOperatorType.Subtract:
-					return AssignmentOperatorType.Subtract;
-				case BinaryOperatorType.Multiply:
-					return AssignmentOperatorType.Multiply;
-				case BinaryOperatorType.Divide:
-					return AssignmentOperatorType.Divide;
-				case BinaryOperatorType.Modulus:
-					return AssignmentOperatorType.Modulus;
-				case BinaryOperatorType.ShiftLeft:
-					return AssignmentOperatorType.ShiftLeft;
-				case BinaryOperatorType.ShiftRight:
-					return AssignmentOperatorType.ShiftRight;
-				case BinaryOperatorType.BitwiseAnd:
-					return AssignmentOperatorType.BitwiseAnd;
-				case BinaryOperatorType.BitwiseOr:
-					return AssignmentOperatorType.BitwiseOr;
-				case BinaryOperatorType.ExclusiveOr:
-					return AssignmentOperatorType.ExclusiveOr;
-				default:
-					return AssignmentOperatorType.Assign;
-			}
+			return bop switch {
+				BinaryOperatorType.Add => AssignmentOperatorType.Add,
+				BinaryOperatorType.Subtract => AssignmentOperatorType.Subtract,
+				BinaryOperatorType.Multiply => AssignmentOperatorType.Multiply,
+				BinaryOperatorType.Divide => AssignmentOperatorType.Divide,
+				BinaryOperatorType.Modulus => AssignmentOperatorType.Modulus,
+				BinaryOperatorType.ShiftLeft => AssignmentOperatorType.ShiftLeft,
+				BinaryOperatorType.ShiftRight => AssignmentOperatorType.ShiftRight,
+				BinaryOperatorType.BitwiseAnd => AssignmentOperatorType.BitwiseAnd,
+				BinaryOperatorType.BitwiseOr => AssignmentOperatorType.BitwiseOr,
+				BinaryOperatorType.ExclusiveOr => AssignmentOperatorType.ExclusiveOr,
+				_ => AssignmentOperatorType.Assign
+			};
 		}
 
 		static bool CanConvertToCompoundAssignment(Expression left)
@@ -125,7 +113,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		static bool IsWithoutSideEffects(Expression left)
 		{
-			return left is ThisReferenceExpression || left is IdentifierExpression || left is TypeReferenceExpression || left is BaseReferenceExpression;
+			return left is ThisReferenceExpression or IdentifierExpression or TypeReferenceExpression or BaseReferenceExpression;
 		}
 
 		void IAstTransform.Run(AstNode node, TransformContext context)

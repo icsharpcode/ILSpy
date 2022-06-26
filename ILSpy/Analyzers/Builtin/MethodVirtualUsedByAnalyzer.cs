@@ -111,7 +111,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				return false;
 			var mainModule = (MetadataModule)method.ParentModule;
 			var blob = methodBody.GetILReader();
-			var genericContext = new Decompiler.TypeSystem.GenericContext();
+			var genericContext = new GenericContext();
 
 			while (blob.RemainingBytes > 0)
 			{

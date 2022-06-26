@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public bool IsDocumentation {
 			get {
-				return commentType == CommentType.Documentation || commentType == CommentType.MultiLineDocumentation;
+				return commentType is CommentType.Documentation or CommentType.MultiLineDocumentation;
 			}
 		}
 

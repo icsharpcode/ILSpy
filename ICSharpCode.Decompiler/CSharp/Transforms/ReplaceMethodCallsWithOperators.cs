@@ -158,7 +158,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			UnaryOperatorType? uop = GetUnaryOperatorTypeFromMetadataName(method.Name);
 			if (uop != null && arguments.Length == 1)
 			{
-				if (uop == UnaryOperatorType.Increment || uop == UnaryOperatorType.Decrement)
+				if (uop is UnaryOperatorType.Increment or UnaryOperatorType.Decrement)
 				{
 					// `op_Increment(a)` is not equivalent to `++a`,
 					// because it doesn't assign the incremented value to a.
@@ -352,64 +352,38 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		static BinaryOperatorType? GetBinaryOperatorTypeFromMetadataName(string name)
 		{
-			switch (name)
-			{
-				case "op_Addition":
-					return BinaryOperatorType.Add;
-				case "op_Subtraction":
-					return BinaryOperatorType.Subtract;
-				case "op_Multiply":
-					return BinaryOperatorType.Multiply;
-				case "op_Division":
-					return BinaryOperatorType.Divide;
-				case "op_Modulus":
-					return BinaryOperatorType.Modulus;
-				case "op_BitwiseAnd":
-					return BinaryOperatorType.BitwiseAnd;
-				case "op_BitwiseOr":
-					return BinaryOperatorType.BitwiseOr;
-				case "op_ExclusiveOr":
-					return BinaryOperatorType.ExclusiveOr;
-				case "op_LeftShift":
-					return BinaryOperatorType.ShiftLeft;
-				case "op_RightShift":
-					return BinaryOperatorType.ShiftRight;
-				case "op_Equality":
-					return BinaryOperatorType.Equality;
-				case "op_Inequality":
-					return BinaryOperatorType.InEquality;
-				case "op_LessThan":
-					return BinaryOperatorType.LessThan;
-				case "op_LessThanOrEqual":
-					return BinaryOperatorType.LessThanOrEqual;
-				case "op_GreaterThan":
-					return BinaryOperatorType.GreaterThan;
-				case "op_GreaterThanOrEqual":
-					return BinaryOperatorType.GreaterThanOrEqual;
-				default:
-					return null;
-			}
+			return name switch {
+				"op_Addition" => BinaryOperatorType.Add,
+				"op_Subtraction" => BinaryOperatorType.Subtract,
+				"op_Multiply" => BinaryOperatorType.Multiply,
+				"op_Division" => BinaryOperatorType.Divide,
+				"op_Modulus" => BinaryOperatorType.Modulus,
+				"op_BitwiseAnd" => BinaryOperatorType.BitwiseAnd,
+				"op_BitwiseOr" => BinaryOperatorType.BitwiseOr,
+				"op_ExclusiveOr" => BinaryOperatorType.ExclusiveOr,
+				"op_LeftShift" => BinaryOperatorType.ShiftLeft,
+				"op_RightShift" => BinaryOperatorType.ShiftRight,
+				"op_Equality" => BinaryOperatorType.Equality,
+				"op_Inequality" => BinaryOperatorType.InEquality,
+				"op_LessThan" => BinaryOperatorType.LessThan,
+				"op_LessThanOrEqual" => BinaryOperatorType.LessThanOrEqual,
+				"op_GreaterThan" => BinaryOperatorType.GreaterThan,
+				"op_GreaterThanOrEqual" => BinaryOperatorType.GreaterThanOrEqual,
+				_ => null
+			};
 		}
 
 		static UnaryOperatorType? GetUnaryOperatorTypeFromMetadataName(string name)
 		{
-			switch (name)
-			{
-				case "op_LogicalNot":
-					return UnaryOperatorType.Not;
-				case "op_OnesComplement":
-					return UnaryOperatorType.BitNot;
-				case "op_UnaryNegation":
-					return UnaryOperatorType.Minus;
-				case "op_UnaryPlus":
-					return UnaryOperatorType.Plus;
-				case "op_Increment":
-					return UnaryOperatorType.Increment;
-				case "op_Decrement":
-					return UnaryOperatorType.Decrement;
-				default:
-					return null;
-			}
+			return name switch {
+				"op_LogicalNot" => UnaryOperatorType.Not,
+				"op_OnesComplement" => UnaryOperatorType.BitNot,
+				"op_UnaryNegation" => UnaryOperatorType.Minus,
+				"op_UnaryPlus" => UnaryOperatorType.Plus,
+				"op_Increment" => UnaryOperatorType.Increment,
+				"op_Decrement" => UnaryOperatorType.Decrement,
+				_ => null
+			};
 		}
 
 		static readonly Expression getMethodOrConstructorFromHandlePattern =

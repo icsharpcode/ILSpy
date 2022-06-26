@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Debug.Assert(block.Kind == BlockKind.CallWithNamedArgs);
 			var firstArg = ((StLoc)block.Instructions[0]).Value;
 			var r = ILInlining.FindLoadInNext(firstArg, v, expressionBeingMoved, InliningOptions.IntroduceNamedArguments);
-			if (r.Type == FindResultType.Found || r.Type == FindResultType.NamedArgument)
+			if (r.Type is FindResultType.Found or FindResultType.NamedArgument)
 			{
 				return r; // OK, inline into first instruction of block
 			}
@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (block.Instructions.Count > 1)
 				{
 					r = ILInlining.FindLoadInNext(block.Instructions[1], v, expressionBeingMoved, InliningOptions.IntroduceNamedArguments);
-					if (r.Type == FindResultType.Found || r.Type == FindResultType.NamedArgument)
+					if (r.Type is FindResultType.Found or FindResultType.NamedArgument)
 					{
 						return r; // OK, inline into block.Instructions[1]
 					}
@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var type = context.TypeSystem.FindType(arg.ResultType);
 			var v = context.Function.RegisterVariable(VariableKind.NamedArgument, type);
 			context.Step($"Introduce named argument '{v.Name}'", arg);
-			if (!(call.Parent is Block namedArgBlock) || namedArgBlock.Kind != BlockKind.CallWithNamedArgs)
+			if (!(call.Parent is Block { Kind: BlockKind.CallWithNamedArgs } namedArgBlock))
 			{
 				// create namedArgBlock:
 				namedArgBlock = new(BlockKind.CallWithNamedArgs);

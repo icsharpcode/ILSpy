@@ -74,17 +74,12 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index - Init.Count)
-			{
-				case 0:
-					return this.pattern;
-				case 1:
-					return this.conversions;
-				case 2:
-					return this.assignments;
-				default:
-					return this.Init[index];
-			}
+			return (index - Init.Count) switch {
+				0 => this.pattern,
+				1 => this.conversions,
+				2 => this.assignments,
+				_ => this.Init[index]
+			};
 		}
 
 		protected sealed override void SetChild(int index, ILInstruction value)
@@ -108,17 +103,12 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index - Init.Count)
-			{
-				case 0:
-					return PatternSlot;
-				case 1:
-					return ConversionsSlot;
-				case 2:
-					return AssignmentsSlot;
-				default:
-					return InitSlot;
-			}
+			return (index - Init.Count) switch {
+				0 => PatternSlot,
+				1 => ConversionsSlot,
+				2 => AssignmentsSlot,
+				_ => InitSlot
+			};
 		}
 
 		public sealed override ILInstruction Clone()

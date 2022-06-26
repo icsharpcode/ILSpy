@@ -443,23 +443,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case "SetIndex":
 				case "InvokeConstructor":
 				case "Invoke":
-					switch (binderCall.Method.Name)
-					{
-						case "GetIndex":
-							callSiteInfo.Kind = BinderMethodKind.GetIndex;
-							break;
-						case "SetIndex":
-							callSiteInfo.Kind = BinderMethodKind.SetIndex;
-							break;
-						case "InvokeConstructor":
-							callSiteInfo.Kind = BinderMethodKind.InvokeConstructor;
-							break;
-						case "Invoke":
-							callSiteInfo.Kind = BinderMethodKind.Invoke;
-							break;
-						default:
-							throw new ArgumentOutOfRangeException();
-					}
+					callSiteInfo.Kind = binderCall.Method.Name switch {
+						"GetIndex" => BinderMethodKind.GetIndex,
+						"SetIndex" => BinderMethodKind.SetIndex,
+						"InvokeConstructor" => BinderMethodKind.InvokeConstructor,
+						"Invoke" => BinderMethodKind.Invoke,
+						_ => throw new ArgumentOutOfRangeException()
+					};
 					if (binderCall.Arguments.Count != 3)
 						return false;
 					// First argument: binder flags

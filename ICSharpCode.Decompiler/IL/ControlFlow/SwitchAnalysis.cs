@@ -333,23 +333,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		internal static LongSet MakeSetWhereComparisonIsTrue(ComparisonKind kind, long val, Sign sign)
 		{
-			switch (kind)
-			{
-				case ComparisonKind.Equality:
-					return new(val);
-				case ComparisonKind.Inequality:
-					return new LongSet(val).Invert();
-				case ComparisonKind.LessThan:
-					return MakeGreaterThanOrEqualSet(val, sign).Invert();
-				case ComparisonKind.LessThanOrEqual:
-					return MakeLessThanOrEqualSet(val, sign);
-				case ComparisonKind.GreaterThan:
-					return MakeLessThanOrEqualSet(val, sign).Invert();
-				case ComparisonKind.GreaterThanOrEqual:
-					return MakeGreaterThanOrEqualSet(val, sign);
-				default:
-					throw new ArgumentException("Invalid ComparisonKind");
-			}
+			return kind switch {
+				ComparisonKind.Equality => new(val),
+				ComparisonKind.Inequality => new LongSet(val).Invert(),
+				ComparisonKind.LessThan => MakeGreaterThanOrEqualSet(val, sign).Invert(),
+				ComparisonKind.LessThanOrEqual => MakeLessThanOrEqualSet(val, sign),
+				ComparisonKind.GreaterThan => MakeLessThanOrEqualSet(val, sign).Invert(),
+				ComparisonKind.GreaterThanOrEqual => MakeGreaterThanOrEqualSet(val, sign),
+				_ => throw new ArgumentException("Invalid ComparisonKind")
+			};
 		}
 
 		private static LongSet MakeGreaterThanOrEqualSet(long val, Sign sign)

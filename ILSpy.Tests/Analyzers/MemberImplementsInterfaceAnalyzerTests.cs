@@ -51,12 +51,10 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 		{
 			string fileName = GetType().Assembly.Location;
 
-			using (var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
-			{
-				var module = new PEFile(fileName, stream, PEStreamOptions.PrefetchEntireImage, MetadataReaderOptions.None);
+			using var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+			var module = new PEFile(fileName, stream, PEStreamOptions.PrefetchEntireImage, MetadataReaderOptions.None);
 
-				testAssembly = new SimpleCompilation(module.WithOptions(TypeSystemOptions.Default), MinimalCorlib.Instance);
-			}
+			testAssembly = new SimpleCompilation(module.WithOptions(TypeSystemOptions.Default), MinimalCorlib.Instance);
 		}
 
 		[Test]

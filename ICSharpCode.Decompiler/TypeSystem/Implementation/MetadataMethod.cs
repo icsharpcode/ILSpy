@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				&& typeParameters.Length == 0)
 			{
 				string name = this.Name;
-				if (name == ".cctor" || name == ".ctor")
+				if (name is ".cctor" or ".ctor")
 				{
 					this.symbolKind = SymbolKind.Constructor;
 				}
@@ -380,19 +380,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					dllImport.AddNamedArg("CallingConvention", callingConventionType, (int)callingConvention);
 				}
 
-				CharSet charSet = CharSet.None;
-				switch (info.Attributes & MethodImportAttributes.CharSetMask)
-				{
-					case MethodImportAttributes.CharSetAnsi:
-						charSet = CharSet.Ansi;
-						break;
-					case MethodImportAttributes.CharSetAuto:
-						charSet = CharSet.Auto;
-						break;
-					case MethodImportAttributes.CharSetUnicode:
-						charSet = CharSet.Unicode;
-						break;
-				}
+				CharSet charSet = (info.Attributes & MethodImportAttributes.CharSetMask) switch {
+					MethodImportAttributes.CharSetAnsi => CharSet.Ansi,
+					MethodImportAttributes.CharSetAuto => CharSet.Auto,
+					MethodImportAttributes.CharSetUnicode => CharSet.Unicode,
+					_ => CharSet.None
+				};
 				if (charSet != CharSet.None)
 				{
 					var charSetType = FindInteropType(nameof(CharSet));
@@ -531,23 +524,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		internal static Accessibility GetAccessibility(MethodAttributes attr)
 		{
-			switch (attr & MethodAttributes.MemberAccessMask)
-			{
-				case MethodAttributes.Public:
-					return Accessibility.Public;
-				case MethodAttributes.Assembly:
-					return Accessibility.Internal;
-				case MethodAttributes.Private:
-					return Accessibility.Private;
-				case MethodAttributes.Family:
-					return Accessibility.Protected;
-				case MethodAttributes.FamANDAssem:
-					return Accessibility.ProtectedAndInternal;
-				case MethodAttributes.FamORAssem:
-					return Accessibility.ProtectedOrInternal;
-				default:
-					return Accessibility.None;
-			}
+			return (attr & MethodAttributes.MemberAccessMask) switch {
+				MethodAttributes.Public => Accessibility.Public,
+				MethodAttributes.Assembly => Accessibility.Internal,
+				MethodAttributes.Private => Accessibility.Private,
+				MethodAttributes.Family => Accessibility.Protected,
+				MethodAttributes.FamANDAssem => Accessibility.ProtectedAndInternal,
+				MethodAttributes.FamORAssem => Accessibility.ProtectedOrInternal,
+				_ => Accessibility.None
+			};
 		}
 
 		public bool IsStatic => (attributes & MethodAttributes.Static) != 0;

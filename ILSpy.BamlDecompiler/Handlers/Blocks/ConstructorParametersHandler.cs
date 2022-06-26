@@ -32,8 +32,9 @@ namespace ILSpy.BamlDecompiler.Handlers
 
 		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
 		{
-			var doc = new BamlElement(node);
-			doc.Xaml = new XElement(ctx.GetPseudoName("Ctor"));
+			var doc = new BamlElement(node) {
+				Xaml = new XElement(ctx.GetPseudoName("Ctor"))
+			};
 			parent.Xaml.Element.Add(doc.Xaml.Element);
 
 			HandlerMap.ProcessChildren(ctx, (BamlBlockNode)node, doc);

@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			Debug.Assert(Left.ResultType == StackType.I4 || Left.ResultType == StackType.O);
+			Debug.Assert(Left.ResultType is StackType.I4 or StackType.O);
 		}
 	}
 
@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			Debug.Assert(Left.ResultType == StackType.I4 || Left.ResultType == StackType.O);
+			Debug.Assert(Left.ResultType is StackType.I4 or StackType.O);
 		}
 	}
 

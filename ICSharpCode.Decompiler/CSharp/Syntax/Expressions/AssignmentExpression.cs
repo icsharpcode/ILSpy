@@ -111,33 +111,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public static TokenRole GetOperatorRole(AssignmentOperatorType op)
 		{
-			switch (op)
-			{
-				case AssignmentOperatorType.Assign:
-					return AssignRole;
-				case AssignmentOperatorType.Add:
-					return AddRole;
-				case AssignmentOperatorType.Subtract:
-					return SubtractRole;
-				case AssignmentOperatorType.Multiply:
-					return MultiplyRole;
-				case AssignmentOperatorType.Divide:
-					return DivideRole;
-				case AssignmentOperatorType.Modulus:
-					return ModulusRole;
-				case AssignmentOperatorType.ShiftLeft:
-					return ShiftLeftRole;
-				case AssignmentOperatorType.ShiftRight:
-					return ShiftRightRole;
-				case AssignmentOperatorType.BitwiseAnd:
-					return BitwiseAndRole;
-				case AssignmentOperatorType.BitwiseOr:
-					return BitwiseOrRole;
-				case AssignmentOperatorType.ExclusiveOr:
-					return ExclusiveOrRole;
-				default:
-					throw new NotSupportedException("Invalid value for AssignmentOperatorType");
-			}
+			return op switch {
+				AssignmentOperatorType.Assign => AssignRole,
+				AssignmentOperatorType.Add => AddRole,
+				AssignmentOperatorType.Subtract => SubtractRole,
+				AssignmentOperatorType.Multiply => MultiplyRole,
+				AssignmentOperatorType.Divide => DivideRole,
+				AssignmentOperatorType.Modulus => ModulusRole,
+				AssignmentOperatorType.ShiftLeft => ShiftLeftRole,
+				AssignmentOperatorType.ShiftRight => ShiftRightRole,
+				AssignmentOperatorType.BitwiseAnd => BitwiseAndRole,
+				AssignmentOperatorType.BitwiseOr => BitwiseOrRole,
+				AssignmentOperatorType.ExclusiveOr => ExclusiveOrRole,
+				_ => throw new NotSupportedException("Invalid value for AssignmentOperatorType")
+			};
 		}
 
 		/// <summary>
@@ -146,64 +133,44 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public static BinaryOperatorType? GetCorrespondingBinaryOperator(AssignmentOperatorType op)
 		{
-			switch (op)
-			{
-				case AssignmentOperatorType.Assign:
-					return null;
-				case AssignmentOperatorType.Add:
-					return BinaryOperatorType.Add;
-				case AssignmentOperatorType.Subtract:
-					return BinaryOperatorType.Subtract;
-				case AssignmentOperatorType.Multiply:
-					return BinaryOperatorType.Multiply;
-				case AssignmentOperatorType.Divide:
-					return BinaryOperatorType.Divide;
-				case AssignmentOperatorType.Modulus:
-					return BinaryOperatorType.Modulus;
-				case AssignmentOperatorType.ShiftLeft:
-					return BinaryOperatorType.ShiftLeft;
-				case AssignmentOperatorType.ShiftRight:
-					return BinaryOperatorType.ShiftRight;
-				case AssignmentOperatorType.BitwiseAnd:
-					return BinaryOperatorType.BitwiseAnd;
-				case AssignmentOperatorType.BitwiseOr:
-					return BinaryOperatorType.BitwiseOr;
-				case AssignmentOperatorType.ExclusiveOr:
-					return BinaryOperatorType.ExclusiveOr;
-				default:
-					throw new NotSupportedException("Invalid value for AssignmentOperatorType");
-			}
+			return op switch {
+				AssignmentOperatorType.Assign => null,
+				AssignmentOperatorType.Add => BinaryOperatorType.Add,
+				AssignmentOperatorType.Subtract => BinaryOperatorType.Subtract,
+				AssignmentOperatorType.Multiply => BinaryOperatorType.Multiply,
+				AssignmentOperatorType.Divide => BinaryOperatorType.Divide,
+				AssignmentOperatorType.Modulus => BinaryOperatorType.Modulus,
+				AssignmentOperatorType.ShiftLeft => BinaryOperatorType.ShiftLeft,
+				AssignmentOperatorType.ShiftRight => BinaryOperatorType.ShiftRight,
+				AssignmentOperatorType.BitwiseAnd => BinaryOperatorType.BitwiseAnd,
+				AssignmentOperatorType.BitwiseOr => BinaryOperatorType.BitwiseOr,
+				AssignmentOperatorType.ExclusiveOr => BinaryOperatorType.ExclusiveOr,
+				_ => throw new NotSupportedException("Invalid value for AssignmentOperatorType")
+			};
 		}
 
 		public static ExpressionType GetLinqNodeType(AssignmentOperatorType op, bool checkForOverflow)
 		{
-			switch (op)
-			{
-				case AssignmentOperatorType.Assign:
-					return ExpressionType.Assign;
-				case AssignmentOperatorType.Add:
-					return checkForOverflow ? ExpressionType.AddAssignChecked : ExpressionType.AddAssign;
-				case AssignmentOperatorType.Subtract:
-					return checkForOverflow ? ExpressionType.SubtractAssignChecked : ExpressionType.SubtractAssign;
-				case AssignmentOperatorType.Multiply:
-					return checkForOverflow ? ExpressionType.MultiplyAssignChecked : ExpressionType.MultiplyAssign;
-				case AssignmentOperatorType.Divide:
-					return ExpressionType.DivideAssign;
-				case AssignmentOperatorType.Modulus:
-					return ExpressionType.ModuloAssign;
-				case AssignmentOperatorType.ShiftLeft:
-					return ExpressionType.LeftShiftAssign;
-				case AssignmentOperatorType.ShiftRight:
-					return ExpressionType.RightShiftAssign;
-				case AssignmentOperatorType.BitwiseAnd:
-					return ExpressionType.AndAssign;
-				case AssignmentOperatorType.BitwiseOr:
-					return ExpressionType.OrAssign;
-				case AssignmentOperatorType.ExclusiveOr:
-					return ExpressionType.ExclusiveOrAssign;
-				default:
-					throw new NotSupportedException("Invalid value for AssignmentOperatorType");
-			}
+			return op switch {
+				AssignmentOperatorType.Assign => ExpressionType.Assign,
+				AssignmentOperatorType.Add => checkForOverflow
+					? ExpressionType.AddAssignChecked
+					: ExpressionType.AddAssign,
+				AssignmentOperatorType.Subtract => checkForOverflow
+					? ExpressionType.SubtractAssignChecked
+					: ExpressionType.SubtractAssign,
+				AssignmentOperatorType.Multiply => checkForOverflow
+					? ExpressionType.MultiplyAssignChecked
+					: ExpressionType.MultiplyAssign,
+				AssignmentOperatorType.Divide => ExpressionType.DivideAssign,
+				AssignmentOperatorType.Modulus => ExpressionType.ModuloAssign,
+				AssignmentOperatorType.ShiftLeft => ExpressionType.LeftShiftAssign,
+				AssignmentOperatorType.ShiftRight => ExpressionType.RightShiftAssign,
+				AssignmentOperatorType.BitwiseAnd => ExpressionType.AndAssign,
+				AssignmentOperatorType.BitwiseOr => ExpressionType.OrAssign,
+				AssignmentOperatorType.ExclusiveOr => ExpressionType.ExclusiveOrAssign,
+				_ => throw new NotSupportedException("Invalid value for AssignmentOperatorType")
+			};
 		}
 
 		public static AssignmentOperatorType? GetAssignmentOperatorTypeFromExpressionType(ExpressionType expressionType)

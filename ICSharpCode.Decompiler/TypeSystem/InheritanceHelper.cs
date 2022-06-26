@@ -200,7 +200,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				{
 					yield return attr;
 				}
-			} while (member.IsOverride && (member = InheritanceHelper.GetBaseMember(member)) != null);
+			} while (member.IsOverride && (member = GetBaseMember(member)) != null);
 		}
 		#endregion
 	}

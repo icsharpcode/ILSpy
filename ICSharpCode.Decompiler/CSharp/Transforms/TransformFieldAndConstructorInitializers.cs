@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					// Pattern for reference types:
 					// this..ctor(...);
 					case InvocationExpression invocation:
-						if (!(invocation.Target is MemberReferenceExpression mre) || mre.MemberName != ".ctor")
+						if (!(invocation.Target is MemberReferenceExpression { MemberName: ".ctor" } mre))
 							return;
 						if (!(invocation.GetSymbol() is IMethod ctor && ctor.IsConstructor))
 							return;
@@ -206,7 +206,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 					Expression initializer = m.Get<Expression>("initializer").Single();
 					// 'this'/'base' cannot be used in initializers
-					if (initializer.DescendantsAndSelf.Any(n => n is ThisReferenceExpression || n is BaseReferenceExpression))
+					if (initializer.DescendantsAndSelf.Any(n => n is ThisReferenceExpression or BaseReferenceExpression))
 						break;
 
 					if (initializer.Annotation<ILVariableResolveResult>()?.Variable.Kind == IL.VariableKind.Parameter)
@@ -284,8 +284,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				var ctor = instanceCtors[0];
 				// dynamically create a pattern of an empty ctor
-				ConstructorDeclaration emptyCtorPattern = new();
-				emptyCtorPattern.Modifiers = contextTypeDefinition.IsAbstract ? Modifiers.Protected : Modifiers.Public;
+				ConstructorDeclaration emptyCtorPattern = new() {
+					Modifiers = contextTypeDefinition.IsAbstract ? Modifiers.Protected : Modifiers.Public
+				};
 				if (ctor.HasModifier(Modifiers.Unsafe))
 					emptyCtorPattern.Modifiers |= Modifiers.Unsafe;
 				emptyCtorPattern.Body = new();
@@ -321,10 +322,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						if (es == null)
 							break;
 						AssignmentExpression assignment = es.Expression as AssignmentExpression;
-						if (assignment == null || assignment.Operator != AssignmentOperatorType.Assign)
+						if (assignment is not { Operator: AssignmentOperatorType.Assign })
 							break;
 						IMember fieldOrProperty = (assignment.Left.GetSymbol() as IMember)?.MemberDefinition;
-						if (!(fieldOrProperty is IField || fieldOrProperty is IProperty) || !fieldOrProperty.IsStatic)
+						if (!(fieldOrProperty is IField or IProperty) || !fieldOrProperty.IsStatic)
 							break;
 						var fieldOrPropertyDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrProperty) as EntityDeclaration;
 						if (fieldOrPropertyDecl == null)

@@ -278,15 +278,11 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return TargetArgumentInfo;
-				case 1:
-					return ValueArgumentInfo;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(index));
-			}
+			return index switch {
+				0 => TargetArgumentInfo,
+				1 => ValueArgumentInfo,
+				_ => throw new ArgumentOutOfRangeException(nameof(index))
+			};
 		}
 	}
 
@@ -420,15 +416,11 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return LeftArgumentInfo;
-				case 1:
-					return RightArgumentInfo;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(index));
-			}
+			return index switch {
+				0 => LeftArgumentInfo,
+				1 => RightArgumentInfo,
+				_ => throw new ArgumentOutOfRangeException(nameof(index))
+			};
 		}
 	}
 
@@ -470,15 +462,11 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return LeftArgumentInfo;
-				case 1:
-					return RightArgumentInfo;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(index));
-			}
+			return index switch {
+				0 => LeftArgumentInfo,
+				1 => RightArgumentInfo,
+				_ => throw new ArgumentOutOfRangeException(nameof(index))
+			};
 		}
 	}
 
@@ -520,13 +508,10 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return OperandArgumentInfo;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(index));
-			}
+			return index switch {
+				0 => OperandArgumentInfo,
+				_ => throw new ArgumentOutOfRangeException(nameof(index))
+			};
 		}
 	}
 

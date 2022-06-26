@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public LdLen(StackType type, ILInstruction array) : base(OpCode.LdLen)
 		{
-			Debug.Assert(type == StackType.I || type == StackType.I4 || type == StackType.I8);
+			Debug.Assert(type is StackType.I or StackType.I4 or StackType.I8);
 			this.resultType = type;
 			this.Array = array;
 		}

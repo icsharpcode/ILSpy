@@ -462,7 +462,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						TryDecodeSecurityDeclaration(outputWithRollback, blob, module);
 						outputWithRollback.Commit();
 					}
-					catch (Exception ex) when (ex is BadImageFormatException || ex is EnumUnderlyingTypeResolveException)
+					catch (Exception ex) when (ex is BadImageFormatException or EnumUnderlyingTypeResolveException)
 					{
 						blob.Reset();
 						output.Write(" = ");
@@ -795,39 +795,23 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		static string PrimitiveTypeCodeToString(PrimitiveTypeCode typeCode)
 		{
-			switch (typeCode)
-			{
-				case PrimitiveTypeCode.Boolean:
-					return "bool";
-				case PrimitiveTypeCode.Byte:
-					return "uint8";
-				case PrimitiveTypeCode.SByte:
-					return "int8";
-				case PrimitiveTypeCode.Char:
-					return "char";
-				case PrimitiveTypeCode.Int16:
-					return "int16";
-				case PrimitiveTypeCode.UInt16:
-					return "uint16";
-				case PrimitiveTypeCode.Int32:
-					return "int32";
-				case PrimitiveTypeCode.UInt32:
-					return "uint32";
-				case PrimitiveTypeCode.Int64:
-					return "int64";
-				case PrimitiveTypeCode.UInt64:
-					return "uint64";
-				case PrimitiveTypeCode.Single:
-					return "float32";
-				case PrimitiveTypeCode.Double:
-					return "float64";
-				case PrimitiveTypeCode.String:
-					return "string";
-				case PrimitiveTypeCode.Object:
-					return "object";
-				default:
-					return "unknown";
-			}
+			return typeCode switch {
+				PrimitiveTypeCode.Boolean => "bool",
+				PrimitiveTypeCode.Byte => "uint8",
+				PrimitiveTypeCode.SByte => "int8",
+				PrimitiveTypeCode.Char => "char",
+				PrimitiveTypeCode.Int16 => "int16",
+				PrimitiveTypeCode.UInt16 => "uint16",
+				PrimitiveTypeCode.Int32 => "int32",
+				PrimitiveTypeCode.UInt32 => "uint32",
+				PrimitiveTypeCode.Int64 => "int64",
+				PrimitiveTypeCode.UInt64 => "uint64",
+				PrimitiveTypeCode.Single => "float32",
+				PrimitiveTypeCode.Double => "float64",
+				PrimitiveTypeCode.String => "string",
+				PrimitiveTypeCode.Object => "object",
+				_ => "unknown"
+			};
 		}
 
 		#endregion
@@ -1360,15 +1344,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 			if (sectionIndex < 0)
 				return 'D';
 			var sectionHeader = headers.SectionHeaders[sectionIndex];
-			switch (sectionHeader.Name)
-			{
-				case ".tls":
-					return 'T';
-				case ".text":
-					return 'I';
-				default:
-					return 'D';
-			}
+			return sectionHeader.Name switch {
+				".tls" => 'T',
+				".text" => 'I',
+				_ => 'D'
+			};
 		}
 		#endregion
 
@@ -1496,22 +1476,15 @@ namespace ICSharpCode.Decompiler.Disassembler
 				spaceAfter: true, spaceBefore: true, ShowMetadataTokens, ShowMetadataTokensInBase10);
 			WriteFlags(eventDefinition.Attributes, eventAttributes);
 			var provider = new DisassemblerSignatureTypeProvider(module, output);
-			Action<ILNameSyntax> signature;
-			switch (eventDefinition.Type.Kind)
-			{
-				case HandleKind.TypeDefinition:
-					signature = provider.GetTypeFromDefinition(module.Metadata, (TypeDefinitionHandle)eventDefinition.Type, 0);
-					break;
-				case HandleKind.TypeReference:
-					signature = provider.GetTypeFromReference(module.Metadata, (TypeReferenceHandle)eventDefinition.Type, 0);
-					break;
-				case HandleKind.TypeSpecification:
-					signature = provider.GetTypeFromSpecification(module.Metadata, new(declaringType, module),
-						(TypeSpecificationHandle)eventDefinition.Type, 0);
-					break;
-				default:
-					throw new BadImageFormatException("Expected a TypeDef, TypeRef or TypeSpec handle!");
-			}
+			Action<ILNameSyntax> signature = eventDefinition.Type.Kind switch {
+				HandleKind.TypeDefinition => provider.GetTypeFromDefinition(module.Metadata,
+					(TypeDefinitionHandle)eventDefinition.Type, 0),
+				HandleKind.TypeReference => provider.GetTypeFromReference(module.Metadata,
+					(TypeReferenceHandle)eventDefinition.Type, 0),
+				HandleKind.TypeSpecification => provider.GetTypeFromSpecification(module.Metadata,
+					new(declaringType, module), (TypeSpecificationHandle)eventDefinition.Type, 0),
+				_ => throw new BadImageFormatException("Expected a TypeDef, TypeRef or TypeSpec handle!")
+			};
 			signature(ILNameSyntax.TypeName);
 			output.Write(' ');
 			output.Write(DisassemblerHelpers.Escape(module.Metadata.GetString(eventDefinition.Name)));

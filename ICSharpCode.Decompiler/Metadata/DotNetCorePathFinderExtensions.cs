@@ -152,7 +152,7 @@ namespace ICSharpCode.Decompiler.Metadata
 						version = "4.0";
 					version = version.TrimStart('v');
 
-					if (type == "Microsoft.NET" || type == ".NETFramework")
+					if (type is "Microsoft.NET" or ".NETFramework")
 					{
 						return $".NETFramework,Version=v{version.Substring(0, Math.Min(3, version.Length))}";
 					}

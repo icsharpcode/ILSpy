@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			public bool Equals(TypePair other)
 			{
-				return object.Equals(this.FromType, other.FromType) && object.Equals(this.ToType, other.ToType);
+				return Equals(this.FromType, other.FromType) && Equals(this.ToType, other.ToType);
 			}
 
 			public override int GetHashCode()
@@ -367,29 +367,21 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (from == TypeCode.Empty)
 			{
 				// When converting from a native-sized integer, treat it as 64-bits
-				switch (fromType.Kind)
-				{
-					case TypeKind.NInt:
-						from = TypeCode.Int64;
-						break;
-					case TypeKind.NUInt:
-						from = TypeCode.UInt64;
-						break;
-				}
+				from = fromType.Kind switch {
+					TypeKind.NInt => TypeCode.Int64,
+					TypeKind.NUInt => TypeCode.UInt64,
+					_ => from
+				};
 			}
 			TypeCode to = ReflectionHelper.GetTypeCode(toType);
 			if (to == TypeCode.Empty)
 			{
 				// When converting to a native-sized integer, only 32-bits can be stored safely
-				switch (toType.Kind)
-				{
-					case TypeKind.NInt:
-						to = TypeCode.Int32;
-						break;
-					case TypeKind.NUInt:
-						to = TypeCode.UInt32;
-						break;
-				}
+				to = toType.Kind switch {
+					TypeKind.NInt => TypeCode.Int32,
+					TypeKind.NUInt => TypeCode.UInt32,
+					_ => to
+				};
 			}
 			if (to >= TypeCode.Single && to <= TypeCode.Decimal)
 			{
@@ -794,7 +786,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#region Implicit Constant-Expression Conversion
 		bool ImplicitConstantExpressionConversion(ResolveResult rr, IType toType)
 		{
-			if (rr == null || !rr.IsCompileTimeConstant)
+			if (rr is not { IsCompileTimeConstant: true })
 				return false;
 			// C# 4.0 spec: §6.1.9
 			TypeCode fromTypeCode = ReflectionHelper.GetTypeCode(rr.Type);
@@ -1117,7 +1109,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// Find the candidate operators:
 			Predicate<IMethod> opFilter;
 			if (isExplicit)
-				opFilter = m => m.IsStatic && m.IsOperator && (m.Name == "op_Explicit" || m.Name == "op_Implicit") && m.Parameters.Count == 1;
+				opFilter = m => m.IsStatic && m.IsOperator && m.Name is "op_Explicit" or "op_Implicit" && m.Parameters.Count == 1;
 			else
 				opFilter = m => m.IsStatic && m.IsOperator && m.Name == "op_Implicit" && m.Parameters.Count == 1;
 
@@ -1531,19 +1523,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		bool IsBetterIntegralType(TypeCode t1, TypeCode t2)
 		{
 			// signed types are better than unsigned types
-			switch (t1)
-			{
-				case TypeCode.SByte:
-					return t2 == TypeCode.Byte || t2 == TypeCode.UInt16 || t2 == TypeCode.UInt32 || t2 == TypeCode.UInt64;
-				case TypeCode.Int16:
-					return t2 == TypeCode.UInt16 || t2 == TypeCode.UInt32 || t2 == TypeCode.UInt64;
-				case TypeCode.Int32:
-					return t2 == TypeCode.UInt32 || t2 == TypeCode.UInt64;
-				case TypeCode.Int64:
-					return t2 == TypeCode.UInt64;
-				default:
-					return false;
-			}
+			return t1 switch {
+				TypeCode.SByte => t2 is TypeCode.Byte or TypeCode.UInt16 or TypeCode.UInt32 or TypeCode.UInt64,
+				TypeCode.Int16 => t2 is TypeCode.UInt16 or TypeCode.UInt32 or TypeCode.UInt64,
+				TypeCode.Int32 => t2 is TypeCode.UInt32 or TypeCode.UInt64,
+				TypeCode.Int64 => t2 == TypeCode.UInt64,
+				_ => false
+			};
 		}
 		#endregion
 	}

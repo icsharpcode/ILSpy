@@ -60,8 +60,8 @@ namespace ICSharpCode.ILSpy
 		public App()
 		{
 			var cmdArgs = Environment.GetCommandLineArgs().Skip(1);
-			App.CommandLineArguments = new(cmdArgs);
-			bool forceSingleInstance = (App.CommandLineArguments.SingleInstance ?? true)
+			CommandLineArguments = new(cmdArgs);
+			bool forceSingleInstance = (CommandLineArguments.SingleInstance ?? true)
 				&& !MiscSettingsPanel.CurrentMiscSettings.AllowMultipleInstances;
 			if (forceSingleInstance)
 			{
@@ -87,7 +87,7 @@ namespace ICSharpCode.ILSpy
 				}
 				cmdArgs = cmdArgs.Select(FullyQualifyPath);
 				string message = string.Join(Environment.NewLine, cmdArgs);
-				if (SendToPreviousInstance("ILSpy:\r\n" + message, !App.CommandLineArguments.NoActivate))
+				if (SendToPreviousInstance("ILSpy:\r\n" + message, !CommandLineArguments.NoActivate))
 				{
 					ReleaseSingleInstanceMutex();
 					Environment.Exit(0);
@@ -199,7 +199,7 @@ namespace ICSharpCode.ILSpy
 		protected override void OnStartup(StartupEventArgs e)
 		{
 			var output = new StringBuilder();
-			if (ILSpy.MainWindow.FormatExceptions(StartupExceptions.ToArray(), output))
+			if (MainWindow.FormatExceptions(StartupExceptions.ToArray(), output))
 			{
 				MessageBox.Show(output.ToString(), "Sorry we crashed!");
 				Environment.Exit(1);
@@ -342,7 +342,7 @@ namespace ICSharpCode.ILSpy
 
 		void Window_RequestNavigate(object sender, RequestNavigateEventArgs e)
 		{
-			ILSpy.MainWindow.Instance.NavigateTo(e);
+			MainWindow.Instance.NavigateTo(e);
 		}
 	}
 }

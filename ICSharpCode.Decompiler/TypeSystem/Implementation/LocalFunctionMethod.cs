@@ -70,7 +70,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override string ToString()
 		{
-			return string.Format("[LocalFunctionMethod: ReducedFrom={0}, Name={1}, NumberOfGeneratedParameters={2}, NumberOfCompilerGeneratedTypeParameters={3}, IsStaticLocalFunction={4}]", ReducedFrom, Name, NumberOfCompilerGeneratedParameters, NumberOfCompilerGeneratedTypeParameters, IsStaticLocalFunction);
+			return
+				$"[LocalFunctionMethod: ReducedFrom={ReducedFrom}, Name={Name}, NumberOfGeneratedParameters={NumberOfCompilerGeneratedParameters}, NumberOfCompilerGeneratedTypeParameters={NumberOfCompilerGeneratedTypeParameters}, IsStaticLocalFunction={IsStaticLocalFunction}]";
 		}
 
 		internal int NumberOfCompilerGeneratedParameters { get; }

@@ -24,8 +24,8 @@ using ICSharpCode.Decompiler;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
-	using ICSharpCode.Decompiler.TypeSystem;
-	using ICSharpCode.ILSpyX;
+	using Decompiler.TypeSystem;
+	using ILSpyX;
 
 	/// <summary>
 	/// Tree Node representing a field, method, property, or event.
@@ -75,23 +75,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		internal static AccessOverlayIcon GetOverlayIcon(Accessibility accessibility)
 		{
-			switch (accessibility)
-			{
-				case Accessibility.Public:
-					return AccessOverlayIcon.Public;
-				case Accessibility.Internal:
-					return AccessOverlayIcon.Internal;
-				case Accessibility.ProtectedAndInternal:
-					return AccessOverlayIcon.PrivateProtected;
-				case Accessibility.Protected:
-					return AccessOverlayIcon.Protected;
-				case Accessibility.ProtectedOrInternal:
-					return AccessOverlayIcon.ProtectedInternal;
-				case Accessibility.Private:
-					return AccessOverlayIcon.Private;
-				default:
-					return AccessOverlayIcon.CompilerControlled;
-			}
+			return accessibility switch {
+				Accessibility.Public => AccessOverlayIcon.Public,
+				Accessibility.Internal => AccessOverlayIcon.Internal,
+				Accessibility.ProtectedAndInternal => AccessOverlayIcon.PrivateProtected,
+				Accessibility.Protected => AccessOverlayIcon.Protected,
+				Accessibility.ProtectedOrInternal => AccessOverlayIcon.ProtectedInternal,
+				Accessibility.Private => AccessOverlayIcon.Private,
+				_ => AccessOverlayIcon.CompilerControlled
+			};
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)

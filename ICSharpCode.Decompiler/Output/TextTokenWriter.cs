@@ -132,10 +132,7 @@ namespace ICSharpCode.Decompiler
 
 		ISymbol FilterMember(ISymbol symbol)
 		{
-			if (symbol == null)
-				return null;
-
-			if (symbol is LocalFunctionMethod)
+			if (symbol is null or LocalFunctionMethod)
 				return null;
 
 			return symbol;
@@ -175,7 +172,7 @@ namespace ICSharpCode.Decompiler
 			if (node is Identifier && node.Parent != null)
 				node = node.Parent;
 
-			if (node is ParameterDeclaration || node is VariableInitializer || node is CatchClause || node is VariableDesignation)
+			if (node is ParameterDeclaration or VariableInitializer or CatchClause or VariableDesignation)
 			{
 				var variable = node.Annotation<ILVariableResolveResult>()?.Variable;
 				if (variable != null)
@@ -444,7 +441,7 @@ namespace ICSharpCode.Decompiler
 
 		private bool IsUsingDeclaration(AstNode node)
 		{
-			return node is UsingDeclaration || node is UsingAliasDeclaration;
+			return node is UsingDeclaration or UsingAliasDeclaration;
 		}
 
 		public override void EndNode(AstNode node)

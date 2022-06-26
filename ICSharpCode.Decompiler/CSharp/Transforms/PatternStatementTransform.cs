@@ -221,9 +221,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		bool DescendIntoStatement(AstNode node)
 		{
-			if (node is Expression || node is ExpressionStatement)
-				return false;
-			if (node is WhileStatement || node is ForeachStatement || node is DoWhileStatement || node is ForStatement)
+			if (node is Expression or ExpressionStatement or WhileStatement or ForeachStatement or DoWhileStatement or ForStatement)
 				return false;
 			return true;
 		}
@@ -286,7 +284,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		bool VariableCanBeUsedAsForeachLocal(IL.ILVariable itemVar, Statement loop)
 		{
-			if (itemVar == null || !(itemVar.Kind == IL.VariableKind.Local || itemVar.Kind == IL.VariableKind.StackSlot))
+			if (itemVar == null || !(itemVar.Kind is IL.VariableKind.Local or IL.VariableKind.StackSlot))
 			{
 				// only locals/temporaries can be converted into foreach loop variable
 				return false;
@@ -495,7 +493,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (upperBounds == null)
 				{
 					collection = m.Get<IdentifierExpression>("collection").Single().GetILVariable();
-					if (!(collection?.Type is Decompiler.TypeSystem.ArrayType arrayType))
+					if (!(collection?.Type is ArrayType arrayType))
 						break;
 					upperBounds = new IL.ILVariable[arrayType.Dimensions];
 				}
@@ -520,10 +518,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			statementsToDelete.Add(stmt);
 			statementsToDelete.Add(stmt.GetNextStatement());
 			var itemVariable = foreachVariable.GetILVariable();
-			if (itemVariable == null || !itemVariable.IsSingleDefinition
-				|| (itemVariable.Kind != IL.VariableKind.Local && itemVariable.Kind != IL.VariableKind.StackSlot)
-				|| !upperBounds.All(ub => ub.IsSingleDefinition && ub.LoadCount == 1)
-				|| !lowerBounds.All(lb => lb.StoreCount == 2 && lb.LoadCount == 3 && lb.AddressCount == 0))
+			if (itemVariable is not { IsSingleDefinition: true } 
+			    || (itemVariable.Kind != IL.VariableKind.Local && itemVariable.Kind != IL.VariableKind.StackSlot) 
+			    || !upperBounds.All(ub => ub.IsSingleDefinition && ub.LoadCount == 1) 
+			    || !lowerBounds.All(lb => lb.StoreCount == 2 && lb.LoadCount == 3 && lb.AddressCount == 0))
 				return null;
 			var body = new BlockStatement();
 			foreach (var statement in statements)
@@ -598,7 +596,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return false;
 			if (accessorsMustBeCompilerGenerated && !property.Getter.IsCompilerGenerated())
 				return false;
-			if (property.Setter is IMethod setter)
+			if (property.Setter is { } setter)
 			{
 				if (accessorsMustBeCompilerGenerated && !setter.IsCompilerGenerated())
 					return false;

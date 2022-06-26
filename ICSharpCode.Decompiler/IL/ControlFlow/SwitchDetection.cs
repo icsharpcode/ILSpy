@@ -174,7 +174,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// complex multi-block switch that can be combined into a single SwitchInstruction
 				ILInstruction switchValue = new LdLoc(analysis.SwitchVariable);
 				Debug.Assert(switchValue.ResultType.IsIntegerType() || switchValue.ResultType == StackType.Unknown);
-				if (!(switchValue.ResultType == StackType.I4 || switchValue.ResultType == StackType.I8))
+				if (!(switchValue.ResultType is StackType.I4 or StackType.I8))
 				{
 					// switchValue must have a result type of either I4 or I8
 					switchValue = new Conv(switchValue, PrimitiveType.I8, false, Sign.Signed);

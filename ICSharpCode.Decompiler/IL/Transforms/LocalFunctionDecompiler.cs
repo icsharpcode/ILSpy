@@ -250,7 +250,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 								AddAsArgument(i - firstArgumentIndex, call.Arguments[i]);
 							}
 							break;
-						case LdFtn _:
+						case LdFtn:
 							// &LocalFunction is only possible, if the local function is declared static,
 							// this means that the local function can be declared in the top-level scope.
 							// Thus, there are no closure parameters that need propagation.
@@ -284,10 +284,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					switch (argument)
 					{
-						case LdLoc _:
-						case LdLoca _:
-						case LdFlda _:
-						case LdObj _:
+						case LdLoc:
+						case LdLoca:
+						case LdFlda:
+						case LdObj:
 							if (index >= 0 && !IsClosureParameter(info.Method.Parameters[index], resolveContext))
 								return;
 							break;
@@ -501,7 +501,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return skipCount;
 		}
 
-		static TypeSystem.GenericContext? GenericContextFromTypeArguments(IMethod targetMethod, int skipCount)
+		static GenericContext? GenericContextFromTypeArguments(IMethod targetMethod, int skipCount)
 		{
 			if (skipCount < 0 || skipCount > targetMethod.TypeParameters.Count)
 			{
@@ -510,7 +510,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			int total = targetMethod.DeclaringType.TypeParameters.Count + skipCount;
 			if (total == 0)
-				return default(TypeSystem.GenericContext);
+				return default(GenericContext);
 
 			var classTypeParameters = new List<ITypeParameter>(targetMethod.DeclaringType.TypeParameters);
 			var methodTypeParameters = new List<ITypeParameter>(targetMethod.TypeParameters);
@@ -544,7 +544,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			}
 
-			return new TypeSystem.GenericContext(classTypeParameters, methodTypeParameters);
+			return new GenericContext(classTypeParameters, methodTypeParameters);
 		}
 
 		static T FindCommonAncestorInstruction<T>(ILInstruction a, ILInstruction b)
@@ -678,7 +678,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						DetermineCaptureAndDeclarationScope(info, -1, call.Arguments[0]);
 					}
 					break;
-				case LdFtn _:
+				case LdFtn:
 					// &LocalFunction is only possible, if the local function is declared static,
 					// this means that the local function can be declared in the top-level scope.
 					// leave info.DeclarationScope null/unassigned.

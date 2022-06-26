@@ -218,7 +218,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		private class ReadyToRunAssemblyResolver : ILCompiler.Reflection.ReadyToRun.IAssemblyResolver
 		{
-			private Decompiler.Metadata.IAssemblyResolver assemblyResolver;
+			private IAssemblyResolver assemblyResolver;
 
 			public ReadyToRunAssemblyResolver(LoadedAssembly loadedAssembly)
 			{
@@ -227,7 +227,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 			public IAssemblyMetadata FindAssembly(MetadataReader metadataReader, AssemblyReferenceHandle assemblyReferenceHandle, string parentFile)
 			{
-				PEFile module = assemblyResolver.Resolve(new Decompiler.Metadata.AssemblyReference(metadataReader, assemblyReferenceHandle));
+				PEFile module = assemblyResolver.Resolve(new AssemblyReference(metadataReader, assemblyReferenceHandle));
 				PEReader reader = module?.Reader;
 				return reader == null ? null : new StandaloneAssemblyMetadata(reader);
 			}

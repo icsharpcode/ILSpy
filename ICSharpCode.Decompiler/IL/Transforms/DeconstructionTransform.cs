@@ -169,7 +169,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (loadInst.SlotInfo == StObj.TargetSlot)
 			{
-				if (value.OpCode == OpCode.LdFlda || value.OpCode == OpCode.LdElema)
+				if (value.OpCode is OpCode.LdFlda or OpCode.LdElema)
 					return false;
 			}
 			if (deconstruction.Init.Count > 0)
@@ -482,19 +482,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (c.IsNumericConversion && conv != null)
 			{
-				switch (conv.Kind)
-				{
-					case ConversionKind.IntToFloat:
-						return inputType.GetSign() == conv.InputSign;
-					case ConversionKind.FloatPrecisionChange:
-						return true;
-					case ConversionKind.SignExtend:
-						return inputType.GetSign() == Sign.Signed;
-					case ConversionKind.ZeroExtend:
-						return inputType.GetSign() == Sign.Unsigned;
-					default:
-						return false;
-				}
+				return conv.Kind switch {
+					ConversionKind.IntToFloat => inputType.GetSign() == conv.InputSign,
+					ConversionKind.FloatPrecisionChange => true,
+					ConversionKind.SignExtend => inputType.GetSign() == Sign.Signed,
+					ConversionKind.ZeroExtend => inputType.GetSign() == Sign.Unsigned,
+					_ => false
+				};
 			}
 			return false;
 		}

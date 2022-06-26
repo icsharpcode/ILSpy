@@ -226,10 +226,10 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		#region IField tests
 		[TestCase(All & ~PlaceReturnTypeAfterParameterList, "private int ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.Program.test;")]
 		[TestCase(ILSpyMainTreeViewMemberFlags, "test : int")]
-		[TestCase(ConversionFlags.All & ~(ConversionFlags.ShowDeclaringType | ConversionFlags.ShowModifiers | ConversionFlags.ShowAccessibility | ConversionFlags.PlaceReturnTypeAfterParameterList), "int test;")]
+		[TestCase(All & ~(ShowDeclaringType | ShowModifiers | ShowAccessibility | PlaceReturnTypeAfterParameterList), "int test;")]
 		public void SimpleField(ConversionFlags flags, string expectedOutput)
 		{
-			var field = GetDefinition(typeof(CSharpAmbienceTests.Program)).GetFields(f => f.Name == "test").Single();
+			var field = GetDefinition(typeof(Program)).GetFields(f => f.Name == "test").Single();
 			ambience.ConversionFlags = flags;
 
 			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(field));
@@ -239,7 +239,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[TestCase(ILSpyMainTreeViewMemberFlags, "TEST2 : int")]
 		public void SimpleConstField(ConversionFlags flags, string expectedOutput)
 		{
-			var field = compilation.FindType(typeof(CSharpAmbienceTests.Program)).GetFields(f => f.Name == "TEST2").Single();
+			var field = compilation.FindType(typeof(Program)).GetFields(f => f.Name == "TEST2").Single();
 			ambience.ConversionFlags = flags;
 
 			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(field));
@@ -250,8 +250,8 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[Test]
 		public void EventWithDeclaringType()
 		{
-			var ev = compilation.FindType(typeof(CSharpAmbienceTests.Program)).GetEvents(f => f.Name == "ProgramChanged").Single();
-			ambience.ConversionFlags = ConversionFlags.StandardConversionFlags | ConversionFlags.ShowDeclaringType;
+			var ev = compilation.FindType(typeof(Program)).GetEvents(f => f.Name == "ProgramChanged").Single();
+			ambience.ConversionFlags = StandardConversionFlags | ShowDeclaringType;
 			string result = ambience.ConvertSymbol(ev);
 
 			Assert.AreEqual("public event EventHandler Program.ProgramChanged;", result);
@@ -260,8 +260,8 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[Test]
 		public void CustomEvent()
 		{
-			var ev = compilation.FindType(typeof(CSharpAmbienceTests.Program)).GetEvents(f => f.Name == "SomeEvent").Single();
-			ambience.ConversionFlags = ConversionFlags.StandardConversionFlags;
+			var ev = compilation.FindType(typeof(Program)).GetEvents(f => f.Name == "SomeEvent").Single();
+			ambience.ConversionFlags = StandardConversionFlags;
 			string result = ambience.ConvertSymbol(ev);
 
 			Assert.AreEqual("public event EventHandler SomeEvent;", result);
@@ -273,7 +273,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[TestCase(ILSpyMainTreeViewMemberFlags, "Test : int")]
 		public void AutomaticProperty(ConversionFlags flags, string expectedOutput)
 		{
-			var prop = compilation.FindType(typeof(CSharpAmbienceTests.Program)).GetProperties(p => p.Name == "Test").Single();
+			var prop = compilation.FindType(typeof(Program)).GetProperties(p => p.Name == "Test").Single();
 			ambience.ConversionFlags = flags;
 
 			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(prop));
@@ -283,7 +283,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[TestCase(ILSpyMainTreeViewMemberFlags, "this[int] : int")]
 		public void Indexer(ConversionFlags flags, string expectedOutput)
 		{
-			var prop = compilation.FindType(typeof(CSharpAmbienceTests.Program)).GetProperties(p => p.IsIndexer).Single();
+			var prop = compilation.FindType(typeof(Program)).GetProperties(p => p.IsIndexer).Single();
 			ambience.ConversionFlags = flags;
 
 			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(prop));
@@ -295,7 +295,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[TestCase(ILSpyMainTreeViewMemberFlags, "Program(int)")]
 		public void ConstructorTests(ConversionFlags flags, string expectedOutput)
 		{
-			var prop = compilation.FindType(typeof(CSharpAmbienceTests.Program)).GetConstructors().Single();
+			var prop = compilation.FindType(typeof(Program)).GetConstructors().Single();
 			ambience.ConversionFlags = flags;
 
 			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(prop));
@@ -305,7 +305,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[TestCase(ILSpyMainTreeViewMemberFlags, "~Program()")]
 		public void DestructorTests(ConversionFlags flags, string expectedOutput)
 		{
-			var dtor = compilation.FindType(typeof(CSharpAmbienceTests.Program))
+			var dtor = compilation.FindType(typeof(Program))
 				.GetMembers(m => m.SymbolKind == SymbolKind.Destructor, GetMemberOptions.IgnoreInheritedMembers).Single();
 			ambience.ConversionFlags = flags;
 

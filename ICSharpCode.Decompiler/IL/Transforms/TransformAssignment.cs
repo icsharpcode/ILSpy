@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			else if (block.Instructions[nextPos] is CallInstruction call)
 			{
 				// call must be a setter call:
-				if (!(call.OpCode == OpCode.Call || call.OpCode == OpCode.CallVirt))
+				if (!(call.OpCode is OpCode.Call or OpCode.CallVirt))
 					return false;
 				if (call.ResultType != StackType.Void || call.Arguments.Count == 0)
 					return false;
@@ -362,7 +362,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				else if (operatorCall.Arguments.Count == 1)
 				{
-					if (!(operatorCall.Method.Name == "op_Increment" || operatorCall.Method.Name == "op_Decrement"))
+					if (!(operatorCall.Method.Name is "op_Increment" or "op_Decrement"))
 						return false;
 					// use a dummy node so that we don't need a dedicated instruction for user-defined unary operator calls
 					rhs = new LdcI4(1);
@@ -468,7 +468,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (inst.Variable.Kind != VariableKind.StackSlot)
 				return false;
-			if (!(nextInst.Variable.Kind == VariableKind.Local || nextInst.Variable.Kind == VariableKind.Parameter))
+			if (!(nextInst.Variable.Kind is VariableKind.Local or VariableKind.Parameter))
 				return false;
 			if (!nextInst.Value.MatchLdLoc(inst.Variable))
 				return false;
@@ -521,7 +521,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				switch (type.GetEnumUnderlyingType().GetDefinition()?.KnownTypeCode)
 				{
 					case KnownTypeCode.Boolean:
-						return !(val == 0 || val == 1);
+						return !(val is 0 or 1);
 					case KnownTypeCode.Byte:
 						return !(val >= byte.MinValue && val <= byte.MaxValue);
 					case KnownTypeCode.SByte:
@@ -623,7 +623,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				value = stobj.Value;
 				return SemanticHelper.IsPure(stobj.Target.Flags);
 			}
-			else if (inst is CallInstruction call && (call.OpCode == OpCode.Call || call.OpCode == OpCode.CallVirt))
+			else if (inst is CallInstruction call && call.OpCode is OpCode.Call or OpCode.CallVirt)
 			{
 				if (call.Method.Parameters.Count == 0)
 				{
@@ -644,7 +644,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				value = call.Arguments.Last();
 				return IsSameMember(call.Method, (call.Method.AccessorOwner as IProperty)?.Setter);
 			}
-			else if (inst is StLoc stloc && (stloc.Variable.Kind == VariableKind.Local || stloc.Variable.Kind == VariableKind.Parameter))
+			else if (inst is StLoc stloc && stloc.Variable.Kind is VariableKind.Local or VariableKind.Parameter)
 			{
 				storeType = stloc.Variable.Type;
 				value = stloc.Value;
@@ -781,7 +781,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var binary = UnwrapSmallIntegerConv(value, out var conv) as BinaryNumericInstruction;
 			if (binary != null && (binary.Right.MatchLdcI(1) || binary.Right.MatchLdcF4(1) || binary.Right.MatchLdcF8(1)))
 			{
-				if (!(binary.Operator == BinaryNumericOperator.Add || binary.Operator == BinaryNumericOperator.Sub))
+				if (!(binary.Operator is BinaryNumericOperator.Add or BinaryNumericOperator.Sub))
 					return false;
 				if (!ValidateCompoundAssign(binary, conv, targetType, context.Settings))
 					return false;
@@ -789,7 +789,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			else if (value is Call operatorCall && operatorCall.Method.IsOperator && operatorCall.Arguments.Count == 1)
 			{
-				if (!(operatorCall.Method.Name == "op_Increment" || operatorCall.Method.Name == "op_Decrement"))
+				if (!(operatorCall.Method.Name is "op_Increment" or "op_Decrement"))
 					return false;
 				if (operatorCall.IsLifted)
 					return false; // TODO: add tests and think about whether nullables need special considerations
@@ -801,7 +801,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (stloc == null)
 				return false;
-			if (!(stloc.Variable.Kind == VariableKind.Local || stloc.Variable.Kind == VariableKind.StackSlot))
+			if (!(stloc.Variable.Kind is VariableKind.Local or VariableKind.StackSlot))
 				return false;
 			if (!IsMatchingCompoundLoad(stloc.Value, store, out var target, out var targetKind, out var finalizeMatch, forbiddenVariable: stloc.Variable))
 				return false;
@@ -866,7 +866,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (!binary.Left.MatchLdLoc(tmpVar) || !(binary.Right.MatchLdcI(1) || binary.Right.MatchLdcF4(1) || binary.Right.MatchLdcF8(1)))
 					return false;
-				if (!(binary.Operator == BinaryNumericOperator.Add || binary.Operator == BinaryNumericOperator.Sub))
+				if (!(binary.Operator is BinaryNumericOperator.Add or BinaryNumericOperator.Sub))
 					return false;
 				if (!ValidateCompoundAssign(binary, conv, targetType, context.Settings))
 					return false;
@@ -879,7 +879,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (!operatorCall.Arguments[0].MatchLdLoc(tmpVar))
 					return false;
-				if (!(operatorCall.Method.Name == "op_Increment" || operatorCall.Method.Name == "op_Decrement"))
+				if (!(operatorCall.Method.Name is "op_Increment" or "op_Decrement"))
 					return false;
 				if (operatorCall.IsLifted)
 					return false; // TODO: add tests and think about whether nullables need special considerations

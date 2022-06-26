@@ -90,12 +90,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (effectiveBaseClass == null)
 				{
 					// protect against cyclic type parameters
-					using (var busyLock = BusyManager.Enter(this))
-					{
-						if (!busyLock.Success)
-							return SpecialType.UnknownType; // don't cache this error
-						effectiveBaseClass = CalculateEffectiveBaseClass();
-					}
+					using var busyLock = BusyManager.Enter(this);
+					if (!busyLock.Success)
+						return SpecialType.UnknownType; // don't cache this error
+					effectiveBaseClass = CalculateEffectiveBaseClass();
 				}
 				return effectiveBaseClass;
 			}
@@ -144,12 +142,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				else
 				{
 					// protect against cyclic type parameters
-					using (var busyLock = BusyManager.Enter(this))
-					{
-						if (!busyLock.Success)
-							return EmptyList<IType>.Instance; // don't cache this error
-						return LazyInit.GetOrSet(ref effectiveInterfaceSet, CalculateEffectiveInterfaceSet());
-					}
+					using var busyLock = BusyManager.Enter(this);
+					if (!busyLock.Success)
+						return EmptyList<IType>.Instance; // don't cache this error
+					return LazyInit.GetOrSet(ref effectiveInterfaceSet, CalculateEffectiveInterfaceSet());
 				}
 			}
 		}
@@ -191,7 +187,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				// A type parameter is known to be a reference type if it has the reference type constraint
 				// or its effective base class is not object or System.ValueType.
 				IType effectiveBaseClass = this.EffectiveBaseClass;
-				if (effectiveBaseClass.Kind == TypeKind.Class || effectiveBaseClass.Kind == TypeKind.Delegate)
+				if (effectiveBaseClass.Kind is TypeKind.Class or TypeKind.Delegate)
 				{
 					ITypeDefinition effectiveBaseClassDef = effectiveBaseClass.GetDefinition();
 					if (effectiveBaseClassDef != null)
@@ -206,7 +202,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					}
 					return true;
 				}
-				else if (effectiveBaseClass.Kind == TypeKind.Struct || effectiveBaseClass.Kind == TypeKind.Enum)
+				else if (effectiveBaseClass.Kind is TypeKind.Struct or TypeKind.Enum)
 				{
 					return false;
 				}

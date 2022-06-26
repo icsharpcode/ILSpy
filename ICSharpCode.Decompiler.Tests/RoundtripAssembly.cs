@@ -180,32 +180,30 @@ namespace ICSharpCode.Decompiler.Tests
 				{
 					Console.WriteLine($"Decompiling {fileToRoundtrip}...");
 					Stopwatch w = Stopwatch.StartNew();
-					using (var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read))
+					using var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read);
+					PEFile module = new(file, fileStream, PEStreamOptions.PrefetchEntireImage);
+					var resolver = new TestAssemblyResolver(file, inputDir, module.Metadata.DetectTargetFrameworkId());
+					resolver.AddSearchDirectory(inputDir);
+					resolver.RemoveSearchDirectory(".");
+
+					// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
+					var projectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");
+
+					var settings = new DecompilerSettings(languageVersion);
+					if (useOldProjectFormat)
 					{
-						PEFile module = new(file, fileStream, PEStreamOptions.PrefetchEntireImage);
-						var resolver = new TestAssemblyResolver(file, inputDir, module.Metadata.DetectTargetFrameworkId());
-						resolver.AddSearchDirectory(inputDir);
-						resolver.RemoveSearchDirectory(".");
-
-						// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
-						var projectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");
-
-						var settings = new DecompilerSettings(languageVersion);
-						if (useOldProjectFormat)
-						{
-							settings.UseSdkStyleProjectFormat = false;
-						}
-
-						var decompiler = new TestProjectDecompiler(projectGuid, resolver, resolver, settings);
-
-						if (snkFilePath != null)
-						{
-							decompiler.StrongNameKeyFile = Path.Combine(inputDir, snkFilePath);
-						}
-						decompiler.DecompileProject(module, decompiledDir);
-						Console.WriteLine($"Decompiled {fileToRoundtrip} in {w.Elapsed.TotalSeconds:f2}");
-						projectFile = Path.Combine(decompiledDir, module.Name + ".csproj");
+						settings.UseSdkStyleProjectFormat = false;
 					}
+
+					var decompiler = new TestProjectDecompiler(projectGuid, resolver, resolver, settings);
+
+					if (snkFilePath != null)
+					{
+						decompiler.StrongNameKeyFile = Path.Combine(inputDir, snkFilePath);
+					}
+					decompiler.DecompileProject(module, decompiledDir);
+					Console.WriteLine($"Decompiled {fileToRoundtrip} in {w.Elapsed.TotalSeconds:f2}");
+					projectFile = Path.Combine(decompiledDir, module.Name + ".csproj");
 				}
 				else
 				{

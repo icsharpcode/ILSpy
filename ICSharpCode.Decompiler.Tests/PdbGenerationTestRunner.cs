@@ -58,18 +58,16 @@ namespace ICSharpCode.Decompiler.Tests
 			var decompiler = new CSharpDecompiler(moduleDefinition, resolver, new());
 			var expectedPdbId = new BlobContentId(Guid.NewGuid(), (uint)Random.Shared.Next());
 
-			using (FileStream pdbStream = File.Open(Path.Combine(TestCasePath, nameof(CustomPdbId) + ".pdb"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
-			{
-				pdbStream.SetLength(0);
-				PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new(), pdbStream, noLogo: true, pdbId: expectedPdbId);
+			using FileStream pdbStream = File.Open(Path.Combine(TestCasePath, nameof(CustomPdbId) + ".pdb"), FileMode.OpenOrCreate, FileAccess.ReadWrite);
+			pdbStream.SetLength(0);
+			PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new(), pdbStream, noLogo: true, pdbId: expectedPdbId);
 
-				pdbStream.Position = 0;
-				var metadataReader = MetadataReaderProvider.FromPortablePdbStream(pdbStream).GetMetadataReader();
-				var generatedPdbId = new BlobContentId(metadataReader.DebugMetadataHeader.Id);
+			pdbStream.Position = 0;
+			var metadataReader = MetadataReaderProvider.FromPortablePdbStream(pdbStream).GetMetadataReader();
+			var generatedPdbId = new BlobContentId(metadataReader.DebugMetadataHeader.Id);
 
-				Assert.AreEqual(expectedPdbId.Guid, generatedPdbId.Guid);
-				Assert.AreEqual(expectedPdbId.Stamp, generatedPdbId.Stamp);
-			}
+			Assert.AreEqual(expectedPdbId.Guid, generatedPdbId.Guid);
+			Assert.AreEqual(expectedPdbId.Stamp, generatedPdbId.Stamp);
 		}
 
 		private void TestGeneratePdb([CallerMemberName] string testName = null)

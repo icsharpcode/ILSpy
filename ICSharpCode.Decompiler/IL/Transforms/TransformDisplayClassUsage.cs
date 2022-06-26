@@ -347,17 +347,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Try to find a common ancestor of all uses of the variable v.
 			ILInstruction Visit(ILInstruction inst)
 			{
-				switch (inst)
-				{
-					case LdLoc l when l.Variable == v:
-						return l;
-					case StLoc s when s.Variable == v:
-						return s;
-					case LdLoca la when la.Variable == v:
-						return la;
-					default:
-						return VisitChildren(inst);
-				}
+				return inst switch {
+					LdLoc l when l.Variable == v => l,
+					StLoc s when s.Variable == v => s,
+					LdLoca la when la.Variable == v => la,
+					_ => VisitChildren(inst)
+				};
 			}
 
 			ILInstruction VisitChildren(ILInstruction inst)
@@ -643,8 +638,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				&& IsPotentialClosure(decompilationContext.CurrentTypeDefinition, closureType, allowTypeImplementingInterfaces: true)))
 				return null;
 
-			var displayClass = new DisplayClass(thisVariable, thisVariable.Type.GetDefinition());
-			displayClass.CaptureScope = (BlockContainer)function.Body;
+			var displayClass = new DisplayClass(thisVariable, thisVariable.Type.GetDefinition()) {
+				CaptureScope = (BlockContainer)function.Body
+			};
 			foreach (var stateMachineVariable in function.Variables)
 			{
 				if (stateMachineVariable.StateMachineField == null || displayClass.VariablesToDeclare.ContainsKey(stateMachineVariable.StateMachineField))
@@ -757,11 +753,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			DisplayClass displayClass;
 			if (inst.Parent is Block parentBlock && inst.Variable.IsSingleDefinition)
 			{
-				if ((inst.Variable.Kind == VariableKind.Local || inst.Variable.Kind == VariableKind.StackSlot) && inst.Variable.LoadCount == 0)
+				if (inst.Variable.Kind is VariableKind.Local or VariableKind.StackSlot && inst.Variable.LoadCount == 0)
 				{
 					// traverse pre-order, so that we do not have to deal with more special cases afterwards
 					base.VisitStLoc(inst);
-					if (inst.Value is StLoc || inst.Value is CompoundAssignmentInstruction)
+					if (inst.Value is StLoc or CompoundAssignmentInstruction)
 					{
 						context.Step($"Remove unused variable assignment {inst.Variable.Name}", inst);
 						inst.ReplaceWith(inst.Value);
@@ -785,7 +781,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					parentBlock.Instructions.Remove(inst);
 					return;
 				}
-				if (inst.Value is LdLoc || inst.Value is LdObj)
+				if (inst.Value is LdLoc or LdObj)
 				{
 					// in some cases (e.g. if inlining fails), there can be a reference to a display class in a stack slot,
 					// in that case it is necessary to resolve the reference and iff it can be propagated, replace all loads

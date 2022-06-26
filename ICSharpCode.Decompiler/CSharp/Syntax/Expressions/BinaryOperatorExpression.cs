@@ -56,8 +56,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static TokenRole RangeRole = new("..");
 		public readonly static TokenRole IsKeywordRole = IsExpression.IsKeywordRole;
 
-		public readonly static Role<Expression> LeftRole = new("Left", Expression.Null);
-		public readonly static Role<Expression> RightRole = new("Right", Expression.Null);
+		public readonly static Role<Expression> LeftRole = new("Left", Null);
+		public readonly static Role<Expression> RightRole = new("Right", Null);
 
 		public BinaryOperatorExpression()
 		{
@@ -113,102 +113,61 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public static TokenRole GetOperatorRole(BinaryOperatorType op)
 		{
-			switch (op)
-			{
-				case BinaryOperatorType.BitwiseAnd:
-					return BitwiseAndRole;
-				case BinaryOperatorType.BitwiseOr:
-					return BitwiseOrRole;
-				case BinaryOperatorType.ConditionalAnd:
-					return ConditionalAndRole;
-				case BinaryOperatorType.ConditionalOr:
-					return ConditionalOrRole;
-				case BinaryOperatorType.ExclusiveOr:
-					return ExclusiveOrRole;
-				case BinaryOperatorType.GreaterThan:
-					return GreaterThanRole;
-				case BinaryOperatorType.GreaterThanOrEqual:
-					return GreaterThanOrEqualRole;
-				case BinaryOperatorType.Equality:
-					return EqualityRole;
-				case BinaryOperatorType.InEquality:
-					return InEqualityRole;
-				case BinaryOperatorType.LessThan:
-					return LessThanRole;
-				case BinaryOperatorType.LessThanOrEqual:
-					return LessThanOrEqualRole;
-				case BinaryOperatorType.Add:
-					return AddRole;
-				case BinaryOperatorType.Subtract:
-					return SubtractRole;
-				case BinaryOperatorType.Multiply:
-					return MultiplyRole;
-				case BinaryOperatorType.Divide:
-					return DivideRole;
-				case BinaryOperatorType.Modulus:
-					return ModulusRole;
-				case BinaryOperatorType.ShiftLeft:
-					return ShiftLeftRole;
-				case BinaryOperatorType.ShiftRight:
-					return ShiftRightRole;
-				case BinaryOperatorType.NullCoalescing:
-					return NullCoalescingRole;
-				case BinaryOperatorType.Range:
-					return RangeRole;
-				case BinaryOperatorType.IsPattern:
-					return IsKeywordRole;
-				default:
-					throw new NotSupportedException("Invalid value for BinaryOperatorType");
-			}
+			return op switch {
+				BinaryOperatorType.BitwiseAnd => BitwiseAndRole,
+				BinaryOperatorType.BitwiseOr => BitwiseOrRole,
+				BinaryOperatorType.ConditionalAnd => ConditionalAndRole,
+				BinaryOperatorType.ConditionalOr => ConditionalOrRole,
+				BinaryOperatorType.ExclusiveOr => ExclusiveOrRole,
+				BinaryOperatorType.GreaterThan => GreaterThanRole,
+				BinaryOperatorType.GreaterThanOrEqual => GreaterThanOrEqualRole,
+				BinaryOperatorType.Equality => EqualityRole,
+				BinaryOperatorType.InEquality => InEqualityRole,
+				BinaryOperatorType.LessThan => LessThanRole,
+				BinaryOperatorType.LessThanOrEqual => LessThanOrEqualRole,
+				BinaryOperatorType.Add => AddRole,
+				BinaryOperatorType.Subtract => SubtractRole,
+				BinaryOperatorType.Multiply => MultiplyRole,
+				BinaryOperatorType.Divide => DivideRole,
+				BinaryOperatorType.Modulus => ModulusRole,
+				BinaryOperatorType.ShiftLeft => ShiftLeftRole,
+				BinaryOperatorType.ShiftRight => ShiftRightRole,
+				BinaryOperatorType.NullCoalescing => NullCoalescingRole,
+				BinaryOperatorType.Range => RangeRole,
+				BinaryOperatorType.IsPattern => IsKeywordRole,
+				_ => throw new NotSupportedException("Invalid value for BinaryOperatorType")
+			};
 		}
 
 		public static ExpressionType GetLinqNodeType(BinaryOperatorType op, bool checkForOverflow)
 		{
-			switch (op)
-			{
-				case BinaryOperatorType.BitwiseAnd:
-					return ExpressionType.And;
-				case BinaryOperatorType.BitwiseOr:
-					return ExpressionType.Or;
-				case BinaryOperatorType.ConditionalAnd:
-					return ExpressionType.AndAlso;
-				case BinaryOperatorType.ConditionalOr:
-					return ExpressionType.OrElse;
-				case BinaryOperatorType.ExclusiveOr:
-					return ExpressionType.ExclusiveOr;
-				case BinaryOperatorType.GreaterThan:
-					return ExpressionType.GreaterThan;
-				case BinaryOperatorType.GreaterThanOrEqual:
-					return ExpressionType.GreaterThanOrEqual;
-				case BinaryOperatorType.Equality:
-					return ExpressionType.Equal;
-				case BinaryOperatorType.InEquality:
-					return ExpressionType.NotEqual;
-				case BinaryOperatorType.LessThan:
-					return ExpressionType.LessThan;
-				case BinaryOperatorType.LessThanOrEqual:
-					return ExpressionType.LessThanOrEqual;
-				case BinaryOperatorType.Add:
-					return checkForOverflow ? ExpressionType.AddChecked : ExpressionType.Add;
-				case BinaryOperatorType.Subtract:
-					return checkForOverflow ? ExpressionType.SubtractChecked : ExpressionType.Subtract;
-				case BinaryOperatorType.Multiply:
-					return checkForOverflow ? ExpressionType.MultiplyChecked : ExpressionType.Multiply;
-				case BinaryOperatorType.Divide:
-					return ExpressionType.Divide;
-				case BinaryOperatorType.Modulus:
-					return ExpressionType.Modulo;
-				case BinaryOperatorType.ShiftLeft:
-					return ExpressionType.LeftShift;
-				case BinaryOperatorType.ShiftRight:
-					return ExpressionType.RightShift;
-				case BinaryOperatorType.NullCoalescing:
-					return ExpressionType.Coalesce;
-				case BinaryOperatorType.Range:
-					return ExpressionType.Extension;
-				default:
-					throw new NotSupportedException("Invalid value for BinaryOperatorType");
-			}
+			return op switch {
+				BinaryOperatorType.BitwiseAnd => ExpressionType.And,
+				BinaryOperatorType.BitwiseOr => ExpressionType.Or,
+				BinaryOperatorType.ConditionalAnd => ExpressionType.AndAlso,
+				BinaryOperatorType.ConditionalOr => ExpressionType.OrElse,
+				BinaryOperatorType.ExclusiveOr => ExpressionType.ExclusiveOr,
+				BinaryOperatorType.GreaterThan => ExpressionType.GreaterThan,
+				BinaryOperatorType.GreaterThanOrEqual => ExpressionType.GreaterThanOrEqual,
+				BinaryOperatorType.Equality => ExpressionType.Equal,
+				BinaryOperatorType.InEquality => ExpressionType.NotEqual,
+				BinaryOperatorType.LessThan => ExpressionType.LessThan,
+				BinaryOperatorType.LessThanOrEqual => ExpressionType.LessThanOrEqual,
+				BinaryOperatorType.Add => checkForOverflow ? ExpressionType.AddChecked : ExpressionType.Add,
+				BinaryOperatorType.Subtract => checkForOverflow
+					? ExpressionType.SubtractChecked
+					: ExpressionType.Subtract,
+				BinaryOperatorType.Multiply => checkForOverflow
+					? ExpressionType.MultiplyChecked
+					: ExpressionType.Multiply,
+				BinaryOperatorType.Divide => ExpressionType.Divide,
+				BinaryOperatorType.Modulus => ExpressionType.Modulo,
+				BinaryOperatorType.ShiftLeft => ExpressionType.LeftShift,
+				BinaryOperatorType.ShiftRight => ExpressionType.RightShift,
+				BinaryOperatorType.NullCoalescing => ExpressionType.Coalesce,
+				BinaryOperatorType.Range => ExpressionType.Extension,
+				_ => throw new NotSupportedException("Invalid value for BinaryOperatorType")
+			};
 		}
 	}
 

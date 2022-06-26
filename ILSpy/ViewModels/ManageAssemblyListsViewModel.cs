@@ -250,7 +250,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 					if (manager.AssemblyLists.Contains(dlg.ListName))
 					{
 						args.Cancel = true;
-						MessageBox.Show(Properties.Resources.ListExistsAlready, null, MessageBoxButton.OK);
+						MessageBox.Show(Resources.ListExistsAlready, null, MessageBoxButton.OK);
 					}
 				}
 			};

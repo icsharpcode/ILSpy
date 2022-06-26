@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.Util
 			if (baseDirectory == null || testDirectory == null)
 				return false;
 			baseDirectory = NormalizePath(baseDirectory);
-			if (baseDirectory == "." || baseDirectory == "")
+			if (baseDirectory is "." or "")
 				return !Path.IsPathRooted(testDirectory);
 			baseDirectory = AddTrailingSeparator(baseDirectory);
 			testDirectory = AddTrailingSeparator(NormalizePath(testDirectory));

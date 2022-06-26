@@ -302,43 +302,25 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static string? GetCSharpNameByTypeCode(KnownTypeCode knownTypeCode)
 		{
-			switch (knownTypeCode)
-			{
-				case KnownTypeCode.Object:
-					return "object";
-				case KnownTypeCode.Boolean:
-					return "bool";
-				case KnownTypeCode.Char:
-					return "char";
-				case KnownTypeCode.SByte:
-					return "sbyte";
-				case KnownTypeCode.Byte:
-					return "byte";
-				case KnownTypeCode.Int16:
-					return "short";
-				case KnownTypeCode.UInt16:
-					return "ushort";
-				case KnownTypeCode.Int32:
-					return "int";
-				case KnownTypeCode.UInt32:
-					return "uint";
-				case KnownTypeCode.Int64:
-					return "long";
-				case KnownTypeCode.UInt64:
-					return "ulong";
-				case KnownTypeCode.Single:
-					return "float";
-				case KnownTypeCode.Double:
-					return "double";
-				case KnownTypeCode.Decimal:
-					return "decimal";
-				case KnownTypeCode.String:
-					return "string";
-				case KnownTypeCode.Void:
-					return "void";
-				default:
-					return null;
-			}
+			return knownTypeCode switch {
+				KnownTypeCode.Object => "object",
+				KnownTypeCode.Boolean => "bool",
+				KnownTypeCode.Char => "char",
+				KnownTypeCode.SByte => "sbyte",
+				KnownTypeCode.Byte => "byte",
+				KnownTypeCode.Int16 => "short",
+				KnownTypeCode.UInt16 => "ushort",
+				KnownTypeCode.Int32 => "int",
+				KnownTypeCode.UInt32 => "uint",
+				KnownTypeCode.Int64 => "long",
+				KnownTypeCode.UInt64 => "ulong",
+				KnownTypeCode.Single => "float",
+				KnownTypeCode.Double => "double",
+				KnownTypeCode.Decimal => "decimal",
+				KnownTypeCode.String => "string",
+				KnownTypeCode.Void => "void",
+				_ => null
+			};
 		}
 	}
 }

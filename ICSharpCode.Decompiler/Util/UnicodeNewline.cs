@@ -128,7 +128,7 @@ namespace ICSharpCode.Decompiler.Util
 				return 1;
 			}
 
-			if (curChar == LF || curChar == NEL || curChar == VT || curChar == FF || curChar == LS || curChar == PS)
+			if (curChar is LF or NEL or VT or FF or LS or PS)
 				return 1;
 			return 0;
 		}
@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.Util
 				return 1;
 			}
 
-			if (curChar == LF || curChar == NEL || curChar == VT || curChar == FF || curChar == LS || curChar == PS)
+			if (curChar is LF or NEL or VT or FF or LS or PS)
 				return 1;
 			return 0;
 		}
@@ -339,13 +339,7 @@ namespace ICSharpCode.Decompiler.Util
 		public static bool IsNewLine(char ch)
 		{
 			return
-				ch == NewLine.CR ||
-				ch == NewLine.LF ||
-				ch == NewLine.NEL ||
-				ch == NewLine.VT ||
-				ch == NewLine.FF ||
-				ch == NewLine.LS ||
-				ch == NewLine.PS;
+				ch is CR or LF or NEL or VT or FF or LS or PS;
 		}
 
 		/// <summary>
@@ -353,29 +347,18 @@ namespace ICSharpCode.Decompiler.Util
 		/// </summary>
 		public static string GetString(UnicodeNewline newLine)
 		{
-			switch (newLine)
-			{
-				case UnicodeNewline.Unknown:
-					return "";
-				case UnicodeNewline.LF:
-					return "\n";
-				case UnicodeNewline.CRLF:
-					return "\r\n";
-				case UnicodeNewline.CR:
-					return "\r";
-				case UnicodeNewline.NEL:
-					return "\u0085";
-				case UnicodeNewline.VT:
-					return "\u000B";
-				case UnicodeNewline.FF:
-					return "\u000C";
-				case UnicodeNewline.LS:
-					return "\u2028";
-				case UnicodeNewline.PS:
-					return "\u2029";
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+			return newLine switch {
+				UnicodeNewline.Unknown => "",
+				UnicodeNewline.LF => "\n",
+				UnicodeNewline.CRLF => "\r\n",
+				UnicodeNewline.CR => "\r",
+				UnicodeNewline.NEL => "\u0085",
+				UnicodeNewline.VT => "\u000B",
+				UnicodeNewline.FF => "\u000C",
+				UnicodeNewline.LS => "\u2028",
+				UnicodeNewline.PS => "\u2029",
+				_ => throw new ArgumentOutOfRangeException()
+			};
 		}
 	}
 }

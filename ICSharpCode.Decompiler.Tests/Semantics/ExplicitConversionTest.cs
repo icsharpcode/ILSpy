@@ -31,7 +31,7 @@ using NUnit.Framework;
 namespace ICSharpCode.Decompiler.Tests.Semantics
 {
 	using C = Conversion;
-	using dynamic = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.Dynamic;
+	using dynamic = ReflectionHelper.Dynamic;
 
 	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class ExplicitConversionsTest

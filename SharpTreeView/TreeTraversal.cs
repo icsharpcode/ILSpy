@@ -34,7 +34,7 @@ namespace ICSharpCode.TreeView
 		/// <returns>Iterator that enumerates the tree structure in pre-order.</returns>
 		public static IEnumerable<T> PreOrder<T>(T root, Func<T, IEnumerable<T>> recursion)
 		{
-			return PreOrder(new T[] { root }, recursion);
+			return PreOrder(new[] { root }, recursion);
 		}
 
 		/// <summary>

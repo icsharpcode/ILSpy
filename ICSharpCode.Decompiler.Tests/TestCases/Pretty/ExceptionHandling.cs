@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("Try");
 				return B(new Random().Next());
 			}
-			catch (Exception ex) when (ex is ArgumentException || ex is IOException)
+			catch (Exception ex) when (ex is ArgumentException or IOException)
 			{
 				Console.WriteLine("CatchException ex: " + ex.ToString());
 			}
@@ -110,7 +110,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("Try");
 				return await T();
 			}
-			catch (Exception ex) when (ex is ArgumentException || ex is IOException)
+			catch (Exception ex) when (ex is ArgumentException or IOException)
 			{
 				Console.WriteLine("CatchException ex: " + ex.ToString());
 			}

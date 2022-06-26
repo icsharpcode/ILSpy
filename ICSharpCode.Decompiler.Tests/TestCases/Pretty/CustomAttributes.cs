@@ -52,7 +52,7 @@ namespace CustomAttributes
 			}
 		}
 #endif
-		[My(ULongEnum.MaxUInt64)]
+		[My(MaxUInt64)]
 		public enum ULongEnum : ulong
 		{
 			[My(null)]
@@ -117,7 +117,7 @@ namespace CustomAttributes
 		{
 		}
 		// No Boxing
-		[My(new StringComparison[] {
+		[My(new[] {
 			StringComparison.Ordinal,
 			StringComparison.CurrentCulture
 		})]
@@ -152,7 +152,7 @@ namespace CustomAttributes
 			null,
 			typeof(int),
 			new object[] { 1 },
-			new int[] { 1 }
+			new[] { 1 }
 		})]
 		public static void BoxedLiteralsArray()
 		{

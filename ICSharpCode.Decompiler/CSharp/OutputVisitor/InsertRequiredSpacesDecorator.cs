@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				Space();
 			}
 			base.WritePrimitiveValue(value, format);
-			if (value == null || value is bool)
+			if (value is null or bool)
 				return;
 			if (value is string)
 			{

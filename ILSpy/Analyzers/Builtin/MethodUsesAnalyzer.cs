@@ -65,7 +65,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				yield break;
 			}
 			var visitor = new TypeDefinitionCollector();
-			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type parameters don't matter for this analyzer
+			var genericContext = new GenericContext(); // type parameters don't matter for this analyzer
 
 			while (blob.RemainingBytes > 0)
 			{

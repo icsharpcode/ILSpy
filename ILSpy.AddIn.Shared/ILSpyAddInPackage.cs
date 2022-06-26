@@ -62,7 +62,7 @@ namespace ICSharpCode.ILSpy.AddIn
 		VisualStudioWorkspace workspace;
 		public VisualStudioWorkspace Workspace => workspace;
 
-		public EnvDTE80.DTE2 DTE => (EnvDTE80.DTE2)GetGlobalService(typeof(EnvDTE.DTE));
+		public EnvDTE80.DTE2 DTE => (EnvDTE80.DTE2)GetGlobalService(typeof(DTE));
 
 
 		/////////////////////////////////////////////////////////////////////////////
@@ -125,7 +125,7 @@ namespace ICSharpCode.ILSpy.AddIn
 
 			Guid clsid = Guid.Empty;
 			int result;
-			Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(
+			ErrorHandler.ThrowOnFailure(
 				uiShell.ShowMessageBox(
 					0,
 					ref clsid,

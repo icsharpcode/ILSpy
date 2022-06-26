@@ -3088,7 +3088,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
 			var o = other as LdFtn;
-			return o != null && object.Equals(method, o.method);
+			return o != null && Equals(method, o.method);
 		}
 	}
 }
@@ -3142,7 +3142,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
 			var o = other as LdVirtFtn;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && object.Equals(method, o.method);
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && Equals(method, o.method);
 		}
 	}
 }
@@ -3205,7 +3205,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
 			var o = other as LdVirtDelegate;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type) && object.Equals(method, o.method);
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type) && Equals(method, o.method);
 		}
 	}
 }
@@ -3526,8 +3526,8 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			DebugAssert(destAddress.ResultType == StackType.I || destAddress.ResultType == StackType.Ref);
-			DebugAssert(sourceAddress.ResultType == StackType.I || sourceAddress.ResultType == StackType.Ref);
+			DebugAssert(destAddress.ResultType is StackType.I or StackType.Ref);
+			DebugAssert(sourceAddress.ResultType is StackType.I or StackType.Ref);
 			DebugAssert(size.ResultType == StackType.I4);
 		}
 	}
@@ -3677,7 +3677,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			DebugAssert(address.ResultType == StackType.I || address.ResultType == StackType.Ref);
+			DebugAssert(address.ResultType is StackType.I or StackType.Ref);
 			DebugAssert(value.ResultType == StackType.I4);
 			DebugAssert(size.ResultType == StackType.I4);
 		}
@@ -4040,7 +4040,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			DebugAssert(target.ResultType == StackType.Ref || target.ResultType == StackType.I);
+			DebugAssert(target.ResultType is StackType.Ref or StackType.I);
 		}
 	}
 }
@@ -4179,7 +4179,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			DebugAssert(target.ResultType == StackType.Ref || target.ResultType == StackType.I);
+			DebugAssert(target.ResultType is StackType.Ref or StackType.I);
 			DebugAssert(value.ResultType == type.GetStackType());
 			CheckTargetSlot();
 		}
@@ -4950,7 +4950,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
 			var o = other as GetPinnableReference;
-			return o != null && this.argument.PerformMatch(o.argument, ref match) && object.Equals(method, o.method);
+			return o != null && this.argument.PerformMatch(o.argument, ref match) && Equals(method, o.method);
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -5200,7 +5200,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
 			var o = other as UserDefinedLogicOperator;
-			return o != null && object.Equals(method, o.method) && this.left.PerformMatch(o.left, ref match) && this.right.PerformMatch(o.right, ref match);
+			return o != null && Equals(method, o.method) && this.left.PerformMatch(o.left, ref match) && this.right.PerformMatch(o.right, ref match);
 		}
 	}
 }
@@ -6340,7 +6340,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
 			var o = other as MatchInstruction;
-			return o != null && variable == o.variable && object.Equals(method, o.method) && this.IsDeconstructCall == o.IsDeconstructCall && this.IsDeconstructTuple == o.IsDeconstructTuple && this.CheckType == o.CheckType && this.CheckNotNull == o.CheckNotNull && this.testedOperand.PerformMatch(o.testedOperand, ref match) && Patterns.ListMatch.DoMatch(this.SubPatterns, o.SubPatterns, ref match);
+			return o != null && variable == o.variable && Equals(method, o.method) && this.IsDeconstructCall == o.IsDeconstructCall && this.IsDeconstructTuple == o.IsDeconstructTuple && this.CheckType == o.CheckType && this.CheckNotNull == o.CheckNotNull && this.testedOperand.PerformMatch(o.testedOperand, ref match) && Patterns.ListMatch.DoMatch(this.SubPatterns, o.SubPatterns, ref match);
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{

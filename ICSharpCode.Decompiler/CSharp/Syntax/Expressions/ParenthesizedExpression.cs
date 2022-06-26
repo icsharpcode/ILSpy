@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <returns>Returns true for ParenthesizedExpression, CheckedExpression or UncheckedExpression; false otherwise.</returns>
 		public static bool ActsAsParenthesizedExpression(AstNode expression)
 		{
-			return expression is ParenthesizedExpression || expression is CheckedExpression || expression is UncheckedExpression;
+			return expression is ParenthesizedExpression or CheckedExpression or UncheckedExpression;
 		}
 
 		/// <summary>

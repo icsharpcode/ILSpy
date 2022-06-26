@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (query == null)
 				return false;
 			var lastClause = query.Clauses.LastOrDefault();
-			return !(lastClause is QuerySelectClause || lastClause is QueryGroupClause);
+			return !(lastClause is QuerySelectClause or QueryGroupClause);
 		}
 
 		void DecompileQueries(AstNode node)
@@ -217,7 +217,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						if (ValidateThenByChain(invocation, parameter.Name))
 						{
 							QueryOrderClause orderClause = new();
-							while (mre.MemberName == "ThenBy" || mre.MemberName == "ThenByDescending")
+							while (mre.MemberName is "ThenBy" or "ThenByDescending")
 							{
 								// insert new ordering at beginning
 								orderClause.Orderings.InsertAfter(
@@ -271,8 +271,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						{
 							QueryExpression query = new();
 							query.Clauses.Add(MakeFromClause(element1, source1.Detach()));
-							QueryJoinClause joinClause = new();
-							joinClause.JoinIdentifier = element2.Name;    // join elementName2
+							QueryJoinClause joinClause = new() {
+								JoinIdentifier = element2.Name // join elementName2
+							};
 							joinClause.JoinIdentifierToken.CopyAnnotationsFrom(element2);
 							joinClause.InExpression = source2.Detach();  // in source2
 							joinClause.OnExpression = key1.Detach();     // on key1
@@ -361,9 +362,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (parameter.Name != expectedParameterName)
 				return false;
 
-			if (mre.MemberName == "OrderBy" || mre.MemberName == "OrderByDescending")
+			if (mre.MemberName is "OrderBy" or "OrderByDescending")
 				return !IsNullConditional(mre.Target);
-			else if (mre.MemberName == "ThenBy" || mre.MemberName == "ThenByDescending")
+			else if (mre.MemberName is "ThenBy" or "ThenByDescending")
 				return ValidateThenByChain(mre.Target as InvocationExpression, expectedParameterName);
 			else
 				return false;

@@ -152,7 +152,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			valueType.Field += 5;
 			valueType.Field[1] = 5;
 			valueType.Field.CallMe();
-			DynamicTests.Casts(valueType.GetOnlyProperty);
+			Casts(valueType.GetOnlyProperty);
 			valueType.GetOnlyProperty.CallMe();
 			valueType.Property = 0;
 			valueType.Property += 5;
@@ -179,7 +179,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static void StaticCallWithDynamicArgumentInStaticContext(dynamic d)
 		{
-			DynamicTests.M3(d + 5);
+			M3(d + 5);
 		}
 
 		private static void DynamicCallWithString()
@@ -235,42 +235,42 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static void ArithmeticBinaryOperators(dynamic a, dynamic b)
 		{
-			DynamicTests.MemberAccess(a + b);
-			DynamicTests.MemberAccess(a + 1);
-			DynamicTests.MemberAccess(a + null);
-			DynamicTests.MemberAccess(a - b);
-			DynamicTests.MemberAccess(a - 1);
-			DynamicTests.MemberAccess(a - null);
-			DynamicTests.MemberAccess(a * b);
-			DynamicTests.MemberAccess(a * 1);
-			DynamicTests.MemberAccess(a * null);
-			DynamicTests.MemberAccess(a / b);
-			DynamicTests.MemberAccess(a / 1);
-			DynamicTests.MemberAccess(a / null);
-			DynamicTests.MemberAccess(a % b);
-			DynamicTests.MemberAccess(a % 1);
-			DynamicTests.MemberAccess(a % null);
+			MemberAccess(a + b);
+			MemberAccess(a + 1);
+			MemberAccess(a + null);
+			MemberAccess(a - b);
+			MemberAccess(a - 1);
+			MemberAccess(a - null);
+			MemberAccess(a * b);
+			MemberAccess(a * 1);
+			MemberAccess(a * null);
+			MemberAccess(a / b);
+			MemberAccess(a / 1);
+			MemberAccess(a / null);
+			MemberAccess(a % b);
+			MemberAccess(a % 1);
+			MemberAccess(a % null);
 		}
 
 		private static void CheckedArithmeticBinaryOperators(dynamic a, dynamic b)
 		{
 			checked
 			{
-				DynamicTests.MemberAccess(a + b);
-				DynamicTests.MemberAccess(a + 1);
-				DynamicTests.MemberAccess(a + null);
-				DynamicTests.MemberAccess(a - b);
-				DynamicTests.MemberAccess(a - 1);
-				DynamicTests.MemberAccess(a - null);
-				DynamicTests.MemberAccess(a * b);
-				DynamicTests.MemberAccess(a * 1);
-				DynamicTests.MemberAccess(a * null);
-				DynamicTests.MemberAccess(a / b);
-				DynamicTests.MemberAccess(a / 1);
-				DynamicTests.MemberAccess(a / null);
-				DynamicTests.MemberAccess(a % b);
-				DynamicTests.MemberAccess(a % 1);
-				DynamicTests.MemberAccess(a % null);
+				MemberAccess(a + b);
+				MemberAccess(a + 1);
+				MemberAccess(a + null);
+				MemberAccess(a - b);
+				MemberAccess(a - 1);
+				MemberAccess(a - null);
+				MemberAccess(a * b);
+				MemberAccess(a * 1);
+				MemberAccess(a * null);
+				MemberAccess(a / b);
+				MemberAccess(a / 1);
+				MemberAccess(a / null);
+				MemberAccess(a % b);
+				MemberAccess(a % 1);
+				MemberAccess(a % null);
 			}
 		}
 
@@ -278,44 +278,44 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			checked
 			{
-				DynamicTests.MemberAccess(a + b);
-				DynamicTests.MemberAccess(a + 1);
-				DynamicTests.MemberAccess(a + null);
-				DynamicTests.MemberAccess(unchecked(a - b));
-				DynamicTests.MemberAccess(a - 1);
-				DynamicTests.MemberAccess(a - null);
-				DynamicTests.MemberAccess(unchecked(a * b));
-				DynamicTests.MemberAccess(a * 1);
-				DynamicTests.MemberAccess(a * null);
-				DynamicTests.MemberAccess(a / b);
-				DynamicTests.MemberAccess(a / 1);
-				DynamicTests.MemberAccess(a / null);
-				DynamicTests.MemberAccess(a % b);
-				DynamicTests.MemberAccess(a % 1);
-				DynamicTests.MemberAccess(a % null);
+				MemberAccess(a + b);
+				MemberAccess(a + 1);
+				MemberAccess(a + null);
+				MemberAccess(unchecked(a - b));
+				MemberAccess(a - 1);
+				MemberAccess(a - null);
+				MemberAccess(unchecked(a * b));
+				MemberAccess(a * 1);
+				MemberAccess(a * null);
+				MemberAccess(a / b);
+				MemberAccess(a / 1);
+				MemberAccess(a / null);
+				MemberAccess(a % b);
+				MemberAccess(a % 1);
+				MemberAccess(a % null);
 			}
 		}
 
 		private static void RelationalOperators(dynamic a, dynamic b)
 		{
-			DynamicTests.MemberAccess(a == b);
-			DynamicTests.MemberAccess(a == 1);
-			DynamicTests.MemberAccess(a == null);
-			DynamicTests.MemberAccess(a != b);
-			DynamicTests.MemberAccess(a != 1);
-			DynamicTests.MemberAccess(a != null);
-			DynamicTests.MemberAccess(a < b);
-			DynamicTests.MemberAccess(a < 1);
-			DynamicTests.MemberAccess(a < null);
-			DynamicTests.MemberAccess(a > b);
-			DynamicTests.MemberAccess(a > 1);
-			DynamicTests.MemberAccess(a > null);
-			DynamicTests.MemberAccess(a >= b);
-			DynamicTests.MemberAccess(a >= 1);
-			DynamicTests.MemberAccess(a >= null);
-			DynamicTests.MemberAccess(a <= b);
-			DynamicTests.MemberAccess(a <= 1);
-			DynamicTests.MemberAccess(a <= null);
+			MemberAccess(a == b);
+			MemberAccess(a == 1);
+			MemberAccess(a == null);
+			MemberAccess(a != b);
+			MemberAccess(a != 1);
+			MemberAccess(a != null);
+			MemberAccess(a < b);
+			MemberAccess(a < 1);
+			MemberAccess(a < null);
+			MemberAccess(a > b);
+			MemberAccess(a > 1);
+			MemberAccess(a > null);
+			MemberAccess(a >= b);
+			MemberAccess(a >= 1);
+			MemberAccess(a >= null);
+			MemberAccess(a <= b);
+			MemberAccess(a <= 1);
+			MemberAccess(a <= null);
 		}
 
 		private static void Casts(dynamic a)
@@ -339,9 +339,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static void NotDynamicDispatch(dynamic d)
 		{
-			DynamicTests.M(d);
+			M(d);
 			M((object)d);
-			DynamicTests.M2(d);
+			M2(d);
 			M2((object)d);
 		}
 
@@ -378,15 +378,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			//a++;
 			//--a;
 			//++a;
-			DynamicTests.Casts(-a);
-			DynamicTests.Casts(+a);
+			Casts(-a);
+			Casts(+a);
 		}
 
 		private static void Loops(dynamic list)
 		{
 			foreach (dynamic item in list)
 			{
-				DynamicTests.UnaryOperators(item);
+				UnaryOperators(item);
 			}
 		}
 

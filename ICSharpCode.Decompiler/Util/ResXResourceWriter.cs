@@ -278,7 +278,8 @@ namespace ICSharpCode.Decompiler.Util
 			}
 
 			if (value != null && !value.GetType().IsSerializable)
-				throw new InvalidOperationException(String.Format("The element '{0}' of type '{1}' is not serializable.", name, value.GetType().Name));
+				throw new InvalidOperationException(
+					$"The element '{name}' of type '{value.GetType().Name}' is not serializable.");
 
 			TypeConverter converter = TypeDescriptor.GetConverter(value);
 
@@ -405,7 +406,8 @@ namespace ICSharpCode.Decompiler.Util
 				throw new ArgumentNullException(nameof(value));
 
 			if (!value.GetType().IsSerializable)
-				throw new InvalidOperationException(String.Format("The element '{0}' of type '{1}' is not serializable.", name, value.GetType().Name));
+				throw new InvalidOperationException(
+					$"The element '{name}' of type '{value.GetType().Name}' is not serializable.");
 
 			if (written)
 				throw new InvalidOperationException("The resource is already generated.");

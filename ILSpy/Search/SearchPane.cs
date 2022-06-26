@@ -495,35 +495,28 @@ namespace ICSharpCode.ILSpy.Search
 				if (request.Keywords.Length == 0 && request.RegEx == null)
 					return null;
 
-				switch (request.Mode)
-				{
-					case SearchMode.TypeAndMember:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue);
-					case SearchMode.Type:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Type);
-					case SearchMode.Member:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, request.MemberSearchKind);
-					case SearchMode.Literal:
-						return new LiteralSearchStrategy(language, apiVisibility, request, resultQueue);
-					case SearchMode.Method:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Method);
-					case SearchMode.Field:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Field);
-					case SearchMode.Property:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Property);
-					case SearchMode.Event:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Event);
-					case SearchMode.Token:
-						return new MetadataTokenSearchStrategy(language, apiVisibility, request, resultQueue);
-					case SearchMode.Resource:
-						return new ResourceSearchStrategy(apiVisibility, request, resultQueue);
-					case SearchMode.Assembly:
-						return new AssemblySearchStrategy(request, resultQueue, AssemblySearchKind.NameOrFileName);
-					case SearchMode.Namespace:
-						return new NamespaceSearchStrategy(request, resultQueue);
-				}
-
-				return null;
+				return request.Mode switch {
+					SearchMode.TypeAndMember => new MemberSearchStrategy(language, apiVisibility, request, resultQueue),
+					SearchMode.Type => new MemberSearchStrategy(language, apiVisibility, request, resultQueue,
+						MemberSearchKind.Type),
+					SearchMode.Member => new MemberSearchStrategy(language, apiVisibility, request, resultQueue,
+						request.MemberSearchKind),
+					SearchMode.Literal => new LiteralSearchStrategy(language, apiVisibility, request, resultQueue),
+					SearchMode.Method => new MemberSearchStrategy(language, apiVisibility, request, resultQueue,
+						MemberSearchKind.Method),
+					SearchMode.Field => new MemberSearchStrategy(language, apiVisibility, request, resultQueue,
+						MemberSearchKind.Field),
+					SearchMode.Property => new MemberSearchStrategy(language, apiVisibility, request, resultQueue,
+						MemberSearchKind.Property),
+					SearchMode.Event => new MemberSearchStrategy(language, apiVisibility, request, resultQueue,
+						MemberSearchKind.Event),
+					SearchMode.Token => new MetadataTokenSearchStrategy(language, apiVisibility, request, resultQueue),
+					SearchMode.Resource => new ResourceSearchStrategy(apiVisibility, request, resultQueue),
+					SearchMode.Assembly => new AssemblySearchStrategy(request, resultQueue,
+						AssemblySearchKind.NameOrFileName),
+					SearchMode.Namespace => new NamespaceSearchStrategy(request, resultQueue),
+					_ => null
+				};
 			}
 		}
 	}

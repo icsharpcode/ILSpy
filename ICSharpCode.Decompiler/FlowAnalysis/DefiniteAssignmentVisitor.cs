@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// <summary>
 		/// State for definite assignment analysis.
 		/// </summary>
-		[DebuggerDisplay("{bits}")]
+		[DebuggerDisplay("{" + nameof(bits) + "}")]
 		public struct State : IDataFlowState<State>
 		{
 			/// <summary>

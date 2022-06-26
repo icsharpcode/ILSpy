@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		const string InteropServices = "System.Runtime.InteropServices";
 
-		IAttribute ConvertMarshalInfo(SRM.BlobReader marshalInfo)
+		IAttribute ConvertMarshalInfo(BlobReader marshalInfo)
 		{
 			var b = new AttributeBuilder(module, KnownAttribute.MarshalAs);
 			IType unmanagedTypeType = module.Compilation.FindType(new TopLevelTypeName(InteropServices, nameof(UnmanagedType)));
@@ -220,7 +220,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						case "ExtensionAttribute":
 							return (options & TypeSystemOptions.ExtensionMethods) != 0;
 						case "DecimalConstantAttribute":
-							return (options & TypeSystemOptions.DecimalConstants) != 0 && (target == SymbolKind.Field || target == SymbolKind.Parameter);
+							return (options & TypeSystemOptions.DecimalConstants) != 0 && target is SymbolKind.Field or SymbolKind.Parameter;
 						case "IsReadOnlyAttribute":
 							switch (target)
 							{
@@ -315,7 +315,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		private IAttribute ReadXmlSecurityAttribute(ref SRM.BlobReader reader, CustomAttributeTypedArgument<IType> securityAction)
+		private IAttribute ReadXmlSecurityAttribute(ref BlobReader reader, CustomAttributeTypedArgument<IType> securityAction)
 		{
 			string xml = reader.ReadUTF16(reader.RemainingBytes);
 			var b = new AttributeBuilder(module, KnownAttribute.PermissionSet);
@@ -324,7 +324,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return b.Build();
 		}
 
-		private IAttribute ReadBinarySecurityAttribute(ref SRM.BlobReader reader, CustomAttributeTypedArgument<IType> securityAction)
+		private IAttribute ReadBinarySecurityAttribute(ref BlobReader reader, CustomAttributeTypedArgument<IType> securityAction)
 		{
 			string attributeTypeName = reader.ReadSerializedString();
 			IType attributeType = module.TypeProvider.GetTypeFromSerializedName(attributeTypeName);
@@ -333,7 +333,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 											// The specification seems to be incorrect here, so I'm using the logic from Cecil instead.
 			int numNamed = reader.ReadCompressedInteger();
 
-			var decoder = new Metadata.CustomAttributeDecoder<IType>(module.TypeProvider, module.metadata);
+			var decoder = new CustomAttributeDecoder<IType>(module.TypeProvider, module.metadata);
 			var namedArgs = decoder.DecodeNamedArguments(ref reader, numNamed);
 
 			return new DefaultAttribute(

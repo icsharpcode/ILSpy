@@ -135,10 +135,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		public void DecompileProject(PEFile moduleDefinition, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			string projectFileName = Path.Combine(targetDirectory, CleanUpFileName(moduleDefinition.Name) + ".csproj");
-			using (var writer = new StreamWriter(projectFileName))
-			{
-				DecompileProject(moduleDefinition, targetDirectory, writer, cancellationToken);
-			}
+			using var writer = new StreamWriter(projectFileName);
+			DecompileProject(moduleDefinition, targetDirectory, writer, cancellationToken);
 		}
 
 		public ProjectId DecompileProject(PEFile moduleDefinition, string targetDirectory, TextWriter projectFileWriter, CancellationToken cancellationToken = default(CancellationToken))
@@ -177,8 +175,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		CSharpDecompiler CreateDecompiler(DecompilerTypeSystem ts)
 		{
-			var decompiler = new CSharpDecompiler(ts, Settings);
-			decompiler.DebugInfoProvider = DebugInfoProvider;
+			var decompiler = new CSharpDecompiler(ts, Settings) {
+				DebugInfoProvider = DebugInfoProvider
+			};
 			decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 			decompiler.AstTransforms.Add(new RemoveCLSCompliantAttribute());
 			return decompiler;
@@ -202,7 +201,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			return new[] { ("Compile", assemblyInfo) };
 		}
 
-		IEnumerable<(string itemType, string fileName)> WriteCodeFilesInProject(Metadata.PEFile module, CancellationToken cancellationToken)
+		IEnumerable<(string itemType, string fileName)> WriteCodeFilesInProject(PEFile module, CancellationToken cancellationToken)
 		{
 			var metadata = module.Metadata;
 			var files = module.Metadata.GetTopLevelTypeDefinitions().Where(td => IncludeTypeWhenDecompilingProject(module, td)).GroupBy(
@@ -241,7 +240,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 							var syntaxTree = decompiler.DecompileTypes(file.ToArray());
 							syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, Settings.CSharpFormattingOptions));
 						}
-						catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException))
+						catch (Exception innerException) when (!(innerException is OperationCanceledException or DecompilerException))
 						{
 							throw new DecompilerException(module, $"Error decompiling for '{file.Key}'", innerException);
 						}
@@ -253,7 +252,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		#endregion
 
 		#region WriteResourceFilesInProject
-		protected virtual IEnumerable<(string itemType, string fileName)> WriteResourceFilesInProject(Metadata.PEFile module)
+		protected virtual IEnumerable<(string itemType, string fileName)> WriteResourceFilesInProject(PEFile module)
 		{
 			foreach (var r in module.Resources.Where(r => r.ResourceType == ResourceType.Embedded))
 			{
@@ -587,7 +586,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					text = text.Remove(lastDot);
 					foreach (var c in extension)
 					{
-						if (!(char.IsLetterOrDigit(c) || c == '-' || c == '_' || c == '.'))
+						if (!(char.IsLetterOrDigit(c) || c is '-' or '_' or '.'))
 						{
 							// extension contains an invalid character, therefore cannot be a valid extension.
 							extension = null;
@@ -602,7 +601,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			foreach (var c in text)
 			{
 				currentSegmentLength++;
-				if (char.IsLetterOrDigit(c) || c == '-' || c == '_')
+				if (char.IsLetterOrDigit(c) || c is '-' or '_')
 				{
 					// if the current segment exceeds maxSegmentLength characters,
 					// skip until the end of the segment.
@@ -620,7 +619,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					if (separateAtDots)
 						currentSegmentLength = 0;
 				}
-				else if (treatAsFileName && (c == '/' || c == '\\') && currentSegmentLength > 0)
+				else if (treatAsFileName && c is '/' or '\\' && currentSegmentLength > 0)
 				{
 					// if we treat this as a file name, we've started a new segment
 					b.Append(c);

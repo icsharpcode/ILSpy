@@ -106,11 +106,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			context.Step("Replace proxy: " + inst.Method.Name + " with " + call.Method.Name, inst);
 			// Apply the wrapper call's substitution to the actual method call.
-			Call newInst = new(call.Method.Specialize(inst.Method.Substitution));
-			// copy flags
-			newInst.ConstrainedTo = call.ConstrainedTo;
-			newInst.ILStackWasEmpty = inst.ILStackWasEmpty;
-			newInst.IsTail = call.IsTail & inst.IsTail;
+			Call newInst = new(call.Method.Specialize(inst.Method.Substitution)) {
+				// copy flags
+				ConstrainedTo = call.ConstrainedTo,
+				ILStackWasEmpty = inst.ILStackWasEmpty,
+				IsTail = call.IsTail & inst.IsTail
+			};
 			// copy IL ranges
 			newInst.AddILRange(inst);
 			newInst.Arguments.ReplaceList(inst.Arguments);

@@ -131,7 +131,7 @@ namespace ICSharpCode.Decompiler.IL
 			get {
 				if (ctorCallStart == int.MinValue)
 				{
-					if (this.Method == null || !this.Method.IsConstructor || this.Method.IsStatic)
+					if (this.Method is not { IsConstructor: true } || this.Method.IsStatic)
 					{
 						ctorCallStart = -1;
 					}
@@ -162,7 +162,7 @@ namespace ICSharpCode.Decompiler.IL
 		public ILFunctionKind Kind {
 			get => kind;
 			internal set {
-				if (kind == ILFunctionKind.TopLevelFunction || kind == ILFunctionKind.LocalFunction)
+				if (kind is ILFunctionKind.TopLevelFunction or ILFunctionKind.LocalFunction)
 					throw new InvalidOperationException("ILFunction.Kind of a top-level or local function may not be changed.");
 				kind = value;
 			}
@@ -240,7 +240,7 @@ namespace ICSharpCode.Decompiler.IL
 					Debug.Assert(DelegateType?.FullName == "System.Linq.Expressions.Expression" && DelegateType.TypeParameterCount == 1);
 					break;
 				case ILFunctionKind.LocalFunction:
-					Debug.Assert(Parent is ILFunction && SlotInfo == ILFunction.LocalFunctionsSlot);
+					Debug.Assert(Parent is ILFunction && SlotInfo == LocalFunctionsSlot);
 					Debug.Assert(DeclarationScope != null);
 					Debug.Assert(DelegateType == null);
 					Debug.Assert(Method != null);

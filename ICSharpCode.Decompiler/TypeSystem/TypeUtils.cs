@@ -221,7 +221,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static bool IsCompatiblePointerTypeForMemoryAccess(IType pointerType, IType accessType)
 		{
 			IType memoryType;
-			if (pointerType is PointerType || pointerType is ByReferenceType)
+			if (pointerType is PointerType or ByReferenceType)
 				memoryType = ((TypeWithElementType)pointerType).ElementType;
 			else
 				return false;
@@ -471,48 +471,30 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public static KnownTypeCode ToKnownTypeCode(this StackType stackType, Sign sign = Sign.None)
 		{
-			switch (stackType)
-			{
-				case StackType.I4:
-					return sign == Sign.Unsigned ? KnownTypeCode.UInt32 : KnownTypeCode.Int32;
-				case StackType.I8:
-					return sign == Sign.Unsigned ? KnownTypeCode.UInt64 : KnownTypeCode.Int64;
-				case StackType.I:
-					return sign == Sign.Unsigned ? KnownTypeCode.UIntPtr : KnownTypeCode.IntPtr;
-				case StackType.F4:
-					return KnownTypeCode.Single;
-				case StackType.F8:
-					return KnownTypeCode.Double;
-				case StackType.O:
-					return KnownTypeCode.Object;
-				case StackType.Void:
-					return KnownTypeCode.Void;
-				default:
-					return KnownTypeCode.None;
-			}
+			return stackType switch {
+				StackType.I4 => sign == Sign.Unsigned ? KnownTypeCode.UInt32 : KnownTypeCode.Int32,
+				StackType.I8 => sign == Sign.Unsigned ? KnownTypeCode.UInt64 : KnownTypeCode.Int64,
+				StackType.I => sign == Sign.Unsigned ? KnownTypeCode.UIntPtr : KnownTypeCode.IntPtr,
+				StackType.F4 => KnownTypeCode.Single,
+				StackType.F8 => KnownTypeCode.Double,
+				StackType.O => KnownTypeCode.Object,
+				StackType.Void => KnownTypeCode.Void,
+				_ => KnownTypeCode.None
+			};
 		}
 
 		public static PrimitiveType ToPrimitiveType(this StackType stackType, Sign sign = Sign.None)
 		{
-			switch (stackType)
-			{
-				case StackType.I4:
-					return sign == Sign.Unsigned ? PrimitiveType.U4 : PrimitiveType.I4;
-				case StackType.I8:
-					return sign == Sign.Unsigned ? PrimitiveType.U8 : PrimitiveType.I8;
-				case StackType.I:
-					return sign == Sign.Unsigned ? PrimitiveType.U : PrimitiveType.I;
-				case StackType.F4:
-					return PrimitiveType.R4;
-				case StackType.F8:
-					return PrimitiveType.R8;
-				case StackType.Ref:
-					return PrimitiveType.Ref;
-				case StackType.Unknown:
-					return PrimitiveType.Unknown;
-				default:
-					return PrimitiveType.None;
-			}
+			return stackType switch {
+				StackType.I4 => sign == Sign.Unsigned ? PrimitiveType.U4 : PrimitiveType.I4,
+				StackType.I8 => sign == Sign.Unsigned ? PrimitiveType.U8 : PrimitiveType.I8,
+				StackType.I => sign == Sign.Unsigned ? PrimitiveType.U : PrimitiveType.I,
+				StackType.F4 => PrimitiveType.R4,
+				StackType.F8 => PrimitiveType.R8,
+				StackType.Ref => PrimitiveType.Ref,
+				StackType.Unknown => PrimitiveType.Unknown,
+				_ => PrimitiveType.None
+			};
 		}
 	}
 

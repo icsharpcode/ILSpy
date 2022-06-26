@@ -502,14 +502,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// with the condition block.
 			if (!block.MatchIfAtEndOfBlock(out _, out var trueInst, out var falseInst))
 				return;
-			if (trueInst.StartILOffset > exitPointILOffset && trueInst is Leave { IsLeavingFunction: true, Value: Nop _ })
+			if (trueInst.StartILOffset > exitPointILOffset && trueInst is Leave { IsLeavingFunction: true, Value: Nop })
 			{
 				// By using NoExitPoint, everything (including the "return;") becomes part of the loop body
 				// Then DetectExitPoint will move the "return;" out of the loop body.
 				exitPoint = NoExitPoint;
 				exitPointILOffset = trueInst.StartILOffset;
 			}
-			if (falseInst.StartILOffset > exitPointILOffset && falseInst is Leave { IsLeavingFunction: true, Value: Nop _ })
+			if (falseInst.StartILOffset > exitPointILOffset && falseInst is Leave { IsLeavingFunction: true, Value: Nop })
 			{
 				exitPoint = NoExitPoint;
 				exitPointILOffset = falseInst.StartILOffset;

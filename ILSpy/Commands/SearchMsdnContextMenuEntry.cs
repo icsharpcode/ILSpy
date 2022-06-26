@@ -23,7 +23,7 @@ using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
 namespace ICSharpCode.ILSpy
 {
-	using ICSharpCode.Decompiler.TypeSystem;
+	using Decompiler.TypeSystem;
 
 	[ExportContextMenuEntry(Header = nameof(Resources.SearchMSDN), Icon = "images/SearchMsdn", Order = 9999)]
 	internal sealed class SearchMsdnContextMenuEntry : IContextMenuEntry
@@ -36,12 +36,7 @@ namespace ICSharpCode.ILSpy
 				return false;
 
 			return context.SelectedTreeNodes.All(
-				n => n is NamespaceTreeNode
-				|| n is TypeTreeNode
-				|| n is EventTreeNode
-				|| n is FieldTreeNode
-				|| n is PropertyTreeNode
-				|| n is MethodTreeNode);
+				n => n is NamespaceTreeNode or TypeTreeNode or EventTreeNode or FieldTreeNode or PropertyTreeNode or MethodTreeNode);
 		}
 
 		public bool IsEnabled(TextViewContext context)

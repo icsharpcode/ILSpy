@@ -409,7 +409,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return; // need a container length to extend with
 				}
 				Debug.Assert(containerLengthVar.IsSingleDefinition);
-				Debug.Assert(containerLengthVar.LoadCount == 1 || containerLengthVar.LoadCount == 2);
+				Debug.Assert(containerLengthVar.LoadCount is 1 or 2);
 				NewObj rangeCtorCall = null;
 				foreach (var inst in containerLengthVar.LoadInstructions[0].Ancestors)
 				{
@@ -424,7 +424,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (rangeCtorCall == null)
 					return;
 				// Now match the pattern that TransformSlicing() generated in the IndexKind.FromStart case
-				if (!(rangeCtorCall.Parent is CallInstruction { Method: SyntheticRangeIndexAccessor _ } slicingCall))
+				if (!(rangeCtorCall.Parent is CallInstruction { Method: SyntheticRangeIndexAccessor } slicingCall))
 					return;
 				if (!MatchContainerVar(slicingCall.Arguments[0], ref containerVar))
 					return;
@@ -546,7 +546,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				//  complex_expr(call get_Item(ldloc container, ldobj startIndexLoad))
 				return new LdObj(indexLoad, specialMethods.IndexType);
 			}
-			else if (indexKind == IndexKind.FromEnd || indexKind == IndexKind.TheEnd)
+			else if (indexKind is IndexKind.FromEnd or IndexKind.TheEnd)
 			{
 				//  stloc offsetVar(binary.sub.i4(call get_Length/get_Count(ldloc container), startIndexLoad))
 				//  complex_expr(call get_Item(ldloc container, ldloc startOffsetVar))
@@ -556,7 +556,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			else
 			{
-				Debug.Assert(indexKind == IndexKind.FromStart || indexKind == IndexKind.TheStart);
+				Debug.Assert(indexKind is IndexKind.FromStart or IndexKind.TheStart);
 				return new Call(specialMethods.IndexImplicitConv) { Arguments = { indexLoad } };
 			}
 		}
@@ -570,7 +570,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			bool foundIndexOverload = false;
 			bool foundRangeOverload = false;
 			bool foundCountProperty = false;
-			foreach (var prop in declaringType.GetProperties(p => p.IsIndexer || (p.Name == "Length" || p.Name == "Count")))
+			foreach (var prop in declaringType.GetProperties(p => p.IsIndexer || p.Name is "Length" or "Count"))
 			{
 				if (prop.IsIndexer && prop.Parameters.Count == 1)
 				{
@@ -588,7 +588,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						foundRangeOverload = true;
 					}
 				}
-				else if (prop.Name == "Length" || prop.Name == "Count")
+				else if (prop.Name is "Length" or "Count")
 				{
 					foundCountProperty = true;
 				}
@@ -613,7 +613,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(lengthVar.IsSingleDefinition && lengthVar.StackType == StackType.I4))
 				return false;
-			if (lengthVar.LoadCount == 0 || lengthVar.LoadCount > 2)
+			if (lengthVar.LoadCount is 0 or > 2)
 				return false;
 			return MatchContainerLength(init, null, ref containerVar);
 		}

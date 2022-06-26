@@ -716,14 +716,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 				else
 				{
-					equal = object.Equals(lhs, rhs);
+					equal = Equals(lhs, rhs);
 				}
 				return equal ^ Negate;
 			}
 
 			public override OperatorMethod? Lift(CSharpOperators operators)
 			{
-				if (Type == TypeCode.Object || Type == TypeCode.String)
+				if (Type is TypeCode.Object or TypeCode.String)
 					return null;
 				else
 					return new LiftedEqualityOperatorMethod(operators, this);
@@ -869,8 +869,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			public override OperatorMethod Lift(CSharpOperators operators)
 			{
-				var lifted = new LiftedBinaryOperatorMethod(operators, this);
-				lifted.ReturnType = this.ReturnType; // don't lift the return type for relational operators
+				var lifted = new LiftedBinaryOperatorMethod(operators, this) {
+					ReturnType = this.ReturnType // don't lift the return type for relational operators
+				};
 				return lifted;
 			}
 		}

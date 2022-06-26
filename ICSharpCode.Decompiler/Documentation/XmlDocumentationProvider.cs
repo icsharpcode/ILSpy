@@ -134,41 +134,33 @@ namespace ICSharpCode.Decompiler.Documentation
 			if (fileName == null)
 				throw new ArgumentNullException(nameof(fileName));
 
-			using (FileStream fs = new(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
+			using FileStream fs = new(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete);
+			using XmlTextReader xmlReader = new(fs);
+			xmlReader.XmlResolver = null; // no DTD resolving
+			xmlReader.MoveToContent();
+			if (string.IsNullOrEmpty(xmlReader.GetAttribute("redirect")))
 			{
-				using (XmlTextReader xmlReader = new(fs))
+				this.fileName = fileName;
+				this.encoding = xmlReader.Encoding;
+				ReadXmlDoc(xmlReader);
+			}
+			else
+			{
+				string redirectionTarget = GetRedirectionTarget(fileName, xmlReader.GetAttribute("redirect"));
+				if (redirectionTarget != null)
 				{
-					xmlReader.XmlResolver = null; // no DTD resolving
-					xmlReader.MoveToContent();
-					if (string.IsNullOrEmpty(xmlReader.GetAttribute("redirect")))
-					{
-						this.fileName = fileName;
-						this.encoding = xmlReader.Encoding;
-						ReadXmlDoc(xmlReader);
-					}
-					else
-					{
-						string redirectionTarget = GetRedirectionTarget(fileName, xmlReader.GetAttribute("redirect"));
-						if (redirectionTarget != null)
-						{
-							Debug.WriteLine("XmlDoc " + fileName + " is redirecting to " + redirectionTarget);
-							using (FileStream redirectedFs = new(redirectionTarget, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
-							{
-								using (XmlTextReader redirectedXmlReader = new(redirectedFs))
-								{
-									redirectedXmlReader.XmlResolver = null; // no DTD resolving
-									redirectedXmlReader.MoveToContent();
-									this.fileName = redirectionTarget;
-									this.encoding = redirectedXmlReader.Encoding;
-									ReadXmlDoc(redirectedXmlReader);
-								}
-							}
-						}
-						else
-						{
-							throw new XmlException("XmlDoc " + fileName + " is redirecting to " + xmlReader.GetAttribute("redirect") + ", but that file was not found.");
-						}
-					}
+					Debug.WriteLine("XmlDoc " + fileName + " is redirecting to " + redirectionTarget);
+					using FileStream redirectedFs = new(redirectionTarget, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete);
+					using XmlTextReader redirectedXmlReader = new(redirectedFs);
+					redirectedXmlReader.XmlResolver = null; // no DTD resolving
+					redirectedXmlReader.MoveToContent();
+					this.fileName = redirectionTarget;
+					this.encoding = redirectedXmlReader.Encoding;
+					ReadXmlDoc(redirectedXmlReader);
+				}
+				else
+				{
+					throw new XmlException("XmlDoc " + fileName + " is redirecting to " + xmlReader.GetAttribute("redirect") + ", but that file was not found.");
 				}
 			}
 		}
@@ -242,25 +234,23 @@ namespace ICSharpCode.Decompiler.Documentation
 		{
 			//lastWriteDate = File.GetLastWriteTimeUtc(fileName);
 			// Open up a second file stream for the line<->position mapping
-			using (FileStream fs = new(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
+			using FileStream fs = new(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete);
+			LinePositionMapper linePosMapper = new(fs, encoding);
+			List<IndexEntry> indexList = new();
+			while (reader.Read())
 			{
-				LinePositionMapper linePosMapper = new(fs, encoding);
-				List<IndexEntry> indexList = new();
-				while (reader.Read())
+				if (reader.IsStartElement())
 				{
-					if (reader.IsStartElement())
+					switch (reader.LocalName)
 					{
-						switch (reader.LocalName)
-						{
-							case "members":
-								ReadMembersSection(reader, linePosMapper, indexList);
-								break;
-						}
+						case "members":
+							ReadMembersSection(reader, linePosMapper, indexList);
+							break;
 					}
 				}
-				indexList.Sort();
-				this.index = indexList.ToArray(); // volatile write
 			}
+			indexList.Sort();
+			this.index = indexList.ToArray(); // volatile write
 		}
 
 		sealed class LinePositionMapper
@@ -420,15 +410,11 @@ namespace ICSharpCode.Decompiler.Documentation
 			try
 			{
 				// Reload the index
-				using (FileStream fs = new(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
-				{
-					using (XmlTextReader xmlReader = new(fs))
-					{
-						xmlReader.XmlResolver = null; // no DTD resolving
-						xmlReader.MoveToContent();
-						ReadXmlDoc(xmlReader);
-					}
-				}
+				using FileStream fs = new(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete);
+				using XmlTextReader xmlReader = new(fs);
+				xmlReader.XmlResolver = null; // no DTD resolving
+				xmlReader.MoveToContent();
+				ReadXmlDoc(xmlReader);
 			}
 			catch (IOException)
 			{
@@ -448,31 +434,27 @@ namespace ICSharpCode.Decompiler.Documentation
 		#region Load / Read XML
 		string LoadDocumentation(string key, int positionInFile)
 		{
-			using (FileStream fs = new(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
+			using FileStream fs = new(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete);
+			fs.Position = positionInFile;
+			var context = new XmlParserContext(null, null, null, XmlSpace.None) { Encoding = encoding };
+			using XmlTextReader r = new(fs, XmlNodeType.Element, context);
+			r.XmlResolver = null; // no DTD resolving
+			while (r.Read())
 			{
-				fs.Position = positionInFile;
-				var context = new XmlParserContext(null, null, null, XmlSpace.None) { Encoding = encoding };
-				using (XmlTextReader r = new(fs, XmlNodeType.Element, context))
+				if (r.NodeType == XmlNodeType.Element)
 				{
-					r.XmlResolver = null; // no DTD resolving
-					while (r.Read())
+					string memberAttr = r.GetAttribute("name");
+					if (memberAttr == key)
 					{
-						if (r.NodeType == XmlNodeType.Element)
-						{
-							string memberAttr = r.GetAttribute("name");
-							if (memberAttr == key)
-							{
-								return r.ReadInnerXml();
-							}
-							else
-							{
-								return null;
-							}
-						}
+						return r.ReadInnerXml();
 					}
-					return null;
+					else
+					{
+						return null;
+					}
 				}
 			}
+			return null;
 		}
 		#endregion
 

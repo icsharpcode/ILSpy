@@ -70,15 +70,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public static IType FindType(this ICompilation compilation, StackType stackType, Sign sign = Sign.None)
 		{
-			switch (stackType)
-			{
-				case StackType.Unknown:
-					return SpecialType.UnknownType;
-				case StackType.Ref:
-					return new ByReferenceType(SpecialType.UnknownType);
-				default:
-					return compilation.FindType(stackType.ToKnownTypeCode(sign));
-			}
+			return stackType switch {
+				StackType.Unknown => SpecialType.UnknownType,
+				StackType.Ref => new ByReferenceType(SpecialType.UnknownType),
+				_ => compilation.FindType(stackType.ToKnownTypeCode(sign))
+			};
 		}
 		#endregion
 
@@ -502,7 +498,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			while (pos < reflectionTypeName.Length)
 			{
 				char c = reflectionTypeName[pos];
-				if (c < '0' || c > '9')
+				if (c is < '0' or > '9')
 					break;
 				pos++;
 			}

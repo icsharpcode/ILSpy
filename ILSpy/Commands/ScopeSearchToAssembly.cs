@@ -71,15 +71,11 @@ namespace ICSharpCode.ILSpy
 				return entity.ParentModule?.AssemblyName;
 			if (context.SelectedTreeNodes?.Length != 1)
 				return null;
-			switch (context.SelectedTreeNodes[0])
-			{
-				case AssemblyTreeNode tn:
-					return tn.LoadedAssembly.ShortName;
-				case IMemberTreeNode member:
-					return member.Member?.ParentModule?.AssemblyName;
-				default:
-					return null;
-			}
+			return context.SelectedTreeNodes[0] switch {
+				AssemblyTreeNode tn => tn.LoadedAssembly.ShortName,
+				IMemberTreeNode member => member.Member?.ParentModule?.AssemblyName,
+				_ => null
+			};
 		}
 	}
 }
