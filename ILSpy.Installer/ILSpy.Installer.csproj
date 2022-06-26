@@ -4,10 +4,11 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net472</TargetFramework>
     <StartupObject>ILSpy.Installer.Builder</StartupObject>
+    <LangVersion>default</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="WixSharp" Version="1.19.0" />
+    <PackageReference Include="WixSharp" Version="1.20.1" />
     <PackageReference Include="WixSharp.wix.bin" Version="3.11.2" />
   </ItemGroup>
 

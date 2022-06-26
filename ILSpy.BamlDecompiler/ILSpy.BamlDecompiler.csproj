@@ -8,6 +8,7 @@
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <BaseAddress>6488064</BaseAddress>
     <UseWpf>true</UseWpf>
+    <LangVersion>default</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
