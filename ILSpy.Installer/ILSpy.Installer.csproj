@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>net48</TargetFramework>
     <StartupObject>ILSpy.Installer.Builder</StartupObject>
     <LangVersion>default</LangVersion>
   </PropertyGroup>
