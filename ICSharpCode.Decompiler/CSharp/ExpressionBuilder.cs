@@ -648,9 +648,22 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitSizeOf(SizeOf inst, TranslationContext context)
 		{
-			return new SizeOfExpression(ConvertType(inst.Type))
-				.WithILInstruction(inst)
-				.WithRR(new SizeOfResolveResult(compilation.FindType(KnownTypeCode.Int32), inst.Type, null));
+			if (inst.Type.IsUnmanagedType(allowGenerics: settings.IntroduceUnmanagedConstraint))
+			{
+				return new SizeOfExpression(ConvertType(inst.Type))
+					.WithILInstruction(inst)
+					.WithRR(new SizeOfResolveResult(compilation.FindType(KnownTypeCode.Int32), inst.Type, null));
+			}
+			else
+			{
+				return CallUnsafeIntrinsic(
+					name: "SizeOf",
+					arguments: Array.Empty<Expression>(),
+					returnType: compilation.FindType(KnownTypeCode.Int32),
+					inst: inst,
+					typeArguments: new[] { inst.Type }
+				);
+			}
 		}
 
 		protected internal override TranslatedExpression VisitLdTypeToken(LdTypeToken inst, TranslationContext context)

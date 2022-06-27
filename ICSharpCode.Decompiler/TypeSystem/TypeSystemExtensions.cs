@@ -290,13 +290,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					{
 						if (types.Contains(f.Type))
 						{
+							types.Remove(type);
 							return false;
 						}
 						if (!IsUnmanagedTypeInternal(f.Type))
 						{
+							types.Remove(type);
 							return false;
 						}
 					}
+					types.Remove(type);
 					return true;
 				}
 				return false;
