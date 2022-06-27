@@ -20,6 +20,7 @@ using System;
 using System.ComponentModel.Composition;
 using System.IO;
 
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -53,8 +54,15 @@ namespace ILSpy.BamlDecompiler
 				ThrowOnAssemblyResolveErrors = options.DecompilerSettings.ThrowOnAssemblyResolveErrors
 			});
 			decompiler.CancellationToken = options.CancellationToken;
-			fileName = Path.ChangeExtension(fileName, ".xaml");
 			var result = decompiler.Decompile(stream);
+			if (result.TypeName.HasValue)
+			{
+				fileName = WholeProjectDecompiler.CleanUpPath(result.TypeName.Value.ReflectionName) + ".xaml";
+			}
+			else
+			{
+				fileName = Path.ChangeExtension(fileName, ".xaml");
+			}
 			result.Xaml.Save(Path.Combine(options.SaveAsProjectDirectory, fileName));
 			return fileName;
 		}

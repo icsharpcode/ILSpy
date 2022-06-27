@@ -20,6 +20,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 
+using ICSharpCode.Decompiler.TypeSystem;
+
 namespace ILSpy.BamlDecompiler
 {
 	public class BamlDecompilationResult
@@ -27,9 +29,12 @@ namespace ILSpy.BamlDecompiler
 		public XDocument Xaml { get; }
 		public List<string> AssemblyReferences { get; }
 
-		public BamlDecompilationResult(XDocument xaml, IEnumerable<string> assemblyReferences)
+		public FullTypeName? TypeName { get; }
+
+		public BamlDecompilationResult(XDocument xaml, FullTypeName? typeName, IEnumerable<string> assemblyReferences)
 		{
 			this.Xaml = xaml;
+			this.TypeName = typeName;
 			this.AssemblyReferences = assemblyReferences.ToList();
 		}
 	}
