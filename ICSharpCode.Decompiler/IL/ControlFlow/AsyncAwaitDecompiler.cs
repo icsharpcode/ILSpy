@@ -1107,6 +1107,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				foreach (var block in container.Blocks)
 				{
 					context.CancellationToken.ThrowIfCancellationRequested();
+					DynamicCallSiteTransform.RunOnBasicBlock(block, context);
 					if (block.Instructions.Last() is Leave leave && moveNextLeaves.Contains(leave))
 					{
 						// This is likely an 'await' block
