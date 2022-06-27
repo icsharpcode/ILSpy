@@ -142,7 +142,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			public int GetHashCode(string obj)
 			{
-				return baseComparer.GetHashCode(NormalizeLine(obj));
+				return baseComparer.GetHashCode(normalizeLine(obj));
 			}
 		}
 
