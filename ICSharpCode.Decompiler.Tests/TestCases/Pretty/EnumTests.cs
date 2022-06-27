@@ -82,7 +82,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Item1 = 1,
 			Item2 = 2,
 			Item3 = 4,
-			All = 7
+			All = Item1 | Item2 | Item3
+		}
+
+		[Flags]
+		public enum SelfReferentialEnum
+		{
+			None = 0,
+			Item1 = 1,
+			Item2 = Item1,
+			Item3 = 3
 		}
 
 		[Flags]

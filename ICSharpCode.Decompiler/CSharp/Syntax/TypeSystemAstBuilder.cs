@@ -1199,22 +1199,32 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return type.HasAttribute(KnownAttribute.Flags, inherit: false);
 		}
 
-		Expression ConvertEnumValue(IType type, long val)
+		/// <summary>
+		/// Converts a numeric enum value into its enum member representation, if possible.
+		/// Uses a series of enum members concatenated by <c>|</c>, if necessary.
+		/// Returns <c>(EnumType)value</c>, if it fails.
+		/// <para>
+		/// If <paramref name="declaringEnumMember"/> is set to a non-<see langword="null"/> value,
+		/// unqualified references are used and self references are avoided. Also, casts to EnumType are dropped.
+		/// </para>
+		/// </summary>
+		internal Expression ConvertEnumValue(IType type, long val, IField declaringEnumMember = null)
 		{
 			ITypeDefinition enumDefinition = type.GetDefinition();
 			TypeCode enumBaseTypeCode = ReflectionHelper.GetTypeCode(enumDefinition.EnumUnderlyingType);
 			var fields = enumDefinition.Fields
-				.Select(PrepareConstant)
+				.SelectWithIndex(PrepareConstant)
 				.Where(f => f.field != null)
 				.ToArray();
-			foreach (var (value, field) in fields)
+			foreach (var (index, value, field, weight) in fields)
 			{
-				if (value == val)
+				if (value == val && weight == 1)
 				{
-					var mre = new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
-					if (AddResolveResultAnnotations)
-						mre.AddAnnotation(new MemberResolveResult(mre.Target.GetResolveResult(), field));
-					return mre;
+					if (field == declaringEnumMember)
+					{
+						return new PrimitiveExpression(CSharpPrimitiveCast.Cast(enumBaseTypeCode, val, false));
+					}
+					return MakeEnumMemberReference(field);
 				}
 			}
 			if (IsFlagsEnum(enumDefinition))
@@ -1239,14 +1249,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						break;
 				}
 				Expression negatedExpr = null;
-				foreach (var (fieldValue, field) in fields.OrderByDescending(f => CalculateHammingWeight(unchecked((ulong)f.value))))
+				foreach (var (fieldIndex, fieldValue, field, weight) in fields.OrderByDescending(f => f.weight))
 				{
-					if (fieldValue == 0)
+					if (fieldValue == 0 || field == declaringEnumMember)
 						continue;   // skip None enum value
 
 					if ((fieldValue & enumValue) == fieldValue)
 					{
-						var fieldExpression = new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
+						var fieldExpression = MakeEnumMemberReference(field);
 						if (expr == null)
 							expr = fieldExpression;
 						else
@@ -1256,7 +1266,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					}
 					if ((fieldValue & negatedEnumValue) == fieldValue)
 					{
-						var fieldExpression = new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
+						var fieldExpression = MakeEnumMemberReference(field);
 						if (negatedExpr == null)
 							negatedExpr = fieldExpression;
 						else
@@ -1277,16 +1287,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return new UnaryOperatorExpression(UnaryOperatorType.BitNot, negatedExpr);
 				}
 			}
-			return new CastExpression(ConvertType(type), new PrimitiveExpression(CSharpPrimitiveCast.Cast(enumBaseTypeCode, val, false)));
 
-			(long value, IField field) PrepareConstant(IField field)
+			var numericExpression = new PrimitiveExpression(CSharpPrimitiveCast.Cast(enumBaseTypeCode, val, false));
+			if (declaringEnumMember != null)
+			{
+				return numericExpression;
+			}
+			return new CastExpression(ConvertType(type), numericExpression);
+
+			(int index, long value, IField field, int weight) PrepareConstant(int index, IField field)
 			{
 				if (!field.IsConst)
-					return (-1, null);
+					return default;
 				object constantValue = field.GetConstantValue();
 				if (constantValue == null)
-					return (-1, null);
-				return ((long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, checkForOverflow: false), field);
+					return default;
+				var value = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, checkForOverflow: false);
+				var weight = CalculateHammingWeight(unchecked((ulong)value));
+				return (index, value, field, weight);
 			}
 
 			// see https://en.wikipedia.org/wiki/Hamming_weight
@@ -1300,6 +1318,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				x = (x & m2) + ((x >> 2) & m2); //put count of each 4 bits into those 4 bits 
 				x = (x + (x >> 4)) & m4;        //put count of each 8 bits into those 8 bits 
 				return unchecked((int)((x * h01) >> 56));  //returns left 8 bits of x + (x<<8) + (x<<16) + (x<<24) + ... 
+			}
+
+			Expression MakeEnumMemberReference(IField field)
+			{
+				if (declaringEnumMember == null)
+				{
+					var mre = new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
+					if (AddResolveResultAnnotations)
+						mre.AddAnnotation(new MemberResolveResult(mre.Target.GetResolveResult(), field));
+					return mre;
+				}
+				else
+				{
+					var ie = new IdentifierExpression(field.Name);
+					if (AddResolveResultAnnotations)
+						ie.AddAnnotation(new MemberResolveResult(null, field));
+					return ie;
+				}
 			}
 		}
 

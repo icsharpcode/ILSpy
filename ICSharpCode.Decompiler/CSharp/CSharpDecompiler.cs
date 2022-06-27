@@ -1835,7 +1835,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (constantValue != null)
 					{
 						long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false);
-						enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, constantValue);
+						enumDec.Initializer = typeSystemAstBuilder.ConvertEnumValue(decompilationContext.CurrentTypeDefinition, initValue, field);
 						if (enumDec.Initializer is PrimitiveExpression primitive
 							&& initValue >= 10 && decompileRun.EnumValueDisplayMode == EnumValueDisplayMode.AllHex)
 						{
