@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2018 Daniel Grunwald
+// Copyright (c) 2018 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.fullTypeName = td.GetFullTypeName(metadata);
 			this.MetadataName = metadata.GetString(td.Name);
 			// Find DeclaringType + KnownTypeCode:
-			if (fullTypeName.IsNested)
+			if (td.IsNested)
 			{
 				this.DeclaringTypeDefinition = module.GetDefinition(td.GetDeclaringType());
 
