@@ -1415,7 +1415,7 @@ namespace ICSharpCode.ILSpy
 				refreshInProgress = true;
 				var path = GetPathForNode(AssemblyTreeView.SelectedItem as SharpTreeNode);
 				ShowAssemblyList(AssemblyListManager.LoadList(assemblyList.ListName));
-				SelectNode(FindNodeByPath(path, true), false, false);
+				SelectNode(FindNodeByPath(path, true), inNewTabPage: false, AssemblyTreeView.IsFocused);
 			}
 			finally
 			{
