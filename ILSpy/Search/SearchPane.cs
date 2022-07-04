@@ -321,14 +321,17 @@ namespace ICSharpCode.ILSpy.Search
 						prefixLength = part.Length;
 					}
 
+					int delimiterLength;
 					// Find end of prefix
 					if (part.StartsWith("@", StringComparison.Ordinal))
 					{
 						prefixLength = 1;
+						delimiterLength = 0;
 					}
 					else
 					{
 						prefixLength = part.IndexOf(':', 0, prefixLength);
+						delimiterLength = 1;
 					}
 					string prefix;
 					if (prefixLength <= 0)
@@ -342,7 +345,7 @@ namespace ICSharpCode.ILSpy.Search
 					}
 
 					// unescape quotes
-					string searchTerm = part.Substring(prefixLength + 1).Trim();
+					string searchTerm = part.Substring(prefixLength + delimiterLength).Trim();
 					if (searchTerm.Length > 0)
 					{
 						searchTerm = NativeMethods.CommandLineToArgumentArray(searchTerm)[0];
