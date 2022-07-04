@@ -239,29 +239,37 @@ namespace ICSharpCode.Decompiler
 			if (handle.IsNil)
 				return false;
 			StringHandle nameHandle, namespaceHandle;
-			switch (handle.Kind)
+			try
 			{
-				case HandleKind.TypeReference:
-					var tr = reader.GetTypeReference((TypeReferenceHandle)handle);
-					// ignore exported and nested types
-					if (tr.ResolutionScope.IsNil || tr.ResolutionScope.Kind == HandleKind.TypeReference)
+				switch (handle.Kind)
+				{
+					case HandleKind.TypeReference:
+						var tr = reader.GetTypeReference((TypeReferenceHandle)handle);
+						// ignore exported and nested types
+						if (tr.ResolutionScope.IsNil || tr.ResolutionScope.Kind == HandleKind.TypeReference)
+							return false;
+						nameHandle = tr.Name;
+						namespaceHandle = tr.Namespace;
+						break;
+					case HandleKind.TypeDefinition:
+						var td = reader.GetTypeDefinition((TypeDefinitionHandle)handle);
+						if (td.IsNested)
+							return false;
+						nameHandle = td.Name;
+						namespaceHandle = td.Namespace;
+						break;
+					case HandleKind.TypeSpecification:
+						var ts = reader.GetTypeSpecification((TypeSpecificationHandle)handle);
+						var blob = reader.GetBlobReader(ts.Signature);
+						return SignatureIsKnownType(reader, knownType, ref blob);
+					default:
 						return false;
-					nameHandle = tr.Name;
-					namespaceHandle = tr.Namespace;
-					break;
-				case HandleKind.TypeDefinition:
-					var td = reader.GetTypeDefinition((TypeDefinitionHandle)handle);
-					if (td.IsNested)
-						return false;
-					nameHandle = td.Name;
-					namespaceHandle = td.Namespace;
-					break;
-				case HandleKind.TypeSpecification:
-					var ts = reader.GetTypeSpecification((TypeSpecificationHandle)handle);
-					var blob = reader.GetBlobReader(ts.Signature);
-					return SignatureIsKnownType(reader, knownType, ref blob);
-				default:
-					return false;
+				}
+			}
+			catch (BadImageFormatException)
+			{
+				// ignore bad metadata when trying to resolve ResolutionScope et al.
+				return false;
 			}
 			if (knownType.TypeParameterCount == 0)
 			{
