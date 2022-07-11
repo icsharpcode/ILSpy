@@ -22,7 +22,7 @@ jobs:
       
     - name: Force git to use crlf, otherwise dotnet-format --check fails
       run: git config --global core.autocrlf true
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: true
         fetch-depth: 0
