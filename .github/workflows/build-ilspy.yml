@@ -54,7 +54,7 @@ jobs:
         Tests3: ILSpy.BamlDecompiler.Tests\bin\${{ matrix.configuration }}\net6.0-windows\win-x64\ILSpy.BamlDecompiler.Tests.dll
 
     - name: Upload Test Logs
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: success() || failure()
       with:
         name: test-results-${{ matrix.configuration }}
@@ -91,7 +91,7 @@ jobs:
     # https://github.com/actions/upload-artifact
     - name: Upload VSIX (VS 2019) release build artifacts
       if: matrix.configuration == 'release'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ILSpy VS Addin for VS 2017-2019 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
         path: ILSpy.AddIn\bin\${{ matrix.configuration }}\net472\*.vsix
@@ -99,7 +99,7 @@ jobs:
 
     - name: Upload VSIX (VS 2022) release build artifacts
       if: matrix.configuration == 'release'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ILSpy VS Addin for VS 2022 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
         path: ILSpy.AddIn.VS2022\bin\${{ matrix.configuration }}\net472\*.vsix
@@ -107,7 +107,7 @@ jobs:
 
     - name: Upload Decompiler NuGet release build artifacts
       if: matrix.configuration == 'release'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ICSharpCode.Decompiler NuGet Package (${{ matrix.configuration }})
         path: ICSharpCode.Decompiler\bin\Release\ICSharpCode.Decompiler*.nupkg
@@ -120,7 +120,7 @@ jobs:
 
     - name: Upload ILSpyX NuGet release build artifacts
       if: matrix.configuration == 'release'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ICSharpCode.ILSpyX NuGet Package (${{ matrix.configuration }})
         path: ICSharpCode.ILSpyX\bin\Release\ICSharpCode.ILSpyX*.nupkg
@@ -132,7 +132,7 @@ jobs:
         dotnet nuget push "ICSharpCode.ILSpyX\bin\Release\ICSharpCode.ILSpyX*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source https://nuget.pkg.github.com/${{ github.repository_owner }}
       
     - name: Upload zip binaries build artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ILSpy ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
         path: ${{ env.StagingDirectory }}\ILSpy_binaries.zip
@@ -140,7 +140,7 @@ jobs:
 
     - name: Upload self-contained zip build artifacts (Release-only)
       if: matrix.configuration == 'release'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ILSpy self-contained x64 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
         path: ${{ env.StagingDirectory }}\ILSpy_selfcontained_x64.zip
@@ -148,7 +148,7 @@ jobs:
 
     - name: Upload installer artifact
       if: matrix.configuration == 'release'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ILSpy Installer ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
         path: ILSpy.Installer\wix\*.msi
@@ -156,7 +156,7 @@ jobs:
 
     - name: Upload ilspycmd release build artifacts
       if: matrix.configuration == 'release'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ilspycmd dotnet tool (${{ matrix.configuration }})
         path: ICSharpCode.ILSpyCmd\bin\Release\ilspycmd*.nupkg
