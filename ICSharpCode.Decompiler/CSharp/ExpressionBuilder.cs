@@ -22,6 +22,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
@@ -3116,9 +3117,45 @@ namespace ICSharpCode.Decompiler.CSharp
 					return TranslateSetterCallAssignment(block);
 				case BlockKind.CallWithNamedArgs:
 					return TranslateCallWithNamedArgs(block);
+				case BlockKind.InterpolatedString:
+					return TranslateInterpolatedString(block);
 				default:
 					return ErrorExpression("Unknown block type: " + block.Kind);
 			}
+		}
+
+		private TranslatedExpression TranslateInterpolatedString(Block block)
+		{
+			var content = new List<InterpolatedStringContent>();
+
+			for (int i = 1; i < block.Instructions.Count; i++)
+			{
+				var call = (Call)block.Instructions[i];
+				switch (call.Method.Name)
+				{
+					case "AppendLiteral":
+						content.Add(new InterpolatedStringText(((LdStr)call.Arguments[1]).Value.Replace("{", "{{").Replace("}", "}}")));
+						break;
+					case "AppendFormatted" when call.Arguments.Count == 2:
+						content.Add(new Interpolation(Translate(call.Arguments[1])));
+						break;
+					case "AppendFormatted" when call.Arguments.Count == 3 && call.Arguments[2] is LdStr ldstr:
+						content.Add(new Interpolation(Translate(call.Arguments[1]), suffix: ldstr.Value));
+						break;
+					case "AppendFormatted" when call.Arguments.Count == 3 && call.Arguments[2] is LdcI4 ldci4:
+						content.Add(new Interpolation(Translate(call.Arguments[1]), alignment: ldci4.Value));
+						break;
+					case "AppendFormatted" when call.Arguments.Count == 4 && call.Arguments[2] is LdcI4 ldci4 && call.Arguments[3] is LdStr ldstr:
+						content.Add(new Interpolation(Translate(call.Arguments[1]), ldci4.Value, ldstr.Value));
+						break;
+					default:
+						throw new NotSupportedException();
+				}
+			}
+
+			return new InterpolatedStringExpression(content)
+				.WithILInstruction(block)
+				.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.String)));
 		}
 
 		private TranslatedExpression TranslateCallWithNamedArgs(Block block)
