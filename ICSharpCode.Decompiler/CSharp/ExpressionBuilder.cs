@@ -2272,6 +2272,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			return false;
 		}
 
+		internal bool IsBaseTypeOfCurrentType(ITypeDefinition type)
+		{
+			return decompilationContext.CurrentTypeDefinition.GetAllBaseTypeDefinitions().Any(t => t == type);
+		}
+
 		internal ExpressionWithResolveResult TranslateFunction(IType delegateType, ILFunction function)
 		{
 			var method = function.Method?.MemberDefinition as IMethod;

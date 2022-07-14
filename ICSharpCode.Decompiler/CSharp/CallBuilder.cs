@@ -917,7 +917,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					else if (target.Expression is BaseReferenceExpression)
 						requireTarget = (expectedTargetDetails.CallOpCode != OpCode.CallVirt && method.IsVirtual);
 					else
-						requireTarget = !(target.Expression is ThisReferenceExpression);
+						requireTarget = target.Expression is not ThisReferenceExpression;
 				}
 				targetResolveResult = requireTarget ? target.ResolveResult : null;
 			}
@@ -962,6 +962,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			bool targetCasted = false;
 			bool argumentsCasted = false;
+			bool originalRequireTarget = requireTarget;
+			bool skipTargetCast = method.Accessibility <= Accessibility.Protected && expressionBuilder.IsBaseTypeOfCurrentType(method.DeclaringTypeDefinition);
 			OverloadResolutionErrors errors;
 			while ((errors = IsUnambiguousCall(expectedTargetDetails, method, targetResolveResult, typeArguments,
 				argumentList.GetArgumentResolveResults().ToArray(), argumentList.ArgumentNames, argumentList.FirstOptionalArgumentIndex, out foundMethod,
@@ -1015,9 +1017,19 @@ namespace ICSharpCode.Decompiler.CSharp
 						}
 						else if ((allowedTransforms & CallTransformation.RequireTarget) != 0 && !targetCasted)
 						{
-							targetCasted = true;
-							target = target.ConvertTo(method.DeclaringType, expressionBuilder);
-							targetResolveResult = target.ResolveResult;
+							if (skipTargetCast && requireTarget != originalRequireTarget)
+							{
+								requireTarget = originalRequireTarget;
+								if (!originalRequireTarget)
+									targetResolveResult = null;
+								allowedTransforms &= ~CallTransformation.RequireTarget;
+							}
+							else
+							{
+								targetCasted = true;
+								target = target.ConvertTo(method.DeclaringType, expressionBuilder);
+								targetResolveResult = target.ResolveResult;
+							}
 						}
 						else if ((allowedTransforms & CallTransformation.RequireTypeArguments) != 0 && !requireTypeArguments)
 						{
