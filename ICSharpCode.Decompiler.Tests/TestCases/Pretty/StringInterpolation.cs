@@ -20,6 +20,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine($"\ta{args[0][0] == 'a'}");
 			Console.WriteLine($"\ta{$"a{args.Length}" == args[0]}");
 			Console.WriteLine($"\ta{args.Length}}}");
+			Console.WriteLine($"{args.Length,5:x}");
+			Console.WriteLine($"{args.Length,5}");
 		}
 
 		public static void ArrayExpansionSpecialCases(object[] args)

@@ -20,6 +20,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		}
 
+		public InterpolatedStringExpression(IList<InterpolatedStringContent> content)
+		{
+			Content.AddRange(content);
+		}
+
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
 			visitor.VisitInterpolatedStringExpression(this);
@@ -83,7 +88,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	/// <summary>
-	/// { Expression }
+	/// { Expression , Alignment : Suffix }
 	/// </summary>
 	public class Interpolation : InterpolatedStringContent
 	{
@@ -99,6 +104,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.Expression, value); }
 		}
 
+		public int Alignment { get; }
+
 		public string Suffix { get; }
 
 		public CSharpTokenNode RBraceToken {
@@ -110,9 +117,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		}
 
-		public Interpolation(Expression expression, string suffix = null)
+		public Interpolation(Expression expression, int alignment = 0, string suffix = null)
 		{
 			Expression = expression;
+			Alignment = alignment;
 			Suffix = suffix;
 		}
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
@@ -114,12 +115,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine(a[0].ToString() + a[1].ToString());
 		}
 
+#if NET60 && ROSLYN2
+		static void TestManualDefaultStringInterpolationHandler()
+		{
+			Console.WriteLine("TestManualDefaultStringInterpolationHandler:");
+			C c = new C(42);
+			DefaultInterpolatedStringHandler defaultInterpolatedStringHandler = new DefaultInterpolatedStringHandler(0, 1);
+			defaultInterpolatedStringHandler.AppendFormatted(c);
+			M2(Space(), defaultInterpolatedStringHandler.ToStringAndClear());
+		}
+
+		static void M2(object x, string y) { }
+#endif
+
 		static void Main()
 		{
 			TestClass();
 			TestStruct();
 			TestStructMutation();
 			TestCharPlusChar("ab");
+#if NET60 && ROSLYN2
+			TestManualDefaultStringInterpolationHandler();
+#endif
 		}
 	}
 }

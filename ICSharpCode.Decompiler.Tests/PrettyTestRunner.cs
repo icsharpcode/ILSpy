@@ -532,12 +532,6 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task StringInterpolation([ValueSource(nameof(roslynOnlyWithNet40Options))] CompilerOptions cscOptions)
 		{
-			if (!cscOptions.HasFlag(CompilerOptions.TargetNet40) && cscOptions.HasFlag(CompilerOptions.UseRoslynLatest))
-			{
-				Assert.Ignore("DefaultInterpolatedStringHandler is not yet supported!");
-				return;
-			}
-
 			await Run(cscOptions: cscOptions);
 		}
 
