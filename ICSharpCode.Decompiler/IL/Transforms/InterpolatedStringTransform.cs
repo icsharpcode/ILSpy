@@ -33,11 +33,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			int interpolationEnd;
 			ILInstruction insertionPoint;
 			// stloc v(newobj DefaultInterpolatedStringHandler..ctor(ldc.i4 literalLength, ldc.i4 formattedCount))
-			if (block.Instructions[pos] is StLoc
-				{
-					Variable: ILVariable { Kind: VariableKind.Local } v,
-					Value: NewObj { Arguments: { Count: 2 } } newObj
-				} stloc
+			if (block.Instructions[pos] is StLoc {
+				Variable: ILVariable { Kind: VariableKind.Local } v,
+				Value: NewObj { Arguments: { Count: 2 } } newObj
+			} stloc
 				&& v.Type.IsKnownType(KnownTypeCode.DefaultInterpolatedStringHandler)
 				&& newObj.Method.DeclaringType.IsKnownType(KnownTypeCode.DefaultInterpolatedStringHandler)
 				&& newObj.Arguments[0].MatchLdcI4(out _)
@@ -122,8 +121,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				Debug.Assert(insertionPoint == result.LoadInst.Parent);
 			}
 
-			return insertionPoint is Call
-			{
+			return insertionPoint is Call {
 				Arguments: { Count: 1 },
 				Method: { Name: "ToStringAndClear", IsStatic: false }
 			};

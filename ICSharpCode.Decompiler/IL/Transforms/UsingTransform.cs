@@ -389,13 +389,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				return true;
 			}
-			if (condition is MatchInstruction
-				{
-					CheckNotNull: true,
-					CheckType: true,
-					TestedOperand: LdLoc { Variable: var v },
-					Variable: var newObjVar
-				})
+			if (condition is MatchInstruction {
+				CheckNotNull: true,
+				CheckType: true,
+				TestedOperand: LdLoc { Variable: var v },
+				Variable: var newObjVar
+			})
 			{
 				if (v != objVar)
 					return false;

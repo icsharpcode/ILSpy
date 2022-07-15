@@ -733,8 +733,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					case ThisReferenceExpression _:
 					case PrimitiveExpression _:
 					case IdentifierExpression _:
-					case MemberReferenceExpression
-					{
+					case MemberReferenceExpression {
 						Target: ThisReferenceExpression
 							or IdentifierExpression
 							or BaseReferenceExpression

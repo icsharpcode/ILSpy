@@ -476,11 +476,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			int pos = 0;
 			//Roslyn 4.0.0-3.final start to insert an call to RuntimeHelpers.EnsureSufficientExecutionStack()
-			if (!isStruct && !isInheritedRecord && body.Instructions[pos] is Call
-				{
-					Arguments: { Count: 0 },
-					Method: { Name: "EnsureSufficientExecutionStack", DeclaringType: { Namespace: "System.Runtime.CompilerServices", Name: "RuntimeHelpers" } }
-				})
+			if (!isStruct && !isInheritedRecord && body.Instructions[pos] is Call {
+				Arguments: { Count: 0 },
+				Method: { Name: "EnsureSufficientExecutionStack", DeclaringType: { Namespace: "System.Runtime.CompilerServices", Name: "RuntimeHelpers" } }
+			})
 			{
 				pos++;
 			}
@@ -924,19 +923,17 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			bool Visit(ILInstruction inst)
 			{
-				if (inst is BinaryNumericInstruction
-					{
-						Operator: BinaryNumericOperator.Add,
+				if (inst is BinaryNumericInstruction {
+					Operator: BinaryNumericOperator.Add,
+					CheckForOverflow: false,
+					Left: BinaryNumericInstruction {
+						Operator: BinaryNumericOperator.Mul,
 						CheckForOverflow: false,
-						Left: BinaryNumericInstruction
-						{
-							Operator: BinaryNumericOperator.Mul,
-							CheckForOverflow: false,
-							Left: var left,
-							Right: LdcI4 { Value: -1521134295 }
-						},
-						Right: var right
-					})
+						Left: var left,
+						Right: LdcI4 { Value: -1521134295 }
+					},
+					Right: var right
+				})
 				{
 					if (!Visit(left))
 						return false;
@@ -1039,14 +1036,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			target = null;
 			member = null;
-			if (inst is CallInstruction
-				{
-					Method:
-					{
-						AccessorKind: System.Reflection.MethodSemanticsAttributes.Getter,
-						AccessorOwner: IProperty property
-					}
-				} call && (call is CallVirt || (isSealed && call is Call)))
+			if (inst is CallInstruction {
+				Method: {
+					AccessorKind: System.Reflection.MethodSemanticsAttributes.Getter,
+					AccessorOwner: IProperty property
+				}
+			} call && (call is CallVirt || (isSealed && call is Call)))
 			{
 				if (call.Arguments.Count != 1)
 					return false;

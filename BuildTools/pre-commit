@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+# To enable this hook, copy/symlink this file to ".git/hooks/pre-commit".
+
+#if git diff --quiet --ignore-submodules; then
+#	dotnet format whitespace --no-restore --verbosity detailed ILSpy.sln
+#	git add -u -- \*\*.cs
+#else
+	exec dotnet format whitespace --verify-no-changes --no-restore --verbosity detailed ILSpy.sln
+#fi

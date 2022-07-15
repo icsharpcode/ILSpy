@@ -30,9 +30,6 @@ jobs:
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.1
 
-    - name: Install dotnet-format
-      run: dotnet tool install dotnet-format --global --version 5.1.225507
-
     - name: Get Version
       id: version
       shell: pwsh
@@ -67,7 +64,7 @@ jobs:
         paths: "test-results/${{ matrix.configuration }}.xml"
 
     - name: Format check
-      run: python BuildTools\tidy.py
+      run: dotnet format whitespace --verify-no-changes --verbosity detailed
       
     - name: Verify package contents
       if: matrix.configuration == 'debug'

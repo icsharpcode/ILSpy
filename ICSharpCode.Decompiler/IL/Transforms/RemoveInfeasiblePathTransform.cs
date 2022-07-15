@@ -79,11 +79,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			branch = null;
 			if (block.Instructions.Count != 2)
 				return false;
-			if (block.Instructions[0] is not StLoc
-				{
-					Variable: { Kind: VariableKind.StackSlot } s,
-					Value: LdcI4 { Value: 0 or 1 } valueInst
-				})
+			if (block.Instructions[0] is not StLoc {
+				Variable: { Kind: VariableKind.StackSlot } s,
+				Value: LdcI4 { Value: 0 or 1 } valueInst
+			})
 			{
 				return false;
 			}
