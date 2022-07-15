@@ -20,8 +20,7 @@ jobs:
     steps:
     - run: mkdir -p $env:StagingDirectory
       
-    - name: Force git to use crlf, otherwise dotnet-format --check fails
-      run: git config --global core.autocrlf true
+
     - uses: actions/checkout@v3
       with:
         submodules: true
@@ -29,6 +28,9 @@ jobs:
 
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.1
+
+    - name: Install dotnet-format
+      run: dotnet tool install -g dotnet-format --version "6.2.315104" --add-source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet6/nuget/v3/index.json
 
     - name: Get Version
       id: version
@@ -64,7 +66,7 @@ jobs:
         paths: "test-results/${{ matrix.configuration }}.xml"
 
     - name: Format check
-      run: dotnet format whitespace --verify-no-changes --verbosity detailed ILSpy.sln
+      run: dotnet-format whitespace --verify-no-changes --verbosity detailed ILSpy.sln
       
     - name: Verify package contents
       if: matrix.configuration == 'debug'
