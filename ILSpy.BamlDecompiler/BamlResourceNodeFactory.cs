@@ -19,7 +19,9 @@
 using System;
 using System.ComponentModel.Composition;
 using System.IO;
+using System.Linq;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy;
@@ -45,25 +47,34 @@ namespace ILSpy.BamlDecompiler
 	public sealed class BamlResourceFileHandler : IResourceFileHandler
 	{
 		public string EntryType => "Page";
-		public bool CanHandle(string name, DecompilationOptions options) => name.EndsWith(".baml", StringComparison.OrdinalIgnoreCase);
+		public bool CanHandle(string name, ResourceFileHandlerContext context) => name.EndsWith(".baml", StringComparison.OrdinalIgnoreCase);
 
-		public string WriteResourceToFile(LoadedAssembly assembly, string fileName, Stream stream, DecompilationOptions options)
+		public string WriteResourceToFile(LoadedAssembly assembly, string fileName, Stream stream, ResourceFileHandlerContext context)
 		{
 			BamlDecompilerTypeSystem typeSystem = new BamlDecompilerTypeSystem(assembly.GetPEFileOrNull(), assembly.GetAssemblyResolver());
 			var decompiler = new XamlDecompiler(typeSystem, new BamlDecompilerSettings() {
-				ThrowOnAssemblyResolveErrors = options.DecompilerSettings.ThrowOnAssemblyResolveErrors
+				ThrowOnAssemblyResolveErrors = context.DecompilationOptions.DecompilerSettings.ThrowOnAssemblyResolveErrors
 			});
-			decompiler.CancellationToken = options.CancellationToken;
+			decompiler.CancellationToken = context.DecompilationOptions.CancellationToken;
 			var result = decompiler.Decompile(stream);
-			if (result.TypeName.HasValue)
+			var typeDefinition = result.TypeName.HasValue ? typeSystem.MainModule.GetTypeDefinition(result.TypeName.Value.TopLevelTypeName) : null;
+			if (typeDefinition != null)
 			{
-				fileName = WholeProjectDecompiler.CleanUpPath(result.TypeName.Value.ReflectionName) + ".xaml";
+				fileName = WholeProjectDecompiler.CleanUpPath(typeDefinition.ReflectionName) + ".xaml";
+				var partialTypeInfo = new PartialTypeInfo(typeDefinition);
+				foreach (var member in result.GeneratedMembers)
+				{
+					partialTypeInfo.AddDeclaredMember(member);
+				}
+				context.AddPartialTypeInfo(partialTypeInfo);
 			}
 			else
 			{
 				fileName = Path.ChangeExtension(fileName, ".xaml");
 			}
-			result.Xaml.Save(Path.Combine(options.SaveAsProjectDirectory, fileName));
+			string saveFileName = Path.Combine(context.DecompilationOptions.SaveAsProjectDirectory, fileName);
+			Directory.CreateDirectory(Path.GetDirectoryName(saveFileName));
+			result.Xaml.Save(saveFileName);
 			return fileName;
 		}
 	}

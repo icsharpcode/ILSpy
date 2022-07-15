@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Xml.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -31,11 +32,14 @@ namespace ILSpy.BamlDecompiler
 
 		public FullTypeName? TypeName { get; }
 
-		public BamlDecompilationResult(XDocument xaml, FullTypeName? typeName, IEnumerable<string> assemblyReferences)
+		public List<EntityHandle> GeneratedMembers { get; }
+
+		public BamlDecompilationResult(XDocument xaml, FullTypeName? typeName, IEnumerable<string> assemblyReferences, IEnumerable<EntityHandle> generatedMembers)
 		{
 			this.Xaml = xaml;
 			this.TypeName = typeName;
 			this.AssemblyReferences = assemblyReferences.ToList();
+			this.GeneratedMembers = generatedMembers.ToList();
 		}
 	}
 }

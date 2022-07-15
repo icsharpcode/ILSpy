@@ -509,15 +509,17 @@ namespace ICSharpCode.ILSpy
 				this.options = options;
 			}
 
-			protected override IEnumerable<(string itemType, string fileName)> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
+			protected override IEnumerable<(string itemType, string fileName, List<PartialTypeInfo> partialTypes)> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 			{
+				var context = new ResourceFileHandlerContext(options);
 				foreach (var handler in App.ExportProvider.GetExportedValues<IResourceFileHandler>())
 				{
-					if (handler.CanHandle(fileName, options))
+					if (handler.CanHandle(fileName, context))
 					{
 						entryStream.Position = 0;
-						fileName = handler.WriteResourceToFile(assembly, fileName, entryStream, options);
-						return new[] { (handler.EntryType, fileName) };
+						fileName = handler.WriteResourceToFile(assembly, fileName, entryStream, context);
+
+						return new[] { (handler.EntryType, fileName, context.PartialTypes) };
 					}
 				}
 				return base.WriteResourceToFile(fileName, resourceName, entryStream);

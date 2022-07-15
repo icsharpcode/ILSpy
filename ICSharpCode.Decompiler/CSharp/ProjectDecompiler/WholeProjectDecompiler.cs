@@ -149,8 +149,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 			TargetDirectory = targetDirectory;
 			directories.Clear();
-			var files = WriteCodeFilesInProject(moduleDefinition, cancellationToken).ToList();
-			files.AddRange(WriteResourceFilesInProject(moduleDefinition));
+			var resources = WriteResourceFilesInProject(moduleDefinition).ToList();
+			var files = WriteCodeFilesInProject(moduleDefinition, resources.SelectMany(r => r.partialTypes ?? Enumerable.Empty<PartialTypeInfo>()).ToList(), cancellationToken).ToList();
+			files.AddRange(resources.Select(r => (r.itemType, r.fileName)));
 			files.AddRange(WriteMiscellaneousFilesInProject(moduleDefinition));
 			if (StrongNameKeyFile != null)
 			{
@@ -202,7 +203,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			return new[] { ("Compile", assemblyInfo) };
 		}
 
-		IEnumerable<(string itemType, string fileName)> WriteCodeFilesInProject(Metadata.PEFile module, CancellationToken cancellationToken)
+		IEnumerable<(string itemType, string fileName)> WriteCodeFilesInProject(Metadata.PEFile module, IList<PartialTypeInfo> partialTypes, CancellationToken cancellationToken)
 		{
 			var metadata = module.Metadata;
 			var files = module.Metadata.GetTopLevelTypeDefinitions().Where(td => IncludeTypeWhenDecompilingProject(module, td)).GroupBy(
@@ -237,6 +238,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						try
 						{
 							CSharpDecompiler decompiler = CreateDecompiler(ts);
+
+							foreach (var partialType in partialTypes)
+							{
+								decompiler.AddPartialTypeDefinition(partialType);
+							}
+
 							decompiler.CancellationToken = cancellationToken;
 							var syntaxTree = decompiler.DecompileTypes(file.ToArray());
 							syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, Settings.CSharpFormattingOptions));
@@ -253,7 +260,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		#endregion
 
 		#region WriteResourceFilesInProject
-		protected virtual IEnumerable<(string itemType, string fileName)> WriteResourceFilesInProject(Metadata.PEFile module)
+		protected virtual IEnumerable<(string itemType, string fileName, List<PartialTypeInfo> partialTypes)> WriteResourceFilesInProject(Metadata.PEFile module)
 		{
 			foreach (var r in module.Resources.Where(r => r.ResourceType == ResourceType.Embedded))
 			{
@@ -263,7 +270,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				if (r.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
 				{
 					bool decodedIntoIndividualFiles;
-					var individualResources = new List<(string itemType, string fileName)>();
+					var individualResources = new List<(string itemType, string fileName, List<PartialTypeInfo> partialTypes)>();
 					try
 					{
 						var resourcesFile = new ResourcesFile(stream);
@@ -323,12 +330,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						stream.Position = 0;
 						stream.CopyTo(fs);
 					}
-					yield return ("EmbeddedResource", fileName);
+					yield return ("EmbeddedResource", fileName, null);
 				}
 			}
 		}
 
-		protected virtual IEnumerable<(string itemType, string fileName)> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
+		protected virtual IEnumerable<(string itemType, string fileName, List<PartialTypeInfo> partialTypes)> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 		{
 			if (fileName.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
 			{
@@ -343,7 +350,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 							writer.AddResource(entry.Key, entry.Value);
 						}
 					}
-					return new[] { ("EmbeddedResource", resx) };
+					return new[] { ("EmbeddedResource", resx, (List<PartialTypeInfo>)null) };
 				}
 				catch (BadImageFormatException)
 				{
@@ -358,7 +365,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			{
 				entryStream.CopyTo(fs);
 			}
-			return new[] { ("EmbeddedResource", fileName) };
+			return new[] { ("EmbeddedResource", fileName, (List<PartialTypeInfo>)null) };
 		}
 
 		string GetFileNameForResource(string fullName)
@@ -558,8 +565,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <summary>
 		/// Cleans up a node name for use as a file system name. If <paramref name="separateAtDots"/> is active,
 		/// dots are seen as segment separators. Each segment is limited to maxSegmentLength characters.
-		/// (see <see cref="GetLongPathSupport"/>) If <paramref name="treatAsFileName"/> is active,
-		/// we check for file a extension and try to preserve it, if it's valid.
+		/// If <paramref name="treatAsFileName"/> is active, we check for file a extension and try to preserve it,
+		/// if it's valid.
 		/// </summary>
 		static string CleanUpName(string text, bool separateAtDots, bool treatAsFileName)
 		{

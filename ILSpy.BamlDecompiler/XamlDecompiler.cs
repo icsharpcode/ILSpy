@@ -121,7 +121,7 @@ namespace ILSpy.BamlDecompiler
 
 			var assemblyReferences = ctx.Baml.AssemblyIdMap.Select(a => a.Value.AssemblyFullName);
 			var typeName = ctx.XClassNames.FirstOrDefault() is string s ? (FullTypeName?)new FullTypeName(s) : null;
-			return new BamlDecompilationResult(xaml, typeName, assemblyReferences);
+			return new BamlDecompilationResult(xaml, typeName, assemblyReferences, ctx.GeneratedMembers);
 		}
 	}
 }

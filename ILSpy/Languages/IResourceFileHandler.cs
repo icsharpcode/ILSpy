@@ -16,8 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Generic;
 using System.IO;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy
@@ -25,7 +27,25 @@ namespace ICSharpCode.ILSpy
 	public interface IResourceFileHandler
 	{
 		string EntryType { get; }
-		bool CanHandle(string name, DecompilationOptions options);
-		string WriteResourceToFile(LoadedAssembly assembly, string fileName, Stream stream, DecompilationOptions options);
+		bool CanHandle(string name, ResourceFileHandlerContext context);
+		string WriteResourceToFile(LoadedAssembly assembly, string fileName, Stream stream, ResourceFileHandlerContext context);
+	}
+
+	public class ResourceFileHandlerContext
+	{
+		readonly List<PartialTypeInfo> partialTypes = new();
+		internal List<PartialTypeInfo> PartialTypes => partialTypes;
+
+		public DecompilationOptions DecompilationOptions { get; }
+
+		public ResourceFileHandlerContext(DecompilationOptions options)
+		{
+			this.DecompilationOptions = options;
+		}
+
+		public void AddPartialTypeInfo(PartialTypeInfo info)
+		{
+			this.PartialTypes.Add(info);
+		}
 	}
 }

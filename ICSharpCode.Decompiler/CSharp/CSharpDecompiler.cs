@@ -26,6 +26,7 @@ using System.Reflection.PortableExecutable;
 using System.Text.RegularExpressions;
 using System.Threading;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
@@ -522,6 +523,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		DecompileRun CreateDecompileRun()
+		{
+			return new DecompileRun(settings) {
+				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
+				CancellationToken = CancellationToken
+			};
+		}
+
 		void RunTransforms(AstNode rootNode, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
@@ -550,10 +559,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		public SyntaxTree DecompileModuleAndAssemblyAttributes()
 		{
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainModule);
-			var decompileRun = new DecompileRun(settings) {
-				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
-				CancellationToken = CancellationToken
-			};
+			DecompileRun decompileRun = CreateDecompileRun();
 			syntaxTree = new SyntaxTree();
 			RequiredNamespaceCollector.CollectAttributeNamespaces(module, decompileRun.Namespaces);
 			DoDecompileModuleAndAssemblyAttributes(decompileRun, decompilationContext, syntaxTree);
@@ -639,10 +645,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		public SyntaxTree DecompileWholeModuleAsSingleFile(bool sortTypes)
 		{
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainModule);
-			var decompileRun = new DecompileRun(settings) {
-				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
-				CancellationToken = CancellationToken
-			};
+			var decompileRun = CreateDecompileRun();
 			syntaxTree = new SyntaxTree();
 			RequiredNamespaceCollector.CollectNamespaces(module, decompileRun.Namespaces);
 			DoDecompileModuleAndAssemblyAttributes(decompileRun, decompilationContext, syntaxTree);
@@ -664,10 +667,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public ILTransformContext CreateILTransformContext(ILFunction function)
 		{
-			var decompileRun = new DecompileRun(settings) {
-				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
-				CancellationToken = CancellationToken
-			};
+			var decompileRun = CreateDecompileRun();
 			RequiredNamespaceCollector.CollectNamespaces(function.Method, module, decompileRun.Namespaces);
 			return new ILTransformContext(function, typeSystem, DebugInfoProvider, settings) {
 				CancellationToken = CancellationToken,
@@ -912,10 +912,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (types == null)
 				throw new ArgumentNullException(nameof(types));
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainModule);
-			var decompileRun = new DecompileRun(settings) {
-				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
-				CancellationToken = CancellationToken
-			};
+			var decompileRun = CreateDecompileRun();
 			syntaxTree = new SyntaxTree();
 
 			foreach (var type in types)
@@ -957,10 +954,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (type.ParentModule != typeSystem.MainModule)
 				throw new NotSupportedException("Decompiling types that are not part of the main module is not supported.");
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainModule);
-			var decompileRun = new DecompileRun(settings) {
-				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
-				CancellationToken = CancellationToken
-			};
+			var decompileRun = CreateDecompileRun();
 			syntaxTree = new SyntaxTree();
 			RequiredNamespaceCollector.CollectNamespaces(type.MetadataToken, module, decompileRun.Namespaces);
 			DoDecompileTypes(new[] { (TypeDefinitionHandle)type.MetadataToken }, decompileRun, decompilationContext, syntaxTree);
@@ -995,10 +989,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (definitions == null)
 				throw new ArgumentNullException(nameof(definitions));
 			syntaxTree = new SyntaxTree();
-			var decompileRun = new DecompileRun(settings) {
-				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
-				CancellationToken = CancellationToken
-			};
+			var decompileRun = CreateDecompileRun();
 			foreach (var entity in definitions)
 			{
 				if (entity.IsNil)
@@ -1098,6 +1089,20 @@ namespace ICSharpCode.Decompiler.CSharp
 		public string DecompileAsString(IEnumerable<EntityHandle> definitions)
 		{
 			return SyntaxTreeToString(Decompile(definitions));
+		}
+
+		readonly Dictionary<TypeDefinitionHandle, PartialTypeInfo> partialTypes = new();
+
+		public void AddPartialTypeDefinition(PartialTypeInfo info)
+		{
+			if (!partialTypes.TryGetValue(info.DeclaringTypeDefinitionHandle, out var existingInfo))
+			{
+				partialTypes.Add(info.DeclaringTypeDefinitionHandle, info);
+			}
+			else
+			{
+				existingInfo.AddDeclaredMembers(info);
+			}
 		}
 
 		IEnumerable<EntityDeclaration> AddInterfaceImplHelpers(
@@ -1319,6 +1324,11 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				var allOrderedEntities = typeDef.NestedTypes.Concat<IEntity>(allOrderedMembers).ToArray();
 
+				if (!partialTypes.TryGetValue((TypeDefinitionHandle)typeDef.MetadataToken, out var partialTypeInfo))
+				{
+					partialTypeInfo = null;
+				}
+
 				// Decompile members that are not compiler-generated.
 				foreach (var entity in allOrderedEntities)
 				{
@@ -1326,7 +1336,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						continue;
 					}
-					DoDecompileMember(entity, recordDecompiler);
+					DoDecompileMember(entity, recordDecompiler, partialTypeInfo);
 				}
 
 				// Decompile compiler-generated members that are still needed.
@@ -1338,7 +1348,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						// Member is already decompiled.
 						continue;
 					}
-					DoDecompileMember(entity, recordDecompiler);
+					DoDecompileMember(entity, recordDecompiler, partialTypeInfo);
 				}
 
 				// Add all decompiled members to syntax tree in the correct order.
@@ -1351,6 +1361,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					// Remove the [DefaultMember] attribute if the class contains indexers
 					RemoveAttribute(typeDecl, KnownAttribute.DefaultMember);
+				}
+				if (partialTypeInfo != null)
+				{
+					typeDecl.Modifiers |= Modifiers.Partial;
 				}
 				if (settings.IntroduceRefModifiersOnStructs)
 				{
@@ -1406,8 +1420,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				Instrumentation.DecompilerEventSource.Log.DoDecompileTypeDefinition(typeDef.FullName, watch.ElapsedMilliseconds);
 			}
 
-			void DoDecompileMember(IEntity entity, RecordDecompiler recordDecompiler)
+			void DoDecompileMember(IEntity entity, RecordDecompiler recordDecompiler, PartialTypeInfo partialType)
 			{
+				if (partialType != null && partialType.IsDeclaredMember(entity.MetadataToken))
+				{
+					return;
+				}
+
 				EntityDeclaration entityDecl;
 				switch (entity)
 				{
