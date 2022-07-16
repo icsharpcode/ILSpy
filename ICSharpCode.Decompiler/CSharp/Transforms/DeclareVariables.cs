@@ -203,6 +203,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		#region EnsureExpressionStatementsAreValid
 		void EnsureExpressionStatementsAreValid(AstNode rootNode)
 		{
+			string[] reservedNames = null;
 			foreach (var stmt in rootNode.DescendantsAndSelf.OfType<ExpressionStatement>())
 			{
 				if (!IsValidInStatementExpression(stmt.Expression))
@@ -218,6 +219,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 					else
 					{
+						reservedNames ??= rootNode.DescendantsAndSelf.OfType<Identifier>().Select(i => i.Name).ToArray();
 						// assign result to dummy variable
 						var type = stmt.Expression.GetResolveResult().Type;
 						var v = function.RegisterVariable(
@@ -226,7 +228,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							AssignVariableNames.GenerateVariableName(function, type,
 								stmt.Expression.Annotations.OfType<ILInstruction>()
 									.Where(AssignVariableNames.IsSupportedInstruction).FirstOrDefault(),
-								mustResolveConflicts: true)
+								reservedNames: reservedNames)
 						);
 						stmt.Expression = new AssignmentExpression(
 							new IdentifierExpression(v.Name).WithRR(new ILVariableResolveResult(v, v.Type)),
