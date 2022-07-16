@@ -20,8 +20,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+#if CS100
+using System.Threading.Tasks;
+#endif
 
-namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
+namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 {
 	public static class DelegateConstruction
 	{
@@ -527,6 +530,46 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return (int _, int _, int _) => 0;
 		}
 #endif
+
+#if CS100
+		public static Func<int> LambdaWithAttribute0()
+		{
+			return [My] () => 0;
+		}
+
+		public static Func<int, int> LambdaWithAttribute1()
+		{
+			return [My] (int x) => 0;
+		}
+
+		public static Func<int, int> LambdaWithAttributeOnParam()
+		{
+			return ([My] int x) => 0;
+		}
+
+		public static Func<Task<int>> AsyncLambdaWithAttribute0()
+		{
+			return [My] async () => 0;
+		}
+		public static Action StatementLambdaWithAttribute0()
+		{
+			return [My] () => {
+			};
+		}
+
+		public static Action<int> StatementLambdaWithAttribute1()
+		{
+			return [return: My] (int x) => {
+				Console.WriteLine(x);
+			};
+		}
+		public static Action<int> StatementLambdaWithAttribute2()
+		{
+			return ([My] int x) => {
+				Console.WriteLine(x);
+			};
+		}
+#endif
 	}
 
 	public class Issue1867
@@ -550,5 +593,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			return () => m1.value + 1 == 4 && m2.value > 5;
 		}
+	}
+
+	[AttributeUsage(AttributeTargets.All)]
+	internal class MyAttribute : Attribute
+	{
 	}
 }

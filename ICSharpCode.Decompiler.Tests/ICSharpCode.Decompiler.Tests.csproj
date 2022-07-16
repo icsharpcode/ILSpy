@@ -33,11 +33,11 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>TRACE;DEBUG;NET46;ROSLYN;CS60;CS70;CS71;CS72;CS73</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;ROSLYN;CS60;CS70;CS71;CS72;CS73;CS80;CS90;CS100</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DefineConstants>TRACE;NET46;ROSLYN;CS60;CS70;CS71;CS72;CS73</DefineConstants>
+    <DefineConstants>TRACE;ROSLYN;CS60;CS70;CS71;CS72;CS73;CS80;CS90;CS100</DefineConstants>
   </PropertyGroup>
 
   <Import Project="..\packages.props" />

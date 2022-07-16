@@ -2302,11 +2302,34 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
 			}
+			var attributeSections = new List<AttributeSection>();
+			foreach (var attr in method?.GetAttributes() ?? Enumerable.Empty<IAttribute>())
+			{
+				if (attr.AttributeType.IsKnownType(KnownAttribute.CompilerGenerated))
+					continue;
+				if (function.IsAsync)
+				{
+					if (attr.AttributeType.IsKnownType(KnownAttribute.AsyncStateMachine))
+						continue;
+					if (attr.AttributeType.IsKnownType(KnownAttribute.DebuggerStepThrough))
+						continue;
+				}
+				attributeSections.Add(new AttributeSection(astBuilder.ConvertAttribute(attr)));
+			}
+			foreach (var attr in method?.GetReturnTypeAttributes() ?? Enumerable.Empty<IAttribute>())
+			{
+				attributeSections.Add(new AttributeSection(astBuilder.ConvertAttribute(attr)) { AttributeTarget = "return" });
+			}
 
 			bool isLambda = false;
 			if (ame.Parameters.Any(p => p.Type.IsNull))
 			{
 				// if there is an anonymous type involved, we are forced to use a lambda expression.
+				isLambda = true;
+			}
+			else if (attributeSections.Count > 0 || ame.Parameters.Any(p => p.Attributes.Any()))
+			{
+				// C# 10 lambdas can have attributes, but anonymous methods cannot
 				isLambda = true;
 			}
 			else if (settings.UseLambdaSyntax && ame.Parameters.All(p => p.ParameterModifier == ParameterModifier.None))
@@ -2331,6 +2354,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (isLambda)
 			{
 				LambdaExpression lambda = new LambdaExpression();
+				lambda.Attributes.AddRange(attributeSections);
 				lambda.IsAsync = ame.IsAsync;
 				lambda.CopyAnnotationsFrom(ame);
 				ame.Parameters.MoveTo(lambda.Parameters);

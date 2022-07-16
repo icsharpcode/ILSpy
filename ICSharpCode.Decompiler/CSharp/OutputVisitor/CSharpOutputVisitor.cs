@@ -1007,6 +1007,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitLambdaExpression(LambdaExpression lambdaExpression)
 		{
 			StartNode(lambdaExpression);
+			WriteAttributes(lambdaExpression.Attributes);
 			if (lambdaExpression.IsAsync)
 			{
 				WriteKeyword(LambdaExpression.AsyncModifierRole);
@@ -1502,6 +1503,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					break;
 				case TypeParameterDeclaration _:
 				case ComposedType _:
+				case LambdaExpression _:
 					Space();
 					break;
 				default:

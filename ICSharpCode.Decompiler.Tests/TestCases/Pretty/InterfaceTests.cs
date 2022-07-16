@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			{
 
 			}
-			
+
 			void DefaultMethod()
 			{
 				Method();

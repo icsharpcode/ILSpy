@@ -31,10 +31,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class LambdaExpression : Expression
 	{
+		public static readonly Role<AttributeSection> AttributeRole = new Role<AttributeSection>("Attribute", null);
 		public readonly static TokenRole AsyncModifierRole = new TokenRole("async");
 		public static readonly Role<AstNode> BodyRole = new Role<AstNode>("Body", AstNode.Null);
 
 		bool isAsync;
+
+		public AstNodeCollection<AttributeSection> Attributes {
+			get { return base.GetChildrenByRole(AttributeRole); }
+		}
 
 		public bool IsAsync {
 			get { return isAsync; }
