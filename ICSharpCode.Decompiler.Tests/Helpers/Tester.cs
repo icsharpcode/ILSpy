@@ -113,8 +113,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		internal static async Task Initialize()
 		{
-			await roslynToolset.Fetch("1.3.2").ConfigureAwait(false);
-			await roslynToolset.Fetch("2.10.0").ConfigureAwait(false);
+			await roslynToolset.Fetch("1.3.2", "Microsoft.Net.Compilers", "tools").ConfigureAwait(false);
+			await roslynToolset.Fetch("2.10.0", "Microsoft.Net.Compilers", "tools").ConfigureAwait(false);
 			await roslynToolset.Fetch("3.11.0").ConfigureAwait(false);
 			await roslynToolset.Fetch(roslynLatestVersion).ConfigureAwait(false);
 
@@ -432,7 +432,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				if (roslynVersion != "legacy")
 				{
 					otherOptions += "/shared ";
-					if (!targetNet40 && Version.Parse(roslynVersion).Major > 2)
+					if (!targetNet40 && Version.Parse(RoslynToolset.SanitizeVersion(roslynVersion)).Major > 2)
 					{
 						if (flags.HasFlag(CompilerOptions.NullableEnable))
 							otherOptions += "/nullable+ ";
