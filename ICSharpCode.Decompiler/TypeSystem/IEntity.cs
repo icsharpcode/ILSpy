@@ -68,6 +68,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		IEnumerable<IAttribute> GetAttributes();
 
+		bool HasAttribute(KnownAttribute attribute);
+
+		IAttribute? GetAttribute(KnownAttribute attribute);
+
 		/// <summary>
 		/// Gets the accessibility of this entity.
 		/// </summary>

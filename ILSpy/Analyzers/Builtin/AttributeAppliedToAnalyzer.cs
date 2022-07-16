@@ -51,26 +51,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		bool IsBuiltinAttribute(ITypeDefinition attributeType, out KnownAttribute knownAttribute)
 		{
 			knownAttribute = attributeType.IsBuiltinAttribute();
-			switch (knownAttribute)
-			{
-				case KnownAttribute.Serializable:
-				case KnownAttribute.ComImport:
-				case KnownAttribute.StructLayout:
-				case KnownAttribute.DllImport:
-				case KnownAttribute.PreserveSig:
-				case KnownAttribute.MethodImpl:
-				case KnownAttribute.FieldOffset:
-				case KnownAttribute.NonSerialized:
-				case KnownAttribute.MarshalAs:
-				case KnownAttribute.PermissionSet:
-				case KnownAttribute.Optional:
-				case KnownAttribute.In:
-				case KnownAttribute.Out:
-				case KnownAttribute.IndexerName:
-					return true;
-				default:
-					return false;
-			}
+			return !knownAttribute.IsCustomAttribute();
 		}
 
 		IEnumerable<IEnumerable<ISymbol>> HandleBuiltinAttribute(KnownAttribute attribute, AnalyzerScope scope, CancellationToken ct)

@@ -126,6 +126,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		IEnumerable<IAttribute> IEntity.GetAttributes() => underlyingMethod.GetAttributes();
+		bool IEntity.HasAttribute(KnownAttribute attribute) => underlyingMethod.HasAttribute(attribute);
+		IAttribute IEntity.GetAttribute(KnownAttribute attribute) => underlyingMethod.GetAttribute(attribute);
 
 		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => underlyingMethod.GetReturnTypeAttributes();
 
