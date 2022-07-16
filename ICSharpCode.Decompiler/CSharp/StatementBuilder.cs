@@ -120,6 +120,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new ExpressionStatement(expr).WithILInstruction(inst);
 		}
 
+		protected internal override TranslatedStatement VisitStObj(StObj inst)
+		{
+			var expr = exprBuilder.Translate(inst);
+			// strip top-level ref on ref re-assignment
+			if (expr.Expression is DirectionExpression dirExpr)
+			{
+				expr = expr.UnwrapChild(dirExpr.Expression);
+			}
+			return new ExpressionStatement(expr).WithILInstruction(inst);
+		}
+
 		protected internal override TranslatedStatement VisitNop(Nop inst)
 		{
 			var stmt = new EmptyStatement();

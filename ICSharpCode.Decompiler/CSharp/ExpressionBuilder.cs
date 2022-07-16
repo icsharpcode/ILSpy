@@ -357,16 +357,17 @@ namespace ICSharpCode.Decompiler.CSharp
 				mrr = new MemberResolveResult(target.ResolveResult, field);
 			}
 
-			if (requireTarget)
+			var expr = requireTarget
+				? new MemberReferenceExpression(target, field.Name).WithRR(mrr)
+				: new IdentifierExpression(field.Name).WithRR(mrr);
+
+			if (field.Type.Kind == TypeKind.ByReference)
 			{
-				return new MemberReferenceExpression(target, field.Name)
-					.WithRR(mrr);
+				expr = new DirectionExpression(FieldDirection.Ref, expr)
+					.WithRR(new ByReferenceResolveResult(mrr, ReferenceKind.Ref));
 			}
-			else
-			{
-				return new IdentifierExpression(field.Name)
-					.WithRR(mrr);
-			}
+
+			return expr;
 		}
 
 		TranslatedExpression IsType(IsInst inst)
@@ -2798,7 +2799,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				value = Translate(inst.Value, typeHint: target.Type);
 			}
-			return Assignment(target, value).WithILInstruction(inst);
+			if (target.Expression is DirectionExpression dirExpr && target.ResolveResult is ByReferenceResolveResult lhsRefRR)
+			{
+				// ref (re-)assignment, emit "ref (a = ref b)".
+				target = target.UnwrapChild(dirExpr.Expression);
+				value = value.ConvertTo(lhsRefRR.Type, this, allowImplicitConversion: true);
+				var assign = new AssignmentExpression(target.Expression, value.Expression)
+					.WithRR(new OperatorResolveResult(target.Type, ExpressionType.Assign, lhsRefRR, value.ResolveResult));
+				return new DirectionExpression(FieldDirection.Ref, assign)
+					.WithoutILInstruction().WithRR(lhsRefRR);
+			}
+			else
+			{
+				return Assignment(target, value).WithILInstruction(inst);
+			}
 		}
 
 		private TranslatedExpression UnalignedStObj(StObj inst)
