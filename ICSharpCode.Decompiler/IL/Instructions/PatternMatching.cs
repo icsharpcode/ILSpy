@@ -553,6 +553,23 @@ namespace ICSharpCode.Decompiler.IL
 			return false;
 		}
 
+		public bool MatchDefaultOrNullOrZero()
+		{
+			switch (this)
+			{
+				case LdNull _:
+				case LdcF4 { Value: 0 }:
+				case LdcF8 { Value: 0 }:
+				case LdcI4 { Value: 0 }:
+				case LdcI8 { Value: 0 }:
+				case DefaultValue _:
+					return true;
+				default:
+					return false;
+			}
+		}
+
+
 		/// <summary>
 		/// If this instruction is a conversion of the specified kind, return its argument.
 		/// Otherwise, return the instruction itself.

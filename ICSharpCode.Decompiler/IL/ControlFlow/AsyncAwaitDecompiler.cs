@@ -725,6 +725,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				throw new SymbolicAnalysisFailedException();
 			finalStateKnown = true;
 			pos++;
+
 			if (pos + 2 == block.Instructions.Count && block.MatchIfAtEndOfBlock(out var condition, out var trueInst, out var falseInst))
 			{
 				if (MatchDisposeCombinedTokens(blockContainer, condition, trueInst, falseInst, blocksAnalyzed, out var setResultAndExitBlock))
@@ -807,7 +808,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// https://github.com/dotnet/roslyn/pull/39735 hoisted local cleanup
 				if (!target.MatchLdThis())
 					throw new SymbolicAnalysisFailedException();
-				if (!(value.MatchLdNull() || value is DefaultValue))
+				if (!value.MatchDefaultOrNullOrZero())
 					throw new SymbolicAnalysisFailedException();
 				pos++;
 			}
@@ -1441,13 +1442,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				pos--;
 			}
 
-			if (pos < 0 || !block.Instructions[pos].MatchStFld(out var target, out var field, out yieldValue))
+			if (pos < 0 || !MatchCurrentAssignment(block.Instructions[pos], out yieldValue))
+				return false;
+
+			block.Instructions.RemoveRange(pos, block.Instructions.Count - pos);
+			return true;
+		}
+
+		bool MatchCurrentAssignment(ILInstruction inst, out ILInstruction value)
+		{
+			if (!inst.MatchStFld(out var target, out var field, out value))
 				return false;
 			if (!StackSlotValue(target).MatchLdThis())
 				return false;
 			// TODO: check that we are accessing the current field (compare with get_Current)
-
-			block.Instructions.RemoveRange(pos, block.Instructions.Count - pos);
 			return true;
 		}
 		#endregion

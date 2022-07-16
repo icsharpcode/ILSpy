@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			this.baseDir = baseDir;
 		}
 
-		protected async Task FetchPackage(string packageName, string version, string outputPath)
+		protected async Task FetchPackage(string packageName, string version, string sourcePath, string outputPath)
 		{
 			ILogger logger = NullLogger.Instance;
 			CancellationToken cancellationToken = CancellationToken.None;
@@ -65,8 +65,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			using PackageArchiveReader packageReader = new PackageArchiveReader(packageStream);
 			NuspecReader nuspecReader = await packageReader.GetNuspecReaderAsync(cancellationToken).ConfigureAwait(false);
 
-			var files = await packageReader.GetFilesAsync(cancellationToken).ConfigureAwait(false);
-			files = files.Where(f => f.StartsWith("tools", StringComparison.OrdinalIgnoreCase));
+			var files = (await packageReader.GetFilesAsync(cancellationToken).ConfigureAwait(false)).ToArray();
+			files = files.Where(f => f.StartsWith(sourcePath, StringComparison.OrdinalIgnoreCase)).ToArray();
 			await packageReader.CopyFilesAsync(outputPath, files,
 				(sourceFile, targetPath, fileStream) => {
 					fileStream.CopyToFile(targetPath);
@@ -87,15 +87,15 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		{
 		}
 
-		public async Task Fetch(string version)
+		public async Task Fetch(string version, string packageName = "Microsoft.Net.Compilers.Toolset", string sourcePath = "tasks/net472")
 		{
-			string path = Path.Combine(baseDir, version, "tools");
+			string path = Path.Combine(baseDir, version, sourcePath);
 			if (!Directory.Exists(path))
 			{
-				await FetchPackage("Microsoft.Net.Compilers", version, Path.Combine(baseDir, version)).ConfigureAwait(false);
+				await FetchPackage(packageName, version, sourcePath, Path.Combine(baseDir, version)).ConfigureAwait(false);
 			}
 
-			installedCompilers.Add(version, path);
+			installedCompilers.Add(SanitizeVersion(version), path);
 		}
 
 		public string GetCSharpCompiler(string version)
@@ -110,9 +110,17 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		string GetCompiler(string compiler, string version)
 		{
-			if (installedCompilers.TryGetValue(version, out var path))
+			if (installedCompilers.TryGetValue(SanitizeVersion(version), out var path))
 				return Path.Combine(path, compiler);
 			throw new NotSupportedException($"Cannot find {compiler} {version}, please add it to the initialization.");
+		}
+
+		internal static string SanitizeVersion(string version)
+		{
+			int index = version.IndexOf("-");
+			if (index > 0)
+				return version.Remove(index);
+			return version;
 		}
 	}
 
@@ -130,7 +138,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			string path = Path.Combine(baseDir, "tools");
 			if (!Directory.Exists(path))
 			{
-				await FetchPackage("vswhere", "2.8.4", baseDir).ConfigureAwait(false);
+				await FetchPackage("vswhere", "2.8.4", "tools", baseDir).ConfigureAwait(false);
 			}
 			vswherePath = Path.Combine(path, "vswhere.exe");
 		}
