@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		const Accessibility InvalidAccessibility = (Accessibility)0xff;
 
 		readonly MetadataModule module;
-		readonly PropertyDefinitionHandle propertyHandle;
+		readonly PropertyDefinitionHandle handle;
 		readonly IMethod getter;
 		readonly IMethod setter;
 		readonly string name;
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			Debug.Assert(module != null);
 			Debug.Assert(!handle.IsNil);
 			this.module = module;
-			this.propertyHandle = handle;
+			this.handle = handle;
 
 			var metadata = module.metadata;
 			var prop = metadata.GetPropertyDefinition(handle);
@@ -83,10 +83,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override string ToString()
 		{
-			return $"{MetadataTokens.GetToken(propertyHandle):X8} {DeclaringType?.ReflectionName}.{Name}";
+			return $"{MetadataTokens.GetToken(handle):X8} {DeclaringType?.ReflectionName}.{Name}";
 		}
 
-		public EntityHandle MetadataToken => propertyHandle;
+		public EntityHandle MetadataToken => handle;
 		public string Name => name;
 
 		public bool CanGet => getter != null;
@@ -122,14 +122,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public bool ReturnTypeIsRefReadOnly {
 			get {
-				var propertyDef = module.metadata.GetPropertyDefinition(propertyHandle);
+				var propertyDef = module.metadata.GetPropertyDefinition(handle);
 				return propertyDef.GetCustomAttributes().HasKnownAttribute(module.metadata, KnownAttribute.IsReadOnly);
 			}
 		}
 
 		private void DecodeSignature()
 		{
-			var propertyDef = module.metadata.GetPropertyDefinition(propertyHandle);
+			var propertyDef = module.metadata.GetPropertyDefinition(handle);
 			var genericContext = new GenericContext(DeclaringType.TypeParameters);
 			IType returnType;
 			IParameter[] parameters;
@@ -201,7 +201,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			var b = new AttributeListBuilder(module);
 			var metadata = module.metadata;
-			var propertyDef = metadata.GetPropertyDefinition(propertyHandle);
+			var propertyDef = metadata.GetPropertyDefinition(handle);
 			if (IsIndexer && Name != "Item" && !IsExplicitInterfaceImplementation)
 			{
 				b.Add(KnownAttribute.IndexerName, KnownTypeCode.String, Name);
@@ -215,6 +215,30 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			b.Add(propertyDef.GetCustomAttributes(), symbolKind);
 			return b.Build();
+		}
+
+		public bool HasAttribute(KnownAttribute attribute)
+		{
+			if (!attribute.IsCustomAttribute())
+			{
+				return GetAttributes().Any(attr => attr.AttributeType.IsKnownType(attribute));
+			}
+			var b = new AttributeListBuilder(module);
+			var metadata = module.metadata;
+			var def = metadata.GetPropertyDefinition(handle);
+			return b.HasAttribute(metadata, def.GetCustomAttributes(), attribute, symbolKind);
+		}
+
+		public IAttribute GetAttribute(KnownAttribute attribute)
+		{
+			if (!attribute.IsCustomAttribute())
+			{
+				return GetAttributes().FirstOrDefault(attr => attr.AttributeType.IsKnownType(attribute));
+			}
+			var b = new AttributeListBuilder(module);
+			var metadata = module.metadata;
+			var def = metadata.GetPropertyDefinition(handle);
+			return b.GetAttribute(metadata, def.GetCustomAttributes(), attribute, symbolKind);
 		}
 		#endregion
 
@@ -278,14 +302,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (obj is MetadataProperty p)
 			{
-				return propertyHandle == p.propertyHandle && module.PEFile == p.module.PEFile;
+				return handle == p.handle && module.PEFile == p.module.PEFile;
 			}
 			return false;
 		}
 
 		public override int GetHashCode()
 		{
-			return 0x32b6a76c ^ module.PEFile.GetHashCode() ^ propertyHandle.GetHashCode();
+			return 0x32b6a76c ^ module.PEFile.GetHashCode() ^ handle.GetHashCode();
 		}
 
 		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)

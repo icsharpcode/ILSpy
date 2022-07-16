@@ -162,6 +162,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		IEnumerable<IAttribute> IEntity.GetAttributes() => baseMember.GetAttributes();
+		bool IEntity.HasAttribute(KnownAttribute attribute) => baseMember.HasAttribute(attribute);
+		IAttribute IEntity.GetAttribute(KnownAttribute attribute) => baseMember.GetAttribute(attribute);
+
 
 		public IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers {
 			get {

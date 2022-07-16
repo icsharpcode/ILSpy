@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -162,6 +163,30 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			b.Add(fieldDef.GetCustomAttributes(), SymbolKind.Field);
 
 			return b.Build();
+		}
+
+		public bool HasAttribute(KnownAttribute attribute)
+		{
+			if (!attribute.IsCustomAttribute())
+			{
+				return GetAttributes().Any(attr => attr.AttributeType.IsKnownType(attribute));
+			}
+			var b = new AttributeListBuilder(module);
+			var metadata = module.metadata;
+			var def = metadata.GetFieldDefinition(handle);
+			return b.HasAttribute(metadata, def.GetCustomAttributes(), attribute, SymbolKind.Field);
+		}
+
+		public IAttribute GetAttribute(KnownAttribute attribute)
+		{
+			if (!attribute.IsCustomAttribute())
+			{
+				return GetAttributes().FirstOrDefault(attr => attr.AttributeType.IsKnownType(attribute));
+			}
+			var b = new AttributeListBuilder(module);
+			var metadata = module.metadata;
+			var def = metadata.GetFieldDefinition(handle);
+			return b.GetAttribute(metadata, def.GetCustomAttributes(), attribute, SymbolKind.Field);
 		}
 
 		public string FullName => $"{DeclaringType?.FullName}.{Name}";

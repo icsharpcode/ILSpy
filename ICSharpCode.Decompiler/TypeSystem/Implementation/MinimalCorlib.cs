@@ -258,10 +258,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return EmptyList<IMethod>.Instance;
 			}
 
-			IEnumerable<IAttribute> IEntity.GetAttributes()
-			{
-				return EmptyList<IAttribute>.Instance;
-			}
+			IEnumerable<IAttribute> IEntity.GetAttributes() => EmptyList<IAttribute>.Instance;
+			bool IEntity.HasAttribute(KnownAttribute attribute) => false;
+			IAttribute IEntity.GetAttribute(KnownAttribute attribute) => null;
 
 			IEnumerable<IMethod> IType.GetConstructors(Predicate<IMethod> filter, GetMemberOptions options)
 			{

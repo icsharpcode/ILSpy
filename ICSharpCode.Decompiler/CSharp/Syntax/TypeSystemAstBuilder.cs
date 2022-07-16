@@ -1196,7 +1196,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		bool IsFlagsEnum(ITypeDefinition type)
 		{
-			return type.HasAttribute(KnownAttribute.Flags, inherit: false);
+			return type.HasAttribute(KnownAttribute.Flags);
 		}
 
 		Expression ConvertEnumValue(IType type, long val)
