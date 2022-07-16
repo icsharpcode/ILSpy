@@ -262,6 +262,7 @@ namespace ICSharpCode.ILSpy
 				case "params":
 				case "ref":
 				case "out":
+				case "scoped":
 					color = parameterModifierColor;
 					break;
 				case "break":

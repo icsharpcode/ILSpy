@@ -246,6 +246,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						case "NullableContextAttribute":
 							return (options & TypeSystemOptions.NullabilityAnnotations) != 0
 								&& (target == SymbolKind.TypeDefinition || IsMethodLike(target));
+						case "LifetimeAnnotationAttribute":
+							return (options & TypeSystemOptions.LifetimeAnnotations) != 0
+								&& (target == SymbolKind.Parameter);
 						default:
 							return false;
 					}

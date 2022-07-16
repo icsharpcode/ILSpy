@@ -150,12 +150,13 @@ namespace ICSharpCode.Decompiler
 			if (languageVersion < CSharp.LanguageVersion.CSharp11_0)
 			{
 				parameterNullCheck = false;
+				lifetimeAnnotations = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (parameterNullCheck)
+			if (parameterNullCheck || lifetimeAnnotations)
 				return CSharp.LanguageVersion.CSharp11_0;
 			if (fileScopedNamespaces || recordStructs)
 				return CSharp.LanguageVersion.CSharp10_0;
@@ -331,6 +332,25 @@ namespace ICSharpCode.Decompiler
 				if (functionPointers != value)
 				{
 					functionPointers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool lifetimeAnnotations = true;
+
+		/// <summary>
+		/// Use C# 9 <c>delegate* unmanaged</c> types.
+		/// If this option is disabled, function pointers will instead be decompiled with type `IntPtr`.
+		/// </summary>
+		[Category("C# 11.0 / VS 2022.4")]
+		[Description("DecompilerSettings.LifetimeAnnotations")]
+		public bool LifetimeAnnotations {
+			get { return lifetimeAnnotations; }
+			set {
+				if (lifetimeAnnotations != value)
+				{
+					lifetimeAnnotations = value;
 					OnPropertyChanged();
 				}
 			}

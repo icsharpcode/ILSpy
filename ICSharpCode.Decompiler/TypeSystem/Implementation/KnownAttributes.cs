@@ -91,6 +91,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		CallerMemberName,
 		CallerFilePath,
 		CallerLineNumber,
+		LifetimeAnnotation,
 
 		// Type parameter attributes:
 		IsUnmanaged,
@@ -162,6 +163,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CallerMemberNameAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CallerFilePathAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CallerLineNumberAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", "LifetimeAnnotationAttribute"),
 			// Type parameter attributes:
 			new TopLevelTypeName("System.Runtime.CompilerServices", "IsUnmanagedAttribute"),
 			// Marshalling attributes:

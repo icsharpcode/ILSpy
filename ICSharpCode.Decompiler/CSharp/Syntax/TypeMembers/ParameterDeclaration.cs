@@ -34,17 +34,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		Ref,
 		Out,
 		Params,
-		In
+		In,
+		Scoped
 	}
 
 	public class ParameterDeclaration : AstNode
 	{
 		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
+		public static readonly TokenRole ThisModifierRole = new TokenRole("this");
+		public static readonly TokenRole RefScopedRole = new TokenRole("scoped");
 		public static readonly TokenRole RefModifierRole = new TokenRole("ref");
 		public static readonly TokenRole OutModifierRole = new TokenRole("out");
-		public static readonly TokenRole ParamsModifierRole = new TokenRole("params");
-		public static readonly TokenRole ThisModifierRole = new TokenRole("this");
 		public static readonly TokenRole InModifierRole = new TokenRole("in");
+		public static readonly TokenRole ValueScopedRole = new TokenRole("scoped");
+		public static readonly TokenRole ParamsModifierRole = new TokenRole("params");
 
 		#region PatternPlaceholder
 		public static implicit operator ParameterDeclaration?(PatternMatching.Pattern pattern)
@@ -92,17 +95,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		#endregion
 
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
+		public override NodeType NodeType => NodeType.Unknown;
 
 		public AstNodeCollection<AttributeSection> Attributes {
 			get { return GetChildrenByRole(AttributeRole); }
 		}
 
 		bool hasThisModifier;
+		bool isRefScoped, isValueScoped;
 
 		public CSharpTokenNode ThisKeyword {
 			get {
@@ -119,6 +119,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set {
 				ThrowIfFrozen();
 				hasThisModifier = value;
+			}
+		}
+
+		public bool IsRefScoped {
+			get { return isRefScoped; }
+			set {
+				ThrowIfFrozen();
+				isRefScoped = value;
+			}
+		}
+
+		public bool IsValueScoped {
+			get { return isValueScoped; }
+			set {
+				ThrowIfFrozen();
+				isValueScoped = value;
 			}
 		}
 

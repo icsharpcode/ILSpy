@@ -120,11 +120,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		FunctionPointers = 0x2000,
 		/// <summary>
+		/// Allow C# 11 scoped annotation. If this option is not enabled, LifetimeAnnotationAttribute
+		/// will be reported as custom attribute.
+		/// </summary>
+		LifetimeAnnotations = 0x4000,
+		/// <summary>
 		/// Default settings: typical options for the decompiler, with all C# languages features enabled.
 		/// </summary>
 		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants | ReadOnlyStructsAndParameters
 			| RefStructs | UnmanagedConstraints | NullabilityAnnotations | ReadOnlyMethods
-			| NativeIntegers | FunctionPointers
+			| NativeIntegers | FunctionPointers | LifetimeAnnotations
 	}
 
 	/// <summary>
@@ -160,6 +165,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				typeSystemOptions |= TypeSystemOptions.NativeIntegers;
 			if (settings.FunctionPointers)
 				typeSystemOptions |= TypeSystemOptions.FunctionPointers;
+			if (settings.LifetimeAnnotations)
+				typeSystemOptions |= TypeSystemOptions.LifetimeAnnotations;
 			return typeSystemOptions;
 		}
 

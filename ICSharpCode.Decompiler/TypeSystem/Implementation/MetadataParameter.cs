@@ -106,6 +106,38 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return ReferenceKind.Ref;
 		}
 
+		public LifetimeAnnotation Lifetime {
+			get {
+				if ((module.TypeSystemOptions & TypeSystemOptions.LifetimeAnnotations) == 0)
+				{
+					return default;
+				}
+
+				var metadata = module.metadata;
+				var parameterDef = metadata.GetParameter(handle);
+				foreach (var h in parameterDef.GetCustomAttributes())
+				{
+					var custom = metadata.GetCustomAttribute(h);
+					if (!custom.IsKnownAttribute(metadata, KnownAttribute.LifetimeAnnotation))
+						continue;
+
+					var value = custom.DecodeValue(module.TypeProvider);
+					if (value.FixedArguments.Length != 2)
+						continue;
+					if (value.FixedArguments[0].Value is bool refScoped
+						&& value.FixedArguments[1].Value is bool valueScoped)
+					{
+						return new LifetimeAnnotation {
+							RefScoped = refScoped,
+							ValueScoped = valueScoped
+						};
+					}
+				}
+
+				return default;
+			}
+		}
+
 		public bool IsParams {
 			get {
 				if (Type.Kind != TypeKind.Array)

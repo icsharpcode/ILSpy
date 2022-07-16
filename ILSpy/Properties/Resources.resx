@@ -381,6 +381,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.IsUnmanagedAttributeOnTypeParametersShouldBeReplacedWithUnmanagedConstraints" xml:space="preserve">
     <value>IsUnmanagedAttribute on type parameters should be replaced with 'unmanaged' constraints</value>
   </data>
+  <data name="DecompilerSettings.LifetimeAnnotations" xml:space="preserve">
+    <value>'scoped' lifetime annotation</value>
+  </data>
   <data name="DecompilerSettings.NativeIntegers" xml:space="preserve">
     <value>Use nint/nuint types</value>
   </data>
@@ -412,7 +415,10 @@ Are you sure you want to continue?</value>
     <value>Read-only methods</value>
   </data>
   <data name="DecompilerSettings.RecordClasses" xml:space="preserve">
-    <value>Records</value>
+    <value>Record classes</value>
+  </data>
+  <data name="DecompilerSettings.RecordStructs" xml:space="preserve">
+    <value>Record structs</value>
   </data>
   <data name="DecompilerSettings.RemoveDeadAndSideEffectFreeCodeUseWithCaution" xml:space="preserve">
     <value>Remove dead and side effect free code (use with caution!)</value>

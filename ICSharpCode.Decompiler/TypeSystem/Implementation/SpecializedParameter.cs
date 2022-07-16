@@ -51,6 +51,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		object IVariable.GetConstantValue(bool throwOnInvalidMetadata) => baseParameter.GetConstantValue(throwOnInvalidMetadata);
 		SymbolKind ISymbol.SymbolKind => SymbolKind.Parameter;
 
+		public LifetimeAnnotation Lifetime => baseParameter.Lifetime;
+
 		public override string ToString()
 		{
 			return DefaultParameter.ToString(this);

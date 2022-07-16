@@ -1074,6 +1074,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &apos;scoped&apos; lifetime annotation.
+        /// </summary>
+        public static string DecompilerSettings_LifetimeAnnotations {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.LifetimeAnnotations", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use nint/nuint types.
         /// </summary>
         public static string DecompilerSettings_NativeIntegers {
@@ -1164,11 +1173,20 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Records.
+        ///   Looks up a localized string similar to Record classes.
         /// </summary>
         public static string DecompilerSettings_RecordClasses {
             get {
                 return ResourceManager.GetString("DecompilerSettings.RecordClasses", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Record structs.
+        /// </summary>
+        public static string DecompilerSettings_RecordStructs {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.RecordStructs", resourceCulture);
             }
         }
         
