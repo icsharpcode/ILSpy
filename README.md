@@ -81,7 +81,7 @@ How to contribute
 -----------------
 
 - Report bugs
-- If you want to contribute a pull request, please add https://gist.github.com/siegfriedpammer/75700ea61609eb22714d21885e4eb084 to your `.git/hooks` to prevent checking in code with wrong indentation. We use tabs and not spaces. The build server runs the same script, so any pull requests using wrong indentation will fail.
+- If you want to contribute a pull request, please add https://github.com/icsharpcode/ILSpy/blob/master/BuildTools/pre-commit to your `.git/hooks` to prevent checking in code with wrong formatting. We use tabs and not spaces. The build server runs the same script, so any pull requests using wrong formatting will fail.
 
 Current and past [contributors](https://github.com/icsharpcode/ILSpy/graphs/contributors).
 

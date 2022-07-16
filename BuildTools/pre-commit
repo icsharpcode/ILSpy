@@ -1,10 +1,20 @@
 #!/bin/sh
 #
 # To enable this hook, copy/symlink this file to ".git/hooks/pre-commit".
+#  mklink .git\hooks\pre-commit ..\..\BuildTools\pre-commit
 
+set -eu
+
+DOTNET_FORMAT_VERSION=6.2.315104
+DOTNET_PATH="$LOCALAPPDATA/ICSharpCode/ILSpy/dotnet-format-$DOTNET_FORMAT_VERSION"
+if [ ! -d "$DOTNET_PATH" ]; then
+ dotnet tool install --tool-path "$DOTNET_PATH" dotnet-format --version "$DOTNET_FORMAT_VERSION" --add-source "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet6/nuget/v3/index.json"
+fi
+
+"$DOTNET_PATH/dotnet-format.exe" --version
 #if git diff --quiet --ignore-submodules; then
-#	dotnet format whitespace --no-restore --verbosity detailed ILSpy.sln
+#	"$DOTNET_PATH/dotnet-format.exe" whitespace --no-restore --verbosity detailed ILSpy.sln
 #	git add -u -- \*\*.cs
 #else
-	exec dotnet format whitespace --verify-no-changes --no-restore --verbosity detailed ILSpy.sln
+	exec "$DOTNET_PATH/dotnet-format.exe" whitespace --verify-no-changes --no-restore --verbosity detailed ILSpy.sln
 #fi
