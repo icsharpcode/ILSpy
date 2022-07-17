@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.IL
 		ImmutableStack<ILVariable> currentStack;
 		ILVariable[] parameterVariables;
 		ILVariable[] localVariables;
-		BitArray isBranchTarget;
+		BitSet isBranchTarget;
 		BlockContainer mainContainer;
 		List<ILInstruction> instructionBuilder;
 		int currentInstructionStart;
@@ -125,7 +125,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			this.mainContainer = new BlockContainer(expectedResultType: methodReturnStackType);
 			this.instructionBuilder = new List<ILInstruction>();
-			this.isBranchTarget = new BitArray(reader.Length);
+			this.isBranchTarget = new BitSet(reader.Length);
 			this.stackByOffset = new Dictionary<int, ImmutableStack<ILVariable>>();
 			this.variableByExceptionHandler = new Dictionary<ExceptionRegion, ILVariable>();
 		}
@@ -390,44 +390,10 @@ namespace ICSharpCode.Decompiler.IL
 
 		void ReadInstructions(CancellationToken cancellationToken)
 		{
-			// Fill isBranchTarget and branchStackDict based on exception handlers
-			foreach (var eh in body.ExceptionRegions)
-			{
-				ImmutableStack<ILVariable> ehStack = null;
-				if (eh.Kind == ExceptionRegionKind.Catch)
-				{
-					var catchType = module.ResolveType(eh.CatchType, genericContext);
-					var v = new ILVariable(VariableKind.ExceptionStackSlot, catchType, eh.HandlerOffset) {
-						Name = "E_" + eh.HandlerOffset,
-						HasGeneratedName = true
-					};
-					variableByExceptionHandler.Add(eh, v);
-					ehStack = ImmutableStack.Create(v);
-				}
-				else if (eh.Kind == ExceptionRegionKind.Filter)
-				{
-					var v = new ILVariable(VariableKind.ExceptionStackSlot, compilation.FindType(KnownTypeCode.Object), eh.HandlerOffset) {
-						Name = "E_" + eh.HandlerOffset,
-						HasGeneratedName = true
-					};
-					variableByExceptionHandler.Add(eh, v);
-					ehStack = ImmutableStack.Create(v);
-				}
-				else
-				{
-					ehStack = ImmutableStack<ILVariable>.Empty;
-				}
-				if (eh.FilterOffset != -1)
-				{
-					isBranchTarget[eh.FilterOffset] = true;
-					StoreStackForOffset(eh.FilterOffset, ref ehStack);
-				}
-				if (eh.HandlerOffset != -1)
-				{
-					isBranchTarget[eh.HandlerOffset] = true;
-					StoreStackForOffset(eh.HandlerOffset, ref ehStack);
-				}
-			}
+			reader.Reset();
+			ILParser.SetBranchTargets(ref reader, isBranchTarget);
+			reader.Reset();
+			PrepareBranchTargetsAndStacksForExceptionHandlers();
 
 			reader.Reset();
 			while (reader.RemainingBytes > 0)
@@ -476,13 +442,55 @@ namespace ICSharpCode.Decompiler.IL
 			InsertStackAdjustments();
 		}
 
+		private void PrepareBranchTargetsAndStacksForExceptionHandlers()
+		{
+			// Fill isBranchTarget and branchStackDict based on exception handlers
+			foreach (var eh in body.ExceptionRegions)
+			{
+				ImmutableStack<ILVariable> ehStack;
+				if (eh.Kind == ExceptionRegionKind.Catch)
+				{
+					var catchType = module.ResolveType(eh.CatchType, genericContext);
+					var v = new ILVariable(VariableKind.ExceptionStackSlot, catchType, eh.HandlerOffset) {
+						Name = "E_" + eh.HandlerOffset,
+						HasGeneratedName = true
+					};
+					variableByExceptionHandler.Add(eh, v);
+					ehStack = ImmutableStack.Create(v);
+				}
+				else if (eh.Kind == ExceptionRegionKind.Filter)
+				{
+					var v = new ILVariable(VariableKind.ExceptionStackSlot, compilation.FindType(KnownTypeCode.Object), eh.HandlerOffset) {
+						Name = "E_" + eh.HandlerOffset,
+						HasGeneratedName = true
+					};
+					variableByExceptionHandler.Add(eh, v);
+					ehStack = ImmutableStack.Create(v);
+				}
+				else
+				{
+					ehStack = ImmutableStack<ILVariable>.Empty;
+				}
+				if (eh.FilterOffset != -1)
+				{
+					isBranchTarget[eh.FilterOffset] = true;
+					StoreStackForOffset(eh.FilterOffset, ref ehStack);
+				}
+				if (eh.HandlerOffset != -1)
+				{
+					isBranchTarget[eh.HandlerOffset] = true;
+					StoreStackForOffset(eh.HandlerOffset, ref ehStack);
+				}
+			}
+		}
+
 		private bool IsSequencePointInstruction(ILInstruction instruction)
 		{
 			if (instruction.OpCode == OpCode.Nop ||
-				(this.instructionBuilder.Count > 0 &&
-				this.instructionBuilder.Last().OpCode == OpCode.Call ||
-				this.instructionBuilder.Last().OpCode == OpCode.CallIndirect ||
-				this.instructionBuilder.Last().OpCode == OpCode.CallVirt))
+				(instructionBuilder.Count > 0
+				&& instructionBuilder.Last().OpCode is OpCode.Call
+													or OpCode.CallIndirect
+													or OpCode.CallVirt))
 			{
 
 				return true;
@@ -1787,7 +1795,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		void MarkBranchTarget(int targetILOffset)
 		{
-			isBranchTarget[targetILOffset] = true;
+			Debug.Assert(isBranchTarget[targetILOffset]);
 			StoreStackForOffset(targetILOffset, ref currentStack);
 		}
 
