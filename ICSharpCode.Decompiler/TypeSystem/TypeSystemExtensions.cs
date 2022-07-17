@@ -748,5 +748,21 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new ParameterizedType(td, td.TypeArguments);
 			}
 		}
+
+		public static INamespace GetNamespaceByFullName(this ICompilation compilation, string name)
+		{
+			if (string.IsNullOrEmpty(name))
+				return compilation.RootNamespace;
+			var parts = name.Split('.');
+			var ns = compilation.RootNamespace;
+			foreach (var part in parts)
+			{
+				var child = ns.GetChildNamespace(part);
+				if (child == null)
+					return null;
+				ns = child;
+			}
+			return ns;
+		}
 	}
 }
