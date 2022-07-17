@@ -78,6 +78,7 @@ namespace ICSharpCode.Decompiler.IL
 		StackType methodReturnStackType;
 		BlobReader reader;
 		ImmutableStack<ILVariable> currentStack;
+		List<ILInstruction> expressionStack;
 		ILVariable[] parameterVariables;
 		ILVariable[] localVariables;
 		BitSet isBranchTarget;
@@ -113,6 +114,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.body = body;
 			this.reader = body.GetILReader();
 			this.currentStack = ImmutableStack<ILVariable>.Empty;
+			this.expressionStack = new List<ILInstruction>();
 			this.unionFind = new UnionFind<ILVariable>();
 			this.stackMismatchPairs = new List<(ILVariable, ILVariable)>();
 			this.methodReturnStackType = method.ReturnType.GetStackType();
@@ -395,15 +397,21 @@ namespace ICSharpCode.Decompiler.IL
 			reader.Reset();
 			PrepareBranchTargetsAndStacksForExceptionHandlers();
 
+			bool nextInstructionBeginsNewBlock = false;
+
 			reader.Reset();
 			while (reader.RemainingBytes > 0)
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 				int start = reader.Offset;
-				StoreStackForOffset(start, ref currentStack);
+				if (isBranchTarget[start])
+				{
+					FlushExpressionStack();
+					StoreStackForOffset(start, ref currentStack);
+				}
 				currentInstructionStart = start;
-				bool startedWithEmptyStack = currentStack.IsEmpty;
-				ILInstruction decodedInstruction;
+				bool startedWithEmptyStack = CurrentStackIsEmpty();
+				DecodedInstruction decodedInstruction;
 				try
 				{
 					decodedInstruction = DecodeInstruction();
@@ -412,26 +420,47 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					decodedInstruction = new InvalidBranch(ex.Message);
 				}
-				if (decodedInstruction.ResultType == StackType.Unknown && decodedInstruction.OpCode != OpCode.InvalidBranch && UnpackPush(decodedInstruction).OpCode != OpCode.InvalidExpression)
+				var inst = decodedInstruction.Instruction;
+				if (inst.ResultType == StackType.Unknown && inst.OpCode != OpCode.InvalidBranch && inst.OpCode != OpCode.InvalidExpression)
 					Warn("Unknown result type (might be due to invalid IL or missing references)");
-				decodedInstruction.CheckInvariant(ILPhase.InILReader);
+				inst.CheckInvariant(ILPhase.InILReader);
 				int end = reader.Offset;
-				decodedInstruction.AddILRange(new Interval(start, end));
-				UnpackPush(decodedInstruction).AddILRange(decodedInstruction);
-				instructionBuilder.Add(decodedInstruction);
-				if (decodedInstruction.HasDirectFlag(InstructionFlags.EndPointUnreachable))
+				inst.AddILRange(new Interval(start, end));
+				if (!decodedInstruction.PushedOnExpressionStack)
 				{
+					// Flush to avoid re-ordering of side-effects
+					FlushExpressionStack();
+					instructionBuilder.Add(inst);
+				}
+				else if (isBranchTarget[start] || nextInstructionBeginsNewBlock)
+				{
+					// If this instruction is the first in a new block, avoid it being inlined
+					// into the next instruction.
+					// This is necessary because the BlockBuilder uses inst.StartILOffset to
+					// detect block starts, and doesn't search nested instructions.
+					FlushExpressionStack();
+				}
+				if (inst.HasDirectFlag(InstructionFlags.EndPointUnreachable))
+				{
+					FlushExpressionStack();
 					if (!stackByOffset.TryGetValue(end, out currentStack))
 					{
 						currentStack = ImmutableStack<ILVariable>.Empty;
 					}
+					nextInstructionBeginsNewBlock = true;
+				}
+				else
+				{
+					nextInstructionBeginsNewBlock = inst.HasFlag(InstructionFlags.MayBranch);
 				}
 
-				if (IsSequencePointInstruction(decodedInstruction) || startedWithEmptyStack)
+				if ((!decodedInstruction.PushedOnExpressionStack && IsSequencePointInstruction(inst)) || startedWithEmptyStack)
 				{
-					this.SequencePointCandidates.Add(decodedInstruction.StartILOffset);
+					this.SequencePointCandidates.Add(inst.StartILOffset);
 				}
 			}
+
+			FlushExpressionStack();
 
 			var visitor = new CollectStackVariablesVisitor(unionFind);
 			for (int i = 0; i < instructionBuilder.Count; i++)
@@ -442,11 +471,22 @@ namespace ICSharpCode.Decompiler.IL
 			InsertStackAdjustments();
 		}
 
+		private bool CurrentStackIsEmpty()
+		{
+			return currentStack.IsEmpty && expressionStack.Count == 0;
+		}
+
 		private void PrepareBranchTargetsAndStacksForExceptionHandlers()
 		{
 			// Fill isBranchTarget and branchStackDict based on exception handlers
 			foreach (var eh in body.ExceptionRegions)
 			{
+				// Always mark the start of the try block as a "branch target".
+				// We don't actually need to store the stack state here,
+				// but we need to ensure that no ILInstructions are inlined
+				// into the try-block.
+				isBranchTarget[eh.TryOffset] = true;
+
 				ImmutableStack<ILVariable> ehStack;
 				if (eh.Kind == ExceptionRegionKind.Catch)
 				{
@@ -551,20 +591,23 @@ namespace ICSharpCode.Decompiler.IL
 					output.WriteLine();
 					continue;
 				}
-				output.Write("   [");
-				bool isFirstElement = true;
-				foreach (var element in stackByOffset[inst.StartILOffset])
+				if (stackByOffset.TryGetValue(inst.StartILOffset, out var stack))
 				{
-					if (isFirstElement)
-						isFirstElement = false;
-					else
-						output.Write(", ");
-					output.WriteLocalReference(element.Name, element);
-					output.Write(":");
-					output.Write(element.StackType);
+					output.Write("   [");
+					bool isFirstElement = true;
+					foreach (var element in stack)
+					{
+						if (isFirstElement)
+							isFirstElement = false;
+						else
+							output.Write(", ");
+						output.WriteLocalReference(element.Name, element);
+						output.Write(":");
+						output.Write(element.StackType);
+					}
+					output.Write(']');
+					output.WriteLine();
 				}
-				output.Write(']');
-				output.WriteLine();
 				if (isBranchTarget[inst.StartILOffset])
 					output.Write('*');
 				else
@@ -619,17 +662,7 @@ namespace ICSharpCode.Decompiler.IL
 			return function;
 		}
 
-		static ILInstruction UnpackPush(ILInstruction inst)
-		{
-			ILVariable v;
-			ILInstruction inner;
-			if (inst.MatchStLoc(out v, out inner) && v.Kind == VariableKind.StackSlot)
-				return inner;
-			else
-				return inst;
-		}
-
-		ILInstruction Neg()
+		DecodedInstruction Neg()
 		{
 			switch (PeekStackType())
 			{
@@ -649,7 +682,18 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		ILInstruction DecodeInstruction()
+		struct DecodedInstruction
+		{
+			public ILInstruction Instruction;
+			public bool PushedOnExpressionStack;
+
+			public static implicit operator DecodedInstruction(ILInstruction instruction)
+			{
+				return new DecodedInstruction { Instruction = instruction };
+			}
+		}
+
+		DecodedInstruction DecodeInstruction()
 		{
 			if (reader.RemainingBytes == 0)
 				return new InvalidBranch("Unexpected end of body");
@@ -939,6 +983,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Or:
 					return BinaryNumeric(BinaryNumericOperator.BitOr);
 				case ILOpCode.Pop:
+					FlushExpressionStack();
 					Pop();
 					return new Nop() { Kind = NopKind.Pop };
 				case ILOpCode.Rem:
@@ -1119,6 +1164,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		StackType PeekStackType()
 		{
+			if (expressionStack.Count > 0)
+				return expressionStack.Last().ResultType;
 			if (currentStack.IsEmpty)
 				return StackType.Unknown;
 			else
@@ -1174,18 +1221,18 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		ILInstruction Push(ILInstruction inst)
+		DecodedInstruction Push(ILInstruction inst)
 		{
-			Debug.Assert(inst.ResultType != StackType.Void);
-			IType type = compilation.FindType(inst.ResultType);
-			var v = new ILVariable(VariableKind.StackSlot, type, inst.ResultType);
-			v.HasGeneratedName = true;
-			currentStack = currentStack.Push(v);
-			return new StLoc(v, inst);
+			expressionStack.Add(inst);
+			return new DecodedInstruction {
+				Instruction = inst,
+				PushedOnExpressionStack = true
+			};
 		}
 
 		ILInstruction Peek()
 		{
+			FlushExpressionStack();
 			if (currentStack.IsEmpty)
 			{
 				return new InvalidExpression("Stack underflow").WithILRange(new Interval(reader.Offset, reader.Offset));
@@ -1195,6 +1242,12 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILInstruction Pop()
 		{
+			if (expressionStack.Count > 0)
+			{
+				var inst = expressionStack.Last();
+				expressionStack.RemoveAt(expressionStack.Count - 1);
+				return inst;
+			}
 			if (currentStack.IsEmpty)
 			{
 				return new InvalidExpression("Stack underflow").WithILRange(new Interval(reader.Offset, reader.Offset));
@@ -1396,6 +1449,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			else
 			{
+				FlushExpressionStack();
 				Pop();
 				return new InvalidExpression($"starg {v} (out-of-bounds)");
 			}
@@ -1430,17 +1484,18 @@ namespace ICSharpCode.Decompiler.IL
 			if (v >= 0 && v < localVariables.Length)
 			{
 				return new StLoc(localVariables[v], Pop(localVariables[v].StackType)) {
-					ILStackWasEmpty = currentStack.IsEmpty
+					ILStackWasEmpty = CurrentStackIsEmpty()
 				};
 			}
 			else
 			{
+				FlushExpressionStack();
 				Pop();
 				return new InvalidExpression($"stloc {v} (out-of-bounds)");
 			}
 		}
 
-		private ILInstruction LdElem(IType type)
+		private DecodedInstruction LdElem(IType type)
 		{
 			return Push(new LdObj(new LdElema(indices: Pop(), array: Pop(), type: type) { DelayExceptions = true }, type));
 		}
@@ -1456,17 +1511,17 @@ namespace ICSharpCode.Decompiler.IL
 		ILInstruction InitObj(ILInstruction target, IType type)
 		{
 			var value = new DefaultValue(type);
-			value.ILStackWasEmpty = currentStack.IsEmpty;
+			value.ILStackWasEmpty = CurrentStackIsEmpty();
 			return new StObj(target, value, type);
 		}
 
 		IType constrainedPrefix;
 
-		private ILInstruction DecodeConstrainedCall()
+		private DecodedInstruction DecodeConstrainedCall()
 		{
 			constrainedPrefix = ReadAndDecodeTypeReference();
 			var inst = DecodeInstruction();
-			var call = UnpackPush(inst) as CallInstruction;
+			var call = inst.Instruction as CallInstruction;
 			if (call != null)
 				Debug.Assert(call.ConstrainedTo == constrainedPrefix);
 			else
@@ -1475,10 +1530,10 @@ namespace ICSharpCode.Decompiler.IL
 			return inst;
 		}
 
-		private ILInstruction DecodeTailCall()
+		private DecodedInstruction DecodeTailCall()
 		{
 			var inst = DecodeInstruction();
-			var call = UnpackPush(inst) as CallInstruction;
+			var call = inst.Instruction as CallInstruction;
 			if (call != null)
 				call.IsTail = true;
 			else
@@ -1486,11 +1541,11 @@ namespace ICSharpCode.Decompiler.IL
 			return inst;
 		}
 
-		private ILInstruction DecodeUnaligned()
+		private DecodedInstruction DecodeUnaligned()
 		{
 			byte alignment = reader.ReadByte();
 			var inst = DecodeInstruction();
-			var sup = UnpackPush(inst) as ISupportsUnalignedPrefix;
+			var sup = inst.Instruction as ISupportsUnalignedPrefix;
 			if (sup != null)
 				sup.UnalignedPrefix = alignment;
 			else
@@ -1498,10 +1553,10 @@ namespace ICSharpCode.Decompiler.IL
 			return inst;
 		}
 
-		private ILInstruction DecodeVolatile()
+		private DecodedInstruction DecodeVolatile()
 		{
 			var inst = DecodeInstruction();
-			var svp = UnpackPush(inst) as ISupportsVolatilePrefix;
+			var svp = inst.Instruction as ISupportsVolatilePrefix;
 			if (svp != null)
 				svp.IsVolatile = true;
 			else
@@ -1509,10 +1564,10 @@ namespace ICSharpCode.Decompiler.IL
 			return inst;
 		}
 
-		private ILInstruction DecodeReadonly()
+		private DecodedInstruction DecodeReadonly()
 		{
 			var inst = DecodeInstruction();
-			var ldelema = UnpackPush(inst) as LdElema;
+			var ldelema = inst.Instruction as LdElema;
 			if (ldelema != null)
 				ldelema.IsReadOnly = true;
 			else
@@ -1520,7 +1575,7 @@ namespace ICSharpCode.Decompiler.IL
 			return inst;
 		}
 
-		ILInstruction DecodeCall(OpCode opCode)
+		DecodedInstruction DecodeCall(OpCode opCode)
 		{
 			var method = ReadAndDecodeMethodReference();
 			int firstArgument = (opCode != OpCode.NewObj && !method.IsStatic) ? 1 : 0;
@@ -1571,14 +1626,14 @@ namespace ICSharpCode.Decompiler.IL
 					// This needs to happen early (not as a transform) because the StObj.TargetSlot has
 					// restricted inlining (doesn't accept ldflda when exceptions aren't delayed).
 					var newobj = new NewObj(method);
-					newobj.ILStackWasEmpty = currentStack.IsEmpty;
+					newobj.ILStackWasEmpty = CurrentStackIsEmpty();
 					newobj.ConstrainedTo = constrainedPrefix;
 					newobj.Arguments.AddRange(arguments.Skip(1));
 					return new StObj(arguments[0], newobj, method.DeclaringType);
 				}
 				default:
 					var call = CallInstruction.Create(opCode, method);
-					call.ILStackWasEmpty = currentStack.IsEmpty;
+					call.ILStackWasEmpty = CurrentStackIsEmpty();
 					call.ConstrainedTo = constrainedPrefix;
 					call.Arguments.AddRange(arguments);
 					if (call.ResultType != StackType.Void)
@@ -1587,7 +1642,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		ILInstruction DecodeCallIndirect()
+		DecodedInstruction DecodeCallIndirect()
 		{
 			var signatureHandle = (StandaloneSignatureHandle)ReadAndDecodeMetadataToken();
 			var (header, fpt) = module.DecodeMethodSignature(signatureHandle, genericContext);
@@ -1780,6 +1835,7 @@ namespace ICSharpCode.Decompiler.IL
 			int target = ILParser.DecodeBranchTarget(ref reader, opCode);
 			if (isLeave)
 			{
+				FlushExpressionStack();
 				currentStack = currentStack.Clear();
 			}
 			if (!IsInvalidBranch(target))
@@ -1795,8 +1851,23 @@ namespace ICSharpCode.Decompiler.IL
 
 		void MarkBranchTarget(int targetILOffset)
 		{
+			FlushExpressionStack();
 			Debug.Assert(isBranchTarget[targetILOffset]);
 			StoreStackForOffset(targetILOffset, ref currentStack);
+		}
+
+		private void FlushExpressionStack()
+		{
+			foreach (var inst in expressionStack)
+			{
+				Debug.Assert(inst.ResultType != StackType.Void);
+				IType type = compilation.FindType(inst.ResultType);
+				var v = new ILVariable(VariableKind.StackSlot, type, inst.ResultType);
+				v.HasGeneratedName = true;
+				currentStack = currentStack.Push(v);
+				instructionBuilder.Add(new StLoc(v, inst).WithILRange(inst));
+			}
+			expressionStack.Clear();
 		}
 
 		ILInstruction DecodeSwitch()
@@ -1827,7 +1898,7 @@ namespace ICSharpCode.Decompiler.IL
 			return instr;
 		}
 
-		ILInstruction BinaryNumeric(BinaryNumericOperator @operator, bool checkForOverflow = false, Sign sign = Sign.None)
+		DecodedInstruction BinaryNumeric(BinaryNumericOperator @operator, bool checkForOverflow = false, Sign sign = Sign.None)
 		{
 			var right = Pop();
 			var left = Pop();
