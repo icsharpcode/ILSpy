@@ -859,6 +859,8 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Conv_ovf_u_un:
 					return Push(new Conv(Pop(), PrimitiveType.U, true, Sign.Unsigned));
 				case ILOpCode.Cpblk:
+					// This preserves the evaluation order because the ILAst will run
+					// destAddress; sourceAddress; size.
 					return new Cpblk(size: Pop(StackType.I4), sourceAddress: PopPointer(), destAddress: PopPointer());
 				case ILOpCode.Div:
 					return BinaryNumeric(BinaryNumericOperator.Div, false, Sign.Signed);
@@ -871,6 +873,8 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Endfinally:
 					return new Leave(null);
 				case ILOpCode.Initblk:
+					// This preserves the evaluation order because the ILAst will run
+					// address; value; size.
 					return new Initblk(size: Pop(StackType.I4), value: Pop(StackType.I4), address: PopPointer());
 				case ILOpCode.Jmp:
 					return DecodeJmp();
@@ -983,7 +987,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Or:
 					return BinaryNumeric(BinaryNumericOperator.BitOr);
 				case ILOpCode.Pop:
-					FlushExpressionStack();
+					FlushExpressionStack(); // discard only the value, not the side-effects
 					Pop();
 					return new Nop() { Kind = NopKind.Pop };
 				case ILOpCode.Rem:
@@ -1002,21 +1006,22 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Starg_s:
 					return Starg(ILParser.DecodeIndex(ref reader, opCode));
 				case ILOpCode.Stind_i1:
-					return new StObj(value: Pop(StackType.I4), target: PopPointer(), type: compilation.FindType(KnownTypeCode.SByte));
+					// target will run before value, thus preserving the evaluation order
+					return new StObj(value: Pop(StackType.I4), target: PopStObjTarget(), type: compilation.FindType(KnownTypeCode.SByte));
 				case ILOpCode.Stind_i2:
-					return new StObj(value: Pop(StackType.I4), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Int16));
+					return new StObj(value: Pop(StackType.I4), target: PopStObjTarget(), type: compilation.FindType(KnownTypeCode.Int16));
 				case ILOpCode.Stind_i4:
-					return new StObj(value: Pop(StackType.I4), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Int32));
+					return new StObj(value: Pop(StackType.I4), target: PopStObjTarget(), type: compilation.FindType(KnownTypeCode.Int32));
 				case ILOpCode.Stind_i8:
-					return new StObj(value: Pop(StackType.I8), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Int64));
+					return new StObj(value: Pop(StackType.I8), target: PopStObjTarget(), type: compilation.FindType(KnownTypeCode.Int64));
 				case ILOpCode.Stind_r4:
-					return new StObj(value: Pop(StackType.F4), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Single));
+					return new StObj(value: Pop(StackType.F4), target: PopStObjTarget(), type: compilation.FindType(KnownTypeCode.Single));
 				case ILOpCode.Stind_r8:
-					return new StObj(value: Pop(StackType.F8), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Double));
+					return new StObj(value: Pop(StackType.F8), target: PopStObjTarget(), type: compilation.FindType(KnownTypeCode.Double));
 				case ILOpCode.Stind_i:
-					return new StObj(value: Pop(StackType.I), target: PopPointer(), type: compilation.FindType(KnownTypeCode.IntPtr));
+					return new StObj(value: Pop(StackType.I), target: PopStObjTarget(), type: compilation.FindType(KnownTypeCode.IntPtr));
 				case ILOpCode.Stind_ref:
-					return new StObj(value: Pop(StackType.O), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Object));
+					return new StObj(value: Pop(StackType.O), target: PopStObjTarget(), type: compilation.FindType(KnownTypeCode.Object));
 				case ILOpCode.Stloc:
 				case ILOpCode.Stloc_s:
 					return Stloc(ILParser.DecodeIndex(ref reader, opCode));
@@ -1048,11 +1053,12 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Cpobj:
 				{
 					var type = ReadAndDecodeTypeReference();
+					// OK, 'target' runs before 'value: ld'
 					var ld = new LdObj(PopPointer(), type);
 					return new StObj(PopPointer(), ld, type);
 				}
 				case ILOpCode.Initobj:
-					return InitObj(PopPointer(), ReadAndDecodeTypeReference());
+					return InitObj(PopStObjTarget(), ReadAndDecodeTypeReference());
 				case ILOpCode.Isinst:
 					return Push(new IsInst(Pop(StackType.O), ReadAndDecodeTypeReference()));
 				case ILOpCode.Ldelem:
@@ -1080,6 +1086,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldelem_ref:
 					return LdElem(compilation.FindType(KnownTypeCode.Object));
 				case ILOpCode.Ldelema:
+					// LdElema will evalute the array before the indices, so we're preserving the evaluation order
 					return Push(new LdElema(indices: Pop(), array: Pop(), type: ReadAndDecodeTypeReference()));
 				case ILOpCode.Ldfld:
 				{
@@ -1149,7 +1156,8 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Stobj:
 				{
 					var type = ReadAndDecodeTypeReference();
-					return new StObj(value: Pop(type.GetStackType()), target: PopPointer(), type: type);
+					// OK, target runs before value
+					return new StObj(value: Pop(type.GetStackType()), target: PopStObjTarget(), type: type);
 				}
 				case ILOpCode.Throw:
 					return new Throw(Pop());
@@ -1240,6 +1248,24 @@ namespace ICSharpCode.Decompiler.IL
 			return new LdLoc(currentStack.Peek());
 		}
 
+		/// <summary>
+		/// Pops a value/instruction from the evaluation stack.
+		/// Note that instructions popped from the stack must be evaluated in the order they
+		/// were pushed (so in reverse order of the pop calls!).
+		/// 
+		/// For instructions like 'conv' that pop a single element and then push their result,
+		/// it's fine to pop just one element as the instruction itself will end up on the stack,
+		/// thus maintaining the evaluation order.
+		/// For instructions like 'call' that pop multiple arguments, it's critical that
+		/// the evaluation order of the resulting ILAst will be reverse from the order of the push
+		/// calls.
+		/// For instructions like 'brtrue', it's fine to pop only a part of the stack because
+		/// ReadInstructions() will flush the evaluation stack before outputting the brtrue instruction.
+		/// 
+		/// Use FlushExpressionStack() to ensure that following Pop() calls do not return
+		/// instructions that involve side-effects. This way evaluation order is preserved
+		/// no matter which order the ILAst will execute the popped instructions in.
+		/// </summary>
 		ILInstruction Pop()
 		{
 			if (expressionStack.Count > 0)
@@ -1360,6 +1386,17 @@ namespace ICSharpCode.Decompiler.IL
 					Warn("Expected native int or pointer, but got " + inst.ResultType);
 					return new Conv(inst, PrimitiveType.I, false, Sign.None);
 			}
+		}
+
+		ILInstruction PopStObjTarget()
+		{
+			// stobj has a special invariant (StObj.CheckTargetSlot)
+			// that prohibts inlining LdElema/LdFlda.
+			if (expressionStack.LastOrDefault() is LdElema or LdFlda)
+			{
+				FlushExpressionStack();
+			}
+			return PopPointer();
 		}
 
 		ILInstruction PopFieldTarget(IField field)
@@ -1505,6 +1542,7 @@ namespace ICSharpCode.Decompiler.IL
 			var value = Pop(type.GetStackType());
 			var index = Pop();
 			var array = Pop();
+			// OK, evaluation order is array, index, value
 			return new StObj(new LdElema(type, array, index) { DelayExceptions = true }, value, type);
 		}
 
@@ -1588,6 +1626,8 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				arguments[0] = Pop(CallInstruction.ExpectedTypeForThisPointer(constrainedPrefix ?? method.DeclaringType));
 			}
+			// arguments is in reverse order of the Pop calls, thus
+			// arguments is now in the correct evaluation order.
 			switch (method.DeclaringType.Kind)
 			{
 				case TypeKind.Array:
@@ -1598,20 +1638,23 @@ namespace ICSharpCode.Decompiler.IL
 					if (method.Name == "Set")
 					{
 						var target = arguments[0];
-						var value = arguments.Last();
 						var indices = arguments.Skip(1).Take(arguments.Length - 2).ToArray();
+						var value = arguments.Last();
+						// preserves evaluation order target,indices,value
 						return new StObj(new LdElema(elementType, target, indices) { DelayExceptions = true }, value, elementType);
 					}
 					if (method.Name == "Get")
 					{
 						var target = arguments[0];
 						var indices = arguments.Skip(1).ToArray();
+						// preserves evaluation order target,indices
 						return Push(new LdObj(new LdElema(elementType, target, indices) { DelayExceptions = true }, elementType));
 					}
 					if (method.Name == "Address")
 					{
 						var target = arguments[0];
 						var indices = arguments.Skip(1).ToArray();
+						// preserves evaluation order target,indices
 						return Push(new LdElema(elementType, target, indices));
 					}
 					Warn("Unknown method called on array type: " + method.Name);
@@ -1657,6 +1700,8 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				arguments[0] = Pop();
 			}
+			// arguments is in reverse order of the Pop calls, thus
+			// arguments is now in the correct evaluation order.
 			var call = new CallIndirect(
 				header.IsInstance,
 				header.HasExplicitThis,
@@ -1674,6 +1719,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var right = Pop();
 			var left = Pop();
+			// left will run before right, thus preserving the evaluation order
 
 			if ((left.ResultType == StackType.O || left.ResultType == StackType.Ref) && right.ResultType.IsIntegerType())
 			{
@@ -1856,6 +1902,12 @@ namespace ICSharpCode.Decompiler.IL
 			StoreStackForOffset(targetILOffset, ref currentStack);
 		}
 
+		/// <summary>
+		/// The expression stack holds ILInstructions that might have side-effects
+		/// that should have already happened (in the order of the pushes).
+		/// This method forces these instructions to be added to the instructionBuilder.
+		/// This is used e.g. to avoid moving side-effects past branches.
+		/// </summary>
 		private void FlushExpressionStack()
 		{
 			foreach (var inst in expressionStack)
@@ -1902,6 +1954,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var right = Pop();
 			var left = Pop();
+			// left will run before right, thus preserving the evaluation order
 			if (@operator != BinaryNumericOperator.Add && @operator != BinaryNumericOperator.Sub)
 			{
 				// we are treating all Refs as I, make the conversion explicit
