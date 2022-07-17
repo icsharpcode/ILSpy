@@ -207,9 +207,9 @@ namespace System.Runtime.CompilerServices
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static int SizeOf<T>()
+		public static int SizeOf<T>()
 		{
-			return sizeof(T);
+			return Unsafe.SizeOf<T>();
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -307,7 +307,7 @@ namespace System.Runtime.CompilerServices
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public unsafe static void* Add<T>(void* source, int elementOffset)
 		{
-			return (byte*)source + (nint)elementOffset * (nint)sizeof(T);
+			return (byte*)source + (nint)elementOffset * (nint)Unsafe.SizeOf<T>();
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -343,7 +343,7 @@ namespace System.Runtime.CompilerServices
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public unsafe static void* Subtract<T>(void* source, int elementOffset)
 		{
-			return (byte*)source - (nint)elementOffset * (nint)sizeof(T);
+			return (byte*)source - (nint)elementOffset * (nint)Unsafe.SizeOf<T>();
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
