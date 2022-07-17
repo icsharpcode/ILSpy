@@ -126,16 +126,11 @@ namespace Humanizer.Inflections
 				return null;
 			}
 
-			if (word.Length < 1)
+			if (word.Length < 1 || IsUncountable(word))
 			{
 				return word;
 			}
-
-			if (IsUncountable(word))
-			{
-				return word;
-			}
-
+			
 			var result = word;
 			var end = skipFirstRule ? 1 : 0;
 			for (var i = rules.Count - 1; i >= end; i--)
