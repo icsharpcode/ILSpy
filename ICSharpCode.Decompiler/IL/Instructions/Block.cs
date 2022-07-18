@@ -265,7 +265,7 @@ namespace ICSharpCode.Decompiler.IL
 				Instructions[index] = value;
 		}
 
-		protected override SlotInfo GetChildSlot(int index)
+		public override SlotInfo GetChildSlot(int index)
 		{
 			if (index == Instructions.Count)
 				return FinalInstructionSlot;

@@ -429,7 +429,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected abstract int GetChildCount();
 		protected abstract ILInstruction GetChild(int index);
 		protected abstract void SetChild(int index, ILInstruction value);
-		protected abstract SlotInfo GetChildSlot(int index);
+		public abstract SlotInfo GetChildSlot(int index);
 
 		#region ChildrenCollection + ChildrenEnumerator
 		public readonly struct ChildrenCollection : IReadOnlyList<ILInstruction>
@@ -675,7 +675,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// of the ILAst; it does not make use of the <c>Parent</c> field so the considerations
 		/// about orphaned nodes and stale positions don't apply.
 		/// </remarks>
-		protected internal bool IsConnected {
+		public bool IsConnected {
 			get { return refCount > 0; }
 		}
 

@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index - Init.Count)
 			{

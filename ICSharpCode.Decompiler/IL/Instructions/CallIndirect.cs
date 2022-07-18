@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.IL
 				Arguments[index - 1] = value;
 		}
 
-		protected override SlotInfo GetChildSlot(int index)
+		public override SlotInfo GetChildSlot(int index)
 		{
 			if (index == 0)
 				return FunctionPointerSlot;
