@@ -119,7 +119,7 @@ namespace ICSharpCode.Decompiler.IL
 				Handlers[index - 1] = (TryCatchHandler)value;
 		}
 
-		protected override SlotInfo GetChildSlot(int index)
+		public override SlotInfo GetChildSlot(int index)
 		{
 			if (index == 0)
 				return TryBlockSlot;
@@ -277,7 +277,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		protected override SlotInfo GetChildSlot(int index)
+		public override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -372,7 +372,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		protected override SlotInfo GetChildSlot(int index)
+		public override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{

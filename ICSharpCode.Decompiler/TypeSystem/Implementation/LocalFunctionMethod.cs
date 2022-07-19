@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// <summary>
 	/// A local function has zero or more compiler-generated parameters added at the end.
 	/// </summary>
-	class LocalFunctionMethod : IMethod
+	public class LocalFunctionMethod : IMethod
 	{
 		readonly IMethod baseMethod;
 

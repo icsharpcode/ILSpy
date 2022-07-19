@@ -271,7 +271,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -338,7 +338,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -431,7 +431,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -499,7 +499,7 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -589,7 +589,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -793,7 +793,7 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -974,7 +974,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -1290,7 +1290,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -1393,7 +1393,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -1487,7 +1487,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -1589,7 +1589,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -1709,7 +1709,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -1887,7 +1887,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -2031,7 +2031,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -2515,7 +2515,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -2614,7 +2614,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -3454,7 +3454,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -3605,7 +3605,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -3727,7 +3727,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -3970,7 +3970,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -4104,7 +4104,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -4410,7 +4410,7 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -4669,7 +4669,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -4773,7 +4773,7 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -4893,7 +4893,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -4998,7 +4998,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -5151,7 +5151,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -5257,7 +5257,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -5348,7 +5348,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -5434,7 +5434,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -5523,7 +5523,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -5611,7 +5611,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -5713,7 +5713,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -5793,7 +5793,7 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -5864,7 +5864,7 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -5935,7 +5935,7 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -6006,7 +6006,7 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -6077,7 +6077,7 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -6159,7 +6159,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -6297,7 +6297,7 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -6521,7 +6521,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -6617,7 +6617,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{
@@ -6750,7 +6750,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 					throw new IndexOutOfRangeException();
 			}
 		}
-		protected sealed override SlotInfo GetChildSlot(int index)
+		public sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index)
 			{

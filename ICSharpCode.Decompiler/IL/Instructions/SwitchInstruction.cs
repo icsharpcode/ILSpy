@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.IL
 				Sections[index - 1] = (SwitchSection)value;
 		}
 
-		protected override SlotInfo GetChildSlot(int index)
+		public override SlotInfo GetChildSlot(int index)
 		{
 			if (index == 0)
 				return ValueSlot;

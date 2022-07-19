@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.IL
 				throw new InvalidOperationException("Cannot replace blocks in BlockContainer");
 		}
 
-		protected override SlotInfo GetChildSlot(int index)
+		public override SlotInfo GetChildSlot(int index)
 		{
 			return BlockSlot;
 		}

@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// If this function is a local function, this field stores the reduced version of the function.
 		/// </summary>
-		internal TypeSystem.Implementation.LocalFunctionMethod? ReducedMethod;
+		public TypeSystem.Implementation.LocalFunctionMethod? ReducedMethod;
 
 		public DebugInfo.AsyncDebugInfo AsyncDebugInfo;
 
@@ -127,7 +127,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Returns the IL offset of the constructor call, -1 if this is not a constructor or no chained constructor call was found.
 		/// </summary>
-		internal int ChainedConstructorCallILOffset {
+		public int ChainedConstructorCallILOffset {
 			get {
 				if (ctorCallStart == int.MinValue)
 				{
