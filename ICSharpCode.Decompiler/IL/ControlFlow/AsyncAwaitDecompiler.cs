@@ -189,7 +189,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			foreach (var block in function.Descendants.OfType<Block>())
 			{
 				// Run inlining, but don't remove dead variables (they might get revived by TranslateFieldsToLocalAccess)
-				ILInlining.InlineAllInBlock(function, block, context);
+				ILInlining.InlineAllInBlock(function, block, InliningOptions.None, context);
 				if (IsAsyncEnumerator)
 				{
 					// Remove lone 'ldc.i4', those are sometimes left over after C# compiler

@@ -34,6 +34,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		IntroduceNamedArguments = 2,
 		FindDeconstruction = 4,
 		AllowChangingOrderOfEvaluationForExceptions = 8,
+		AllowInliningOfLdloca = 0x10
 	}
 
 	/// <summary>
@@ -41,23 +42,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	public class ILInlining : IILTransform, IBlockTransform, IStatementTransform
 	{
+		internal InliningOptions options;
+
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			foreach (var block in function.Descendants.OfType<Block>())
 			{
-				InlineAllInBlock(function, block, context);
+				InlineAllInBlock(function, block, this.options, context);
 			}
 			function.Variables.RemoveDead();
 		}
 
 		public void Run(Block block, BlockTransformContext context)
 		{
-			InlineAllInBlock(context.Function, block, context);
+			InlineAllInBlock(context.Function, block, this.options, context);
 		}
 
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
-			InlineOneIfPossible(block, pos, OptionsForBlock(block, pos, context), context: context);
+			InlineOneIfPossible(block, pos, this.options | OptionsForBlock(block, pos, context), context: context);
 		}
 
 		internal static InliningOptions OptionsForBlock(Block block, int pos, ILTransformContext context)
@@ -94,7 +97,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		public static bool InlineAllInBlock(ILFunction function, Block block, ILTransformContext context)
+		public static bool InlineAllInBlock(ILFunction function, Block block, InliningOptions options, ILTransformContext context)
 		{
 			bool modified = false;
 			var instructions = block.Instructions;
@@ -102,9 +105,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (instructions[i] is StLoc inst)
 				{
-					InliningOptions options = InliningOptions.None;
-					if (context.Settings.AggressiveInlining || IsCatchWhenBlock(block) || IsInConstructorInitializer(function, inst))
-						options = InliningOptions.Aggressive;
 					if (InlineOneIfPossible(block, i, options, context))
 					{
 						modified = true;
@@ -288,6 +288,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		static bool IsGeneratedValueTypeTemporary(LdLoca loadInst, ILVariable v, ILInstruction inlinedExpression, InliningOptions options)
 		{
 			Debug.Assert(loadInst.Variable == v);
+			if (!options.HasFlag(InliningOptions.AllowInliningOfLdloca))
+			{
+				return false; // inlining of ldloca is not allowed in the early inlining stage
+			}
 			// Inlining a value type variable is allowed only if the resulting code will maintain the semantics
 			// that the method is operating on a copy.
 			// Thus, we have to ensure we're operating on an r-value.
