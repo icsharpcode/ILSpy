@@ -106,7 +106,7 @@ namespace ICSharpCode.ILSpy.Search
 				Location = declaringType != null ? language.TypeToString(declaringType, includeNamespace: true) : entity.Namespace,
 				Assembly = entity.ParentModule.FullAssemblyName,
 				ToolTip = entity.ParentModule.PEFile?.FileName,
-				Image = Images.Assembly,
+				Image = GetIcon(entity),
 				LocationImage = declaringType != null ? TypeTreeNode.GetIcon(declaringType) : Images.Namespace,
 				AssemblyImage = Images.Assembly,
 			};
