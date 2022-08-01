@@ -477,9 +477,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				throw new BadImageFormatException($"Member reference must be method, but was: {memberRef.GetKind()}");
 			}
-			MethodSignature<IType> signature;
+			MethodSignature<IType> signature = default;
 			IReadOnlyList<IType> classTypeArguments = null;
-			IMethod method;
+			IMethod method = null;
 			if (memberRef.Parent.Kind == HandleKind.MethodDefinition)
 			{
 				method = ResolveMethodDefinition((MethodDefinitionHandle)memberRef.Parent, expandVarArgs: false);
@@ -487,67 +487,84 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			else
 			{
-				var declaringType = ResolveDeclaringType(memberRef.Parent, context);
-				var declaringTypeDefinition = declaringType.GetDefinition();
-				if (declaringType.TypeArguments.Count > 0)
+				var statedDeclaringType = ResolveDeclaringType(memberRef.Parent, context);
+				var statedDeclaringTypeDefinition = statedDeclaringType.GetDefinition();
+
+				// Search through type hierarchy of declaring type, traversing up the chain.
+				var directBaseTypes = statedDeclaringTypeDefinition.DirectBaseTypes.ToArray();
+				var candidateDeclaringTypes = new IType[directBaseTypes.Length + 1];
+				candidateDeclaringTypes[0] = statedDeclaringType;
+
+				for (int i = 0; i < directBaseTypes.Length; i++)
 				{
-					classTypeArguments = declaringType.TypeArguments;
+					candidateDeclaringTypes[i + 1] = directBaseTypes[i];
 				}
-				// Note: declaringType might be parameterized, but the signature is for the original method definition.
-				// We'll have to search the member directly on declaringTypeDefinition.
+
 				string name = metadata.GetString(memberRef.Name);
-				signature = memberRef.DecodeMethodSignature(TypeProvider,
-					new GenericContext(declaringTypeDefinition?.TypeParameters));
-				if (declaringTypeDefinition != null)
+				for (int i = 0; i < candidateDeclaringTypes.Length; i++)
 				{
-					// Find the set of overloads to search:
-					IEnumerable<IMethod> methods;
-					if (name == ".ctor")
+					var declaringType = candidateDeclaringTypes[i];
+					var declaringTypeDefinition = i == 0 ? statedDeclaringTypeDefinition : candidateDeclaringTypes[i].GetDefinition();
+
+					if (declaringType.TypeArguments.Count > 0)
 					{
-						methods = declaringTypeDefinition.GetConstructors();
+						classTypeArguments = declaringType.TypeArguments;
 					}
-					else if (name == ".cctor")
+					// Note: declaringType might be parameterized, but the signature is for the original method definition.
+					// We'll have to search the member directly on declaringTypeDefinition.
+					signature = memberRef.DecodeMethodSignature(TypeProvider,
+						new GenericContext(declaringTypeDefinition?.TypeParameters));
+					if (declaringTypeDefinition != null)
 					{
-						methods = declaringTypeDefinition.Methods.Where(m => m.IsConstructor && m.IsStatic);
-					}
-					else
-					{
-						methods = declaringTypeDefinition.GetMethods(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers)
-							.Concat(declaringTypeDefinition.GetAccessors(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers));
-					}
-					// Determine the expected parameters from the signature:
-					ImmutableArray<IType> parameterTypes;
-					if (signature.Header.CallingConvention == SignatureCallingConvention.VarArgs)
-					{
-						parameterTypes = signature.ParameterTypes
-							.Take(signature.RequiredParameterCount)
-							.Concat(new[] { SpecialType.ArgList })
-							.ToImmutableArray();
-					}
-					else
-					{
-						parameterTypes = signature.ParameterTypes;
-					}
-					// Search for the matching method:
-					method = null;
-					foreach (var m in methods)
-					{
-						if (m.TypeParameters.Count != signature.GenericParameterCount)
-							continue;
-						if (CompareSignatures(m.Parameters, parameterTypes) && CompareTypes(m.ReturnType, signature.ReturnType))
+						// Find the set of overloads to search:
+						IEnumerable<IMethod> methods;
+						if (name == ".ctor")
 						{
-							method = m;
-							break;
+							methods = declaringTypeDefinition.GetConstructors();
 						}
+						else if (name == ".cctor")
+						{
+							methods = declaringTypeDefinition.Methods.Where(m => m.IsConstructor && m.IsStatic);
+						}
+						else
+						{
+							methods = declaringTypeDefinition.GetMethods(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers)
+								.Concat(declaringTypeDefinition.GetAccessors(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers));
+						}
+						// Determine the expected parameters from the signature:
+						ImmutableArray<IType> parameterTypes;
+						if (signature.Header.CallingConvention == SignatureCallingConvention.VarArgs)
+						{
+							parameterTypes = signature.ParameterTypes
+								.Take(signature.RequiredParameterCount)
+								.Concat(new[] { SpecialType.ArgList })
+								.ToImmutableArray();
+						}
+						else
+						{
+							parameterTypes = signature.ParameterTypes;
+						}
+						// Search for the matching method:
+						method = null;
+						foreach (var m in methods)
+						{
+							if (m.TypeParameters.Count != signature.GenericParameterCount)
+								continue;
+							if (CompareSignatures(m.Parameters, parameterTypes) && CompareTypes(m.ReturnType, signature.ReturnType))
+							{
+								method = m;
+								break;
+							}
+						}
+
+						if (method != null)
+							break;
 					}
 				}
-				else
-				{
-					method = null;
-				}
+
 				if (method == null)
 				{
-					method = CreateFakeMethod(declaringType, name, signature);
+					method = CreateFakeMethod(statedDeclaringType, name, signature);
 				}
 			}
 			if (classTypeArguments != null || methodTypeArguments != null)
