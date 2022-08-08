@@ -224,6 +224,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Controls whether C# 10 "record" struct types are supported.
 		/// </summary>
 		public bool SupportRecordStructs { get; set; }
+
+		/// <summary>
+		/// Controls whether all fully qualified type names should be prefixed with "global::".
+		/// </summary>
+		public bool AlwaysUseGlobal { get; set; }
 		#endregion
 
 		#region Convert Type
@@ -535,7 +540,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				else
 				{
 					result.Target = ConvertNamespace(genericType.Namespace,
-						out _, genericType.Namespace == genericType.Name);
+						out _, AlwaysUseGlobal || genericType.Namespace == genericType.Name);
 				}
 			}
 			result.MemberName = genericType.Name;
