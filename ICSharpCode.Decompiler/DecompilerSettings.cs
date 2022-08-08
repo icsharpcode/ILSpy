@@ -1915,6 +1915,24 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool alwaysUseGlobal = false;
+
+		/// <summary>
+		/// Always fully qualify namespaces using the "global::" prefix.
+		/// </summary>
+		[Category("DecompilerSettings.Other")]
+		[Description("DecompilerSettings.AlwaysUseGlobal")]
+		public bool AlwaysUseGlobal {
+			get { return alwaysUseGlobal; }
+			set {
+				if (alwaysUseGlobal != value)
+				{
+					alwaysUseGlobal = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		CSharpFormattingOptions csharpFormattingOptions;
 
 		[Browsable(false)]
