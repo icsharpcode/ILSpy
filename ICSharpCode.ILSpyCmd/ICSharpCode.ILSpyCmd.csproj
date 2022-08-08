@@ -26,6 +26,7 @@
     <Company>ic#code</Company>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>ILSpy Team</Authors>
+    <LangVersion>default</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

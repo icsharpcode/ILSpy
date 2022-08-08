@@ -6,7 +6,7 @@
 	-->
 	<PropertyGroup>
 		<SystemCollectionsImmutableVersion>6.0.0</SystemCollectionsImmutableVersion>
-		<SystemReflectionMetadataVersion>6.0.0</SystemReflectionMetadataVersion>
+		<SystemReflectionMetadataVersion>6.0.1</SystemReflectionMetadataVersion>
 		<SystemCompilerServicesUnsafeVersion>6.0.0</SystemCompilerServicesUnsafeVersion>
 		<SystemCompositionVersion>6.0.0</SystemCompositionVersion>
 		<!-- Microsoft.NETCore.ILAsm -->
@@ -23,7 +23,7 @@
 		<JUnitXmlTestLoggerVersion>3.0.114</JUnitXmlTestLoggerVersion>
 		<CoverletCollectorVersion>3.1.2</CoverletCollectorVersion>
 		<MicrosoftNETTestSdkVersion>17.2.0</MicrosoftNETTestSdkVersion>
-		<MoqVersion>4.18.1</MoqVersion>
+		<MoqVersion>4.18.2</MoqVersion>
 		<DiffLibVersion>2017.7.26.1241</DiffLibVersion>
 		<DSRConverterXmlVersion>1.1.0-beta2-22171-02</DSRConverterXmlVersion>
 	</PropertyGroup>
