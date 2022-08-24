@@ -1154,7 +1154,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return true;
 		}
 
-		Dictionary<object, (KnownTypeCode Type, string Member)> specialConstants = new Dictionary<object, (KnownTypeCode Type, string Member)>() {
+		static readonly Dictionary<object, (KnownTypeCode Type, string Member)> specialConstants = new Dictionary<object, (KnownTypeCode Type, string Member)>() {
 			// byte:
 			{ byte.MaxValue, (KnownTypeCode.Byte, "MaxValue") },
 			// sbyte:
@@ -1196,7 +1196,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		bool IsFlagsEnum(ITypeDefinition type)
 		{
-			return type.HasAttribute(KnownAttribute.Flags, inherit: false);
+			return type.HasAttribute(KnownAttribute.Flags);
 		}
 
 		Expression ConvertEnumValue(IType type, long val)

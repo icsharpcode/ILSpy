@@ -107,7 +107,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		PreserveBaseOverrides,
 	}
 
-	static class KnownAttributes
+	public static class KnownAttributes
 	{
 		internal const int Count = (int)KnownAttribute.PreserveBaseOverrides + 1;
 
@@ -196,6 +196,31 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return (KnownAttribute)i;
 			}
 			return KnownAttribute.None;
+		}
+
+		public static bool IsCustomAttribute(this KnownAttribute knownAttribute)
+		{
+			switch (knownAttribute)
+			{
+				case KnownAttribute.Serializable:
+				case KnownAttribute.ComImport:
+				case KnownAttribute.StructLayout:
+				case KnownAttribute.DllImport:
+				case KnownAttribute.PreserveSig:
+				case KnownAttribute.MethodImpl:
+				case KnownAttribute.FieldOffset:
+				case KnownAttribute.NonSerialized:
+				case KnownAttribute.MarshalAs:
+				case KnownAttribute.PermissionSet:
+				case KnownAttribute.Optional:
+				case KnownAttribute.In:
+				case KnownAttribute.Out:
+				case KnownAttribute.IndexerName:
+				case KnownAttribute.SpecialName:
+					return false;
+				default:
+					return true;
+			}
 		}
 	}
 }

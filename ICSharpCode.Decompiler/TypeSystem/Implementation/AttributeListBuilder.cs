@@ -190,7 +190,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			foreach (var handle in attributes)
 			{
 				var attribute = metadata.GetCustomAttribute(handle);
-				// Attribute types shouldn't be generic (and certainly not open), so we don't need a generic context.
+				// Attribute types shouldn't be open generic, so we don't need a generic context.
 				var ctor = module.ResolveMethod(attribute.Constructor, new GenericContext());
 				var type = ctor.DeclaringType;
 				if (IgnoreAttribute(type, target))
@@ -205,6 +205,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (attributeType.DeclaringType != null || attributeType.TypeParameterCount != 0)
 				return false;
+			return IgnoreAttribute(new TopLevelTypeName(attributeType.Namespace, attributeType.Name), target);
+		}
+
+		internal bool IgnoreAttribute(TopLevelTypeName attributeType, SymbolKind target)
+		{
 			switch (attributeType.Namespace)
 			{
 				case "System.Runtime.CompilerServices":
@@ -257,6 +262,39 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				default:
 					return false;
 			}
+		}
+
+		internal bool HasAttribute(MetadataReader metadata, CustomAttributeHandleCollection customAttributes, KnownAttribute attribute, SymbolKind symbolKind)
+		{
+			Debug.Assert(attribute.IsCustomAttribute());
+			foreach (var h in customAttributes)
+			{
+				var attr = metadata.GetCustomAttribute(h);
+				if (attr.IsKnownAttribute(metadata, attribute))
+				{
+					return !IgnoreAttribute(attribute.GetTypeName(), symbolKind);
+				}
+			}
+
+			return false;
+		}
+
+		internal IAttribute GetAttribute(MetadataReader metadata, CustomAttributeHandleCollection customAttributes, KnownAttribute attribute, SymbolKind symbolKind)
+		{
+			Debug.Assert(attribute.IsCustomAttribute());
+			foreach (var h in customAttributes)
+			{
+				var attr = metadata.GetCustomAttribute(h);
+				if (attr.IsKnownAttribute(metadata, attribute)
+					&& !IgnoreAttribute(attribute.GetTypeName(), symbolKind))
+				{
+					// Attribute types shouldn't be open generic, so we don't need a generic context.
+					var ctor = module.ResolveMethod(attr.Constructor, new GenericContext());
+					return new CustomAttribute(module, ctor, h);
+				}
+			}
+
+			return null;
 		}
 
 		static bool IsMethodLike(SymbolKind kind)

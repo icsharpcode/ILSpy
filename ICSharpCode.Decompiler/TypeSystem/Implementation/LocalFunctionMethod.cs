@@ -145,6 +145,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IType DeclaringType => baseMethod.DeclaringType;
 		public IModule ParentModule => baseMethod.ParentModule;
 		IEnumerable<IAttribute> IEntity.GetAttributes() => baseMethod.GetAttributes();
+		bool IEntity.HasAttribute(KnownAttribute attribute) => baseMethod.HasAttribute(attribute);
+		IAttribute IEntity.GetAttribute(KnownAttribute attribute) => baseMethod.GetAttribute(attribute);
 		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => baseMethod.GetReturnTypeAttributes();
 		bool IMethod.ReturnTypeIsRefReadOnly => baseMethod.ReturnTypeIsRefReadOnly;
 		bool IMethod.ThisIsRefReadOnly => baseMethod.ThisIsRefReadOnly;

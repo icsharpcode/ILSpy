@@ -463,6 +463,30 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			return b.Build();
 		}
+
+		public bool HasAttribute(KnownAttribute attribute)
+		{
+			if (!attribute.IsCustomAttribute())
+			{
+				return GetAttributes().Any(attr => attr.AttributeType.IsKnownType(attribute));
+			}
+			var b = new AttributeListBuilder(module);
+			var metadata = module.metadata;
+			var def = metadata.GetMethodDefinition(handle);
+			return b.HasAttribute(metadata, def.GetCustomAttributes(), attribute, symbolKind);
+		}
+
+		public IAttribute GetAttribute(KnownAttribute attribute)
+		{
+			if (!attribute.IsCustomAttribute())
+			{
+				return GetAttributes().FirstOrDefault(attr => attr.AttributeType.IsKnownType(attribute));
+			}
+			var b = new AttributeListBuilder(module);
+			var metadata = module.metadata;
+			var def = metadata.GetMethodDefinition(handle);
+			return b.GetAttribute(metadata, def.GetCustomAttributes(), attribute, symbolKind);
+		}
 		#endregion
 
 		#region Return type attributes
