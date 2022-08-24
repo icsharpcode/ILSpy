@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			return typeDefinition != null
 				&& typeDefinition.Kind == TypeKind.Interface
-				&& typeDefinition.HasAttribute(KnownAttribute.ComImport, inherit: false);
+				&& typeDefinition.HasAttribute(KnownAttribute.ComImport);
 		}
 
 		/// <summary>
@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (typeDefinition == null)
 				return SpecialType.UnknownType;
-			var coClassAttribute = typeDefinition.GetAttribute(KnownAttribute.CoClass, inherit: false);
+			var coClassAttribute = typeDefinition.GetAttribute(KnownAttribute.CoClass);
 			if (coClassAttribute != null && coClassAttribute.FixedArguments.Length == 1)
 			{
 				if (coClassAttribute.FixedArguments[0].Value is IType ty)

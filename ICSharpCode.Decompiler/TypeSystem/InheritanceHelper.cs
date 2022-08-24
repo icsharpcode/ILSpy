@@ -185,6 +185,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
+		internal static IAttribute GetAttribute(ITypeDefinition typeDef, KnownAttribute attributeType)
+		{
+			foreach (var baseType in typeDef.GetNonInterfaceBaseTypes().Reverse())
+			{
+				ITypeDefinition baseTypeDef = baseType.GetDefinition();
+				if (baseTypeDef == null)
+					continue;
+				var attr = baseTypeDef.GetAttribute(attributeType);
+				if (attr != null)
+					return attr;
+			}
+			return null;
+		}
+
 		internal static IEnumerable<IAttribute> GetAttributes(IMember member)
 		{
 			HashSet<IMember> visitedMembers = new HashSet<IMember>();
@@ -201,6 +215,24 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					yield return attr;
 				}
 			} while (member.IsOverride && (member = InheritanceHelper.GetBaseMember(member)) != null);
+		}
+
+		internal static IAttribute GetAttribute(IMember member, KnownAttribute attributeType)
+		{
+			HashSet<IMember> visitedMembers = new HashSet<IMember>();
+			do
+			{
+				member = member.MemberDefinition; // it's sufficient to look at the definitions
+				if (!visitedMembers.Add(member))
+				{
+					// abort if we seem to be in an infinite loop (cyclic inheritance)
+					break;
+				}
+				var attr = member.GetAttribute(attributeType);
+				if (attr != null)
+					return attr;
+			} while (member.IsOverride && (member = InheritanceHelper.GetBaseMember(member)) != null);
+			return null;
 		}
 		#endregion
 	}
