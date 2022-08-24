@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection.PortableExecutable;
@@ -296,6 +297,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		static string GetTargetFrameworkAttributeSnippetFile()
 		{
+			// Note: this leaks a temporary file, we're not attempting to delete it, because it is only one.
 			var tempFile = Path.GetTempFileName();
 			File.WriteAllText(tempFile, targetFrameworkAttributeSnippet);
 			return tempFile;
@@ -395,7 +397,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			if ((flags & CompilerOptions.UseMcsMask) == 0)
 			{
 				CompilerResults results = new CompilerResults();
-				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
+				results.PathToAssembly = outputFileName;
 
 				var (roslynVersion, languageVersion) = (flags & CompilerOptions.UseRoslynMask) switch {
 					0 => ("legacy", "5"),
@@ -488,7 +490,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			else
 			{
 				CompilerResults results = new CompilerResults();
-				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
+				results.PathToAssembly = outputFileName;
 				string testBasePath = RoundtripAssembly.TestDir;
 				if (!Directory.Exists(testBasePath))
 				{
@@ -828,11 +830,42 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 	public class CompilerResults
 	{
-		public string PathToAssembly { get; set; }
+		readonly HashSet<string> tempFiles = new(Decompiler.Util.Platform.FileNameComparer);
+		string pathToAssembly;
+
+		public string PathToAssembly {
+			get {
+				if (pathToAssembly == null)
+				{
+					pathToAssembly = Path.GetTempFileName();
+					tempFiles.Add(pathToAssembly);
+				}
+				return pathToAssembly;
+			}
+			set {
+				if (pathToAssembly != null)
+				{
+					throw new InvalidOperationException("PathToAssembly can only be set once");
+				}
+				pathToAssembly = value;
+			}
+		}
 
 		public void DeleteTempFiles()
 		{
+			foreach (var file in tempFiles)
+			{
+				Tester.RepeatOnIOError(() => File.Delete(file));
+			}
+		}
 
+		public void AddTempFile(string file)
+		{
+			if (!Path.IsPathFullyQualified(file))
+			{
+				throw new InvalidOperationException("file must be a fully qualified path");
+			}
+			tempFiles.Add(file);
 		}
 	}
 }

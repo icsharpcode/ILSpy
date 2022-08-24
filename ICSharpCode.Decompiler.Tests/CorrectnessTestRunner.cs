@@ -443,9 +443,7 @@ namespace ICSharpCode.Decompiler.Tests
 				decompiledOutputFile = await Tester.CompileCSharp(decompiledCodeFile, options).ConfigureAwait(false);
 
 				await Tester.RunAndCompareOutput(testFileName, outputFile.PathToAssembly, decompiledOutputFile.PathToAssembly, decompiledCodeFile, (options & CompilerOptions.UseTestRunner) != 0, (options & CompilerOptions.Force32Bit) != 0);
-
 				Tester.RepeatOnIOError(() => File.Delete(decompiledCodeFile));
-				Tester.RepeatOnIOError(() => File.Delete(decompiledOutputFile.PathToAssembly));
 			}
 			finally
 			{
@@ -473,9 +471,7 @@ namespace ICSharpCode.Decompiler.Tests
 				decompiledOutputFile = await Tester.CompileCSharp(decompiledCodeFile, options).ConfigureAwait(false);
 
 				await Tester.RunAndCompareOutput(testFileName, outputFile.PathToAssembly, decompiledOutputFile.PathToAssembly, decompiledCodeFile, (options & CompilerOptions.UseTestRunner) != 0, (options & CompilerOptions.Force32Bit) != 0);
-
 				Tester.RepeatOnIOError(() => File.Delete(decompiledCodeFile));
-				Tester.RepeatOnIOError(() => File.Delete(decompiledOutputFile.PathToAssembly));
 			}
 			finally
 			{
@@ -499,9 +495,7 @@ namespace ICSharpCode.Decompiler.Tests
 				decompiledOutputFile = await Tester.CompileCSharp(decompiledCodeFile, options).ConfigureAwait(false);
 
 				await Tester.RunAndCompareOutput(testFileName, outputFile, decompiledOutputFile.PathToAssembly, decompiledCodeFile, (options & CompilerOptions.UseTestRunner) != 0, (options & CompilerOptions.Force32Bit) != 0).ConfigureAwait(false);
-
 				Tester.RepeatOnIOError(() => File.Delete(decompiledCodeFile));
-				Tester.RepeatOnIOError(() => File.Delete(decompiledOutputFile.PathToAssembly));
 			}
 			finally
 			{
