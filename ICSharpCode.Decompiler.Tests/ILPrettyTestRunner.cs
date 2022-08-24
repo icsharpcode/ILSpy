@@ -278,6 +278,7 @@ namespace ICSharpCode.Decompiler.Tests
 			var decompiled = await Tester.DecompileCSharp(executable, settings).ConfigureAwait(false);
 
 			CodeAssert.FilesAreEqual(csFile, decompiled);
+			Tester.RepeatOnIOError(() => File.Delete(decompiled));
 		}
 
 		static readonly object copyLock = new object();
