@@ -745,6 +745,7 @@ namespace ICSharpCode.Decompiler.Tests
 
 			// 3. Compile
 			CodeAssert.FilesAreEqual(csFile, decompiled, Tester.GetPreprocessorSymbols(cscOptions).ToArray());
+			Tester.RepeatOnIOError(() => File.Delete(decompiled));
 		}
 	}
 }

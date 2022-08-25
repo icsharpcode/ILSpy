@@ -139,6 +139,7 @@ namespace ICSharpCode.Decompiler.Tests
 			var decompiled = await Tester.DecompileCSharp(executable.PathToAssembly, settings).ConfigureAwait(false);
 
 			CodeAssert.FilesAreEqual(csFile, decompiled, Tester.GetPreprocessorSymbols(options).ToArray());
+			Tester.RepeatOnIOError(() => File.Delete(decompiled));
 		}
 	}
 }

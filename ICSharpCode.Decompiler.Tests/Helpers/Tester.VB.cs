@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			if ((flags & CompilerOptions.UseMcsMask) == 0)
 			{
 				CompilerResults results = new CompilerResults();
-				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
+				results.PathToAssembly = outputFileName;
 
 				var (roslynVersion, languageVersion) = (flags & CompilerOptions.UseRoslynMask) switch {
 					0 => ("legacy", "11"),
