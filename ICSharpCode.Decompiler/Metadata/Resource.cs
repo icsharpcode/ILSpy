@@ -71,8 +71,6 @@ namespace ICSharpCode.Decompiler.Metadata
 			this.Handle = handle;
 		}
 
-		ManifestResource This() => Module.Metadata.GetManifestResource(Handle);
-
 		public bool Equals(MetadataResource other)
 		{
 			return Module == other.Module && Handle == other.Handle;
@@ -90,17 +88,18 @@ namespace ICSharpCode.Decompiler.Metadata
 			return unchecked(982451629 * Module.GetHashCode() + 982451653 * MetadataTokens.GetToken(Handle));
 		}
 
-		public override string Name => Module.Metadata.GetString(This().Name);
+		public override string Name => Module.Metadata.GetString(Module.Metadata.GetManifestResource(Handle).Name);
 
-		public override ManifestResourceAttributes Attributes => This().Attributes;
+		public override ManifestResourceAttributes Attributes => Module.Metadata.GetManifestResource(Handle).Attributes;
 		public bool HasFlag(ManifestResourceAttributes flag) => (Attributes & flag) == flag;
 		public override ResourceType ResourceType => GetResourceType();
 
 		ResourceType GetResourceType()
 		{
-			if (This().Implementation.IsNil)
+			var resource = Module.Metadata.GetManifestResource(Handle);
+			if (resource.Implementation.IsNil)
 				return ResourceType.Embedded;
-			if (This().Implementation.Kind == HandleKind.AssemblyReference)
+			if (resource.Implementation.Kind == HandleKind.AssemblyReference)
 				return ResourceType.AssemblyLinked;
 			return ResourceType.Linked;
 		}
@@ -117,13 +116,15 @@ namespace ICSharpCode.Decompiler.Metadata
 				return null;
 			var sectionData = Module.Reader.GetSectionData(resources.RelativeVirtualAddress);
 			if (sectionData.Length == 0)
-				throw new BadImageFormatException("RVA could not be found in any section!");
-			var reader = sectionData.GetReader();
-			reader.Offset += (int)This().Offset;
-			int length = reader.ReadInt32();
-			if (length < 0 || length > reader.RemainingBytes)
-				throw new BadImageFormatException("Resource stream length invalid");
-			return new ResourceMemoryStream(Module.Reader, reader.CurrentPointer, length);
+				return null;
+			var resource = Module.Metadata.GetManifestResource(Handle);
+			if (resource.Offset > sectionData.Length)
+				return null;
+			byte* ptr = sectionData.Pointer + resource.Offset;
+			int length = ptr[0] + (ptr[1] << 8) + (ptr[2] << 16) + (ptr[3] << 24);
+			if (length < 0 || length > sectionData.Length)
+				return null;
+			return new ResourceMemoryStream(Module.Reader, ptr + sizeof(int), length);
 		}
 	}
 
