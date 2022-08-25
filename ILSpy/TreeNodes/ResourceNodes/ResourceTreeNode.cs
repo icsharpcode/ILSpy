@@ -51,7 +51,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public Resource Resource { get; }
 
-		public override object Text => Resource.Name;
+		public override object Text => Language.EscapeName(Resource.Name);
 
 		public override object Icon => Images.Resource;
 
