@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.metadata = module;
 			this.handle = r;
 			this.reference = module.GetModuleReference(r);
-			this.moduleName = metadata.GetString(reference.Name);
+			this.moduleName = Language.EscapeName(metadata.GetString(reference.Name));
 
 			foreach (var h in module.AssemblyFiles)
 			{
