@@ -441,6 +441,11 @@ namespace ICSharpCode.ILSpy.TextView
 			Language currentLanguage = MainWindow.Instance.CurrentLanguage;
 			DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), currentLanguage.SyntaxHighlighting);
 			RichText richText = currentLanguage.GetRichTextTooltip(resolved);
+			if (richText == null)
+			{
+				return null;
+			}
+
 			renderer.AddSignatureBlock(richText.Text, richText.ToRichTextModel());
 			try
 			{

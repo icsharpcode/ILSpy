@@ -195,27 +195,33 @@ namespace ICSharpCode.ILSpy
 		{
 			var output = new AvalonEditTextOutput() { IgnoreNewLineAndIndent = true };
 			var disasm = CreateDisassembler(output, new DecompilationOptions());
+			PEFile module = entity.ParentModule?.PEFile;
+			if (module == null)
+			{
+				return null;
+			}
+
 			switch (entity.SymbolKind)
 			{
 				case SymbolKind.TypeDefinition:
-					disasm.DisassembleTypeHeader(entity.ParentModule.PEFile, (TypeDefinitionHandle)entity.MetadataToken);
+					disasm.DisassembleTypeHeader(module, (TypeDefinitionHandle)entity.MetadataToken);
 					break;
 				case SymbolKind.Field:
-					disasm.DisassembleFieldHeader(entity.ParentModule.PEFile, (FieldDefinitionHandle)entity.MetadataToken);
+					disasm.DisassembleFieldHeader(module, (FieldDefinitionHandle)entity.MetadataToken);
 					break;
 				case SymbolKind.Property:
 				case SymbolKind.Indexer:
-					disasm.DisassemblePropertyHeader(entity.ParentModule.PEFile, (PropertyDefinitionHandle)entity.MetadataToken);
+					disasm.DisassemblePropertyHeader(module, (PropertyDefinitionHandle)entity.MetadataToken);
 					break;
 				case SymbolKind.Event:
-					disasm.DisassembleEventHeader(entity.ParentModule.PEFile, (EventDefinitionHandle)entity.MetadataToken);
+					disasm.DisassembleEventHeader(module, (EventDefinitionHandle)entity.MetadataToken);
 					break;
 				case SymbolKind.Method:
 				case SymbolKind.Operator:
 				case SymbolKind.Constructor:
 				case SymbolKind.Destructor:
 				case SymbolKind.Accessor:
-					disasm.DisassembleMethodHeader(entity.ParentModule.PEFile, (MethodDefinitionHandle)entity.MetadataToken);
+					disasm.DisassembleMethodHeader(module, (MethodDefinitionHandle)entity.MetadataToken);
 					break;
 				default:
 					output.Write(GetDisplayName(entity, true, true, true));
