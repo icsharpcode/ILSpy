@@ -119,7 +119,7 @@
     <SortResXStamp Include="obj\sort-resx.stamp" />
   </ItemGroup>
 
-  <Target Name="SortResX" BeforeTargets="BeforeBuild" Inputs="@(SortResXInput)" Outputs="@(SortResXStamp)">
+  <Target Name="SortResX" BeforeTargets="BeforeBuild" Inputs="@(SortResXInput)" Outputs="@(SortResXStamp)" Condition="'$(GITHUB_ACTIONS)' != 'true'">
     <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
       <SortResX>powershell -NoProfile -ExecutionPolicy Bypass -File BuildTools/sort-resx.ps1</SortResX>
     </PropertyGroup>

@@ -100,6 +100,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.astBuilder.AddResolveResultAnnotations = true;
 			this.astBuilder.ShowAttributes = true;
 			this.astBuilder.UseNullableSpecifierForValueTypes = settings.LiftNullables;
+			this.astBuilder.AlwaysUseGlobal = settings.AlwaysUseGlobal;
 			this.typeInference = new TypeInference(compilation) { Algorithm = TypeInferenceAlgorithm.Improved };
 		}
 

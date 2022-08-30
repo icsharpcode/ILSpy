@@ -739,6 +739,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Always fully qualify namespaces using the &quot;global::&quot; prefix.
+        /// </summary>
+        public static string DecompilerSettings_AlwaysUseGlobal {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.AlwaysUseGlobal", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Apply Windows Runtime projections on loaded assemblies.
         /// </summary>
         public static string DecompilerSettings_ApplyWindowsRuntimeProjectionsOnLoadedAssemblies {
