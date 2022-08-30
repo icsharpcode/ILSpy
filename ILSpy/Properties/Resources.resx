@@ -270,6 +270,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.AlwaysUseBraces" xml:space="preserve">
     <value>Always use braces</value>
   </data>
+  <data name="DecompilerSettings.AlwaysUseGlobal" xml:space="preserve">
+    <value>Always fully qualify namespaces using the "global::" prefix</value>
+  </data>
   <data name="DecompilerSettings.ApplyWindowsRuntimeProjectionsOnLoadedAssemblies" xml:space="preserve">
     <value>Apply Windows Runtime projections on loaded assemblies</value>
   </data>
