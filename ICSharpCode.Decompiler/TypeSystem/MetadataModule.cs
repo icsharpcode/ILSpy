@@ -491,6 +491,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				var statedDeclaringType = ResolveDeclaringType(memberRef.Parent, context);
 				var statedDeclaringTypeDefinition = statedDeclaringType.GetDefinition();
 
+				// Note: statedDeclaringType might be parameterized, but the signature is for the original method definition.
+				// We'll have to search the member directly on statedDeclaringTypeDefinition.
+				signature = memberRef.DecodeMethodSignature(TypeProvider,
+					new GenericContext(statedDeclaringTypeDefinition?.TypeParameters));
+
 				if (statedDeclaringTypeDefinition != null)
 				{
 					var candidateDeclaringTypes = statedDeclaringType.GetAllBaseTypes().ToList();
@@ -506,10 +511,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						{
 							classTypeArguments = declaringType.TypeArguments;
 						}
-						// Note: declaringType might be parameterized, but the signature is for the original method definition.
-						// We'll have to search the member directly on declaringTypeDefinition.
+
 						signature = memberRef.DecodeMethodSignature(TypeProvider,
 							new GenericContext(declaringTypeDefinition?.TypeParameters));
+
 						if (declaringTypeDefinition != null)
 						{
 							// Find the set of overloads to search:
