@@ -493,18 +493,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 				if (statedDeclaringTypeDefinition != null)
 				{
-					var candidateDeclaringTypes = new List<IType>() { statedDeclaringType };
+					var candidateDeclaringTypes = statedDeclaringType.GetAllBaseTypes().ToList();
 
-					// Search through type hierarchy of declaring type, traversing up the chain.
-					if (statedDeclaringTypeDefinition.DirectBaseTypes?.Any() == true)
-					{
-						candidateDeclaringTypes.AddRange(statedDeclaringTypeDefinition.DirectBaseTypes);
-					}
-
-					for (int i = 0; i < candidateDeclaringTypes.Count; i++)
+					// GetAllBaseTypes() returns types ordered from base -> specific. Traverse the list in reverse
+					// to check in the opposite direction (most specific to least specific).
+					for (int i = candidateDeclaringTypes.Count; i >= 0; i--)
 					{
 						var declaringType = candidateDeclaringTypes[i];
-						var declaringTypeDefinition = i == 0 ? statedDeclaringTypeDefinition : candidateDeclaringTypes[i].GetDefinition();
+						var declaringTypeDefinition = declaringType.GetDefinition();
 
 						if (declaringType.TypeArguments.Count > 0)
 						{
