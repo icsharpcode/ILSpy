@@ -497,7 +497,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 					// GetAllBaseTypes() returns types ordered from base -> specific. Traverse the list in reverse
 					// to check in the opposite direction (most specific to least specific).
-					for (int i = candidateDeclaringTypes.Count; i >= 0; i--)
+					for (int i = candidateDeclaringTypes.Count - 1; i >= 0; i--)
 					{
 						var declaringType = candidateDeclaringTypes[i];
 						var declaringTypeDefinition = declaringType.GetDefinition();
