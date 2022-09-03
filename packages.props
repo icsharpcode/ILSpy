@@ -6,7 +6,7 @@
 	-->
 	<PropertyGroup>
 		<SystemCollectionsImmutableVersion>6.0.0</SystemCollectionsImmutableVersion>
-		<SystemReflectionMetadataVersion>6.0.0</SystemReflectionMetadataVersion>
+		<SystemReflectionMetadataVersion>6.0.1</SystemReflectionMetadataVersion>
 		<SystemCompilerServicesUnsafeVersion>6.0.0</SystemCompilerServicesUnsafeVersion>
 		<SystemCompositionVersion>6.0.0</SystemCompositionVersion>
 		<!-- Microsoft.NETCore.ILAsm -->

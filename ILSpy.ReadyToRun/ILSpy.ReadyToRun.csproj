@@ -38,7 +38,7 @@
 
   <ItemGroup>
     <PackageReference Include="Iced" Version="1.13.0" />
-    <PackageReference Include="ILCompiler.Reflection.ReadyToRun.Experimental" Version="6.0.0-rc.2.21424.11" />
+    <PackageReference Include="ILCompiler.Reflection.ReadyToRun.Experimental" Version="7.0.0-rc.2.22451.11" />
     <!-- ILCompiler.Reflection.ReadyToRun has dependencies on System.Reflection.Metadata and
          System.Runtime.CompilerServices.Unsafe. Because the AddIn compiles into ILSpy's output
          directory, we're at risk of overwriting our dependencies with different versions.
