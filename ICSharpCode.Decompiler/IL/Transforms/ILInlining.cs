@@ -60,7 +60,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
-			InlineOneIfPossible(block, pos, this.options | OptionsForBlock(block, pos, context), context: context);
+			var options = this.options | OptionsForBlock(block, pos, context);
+			while (InlineOneIfPossible(block, pos, options, context: context))
+			{
+				// repeat inlining until nothing changes.
+			}
 		}
 
 		internal static InliningOptions OptionsForBlock(Block block, int pos, ILTransformContext context)
