@@ -1391,7 +1391,7 @@ namespace ICSharpCode.Decompiler.IL
 		ILInstruction PopStObjTarget()
 		{
 			// stobj has a special invariant (StObj.CheckTargetSlot)
-			// that prohibts inlining LdElema/LdFlda.
+			// that prohibits inlining LdElema/LdFlda.
 			if (expressionStack.LastOrDefault() is LdElema or LdFlda)
 			{
 				FlushExpressionStack();
@@ -1616,22 +1616,12 @@ namespace ICSharpCode.Decompiler.IL
 		DecodedInstruction DecodeCall(OpCode opCode)
 		{
 			var method = ReadAndDecodeMethodReference();
-			int firstArgument = (opCode != OpCode.NewObj && !method.IsStatic) ? 1 : 0;
-			var arguments = new ILInstruction[firstArgument + method.Parameters.Count];
-			for (int i = method.Parameters.Count - 1; i >= 0; i--)
-			{
-				arguments[firstArgument + i] = Pop(method.Parameters[i].Type.GetStackType());
-			}
-			if (firstArgument == 1)
-			{
-				arguments[0] = Pop(CallInstruction.ExpectedTypeForThisPointer(constrainedPrefix ?? method.DeclaringType));
-			}
-			// arguments is in reverse order of the Pop calls, thus
-			// arguments is now in the correct evaluation order.
+			ILInstruction[] arguments;
 			switch (method.DeclaringType.Kind)
 			{
 				case TypeKind.Array:
 				{
+					arguments = PrepareArguments(firstArgumentIsStObjTarget: false);
 					var elementType = ((ArrayType)method.DeclaringType).ElementType;
 					if (opCode == OpCode.NewObj)
 						return Push(new NewArr(elementType, arguments));
@@ -1668,6 +1658,7 @@ namespace ICSharpCode.Decompiler.IL
 					// So we represent this call as "stobj Struct(target, newobj Struct.ctor(...))".
 					// This needs to happen early (not as a transform) because the StObj.TargetSlot has
 					// restricted inlining (doesn't accept ldflda when exceptions aren't delayed).
+					arguments = PrepareArguments(firstArgumentIsStObjTarget: true);
 					var newobj = new NewObj(method);
 					newobj.ILStackWasEmpty = CurrentStackIsEmpty();
 					newobj.ConstrainedTo = constrainedPrefix;
@@ -1675,6 +1666,7 @@ namespace ICSharpCode.Decompiler.IL
 					return new StObj(arguments[0], newobj, method.DeclaringType);
 				}
 				default:
+					arguments = PrepareArguments(firstArgumentIsStObjTarget: false);
 					var call = CallInstruction.Create(opCode, method);
 					call.ILStackWasEmpty = CurrentStackIsEmpty();
 					call.ConstrainedTo = constrainedPrefix;
@@ -1682,6 +1674,25 @@ namespace ICSharpCode.Decompiler.IL
 					if (call.ResultType != StackType.Void)
 						return Push(call);
 					return call;
+			}
+
+			ILInstruction[] PrepareArguments(bool firstArgumentIsStObjTarget)
+			{
+				int firstArgument = (opCode != OpCode.NewObj && !method.IsStatic) ? 1 : 0;
+				var arguments = new ILInstruction[firstArgument + method.Parameters.Count];
+				for (int i = method.Parameters.Count - 1; i >= 0; i--)
+				{
+					arguments[firstArgument + i] = Pop(method.Parameters[i].Type.GetStackType());
+				}
+				if (firstArgument == 1)
+				{
+					arguments[0] = firstArgumentIsStObjTarget
+						? PopStObjTarget()
+						: Pop(CallInstruction.ExpectedTypeForThisPointer(constrainedPrefix ?? method.DeclaringType));
+				}
+				// arguments is in reverse order of the Pop calls, thus
+				// arguments is now in the correct evaluation order.
+				return arguments;
 			}
 		}
 
