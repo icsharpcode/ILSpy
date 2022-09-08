@@ -78,9 +78,10 @@ namespace ICSharpCode.Decompiler.IL
 		StackType methodReturnStackType;
 		BlobReader reader;
 		ImmutableStack<ILVariable> currentStack;
+		List<ILInstruction> expressionStack;
 		ILVariable[] parameterVariables;
 		ILVariable[] localVariables;
-		BitArray isBranchTarget;
+		BitSet isBranchTarget;
 		BlockContainer mainContainer;
 		List<ILInstruction> instructionBuilder;
 		int currentInstructionStart;
@@ -113,6 +114,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.body = body;
 			this.reader = body.GetILReader();
 			this.currentStack = ImmutableStack<ILVariable>.Empty;
+			this.expressionStack = new List<ILInstruction>();
 			this.unionFind = new UnionFind<ILVariable>();
 			this.stackMismatchPairs = new List<(ILVariable, ILVariable)>();
 			this.methodReturnStackType = method.ReturnType.GetStackType();
@@ -125,7 +127,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			this.mainContainer = new BlockContainer(expectedResultType: methodReturnStackType);
 			this.instructionBuilder = new List<ILInstruction>();
-			this.isBranchTarget = new BitArray(reader.Length);
+			this.isBranchTarget = new BitSet(reader.Length);
 			this.stackByOffset = new Dictionary<int, ImmutableStack<ILVariable>>();
 			this.variableByExceptionHandler = new Dictionary<ExceptionRegion, ILVariable>();
 		}
@@ -390,10 +392,102 @@ namespace ICSharpCode.Decompiler.IL
 
 		void ReadInstructions(CancellationToken cancellationToken)
 		{
+			reader.Reset();
+			ILParser.SetBranchTargets(ref reader, isBranchTarget);
+			reader.Reset();
+			PrepareBranchTargetsAndStacksForExceptionHandlers();
+
+			bool nextInstructionBeginsNewBlock = false;
+
+			reader.Reset();
+			while (reader.RemainingBytes > 0)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+				int start = reader.Offset;
+				if (isBranchTarget[start])
+				{
+					FlushExpressionStack();
+					StoreStackForOffset(start, ref currentStack);
+				}
+				currentInstructionStart = start;
+				bool startedWithEmptyStack = CurrentStackIsEmpty();
+				DecodedInstruction decodedInstruction;
+				try
+				{
+					decodedInstruction = DecodeInstruction();
+				}
+				catch (BadImageFormatException ex)
+				{
+					decodedInstruction = new InvalidBranch(ex.Message);
+				}
+				var inst = decodedInstruction.Instruction;
+				if (inst.ResultType == StackType.Unknown && inst.OpCode != OpCode.InvalidBranch && inst.OpCode != OpCode.InvalidExpression)
+					Warn("Unknown result type (might be due to invalid IL or missing references)");
+				inst.CheckInvariant(ILPhase.InILReader);
+				int end = reader.Offset;
+				inst.AddILRange(new Interval(start, end));
+				if (!decodedInstruction.PushedOnExpressionStack)
+				{
+					// Flush to avoid re-ordering of side-effects
+					FlushExpressionStack();
+					instructionBuilder.Add(inst);
+				}
+				else if (isBranchTarget[start] || nextInstructionBeginsNewBlock)
+				{
+					// If this instruction is the first in a new block, avoid it being inlined
+					// into the next instruction.
+					// This is necessary because the BlockBuilder uses inst.StartILOffset to
+					// detect block starts, and doesn't search nested instructions.
+					FlushExpressionStack();
+				}
+				if (inst.HasDirectFlag(InstructionFlags.EndPointUnreachable))
+				{
+					FlushExpressionStack();
+					if (!stackByOffset.TryGetValue(end, out currentStack))
+					{
+						currentStack = ImmutableStack<ILVariable>.Empty;
+					}
+					nextInstructionBeginsNewBlock = true;
+				}
+				else
+				{
+					nextInstructionBeginsNewBlock = inst.HasFlag(InstructionFlags.MayBranch);
+				}
+
+				if ((!decodedInstruction.PushedOnExpressionStack && IsSequencePointInstruction(inst)) || startedWithEmptyStack)
+				{
+					this.SequencePointCandidates.Add(inst.StartILOffset);
+				}
+			}
+
+			FlushExpressionStack();
+
+			var visitor = new CollectStackVariablesVisitor(unionFind);
+			for (int i = 0; i < instructionBuilder.Count; i++)
+			{
+				instructionBuilder[i] = instructionBuilder[i].AcceptVisitor(visitor);
+			}
+			stackVariables = visitor.variables;
+			InsertStackAdjustments();
+		}
+
+		private bool CurrentStackIsEmpty()
+		{
+			return currentStack.IsEmpty && expressionStack.Count == 0;
+		}
+
+		private void PrepareBranchTargetsAndStacksForExceptionHandlers()
+		{
 			// Fill isBranchTarget and branchStackDict based on exception handlers
 			foreach (var eh in body.ExceptionRegions)
 			{
-				ImmutableStack<ILVariable> ehStack = null;
+				// Always mark the start of the try block as a "branch target".
+				// We don't actually need to store the stack state here,
+				// but we need to ensure that no ILInstructions are inlined
+				// into the try-block.
+				isBranchTarget[eh.TryOffset] = true;
+
+				ImmutableStack<ILVariable> ehStack;
 				if (eh.Kind == ExceptionRegionKind.Catch)
 				{
 					var catchType = module.ResolveType(eh.CatchType, genericContext);
@@ -428,61 +522,15 @@ namespace ICSharpCode.Decompiler.IL
 					StoreStackForOffset(eh.HandlerOffset, ref ehStack);
 				}
 			}
-
-			reader.Reset();
-			while (reader.RemainingBytes > 0)
-			{
-				cancellationToken.ThrowIfCancellationRequested();
-				int start = reader.Offset;
-				StoreStackForOffset(start, ref currentStack);
-				currentInstructionStart = start;
-				bool startedWithEmptyStack = currentStack.IsEmpty;
-				ILInstruction decodedInstruction;
-				try
-				{
-					decodedInstruction = DecodeInstruction();
-				}
-				catch (BadImageFormatException ex)
-				{
-					decodedInstruction = new InvalidBranch(ex.Message);
-				}
-				if (decodedInstruction.ResultType == StackType.Unknown && decodedInstruction.OpCode != OpCode.InvalidBranch && UnpackPush(decodedInstruction).OpCode != OpCode.InvalidExpression)
-					Warn("Unknown result type (might be due to invalid IL or missing references)");
-				decodedInstruction.CheckInvariant(ILPhase.InILReader);
-				int end = reader.Offset;
-				decodedInstruction.AddILRange(new Interval(start, end));
-				UnpackPush(decodedInstruction).AddILRange(decodedInstruction);
-				instructionBuilder.Add(decodedInstruction);
-				if (decodedInstruction.HasDirectFlag(InstructionFlags.EndPointUnreachable))
-				{
-					if (!stackByOffset.TryGetValue(end, out currentStack))
-					{
-						currentStack = ImmutableStack<ILVariable>.Empty;
-					}
-				}
-
-				if (IsSequencePointInstruction(decodedInstruction) || startedWithEmptyStack)
-				{
-					this.SequencePointCandidates.Add(decodedInstruction.StartILOffset);
-				}
-			}
-
-			var visitor = new CollectStackVariablesVisitor(unionFind);
-			for (int i = 0; i < instructionBuilder.Count; i++)
-			{
-				instructionBuilder[i] = instructionBuilder[i].AcceptVisitor(visitor);
-			}
-			stackVariables = visitor.variables;
-			InsertStackAdjustments();
 		}
 
 		private bool IsSequencePointInstruction(ILInstruction instruction)
 		{
 			if (instruction.OpCode == OpCode.Nop ||
-				(this.instructionBuilder.Count > 0 &&
-				this.instructionBuilder.Last().OpCode == OpCode.Call ||
-				this.instructionBuilder.Last().OpCode == OpCode.CallIndirect ||
-				this.instructionBuilder.Last().OpCode == OpCode.CallVirt))
+				(instructionBuilder.Count > 0
+				&& instructionBuilder.Last().OpCode is OpCode.Call
+													or OpCode.CallIndirect
+													or OpCode.CallVirt))
 			{
 
 				return true;
@@ -543,20 +591,23 @@ namespace ICSharpCode.Decompiler.IL
 					output.WriteLine();
 					continue;
 				}
-				output.Write("   [");
-				bool isFirstElement = true;
-				foreach (var element in stackByOffset[inst.StartILOffset])
+				if (stackByOffset.TryGetValue(inst.StartILOffset, out var stack))
 				{
-					if (isFirstElement)
-						isFirstElement = false;
-					else
-						output.Write(", ");
-					output.WriteLocalReference(element.Name, element);
-					output.Write(":");
-					output.Write(element.StackType);
+					output.Write("   [");
+					bool isFirstElement = true;
+					foreach (var element in stack)
+					{
+						if (isFirstElement)
+							isFirstElement = false;
+						else
+							output.Write(", ");
+						output.WriteLocalReference(element.Name, element);
+						output.Write(":");
+						output.Write(element.StackType);
+					}
+					output.Write(']');
+					output.WriteLine();
 				}
-				output.Write(']');
-				output.WriteLine();
 				if (isBranchTarget[inst.StartILOffset])
 					output.Write('*');
 				else
@@ -611,17 +662,7 @@ namespace ICSharpCode.Decompiler.IL
 			return function;
 		}
 
-		static ILInstruction UnpackPush(ILInstruction inst)
-		{
-			ILVariable v;
-			ILInstruction inner;
-			if (inst.MatchStLoc(out v, out inner) && v.Kind == VariableKind.StackSlot)
-				return inner;
-			else
-				return inst;
-		}
-
-		ILInstruction Neg()
+		DecodedInstruction Neg()
 		{
 			switch (PeekStackType())
 			{
@@ -641,7 +682,18 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		ILInstruction DecodeInstruction()
+		struct DecodedInstruction
+		{
+			public ILInstruction Instruction;
+			public bool PushedOnExpressionStack;
+
+			public static implicit operator DecodedInstruction(ILInstruction instruction)
+			{
+				return new DecodedInstruction { Instruction = instruction };
+			}
+		}
+
+		DecodedInstruction DecodeInstruction()
 		{
 			if (reader.RemainingBytes == 0)
 				return new InvalidBranch("Unexpected end of body");
@@ -807,6 +859,8 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Conv_ovf_u_un:
 					return Push(new Conv(Pop(), PrimitiveType.U, true, Sign.Unsigned));
 				case ILOpCode.Cpblk:
+					// This preserves the evaluation order because the ILAst will run
+					// destAddress; sourceAddress; size.
 					return new Cpblk(size: Pop(StackType.I4), sourceAddress: PopPointer(), destAddress: PopPointer());
 				case ILOpCode.Div:
 					return BinaryNumeric(BinaryNumericOperator.Div, false, Sign.Signed);
@@ -819,6 +873,8 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Endfinally:
 					return new Leave(null);
 				case ILOpCode.Initblk:
+					// This preserves the evaluation order because the ILAst will run
+					// address; value; size.
 					return new Initblk(size: Pop(StackType.I4), value: Pop(StackType.I4), address: PopPointer());
 				case ILOpCode.Jmp:
 					return DecodeJmp();
@@ -931,6 +987,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Or:
 					return BinaryNumeric(BinaryNumericOperator.BitOr);
 				case ILOpCode.Pop:
+					FlushExpressionStack(); // discard only the value, not the side-effects
 					Pop();
 					return new Nop() { Kind = NopKind.Pop };
 				case ILOpCode.Rem:
@@ -949,21 +1006,22 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Starg_s:
 					return Starg(ILParser.DecodeIndex(ref reader, opCode));
 				case ILOpCode.Stind_i1:
-					return new StObj(value: Pop(StackType.I4), target: PopPointer(), type: compilation.FindType(KnownTypeCode.SByte));
+					// target will run before value, thus preserving the evaluation order
+					return new StObj(value: Pop(StackType.I4), target: PopStObjTarget(), type: compilation.FindType(KnownTypeCode.SByte));
 				case ILOpCode.Stind_i2:
-					return new StObj(value: Pop(StackType.I4), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Int16));
+					return new StObj(value: Pop(StackType.I4), target: PopStObjTarget(), type: compilation.FindType(KnownTypeCode.Int16));
 				case ILOpCode.Stind_i4:
-					return new StObj(value: Pop(StackType.I4), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Int32));
+					return new StObj(value: Pop(StackType.I4), target: PopStObjTarget(), type: compilation.FindType(KnownTypeCode.Int32));
 				case ILOpCode.Stind_i8:
-					return new StObj(value: Pop(StackType.I8), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Int64));
+					return new StObj(value: Pop(StackType.I8), target: PopStObjTarget(), type: compilation.FindType(KnownTypeCode.Int64));
 				case ILOpCode.Stind_r4:
-					return new StObj(value: Pop(StackType.F4), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Single));
+					return new StObj(value: Pop(StackType.F4), target: PopStObjTarget(), type: compilation.FindType(KnownTypeCode.Single));
 				case ILOpCode.Stind_r8:
-					return new StObj(value: Pop(StackType.F8), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Double));
+					return new StObj(value: Pop(StackType.F8), target: PopStObjTarget(), type: compilation.FindType(KnownTypeCode.Double));
 				case ILOpCode.Stind_i:
-					return new StObj(value: Pop(StackType.I), target: PopPointer(), type: compilation.FindType(KnownTypeCode.IntPtr));
+					return new StObj(value: Pop(StackType.I), target: PopStObjTarget(), type: compilation.FindType(KnownTypeCode.IntPtr));
 				case ILOpCode.Stind_ref:
-					return new StObj(value: Pop(StackType.O), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Object));
+					return new StObj(value: Pop(StackType.O), target: PopStObjTarget(), type: compilation.FindType(KnownTypeCode.Object));
 				case ILOpCode.Stloc:
 				case ILOpCode.Stloc_s:
 					return Stloc(ILParser.DecodeIndex(ref reader, opCode));
@@ -995,11 +1053,12 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Cpobj:
 				{
 					var type = ReadAndDecodeTypeReference();
+					// OK, 'target' runs before 'value: ld'
 					var ld = new LdObj(PopPointer(), type);
 					return new StObj(PopPointer(), ld, type);
 				}
 				case ILOpCode.Initobj:
-					return InitObj(PopPointer(), ReadAndDecodeTypeReference());
+					return InitObj(PopStObjTarget(), ReadAndDecodeTypeReference());
 				case ILOpCode.Isinst:
 					return Push(new IsInst(Pop(StackType.O), ReadAndDecodeTypeReference()));
 				case ILOpCode.Ldelem:
@@ -1027,6 +1086,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldelem_ref:
 					return LdElem(compilation.FindType(KnownTypeCode.Object));
 				case ILOpCode.Ldelema:
+					// LdElema will evalute the array before the indices, so we're preserving the evaluation order
 					return Push(new LdElema(indices: Pop(), array: Pop(), type: ReadAndDecodeTypeReference()));
 				case ILOpCode.Ldfld:
 				{
@@ -1096,7 +1156,8 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Stobj:
 				{
 					var type = ReadAndDecodeTypeReference();
-					return new StObj(value: Pop(type.GetStackType()), target: PopPointer(), type: type);
+					// OK, target runs before value
+					return new StObj(value: Pop(type.GetStackType()), target: PopStObjTarget(), type: type);
 				}
 				case ILOpCode.Throw:
 					return new Throw(Pop());
@@ -1111,6 +1172,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		StackType PeekStackType()
 		{
+			if (expressionStack.Count > 0)
+				return expressionStack.Last().ResultType;
 			if (currentStack.IsEmpty)
 				return StackType.Unknown;
 			else
@@ -1166,18 +1229,18 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		ILInstruction Push(ILInstruction inst)
+		DecodedInstruction Push(ILInstruction inst)
 		{
-			Debug.Assert(inst.ResultType != StackType.Void);
-			IType type = compilation.FindType(inst.ResultType);
-			var v = new ILVariable(VariableKind.StackSlot, type, inst.ResultType);
-			v.HasGeneratedName = true;
-			currentStack = currentStack.Push(v);
-			return new StLoc(v, inst);
+			expressionStack.Add(inst);
+			return new DecodedInstruction {
+				Instruction = inst,
+				PushedOnExpressionStack = true
+			};
 		}
 
 		ILInstruction Peek()
 		{
+			FlushExpressionStack();
 			if (currentStack.IsEmpty)
 			{
 				return new InvalidExpression("Stack underflow").WithILRange(new Interval(reader.Offset, reader.Offset));
@@ -1185,8 +1248,32 @@ namespace ICSharpCode.Decompiler.IL
 			return new LdLoc(currentStack.Peek());
 		}
 
+		/// <summary>
+		/// Pops a value/instruction from the evaluation stack.
+		/// Note that instructions popped from the stack must be evaluated in the order they
+		/// were pushed (so in reverse order of the pop calls!).
+		/// 
+		/// For instructions like 'conv' that pop a single element and then push their result,
+		/// it's fine to pop just one element as the instruction itself will end up on the stack,
+		/// thus maintaining the evaluation order.
+		/// For instructions like 'call' that pop multiple arguments, it's critical that
+		/// the evaluation order of the resulting ILAst will be reverse from the order of the push
+		/// calls.
+		/// For instructions like 'brtrue', it's fine to pop only a part of the stack because
+		/// ReadInstructions() will flush the evaluation stack before outputting the brtrue instruction.
+		/// 
+		/// Use FlushExpressionStack() to ensure that following Pop() calls do not return
+		/// instructions that involve side-effects. This way evaluation order is preserved
+		/// no matter which order the ILAst will execute the popped instructions in.
+		/// </summary>
 		ILInstruction Pop()
 		{
+			if (expressionStack.Count > 0)
+			{
+				var inst = expressionStack.Last();
+				expressionStack.RemoveAt(expressionStack.Count - 1);
+				return inst;
+			}
 			if (currentStack.IsEmpty)
 			{
 				return new InvalidExpression("Stack underflow").WithILRange(new Interval(reader.Offset, reader.Offset));
@@ -1301,6 +1388,17 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
+		ILInstruction PopStObjTarget()
+		{
+			// stobj has a special invariant (StObj.CheckTargetSlot)
+			// that prohibits inlining LdElema/LdFlda.
+			if (expressionStack.LastOrDefault() is LdElema or LdFlda)
+			{
+				FlushExpressionStack();
+			}
+			return PopPointer();
+		}
+
 		ILInstruction PopFieldTarget(IField field)
 		{
 			switch (field.DeclaringType.IsReferenceType)
@@ -1388,6 +1486,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			else
 			{
+				FlushExpressionStack();
 				Pop();
 				return new InvalidExpression($"starg {v} (out-of-bounds)");
 			}
@@ -1422,17 +1521,18 @@ namespace ICSharpCode.Decompiler.IL
 			if (v >= 0 && v < localVariables.Length)
 			{
 				return new StLoc(localVariables[v], Pop(localVariables[v].StackType)) {
-					ILStackWasEmpty = currentStack.IsEmpty
+					ILStackWasEmpty = CurrentStackIsEmpty()
 				};
 			}
 			else
 			{
+				FlushExpressionStack();
 				Pop();
 				return new InvalidExpression($"stloc {v} (out-of-bounds)");
 			}
 		}
 
-		private ILInstruction LdElem(IType type)
+		private DecodedInstruction LdElem(IType type)
 		{
 			return Push(new LdObj(new LdElema(indices: Pop(), array: Pop(), type: type) { DelayExceptions = true }, type));
 		}
@@ -1442,23 +1542,24 @@ namespace ICSharpCode.Decompiler.IL
 			var value = Pop(type.GetStackType());
 			var index = Pop();
 			var array = Pop();
+			// OK, evaluation order is array, index, value
 			return new StObj(new LdElema(type, array, index) { DelayExceptions = true }, value, type);
 		}
 
 		ILInstruction InitObj(ILInstruction target, IType type)
 		{
 			var value = new DefaultValue(type);
-			value.ILStackWasEmpty = currentStack.IsEmpty;
+			value.ILStackWasEmpty = CurrentStackIsEmpty();
 			return new StObj(target, value, type);
 		}
 
 		IType constrainedPrefix;
 
-		private ILInstruction DecodeConstrainedCall()
+		private DecodedInstruction DecodeConstrainedCall()
 		{
 			constrainedPrefix = ReadAndDecodeTypeReference();
 			var inst = DecodeInstruction();
-			var call = UnpackPush(inst) as CallInstruction;
+			var call = inst.Instruction as CallInstruction;
 			if (call != null)
 				Debug.Assert(call.ConstrainedTo == constrainedPrefix);
 			else
@@ -1467,10 +1568,10 @@ namespace ICSharpCode.Decompiler.IL
 			return inst;
 		}
 
-		private ILInstruction DecodeTailCall()
+		private DecodedInstruction DecodeTailCall()
 		{
 			var inst = DecodeInstruction();
-			var call = UnpackPush(inst) as CallInstruction;
+			var call = inst.Instruction as CallInstruction;
 			if (call != null)
 				call.IsTail = true;
 			else
@@ -1478,11 +1579,11 @@ namespace ICSharpCode.Decompiler.IL
 			return inst;
 		}
 
-		private ILInstruction DecodeUnaligned()
+		private DecodedInstruction DecodeUnaligned()
 		{
 			byte alignment = reader.ReadByte();
 			var inst = DecodeInstruction();
-			var sup = UnpackPush(inst) as ISupportsUnalignedPrefix;
+			var sup = inst.Instruction as ISupportsUnalignedPrefix;
 			if (sup != null)
 				sup.UnalignedPrefix = alignment;
 			else
@@ -1490,10 +1591,10 @@ namespace ICSharpCode.Decompiler.IL
 			return inst;
 		}
 
-		private ILInstruction DecodeVolatile()
+		private DecodedInstruction DecodeVolatile()
 		{
 			var inst = DecodeInstruction();
-			var svp = UnpackPush(inst) as ISupportsVolatilePrefix;
+			var svp = inst.Instruction as ISupportsVolatilePrefix;
 			if (svp != null)
 				svp.IsVolatile = true;
 			else
@@ -1501,10 +1602,10 @@ namespace ICSharpCode.Decompiler.IL
 			return inst;
 		}
 
-		private ILInstruction DecodeReadonly()
+		private DecodedInstruction DecodeReadonly()
 		{
 			var inst = DecodeInstruction();
-			var ldelema = UnpackPush(inst) as LdElema;
+			var ldelema = inst.Instruction as LdElema;
 			if (ldelema != null)
 				ldelema.IsReadOnly = true;
 			else
@@ -1512,43 +1613,38 @@ namespace ICSharpCode.Decompiler.IL
 			return inst;
 		}
 
-		ILInstruction DecodeCall(OpCode opCode)
+		DecodedInstruction DecodeCall(OpCode opCode)
 		{
 			var method = ReadAndDecodeMethodReference();
-			int firstArgument = (opCode != OpCode.NewObj && !method.IsStatic) ? 1 : 0;
-			var arguments = new ILInstruction[firstArgument + method.Parameters.Count];
-			for (int i = method.Parameters.Count - 1; i >= 0; i--)
-			{
-				arguments[firstArgument + i] = Pop(method.Parameters[i].Type.GetStackType());
-			}
-			if (firstArgument == 1)
-			{
-				arguments[0] = Pop(CallInstruction.ExpectedTypeForThisPointer(constrainedPrefix ?? method.DeclaringType));
-			}
+			ILInstruction[] arguments;
 			switch (method.DeclaringType.Kind)
 			{
 				case TypeKind.Array:
 				{
+					arguments = PrepareArguments(firstArgumentIsStObjTarget: false);
 					var elementType = ((ArrayType)method.DeclaringType).ElementType;
 					if (opCode == OpCode.NewObj)
 						return Push(new NewArr(elementType, arguments));
 					if (method.Name == "Set")
 					{
 						var target = arguments[0];
-						var value = arguments.Last();
 						var indices = arguments.Skip(1).Take(arguments.Length - 2).ToArray();
+						var value = arguments.Last();
+						// preserves evaluation order target,indices,value
 						return new StObj(new LdElema(elementType, target, indices) { DelayExceptions = true }, value, elementType);
 					}
 					if (method.Name == "Get")
 					{
 						var target = arguments[0];
 						var indices = arguments.Skip(1).ToArray();
+						// preserves evaluation order target,indices
 						return Push(new LdObj(new LdElema(elementType, target, indices) { DelayExceptions = true }, elementType));
 					}
 					if (method.Name == "Address")
 					{
 						var target = arguments[0];
 						var indices = arguments.Skip(1).ToArray();
+						// preserves evaluation order target,indices
 						return Push(new LdElema(elementType, target, indices));
 					}
 					Warn("Unknown method called on array type: " + method.Name);
@@ -1562,24 +1658,45 @@ namespace ICSharpCode.Decompiler.IL
 					// So we represent this call as "stobj Struct(target, newobj Struct.ctor(...))".
 					// This needs to happen early (not as a transform) because the StObj.TargetSlot has
 					// restricted inlining (doesn't accept ldflda when exceptions aren't delayed).
+					arguments = PrepareArguments(firstArgumentIsStObjTarget: true);
 					var newobj = new NewObj(method);
-					newobj.ILStackWasEmpty = currentStack.IsEmpty;
+					newobj.ILStackWasEmpty = CurrentStackIsEmpty();
 					newobj.ConstrainedTo = constrainedPrefix;
 					newobj.Arguments.AddRange(arguments.Skip(1));
 					return new StObj(arguments[0], newobj, method.DeclaringType);
 				}
 				default:
+					arguments = PrepareArguments(firstArgumentIsStObjTarget: false);
 					var call = CallInstruction.Create(opCode, method);
-					call.ILStackWasEmpty = currentStack.IsEmpty;
+					call.ILStackWasEmpty = CurrentStackIsEmpty();
 					call.ConstrainedTo = constrainedPrefix;
 					call.Arguments.AddRange(arguments);
 					if (call.ResultType != StackType.Void)
 						return Push(call);
 					return call;
 			}
+
+			ILInstruction[] PrepareArguments(bool firstArgumentIsStObjTarget)
+			{
+				int firstArgument = (opCode != OpCode.NewObj && !method.IsStatic) ? 1 : 0;
+				var arguments = new ILInstruction[firstArgument + method.Parameters.Count];
+				for (int i = method.Parameters.Count - 1; i >= 0; i--)
+				{
+					arguments[firstArgument + i] = Pop(method.Parameters[i].Type.GetStackType());
+				}
+				if (firstArgument == 1)
+				{
+					arguments[0] = firstArgumentIsStObjTarget
+						? PopStObjTarget()
+						: Pop(CallInstruction.ExpectedTypeForThisPointer(constrainedPrefix ?? method.DeclaringType));
+				}
+				// arguments is in reverse order of the Pop calls, thus
+				// arguments is now in the correct evaluation order.
+				return arguments;
+			}
 		}
 
-		ILInstruction DecodeCallIndirect()
+		DecodedInstruction DecodeCallIndirect()
 		{
 			var signatureHandle = (StandaloneSignatureHandle)ReadAndDecodeMetadataToken();
 			var (header, fpt) = module.DecodeMethodSignature(signatureHandle, genericContext);
@@ -1594,6 +1711,8 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				arguments[0] = Pop();
 			}
+			// arguments is in reverse order of the Pop calls, thus
+			// arguments is now in the correct evaluation order.
 			var call = new CallIndirect(
 				header.IsInstance,
 				header.HasExplicitThis,
@@ -1611,6 +1730,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var right = Pop();
 			var left = Pop();
+			// left will run before right, thus preserving the evaluation order
 
 			if ((left.ResultType == StackType.O || left.ResultType == StackType.Ref) && right.ResultType.IsIntegerType())
 			{
@@ -1772,6 +1892,7 @@ namespace ICSharpCode.Decompiler.IL
 			int target = ILParser.DecodeBranchTarget(ref reader, opCode);
 			if (isLeave)
 			{
+				FlushExpressionStack();
 				currentStack = currentStack.Clear();
 			}
 			if (!IsInvalidBranch(target))
@@ -1787,8 +1908,29 @@ namespace ICSharpCode.Decompiler.IL
 
 		void MarkBranchTarget(int targetILOffset)
 		{
-			isBranchTarget[targetILOffset] = true;
+			FlushExpressionStack();
+			Debug.Assert(isBranchTarget[targetILOffset]);
 			StoreStackForOffset(targetILOffset, ref currentStack);
+		}
+
+		/// <summary>
+		/// The expression stack holds ILInstructions that might have side-effects
+		/// that should have already happened (in the order of the pushes).
+		/// This method forces these instructions to be added to the instructionBuilder.
+		/// This is used e.g. to avoid moving side-effects past branches.
+		/// </summary>
+		private void FlushExpressionStack()
+		{
+			foreach (var inst in expressionStack)
+			{
+				Debug.Assert(inst.ResultType != StackType.Void);
+				IType type = compilation.FindType(inst.ResultType);
+				var v = new ILVariable(VariableKind.StackSlot, type, inst.ResultType);
+				v.HasGeneratedName = true;
+				currentStack = currentStack.Push(v);
+				instructionBuilder.Add(new StLoc(v, inst).WithILRange(inst));
+			}
+			expressionStack.Clear();
 		}
 
 		ILInstruction DecodeSwitch()
@@ -1819,10 +1961,11 @@ namespace ICSharpCode.Decompiler.IL
 			return instr;
 		}
 
-		ILInstruction BinaryNumeric(BinaryNumericOperator @operator, bool checkForOverflow = false, Sign sign = Sign.None)
+		DecodedInstruction BinaryNumeric(BinaryNumericOperator @operator, bool checkForOverflow = false, Sign sign = Sign.None)
 		{
 			var right = Pop();
 			var left = Pop();
+			// left will run before right, thus preserving the evaluation order
 			if (@operator != BinaryNumericOperator.Add && @operator != BinaryNumericOperator.Sub)
 			{
 				// we are treating all Refs as I, make the conversion explicit
