@@ -67,7 +67,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, string.Format("{0} ({1}, {2})", Resource.Name, Resource.ResourceType, Resource.Attributes));
+			var sizeInBytes = Resource.TryGetLength();
+			var sizeInBytesText = sizeInBytes == null ? "" : ", " + sizeInBytes + " bytes";
+			language.WriteCommentLine(output, $"{Resource.Name} ({Resource.ResourceType}, {Resource.Attributes}{sizeInBytesText})");
 
 			ISmartTextOutput smartOutput = output as ISmartTextOutput;
 			if (smartOutput != null)

@@ -40,6 +40,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		public virtual ManifestResourceAttributes Attributes => ManifestResourceAttributes.Public;
 		public abstract string Name { get; }
 		public abstract Stream? TryOpenStream();
+		public abstract long? TryGetLength();
 	}
 
 	public class ByteArrayResource : Resource
@@ -56,6 +57,11 @@ namespace ICSharpCode.Decompiler.Metadata
 		public override Stream TryOpenStream()
 		{
 			return new MemoryStream(data);
+		}
+
+		public override long? TryGetLength()
+		{
+			return data.Length;
 		}
 	}
 
@@ -125,6 +131,29 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (length < 0 || length > sectionData.Length)
 				return null;
 			return new ResourceMemoryStream(Module.Reader, ptr + sizeof(int), length);
+		}
+
+		public unsafe override long? TryGetLength()
+		{
+			if (ResourceType != ResourceType.Embedded)
+				return null;
+			var headers = Module.Reader.PEHeaders;
+			if (headers.CorHeader == null)
+				return null;
+			var resources = headers.CorHeader.ResourcesDirectory;
+			if (resources.RelativeVirtualAddress == 0)
+				return null;
+			var sectionData = Module.Reader.GetSectionData(resources.RelativeVirtualAddress);
+			if (sectionData.Length == 0)
+				return null;
+			var resource = Module.Metadata.GetManifestResource(Handle);
+			if (resource.Offset > sectionData.Length)
+				return null;
+			byte* ptr = sectionData.Pointer + resource.Offset;
+			int length = ptr[0] + (ptr[1] << 8) + (ptr[2] << 16) + (ptr[3] << 24);
+			if (length < 0 || length > sectionData.Length)
+				return null;
+			return length;
 		}
 	}
 

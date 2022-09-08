@@ -147,6 +147,7 @@ namespace ICSharpCode.ILSpyX
 			public override string FullName => originalEntry.FullName;
 			public override ResourceType ResourceType => originalEntry.ResourceType;
 			public override Stream? TryOpenStream() => originalEntry.TryOpenStream();
+			public override long? TryGetLength() => originalEntry.TryGetLength();
 		}
 
 		sealed class ZipFileEntry : PackageEntry
@@ -175,6 +176,16 @@ namespace ICSharpCode.ILSpyX
 				}
 				memoryStream.Position = 0;
 				return memoryStream;
+			}
+
+			public override long? TryGetLength()
+			{
+				Debug.WriteLine("TryGetLength " + Name);
+				using var archive = ZipFile.OpenRead(zipFile);
+				var entry = archive.GetEntry(Name);
+				if (entry == null)
+					return null;
+				return entry.Length;
 			}
 		}
 
@@ -216,6 +227,11 @@ namespace ICSharpCode.ILSpyX
 					decompressedStream.Seek(0, SeekOrigin.Begin);
 					return decompressedStream;
 				}
+			}
+
+			public override long? TryGetLength()
+			{
+				return entry.Size;
 			}
 		}
 	}
