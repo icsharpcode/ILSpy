@@ -29,6 +29,8 @@ using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpyX;
 
+using TomsToolbox.Essentials;
+
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile), MenuCategory = nameof(Resources.Open), MenuOrder = 2.5)]
@@ -55,7 +57,10 @@ namespace ICSharpCode.ILSpy
 							{
 								try
 								{
-									new CSharpLanguage().DecompileAssembly(asm, new Decompiler.PlainTextOutput(writer), new DecompilationOptions() { FullDecompilation = true, CancellationToken = ct });
+									var options = MainWindow.Instance.CreateDecompilationOptions();
+									options.CancellationToken = ct;
+									options.FullDecompilation = true;
+									new CSharpLanguage().DecompileAssembly(asm, new PlainTextOutput(writer), options);
 								}
 								catch (Exception ex)
 								{
@@ -88,7 +93,7 @@ namespace ICSharpCode.ILSpy
 			const int numRuns = 100;
 			var language = MainWindow.Instance.CurrentLanguage;
 			var nodes = MainWindow.Instance.SelectedNodes.ToArray();
-			var options = new DecompilationOptions();
+			var options = MainWindow.Instance.CreateDecompilationOptions();
 			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				options.CancellationToken = ct;
 				Stopwatch w = Stopwatch.StartNew();

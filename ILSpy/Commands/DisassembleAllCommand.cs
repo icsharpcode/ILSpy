@@ -53,7 +53,10 @@ namespace ICSharpCode.ILSpy
 							{
 								try
 								{
-									new ILLanguage().DecompileAssembly(asm, new Decompiler.PlainTextOutput(writer), new DecompilationOptions { FullDecompilation = true, CancellationToken = ct });
+									var options = MainWindow.Instance.CreateDecompilationOptions();
+									options.FullDecompilation = true;
+									options.CancellationToken = ct;
+									new ILLanguage().DecompileAssembly(asm, new Decompiler.PlainTextOutput(writer), options);
 								}
 								catch (Exception ex)
 								{

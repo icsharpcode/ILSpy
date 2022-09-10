@@ -68,14 +68,6 @@ namespace ICSharpCode.ILSpy.Options
 			this.DataContext = LoadDisplaySettings(settings);
 		}
 
-		static DisplaySettings currentDisplaySettings;
-
-		public static DisplaySettings CurrentDisplaySettings {
-			get {
-				return currentDisplaySettings ?? (currentDisplaySettings = LoadDisplaySettings(ILSpySettings.Load()));
-			}
-		}
-
 		static bool IsSymbolFont(FontFamily fontFamily)
 		{
 			foreach (var tf in fontFamily.GetTypefaces())
@@ -162,8 +154,7 @@ namespace ICSharpCode.ILSpy.Options
 			else
 				root.Add(section);
 
-			if (currentDisplaySettings != null)
-				currentDisplaySettings.CopyValues(s);
+			MainWindow.Instance.CurrentDisplaySettings.CopyValues(s);
 		}
 
 		private void TextBox_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
@@ -183,8 +174,8 @@ namespace ICSharpCode.ILSpy.Options
 
 		public void LoadDefaults()
 		{
-			currentDisplaySettings = new DisplaySettings();
-			this.DataContext = currentDisplaySettings;
+			MainWindow.Instance.CurrentDisplaySettings.CopyValues(new DisplaySettings());
+			this.DataContext = MainWindow.Instance.CurrentDisplaySettings;
 		}
 	}
 

@@ -37,14 +37,6 @@ namespace ICSharpCode.ILSpy.Options
 			InitializeComponent();
 		}
 
-		static Decompiler.DecompilerSettings currentDecompilerSettings;
-
-		public static Decompiler.DecompilerSettings CurrentDecompilerSettings {
-			get {
-				return currentDecompilerSettings ?? (currentDecompilerSettings = LoadDecompilerSettings(ILSpySettings.Load()));
-			}
-		}
-
 		public static Decompiler.DecompilerSettings LoadDecompilerSettings(ILSpySettings settings)
 		{
 			XElement e = settings["DecompilerSettings"];
@@ -81,7 +73,7 @@ namespace ICSharpCode.ILSpy.Options
 			else
 				root.Add(section);
 
-			currentDecompilerSettings = newSettings;
+			MainWindow.Instance.CurrentDecompilerSettings = newSettings;
 			MainWindow.Instance.AssemblyListManager.ApplyWinRTProjections = newSettings.ApplyWindowsRuntimeProjections;
 			MainWindow.Instance.AssemblyListManager.UseDebugSymbols = newSettings.UseDebugSymbols;
 		}
@@ -137,8 +129,8 @@ namespace ICSharpCode.ILSpy.Options
 
 		public void LoadDefaults()
 		{
-			currentDecompilerSettings = new Decompiler.DecompilerSettings();
-			this.DataContext = new DecompilerSettingsViewModel(currentDecompilerSettings);
+			MainWindow.Instance.CurrentDecompilerSettings = new Decompiler.DecompilerSettings();
+			this.DataContext = new DecompilerSettingsViewModel(MainWindow.Instance.CurrentDecompilerSettings);
 		}
 	}
 }

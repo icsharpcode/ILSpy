@@ -188,11 +188,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected string GetSuffixString(EntityHandle handle)
 		{
-			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
+			if (!MainWindow.Instance.CurrentDisplaySettings.ShowMetadataTokens)
 				return string.Empty;
 
 			int token = MetadataTokens.GetToken(handle);
-			if (DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokensInBase10)
+			if (MainWindow.Instance.CurrentDisplaySettings.ShowMetadataTokensInBase10)
 				return " @" + token;
 			return " @" + token.ToString("x8");
 		}

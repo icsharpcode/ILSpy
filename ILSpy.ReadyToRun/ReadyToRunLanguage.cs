@@ -157,8 +157,9 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 						.GroupBy(m => m.MethodHandle)
 						.ToDictionary(g => g.Key, g => g.ToArray());
 				}
-				bool showMetadataTokens = ILSpy.Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens;
-				bool showMetadataTokensInBase10 = ILSpy.Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokensInBase10;
+				var displaySettings = MainWindow.Instance.CurrentDisplaySettings;
+				bool showMetadataTokens = displaySettings.ShowMetadataTokens;
+				bool showMetadataTokensInBase10 = displaySettings.ShowMetadataTokensInBase10;
 #if STRESS
 				ITextOutput originalOutput = output;
 				output = new DummyOutput();

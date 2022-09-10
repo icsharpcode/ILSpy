@@ -78,7 +78,8 @@ namespace ICSharpCode.ILSpy
 
 		public static ICompilation? GetTypeSystemWithCurrentOptionsOrNull(this PEFile file)
 		{
-			return LoadedAssemblyExtensions.GetLoadedAssembly(file).GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(new DecompilationOptions().DecompilerSettings));
+			return LoadedAssemblyExtensions.GetLoadedAssembly(file)
+				.GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(MainWindow.Instance.CurrentDecompilerSettings));
 		}
 
 		#region DPI independence

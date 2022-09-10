@@ -248,7 +248,8 @@ namespace ICSharpCode.ILSpy.Search
 				currentSearch = null;
 			}
 
-			resultsComparer = DisplaySettingsPanel.CurrentDisplaySettings.SortResults ?
+			MainWindow mainWindow = MainWindow.Instance;
+			resultsComparer = mainWindow.CurrentDisplaySettings.SortResults ?
 				SearchResult.ComparerByFitness :
 				SearchResult.ComparerByName;
 			Results.Clear();
@@ -256,7 +257,6 @@ namespace ICSharpCode.ILSpy.Search
 			RunningSearch startedSearch = null;
 			if (!string.IsNullOrEmpty(searchTerm))
 			{
-				MainWindow mainWindow = MainWindow.Instance;
 
 				searchProgressBar.IsIndeterminate = true;
 				startedSearch = new RunningSearch(await mainWindow.CurrentAssemblyList.GetAllAssemblies(), searchTerm,
@@ -452,7 +452,7 @@ namespace ICSharpCode.ILSpy.Search
 				request.RegEx = regex;
 				request.SearchResultFactory = new SearchResultFactory(language);
 				request.TreeNodeFactory = new TreeNodeFactory();
-				request.DecompilerSettings = new DecompilationOptions().DecompilerSettings;
+				request.DecompilerSettings = MainWindow.Instance.CurrentDecompilerSettings;
 
 				return request;
 			}

@@ -212,11 +212,10 @@ namespace ICSharpCode.ILSpy
 				using (var projectFileWriter = new StreamWriter(projectFileName))
 				{
 					var projectFileOutput = new PlainTextOutput(projectFileWriter);
-					var options = new DecompilationOptions() {
-						FullDecompilation = true,
-						CancellationToken = ct,
-						SaveAsProjectDirectory = targetDirectory
-					};
+					var options = MainWindow.Instance.CreateDecompilationOptions();
+					options.FullDecompilation = true;
+					options.CancellationToken = ct;
+					options.SaveAsProjectDirectory = targetDirectory;
 
 					var projectInfo = language.DecompileAssembly(loadedAssembly, projectFileOutput, options);
 					if (projectInfo != null)

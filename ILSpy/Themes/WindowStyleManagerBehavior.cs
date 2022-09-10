@@ -16,7 +16,7 @@ namespace ICSharpCode.ILSpy.Themes
 		{
 			base.OnAttached();
 
-			DisplaySettingsPanel.CurrentDisplaySettings.PropertyChanged += DisplaySettings_PropertyChanged;
+			MainWindow.Instance.CurrentDisplaySettings.PropertyChanged += DisplaySettings_PropertyChanged;
 
 			UpdateWindowStyle();
 
@@ -26,12 +26,12 @@ namespace ICSharpCode.ILSpy.Themes
 		{
 			base.OnDetaching();
 
-			DisplaySettingsPanel.CurrentDisplaySettings.PropertyChanged -= DisplaySettings_PropertyChanged;
+			MainWindow.Instance.CurrentDisplaySettings.PropertyChanged -= DisplaySettings_PropertyChanged;
 		}
 
 		private void UpdateWindowStyle()
 		{
-			if (!DisplaySettingsPanel.CurrentDisplaySettings.StyleWindowTitleBar)
+			if (!MainWindow.Instance.CurrentDisplaySettings.StyleWindowTitleBar)
 			{
 				return;
 			}
@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy.Themes
 		{
 			if (e.PropertyName == nameof(DisplaySettings.StyleWindowTitleBar))
 			{
-				if (!DisplaySettingsPanel.CurrentDisplaySettings.StyleWindowTitleBar)
+				if (!MainWindow.Instance.CurrentDisplaySettings.StyleWindowTitleBar)
 				{
 					restartNotificationThrottle.Tick();
 					return;

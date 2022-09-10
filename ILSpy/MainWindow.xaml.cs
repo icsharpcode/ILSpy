@@ -45,6 +45,7 @@ using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpy.Commands;
 using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.Search;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.Themes;
@@ -100,15 +101,23 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
+		public DecompilerSettings CurrentDecompilerSettings { get; internal set; }
+
+		public DisplaySettings CurrentDisplaySettings { get; internal set; }
+
+		public DecompilationOptions CreateDecompilationOptions() => new DecompilationOptions(CurrentLanguageVersion, CurrentDecompilerSettings, CurrentDisplaySettings);
+
 		public MainWindow()
 		{
 			instance = this;
 			var spySettings = ILSpySettings.Load();
 			this.spySettingsForMainWindow_Loaded = spySettings;
 			this.sessionSettings = new SessionSettings(spySettings);
+			this.CurrentDecompilerSettings = DecompilerSettingsPanel.LoadDecompilerSettings(spySettings);
+			this.CurrentDisplaySettings = DisplaySettingsPanel.LoadDisplaySettings(spySettings);
 			this.AssemblyListManager = new AssemblyListManager(spySettings) {
-				ApplyWinRTProjections = Options.DecompilerSettingsPanel.CurrentDecompilerSettings.ApplyWindowsRuntimeProjections,
-				UseDebugSymbols = Options.DecompilerSettingsPanel.CurrentDecompilerSettings.UseDebugSymbols
+				ApplyWinRTProjections = CurrentDecompilerSettings.ApplyWindowsRuntimeProjections,
+				UseDebugSymbols = CurrentDecompilerSettings.UseDebugSymbols
 			};
 
 			// Make sure Images are initialized on the UI thread.
@@ -1494,7 +1503,8 @@ namespace ICSharpCode.ILSpy
 				NavigateTo(new RequestNavigateEventArgs(newState.ViewedUri, null), recordHistory: false);
 				return;
 			}
-			var options = new DecompilationOptions() { TextViewState = newState };
+			var options = MainWindow.Instance.CreateDecompilationOptions();
+			options.TextViewState = newState;
 			decompilationTask = DockWorkspace.Instance.ActiveTabPage.ShowTextViewAsync(
 				textView => textView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, options)
 			);

@@ -112,7 +112,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			if (ShowTable(TableIndex.GenericParamConstraint))
 				this.Children.Add(new GenericParamConstraintTableTreeNode(module));
 
-			bool ShowTable(TableIndex table) => !DisplaySettingsPanel.CurrentDisplaySettings.HideEmptyMetadataTables || module.Metadata.GetTableRowCount(table) > 0;
+			bool ShowTable(TableIndex table) => !MainWindow.Instance.CurrentDisplaySettings.HideEmptyMetadataTables || module.Metadata.GetTableRowCount(table) > 0;
 
 		}
 
