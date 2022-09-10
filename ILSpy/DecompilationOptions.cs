@@ -20,6 +20,7 @@ using System;
 using System.Threading;
 
 using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy
 {

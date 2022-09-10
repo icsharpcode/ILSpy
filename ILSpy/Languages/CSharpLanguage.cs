@@ -47,6 +47,8 @@ using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpyX;
 
+using LanguageVersion = ICSharpCode.ILSpyX.LanguageVersion;
+
 namespace ICSharpCode.ILSpy
 {
 	/// <summary>

@@ -22,6 +22,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
