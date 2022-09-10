@@ -114,21 +114,28 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 			ptr = null;
 			length = 0;
+			// embedded resources cannot be read from this binary.
 			if (ResourceType != ResourceType.Embedded)
 				return false;
+			// get cor header
 			var headers = Module.Reader.PEHeaders;
 			if (headers.CorHeader == null)
 				return false;
 			var resources = headers.CorHeader.ResourcesDirectory;
-			if (resources.RelativeVirtualAddress == 0)
+			// validate resources directory, GetSectionData throws on negative RVAs
+			if (resources.RelativeVirtualAddress <= 0)
 				return false;
 			var sectionData = Module.Reader.GetSectionData(resources.RelativeVirtualAddress);
-			if (sectionData.Length == 0)
+			// validate section length: we need at least 4 bytes to extract
+			// the actual length of the resource blob.
+			if (sectionData.Length < 4)
 				return false;
-			var resource = Module.Metadata.GetManifestResource(Handle);
-			if (resource.Offset + 4 > sectionData.Length)
+			var offset = Module.Metadata.GetManifestResource(Handle).Offset;
+			// validate resource offset
+			if (offset < 0 || offset > sectionData.Length - 4)
 				return false;
-			ptr = sectionData.Pointer + resource.Offset;
+			ptr = sectionData.Pointer + offset;
+			// get actual length of resource blob.
 			length = ptr[0] + (ptr[1] << 8) + (ptr[2] << 16) + (ptr[3] << 24);
 			return length >= 0 && length <= sectionData.Length;
 		}
