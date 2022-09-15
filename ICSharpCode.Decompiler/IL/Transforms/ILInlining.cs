@@ -179,6 +179,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (v.LoadCount > 1 || v.LoadCount + v.AddressCount != 1)
 				return false;
+			if (v.IsCast)
+				return false;
 			// TODO: inlining of small integer types might be semantically incorrect,
 			// but we can't avoid it this easily without breaking lots of tests.
 			//if (v.Type.IsSmallIntegerType())

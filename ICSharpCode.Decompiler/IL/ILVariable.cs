@@ -199,6 +199,28 @@ namespace ICSharpCode.Decompiler.IL
 		public bool HasGeneratedName { get; set; }
 
 		/// <summary>
+		/// Is the variable declaration the casting of one type to another.
+		/// </summary>
+		public bool IsCast
+		{
+			get
+			{
+				if (StoreInstructions.Count != 1)
+					return false;
+				if (LoadInstructions.Count != 1)
+					return false;
+				var stLoc = StoreInstructions[0] as StLoc;
+				if (stLoc == null)
+					return false;
+				var ldLoc = stLoc.Value as LdLoc;
+				if (ldLoc == null)
+					return false;
+
+				return !HasGeneratedName && LoadInstructions[0].Variable.Type != ldLoc.Variable.Type;
+			}
+		}
+
+		/// <summary>
 		/// Gets the function in which this variable is declared.
 		/// </summary>
 		/// <remarks>

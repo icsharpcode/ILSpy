@@ -143,6 +143,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		static void DoPropagate(ILVariable v, ILInstruction copiedExpr, Block block, ref int i, ILTransformContext context)
 		{
 			context.Step($"Copy propagate {v.Name}", copiedExpr);
+
+			if (v.IsCast)
+				return;
+
 			// un-inline the arguments of the ldArg instruction
 			ILVariable[] uninlinedArgs = new ILVariable[copiedExpr.Children.Count];
 			for (int j = 0; j < uninlinedArgs.Length; j++)

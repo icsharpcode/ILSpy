@@ -37,6 +37,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			SwitchWithGoto(2);
 			SwitchWithGoto(3);
 			SwitchWithGoto(4);
+			SwitchWithEnum(5);
 		}
 
 		static void TestCase<T>(Func<T, string> target, params T[] args)
@@ -244,6 +245,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 					Console.WriteLine("default");
 					break;
 			}
+		}
+
+		public static void SwitchWithEnum(int i)
+		{
+			Console.WriteLine("SwitchWithEnum: " + i);
+			var color = (KnownColor)i;
+			switch (color)
+			{
+				case KnownColor.DarkBlue:
+					Console.WriteLine("one");
+					break;
+				case KnownColor.DarkCyan:
+					Console.WriteLine("two");
+					break;
+				default:
+					Console.WriteLine("default");
+					break;
+			}
+		}
+		
+		public enum KnownColor
+		{
+			DarkBlue = 749,
+			DarkCyan = 750,
 		}
 	}
 }
