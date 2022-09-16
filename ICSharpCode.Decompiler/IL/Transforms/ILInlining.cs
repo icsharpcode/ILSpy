@@ -600,6 +600,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case OpCode.YieldReturn:
 					return true;
 				case OpCode.SwitchInstruction:
+					// Preserve type info on switch instruction, if we're inlining a local variable into the switch-value slot.
+					if (v.Kind != VariableKind.StackSlot && loadInst.SlotInfo == SwitchInstruction.ValueSlot)
+					{
+						((SwitchInstruction)parent).Type ??= v.Type;
+					}
+					return true;
 				//case OpCode.BinaryNumericInstruction when parent.SlotInfo == SwitchInstruction.ValueSlot:
 				case OpCode.StringToInt when parent.SlotInfo == SwitchInstruction.ValueSlot:
 					return true;

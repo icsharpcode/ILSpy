@@ -20,6 +20,7 @@
 using System.Diagnostics;
 using System.Linq;
 
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
@@ -41,6 +42,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// integral type T. The section with <c>SwitchSection.HasNullLabel</c> is called if the value is null.
 		/// </summary>
 		public bool IsLifted;
+
+		/// <summary>
+		/// Additional type information used to interpret the value instruction.
+		/// Set by ILInlining to preserve stack information that would otherwise be lost.
+		/// </summary>
+		public IType? Type;
 
 		public SwitchInstruction(ILInstruction value)
 			: base(OpCode.SwitchInstruction)
@@ -82,7 +89,9 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write("switch");
 			if (IsLifted)
 				output.Write(".lifted");
-			output.Write(" (");
+			output.Write(' ');
+			Type?.WriteTo(output);
+			output.Write('(');
 			value.WriteTo(output, options);
 			output.Write(") ");
 			output.MarkFoldStart("{...}");

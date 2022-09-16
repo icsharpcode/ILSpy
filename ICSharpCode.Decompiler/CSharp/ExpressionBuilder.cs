@@ -3819,6 +3819,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				strToInt = null;
 				value = Translate(inst.Value);
+				if (inst.Type != null)
+				{
+					value = value.ConvertTo(inst.Type, this, allowImplicitConversion: true);
+				}
 				type = value.Type;
 			}
 

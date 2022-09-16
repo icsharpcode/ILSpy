@@ -226,6 +226,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				strToInt = null;
 				value = exprBuilder.Translate(inst.Value);
+				if (inst.Type != null)
+				{
+					value = value.ConvertTo(inst.Type, exprBuilder, allowImplicitConversion: true);
+				}
 				type = value.Type;
 			}
 
