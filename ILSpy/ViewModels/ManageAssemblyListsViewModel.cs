@@ -71,7 +71,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 					continue;
 				foreach (var versionDir in Directory.GetDirectories(sdkDir))
 				{
-					var match = Regex.Match(versionDir, @"[/\\](?<name>[A-z0-9.]+)[/\\](?<version>\d+\.\d)+(.(?<revision>\d+))?$");
+					var match = Regex.Match(versionDir, @"[/\\](?<name>[A-z0-9.]+)[/\\](?<version>\d+\.\d)+(.(?<revision>\d+))?(?<suffix>-preview.*)?$");
 					if (!match.Success)
 						continue;
 					string name = match.Groups["name"].Value;
@@ -250,7 +250,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 					if (manager.AssemblyLists.Contains(dlg.ListName))
 					{
 						args.Cancel = true;
-						MessageBox.Show(Properties.Resources.ListExistsAlready, null, MessageBoxButton.OK);
+						MessageBox.Show(Resources.ListExistsAlready, null, MessageBoxButton.OK);
 					}
 				}
 			};
