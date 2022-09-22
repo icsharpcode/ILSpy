@@ -137,7 +137,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 			};
 			if (dlg.ShowDialog() == true)
 			{
-				manager.CreateList(dlg.ListName);
+				var list = manager.CreateList(dlg.ListName);
+				manager.AddListIfNotExists(list);
 			}
 		}
 
