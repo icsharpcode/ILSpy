@@ -33,29 +33,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	public class TransformCollectionAndObjectInitializers : IStatementTransform
 	{
-		StatementTransformContext context;
-
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
 			if (!context.Settings.ObjectOrCollectionInitializers)
 				return;
-			this.context = context;
-			try
-			{
-				DoTransform(block, pos);
-			}
-			finally
-			{
-				this.context = null;
-			}
-		}
-
-		bool DoTransform(Block body, int pos)
-		{
-			ILInstruction inst = body.Instructions[pos];
+			ILInstruction inst = block.Instructions[pos];
 			// Match stloc(v, newobj)
 			if (!inst.MatchStLoc(out var v, out var initInst) || v.Kind != VariableKind.Local && v.Kind != VariableKind.StackSlot)
-				return false;
+				return;
 			IType instType;
 			var blockKind = BlockKind.CollectionInitializer;
 			var insertionPos = initInst.ChildIndex;
@@ -71,17 +56,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// prefer to keep local variables (but not stack slots),
 						// unless we are in a constructor (where inlining object initializers might be critical
 						// for the base ctor call) or a compiler-generated delegate method, which might be used in a query expression.
-						return false;
+						return;
 					}
 					// Do not try to transform delegate construction.
 					// DelegateConstruction transform cannot deal with this.
 					if (DelegateConstruction.MatchDelegateConstruction(newObjInst, out _, out _, out _)
 						|| TransformDisplayClassUsage.IsPotentialClosure(context, newObjInst))
-						return false;
+						return;
 					// Cannot build a collection/object initializer attached to an AnonymousTypeCreateExpression
 					// anon = new { A = 5 } { 3,4,5 } is invalid syntax.
 					if (newObjInst.Method.DeclaringType.ContainsAnonymousType())
-						return false;
+						return;
 					instType = newObjInst.Method.DeclaringType;
 					break;
 				case DefaultValue defaultVal:
@@ -91,7 +76,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// prefer to keep local variables (but not stack slots),
 						// unless we are in a constructor (where inlining object initializers might be 
 						// critical for the base ctor call)
-						return false;
+						return;
 					}
 					instType = defaultVal.Type;
 					break;
@@ -112,7 +97,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						blockKind = BlockKind.WithInitializer;
 						break;
 					}
-					return false;
+					return;
 			}
 			int initializerItemsCount = 0;
 			possibleIndexVariables = new Dictionary<ILVariable, (int Index, ILInstruction Value)>();
@@ -124,15 +109,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// each must be a callvirt with ldloc v as first argument
 			// if the method is a setter we're dealing with an object initializer
 			// if the method is named Add and has at least 2 arguments we're dealing with a collection/dictionary initializer
-			while (pos + initializerItemsCount + 1 < body.Instructions.Count
-				&& IsPartOfInitializer(body.Instructions, pos + initializerItemsCount + 1, v, instType, ref blockKind))
+			while (pos + initializerItemsCount + 1 < block.Instructions.Count
+				&& IsPartOfInitializer(block.Instructions, pos + initializerItemsCount + 1, v, instType, ref blockKind, context))
 			{
 				initializerItemsCount++;
 			}
 			// Do not convert the statements into an initializer if there's an incompatible usage of the initializer variable
 			// directly after the possible initializer.
-			if (IsMethodCallOnVariable(body.Instructions[pos + initializerItemsCount + 1], v))
-				return false;
+			if (IsMethodCallOnVariable(block.Instructions[pos + initializerItemsCount + 1], v))
+				return;
 			// Calculate the correct number of statements inside the initializer:
 			// All index variables that were used in the initializer have Index set to -1.
 			// We fetch the first unused variable from the list and remove all instructions after its
@@ -144,7 +129,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			// The initializer would be empty, there's nothing to do here.
 			if (initializerItemsCount <= 0)
-				return false;
+				return;
 			context.Step("CollectionOrObjectInitializer", inst);
 			// Create a new block and final slot (initializer target variable)
 			var initializerBlock = new Block(blockKind);
@@ -154,7 +139,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Move all instructions to the initializer block.
 			for (int i = 1; i <= initializerItemsCount; i++)
 			{
-				switch (body.Instructions[i + pos])
+				switch (block.Instructions[i + pos])
 				{
 					case CallInstruction call:
 						if (!(call is CallVirt || call is Call))
@@ -179,10 +164,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						break;
 				}
 			}
-			body.Instructions.RemoveRange(pos + 1, initializerItemsCount);
+			block.Instructions.RemoveRange(pos + 1, initializerItemsCount);
 			siblings[insertionPos] = initializerBlock;
-			ILInlining.InlineIfPossible(body, pos, context);
-			return true;
+			ILInlining.InlineIfPossible(block, pos, context);
 		}
 
 		internal static bool IsRecordCloneMethodCall(CallInstruction ci)
@@ -213,7 +197,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool isCollection;
 		Stack<HashSet<AccessPathElement>> pathStack;
 
-		bool IsPartOfInitializer(InstructionCollection<ILInstruction> instructions, int pos, ILVariable target, IType rootType, ref BlockKind blockKind)
+		bool IsPartOfInitializer(InstructionCollection<ILInstruction> instructions, int pos, ILVariable target, IType rootType, ref BlockKind blockKind, StatementTransformContext context)
 		{
 			// Include any stores to local variables that are single-assigned and do not reference the initializer-variable
 			// in the list of possible index variables.
