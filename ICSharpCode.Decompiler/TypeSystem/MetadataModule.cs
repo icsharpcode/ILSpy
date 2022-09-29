@@ -670,7 +670,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 					m.AccessorKind = MethodSemanticsAttributes.Setter;
 					m.AccessorOwner = fakeProperty;
-					fakeProperty.Getter = m;
+					fakeProperty.Setter = m;
 					fakeProperty.ReturnType = parameters.Last().Type;
 					fakeProperty.IsIndexer = parameters.Count > 1;
 					fakeProperty.Parameters = parameters.SkipLast(1).ToArray();
