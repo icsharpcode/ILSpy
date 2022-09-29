@@ -3340,6 +3340,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						{
 							var property = (IProperty)lastElement.Member;
 							Debug.Assert(property.IsIndexer);
+							Debug.Assert(property.Setter != null, $"Indexer property {property} has no setter");
 							elementsStack.Peek().Add(
 								new CallBuilder(this, typeSystem, settings)
 									.BuildDictionaryInitializerExpression(lastElement.OpCode, property.Setter, initObjRR, GetIndices(lastElement.Indices, indexVariables).ToList(), info.Values.Single())
