@@ -1055,7 +1055,7 @@ namespace ICSharpCode.Decompiler.IL
 					var type = ReadAndDecodeTypeReference();
 					// OK, 'target' runs before 'value: ld'
 					var ld = new LdObj(PopPointer(), type);
-					return new StObj(PopPointer(), ld, type);
+					return new StObj(PopStObjTarget(), ld, type);
 				}
 				case ILOpCode.Initobj:
 					return InitObj(PopStObjTarget(), ReadAndDecodeTypeReference());
