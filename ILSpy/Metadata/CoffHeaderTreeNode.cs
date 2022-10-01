@@ -67,10 +67,12 @@ namespace ICSharpCode.ILSpy.Metadata
 			var headers = module.Reader.PEHeaders;
 			var header = headers.CoffHeader;
 
+			var linkerDateTime = DateTimeOffset.FromUnixTimeSeconds(unchecked((uint)header.TimeDateStamp)).DateTime;
+
 			var entries = new List<Entry>();
 			entries.Add(new Entry(headers.CoffHeaderStartOffset, (int)header.Machine, 2, "Machine", header.Machine.ToString()));
 			entries.Add(new Entry(headers.CoffHeaderStartOffset + 2, (int)header.NumberOfSections, 2, "Number of Sections", "Number of sections; indicates size of the Section Table, which immediately follows the headers."));
-			entries.Add(new Entry(headers.CoffHeaderStartOffset + 4, header.TimeDateStamp, 4, "Time/Date Stamp", DateTimeOffset.FromUnixTimeSeconds(unchecked((uint)header.TimeDateStamp)).DateTime + " - Time and date the file was created in seconds since January 1st 1970 00:00:00 or 0."));
+			entries.Add(new Entry(headers.CoffHeaderStartOffset + 4, header.TimeDateStamp, 4, "Time/Date Stamp", $"{linkerDateTime} (UTC) / {linkerDateTime.ToLocalTime()} - Time and date the file was created in seconds since January 1st 1970 00:00:00 or 0. Note that for deterministic builds this value is meaningless."));
 			entries.Add(new Entry(headers.CoffHeaderStartOffset + 8, header.PointerToSymbolTable, 4, "Pointer to Symbol Table", "Always 0 in .NET executables."));
 			entries.Add(new Entry(headers.CoffHeaderStartOffset + 12, header.NumberOfSymbols, 4, "Number of Symbols", "Always 0 in .NET executables."));
 			entries.Add(new Entry(headers.CoffHeaderStartOffset + 16, (int)header.SizeOfOptionalHeader, 2, "Optional Header Size", "Size of the optional header."));
