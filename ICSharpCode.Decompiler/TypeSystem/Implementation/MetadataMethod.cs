@@ -67,7 +67,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var (accessorOwner, semanticsAttribute) = module.PEFile.MethodSemanticsLookup.GetSemantics(handle);
 			const MethodAttributes finalizerAttributes = (MethodAttributes.Virtual | MethodAttributes.Family | MethodAttributes.HideBySig);
 			this.typeParameters = MetadataTypeParameter.Create(module, this, def.GetGenericParameters());
-			if (semanticsAttribute != 0)
+			if (semanticsAttribute != 0 && !accessorOwner.IsNil
+				&& accessorOwner.Kind is HandleKind.PropertyDefinition or HandleKind.EventDefinition)
 			{
 				this.symbolKind = SymbolKind.Accessor;
 				this.accessorOwner = accessorOwner;
@@ -128,7 +129,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsAccessor => symbolKind == SymbolKind.Accessor;
 
 		public bool HasBody => module.metadata.GetMethodDefinition(handle).HasBody();
-
 
 		public IMember AccessorOwner {
 			get {
