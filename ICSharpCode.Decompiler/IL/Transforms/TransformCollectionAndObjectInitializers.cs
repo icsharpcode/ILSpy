@@ -324,7 +324,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (resolveContext != null && !IsMethodApplicable(method, call.Arguments, rootType, resolveContext, settings))
 							goto default;
 						inst = call.Arguments[0];
-						if (method.AccessorOwner is not null)
+						if (method.IsAccessor)
 						{
 							if (method.AccessorOwner is IProperty property &&
 								!CanBeUsedInInitializer(property, resolveContext, kind))
