@@ -281,7 +281,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		void FindInsertionPoints(AstNode node, int nodeLevel)
 		{
 			BlockContainer scope = node.Annotation<BlockContainer>();
-			if (scope != null && (scope.EntryPoint.IncomingEdgeCount > 1 || scope.Parent is ILFunction))
+			if (scope != null && IsRelevantScope(scope))
 			{
 				// track loops and function bodies as scopes, for comparison with CaptureScope.
 				scopeTracking.Add((new InsertionPoint { level = nodeLevel, nextNode = node }, scope));
@@ -316,9 +316,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						InsertionPoint newPoint;
 						int startIndex = scopeTracking.Count - 1;
-						if (variable.CaptureScope != null && startIndex > 0 && variable.CaptureScope != scopeTracking[startIndex].Scope)
+						BlockContainer captureScope = variable.CaptureScope;
+						while (captureScope != null && !IsRelevantScope(captureScope))
 						{
-							while (startIndex > 0 && scopeTracking[startIndex].Scope != variable.CaptureScope)
+							captureScope = BlockContainer.FindClosestContainer(captureScope.Parent);
+						}
+						if (captureScope != null && startIndex > 0 && captureScope != scopeTracking[startIndex].Scope)
+						{
+							while (startIndex > 0 && scopeTracking[startIndex].Scope != captureScope)
 								startIndex--;
 							newPoint = scopeTracking[startIndex + 1].InsertionPoint;
 						}
@@ -364,6 +369,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (scope != null)
 					scopeTracking.RemoveAt(scopeTracking.Count - 1);
 			}
+		}
+
+		private static bool IsRelevantScope(BlockContainer scope)
+		{
+			return scope.EntryPoint.IncomingEdgeCount > 1 || scope.Parent is ILFunction;
 		}
 
 		internal static bool VariableNeedsDeclaration(VariableKind kind)
