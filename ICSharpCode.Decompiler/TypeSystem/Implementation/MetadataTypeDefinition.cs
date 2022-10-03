@@ -323,7 +323,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					EntityHandle baseTypeHandle = td.BaseType;
 					if (!baseTypeHandle.IsNil)
 					{
-						baseType = module.ResolveType(baseTypeHandle, context);
+						baseType = module.ResolveType(baseTypeHandle, context, metadata.GetCustomAttributes(this.handle), Nullability.Oblivious);
 					}
 				}
 				catch (BadImageFormatException)
