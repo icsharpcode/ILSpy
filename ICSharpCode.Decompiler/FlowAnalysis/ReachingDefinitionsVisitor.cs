@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 	/// derive from the class and override the Visit methods at the points of interest
 	/// (usually the load instructions).
 	/// </remarks>
-	class ReachingDefinitionsVisitor : DataFlowVisitor<ReachingDefinitionsVisitor.State>
+	public class ReachingDefinitionsVisitor : DataFlowVisitor<ReachingDefinitionsVisitor.State>
 	{
 		#region State representation
 		/// <summary>
