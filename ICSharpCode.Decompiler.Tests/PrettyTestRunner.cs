@@ -376,7 +376,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task UnsafeCode([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions);
+			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.ReferenceUnsafe);
 		}
 
 		[Test]

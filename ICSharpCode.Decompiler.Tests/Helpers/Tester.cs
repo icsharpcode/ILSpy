@@ -69,6 +69,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		UseMcs5_23 = 0x2000,
 		UseTestRunner = 0x4000,
 		NullableEnable = 0x8000,
+		ReferenceUnsafe = 0x10000,
 		UseMcsMask = UseMcs2_6_4 | UseMcs5_23,
 		UseRoslynMask = UseRoslyn1_3_2 | UseRoslyn2_10_0 | UseRoslyn3_11_0 | UseRoslynLatest
 	}
@@ -424,6 +425,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic))
 				{
 					references = references.Concat(new[] { "-r:\"Microsoft.VisualBasic.dll\"" });
+				}
+				if (useRoslyn && !targetNet40 && flags.HasFlag(CompilerOptions.ReferenceUnsafe))
+				{
+					references = references.Concat(new[] { "-r:\"System.Runtime.CompilerServices.Unsafe.dll\"" });
 				}
 				string otherOptions = $"-noconfig " +
 					$"-langversion:{languageVersion} " +

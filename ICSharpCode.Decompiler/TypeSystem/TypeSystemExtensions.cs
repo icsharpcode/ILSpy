@@ -286,7 +286,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						types = new HashSet<IType>();
 					}
 					types.Add(type);
-					foreach (var f in type.GetFields())
+					foreach (var f in type.GetFields(f => !f.IsStatic))
 					{
 						if (types.Contains(f.Type))
 						{
