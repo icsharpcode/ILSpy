@@ -97,6 +97,7 @@
 				<StackPanel Margin="3">
 					<CheckBox IsChecked="{Binding SortResults}" Content="{x:Static properties:Resources.SortResultsFitness}"></CheckBox>
 					<CheckBox IsChecked="{Binding StyleWindowTitleBar}" Content="{x:Static properties:Resources.StyleTheWindowTitleBar}"></CheckBox>
+					<CheckBox IsChecked="{Binding ShowRowNumbersInBase16}" Content="{x:Static properties:Resources.ShowRowNumbersInBase16}"></CheckBox>
 				</StackPanel>
 			</GroupBox>
 		</StackPanel>

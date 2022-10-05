@@ -117,6 +117,19 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
+		bool showRowNumbersInBase16;
+
+		public bool ShowRowNumbersInBase16 {
+			get { return showRowNumbersInBase16; }
+			set {
+				if (showRowNumbersInBase16 != value)
+				{
+					showRowNumbersInBase16 = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool enableWordWrap;
 
 		public bool EnableWordWrap {
@@ -319,6 +332,7 @@ namespace ICSharpCode.ILSpy.Options
 			this.ShowLineNumbers = s.showLineNumbers;
 			this.ShowMetadataTokens = s.showMetadataTokens;
 			this.ShowMetadataTokensInBase10 = s.showMetadataTokensInBase10;
+			this.ShowRowNumbersInBase16 = s.showRowNumbersInBase16;
 			this.ShowDebugInfo = s.showDebugInfo;
 			this.EnableWordWrap = s.enableWordWrap;
 			this.SortResults = s.sortResults;

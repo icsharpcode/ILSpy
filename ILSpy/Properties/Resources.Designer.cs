@@ -2539,6 +2539,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Show row numbers in base 16.
+        /// </summary>
+        public static string ShowRowNumbersInBase16 {
+            get {
+                return ResourceManager.GetString("ShowRowNumbersInBase16", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Show state after this step.
         /// </summary>
         public static string ShowStateAfterThisStep {

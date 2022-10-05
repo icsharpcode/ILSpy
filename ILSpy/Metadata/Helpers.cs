@@ -94,11 +94,22 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		internal static void View_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
 		{
+			var displaySettings = MainWindow.Instance.CurrentDisplaySettings;
 			var binding = new Binding(e.PropertyName) { Mode = BindingMode.OneWay };
 			e.Column = GetColumn();
 			switch (e.PropertyName)
 			{
 				case "RID":
+					if (displaySettings.ShowRowNumbersInBase16)
+					{
+						binding.StringFormat = "X";
+						e.Column.SetTemplate((ControlTemplate)MetadataTableViews.Instance["HexFilter"]);
+					}
+					else
+					{
+						e.Column.SetTemplate((ControlTemplate)MetadataTableViews.Instance["DefaultFilter"]);
+					}
+					break;
 				case "Meaning":
 					e.Column.SetTemplate((ControlTemplate)MetadataTableViews.Instance["DefaultFilter"]);
 					break;

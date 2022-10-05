@@ -862,6 +862,9 @@ Do you want to continue?</value>
   <data name="ShowRawOffsetsAndBytesBeforeInstruction" xml:space="preserve">
     <value>Show raw offsets and bytes before each instruction</value>
   </data>
+  <data name="ShowRowNumbersInBase16" xml:space="preserve">
+    <value>Show row numbers in base 16</value>
+  </data>
   <data name="ShowStateAfterThisStep" xml:space="preserve">
     <value>Show state after this step</value>
   </data>
