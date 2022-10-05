@@ -97,6 +97,15 @@ namespace ClassLibrary1
 			UnknownStaticGenericClass<string>.OnEvent -= Instance_OnEvent;
 		}
 
+		public void MethodUnknownIndexerInitializer()
+		{
+			//IL_0006: Unknown result type (might be due to invalid IL or missing references)
+			new UnknownClass {
+				["a"] = 1,
+				["b"] = 2
+			};
+		}
+
 		private void Instance_OnEvent(object sender, EventArgs e)
 		{
 			throw new NotImplementedException();

@@ -539,6 +539,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		public ExpressionWithResolveResult BuildDictionaryInitializerExpression(OpCode callOpCode, IMethod method,
 			InitializedObjectResolveResult target, IReadOnlyList<ILInstruction> indices, ILInstruction value = null)
 		{
+			if (method is null)
+				throw new ArgumentNullException(nameof(method));
 			ExpectedTargetDetails expectedTargetDetails = new ExpectedTargetDetails { CallOpCode = callOpCode };
 
 			var callArguments = new List<ILInstruction>();

@@ -378,6 +378,28 @@
 		IL_0098: ret
 	} // end of method UnknownClassTest::MethodUnknownStaticGeneric
 
+	.method public hidebysig 
+		instance void MethodUnknownIndexerInitializer () cil managed 
+	{
+		// Method begins at RVA 0x2050
+		// Code size 32 (0x20)
+		.maxstack 8
+
+		IL_0000: nop
+		IL_0001: newobj instance void [UnknownAssembly]UnknownNamespace.UnknownClass::.ctor()
+		IL_0006: dup
+		IL_0007: ldstr "a"
+		IL_000c: ldc.i4.1
+		IL_000d: callvirt instance void [UnknownAssembly]UnknownNamespace.UnknownClass::set_Item(string, int32)
+		IL_0012: nop
+		IL_0013: ldstr "b"
+		IL_0018: ldc.i4.2
+		IL_0019: callvirt instance void [UnknownAssembly]UnknownNamespace.UnknownClass::set_Item(string, int32)
+		IL_001e: nop
+		IL_001f: ret
+	} // end of method C::MethodUnknownIndexerInitializer
+
+
 	.method /* 100663301 */ private hidebysig 
 		instance void Instance_OnEvent (
 			object sender,
