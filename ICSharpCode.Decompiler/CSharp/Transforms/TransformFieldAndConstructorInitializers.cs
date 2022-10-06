@@ -315,9 +315,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					SRM.MethodDefinition ctorMethodDef = metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)ctorMethod.MetadataToken);
 					SRM.TypeDefinition declaringType = metadata.GetTypeDefinition(ctorMethodDef.GetDeclaringType());
 					bool declaringTypeIsBeforeFieldInit = declaringType.HasFlag(TypeAttributes.BeforeFieldInit);
-					while (true)
+					int pos = 0;
+					while (pos < staticCtor.Body.Statements.Count)
 					{
-						ExpressionStatement es = staticCtor.Body.Statements.FirstOrDefault() as ExpressionStatement;
+						ExpressionStatement es = staticCtor.Body.Statements.ElementAtOrDefault(pos) as ExpressionStatement;
 						if (es == null)
 							break;
 						AssignmentExpression assignment = es.Expression as AssignmentExpression;
@@ -329,7 +330,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						// Only move fields that are constants, if the declaring type is not marked beforefieldinit.
 						if (!declaringTypeIsBeforeFieldInit && fieldOrProperty is not IField { IsConst: true })
 						{
-							break;
+							pos++;
+							continue;
 						}
 						var fieldOrPropertyDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrProperty) as EntityDeclaration;
 						if (fieldOrPropertyDecl == null)
