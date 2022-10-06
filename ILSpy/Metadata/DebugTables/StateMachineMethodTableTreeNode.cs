@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			StateMachineMethodEntry scrollTargetEntry = default;
 			var length = metadata.GetTableRowCount(TableIndex.StateMachineMethod);
 			var reader = new BlobReader(metadata.MetadataPointer, metadata.MetadataLength);
-			reader.Offset = +metadata.GetTableMetadataOffset(TableIndex.StateMachineMethod);
+			reader.Offset = metadata.GetTableMetadataOffset(TableIndex.StateMachineMethod);
 
 			for (int rid = 1; rid <= length; rid++)
 			{
@@ -87,6 +87,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			readonly MethodDefinitionHandle kickoffMethod;
 
 			public int RID { get; }
+
+			public int Token => 0x36000000 + RID;
 
 			public object Offset => offset == null ? "n/a" : (object)offset;
 
