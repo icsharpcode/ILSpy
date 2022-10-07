@@ -211,7 +211,7 @@ namespace ICSharpCode.ILSpy.Metadata
 					ITextOutput output = new PlainTextOutput();
 					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
 					debugInfo.Parent.WriteTo(module, output, context);
-					return output.ToString();
+					return $"{debugInfo.Parent.Kind}:\n{output}";
 				}
 			}
 
@@ -251,7 +251,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X")]
+			[StringFormat("X8")]
 			public int Value => MetadataTokens.GetHeapOffset(debugInfo.Value);
 
 			public string ValueTooltip {
