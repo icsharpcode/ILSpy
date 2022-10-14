@@ -312,6 +312,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="TestCases\PdbGen\ProgressReporting.xml" />
     <Content Include="TestCases\PdbGen\ForLoopTests.xml" />
     <Content Include="TestCases\PdbGen\CustomPdbId.xml" />
     <Content Include="TestCases\PdbGen\HelloWorld.xml" />

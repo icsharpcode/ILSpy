@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -9,13 +8,10 @@ using System.Text;
 using System.Xml.Linq;
 
 using ICSharpCode.Decompiler.CSharp;
-using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Tests.Helpers;
-using ICSharpCode.Decompiler.TypeSystem;
 
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.DiaSymReader.Tools;
 
 using NUnit.Framework;
@@ -69,6 +65,60 @@ namespace ICSharpCode.Decompiler.Tests
 
 				Assert.AreEqual(expectedPdbId.Guid, generatedPdbId.Guid);
 				Assert.AreEqual(expectedPdbId.Stamp, generatedPdbId.Stamp);
+			}
+		}
+
+		[Test]
+		public void ProgressReporting()
+		{
+			// Generate a PDB for an assembly and validate that the progress reporter is called with reasonable values
+			(string peFileName, string pdbFileName) = CompileTestCase(nameof(ProgressReporting));
+
+			var moduleDefinition = new PEFile(peFileName);
+			var resolver = new UniversalAssemblyResolver(peFileName, false, moduleDefinition.Metadata.DetectTargetFrameworkId(), null, PEStreamOptions.PrefetchEntireImage);
+			var decompiler = new CSharpDecompiler(moduleDefinition, resolver, new DecompilerSettings());
+
+			var lastFilesWritten = 0;
+			var totalFiles = -1;
+
+			Action<WritePortablePdbProgress> reportFunc = progress => {
+				if (totalFiles == -1)
+				{
+					// Initialize value on first call
+					totalFiles = progress.TotalFiles;
+				}
+
+				Assert.AreEqual(progress.TotalFiles, totalFiles);
+				Assert.AreEqual(progress.FilesWritten, lastFilesWritten + 1);
+
+				lastFilesWritten = progress.FilesWritten;
+			};
+
+			using (FileStream pdbStream = File.Open(Path.Combine(TestCasePath, nameof(ProgressReporting) + ".pdb"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
+			{
+				pdbStream.SetLength(0);
+				PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream, noLogo: true, progress: new TestProgressReporter(reportFunc));
+
+				pdbStream.Position = 0;
+				var metadataReader = MetadataReaderProvider.FromPortablePdbStream(pdbStream).GetMetadataReader();
+				var generatedPdbId = new BlobContentId(metadataReader.DebugMetadataHeader.Id);
+			}
+
+			Assert.AreEqual(totalFiles, lastFilesWritten);
+		}
+
+		private class TestProgressReporter : IProgress<WritePortablePdbProgress>
+		{
+			private Action<WritePortablePdbProgress> reportFunc;
+
+			public TestProgressReporter(Action<WritePortablePdbProgress> reportFunc)
+			{
+				this.reportFunc = reportFunc;
+			}
+
+			public void Report(WritePortablePdbProgress value)
+			{
+				reportFunc(value);
 			}
 		}
 

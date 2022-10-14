@@ -28,6 +28,7 @@ using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
@@ -40,6 +41,12 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.DebugInfo
 {
+	public struct WritePortablePdbProgress
+	{
+		public int TotalFiles { get; internal set; }
+		public int FilesWritten { get; internal set; }
+	}
+
 	public class PortablePdbWriter
 	{
 		static readonly FileVersionInfo decompilerVersion = FileVersionInfo.GetVersionInfo(typeof(CSharpDecompiler).Assembly.Location);
@@ -49,7 +56,14 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			return file.Reader.ReadDebugDirectory().Any(entry => entry.Type == DebugDirectoryEntryType.CodeView);
 		}
 
-		public static void WritePdb(PEFile file, CSharpDecompiler decompiler, DecompilerSettings settings, Stream targetStream, bool noLogo = false, BlobContentId? pdbId = null)
+		public static void WritePdb(
+			PEFile file,
+			CSharpDecompiler decompiler,
+			DecompilerSettings settings,
+			Stream targetStream,
+			bool noLogo = false,
+			BlobContentId? pdbId = null,
+			IProgress<WritePortablePdbProgress> progress = null)
 		{
 			MetadataBuilder metadata = new MetadataBuilder();
 			MetadataReader reader = file.Metadata;
@@ -72,10 +86,23 @@ namespace ICSharpCode.Decompiler.DebugInfo
 				return Path.Combine(ns, WholeProjectDecompiler.CleanUpFileName(typeName.Name) + ".cs");
 			}
 
-			foreach (var sourceFile in reader.GetTopLevelTypeDefinitions().GroupBy(BuildFileNameFromTypeName))
+			var sourceFiles = reader.GetTopLevelTypeDefinitions().GroupBy(BuildFileNameFromTypeName).ToList();
+			WritePortablePdbProgress currentProgress = new WritePortablePdbProgress() {
+				TotalFiles = sourceFiles.Count,
+				FilesWritten = 0
+			};
+
+			foreach (var sourceFile in sourceFiles)
 			{
 				// Generate syntax tree
 				var syntaxTree = decompiler.DecompileTypes(sourceFile);
+
+				if (progress != null)
+				{
+					currentProgress.FilesWritten++;
+					progress.Report(currentProgress);
+				}
+
 				if (!syntaxTree.HasChildren)
 					continue;
 
