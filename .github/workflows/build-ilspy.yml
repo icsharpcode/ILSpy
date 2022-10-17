@@ -60,7 +60,7 @@ jobs:
         path: 'test-results/${{ matrix.configuration }}.xml'
 
     - name: Create Test Report
-      uses: test-summary/action@v1
+      uses: test-summary/action@v2
       if: always()
       with:
         paths: "test-results/${{ matrix.configuration }}.xml"
