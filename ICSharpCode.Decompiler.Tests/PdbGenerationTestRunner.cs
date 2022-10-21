@@ -81,17 +81,17 @@ namespace ICSharpCode.Decompiler.Tests
 			var lastFilesWritten = 0;
 			var totalFiles = -1;
 
-			Action<WritePortablePdbProgress> reportFunc = progress => {
+			Action<DecompilationProgress> reportFunc = progress => {
 				if (totalFiles == -1)
 				{
 					// Initialize value on first call
-					totalFiles = progress.TotalFiles;
+					totalFiles = progress.TotalUnits;
 				}
 
-				Assert.AreEqual(progress.TotalFiles, totalFiles);
-				Assert.AreEqual(progress.FilesWritten, lastFilesWritten + 1);
+				Assert.AreEqual(progress.TotalUnits, totalFiles);
+				Assert.AreEqual(progress.UnitsCompleted, lastFilesWritten + 1);
 
-				lastFilesWritten = progress.FilesWritten;
+				lastFilesWritten = progress.UnitsCompleted;
 			};
 
 			using (FileStream pdbStream = File.Open(Path.Combine(TestCasePath, nameof(ProgressReporting) + ".pdb"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
@@ -107,16 +107,16 @@ namespace ICSharpCode.Decompiler.Tests
 			Assert.AreEqual(totalFiles, lastFilesWritten);
 		}
 
-		private class TestProgressReporter : IProgress<WritePortablePdbProgress>
+		private class TestProgressReporter : IProgress<DecompilationProgress>
 		{
-			private Action<WritePortablePdbProgress> reportFunc;
+			private Action<DecompilationProgress> reportFunc;
 
-			public TestProgressReporter(Action<WritePortablePdbProgress> reportFunc)
+			public TestProgressReporter(Action<DecompilationProgress> reportFunc)
 			{
 				this.reportFunc = reportFunc;
 			}
 
-			public void Report(WritePortablePdbProgress value)
+			public void Report(DecompilationProgress value)
 			{
 				reportFunc(value);
 			}

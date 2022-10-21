@@ -41,12 +41,6 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.DebugInfo
 {
-	public struct WritePortablePdbProgress
-	{
-		public int TotalFiles { get; internal set; }
-		public int FilesWritten { get; internal set; }
-	}
-
 	public class PortablePdbWriter
 	{
 		static readonly FileVersionInfo decompilerVersion = FileVersionInfo.GetVersionInfo(typeof(CSharpDecompiler).Assembly.Location);
@@ -63,7 +57,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			Stream targetStream,
 			bool noLogo = false,
 			BlobContentId? pdbId = null,
-			IProgress<WritePortablePdbProgress> progress = null)
+			IProgress<DecompilationProgress> progress = null)
 		{
 			MetadataBuilder metadata = new MetadataBuilder();
 			MetadataReader reader = file.Metadata;
@@ -87,9 +81,10 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			}
 
 			var sourceFiles = reader.GetTopLevelTypeDefinitions().GroupBy(BuildFileNameFromTypeName).ToList();
-			WritePortablePdbProgress currentProgress = new WritePortablePdbProgress() {
-				TotalFiles = sourceFiles.Count,
-				FilesWritten = 0
+			DecompilationProgress currentProgress = new() {
+				TotalUnits = sourceFiles.Count,
+				UnitsCompleted = 0,
+				Title = "Generating portable PDB..."
 			};
 
 			foreach (var sourceFile in sourceFiles)
@@ -99,7 +94,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 
 				if (progress != null)
 				{
-					currentProgress.FilesWritten++;
+					currentProgress.UnitsCompleted++;
 					progress.Report(currentProgress);
 				}
 

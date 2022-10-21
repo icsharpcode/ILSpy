@@ -223,8 +223,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						return Path.Combine(dir, file);
 					}
 				}, StringComparer.OrdinalIgnoreCase).ToList();
-			int total = files.Count;
-			var progress = ProgressIndicator;
+			var progressReporter = ProgressIndicator;
+			var progress = new DecompilationProgress { TotalUnits = files.Count, Title = "Exporting project..." };
 			DecompilerTypeSystem ts = new DecompilerTypeSystem(module, AssemblyResolver, Settings);
 			Parallel.ForEach(
 				Partitioner.Create(files, loadBalance: true),
@@ -253,7 +253,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 							throw new DecompilerException(module, $"Error decompiling for '{file.Key}'", innerException);
 						}
 					}
-					progress?.Report(new DecompilationProgress(total, file.Key));
+					progress.Status = file.Key;
+					Interlocked.Increment(ref progress.UnitsCompleted);
+					progressReporter?.Report(progress);
 				});
 			return files.Select(f => ("Compile", f.Key)).Concat(WriteAssemblyInfo(ts, cancellationToken));
 		}
@@ -703,18 +705,6 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		public static bool CanUseSdkStyleProjectFormat(PEFile module)
 		{
 			return TargetServices.DetectTargetFramework(module).Moniker != null;
-		}
-	}
-
-	public readonly struct DecompilationProgress
-	{
-		public readonly int TotalNumberOfFiles;
-		public readonly string Status;
-
-		public DecompilationProgress(int total, string status = null)
-		{
-			this.TotalNumberOfFiles = total;
-			this.Status = status ?? "";
 		}
 	}
 }
