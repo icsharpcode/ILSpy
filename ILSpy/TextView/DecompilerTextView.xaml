@@ -20,8 +20,7 @@
 				               folding:FoldingMargin.FoldingMarkerBackgroundBrush="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
 				               folding:FoldingMargin.SelectedFoldingMarkerBackgroundBrush="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
 				               folding:FoldingMargin.FoldingMarkerBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
-				               folding:FoldingMargin.SelectedFoldingMarkerBrush="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"
-				               >
+				               folding:FoldingMargin.SelectedFoldingMarkerBrush="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}">
 					<ae:TextEditor.Resources>
 						<!-- prevent App-wide button style from applying to the buttons in the search box -->
 						<Style TargetType="{x:Type Button}">
@@ -78,11 +77,19 @@
 					</ae:TextEditor.Template>
 				</ae:TextEditor>
 				<Border Name="waitAdorner" Background="{StaticResource waitAdornerBackgoundBrush}" Visibility="Collapsed">
-					<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-						<TextBlock FontSize="14pt" Text="{x:Static properties:Resources.Decompiling}"/>
-						<ProgressBar Name="progressBar" Height="16" Margin="0, 4" />
-						<Button Click="CancelButton_Click" HorizontalAlignment="Center"  Content="{x:Static properties:Resources.Cancel}"/>
-					</StackPanel>
+					<Grid>
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="*" />
+							<ColumnDefinition Width="2*" />
+							<ColumnDefinition Width="*" />
+						</Grid.ColumnDefinitions>
+						<StackPanel Grid.Column="1" VerticalAlignment="Center">
+							<TextBlock Name="progressTitle" FontSize="14pt" Text="{x:Static properties:Resources.Decompiling}" Margin="3"/>
+							<ProgressBar Name="progressBar" Height="16" />
+							<TextBlock Name="progressText" Visibility="Collapsed" Margin="3" />
+							<Button Click="CancelButton_Click" HorizontalAlignment="Center" Margin="3" Content="{x:Static properties:Resources.Cancel}"/>
+						</StackPanel>
+					</Grid>
 				</Border>
 			</Grid>
 		</Border>
