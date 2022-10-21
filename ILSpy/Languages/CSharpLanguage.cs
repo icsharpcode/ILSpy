@@ -404,6 +404,7 @@ namespace ICSharpCode.ILSpy
 					options.DecompilerSettings.UseSdkStyleProjectFormat = false;
 				}
 				var decompiler = new ILSpyWholeProjectDecompiler(assembly, options);
+				decompiler.ProgressIndicator = options.Progress;
 				return decompiler.DecompileProject(module, options.SaveAsProjectDirectory, new TextOutputWriter(output), options.CancellationToken);
 			}
 			else

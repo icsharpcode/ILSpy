@@ -19,6 +19,7 @@
 using System;
 using System.Threading;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpyX;
 
@@ -54,6 +55,14 @@ namespace ICSharpCode.ILSpy
 		/// to allow for cooperative cancellation of the decompilation task.
 		/// </remarks>
 		public CancellationToken CancellationToken { get; set; }
+
+		/// <summary>
+		/// Gets the progress reporter.
+		/// </summary>
+		/// <remarks>
+		/// If decompilers do not implement progress reporting, an indeterminate wait bar is displayed.
+		/// </remarks>
+		public IProgress<DecompilationProgress> Progress { get; set; }
 
 		/// <summary>
 		/// Gets the settings for the decompiler.

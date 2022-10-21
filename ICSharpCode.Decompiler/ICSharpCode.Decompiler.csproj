@@ -90,6 +90,7 @@
     <Compile Include="CSharp\Annotations.cs" />
     <Compile Include="CSharp\CallBuilder.cs" />
     <Compile Include="CSharp\CSharpLanguageVersion.cs" />
+    <Compile Include="DecompilationProgress.cs" />
     <Compile Include="NRTAttributes.cs" />
     <Compile Include="PartialTypeInfo.cs" />
     <Compile Include="CSharp\ProjectDecompiler\IProjectFileWriter.cs" />

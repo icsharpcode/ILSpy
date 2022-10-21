@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<symbols>
+  <files>
+    <file id="1" name="ICSharpCode.Decompiler.Tests.TestCases.PdbGen\ProgressReporting.cs" language="C#" checksumAlgorithm="SHA256">
+	<![CDATA[using System;
+
+namespace ICSharpCode.Decompiler.Tests.TestCases.PdbGen;
+
+public class ProgressReporting
+{
+	public static void Main(string[] args)
+	{
+		Console.ReadKey();
+		Console.WriteLine("Hello World!");
+		Console.ReadKey();
+	}
+}
+
+public class Class1
+{
+	public static void Test()
+	{
+		Console.WriteLine("Class1");
+	}
+}
+
+public class Class2
+{
+	public static void Test()
+	{
+		Console.WriteLine("Class2");
+	}
+}
+
+public class Class3
+{
+	public static void Test()
+	{
+		Console.WriteLine("Class3");
+	}
+}
+]]></file>
+  </files>
+</symbols>

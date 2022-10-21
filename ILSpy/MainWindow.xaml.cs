@@ -105,7 +105,11 @@ namespace ICSharpCode.ILSpy
 
 		public DisplaySettings CurrentDisplaySettings { get; internal set; }
 
-		public DecompilationOptions CreateDecompilationOptions() => new DecompilationOptions(CurrentLanguageVersion, CurrentDecompilerSettings, CurrentDisplaySettings);
+		public DecompilationOptions CreateDecompilationOptions()
+		{
+			var decompilerView = DockWorkspace.Instance.ActiveTabPage.Content as IProgress<DecompilationProgress>;
+			return new DecompilationOptions(CurrentLanguageVersion, CurrentDecompilerSettings, CurrentDisplaySettings) { Progress = decompilerView };
+		}
 
 		public MainWindow()
 		{

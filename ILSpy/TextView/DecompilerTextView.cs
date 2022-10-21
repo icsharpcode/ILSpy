@@ -70,7 +70,7 @@ namespace ICSharpCode.ILSpy.TextView
 	/// Manages the TextEditor showing the decompiled code.
 	/// Contains all the threading logic that makes the decompiler work in the background.
 	/// </summary>
-	public sealed partial class DecompilerTextView : UserControl, IDisposable, IHaveState
+	public sealed partial class DecompilerTextView : UserControl, IDisposable, IHaveState, IProgress<DecompilationProgress>
 	{
 		readonly ReferenceElementGenerator referenceElementGenerator;
 		readonly UIElementGenerator uiElementGenerator;
@@ -540,18 +540,26 @@ namespace ICSharpCode.ILSpy.TextView
 		#endregion
 
 		#region RunWithCancellation
-		/// <summary>
-		/// Switches the GUI into "waiting" mode, then calls <paramref name="taskCreation"/> to create
-		/// the task.
-		/// When the task completes without being cancelled, the <paramref name="taskCompleted"/>
-		/// callback is called on the GUI thread.
-		/// When the task is cancelled before completing, the callback is not called; and any result
-		/// of the task (including exceptions) are ignored.
-		/// </summary>
-		[Obsolete("RunWithCancellation(taskCreation).ContinueWith(taskCompleted) instead")]
-		public void RunWithCancellation<T>(Func<CancellationToken, Task<T>> taskCreation, Action<Task<T>> taskCompleted)
+		public void Report(DecompilationProgress value)
 		{
-			RunWithCancellation(taskCreation).ContinueWith(taskCompleted, CancellationToken.None, TaskContinuationOptions.NotOnCanceled, TaskScheduler.FromCurrentSynchronizationContext());
+			double v = (double)value.UnitsCompleted / value.TotalUnits;
+			Dispatcher.BeginInvoke(DispatcherPriority.Normal, delegate {
+				progressBar.IsIndeterminate = !double.IsFinite(v);
+				progressBar.Value = v * 100.0;
+				progressTitle.Text = !string.IsNullOrWhiteSpace(value.Title) ? value.Title : Properties.Resources.Decompiling;
+				progressText.Text = value.Status;
+				progressText.Visibility = !string.IsNullOrWhiteSpace(progressText.Text) ? Visibility.Visible : Visibility.Collapsed;
+				var taskBar = MainWindow.Instance.TaskbarItemInfo;
+				if (taskBar != null)
+				{
+					taskBar.ProgressState = System.Windows.Shell.TaskbarItemProgressState.Normal;
+					taskBar.ProgressValue = v;
+				}
+				if (this.DataContext is TabPageModel model)
+				{
+					model.Title = progressTitle.Text;
+				}
+			});
 		}
 
 		/// <summary>
@@ -566,7 +574,10 @@ namespace ICSharpCode.ILSpy.TextView
 				waitAdorner.Visibility = Visibility.Visible;
 				// Work around a WPF bug by setting IsIndeterminate only while the progress bar is visible.
 				// https://github.com/icsharpcode/ILSpy/issues/593
+				progressTitle.Text = Properties.Resources.Decompiling;
 				progressBar.IsIndeterminate = true;
+				progressText.Text = null;
+				progressText.Visibility = Visibility.Collapsed;
 				waitAdorner.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, new Duration(TimeSpan.FromSeconds(0.5)), FillBehavior.Stop));
 				var taskBar = MainWindow.Instance.TaskbarItemInfo;
 				if (taskBar != null)
@@ -605,6 +616,8 @@ namespace ICSharpCode.ILSpy.TextView
 						currentCancellationTokenSource = null;
 						waitAdorner.Visibility = Visibility.Collapsed;
 						progressBar.IsIndeterminate = false;
+						progressText.Text = null;
+						progressText.Visibility = Visibility.Collapsed;
 						var taskBar = MainWindow.Instance.TaskbarItemInfo;
 						if (taskBar != null)
 						{
@@ -828,6 +841,7 @@ namespace ICSharpCode.ILSpy.TextView
 			return RunWithCancellation(
 				delegate (CancellationToken ct) { // creation of the background task
 					context.Options.CancellationToken = ct;
+					context.Options.Progress = this;
 					decompiledNodes = context.TreeNodes;
 					return DecompileAsync(context, outputLengthLimit);
 				})
@@ -1091,6 +1105,7 @@ namespace ICSharpCode.ILSpy.TextView
 					{
 						bool originalProjectFormatSetting = context.Options.DecompilerSettings.UseSdkStyleProjectFormat;
 						context.Options.EscapeInvalidIdentifiers = true;
+						context.Options.Progress = this;
 						AvalonEditTextOutput output = new AvalonEditTextOutput {
 							EnableHyperlinks = true,
 							Title = string.Join(", ", context.TreeNodes.Select(n => n.Text))

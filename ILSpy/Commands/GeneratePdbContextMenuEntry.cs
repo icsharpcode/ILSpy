@@ -75,12 +75,14 @@ namespace ICSharpCode.ILSpy
 			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
 				Stopwatch stopwatch = Stopwatch.StartNew();
+				options.CancellationToken = ct;
 				using (FileStream stream = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.Write))
 				{
 					try
 					{
 						var decompiler = new CSharpDecompiler(file, assembly.GetAssemblyResolver(), options.DecompilerSettings);
-						PortablePdbWriter.WritePdb(file, decompiler, options.DecompilerSettings, stream);
+						decompiler.CancellationToken = ct;
+						PortablePdbWriter.WritePdb(file, decompiler, options.DecompilerSettings, stream, progress: options.Progress);
 					}
 					catch (OperationCanceledException)
 					{

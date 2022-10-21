@@ -28,6 +28,7 @@ using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
@@ -49,7 +50,14 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			return file.Reader.ReadDebugDirectory().Any(entry => entry.Type == DebugDirectoryEntryType.CodeView);
 		}
 
-		public static void WritePdb(PEFile file, CSharpDecompiler decompiler, DecompilerSettings settings, Stream targetStream, bool noLogo = false, BlobContentId? pdbId = null)
+		public static void WritePdb(
+			PEFile file,
+			CSharpDecompiler decompiler,
+			DecompilerSettings settings,
+			Stream targetStream,
+			bool noLogo = false,
+			BlobContentId? pdbId = null,
+			IProgress<DecompilationProgress> progress = null)
 		{
 			MetadataBuilder metadata = new MetadataBuilder();
 			MetadataReader reader = file.Metadata;
@@ -72,10 +80,24 @@ namespace ICSharpCode.Decompiler.DebugInfo
 				return Path.Combine(ns, WholeProjectDecompiler.CleanUpFileName(typeName.Name) + ".cs");
 			}
 
-			foreach (var sourceFile in reader.GetTopLevelTypeDefinitions().GroupBy(BuildFileNameFromTypeName))
+			var sourceFiles = reader.GetTopLevelTypeDefinitions().GroupBy(BuildFileNameFromTypeName).ToList();
+			DecompilationProgress currentProgress = new() {
+				TotalUnits = sourceFiles.Count,
+				UnitsCompleted = 0,
+				Title = "Generating portable PDB..."
+			};
+
+			foreach (var sourceFile in sourceFiles)
 			{
 				// Generate syntax tree
 				var syntaxTree = decompiler.DecompileTypes(sourceFile);
+
+				if (progress != null)
+				{
+					currentProgress.UnitsCompleted++;
+					progress.Report(currentProgress);
+				}
+
 				if (!syntaxTree.HasChildren)
 					continue;
 
