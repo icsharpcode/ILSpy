@@ -345,6 +345,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.DoWhileStatement" xml:space="preserve">
     <value>Transform to do-while, if possible</value>
   </data>
+  <data name="DecompilerSettings.EmitModuleType" xml:space="preserve">
+    <value>Emit the &lt;Module&gt; type.</value>
+  </data>
   <data name="DecompilerSettings.FSpecificOptions" xml:space="preserve">
     <value>F#-specific options</value>
   </data>

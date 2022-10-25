@@ -331,6 +331,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					if (settings.ArrayInitializers && settings.SwitchStatementOnString && name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
 						return true;
+					if (!settings.EmitModuleType && name == "<Module>")
+						return true;
 					return false;
 				case HandleKind.FieldDefinition:
 					var fieldHandle = (FieldDefinitionHandle)member;

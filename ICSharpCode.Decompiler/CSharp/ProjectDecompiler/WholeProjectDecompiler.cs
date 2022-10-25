@@ -169,7 +169,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			var metadata = module.Metadata;
 			var typeDef = metadata.GetTypeDefinition(type);
-			if (metadata.GetString(typeDef.Name) == "<Module>" || CSharpDecompiler.MemberIsHidden(module, type, Settings))
+			if (CSharpDecompiler.MemberIsHidden(module, type, Settings))
 				return false;
 			if (metadata.GetString(typeDef.Namespace) == "XamlGeneratedNamespace" && metadata.GetString(typeDef.Name) == "GeneratedInternalTypeHelper")
 				return false;

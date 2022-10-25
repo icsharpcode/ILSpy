@@ -1003,6 +1003,24 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool emitModuleType = false;
+
+		/// <summary>
+		/// Gets/Sets whether to emit the &lt;Module&gt; type.
+		/// </summary>
+		[Category("Other")]
+		[Description("DecompilerSettings.EmitModuleType")]
+		public bool EmitModuleType {
+			get { return emitModuleType; }
+			set {
+				if (emitModuleType != value)
+				{
+					emitModuleType = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool arrayInitializers = true;
 
 		/// <summary>

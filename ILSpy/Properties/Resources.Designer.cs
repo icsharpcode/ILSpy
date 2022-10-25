@@ -964,6 +964,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Emit the &lt;Module&gt; type..
+        /// </summary>
+        public static string DecompilerSettings_EmitModuleType {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.EmitModuleType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use file-scoped namespace declarations.
         /// </summary>
         public static string DecompilerSettings_FileScopedNamespaces {
