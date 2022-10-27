@@ -16,7 +16,7 @@
     <Product>ILSpy</Product>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/icsharpcode/ILSpy.git</RepositoryUrl>
-    <PackageIconUrl>images\DecompilerNuGetPackageIcon.png</PackageIconUrl>
+    <PackageIcon>DecompilerNuGetPackageIcon.png</PackageIcon>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Copyright>Copyright 2011-$([System.DateTime]::Now.Year) AlphaSierraPapa</Copyright>
     <PackageTags>C# Decompiler ILSpy</PackageTags>
@@ -45,6 +45,7 @@
 
   <ItemGroup>
     <None Include="PackageReadme.md" Pack="true" PackagePath="\" />
+    <None Include="DecompilerNuGetPackageIcon.png" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -674,10 +675,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\doc\Pattern Matching.html">
+    <None Include="..\doc\Pattern Matching.html">
       <Link>CSharp\Syntax\PatternMatching\Pattern Matching.html</Link>
-    </Content>
-    <Content Include="Humanizer\LICENSE" />
+    </None>
+    <None Include="Humanizer\LICENSE" />
   </ItemGroup>
 
   <ItemGroup>
