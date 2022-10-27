@@ -154,6 +154,12 @@ namespace ILSpy.BamlDecompiler.Tests
 			RunTest("cases/issue2116");
 		}
 
+		[Test]
+		public void ReadonlyProperty()
+		{
+			RunTest("cases/readonlyproperty");
+		}
+
 		#region RunTest
 		void RunTest(string name)
 		{
