@@ -374,6 +374,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return ty;
 		}
 
+		public static IType UnwrapByRef(this IType type)
+		{
+			if (type is ByReferenceType byRef)
+			{
+				type = byRef.ElementType;
+			}
+			return type;
+		}
+
 		public static bool HasReadonlyModifier(this IMethod accessor)
 		{
 			return accessor.ThisIsRefReadOnly && accessor.DeclaringTypeDefinition?.IsReadOnly == false;

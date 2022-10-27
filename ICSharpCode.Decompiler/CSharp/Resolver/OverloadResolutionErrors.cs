@@ -82,6 +82,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <remarks>
 		/// This error does not prevent a candidate from being applicable.
 		/// </remarks>
-		MethodConstraintsNotSatisfied = 0x0800
+		MethodConstraintsNotSatisfied = 0x0800,
+		/// <summary>
+		/// Using 'out var' instead of 'out T' would result in loss of type information.
+		/// </summary>
+		OutVarTypeMismatch = 0x1000,
 	}
 }
