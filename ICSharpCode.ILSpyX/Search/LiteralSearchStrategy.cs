@@ -90,9 +90,10 @@ namespace ICSharpCode.ILSpyX.Search
 				if (!md.HasBody() || !MethodIsLiteralMatch(module, md))
 					continue;
 				var method = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-				if (!CheckVisibility(method) || !IsInNamespaceOrAssembly(method))
+				var result = method.AccessorOwner ?? method;
+				if (!CheckVisibility(result) || !IsInNamespaceOrAssembly(result))
 					continue;
-				OnFoundResult(method);
+				OnFoundResult(result);
 			}
 
 			foreach (var handle in metadata.FieldDefinitions)
