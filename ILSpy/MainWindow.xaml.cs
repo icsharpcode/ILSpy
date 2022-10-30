@@ -1088,8 +1088,10 @@ namespace ICSharpCode.ILSpy
 			// filterSettings is mutable; but the ILSpyTreeNode filtering assumes that filter settings are immutable.
 			// Thus, the main window will use one mutable instance (for data-binding), and assign a new clone to the ILSpyTreeNodes whenever the main
 			// mutable instance changes.
+			FilterSettings filterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings.Clone();
 			if (assemblyListTreeNode != null)
-				assemblyListTreeNode.FilterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings.Clone();
+				assemblyListTreeNode.FilterSettings = filterSettings;
+			SearchPane.UpdateFilter(filterSettings);
 		}
 
 		internal AssemblyListTreeNode AssemblyListTreeNode {
