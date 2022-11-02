@@ -234,13 +234,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			taskType = function.Method.ReturnType;
 			builderType = startCall.Method.DeclaringType;
 			FullTypeName builderTypeName;
-			if (builderType?.GetDefinition() is { } builderTypeDef)
+			if (builderType?.GetDefinitionOrUnknown() is { } builderTypeDef)
 			{
 				builderTypeName = builderTypeDef.FullTypeName;
-			}
-			else if (builderType is UnknownType unknownBuilderType)
-			{
-				builderTypeName = unknownBuilderType.FullTypeName;
 			}
 			else
 			{

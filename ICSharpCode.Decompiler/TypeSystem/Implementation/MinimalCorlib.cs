@@ -310,6 +310,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			bool ITypeDefinition.IsRecord => false;
 
 			ITypeDefinition IType.GetDefinition() => this;
+			ITypeDefinitionOrUnknown IType.GetDefinitionOrUnknown() => this;
 			TypeParameterSubstitution IType.GetSubstitution() => TypeParameterSubstitution.Identity;
 
 			IType IType.AcceptVisitor(TypeVisitor visitor)

@@ -180,6 +180,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return genericType.GetDefinition();
 		}
 
+		public ITypeDefinitionOrUnknown GetDefinitionOrUnknown()
+		{
+			return genericType.GetDefinitionOrUnknown();
+		}
+
 		/// <summary>
 		/// Gets a type visitor that performs the substitution of class type parameters with the type arguments
 		/// of this parameterized type.

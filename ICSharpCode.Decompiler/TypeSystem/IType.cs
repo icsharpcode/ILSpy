@@ -88,6 +88,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		ITypeDefinition? GetDefinition();
 
 		/// <summary>
+		/// Gets the underlying type definition or UnkownType, if unknown.
+		/// Can return null for types which do not have a type definition (for example arrays, pointers, type parameters).
+		/// </summary>
+		ITypeDefinitionOrUnknown? GetDefinitionOrUnknown();
+
+		/// <summary>
 		/// Gets the parent type, if this is a nested type.
 		/// Returns null for top-level types.
 		/// </summary>

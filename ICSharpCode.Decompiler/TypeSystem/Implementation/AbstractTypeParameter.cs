@@ -270,6 +270,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return null;
 		}
 
+		ITypeDefinitionOrUnknown IType.GetDefinitionOrUnknown()
+		{
+			return null;
+		}
+
 		public IType AcceptVisitor(TypeVisitor visitor)
 		{
 			return visitor.VisitTypeParameter(this);

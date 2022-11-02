@@ -59,6 +59,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return baseType.GetDefinition();
 		}
 
+		ITypeDefinitionOrUnknown IType.GetDefinitionOrUnknown()
+		{
+			return baseType.GetDefinitionOrUnknown();
+		}
+
 		IEnumerable<IEvent> IType.GetEvents(Predicate<IEvent> filter, GetMemberOptions options)
 		{
 			return baseType.GetEvents(filter, options);

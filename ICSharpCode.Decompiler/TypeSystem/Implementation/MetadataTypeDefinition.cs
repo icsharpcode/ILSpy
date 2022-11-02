@@ -530,6 +530,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public string Namespace => fullTypeName.TopLevelTypeName.Namespace;
 
 		ITypeDefinition IType.GetDefinition() => this;
+		ITypeDefinitionOrUnknown IType.GetDefinitionOrUnknown() => this;
 		TypeParameterSubstitution IType.GetSubstitution() => TypeParameterSubstitution.Identity;
 
 		public IType AcceptVisitor(TypeVisitor visitor)

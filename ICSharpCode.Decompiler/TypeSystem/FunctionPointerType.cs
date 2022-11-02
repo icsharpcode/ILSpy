@@ -132,6 +132,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
+		public override ITypeDefinitionOrUnknown GetDefinitionOrUnknown()
+		{
+			return GetDefinition();
+		}
+
 		public override IType AcceptVisitor(TypeVisitor visitor)
 		{
 			return visitor.VisitFunctionPointerType(this);

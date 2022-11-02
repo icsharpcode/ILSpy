@@ -23,10 +23,10 @@ using System.Collections.Generic;
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
-	/// Represents a class, enum, interface, struct, delegate or VB module.
+	/// Represents a class, enum, interface, struct, delegate, record or VB module.
 	/// For partial classes, this represents the whole class.
 	/// </summary>
-	public interface ITypeDefinition : IType, IEntity
+	public interface ITypeDefinition : ITypeDefinitionOrUnknown, IType, IEntity
 	{
 		IReadOnlyList<ITypeDefinition> NestedTypes { get; }
 		IReadOnlyList<IMember> Members { get; }
