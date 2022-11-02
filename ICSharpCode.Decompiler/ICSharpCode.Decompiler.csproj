@@ -45,7 +45,7 @@
 
   <ItemGroup>
     <None Include="PackageReadme.md" Pack="true" PackagePath="\" />
-    <None Include="DecompilerNuGetPackageIcon.png" Pack="true" PackagePath="\"/>
+    <None Include="DecompilerNuGetPackageIcon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -136,6 +136,7 @@
     <Compile Include="Metadata\MetadataGenericContext.cs" />
     <Compile Include="Metadata\ReferenceLoadInfo.cs" />
     <Compile Include="Properties\DecompilerVersionInfo.cs" />
+    <Compile Include="TypeSystem\ITypeDefinitionOrUnknown.cs" />
     <None Include="Properties\DecompilerVersionInfo.template.cs" />
     <Compile Include="Semantics\OutVarResolveResult.cs" />
     <Compile Include="SingleFileBundle.cs" />
