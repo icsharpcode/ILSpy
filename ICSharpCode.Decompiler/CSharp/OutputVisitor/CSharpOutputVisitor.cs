@@ -2835,6 +2835,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(primitiveType);
 			writer.WritePrimitiveType(primitiveType.Keyword);
+			isAfterSpace = false;
 			EndNode(primitiveType);
 		}
 
