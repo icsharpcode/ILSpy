@@ -20,7 +20,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				if (section.Attributes.Count == 0)
 					section.Remove();
 			}
-			if (section.AttributeTarget == "module" && type.Identifier == "UnverifiableCode")
+			if (section.AttributeTarget == "module" && type.Identifier is "UnverifiableCode" or "RefSafetyRules")
 			{
 				attribute.Remove();
 				if (section.Attributes.Count == 0)
@@ -43,6 +43,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			"System.Runtime.CompilerServices.NullableAttribute",
 			"System.Runtime.CompilerServices.NullableContextAttribute",
 			"System.Runtime.CompilerServices.NativeIntegerAttribute",
+			"System.Runtime.CompilerServices.RefSafetyRulesAttribute",
 			"Microsoft.CodeAnalysis.EmbeddedAttribute",
 		};
 
