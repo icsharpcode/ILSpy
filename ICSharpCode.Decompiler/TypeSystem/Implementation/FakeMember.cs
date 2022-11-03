@@ -199,6 +199,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsIndexer { get; set; }
 		public bool ReturnTypeIsRefReadOnly => false;
 		public IReadOnlyList<IParameter> Parameters { get; set; }
+
+		public override string ToString() =>
+			"FakeProperty " + ReturnType + " " + DeclaringType.Name + "." + Name +
+				(Parameters.Count == 0
+					? ""
+					: "[" + string.Join(", ", Parameters) + "]") +
+				" { " +
+					(CanGet ? "get; " : "") +
+					(CanSet ? "set; " : "") +
+				"}";
 	}
 
 	sealed class FakeEvent : FakeMember, IEvent
