@@ -21,6 +21,7 @@ using System.Runtime.InteropServices;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1060:MovePInvokesToNativeMethodsClass")]
 	public sealed class NaturalStringComparer : IComparer<string>
 	{
 		[DllImport("shlwapi.dll", CharSet = CharSet.Unicode)]

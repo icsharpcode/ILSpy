@@ -35,7 +35,7 @@ namespace ICSharpCode.ILSpy
 		[DllImport("user32.dll", CharSet = CharSet.Auto)]
 		internal static extern unsafe int GetWindowThreadProcessId(IntPtr hWnd, int* lpdwProcessId);
 
-		[DllImport("user32.dll", CharSet = CharSet.Auto)]
+		[DllImport("user32.dll", CharSet = CharSet.Unicode)]
 		static extern int GetWindowText(IntPtr hWnd, [Out] StringBuilder title, int size);
 
 		public static string GetWindowText(IntPtr hWnd, int maxLength)

@@ -54,11 +54,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		bool IsReadOnly { get; }
 
 		/// <summary>
-		/// Gets the full name of this type.
-		/// </summary>
-		FullTypeName FullTypeName { get; }
-
-		/// <summary>
 		/// Gets the short type name as stored in metadata.
 		/// That is, the short type name including the generic arity (`N) appended.
 		/// </summary>

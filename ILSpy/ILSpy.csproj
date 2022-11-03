@@ -108,6 +108,15 @@
     <!-- In VS 2022 there is an extra directory level that's why we need to add one more '..'  -->
     <VCBasePath Condition="!Exists('$(VCBasePath)Auxiliary\Build\$(VCToolsVersionPropsFileNameDefault)')">$(MSBuildToolsPath)\..\..\..\..\VC\</VCBasePath>
     <VCToolsVersionPropsFile>$(VCBasePath)Auxiliary\Build\$(VCToolsVersionPropsFileNameDefault)</VCToolsVersionPropsFile>
+    <EnableNETAnalyzers>True</EnableNETAnalyzers>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>1701;1702;CA1001;CA2213</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <NoWarn>1701;1702;CA1001;CA2213</NoWarn>
   </PropertyGroup>
 
   <Import Project="$(VCToolsVersionPropsFile)" Condition="Exists('$(VCToolsVersionPropsFile)')" />
