@@ -335,6 +335,14 @@ namespace ICSharpCode.ILSpy.Search
 					{
 						searchTerm = NativeMethods.CommandLineToArgumentArray(searchTerm)[0];
 					}
+					else
+					{
+						// if searchTerm is only "@" or "prefix:",
+						// then we do not interpret it as prefix, but as searchTerm.
+						searchTerm = part;
+						prefix = null;
+						prefixLength = -1;
+					}
 
 					if (prefix == null || prefix.Length <= 2)
 					{
