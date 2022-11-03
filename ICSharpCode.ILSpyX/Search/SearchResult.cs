@@ -42,14 +42,18 @@ namespace ICSharpCode.ILSpyX.Search
 
 		public float Fitness { get; set; }
 
+#nullable disable
 		public string Name { get; set; }
 		public string Location { get; set; }
 		public string Assembly { get; set; }
+#nullable enable
 		public object? ToolTip { get; set; }
+#nullable disable
 		public object Image { get; set; }
 		public object LocationImage { get; set; }
 
 		public object AssemblyImage { get; set; }
+#nullable enable
 
 		public override string ToString()
 		{
@@ -76,25 +80,33 @@ namespace ICSharpCode.ILSpyX.Search
 
 	public class MemberSearchResult : SearchResult
 	{
+#nullable disable
 		public IEntity Member { get; set; }
 		public override object Reference => Member;
+#nullable enable
 	}
 
 	public class ResourceSearchResult : SearchResult
 	{
+#nullable disable
 		public Resource Resource { get; set; }
+#nullable enable
 		public override object Reference => ValueTuple.Create(Resource, Name);
 	}
 
 	public class AssemblySearchResult : SearchResult
 	{
+#nullable disable
 		public PEFile Module { get; set; }
 		public override object Reference => Module;
+#nullable enable
 	}
 
 	public class NamespaceSearchResult : SearchResult
 	{
+#nullable disable
 		public INamespace Namespace { get; set; }
 		public override object Reference => Namespace;
+#nullable enable
 	}
 }

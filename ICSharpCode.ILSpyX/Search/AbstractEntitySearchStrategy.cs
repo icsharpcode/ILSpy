@@ -37,12 +37,12 @@ namespace ICSharpCode.ILSpyX.Search
 			this.apiVisibility = apiVisibility;
 		}
 
-		protected bool CheckVisibility(IEntity entity)
+		protected bool CheckVisibility(IEntity? entity)
 		{
 			if (apiVisibility == ApiVisibility.All)
 				return true;
 
-			do
+			while (entity != null)
 			{
 				if (apiVisibility == ApiVisibility.PublicOnly)
 				{
@@ -58,7 +58,6 @@ namespace ICSharpCode.ILSpyX.Search
 				}
 				entity = entity.DeclaringTypeDefinition;
 			}
-			while (entity != null);
 
 			return true;
 		}
@@ -67,7 +66,7 @@ namespace ICSharpCode.ILSpyX.Search
 		{
 			if (searchRequest.InAssembly != null)
 			{
-				if (!entity.ParentModule.FullAssemblyName.Contains(searchRequest.InAssembly))
+				if (entity.ParentModule == null || !entity.ParentModule.FullAssemblyName.Contains(searchRequest.InAssembly))
 				{
 					return false;
 				}
