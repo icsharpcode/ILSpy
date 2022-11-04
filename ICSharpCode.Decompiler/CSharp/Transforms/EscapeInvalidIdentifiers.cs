@@ -16,10 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Generic;
 using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
@@ -151,4 +153,40 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 	}
+
+	/// <summary>
+	/// This transform is used to remove attributes that are embedded 
+	/// </summary>
+	public class RemoveEmbeddedAttributes : DepthFirstAstVisitor, IAstTransform
+	{
+		internal static readonly HashSet<string> attributeNames = new HashSet<string>() {
+			"System.Runtime.CompilerServices.IsReadOnlyAttribute",
+			"System.Runtime.CompilerServices.IsByRefLikeAttribute",
+			"System.Runtime.CompilerServices.IsUnmanagedAttribute",
+			"System.Runtime.CompilerServices.NullableAttribute",
+			"System.Runtime.CompilerServices.NullableContextAttribute",
+			"System.Runtime.CompilerServices.NativeIntegerAttribute",
+			"System.Runtime.CompilerServices.RefSafetyRulesAttribute",
+			"Microsoft.CodeAnalysis.EmbeddedAttribute",
+		};
+
+		public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
+		{
+			var typeDefinition = typeDeclaration.GetSymbol() as ITypeDefinition;
+			if (typeDefinition == null || !attributeNames.Contains(typeDefinition.FullName))
+				return;
+			if (!typeDefinition.HasAttribute(KnownAttribute.Embedded))
+				return;
+			if (typeDeclaration.Parent is NamespaceDeclaration ns && ns.Members.Count == 1)
+				ns.Remove();
+			else
+				typeDeclaration.Remove();
+		}
+
+		public void Run(AstNode rootNode, TransformContext context)
+		{
+			rootNode.AcceptVisitor(this);
+		}
+	}
+
 }

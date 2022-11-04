@@ -34,36 +34,6 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		}
 	}
 
-	public class RemoveEmbeddedAttributes : DepthFirstAstVisitor, IAstTransform
-	{
-		HashSet<string> attributeNames = new HashSet<string>() {
-			"System.Runtime.CompilerServices.IsReadOnlyAttribute",
-			"System.Runtime.CompilerServices.IsByRefLikeAttribute",
-			"System.Runtime.CompilerServices.IsUnmanagedAttribute",
-			"System.Runtime.CompilerServices.NullableAttribute",
-			"System.Runtime.CompilerServices.NullableContextAttribute",
-			"System.Runtime.CompilerServices.NativeIntegerAttribute",
-			"System.Runtime.CompilerServices.RefSafetyRulesAttribute",
-			"Microsoft.CodeAnalysis.EmbeddedAttribute",
-		};
-
-		public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
-		{
-			var typeDefinition = typeDeclaration.GetSymbol() as ITypeDefinition;
-			if (typeDefinition == null || !attributeNames.Contains(typeDefinition.FullName))
-				return;
-			if (typeDeclaration.Parent is NamespaceDeclaration ns && ns.Members.Count == 1)
-				ns.Remove();
-			else
-				typeDeclaration.Remove();
-		}
-
-		public void Run(AstNode rootNode, TransformContext context)
-		{
-			rootNode.AcceptVisitor(this);
-		}
-	}
-
 	public class RemoveNamespaceMy : DepthFirstAstVisitor, IAstTransform
 	{
 		public override void VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration)

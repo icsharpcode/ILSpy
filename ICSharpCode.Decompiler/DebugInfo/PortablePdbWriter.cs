@@ -26,6 +26,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
+using System.Runtime;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -34,6 +35,7 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -48,6 +50,21 @@ namespace ICSharpCode.Decompiler.DebugInfo
 		public static bool HasCodeViewDebugDirectoryEntry(PEFile file)
 		{
 			return file.Reader.ReadDebugDirectory().Any(entry => entry.Type == DebugDirectoryEntryType.CodeView);
+		}
+
+		private static bool IncludeTypeWhenGeneratingPdb(PEFile module, TypeDefinitionHandle type, DecompilerSettings settings)
+		{
+			var metadata = module.Metadata;
+			var typeDef = metadata.GetTypeDefinition(type);
+			string name = metadata.GetString(typeDef.Name);
+			string ns = metadata.GetString(typeDef.Namespace);
+			if (name == "<Module>" || CSharpDecompiler.MemberIsHidden(module, type, settings))
+				return false;
+			if (ns == "XamlGeneratedNamespace" && name == "GeneratedInternalTypeHelper")
+				return false;
+			if (!typeDef.IsNested && RemoveEmbeddedAttributes.attributeNames.Contains(ns + "." + name))
+				return false;
+			return true;
 		}
 
 		public static void WritePdb(
@@ -80,7 +97,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 				return Path.Combine(ns, WholeProjectDecompiler.CleanUpFileName(typeName.Name) + ".cs");
 			}
 
-			var sourceFiles = reader.GetTopLevelTypeDefinitions().GroupBy(BuildFileNameFromTypeName).ToList();
+			var sourceFiles = reader.GetTopLevelTypeDefinitions().Where(t => IncludeTypeWhenGeneratingPdb(file, t, settings)).GroupBy(BuildFileNameFromTypeName).ToList();
 			DecompilationProgress currentProgress = new() {
 				TotalUnits = sourceFiles.Count,
 				UnitsCompleted = 0,
