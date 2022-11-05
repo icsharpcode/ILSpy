@@ -32,6 +32,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -206,58 +207,99 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		IEnumerable<(string itemType, string fileName)> WriteCodeFilesInProject(Metadata.PEFile module, IList<PartialTypeInfo> partialTypes, CancellationToken cancellationToken)
 		{
 			var metadata = module.Metadata;
-			var files = module.Metadata.GetTopLevelTypeDefinitions().Where(td => IncludeTypeWhenDecompilingProject(module, td)).GroupBy(
-				delegate (TypeDefinitionHandle h) {
-					var type = metadata.GetTypeDefinition(h);
-					string file = CleanUpFileName(metadata.GetString(type.Name)) + ".cs";
-					string ns = metadata.GetString(type.Namespace);
-					if (string.IsNullOrEmpty(ns))
-					{
-						return file;
-					}
-					else
-					{
-						string dir = Settings.UseNestedDirectoriesForNamespaces ? CleanUpPath(ns) : CleanUpDirectoryName(ns);
-						if (directories.Add(dir))
-							Directory.CreateDirectory(Path.Combine(TargetDirectory, dir));
-						return Path.Combine(dir, file);
-					}
-				}, StringComparer.OrdinalIgnoreCase).ToList();
+			var files = module.Metadata.GetTopLevelTypeDefinitions().Where(td => IncludeTypeWhenDecompilingProject(module, td))
+				.GroupBy(GetFileFileNameForHandle, StringComparer.OrdinalIgnoreCase).ToList();
 			var progressReporter = ProgressIndicator;
 			var progress = new DecompilationProgress { TotalUnits = files.Count, Title = "Exporting project..." };
 			DecompilerTypeSystem ts = new DecompilerTypeSystem(module, AssemblyResolver, Settings);
-			Parallel.ForEach(
-				Partitioner.Create(files, loadBalance: true),
-				new ParallelOptions {
-					MaxDegreeOfParallelism = this.MaxDegreeOfParallelism,
-					CancellationToken = cancellationToken
-				},
-				delegate (IGrouping<string, TypeDefinitionHandle> file) {
-					using (StreamWriter w = new StreamWriter(Path.Combine(TargetDirectory, file.Key)))
-					{
-						try
-						{
-							CSharpDecompiler decompiler = CreateDecompiler(ts);
+			var workList = new HashSet<TypeDefinitionHandle>();
+			var processedTypes = new HashSet<TypeDefinitionHandle>();
+			ProcessFiles(files);
+			while (workList.Count > 0)
+			{
+				var additionalFiles = workList
+					.GroupBy(GetFileFileNameForHandle, StringComparer.OrdinalIgnoreCase).ToList();
+				workList.Clear();
+				ProcessFiles(additionalFiles);
+				files.AddRange(additionalFiles);
+				progress.TotalUnits = files.Count;
+			}
 
-							foreach (var partialType in partialTypes)
-							{
-								decompiler.AddPartialTypeDefinition(partialType);
-							}
-
-							decompiler.CancellationToken = cancellationToken;
-							var syntaxTree = decompiler.DecompileTypes(file.ToArray());
-							syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, Settings.CSharpFormattingOptions));
-						}
-						catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException))
-						{
-							throw new DecompilerException(module, $"Error decompiling for '{file.Key}'", innerException);
-						}
-					}
-					progress.Status = file.Key;
-					Interlocked.Increment(ref progress.UnitsCompleted);
-					progressReporter?.Report(progress);
-				});
 			return files.Select(f => ("Compile", f.Key)).Concat(WriteAssemblyInfo(ts, cancellationToken));
+
+			string GetFileFileNameForHandle(TypeDefinitionHandle h)
+			{
+				var type = metadata.GetTypeDefinition(h);
+				string file = CleanUpFileName(metadata.GetString(type.Name)) + ".cs";
+				string ns = metadata.GetString(type.Namespace);
+				if (string.IsNullOrEmpty(ns))
+				{
+					return file;
+				}
+				else
+				{
+					string dir = Settings.UseNestedDirectoriesForNamespaces ? CleanUpPath(ns) : CleanUpDirectoryName(ns);
+					if (directories.Add(dir))
+						Directory.CreateDirectory(Path.Combine(TargetDirectory, dir));
+					return Path.Combine(dir, file);
+				}
+			}
+
+			void ProcessFiles(List<IGrouping<string, TypeDefinitionHandle>> files)
+			{
+				processedTypes.AddRange(files.SelectMany(f => f));
+				Parallel.ForEach(
+					Partitioner.Create(files, loadBalance: true),
+					new ParallelOptions {
+						MaxDegreeOfParallelism = this.MaxDegreeOfParallelism,
+						CancellationToken = cancellationToken
+					},
+					delegate (IGrouping<string, TypeDefinitionHandle> file) {
+						using (StreamWriter w = new StreamWriter(Path.Combine(TargetDirectory, file.Key)))
+						{
+							try
+							{
+								CSharpDecompiler decompiler = CreateDecompiler(ts);
+
+								foreach (var partialType in partialTypes)
+								{
+									decompiler.AddPartialTypeDefinition(partialType);
+								}
+
+								decompiler.CancellationToken = cancellationToken;
+								var declaredTypes = file.ToArray();
+								var syntaxTree = decompiler.DecompileTypes(declaredTypes);
+
+								foreach (var node in syntaxTree.Descendants)
+								{
+									var td = (node.GetResolveResult() as TypeResolveResult)?.Type.GetDefinition();
+									if (td?.ParentModule != ts.MainModule)
+										continue;
+									while (td?.DeclaringTypeDefinition != null)
+									{
+										td = td.DeclaringTypeDefinition;
+									}
+									if (td != null && td.MetadataToken is { IsNil: false } token && !processedTypes.Contains((TypeDefinitionHandle)token))
+									{
+										lock (workList)
+										{
+											workList.Add((TypeDefinitionHandle)token);
+										}
+									}
+								}
+
+								syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, Settings.CSharpFormattingOptions));
+							}
+							catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException))
+							{
+								throw new DecompilerException(module, $"Error decompiling for '{file.Key}'", innerException);
+							}
+						}
+						progress.Status = file.Key;
+						Interlocked.Increment(ref progress.UnitsCompleted);
+						progressReporter?.Report(progress);
+					});
+			}
 		}
 		#endregion
 
