@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Modifiers.Public, Modifiers.Private, Modifiers.Protected, Modifiers.Internal,
 			Modifiers.New,
 			Modifiers.Unsafe,
-			Modifiers.Abstract, Modifiers.Virtual, Modifiers.Sealed, Modifiers.Static, Modifiers.Override,
+			Modifiers.Static, Modifiers.Abstract, Modifiers.Virtual, Modifiers.Sealed, Modifiers.Override,
 			Modifiers.Required, Modifiers.Readonly, Modifiers.Volatile,
 			Modifiers.Ref,
 			Modifiers.Extern, Modifiers.Partial, Modifiers.Const,
