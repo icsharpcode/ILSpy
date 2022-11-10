@@ -66,4 +66,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.StaticAbstractInterfaceM
 			throw new NotImplementedException();
 		}
 	}
+
+	internal class ZOperatorTest
+	{
+
+		public interface IGetNext<T> where T : IGetNext<T>
+		{
+			abstract static T operator ++(T other);
+		}
+
+		public struct WrappedInteger : IGetNext<WrappedInteger>
+		{
+			public int Value;
+
+			public static WrappedInteger operator ++(WrappedInteger other)
+			{
+				WrappedInteger result = other;
+				result.Value++;
+				return result;
+			}
+		}
+
+		public void GenericUse<T>(T t) where T : IGetNext<T>
+		{
+			++t;
+		}
+	}
 }
