@@ -493,9 +493,35 @@
 
 #ifdef netcoreapp
 #else
+.class private auto ansi sealed beforefieldinit Microsoft.CodeAnalysis.EmbeddedAttribute
+  extends [CORE_ASSEMBLY]System.Attribute
+{
+  .custom instance void [CORE_ASSEMBLY]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = (
+      01 00 00 00
+  )
+  .custom instance void Microsoft.CodeAnalysis.EmbeddedAttribute::.ctor() = (
+      01 00 00 00
+  )
+  .method public hidebysig specialname rtspecialname 
+      instance void .ctor () cil managed 
+  {
+      .maxstack 8
+      IL_0000: ldarg.0
+      IL_0001: call instance void [CORE_ASSEMBLY]System.Attribute::.ctor()
+      IL_0006: ret
+  } // end of method EmbeddedAttribute::.ctor
+
+} // end of class Microsoft.CodeAnalysis.EmbeddedAttribute
+
 .class private auto ansi sealed beforefieldinit System.Runtime.CompilerServices.IsReadOnlyAttribute
        extends [CORE_ASSEMBLY]System.Attribute
 {
+  .custom instance void [CORE_ASSEMBLY]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = (
+  	01 00 00 00
+  )
+  .custom instance void Microsoft.CodeAnalysis.EmbeddedAttribute::.ctor() = (
+  	01 00 00 00
+  )
   .method public hidebysig specialname rtspecialname 
           instance void .ctor () cil managed 
   {

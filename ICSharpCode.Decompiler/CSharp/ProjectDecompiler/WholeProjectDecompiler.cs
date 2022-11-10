@@ -170,9 +170,13 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			var metadata = module.Metadata;
 			var typeDef = metadata.GetTypeDefinition(type);
-			if (metadata.GetString(typeDef.Name) == "<Module>" || CSharpDecompiler.MemberIsHidden(module, type, Settings))
+			string name = metadata.GetString(typeDef.Name);
+			string ns = metadata.GetString(typeDef.Namespace);
+			if (name == "<Module>" || CSharpDecompiler.MemberIsHidden(module, type, Settings))
 				return false;
-			if (metadata.GetString(typeDef.Namespace) == "XamlGeneratedNamespace" && metadata.GetString(typeDef.Name) == "GeneratedInternalTypeHelper")
+			if (ns == "XamlGeneratedNamespace" && name == "GeneratedInternalTypeHelper")
+				return false;
+			if (!typeDef.IsNested && RemoveEmbeddedAttributes.attributeNames.Contains(ns + "." + name))
 				return false;
 			return true;
 		}

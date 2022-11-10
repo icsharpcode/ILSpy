@@ -1,5 +1,7 @@
 ﻿using System;
+#if ROSLYN4
 using System.Runtime.InteropServices;
+#endif
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -127,6 +129,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 	}
+#if ROSLYN4
 	internal class RecordStructs
 	{
 		public record struct Base(string A);
@@ -227,6 +230,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 	}
+#endif
 }
 namespace System.Runtime.CompilerServices
 {

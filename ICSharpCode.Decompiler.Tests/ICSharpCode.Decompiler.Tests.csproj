@@ -57,7 +57,7 @@
     <!-- used for xml test result files -->
     <PackageReference Include="JunitXml.TestLogger" Version="$(JUnitXmlTestLoggerVersion)" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
-    <PackageReference Include="System.Memory" Version="4.5.4" />
+    <PackageReference Include="System.Memory" Version="4.5.5" />
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
     <PackageReference Include="Microsoft.NETCore.ILAsm" Version="$(ILAsmVersion)" />
     <PackageReference Include="Microsoft.NETCore.ILDAsm" Version="$(ILDAsmVersion)" />
