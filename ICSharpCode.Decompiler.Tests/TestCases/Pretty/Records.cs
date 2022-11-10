@@ -129,7 +129,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 	}
-#if ROSLYN4
+
+#if CS100
 	internal class RecordStructs
 	{
 		public record struct Base(string A);
@@ -230,6 +231,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 	}
+#endif
+#if CS110
+
 #endif
 }
 namespace System.Runtime.CompilerServices

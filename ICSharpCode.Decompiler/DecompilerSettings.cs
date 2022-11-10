@@ -151,12 +151,13 @@ namespace ICSharpCode.Decompiler
 			{
 				parameterNullCheck = false;
 				lifetimeAnnotations = false;
+				requiredMembers = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (parameterNullCheck || lifetimeAnnotations)
+			if (parameterNullCheck || lifetimeAnnotations || requiredMembers)
 				return CSharp.LanguageVersion.CSharp11_0;
 			if (fileScopedNamespaces || recordStructs)
 				return CSharp.LanguageVersion.CSharp10_0;
@@ -351,6 +352,24 @@ namespace ICSharpCode.Decompiler
 				if (lifetimeAnnotations != value)
 				{
 					lifetimeAnnotations = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool requiredMembers = true;
+
+		/// <summary>
+		/// Use C# 11 <c>required</c> modifier.
+		/// </summary>
+		[Category("C# 11.0 / VS 2022.4")]
+		[Description("DecompilerSettings.RequiredMembers")]
+		public bool RequiredMembers {
+			get { return requiredMembers; }
+			set {
+				if (requiredMembers != value)
+				{
+					requiredMembers = value;
 					OnPropertyChanged();
 				}
 			}

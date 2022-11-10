@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Modifiers.New,
 			Modifiers.Unsafe,
 			Modifiers.Abstract, Modifiers.Virtual, Modifiers.Sealed, Modifiers.Static, Modifiers.Override,
-			Modifiers.Readonly, Modifiers.Volatile,
+			Modifiers.Required, Modifiers.Readonly, Modifiers.Volatile,
 			Modifiers.Ref,
 			Modifiers.Extern, Modifiers.Partial, Modifiers.Const,
 			Modifiers.Async,
@@ -119,6 +119,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return "async";
 				case Modifiers.Ref:
 					return "ref";
+				case Modifiers.Required:
+					return "required";
 				case Modifiers.Any:
 					// even though it's used for pattern matching only, 'any' needs to be in this list to be usable in the AST
 					return "any";
@@ -129,50 +131,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public static int GetModifierLength(Modifiers modifier)
 		{
-			switch (modifier)
-			{
-				case Modifiers.Private:
-					return "private".Length;
-				case Modifiers.Internal:
-					return "internal".Length;
-				case Modifiers.Protected:
-					return "protected".Length;
-				case Modifiers.Public:
-					return "public".Length;
-				case Modifiers.Abstract:
-					return "abstract".Length;
-				case Modifiers.Virtual:
-					return "virtual".Length;
-				case Modifiers.Sealed:
-					return "sealed".Length;
-				case Modifiers.Static:
-					return "static".Length;
-				case Modifiers.Override:
-					return "override".Length;
-				case Modifiers.Readonly:
-					return "readonly".Length;
-				case Modifiers.Const:
-					return "const".Length;
-				case Modifiers.New:
-					return "new".Length;
-				case Modifiers.Partial:
-					return "partial".Length;
-				case Modifiers.Extern:
-					return "extern".Length;
-				case Modifiers.Volatile:
-					return "volatile".Length;
-				case Modifiers.Unsafe:
-					return "unsafe".Length;
-				case Modifiers.Async:
-					return "async".Length;
-				case Modifiers.Ref:
-					return "ref".Length;
-				case Modifiers.Any:
-					// even though it's used for pattern matching only, 'any' needs to be in this list to be usable in the AST
-					return "any".Length;
-				default:
-					throw new NotSupportedException("Invalid value for Modifiers");
-			}
+			return GetModifierName(modifier).Length;
 		}
 
 		public static Modifiers GetModifierValue(string modifier)
@@ -215,6 +174,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return Modifiers.Async;
 				case "ref":
 					return Modifiers.Ref;
+				case "required":
+					return Modifiers.Required;
 				case "any":
 					// even though it's used for pattern matching only, 'any' needs to be in this list to be usable in the AST
 					return Modifiers.Any;
