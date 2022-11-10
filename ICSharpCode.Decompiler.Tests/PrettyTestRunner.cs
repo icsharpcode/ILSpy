@@ -267,7 +267,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task DelegateConstruction([ValueSource(nameof(defaultOptionsWithMcs))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview);
+			await RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
@@ -332,7 +332,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task LocalFunctions([ValueSource(nameof(roslyn2OrNewerOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview);
+			await RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
@@ -488,7 +488,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task NativeInts([ValueSource(nameof(roslyn3OrNewerOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview);
+			await RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
@@ -506,7 +506,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task FunctionPointers([ValueSource(nameof(roslyn3OrNewerOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview);
+			await RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
@@ -578,7 +578,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task OptionalArguments([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview);
+			await RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
@@ -602,11 +602,6 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task CustomAttributes([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
-			if (cscOptions.HasFlag(CompilerOptions.UseRoslynLatest))
-			{
-				// Test C# 11 generic attributes
-				cscOptions |= CompilerOptions.Preview;
-			}
 			await RunForLibrary(cscOptions: cscOptions);
 		}
 
@@ -661,7 +656,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task YieldReturn([ValueSource(nameof(defaultOptionsWithMcs))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview);
+			await RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
@@ -697,7 +692,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task StaticAbstractInterfaceMembers([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview);
+			await RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
