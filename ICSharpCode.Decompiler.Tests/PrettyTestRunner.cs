@@ -135,15 +135,7 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
 
-		static readonly CompilerOptions[] roslynLatestOnlyWithNet40Options =
-		{
-			CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
-			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
-			CompilerOptions.UseRoslynLatest,
-			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
-		};
-
-		static readonly CompilerOptions[] roslynLatestOnlyOptions =
+		static readonly CompilerOptions[] roslyn4OrNewerOptions =
 		{
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
@@ -261,7 +253,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public async Task SwitchExpressions([ValueSource(nameof(roslynLatestOnlyOptions))] CompilerOptions cscOptions)
+		public async Task SwitchExpressions([ValueSource(nameof(roslyn3OrNewerOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions);
 		}
@@ -494,13 +486,13 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public async Task NativeInts([ValueSource(nameof(roslynLatestOnlyOptions))] CompilerOptions cscOptions)
+		public async Task NativeInts([ValueSource(nameof(roslyn3OrNewerOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview);
 		}
 
 		[Test]
-		public async Task FileScopedNamespaces([ValueSource(nameof(roslynLatestOnlyOptions))] CompilerOptions cscOptions)
+		public async Task FileScopedNamespaces([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings());
 		}
@@ -512,7 +504,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public async Task FunctionPointers([ValueSource(nameof(roslynLatestOnlyOptions))] CompilerOptions cscOptions)
+		public async Task FunctionPointers([ValueSource(nameof(roslyn3OrNewerOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview);
 		}
@@ -703,7 +695,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public async Task StaticAbstractInterfaceMembers([ValueSource(nameof(roslynLatestOnlyOptions))] CompilerOptions cscOptions)
+		public async Task StaticAbstractInterfaceMembers([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview);
 		}
