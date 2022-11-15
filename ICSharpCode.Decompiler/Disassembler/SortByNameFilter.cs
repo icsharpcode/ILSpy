@@ -32,55 +32,37 @@ public class SortByNameFilter : IEntityProcessor
 	public IReadOnlyCollection<InterfaceImplementationHandle> Filter(PEFile module,
 		IReadOnlyCollection<InterfaceImplementationHandle> items)
 	{
-		return items.Select(item => new { Key = GetSortKey(item, module), Value = item })
-			.OrderBy(item => item.Key)
-			.Select(item => item.Value)
-			.ToArray();
+		return items.OrderBy(item => GetSortKey(item, module)).ToArray();
 	}
 
 	public IReadOnlyCollection<TypeDefinitionHandle> Filter(PEFile module,
 		IReadOnlyCollection<TypeDefinitionHandle> items)
 	{
-		return items.Select(item => new { Key = GetSortKey(item, module), Value = item })
-			.OrderBy(item => item.Key)
-			.Select(item => item.Value)
-			.ToArray();
+		return items.OrderBy(item => GetSortKey(item, module)).ToArray();
 	}
 
 	public IReadOnlyCollection<MethodDefinitionHandle> Filter(PEFile module,
 		IReadOnlyCollection<MethodDefinitionHandle> items)
 	{
-		return items.Select(item => new { Key = GetSortKey(item, module), Value = item })
-			.OrderBy(item => item.Key)
-			.Select(item => item.Value)
-			.ToArray();
+		return items.OrderBy(item => GetSortKey(item, module)).ToArray();
 	}
 
 	public IReadOnlyCollection<PropertyDefinitionHandle> Filter(PEFile module,
 		IReadOnlyCollection<PropertyDefinitionHandle> items)
 	{
-		return items.Select(item => new { Key = GetSortKey(item, module), Value = item })
-			.OrderBy(item => item.Key)
-			.Select(item => item.Value)
-			.ToArray();
+		return items.OrderBy(item => GetSortKey(item, module)).ToArray();
 	}
 
 	public IReadOnlyCollection<EventDefinitionHandle> Filter(PEFile module,
 		IReadOnlyCollection<EventDefinitionHandle> items)
 	{
-		return items.Select(item => new { Key = GetSortKey(item, module), Value = item })
-			.OrderBy(item => item.Key)
-			.Select(item => item.Value)
-			.ToArray();
+		return items.OrderBy(item => GetSortKey(item, module)).ToArray();
 	}
 
 	public IReadOnlyCollection<FieldDefinitionHandle> Filter(PEFile module,
 		IReadOnlyCollection<FieldDefinitionHandle> items)
 	{
-		return items.Select(item => new { Key = GetSortKey(item, module), Value = item })
-			.OrderBy(item => item.Key)
-			.Select(item => item.Value)
-			.ToArray();
+		return items.OrderBy(item => GetSortKey(item, module)).ToArray();
 	}
 
 	private static string GetSortKey(TypeDefinitionHandle handle, PEFile module) =>
