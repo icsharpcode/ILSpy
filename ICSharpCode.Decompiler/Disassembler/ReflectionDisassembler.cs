@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public IAssemblyResolver AssemblyResolver { get; set; }
 
-		public IFilter Filter { get; set; }
+		public IEntityProcessor EntityProcessor { get; set; }
 
 		public ReflectionDisassembler(ITextOutput output, CancellationToken cancellationToken)
 			: this(output, new MethodBodyDisassembler(output, cancellationToken), cancellationToken)
@@ -1410,7 +1410,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			var metadata = module.Metadata;
 			var propertyDefinition = adapter.Definition;
 			var property = adapter.Handle;
-			
+
 			PropertyAccessors accessors = DisassemblePropertyHeaderInternal(module, property, metadata, propertyDefinition);
 
 			OpenBlock(false);
@@ -1794,9 +1794,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		#region Helper methods
 
-		private ICollection<T> OnFilter<T>(ICollection<T> items) where T : Adapter
+		private ICollection<T> OnFilter<T>(ICollection<T> items) where T : EntityAdapter
 		{
-			return Filter?.Filter(items) ?? items;
+			return EntityProcessor?.Filter(items) ?? items;
 		}
 
 		void WriteAttributes(PEFile module, CustomAttributeHandleCollection attributes)

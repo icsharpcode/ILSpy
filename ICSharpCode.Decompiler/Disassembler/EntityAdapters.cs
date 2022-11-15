@@ -28,20 +28,20 @@ using System.Linq;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
-	public abstract class Adapter
+	public abstract class EntityAdapter
 	{
-		private readonly Lazy<string> displayName;
+		private readonly Lazy<string> sortKey;
 
-		protected Adapter(PEFile module, TypeDefinitionAdapter? containingType)
+		protected EntityAdapter(PEFile module, TypeDefinitionAdapter? containingType)
 		{
 			Module = module;
 			ContainingType = containingType;
-			displayName = new Lazy<string>(GetDisplayName);
+			sortKey = new Lazy<string>(GetSortKey);
 		}
 
 		public PEFile Module { get; }
 
-		public string DisplayName => displayName.Value;
+		public string SortKey => sortKey.Value;
 
 		public TypeDefinitionAdapter? ContainingType { get; }
 
@@ -50,12 +50,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 			return Module.Metadata.GetString(handle);
 		}
 
-		protected abstract string GetDisplayName();
+		protected abstract string GetSortKey();
 	}
 
-	public abstract class Adapter<T> : Adapter where T : struct
+	public abstract class EntityAdapter<T> : EntityAdapter where T : struct
 	{
-		protected Adapter(PEFile module, T handle, TypeDefinitionAdapter? containingType)
+		protected EntityAdapter(PEFile module, T handle, TypeDefinitionAdapter? containingType)
 			: base(module, containingType)
 		{
 			Handle = handle;
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public T Handle { get; }
 	}
 
-	public class TypeDefinitionAdapter : Adapter<TypeDefinitionHandle>
+	public class TypeDefinitionAdapter : EntityAdapter<TypeDefinitionHandle>
 	{
 		public TypeDefinitionAdapter(PEFile module, TypeDefinitionHandle handle, TypeDefinitionAdapter? containingType = null)
 			: base(module, handle, containingType)
@@ -77,10 +77,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public MetadataGenericContext GenericContext { get; }
 
-		protected override string GetDisplayName() => Definition.GetFullTypeName(Module.Metadata).ToILNameString();
+		protected override string GetSortKey() => Definition.GetFullTypeName(Module.Metadata).ToILNameString();
 	}
 
-	public class MethodDefinitionAdapter : Adapter<MethodDefinitionHandle>
+	public class MethodDefinitionAdapter : EntityAdapter<MethodDefinitionHandle>
 	{
 		public MethodDefinitionAdapter(PEFile module, MethodDefinitionHandle handle, TypeDefinitionAdapter? containingType = null)
 			: base(module, handle, containingType)
@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public MetadataGenericContext GenericContext { get; }
 
-		protected override string GetDisplayName()
+		protected override string GetSortKey()
 		{
 			var output = new PlainTextOutput();
 
@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		}
 	}
 
-	public class InterfaceImplementationAdapter : Adapter<InterfaceImplementationHandle>
+	public class InterfaceImplementationAdapter : EntityAdapter<InterfaceImplementationHandle>
 	{
 		public InterfaceImplementationAdapter(PEFile module, InterfaceImplementationHandle handle, TypeDefinitionAdapter? containingType = null)
 			: base(module, handle, containingType)
@@ -136,10 +136,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public InterfaceImplementation Implementation { get; }
 
-		protected override string GetDisplayName() => Implementation.Interface.GetFullTypeName(Module.Metadata).ToILNameString();
+		protected override string GetSortKey() => Implementation.Interface.GetFullTypeName(Module.Metadata).ToILNameString();
 	}
 
-	public class FieldDefinitionAdapter : Adapter<FieldDefinitionHandle>
+	public class FieldDefinitionAdapter : EntityAdapter<FieldDefinitionHandle>
 	{
 		public FieldDefinitionAdapter(PEFile module, FieldDefinitionHandle handle, TypeDefinitionAdapter? containingType = null)
 			: base(module, handle, containingType)
@@ -149,10 +149,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public FieldDefinition Definition { get; }
 
-		protected override string GetDisplayName() => GetString(Definition.Name);
+		protected override string GetSortKey() => GetString(Definition.Name);
 	}
 
-	public class PropertyDefinitionAdapter : Adapter<PropertyDefinitionHandle>
+	public class PropertyDefinitionAdapter : EntityAdapter<PropertyDefinitionHandle>
 	{
 		public PropertyDefinitionAdapter(PEFile module, PropertyDefinitionHandle handle, TypeDefinitionAdapter? containingType = null)
 			: base(module, handle, containingType)
@@ -162,10 +162,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public PropertyDefinition Definition { get; }
 
-		protected override string GetDisplayName() => GetString(Definition.Name);
+		protected override string GetSortKey() => GetString(Definition.Name);
 	}
 
-	public class EventDefinitionAdapter : Adapter<EventDefinitionHandle>
+	public class EventDefinitionAdapter : EntityAdapter<EventDefinitionHandle>
 	{
 		public EventDefinitionAdapter(PEFile module, EventDefinitionHandle handle, TypeDefinitionAdapter? containingType = null)
 			: base(module, handle, containingType)
@@ -175,7 +175,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public EventDefinition Definition { get; }
 
-		protected override string GetDisplayName() => GetString(Definition.Name);
+		protected override string GetSortKey() => GetString(Definition.Name);
 	}
 
 	public static class AdapterExtensionMethods

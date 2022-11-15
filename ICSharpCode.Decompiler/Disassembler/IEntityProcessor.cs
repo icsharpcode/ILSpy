@@ -23,16 +23,16 @@ using System.Linq;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
-	public interface IFilter
+	public interface IEntityProcessor
 	{
-		ICollection<T> Filter<T>(ICollection<T> items) where T : Adapter;
+		ICollection<T> Filter<T>(ICollection<T> items) where T : EntityAdapter;
 	}
 
-	public class SortByNameFilter : IFilter
+	public class SortByNameFilter : IEntityProcessor
 	{
-		public ICollection<T> Filter<T>(ICollection<T> items) where T : Adapter
+		public ICollection<T> Filter<T>(ICollection<T> items) where T : EntityAdapter
 		{
-			return items.OrderBy(item => item.DisplayName).ToArray();
+			return items.OrderBy(item => item.SortKey).ToArray();
 		}
 	}
 }

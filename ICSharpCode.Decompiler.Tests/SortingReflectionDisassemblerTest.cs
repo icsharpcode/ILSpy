@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.Tests
 			var rd = new ReflectionDisassembler(output, CancellationToken.None) {
 				AssemblyResolver = new UniversalAssemblyResolver(sourceFileName, true, null),
 				DetectControlStructure = false,
-				Filter = new SortByNameFilter()
+				EntityProcessor = new SortByNameFilter()
 			};
 
 			writeIL(peFile, rd);
