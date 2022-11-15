@@ -19,20 +19,24 @@
 #nullable enable
 
 using System.Collections.Generic;
-using System.Linq;
+using System.Reflection.Metadata;
+
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
 	public interface IEntityProcessor
 	{
-		ICollection<T> Filter<T>(ICollection<T> items) where T : EntityAdapter;
-	}
+		IReadOnlyCollection<InterfaceImplementationHandle> Filter(PEFile module, IReadOnlyCollection<InterfaceImplementationHandle> items);
 
-	public class SortByNameFilter : IEntityProcessor
-	{
-		public ICollection<T> Filter<T>(ICollection<T> items) where T : EntityAdapter
-		{
-			return items.OrderBy(item => item.SortKey).ToArray();
-		}
+		IReadOnlyCollection<TypeDefinitionHandle> Filter(PEFile module, IReadOnlyCollection<TypeDefinitionHandle> items);
+
+		IReadOnlyCollection<MethodDefinitionHandle> Filter(PEFile module, IReadOnlyCollection<MethodDefinitionHandle> items);
+
+		IReadOnlyCollection<PropertyDefinitionHandle> Filter(PEFile module, IReadOnlyCollection<PropertyDefinitionHandle> items);
+
+		IReadOnlyCollection<EventDefinitionHandle> Filter(PEFile module, IReadOnlyCollection<EventDefinitionHandle> items);
+
+		IReadOnlyCollection<FieldDefinitionHandle> Filter(PEFile module, IReadOnlyCollection<FieldDefinitionHandle> items);
 	}
 }
