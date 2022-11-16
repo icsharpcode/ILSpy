@@ -51,4 +51,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 	}
 #endif
+
+#if CS110
+	public struct StructWithRequiredMembers
+	{
+		public required string FirstName;
+		public required string LastName { get; set; }
+	}
+#endif
+}
+
+namespace System.Runtime.CompilerServices
+{
+	[AttributeUsage(AttributeTargets.All, AllowMultiple = true, Inherited = false)]
+	internal sealed class CompilerFeatureRequiredAttribute : Attribute
+	{
+		public CompilerFeatureRequiredAttribute(string featureName)
+		{
+		}
+	}
+
+	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
+	internal sealed class RequiredMemberAttribute : Attribute
+	{
+	}
 }
