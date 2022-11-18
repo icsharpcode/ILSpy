@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2018 Daniel Grunwald
+// Copyright (c) 2018 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -225,7 +225,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (ty is ModifiedType mod && mod.Modifier.Name == "IsVolatile" && mod.Modifier.Namespace == "System.Runtime.CompilerServices")
 				{
 					Volatile.Write(ref this.isVolatile, true);
-					ty = mod.ElementType;
 				}
 				ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation,
 					fieldDef.GetCustomAttributes(), metadata, module.OptionsForEntity(this),
