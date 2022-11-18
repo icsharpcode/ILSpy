@@ -231,6 +231,8 @@ namespace ICSharpCode.ILSpy.TextView
 				{
 					var popupPosition = GetPopupPosition(e);
 					popupToolTip.Closed += ToolTipClosed;
+					popupToolTip.Placement = PlacementMode.Relative;
+					popupToolTip.PlacementTarget = this;
 					popupToolTip.HorizontalOffset = popupPosition.X;
 					popupToolTip.VerticalOffset = popupPosition.Y;
 					popupToolTip.StaysOpen = true;  // We will close it ourselves
@@ -282,23 +284,19 @@ namespace ICSharpCode.ILSpy.TextView
 		Point GetPopupPosition(MouseEventArgs mouseArgs)
 		{
 			Point mousePos = mouseArgs.GetPosition(this);
-			Point positionInPixels;
 			// align Popup with line bottom
 			TextViewPosition? logicalPos = textEditor.GetPositionFromPoint(mousePos);
 			if (logicalPos.HasValue)
 			{
 				var textView = textEditor.TextArea.TextView;
-				positionInPixels =
-					textView.PointToScreen(
-						textView.GetVisualPosition(logicalPos.Value, VisualYPosition.LineBottom) - textView.ScrollOffset);
-				positionInPixels.X -= 4;
+				return textView.GetVisualPosition(logicalPos.Value, VisualYPosition.LineBottom)
+					- textView.ScrollOffset
+					+ new Vector(-4, 0);
 			}
 			else
 			{
-				positionInPixels = PointToScreen(mousePos + new Vector(-4, 6));
+				return mousePos + new Vector(-4, 6);
 			}
-			// use device independent units, because Popup Left/Top are in independent units
-			return positionInPixels.TransformFromDevice(this);
 		}
 
 		void TextViewMouseHoverStopped(object sender, MouseEventArgs e)
