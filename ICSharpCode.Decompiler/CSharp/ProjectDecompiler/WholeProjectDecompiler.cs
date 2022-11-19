@@ -151,8 +151,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			TargetDirectory = targetDirectory;
 			directories.Clear();
 			var resources = WriteResourceFilesInProject(moduleDefinition).ToList();
-			var files = WriteCodeFilesInProject(moduleDefinition, resources.SelectMany(r => r.partialTypes ?? Enumerable.Empty<PartialTypeInfo>()).ToList(), cancellationToken).ToList();
-			files.AddRange(resources.Select(r => (r.itemType, r.fileName)));
+			var files = WriteCodeFilesInProject(moduleDefinition, resources.SelectMany(r => r.PartialTypes ?? Enumerable.Empty<PartialTypeInfo>()).ToList(), cancellationToken).ToList();
+			files.AddRange(resources);
 			files.AddRange(WriteMiscellaneousFilesInProject(moduleDefinition));
 			if (StrongNameKeyFile != null)
 			{
@@ -190,7 +190,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			return decompiler;
 		}
 
-		IEnumerable<(string itemType, string fileName)> WriteAssemblyInfo(DecompilerTypeSystem ts, CancellationToken cancellationToken)
+		IEnumerable<ProjectItemInfo> WriteAssemblyInfo(DecompilerTypeSystem ts, CancellationToken cancellationToken)
 		{
 			var decompiler = CreateDecompiler(ts);
 			decompiler.CancellationToken = cancellationToken;
@@ -205,10 +205,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			{
 				syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, Settings.CSharpFormattingOptions));
 			}
-			return new[] { ("Compile", assemblyInfo) };
+			return new[] { new ProjectItemInfo("Compile", assemblyInfo) };
 		}
 
-		IEnumerable<(string itemType, string fileName)> WriteCodeFilesInProject(Metadata.PEFile module, IList<PartialTypeInfo> partialTypes, CancellationToken cancellationToken)
+		IEnumerable<ProjectItemInfo> WriteCodeFilesInProject(Metadata.PEFile module, IList<PartialTypeInfo> partialTypes, CancellationToken cancellationToken)
 		{
 			var metadata = module.Metadata;
 			var files = module.Metadata.GetTopLevelTypeDefinitions().Where(td => IncludeTypeWhenDecompilingProject(module, td))
@@ -229,7 +229,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				progress.TotalUnits = files.Count;
 			}
 
-			return files.Select(f => ("Compile", f.Key)).Concat(WriteAssemblyInfo(ts, cancellationToken));
+			return files.Select(f => new ProjectItemInfo("Compile", f.Key)).Concat(WriteAssemblyInfo(ts, cancellationToken));
 
 			string GetFileFileNameForHandle(TypeDefinitionHandle h)
 			{
@@ -308,7 +308,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		#endregion
 
 		#region WriteResourceFilesInProject
-		protected virtual IEnumerable<(string itemType, string fileName, List<PartialTypeInfo> partialTypes)> WriteResourceFilesInProject(Metadata.PEFile module)
+		protected virtual IEnumerable<ProjectItemInfo> WriteResourceFilesInProject(Metadata.PEFile module)
 		{
 			foreach (var r in module.Resources.Where(r => r.ResourceType == ResourceType.Embedded))
 			{
@@ -318,7 +318,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				if (r.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
 				{
 					bool decodedIntoIndividualFiles;
-					var individualResources = new List<(string itemType, string fileName, List<PartialTypeInfo> partialTypes)>();
+					var individualResources = new List<ProjectItemInfo>();
 					try
 					{
 						var resourcesFile = new ResourcesFile(stream);
@@ -378,12 +378,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						stream.Position = 0;
 						stream.CopyTo(fs);
 					}
-					yield return ("EmbeddedResource", fileName, null);
+					yield return new ProjectItemInfo("EmbeddedResource", fileName).With("LogicalName", r.Name);
 				}
 			}
 		}
 
-		protected virtual IEnumerable<(string itemType, string fileName, List<PartialTypeInfo> partialTypes)> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
+		protected virtual IEnumerable<ProjectItemInfo> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 		{
 			if (fileName.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
 			{
@@ -398,7 +398,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 							writer.AddResource(entry.Key, entry.Value);
 						}
 					}
-					return new[] { ("EmbeddedResource", resx, (List<PartialTypeInfo>)null) };
+					return new[] { new ProjectItemInfo("EmbeddedResource", resx).With("LogicalName", resourceName) };
 				}
 				catch (BadImageFormatException)
 				{
@@ -413,7 +413,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			{
 				entryStream.CopyTo(fs);
 			}
-			return new[] { ("EmbeddedResource", fileName, (List<PartialTypeInfo>)null) };
+			return new[] { new ProjectItemInfo("EmbeddedResource", fileName).With("LogicalName", resourceName) };
 		}
 
 		string GetFileNameForResource(string fullName)
@@ -444,7 +444,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		#endregion
 
 		#region WriteMiscellaneousFilesInProject
-		protected virtual IEnumerable<(string itemType, string fileName)> WriteMiscellaneousFilesInProject(PEFile module)
+		protected virtual IEnumerable<ProjectItemInfo> WriteMiscellaneousFilesInProject(PEFile module)
 		{
 			var resources = module.Reader.ReadWin32Resources();
 			if (resources == null)
@@ -454,21 +454,21 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			if (appIcon != null)
 			{
 				File.WriteAllBytes(Path.Combine(TargetDirectory, "app.ico"), appIcon);
-				yield return ("ApplicationIcon", "app.ico");
+				yield return new ProjectItemInfo("ApplicationIcon", "app.ico");
 			}
 
 			byte[] appManifest = CreateApplicationManifest(resources);
 			if (appManifest != null && !IsDefaultApplicationManifest(appManifest))
 			{
 				File.WriteAllBytes(Path.Combine(TargetDirectory, "app.manifest"), appManifest);
-				yield return ("ApplicationManifest", "app.manifest");
+				yield return new ProjectItemInfo("ApplicationManifest", "app.manifest");
 			}
 
 			var appConfig = module.FileName + ".config";
 			if (File.Exists(appConfig))
 			{
 				File.Copy(appConfig, Path.Combine(TargetDirectory, "app.config"), overwrite: true);
-				yield return ("ApplicationConfig", Path.GetFileName(appConfig));
+				yield return new ProjectItemInfo("ApplicationConfig", Path.GetFileName(appConfig));
 			}
 		}
 
@@ -751,6 +751,27 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		public static bool CanUseSdkStyleProjectFormat(PEFile module)
 		{
 			return TargetServices.DetectTargetFramework(module).Moniker != null;
+		}
+	}
+
+	public record struct ProjectItemInfo(string ItemType, string FileName)
+	{
+		public List<PartialTypeInfo> PartialTypes { get; set; } = null;
+
+		public Dictionary<string, string> AdditionalProperties { get; set; } = null;
+
+		public ProjectItemInfo With(string name, string value)
+		{
+			AdditionalProperties ??= new Dictionary<string, string>();
+			AdditionalProperties.Add(name, value);
+			return this;
+		}
+
+		public ProjectItemInfo With(IEnumerable<KeyValuePair<string, string>> pairs)
+		{
+			AdditionalProperties ??= new Dictionary<string, string>();
+			AdditionalProperties.AddRange(pairs);
+			return this;
 		}
 	}
 }

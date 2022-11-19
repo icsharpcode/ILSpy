@@ -72,6 +72,8 @@ namespace ILSpy.BamlDecompiler
 			{
 				fileName = Path.ChangeExtension(fileName, ".xaml");
 			}
+			context.AdditionalProperties.Add("Generator", "MSBuild:Compile");
+			context.AdditionalProperties.Add("SubType", "Designer");
 			string saveFileName = Path.Combine(context.DecompilationOptions.SaveAsProjectDirectory, fileName);
 			Directory.CreateDirectory(Path.GetDirectoryName(saveFileName));
 			result.Xaml.Save(saveFileName);

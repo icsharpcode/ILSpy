@@ -36,6 +36,9 @@ namespace ICSharpCode.ILSpy
 		readonly List<PartialTypeInfo> partialTypes = new();
 		internal List<PartialTypeInfo> PartialTypes => partialTypes;
 
+		readonly Dictionary<string, string> additionalProperties = new();
+		public Dictionary<string, string> AdditionalProperties => additionalProperties;
+
 		public DecompilationOptions DecompilationOptions { get; }
 
 		public ResourceFileHandlerContext(DecompilationOptions options)
