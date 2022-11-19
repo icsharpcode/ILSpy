@@ -426,7 +426,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			// the directory part Namespace1\Namespace2\... reuses as many existing directories as
 			// possible, and only the remaining name parts are used as prefix for the filename.
 			// This is not affected by the UseNestedDirectoriesForNamespaces setting.
-			string[] splitName = fullName.Split(Path.DirectorySeparatorChar);
+			string[] splitName = fullName.Split('\\', '/');
 			string fileName = string.Join(".", splitName);
 			string separator = Path.DirectorySeparatorChar.ToString();
 			for (int i = splitName.Length - 1; i > 0; i--)
