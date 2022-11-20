@@ -1781,7 +1781,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			return EntityProcessor?.Process(module, items) ?? items;
 		}
 
-		private IReadOnlyCollection<CustomAttributeHandle> Filter(PEFile module, IReadOnlyCollection<CustomAttributeHandle> items)
+		private IReadOnlyCollection<CustomAttributeHandle> Process(PEFile module, IReadOnlyCollection<CustomAttributeHandle> items)
 		{
 			return EntityProcessor?.Process(module, items) ?? items;
 		}
@@ -1793,7 +1793,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		void WriteAttributes(PEFile module, CustomAttributeHandleCollection attributes)
 		{
 			var metadata = module.Metadata;
-			foreach (CustomAttributeHandle a in Filter(module, attributes))
+			foreach (CustomAttributeHandle a in Process(module, attributes))
 			{
 				output.Write(".custom ");
 				var attr = metadata.GetCustomAttribute(a);
