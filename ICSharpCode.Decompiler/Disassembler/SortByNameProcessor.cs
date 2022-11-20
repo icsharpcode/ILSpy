@@ -65,6 +65,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 			return items.OrderBy(item => GetSortKey(item, module)).ToArray();
 		}
 
+		public IReadOnlyCollection<CustomAttributeHandle> Process(PEFile module,
+			IReadOnlyCollection<CustomAttributeHandle> items)
+		{
+			return items.OrderBy(item => GetSortKey(item, module)).ToArray();
+		}
+
 		private static string GetSortKey(TypeDefinitionHandle handle, PEFile module) =>
 			handle.GetFullTypeName(module.Metadata).ToILNameString();
 
@@ -89,5 +95,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		private static string GetSortKey(EventDefinitionHandle handle, PEFile module) =>
 			module.Metadata.GetString(module.Metadata.GetEventDefinition(handle).Name);
+
+		private static string GetSortKey(CustomAttributeHandle handle, PEFile module) =>
+			module.Metadata.GetCustomAttribute(handle)
+				.Constructor
+				.GetDeclaringType(module.Metadata)
+				.GetFullTypeName(module.Metadata)
+				.ToILNameString();
 	}
 }
