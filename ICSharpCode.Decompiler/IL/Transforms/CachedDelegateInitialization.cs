@@ -257,7 +257,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (trueInst.Instructions.Count != 1 || falseInst.Instructions.Count != 1)
 				return false;
 			if (!(trueInst.Instructions[0].MatchStLoc(out var s, out var trueInitValue)
-			      && falseInst.Instructions[0].MatchStLoc(s, out var falseInitValue)))
+				  && falseInst.Instructions[0].MatchStLoc(s, out var falseInitValue)))
 			{
 				return false;
 			}
@@ -268,8 +268,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!(stobj.Value is NewObj delegateConstruction))
 				return false;
 			if (!stobj.Target.MatchLdFlda(out var target1, out var field1)
-			    || !ldobj.Target.MatchLdFlda(out var target2, out var field2)
-			    || !field1.Equals(field2) || !target1.Match(target2).Success)
+				|| !ldobj.Target.MatchLdFlda(out var target2, out var field2)
+				|| !field1.Equals(field2) || !target1.Match(target2).Success)
 			{
 				return false;
 			}
