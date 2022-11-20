@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
 
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.Disassembler;
@@ -71,35 +72,7 @@ public class SortByNameFilter : IEntityProcessor
 	private static string GetSortKey(MethodDefinitionHandle handle, PEFile module)
 	{
 		PlainTextOutput output = new PlainTextOutput();
-		MethodDefinition definition = module.Metadata.GetMethodDefinition(handle);
-
-		output.Write(module.Metadata.GetString(definition.Name));
-		int genericParameterCount = definition.GetGenericParameters().Count;
-		if (genericParameterCount > 0)
-		{
-			output.Write($"`{genericParameterCount}");
-		}
-
-		output.Write("(");
-
-		DisassemblerSignatureTypeProvider signatureProvider = new DisassemblerSignatureTypeProvider(module, output);
-		MethodSignature<Action<ILNameSyntax>> signature =
-			definition.DecodeSignature(signatureProvider, new MetadataGenericContext(handle, module));
-		bool first = true;
-
-		foreach (Action<ILNameSyntax>? action in signature.ParameterTypes)
-		{
-			if (!first)
-			{
-				output.Write(", ");
-			}
-
-			first = false;
-			action(ILNameSyntax.ShortTypeName);
-		}
-
-		output.Write(")");
-
+		InstructionOutputExtensions.WriteTo(handle, module, output, default);
 		return output.ToString();
 	}
 

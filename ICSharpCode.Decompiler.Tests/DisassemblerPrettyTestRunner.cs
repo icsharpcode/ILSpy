@@ -58,15 +58,22 @@ namespace ICSharpCode.Decompiler.Tests
 			await Run();
 		}
 
-		async Task Run([CallerMemberName] string testName = null)
+		[Test]
+		public async Task SortMembers()
 		{
-			var ilExpectedFile = Path.Combine(TestCasePath, testName + ".il");
+			await Run(ilExpectedFile: Path.Combine(TestCasePath, "SortMembers.expected.il"), asmOptions: AssemblerOptions.SortedOutput);
+		}
+
+		async Task Run([CallerMemberName] string testName = null, string ilExpectedFile = null, AssemblerOptions asmOptions = AssemblerOptions.None)
+		{
+			var ilInputFile = Path.Combine(TestCasePath, testName + ".il");
+			ilExpectedFile ??= ilInputFile;
 			var ilResultFile = Path.Combine(TestCasePath, testName + ".result.il");
 
-			var executable = await Tester.AssembleIL(ilExpectedFile, AssemblerOptions.Library).ConfigureAwait(false);
-			var disassembled = await Tester.Disassemble(executable, ilResultFile, AssemblerOptions.UseOwnDisassembler).ConfigureAwait(false);
+			var executable = await Tester.AssembleIL(ilInputFile, AssemblerOptions.Library).ConfigureAwait(false);
+			var disassembled = await Tester.Disassemble(executable, ilResultFile, AssemblerOptions.UseOwnDisassembler | asmOptions).ConfigureAwait(false);
 
-			CodeAssert.FilesAreEqual(ilExpectedFile, ilResultFile);
+			CodeAssert.FilesAreEqual(ilExpectedFile, disassembled);
 		}
 	}
 }
