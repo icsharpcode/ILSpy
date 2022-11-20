@@ -69,6 +69,24 @@
 	.field public class [mscorlib]System.Type TestType
 
 	// Methods
+	.method public hidebysig specialname rtspecialname 
+		instance void .ctor (
+			valuetype [mscorlib]System.Security.Permissions.SecurityAction action
+		) cil managed 
+	{
+		// Method begins at RVA 0x2059
+		// Header size: 1
+		// Code size: 10 (0xa)
+		.maxstack 8
+
+		IL_0000: ldarg.0
+		IL_0001: ldarg.1
+		IL_0002: call instance void [mscorlib]System.Security.Permissions.SecurityAttribute::.ctor(valuetype [mscorlib]System.Security.Permissions.SecurityAction)
+		IL_0007: nop
+		IL_0008: nop
+		IL_0009: ret
+	} // end of method SecurityAttrTest::.ctor
+
 	.method public hidebysig virtual 
 		instance class [mscorlib]System.Security.IPermission CreatePermission () cil managed 
 	{
@@ -83,17 +101,17 @@
 	} // end of method SecurityAttrTest::CreatePermission
 
 	.method public hidebysig specialname 
-		instance class [mscorlib]System.Type[] get_TestTypeArray () cil managed 
+		instance valuetype SecurityDeclarations.TestEnum[] get_TestEnumArray () cil managed 
 	{
-		// Method begins at RVA 0x209f
+		// Method begins at RVA 0x208e
 		// Header size: 1
 		// Code size: 7 (0x7)
 		.maxstack 8
 
 		IL_0000: ldarg.0
-		IL_0001: ldfld class [mscorlib]System.Type[] SecurityDeclarations.SecurityAttrTest::_testTypeArray
+		IL_0001: ldfld valuetype SecurityDeclarations.TestEnum[] SecurityDeclarations.SecurityAttrTest::_testEnumArray
 		IL_0006: ret
-	} // end of method SecurityAttrTest::get_TestTypeArray
+	} // end of method SecurityAttrTest::get_TestEnumArray
 
 	.method public hidebysig specialname 
 		instance int32[] get_TestInt32Array () cil managed 
@@ -122,35 +140,17 @@
 	} // end of method SecurityAttrTest::get_TestStringArray
 
 	.method public hidebysig specialname 
-		instance valuetype SecurityDeclarations.TestEnum[] get_TestEnumArray () cil managed 
+		instance class [mscorlib]System.Type[] get_TestTypeArray () cil managed 
 	{
-		// Method begins at RVA 0x208e
+		// Method begins at RVA 0x209f
 		// Header size: 1
 		// Code size: 7 (0x7)
 		.maxstack 8
 
 		IL_0000: ldarg.0
-		IL_0001: ldfld valuetype SecurityDeclarations.TestEnum[] SecurityDeclarations.SecurityAttrTest::_testEnumArray
+		IL_0001: ldfld class [mscorlib]System.Type[] SecurityDeclarations.SecurityAttrTest::_testTypeArray
 		IL_0006: ret
-	} // end of method SecurityAttrTest::get_TestEnumArray
-
-	.method public hidebysig specialname rtspecialname 
-		instance void .ctor (
-			valuetype [mscorlib]System.Security.Permissions.SecurityAction action
-		) cil managed 
-	{
-		// Method begins at RVA 0x2059
-		// Header size: 1
-		// Code size: 10 (0xa)
-		.maxstack 8
-
-		IL_0000: ldarg.0
-		IL_0001: ldarg.1
-		IL_0002: call instance void [mscorlib]System.Security.Permissions.SecurityAttribute::.ctor(valuetype [mscorlib]System.Security.Permissions.SecurityAction)
-		IL_0007: nop
-		IL_0008: nop
-		IL_0009: ret
-	} // end of method SecurityAttrTest::.ctor
+	} // end of method SecurityAttrTest::get_TestTypeArray
 
 	.method public hidebysig specialname 
 		instance void set_TestEnumArray (

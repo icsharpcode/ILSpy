@@ -18,6 +18,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -77,7 +78,22 @@ namespace ICSharpCode.Decompiler.Disassembler
 		private static string GetSortKey(MethodDefinitionHandle handle, PEFile module)
 		{
 			PlainTextOutput output = new PlainTextOutput();
-			InstructionOutputExtensions.WriteTo(handle, module, output, default);
+			MethodDefinition definition = module.Metadata.GetMethodDefinition(handle);
+
+			// Start with the methods name, skip return type
+			output.Write(module.Metadata.GetString(definition.Name));
+			int genericParameterCount = definition.GetGenericParameters().Count;
+			if (genericParameterCount > 0)
+			{
+				output.Write($"`{genericParameterCount}");
+			}
+
+			DisassemblerSignatureTypeProvider signatureProvider = new DisassemblerSignatureTypeProvider(module, output);
+			MethodSignature<Action<ILNameSyntax>> signature =
+				definition.DecodeSignature(signatureProvider, new MetadataGenericContext(handle, module));
+
+			InstructionOutputExtensions.WriteParameterList(output, signature);
+
 			return output.ToString();
 		}
 
