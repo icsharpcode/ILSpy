@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+// Copyright (c) 2014 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -367,8 +367,16 @@ namespace ICSharpCode.Decompiler.CSharp
 							return true;
 					}
 					// event-fields are not [CompilerGenerated]
-					if (settings.AutomaticEvents && metadata.GetTypeDefinition(field.GetDeclaringType()).GetEvents().Any(ev => metadata.GetEventDefinition(ev).Name == field.Name))
-						return true;
+					if (settings.AutomaticEvents)
+					{
+						foreach (var ev in metadata.GetTypeDefinition(field.GetDeclaringType()).GetEvents())
+						{
+							var eventName = metadata.GetString(metadata.GetEventDefinition(ev).Name);
+							var fieldName = metadata.GetString(field.Name);
+							if (IsEventBackingFieldName(fieldName, eventName, out _))
+								return true;
+						}
+					}
 					if (settings.ArrayInitializers && metadata.GetString(metadata.GetTypeDefinition(field.GetDeclaringType()).Name).StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
 					{
 						// only hide fields starting with '__StaticArrayInit'
@@ -408,6 +416,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				propertyName = name.Substring(1);
 				return field.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.CompilerGenerated);
+			}
+			return false;
+		}
+
+		internal static bool IsEventBackingFieldName(string fieldName, string eventName, out int suffixLength)
+		{
+			suffixLength = 0;
+			if (fieldName == eventName)
+				return true;
+			var vbSuffixLength = "Event".Length;
+			if (fieldName.Length == eventName.Length + vbSuffixLength && fieldName.StartsWith(eventName, StringComparison.Ordinal) && fieldName.EndsWith("Event", StringComparison.Ordinal))
+			{
+				suffixLength = vbSuffixLength;
+				return true;
 			}
 			return false;
 		}

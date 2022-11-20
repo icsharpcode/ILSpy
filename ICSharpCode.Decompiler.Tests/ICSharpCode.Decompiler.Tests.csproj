@@ -110,6 +110,8 @@
     <Compile Include="Output\InsertParenthesesVisitorTests.cs" />
     <Compile Include="ProjectDecompiler\TargetFrameworkTests.cs" />
     <Compile Include="TestAssemblyResolver.cs" />
+    <None Include="TestCases\VBPretty\VBAutomaticEvents.vb" />
+    <Compile Include="TestCases\VBPretty\VBAutomaticEvents.cs" />
     <Compile Include="TypeSystem\ReflectionHelperTests.cs" />
     <None Include="TestCases\Pretty\MetadataAttributes.cs" />
     <None Include="TestCases\Correctness\ComInterop.cs" />
