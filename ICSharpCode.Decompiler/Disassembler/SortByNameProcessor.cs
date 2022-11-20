@@ -82,15 +82,15 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			// Start with the methods name, skip return type
 			output.Write(module.Metadata.GetString(definition.Name));
-			int genericParameterCount = definition.GetGenericParameters().Count;
-			if (genericParameterCount > 0)
-			{
-				output.Write($"`{genericParameterCount}");
-			}
 
 			DisassemblerSignatureTypeProvider signatureProvider = new DisassemblerSignatureTypeProvider(module, output);
 			MethodSignature<Action<ILNameSyntax>> signature =
 				definition.DecodeSignature(signatureProvider, new MetadataGenericContext(handle, module));
+
+			if (signature.GenericParameterCount > 0)
+			{
+				output.Write($"`{signature.GenericParameterCount}");
+			}
 
 			InstructionOutputExtensions.WriteParameterList(output, signature);
 

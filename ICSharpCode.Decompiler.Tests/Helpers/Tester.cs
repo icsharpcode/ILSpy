@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		UseOwnDisassembler = 0x8,
 		/// Work around bug in .NET 5 ilasm (https://github.com/dotnet/runtime/issues/32400)
 		UseLegacyAssembler = 0x10,
-		/// UseSortByNameFilter, implies UseOwnDiassembler
+		/// UseSortByNameFilter, implies UseOwnDisassembler
 		SortedOutput = 0x20,
 	}
 
