@@ -92,6 +92,8 @@
     <Compile Include="CSharp\CallBuilder.cs" />
     <Compile Include="CSharp\CSharpLanguageVersion.cs" />
     <Compile Include="DecompilationProgress.cs" />
+    <Compile Include="Disassembler\IEntityProcessor.cs" />
+    <Compile Include="Disassembler\SortByNameProcessor.cs" />
     <Compile Include="NRTAttributes.cs" />
     <Compile Include="PartialTypeInfo.cs" />
     <Compile Include="CSharp\ProjectDecompiler\IProjectFileWriter.cs" />

@@ -85,6 +85,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		UseOwnDisassembler = 0x8,
 		/// Work around bug in .NET 5 ilasm (https://github.com/dotnet/runtime/issues/32400)
 		UseLegacyAssembler = 0x10,
+		/// UseSortByNameFilter, implies UseOwnDisassembler
+		SortedOutput = 0x20,
 	}
 
 	public static partial class Tester
@@ -196,7 +198,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public static async Task<string> Disassemble(string sourceFileName, string outputFile, AssemblerOptions asmOptions)
 		{
-			if (asmOptions.HasFlag(AssemblerOptions.UseOwnDisassembler))
+			if (asmOptions.HasFlag(AssemblerOptions.UseOwnDisassembler) || asmOptions.HasFlag(AssemblerOptions.SortedOutput))
 			{
 				using (var peFileStream = new FileStream(sourceFileName, FileMode.Open, FileAccess.Read))
 				using (var peFile = new PEFile(sourceFileName, peFileStream))
@@ -205,7 +207,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					var metadata = peFile.Metadata;
 					var output = new PlainTextOutput(writer);
 					ReflectionDisassembler rd = new ReflectionDisassembler(output, CancellationToken.None);
-					rd.AssemblyResolver = new UniversalAssemblyResolver(sourceFileName, true, null);
+					if (asmOptions.HasFlag(AssemblerOptions.SortedOutput))
+					{
+						rd.EntityProcessor = new SortByNameProcessor();
+					}
+					rd.AssemblyResolver = new UniversalAssemblyResolver(sourceFileName, throwOnError: true, null);
 					rd.DetectControlStructure = false;
 					rd.WriteAssemblyReferences(metadata);
 					if (metadata.IsAssembly)
