@@ -111,7 +111,6 @@
     <Compile Include="Helpers\RoslynToolset.cs" />
     <Compile Include="Output\InsertParenthesesVisitorTests.cs" />
     <Compile Include="ProjectDecompiler\TargetFrameworkTests.cs" />
-    <Compile Include="SortingReflectionDisassemblerTest.cs" />
     <Compile Include="TestAssemblyResolver.cs" />
     <Compile Include="TypeSystem\ReflectionHelperTests.cs" />
     <None Include="TestCases\Pretty\MetadataAttributes.cs" />

@@ -93,7 +93,7 @@
     <Compile Include="CSharp\CSharpLanguageVersion.cs" />
     <Compile Include="DecompilationProgress.cs" />
     <Compile Include="Disassembler\IEntityProcessor.cs" />
-    <Compile Include="Disassembler\SortByNameFilter.cs" />
+    <Compile Include="Disassembler\SortByNameProcessor.cs" />
     <Compile Include="NRTAttributes.cs" />
     <Compile Include="PartialTypeInfo.cs" />
     <Compile Include="CSharp\ProjectDecompiler\IProjectFileWriter.cs" />
