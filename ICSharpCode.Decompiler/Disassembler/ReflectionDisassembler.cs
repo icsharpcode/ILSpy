@@ -1562,7 +1562,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			DisassembleTypeHeaderInternal(module, type, typeDefinition, genericContext);
 
-			var interfaces = Filter(module, typeDefinition.GetInterfaceImplementations());
+			var interfaces = Process(module, typeDefinition.GetInterfaceImplementations());
 			if (interfaces.Count > 0)
 			{
 				output.Indent();
@@ -1601,7 +1601,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.WriteLine(".size {0}", layout.Size);
 				output.WriteLine();
 			}
-			var nestedTypes = Filter(module, typeDefinition.GetNestedTypes());
+			var nestedTypes = Process(module, typeDefinition.GetNestedTypes());
 			if (nestedTypes.Any())
 			{
 				output.WriteLine("// Nested Types");
@@ -1613,7 +1613,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				}
 				output.WriteLine();
 			}
-			var fields = Filter(module, typeDefinition.GetFields());
+			var fields = Process(module, typeDefinition.GetFields());
 			if (fields.Any())
 			{
 				output.WriteLine("// Fields");
@@ -1624,7 +1624,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				}
 				output.WriteLine();
 			}
-			var methods = Filter(module, typeDefinition.GetMethods());
+			var methods = Process(module, typeDefinition.GetMethods());
 			if (methods.Any())
 			{
 				output.WriteLine("// Methods");
@@ -1635,7 +1635,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.WriteLine();
 				}
 			}
-			var events = Filter(module, typeDefinition.GetEvents());
+			var events = Process(module, typeDefinition.GetEvents());
 			if (events.Any())
 			{
 				output.WriteLine("// Events");
@@ -1647,7 +1647,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				}
 				output.WriteLine();
 			}
-			var properties = Filter(module, typeDefinition.GetProperties());
+			var properties = Process(module, typeDefinition.GetProperties());
 			if (properties.Any())
 			{
 				output.WriteLine("// Properties");
@@ -1749,36 +1749,36 @@ namespace ICSharpCode.Decompiler.Disassembler
 		}
 		#endregion
 
-		#region Filter
+		#region Processing
 
-		private IReadOnlyCollection<InterfaceImplementationHandle> Filter(PEFile module, IReadOnlyCollection<InterfaceImplementationHandle> items)
+		private IReadOnlyCollection<InterfaceImplementationHandle> Process(PEFile module, IReadOnlyCollection<InterfaceImplementationHandle> items)
 		{
-			return EntityProcessor?.Filter(module, items) ?? items;
+			return EntityProcessor?.Process(module, items) ?? items;
 		}
 
-		private IReadOnlyCollection<TypeDefinitionHandle> Filter(PEFile module, IReadOnlyCollection<TypeDefinitionHandle> items)
+		private IReadOnlyCollection<TypeDefinitionHandle> Process(PEFile module, IReadOnlyCollection<TypeDefinitionHandle> items)
 		{
-			return EntityProcessor?.Filter(module, items) ?? items;
+			return EntityProcessor?.Process(module, items) ?? items;
 		}
 
-		private IReadOnlyCollection<MethodDefinitionHandle> Filter(PEFile module, IReadOnlyCollection<MethodDefinitionHandle> items)
+		private IReadOnlyCollection<MethodDefinitionHandle> Process(PEFile module, IReadOnlyCollection<MethodDefinitionHandle> items)
 		{
-			return EntityProcessor?.Filter(module, items) ?? items;
+			return EntityProcessor?.Process(module, items) ?? items;
 		}
 
-		private IReadOnlyCollection<PropertyDefinitionHandle> Filter(PEFile module, IReadOnlyCollection<PropertyDefinitionHandle> items)
+		private IReadOnlyCollection<PropertyDefinitionHandle> Process(PEFile module, IReadOnlyCollection<PropertyDefinitionHandle> items)
 		{
-			return EntityProcessor?.Filter(module, items) ?? items;
+			return EntityProcessor?.Process(module, items) ?? items;
 		}
 
-		private IReadOnlyCollection<EventDefinitionHandle> Filter(PEFile module, IReadOnlyCollection<EventDefinitionHandle> items)
+		private IReadOnlyCollection<EventDefinitionHandle> Process(PEFile module, IReadOnlyCollection<EventDefinitionHandle> items)
 		{
-			return EntityProcessor?.Filter(module, items) ?? items;
+			return EntityProcessor?.Process(module, items) ?? items;
 		}
 
-		private IReadOnlyCollection<FieldDefinitionHandle> Filter(PEFile module, IReadOnlyCollection<FieldDefinitionHandle> items)
+		private IReadOnlyCollection<FieldDefinitionHandle> Process(PEFile module, IReadOnlyCollection<FieldDefinitionHandle> items)
 		{
-			return EntityProcessor?.Filter(module, items) ?? items;
+			return EntityProcessor?.Process(module, items) ?? items;
 		}
 
 		#endregion
@@ -2074,7 +2074,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public void WriteModuleContents(PEFile module)
 		{
-			foreach (var handle in Filter(module, module.Metadata.GetTopLevelTypeDefinitions().ToArray()))
+			foreach (var handle in Process(module, module.Metadata.GetTopLevelTypeDefinitions().ToArray()))
 			{
 				DisassembleType(module, handle);
 				output.WriteLine();

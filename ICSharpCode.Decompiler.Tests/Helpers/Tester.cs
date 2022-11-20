@@ -203,7 +203,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					ReflectionDisassembler rd = new ReflectionDisassembler(output, CancellationToken.None);
 					if (asmOptions.HasFlag(AssemblerOptions.SortedOutput))
 					{
-						rd.EntityProcessor = new SortByNameFilter();
+						rd.EntityProcessor = new SortByNameProcessor();
 					}
 					rd.AssemblyResolver = new UniversalAssemblyResolver(sourceFileName, throwOnError: true, null);
 					rd.DetectControlStructure = false;

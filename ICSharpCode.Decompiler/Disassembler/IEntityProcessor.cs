@@ -27,16 +27,16 @@ namespace ICSharpCode.Decompiler.Disassembler
 {
 	public interface IEntityProcessor
 	{
-		IReadOnlyCollection<InterfaceImplementationHandle> Filter(PEFile module, IReadOnlyCollection<InterfaceImplementationHandle> items);
+		IReadOnlyCollection<InterfaceImplementationHandle> Process(PEFile module, IReadOnlyCollection<InterfaceImplementationHandle> items);
 
-		IReadOnlyCollection<TypeDefinitionHandle> Filter(PEFile module, IReadOnlyCollection<TypeDefinitionHandle> items);
+		IReadOnlyCollection<TypeDefinitionHandle> Process(PEFile module, IReadOnlyCollection<TypeDefinitionHandle> items);
 
-		IReadOnlyCollection<MethodDefinitionHandle> Filter(PEFile module, IReadOnlyCollection<MethodDefinitionHandle> items);
+		IReadOnlyCollection<MethodDefinitionHandle> Process(PEFile module, IReadOnlyCollection<MethodDefinitionHandle> items);
 
-		IReadOnlyCollection<PropertyDefinitionHandle> Filter(PEFile module, IReadOnlyCollection<PropertyDefinitionHandle> items);
+		IReadOnlyCollection<PropertyDefinitionHandle> Process(PEFile module, IReadOnlyCollection<PropertyDefinitionHandle> items);
 
-		IReadOnlyCollection<EventDefinitionHandle> Filter(PEFile module, IReadOnlyCollection<EventDefinitionHandle> items);
+		IReadOnlyCollection<EventDefinitionHandle> Process(PEFile module, IReadOnlyCollection<EventDefinitionHandle> items);
 
-		IReadOnlyCollection<FieldDefinitionHandle> Filter(PEFile module, IReadOnlyCollection<FieldDefinitionHandle> items);
+		IReadOnlyCollection<FieldDefinitionHandle> Process(PEFile module, IReadOnlyCollection<FieldDefinitionHandle> items);
 	}
 }
