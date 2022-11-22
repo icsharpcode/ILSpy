@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017 Siegfried Pammer
+// Copyright (c) 2017 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -39,8 +39,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (!TransformLockRoslyn(block, i))
 					if (!TransformLockV4(block, i))
-						if (!TransformLockV2(block, i))
-							TransformLockMCS(block, i);
+						if (!TransformLockV4YieldReturn(block, i))
+							if (!TransformLockV2(block, i))
+								TransformLockMCS(block, i);
 				// This happens in some cases:
 				// Use correct index after transformation.
 				if (i >= block.Instructions.Count)
@@ -184,6 +185,52 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		/// <summary>
+		///	stloc flag(ldc.i4 0)
+		///	.try BlockContainer {
+		///		Block lockBlock (incoming: 1) {
+		///			stloc obj1(stloc obj2(lockObj))
+		///			call Enter(ldloc obj2, ldloca flag)
+		///			call WriteLine()
+		///			leave lockBlock (nop)
+		///		}
+		///	} finally BlockContainer {
+		///		Block (incoming: 1) {
+		///			if (ldloc flag) Block  {
+		///				call Exit(ldloc obj1)
+		///			}
+		///			leave lockBlock (nop)
+		///		}
+		/// }
+		/// =>
+		/// .lock (lockObj) BlockContainer {
+		/// 	Block lockBlock (incoming: 1) {
+		///			call WriteLine()
+		///			leave lockBlock (nop)
+		///		}
+		/// }
+		/// </summary>
+		bool TransformLockV4YieldReturn(Block block, int i)
+		{
+			if (i < 1)
+				return false;
+			if (!(block.Instructions[i] is TryFinally body) || !(block.Instructions[i - 1] is StLoc flagStore))
+				return false;
+			if (!flagStore.Variable.Type.IsKnownType(KnownTypeCode.Boolean) || !flagStore.Value.MatchLdcI4(0))
+				return false;
+			if (!(body.TryBlock is BlockContainer tryContainer) || !MatchLockEntryPoint(tryContainer.EntryPoint, flagStore.Variable, out ILVariable exitVariable, out var objectStore))
+				return false;
+			if (!(body.FinallyBlock is BlockContainer finallyContainer) || !MatchExitBlock(finallyContainer.EntryPoint, flagStore.Variable, exitVariable))
+				return false;
+			if (objectStore.Variable.LoadCount > 1)
+				return false;
+			context.Step("LockTransformV4YieldReturn", block);
+			block.Instructions.RemoveAt(i - 1);
+			tryContainer.EntryPoint.Instructions.RemoveRange(0, 2);
+			body.ReplaceWith(new LockInstruction(objectStore.Value, body.TryBlock).WithILRange(objectStore));
+			return true;
+		}
+
+		/// <summary>
 		/// stloc obj(lockObj)
 		///	stloc flag(ldc.i4 0)
 		///	.try BlockContainer {
@@ -277,6 +324,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!MatchCall(entryPoint.Instructions[0] as Call, "Enter", flag, out obj))
 				return false;
 			return true;
+		}
+
+		bool MatchLockEntryPoint(Block entryPoint, ILVariable flag, out ILVariable exitVairable, out StLoc obj)
+		{
+			// This pattern is commonly seen in yield return state machines emitted by the legacy C# compiler.
+			obj = null;
+			exitVairable = null;
+			if (entryPoint.Instructions.Count < 1 || entryPoint.IncomingEdgeCount != 1)
+				return false;
+			if (entryPoint.Instructions[0].MatchStLoc(out exitVairable, out var value) && value is StLoc nestedStloc)
+			{
+				obj = nestedStloc;
+				if (!MatchCall(entryPoint.Instructions[1] as Call, "Enter", nestedStloc.Variable, flag))
+					return false;
+				return true;
+			}
+			return false;
 		}
 
 		bool MatchCall(Call call, string methodName, ILVariable flag, out StLoc obj)
