@@ -47,6 +47,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 		private static dynamic field;
+		private static volatile dynamic volatileField;
 		private static object objectField;
 		public dynamic Property { get; set; }
 

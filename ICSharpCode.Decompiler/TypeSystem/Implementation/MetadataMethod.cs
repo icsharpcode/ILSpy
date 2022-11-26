@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2018 Daniel Grunwald
+// Copyright (c) 2018 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -271,8 +271,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 			Debug.Assert(i == parameters.Length);
 			var returnType = ApplyAttributeTypeVisitor.ApplyAttributesToType(signature.ReturnType,
-				module.Compilation, returnTypeAttributes, metadata, typeSystemOptions, nullableContext,
-				isSignatureReturnType: true);
+				module.Compilation, returnTypeAttributes, metadata, typeSystemOptions, nullableContext);
 			return (returnType, parameters, signature.ReturnType as ModifiedType);
 		}
 		#endregion
