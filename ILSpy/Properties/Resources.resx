@@ -432,6 +432,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.RemoveOptionalArgumentsIfPossible" xml:space="preserve">
     <value>Remove optional arguments, if possible</value>
   </data>
+  <data name="DecompilerSettings.RequiredMembers" xml:space="preserve">
+    <value>Required members</value>
+  </data>
   <data name="DecompilerSettings.SeparateLocalVariableDeclarations" xml:space="preserve">
     <value>Separate local variable declarations and initializers (int x = 5; -&gt; int x; x = 5;), if possible</value>
   </data>
@@ -1053,8 +1056,5 @@ Do you want to continue?</value>
   </data>
   <data name="_Window" xml:space="preserve">
     <value>_Window</value>
-  </data>
-  <data name="DecompilerSettings.RequiredMembers" xml:space="preserve">
-    <value>Required members</value>
   </data>
 </root>
