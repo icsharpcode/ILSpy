@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task Async([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
-			await Run(options: options);
+			await Run(options: options | CompilerOptions.Library);
 		}
 
 		[Test] // TODO: legacy VB compound assign
@@ -142,7 +142,7 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 
 			var executable = await Tester.CompileVB(vbFile, options | CompilerOptions.ReferenceVisualBasic, exeFile).ConfigureAwait(false);
-			var decompiled = await Tester.DecompileCSharp(executable.PathToAssembly, settings).ConfigureAwait(false);
+			var decompiled = await Tester.DecompileCSharp(executable.PathToAssembly, settings ?? new DecompilerSettings { FileScopedNamespaces = false }).ConfigureAwait(false);
 
 			CodeAssert.FilesAreEqual(csFile, decompiled, Tester.GetPreprocessorSymbols(options).ToArray());
 			Tester.RepeatOnIOError(() => File.Delete(decompiled));

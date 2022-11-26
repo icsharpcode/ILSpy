@@ -196,6 +196,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				{
 					CopyPropagation.Propagate(stloc, context);
 				}
+
+				// Remove lone 'ldc.i4', present in older Roslyn VB compiler output
+				foreach (var block in function.Descendants.OfType<Block>())
+					block.Instructions.RemoveAll(inst => inst.OpCode == OpCode.LdcI4);
 			}
 
 			// Copy-propagate temporaries holding a copy of 'this'.
