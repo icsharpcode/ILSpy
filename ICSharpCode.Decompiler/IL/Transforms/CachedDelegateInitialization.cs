@@ -218,7 +218,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
-			if (s.Kind != VariableKind.StackSlot || s.StoreCount != 2 || s.LoadCount != 1)
+			if (s.Kind != VariableKind.StackSlot || s.StoreCount != 2)
 				return false;
 			if (!(trueInitValue is StObj stobj) || !(falseInitValue is LdObj ldobj))
 				return false;
