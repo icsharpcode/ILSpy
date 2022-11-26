@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017 Daniel Grunwald
+// Copyright (c) 2017 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -105,6 +105,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		// across the yield point.
 		Dictionary<Block, (ILVariable awaiterVar, IField awaiterField)> awaitBlocks = new Dictionary<Block, (ILVariable awaiterVar, IField awaiterField)>();
 
+		bool isVisualBasicStateMachine;
+
 		int catchHandlerOffset;
 		List<AsyncDebugInfo.Await> awaitDebugInfos = new List<AsyncDebugInfo.Await>();
 
@@ -158,8 +160,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// and inlining because TranslateFieldsToLocalAccess() might have opened up new inlining opportunities.
 			function.RunTransforms(CSharpDecompiler.EarlyILTransforms(), context);
 
-			AwaitInCatchTransform.Run(function, context);
-			AwaitInFinallyTransform.Run(function, context);
+			if (!isVisualBasicStateMachine)
+			{
+				AwaitInCatchTransform.Run(function, context);
+				AwaitInFinallyTransform.Run(function, context);
+			}
 
 			awaitDebugInfos.SortBy(row => row.YieldOffset);
 			function.AsyncDebugInfo = new AsyncDebugInfo(catchHandlerOffset, awaitDebugInfos.ToImmutableArray());
@@ -178,6 +183,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			foreach (var stobj in function.Descendants.OfType<StObj>())
 			{
 				EarlyExpressionTransforms.StObjToStLoc(stobj, context);
+			}
+
+			if (isVisualBasicStateMachine)
+			{
+				// Visual Basic state machines often contain stack slots for ldflda instruction for the builder field.
+				// This messes up the matching code in AnalyzeAwaitBlock() and causes it to fail.
+				// Propagating these stack stores makes the matching code work without the need for a lot of
+				// additional matching code to handle these stack slots.
+				foreach (var stloc in function.Descendants.OfType<StLoc>().Where(s => s.Variable.Kind == VariableKind.StackSlot && s.Variable.IsSingleDefinition
+							&& s.Value.MatchLdFlda(out var target, out var field) && field.Equals(builderField) && target.MatchLdThis()).ToList())
+				{
+					CopyPropagation.Propagate(stloc, context);
+				}
 			}
 
 			// Copy-propagate temporaries holding a copy of 'this'.
@@ -335,6 +353,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 			}
 
+			if (IsPotentialVisualBasicStateMachineInitialiation(body[0], stateMachineVar))
+			{
+				// Visual Basic compiler uses a different order of field assignements
+				if (MatchVisualBasicStateMachineFieldAssignements(body, stateMachineVar))
+				{
+					isVisualBasicStateMachine = true;
+					return true;
+				}
+				// If the Visual Basic matching code failed, reset the map in case it
+				// was partially populated and try matching the C# state machine initialization.
+				fieldToParameterMap.Clear();
+			}
+
 			// Check the last field assignment - this should be the state field
 			// stfld <>1__state(ldloca stateField, ldc.i4 -1)
 			if (!MatchStFld(body[pos], stateMachineVar, out stateField, out var initialStateExpr))
@@ -386,6 +417,62 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			return builderFieldIsInitialized;
+		}
+
+		bool IsPotentialVisualBasicStateMachineInitialiation(ILInstruction inst, ILVariable stateMachineVar)
+		{
+			// stobj VB$StateMachine(ldloca stateMachine, default.value VB$StateMachine)
+			// Used by VBC (Debug and Release) and Roslyn VB (Release) builds
+			if (inst.MatchStObj(out var target, out var val, out var type1) && target.MatchLdLoca(stateMachineVar) &&
+				val.MatchDefaultValue(out var type2) && type1.Equals(type2))
+				return true;
+			// stloc stateMachine(newobj VB$StateMachine..ctor())
+			// Used by Roslyn VB (Debug) builds
+			if (inst.MatchStLoc(stateMachineVar, out var init) && init is NewObj newObj && newObj.Arguments.Count == 0 &&
+				stateMachineType.Equals(newObj.Method.DeclaringTypeDefinition))
+				return true;
+			return false;
+		}
+
+		bool MatchVisualBasicStateMachineFieldAssignements(IList<ILInstruction> body, ILVariable stateMachineVar)
+		{
+			// stfld $State(ldloca stateField, ldc.i4 -1)
+			if (!MatchStFld(body[body.Count - 4], stateMachineVar, out stateField, out var initialStateExpr))
+				return false;
+			if (!initialStateExpr.MatchLdcI4(out initialState))
+				return false;
+			if (initialState != -1)
+				return false;
+
+			// stfld $Builder(ldloca stateMachine, call Create())
+			if (!MatchStFld(body[body.Count - 3], stateMachineVar, out var builderField2, out var fieldInit))
+				return false;
+			if (!builderField.Equals(builderField2))
+				return false;
+			if (fieldInit is not Call { Method: { Name: "Create" }, Arguments: { Count: 0 } })
+				return false;
+
+			for (int i = 1; i < body.Count - 4; i++)
+			{
+				if (!MatchStFld(body[i], stateMachineVar, out var field, out fieldInit))
+					return false;
+				// Legacy Visual Basic compiler can emit a call to RuntimeHelpers.GetObjectValue here
+				if (fieldInit is Call call && call.Arguments.Count == 1 && call.Method.IsStatic && call.Method.Name == "GetObjectValue")
+					fieldInit = call.Arguments[0];
+				if (fieldInit.MatchLdLoc(out var v) && v.Kind == VariableKind.Parameter)
+				{
+					// OK, copies parameter into state machine
+					fieldToParameterMap[field] = v;
+				}
+				else if (fieldInit is LdObj ldobj && ldobj.Target.MatchLdThis())
+				{
+					// stfld <>4__this(ldloc stateMachine, ldobj AsyncInStruct(ldloc this))
+					fieldToParameterMap[field] = ((LdLoc)ldobj.Target).Variable;
+				}
+				else
+					return false;
+			}
+			return true;
 		}
 
 		/// <summary>
@@ -622,6 +709,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			bool[] blocksAnalyzed = new bool[blockContainer.Blocks.Count];
 			cachedStateVar = null;
 			int pos = 0;
+			// Visual Basic state machines initialize doFinallyBodies at the start of MoveNext()
+			// stloc doFinallyBodies(ldc.i4 1)
+			if (isVisualBasicStateMachine && blockContainer.EntryPoint.Instructions[pos].MatchStLoc(out var v, out var ldci4) &&
+				ldci4.MatchLdcI4(1))
+			{
+				doFinallyBodies = v;
+				pos++;
+			}
 			while (blockContainer.EntryPoint.Instructions[pos] is StLoc stloc)
 			{
 				// stloc V_1(ldfld <>4__this(ldloc this))
@@ -651,6 +746,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				throw new SymbolicAnalysisFailedException();
 			// CatchHandler will be validated in ValidateCatchBlock()
 
+			// stloc doFinallyBodies(ldc.i4 1)
 			if (((BlockContainer)mainTryCatch.TryBlock).EntryPoint.Instructions[0] is StLoc initDoFinallyBodies
 				&& initDoFinallyBodies.Variable.Kind == VariableKind.Local
 				&& initDoFinallyBodies.Variable.Type.IsKnownType(KnownTypeCode.Boolean)
@@ -715,9 +811,35 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			var block = blockContainer.Blocks[setResultReturnBlockIndex];
-			// stfld <>1__state(ldloc this, ldc.i4 -2)
+
 			int pos = 0;
+			// [vb-only] stloc S_10(ldloc this)
+			if (block.Instructions[pos] is StLoc stlocThisCache && stlocThisCache.Value.MatchLdThis() &&
+				stlocThisCache.Variable.Kind == VariableKind.StackSlot)
+			{
+				pos++;
+			}
+			// [vb-only] stloc S_11(ldc.i4 -2)
+			ILVariable finalStateSlot = null;
+			int? finalStateSlotValue = null;
+			if (block.Instructions[pos] is StLoc stlocFinalState && stlocFinalState.Value is LdcI4 ldcI4 &&
+				stlocFinalState.Variable.Kind == VariableKind.StackSlot)
+			{
+				finalStateSlot = stlocFinalState.Variable;
+				finalStateSlotValue = ldcI4.Value;
+				pos++;
+			}
+			// [vb-only] stloc cachedStateVar(ldloc S_11)
+			if (block.Instructions[pos] is StLoc stlocCachedState && stlocCachedState.Variable.Kind == VariableKind.Local &&
+				stlocCachedState.Variable.Index == cachedStateVar?.Index && stlocCachedState.Value.MatchLdLoc(finalStateSlot))
+			{
+				pos++;
+			}
+
+			// stfld <>1__state(ldloc this, ldc.i4 -2)
 			if (!MatchStateAssignment(block.Instructions[pos], out finalState))
+				throw new SymbolicAnalysisFailedException();
+			if (finalStateSlotValue is not null && finalState != finalStateSlotValue.Value)
 				throw new SymbolicAnalysisFailedException();
 			finalStateKnown = true;
 			pos++;
@@ -874,13 +996,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			bool[] blocksAnalyzed = new bool[handlerContainer.Blocks.Count];
 			var catchBlock = handlerContainer.EntryPoint;
 			catchHandlerOffset = catchBlock.StartILOffset;
+			int pos = 0;
+			// [vb-only] call SetProjectError(ldloc E_143)
+			if (isVisualBasicStateMachine && catchBlock.Instructions[pos] is Call call && call.Method.Name == "SetProjectError" &&
+				call.Arguments.Count == 1 && call.Arguments[0].MatchLdLoc(handler.Variable))
+			{
+				pos++;
+			}
 			// stloc exception(ldloc E_143)
-			if (!(catchBlock.Instructions[0] is StLoc stloc))
+			if (!(catchBlock.Instructions[pos++] is StLoc stloc))
 				throw new SymbolicAnalysisFailedException();
 			if (!stloc.Value.MatchLdLoc(handler.Variable))
 				throw new SymbolicAnalysisFailedException();
 			// stfld <>1__state(ldloc this, ldc.i4 -2)
-			if (!MatchStateAssignment(catchBlock.Instructions[1], out int newState))
+			if (!MatchStateAssignment(catchBlock.Instructions[pos++], out int newState))
 				throw new SymbolicAnalysisFailedException();
 			if (finalStateKnown)
 			{
@@ -892,7 +1021,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				finalState = newState;
 				finalStateKnown = true;
 			}
-			int pos = 2;
 			if (pos + 2 == catchBlock.Instructions.Count && catchBlock.MatchIfAtEndOfBlock(out var condition, out var trueInst, out var falseInst))
 			{
 				if (MatchDisposeCombinedTokens(handlerContainer, condition, trueInst, falseInst, blocksAnalyzed, out var setResultAndExitBlock))
@@ -923,6 +1051,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			pos++;
 			// [optional] call Complete(ldfld <>t__builder(ldloc this))
 			MatchCompleteCall(catchBlock, ref pos);
+
+			// [vb-only] call ClearProjectError()
+			if (isVisualBasicStateMachine && catchBlock.Instructions[pos] is Call call2 &&
+				call2.Method.Name == "ClearProjectError" && call2.Arguments.Count == 0)
+			{
+				pos++;
+			}
 
 			// leave IL_0000
 			if (!catchBlock.Instructions[pos].MatchLeave((BlockContainer)moveNextFunction.Body))
@@ -1594,77 +1729,116 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!RestoreStack(block, ref pos, stackField))
 				return false;
 
-			// stloc awaiterVar(ldfld awaiterField(ldloc this))
-			if (!block.Instructions[pos].MatchStLoc(awaiterVar, out var value))
-				return false;
-			if (value is CastClass cast && cast.Type.Equals(awaiterVar.Type))
+			// Visual Basic state machines use a different order of field assignements.
+			if (isVisualBasicStateMachine)
 			{
-				// If the awaiter is a reference type, it might get stored in a field of type `object`
-				// and cast back to the awaiter type in the resume block
-				value = cast.Argument;
-			}
-			if (!value.MatchLdFld(out var target, out var field))
-				return false;
-			if (!target.MatchLdThis())
-				return false;
-			if (!field.Equals(awaiterField))
-				return false;
-			pos++;
-
-			// stfld awaiterField(ldloc this, default.value)
-			if (block.Instructions[pos].MatchStFld(out target, out field, out value)
-				&& target.MatchLdThis()
-				&& field.Equals(awaiterField)
-				&& (value.OpCode == OpCode.DefaultValue || value.OpCode == OpCode.LdNull))
-			{
+				// stloc S_28(ldc.i4 -1)
+				// stloc cachedStateVar(ldloc S_28)
+				// stfld <>1__state(ldloc this, ldloc S_28)
+				if (!MatchStateFieldAssignement(block, ref pos))
+					return false;
 				pos++;
+
+				// stloc awaiterVar(ldfld awaiterField(ldloc this))
+				if (!MatchStoreToAwaiterVariable(block.Instructions[pos]))
+					return false;
+				pos++;
+
+				// [optional] stfld awaiterField(ldloc this, default.value)
+				MatchResetAwaiterField(block, ref pos);
 			}
 			else
 			{
-				// {stloc V_6(default.value System.Runtime.CompilerServices.TaskAwaiter)}
-				// {stobj System.Runtime.CompilerServices.TaskAwaiter`1[[System.Int32]](ldflda <>u__$awaiter4(ldloc this), ldloc V_6) at IL_0163}
-				if (block.Instructions[pos].MatchStLoc(out var variable, out value) && value.OpCode == OpCode.DefaultValue
-					&& block.Instructions[pos + 1].MatchStFld(out target, out field, out value)
-					&& field.Equals(awaiterField)
-					&& value.MatchLdLoc(variable))
+				// stloc awaiterVar(ldfld awaiterField(ldloc this))
+				if (!MatchStoreToAwaiterVariable(block.Instructions[pos]))
+					return false;
+				pos++;
+
+				// [optional] stfld awaiterField(ldloc this, default.value)
+				MatchResetAwaiterField(block, ref pos);
+
+				// stloc S_28(ldc.i4 -1)
+				// stloc cachedStateVar(ldloc S_28)
+				// stfld <>1__state(ldloc this, ldloc S_28)
+				if (!MatchStateFieldAssignement(block, ref pos))
+					return false;
+				pos++;
+			}
+			return block.Instructions[pos].MatchBranch(completedBlock);
+
+			bool MatchStoreToAwaiterVariable(ILInstruction instr)
+			{
+				// stloc awaiterVar(ldfld awaiterField(ldloc this))
+				if (!instr.MatchStLoc(awaiterVar, out var value))
+					return false;
+				if (value is CastClass cast && cast.Type.Equals(awaiterVar.Type))
 				{
-					pos += 2;
+					// If the awaiter is a reference type, it might get stored in a field of type `object`
+					// and cast back to the awaiter type in the resume block
+					value = cast.Argument;
+				}
+				if (!value.MatchLdFld(out var target, out var field))
+					return false;
+				if (!target.MatchLdThis())
+					return false;
+				if (!field.Equals(awaiterField))
+					return false;
+				return true;
+			}
+
+			void MatchResetAwaiterField(Block block, ref int pos)
+			{
+				// stfld awaiterField(ldloc this, default.value)
+				if (block.Instructions[pos].MatchStFld(out var target, out var field, out var value)
+					&& target.MatchLdThis()
+					&& field.Equals(awaiterField)
+					&& (value.OpCode == OpCode.DefaultValue || value.OpCode == OpCode.LdNull))
+				{
+					pos++;
+				}
+				else
+				{
+					// {stloc V_6(default.value System.Runtime.CompilerServices.TaskAwaiter)}
+					// {stobj System.Runtime.CompilerServices.TaskAwaiter`1[[System.Int32]](ldflda <>u__$awaiter4(ldloc this), ldloc V_6) at IL_0163}
+					if (block.Instructions[pos].MatchStLoc(out var variable, out value) && value.OpCode == OpCode.DefaultValue
+						&& block.Instructions[pos + 1].MatchStFld(out target, out field, out value)
+						&& field.Equals(awaiterField)
+						&& value.MatchLdLoc(variable))
+					{
+						pos += 2;
+					}
 				}
 			}
 
-			// stloc S_28(ldc.i4 -1)
-			// stloc cachedStateVar(ldloc S_28)
-			// stfld <>1__state(ldloc this, ldloc S_28)
-			ILVariable m1Var = null;
-			if (block.Instructions[pos] is StLoc stlocM1 && stlocM1.Value.MatchLdcI4(initialState) && stlocM1.Variable.Kind == VariableKind.StackSlot)
+			bool MatchStateFieldAssignement(Block block, ref int pos)
 			{
-				m1Var = stlocM1.Variable;
-				pos++;
-			}
-			if (block.Instructions[pos] is StLoc stlocCachedState)
-			{
-				if (stlocCachedState.Variable.Kind == VariableKind.Local && stlocCachedState.Variable.Index == cachedStateVar?.Index)
+				// stloc S_28(ldc.i4 -1)
+				// stloc cachedStateVar(ldloc S_28)
+				// stfld <>1__state(ldloc this, ldloc S_28)
+				ILVariable m1Var = null;
+				if (block.Instructions[pos] is StLoc stlocM1 && stlocM1.Value.MatchLdcI4(initialState) && stlocM1.Variable.Kind == VariableKind.StackSlot)
 				{
-					if (stlocCachedState.Value.MatchLdLoc(m1Var) || stlocCachedState.Value.MatchLdcI4(initialState))
-						pos++;
+					m1Var = stlocM1.Variable;
+					pos++;
 				}
-			}
-			if (block.Instructions[pos].MatchStFld(out target, out field, out value))
-			{
+				if (block.Instructions[pos] is StLoc stlocCachedState)
+				{
+					if (stlocCachedState.Variable.Kind == VariableKind.Local && stlocCachedState.Variable.Index == cachedStateVar?.Index)
+					{
+						if (stlocCachedState.Value.MatchLdLoc(m1Var) || stlocCachedState.Value.MatchLdcI4(initialState))
+							pos++;
+					}
+				}
+				if (!block.Instructions[pos].MatchStFld(out var target, out var field, out var value))
+					return false;
 				if (!target.MatchLdThis())
 					return false;
 				if (!field.MemberDefinition.Equals(stateField.MemberDefinition))
 					return false;
 				if (!(value.MatchLdcI4(initialState) || value.MatchLdLoc(m1Var)))
 					return false;
-				pos++;
+				return true;
 			}
-			else
-			{
-				return false;
-			}
-
-			return block.Instructions[pos].MatchBranch(completedBlock);
 		}
 
 		private bool RestoreStack(Block block, ref int pos, IField stackField)
