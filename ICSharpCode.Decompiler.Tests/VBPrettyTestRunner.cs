@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
 
-		[Test, Ignore("Implement VB async/await")]
+		[Test]
 		public async Task Async([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
 			await Run(options: options);

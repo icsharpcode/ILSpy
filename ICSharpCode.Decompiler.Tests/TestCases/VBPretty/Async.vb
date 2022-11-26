@@ -1,7 +1,8 @@
 Imports System
 Imports System.IO
+Imports System.Threading.Tasks
 
-Module Program
+Module AsyncProgram
     ' Sample taken verbatim from https://www.dotnetperls.com/async-vbnet
     Sub Main(args As String())
         Dim task = New Task(AddressOf ProcessDataAsync)
