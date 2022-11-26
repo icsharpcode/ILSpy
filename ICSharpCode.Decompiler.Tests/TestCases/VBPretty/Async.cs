@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+
 using Microsoft.VisualBasic.CompilerServices;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.VBPretty
