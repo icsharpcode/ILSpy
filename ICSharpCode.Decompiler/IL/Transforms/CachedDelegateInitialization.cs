@@ -55,6 +55,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						continue;
 					}
+					if (CachedDelegateInitializationVBWithReturn(inst))
+					{
+						block.Instructions.RemoveAt(i);
+						continue;
+					}
 					if (CachedDelegateInitializationVBWithClosure(inst))
 					{
 						continue;
@@ -238,6 +243,34 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			context.Step("CachedDelegateInitializationVB", inst);
 			inst.ReplaceWith(new StLoc(s, delegateConstruction));
+			return true;
+		}
+
+		/// <summary>
+		/// if (comp.o(ldsfld CachedAnonMethodDelegate != ldnull)) {
+		///		leave IL_0005 (ldsfld CachedAnonMethodDelegate)
+		/// }
+		///	leave IL_0005 (stsfld CachedAnonMethodDelegate(DelegateConstruction))
+		/// =>
+		/// leave IL_0005 (DelegateConstruction)
+		/// </summary>
+		bool CachedDelegateInitializationVBWithReturn(IfInstruction inst)
+		{
+			if (!inst.Condition.MatchCompNotEqualsNull(out var arg) || !arg.MatchLdsFld(out var field))
+				return false;
+			if (!inst.FalseInst.MatchNop())
+				return false;
+			if (!inst.TrueInst.MatchReturn(out arg) || !arg.MatchLdsFld(field))
+				return false;
+			var leaveAfterIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex + 1) as Leave;
+			if (leaveAfterIf is null || !leaveAfterIf.IsLeavingFunction)
+				return false;
+			if (!leaveAfterIf.Value.MatchStsFld(out var field2, out var delegateConstruction) || !field.Equals(field2))
+				return false;
+			if (!DelegateConstruction.MatchDelegateConstruction(delegateConstruction, out _, out _, out _, true))
+				return false;
+			context.Step("CachedDelegateInitializationVBWithReturn", inst);
+			leaveAfterIf.Value = delegateConstruction;
 			return true;
 		}
 
