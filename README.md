@@ -15,7 +15,7 @@ Aside from the WPF UI ILSpy (downloadable via Releases, see also [plugins](https
 * Our Visual Studio 2022 extension [marketplace](https://marketplace.visualstudio.com/items?itemName=SharpDevelopTeam.ILSpy2022)
 * Our Visual Studio 2017/2019 extension [marketplace](https://marketplace.visualstudio.com/items?itemName=SharpDevelopTeam.ILSpy)
 * Our Visual Studio Code Extension [repository](https://github.com/icsharpcode/ilspy-vscode) | [marketplace](https://marketplace.visualstudio.com/items?itemName=icsharpcode.ilspy-vscode)
-* Our Linux/Mac/Windows ILSpy UI based on [Avalonia](http://www.avaloniaui.net/) - check out https://github.com/icsharpcode/AvaloniaILSpy
+* Our Linux/Mac/Windows ILSpy UI is based on [Avalonia](http://www.avaloniaui.net/) - check out https://github.com/icsharpcode/AvaloniaILSpy
 * Our [ICSharpCode.Decompiler](https://www.nuget.org/packages/ICSharpCode.Decompiler/) NuGet for your own projects
 * Our dotnet tool for Linux/Mac/Windows - check out [ILSpyCmd](ICSharpCode.ILSpyCmd) in this repository
 * Our Linux/Mac/Windows [PowerShell cmdlets](ICSharpCode.Decompiler.PowerShell) in this repository
@@ -38,7 +38,7 @@ License
 -------
 
 ILSpy is distributed under the MIT License. Please see the [About](doc/ILSpyAboutPage.txt) doc for details, 
-as well as [third party notices](doc/third-party-notices.txt) for included open-source libraries.
+as well as [third-party notices](doc/third-party-notices.txt) for included open-source libraries.
 
 How to build
 ------------
@@ -81,7 +81,7 @@ How to contribute
 -----------------
 
 - Report bugs
-- If you want to contribute a pull request, please add https://github.com/icsharpcode/ILSpy/blob/master/BuildTools/pre-commit to your `.git/hooks` to prevent checking in code with wrong formatting. We use tabs and not spaces. The build server runs the same script, so any pull requests using wrong formatting will fail.
+- If you want to contribute a pull request, please add https://github.com/icsharpcode/ILSpy/blob/master/BuildTools/pre-commit to your `.git/hooks` to prevent checking in code with wrong formatting. We use tabs and not spaces. The build server runs the same script, so any pull requests using the wrong formatting will fail.
 
 Current and past [contributors](https://github.com/icsharpcode/ILSpy/graphs/contributors).
 
