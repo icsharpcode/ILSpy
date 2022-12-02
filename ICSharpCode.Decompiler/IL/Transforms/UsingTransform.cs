@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017 Siegfried Pammer
+// Copyright (c) 2017 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -316,7 +316,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// reference types have a null check.
 					if (!checkInst.MatchIfInstruction(out var condition, out var disposeInst))
 						return false;
-					if (!MatchNullCheckOrTypeCheck(condition, ref objVar, disposeTypeCode))
+					if (!MatchNullCheckOrTypeCheck(condition, ref objVar, disposeTypeCode, out var isInlinedIsInst))
 						return false;
 					if (!(disposeInst is Block disposeBlock) || disposeBlock.Instructions.Count != 1)
 						return false;
@@ -332,6 +332,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (target == null)
 						return false;
 					if (target.MatchBox(out var newTarget, out var type) && type.Equals(objVar.Type))
+						target = newTarget;
+					else if (isInlinedIsInst && target.MatchIsInst(out newTarget, out type) && type.IsKnownType(disposeTypeCode))
 						target = newTarget;
 					disposeCall = cv;
 				}
@@ -381,10 +383,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool MatchNullCheckOrTypeCheck(ILInstruction condition, ref ILVariable objVar, KnownTypeCode disposeType)
+		bool MatchNullCheckOrTypeCheck(ILInstruction condition, ref ILVariable objVar, KnownTypeCode disposeType, out bool isInlinedIsInst)
 		{
+			isInlinedIsInst = false;
 			if (condition.MatchCompNotEquals(out var left, out var right))
 			{
+				if (left.MatchIsInst(out var arg, out var type) && type.IsKnownType(disposeType))
+				{
+					isInlinedIsInst = true;
+					left = arg;
+				}
 				if (!left.MatchLdLoc(objVar) || !right.MatchLdNull())
 					return false;
 				return true;
