@@ -234,7 +234,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			string GetFileFileNameForHandle(TypeDefinitionHandle h)
 			{
 				var type = metadata.GetTypeDefinition(h);
-				string file = CleanUpFileName(metadata.GetString(type.Name)) + ".cs";
+				string file = SanitizeFileName(metadata.GetString(type.Name) + ".cs");
 				string ns = metadata.GetString(type.Namespace);
 				if (string.IsNullOrEmpty(ns))
 				{
@@ -616,10 +616,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </summary>
 		static string CleanUpName(string text, bool separateAtDots, bool treatAsFileName)
 		{
+			// Remove anything that could be confused with a rooted path.
 			int pos = text.IndexOf(':');
-			if (pos > 0)
-				text = text.Substring(0, pos);
-			pos = text.IndexOf('`');
 			if (pos > 0)
 				text = text.Substring(0, pos);
 			text = text.Trim();
@@ -649,6 +647,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						}
 					}
 				}
+			}
+			// Remove generics
+			pos = text.IndexOf('`');
+			if (pos > 0)
+			{
+				text = text.Substring(0, pos).Trim();
 			}
 			// Whitelist allowed characters, replace everything else:
 			StringBuilder b = new StringBuilder(text.Length + (extension?.Length ?? 0));
@@ -691,7 +695,15 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				b.Append('-');
 			string name = b.ToString();
 			if (extension != null)
+			{
+				// make sure that adding the extension to the filename
+				// does not exceed maxSegmentLength.
+				// trim the name, if necessary.
+				if (name.Length + extension.Length > maxSegmentLength)
+					name = name.Remove(name.Length - extension.Length);
 				name += extension;
+			}
+
 			if (IsReservedFileSystemName(name))
 				return name + "_";
 			else if (name == ".")
