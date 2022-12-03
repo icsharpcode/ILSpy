@@ -25,6 +25,7 @@ using System.Xml;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 {
@@ -43,7 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		public void Write(
 			TextWriter target,
 			IProjectInfoProvider project,
-			IEnumerable<(string itemType, string fileName)> files,
+			IEnumerable<ProjectItemInfo> files,
 			PEFile module)
 		{
 			const string ns = "http://schemas.microsoft.com/developer/msbuild/2003";
@@ -162,13 +163,18 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				}
 				w.WriteEndElement(); // </ItemGroup> (References)
 
-				foreach (IGrouping<string, string> gr in from f in files group f.fileName by f.itemType into g orderby g.Key select g)
+				foreach (IGrouping<string, ProjectItemInfo> gr in files.GroupBy(f => f.ItemType).OrderBy(g => g.Key))
 				{
 					w.WriteStartElement("ItemGroup");
-					foreach (string file in gr.OrderBy(f => f, StringComparer.OrdinalIgnoreCase))
+					foreach (var item in gr.OrderBy(f => f.FileName, StringComparer.OrdinalIgnoreCase))
 					{
 						w.WriteStartElement(gr.Key);
-						w.WriteAttributeString("Include", file);
+						w.WriteAttributeString("Include", item.FileName);
+						if (item.AdditionalProperties != null)
+						{
+							foreach (var (key, value) in item.AdditionalProperties)
+								w.WriteAttributeString(key, value);
+						}
 						w.WriteEndElement();
 					}
 					w.WriteEndElement();

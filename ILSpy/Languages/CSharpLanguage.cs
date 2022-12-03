@@ -517,7 +517,7 @@ namespace ICSharpCode.ILSpy
 				this.options = options;
 			}
 
-			protected override IEnumerable<(string itemType, string fileName, List<PartialTypeInfo> partialTypes)> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
+			protected override IEnumerable<ProjectItemInfo> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 			{
 				var context = new ResourceFileHandlerContext(options);
 				foreach (var handler in App.ExportProvider.GetExportedValues<IResourceFileHandler>())
@@ -527,7 +527,7 @@ namespace ICSharpCode.ILSpy
 						entryStream.Position = 0;
 						fileName = handler.WriteResourceToFile(assembly, fileName, entryStream, context);
 
-						return new[] { (handler.EntryType, fileName, context.PartialTypes) };
+						return new[] { new ProjectItemInfo(handler.EntryType, fileName) { PartialTypes = context.PartialTypes }.With(context.AdditionalProperties) };
 					}
 				}
 				return base.WriteResourceToFile(fileName, resourceName, entryStream);
