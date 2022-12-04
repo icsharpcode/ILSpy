@@ -1902,7 +1902,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				Debug.Assert(op == AssignmentOperatorType.Add || op == AssignmentOperatorType.Subtract);
 #if DEBUG
-				if (inst.Type is PointerType ptrType)
+				if (target.Type is PointerType ptrType)
 				{
 					ILInstruction instValue = PointerArithmeticOffset.Detect(inst.Value, ptrType.ElementType, inst.CheckForOverflow);
 					Debug.Assert(instValue is not null);
