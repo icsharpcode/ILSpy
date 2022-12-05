@@ -342,6 +342,12 @@ Examples:
 					{
 						Stream contents;
 
+						if (entry.RelativePath.Replace('\\', '/').Contains("../", StringComparison.Ordinal))
+						{
+							app.Error.WriteLine($"Skipping single-file entry '{entry.RelativePath}' because it might refer to a location outside of the bundle output directory.");
+							continue;
+						}
+
 						if (entry.CompressedSize == 0)
 						{
 							contents = new UnmanagedMemoryStream(packageView.SafeMemoryMappedViewHandle, entry.Offset, entry.Size);
