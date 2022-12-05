@@ -365,7 +365,9 @@ Examples:
 							contents = decompressedStream;
 						}
 
-						using (var fileStream = File.Create(Path.Combine(outputDirectory, entry.RelativePath)))
+						string target = Path.Combine(outputDirectory, entry.RelativePath);
+						Directory.CreateDirectory(Path.GetDirectoryName(target));
+						using (var fileStream = File.Create(target))
 						{
 							contents.CopyTo(fileStream);
 						}
