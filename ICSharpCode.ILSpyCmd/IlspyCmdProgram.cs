@@ -363,7 +363,7 @@ Examples:
 
 							if (decompressedStream.Length != entry.Size)
 							{
-								app.Error.WriteLine($"Corrupted single-file entry '${entry.RelativePath}'. Declared decompressed size '${entry.Size}' is not the same as actual decompressed size '${decompressedStream.Length}'.");
+								app.Error.WriteLine($"Corrupted single-file entry '{entry.RelativePath}'. Declared decompressed size '{entry.Size}' is not the same as actual decompressed size '{decompressedStream.Length}'.");
 								return ProgramExitCodes.EX_DATAERR;
 							}
 
