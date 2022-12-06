@@ -342,7 +342,7 @@ Examples:
 					{
 						Stream contents;
 
-						if (entry.RelativePath.Replace('\\', '/').Contains("../", StringComparison.Ordinal))
+						if (entry.RelativePath.Replace('\\', '/').Contains("../", StringComparison.Ordinal) || Path.IsPathRooted(entry.RelativePath))
 						{
 							app.Error.WriteLine($"Skipping single-file entry '{entry.RelativePath}' because it might refer to a location outside of the bundle output directory.");
 							continue;
