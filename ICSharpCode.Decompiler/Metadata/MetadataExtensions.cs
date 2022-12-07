@@ -185,7 +185,9 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public static string ToILNameString(this FullTypeName typeName, bool omitGenerics = false)
+
+
+		public static string ToILNameString(this FullTypeName typeName, bool omitGenerics = false, char nestedTypeDelimiter = '/')
 		{
 			string name;
 			if (typeName.IsNested)
@@ -198,7 +200,7 @@ namespace ICSharpCode.Decompiler.Metadata
 						name += "`" + localTypeParameterCount;
 				}
 				name = Disassembler.DisassemblerHelpers.Escape(name);
-				return $"{typeName.GetDeclaringType().ToILNameString(omitGenerics)}/{name}";
+				return $"{typeName.GetDeclaringType().ToILNameString(omitGenerics)}{nestedTypeDelimiter}{name}";
 			}
 			if (!string.IsNullOrEmpty(typeName.TopLevelTypeName.Namespace))
 			{
@@ -213,6 +215,11 @@ namespace ICSharpCode.Decompiler.Metadata
 					name += "`" + typeName.TypeParameterCount;
 			}
 			return Disassembler.DisassemblerHelpers.Escape(name);
+		}
+
+		public static string ToCSharpNameString(this FullTypeName fullName, bool omitGenerics = false)
+		{
+			return fullName.ToILNameString(omitGenerics, '.');
 		}
 
 		[Obsolete("Use MetadataModule.GetDeclaringModule() instead")]
