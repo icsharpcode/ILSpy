@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				return output.ToString();
 			});
 
-			var parameters = new Lazy<IReadOnlyList<string>>(() => {
+			var parameterTypes = new Lazy<IReadOnlyList<string>>(() => {
 				var items = new List<string>(signature.ParameterTypes.Length);
 				foreach (var parameterType in signature.ParameterTypes)
 				{
@@ -65,20 +65,20 @@ namespace ICSharpCode.Decompiler.Disassembler
 				return items.ToImmutableArray();
 			});
 
-			return new MethodSignature(handle, name, returnType, parameters);
+			return new MethodSignature(handle, name, returnType, parameterTypes);
 		}
 
 		private class MethodSignature : IMethodSignature
 		{
 			private readonly Lazy<string> returnType;
-			private readonly Lazy<IReadOnlyList<string>> argumentTypes;
+			private readonly Lazy<IReadOnlyList<string>> parameterTypes;
 
-			public MethodSignature(MethodDefinitionHandle handle, string name, Lazy<string> returnType, Lazy<IReadOnlyList<string>> argumentTypes)
+			public MethodSignature(MethodDefinitionHandle handle, string name, Lazy<string> returnType, Lazy<IReadOnlyList<string>> parameterTypes)
 			{
 				Handle = handle;
 				Name = name;
 				this.returnType = returnType;
-				this.argumentTypes = argumentTypes;
+				this.parameterTypes = parameterTypes;
 			}
 
 			public MethodDefinitionHandle Handle { get; }
@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			public string ReturnType => returnType.Value;
 
-			public IReadOnlyList<string> ArgumentTypes => argumentTypes.Value;
+			public IReadOnlyList<string> ParameterTypes => parameterTypes.Value;
 		}
 	}
 }

@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.Tests
 
 			Assert.AreEqual(methodName, signature.Name);
 			Assert.AreEqual(returnType, signature.ReturnType);
-			Assert.AreEqual(string.Join(", ", parameterTypes), string.Join(", ", signature.ArgumentTypes));
+			Assert.AreEqual(string.Join(", ", parameterTypes), string.Join(", ", signature.ParameterTypes));
 		}
 
 		[Test]
@@ -51,9 +51,9 @@ namespace ICSharpCode.Decompiler.Tests
 			using var module = new PEFile(typeof(MethodSignatureProviderTest).Assembly.Location);
 
 			Assert.Throws<InvalidOperationException>(() => module.FindMethod(typeof(MethodSignatureProviderTest).FullName, "Method2`1"));
-			Assert.Throws<InvalidOperationException>(() => module.FindMethod(typeof(MethodSignatureProviderTest).FullName, "Method2`1", signature => signature.ArgumentTypes.Count == 2));
+			Assert.Throws<InvalidOperationException>(() => module.FindMethod(typeof(MethodSignatureProviderTest).FullName, "Method2`1", signature => signature.ParameterTypes.Count == 2));
 
-			var method = module.FindMethod(typeof(MethodSignatureProviderTest).FullName, "Method2`1", signature => signature.ArgumentTypes.Count == 2 && signature.ArgumentTypes[1] == "double");
+			var method = module.FindMethod(typeof(MethodSignatureProviderTest).FullName, "Method2`1", signature => signature.ParameterTypes.Count == 2 && signature.ParameterTypes[1] == "double");
 
 			Assert.NotNull(method);
 		}

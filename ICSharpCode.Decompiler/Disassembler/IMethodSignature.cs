@@ -31,5 +31,5 @@ public interface IMethodSignature
 
 	string ReturnType { get; }
 
-	IReadOnlyList<string> ArgumentTypes { get; }
+	IReadOnlyList<string> ParameterTypes { get; }
 }
