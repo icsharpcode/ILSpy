@@ -47,12 +47,8 @@ namespace ICSharpCode.ILSpy.Options
 
 		public static MiscSettings LoadMiscSettings(ILSpySettings settings)
 		{
-			XElement e = settings["MiscSettings"];
-			var s = new MiscSettings();
-			s.AllowMultipleInstances = (bool?)e.Attribute(nameof(s.AllowMultipleInstances)) ?? false;
-			s.LoadPreviousAssemblies = (bool?)e.Attribute(nameof(s.LoadPreviousAssemblies)) ?? true;
-
-			return s;
+			var s = PersistedMiscSettings.FromILSpySettings(settings);
+			return new MiscSettings(s);
 		}
 
 		public void Save(XElement root)
@@ -74,7 +70,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		public void LoadDefaults()
 		{
-			currentMiscSettings = new MiscSettings();
+			currentMiscSettings = new MiscSettings(PersistedMiscSettings.FromILSpySettings(ILSpySettings.Load()));
 			this.DataContext = currentMiscSettings;
 		}
 	}

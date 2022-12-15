@@ -24,6 +24,7 @@ using System.Runtime.CompilerServices;
 using System.Security.Principal;
 using System.Windows;
 using System.Windows.Input;
+using System.Xml.Linq;
 
 using ICSharpCode.ILSpy.Commands;
 
@@ -31,13 +32,42 @@ using Microsoft.Win32;
 
 namespace ICSharpCode.ILSpy.Options
 {
-	public class MiscSettings : INotifyPropertyChanged
+	public interface IMiscSettings
+	{
+		public bool AllowMultipleInstances { get; set; }
+		public bool LoadPreviousAssemblies { get; set; }
+	}
+
+	public class PersistedMiscSettings : IMiscSettings
+	{
+		private PersistedMiscSettings()
+		{
+		}
+
+		public bool AllowMultipleInstances { get; set; }
+		public bool LoadPreviousAssemblies { get; set; }
+
+		public static PersistedMiscSettings FromILSpySettings(ILSpySettings settings)
+		{
+			XElement e = settings["MiscSettings"];
+			var s = new PersistedMiscSettings();
+			s.AllowMultipleInstances = (bool?)e.Attribute(nameof(s.AllowMultipleInstances)) ?? false;
+			s.LoadPreviousAssemblies = (bool?)e.Attribute(nameof(s.LoadPreviousAssemblies)) ?? true;
+
+			return s;
+		}
+	}
+
+	public class MiscSettings : IMiscSettings, INotifyPropertyChanged
 	{
 		bool allowMultipleInstances;
 		bool loadPreviousAssemblies = true;
 
-		public MiscSettings()
+		public MiscSettings(PersistedMiscSettings s)
 		{
+			AllowMultipleInstances = s.AllowMultipleInstances;
+			LoadPreviousAssemblies = s.LoadPreviousAssemblies;
+
 			AddRemoveShellIntegrationCommand = new DelegateCommand<object>(AddRemoveShellIntegration);
 		}
 
