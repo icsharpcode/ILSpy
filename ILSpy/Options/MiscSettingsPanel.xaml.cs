@@ -19,6 +19,8 @@
 using System.Windows.Controls;
 using System.Xml.Linq;
 
+using ICSharpCode.ILSpyX.Settings;
+
 namespace ICSharpCode.ILSpy.Options
 {
 	/// <summary>

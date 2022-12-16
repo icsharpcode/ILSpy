@@ -35,6 +35,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.Themes;
+using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy
 {

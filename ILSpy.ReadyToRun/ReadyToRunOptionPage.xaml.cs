@@ -21,6 +21,7 @@ using System.Windows.Controls;
 using System.Xml.Linq;
 
 using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy.ReadyToRun
 {

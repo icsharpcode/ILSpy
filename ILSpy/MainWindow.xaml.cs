@@ -52,6 +52,7 @@ using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.Settings;
 using ICSharpCode.TreeView;
 
 using Microsoft.Win32;

@@ -16,23 +16,16 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.Xml.Linq;
 
-using ICSharpCode.ILSpy.Properties;
-using ICSharpCode.ILSpyX.Settings;
-
-namespace ICSharpCode.ILSpy
+namespace ICSharpCode.ILSpyX.Settings
 {
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._Help), Header = nameof(Resources._CheckUpdates), MenuOrder = 5000)]
-	sealed class CheckForUpdatesCommand : SimpleCommand
+	public interface ISettingsProvider
 	{
-		public override bool CanExecute(object parameter)
-		{
-			return base.CanExecute(parameter);
-		}
+		XElement this[XName section] { get; }
 
-		public override async void Execute(object parameter)
-		{
-			await MainWindow.Instance.ShowMessageIfUpdatesAvailableAsync(ILSpySettings.Load(), forceCheck: true);
-		}
+		void Update(Action<XElement> action);
+		ISettingsProvider Load();
 	}
 }

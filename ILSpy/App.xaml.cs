@@ -32,6 +32,7 @@ using System.Windows.Navigation;
 using System.Windows.Threading;
 
 using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpyX.Settings;
 
 using Microsoft.VisualStudio.Composition;
 
@@ -59,6 +60,8 @@ namespace ICSharpCode.ILSpy
 
 		public App()
 		{
+			ILSpySettings.SettingsFilePathProvider = new ILSpySettingsFilePathProvider();
+
 			var cmdArgs = Environment.GetCommandLineArgs().Skip(1);
 			App.CommandLineArguments = new CommandLineArguments(cmdArgs);
 			bool forceSingleInstance = (App.CommandLineArguments.SingleInstance ?? true)

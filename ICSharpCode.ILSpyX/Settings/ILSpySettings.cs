@@ -22,15 +22,18 @@ using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
 
-using ICSharpCode.ILSpyX;
-
-namespace ICSharpCode.ILSpy
+namespace ICSharpCode.ILSpyX.Settings
 {
 	/// <summary>
 	/// Manages IL Spy settings.
 	/// </summary>
 	public class ILSpySettings : ISettingsProvider
 	{
+		/// <summary>
+		/// This settings file path provider determines where to load settings file from, includes filename
+		/// </summary>
+		public static ISettingsFilePathProvider? SettingsFilePathProvider { get; set; }
+
 		readonly XElement root;
 
 		ILSpySettings()
@@ -62,6 +65,11 @@ namespace ICSharpCode.ILSpy
 				try
 				{
 					XDocument doc = LoadWithoutCheckingCharacters(GetConfigFile());
+					if (null == doc.Root)
+					{
+						return new ILSpySettings();
+					}
+
 					return new ILSpySettings(doc.Root);
 				}
 				catch (IOException)
@@ -87,7 +95,7 @@ namespace ICSharpCode.ILSpy
 		{
 			Update(
 				delegate (XElement root) {
-					XElement existingElement = root.Element(section.Name);
+					XElement? existingElement = root.Element(section.Name);
 					if (existingElement != null)
 						existingElement.ReplaceWith(section);
 					else
@@ -113,14 +121,14 @@ namespace ICSharpCode.ILSpy
 				catch (IOException)
 				{
 					// ensure the directory exists
-					Directory.CreateDirectory(Path.GetDirectoryName(config));
+					Directory.CreateDirectory(Path.GetDirectoryName(config)!);
 					doc = new XDocument(new XElement("ILSpy"));
 				}
 				catch (XmlException)
 				{
 					doc = new XDocument(new XElement("ILSpy"));
 				}
-				doc.Root.SetAttributeValue("version", DecompilerVersionInfo.Major + "." + DecompilerVersionInfo.Minor + "." + DecompilerVersionInfo.Build + "." + DecompilerVersionInfo.Revision);
+				doc.Root!.SetAttributeValue("version", DecompilerVersionInfo.Major + "." + DecompilerVersionInfo.Minor + "." + DecompilerVersionInfo.Build + "." + DecompilerVersionInfo.Revision);
 				action(doc.Root);
 				doc.Save(config, SaveOptions.None);
 			}
@@ -133,12 +141,11 @@ namespace ICSharpCode.ILSpy
 
 		static string GetConfigFile()
 		{
-			if (App.CommandLineArguments.ConfigFile != null)
-				return App.CommandLineArguments.ConfigFile;
-			string localPath = Path.Combine(Path.GetDirectoryName(typeof(MainWindow).Assembly.Location), "ILSpy.xml");
-			if (File.Exists(localPath))
-				return localPath;
-			return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ICSharpCode\\ILSpy.xml");
+			if (null != SettingsFilePathProvider)
+				return SettingsFilePathProvider.GetSettingsFilePath();
+
+			throw new ArgumentNullException(nameof(SettingsFilePathProvider));
+			// return "ILSpy.xml";
 		}
 
 		ISettingsProvider ISettingsProvider.Load()
