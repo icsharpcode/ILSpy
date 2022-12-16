@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2022 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -17,33 +17,16 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.ComponentModel;
-using System.Linq;
-using System.Reflection;
-using System.Xml.Linq;
 
 namespace ICSharpCode.ILSpyX.Settings
 {
-	public interface ISettingsProvider
+	public interface ISettingsSection<TSelf>
 	{
-		XElement this[XName section] { get; }
-
-		void Update(Action<XElement> action);
-		ISettingsProvider Load();
-
-		public static ICSharpCode.Decompiler.DecompilerSettings LoadDecompilerSettings(ISettingsProvider settingsProvider)
+		// This should be abstract, but that needs C# 11.0 (see IParseable<TSelf>)
+		// Keep it to be enabled in the future
+		public static TSelf Load(ISettingsProvider settingsProvider)
 		{
-			XElement e = settingsProvider["DecompilerSettings"];
-			var newSettings = new Decompiler.DecompilerSettings();
-			var properties = typeof(Decompiler.DecompilerSettings).GetProperties()
-				.Where(p => p.GetCustomAttribute<BrowsableAttribute>()?.Browsable != false);
-			foreach (var p in properties)
-			{
-				var value = (bool?)e.Attribute(p.Name);
-				if (value.HasValue)
-					p.SetValue(newSettings, value.Value);
-			}
-			return newSettings;
+			throw new NotImplementedException();
 		}
 	}
 }

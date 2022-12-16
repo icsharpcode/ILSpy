@@ -41,17 +41,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		public static Decompiler.DecompilerSettings LoadDecompilerSettings(ILSpySettings settings)
 		{
-			XElement e = settings["DecompilerSettings"];
-			var newSettings = new Decompiler.DecompilerSettings();
-			var properties = typeof(Decompiler.DecompilerSettings).GetProperties()
-				.Where(p => p.GetCustomAttribute<BrowsableAttribute>()?.Browsable != false);
-			foreach (var p in properties)
-			{
-				var value = (bool?)e.Attribute(p.Name);
-				if (value.HasValue)
-					p.SetValue(newSettings, value.Value);
-			}
-			return newSettings;
+			return ISettingsProvider.LoadDecompilerSettings(settings);
 		}
 
 		public void Load(ILSpySettings settings)
