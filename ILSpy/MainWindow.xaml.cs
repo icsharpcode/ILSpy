@@ -104,7 +104,7 @@ namespace ICSharpCode.ILSpy
 
 		public DecompilerSettings CurrentDecompilerSettings { get; internal set; }
 
-		public DisplaySettings CurrentDisplaySettings { get; internal set; }
+		public DisplaySettingsViewModel CurrentDisplaySettings { get; internal set; }
 
 		public DecompilationOptions CreateDecompilationOptions()
 		{

@@ -65,7 +65,7 @@ namespace ICSharpCode.ILSpy.Themes
 
 		private void DisplaySettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(DisplaySettings.StyleWindowTitleBar))
+			if (e.PropertyName == nameof(DisplaySettingsViewModel.StyleWindowTitleBar))
 			{
 				if (!MainWindow.Instance.CurrentDisplaySettings.StyleWindowTitleBar)
 				{

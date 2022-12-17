@@ -25,9 +25,9 @@ namespace ICSharpCode.ILSpy.Options
 	/// <summary>
 	/// Description of DisplaySettings.
 	/// </summary>
-	public class DisplaySettings : INotifyPropertyChanged
+	public class DisplaySettingsViewModel : INotifyPropertyChanged
 	{
-		public DisplaySettings()
+		public DisplaySettingsViewModel()
 		{
 			this.selectedFont = new FontFamily("Consolas");
 			this.selectedFontSize = 10.0 * 4 / 3;
@@ -312,7 +312,7 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
-		public void CopyValues(DisplaySettings s)
+		public void CopyValues(DisplaySettingsViewModel s)
 		{
 			this.SelectedFont = s.selectedFont;
 			this.SelectedFontSize = s.selectedFontSize;

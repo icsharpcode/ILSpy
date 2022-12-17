@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Xml.Linq;
 
 namespace ICSharpCode.ILSpyX.Settings
 {
@@ -24,5 +25,18 @@ namespace ICSharpCode.ILSpyX.Settings
 	{
 		public bool AllowMultipleInstances { get; set; }
 		public bool LoadPreviousAssemblies { get; set; }
+
+		public static void Save(XElement root, IMiscSettings miscSettings)
+		{
+			var section = new XElement("MiscSettings");
+			section.SetAttributeValue(nameof(miscSettings.AllowMultipleInstances), miscSettings.AllowMultipleInstances);
+			section.SetAttributeValue(nameof(miscSettings.LoadPreviousAssemblies), miscSettings.LoadPreviousAssemblies);
+
+			XElement? existingElement = root.Element("MiscSettings");
+			if (existingElement != null)
+				existingElement.ReplaceWith(section);
+			else
+				root.Add(section);
+		}
 	}
 }

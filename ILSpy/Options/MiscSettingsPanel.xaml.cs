@@ -56,16 +56,7 @@ namespace ICSharpCode.ILSpy.Options
 		public void Save(XElement root)
 		{
 			var s = (MiscSettingsViewModel)this.DataContext;
-
-			var section = new XElement("MiscSettings");
-			section.SetAttributeValue(nameof(s.AllowMultipleInstances), s.AllowMultipleInstances);
-			section.SetAttributeValue(nameof(s.LoadPreviousAssemblies), s.LoadPreviousAssemblies);
-
-			XElement existingElement = root.Element("MiscSettings");
-			if (existingElement != null)
-				existingElement.ReplaceWith(section);
-			else
-				root.Add(section);
+			IMiscSettings.Save(root, s);
 
 			currentMiscSettings = null; // invalidate cached settings
 		}

@@ -174,11 +174,11 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void CurrentDisplaySettings_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(DisplaySettings.ShowLineNumbers))
+			if (e.PropertyName == nameof(DisplaySettingsViewModel.ShowLineNumbers))
 			{
 				ShowLineMargin();
 			}
-			else if (e.PropertyName == nameof(DisplaySettings.HighlightCurrentLine))
+			else if (e.PropertyName == nameof(DisplaySettingsViewModel.HighlightCurrentLine))
 			{
 				SetHighlightCurrentLine();
 			}
