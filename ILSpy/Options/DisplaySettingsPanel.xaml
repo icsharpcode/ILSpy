@@ -6,7 +6,7 @@
 			 xmlns:system="clr-namespace:System;assembly=mscorlib"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-			 d:DataContext="{d:DesignInstance local:DisplaySettings}">
+			 d:DataContext="{d:DesignInstance local:DisplaySettingsViewModel}">
 	<UserControl.Resources>
 		<local:FontSizeConverter x:Key="fontSizeConv" />
 	</UserControl.Resources>

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2022 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,23 +16,28 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.Xml.Linq;
 
-using ICSharpCode.ILSpy.Properties;
-using ICSharpCode.ILSpyX.Settings;
-
-namespace ICSharpCode.ILSpy
+namespace ICSharpCode.ILSpyX.Settings
 {
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._Help), Header = nameof(Resources._CheckUpdates), MenuOrder = 5000)]
-	sealed class CheckForUpdatesCommand : SimpleCommand
+	public class MiscSettings : IMiscSettings, ISettingsSection<MiscSettings>
 	{
-		public override bool CanExecute(object parameter)
+		private MiscSettings()
 		{
-			return base.CanExecute(parameter);
 		}
 
-		public override async void Execute(object parameter)
+		public bool AllowMultipleInstances { get; set; }
+		public bool LoadPreviousAssemblies { get; set; }
+
+		public static MiscSettings Load(ISettingsProvider settingsProvider)
 		{
-			await MainWindow.Instance.ShowMessageIfUpdatesAvailableAsync(ILSpySettings.Load(), forceCheck: true);
+			XElement e = settingsProvider["MiscSettings"];
+			var s = new MiscSettings();
+			s.AllowMultipleInstances = (bool?)e.Attribute(nameof(s.AllowMultipleInstances)) ?? false;
+			s.LoadPreviousAssemblies = (bool?)e.Attribute(nameof(s.LoadPreviousAssemblies)) ?? true;
+
+			return s;
 		}
 	}
 }

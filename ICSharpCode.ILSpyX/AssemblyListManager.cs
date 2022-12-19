@@ -23,17 +23,10 @@ using System.Linq;
 using System.Xml.Linq;
 
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpyX
 {
-	public interface ISettingsProvider
-	{
-		XElement this[XName section] { get; }
-
-		void Update(Action<XElement> action);
-		ISettingsProvider Load();
-	}
-
 	/// <summary>
 	/// Manages the available assembly lists.
 	/// 

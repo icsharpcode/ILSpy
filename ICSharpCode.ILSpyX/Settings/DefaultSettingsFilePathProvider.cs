@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2022 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,23 +16,25 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 
-using ICSharpCode.ILSpy.Properties;
-using ICSharpCode.ILSpyX.Settings;
-
-namespace ICSharpCode.ILSpy
+namespace ICSharpCode.ILSpyX.Settings
 {
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._Help), Header = nameof(Resources._CheckUpdates), MenuOrder = 5000)]
-	sealed class CheckForUpdatesCommand : SimpleCommand
+	/// <summary>
+	/// Used in scenarios where the user passes a path and that is to be used, eg ilspycmd parameter
+	/// </summary>
+	public class DefaultSettingsFilePathProvider : ISettingsFilePathProvider
 	{
-		public override bool CanExecute(object parameter)
+		private readonly string _providedPath;
+
+		public DefaultSettingsFilePathProvider(string providedPath)
 		{
-			return base.CanExecute(parameter);
+			_providedPath = providedPath;
 		}
 
-		public override async void Execute(object parameter)
+		public string GetSettingsFilePath()
 		{
-			await MainWindow.Instance.ShowMessageIfUpdatesAvailableAsync(ILSpySettings.Load(), forceCheck: true);
+			return _providedPath;
 		}
 	}
 }

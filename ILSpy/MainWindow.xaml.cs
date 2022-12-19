@@ -52,6 +52,7 @@ using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.Settings;
 using ICSharpCode.TreeView;
 
 using Microsoft.Win32;
@@ -103,7 +104,7 @@ namespace ICSharpCode.ILSpy
 
 		public DecompilerSettings CurrentDecompilerSettings { get; internal set; }
 
-		public DisplaySettings CurrentDisplaySettings { get; internal set; }
+		public DisplaySettingsViewModel CurrentDisplaySettings { get; internal set; }
 
 		public DecompilationOptions CreateDecompilationOptions()
 		{
