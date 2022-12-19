@@ -24,7 +24,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
@@ -47,7 +46,6 @@ namespace ICSharpCode.ILSpy
 	{
 		internal static CommandLineArguments CommandLineArguments;
 		internal static readonly IList<ExceptionData> StartupExceptions = new List<ExceptionData>();
-		internal static Mutex SingleInstanceMutex;
 
 		public static ExportProvider ExportProvider { get; private set; }
 		public static IExportProviderFactory ExportProviderFactory { get; private set; }
@@ -64,38 +62,14 @@ namespace ICSharpCode.ILSpy
 
 			var cmdArgs = Environment.GetCommandLineArgs().Skip(1);
 			App.CommandLineArguments = new CommandLineArguments(cmdArgs);
+
 			bool forceSingleInstance = (App.CommandLineArguments.SingleInstance ?? true)
 				&& !MiscSettingsPanel.CurrentMiscSettings.AllowMultipleInstances;
 			if (forceSingleInstance)
 			{
-				bool isFirst;
-				try
-				{
-					SingleInstanceMutex = new Mutex(initiallyOwned: true, @"Local\ILSpyInstance", out isFirst);
-				}
-				catch (WaitHandleCannotBeOpenedException)
-				{
-					isFirst = true;
-				}
-				if (!isFirst)
-				{
-					try
-					{
-						SingleInstanceMutex.WaitOne(10000);
-					}
-					catch (AbandonedMutexException)
-					{
-						// continue, there is no concurrent start happening.
-					}
-				}
-				cmdArgs = cmdArgs.Select(FullyQualifyPath);
-				string message = string.Join(Environment.NewLine, cmdArgs);
-				if (SendToPreviousInstance("ILSpy:\r\n" + message, !App.CommandLineArguments.NoActivate))
-				{
-					ReleaseSingleInstanceMutex();
-					Environment.Exit(0);
-				}
+				SingleInstanceHandling.ForceSingleInstance(cmdArgs);
 			}
+
 			InitializeComponent();
 
 			Resources.RegisterDefaultStyles();
@@ -112,20 +86,6 @@ namespace ICSharpCode.ILSpy
 											  Hyperlink.RequestNavigateEvent,
 											  new RequestNavigateEventHandler(Window_RequestNavigate));
 			ILSpyTraceListener.Install();
-		}
-
-		internal static void ReleaseSingleInstanceMutex()
-		{
-			var mutex = SingleInstanceMutex;
-			SingleInstanceMutex = null;
-			if (mutex == null)
-			{
-				return;
-			}
-			using (mutex)
-			{
-				mutex.ReleaseMutex();
-			}
 		}
 
 		static Assembly ResolvePluginDependencies(AssemblyLoadContext context, AssemblyName assemblyName)
@@ -210,22 +170,6 @@ namespace ICSharpCode.ILSpy
 			base.OnStartup(e);
 		}
 
-		string FullyQualifyPath(string argument)
-		{
-			// Fully qualify the paths before passing them to another process,
-			// because that process might use a different current directory.
-			if (string.IsNullOrEmpty(argument) || argument[0] == '/')
-				return argument;
-			try
-			{
-				return Path.Combine(Environment.CurrentDirectory, argument);
-			}
-			catch (ArgumentException)
-			{
-				return argument;
-			}
-		}
-
 		void DotNet40_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
 		{
 			// On .NET 4.0, an unobserved exception in a task terminates the process unless we mark it as observed
@@ -278,67 +222,6 @@ namespace ICSharpCode.ILSpy
 			finally
 			{
 				showingError = false;
-			}
-		}
-		#endregion
-
-		#region Pass Command Line Arguments to previous instance
-		bool SendToPreviousInstance(string message, bool activate)
-		{
-			string ownProcessName;
-			using (var ownProcess = Process.GetCurrentProcess())
-			{
-				ownProcessName = ownProcess.ProcessName;
-			}
-
-			bool success = false;
-			NativeMethods.EnumWindows(
-				(hWnd, lParam) => {
-					string windowTitle = NativeMethods.GetWindowText(hWnd, 100);
-					if (windowTitle.StartsWith("ILSpy", StringComparison.Ordinal))
-					{
-						string processName = NativeMethods.GetProcessNameFromWindow(hWnd);
-						Debug.WriteLine("Found {0:x4}: '{1}' in '{2}'", hWnd, windowTitle, processName);
-						if (string.Equals(processName, ownProcessName, StringComparison.OrdinalIgnoreCase))
-						{
-							IntPtr result = Send(hWnd, message);
-							Debug.WriteLine("WM_COPYDATA result: {0:x8}", result);
-							if (result == (IntPtr)1)
-							{
-								if (activate)
-									NativeMethods.SetForegroundWindow(hWnd);
-								success = true;
-								return false; // stop enumeration
-							}
-						}
-					}
-					return true; // continue enumeration
-				}, IntPtr.Zero);
-			return success;
-		}
-
-		unsafe static IntPtr Send(IntPtr hWnd, string message)
-		{
-			const uint SMTO_NORMAL = 0;
-
-			CopyDataStruct lParam;
-			lParam.Padding = IntPtr.Zero;
-			lParam.Size = message.Length * 2;
-			fixed (char* buffer = message)
-			{
-				lParam.Buffer = (IntPtr)buffer;
-				IntPtr result;
-				// SendMessage with 3s timeout (e.g. when the target process is stopped in the debugger)
-				if (NativeMethods.SendMessageTimeout(
-					hWnd, NativeMethods.WM_COPYDATA, IntPtr.Zero, ref lParam,
-					SMTO_NORMAL, 3000, out result) != IntPtr.Zero)
-				{
-					return result;
-				}
-				else
-				{
-					return IntPtr.Zero;
-				}
 			}
 		}
 		#endregion

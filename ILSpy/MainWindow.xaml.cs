@@ -581,7 +581,7 @@ namespace ICSharpCode.ILSpy
 			{
 				hwndSource.AddHook(WndProc);
 			}
-			App.ReleaseSingleInstanceMutex();
+			SingleInstanceHandling.ReleaseSingleInstanceMutex();
 			// Validate and Set Window Bounds
 			Rect bounds = Rect.Transform(sessionSettings.WindowBounds, source.CompositionTarget.TransformToDevice);
 			var boundsRect = new System.Drawing.Rectangle((int)bounds.Left, (int)bounds.Top, (int)bounds.Width, (int)bounds.Height);
