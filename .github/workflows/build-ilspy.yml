@@ -27,7 +27,7 @@ jobs:
         fetch-depth: 0
 
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.2
+      uses: microsoft/setup-msbuild@v1.3
 
     - name: Install dotnet-format
       run: dotnet tool install -g dotnet-format --version "6.2.315104" --add-source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet6/nuget/v3/index.json
