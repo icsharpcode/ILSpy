@@ -1804,6 +1804,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					RemoveAttribute(entityDecl, KnownAttribute.DebuggerHidden);
 				}
+				if (function.StateMachineCompiledWithLegacyVisualBasic)
+				{
+					RemoveAttribute(entityDecl, KnownAttribute.DebuggerStepThrough);
+				}
 			}
 			if (function.IsAsync)
 			{

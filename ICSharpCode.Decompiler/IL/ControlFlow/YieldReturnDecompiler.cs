@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -59,6 +59,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <remarks>Set in MatchEnumeratorCreationPattern()</remarks>
 		bool isCompiledWithMono;
 
+		/// <remarks>Set in MatchEnumeratorCreationPattern() or ConstructExceptionTable()</remarks>
+		bool isCompiledWithVisualBasic;
+
+		/// <remarks>Set in MatchEnumeratorCreationPattern()</remarks>
+		/// <remarks>If this is true, then isCompiledWithVisualBasic is also true.</remarks>
+		bool isCompiledWithLegacyVisualBasic;
+
 		/// <summary>The dispose method of the compiler-generated enumerator class.</summary>
 		/// <remarks>Set in ConstructExceptionTable()</remarks>
 		MethodDefinitionHandle disposeMethod;
@@ -101,6 +108,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		ILVariable skipFinallyBodies;
 
 		/// <summary>
+		/// Local bool variable in MoveNext() that signifies whether to execute finally bodies.
+		/// </summary>
+		ILVariable doFinallyBodies;
+
+		/// <summary>
 		/// Set of variables might hold copies of the generated state field.
 		/// </summary>
 		HashSet<ILVariable> cachedStateVars;
@@ -115,6 +127,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			this.currentType = metadata.GetMethodDefinition((MethodDefinitionHandle)context.Function.Method.MetadataToken).GetDeclaringType();
 			this.enumeratorType = default;
 			this.enumeratorCtor = default;
+			this.isCompiledWithMono = false;
+			this.isCompiledWithVisualBasic = false;
+			this.isCompiledWithLegacyVisualBasic = false;
 			this.stateField = null;
 			this.currentField = null;
 			this.disposingField = null;
@@ -123,6 +138,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			this.decompiledFinallyMethods.Clear();
 			this.returnStores.Clear();
 			this.skipFinallyBodies = null;
+			this.doFinallyBodies = null;
 			this.cachedStateVars = null;
 			if (!MatchEnumeratorCreationPattern(function))
 				return;
@@ -144,6 +160,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			context.Step("Replacing body with MoveNext() body", function);
 			function.IsIterator = true;
 			function.StateMachineCompiledWithMono = isCompiledWithMono;
+			function.StateMachineCompiledWithLegacyVisualBasic = isCompiledWithLegacyVisualBasic;
 			var oldBody = function.Body;
 			function.Body = newBody;
 			// register any locals used in newBody
@@ -159,7 +176,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			context.Step("Delete unreachable blocks", function);
 
-			if (isCompiledWithMono)
+			if (isCompiledWithMono || isCompiledWithVisualBasic)
 			{
 				// mono has try-finally inline (like async on MS); we also need to sort nested blocks:
 				foreach (var nestedContainer in newBody.Blocks.SelectMany(c => c.Descendants).OfType<BlockContainer>())
@@ -180,6 +197,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				{
 					CleanSkipFinallyBodies(function);
 				}
+				else if (isCompiledWithLegacyVisualBasic)
+				{
+					CleanDoFinallyBodies(function);
+				}
+				else if (isCompiledWithVisualBasic)
+				{
+					CleanFinallyStateChecks(function);
+				}
 				else
 				{
 					DecompileFinallyBlocks();
@@ -192,6 +217,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				context.Step("Transform failed, roll it back", function);
 				function.IsIterator = false;
 				function.StateMachineCompiledWithMono = false;
+				function.StateMachineCompiledWithLegacyVisualBasic = false;
 				function.Body = oldBody;
 				function.Variables.RemoveDead();
 				function.Warnings.Add($"yield-return decompiler failed: {ex.Message}");
@@ -202,7 +228,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			TranslateFieldsToLocalAccess(function, function, fieldToParameterMap, isCompiledWithMono);
 
 			// On mono, we still need to remove traces of the state variable(s):
-			if (isCompiledWithMono)
+			if (isCompiledWithMono || isCompiledWithVisualBasic)
 			{
 				if (fieldToParameterMap.TryGetValue(stateField, out var stateVar))
 				{
@@ -275,18 +301,26 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (MatchEnumeratorCreationNewObj(newObj))
 			{
 				pos++; // OK
-				isCompiledWithMono = false;
 			}
 			else if (MatchMonoEnumeratorCreationNewObj(newObj))
 			{
 				pos++;
-				isCompiledWithMono = true;
+				if (TransformDisplayClassUsage.ValidateConstructor(context, ((NewObj)newObj).Method))
+				{
+					isCompiledWithMono = true;
+				}
+				else
+				{
+					isCompiledWithVisualBasic = true;
+					isCompiledWithLegacyVisualBasic = true;
+				}
 			}
 			else
 			{
 				return false;
 			}
 
+			bool stateFieldInitialized = false;
 			for (; pos < body.Instructions.Count; pos++)
 			{
 				// stfld(..., ldloc(var_1), ldloc(parameter))
@@ -306,6 +340,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					// copy of 'this' in struct
 					fieldToParameterMap[(IField)storedField.MemberDefinition] = ((LdLoc)ldobj.Target).Variable;
 				}
+				else if ((isCompiledWithMono || isCompiledWithLegacyVisualBasic) && (value.MatchLdcI4(-2) || value.MatchLdcI4(-1) || value.MatchLdcI4(0)))
+				{
+					stateField = (IField)storedField.MemberDefinition;
+					stateFieldInitialized = true;
+				}
 				else
 				{
 					return false;
@@ -319,7 +358,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// stloc(var_2, ldloc(var_1))
 				pos++;
 			}
-			if (isCompiledWithMono)
+			if (isCompiledWithMono && !stateFieldInitialized)
 			{
 				// Mono initializes the state field separately:
 				// (but not if it's left at the default value 0)
@@ -328,7 +367,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					&& (value.MatchLdcI4(-2) || value.MatchLdcI4(0)))
 				{
 					stateField = (IField)field.MemberDefinition;
-					isCompiledWithMono = true;
 					pos++;
 				}
 			}
@@ -477,8 +515,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		void AnalyzeCurrentProperty()
 		{
 			MethodDefinitionHandle getCurrentMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(
-				m => metadata.GetString(metadata.GetMethodDefinition(m).Name).StartsWith("System.Collections.Generic.IEnumerator", StringComparison.Ordinal)
-				&& metadata.GetString(metadata.GetMethodDefinition(m).Name).EndsWith(".get_Current", StringComparison.Ordinal));
+				m => IsMethod(m, "get_Current"));
 			Block body = SingleBlock(CreateILAst(getCurrentMethod, context).Body);
 			if (body == null)
 				throw new SymbolicAnalysisFailedException("get_Current has no body");
@@ -516,8 +553,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		void ResolveIEnumerableIEnumeratorFieldMapping()
 		{
 			MethodDefinitionHandle getEnumeratorMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(
-				m => metadata.GetString(metadata.GetMethodDefinition(m).Name).StartsWith("System.Collections.Generic.IEnumerable", StringComparison.Ordinal)
-				&& metadata.GetString(metadata.GetMethodDefinition(m).Name).EndsWith(".GetEnumerator", StringComparison.Ordinal));
+				m => IsMethod(m, "GetEnumerator"));
 			ResolveIEnumerableIEnumeratorFieldMapping(getEnumeratorMethod, context, fieldToParameterMap);
 		}
 
@@ -551,12 +587,26 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		void ConstructExceptionTable()
 		{
-			if (isCompiledWithMono)
-			{
-				disposeMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(m => metadata.GetString(metadata.GetMethodDefinition(m).Name) == "Dispose");
-				var function = CreateILAst(disposeMethod, context);
-				BlockContainer body = (BlockContainer)function.Body;
+			disposeMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(m => IsMethod(m, "Dispose"));
+			var function = CreateILAst(disposeMethod, context);
 
+			if (!isCompiledWithVisualBasic && !isCompiledWithMono)
+			{
+				BlockContainer body = (BlockContainer)function.Body;
+				foreach (var instr in body.Blocks.SelectMany(block => block.Instructions))
+				{
+					if (instr is CallInstruction call && call.Arguments.Count == 1 && call.Arguments[0].MatchLdThis() &&
+					    IsMethod((MethodDefinitionHandle)call.Method.MetadataToken, "MoveNext"))
+					{
+						isCompiledWithVisualBasic = true;
+						break;
+					}
+				}
+			}
+
+			if (isCompiledWithMono || isCompiledWithVisualBasic)
+			{
+				BlockContainer body = (BlockContainer)function.Body;
 				for (var i = 0; (i < body.EntryPoint.Instructions.Count) && !(body.EntryPoint.Instructions[i] is Branch); i++)
 				{
 					if (body.EntryPoint.Instructions[i] is StObj stobj
@@ -570,14 +620,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 				}
 
-				// On mono, we don't need to analyse Dispose() to reconstruct the try-finally structure.
+				// On mono and VB, we don't need to analyse Dispose() to reconstruct the try-finally structure.
 				finallyMethodToStateRange = default;
 			}
 			else
 			{
-				// Non-Mono: analyze try-finally structure in Dispose()
-				disposeMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(m => metadata.GetString(metadata.GetMethodDefinition(m).Name) == "System.IDisposable.Dispose");
-				var function = CreateILAst(disposeMethod, context);
+				// Non-Mono/Non-VB: analyze try-finally structure in Dispose()
 				var rangeAnalysis = new StateRangeAnalysis(StateRangeAnalysisMode.IteratorDispose, stateField);
 				rangeAnalysis.AssignStateRanges(function.Body, LongSet.Universe);
 				finallyMethodToStateRange = rangeAnalysis.finallyMethodToStateRange;
@@ -616,6 +664,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				CopyPropagation.Propagate(stloc, context);
 			}
 
+			// Copy propagate stack slots holding a 32 bit integer.
+			foreach (var stloc in moveNextFunction.Descendants.OfType<StLoc>().Where(s => s.Variable.Kind == VariableKind.StackSlot && s.Variable.IsSingleDefinition && s.Value.OpCode == OpCode.LdcI4).ToList())
+			{
+				CopyPropagation.Propagate(stloc, context);
+			}
+
+			foreach (var block in moveNextFunction.Descendants.OfType<Block>())
+			{
+				block.Instructions.RemoveAll(inst => inst.OpCode == OpCode.LdcI4);
+			}
+
 			var body = (BlockContainer)moveNextFunction.Body;
 			if (body.Blocks.Count == 1 && body.Blocks[0].Instructions.Count == 1 && body.Blocks[0].Instructions[0] is TryFault tryFault)
 			{
@@ -632,6 +691,35 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					&& faultBlock.Instructions[1].MatchLeave(faultBlockContainer)))
 				{
 					throw new SymbolicAnalysisFailedException("Unexpected fault block contents in MoveNext()");
+				}
+			}
+
+			if (isCompiledWithLegacyVisualBasic && (body.Blocks.Count == 2 || body.Blocks.Count == 1) &&
+				body.Blocks[0].Instructions.Count == 2 &&
+				body.Blocks[0].Instructions[0].MatchStLoc(out var firstVar, out var ldc) && ldc.MatchLdcI4(1))
+			{
+				doFinallyBodies = firstVar;
+				if (body.Blocks[0].Instructions[1] is TryCatch tryCatch && tryCatch.Handlers.Count == 1)
+				{
+					TryCatchHandler catchHandler = tryCatch.Handlers[0];
+					var catchBlockContainer = catchHandler.Body as BlockContainer;
+					if (catchBlockContainer?.Blocks.Count != 1)
+						throw new SymbolicAnalysisFailedException("Unexpected number of blocks in MoveNext() catch block");
+					var catchBlock = catchBlockContainer.Blocks.Single();
+					if (!(catchBlock.Instructions.Count == 4 && catchBlock.Instructions[0] is Call call &&
+							call.Method.Name == "SetProjectError" && call.Arguments.Count == 1 &&
+							call.Arguments[0].MatchLdLoc(catchHandler.Variable) &&
+							catchBlock.Instructions[1].MatchStLoc(out _, out var ldloc) &&
+							ldloc.MatchLdLoc(catchHandler.Variable) &&
+							catchBlock.Instructions[2].MatchStFld(out var ldThis, out var fld, out var value) &&
+							ldThis.MatchLdThis() && fld.MemberDefinition.Equals(stateField) && value is LdcI4 &&
+							catchBlock.Instructions[3] is Rethrow))
+						throw new SymbolicAnalysisFailedException("Unexpected catch block contents in MoveNext()");
+					BlockContainer tryCatchBody = (BlockContainer)tryCatch.TryBlock;
+					// Move return block
+					if (body.Blocks.Count == 2)
+						tryCatchBody.Blocks.Add(body.Blocks[1]);
+					body = tryCatchBody;
 				}
 			}
 
@@ -690,6 +778,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			var rangeAnalysis = new StateRangeAnalysis(StateRangeAnalysisMode.IteratorMoveNext, stateField);
 			rangeAnalysis.skipFinallyBodies = skipFinallyBodies;
+			rangeAnalysis.doFinallyBodies = doFinallyBodies;
 			rangeAnalysis.CancellationToken = context.CancellationToken;
 			rangeAnalysis.AssignStateRanges(body, LongSet.Universe);
 			cachedStateVars = rangeAnalysis.CachedStateVars.ToHashSet();
@@ -813,7 +902,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						// (this allows us to consider each block individually for try-finally reconstruction)
 						newBlock = SplitBlock(newBlock, oldInst);
 					}
-					else if (oldInst is TryFinally tryFinally && isCompiledWithMono)
+					else if (oldInst is TryFinally tryFinally && (isCompiledWithMono || isCompiledWithVisualBasic))
 					{
 						// with mono, we have to recurse into try-finally blocks
 						var oldTryBlock = (BlockContainer)tryFinally.TryBlock;
@@ -821,6 +910,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						sra.AssignStateRanges(oldTryBlock, LongSet.Universe);
 						tryFinally.TryBlock = ConvertBody(oldTryBlock, sra);
 					}
+					else if (isCompiledWithLegacyVisualBasic && oldInst is IfInstruction ifInstruction &&
+								ifInstruction.FalseInst.MatchNop() &&
+								ifInstruction.Condition.MatchCompEquals(out var left, out var right) &&
+								left.MatchLdFld(out var ldThis, out var fld) && ldThis.MatchLdThis() &&
+								fld.MemberDefinition.Equals(disposingField) &&
+								right.MatchLdcI4(0))
+					{
+						newBlock.Instructions.Add(ifInstruction.TrueInst);
+						newBlock.AddILRange(ifInstruction.TrueInst);
+						UpdateBranchTargets(ifInstruction.TrueInst);
+						break;
+					}
+
 					// copy over the instruction to the new block
 					newBlock.Instructions.Add(oldInst);
 					newBlock.AddILRange(oldInst);
@@ -828,12 +930,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 
-			// Insert new artificial block as entry point, and jump to state 0.
+			// Insert new artificial block as entry point, and jump to the initial state.
 			// This causes the method to start directly at the first user code,
 			// and the whole compiler-generated state-dispatching logic becomes unreachable code
 			// and gets deleted.
+			int initialState = isCompiledWithLegacyVisualBasic ? -1 : 0;
 			newBody.Blocks.Insert(0, new Block {
-				Instructions = { MakeGoTo(0) }
+				Instructions = { MakeGoTo(initialState) }
 			});
 			return newBody;
 
@@ -870,10 +973,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 				}
 
-				if (oldBlock.Instructions[pos].MatchStFld(out var target, out var field, out var value)
+				// Visual Basic Compiler emits additional stores to variables.
+				int? localNewState = null;
+				if (oldBlock.Instructions[pos].MatchStLoc(out _, out var value) && value is LdcI4 ldci4)
+				{
+					localNewState = ldci4.Value;
+					pos++;
+				}
+
+				if (oldBlock.Instructions[pos].MatchStFld(out var target, out var field, out value)
 					&& target.MatchLdThis()
 					&& field.MemberDefinition == stateField
-					&& value.MatchLdcI4(out int newState))
+					&& value.MatchLdcI4(out int newState)
+					&& (localNewState is null || localNewState == newState))
 				{
 					pos++;
 				}
@@ -895,6 +1007,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						newBlock.Instructions.Add(new InvalidExpression {
 							ExpectedResultType = StackType.Void,
 							Message = "Unexpected assignment to skipFinallyBodies"
+						});
+					}
+					pos++;
+				}
+				// We can't use MatchStLoc like above since the doFinallyBodies variable is split by SplitVariables.
+				// This occurs for the Legacy VBC compiler.
+				if (oldBlock.Instructions[pos].MatchStLoc(out var var, out value) && var.Kind == VariableKind.Local && var.Index == doFinallyBodies.Index)
+				{
+					if (!value.MatchLdcI4(0))
+					{
+						newBlock.Instructions.Add(new InvalidExpression {
+							ExpectedResultType = StackType.Void,
+							Message = "Unexpected assignment to doFinallyBodies"
 						});
 					}
 					pos++;
@@ -1251,6 +1376,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		}
 		#endregion
 
+		#region Cleanup finally blocks
 
 		/// <summary>
 		/// Eliminates usage of doFinallyBodies
@@ -1264,7 +1390,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			context.StepStartGroup("CleanFinallyBlocks", function);
 			if (skipFinallyBodies.StoreInstructions.Count != 0 || skipFinallyBodies.AddressCount != 0)
 			{
-				// misdetected another variable as doFinallyBodies?
+				// misdetected another variable as skipFinallyBodies?
 				// Fortunately removing the initial store of 0 is harmless, as we
 				// default-initialize the variable on uninit uses
 				return;
@@ -1317,6 +1443,97 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				finallyMethod = call.Method;
 				return !call.Method.MetadataToken.IsNil;
 			}
+		}
+
+		private void CleanDoFinallyBodies(ILFunction function)
+		{
+			if (doFinallyBodies == null)
+			{
+				return; // only VB code uses doFinallyBodies
+			}
+			context.StepStartGroup("CleanDoFinallyBodies", function);
+			if (doFinallyBodies.StoreInstructions.Count != 0 || doFinallyBodies.AddressCount != 0)
+			{
+				// misdetected another variable as skipFinallyBodies?
+				// Fortunately removing the initial store of 0 is harmless, as we
+				// default-initialize the variable on uninit uses
+				return;
+			}
+			foreach (var tryFinally in function.Descendants.OfType<TryFinally>())
+			{
+				if (!(tryFinally.FinallyBlock is BlockContainer container))
+					continue;
+				Block entryPoint = AsyncAwaitDecompiler.GetBodyEntryPoint(container);
+				if (entryPoint?.Instructions[0] is IfInstruction ifInst)
+				{
+					if (ifInst.Condition.MatchCompEquals(out var left, out var right) && left.MatchLdLoc(doFinallyBodies) && right.MatchLdcI4(0))
+					{
+						context.Step("Remove if (doFinallyBodies) from try-finally", tryFinally);
+						// condition will always be false now that we're using 'yield' instructions
+						entryPoint.Instructions.RemoveAt(0);
+					}
+				}
+			}
+			foreach (LdLoc load in doFinallyBodies.LoadInstructions.ToArray())
+			{
+				load.ReplaceWith(new LdcI4(1).WithILRange(load));
+			}
+			context.StepEndGroup(keepIfEmpty: true);
+		}
+
+		private void CleanFinallyStateChecks(ILFunction function)
+		{
+			context.StepStartGroup("CleanFinallyStateChecks", function);
+			foreach (var tryFinally in function.Descendants.OfType<TryFinally>())
+			{
+				if (!(tryFinally.FinallyBlock is BlockContainer container))
+					continue;
+				Block entryPoint = AsyncAwaitDecompiler.GetBodyEntryPoint(container);
+				if (entryPoint?.Instructions[0] is IfInstruction ifInst)
+				{
+					if (ifInst.Condition is Comp comp && comp.Kind == ComparisonKind.GreaterThanOrEqual &&
+						comp.InputType == StackType.I4 && comp.Sign == Sign.Signed && comp.Left.MatchLdLoc(out var variable) &&
+						cachedStateVars.Contains(variable) &&
+						comp.Right.MatchLdcI4(0))
+					{
+						context.Step("Remove if (stateVar >= 0) from try-finally", tryFinally);
+						// condition will always be false now that we're using 'yield' instructions
+						entryPoint.Instructions.RemoveAt(0);
+					}
+				}
+			}
+			context.StepEndGroup(keepIfEmpty: true);
+		}
+
+		#endregion
+
+		bool IsMethod(MethodDefinitionHandle method, string name)
+		{
+			var methodDefinition = metadata.GetMethodDefinition(method);
+			if (metadata.GetString(methodDefinition.Name) == name)
+				return true;
+			foreach (var implHandle in method.GetMethodImplementations(metadata))
+			{
+				var impl = metadata.GetMethodImplementation(implHandle);
+				switch (impl.MethodDeclaration.Kind)
+				{
+					case HandleKind.MethodDefinition:
+						var md = metadata.GetMethodDefinition((MethodDefinitionHandle)impl.MethodDeclaration);
+						if (metadata.GetString(md.Name) != name)
+							continue;
+						return true;
+					case HandleKind.MemberReference:
+						var mr = metadata.GetMemberReference((MemberReferenceHandle)impl.MethodDeclaration);
+						if (mr.GetKind() != MemberReferenceKind.Method)
+							continue;
+						if (metadata.GetString(mr.Name) != name)
+							continue;
+						return true;
+					default:
+						continue;
+				}
+			}
+			return false;
 		}
 	}
 }

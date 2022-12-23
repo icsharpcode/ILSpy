@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		public SymbolicValue Eval(ILInstruction inst)
 		{
-			if (inst is BinaryNumericInstruction bni && bni.Operator == BinaryNumericOperator.Sub && !bni.CheckForOverflow)
+			if (inst is BinaryNumericInstruction bni && bni.Operator == BinaryNumericOperator.Sub)
 			{
 				var left = Eval(bni.Left);
 				var right = Eval(bni.Right);
