@@ -33,6 +33,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		None,
 
 		CompilerGenerated,
+		CompilerFeatureRequired,
 		/// <summary>
 		/// Marks a method as extension method; or a class as containing extension methods.
 		/// </summary>
@@ -119,6 +120,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		static readonly TopLevelTypeName[] typeNames = new TopLevelTypeName[Count]{
 			default,
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CompilerGeneratedAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", "CompilerFeatureRequiredAttribute"),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(ExtensionAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(DynamicAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(TupleElementNamesAttribute)),
