@@ -596,7 +596,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				foreach (var instr in body.Blocks.SelectMany(block => block.Instructions))
 				{
 					if (instr is CallInstruction call && call.Arguments.Count == 1 && call.Arguments[0].MatchLdThis() &&
-					    IsMethod((MethodDefinitionHandle)call.Method.MetadataToken, "MoveNext"))
+						IsMethod((MethodDefinitionHandle)call.Method.MetadataToken, "MoveNext"))
 					{
 						isCompiledWithVisualBasic = true;
 						break;
