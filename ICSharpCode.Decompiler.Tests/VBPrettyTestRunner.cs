@@ -137,6 +137,12 @@ namespace ICSharpCode.Decompiler.Tests
 			await Run(options: options | CompilerOptions.Library);
 		}
 
+		[Test]
+		public async Task YieldReturn([ValueSource(nameof(defaultOptions))] CompilerOptions options)
+		{
+			await Run(options: options | CompilerOptions.Library);
+		}
+
 		async Task Run([CallerMemberName] string testName = null, CompilerOptions options = CompilerOptions.UseDebug, DecompilerSettings settings = null)
 		{
 			var vbFile = Path.Combine(TestCasePath, testName + ".vb");
