@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-#if LEGACY_VBC
-using System.Diagnostics;
-#endif
 
 using Microsoft.VisualBasic.CompilerServices;
 
@@ -23,9 +20,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.VBPretty
 	{
 		private int fieldOnThis;
 
-#if LEGACY_VBC
-		[DebuggerStepThrough]
-#endif
 		public static IEnumerable<char> YieldChars {
 			get {
 				yield return 'a';
