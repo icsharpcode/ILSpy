@@ -17,13 +17,13 @@
 		<RoslynVersion>4.4.0</RoslynVersion>
 		<MonoCecilVersion>0.11.4</MonoCecilVersion>
 		<AvalonEditVersion>6.2.0.78</AvalonEditVersion>
-		<WpfStylesToolboxVersion>2.8.4</WpfStylesToolboxVersion>
+		<WpfStylesToolboxVersion>2.8.5</WpfStylesToolboxVersion>
 		<NUnitVersion>3.13.3</NUnitVersion>
-		<NUnitAdapterVersion>4.2.1</NUnitAdapterVersion>
+		<NUnitAdapterVersion>4.3.1</NUnitAdapterVersion>
 		<JUnitXmlTestLoggerVersion>3.0.114</JUnitXmlTestLoggerVersion>
-		<CoverletCollectorVersion>3.1.2</CoverletCollectorVersion>
-		<MicrosoftNETTestSdkVersion>17.2.0</MicrosoftNETTestSdkVersion>
-		<MoqVersion>4.18.1</MoqVersion>
+		<CoverletCollectorVersion>3.2.0</CoverletCollectorVersion>
+		<MicrosoftNETTestSdkVersion>17.4.1</MicrosoftNETTestSdkVersion>
+		<MoqVersion>4.18.3</MoqVersion>
 		<DiffLibVersion>2017.7.26.1241</DiffLibVersion>
 		<DSRConverterXmlVersion>1.1.0-beta2-22171-02</DSRConverterXmlVersion>
 	</PropertyGroup>
