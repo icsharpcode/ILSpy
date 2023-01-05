@@ -1,6 +1,6 @@
 MIT license
 
-Copyright (c) 2011-2022 AlphaSierraPapa for the ILSpy team
+Copyright (c) 2011-2023 AlphaSierraPapa for the ILSpy team
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this
 software and associated documentation files (the "Software"), to deal in the Software
