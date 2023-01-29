@@ -30,7 +30,7 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
-	sealed class MetadataMethod : IMethod
+	public sealed class MetadataMethod : IMethod
 	{
 		readonly MetadataModule module;
 		readonly MethodDefinitionHandle handle;

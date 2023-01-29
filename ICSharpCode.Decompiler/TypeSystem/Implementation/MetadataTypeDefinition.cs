@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// <summary>
 	/// Type definition backed by System.Reflection.Metadata
 	/// </summary>
-	sealed class MetadataTypeDefinition : ITypeDefinition
+	public sealed class MetadataTypeDefinition : ITypeDefinition
 	{
 		readonly MetadataModule module;
 		readonly TypeDefinitionHandle handle;

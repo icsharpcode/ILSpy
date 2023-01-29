@@ -48,6 +48,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		readonly IMethod methodDefinition;
+		public IMethod MethodDefinition => methodDefinition;
 		readonly ITypeParameter[] specializedTypeParameters;
 		readonly bool isParameterized;
 		readonly TypeParameterSubstitution substitutionWithoutSpecializedTypeParameters;

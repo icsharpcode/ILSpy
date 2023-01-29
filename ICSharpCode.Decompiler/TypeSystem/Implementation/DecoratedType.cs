@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public abstract IType ChangeNullability(Nullability nullability);
 
 		IType IType.DeclaringType => baseType.DeclaringType;
-
+		public IType BaseType => baseType;
 		int IType.TypeParameterCount => baseType.TypeParameterCount;
 
 		IReadOnlyList<ITypeParameter> IType.TypeParameters => baseType.TypeParameters;
