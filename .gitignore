@@ -8,6 +8,7 @@ _ReSharper*/
 *.ReSharper
 *.patch
 .vs/
+.idea/
 /ILSpy.AddIn*/Packages/*
 /ILSpy.AddIn*/source.extension.vsixmanifest
 /ICSharpCode.Decompiler.Tests/TestCases/Disassembler/Pretty/*.dll
