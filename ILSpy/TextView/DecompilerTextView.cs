@@ -1364,15 +1364,8 @@ namespace ICSharpCode.ILSpy.TextView
 			string[] extensions,
 			string resourceName)
 		{
-			if (ThemeManager.Current.Theme == "Dark")
-			{
-				resourceName += "-Dark";
-			}
-
-			resourceName += ".xshd";
-
 			Stream? resourceStream = typeof(DecompilerTextView).Assembly
-				.GetManifestResourceStream(typeof(DecompilerTextView), resourceName);
+				.GetManifestResourceStream(typeof(DecompilerTextView), resourceName + ".xshd");
 
 			if (resourceStream != null)
 			{
@@ -1382,7 +1375,9 @@ namespace ICSharpCode.ILSpy.TextView
 						using (resourceStream)
 						using (XmlTextReader reader = new XmlTextReader(resourceStream))
 						{
-							return HighlightingLoader.Load(reader, manager);
+							var highlightingDefinition = HighlightingLoader.Load(reader, manager);
+							ThemeManager.Current.UpdateColors(highlightingDefinition);
+							return highlightingDefinition;
 						}
 					});
 			}

@@ -16,20 +16,25 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
+
+using ICSharpCode.AvalonEdit.Highlighting;
 
 namespace ICSharpCode.ILSpy.Themes
 {
 	public class ThemeManager
 	{
-		private static List<string> _allThemes;
-		private string _theme;
-		private readonly ResourceDictionary _themeDictionaryContainer = new ResourceDictionary();
+		private string? _theme;
+		private readonly ResourceDictionary _themeDictionaryContainer = new();
+		private readonly Dictionary<string, SyntaxColor> _syntaxColors = new();
 
-		public static readonly ThemeManager Current = new ThemeManager();
+		public static readonly ThemeManager Current = new();
 
 		private ThemeManager()
 		{
@@ -40,12 +45,10 @@ namespace ICSharpCode.ILSpy.Themes
 		public static IReadOnlyCollection<string> AllThemes => new[] { "Light", "Dark" };
 
 		public string Theme {
-			get => _theme;
+			get => _theme ?? DefaultTheme;
 			set {
 				_theme = value;
-
-				_themeDictionaryContainer.MergedDictionaries.Clear();
-				_themeDictionaryContainer.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri($"themes/{value}Theme.xaml", UriKind.Relative) });
+				UpdateTheme();
 			}
 		}
 
@@ -64,6 +67,39 @@ namespace ICSharpCode.ILSpy.Themes
 		public Style CreateToolBarButtonStyle()
 		{
 			return new Style(typeof(Button), (Style)Application.Current.FindResource(ToolBar.ButtonStyleKey));
+		}
+
+		public void UpdateColors(IHighlightingDefinition highlightingDefinition)
+		{
+			var prefix = $"SyntaxColor.{highlightingDefinition.Name}.";
+
+			foreach (var (key, syntaxColor) in _syntaxColors)
+			{
+				var color = highlightingDefinition.GetNamedColor(key.Substring(prefix.Length));
+				if (color is not null)
+					syntaxColor.ApplyTo(color);
+			}
+		}
+
+		private void UpdateTheme()
+		{
+			_themeDictionaryContainer.MergedDictionaries.Clear();
+			_themeDictionaryContainer.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri($"themes/{Theme}Theme.xaml", UriKind.Relative) });
+
+			_syntaxColors.Clear();
+			ProcessDictionary(_themeDictionaryContainer);
+
+			void ProcessDictionary(ResourceDictionary resourceDictionary)
+			{
+				foreach (DictionaryEntry entry in resourceDictionary)
+				{
+					if (entry is { Key: string key, Value: SyntaxColor syntaxColor })
+						_syntaxColors.TryAdd(key, syntaxColor);
+				}
+
+				foreach (ResourceDictionary mergedDictionary in resourceDictionary.MergedDictionaries)
+					ProcessDictionary(mergedDictionary);
+			}
 		}
 	}
 }
