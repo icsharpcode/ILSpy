@@ -17,16 +17,17 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 
 namespace ICSharpCode.ILSpy.Themes
 {
-	internal class ThemeManager
+	public class ThemeManager
 	{
-		private bool _isDarkMode;
+		private static List<string> _allThemes;
+		private string _theme;
 		private readonly ResourceDictionary _themeDictionaryContainer = new ResourceDictionary();
-
 
 		public static readonly ThemeManager Current = new ThemeManager();
 
@@ -35,16 +36,16 @@ namespace ICSharpCode.ILSpy.Themes
 			Application.Current.Resources.MergedDictionaries.Add(_themeDictionaryContainer);
 		}
 
-		public bool IsDarkMode {
-			get => _isDarkMode;
+		public string DefaultTheme => "Light";
+		public static IReadOnlyCollection<string> AllThemes => new[] { "Light", "Dark" };
+
+		public string Theme {
+			get => _theme;
 			set {
-				_isDarkMode = value;
+				_theme = value;
 
 				_themeDictionaryContainer.MergedDictionaries.Clear();
-
-				string theme = value ? "Dark" : "Light";
-
-				_themeDictionaryContainer.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri($"themes/{theme}Theme.xaml", UriKind.Relative) });
+				_themeDictionaryContainer.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri($"themes/{value}Theme.xaml", UriKind.Relative) });
 			}
 		}
 

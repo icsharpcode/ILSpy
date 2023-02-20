@@ -92,8 +92,6 @@
 			<ContentPresenter Content="{Binding Content}" />
 		</DataTemplate>
 
-		<styles:InvertGrayEffect x:Key="InvertGrayEffect" />
-
 		<controls:CultureSelectionConverter x:Key="cultureSelectionConverter" />
 
 	</Window.Resources>
@@ -164,16 +162,12 @@
 					</Style.Triggers>
 				</Style>
 				<Style TargetType="{x:Type Image}" x:Key="DarkModeAwareImageStyle">
+					<Setter Property="Effect" Value="{DynamicResource {x:Static themes:ResourceKeys.ThemeAwareButtonEffect}}" />
 					<Style.Triggers>
 						<DataTrigger
 							Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type ButtonBase}, AncestorLevel=1}, Path=IsEnabled}"
 							Value="False">
 							<Setter Property="Opacity" Value="0.30" />
-						</DataTrigger>
-						<DataTrigger
-							Binding="{Binding SessionSettings.IsDarkMode}" 
-							Value="True">
-							<Setter Property="Effect" Value="{StaticResource InvertGrayEffect}" />
 						</DataTrigger>
 					</Style.Triggers>
 				</Style>
@@ -209,9 +203,9 @@
 			          ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}"
 			          SelectedItem="{Binding Workspace.ActiveTabPage.FilterSettings.LanguageVersion, UpdateSourceTrigger=PropertyChanged}"/>
 			<Separator />
-			<CheckBox IsChecked="{Binding SessionSettings.IsDarkMode}" ToolTip="{x:Static properties:Resources.DarkMode}">
-				<Image Source="Images/DarkMode.png" Stretch="None" Style="{StaticResource DarkModeAwareImageStyle}"/>
-			</CheckBox>
+			<ComboBox Width="100" MaxDropDownHeight="Auto" ToolTip="{x:Static properties:Resources.Theme}"
+			          ItemsSource="{x:Static themes:ThemeManager.AllThemes}"
+			          SelectedItem="{Binding SessionSettings.Theme}"/>
 		</ToolBar>
 		<Border DockPanel.Dock="Top" BorderBrush="Black" BorderThickness="1" Name="updatePanel" Visibility="Collapsed">
 			<DockPanel KeyboardNavigation.TabNavigation="Contained">

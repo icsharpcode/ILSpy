@@ -29,5 +29,7 @@ namespace ICSharpCode.ILSpy.Themes
 		public static ResourceKey LinkTextForegroundBrush = new ComponentResourceKey(typeof(ResourceKeys), "LinkTextForegroundBrush");
 		public static ResourceKey BracketHighlightBackgroundBrush = new ComponentResourceKey(typeof(ResourceKeys), "BracketHighlightBackgroundBrush");
 		public static ResourceKey BracketHighlightBorderPen = new ComponentResourceKey(typeof(ResourceKeys), "BracketHighlightBorderPen");
+
+		public static ResourceKey ThemeAwareButtonEffect = new ComponentResourceKey(typeof(ResourceKeys), nameof(ThemeAwareButtonEffect));
 	}
 }

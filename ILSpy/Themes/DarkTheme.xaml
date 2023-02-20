@@ -63,4 +63,6 @@
 	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerBackgroundColor}">MediumVioletRed</Color>
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.LinkTextForegroundBrush}">CornflowerBlue</SolidColorBrush>
 
+	<styles:InvertGrayEffect x:Key="{x:Static themes:ResourceKeys.ThemeAwareButtonEffect}" />
+
 </ResourceDictionary>

@@ -1364,7 +1364,7 @@ namespace ICSharpCode.ILSpy.TextView
 			string[] extensions,
 			string resourceName)
 		{
-			if (ThemeManager.Current.IsDarkMode)
+			if (ThemeManager.Current.Theme == "Dark")
 			{
 				resourceName += "-Dark";
 			}
