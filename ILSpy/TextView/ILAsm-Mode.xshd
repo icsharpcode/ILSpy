@@ -518,6 +518,10 @@
 			<Begin>"</Begin>
 			<End>"</End>
 		</Span>
+		<Span>
+			<Begin>'</Begin>
+			<End>'</End>
+		</Span>
 	</RuleSet>
 	<RuleSet name="CommentMarkerSet" ignoreCase="false">
 		<Keywords foreground="#FFFF0000" fontWeight="bold">
