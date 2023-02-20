@@ -6,6 +6,9 @@
 		<ResourceDictionary Source="/AvalonDock.Themes.VS2013;component/darktheme.xaml" />
 	</ResourceDictionary.MergedDictionaries>
 
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextBackgroundColor}" Color="#333337" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextForegroundColor}" Color="#F1F1F1" />
+
 	<Color x:Key="{x:Static SystemColors.ControlLightLightColorKey}">#333337</Color>
 	<Color x:Key="{x:Static SystemColors.ControlLightColorKey}">#464646</Color>
 	<Color x:Key="{x:Static SystemColors.ControlColorKey}">#252526</Color>

@@ -6,7 +6,8 @@
 			 xmlns:local="clr-namespace:ICSharpCode.ILSpy.TextView"
 			 xmlns:ae="clr-namespace:ICSharpCode.AvalonEdit;assembly=ICSharpCode.AvalonEdit"
 			 xmlns:folding="clr-namespace:ICSharpCode.AvalonEdit.Folding;assembly=ICSharpCode.AvalonEdit"
-			 xmlns:styles="urn:TomsToolbox.Wpf.Styles">
+			 xmlns:styles="urn:TomsToolbox.Wpf.Styles"
+			 xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes">
 	<UserControl.Resources>
 		<BooleanToVisibilityConverter x:Key="boolToVisibility" />
 		<SolidColorBrush x:Key="waitAdornerBackgoundBrush" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" Opacity=".75"/>
@@ -15,8 +16,8 @@
 		<Border BorderThickness="1,1,0,1" BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
 			<Grid>
 				<ae:TextEditor Name="textEditor" AutomationProperties.Name="Decompilation"  FontFamily="Consolas" FontSize="10pt" IsReadOnly="True"
-				               Background="{DynamicResource {x:Static SystemColors.InfoBrushKey}}"
-				               Foreground="{DynamicResource {x:Static SystemColors.InfoTextBrushKey}}"
+				               Background="{DynamicResource {x:Static themes:ResourceKeys.TextBackgroundColor}}"
+				               Foreground="{DynamicResource {x:Static themes:ResourceKeys.TextForegroundColor}}"
 				               folding:FoldingMargin.FoldingMarkerBackgroundBrush="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
 				               folding:FoldingMargin.SelectedFoldingMarkerBackgroundBrush="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
 				               folding:FoldingMargin.FoldingMarkerBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
