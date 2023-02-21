@@ -16,16 +16,9 @@ public class SyntaxColor
 
 	public void ApplyTo(HighlightingColor color)
 	{
-		if (Foreground is { } foreground)
-			color.Foreground = new SimpleHighlightingBrush(foreground);
-
-		if (Background is { } background)
-			color.Background = new SimpleHighlightingBrush(background);
-
-		if (FontWeight is { } fontWeight)
-			color.FontWeight = fontWeight;
-
-		if (FontStyle is { } fontStyle)
-			color.FontStyle = fontStyle;
+		color.Foreground = Foreground is { } foreground ? new SimpleHighlightingBrush(foreground) : null;
+		color.Background = Background is { } background ? new SimpleHighlightingBrush(background) : null;
+		color.FontWeight = FontWeight ?? FontWeights.Normal;
+		color.FontStyle = FontStyle ?? FontStyles.Normal;
 	}
 }

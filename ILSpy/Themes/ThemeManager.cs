@@ -42,10 +42,15 @@ namespace ICSharpCode.ILSpy.Themes
 		}
 
 		public string DefaultTheme => "Light";
-		public static IReadOnlyCollection<string> AllThemes => new[] { "Light", "Dark" };
 
-		public string Theme {
-			get => _theme ?? DefaultTheme;
+		public static IReadOnlyCollection<string> AllThemes => new[] {
+			"Dark",
+			"Light",
+			"VS Light"
+		};
+
+		public string? Theme {
+			get => _theme;
 			set {
 				_theme = value;
 				UpdateTheme();
@@ -84,7 +89,7 @@ namespace ICSharpCode.ILSpy.Themes
 		private void UpdateTheme()
 		{
 			_themeDictionaryContainer.MergedDictionaries.Clear();
-			_themeDictionaryContainer.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri($"themes/{Theme}Theme.xaml", UriKind.Relative) });
+			_themeDictionaryContainer.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri($"themes/{(_theme ?? DefaultTheme).Replace(" ", "")}Theme.xaml", UriKind.Relative) });
 
 			_syntaxColors.Clear();
 			ProcessDictionary(_themeDictionaryContainer);
