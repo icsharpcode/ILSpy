@@ -10,6 +10,9 @@
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextBackgroundColor}" Color="White" />
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextForegroundColor}" Color="Black" />
 
+	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerBackgroundColor}">#F6B94D</Color>
+	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerDefinitionBackgroundColor}">#87CEFA</Color>
+
 	<!-- ILAsm -->
 	<themes:SyntaxColor x:Key="SyntaxColor.ILAsm.Comment" Foreground="#007F00" />
 	<themes:SyntaxColor x:Key="SyntaxColor.ILAsm.String" Foreground="#A31515" />
@@ -17,6 +20,7 @@
 	<themes:SyntaxColor x:Key="SyntaxColor.ILAsm.Keywords" Foreground="#0000FF" />
 	<themes:SyntaxColor x:Key="SyntaxColor.ILAsm.Directives" Foreground="#00008B" />
 	<themes:SyntaxColor x:Key="SyntaxColor.ILAsm.Security" Foreground="#0000FF" />
+	<themes:SyntaxColor x:Key="SyntaxColor.ILAsm.Label" Foreground="#398A8A" />
 
 	<!-- Asm -->
 	<themes:SyntaxColor x:Key="SyntaxColor.Asm.Comment" Foreground="#007F00" />
@@ -28,6 +32,7 @@
 	<themes:SyntaxColor x:Key="SyntaxColor.Asm.Registers" Foreground="#1F377F" />
 	<themes:SyntaxColor x:Key="SyntaxColor.Asm.Directives" Foreground="#0000FF" />
 	<themes:SyntaxColor x:Key="SyntaxColor.Asm.Directive Operands" Foreground="#1F377F" />
+	<themes:SyntaxColor x:Key="SyntaxColor.Asm.Address and Bytes" Foreground="#398A8A" />
 
 	<!-- CSharp -->
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.Comment" Foreground="#007F00" />

@@ -80,7 +80,7 @@
 	<themes:SyntaxColor x:Key="SyntaxColor.Asm.Instructions" Foreground="#FFD69D85" />
 	<themes:SyntaxColor x:Key="SyntaxColor.Asm.Math Instructions" Foreground="#FFD69D85" />
 	<themes:SyntaxColor x:Key="SyntaxColor.Asm.Extended Instructions" Foreground="#FF559CD6" />
-	<themes:SyntaxColor x:Key="SyntaxColor.Asm.Registers" Foreground="#8080FF" Background="#EEEEEE" />
+	<themes:SyntaxColor x:Key="SyntaxColor.Asm.Registers" Foreground="#8080FF" />
 	<themes:SyntaxColor x:Key="SyntaxColor.Asm.Directives" Foreground="#FFD69D85" FontWeight="Bold" />
 	<themes:SyntaxColor x:Key="SyntaxColor.Asm.Directive Operands" Foreground="#FFb5cea8" FontWeight="Bold" />
 

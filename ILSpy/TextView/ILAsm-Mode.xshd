@@ -5,7 +5,8 @@
 	<Color name="Keywords" foreground="Blue" fontWeight="bold" exampleText="true" />
 	<Color name="Directives" foreground="Green" fontWeight="bold" exampleText=".class" />
 	<Color name="Security" foreground="Red" exampleText="request" />
-	
+	<Color name="Label" exampleText="IL_0000:" />
+
 	<RuleSet ignoreCase="false">
 		<Keywords color="Instructions">
 			<Word>nop</Word>
@@ -516,6 +517,9 @@
 			<Begin>"</Begin>
 			<End>"</End>
 		</Span>
+		<Rule color="Label">
+			^ \s* \w+ :
+		</Rule>
 	</RuleSet>
 	<RuleSet name="CommentMarkerSet" ignoreCase="false">
 		<Keywords foreground="#FFFF0000" fontWeight="bold">
