@@ -49,7 +49,8 @@ namespace ICSharpCode.ILSpy.Themes
 			"Dark",
 			"VS Code Light+",
 			"VS Code Dark+",
-			"R# Light"
+			"R# Light",
+			"R# Dark"
 		};
 
 		public string? Theme {
