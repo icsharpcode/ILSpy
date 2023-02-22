@@ -21,6 +21,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -46,15 +47,12 @@ namespace ICSharpCode.ILSpy.Themes
 		public static IReadOnlyCollection<string> AllThemes => new[] {
 			"Dark",
 			"Light",
-			"VS Light"
+			"VS Code Light+"
 		};
 
 		public string? Theme {
 			get => _theme;
-			set {
-				_theme = value;
-				UpdateTheme();
-			}
+			set => UpdateTheme(value);
 		}
 
 		public Button CreateButton()
@@ -86,10 +84,19 @@ namespace ICSharpCode.ILSpy.Themes
 			}
 		}
 
-		private void UpdateTheme()
+		private void UpdateTheme(string? themeName)
 		{
+			_theme = themeName ?? DefaultTheme;
+			if (!AllThemes.Contains(_theme))
+				_theme = DefaultTheme;
+
+			var themeFileName = _theme
+				.Replace("+", "Plus")
+				.Replace("#", "Sharp")
+				.Replace(" ", "");
+
 			_themeDictionaryContainer.MergedDictionaries.Clear();
-			_themeDictionaryContainer.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri($"themes/{(_theme ?? DefaultTheme).Replace(" ", "")}Theme.xaml", UriKind.Relative) });
+			_themeDictionaryContainer.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri($"themes/Theme.{themeFileName}.xaml", UriKind.Relative) });
 
 			_syntaxColors.Clear();
 			ProcessDictionary(_themeDictionaryContainer);

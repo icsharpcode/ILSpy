@@ -2,7 +2,7 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes">
 	<ResourceDictionary.MergedDictionaries>
-		<ResourceDictionary Source="LightTheme.xaml" />
+		<ResourceDictionary Source="Theme.Light.xaml" />
 	</ResourceDictionary.MergedDictionaries>
 
 	<!--
