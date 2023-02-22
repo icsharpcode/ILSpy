@@ -45,9 +45,10 @@ namespace ICSharpCode.ILSpy.Themes
 		public string DefaultTheme => "Light";
 
 		public static IReadOnlyCollection<string> AllThemes => new[] {
-			"Dark",
 			"Light",
-			"VS Code Light+"
+			"Dark",
+			"VS Code Light+",
+			"VS Code Dark+"
 		};
 
 		public string? Theme {
@@ -92,7 +93,6 @@ namespace ICSharpCode.ILSpy.Themes
 
 			var themeFileName = _theme
 				.Replace("+", "Plus")
-				.Replace("#", "Sharp")
 				.Replace(" ", "");
 
 			_themeDictionaryContainer.MergedDictionaries.Clear();
