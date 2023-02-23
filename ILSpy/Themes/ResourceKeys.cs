@@ -22,14 +22,14 @@ namespace ICSharpCode.ILSpy.Themes
 {
 	public static class ResourceKeys
 	{
-		public static ResourceKey TextBackgroundColor = new ComponentResourceKey(typeof(ResourceKeys), "TextBackgroundColor");
-		public static ResourceKey TextForegroundColor = new ComponentResourceKey(typeof(ResourceKeys), "TextForegroundColor");
-		public static ResourceKey TextMarkerBackgroundColor = new ComponentResourceKey(typeof(ResourceKeys), "TextMarkerBackgroundColor");
-		public static ResourceKey TextMarkerDefinitionBackgroundColor = new ComponentResourceKey(typeof(ResourceKeys), "TextMarkerDefinitionBackgroundColor");
-		public static ResourceKey LinkTextForegroundBrush = new ComponentResourceKey(typeof(ResourceKeys), "LinkTextForegroundBrush");
-		public static ResourceKey BracketHighlightBackgroundBrush = new ComponentResourceKey(typeof(ResourceKeys), "BracketHighlightBackgroundBrush");
-		public static ResourceKey BracketHighlightBorderPen = new ComponentResourceKey(typeof(ResourceKeys), "BracketHighlightBorderPen");
-
+		public static ResourceKey TextBackgroundBrush = new ComponentResourceKey(typeof(ResourceKeys), nameof(TextBackgroundBrush));
+		public static ResourceKey TextForegroundBrush = new ComponentResourceKey(typeof(ResourceKeys), nameof(TextForegroundBrush));
+		public static ResourceKey TextMarkerBackgroundColor = new ComponentResourceKey(typeof(ResourceKeys), nameof(TextMarkerBackgroundColor));
+		public static ResourceKey TextMarkerDefinitionBackgroundColor = new ComponentResourceKey(typeof(ResourceKeys), nameof(TextMarkerDefinitionBackgroundColor));
+		public static ResourceKey SearchResultBackgroundBrush = new ComponentResourceKey(typeof(ResourceKeys), nameof(SearchResultBackgroundBrush));
+		public static ResourceKey LinkTextForegroundBrush = new ComponentResourceKey(typeof(ResourceKeys), nameof(LinkTextForegroundBrush));
+		public static ResourceKey BracketHighlightBackgroundBrush = new ComponentResourceKey(typeof(ResourceKeys), nameof(BracketHighlightBackgroundBrush));
+		public static ResourceKey BracketHighlightBorderPen = new ComponentResourceKey(typeof(ResourceKeys), nameof(BracketHighlightBorderPen));
 		public static ResourceKey ThemeAwareButtonEffect = new ComponentResourceKey(typeof(ResourceKeys), nameof(ThemeAwareButtonEffect));
 	}
 }

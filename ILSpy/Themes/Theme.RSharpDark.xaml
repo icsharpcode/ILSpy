@@ -7,11 +7,12 @@
 
 	<!-- Inspired from the ReSharper Dark theme, with changes -->
 
-	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextBackgroundColor}" Color="#1E1E1E" />
-	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextForegroundColor}" Color="#DCDCDC" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextBackgroundBrush}" Color="#1E1E1E" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextForegroundBrush}" Color="#DCDCDC" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.SearchResultBackgroundBrush}">#995A23</SolidColorBrush>
 
-	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerBackgroundColor}">#623916</Color>
-	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerDefinitionBackgroundColor}">#483D8B</Color>
+	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerBackgroundColor}">#483D8B</Color>
+	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerDefinitionBackgroundColor}">#800000</Color>
 
 	<!-- ILAsm -->
 	<themes:SyntaxColor x:Key="SyntaxColor.ILAsm.Comment" Foreground="#57A64A" />

@@ -127,6 +127,7 @@ namespace ICSharpCode.ILSpy.TextView
 			// SearchPanel
 			SearchPanel searchPanel = SearchPanel.Install(textEditor.TextArea);
 			searchPanel.RegisterCommands(Application.Current.MainWindow.CommandBindings);
+			searchPanel.SetResourceReference(SearchPanel.MarkerBrushProperty, ResourceKeys.SearchResultBackgroundBrush);
 			searchPanel.Loaded += (_, _) => {
 				// HACK: fix the hardcoded but misaligned margin of the search text box.
 				var textBox = searchPanel.VisualDescendants().OfType<TextBox>().FirstOrDefault();

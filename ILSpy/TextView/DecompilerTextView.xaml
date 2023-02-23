@@ -16,8 +16,8 @@
 		<Border BorderThickness="1,1,0,1" BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
 			<Grid>
 				<ae:TextEditor Name="textEditor" AutomationProperties.Name="Decompilation"  FontFamily="Consolas" FontSize="10pt" IsReadOnly="True"
-				               Background="{DynamicResource {x:Static themes:ResourceKeys.TextBackgroundColor}}"
-				               Foreground="{DynamicResource {x:Static themes:ResourceKeys.TextForegroundColor}}"
+				               Background="{DynamicResource {x:Static themes:ResourceKeys.TextBackgroundBrush}}"
+				               Foreground="{DynamicResource {x:Static themes:ResourceKeys.TextForegroundBrush}}"
 				               folding:FoldingMargin.FoldingMarkerBackgroundBrush="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
 				               folding:FoldingMargin.SelectedFoldingMarkerBackgroundBrush="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
 				               folding:FoldingMargin.FoldingMarkerBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"

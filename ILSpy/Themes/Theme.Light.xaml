@@ -6,8 +6,9 @@
 		<ResourceDictionary Source="/AvalonDock.Themes.VS2013;component/lighttheme.xaml" />
 	</ResourceDictionary.MergedDictionaries>
 
-	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextBackgroundColor}" Color="{DynamicResource {x:Static SystemColors.InfoColorKey}}" />
-	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextForegroundColor}" Color="{DynamicResource {x:Static SystemColors.InfoTextColorKey}}" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextBackgroundBrush}" Color="{DynamicResource {x:Static SystemColors.InfoColorKey}}" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextForegroundBrush}" Color="{DynamicResource {x:Static SystemColors.InfoTextColorKey}}" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.SearchResultBackgroundBrush}" Color="LightGreen" />
 
 	<Color x:Key="{x:Static SystemColors.ControlLightLightColorKey}">#FCFCFC</Color>
 	<Color x:Key="{x:Static SystemColors.ControlLightColorKey}">#D8D8E0</Color>

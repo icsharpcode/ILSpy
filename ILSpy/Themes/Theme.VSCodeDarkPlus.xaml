@@ -12,8 +12,9 @@
 		https://github.com/microsoft/vscode/blob/main/extensions/theme-defaults/themes/dark_plus.json
 	-->
 
-	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextBackgroundColor}" Color="#1E1E1E" />
-	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextForegroundColor}" Color="#D4D4D4" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextBackgroundBrush}" Color="#1E1E1E" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextForegroundBrush}" Color="#D4D4D4" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.SearchResultBackgroundBrush}" Color="#613214" />
 
 	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerBackgroundColor}">#264F78</Color>
 	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerDefinitionBackgroundColor}">#343A40</Color>

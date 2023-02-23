@@ -12,8 +12,9 @@
 		https://github.com/microsoft/vscode/blob/main/extensions/theme-defaults/themes/light_plus.json
 	-->
 
-	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextBackgroundColor}" Color="White" />
-	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextForegroundColor}" Color="Black" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextBackgroundBrush}" Color="White" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextForegroundBrush}" Color="Black" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.SearchResultBackgroundBrush}" Color="#F8C9AB" />
 
 	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerBackgroundColor}">#ADD6FF</Color>
 	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerDefinitionBackgroundColor}">#D6EAFF</Color>
