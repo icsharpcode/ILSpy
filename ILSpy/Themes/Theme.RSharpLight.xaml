@@ -70,6 +70,8 @@
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.EnumTypes" Foreground="#3F008F" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.MethodCall" Foreground="#008B8B" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.FieldAccess" Foreground="#660E7A" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.PropertyAccess" Foreground="#660E7A" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.EventAccess" Foreground="#FF00FF" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.InactiveCode" Foreground="#A9A9A9" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.SemanticError" Foreground="#FF0000" />
 

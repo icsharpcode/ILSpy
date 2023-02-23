@@ -55,9 +55,12 @@ namespace ICSharpCode.ILSpy
 
 		HighlightingColor methodCallColor;
 		HighlightingColor methodDeclarationColor;
-
 		HighlightingColor fieldDeclarationColor;
 		HighlightingColor fieldAccessColor;
+		HighlightingColor propertyDeclarationColor;
+		HighlightingColor propertyAccessColor;
+		HighlightingColor eventDeclarationColor;
+		HighlightingColor eventAccessColor;
 
 		HighlightingColor valueKeywordColor;
 		HighlightingColor thisKeywordColor;
@@ -74,39 +77,49 @@ namespace ICSharpCode.ILSpy
 			this.locatable = locatable;
 			this.textOutput = textOutput;
 
-			this.visibilityKeywordsColor = highlighting.GetNamedColor("Visibility");
-			this.namespaceKeywordsColor = highlighting.GetNamedColor("NamespaceKeywords");
-			this.structureKeywordsColor = highlighting.GetNamedColor("Keywords");
-			this.gotoKeywordsColor = highlighting.GetNamedColor("GotoKeywords");
-			this.queryKeywordsColor = highlighting.GetNamedColor("QueryKeywords");
-			this.exceptionKeywordsColor = highlighting.GetNamedColor("ExceptionKeywords");
-			this.checkedKeywordColor = highlighting.GetNamedColor("CheckedKeyword");
-			this.unsafeKeywordsColor = highlighting.GetNamedColor("UnsafeKeywords");
-			this.valueTypeKeywordsColor = highlighting.GetNamedColor("ValueTypeKeywords");
-			this.referenceTypeKeywordsColor = highlighting.GetNamedColor("ReferenceTypeKeywords");
-			this.operatorKeywordsColor = highlighting.GetNamedColor("OperatorKeywords");
-			this.parameterModifierColor = highlighting.GetNamedColor("ParameterModifiers");
-			this.modifiersColor = highlighting.GetNamedColor("Modifiers");
-			this.accessorKeywordsColor = highlighting.GetNamedColor("GetSetAddRemove");
+			this.visibilityKeywordsColor = GetColor("Visibility") ?? GetColor("Keywords");
+			this.namespaceKeywordsColor = GetColor("NamespaceKeywords") ?? GetColor("Keywords");
+			this.structureKeywordsColor = GetColor("Keywords");
+			this.gotoKeywordsColor = GetColor("GotoKeywords") ?? GetColor("Keywords");
+			this.queryKeywordsColor = GetColor("QueryKeywords") ?? GetColor("Keywords");
+			this.exceptionKeywordsColor = GetColor("ExceptionKeywords") ?? GetColor("Keywords");
+			this.checkedKeywordColor = GetColor("CheckedKeyword") ?? GetColor("Keywords");
+			this.unsafeKeywordsColor = GetColor("UnsafeKeywords") ?? GetColor("Keywords");
+			this.valueTypeKeywordsColor = GetColor("ValueTypeKeywords") ?? GetColor("Keywords");
+			this.referenceTypeKeywordsColor = GetColor("ReferenceTypeKeywords") ?? GetColor("Keywords");
+			this.operatorKeywordsColor = GetColor("OperatorKeywords") ?? GetColor("Keywords");
+			this.parameterModifierColor = GetColor("ParameterModifiers") ?? GetColor("Keywords");
+			this.modifiersColor = GetColor("Modifiers") ?? GetColor("Keywords");
+			this.accessorKeywordsColor = GetColor("GetSetAddRemove") ?? GetColor("Keywords");
 
-			this.referenceTypeColor = highlighting.GetNamedColor("ReferenceTypes");
-			this.valueTypeColor = highlighting.GetNamedColor("ValueTypes");
-			this.interfaceTypeColor = highlighting.GetNamedColor("InterfaceTypes");
-			this.enumerationTypeColor = highlighting.GetNamedColor("EnumTypes");
-			this.typeParameterTypeColor = highlighting.GetNamedColor("TypeParameters");
-			this.delegateTypeColor = highlighting.GetNamedColor("DelegateTypes");
-			this.methodDeclarationColor = this.methodCallColor = highlighting.GetNamedColor("MethodCall");
-			//this.eventDeclarationColor = this.eventAccessColor = defaultTextColor;
-			//this.propertyDeclarationColor = this.propertyAccessColor = defaultTextColor;
-			this.fieldDeclarationColor = this.fieldAccessColor = highlighting.GetNamedColor("FieldAccess");
+			this.referenceTypeColor = GetColor("ReferenceTypes") ?? GetColor("Types");
+			this.valueTypeColor = GetColor("ValueTypes") ?? GetColor("Types");
+			this.interfaceTypeColor = GetColor("InterfaceTypes") ?? GetColor("Types");
+			this.enumerationTypeColor = GetColor("EnumTypes") ?? GetColor("Types");
+			this.typeParameterTypeColor = GetColor("TypeParameters") ?? GetColor("Types");
+			this.delegateTypeColor = GetColor("DelegateTypes") ?? GetColor("Types");
+			this.methodDeclarationColor = GetColor("MethodDeclaration") ?? GetColor("MethodCall");
+			this.methodCallColor = GetColor("MethodCall") ?? GetColor("MethodDeclaration");
+			this.fieldDeclarationColor = GetColor("FieldDeclaration") ?? GetColor("FieldAccess");
+			this.fieldAccessColor = GetColor("FieldAccess") ?? GetColor("FieldDeclaration");
+			this.propertyDeclarationColor = GetColor("PropertyDeclaration") ?? GetColor("PropertyAccess");
+			this.propertyAccessColor = GetColor("PropertyAccess") ?? GetColor("PropertyDeclaration");
+			this.eventDeclarationColor = GetColor("EventDeclaration") ?? GetColor("EventAccess");
+			this.eventAccessColor = GetColor("EventAccess") ?? GetColor("EventDeclaration");
 			//this.variableDeclarationColor = this.variableAccessColor = defaultTextColor;
 			//this.parameterDeclarationColor = this.parameterAccessColor = defaultTextColor;
-			this.valueKeywordColor = highlighting.GetNamedColor("NullOrValueKeywords");
-			this.thisKeywordColor = highlighting.GetNamedColor("ThisOrBaseReference");
-			this.trueKeywordColor = highlighting.GetNamedColor("TrueFalse");
-			this.typeKeywordsColor = highlighting.GetNamedColor("TypeKeywords");
-			this.attributeKeywordsColor = highlighting.GetNamedColor("AttributeKeywords");
+			this.valueKeywordColor = GetColor("NullOrValueKeywords") ?? GetColor("Keywords");
+			this.thisKeywordColor = GetColor("ThisOrBaseReference") ?? GetColor("Keywords");
+			this.trueKeywordColor = GetColor("TrueFalse") ?? GetColor("Keywords");
+			this.typeKeywordsColor = GetColor("TypeKeywords") ?? GetColor("Keywords");
+			this.attributeKeywordsColor = GetColor("AttributeKeywords") ?? GetColor("Keywords");
 			//this.externAliasKeywordColor = ...;
+
+			HighlightingColor GetColor(string colorName)
+			{
+				var color = highlighting.GetNamedColor(colorName);
+				return color is not { Foreground: null, Background: null, FontFamily: null, FontWeight: null, FontSize: null, FontStyle: null, Strikethrough: null, Underline: null } ? color : null;
+			}
 		}
 
 		public override void WriteKeyword(Role role, string keyword)
@@ -380,11 +393,17 @@ namespace ICSharpCode.ILSpy
 							break;
 					}
 					break;
-				case IMethod m:
+				case IMethod:
 					color = methodDeclarationColor;
 					break;
-				case IField f:
+				case IField:
 					color = fieldDeclarationColor;
+					break;
+				case IProperty:
+					color = propertyDeclarationColor;
+					break;
+				case IEvent:
+					color = eventDeclarationColor;
 					break;
 			}
 			switch (GetCurrentMemberReference())
@@ -409,11 +428,17 @@ namespace ICSharpCode.ILSpy
 							break;
 					}
 					break;
-				case IMethod m:
+				case IMethod:
 					color = methodCallColor;
 					break;
-				case IField f:
+				case IField:
 					color = fieldAccessColor;
+					break;
+				case IProperty:
+					color = propertyAccessColor;
+					break;
+				case IEvent:
+					color = eventAccessColor;
 					break;
 			}
 			if (color != null)

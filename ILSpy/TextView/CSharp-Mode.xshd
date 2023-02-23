@@ -33,14 +33,23 @@
 	<Color name="AttributeKeywords" foreground="Navy" exampleText="[assembly: AssemblyVersion(&quot;1.0.0.*&quot;)]" />
 	
 	<!-- Colors used for semantic highlighting -->
+	<Color name="Types" exampleText="System.#{#Uri#}# uri;"/>
 	<Color name="ReferenceTypes" foreground="#004085" exampleText="System.#{#Uri#}# uri;"/>
 	<Color name="InterfaceTypes" foreground="#004085" exampleText="System.#{#IDisposable#}# obj;"/>
 	<Color name="TypeParameters" foreground="#004085" exampleText="class MyList&lt;#{#T#}#&gt; { }"/>
 	<Color name="DelegateTypes" foreground="#004085" exampleText="System.#{#Action#}#; action;"/>
 	<Color name="ValueTypes" fontWeight="bold" foreground="#004085" exampleText="System.#{#DateTime#}# date;"/>
 	<Color name="EnumTypes" fontWeight="bold" foreground="#004085" exampleText="System.#{#ConsoleKey#}# key;"/>
+
+	<Color name="MethodDeclaration" exampleText="override string #{#ToString#}#() { }"/>
 	<Color name="MethodCall" foreground="MidnightBlue" fontWeight="bold" exampleText="o.#{#ToString#}#();"/>
+	<Color name="FieldDeclaration" exampleText="private int #{#name#}#;"/>
 	<Color name="FieldAccess" fontStyle="italic" exampleText="return this.#{#name#}#;"/>
+	<Color name="PropertyDeclaration" exampleText="private int #{#name#}# { get; set; }"/>
+	<Color name="PropertyAccess" exampleText="return this.#{#name#}#;"/>
+	<Color name="EventDeclaration" exampleText="private event Action #{#name#}#;"/>
+	<Color name="EventAccess" exampleText="this.#{#name#}#?.Invoke();"/>
+
 	<Color name="InactiveCode" foreground="Gray" exampleText="#{#Deactivated by #if#}#"/>
 	<Color name="SemanticError" foreground="DarkRed" exampleText="o.#{#MissingMethod#}#()"/>
 	
