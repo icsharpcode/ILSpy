@@ -2,10 +2,10 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes">
 	<ResourceDictionary.MergedDictionaries>
-		<ResourceDictionary Source="Theme.Light.xaml" />
+		<ResourceDictionary Source="Base.Light.xaml" />
 	</ResourceDictionary.MergedDictionaries>
 
-	<!-- Inspired from the ReSharper Light theme, with changes -->
+	<!-- Inspired from the ReSharper Light theme, with some changes -->
 
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextBackgroundBrush}" Color="White" />
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextForegroundBrush}" Color="Black" />
@@ -41,7 +41,7 @@
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.StringInterpolation" Foreground="#008000" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.Char" Foreground="#A31515" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.Preprocessor" Foreground="#0000FF" />
-	<themes:SyntaxColor x:Key="SyntaxColor.C#.Punctuation" Foreground="#000000" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.Punctuation" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.ValueTypeKeywords" Foreground="#0000FF" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.ReferenceTypeKeywords" Foreground="#0000FF" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.NumberLiteral" Foreground="#000000" />
@@ -69,9 +69,13 @@
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.DelegateTypes" Foreground="#00008B" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.ValueTypes" Foreground="#3F008F" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.EnumTypes" Foreground="#3F008F" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.MethodDeclaration" Foreground="#008B8B" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.MethodCall" Foreground="#008B8B" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.FieldDeclaration" Foreground="#660E7A" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.FieldAccess" Foreground="#660E7A" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.PropertyDeclaration" Foreground="#660E7A" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.PropertyAccess" Foreground="#660E7A" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.EventDeclaration" Foreground="#FF00FF" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.EventAccess" Foreground="#FF00FF" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.InactiveCode" Foreground="#A9A9A9" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.SemanticError" Foreground="#FF0000" />

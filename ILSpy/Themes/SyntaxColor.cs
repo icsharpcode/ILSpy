@@ -21,4 +21,12 @@ public class SyntaxColor
 		color.FontWeight = FontWeight ?? FontWeights.Normal;
 		color.FontStyle = FontStyle ?? FontStyles.Normal;
 	}
+
+	public static void ResetColor(HighlightingColor color)
+	{
+		color.Foreground = null;
+		color.Background = null;
+		color.FontWeight = null;
+		color.FontStyle = null;
+	}
 }

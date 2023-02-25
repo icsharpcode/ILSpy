@@ -33,7 +33,6 @@
 	<Color name="AttributeKeywords" foreground="Navy" exampleText="[assembly: AssemblyVersion(&quot;1.0.0.*&quot;)]" />
 	
 	<!-- Colors used for semantic highlighting -->
-	<Color name="Types" exampleText="System.#{#Uri#}# uri;"/>
 	<Color name="ReferenceTypes" foreground="#004085" exampleText="System.#{#Uri#}# uri;"/>
 	<Color name="InterfaceTypes" foreground="#004085" exampleText="System.#{#IDisposable#}# obj;"/>
 	<Color name="TypeParameters" foreground="#004085" exampleText="class MyList&lt;#{#T#}#&gt; { }"/>

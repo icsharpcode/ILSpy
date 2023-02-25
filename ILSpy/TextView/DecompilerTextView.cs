@@ -140,10 +140,6 @@ namespace ICSharpCode.ILSpy.TextView
 			ShowLineMargin();
 			SetHighlightCurrentLine();
 
-			// add marker service & margin
-			textEditor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
-			textEditor.TextArea.TextView.LineTransformers.Add(textMarkerService);
-
 			ContextMenuProvider.Add(this);
 
 			textEditor.TextArea.TextView.SetResourceReference(ICSharpCode.AvalonEdit.Rendering.TextView.LinkTextForegroundBrushProperty, ResourceKeys.LinkTextForegroundBrush);
@@ -1377,7 +1373,7 @@ namespace ICSharpCode.ILSpy.TextView
 						using (XmlTextReader reader = new XmlTextReader(resourceStream))
 						{
 							var highlightingDefinition = HighlightingLoader.Load(reader, manager);
-							ThemeManager.Current.UpdateColors(highlightingDefinition);
+							ThemeManager.Current.ApplyHighlightingColors(highlightingDefinition);
 							return highlightingDefinition;
 						}
 					});

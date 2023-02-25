@@ -75,8 +75,12 @@ namespace ICSharpCode.ILSpy.Themes
 			return new Style(typeof(Button), (Style)Application.Current.FindResource(ToolBar.ButtonStyleKey));
 		}
 
-		public void UpdateColors(IHighlightingDefinition highlightingDefinition)
+		public void ApplyHighlightingColors(IHighlightingDefinition highlightingDefinition)
 		{
+			// Make sure all color values are taken from the theme
+			foreach (var color in highlightingDefinition.NamedHighlightingColors)
+				SyntaxColor.ResetColor(color);
+
 			var prefix = $"SyntaxColor.{highlightingDefinition.Name}.";
 
 			foreach (var (key, syntaxColor) in _syntaxColors)
