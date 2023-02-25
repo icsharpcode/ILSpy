@@ -48,6 +48,8 @@
 	<Color name="PropertyAccess" exampleText="return this.#{#name#}#;"/>
 	<Color name="EventDeclaration" exampleText="private event Action #{#name#}#;"/>
 	<Color name="EventAccess" exampleText="this.#{#name#}#?.Invoke();"/>
+	<Color name="Variable" exampleText="var #{#name#}# = 42;"/>
+	<Color name="Parameter" exampleText="void Method(string #{#name#}#) { }"/>
 
 	<Color name="InactiveCode" foreground="Gray" exampleText="#{#Deactivated by #if#}#"/>
 	<Color name="SemanticError" foreground="DarkRed" exampleText="o.#{#MissingMethod#}#()"/>

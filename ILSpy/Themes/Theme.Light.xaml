@@ -72,6 +72,8 @@
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.PropertyAccess" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.EventDeclaration" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.EventAccess" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.Variable" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.Parameter" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.InactiveCode" Foreground="Gray" />
 	<themes:SyntaxColor x:Key="SyntaxColor.C#.SemanticError" Foreground="DarkRed" />
 

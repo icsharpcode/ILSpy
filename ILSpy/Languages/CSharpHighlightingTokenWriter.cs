@@ -23,6 +23,7 @@ using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.Extensions;
 
@@ -61,6 +62,9 @@ namespace ICSharpCode.ILSpy
 		HighlightingColor propertyAccessColor;
 		HighlightingColor eventDeclarationColor;
 		HighlightingColor eventAccessColor;
+
+		HighlightingColor variableColor;
+		HighlightingColor parameterColor;
 
 		HighlightingColor valueKeywordColor;
 		HighlightingColor thisKeywordColor;
@@ -106,8 +110,8 @@ namespace ICSharpCode.ILSpy
 			this.propertyAccessColor = highlighting.GetNamedColor("PropertyAccess");
 			this.eventDeclarationColor = highlighting.GetNamedColor("EventDeclaration");
 			this.eventAccessColor = highlighting.GetNamedColor("EventAccess");
-			//this.variableDeclarationColor = this.variableAccessColor = defaultTextColor;
-			//this.parameterDeclarationColor = this.parameterAccessColor = defaultTextColor;
+			this.variableColor = highlighting.GetNamedColor("Variable");
+			this.parameterColor = highlighting.GetNamedColor("Parameter");
 			this.valueKeywordColor = highlighting.GetNamedColor("NullOrValueKeywords");
 			this.thisKeywordColor = highlighting.GetNamedColor("ThisOrBaseReference");
 			this.trueKeywordColor = highlighting.GetNamedColor("TrueFalse");
@@ -345,13 +349,25 @@ namespace ICSharpCode.ILSpy
 		public override void WriteIdentifier(Identifier identifier)
 		{
 			HighlightingColor color = null;
-			if (identifier.Name == "value"
-				&& identifier.Parent?.GetResolveResult() is ILVariableResolveResult rr
-				&& rr.Variable.Kind == Decompiler.IL.VariableKind.Parameter
-				&& identifier.Ancestors.OfType<Accessor>().FirstOrDefault() is Accessor accessor
-				&& accessor.Role != PropertyDeclaration.GetterRole)
+			if (identifier.Parent?.GetResolveResult() is ILVariableResolveResult rr)
 			{
-				color = valueKeywordColor;
+				if (rr.Variable.Kind == VariableKind.Parameter)
+				{
+					if (identifier.Name == "value"
+						&& identifier.Ancestors.OfType<Accessor>().FirstOrDefault() is { } accessor
+						&& accessor.Role != PropertyDeclaration.GetterRole)
+					{
+						color = valueKeywordColor;
+					}
+					else
+					{
+						color = parameterColor;
+					}
+				}
+				else
+				{
+					color = variableColor;
+				}
 			}
 			if (identifier.Parent is AstType)
 			{
