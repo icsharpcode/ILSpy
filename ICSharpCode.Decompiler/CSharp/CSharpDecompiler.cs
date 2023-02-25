@@ -1288,6 +1288,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
 				var entityDecl = typeSystemAstBuilder.ConvertEntity(typeDef);
+				if (entityDecl is DelegateDeclaration delegateDeclaration)
+				{
+					// Fix empty parameter names in delegate declarations
+					FixParameterNames(delegateDeclaration);
+				}
 				var typeDecl = entityDecl as TypeDeclaration;
 				if (typeDecl == null)
 				{
