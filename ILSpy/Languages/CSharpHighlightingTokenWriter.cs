@@ -384,24 +384,7 @@ namespace ICSharpCode.ILSpy
 			switch (GetCurrentDefinition())
 			{
 				case ITypeDefinition t:
-					switch (t.Kind)
-					{
-						case TypeKind.Delegate:
-							color = delegateTypeColor;
-							break;
-						case TypeKind.Class:
-							color = referenceTypeColor;
-							break;
-						case TypeKind.Interface:
-							color = interfaceTypeColor;
-							break;
-						case TypeKind.Enum:
-							color = enumerationTypeColor;
-							break;
-						case TypeKind.Struct:
-							color = valueTypeColor;
-							break;
-					}
+					ApplyTypeColor(t, ref color);
 					break;
 				case IMethod:
 					color = methodDeclarationColor;
@@ -419,27 +402,12 @@ namespace ICSharpCode.ILSpy
 			switch (GetCurrentMemberReference())
 			{
 				case IType t:
-					switch (t.Kind)
-					{
-						case TypeKind.Delegate:
-							color = delegateTypeColor;
-							break;
-						case TypeKind.Class:
-							color = referenceTypeColor;
-							break;
-						case TypeKind.Interface:
-							color = interfaceTypeColor;
-							break;
-						case TypeKind.Enum:
-							color = enumerationTypeColor;
-							break;
-						case TypeKind.Struct:
-							color = valueTypeColor;
-							break;
-					}
+					ApplyTypeColor(t, ref color);
 					break;
-				case IMethod:
+				case IMethod m:
 					color = methodCallColor;
+					if (m.IsConstructor)
+						ApplyTypeColor(m.DeclaringType, ref color);
 					break;
 				case IField:
 					color = fieldAccessColor;
@@ -459,6 +427,28 @@ namespace ICSharpCode.ILSpy
 			if (color != null)
 			{
 				EndSpan();
+			}
+		}
+
+		void ApplyTypeColor(IType type, ref HighlightingColor color)
+		{
+			switch (type?.Kind)
+			{
+				case TypeKind.Delegate:
+					color = delegateTypeColor;
+					break;
+				case TypeKind.Class:
+					color = referenceTypeColor;
+					break;
+				case TypeKind.Interface:
+					color = interfaceTypeColor;
+					break;
+				case TypeKind.Enum:
+					color = enumerationTypeColor;
+					break;
+				case TypeKind.Struct:
+					color = valueTypeColor;
+					break;
 			}
 		}
 
