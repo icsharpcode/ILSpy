@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2018 Daniel Grunwald
+// Copyright (c) 2018 Daniel Grunwald
 //   This file is based on the Mono implementation of ResXResourceWriter.
 //   It is modified to add support for "ResourceSerializedObject" values.
 //
@@ -261,6 +261,11 @@ namespace ICSharpCode.Decompiler.Util
 			if (value is byte[])
 			{
 				WriteBytes(name, value.GetType(), (byte[])value, comment);
+				return;
+			}
+			if (value is MemoryStream memoryStream)
+			{
+				WriteBytes(name, null, memoryStream.ToArray(), comment);
 				return;
 			}
 			if (value is ResourceSerializedObject rso)

@@ -83,6 +83,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 						case ClassType.RecordClass:
 							writer.WriteKeyword(Roles.RecordKeyword, "record");
 							break;
+						case ClassType.RecordStruct:
+							writer.WriteKeyword(Roles.RecordKeyword, "record");
+							writer.WriteKeyword(Roles.StructKeyword, "struct");
+							break;
 						default:
 							throw new Exception("Invalid value for ClassType");
 					}

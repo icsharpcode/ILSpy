@@ -64,6 +64,12 @@ namespace ICSharpCode.Decompiler.Tests
 			await Run(ilExpectedFile: Path.Combine(TestCasePath, "SortMembers.expected.il"), asmOptions: AssemblerOptions.SortedOutput);
 		}
 
+		[Test]
+		public async Task InterfaceImplAttributes()
+		{
+			await Run();
+		}
+
 		async Task Run([CallerMemberName] string testName = null, string ilExpectedFile = null, AssemblerOptions asmOptions = AssemblerOptions.None)
 		{
 			var ilInputFile = Path.Combine(TestCasePath, testName + ".il");

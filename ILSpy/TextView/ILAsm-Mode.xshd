@@ -357,6 +357,7 @@
 			<Word>true</Word>
 			<Word>false</Word>
 			<Word>strict</Word>
+			<Word>type</Word>
 		</Keywords>
 		<Keywords color="Directives">
 			<Word>.class</Word>
@@ -386,6 +387,7 @@
 			<Word>.permissionset</Word>
 			<Word>.line</Word>
 			<Word>.language</Word>
+			<Word>.interfaceimpl</Word>
 			<Word>#line</Word>
 		</Keywords>
 		<Keywords color="Security">
@@ -516,6 +518,10 @@
 		<Span color="String">
 			<Begin>"</Begin>
 			<End>"</End>
+		</Span>
+		<Span>
+			<Begin>'</Begin>
+			<End>'</End>
 		</Span>
 		<Rule color="Label">
 			^ \s* \w+ :

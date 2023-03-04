@@ -1577,7 +1577,6 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.Write("           ");
 					first = false;
 					var iface = module.Metadata.GetInterfaceImplementation(i);
-					WriteAttributes(module, iface.GetCustomAttributes());
 					iface.Interface.WriteTo(module, output, genericContext, ILNameSyntax.TypeName);
 				}
 				output.WriteLine();
@@ -1600,6 +1599,19 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.WriteLine(".pack {0}", layout.PackingSize);
 				output.WriteLine(".size {0}", layout.Size);
 				output.WriteLine();
+			}
+			foreach (var ifaceHandle in interfaces)
+			{
+				var iface = module.Metadata.GetInterfaceImplementation(ifaceHandle);
+				var customAttributes = iface.GetCustomAttributes();
+				if (customAttributes.Count != 0)
+				{
+					output.Write(".interfaceimpl type ");
+					iface.Interface.WriteTo(module, output, genericContext, ILNameSyntax.TypeName);
+					output.WriteLine();
+					WriteAttributes(module, customAttributes);
+					output.WriteLine();
+				}
 			}
 			var nestedTypes = Process(module, typeDefinition.GetNestedTypes());
 			if (nestedTypes.Any())
