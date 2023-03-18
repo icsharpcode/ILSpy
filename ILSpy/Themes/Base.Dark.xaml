@@ -6,6 +6,10 @@
 		<ResourceDictionary Source="/AvalonDock.Themes.VS2013;component/darktheme.xaml" />
 	</ResourceDictionary.MergedDictionaries>
 
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextBackgroundBrush}" Color="Black" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextForegroundBrush}" Color="White" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.SearchResultBackgroundBrush}" Color="#995A23" />
+
 	<Color x:Key="{x:Static SystemColors.ControlLightLightColorKey}">#333337</Color>
 	<Color x:Key="{x:Static SystemColors.ControlLightColorKey}">#464646</Color>
 	<Color x:Key="{x:Static SystemColors.ControlColorKey}">#252526</Color>
@@ -59,5 +63,7 @@
 	<SolidColorBrush x:Key="{x:Static styles:ResourceKeys.DisabledBrush}" Color="#2D2D30" />
 	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerBackgroundColor}">MediumVioletRed</Color>
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.LinkTextForegroundBrush}">CornflowerBlue</SolidColorBrush>
+
+	<styles:InvertGrayEffect x:Key="{x:Static themes:ResourceKeys.ThemeAwareButtonEffect}" />
 
 </ResourceDictionary>

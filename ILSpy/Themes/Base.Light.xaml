@@ -6,6 +6,10 @@
 		<ResourceDictionary Source="/AvalonDock.Themes.VS2013;component/lighttheme.xaml" />
 	</ResourceDictionary.MergedDictionaries>
 
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextBackgroundBrush}" Color="White" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextForegroundBrush}" Color="Black" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.SearchResultBackgroundBrush}">LightGreen</SolidColorBrush>
+
 	<Color x:Key="{x:Static SystemColors.ControlLightLightColorKey}">#FCFCFC</Color>
 	<Color x:Key="{x:Static SystemColors.ControlLightColorKey}">#D8D8E0</Color>
 	<Color x:Key="{x:Static SystemColors.ControlColorKey}">#F5F5F5</Color>
@@ -53,4 +57,5 @@
 
 	<SolidColorBrush x:Key="{x:Static styles:ResourceKeys.BorderBrush}" Color="#CCCEDB" />
 	<SolidColorBrush x:Key="{x:Static styles:ResourceKeys.DisabledBrush}" Color="#EEEEF2" />
+
 </ResourceDictionary>

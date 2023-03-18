@@ -222,9 +222,6 @@ Are you sure you want to continue?</value>
   <data name="DEBUGDumpPDBAsXML" xml:space="preserve">
     <value>DEBUG -- Dump PDB as XML</value>
   </data>
-  <data name="DarkMode" xml:space="preserve">
-    <value>Dark Mode</value>
-  </data>
   <data name="DebugSteps" xml:space="preserve">
     <value>Debug Steps</value>
   </data>
@@ -906,6 +903,9 @@ Do you want to continue?</value>
   </data>
   <data name="TabSize" xml:space="preserve">
     <value>Tab size:</value>
+  </data>
+  <data name="Theme" xml:space="preserve">
+	  <value>Theme</value>
   </data>
   <data name="ToggleFolding" xml:space="preserve">
     <value>Toggle All Folding</value>

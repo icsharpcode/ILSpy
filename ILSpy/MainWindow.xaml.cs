@@ -184,7 +184,7 @@ namespace ICSharpCode.ILSpy
 				case nameof(SessionSettings.ActiveAssemblyList):
 					ShowAssemblyList(sessionSettings.ActiveAssemblyList);
 					break;
-				case nameof(SessionSettings.IsDarkMode):
+				case nameof(SessionSettings.Theme):
 					// update syntax highlighting and force reload (AvalonEdit does not automatically refresh on highlighting change)
 					DecompilerTextView.RegisterHighlighting();
 					DecompileSelectedNodes(DockWorkspace.Instance.ActiveTabPage.GetState() as DecompilerTextViewState);

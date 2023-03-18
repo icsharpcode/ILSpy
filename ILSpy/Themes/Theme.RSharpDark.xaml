@@ -1,0 +1,96 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes">
+	<ResourceDictionary.MergedDictionaries>
+		<ResourceDictionary Source="Base.Dark.xaml" />
+	</ResourceDictionary.MergedDictionaries>
+
+	<!-- Inspired from the ReSharper Dark theme, with some changes -->
+
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextBackgroundBrush}" Color="#1E1E1E" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextForegroundBrush}" Color="#DCDCDC" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.SearchResultBackgroundBrush}">#995A23</SolidColorBrush>
+
+	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerBackgroundColor}">#483D8B</Color>
+	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerDefinitionBackgroundColor}">#800000</Color>
+
+	<!-- ILAsm -->
+	<themes:SyntaxColor x:Key="SyntaxColor.ILAsm.Comment" Foreground="#57A64A" />
+	<themes:SyntaxColor x:Key="SyntaxColor.ILAsm.String" Foreground="#D69D85" />
+	<themes:SyntaxColor x:Key="SyntaxColor.ILAsm.Instructions" Foreground="#D2691E" />
+	<themes:SyntaxColor x:Key="SyntaxColor.ILAsm.Keywords" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.ILAsm.Directives" Foreground="#ADD8E6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.ILAsm.Security" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.ILAsm.Label" Foreground="#696969" />
+
+	<!-- Asm -->
+	<themes:SyntaxColor x:Key="SyntaxColor.Asm.Comment" Foreground="#57A64A" />
+	<themes:SyntaxColor x:Key="SyntaxColor.Asm.NumberLiteral" Foreground="#B5CEA8" />
+	<themes:SyntaxColor x:Key="SyntaxColor.Asm.String" Foreground="#D69D85" />
+	<themes:SyntaxColor x:Key="SyntaxColor.Asm.Instructions" Foreground="#D2691E" />
+	<themes:SyntaxColor x:Key="SyntaxColor.Asm.Math Instructions" Foreground="#D2691E" />
+	<themes:SyntaxColor x:Key="SyntaxColor.Asm.Extended Instructions" Foreground="#D2691E" />
+	<themes:SyntaxColor x:Key="SyntaxColor.Asm.Registers" Foreground="#9CDCFE" />
+	<themes:SyntaxColor x:Key="SyntaxColor.Asm.Directives" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.Asm.Directive Operands" Foreground="#9CDCFE" />
+	<themes:SyntaxColor x:Key="SyntaxColor.Asm.Address and Bytes" Foreground="#696969" />
+
+	<!-- CSharp -->
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.Comment" Foreground="#57A64A" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.String" Foreground="#D69D85" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.StringInterpolation" Foreground="#80FF80" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.Char" Foreground="#D69D85" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.Preprocessor" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.Punctuation" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.ValueTypeKeywords" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.ReferenceTypeKeywords" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.NumberLiteral" Foreground="#B5CEA8" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.ThisOrBaseReference" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.NullOrValueKeywords" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.Keywords" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.GotoKeywords" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.QueryKeywords" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.ExceptionKeywords" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.CheckedKeyword" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.UnsafeKeywords" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.OperatorKeywords" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.ParameterModifiers" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.Modifiers" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.Visibility" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.NamespaceKeywords" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.GetSetAddRemove" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.TrueFalse" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.TypeKeywords" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.AttributeKeywords" Foreground="#569CD6" />
+
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.ReferenceTypes" Foreground="#ADD8E6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.InterfaceTypes" Foreground="#ADD8E6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.TypeParameters" Foreground="#ADD8E6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.DelegateTypes" Foreground="#ADD8E6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.ValueTypes" Foreground="#ADB0E6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.EnumTypes" Foreground="#ADB0E6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.MethodDeclaration" Foreground="#00FFFF" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.MethodCall" Foreground="#00FFFF" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.FieldDeclaration" Foreground="#C4ADE6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.FieldAccess" Foreground="#C4ADE6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.PropertyDeclaration" Foreground="#C4ADE6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.PropertyAccess" Foreground="#C4ADE6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.EventDeclaration" Foreground="#DDA0DD" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.EventAccess" Foreground="#DDA0DD" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.Variable" Foreground="#9CDCFE" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.Parameter" Foreground="#9CDCFE" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.InactiveCode" Foreground="#A9A9A9" />
+	<themes:SyntaxColor x:Key="SyntaxColor.C#.SemanticError" Foreground="#FF3333" />
+
+	<!-- XML -->
+	<themes:SyntaxColor x:Key="SyntaxColor.XML.Comment" Foreground="#57A64A" />
+	<themes:SyntaxColor x:Key="SyntaxColor.XML.CData" Foreground="#C8C8C8" />
+	<themes:SyntaxColor x:Key="SyntaxColor.XML.DocType" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.XML.XmlDeclaration" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.XML.XmlTag" Foreground="#569CD6" />
+	<themes:SyntaxColor x:Key="SyntaxColor.XML.AttributeName" Foreground="#92CAF4" />
+	<themes:SyntaxColor x:Key="SyntaxColor.XML.AttributeValue" Foreground="#C8C8C8" />
+	<themes:SyntaxColor x:Key="SyntaxColor.XML.Entity" Foreground="#92CAF4" />
+	<themes:SyntaxColor x:Key="SyntaxColor.XML.BrokenEntity" Foreground="#92CAF4" />
+
+</ResourceDictionary>

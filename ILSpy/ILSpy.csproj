@@ -64,16 +64,11 @@
       <Link>license.txt</Link>
     </EmbeddedResource>
     <Resource Include="Images\NuGet.png" />
-    <Resource Include="Images\DarkMode.png" />
     <Resource Include="Images\ILSpy.ico" />
     <EmbeddedResource Include="TextView\CSharp-Mode.xshd" />
     <EmbeddedResource Include="TextView\ILAsm-Mode.xshd" />
     <EmbeddedResource Include="TextView\Asm-Mode.xshd" />
     <EmbeddedResource Include="TextView\XML-Mode.xshd" />
-    <EmbeddedResource Include="TextView\CSharp-Mode-Dark.xshd" />
-    <EmbeddedResource Include="TextView\ILAsm-Mode-Dark.xshd" />
-    <EmbeddedResource Include="TextView\Asm-Mode-Dark.xshd" />
-    <EmbeddedResource Include="TextView\XML-Mode-Dark.xshd" />
     <None Remove="Properties\launchSettings.json" />
   </ItemGroup>
 

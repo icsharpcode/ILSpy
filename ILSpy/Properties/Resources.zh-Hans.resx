@@ -222,9 +222,6 @@
   <data name="DEBUGDumpPDBAsXML" xml:space="preserve">
     <value>调试 -- PDB 转储为 XML</value>
   </data>
-  <data name="DarkMode" xml:space="preserve">
-    <value>深色</value>
-  </data>
   <data name="DebugSteps" xml:space="preserve">
     <value>调试步骤</value>
   </data>
