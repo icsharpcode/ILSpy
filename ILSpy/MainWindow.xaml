@@ -220,10 +220,6 @@
 					  IsEnabled="{Binding Workspace.ActiveTabPage.SupportsLanguageSwitching}"
 			          ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}"
 			          SelectedItem="{Binding Workspace.ActiveTabPage.FilterSettings.LanguageVersion, UpdateSourceTrigger=PropertyChanged}"/>
-			<Separator />
-			<ComboBox Width="100" MaxDropDownHeight="Auto" ToolTip="{x:Static properties:Resources.Theme}"
-			          ItemsSource="{x:Static themes:ThemeManager.AllThemes}"
-			          SelectedItem="{Binding SessionSettings.Theme}"/>
 		</ToolBar>
 		<Border DockPanel.Dock="Top" BorderBrush="Black" BorderThickness="1" Name="updatePanel" Visibility="Collapsed">
 			<DockPanel KeyboardNavigation.TabNavigation="Contained">
