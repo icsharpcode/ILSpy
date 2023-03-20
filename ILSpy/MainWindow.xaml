@@ -20,6 +20,7 @@
 	xmlns:styles="urn:TomsToolbox.Wpf.Styles"
 	xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
 	xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
+	xmlns:toms="urn:TomsToolbox"
 	d:DataContext="{d:DesignInstance local:MainWindowViewModel}"
 >
 	<Window.Resources>
@@ -138,6 +139,23 @@
 				<MenuItem Header="{x:Static properties:Resources.Show_internalTypesMembers}" IsCheckable="True" IsChecked="{Binding Workspace.ActiveTabPage.FilterSettings.ApiVisPublicAndInternal}" />
 				<MenuItem Header="{x:Static properties:Resources.Show_allTypesAndMembers}" IsCheckable="True" IsChecked="{Binding Workspace.ActiveTabPage.FilterSettings.ApiVisAll}" />
 				<Separator/>
+				<MenuItem Header="{x:Static properties:Resources.Theme}" ItemsSource="{x:Static themes:ThemeManager.AllThemes}">
+					<MenuItem.ItemContainerStyle>
+						<Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Type MenuItem}}">
+							<Setter Property="Command" Value="{x:Static local:ILSpyCommands.SetTheme}" />
+							<Setter Property="CommandParameter" Value="{Binding}" />
+							<Setter Property="IsCheckable" Value="True" /> <!-- Required by AvalonDock's MenuItem style to show the checkmark -->
+							<Setter Property="IsChecked">
+								<Setter.Value>
+									<MultiBinding Converter="{x:Static toms:BinaryOperationConverter.Equality}" Mode="OneWay">
+										<Binding />
+										<Binding RelativeSource="{RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}" Path="SessionSettings.Theme" />
+									</MultiBinding>
+								</Setter.Value>
+							</Setter>
+						</Style>
+					</MenuItem.ItemContainerStyle>
+				</MenuItem>
 				<MenuItem Header="{x:Static properties:Resources.UILanguage}">
 					<MenuItem Header="{x:Static properties:Resources.UILanguage_System}" IsCheckable="True" IsChecked="{Binding SessionSettings.CurrentCulture, Converter={StaticResource cultureSelectionConverter}, ConverterParameter={x:Null}}" />
 					<MenuItem Header="English" IsCheckable="True" IsChecked="{Binding SessionSettings.CurrentCulture, Converter={StaticResource cultureSelectionConverter}, ConverterParameter=en-US}" />
