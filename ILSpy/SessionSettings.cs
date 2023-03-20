@@ -127,7 +127,7 @@ namespace ICSharpCode.ILSpy
 
 		public DockLayoutSettings DockLayout { get; private set; }
 
-		public void Save()
+		public XElement ToXml()
 		{
 			XElement doc = new XElement("SessionSettings");
 			doc.Add(this.FilterSettings.SaveAsXml());
@@ -161,7 +161,12 @@ namespace ICSharpCode.ILSpy
 				dockLayoutElement.Add(DockLayout.SaveAsXml());
 			}
 			doc.Add(dockLayoutElement);
+			return doc;
+		}
 
+		public void Save()
+		{
+			var doc = ToXml();
 			ILSpySettings.SaveSettings(doc);
 		}
 

@@ -121,6 +121,8 @@ namespace ICSharpCode.ILSpy.Options
 			s.ShowRawOffsetsAndBytesBeforeInstruction = (bool?)e.Attribute("ShowRawOffsetsAndBytesBeforeInstruction") ?? false;
 			s.StyleWindowTitleBar = (bool?)e.Attribute("StyleWindowTitleBar") ?? false;
 
+			s.Theme = MainWindow.Instance.SessionSettings.Theme;
+
 			return s;
 		}
 
@@ -150,13 +152,22 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("ShowRawOffsetsAndBytesBeforeInstruction", s.ShowRawOffsetsAndBytesBeforeInstruction);
 			section.SetAttributeValue("StyleWindowTitleBar", s.StyleWindowTitleBar);
 
-			XElement existingElement = root.Element("DisplaySettings");
-			if (existingElement != null)
-				existingElement.ReplaceWith(section);
-			else
-				root.Add(section);
+			MainWindow.Instance.SessionSettings.Theme = s.Theme;
+			var sessionSettings = MainWindow.Instance.SessionSettings.ToXml();
 
 			MainWindow.Instance.CurrentDisplaySettings.CopyValues(s);
+
+			Update(section);
+			Update(sessionSettings);
+
+			void Update(XElement element)
+			{
+				var existingElement = root.Element(element.Name);
+				if (existingElement != null)
+					existingElement.ReplaceWith(element);
+				else
+					root.Add(element);
+			}
 		}
 
 		private void TextBox_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)

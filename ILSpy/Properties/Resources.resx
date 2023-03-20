@@ -540,6 +540,9 @@ Are you sure you want to continue?</value>
   <data name="DisplaySettingsPanel_Font" xml:space="preserve">
     <value>Font:</value>
   </data>
+  <data name="DisplaySettingsPanel_Theme" xml:space="preserve">
+	  <value>Theme:</value>
+  </data>
   <data name="Download" xml:space="preserve">
     <value>Download</value>
   </data>
