@@ -19,11 +19,11 @@
 		<AvalonEditVersion>6.3.0.90</AvalonEditVersion>
 		<WpfStylesToolboxVersion>2.8.5</WpfStylesToolboxVersion>
 		<NUnitVersion>3.13.3</NUnitVersion>
-		<NUnitAdapterVersion>4.3.1</NUnitAdapterVersion>
-		<JUnitXmlTestLoggerVersion>3.0.114</JUnitXmlTestLoggerVersion>
+		<NUnitAdapterVersion>4.4.2</NUnitAdapterVersion>
+		<JUnitXmlTestLoggerVersion>3.0.124</JUnitXmlTestLoggerVersion>
 		<CoverletCollectorVersion>3.2.0</CoverletCollectorVersion>
-		<MicrosoftNETTestSdkVersion>17.4.1</MicrosoftNETTestSdkVersion>
-		<MoqVersion>4.18.3</MoqVersion>
+		<MicrosoftNETTestSdkVersion>17.5.0</MicrosoftNETTestSdkVersion>
+		<MoqVersion>4.18.4</MoqVersion>
 		<DiffLibVersion>2017.7.26.1241</DiffLibVersion>
 		<DSRConverterXmlVersion>1.1.0-beta2-22171-02</DSRConverterXmlVersion>
 	</PropertyGroup>
