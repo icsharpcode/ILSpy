@@ -20,6 +20,8 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
 
+using ICSharpCode.ILSpy.Themes;
+
 namespace ICSharpCode.ILSpy.Options
 {
 	/// <summary>
@@ -29,6 +31,7 @@ namespace ICSharpCode.ILSpy.Options
 	{
 		public DisplaySettingsViewModel()
 		{
+			this.theme = ThemeManager.Current.DefaultTheme;
 			this.selectedFont = new FontFamily("Consolas");
 			this.selectedFontSize = 10.0 * 4 / 3;
 			this.sortResults = true;
@@ -51,6 +54,19 @@ namespace ICSharpCode.ILSpy.Options
 			OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
 		}
 		#endregion
+
+		string theme;
+
+		public string Theme {
+			get { return theme; }
+			set {
+				if (theme != value)
+				{
+					theme = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 
 		FontFamily selectedFont;
 
@@ -314,6 +330,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		public void CopyValues(DisplaySettingsViewModel s)
 		{
+			this.Theme = s.Theme;
 			this.SelectedFont = s.selectedFont;
 			this.SelectedFontSize = s.selectedFontSize;
 			this.ShowLineNumbers = s.showLineNumbers;

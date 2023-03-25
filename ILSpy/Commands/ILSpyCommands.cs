@@ -24,6 +24,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 
 using ICSharpCode.ILSpy.Analyzers;
+using ICSharpCode.ILSpy.Commands;
 
 namespace ICSharpCode.ILSpy
 {
@@ -31,5 +32,6 @@ namespace ICSharpCode.ILSpy
 	{
 		public static readonly AnalyzeCommand Analyze = new AnalyzeCommand();
 		public static readonly ManageAssemblyListsCommand ManageAssemblyListsCommand = new ManageAssemblyListsCommand();
+		public static readonly SetThemeCommand SetTheme = new SetThemeCommand();
 	}
 }
