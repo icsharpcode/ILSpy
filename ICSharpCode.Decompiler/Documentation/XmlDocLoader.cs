@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
 
@@ -114,20 +115,27 @@ namespace ICSharpCode.Decompiler.Documentation
 				return null;
 
 			string xmlFileName = Path.ChangeExtension(fileName, ".xml");
-			string currentCulture = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName;
-			string localizedXmlDocFile = GetLocalizedName(xmlFileName, currentCulture);
+
+			CultureInfo currentCulture = System.Threading.Thread.CurrentThread.CurrentUICulture;
+			string localizedXmlDocFile = GetLocalizedName(xmlFileName, currentCulture.Name);
+			string localizedXmlDocFallbackFile = GetLocalizedName(xmlFileName, currentCulture.TwoLetterISOLanguageName);
 
 			Debug.WriteLine("Try find XMLDoc @" + localizedXmlDocFile);
 			if (File.Exists(localizedXmlDocFile))
 			{
 				return localizedXmlDocFile;
 			}
+			Debug.WriteLine("Try find XMLDoc @" + localizedXmlDocFallbackFile);
+			if (File.Exists(localizedXmlDocFallbackFile))
+			{
+				return localizedXmlDocFallbackFile;
+			}
 			Debug.WriteLine("Try find XMLDoc @" + xmlFileName);
 			if (File.Exists(xmlFileName))
 			{
 				return xmlFileName;
 			}
-			if (currentCulture != "en")
+			if (currentCulture.TwoLetterISOLanguageName != "en")
 			{
 				string englishXmlDocFile = GetLocalizedName(xmlFileName, "en");
 				Debug.WriteLine("Try find XMLDoc @" + englishXmlDocFile);
