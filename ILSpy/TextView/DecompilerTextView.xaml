@@ -13,16 +13,14 @@
 		<BooleanToVisibilityConverter x:Key="boolToVisibility" />
 		<SolidColorBrush x:Key="waitAdornerBackgoundBrush" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" Opacity=".75"/>
 		<Style TargetType="{x:Type editing:TextArea}">
-			<Setter Property="FocusVisualStyle"      Value="{x:Null}" />
-			<Setter Property="SelectionForeground"   Value="{x:Null}" />
+			<Setter Property="FocusVisualStyle" Value="{x:Null}" />
+			<Setter Property="SelectionForeground" Value="{x:Null}" />
 			<Setter Property="SelectionCornerRadius" Value="0.0" />
-
 			<Setter Property="SelectionBrush">
 				<Setter.Value>
 					<SolidColorBrush Color="{DynamicResource {x:Static SystemColors.HighlightColorKey}}" Opacity="0.3" />
 				</Setter.Value>
 			</Setter>
-
 			<Setter Property="SelectionBorder">
 				<Setter.Value>
 					<Pen Brush="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" Thickness="0" />
