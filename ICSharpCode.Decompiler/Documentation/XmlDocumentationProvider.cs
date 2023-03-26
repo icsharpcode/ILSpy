@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.Documentation
 				.Replace("%CORSYSDIR%", corSysDir);
 			if (!Path.IsPathRooted(fileName))
 				fileName = Path.Combine(Path.GetDirectoryName(xmlFileName), fileName);
-			return LookupLocalizedXmlDoc(fileName);
+			return XmlDocLoader.LookupLocalizedXmlDoc(fileName);
 		}
 
 		static string AppendDirectorySeparator(string dir)
@@ -196,45 +196,6 @@ namespace ICSharpCode.Decompiler.Documentation
 				return dir + Path.DirectorySeparatorChar;
 		}
 
-		/// <summary>
-		/// Given the assembly file name, looks up the XML documentation file name.
-		/// Returns null if no XML documentation file is found.
-		/// </summary>
-		public static string LookupLocalizedXmlDoc(string fileName)
-		{
-			string xmlFileName = Path.ChangeExtension(fileName, ".xml");
-			string currentCulture = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName;
-			string localizedXmlDocFile = GetLocalizedName(xmlFileName, currentCulture);
-
-			Debug.WriteLine("Try find XMLDoc @" + localizedXmlDocFile);
-			if (File.Exists(localizedXmlDocFile))
-			{
-				return localizedXmlDocFile;
-			}
-			Debug.WriteLine("Try find XMLDoc @" + xmlFileName);
-			if (File.Exists(xmlFileName))
-			{
-				return xmlFileName;
-			}
-			if (currentCulture != "en")
-			{
-				string englishXmlDocFile = GetLocalizedName(xmlFileName, "en");
-				Debug.WriteLine("Try find XMLDoc @" + englishXmlDocFile);
-				if (File.Exists(englishXmlDocFile))
-				{
-					return englishXmlDocFile;
-				}
-			}
-			return null;
-		}
-
-		static string GetLocalizedName(string fileName, string language)
-		{
-			string localizedXmlDocFile = Path.GetDirectoryName(fileName);
-			localizedXmlDocFile = Path.Combine(localizedXmlDocFile, language);
-			localizedXmlDocFile = Path.Combine(localizedXmlDocFile, Path.GetFileName(fileName));
-			return localizedXmlDocFile;
-		}
 		#endregion
 
 		#region Load / Create Index

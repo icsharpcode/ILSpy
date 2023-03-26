@@ -104,7 +104,11 @@ namespace ICSharpCode.Decompiler.Documentation
 			return fileName;
 		}
 
-		static string LookupLocalizedXmlDoc(string fileName)
+		/// <summary>
+		/// Given the assembly file name, looks up the XML documentation file name.
+		/// Returns null if no XML documentation file is found.
+		/// </summary>
+		internal static string LookupLocalizedXmlDoc(string fileName)
 		{
 			if (string.IsNullOrEmpty(fileName))
 				return null;
@@ -135,7 +139,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			return null;
 		}
 
-		static string GetLocalizedName(string fileName, string language)
+		private static string GetLocalizedName(string fileName, string language)
 		{
 			string localizedXmlDocFile = Path.GetDirectoryName(fileName);
 			localizedXmlDocFile = Path.Combine(localizedXmlDocFile, language);
