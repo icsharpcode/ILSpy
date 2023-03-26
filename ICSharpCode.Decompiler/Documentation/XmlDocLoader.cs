@@ -149,10 +149,7 @@ namespace ICSharpCode.Decompiler.Documentation
 
 		private static string GetLocalizedName(string fileName, string language)
 		{
-			string localizedXmlDocFile = Path.GetDirectoryName(fileName);
-			localizedXmlDocFile = Path.Combine(localizedXmlDocFile, language);
-			localizedXmlDocFile = Path.Combine(localizedXmlDocFile, Path.GetFileName(fileName));
-			return localizedXmlDocFile;
+			return Path.Combine(Path.GetDirectoryName(fileName), language, Path.GetFileName(fileName));
 		}
 	}
 }
