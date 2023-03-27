@@ -35,11 +35,15 @@ namespace ICSharpCode.ILSpy.Options
 	{
 		bool allowMultipleInstances;
 		bool loadPreviousAssemblies = true;
+		bool enableExplainThisCode = false;
+		string openAIKey = "";
 
 		public MiscSettingsViewModel(MiscSettings s)
 		{
 			AllowMultipleInstances = s.AllowMultipleInstances;
 			LoadPreviousAssemblies = s.LoadPreviousAssemblies;
+			EnableExplainThisCode = s.EnableExplainThisCode;
+			OpenAIApiKey = s.OpenAIApiKey;
 
 			AddRemoveShellIntegrationCommand = new DelegateCommand<object>(AddRemoveShellIntegration);
 		}
@@ -67,6 +71,34 @@ namespace ICSharpCode.ILSpy.Options
 				if (loadPreviousAssemblies != value)
 				{
 					loadPreviousAssemblies = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		/// <summary>
+		/// Enable "Explain this code" feature
+		/// </summary>
+		public bool EnableExplainThisCode {
+			get { return enableExplainThisCode; }
+			set {
+				if (enableExplainThisCode != value)
+				{
+					enableExplainThisCode = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		/// <summary>
+		/// API key for working with OpenAI APIs (not strictly tied to EnableExplainThisCode because it might be used for other things too)
+		/// </summary>
+		public string OpenAIApiKey {
+			get { return openAIKey; }
+			set {
+				if (openAIKey != value)
+				{
+					openAIKey = value;
 					OnPropertyChanged();
 				}
 			}

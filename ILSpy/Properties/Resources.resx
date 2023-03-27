@@ -541,7 +541,7 @@ Are you sure you want to continue?</value>
     <value>Font:</value>
   </data>
   <data name="DisplaySettingsPanel_Theme" xml:space="preserve">
-	  <value>Theme:</value>
+    <value>Theme:</value>
   </data>
   <data name="Download" xml:space="preserve">
     <value>Download</value>
@@ -551,6 +551,9 @@ Are you sure you want to continue?</value>
   </data>
   <data name="Editor" xml:space="preserve">
     <value>Editor</value>
+  </data>
+  <data name="EnableExplainThisCode" xml:space="preserve">
+    <value>Enable 'Explain this code'</value>
   </data>
   <data name="EnableFoldingBlocksBraces" xml:space="preserve">
     <value>Enable folding on all blocks in braces</value>
@@ -569,6 +572,9 @@ Are you sure you want to continue?</value>
   </data>
   <data name="ExpandUsingDeclarationsAfterDecompilation" xml:space="preserve">
     <value>Expand using declarations after decompilation</value>
+  </data>
+  <data name="ExplainThisCode" xml:space="preserve">
+    <value>Explain this code</value>
   </data>
   <data name="ExtractPackageEntry" xml:space="preserve">
     <value>Extract package entry</value>
@@ -675,6 +681,9 @@ Please disable all filters that might hide the item (i.e. activate "View &gt; Sh
   </data>
   <data name="Open" xml:space="preserve">
     <value>Open</value>
+  </data>
+  <data name="OpenAIApiKey" xml:space="preserve">
+    <value>Your OpenAI API key</value>
   </data>
   <data name="OpenExplorer" xml:space="preserve">
     <value>Open Explorer</value>
@@ -908,7 +917,7 @@ Do you want to continue?</value>
     <value>Tab size:</value>
   </data>
   <data name="Theme" xml:space="preserve">
-	  <value>Theme</value>
+    <value>Theme</value>
   </data>
   <data name="ToggleFolding" xml:space="preserve">
     <value>Toggle All Folding</value>

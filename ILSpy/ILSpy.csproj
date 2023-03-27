@@ -45,6 +45,7 @@
     <PackageReference Include="Microsoft.VisualStudio.Composition" Version="17.4.16" />
     <PackageReference Include="DataGridExtensions" Version="2.5.14" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
+    <PackageReference Include="OpenAI" Version="1.6.0" />
     <PackageReference Include="TomsToolbox.Wpf.Styles" Version="$(WpfStylesToolboxVersion)" />
   </ItemGroup>
 

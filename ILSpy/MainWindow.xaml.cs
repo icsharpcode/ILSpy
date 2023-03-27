@@ -1608,7 +1608,7 @@ namespace ICSharpCode.ILSpy
 		}
 		#endregion
 
-		internal void NavigateTo(RequestNavigateEventArgs e, bool recordHistory = true, bool inNewTabPage = false)
+		internal void NavigateTo(RequestNavigateEventArgs e, bool recordHistory = true, bool inNewTabPage = false, object state = null)
 		{
 			if (e.Uri.Scheme == "resource")
 			{
@@ -1628,6 +1628,15 @@ namespace ICSharpCode.ILSpy
 					e.Handled = true;
 					return;
 				}
+
+				if (e.Uri.Host == "explainthiscode")
+				{
+					RecordHistory();
+					DockWorkspace.Instance.ActiveTabPage.ShowExplainThisCode(state, ExplainThisCode.Display);
+					e.Handled = true;
+					return;
+				}
+
 				AvalonEditTextOutput output = new AvalonEditTextOutput {
 					Address = e.Uri,
 					Title = e.Uri.AbsolutePath,

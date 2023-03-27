@@ -14,5 +14,14 @@
 				<Button Command="{Binding AddRemoveShellIntegrationCommand}" Content="{Binding AddRemoveShellIntegrationText}" Margin="3" />
 			</StackPanel>
 		</GroupBox>
+		<GroupBox Header="{x:Static properties:Resources.ExplainThisCode}">
+			<StackPanel Margin="10">
+				<CheckBox IsChecked="{Binding EnableExplainThisCode}" Content="{x:Static properties:Resources.EnableExplainThisCode}" />
+				<StackPanel Orientation="Horizontal">
+					<Label Content="{x:Static properties:Resources.OpenAIApiKey}"></Label>
+					<TextBox x:Name="apiKeyTextBox" Width="100" Margin="3" Text="{Binding OpenAIApiKey}" />
+				</StackPanel>
+			</StackPanel>
+		</GroupBox>
 	</StackPanel>
 </UserControl>
