@@ -25,12 +25,16 @@ namespace ICSharpCode.ILSpyX.Settings
 	{
 		public bool AllowMultipleInstances { get; set; }
 		public bool LoadPreviousAssemblies { get; set; }
+		public bool EnableExplainThisCode { get; set; }
+		public string OpenAIApiKey { get; set; }
 
 		public static void Save(XElement root, IMiscSettings miscSettings)
 		{
 			var section = new XElement("MiscSettings");
 			section.SetAttributeValue(nameof(miscSettings.AllowMultipleInstances), miscSettings.AllowMultipleInstances);
 			section.SetAttributeValue(nameof(miscSettings.LoadPreviousAssemblies), miscSettings.LoadPreviousAssemblies);
+			section.SetAttributeValue(nameof(miscSettings.EnableExplainThisCode), miscSettings.EnableExplainThisCode);
+			section.SetAttributeValue(nameof(miscSettings.OpenAIApiKey), miscSettings.OpenAIApiKey);
 
 			XElement? existingElement = root.Element("MiscSettings");
 			if (existingElement != null)

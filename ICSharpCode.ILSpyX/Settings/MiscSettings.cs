@@ -30,12 +30,17 @@ namespace ICSharpCode.ILSpyX.Settings
 		public bool AllowMultipleInstances { get; set; }
 		public bool LoadPreviousAssemblies { get; set; }
 
+		public bool EnableExplainThisCode { get; set; }
+		public string OpenAIApiKey { get; set; } = "";
+
 		public static MiscSettings Load(ISettingsProvider settingsProvider)
 		{
 			XElement e = settingsProvider["MiscSettings"];
 			var s = new MiscSettings();
 			s.AllowMultipleInstances = (bool?)e.Attribute(nameof(s.AllowMultipleInstances)) ?? false;
 			s.LoadPreviousAssemblies = (bool?)e.Attribute(nameof(s.LoadPreviousAssemblies)) ?? true;
+			s.EnableExplainThisCode = (bool?)e.Attribute(nameof(s.EnableExplainThisCode)) ?? false;
+			s.OpenAIApiKey = (string?)e.Attribute(nameof(s.OpenAIApiKey)) ?? "";
 
 			return s;
 		}
