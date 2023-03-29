@@ -5,12 +5,28 @@
 			 xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
 			 xmlns:local="clr-namespace:ICSharpCode.ILSpy.TextView"
 			 xmlns:ae="clr-namespace:ICSharpCode.AvalonEdit;assembly=ICSharpCode.AvalonEdit"
+			 xmlns:editing="clr-namespace:ICSharpCode.AvalonEdit.Editing;assembly=ICSharpCode.AvalonEdit"
 			 xmlns:folding="clr-namespace:ICSharpCode.AvalonEdit.Folding;assembly=ICSharpCode.AvalonEdit"
 			 xmlns:styles="urn:TomsToolbox.Wpf.Styles"
 			 xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes">
 	<UserControl.Resources>
 		<BooleanToVisibilityConverter x:Key="boolToVisibility" />
 		<SolidColorBrush x:Key="waitAdornerBackgoundBrush" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" Opacity=".75"/>
+		<Style TargetType="{x:Type editing:TextArea}">
+			<Setter Property="FocusVisualStyle" Value="{x:Null}" />
+			<Setter Property="SelectionForeground" Value="{x:Null}" />
+			<Setter Property="SelectionCornerRadius" Value="0.0" />
+			<Setter Property="SelectionBrush">
+				<Setter.Value>
+					<SolidColorBrush Color="{DynamicResource {x:Static SystemColors.HighlightColorKey}}" Opacity="0.3" />
+				</Setter.Value>
+			</Setter>
+			<Setter Property="SelectionBorder">
+				<Setter.Value>
+					<Pen Brush="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" Thickness="0" />
+				</Setter.Value>
+			</Setter>
+		</Style>
 	</UserControl.Resources>
 	<Grid>
 		<Border BorderThickness="1,1,0,1" BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
@@ -32,7 +48,7 @@
 							<Setter Property="Template">
 								<Setter.Value>
 									<ControlTemplate TargetType="Button">
-										<Border BorderThickness="1" 
+										<Border BorderThickness="1"
 										        Background="{TemplateBinding Background}"
 										        BorderBrush="{TemplateBinding BorderBrush}"
 										        Padding="{TemplateBinding Padding}">
@@ -64,7 +80,7 @@
 								Background="{TemplateBinding Background}"
 								Padding="{TemplateBinding Padding}"
 								BorderBrush="{TemplateBinding BorderBrush}"
-								BorderThickness="{TemplateBinding BorderThickness}" 
+								BorderThickness="{TemplateBinding BorderThickness}"
 								TextOptions.TextFormattingMode="{Binding CurrentZoom, ElementName=PART_ScrollViewer, Converter={x:Static local:ZoomLevelToTextFormattingModeConverter.Instance}}" />
 							<ControlTemplate.Triggers>
 								<Trigger Property="WordWrap"
