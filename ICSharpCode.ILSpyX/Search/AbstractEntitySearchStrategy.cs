@@ -66,7 +66,7 @@ namespace ICSharpCode.ILSpyX.Search
 		{
 			if (searchRequest.InAssembly != null)
 			{
-				if (entity.ParentModule == null || !entity.ParentModule.FullAssemblyName.Contains(searchRequest.InAssembly))
+				if (entity.ParentModule == null || !entity.ParentModule.FullAssemblyName.Contains(searchRequest.InAssembly, StringComparison.OrdinalIgnoreCase))
 				{
 					return false;
 				}
@@ -78,7 +78,7 @@ namespace ICSharpCode.ILSpyX.Search
 				{
 					return entity.Namespace.Length == 0;
 				}
-				else if (!entity.Namespace.Contains(searchRequest.InNamespace))
+				else if (!entity.Namespace.Contains(searchRequest.InNamespace, StringComparison.OrdinalIgnoreCase))
 				{
 					return false;
 				}
