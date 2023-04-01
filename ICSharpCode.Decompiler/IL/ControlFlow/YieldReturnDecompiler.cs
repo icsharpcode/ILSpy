@@ -776,7 +776,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// but those cannot contain any yield statements.
 			// So for reconstructing the control flow, we only consider the blocks directly within body.
 
-			var rangeAnalysis = new StateRangeAnalysis(StateRangeAnalysisMode.IteratorMoveNext, stateField);
+			var rangeAnalysis = new StateRangeAnalysis(StateRangeAnalysisMode.IteratorMoveNext, stateField, legacyVisualBasic: isCompiledWithLegacyVisualBasic);
 			rangeAnalysis.skipFinallyBodies = skipFinallyBodies;
 			rangeAnalysis.doFinallyBodies = doFinallyBodies;
 			rangeAnalysis.CancellationToken = context.CancellationToken;

@@ -99,10 +99,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	class SymbolicEvaluationContext
 	{
 		readonly IField stateField;
+		readonly bool legacyVisualBasic;
 		readonly List<ILVariable> stateVariables = new List<ILVariable>();
 
-		public SymbolicEvaluationContext(IField stateField)
+		public SymbolicEvaluationContext(IField stateField, bool legacyVisualBasic = false)
 		{
+			this.legacyVisualBasic = legacyVisualBasic;
 			this.stateField = stateField;
 		}
 
@@ -118,7 +120,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		public SymbolicValue Eval(ILInstruction inst)
 		{
-			if (inst is BinaryNumericInstruction bni && bni.Operator == BinaryNumericOperator.Sub)
+			if (inst is BinaryNumericInstruction bni && bni.Operator == BinaryNumericOperator.Sub && (legacyVisualBasic || !bni.CheckForOverflow))
 			{
 				var left = Eval(bni.Left);
 				var right = Eval(bni.Right);
