@@ -117,6 +117,8 @@
     <Compile Include="TestCases\VBPretty\VBAutomaticEvents.cs" />
     <Compile Include="TestCases\VBPretty\VBNonGenericForEach.cs" />
     <None Include="TestCases\VBPretty\VBNonGenericForEach.vb" />
+    <Compile Include="TestCases\VBPretty\YieldReturn.cs" />
+    <None Include="TestCases\VBPretty\YieldReturn.vb" />
     <Compile Include="TypeSystem\ReflectionHelperTests.cs" />
     <None Include="TestCases\Pretty\MetadataAttributes.cs" />
     <None Include="TestCases\Correctness\ComInterop.cs" />

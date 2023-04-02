@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2012 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2012 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -58,6 +58,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		public CancellationToken CancellationToken;
 		readonly StateRangeAnalysisMode mode;
 		readonly IField? stateField;
+		readonly bool legacyVisualBasic;
 		readonly SymbolicEvaluationContext evalContext;
 
 		readonly Dictionary<Block, LongSet> ranges = new Dictionary<Block, LongSet>();
@@ -67,10 +68,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		internal ILVariable? doFinallyBodies;
 		internal ILVariable? skipFinallyBodies;
 
-		public StateRangeAnalysis(StateRangeAnalysisMode mode, IField? stateField, ILVariable? cachedStateVar = null)
+		public StateRangeAnalysis(StateRangeAnalysisMode mode, IField? stateField, ILVariable? cachedStateVar = null, bool legacyVisualBasic = false)
 		{
 			this.mode = mode;
 			this.stateField = stateField;
+			this.legacyVisualBasic = legacyVisualBasic;
 			if (mode == StateRangeAnalysisMode.IteratorDispose)
 			{
 				finallyMethodToStateRange = new Dictionary<IMethod, LongSet>();
@@ -80,7 +82,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				rangesForLeave = new Dictionary<BlockContainer, LongSet>();
 			}
 
-			evalContext = new SymbolicEvaluationContext(stateField);
+			evalContext = new SymbolicEvaluationContext(stateField, legacyVisualBasic);
 			if (cachedStateVar != null)
 				evalContext.AddStateVariable(cachedStateVar);
 		}
@@ -94,7 +96,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		internal StateRangeAnalysis CreateNestedAnalysis()
 		{
-			var sra = new StateRangeAnalysis(mode, stateField);
+			var sra = new StateRangeAnalysis(mode, stateField, legacyVisualBasic: legacyVisualBasic);
 			sra.doFinallyBodies = this.doFinallyBodies;
 			sra.skipFinallyBodies = this.skipFinallyBodies;
 			foreach (var v in this.evalContext.StateVariables)
