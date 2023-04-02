@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.Semantics;
@@ -544,6 +545,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return (null, SpecialType.UnknownType);
 			if (MatchGetMethodFromHandle(invocation.Arguments[0], out var member))
 			{
+				var method = (IMethod)member;
+				// It is possible to use Expression.Bind with a get-accessor,
+				// however, it would be an invalid expression tree if the property is readonly.
+				// As this is an assignment, the ILAst expects a set-accessor. To avoid any problems
+				// constructing property assignments, we explicitly use the set-accessor instead.
+				if (method.AccessorOwner is IProperty { CanSet: true } property && method != property.Setter)
+				{
+					member = property.Setter;
+				}
 			}
 			else if (MatchGetFieldFromHandle(invocation.Arguments[0], out member))
 			{
