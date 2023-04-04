@@ -1,5 +1,8 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Controls;
+
+using ICSharpCode.ILSpy.Themes;
 
 namespace ICSharpCode.ILSpy
 {
@@ -30,6 +33,12 @@ namespace ICSharpCode.ILSpy
 		public string ListName {
 			get => ListNameBox.Text;
 			set => ListNameBox.Text = value;
+		}
+
+		protected override void OnSourceInitialized(EventArgs e)
+		{
+			base.OnSourceInitialized(e);
+			ThemeManager.Current.ApplyThemeForWindow(this);
 		}
 	}
 }

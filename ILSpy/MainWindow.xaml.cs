@@ -598,6 +598,8 @@ namespace ICSharpCode.ILSpy
 				SetWindowBounds(SessionSettings.DefaultWindowBounds);
 
 			this.WindowState = sessionSettings.WindowState;
+
+			ThemeManager.Current.ApplyThemeForWindow(this);
 		}
 
 		unsafe IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)

@@ -16,10 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 
+using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy
@@ -41,6 +43,12 @@ namespace ICSharpCode.ILSpy
 			menu.PlacementTarget = (Button)sender;
 			menu.Placement = PlacementMode.Bottom;
 			menu.IsOpen = true;
+		}
+
+		protected override void OnSourceInitialized(EventArgs e)
+		{
+			base.OnSourceInitialized(e);
+			ThemeManager.Current.ApplyThemeForWindow(this);
 		}
 	}
 }

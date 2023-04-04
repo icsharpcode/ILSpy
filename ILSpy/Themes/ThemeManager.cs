@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Interop;
 
 using ICSharpCode.AvalonEdit.Highlighting;
 
@@ -58,6 +59,8 @@ namespace ICSharpCode.ILSpy.Themes
 			set => UpdateTheme(value);
 		}
 
+		public bool ThemeIsDark => IsDarkTheme(Theme);
+
 		public Button CreateButton()
 		{
 			return new Button {
@@ -91,6 +94,9 @@ namespace ICSharpCode.ILSpy.Themes
 			}
 		}
 
+		private bool IsDarkTheme(string? themeName) =>
+			themeName?.Contains("Dark", StringComparison.CurrentCultureIgnoreCase) ?? false;
+
 		private void UpdateTheme(string? themeName)
 		{
 			_theme = themeName ?? DefaultTheme;
@@ -118,6 +124,36 @@ namespace ICSharpCode.ILSpy.Themes
 
 				foreach (ResourceDictionary mergedDictionary in resourceDictionary.MergedDictionaries)
 					ProcessDictionary(mergedDictionary);
+			}
+
+			if (Application.Current.MainWindow is Window mainWindow)
+				ApplyThemeForWindow(mainWindow);
+		}
+
+		public void ApplyThemeForWindow(Window window)
+		{
+			if (window is null)
+				throw new ArgumentNullException(nameof(window));
+
+			IntPtr hwnd = new WindowInteropHelper(window).Handle;
+			bool enable = IsDarkTheme(Theme);
+
+			if (hwnd != IntPtr.Zero)
+			{
+				NativeMethods.EnableDarkModeForWindow(hwnd, enable);
+			}
+			else
+			{
+				EventHandler? handler = null;
+
+				handler = (s, args) => {
+					if (s is Window _window)
+						ApplyThemeForWindow(_window);
+
+					window.SourceInitialized -= handler;
+				};
+
+				window.SourceInitialized += handler;
 			}
 		}
 	}

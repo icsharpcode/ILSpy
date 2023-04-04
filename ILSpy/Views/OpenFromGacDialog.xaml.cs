@@ -29,6 +29,7 @@ using System.Windows.Threading;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Controls;
+using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpyX.Extensions;
 
 namespace ICSharpCode.ILSpy
@@ -190,6 +191,12 @@ namespace ICSharpCode.ILSpy
 			get {
 				return listView.SelectedItems.OfType<GacEntry>().Select(e => e.FileName).ToArray();
 			}
+		}
+
+		protected override void OnSourceInitialized(EventArgs e)
+		{
+			base.OnSourceInitialized(e);
+			ThemeManager.Current.ApplyThemeForWindow(this);
 		}
 	}
 }
