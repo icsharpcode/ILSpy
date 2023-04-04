@@ -140,6 +140,11 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		public MyStructWithCtor(int a) { }
 	}
 
+	public struct MyStructWithDefaultCtor
+	{
+		public MyStructWithDefaultCtor() { }
+	}
+
 	public class MyClassWithCtor
 	{
 		private MyClassWithCtor(int a) { }

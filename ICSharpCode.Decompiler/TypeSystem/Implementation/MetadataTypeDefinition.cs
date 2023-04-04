@@ -259,17 +259,23 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var methodsCollection = metadata.GetTypeDefinition(handle).GetMethods();
 				var methodsList = new List<IMethod>(methodsCollection.Count);
 				var methodSemantics = module.PEFile.MethodSemanticsLookup;
+				bool hasDefaultCtor = false;
 				foreach (MethodDefinitionHandle h in methodsCollection)
 				{
 					var md = metadata.GetMethodDefinition(h);
 					if (methodSemantics.GetSemantics(h).Item2 == 0 && module.IsVisible(md.Attributes))
 					{
-						methodsList.Add(module.GetDefinition(h));
+						IMethod method = module.GetDefinition(h);
+						if (method.SymbolKind == SymbolKind.Constructor && !method.IsStatic && method.Parameters.Count == 0)
+						{
+							hasDefaultCtor = true;
+						}
+						methodsList.Add(method);
 					}
 				}
-				if (this.Kind == TypeKind.Struct || this.Kind == TypeKind.Enum)
+				if (!hasDefaultCtor && (this.Kind == TypeKind.Struct || this.Kind == TypeKind.Enum))
 				{
-					methodsList.Add(FakeMethod.CreateDummyConstructor(Compilation, this, IsAbstract ? Accessibility.Protected : Accessibility.Public));
+					methodsList.Add(FakeMethod.CreateDummyConstructor(Compilation, this, Accessibility.Public));
 				}
 				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
 					return methodsList;
