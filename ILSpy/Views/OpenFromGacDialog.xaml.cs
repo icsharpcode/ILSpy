@@ -192,11 +192,5 @@ namespace ICSharpCode.ILSpy
 				return listView.SelectedItems.OfType<GacEntry>().Select(e => e.FileName).ToArray();
 			}
 		}
-
-		protected override void OnSourceInitialized(EventArgs e)
-		{
-			base.OnSourceInitialized(e);
-			ThemeManager.Current.ApplyThemeForWindow(this);
-		}
 	}
 }

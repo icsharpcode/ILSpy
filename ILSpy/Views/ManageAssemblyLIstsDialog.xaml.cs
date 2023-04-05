@@ -44,11 +44,5 @@ namespace ICSharpCode.ILSpy
 			menu.Placement = PlacementMode.Bottom;
 			menu.IsOpen = true;
 		}
-
-		protected override void OnSourceInitialized(EventArgs e)
-		{
-			base.OnSourceInitialized(e);
-			ThemeManager.Current.ApplyThemeForWindow(this);
-		}
 	}
 }

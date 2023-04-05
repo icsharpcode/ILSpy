@@ -49,13 +49,11 @@ namespace ICSharpCode.ILSpy.Themes
 
 		private void UpdateWindowStyle()
 		{
-			if (!MainWindow.Instance.CurrentDisplaySettings.StyleWindowTitleBar)
-			{
-				return;
-			}
-
 			var window = AssociatedObject;
-			window.Style = (Style)window.FindResource(TomsToolbox.Wpf.Styles.ResourceKeys.WindowStyle);
+			ThemeManager.Current.ApplyThemeForWindow(window);
+
+			if (MainWindow.Instance.CurrentDisplaySettings.StyleWindowTitleBar)
+				window.Style = (Style)window.FindResource(TomsToolbox.Wpf.Styles.ResourceKeys.WindowStyle);
 		}
 
 		private static void ShowRestartNotification()
