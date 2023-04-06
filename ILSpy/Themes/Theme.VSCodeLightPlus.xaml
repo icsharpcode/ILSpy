@@ -18,6 +18,8 @@
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.LineNumbersForegroundBrush}" Color="#237893" />
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.CurrentLineBackgroundBrush}" />
 	<Pen x:Key="{x:Static themes:ResourceKeys.CurrentLineBorderPen}" Brush="#EEEEEE" Thickness="2" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.BracketHighlightBackgroundBrush}" Color="#E5EFE5" />
+	<Pen x:Key="{x:Static themes:ResourceKeys.BracketHighlightBorderPen}" Brush="#B9B9B9" Thickness="1" />
 
 	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerBackgroundColor}">#ADD6FF</Color>
 	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerDefinitionBackgroundColor}">#D6EAFF</Color>

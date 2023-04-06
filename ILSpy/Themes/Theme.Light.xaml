@@ -11,6 +11,8 @@
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.LineNumbersForegroundBrush}" Color="Gray" />
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.CurrentLineBackgroundBrush}" Color="#1614DCE0" />
 	<Pen x:Key="{x:Static themes:ResourceKeys.CurrentLineBorderPen}" Brush="#3400FF6E" Thickness="1" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.BracketHighlightBackgroundBrush}" Color="#160000FF" />
+	<Pen x:Key="{x:Static themes:ResourceKeys.BracketHighlightBorderPen}" Brush="#340000FF" Thickness="1" />
 
 	<!-- ILAsm -->
 	<themes:SyntaxColor x:Key="SyntaxColor.ILAsm.Comment" Foreground="Green" />
