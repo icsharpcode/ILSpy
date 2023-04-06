@@ -617,6 +617,16 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		}
 
 		[Test]
+		public void NoDefaultConstructorAddedToStruct()
+		{
+			var ctors = compilation.FindType(typeof(MyStructWithDefaultCtor)).GetConstructors();
+			Assert.AreEqual(1, ctors.Count());
+			Assert.IsFalse(ctors.Any(c => c.IsStatic));
+			Assert.IsTrue(ctors.All(c => c.ReturnType.Kind == TypeKind.Void));
+			Assert.IsTrue(ctors.All(c => c.Accessibility == Accessibility.Public));
+		}
+
+		[Test]
 		public void NoDefaultConstructorAddedToClass()
 		{
 			var ctors = compilation.FindType(typeof(MyClassWithCtor)).GetConstructors();
