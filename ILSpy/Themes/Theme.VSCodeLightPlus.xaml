@@ -15,6 +15,7 @@
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextBackgroundBrush}" Color="White" />
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextForegroundBrush}" Color="Black" />
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.SearchResultBackgroundBrush}" Color="#F8C9AB" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.LineNumbersForegroundBrush}" Color="#237893" />
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.CurrentLineBackgroundBrush}" />
 	<Pen x:Key="{x:Static themes:ResourceKeys.CurrentLineBorderPen}" Brush="#EEEEEE" Thickness="2" />
 

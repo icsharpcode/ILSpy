@@ -30,6 +30,7 @@ namespace ICSharpCode.ILSpy.Themes
 		public static ResourceKey LinkTextForegroundBrush = new ComponentResourceKey(typeof(ResourceKeys), nameof(LinkTextForegroundBrush));
 		public static ResourceKey BracketHighlightBackgroundBrush = new ComponentResourceKey(typeof(ResourceKeys), nameof(BracketHighlightBackgroundBrush));
 		public static ResourceKey BracketHighlightBorderPen = new ComponentResourceKey(typeof(ResourceKeys), nameof(BracketHighlightBorderPen));
+		public static ResourceKey LineNumbersForegroundBrush = new ComponentResourceKey(typeof(ResourceKeys), nameof(LineNumbersForegroundBrush));
 		public static ResourceKey CurrentLineBackgroundBrush = new ComponentResourceKey(typeof(ResourceKeys), nameof(CurrentLineBackgroundBrush));
 		public static ResourceKey CurrentLineBorderPen = new ComponentResourceKey(typeof(ResourceKeys), nameof(CurrentLineBorderPen));
 		public static ResourceKey ThemeAwareButtonEffect = new ComponentResourceKey(typeof(ResourceKeys), nameof(ThemeAwareButtonEffect));

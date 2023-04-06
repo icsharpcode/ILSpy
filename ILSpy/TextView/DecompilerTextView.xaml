@@ -34,6 +34,7 @@
 				<ae:TextEditor Name="textEditor" AutomationProperties.Name="Decompilation"  FontFamily="Consolas" FontSize="10pt" IsReadOnly="True"
 				               Background="{DynamicResource {x:Static themes:ResourceKeys.TextBackgroundBrush}}"
 				               Foreground="{DynamicResource {x:Static themes:ResourceKeys.TextForegroundBrush}}"
+				               LineNumbersForeground="{DynamicResource {x:Static themes:ResourceKeys.LineNumbersForegroundBrush}}"
 				               folding:FoldingMargin.FoldingMarkerBackgroundBrush="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
 				               folding:FoldingMargin.SelectedFoldingMarkerBackgroundBrush="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
 				               folding:FoldingMargin.FoldingMarkerBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
