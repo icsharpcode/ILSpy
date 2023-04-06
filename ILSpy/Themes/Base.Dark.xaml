@@ -9,6 +9,8 @@
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextBackgroundBrush}" Color="Black" />
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextForegroundBrush}" Color="White" />
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.SearchResultBackgroundBrush}" Color="#995A23" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.CurrentLineBackgroundBrush}" Color="#1614DCE0" />
+	<Pen x:Key="{x:Static themes:ResourceKeys.CurrentLineBorderPen}" Brush="#3400FF6E" Thickness="1" />
 
 	<Color x:Key="{x:Static SystemColors.ControlLightLightColorKey}">#333337</Color>
 	<Color x:Key="{x:Static SystemColors.ControlLightColorKey}">#464646</Color>

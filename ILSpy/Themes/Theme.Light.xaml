@@ -8,6 +8,8 @@
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextBackgroundBrush}" Color="{DynamicResource {x:Static SystemColors.InfoColorKey}}" />
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextForegroundBrush}" Color="{DynamicResource {x:Static SystemColors.InfoTextColorKey}}" />
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.SearchResultBackgroundBrush}" Color="LightGreen" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.CurrentLineBackgroundBrush}" Color="#1614DCE0" />
+	<Pen x:Key="{x:Static themes:ResourceKeys.CurrentLineBorderPen}" Brush="#3400FF6E" Thickness="1" />
 
 	<!-- ILAsm -->
 	<themes:SyntaxColor x:Key="SyntaxColor.ILAsm.Comment" Foreground="Green" />
