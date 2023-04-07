@@ -375,7 +375,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var arg = Translate(inst.Argument);
 			arg = UnwrapBoxingConversion(arg);
-			return new IsExpression(arg.Expression, ConvertType(inst.Type))
+			return new IsExpression(arg.Expression, ConvertType(inst.Type.TupleUnderlyingTypeOrSelf()))
 				.WithILInstruction(inst)
 				.WithRR(new TypeIsResolveResult(arg.ResolveResult, inst.Type, compilation.FindType(TypeCode.Boolean)));
 		}
