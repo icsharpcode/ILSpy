@@ -114,6 +114,8 @@ namespace ICSharpCode.ILSpy.TextView
 			BackgroundGeometryBuilder builder = new BackgroundGeometryBuilder();
 
 			builder.CornerRadius = 1;
+			builder.AlignToWholePixels = true;
+			builder.BorderThickness = borderPen?.Thickness ?? 0;
 
 			builder.AddSegment(textView, new TextSegment() { StartOffset = result.OpeningBracketOffset, Length = result.OpeningBracketLength });
 			builder.CloseFigure(); // prevent connecting the two segments
