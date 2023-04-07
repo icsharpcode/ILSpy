@@ -43,19 +43,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			return 0;
 		}
 
-		public static decimal IntToDecimal() {
+		public static decimal IntToDecimal()
+		{
 			return (decimal)int.MaxValue;
 		}
 
-		public static decimal UIntToDecimal() {
+		public static decimal UIntToDecimal()
+		{
 			return (decimal)uint.MaxValue;
 		}
 
-		public static decimal LongToDecimal() {
+		public static decimal LongToDecimal()
+		{
 			return (decimal)long.MaxValue;
 		}
 
-		public static decimal ULongToDecimal() {
+		public static decimal ULongToDecimal()
+		{
 			return (decimal)ulong.MaxValue;
 		}
 	}
