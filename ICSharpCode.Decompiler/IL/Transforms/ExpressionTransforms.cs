@@ -433,10 +433,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					var paramType = inst.Method.Parameters[0].Type.GetDefinition()?.KnownTypeCode;
 					result = paramType switch {
-						KnownTypeCode.Int32 => new LdcDecimal(new decimal((int)val)),
-						KnownTypeCode.UInt32 => new LdcDecimal(new decimal((uint)val)),
+						KnownTypeCode.Int32 => new LdcDecimal(new decimal(unchecked((int)val))),
+						KnownTypeCode.UInt32 => new LdcDecimal(new decimal(unchecked((uint)val))),
 						KnownTypeCode.Int64 => new LdcDecimal(new decimal(val)),
-						KnownTypeCode.UInt64 => new LdcDecimal(new decimal((ulong)val)),
+						KnownTypeCode.UInt64 => new LdcDecimal(new decimal(unchecked((ulong)val))),
 						_ => null
 					};
 					return result is not null;
