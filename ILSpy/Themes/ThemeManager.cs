@@ -103,21 +103,20 @@ namespace ICSharpCode.ILSpy.Themes
 				.Replace(" ", "");
 
 			_themeDictionaryContainer.MergedDictionaries.Clear();
-			_themeDictionaryContainer.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri($"themes/Theme.{themeFileName}.xaml", UriKind.Relative) });
-
 			_syntaxColors.Clear();
-			ProcessDictionary(_themeDictionaryContainer);
 
-			void ProcessDictionary(ResourceDictionary resourceDictionary)
+			// Load SyntaxColor info from theme XAML
+			var resourceDictionary = new ResourceDictionary { Source = new Uri($"/themes/Theme.{themeFileName}.xaml", UriKind.Relative) };
+			_themeDictionaryContainer.MergedDictionaries.Add(resourceDictionary);
+
+			// Iterate over keys first, because we don't want to instantiate all values eagerly, if we don't need them.
+			foreach (var item in resourceDictionary.Keys)
 			{
-				foreach (DictionaryEntry entry in resourceDictionary)
+				if (item is string key && key.StartsWith("SyntaxColor.", StringComparison.Ordinal))
 				{
-					if (entry is { Key: string key, Value: SyntaxColor syntaxColor })
+					if (resourceDictionary[key] is SyntaxColor syntaxColor)
 						_syntaxColors.TryAdd(key, syntaxColor);
 				}
-
-				foreach (ResourceDictionary mergedDictionary in resourceDictionary.MergedDictionaries)
-					ProcessDictionary(mergedDictionary);
 			}
 		}
 	}
