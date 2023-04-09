@@ -17,7 +17,7 @@
 		<RoslynVersion>4.4.0</RoslynVersion>
 		<MonoCecilVersion>0.11.4</MonoCecilVersion>
 		<AvalonEditVersion>6.3.0.90</AvalonEditVersion>
-		<WpfStylesToolboxVersion>2.8.6</WpfStylesToolboxVersion>
+		<WpfStylesToolboxVersion>2.8.7</WpfStylesToolboxVersion>
 		<NUnitVersion>3.13.3</NUnitVersion>
 		<NUnitAdapterVersion>4.4.2</NUnitAdapterVersion>
 		<JUnitXmlTestLoggerVersion>3.0.124</JUnitXmlTestLoggerVersion>
