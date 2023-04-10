@@ -849,7 +849,7 @@ namespace ICSharpCode.Decompiler.CSharp
 										foreach (var m in closureType.GetMethods())
 										{
 											var methodDef = module.Metadata.GetMethodDefinition(m);
-											if (methodDef.Name == memberRef.Name)
+											if (methodDef.Name == memberRef.Name && m.IsCompilerGeneratedOrIsInCompilerGeneratedClass(module.Metadata))
 												connectedMethods.Enqueue(m);
 										}
 									}
