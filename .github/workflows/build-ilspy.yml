@@ -20,11 +20,19 @@ jobs:
     steps:
     - run: mkdir -p $env:StagingDirectory
       
-
     - uses: actions/checkout@v3
       with:
         submodules: true
         fetch-depth: 0
+
+    - name: NuGet package caching
+      uses: actions/cache@v3
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.props') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.props') }}
+          ${{ runner.os }}-nuget-
 
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.3
