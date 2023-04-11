@@ -29,9 +29,9 @@ jobs:
       uses: actions/cache@v3
       with:
         path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.props') }}
+        key: ${{ runner.os }}-nuget-${{ matrix.configuration }}-${{ hashFiles('**/*.csproj', '**/packages.props') }}
         restore-keys: |
-          ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.props') }}
+          ${{ runner.os }}-nuget-${{ matrix.configuration }}-
           ${{ runner.os }}-nuget-
 
     - name: Add msbuild to PATH
