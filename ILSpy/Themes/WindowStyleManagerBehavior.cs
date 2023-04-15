@@ -16,11 +16,16 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Interop;
+using System.Windows.Media;
 
 using ICSharpCode.ILSpy.Options;
 
+using TomsToolbox.Essentials;
 using TomsToolbox.Wpf;
 using TomsToolbox.Wpf.Interactivity;
 
@@ -30,32 +35,46 @@ namespace ICSharpCode.ILSpy.Themes
 	{
 		private static readonly DispatcherThrottle restartNotificationThrottle = new DispatcherThrottle(ShowRestartNotification);
 
+		private INotifyChanged _foreground;
+		private INotifyChanged _background;
+
 		protected override void OnAttached()
 		{
 			base.OnAttached();
 
 			MainWindow.Instance.CurrentDisplaySettings.PropertyChanged += DisplaySettings_PropertyChanged;
 
-			UpdateWindowStyle();
+			_foreground = AssociatedObject.Track(Control.ForegroundProperty);
+			_background = AssociatedObject.Track(Control.BackgroundProperty);
 
+			_foreground.Changed += Color_Changed;
+			_background.Changed += Color_Changed;
+
+			UpdateWindowStyle();
+			ApplyThemeToWindowCaption();
 		}
 
 		protected override void OnDetaching()
 		{
 			base.OnDetaching();
 
+			_foreground.Changed -= Color_Changed;
+			_background.Changed -= Color_Changed;
+
 			MainWindow.Instance.CurrentDisplaySettings.PropertyChanged -= DisplaySettings_PropertyChanged;
+		}
+
+		private void Color_Changed(object sender, EventArgs e)
+		{
+			ApplyThemeToWindowCaption();
 		}
 
 		private void UpdateWindowStyle()
 		{
-			if (!MainWindow.Instance.CurrentDisplaySettings.StyleWindowTitleBar)
-			{
-				return;
-			}
-
 			var window = AssociatedObject;
-			window.Style = (Style)window.FindResource(TomsToolbox.Wpf.Styles.ResourceKeys.WindowStyle);
+
+			if (MainWindow.Instance.CurrentDisplaySettings.StyleWindowTitleBar)
+				window.Style = (Style)window.FindResource(TomsToolbox.Wpf.Styles.ResourceKeys.WindowStyle);
 		}
 
 		private static void ShowRestartNotification()
@@ -74,6 +93,33 @@ namespace ICSharpCode.ILSpy.Themes
 				}
 
 				UpdateWindowStyle();
+			}
+		}
+
+		private void ApplyThemeToWindowCaption()
+		{
+			var window = AssociatedObject;
+
+			IntPtr hwnd = new WindowInteropHelper(window).Handle;
+
+			if (hwnd != IntPtr.Zero)
+			{
+				var foreground = ((window.Foreground as SolidColorBrush)?.Color).ToGray();
+				var background = ((window.Background as SolidColorBrush)?.Color).ToGray();
+
+				var isDarkTheme = background < foreground;
+
+				NativeMethods.UseImmersiveDarkMode(hwnd, isDarkTheme);
+			}
+			else
+			{
+				void Initialized(object o, EventArgs eventArgs)
+				{
+					ApplyThemeToWindowCaption();
+					window.SourceInitialized -= Initialized;
+				}
+
+				window.SourceInitialized += Initialized;
 			}
 		}
 	}
