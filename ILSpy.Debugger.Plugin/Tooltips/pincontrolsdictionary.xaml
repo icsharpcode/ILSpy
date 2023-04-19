@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:ICSharpCode.ILSpy.Debugger.Tooltips">
+    <LinearGradientBrush x:Key="OrangeBrushKey" EndPoint="0,1" StartPoint="0,0">
+        <GradientBrush.GradientStops>
+            <GradientStop Offset="0" Color="White" />
+            <GradientStop Offset="0.5" Color="Orange" />
+            <GradientStop Offset="1" Color="Orange" />
+        </GradientBrush.GradientStops>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="OrangePressedBrushKey" EndPoint="0,1" StartPoint="0,0">
+        <GradientBrush.GradientStops>
+            <GradientStop Offset="1" Color="White" />
+            <GradientStop Offset="0.5" Color="Orange" />
+            <GradientStop Offset="0" Color="Orange" />
+        </GradientBrush.GradientStops>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="SilverBrushKey" EndPoint="0,1" StartPoint="0,0">
+        <GradientBrush.GradientStops>
+            <GradientStop Offset="0" Color="White" />
+            <GradientStop Offset="0.5" Color="LightGray" />
+            <GradientStop Offset="1" Color="LightGray" />
+        </GradientBrush.GradientStops>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="SilverPressedBrushKey" EndPoint="0,1" StartPoint="0,0">
+        <GradientBrush.GradientStops>
+            <GradientStop Offset="1" Color="White" />
+            <GradientStop Offset="0.5" Color="LightGray" />
+            <GradientStop Offset="0" Color="LightGray" />
+        </GradientBrush.GradientStops>
+    </LinearGradientBrush>
+    <ControlTemplate x:Key="CloseButtonTemplate" TargetType="{x:Type Button}">
+        <Border Name="TheBorder" Width="16" Height="16" CornerRadius="2,2,0,0" BorderThickness="1" BorderBrush="#FF000000" Background="{StaticResource SilverPressedBrushKey}">
+            <Canvas>
+                <Line X1="3.5" X2="10.5" Y1="3.5" Y2="10.5" Stroke="#FF000000" StrokeThickness="2" />
+                <Line X1="3.5" X2="10.5" Y1="10.5" Y2="3.5" Stroke="#FF000000" StrokeThickness="2" />
+            </Canvas>
+        </Border>
+        <ControlTemplate.Triggers>
+            <Trigger Property="UIElement.IsMouseOver" Value="True">
+                <Setter TargetName="TheBorder" Property="Border.Background" Value="{StaticResource OrangeBrushKey}" />
+                <Setter TargetName="TheBorder" Property="Border.BorderBrush" Value="#FFC0C0C0" />
+            </Trigger>
+            <Trigger Property="ButtonBase.IsPressed" Value="True">
+                <Setter TargetName="TheBorder" Property="Border.Background" Value="{StaticResource OrangePressedBrushKey}" />
+                <Setter TargetName="TheBorder" Property="Border.BorderBrush" Value="#FFC0C0C0" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+    <TransformGroup x:Key="Rotate">
+        <RotateTransform Angle="270" CenterX="7" CenterY="7" />
+    </TransformGroup>
+    <TransformGroup x:Key="RotateUnpin">
+        <RotateTransform Angle="270" CenterX="7" CenterY="7" />
+        <RotateTransform Angle="-90" CenterX="7" CenterY="7" />
+        <ScaleTransform ScaleY="-1" CenterX="7" CenterY="7" />
+    </TransformGroup>
+    <TransformGroup x:Key="RotatePin">
+        <RotateTransform Angle="-90" CenterX="7" CenterY="7" />
+    </TransformGroup>
+    <TransformGroup x:Key="FlipComment">
+        <ScaleTransform CenterX="7" CenterY="7" ScaleY="-1" />
+    </TransformGroup>
+    <ControlTemplate x:Key="PinButtonTemplate" TargetType="{x:Type ToggleButton}">
+        <Border Name="TheBorder" Width="16" Height="16" CornerRadius="0" BorderThickness="1" BorderBrush="#FF000000" Background="{StaticResource SilverPressedBrushKey}">
+            <Canvas Name="TheCanvas">
+                <Line X1="4" X2="10" Y1="2" Y2="2" Stroke="#FF000000" StrokeThickness="1" />
+                <Line X1="9" X2="9" Y1="2" Y2="8" Stroke="#FF000000" StrokeThickness="1" />
+                <Line X1="2" X2="12" Y1="8" Y2="8" Stroke="#FF000000" StrokeThickness="1" />
+                <Rectangle Fill="#FF000000" Width="2" Height="5" Canvas.Left="4" Canvas.Top="3" />
+                <Line X1="7" X2="7" Y1="9" Y2="12" Stroke="#FF000000" StrokeThickness="1" />
+            </Canvas>
+        </Border>
+        <ControlTemplate.Triggers>
+            <Trigger Property="UIElement.IsMouseOver" Value="True">
+                <Setter TargetName="TheBorder" Property="Border.Background" Value="{StaticResource OrangeBrushKey}" />
+                <Setter TargetName="TheBorder" Property="Border.BorderBrush" Value="#FFC0C0C0" />
+            </Trigger>
+            <Trigger Property="ButtonBase.IsPressed" Value="True">
+                <Setter TargetName="TheCanvas" Property="UIElement.RenderTransform" Value="{StaticResource RotatePin}" />
+                <Setter TargetName="TheBorder" Property="Border.Background" Value="{StaticResource OrangePressedBrushKey}" />
+                <Setter TargetName="TheBorder" Property="Border.BorderBrush" Value="#FFC0C0C0" />
+            </Trigger>
+            <Trigger Property="ToggleButton.IsChecked" Value="true">
+                <Setter TargetName="TheCanvas" Property="UIElement.RenderTransform" Value="{StaticResource RotatePin}" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+    <ControlTemplate x:Key="CommentButtonTemplate" TargetType="{x:Type ToggleButton}">
+        <Border Name="TheBorder" Width="16" Height="16" CornerRadius="0,0,2,2" BorderThickness="1" BorderBrush="#FF000000" Background="{StaticResource SilverPressedBrushKey}">
+            <Canvas Name="TheCanvas">
+                <Line X1="3" Y1="3" X2="7" Y2="7.5" Stroke="#FF000000" StrokeThickness="1" />
+                <Line X1="7" Y1="7.4" X2="11" Y2="3" Stroke="#FF000000" StrokeThickness="1" />
+                <Line X1="3" Y1="7.5" X2="7" Y2="12" Stroke="#FF000000" StrokeThickness="1" />
+                <Line X1="7" Y1="12" X2="11" Y2="7.5" Stroke="#FF000000" StrokeThickness="1" />
+            </Canvas>
+        </Border>
+        <ControlTemplate.Triggers>
+            <Trigger Property="UIElement.IsMouseOver" Value="True">
+                <Setter TargetName="TheBorder" Property="Border.Background" Value="{StaticResource OrangeBrushKey}" />
+                <Setter TargetName="TheBorder" Property="Border.BorderBrush" Value="#FFC0C0C0" />
+            </Trigger>
+            <Trigger Property="ButtonBase.IsPressed" Value="True">
+                <Setter TargetName="TheBorder" Property="Border.Background" Value="{StaticResource OrangePressedBrushKey}" />
+                <Setter TargetName="TheBorder" Property="Border.BorderBrush" Value="#FFC0C0C0" />
+            </Trigger>
+            <Trigger Property="ToggleButton.IsChecked" Value="True">
+                <Setter TargetName="TheCanvas" Property="UIElement.RenderTransform" Value="{StaticResource FlipComment}" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+    <SolidColorBrush x:Key="MouseOverPinBrush" Color="Black" />
+    <ControlTemplate x:Key="PinTooltipButtonTemplate" TargetType="{x:Type ToggleButton}">
+        <Border Name="TheBorder" Width="16" Height="16" CornerRadius="2" BorderBrush="#00FFFFFF" BorderThickness="1" Background="#00FFFFFF">
+            <Canvas Name="TheCanvas" RenderTransform="{StaticResource Rotate}">
+                <Line Name="Line1" X1="4" X2="10" Y1="2" Y2="2" Stroke="#FFC0C0C0" StrokeThickness="1" />
+                <Line Name="Line2" X1="9" X2="9" Y1="2" Y2="8" Stroke="#FFC0C0C0" StrokeThickness="1" />
+                <Line Name="Line3" X1="2" X2="12" Y1="8" Y2="8" Stroke="#FFC0C0C0" StrokeThickness="1" />
+                <Rectangle Name="Rectangle" Fill="#FFC0C0C0" Width="2" Height="7" Canvas.Left="4" Canvas.Top="2" />
+                <Line Name="Line4" X1="7" X2="7" Y1="9" Y2="12" Stroke="#FFC0C0C0" StrokeThickness="1" />
+            </Canvas>
+        </Border>
+        <ControlTemplate.Triggers>
+            <Trigger Property="ButtonBase.IsPressed" Value="True">
+                <Setter TargetName="TheCanvas" Property="UIElement.RenderTransform" Value="{StaticResource RotateUnpin}" />
+            </Trigger>
+            <Trigger Property="UIElement.IsMouseOver" Value="True">
+                <Setter TargetName="Line1" Property="Shape.Stroke" Value="{StaticResource MouseOverPinBrush}" />
+                <Setter TargetName="Line2" Property="Shape.Stroke" Value="{StaticResource MouseOverPinBrush}" />
+                <Setter TargetName="Line3" Property="Shape.Stroke" Value="{StaticResource MouseOverPinBrush}" />
+                <Setter TargetName="Line4" Property="Shape.Stroke" Value="{StaticResource MouseOverPinBrush}" />
+                <Setter TargetName="Rectangle" Property="Shape.Fill" Value="{StaticResource MouseOverPinBrush}" />
+            </Trigger>
+            <Trigger Property="ToggleButton.IsChecked" Value="True">
+                <Setter TargetName="TheCanvas" Property="UIElement.RenderTransform" Value="{StaticResource RotateUnpin}" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+    <Style x:Key="TextStyle" TargetType="{x:Type TextBox}">
+        <Setter Property="FrameworkElement.OverridesDefaultStyle" Value="True" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="FontFamily" Value="Khmer UI" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="KeyboardNavigation.TabNavigation" Value="None" />
+        <Setter Property="FrameworkElement.FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TextBoxBase}">
+                    <Border Name="Border" Background="#00FFFFFF" BorderBrush="#00FFFFFF" BorderThickness="0">
+                        <ScrollViewer Name="PART_ContentHost" Margin="0" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="TextBlockStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Margin" Value="4 0" />
+        <Setter Property="FontFamily" Value="Khmer UI" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style x:Key="PinThumbStyle" TargetType="{x:Type Thumb}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Thumb}">
+                    <StackPanel Name="Container" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="ExpandCollapseToggleStyle" TargetType="{x:Type ToggleButton}">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Width" Value="19" />
+        <Setter Property="Height" Value="13" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                    <Border Width="19" Height="13" Background="#00FFFFFF">
+                        <Border Width="9" Height="9" BorderThickness="1" BorderBrush="#FF7898B5" CornerRadius="1" SnapsToDevicePixels="True">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientBrush.GradientStops>
+                                        <GradientStop Color="White" Offset=".2" />
+                                        <GradientStop Color="#FFC0B7A6" Offset="1" />
+                                    </GradientBrush.GradientStops>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Path Name="ExpandPath" Margin="1,1,1,1" Fill="#FF000000" Data="M0,2 L0,3 L2,3 L2,5 L3,5 L3,3 L5,3 L5,2 L3,2 L3,0 L2,0 L2,2" />
+                        </Border>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="ToggleButton.IsChecked" Value="True">
+                            <Setter TargetName="ExpandPath" Property="Path.Data" Value="M0,2 L0,3 L5,3 L5,2" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="upDownBorderStyle" TargetType="{x:Type Border}">
+        <Setter Property="BorderBrush" Value="#FF808080" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="Border.Padding" Value="0" />
+        <Setter Property="Background" Value="#FFECF7FC" />
+        <Setter Property="Height" Value="14" />
+        <Style.Triggers>
+            <DataTrigger Value="False" Binding="{Binding Path=IsEnabled, RelativeSource={RelativeSource Self}}">
+                <Setter Property="Background" Value="#FFE0E0E0" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+    <Style x:Key="upButtonStyle" TargetType="{x:Type RepeatButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RepeatButton}">
+                    <Border BorderThickness="1 1 1 0" Style="{StaticResource upDownBorderStyle}">
+                        <ContentPresenter HorizontalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="downButtonStyle" TargetType="{x:Type RepeatButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RepeatButton}">
+                    <Border BorderThickness="1 0 1 1" Style="{StaticResource upDownBorderStyle}">
+                        <ContentPresenter HorizontalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <ControlTemplate x:Key="RefreshButton" TargetType="{x:Type Button}">
+        <Border Name="ImageBorder" CornerRadius="7" BorderBrush="#00FFFFFF" BorderThickness="1" Height="14" Width="14">
+            <Image Name="RefreshContentImage" Width="9" Height="9" Margin="2 2" Source="pack://application:,,,/ILSpy;component/Images/Refresh.png" Tag="{Binding}" />
+        </Border>
+        <ControlTemplate.Triggers>
+            <Trigger Property="UIElement.IsMouseOver" Value="True">
+                <Setter TargetName="ImageBorder" Property="Border.Background" Value="{StaticResource SilverBrushKey}" />
+                <Setter TargetName="ImageBorder" Property="Border.BorderBrush" Value="#FF808080" />
+            </Trigger>
+            <Trigger Property="ButtonBase.IsPressed" Value="True">
+                <Setter TargetName="ImageBorder" Property="Border.Background" Value="{StaticResource SilverPressedBrushKey}" />
+                <Setter TargetName="ImageBorder" Property="Border.BorderBrush" Value="#FF808080" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+</ResourceDictionary>

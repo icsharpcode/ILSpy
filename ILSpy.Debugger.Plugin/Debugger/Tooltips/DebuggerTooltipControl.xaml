@@ -1,0 +1,194 @@
+<UserControl
+	x:Class="ICSharpCode.ILSpy.Debugger.Tooltips.DebuggerTooltipControl"
+	x:ClassModifier="internal" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:aero="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero" xmlns:debugging="clr-namespace:ICSharpCode.ILSpy.Debugger.Tooltips" xmlns:localControls="clr-namespace:ICSharpCode.ILSpy.Debugger.Tooltips"
+	Background="#00FFFFFF">
+	<FrameworkElement.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<ResourceDictionary
+					Source="VisualizerPicker.xaml" />
+				<ResourceDictionary
+					Source="PinControlsDictionary.xaml" />
+			</ResourceDictionary.MergedDictionaries>
+		</ResourceDictionary>
+	</FrameworkElement.Resources>
+	<StackPanel
+		Orientation="Vertical">
+		<RepeatButton
+			Name="btnUp"
+			Focusable="False"
+			Style="{StaticResource upButtonStyle}"
+			Content="^"
+			Click="BtnUp_Click" />
+		<DataGrid
+			Name="dataGrid"
+			VerticalScrollBarVisibility="Disabled"
+			HorizontalScrollBarVisibility="Disabled"
+			GridLinesVisibility="None"
+			RowHeight="18"
+			MaxHeight="202"
+			SelectionMode="Single"
+			SelectionUnit="FullRow"
+			AutoGenerateColumns="False"
+			CanUserAddRows="False"
+			HeadersVisibility="None"
+			BorderBrush="#FF808080"
+			BorderThickness="1"
+			ItemsSource="{Binding}">
+			<Control.Background>
+				<LinearGradientBrush
+					StartPoint="0,-0.03"
+					EndPoint="0,1">
+					<GradientStop
+						Color="White" />
+					<GradientStop
+						Color="#FFFAFCFE"
+						Offset="0.983" />
+					<GradientStop
+						Color="#FFECF7FC"
+						Offset="0.07" />
+					<GradientStop
+						Color="#FFEEF7FA"
+						Offset="0.436" />
+				</LinearGradientBrush>
+			</Control.Background>
+			<DataGrid.RowStyle>
+				<Style
+					TargetType="{x:Type DataGridRow}">
+					<Setter
+						Property="Background"
+						Value="#00FFFFFF" />
+					<Style.Triggers>
+						<Trigger
+							Property="UIElement.IsMouseOver"
+							Value="True">
+							<Setter
+								Property="Background"
+								Value="#FFE2F6FE" />
+						</Trigger>
+					</Style.Triggers>
+				</Style>
+			</DataGrid.RowStyle>
+			<DataGrid.CellStyle>
+				<Style
+					TargetType="{x:Type DataGridCell}">
+					<Setter
+						Property="Focusable"
+						Value="False" />
+					<Setter
+						Property="BorderThickness"
+						Value="0" />
+					<Style.Triggers>
+						<Trigger
+							Property="DataGridCell.IsSelected"
+							Value="True">
+							<Setter
+								Property="Foreground"
+								Value="#FF000000" />
+							<Setter
+								Property="Background"
+								Value="{x:Null}" />
+						</Trigger>
+					</Style.Triggers>
+				</Style>
+			</DataGrid.CellStyle>
+			<DataGrid.Columns>
+				<DataGridTemplateColumn>
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<Grid
+								Background="#FFFFFFFF">
+								<StackPanel
+									VerticalAlignment="Center">
+									<!--Unknown connection ID: 3-->
+									<ToggleButton
+										Name="btnExpander"
+										Style="{StaticResource ExpandCollapseToggleStyle}"
+										Padding="0"
+										Margin="0" />
+								</StackPanel>
+							</Grid>
+							<DataTemplate.Triggers>
+								<DataTrigger
+									Value="False"
+									Binding="{Binding Path=HasChildNodes}">
+									<Setter
+										TargetName="btnExpander"
+										Property="Visibility"
+										Value="Collapsed" />
+								</DataTrigger>
+							</DataTemplate.Triggers>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+				<DataGridTemplateColumn>
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<Image
+								Source="{Binding ImageSource}" />
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+				<DataGridTemplateColumn
+					MinWidth="20"
+					Header="Name">
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<Border
+								BorderBrush="#FFDDDDDD"
+								BorderThickness="0 0 1 0">
+								<TextBlock
+									Style="{StaticResource TextBlockStyle}"
+									VerticalAlignment="Top"
+									Text="{Binding Path=Name, Mode=OneWay}" />
+							</Border>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+				<DataGridTemplateColumn
+					MinWidth="20"
+					Header="Text">
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<!--Unknown connection ID: 4-->
+							<TextBox
+								Style="{StaticResource TextStyle}"
+								IsEnabled="{Binding CanSetText}"
+								Text="{Binding Path=Text}" />
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+				<DataGridTemplateColumn>
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<!--Unknown connection ID: 5-->
+							<ToggleButton
+								Name="PinButton"
+								Visibility="Collapsed"
+								VerticalAlignment="Center"
+								Template="{StaticResource PinTooltipButtonTemplate}"
+								IsChecked="{Binding IsPinned}"
+								DataContext="{Binding}" />
+							<DataTemplate.Triggers>
+								<DataTrigger
+									Value="True"
+									Binding="{Binding Path=IsMouseOver, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=DataGridRow}}">
+									<Setter
+										TargetName="PinButton"
+										Property="Visibility"
+										Value="Visible" />
+								</DataTrigger>
+							</DataTemplate.Triggers>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+			</DataGrid.Columns>
+		</DataGrid>
+		<!--Unknown connection ID: 6-->
+		<RepeatButton
+			Name="btnDown"
+			Focusable="False"
+			Style="{StaticResource downButtonStyle}"
+			Content="v" />
+	</StackPanel>
+</UserControl>

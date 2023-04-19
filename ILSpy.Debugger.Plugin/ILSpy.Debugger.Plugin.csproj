@@ -1,0 +1,236 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{4943067D-F0E6-43CC-A1DB-CD3DE087C31D}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ICSharpCode.ILSpy</RootNamespace>
+    <AssemblyName>ILSpy.Debugger.Plugin</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <FileAlignment>4096</FileAlignment>
+    <ProjectTypeGuids>{60DC8134-EBA5-43B8-BCC9-BB4BC16C2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Debugger.Core">
+      <HintPath>..\..\ILSpy with Debug 2.1.0.1643\Debugger.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="ICSharpCode.AvalonEdit">
+      <HintPath>..\..\ILSpy with Debug 2.1.0.1643\ICSharpCode.AvalonEdit.dll</HintPath>
+    </Reference>
+    <Reference Include="ICSharpCode.Decompiler">
+      <HintPath>..\..\ILSpy with Debug 2.1.0.1643\ICSharpCode.Decompiler.dll</HintPath>
+    </Reference>
+    <Reference Include="ICSharpCode.NRefactory">
+      <HintPath>..\..\ILSpy with Debug 2.1.0.1643\ICSharpCode.NRefactory.dll</HintPath>
+    </Reference>
+    <Reference Include="ICSharpCode.NRefactory.CSharp">
+      <HintPath>..\..\ILSpy with Debug 2.1.0.1643\ICSharpCode.NRefactory.CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="ICSharpCode.TreeView">
+      <HintPath>..\..\ILSpy with Debug 2.1.0.1643\ICSharpCode.TreeView.dll</HintPath>
+    </Reference>
+    <Reference Include="ILSpy">
+      <HintPath>..\..\ILSpy with Debug 2.1.0.1643\ILSpy.exe</HintPath>
+    </Reference>
+    <Reference Include="ILSpy.SharpDevelop.LGPL">
+      <HintPath>..\..\ILSpy with Debug 2.1.0.1643\ILSpy.SharpDevelop.LGPL.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Cecil">
+      <HintPath>..\..\ILSpy with Debug 2.1.0.1643\Mono.Cecil.dll</HintPath>
+    </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="PresentationFramework.Aero" />
+  </ItemGroup>
+  <ItemGroup>
+    <AppDesigner Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Debugger\Commands\AttachCommand.cs" />
+    <Compile Include="Debugger\Commands\BreakDebuggingCommand.cs" />
+    <Compile Include="Debugger\Commands\BreakpointCommand.cs" />
+    <Compile Include="Debugger\Commands\ContinueDebuggingCommand.cs" />
+    <Compile Include="Debugger\Commands\DebugExecutableCommand.cs" />
+    <Compile Include="Debugger\Commands\DebugExecutableNodeCommand.cs" />
+    <Compile Include="Debugger\Commands\DebuggerCommand.cs" />
+    <Compile Include="Debugger\Commands\DetachCommand.cs" />
+    <Compile Include="Debugger\Commands\RemoveBreakpointsCommand.cs" />
+    <Compile Include="Debugger\Commands\StepIntoCommand.cs" />
+    <Compile Include="Debugger\Commands\StepOutCommand.cs" />
+    <Compile Include="Debugger\Commands\StepOverCommand.cs" />
+    <Compile Include="Debugger\DebuggerSettings.cs" />
+    <Compile Include="Debugger\Models\RunningProcess.cs" />
+    <Compile Include="Debugger\Models\TreeModel\AbortedBecauseDebuggeeResumedException.cs" />
+    <Compile Include="Debugger\Models\TreeModel\ArrayRangeNode.cs" />
+    <Compile Include="Debugger\Models\TreeModel\ExpressionNode.cs" />
+    <Compile Include="Debugger\Models\TreeModel\ICorDebug.cs" />
+    <Compile Include="Debugger\Models\TreeModel\IEnumerableNode.cs" />
+    <Compile Include="Debugger\Models\TreeModel\IListNode.cs" />
+    <Compile Include="Debugger\Models\TreeModel\ISetText.cs" />
+    <Compile Include="Debugger\Models\TreeModel\ITreeNode.cs" />
+    <Compile Include="Debugger\Models\TreeModel\IVisualizerCommand.cs" />
+    <Compile Include="Debugger\Models\TreeModel\PrintTime.cs" />
+    <Compile Include="Debugger\Models\TreeModel\SavedTreeNode.cs" />
+    <Compile Include="Debugger\Models\TreeModel\StackFrameNode.cs" />
+    <Compile Include="Debugger\Models\TreeModel\TreeNode.cs" />
+    <Compile Include="Debugger\Models\TreeModel\Utils.cs" />
+    <Compile Include="Debugger\Services\Debugger\DebuggerHelpers.cs" />
+    <Compile Include="Debugger\Services\Debugger\ListHelper.cs" />
+    <Compile Include="Debugger\Services\Debugger\TypeResolverExtension.cs" />
+    <Compile Include="Debugger\Services\ExtensionMethods.cs" />
+    <Compile Include="Debugger\Services\ImageService.cs" />
+    <Compile Include="Debugger\Services\ScrollUtils.cs" />
+    <Compile Include="Debugger\Services\WindowsDebugger.cs" />
+    <Compile Include="Debugger\Tooltips\DebuggerPopup.cs" />
+    <Compile Include="Debugger\Tooltips\DebuggerTooltipControl.xaml.cs">
+      <DependentUpon>DebuggerTooltipControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Debugger\Tooltips\LazyItemsControl.cs" />
+    <Compile Include="Debugger\Tooltips\TextEditorListener.cs" />
+    <Compile Include="Debugger\Tooltips\VirtualizingIEnumerable.cs" />
+    <Compile Include="Debugger\UI\AttachToProcessWindow.xaml.cs">
+      <DependentUpon>AttachToProcessWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Debugger\UI\BookmarkManagerPanelCommand.cs" />
+    <Compile Include="Debugger\UI\BreakpointPanel.xaml.cs">
+      <DependentUpon>BreakpointPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Debugger\UI\CallStackItem.cs" />
+    <Compile Include="Debugger\UI\CallStackPanel.xaml.cs">
+      <DependentUpon>CallStackPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Debugger\UI\CallstackPanelcommand.cs" />
+    <Compile Include="Debugger\UI\ExecuteProcessWindow.xaml.cs">
+      <DependentUpon>ExecuteProcessWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Options\DebuggerSettingsPanel.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="Debugger\Tooltips\DebuggerTooltipControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Debugger\UI\AttachToProcessWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Debugger\UI\BreakpointPanel.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Debugger\UI\CallStackPanel.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Debugger\UI\ExecuteProcessWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Tooltips\pincontrolsdictionary.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Tooltips\visualizerpicker.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\debuggersettingspanel.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="images\application-x-executable.png" />
+    <Resource Include="images\break.png" />
+    <Resource Include="images\breakpoint.png" />
+    <Resource Include="images\continuedebugging.png" />
+    <Resource Include="images\currentline.png" />
+    <Resource Include="images\deleteallbreakpoints.png" />
+    <Resource Include="images\icons.16x16.class.png" />
+    <Resource Include="images\icons.16x16.delegate.png" />
+    <Resource Include="images\icons.16x16.enum.png" />
+    <Resource Include="images\icons.16x16.event.png" />
+    <Resource Include="images\icons.16x16.extensionmethod.png" />
+    <Resource Include="images\icons.16x16.field.png" />
+    <Resource Include="images\icons.16x16.indexer.png" />
+    <Resource Include="images\icons.16x16.interface.png" />
+    <Resource Include="images\icons.16x16.internalclass.png" />
+    <Resource Include="images\icons.16x16.internaldelegate.png" />
+    <Resource Include="images\icons.16x16.internalenum.png" />
+    <Resource Include="images\icons.16x16.internalevent.png" />
+    <Resource Include="images\icons.16x16.internalextensionmethod.png" />
+    <Resource Include="images\icons.16x16.internalfield.png" />
+    <Resource Include="images\icons.16x16.internalindexer.png" />
+    <Resource Include="images\icons.16x16.internalinterface.png" />
+    <Resource Include="images\icons.16x16.internalmethod.png" />
+    <Resource Include="images\icons.16x16.internalproperty.png" />
+    <Resource Include="images\icons.16x16.internalstruct.png" />
+    <Resource Include="images\icons.16x16.keyword.png" />
+    <Resource Include="images\icons.16x16.literal.png" />
+    <Resource Include="images\icons.16x16.local.png" />
+    <Resource Include="images\icons.16x16.method.png" />
+    <Resource Include="images\icons.16x16.namespace.png" />
+    <Resource Include="images\icons.16x16.operator.png" />
+    <Resource Include="images\icons.16x16.parameter.png" />
+    <Resource Include="images\icons.16x16.privateclass.png" />
+    <Resource Include="images\icons.16x16.privatedelegate.png" />
+    <Resource Include="images\icons.16x16.privateenum.png" />
+    <Resource Include="images\icons.16x16.privateevent.png" />
+    <Resource Include="images\icons.16x16.privateextensionmethod.png" />
+    <Resource Include="images\icons.16x16.privatefield.png" />
+    <Resource Include="images\icons.16x16.privateindexer.png" />
+    <Resource Include="images\icons.16x16.privateinterface.png" />
+    <Resource Include="images\icons.16x16.privatemethod.png" />
+    <Resource Include="images\icons.16x16.privateproperty.png" />
+    <Resource Include="images\icons.16x16.privatestruct.png" />
+    <Resource Include="images\icons.16x16.property.png" />
+    <Resource Include="images\icons.16x16.protectedclass.png" />
+    <Resource Include="images\icons.16x16.protecteddelegate.png" />
+    <Resource Include="images\icons.16x16.protectedenum.png" />
+    <Resource Include="images\icons.16x16.protectedevent.png" />
+    <Resource Include="images\icons.16x16.protectedextensionmethod.png" />
+    <Resource Include="images\icons.16x16.protectedfield.png" />
+    <Resource Include="images\icons.16x16.protectedindexer.png" />
+    <Resource Include="images\icons.16x16.protectedinterface.png" />
+    <Resource Include="images\icons.16x16.protectedmethod.png" />
+    <Resource Include="images\icons.16x16.protectedproperty.png" />
+    <Resource Include="images\icons.16x16.protectedstruct.png" />
+    <Resource Include="images\icons.16x16.reference.png" />
+    <Resource Include="images\icons.16x16.struct.png" />
+    <Resource Include="images\stepinto.png" />
+    <Resource Include="images\stepout.png" />
+    <Resource Include="images\stepover.png" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
