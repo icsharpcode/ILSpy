@@ -29,8 +29,11 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.PdbProvider;
 using ICSharpCode.TreeView;
 
 using Microsoft.Win32;
@@ -204,10 +207,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			var assembly = (MetadataModule)typeSystem.MainModule;
 			this.Children.Add(new Metadata.MetadataTreeNode(module, this));
 			Decompiler.DebugInfo.IDebugInfoProvider debugInfo = LoadedAssembly.GetDebugInfoOrNull();
-			if (debugInfo is Decompiler.PdbProvider.PortableDebugInfoProvider ppdb
+			if (debugInfo is PortableDebugInfoProvider ppdb
 				&& ppdb.GetMetadataReader() is System.Reflection.Metadata.MetadataReader reader)
 			{
-				this.Children.Add(new Metadata.DebugMetadataTreeNode(module, ppdb.IsEmbedded, reader, this));
+				this.Children.Add(new Metadata.DebugMetadataTreeNode(module, ppdb.IsEmbedded, reader));
 			}
 			this.Children.Add(new ReferenceFolderTreeNode(module, this));
 			if (module.Resources.Any())
@@ -216,24 +219,61 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			{
 				ns.Children.Clear();
 			}
+			namespaces.Clear();
+			bool useNestedStructure = MainWindow.Instance.CurrentDisplaySettings.UseNestedNamespaceNodes;
 			foreach (var type in assembly.TopLevelTypeDefinitions.OrderBy(t => t.ReflectionName, NaturalStringComparer.Instance))
 			{
-				var escapedNamespace = Language.EscapeName(type.Namespace);
-				if (!namespaces.TryGetValue(type.Namespace, out NamespaceTreeNode ns))
-				{
-					ns = new NamespaceTreeNode(escapedNamespace);
-					namespaces.Add(type.Namespace, ns);
-				}
+				var ns = GetOrCreateNamespaceTreeNode(type.Namespace);
 				TypeTreeNode node = new TypeTreeNode(type, this);
 				typeDict[(TypeDefinitionHandle)type.MetadataToken] = node;
 				ns.Children.Add(node);
 			}
-			foreach (NamespaceTreeNode ns in namespaces.Values.OrderBy(n => n.Name, NaturalStringComparer.Instance))
+			foreach (NamespaceTreeNode ns in namespaces.Values
+				.Where(ns => ns.Children.Count > 0 && ns.Parent == null)
+				.OrderBy(n => n.Name, NaturalStringComparer.Instance))
 			{
-				if (ns.Children.Count > 0)
-					this.Children.Add(ns);
-				ns.SetPublicAPI(ns.Children.OfType<ILSpyTreeNode>().Any(n => n.IsPublicAPI));
+				this.Children.Add(ns);
+				SetPublicAPI(ns);
 			}
+
+			NamespaceTreeNode GetOrCreateNamespaceTreeNode(string @namespace)
+			{
+				if (!namespaces.TryGetValue(@namespace, out NamespaceTreeNode ns))
+				{
+					if (useNestedStructure)
+					{
+						int decimalIndex = @namespace.LastIndexOf('.');
+						if (decimalIndex < 0)
+						{
+							var escapedNamespace = Language.EscapeName(@namespace);
+							ns = new NamespaceTreeNode(escapedNamespace);
+						}
+						else
+						{
+							var parentNamespaceTreeNode = GetOrCreateNamespaceTreeNode(@namespace.Substring(0, decimalIndex));
+							var escapedInnerNamespace = Language.EscapeName(@namespace.Substring(decimalIndex + 1));
+							ns = new NamespaceTreeNode(escapedInnerNamespace);
+							parentNamespaceTreeNode.Children.Add(ns);
+						}
+					}
+					else
+					{
+						var escapedNamespace = Language.EscapeName(@namespace);
+						ns = new NamespaceTreeNode(escapedNamespace);
+					}
+					namespaces.Add(@namespace, ns);
+				}
+				return ns;
+			}
+		}
+
+		private static void SetPublicAPI(NamespaceTreeNode ns)
+		{
+			foreach (NamespaceTreeNode innerNamespace in ns.Children.OfType<NamespaceTreeNode>())
+			{
+				SetPublicAPI(innerNamespace);
+			}
+			ns.SetPublicAPI(ns.Children.OfType<ILSpyTreeNode>().Any(n => n.IsPublicAPI));
 		}
 
 		/// <summary>
@@ -389,7 +429,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			dlg.Filter = language.Name + " project|*" + language.ProjectFileExtension + "|" + language.Name + " single file|*" + language.FileExtension + "|All files|*.*";
 			if (dlg.ShowDialog() == true)
 			{
-				DecompilationOptions options = new DecompilationOptions();
+				DecompilationOptions options = MainWindow.Instance.CreateDecompilationOptions();
 				options.FullDecompilation = true;
 				if (dlg.FilterIndex == 1)
 				{

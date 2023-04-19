@@ -18,6 +18,7 @@
 
 using System.Linq;
 
+using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -127,34 +128,23 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				pre.CopyAnnotationsFrom(memberReferenceExpression);
 				memberReferenceExpression.ReplaceWith(pre);
 			}
-			var rr = memberReferenceExpression.GetResolveResult();
-			if (rr != null)
-			{
-				if (IsUnsafeType(rr.Type))
-					return true;
-			}
-
+			if (HasUnsafeResolveResult(memberReferenceExpression))
+				return true;
 			return result;
 		}
 
 		public override bool VisitIdentifierExpression(IdentifierExpression identifierExpression)
 		{
 			bool result = base.VisitIdentifierExpression(identifierExpression);
-			var rr = identifierExpression.GetResolveResult();
-			if (rr != null)
-			{
-				if (IsUnsafeType(rr.Type))
-					return true;
-			}
-
+			if (HasUnsafeResolveResult(identifierExpression))
+				return true;
 			return result;
 		}
 
 		public override bool VisitStackAllocExpression(StackAllocExpression stackAllocExpression)
 		{
 			bool result = base.VisitStackAllocExpression(stackAllocExpression);
-			var rr = stackAllocExpression.GetResolveResult();
-			if (IsUnsafeType(rr?.Type))
+			if (HasUnsafeResolveResult(stackAllocExpression))
 				return true;
 			return result;
 		}
@@ -162,14 +152,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public override bool VisitInvocationExpression(InvocationExpression invocationExpression)
 		{
 			bool result = base.VisitInvocationExpression(invocationExpression);
-			var rr = invocationExpression.GetResolveResult();
-			if (IsUnsafeType(rr?.Type))
+			if (HasUnsafeResolveResult(invocationExpression))
 				return true;
-			if ((rr as MemberResolveResult)?.Member is IParameterizedMember pm)
-			{
-				if (pm.Parameters.Any(p => IsUnsafeType(p.Type)))
-					return true;
-			}
 			return result;
 		}
 
@@ -179,20 +163,33 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		private bool IsUnsafeType(IType type)
+		private bool HasUnsafeResolveResult(AstNode node)
 		{
-			if (type?.Kind == TypeKind.Delegate)
+			var rr = node.GetResolveResult();
+			if (rr == null)
+				return false;
+			if (IsUnsafeType(rr.Type))
+				return true;
+			if ((rr as MemberResolveResult)?.Member is IParameterizedMember pm)
 			{
-				// Using a delegate which involves pointers in its signature needs the unsafe modifier
-				// https://github.com/icsharpcode/ILSpy/issues/949
-				IMethod invoke = type.GetDelegateInvokeMethod();
-				if (invoke != null && (ContainsPointer(invoke.ReturnType) || invoke.Parameters.Any(p => ContainsPointer(p.Type))))
+				if (pm.Parameters.Any(p => IsUnsafeType(p.Type)))
 					return true;
 			}
-			return ContainsPointer(type);
+			else if (rr is MethodGroupResolveResult)
+			{
+				var chosenMethod = node.GetSymbol();
+				if (chosenMethod is IParameterizedMember pm2)
+				{
+					if (IsUnsafeType(pm2.ReturnType))
+						return true;
+					if (pm2.Parameters.Any(p => IsUnsafeType(p.Type)))
+						return true;
+				}
+			}
+			return false;
 		}
 
-		private bool ContainsPointer(IType type)
+		private bool IsUnsafeType(IType type)
 		{
 			switch (type?.Kind)
 			{

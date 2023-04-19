@@ -354,6 +354,17 @@ namespace ICSharpCode.Decompiler.CSharp
 				&& IsRecordType(method.Parameters[0].Type);
 		}
 
+		private bool IsAllowedAttribute(IAttribute attribute)
+		{
+			switch (attribute.AttributeType.ReflectionName)
+			{
+				case "System.Runtime.CompilerServices.CompilerGeneratedAttribute":
+					return true;
+				default:
+					return false;
+			}
+		}
+
 		private bool IsGeneratedCopyConstructor(IMethod method)
 		{
 			/* 
@@ -362,7 +373,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				leave IL_0000 (nop)
 			 */
 			Debug.Assert(method.IsConstructor && method.Parameters.Count == 1);
-			if (method.GetAttributes().Any() || method.GetReturnTypeAttributes().Any())
+			if (method.GetAttributes().Any(attr => !IsAllowedAttribute(attr)) || method.GetReturnTypeAttributes().Any())
 				return false;
 			if (method.Accessibility != Accessibility.Protected && (!isSealed || method.Accessibility != Accessibility.Private))
 				return false;
@@ -434,11 +445,23 @@ namespace ICSharpCode.Decompiler.CSharp
 			var getter = property.Getter;
 			if (!(getter != null && !property.CanSet))
 				return false;
-			if (property.GetAttributes().Any())
-				return false;
+			var attrs = property.GetAttributes().ToList();
+			switch (attrs.Count)
+			{
+				case 0:
+					// Roslyn 3.x does not emit a CompilerGeneratedAttribute on the property itself.
+					break;
+				case 1:
+					// Roslyn 4.4 started doing so.
+					if (!attrs[0].AttributeType.IsKnownType(KnownAttribute.CompilerGenerated))
+						return false;
+					break;
+				default:
+					return false;
+			}
 			if (getter.GetReturnTypeAttributes().Any())
 				return false;
-			var attrs = getter.GetAttributes().ToList();
+			attrs = getter.GetAttributes().ToList();
 			if (attrs.Count != 1)
 				return false;
 			if (!attrs[0].AttributeType.IsKnownType(KnownAttribute.CompilerGenerated))
@@ -461,7 +484,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			if (!isSealed && !method.IsOverridable)
 				return false;
-			if (method.GetAttributes().Any() || method.GetReturnTypeAttributes().Any())
+			if (method.GetAttributes().Any(attr => !IsAllowedAttribute(attr)) || method.GetReturnTypeAttributes().Any())
 				return false;
 			if (method.Accessibility != Accessibility.Protected && (!isSealed || method.Accessibility != Accessibility.Private))
 				return false;
@@ -476,11 +499,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			int pos = 0;
 			//Roslyn 4.0.0-3.final start to insert an call to RuntimeHelpers.EnsureSufficientExecutionStack()
-			if (!isStruct && !isInheritedRecord && body.Instructions[pos] is Call
-				{
-					Arguments: { Count: 0 },
-					Method: { Name: "EnsureSufficientExecutionStack", DeclaringType: { Namespace: "System.Runtime.CompilerServices", Name: "RuntimeHelpers" } }
-				})
+			if (!isStruct && !isInheritedRecord && body.Instructions[pos] is Call {
+				Arguments: { Count: 0 },
+				Method: { Name: "EnsureSufficientExecutionStack", DeclaringType: { Namespace: "System.Runtime.CompilerServices", Name: "RuntimeHelpers" } }
+			})
 			{
 				pos++;
 			}
@@ -638,7 +660,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			if (method.IsSealed)
 				return false;
-			if (method.GetAttributes().Any() || method.GetReturnTypeAttributes().Any())
+			if (method.GetAttributes().Any(attr => !IsAllowedAttribute(attr)) || method.GetReturnTypeAttributes().Any())
 				return false;
 			var body = DecompileBody(method);
 			if (body == null)
@@ -712,7 +734,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			if (!isSealed && !method.IsOverridable)
 				return false;
-			if (method.GetAttributes().Any() || method.GetReturnTypeAttributes().Any())
+			if (method.GetAttributes().Any(attr => !IsAllowedAttribute(attr)) || method.GetReturnTypeAttributes().Any())
 				return false;
 			if (orderedMembers == null)
 				return false;
@@ -721,6 +743,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			if (!body.Instructions[0].MatchReturn(out var returnValue))
 				return false;
+			// special case for empty record struct; always returns true;
+			if (returnValue.MatchLdcI4(1))
+				return true;
 			var variables = body.Ancestors.OfType<ILFunction>().Single().Variables;
 			var other = variables.Single(v => v.Kind == VariableKind.Parameter && v.Index == 0);
 			Debug.Assert(IsRecordType(other.Type));
@@ -899,7 +924,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			if (!method.IsOverride || method.IsSealed)
 				return false;
-			if (method.GetAttributes().Any() || method.GetReturnTypeAttributes().Any())
+			if (method.GetAttributes().Any(attr => !IsAllowedAttribute(attr)) || method.GetReturnTypeAttributes().Any())
 				return false;
 			if (orderedMembers == null)
 				return false;
@@ -908,6 +933,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			if (!body.Instructions[0].MatchReturn(out var returnValue))
 				return false;
+			// special case for empty record struct; always returns false;
+			if (returnValue.MatchLdcI4(0))
+				return true;
 			var hashedMembers = new List<IMember>();
 			bool foundBaseClassHash = false;
 			if (!Visit(returnValue))
@@ -918,19 +946,17 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			bool Visit(ILInstruction inst)
 			{
-				if (inst is BinaryNumericInstruction
-					{
-						Operator: BinaryNumericOperator.Add,
+				if (inst is BinaryNumericInstruction {
+					Operator: BinaryNumericOperator.Add,
+					CheckForOverflow: false,
+					Left: BinaryNumericInstruction {
+						Operator: BinaryNumericOperator.Mul,
 						CheckForOverflow: false,
-						Left: BinaryNumericInstruction
-						{
-							Operator: BinaryNumericOperator.Mul,
-							CheckForOverflow: false,
-							Left: var left,
-							Right: LdcI4 { Value: -1521134295 }
-						},
-						Right: var right
-					})
+						Left: var left,
+						Right: LdcI4 { Value: -1521134295 }
+					},
+					Right: var right
+				})
 				{
 					if (!Visit(left))
 						return false;
@@ -1033,14 +1059,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			target = null;
 			member = null;
-			if (inst is CallInstruction
-				{
-					Method:
-					{
-						AccessorKind: System.Reflection.MethodSemanticsAttributes.Getter,
-						AccessorOwner: IProperty property
-					}
-				} call && (call is CallVirt || (isSealed && call is Call)))
+			if (inst is CallInstruction {
+				Method: {
+					AccessorKind: System.Reflection.MethodSemanticsAttributes.Getter,
+					AccessorOwner: IProperty property
+				}
+			} call && (call is CallVirt || (isSealed && call is Call)))
 			{
 				if (call.Arguments.Count != 1)
 					return false;

@@ -105,6 +105,10 @@ namespace ICSharpCode.Decompiler.Output
 		/// Support <c>record</c> classes.
 		/// </summary>
 		SupportRecordClasses = 0x20000,
+		/// <summary>
+		/// Support <c>record</c> structs.
+		/// </summary>
+		SupportRecordStructs = 0x40000,
 
 		StandardConversionFlags = ShowParameterNames |
 			ShowAccessibility |

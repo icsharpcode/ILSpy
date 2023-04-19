@@ -3,8 +3,10 @@
 		"path": "ILSpy.sln",
 		"projects": [
 			"ICSharpCode.Decompiler.PdbProvider.Cecil\\ICSharpCode.Decompiler.PdbProvider.Cecil.csproj",
+			"ICSharpCode.Decompiler.TestRunner\\ICSharpCode.Decompiler.TestRunner.csproj",
 			"ICSharpCode.Decompiler.Tests\\ICSharpCode.Decompiler.Tests.csproj",
 			"ICSharpCode.Decompiler\\ICSharpCode.Decompiler.csproj",
+			"ICSharpCode.ILSpyX\\ICSharpCode.ILSpyX.csproj",
 			"ILSpy.BamlDecompiler.Tests\\ILSpy.BamlDecompiler.Tests.csproj",
 			"ILSpy.BamlDecompiler\\ILSpy.BamlDecompiler.csproj",
 			"ILSpy.ReadyToRun\\ILSpy.ReadyToRun.csproj",

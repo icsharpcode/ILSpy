@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			StateMachineMethodEntry scrollTargetEntry = default;
 			var length = metadata.GetTableRowCount(TableIndex.StateMachineMethod);
 			var reader = new BlobReader(metadata.MetadataPointer, metadata.MetadataLength);
-			reader.Offset = +metadata.GetTableMetadataOffset(TableIndex.StateMachineMethod);
+			reader.Offset = metadata.GetTableMetadataOffset(TableIndex.StateMachineMethod);
 
 			for (int rid = 1; rid <= length; rid++)
 			{
@@ -88,6 +88,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int RID { get; }
 
+			public int Token => 0x36000000 + RID;
+
 			public object Offset => offset == null ? "n/a" : (object)offset;
 
 			[StringFormat("X8")]
@@ -102,7 +104,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string MoveNextMethodTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new GenericContext(default(TypeDefinitionHandle), module);
+					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
 					((EntityHandle)moveNextMethod).WriteTo(module, output, context);
 					return output.ToString();
 				}
@@ -120,7 +122,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string KickoffMethodTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new GenericContext(default(TypeDefinitionHandle), module);
+					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
 					((EntityHandle)kickoffMethod).WriteTo(module, output, context);
 					return output.ToString();
 				}

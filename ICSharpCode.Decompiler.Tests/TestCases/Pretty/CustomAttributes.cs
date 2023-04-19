@@ -40,6 +40,18 @@ namespace CustomAttributes
 			{
 			}
 		}
+#if CS110
+		[AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
+		public class GenericAttribute<T> : Attribute
+		{
+			public GenericAttribute()
+			{
+			}
+			public GenericAttribute(T val)
+			{
+			}
+		}
+#endif
 		[My(ULongEnum.MaxUInt64)]
 		public enum ULongEnum : ulong
 		{
@@ -145,5 +157,14 @@ namespace CustomAttributes
 		public static void BoxedLiteralsArray()
 		{
 		}
+#if CS110
+		[Generic<int>]
+		[Generic<string>]
+		public static void UseGenericAttribute()
+		{
+		}
+		// TODO: add test for generic attributes with arguments of type T
+		// This is blocked by https://github.com/dotnet/runtime/issues/58073
+#endif
 	}
 }

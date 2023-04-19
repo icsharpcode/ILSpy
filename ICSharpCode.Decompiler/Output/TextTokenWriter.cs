@@ -255,7 +255,7 @@ namespace ICSharpCode.Decompiler
 						braceLevelWithinType++;
 					if (nodeStack.OfType<BlockStatement>().Count() <= 1 || settings.FoldBraces)
 					{
-						output.MarkFoldStart(defaultCollapsed: !settings.ExpandMemberDefinitions && braceLevelWithinType == 1);
+						output.MarkFoldStart(defaultCollapsed: !settings.ExpandMemberDefinitions && braceLevelWithinType == 1, isDefinition: braceLevelWithinType == 1);
 					}
 					output.Write("{");
 					break;
@@ -457,7 +457,7 @@ namespace ICSharpCode.Decompiler
 		{
 			if (node is EntityDeclaration && !(node.Parent is LocalFunctionDeclarationStatement))
 				return true;
-			if (node is VariableInitializer && node.Parent is FieldDeclaration)
+			if (node is VariableInitializer && node.Parent is FieldDeclaration or EventDeclaration)
 			{
 				node = node.Parent;
 				return true;

@@ -7,6 +7,7 @@ using System.Xml.Linq;
 
 using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpyX.Settings;
 
 namespace TestPlugin
 {

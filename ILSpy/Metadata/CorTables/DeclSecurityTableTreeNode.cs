@@ -100,7 +100,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string ParentTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new GenericContext(default(TypeDefinitionHandle), module);
+					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
 					declSecAttr.Parent.WriteTo(module, output, context);
 					return output.ToString();
 				}

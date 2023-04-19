@@ -21,6 +21,7 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
@@ -121,6 +122,32 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{
 				// tiny
 				return 1;
+			}
+		}
+
+		public static void SetBranchTargets(ref BlobReader blob, BitSet branchTargets)
+		{
+			while (blob.RemainingBytes > 0)
+			{
+				var opCode = DecodeOpCode(ref blob);
+				if (opCode == ILOpCode.Switch)
+				{
+					foreach (var target in DecodeSwitchTargets(ref blob))
+					{
+						if (target >= 0 && target < blob.Length)
+							branchTargets.Set(target);
+					}
+				}
+				else if (opCode.IsBranch())
+				{
+					int target = DecodeBranchTarget(ref blob, opCode);
+					if (target >= 0 && target < blob.Length)
+						branchTargets.Set(target);
+				}
+				else
+				{
+					SkipOperand(ref blob, opCode);
+				}
 			}
 		}
 	}

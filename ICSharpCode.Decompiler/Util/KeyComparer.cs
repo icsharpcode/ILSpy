@@ -69,14 +69,14 @@ namespace ICSharpCode.Decompiler.Util
 			this.keyEqualityComparer = keyEqualityComparer;
 		}
 
-		public int Compare(TElement x, TElement y)
+		public int Compare(TElement? x, TElement? y)
 		{
-			return keyComparer.Compare(keySelector(x), keySelector(y));
+			return keyComparer.Compare(keySelector(x!), keySelector(y!));
 		}
 
-		public bool Equals(TElement x, TElement y)
+		public bool Equals(TElement? x, TElement? y)
 		{
-			return keyEqualityComparer.Equals(keySelector(x), keySelector(y));
+			return keyEqualityComparer.Equals(keySelector(x!), keySelector(y!));
 		}
 
 		public int GetHashCode(TElement obj)

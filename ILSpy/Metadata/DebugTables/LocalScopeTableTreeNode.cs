@@ -86,6 +86,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int RID => MetadataTokens.GetRowNumber(handle);
 
+			public int Token => MetadataTokens.GetToken(handle);
+
 			public object Offset => offset == null ? "n/a" : (object)offset;
 
 			[StringFormat("X8")]
@@ -100,7 +102,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string MethodTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					((EntityHandle)localScope.Method).WriteTo(module, output, Decompiler.Metadata.GenericContext.Empty);
+					((EntityHandle)localScope.Method).WriteTo(module, output, default);
 					return output.ToString();
 				}
 			}

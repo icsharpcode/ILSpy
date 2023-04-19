@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2015 Siegfried Pammer
+// Copyright (c) 2015 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -122,6 +122,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				local = inst.Variable;
 				localStore = null;
 				nextPos = pos + 1;
+
+				if (local.LoadCount == 1 && local.AddressCount == 0)
+				{
+					// inline assignment would produce a dead store in this case, which is ugly
+					// and causes problems with the deconstruction transform.
+					return false;
+				}
 			}
 			if (block.Instructions[nextPos] is StObj stobj)
 			{
@@ -864,9 +871,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (UnwrapSmallIntegerConv(value, out var conv) is BinaryNumericInstruction binary)
 			{
-				if (!binary.Left.MatchLdLoc(tmpVar) || !(binary.Right.MatchLdcI(1) || binary.Right.MatchLdcF4(1) || binary.Right.MatchLdcF8(1)))
-					return false;
 				if (!(binary.Operator == BinaryNumericOperator.Add || binary.Operator == BinaryNumericOperator.Sub))
+					return false;
+				if (!binary.Left.MatchLdLoc(tmpVar))
+					return false;
+				if (targetType is PointerType ptrType)
+				{
+					var right = PointerArithmeticOffset.Detect(binary.Right, ptrType.ElementType, binary.CheckForOverflow);
+					if (right is null || !right.MatchLdcI(1))
+						return false;
+				}
+				else if (!(binary.Right.MatchLdcI(1) || binary.Right.MatchLdcF4(1) || binary.Right.MatchLdcF8(1)))
 					return false;
 				if (!ValidateCompoundAssign(binary, conv, targetType, context.Settings))
 					return false;

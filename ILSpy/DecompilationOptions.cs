@@ -19,7 +19,9 @@
 using System;
 using System.Threading;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy
 {
@@ -55,6 +57,14 @@ namespace ICSharpCode.ILSpy
 		public CancellationToken CancellationToken { get; set; }
 
 		/// <summary>
+		/// Gets the progress reporter.
+		/// </summary>
+		/// <remarks>
+		/// If decompilers do not implement progress reporting, an indeterminate wait bar is displayed.
+		/// </remarks>
+		public IProgress<DecompilationProgress> Progress { get; set; }
+
+		/// <summary>
 		/// Gets the settings for the decompiler.
 		/// </summary>
 		public Decompiler.DecompilerSettings DecompilerSettings { get; private set; }
@@ -73,17 +83,7 @@ namespace ICSharpCode.ILSpy
 		internal int StepLimit = int.MaxValue;
 		internal bool IsDebug = false;
 
-		public DecompilationOptions()
-			: this(MainWindow.Instance.CurrentLanguageVersion, DecompilerSettingsPanel.CurrentDecompilerSettings, DisplaySettingsPanel.CurrentDisplaySettings)
-		{
-		}
-
-		public DecompilationOptions(LanguageVersion version)
-			: this(version, DecompilerSettingsPanel.CurrentDecompilerSettings, DisplaySettingsPanel.CurrentDisplaySettings)
-		{
-		}
-
-		public DecompilationOptions(LanguageVersion version, Decompiler.DecompilerSettings settings, Options.DisplaySettings displaySettings)
+		public DecompilationOptions(LanguageVersion version, Decompiler.DecompilerSettings settings, DisplaySettingsViewModel displaySettings)
 		{
 			if (!Enum.TryParse(version?.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
 				languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
@@ -96,7 +96,7 @@ namespace ICSharpCode.ILSpy
 			newSettings.CSharpFormattingOptions.IndentationString = GetIndentationString(displaySettings);
 		}
 
-		private string GetIndentationString(DisplaySettings displaySettings)
+		private string GetIndentationString(DisplaySettingsViewModel displaySettings)
 		{
 			if (displaySettings.IndentationUseTabs)
 			{

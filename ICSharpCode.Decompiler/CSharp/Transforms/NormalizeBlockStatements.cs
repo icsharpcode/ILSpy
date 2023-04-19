@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				case FixedStatement fxs:
 					return false;
 				case UsingStatement us:
-					return parent is UsingStatement;
+					return parent is UsingStatement && !us.IsEnhanced;
 				default:
 					return !(parent?.Parent is IfElseStatement);
 			}

@@ -1,17 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AssemblyName>ILSpy.ReadyToRun.Plugin</AssemblyName>
-    <LangVersion>8.0</LangVersion>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <NeutralResourcesLanguage>en-US</NeutralResourcesLanguage>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <UseWpf>true</UseWpf>
-  </PropertyGroup>
-  
-  <Import Project="..\multitargeting.props" Condition="Exists('..\multitargeting.props')" />
-  <PropertyGroup Condition="!Exists('..\multitargeting.props')">
-    <TargetFramework>net472</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -38,8 +37,8 @@
   <Import Project="../packages.props" />
 
   <ItemGroup>
-    <PackageReference Include="Iced" Version="1.13.0" />
-    <PackageReference Include="ILCompiler.Reflection.ReadyToRun.Experimental" Version="6.0.0-rc.2.21424.11" />
+    <PackageReference Include="Iced" Version="1.18.0" />
+    <PackageReference Include="ILCompiler.Reflection.ReadyToRun.Experimental" Version="8.0.0-preview.4.23202.2" />
     <!-- ILCompiler.Reflection.ReadyToRun has dependencies on System.Reflection.Metadata and
          System.Runtime.CompilerServices.Unsafe. Because the AddIn compiles into ILSpy's output
          directory, we're at risk of overwriting our dependencies with different versions.

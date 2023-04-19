@@ -33,7 +33,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		CSharp8_0 = 800,
 		CSharp9_0 = 900,
 		CSharp10_0 = 1000,
-		Preview = 1000,
+		CSharp11_0 = 1100,
+		Preview = 1100,
 		Latest = 0x7FFFFFFF
 	}
 }

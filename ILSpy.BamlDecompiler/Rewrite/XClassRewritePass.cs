@@ -62,6 +62,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				attrs.Insert(0, new XAttribute(classModifierName, "internal"));
 			}
 			attrs.Insert(0, new XAttribute(attrName, type.ResolvedType.FullName));
+			ctx.XClassNames.Add(type.ResolvedType.FullName);
 			elem.ReplaceAttributes(attrs);
 		}
 	}

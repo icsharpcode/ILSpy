@@ -19,6 +19,7 @@
 #nullable enable
 
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -81,6 +82,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets whether the method is a property/event accessor.
 		/// </summary>
+		[MemberNotNullWhen(true, nameof(AccessorOwner))]
 		bool IsAccessor { get; }
 
 		/// <summary>

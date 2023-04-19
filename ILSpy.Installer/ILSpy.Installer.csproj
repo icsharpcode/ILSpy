@@ -7,8 +7,24 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="WixSharp" Version="1.19.0" />
+    <PackageReference Include="WixSharp" Version="1.20.3" />
     <PackageReference Include="WixSharp.wix.bin" Version="3.11.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
+    <ProjectReference Include="..\ILSpy\ILSpy.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
+    <ProjectReference Include="..\ILSpy.ReadyToRun\ILSpy.ReadyToRun.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
+    <ProjectReference Include="..\ILSpy.BamlDecompiler\ILSpy.BamlDecompiler.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
   </ItemGroup>
 
 </Project>

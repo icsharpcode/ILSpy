@@ -33,8 +33,8 @@ namespace ICSharpCode.Decompiler.PowerShell
 			lock (syncObject)
 			{
 				completed++;
-				progress = new ProgressRecord(1, "Decompiling " + fileName, $"Completed {completed} of {value.TotalNumberOfFiles}: {value.Status}") {
-					PercentComplete = (int)(completed * 100.0 / value.TotalNumberOfFiles)
+				progress = new ProgressRecord(1, "Decompiling " + fileName, $"Completed {completed} of {value.TotalUnits}: {value.Status}") {
+					PercentComplete = (int)(completed * 100.0 / value.TotalUnits)
 				};
 			}
 		}
@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 		private void DoDecompile(string path)
 		{
 			PEFile module = Decompiler.TypeSystem.MainModule.PEFile;
-			var assemblyResolver = new UniversalAssemblyResolver(module.FileName, false, module.Reader.DetectTargetFrameworkId());
+			var assemblyResolver = new UniversalAssemblyResolver(module.FileName, false, module.Metadata.DetectTargetFrameworkId());
 			WholeProjectDecompiler decompiler = new WholeProjectDecompiler(assemblyResolver);
 			decompiler.ProgressIndicator = this;
 			fileName = module.FileName;

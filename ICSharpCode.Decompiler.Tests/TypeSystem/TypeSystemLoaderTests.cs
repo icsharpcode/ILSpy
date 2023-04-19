@@ -46,12 +46,12 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 
 		static readonly Lazy<PEFile> mscorlib = new Lazy<PEFile>(
 			delegate {
-				return LoadAssembly(typeof(object).Assembly.Location);
+				return LoadAssembly(Path.Combine(Helpers.Tester.RefAsmPath, "mscorlib.dll"));
 			});
 
 		static readonly Lazy<PEFile> systemCore = new Lazy<PEFile>(
 			delegate {
-				return LoadAssembly(typeof(System.Linq.Enumerable).Assembly.Location);
+				return LoadAssembly(Path.Combine(Helpers.Tester.RefAsmPath, "System.Core.dll"));
 			});
 
 		static readonly Lazy<PEFile> testAssembly = new Lazy<PEFile>(
@@ -611,6 +611,16 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		{
 			var ctors = compilation.FindType(typeof(MyStructWithCtor)).GetConstructors();
 			Assert.AreEqual(2, ctors.Count());
+			Assert.IsFalse(ctors.Any(c => c.IsStatic));
+			Assert.IsTrue(ctors.All(c => c.ReturnType.Kind == TypeKind.Void));
+			Assert.IsTrue(ctors.All(c => c.Accessibility == Accessibility.Public));
+		}
+
+		[Test]
+		public void NoDefaultConstructorAddedToStruct()
+		{
+			var ctors = compilation.FindType(typeof(MyStructWithDefaultCtor)).GetConstructors();
+			Assert.AreEqual(1, ctors.Count());
 			Assert.IsFalse(ctors.Any(c => c.IsStatic));
 			Assert.IsTrue(ctors.All(c => c.ReturnType.Kind == TypeKind.Void));
 			Assert.IsTrue(ctors.All(c => c.Accessibility == Accessibility.Public));

@@ -358,9 +358,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return Ancestors.OfType<T>().FirstOrDefault();
 		}
 
-		public AstNode GetParent(Func<AstNode, bool>? pred)
+		public AstNode? GetParent(Func<AstNode, bool>? pred)
 		{
-			return Ancestors.FirstOrDefault(pred);
+			return pred != null ? Ancestors.FirstOrDefault(pred) : Ancestors.FirstOrDefault();
 		}
 
 		public AstNodeCollection<T> GetChildrenByRole<T>(Role<T> role) where T : AstNode

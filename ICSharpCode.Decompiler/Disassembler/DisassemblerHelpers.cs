@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				writer.WriteLocalReference(OffsetToString(offset.Value), offset);
 		}
 
-		public static void WriteTo(this SRM.ExceptionRegion exceptionHandler, Metadata.PEFile module, GenericContext context, ITextOutput writer)
+		public static void WriteTo(this SRM.ExceptionRegion exceptionHandler, Metadata.PEFile module, MetadataGenericContext context, ITextOutput writer)
 		{
 			writer.Write(".try ");
 			WriteOffsetReference(writer, exceptionHandler.TryOffset);

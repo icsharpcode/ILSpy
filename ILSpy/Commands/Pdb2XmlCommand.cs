@@ -33,7 +33,7 @@ using Microsoft.DiaSymReader.Tools;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportMainMenuCommand(Menu = nameof(Resources._File), Header = nameof(Resources.DEBUGDumpPDBAsXML), MenuCategory = nameof(Resources.Open), MenuOrder = 2.6)]
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDumpPDBAsXML), MenuCategory = nameof(Resources.Open), MenuOrder = 2.6)]
 	sealed class Pdb2XmlCommand : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)

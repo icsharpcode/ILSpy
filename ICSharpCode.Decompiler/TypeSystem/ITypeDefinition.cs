@@ -23,10 +23,10 @@ using System.Collections.Generic;
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
-	/// Represents a class, enum, interface, struct, delegate or VB module.
+	/// Represents a class, enum, interface, struct, delegate, record or VB module.
 	/// For partial classes, this represents the whole class.
 	/// </summary>
-	public interface ITypeDefinition : IType, IEntity
+	public interface ITypeDefinition : ITypeDefinitionOrUnknown, IType, IEntity
 	{
 		IReadOnlyList<ITypeDefinition> NestedTypes { get; }
 		IReadOnlyList<IMember> Members { get; }
@@ -43,9 +43,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		/// <summary>
 		/// For enums: returns the underlying primitive type.
-		/// For all other types: returns <see cref="SpecialType.UnknownType"/>.
+		/// For all other types: returns <see langword="null"/>.
 		/// </summary>
-		IType EnumUnderlyingType { get; }
+		IType? EnumUnderlyingType { get; }
 
 		/// <summary>
 		/// For structs: returns whether this is a readonly struct.
@@ -54,9 +54,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		bool IsReadOnly { get; }
 
 		/// <summary>
-		/// Gets the full name of this type.
+		/// Gets the short type name as stored in metadata.
+		/// That is, the short type name including the generic arity (`N) appended.
 		/// </summary>
-		FullTypeName FullTypeName { get; }
+		/// <remarks>
+		/// "Int32" for int
+		/// "List`1" for List&lt;T&gt;
+		/// "List`1" for List&lt;string&gt;
+		/// </remarks>
+		string MetadataName { get; }
 
 		/// <summary>
 		/// Gets/Sets the declaring type (incl. type arguments, if any).
@@ -77,7 +83,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		Nullability NullableContext { get; }
 
 		/// <summary>
-		/// Gets whether the type has the necessary members to be considered a C# 9 record type.
+		/// Gets whether the type has the necessary members to be considered a C# 9 record or C# 10 record struct type.
 		/// </summary>
 		bool IsRecord { get; }
 	}

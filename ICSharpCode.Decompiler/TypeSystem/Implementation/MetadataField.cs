@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2018 Daniel Grunwald
+// Copyright (c) 2018 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -164,6 +165,30 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return b.Build();
 		}
 
+		public bool HasAttribute(KnownAttribute attribute)
+		{
+			if (!attribute.IsCustomAttribute())
+			{
+				return GetAttributes().Any(attr => attr.AttributeType.IsKnownType(attribute));
+			}
+			var b = new AttributeListBuilder(module);
+			var metadata = module.metadata;
+			var def = metadata.GetFieldDefinition(handle);
+			return b.HasAttribute(metadata, def.GetCustomAttributes(), attribute, SymbolKind.Field);
+		}
+
+		public IAttribute GetAttribute(KnownAttribute attribute)
+		{
+			if (!attribute.IsCustomAttribute())
+			{
+				return GetAttributes().FirstOrDefault(attr => attr.AttributeType.IsKnownType(attribute));
+			}
+			var b = new AttributeListBuilder(module);
+			var metadata = module.metadata;
+			var def = metadata.GetFieldDefinition(handle);
+			return b.GetAttribute(metadata, def.GetCustomAttributes(), attribute, SymbolKind.Field);
+		}
+
 		public string FullName => $"{DeclaringType?.FullName}.{Name}";
 		public string ReflectionName => $"{DeclaringType?.ReflectionName}.{Name}";
 		public string Namespace => DeclaringType?.Namespace ?? string.Empty;
@@ -200,7 +225,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (ty is ModifiedType mod && mod.Modifier.Name == "IsVolatile" && mod.Modifier.Namespace == "System.Runtime.CompilerServices")
 				{
 					Volatile.Write(ref this.isVolatile, true);
-					ty = mod.ElementType;
 				}
 				ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation,
 					fieldDef.GetCustomAttributes(), metadata, module.OptionsForEntity(this),

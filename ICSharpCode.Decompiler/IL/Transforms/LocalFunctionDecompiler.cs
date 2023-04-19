@@ -493,7 +493,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (targetMethod.TypeParameters.Count > 0)
 			{
-				var lastParams = targetMethod.Parameters.Where(p => IsClosureParameter(p, this.resolveContext)).SelectMany(p => UnwrapByRef(p.Type).TypeArguments)
+				var lastParams = targetMethod.Parameters.Where(p => IsClosureParameter(p, this.resolveContext)).SelectMany(p => p.Type.UnwrapByRef().TypeArguments)
 					.Select(pt => (int?)targetMethod.TypeParameters.IndexOf(pt)).DefaultIfEmpty().Max();
 				if (lastParams != null && lastParams.GetValueOrDefault() + 1 > skipCount)
 					skipCount = lastParams.GetValueOrDefault() + 1;
@@ -562,15 +562,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return type != null
 				&& type.Kind == TypeKind.Struct
 				&& TransformDisplayClassUsage.IsPotentialClosure(context.CurrentTypeDefinition, type);
-		}
-
-		static IType UnwrapByRef(IType type)
-		{
-			if (type is ByReferenceType byRef)
-			{
-				type = byRef.ElementType;
-			}
-			return type;
 		}
 
 		internal static ILInstruction GetStatement(ILInstruction inst)
@@ -733,7 +724,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			ILInstruction GetClosureInitializer(ILVariable variable)
 			{
-				var type = UnwrapByRef(variable.Type).GetDefinition();
+				var type = variable.Type.UnwrapByRef().GetDefinition();
 				if (type == null)
 					return null;
 				if (variable.Kind == VariableKind.Parameter)
@@ -827,7 +818,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!IsLocalFunctionMethod(module, method, context))
 					continue;
 				var md = metadata.GetMethodDefinition(method);
-				if (md.DecodeSignature(new FindTypeDecoder(typeHandle), default).ParameterTypes.Any())
+				if (md.DecodeSignature(new FindTypeDecoder(typeHandle, module), default).ParameterTypes.Any())
 					return true;
 			}
 
@@ -850,43 +841,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			callerName = match.Groups[1].Value;
 			functionName = match.Groups[2].Value;
 			return match.Success;
-		}
-
-		struct FindTypeDecoder : ISignatureTypeProvider<bool, Unit>
-		{
-			readonly TypeDefinitionHandle handle;
-
-			public FindTypeDecoder(TypeDefinitionHandle handle)
-			{
-				this.handle = handle;
-			}
-
-			public bool GetArrayType(bool elementType, ArrayShape shape) => elementType;
-			public bool GetByReferenceType(bool elementType) => elementType;
-			public bool GetFunctionPointerType(MethodSignature<bool> signature) => false;
-			public bool GetGenericInstantiation(bool genericType, ImmutableArray<bool> typeArguments) => genericType;
-			public bool GetGenericMethodParameter(Unit genericContext, int index) => false;
-			public bool GetGenericTypeParameter(Unit genericContext, int index) => false;
-			public bool GetModifiedType(bool modifier, bool unmodifiedType, bool isRequired) => unmodifiedType;
-			public bool GetPinnedType(bool elementType) => elementType;
-			public bool GetPointerType(bool elementType) => elementType;
-			public bool GetPrimitiveType(PrimitiveTypeCode typeCode) => false;
-			public bool GetSZArrayType(bool elementType) => false;
-
-			public bool GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
-			{
-				return this.handle == handle;
-			}
-
-			public bool GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
-			{
-				return false;
-			}
-
-			public bool GetTypeFromSpecification(MetadataReader reader, Unit genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
-			{
-				return reader.GetTypeSpecification(handle).DecodeSignature(this, genericContext);
-			}
 		}
 
 		class FindRefStructParameters : ISignatureTypeProvider<TypeDefinitionHandle, Unit>

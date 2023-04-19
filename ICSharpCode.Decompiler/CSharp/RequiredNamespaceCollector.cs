@@ -137,11 +137,13 @@ namespace ICSharpCode.Decompiler.CSharp
 					break;
 				case IProperty property:
 					HandleAttributes(property.GetAttributes());
+					CollectNamespacesForTypeReference(property.ReturnType);
 					CollectNamespaces(property.Getter, module, mappingInfo);
 					CollectNamespaces(property.Setter, module, mappingInfo);
 					break;
 				case IEvent @event:
 					HandleAttributes(@event.GetAttributes());
+					CollectNamespacesForTypeReference(@event.ReturnType);
 					CollectNamespaces(@event.AddAccessor, module, mappingInfo);
 					CollectNamespaces(@event.RemoveAccessor, module, mappingInfo);
 					break;
@@ -302,7 +304,15 @@ namespace ICSharpCode.Decompiler.CSharp
 					case OperandType.Sig:
 					case OperandType.Tok:
 					case OperandType.Type:
-						var handle = MetadataTokenHelpers.EntityHandleOrNil(instructions.ReadInt32());
+						EntityHandle handle;
+						try
+						{
+							handle = MetadataTokenHelpers.EntityHandleOrNil(instructions.ReadInt32());
+						}
+						catch (BadImageFormatException)
+						{
+							return;
+						}
 						if (handle.IsNil)
 							break;
 						switch (handle.Kind)

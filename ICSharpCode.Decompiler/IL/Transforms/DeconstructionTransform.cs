@@ -272,8 +272,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!MatchInstruction.IsDeconstructMethod(call.Method))
 				return false;
-			if (call.Method.IsStatic == call is CallVirt)
-				return false;
+			if (call.Method.IsStatic || call.Method.DeclaringType.IsReferenceType == false)
+			{
+				if (!(call is Call))
+					return false;
+			}
+			else
+			{
+				if (!(call is CallVirt))
+					return false;
+			}
 			if (call.Arguments.Count < 3)
 				return false;
 			deconstructionResults = new ILVariable[call.Arguments.Count - 1];
@@ -472,7 +480,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return conv == null || conv.Kind == ConversionKind.Nop;
 			}
-			if (c.IsNumericConversion)
+			if (c.IsNumericConversion && conv != null)
 			{
 				switch (conv.Kind)
 				{

@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		public void Write(
 			TextWriter target,
 			IProjectInfoProvider project,
-			IEnumerable<(string itemType, string fileName)> files,
+			IEnumerable<ProjectItemInfo> files,
 			PEFile module)
 		{
 			using (XmlTextWriter xmlWriter = new XmlTextWriter(target))
@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static void Write(XmlTextWriter xml, IProjectInfoProvider project, IEnumerable<(string itemType, string fileName)> files, PEFile module)
+		static void Write(XmlTextWriter xml, IProjectInfoProvider project, IEnumerable<ProjectItemInfo> files, PEFile module)
 		{
 			xml.WriteStartElement("Project");
 
@@ -188,27 +188,27 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static void WriteMiscellaneousPropertyGroup(XmlTextWriter xml, IEnumerable<(string itemType, string fileName)> files)
+		static void WriteMiscellaneousPropertyGroup(XmlTextWriter xml, IEnumerable<ProjectItemInfo> files)
 		{
-			var (itemType, fileName) = files.FirstOrDefault(t => t.itemType == "ApplicationIcon");
+			var (itemType, fileName) = files.FirstOrDefault(t => t.ItemType == "ApplicationIcon");
 			if (fileName != null)
 				xml.WriteElementString("ApplicationIcon", fileName);
 
-			(itemType, fileName) = files.FirstOrDefault(t => t.itemType == "ApplicationManifest");
+			(itemType, fileName) = files.FirstOrDefault(t => t.ItemType == "ApplicationManifest");
 			if (fileName != null)
 				xml.WriteElementString("ApplicationManifest", fileName);
 
-			if (files.Any(t => t.itemType == "EmbeddedResource"))
+			if (files.Any(t => t.ItemType == "EmbeddedResource"))
 				xml.WriteElementString("RootNamespace", string.Empty);
 			// TODO: We should add CustomToolNamespace for resources, otherwise we should add empty RootNamespace
 		}
 
-		static void WriteResources(XmlTextWriter xml, IEnumerable<(string itemType, string fileName)> files)
+		static void WriteResources(XmlTextWriter xml, IEnumerable<ProjectItemInfo> files)
 		{
 			// remove phase
-			foreach (var (itemType, fileName) in files.Where(t => t.itemType == "EmbeddedResource"))
+			foreach (var item in files.Where(t => t.ItemType == "EmbeddedResource"))
 			{
-				string buildAction = Path.GetExtension(fileName).ToUpperInvariant() switch {
+				string buildAction = Path.GetExtension(item.FileName).ToUpperInvariant() switch {
 					".CS" => "Compile",
 					".RESX" => "EmbeddedResource",
 					_ => "None"
@@ -217,18 +217,23 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					continue;
 
 				xml.WriteStartElement(buildAction);
-				xml.WriteAttributeString("Remove", fileName);
+				xml.WriteAttributeString("Remove", item.FileName);
 				xml.WriteEndElement();
 			}
 
 			// include phase
-			foreach (var (itemType, fileName) in files.Where(t => t.itemType == "EmbeddedResource"))
+			foreach (var item in files.Where(t => t.ItemType == "EmbeddedResource"))
 			{
-				if (Path.GetExtension(fileName) == ".resx")
+				if (Path.GetExtension(item.FileName) == ".resx")
 					continue;
 
 				xml.WriteStartElement("EmbeddedResource");
-				xml.WriteAttributeString("Include", fileName);
+				xml.WriteAttributeString("Include", item.FileName);
+				if (item.AdditionalProperties != null)
+				{
+					foreach (var (key, value) in item.AdditionalProperties)
+						xml.WriteAttributeString(key, value);
+				}
 				xml.WriteEndElement();
 			}
 		}

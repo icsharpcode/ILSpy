@@ -18,6 +18,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 using ICSharpCode.Decompiler.Metadata;
@@ -64,6 +65,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the assembly name (short name).
 		/// </summary>
 		string AssemblyName { get; }
+
+		/// <summary>
+		/// Gets the assembly version.
+		/// </summary>
+		Version AssemblyVersion { get; }
 
 		/// <summary>
 		/// Gets the full assembly name (including public key token etc.)

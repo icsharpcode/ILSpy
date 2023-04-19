@@ -42,7 +42,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public IAssemblyReference AssemblyNameReference => r;
 
 		public override object Text {
-			get { return r.Name + ((System.Reflection.Metadata.EntityHandle)r.Handle).ToSuffixString(); }
+			get { return Language.EscapeName(r.Name) + GetSuffixString(r.Handle); }
 		}
 
 		public override object Icon => Images.Assembly;

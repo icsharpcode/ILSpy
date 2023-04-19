@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string ParentTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new GenericContext(default(TypeDefinitionHandle), module);
+					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
 					((EntityHandle)eventMap.Parent).WriteTo(module, output, context);
 					return output.ToString();
 				}
@@ -128,7 +128,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string EventListTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new GenericContext(default(TypeDefinitionHandle), module);
+					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
 					((EntityHandle)eventMap.EventList).WriteTo(module, output, context);
 					return output.ToString();
 				}

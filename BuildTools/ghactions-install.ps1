@@ -6,10 +6,10 @@ $baseCommitRev = 1;
 # make sure this matches artifacts-only branches list in appveyor.yml!
 $masterBranches = '^refs/heads/(master|release/.+)$';
 
-$globalAssemblyInfoTemplateFile = "ILSpy/Properties/AssemblyInfo.template.cs";
+$decompilerVersionInfoTemplateFile = "ICSharpCode.Decompiler/Properties/DecompilerVersionInfo.template.cs";
 
 $versionParts = @{};
-Get-Content $globalAssemblyInfoTemplateFile | where { $_ -match 'string (\w+) = "?(\w+)"?;' } | foreach { $versionParts.Add($Matches[1], $Matches[2]) }
+Get-Content $decompilerVersionInfoTemplateFile | where { $_ -match 'string (\w+) = "?(\w+)"?;' } | foreach { $versionParts.Add($Matches[1], $Matches[2]) }
 
 $major = $versionParts.Major;
 $minor = $versionParts.Minor;

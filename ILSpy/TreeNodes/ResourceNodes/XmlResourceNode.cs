@@ -26,6 +26,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpyX.Abstractions;
 
 namespace ICSharpCode.ILSpy.Xaml
 {
@@ -34,7 +35,7 @@ namespace ICSharpCode.ILSpy.Xaml
 	{
 		private readonly static string[] xmlFileExtensions = { ".xml", ".xsd", ".xslt" };
 
-		public ILSpyTreeNode CreateNode(Resource resource)
+		public ITreeNode CreateNode(Resource resource)
 		{
 			string key = resource.Name;
 			foreach (string fileExt in xmlFileExtensions)

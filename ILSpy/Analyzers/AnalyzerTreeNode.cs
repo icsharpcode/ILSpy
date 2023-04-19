@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 
+using ICSharpCode.ILSpyX;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.Analyzers

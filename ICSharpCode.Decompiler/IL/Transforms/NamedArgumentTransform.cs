@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				namedArgBlock.FinalInstruction = call;
 				if (call.IsInstanceCall)
 				{
-					IType thisVarType = call.Method.DeclaringType;
+					IType thisVarType = call.ConstrainedTo ?? call.Method.DeclaringType;
 					if (CallInstruction.ExpectedTypeForThisPointer(thisVarType) == StackType.Ref)
 					{
 						thisVarType = new ByReferenceType(thisVarType);

@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.metadata = module;
 			this.handle = r;
 			this.reference = module.GetModuleReference(r);
-			this.moduleName = metadata.GetString(reference.Name);
+			this.moduleName = Language.EscapeName(metadata.GetString(reference.Name));
 
 			foreach (var h in module.AssemblyFiles)
 			{
@@ -61,7 +61,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 
 		public override object Text {
-			get { return moduleName + ((EntityHandle)handle).ToSuffixString(); }
+			get { return moduleName + GetSuffixString(handle); }
 		}
 
 		public override object Icon => Images.Library;

@@ -20,6 +20,8 @@
 	THE SOFTWARE.
 */
 
+using ICSharpCode.Decompiler.TypeSystem;
+
 namespace ILSpy.BamlDecompiler
 {
 	/// <summary>
@@ -27,7 +29,7 @@ namespace ILSpy.BamlDecompiler
 	/// </summary>
 	internal sealed class FieldAssignment
 	{
-		public string FieldName;
+		public IField Field;
 	}
 
 	/// <summary>

@@ -16,9 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -39,18 +37,6 @@ namespace ICSharpCode.ILSpy.Analyzers
 		/// Returns all symbols found by this analyzer.
 		/// </summary>
 		IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context);
-	}
-
-	[MetadataAttribute]
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-	public class ExportAnalyzerAttribute : ExportAttribute, IAnalyzerMetadata
-	{
-		public ExportAnalyzerAttribute() : base("Analyzer", typeof(IAnalyzer))
-		{ }
-
-		public string Header { get; set; }
-
-		public int Order { get; set; }
 	}
 
 	public interface IAnalyzerMetadata

@@ -23,7 +23,7 @@ using ICSharpCode.ILSpy.Properties;
 namespace ICSharpCode.ILSpy
 {
 	[ExportToolbarCommand(ToolTip = nameof(Resources.Open), ToolbarIcon = "Images/Open", ToolbarCategory = nameof(Resources.Open), ToolbarOrder = 0)]
-	[ExportMainMenuCommand(Menu = nameof(Resources._File), Header = nameof(Resources._Open), MenuIcon = "Images/Open", MenuCategory = nameof(Resources.Open), MenuOrder = 0)]
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources._Open), MenuIcon = "Images/Open", MenuCategory = nameof(Resources.Open), MenuOrder = 0)]
 	sealed class OpenCommand : CommandWrapper
 	{
 		public OpenCommand()

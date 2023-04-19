@@ -25,13 +25,14 @@ using System.Xml.Linq;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
-using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
 using ILSpy.BamlDecompiler.Xaml;
 
 namespace ILSpy.BamlDecompiler.Rewrite
 {
+	using ICSharpCode.Decompiler.TypeSystem;
+
 	internal class ConnectionIdRewritePass : IRewritePass
 	{
 		static readonly TopLevelTypeName componentConnectorTypeName
@@ -61,8 +62,12 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				if ((index = fieldAssignments.FindIndex(item => item.key.Contains(annotation.Id))) > -1)
 				{
 					var xName = ctx.GetKnownNamespace("Name", XamlContext.KnownNamespace_Xaml, element);
+					FieldAssignment fieldAssignment = fieldAssignments[index].value;
 					if (element.Attribute("Name") is null && element.Attribute(xName) is null)
-						element.Add(new XAttribute(xName, fieldAssignments[index].value.FieldName));
+					{
+						element.Add(new XAttribute(xName, fieldAssignment.Field.Name));
+					}
+					ctx.GeneratedMembers.Add(fieldAssignment.Field.MetadataToken);
 					found = true;
 				}
 				if ((index = eventMappings.FindIndex(item => item.key.Contains(annotation.Id))) > -1)
@@ -121,32 +126,61 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				return;
 			var connect = connectorInterface.GetMethods(m => m.Name == "Connect").SingleOrDefault();
 
-			IMethod method = null;
-			MethodDefinition metadataEntry = default;
+			IMethod connectMethod = null;
+			MethodDefinition connectMetadataEntry = default;
 			var module = ctx.TypeSystem.MainModule.PEFile;
 
 			foreach (IMethod m in type.Methods)
 			{
-				if (m.ExplicitlyImplementedInterfaceMembers.Any(md => md.MemberDefinition.Equals(connect)))
+				if (connectMethod == null && m.ExplicitlyImplementedInterfaceMembers.Any(md => md.MemberDefinition.Equals(connect)))
 				{
-					method = m;
-					metadataEntry = module.Metadata
-						.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
-					break;
+					connectMethod = m;
+					connectMetadataEntry = module.Metadata
+						.GetMethodDefinition((MethodDefinitionHandle)connectMethod.MetadataToken);
+				}
+				else if (m.Parameters.Count == 0
+					&& m.ReturnType.Kind == TypeKind.Void
+					&& !m.IsStatic
+					&& m.Accessibility == Accessibility.Public
+					&& m.Name == "InitializeComponent"
+					&& m.GetAttributes().Any(a => a.AttributeType.ReflectionName == "System.CodeDom.Compiler.GeneratedCodeAttribute"))
+				{
+					ctx.GeneratedMembers.Add(m.MetadataToken);
+				}
+				else if (m.Parameters.Count == 0
+					&& m.ReturnType.Kind == TypeKind.Void
+					&& m.IsStatic
+					&& m.Accessibility == Accessibility.Public
+					&& m.Name == "Main"
+					&& m.DeclaringTypeDefinition.GetNonInterfaceBaseTypes().Any(t => t.ReflectionName == "System.Windows.Application")
+					&& m.GetAttributes().Any(a => a.AttributeType.ReflectionName == "System.CodeDom.Compiler.GeneratedCodeAttribute"))
+				{
+					ctx.GeneratedMembers.Add(m.MetadataToken);
 				}
 			}
 
-			if (method == null || metadataEntry.RelativeVirtualAddress <= 0)
+			if (type.Fields.FirstOrDefault(f => f.Name == "_contentLoaded" && f.Type.IsKnownType(KnownTypeCode.Boolean)) is {
+				Accessibility: Accessibility.Private, IsStatic: false
+			} contentLoadedField)
+			{
+				ctx.GeneratedMembers.Add(contentLoadedField.MetadataToken);
+			}
+
+			if (connectMethod == null || connectMetadataEntry.RelativeVirtualAddress <= 0)
 				return;
 
-			var body = module.Reader.GetMethodBody(metadataEntry.RelativeVirtualAddress);
+			ctx.GeneratedMembers.Add(connectMethod.MetadataToken);
+
+
+
+			var body = module.Reader.GetMethodBody(connectMetadataEntry.RelativeVirtualAddress);
 			var genericContext = new GenericContext(
-				classTypeParameters: method.DeclaringType?.TypeParameters,
-				methodTypeParameters: method.TypeParameters);
+				classTypeParameters: connectMethod.DeclaringType?.TypeParameters,
+				methodTypeParameters: connectMethod.TypeParameters);
 
 			// decompile method and optimize the switch
 			var ilReader = new ILReader(ctx.TypeSystem.MainModule);
-			var function = ilReader.ReadIL((MethodDefinitionHandle)method.MetadataToken, body, genericContext,
+			var function = ilReader.ReadIL((MethodDefinitionHandle)connectMethod.MetadataToken, body, genericContext,
 				ILFunctionKind.TopLevelFunction, ctx.CancellationToken);
 
 			var context = new ILTransformContext(function, ctx.TypeSystem, null) {
@@ -224,7 +258,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				|| !(arg.MatchLdLoc(out var t) && t.Kind == VariableKind.Parameter && t.Index == 1))
 				return false;
 
-			field = new FieldAssignment { FieldName = fld.Name };
+			field = new FieldAssignment { Field = fld };
 			return true;
 		}
 

@@ -42,7 +42,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public interface I
+		{
+		}
+
 		private static dynamic field;
+		private static volatile dynamic volatileField;
 		private static object objectField;
 		public dynamic Property { get; set; }
 
@@ -490,6 +495,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private static int ExplicitCast(object o)
 		{
 			return (int)(dynamic)o;
+		}
+
+		private static dynamic GetI()
+		{
+			return null;
+		}
+
+		public I Test()
+		{
+			return GetI();
+		}
+
+		public I Test1()
+		{
+			return (I)GetI();
+		}
+
+		public I Test2()
+		{
+			return (I)(object)GetI();
 		}
 
 #if CS72

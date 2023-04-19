@@ -44,10 +44,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		NullablePublicOnly,
 		Conditional,
 		Obsolete,
+		Embedded,
 		IsReadOnly,
 		SpecialName,
 		DebuggerHidden,
 		DebuggerStepThrough,
+		DebuggerBrowsable,
 
 		// Assembly attributes:
 		AssemblyVersion,
@@ -90,6 +92,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		CallerMemberName,
 		CallerFilePath,
 		CallerLineNumber,
+		LifetimeAnnotation,
 
 		// Type parameter attributes:
 		IsUnmanaged,
@@ -103,11 +106,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		// C# 9 attributes:
 		NativeInteger,
 		PreserveBaseOverrides,
+
+		// C# 11 attributes:
+		RequiredAttribute,
 	}
 
-	static class KnownAttributes
+	public static class KnownAttributes
 	{
-		internal const int Count = (int)KnownAttribute.PreserveBaseOverrides + 1;
+		internal const int Count = (int)KnownAttribute.RequiredAttribute + 1;
 
 		static readonly TopLevelTypeName[] typeNames = new TopLevelTypeName[Count]{
 			default,
@@ -120,10 +126,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System.Runtime.CompilerServices", "NullablePublicOnlyAttribute"),
 			new TopLevelTypeName("System.Diagnostics", nameof(ConditionalAttribute)),
 			new TopLevelTypeName("System", nameof(ObsoleteAttribute)),
+			new TopLevelTypeName("Microsoft.CodeAnalysis", "EmbeddedAttribute"),
 			new TopLevelTypeName("System.Runtime.CompilerServices", "IsReadOnlyAttribute"),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(SpecialNameAttribute)),
 			new TopLevelTypeName("System.Diagnostics", nameof(DebuggerHiddenAttribute)),
 			new TopLevelTypeName("System.Diagnostics", nameof(DebuggerStepThroughAttribute)),
+			new TopLevelTypeName("System.Diagnostics", nameof(DebuggerBrowsableAttribute)),
 			// Assembly attributes:
 			new TopLevelTypeName("System.Reflection", nameof(AssemblyVersionAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(InternalsVisibleToAttribute)),
@@ -160,6 +168,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CallerMemberNameAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CallerFilePathAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CallerLineNumberAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", "LifetimeAnnotationAttribute"),
 			// Type parameter attributes:
 			new TopLevelTypeName("System.Runtime.CompilerServices", "IsUnmanagedAttribute"),
 			// Marshalling attributes:
@@ -169,6 +178,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			// C# 9 attributes:
 			new TopLevelTypeName("System.Runtime.CompilerServices", "NativeIntegerAttribute"),
 			new TopLevelTypeName("System.Runtime.CompilerServices", "PreserveBaseOverridesAttribute"),
+			// C# 11 attributes:
+			new TopLevelTypeName("System.Runtime.CompilerServices", "RequiredMemberAttribute"),
 		};
 
 		public static ref readonly TopLevelTypeName GetTypeName(this KnownAttribute attr)
@@ -192,6 +203,31 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return (KnownAttribute)i;
 			}
 			return KnownAttribute.None;
+		}
+
+		public static bool IsCustomAttribute(this KnownAttribute knownAttribute)
+		{
+			switch (knownAttribute)
+			{
+				case KnownAttribute.Serializable:
+				case KnownAttribute.ComImport:
+				case KnownAttribute.StructLayout:
+				case KnownAttribute.DllImport:
+				case KnownAttribute.PreserveSig:
+				case KnownAttribute.MethodImpl:
+				case KnownAttribute.FieldOffset:
+				case KnownAttribute.NonSerialized:
+				case KnownAttribute.MarshalAs:
+				case KnownAttribute.PermissionSet:
+				case KnownAttribute.Optional:
+				case KnownAttribute.In:
+				case KnownAttribute.Out:
+				case KnownAttribute.IndexerName:
+				case KnownAttribute.SpecialName:
+					return false;
+				default:
+					return true;
+			}
 		}
 	}
 }

@@ -142,7 +142,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			public int GetHashCode(string obj)
 			{
-				return baseComparer.GetHashCode(NormalizeLine(obj));
+				return baseComparer.GetHashCode(normalizeLine(obj));
 			}
 		}
 
@@ -175,6 +175,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			public override SyntaxTrivia VisitTrivia(SyntaxTrivia trivia)
 			{
 				if (trivia.IsKind(SyntaxKind.DisabledTextTrivia))
+				{
+					return default(SyntaxTrivia); // delete
+				}
+				if (trivia.IsKind(SyntaxKind.PragmaWarningDirectiveTrivia))
 				{
 					return default(SyntaxTrivia); // delete
 				}

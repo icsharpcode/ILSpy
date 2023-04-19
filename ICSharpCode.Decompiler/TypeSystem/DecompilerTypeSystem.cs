@@ -120,11 +120,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		FunctionPointers = 0x2000,
 		/// <summary>
+		/// Allow C# 11 scoped annotation. If this option is not enabled, LifetimeAnnotationAttribute
+		/// will be reported as custom attribute.
+		/// </summary>
+		LifetimeAnnotations = 0x4000,
+		/// <summary>
 		/// Default settings: typical options for the decompiler, with all C# languages features enabled.
 		/// </summary>
 		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants | ReadOnlyStructsAndParameters
 			| RefStructs | UnmanagedConstraints | NullabilityAnnotations | ReadOnlyMethods
-			| NativeIntegers | FunctionPointers
+			| NativeIntegers | FunctionPointers | LifetimeAnnotations
 	}
 
 	/// <summary>
@@ -160,6 +165,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				typeSystemOptions |= TypeSystemOptions.NativeIntegers;
 			if (settings.FunctionPointers)
 				typeSystemOptions |= TypeSystemOptions.FunctionPointers;
+			if (settings.LifetimeAnnotations)
+				typeSystemOptions |= TypeSystemOptions.LifetimeAnnotations;
 			return typeSystemOptions;
 		}
 
@@ -210,6 +217,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			InitializeAsync(mainModule, assemblyResolver, typeSystemOptions).GetAwaiter().GetResult();
 		}
 
+		static readonly string[] implicitReferences = new[] {
+			"System.Runtime.InteropServices",
+			"System.Runtime.CompilerServices.Unsafe"
+		};
+
 		private async Task InitializeAsync(PEFile mainModule, IAssemblyResolver assemblyResolver, TypeSystemOptions typeSystemOptions)
 		{
 			// Load referenced assemblies and type-forwarder references.
@@ -217,10 +229,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var referencedAssemblies = new List<PEFile>();
 			var assemblyReferenceQueue = new Queue<(bool IsAssembly, PEFile MainModule, object Reference, Task<PEFile> ResolveTask)>();
 			var comparer = KeyComparer.Create(((bool IsAssembly, PEFile MainModule, object Reference) reference) =>
-				reference.IsAssembly ? "A:" + ((AssemblyReference)reference.Reference).FullName :
+				reference.IsAssembly ? "A:" + ((IAssemblyReference)reference.Reference).FullName :
 									   "M:" + reference.Reference);
 			var assemblyReferencesInQueue = new HashSet<(bool IsAssembly, PEFile Parent, object Reference)>(comparer);
 			var mainMetadata = mainModule.Metadata;
+			var tfm = mainModule.DetectTargetFrameworkId();
+			var (identifier, version) = UniversalAssemblyResolver.ParseTargetFramework(tfm);
 			foreach (var h in mainMetadata.GetModuleReferences())
 			{
 				try
@@ -268,6 +282,27 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						}
 					}
 				}
+				if (assemblyReferenceQueue.Count == 0)
+				{
+					// For .NET Core and .NET 5 and newer, we need to pull in implicit references which are not included in the metadata,
+					// as they contain compile-time-only types, such as System.Runtime.InteropServices.dll (for DllImport, MarshalAs, etc.)
+					switch (identifier)
+					{
+						case TargetFrameworkIdentifier.NETCoreApp:
+						case TargetFrameworkIdentifier.NETStandard:
+						case TargetFrameworkIdentifier.NET:
+							foreach (var item in implicitReferences)
+							{
+								var existing = referencedAssemblies.FirstOrDefault(asm => asm.Name == item);
+								if (existing == null)
+								{
+									AddToQueue(true, mainModule, AssemblyNameReference.Parse(item + ", Version=" + version.ToString(3) + ".0, Culture=neutral"));
+								}
+							}
+							break;
+					}
+
+				}
 			}
 			var mainModuleWithOptions = mainModule.WithOptions(typeSystemOptions);
 			var referencedAssembliesWithOptions = referencedAssemblies.Select(file => file.WithOptions(typeSystemOptions));
@@ -294,7 +329,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					Task<PEFile> asm;
 					if (isAssembly)
 					{
-						asm = assemblyResolver.ResolveAsync((AssemblyReference)reference);
+						asm = assemblyResolver.ResolveAsync((IAssemblyReference)reference);
 					}
 					else
 					{

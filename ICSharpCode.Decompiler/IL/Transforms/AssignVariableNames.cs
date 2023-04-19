@@ -165,11 +165,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static IEnumerable<string> CollectAllLowerCaseTypeNames(ITypeDefinition type)
 		{
-
-			foreach (var item in type.ParentModule.TopLevelTypeDefinitions)
+			var ns = type.ParentModule.Compilation.GetNamespaceByFullName(type.Namespace);
+			foreach (var item in ns.Types)
 			{
-				if (item.Namespace != type.Namespace)
-					continue;
 				if (IsLowerCase(item.Name))
 					yield return item.Name;
 			}

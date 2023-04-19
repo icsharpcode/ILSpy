@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Reflection.PortableExecutable;
@@ -36,6 +38,7 @@ namespace ICSharpCode.ILSpy.Metadata
 		public DebugDirectoryTreeNode(PEFile module)
 		{
 			this.module = module;
+			this.LazyLoading = true;
 		}
 
 		public override object Text => "Debug Directory";
@@ -51,13 +54,47 @@ namespace ICSharpCode.ILSpy.Metadata
 			var entries = new List<DebugDirectoryEntryView>();
 			foreach (var entry in module.Reader.ReadDebugDirectory())
 			{
-				entries.Add(new DebugDirectoryEntryView(entry));
+				int dataOffset = module.Reader.IsLoadedImage ? entry.DataRelativeVirtualAddress : entry.DataPointer;
+				var data = module.Reader.GetEntireImage().GetContent(dataOffset, entry.DataSize);
+
+				entries.Add(new DebugDirectoryEntryView(entry, data.ToHexString(data.Length)));
 			}
 
 			dataGrid.ItemsSource = entries.ToArray();
 
 			tabPage.Content = dataGrid;
 			return true;
+		}
+
+		protected override void LoadChildren()
+		{
+			foreach (var entry in module.Reader.ReadDebugDirectory())
+			{
+				switch (entry.Type)
+				{
+					case DebugDirectoryEntryType.CodeView:
+						var codeViewData = module.Reader.ReadCodeViewDebugDirectoryData(entry);
+						this.Children.Add(new CodeViewTreeNode(codeViewData));
+						break;
+
+					case DebugDirectoryEntryType.EmbeddedPortablePdb:
+						var embeddedPortablePdbReader = module.Reader.ReadEmbeddedPortablePdbDebugDirectoryData(entry).GetMetadataReader();
+						this.Children.Add(new DebugMetadataTreeNode(module, isEmbedded: true, provider: embeddedPortablePdbReader));
+						break;
+
+					case DebugDirectoryEntryType.PdbChecksum:
+						var pdbChecksumData = module.Reader.ReadPdbChecksumDebugDirectoryData(entry);
+						this.Children.Add(new PdbChecksumTreeNode(pdbChecksumData));
+						break;
+
+					case DebugDirectoryEntryType.Unknown:
+					case DebugDirectoryEntryType.Coff:
+					case DebugDirectoryEntryType.Reproducible:
+					default:
+						this.Children.Add(new DebugDirectoryEntryTreeNode(module, entry));
+						break;
+				}
+			}
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
@@ -67,7 +104,6 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		class DebugDirectoryEntryView
 		{
-			public int Characteristics { get; set; }
 			public uint Timestamp { get; set; }
 			public ushort MajorVersion { get; set; }
 			public ushort MinorVersion { get; set; }
@@ -75,10 +111,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			public int SizeOfRawData { get; set; }
 			public int AddressOfRawData { get; set; }
 			public int PointerToRawData { get; set; }
+			public string RawData { get; set; }
 
-			public DebugDirectoryEntryView(DebugDirectoryEntry entry)
+			public DebugDirectoryEntryView(DebugDirectoryEntry entry, string data)
 			{
-				this.Characteristics = 0;
+				this.RawData = data;
 				this.Timestamp = entry.Stamp;
 				this.MajorVersion = entry.MajorVersion;
 				this.MinorVersion = entry.MinorVersion;

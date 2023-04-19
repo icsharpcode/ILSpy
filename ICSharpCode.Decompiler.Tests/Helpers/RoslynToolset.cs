@@ -18,11 +18,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
+using ICSharpCode.Decompiler.Util;
 
 using NuGet.Common;
 using NuGet.Packaging;
@@ -32,23 +33,69 @@ using NuGet.Versioning;
 
 namespace ICSharpCode.Decompiler.Tests.Helpers
 {
-	class RoslynToolset
+	abstract class AbstractToolset
 	{
 		readonly SourceCacheContext cache;
 		readonly SourceRepository repository;
 		readonly FindPackageByIdResource resource;
-		readonly string nugetDir;
-		readonly Dictionary<string, string> installedCompilers = new Dictionary<string, string> {
-			{ "legacy", Environment.ExpandEnvironmentVariables(@"%WINDIR%\Microsoft.NET\Framework\v4.0.30319") }
-		};
-		readonly object syncObj = new object();
+		protected readonly string baseDir;
 
-		public RoslynToolset()
+		public AbstractToolset(string baseDir)
 		{
 			this.cache = new SourceCacheContext();
 			this.repository = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
 			this.resource = repository.GetResource<FindPackageByIdResource>();
-			this.nugetDir = Path.Combine(Path.GetDirectoryName(typeof(RoslynToolset).Assembly.Location), "roslyn");
+			this.baseDir = baseDir;
+		}
+
+		protected async Task FetchPackage(string packageName, string version, string sourcePath, string outputPath)
+		{
+			ILogger logger = NullLogger.Instance;
+			CancellationToken cancellationToken = CancellationToken.None;
+			using MemoryStream packageStream = new MemoryStream();
+
+			await resource.CopyNupkgToStreamAsync(
+				packageName,
+				NuGetVersion.Parse(version),
+				packageStream,
+				cache,
+				logger,
+				cancellationToken).ConfigureAwait(false);
+
+			using PackageArchiveReader packageReader = new PackageArchiveReader(packageStream);
+			NuspecReader nuspecReader = await packageReader.GetNuspecReaderAsync(cancellationToken).ConfigureAwait(false);
+
+			var files = (await packageReader.GetFilesAsync(cancellationToken).ConfigureAwait(false)).ToArray();
+			files = files.Where(f => f.StartsWith(sourcePath, StringComparison.OrdinalIgnoreCase)).ToArray();
+			await packageReader.CopyFilesAsync(outputPath, files,
+				(sourceFile, targetPath, fileStream) => {
+					fileStream.CopyToFile(targetPath);
+					return targetPath;
+				},
+				logger, cancellationToken).ConfigureAwait(false);
+		}
+	}
+
+	class RoslynToolset : AbstractToolset
+	{
+		readonly Dictionary<string, string> installedCompilers = new Dictionary<string, string> {
+			{ "legacy", Environment.ExpandEnvironmentVariables(@"%WINDIR%\Microsoft.NET\Framework\v4.0.30319") }
+		};
+
+		public RoslynToolset()
+			: base(Path.Combine(AppContext.BaseDirectory, "roslyn"))
+		{
+		}
+
+		public async Task Fetch(string version, string packageName = "Microsoft.Net.Compilers.Toolset", string sourcePath = "tasks/net472")
+		{
+			string path = Path.Combine(baseDir, version, sourcePath);
+			if (!Directory.Exists(path))
+			{
+				await FetchPackage(packageName, version, sourcePath, Path.Combine(baseDir, version)).ConfigureAwait(false);
+			}
+
+			installedCompilers.Add(SanitizeVersion(version), path);
 		}
 
 		public string GetCSharpCompiler(string version)
@@ -63,49 +110,39 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		string GetCompiler(string compiler, string version)
 		{
-			lock (syncObj)
-			{
-				if (installedCompilers.TryGetValue(version, out var path))
-					return Path.Combine(path, compiler);
-
-				string outputPath = Path.Combine(nugetDir, version);
-				path = Path.Combine(outputPath, "tools");
-
-				if (!Directory.Exists(path))
-				{
-					FetchPackage(version, outputPath).GetAwaiter().GetResult();
-				}
-
-				installedCompilers.Add(version, path);
+			if (installedCompilers.TryGetValue(SanitizeVersion(version), out var path))
 				return Path.Combine(path, compiler);
-			}
+			throw new NotSupportedException($"Cannot find {compiler} {version}, please add it to the initialization.");
 		}
 
-		async Task FetchPackage(string version, string outputPath)
+		internal static string SanitizeVersion(string version)
 		{
-			ILogger logger = NullLogger.Instance;
-			CancellationToken cancellationToken = CancellationToken.None;
-			using MemoryStream packageStream = new MemoryStream();
-
-			await resource.CopyNupkgToStreamAsync(
-				"Microsoft.Net.Compilers",
-				NuGetVersion.Parse(version),
-				packageStream,
-				cache,
-				logger,
-				cancellationToken);
-
-			using PackageArchiveReader packageReader = new PackageArchiveReader(packageStream);
-			NuspecReader nuspecReader = await packageReader.GetNuspecReaderAsync(cancellationToken);
-
-			var files = await packageReader.GetFilesAsync(cancellationToken);
-			files = files.Where(f => f.StartsWith("tools", StringComparison.OrdinalIgnoreCase));
-			await packageReader.CopyFilesAsync(outputPath, files,
-				(sourceFile, targetPath, fileStream) => {
-					fileStream.CopyToFile(targetPath);
-					return targetPath;
-				},
-				logger, cancellationToken);
+			int index = version.IndexOf("-");
+			if (index > 0)
+				return version.Remove(index);
+			return version;
 		}
+	}
+
+	class VsWhereToolset : AbstractToolset
+	{
+		string vswherePath;
+
+		public VsWhereToolset()
+			: base(Path.Combine(AppContext.BaseDirectory, "vswhere"))
+		{
+		}
+
+		public async Task Fetch()
+		{
+			string path = Path.Combine(baseDir, "tools");
+			if (!Directory.Exists(path))
+			{
+				await FetchPackage("vswhere", "2.8.4", "tools", baseDir).ConfigureAwait(false);
+			}
+			vswherePath = Path.Combine(path, "vswhere.exe");
+		}
+
+		public string GetVsWhere() => vswherePath;
 	}
 }

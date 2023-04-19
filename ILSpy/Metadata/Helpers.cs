@@ -136,6 +136,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				{
 					return new DataGridCheckBoxColumn() {
 						Header = e.PropertyName,
+						SortMemberPath = e.PropertyName,
 						Binding = binding
 					};
 				}
@@ -146,12 +147,14 @@ namespace ICSharpCode.ILSpy.Metadata
 				{
 					return new DataGridTemplateColumn() {
 						Header = e.PropertyName,
+						SortMemberPath = e.PropertyName,
 						CellTemplate = GetOrCreateLinkCellTemplate(e.PropertyName, descriptor, binding)
 					};
 				}
 
 				return new DataGridTextColumn() {
 					Header = e.PropertyName,
+					SortMemberPath = e.PropertyName,
 					Binding = binding
 				};
 			}

@@ -25,6 +25,7 @@ using ICSharpCode.Decompiler;
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	using ICSharpCode.Decompiler.TypeSystem;
+	using ICSharpCode.ILSpyX;
 
 	/// <summary>
 	/// Represents an event in the TreeView.
@@ -46,7 +47,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public IEvent EventDefinition { get; }
 
-		public override object Text => GetText(GetEventDefinition(), this.Language) + EventDefinition.MetadataToken.ToSuffixString();
+		public override object Text => GetText(GetEventDefinition(), this.Language) + GetSuffixString(EventDefinition);
 
 		private IEvent GetEventDefinition()
 		{

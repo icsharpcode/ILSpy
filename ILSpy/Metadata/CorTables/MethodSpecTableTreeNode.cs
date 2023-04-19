@@ -99,7 +99,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string MethodTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					methodSpec.Method.WriteTo(module, output, GenericContext.Empty);
+					methodSpec.Method.WriteTo(module, output, default);
 					return output.ToString();
 				}
 			}
@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string SignatureTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var signature = methodSpec.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), GenericContext.Empty);
+					var signature = methodSpec.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), default);
 					bool first = true;
 					foreach (var type in signature)
 					{

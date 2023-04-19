@@ -58,14 +58,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		/// <summary>
 		/// The module in which this entity is defined.
+		/// May return null, if the IEntity was not created from a module.
 		/// </summary>
-		IModule ParentModule { get; }
+		IModule? ParentModule { get; }
 
 		/// <summary>
 		/// Gets the attributes on this entity.
 		/// Does not include inherited attributes.
 		/// </summary>
 		IEnumerable<IAttribute> GetAttributes();
+
+		bool HasAttribute(KnownAttribute attribute);
+
+		IAttribute? GetAttribute(KnownAttribute attribute);
 
 		/// <summary>
 		/// Gets the accessibility of this entity.

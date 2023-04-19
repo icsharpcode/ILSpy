@@ -209,7 +209,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Gets the block container in which this variable is captured.
 		/// For captured variables declared inside the loop, the capture scope is the BlockContainer of the loop.
-		/// For captured variables declared outside of the loop, the capture scope is the BlockContainer of the parent. 
+		/// For captured variables declared outside of the loop, the capture scope is the BlockContainer of the parent function.
 		/// </summary>
 		/// <remarks>
 		/// This property returns null for variables that are not captured.
@@ -437,6 +437,21 @@ namespace ICSharpCode.Decompiler.IL
 		/// If enabled, remove dead stores to this variable as if the "Remove dead code" option is enabled.
 		/// </summary>
 		internal bool RemoveIfRedundant;
+
+		private bool hasNullCheck;
+
+		/// <summary>
+		/// Gets/sets whether a parameter has an auto-generated null check, i.e., the !! modifier.
+		/// Returns false for all variables except parameters.
+		/// </summary>
+		public bool HasNullCheck {
+			get => hasNullCheck;
+			set {
+				if (Kind != VariableKind.Parameter && value)
+					throw new InvalidOperationException("Cannot set HasNullCheck on local variables!");
+				hasNullCheck = value;
+			}
+		}
 
 		public ILVariable(VariableKind kind, IType type, int? index = null)
 		{

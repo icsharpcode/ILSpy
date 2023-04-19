@@ -53,6 +53,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public int bottom;
 		}
 
+#pragma warning disable CS0618 // Type or member is obsolete
 		public static decimal MarshalAttributesOnPropertyAccessors {
 			[return: MarshalAs(UnmanagedType.Currency)]
 			get {
@@ -62,6 +63,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			set {
 			}
 		}
+#pragma warning restore CS0618 // Type or member is obsolete
 
 		[DllImport("xyz.dll", CharSet = CharSet.Auto)]
 		[return: MarshalAs(UnmanagedType.Bool)]

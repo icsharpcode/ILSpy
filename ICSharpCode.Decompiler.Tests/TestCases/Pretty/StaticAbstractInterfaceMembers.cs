@@ -4,11 +4,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.StaticAbstractInterfaceM
 {
 	public interface I
 	{
-		abstract static int Capacity { get; }
-		abstract static int Count { get; set; }
-		abstract static int SetterOnly { set; }
-		abstract static event EventHandler E;
-		abstract static I CreateI();
+		static abstract int Capacity { get; }
+		static abstract int Count { get; set; }
+		static abstract int SetterOnly { set; }
+		static abstract event EventHandler E;
+		static abstract I CreateI();
 	}
 
 	public class X : I
@@ -64,6 +64,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.StaticAbstractInterfaceM
 		public static I CreateI()
 		{
 			throw new NotImplementedException();
+		}
+	}
+
+	internal class ZOperatorTest
+	{
+
+		public interface IGetNext<T> where T : IGetNext<T>
+		{
+			static abstract T operator ++(T other);
+		}
+
+		public struct WrappedInteger : IGetNext<WrappedInteger>
+		{
+			public int Value;
+
+			public static WrappedInteger operator ++(WrappedInteger other)
+			{
+				WrappedInteger result = other;
+				result.Value++;
+				return result;
+			}
+		}
+
+		public void GenericUse<T>(T t) where T : IGetNext<T>
+		{
+			++t;
 		}
 	}
 }

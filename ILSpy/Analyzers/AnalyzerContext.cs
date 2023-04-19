@@ -23,6 +23,7 @@ using System.Threading;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
@@ -42,6 +43,13 @@ namespace ICSharpCode.ILSpy.Analyzers
 		/// Currently used language.
 		/// </summary>
 		public Language Language { get; internal set; }
+
+		/// <summary>
+		/// Allows the analyzer to control whether the tree nodes will be sorted.
+		/// Must be set within <see cref="IAnalyzer.Analyze(ISymbol, AnalyzerContext)"/>
+		/// before the results are enumerated.
+		/// </summary>
+		public bool SortResults { get; set; }
 
 		public MethodBodyBlock GetMethodBody(IMethod method)
 		{

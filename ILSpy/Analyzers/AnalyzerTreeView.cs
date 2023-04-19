@@ -26,6 +26,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Analyzers.TreeNodes;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpyX;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.Analyzers

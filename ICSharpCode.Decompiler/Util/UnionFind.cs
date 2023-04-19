@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.Util
 	/// <summary>
 	/// Union-Find data structure.
 	/// </summary>
-	public class UnionFind<T>
+	public class UnionFind<T> where T : notnull
 	{
 		Dictionary<T, Node> mapping;
 
@@ -48,8 +48,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		Node GetNode(T element)
 		{
-			Node node;
-			if (!mapping.TryGetValue(element, out node))
+			if (!mapping.TryGetValue(element, out Node? node))
 			{
 				node = new Node(element);
 				node.parent = node;

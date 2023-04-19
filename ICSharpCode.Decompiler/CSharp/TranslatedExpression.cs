@@ -193,7 +193,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		public TranslatedExpression ConvertTo(IType targetType, ExpressionBuilder expressionBuilder, bool checkForOverflow = false, bool allowImplicitConversion = false)
 		{
 			var type = this.Type;
-			if (type.Equals(targetType))
+			if (NormalizeTypeVisitor.IgnoreNullabilityAndTuples.EquivalentTypes(type, targetType))
 			{
 				// Make explicit conversion implicit, if possible
 				if (allowImplicitConversion)
@@ -225,7 +225,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						}
 						case InvocationResolveResult invocation:
 						{
-							if (Expression is ObjectCreateExpression oce && oce.Arguments.Count == 1 && invocation.Type.IsKnownType(KnownTypeCode.NullableOfT))
+							if (Expression is ObjectCreateExpression oce && oce.Arguments.Count == 1
+								&& invocation.Type.IsKnownType(KnownTypeCode.NullableOfT))
 							{
 								return this.UnwrapChild(oce.Arguments.Single());
 							}
@@ -533,6 +534,17 @@ namespace ICSharpCode.Decompiler.CSharp
 					return this.ConvertTo(compilation.FindType(KnownTypeCode.Object), expressionBuilder)
 						.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 				}
+			}
+			else if (type.Kind == TypeKind.Dynamic && targetType.IsReferenceType == true && !targetType.IsKnownType(KnownTypeCode.Object))
+			{
+				// "static" conversion between dynamic and a reference type requires us to add a cast to object,
+				// otherwise recompilation would produce a dynamic cast.
+				// (T)dynamicExpression is a "dynamic" cast
+				// (T)(object)dynamicExpression is a "static" cast
+				// as "dynamic" casts are handled differently by ExpressionBuilder.VisitDynamicConvertInstruction
+				// we can always insert the cast to object, if we encounter a conversion from any reference type to dynamic.
+				return this.ConvertTo(compilation.FindType(KnownTypeCode.Object), expressionBuilder)
+					.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 			}
 			if (targetType.Kind.IsAnyPointer() && (0.Equals(ResolveResult.ConstantValue) || 0u.Equals(ResolveResult.ConstantValue)))
 			{

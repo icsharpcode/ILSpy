@@ -23,6 +23,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading;
 using System.Xml.Linq;
 
@@ -40,6 +41,8 @@ namespace ILSpy.BamlDecompiler
 			TypeSystem = typeSystem;
 			NodeMap = new Dictionary<BamlRecord, BamlBlockNode>();
 			XmlNs = new XmlnsDictionary();
+			GeneratedMembers = new List<EntityHandle>();
+			XClassNames = new List<string>();
 		}
 
 		Dictionary<ushort, XamlType> typeMap = new Dictionary<ushort, XamlType>();
@@ -53,6 +56,10 @@ namespace ILSpy.BamlDecompiler
 		public BamlContext Baml { get; private set; }
 		public BamlNode RootNode { get; private set; }
 		public IDictionary<BamlRecord, BamlBlockNode> NodeMap { get; }
+
+		public List<string> XClassNames { get; }
+
+		public List<EntityHandle> GeneratedMembers { get; }
 
 		public XmlnsDictionary XmlNs { get; }
 

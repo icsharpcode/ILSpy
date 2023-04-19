@@ -25,6 +25,7 @@ using ICSharpCode.Decompiler;
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	using ICSharpCode.Decompiler.TypeSystem;
+	using ICSharpCode.ILSpyX;
 
 	/// <summary>
 	/// Represents a field in the TreeView.
@@ -38,7 +39,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.FieldDefinition = field ?? throw new ArgumentNullException(nameof(field));
 		}
 
-		public override object Text => GetText(GetFieldDefinition(), Language) + FieldDefinition.MetadataToken.ToSuffixString();
+		public override object Text => GetText(GetFieldDefinition(), Language) + GetSuffixString(FieldDefinition);
 
 		private IField GetFieldDefinition()
 		{

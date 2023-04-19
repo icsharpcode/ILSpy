@@ -154,13 +154,19 @@ namespace ILSpy.BamlDecompiler.Tests
 			RunTest("cases/issue2116");
 		}
 
+		[Test]
+		public void ReadonlyProperty()
+		{
+			RunTest("cases/readonlyproperty");
+		}
+
 		#region RunTest
 		void RunTest(string name)
 		{
 			RunTest(name, typeof(BamlTestRunner).Assembly.Location,
 				Path.Combine(
 					Path.GetDirectoryName(typeof(BamlTestRunner).Assembly.Location),
-					"../../../../ILSpy.BamlDecompiler.Tests", name + ".xaml"));
+					"../../../..", name + ".xaml"));
 		}
 
 		void RunTest(string name, string asmPath, string sourcePath)
@@ -168,7 +174,7 @@ namespace ILSpy.BamlDecompiler.Tests
 			using (var fileStream = new FileStream(asmPath, FileMode.Open, FileAccess.Read))
 			{
 				var module = new PEFile(asmPath, fileStream);
-				var resolver = new UniversalAssemblyResolver(asmPath, false, module.Reader.DetectTargetFrameworkId());
+				var resolver = new UniversalAssemblyResolver(asmPath, false, module.Metadata.DetectTargetFrameworkId());
 				resolver.RemoveSearchDirectory(".");
 				resolver.AddSearchDirectory(Path.GetDirectoryName(asmPath));
 				var res = module.Resources.First();

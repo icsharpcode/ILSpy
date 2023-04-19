@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy
 {

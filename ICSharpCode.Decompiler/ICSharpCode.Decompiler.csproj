@@ -4,34 +4,49 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
 
-    <Description>IL decompiler engine</Description>
+    <PackageId>ICSharpCode.Decompiler</PackageId>
+    <PackageVersion>8.0.0.0-noversion</PackageVersion>
+    <Title>ILSpy Decompiler Engine</Title>
+    <Authors>ILSpy Contributors</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/icsharpcode/ILSpy/</PackageProjectUrl>
+    <Description>ICSharpCode.Decompiler is the decompiler engine used in ILSpy.</Description>
+    <PackageReadmeFile>PackageReadme.md</PackageReadmeFile>
     <Company>ic#code</Company>
     <Product>ILSpy</Product>
-    <Copyright>Copyright 2011-2021 AlphaSierraPapa for the SharpDevelop Team</Copyright>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/icsharpcode/ILSpy.git</RepositoryUrl>
+    <PackageIcon>DecompilerNuGetPackageIcon.png</PackageIcon>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Copyright>Copyright 2011-$([System.DateTime]::Now.Year) AlphaSierraPapa</Copyright>
+    <PackageTags>C# Decompiler ILSpy</PackageTags>
+
     <NeutralLanguage>en-US</NeutralLanguage>
     <GenerateAssemblyVersionAttribute>False</GenerateAssemblyVersionAttribute>
     <GenerateAssemblyFileVersionAttribute>False</GenerateAssemblyFileVersionAttribute>
     <GenerateAssemblyInformationalVersionAttribute>False</GenerateAssemblyInformationalVersionAttribute>
 
     <EnableDefaultItems>false</EnableDefaultItems>
-    <LangVersion>9.0</LangVersion>
+    <LangVersion>10</LangVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
     <NoWarn>1701;1702;1591;1573</NoWarn>
+    <WarningsAsErrors>nullable</WarningsAsErrors>
 
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <DebugType>embedded</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <CodeAnalysisRuleSet>ICSharpCode.Decompiler.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
-  <!-- HACK: Disable package generation on Unix due to tooling issues. -->
-  <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <NuspecFile>ICSharpCode.Decompiler.nuspec</NuspecFile>
-    <NuspecProperties>Configuration=$(Configuration)</NuspecProperties>
-  </PropertyGroup>
+  <ItemGroup>
+    <None Include="PackageReadme.md" Pack="true" PackagePath="\" />
+    <None Include="DecompilerNuGetPackageIcon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
@@ -40,22 +55,25 @@
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
+  <!-- Inject ILSpyUpdateAssemblyInfo as dependency of the GetPackageVersion
+    target so Pack uses the generated version when evaluating project references. -->
   <PropertyGroup>
-    <CodeAnalysisRuleSet>ICSharpCode.Decompiler.ruleset</CodeAnalysisRuleSet>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GetPackageVersionDependsOn>
+      ILSpyUpdateAssemblyInfo;
+      $(GetPackageVersionDependsOn)
+    </GetPackageVersionDependsOn>
   </PropertyGroup>
 
   <Import Project="..\packages.props" />
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
-    <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutableVersion)" />
-    <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
+    <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
+    <PackageReference Include="System.Reflection.Metadata" Version="6.0.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -63,9 +81,21 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="TunnelVisionLabs.ReferenceAssemblyAnnotator" Version="1.0.0-alpha.160" PrivateAssets="all" />
+
+    <!-- Specifies the version of Microsoft.NETCore.App.Ref to obtain nullability information from. -->
+    <PackageDownload Include="Microsoft.NETCore.App.Ref" Version="[6.0.0]" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="CSharp\Annotations.cs" />
     <Compile Include="CSharp\CallBuilder.cs" />
     <Compile Include="CSharp\CSharpLanguageVersion.cs" />
+    <Compile Include="DecompilationProgress.cs" />
+    <Compile Include="Disassembler\IEntityProcessor.cs" />
+    <Compile Include="Disassembler\SortByNameProcessor.cs" />
+    <Compile Include="NRTAttributes.cs" />
+    <Compile Include="PartialTypeInfo.cs" />
     <Compile Include="CSharp\ProjectDecompiler\IProjectFileWriter.cs" />
     <Compile Include="CSharp\OutputVisitor\GenericGrammarAmbiguityVisitor.cs" />
     <Compile Include="CSharp\ProjectDecompiler\IProjectInfoProvider.cs" />
@@ -96,12 +126,20 @@
     <Compile Include="Disassembler\DisassemblerSignatureTypeProvider.cs" />
     <Compile Include="Documentation\XmlDocumentationElement.cs" />
     <Compile Include="IL\ControlFlow\AwaitInFinallyTransform.cs" />
+    <Compile Include="IL\Transforms\InterpolatedStringTransform.cs" />
     <Compile Include="IL\Transforms\IntroduceNativeIntTypeOnLocals.cs" />
     <Compile Include="IL\Transforms\LdLocaDupInitObjTransform.cs" />
+    <Compile Include="IL\Transforms\ParameterNullCheckTransform.cs" />
     <Compile Include="IL\Transforms\PatternMatchingTransform.cs" />
     <Compile Include="IL\Transforms\RemoveInfeasiblePathTransform.cs" />
     <Compile Include="Instrumentation\DecompilerEventSource.cs" />
+    <Compile Include="Metadata\FindTypeDecoder.cs" />
+    <Compile Include="Metadata\FullTypeNameSignatureDecoder.cs" />
+    <Compile Include="Metadata\MetadataGenericContext.cs" />
     <Compile Include="Metadata\ReferenceLoadInfo.cs" />
+    <Compile Include="Properties\DecompilerVersionInfo.cs" />
+    <Compile Include="TypeSystem\ITypeDefinitionOrUnknown.cs" />
+    <None Include="Properties\DecompilerVersionInfo.template.cs" />
     <Compile Include="Semantics\OutVarResolveResult.cs" />
     <Compile Include="SingleFileBundle.cs" />
     <Compile Include="Solution\ProjectId.cs" />
@@ -250,7 +288,6 @@
     <Compile Include="CSharp\Resolver\AliasNamespaceResolveResult.cs" />
     <Compile Include="CSharp\Resolver\AliasTypeResolveResult.cs" />
     <Compile Include="CSharp\Resolver\AwaitResolveResult.cs" />
-    <Compile Include="CSharp\Resolver\CastResolveResult.cs" />
     <Compile Include="CSharp\Resolver\CSharpConversions.cs" />
     <Compile Include="CSharp\Resolver\CSharpInvocationResolveResult.cs" />
     <Compile Include="CSharp\Resolver\CSharpOperators.cs" />
@@ -332,7 +369,7 @@
     <Compile Include="IL\ControlFlow\AwaitInCatchTransform.cs" />
     <Compile Include="IL\ControlFlow\YieldReturnDecompiler.cs" />
     <Compile Include="Metadata\CustomAttributeDecoder.cs" />
-    <Compile Include="Metadata\Dom.cs" />
+    <Compile Include="Metadata\Resource.cs" />
     <Compile Include="Metadata\DotNetCorePathFinder.cs" />
     <Compile Include="Metadata\DotNetCorePathFinderExtensions.cs" />
     <Compile Include="Metadata\LightJson\JsonArray.cs" />
@@ -432,7 +469,6 @@
     <Compile Include="Util\GraphVizGraph.cs" />
     <Compile Include="Util\KeyComparer.cs" />
     <Compile Include="Util\LongDict.cs" />
-    <Compile Include="Util\NullAttributes.cs" />
     <Compile Include="Util\ResourcesFile.cs" />
     <Compile Include="Util\ResXResourceWriter.cs" />
     <Compile Include="Util\UnicodeNewline.cs" />
@@ -629,8 +665,6 @@
     <Compile Include="Util\TreeTraversal.cs" />
     <Compile Include="Util\UnionFind.cs" />
     <Compile Include="Util\Win32Resources.cs" />
-    <None Include="ICSharpCode.Decompiler.nuspec" DependentUpon="ICSharpCode.Decompiler.nuspec.template" />
-    <None Include="ICSharpCode.Decompiler.nuspec.template" />
     <None Include="ICSharpCode.Decompiler.ruleset" />
     <None Include="ICSharpCode.Decompiler.snk" />
     <None Include="Metadata\ILOpCodes.tt">
@@ -641,14 +675,13 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Instructions.cs</LastGenOutput>
     </None>
-    <None Include="Properties\AssemblyInfo.template.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\doc\Pattern Matching.html">
+    <None Include="..\doc\Pattern Matching.html">
       <Link>CSharp\Syntax\PatternMatching\Pattern Matching.html</Link>
-    </Content>
-    <Content Include="Humanizer\LICENSE" />
+    </None>
+    <None Include="Humanizer\LICENSE" />
   </ItemGroup>
 
   <ItemGroup>
@@ -674,12 +707,15 @@
     <Exec ContinueOnError="true" WorkingDirectory=".." Command="$(GitRevParse)" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="CommitHash" />
     </Exec>
-    <Exec WorkingDirectory=".." Command="$(UpdateAssemblyInfo)" Timeout="60000" Condition="'$(CommitHash)'!='$(LastCommitHash)'" />
+    <Exec WorkingDirectory=".." Command="$(UpdateAssemblyInfo)" Timeout="60000" Condition="'$(CommitHash)'!='$(LastCommitHash)'" LogStandardErrorAsError="true" ContinueOnError="false" />
     <WriteLinesToFile Lines="$(CommitHash)" File="@(UpdateAssemblyInfoStamp)" Overwrite="true" Condition="'$(CommitHash)'!='$(LastCommitHash)'" />
+    <ReadLinesFromFile ContinueOnError="true" File="..\VERSION">
+      <Output TaskParameter="Lines" PropertyName="PackageVersion" />
+    </ReadLinesFromFile>
   </Target>
 
   <Target Name="CleanUpdateAssemblyInfo" BeforeTargets="BeforeClean">
-    <Delete Files="@(UpdateAssemblyInfoStamp)" />
+    <Delete Files="@(UpdateAssemblyInfoStamp);..\VERSION" />
   </Target>
 
 </Project>

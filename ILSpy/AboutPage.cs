@@ -20,7 +20,7 @@ using System;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Net;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
@@ -35,10 +35,11 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.Themes;
+using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportMainMenuCommand(Menu = nameof(Resources._Help), Header = nameof(Resources._About), MenuOrder = 99999)]
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._Help), Header = nameof(Resources._About), MenuOrder = 99999)]
 	sealed class AboutPage : SimpleCommand
 	{
 		public override void Execute(object parameter)
@@ -60,44 +61,37 @@ namespace ICSharpCode.ILSpy
 				Title = Resources.About,
 				EnableHyperlinks = true
 			};
-			output.WriteLine(Resources.ILSpyVersion + RevisionClass.FullVersion);
+			output.WriteLine(Resources.ILSpyVersion + DecompilerVersionInfo.FullVersion);
 
 			string prodVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(typeof(Uri).Assembly.Location).ProductVersion;
 			output.WriteLine(Resources.NETFrameworkVersion + prodVersion);
 
-			if (StorePackageHelper.HasPackageIdentity)
-			{
-				output.WriteLine($"Package Name: {StorePackageHelper.GetPackageFamilyName()}");
-			}
-			else
-			{// if we're running in an MSIX, updates work differently
-				output.AddUIElement(
-				delegate {
-					StackPanel stackPanel = new StackPanel();
-					stackPanel.HorizontalAlignment = HorizontalAlignment.Center;
-					stackPanel.Orientation = Orientation.Horizontal;
-					if (latestAvailableVersion == null)
-					{
-						AddUpdateCheckButton(stackPanel, textView);
-					}
-					else
-					{
-						// we already retrieved the latest version sometime earlier
-						ShowAvailableVersion(latestAvailableVersion, stackPanel);
-					}
-					CheckBox checkBox = new CheckBox();
-					checkBox.Margin = new Thickness(4);
-					checkBox.Content = Resources.AutomaticallyCheckUpdatesEveryWeek;
-					UpdateSettings settings = new UpdateSettings(ILSpySettings.Load());
-					checkBox.SetBinding(CheckBox.IsCheckedProperty, new Binding("AutomaticUpdateCheckEnabled") { Source = settings });
-					return new StackPanel {
-						Margin = new Thickness(0, 4, 0, 0),
-						Cursor = Cursors.Arrow,
-						Children = { stackPanel, checkBox }
-					};
-				});
-				output.WriteLine();
-			}
+			output.AddUIElement(
+			delegate {
+				StackPanel stackPanel = new StackPanel();
+				stackPanel.HorizontalAlignment = HorizontalAlignment.Center;
+				stackPanel.Orientation = Orientation.Horizontal;
+				if (latestAvailableVersion == null)
+				{
+					AddUpdateCheckButton(stackPanel, textView);
+				}
+				else
+				{
+					// we already retrieved the latest version sometime earlier
+					ShowAvailableVersion(latestAvailableVersion, stackPanel);
+				}
+				CheckBox checkBox = new CheckBox();
+				checkBox.Margin = new Thickness(4);
+				checkBox.Content = Resources.AutomaticallyCheckUpdatesEveryWeek;
+				UpdateSettings settings = new UpdateSettings(ILSpySettings.Load());
+				checkBox.SetBinding(CheckBox.IsCheckedProperty, new Binding("AutomaticUpdateCheckEnabled") { Source = settings });
+				return new StackPanel {
+					Margin = new Thickness(0, 4, 0, 0),
+					Cursor = Cursors.Arrow,
+					Children = { stackPanel, checkBox }
+				};
+			});
+			output.WriteLine();
 
 			foreach (var plugin in App.ExportProvider.GetExportedValues<IAboutPageAddition>())
 				plugin.Write(output);
@@ -161,7 +155,7 @@ namespace ICSharpCode.ILSpy
 			};
 		}
 
-		static readonly Version currentVersion = new Version(RevisionClass.Major + "." + RevisionClass.Minor + "." + RevisionClass.Build + "." + RevisionClass.Revision);
+		static readonly Version currentVersion = new Version(DecompilerVersionInfo.Major + "." + DecompilerVersionInfo.Minor + "." + DecompilerVersionInfo.Build + "." + DecompilerVersionInfo.Revision);
 
 		static void ShowAvailableVersion(AvailableVersionInfo availableVersion, StackPanel stackPanel)
 		{
@@ -206,12 +200,11 @@ namespace ICSharpCode.ILSpy
 
 		static async Task<AvailableVersionInfo> GetLatestVersionAsync()
 		{
-			WebClient wc = new WebClient();
-			IWebProxy systemWebProxy = WebRequest.GetSystemWebProxy();
-			systemWebProxy.Credentials = CredentialCache.DefaultCredentials;
-			wc.Proxy = systemWebProxy;
-
-			string data = await wc.DownloadStringTaskAsync(UpdateUrl);
+			var client = new HttpClient(new HttpClientHandler() {
+				UseProxy = true,
+				UseDefaultCredentials = true,
+			});
+			string data = await client.GetStringAsync(UpdateUrl);
 
 			XDocument doc = XDocument.Load(new StringReader(data));
 			var bands = doc.Root.Elements("band");
@@ -303,7 +296,7 @@ namespace ICSharpCode.ILSpy
 			UpdateSettings s = new UpdateSettings(spySettings);
 
 			// If we're in an MSIX package, updates work differently
-			if (s.AutomaticUpdateCheckEnabled && !StorePackageHelper.HasPackageIdentity)
+			if (s.AutomaticUpdateCheckEnabled)
 			{
 				// perform update check if we never did one before;
 				// or if the last check wasn't in the past 7 days

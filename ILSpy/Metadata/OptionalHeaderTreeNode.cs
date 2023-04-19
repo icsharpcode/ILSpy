@@ -24,8 +24,8 @@ using System.Windows.Data;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpyX.Extensions;
 
 namespace ICSharpCode.ILSpy.Metadata
 {

@@ -1,9 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <LangVersion>9.0</LangVersion>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
     <GenerateSupportedRuntime>false</GenerateSupportedRuntime>
@@ -17,11 +18,8 @@
 
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-  
-  <Import Project="..\multitargeting.props" Condition="Exists('..\multitargeting.props')" />
-  <PropertyGroup Condition="!Exists('..\multitargeting.props')">
-    <TargetFramework>net472</TargetFramework>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -43,24 +41,14 @@
 
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="$(AvalonEditVersion)" />
-    <PackageReference Include="System.IO.Compression" Version="4.3.0" />
-    <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="$(SystemCompilerServicesUnsafeVersion)" />
-    <PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.60.1" />
-    <PackageReference Include="Microsoft.VisualStudio.Composition" Version="16.9.20" />
-    <PackageReference Include="System.Composition" Version="$(SystemCompositionVersion)" />
-    <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
-    <PackageReference Include="OSVersionHelper" Version="1.1.24" />
-    <PackageReference Include="DataGridExtensions" Version="2.5.13" />
+    <PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Composition" Version="17.4.16" />
+    <PackageReference Include="DataGridExtensions" Version="2.5.14" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
     <PackageReference Include="TomsToolbox.Wpf.Styles" Version="$(WpfStylesToolboxVersion)" />
-    <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
-    <PackageReference Include="K4os.Compression.LZ4" Version="1.2.16" />
-    <PackageReference Include="System.Buffers" Version="4.5.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\ICSharpCode.Decompiler.PdbProvider.Cecil\MonoCecilDebugInfoProvider.cs" Link="DebugInfo\MonoCecilDebugInfoProvider.cs" />
     <EmbeddedResource Include="..\doc\ILSpyAboutPage.txt" />
     <EmbeddedResource Include="..\doc\ILSpyAboutPage_zh_Hans.txt" />
     <EmbeddedResource Include="..\doc\third-party-notices.txt" />
@@ -68,19 +56,12 @@
       <Link>license.txt</Link>
     </EmbeddedResource>
     <Resource Include="Images\NuGet.png" />
-    <Resource Include="Images\DarkMode.png" />
     <Resource Include="Images\ILSpy.ico" />
     <EmbeddedResource Include="TextView\CSharp-Mode.xshd" />
     <EmbeddedResource Include="TextView\ILAsm-Mode.xshd" />
     <EmbeddedResource Include="TextView\Asm-Mode.xshd" />
     <EmbeddedResource Include="TextView\XML-Mode.xshd" />
-    <EmbeddedResource Include="TextView\CSharp-Mode-Dark.xshd" />
-    <EmbeddedResource Include="TextView\ILAsm-Mode-Dark.xshd" />
-    <EmbeddedResource Include="TextView\Asm-Mode-Dark.xshd" />
-    <EmbeddedResource Include="TextView\XML-Mode-Dark.xshd" />
-    <Compile Remove="Properties\AssemblyInfo.template.cs" />
     <None Remove="Properties\launchSettings.json" />
-    <None Remove="Properties\app.config.template" />
   </ItemGroup>
 
   <ItemGroup>
@@ -99,6 +80,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ICSharpCode.ILSpyX\ICSharpCode.ILSpyX.csproj" />
     <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
     <ProjectReference Include="..\SharpTreeView\ICSharpCode.TreeView.csproj" />
   </ItemGroup>
@@ -108,9 +90,20 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <VCBasePath>$(MSBuildToolsPath)\..\..\..\VC\</VCBasePath>
     <VCToolsVersionPropsFileNameDefault>Microsoft.VCToolsVersion.default.props</VCToolsVersionPropsFileNameDefault>
+    <VCBasePath>$(MSBuildToolsPath)\..\..\..\VC\</VCBasePath>
+    <!-- In VS 2022 there is an extra directory level that's why we need to add one more '..'  -->
+    <VCBasePath Condition="!Exists('$(VCBasePath)Auxiliary\Build\$(VCToolsVersionPropsFileNameDefault)')">$(MSBuildToolsPath)\..\..\..\..\VC\</VCBasePath>
     <VCToolsVersionPropsFile>$(VCBasePath)Auxiliary\Build\$(VCToolsVersionPropsFileNameDefault)</VCToolsVersionPropsFile>
+    <EnableNETAnalyzers>True</EnableNETAnalyzers>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>1701;1702;CA1001;CA2213</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <NoWarn>1701;1702;CA1001;CA2213</NoWarn>
   </PropertyGroup>
 
   <Import Project="$(VCToolsVersionPropsFile)" Condition="Exists('$(VCToolsVersionPropsFile)')" />
@@ -122,7 +115,7 @@
     <SortResXStamp Include="obj\sort-resx.stamp" />
   </ItemGroup>
 
-  <Target Name="SortResX" BeforeTargets="BeforeBuild" Inputs="@(SortResXInput)" Outputs="@(SortResXStamp)">
+  <Target Name="SortResX" BeforeTargets="BeforeBuild" Inputs="@(SortResXInput)" Outputs="@(SortResXStamp)" Condition="'$(GITHUB_ACTIONS)' != 'true'">
     <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
       <SortResX>powershell -NoProfile -ExecutionPolicy Bypass -File BuildTools/sort-resx.ps1</SortResX>
     </PropertyGroup>
@@ -131,7 +124,6 @@
   </Target>
 
   <Target Name="ApplyStackExtension" AfterTargets="PostBuildEvent" Condition="'$(VCToolsVersion)'!=''">
-    <Exec Command="&quot;$(VCBasePath)Tools\MSVC\$(VCToolsVersion)\bin\Hostx64\x64\editbin.exe&quot; /stack:16777216 &quot;$(TargetPath)&quot;&#xD;&#xA;EXIT 0" />
-    <Exec Command="&quot;$(TargetFrameworkSDKToolsDirectory)sn.exe&quot; -R &quot;$(TargetPath)&quot; &quot;$(AssemblyOriginatorKeyFile)&quot;" />
+    <Exec Command="&quot;$(VCBasePath)Tools\MSVC\$(VCToolsVersion)\bin\Hostx64\x64\editbin.exe&quot; /stack:16777216 &quot;$(TargetDir)$(TargetName).exe&quot;&#xD;&#xA;EXIT 0" />
   </Target>
 </Project>

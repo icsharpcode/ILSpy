@@ -32,14 +32,12 @@ namespace ICSharpCode.ILSpy.Metadata
 	{
 		private PEFile module;
 		private MetadataReader provider;
-		private AssemblyTreeNode assemblyTreeNode;
 		private bool isEmbedded;
 
-		public DebugMetadataTreeNode(PEFile module, bool isEmbedded, MetadataReader provider, AssemblyTreeNode assemblyTreeNode)
+		public DebugMetadataTreeNode(PEFile module, bool isEmbedded, MetadataReader provider)
 		{
 			this.module = module;
 			this.provider = provider;
-			this.assemblyTreeNode = assemblyTreeNode;
 			this.isEmbedded = isEmbedded;
 			this.Text = "Debug Metadata (" + (isEmbedded ? "Embedded" : "From portable PDB") + ")";
 			this.LazyLoading = true;

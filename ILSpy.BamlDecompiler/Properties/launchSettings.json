@@ -2,7 +2,7 @@
   "profiles": {
     "ILSpy.BamlDecompiler": {
       "commandName": "Executable",
-      "executablePath": "C:\\Users\\sie_p\\Projects\\ILSpy\\ILSpy\\bin\\Debug\\net472\\ILSpy.exe",
+      "executablePath": "$(SolutionDir)\\ILSpy\\bin\\Debug\\net6.0-windows\\ILSpy.exe",
       "commandLineArgs": "/separate"
     }
   }

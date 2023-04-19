@@ -35,7 +35,7 @@ namespace ICSharpCode.ILSpy
 		[DllImport("user32.dll", CharSet = CharSet.Auto)]
 		internal static extern unsafe int GetWindowThreadProcessId(IntPtr hWnd, int* lpdwProcessId);
 
-		[DllImport("user32.dll", CharSet = CharSet.Auto)]
+		[DllImport("user32.dll", CharSet = CharSet.Unicode)]
 		static extern int GetWindowText(IntPtr hWnd, [Out] StringBuilder title, int size);
 
 		public static string GetWindowText(IntPtr hWnd, int maxLength)
@@ -193,6 +193,16 @@ namespace ICSharpCode.ILSpy
 				return null;
 			}
 		}
+
+		[DllImport("dwmapi.dll", PreserveSig = true)]
+		public static extern int DwmSetWindowAttribute(IntPtr hwnd, DwmWindowAttribute attr, ref int attrValue, int attrSize);
+
+		public static bool UseImmersiveDarkMode(IntPtr hWnd, bool enable)
+		{
+			int darkMode = enable ? 1 : 0;
+			int hr = DwmSetWindowAttribute(hWnd, DwmWindowAttribute.UseImmersiveDarkMode, ref darkMode, sizeof(int));
+			return hr >= 0;
+		}
 	}
 
 	[return: MarshalAs(UnmanagedType.Bool)]
@@ -211,5 +221,34 @@ namespace ICSharpCode.ILSpy
 			this.Size = size;
 			this.Buffer = buffer;
 		}
+	}
+
+	public enum DwmWindowAttribute : uint
+	{
+		NCRenderingEnabled = 1,
+		NCRenderingPolicy,
+		TransitionsForceDisabled,
+		AllowNCPaint,
+		CaptionButtonBounds,
+		NonClientRtlLayout,
+		ForceIconicRepresentation,
+		Flip3DPolicy,
+		ExtendedFrameBounds,
+		HasIconicBitmap,
+		DisallowPeek,
+		ExcludedFromPeek,
+		Cloak,
+		Cloaked,
+		FreezeRepresentation,
+		PassiveUpdateMode,
+		UseHostBackdropBrush,
+		UseImmersiveDarkMode = 20,
+		WindowCornerPreference = 33,
+		BorderColor,
+		CaptionColor,
+		TextColor,
+		VisibleFrameBorderThickness,
+		SystemBackdropType,
+		Last
 	}
 }

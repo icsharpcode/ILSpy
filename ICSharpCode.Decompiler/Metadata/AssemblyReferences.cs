@@ -222,29 +222,40 @@ namespace ICSharpCode.Decompiler.Metadata
 		public bool IsWindowsRuntime => (entry.Flags & AssemblyFlags.WindowsRuntime) != 0;
 		public bool IsRetargetable => (entry.Flags & AssemblyFlags.Retargetable) != 0;
 
+		string? name;
+		string? fullName;
+
 		public string Name {
 			get {
-				try
+				if (name == null)
 				{
-					return Metadata.GetString(entry.Name);
+					try
+					{
+						name = Metadata.GetString(entry.Name);
+					}
+					catch (BadImageFormatException)
+					{
+						name = $"AR:{Handle}";
+					}
 				}
-				catch (BadImageFormatException)
-				{
-					return $"AR:{Handle}";
-				}
+				return name;
 			}
 		}
 
 		public string FullName {
 			get {
-				try
+				if (fullName == null)
 				{
-					return entry.GetFullAssemblyName(Metadata);
+					try
+					{
+						fullName = entry.GetFullAssemblyName(Metadata);
+					}
+					catch (BadImageFormatException)
+					{
+						fullName = $"fullname(AR:{Handle})";
+					}
 				}
-				catch (BadImageFormatException)
-				{
-					return $"fullname(AR:{Handle})";
-				}
+				return fullName;
 			}
 		}
 

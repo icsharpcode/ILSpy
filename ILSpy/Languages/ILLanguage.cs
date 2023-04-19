@@ -30,6 +30,7 @@ using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy
 {
@@ -55,13 +56,14 @@ namespace ICSharpCode.ILSpy
 
 		protected virtual ReflectionDisassembler CreateDisassembler(ITextOutput output, DecompilationOptions options)
 		{
+			var displaySettings = MainWindow.Instance.CurrentDisplaySettings;
 			output.IndentationString = options.DecompilerSettings.CSharpFormattingOptions.IndentationString;
 			return new ReflectionDisassembler(output, options.CancellationToken) {
 				DetectControlStructure = detectControlStructure,
 				ShowSequencePoints = options.DecompilerSettings.ShowDebugInfo,
-				ShowMetadataTokens = Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens,
-				ShowMetadataTokensInBase10 = Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokensInBase10,
-				ShowRawRVAOffsetAndBytes = Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowRawOffsetsAndBytesBeforeInstruction,
+				ShowMetadataTokens = displaySettings.ShowMetadataTokens,
+				ShowMetadataTokensInBase10 = displaySettings.ShowMetadataTokensInBase10,
+				ShowRawRVAOffsetAndBytes = displaySettings.ShowRawOffsetsAndBytesBeforeInstruction,
 				ExpandMemberDefinitions = options.DecompilerSettings.ExpandMemberDefinitions
 			};
 		}
@@ -193,28 +195,34 @@ namespace ICSharpCode.ILSpy
 		public override RichText GetRichTextTooltip(IEntity entity)
 		{
 			var output = new AvalonEditTextOutput() { IgnoreNewLineAndIndent = true };
-			var disasm = CreateDisassembler(output, new DecompilationOptions());
+			var disasm = CreateDisassembler(output, MainWindow.Instance.CreateDecompilationOptions());
+			PEFile module = entity.ParentModule?.PEFile;
+			if (module == null)
+			{
+				return null;
+			}
+
 			switch (entity.SymbolKind)
 			{
 				case SymbolKind.TypeDefinition:
-					disasm.DisassembleTypeHeader(entity.ParentModule.PEFile, (TypeDefinitionHandle)entity.MetadataToken);
+					disasm.DisassembleTypeHeader(module, (TypeDefinitionHandle)entity.MetadataToken);
 					break;
 				case SymbolKind.Field:
-					disasm.DisassembleFieldHeader(entity.ParentModule.PEFile, (FieldDefinitionHandle)entity.MetadataToken);
+					disasm.DisassembleFieldHeader(module, (FieldDefinitionHandle)entity.MetadataToken);
 					break;
 				case SymbolKind.Property:
 				case SymbolKind.Indexer:
-					disasm.DisassemblePropertyHeader(entity.ParentModule.PEFile, (PropertyDefinitionHandle)entity.MetadataToken);
+					disasm.DisassemblePropertyHeader(module, (PropertyDefinitionHandle)entity.MetadataToken);
 					break;
 				case SymbolKind.Event:
-					disasm.DisassembleEventHeader(entity.ParentModule.PEFile, (EventDefinitionHandle)entity.MetadataToken);
+					disasm.DisassembleEventHeader(module, (EventDefinitionHandle)entity.MetadataToken);
 					break;
 				case SymbolKind.Method:
 				case SymbolKind.Operator:
 				case SymbolKind.Constructor:
 				case SymbolKind.Destructor:
 				case SymbolKind.Accessor:
-					disasm.DisassembleMethodHeader(entity.ParentModule.PEFile, (MethodDefinitionHandle)entity.MetadataToken);
+					disasm.DisassembleMethodHeader(module, (MethodDefinitionHandle)entity.MetadataToken);
 					break;
 				default:
 					output.Write(GetDisplayName(entity, true, true, true));

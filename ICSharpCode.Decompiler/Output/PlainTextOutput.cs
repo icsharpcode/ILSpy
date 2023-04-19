@@ -143,7 +143,7 @@ namespace ICSharpCode.Decompiler
 			Write(text);
 		}
 
-		void ITextOutput.MarkFoldStart(string collapsedText, bool defaultCollapsed)
+		void ITextOutput.MarkFoldStart(string collapsedText, bool defaultCollapsed, bool isDefinition)
 		{
 		}
 
@@ -190,7 +190,7 @@ namespace ICSharpCode.Decompiler
 			actions.Add(target => target.MarkFoldEnd());
 		}
 
-		public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false)
+		public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false, bool isDefinition = false)
 		{
 			actions.Add(target => target.MarkFoldStart(collapsedText, defaultCollapsed));
 		}

@@ -391,7 +391,43 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		}
 
+#if CS60
+		class Issue2622a
+		{
+			public class C
+			{
+				public ServiceHost M()
+				{
+					return new ServiceHost(typeof(EWSService), null) {
+						Description = { Endpoints = { [0] = { Behaviors = { new EwsWebHttpBehavior() } } } }
+					};
+				}
+			}
 
+			class EWSService { }
+
+			public class ServiceHost
+			{
+				public ServiceHost(Type type, object x) { }
+
+				public Descr Description { get; }
+			}
+
+			public class Descr
+			{
+				public List<EP> Endpoints { get; }
+			}
+
+			public class EP
+			{
+				public List<Beh> Behaviors { get; }
+			}
+
+			public abstract class Beh { }
+
+			public class EwsWebHttpBehavior : Beh { }
+		}
+#endif
 
 		class Issue855
 		{

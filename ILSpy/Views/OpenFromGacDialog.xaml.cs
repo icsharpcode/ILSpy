@@ -29,6 +29,7 @@ using System.Windows.Threading;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Controls;
+using ICSharpCode.ILSpyX.Extensions;
 
 namespace ICSharpCode.ILSpy
 {

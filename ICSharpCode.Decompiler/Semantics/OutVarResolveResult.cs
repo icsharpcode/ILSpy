@@ -26,8 +26,11 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	class OutVarResolveResult : ResolveResult
 	{
-		public static readonly OutVarResolveResult Instance = new OutVarResolveResult();
+		/// <summary>
+		/// Type of the variable originally used in IL. It will be used, if "out var" cannot be used.
+		/// </summary>
+		public readonly IType OriginalVariableType;
 
-		public OutVarResolveResult() : base(SpecialType.NoType) { }
+		public OutVarResolveResult(IType originalVariableType) : base(SpecialType.NoType) { OriginalVariableType = originalVariableType; }
 	}
 }

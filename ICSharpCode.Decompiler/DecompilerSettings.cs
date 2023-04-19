@@ -145,12 +145,21 @@ namespace ICSharpCode.Decompiler
 			if (languageVersion < CSharp.LanguageVersion.CSharp10_0)
 			{
 				fileScopedNamespaces = false;
+				recordStructs = false;
+			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp11_0)
+			{
+				parameterNullCheck = false;
+				lifetimeAnnotations = false;
+				requiredMembers = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (fileScopedNamespaces)
+			if (parameterNullCheck || lifetimeAnnotations || requiredMembers)
+				return CSharp.LanguageVersion.CSharp11_0;
+			if (fileScopedNamespaces || recordStructs)
 				return CSharp.LanguageVersion.CSharp10_0;
 			if (nativeIntegers || initAccessors || functionPointers || forEachWithGetEnumeratorExtension
 				|| recordClasses || withExpressions || usePrimaryConstructorSyntax || covariantReturns)
@@ -256,6 +265,24 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool recordStructs = true;
+
+		/// <summary>
+		/// Use C# 10 <c>record</c> structs.
+		/// </summary>
+		[Category("C# 10.0 / VS 2022")]
+		[Description("DecompilerSettings.RecordStructs")]
+		public bool RecordStructs {
+			get { return recordStructs; }
+			set {
+				if (recordStructs != value)
+				{
+					recordStructs = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool withExpressions = true;
 
 		/// <summary>
@@ -311,6 +338,43 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool lifetimeAnnotations = true;
+
+		/// <summary>
+		/// Use C# 9 <c>delegate* unmanaged</c> types.
+		/// If this option is disabled, function pointers will instead be decompiled with type `IntPtr`.
+		/// </summary>
+		[Category("C# 11.0 / VS 2022.4")]
+		[Description("DecompilerSettings.LifetimeAnnotations")]
+		public bool LifetimeAnnotations {
+			get { return lifetimeAnnotations; }
+			set {
+				if (lifetimeAnnotations != value)
+				{
+					lifetimeAnnotations = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool requiredMembers = true;
+
+		/// <summary>
+		/// Use C# 11 <c>required</c> modifier.
+		/// </summary>
+		[Category("C# 11.0 / VS 2022.4")]
+		[Description("DecompilerSettings.RequiredMembers")]
+		public bool RequiredMembers {
+			get { return requiredMembers; }
+			set {
+				if (requiredMembers != value)
+				{
+					requiredMembers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool switchExpressions = true;
 
 		/// <summary>
@@ -342,6 +406,25 @@ namespace ICSharpCode.Decompiler
 				if (fileScopedNamespaces != value)
 				{
 					fileScopedNamespaces = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool parameterNullCheck = false;
+
+		/// <summary>
+		/// Use C# 11 preview parameter null-checking (<code>string param!!</code>).
+		/// </summary>
+		[Category("C# 11.0 / VS 2022.1")]
+		[Description("DecompilerSettings.ParameterNullCheck")]
+		[Browsable(false)]
+		public bool ParameterNullCheck {
+			get { return parameterNullCheck; }
+			set {
+				if (parameterNullCheck != value)
+				{
+					parameterNullCheck = value;
 					OnPropertyChanged();
 				}
 			}
@@ -1017,8 +1100,11 @@ namespace ICSharpCode.Decompiler
 		bool useRefLocalsForAccurateOrderOfEvaluation = true;
 
 		/// <summary>
-		/// Gets/Sets whether to use C# 6.0 Extension Add methods in collection initializers.
-		/// Only has an effect if ObjectOrCollectionInitializers is enabled.
+		/// Gets/Sets whether to use local ref variables in cases where this is necessary
+		/// for re-compilation with a modern C# compiler to reproduce the same behavior
+		/// as the original assembly produced with an old C# compiler that used an incorrect
+		/// order of evaluation.
+		/// See https://github.com/icsharpcode/ILSpy/issues/2050
 		/// </summary>
 		[Category("C# 6.0 / VS 2015")]
 		[Description("DecompilerSettings.UseRefLocalsForAccurateOrderOfEvaluation")]
@@ -1843,6 +1929,24 @@ namespace ICSharpCode.Decompiler
 				if (aggressiveInlining != value)
 				{
 					aggressiveInlining = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool alwaysUseGlobal = false;
+
+		/// <summary>
+		/// Always fully qualify namespaces using the "global::" prefix.
+		/// </summary>
+		[Category("DecompilerSettings.Other")]
+		[Description("DecompilerSettings.AlwaysUseGlobal")]
+		public bool AlwaysUseGlobal {
+			get { return alwaysUseGlobal; }
+			set {
+				if (alwaysUseGlobal != value)
+				{
+					alwaysUseGlobal = value;
 					OnPropertyChanged();
 				}
 			}

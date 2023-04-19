@@ -312,14 +312,15 @@ namespace ICSharpCode.ILSpy.TextView
 			references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = reference, IsLocal = true, IsDefinition = isDefinition });
 		}
 
-		public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false)
+		public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false, bool isDefinition = false)
 		{
 			WriteIndent();
 			openFoldings.Push((
 				new NewFolding {
 					StartOffset = this.TextLength,
 					Name = collapsedText,
-					DefaultClosed = defaultCollapsed
+					DefaultClosed = defaultCollapsed,
+					IsDefinition = isDefinition,
 				}, lineNumber));
 		}
 

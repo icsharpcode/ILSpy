@@ -16,13 +16,21 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy
 {
@@ -31,135 +39,15 @@ namespace ICSharpCode.ILSpy
 	/// </summary>
 	public static class ExtensionMethods
 	{
-		public static void AddRange<T>(this ICollection<T> list, IEnumerable<T> items)
+		public static string ToSuffixString(this System.Reflection.Metadata.EntityHandle handle, bool showMetadataTokens, bool useBase10)
 		{
-			foreach (T item in items)
-				if (!list.Contains(item))
-					list.Add(item);
-		}
-
-		public static T PeekOrDefault<T>(this Stack<T> stack)
-		{
-			if (stack.Count == 0)
-				return default(T);
-			return stack.Peek();
-		}
-
-		public static int BinarySearch<T>(this IList<T> list, T item, int start, int count, IComparer<T> comparer)
-		{
-			if (list == null)
-				throw new ArgumentNullException(nameof(list));
-			if (start < 0 || start >= list.Count)
-				throw new ArgumentOutOfRangeException(nameof(start), start, "Value must be between 0 and " + (list.Count - 1));
-			if (count < 0 || count > list.Count - start)
-				throw new ArgumentOutOfRangeException(nameof(count), count, "Value must be between 0 and " + (list.Count - start));
-			int end = start + count - 1;
-			while (start <= end)
-			{
-				int pivot = (start + end) / 2;
-				int result = comparer.Compare(item, list[pivot]);
-				if (result == 0)
-					return pivot;
-				if (result < 0)
-					end = pivot - 1;
-				else
-					start = pivot + 1;
-			}
-			return ~start;
-		}
-
-		public static int BinarySearch<T, TKey>(this IList<T> instance, TKey itemKey, Func<T, TKey> keySelector)
-			where TKey : IComparable<TKey>, IComparable
-		{
-			if (instance == null)
-				throw new ArgumentNullException(nameof(instance));
-			if (keySelector == null)
-				throw new ArgumentNullException(nameof(keySelector));
-
-			int start = 0;
-			int end = instance.Count - 1;
-
-			while (start <= end)
-			{
-				int m = (start + end) / 2;
-				TKey key = keySelector(instance[m]);
-				int result = key.CompareTo(itemKey);
-				if (result == 0)
-					return m;
-				if (result < 0)
-					start = m + 1;
-				else
-					end = m - 1;
-			}
-			return ~start;
-		}
-
-		public static void InsertSorted<T>(this IList<T> list, T item, IComparer<T> comparer)
-		{
-			if (list == null)
-				throw new ArgumentNullException(nameof(list));
-			if (comparer == null)
-				throw new ArgumentNullException(nameof(comparer));
-
-			if (list.Count == 0)
-			{
-				list.Add(item);
-			}
-			else
-			{
-				int index = list.BinarySearch(item, 0, list.Count, comparer);
-				list.Insert(index < 0 ? ~index : index, item);
-			}
-		}
-
-		/*
-		public static bool IsCustomAttribute(this TypeDefinition type)
-		{
-			while (type.FullName != "System.Object") {
-				var resolvedBaseType = type.BaseType.Resolve();
-				if (resolvedBaseType == null)
-					return false;
-				if (resolvedBaseType.FullName == "System.Attribute")
-					return true;
-				type = resolvedBaseType;
-			}
-			return false;
-		}
-		*/
-		public static string ToSuffixString(this System.Reflection.Metadata.EntityHandle handle)
-		{
-			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
+			if (!showMetadataTokens)
 				return string.Empty;
 
 			int token = System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(handle);
-			if (DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokensInBase10)
+			if (useBase10)
 				return " @" + token;
 			return " @" + token.ToString("x8");
-		}
-
-		public static string ToSuffixString(this System.Reflection.Metadata.MethodDefinitionHandle handle)
-		{
-			return ToSuffixString((System.Reflection.Metadata.EntityHandle)handle);
-		}
-
-		public static string ToSuffixString(this System.Reflection.Metadata.PropertyDefinitionHandle handle)
-		{
-			return ToSuffixString((System.Reflection.Metadata.EntityHandle)handle);
-		}
-
-		public static string ToSuffixString(this System.Reflection.Metadata.EventDefinitionHandle handle)
-		{
-			return ToSuffixString((System.Reflection.Metadata.EntityHandle)handle);
-		}
-
-		public static string ToSuffixString(this System.Reflection.Metadata.FieldDefinitionHandle handle)
-		{
-			return ToSuffixString((System.Reflection.Metadata.EntityHandle)handle);
-		}
-
-		public static string ToSuffixString(this System.Reflection.Metadata.TypeDefinitionHandle handle)
-		{
-			return ToSuffixString((System.Reflection.Metadata.EntityHandle)handle);
 		}
 
 		/// <summary>
@@ -186,6 +74,12 @@ namespace ICSharpCode.ILSpy
 				result[index++] = func(element);
 			}
 			return result;
+		}
+
+		public static ICompilation? GetTypeSystemWithCurrentOptionsOrNull(this PEFile file)
+		{
+			return LoadedAssemblyExtensions.GetLoadedAssembly(file)
+				.GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(MainWindow.Instance.CurrentDecompilerSettings));
 		}
 
 		#region DPI independence
@@ -226,7 +120,7 @@ namespace ICSharpCode.ILSpy
 		}
 		#endregion
 
-		public static T FindVisualChild<T>(this DependencyObject depObj) where T : DependencyObject
+		public static T? FindVisualChild<T>(this DependencyObject? depObj) where T : DependencyObject
 		{
 			if (depObj != null)
 			{
@@ -238,7 +132,7 @@ namespace ICSharpCode.ILSpy
 						return (T)child;
 					}
 
-					T childItem = FindVisualChild<T>(child);
+					T? childItem = FindVisualChild<T>(child);
 					if (childItem != null)
 						return childItem;
 				}
@@ -246,7 +140,7 @@ namespace ICSharpCode.ILSpy
 			return null;
 		}
 
-		public static T GetParent<T>(this DependencyObject depObj) where T : DependencyObject
+		public static T? GetParent<T>(this DependencyObject? depObj) where T : DependencyObject
 		{
 			if (depObj == null)
 				return null;
@@ -266,6 +160,11 @@ namespace ICSharpCode.ILSpy
 			if (container != null)
 				container.IsSelected = true;
 			view.Focus();
+		}
+
+		public static double ToGray(this Color? color)
+		{
+			return color?.R * 0.3 + color?.G * 0.6 + color?.B * 0.1 ?? 0.0;
 		}
 	}
 }

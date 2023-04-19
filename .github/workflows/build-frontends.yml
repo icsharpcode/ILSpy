@@ -2,21 +2,20 @@ name: Build XPlat Frontends
 
 on:
   push:
-    branches: [ master ]
+    branches: '**'
   pull_request:
-    branches: [ master ]
+    branches: [ master, release/** ]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
     - name: Setup .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 6.0.x
 
@@ -24,17 +23,23 @@ jobs:
       run: dotnet restore ILSpy.XPlat.slnf
 
     - name: Build Debug
-      run: dotnet build ILSpy.XPlat.slnf --configuration Debug --no-restore
+      run: dotnet msbuild ILSpy.XPlat.slnf -p:Configuration=Debug -bl:Debug.binlog
 
-    - name: Build Release ilspycmd
-      run: dotnet build ICSharpCode.Decompiler.Console/ICSharpCode.Decompiler.Console.csproj --configuration Release
-      
-    - name: Pack Release ilspycmd
-      run: dotnet pack ICSharpCode.Decompiler.Console/ICSharpCode.Decompiler.Console.csproj --configuration Release --no-restore
+    - name: Build Release
+      run: dotnet msbuild ILSpy.XPlat.slnf -p:Configuration=Release -bl:Release.binlog
 
-    - name: Upload ilspycmd
-      uses: actions/upload-artifact@v2
+    - name: list files
+      if: always()
+      run: ls -la
+
+    - name: print VERSION
+      if: always()
+      run: cat VERSION
+
+    - name: Upload binlog
+      if: always()
+      uses: actions/upload-artifact@v3
       with:
-        name: ilspycmd NuGet Package
-        path: ICSharpCode.Decompiler.Console/bin/Release/ilspycmd*.nupkg
+        name: binlog
+        path: '**/*.binlog'
         if-no-files-found: error

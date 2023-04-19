@@ -104,7 +104,7 @@ namespace ICSharpCode.ILSpy.Metadata
 						ITextOutput output = new PlainTextOutput();
 						var p = metadata.GetGenericParameter(genericParamConstraint.Parameter);
 						output.Write("parameter " + p.Index + (p.Name.IsNil ? "" : " (" + metadata.GetString(p.Name) + ")") + " of ");
-						p.Parent.WriteTo(module, output, GenericContext.Empty);
+						p.Parent.WriteTo(module, output, default);
 						ownerTooltip = output.ToString();
 					}
 					return ownerTooltip;
@@ -123,7 +123,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string TypeTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					genericParamConstraint.Type.WriteTo(module, output, GenericContext.Empty);
+					genericParamConstraint.Type.WriteTo(module, output, default);
 					return output.ToString();
 				}
 			}

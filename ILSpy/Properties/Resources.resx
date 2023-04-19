@@ -222,9 +222,6 @@ Are you sure you want to continue?</value>
   <data name="DEBUGDumpPDBAsXML" xml:space="preserve">
     <value>DEBUG -- Dump PDB as XML</value>
   </data>
-  <data name="DarkMode" xml:space="preserve">
-    <value>Dark Mode</value>
-  </data>
   <data name="DebugSteps" xml:space="preserve">
     <value>Debug Steps</value>
   </data>
@@ -269,6 +266,9 @@ Are you sure you want to continue?</value>
   </data>
   <data name="DecompilerSettings.AlwaysUseBraces" xml:space="preserve">
     <value>Always use braces</value>
+  </data>
+  <data name="DecompilerSettings.AlwaysUseGlobal" xml:space="preserve">
+    <value>Always fully qualify namespaces using the "global::" prefix</value>
   </data>
   <data name="DecompilerSettings.ApplyWindowsRuntimeProjectionsOnLoadedAssemblies" xml:space="preserve">
     <value>Apply Windows Runtime projections on loaded assemblies</value>
@@ -381,6 +381,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.IsUnmanagedAttributeOnTypeParametersShouldBeReplacedWithUnmanagedConstraints" xml:space="preserve">
     <value>IsUnmanagedAttribute on type parameters should be replaced with 'unmanaged' constraints</value>
   </data>
+  <data name="DecompilerSettings.LifetimeAnnotations" xml:space="preserve">
+    <value>'scoped' lifetime annotation</value>
+  </data>
   <data name="DecompilerSettings.NativeIntegers" xml:space="preserve">
     <value>Use nint/nuint types</value>
   </data>
@@ -396,6 +399,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.Other" xml:space="preserve">
     <value>Other</value>
   </data>
+  <data name="DecompilerSettings.ParameterNullCheck" xml:space="preserve">
+    <value>Use parameter null checking</value>
+  </data>
   <data name="DecompilerSettings.PatternMatching" xml:space="preserve">
     <value>Use pattern matching expressions</value>
   </data>
@@ -409,7 +415,10 @@ Are you sure you want to continue?</value>
     <value>Read-only methods</value>
   </data>
   <data name="DecompilerSettings.RecordClasses" xml:space="preserve">
-    <value>Records</value>
+    <value>Record classes</value>
+  </data>
+  <data name="DecompilerSettings.RecordStructs" xml:space="preserve">
+    <value>Record structs</value>
   </data>
   <data name="DecompilerSettings.RemoveDeadAndSideEffectFreeCodeUseWithCaution" xml:space="preserve">
     <value>Remove dead and side effect free code (use with caution!)</value>
@@ -419,6 +428,9 @@ Are you sure you want to continue?</value>
   </data>
   <data name="DecompilerSettings.RemoveOptionalArgumentsIfPossible" xml:space="preserve">
     <value>Remove optional arguments, if possible</value>
+  </data>
+  <data name="DecompilerSettings.RequiredMembers" xml:space="preserve">
+    <value>Required members</value>
   </data>
   <data name="DecompilerSettings.SeparateLocalVariableDeclarations" xml:space="preserve">
     <value>Separate local variable declarations and initializers (int x = 5; -&gt; int x; x = 5;), if possible</value>
@@ -527,6 +539,9 @@ Are you sure you want to continue?</value>
   </data>
   <data name="DisplaySettingsPanel_Font" xml:space="preserve">
     <value>Font:</value>
+  </data>
+  <data name="DisplaySettingsPanel_Theme" xml:space="preserve">
+	  <value>Theme:</value>
   </data>
   <data name="Download" xml:space="preserve">
     <value>Download</value>
@@ -892,6 +907,9 @@ Do you want to continue?</value>
   <data name="TabSize" xml:space="preserve">
     <value>Tab size:</value>
   </data>
+  <data name="Theme" xml:space="preserve">
+	  <value>Theme</value>
+  </data>
   <data name="ToggleFolding" xml:space="preserve">
     <value>Toggle All Folding</value>
   </data>
@@ -915,6 +933,9 @@ Do you want to continue?</value>
   </data>
   <data name="UseLogicOperationSugar" xml:space="preserve">
     <value>UseLogicOperationSugar</value>
+  </data>
+  <data name="UseNestedNamespaceNodes" xml:space="preserve">
+    <value>Use nested namespace structure</value>
   </data>
   <data name="UseTabsInsteadOfSpaces" xml:space="preserve">
     <value>Use tabs instead of spaces</value>

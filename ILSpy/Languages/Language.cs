@@ -29,35 +29,18 @@ using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
-
-using SRM = System.Reflection.Metadata;
+using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.Abstractions;
 
 namespace ICSharpCode.ILSpy
 {
-	public class LanguageVersion
-	{
-		public string Version { get; }
-		public string DisplayName { get; }
-
-		public LanguageVersion(string version, string name = null)
-		{
-			this.Version = version ?? "";
-			this.DisplayName = name ?? version.ToString();
-		}
-
-		public override string ToString()
-		{
-			return $"[LanguageVersion DisplayName={DisplayName}, Version={Version}]";
-		}
-	}
-
 	/// <summary>
 	/// Base class for language-specific decompiler implementations.
 	/// </summary>
 	/// <remarks>
 	/// Implementations of this class must be thread-safe.
 	/// </remarks>
-	public abstract class Language
+	public abstract class Language : ILanguage
 	{
 		/// <summary>
 		/// Gets the name of the language (as shown in the UI)
@@ -82,9 +65,9 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Gets the syntax highlighting used for this language.
 		/// </summary>
-		public virtual ICSharpCode.AvalonEdit.Highlighting.IHighlightingDefinition SyntaxHighlighting {
+		public virtual IHighlightingDefinition SyntaxHighlighting {
 			get {
-				return ICSharpCode.AvalonEdit.Highlighting.HighlightingManager.Instance.GetDefinitionByExtension(this.FileExtension);
+				return HighlightingManager.Instance.GetDefinitionByExtension(FileExtension);
 			}
 		}
 
@@ -539,13 +522,13 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public virtual CodeMappingInfo GetCodeMappingInfo(PEFile module, SRM.EntityHandle member)
+		public virtual CodeMappingInfo GetCodeMappingInfo(PEFile module, EntityHandle member)
 		{
-			var declaringType = member.GetDeclaringType(module.Metadata);
+			var declaringType = (TypeDefinitionHandle)member.GetDeclaringType(module.Metadata);
 
-			if (declaringType.IsNil && member.Kind == SRM.HandleKind.TypeDefinition)
+			if (declaringType.IsNil && member.Kind == HandleKind.TypeDefinition)
 			{
-				declaringType = (SRM.TypeDefinitionHandle)member;
+				declaringType = (TypeDefinitionHandle)member;
 			}
 
 			return new CodeMappingInfo(module, declaringType);

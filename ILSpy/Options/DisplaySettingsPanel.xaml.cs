@@ -26,6 +26,8 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using System.Xml.Linq;
 
+using ICSharpCode.ILSpyX.Settings;
+
 namespace ICSharpCode.ILSpy.Options
 {
 	/// <summary>
@@ -68,14 +70,6 @@ namespace ICSharpCode.ILSpy.Options
 			this.DataContext = LoadDisplaySettings(settings);
 		}
 
-		static DisplaySettings currentDisplaySettings;
-
-		public static DisplaySettings CurrentDisplaySettings {
-			get {
-				return currentDisplaySettings ?? (currentDisplaySettings = LoadDisplaySettings(ILSpySettings.Load()));
-			}
-		}
-
 		static bool IsSymbolFont(FontFamily fontFamily)
 		{
 			foreach (var tf in fontFamily.GetTypefaces())
@@ -102,10 +96,10 @@ namespace ICSharpCode.ILSpy.Options
 					select ff).ToArray();
 		}
 
-		public static DisplaySettings LoadDisplaySettings(ILSpySettings settings)
+		public static DisplaySettingsViewModel LoadDisplaySettings(ILSpySettings settings)
 		{
 			XElement e = settings["DisplaySettings"];
-			var s = new DisplaySettings();
+			var s = new DisplaySettingsViewModel();
 			s.SelectedFont = new FontFamily((string)e.Attribute("Font") ?? "Consolas");
 			s.SelectedFontSize = (double?)e.Attribute("FontSize") ?? 10.0 * 4 / 3;
 			s.ShowLineNumbers = (bool?)e.Attribute("ShowLineNumbers") ?? false;
@@ -123,15 +117,18 @@ namespace ICSharpCode.ILSpy.Options
 			s.HighlightMatchingBraces = (bool?)e.Attribute("HighlightMatchingBraces") ?? true;
 			s.HighlightCurrentLine = (bool?)e.Attribute("HighlightCurrentLine") ?? false;
 			s.HideEmptyMetadataTables = (bool?)e.Attribute("HideEmptyMetadataTables") ?? true;
+			s.UseNestedNamespaceNodes = (bool?)e.Attribute("UseNestedNamespaceNodes") ?? false;
 			s.ShowRawOffsetsAndBytesBeforeInstruction = (bool?)e.Attribute("ShowRawOffsetsAndBytesBeforeInstruction") ?? false;
 			s.StyleWindowTitleBar = (bool?)e.Attribute("StyleWindowTitleBar") ?? false;
+
+			s.Theme = MainWindow.Instance.SessionSettings.Theme;
 
 			return s;
 		}
 
 		public void Save(XElement root)
 		{
-			var s = (DisplaySettings)this.DataContext;
+			var s = (DisplaySettingsViewModel)this.DataContext;
 
 			var section = new XElement("DisplaySettings");
 			section.SetAttributeValue("Font", s.SelectedFont.Source);
@@ -151,17 +148,26 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("HighlightMatchingBraces", s.HighlightMatchingBraces);
 			section.SetAttributeValue("HighlightCurrentLine", s.HighlightCurrentLine);
 			section.SetAttributeValue("HideEmptyMetadataTables", s.HideEmptyMetadataTables);
+			section.SetAttributeValue("UseNestedNamespaceNodes", s.UseNestedNamespaceNodes);
 			section.SetAttributeValue("ShowRawOffsetsAndBytesBeforeInstruction", s.ShowRawOffsetsAndBytesBeforeInstruction);
 			section.SetAttributeValue("StyleWindowTitleBar", s.StyleWindowTitleBar);
 
-			XElement existingElement = root.Element("DisplaySettings");
-			if (existingElement != null)
-				existingElement.ReplaceWith(section);
-			else
-				root.Add(section);
+			MainWindow.Instance.SessionSettings.Theme = s.Theme;
+			var sessionSettings = MainWindow.Instance.SessionSettings.ToXml();
 
-			if (currentDisplaySettings != null)
-				currentDisplaySettings.CopyValues(s);
+			MainWindow.Instance.CurrentDisplaySettings.CopyValues(s);
+
+			Update(section);
+			Update(sessionSettings);
+
+			void Update(XElement element)
+			{
+				var existingElement = root.Element(element.Name);
+				if (existingElement != null)
+					existingElement.ReplaceWith(element);
+				else
+					root.Add(element);
+			}
 		}
 
 		private void TextBox_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
@@ -181,8 +187,8 @@ namespace ICSharpCode.ILSpy.Options
 
 		public void LoadDefaults()
 		{
-			currentDisplaySettings = new DisplaySettings();
-			this.DataContext = currentDisplaySettings;
+			MainWindow.Instance.CurrentDisplaySettings.CopyValues(new DisplaySettingsViewModel());
+			this.DataContext = MainWindow.Instance.CurrentDisplaySettings;
 		}
 	}
 

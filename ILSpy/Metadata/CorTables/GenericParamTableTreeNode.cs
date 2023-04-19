@@ -108,7 +108,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string OwnerTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					genericParam.Parent.WriteTo(module, output, GenericContext.Empty);
+					genericParam.Parent.WriteTo(module, output, default);
 					return output.ToString();
 				}
 			}

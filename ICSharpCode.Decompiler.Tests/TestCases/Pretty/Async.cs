@@ -193,7 +193,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			catch (Exception ex)
 			{
 				await Task.Delay(0);
+#pragma warning disable CA2200 // Rethrow to preserve stack details
 				throw ex;
+#pragma warning restore CA2200 // Rethrow to preserve stack details
 			}
 		}
 

@@ -7,6 +7,7 @@ using System.Windows.Input;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy
@@ -31,7 +32,7 @@ namespace ICSharpCode.ILSpy
 
 #if DEBUG
 			DockWorkspace.Instance.PropertyChanged += DockWorkspace_PropertyChanged;
-			this.filterSettings = MainWindow.Instance.SessionSettings.FilterSettings;
+			filterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings;
 			filterSettings.PropertyChanged += FilterSettings_PropertyChanged;
 			MainWindow.Instance.SelectionChanged += SelectionChanged;
 			writingOptions.PropertyChanged += WritingOptions_PropertyChanged;
@@ -133,7 +134,7 @@ namespace ICSharpCode.ILSpy
 			var window = MainWindow.Instance;
 			var state = DockWorkspace.Instance.ActiveTabPage.GetState();
 			DockWorkspace.Instance.ActiveTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(window.CurrentLanguage, window.SelectedNodes,
-				new DecompilationOptions(window.CurrentLanguageVersion) {
+				new DecompilationOptions(window.CurrentLanguageVersion, window.CurrentDecompilerSettings, window.CurrentDisplaySettings) {
 					StepLimit = step,
 					IsDebug = isDebug,
 					TextViewState = state as TextView.DecompilerTextViewState

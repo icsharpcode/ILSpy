@@ -194,6 +194,20 @@ namespace ICSharpCode.Decompiler.IL
 				case BlockKind.DeconstructionAssignments:
 					Debug.Assert(this.SlotInfo == DeconstructInstruction.AssignmentsSlot);
 					break;
+				case BlockKind.InterpolatedString:
+					Debug.Assert(FinalInstruction is Call { Method: { Name: "ToStringAndClear" }, Arguments: { Count: 1 } });
+					var interpolInit = Instructions[0] as StLoc;
+					DebugAssert(interpolInit != null
+						&& interpolInit.Variable.Kind == VariableKind.InitializerTarget
+						&& interpolInit.Variable.AddressCount == Instructions.Count
+						&& interpolInit.Variable.StoreCount == 1);
+					for (int i = 1; i < Instructions.Count; i++)
+					{
+						Call? inst = Instructions[i] as Call;
+						DebugAssert(inst != null);
+						DebugAssert(inst.Arguments.Count >= 1 && inst.Arguments[0].MatchLdLoca(interpolInit.Variable));
+					}
+					break;
 			}
 		}
 
@@ -465,5 +479,17 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		DeconstructionAssignments,
 		WithInitializer,
+		/// <summary>
+		/// String interpolation using DefaultInterpolatedStringHandler.
+		/// </summary>
+		/// <example>
+		/// Block {
+		///		stloc I_0 = newobj DefaultInterpolatedStringHandler(...)
+		///		call AppendXXX(I_0, ...)
+		///		...
+		///		final: call ToStringAndClear(ldloc I_0)
+		/// }
+		/// </example>
+		InterpolatedString,
 	}
 }

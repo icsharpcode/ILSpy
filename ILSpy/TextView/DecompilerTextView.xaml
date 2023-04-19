@@ -5,23 +5,40 @@
 			 xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
 			 xmlns:local="clr-namespace:ICSharpCode.ILSpy.TextView"
 			 xmlns:ae="clr-namespace:ICSharpCode.AvalonEdit;assembly=ICSharpCode.AvalonEdit"
+			 xmlns:editing="clr-namespace:ICSharpCode.AvalonEdit.Editing;assembly=ICSharpCode.AvalonEdit"
 			 xmlns:folding="clr-namespace:ICSharpCode.AvalonEdit.Folding;assembly=ICSharpCode.AvalonEdit"
-			 xmlns:styles="urn:TomsToolbox.Wpf.Styles">
+			 xmlns:styles="urn:TomsToolbox.Wpf.Styles"
+			 xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes">
 	<UserControl.Resources>
 		<BooleanToVisibilityConverter x:Key="boolToVisibility" />
 		<SolidColorBrush x:Key="waitAdornerBackgoundBrush" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" Opacity=".75"/>
+		<Style TargetType="{x:Type editing:TextArea}">
+			<Setter Property="FocusVisualStyle" Value="{x:Null}" />
+			<Setter Property="SelectionForeground" Value="{x:Null}" />
+			<Setter Property="SelectionCornerRadius" Value="0.0" />
+			<Setter Property="SelectionBrush">
+				<Setter.Value>
+					<SolidColorBrush Color="{DynamicResource {x:Static SystemColors.HighlightColorKey}}" Opacity="0.3" />
+				</Setter.Value>
+			</Setter>
+			<Setter Property="SelectionBorder">
+				<Setter.Value>
+					<Pen Brush="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" Thickness="0" />
+				</Setter.Value>
+			</Setter>
+		</Style>
 	</UserControl.Resources>
 	<Grid>
 		<Border BorderThickness="1,1,0,1" BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
 			<Grid>
 				<ae:TextEditor Name="textEditor" AutomationProperties.Name="Decompilation"  FontFamily="Consolas" FontSize="10pt" IsReadOnly="True"
-				               Background="{DynamicResource {x:Static SystemColors.InfoBrushKey}}"
-				               Foreground="{DynamicResource {x:Static SystemColors.InfoTextBrushKey}}"
+				               Background="{DynamicResource {x:Static themes:ResourceKeys.TextBackgroundBrush}}"
+				               Foreground="{DynamicResource {x:Static themes:ResourceKeys.TextForegroundBrush}}"
+				               LineNumbersForeground="{DynamicResource {x:Static themes:ResourceKeys.LineNumbersForegroundBrush}}"
 				               folding:FoldingMargin.FoldingMarkerBackgroundBrush="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
 				               folding:FoldingMargin.SelectedFoldingMarkerBackgroundBrush="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
 				               folding:FoldingMargin.FoldingMarkerBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
-				               folding:FoldingMargin.SelectedFoldingMarkerBrush="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"
-				               >
+				               folding:FoldingMargin.SelectedFoldingMarkerBrush="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}">
 					<ae:TextEditor.Resources>
 						<!-- prevent App-wide button style from applying to the buttons in the search box -->
 						<Style TargetType="{x:Type Button}">
@@ -32,7 +49,7 @@
 							<Setter Property="Template">
 								<Setter.Value>
 									<ControlTemplate TargetType="Button">
-										<Border BorderThickness="1" 
+										<Border BorderThickness="1"
 										        Background="{TemplateBinding Background}"
 										        BorderBrush="{TemplateBinding BorderBrush}"
 										        Padding="{TemplateBinding Padding}">
@@ -64,7 +81,7 @@
 								Background="{TemplateBinding Background}"
 								Padding="{TemplateBinding Padding}"
 								BorderBrush="{TemplateBinding BorderBrush}"
-								BorderThickness="{TemplateBinding BorderThickness}" 
+								BorderThickness="{TemplateBinding BorderThickness}"
 								TextOptions.TextFormattingMode="{Binding CurrentZoom, ElementName=PART_ScrollViewer, Converter={x:Static local:ZoomLevelToTextFormattingModeConverter.Instance}}" />
 							<ControlTemplate.Triggers>
 								<Trigger Property="WordWrap"
@@ -78,11 +95,19 @@
 					</ae:TextEditor.Template>
 				</ae:TextEditor>
 				<Border Name="waitAdorner" Background="{StaticResource waitAdornerBackgoundBrush}" Visibility="Collapsed">
-					<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-						<TextBlock FontSize="14pt" Text="{x:Static properties:Resources.Decompiling}"/>
-						<ProgressBar Name="progressBar" Height="16" Margin="0, 4" />
-						<Button Click="CancelButton_Click" HorizontalAlignment="Center"  Content="{x:Static properties:Resources.Cancel}"/>
-					</StackPanel>
+					<Grid>
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="*" />
+							<ColumnDefinition Width="2*" />
+							<ColumnDefinition Width="*" />
+						</Grid.ColumnDefinitions>
+						<StackPanel Grid.Column="1" VerticalAlignment="Center">
+							<TextBlock Name="progressTitle" FontSize="14pt" Text="{x:Static properties:Resources.Decompiling}" Margin="3"/>
+							<ProgressBar Name="progressBar" Height="16" />
+							<TextBlock Name="progressText" Visibility="Collapsed" Margin="3" />
+							<Button Click="CancelButton_Click" HorizontalAlignment="Center" Margin="3" Content="{x:Static properties:Resources.Cancel}"/>
+						</StackPanel>
+					</Grid>
 				</Border>
 			</Grid>
 		</Border>

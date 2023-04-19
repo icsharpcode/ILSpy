@@ -37,6 +37,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			CallAmbiguousOutParam();
 			CallWithInParam();
 			Issue2444.M2();
+			Issue2741.B.Test(new Issue2741.C());
 		}
 
 		#region ConstructorTest
@@ -364,6 +365,64 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				Console.WriteLine("#2444: before M1");
 				M1((X)null);
 				Console.WriteLine("#2444: after M1");
+			}
+		}
+
+		public class Issue2741
+		{
+			public class B
+			{
+				private void M()
+				{
+					Console.WriteLine("B::M");
+				}
+
+				protected void M2()
+				{
+					Console.WriteLine("B::M2");
+				}
+
+				protected void M3()
+				{
+					Console.WriteLine("B::M3");
+				}
+
+				protected void M4()
+				{
+					Console.WriteLine("B::M4");
+				}
+
+				public static void Test(C c)
+				{
+					((B)c).M();
+					((B)c).M2();
+					c.Test();
+				}
+			}
+
+			public class C : B
+			{
+				public void M()
+				{
+					Console.WriteLine("C::M");
+				}
+
+				public new void M2()
+				{
+					Console.WriteLine("C::M2");
+				}
+
+				public new void M3()
+				{
+					Console.WriteLine("C::M3");
+				}
+
+				public void Test()
+				{
+					M3();
+					base.M3();
+					M4();
+				}
 			}
 		}
 		#endregion

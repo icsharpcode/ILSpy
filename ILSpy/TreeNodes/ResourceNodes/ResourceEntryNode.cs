@@ -22,6 +22,7 @@ using System.IO;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpyX.Abstractions;
 
 using Microsoft.Win32;
 
@@ -35,7 +36,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		private readonly string key;
 		private readonly Func<Stream> openStream;
 
-		public override object Text => this.key;
+		public override object Text => Language.EscapeName(key);
 
 		public override object Icon => Images.Resource;
 
@@ -59,7 +60,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			ILSpyTreeNode result = null;
 			foreach (var factory in App.ExportProvider.GetExportedValues<IResourceNodeFactory>())
 			{
-				result = factory.CreateNode(resource);
+				result = factory.CreateNode(resource) as ILSpyTreeNode;
 				if (result != null)
 					break;
 			}

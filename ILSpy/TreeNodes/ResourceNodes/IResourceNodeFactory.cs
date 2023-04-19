@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpyX.Abstractions;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -25,6 +26,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public interface IResourceNodeFactory
 	{
-		ILSpyTreeNode CreateNode(Resource resource);
+		ITreeNode CreateNode(Resource resource);
 	}
 }

@@ -137,7 +137,7 @@ namespace ICSharpCode.ILSpy.Metadata
 							provider.GetTypeFromReference(module.Metadata, (TypeReferenceHandle)typeDef.BaseType, 0)(ILNameSyntax.Signature);
 							return output.ToString();
 						case HandleKind.TypeSpecification:
-							provider.GetTypeFromSpecification(module.Metadata, new Decompiler.Metadata.GenericContext(default(TypeDefinitionHandle), module), (TypeSpecificationHandle)typeDef.BaseType, 0)(ILNameSyntax.Signature);
+							provider.GetTypeFromSpecification(module.Metadata, new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module), (TypeSpecificationHandle)typeDef.BaseType, 0)(ILNameSyntax.Signature);
 							return output.ToString();
 						default:
 							return null;
@@ -160,7 +160,7 @@ namespace ICSharpCode.ILSpy.Metadata
 					if (field.IsNil)
 						return null;
 					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.GenericContext(default(TypeDefinitionHandle), module);
+					var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
 					((EntityHandle)field).WriteTo(module, output, context);
 					return output.ToString();
 				}
@@ -181,7 +181,7 @@ namespace ICSharpCode.ILSpy.Metadata
 					if (method.IsNil)
 						return null;
 					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.GenericContext(default(TypeDefinitionHandle), module);
+					var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
 					((EntityHandle)method).WriteTo(module, output, context);
 					return output.ToString();
 				}

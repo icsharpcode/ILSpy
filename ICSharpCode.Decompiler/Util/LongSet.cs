@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// <summary>
 		/// Creates a new LongSet the contains the values from the specified intervals.
 		/// </summary>
-		public LongSet(IEnumerable<LongInterval>? intervals)
+		public LongSet(IEnumerable<LongInterval> intervals)
 			: this(MergeOverlapping(intervals.Where(i => !i.IsEmpty).OrderBy(i => i.Start)).ToImmutableArray())
 		{
 		}

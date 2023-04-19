@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 // Copyright (c) 2014 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -97,6 +97,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets whether the YieldReturnDecompiler determined that the Mono C# compiler was used to compile this function.
 		/// </summary>
 		public bool StateMachineCompiledWithMono;
+
+		/// <summary>
+		/// Gets whether the YieldReturnDecompiler determined that the Legacy VB compiler was used to compile this function.
+		/// </summary>
+		public bool StateMachineCompiledWithLegacyVisualBasic;
 
 		/// <summary>
 		/// Gets whether this function is async.

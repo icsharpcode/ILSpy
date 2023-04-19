@@ -170,6 +170,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 				return new TypeSystemAstBuilder(resolver) {
 					UseNullableSpecifierForValueTypes = settings.LiftNullables,
+					AlwaysUseGlobal = settings.AlwaysUseGlobal,
 					AddResolveResultAnnotations = true,
 					UseAliases = true
 				};

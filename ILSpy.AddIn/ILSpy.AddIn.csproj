@@ -2,7 +2,6 @@
 <Project>
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
 
-
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <RootNamespace>ICSharpCode.ILSpy.AddIn</RootNamespace>
@@ -19,6 +18,10 @@
 
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>Key.snk</AssemblyOriginatorKeyFile>
+    <NoWarn>
+      MSB3277;<!-- this is due to Visual Studio package references weirdness, see https://github.com/dotnet/roslyn/discussions/49787 -->
+      VSSDK1009
+    </NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -29,10 +32,6 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <DebugType>pdbonly</DebugType>
     <DebugSymbols>true</DebugSymbols>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(AppVeyor)' != ''">
-    <DeployExtension>False</DeployExtension>
   </PropertyGroup>
 
   <ItemGroup>
@@ -48,7 +47,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis" Version="2.4.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.4.0" />
     <PackageReference Include="Microsoft.VisualStudio.LanguageServices" Version="2.4.0" />
-    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.0.5232">
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.3.2093">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -56,9 +55,24 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="TunnelVisionLabs.ReferenceAssemblyAnnotator" Version="1.0.0-alpha.160" PrivateAssets="all" />
+
+    <!-- Specifies the version of Microsoft.NETCore.App.Ref to obtain nullability information from. -->
+    <PackageDownload Include="Microsoft.NETCore.App.Ref" Version="[6.0.0]" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\ILSpy\ILSpy.csproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-      <Private>false</Private>
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
+    <ProjectReference Include="..\ILSpy.ReadyToRun\ILSpy.ReadyToRun.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
+    <ProjectReference Include="..\ILSpy.BamlDecompiler\ILSpy.BamlDecompiler.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
     </ProjectReference>
   </ItemGroup>
 
@@ -75,40 +89,30 @@
     <Compile Include="..\ICSharpCode.Decompiler\Metadata\LightJson\Serialization\TextScanner.cs" Link="Decompiler\LightJson\Serialization\TextScanner.cs" />
     <Compile Include="..\ICSharpCode.Decompiler\Metadata\UniversalAssemblyResolver.cs" Link="UniversalAssemblyResolver.cs" />
     <Compile Include="..\ICSharpCode.Decompiler\Util\EmptyList.cs" Link="Decompiler\EmptyList.cs" />
-    <Compile Include="..\ICSharpCode.Decompiler\Util\NullAttributes.cs" Link="NullAttributes.cs" />
     <Compile Include="..\ILSpy\NativeMethods.cs" Link="NativeMethods.cs" />
     <Compile Include="Decompiler\Dummy.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
 
-  <!--
-  BEGIN WORKAROUND:
-  Nuget packages do not get added to the vsix automatically.
-  (related to https://github.com/icsharpcode/ILSpy/issues/511)
-  -->
   <PropertyGroup>
-    <ILSpyBuildPath>..\ILSpy\bin\$(Configuration)\$(TargetFramework)\</ILSpyBuildPath>
+    <ILSpyBuildPath>..\ILSpy\bin\$(Configuration)\net6.0-windows\</ILSpyBuildPath>
   </PropertyGroup>
+
+  <Target Name="IncludeILSpyDistributionInVSIXSubFolder" AfterTargets="ResolveProjectReferences">
+    <ItemGroup>
+      <VSIXSourceItem Include="$(ILSpyBuildPath)zh-Hans\ILSpy.resources.dll;$(ILSpyBuildPath)zh-Hans\ILSpy.ReadyToRun.Plugin.resources.dll;">
+        <VSIXSubPath>\ILSpy\zh-Hans\</VSIXSubPath>
+      </VSIXSourceItem>
+      <VSIXSourceItem Include="$(ILSpyBuildPath)*.dll;$(ILSpyBuildPath)ILSpy.exe;$(ILSpyBuildPath)*.json">
+        <VSIXSubPath>\ILSpy</VSIXSubPath>
+      </VSIXSourceItem>
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <Content Include="$(OutputPath)Mono.Cecil.dll">
       <IncludeInVSIX>true</IncludeInVSIX>
       <VSIXSubPath>\</VSIXSubPath>
-    </Content>
-  </ItemGroup>
-  <!-- END WORKAROUND -->
-
-  <ItemGroup>
-    <Content Include="$(ILSpyBuildPath)*.dll;$(ILSpyBuildPath)ILSpy.exe;$(ILSpyBuildPath)ILSpy.exe.config">
-      <IncludeInVSIX>true</IncludeInVSIX>
-      <VSIXSubPath>\ILSpy</VSIXSubPath>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="$(ILSpyBuildPath)zh-Hans\ILSpy.resources.dll;$(ILSpyBuildPath)zh-Hans\ILSpy.ReadyToRun.Plugin.resources.dll;">
-      <IncludeInVSIX>true</IncludeInVSIX>
-      <VSIXSubPath>\ILSpy\zh-Hans\</VSIXSubPath>
     </Content>
     <Content Include="ILSpy-Large.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

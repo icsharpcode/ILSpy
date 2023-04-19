@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// </summary>
 		public string? GetAttribute(string? name)
 		{
-			return element?.Attribute(name)?.Value;
+			return name == null ? null : element?.Attribute(name)?.Value;
 		}
 
 		/// <summary>
@@ -212,7 +212,7 @@ namespace ICSharpCode.Decompiler.Documentation
 							var doc = XDocument.Parse(inheritedDocumentation).Element("doc");
 
 							// XPath filter not yet implemented
-							if (childElement.Parent?.Parent == null && childElement.Attribute("select")?.Value == null)
+							if (doc != null && childElement.Parent?.Parent == null && childElement.Attribute("select")?.Value == null)
 							{
 								// Inheriting documentation at the root level
 								List<string> doNotInherit = new List<string>();

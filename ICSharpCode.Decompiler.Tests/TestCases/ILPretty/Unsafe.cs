@@ -2,16 +2,16 @@ using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
+[assembly: AssemblyMetadata(".NETFrameworkAssembly", "")]
+[assembly: CLSCompliant(false)]
 [assembly: AssemblyFileVersion("4.0.0.0")]
 [assembly: AssemblyInformationalVersion("4.0.0.0")]
 [assembly: AssemblyTitle("System.Runtime.CompilerServices.Unsafe")]
 [assembly: AssemblyDescription("System.Runtime.CompilerServices.Unsafe")]
-[assembly: AssemblyMetadata(".NETFrameworkAssembly", "")]
 [assembly: AssemblyMetadata("Serviceable", "True")]
 [assembly: AssemblyCopyright("© Microsoft Corporation.  All rights reserved.")]
 [assembly: AssemblyCompany("Microsoft Corporation")]
 [assembly: AssemblyProduct("Microsoft® .NET Framework")]
-[assembly: CLSCompliant(false)]
 
 internal sealed class ExtraUnsafeTests
 {
@@ -207,9 +207,9 @@ namespace System.Runtime.CompilerServices
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static int SizeOf<T>()
+		public static int SizeOf<T>()
 		{
-			return sizeof(T);
+			return Unsafe.SizeOf<T>();
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -307,7 +307,7 @@ namespace System.Runtime.CompilerServices
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public unsafe static void* Add<T>(void* source, int elementOffset)
 		{
-			return (byte*)source + (nint)elementOffset * (nint)sizeof(T);
+			return (byte*)source + (nint)elementOffset * (nint)Unsafe.SizeOf<T>();
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -343,7 +343,7 @@ namespace System.Runtime.CompilerServices
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public unsafe static void* Subtract<T>(void* source, int elementOffset)
 		{
-			return (byte*)source - (nint)elementOffset * (nint)sizeof(T);
+			return (byte*)source - (nint)elementOffset * (nint)Unsafe.SizeOf<T>();
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

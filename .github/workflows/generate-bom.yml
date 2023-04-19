@@ -1,0 +1,29 @@
+name: Generate BOM
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: windows-2022
+
+    steps:
+    - name: Checkout
+      run: git config --global core.autocrlf true
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Install CycloneDX
+      run: dotnet tool install --global CycloneDX
+      
+    - name: Analyze
+      run: dotnet CycloneDX ILSpy/ILSpy.csproj --out sbom --recursive --exclude-dev --exclude-test-projects
+
+    - name: Upload BOM
+      uses: actions/upload-artifact@v3
+      with:
+        name: ILSpyBOM.xml
+        path: sbom/bom.xml
+        if-no-files-found: error

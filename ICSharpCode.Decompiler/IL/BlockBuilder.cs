@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler.IL
 		Block currentBlock;
 		readonly Stack<BlockContainer> containerStack = new Stack<BlockContainer>();
 
-		public void CreateBlocks(BlockContainer mainContainer, List<ILInstruction> instructions, BitArray incomingBranches, CancellationToken cancellationToken)
+		public void CreateBlocks(BlockContainer mainContainer, List<ILInstruction> instructions, BitSet incomingBranches, CancellationToken cancellationToken)
 		{
 			CreateContainerStructure();
 			mainContainer.SetILRange(new Interval(0, body.GetCodeSize()));

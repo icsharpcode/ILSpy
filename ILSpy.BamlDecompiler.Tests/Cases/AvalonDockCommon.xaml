@@ -21,7 +21,7 @@
 		<Setter Property="Template">
 			<Setter.Value>
 				<ControlTemplate TargetType="{x:Type ad:Resizer}">
-					<Border Background="{TemplateBinding Background}" />
+					<Border Background="{TemplateBinding Control.Background}" />
 				</ControlTemplate>
 			</Setter.Value>
 		</Setter>

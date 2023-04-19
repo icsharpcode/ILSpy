@@ -25,10 +25,11 @@ using System.Threading.Tasks;
 
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportMainMenuCommand(Menu = nameof(Resources._File), Header = nameof(Resources.DEBUGDisassemble), MenuCategory = nameof(Resources.Open), MenuOrder = 2.5)]
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDisassemble), MenuCategory = nameof(Resources.Open), MenuOrder = 2.5)]
 	sealed class DisassembleAllCommand : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)
@@ -52,7 +53,10 @@ namespace ICSharpCode.ILSpy
 							{
 								try
 								{
-									new ILLanguage().DecompileAssembly(asm, new Decompiler.PlainTextOutput(writer), new DecompilationOptions { FullDecompilation = true, CancellationToken = ct });
+									var options = MainWindow.Instance.CreateDecompilationOptions();
+									options.FullDecompilation = true;
+									options.CancellationToken = ct;
+									new ILLanguage().DecompileAssembly(asm, new Decompiler.PlainTextOutput(writer), options);
 								}
 								catch (Exception ex)
 								{

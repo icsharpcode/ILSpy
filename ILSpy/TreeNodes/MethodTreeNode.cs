@@ -25,6 +25,7 @@ using ICSharpCode.Decompiler;
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	using ICSharpCode.Decompiler.TypeSystem;
+	using ICSharpCode.ILSpyX;
 
 	/// <summary>
 	/// Tree Node representing a field, method, property, or event.
@@ -38,7 +39,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.MethodDefinition = method ?? throw new ArgumentNullException(nameof(method));
 		}
 
-		public override object Text => GetText(GetMethodDefinition(), Language) + MethodDefinition.MetadataToken.ToSuffixString();
+		public override object Text => GetText(GetMethodDefinition(), Language) + GetSuffixString(MethodDefinition);
 
 		private IMethod GetMethodDefinition()
 		{

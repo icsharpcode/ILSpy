@@ -25,6 +25,7 @@ using ICSharpCode.Decompiler;
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	using ICSharpCode.Decompiler.TypeSystem;
+	using ICSharpCode.ILSpyX;
 
 	/// <summary>
 	/// Represents a property in the TreeView.
@@ -48,7 +49,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public IProperty PropertyDefinition { get; }
 
-		public override object Text => GetText(GetPropertyDefinition(), Language) + PropertyDefinition.MetadataToken.ToSuffixString();
+		public override object Text => GetText(GetPropertyDefinition(), Language) + GetSuffixString(PropertyDefinition);
 
 		private IProperty GetPropertyDefinition()
 		{

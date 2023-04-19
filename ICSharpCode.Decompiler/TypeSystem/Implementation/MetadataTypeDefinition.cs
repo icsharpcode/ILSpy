@@ -58,6 +58,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IEvent[] events;
 		IMethod[] methods;
 		List<IType> directBaseTypes;
+		bool defaultMemberNameInitialized;
 		string defaultMemberName;
 
 		internal MetadataTypeDefinition(MetadataModule module, TypeDefinitionHandle handle)
@@ -70,6 +71,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var td = metadata.GetTypeDefinition(handle);
 			this.attributes = td.Attributes;
 			this.fullTypeName = td.GetFullTypeName(metadata);
+			this.MetadataName = metadata.GetString(td.Name);
 			// Find DeclaringType + KnownTypeCode:
 			if (fullTypeName.IsNested)
 			{
@@ -257,17 +259,23 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var methodsCollection = metadata.GetTypeDefinition(handle).GetMethods();
 				var methodsList = new List<IMethod>(methodsCollection.Count);
 				var methodSemantics = module.PEFile.MethodSemanticsLookup;
+				bool hasDefaultCtor = false;
 				foreach (MethodDefinitionHandle h in methodsCollection)
 				{
 					var md = metadata.GetMethodDefinition(h);
 					if (methodSemantics.GetSemantics(h).Item2 == 0 && module.IsVisible(md.Attributes))
 					{
-						methodsList.Add(module.GetDefinition(h));
+						IMethod method = module.GetDefinition(h);
+						if (method.SymbolKind == SymbolKind.Constructor && !method.IsStatic && method.Parameters.Count == 0)
+						{
+							hasDefaultCtor = true;
+						}
+						methodsList.Add(method);
 					}
 				}
-				if (this.Kind == TypeKind.Struct || this.Kind == TypeKind.Enum)
+				if (!hasDefaultCtor && (this.Kind == TypeKind.Struct || this.Kind == TypeKind.Enum))
 				{
-					methodsList.Add(FakeMethod.CreateDummyConstructor(Compilation, this, IsAbstract ? Accessibility.Protected : Accessibility.Public));
+					methodsList.Add(FakeMethod.CreateDummyConstructor(Compilation, this, Accessibility.Public));
 				}
 				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
 					return methodsList;
@@ -322,7 +330,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					EntityHandle baseTypeHandle = td.BaseType;
 					if (!baseTypeHandle.IsNil)
 					{
-						baseType = module.ResolveType(baseTypeHandle, context);
+						baseType = module.ResolveType(baseTypeHandle, context, metadata.GetCustomAttributes(this.handle), Nullability.Oblivious);
 					}
 				}
 				catch (BadImageFormatException)
@@ -349,7 +357,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		public EntityHandle MetadataToken => handle;
-
+		public string MetadataName { get; }
 		public FullTypeName FullTypeName => fullTypeName;
 		public string Name => fullTypeName.Name;
 
@@ -431,10 +439,34 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return b.Build();
 		}
 
+		public bool HasAttribute(KnownAttribute attribute)
+		{
+			if (!attribute.IsCustomAttribute())
+			{
+				return GetAttributes().Any(attr => attr.AttributeType.IsKnownType(attribute));
+			}
+			var b = new AttributeListBuilder(module);
+			var metadata = module.metadata;
+			var def = metadata.GetTypeDefinition(handle);
+			return b.HasAttribute(metadata, def.GetCustomAttributes(), attribute, SymbolKind.TypeDefinition);
+		}
+
+		public IAttribute GetAttribute(KnownAttribute attribute)
+		{
+			if (!attribute.IsCustomAttribute())
+			{
+				return GetAttributes().FirstOrDefault(attr => attr.AttributeType.IsKnownType(attribute));
+			}
+			var b = new AttributeListBuilder(module);
+			var metadata = module.metadata;
+			var def = metadata.GetTypeDefinition(handle);
+			return b.GetAttribute(metadata, def.GetCustomAttributes(), attribute, SymbolKind.TypeDefinition);
+		}
+
 		public string DefaultMemberName {
 			get {
 				string defaultMemberName = LazyInit.VolatileRead(ref this.defaultMemberName);
-				if (defaultMemberName != null)
+				if (defaultMemberName != null || defaultMemberNameInitialized)
 					return defaultMemberName;
 				var metadata = module.metadata;
 				var typeDefinition = metadata.GetTypeDefinition(handle);
@@ -450,7 +482,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						break;
 					}
 				}
-				return LazyInit.GetOrSet(ref this.defaultMemberName, defaultMemberName ?? "Item");
+				defaultMemberName = LazyInit.GetOrSet(ref this.defaultMemberName, defaultMemberName);
+				defaultMemberNameInitialized = true;
+				return defaultMemberName;
 			}
 		}
 		#endregion
@@ -502,6 +536,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public string Namespace => fullTypeName.TopLevelTypeName.Namespace;
 
 		ITypeDefinition IType.GetDefinition() => this;
+		ITypeDefinitionOrUnknown IType.GetDefinitionOrUnknown() => this;
 		TypeParameterSubstitution IType.GetSubstitution() => TypeParameterSubstitution.Identity;
 
 		public IType AcceptVisitor(TypeVisitor visitor)
@@ -757,21 +792,40 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		private bool ComputeIsRecord()
 		{
-			if (Kind != TypeKind.Class)
+			if (Kind != TypeKind.Class && Kind != TypeKind.Struct)
 				return false;
+			bool isStruct = Kind == TypeKind.Struct;
+
 			var metadata = module.metadata;
 			var typeDef = metadata.GetTypeDefinition(handle);
+
+			bool getEqualityContract = isStruct;
+			bool toString = false;
+			bool printMembers = false;
+			bool getHashCode = false;
+			bool equals = false;
 			bool opEquality = false;
 			bool opInequality = false;
-			bool clone = false;
+			bool clone = isStruct;
 			foreach (var methodHandle in typeDef.GetMethods())
 			{
 				var method = metadata.GetMethodDefinition(methodHandle);
+				if (metadata.StringComparer.Equals(method.Name, "Clone"))
+				{
+					// error CS8859: Members named 'Clone' are disallowed in records.
+					return false;
+				}
+
+				getEqualityContract |= metadata.StringComparer.Equals(method.Name, "get_EqualityContract");
+				toString |= metadata.StringComparer.Equals(method.Name, "ToString");
+				printMembers |= metadata.StringComparer.Equals(method.Name, "PrintMembers");
+				getHashCode |= metadata.StringComparer.Equals(method.Name, "GetHashCode");
+				equals |= metadata.StringComparer.Equals(method.Name, "Equals");
 				opEquality |= metadata.StringComparer.Equals(method.Name, "op_Equality");
 				opInequality |= metadata.StringComparer.Equals(method.Name, "op_Inequality");
 				clone |= metadata.StringComparer.Equals(method.Name, "<Clone>$");
 			}
-			return opEquality & opInequality & clone;
+			return getEqualityContract & toString & printMembers & getHashCode & equals & opEquality & opInequality & clone;
 		}
 		#endregion
 	}

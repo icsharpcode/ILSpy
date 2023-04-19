@@ -137,6 +137,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IFormattable,
 		/// <summary><c>System.FormattableString</c></summary>
 		FormattableString,
+		/// <summary><c>System.Runtime.CompilerServices.DefaultInterpolatedStringHandler</c></summary>
+		DefaultInterpolatedStringHandler,
 		/// <summary><c>System.Span{T}</c></summary>
 		SpanOfT,
 		/// <summary><c>System.ReadOnlySpan{T}</c></summary>
@@ -218,6 +220,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new KnownTypeReference(KnownTypeCode.TypedReference, TypeKind.Struct, "System", "TypedReference"),
 			new KnownTypeReference(KnownTypeCode.IFormattable, TypeKind.Interface, "System", "IFormattable"),
 			new KnownTypeReference(KnownTypeCode.FormattableString, TypeKind.Class, "System", "FormattableString", baseType: KnownTypeCode.IFormattable),
+			new KnownTypeReference(KnownTypeCode.DefaultInterpolatedStringHandler, TypeKind.Struct, "System.Runtime.CompilerServices", "DefaultInterpolatedStringHandler"),
 			new KnownTypeReference(KnownTypeCode.SpanOfT, TypeKind.Struct, "System", "Span", 1),
 			new KnownTypeReference(KnownTypeCode.ReadOnlySpanOfT, TypeKind.Struct, "System", "ReadOnlySpan", 1),
 			new KnownTypeReference(KnownTypeCode.MemoryOfT, TypeKind.Struct, "System", "Memory", 1),

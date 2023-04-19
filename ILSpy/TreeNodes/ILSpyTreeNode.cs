@@ -17,13 +17,19 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Windows;
 using System.Windows.Threading;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpyX.Abstractions;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -31,7 +37,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// <summary>
 	/// Base class of all ILSpy tree nodes.
 	/// </summary>
-	public abstract class ILSpyTreeNode : SharpTreeNode
+	public abstract class ILSpyTreeNode : SharpTreeNode, ITreeNode
 	{
 		FilterSettings filterSettings;
 		bool childrenNeedFiltering;
@@ -178,6 +184,19 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
+		protected string GetSuffixString(IMember member) => GetSuffixString(member.MetadataToken);
+
+		protected string GetSuffixString(EntityHandle handle)
+		{
+			if (!MainWindow.Instance.CurrentDisplaySettings.ShowMetadataTokens)
+				return string.Empty;
+
+			int token = MetadataTokens.GetToken(handle);
+			if (MainWindow.Instance.CurrentDisplaySettings.ShowMetadataTokensInBase10)
+				return " @" + token;
+			return " @" + token.ToString("x8");
+		}
+
 		public virtual bool IsPublicAPI {
 			get { return true; }
 		}
@@ -185,5 +204,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public virtual bool IsAutoLoaded {
 			get { return false; }
 		}
+
+		IEnumerable<ITreeNode> ITreeNode.Children => this.Children.OfType<ILSpyTreeNode>();
 	}
 }

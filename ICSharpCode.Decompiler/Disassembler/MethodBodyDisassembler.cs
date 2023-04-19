@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		// cache info
 		PEFile module;
 		MetadataReader metadata;
-		GenericContext genericContext;
+		MetadataGenericContext genericContext;
 		DisassemblerSignatureTypeProvider signatureDecoder;
 
 		public MethodBodyDisassembler(ITextOutput output, CancellationToken cancellationToken)
@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			metadata = module.Metadata;
-			genericContext = new GenericContext(handle, module);
+			genericContext = new MetadataGenericContext(handle, module);
 			signatureDecoder = new DisassemblerSignatureTypeProvider(module, output);
 			var methodDefinition = metadata.GetMethodDefinition(handle);
 
@@ -131,7 +131,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			if (DetectControlStructure && blob.Length > 0)
 			{
 				blob.Reset();
-				HashSet<int> branchTargets = GetBranchTargets(blob);
+				BitSet branchTargets = new(blob.Length);
+				ILParser.SetBranchTargets(ref blob, branchTargets);
 				blob.Reset();
 				WriteStructureBody(new ILStructure(module, handle, genericContext, body), branchTargets, ref blob, methodDefinition.RelativeVirtualAddress + headerSize);
 			}
@@ -198,7 +199,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			this.module = module;
 			metadata = module.Metadata;
-			genericContext = new GenericContext(handle, module);
+			genericContext = new MetadataGenericContext(handle, module);
 			signatureDecoder = new DisassemblerSignatureTypeProvider(module, output);
 			var handlers = body.ExceptionRegions;
 			if (!handlers.IsEmpty)
@@ -210,28 +211,6 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.WriteLine();
 				}
 			}
-		}
-
-		HashSet<int> GetBranchTargets(BlobReader blob)
-		{
-			HashSet<int> branchTargets = new HashSet<int>();
-			while (blob.RemainingBytes > 0)
-			{
-				var opCode = ILParser.DecodeOpCode(ref blob);
-				if (opCode == ILOpCode.Switch)
-				{
-					branchTargets.UnionWith(ILParser.DecodeSwitchTargets(ref blob));
-				}
-				else if (opCode.IsBranch())
-				{
-					branchTargets.Add(ILParser.DecodeBranchTarget(ref blob, opCode));
-				}
-				else
-				{
-					ILParser.SkipOperand(ref blob, opCode);
-				}
-			}
-			return branchTargets;
 		}
 
 		void WriteStructureHeader(ILStructure s)
@@ -286,7 +265,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.Indent();
 		}
 
-		void WriteStructureBody(ILStructure s, HashSet<int> branchTargets, ref BlobReader body, int methodRva)
+		void WriteStructureBody(ILStructure s, BitSet branchTargets, ref BlobReader body, int methodRva)
 		{
 			bool isFirstInstructionInStructure = true;
 			bool prevInstructionWasBranch = false;
@@ -304,7 +283,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				}
 				else
 				{
-					if (!isFirstInstructionInStructure && (prevInstructionWasBranch || branchTargets.Contains(offset)))
+					if (!isFirstInstructionInStructure && (prevInstructionWasBranch || branchTargets[offset]))
 					{
 						output.WriteLine(); // put an empty line after branches, and in front of branch targets
 					}

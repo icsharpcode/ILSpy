@@ -74,6 +74,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Null
 		}
 
+		public enum KnownColor
+		{
+			DarkBlue,
+			DarkCyan,
+			DarkGoldenrod,
+			DarkGray,
+			DarkGreen,
+			DarkKhaki
+		}
+
 		private static char ch1767;
 
 #if !ROSLYN
@@ -1471,6 +1481,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					break;
 				case "f":
 					ch1767 = s[0];
+					break;
+			}
+		}
+
+		public static void Issue2763(int value)
+		{
+			switch ((KnownColor)value)
+			{
+				case KnownColor.DarkBlue:
+					Console.WriteLine("DarkBlue");
+					break;
+				case KnownColor.DarkCyan:
+					Console.WriteLine("DarkCyan");
+					break;
+				case KnownColor.DarkGoldenrod:
+					Console.WriteLine("DarkGoldenrod");
+					break;
+				case KnownColor.DarkGray:
+					Console.WriteLine("DarkGray");
+					break;
+				case KnownColor.DarkGreen:
+					Console.WriteLine("DarkGreen");
+					break;
+				case KnownColor.DarkKhaki:
+					Console.WriteLine("DarkKhaki");
 					break;
 			}
 		}

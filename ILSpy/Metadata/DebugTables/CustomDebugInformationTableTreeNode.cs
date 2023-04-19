@@ -188,7 +188,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int RID => MetadataTokens.GetRowNumber(handle);
 
-			public object Offset => offset == null ? null : offset;
+			public int Token => MetadataTokens.GetToken(handle);
+
+			public object Offset => offset == null ? "n/a" : (object)offset;
 
 			[StringFormat("X8")]
 			[LinkToTable]
@@ -202,7 +204,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string ParentTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new GenericContext(default(TypeDefinitionHandle), module);
+					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
 					debugInfo.Parent.WriteTo(module, output, context);
 					return output.ToString();
 				}

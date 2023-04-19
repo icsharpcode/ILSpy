@@ -107,7 +107,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string MethodTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					((EntityHandle)method).WriteTo(module, output, Decompiler.Metadata.GenericContext.Empty);
+					((EntityHandle)method).WriteTo(module, output, default);
 					return output.ToString();
 				}
 			}
@@ -124,7 +124,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string AssociationTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					association.WriteTo(module, output, Decompiler.Metadata.GenericContext.Empty);
+					association.WriteTo(module, output, default);
 					return output.ToString();
 				}
 			}
