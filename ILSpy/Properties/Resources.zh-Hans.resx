@@ -1028,4 +1028,34 @@
   <data name="_Window" xml:space="preserve">
     <value>窗口(_W)</value>
   </data>
+  <data name="_Analyzer" xml:space="preserve">
+    <value>分析器(_A)</value>
+  </data>
+  <data name="_Assemblies" xml:space="preserve">
+    <value>程序集(_A)</value>
+  </data>
+  <data name="DecompilerSettings.AlwaysUseGlobal" xml:space="preserve">
+    <value>总是使用 "global::" 完全限定命名空间</value>
+  </data>
+  <data name="DecompilerSettings.LifetimeAnnotations" xml:space="preserve">
+    <value>'scoped' 生命周期注解关键字</value>
+  </data>
+  <data name="DecompilerSettings.ParameterNullCheck" xml:space="preserve">
+    <value>使用方法参数非空校验</value>
+  </data>
+  <data name="DecompilerSettings.RecordStructs" xml:space="preserve">
+    <value>记录结构</value>
+  </data>
+  <data name="DecompilerSettings.RequiredMembers" xml:space="preserve">
+    <value>Required 必须的成员</value>
+  </data>
+  <data name="DisplaySettingsPanel_Theme" xml:space="preserve">
+    <value>主题:</value>
+  </data>
+  <data name="Theme" xml:space="preserve">
+    <value>主题</value>
+  </data>
+  <data name="UseNestedNamespaceNodes" xml:space="preserve">
+    <value>使用嵌套的命名空间结构</value>
+  </data>
 </root>
