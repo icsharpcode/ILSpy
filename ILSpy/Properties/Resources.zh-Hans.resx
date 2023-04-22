@@ -202,7 +202,7 @@
     <value>复制完全限定名称</value>
   </data>
   <data name="CouldNotUseSdkStyleProjectFormat" xml:space="preserve">
-    <value>无法使用SDK-style项目格式， 因为发现有不兼容目标框架别名</value>
+    <value>无法使用SDK-style项目格式，因为发现有不兼容目标框架别名。</value>
   </data>
   <data name="Create" xml:space="preserve">
     <value>创建</value>
@@ -235,7 +235,7 @@
     <value>反编译视图选项</value>
   </data>
   <data name="DecompilationWasCancelled" xml:space="preserve">
-    <value>反编译已取消</value>
+    <value>反编译已取消。</value>
   </data>
   <data name="Decompile" xml:space="preserve">
     <value>反编译</value>
@@ -649,7 +649,7 @@
     <value>杂项</value>
   </data>
   <data name="NETFrameworkVersion" xml:space="preserve">
-    <value>.Net 版本</value>
+    <value>.NET 版本 </value>
   </data>
   <data name="Name" xml:space="preserve">
     <value>名称</value>
@@ -692,7 +692,7 @@
     <value>打开(_O)</value>
   </data>
   <data name="OperationWasCancelled" xml:space="preserve">
-    <value>操作已取消</value>
+    <value>操作已取消。</value>
   </data>
   <data name="Options" xml:space="preserve">
     <value>选项</value>
