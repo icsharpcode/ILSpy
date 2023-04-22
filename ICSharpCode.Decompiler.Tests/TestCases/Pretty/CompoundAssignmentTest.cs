@@ -4586,6 +4586,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return *(ptr++);
 		}
 
+		public unsafe int PostIncrementOfSmallIntegerPointerDereference(byte* ptr)
+		{
+			return (*ptr)++ * (*ptr)++;
+		}
+
+		public unsafe int PreIncrementOfSmallIntegerPointerDereference(byte* ptr)
+		{
+			return ++(*ptr) * ++(*ptr);
+		}
+
+		public unsafe int CompoundAssignSmallIntegerPointerDereference(byte* ptr)
+		{
+			return (*ptr += 5) * (*ptr += 5);
+		}
+
 		public int PostDecrementInstanceField()
 		{
 			return M().Field--;
