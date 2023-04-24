@@ -568,7 +568,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		private static string DuplicateReturnTest(IDictionary<int, string> dict)
+		private static string ShouldNotDuplicateReturnStatementIntoTry(IDictionary<int, string> dict)
 		{
 			string value;
 			lock (dict)
