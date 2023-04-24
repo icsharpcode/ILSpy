@@ -21,7 +21,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
@@ -58,12 +57,6 @@ namespace ICSharpCode.ILSpy
 
 		internal static void GeneratePdbForAssembly(LoadedAssembly assembly)
 		{
-			var file = assembly.GetPEFileOrNull();
-			if (!PortablePdbWriter.HasCodeViewDebugDirectoryEntry(file))
-			{
-				MessageBox.Show(string.Format(Resources.CannotCreatePDBFile, Path.GetFileName(assembly.FileName)));
-				return;
-			}
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.FileName = WholeProjectDecompiler.CleanUpFileName(assembly.ShortName) + ".pdb";
 			dlg.Filter = Resources.PortablePDBPdbAllFiles;
@@ -80,6 +73,7 @@ namespace ICSharpCode.ILSpy
 				{
 					try
 					{
+						var file = assembly.GetPEFileOrNull();
 						var decompiler = new CSharpDecompiler(file, assembly.GetAssemblyResolver(), options.DecompilerSettings);
 						decompiler.CancellationToken = ct;
 						PortablePdbWriter.WritePdb(file, decompiler, options.DecompilerSettings, stream, progress: options.Progress);

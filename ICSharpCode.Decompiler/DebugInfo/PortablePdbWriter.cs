@@ -26,10 +26,8 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
-using System.Runtime;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
@@ -236,9 +234,16 @@ namespace ICSharpCode.Decompiler.DebugInfo
 
 			if (pdbId == null)
 			{
-				var debugDir = file.Reader.ReadDebugDirectory().FirstOrDefault(dir => dir.Type == DebugDirectoryEntryType.CodeView);
-				var portable = file.Reader.ReadCodeViewDebugDirectoryData(debugDir);
-				pdbId = new BlobContentId(portable.Guid, debugDir.Stamp);
+				if (PortablePdbWriter.HasCodeViewDebugDirectoryEntry(file))
+				{
+					var debugDir = file.Reader.ReadDebugDirectory().FirstOrDefault(dir => dir.Type == DebugDirectoryEntryType.CodeView);
+					var portable = file.Reader.ReadCodeViewDebugDirectoryData(debugDir);
+					pdbId = new BlobContentId(portable.Guid, debugDir.Stamp);
+				}
+				else
+				{
+					pdbId = new BlobContentId(Guid.NewGuid(), 0);
+				}
 			}
 
 			PortablePdbBuilder serializer = new PortablePdbBuilder(metadata, GetRowCounts(reader), entrypointHandle, blobs => pdbId.Value);

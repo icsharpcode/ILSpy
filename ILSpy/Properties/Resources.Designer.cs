@@ -459,15 +459,6 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot create PDB file for {0}, because it does not contain a PE Debug Directory Entry of type &apos;CodeView&apos;..
-        /// </summary>
-        public static string CannotCreatePDBFile {
-            get {
-                return ResourceManager.GetString("CannotCreatePDBFile", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Check again.
         /// </summary>
         public static string CheckAgain {
