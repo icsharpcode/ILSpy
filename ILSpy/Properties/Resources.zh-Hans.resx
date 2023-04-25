@@ -430,7 +430,7 @@
     <value>如果可能，删除可选参数</value>
   </data>
   <data name="DecompilerSettings.RequiredMembers" xml:space="preserve">
-    <value>Required 必须的成员</value>
+    <value>Required 必要成员</value>
   </data>
   <data name="DecompilerSettings.SeparateLocalVariableDeclarations" xml:space="preserve">
     <value>如果可能，分离局部变量的声明与初始化（int x = 5; -&gt; int x; x = 5;）</value>
