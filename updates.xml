@@ -1,7 +1,7 @@
 <updateInfo>
 	<band id="stable">
-		<latestVersion>7.2.1.6856</latestVersion>
-		<downloadUrl>https://github.com/icsharpcode/ILSpy/releases/tag/v7.2.1</downloadUrl>
+		<latestVersion>8.0.0.7339-rc1</latestVersion>
+		<downloadUrl>https://github.com/icsharpcode/ILSpy/releases/tag/v8.0-rc1</downloadUrl>
 	</band>
 	<!-- reenable when implemented
 	<band id="beta">
