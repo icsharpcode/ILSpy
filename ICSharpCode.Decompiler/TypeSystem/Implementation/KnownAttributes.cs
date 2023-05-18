@@ -89,6 +89,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		In,
 		Out,
 		Optional,
+		DefaultParameterValue,
 		CallerMemberName,
 		CallerFilePath,
 		CallerLineNumber,
@@ -165,6 +166,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(InAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(OutAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(OptionalAttribute)),
+			new TopLevelTypeName("System.Runtime.InteropServices", nameof(DefaultParameterValueAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CallerMemberNameAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CallerFilePathAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CallerLineNumberAttribute)),
@@ -220,6 +222,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				case KnownAttribute.MarshalAs:
 				case KnownAttribute.PermissionSet:
 				case KnownAttribute.Optional:
+				case KnownAttribute.DefaultParameterValue:
 				case KnownAttribute.In:
 				case KnownAttribute.Out:
 				case KnownAttribute.IndexerName:
