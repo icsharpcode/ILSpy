@@ -58,6 +58,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		Dictionary<MethodDefinitionHandle, string> localFunctionMapping;
 		HashSet<ILVariable> loopCounters;
 		const char maxLoopVariableName = 'n';
+		int numDisplayClassLocals;
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{
@@ -151,6 +152,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						AddExistingName(reservedVariableNames, p.Name);
 				}
 			}
+			numDisplayClassLocals = 0;
 			foreach (ILFunction f in function.Descendants.OfType<ILFunction>().Reverse())
 			{
 				PerformAssignment(f);
@@ -195,7 +197,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			// remove unused variables before assigning names
 			function.Variables.RemoveDead();
-			int numDisplayClassLocals = 0;
 			Dictionary<int, string> assignedLocalSignatureIndices = new Dictionary<int, string>();
 			foreach (var v in function.Variables.OrderBy(v => v.Name))
 			{

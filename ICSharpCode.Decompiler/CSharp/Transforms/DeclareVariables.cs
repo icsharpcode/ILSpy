@@ -476,6 +476,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					Debug.Assert(point1.level == point2.level);
 					if (point1.nextNode.Parent == point2.nextNode.Parent)
 					{
+						Debug.Assert(prev.Type.Equals(v.Type));
 						// We found a collision!
 						v.InvolvedInCollision = true;
 						prev.ReplacementDueToCollision = v;
