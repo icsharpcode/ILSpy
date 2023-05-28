@@ -78,7 +78,16 @@ jobs:
     - name: Zip ILSpy (framework-dependent)
       run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.dll .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.exe .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.config .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.json .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*\ILSpy.resources.dll .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*\ILSpy.ReadyToRun.Plugin.resources.dll
 
-    - name: Zip ILSpy Release (self-contained win-x64)
+    - name: Zip ILSpy Release (arm64 framework-dependent)
+      if: matrix.configuration == 'release'    
+      shell: pwsh
+      run: |
+        dotnet publish ./ILSpy/ILSpy.csproj -c Release --no-restore --no-self-contained -r win-arm64 -o ./ILSpy/bin/Release/net6.0-windows/win-arm64/publish/nsc
+        dotnet publish ./ILSpy.ReadyToRun/ILSpy.ReadyToRun.csproj -c Release --no-restore --no-self-contained -r win-arm64 -o ./ILSpy/bin/Release/net6.0-windows/win-arm64/publish/nsc
+        dotnet publish ./ILSpy.BamlDecompiler/ILSpy.BamlDecompiler.csproj -c Release --no-restore --no-self-contained -r win-arm64 -o ./ILSpy/bin/Release/net6.0-windows/win-arm64/publish/nsc
+        7z a -tzip $env:StagingDirectory\ILSpy_binaries_arm64.zip .\ILSpy\bin\Release\net6.0-windows\win-arm64\publish\nsc\*     
+
+    - name: Zip ILSpy Release (win-x64 self-contained)
       if: matrix.configuration == 'release'    
       shell: pwsh
       run: |
@@ -137,12 +146,20 @@ jobs:
         path: ${{ env.StagingDirectory }}\ILSpy_binaries.zip
         if-no-files-found: error
 
-    - name: Upload self-contained zip build artifacts (Release-only)
+    - name: Upload x64 self-contained zip (Release-only)
       if: matrix.configuration == 'release'
       uses: actions/upload-artifact@v3
       with:
         name: ILSpy self-contained x64 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
         path: ${{ env.StagingDirectory }}\ILSpy_selfcontained_x64.zip
+        if-no-files-found: error
+
+    - name: Upload arm64 framework-dependent zip (Release-only)
+      if: matrix.configuration == 'release'
+      uses: actions/upload-artifact@v3
+      with:
+        name: ILSpy arm64 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
+        path: ${{ env.StagingDirectory }}\ILSpy_binaries_arm64.zip
         if-no-files-found: error
 
     - name: Upload installer artifact
