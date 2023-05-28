@@ -723,16 +723,22 @@ namespace ICSharpCode.Decompiler.Metadata
 						continue;
 					foreach (var item in new DirectoryInfo(rootPath).EnumerateFiles("*.dll", SearchOption.AllDirectories))
 					{
-						string[]? name = Path.GetDirectoryName(item.FullName)?.Substring(rootPath.Length + 1).Split(new[] { "\\" }, StringSplitOptions.RemoveEmptyEntries);
-						if (name?.Length != 2)
-							continue;
-						var match = Regex.Match(name[1], $"(v4.0_)?(?<version>[^_]+)_(?<culture>[^_]+)?_(?<publicKey>[^_]+)");
-						if (!match.Success)
-							continue;
-						string culture = match.Groups["culture"].Value;
-						if (string.IsNullOrEmpty(culture))
-							culture = "neutral";
-						yield return AssemblyNameReference.Parse(name[0] + ", Version=" + match.Groups["version"].Value + ", Culture=" + culture + ", PublicKeyToken=" + match.Groups["publicKey"].Value);
+						// The root of the GAC should only contain folders, but make sure we handle the case where it does NOT in case
+						// someone has a non-standard layout (e.g. due to a broken installer).
+						string? assemblyParentPath = Path.GetDirectoryName(item.FullName);
+						if (assemblyParentPath?.Length > rootPath.Length)
+						{
+							string[]? name = assemblyParentPath.Substring(rootPath.Length + 1).Split(new[] { "\\" }, StringSplitOptions.RemoveEmptyEntries);
+							if (name?.Length != 2)
+								continue;
+							var match = Regex.Match(name[1], $"(v4.0_)?(?<version>[^_]+)_(?<culture>[^_]+)?_(?<publicKey>[^_]+)");
+							if (!match.Success)
+								continue;
+							string culture = match.Groups["culture"].Value;
+							if (string.IsNullOrEmpty(culture))
+								culture = "neutral";
+							yield return AssemblyNameReference.Parse(name[0] + ", Version=" + match.Groups["version"].Value + ", Culture=" + culture + ", PublicKeyToken=" + match.Groups["publicKey"].Value);
+						}
 					}
 				}
 			}
