@@ -18,9 +18,12 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 
 namespace ICSharpCode.ILSpy.Controls
@@ -30,6 +33,9 @@ namespace ICSharpCode.ILSpy.Controls
 	/// </summary>
 	public partial class ResourceStringTable : UserControl
 	{
+		ICollectionView filteredView;
+		string filter;
+
 		public ResourceStringTable(IEnumerable strings, FrameworkElement container)
 		{
 			InitializeComponent();
@@ -38,7 +44,22 @@ namespace ICSharpCode.ILSpy.Controls
 			if (!double.IsNaN(container.ActualWidth))
 				Width = Math.Max(container.ActualWidth - 45, 0);
 			MaxHeight = container.ActualHeight;
-			resourceListView.ItemsSource = strings;
+
+			filteredView = CollectionViewSource.GetDefaultView(strings);
+			filteredView.Filter = OnResourceFilter;
+			resourceListView.ItemsSource = filteredView;
+		}
+
+		private bool OnResourceFilter(object obj)
+		{
+			if (string.IsNullOrEmpty(filter))
+				return true;
+
+			if (obj is KeyValuePair<string, string> item)
+				return item.Key?.Contains(filter, StringComparison.OrdinalIgnoreCase) == true ||
+					   item.Value?.Contains(filter, StringComparison.OrdinalIgnoreCase) == true;
+
+			return false; // make it obvious search is not working
 		}
 
 		private void OnParentSizeChanged(object sender, SizeChangedEventArgs e)
@@ -47,6 +68,12 @@ namespace ICSharpCode.ILSpy.Controls
 				Width = Math.Max(e.NewSize.Width - 45, 0);
 			if (e.HeightChanged)
 				MaxHeight = e.NewSize.Height;
+		}
+
+		private void OnFilterTextChanged(object sender, TextChangedEventArgs e)
+		{
+			filter = resourceFilterBox.Text;
+			filteredView?.Refresh();
 		}
 
 		void ExecuteCopy(object sender, ExecutedRoutedEventArgs args)
