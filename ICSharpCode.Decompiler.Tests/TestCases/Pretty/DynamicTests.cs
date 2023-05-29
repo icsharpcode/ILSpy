@@ -436,10 +436,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return true.Equals(a);
 		}
 
+#if CS110 && NET70
+		private static nint NewIntPtr(dynamic a)
+		{
+			return new nint(a);
+		}
+#else
 		private static IntPtr NewIntPtr(dynamic a)
 		{
 			return new IntPtr(a);
 		}
+#endif
 
 		private static dynamic GetDynamic(int i)
 		{

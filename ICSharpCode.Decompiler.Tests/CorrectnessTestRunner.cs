@@ -317,7 +317,7 @@ namespace ICSharpCode.Decompiler.Tests
 		public async Task StackTests()
 		{
 			// IL contains .corflags = 32BITREQUIRED
-			await RunIL("StackTests.il", asmOptions: AssemblerOptions.Force32Bit);
+			await RunIL("StackTests.il", CompilerOptions.Force32Bit, AssemblerOptions.Force32Bit);
 		}
 
 		[Test]
@@ -482,6 +482,11 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			string outputFile = null;
 			CompilerResults decompiledOutputFile = null;
+
+			bool optionsForce32Bit = options.HasFlag(CompilerOptions.Force32Bit);
+			bool asmOptionsForce32Bit = asmOptions.HasFlag(AssemblerOptions.Force32Bit);
+
+			Assert.AreEqual(optionsForce32Bit, asmOptionsForce32Bit, "Inconsistent architecture.");
 
 			try
 			{

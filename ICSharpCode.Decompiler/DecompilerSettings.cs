@@ -152,12 +152,13 @@ namespace ICSharpCode.Decompiler
 				parameterNullCheck = false;
 				lifetimeAnnotations = false;
 				requiredMembers = false;
+				numericIntPtr = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (parameterNullCheck || lifetimeAnnotations || requiredMembers)
+			if (parameterNullCheck || lifetimeAnnotations || requiredMembers || numericIntPtr)
 				return CSharp.LanguageVersion.CSharp11_0;
 			if (fileScopedNamespaces || recordStructs)
 				return CSharp.LanguageVersion.CSharp10_0;
@@ -206,6 +207,24 @@ namespace ICSharpCode.Decompiler
 				if (nativeIntegers != value)
 				{
 					nativeIntegers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool numericIntPtr = true;
+
+		/// <summary>
+		/// Treat <c>IntPtr</c>/<c>UIntPtr</c> as <c>nint</c>/<c>nuint</c>.
+		/// </summary>
+		[Category("C# 11.0 / VS 2022.4")]
+		[Description("DecompilerSettings.NumericIntPtr")]
+		public bool NumericIntPtr {
+			get { return numericIntPtr; }
+			set {
+				if (numericIntPtr != value)
+				{
+					numericIntPtr = value;
 					OnPropertyChanged();
 				}
 			}

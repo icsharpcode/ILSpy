@@ -1553,12 +1553,25 @@ namespace ICSharpCode.Decompiler.CSharp
 					CastArguments(argumentList.Arguments, argumentList.ExpectedParameters);
 					break; // make sure that we don't not end up in an infinite loop
 				}
+				IType returnTypeOverride = null;
+				if (typeSystem.MainModule.TypeSystemOptions.HasFlag(TypeSystemOptions.NativeIntegersWithoutAttribute))
+				{
+					// For DeclaringType, we don't use nint/nuint (so that DeclaringType.GetConstructors etc. works),
+					// but in NativeIntegersWithoutAttribute mode we must use nint/nuint for expression types,
+					// so that the appropriate set of conversions is used for further overload resolution.
+					if (method.DeclaringType.IsKnownType(KnownTypeCode.IntPtr))
+						returnTypeOverride = SpecialType.NInt;
+					else if (method.DeclaringType.IsKnownType(KnownTypeCode.UIntPtr))
+						returnTypeOverride = SpecialType.NUInt;
+				}
 				return new ObjectCreateExpression(
 					expressionBuilder.ConvertType(method.DeclaringType),
 					argumentList.GetArgumentExpressions()
 				).WithRR(new CSharpInvocationResolveResult(
 					target, method, argumentList.GetArgumentResolveResults().ToArray(),
-					isExpandedForm: argumentList.IsExpandedForm, argumentToParameterMap: argumentList.ArgumentToParameterMap
+					isExpandedForm: argumentList.IsExpandedForm,
+					argumentToParameterMap: argumentList.ArgumentToParameterMap,
+					returnTypeOverride: returnTypeOverride
 				));
 			}
 		}

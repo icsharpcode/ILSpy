@@ -36,6 +36,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Issue1747();
 			CallAmbiguousOutParam();
 			CallWithInParam();
+#if CS90
+			NativeIntTests(new IntPtr(1), 2);
+#endif
 			Issue2444.M2();
 			Issue2741.B.Test(new Issue2741.C());
 		}
@@ -336,6 +339,34 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		}
 #endif
 		#endregion
+
+#if CS90
+		static void NativeIntTests(IntPtr i1, nint i2)
+		{
+			Console.WriteLine("NativeIntTests(i1):");
+			ObjectOrLong((object)i1);
+			ObjectOrLong((long)i1);
+			Console.WriteLine("NativeIntTests(i2):");
+			ObjectOrLong((object)i2);
+			ObjectOrLong((long)i2);
+			Console.WriteLine("NativeIntTests(new IntPtr):");
+			ObjectOrLong((object)new IntPtr(3));
+			ObjectOrLong((long)new IntPtr(3));
+			Console.WriteLine("NativeIntTests(IntPtr.Zero):");
+			ObjectOrLong((object)IntPtr.Zero);
+			ObjectOrLong((long)IntPtr.Zero);
+		}
+
+		static void ObjectOrLong(object o)
+		{
+			Console.WriteLine("object " + o);
+		}
+
+		static void ObjectOrLong(long l)
+		{
+			Console.WriteLine("long " + l);
+		}
+#endif
 
 		#region #2444
 		public struct Issue2444

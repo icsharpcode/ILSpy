@@ -388,7 +388,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			isInlinedIsInst = false;
 			if (condition.MatchCompNotEquals(out var left, out var right))
 			{
-				if (left.MatchIsInst(out var arg, out var type) && type.IsKnownType(disposeType))
+				if (left.MatchStLoc(out var inlineAssignVar, out var inlineAssignVal))
+				{
+					if (!inlineAssignVal.MatchIsInst(out var arg, out var type) && type.IsKnownType(disposeType))
+						return false;
+					if (!inlineAssignVar.IsSingleDefinition || inlineAssignVar.LoadCount != 1)
+						return false;
+					if (!inlineAssignVar.Type.IsKnownType(disposeType))
+						return false;
+					isInlinedIsInst = true;
+					left = arg;
+					if (!left.MatchLdLoc(objVar) || !right.MatchLdNull())
+						return false;
+					objVar = inlineAssignVar;
+					return true;
+				}
+				else if (left.MatchIsInst(out var arg, out var type) && type.IsKnownType(disposeType))
 				{
 					isInlinedIsInst = true;
 					left = arg;

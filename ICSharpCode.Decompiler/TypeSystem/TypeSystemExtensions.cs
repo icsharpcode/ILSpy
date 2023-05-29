@@ -239,7 +239,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			bool IsUnmanagedTypeInternal(IType type)
 			{
-				if (type.Kind is TypeKind.Enum or TypeKind.Pointer or TypeKind.FunctionPointer)
+				if (type.Kind is TypeKind.Enum or TypeKind.Pointer or TypeKind.FunctionPointer or TypeKind.NInt or TypeKind.NUInt)
 				{
 					return true;
 				}
