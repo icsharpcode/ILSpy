@@ -383,6 +383,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public static Span<byte> StaticData3Span => new byte[3] { 1, 2, 3 };
 #endif
+#if CS110 && !NET40
+		public static ReadOnlySpan<byte> UTF8Literal => "Hello, world!"u8;
+#endif
 		#endregion
 
 		#region Helper methods used to ensure initializers used within expressions work correctly

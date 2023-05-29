@@ -516,6 +516,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.UseVariableNamesFromDebugSymbolsIfAvailable" xml:space="preserve">
     <value>Use variable names from debug symbols, if available</value>
   </data>
+  <data name="DecompilerSettings.Utf8StringLiterals" xml:space="preserve">
+    <value>UTF-8 string literals</value>
+  </data>
   <data name="DecompilerSettings.VBSpecificOptions" xml:space="preserve">
     <value>VB-specific options</value>
   </data>
@@ -544,7 +547,7 @@ Are you sure you want to continue?</value>
     <value>Font:</value>
   </data>
   <data name="DisplaySettingsPanel_Theme" xml:space="preserve">
-	  <value>Theme:</value>
+    <value>Theme:</value>
   </data>
   <data name="Download" xml:space="preserve">
     <value>Download</value>
@@ -911,7 +914,7 @@ Do you want to continue?</value>
     <value>Tab size:</value>
   </data>
   <data name="Theme" xml:space="preserve">
-	  <value>Theme</value>
+    <value>Theme</value>
   </data>
   <data name="ToggleFolding" xml:space="preserve">
     <value>Toggle All Folding</value>

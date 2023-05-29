@@ -31,8 +31,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
+#pragma warning disable 618 // ParameterNullCheck is obsolete
 			if (!context.Settings.ParameterNullCheck)
 				return;
+#pragma warning restore 618
 			// we only need to look at the entry-point as parameter null-checks
 			// do not produce any IL control-flow instructions
 			Block entryPoint = ((BlockContainer)function.Body).EntryPoint;

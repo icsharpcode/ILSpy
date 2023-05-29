@@ -617,6 +617,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.String), inst.Value));
 		}
 
+		protected internal override TranslatedExpression VisitLdStrUtf8(LdStrUtf8 inst, TranslationContext context)
+		{
+			var type = new ParameterizedType(compilation.FindType(KnownTypeCode.ReadOnlySpanOfT), new[] { compilation.FindType(KnownTypeCode.Byte) });
+			return new PrimitiveExpression(inst.Value, LiteralFormat.Utf8Literal)
+				.WithILInstruction(inst)
+				.WithRR(new ConstantResolveResult(type, inst.Value));
+		}
+
 		protected internal override TranslatedExpression VisitLdNull(LdNull inst, TranslationContext context)
 		{
 			return GetDefaultValueExpression(SpecialType.NullType).WithILInstruction(inst);
