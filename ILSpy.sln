@@ -38,18 +38,11 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "ILSpy.AddIn.Shared", "ILSpy
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ILSpy.AddIn.VS2022", "ILSpy.AddIn.VS2022\ILSpy.AddIn.VS2022.csproj", "{09A03980-D14A-4705-A38C-741AD7166DEE}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ILSpy.Installer", "ILSpy.Installer\ILSpy.Installer.csproj", "{A4BA0771-DA4A-4A94-A5EC-5BA10B52816F}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.Decompiler.TestRunner", "ICSharpCode.Decompiler.TestRunner\ICSharpCode.Decompiler.TestRunner.csproj", "{4FBB470F-69EB-4C8B-8961-8B4DF4EBB999}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.ILSpyX", "ICSharpCode.ILSpyX\ICSharpCode.ILSpyX.csproj", "{F8EFCF9D-B9A3-4BA0-A1B2-B026A71DAC22}"
 EndProject
 Global
-	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		ILSpy.AddIn.Shared\ILSpy.AddIn.Shared.projitems*{09a03980-d14a-4705-a38c-741ad7166dee}*SharedItemsImports = 5
-		ILSpy.AddIn.Shared\ILSpy.AddIn.Shared.projitems*{9d7be6c0-b7b3-4a50-a54e-18a2d84a3384}*SharedItemsImports = 5
-		ILSpy.AddIn.Shared\ILSpy.AddIn.Shared.projitems*{acab1e5d-b3df-4092-aa72-692f8341e520}*SharedItemsImports = 13
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -107,10 +100,6 @@ Global
 		{09A03980-D14A-4705-A38C-741AD7166DEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{09A03980-D14A-4705-A38C-741AD7166DEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{09A03980-D14A-4705-A38C-741AD7166DEE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A4BA0771-DA4A-4A94-A5EC-5BA10B52816F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A4BA0771-DA4A-4A94-A5EC-5BA10B52816F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A4BA0771-DA4A-4A94-A5EC-5BA10B52816F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A4BA0771-DA4A-4A94-A5EC-5BA10B52816F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4FBB470F-69EB-4C8B-8961-8B4DF4EBB999}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4FBB470F-69EB-4C8B-8961-8B4DF4EBB999}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4FBB470F-69EB-4C8B-8961-8B4DF4EBB999}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -125,5 +114,10 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C764218F-7633-4412-923D-558CE7EE0560}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		ILSpy.AddIn.Shared\ILSpy.AddIn.Shared.projitems*{09a03980-d14a-4705-a38c-741ad7166dee}*SharedItemsImports = 5
+		ILSpy.AddIn.Shared\ILSpy.AddIn.Shared.projitems*{9d7be6c0-b7b3-4a50-a54e-18a2d84a3384}*SharedItemsImports = 5
+		ILSpy.AddIn.Shared\ILSpy.AddIn.Shared.projitems*{acab1e5d-b3df-4092-aa72-692f8341e520}*SharedItemsImports = 13
 	EndGlobalSection
 EndGlobal
