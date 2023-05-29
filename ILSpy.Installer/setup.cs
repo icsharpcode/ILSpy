@@ -19,7 +19,13 @@ namespace ILSpy.Installer
 #else
 			var buildConfiguration = "Release";
 #endif
-			var buildOutputDir = $@"ILSpy\bin\{buildConfiguration}\net6.0-windows";
+
+#if ARM64
+			var buildPlatform = "arm64";
+#else
+			var buildPlatform = "x64";
+#endif
+			var buildOutputDir = $@"ILSpy\bin\{buildConfiguration}\net6.0-windows\win-{buildPlatform}\publish\nsc";
 
 			var project = new Project("ILSpy",
 							  new InstallDir(@"%LocalAppData%\Programs\ILSpy",
@@ -29,6 +35,12 @@ namespace ILSpy.Installer
 								  new DirFiles(Path.Combine(buildOutputDir, "*.json")),
 								  new Files(Path.Combine(buildOutputDir, "ILSpy.resources.dll")),
 								  new Files(Path.Combine(buildOutputDir, "ILSpy.ReadyToRun.Plugin.resources.dll"))));
+
+#if ARM64
+			project.Platform = Platform.arm64;
+#else
+			project.Platform = Platform.x64;
+#endif
 
 			project.GUID = new Guid("a12fdab1-731b-4a98-9749-d481ce8692ab");
 			project.Version = AppPackage.Version;
@@ -59,7 +71,7 @@ namespace ILSpy.Installer
 					new FileShortcut("ILSpy", @"%ProgramMenu%")
 				};
 
-			Compiler.BuildMsi(project, Path.Combine(Environment.CurrentDirectory, "wix", $"ILSpy-{AppPackage.Version}.msi"));
+			Compiler.BuildMsi(project, Path.Combine(Environment.CurrentDirectory, "wix", $"ILSpy-{AppPackage.Version}-{buildPlatform}.msi"));
 		}
 	}
 }
