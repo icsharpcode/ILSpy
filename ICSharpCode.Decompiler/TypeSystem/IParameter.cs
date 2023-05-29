@@ -18,6 +18,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
@@ -36,7 +37,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 	public struct LifetimeAnnotation
 	{
+		/// <summary>
+		/// C# 11 scoped annotation: "scoped ref" (ScopedRefAttribute)
+		/// </summary>
 		public bool RefScoped;
+
+		[Obsolete("C# 11 preview: \"ref scoped\" no longer supported")]
 		public bool ValueScoped;
 	}
 

@@ -252,7 +252,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						case "NullableContextAttribute":
 							return (options & TypeSystemOptions.NullabilityAnnotations) != 0
 								&& (target == SymbolKind.TypeDefinition || IsMethodLike(target));
-						case "LifetimeAnnotationAttribute":
+						case "ScopedRefAttribute":
 							return (options & TypeSystemOptions.LifetimeAnnotations) != 0
 								&& (target == SymbolKind.Parameter);
 						default:

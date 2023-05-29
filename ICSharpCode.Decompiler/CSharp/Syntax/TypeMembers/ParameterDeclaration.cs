@@ -26,6 +26,8 @@
 
 #nullable enable
 
+using System;
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public enum ParameterModifier
@@ -46,6 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole RefModifierRole = new TokenRole("ref");
 		public static readonly TokenRole OutModifierRole = new TokenRole("out");
 		public static readonly TokenRole InModifierRole = new TokenRole("in");
+		[Obsolete("C# 11 preview: \"ref scoped\" no longer supported")]
 		public static readonly TokenRole ValueScopedRole = new TokenRole("scoped");
 		public static readonly TokenRole ParamsModifierRole = new TokenRole("params");
 
@@ -102,7 +105,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		bool hasThisModifier;
-		bool isRefScoped, isValueScoped;
+		bool isRefScoped;
 
 		public CSharpTokenNode ThisKeyword {
 			get {
@@ -130,12 +133,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		[Obsolete("C# 11 preview: \"ref scoped\" no longer supported")]
 		public bool IsValueScoped {
-			get { return isValueScoped; }
-			set {
-				ThrowIfFrozen();
-				isValueScoped = value;
-			}
+			get { return false; }
+			set { }
 		}
 
 		ParameterModifier parameterModifier;

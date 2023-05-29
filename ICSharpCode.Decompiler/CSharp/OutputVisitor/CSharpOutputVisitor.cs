@@ -2589,11 +2589,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					Space();
 					break;
 			}
-			if (parameterDeclaration.IsValueScoped)
-			{
-				WriteKeyword(ParameterDeclaration.ValueScopedRole);
-				Space();
-			}
 			parameterDeclaration.Type.AcceptVisitor(this);
 			if (!parameterDeclaration.Type.IsNull && !string.IsNullOrEmpty(parameterDeclaration.Name))
 			{

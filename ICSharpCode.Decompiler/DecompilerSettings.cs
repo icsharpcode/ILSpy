@@ -360,8 +360,7 @@ namespace ICSharpCode.Decompiler
 		bool lifetimeAnnotations = true;
 
 		/// <summary>
-		/// Use C# 9 <c>delegate* unmanaged</c> types.
-		/// If this option is disabled, function pointers will instead be decompiled with type `IntPtr`.
+		/// Use C# 11 <c>scoped</c> modifier.
 		/// </summary>
 		[Category("C# 11.0 / VS 2022.4")]
 		[Description("DecompilerSettings.LifetimeAnnotations")]
