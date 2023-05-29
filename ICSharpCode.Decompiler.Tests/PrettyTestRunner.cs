@@ -326,6 +326,7 @@ namespace ICSharpCode.Decompiler.Tests
 				RemoveDeadStores = (cscOptions == CompilerOptions.None),
 				UseExpressionBodyForCalculatedGetterOnlyProperties = false,
 				FileScopedNamespaces = false,
+				NumericIntPtr = false,
 			});
 		}
 
@@ -486,7 +487,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public async Task NativeInts([ValueSource(nameof(roslyn3OrNewerOptions))] CompilerOptions cscOptions)
+		public async Task NativeInts([ValueSource(nameof(roslyn3OrNewerWithNet40Options))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions);
 		}

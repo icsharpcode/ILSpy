@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if !(CS110 && NET70)
+using System;
+#endif
 using System.Text;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
@@ -17,9 +19,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return &Overloaded;
 		}
 
+#if !(CS110 && NET70)
 		public unsafe IntPtr GetAddressAsIntPtr()
 		{
 			return (IntPtr)(delegate*<void>)(&Overloaded);
+		}
+#endif
+
+		public unsafe nint GetAddressAsNInt()
+		{
+			return (nint)(delegate*<void>)(&Overloaded);
 		}
 
 		public unsafe void* GetAddressAsVoidPtr()
@@ -93,6 +102,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	internal class FunctionPointersWithNativeIntegerTypes
 	{
 		public unsafe delegate*<nint, nint, nint> F1;
+		#if !(CS110 && NET70)
 		public unsafe delegate*<IntPtr, IntPtr, nint> F2;
 		public unsafe delegate*<nint, IntPtr, IntPtr> F3;
 		public unsafe delegate*<IntPtr, nint, IntPtr> F4;
@@ -100,6 +110,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public unsafe delegate*<nint, delegate*<IntPtr, IntPtr, IntPtr>> F6;
 		public unsafe delegate*<delegate*<IntPtr, IntPtr, nint>, IntPtr> F7;
 		public unsafe delegate*<IntPtr, delegate*<IntPtr, nint, IntPtr>> F8;
+		public unsafe delegate*<IntPtr, delegate*<IntPtr, IntPtr, IntPtr>> F9;
+		#endif
 	}
 
 	internal class FunctionPointersWithRefParams

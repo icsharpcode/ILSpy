@@ -24,7 +24,7 @@ Features
 -------
 
  * Decompilation to C# (check out the [language support status](https://github.com/icsharpcode/ILSpy/issues/829))
- * Whole-project decompilation (csproj, not sln!)
+ * Whole-project decompilation
  * Search for types/methods/properties (learn about the [options](https://github.com/icsharpcode/ILSpy/wiki/Search-Options))
  * Hyperlink-based type/method/property navigation
  * Base/Derived types navigation, history
@@ -65,7 +65,7 @@ How to build
       - ILSpy.XPlat.slnf: for the cross-platform CLI or PowerShell cmdlets
       - ILSpy.AddIn.slnf: for the Visual Studio plugin
 
-**Note:** Visual Studio 16.3 and later include a version of the .NET (Core) SDK that is managed by the Visual Studio installer - once you update, it may get upgraded too.
+**Note:** Visual Studio includes a version of the .NET SDK that is managed by the Visual Studio installer - once you update, it may get upgraded too.
 Please note that ILSpy is only compatible with the .NET 6.0 SDK and Visual Studio will refuse to load some projects in the solution (and unit tests will fail). 
 If this problem occurs, please manually install the .NET 6.0 SDK from [here](https://dotnet.microsoft.com/download/dotnet/6.0).
 

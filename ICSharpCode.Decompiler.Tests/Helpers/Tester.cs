@@ -343,6 +343,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				{
 					preprocessorSymbols.Add("NETCORE");
 					preprocessorSymbols.Add("NET60");
+					preprocessorSymbols.Add("NET70");
 				}
 				preprocessorSymbols.Add("ROSLYN");
 				preprocessorSymbols.Add("CS60");

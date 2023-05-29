@@ -844,10 +844,10 @@ namespace LocalFunctions
 #if CS90
 		public void Issue2196()
 		{
-			EnumWindows(IntPtr.Zero, IntPtr.Zero);
+			EnumWindows(0L, 0L);
 
 			[DllImport("user32.dll", CallingConvention = CallingConvention.StdCall, EntryPoint = "EnumWindows")]
-			static extern int EnumWindows(IntPtr hWnd, IntPtr lParam);
+			static extern int EnumWindows(long hWnd, long lParam);
 		}
 #endif
 	}
