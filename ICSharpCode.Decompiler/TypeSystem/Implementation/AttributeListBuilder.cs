@@ -238,6 +238,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 								case SymbolKind.ReturnType:
 								case SymbolKind.Property:
 								case SymbolKind.Indexer:
+								case SymbolKind.Field:
 									return true;  // "ref readonly" is currently always active
 								default:
 									return false;
