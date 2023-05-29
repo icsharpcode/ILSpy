@@ -78,25 +78,19 @@ jobs:
     - name: Zip ILSpy (framework-dependent)
       run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.dll .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.exe .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.config .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.json .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*\ILSpy.resources.dll .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*\ILSpy.ReadyToRun.Plugin.resources.dll
 
-    - name: Zip ILSpy Release (win-x64 self-contained)
-      if: matrix.configuration == 'release'    
-      shell: pwsh
-      run: |
-        dotnet publish ./ILSpy/ILSpy.csproj -c Release --no-restore --self-contained -r win-x64
-        dotnet publish ./ILSpy.ReadyToRun/ILSpy.ReadyToRun.csproj -c Release --no-restore --self-contained -r win-x64
-        dotnet publish ./ILSpy.BamlDecompiler/ILSpy.BamlDecompiler.csproj -c Release --no-restore --self-contained -r win-x64
-        7z a -tzip $env:StagingDirectory\ILSpy_selfcontained_x64.zip .\ILSpy\bin\Release\net6.0-windows\win-x64\publish\*  
-
-    - name: Publish x64/arm64 framework-dependent
+    - name: Publish x64/arm64 framework-dependent/self-contained
       shell: pwsh
       run: .\publish.ps1
 
+    - name: Zip ILSpy Release (x64 self-contained)
+      if: matrix.configuration == 'release'    
+      run: 7z a -tzip $env:StagingDirectory\ILSpy_selfcontained_x64.zip .\ILSpy\bin\Release\net6.0-windows\win-x64\publish\selfcontained\*  
+
     - name: Zip ILSpy Release (arm64 framework-dependent)
       if: matrix.configuration == 'release'    
-      shell: pwsh
-      run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries_arm64.zip .\ILSpy\bin\Release\net6.0-windows\win-arm64\publish\nsc\*
+      run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries_arm64.zip .\ILSpy\bin\Release\net6.0-windows\win-arm64\publish\fwdependent\*
 
-    - name: Build Installer
+    - name: Build Installer (x64 framework-dependent)
       if: matrix.configuration == 'release'  
       run: msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU"
 
