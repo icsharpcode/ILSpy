@@ -92,7 +92,9 @@ jobs:
 
     - name: Build Installer (x64 framework-dependent)
       if: matrix.configuration == 'release'  
-      run: msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU"
+      run: |
+        msbuild ILSpy.Installer.sln /t:Restore /p:Configuration="Release" /p:Platform="Any CPU"
+        msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU"
 
     # https://github.com/actions/upload-artifact
     - name: Upload VSIX (VS 2019) release build artifacts
