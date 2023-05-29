@@ -1223,14 +1223,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				ResolveResult rr = ResolveCast(targetType, expression);
 				if (rr.IsError)
 					return rr;
-				Debug.Assert(rr.IsCompileTimeConstant);
-				return new ConstantResolveResult(nullableType, rr.ConstantValue);
+				if (rr.IsCompileTimeConstant)
+					return new ConstantResolveResult(nullableType, rr.ConstantValue);
 			}
-			else
-			{
-				return Convert(expression, nullableType,
-							   isNullable ? Conversion.ImplicitNullableConversion : Conversion.ImplicitNumericConversion);
-			}
+			return Convert(expression, nullableType,
+							isNullable ? Conversion.ImplicitNullableConversion : Conversion.ImplicitNumericConversion);
 		}
 		#endregion
 

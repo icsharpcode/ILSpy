@@ -206,6 +206,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return (nint)(0 - x);
 		}
 
+		public bool CompareToMinus3(nuint x)
+		{
+			return x == unchecked((nuint)(-3));
+		}
+
 		public nint SignedNotFittingIn32Bits()
 		{
 			// Explicit `unchecked` is necessary when casting oversized constant to nint
