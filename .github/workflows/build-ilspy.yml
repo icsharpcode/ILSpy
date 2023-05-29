@@ -89,16 +89,15 @@ jobs:
 
     - name: Publish x64/arm64 framework-dependent
       shell: pwsh
-      run: |
-        .\publish.ps1
+      run: .\publish.ps1
 
     - name: Zip ILSpy Release (arm64 framework-dependent)
       if: matrix.configuration == 'release'    
       shell: pwsh
-      run: |
-        7z a -tzip $env:StagingDirectory\ILSpy_binaries_arm64.zip .\ILSpy\bin\Release\net6.0-windows\win-arm64\publish\nsc\*     
+      run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries_arm64.zip .\ILSpy\bin\Release\net6.0-windows\win-arm64\publish\nsc\*
 
     - name: Build Installer
+      if: matrix.configuration == 'release'  
       run: msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU"
 
     # https://github.com/actions/upload-artifact
