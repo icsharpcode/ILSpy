@@ -93,20 +93,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		[DllImport("ws2_32.dll", SetLastError = true)]
 		internal static extern nint ioctlsocket([In] nint socketHandle, [In] int cmd, [In][Out] ref int argp);
 
-		public void CallMethodWithInOutParameter()
-		{
-			int argp = 0;
-			ioctlsocket(nint.Zero, 0, ref argp);
-		}
 #else
 		[DllImport("ws2_32.dll", SetLastError = true)]
 		internal static extern IntPtr ioctlsocket([In] IntPtr socketHandle, [In] int cmd, [In][Out] ref int argp);
-
+#endif
 		public void CallMethodWithInOutParameter()
 		{
 			int argp = 0;
 			ioctlsocket(IntPtr.Zero, 0, ref argp);
 		}
-#endif
 	}
 }

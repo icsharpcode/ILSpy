@@ -321,13 +321,11 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task Loops([ValueSource(nameof(defaultOptionsWithMcs))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
-				// legacy csc generates a dead store in debug builds
-				RemoveDeadStores = (cscOptions == CompilerOptions.None),
-				UseExpressionBodyForCalculatedGetterOnlyProperties = false,
-				FileScopedNamespaces = false,
-				NumericIntPtr = false,
-			});
+			DecompilerSettings settings = Tester.GetSettings(cscOptions);
+			// legacy csc generates a dead store in debug builds
+			settings.RemoveDeadStores = (cscOptions == CompilerOptions.None);
+			settings.UseExpressionBodyForCalculatedGetterOnlyProperties = false;
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: settings);
 		}
 
 		[Test]
