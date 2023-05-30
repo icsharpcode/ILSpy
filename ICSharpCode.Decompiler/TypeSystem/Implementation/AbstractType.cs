@@ -64,7 +64,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public virtual IType ChangeNullability(Nullability nullability)
 		{
-			Debug.Assert(nullability == Nullability.Oblivious);
+			// Only some types support nullability, in the default implementation
+			// we just ignore the nullability change.
 			return this;
 		}
 
