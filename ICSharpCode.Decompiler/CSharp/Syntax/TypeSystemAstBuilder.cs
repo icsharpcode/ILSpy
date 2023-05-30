@@ -1654,7 +1654,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				decl.ParameterModifier = ParameterModifier.Params;
 			}
-			decl.IsRefScoped = parameter.Lifetime.RefScoped;
+			decl.IsScopedRef = parameter.Lifetime.ScopedRef;
 			if (ShowAttributes)
 			{
 				decl.Attributes.AddRange(ConvertAttributes(parameter.GetAttributes()));

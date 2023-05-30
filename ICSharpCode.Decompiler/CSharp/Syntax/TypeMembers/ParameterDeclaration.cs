@@ -44,7 +44,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
 		public static readonly TokenRole ThisModifierRole = new TokenRole("this");
-		public static readonly TokenRole RefScopedRole = new TokenRole("scoped");
+		public static readonly TokenRole ScopedRefRole = new TokenRole("scoped");
+		[Obsolete("Renamed to ScopedRefRole")]
+		public static readonly TokenRole RefScopedRole = ScopedRefRole;
 		public static readonly TokenRole RefModifierRole = new TokenRole("ref");
 		public static readonly TokenRole OutModifierRole = new TokenRole("out");
 		public static readonly TokenRole InModifierRole = new TokenRole("in");
@@ -105,7 +107,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		bool hasThisModifier;
-		bool isRefScoped;
+		bool isScopedRef;
 
 		public CSharpTokenNode ThisKeyword {
 			get {
@@ -125,11 +127,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public bool IsRefScoped {
-			get { return isRefScoped; }
+		public bool IsScopedRef {
+			get { return isScopedRef; }
 			set {
 				ThrowIfFrozen();
-				isRefScoped = value;
+				isScopedRef = value;
+			}
+		}
+
+		[Obsolete("Renamed to IsScopedRef")]
+		public bool IsRefScoped {
+			get { return isScopedRef; }
+			set {
+				ThrowIfFrozen();
+				isScopedRef = value;
 			}
 		}
 

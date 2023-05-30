@@ -381,9 +381,6 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.IsUnmanagedAttributeOnTypeParametersShouldBeReplacedWithUnmanagedConstraints" xml:space="preserve">
     <value>IsUnmanagedAttribute on type parameters should be replaced with 'unmanaged' constraints</value>
   </data>
-  <data name="DecompilerSettings.LifetimeAnnotations" xml:space="preserve">
-    <value>'scoped' lifetime annotation</value>
-  </data>
   <data name="DecompilerSettings.NativeIntegers" xml:space="preserve">
     <value>Use nint/nuint types</value>
   </data>
@@ -434,6 +431,9 @@ Are you sure you want to continue?</value>
   </data>
   <data name="DecompilerSettings.RequiredMembers" xml:space="preserve">
     <value>Required members</value>
+  </data>
+  <data name="DecompilerSettings.ScopedRef" xml:space="preserve">
+    <value>'scoped' lifetime annotation</value>
   </data>
   <data name="DecompilerSettings.SeparateLocalVariableDeclarations" xml:space="preserve">
     <value>Separate local variable declarations and initializers (int x = 5; -&gt; int x; x = 5;), if possible</value>

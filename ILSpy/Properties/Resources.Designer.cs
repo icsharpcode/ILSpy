@@ -1074,15 +1074,6 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &apos;scoped&apos; lifetime annotation.
-        /// </summary>
-        public static string DecompilerSettings_LifetimeAnnotations {
-            get {
-                return ResourceManager.GetString("DecompilerSettings.LifetimeAnnotations", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Use nint/nuint types.
         /// </summary>
         public static string DecompilerSettings_NativeIntegers {
@@ -1232,6 +1223,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string DecompilerSettings_RequiredMembers {
             get {
                 return ResourceManager.GetString("DecompilerSettings.RequiredMembers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &apos;scoped&apos; lifetime annotation.
+        /// </summary>
+        public static string DecompilerSettings_ScopedRef {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.ScopedRef", resourceCulture);
             }
         }
         

@@ -123,7 +123,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Allow C# 11 scoped annotation. If this option is not enabled, ScopedRefAttribute
 		/// will be reported as custom attribute.
 		/// </summary>
-		LifetimeAnnotations = 0x4000,
+		ScopedRef = 0x4000,
+		[Obsolete("Use ScopedRef instead")]
+		LifetimeAnnotations = ScopedRef,
 		/// <summary>
 		/// Replace 'IntPtr' types with the 'nint' type even in absence of [NativeIntegerAttribute].
 		/// Note: DecompilerTypeSystem constructor removes this setting from the options if
@@ -135,7 +137,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants | ReadOnlyStructsAndParameters
 			| RefStructs | UnmanagedConstraints | NullabilityAnnotations | ReadOnlyMethods
-			| NativeIntegers | FunctionPointers | LifetimeAnnotations | NativeIntegersWithoutAttribute
+			| NativeIntegers | FunctionPointers | ScopedRef | NativeIntegersWithoutAttribute
 	}
 
 	/// <summary>
@@ -171,8 +173,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				typeSystemOptions |= TypeSystemOptions.NativeIntegers;
 			if (settings.FunctionPointers)
 				typeSystemOptions |= TypeSystemOptions.FunctionPointers;
-			if (settings.LifetimeAnnotations)
-				typeSystemOptions |= TypeSystemOptions.LifetimeAnnotations;
+			if (settings.ScopedRef)
+				typeSystemOptions |= TypeSystemOptions.ScopedRef;
 			if (settings.NumericIntPtr)
 				typeSystemOptions |= TypeSystemOptions.NativeIntegersWithoutAttribute;
 			return typeSystemOptions;

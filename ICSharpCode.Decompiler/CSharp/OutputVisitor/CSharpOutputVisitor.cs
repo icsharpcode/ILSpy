@@ -2565,9 +2565,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				WriteKeyword(ParameterDeclaration.ThisModifierRole);
 				Space();
 			}
-			if (parameterDeclaration.IsRefScoped)
+			if (parameterDeclaration.IsScopedRef)
 			{
-				WriteKeyword(ParameterDeclaration.RefScopedRole);
+				WriteKeyword(ParameterDeclaration.ScopedRefRole);
 				Space();
 			}
 			switch (parameterDeclaration.ParameterModifier)

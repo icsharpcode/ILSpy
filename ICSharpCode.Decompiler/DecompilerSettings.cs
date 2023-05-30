@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler
 			if (languageVersion < CSharp.LanguageVersion.CSharp11_0)
 			{
 				parameterNullCheck = false;
-				lifetimeAnnotations = false;
+				scopedRef = false;
 				requiredMembers = false;
 				numericIntPtr = false;
 				utf8StringLiterals = false;
@@ -159,7 +159,7 @@ namespace ICSharpCode.Decompiler
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (parameterNullCheck || lifetimeAnnotations || requiredMembers || numericIntPtr || utf8StringLiterals)
+			if (parameterNullCheck || scopedRef || requiredMembers || numericIntPtr || utf8StringLiterals)
 				return CSharp.LanguageVersion.CSharp11_0;
 			if (fileScopedNamespaces || recordStructs)
 				return CSharp.LanguageVersion.CSharp10_0;
@@ -358,22 +358,28 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		bool lifetimeAnnotations = true;
+		bool scopedRef = true;
 
 		/// <summary>
 		/// Use C# 11 <c>scoped</c> modifier.
 		/// </summary>
 		[Category("C# 11.0 / VS 2022.4")]
-		[Description("DecompilerSettings.LifetimeAnnotations")]
-		public bool LifetimeAnnotations {
-			get { return lifetimeAnnotations; }
+		[Description("DecompilerSettings.ScopedRef")]
+		public bool ScopedRef {
+			get { return scopedRef; }
 			set {
-				if (lifetimeAnnotations != value)
+				if (scopedRef != value)
 				{
-					lifetimeAnnotations = value;
+					scopedRef = value;
 					OnPropertyChanged();
 				}
 			}
+		}
+
+		[Obsolete("Renamed to ScopedRef. This property will be removed in a future version of the decompiler.")]
+		public bool LifetimeAnnotations {
+			get { return ScopedRef; }
+			set { ScopedRef = value; }
 		}
 
 		bool requiredMembers = true;

@@ -117,7 +117,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public LifetimeAnnotation Lifetime {
 			get {
-				if ((module.TypeSystemOptions & TypeSystemOptions.LifetimeAnnotations) == 0)
+				if ((module.TypeSystemOptions & TypeSystemOptions.ScopedRef) == 0)
 				{
 					return default;
 				}
@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var parameterDef = metadata.GetParameter(handle);
 				if (parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.ScopedRef))
 				{
-					return new LifetimeAnnotation { RefScoped = true };
+					return new LifetimeAnnotation { ScopedRef = true };
 				}
 				return default;
 			}
