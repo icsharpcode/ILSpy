@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override ILInstruction Clone()
 		{
-			BlockContainer clone = new BlockContainer();
+			BlockContainer clone = new BlockContainer(this.Kind, this.ExpectedResultType);
 			clone.AddILRange(this);
 			clone.Blocks.AddRange(this.Blocks.Select(block => (Block)block.Clone()));
 			// Adjust branch instructions to point to the new container
