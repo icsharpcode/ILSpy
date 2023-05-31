@@ -72,6 +72,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IType GetGenericInstantiation(IType genericType, ImmutableArray<IType> typeArguments)
 		{
+			int tpc = genericType.TypeParameterCount;
+			if (tpc == 0 || tpc != typeArguments.Length)
+			{
+				// This can occur when the genericType is from another assembly,
+				// doesn't have the typical `1 suffix, and that other assembly is not loaded.
+				return genericType;
+			}
 			return new ParameterizedType(genericType, typeArguments);
 		}
 
