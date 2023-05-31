@@ -20,6 +20,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			// the NullabilityAnnotatedType wrapper only in some limited places.
 			Debug.Assert(type is ITypeDefinition { IsReferenceType: not false }
 				|| type.Kind == TypeKind.Dynamic
+				|| type.Kind == TypeKind.Unknown
 				|| (type is ITypeParameter && this is ITypeParameter));
 			this.nullability = nullability;
 		}
