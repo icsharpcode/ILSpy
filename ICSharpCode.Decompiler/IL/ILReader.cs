@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -49,12 +51,12 @@ namespace ICSharpCode.Decompiler.IL
 		readonly MetadataReader metadata;
 
 		public bool UseDebugSymbols { get; set; }
-		public DebugInfo.IDebugInfoProvider DebugInfo { get; set; }
+		public DebugInfo.IDebugInfoProvider? DebugInfo { get; set; }
 		public List<string> Warnings { get; } = new List<string>();
 
 		// List of candidate locations for sequence points. Includes empty il stack locations, any nop instructions, and the instruction following
 		// a call instruction. 
-		public List<int> SequencePointCandidates { get; private set; }
+		public List<int> SequencePointCandidates { get; } = new List<int>();
 
 		/// <summary>
 		/// Creates a new ILReader instance.
@@ -69,29 +71,29 @@ namespace ICSharpCode.Decompiler.IL
 			this.module = module;
 			this.compilation = module.Compilation;
 			this.metadata = module.metadata;
-			this.SequencePointCandidates = new List<int>();
 		}
 
+		// The members initialized with `null!` are initialized in the Init method.
 		GenericContext genericContext;
-		IMethod method;
-		MethodBodyBlock body;
+		IMethod method = null!;
+		MethodBodyBlock body = null!;
 		StackType methodReturnStackType;
 		BlobReader reader;
-		ImmutableStack<ILVariable> currentStack;
-		List<ILInstruction> expressionStack;
-		ILVariable[] parameterVariables;
-		ILVariable[] localVariables;
-		BitSet isBranchTarget;
-		BlockContainer mainContainer;
-		List<ILInstruction> instructionBuilder;
+		ImmutableStack<ILVariable> currentStack = ImmutableStack<ILVariable>.Empty;
+		List<ILInstruction> expressionStack = new List<ILInstruction>();
+		ILVariable[] parameterVariables = null!;
+		ILVariable[] localVariables = null!;
+		BitSet isBranchTarget = null!;
+		BlockContainer mainContainer = null!;
+		List<ILInstruction> instructionBuilder = new List<ILInstruction>();
 		int currentInstructionStart;
 
 		// Dictionary that stores stacks for each IL instruction
-		Dictionary<int, ImmutableStack<ILVariable>> stackByOffset;
-		Dictionary<ExceptionRegion, ILVariable> variableByExceptionHandler;
-		UnionFind<ILVariable> unionFind;
-		List<(ILVariable, ILVariable)> stackMismatchPairs;
-		IEnumerable<ILVariable> stackVariables;
+		Dictionary<int, ImmutableStack<ILVariable>> stackByOffset = new Dictionary<int, ImmutableStack<ILVariable>>();
+		Dictionary<ExceptionRegion, ILVariable> variableByExceptionHandler = new Dictionary<ExceptionRegion, ILVariable>();
+		UnionFind<ILVariable> unionFind = null!;
+		List<(ILVariable, ILVariable)> stackMismatchPairs = new List<(ILVariable, ILVariable)>();
+		IEnumerable<ILVariable>? stackVariables;
 
 		void Init(MethodDefinitionHandle methodDefinitionHandle, MethodBodyBlock body, GenericContext genericContext)
 		{
@@ -114,9 +116,9 @@ namespace ICSharpCode.Decompiler.IL
 			this.body = body;
 			this.reader = body.GetILReader();
 			this.currentStack = ImmutableStack<ILVariable>.Empty;
-			this.expressionStack = new List<ILInstruction>();
+			this.expressionStack.Clear();
 			this.unionFind = new UnionFind<ILVariable>();
-			this.stackMismatchPairs = new List<(ILVariable, ILVariable)>();
+			this.stackMismatchPairs.Clear();
 			this.methodReturnStackType = method.ReturnType.GetStackType();
 			InitParameterVariables();
 			localVariables = InitLocalVariables();
@@ -126,10 +128,10 @@ namespace ICSharpCode.Decompiler.IL
 				v.UsesInitialValue = true;
 			}
 			this.mainContainer = new BlockContainer(expectedResultType: methodReturnStackType);
-			this.instructionBuilder = new List<ILInstruction>();
+			this.instructionBuilder.Clear();
 			this.isBranchTarget = new BitSet(reader.Length);
-			this.stackByOffset = new Dictionary<int, ImmutableStack<ILVariable>>();
-			this.variableByExceptionHandler = new Dictionary<ExceptionRegion, ILVariable>();
+			this.stackByOffset.Clear();
+			this.variableByExceptionHandler.Clear();
 		}
 
 		EntityHandle ReadAndDecodeMetadataToken()
@@ -256,7 +258,7 @@ namespace ICSharpCode.Decompiler.IL
 		ILVariable CreateILVariable(int index, IType parameterType, string name)
 		{
 			Debug.Assert(!parameterType.IsUnbound());
-			ITypeDefinition def = parameterType.GetDefinition();
+			ITypeDefinition? def = parameterType.GetDefinition();
 			if (def != null && index < 0 && def.IsReferenceType == false)
 			{
 				parameterType = new ByReferenceType(parameterType);
@@ -443,7 +445,11 @@ namespace ICSharpCode.Decompiler.IL
 				if (inst.HasDirectFlag(InstructionFlags.EndPointUnreachable))
 				{
 					FlushExpressionStack();
-					if (!stackByOffset.TryGetValue(end, out currentStack))
+					if (stackByOffset.TryGetValue(end, out var stackAfterEnd))
+					{
+						currentStack = stackAfterEnd;
+					}
+					else
 					{
 						currentStack = ImmutableStack<ILVariable>.Empty;
 					}
@@ -634,6 +640,7 @@ namespace ICSharpCode.Decompiler.IL
 			var function = new ILFunction(this.method, body.GetCodeSize(), this.genericContext, mainContainer, kind);
 			function.Variables.AddRange(parameterVariables);
 			function.Variables.AddRange(localVariables);
+			Debug.Assert(stackVariables != null);
 			function.Variables.AddRange(stackVariables);
 			function.Variables.AddRange(variableByExceptionHandler.Values);
 			function.Variables.AddRange(blockBuilder.OnErrorDispatcherVariables);
@@ -1553,7 +1560,7 @@ namespace ICSharpCode.Decompiler.IL
 			return new StObj(target, value, type);
 		}
 
-		IType constrainedPrefix;
+		IType? constrainedPrefix;
 
 		private DecodedInstruction DecodeConstrainedCall()
 		{
