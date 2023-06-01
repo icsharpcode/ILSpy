@@ -535,16 +535,25 @@ namespace ICSharpCode.Decompiler.IL
 			if (!block.Block.HasFlag(InstructionFlags.EndPointUnreachable))
 			{
 				// create fall through branch
-				MarkBranchTarget(reader.Offset, isFallThrough: true);
+				ILInstruction branch;
+				if (reader.RemainingBytes > 0)
+				{
+					MarkBranchTarget(reader.Offset, isFallThrough: true);
+					branch = new Branch(reader.Offset);
+				}
+				else
+				{
+					branch = new InvalidBranch("End of method reached without returning.");
+				}
 				if (block.Block.Instructions.LastOrDefault() is SwitchInstruction switchInst && switchInst.Sections.Last().Body.MatchNop())
 				{
 					// Instead of putting the default branch after the switch instruction
-					switchInst.Sections.Last().Body = new Branch(reader.Offset);
+					switchInst.Sections.Last().Body = branch;
 					Debug.Assert(switchInst.HasFlag(InstructionFlags.EndPointUnreachable));
 				}
 				else
 				{
-					block.Block.Instructions.Add(new Branch(reader.Offset));
+					block.Block.Instructions.Add(branch);
 				}
 			}
 		}
