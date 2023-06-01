@@ -117,32 +117,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public LifetimeAnnotation Lifetime {
 			get {
-				if ((module.TypeSystemOptions & TypeSystemOptions.LifetimeAnnotations) == 0)
+				if ((module.TypeSystemOptions & TypeSystemOptions.ScopedRef) == 0)
 				{
 					return default;
 				}
 
 				var metadata = module.metadata;
 				var parameterDef = metadata.GetParameter(handle);
-				foreach (var h in parameterDef.GetCustomAttributes())
+				if (parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.ScopedRef))
 				{
-					var custom = metadata.GetCustomAttribute(h);
-					if (!custom.IsKnownAttribute(metadata, KnownAttribute.LifetimeAnnotation))
-						continue;
-
-					var value = custom.DecodeValue(module.TypeProvider);
-					if (value.FixedArguments.Length != 2)
-						continue;
-					if (value.FixedArguments[0].Value is bool refScoped
-						&& value.FixedArguments[1].Value is bool valueScoped)
-					{
-						return new LifetimeAnnotation {
-							RefScoped = refScoped,
-							ValueScoped = valueScoped
-						};
-					}
+					return new LifetimeAnnotation { ScopedRef = true };
 				}
-
 				return default;
 			}
 		}

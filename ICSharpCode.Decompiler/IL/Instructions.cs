@@ -19,6 +19,7 @@
 #nullable enable
 
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
@@ -121,6 +122,8 @@ namespace ICSharpCode.Decompiler.IL
 		NullableRewrap,
 		/// <summary>Loads a constant string.</summary>
 		LdStr,
+		/// <summary>Loads a constant byte string (as ReadOnlySpan&lt;byte&gt;).</summary>
+		LdStrUtf8,
 		/// <summary>Loads a constant 32-bit integer.</summary>
 		LdcI4,
 		/// <summary>Loads a constant 64-bit integer.</summary>
@@ -2833,6 +2836,43 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
 			var o = other as LdStr;
+			return o != null && this.Value == o.Value;
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>Loads a constant byte string (as ReadOnlySpan&lt;byte&gt;).</summary>
+	public sealed partial class LdStrUtf8 : SimpleInstruction
+	{
+		public LdStrUtf8(string value) : base(OpCode.LdStrUtf8)
+		{
+			this.Value = value;
+		}
+		public readonly string Value;
+		public override StackType ResultType { get { return StackType.O; } }
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdStrUtf8(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitLdStrUtf8(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdStrUtf8(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
+		{
+			var o = other as LdStrUtf8;
 			return o != null && this.Value == o.Value;
 		}
 	}
@@ -6947,6 +6987,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitLdStrUtf8(LdStrUtf8 inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitLdcI4(LdcI4 inst)
 		{
 			Default(inst);
@@ -7342,6 +7386,10 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitLdStr(LdStr inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitLdStrUtf8(LdStrUtf8 inst)
 		{
 			return Default(inst);
 		}
@@ -7743,6 +7791,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitLdStrUtf8(LdStrUtf8 inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitLdcI4(LdcI4 inst, C context)
 		{
 			return Default(inst, context);
@@ -8013,6 +8065,7 @@ namespace ICSharpCode.Decompiler.IL
 			"nullable.unwrap",
 			"nullable.rewrap",
 			"ldstr",
+			"ldstr.utf8",
 			"ldc.i4",
 			"ldc.i8",
 			"ldc.f4",
@@ -8277,6 +8330,17 @@ namespace ICSharpCode.Decompiler.IL
 		public bool MatchLdStr([NotNullWhen(true)] out string? value)
 		{
 			var inst = this as LdStr;
+			if (inst != null)
+			{
+				value = inst.Value;
+				return true;
+			}
+			value = default(string);
+			return false;
+		}
+		public bool MatchLdStrUtf8([NotNullWhen(true)] out string? value)
+		{
+			var inst = this as LdStrUtf8;
 			if (inst != null)
 			{
 				value = inst.Value;
@@ -8751,3 +8815,4 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 }
+

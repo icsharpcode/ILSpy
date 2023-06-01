@@ -159,7 +159,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				return;
 			if (value is string)
 			{
-				lastWritten = LastWritten.Other;
+				if (format == LiteralFormat.VerbatimStringLiteral)
+					lastWritten = LastWritten.KeywordOrIdentifier;
+				else
+					lastWritten = LastWritten.Other;
 			}
 			else if (value is char)
 			{

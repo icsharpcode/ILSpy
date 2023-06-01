@@ -269,6 +269,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				textWriter.Write('"');
 				textWriter.Write(tmp);
 				textWriter.Write('"');
+				if (format == LiteralFormat.Utf8Literal)
+				{
+					textWriter.Write("u8");
+					column += 2;
+					Length += 2;
+				}
 			}
 			else if (value is char)
 			{

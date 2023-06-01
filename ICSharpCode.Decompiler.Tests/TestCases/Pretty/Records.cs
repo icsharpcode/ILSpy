@@ -1,5 +1,5 @@
 ﻿using System;
-#if ROSLYN4
+#if CS100
 using System.Runtime.InteropServices;
 #endif
 
@@ -242,6 +242,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	}
 #endif
 }
+#if !NET60
 namespace System.Runtime.CompilerServices
 {
 	[AttributeUsage(AttributeTargets.All, AllowMultiple = true, Inherited = false)]
@@ -261,3 +262,4 @@ namespace System.Runtime.CompilerServices
 	{
 	}
 }
+#endif

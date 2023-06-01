@@ -1654,8 +1654,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				decl.ParameterModifier = ParameterModifier.Params;
 			}
-			decl.IsRefScoped = parameter.Lifetime.RefScoped;
-			decl.IsValueScoped = parameter.Lifetime.ValueScoped;
+			decl.IsScopedRef = parameter.Lifetime.ScopedRef;
 			if (ShowAttributes)
 			{
 				decl.Attributes.AddRange(ConvertAttributes(parameter.GetAttributes()));
@@ -1970,6 +1969,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				decl.AddAnnotation(new MemberResolveResult(null, field));
 			}
 			decl.ReturnType = ConvertType(field.ReturnType);
+			if (decl.ReturnType is ComposedType ct && ct.HasRefSpecifier && field.ReturnTypeIsRefReadOnly)
+			{
+				ct.HasReadOnlySpecifier = true;
+			}
 			Expression initializer = null;
 			if (field.IsConst && this.ShowConstantValues)
 			{

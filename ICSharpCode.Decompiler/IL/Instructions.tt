@@ -204,6 +204,8 @@
 
 		new OpCode("ldstr", "Loads a constant string.",
 			CustomClassName("LdStr"), LoadConstant("string"), ResultType("O")),
+		new OpCode("ldstr.utf8", "Loads a constant byte string (as ReadOnlySpan&lt;byte&gt;).",
+			CustomClassName("LdStrUtf8"), LoadConstant("string"), ResultType("O")),
 		new OpCode("ldc.i4", "Loads a constant 32-bit integer.",
 			LoadConstant("int"), ResultType("I4")),
 		new OpCode("ldc.i8", "Loads a constant 64-bit integer.",

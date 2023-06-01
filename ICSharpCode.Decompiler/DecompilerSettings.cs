@@ -150,15 +150,16 @@ namespace ICSharpCode.Decompiler
 			if (languageVersion < CSharp.LanguageVersion.CSharp11_0)
 			{
 				parameterNullCheck = false;
-				lifetimeAnnotations = false;
+				scopedRef = false;
 				requiredMembers = false;
 				numericIntPtr = false;
+				utf8StringLiterals = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (parameterNullCheck || lifetimeAnnotations || requiredMembers || numericIntPtr)
+			if (parameterNullCheck || scopedRef || requiredMembers || numericIntPtr || utf8StringLiterals)
 				return CSharp.LanguageVersion.CSharp11_0;
 			if (fileScopedNamespaces || recordStructs)
 				return CSharp.LanguageVersion.CSharp10_0;
@@ -357,23 +358,28 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		bool lifetimeAnnotations = true;
+		bool scopedRef = true;
 
 		/// <summary>
-		/// Use C# 9 <c>delegate* unmanaged</c> types.
-		/// If this option is disabled, function pointers will instead be decompiled with type `IntPtr`.
+		/// Use C# 11 <c>scoped</c> modifier.
 		/// </summary>
 		[Category("C# 11.0 / VS 2022.4")]
-		[Description("DecompilerSettings.LifetimeAnnotations")]
-		public bool LifetimeAnnotations {
-			get { return lifetimeAnnotations; }
+		[Description("DecompilerSettings.ScopedRef")]
+		public bool ScopedRef {
+			get { return scopedRef; }
 			set {
-				if (lifetimeAnnotations != value)
+				if (scopedRef != value)
 				{
-					lifetimeAnnotations = value;
+					scopedRef = value;
 					OnPropertyChanged();
 				}
 			}
+		}
+
+		[Obsolete("Renamed to ScopedRef. This property will be removed in a future version of the decompiler.")]
+		public bool LifetimeAnnotations {
+			get { return ScopedRef; }
+			set { ScopedRef = value; }
 		}
 
 		bool requiredMembers = true;
@@ -435,9 +441,10 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Use C# 11 preview parameter null-checking (<code>string param!!</code>).
 		/// </summary>
-		[Category("C# 11.0 / VS 2022.1")]
+		[Category("C# 11.0 / VS 2022.4")]
 		[Description("DecompilerSettings.ParameterNullCheck")]
 		[Browsable(false)]
+		[Obsolete("This feature did not make it into C# 11, and may be removed in a future version of the decompiler.")]
 		public bool ParameterNullCheck {
 			get { return parameterNullCheck; }
 			set {
@@ -1169,6 +1176,24 @@ namespace ICSharpCode.Decompiler
 				if (stringInterpolation != value)
 				{
 					stringInterpolation = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool utf8StringLiterals = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use C# 11.0 UTF-8 string literals
+		/// </summary>
+		[Category("C# 11.0 / VS 2022.4")]
+		[Description("DecompilerSettings.Utf8StringLiterals")]
+		public bool Utf8StringLiterals {
+			get { return utf8StringLiterals; }
+			set {
+				if (utf8StringLiterals != value)
+				{
+					utf8StringLiterals = value;
 					OnPropertyChanged();
 				}
 			}

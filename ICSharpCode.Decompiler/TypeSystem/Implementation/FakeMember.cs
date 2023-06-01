@@ -109,6 +109,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		bool IField.IsReadOnly => false;
+		bool IField.ReturnTypeIsRefReadOnly => false;
 		bool IField.IsVolatile => false;
 
 		bool IVariable.IsConst => false;

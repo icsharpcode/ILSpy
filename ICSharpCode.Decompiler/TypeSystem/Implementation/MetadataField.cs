@@ -189,6 +189,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return b.GetAttribute(metadata, def.GetCustomAttributes(), attribute, SymbolKind.Field);
 		}
 
+		public bool ReturnTypeIsRefReadOnly {
+			get {
+				var def = module.metadata.GetFieldDefinition(handle);
+				return def.GetCustomAttributes().HasKnownAttribute(module.metadata, KnownAttribute.IsReadOnly);
+			}
+		}
+
 		public string FullName => $"{DeclaringType?.FullName}.{Name}";
 		public string ReflectionName => $"{DeclaringType?.ReflectionName}.{Name}";
 		public string Namespace => DeclaringType?.Namespace ?? string.Empty;

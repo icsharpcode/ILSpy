@@ -381,9 +381,6 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.IsUnmanagedAttributeOnTypeParametersShouldBeReplacedWithUnmanagedConstraints" xml:space="preserve">
     <value>IsUnmanagedAttribute on type parameters should be replaced with 'unmanaged' constraints</value>
   </data>
-  <data name="DecompilerSettings.LifetimeAnnotations" xml:space="preserve">
-    <value>'scoped' lifetime annotation</value>
-  </data>
   <data name="DecompilerSettings.NativeIntegers" xml:space="preserve">
     <value>Use nint/nuint types</value>
   </data>
@@ -434,6 +431,9 @@ Are you sure you want to continue?</value>
   </data>
   <data name="DecompilerSettings.RequiredMembers" xml:space="preserve">
     <value>Required members</value>
+  </data>
+  <data name="DecompilerSettings.ScopedRef" xml:space="preserve">
+    <value>'scoped' lifetime annotation</value>
   </data>
   <data name="DecompilerSettings.SeparateLocalVariableDeclarations" xml:space="preserve">
     <value>Separate local variable declarations and initializers (int x = 5; -&gt; int x; x = 5;), if possible</value>
@@ -516,6 +516,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.UseVariableNamesFromDebugSymbolsIfAvailable" xml:space="preserve">
     <value>Use variable names from debug symbols, if available</value>
   </data>
+  <data name="DecompilerSettings.Utf8StringLiterals" xml:space="preserve">
+    <value>UTF-8 string literals</value>
+  </data>
   <data name="DecompilerSettings.VBSpecificOptions" xml:space="preserve">
     <value>VB-specific options</value>
   </data>
@@ -544,7 +547,7 @@ Are you sure you want to continue?</value>
     <value>Font:</value>
   </data>
   <data name="DisplaySettingsPanel_Theme" xml:space="preserve">
-	  <value>Theme:</value>
+    <value>Theme:</value>
   </data>
   <data name="Download" xml:space="preserve">
     <value>Download</value>
@@ -911,7 +914,7 @@ Do you want to continue?</value>
     <value>Tab size:</value>
   </data>
   <data name="Theme" xml:space="preserve">
-	  <value>Theme</value>
+    <value>Theme</value>
   </data>
   <data name="ToggleFolding" xml:space="preserve">
     <value>Toggle All Folding</value>

@@ -36,6 +36,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		bool IsReadOnly { get; }
 
 		/// <summary>
+		/// Gets whether the field type is 'ref readonly'.
+		/// </summary>
+		bool ReturnTypeIsRefReadOnly { get; }
+
+		/// <summary>
 		/// Gets whether this field is volatile.
 		/// </summary>
 		bool IsVolatile { get; }

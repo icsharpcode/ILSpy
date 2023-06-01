@@ -390,7 +390,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (left.MatchStLoc(out var inlineAssignVar, out var inlineAssignVal))
 				{
-					if (!inlineAssignVal.MatchIsInst(out var arg, out var type) && type.IsKnownType(disposeType))
+					if (!inlineAssignVal.MatchIsInst(out var arg, out var type) || !type.IsKnownType(disposeType))
 						return false;
 					if (!inlineAssignVar.IsSingleDefinition || inlineAssignVar.LoadCount != 1)
 						return false;

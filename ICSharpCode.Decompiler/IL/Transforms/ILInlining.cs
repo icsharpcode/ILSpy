@@ -494,6 +494,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// C# doesn't allow mutation of value-type temporaries
 					return true;
 				default:
+					if (addr.MatchLdFld(out _, out var field))
+						return field.ReturnTypeIsRefReadOnly;
 					return false;
 			}
 		}
