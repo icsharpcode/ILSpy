@@ -514,14 +514,6 @@ namespace ICSharpCode.Decompiler.IL
 					FlushExpressionStack();
 					block.Block.Instructions.Add(inst);
 				}
-				else if (start == block.StartILOffset)
-				{
-					// If this instruction is the first in a new block, avoid it being inlined
-					// into the next instruction.
-					// This is necessary because the BlockBuilder uses inst.StartILOffset to
-					// detect block starts, and doesn't search nested instructions.
-					FlushExpressionStack();
-				}
 
 				if ((!decodedInstruction.PushedOnExpressionStack && IsSequencePointInstruction(inst)) || startedWithEmptyStack)
 				{
