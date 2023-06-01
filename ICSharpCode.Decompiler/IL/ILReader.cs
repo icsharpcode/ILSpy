@@ -457,6 +457,13 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			reader.Reset();
 			StoreStackForOffset(0, ImmutableStack<ILVariable>.Empty);
+			if (reader.Length == 0)
+			{
+				blocksByOffset[0].Block.Instructions.Add(
+					new InvalidBranch("Empty body found. Decompiled assembly might be a reference assembly.")
+				);
+				return;
+			}
 			ILParser.SetBranchTargets(ref reader, isBranchTarget);
 			PrepareBranchTargetsAndStacksForExceptionHandlers();
 
@@ -1480,9 +1487,18 @@ namespace ICSharpCode.Decompiler.IL
 		private ILInstruction Return()
 		{
 			if (methodReturnStackType == StackType.Void)
+			{
 				return new IL.Leave(mainContainer);
+			}
+			else if (currentInstructionStart == 0)
+			{
+				Debug.Assert(expressionStack.Count == 0 && currentStack.IsEmpty);
+				return new InvalidBranch("Method body consists only of 'ret', but nothing is being returned. Decompiled assembly might be a reference assembly.");
+			}
 			else
+			{
 				return new IL.Leave(mainContainer, Pop(methodReturnStackType));
+			}
 		}
 
 		private ILInstruction DecodeLdstr()

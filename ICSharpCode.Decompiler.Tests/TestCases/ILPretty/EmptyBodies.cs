@@ -5,7 +5,7 @@ internal class EmptyBodies
 	}
 	public static int RetInt()
 	{
-		return (int)/*Error near IL_0001: Stack underflow*/;
+		/*Error: Method body consists only of 'ret', but nothing is being returned. Decompiled assembly might be a reference assembly.*/;
 	}
 	public static void Nop()
 	{

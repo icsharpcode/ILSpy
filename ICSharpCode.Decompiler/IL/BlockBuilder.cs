@@ -129,15 +129,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			CreateContainerStructure();
 			mainContainer.SetILRange(new Interval(0, body.GetCodeSize()));
-			if (!basicBlocks.Any())
-			{
-				mainContainer.Blocks.Add(new Block {
-					Instructions = {
-						new InvalidBranch("Empty body found. Decompiled assembly might be a reference assembly.")
-					}
-				});
-				return;
-			}
 
 			currentContainer = mainContainer;
 			foreach (var block in basicBlocks.OrderBy(b => b.StartILOffset))
