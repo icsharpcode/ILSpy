@@ -258,7 +258,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (targetBlock.StartILOffset < block.StartILOffset && IsDeadTrueStore(block))
 			{
 				// The C# compiler generates a dead store for the condition of while (true) loops.
-				block.Instructions.RemoveRange(block.Instructions.Count - 3, 2);
+				block.Instructions.RemoveAt(block.Instructions.Count - 2);
 			}
 
 			if (block.ILRangeIsEmpty)
@@ -275,15 +275,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		private static bool IsDeadTrueStore(Block block)
 		{
-			if (block.Instructions.Count < 3)
+			if (block.Instructions.Count < 2)
 				return false;
-			if (!(block.Instructions.SecondToLastOrDefault() is StLoc deadStore && block.Instructions[block.Instructions.Count - 3] is StLoc tempStore))
+			if (!(block.Instructions.SecondToLastOrDefault() is StLoc deadStore))
 				return false;
 			if (!(deadStore.Variable.LoadCount == 0 && deadStore.Variable.AddressCount == 0))
 				return false;
-			if (!(deadStore.Value.MatchLdLoc(tempStore.Variable) && tempStore.Variable.IsSingleDefinition && tempStore.Variable.LoadCount == 1))
-				return false;
-			return tempStore.Value.MatchLdcI4(1) && deadStore.Variable.Type.IsKnownType(KnownTypeCode.Boolean);
+			return deadStore.Value.MatchLdcI4(1) && deadStore.Variable.Type.IsKnownType(KnownTypeCode.Boolean);
 		}
 	}
 }

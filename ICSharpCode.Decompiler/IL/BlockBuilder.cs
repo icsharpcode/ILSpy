@@ -16,8 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -29,6 +29,11 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
 {
+	/// <summary>
+	/// Converts the list of basic blocks from ILReader into a BlockContainer structure. 
+	/// This involves creating nested block containers for exception handlers, and creating
+	/// branches between the blocks.
+	/// </summary>
 	class BlockBuilder
 	{
 		readonly MethodBodyBlock body;
@@ -64,7 +69,6 @@ namespace ICSharpCode.Decompiler.IL
 				var tryRange = new Interval(eh.TryOffset, eh.TryOffset + eh.TryLength);
 				var handlerBlock = new BlockContainer();
 				handlerBlock.AddILRange(new Interval(eh.HandlerOffset, eh.HandlerOffset + eh.HandlerLength));
-				handlerBlock.Blocks.Add(new Block());
 				handlerContainers.Add(handlerBlock.StartILOffset, handlerBlock);
 
 				if (eh.Kind == ExceptionRegionKind.Fault || eh.Kind == ExceptionRegionKind.Finally)
@@ -94,7 +98,6 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					var filterBlock = new BlockContainer(expectedResultType: StackType.I4);
 					filterBlock.AddILRange(new Interval(eh.FilterOffset, eh.HandlerOffset));
-					filterBlock.Blocks.Add(new Block());
 					handlerContainers.Add(filterBlock.StartILOffset, filterBlock);
 					filter = filterBlock;
 				}
@@ -117,118 +120,50 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		int currentTryIndex;
-		TryInstruction nextTry;
+		TryInstruction? nextTry;
 
-		BlockContainer currentContainer;
-		Block currentBlock;
+		BlockContainer? currentContainer;
 		readonly Stack<BlockContainer> containerStack = new Stack<BlockContainer>();
 
-		public void CreateBlocks(BlockContainer mainContainer, List<ILInstruction> instructions, BitSet incomingBranches, CancellationToken cancellationToken)
+		public void CreateBlocks(BlockContainer mainContainer, IEnumerable<Block> basicBlocks, CancellationToken cancellationToken)
 		{
 			CreateContainerStructure();
 			mainContainer.SetILRange(new Interval(0, body.GetCodeSize()));
-			currentContainer = mainContainer;
-			if (instructions.Count == 0)
-			{
-				currentContainer.Blocks.Add(new Block {
-					Instructions = {
-						new InvalidBranch("Empty body found. Decompiled assembly might be a reference assembly.")
-					}
-				});
-				return;
-			}
 
-			foreach (var inst in instructions)
+			currentContainer = mainContainer;
+			foreach (var block in basicBlocks.OrderBy(b => b.StartILOffset))
 			{
 				cancellationToken.ThrowIfCancellationRequested();
-				int start = inst.StartILOffset;
-				if (currentBlock == null || (incomingBranches[start] && !IsStackAdjustment(inst)))
+				int start = block.StartILOffset;
+				// Leave nested containers if necessary
+				while (start >= currentContainer.EndILOffset)
 				{
-					// Finish up the previous block
-					FinalizeCurrentBlock(start, fallthrough: true);
-					// Leave nested containers if necessary
-					while (start >= currentContainer.EndILOffset)
-					{
-						currentContainer = containerStack.Pop();
-						currentBlock = currentContainer.Blocks.Last();
-						// this container is skipped (i.e. the loop will execute again)
-						// set ILRange to the last instruction offset inside the block.
-						if (start >= currentContainer.EndILOffset)
-						{
-							Debug.Assert(currentBlock.ILRangeIsEmpty);
-							currentBlock.AddILRange(new Interval(currentBlock.StartILOffset, start));
-						}
-					}
-					// Enter a handler if necessary
-					if (handlerContainers.TryGetValue(start, out BlockContainer handlerContainer))
-					{
-						containerStack.Push(currentContainer);
-						currentContainer = handlerContainer;
-						currentBlock = handlerContainer.EntryPoint;
-					}
-					else
-					{
-						FinalizeCurrentBlock(start, fallthrough: false);
-						// Create the new block
-						currentBlock = new Block();
-						currentContainer.Blocks.Add(currentBlock);
-					}
-					currentBlock.SetILRange(new Interval(start, start));
+					currentContainer = containerStack.Pop();
 				}
+				// Enter a handler if necessary
+				if (handlerContainers.TryGetValue(start, out BlockContainer? handlerContainer))
+				{
+					containerStack.Push(currentContainer);
+					currentContainer = handlerContainer;
+				}
+				// Enter a try block if necessary
 				while (nextTry != null && start == nextTry.TryBlock.StartILOffset)
 				{
-					currentBlock.Instructions.Add(nextTry);
+					var blockForTry = new Block();
+					blockForTry.SetILRange(nextTry);
+					blockForTry.Instructions.Add(nextTry);
+					currentContainer.Blocks.Add(blockForTry);
+
 					containerStack.Push(currentContainer);
 					currentContainer = (BlockContainer)nextTry.TryBlock;
-					currentBlock = new Block();
-					currentContainer.Blocks.Add(currentBlock);
-					currentBlock.SetILRange(new Interval(start, start));
 
 					nextTry = tryInstructionList.ElementAtOrDefault(++currentTryIndex);
 				}
-				currentBlock.Instructions.Add(inst);
-				if (inst.HasFlag(InstructionFlags.EndPointUnreachable))
-					FinalizeCurrentBlock(inst.EndILOffset, fallthrough: false);
-				else if (!CreateExtendedBlocks && inst.HasFlag(InstructionFlags.MayBranch))
-					FinalizeCurrentBlock(inst.EndILOffset, fallthrough: true);
+				currentContainer.Blocks.Add(block);
 			}
-			FinalizeCurrentBlock(mainContainer.EndILOffset, fallthrough: false);
-			// Finish up all containers
-			while (containerStack.Count > 0)
-			{
-				currentContainer = containerStack.Pop();
-				currentBlock = currentContainer.Blocks.Last();
-				FinalizeCurrentBlock(mainContainer.EndILOffset, fallthrough: false);
-			}
+			Debug.Assert(currentTryIndex == tryInstructionList.Count && nextTry == null);
 			ConnectBranches(mainContainer, cancellationToken);
 			CreateOnErrorDispatchers();
-		}
-
-		static bool IsStackAdjustment(ILInstruction inst)
-		{
-			return inst is StLoc stloc && stloc.IsStackAdjustment;
-		}
-
-		private void FinalizeCurrentBlock(int currentILOffset, bool fallthrough)
-		{
-			if (currentBlock == null)
-				return;
-			Debug.Assert(currentBlock.ILRangeIsEmpty);
-			currentBlock.SetILRange(new Interval(currentBlock.StartILOffset, currentILOffset));
-			if (fallthrough)
-			{
-				if (currentBlock.Instructions.LastOrDefault() is SwitchInstruction switchInst && switchInst.Sections.Last().Body.MatchNop())
-				{
-					// Instead of putting the default branch after the switch instruction
-					switchInst.Sections.Last().Body = new Branch(currentILOffset);
-					Debug.Assert(switchInst.HasFlag(InstructionFlags.EndPointUnreachable));
-				}
-				else
-				{
-					currentBlock.Instructions.Add(new Branch(currentILOffset));
-				}
-			}
-			currentBlock = null;
 		}
 
 		void ConnectBranches(ILInstruction inst, CancellationToken cancellationToken)
@@ -238,11 +173,15 @@ namespace ICSharpCode.Decompiler.IL
 				case Branch branch:
 					cancellationToken.ThrowIfCancellationRequested();
 					Debug.Assert(branch.TargetBlock == null);
-					branch.TargetBlock = FindBranchTarget(branch.TargetILOffset);
-					if (branch.TargetBlock == null)
+					var targetBlock = FindBranchTarget(branch.TargetILOffset);
+					if (targetBlock == null)
 					{
 						branch.ReplaceWith(new InvalidBranch("Could not find block for branch target "
 							+ Disassembler.DisassemblerHelpers.OffsetToString(branch.TargetILOffset)).WithILRange(branch));
+					}
+					else
+					{
+						branch.TargetBlock = targetBlock;
 					}
 					break;
 				case Leave leave:
@@ -279,7 +218,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		Block FindBranchTarget(int targetILOffset)
+		Block? FindBranchTarget(int targetILOffset)
 		{
 			foreach (var container in containerStack)
 			{
@@ -291,7 +230,7 @@ namespace ICSharpCode.Decompiler.IL
 				if (container.SlotInfo == TryCatchHandler.BodySlot)
 				{
 					// catch handler is allowed to branch back into try block (VB On Error)
-					TryCatch tryCatch = (TryCatch)container.Parent.Parent;
+					TryCatch tryCatch = (TryCatch)container.Parent!.Parent!;
 					if (tryCatch.TryBlock.StartILOffset < targetILOffset && targetILOffset < tryCatch.TryBlock.EndILOffset)
 					{
 						return CreateBranchTargetForOnErrorJump(tryCatch, targetILOffset);
@@ -345,7 +284,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			foreach (var (tryCatch, dispatch) in onErrorDispatchers)
 			{
-				Block block = (Block)tryCatch.Parent;
+				Block block = (Block)tryCatch.Parent!;
 				// Before the regular entry point of the try-catch, insert an. instruction that resets the dispatcher variable
 				block.Instructions.Insert(tryCatch.ChildIndex, new StLoc(dispatch.Variable, new LdcI4(-1)));
 				// Split the block, so that we can introduce branches that jump directly into the try block
@@ -355,7 +294,7 @@ namespace ICSharpCode.Decompiler.IL
 				newBlock.Instructions.AddRange(block.Instructions.Skip(splitAt));
 				block.Instructions.RemoveRange(splitAt, block.Instructions.Count - splitAt);
 				block.Instructions.Add(new Branch(newBlock));
-				((BlockContainer)block.Parent).Blocks.Add(newBlock);
+				((BlockContainer)block.Parent!).Blocks.Add(newBlock);
 				// Update the branches that jump directly into the try block
 				foreach (var b in dispatch.Branches)
 				{
