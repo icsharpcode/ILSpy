@@ -386,7 +386,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ILInstruction rhs;
 				if (operatorCall.Arguments.Count == 2)
 				{
-					if (CSharp.ExpressionBuilder.GetAssignmentOperatorTypeFromMetadataName(operatorCall.Method.Name) == null)
+					if (CSharp.ExpressionBuilder.GetAssignmentOperatorTypeFromMetadataName(operatorCall.Method.Name, context.Settings) == null)
 						return false;
 					rhs = operatorCall.Arguments[1];
 				}

@@ -530,6 +530,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			typeSystemAstBuilder.SupportInitAccessors = settings.InitAccessors;
 			typeSystemAstBuilder.SupportRecordClasses = settings.RecordClasses;
 			typeSystemAstBuilder.SupportRecordStructs = settings.RecordStructs;
+			typeSystemAstBuilder.SupportUnsignedRightShift = settings.UnsignedRightShift;
 			typeSystemAstBuilder.AlwaysUseGlobal = settings.AlwaysUseGlobal;
 			return typeSystemAstBuilder;
 		}

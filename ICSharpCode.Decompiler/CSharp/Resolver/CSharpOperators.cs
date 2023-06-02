@@ -674,6 +674,27 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 			}
 		}
+
+		OperatorMethod[]? unsignedShiftRightOperators;
+
+		public OperatorMethod[] UnsignedShiftRightOperators {
+			get {
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref unsignedShiftRightOperators);
+				if (ops != null)
+				{
+					return ops;
+				}
+				else
+				{
+					return LazyInit.GetOrSet(ref unsignedShiftRightOperators, Lift(
+						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => (int)((uint)a >> b)),
+						new LambdaBinaryOperatorMethod<uint, int>(this, (a, b) => a >> b),
+						new LambdaBinaryOperatorMethod<long, int>(this, (a, b) => (long)((ulong)a >> b)),
+						new LambdaBinaryOperatorMethod<ulong, int>(this, (a, b) => a >> b)
+					));
+				}
+			}
+		}
 		#endregion
 
 		#region Equality operators

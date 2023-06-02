@@ -72,6 +72,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return null;
 		}
 
+#if CS110
+        public static AllOperators operator >>>(AllOperators a, int b)
+        {
+            return null;
+        }
+#endif
+
 		public static AllOperators operator ~(AllOperators a)
 		{
 			return null;
@@ -170,6 +177,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			c = a ^ b;
 			c = a << 5;
 			c = a >> 5;
+#if CS110
+            c = a >>> 5;
+#endif
 			c = ~a;
 			c = !a;
 			c = -a;

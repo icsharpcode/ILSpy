@@ -749,6 +749,10 @@ namespace ICSharpCode.ILSpy
 			{
 				flags |= ConversionFlags.SupportRecordStructs;
 			}
+			if (settings.UnsignedRightShift)
+			{
+				flags |= ConversionFlags.SupportUnsignedRightShift;
+			}
 			if (settings.InitAccessors)
 			{
 				flags |= ConversionFlags.SupportInitAccessors;

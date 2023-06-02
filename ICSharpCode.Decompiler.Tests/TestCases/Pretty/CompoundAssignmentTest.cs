@@ -201,6 +201,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			{
 				throw new NotImplementedException();
 			}
+#if CS110
+			public static CustomStruct operator >>>(CustomStruct lhs, int rhs)
+			{
+				throw new NotImplementedException();
+			}
+#endif
 			public static CustomStruct operator &(CustomStruct lhs, CustomStruct rhs)
 			{
 				throw new NotImplementedException();
@@ -4218,6 +4224,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			GetRefCustomStruct() >>= 5;
 #endif
 		}
+
+#if CS110
+		public static void CustomStructUnsignedRightShiftTest(CustomStruct p, CustomClass c, CustomStruct2 s)
+		{
+			//CustomStruct l = default(CustomStruct);
+			//p >>>= 5;
+			//l >>>= 5;
+			customStructField >>>= 5;
+			CustomStructProp >>>= 5;
+			c.CustomStructField >>>= 5;
+			c.CustomStructProp >>>= 5;
+			s.CustomStructField >>>= 5;
+			s.CustomStructProp >>>= 5;
+			customClassField.CustomStructField >>>= 5;
+			customClassField.CustomStructProp >>>= 5;
+			otherCustomStructField.CustomStructField >>>= 5;
+			otherCustomStructField.CustomStructProp >>>= 5;
+			CustomClassProp.CustomStructField >>>= 5;
+			CustomClassProp.CustomStructProp >>>= 5;
+			GetClass().CustomStructField >>>= 5;
+			GetClass().CustomStructProp >>>= 5;
+			GetRefStruct().CustomStructField >>>= 5;
+			GetRefStruct().CustomStructProp >>>= 5;
+			GetRefCustomStruct() >>>= 5;
+		}
+#endif
 
 		public static void CustomStructBitAndTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{

@@ -1729,6 +1729,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				case BinaryOperatorType.ExclusiveOr:
 				case BinaryOperatorType.ShiftLeft:
 				case BinaryOperatorType.ShiftRight:
+				case BinaryOperatorType.UnsignedShiftRight:
 					return false;
 				default:
 					return true;
@@ -1804,7 +1805,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			else if (inst.Method.Parameters.Count == 2)
 			{
 				var value = Translate(inst.Value).ConvertTo(inst.Method.Parameters[1].Type, this);
-				AssignmentOperatorType? op = GetAssignmentOperatorTypeFromMetadataName(inst.Method.Name);
+				AssignmentOperatorType? op = GetAssignmentOperatorTypeFromMetadataName(inst.Method.Name, settings);
 				Debug.Assert(op != null);
 
 				return new AssignmentExpression(target, op.Value, value)
@@ -1822,7 +1823,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		internal static AssignmentOperatorType? GetAssignmentOperatorTypeFromMetadataName(string name)
+		internal static AssignmentOperatorType? GetAssignmentOperatorTypeFromMetadataName(string name, DecompilerSettings settings)
 		{
 			switch (name)
 			{
@@ -1846,6 +1847,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					return AssignmentOperatorType.ShiftLeft;
 				case "op_RightShift":
 					return AssignmentOperatorType.ShiftRight;
+				case "op_UnsignedRightShift" when settings.UnsignedRightShift:
+					return AssignmentOperatorType.UnsignedShiftRight;
 				default:
 					return null;
 			}

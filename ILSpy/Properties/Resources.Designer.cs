@@ -1281,6 +1281,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unsigned right shift (&gt;&gt;&gt;).
+        /// </summary>
+        public static string DecompilerSettings_UnsignedRightShift {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.UnsignedRightShift", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use discards.
         /// </summary>
         public static string DecompilerSettings_UseDiscards {

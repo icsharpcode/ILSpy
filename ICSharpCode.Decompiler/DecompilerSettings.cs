@@ -154,12 +154,13 @@ namespace ICSharpCode.Decompiler
 				requiredMembers = false;
 				numericIntPtr = false;
 				utf8StringLiterals = false;
+				unsignedRightShift = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (parameterNullCheck || scopedRef || requiredMembers || numericIntPtr || utf8StringLiterals)
+			if (parameterNullCheck || scopedRef || requiredMembers || numericIntPtr || utf8StringLiterals || unsignedRightShift)
 				return CSharp.LanguageVersion.CSharp11_0;
 			if (fileScopedNamespaces || recordStructs)
 				return CSharp.LanguageVersion.CSharp10_0;
@@ -1194,6 +1195,24 @@ namespace ICSharpCode.Decompiler
 				if (utf8StringLiterals != value)
 				{
 					utf8StringLiterals = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool unsignedRightShift = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use C# 11.0 unsigned right shift operator.
+		/// </summary>
+		[Category("C# 11.0 / VS 2022.4")]
+		[Description("DecompilerSettings.UnsignedRightShift")]
+		public bool UnsignedRightShift {
+			get { return unsignedRightShift; }
+			set {
+				if (unsignedRightShift != value)
+				{
+					unsignedRightShift = value;
 					OnPropertyChanged();
 				}
 			}
