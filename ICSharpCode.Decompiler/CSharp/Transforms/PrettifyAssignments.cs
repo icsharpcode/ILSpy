@@ -98,6 +98,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					return AssignmentOperatorType.ShiftLeft;
 				case BinaryOperatorType.ShiftRight:
 					return AssignmentOperatorType.ShiftRight;
+				case BinaryOperatorType.UnsignedShiftRight:
+					return AssignmentOperatorType.UnsignedShiftRight;
 				case BinaryOperatorType.BitwiseAnd:
 					return AssignmentOperatorType.BitwiseAnd;
 				case BinaryOperatorType.BitwiseOr:

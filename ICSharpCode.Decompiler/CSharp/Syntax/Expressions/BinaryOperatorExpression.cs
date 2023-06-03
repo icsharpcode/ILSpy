@@ -208,6 +208,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				case BinaryOperatorType.NullCoalescing:
 					return ExpressionType.Coalesce;
 				case BinaryOperatorType.Range:
+				case BinaryOperatorType.UnsignedShiftRight:
 					return ExpressionType.Extension;
 				default:
 					throw new NotSupportedException("Invalid value for BinaryOperatorType");

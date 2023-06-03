@@ -1691,6 +1691,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #endif
 		}
 
+#if CS110
+		public static void ShortUnsignedRightShiftTest(short p, CustomClass c, CustomStruct2 s)
+		{
+			//X(p >>>= 5);
+			shortField >>>= 5;
+			ShortProp >>>= 5;
+			c.ShortField >>>= 5;
+			c.ShortProp >>>= 5;
+			s.ShortField >>>= 5;
+			s.ShortProp >>>= 5;
+			customClassField.ShortField >>>= 5;
+			customClassField.ShortProp >>>= 5;
+			otherCustomStructField.ShortField >>>= 5;
+			otherCustomStructField.ShortProp >>>= 5;
+			CustomClassProp.ShortField >>>= 5;
+			CustomClassProp.ShortProp >>>= 5;
+			GetClass().ShortField >>>= 5;
+			GetClass().ShortProp >>>= 5;
+			GetRefStruct().ShortField >>>= 5;
+			GetRefStruct().ShortProp >>>= 5;
+			GetRefShort() >>>= 5;
+		}
+#endif
+
 		public static void ShortBitAndTest(short p, CustomClass c, CustomStruct2 s)
 		{
 			//short l = 0;
@@ -2053,6 +2077,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #endif
 		}
 
+#if CS110
+		public static void UshortUnsignedRightShiftTest(ushort p, CustomClass c, CustomStruct2 s)
+		{
+			//ushort l = 0;
+			//p >>>= 5;
+			//l >>>= 5;
+			ushortField >>>= 5;
+			UshortProp >>>= 5;
+			c.UshortField >>>= 5;
+			c.UshortProp >>>= 5;
+			s.UshortField >>>= 5;
+			s.UshortProp >>>= 5;
+			customClassField.UshortField >>>= 5;
+			customClassField.UshortProp >>>= 5;
+			otherCustomStructField.UshortField >>>= 5;
+			otherCustomStructField.UshortProp >>>= 5;
+			CustomClassProp.UshortField >>>= 5;
+			CustomClassProp.UshortProp >>>= 5;
+			GetClass().UshortField >>>= 5;
+			GetClass().UshortProp >>>= 5;
+			GetRefStruct().UshortField >>>= 5;
+			GetRefStruct().UshortProp >>>= 5;
+			GetRefUshort() >>>= 5;
+		}
+#endif
+
 		public static void UshortBitAndTest(ushort p, CustomClass c, CustomStruct2 s)
 		{
 			//ushort l = 0;
@@ -2414,6 +2464,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			GetRefInt() >>= 5;
 #endif
 		}
+
+#if CS110
+		public static void IntUnsignedRightShiftTest(int p, CustomClass c, CustomStruct2 s)
+		{
+			X(p >>>= 5);
+			intField >>>= 5;
+			IntProp >>>= 5;
+			c.IntField >>>= 5;
+			c.IntProp >>>= 5;
+			s.IntField >>>= 5;
+			s.IntProp >>>= 5;
+			customClassField.IntField >>>= 5;
+			customClassField.IntProp >>>= 5;
+			otherCustomStructField.IntField >>>= 5;
+			otherCustomStructField.IntProp >>>= 5;
+			CustomClassProp.IntField >>>= 5;
+			CustomClassProp.IntProp >>>= 5;
+			GetClass().IntField >>>= 5;
+			GetClass().IntProp >>>= 5;
+			GetRefStruct().IntField >>>= 5;
+			GetRefStruct().IntProp >>>= 5;
+			GetRefInt() >>>= 5;
+		}
+#endif
 
 		public static void IntBitAndTest(int p, CustomClass c, CustomStruct2 s)
 		{

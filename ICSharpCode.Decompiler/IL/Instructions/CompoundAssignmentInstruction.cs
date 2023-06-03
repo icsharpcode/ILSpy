@@ -215,8 +215,9 @@ namespace ICSharpCode.Decompiler.IL
 						return false; // operator not supported on pointer types
 				}
 			}
-			else if (type.IsKnownType(KnownTypeCode.IntPtr) || type.IsKnownType(KnownTypeCode.UIntPtr))
+			else if ((type.IsKnownType(KnownTypeCode.IntPtr) || type.IsKnownType(KnownTypeCode.UIntPtr)) && type.Kind is not TypeKind.NInt or TypeKind.NUInt)
 			{
+				// If the LHS is C# 9 IntPtr (but not nint or C# 11 IntPtr):
 				// "target.intptr *= 2;" is compiler error, but
 				// "target.intptr *= (nint)2;" works
 				if (settings != null && !settings.NativeIntegers)
@@ -234,16 +235,17 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			if (binary.Sign != Sign.None)
 			{
+				bool signMismatchAllowed = (binary.Sign == Sign.Unsigned && binary.Operator == BinaryNumericOperator.ShiftRight && (settings == null || settings.UnsignedRightShift));
 				if (type.IsCSharpSmallIntegerType())
 				{
 					// C# will use numeric promotion to int, binary op must be signed
-					if (binary.Sign != Sign.Signed)
+					if (binary.Sign != Sign.Signed && !signMismatchAllowed)
 						return false;
 				}
 				else
 				{
-					// C# will use sign from type
-					if (type.GetSign() != binary.Sign)
+					// C# will use sign from type; except for right shift with C# 11 >>> operator.
+					if (type.GetSign() != binary.Sign && !signMismatchAllowed)
 						return false;
 				}
 			}
