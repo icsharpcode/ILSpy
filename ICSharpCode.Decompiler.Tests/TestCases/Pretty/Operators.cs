@@ -217,6 +217,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			c = a - b;
 			c = a * b;
 			c = a / b;
+#if CS110
+			checked
+			{
+				c = a + b;
+				c = a - b;
+				c = a * b;
+				c = a / b;
+			}
+			// force end of checked block:
+			++a;
+#endif
+
 			c = a % b;
 			c = a & b;
 			c = a | b;
@@ -232,6 +244,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			c = +a;
 			c = ++a;
 			c = --a;
+#if CS110
+			checked
+			{
+				c = -a;
+				c = ++a;
+				c = --a;
+			}
+			// force end of checked block:
+			++a;
+#endif
 			if (a)
 			{
 				Console.WriteLine("a");
@@ -265,6 +287,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("a >= b");
 			}
 			int num = (int)a;
+#if CS110
+			num = checked((int)a);
+			// force end of checked block:
+			num = (int)a;
+#endif
 			a = num;
 		}
 	}

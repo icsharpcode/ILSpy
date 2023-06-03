@@ -315,7 +315,18 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.Method = method;
 			Debug.Assert(Method.IsOperator || IsStringConcat(method));
-			Debug.Assert(evalMode == CompoundEvalMode.EvaluatesToNewValue || (Method.Name == "op_Increment" || Method.Name == "op_Decrement"));
+			Debug.Assert(evalMode == CompoundEvalMode.EvaluatesToNewValue || IsIncrementOrDecrement(method));
+		}
+
+		public static bool IsIncrementOrDecrement(IMethod method, DecompilerSettings? settings = null)
+		{
+			if (!(method.IsOperator && method.IsStatic))
+				return false;
+			if (method.Name is "op_Increment" or "op_Decrement")
+				return true;
+			if (method.Name is "op_CheckedIncrement" or "op_CheckedDecrement")
+				return settings?.CheckedOperators ?? true;
+			return false;
 		}
 
 		public static bool IsStringConcat(IMethod method)

@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Linq;
 using System.Reflection;
 
@@ -142,10 +143,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					break;
 			}
 
-			BinaryOperatorType? bop = GetBinaryOperatorTypeFromMetadataName(method.Name, context.Settings);
+			bool isChecked;
+			BinaryOperatorType? bop = GetBinaryOperatorTypeFromMetadataName(method.Name, out isChecked, context.Settings);
 			if (bop != null && arguments.Length == 2)
 			{
 				invocationExpression.Arguments.Clear(); // detach arguments from invocationExpression
+				if (isChecked)
+				{
+					invocationExpression.AddAnnotation(AddCheckedBlocks.CheckedAnnotation);
+				}
+				else if (HasCheckedEquivalent(method))
+				{
+					invocationExpression.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
+				}
 				invocationExpression.ReplaceWith(
 					new BinaryOperatorExpression(
 						arguments[0].UnwrapInDirectionExpression(),
@@ -155,9 +165,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				);
 				return;
 			}
-			UnaryOperatorType? uop = GetUnaryOperatorTypeFromMetadataName(method.Name);
+			UnaryOperatorType? uop = GetUnaryOperatorTypeFromMetadataName(method.Name, out isChecked, context.Settings);
 			if (uop != null && arguments.Length == 1)
 			{
+				if (isChecked)
+				{
+					invocationExpression.AddAnnotation(AddCheckedBlocks.CheckedAnnotation);
+				}
+				else if (HasCheckedEquivalent(method))
+				{
+					invocationExpression.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
+				}
 				if (uop == UnaryOperatorType.Increment || uop == UnaryOperatorType.Decrement)
 				{
 					// `op_Increment(a)` is not equivalent to `++a`,
@@ -174,17 +192,27 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							).CopyAnnotationsFrom(invocationExpression)
 						);
 					}
-					return;
 				}
-				arguments[0].Remove(); // detach argument
-				invocationExpression.ReplaceWith(
-					new UnaryOperatorExpression(uop.Value, arguments[0].UnwrapInDirectionExpression()).CopyAnnotationsFrom(invocationExpression)
-				);
+				else
+				{
+					arguments[0].Remove(); // detach argument
+					invocationExpression.ReplaceWith(
+						new UnaryOperatorExpression(uop.Value, arguments[0].UnwrapInDirectionExpression()).CopyAnnotationsFrom(invocationExpression)
+					);
+				}
 				return;
 			}
-			if (method.Name == "op_Explicit" && arguments.Length == 1)
+			if (method.Name is "op_Explicit" or "op_CheckedExplicit" && arguments.Length == 1)
 			{
 				arguments[0].Remove(); // detach argument
+				if (method.Name == "op_CheckedExplicit")
+				{
+					invocationExpression.AddAnnotation(AddCheckedBlocks.CheckedAnnotation);
+				}
+				else if (HasCheckedEquivalent(method))
+				{
+					invocationExpression.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
+				}
 				invocationExpression.ReplaceWith(
 					new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.ReturnType), arguments[0].UnwrapInDirectionExpression())
 						.CopyAnnotationsFrom(invocationExpression)
@@ -198,6 +226,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 
 			return;
+		}
+
+		internal static bool HasCheckedEquivalent(IMethod method)
+		{
+			string name = method.Name;
+			if (name.StartsWith("op_", StringComparison.Ordinal))
+				name = "op_Checked" + name.Substring(3);
+			return method.DeclaringType.GetMethods(m => m.IsOperator && m.Name == name).Any();
 		}
 
 		bool IsInstantiableTypeParameter(IType type)
@@ -350,8 +386,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		static BinaryOperatorType? GetBinaryOperatorTypeFromMetadataName(string name, DecompilerSettings settings)
+		static BinaryOperatorType? GetBinaryOperatorTypeFromMetadataName(string name, out bool isChecked, DecompilerSettings settings)
 		{
+			isChecked = false;
 			switch (name)
 			{
 				case "op_Addition":
@@ -361,6 +398,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				case "op_Multiply":
 					return BinaryOperatorType.Multiply;
 				case "op_Division":
+					return BinaryOperatorType.Divide;
+				case "op_CheckedAddition" when settings.CheckedOperators:
+					isChecked = true;
+					return BinaryOperatorType.Add;
+				case "op_CheckedSubtraction" when settings.CheckedOperators:
+					isChecked = true;
+					return BinaryOperatorType.Subtract;
+				case "op_CheckedMultiply" when settings.CheckedOperators:
+					isChecked = true;
+					return BinaryOperatorType.Multiply;
+				case "op_CheckedDivision" when settings.CheckedOperators:
+					isChecked = true;
 					return BinaryOperatorType.Divide;
 				case "op_Modulus":
 					return BinaryOperatorType.Modulus;
@@ -393,8 +442,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		static UnaryOperatorType? GetUnaryOperatorTypeFromMetadataName(string name)
+		static UnaryOperatorType? GetUnaryOperatorTypeFromMetadataName(string name, out bool isChecked, DecompilerSettings settings)
 		{
+			isChecked = false;
 			switch (name)
 			{
 				case "op_LogicalNot":
@@ -403,11 +453,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					return UnaryOperatorType.BitNot;
 				case "op_UnaryNegation":
 					return UnaryOperatorType.Minus;
+				case "op_CheckedUnaryNegation" when settings.CheckedOperators:
+					isChecked = true;
+					return UnaryOperatorType.Minus;
 				case "op_UnaryPlus":
 					return UnaryOperatorType.Plus;
 				case "op_Increment":
 					return UnaryOperatorType.Increment;
 				case "op_Decrement":
+					return UnaryOperatorType.Decrement;
+				case "op_CheckedIncrement" when settings.CheckedOperators:
+					isChecked = true;
+					return UnaryOperatorType.Increment;
+				case "op_CheckedDecrement" when settings.CheckedOperators:
+					isChecked = true;
 					return UnaryOperatorType.Decrement;
 				default:
 					return null;

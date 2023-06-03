@@ -297,10 +297,16 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 							ConvertType(member.ReturnType, writer, formattingPolicy);
 							break;
 						case "op_Explicit":
+						case "op_CheckedExplicit":
 							writer.WriteKeyword(OperatorDeclaration.ExplicitRole, "explicit");
 							writer.Space();
 							writer.WriteKeyword(OperatorDeclaration.OperatorKeywordRole, "operator");
 							writer.Space();
+							if (member.Name == "op_CheckedExplicit")
+							{
+								writer.WriteToken(OperatorDeclaration.CheckedKeywordRole, "checked");
+								writer.Space();
+							}
 							ConvertType(member.ReturnType, writer, formattingPolicy);
 							break;
 						default:
