@@ -2528,7 +2528,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StartNode(operatorDeclaration);
 			WriteAttributes(operatorDeclaration.Attributes);
 			WriteModifiers(operatorDeclaration.ModifierTokens);
-			if (operatorDeclaration.OperatorType == OperatorType.Explicit)
+			if (operatorDeclaration.OperatorType == OperatorType.Explicit || operatorDeclaration.OperatorType == OperatorType.CheckedExplicit)
 			{
 				WriteKeyword(OperatorDeclaration.ExplicitRole);
 			}
@@ -2542,7 +2542,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			WriteKeyword(OperatorDeclaration.OperatorKeywordRole);
 			Space();
+			if (OperatorDeclaration.IsChecked(operatorDeclaration.OperatorType))
+			{
+				WriteKeyword(OperatorDeclaration.CheckedKeywordRole);
+				Space();
+			}
 			if (operatorDeclaration.OperatorType == OperatorType.Explicit
+				|| operatorDeclaration.OperatorType == OperatorType.CheckedExplicit
 				|| operatorDeclaration.OperatorType == OperatorType.Implicit)
 			{
 				operatorDeclaration.ReturnType.AcceptVisitor(this);
@@ -3082,7 +3088,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					break;
 				case SymbolKind.Operator:
 					var opType = documentationReference.OperatorType;
-					if (opType == OperatorType.Explicit)
+					if (opType == OperatorType.Explicit || opType == OperatorType.CheckedExplicit)
 					{
 						WriteKeyword(OperatorDeclaration.ExplicitRole);
 					}
@@ -3092,7 +3098,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					}
 					WriteKeyword(OperatorDeclaration.OperatorKeywordRole);
 					Space();
-					if (opType == OperatorType.Explicit || opType == OperatorType.Implicit)
+					if (OperatorDeclaration.IsChecked(opType))
+					{
+						WriteKeyword(OperatorDeclaration.CheckedKeywordRole);
+						Space();
+					}
+					if (opType == OperatorType.Explicit || opType == OperatorType.Implicit || opType == OperatorType.CheckedExplicit)
 					{
 						documentationReference.ConversionOperatorReturnType.AcceptVisitor(this);
 					}

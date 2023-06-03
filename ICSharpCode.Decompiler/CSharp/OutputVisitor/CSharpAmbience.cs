@@ -238,6 +238,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			astBuilder.SupportRecordClasses = (ConversionFlags & ConversionFlags.SupportRecordClasses) != 0;
 			astBuilder.SupportRecordStructs = (ConversionFlags & ConversionFlags.SupportRecordStructs) != 0;
 			astBuilder.SupportUnsignedRightShift = (ConversionFlags & ConversionFlags.SupportUnsignedRightShift) != 0;
+			astBuilder.SupportOperatorChecked = (ConversionFlags & ConversionFlags.SupportOperatorChecked) != 0;
 			return astBuilder;
 		}
 
@@ -306,10 +307,19 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 							writer.WriteKeyword(OperatorDeclaration.OperatorKeywordRole, "operator");
 							writer.Space();
 							var operatorType = OperatorDeclaration.GetOperatorType(member.Name);
-							if (operatorType.HasValue)
+							if (operatorType.HasValue && !((ConversionFlags & ConversionFlags.SupportOperatorChecked) == 0 && OperatorDeclaration.IsChecked(operatorType.Value)))
+							{
+								if (OperatorDeclaration.IsChecked(operatorType.Value))
+								{
+									writer.WriteToken(OperatorDeclaration.CheckedKeywordRole, "checked");
+									writer.Space();
+								}
 								writer.WriteToken(OperatorDeclaration.GetRole(operatorType.Value), OperatorDeclaration.GetToken(operatorType.Value));
+							}
 							else
+							{
 								writer.WriteIdentifier(node.NameToken);
+							}
 							break;
 					}
 					break;

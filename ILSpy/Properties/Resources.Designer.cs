@@ -766,6 +766,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to User-defined checked operators.
+        /// </summary>
+        public static string DecompilerSettings_CheckedOperators {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.CheckedOperators", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Decompile anonymous methods/lambdas.
         /// </summary>
         public static string DecompilerSettings_DecompileAnonymousMethodsLambdas {

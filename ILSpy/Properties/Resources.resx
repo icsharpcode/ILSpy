@@ -1069,4 +1069,7 @@ Do you want to continue?</value>
   <data name="_Window" xml:space="preserve">
     <value>_Window</value>
   </data>
+  <data name="DecompilerSettings.CheckedOperators" xml:space="preserve">
+    <value>User-defined checked operators</value>
+  </data>
 </root>

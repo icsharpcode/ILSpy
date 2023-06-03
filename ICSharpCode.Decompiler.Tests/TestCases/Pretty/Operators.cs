@@ -42,6 +42,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return null;
 		}
 
+#if CS110
+		public static AllOperators operator checked +(AllOperators a, AllOperators b)
+		{
+			return null;
+		}
+
+		public static AllOperators operator checked -(AllOperators a, AllOperators b)
+		{
+			return null;
+		}
+
+		public static AllOperators operator checked *(AllOperators a, AllOperators b)
+		{
+			return null;
+		}
+
+		public static AllOperators operator checked /(AllOperators a, AllOperators b)
+		{
+			return null;
+		}
+#endif
+
 		public static AllOperators operator %(AllOperators a, AllOperators b)
 		{
 			return null;
@@ -109,6 +131,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return null;
 		}
 
+#if CS110
+		public static AllOperators operator checked -(AllOperators a)
+		{
+			return null;
+		}
+
+		public static AllOperators operator checked ++(AllOperators a)
+		{
+			return null;
+		}
+
+		public static AllOperators operator checked --(AllOperators a)
+		{
+			return null;
+		}
+#endif
+
 		public static bool operator true(AllOperators a)
 		{
 			return false;
@@ -158,6 +197,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return 0;
 		}
+
+#if CS110
+		public static explicit operator checked int(AllOperators a)
+		{
+			return 0;
+		}
+#endif
 	}
 
 	public class UseAllOperators
