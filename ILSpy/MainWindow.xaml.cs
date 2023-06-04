@@ -57,6 +57,11 @@ using ICSharpCode.TreeView;
 
 using Microsoft.Win32;
 
+using NetSparkleUpdater.Enums;
+using NetSparkleUpdater.SignatureVerifiers;
+using NetSparkleUpdater;
+using System.Runtime.InteropServices;
+
 namespace ICSharpCode.ILSpy
 {
 	/// <summary>
@@ -71,6 +76,8 @@ namespace ICSharpCode.ILSpy
 		FilterSettings filterSettings;
 		AssemblyList assemblyList;
 		AssemblyListTreeNode assemblyListTreeNode;
+
+		SparkleUpdater _sparkle;
 
 		static MainWindow instance;
 
@@ -895,6 +902,37 @@ namespace ICSharpCode.ILSpy
 			}
 
 			Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() => OpenAssemblies(spySettings)));
+
+
+			var s = new UpdateSettings(spySettings);
+			bool automaticCheckingEnabled = s.AutomaticUpdateCheckEnabled;
+#if DEBUG
+			// automaticCheckingEnabled = false;
+#endif
+
+			if (automaticCheckingEnabled)
+				EnableSparkleUpdateChecking();
+		}
+
+		void EnableSparkleUpdateChecking()
+		{
+			// We'd need two appcast.xml's, one for x64 and one for arm64
+			if (RuntimeInformation.ProcessArchitecture != Architecture.X64)
+				return;
+
+			// https://github.com/NetSparkleUpdater/NetSparkle/blob/develop/src/NetSparkle.Samples.NetCore.WPF/MainWindow.xaml.cs
+			string sparkleSettingsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ICSharpCode\\ILSpy-sparkle.json");
+
+			_sparkle = new SparkleUpdater(
+				"https://ilspy.net/appcast.xml",
+				new Ed25519Checker(SecurityMode.Strict, "s2P6MPexSRSjod77aWUjgVKj/gKYYAeqgHY/0Gf8b78=")
+			) {
+				UIFactory = new NetSparkleUpdater.UI.WPF.UIFactory(null),
+				RelaunchAfterUpdate = false,
+				CustomInstallerArguments = "",
+				// Configuration = new JSONConfiguration(null, sparkleSettingsPath)
+			};
+			_sparkle.StartLoop(true);
 		}
 
 		void OpenAssemblies(ILSpySettings spySettings)
@@ -951,6 +989,9 @@ namespace ICSharpCode.ILSpy
 
 		public async Task ShowMessageIfUpdatesAvailableAsync(ILSpySettings spySettings, bool forceCheck = false)
 		{
+			// TODO: Properly replace old code-paths, this is for UI testing of Netsparkle only
+			var info = await _sparkle.CheckForUpdatesAtUserRequest();
+
 			string downloadUrl;
 			if (forceCheck)
 			{
