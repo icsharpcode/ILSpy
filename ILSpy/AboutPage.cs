@@ -218,74 +218,6 @@ namespace ICSharpCode.ILSpy
 			return latestAvailableVersion;
 		}
 
-		sealed class AvailableVersionInfo
-		{
-			public Version Version;
-			public string DownloadUrl;
-		}
-
-		sealed class UpdateSettings : INotifyPropertyChanged
-		{
-			public UpdateSettings(ILSpySettings spySettings)
-			{
-				XElement s = spySettings["UpdateSettings"];
-				this.automaticUpdateCheckEnabled = (bool?)s.Element("AutomaticUpdateCheckEnabled") ?? true;
-				try
-				{
-					this.lastSuccessfulUpdateCheck = (DateTime?)s.Element("LastSuccessfulUpdateCheck");
-				}
-				catch (FormatException)
-				{
-					// avoid crashing on settings files invalid due to
-					// https://github.com/icsharpcode/ILSpy/issues/closed/#issue/2
-				}
-			}
-
-			bool automaticUpdateCheckEnabled;
-
-			public bool AutomaticUpdateCheckEnabled {
-				get { return automaticUpdateCheckEnabled; }
-				set {
-					if (automaticUpdateCheckEnabled != value)
-					{
-						automaticUpdateCheckEnabled = value;
-						Save();
-						OnPropertyChanged(nameof(AutomaticUpdateCheckEnabled));
-					}
-				}
-			}
-
-			DateTime? lastSuccessfulUpdateCheck;
-
-			public DateTime? LastSuccessfulUpdateCheck {
-				get { return lastSuccessfulUpdateCheck; }
-				set {
-					if (lastSuccessfulUpdateCheck != value)
-					{
-						lastSuccessfulUpdateCheck = value;
-						Save();
-						OnPropertyChanged(nameof(LastSuccessfulUpdateCheck));
-					}
-				}
-			}
-
-			public void Save()
-			{
-				XElement updateSettings = new XElement("UpdateSettings");
-				updateSettings.Add(new XElement("AutomaticUpdateCheckEnabled", automaticUpdateCheckEnabled));
-				if (lastSuccessfulUpdateCheck != null)
-					updateSettings.Add(new XElement("LastSuccessfulUpdateCheck", lastSuccessfulUpdateCheck));
-				ILSpySettings.SaveSettings(updateSettings);
-			}
-
-			public event PropertyChangedEventHandler PropertyChanged;
-
-			void OnPropertyChanged(string propertyName)
-			{
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-			}
-		}
-
 		/// <summary>
 		/// If automatic update checking is enabled, checks if there are any updates available.
 		/// Returns the download URL if an update is available.
@@ -349,4 +281,73 @@ namespace ICSharpCode.ILSpy
 	{
 		void Write(ISmartTextOutput textOutput);
 	}
+
+	sealed class AvailableVersionInfo
+	{
+		public Version Version;
+		public string DownloadUrl;
+	}
+
+	sealed class UpdateSettings : INotifyPropertyChanged
+	{
+		public UpdateSettings(ILSpySettings spySettings)
+		{
+			XElement s = spySettings["UpdateSettings"];
+			this.automaticUpdateCheckEnabled = (bool?)s.Element("AutomaticUpdateCheckEnabled") ?? true;
+			try
+			{
+				this.lastSuccessfulUpdateCheck = (DateTime?)s.Element("LastSuccessfulUpdateCheck");
+			}
+			catch (FormatException)
+			{
+				// avoid crashing on settings files invalid due to
+				// https://github.com/icsharpcode/ILSpy/issues/closed/#issue/2
+			}
+		}
+
+		bool automaticUpdateCheckEnabled;
+
+		public bool AutomaticUpdateCheckEnabled {
+			get { return automaticUpdateCheckEnabled; }
+			set {
+				if (automaticUpdateCheckEnabled != value)
+				{
+					automaticUpdateCheckEnabled = value;
+					Save();
+					OnPropertyChanged(nameof(AutomaticUpdateCheckEnabled));
+				}
+			}
+		}
+
+		DateTime? lastSuccessfulUpdateCheck;
+
+		public DateTime? LastSuccessfulUpdateCheck {
+			get { return lastSuccessfulUpdateCheck; }
+			set {
+				if (lastSuccessfulUpdateCheck != value)
+				{
+					lastSuccessfulUpdateCheck = value;
+					Save();
+					OnPropertyChanged(nameof(LastSuccessfulUpdateCheck));
+				}
+			}
+		}
+
+		public void Save()
+		{
+			XElement updateSettings = new XElement("UpdateSettings");
+			updateSettings.Add(new XElement("AutomaticUpdateCheckEnabled", automaticUpdateCheckEnabled));
+			if (lastSuccessfulUpdateCheck != null)
+				updateSettings.Add(new XElement("LastSuccessfulUpdateCheck", lastSuccessfulUpdateCheck));
+			ILSpySettings.SaveSettings(updateSettings);
+		}
+
+		public event PropertyChangedEventHandler PropertyChanged;
+
+		void OnPropertyChanged(string propertyName)
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
+	}
+
 }
