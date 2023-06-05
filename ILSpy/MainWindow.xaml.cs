@@ -25,6 +25,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -57,10 +58,10 @@ using ICSharpCode.TreeView;
 
 using Microsoft.Win32;
 
+using NetSparkleUpdater;
+using NetSparkleUpdater.Configurations;
 using NetSparkleUpdater.Enums;
 using NetSparkleUpdater.SignatureVerifiers;
-using NetSparkleUpdater;
-using System.Runtime.InteropServices;
 
 namespace ICSharpCode.ILSpy
 {
@@ -906,9 +907,15 @@ namespace ICSharpCode.ILSpy
 
 			var s = new UpdateSettings(spySettings);
 			bool automaticCheckingEnabled = s.AutomaticUpdateCheckEnabled;
+
+			// TODO: That would need to be way more sophisticated - we ship zip, msi, vsix (actually doing an update-check there is wrong even today)
+			//       Multiple of those could be installed on the same machine in multiple versions (esp. zip)
+			//       Somehow we'd need to "tag" the version running from our msi installer, and only then offering auto-update
+
 #if DEBUG
 			// automaticCheckingEnabled = false;
 #endif
+			// TODO: Additional check if branch version
 
 			if (automaticCheckingEnabled)
 				EnableSparkleUpdateChecking();
@@ -930,7 +937,7 @@ namespace ICSharpCode.ILSpy
 				UIFactory = new NetSparkleUpdater.UI.WPF.UIFactory(null),
 				RelaunchAfterUpdate = false,
 				CustomInstallerArguments = "",
-				// Configuration = new JSONConfiguration(null, sparkleSettingsPath)
+				Configuration = new JSONConfiguration(null, sparkleSettingsPath)
 			};
 			_sparkle.StartLoop(true);
 		}

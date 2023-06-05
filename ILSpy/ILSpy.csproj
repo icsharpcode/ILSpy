@@ -45,7 +45,7 @@
     <PackageReference Include="Microsoft.VisualStudio.Composition" Version="17.4.16" />
     <PackageReference Include="DataGridExtensions" Version="2.5.14" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
-    <PackageReference Include="NetSparkleUpdater.UI.WPF" Version="2.2.2" />
+    <PackageReference Include="NetSparkleUpdater.UI.WPF" Version="2.3.0-preview20230604001" />
     <PackageReference Include="TomsToolbox.Wpf.Styles" Version="$(WpfStylesToolboxVersion)" />
   </ItemGroup>
 
