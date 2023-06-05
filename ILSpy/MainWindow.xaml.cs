@@ -930,15 +930,18 @@ namespace ICSharpCode.ILSpy
 			// https://github.com/NetSparkleUpdater/NetSparkle/blob/develop/src/NetSparkle.Samples.NetCore.WPF/MainWindow.xaml.cs
 			string sparkleSettingsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ICSharpCode\\ILSpy-sparkle.json");
 
+			// var icsdasm = typeof(DecompilerVersionInfo).Assembly.FullName;
+
 			_sparkle = new SparkleUpdater(
 				"https://ilspy.net/appcast.xml",
 				new Ed25519Checker(SecurityMode.Strict, "s2P6MPexSRSjod77aWUjgVKj/gKYYAeqgHY/0Gf8b78=")
 			) {
-				UIFactory = new NetSparkleUpdater.UI.WPF.UIFactory(null),
+				UIFactory = new NetSparkleUpdater.UI.WPF.UIFactory(Images.ILSpyIcon),
 				RelaunchAfterUpdate = false,
 				CustomInstallerArguments = "",
-				Configuration = new JSONConfiguration(null, sparkleSettingsPath)
+				Configuration = new JSONConfiguration(new NetSparkleUpdater.AssemblyAccessors.AssemblyReflectionAccessor(null), sparkleSettingsPath)
 			};
+
 			_sparkle.StartLoop(true);
 		}
 
