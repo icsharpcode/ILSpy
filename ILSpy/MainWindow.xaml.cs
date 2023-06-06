@@ -62,6 +62,7 @@ using NetSparkleUpdater;
 using NetSparkleUpdater.Configurations;
 using NetSparkleUpdater.Enums;
 using NetSparkleUpdater.SignatureVerifiers;
+using NetSparkleUpdater.UI.WPF;
 
 namespace ICSharpCode.ILSpy
 {
@@ -910,7 +911,8 @@ namespace ICSharpCode.ILSpy
 
 			// TODO: That would need to be way more sophisticated - we ship zip, msi, vsix (actually doing an update-check there is wrong even today)
 			//       Multiple of those could be installed on the same machine in multiple versions (esp. zip)
-			//       Somehow we'd need to "tag" the version running from our msi installer, and only then offering auto-update
+			//       Somehow we'd need to "tag" the version running from our msi installer, and only then offering auto-update (eg MsiInstaller.txt marker file)
+			//       And then have an IUpdateService with one impl existing plus one for auto-updating
 
 #if DEBUG
 			// automaticCheckingEnabled = false;
@@ -927,16 +929,30 @@ namespace ICSharpCode.ILSpy
 			if (RuntimeInformation.ProcessArchitecture != Architecture.X64)
 				return;
 
+			bool isLightTheme = ThemeManager.Current.Theme.Contains("light", StringComparison.InvariantCultureIgnoreCase);
+
+			var extraHeadAdditionForReleaseNotes = "<style>";
+			if (!isLightTheme)
+			{
+				extraHeadAdditionForReleaseNotes +=
+					"body {background-color: #212121; } " +
+					"h1, h2, li { color: #e8e8e8; } ";
+			}
+			extraHeadAdditionForReleaseNotes +=
+				"h1, h2 { margin-top: -8px; margin-left: 6px; } ";
+			extraHeadAdditionForReleaseNotes += "</style>";
+
 			// https://github.com/NetSparkleUpdater/NetSparkle/blob/develop/src/NetSparkle.Samples.NetCore.WPF/MainWindow.xaml.cs
 			string sparkleSettingsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ICSharpCode\\ILSpy-sparkle.json");
-
-			// var icsdasm = typeof(DecompilerVersionInfo).Assembly.FullName;
 
 			_sparkle = new SparkleUpdater(
 				"https://ilspy.net/appcast.xml",
 				new Ed25519Checker(SecurityMode.Strict, "s2P6MPexSRSjod77aWUjgVKj/gKYYAeqgHY/0Gf8b78=")
 			) {
-				UIFactory = new NetSparkleUpdater.UI.WPF.UIFactory(Images.ILSpyIcon),
+				UIFactory = new UIFactory(Images.ILSpyIcon) {
+					UseStaticUpdateWindowBackgroundColor = false,
+					AdditionalReleaseNotesHeaderHTML = extraHeadAdditionForReleaseNotes
+				},
 				RelaunchAfterUpdate = false,
 				CustomInstallerArguments = "",
 				Configuration = new JSONConfiguration(new NetSparkleUpdater.AssemblyAccessors.AssemblyReflectionAccessor(null), sparkleSettingsPath)
