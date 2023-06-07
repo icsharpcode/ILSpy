@@ -71,7 +71,41 @@ namespace ILSpy.Installer
 					new FileShortcut("ILSpy", @"%ProgramMenu%")
 				};
 
+			Compiler.WixLocation = GetWixBinLocationForPackage();
 			Compiler.BuildMsi(project, Path.Combine(Environment.CurrentDirectory, "wix", $"ILSpy-{AppPackage.Version}-{buildPlatform}.msi"));
+		}
+
+		// Copied from https://github.com/oleg-shilo/wixsharp/blob/c4f8615ce8e47c7162edb30656669d0d326f79ff/Source/src/WixSharp/Utilities/WixBinLocator.cs#L117
+		private static string GetWixBinLocationForPackage()
+		{
+			//The global packages may be redirected with environment variable
+			//https://docs.microsoft.com/en-us/nuget/consume-packages/managing-the-global-packages-and-cache-folders
+
+			string wixBinPackageDir;
+			var nugetPackagesEnvironmentVariable = Environment.GetEnvironmentVariable("NUGET_PACKAGES");
+			if (nugetPackagesEnvironmentVariable.IsNotEmpty() && Directory.Exists(nugetPackagesEnvironmentVariable))
+			{
+				wixBinPackageDir = Path.Combine(nugetPackagesEnvironmentVariable, "wixsharp.wix.bin");
+			}
+			else
+			{
+				wixBinPackageDir = @"%userprofile%\.nuget\packages\wixsharp.wix.bin".ExpandEnvVars();
+			}
+
+			if (Directory.Exists(wixBinPackageDir))
+			{
+				Version greatestWixBinVersion = System.IO.Directory.GetDirectories(wixBinPackageDir)
+																   .Select(dirPath => new Version(dirPath.PathGetFileName()))
+																   .OrderDescending()
+																   .FirstOrDefault();
+
+				if (greatestWixBinVersion != null)
+				{
+					return wixBinPackageDir.PathJoin(greatestWixBinVersion.ToString(), @"tools\bin");
+				}
+			}
+
+			return "";
 		}
 	}
 }
