@@ -957,6 +957,7 @@ namespace ICSharpCode.ILSpy
 						w.Style = (Style)Application.Current.FindResource("DialogWindow");
 					}
 				},
+				ShowsUIOnMainThread = true,
 				RelaunchAfterUpdate = false,
 				CustomInstallerArguments = "",
 				Configuration = new JSONConfiguration(new NetSparkleUpdater.AssemblyAccessors.AssemblyReflectionAccessor(null), sparkleSettingsPath)
