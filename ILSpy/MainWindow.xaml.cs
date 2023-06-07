@@ -929,6 +929,7 @@ namespace ICSharpCode.ILSpy
 			if (RuntimeInformation.ProcessArchitecture != Architecture.X64)
 				return;
 
+			// This should update with UpdateTheme
 			bool isLightTheme = ThemeManager.Current.Theme.Contains("light", StringComparison.InvariantCultureIgnoreCase);
 
 			var extraHeadAdditionForReleaseNotes = "<style>";
@@ -951,7 +952,10 @@ namespace ICSharpCode.ILSpy
 			) {
 				UIFactory = new UIFactory(Images.ILSpyIcon) {
 					UseStaticUpdateWindowBackgroundColor = false,
-					AdditionalReleaseNotesHeaderHTML = extraHeadAdditionForReleaseNotes
+					AdditionalReleaseNotesHeaderHTML = extraHeadAdditionForReleaseNotes,
+					ProcessWindowAfterInit = (w, f) => {
+						w.Style = (Style)Application.Current.FindResource("DialogWindow");
+					}
 				},
 				RelaunchAfterUpdate = false,
 				CustomInstallerArguments = "",
