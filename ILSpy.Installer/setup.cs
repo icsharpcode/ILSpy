@@ -38,8 +38,6 @@ namespace ILSpy.Installer
 
 #if ARM64
 			project.Platform = Platform.arm64;
-			// https://github.com/oleg-shilo/wixsharp/issues/1296#issuecomment-1575523854 3.11.2 won't do, need 3.14
-			// Compiler.WixLocation = @"D:\GitWorkspace\_wix314-binaries";
 #else
 			project.Platform = Platform.x64;
 #endif

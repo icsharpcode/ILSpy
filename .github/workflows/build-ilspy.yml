@@ -90,11 +90,12 @@ jobs:
       if: matrix.configuration == 'release'    
       run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries_arm64.zip .\ILSpy\bin\Release\net6.0-windows\win-arm64\publish\fwdependent\*
 
-    - name: Build Installer (x64 framework-dependent)
+    - name: Build Installer (x64 and arm64, framework-dependent)
       if: matrix.configuration == 'release'  
       run: |
         msbuild ILSpy.Installer.sln /t:Restore /p:Configuration="Release" /p:Platform="Any CPU"
         msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU"
+        msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU" /p:DefineConstants="ARM64"
 
     # https://github.com/actions/upload-artifact
     - name: Upload VSIX (VS 2019) release build artifacts
@@ -162,12 +163,20 @@ jobs:
         path: ${{ env.StagingDirectory }}\ILSpy_binaries_arm64.zip
         if-no-files-found: error
 
-    - name: Upload installer artifact
+    - name: Upload x64 installer artifact
       if: matrix.configuration == 'release'
       uses: actions/upload-artifact@v3
       with:
-        name: ILSpy Installer ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
-        path: ILSpy.Installer\wix\*.msi
+        name: ILSpy Installer x64 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
+        path: ILSpy.Installer\wix\*-x64.msi
+        if-no-files-found: error
+
+    - name: Upload arm64 installer artifact
+      if: matrix.configuration == 'release'
+      uses: actions/upload-artifact@v3
+      with:
+        name: ILSpy Installer arm64 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
+        path: ILSpy.Installer\wix\*-arm64.msi
         if-no-files-found: error
 
     - name: Upload ilspycmd release build artifacts

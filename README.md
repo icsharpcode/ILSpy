@@ -2,7 +2,7 @@
 
 ILSpy is the open-source .NET assembly browser and decompiler.
 
-Download: [latest release](https://github.com/icsharpcode/ILSpy/releases) | [latest CI build (master)](https://github.com/icsharpcode/ILSpy/actions?query=workflow%3A%22Build+ILSpy%22+branch%3Amaster+is%3Asuccess+event%3Apush) | [Microsoft Store (RC & RTM versions only)](https://www.microsoft.com/store/apps/9MXFBKFVSQ13)
+Download: [latest release](https://github.com/icsharpcode/ILSpy/releases) | [latest CI build (master)](https://github.com/icsharpcode/ILSpy/actions?query=workflow%3A%22Build+ILSpy%22+branch%3Amaster+is%3Asuccess+event%3Apush) | [Microsoft Store (RTM versions only)](https://apps.microsoft.com/store/detail/ilspy-fresh/XP8C26VDWLP4T4)
 
 Decompiler Frontends
 -------

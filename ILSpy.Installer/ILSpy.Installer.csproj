@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="WixSharp" Version="1.20.3" />
-    <PackageReference Include="WixSharp.wix.bin" Version="3.11.2" />
+    <PackageReference Include="WixSharp" Version="1.20.4" />
+    <PackageReference Include="WixSharp.wix.bin" Version="3.14.0" />
   </ItemGroup>
 
   <ItemGroup>
