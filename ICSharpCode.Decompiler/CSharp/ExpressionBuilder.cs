@@ -1587,7 +1587,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			var rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
 			if (rr.IsError || NullableType.GetUnderlyingType(rr.Type).GetStackType() != inst.UnderlyingResultType
-				|| !IsCompatibleWithSign(left.Type, inst.Sign) || !IsCompatibleWithSign(right.Type, inst.Sign))
+				|| !IsCompatibleWithSign(rr.Type, inst.Sign))
 			{
 				// Left and right operands are incompatible, so convert them to a common type
 				Sign sign = inst.Sign;
