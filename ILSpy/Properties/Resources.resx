@@ -651,6 +651,9 @@ Are you sure you want to continue?</value>
   <data name="ManageAssembly_Lists" xml:space="preserve">
     <value>Manage assembly _lists...</value>
   </data>
+  <data name="Metadata" xml:space="preserve">
+    <value>Metadata</value>
+  </data>
   <data name="Misc" xml:space="preserve">
     <value>Misc</value>
   </data>

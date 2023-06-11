@@ -25,6 +25,7 @@ using System.Windows.Data;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 
@@ -32,7 +33,7 @@ namespace ICSharpCode.ILSpy.Metadata
 {
 	class MetadataTreeNode : ILSpyTreeNode
 	{
-		private PEFile module;
+		private readonly PEFile module;
 		private AssemblyTreeNode assemblyTreeNode;
 
 		public MetadataTreeNode(PEFile module, AssemblyTreeNode assemblyTreeNode)
@@ -42,7 +43,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			this.LazyLoading = true;
 		}
 
-		public override object Text => "Metadata";
+		public override object Text => Resources.Metadata;
 
 		public override object Icon => Images.Library;
 

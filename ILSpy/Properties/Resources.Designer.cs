@@ -1893,6 +1893,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Metadata.
+        /// </summary>
+        public static string Metadata {
+            get {
+                return ResourceManager.GetString("Metadata", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Misc.
         /// </summary>
         public static string Misc {
