@@ -97,6 +97,12 @@ jobs:
         msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU"
         msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU" /p:DefineConstants="ARM64"
 
+    - name: Build VS Extensions (for 2017-2019 and 2022)
+      if: matrix.configuration == 'release'  
+      run: |
+        msbuild ILSpy.VSExtensions.sln /t:Restore /p:Configuration="Release" /p:Platform="Any CPU"
+        msbuild ILSpy.VSExtensions.sln /p:Configuration="Release" /p:Platform="Any CPU"
+
     # https://github.com/actions/upload-artifact
     - name: Upload VSIX (VS 2019) release build artifacts
       if: matrix.configuration == 'release'

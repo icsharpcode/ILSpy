@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.33808.371
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "ILSpy.AddIn.Shared", "ILSpy.AddIn.Shared\ILSpy.AddIn.Shared.shproj", "{ACAB1E5D-B3DF-4092-AA72-692F8341E520}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ILSpy.AddIn", "ILSpy.AddIn\ILSpy.AddIn.csproj", "{A1B6B501-15D4-4237-A4C3-5EFCB71B0F74}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ILSpy.AddIn.VS2022", "ILSpy.AddIn.VS2022\ILSpy.AddIn.VS2022.csproj", "{31E6E2B0-24B4-4D2C-AC17-3B44DAACC9D4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A1B6B501-15D4-4237-A4C3-5EFCB71B0F74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B6B501-15D4-4237-A4C3-5EFCB71B0F74}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B6B501-15D4-4237-A4C3-5EFCB71B0F74}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B6B501-15D4-4237-A4C3-5EFCB71B0F74}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31E6E2B0-24B4-4D2C-AC17-3B44DAACC9D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31E6E2B0-24B4-4D2C-AC17-3B44DAACC9D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31E6E2B0-24B4-4D2C-AC17-3B44DAACC9D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31E6E2B0-24B4-4D2C-AC17-3B44DAACC9D4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {84D734FE-9E9C-4593-8927-6F45FE3E460A}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		ILSpy.AddIn.Shared\ILSpy.AddIn.Shared.projitems*{31e6e2b0-24b4-4d2c-ac17-3b44daacc9d4}*SharedItemsImports = 5
+		ILSpy.AddIn.Shared\ILSpy.AddIn.Shared.projitems*{a1b6b501-15d4-4237-a4c3-5efcb71b0f74}*SharedItemsImports = 5
+		ILSpy.AddIn.Shared\ILSpy.AddIn.Shared.projitems*{acab1e5d-b3df-4092-aa72-692f8341e520}*SharedItemsImports = 13
+	EndGlobalSection
+EndGlobal
