@@ -74,16 +74,23 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <ILSpyBuildPath>..\ILSpy\bin\$(Configuration)\net6.0-windows\win-x64\publish\fwdependent\</ILSpyBuildPath>
+    <ILSpyBuildPathX64>..\ILSpy\bin\$(Configuration)\net6.0-windows\win-x64\publish\fwdependent\</ILSpyBuildPathX64>
+    <ILSpyBuildPathArm64>..\ILSpy\bin\$(Configuration)\net6.0-windows\win-arm64\publish\fwdependent\</ILSpyBuildPathArm64>
   </PropertyGroup>
 
   <Target Name="IncludeILSpyDistributionInVSIXSubFolder" AfterTargets="ResolveProjectReferences">
     <ItemGroup>
-      <VSIXSourceItem Include="$(ILSpyBuildPath)zh-Hans\ILSpy.resources.dll;$(ILSpyBuildPath)zh-Hans\ILSpy.ReadyToRun.Plugin.resources.dll;">
-        <VSIXSubPath>\ILSpy\zh-Hans\</VSIXSubPath>
+      <VSIXSourceItem Include="$(ILSpyBuildPathX64)zh-Hans\ILSpy.resources.dll;$(ILSpyBuildPathX64)zh-Hans\ILSpy.ReadyToRun.Plugin.resources.dll;">
+        <VSIXSubPath>\x64\ILSpy\zh-Hans\</VSIXSubPath>
       </VSIXSourceItem>
-      <VSIXSourceItem Include="$(ILSpyBuildPath)*.dll;$(ILSpyBuildPath)ILSpy.exe;$(ILSpyBuildPath)*.json">
-        <VSIXSubPath>\ILSpy</VSIXSubPath>
+      <VSIXSourceItem Include="$(ILSpyBuildPathX64)*.dll;$(ILSpyBuildPathX64)ILSpy.exe;$(ILSpyBuildPathX64)*.json">
+        <VSIXSubPath>\x64\ILSpy</VSIXSubPath>
+      </VSIXSourceItem>
+      <VSIXSourceItem Include="$(ILSpyBuildPathArm64)zh-Hans\ILSpy.resources.dll;$(ILSpyBuildPathArm64)zh-Hans\ILSpy.ReadyToRun.Plugin.resources.dll;">
+        <VSIXSubPath>\arm64\ILSpy\zh-Hans\</VSIXSubPath>
+      </VSIXSourceItem>
+      <VSIXSourceItem Include="$(ILSpyBuildPathArm64)*.dll;$(ILSpyBuildPathArm64)ILSpy.exe;$(ILSpyBuildPathArm64)*.json">
+        <VSIXSubPath>\arm64\ILSpy</VSIXSubPath>
       </VSIXSourceItem>
     </ItemGroup>
   </Target>
