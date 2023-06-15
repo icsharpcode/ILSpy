@@ -41,9 +41,9 @@
     <PackageReference Include="Microsoft.CodeAnalysis" Version="4.0.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" />
     <PackageReference Include="Microsoft.VisualStudio.LanguageServices" Version="4.0.1" />
-    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.5.4065">
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.6.2164">
       <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
   </ItemGroup>
