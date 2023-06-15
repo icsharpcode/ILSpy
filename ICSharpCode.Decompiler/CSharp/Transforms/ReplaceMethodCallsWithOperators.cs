@@ -142,7 +142,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					break;
 			}
 
-			BinaryOperatorType? bop = GetBinaryOperatorTypeFromMetadataName(method.Name);
+			BinaryOperatorType? bop = GetBinaryOperatorTypeFromMetadataName(method.Name, context.Settings);
 			if (bop != null && arguments.Length == 2)
 			{
 				invocationExpression.Arguments.Clear(); // detach arguments from invocationExpression
@@ -350,7 +350,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		static BinaryOperatorType? GetBinaryOperatorTypeFromMetadataName(string name)
+		static BinaryOperatorType? GetBinaryOperatorTypeFromMetadataName(string name, DecompilerSettings settings)
 		{
 			switch (name)
 			{
@@ -374,6 +374,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					return BinaryOperatorType.ShiftLeft;
 				case "op_RightShift":
 					return BinaryOperatorType.ShiftRight;
+				case "op_UnsignedRightShift" when settings.UnsignedRightShift:
+					return BinaryOperatorType.UnsignedShiftRight;
 				case "op_Equality":
 					return BinaryOperatorType.Equality;
 				case "op_Inequality":

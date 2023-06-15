@@ -685,7 +685,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				isNullable = true;
 			}
-			if (op == BinaryOperatorType.ShiftLeft || op == BinaryOperatorType.ShiftRight)
+			if (op == BinaryOperatorType.ShiftLeft || op == BinaryOperatorType.ShiftRight || op == BinaryOperatorType.UnsignedShiftRight)
 			{
 				// special case: the shift operators allow "var x = null << null", producing int?.
 				if (lhsType.Kind == TypeKind.Null && rhsType.Kind == TypeKind.Null)
@@ -804,6 +804,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					break;
 				case BinaryOperatorType.ShiftRight:
 					methodGroup = operators.ShiftRightOperators;
+					break;
+				case BinaryOperatorType.UnsignedShiftRight:
+					methodGroup = operators.UnsignedShiftRightOperators;
 					break;
 				case BinaryOperatorType.Equality:
 				case BinaryOperatorType.InEquality:
@@ -1256,6 +1259,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return "op_LeftShift";
 				case BinaryOperatorType.ShiftRight:
 					return "op_RightShift";
+				case BinaryOperatorType.UnsignedShiftRight:
+					return "op_UnsignedRightShift";
 				case BinaryOperatorType.Equality:
 					return "op_Equality";
 				case BinaryOperatorType.InEquality:

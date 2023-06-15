@@ -226,6 +226,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public bool SupportRecordStructs { get; set; }
 
 		/// <summary>
+		/// Controls whether C# 11 "operator >>>" is supported.
+		/// </summary>
+		public bool SupportUnsignedRightShift { get; set; }
+
+		/// <summary>
 		/// Controls whether all fully qualified type names should be prefixed with "global::".
 		/// </summary>
 		public bool AlwaysUseGlobal { get; set; }
@@ -2216,6 +2221,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			OperatorType? opType = OperatorDeclaration.GetOperatorType(op.Name);
 			if (opType == null)
+				return ConvertMethod(op);
+			if (opType == OperatorType.UnsignedRightShift && !SupportUnsignedRightShift)
 				return ConvertMethod(op);
 
 			OperatorDeclaration decl = new OperatorDeclaration();

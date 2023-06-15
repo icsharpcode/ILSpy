@@ -47,6 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static TokenRole ModulusRole = new TokenRole("%=");
 		public readonly static TokenRole ShiftLeftRole = new TokenRole("<<=");
 		public readonly static TokenRole ShiftRightRole = new TokenRole(">>=");
+		public readonly static TokenRole UnsignedShiftRightRole = new TokenRole(">>>=");
 		public readonly static TokenRole BitwiseAndRole = new TokenRole("&=");
 		public readonly static TokenRole BitwiseOrRole = new TokenRole("|=");
 		public readonly static TokenRole ExclusiveOrRole = new TokenRole("^=");
@@ -129,6 +130,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return ShiftLeftRole;
 				case AssignmentOperatorType.ShiftRight:
 					return ShiftRightRole;
+				case AssignmentOperatorType.UnsignedShiftRight:
+					return UnsignedShiftRightRole;
 				case AssignmentOperatorType.BitwiseAnd:
 					return BitwiseAndRole;
 				case AssignmentOperatorType.BitwiseOr:
@@ -164,6 +167,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return BinaryOperatorType.ShiftLeft;
 				case AssignmentOperatorType.ShiftRight:
 					return BinaryOperatorType.ShiftRight;
+				case AssignmentOperatorType.UnsignedShiftRight:
+					return BinaryOperatorType.UnsignedShiftRight;
 				case AssignmentOperatorType.BitwiseAnd:
 					return BinaryOperatorType.BitwiseAnd;
 				case AssignmentOperatorType.BitwiseOr:
@@ -195,6 +200,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return ExpressionType.LeftShiftAssign;
 				case AssignmentOperatorType.ShiftRight:
 					return ExpressionType.RightShiftAssign;
+				case AssignmentOperatorType.UnsignedShiftRight:
+					return ExpressionType.Extension;
 				case AssignmentOperatorType.BitwiseAnd:
 					return ExpressionType.AndAssign;
 				case AssignmentOperatorType.BitwiseOr:
@@ -259,6 +266,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		ShiftLeft,
 		/// <summary>left >>= right</summary>
 		ShiftRight,
+		/// <summary>left >>>= right</summary>
+		UnsignedShiftRight,
 
 		/// <summary>left &amp;= right</summary>
 		BitwiseAnd,
