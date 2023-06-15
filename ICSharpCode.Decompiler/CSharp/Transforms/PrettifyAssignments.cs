@@ -19,6 +19,7 @@
 using System;
 using System.Linq;
 
+using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -44,10 +45,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			base.VisitAssignmentExpression(assignment);
 			// Combine "x = x op y" into "x op= y"
-			BinaryOperatorExpression binary = assignment.Right as BinaryOperatorExpression;
-			if (binary != null && assignment.Operator == AssignmentOperatorType.Assign)
+			// Also supports "x = (T)(x op y)" -> "x op= y", if x.GetType() == T
+			// and y is implicitly convertible to T.
+			Expression rhs = assignment.Right;
+			IType expectedType = null;
+			if (assignment.Right is CastExpression { Type: var astType } cast)
 			{
-				if (CanConvertToCompoundAssignment(assignment.Left) && assignment.Left.IsMatch(binary.Left))
+				rhs = cast.Expression;
+				expectedType = astType.GetResolveResult().Type;
+			}
+			if (rhs is BinaryOperatorExpression binary && assignment.Operator == AssignmentOperatorType.Assign)
+			{
+				if (CanConvertToCompoundAssignment(assignment.Left) && assignment.Left.IsMatch(binary.Left)
+					&& IsImplicitlyConvertible(binary.Right, expectedType))
 				{
 					assignment.Operator = GetAssignmentOperatorForBinaryOperator(binary.Operator);
 					if (assignment.Operator != AssignmentOperatorType.Assign)
@@ -77,6 +87,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						assignment.ReplaceWith(new UnaryOperatorExpression(type, assignment.Left.Detach()).CopyAnnotationsFrom(assignment));
 					}
 				}
+			}
+
+			bool IsImplicitlyConvertible(Expression rhs, IType expectedType)
+			{
+				if (expectedType == null)
+					return true;
+
+				var conversions = CSharpConversions.Get(context.TypeSystem);
+				return conversions.ImplicitConversion(rhs.GetResolveResult(), expectedType).IsImplicit;
 			}
 		}
 
