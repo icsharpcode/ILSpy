@@ -50,6 +50,7 @@ using ICSharpCode.ILSpy.Search;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Updates;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Settings;
@@ -954,13 +955,14 @@ namespace ICSharpCode.ILSpy
 			string downloadUrl;
 			if (forceCheck)
 			{
-				downloadUrl = await AboutPage.CheckForUpdatesAsync(spySettings);
+				downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesAsync(spySettings);
 			}
 			else
 			{
-				downloadUrl = await AboutPage.CheckForUpdatesIfEnabledAsync(spySettings);
+				downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesIfEnabledAsync(spySettings);
 			}
 
+			// The Update Panel is only available for NotifyOfUpdatesStrategy, AutoUpdate will have differing UI requirements
 			AdjustUpdateUIAfterCheck(downloadUrl, forceCheck);
 		}
 
@@ -978,7 +980,7 @@ namespace ICSharpCode.ILSpy
 			else
 			{
 				updatePanel.Visibility = Visibility.Collapsed;
-				string downloadUrl = await AboutPage.CheckForUpdatesAsync(ILSpySettings.Load());
+				string downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesAsync(ILSpySettings.Load());
 				AdjustUpdateUIAfterCheck(downloadUrl, true);
 			}
 		}
