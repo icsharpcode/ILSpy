@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2016 Daniel Grunwald
+// Copyright (c) 2016 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -878,28 +878,44 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 				return;
 			}
-			if (body.EntryPoint.Instructions.Count != 3)
-			{
-				return;
-			}
-
 			if (nativeVar.Type.GetStackType() != StackType.I)
 				return;
-			if (!initInst.UnwrapConv(ConversionKind.StopGCTracking).MatchLdLoc(pinnedRegion.Variable))
+
+			Block targetBlock;
+			Block adjustOffsetToStringData = null;
+			if (body.EntryPoint.Instructions.Count == 2)
+			{
+				if (!initInst.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out ILInstruction left, out ILInstruction right))
+					return;
+				if (!left.UnwrapConv(ConversionKind.StopGCTracking).MatchLdLoc(pinnedRegion.Variable))
+					return;
+				if (!IsOffsetToStringDataCall(right))
+					return;
+				if (!body.EntryPoint.Instructions[1].MatchBranch(out targetBlock))
+					return;
+			}
+			else if (body.EntryPoint.Instructions.Count == 3)
+			{
+				if (!initInst.UnwrapConv(ConversionKind.StopGCTracking).MatchLdLoc(pinnedRegion.Variable))
+					return;
+				if (!IsBranchOnNull(body.EntryPoint.Instructions[1], nativeVar, out targetBlock))
+					return;
+				if (!body.EntryPoint.Instructions[2].MatchBranch(out adjustOffsetToStringData))
+					return;
+				if (!(adjustOffsetToStringData.Parent == body && adjustOffsetToStringData.IncomingEdgeCount == 1
+						&& IsOffsetToStringDataBlock(adjustOffsetToStringData, nativeVar, targetBlock)))
+					return;
+			}
+			else
 				return;
-			if (!IsBranchOnNull(body.EntryPoint.Instructions[1], nativeVar, out Block targetBlock))
-				return;
-			if (!body.EntryPoint.Instructions[2].MatchBranch(out Block adjustOffsetToStringData))
-				return;
-			if (!(adjustOffsetToStringData.Parent == body && adjustOffsetToStringData.IncomingEdgeCount == 1
-					&& IsOffsetToStringDataBlock(adjustOffsetToStringData, nativeVar, targetBlock)))
-				return;
+
 			context.Step("Handle pinned string (with adjustOffsetToStringData)", pinnedRegion);
 			if (targetBlock.Parent == body)
 			{
 				// remove old entry point
 				body.Blocks.RemoveAt(0);
-				body.Blocks.RemoveAt(adjustOffsetToStringData.ChildIndex);
+				if (adjustOffsetToStringData is not null)
+					body.Blocks.RemoveAt(adjustOffsetToStringData.ChildIndex);
 				// make targetBlock the new entry point
 				body.Blocks.RemoveAt(targetBlock.ChildIndex);
 				body.Blocks.Insert(0, targetBlock);
