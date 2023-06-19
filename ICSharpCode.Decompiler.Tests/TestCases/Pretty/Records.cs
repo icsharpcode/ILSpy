@@ -256,10 +256,13 @@ namespace System.Runtime.CompilerServices
 	internal class IsExternalInit
 	{
 	}
-
+#endif
+#if !NET70
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
 	internal sealed class RequiredMemberAttribute : Attribute
 	{
 	}
+#endif
+#if !NET60
 }
 #endif
