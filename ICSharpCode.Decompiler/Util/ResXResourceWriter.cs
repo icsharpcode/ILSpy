@@ -31,10 +31,8 @@
 //	includes code by Mike Krüger and Lluis Sanchez
 
 using System;
-using System.ComponentModel;
 using System.Globalization;
 using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Xml;
 
@@ -47,25 +45,20 @@ namespace ICSharpCode.Decompiler.Util
 #endif
 	class ResXResourceWriter : IDisposable
 	{
-		#region Local Variables
 		private string filename;
 		private Stream stream;
 		private TextWriter textwriter;
 		private XmlTextWriter writer;
 		private bool written;
 		private string base_path;
-		#endregion    // Local Variables
 
-		#region Static Fields
 		public static readonly string BinSerializedObjectMimeType = "application/x-microsoft.net.object.binary.base64";
 		public static readonly string ByteArraySerializedObjectMimeType = "application/x-microsoft.net.object.bytearray.base64";
 		public static readonly string DefaultSerializedObjectMimeType = BinSerializedObjectMimeType;
 		public static readonly string ResMimeType = "text/microsoft-resx";
 		public static readonly string SoapSerializedObjectMimeType = "application/x-microsoft.net.object.soap.base64";
 		public static readonly string Version = "2.0";
-		#endregion  // Static Fields
 
-		#region Constructors & Destructor
 		public ResXResourceWriter(Stream stream)
 		{
 			if (stream == null)
@@ -97,7 +90,6 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			Dispose(false);
 		}
-		#endregion // Constructors & Destructor
 
 		const string WinFormsAssemblyName = ", System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
 		const string MSCorLibAssemblyName = ", mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
@@ -332,7 +324,7 @@ namespace ICSharpCode.Decompiler.Util
 				Close();
 		}
 
-		static string schema = @"
+		static readonly string schema = @"
 	<xsd:schema id='root' xmlns='' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:msdata='urn:schemas-microsoft-com:xml-msdata'>
 		<xsd:element name='root' msdata:IsDataSet='true'>
 			<xsd:complexType>
@@ -362,11 +354,9 @@ namespace ICSharpCode.Decompiler.Util
 	</xsd:schema>
 ".Replace("'", "\"").Replace("\t", "  ");
 
-		#region Public Properties
 		public string BasePath {
 			get { return base_path; }
 			set { base_path = value; }
 		}
-		#endregion
 	}
 }
