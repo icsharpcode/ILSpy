@@ -131,26 +131,10 @@ namespace ICSharpCode.Decompiler.Util
 
 		void WriteNiceBase64(byte[] value, int offset, int length)
 		{
-			string b64;
-			StringBuilder sb;
-			int pos;
-			int inc;
-			string ins;
-
-			b64 = Convert.ToBase64String(value, offset, length);
-
-			// Wild guess; two extra newlines, and one newline/tab pair for every 80 chars
-			sb = new StringBuilder(b64, b64.Length + ((b64.Length + 160) / 80) * 3);
-			pos = 0;
-			inc = 80 + Environment.NewLine.Length + 1;
-			ins = Environment.NewLine + "\t";
-			while (pos < sb.Length)
-			{
-				sb.Insert(pos, ins);
-				pos += inc;
-			}
-			sb.Insert(sb.Length, Environment.NewLine);
-			writer.WriteString(sb.ToString());
+			string base64 = Convert.ToBase64String(
+				value, offset, length,
+				Base64FormattingOptions.InsertLineBreaks);
+			writer.WriteString(base64);
 		}
 
 		void WriteBytes(string name, Type type, byte[] value, int offset, int length, string comment)
