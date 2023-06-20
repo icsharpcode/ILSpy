@@ -5,7 +5,7 @@
     <UseWpf>true</UseWpf>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <SignAssembly>True</SignAssembly>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <AssemblyOriginatorKeyFile>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>

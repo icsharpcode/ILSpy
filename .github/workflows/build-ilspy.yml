@@ -26,6 +26,11 @@ jobs:
         submodules: true
         fetch-depth: 0
 
+    - uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+        dotnet-quality: 'preview'
+    
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.3
 
@@ -48,9 +53,9 @@ jobs:
     - name: Execute unit tests
       run: dotnet test --logger "junit;LogFileName=${{ matrix.configuration }}.xml" --results-directory test-results $env:Tests1 $env:Tests2 $env:Tests3
       env:
-        Tests1: ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net6.0-windows\win-x64\ICSharpCode.Decompiler.Tests.dll
-        Tests2: ILSpy.Tests\bin\${{ matrix.configuration }}\net6.0-windows\ILSpy.Tests.dll
-        Tests3: ILSpy.BamlDecompiler.Tests\bin\${{ matrix.configuration }}\net6.0-windows\win-x64\ILSpy.BamlDecompiler.Tests.dll
+        Tests1: ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net8.0-windows\win-x64\ICSharpCode.Decompiler.Tests.dll
+        Tests2: ILSpy.Tests\bin\${{ matrix.configuration }}\net8.0-windows\ILSpy.Tests.dll
+        Tests3: ILSpy.BamlDecompiler.Tests\bin\${{ matrix.configuration }}\net8.0-windows\win-x64\ILSpy.BamlDecompiler.Tests.dll
 
     - name: Upload Test Logs
       uses: actions/upload-artifact@v3
@@ -76,7 +81,7 @@ jobs:
         git diff --exit-code
     
     - name: Zip ILSpy (framework-dependent)
-      run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.dll .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.exe .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.config .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.json .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*\ILSpy.resources.dll .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*\ILSpy.ReadyToRun.Plugin.resources.dll
+      run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip .\ILSpy\bin\${{ matrix.configuration }}\net8.0-windows\*.dll .\ILSpy\bin\${{ matrix.configuration }}\net8.0-windows\*.exe .\ILSpy\bin\${{ matrix.configuration }}\net8.0-windows\*.config .\ILSpy\bin\${{ matrix.configuration }}\net8.0-windows\*.json .\ILSpy\bin\${{ matrix.configuration }}\net8.0-windows\*\ILSpy.resources.dll .\ILSpy\bin\${{ matrix.configuration }}\net8.0-windows\*\ILSpy.ReadyToRun.Plugin.resources.dll
 
     - name: Publish x64/arm64 framework-dependent/self-contained
       shell: pwsh
@@ -84,11 +89,11 @@ jobs:
 
     - name: Zip ILSpy Release (x64 self-contained)
       if: matrix.configuration == 'release'    
-      run: 7z a -tzip $env:StagingDirectory\ILSpy_selfcontained_x64.zip .\ILSpy\bin\Release\net6.0-windows\win-x64\publish\selfcontained\*  
+      run: 7z a -tzip $env:StagingDirectory\ILSpy_selfcontained_x64.zip .\ILSpy\bin\Release\net8.0-windows\win-x64\publish\selfcontained\*  
 
     - name: Zip ILSpy Release (arm64 framework-dependent)
       if: matrix.configuration == 'release'    
-      run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries_arm64.zip .\ILSpy\bin\Release\net6.0-windows\win-arm64\publish\fwdependent\*
+      run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries_arm64.zip .\ILSpy\bin\Release\net8.0-windows\win-arm64\publish\fwdependent\*
 
     - name: Build Installer (x64 and arm64, framework-dependent)
       if: matrix.configuration == 'release'  

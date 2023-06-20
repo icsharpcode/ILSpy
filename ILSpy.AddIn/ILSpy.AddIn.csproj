@@ -80,7 +80,7 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <ILSpyBuildPath>..\ILSpy\bin\$(Configuration)\net6.0-windows\win-x64\publish\fwdependent\</ILSpyBuildPath>
+    <ILSpyBuildPath>..\ILSpy\bin\$(Configuration)\net8.0-windows\win-x64\publish\fwdependent\</ILSpyBuildPath>
   </PropertyGroup>
 
   <Target Name="IncludeILSpyDistributionInVSIXSubFolder" AfterTargets="ResolveProjectReferences">
