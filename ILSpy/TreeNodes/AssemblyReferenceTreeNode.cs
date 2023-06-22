@@ -31,7 +31,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		readonly AssemblyReference r;
 		readonly AssemblyTreeNode parentAssembly;
-		private bool? loadFualt;
+		private bool? moduleResolveFailed;
 
 		public AssemblyReferenceTreeNode(AssemblyReference r, AssemblyTreeNode parentAssembly)
 		{
@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			get { return Language.EscapeName(r.Name) + GetSuffixString(r.Handle); }
 		}
 
-		public override object Icon => loadFualt switch {
+		public override object Icon => moduleResolveFailed switch {
 			true => Images.AssemblyWarning,
 			_ => Images.Assembly
 		};
@@ -83,13 +83,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			var module = resolver.Resolve(r);
 			if (module != null)
 			{
-				loadFualt = false;
+				moduleResolveFailed = false;
 				foreach (var childRef in module.AssemblyReferences)
 					this.Children.Add(new AssemblyReferenceTreeNode(childRef, parentAssembly));
 			}
 			else
 			{
-				loadFualt = true;
+				moduleResolveFailed = true;
 			}
 			RaisePropertyChanged(nameof(Icon));
 		}
@@ -112,11 +112,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				if (info.HasErrors)
 				{
 					language.WriteCommentLine(output, "There were some problems during assembly reference load, see below for more information!");
-					loadFualt = true;
+					moduleResolveFailed = true;
 				}
 				else
 				{
-					loadFualt = false;
+					moduleResolveFailed = false;
 				}
 				foreach (var item in info.Messages)
 				{
