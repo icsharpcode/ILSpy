@@ -71,7 +71,7 @@ If this problem occurs, please manually install the .NET 6.0 SDK from [here](htt
 
 #### Unix / Mac:
 
-- Make sure [.NET 6.0 SDK](https://dotnet.microsoft.com/download/dotnet/6.0) is installed.
+- Make sure [.NET 7.0 SDK](https://dotnet.microsoft.com/download/dotnet/7.0) is installed.
 - Make sure [PowerShell](https://github.com/PowerShell/PowerShell) is installed (formerly known as PowerShell Core)
 - Clone the repository using git.
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
