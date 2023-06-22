@@ -26,6 +26,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="pwsh -Command &quot;Copy-Item $(ProjectDir)manifest.psd1 $(TargetDir)$(TargetName).psd1&quot;" />
+    <Exec Condition=" '$(OS)' == 'Windows_NT' " Command="powershell -Command &quot;Copy-Item $(ProjectDir)manifest.psd1 $(TargetDir)$(TargetName).psd1&quot;" />
+	<Exec Condition=" '$(OS)' != 'Windows_NT' " Command="pwsh -Command &quot;Copy-Item $(ProjectDir)manifest.psd1 $(TargetDir)$(TargetName).psd1&quot;" />
   </Target>
 </Project>
