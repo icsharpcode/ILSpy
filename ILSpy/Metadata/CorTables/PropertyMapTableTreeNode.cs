@@ -98,8 +98,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset { get; }
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(propertyMap.Parent);
 
 			public void OnParentClick()
@@ -116,8 +115,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int PropertyList => MetadataTokens.GetToken(propertyMap.PropertyList);
 
 			public void OnPropertyListClick()

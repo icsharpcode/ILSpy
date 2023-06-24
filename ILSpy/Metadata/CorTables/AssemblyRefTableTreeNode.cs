@@ -87,14 +87,14 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public Version Version => assemblyRef.Version;
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public AssemblyFlags Flags => assemblyRef.Flags;
 
 			public object FlagsTooltip => new FlagsTooltip((int)assemblyRef.Flags, null) {
 				FlagGroup.CreateMultipleChoiceGroup(typeof(AssemblyFlags), selectedValue: (int)assemblyRef.Flags, includeAll: false)
 			};
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int PublicKeyOrToken => MetadataTokens.GetHeapOffset(assemblyRef.PublicKeyOrToken);
 
 			public string PublicKeyOrTokenTooltip {

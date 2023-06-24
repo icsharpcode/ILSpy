@@ -100,8 +100,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset { get; }
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(classLayout.Parent);
 
 			public void OnParentClick()
@@ -113,15 +112,15 @@ namespace ICSharpCode.ILSpy.Metadata
 				get {
 					ITextOutput output = new PlainTextOutput();
 					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)classLayout.Parent).WriteTo(module, output, context);
+					classLayout.Parent.WriteTo(module, output, context);
 					return output.ToString();
 				}
 			}
 
-			[StringFormat("X4")]
+			[ColumnInfo("X4", Kind = ColumnKind.Other)]
 			public ushort PackingSize => classLayout.PackingSize;
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public uint ClassSize => classLayout.ClassSize;
 
 			public ClassLayoutEntry(PEFile module, byte* ptr, int metadataOffset, int row)

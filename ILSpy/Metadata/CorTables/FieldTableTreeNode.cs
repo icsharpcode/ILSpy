@@ -94,7 +94,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.Field)
 				+ metadata.GetTableRowSize(TableIndex.Field) * (RID - 1);
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public FieldAttributes Attributes => fieldDef.Attributes;
 
 			const FieldAttributes otherFlagsMask = ~(FieldAttributes.FieldAccessMask);
@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule).GetDefinition(handle);
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(fieldDef.Signature);
 
 			public string SignatureTooltip {

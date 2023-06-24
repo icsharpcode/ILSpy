@@ -92,8 +92,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public object Offset => offset == null ? "n/a" : (object)offset;
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int MoveNextMethod => MetadataTokens.GetToken(moveNextMethod);
 
 			public void OnMoveNextMethodClick()
@@ -110,8 +109,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int KickoffMethod => MetadataTokens.GetToken(kickoffMethod);
 
 			public void OnKickofMethodClick()

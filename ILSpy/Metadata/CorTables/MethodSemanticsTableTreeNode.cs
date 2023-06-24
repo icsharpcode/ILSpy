@@ -90,13 +90,12 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.MethodDef)
 				+ metadata.GetTableRowSize(TableIndex.MethodDef) * (RID - 1);
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public MethodSemanticsAttributes Semantics => semantics;
 
 			public string SemanticsTooltip => semantics.ToString();
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Method => MetadataTokens.GetToken(method);
 
 			public void OnMethodClick()
@@ -112,8 +111,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Association => MetadataTokens.GetToken(association);
 
 			public void OnAssociationClick()

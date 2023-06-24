@@ -86,8 +86,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.TypeRef)
 				+ metadata.GetTableRowSize(TableIndex.TypeRef) * (RID - 1);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int ResolutionScope => MetadataTokens.GetToken(typeRef.ResolutionScope);
 
 			public void OnResolutionScopeClick()

@@ -98,8 +98,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset { get; }
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Field => MetadataTokens.GetToken(fieldLayout.Field);
 
 			public void OnFieldClick()
@@ -116,7 +115,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public int FieldOffset => fieldLayout.Offset;
 
 			public FieldLayoutEntry(PEFile module, byte* ptr, int metadataOffset, int row)

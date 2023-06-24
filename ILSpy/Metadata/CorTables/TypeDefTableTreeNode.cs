@@ -91,7 +91,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.TypeDef)
 				+ metadata.GetTableRowSize(TableIndex.TypeDef) * (RID - 1);
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public TypeAttributes Attributes => typeDef.Attributes;
 
 			const TypeAttributes otherFlagsMask = ~(TypeAttributes.VisibilityMask | TypeAttributes.LayoutMask | TypeAttributes.ClassSemanticsMask | TypeAttributes.StringFormatMask | TypeAttributes.CustomFormatMask);
@@ -113,8 +113,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string Namespace => metadata.GetString(typeDef.Namespace);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int BaseType => MetadataTokens.GetToken(typeDef.BaseType);
 
 			public void OnBaseTypeClick()
@@ -145,8 +144,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int FieldList => MetadataTokens.GetToken(typeDef.GetFields().FirstOrDefault());
 
 			public void OnFieldListClick()
@@ -166,8 +164,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int MethodList => MetadataTokens.GetToken(typeDef.GetMethods().FirstOrDefault());
 
 			public void OnMethodListClick()

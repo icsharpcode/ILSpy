@@ -88,7 +88,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.ManifestResource)
 				+ metadata.GetTableRowSize(TableIndex.ManifestResource) * (RID - 1);
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public ManifestResourceAttributes Attributes => manifestResource.Attributes;
 
 			public object AttributesTooltip => manifestResource.Attributes.ToString();
@@ -97,8 +97,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(manifestResource.Name):X} \"{Name}\"";
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Implementation => MetadataTokens.GetToken(manifestResource.Implementation);
 
 			public void OnImplementationClick()

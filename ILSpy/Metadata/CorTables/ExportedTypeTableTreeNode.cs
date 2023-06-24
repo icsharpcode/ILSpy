@@ -86,7 +86,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.ExportedType)
 				+ metadata.GetTableRowSize(TableIndex.ExportedType) * (RID - 1);
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public TypeAttributes Attributes => type.Attributes;
 
 			const TypeAttributes otherFlagsMask = ~(TypeAttributes.VisibilityMask | TypeAttributes.LayoutMask | TypeAttributes.ClassSemanticsMask | TypeAttributes.StringFormatMask | TypeAttributes.CustomFormatMask);
@@ -110,8 +110,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string TypeNamespace => metadata.GetString(type.Namespace);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Implementation => MetadataTokens.GetToken(type.Implementation);
 
 			public void OnImplementationClick()

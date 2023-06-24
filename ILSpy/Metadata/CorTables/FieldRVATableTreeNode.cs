@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpy.Metadata
 		{
 			readonly PEFile module;
 			readonly MetadataReader metadata;
-			readonly FieldRVA fieldLayout;
+			readonly FieldRVA fieldRVA;
 
 			public int RID { get; }
 
@@ -98,13 +98,12 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset { get; }
 
-			[StringFormat("X8")]
-			[LinkToTable]
-			public int Field => MetadataTokens.GetToken(fieldLayout.Field);
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
+			public int Field => MetadataTokens.GetToken(fieldRVA.Field);
 
 			public void OnFieldClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, fieldLayout.Field, protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(module, fieldRVA.Field, protocol: "metadata"));
 			}
 
 			public string FieldTooltip {
@@ -116,8 +115,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X")]
-			public int FieldOffset => fieldLayout.Offset;
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
+			public int FieldOffset => fieldRVA.Offset;
 
 			public FieldRVAEntry(PEFile module, byte* ptr, int metadataOffset, int row)
 			{

@@ -87,13 +87,12 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.Constant)
 				+ metadata.GetTableRowSize(TableIndex.Constant) * (RID - 1);
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public ConstantTypeCode Type => constant.TypeCode;
 
 			public string TypeTooltip => constant.TypeCode.ToString();
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(constant.Parent);
 
 			public void OnParentClick()
@@ -110,7 +109,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Value => MetadataTokens.GetHeapOffset(constant.Value);
 
 			public string ValueTooltip {

@@ -88,8 +88,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.DeclSecurity)
 				+ metadata.GetTableRowSize(TableIndex.DeclSecurity) * (RID - 1);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(declSecAttr.Parent);
 
 			public void OnParentClick()
@@ -106,7 +105,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public DeclarativeSecurityAction Action => declSecAttr.Action;
 
 			public string ActionTooltip {
@@ -115,7 +114,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int PermissionSet => MetadataTokens.GetHeapOffset(declSecAttr.PermissionSet);
 
 			public string PermissionSetTooltip {

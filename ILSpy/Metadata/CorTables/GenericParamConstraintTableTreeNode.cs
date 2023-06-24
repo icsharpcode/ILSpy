@@ -86,8 +86,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.GenericParamConstraint)
 				+ metadata.GetTableRowSize(TableIndex.GenericParamConstraint) * (RID - 1);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Owner => MetadataTokens.GetToken(genericParamConstraint.Parameter);
 
 			public void OnOwnerClick()
@@ -111,8 +110,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Type => MetadataTokens.GetToken(genericParamConstraint.Type);
 
 			public void OnTypeClick()

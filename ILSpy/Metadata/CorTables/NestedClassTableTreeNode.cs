@@ -98,8 +98,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset { get; }
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int NestedClass => MetadataTokens.GetToken(nestedClass.Nested);
 
 			public void OnNestedClassClick()
@@ -116,8 +115,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int EnclosingClass => MetadataTokens.GetToken(nestedClass.Enclosing);
 
 			public void OnEnclosingClassClick()

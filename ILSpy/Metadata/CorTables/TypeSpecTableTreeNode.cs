@@ -86,7 +86,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.TypeSpec)
 				+ metadata.GetTableRowSize(TableIndex.TypeSpec) * (RID - 1);
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(typeSpec.Signature);
 
 			public string SignatureTooltip {

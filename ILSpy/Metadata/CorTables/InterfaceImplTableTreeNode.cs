@@ -98,8 +98,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset { get; }
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Class => MetadataTokens.GetToken(interfaceImpl.Class);
 
 			public void OnClassClick()
@@ -116,8 +115,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Interface => MetadataTokens.GetToken(interfaceImpl.Interface);
 
 			public void OnInterfaceClick()

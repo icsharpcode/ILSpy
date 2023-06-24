@@ -86,8 +86,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.MethodDef)
 				+ metadata.GetTableRowSize(TableIndex.MethodDef) * (RID - 1);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int MethodDeclaration => MetadataTokens.GetToken(methodImpl.MethodDeclaration);
 
 			public void OnMethodDeclarationClick()
@@ -103,8 +102,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int MethodBody => MetadataTokens.GetToken(methodImpl.MethodBody);
 
 			public void OnMethodBodyClick()
@@ -120,8 +118,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Type => MetadataTokens.GetToken(methodImpl.Type);
 
 			public void OnTypeClick()

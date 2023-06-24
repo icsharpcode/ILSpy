@@ -104,7 +104,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset { get; }
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public PInvokeAttributes MappingFlags => implMap.MappingFlags;
 
 			const PInvokeAttributes otherFlagsMask = ~(PInvokeAttributes.CallConvMask | PInvokeAttributes.CharSetMask);
@@ -115,8 +115,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				FlagGroup.CreateMultipleChoiceGroup(typeof(PInvokeAttributes), "Flags:", (int)otherFlagsMask, (int)(implMap.MappingFlags & otherFlagsMask), includeAll: false),
 			};
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int MemberForwarded => MetadataTokens.GetToken(implMap.MemberForwarded);
 
 			public void OnMemberForwardedClick()
@@ -133,8 +132,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int ImportScope => MetadataTokens.GetToken(implMap.ImportScope);
 
 			public void OnImportScopeClick()

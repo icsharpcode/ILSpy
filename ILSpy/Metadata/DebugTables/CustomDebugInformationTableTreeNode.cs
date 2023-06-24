@@ -197,8 +197,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public object Offset => offset == null ? "n/a" : (object)offset;
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(debugInfo.Parent);
 
 			public void OnParentClick()
@@ -251,7 +250,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Value => MetadataTokens.GetHeapOffset(debugInfo.Value);
 
 			public string ValueTooltip {

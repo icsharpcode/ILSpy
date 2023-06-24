@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.Event)
 				+ metadata.GetTableRowSize(TableIndex.Event) * (RID - 1);
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public EventAttributes Attributes => eventDef.Attributes;
 
 			public object AttributesTooltip => new FlagsTooltip {
@@ -103,8 +103,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule).GetDefinition(handle);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Type => MetadataTokens.GetToken(eventDef.Type);
 
 			public void OnTypeClick()

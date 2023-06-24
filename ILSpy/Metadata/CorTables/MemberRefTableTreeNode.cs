@@ -87,8 +87,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.MemberRef)
 				+ metadata.GetTableRowSize(TableIndex.MemberRef) * (RID - 1);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(memberRef.Parent);
 
 			public void OnParentClick()
@@ -108,7 +107,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(memberRef.Name):X} \"{Name}\"";
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(memberRef.Signature);
 
 			public string SignatureTooltip {

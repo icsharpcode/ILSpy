@@ -87,8 +87,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.MethodSpec)
 				+ metadata.GetTableRowSize(TableIndex.MethodSpec) * (RID - 1);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Method => MetadataTokens.GetToken(methodSpec.Method);
 
 			public void OnMethodClick()
@@ -104,7 +103,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(methodSpec.Signature);
 
 			public string SignatureTooltip {
