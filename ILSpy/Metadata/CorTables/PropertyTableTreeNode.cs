@@ -106,13 +106,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(propertyDef.Signature);
 
-			public string SignatureTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					((EntityHandle)handle).WriteTo(module, output, default);
-					return output.ToString();
-				}
-			}
+			string signatureTooltip;
+			public string SignatureTooltip => GenerateTooltip(ref signatureTooltip, module, handle);
 
 			public PropertyDefEntry(PEFile module, PropertyDefinitionHandle handle)
 			{
@@ -121,6 +116,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.propertyDef = metadata.GetPropertyDefinition(handle);
+				this.signatureTooltip = null;
 			}
 		}
 

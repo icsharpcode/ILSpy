@@ -96,14 +96,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, declSecAttr.Parent, protocol: "metadata"));
 			}
 
-			public string ParentTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					declSecAttr.Parent.WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string parentTooltip;
+			public string ParentTooltip => GenerateTooltip(ref parentTooltip, module, declSecAttr.Parent);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public DeclarativeSecurityAction Action => declSecAttr.Action;
@@ -130,6 +124,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.declSecAttr = metadata.GetDeclarativeSecurityAttribute(handle);
+				this.parentTooltip = null;
 			}
 		}
 

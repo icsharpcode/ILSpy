@@ -123,14 +123,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, implMap.MemberForwarded, protocol: "metadata"));
 			}
 
-			public string MemberForwardedTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)implMap.MemberForwarded).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string memberForwardedTooltip;
+			public string MemberForwardedTooltip => GenerateTooltip(ref memberForwardedTooltip, module, implMap.MemberForwarded);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int ImportScope => MetadataTokens.GetToken(implMap.ImportScope);
@@ -140,14 +134,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, implMap.ImportScope, protocol: "metadata"));
 			}
 
-			public string ImportScopeTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)implMap.ImportScope).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string importScopeTooltip;
+			public string ImportScopeTooltip => GenerateTooltip(ref importScopeTooltip, module, implMap.ImportScope);
 
 			public string ImportName => metadata.GetString(implMap.ImportName);
 
@@ -165,6 +153,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				int memberForwardedTagRefSize = metadata.ComputeCodedTokenSize(32768, TableMask.MethodDef | TableMask.Field);
 				int stringHandleSize = metadata.GetHeapSize(HeapIndex.String) < ushort.MaxValue ? 2 : 4;
 				this.implMap = new ImplMap(ptr + rowOffset, moduleRefSize, memberForwardedTagRefSize, stringHandleSize);
+				this.importScopeTooltip = null;
+				this.memberForwardedTooltip = null;
 			}
 		}
 

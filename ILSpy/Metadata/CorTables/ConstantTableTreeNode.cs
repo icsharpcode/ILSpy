@@ -100,14 +100,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, constant.Parent, protocol: "metadata"));
 			}
 
-			public string ParentTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					constant.Parent.WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string parentTooltip;
+			public string ParentTooltip => GenerateTooltip(ref parentTooltip, module, constant.Parent);
 
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Value => MetadataTokens.GetHeapOffset(constant.Value);
@@ -125,6 +119,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.constant = metadata.GetConstant(handle);
+				this.parentTooltip = null;
 			}
 		}
 

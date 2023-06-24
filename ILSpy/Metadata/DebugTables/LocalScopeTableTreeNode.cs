@@ -98,13 +98,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, localScope.Method, protocol: "metadata"));
 			}
 
-			public string MethodTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					((EntityHandle)localScope.Method).WriteTo(module, output, default);
-					return output.ToString();
-				}
-			}
+			string methodTooltip;
+			public string MethodTooltip => GenerateTooltip(ref methodTooltip, module, localScope.Method);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int ImportScope => MetadataTokens.GetToken(localScope.ImportScope);
@@ -142,6 +137,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = metadata;
 				this.handle = handle;
 				this.localScope = metadata.GetLocalScope(handle);
+				this.methodTooltip = null;
 			}
 		}
 

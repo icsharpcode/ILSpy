@@ -94,31 +94,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, typeRef.ResolutionScope, protocol: "metadata"));
 			}
 
-			public string ResolutionScopeTooltip {
-				get {
-					if (typeRef.ResolutionScope.IsNil)
-						return null;
-					var output = new PlainTextOutput();
-					switch (typeRef.ResolutionScope.Kind)
-					{
-						case HandleKind.ModuleDefinition:
-							output.Write(metadata.GetString(metadata.GetModuleDefinition().Name));
-							break;
-						case HandleKind.ModuleReference:
-							ModuleReference moduleReference = metadata.GetModuleReference((ModuleReferenceHandle)typeRef.ResolutionScope);
-							output.Write(metadata.GetString(moduleReference.Name));
-							break;
-						case HandleKind.AssemblyReference:
-							var asmRef = new Decompiler.Metadata.AssemblyReference(module, (AssemblyReferenceHandle)typeRef.ResolutionScope);
-							output.Write(asmRef.ToString());
-							break;
-						default:
-							typeRef.ResolutionScope.WriteTo(module, output, default);
-							break;
-					}
-					return output.ToString();
-				}
-			}
+			string resolutionScopeTooltip;
+			public string ResolutionScopeTooltip => GenerateTooltip(ref resolutionScopeTooltip, module, typeRef.ResolutionScope);
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(typeRef.Name):X} \"{Name}\"";
 
@@ -135,6 +112,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.typeRef = metadata.GetTypeReference(handle);
+				this.resolutionScopeTooltip = null;
 			}
 		}
 

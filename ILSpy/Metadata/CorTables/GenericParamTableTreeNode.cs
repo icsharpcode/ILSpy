@@ -99,18 +99,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Owner => MetadataTokens.GetToken(genericParam.Parent);
 
-			public void OnParentClick()
+			public void OnOwnerClick()
 			{
 				MainWindow.Instance.JumpToReference(new EntityReference(module, genericParam.Parent, protocol: "metadata"));
 			}
 
-			public string OwnerTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					genericParam.Parent.WriteTo(module, output, default);
-					return output.ToString();
-				}
-			}
+			string ownerTooltip;
+			public string OwnerTooltip => GenerateTooltip(ref ownerTooltip, module, genericParam.Parent);
 
 			public string Name => metadata.GetString(genericParam.Name);
 
@@ -123,6 +118,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.genericParam = metadata.GetGenericParameter(handle);
+				this.ownerTooltip = null;
 			}
 		}
 

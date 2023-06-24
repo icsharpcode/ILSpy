@@ -103,13 +103,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, method, protocol: "metadata"));
 			}
 
-			public string MethodTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					((EntityHandle)method).WriteTo(module, output, default);
-					return output.ToString();
-				}
-			}
+			string methodTooltip;
+			public string MethodTooltip => GenerateTooltip(ref methodTooltip, module, method);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Association => MetadataTokens.GetToken(association);
@@ -119,13 +114,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, association, protocol: "metadata"));
 			}
 
-			public string AssociationTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					association.WriteTo(module, output, default);
-					return output.ToString();
-				}
-			}
+			string associationTooltip;
+			public string AssociationTooltip => GenerateTooltip(ref associationTooltip, module, association);
 
 			public MethodSemanticsEntry(PEFile module, Handle handle, MethodSemanticsAttributes semantics, MethodDefinitionHandle method, EntityHandle association)
 			{
@@ -136,6 +126,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.semantics = semantics;
 				this.method = method;
 				this.association = association;
+				this.methodTooltip = null;
+				this.associationTooltip = null;
 			}
 		}
 

@@ -113,14 +113,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(fieldDef.Signature);
 
-			public string SignatureTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)handle).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string signatureTooltip;
+			public string SignatureTooltip => GenerateTooltip(ref signatureTooltip, module, handle);
 
 			public FieldDefEntry(PEFile module, FieldDefinitionHandle handle)
 			{
@@ -129,6 +123,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.fieldDef = metadata.GetFieldDefinition(handle);
+				this.signatureTooltip = null;
 			}
 		}
 

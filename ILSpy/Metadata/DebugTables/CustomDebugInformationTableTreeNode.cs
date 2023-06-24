@@ -205,14 +205,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, debugInfo.Parent, protocol: "metadata"));
 			}
 
-			public string ParentTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					debugInfo.Parent.WriteTo(module, output, context);
-					return $"{debugInfo.Parent.Kind}:\n{output}";
-				}
-			}
+			string parentTooltip;
+			public string ParentTooltip => GenerateTooltip(ref parentTooltip, module, debugInfo.Parent);
 
 			string kindString;
 			public string Kind {

@@ -105,16 +105,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, manifestResource.Implementation, protocol: "metadata"));
 			}
 
-			public string ImplementationTooltip {
-				get {
-					if (manifestResource.Implementation.IsNil)
-						return null;
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					manifestResource.Implementation.WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string implementationTooltip;
+			public string ImplementationTooltip => GenerateTooltip(ref implementationTooltip, module, manifestResource.Implementation);
 
 			public ManifestResourceEntry(PEFile module, ManifestResourceHandle handle)
 			{
@@ -123,6 +115,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.manifestResource = metadata.GetManifestResource(handle);
+				this.implementationTooltip = null;
 			}
 		}
 

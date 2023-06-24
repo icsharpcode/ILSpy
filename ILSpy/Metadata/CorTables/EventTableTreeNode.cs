@@ -111,13 +111,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, eventDef.Type, protocol: "metadata"));
 			}
 
-			public string TypeTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					eventDef.Type.WriteTo(module, output, default);
-					return output.ToString();
-				}
-			}
+			string typeTooltip;
+			public string TypeTooltip => GenerateTooltip(ref typeTooltip, module, eventDef.Type);
 
 			public EventDefEntry(PEFile module, EventDefinitionHandle handle)
 			{
@@ -126,6 +121,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.eventDef = metadata.GetEventDefinition(handle);
+				this.typeTooltip = null;
 			}
 		}
 

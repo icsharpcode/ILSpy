@@ -94,13 +94,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, methodImpl.MethodDeclaration, protocol: "metadata"));
 			}
 
-			public string MethodDeclarationTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					methodImpl.MethodDeclaration.WriteTo(module, output, default);
-					return output.ToString();
-				}
-			}
+			string methodDeclarationTooltip;
+			public string MethodDeclarationTooltip => GenerateTooltip(ref methodDeclarationTooltip, module, methodImpl.MethodDeclaration);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int MethodBody => MetadataTokens.GetToken(methodImpl.MethodBody);
@@ -110,13 +105,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, methodImpl.MethodBody, protocol: "metadata"));
 			}
 
-			public string MethodBodyTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					methodImpl.MethodBody.WriteTo(module, output, default);
-					return output.ToString();
-				}
-			}
+			string methodBodyTooltip;
+			public string MethodBodyTooltip => GenerateTooltip(ref methodBodyTooltip, module, methodImpl.MethodBody);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Type => MetadataTokens.GetToken(methodImpl.Type);
@@ -126,13 +116,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, methodImpl.Type, protocol: "metadata"));
 			}
 
-			public string TypeTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					((EntityHandle)methodImpl.Type).WriteTo(module, output, default);
-					return output.ToString();
-				}
-			}
+			string typeTooltip;
+			public string TypeTooltip => GenerateTooltip(ref typeTooltip, module, methodImpl.Type);
 
 			public MethodImplEntry(PEFile module, MethodImplementationHandle handle)
 			{
@@ -141,6 +126,9 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.methodImpl = metadata.GetMethodImplementation(handle);
+				this.typeTooltip = null;
+				this.methodBodyTooltip = null;
+				this.methodDeclarationTooltip = null;
 			}
 		}
 

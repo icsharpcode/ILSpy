@@ -89,14 +89,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(standaloneSig.Signature);
 
-			public string SignatureTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)handle).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string signatureTooltip;
+			public string SignatureTooltip => GenerateTooltip(ref signatureTooltip, module, handle);
 
 			public StandAloneSigEntry(PEFile module, StandaloneSignatureHandle handle)
 			{
@@ -105,6 +99,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.standaloneSig = metadata.GetStandaloneSignature(handle);
+				this.signatureTooltip = null;
 			}
 		}
 

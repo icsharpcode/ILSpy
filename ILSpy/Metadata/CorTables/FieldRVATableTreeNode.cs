@@ -106,14 +106,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, fieldRVA.Field, protocol: "metadata"));
 			}
 
-			public string FieldTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)fieldLayout.Field).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string fieldTooltip;
+			public string FieldTooltip => GenerateTooltip(ref fieldTooltip, module, fieldRVA.Field);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public int FieldOffset => fieldRVA.Offset;
@@ -127,7 +121,8 @@ namespace ICSharpCode.ILSpy.Metadata
 					+ metadata.GetTableRowSize(TableIndex.FieldRva) * (row - 1);
 				this.Offset = metadataOffset + rowOffset;
 				int fieldDefSize = metadata.GetTableRowCount(TableIndex.Field) < ushort.MaxValue ? 2 : 4;
-				this.fieldLayout = new FieldRVA(ptr + rowOffset, fieldDefSize);
+				this.fieldRVA = new FieldRVA(ptr + rowOffset, fieldDefSize);
+				this.fieldTooltip = null;
 			}
 		}
 

@@ -122,18 +122,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			string signatureTooltip;
 
-			public string SignatureTooltip {
-				get {
-					if (signatureTooltip == null)
-					{
-						ITextOutput output = new PlainTextOutput();
-						var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
-						((EntityHandle)handle).WriteTo(module, output, context);
-						signatureTooltip = output.ToString();
-					}
-					return signatureTooltip;
-				}
-			}
+			public string SignatureTooltip => GenerateTooltip(ref signatureTooltip, module, handle);
 
 			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule).GetDefinition(handle);
 
