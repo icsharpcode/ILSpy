@@ -104,7 +104,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset { get; }
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public PInvokeAttributes MappingFlags => implMap.MappingFlags;
 
 			const PInvokeAttributes otherFlagsMask = ~(PInvokeAttributes.CallConvMask | PInvokeAttributes.CharSetMask);
@@ -115,8 +115,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				FlagGroup.CreateMultipleChoiceGroup(typeof(PInvokeAttributes), "Flags:", (int)otherFlagsMask, (int)(implMap.MappingFlags & otherFlagsMask), includeAll: false),
 			};
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int MemberForwarded => MetadataTokens.GetToken(implMap.MemberForwarded);
 
 			public void OnMemberForwardedClick()
@@ -124,17 +123,10 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, implMap.MemberForwarded, protocol: "metadata"));
 			}
 
-			public string MemberForwardedTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)implMap.MemberForwarded).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string memberForwardedTooltip;
+			public string MemberForwardedTooltip => GenerateTooltip(ref memberForwardedTooltip, module, implMap.MemberForwarded);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int ImportScope => MetadataTokens.GetToken(implMap.ImportScope);
 
 			public void OnImportScopeClick()
@@ -142,14 +134,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, implMap.ImportScope, protocol: "metadata"));
 			}
 
-			public string ImportScopeTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)implMap.ImportScope).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string importScopeTooltip;
+			public string ImportScopeTooltip => GenerateTooltip(ref importScopeTooltip, module, implMap.ImportScope);
 
 			public string ImportName => metadata.GetString(implMap.ImportName);
 
@@ -167,6 +153,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				int memberForwardedTagRefSize = metadata.ComputeCodedTokenSize(32768, TableMask.MethodDef | TableMask.Field);
 				int stringHandleSize = metadata.GetHeapSize(HeapIndex.String) < ushort.MaxValue ? 2 : 4;
 				this.implMap = new ImplMap(ptr + rowOffset, moduleRefSize, memberForwardedTagRefSize, stringHandleSize);
+				this.importScopeTooltip = null;
+				this.memberForwardedTooltip = null;
 			}
 		}
 

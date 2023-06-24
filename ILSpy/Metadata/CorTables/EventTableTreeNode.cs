@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.Event)
 				+ metadata.GetTableRowSize(TableIndex.Event) * (RID - 1);
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public EventAttributes Attributes => eventDef.Attributes;
 
 			public object AttributesTooltip => new FlagsTooltip {
@@ -103,8 +103,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule).GetDefinition(handle);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Type => MetadataTokens.GetToken(eventDef.Type);
 
 			public void OnTypeClick()
@@ -112,13 +111,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, eventDef.Type, protocol: "metadata"));
 			}
 
-			public string TypeTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					eventDef.Type.WriteTo(module, output, default);
-					return output.ToString();
-				}
-			}
+			string typeTooltip;
+			public string TypeTooltip => GenerateTooltip(ref typeTooltip, module, eventDef.Type);
 
 			public EventDefEntry(PEFile module, EventDefinitionHandle handle)
 			{
@@ -127,6 +121,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.eventDef = metadata.GetEventDefinition(handle);
+				this.typeTooltip = null;
 			}
 		}
 

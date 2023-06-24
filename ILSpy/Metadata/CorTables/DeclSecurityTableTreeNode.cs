@@ -88,8 +88,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.DeclSecurity)
 				+ metadata.GetTableRowSize(TableIndex.DeclSecurity) * (RID - 1);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(declSecAttr.Parent);
 
 			public void OnParentClick()
@@ -97,16 +96,10 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, declSecAttr.Parent, protocol: "metadata"));
 			}
 
-			public string ParentTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					declSecAttr.Parent.WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string parentTooltip;
+			public string ParentTooltip => GenerateTooltip(ref parentTooltip, module, declSecAttr.Parent);
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public DeclarativeSecurityAction Action => declSecAttr.Action;
 
 			public string ActionTooltip {
@@ -115,7 +108,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int PermissionSet => MetadataTokens.GetHeapOffset(declSecAttr.PermissionSet);
 
 			public string PermissionSetTooltip {
@@ -131,6 +124,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.declSecAttr = metadata.GetDeclarativeSecurityAttribute(handle);
+				this.parentTooltip = null;
 			}
 		}
 

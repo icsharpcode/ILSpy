@@ -85,7 +85,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.Param)
 				+ metadata.GetTableRowSize(TableIndex.Param) * (RID - 1);
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public ParameterAttributes Attributes => param.Attributes;
 
 			public object AttributesTooltip => new FlagsTooltip {

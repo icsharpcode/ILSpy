@@ -98,8 +98,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset { get; }
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int NestedClass => MetadataTokens.GetToken(nestedClass.Nested);
 
 			public void OnNestedClassClick()
@@ -107,17 +106,10 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, nestedClass.Nested, protocol: "metadata"));
 			}
 
-			public string NestedClassTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)nestedClass.Nested).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string nestedClassTooltip;
+			public string NestedClassTooltip => GenerateTooltip(ref nestedClassTooltip, module, nestedClass.Nested);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int EnclosingClass => MetadataTokens.GetToken(nestedClass.Enclosing);
 
 			public void OnEnclosingClassClick()
@@ -125,14 +117,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, nestedClass.Enclosing, protocol: "metadata"));
 			}
 
-			public string EnclosingClassTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)nestedClass.Enclosing).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string enclosingClassTooltip;
+			public string EnclosingClassTooltip => GenerateTooltip(ref enclosingClassTooltip, module, nestedClass.Enclosing);
 
 			public unsafe NestedClassEntry(PEFile module, byte* ptr, int metadataOffset, int row)
 			{
@@ -144,6 +130,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.Offset = metadataOffset + rowOffset;
 				int typeDefSize = metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
 				this.nestedClass = new NestedClass(ptr + rowOffset, typeDefSize);
+				this.nestedClassTooltip = null;
+				this.enclosingClassTooltip = null;
 			}
 		}
 

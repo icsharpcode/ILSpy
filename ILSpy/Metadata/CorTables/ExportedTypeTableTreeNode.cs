@@ -86,7 +86,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.ExportedType)
 				+ metadata.GetTableRowSize(TableIndex.ExportedType) * (RID - 1);
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public TypeAttributes Attributes => type.Attributes;
 
 			const TypeAttributes otherFlagsMask = ~(TypeAttributes.VisibilityMask | TypeAttributes.LayoutMask | TypeAttributes.ClassSemanticsMask | TypeAttributes.StringFormatMask | TypeAttributes.CustomFormatMask);
@@ -110,8 +110,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string TypeNamespace => metadata.GetString(type.Namespace);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Implementation => MetadataTokens.GetToken(type.Implementation);
 
 			public void OnImplementationClick()
@@ -119,16 +118,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, type.Implementation, protocol: "metadata"));
 			}
 
-			public string ImplementationTooltip {
-				get {
-					if (type.Implementation.IsNil)
-						return null;
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					type.Implementation.WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string implementationTooltip;
+			public string ImplementationTooltip => GenerateTooltip(ref implementationTooltip, module, type.Implementation);
 
 			public ExportedTypeEntry(int metadataOffset, PEFile module, ExportedTypeHandle handle, ExportedType type)
 			{
@@ -137,6 +128,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.type = type;
+				this.implementationTooltip = null;
 			}
 		}
 

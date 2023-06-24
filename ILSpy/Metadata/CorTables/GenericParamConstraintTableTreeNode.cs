@@ -86,8 +86,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.GenericParamConstraint)
 				+ metadata.GetTableRowSize(TableIndex.GenericParamConstraint) * (RID - 1);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Owner => MetadataTokens.GetToken(genericParamConstraint.Parameter);
 
 			public void OnOwnerClick()
@@ -111,8 +110,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Type => MetadataTokens.GetToken(genericParamConstraint.Type);
 
 			public void OnTypeClick()
@@ -120,13 +118,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, genericParamConstraint.Type, protocol: "metadata"));
 			}
 
-			public string TypeTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					genericParamConstraint.Type.WriteTo(module, output, default);
-					return output.ToString();
-				}
-			}
+			string typeTooltip;
+			public string TypeTooltip => GenerateTooltip(ref typeTooltip, module, genericParamConstraint.Type);
 
 			public GenericParamConstraintEntry(PEFile module, GenericParameterConstraintHandle handle)
 			{
@@ -136,6 +129,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.handle = handle;
 				this.genericParamConstraint = metadata.GetGenericParameterConstraint(handle);
 				this.ownerTooltip = null;
+				this.typeTooltip = null;
 			}
 		}
 

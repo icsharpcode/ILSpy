@@ -60,7 +60,7 @@ namespace ICSharpCode.ILSpy.Commands
 			Type type = cell.Item.GetType();
 			var property = type.GetProperty(cell.Column.Header.ToString());
 			var moduleField = type.GetField("module", BindingFlags.NonPublic | BindingFlags.Instance);
-			if (property == null || property.PropertyType != typeof(int) || !property.GetCustomAttributes(false).Any(a => a is StringFormatAttribute sf && sf.Format == "X8"))
+			if (property == null || property.PropertyType != typeof(int) || !property.GetCustomAttributes(false).Any(a => a is ColumnInfoAttribute { Kind: ColumnKind.Token } c))
 				return null;
 			module = (PEFile)moduleField.GetValue(cell.Item);
 			return (int)property.GetValue(cell.Item);

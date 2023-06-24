@@ -84,7 +84,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public object Offset => offset == null ? "n/a" : (object)offset;
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public LocalVariableAttributes Attributes => localVar.Attributes;
 
 			public object AttributesTooltip => new FlagsTooltip() {

@@ -88,8 +88,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public object Offset => offset == null ? "n/a" : (object)offset;
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Document => MetadataTokens.GetToken(debugInfo.Document);
 
 			public void OnDocumentClick()
@@ -106,7 +105,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int SequencePoints => MetadataTokens.GetHeapOffset(debugInfo.SequencePointsBlob);
 
 			public string SequencePointsTooltip {
@@ -122,8 +121,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int LocalSignature => MetadataTokens.GetToken(debugInfo.LocalSignature);
 
 			public void OnLocalSignatureClick()
