@@ -26,9 +26,9 @@
 					<Setter.Value>
 						<ContextMenu>
 							<MenuItem Header="_Copy" Command="ApplicationCommands.Copy" />
-							<MenuItem Header="Copy _name" Command="ApplicationCommands.Copy" CommandParameter="Key" />
-							<MenuItem Header="Copy _value" Command="ApplicationCommands.Copy" CommandParameter="Value" />
-							<MenuItem Header="Copy _type" Command="ApplicationCommands.Copy" CommandParameter="Type" />
+							<MenuItem Header="Copy _name" Command="ApplicationCommands.Copy" CommandParameter="Key" InputGestureText=" " />
+							<MenuItem Header="Copy _value" Command="ApplicationCommands.Copy" CommandParameter="Value" InputGestureText=" " />
+							<MenuItem Header="Copy _type" Command="ApplicationCommands.Copy" CommandParameter="Type" InputGestureText=" " />
 						</ContextMenu>
 					</Setter.Value>
 				</Setter>
