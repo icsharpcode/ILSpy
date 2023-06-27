@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2018 Daniel Grunwald
+// Copyright (c) 2018 Daniel Grunwald
 //   This file is based on the Mono implementation of ResXResourceWriter.
 //   It is modified to add support for "ResourceSerializedObject" values.
 //
@@ -31,9 +31,8 @@
 //	includes code by Mike Krüger and Lluis Sanchez
 
 using System;
-using System.ComponentModel;
+using System.Globalization;
 using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Xml;
 
@@ -46,25 +45,20 @@ namespace ICSharpCode.Decompiler.Util
 #endif
 	class ResXResourceWriter : IDisposable
 	{
-		#region Local Variables
 		private string filename;
 		private Stream stream;
 		private TextWriter textwriter;
 		private XmlTextWriter writer;
 		private bool written;
 		private string base_path;
-		#endregion    // Local Variables
 
-		#region Static Fields
 		public static readonly string BinSerializedObjectMimeType = "application/x-microsoft.net.object.binary.base64";
 		public static readonly string ByteArraySerializedObjectMimeType = "application/x-microsoft.net.object.bytearray.base64";
 		public static readonly string DefaultSerializedObjectMimeType = BinSerializedObjectMimeType;
 		public static readonly string ResMimeType = "text/microsoft-resx";
 		public static readonly string SoapSerializedObjectMimeType = "application/x-microsoft.net.object.soap.base64";
 		public static readonly string Version = "2.0";
-		#endregion  // Static Fields
 
-		#region Constructors & Destructor
 		public ResXResourceWriter(Stream stream)
 		{
 			if (stream == null)
@@ -96,9 +90,9 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			Dispose(false);
 		}
-		#endregion // Constructors & Destructor
 
 		const string WinFormsAssemblyName = ", System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
+		const string MSCorLibAssemblyName = ", mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
 		const string ResXNullRefTypeName = "System.Resources.ResXNullRef" + WinFormsAssemblyName;
 
 		void InitWriter()
@@ -131,39 +125,23 @@ namespace ICSharpCode.Decompiler.Util
 
 		void WriteNiceBase64(byte[] value, int offset, int length)
 		{
-			string b64;
-			StringBuilder sb;
-			int pos;
-			int inc;
-			string ins;
-
-			b64 = Convert.ToBase64String(value, offset, length);
-
-			// Wild guess; two extra newlines, and one newline/tab pair for every 80 chars
-			sb = new StringBuilder(b64, b64.Length + ((b64.Length + 160) / 80) * 3);
-			pos = 0;
-			inc = 80 + Environment.NewLine.Length + 1;
-			ins = Environment.NewLine + "\t";
-			while (pos < sb.Length)
-			{
-				sb.Insert(pos, ins);
-				pos += inc;
-			}
-			sb.Insert(sb.Length, Environment.NewLine);
-			writer.WriteString(sb.ToString());
+			string base64 = Convert.ToBase64String(
+				value, offset, length,
+				Base64FormattingOptions.InsertLineBreaks);
+			writer.WriteString(base64);
 		}
 
-		void WriteBytes(string name, Type type, byte[] value, int offset, int length, string comment)
+		void WriteBytes(string name, string type, byte[] value, int offset, int length, string comment)
 		{
 			writer.WriteStartElement("data");
 			writer.WriteAttributeString("name", name);
 
 			if (type != null)
 			{
-				writer.WriteAttributeString("type", type.AssemblyQualifiedName);
+				writer.WriteAttributeString("type", type);
 				// byte[] should never get a mimetype, otherwise MS.NET won't be able
 				// to parse the data.
-				if (type != typeof(byte[]))
+				if (type != "System.Byte[]" + MSCorLibAssemblyName)
 					writer.WriteAttributeString("mimetype", ByteArraySerializedObjectMimeType);
 				writer.WriteStartElement("value");
 				WriteNiceBase64(value, offset, length);
@@ -177,7 +155,7 @@ namespace ICSharpCode.Decompiler.Util
 
 			writer.WriteEndElement();
 
-			if (!(comment == null || comment.Equals(String.Empty)))
+			if (!string.IsNullOrEmpty(comment))
 			{
 				writer.WriteStartElement("comment");
 				writer.WriteString(comment);
@@ -187,29 +165,22 @@ namespace ICSharpCode.Decompiler.Util
 			writer.WriteEndElement();
 		}
 
-		void WriteBytes(string name, Type type, byte[] value, string comment)
-		{
-			WriteBytes(name, type, value, 0, value.Length, comment);
-		}
-
-		void WriteString(string name, string value)
-		{
-			WriteString(name, value, null);
-		}
-		void WriteString(string name, string value, string type)
-		{
-			WriteString(name, value, type, String.Empty);
-		}
 		void WriteString(string name, string value, string type, string comment)
 		{
 			writer.WriteStartElement("data");
 			writer.WriteAttributeString("name", name);
 			if (type != null)
+			{
 				writer.WriteAttributeString("type", type);
+			}
+			else
+			{
+				writer.WriteAttributeString("xml:space", "preserve");
+			}
 			writer.WriteStartElement("value");
 			writer.WriteString(value);
 			writer.WriteEndElement();
-			if (!(comment == null || comment.Equals(String.Empty)))
+			if (!string.IsNullOrEmpty(comment))
 			{
 				writer.WriteStartElement("comment");
 				writer.WriteString(comment);
@@ -221,34 +192,16 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void AddResource(string name, byte[] value)
 		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-
-			if (value == null)
-				throw new ArgumentNullException(nameof(value));
-
-			if (written)
-				throw new InvalidOperationException("The resource is already generated.");
-
-			if (writer == null)
-				InitWriter();
-
-			WriteBytes(name, value.GetType(), value, null);
+			AddResource(name, value, string.Empty);
 		}
 
 		public void AddResource(string name, object value)
 		{
-			AddResource(name, value, String.Empty);
+			AddResource(name, value, string.Empty);
 		}
 
 		private void AddResource(string name, object value, string comment)
 		{
-			if (value is string)
-			{
-				AddResource(name, (string)value, comment);
-				return;
-			}
-
 			if (name == null)
 				throw new ArgumentNullException(nameof(name));
 
@@ -258,237 +211,79 @@ namespace ICSharpCode.Decompiler.Util
 			if (writer == null)
 				InitWriter();
 
-			if (value is byte[])
+			switch (value)
 			{
-				WriteBytes(name, value.GetType(), (byte[])value, comment);
-				return;
+				case null:
+					// nulls written as ResXNullRef
+					WriteString(name, "", ResXNullRefTypeName, comment);
+					break;
+				case string s:
+					WriteString(name, s, null, comment);
+					break;
+				case bool bo:
+					WriteString(name, bo.ToString(CultureInfo.InvariantCulture), "System.Boolean" + MSCorLibAssemblyName, comment);
+					break;
+				case char ch:
+					WriteString(name, ch.ToString(CultureInfo.InvariantCulture), "System.Char" + MSCorLibAssemblyName, comment);
+					break;
+				case sbyte sb:
+					WriteString(name, sb.ToString(CultureInfo.InvariantCulture), "System.SByte" + MSCorLibAssemblyName, comment);
+					break;
+				case byte b:
+					WriteString(name, b.ToString(CultureInfo.InvariantCulture), "System.Byte" + MSCorLibAssemblyName, comment);
+					break;
+				case short sh:
+					WriteString(name, sh.ToString(CultureInfo.InvariantCulture), "System.Int16" + MSCorLibAssemblyName, comment);
+					break;
+				case ushort ush:
+					WriteString(name, ush.ToString(CultureInfo.InvariantCulture), "System.UInt16" + MSCorLibAssemblyName, comment);
+					break;
+				case int i:
+					WriteString(name, i.ToString(CultureInfo.InvariantCulture), "System.Int32" + MSCorLibAssemblyName, comment);
+					break;
+				case uint u:
+					WriteString(name, u.ToString(CultureInfo.InvariantCulture), "System.UInt32" + MSCorLibAssemblyName, comment);
+					break;
+				case long l:
+					WriteString(name, l.ToString(CultureInfo.InvariantCulture), "System.Int64" + MSCorLibAssemblyName, comment);
+					break;
+				case ulong ul:
+					WriteString(name, ul.ToString(CultureInfo.InvariantCulture), "System.UInt64" + MSCorLibAssemblyName, comment);
+					break;
+				case float f:
+					WriteString(name, f.ToString(CultureInfo.InvariantCulture), "System.Single" + MSCorLibAssemblyName, comment);
+					break;
+				case double d:
+					WriteString(name, d.ToString(CultureInfo.InvariantCulture), "System.Double" + MSCorLibAssemblyName, comment);
+					break;
+				case decimal m:
+					WriteString(name, m.ToString(CultureInfo.InvariantCulture), "System.Decimal" + MSCorLibAssemblyName, comment);
+					break;
+				case DateTime dt:
+					WriteString(name, dt.ToString(CultureInfo.InvariantCulture), "System.DateTime" + MSCorLibAssemblyName, comment);
+					break;
+				case TimeSpan sp:
+					WriteString(name, sp.ToString(), "System.TimeSpan" + MSCorLibAssemblyName, comment);
+					break;
+				case byte[] array:
+					WriteBytes(name, "System.Byte[]" + MSCorLibAssemblyName, array, 0, array.Length, comment);
+					break;
+				case MemoryStream memoryStream:
+					var arr = memoryStream.ToArray();
+					WriteBytes(name, null, arr, 0, arr.Length, comment);
+					break;
+				case ResourceSerializedObject rso:
+					var bytes = rso.GetBytes();
+					WriteBytes(name, null, bytes, 0, bytes.Length, comment);
+					break;
+				default:
+					throw new NotSupportedException($"Value '{value}' of type {value.GetType().FullName} is not supported by this version of ResXResourceWriter. Use byte arrays or streams instead.");
 			}
-			if (value is ResourceSerializedObject rso)
-			{
-				var bytes = rso.GetBytes();
-				WriteBytes(name, null, bytes, 0, bytes.Length, comment);
-				return;
-			}
-
-			if (value == null)
-			{
-				// nulls written as ResXNullRef
-				WriteString(name, "", ResXNullRefTypeName, comment);
-				return;
-			}
-
-			if (value != null && !value.GetType().IsSerializable)
-				throw new InvalidOperationException(String.Format("The element '{0}' of type '{1}' is not serializable.", name, value.GetType().Name));
-
-			TypeConverter converter = TypeDescriptor.GetConverter(value);
-
-			if (converter != null && converter.CanConvertTo(typeof(string)) && converter.CanConvertFrom(typeof(string)))
-			{
-				string str = (string)converter.ConvertToInvariantString(value);
-				WriteString(name, str, value.GetType().AssemblyQualifiedName, comment);
-				return;
-			}
-
-			if (converter != null && converter.CanConvertTo(typeof(byte[])) && converter.CanConvertFrom(typeof(byte[])))
-			{
-				byte[] b = (byte[])converter.ConvertTo(value, typeof(byte[]));
-				WriteBytes(name, value.GetType(), b, comment);
-				return;
-			}
-
-			MemoryStream ms = new MemoryStream();
-			BinaryFormatter fmt = new BinaryFormatter();
-			try
-			{
-				fmt.Serialize(ms, value);
-			}
-			catch (Exception e)
-			{
-				throw new InvalidOperationException("Cannot add a " + value.GetType() +
-									 "because it cannot be serialized: " +
-									 e.Message);
-			}
-
-			WriteBytes(name, null, ms.GetBuffer(), 0, (int)ms.Length, comment);
-			ms.Close();
 		}
 
 		public void AddResource(string name, string value)
 		{
 			AddResource(name, value, string.Empty);
-		}
-
-		private void AddResource(string name, string value, string comment)
-		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-
-			if (value == null)
-				throw new ArgumentNullException(nameof(value));
-
-			if (written)
-				throw new InvalidOperationException("The resource is already generated.");
-
-			if (writer == null)
-				InitWriter();
-
-			WriteString(name, value, null, comment);
-		}
-
-		public void AddMetadata(string name, string value)
-		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-
-			if (value == null)
-				throw new ArgumentNullException(nameof(value));
-
-			if (written)
-				throw new InvalidOperationException("The resource is already generated.");
-
-			if (writer == null)
-				InitWriter();
-
-			writer.WriteStartElement("metadata");
-			writer.WriteAttributeString("name", name);
-			writer.WriteAttributeString("xml:space", "preserve");
-
-			writer.WriteElementString("value", value);
-
-			writer.WriteEndElement();
-		}
-
-		public void AddMetadata(string name, byte[] value)
-		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-
-			if (value == null)
-				throw new ArgumentNullException(nameof(value));
-
-			if (written)
-				throw new InvalidOperationException("The resource is already generated.");
-
-			if (writer == null)
-				InitWriter();
-
-			writer.WriteStartElement("metadata");
-			writer.WriteAttributeString("name", name);
-
-			writer.WriteAttributeString("type", value.GetType().AssemblyQualifiedName);
-
-			writer.WriteStartElement("value");
-			WriteNiceBase64(value, 0, value.Length);
-			writer.WriteEndElement();
-
-			writer.WriteEndElement();
-		}
-
-		public void AddMetadata(string name, object value)
-		{
-			if (value is string)
-			{
-				AddMetadata(name, (string)value);
-				return;
-			}
-
-			if (value is byte[])
-			{
-				AddMetadata(name, (byte[])value);
-				return;
-			}
-
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-
-			if (value == null)
-				throw new ArgumentNullException(nameof(value));
-
-			if (!value.GetType().IsSerializable)
-				throw new InvalidOperationException(String.Format("The element '{0}' of type '{1}' is not serializable.", name, value.GetType().Name));
-
-			if (written)
-				throw new InvalidOperationException("The resource is already generated.");
-
-			if (writer == null)
-				InitWriter();
-
-			Type type = value.GetType();
-
-			TypeConverter converter = TypeDescriptor.GetConverter(value);
-			if (converter != null && converter.CanConvertTo(typeof(string)) && converter.CanConvertFrom(typeof(string)))
-			{
-				string str = (string)converter.ConvertToInvariantString(value);
-				writer.WriteStartElement("metadata");
-				writer.WriteAttributeString("name", name);
-				if (type != null)
-					writer.WriteAttributeString("type", type.AssemblyQualifiedName);
-				writer.WriteStartElement("value");
-				writer.WriteString(str);
-				writer.WriteEndElement();
-				writer.WriteEndElement();
-				writer.WriteWhitespace("\n  ");
-				return;
-			}
-
-			if (converter != null && converter.CanConvertTo(typeof(byte[])) && converter.CanConvertFrom(typeof(byte[])))
-			{
-				byte[] b = (byte[])converter.ConvertTo(value, typeof(byte[]));
-				writer.WriteStartElement("metadata");
-				writer.WriteAttributeString("name", name);
-
-				if (type != null)
-				{
-					writer.WriteAttributeString("type", type.AssemblyQualifiedName);
-					writer.WriteAttributeString("mimetype", ByteArraySerializedObjectMimeType);
-					writer.WriteStartElement("value");
-					WriteNiceBase64(b, 0, b.Length);
-				}
-				else
-				{
-					writer.WriteAttributeString("mimetype", BinSerializedObjectMimeType);
-					writer.WriteStartElement("value");
-					writer.WriteBase64(b, 0, b.Length);
-				}
-
-				writer.WriteEndElement();
-				writer.WriteEndElement();
-				return;
-			}
-
-			MemoryStream ms = new MemoryStream();
-			BinaryFormatter fmt = new BinaryFormatter();
-			try
-			{
-				fmt.Serialize(ms, value);
-			}
-			catch (Exception e)
-			{
-				throw new InvalidOperationException("Cannot add a " + value.GetType() +
-									 "because it cannot be serialized: " +
-									 e.Message);
-			}
-
-			writer.WriteStartElement("metadata");
-			writer.WriteAttributeString("name", name);
-
-			if (type != null)
-			{
-				writer.WriteAttributeString("type", type.AssemblyQualifiedName);
-				writer.WriteAttributeString("mimetype", ByteArraySerializedObjectMimeType);
-				writer.WriteStartElement("value");
-				WriteNiceBase64(ms.GetBuffer(), 0, ms.GetBuffer().Length);
-			}
-			else
-			{
-				writer.WriteAttributeString("mimetype", BinSerializedObjectMimeType);
-				writer.WriteStartElement("value");
-				writer.WriteBase64(ms.GetBuffer(), 0, ms.GetBuffer().Length);
-			}
-
-			writer.WriteEndElement();
-			writer.WriteEndElement();
-			ms.Close();
 		}
 
 		public void Close()
@@ -529,7 +324,7 @@ namespace ICSharpCode.Decompiler.Util
 				Close();
 		}
 
-		static string schema = @"
+		static readonly string schema = @"
 	<xsd:schema id='root' xmlns='' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:msdata='urn:schemas-microsoft-com:xml-msdata'>
 		<xsd:element name='root' msdata:IsDataSet='true'>
 			<xsd:complexType>
@@ -559,11 +354,9 @@ namespace ICSharpCode.Decompiler.Util
 	</xsd:schema>
 ".Replace("'", "\"").Replace("\t", "  ");
 
-		#region Public Properties
 		public string BasePath {
 			get { return base_path; }
 			set { base_path = value; }
 		}
-		#endregion
 	}
 }

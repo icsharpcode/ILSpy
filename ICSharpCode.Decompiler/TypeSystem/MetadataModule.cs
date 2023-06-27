@@ -402,8 +402,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IType ResolveDeclaringType(EntityHandle declaringTypeReference, GenericContext context)
 		{
 			// resolve without substituting dynamic/tuple types
-			var ty = ResolveType(declaringTypeReference, context,
-				options & ~(TypeSystemOptions.Dynamic | TypeSystemOptions.Tuple | TypeSystemOptions.NullabilityAnnotations));
+			const TypeSystemOptions removedOptions = TypeSystemOptions.Dynamic | TypeSystemOptions.Tuple
+				| TypeSystemOptions.NullabilityAnnotations | TypeSystemOptions.NativeIntegers | TypeSystemOptions.NativeIntegersWithoutAttribute;
+			var ty = ResolveType(declaringTypeReference, context, options & ~removedOptions);
 			// but substitute tuple types in type arguments:
 			ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation, null, metadata, options, Nullability.Oblivious, typeChildrenOnly: true);
 			return ty;
@@ -670,7 +671,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 					m.AccessorKind = MethodSemanticsAttributes.Setter;
 					m.AccessorOwner = fakeProperty;
-					fakeProperty.Getter = m;
+					fakeProperty.Setter = m;
 					fakeProperty.ReturnType = parameters.Last().Type;
 					fakeProperty.IsIndexer = parameters.Count > 1;
 					fakeProperty.Parameters = parameters.SkipLast(1).ToArray();

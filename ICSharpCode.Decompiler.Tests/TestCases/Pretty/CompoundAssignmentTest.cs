@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -201,6 +201,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			{
 				throw new NotImplementedException();
 			}
+#if CS110
+			public static CustomStruct operator >>>(CustomStruct lhs, int rhs)
+			{
+				throw new NotImplementedException();
+			}
+#endif
 			public static CustomStruct operator &(CustomStruct lhs, CustomStruct rhs)
 			{
 				throw new NotImplementedException();
@@ -286,6 +292,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static ShortEnum StaticShortProperty { get; set; }
 
 		public static string StaticStringProperty { get; set; }
+
+		private static void Use(ref byte b)
+		{
+		}
+
+		private static void Use(ref sbyte b)
+		{
+		}
+
+		private static void Use<T>(ref T num)
+		{
+		}
 
 		private static CustomStruct2 GetStruct()
 		{
@@ -781,9 +799,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ByteAddTest(byte p, CustomClass c, CustomStruct2 s)
 		{
-			//byte l = 0;
-			//p += 5;
-			//l += 5;
+			byte b = 0;
+			p += 5;
+			b += 5;
+			Use(ref b);
 			byteField += 5;
 			ByteProp += 5;
 			c.ByteField += 5;
@@ -807,9 +826,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ByteSubtractTest(byte p, CustomClass c, CustomStruct2 s)
 		{
-			//byte l = 0;
-			//p -= 5;
-			//l -= 5;
+			byte b = 0;
+			p -= 5;
+			b -= 5;
+			Use(ref b);
 			byteField -= 5;
 			ByteProp -= 5;
 			c.ByteField -= 5;
@@ -833,9 +853,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ByteMultiplyTest(byte p, CustomClass c, CustomStruct2 s)
 		{
-			//byte l = 0;
-			//p *= 5;
-			//l *= 5;
+			byte b = 0;
+			p *= 5;
+			b *= 5;
+			Use(ref b);
 			byteField *= 5;
 			ByteProp *= 5;
 			c.ByteField *= 5;
@@ -859,9 +880,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ByteDivideTest(byte p, CustomClass c, CustomStruct2 s)
 		{
-			//byte l = 0;
-			//p /= 5;
-			//l /= 5;
+			byte b = 0;
+			p /= 5;
+			b /= 5;
+			Use(ref b);
 			byteField /= 5;
 			ByteProp /= 5;
 			c.ByteField /= 5;
@@ -885,9 +907,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ByteModulusTest(byte p, CustomClass c, CustomStruct2 s)
 		{
-			//byte l = 0;
-			//p %= 5;
-			//l %= 5;
+			byte b = 0;
+			p %= 5;
+			b %= 5;
+			Use(ref b);
 			byteField %= 5;
 			ByteProp %= 5;
 			c.ByteField %= 5;
@@ -911,9 +934,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ByteLeftShiftTest(byte p, CustomClass c, CustomStruct2 s)
 		{
-			//byte l = 0;
-			//p <<= 5;
-			//l <<= 5;
+			byte b = 0;
+			p <<= 5;
+			b <<= 5;
+			Use(ref b);
 			byteField <<= 5;
 			ByteProp <<= 5;
 			c.ByteField <<= 5;
@@ -937,9 +961,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ByteRightShiftTest(byte p, CustomClass c, CustomStruct2 s)
 		{
-			//byte l = 0;
-			//p >>= 5;
-			//l >>= 5;
+			byte b = 0;
+			p >>= 5;
+			b >>= 5;
+			Use(ref b);
 			byteField >>= 5;
 			ByteProp >>= 5;
 			c.ByteField >>= 5;
@@ -963,9 +988,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ByteBitAndTest(byte p, CustomClass c, CustomStruct2 s)
 		{
-			//byte l = 0;
-			//p &= 5;
-			//l &= 5;
+			byte b = 0;
+			p &= c.ByteField;
+			b &= c.ByteField;
+			Use(ref b);
 			byteField &= 5;
 			ByteProp &= 5;
 			c.ByteField &= 5;
@@ -989,9 +1015,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ByteBitOrTest(byte p, CustomClass c, CustomStruct2 s)
 		{
-			//byte l = 0;
-			//p |= 5;
-			//l |= 5;
+			byte b = 0;
+			p |= c.ByteField;
+			b |= c.ByteField;
+			Use(ref b);
 			byteField |= 5;
 			ByteProp |= 5;
 			c.ByteField |= 5;
@@ -1015,9 +1042,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ByteBitXorTest(byte p, CustomClass c, CustomStruct2 s)
 		{
-			//byte l = 0;
-			//p ^= 5;
-			//l ^= 5;
+			byte b = 0;
+			p ^= c.ByteField;
+			b ^= c.ByteField;
+			Use(ref b);
 			byteField ^= 5;
 			ByteProp ^= 5;
 			c.ByteField ^= 5;
@@ -1041,9 +1069,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void BytePostIncTest(byte p, CustomClass c, CustomStruct2 s)
 		{
-			//byte l = 0;
-			//X(p++);
-			//X(l++);
+			byte b = 0;
+			X(p++);
+			X(b++);
+			Use(ref b);
 			X(byteField++);
 			X(ByteProp++);
 			X(c.ByteField++);
@@ -1067,9 +1096,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void BytePreIncTest(byte p, CustomClass c, CustomStruct2 s)
 		{
-			//byte l = 0;
-			//X(++p);
-			//X(++l);
+			byte b = 0;
+			X(++p);
+			X(++b);
+			Use(ref b);
 			X(++byteField);
 			X(++ByteProp);
 			X(++c.ByteField);
@@ -1092,9 +1122,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void BytePostDecTest(byte p, CustomClass c, CustomStruct2 s)
 		{
-			//byte l = 0;
-			//X(p--);
-			//X(l--);
+			byte b = 0;
+			X(p--);
+			X(b--);
+			Use(ref b);
 			X(byteField--);
 			X(ByteProp--);
 			X(c.ByteField--);
@@ -1118,9 +1149,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void BytePreDecTest(byte p, CustomClass c, CustomStruct2 s)
 		{
-			//byte l = 0;
-			//X(--p);
-			//X(--l);
+			byte b = 0;
+			X(--p);
+			X(--b);
+			Use(ref b);
 			X(--byteField);
 			X(--ByteProp);
 			X(--c.ByteField);
@@ -1143,9 +1175,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void SbyteAddTest(sbyte p, CustomClass c, CustomStruct2 s)
 		{
-			//sbyte l = 0;
-			//p += 5;
-			//l += 5;
+			sbyte b = 0;
+			p += 5;
+			b += 5;
+			Use(ref b);
 			sbyteField += 5;
 			SbyteProp += 5;
 			c.SbyteField += 5;
@@ -1169,9 +1202,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SbyteSubtractTest(sbyte p, CustomClass c, CustomStruct2 s)
 		{
-			//sbyte l = 0;
-			//p -= 5;
-			//l -= 5;
+			sbyte b = 0;
+			p -= 5;
+			b -= 5;
+			Use(ref b);
 			sbyteField -= 5;
 			SbyteProp -= 5;
 			c.SbyteField -= 5;
@@ -1195,9 +1229,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SbyteMultiplyTest(sbyte p, CustomClass c, CustomStruct2 s)
 		{
-			//sbyte l = 0;
-			//p *= 5;
-			//l *= 5;
+			sbyte b = 0;
+			p *= 5;
+			b *= 5;
+			Use(ref b);
 			sbyteField *= 5;
 			SbyteProp *= 5;
 			c.SbyteField *= 5;
@@ -1221,9 +1256,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SbyteDivideTest(sbyte p, CustomClass c, CustomStruct2 s)
 		{
-			//sbyte l = 0;
-			//p /= 5;
-			//l /= 5;
+			sbyte b = 0;
+			p /= 5;
+			b /= 5;
+			Use(ref b);
 			sbyteField /= 5;
 			SbyteProp /= 5;
 			c.SbyteField /= 5;
@@ -1247,9 +1283,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SbyteModulusTest(sbyte p, CustomClass c, CustomStruct2 s)
 		{
-			//sbyte l = 0;
-			//p %= 5;
-			//l %= 5;
+			sbyte b = 0;
+			p %= 5;
+			b %= 5;
+			Use(ref b);
 			sbyteField %= 5;
 			SbyteProp %= 5;
 			c.SbyteField %= 5;
@@ -1273,9 +1310,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SbyteLeftShiftTest(sbyte p, CustomClass c, CustomStruct2 s)
 		{
-			//sbyte l = 0;
-			//p <<= 5;
-			//l <<= 5;
+			sbyte b = 0;
+			p <<= 5;
+			b <<= 5;
+			Use(ref b);
 			sbyteField <<= 5;
 			SbyteProp <<= 5;
 			c.SbyteField <<= 5;
@@ -1299,9 +1337,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SbyteRightShiftTest(sbyte p, CustomClass c, CustomStruct2 s)
 		{
-			//sbyte l = 0;
-			//p >>= 5;
-			//l >>= 5;
+			sbyte b = 0;
+			p >>= 5;
+			b >>= 5;
+			Use(ref b);
 			sbyteField >>= 5;
 			SbyteProp >>= 5;
 			c.SbyteField >>= 5;
@@ -1325,9 +1364,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SbyteBitAndTest(sbyte p, CustomClass c, CustomStruct2 s)
 		{
-			//sbyte l = 0;
-			//p &= 5;
-			//l &= 5;
+			sbyte b = 0;
+			p &= 5;
+			b &= 5;
+			Use(ref b);
 			sbyteField &= 5;
 			SbyteProp &= 5;
 			c.SbyteField &= 5;
@@ -1351,9 +1391,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SbyteBitOrTest(sbyte p, CustomClass c, CustomStruct2 s)
 		{
-			//sbyte l = 0;
-			//p |= 5;
-			//l |= 5;
+			sbyte b = 0;
+			p |= 5;
+			b |= 5;
+			Use(ref b);
 			sbyteField |= 5;
 			SbyteProp |= 5;
 			c.SbyteField |= 5;
@@ -1377,9 +1418,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SbyteBitXorTest(sbyte p, CustomClass c, CustomStruct2 s)
 		{
-			//sbyte l = 0;
-			//p ^= 5;
-			//l ^= 5;
+			sbyte b = 0;
+			p ^= 5;
+			b ^= 5;
+			Use(ref b);
 			sbyteField ^= 5;
 			SbyteProp ^= 5;
 			c.SbyteField ^= 5;
@@ -1403,9 +1445,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SbytePostIncTest(sbyte p, CustomClass c, CustomStruct2 s)
 		{
-			//sbyte l = 0;
-			//X(p++);
-			//X(l++);
+			sbyte b = 0;
+			X(p++);
+			X(b++);
+			Use(ref b);
 			X(sbyteField++);
 			X(SbyteProp++);
 			X(c.SbyteField++);
@@ -1429,9 +1472,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SbytePreIncTest(sbyte p, CustomClass c, CustomStruct2 s)
 		{
-			//sbyte l = 0;
-			//X(++p);
-			//X(++l);
+			sbyte b = 0;
+			X(++p);
+			X(++b);
+			Use(ref b);
 			X(++sbyteField);
 			X(++SbyteProp);
 			X(++c.SbyteField);
@@ -1454,9 +1498,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void SbytePostDecTest(sbyte p, CustomClass c, CustomStruct2 s)
 		{
-			//sbyte l = 0;
-			//X(p--);
-			//X(l--);
+			sbyte b = 0;
+			X(p--);
+			X(b--);
+			Use(ref b);
 			X(sbyteField--);
 			X(SbyteProp--);
 			X(c.SbyteField--);
@@ -1480,9 +1525,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SbytePreDecTest(sbyte p, CustomClass c, CustomStruct2 s)
 		{
-			//sbyte l = 0;
-			//X(--p);
-			//X(--l);
+			sbyte b = 0;
+			X(--p);
+			X(--b);
+			Use(ref b);
 			X(--sbyteField);
 			X(--SbyteProp);
 			X(--c.SbyteField);
@@ -1505,9 +1551,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void ShortAddTest(short p, CustomClass c, CustomStruct2 s)
 		{
-			//short l = 0;
-			//p += 5;
-			//l += 5;
+			short num = 0;
+			p += 5;
+			num += 5;
+			Use(ref num);
 			shortField += 5;
 			ShortProp += 5;
 			c.ShortField += 5;
@@ -1531,9 +1578,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ShortSubtractTest(short p, CustomClass c, CustomStruct2 s)
 		{
-			//short l = 0;
-			//p -= 5;
-			//l -= 5;
+			short num = 0;
+			p -= 5;
+			num -= 5;
+			Use(ref num);
 			shortField -= 5;
 			ShortProp -= 5;
 			c.ShortField -= 5;
@@ -1557,9 +1605,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ShortMultiplyTest(short p, CustomClass c, CustomStruct2 s)
 		{
-			//short l = 0;
-			//p *= 5;
-			//l *= 5;
+			short num = 0;
+			p *= 5;
+			num *= 5;
+			Use(ref num);
 			shortField *= 5;
 			ShortProp *= 5;
 			c.ShortField *= 5;
@@ -1583,9 +1632,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ShortDivideTest(short p, CustomClass c, CustomStruct2 s)
 		{
-			//short l = 0;
-			//p /= 5;
-			//l /= 5;
+			short num = 0;
+			p /= 5;
+			num /= 5;
+			Use(ref num);
 			shortField /= 5;
 			ShortProp /= 5;
 			c.ShortField /= 5;
@@ -1609,9 +1659,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ShortModulusTest(short p, CustomClass c, CustomStruct2 s)
 		{
-			//short l = 0;
-			//p %= 5;
-			//l %= 5;
+			short num = 0;
+			p %= 5;
+			num %= 5;
+			Use(ref num);
 			shortField %= 5;
 			ShortProp %= 5;
 			c.ShortField %= 5;
@@ -1635,9 +1686,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ShortLeftShiftTest(short p, CustomClass c, CustomStruct2 s)
 		{
-			//short l = 0;
-			//p <<= 5;
-			//l <<= 5;
+			short num = 0;
+			p <<= 5;
+			num <<= 5;
+			Use(ref num);
 			shortField <<= 5;
 			ShortProp <<= 5;
 			c.ShortField <<= 5;
@@ -1661,9 +1713,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ShortRightShiftTest(short p, CustomClass c, CustomStruct2 s)
 		{
-			//short l = 0;
-			//p >>= 5;
-			//l >>= 5;
+			short num = 0;
+			p >>= 5;
+			num >>= 5;
+			Use(ref num);
 			shortField >>= 5;
 			ShortProp >>= 5;
 			c.ShortField >>= 5;
@@ -1685,11 +1738,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #endif
 		}
 
+#if CS110
+		public static void ShortUnsignedRightShiftTest(short p, CustomClass c, CustomStruct2 s)
+		{
+			//X(p >>>= 5);
+			shortField >>>= 5;
+			ShortProp >>>= 5;
+			c.ShortField >>>= 5;
+			c.ShortProp >>>= 5;
+			s.ShortField >>>= 5;
+			s.ShortProp >>>= 5;
+			customClassField.ShortField >>>= 5;
+			customClassField.ShortProp >>>= 5;
+			otherCustomStructField.ShortField >>>= 5;
+			otherCustomStructField.ShortProp >>>= 5;
+			CustomClassProp.ShortField >>>= 5;
+			CustomClassProp.ShortProp >>>= 5;
+			GetClass().ShortField >>>= 5;
+			GetClass().ShortProp >>>= 5;
+			GetRefStruct().ShortField >>>= 5;
+			GetRefStruct().ShortProp >>>= 5;
+			GetRefShort() >>>= 5;
+		}
+#endif
+
 		public static void ShortBitAndTest(short p, CustomClass c, CustomStruct2 s)
 		{
-			//short l = 0;
-			//p &= 5;
-			//l &= 5;
+			short num = 0;
+			p &= 5;
+			num &= 5;
+			Use(ref num);
 			shortField &= 5;
 			ShortProp &= 5;
 			c.ShortField &= 5;
@@ -1713,9 +1791,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ShortBitOrTest(short p, CustomClass c, CustomStruct2 s)
 		{
-			//short l = 0;
-			//p |= 5;
-			//l |= 5;
+			short num = 0;
+			p |= 5;
+			num |= 5;
+			Use(ref num);
 			shortField |= 5;
 			ShortProp |= 5;
 			c.ShortField |= 5;
@@ -1739,9 +1818,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ShortBitXorTest(short p, CustomClass c, CustomStruct2 s)
 		{
-			//short l = 0;
-			//p ^= 5;
-			//l ^= 5;
+			short num = 0;
+			p ^= 5;
+			num ^= 5;
+			Use(ref num);
 			shortField ^= 5;
 			ShortProp ^= 5;
 			c.ShortField ^= 5;
@@ -1765,9 +1845,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ShortPostIncTest(short p, CustomClass c, CustomStruct2 s)
 		{
-			//short l = 0;
-			//X(p++);
-			//X(l++);
+			short num = 0;
+			X(p++);
+			X(num++);
+			Use(ref num);
 			X(shortField++);
 			X(ShortProp++);
 			X(c.ShortField++);
@@ -1791,9 +1872,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ShortPreIncTest(short p, CustomClass c, CustomStruct2 s)
 		{
-			//short l = 0;
-			//X(++p);
-			//X(++l);
+			short num = 0;
+			X(++p);
+			X(++num);
+			Use(ref num);
 			X(++shortField);
 			X(++ShortProp);
 			X(++c.ShortField);
@@ -1816,9 +1898,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void ShortPostDecTest(short p, CustomClass c, CustomStruct2 s)
 		{
-			//short l = 0;
-			//X(p--);
-			//X(l--);
+			short num = 0;
+			X(p--);
+			X(num--);
+			Use(ref num);
 			X(shortField--);
 			X(ShortProp--);
 			X(c.ShortField--);
@@ -1842,9 +1925,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ShortPreDecTest(short p, CustomClass c, CustomStruct2 s)
 		{
-			//short l = 0;
-			//X(--p);
-			//X(--l);
+			short num = 0;
+			X(--p);
+			X(--num);
+			Use(ref num);
 			X(--shortField);
 			X(--ShortProp);
 			X(--c.ShortField);
@@ -1867,9 +1951,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void UshortAddTest(ushort p, CustomClass c, CustomStruct2 s)
 		{
-			//ushort l = 0;
-			//p += 5;
-			//l += 5;
+			ushort num = 0;
+			p += 5;
+			num += 5;
+			Use(ref num);
 			ushortField += 5;
 			UshortProp += 5;
 			c.UshortField += 5;
@@ -1893,9 +1978,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UshortSubtractTest(ushort p, CustomClass c, CustomStruct2 s)
 		{
-			//ushort l = 0;
-			//p -= 5;
-			//l -= 5;
+			ushort num = 0;
+			p -= 5;
+			num -= 5;
+			Use(ref num);
 			ushortField -= 5;
 			UshortProp -= 5;
 			c.UshortField -= 5;
@@ -1919,9 +2005,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UshortMultiplyTest(ushort p, CustomClass c, CustomStruct2 s)
 		{
-			//ushort l = 0;
-			//p *= 5;
-			//l *= 5;
+			ushort num = 0;
+			p *= 5;
+			num *= 5;
+			Use(ref num);
 			ushortField *= 5;
 			UshortProp *= 5;
 			c.UshortField *= 5;
@@ -1945,9 +2032,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UshortDivideTest(ushort p, CustomClass c, CustomStruct2 s)
 		{
-			//ushort l = 0;
-			//p /= 5;
-			//l /= 5;
+			ushort num = 0;
+			p /= 5;
+			num /= 5;
+			Use(ref num);
 			ushortField /= 5;
 			UshortProp /= 5;
 			c.UshortField /= 5;
@@ -1971,9 +2059,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UshortModulusTest(ushort p, CustomClass c, CustomStruct2 s)
 		{
-			//ushort l = 0;
-			//p %= 5;
-			//l %= 5;
+			ushort num = 0;
+			p %= 5;
+			num %= 5;
+			Use(ref num);
 			ushortField %= 5;
 			UshortProp %= 5;
 			c.UshortField %= 5;
@@ -1997,9 +2086,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UshortLeftShiftTest(ushort p, CustomClass c, CustomStruct2 s)
 		{
-			//ushort l = 0;
-			//p <<= 5;
-			//l <<= 5;
+			ushort num = 0;
+			p <<= 5;
+			num <<= 5;
+			Use(ref num);
 			ushortField <<= 5;
 			UshortProp <<= 5;
 			c.UshortField <<= 5;
@@ -2023,9 +2113,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UshortRightShiftTest(ushort p, CustomClass c, CustomStruct2 s)
 		{
-			//ushort l = 0;
-			//p >>= 5;
-			//l >>= 5;
+			ushort num = 0;
+			p >>= 5;
+			num >>= 5;
+			Use(ref num);
 			ushortField >>= 5;
 			UshortProp >>= 5;
 			c.UshortField >>= 5;
@@ -2047,11 +2138,38 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #endif
 		}
 
-		public static void UshortBitAndTest(ushort p, CustomClass c, CustomStruct2 s)
+#if CS110
+		public static void UshortUnsignedRightShiftTest(ushort p, CustomClass c, CustomStruct2 s)
 		{
 			//ushort l = 0;
-			//p &= 5;
-			//l &= 5;
+			//p >>>= 5;
+			//l >>>= 5;
+			ushortField >>>= 5;
+			UshortProp >>>= 5;
+			c.UshortField >>>= 5;
+			c.UshortProp >>>= 5;
+			s.UshortField >>>= 5;
+			s.UshortProp >>>= 5;
+			customClassField.UshortField >>>= 5;
+			customClassField.UshortProp >>>= 5;
+			otherCustomStructField.UshortField >>>= 5;
+			otherCustomStructField.UshortProp >>>= 5;
+			CustomClassProp.UshortField >>>= 5;
+			CustomClassProp.UshortProp >>>= 5;
+			GetClass().UshortField >>>= 5;
+			GetClass().UshortProp >>>= 5;
+			GetRefStruct().UshortField >>>= 5;
+			GetRefStruct().UshortProp >>>= 5;
+			GetRefUshort() >>>= 5;
+		}
+#endif
+
+		public static void UshortBitAndTest(ushort p, CustomClass c, CustomStruct2 s)
+		{
+			ushort num = 0;
+			p &= c.UshortField;
+			num &= c.UshortField;
+			Use(ref num);
 			ushortField &= 5;
 			UshortProp &= 5;
 			c.UshortField &= 5;
@@ -2075,9 +2193,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UshortBitOrTest(ushort p, CustomClass c, CustomStruct2 s)
 		{
-			//ushort l = 0;
-			//p |= 5;
-			//l |= 5;
+			ushort num = 0;
+			p |= c.UshortField;
+			num |= c.UshortField;
+			Use(ref num);
 			ushortField |= 5;
 			UshortProp |= 5;
 			c.UshortField |= 5;
@@ -2101,9 +2220,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UshortBitXorTest(ushort p, CustomClass c, CustomStruct2 s)
 		{
-			//ushort l = 0;
-			//p ^= 5;
-			//l ^= 5;
+			ushort num = 0;
+			p ^= c.UshortField;
+			num ^= c.UshortField;
+			Use(ref num);
 			ushortField ^= 5;
 			UshortProp ^= 5;
 			c.UshortField ^= 5;
@@ -2127,9 +2247,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UshortPostIncTest(ushort p, CustomClass c, CustomStruct2 s)
 		{
-			//ushort l = 0;
-			//X(p++);
-			//X(l++);
+			ushort num = 0;
+			X(p++);
+			X(num++);
+			Use(ref num);
 			X(ushortField++);
 			X(UshortProp++);
 			X(c.UshortField++);
@@ -2153,9 +2274,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UshortPreIncTest(ushort p, CustomClass c, CustomStruct2 s)
 		{
-			//ushort l = 0;
-			//X(++p);
-			//X(++l);
+			ushort num = 0;
+			X(++p);
+			X(++num);
+			Use(ref num);
 			X(++ushortField);
 			X(++UshortProp);
 			X(++c.UshortField);
@@ -2178,9 +2300,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void UshortPostDecTest(ushort p, CustomClass c, CustomStruct2 s)
 		{
-			//ushort l = 0;
-			//X(p--);
-			//X(l--);
+			ushort num = 0;
+			X(p--);
+			X(num--);
+			Use(ref num);
 			X(ushortField--);
 			X(UshortProp--);
 			X(c.UshortField--);
@@ -2204,9 +2327,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UshortPreDecTest(ushort p, CustomClass c, CustomStruct2 s)
 		{
-			//ushort l = 0;
-			//X(--p);
-			//X(--l);
+			ushort num = 0;
+			X(--p);
+			X(--num);
+			Use(ref num);
 			X(--ushortField);
 			X(--UshortProp);
 			X(--c.UshortField);
@@ -2229,9 +2353,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void IntAddTest(int p, CustomClass c, CustomStruct2 s)
 		{
-			//int l = 0;
-			//p += 5;
-			//l += 5;
+			int num = 0;
+			p += 5;
+			num += 5;
+			Use(ref num);
 			intField += 5;
 			IntProp += 5;
 			c.IntField += 5;
@@ -2255,9 +2380,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void IntSubtractTest(int p, CustomClass c, CustomStruct2 s)
 		{
-			//int l = 0;
-			//p -= 5;
-			//l -= 5;
+			int num = 0;
+			p -= 5;
+			num -= 5;
+			Use(ref num);
 			intField -= 5;
 			IntProp -= 5;
 			c.IntField -= 5;
@@ -2281,9 +2407,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void IntMultiplyTest(int p, CustomClass c, CustomStruct2 s)
 		{
-			//int l = 0;
-			//p *= 5;
-			//l *= 5;
+			int num = 0;
+			p *= 5;
+			num *= 5;
+			Use(ref num);
 			intField *= 5;
 			IntProp *= 5;
 			c.IntField *= 5;
@@ -2307,9 +2434,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void IntDivideTest(int p, CustomClass c, CustomStruct2 s)
 		{
-			//int l = 0;
-			//p /= 5;
-			//l /= 5;
+			int num = 0;
+			p /= 5;
+			num /= 5;
+			Use(ref num);
 			intField /= 5;
 			IntProp /= 5;
 			c.IntField /= 5;
@@ -2333,9 +2461,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void IntModulusTest(int p, CustomClass c, CustomStruct2 s)
 		{
-			//int l = 0;
-			//p %= 5;
-			//l %= 5;
+			int num = 0;
+			p %= 5;
+			num %= 5;
+			Use(ref num);
 			intField %= 5;
 			IntProp %= 5;
 			c.IntField %= 5;
@@ -2359,9 +2488,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void IntLeftShiftTest(int p, CustomClass c, CustomStruct2 s)
 		{
-			//int l = 0;
-			//p <<= 5;
-			//l <<= 5;
+			int num = 0;
+			p <<= 5;
+			num <<= 5;
+			Use(ref num);
 			intField <<= 5;
 			IntProp <<= 5;
 			c.IntField <<= 5;
@@ -2385,9 +2515,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void IntRightShiftTest(int p, CustomClass c, CustomStruct2 s)
 		{
-			//int l = 0;
-			//p >>= 5;
-			//l >>= 5;
+			int num = 0;
+			p >>= 5;
+			num >>= 5;
+			Use(ref num);
 			intField >>= 5;
 			IntProp >>= 5;
 			c.IntField >>= 5;
@@ -2409,11 +2540,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #endif
 		}
 
+#if CS110
+		public static void IntUnsignedRightShiftTest(int p, CustomClass c, CustomStruct2 s)
+		{
+			X(p >>>= 5);
+			intField >>>= 5;
+			IntProp >>>= 5;
+			c.IntField >>>= 5;
+			c.IntProp >>>= 5;
+			s.IntField >>>= 5;
+			s.IntProp >>>= 5;
+			customClassField.IntField >>>= 5;
+			customClassField.IntProp >>>= 5;
+			otherCustomStructField.IntField >>>= 5;
+			otherCustomStructField.IntProp >>>= 5;
+			CustomClassProp.IntField >>>= 5;
+			CustomClassProp.IntProp >>>= 5;
+			GetClass().IntField >>>= 5;
+			GetClass().IntProp >>>= 5;
+			GetRefStruct().IntField >>>= 5;
+			GetRefStruct().IntProp >>>= 5;
+			GetRefInt() >>>= 5;
+		}
+#endif
+
 		public static void IntBitAndTest(int p, CustomClass c, CustomStruct2 s)
 		{
-			//int l = 0;
-			//p &= 5;
-			//l &= 5;
+			int num = 0;
+			p &= 5;
+			num &= 5;
+			Use(ref num);
 			intField &= 5;
 			IntProp &= 5;
 			c.IntField &= 5;
@@ -2437,9 +2593,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void IntBitOrTest(int p, CustomClass c, CustomStruct2 s)
 		{
-			//int l = 0;
-			//p |= 5;
-			//l |= 5;
+			int num = 0;
+			p |= 5;
+			num |= 5;
+			Use(ref num);
 			intField |= 5;
 			IntProp |= 5;
 			c.IntField |= 5;
@@ -2463,9 +2620,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void IntBitXorTest(int p, CustomClass c, CustomStruct2 s)
 		{
-			//int l = 0;
-			//p ^= 5;
-			//l ^= 5;
+			int num = 0;
+			p ^= 5;
+			num ^= 5;
+			Use(ref num);
 			intField ^= 5;
 			IntProp ^= 5;
 			c.IntField ^= 5;
@@ -2489,9 +2647,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void IntPostIncTest(int p, CustomClass c, CustomStruct2 s)
 		{
-			//int l = 0;
-			//X(p++);
-			//X(l++);
+			int num = 0;
+			X(p++);
+			X(num++);
+			Use(ref num);
 			X(intField++);
 			X(IntProp++);
 			X(c.IntField++);
@@ -2515,9 +2674,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void IntPreIncTest(int p, CustomClass c, CustomStruct2 s)
 		{
-			//int l = 0;
-			//X(++p);
-			//X(++l);
+			int num = 0;
+			X(++p);
+			X(++num);
+			Use(ref num);
 			X(++intField);
 			X(++IntProp);
 			X(++c.IntField);
@@ -2540,9 +2700,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void IntPostDecTest(int p, CustomClass c, CustomStruct2 s)
 		{
-			//int l = 0;
-			//X(p--);
-			//X(l--);
+			int num = 0;
+			X(p--);
+			X(num--);
+			Use(ref num);
 			X(intField--);
 			X(IntProp--);
 			X(c.IntField--);
@@ -2566,9 +2727,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void IntPreDecTest(int p, CustomClass c, CustomStruct2 s)
 		{
-			//int l = 0;
-			//X(--p);
-			//X(--l);
+			int num = 0;
+			X(--p);
+			X(--num);
+			Use(ref num);
 			X(--intField);
 			X(--IntProp);
 			X(--c.IntField);
@@ -2591,9 +2753,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void UintAddTest(uint p, CustomClass c, CustomStruct2 s)
 		{
-			//uint l = 0;
-			//p += 5u;
-			//l += 5u;
+			uint num = 0u;
+			p += 5;
+			num += 5;
+			Use(ref num);
 			uintField += 5u;
 			UintProp += 5u;
 			c.UintField += 5u;
@@ -2617,9 +2780,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UintSubtractTest(uint p, CustomClass c, CustomStruct2 s)
 		{
-			//uint l = 0;
-			//p -= 5u;
-			//l -= 5u;
+			uint num = 0u;
+			p -= 5;
+			num -= 5;
+			Use(ref num);
 			uintField -= 5u;
 			UintProp -= 5u;
 			c.UintField -= 5u;
@@ -2643,9 +2807,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UintMultiplyTest(uint p, CustomClass c, CustomStruct2 s)
 		{
-			//uint l = 0;
-			//p *= 5u;
-			//l *= 5u;
+			uint num = 0u;
+			p *= 5;
+			num *= 5;
+			Use(ref num);
 			uintField *= 5u;
 			UintProp *= 5u;
 			c.UintField *= 5u;
@@ -2669,9 +2834,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UintDivideTest(uint p, CustomClass c, CustomStruct2 s)
 		{
-			//uint l = 0;
-			//p /= 5u;
-			//l /= 5u;
+			uint num = 0u;
+			p /= 5;
+			num /= 5;
+			Use(ref num);
 			uintField /= 5u;
 			UintProp /= 5u;
 			c.UintField /= 5u;
@@ -2695,9 +2861,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UintModulusTest(uint p, CustomClass c, CustomStruct2 s)
 		{
-			//uint l = 0;
-			//p %= 5u;
-			//l %= 5u;
+			uint num = 0u;
+			p %= 5;
+			num %= 5;
+			Use(ref num);
 			uintField %= 5u;
 			UintProp %= 5u;
 			c.UintField %= 5u;
@@ -2721,9 +2888,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UintLeftShiftTest(uint p, CustomClass c, CustomStruct2 s)
 		{
-			//uint l = 0;
-			//p <<= 5;
-			//l <<= 5;
+			uint num = 0u;
+			p <<= 5;
+			num <<= 5;
+			Use(ref num);
 			uintField <<= 5;
 			UintProp <<= 5;
 			c.UintField <<= 5;
@@ -2747,9 +2915,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UintRightShiftTest(uint p, CustomClass c, CustomStruct2 s)
 		{
-			//uint l = 0;
-			//p >>= 5;
-			//l >>= 5;
+			uint num = 0u;
+			p >>= 5;
+			num >>= 5;
+			Use(ref num);
 			uintField >>= 5;
 			UintProp >>= 5;
 			c.UintField >>= 5;
@@ -2773,9 +2942,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UintBitAndTest(uint p, CustomClass c, CustomStruct2 s)
 		{
-			//uint l = 0;
-			//p &= 5u;
-			//l &= 5u;
+			uint num = 0u;
+			p &= 5u;
+			num &= 5u;
+			Use(ref num);
 			uintField &= 5u;
 			UintProp &= 5u;
 			c.UintField &= 5u;
@@ -2799,9 +2969,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UintBitOrTest(uint p, CustomClass c, CustomStruct2 s)
 		{
-			//uint l = 0;
-			//p |= 5u;
-			//l |= 5u;
+			uint num = 0u;
+			p |= 5u;
+			num |= 5u;
+			Use(ref num);
 			uintField |= 5u;
 			UintProp |= 5u;
 			c.UintField |= 5u;
@@ -2825,9 +2996,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UintBitXorTest(uint p, CustomClass c, CustomStruct2 s)
 		{
-			//uint l = 0;
-			//p ^= 5u;
-			//l ^= 5u;
+			uint num = 0u;
+			p ^= 5u;
+			num ^= 5u;
+			Use(ref num);
 			uintField ^= 5u;
 			UintProp ^= 5u;
 			c.UintField ^= 5u;
@@ -2851,9 +3023,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UintPostIncTest(uint p, CustomClass c, CustomStruct2 s)
 		{
-			//uint l = 0;
-			//X(p++);
-			//X(l++);
+			uint num = 0u;
+			X(p++);
+			X(num++);
+			Use(ref num);
 			X(uintField++);
 			X(UintProp++);
 			X(c.UintField++);
@@ -2877,9 +3050,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UintPreIncTest(uint p, CustomClass c, CustomStruct2 s)
 		{
-			//uint l = 0;
-			//X(++p);
-			//X(++l);
+			uint num = 0u;
+			X(++p);
+			X(++num);
+			Use(ref num);
 			X(++uintField);
 			X(++UintProp);
 			X(++c.UintField);
@@ -2902,9 +3076,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void UintPostDecTest(uint p, CustomClass c, CustomStruct2 s)
 		{
-			//uint l = 0;
-			//X(p--);
-			//X(l--);
+			uint num = 0u;
+			X(p--);
+			X(num--);
+			Use(ref num);
 			X(uintField--);
 			X(UintProp--);
 			X(c.UintField--);
@@ -2928,9 +3103,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UintPreDecTest(uint p, CustomClass c, CustomStruct2 s)
 		{
-			//uint l = 0;
-			//X(--p);
-			//X(--l);
+			uint num = 0u;
+			X(--p);
+			X(--num);
+			Use(ref num);
 			X(--uintField);
 			X(--UintProp);
 			X(--c.UintField);
@@ -2953,9 +3129,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void LongAddTest(long p, CustomClass c, CustomStruct2 s)
 		{
-			//long l = 0;
-			//p += 5L;
-			//l += 5L;
+			long num = 0L;
+			p += 5;
+			num += 5;
+			Use(ref num);
 			longField += 5L;
 			LongProp += 5L;
 			c.LongField += 5L;
@@ -2979,9 +3156,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void LongSubtractTest(long p, CustomClass c, CustomStruct2 s)
 		{
-			//long l = 0;
-			//p -= 5L;
-			//l -= 5L;
+			long num = 0L;
+			p -= 5;
+			num -= 5;
+			Use(ref num);
 			longField -= 5L;
 			LongProp -= 5L;
 			c.LongField -= 5L;
@@ -3005,9 +3183,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void LongMultiplyTest(long p, CustomClass c, CustomStruct2 s)
 		{
-			//long l = 0;
-			//p *= 5L;
-			//l *= 5L;
+			long num = 0L;
+			p *= 5;
+			num *= 5;
+			Use(ref num);
 			longField *= 5L;
 			LongProp *= 5L;
 			c.LongField *= 5L;
@@ -3031,9 +3210,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void LongDivideTest(long p, CustomClass c, CustomStruct2 s)
 		{
-			//long l = 0;
-			//p /= 5L;
-			//l /= 5L;
+			long num = 0L;
+			p /= 5;
+			num /= 5;
+			Use(ref num);
 			longField /= 5L;
 			LongProp /= 5L;
 			c.LongField /= 5L;
@@ -3057,9 +3237,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void LongModulusTest(long p, CustomClass c, CustomStruct2 s)
 		{
-			//long l = 0;
-			//p %= 5L;
-			//l %= 5L;
+			long num = 0L;
+			p %= 5;
+			num %= 5;
+			Use(ref num);
 			longField %= 5L;
 			LongProp %= 5L;
 			c.LongField %= 5L;
@@ -3083,9 +3264,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void LongLeftShiftTest(long p, CustomClass c, CustomStruct2 s)
 		{
-			//long l = 0;
-			//p <<= 5;
-			//l <<= 5;
+			long num = 0L;
+			p <<= 5;
+			num <<= 5;
+			Use(ref num);
 			longField <<= 5;
 			LongProp <<= 5;
 			c.LongField <<= 5;
@@ -3109,9 +3291,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void LongRightShiftTest(long p, CustomClass c, CustomStruct2 s)
 		{
-			//long l = 0;
-			//p >>= 5;
-			//l >>= 5;
+			long num = 0L;
+			p >>= 5;
+			num >>= 5;
+			Use(ref num);
 			longField >>= 5;
 			LongProp >>= 5;
 			c.LongField >>= 5;
@@ -3135,9 +3318,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void LongBitAndTest(long p, CustomClass c, CustomStruct2 s)
 		{
-			//long l = 0;
-			//p &= 5L;
-			//l &= 5L;
+			long num = 0L;
+			p &= 5;
+			num &= 5;
+			Use(ref num);
 			longField &= 5L;
 			LongProp &= 5L;
 			c.LongField &= 5L;
@@ -3161,9 +3345,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void LongBitOrTest(long p, CustomClass c, CustomStruct2 s)
 		{
-			//long l = 0;
-			//p |= 5L;
-			//l |= 5L;
+			long num = 0L;
+			p |= 5;
+			num |= 5;
+			Use(ref num);
 			longField |= 5L;
 			LongProp |= 5L;
 			c.LongField |= 5L;
@@ -3187,9 +3372,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void LongBitXorTest(long p, CustomClass c, CustomStruct2 s)
 		{
-			//long l = 0;
-			//p ^= 5L;
-			//l ^= 5L;
+			long num = 0L;
+			p ^= 5;
+			num ^= 5;
+			Use(ref num);
 			longField ^= 5L;
 			LongProp ^= 5L;
 			c.LongField ^= 5L;
@@ -3213,9 +3399,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void LongPostIncTest(long p, CustomClass c, CustomStruct2 s)
 		{
-			//long l = 0;
-			//X(p++);
-			//X(l++);
+			long num = 0L;
+			X(p++);
+			X(num++);
+			Use(ref num);
 			X(longField++);
 			X(LongProp++);
 			X(c.LongField++);
@@ -3239,9 +3426,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void LongPreIncTest(long p, CustomClass c, CustomStruct2 s)
 		{
-			//long l = 0;
-			//X(++p);
-			//X(++l);
+			long num = 0L;
+			X(++p);
+			X(++num);
+			Use(ref num);
 			X(++longField);
 			X(++LongProp);
 			X(++c.LongField);
@@ -3264,9 +3452,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void LongPostDecTest(long p, CustomClass c, CustomStruct2 s)
 		{
-			//long l = 0;
-			//X(p--);
-			//X(l--);
+			long num = 0L;
+			X(p--);
+			X(num--);
+			Use(ref num);
 			X(longField--);
 			X(LongProp--);
 			X(c.LongField--);
@@ -3290,9 +3479,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void LongPreDecTest(long p, CustomClass c, CustomStruct2 s)
 		{
-			//long l = 0;
-			//X(--p);
-			//X(--l);
+			long num = 0L;
+			X(--p);
+			X(--num);
+			Use(ref num);
 			X(--longField);
 			X(--LongProp);
 			X(--c.LongField);
@@ -3315,9 +3505,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void UlongAddTest(ulong p, CustomClass c, CustomStruct2 s)
 		{
-			//ulong l = 0;
-			//p += 5uL;
-			//l += 5uL;
+			ulong num = 0uL;
+			p += 5;
+			num += 5;
+			Use(ref num);
 			ulongField += 5uL;
 			UlongProp += 5uL;
 			c.UlongField += 5uL;
@@ -3341,9 +3532,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UlongSubtractTest(ulong p, CustomClass c, CustomStruct2 s)
 		{
-			//ulong l = 0;
-			//p -= 5uL;
-			//l -= 5uL;
+			ulong num = 0uL;
+			p -= 5;
+			num -= 5;
+			Use(ref num);
 			ulongField -= 5uL;
 			UlongProp -= 5uL;
 			c.UlongField -= 5uL;
@@ -3367,9 +3559,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UlongMultiplyTest(ulong p, CustomClass c, CustomStruct2 s)
 		{
-			//ulong l = 0;
-			//p *= 5uL;
-			//l *= 5uL;
+			ulong num = 0uL;
+			p *= 5;
+			num *= 5;
+			Use(ref num);
 			ulongField *= 5uL;
 			UlongProp *= 5uL;
 			c.UlongField *= 5uL;
@@ -3393,9 +3586,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UlongDivideTest(ulong p, CustomClass c, CustomStruct2 s)
 		{
-			//ulong l = 0;
-			//p /= 5uL;
-			//l /= 5uL;
+			ulong num = 0uL;
+			p /= 5;
+			num /= 5;
+			Use(ref num);
 			ulongField /= 5uL;
 			UlongProp /= 5uL;
 			c.UlongField /= 5uL;
@@ -3419,9 +3613,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UlongModulusTest(ulong p, CustomClass c, CustomStruct2 s)
 		{
-			//ulong l = 0;
-			//p %= 5uL;
-			//l %= 5uL;
+			ulong num = 0uL;
+			p %= 5;
+			num %= 5;
+			Use(ref num);
 			ulongField %= 5uL;
 			UlongProp %= 5uL;
 			c.UlongField %= 5uL;
@@ -3445,9 +3640,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UlongLeftShiftTest(ulong p, CustomClass c, CustomStruct2 s)
 		{
-			//ulong l = 0;
-			//p <<= 5;
-			//l <<= 5;
+			ulong num = 0uL;
+			p <<= 5;
+			num <<= 5;
+			Use(ref num);
 			ulongField <<= 5;
 			UlongProp <<= 5;
 			c.UlongField <<= 5;
@@ -3471,9 +3667,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UlongRightShiftTest(ulong p, CustomClass c, CustomStruct2 s)
 		{
-			//ulong l = 0;
-			//p >>= 5;
-			//l >>= 5;
+			ulong num = 0uL;
+			p >>= 5;
+			num >>= 5;
+			Use(ref num);
 			ulongField >>= 5;
 			UlongProp >>= 5;
 			c.UlongField >>= 5;
@@ -3497,9 +3694,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UlongBitAndTest(ulong p, CustomClass c, CustomStruct2 s)
 		{
-			//ulong l = 0;
-			//p &= 5uL;
-			//l &= 5uL;
+			ulong num = 0uL;
+			p &= 5;
+			num &= 5;
+			Use(ref num);
 			ulongField &= 5uL;
 			UlongProp &= 5uL;
 			c.UlongField &= 5uL;
@@ -3523,9 +3721,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UlongBitOrTest(ulong p, CustomClass c, CustomStruct2 s)
 		{
-			//ulong l = 0;
-			//p |= 5uL;
-			//l |= 5uL;
+			ulong num = 0uL;
+			p |= 5;
+			num |= 5;
+			Use(ref num);
 			ulongField |= 5uL;
 			UlongProp |= 5uL;
 			c.UlongField |= 5uL;
@@ -3549,9 +3748,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UlongBitXorTest(ulong p, CustomClass c, CustomStruct2 s)
 		{
-			//ulong l = 0;
-			//p ^= 5uL;
-			//l ^= 5uL;
+			ulong num = 0uL;
+			p ^= 5;
+			num ^= 5;
+			Use(ref num);
 			ulongField ^= 5uL;
 			UlongProp ^= 5uL;
 			c.UlongField ^= 5uL;
@@ -3575,9 +3775,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UlongPostIncTest(ulong p, CustomClass c, CustomStruct2 s)
 		{
-			//ulong l = 0;
-			//X(p++);
-			//X(l++);
+			ulong num = 0uL;
+			X(p++);
+			X(num++);
+			Use(ref num);
 			X(ulongField++);
 			X(UlongProp++);
 			X(c.UlongField++);
@@ -3601,9 +3802,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UlongPreIncTest(ulong p, CustomClass c, CustomStruct2 s)
 		{
-			//ulong l = 0;
-			//X(++p);
-			//X(++l);
+			ulong num = 0uL;
+			X(++p);
+			X(++num);
+			Use(ref num);
 			X(++ulongField);
 			X(++UlongProp);
 			X(++c.UlongField);
@@ -3626,9 +3828,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void UlongPostDecTest(ulong p, CustomClass c, CustomStruct2 s)
 		{
-			//ulong l = 0;
-			//X(p--);
-			//X(l--);
+			ulong num = 0uL;
+			X(p--);
+			X(num--);
+			Use(ref num);
 			X(ulongField--);
 			X(UlongProp--);
 			X(c.UlongField--);
@@ -3652,9 +3855,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UlongPreDecTest(ulong p, CustomClass c, CustomStruct2 s)
 		{
-			//ulong l = 0;
-			//X(--p);
-			//X(--l);
+			ulong num = 0uL;
+			X(--p);
+			X(--num);
+			Use(ref num);
 			X(--ulongField);
 			X(--UlongProp);
 			X(--c.UlongField);
@@ -3677,9 +3881,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void CustomClassAddTest(CustomClass p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomClass l = null;
-			//p += (CustomClass)null;
-			//l += (CustomClass)null;
+			CustomClass num = null;
+			p += (CustomClass)null;
+			num += (CustomClass)null;
+			Use(ref num);
 			customClassField += (CustomClass)null;
 			CustomClassProp += (CustomClass)null;
 			c.CustomClassField += (CustomClass)null;
@@ -3703,9 +3908,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomClassSubtractTest(CustomClass p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomClass l = null;
-			//p -= (CustomClass)null;
-			//l -= (CustomClass)null;
+			CustomClass num = null;
+			p -= (CustomClass)null;
+			num -= (CustomClass)null;
+			Use(ref num);
 			customClassField -= (CustomClass)null;
 			CustomClassProp -= (CustomClass)null;
 			c.CustomClassField -= (CustomClass)null;
@@ -3729,9 +3935,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomClassMultiplyTest(CustomClass p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomClass l = null;
-			//p *= (CustomClass)null;
-			//l *= (CustomClass)null;
+			CustomClass num = null;
+			p *= (CustomClass)null;
+			num *= (CustomClass)null;
+			Use(ref num);
 			customClassField *= (CustomClass)null;
 			CustomClassProp *= (CustomClass)null;
 			c.CustomClassField *= (CustomClass)null;
@@ -3755,9 +3962,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomClassDivideTest(CustomClass p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomClass l = null;
-			//p /= (CustomClass)null;
-			//l /= (CustomClass)null;
+			CustomClass num = null;
+			p /= (CustomClass)null;
+			num /= (CustomClass)null;
+			Use(ref num);
 			customClassField /= (CustomClass)null;
 			CustomClassProp /= (CustomClass)null;
 			c.CustomClassField /= (CustomClass)null;
@@ -3781,9 +3989,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomClassModulusTest(CustomClass p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomClass l = null;
-			//p %= (CustomClass)null;
-			//l %= (CustomClass)null;
+			CustomClass num = null;
+			p %= (CustomClass)null;
+			num %= (CustomClass)null;
+			Use(ref num);
 			customClassField %= (CustomClass)null;
 			CustomClassProp %= (CustomClass)null;
 			c.CustomClassField %= (CustomClass)null;
@@ -3807,9 +4016,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomClassLeftShiftTest(CustomClass p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomClass l = null;
-			//p <<= 5;
-			//l <<= 5;
+			CustomClass num = null;
+			p <<= 5;
+			num <<= 5;
+			Use(ref num);
 			customClassField <<= 5;
 			CustomClassProp <<= 5;
 			c.CustomClassField <<= 5;
@@ -3833,9 +4043,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomClassRightShiftTest(CustomClass p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomClass l = null;
-			//p >>= 5;
-			//l >>= 5;
+			CustomClass num = null;
+			p >>= 5;
+			num >>= 5;
+			Use(ref num);
 			customClassField >>= 5;
 			CustomClassProp >>= 5;
 			c.CustomClassField >>= 5;
@@ -3859,9 +4070,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomClassBitAndTest(CustomClass p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomClass l = null;
-			//p &= (CustomClass)null;
-			//l &= (CustomClass)null;
+			CustomClass num = null;
+			p &= (CustomClass)null;
+			num &= (CustomClass)null;
+			Use(ref num);
 			customClassField &= (CustomClass)null;
 			CustomClassProp &= (CustomClass)null;
 			c.CustomClassField &= (CustomClass)null;
@@ -3885,9 +4097,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomClassBitOrTest(CustomClass p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomClass l = null;
-			//p |= (CustomClass)null;
-			//l |= (CustomClass)null;
+			CustomClass num = null;
+			p |= (CustomClass)null;
+			num |= (CustomClass)null;
+			Use(ref num);
 			customClassField |= (CustomClass)null;
 			CustomClassProp |= (CustomClass)null;
 			c.CustomClassField |= (CustomClass)null;
@@ -3911,9 +4124,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomClassBitXorTest(CustomClass p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomClass l = null;
-			//p ^= (CustomClass)null;
-			//l ^= (CustomClass)null;
+			CustomClass num = null;
+			p ^= (CustomClass)null;
+			num ^= (CustomClass)null;
+			Use(ref num);
 			customClassField ^= (CustomClass)null;
 			CustomClassProp ^= (CustomClass)null;
 			c.CustomClassField ^= (CustomClass)null;
@@ -3937,9 +4151,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomClassPostIncTest(CustomClass p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomClass l = null;
-			//X(p++);
-			//X(l++);
+			CustomClass num = null;
+			X(p++);
+			X(num++);
+			Use(ref num);
 			X(customClassField++);
 			X(CustomClassProp++);
 			X(c.CustomClassField++);
@@ -3963,9 +4178,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomClassPreIncTest(CustomClass p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomClass l = null;
-			//X(++p);
-			//X(++l);
+			CustomClass num = null;
+			X(++p);
+			X(++num);
+			Use(ref num);
 			X(++customClassField);
 			X(++CustomClassProp);
 			X(++c.CustomClassField);
@@ -3988,9 +4204,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void CustomClassPostDecTest(CustomClass p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomClass l = null;
-			//X(p--);
-			//X(l--);
+			CustomClass num = null;
+			X(p--);
+			X(num--);
+			Use(ref num);
 			X(customClassField--);
 			X(CustomClassProp--);
 			X(c.CustomClassField--);
@@ -4014,9 +4231,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomClassPreDecTest(CustomClass p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomClass l = null;
-			//X(--p);
-			//X(--l);
+			CustomClass num = null;
+			X(--p);
+			X(--num);
+			Use(ref num);
 			X(--customClassField);
 			X(--CustomClassProp);
 			X(--c.CustomClassField);
@@ -4039,9 +4257,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void CustomStructAddTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomStruct l = default(CustomStruct);
-			//p += default(CustomStruct);
-			//l += default(CustomStruct);
+			CustomStruct num = default(CustomStruct);
+			p += default(CustomStruct);
+			num += default(CustomStruct);
+			Use(ref num);
 			customStructField += default(CustomStruct);
 			CustomStructProp += default(CustomStruct);
 			c.CustomStructField += default(CustomStruct);
@@ -4065,9 +4284,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructSubtractTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomStruct l = default(CustomStruct);
-			//p -= default(CustomStruct);
-			//l -= default(CustomStruct);
+			CustomStruct num = default(CustomStruct);
+			p -= default(CustomStruct);
+			num -= default(CustomStruct);
+			Use(ref num);
 			customStructField -= default(CustomStruct);
 			CustomStructProp -= default(CustomStruct);
 			c.CustomStructField -= default(CustomStruct);
@@ -4091,9 +4311,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructMultiplyTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomStruct l = default(CustomStruct);
-			//p *= default(CustomStruct);
-			//l *= default(CustomStruct);
+			CustomStruct num = default(CustomStruct);
+			p *= default(CustomStruct);
+			num *= default(CustomStruct);
+			Use(ref num);
 			customStructField *= default(CustomStruct);
 			CustomStructProp *= default(CustomStruct);
 			c.CustomStructField *= default(CustomStruct);
@@ -4117,9 +4338,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructDivideTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomStruct l = default(CustomStruct);
-			//p /= default(CustomStruct);
-			//l /= default(CustomStruct);
+			CustomStruct num = default(CustomStruct);
+			p /= default(CustomStruct);
+			num /= default(CustomStruct);
+			Use(ref num);
 			customStructField /= default(CustomStruct);
 			CustomStructProp /= default(CustomStruct);
 			c.CustomStructField /= default(CustomStruct);
@@ -4143,9 +4365,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructModulusTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomStruct l = default(CustomStruct);
-			//p %= default(CustomStruct);
-			//l %= default(CustomStruct);
+			CustomStruct num = default(CustomStruct);
+			p %= default(CustomStruct);
+			num %= default(CustomStruct);
+			Use(ref num);
 			customStructField %= default(CustomStruct);
 			CustomStructProp %= default(CustomStruct);
 			c.CustomStructField %= default(CustomStruct);
@@ -4169,9 +4392,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructLeftShiftTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomStruct l = default(CustomStruct);
-			//p <<= 5;
-			//l <<= 5;
+			CustomStruct num = default(CustomStruct);
+			p <<= 5;
+			num <<= 5;
+			Use(ref num);
 			customStructField <<= 5;
 			CustomStructProp <<= 5;
 			c.CustomStructField <<= 5;
@@ -4195,9 +4419,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructRightShiftTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomStruct l = default(CustomStruct);
-			//p >>= 5;
-			//l >>= 5;
+			CustomStruct num = default(CustomStruct);
+			p >>= 5;
+			num >>= 5;
+			Use(ref num);
 			customStructField >>= 5;
 			CustomStructProp >>= 5;
 			c.CustomStructField >>= 5;
@@ -4219,11 +4444,38 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #endif
 		}
 
-		public static void CustomStructBitAndTest(CustomStruct p, CustomClass c, CustomStruct2 s)
+#if CS110
+		public static void CustomStructUnsignedRightShiftTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
 			//CustomStruct l = default(CustomStruct);
-			//p &= default(CustomStruct);
-			//l &= default(CustomStruct);
+			//p >>>= 5;
+			//l >>>= 5;
+			customStructField >>>= 5;
+			CustomStructProp >>>= 5;
+			c.CustomStructField >>>= 5;
+			c.CustomStructProp >>>= 5;
+			s.CustomStructField >>>= 5;
+			s.CustomStructProp >>>= 5;
+			customClassField.CustomStructField >>>= 5;
+			customClassField.CustomStructProp >>>= 5;
+			otherCustomStructField.CustomStructField >>>= 5;
+			otherCustomStructField.CustomStructProp >>>= 5;
+			CustomClassProp.CustomStructField >>>= 5;
+			CustomClassProp.CustomStructProp >>>= 5;
+			GetClass().CustomStructField >>>= 5;
+			GetClass().CustomStructProp >>>= 5;
+			GetRefStruct().CustomStructField >>>= 5;
+			GetRefStruct().CustomStructProp >>>= 5;
+			GetRefCustomStruct() >>>= 5;
+		}
+#endif
+
+		public static void CustomStructBitAndTest(CustomStruct p, CustomClass c, CustomStruct2 s)
+		{
+			CustomStruct num = default(CustomStruct);
+			p &= default(CustomStruct);
+			num &= default(CustomStruct);
+			Use(ref num);
 			customStructField &= default(CustomStruct);
 			CustomStructProp &= default(CustomStruct);
 			c.CustomStructField &= default(CustomStruct);
@@ -4247,9 +4499,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructBitOrTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomStruct l = default(CustomStruct);
-			//p |= default(CustomStruct);
-			//l |= default(CustomStruct);
+			CustomStruct num = default(CustomStruct);
+			p |= default(CustomStruct);
+			num |= default(CustomStruct);
+			Use(ref num);
 			customStructField |= default(CustomStruct);
 			CustomStructProp |= default(CustomStruct);
 			c.CustomStructField |= default(CustomStruct);
@@ -4273,9 +4526,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructBitXorTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomStruct l = default(CustomStruct);
-			//p ^= default(CustomStruct);
-			//l ^= default(CustomStruct);
+			CustomStruct num = default(CustomStruct);
+			p ^= default(CustomStruct);
+			num ^= default(CustomStruct);
+			Use(ref num);
 			customStructField ^= default(CustomStruct);
 			CustomStructProp ^= default(CustomStruct);
 			c.CustomStructField ^= default(CustomStruct);
@@ -4299,9 +4553,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructPostIncTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomStruct l = default(CustomStruct);
-			//X(p++);
-			//X(l++);
+			CustomStruct num = default(CustomStruct);
+			X(p++);
+			X(num++);
+			Use(ref num);
 			X(customStructField++);
 			X(CustomStructProp++);
 			X(c.CustomStructField++);
@@ -4325,9 +4580,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructPreIncTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomStruct l = default(CustomStruct);
-			//X(++p);
-			//X(++l);
+			CustomStruct num = default(CustomStruct);
+			X(++p);
+			X(++num);
+			Use(ref num);
 			X(++customStructField);
 			X(++CustomStructProp);
 			X(++c.CustomStructField);
@@ -4350,9 +4606,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void CustomStructPostDecTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomStruct l = default(CustomStruct);
-			//X(p--);
-			//X(l--);
+			CustomStruct num = default(CustomStruct);
+			X(p--);
+			X(num--);
+			Use(ref num);
 			X(customStructField--);
 			X(CustomStructProp--);
 			X(c.CustomStructField--);
@@ -4376,9 +4633,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructPreDecTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
-			//CustomStruct l = default(CustomStruct);
-			//X(--p);
-			//X(--l);
+			CustomStruct num = default(CustomStruct);
+			X(--p);
+			X(--num);
+			Use(ref num);
 			X(--customStructField);
 			X(--CustomStructProp);
 			X(--c.CustomStructField);
@@ -4581,12 +4839,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return M()[name]++;
 		}
 
-#if false
 		public unsafe int PostIncrementOfPointer(int* ptr)
 		{
 			return *(ptr++);
 		}
-#endif
+
+		public unsafe int PostIncrementOfSmallIntegerPointerDereference(byte* ptr)
+		{
+			return (*ptr)++ * (*ptr)++;
+		}
+
+		public unsafe int PreIncrementOfSmallIntegerPointerDereference(byte* ptr)
+		{
+			return ++(*ptr) * ++(*ptr);
+		}
+
+		public unsafe int CompoundAssignSmallIntegerPointerDereference(byte* ptr)
+		{
+			return (*ptr += 5) * (*ptr += 5);
+		}
 
 		public int PostDecrementInstanceField()
 		{

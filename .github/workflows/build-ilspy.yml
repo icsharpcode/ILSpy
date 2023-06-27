@@ -27,7 +27,7 @@ jobs:
         fetch-depth: 0
 
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.1
+      uses: microsoft/setup-msbuild@v1.3
 
     - name: Install dotnet-format
       run: dotnet tool install -g dotnet-format --version "6.2.315104" --add-source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet6/nuget/v3/index.json
@@ -37,7 +37,7 @@ jobs:
       shell: pwsh
       run: |
         .\BuildTools\ghactions-install.ps1
-        Get-ChildItem Env: | Where-Object {$_.Name -Match "^ILSPY_"} | %{ echo "::set-output name=$($_.Name)::$($_.Value)" }
+        Get-ChildItem Env: | Where-Object {$_.Name -Match "^ILSPY_"} | %{ echo "$($_.Name)=$($_.Value)" } | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
 
     - name: Restore the application
       run: msbuild ILSpy.sln /t:Restore /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform
@@ -60,7 +60,7 @@ jobs:
         path: 'test-results/${{ matrix.configuration }}.xml'
 
     - name: Create Test Report
-      uses: test-summary/action@v1
+      uses: test-summary/action@v2
       if: always()
       with:
         paths: "test-results/${{ matrix.configuration }}.xml"
@@ -78,14 +78,30 @@ jobs:
     - name: Zip ILSpy (framework-dependent)
       run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.dll .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.exe .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.config .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.json .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*\ILSpy.resources.dll .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*\ILSpy.ReadyToRun.Plugin.resources.dll
 
-    - name: Zip ILSpy Release (self-contained win-x64)
-      if: matrix.configuration == 'release'    
+    - name: Publish x64/arm64 framework-dependent/self-contained
       shell: pwsh
+      run: .\publish.ps1
+
+    - name: Zip ILSpy Release (x64 self-contained)
+      if: matrix.configuration == 'release'    
+      run: 7z a -tzip $env:StagingDirectory\ILSpy_selfcontained_x64.zip .\ILSpy\bin\Release\net6.0-windows\win-x64\publish\selfcontained\*  
+
+    - name: Zip ILSpy Release (arm64 framework-dependent)
+      if: matrix.configuration == 'release'    
+      run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries_arm64.zip .\ILSpy\bin\Release\net6.0-windows\win-arm64\publish\fwdependent\*
+
+    - name: Build Installer (x64 and arm64, framework-dependent)
+      if: matrix.configuration == 'release'  
       run: |
-        dotnet publish ./ILSpy/ILSpy.csproj -c Release --no-restore --self-contained -r win-x64
-        dotnet publish ./ILSpy.ReadyToRun/ILSpy.ReadyToRun.csproj -c Release --no-restore --self-contained -r win-x64
-        dotnet publish ./ILSpy.BamlDecompiler/ILSpy.BamlDecompiler.csproj -c Release --no-restore --self-contained -r win-x64
-        7z a -tzip $env:StagingDirectory\ILSpy_selfcontained_x64.zip .\ILSpy\bin\Release\net6.0-windows\win-x64\publish\*     
+        msbuild ILSpy.Installer.sln /t:Restore /p:Configuration="Release" /p:Platform="Any CPU"
+        msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU"
+        msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU" /p:DefineConstants="ARM64"
+
+    - name: Build VS Extensions (for 2017-2019 and 2022)
+      if: matrix.configuration == 'release'  
+      run: |
+        msbuild ILSpy.VSExtensions.sln /t:Restore /p:Configuration="Release" /p:Platform="Any CPU"
+        msbuild ILSpy.VSExtensions.sln /p:Configuration="Release" /p:Platform="Any CPU"
 
     # https://github.com/actions/upload-artifact
     - name: Upload VSIX (VS 2019) release build artifacts
@@ -137,7 +153,7 @@ jobs:
         path: ${{ env.StagingDirectory }}\ILSpy_binaries.zip
         if-no-files-found: error
 
-    - name: Upload self-contained zip build artifacts (Release-only)
+    - name: Upload x64 self-contained zip (Release-only)
       if: matrix.configuration == 'release'
       uses: actions/upload-artifact@v3
       with:
@@ -145,12 +161,28 @@ jobs:
         path: ${{ env.StagingDirectory }}\ILSpy_selfcontained_x64.zip
         if-no-files-found: error
 
-    - name: Upload installer artifact
+    - name: Upload arm64 framework-dependent zip (Release-only)
       if: matrix.configuration == 'release'
       uses: actions/upload-artifact@v3
       with:
-        name: ILSpy Installer ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
-        path: ILSpy.Installer\wix\*.msi
+        name: ILSpy arm64 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
+        path: ${{ env.StagingDirectory }}\ILSpy_binaries_arm64.zip
+        if-no-files-found: error
+
+    - name: Upload x64 installer artifact
+      if: matrix.configuration == 'release'
+      uses: actions/upload-artifact@v3
+      with:
+        name: ILSpy Installer x64 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
+        path: ILSpy.Installer\wix\*-x64.msi
+        if-no-files-found: error
+
+    - name: Upload arm64 installer artifact
+      if: matrix.configuration == 'release'
+      uses: actions/upload-artifact@v3
+      with:
+        name: ILSpy Installer arm64 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
+        path: ILSpy.Installer\wix\*-arm64.msi
         if-no-files-found: error
 
     - name: Upload ilspycmd release build artifacts

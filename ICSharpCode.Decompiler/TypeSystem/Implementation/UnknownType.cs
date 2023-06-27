@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// An unknown type where (part) of the name is known.
 	/// </summary>
 	[Serializable]
-	public class UnknownType : AbstractType, ITypeReference
+	public class UnknownType : AbstractType, ITypeDefinitionOrUnknown, ITypeReference
 	{
 		readonly bool namespaceKnown;
 		readonly FullTypeName fullTypeName;
@@ -78,6 +78,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return this;
 		}
 
+		public override ITypeDefinitionOrUnknown GetDefinitionOrUnknown()
+		{
+			return this;
+		}
+
 		public override string Name {
 			get { return fullTypeName.Name; }
 		}
@@ -102,7 +107,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override IType ChangeNullability(Nullability nullability)
 		{
-			if (nullability == Nullability.Oblivious)
+			if (nullability == Nullability.Oblivious || isReferenceType == false)
 				return this;
 			else
 				return new NullabilityAnnotatedType(this, nullability);

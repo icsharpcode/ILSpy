@@ -58,6 +58,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IEvent[] events;
 		IMethod[] methods;
 		List<IType> directBaseTypes;
+		bool defaultMemberNameInitialized;
 		string defaultMemberName;
 
 		internal MetadataTypeDefinition(MetadataModule module, TypeDefinitionHandle handle)
@@ -258,17 +259,23 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var methodsCollection = metadata.GetTypeDefinition(handle).GetMethods();
 				var methodsList = new List<IMethod>(methodsCollection.Count);
 				var methodSemantics = module.PEFile.MethodSemanticsLookup;
+				bool hasDefaultCtor = false;
 				foreach (MethodDefinitionHandle h in methodsCollection)
 				{
 					var md = metadata.GetMethodDefinition(h);
 					if (methodSemantics.GetSemantics(h).Item2 == 0 && module.IsVisible(md.Attributes))
 					{
-						methodsList.Add(module.GetDefinition(h));
+						IMethod method = module.GetDefinition(h);
+						if (method.SymbolKind == SymbolKind.Constructor && !method.IsStatic && method.Parameters.Count == 0)
+						{
+							hasDefaultCtor = true;
+						}
+						methodsList.Add(method);
 					}
 				}
-				if (this.Kind == TypeKind.Struct || this.Kind == TypeKind.Enum)
+				if (!hasDefaultCtor && (this.Kind == TypeKind.Struct || this.Kind == TypeKind.Enum))
 				{
-					methodsList.Add(FakeMethod.CreateDummyConstructor(Compilation, this, IsAbstract ? Accessibility.Protected : Accessibility.Public));
+					methodsList.Add(FakeMethod.CreateDummyConstructor(Compilation, this, Accessibility.Public));
 				}
 				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
 					return methodsList;
@@ -301,7 +308,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IType ChangeNullability(Nullability nullability)
 		{
-			if (nullability == Nullability.Oblivious)
+			if (nullability == Nullability.Oblivious || IsReferenceType == false)
 				return this;
 			else
 				return new NullabilityAnnotatedType(this, nullability);
@@ -323,7 +330,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					EntityHandle baseTypeHandle = td.BaseType;
 					if (!baseTypeHandle.IsNil)
 					{
-						baseType = module.ResolveType(baseTypeHandle, context);
+						baseType = module.ResolveType(baseTypeHandle, context, metadata.GetCustomAttributes(this.handle), Nullability.Oblivious);
 					}
 				}
 				catch (BadImageFormatException)
@@ -459,7 +466,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public string DefaultMemberName {
 			get {
 				string defaultMemberName = LazyInit.VolatileRead(ref this.defaultMemberName);
-				if (defaultMemberName != null)
+				if (defaultMemberName != null || defaultMemberNameInitialized)
 					return defaultMemberName;
 				var metadata = module.metadata;
 				var typeDefinition = metadata.GetTypeDefinition(handle);
@@ -475,7 +482,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						break;
 					}
 				}
-				return LazyInit.GetOrSet(ref this.defaultMemberName, defaultMemberName ?? "Item");
+				defaultMemberName = LazyInit.GetOrSet(ref this.defaultMemberName, defaultMemberName);
+				defaultMemberNameInitialized = true;
+				return defaultMemberName;
 			}
 		}
 		#endregion
@@ -527,6 +536,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public string Namespace => fullTypeName.TopLevelTypeName.Namespace;
 
 		ITypeDefinition IType.GetDefinition() => this;
+		ITypeDefinitionOrUnknown IType.GetDefinitionOrUnknown() => this;
 		TypeParameterSubstitution IType.GetSubstitution() => TypeParameterSubstitution.Identity;
 
 		public IType AcceptVisitor(TypeVisitor visitor)

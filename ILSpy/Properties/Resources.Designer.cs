@@ -568,15 +568,6 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Dark Mode.
-        /// </summary>
-        public static string DarkMode {
-            get {
-                return ResourceManager.GetString("DarkMode", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to DEBUG -- Decompile All.
         /// </summary>
         public static string DEBUGDecompile {
@@ -1083,15 +1074,6 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &apos;scoped&apos; lifetime annotation.
-        /// </summary>
-        public static string DecompilerSettings_LifetimeAnnotations {
-            get {
-                return ResourceManager.GetString("DecompilerSettings.LifetimeAnnotations", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Use nint/nuint types.
         /// </summary>
         public static string DecompilerSettings_NativeIntegers {
@@ -1115,6 +1097,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string DecompilerSettings_NullPropagation {
             get {
                 return ResourceManager.GetString("DecompilerSettings.NullPropagation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Treat (U)IntPtr as n(u)int.
+        /// </summary>
+        public static string DecompilerSettings_NumericIntPtr {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.NumericIntPtr", resourceCulture);
             }
         }
         
@@ -1227,6 +1218,24 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Required members.
+        /// </summary>
+        public static string DecompilerSettings_RequiredMembers {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.RequiredMembers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &apos;scoped&apos; lifetime annotation.
+        /// </summary>
+        public static string DecompilerSettings_ScopedRef {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.ScopedRef", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Separate local variable declarations and initializers (int x = 5; -&gt; int x; x = 5;), if possible.
         /// </summary>
         public static string DecompilerSettings_SeparateLocalVariableDeclarations {
@@ -1268,6 +1277,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string DecompilerSettings_SwitchExpressions {
             get {
                 return ResourceManager.GetString("DecompilerSettings.SwitchExpressions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unsigned right shift (&gt;&gt;&gt;).
+        /// </summary>
+        public static string DecompilerSettings_UnsignedRightShift {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.UnsignedRightShift", resourceCulture);
             }
         }
         
@@ -1470,6 +1488,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to UTF-8 string literals.
+        /// </summary>
+        public static string DecompilerSettings_Utf8StringLiterals {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.Utf8StringLiterals", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to VB-specific options.
         /// </summary>
         public static string DecompilerSettings_VBSpecificOptions {
@@ -1556,6 +1583,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string DisplaySettingsPanel_Font {
             get {
                 return ResourceManager.GetString("DisplaySettingsPanel_Font", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Theme:.
+        /// </summary>
+        public static string DisplaySettingsPanel_Theme {
+            get {
+                return ResourceManager.GetString("DisplaySettingsPanel_Theme", resourceCulture);
             }
         }
         
@@ -1862,6 +1898,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string ManageAssemblyLists {
             get {
                 return ResourceManager.GetString("ManageAssemblyLists", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Metadata.
+        /// </summary>
+        public static string Metadata {
+            get {
+                return ResourceManager.GetString("Metadata", resourceCulture);
             }
         }
         
@@ -2634,6 +2679,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string TabSize {
             get {
                 return ResourceManager.GetString("TabSize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Theme.
+        /// </summary>
+        public static string Theme {
+            get {
+                return ResourceManager.GetString("Theme", resourceCulture);
             }
         }
         

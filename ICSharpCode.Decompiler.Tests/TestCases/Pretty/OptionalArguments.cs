@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -223,6 +224,63 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void Definition_NullableNInt(nint? p = 100)
 		{
 
+		}
+#endif
+
+		public static void Issue2920a(int x)
+		{
+		}
+		public static void Issue2920b([DefaultParameterValue(3)] int x)
+		{
+		}
+		public static void Issue2920c(ref int x)
+		{
+		}
+		public static void Issue2920d([DefaultParameterValue(3)] ref int x)
+		{
+		}
+		public static void Issue2920e(out int x)
+		{
+			x = 0;
+		}
+		public static void Issue2920f([DefaultParameterValue(3)] out int x)
+		{
+			x = 0;
+		}
+#if CS70
+		public static void Issue2920g(in int x)
+		{
+		}
+		public static void Issue2920h([DefaultParameterValue(3)] in int x)
+		{
+		}
+#endif
+		public static void Issue2920i([Optional] int x)
+		{
+		}
+		public static void Issue2920j(int x = 3)
+		{
+		}
+		public static void Issue2920k([Optional] ref int x)
+		{
+		}
+		public static void Issue2920l([Optional][DefaultParameterValue(3)] ref int x)
+		{
+		}
+		public static void Issue2920m([Optional] out int x)
+		{
+			x = 0;
+		}
+		public static void Issue2920n([Optional][DefaultParameterValue(3)] out int x)
+		{
+			x = 0;
+		}
+#if CS70
+		public static void Issue2920o([Optional] in int x)
+		{
+		}
+		public static void Issue2920p(in int x = 3)
+		{
 		}
 #endif
 	}

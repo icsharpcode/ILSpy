@@ -312,6 +312,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return UnderlyingType.GetDefinition();
 		}
 
+		public override ITypeDefinitionOrUnknown GetDefinitionOrUnknown()
+		{
+			return UnderlyingType.GetDefinitionOrUnknown();
+		}
+
 		public override IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return UnderlyingType.GetEvents(filter, options);

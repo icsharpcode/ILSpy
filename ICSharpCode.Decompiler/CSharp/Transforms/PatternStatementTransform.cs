@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -763,12 +763,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var field = mrr?.Member as IField;
 			if (field == null)
 				return null;
-			var @event = field.DeclaringType.GetEvents(ev => ev.Name == field.Name, GetMemberOptions.IgnoreInheritedMembers).SingleOrDefault();
-			if (@event != null && currentMethod.AccessorOwner != @event)
+			foreach (var ev in field.DeclaringType.GetEvents(null, GetMemberOptions.IgnoreInheritedMembers))
 			{
-				parent.RemoveAnnotations<MemberResolveResult>();
-				parent.AddAnnotation(new MemberResolveResult(mrr.TargetResult, @event));
-				return identifier;
+				if (CSharpDecompiler.IsEventBackingFieldName(field.Name, ev.Name, out int suffixLength) &&
+					currentMethod.AccessorOwner != ev)
+				{
+					parent.RemoveAnnotations<MemberResolveResult>();
+					parent.AddAnnotation(new MemberResolveResult(mrr.TargetResult, ev));
+					if (suffixLength != 0)
+						identifier.Name = identifier.Name.Substring(0, identifier.Name.Length - suffixLength);
+					return identifier;
+				}
 			}
 			return null;
 		}
@@ -911,11 +916,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			switch (fieldExpression)
 			{
 				case IdentifierExpression identifier:
-					if (identifier.Identifier != ev.Name)
+					if (!CSharpDecompiler.IsEventBackingFieldName(identifier.Identifier, ev.Name, out _))
 						return false;
 					break;
 				case MemberReferenceExpression memberRef:
-					if (memberRef.MemberName != ev.Name)
+					if (!CSharpDecompiler.IsEventBackingFieldName(memberRef.MemberName, ev.Name, out _))
 						return false;
 					break;
 				default:
@@ -1013,7 +1018,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			ed.CopyAnnotationsFrom(ev);
 
 			var fieldDecl = ev.Parent?.Children.OfType<FieldDeclaration>()
-				.FirstOrDefault(fd => fd.Variables.Single().Name == ev.Name);
+				.FirstOrDefault(fd => CSharpDecompiler.IsEventBackingFieldName(fd.Variables.Single().Name, ev.Name, out _));
 			if (fieldDecl != null)
 			{
 				fieldDecl.Remove();

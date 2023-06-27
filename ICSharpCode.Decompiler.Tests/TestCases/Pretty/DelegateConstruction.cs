@@ -601,6 +601,50 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 		}
 	}
 
+	internal class Issue2791
+	{
+		public void M()
+		{
+			Run(delegate (object o) {
+				try
+				{
+					List<int> list = o as List<int>;
+					Action action = delegate {
+						list.Select((int x) => x * 2);
+					};
+#if OPT && ROSLYN
+					Action obj = delegate {
+#else
+					Action action2 = delegate {
+#endif
+						list.Select((int x) => x * 2);
+					};
+					Console.WriteLine();
+					action();
+					Console.WriteLine();
+#if OPT && ROSLYN
+					obj();
+#else
+					action2();
+#endif
+				}
+				catch (Exception)
+				{
+					Console.WriteLine("catch");
+				}
+				finally
+				{
+					Console.WriteLine("finally");
+				}
+			}, null);
+		}
+
+		private void Run(ParameterizedThreadStart del, object x)
+		{
+			del(x);
+		}
+	}
+
 	[AttributeUsage(AttributeTargets.All)]
 	internal class MyAttribute : Attribute
 	{

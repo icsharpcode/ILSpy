@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+// Copyright (c) 2014 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -367,8 +367,16 @@ namespace ICSharpCode.Decompiler.CSharp
 							return true;
 					}
 					// event-fields are not [CompilerGenerated]
-					if (settings.AutomaticEvents && metadata.GetTypeDefinition(field.GetDeclaringType()).GetEvents().Any(ev => metadata.GetEventDefinition(ev).Name == field.Name))
-						return true;
+					if (settings.AutomaticEvents)
+					{
+						foreach (var ev in metadata.GetTypeDefinition(field.GetDeclaringType()).GetEvents())
+						{
+							var eventName = metadata.GetString(metadata.GetEventDefinition(ev).Name);
+							var fieldName = metadata.GetString(field.Name);
+							if (IsEventBackingFieldName(fieldName, eventName, out _))
+								return true;
+						}
+					}
 					if (settings.ArrayInitializers && metadata.GetString(metadata.GetTypeDefinition(field.GetDeclaringType()).Name).StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
 					{
 						// only hide fields starting with '__StaticArrayInit'
@@ -408,6 +416,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				propertyName = name.Substring(1);
 				return field.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.CompilerGenerated);
+			}
+			return false;
+		}
+
+		internal static bool IsEventBackingFieldName(string fieldName, string eventName, out int suffixLength)
+		{
+			suffixLength = 0;
+			if (fieldName == eventName)
+				return true;
+			var vbSuffixLength = "Event".Length;
+			if (fieldName.Length == eventName.Length + vbSuffixLength && fieldName.StartsWith(eventName, StringComparison.Ordinal) && fieldName.EndsWith("Event", StringComparison.Ordinal))
+			{
+				suffixLength = vbSuffixLength;
+				return true;
 			}
 			return false;
 		}
@@ -508,6 +530,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			typeSystemAstBuilder.SupportInitAccessors = settings.InitAccessors;
 			typeSystemAstBuilder.SupportRecordClasses = settings.RecordClasses;
 			typeSystemAstBuilder.SupportRecordStructs = settings.RecordStructs;
+			typeSystemAstBuilder.SupportUnsignedRightShift = settings.UnsignedRightShift;
 			typeSystemAstBuilder.AlwaysUseGlobal = settings.AlwaysUseGlobal;
 			return typeSystemAstBuilder;
 		}
@@ -827,7 +850,7 @@ namespace ICSharpCode.Decompiler.CSharp
 										foreach (var m in closureType.GetMethods())
 										{
 											var methodDef = module.Metadata.GetMethodDefinition(m);
-											if (methodDef.Name == memberRef.Name)
+											if (methodDef.Name == memberRef.Name && m.IsCompilerGeneratedOrIsInCompilerGeneratedClass(module.Metadata))
 												connectedMethods.Enqueue(m);
 										}
 									}
@@ -953,7 +976,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (type == null)
 				throw new InvalidOperationException($"Could not find type definition {fullTypeName} in type system.");
 			if (type.ParentModule != typeSystem.MainModule)
-				throw new NotSupportedException("Decompiling types that are not part of the main module is not supported.");
+				throw new NotSupportedException($"Type {fullTypeName} was not found in the module being decompiled, but only in {type.ParentModule.Name}");
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainModule);
 			var decompileRun = CreateDecompileRun();
 			syntaxTree = new SyntaxTree();
@@ -1266,6 +1289,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
 				var entityDecl = typeSystemAstBuilder.ConvertEntity(typeDef);
+				if (entityDecl is DelegateDeclaration delegateDeclaration)
+				{
+					// Fix empty parameter names in delegate declarations
+					FixParameterNames(delegateDeclaration);
+				}
 				var typeDecl = entityDecl as TypeDeclaration;
 				if (typeDecl == null)
 				{
@@ -1369,16 +1397,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				if (settings.IntroduceRefModifiersOnStructs)
 				{
-					if (FindAttribute(typeDecl, KnownAttribute.Obsolete, out var attr))
-					{
-						if (obsoleteAttributePattern.IsMatch(attr))
-						{
-							if (attr.Parent is AttributeSection section && section.Attributes.Count == 1)
-								section.Remove();
-							else
-								attr.Remove();
-						}
-					}
+					RemoveObsoleteAttribute(typeDecl, "Types with embedded references are not supported in this version of your compiler.");
+					RemoveCompilerFeatureRequiredAttribute(typeDecl, "RefStructs");
+				}
+				if (settings.RequiredMembers)
+				{
+					RemoveAttribute(typeDecl, KnownAttribute.RequiredAttribute);
 				}
 				if (typeDecl.ClassType == ClassType.Enum)
 				{
@@ -1551,14 +1575,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			return firstValue == 0 ? EnumValueDisplayMode.None : EnumValueDisplayMode.FirstOnly;
 		}
 
-		static readonly Syntax.Attribute obsoleteAttributePattern = new Syntax.Attribute() {
-			Type = new TypePattern(typeof(ObsoleteAttribute)),
-			Arguments = {
-				new PrimitiveExpression("Types with embedded references are not supported in this version of your compiler."),
-				new Choice() { new PrimitiveExpression(true), new PrimitiveExpression(false) }
-			}
-		};
-
 		EntityDeclaration DoDecompile(IMethod method, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == method);
@@ -1611,6 +1627,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					RemoveAttribute(methodDecl, KnownAttribute.PreserveBaseOverrides);
 					methodDecl.Modifiers &= ~(Modifiers.New | Modifiers.Virtual);
 					methodDecl.Modifiers |= Modifiers.Override;
+				}
+				if (method.IsConstructor && settings.RequiredMembers && RemoveCompilerFeatureRequiredAttribute(methodDecl, "RequiredMembers"))
+				{
+					RemoveObsoleteAttribute(methodDecl, "Constructors of types with required members are not supported in this version of your compiler.");
 				}
 				return methodDecl;
 
@@ -1773,6 +1793,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					RemoveAttribute(entityDecl, KnownAttribute.DebuggerHidden);
 				}
+				if (function.StateMachineCompiledWithLegacyVisualBasic)
+				{
+					RemoveAttribute(entityDecl, KnownAttribute.DebuggerStepThrough);
+					if (function.Method?.IsAccessor == true && entityDecl.Parent is EntityDeclaration parentDecl)
+					{
+						RemoveAttribute(parentDecl, KnownAttribute.DebuggerStepThrough);
+					}
+				}
 			}
 			if (function.IsAsync)
 			{
@@ -1799,6 +1827,54 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					var symbol = attr.Type.GetSymbol();
 					if (symbol is ITypeDefinition td && td.FullTypeName == attributeType.GetTypeName())
+					{
+						attr.Remove();
+						found = true;
+					}
+				}
+				if (section.Attributes.Count == 0)
+				{
+					section.Remove();
+				}
+			}
+			return found;
+		}
+
+		internal static bool RemoveCompilerFeatureRequiredAttribute(EntityDeclaration entityDecl, string feature)
+		{
+			bool found = false;
+			foreach (var section in entityDecl.Attributes)
+			{
+				foreach (var attr in section.Attributes)
+				{
+					var symbol = attr.Type.GetSymbol();
+					if (symbol is ITypeDefinition td && td.FullTypeName == KnownAttribute.CompilerFeatureRequired.GetTypeName()
+						&& attr.Arguments.Count == 1 && attr.Arguments.SingleOrDefault() is PrimitiveExpression pe
+						&& pe.Value is string s && s == feature)
+					{
+						attr.Remove();
+						found = true;
+					}
+				}
+				if (section.Attributes.Count == 0)
+				{
+					section.Remove();
+				}
+			}
+			return found;
+		}
+
+		internal static bool RemoveObsoleteAttribute(EntityDeclaration entityDecl, string message)
+		{
+			bool found = false;
+			foreach (var section in entityDecl.Attributes)
+			{
+				foreach (var attr in section.Attributes)
+				{
+					var symbol = attr.Type.GetSymbol();
+					if (symbol is ITypeDefinition td && td.FullTypeName == KnownAttribute.Obsolete.GetTypeName()
+						&& attr.Arguments.Count >= 1 && attr.Arguments.First() is PrimitiveExpression pe
+						&& pe.Value is string s && s == message)
 					{
 						attr.Remove();
 						found = true;
@@ -1871,6 +1947,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				typeSystemAstBuilder.UseSpecialConstants = !(field.DeclaringType.Equals(field.ReturnType) || isMathPIOrE);
 				var fieldDecl = typeSystemAstBuilder.ConvertEntity(field);
 				SetNewModifier(fieldDecl);
+				if (settings.RequiredMembers && RemoveAttribute(fieldDecl, KnownAttribute.RequiredAttribute))
+				{
+					fieldDecl.Modifiers |= Modifiers.Required;
+				}
 				if (settings.FixedBuffers && IsFixedField(field, out var elementType, out var elementCount))
 				{
 					var fixedFieldDecl = new FixedFieldDeclaration();
@@ -1982,6 +2062,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					RemoveAttribute(getter, KnownAttribute.PreserveBaseOverrides);
 					propertyDecl.Modifiers &= ~(Modifiers.New | Modifiers.Virtual);
 					propertyDecl.Modifiers |= Modifiers.Override;
+				}
+				if (settings.RequiredMembers && RemoveAttribute(propertyDecl, KnownAttribute.RequiredAttribute))
+				{
+					propertyDecl.Modifiers |= Modifiers.Required;
 				}
 				return propertyDecl;
 			}

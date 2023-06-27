@@ -84,13 +84,15 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int RID => MetadataTokens.GetRowNumber(handle);
 
+			public int Token => MetadataTokens.GetToken(handle);
+
 			public object Offset => offset == null ? "n/a" : (object)offset;
 
 			public string Name => metadata.GetString(localConst.Name);
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(localConst.Name):X} \"{Name}\"";
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(localConst.Signature);
 
 			public LocalConstantEntry(PEFile module, MetadataReader metadata, bool isEmbedded, LocalConstantHandle handle)

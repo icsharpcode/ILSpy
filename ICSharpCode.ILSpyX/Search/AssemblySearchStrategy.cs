@@ -41,19 +41,27 @@ namespace ICSharpCode.ILSpyX.Search
 
 			if (searchKind == AssemblySearchKind.NameOrFileName)
 			{
-				string localName = GetNameToMatch(module, AssemblySearchKind.Name);
-				string fileName = Path.GetFileName(GetNameToMatch(module, AssemblySearchKind.FilePath));
-				if (IsMatch(localName) || IsMatch(fileName))
+				string? localName = GetNameToMatch(module, AssemblySearchKind.Name);
+				string? filePath = GetNameToMatch(module, AssemblySearchKind.FilePath);
+				if (localName != null && IsMatch(localName))
+				{
 					OnFoundResult(module);
+				}
+				else if (filePath != null)
+				{
+					string fileName = Path.GetFileName(filePath);
+					if (IsMatch(fileName))
+						OnFoundResult(module);
+				}
 				return;
 			}
 
-			string name = GetNameToMatch(module, searchKind);
-			if (IsMatch(name))
+			string? name = GetNameToMatch(module, searchKind);
+			if (name != null && IsMatch(name))
 				OnFoundResult(module);
 		}
 
-		string GetNameToMatch(PEFile module, AssemblySearchKind kind)
+		string? GetNameToMatch(PEFile module, AssemblySearchKind kind)
 		{
 			switch (kind)
 			{

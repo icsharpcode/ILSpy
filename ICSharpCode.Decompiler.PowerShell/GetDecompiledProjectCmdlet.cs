@@ -33,8 +33,8 @@ namespace ICSharpCode.Decompiler.PowerShell
 			lock (syncObject)
 			{
 				completed++;
-				progress = new ProgressRecord(1, "Decompiling " + fileName, $"Completed {completed} of {value.TotalNumberOfFiles}: {value.Status}") {
-					PercentComplete = (int)(completed * 100.0 / value.TotalNumberOfFiles)
+				progress = new ProgressRecord(1, "Decompiling " + fileName, $"Completed {completed} of {value.TotalUnits}: {value.Status}") {
+					PercentComplete = (int)(completed * 100.0 / value.TotalUnits)
 				};
 			}
 		}

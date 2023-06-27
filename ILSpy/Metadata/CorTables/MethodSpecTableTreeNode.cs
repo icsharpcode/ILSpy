@@ -87,8 +87,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.MethodSpec)
 				+ metadata.GetTableRowSize(TableIndex.MethodSpec) * (RID - 1);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Method => MetadataTokens.GetToken(methodSpec.Method);
 
 			public void OnMethodClick()
@@ -96,15 +95,10 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, methodSpec.Method, protocol: "metadata"));
 			}
 
-			public string MethodTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					methodSpec.Method.WriteTo(module, output, default);
-					return output.ToString();
-				}
-			}
+			string methodTooltip;
+			public string MethodTooltip => GenerateTooltip(ref methodTooltip, module, methodSpec.Method);
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(methodSpec.Signature);
 
 			public string SignatureTooltip {
@@ -131,6 +125,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.methodSpec = metadata.GetMethodSpecification(handle);
+				this.methodTooltip = null;
 			}
 		}
 

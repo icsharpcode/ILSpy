@@ -58,6 +58,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return elementType.GetDefinition();
 		}
 
+		public override ITypeDefinitionOrUnknown GetDefinitionOrUnknown()
+		{
+			return elementType.GetDefinitionOrUnknown();
+		}
+
 		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return elementType.GetAccessors(filter, options);

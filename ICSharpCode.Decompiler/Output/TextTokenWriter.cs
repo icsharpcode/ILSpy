@@ -457,7 +457,7 @@ namespace ICSharpCode.Decompiler
 		{
 			if (node is EntityDeclaration && !(node.Parent is LocalFunctionDeclarationStatement))
 				return true;
-			if (node is VariableInitializer && node.Parent is FieldDeclaration)
+			if (node is VariableInitializer && node.Parent is FieldDeclaration or EventDeclaration)
 			{
 				node = node.Parent;
 				return true;

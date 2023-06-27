@@ -26,23 +26,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private const nint nint_const = 42;
 		private const nuint nuint_const = 99u;
 
+#if CS110 && NET70
+		// C#11 on .NET7 no longer uses NativeIntegerAttribute,
+		// instead nint+IntPtr are considered to be the same type.
+		private nint intptr;
+		private nuint uintptr;
+#else
 		private IntPtr intptr;
 		private UIntPtr uintptr;
+#endif
 		private nint i;
 		private nuint u;
 		private int i32;
 		private uint u32;
 		private long i64;
 		private ulong u64;
+#if !(CS110 && NET70)
 		private (IntPtr, nint, UIntPtr, nuint) tuple_field;
 		private (object, int, IntPtr, nint, UIntPtr, nuint) tuple_field2;
 		private Dictionary<nint, IntPtr> dict1;
 		private Dictionary<IntPtr, nint> dict2;
 		private Dictionary<IntPtr?, nint?> dict3;
 		private Dictionary<IntPtr, nint[]> dict4;
+#endif
+		private Dictionary<nuint, nint[]> dict5;
 
 		public void Convert()
 		{
+			i = (nint)u;
+			u = (nuint)i;
+#if !(CS110 && NET70)
 			intptr = i;
 			intptr = (nint)u;
 			intptr = (nint)(nuint)uintptr;
@@ -58,15 +71,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			u = (nuint)i;
 			u = uintptr;
 			u = (nuint)(nint)intptr;
+#endif
 		}
 
 		public void Convert2()
 		{
 			i32 = (int)i;
 			i = i32;
+#if !(CS110 && NET70)
 			intptr = (IntPtr)i32;
 
 			i64 = (long)intptr;
+#endif
 			i64 = i;
 			i = (nint)i64;
 
@@ -79,7 +95,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void Arithmetic()
 		{
+#if !(CS110 && NET70)
 			Console.WriteLine((nint)intptr * 2);
+#endif
 			Console.WriteLine(i * 2);
 
 			Console.WriteLine(i + (nint)u);
@@ -155,6 +173,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			{
 				GetInstance(3).u *= 2u;
 			}
+#if !(CS110 && NET70)
 			GetInstance(4).intptr += (nint)i32;
 			checked
 			{
@@ -164,10 +183,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			// multiplication results in compiler-error without the cast
 			GetInstance(6).intptr *= (nint)2;
+#endif
 
-			GetInstance(7).i <<= i32;
+			GetInstance(7).i += i32;
+			GetInstance(8).i <<= i32;
 		}
 
+#if !(CS110 && NET70)
 		public void LocalTypeFromStore()
 		{
 			nint num = 42;
@@ -188,10 +210,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			intptr = num3;
 			intptr = intPtr;
 		}
-
+#endif
 
 		public void LocalTypeFromUse()
 		{
+#if CS110 && NET70
+			nint num = intptr;
+			nint num2 = intptr;
+
+			Console.WriteLine();
+
+			intptr = num;
+			i = num2 + 1;
+#else
 			IntPtr intPtr = intptr;
 			nint num = intptr;
 
@@ -199,11 +230,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			intptr = intPtr;
 			i = num + 1;
+#endif
 		}
 
 		public nint NegateUnsigned(nuint x)
 		{
 			return (nint)(0 - x);
+		}
+
+		public bool CompareToMinus3(nuint x)
+		{
+			return x == unchecked((nuint)(-3));
 		}
 
 		public nint SignedNotFittingIn32Bits()

@@ -53,8 +53,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.settings = settings;
 			this.cancellationToken = cancellationToken;
 			this.baseClass = recordTypeDef.DirectBaseTypes.FirstOrDefault(b => b.Kind == TypeKind.Class);
-			this.isStruct = baseClass.IsKnownType(KnownTypeCode.ValueType);
-			this.isInheritedRecord = !isStruct && !baseClass.IsKnownType(KnownTypeCode.Object);
+			this.isStruct = baseClass?.IsKnownType(KnownTypeCode.ValueType) ?? false;
+			this.isInheritedRecord = !isStruct && !(baseClass?.IsKnownType(KnownTypeCode.Object) ?? false);
 			this.isSealed = recordTypeDef.IsSealed;
 			DetectAutomaticProperties();
 			this.orderedMembers = DetectMemberOrder(recordTypeDef, backingFieldToAutoProperty);
@@ -292,7 +292,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						// virtual bool Equals(R? other): generated unless user-declared
 						return IsGeneratedEquals(method);
 					}
-					else if (isInheritedRecord && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(paramType, baseClass) && method.IsOverride)
+					else if (isInheritedRecord && baseClass != null && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(paramType, baseClass) && method.IsOverride)
 					{
 						// override bool Equals(BaseClass? obj): always generated
 						return true;
@@ -445,11 +445,23 @@ namespace ICSharpCode.Decompiler.CSharp
 			var getter = property.Getter;
 			if (!(getter != null && !property.CanSet))
 				return false;
-			if (property.GetAttributes().Any())
-				return false;
+			var attrs = property.GetAttributes().ToList();
+			switch (attrs.Count)
+			{
+				case 0:
+					// Roslyn 3.x does not emit a CompilerGeneratedAttribute on the property itself.
+					break;
+				case 1:
+					// Roslyn 4.4 started doing so.
+					if (!attrs[0].AttributeType.IsKnownType(KnownAttribute.CompilerGenerated))
+						return false;
+					break;
+				default:
+					return false;
+			}
 			if (getter.GetReturnTypeAttributes().Any())
 				return false;
-			var attrs = getter.GetAttributes().ToList();
+			attrs = getter.GetAttributes().ToList();
 			if (attrs.Count != 1)
 				return false;
 			if (!attrs[0].AttributeType.IsKnownType(KnownAttribute.CompilerGenerated))
@@ -760,7 +772,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						return false;
 					if (!(conditions[pos] is Call { Method: { Name: "Equals" } } call))
 						return false;
-					if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(call.Method.DeclaringType, baseClass))
+					if (baseClass != null && !NormalizeTypeVisitor.TypeErasure.EquivalentTypes(call.Method.DeclaringType, baseClass))
 						return false;
 					if (call.Arguments.Count != 2)
 						return false;

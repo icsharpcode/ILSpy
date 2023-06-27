@@ -321,7 +321,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write('>');
 		}
 
-		static void WriteParameterList(ITextOutput output, MethodSignature<Action<ILNameSyntax>> methodSignature)
+		internal static void WriteParameterList(ITextOutput output, MethodSignature<Action<ILNameSyntax>> methodSignature)
 		{
 			output.Write("(");
 			for (int i = 0; i < methodSignature.ParameterTypes.Length; ++i)

@@ -98,8 +98,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset { get; }
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Class => MetadataTokens.GetToken(interfaceImpl.Class);
 
 			public void OnClassClick()
@@ -107,17 +106,10 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, interfaceImpl.Class, protocol: "metadata"));
 			}
 
-			public string ClassTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)interfaceImpl.Class).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string classTooltip;
+			public string ClassTooltip => GenerateTooltip(ref classTooltip, module, interfaceImpl.Class);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Interface => MetadataTokens.GetToken(interfaceImpl.Interface);
 
 			public void OnInterfaceClick()
@@ -125,14 +117,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, interfaceImpl.Interface, protocol: "metadata"));
 			}
 
-			public string InterfaceTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)interfaceImpl.Interface).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string interfaceTooltip;
+			public string InterfaceTooltip => GenerateTooltip(ref interfaceTooltip, module, interfaceImpl.Interface);
 
 			public InterfaceImplEntry(PEFile module, byte* ptr, int metadataOffset, int row)
 			{
@@ -143,6 +129,8 @@ namespace ICSharpCode.ILSpy.Metadata
 					+ metadata.GetTableRowSize(TableIndex.InterfaceImpl) * (row - 1);
 				this.Offset = metadataOffset + rowOffset;
 				this.interfaceImpl = new InterfaceImpl(ptr + rowOffset, metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4, metadata.ComputeCodedTokenSize(16384, TableMask.TypeDef | TableMask.TypeRef | TableMask.TypeSpec));
+				this.interfaceTooltip = null;
+				this.classTooltip = null;
 			}
 		}
 

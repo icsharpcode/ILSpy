@@ -21,23 +21,26 @@ using System.ComponentModel;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Security.Principal;
 using System.Windows;
 using System.Windows.Input;
 
 using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpyX.Settings;
 
 using Microsoft.Win32;
 
 namespace ICSharpCode.ILSpy.Options
 {
-	public class MiscSettings : INotifyPropertyChanged
+	public class MiscSettingsViewModel : IMiscSettings, INotifyPropertyChanged
 	{
 		bool allowMultipleInstances;
 		bool loadPreviousAssemblies = true;
 
-		public MiscSettings()
+		public MiscSettingsViewModel(MiscSettings s)
 		{
+			AllowMultipleInstances = s.AllowMultipleInstances;
+			LoadPreviousAssemblies = s.LoadPreviousAssemblies;
+
 			AddRemoveShellIntegrationCommand = new DelegateCommand<object>(AddRemoveShellIntegration);
 		}
 

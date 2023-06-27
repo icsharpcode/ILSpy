@@ -87,8 +87,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.CustomAttribute)
 				+ metadata.GetTableRowSize(TableIndex.CustomAttribute) * (RID - 1);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(customAttr.Parent);
 
 			public void OnParentClick()
@@ -96,17 +95,10 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, customAttr.Parent, protocol: "metadata"));
 			}
 
-			public string ParentTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					customAttr.Parent.WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string parentTooltip;
+			public string ParentTooltip => GenerateTooltip(ref parentTooltip, module, customAttr.Parent);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Constructor => MetadataTokens.GetToken(customAttr.Constructor);
 
 			public void OnConstructorClick()
@@ -114,16 +106,10 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, customAttr.Constructor, protocol: "metadata"));
 			}
 
-			public string ConstructorTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					customAttr.Constructor.WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string constructorTooltip;
+			public string ConstructorTooltip => GenerateTooltip(ref constructorTooltip, module, customAttr.Constructor);
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Value => MetadataTokens.GetHeapOffset(customAttr.Value);
 
 			public string ValueTooltip {
@@ -139,6 +125,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.customAttr = metadata.GetCustomAttribute(handle);
+				this.parentTooltip = null;
+				this.constructorTooltip = null;
 			}
 		}
 

@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -44,17 +46,88 @@ namespace ICSharpCode.Decompiler.IL
 	/// </remarks>
 	public class ILReader
 	{
+		/// <summary>
+		/// Represents a block of IL instructions.
+		/// </summary>
+		private sealed class ImportedBlock
+		{
+			// These members are immediately available after construction:
+			public readonly Block Block = new Block(BlockKind.ControlFlow);
+			public ImmutableStack<ILVariable> InputStack;
+
+			public int StartILOffset => Block.StartILOffset;
+			/// True if the import is in progress or completed.
+			public bool ImportStarted = false;
+
+			// When the block is imported, Block.Instructions is filled with the imported instructions
+			// and the following members are initialized:
+			public List<(ImportedBlock, ImmutableStack<ILVariable>)> OutgoingEdges = new();
+
+			public ImportedBlock(int offset, ImmutableStack<ILVariable> inputStack)
+			{
+				this.InputStack = inputStack;
+				this.Block.AddILRange(new Interval(offset, offset));
+			}
+
+			/// <summary>
+			/// Compares stack types and update InputStack if necessary.
+			/// Returns true if InputStack was updated, making a reimport necessary.
+			/// </summary>
+			public bool MergeStackTypes(ImmutableStack<ILVariable> newEdge)
+			{
+				var a = this.InputStack;
+				var b = newEdge;
+				bool changed = false;
+				while (!a.IsEmpty && !b.IsEmpty)
+				{
+					if (a.Peek().StackType < b.Peek().StackType)
+					{
+						changed = true;
+					}
+					a = a.Pop();
+					b = b.Pop();
+				}
+				if (!changed || !(a.IsEmpty && b.IsEmpty))
+					return false;
+				a = this.InputStack;
+				b = newEdge;
+				var output = new List<ILVariable>();
+				while (!a.IsEmpty && !b.IsEmpty)
+				{
+					if (a.Peek().StackType < b.Peek().StackType)
+					{
+						output.Add(b.Peek());
+					}
+					else
+					{
+						output.Add(a.Peek());
+					}
+					a = a.Pop();
+					b = b.Pop();
+				}
+				this.InputStack = ImmutableStack.CreateRange(output);
+				this.ImportStarted = false;
+				return true;
+			}
+
+			internal void ResetForReimport()
+			{
+				this.Block.Instructions.Clear();
+				this.OutgoingEdges.Clear();
+			}
+		}
+
 		readonly ICompilation compilation;
 		readonly MetadataModule module;
 		readonly MetadataReader metadata;
 
 		public bool UseDebugSymbols { get; set; }
-		public DebugInfo.IDebugInfoProvider DebugInfo { get; set; }
+		public DebugInfo.IDebugInfoProvider? DebugInfo { get; set; }
 		public List<string> Warnings { get; } = new List<string>();
 
 		// List of candidate locations for sequence points. Includes empty il stack locations, any nop instructions, and the instruction following
 		// a call instruction. 
-		public List<int> SequencePointCandidates { get; private set; }
+		public List<int> SequencePointCandidates { get; } = new List<int>();
 
 		/// <summary>
 		/// Creates a new ILReader instance.
@@ -69,29 +142,27 @@ namespace ICSharpCode.Decompiler.IL
 			this.module = module;
 			this.compilation = module.Compilation;
 			this.metadata = module.metadata;
-			this.SequencePointCandidates = new List<int>();
 		}
 
+		// The members initialized with `null!` are initialized in the Init method.
 		GenericContext genericContext;
-		IMethod method;
-		MethodBodyBlock body;
+		IMethod method = null!;
+		MethodBodyBlock body = null!;
 		StackType methodReturnStackType;
 		BlobReader reader;
-		ImmutableStack<ILVariable> currentStack;
-		List<ILInstruction> expressionStack;
-		ILVariable[] parameterVariables;
-		ILVariable[] localVariables;
-		BitSet isBranchTarget;
-		BlockContainer mainContainer;
-		List<ILInstruction> instructionBuilder;
+		ImmutableStack<ILVariable> currentStack = ImmutableStack<ILVariable>.Empty;
+		ImportedBlock? currentBlock;
+		List<ILInstruction> expressionStack = new List<ILInstruction>();
+		ILVariable[] parameterVariables = null!;
+		ILVariable[] localVariables = null!;
+		BitSet isBranchTarget = null!;
+		BlockContainer mainContainer = null!;
 		int currentInstructionStart;
 
-		// Dictionary that stores stacks for each IL instruction
-		Dictionary<int, ImmutableStack<ILVariable>> stackByOffset;
-		Dictionary<ExceptionRegion, ILVariable> variableByExceptionHandler;
-		UnionFind<ILVariable> unionFind;
-		List<(ILVariable, ILVariable)> stackMismatchPairs;
-		IEnumerable<ILVariable> stackVariables;
+		Dictionary<int, ImportedBlock> blocksByOffset = new Dictionary<int, ImportedBlock>();
+		Queue<ImportedBlock> importQueue = new Queue<ImportedBlock>();
+		Dictionary<ExceptionRegion, ILVariable> variableByExceptionHandler = new Dictionary<ExceptionRegion, ILVariable>();
+		IEnumerable<ILVariable>? stackVariables;
 
 		void Init(MethodDefinitionHandle methodDefinitionHandle, MethodBodyBlock body, GenericContext genericContext)
 		{
@@ -114,9 +185,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.body = body;
 			this.reader = body.GetILReader();
 			this.currentStack = ImmutableStack<ILVariable>.Empty;
-			this.expressionStack = new List<ILInstruction>();
-			this.unionFind = new UnionFind<ILVariable>();
-			this.stackMismatchPairs = new List<(ILVariable, ILVariable)>();
+			this.expressionStack.Clear();
 			this.methodReturnStackType = method.ReturnType.GetStackType();
 			InitParameterVariables();
 			localVariables = InitLocalVariables();
@@ -126,10 +195,10 @@ namespace ICSharpCode.Decompiler.IL
 				v.UsesInitialValue = true;
 			}
 			this.mainContainer = new BlockContainer(expectedResultType: methodReturnStackType);
-			this.instructionBuilder = new List<ILInstruction>();
+			this.blocksByOffset.Clear();
+			this.importQueue.Clear();
 			this.isBranchTarget = new BitSet(reader.Length);
-			this.stackByOffset = new Dictionary<int, ImmutableStack<ILVariable>>();
-			this.variableByExceptionHandler = new Dictionary<ExceptionRegion, ILVariable>();
+			this.variableByExceptionHandler.Clear();
 		}
 
 		EntityHandle ReadAndDecodeMetadataToken()
@@ -256,7 +325,7 @@ namespace ICSharpCode.Decompiler.IL
 		ILVariable CreateILVariable(int index, IType parameterType, string name)
 		{
 			Debug.Assert(!parameterType.IsUnbound());
-			ITypeDefinition def = parameterType.GetDefinition();
+			ITypeDefinition? def = parameterType.GetDefinition();
 			if (def != null && index < 0 && def.IsReferenceType == false)
 			{
 				parameterType = new ByReferenceType(parameterType);
@@ -282,82 +351,71 @@ namespace ICSharpCode.Decompiler.IL
 			Warnings.Add(string.Format("IL_{0:x4}: {1}", currentInstructionStart, message));
 		}
 
-		ImmutableStack<ILVariable> MergeStacks(ImmutableStack<ILVariable> a, ImmutableStack<ILVariable> b)
+		/// <summary>
+		/// Check control flow edges for compatible stacks.
+		/// Returns union find data structure for unifying the different variables for the same stack slot.
+		/// Also inserts stack adjustments where necessary.
+		/// </summary>
+		UnionFind<ILVariable> CheckOutgoingEdges()
 		{
-			if (CheckStackCompatibleWithoutAdjustments(a, b))
+			var unionFind = new UnionFind<ILVariable>();
+			foreach (var block in blocksByOffset.Values)
 			{
-				// We only need to union the input variables, but can 
-				// otherwise re-use the existing stack.
-				ImmutableStack<ILVariable> output = a;
-				while (!a.IsEmpty && !b.IsEmpty)
+				foreach (var (outgoing, stack) in block.OutgoingEdges)
 				{
-					Debug.Assert(a.Peek().StackType == b.Peek().StackType);
-					unionFind.Merge(a.Peek(), b.Peek());
-					a = a.Pop();
-					b = b.Pop();
-				}
-				return output;
-			}
-			else if (a.Count() != b.Count())
-			{
-				// Let's not try to merge mismatched stacks.
-				Warn("Incompatible stack heights: " + a.Count() + " vs " + b.Count());
-				return a;
-			}
-			else
-			{
-				// The more complex case where the stacks don't match exactly.
-				var output = new List<ILVariable>();
-				while (!a.IsEmpty && !b.IsEmpty)
-				{
-					var varA = a.Peek();
-					var varB = b.Peek();
-					if (varA.StackType == varB.StackType)
+					var a = stack;
+					var b = outgoing.InputStack;
+					if (a.Count() != b.Count())
 					{
-						unionFind.Merge(varA, varB);
-						output.Add(varA);
+						// Let's not try to merge mismatched stacks.
+						Warnings.Add($"IL_{block.Block.EndILOffset:x4}->IL{outgoing.StartILOffset:x4}: Incompatible stack heights: {a.Count()} vs {b.Count()}");
+						continue;
 					}
-					else
+					while (!a.IsEmpty && !b.IsEmpty)
 					{
-						if (!IsValidTypeStackTypeMerge(varA.StackType, varB.StackType))
+						var varA = a.Peek();
+						var varB = b.Peek();
+						if (varA.StackType == varB.StackType)
 						{
-							Warn("Incompatible stack types: " + varA.StackType + " vs " + varB.StackType);
-						}
-						if (varA.StackType > varB.StackType)
-						{
-							output.Add(varA);
-							// every store to varB should also store to varA
-							stackMismatchPairs.Add((varB, varA));
+							// The stack types match, so we can merge the variables.
+							unionFind.Merge(varA, varB);
 						}
 						else
 						{
-							output.Add(varB);
-							// every store to varA should also store to varB
-							stackMismatchPairs.Add((varA, varB));
+							Debug.Assert(varA.StackType < varB.StackType);
+							if (!IsValidTypeStackTypeMerge(varA.StackType, varB.StackType))
+							{
+								Warnings.Add($"IL_{block.Block.EndILOffset:x4}->IL{outgoing.StartILOffset:x4}: Incompatible stack types: {varA.StackType} vs {varB.StackType}");
+							}
+							InsertStackAdjustment(block.Block, varA, varB);
 						}
+						a = a.Pop();
+						b = b.Pop();
 					}
-					a = a.Pop();
-					b = b.Pop();
 				}
-				// because we built up output by popping from the input stacks, we need to reverse it to get back the original order
-				output.Reverse();
-				return ImmutableStack.CreateRange(output);
 			}
+			return unionFind;
 		}
 
-		static bool CheckStackCompatibleWithoutAdjustments(ImmutableStack<ILVariable> a, ImmutableStack<ILVariable> b)
+		/// <summary>
+		/// Inserts a copy from varA to varB (with conversion) at the end of <paramref name="block"/>.
+		/// If the block ends with a branching instruction, the copy is inserted before the branching instruction.
+		/// </summary>
+		private void InsertStackAdjustment(Block block, ILVariable varA, ILVariable varB)
 		{
-			while (!a.IsEmpty && !b.IsEmpty)
+			int insertionPosition = block.Instructions.Count;
+			while (insertionPosition > 0 && block.Instructions[insertionPosition - 1].HasFlag(InstructionFlags.MayBranch))
 			{
-				if (a.Peek().StackType != b.Peek().StackType)
-					return false;
-				a = a.Pop();
-				b = b.Pop();
+				// Branch instruction mustn't be initializing varA.
+				Debug.Assert(!block.Instructions[insertionPosition - 1].HasFlag(InstructionFlags.MayWriteLocals));
+				insertionPosition--;
 			}
-			return a.IsEmpty && b.IsEmpty;
+			ILInstruction value = new LdLoc(varA);
+			value = new Conv(value, varB.StackType.ToPrimitiveType(), false, Sign.Signed);
+			block.Instructions.Insert(insertionPosition, new StLoc(varB, value) { IsStackAdjustment = true });
 		}
 
-		private bool IsValidTypeStackTypeMerge(StackType stackType1, StackType stackType2)
+		private static bool IsValidTypeStackTypeMerge(StackType stackType1, StackType stackType2)
 		{
 			if (stackType1 == StackType.I && stackType2 == StackType.I4)
 				return true;
@@ -373,42 +431,73 @@ namespace ICSharpCode.Decompiler.IL
 
 		/// <summary>
 		/// Stores the given stack for a branch to `offset`.
-		/// 
-		/// The stack may be modified if stack adjustments are necessary. (e.g. implicit I4->I conversion)
 		/// </summary>
-		void StoreStackForOffset(int offset, ref ImmutableStack<ILVariable> stack)
+		ImportedBlock StoreStackForOffset(int offset, ImmutableStack<ILVariable> stack)
 		{
-			if (stackByOffset.TryGetValue(offset, out var existing))
+			if (blocksByOffset.TryGetValue(offset, out var existing))
 			{
-				stack = MergeStacks(existing, stack);
-				if (stack != existing)
-					stackByOffset[offset] = stack;
+				bool wasImported = existing.ImportStarted;
+				if (existing.MergeStackTypes(stack) && wasImported)
+				{
+					// If the stack changed, we need to re-import the block.
+					importQueue.Enqueue(existing);
+				}
+				return existing;
 			}
 			else
 			{
-				stackByOffset.Add(offset, stack);
+				ImportedBlock newBlock = new ImportedBlock(offset, stack);
+				blocksByOffset.Add(offset, newBlock);
+				importQueue.Enqueue(newBlock);
+				return newBlock;
 			}
 		}
 
 		void ReadInstructions(CancellationToken cancellationToken)
 		{
 			reader.Reset();
+			StoreStackForOffset(0, ImmutableStack<ILVariable>.Empty);
+			if (reader.Length == 0)
+			{
+				blocksByOffset[0].Block.Instructions.Add(
+					new InvalidBranch("Empty body found. Decompiled assembly might be a reference assembly.")
+				);
+				return;
+			}
 			ILParser.SetBranchTargets(ref reader, isBranchTarget);
-			reader.Reset();
 			PrepareBranchTargetsAndStacksForExceptionHandlers();
 
-			bool nextInstructionBeginsNewBlock = false;
+			// Import of IL byte codes:
+			while (importQueue.Count > 0)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+				ImportedBlock block = importQueue.Dequeue();
+				ReadBlock(block, cancellationToken);
+			}
 
-			reader.Reset();
+			// Merge different variables for same stack slot:
+			var unionFind = CheckOutgoingEdges();
+			var visitor = new CollectStackVariablesVisitor(unionFind);
+			foreach (var block in blocksByOffset.Values)
+			{
+				block.Block.AcceptVisitor(visitor);
+			}
+			stackVariables = visitor.variables;
+		}
+
+		void ReadBlock(ImportedBlock block, CancellationToken cancellationToken)
+		{
+			Debug.Assert(!block.ImportStarted);
+			block.ResetForReimport();
+			block.ImportStarted = true;
+			reader.Offset = block.StartILOffset;
+			currentBlock = block;
+			currentStack = block.InputStack;
+			// Read instructions until we reach the end of the block.
 			while (reader.RemainingBytes > 0)
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 				int start = reader.Offset;
-				if (isBranchTarget[start])
-				{
-					FlushExpressionStack();
-					StoreStackForOffset(start, ref currentStack);
-				}
 				currentInstructionStart = start;
 				bool startedWithEmptyStack = CurrentStackIsEmpty();
 				DecodedInstruction decodedInstruction;
@@ -430,45 +519,50 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					// Flush to avoid re-ordering of side-effects
 					FlushExpressionStack();
-					instructionBuilder.Add(inst);
-				}
-				else if (isBranchTarget[start] || nextInstructionBeginsNewBlock)
-				{
-					// If this instruction is the first in a new block, avoid it being inlined
-					// into the next instruction.
-					// This is necessary because the BlockBuilder uses inst.StartILOffset to
-					// detect block starts, and doesn't search nested instructions.
-					FlushExpressionStack();
-				}
-				if (inst.HasDirectFlag(InstructionFlags.EndPointUnreachable))
-				{
-					FlushExpressionStack();
-					if (!stackByOffset.TryGetValue(end, out currentStack))
-					{
-						currentStack = ImmutableStack<ILVariable>.Empty;
-					}
-					nextInstructionBeginsNewBlock = true;
-				}
-				else
-				{
-					nextInstructionBeginsNewBlock = inst.HasFlag(InstructionFlags.MayBranch);
+					block.Block.Instructions.Add(inst);
 				}
 
 				if ((!decodedInstruction.PushedOnExpressionStack && IsSequencePointInstruction(inst)) || startedWithEmptyStack)
 				{
 					this.SequencePointCandidates.Add(inst.StartILOffset);
 				}
-			}
 
+				if (inst.HasDirectFlag(InstructionFlags.EndPointUnreachable))
+				{
+					break; // end of block, don't parse following instructions if they are unreachable
+				}
+				else if (isBranchTarget[end] || inst.HasFlag(InstructionFlags.MayBranch))
+				{
+					break; // end of block (we'll create fall through)
+				}
+			}
+			// Finalize block
 			FlushExpressionStack();
-
-			var visitor = new CollectStackVariablesVisitor(unionFind);
-			for (int i = 0; i < instructionBuilder.Count; i++)
+			block.Block.AddILRange(new Interval(block.StartILOffset, reader.Offset));
+			if (!block.Block.HasFlag(InstructionFlags.EndPointUnreachable))
 			{
-				instructionBuilder[i] = instructionBuilder[i].AcceptVisitor(visitor);
+				// create fall through branch
+				ILInstruction branch;
+				if (reader.RemainingBytes > 0)
+				{
+					MarkBranchTarget(reader.Offset, isFallThrough: true);
+					branch = new Branch(reader.Offset);
+				}
+				else
+				{
+					branch = new InvalidBranch("End of method reached without returning.");
+				}
+				if (block.Block.Instructions.LastOrDefault() is SwitchInstruction switchInst && switchInst.Sections.Last().Body.MatchNop())
+				{
+					// Instead of putting the default branch after the switch instruction
+					switchInst.Sections.Last().Body = branch;
+					Debug.Assert(switchInst.HasFlag(InstructionFlags.EndPointUnreachable));
+				}
+				else
+				{
+					block.Block.Instructions.Add(branch);
+				}
 			}
-			stackVariables = visitor.variables;
-			InsertStackAdjustments();
 		}
 
 		private bool CurrentStackIsEmpty()
@@ -482,9 +576,7 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var eh in body.ExceptionRegions)
 			{
 				// Always mark the start of the try block as a "branch target".
-				// We don't actually need to store the stack state here,
-				// but we need to ensure that no ILInstructions are inlined
-				// into the try-block.
+				// We need to ensure that we put a block boundary there.
 				isBranchTarget[eh.TryOffset] = true;
 
 				ImmutableStack<ILVariable> ehStack;
@@ -514,64 +606,29 @@ namespace ICSharpCode.Decompiler.IL
 				if (eh.FilterOffset != -1)
 				{
 					isBranchTarget[eh.FilterOffset] = true;
-					StoreStackForOffset(eh.FilterOffset, ref ehStack);
+					StoreStackForOffset(eh.FilterOffset, ehStack);
 				}
 				if (eh.HandlerOffset != -1)
 				{
 					isBranchTarget[eh.HandlerOffset] = true;
-					StoreStackForOffset(eh.HandlerOffset, ref ehStack);
+					StoreStackForOffset(eh.HandlerOffset, ehStack);
 				}
 			}
 		}
 
-		private bool IsSequencePointInstruction(ILInstruction instruction)
+		private static bool IsSequencePointInstruction(ILInstruction instruction)
 		{
-			if (instruction.OpCode == OpCode.Nop ||
-				(instructionBuilder.Count > 0
-				&& instructionBuilder.Last().OpCode is OpCode.Call
-													or OpCode.CallIndirect
-													or OpCode.CallVirt))
+			if (instruction.OpCode is OpCode.Nop
+									or OpCode.Call
+									or OpCode.CallIndirect
+									or OpCode.CallVirt)
 			{
-
 				return true;
 			}
 			else
 			{
 				return false;
 			}
-		}
-
-		void InsertStackAdjustments()
-		{
-			if (stackMismatchPairs.Count == 0)
-				return;
-			var dict = new MultiDictionary<ILVariable, ILVariable>();
-			foreach (var (origA, origB) in stackMismatchPairs)
-			{
-				var a = unionFind.Find(origA);
-				var b = unionFind.Find(origB);
-				Debug.Assert(a.StackType < b.StackType);
-				// For every store to a, insert a converting store to b.
-				if (!dict[a].Contains(b))
-					dict.Add(a, b);
-			}
-			var newInstructions = new List<ILInstruction>();
-			foreach (var inst in instructionBuilder)
-			{
-				newInstructions.Add(inst);
-				if (inst is StLoc store)
-				{
-					foreach (var additionalVar in dict[store.Variable])
-					{
-						ILInstruction value = new LdLoc(store.Variable);
-						value = new Conv(value, additionalVar.StackType.ToPrimitiveType(), false, Sign.Signed);
-						newInstructions.Add(new StLoc(additionalVar, value) {
-							IsStackAdjustment = true,
-						}.WithILRange(inst));
-					}
-				}
-			}
-			instructionBuilder = newInstructions;
 		}
 
 		/// <summary>
@@ -582,39 +639,24 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Init(method, body, genericContext);
 			ReadInstructions(cancellationToken);
-			foreach (var inst in instructionBuilder)
+			foreach (var importBlock in blocksByOffset.Values.OrderBy(b => b.StartILOffset))
 			{
-				if (inst is StLoc stloc && stloc.IsStackAdjustment)
+				output.Write("   [");
+				bool isFirstElement = true;
+				foreach (var element in importBlock.InputStack)
 				{
-					output.Write("          ");
-					inst.WriteTo(output, new ILAstWritingOptions());
-					output.WriteLine();
-					continue;
+					if (isFirstElement)
+						isFirstElement = false;
+					else
+						output.Write(", ");
+					output.WriteLocalReference(element.Name, element);
+					output.Write(":");
+					output.Write(element.StackType);
 				}
-				if (stackByOffset.TryGetValue(inst.StartILOffset, out var stack))
-				{
-					output.Write("   [");
-					bool isFirstElement = true;
-					foreach (var element in stack)
-					{
-						if (isFirstElement)
-							isFirstElement = false;
-						else
-							output.Write(", ");
-						output.WriteLocalReference(element.Name, element);
-						output.Write(":");
-						output.Write(element.StackType);
-					}
-					output.Write(']');
-					output.WriteLine();
-				}
-				if (isBranchTarget[inst.StartILOffset])
-					output.Write('*');
-				else
-					output.Write(' ');
-				output.WriteLocalReference("IL_" + inst.StartILOffset.ToString("x4"), inst.StartILOffset, isDefinition: true);
-				output.Write(": ");
-				inst.WriteTo(output, new ILAstWritingOptions());
+				output.Write(']');
+				output.WriteLine();
+
+				importBlock.Block.WriteTo(output, new ILAstWritingOptions());
 				output.WriteLine();
 			}
 			new Disassembler.MethodBodyDisassembler(output, cancellationToken) { DetectControlStructure = false }
@@ -630,10 +672,11 @@ namespace ICSharpCode.Decompiler.IL
 			Init(method, body, genericContext);
 			ReadInstructions(cancellationToken);
 			var blockBuilder = new BlockBuilder(body, variableByExceptionHandler, compilation);
-			blockBuilder.CreateBlocks(mainContainer, instructionBuilder, isBranchTarget, cancellationToken);
+			blockBuilder.CreateBlocks(mainContainer, blocksByOffset.Values.Select(ib => ib.Block), cancellationToken);
 			var function = new ILFunction(this.method, body.GetCodeSize(), this.genericContext, mainContainer, kind);
 			function.Variables.AddRange(parameterVariables);
 			function.Variables.AddRange(localVariables);
+			Debug.Assert(stackVariables != null);
 			function.Variables.AddRange(stackVariables);
 			function.Variables.AddRange(variableByExceptionHandler.Values);
 			function.Variables.AddRange(blockBuilder.OnErrorDispatcherVariables);
@@ -1180,7 +1223,7 @@ namespace ICSharpCode.Decompiler.IL
 				return currentStack.Peek().StackType;
 		}
 
-		class CollectStackVariablesVisitor : ILVisitor<ILInstruction>
+		sealed class CollectStackVariablesVisitor : ILVisitor<ILInstruction>
 		{
 			readonly UnionFind<ILVariable> unionFind;
 			internal readonly HashSet<ILVariable> variables = new HashSet<ILVariable>();
@@ -1209,7 +1252,7 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					var variable = unionFind.Find(inst.Variable);
 					if (variables.Add(variable))
-						variable.Name = "S_" + (variables.Count - 1);
+						variable.Name = $"S_{variables.Count - 1}";
 					return new LdLoc(variable).WithILRange(inst);
 				}
 				return inst;
@@ -1222,7 +1265,7 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					var variable = unionFind.Find(inst.Variable);
 					if (variables.Add(variable))
-						variable.Name = "S_" + (variables.Count - 1);
+						variable.Name = $"S_{variables.Count - 1}";
 					return new StLoc(variable, inst.Value).WithILRange(inst);
 				}
 				return inst;
@@ -1289,7 +1332,7 @@ namespace ICSharpCode.Decompiler.IL
 			return Cast(inst, expectedType, Warnings, reader.Offset);
 		}
 
-		internal static ILInstruction Cast(ILInstruction inst, StackType expectedType, List<string> warnings, int ilOffset)
+		internal static ILInstruction Cast(ILInstruction inst, StackType expectedType, List<string>? warnings, int ilOffset)
 		{
 			if (expectedType != inst.ResultType)
 			{
@@ -1444,9 +1487,18 @@ namespace ICSharpCode.Decompiler.IL
 		private ILInstruction Return()
 		{
 			if (methodReturnStackType == StackType.Void)
+			{
 				return new IL.Leave(mainContainer);
+			}
+			else if (currentInstructionStart == 0)
+			{
+				Debug.Assert(expressionStack.Count == 0 && currentStack.IsEmpty);
+				return new InvalidBranch("Method body consists only of 'ret', but nothing is being returned. Decompiled assembly might be a reference assembly.");
+			}
 			else
+			{
 				return new IL.Leave(mainContainer, Pop(methodReturnStackType));
+			}
 		}
 
 		private ILInstruction DecodeLdstr()
@@ -1553,7 +1605,7 @@ namespace ICSharpCode.Decompiler.IL
 			return new StObj(target, value, type);
 		}
 
-		IType constrainedPrefix;
+		IType? constrainedPrefix;
 
 		private DecodedInstruction DecodeConstrainedCall()
 		{
@@ -1906,11 +1958,13 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		void MarkBranchTarget(int targetILOffset)
+		void MarkBranchTarget(int targetILOffset, bool isFallThrough = false)
 		{
 			FlushExpressionStack();
-			Debug.Assert(isBranchTarget[targetILOffset]);
-			StoreStackForOffset(targetILOffset, ref currentStack);
+			Debug.Assert(isFallThrough || isBranchTarget[targetILOffset]);
+			var targetBlock = StoreStackForOffset(targetILOffset, currentStack);
+			Debug.Assert(currentBlock != null);
+			currentBlock.OutgoingEdges.Add((targetBlock, currentStack));
 		}
 
 		/// <summary>
@@ -1921,6 +1975,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		private void FlushExpressionStack()
 		{
+			Debug.Assert(currentBlock != null);
 			foreach (var inst in expressionStack)
 			{
 				Debug.Assert(inst.ResultType != StackType.Void);
@@ -1928,7 +1983,7 @@ namespace ICSharpCode.Decompiler.IL
 				var v = new ILVariable(VariableKind.StackSlot, type, inst.ResultType);
 				v.HasGeneratedName = true;
 				currentStack = currentStack.Push(v);
-				instructionBuilder.Add(new StLoc(v, inst).WithILRange(inst));
+				currentBlock.Block.Instructions.Add(new StLoc(v, inst).WithILRange(inst));
 			}
 			expressionStack.Clear();
 		}

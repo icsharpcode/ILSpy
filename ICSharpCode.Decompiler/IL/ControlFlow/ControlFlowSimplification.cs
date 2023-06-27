@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+// Copyright (c) 2014 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		void SimplifyBranchChains(ILFunction function, ILTransformContext context)
 		{
-			List<(BlockContainer, Block)> blocksToAdd = new List<(BlockContainer, Block)>();
+			List<(Block Block, BlockContainer TargetContainer)> blocksToMove = new List<(Block, BlockContainer)>();
 			HashSet<Block> visitedBlocks = new HashSet<Block>();
 			foreach (var branch in function.Descendants.OfType<Branch>())
 			{
@@ -167,7 +167,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						context.Step("Replace branch to return with return", branch);
 						branch.ReplaceWith(targetBlock.Instructions[0].Clone());
 					}
-					else if (branch.TargetContainer != branch.Ancestors.OfType<BlockContainer>().First())
+					else if (branch.TargetContainer != branch.Ancestors.OfType<BlockContainer>().First() && targetBlock.IncomingEdgeCount == 1)
 					{
 						// We don't want to always inline the return directly, because this
 						// might force us to place the return within a loop, when it's better
@@ -175,11 +175,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						// But we do want to move the return block into the correct try-finally scope,
 						// so that loop detection at least has the option to put it inside
 						// the loop body.
-						context.Step("Copy return block into try block", branch);
-						Block blockCopy = (Block)branch.TargetBlock.Clone();
+						context.Step("Move return block into try block", branch);
 						BlockContainer localContainer = branch.Ancestors.OfType<BlockContainer>().First();
-						blocksToAdd.Add((localContainer, blockCopy));
-						branch.TargetBlock = blockCopy;
+						blocksToMove.Add((targetBlock, localContainer));
 					}
 				}
 				else if (targetBlock.Instructions.Count == 1 && targetBlock.Instructions[0] is Leave leave && leave.Value.MatchNop())
@@ -194,9 +192,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (targetBlock.IncomingEdgeCount == 0)
 					targetBlock.Instructions.Clear(); // mark the block for deletion
 			}
-			foreach (var (container, block) in blocksToAdd)
+			foreach ((Block block, BlockContainer targetContainer) in blocksToMove)
 			{
-				container.Blocks.Add(block);
+				block.Remove();
+				targetContainer.Blocks.Add(block);
 			}
 		}
 
@@ -259,7 +258,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (targetBlock.StartILOffset < block.StartILOffset && IsDeadTrueStore(block))
 			{
 				// The C# compiler generates a dead store for the condition of while (true) loops.
-				block.Instructions.RemoveRange(block.Instructions.Count - 3, 2);
+				block.Instructions.RemoveAt(block.Instructions.Count - 2);
 			}
 
 			if (block.ILRangeIsEmpty)
@@ -276,15 +275,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		private static bool IsDeadTrueStore(Block block)
 		{
-			if (block.Instructions.Count < 3)
+			if (block.Instructions.Count < 2)
 				return false;
-			if (!(block.Instructions.SecondToLastOrDefault() is StLoc deadStore && block.Instructions[block.Instructions.Count - 3] is StLoc tempStore))
+			if (!(block.Instructions.SecondToLastOrDefault() is StLoc deadStore))
 				return false;
 			if (!(deadStore.Variable.LoadCount == 0 && deadStore.Variable.AddressCount == 0))
 				return false;
-			if (!(deadStore.Value.MatchLdLoc(tempStore.Variable) && tempStore.Variable.IsSingleDefinition && tempStore.Variable.LoadCount == 1))
-				return false;
-			return tempStore.Value.MatchLdcI4(1) && deadStore.Variable.Type.IsKnownType(KnownTypeCode.Boolean);
+			return deadStore.Value.MatchLdcI4(1) && deadStore.Variable.Type.IsKnownType(KnownTypeCode.Boolean);
 		}
 	}
 }

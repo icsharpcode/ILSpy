@@ -826,6 +826,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					break;
 				case BinaryOperatorType.ShiftLeft:
 				case BinaryOperatorType.ShiftRight:
+				case BinaryOperatorType.UnsignedShiftRight:
 					spacePolicy = policy.SpaceAroundShiftOperator;
 					break;
 				case BinaryOperatorType.NullCoalescing:
@@ -2565,9 +2566,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				WriteKeyword(ParameterDeclaration.ThisModifierRole);
 				Space();
 			}
-			if (parameterDeclaration.IsRefScoped)
+			if (parameterDeclaration.IsScopedRef)
 			{
-				WriteKeyword(ParameterDeclaration.RefScopedRole);
+				WriteKeyword(ParameterDeclaration.ScopedRefRole);
 				Space();
 			}
 			switch (parameterDeclaration.ParameterModifier)
@@ -2588,11 +2589,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					WriteKeyword(ParameterDeclaration.InModifierRole);
 					Space();
 					break;
-			}
-			if (parameterDeclaration.IsValueScoped)
-			{
-				WriteKeyword(ParameterDeclaration.ValueScopedRole);
-				Space();
 			}
 			parameterDeclaration.Type.AcceptVisitor(this);
 			if (!parameterDeclaration.Type.IsNull && !string.IsNullOrEmpty(parameterDeclaration.Name))
@@ -2835,6 +2831,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(primitiveType);
 			writer.WritePrimitiveType(primitiveType.Keyword);
+			isAfterSpace = false;
 			EndNode(primitiveType);
 		}
 

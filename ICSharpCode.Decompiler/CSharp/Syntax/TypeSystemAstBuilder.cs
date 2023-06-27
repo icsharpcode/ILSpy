@@ -226,6 +226,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public bool SupportRecordStructs { get; set; }
 
 		/// <summary>
+		/// Controls whether C# 11 "operator >>>" is supported.
+		/// </summary>
+		public bool SupportUnsignedRightShift { get; set; }
+
+		/// <summary>
 		/// Controls whether all fully qualified type names should be prefixed with "global::".
 		/// </summary>
 		public bool AlwaysUseGlobal { get; set; }
@@ -1654,8 +1659,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				decl.ParameterModifier = ParameterModifier.Params;
 			}
-			decl.IsRefScoped = parameter.Lifetime.RefScoped;
-			decl.IsValueScoped = parameter.Lifetime.ValueScoped;
+			decl.IsScopedRef = parameter.Lifetime.ScopedRef;
 			if (ShowAttributes)
 			{
 				decl.Attributes.AddRange(ConvertAttributes(parameter.GetAttributes()));
@@ -1675,7 +1679,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				decl.Name = parameter.Name;
 			}
-			if (parameter.IsOptional && parameter.HasConstantValueInSignature && this.ShowConstantValues)
+			if (parameter.IsOptional && decl.ParameterModifier is ParameterModifier.None or ParameterModifier.In && parameter.HasConstantValueInSignature && this.ShowConstantValues)
 			{
 				try
 				{
@@ -1970,6 +1974,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				decl.AddAnnotation(new MemberResolveResult(null, field));
 			}
 			decl.ReturnType = ConvertType(field.ReturnType);
+			if (decl.ReturnType is ComposedType ct && ct.HasRefSpecifier && field.ReturnTypeIsRefReadOnly)
+			{
+				ct.HasReadOnlySpecifier = true;
+			}
 			Expression initializer = null;
 			if (field.IsConst && this.ShowConstantValues)
 			{
@@ -2213,6 +2221,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			OperatorType? opType = OperatorDeclaration.GetOperatorType(op.Name);
 			if (opType == null)
+				return ConvertMethod(op);
+			if (opType == OperatorType.UnsignedRightShift && !SupportUnsignedRightShift)
 				return ConvertMethod(op);
 
 			OperatorDeclaration decl = new OperatorDeclaration();

@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				{
 					references = references.Concat(new[] { "-r:\"Microsoft.VisualBasic.dll\"" });
 				}
-				string otherOptions = $"-noconfig " +
+				string otherOptions = $"-nologo -noconfig " +
 					"-optioninfer+ -optionexplicit+ " +
 					$"-langversion:{languageVersion} " +
 					$"/optimize{(flags.HasFlag(CompilerOptions.Optimize) ? "+ " : "- ")}";
@@ -122,8 +122,14 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 				var result = await command.ExecuteBufferedAsync().ConfigureAwait(false);
 
-				Console.WriteLine("output: " + result.StandardOutput);
-				Console.WriteLine("errors: " + result.StandardError);
+				if (!string.IsNullOrWhiteSpace(result.StandardOutput))
+				{
+					Console.WriteLine("output:" + Environment.NewLine + result.StandardOutput);
+				}
+				if (!string.IsNullOrWhiteSpace(result.StandardError))
+				{
+					Console.WriteLine("errors:" + Environment.NewLine + result.StandardError);
+				}
 				Assert.AreEqual(0, result.ExitCode, "vbc failed");
 
 				return results;

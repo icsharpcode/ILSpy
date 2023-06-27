@@ -342,6 +342,12 @@ Examples:
 					{
 						Stream contents;
 
+						if (entry.RelativePath.Replace('\\', '/').Contains("../", StringComparison.Ordinal) || Path.IsPathRooted(entry.RelativePath))
+						{
+							app.Error.WriteLine($"Skipping single-file entry '{entry.RelativePath}' because it might refer to a location outside of the bundle output directory.");
+							continue;
+						}
+
 						if (entry.CompressedSize == 0)
 						{
 							contents = new UnmanagedMemoryStream(packageView.SafeMemoryMappedViewHandle, entry.Offset, entry.Size);
@@ -357,7 +363,7 @@ Examples:
 
 							if (decompressedStream.Length != entry.Size)
 							{
-								app.Error.WriteLine($"Corrupted single-file entry '${entry.RelativePath}'. Declared decompressed size '${entry.Size}' is not the same as actual decompressed size '${decompressedStream.Length}'.");
+								app.Error.WriteLine($"Corrupted single-file entry '{entry.RelativePath}'. Declared decompressed size '{entry.Size}' is not the same as actual decompressed size '{decompressedStream.Length}'.");
 								return ProgramExitCodes.EX_DATAERR;
 							}
 
@@ -365,7 +371,9 @@ Examples:
 							contents = decompressedStream;
 						}
 
-						using (var fileStream = File.Create(Path.Combine(outputDirectory, entry.RelativePath)))
+						string target = Path.Combine(outputDirectory, entry.RelativePath);
+						Directory.CreateDirectory(Path.GetDirectoryName(target));
+						using (var fileStream = File.Create(target))
 						{
 							contents.CopyTo(fileStream);
 						}

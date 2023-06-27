@@ -17,10 +17,58 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+#if !NET40 && ROSLYN
+using System.Runtime.CompilerServices;
+#endif
 using System.Runtime.InteropServices;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
+	internal class SizeofTest
+	{
+		private struct StructWithStaticField
+		{
+			public static object StaticObj;
+
+#if CS110 && NET70
+			public nint A;
+#else
+			public IntPtr A;
+#endif
+		}
+
+		private struct UnmanagedStruct
+		{
+			public StructWithStaticField Value;
+		}
+
+		private struct ManagedStruct
+		{
+			public object Obj;
+		}
+#if CS73
+		private unsafe int GenericMethod<T>() where T : unmanaged
+		{
+			return sizeof(T);
+		}
+#endif
+
+		private unsafe void Test(out int s1, out int s2, out int s3)
+		{
+			s1 = 0;
+			s2 = 0;
+			s3 = 0;
+#if CS73
+			GenericMethod<UnmanagedStruct>();
+#endif
+			s1 = sizeof(UnmanagedStruct);
+#if !NET40 && ROSLYN
+			s2 = Unsafe.SizeOf<UnmanagedStruct>();
+			s3 = Unsafe.SizeOf<ManagedStruct>();
+#endif
+		}
+	}
+
 	public class UnsafeCode
 	{
 		public struct SimpleStruct
@@ -561,6 +609,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return value.Integers[(int)s];
 		}
 
+#if CS90
+		private unsafe static void* CastNIntToVoidPtr(nint intptr)
+		{
+			return (void*)intptr;
+		}
+
+		private unsafe static void* CastNIntToVoidPtr(nuint intptr)
+		{
+			return (void*)intptr;
+		}
+#endif
+#if !(CS110 && NET70)
 		private unsafe static void* CastToVoidPtr(IntPtr intptr)
 		{
 			return (void*)intptr;
@@ -570,6 +630,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return (void*)intptr;
 		}
+#endif
 
 		private unsafe static void* CastToVoidPtr(int* intptr)
 		{

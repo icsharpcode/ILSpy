@@ -137,8 +137,8 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				output.Write(tempOutput.ToStringAndReset());
 				DecorateUnwindInfo(unwindInfo, baseInstrIP, instr);
 				DecorateDebugInfo(instr, debugInfo, baseInstrIP);
-
 				DecorateCallSite(currentFile, showMetadataTokens, showMetadataTokensInBase10, instr);
+				output.WriteLine();
 			}
 			output.WriteLine();
 		}
@@ -451,15 +451,10 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 							methodRefToken.WriteTo(currentFile, output, default);
 							break;
 						default:
-							output.WriteLine(reader.ImportSignatures[importCellAddress].ToString(new SignatureFormattingOptions()));
+							output.Write(reader.ImportSignatures[importCellAddress].ToString(new SignatureFormattingOptions()));
 							break;
 					}
-					output.WriteLine();
 				}
-			}
-			else
-			{
-				output.WriteLine();
 			}
 		}
 	}

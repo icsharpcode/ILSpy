@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2015 Siegfried Pammer
+// Copyright (c) 2015 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -145,10 +145,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					else if (pointerType is PointerType pointer)
 						newType = pointer.ElementType;
 				}
-				if (IsImplicitTruncation(inst.Value, newType, context.TypeSystem))
+				var truncation = CheckImplicitTruncation(inst.Value, newType, context.TypeSystem);
+				if (truncation == ImplicitTruncationResult.ValueChanged)
 				{
 					// 'stobj' is implicitly truncating the value
 					return false;
+				}
+				if (truncation == ImplicitTruncationResult.ValueChangedDueToSignMismatch)
+				{
+					// Change the sign of the type to skip implicit truncation
+					newType = SwapSign(newType, context.TypeSystem);
 				}
 				context.Step("Inline assignment stobj", stobj);
 				stobj.Type = newType;
@@ -212,6 +218,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
+		}
+
+		private static IType SwapSign(IType type, ICompilation compilation)
+		{
+			return type.ToPrimitiveType() switch {
+				PrimitiveType.I1 => compilation.FindType(KnownTypeCode.Byte),
+				PrimitiveType.I2 => compilation.FindType(KnownTypeCode.UInt16),
+				PrimitiveType.I4 => compilation.FindType(KnownTypeCode.UInt32),
+				PrimitiveType.I8 => compilation.FindType(KnownTypeCode.UInt64),
+				PrimitiveType.U1 => compilation.FindType(KnownTypeCode.SByte),
+				PrimitiveType.U2 => compilation.FindType(KnownTypeCode.Int16),
+				PrimitiveType.U4 => compilation.FindType(KnownTypeCode.Int32),
+				PrimitiveType.U8 => compilation.FindType(KnownTypeCode.Int64),
+				PrimitiveType.I => compilation.FindType(KnownTypeCode.UIntPtr),
+				PrimitiveType.U => compilation.FindType(KnownTypeCode.IntPtr),
+				_ => throw new ArgumentException("Type must have an opposing sign: " + type, nameof(type))
+			};
 		}
 
 		static ILInstruction UnwrapSmallIntegerConv(ILInstruction inst, out Conv conv)
@@ -363,7 +386,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ILInstruction rhs;
 				if (operatorCall.Arguments.Count == 2)
 				{
-					if (CSharp.ExpressionBuilder.GetAssignmentOperatorTypeFromMetadataName(operatorCall.Method.Name) == null)
+					if (CSharp.ExpressionBuilder.GetAssignmentOperatorTypeFromMetadataName(operatorCall.Method.Name, context.Settings) == null)
 						return false;
 					rhs = operatorCall.Arguments[1];
 				}
@@ -507,46 +530,69 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
+		internal static bool IsImplicitTruncation(ILInstruction value, IType type, ICompilation compilation, bool allowNullableValue = false)
+		{
+			return CheckImplicitTruncation(value, type, compilation, allowNullableValue) != ImplicitTruncationResult.ValuePreserved;
+		}
+
+
+		internal enum ImplicitTruncationResult : byte
+		{
+			/// <summary>
+			/// The value is not implicitly truncated.
+			/// </summary>
+			ValuePreserved,
+			/// <summary>
+			/// The value is implicitly truncated.
+			/// </summary>
+			ValueChanged,
+			/// <summary>
+			/// The value is implicitly truncated, but the sign of the target type can be changed to remove the truncation.
+			/// </summary>
+			ValueChangedDueToSignMismatch
+		}
+
 		/// <summary>
 		/// Gets whether 'stobj type(..., value)' would evaluate to a different value than 'value'
 		/// due to implicit truncation.
 		/// </summary>
-		static internal bool IsImplicitTruncation(ILInstruction value, IType type, ICompilation compilation, bool allowNullableValue = false)
+		internal static ImplicitTruncationResult CheckImplicitTruncation(ILInstruction value, IType type, ICompilation compilation, bool allowNullableValue = false)
 		{
 			if (!type.IsSmallIntegerType())
 			{
 				// Implicit truncation in ILAst only happens for small integer types;
 				// other types of implicit truncation in IL cause the ILReader to insert
 				// conv instructions.
-				return false;
+				return ImplicitTruncationResult.ValuePreserved;
 			}
 			// With small integer types, test whether the value might be changed by
 			// truncation (based on type.GetSize()) followed by sign/zero extension (based on type.GetSign()).
 			// (it's OK to have false-positives here if we're unsure)
 			if (value.MatchLdcI4(out int val))
 			{
-				switch (type.GetEnumUnderlyingType().GetDefinition()?.KnownTypeCode)
-				{
-					case KnownTypeCode.Boolean:
-						return !(val == 0 || val == 1);
-					case KnownTypeCode.Byte:
-						return !(val >= byte.MinValue && val <= byte.MaxValue);
-					case KnownTypeCode.SByte:
-						return !(val >= sbyte.MinValue && val <= sbyte.MaxValue);
-					case KnownTypeCode.Int16:
-						return !(val >= short.MinValue && val <= short.MaxValue);
-					case KnownTypeCode.UInt16:
-					case KnownTypeCode.Char:
-						return !(val >= ushort.MinValue && val <= ushort.MaxValue);
-				}
+				bool valueFits = (type.GetEnumUnderlyingType().GetDefinition()?.KnownTypeCode) switch {
+					KnownTypeCode.Boolean => val == 0 || val == 1,
+					KnownTypeCode.Byte => val >= byte.MinValue && val <= byte.MaxValue,
+					KnownTypeCode.SByte => val >= sbyte.MinValue && val <= sbyte.MaxValue,
+					KnownTypeCode.Int16 => val >= short.MinValue && val <= short.MaxValue,
+					KnownTypeCode.UInt16 or KnownTypeCode.Char => val >= ushort.MinValue && val <= ushort.MaxValue,
+					_ => false
+				};
+				return valueFits ? ImplicitTruncationResult.ValuePreserved : ImplicitTruncationResult.ValueChanged;
 			}
 			else if (value is Conv conv)
 			{
-				return conv.TargetType != type.ToPrimitiveType();
+				PrimitiveType primitiveType = type.ToPrimitiveType();
+				PrimitiveType convTargetType = conv.TargetType;
+				if (convTargetType == primitiveType)
+					return ImplicitTruncationResult.ValuePreserved;
+				if (primitiveType.GetSize() == convTargetType.GetSize() && primitiveType.GetSign() != convTargetType.GetSign() && primitiveType.HasOppositeSign())
+					return ImplicitTruncationResult.ValueChangedDueToSignMismatch;
+				return ImplicitTruncationResult.ValueChanged;
 			}
 			else if (value is Comp)
 			{
-				return false; // comp returns 0 or 1, which always fits
+				return ImplicitTruncationResult.ValuePreserved; // comp returns 0 or 1, which always fits
 			}
 			else if (value is BinaryNumericInstruction bni)
 			{
@@ -557,14 +603,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					case BinaryNumericOperator.BitXor:
 						// If both input values fit into the type without truncation,
 						// the result of a binary operator will also fit.
-						return IsImplicitTruncation(bni.Left, type, compilation, allowNullableValue)
-							|| IsImplicitTruncation(bni.Right, type, compilation, allowNullableValue);
+						var leftTruncation = CheckImplicitTruncation(bni.Left, type, compilation, allowNullableValue);
+						// If the left side is truncating and a sign change is not possible we do not need to evaluate the right side
+						if (leftTruncation == ImplicitTruncationResult.ValueChanged)
+							return ImplicitTruncationResult.ValueChanged;
+						var rightTruncation = CheckImplicitTruncation(bni.Right, type, compilation, allowNullableValue);
+						return CommonImplicitTruncation(leftTruncation, rightTruncation);
 				}
 			}
 			else if (value is IfInstruction ifInst)
 			{
-				return IsImplicitTruncation(ifInst.TrueInst, type, compilation, allowNullableValue)
-					|| IsImplicitTruncation(ifInst.FalseInst, type, compilation, allowNullableValue);
+				var trueTruncation = CheckImplicitTruncation(ifInst.TrueInst, type, compilation, allowNullableValue);
+				// If the true branch is truncating and a sign change is not possible we do not need to evaluate the false branch
+				if (trueTruncation == ImplicitTruncationResult.ValueChanged)
+					return ImplicitTruncationResult.ValueChanged;
+				var falseTruncation = CheckImplicitTruncation(ifInst.FalseInst, type, compilation, allowNullableValue);
+				return CommonImplicitTruncation(trueTruncation, falseTruncation);
 			}
 			else
 			{
@@ -575,10 +629,28 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				if (inferredType.Kind != TypeKind.Unknown)
 				{
-					return !(inferredType.GetSize() <= type.GetSize() && inferredType.GetSign() == type.GetSign());
+					var inferredPrimitive = inferredType.ToPrimitiveType();
+					var primitiveType = type.ToPrimitiveType();
+
+					bool sameSign = inferredPrimitive.GetSign() == primitiveType.GetSign();
+					if (inferredPrimitive.GetSize() <= primitiveType.GetSize() && sameSign)
+						return ImplicitTruncationResult.ValuePreserved;
+					if (inferredPrimitive.GetSize() == primitiveType.GetSize() && !sameSign && primitiveType.HasOppositeSign())
+						return ImplicitTruncationResult.ValueChangedDueToSignMismatch;
+					return ImplicitTruncationResult.ValueChanged;
 				}
 			}
-			return true;
+			// In unknown cases, assume that the value might be changed by truncation.
+			return ImplicitTruncationResult.ValueChanged;
+		}
+
+		private static ImplicitTruncationResult CommonImplicitTruncation(ImplicitTruncationResult left, ImplicitTruncationResult right)
+		{
+			if (left == right)
+				return left;
+			// Note: in all cases where left!=right, we return ValueChanged:
+			// if only one side can be fixed by changing the sign, we don't want to change the sign of the other side.
+			return ImplicitTruncationResult.ValueChanged;
 		}
 
 		/// <summary>
@@ -790,6 +862,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (!(binary.Operator == BinaryNumericOperator.Add || binary.Operator == BinaryNumericOperator.Sub))
 					return false;
+
+				if (conv is not null)
+				{
+					var primitiveType = targetType.ToPrimitiveType();
+					if (primitiveType.GetSize() == conv.TargetType.GetSize() && primitiveType.GetSign() != conv.TargetType.GetSign())
+						targetType = SwapSign(targetType, context.TypeSystem);
+				}
+
 				if (!ValidateCompoundAssign(binary, conv, targetType, context.Settings))
 					return false;
 				stloc = binary.Left as StLoc;
@@ -858,10 +938,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var tmpVar = inst.Variable;
 			if (!IsCompoundStore(store, out var targetType, out var value, context.TypeSystem))
 				return false;
-			if (IsImplicitTruncation(inst.Value, targetType, context.TypeSystem))
+			var truncation = CheckImplicitTruncation(inst.Value, targetType, context.TypeSystem);
+			if (truncation == ImplicitTruncationResult.ValueChanged)
 			{
 				// 'stloc tmp' is implicitly truncating the value
 				return false;
+			}
+			if (truncation == ImplicitTruncationResult.ValueChangedDueToSignMismatch)
+			{
+				if (!(store is StObj stObj && stObj.Type.Equals(targetType)))
+				{
+					// We cannot apply the sign change, so we can't fix the truncation
+					return false;
+				}
 			}
 			if (!IsMatchingCompoundLoad(inst.Value, store, out var target, out var targetKind, out var finalizeMatch,
 				forbiddenVariable: inst.Variable,
@@ -871,10 +960,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (UnwrapSmallIntegerConv(value, out var conv) is BinaryNumericInstruction binary)
 			{
-				if (!binary.Left.MatchLdLoc(tmpVar) || !(binary.Right.MatchLdcI(1) || binary.Right.MatchLdcF4(1) || binary.Right.MatchLdcF8(1)))
-					return false;
 				if (!(binary.Operator == BinaryNumericOperator.Add || binary.Operator == BinaryNumericOperator.Sub))
 					return false;
+				if (!binary.Left.MatchLdLoc(tmpVar))
+					return false;
+				if (targetType is PointerType ptrType)
+				{
+					var right = PointerArithmeticOffset.Detect(binary.Right, ptrType.ElementType, binary.CheckForOverflow);
+					if (right is null || !right.MatchLdcI(1))
+						return false;
+				}
+				else if (!(binary.Right.MatchLdcI(1) || binary.Right.MatchLdcF4(1) || binary.Right.MatchLdcF8(1)))
+					return false;
+				if (truncation == ImplicitTruncationResult.ValueChangedDueToSignMismatch && store is StObj stObj)
+				{
+					// Change the sign of the type to skip implicit truncation
+					stObj.Type = targetType = SwapSign(targetType, context.TypeSystem);
+				}
 				if (!ValidateCompoundAssign(binary, conv, targetType, context.Settings))
 					return false;
 				context.Step("TransformPostIncDecOperator (builtin)", inst);
@@ -891,6 +993,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (operatorCall.IsLifted)
 					return false; // TODO: add tests and think about whether nullables need special considerations
 				context.Step("TransformPostIncDecOperator (user-defined)", inst);
+				Debug.Assert(truncation == ImplicitTruncationResult.ValuePreserved);
 				finalizeMatch?.Invoke(context);
 				inst.Value = new UserDefinedCompoundAssign(operatorCall.Method,
 					CompoundEvalMode.EvaluatesToOldValue, target, targetKind, new LdcI4(1));

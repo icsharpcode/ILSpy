@@ -21,8 +21,12 @@
 */
 
 using System.Collections.Generic;
+using System.DirectoryServices.ActiveDirectory;
 using System.Linq;
+using System.Windows.Forms;
 using System.Xml.Linq;
+
+using ICSharpCode.Decompiler.TypeSystem;
 
 using ILSpy.BamlDecompiler.Xaml;
 
@@ -64,8 +68,15 @@ namespace ILSpy.BamlDecompiler.Rewrite
 		{
 			var type = parent.Annotation<XamlType>();
 			var property = elem.Annotation<XamlProperty>();
-			if ((property == null || type == null) && elem.Name != key)
-				return false;
+
+			if (elem.Name != key)
+			{
+				if (property == null || type == null)
+					return false;
+
+				if (property.ResolvedMember is IProperty { CanSet: false })
+					return false;
+			}
 
 			if (elem.Elements().Count() != 1 || elem.Attributes().Any(t => t.Name.Namespace != XNamespace.Xmlns))
 				return false;

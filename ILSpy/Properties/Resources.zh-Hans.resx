@@ -202,7 +202,7 @@
     <value>复制完全限定名称</value>
   </data>
   <data name="CouldNotUseSdkStyleProjectFormat" xml:space="preserve">
-    <value>无法使用SDK-style项目格式， 因为发现有不兼容目标框架别名</value>
+    <value>无法使用SDK-style项目格式，因为发现有不兼容目标框架别名。</value>
   </data>
   <data name="Create" xml:space="preserve">
     <value>创建</value>
@@ -222,9 +222,6 @@
   <data name="DEBUGDumpPDBAsXML" xml:space="preserve">
     <value>调试 -- PDB 转储为 XML</value>
   </data>
-  <data name="DarkMode" xml:space="preserve">
-    <value>深色</value>
-  </data>
   <data name="DebugSteps" xml:space="preserve">
     <value>调试步骤</value>
   </data>
@@ -238,7 +235,7 @@
     <value>反编译视图选项</value>
   </data>
   <data name="DecompilationWasCancelled" xml:space="preserve">
-    <value>反编译已取消</value>
+    <value>反编译已取消。</value>
   </data>
   <data name="Decompile" xml:space="preserve">
     <value>反编译</value>
@@ -269,6 +266,9 @@
   </data>
   <data name="DecompilerSettings.AlwaysUseBraces" xml:space="preserve">
     <value>始终使用大括号</value>
+  </data>
+  <data name="DecompilerSettings.AlwaysUseGlobal" xml:space="preserve">
+    <value>总是使用 "global::" 完全限定命名空间</value>
   </data>
   <data name="DecompilerSettings.ApplyWindowsRuntimeProjectionsOnLoadedAssemblies" xml:space="preserve">
     <value>在已加载的程序集上应用 Windows 运行时投影</value>
@@ -381,6 +381,9 @@
   <data name="DecompilerSettings.IsUnmanagedAttributeOnTypeParametersShouldBeReplacedWithUnmanagedConstraints" xml:space="preserve">
     <value>类型参数上的 IsUnmanagedAttribute 应替换为 unmanaged 约束</value>
   </data>
+  <data name="DecompilerSettings.LifetimeAnnotations" xml:space="preserve">
+    <value>'scoped' 生命周期注解关键字</value>
+  </data>
   <data name="DecompilerSettings.NativeIntegers" xml:space="preserve">
     <value>使用 nint/nuint 类型</value>
   </data>
@@ -395,6 +398,9 @@
   </data>
   <data name="DecompilerSettings.Other" xml:space="preserve">
     <value>其他</value>
+  </data>
+  <data name="DecompilerSettings.ParameterNullCheck" xml:space="preserve">
+    <value>使用方法参数非空校验</value>
   </data>
   <data name="DecompilerSettings.PatternMatching" xml:space="preserve">
     <value>使用模式匹配表达式</value>
@@ -411,6 +417,9 @@
   <data name="DecompilerSettings.RecordClasses" xml:space="preserve">
     <value>记录</value>
   </data>
+  <data name="DecompilerSettings.RecordStructs" xml:space="preserve">
+    <value>记录结构</value>
+  </data>
   <data name="DecompilerSettings.RemoveDeadAndSideEffectFreeCodeUseWithCaution" xml:space="preserve">
     <value>删除死代码和无副作用的代码(请谨慎使用)</value>
   </data>
@@ -419,6 +428,9 @@
   </data>
   <data name="DecompilerSettings.RemoveOptionalArgumentsIfPossible" xml:space="preserve">
     <value>如果可能，删除可选参数</value>
+  </data>
+  <data name="DecompilerSettings.RequiredMembers" xml:space="preserve">
+    <value>Required 必要成员</value>
   </data>
   <data name="DecompilerSettings.SeparateLocalVariableDeclarations" xml:space="preserve">
     <value>如果可能，分离局部变量的声明与初始化（int x = 5; -&gt; int x; x = 5;）</value>
@@ -528,6 +540,9 @@
   <data name="DisplaySettingsPanel_Font" xml:space="preserve">
     <value>字体:</value>
   </data>
+  <data name="DisplaySettingsPanel_Theme" xml:space="preserve">
+    <value>主题:</value>
+  </data>
   <data name="Download" xml:space="preserve">
     <value>下载</value>
   </data>
@@ -634,7 +649,7 @@
     <value>杂项</value>
   </data>
   <data name="NETFrameworkVersion" xml:space="preserve">
-    <value>.Net 版本</value>
+    <value>.NET 版本 </value>
   </data>
   <data name="Name" xml:space="preserve">
     <value>名称</value>
@@ -677,7 +692,7 @@
     <value>打开(_O)</value>
   </data>
   <data name="OperationWasCancelled" xml:space="preserve">
-    <value>操作已取消</value>
+    <value>操作已取消。</value>
   </data>
   <data name="Options" xml:space="preserve">
     <value>选项</value>
@@ -890,6 +905,9 @@
   <data name="TabSize" xml:space="preserve">
     <value>Tab 长度：</value>
   </data>
+  <data name="Theme" xml:space="preserve">
+    <value>主题</value>
+  </data>
   <data name="ToggleFolding" xml:space="preserve">
     <value>切换所有折叠</value>
   </data>
@@ -913,6 +931,9 @@
   </data>
   <data name="UseLogicOperationSugar" xml:space="preserve">
     <value>使用 logic 语法糖</value>
+  </data>
+  <data name="UseNestedNamespaceNodes" xml:space="preserve">
+    <value>使用嵌套的命名空间结构</value>
   </data>
   <data name="UseTabsInsteadOfSpaces" xml:space="preserve">
     <value>使用 Tab 替代空格</value>
@@ -964,6 +985,12 @@
   </data>
   <data name="_AddMainList" xml:space="preserve">
     <value>添加到主列表(_A)</value>
+  </data>
+  <data name="_Analyzer" xml:space="preserve">
+    <value>分析器(_A)</value>
+  </data>
+  <data name="_Assemblies" xml:space="preserve">
+    <value>程序集(_A)</value>
   </data>
   <data name="_CheckUpdates" xml:space="preserve">
     <value>检查更新(_C)</value>

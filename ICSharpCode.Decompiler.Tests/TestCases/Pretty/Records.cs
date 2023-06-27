@@ -1,5 +1,7 @@
 ﻿using System;
+#if CS100
 using System.Runtime.InteropServices;
+#endif
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -127,6 +129,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 	}
+
+#if CS100
 	internal class RecordStructs
 	{
 		public record struct Base(string A);
@@ -227,10 +231,38 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 	}
+#endif
+#if CS110
+	public record struct WithRequiredMembers
+	{
+		public int A { get; set; }
+		public required double B { get; set; }
+		public object C;
+		public required dynamic D;
+	}
+#endif
 }
+#if !NET60
 namespace System.Runtime.CompilerServices
 {
+	[AttributeUsage(AttributeTargets.All, AllowMultiple = true, Inherited = false)]
+	internal sealed class CompilerFeatureRequiredAttribute : Attribute
+	{
+		public CompilerFeatureRequiredAttribute(string featureName)
+		{
+		}
+	}
+
 	internal class IsExternalInit
 	{
 	}
+#endif
+#if !NET70
+	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
+	internal sealed class RequiredMemberAttribute : Attribute
+	{
+	}
+#endif
+#if !NET60
 }
+#endif

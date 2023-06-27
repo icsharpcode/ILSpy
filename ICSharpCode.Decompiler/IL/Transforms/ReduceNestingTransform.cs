@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2018 Siegfried Pammer
+// Copyright (c) 2018 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -637,10 +637,25 @@ namespace ICSharpCode.Decompiler.IL
 			// Finally is empty and redundant. But we'll delete the block only if there's a PinnedRegion.
 			if (!(tryFinally.TryBlock is BlockContainer tryContainer))
 				return;
-			if (tryContainer.SingleInstruction() is PinnedRegion pinnedRegion)
+			if (tryContainer.Blocks.Count != 1)
+				return;
+			var tryBlock = tryContainer.Blocks[0];
+			if (tryBlock.Instructions.Count == 1)
 			{
-				context.Step("Removing try-finally around PinnedRegion", pinnedRegion);
-				tryFinally.ReplaceWith(pinnedRegion);
+				if (tryBlock.Instructions[0] is PinnedRegion pinnedRegion)
+				{
+					context.Step("Removing try-finally around PinnedRegion", pinnedRegion);
+					tryFinally.ReplaceWith(pinnedRegion);
+				}
+			}
+			else if (tryBlock.Instructions.Count == 2)
+			{
+				if (tryBlock.Instructions[0] is PinnedRegion pinnedRegion &&
+					tryBlock.Instructions[1].MatchLeave(tryContainer))
+				{
+					context.Step("Removing try-finally around PinnedRegion", pinnedRegion);
+					tryFinally.ReplaceWith(pinnedRegion);
+				}
 			}
 		}
 	}

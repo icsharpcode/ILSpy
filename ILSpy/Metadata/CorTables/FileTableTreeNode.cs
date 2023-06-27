@@ -85,7 +85,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.File)
 				+ metadata.GetTableRowSize(TableIndex.File) * (RID - 1);
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public int Attributes => assemblyFile.ContainsMetadata ? 1 : 0;
 
 			public string AttributesTooltip => assemblyFile.ContainsMetadata ? "ContainsMetaData" : "ContainsNoMetaData";
@@ -94,7 +94,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(assemblyFile.Name):X} \"{Name}\"";
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int HashValue => MetadataTokens.GetHeapOffset(assemblyFile.HashValue);
 
 			public string HashValueTooltip {

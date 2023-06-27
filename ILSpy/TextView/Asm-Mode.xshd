@@ -8,7 +8,8 @@
 	<Color name="Registers" foreground="#8080FF" background="#EEEEEE" exampleText="nop" />
 	<Color name="Directives" foreground="Blue" fontWeight="bold" exampleText=".class" />
 	<Color name="Directive Operands" foreground="DarkBlue" fontWeight="bold" exampleText=".class" />
-	
+	<Color name="Address and Bytes" exampleText="00000000003DEB40 56" />
+
 	<RuleSet ignoreCase="false">
 		<Keywords color="Instructions">
 			<Word>aaa</Word>
@@ -1189,6 +1190,9 @@
 		<Span color="Comment" ruleSet="CommentMarkerSet">
 			<Begin>;</Begin>
 		</Span>
+		<Rule color="Address and Bytes">
+			^ \s* [0-9A-F]+ \s+ [0-9A-F]+
+		</Rule>
 		<Rule color="NumberLiteral">
 			\b(0[xXhH])?[0-9a-fA-F_`]+[h]?  # hex number
 			|

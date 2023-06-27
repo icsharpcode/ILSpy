@@ -163,8 +163,13 @@ namespace CustomAttributes
 		public static void UseGenericAttribute()
 		{
 		}
-		// TODO: add test for generic attributes with arguments of type T
-		// This is blocked by https://github.com/dotnet/runtime/issues/58073
+		[Generic<int>(42)]
+		[Generic<string>("Hi")]
+		[Generic<object>("Hi")]
+		[Generic<object>((short)42)]
+		public static void UseGenericAttributeWithArg()
+		{
+		}
 #endif
 	}
 }

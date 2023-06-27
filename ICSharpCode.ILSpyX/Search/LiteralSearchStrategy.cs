@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Reflection.Metadata;
 using System.Threading;
 
@@ -35,8 +36,8 @@ namespace ICSharpCode.ILSpyX.Search
 {
 	public class LiteralSearchStrategy : AbstractEntitySearchStrategy
 	{
-		readonly TypeCode searchTermLiteralType;
-		readonly object searchTermLiteralValue;
+		readonly TypeCode searchTermLiteralType = TypeCode.Empty;
+		readonly object? searchTermLiteralValue;
 
 		public LiteralSearchStrategy(ILanguage language, ApiVisibility apiVisibility, SearchRequest request,
 			IProducerConsumerCollection<SearchResult> resultQueue)
@@ -90,9 +91,10 @@ namespace ICSharpCode.ILSpyX.Search
 				if (!md.HasBody() || !MethodIsLiteralMatch(module, md))
 					continue;
 				var method = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-				if (!CheckVisibility(method) || !IsInNamespaceOrAssembly(method))
+				var result = method.AccessorOwner ?? method;
+				if (!CheckVisibility(result) || !IsInNamespaceOrAssembly(result))
 					continue;
-				OnFoundResult(method);
+				OnFoundResult(result);
 			}
 
 			foreach (var handle in metadata.FieldDefinitions)
@@ -130,10 +132,12 @@ namespace ICSharpCode.ILSpyX.Search
 				case TypeCode.Single:
 				case TypeCode.Double:
 				case TypeCode.String:
+					Debug.Assert(searchTermLiteralValue != null);
 					return searchTermLiteralValue.Equals(val);
 				default:
 					// substring search with searchTerm
-					return IsMatch(val.ToString());
+					string? valAsString = val.ToString();
+					return valAsString != null && IsMatch(valAsString);
 			}
 		}
 
@@ -142,6 +146,7 @@ namespace ICSharpCode.ILSpyX.Search
 			var blob = module.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress).GetILReader();
 			if (searchTermLiteralType == TypeCode.Int64)
 			{
+				Debug.Assert(searchTermLiteralValue != null);
 				long val = (long)searchTermLiteralValue;
 				while (blob.RemainingBytes > 0)
 				{
@@ -208,6 +213,7 @@ namespace ICSharpCode.ILSpyX.Search
 			}
 			else if (searchTermLiteralType != TypeCode.Empty)
 			{
+				Debug.Assert(searchTermLiteralValue != null);
 				ILOpCode expectedCode;
 				switch (searchTermLiteralType)
 				{

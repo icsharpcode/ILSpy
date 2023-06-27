@@ -109,6 +109,10 @@ namespace ICSharpCode.Decompiler.Output
 		/// Support <c>record</c> structs.
 		/// </summary>
 		SupportRecordStructs = 0x40000,
+		/// <summary>
+		/// Support <c>&gt;&gt;&gt;</c> as unsigned right shift operator.
+		/// </summary>
+		SupportUnsignedRightShift = 0x80000,
 
 		StandardConversionFlags = ShowParameterNames |
 			ShowAccessibility |

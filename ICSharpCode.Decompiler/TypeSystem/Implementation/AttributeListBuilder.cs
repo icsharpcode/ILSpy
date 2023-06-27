@@ -238,6 +238,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 								case SymbolKind.ReturnType:
 								case SymbolKind.Property:
 								case SymbolKind.Indexer:
+								case SymbolKind.Field:
 									return true;  // "ref readonly" is currently always active
 								default:
 									return false;
@@ -251,8 +252,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						case "NullableContextAttribute":
 							return (options & TypeSystemOptions.NullabilityAnnotations) != 0
 								&& (target == SymbolKind.TypeDefinition || IsMethodLike(target));
-						case "LifetimeAnnotationAttribute":
-							return (options & TypeSystemOptions.LifetimeAnnotations) != 0
+						case "ScopedRefAttribute":
+							return (options & TypeSystemOptions.ScopedRef) != 0
 								&& (target == SymbolKind.Parameter);
 						default:
 							return false;

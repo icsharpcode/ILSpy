@@ -83,6 +83,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 						case ClassType.RecordClass:
 							writer.WriteKeyword(Roles.RecordKeyword, "record");
 							break;
+						case ClassType.RecordStruct:
+							writer.WriteKeyword(Roles.RecordKeyword, "record");
+							writer.WriteKeyword(Roles.StructKeyword, "struct");
+							break;
 						default:
 							throw new Exception("Invalid value for ClassType");
 					}
@@ -233,6 +237,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			astBuilder.SupportInitAccessors = (ConversionFlags & ConversionFlags.SupportInitAccessors) != 0;
 			astBuilder.SupportRecordClasses = (ConversionFlags & ConversionFlags.SupportRecordClasses) != 0;
 			astBuilder.SupportRecordStructs = (ConversionFlags & ConversionFlags.SupportRecordStructs) != 0;
+			astBuilder.SupportUnsignedRightShift = (ConversionFlags & ConversionFlags.SupportUnsignedRightShift) != 0;
 			return astBuilder;
 		}
 

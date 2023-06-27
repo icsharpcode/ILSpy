@@ -23,10 +23,10 @@ using System.Collections.Generic;
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
-	/// Represents a class, enum, interface, struct, delegate or VB module.
+	/// Represents a class, enum, interface, struct, delegate, record or VB module.
 	/// For partial classes, this represents the whole class.
 	/// </summary>
-	public interface ITypeDefinition : IType, IEntity
+	public interface ITypeDefinition : ITypeDefinitionOrUnknown, IType, IEntity
 	{
 		IReadOnlyList<ITypeDefinition> NestedTypes { get; }
 		IReadOnlyList<IMember> Members { get; }
@@ -52,11 +52,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// For all other types: returns false.
 		/// </summary>
 		bool IsReadOnly { get; }
-
-		/// <summary>
-		/// Gets the full name of this type.
-		/// </summary>
-		FullTypeName FullTypeName { get; }
 
 		/// <summary>
 		/// Gets the short type name as stored in metadata.

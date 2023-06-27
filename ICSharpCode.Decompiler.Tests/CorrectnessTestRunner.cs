@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -317,7 +317,7 @@ namespace ICSharpCode.Decompiler.Tests
 		public async Task StackTests()
 		{
 			// IL contains .corflags = 32BITREQUIRED
-			await RunIL("StackTests.il", asmOptions: AssemblerOptions.Force32Bit);
+			await RunIL("StackTests.il", CompilerOptions.Force32Bit, AssemblerOptions.Force32Bit);
 		}
 
 		[Test]
@@ -398,10 +398,6 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task MiniJSON([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
-			if (options.HasFlag(CompilerOptions.UseMcs2_6_4))
-			{
-				Assert.Ignore("Decompiler bug with mono!");
-			}
 			await RunCS(options: options);
 		}
 
@@ -486,6 +482,11 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			string outputFile = null;
 			CompilerResults decompiledOutputFile = null;
+
+			bool optionsForce32Bit = options.HasFlag(CompilerOptions.Force32Bit);
+			bool asmOptionsForce32Bit = asmOptions.HasFlag(AssemblerOptions.Force32Bit);
+
+			Assert.AreEqual(optionsForce32Bit, asmOptionsForce32Bit, "Inconsistent architecture.");
 
 			try
 			{

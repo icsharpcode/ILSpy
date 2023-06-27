@@ -239,7 +239,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			bool IsUnmanagedTypeInternal(IType type)
 			{
-				if (type.Kind is TypeKind.Enum or TypeKind.Pointer or TypeKind.FunctionPointer)
+				if (type.Kind is TypeKind.Enum or TypeKind.Pointer or TypeKind.FunctionPointer or TypeKind.NInt or TypeKind.NUInt)
 				{
 					return true;
 				}
@@ -286,7 +286,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						types = new HashSet<IType>();
 					}
 					types.Add(type);
-					foreach (var f in type.GetFields())
+					foreach (var f in type.GetFields(f => !f.IsStatic))
 					{
 						if (types.Contains(f.Type))
 						{
@@ -372,6 +372,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				ty = mt.ElementType;
 			}
 			return ty;
+		}
+
+		public static IType UnwrapByRef(this IType type)
+		{
+			if (type is ByReferenceType byRef)
+			{
+				type = byRef.ElementType;
+			}
+			return type;
 		}
 
 		public static bool HasReadonlyModifier(this IMethod accessor)
@@ -738,6 +747,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				return new ParameterizedType(td, td.TypeArguments);
 			}
+		}
+
+		public static INamespace GetNamespaceByFullName(this ICompilation compilation, string name)
+		{
+			if (string.IsNullOrEmpty(name))
+				return compilation.RootNamespace;
+			var parts = name.Split('.');
+			var ns = compilation.RootNamespace;
+			foreach (var part in parts)
+			{
+				var child = ns.GetChildNamespace(part);
+				if (child == null)
+					return null;
+				ns = child;
+			}
+			return ns;
 		}
 	}
 }

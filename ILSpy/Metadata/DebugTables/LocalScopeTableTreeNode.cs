@@ -86,10 +86,11 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int RID => MetadataTokens.GetRowNumber(handle);
 
+			public int Token => MetadataTokens.GetToken(handle);
+
 			public object Offset => offset == null ? "n/a" : (object)offset;
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Method => MetadataTokens.GetToken(localScope.Method);
 
 			public void OnMethodClick()
@@ -97,16 +98,10 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, localScope.Method, protocol: "metadata"));
 			}
 
-			public string MethodTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					((EntityHandle)localScope.Method).WriteTo(module, output, default);
-					return output.ToString();
-				}
-			}
+			string methodTooltip;
+			public string MethodTooltip => GenerateTooltip(ref methodTooltip, module, localScope.Method);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int ImportScope => MetadataTokens.GetToken(localScope.ImportScope);
 
 			public void OnImportScopeClick()
@@ -114,8 +109,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, localScope.ImportScope, protocol: "metadata"));
 			}
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int VariableList => MetadataTokens.GetToken(localScope.GetLocalVariables().FirstOrDefault());
 
 			public void OnVariableListClick()
@@ -123,8 +117,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, localScope.GetLocalVariables().FirstOrDefault(), protocol: "metadata"));
 			}
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int ConstantList => MetadataTokens.GetToken(localScope.GetLocalConstants().FirstOrDefault());
 
 			public void OnConstantListClick()
@@ -144,6 +137,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = metadata;
 				this.handle = handle;
 				this.localScope = metadata.GetLocalScope(handle);
+				this.methodTooltip = null;
 			}
 		}
 

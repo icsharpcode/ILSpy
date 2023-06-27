@@ -88,7 +88,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Number => genericParam.Index;
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public GenericParameterAttributes Attributes => genericParam.Attributes;
 
 			public object AttributesTooltip => new FlagsTooltip {
@@ -96,22 +96,16 @@ namespace ICSharpCode.ILSpy.Metadata
 				FlagGroup.CreateSingleChoiceGroup(typeof(GenericParameterAttributes), "Managed type: ", (int)GenericParameterAttributes.SpecialConstraintMask, (int)(genericParam.Attributes & GenericParameterAttributes.SpecialConstraintMask), new Flag("None (0000)", 0, false), includeAny: false),
 			};
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Owner => MetadataTokens.GetToken(genericParam.Parent);
 
-			public void OnParentClick()
+			public void OnOwnerClick()
 			{
 				MainWindow.Instance.JumpToReference(new EntityReference(module, genericParam.Parent, protocol: "metadata"));
 			}
 
-			public string OwnerTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					genericParam.Parent.WriteTo(module, output, default);
-					return output.ToString();
-				}
-			}
+			string ownerTooltip;
+			public string OwnerTooltip => GenerateTooltip(ref ownerTooltip, module, genericParam.Parent);
 
 			public string Name => metadata.GetString(genericParam.Name);
 
@@ -124,6 +118,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.genericParam = metadata.GetGenericParameter(handle);
+				this.ownerTooltip = null;
 			}
 		}
 

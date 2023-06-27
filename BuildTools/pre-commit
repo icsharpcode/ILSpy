@@ -12,9 +12,9 @@ if [ ! -d "$DOTNET_PATH" ]; then
 fi
 
 "$DOTNET_PATH/dotnet-format.exe" --version
-#if git diff --quiet --ignore-submodules; then
-#	"$DOTNET_PATH/dotnet-format.exe" whitespace --no-restore --verbosity detailed ILSpy.sln
-#	git add -u -- \*\*.cs
-#else
+if git diff --quiet --ignore-submodules; then
+	"$DOTNET_PATH/dotnet-format.exe" whitespace --no-restore --verbosity detailed ILSpy.sln
+	git add -u -- \*\*.cs
+else
 	exec "$DOTNET_PATH/dotnet-format.exe" whitespace --verify-no-changes --no-restore --verbosity detailed ILSpy.sln
-#fi
+fi

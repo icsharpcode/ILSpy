@@ -98,8 +98,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset { get; }
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Field => MetadataTokens.GetToken(fieldLayout.Field);
 
 			public void OnFieldClick()
@@ -107,16 +106,10 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, fieldLayout.Field, protocol: "metadata"));
 			}
 
-			public string FieldTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)fieldLayout.Field).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string fieldTooltip;
+			public string FieldTooltip => GenerateTooltip(ref fieldTooltip, module, fieldLayout.Field);
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public int FieldOffset => fieldLayout.Offset;
 
 			public FieldLayoutEntry(PEFile module, byte* ptr, int metadataOffset, int row)
@@ -129,6 +122,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.Offset = metadataOffset + rowOffset;
 				int fieldDefSize = metadata.GetTableRowCount(TableIndex.Field) < ushort.MaxValue ? 2 : 4;
 				this.fieldLayout = new FieldLayout(ptr + rowOffset, fieldDefSize);
+				this.fieldTooltip = null;
 			}
 		}
 

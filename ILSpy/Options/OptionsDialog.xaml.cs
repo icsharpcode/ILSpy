@@ -26,6 +26,7 @@ using System.Windows.Media;
 using System.Xml.Linq;
 
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy.Options
 {

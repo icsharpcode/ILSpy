@@ -57,6 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		ExclusiveOr,
 		LeftShift,
 		RightShift,
+		UnsignedRightShift,
 		Equality,
 		Inequality,
 		GreaterThan,
@@ -94,6 +95,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole ExclusiveOrRole = new TokenRole("^");
 		public static readonly TokenRole LeftShiftRole = new TokenRole("<<");
 		public static readonly TokenRole RightShiftRole = new TokenRole(">>");
+		public static readonly TokenRole UnsignedRightShiftRole = new TokenRole(">>>");
 		public static readonly TokenRole EqualityRole = new TokenRole("==");
 		public static readonly TokenRole InequalityRole = new TokenRole("!=");
 		public static readonly TokenRole GreaterThanRole = new TokenRole(">");
@@ -127,6 +129,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			names[(int)OperatorType.ExclusiveOr] = new string[] { "^", "op_ExclusiveOr" };
 			names[(int)OperatorType.LeftShift] = new string[] { "<<", "op_LeftShift" };
 			names[(int)OperatorType.RightShift] = new string[] { ">>", "op_RightShift" };
+			names[(int)OperatorType.UnsignedRightShift] = new string[] { ">>>", "op_UnsignedRightShift" };
 			names[(int)OperatorType.Equality] = new string[] { "==", "op_Equality" };
 			names[(int)OperatorType.Inequality] = new string[] { "!=", "op_Inequality" };
 			names[(int)OperatorType.GreaterThan] = new string[] { ">", "op_GreaterThan" };
@@ -230,6 +233,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return LeftShiftRole;
 				case OperatorType.RightShift:
 					return RightShiftRole;
+				case OperatorType.UnsignedRightShift:
+					return UnsignedRightShiftRole;
 				case OperatorType.Equality:
 					return EqualityRole;
 				case OperatorType.Inequality:

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2011-2016 Siegfried Pammer
+// Copyright (c) 2011-2016 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -52,6 +52,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						continue;
 					}
 					if (CachedDelegateInitializationVB(inst))
+					{
+						continue;
+					}
+					if (CachedDelegateInitializationVBWithReturn(inst))
+					{
+						block.Instructions.RemoveAt(i);
+						continue;
+					}
+					if (CachedDelegateInitializationVBWithClosure(inst))
 					{
 						continue;
 					}
@@ -214,7 +223,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
-			if (s.Kind != VariableKind.StackSlot || s.StoreCount != 2 || s.LoadCount != 1)
+			if (s.Kind != VariableKind.StackSlot || s.StoreCount != 2)
 				return false;
 			if (!(trueInitValue is StObj stobj) || !(falseInitValue is LdObj ldobj))
 				return false;
@@ -233,6 +242,77 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!DelegateConstruction.MatchDelegateConstruction(delegateConstruction, out _, out _, out _, true))
 				return false;
 			context.Step("CachedDelegateInitializationVB", inst);
+			inst.ReplaceWith(new StLoc(s, delegateConstruction));
+			return true;
+		}
+
+		/// <summary>
+		/// if (comp.o(ldsfld CachedAnonMethodDelegate != ldnull)) {
+		///		leave IL_0005 (ldsfld CachedAnonMethodDelegate)
+		/// }
+		///	leave IL_0005 (stsfld CachedAnonMethodDelegate(DelegateConstruction))
+		/// =>
+		/// leave IL_0005 (DelegateConstruction)
+		/// </summary>
+		bool CachedDelegateInitializationVBWithReturn(IfInstruction inst)
+		{
+			if (!inst.Condition.MatchCompNotEqualsNull(out var arg) || !arg.MatchLdsFld(out var field))
+				return false;
+			if (!inst.FalseInst.MatchNop())
+				return false;
+			if (!inst.TrueInst.MatchReturn(out arg) || !arg.MatchLdsFld(field))
+				return false;
+			var leaveAfterIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex + 1) as Leave;
+			if (leaveAfterIf is null || !leaveAfterIf.IsLeavingFunction)
+				return false;
+			if (!leaveAfterIf.Value.MatchStsFld(out var field2, out var delegateConstruction) || !field.Equals(field2))
+				return false;
+			if (!DelegateConstruction.MatchDelegateConstruction(delegateConstruction, out _, out _, out _, true))
+				return false;
+			context.Step("CachedDelegateInitializationVBWithReturn", inst);
+			leaveAfterIf.Value = delegateConstruction;
+			return true;
+		}
+
+		/// <summary>
+		/// if (comp.o(ldobj delegateType(ldflda CachedAnonMethodDelegate(ldloc closure)) != ldnull)) Block {
+		/// 	stloc s(ldobj delegateType(ldflda CachedAnonMethodDelegate(ldloc closure)))
+		/// } else Block {
+		/// 	stloc s(stobj delegateType(ldflda CachedAnonMethodDelegate(ldloc closure), DelegateConstruction))
+		/// }
+		/// =>
+		///	stloc s(DelegateConstruction)
+		/// </summary>
+		bool CachedDelegateInitializationVBWithClosure(IfInstruction inst)
+		{
+			if (!(inst.TrueInst is Block trueInst && inst.FalseInst is Block falseInst))
+				return false;
+			if (trueInst.Instructions.Count != 1 || falseInst.Instructions.Count != 1)
+				return false;
+			if (!(trueInst.Instructions[0].MatchStLoc(out var s, out var trueInitValue)
+				  && falseInst.Instructions[0].MatchStLoc(s, out var falseInitValue)))
+			{
+				return false;
+			}
+			if (s.Kind != VariableKind.StackSlot || s.StoreCount != 2)
+				return false;
+			if (!(falseInitValue is StObj stobj) || !(trueInitValue is LdObj ldobj))
+				return false;
+			if (!(stobj.Value is NewObj delegateConstruction))
+				return false;
+			if (!stobj.Target.MatchLdFlda(out var target1, out var field1)
+				|| !ldobj.Target.MatchLdFlda(out var target2, out var field2)
+				|| !field1.Equals(field2) || !target1.Match(target2).Success)
+			{
+				return false;
+			}
+			if (!inst.Condition.MatchCompNotEqualsNull(out ILInstruction left))
+				return false;
+			if (!ldobj.Match(left).Success)
+				return false;
+			if (!DelegateConstruction.MatchDelegateConstruction(delegateConstruction, out _, out _, out _, true))
+				return false;
+			context.Step("CachedDelegateInitializationVBWithClosure", inst);
 			inst.ReplaceWith(new StLoc(s, delegateConstruction));
 			return true;
 		}

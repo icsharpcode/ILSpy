@@ -58,6 +58,7 @@
     <Compile Include="Cases\MyControl.xaml.cs">
       <DependentUpon>MyControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Cases\ReadonlyProperty.xaml.cs" />
     <Compile Include="Cases\Resources.xaml.cs">
       <DependentUpon>Resources.xaml</DependentUpon>
     </Compile>
@@ -102,6 +103,9 @@
     <Page Include="Cases\MarkupExtension.xaml" />
     <Page Include="Cases\MyControl.xaml" />
     <Page Include="Cases\NamespacePrefix.xaml" />
+    <Page Include="Cases\ReadonlyProperty.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Cases\Resources.xaml" />
     <Page Include="Cases\Simple.xaml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

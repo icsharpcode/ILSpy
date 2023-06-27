@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -31,8 +32,15 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		static string GetILSpyPath()
 		{
+			// Only VS2022 supports arm64, so we can gloss over 2017-2019 support
+			string archPathSegment = "x64";
+			if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+			{
+				archPathSegment = "arm64";
+			}
+
 			var basePath = Path.GetDirectoryName(typeof(ILSpyAddInPackage).Assembly.Location);
-			return Path.Combine(basePath, "ILSpy", "ILSpy.exe");
+			return Path.Combine(basePath, archPathSegment, "ILSpy", "ILSpy.exe");
 		}
 
 		public void Start()

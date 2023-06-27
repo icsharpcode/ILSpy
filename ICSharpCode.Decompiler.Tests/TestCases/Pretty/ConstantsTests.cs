@@ -1,10 +1,25 @@
-﻿using System;
+﻿#if !(CS110 && NET70)
+using System;
+#endif
 using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	internal class ConstantsTests
 	{
+#if CS90
+		public nint? NullableNInt()
+		{
+			return null;
+		}
+
+		public nuint? NullableNUInt()
+		{
+			return null;
+		}
+#endif
+
+#if !(CS110 && NET70)
 		public IntPtr? NullableIntPtr()
 		{
 			return null;
@@ -14,6 +29,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return null;
 		}
+#endif
 
 		public ulong Issue1308(ulong u = 8uL)
 		{

@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			StateMachineMethodEntry scrollTargetEntry = default;
 			var length = metadata.GetTableRowCount(TableIndex.StateMachineMethod);
 			var reader = new BlobReader(metadata.MetadataPointer, metadata.MetadataLength);
-			reader.Offset = +metadata.GetTableMetadataOffset(TableIndex.StateMachineMethod);
+			reader.Offset = metadata.GetTableMetadataOffset(TableIndex.StateMachineMethod);
 
 			for (int rid = 1; rid <= length; rid++)
 			{
@@ -88,10 +88,11 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int RID { get; }
 
+			public int Token => 0x36000000 + RID;
+
 			public object Offset => offset == null ? "n/a" : (object)offset;
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int MoveNextMethod => MetadataTokens.GetToken(moveNextMethod);
 
 			public void OnMoveNextMethodClick()
@@ -99,17 +100,10 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, moveNextMethod, protocol: "metadata"));
 			}
 
-			public string MoveNextMethodTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)moveNextMethod).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string moveNextMethodTooltip;
+			public string MoveNextMethodTooltip => GenerateTooltip(ref moveNextMethodTooltip, module, moveNextMethod);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int KickoffMethod => MetadataTokens.GetToken(kickoffMethod);
 
 			public void OnKickofMethodClick()
@@ -117,14 +111,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, kickoffMethod, protocol: "metadata"));
 			}
 
-			public string KickoffMethodTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)kickoffMethod).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string kickoffMethodTooltip;
+			public string KickoffMethodTooltip => GenerateTooltip(ref kickoffMethodTooltip, module, kickoffMethod);
 
 			public StateMachineMethodEntry(PEFile module, ref BlobReader reader, bool isEmbedded, int row)
 			{
@@ -138,6 +126,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				int methodDefSize = metadata.GetTableRowCount(TableIndex.MethodDef) < ushort.MaxValue ? 2 : 4;
 				this.moveNextMethod = MetadataTokens.MethodDefinitionHandle(methodDefSize == 2 ? reader.ReadInt16() : reader.ReadInt32());
 				this.kickoffMethod = MetadataTokens.MethodDefinitionHandle(methodDefSize == 2 ? reader.ReadInt16() : reader.ReadInt32());
+				this.kickoffMethodTooltip = null;
+				this.moveNextMethodTooltip = null;
 			}
 
 		}

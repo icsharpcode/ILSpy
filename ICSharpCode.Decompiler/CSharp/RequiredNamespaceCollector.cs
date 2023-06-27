@@ -137,11 +137,13 @@ namespace ICSharpCode.Decompiler.CSharp
 					break;
 				case IProperty property:
 					HandleAttributes(property.GetAttributes());
+					CollectNamespacesForTypeReference(property.ReturnType);
 					CollectNamespaces(property.Getter, module, mappingInfo);
 					CollectNamespaces(property.Setter, module, mappingInfo);
 					break;
 				case IEvent @event:
 					HandleAttributes(@event.GetAttributes());
+					CollectNamespacesForTypeReference(@event.ReturnType);
 					CollectNamespaces(@event.AddAccessor, module, mappingInfo);
 					CollectNamespaces(@event.RemoveAccessor, module, mappingInfo);
 					break;

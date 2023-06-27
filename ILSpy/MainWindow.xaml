@@ -20,6 +20,7 @@
 	xmlns:styles="urn:TomsToolbox.Wpf.Styles"
 	xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
 	xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
+	xmlns:toms="urn:TomsToolbox"
 	d:DataContext="{d:DesignInstance local:MainWindowViewModel}"
 >
 	<Window.Resources>
@@ -92,8 +93,6 @@
 			<ContentPresenter Content="{Binding Content}" />
 		</DataTemplate>
 
-		<styles:InvertGrayEffect x:Key="InvertGrayEffect" />
-
 		<controls:CultureSelectionConverter x:Key="cultureSelectionConverter" />
 
 	</Window.Resources>
@@ -140,6 +139,23 @@
 				<MenuItem Header="{x:Static properties:Resources.Show_internalTypesMembers}" IsCheckable="True" IsChecked="{Binding Workspace.ActiveTabPage.FilterSettings.ApiVisPublicAndInternal}" />
 				<MenuItem Header="{x:Static properties:Resources.Show_allTypesAndMembers}" IsCheckable="True" IsChecked="{Binding Workspace.ActiveTabPage.FilterSettings.ApiVisAll}" />
 				<Separator/>
+				<MenuItem Header="{x:Static properties:Resources.Theme}" ItemsSource="{x:Static themes:ThemeManager.AllThemes}">
+					<MenuItem.ItemContainerStyle>
+						<Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Type MenuItem}}">
+							<Setter Property="Command" Value="{x:Static local:ILSpyCommands.SetTheme}" />
+							<Setter Property="CommandParameter" Value="{Binding}" />
+							<Setter Property="IsCheckable" Value="True" /> <!-- Required by AvalonDock's MenuItem style to show the checkmark -->
+							<Setter Property="IsChecked">
+								<Setter.Value>
+									<MultiBinding Converter="{x:Static toms:BinaryOperationConverter.Equality}" Mode="OneWay">
+										<Binding />
+										<Binding RelativeSource="{RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}" Path="SessionSettings.Theme" />
+									</MultiBinding>
+								</Setter.Value>
+							</Setter>
+						</Style>
+					</MenuItem.ItemContainerStyle>
+				</MenuItem>
 				<MenuItem Header="{x:Static properties:Resources.UILanguage}">
 					<MenuItem Header="{x:Static properties:Resources.UILanguage_System}" IsCheckable="True" IsChecked="{Binding SessionSettings.CurrentCulture, Converter={StaticResource cultureSelectionConverter}, ConverterParameter={x:Null}}" />
 					<MenuItem Header="English" IsCheckable="True" IsChecked="{Binding SessionSettings.CurrentCulture, Converter={StaticResource cultureSelectionConverter}, ConverterParameter=en-US}" />
@@ -164,16 +180,12 @@
 					</Style.Triggers>
 				</Style>
 				<Style TargetType="{x:Type Image}" x:Key="DarkModeAwareImageStyle">
+					<Setter Property="Effect" Value="{DynamicResource {x:Static themes:ResourceKeys.ThemeAwareButtonEffect}}" />
 					<Style.Triggers>
 						<DataTrigger
 							Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type ButtonBase}, AncestorLevel=1}, Path=IsEnabled}"
 							Value="False">
 							<Setter Property="Opacity" Value="0.30" />
-						</DataTrigger>
-						<DataTrigger
-							Binding="{Binding SessionSettings.IsDarkMode}" 
-							Value="True">
-							<Setter Property="Effect" Value="{StaticResource InvertGrayEffect}" />
 						</DataTrigger>
 					</Style.Triggers>
 				</Style>
@@ -208,10 +220,6 @@
 					  IsEnabled="{Binding Workspace.ActiveTabPage.SupportsLanguageSwitching}"
 			          ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}"
 			          SelectedItem="{Binding Workspace.ActiveTabPage.FilterSettings.LanguageVersion, UpdateSourceTrigger=PropertyChanged}"/>
-			<Separator />
-			<CheckBox IsChecked="{Binding SessionSettings.IsDarkMode}" ToolTip="{x:Static properties:Resources.DarkMode}">
-				<Image Source="Images/DarkMode.png" Stretch="None" Style="{StaticResource DarkModeAwareImageStyle}"/>
-			</CheckBox>
 		</ToolBar>
 		<Border DockPanel.Dock="Top" BorderBrush="Black" BorderThickness="1" Name="updatePanel" Visibility="Collapsed">
 			<DockPanel KeyboardNavigation.TabNavigation="Contained">

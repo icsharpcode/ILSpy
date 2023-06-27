@@ -493,7 +493,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (targetMethod.TypeParameters.Count > 0)
 			{
-				var lastParams = targetMethod.Parameters.Where(p => IsClosureParameter(p, this.resolveContext)).SelectMany(p => UnwrapByRef(p.Type).TypeArguments)
+				var lastParams = targetMethod.Parameters.Where(p => IsClosureParameter(p, this.resolveContext)).SelectMany(p => p.Type.UnwrapByRef().TypeArguments)
 					.Select(pt => (int?)targetMethod.TypeParameters.IndexOf(pt)).DefaultIfEmpty().Max();
 				if (lastParams != null && lastParams.GetValueOrDefault() + 1 > skipCount)
 					skipCount = lastParams.GetValueOrDefault() + 1;
@@ -562,15 +562,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return type != null
 				&& type.Kind == TypeKind.Struct
 				&& TransformDisplayClassUsage.IsPotentialClosure(context.CurrentTypeDefinition, type);
-		}
-
-		static IType UnwrapByRef(IType type)
-		{
-			if (type is ByReferenceType byRef)
-			{
-				type = byRef.ElementType;
-			}
-			return type;
 		}
 
 		internal static ILInstruction GetStatement(ILInstruction inst)
@@ -733,7 +724,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			ILInstruction GetClosureInitializer(ILVariable variable)
 			{
-				var type = UnwrapByRef(variable.Type).GetDefinition();
+				var type = variable.Type.UnwrapByRef().GetDefinition();
 				if (type == null)
 					return null;
 				if (variable.Kind == VariableKind.Parameter)

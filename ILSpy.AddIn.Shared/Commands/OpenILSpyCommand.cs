@@ -47,12 +47,6 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 		protected abstract void OnExecute(object sender, EventArgs e);
 
-		protected string GetILSpyPath()
-		{
-			var basePath = Path.GetDirectoryName(typeof(ILSpyAddInPackage).Assembly.Location);
-			return Path.Combine(basePath, "ILSpy", "ILSpy.exe");
-		}
-
 		protected void OpenAssembliesInILSpy(ILSpyParameters parameters)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();

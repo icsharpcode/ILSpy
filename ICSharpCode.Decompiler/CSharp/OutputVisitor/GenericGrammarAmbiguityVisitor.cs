@@ -92,6 +92,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				case BinaryOperatorType.ShiftRight when genericNestingLevel >= 2:
 					genericNestingLevel -= 2;
 					break;
+				case BinaryOperatorType.UnsignedShiftRight when genericNestingLevel >= 3:
+					genericNestingLevel -= 3;
+					break;
 				default:
 					return true; // stop visiting, no ambiguity found
 			}

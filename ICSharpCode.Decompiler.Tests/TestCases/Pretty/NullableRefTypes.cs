@@ -111,4 +111,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private Entry[]? _entries;
 		private IEqualityComparer<TKey>? _comparer;
 	}
+
+	public class T05_NullableUnconstrainedGeneric
+	{
+		public static TValue? Default<TValue>()
+		{
+			return default(TValue);
+		}
+
+		public static void CallDefault()
+		{
+#if OPT
+			string? format = Default<string>();
+#else
+			// With optimizations it's a stack slot, so ILSpy picks a nullable type.
+			// Without optimizations it's a local, so the nullability is missing.
+			string format = Default<string>();
+#endif
+			int num = Default<int>();
+#if CS110 && NET70
+			nint num2 = Default<nint>();
+#else
+			int num2 = Default<int>();
+#endif
+			(object, string) tuple = Default<(object, string)>();
+			Console.WriteLine("No inlining");
+			Console.WriteLine(format, num, num2, tuple);
+		}
+	}
 }

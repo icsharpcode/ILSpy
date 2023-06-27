@@ -77,8 +77,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				ResolveResult GetResolveResult(int index, TranslatedExpression expression)
 				{
 					var param = expectedParameters[index];
-					if (useImplicitlyTypedOut && param.IsOut)
-						return OutVarResolveResult.Instance;
+					if (useImplicitlyTypedOut && param.IsOut && expression.Type is ByReferenceType brt)
+						return new OutVarResolveResult(brt.ElementType);
 					return expression.ResolveResult;
 				}
 			}
@@ -539,6 +539,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		public ExpressionWithResolveResult BuildDictionaryInitializerExpression(OpCode callOpCode, IMethod method,
 			InitializedObjectResolveResult target, IReadOnlyList<ILInstruction> indices, ILInstruction value = null)
 		{
+			if (method is null)
+				throw new ArgumentNullException(nameof(method));
 			ExpectedTargetDetails expectedTargetDetails = new ExpectedTargetDetails { CallOpCode = callOpCode };
 
 			var callArguments = new List<ILInstruction>();
@@ -1017,6 +1019,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				switch (errors)
 				{
+					case OverloadResolutionErrors.OutVarTypeMismatch:
+						Debug.Assert(argumentList.UseImplicitlyTypedOut);
+						argumentList.UseImplicitlyTypedOut = false;
+						continue;
 					case OverloadResolutionErrors.TypeInferenceFailed:
 						if ((allowedTransforms & CallTransformation.RequireTypeArguments) != 0)
 						{
@@ -1318,6 +1324,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			foundMember = or.GetBestCandidateWithSubstitutedTypeArguments();
 			if (!IsAppropriateCallTarget(expectedTargetDetails, method, foundMember))
 				return OverloadResolutionErrors.AmbiguousMatch;
+			var map = or.GetArgumentToParameterMap();
+			for (int i = 0; i < arguments.Length; i++)
+			{
+				ResolveResult arg = arguments[i];
+				int parameterIndex = map[i];
+				if (arg is OutVarResolveResult rr && parameterIndex >= 0)
+				{
+					var param = foundMember.Parameters[parameterIndex];
+					var paramType = param.Type.UnwrapByRef();
+					if (!paramType.Equals(rr.OriginalVariableType))
+						return OverloadResolutionErrors.OutVarTypeMismatch;
+				}
+			}
+
 			return OverloadResolutionErrors.None;
 		}
 
@@ -1533,12 +1553,25 @@ namespace ICSharpCode.Decompiler.CSharp
 					CastArguments(argumentList.Arguments, argumentList.ExpectedParameters);
 					break; // make sure that we don't not end up in an infinite loop
 				}
+				IType returnTypeOverride = null;
+				if (typeSystem.MainModule.TypeSystemOptions.HasFlag(TypeSystemOptions.NativeIntegersWithoutAttribute))
+				{
+					// For DeclaringType, we don't use nint/nuint (so that DeclaringType.GetConstructors etc. works),
+					// but in NativeIntegersWithoutAttribute mode we must use nint/nuint for expression types,
+					// so that the appropriate set of conversions is used for further overload resolution.
+					if (method.DeclaringType.IsKnownType(KnownTypeCode.IntPtr))
+						returnTypeOverride = SpecialType.NInt;
+					else if (method.DeclaringType.IsKnownType(KnownTypeCode.UIntPtr))
+						returnTypeOverride = SpecialType.NUInt;
+				}
 				return new ObjectCreateExpression(
 					expressionBuilder.ConvertType(method.DeclaringType),
 					argumentList.GetArgumentExpressions()
 				).WithRR(new CSharpInvocationResolveResult(
 					target, method, argumentList.GetArgumentResolveResults().ToArray(),
-					isExpandedForm: argumentList.IsExpandedForm, argumentToParameterMap: argumentList.ArgumentToParameterMap
+					isExpandedForm: argumentList.IsExpandedForm,
+					argumentToParameterMap: argumentList.ArgumentToParameterMap,
+					returnTypeOverride: returnTypeOverride
 				));
 			}
 		}

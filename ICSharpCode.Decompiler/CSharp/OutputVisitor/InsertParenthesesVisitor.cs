@@ -122,6 +122,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 						return PrecedenceLevel.Additive;
 					case BinaryOperatorType.ShiftLeft:
 					case BinaryOperatorType.ShiftRight:
+					case BinaryOperatorType.UnsignedShiftRight:
 						return PrecedenceLevel.Shift;
 					case BinaryOperatorType.GreaterThan:
 					case BinaryOperatorType.GreaterThanOrEqual:

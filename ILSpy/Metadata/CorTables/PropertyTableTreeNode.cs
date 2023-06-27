@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.Property)
 				+ metadata.GetTableRowSize(TableIndex.Property) * (RID - 1);
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public PropertyAttributes Attributes => propertyDef.Attributes;
 
 			public object AttributesTooltip => new FlagsTooltip {
@@ -103,16 +103,11 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule).GetDefinition(handle);
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(propertyDef.Signature);
 
-			public string SignatureTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					((EntityHandle)handle).WriteTo(module, output, default);
-					return output.ToString();
-				}
-			}
+			string signatureTooltip;
+			public string SignatureTooltip => GenerateTooltip(ref signatureTooltip, module, handle);
 
 			public PropertyDefEntry(PEFile module, PropertyDefinitionHandle handle)
 			{
@@ -121,6 +116,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.propertyDef = metadata.GetPropertyDefinition(handle);
+				this.signatureTooltip = null;
 			}
 		}
 

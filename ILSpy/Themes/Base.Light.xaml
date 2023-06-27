@@ -6,6 +6,15 @@
 		<ResourceDictionary Source="/AvalonDock.Themes.VS2013;component/lighttheme.xaml" />
 	</ResourceDictionary.MergedDictionaries>
 
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextBackgroundBrush}" Color="White" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.TextForegroundBrush}" Color="Black" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.SearchResultBackgroundBrush}" Color="LightGreen" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.LineNumbersForegroundBrush}" Color="Gray" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.CurrentLineBackgroundBrush}" Color="#1614DCE0" />
+	<Pen x:Key="{x:Static themes:ResourceKeys.CurrentLineBorderPen}" Brush="#3400FF6E" Thickness="1" />
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.BracketHighlightBackgroundBrush}" Color="#160000FF" />
+	<Pen x:Key="{x:Static themes:ResourceKeys.BracketHighlightBorderPen}" Brush="#340000FF" Thickness="1" />
+
 	<Color x:Key="{x:Static SystemColors.ControlLightLightColorKey}">#FCFCFC</Color>
 	<Color x:Key="{x:Static SystemColors.ControlLightColorKey}">#D8D8E0</Color>
 	<Color x:Key="{x:Static SystemColors.ControlColorKey}">#F5F5F5</Color>
@@ -26,9 +35,6 @@
 	<Color x:Key="{x:Static SystemColors.InactiveCaptionColorKey}">#EEEEF2</Color>
 	<Color x:Key="{x:Static SystemColors.InactiveBorderColorKey}">#CCCEDB</Color>
 	<Color x:Key="{x:Static SystemColors.InactiveCaptionTextColorKey}">#808080</Color>
-
-	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.BracketHighlightBackgroundBrush}" Color="#160000FF" />
-	<Pen x:Key="{x:Static themes:ResourceKeys.BracketHighlightBorderPen}" Brush="#340000FF" Thickness="1" />
 
 	<SolidColorBrush x:Key="{x:Static SystemColors.ControlLightLightBrushKey}" Color="#FCFCFC" />
 	<SolidColorBrush x:Key="{x:Static SystemColors.ControlLightBrushKey}" Color="#D8D8E0" />
@@ -53,4 +59,5 @@
 
 	<SolidColorBrush x:Key="{x:Static styles:ResourceKeys.BorderBrush}" Color="#CCCEDB" />
 	<SolidColorBrush x:Key="{x:Static styles:ResourceKeys.DisabledBrush}" Color="#EEEEF2" />
+
 </ResourceDictionary>

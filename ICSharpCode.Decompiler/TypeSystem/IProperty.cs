@@ -18,6 +18,8 @@
 
 #nullable enable
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
@@ -25,7 +27,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public interface IProperty : IParameterizedMember
 	{
+		[MemberNotNullWhen(true, nameof(Getter))]
 		bool CanGet { get; }
+		[MemberNotNullWhen(true, nameof(Setter))]
 		bool CanSet { get; }
 
 		IMethod? Getter { get; }

@@ -70,7 +70,7 @@ namespace ICSharpCode.ILSpy.TextView
 	/// Manages the TextEditor showing the decompiled code.
 	/// Contains all the threading logic that makes the decompiler work in the background.
 	/// </summary>
-	public sealed partial class DecompilerTextView : UserControl, IDisposable, IHaveState
+	public sealed partial class DecompilerTextView : UserControl, IDisposable, IHaveState, IProgress<DecompilationProgress>
 	{
 		readonly ReferenceElementGenerator referenceElementGenerator;
 		readonly UIElementGenerator uiElementGenerator;
@@ -127,6 +127,7 @@ namespace ICSharpCode.ILSpy.TextView
 			// SearchPanel
 			SearchPanel searchPanel = SearchPanel.Install(textEditor.TextArea);
 			searchPanel.RegisterCommands(Application.Current.MainWindow.CommandBindings);
+			searchPanel.SetResourceReference(SearchPanel.MarkerBrushProperty, ResourceKeys.SearchResultBackgroundBrush);
 			searchPanel.Loaded += (_, _) => {
 				// HACK: fix the hardcoded but misaligned margin of the search text box.
 				var textBox = searchPanel.VisualDescendants().OfType<TextBox>().FirstOrDefault();
@@ -139,13 +140,11 @@ namespace ICSharpCode.ILSpy.TextView
 			ShowLineMargin();
 			SetHighlightCurrentLine();
 
-			// add marker service & margin
-			textEditor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
-			textEditor.TextArea.TextView.LineTransformers.Add(textMarkerService);
-
 			ContextMenuProvider.Add(this);
 
 			textEditor.TextArea.TextView.SetResourceReference(ICSharpCode.AvalonEdit.Rendering.TextView.LinkTextForegroundBrushProperty, ResourceKeys.LinkTextForegroundBrush);
+			textEditor.TextArea.TextView.SetResourceReference(ICSharpCode.AvalonEdit.Rendering.TextView.CurrentLineBackgroundProperty, ResourceKeys.CurrentLineBackgroundBrush);
+			textEditor.TextArea.TextView.SetResourceReference(ICSharpCode.AvalonEdit.Rendering.TextView.CurrentLineBorderProperty, ResourceKeys.CurrentLineBorderPen);
 
 			this.DataContextChanged += DecompilerTextView_DataContextChanged;
 		}
@@ -174,11 +173,11 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void CurrentDisplaySettings_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(DisplaySettings.ShowLineNumbers))
+			if (e.PropertyName == nameof(DisplaySettingsViewModel.ShowLineNumbers))
 			{
 				ShowLineMargin();
 			}
-			else if (e.PropertyName == nameof(DisplaySettings.HighlightCurrentLine))
+			else if (e.PropertyName == nameof(DisplaySettingsViewModel.HighlightCurrentLine))
 			{
 				SetHighlightCurrentLine();
 			}
@@ -231,6 +230,8 @@ namespace ICSharpCode.ILSpy.TextView
 				{
 					var popupPosition = GetPopupPosition(e);
 					popupToolTip.Closed += ToolTipClosed;
+					popupToolTip.Placement = PlacementMode.Relative;
+					popupToolTip.PlacementTarget = this;
 					popupToolTip.HorizontalOffset = popupPosition.X;
 					popupToolTip.VerticalOffset = popupPosition.Y;
 					popupToolTip.StaysOpen = true;  // We will close it ourselves
@@ -282,23 +283,19 @@ namespace ICSharpCode.ILSpy.TextView
 		Point GetPopupPosition(MouseEventArgs mouseArgs)
 		{
 			Point mousePos = mouseArgs.GetPosition(this);
-			Point positionInPixels;
 			// align Popup with line bottom
 			TextViewPosition? logicalPos = textEditor.GetPositionFromPoint(mousePos);
 			if (logicalPos.HasValue)
 			{
 				var textView = textEditor.TextArea.TextView;
-				positionInPixels =
-					textView.PointToScreen(
-						textView.GetVisualPosition(logicalPos.Value, VisualYPosition.LineBottom) - textView.ScrollOffset);
-				positionInPixels.X -= 4;
+				return textView.GetVisualPosition(logicalPos.Value, VisualYPosition.LineBottom)
+					- textView.ScrollOffset
+					+ new Vector(-4, 0);
 			}
 			else
 			{
-				positionInPixels = PointToScreen(mousePos + new Vector(-4, 6));
+				return mousePos + new Vector(-4, 6);
 			}
-			// use device independent units, because Popup Left/Top are in independent units
-			return positionInPixels.TransformFromDevice(this);
 		}
 
 		void TextViewMouseHoverStopped(object sender, MouseEventArgs e)
@@ -540,18 +537,26 @@ namespace ICSharpCode.ILSpy.TextView
 		#endregion
 
 		#region RunWithCancellation
-		/// <summary>
-		/// Switches the GUI into "waiting" mode, then calls <paramref name="taskCreation"/> to create
-		/// the task.
-		/// When the task completes without being cancelled, the <paramref name="taskCompleted"/>
-		/// callback is called on the GUI thread.
-		/// When the task is cancelled before completing, the callback is not called; and any result
-		/// of the task (including exceptions) are ignored.
-		/// </summary>
-		[Obsolete("RunWithCancellation(taskCreation).ContinueWith(taskCompleted) instead")]
-		public void RunWithCancellation<T>(Func<CancellationToken, Task<T>> taskCreation, Action<Task<T>> taskCompleted)
+		public void Report(DecompilationProgress value)
 		{
-			RunWithCancellation(taskCreation).ContinueWith(taskCompleted, CancellationToken.None, TaskContinuationOptions.NotOnCanceled, TaskScheduler.FromCurrentSynchronizationContext());
+			double v = (double)value.UnitsCompleted / value.TotalUnits;
+			Dispatcher.BeginInvoke(DispatcherPriority.Normal, delegate {
+				progressBar.IsIndeterminate = !double.IsFinite(v);
+				progressBar.Value = v * 100.0;
+				progressTitle.Text = !string.IsNullOrWhiteSpace(value.Title) ? value.Title : Properties.Resources.Decompiling;
+				progressText.Text = value.Status;
+				progressText.Visibility = !string.IsNullOrWhiteSpace(progressText.Text) ? Visibility.Visible : Visibility.Collapsed;
+				var taskBar = MainWindow.Instance.TaskbarItemInfo;
+				if (taskBar != null)
+				{
+					taskBar.ProgressState = System.Windows.Shell.TaskbarItemProgressState.Normal;
+					taskBar.ProgressValue = v;
+				}
+				if (this.DataContext is TabPageModel model)
+				{
+					model.Title = progressTitle.Text;
+				}
+			});
 		}
 
 		/// <summary>
@@ -566,7 +571,10 @@ namespace ICSharpCode.ILSpy.TextView
 				waitAdorner.Visibility = Visibility.Visible;
 				// Work around a WPF bug by setting IsIndeterminate only while the progress bar is visible.
 				// https://github.com/icsharpcode/ILSpy/issues/593
+				progressTitle.Text = Properties.Resources.Decompiling;
 				progressBar.IsIndeterminate = true;
+				progressText.Text = null;
+				progressText.Visibility = Visibility.Collapsed;
 				waitAdorner.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, new Duration(TimeSpan.FromSeconds(0.5)), FillBehavior.Stop));
 				var taskBar = MainWindow.Instance.TaskbarItemInfo;
 				if (taskBar != null)
@@ -605,6 +613,8 @@ namespace ICSharpCode.ILSpy.TextView
 						currentCancellationTokenSource = null;
 						waitAdorner.Visibility = Visibility.Collapsed;
 						progressBar.IsIndeterminate = false;
+						progressText.Text = null;
+						progressText.Visibility = Visibility.Collapsed;
 						var taskBar = MainWindow.Instance.TaskbarItemInfo;
 						if (taskBar != null)
 						{
@@ -828,6 +838,7 @@ namespace ICSharpCode.ILSpy.TextView
 			return RunWithCancellation(
 				delegate (CancellationToken ct) { // creation of the background task
 					context.Options.CancellationToken = ct;
+					context.Options.Progress = this;
 					decompiledNodes = context.TreeNodes;
 					return DecompileAsync(context, outputLengthLimit);
 				})
@@ -1091,6 +1102,7 @@ namespace ICSharpCode.ILSpy.TextView
 					{
 						bool originalProjectFormatSetting = context.Options.DecompilerSettings.UseSdkStyleProjectFormat;
 						context.Options.EscapeInvalidIdentifiers = true;
+						context.Options.Progress = this;
 						AvalonEditTextOutput output = new AvalonEditTextOutput {
 							EnableHyperlinks = true,
 							Title = string.Join(", ", context.TreeNodes.Select(n => n.Text))
@@ -1351,15 +1363,8 @@ namespace ICSharpCode.ILSpy.TextView
 			string[] extensions,
 			string resourceName)
 		{
-			if (ThemeManager.Current.IsDarkMode)
-			{
-				resourceName += "-Dark";
-			}
-
-			resourceName += ".xshd";
-
 			Stream? resourceStream = typeof(DecompilerTextView).Assembly
-				.GetManifestResourceStream(typeof(DecompilerTextView), resourceName);
+				.GetManifestResourceStream(typeof(DecompilerTextView), resourceName + ".xshd");
 
 			if (resourceStream != null)
 			{
@@ -1369,7 +1374,9 @@ namespace ICSharpCode.ILSpy.TextView
 						using (resourceStream)
 						using (XmlTextReader reader = new XmlTextReader(resourceStream))
 						{
-							return HighlightingLoader.Load(reader, manager);
+							var highlightingDefinition = HighlightingLoader.Load(reader, manager);
+							ThemeManager.Current.ApplyHighlightingColors(highlightingDefinition);
+							return highlightingDefinition;
 						}
 					});
 			}

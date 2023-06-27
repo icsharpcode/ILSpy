@@ -43,5 +43,34 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			return null;
 		}
+
+		private bool TryGet<T>(out T result)
+		{
+			result = default(T);
+			return true;
+		}
+
+		public void M3()
+		{
+			TryGet<Dictionary<int, (int, string)>>(out Dictionary<int, (int A, string B)> data);
+
+			Test();
+
+			int Test()
+			{
+				return data[0].A;
+			}
+		}
+
+		public void GetObject(out object obj)
+		{
+			obj = null;
+		}
+
+		public void M4()
+		{
+			GetObject(out dynamic obj);
+			obj.Method();
+		}
 	}
 }

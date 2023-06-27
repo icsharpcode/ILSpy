@@ -27,16 +27,22 @@
 		<Grid.RowDefinitions>
 			<RowDefinition />
 			<RowDefinition />
+			<RowDefinition />
 		</Grid.RowDefinitions>
 		<Label Content="{x:Static properties:Resources.OtherResources}"
 			   FontFamily="Segoe UI"
 			   FontWeight="Bold"
 			   FontSize="12pt" />
+		<local:SearchBox x:Name="resourceFilterBox" 
+			   FontFamily="Segoe UI"
+			   FontSize="9pt"
+			   Grid.Row="1"
+			   TextChanged="OnFilterTextChanged" />
 		<ListView Name="resourceListView"
 				  FontFamily="Segoe UI"
 				  FontSize="9pt"
 				  Foreground="Black"
-				  Grid.Row="1"
+				  Grid.Row="2"
 				  AlternationCount="2"
 				  ItemContainerStyle="{StaticResource alternatingWithBinding}"
 				  local:SortableGridViewColumn.SortMode="Automatic">

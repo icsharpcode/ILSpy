@@ -34,9 +34,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </summary>
 		/// <param name="target">The target to write to.</param>
 		/// <param name="project">The information about the project being created.</param>
-		/// <param name="files">A collection of source files to be included into the project, each item is a pair
-		/// of the project entry type and the file path.</param>
+		/// <param name="files">A collection of source files to be included into the project.</param>
 		/// <param name="module">The module being decompiled.</param>
-		void Write(TextWriter target, IProjectInfoProvider project, IEnumerable<(string itemType, string fileName)> files, PEFile module);
+		void Write(TextWriter target, IProjectInfoProvider project, IEnumerable<ProjectItemInfo> files, PEFile module);
 	}
 }

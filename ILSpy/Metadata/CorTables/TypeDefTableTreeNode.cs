@@ -91,7 +91,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.TypeDef)
 				+ metadata.GetTableRowSize(TableIndex.TypeDef) * (RID - 1);
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public TypeAttributes Attributes => typeDef.Attributes;
 
 			const TypeAttributes otherFlagsMask = ~(TypeAttributes.VisibilityMask | TypeAttributes.LayoutMask | TypeAttributes.ClassSemanticsMask | TypeAttributes.StringFormatMask | TypeAttributes.CustomFormatMask);
@@ -113,8 +113,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string Namespace => metadata.GetString(typeDef.Namespace);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int BaseType => MetadataTokens.GetToken(typeDef.BaseType);
 
 			public void OnBaseTypeClick()
@@ -145,8 +144,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int FieldList => MetadataTokens.GetToken(typeDef.GetFields().FirstOrDefault());
 
 			public void OnFieldListClick()
@@ -154,20 +152,17 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, typeDef.GetFields().FirstOrDefault(), protocol: "metadata"));
 			}
 
+			string fieldListTooltip;
 			public string FieldListTooltip {
 				get {
 					var field = typeDef.GetFields().FirstOrDefault();
 					if (field.IsNil)
 						return null;
-					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)field).WriteTo(module, output, context);
-					return output.ToString();
+					return GenerateTooltip(ref fieldListTooltip, module, field);
 				}
 			}
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int MethodList => MetadataTokens.GetToken(typeDef.GetMethods().FirstOrDefault());
 
 			public void OnMethodListClick()
@@ -175,15 +170,13 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, typeDef.GetMethods().FirstOrDefault(), protocol: "metadata"));
 			}
 
+			string methodListTooltip;
 			public string MethodListTooltip {
 				get {
 					var method = typeDef.GetMethods().FirstOrDefault();
 					if (method.IsNil)
 						return null;
-					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)method).WriteTo(module, output, context);
-					return output.ToString();
+					return GenerateTooltip(ref methodListTooltip, module, method);
 				}
 			}
 
@@ -196,6 +189,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.typeDef = metadata.GetTypeDefinition(handle);
+				this.methodListTooltip = null;
+				this.fieldListTooltip = null;
 			}
 		}
 

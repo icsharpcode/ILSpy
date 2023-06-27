@@ -86,10 +86,11 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int RID => MetadataTokens.GetRowNumber(handle);
 
+			public int Token => MetadataTokens.GetToken(handle);
+
 			public object Offset => offset == null ? "n/a" : (object)offset;
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(localScope.Parent);
 
 			public void OnParentClick()
@@ -97,7 +98,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, localScope.Parent, protocol: "metadata"));
 			}
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Imports => MetadataTokens.GetHeapOffset(localScope.ImportsBlob);
 
 			public ImportScopeEntry(PEFile module, MetadataReader metadata, bool isEmbedded, ImportScopeHandle handle)

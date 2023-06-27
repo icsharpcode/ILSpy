@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override IType ChangeNullability(Nullability nullability)
 		{
-			if (nullability == base.Nullability)
+			if (nullability == base.Nullability || Kind is not TypeKind.Dynamic)
 				return this;
 			else
 				return new NullabilityAnnotatedType(this, nullability);

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2014 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2014 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -36,7 +36,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine(field2);
 			Console.WriteLine(field3);
 			Console.WriteLine(field4);
+			Console.WriteLine(IntToDecimal());
+			Console.WriteLine(UIntToDecimal());
+			Console.WriteLine(LongToDecimal());
+			Console.WriteLine(ULongToDecimal());
 			return 0;
+		}
+
+		public static decimal IntToDecimal()
+		{
+			return (decimal)int.MaxValue;
+		}
+
+		public static decimal UIntToDecimal()
+		{
+			return (decimal)uint.MaxValue;
+		}
+
+		public static decimal LongToDecimal()
+		{
+			return (decimal)long.MaxValue;
+		}
+
+		public static decimal ULongToDecimal()
+		{
+			return (decimal)ulong.MaxValue;
 		}
 	}
 }

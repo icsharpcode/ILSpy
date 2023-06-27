@@ -17,24 +17,21 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.ComponentModel;
 using System.IO;
-using System.Linq;
-using System.Net.Http;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Navigation;
-using System.Xml.Linq;
 
 using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.Themes;
+using ICSharpCode.ILSpy.Updates;
+using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy
 {
@@ -48,11 +45,6 @@ namespace ICSharpCode.ILSpy
 				inNewTabPage: true
 			);
 		}
-
-		static readonly Uri UpdateUrl = new Uri("https://ilspy.net/updates.xml");
-		const string band = "stable";
-
-		static AvailableVersionInfo latestAvailableVersion;
 
 		public static void Display(DecompilerTextView textView)
 		{
@@ -70,14 +62,14 @@ namespace ICSharpCode.ILSpy
 				StackPanel stackPanel = new StackPanel();
 				stackPanel.HorizontalAlignment = HorizontalAlignment.Center;
 				stackPanel.Orientation = Orientation.Horizontal;
-				if (latestAvailableVersion == null)
+				if (NotifyOfUpdatesStrategy.LatestAvailableVersion == null)
 				{
 					AddUpdateCheckButton(stackPanel, textView);
 				}
 				else
 				{
 					// we already retrieved the latest version sometime earlier
-					ShowAvailableVersion(latestAvailableVersion, stackPanel);
+					ShowAvailableVersion(NotifyOfUpdatesStrategy.LatestAvailableVersion, stackPanel);
 				}
 				CheckBox checkBox = new CheckBox();
 				checkBox.Margin = new Thickness(4);
@@ -141,7 +133,7 @@ namespace ICSharpCode.ILSpy
 
 				try
 				{
-					AvailableVersionInfo vInfo = await GetLatestVersionAsync();
+					AvailableVersionInfo vInfo = await NotifyOfUpdatesStrategy.GetLatestVersionAsync();
 					stackPanel.Children.Clear();
 					ShowAvailableVersion(vInfo, stackPanel);
 				}
@@ -154,11 +146,9 @@ namespace ICSharpCode.ILSpy
 			};
 		}
 
-		static readonly Version currentVersion = new Version(DecompilerVersionInfo.Major + "." + DecompilerVersionInfo.Minor + "." + DecompilerVersionInfo.Build + "." + DecompilerVersionInfo.Revision);
-
 		static void ShowAvailableVersion(AvailableVersionInfo availableVersion, StackPanel stackPanel)
 		{
-			if (currentVersion == availableVersion.Version)
+			if (AppUpdateService.CurrentVersion == availableVersion.Version)
 			{
 				stackPanel.Children.Add(
 					new Image {
@@ -172,7 +162,7 @@ namespace ICSharpCode.ILSpy
 						VerticalAlignment = VerticalAlignment.Bottom
 					});
 			}
-			else if (currentVersion < availableVersion.Version)
+			else if (AppUpdateService.CurrentVersion < availableVersion.Version)
 			{
 				stackPanel.Children.Add(
 					new TextBlock {
@@ -194,149 +184,6 @@ namespace ICSharpCode.ILSpy
 			else
 			{
 				stackPanel.Children.Add(new TextBlock { Text = Resources.UsingNightlyBuildNewerThanLatestRelease });
-			}
-		}
-
-		static async Task<AvailableVersionInfo> GetLatestVersionAsync()
-		{
-			var client = new HttpClient(new HttpClientHandler() {
-				UseProxy = true,
-				UseDefaultCredentials = true,
-			});
-			string data = await client.GetStringAsync(UpdateUrl);
-
-			XDocument doc = XDocument.Load(new StringReader(data));
-			var bands = doc.Root.Elements("band");
-			var currentBand = bands.FirstOrDefault(b => (string)b.Attribute("id") == band) ?? bands.First();
-			Version version = new Version((string)currentBand.Element("latestVersion"));
-			string url = (string)currentBand.Element("downloadUrl");
-			if (!(url.StartsWith("http://", StringComparison.Ordinal) || url.StartsWith("https://", StringComparison.Ordinal)))
-				url = null; // don't accept non-urls
-
-			latestAvailableVersion = new AvailableVersionInfo { Version = version, DownloadUrl = url };
-			return latestAvailableVersion;
-		}
-
-		sealed class AvailableVersionInfo
-		{
-			public Version Version;
-			public string DownloadUrl;
-		}
-
-		sealed class UpdateSettings : INotifyPropertyChanged
-		{
-			public UpdateSettings(ILSpySettings spySettings)
-			{
-				XElement s = spySettings["UpdateSettings"];
-				this.automaticUpdateCheckEnabled = (bool?)s.Element("AutomaticUpdateCheckEnabled") ?? true;
-				try
-				{
-					this.lastSuccessfulUpdateCheck = (DateTime?)s.Element("LastSuccessfulUpdateCheck");
-				}
-				catch (FormatException)
-				{
-					// avoid crashing on settings files invalid due to
-					// https://github.com/icsharpcode/ILSpy/issues/closed/#issue/2
-				}
-			}
-
-			bool automaticUpdateCheckEnabled;
-
-			public bool AutomaticUpdateCheckEnabled {
-				get { return automaticUpdateCheckEnabled; }
-				set {
-					if (automaticUpdateCheckEnabled != value)
-					{
-						automaticUpdateCheckEnabled = value;
-						Save();
-						OnPropertyChanged(nameof(AutomaticUpdateCheckEnabled));
-					}
-				}
-			}
-
-			DateTime? lastSuccessfulUpdateCheck;
-
-			public DateTime? LastSuccessfulUpdateCheck {
-				get { return lastSuccessfulUpdateCheck; }
-				set {
-					if (lastSuccessfulUpdateCheck != value)
-					{
-						lastSuccessfulUpdateCheck = value;
-						Save();
-						OnPropertyChanged(nameof(LastSuccessfulUpdateCheck));
-					}
-				}
-			}
-
-			public void Save()
-			{
-				XElement updateSettings = new XElement("UpdateSettings");
-				updateSettings.Add(new XElement("AutomaticUpdateCheckEnabled", automaticUpdateCheckEnabled));
-				if (lastSuccessfulUpdateCheck != null)
-					updateSettings.Add(new XElement("LastSuccessfulUpdateCheck", lastSuccessfulUpdateCheck));
-				ILSpySettings.SaveSettings(updateSettings);
-			}
-
-			public event PropertyChangedEventHandler PropertyChanged;
-
-			void OnPropertyChanged(string propertyName)
-			{
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-			}
-		}
-
-		/// <summary>
-		/// If automatic update checking is enabled, checks if there are any updates available.
-		/// Returns the download URL if an update is available.
-		/// Returns null if no update is available, or if no check was performed.
-		/// </summary>
-		public static async Task<string> CheckForUpdatesIfEnabledAsync(ILSpySettings spySettings)
-		{
-			UpdateSettings s = new UpdateSettings(spySettings);
-
-			// If we're in an MSIX package, updates work differently
-			if (s.AutomaticUpdateCheckEnabled)
-			{
-				// perform update check if we never did one before;
-				// or if the last check wasn't in the past 7 days
-				if (s.LastSuccessfulUpdateCheck == null
-					|| s.LastSuccessfulUpdateCheck < DateTime.UtcNow.AddDays(-7)
-					|| s.LastSuccessfulUpdateCheck > DateTime.UtcNow)
-				{
-					return await CheckForUpdateInternal(s);
-				}
-				else
-				{
-					return null;
-				}
-			}
-			else
-			{
-				return null;
-			}
-		}
-
-		public static Task<string> CheckForUpdatesAsync(ILSpySettings spySettings)
-		{
-			UpdateSettings s = new UpdateSettings(spySettings);
-			return CheckForUpdateInternal(s);
-		}
-
-		static async Task<string> CheckForUpdateInternal(UpdateSettings s)
-		{
-			try
-			{
-				var v = await GetLatestVersionAsync();
-				s.LastSuccessfulUpdateCheck = DateTime.UtcNow;
-				if (v.Version > currentVersion)
-					return v.DownloadUrl;
-				else
-					return null;
-			}
-			catch (Exception)
-			{
-				// ignore errors getting the version info
-				return null;
 			}
 		}
 	}
