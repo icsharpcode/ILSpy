@@ -78,9 +78,9 @@ Examples:
 		public (bool IsSet, string Value) InputPDBFile { get; }
 
 		[Option("-l|--list <entity-type(s)>", "Lists all entities of the specified type(s). Valid types: c(lass), i(nterface), s(truct), d(elegate), e(num)", CommandOptionType.MultipleValue)]
-		public string[] EntityTypes { get; } = new string[0];
+		public string[] EntityTypes { get; } = Array.Empty<string>();
 
-		public string DecompilerVersion => "ilspycmd: " + typeof(ILSpyCmdProgram).Assembly.GetName().Version.ToString() +
+		public static string DecompilerVersion => "ilspycmd: " + typeof(ILSpyCmdProgram).Assembly.GetName().Version.ToString() +
 				Environment.NewLine
 				+ "ICSharpCode.Decompiler: " +
 				typeof(FullTypeName).Assembly.GetName().Version.ToString();
@@ -92,7 +92,7 @@ Examples:
 
 		[DirectoryExists]
 		[Option("-r|--referencepath <path>", "Path to a directory containing dependencies of the assembly that is being decompiled.", CommandOptionType.MultipleValue)]
-		public string[] ReferencePaths { get; } = new string[0];
+		public string[] ReferencePaths { get; } = Array.Empty<string>();
 
 		[Option("--no-dead-code", "Remove dead code.", CommandOptionType.NoValue)]
 		public bool RemoveDeadCode { get; }
@@ -283,8 +283,8 @@ Examples:
 				resolver.AddSearchDirectory(path);
 			}
 			var decompiler = new WholeProjectDecompiler(GetSettings(module), resolver, resolver, TryLoadPDB(module));
-			using (var projectFileWriter = new StreamWriter(File.OpenWrite(projectFileName)))
-				return decompiler.DecompileProject(module, Path.GetDirectoryName(projectFileName), projectFileWriter);
+			using var projectFileWriter = new StreamWriter(File.OpenWrite(projectFileName));
+			return decompiler.DecompileProject(module, Path.GetDirectoryName(projectFileName), projectFileWriter);
 		}
 
 		int Decompile(string assemblyFileName, TextWriter output, string typeName = null)
@@ -316,69 +316,61 @@ Examples:
 				return ProgramExitCodes.EX_DATAERR;
 			}
 
-			using (FileStream stream = new FileStream(pdbFileName, FileMode.OpenOrCreate, FileAccess.Write))
-			{
-				var decompiler = GetDecompiler(assemblyFileName);
-				PortablePdbWriter.WritePdb(module, decompiler, GetSettings(module), stream);
-			}
+			using FileStream stream = new(pdbFileName, FileMode.OpenOrCreate, FileAccess.Write);
+			var decompiler = GetDecompiler(assemblyFileName);
+			PortablePdbWriter.WritePdb(module, decompiler, GetSettings(module), stream);
 
 			return 0;
 		}
 
-		int DumpPackageAssemblies(string packageFileName, string outputDirectory, CommandLineApplication app)
+		static int DumpPackageAssemblies(string packageFileName, string outputDirectory, CommandLineApplication app)
 		{
-			using (var memoryMappedPackage = MemoryMappedFile.CreateFromFile(packageFileName, FileMode.Open, null, 0, MemoryMappedFileAccess.Read))
+			using var memoryMappedPackage = MemoryMappedFile.CreateFromFile(packageFileName, FileMode.Open, null, 0, MemoryMappedFileAccess.Read);
+			using var packageView = memoryMappedPackage.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read);
+			if (!SingleFileBundle.IsBundle(packageView, out long bundleHeaderOffset))
 			{
-				using (var packageView = memoryMappedPackage.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read))
+				app.Error.WriteLine($"Cannot dump assembiles for {packageFileName}, because it is not a single file bundle.");
+				return ProgramExitCodes.EX_DATAERR;
+			}
+
+			var manifest = SingleFileBundle.ReadManifest(packageView, bundleHeaderOffset);
+			foreach (var entry in manifest.Entries)
+			{
+				Stream contents;
+
+				if (entry.RelativePath.Replace('\\', '/').Contains("../", StringComparison.Ordinal) || Path.IsPathRooted(entry.RelativePath))
 				{
-					if (!SingleFileBundle.IsBundle(packageView, out long bundleHeaderOffset))
+					app.Error.WriteLine($"Skipping single-file entry '{entry.RelativePath}' because it might refer to a location outside of the bundle output directory.");
+					continue;
+				}
+
+				if (entry.CompressedSize == 0)
+				{
+					contents = new UnmanagedMemoryStream(packageView.SafeMemoryMappedViewHandle, entry.Offset, entry.Size);
+				}
+				else
+				{
+					Stream compressedStream = new UnmanagedMemoryStream(packageView.SafeMemoryMappedViewHandle, entry.Offset, entry.CompressedSize);
+					Stream decompressedStream = new MemoryStream((int)entry.Size);
+					using (var deflateStream = new DeflateStream(compressedStream, CompressionMode.Decompress))
 					{
-						app.Error.WriteLine($"Cannot dump assembiles for {packageFileName}, because it is not a single file bundle.");
+						deflateStream.CopyTo(decompressedStream);
+					}
+
+					if (decompressedStream.Length != entry.Size)
+					{
+						app.Error.WriteLine($"Corrupted single-file entry '{entry.RelativePath}'. Declared decompressed size '{entry.Size}' is not the same as actual decompressed size '{decompressedStream.Length}'.");
 						return ProgramExitCodes.EX_DATAERR;
 					}
 
-					var manifest = SingleFileBundle.ReadManifest(packageView, bundleHeaderOffset);
-					foreach (var entry in manifest.Entries)
-					{
-						Stream contents;
-
-						if (entry.RelativePath.Replace('\\', '/').Contains("../", StringComparison.Ordinal) || Path.IsPathRooted(entry.RelativePath))
-						{
-							app.Error.WriteLine($"Skipping single-file entry '{entry.RelativePath}' because it might refer to a location outside of the bundle output directory.");
-							continue;
-						}
-
-						if (entry.CompressedSize == 0)
-						{
-							contents = new UnmanagedMemoryStream(packageView.SafeMemoryMappedViewHandle, entry.Offset, entry.Size);
-						}
-						else
-						{
-							Stream compressedStream = new UnmanagedMemoryStream(packageView.SafeMemoryMappedViewHandle, entry.Offset, entry.CompressedSize);
-							Stream decompressedStream = new MemoryStream((int)entry.Size);
-							using (var deflateStream = new DeflateStream(compressedStream, CompressionMode.Decompress))
-							{
-								deflateStream.CopyTo(decompressedStream);
-							}
-
-							if (decompressedStream.Length != entry.Size)
-							{
-								app.Error.WriteLine($"Corrupted single-file entry '{entry.RelativePath}'. Declared decompressed size '{entry.Size}' is not the same as actual decompressed size '{decompressedStream.Length}'.");
-								return ProgramExitCodes.EX_DATAERR;
-							}
-
-							decompressedStream.Seek(0, SeekOrigin.Begin);
-							contents = decompressedStream;
-						}
-
-						string target = Path.Combine(outputDirectory, entry.RelativePath);
-						Directory.CreateDirectory(Path.GetDirectoryName(target));
-						using (var fileStream = File.Create(target))
-						{
-							contents.CopyTo(fileStream);
-						}
-					}
+					decompressedStream.Seek(0, SeekOrigin.Begin);
+					contents = decompressedStream;
 				}
+
+				string target = Path.Combine(outputDirectory, entry.RelativePath);
+				Directory.CreateDirectory(Path.GetDirectoryName(target));
+				using var fileStream = File.Create(target);
+				contents.CopyTo(fileStream);
 			}
 
 			return 0;

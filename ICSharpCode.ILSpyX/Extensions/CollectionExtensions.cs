@@ -37,7 +37,7 @@ namespace ICSharpCode.ILSpyX.Extensions
 		public static T? PeekOrDefault<T>(this Stack<T> stack)
 		{
 			if (stack.Count == 0)
-				return default(T);
+				return default;
 			return stack.Peek();
 		}
 

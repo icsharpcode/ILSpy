@@ -856,8 +856,7 @@ namespace ICSharpCode.ILSpyX.Search
 				if (ch == '\\')
 				{
 					originalValue.Append('\\');
-					string surrogatePair;
-					originalValue.Append(ReadEscapeSequence(out ch, out surrogatePair));
+					originalValue.Append(ReadEscapeSequence(out ch, out string surrogatePair));
 					if (surrogatePair != null)
 					{
 						sb.Append(surrogatePair);
