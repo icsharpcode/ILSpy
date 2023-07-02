@@ -81,6 +81,27 @@ namespace ICSharpCode.ILSpy.Controls
 			StringBuilder sb = new StringBuilder();
 			foreach (var item in resourceListView.SelectedItems)
 			{
+				if (item is TreeNodes.ResourcesFileTreeNode.SerializedObjectRepresentation so)
+				{
+					switch (args.Parameter)
+					{
+						case "Key":
+							sb.AppendLine(so.Key);
+							continue;
+
+						case "Value":
+							sb.AppendLine(so.Value);
+							continue;
+
+						case "Type":
+							sb.AppendLine(so.Type);
+							continue;
+
+						default:
+							sb.AppendLine($"{so.Key}\t{so.Value}\t{so.Type}");
+							continue;
+					}
+				}
 				sb.AppendLine(item.ToString());
 			}
 			Clipboard.SetText(sb.ToString());

@@ -22,6 +22,15 @@
 						Value="{Binding RelativeSource={RelativeSource Self},
 					 Path=(ItemsControl.AlternationIndex),
 					 Converter={StaticResource BackgroundConverter}}" />
+				<Setter Property="ContextMenu">
+					<Setter.Value>
+						<ContextMenu>
+							<MenuItem Header="_Copy" Command="ApplicationCommands.Copy" />
+							<MenuItem Header="Copy _name" Command="ApplicationCommands.Copy" CommandParameter="Key" InputGestureText=" " />
+							<MenuItem Header="Copy _value" Command="ApplicationCommands.Copy" CommandParameter="Value" InputGestureText=" " />
+						</ContextMenu>
+					</Setter.Value>
+				</Setter>
 			</Style>
 		</Grid.Resources>
 		<Grid.RowDefinitions>
