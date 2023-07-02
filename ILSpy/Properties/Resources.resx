@@ -279,6 +279,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.AsyncEnumerator" xml:space="preserve">
     <value>Decompile async IAsyncEnumerator methods</value>
   </data>
+  <data name="DecompilerSettings.CheckedOperators" xml:space="preserve">
+    <value>User-defined checked operators</value>
+  </data>
   <data name="DecompilerSettings.DecompileAnonymousMethodsLambdas" xml:space="preserve">
     <value>Decompile anonymous methods/lambdas</value>
   </data>

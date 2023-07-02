@@ -1810,6 +1810,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				target = Translate(inst.Target, loadType);
 			}
+			var opType = OperatorDeclaration.GetOperatorType(inst.Method.Name);
+			if (opType != null && OperatorDeclaration.IsChecked(opType.Value))
+			{
+				target.Expression.AddAnnotation(AddCheckedBlocks.CheckedAnnotation);
+			}
+			else if (ReplaceMethodCallsWithOperators.HasCheckedEquivalent(inst.Method))
+			{
+				target.Expression.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
+			}
 			if (UserDefinedCompoundAssign.IsStringConcat(inst.Method))
 			{
 				Debug.Assert(inst.Method.Parameters.Count == 2);
@@ -1876,8 +1885,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			switch (name)
 			{
 				case "op_Increment":
+				case "op_CheckedIncrement":
 					return isPostfix ? UnaryOperatorType.PostIncrement : UnaryOperatorType.Increment;
 				case "op_Decrement":
+				case "op_CheckedDecrement":
 					return isPostfix ? UnaryOperatorType.PostDecrement : UnaryOperatorType.Decrement;
 				default:
 					return null;

@@ -231,6 +231,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public bool SupportUnsignedRightShift { get; set; }
 
 		/// <summary>
+		/// Controls whether C# 11 "operator checked" is supported.
+		/// </summary>
+		public bool SupportOperatorChecked { get; set; }
+
+		/// <summary>
 		/// Controls whether all fully qualified type names should be prefixed with "global::".
 		/// </summary>
 		public bool AlwaysUseGlobal { get; set; }
@@ -2223,6 +2228,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (opType == null)
 				return ConvertMethod(op);
 			if (opType == OperatorType.UnsignedRightShift && !SupportUnsignedRightShift)
+				return ConvertMethod(op);
+			if (!SupportOperatorChecked && OperatorDeclaration.IsChecked(opType.Value))
 				return ConvertMethod(op);
 
 			OperatorDeclaration decl = new OperatorDeclaration();

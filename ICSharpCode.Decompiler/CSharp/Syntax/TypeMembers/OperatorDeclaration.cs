@@ -37,20 +37,25 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		LogicalNot,
 		OnesComplement,
 		Increment,
+		CheckedIncrement,
 		Decrement,
+		CheckedDecrement,
 		True,
 		False,
 
-		// Unary and Binary operators
-		Addition,
-		Subtraction,
-
 		UnaryPlus,
 		UnaryNegation,
+		CheckedUnaryNegation,
 
 		// Binary operators
+		Addition,
+		CheckedAddition,
+		Subtraction,
+		CheckedSubtraction,
 		Multiply,
+		CheckedMultiply,
 		Division,
+		CheckedDivision,
 		Modulus,
 		BitwiseAnd,
 		BitwiseOr,
@@ -67,12 +72,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		// Implicit and Explicit
 		Implicit,
-		Explicit
+		Explicit,
+		CheckedExplicit
 	}
 
 	public class OperatorDeclaration : EntityDeclaration
 	{
 		public static readonly TokenRole OperatorKeywordRole = new TokenRole("operator");
+		public static readonly TokenRole CheckedKeywordRole = new TokenRole("checked");
 
 		// Unary operators
 		public static readonly TokenRole LogicalNotRole = new TokenRole("!");
@@ -110,19 +117,26 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		static OperatorDeclaration()
 		{
-			names = new string[(int)OperatorType.Explicit + 1][];
+			names = new string[(int)OperatorType.CheckedExplicit + 1][];
 			names[(int)OperatorType.LogicalNot] = new string[] { "!", "op_LogicalNot" };
 			names[(int)OperatorType.OnesComplement] = new string[] { "~", "op_OnesComplement" };
 			names[(int)OperatorType.Increment] = new string[] { "++", "op_Increment" };
+			names[(int)OperatorType.CheckedIncrement] = new string[] { "++", "op_CheckedIncrement" };
 			names[(int)OperatorType.Decrement] = new string[] { "--", "op_Decrement" };
+			names[(int)OperatorType.CheckedDecrement] = new string[] { "--", "op_CheckedDecrement" };
 			names[(int)OperatorType.True] = new string[] { "true", "op_True" };
 			names[(int)OperatorType.False] = new string[] { "false", "op_False" };
-			names[(int)OperatorType.Addition] = new string[] { "+", "op_Addition" };
-			names[(int)OperatorType.Subtraction] = new string[] { "-", "op_Subtraction" };
 			names[(int)OperatorType.UnaryPlus] = new string[] { "+", "op_UnaryPlus" };
 			names[(int)OperatorType.UnaryNegation] = new string[] { "-", "op_UnaryNegation" };
+			names[(int)OperatorType.CheckedUnaryNegation] = new string[] { "-", "op_CheckedUnaryNegation" };
+			names[(int)OperatorType.Addition] = new string[] { "+", "op_Addition" };
+			names[(int)OperatorType.CheckedAddition] = new string[] { "+", "op_CheckedAddition" };
+			names[(int)OperatorType.Subtraction] = new string[] { "-", "op_Subtraction" };
+			names[(int)OperatorType.CheckedSubtraction] = new string[] { "-", "op_CheckedSubtraction" };
 			names[(int)OperatorType.Multiply] = new string[] { "*", "op_Multiply" };
+			names[(int)OperatorType.CheckedMultiply] = new string[] { "*", "op_CheckedMultiply" };
 			names[(int)OperatorType.Division] = new string[] { "/", "op_Division" };
+			names[(int)OperatorType.CheckedDivision] = new string[] { "/", "op_CheckedDivision" };
 			names[(int)OperatorType.Modulus] = new string[] { "%", "op_Modulus" };
 			names[(int)OperatorType.BitwiseAnd] = new string[] { "&", "op_BitwiseAnd" };
 			names[(int)OperatorType.BitwiseOr] = new string[] { "|", "op_BitwiseOr" };
@@ -138,6 +152,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			names[(int)OperatorType.LessThanOrEqual] = new string[] { "<=", "op_LessThanOrEqual" };
 			names[(int)OperatorType.Implicit] = new string[] { "implicit", "op_Implicit" };
 			names[(int)OperatorType.Explicit] = new string[] { "explicit", "op_Explicit" };
+			names[(int)OperatorType.CheckedExplicit] = new string[] { "explicit", "op_CheckedExplicit" };
 		}
 
 		public override SymbolKind SymbolKind {
@@ -202,8 +217,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				case OperatorType.OnesComplement:
 					return OnesComplementRole;
 				case OperatorType.Increment:
+				case OperatorType.CheckedIncrement:
 					return IncrementRole;
 				case OperatorType.Decrement:
+				case OperatorType.CheckedDecrement:
 					return DecrementRole;
 				case OperatorType.True:
 					return TrueRole;
@@ -211,15 +228,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return FalseRole;
 
 				case OperatorType.Addition:
+				case OperatorType.CheckedAddition:
 				case OperatorType.UnaryPlus:
 					return AdditionRole;
 				case OperatorType.Subtraction:
+				case OperatorType.CheckedSubtraction:
 				case OperatorType.UnaryNegation:
+				case OperatorType.CheckedUnaryNegation:
 					return SubtractionRole;
 
 				case OperatorType.Multiply:
+				case OperatorType.CheckedMultiply:
 					return MultiplyRole;
 				case OperatorType.Division:
+				case OperatorType.CheckedDivision:
 					return DivisionRole;
 				case OperatorType.Modulus:
 					return ModulusRole;
@@ -251,6 +273,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				case OperatorType.Implicit:
 					return ImplicitRole;
 				case OperatorType.Explicit:
+				case OperatorType.CheckedExplicit:
 					return ExplicitRole;
 
 				default:
@@ -269,7 +292,26 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		/// <summary>
-		/// Gets the token for the operator type ("+", "implicit", etc.)
+		/// Gets whether the operator type is a C# 11 "operator checked".
+		/// </summary>
+		public static bool IsChecked(OperatorType type)
+		{
+			return type switch {
+				OperatorType.CheckedAddition => true,
+				OperatorType.CheckedSubtraction => true,
+				OperatorType.CheckedMultiply => true,
+				OperatorType.CheckedDivision => true,
+				OperatorType.CheckedUnaryNegation => true,
+				OperatorType.CheckedIncrement => true,
+				OperatorType.CheckedDecrement => true,
+				OperatorType.CheckedExplicit => true,
+				_ => false,
+			};
+		}
+
+		/// <summary>
+		/// Gets the token for the operator type ("+", "implicit", etc.).
+		/// Does not include the "checked" modifier.
 		/// </summary>
 		public static string GetToken(OperatorType type)
 		{
