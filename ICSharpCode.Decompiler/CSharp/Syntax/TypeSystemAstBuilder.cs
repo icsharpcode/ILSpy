@@ -538,6 +538,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				// Handle nested types
 				result.Target = ConvertTypeHelper(genericType.DeclaringType, typeArguments);
+				AddTypeAnnotation(result.Target, genericType.DeclaringType);
 			}
 			else
 			{
