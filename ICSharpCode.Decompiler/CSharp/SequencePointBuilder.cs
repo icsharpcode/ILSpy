@@ -164,6 +164,30 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		public override void VisitPropertyDeclaration(PropertyDeclaration propertyDeclaration)
+		{
+			if (!propertyDeclaration.ExpressionBody.IsNull)
+			{
+				VisitAsSequencePoint(propertyDeclaration.ExpressionBody);
+			}
+			else
+			{
+				base.VisitPropertyDeclaration(propertyDeclaration);
+			}
+		}
+
+		public override void VisitIndexerDeclaration(IndexerDeclaration indexerDeclaration)
+		{
+			if (!indexerDeclaration.ExpressionBody.IsNull)
+			{
+				VisitAsSequencePoint(indexerDeclaration.ExpressionBody);
+			}
+			else
+			{
+				base.VisitIndexerDeclaration(indexerDeclaration);
+			}
+		}
+
 		public override void VisitForStatement(ForStatement forStatement)
 		{
 			// Every element of a for-statement is its own sequence point.
