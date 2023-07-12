@@ -117,9 +117,9 @@ Examples:
 			_env = env;
 		}
 
-		private Task<int> OnExecuteAsync(CommandLineApplication app)
+		private async Task<int> OnExecuteAsync(CommandLineApplication app)
 		{
-			// await DotNetToolUpdateChecker.CheckForPackageUpdateAsync("ilspycmd");
+			var updateCheckTask = DotNetToolUpdateChecker.CheckForPackageUpdateAsync("ilspycmd");
 
 			TextWriter output = System.Console.Out;
 			string outputDirectory = ResolveOutputDirectory(OutputDirectory);
@@ -137,7 +137,7 @@ Examples:
 					{
 						string projectFileName = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(InputAssemblyNames[0]) + ".csproj");
 						DecompileAsProject(InputAssemblyNames[0], projectFileName);
-						return Task.FromResult(0);
+						return 0;
 					}
 					var projects = new List<ProjectItem>();
 					foreach (var file in InputAssemblyNames)
@@ -148,7 +148,7 @@ Examples:
 						projects.Add(new ProjectItem(projectFileName, projectId.PlatformName, projectId.Guid, projectId.TypeGuid));
 					}
 					SolutionCreator.WriteSolutionFile(Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(outputDirectory) + ".sln"), projects);
-					return Task.FromResult(0);
+					return 0;
 				}
 				else
 				{
@@ -156,19 +156,26 @@ Examples:
 					{
 						int result = PerformPerFileAction(file);
 						if (result != 0)
-							return Task.FromResult(result);
+							return result;
 					}
-					return Task.FromResult(0);
+					return 0;
 				}
 			}
 			catch (Exception ex)
 			{
 				app.Error.WriteLine(ex.ToString());
-				return Task.FromResult(ProgramExitCodes.EX_SOFTWARE);
+				return ProgramExitCodes.EX_SOFTWARE;
 			}
 			finally
 			{
 				output.Close();
+
+				var latestVersion = await updateCheckTask;
+				if (null != latestVersion)
+				{
+					Console.WriteLine("You are not using the latest version of the tool, please update.");
+					Console.WriteLine($"Latest version is '{latestVersion}'");
+				}
 			}
 
 			int PerformPerFileAction(string fileName)

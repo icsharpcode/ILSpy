@@ -20,7 +20,7 @@ namespace ICSharpCode.ILSpyCmd
 				.InformationalVersion);
 		}
 
-		public static async Task CheckForPackageUpdateAsync(string packageId)
+		public static async Task<NuGetVersion> CheckForPackageUpdateAsync(string packageId)
 		{
 			try
 			{
@@ -37,8 +37,7 @@ namespace ICSharpCode.ILSpyCmd
 				var latestVersion = versions.Where(v => v.Release == "").MaxBy(v => v);
 				if (latestVersion > CurrentPackageVersion())
 				{
-					Console.WriteLine("You are not using the latest version of the tool, please update.");
-					Console.WriteLine($"Latest version is '{latestVersion}'");
+					return latestVersion;
 				}
 			}
 #pragma warning disable RCS1075 // Avoid empty catch clause that catches System.Exception.
@@ -46,6 +45,8 @@ namespace ICSharpCode.ILSpyCmd
 			{
 			}
 #pragma warning restore RCS1075 // Avoid empty catch clause that catches System.Exception.
+
+			return null;
 		}
 	}
 }
