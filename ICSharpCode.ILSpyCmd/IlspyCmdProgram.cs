@@ -22,6 +22,8 @@ using ICSharpCode.ILSpyX.PdbProvider;
 
 using McMaster.Extensions.CommandLineUtils;
 
+using Microsoft.Extensions.Hosting;
+
 namespace ICSharpCode.ILSpyCmd
 {
 	[Command(Name = "ilspycmd", Description = "dotnet tool for decompiling .NET assemblies and generating portable PDBs",
@@ -49,7 +51,7 @@ Examples:
 		MemberName = nameof(DecompilerVersion))]
 	class ILSpyCmdProgram
 	{
-		public static Task<int> Main(string[] args) => CommandLineApplication.ExecuteAsync<ILSpyCmdProgram>(args);
+		public static Task<int> Main(string[] args) => new HostBuilder().RunCommandLineApplicationAsync<ILSpyCmdProgram>(args);
 
 		[FilesExist]
 		[Required]
@@ -106,6 +108,12 @@ Examples:
 
 		[Option("--nested-directories", "Use nested directories for namespaces.", CommandOptionType.NoValue)]
 		public bool NestedDirectories { get; }
+
+		private readonly IHostEnvironment _env;
+		public ILSpyCmdProgram(IHostEnvironment env)
+		{
+			_env = env;
+		}
 
 		private Task<int> OnExecuteAsync(CommandLineApplication app)
 		{
