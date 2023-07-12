@@ -51,6 +51,7 @@
   <ItemGroup>
     <PackageReference Include=" McMaster.Extensions.Hosting.CommandLine" Version="4.0.2" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
+    <PackageReference Include="NuGet.Protocol" Version="6.6.1" />
   </ItemGroup>
 
   <Target Name="ILSpyUpdateAssemblyInfo" AfterTargets="ResolveProjectReferences">

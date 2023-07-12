@@ -51,6 +51,8 @@ Examples:
 		MemberName = nameof(DecompilerVersion))]
 	class ILSpyCmdProgram
 	{
+		// https://natemcmaster.github.io/CommandLineUtils/docs/advanced/generic-host.html
+		// https://github.com/natemcmaster/CommandLineUtils/blob/main/docs/samples/dependency-injection/generic-host/Program.cs
 		public static Task<int> Main(string[] args) => new HostBuilder().RunCommandLineApplicationAsync<ILSpyCmdProgram>(args);
 
 		[FilesExist]
@@ -95,7 +97,7 @@ Examples:
 
 		[DirectoryExists]
 		[Option("-r|--referencepath <path>", "Path to a directory containing dependencies of the assembly that is being decompiled.", CommandOptionType.MultipleValue)]
-		public string[] ReferencePaths { get; } = new string[0];
+		public string[] ReferencePaths { get; }
 
 		[Option("--no-dead-code", "Remove dead code.", CommandOptionType.NoValue)]
 		public bool RemoveDeadCode { get; }
@@ -103,7 +105,7 @@ Examples:
 		[Option("--no-dead-stores", "Remove dead stores.", CommandOptionType.NoValue)]
 		public bool RemoveDeadStores { get; }
 
-		[Option("-d|--dump-package", "Dump package assembiles into a folder. This requires the output directory option.", CommandOptionType.NoValue)]
+		[Option("-d|--dump-package", "Dump package assemblies into a folder. This requires the output directory option.", CommandOptionType.NoValue)]
 		public bool DumpPackageFlag { get; }
 
 		[Option("--nested-directories", "Use nested directories for namespaces.", CommandOptionType.NoValue)]
@@ -117,6 +119,8 @@ Examples:
 
 		private Task<int> OnExecuteAsync(CommandLineApplication app)
 		{
+			// await DotNetToolUpdateChecker.CheckForPackageUpdateAsync("ilspycmd");
+
 			TextWriter output = System.Console.Out;
 			string outputDirectory = ResolveOutputDirectory(OutputDirectory);
 
@@ -249,7 +253,7 @@ Examples:
 		{
 			var module = new PEFile(assemblyFileName);
 			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Metadata.DetectTargetFrameworkId());
-			foreach (var path in ReferencePaths)
+			foreach (var path in (ReferencePaths ?? Array.Empty<string>()))
 			{
 				resolver.AddSearchDirectory(path);
 			}
@@ -287,7 +291,7 @@ Examples:
 		{
 			var module = new PEFile(assemblyFileName);
 			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Metadata.DetectTargetFrameworkId());
-			foreach (var path in ReferencePaths)
+			foreach (var path in (ReferencePaths ?? Array.Empty<string>()))
 			{
 				resolver.AddSearchDirectory(path);
 			}
