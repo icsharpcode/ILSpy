@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Threading;
+using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
@@ -48,7 +49,7 @@ Examples:
 		MemberName = nameof(DecompilerVersion))]
 	class ILSpyCmdProgram
 	{
-		public static int Main(string[] args) => CommandLineApplication.Execute<ILSpyCmdProgram>(args);
+		public static Task<int> Main(string[] args) => CommandLineApplication.ExecuteAsync<ILSpyCmdProgram>(args);
 
 		[FilesExist]
 		[Required]
@@ -106,7 +107,7 @@ Examples:
 		[Option("--nested-directories", "Use nested directories for namespaces.", CommandOptionType.NoValue)]
 		public bool NestedDirectories { get; }
 
-		private int OnExecute(CommandLineApplication app)
+		private Task<int> OnExecuteAsync(CommandLineApplication app)
 		{
 			TextWriter output = System.Console.Out;
 			string outputDirectory = ResolveOutputDirectory(OutputDirectory);
@@ -124,7 +125,7 @@ Examples:
 					{
 						string projectFileName = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(InputAssemblyNames[0]) + ".csproj");
 						DecompileAsProject(InputAssemblyNames[0], projectFileName);
-						return 0;
+						return Task.FromResult(0);
 					}
 					var projects = new List<ProjectItem>();
 					foreach (var file in InputAssemblyNames)
@@ -135,7 +136,7 @@ Examples:
 						projects.Add(new ProjectItem(projectFileName, projectId.PlatformName, projectId.Guid, projectId.TypeGuid));
 					}
 					SolutionCreator.WriteSolutionFile(Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(outputDirectory) + ".sln"), projects);
-					return 0;
+					return Task.FromResult(0);
 				}
 				else
 				{
@@ -143,15 +144,15 @@ Examples:
 					{
 						int result = PerformPerFileAction(file);
 						if (result != 0)
-							return result;
+							return Task.FromResult(result);
 					}
-					return 0;
+					return Task.FromResult(0);
 				}
 			}
 			catch (Exception ex)
 			{
 				app.Error.WriteLine(ex.ToString());
-				return ProgramExitCodes.EX_SOFTWARE;
+				return Task.FromResult(ProgramExitCodes.EX_SOFTWARE);
 			}
 			finally
 			{
