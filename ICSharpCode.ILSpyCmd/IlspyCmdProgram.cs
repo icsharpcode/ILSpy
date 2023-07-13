@@ -24,6 +24,8 @@ using McMaster.Extensions.CommandLineUtils;
 
 using Microsoft.Extensions.Hosting;
 
+using NuGet.Versioning;
+
 namespace ICSharpCode.ILSpyCmd
 {
 	[Command(Name = "ilspycmd", Description = "dotnet tool for decompiling .NET assemblies and generating portable PDBs",
@@ -111,6 +113,9 @@ Examples:
 		[Option("--nested-directories", "Use nested directories for namespaces.", CommandOptionType.NoValue)]
 		public bool NestedDirectories { get; }
 
+		[Option("--disable-updatecheck", "If using ilspycmd in a tight loop or fully automated scenario, you might want to disable the automatic update check.", CommandOptionType.NoValue)]
+		public bool DisableUpdateCheck { get; }
+
 		private readonly IHostEnvironment _env;
 		public ILSpyCmdProgram(IHostEnvironment env)
 		{
@@ -119,7 +124,11 @@ Examples:
 
 		private async Task<int> OnExecuteAsync(CommandLineApplication app)
 		{
-			var updateCheckTask = DotNetToolUpdateChecker.CheckForPackageUpdateAsync("ilspycmd");
+			Task<NuGetVersion> updateCheckTask = null;
+			if (!DisableUpdateCheck)
+			{
+				updateCheckTask = DotNetToolUpdateChecker.CheckForPackageUpdateAsync("ilspycmd");
+			}
 
 			TextWriter output = System.Console.Out;
 			string outputDirectory = ResolveOutputDirectory(OutputDirectory);
@@ -170,11 +179,14 @@ Examples:
 			{
 				output.Close();
 
-				var latestVersion = await updateCheckTask;
-				if (null != latestVersion)
+				if (null != updateCheckTask)
 				{
-					Console.WriteLine("You are not using the latest version of the tool, please update.");
-					Console.WriteLine($"Latest version is '{latestVersion}'");
+					var latestVersion = await updateCheckTask;
+					if (null != latestVersion)
+					{
+						Console.WriteLine("You are not using the latest version of the tool, please update.");
+						Console.WriteLine($"Latest version is '{latestVersion}'");
+					}
 				}
 			}
 
