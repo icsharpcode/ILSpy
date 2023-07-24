@@ -268,7 +268,7 @@ namespace ICSharpCode.ILSpyX
 						if (metadata.IsAssembly)
 						{
 							versionOrInfo = metadata.GetAssemblyDefinition().Version?.ToString();
-							var tfId = GetTargetFrameworkIdAsync().Result;
+							string tfId = GetTargetFrameworkIdAsync().GetAwaiter().GetResult();
 							if (!string.IsNullOrEmpty(tfId))
 								versionOrInfo += ", " + tfId.Replace("Version=", " ");
 						}
@@ -638,8 +638,8 @@ namespace ICSharpCode.ILSpyX
 		private UniversalAssemblyResolver GetUniversalResolver(bool applyWinRTProjections)
 		{
 			return LazyInitializer.EnsureInitialized(ref this.universalResolver, () => {
-				var targetFramework = this.GetTargetFrameworkIdAsync().Result;
-				var runtimePack = this.GetRuntimePackAsync().Result;
+				var targetFramework = this.GetTargetFrameworkIdAsync().GetAwaiter().GetResult();
+				var runtimePack = this.GetRuntimePackAsync().GetAwaiter().GetResult();
 
 				var readerOptions = applyWinRTProjections
 					? MetadataReaderOptions.ApplyWindowsRuntimeProjections
