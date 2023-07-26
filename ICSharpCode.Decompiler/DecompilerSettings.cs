@@ -379,6 +379,7 @@ namespace ICSharpCode.Decompiler
 		}
 
 		[Obsolete("Renamed to ScopedRef. This property will be removed in a future version of the decompiler.")]
+		[Browsable(false)]
 		public bool LifetimeAnnotations {
 			get { return ScopedRef; }
 			set { ScopedRef = value; }
