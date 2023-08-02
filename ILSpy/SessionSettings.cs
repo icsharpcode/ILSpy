@@ -125,7 +125,7 @@ namespace ICSharpCode.ILSpy
 		public double SplitterPosition;
 		public double TopPaneSplitterPosition, BottomPaneSplitterPosition;
 
-		public DockLayoutSettings DockLayout { get; private set; }
+		public DockLayoutSettings DockLayout { get; }
 
 		public XElement ToXml()
 		{

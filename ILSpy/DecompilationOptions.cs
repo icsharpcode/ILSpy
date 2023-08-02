@@ -67,7 +67,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Gets the settings for the decompiler.
 		/// </summary>
-		public Decompiler.DecompilerSettings DecompilerSettings { get; private set; }
+		public Decompiler.DecompilerSettings DecompilerSettings { get; }
 
 		/// <summary>
 		/// Gets/sets an optional state of a decompiler text view.

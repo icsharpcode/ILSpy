@@ -145,7 +145,7 @@ namespace ICSharpCode.ILSpy.TextView
 		public void AddDocumentationElement(XmlDocumentationElement element)
 		{
 			if (element == null)
-				throw new ArgumentNullException("element");
+				throw new ArgumentNullException(nameof(element));
 			if (element.IsTextNode)
 			{
 				AddText(element.TextContent);

@@ -51,13 +51,13 @@ namespace ICSharpCode.ILSpy.TextView
 	/// </summary>
 	public class BracketSearchResult
 	{
-		public int OpeningBracketOffset { get; private set; }
+		public int OpeningBracketOffset { get; }
 
-		public int OpeningBracketLength { get; private set; }
+		public int OpeningBracketLength { get; }
 
-		public int ClosingBracketOffset { get; private set; }
+		public int ClosingBracketOffset { get; }
 
-		public int ClosingBracketLength { get; private set; }
+		public int ClosingBracketLength { get; }
 
 		public BracketSearchResult(int openingBracketOffset, int openingBracketLength,
 								   int closingBracketOffset, int closingBracketLength)
@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpy.TextView
 		public BracketHighlightRenderer(ICSharpCode.AvalonEdit.Rendering.TextView textView)
 		{
 			if (textView == null)
-				throw new ArgumentNullException("textView");
+				throw new ArgumentNullException(nameof(textView));
 
 			this.borderPen = (Pen)textView.FindResource(Themes.ResourceKeys.BracketHighlightBorderPen);
 			this.backgroundBrush = (SolidColorBrush)textView.FindResource(Themes.ResourceKeys.BracketHighlightBackgroundBrush);

@@ -32,8 +32,8 @@ namespace ICSharpCode.ILSpy
 		private readonly HashSet<SharpTreeNode> treeNodes;
 
 		public IEnumerable<SharpTreeNode> TreeNodes => treeNodes;
-		public ViewState ViewState { get; private set; }
-		public TabPageModel TabPage { get; private set; }
+		public ViewState ViewState { get; }
+		public TabPageModel TabPage { get; }
 
 		public NavigationState(TabPageModel tabPage, ViewState viewState)
 		{
