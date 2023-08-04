@@ -4641,6 +4641,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						default:
 							throw new InvalidOperationException("Unexpected comparison kind: " + comp.Kind);
 					}
+				case Call call when MatchInstruction.IsCallToString_op_Equality(call):
+					return Translate(call.Arguments[1]);
 				default:
 					throw new NotImplementedException();
 			}

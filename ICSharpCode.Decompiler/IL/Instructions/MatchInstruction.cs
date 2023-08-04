@@ -135,10 +135,20 @@ namespace ICSharpCode.Decompiler.IL
 						testedOperand = comp.Left;
 						return IsConstant(comp.Right);
 					}
+				case Call call when IsCallToString_op_Equality(call):
+					testedOperand = call.Arguments[0];
+					return call.Arguments[1].OpCode == OpCode.LdStr;
 				default:
 					testedOperand = null;
 					return false;
 			}
+		}
+
+		internal static bool IsCallToString_op_Equality(Call call)
+		{
+			return call.Method.IsOperator && call.Method.Name == "op_Equality"
+				&& call.Method.DeclaringType.IsKnownType(KnownTypeCode.String)
+				&& call.Arguments.Count == 2;
 		}
 
 		private static bool IsConstant(ILInstruction inst)
@@ -150,7 +160,6 @@ namespace ICSharpCode.Decompiler.IL
 				OpCode.LdcI4 => true,
 				OpCode.LdcI8 => true,
 				OpCode.LdNull => true,
-				OpCode.LdStr => true,
 				_ => false
 			};
 		}

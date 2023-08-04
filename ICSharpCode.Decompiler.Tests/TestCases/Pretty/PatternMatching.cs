@@ -335,6 +335,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public void RecursivePattern_StringConstant(object obj)
+		{
+			if (obj is X { B: "Hello" } x)
+			{
+				Console.WriteLine("Test " + x);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
 #endif
 		private bool F()
 		{
