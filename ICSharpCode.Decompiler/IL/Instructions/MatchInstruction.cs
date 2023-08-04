@@ -127,9 +127,9 @@ namespace ICSharpCode.Decompiler.IL
 					testedOperand = m.testedOperand;
 					return true;
 				case Comp comp:
-					if (comp.MatchLogicNot(out var operand))
+					if (comp.MatchLogicNot(out var operand) && IsPatternMatch(operand, out testedOperand))
 					{
-						return IsPatternMatch(operand, out testedOperand);
+						return true;
 					}
 					else
 					{

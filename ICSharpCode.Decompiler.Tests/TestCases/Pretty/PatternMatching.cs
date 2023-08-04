@@ -387,6 +387,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("not Test");
 			}
 		}
+
+		public void RecursivePattern_NonTypePattern(object obj)
+		{
+			if (obj is X { A: 42, B: { Length: 0 } } x)
+			{
+				Console.WriteLine("Test " + x);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePattern_VarLengthPattern(object obj)
+		{
+			if (obj is X { A: 42, B: { Length: var length } } x)
+			{
+				Console.WriteLine("Test " + x.A + ": " + length);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
 #endif
 		private bool F()
 		{
