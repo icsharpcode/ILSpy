@@ -240,21 +240,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///	}
 		private bool PatternMatchValueTypes(Block block, BlockContainer container, ILTransformContext context, ref ControlFlowGraph? cfg)
 		{
-			if (!MatchIsInstBlock(block, out var type, out var testedOperand,
-				out var unboxBlock, out var falseBlock))
+			if (!MatchIsInstBlock(block, out var type, out var testedOperand, out var testedVariable,
+				out var boxType1, out var unboxBlock, out var falseBlock))
 			{
 				return false;
 			}
 			StLoc? tempStore = block.Instructions.ElementAtOrDefault(block.Instructions.Count - 3) as StLoc;
-			if (tempStore == null || !tempStore.Value.MatchLdLoc(testedOperand.Variable))
+			if (tempStore == null || !tempStore.Value.MatchLdLoc(testedVariable))
 			{
 				tempStore = null;
 			}
-			if (!MatchUnboxBlock(unboxBlock, type, out var unboxOperand, out var v, out var storeToV))
+			if (!MatchUnboxBlock(unboxBlock, type, out var unboxOperand, out var boxType2, out var storeToV))
 			{
 				return false;
 			}
-			if (unboxOperand == testedOperand.Variable)
+			if (!object.Equals(boxType1, boxType2))
+			{
+				return false;
+			}
+			if (unboxOperand == testedVariable)
 			{
 				// do nothing
 			}
@@ -267,11 +271,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
-			if (!CheckAllUsesDominatedBy(v, container, unboxBlock, storeToV, null, context, ref cfg))
+			if (!CheckAllUsesDominatedBy(storeToV.Variable, container, unboxBlock, storeToV, null, context, ref cfg))
 				return false;
-			context.Step($"PatternMatching with {v.Name}", block);
+			context.Step($"PatternMatching with {storeToV.Variable.Name}", block);
 			var ifInst = (IfInstruction)block.Instructions.SecondToLastOrDefault()!;
-			ifInst.Condition = new MatchInstruction(v, testedOperand) {
+			ifInst.Condition = new MatchInstruction(storeToV.Variable, testedOperand) {
 				CheckNotNull = true,
 				CheckType = true
 			};
@@ -286,25 +290,35 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// should become the then-branch. Change the unboxBlock StartILOffset from an offset inside
 			// the pattern matching machinery to an offset belonging to an instruction in the then-block.
 			unboxBlock.SetILRange(unboxBlock.Instructions[0]);
-			v.Kind = VariableKind.PatternLocal;
+			storeToV.Variable.Kind = VariableKind.PatternLocal;
 			return true;
 		}
 
 		///	...
 		/// if (comp.o(isinst T(ldloc testedOperand) == ldnull)) br falseBlock
 		/// br unboxBlock
+		/// - or -
+		/// ...
+		/// if (comp.o(isinst T(box ``0(ldloc testedOperand)) == ldnull)) br falseBlock
+		/// br unboxBlock
 		private bool MatchIsInstBlock(Block block,
 			[NotNullWhen(true)] out IType? type,
-			[NotNullWhen(true)] out LdLoc? testedOperand,
+			[NotNullWhen(true)] out ILInstruction? testedOperand,
+			[NotNullWhen(true)] out ILVariable? testedVariable,
+			out IType? boxType,
 			[NotNullWhen(true)] out Block? unboxBlock,
 			[NotNullWhen(true)] out Block? falseBlock)
 		{
 			type = null;
 			testedOperand = null;
+			testedVariable = null;
+			boxType = null;
 			unboxBlock = null;
 			falseBlock = null;
 			if (!block.MatchIfAtEndOfBlock(out var condition, out var trueInst, out var falseInst))
+			{
 				return false;
+			}
 			if (condition.MatchCompEqualsNull(out var arg))
 			{
 				ExtensionMethods.Swap(ref trueInst, ref falseInst);
@@ -317,11 +331,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
-			if (!arg.MatchIsInst(out arg, out type))
+			if (!arg.MatchIsInst(out testedOperand, out type))
+			{
 				return false;
-			testedOperand = arg as LdLoc;
-			if (testedOperand == null)
+			}
+			if (!(testedOperand.MatchBox(out var boxArg, out boxType) && boxType.Kind == TypeKind.TypeParameter))
+			{
+				boxArg = testedOperand;
+			}
+			if (!boxArg.MatchLdLoc(out testedVariable))
+			{
 				return false;
+			}
 			return trueInst.MatchBranch(out unboxBlock) && falseInst.MatchBranch(out falseBlock)
 				&& unboxBlock.Parent == block.Parent && falseBlock.Parent == block.Parent;
 		}
@@ -329,21 +350,40 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Block unboxBlock (incoming: 1) {
 		/// 	stloc V(unbox.any T(ldloc testedOperand))
 		/// 	...
+		/// 	- or -
+		/// 	stloc V(unbox.any T(isinst T(box ``0(ldloc testedOperand))))
+		/// 	...
 		/// }
-		private bool MatchUnboxBlock(Block unboxBlock, IType type, [NotNullWhen(true)] out ILVariable? testedOperand,
-			[NotNullWhen(true)] out ILVariable? v, [NotNullWhen(true)] out ILInstruction? storeToV)
+		private bool MatchUnboxBlock(Block unboxBlock, IType type, [NotNullWhen(true)] out ILVariable? testedVariable,
+			out IType? boxType, [NotNullWhen(true)] out StLoc? storeToV)
 		{
-			v = null;
+			boxType = null;
 			storeToV = null;
-			testedOperand = null;
+			testedVariable = null;
 			if (unboxBlock.IncomingEdgeCount != 1)
 				return false;
-			storeToV = unboxBlock.Instructions[0];
-			if (!storeToV.MatchStLoc(out v, out var value))
+			storeToV = unboxBlock.Instructions[0] as StLoc;
+			if (storeToV == null)
 				return false;
-			if (!(value.MatchUnboxAny(out var arg, out var t) && t.Equals(type) && arg.MatchLdLoc(out testedOperand)))
+			var value = storeToV.Value;
+			if (!(value.MatchUnboxAny(out var arg, out var t) && t.Equals(type)))
 				return false;
-
+			if (arg.MatchIsInst(out var isinstArg, out var isinstType) && isinstType.Equals(type))
+			{
+				arg = isinstArg;
+			}
+			if (arg.MatchBox(out var boxArg, out boxType) && boxType.Kind == TypeKind.TypeParameter)
+			{
+				arg = boxArg;
+			}
+			if (!arg.MatchLdLoc(out testedVariable))
+			{
+				return false;
+			}
+			if (boxType != null && !boxType.Equals(testedVariable.Type))
+			{
+				return false;
+			}
 			return true;
 		}
 	}

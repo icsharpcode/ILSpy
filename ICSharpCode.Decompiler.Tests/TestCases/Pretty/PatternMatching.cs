@@ -231,6 +231,78 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #endif
 		}
 
+		public void GenericTypePatternInt<T>(T x)
+		{
+			if (x is int value)
+			{
+				Console.WriteLine(value);
+			}
+			else
+			{
+				Console.WriteLine("not an int");
+			}
+		}
+
+		public void GenericValueTypePatternInt<T>(T x) where T : struct
+		{
+			if (x is int value)
+			{
+				Console.WriteLine(value);
+			}
+			else
+			{
+				Console.WriteLine("not an int");
+			}
+		}
+
+		public void GenericRefTypePatternInt<T>(T x) where T : class
+		{
+			if (x is int value)
+			{
+				Console.WriteLine(value);
+			}
+			else
+			{
+				Console.WriteLine("not an int");
+			}
+		}
+
+		public void GenericTypePatternString<T>(T x)
+		{
+			if (x is string value)
+			{
+				Console.WriteLine(value);
+			}
+			else
+			{
+				Console.WriteLine("not a string");
+			}
+		}
+
+		public void GenericRefTypePatternString<T>(T x) where T : class
+		{
+			if (x is string value)
+			{
+				Console.WriteLine(value);
+			}
+			else
+			{
+				Console.WriteLine("not a string");
+			}
+		}
+
+		public void GenericValueTypePatternStringRequiresCastToObject<T>(T x) where T : struct
+		{
+			if ((object)x is string value)
+			{
+				Console.WriteLine(value);
+			}
+			else
+			{
+				Console.WriteLine("not a string");
+			}
+		}
+
 		private bool F()
 		{
 			return true;

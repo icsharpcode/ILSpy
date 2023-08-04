@@ -4537,6 +4537,15 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitMatchInstruction(MatchInstruction inst, TranslationContext context)
 		{
 			var left = Translate(inst.TestedOperand);
+			// remove boxing conversion if possible, however, we still need a cast in
+			// test case PatternMatching.GenericValueTypePatternStringRequiresCastToObject
+			if (left.ResolveResult is ConversionResolveResult crr
+				&& crr.Conversion.IsBoxingConversion
+				&& left.Expression is CastExpression castExpr
+				&& (crr.Input.Type.IsReferenceType != false || inst.Variable.Type.IsReferenceType == false))
+			{
+				left = left.UnwrapChild(castExpr.Expression);
+			}
 			var right = TranslatePattern(inst);
 
 			return new BinaryOperatorExpression(left, BinaryOperatorType.IsPattern, right)
