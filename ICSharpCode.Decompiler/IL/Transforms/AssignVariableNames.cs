@@ -432,12 +432,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (string.IsNullOrEmpty(proposedName))
 			{
-				var proposedNameForStores = variable.StoreInstructions.OfType<StLoc>()
-					.Select(expr => GetNameFromInstruction(expr.Value))
-					.Except(currentLowerCaseTypeOrMemberNames).ToList();
+				var proposedNameForStores = new HashSet<string>();
+				foreach (var store in variable.StoreInstructions)
+				{
+					if (store is StLoc stloc)
+					{
+						var name = GetNameFromInstruction(stloc.Value);
+						if (!currentLowerCaseTypeOrMemberNames.Contains(name))
+							proposedNameForStores.Add(name);
+					}
+					else if (store is MatchInstruction match && match.SlotInfo == MatchInstruction.SubPatternsSlot)
+					{
+						var name = GetNameFromInstruction(match.TestedOperand);
+						if (!currentLowerCaseTypeOrMemberNames.Contains(name))
+							proposedNameForStores.Add(name);
+					}
+				}
 				if (proposedNameForStores.Count == 1)
 				{
-					proposedName = proposedNameForStores[0];
+					proposedName = proposedNameForStores.Single();
 				}
 			}
 			if (string.IsNullOrEmpty(proposedName))

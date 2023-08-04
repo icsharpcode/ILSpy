@@ -4558,16 +4558,21 @@ namespace ICSharpCode.Decompiler.CSharp
 			switch (pattern)
 			{
 				case MatchInstruction matchInstruction:
-					if (!matchInstruction.CheckType)
-						throw new NotImplementedException();
 					if (matchInstruction.IsDeconstructCall)
 						throw new NotImplementedException();
 					if (matchInstruction.IsDeconstructTuple)
 						throw new NotImplementedException();
-					if (matchInstruction.SubPatterns.Count > 0)
+					if (matchInstruction.SubPatterns.Count > 0 || (matchInstruction.CheckNotNull && !matchInstruction.CheckType))
 					{
 						RecursivePatternExpression recursivePatternExpression = new();
-						recursivePatternExpression.Type = ConvertType(matchInstruction.Variable.Type);
+						if (matchInstruction.CheckType)
+						{
+							recursivePatternExpression.Type = ConvertType(matchInstruction.Variable.Type);
+						}
+						else
+						{
+							Debug.Assert(matchInstruction.CheckNotNull);
+						}
 						foreach (var subPattern in matchInstruction.SubPatterns)
 						{
 							if (!MatchInstruction.IsPatternMatch(subPattern, out var testedOperand))
@@ -4602,17 +4607,28 @@ namespace ICSharpCode.Decompiler.CSharp
 						}
 						return recursivePatternExpression.WithILInstruction(matchInstruction);
 					}
-					else if (matchInstruction.HasDesignator)
+					else if (matchInstruction.HasDesignator || !matchInstruction.CheckType)
 					{
 						SingleVariableDesignation designator = new SingleVariableDesignation { Identifier = matchInstruction.Variable.Name };
 						designator.AddAnnotation(new ILVariableResolveResult(matchInstruction.Variable));
+						AstType type;
+						if (matchInstruction.CheckType)
+						{
+							type = ConvertType(matchInstruction.Variable.Type);
+						}
+						else
+						{
+							Debug.Assert(matchInstruction.IsVar);
+							type = new SimpleType("var");
+						}
 						return new DeclarationExpression {
-							Type = ConvertType(matchInstruction.Variable.Type),
+							Type = type,
 							Designation = designator
 						}.WithILInstruction(matchInstruction);
 					}
 					else
 					{
+						Debug.Assert(matchInstruction.CheckType);
 						return new TypeReferenceExpression(ConvertType(matchInstruction.Variable.Type))
 							.WithILInstruction(matchInstruction);
 					}

@@ -318,9 +318,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if CS80
 		public void RecursivePattern_Type(object x)
 		{
-			if (x is X { C: string text })
+			if (x is X { C: string c })
 			{
-				Console.WriteLine("Test " + text);
+				Console.WriteLine("Test " + c);
 			}
 			else
 			{
@@ -369,6 +369,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			if (obj is S { I: 42 } s)
 			{
 				Console.WriteLine("Test " + s);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePattern_MultipleConstantsMixedWithVar(object x)
+		{
+			if (x is X { A: 42, C: var c, B: "Hello" })
+			{
+				Console.WriteLine("Test " + c);
 			}
 			else
 			{
