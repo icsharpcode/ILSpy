@@ -4564,9 +4564,45 @@ namespace ICSharpCode.Decompiler.CSharp
 						throw new NotImplementedException();
 					if (matchInstruction.IsDeconstructTuple)
 						throw new NotImplementedException();
-					if (matchInstruction.SubPatterns.Any())
-						throw new NotImplementedException();
-					if (matchInstruction.HasDesignator)
+					if (matchInstruction.SubPatterns.Count > 0)
+					{
+						RecursivePatternExpression recursivePatternExpression = new();
+						recursivePatternExpression.Type = ConvertType(matchInstruction.Variable.Type);
+						foreach (var subPattern in matchInstruction.SubPatterns)
+						{
+							if (!MatchInstruction.IsPatternMatch(subPattern, out var testedOperand))
+							{
+								Debug.Fail("Invalid sub pattern");
+								continue;
+							}
+							IMember member;
+							if (testedOperand is CallInstruction call)
+							{
+								member = call.Method.AccessorOwner;
+							}
+							else if (testedOperand.MatchLdFld(out _, out var f))
+							{
+								member = f;
+							}
+							else
+							{
+								Debug.Fail("Invalid sub pattern");
+								continue;
+							}
+							recursivePatternExpression.SubPatterns.Add(
+								new NamedArgumentExpression { Name = member.Name, Expression = TranslatePattern(subPattern) }
+									.WithRR(new MemberResolveResult(null, member))
+							);
+						}
+						if (matchInstruction.HasDesignator)
+						{
+							SingleVariableDesignation designator = new SingleVariableDesignation { Identifier = matchInstruction.Variable.Name };
+							designator.AddAnnotation(new ILVariableResolveResult(matchInstruction.Variable));
+							recursivePatternExpression.Designation = designator;
+						}
+						return recursivePatternExpression.WithILInstruction(matchInstruction);
+					}
+					else if (matchInstruction.HasDesignator)
 					{
 						SingleVariableDesignation designator = new SingleVariableDesignation { Identifier = matchInstruction.Variable.Name };
 						designator.AddAnnotation(new ILVariableResolveResult(matchInstruction.Variable));

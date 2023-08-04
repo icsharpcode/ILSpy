@@ -22,6 +22,7 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Reflection;
 
 using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -39,7 +40,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			foreach (var container in function.Descendants.OfType<BlockContainer>())
 			{
 				ControlFlowGraph? cfg = null;
-				foreach (var block in container.Blocks)
+				foreach (var block in container.Blocks.Reverse())
 				{
 					if (PatternMatchValueTypes(block, container, context, ref cfg))
 					{
@@ -179,7 +180,48 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			block.Instructions[block.Instructions.Count - 1] = falseInst;
 			block.Instructions.RemoveRange(pos, ifInst.ChildIndex - pos);
 			v.Kind = VariableKind.PatternLocal;
+
+			if (trueInst.MatchBranch(out var trueBlock) && trueBlock.IncomingEdgeCount == 1 && trueBlock.Parent == container)
+			{
+				DetectPropertySubPatterns((MatchInstruction)ifInst.Condition, trueBlock, falseInst);
+			}
+
 			return true;
+		}
+
+		private bool DetectPropertySubPatterns(MatchInstruction parentPattern, Block block, ILInstruction parentFalseInst)
+		{
+			// if (match.notnull.type[System.String] (V_0 = callvirt get_C(ldloc V_2))) br IL_0022
+			// br IL_0037
+			if (block.Instructions.Count == 2 && block.MatchIfAtEndOfBlock(out var condition, out var trueInst, out var falseInst))
+			{
+				if (MatchInstruction.IsPatternMatch(condition, out var operand))
+				{
+					if (operand is not CallInstruction {
+						Method: {
+							SymbolKind: SymbolKind.Accessor,
+							AccessorKind: MethodSemanticsAttributes.Getter
+						},
+						Arguments: [LdLoc ldloc]
+					} call)
+					{
+						return false;
+					}
+					if (ldloc.Variable != parentPattern.Variable)
+					{
+						return false;
+					}
+					if (!DetectExitPoints.CompatibleExitInstruction(parentFalseInst, falseInst))
+					{
+						return false;
+					}
+					parentPattern.SubPatterns.Add(condition);
+					block.Instructions.RemoveAt(0);
+					block.Instructions[0] = trueInst;
+					return true;
+				}
+			}
+			return false;
 		}
 
 		private bool CheckAllUsesDominatedBy(ILVariable v, BlockContainer container, ILInstruction trueInst,

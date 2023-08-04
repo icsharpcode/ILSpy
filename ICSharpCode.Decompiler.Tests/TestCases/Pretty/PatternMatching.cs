@@ -4,6 +4,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class PatternMatching
 	{
+		public class X
+		{
+			public int A { get; set; }
+			public string B { get; set; }
+			public object C { get; set; }
+		}
+
 		public void SimpleTypePattern(object x)
 		{
 			if (x is string value)
@@ -300,6 +307,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			else
 			{
 				Console.WriteLine("not a string");
+			}
+		}
+
+		public void RecursivePattern_Type(object x)
+		{
+			if (x is X { C: string text })
+			{
+				Console.WriteLine("Test " + text);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
 			}
 		}
 
