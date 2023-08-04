@@ -4546,14 +4546,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				left = left.UnwrapChild(castExpr.Expression);
 			}
-			var right = TranslatePattern(inst);
+			var right = TranslatePattern(inst, left.Type);
 
 			return new BinaryOperatorExpression(left, BinaryOperatorType.IsPattern, right)
 				.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)))
 				.WithILInstruction(inst);
 		}
 
-		ExpressionWithILInstruction TranslatePattern(ILInstruction pattern)
+		ExpressionWithILInstruction TranslatePattern(ILInstruction pattern, IType leftHandType)
 		{
 			switch (pattern)
 			{
@@ -4590,7 +4590,7 @@ namespace ICSharpCode.Decompiler.CSharp
 								continue;
 							}
 							recursivePatternExpression.SubPatterns.Add(
-								new NamedArgumentExpression { Name = member.Name, Expression = TranslatePattern(subPattern) }
+								new NamedArgumentExpression { Name = member.Name, Expression = TranslatePattern(subPattern, member.ReturnType) }
 									.WithRR(new MemberResolveResult(null, member))
 							);
 						}
@@ -4615,6 +4615,31 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						return new TypeReferenceExpression(ConvertType(matchInstruction.Variable.Type))
 							.WithILInstruction(matchInstruction);
+					}
+				case Comp comp:
+					var constantValue = Translate(comp.Right, leftHandType);
+					switch (comp.Kind)
+					{
+						case ComparisonKind.Equality:
+							return constantValue
+								.WithILInstruction(comp);
+						case ComparisonKind.Inequality:
+							return new UnaryOperatorExpression(UnaryOperatorType.PatternNot, constantValue)
+								.WithILInstruction(comp);
+						case ComparisonKind.LessThan:
+							return new UnaryOperatorExpression(UnaryOperatorType.PatternRelationalLessThan, constantValue)
+								.WithILInstruction(comp);
+						case ComparisonKind.LessThanOrEqual:
+							return new UnaryOperatorExpression(UnaryOperatorType.PatternRelationalLessThanOrEqual, constantValue)
+								.WithILInstruction(comp);
+						case ComparisonKind.GreaterThan:
+							return new UnaryOperatorExpression(UnaryOperatorType.PatternRelationalGreaterThan, constantValue)
+								.WithILInstruction(comp);
+						case ComparisonKind.GreaterThanOrEqual:
+							return new UnaryOperatorExpression(UnaryOperatorType.PatternRelationalGreaterThanOrEqual, constantValue)
+								.WithILInstruction(comp);
+						default:
+							throw new InvalidOperationException("Unexpected comparison kind: " + comp.Kind);
 					}
 				default:
 					throw new NotImplementedException();

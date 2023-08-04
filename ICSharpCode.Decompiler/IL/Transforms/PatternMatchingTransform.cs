@@ -183,17 +183,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			if (trueInst.MatchBranch(out var trueBlock) && trueBlock.IncomingEdgeCount == 1 && trueBlock.Parent == container)
 			{
-				DetectPropertySubPatterns((MatchInstruction)ifInst.Condition, trueBlock, falseInst);
+				DetectPropertySubPatterns((MatchInstruction)ifInst.Condition, trueBlock, falseInst, context);
 			}
 
 			return true;
 		}
 
-		private bool DetectPropertySubPatterns(MatchInstruction parentPattern, Block block, ILInstruction parentFalseInst)
+		private bool DetectPropertySubPatterns(MatchInstruction parentPattern, Block block, ILInstruction parentFalseInst, ILTransformContext context)
 		{
 			// if (match.notnull.type[System.String] (V_0 = callvirt get_C(ldloc V_2))) br IL_0022
 			// br IL_0037
-			if (block.Instructions.Count == 2 && block.MatchIfAtEndOfBlock(out var condition, out var trueInst, out var falseInst))
+			if (MatchBlockContainingOneCondition(block, out var condition, out var trueInst, out var falseInst))
 			{
 				if (MatchInstruction.IsPatternMatch(condition, out var operand))
 				{
@@ -213,15 +213,42 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					if (!DetectExitPoints.CompatibleExitInstruction(parentFalseInst, falseInst))
 					{
-						return false;
+						if (!DetectExitPoints.CompatibleExitInstruction(parentFalseInst, trueInst))
+						{
+							return false;
+						}
+						ExtensionMethods.Swap(ref trueInst, ref falseInst);
+						condition = Comp.LogicNot(condition);
 					}
+					context.Step("Move property sub pattern", condition);
 					parentPattern.SubPatterns.Add(condition);
-					block.Instructions.RemoveAt(0);
-					block.Instructions[0] = trueInst;
+					block.Instructions.Clear();
+					block.Instructions.Add(trueInst);
 					return true;
 				}
 			}
 			return false;
+		}
+
+		private static bool MatchBlockContainingOneCondition(Block block, [NotNullWhen(true)] out ILInstruction? condition, [NotNullWhen(true)] out ILInstruction? trueInst, [NotNullWhen(true)] out ILInstruction? falseInst)
+		{
+			switch (block.Instructions.Count)
+			{
+				case 2:
+					return block.MatchIfAtEndOfBlock(out condition, out trueInst, out falseInst);
+				case 3:
+					condition = null;
+					if (!block.MatchIfAtEndOfBlock(out var loadTemp, out trueInst, out falseInst))
+						return false;
+					if (!(loadTemp.MatchLdLoc(out var tempVar) && tempVar.IsSingleDefinition && tempVar.LoadCount == 1))
+						return false;
+					return block.Instructions[0].MatchStLoc(tempVar, out condition);
+				default:
+					condition = null;
+					trueInst = null;
+					falseInst = null;
+					return false;
+			}
 		}
 
 		private bool CheckAllUsesDominatedBy(ILVariable v, BlockContainer container, ILInstruction trueInst,
