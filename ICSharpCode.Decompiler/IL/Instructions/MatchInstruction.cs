@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 using ICSharpCode.Decompiler.TypeSystem;
+
 namespace ICSharpCode.Decompiler.IL
 {
 	partial class MatchInstruction : ILInstruction
@@ -211,12 +212,12 @@ namespace ICSharpCode.Decompiler.IL
 				}
 				else if (operand.MatchLdFld(out var target, out _))
 				{
-					Debug.Assert(target.MatchLdLoc(variable));
+					Debug.Assert(target.MatchLdLocRef(variable));
 				}
 				else if (operand is CallInstruction call)
 				{
 					Debug.Assert(call.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Getter);
-					Debug.Assert(call.Arguments[0].MatchLdLoc(variable));
+					Debug.Assert(call.Arguments[0].MatchLdLocRef(variable));
 				}
 				else
 				{

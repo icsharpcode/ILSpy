@@ -11,6 +11,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public object C { get; set; }
 		}
 
+		public struct S
+		{
+			public int I;
+		}
+
 		public void SimpleTypePattern(object x)
 		{
 			if (x is string value)
@@ -340,6 +345,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			if (obj is X { B: "Hello" } x)
 			{
 				Console.WriteLine("Test " + x);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePattern_MultipleConstants(object obj)
+		{
+			if (obj is X { A: 42, B: "Hello" } x)
+			{
+				Console.WriteLine("Test " + x);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePattern_ValueTypeWithField(object obj)
+		{
+			if (obj is S { I: 42 } s)
+			{
+				Console.WriteLine("Test " + s);
 			}
 			else
 			{

@@ -19,7 +19,6 @@
 #nullable enable
 
 using System;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
@@ -189,7 +188,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		private bool DetectPropertySubPatterns(MatchInstruction parentPattern, Block block, ILInstruction parentFalseInst, ILTransformContext context)
+		private void DetectPropertySubPatterns(MatchInstruction parentPattern, Block block, ILInstruction parentFalseInst, ILTransformContext context)
 		{
 			// if (match.notnull.type[System.String] (V_0 = callvirt get_C(ldloc V_2))) br IL_0022
 			// br IL_0037
@@ -197,25 +196,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (MatchInstruction.IsPatternMatch(condition, out var operand))
 				{
-					if (operand is not CallInstruction {
-						Method: {
-							SymbolKind: SymbolKind.Accessor,
-							AccessorKind: MethodSemanticsAttributes.Getter
-						},
-						Arguments: [LdLoc ldloc]
-					} call)
+					if (!PropertyOrFieldAccess(operand, out var target))
 					{
-						return false;
+						return;
 					}
-					if (ldloc.Variable != parentPattern.Variable)
+					if (!target.MatchLdLocRef(parentPattern.Variable))
 					{
-						return false;
+						return;
 					}
 					if (!DetectExitPoints.CompatibleExitInstruction(parentFalseInst, falseInst))
 					{
 						if (!DetectExitPoints.CompatibleExitInstruction(parentFalseInst, trueInst))
 						{
-							return false;
+							return;
 						}
 						ExtensionMethods.Swap(ref trueInst, ref falseInst);
 						condition = Comp.LogicNot(condition);
@@ -224,10 +217,36 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					parentPattern.SubPatterns.Add(condition);
 					block.Instructions.Clear();
 					block.Instructions.Add(trueInst);
-					return true;
+
+					if (trueInst.MatchBranch(out var trueBlock) && trueBlock.IncomingEdgeCount == 1 && trueBlock.Parent == block.Parent)
+					{
+						DetectPropertySubPatterns(parentPattern, trueBlock, falseInst, context);
+					}
 				}
 			}
-			return false;
+		}
+
+		private static bool PropertyOrFieldAccess(ILInstruction operand, [NotNullWhen(true)] out ILInstruction? target)
+		{
+			if (operand is CallInstruction {
+				Method: {
+					SymbolKind: SymbolKind.Accessor,
+					AccessorKind: MethodSemanticsAttributes.Getter
+				},
+				Arguments: [var _target]
+			})
+			{
+				target = _target;
+				return true;
+			}
+			else if (operand.MatchLdFld(out target, out _))
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
 		}
 
 		private static bool MatchBlockContainingOneCondition(Block block, [NotNullWhen(true)] out ILInstruction? condition, [NotNullWhen(true)] out ILInstruction? trueInst, [NotNullWhen(true)] out ILInstruction? falseInst)
@@ -310,7 +329,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		private bool PatternMatchValueTypes(Block block, BlockContainer container, ILTransformContext context, ref ControlFlowGraph? cfg)
 		{
 			if (!MatchIsInstBlock(block, out var type, out var testedOperand, out var testedVariable,
-				out var boxType1, out var unboxBlock, out var falseBlock))
+				out var boxType1, out var unboxBlock, out var falseInst))
 			{
 				return false;
 			}
@@ -348,8 +367,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				CheckNotNull = true,
 				CheckType = true
 			};
-			((Branch)ifInst.TrueInst).TargetBlock = unboxBlock;
-			((Branch)block.Instructions.Last()).TargetBlock = falseBlock;
+			ifInst.TrueInst = new Branch(unboxBlock);
+			block.Instructions[^1] = falseInst;
 			unboxBlock.Instructions.RemoveAt(0);
 			if (unboxOperand == tempStore?.Variable)
 			{
@@ -360,6 +379,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// the pattern matching machinery to an offset belonging to an instruction in the then-block.
 			unboxBlock.SetILRange(unboxBlock.Instructions[0]);
 			storeToV.Variable.Kind = VariableKind.PatternLocal;
+			DetectPropertySubPatterns((MatchInstruction)ifInst.Condition, unboxBlock, falseInst, context);
 			return true;
 		}
 
@@ -376,15 +396,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			[NotNullWhen(true)] out ILVariable? testedVariable,
 			out IType? boxType,
 			[NotNullWhen(true)] out Block? unboxBlock,
-			[NotNullWhen(true)] out Block? falseBlock)
+			[NotNullWhen(true)] out ILInstruction? falseInst)
 		{
 			type = null;
 			testedOperand = null;
 			testedVariable = null;
 			boxType = null;
 			unboxBlock = null;
-			falseBlock = null;
-			if (!block.MatchIfAtEndOfBlock(out var condition, out var trueInst, out var falseInst))
+			if (!block.MatchIfAtEndOfBlock(out var condition, out var trueInst, out falseInst))
 			{
 				return false;
 			}
@@ -412,8 +431,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
-			return trueInst.MatchBranch(out unboxBlock) && falseInst.MatchBranch(out falseBlock)
-				&& unboxBlock.Parent == block.Parent && falseBlock.Parent == block.Parent;
+			return trueInst.MatchBranch(out unboxBlock) && unboxBlock.Parent == block.Parent;
 		}
 
 		/// Block unboxBlock (incoming: 1) {
