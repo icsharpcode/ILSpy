@@ -256,7 +256,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 					if (v.Index != null && v.Kind.IsLocal())
 					{
 #if DEBUG
-						Debug.Assert(v.Index < types.Length && v.Type.Equals(types[v.Index.Value]));
+						Debug.Assert(v.Index < types.Length && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(v.Type, types[v.Index.Value]));
 #endif
 						localVariables.Add(v);
 					}
