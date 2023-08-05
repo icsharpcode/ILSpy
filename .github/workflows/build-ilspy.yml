@@ -95,7 +95,7 @@ jobs:
       run: |
         msbuild ILSpy.Installer.sln /t:Restore /p:Configuration="Release" /p:Platform="Any CPU"
         msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU"
-        msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU" /p:DefineConstants="ARM64"
+        msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU" /p:PlatformForInstaller="ARM64"
 
     - name: Build VS Extensions (for 2017-2019 and 2022)
       if: matrix.configuration == 'release'  

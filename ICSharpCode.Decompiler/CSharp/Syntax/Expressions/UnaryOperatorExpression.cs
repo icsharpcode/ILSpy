@@ -46,6 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static TokenRole NullConditionalRole = new TokenRole("?");
 		public readonly static TokenRole SuppressNullableWarningRole = new TokenRole("!");
 		public readonly static TokenRole IndexFromEndRole = new TokenRole("^");
+		public readonly static TokenRole PatternNotRole = new TokenRole("not");
 
 		public UnaryOperatorExpression()
 		{
@@ -126,6 +127,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return SuppressNullableWarningRole;
 				case UnaryOperatorType.IndexFromEnd:
 					return IndexFromEndRole;
+				case UnaryOperatorType.PatternNot:
+					return PatternNotRole;
+				case UnaryOperatorType.PatternRelationalLessThan:
+					return BinaryOperatorExpression.LessThanRole;
+				case UnaryOperatorType.PatternRelationalLessThanOrEqual:
+					return BinaryOperatorExpression.LessThanOrEqualRole;
+				case UnaryOperatorType.PatternRelationalGreaterThan:
+					return BinaryOperatorExpression.GreaterThanRole;
+				case UnaryOperatorType.PatternRelationalGreaterThanOrEqual:
+					return BinaryOperatorExpression.GreaterThanOrEqualRole;
 				default:
 					throw new NotSupportedException("Invalid value for UnaryOperatorType");
 			}
@@ -156,6 +167,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				case UnaryOperatorType.Await:
 				case UnaryOperatorType.SuppressNullableWarning:
 				case UnaryOperatorType.IndexFromEnd:
+				case UnaryOperatorType.PatternNot:
+				case UnaryOperatorType.PatternRelationalLessThan:
+				case UnaryOperatorType.PatternRelationalLessThanOrEqual:
+				case UnaryOperatorType.PatternRelationalGreaterThan:
+				case UnaryOperatorType.PatternRelationalGreaterThanOrEqual:
 					return ExpressionType.Extension;
 				default:
 					throw new NotSupportedException("Invalid value for UnaryOperatorType");
@@ -216,5 +232,25 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// C# 8 prefix ^ operator
 		/// </summary>
 		IndexFromEnd,
+		/// <summary>
+		/// C# 9 not pattern
+		/// </summary>
+		PatternNot,
+		/// <summary>
+		/// C# 9 relational pattern
+		/// </summary>
+		PatternRelationalLessThan,
+		/// <summary>
+		/// C# 9 relational pattern
+		/// </summary>
+		PatternRelationalLessThanOrEqual,
+		/// <summary>
+		/// C# 9 relational pattern
+		/// </summary>
+		PatternRelationalGreaterThan,
+		/// <summary>
+		/// C# 9 relational pattern
+		/// </summary>
+		PatternRelationalGreaterThanOrEqual,
 	}
 }

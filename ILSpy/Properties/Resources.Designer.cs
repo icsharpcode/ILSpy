@@ -1146,6 +1146,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Pattern combinators (and, or, not).
+        /// </summary>
+        public static string DecompilerSettings_PatternCombinators {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.PatternCombinators", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use pattern matching expressions.
         /// </summary>
         public static string DecompilerSettings_PatternMatching {
@@ -1196,6 +1205,24 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string DecompilerSettings_RecordStructs {
             get {
                 return ResourceManager.GetString("DecompilerSettings.RecordStructs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Recursive pattern matching.
+        /// </summary>
+        public static string DecompilerSettings_RecursivePatternMatching {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.RecursivePatternMatching", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Relational patterns.
+        /// </summary>
+        public static string DecompilerSettings_RelationalPatterns {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.RelationalPatterns", resourceCulture);
             }
         }
         
