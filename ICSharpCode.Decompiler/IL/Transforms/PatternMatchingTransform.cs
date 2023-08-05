@@ -285,7 +285,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				block.Instructions.RemoveAt(0);
 				targetVariable.Kind = VariableKind.PatternLocal;
 
-				var instructionAfterNullCheck = MatchNullCheckPattern(block, varPattern, parentFalseInst, context, ref cfg);
+				if (targetVariable.Type.IsKnownType(KnownTypeCode.NullableOfT))
+				{
+					var instructionAfterHasValueCheck = MatchNullableHasValueCheckPattern(block, varPattern, parentFalseInst, context);
+					return DetectPropertySubPatterns(varPattern, instructionAfterHasValueCheck, parentFalseInst, (BlockContainer)block.Parent!, context, ref cfg);
+				}
+
+				var instructionAfterNullCheck = MatchNullCheckPattern(block, varPattern, parentFalseInst, context);
 				if (instructionAfterNullCheck != null)
 				{
 					return DetectPropertySubPatterns(varPattern, instructionAfterNullCheck, parentFalseInst, (BlockContainer)block.Parent!, context, ref cfg);
@@ -306,7 +312,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		private static ILInstruction? MatchNullCheckPattern(Block block, MatchInstruction varPattern,
-			ILInstruction parentFalseInst, ILTransformContext context, ref ControlFlowGraph? cfg)
+			ILInstruction parentFalseInst, ILTransformContext context)
 		{
 			if (!MatchBlockContainingOneCondition(block, out var condition, out var trueInst, out var falseInst))
 			{
@@ -332,6 +338,46 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			block.Instructions.Clear();
 			block.Instructions.Add(trueInst);
 			return trueInst;
+		}
+		private static ILInstruction? MatchNullableHasValueCheckPattern(Block block, MatchInstruction varPattern,
+			ILInstruction parentFalseInst, ILTransformContext context)
+		{
+			if (!MatchBlockContainingOneCondition(block, out var condition, out var trueInst, out var falseInst))
+			{
+				return null;
+			}
+			if (!NullableLiftingTransform.MatchHasValueCall(condition, varPattern.Variable))
+			{
+				return null;
+			}
+			if (!DetectExitPoints.CompatibleExitInstruction(falseInst, parentFalseInst))
+			{
+				return null;
+			}
+			if (!(trueInst.MatchBranch(out var trueBlock) && trueBlock.Parent == block.Parent && trueBlock.IncomingEdgeCount == 1))
+			{
+				return null;
+			}
+			if (!trueBlock.Instructions[0].MatchStLoc(out var newTargetVariable, out var getValueOrDefaultCall))
+			{
+				return null;
+			}
+			if (!NullableLiftingTransform.MatchGetValueOrDefault(getValueOrDefaultCall, varPattern.Variable))
+			{
+				return null;
+			}
+			if (!(varPattern.Variable.StoreCount == 1 && varPattern.Variable.LoadCount == 0 && varPattern.Variable.AddressCount == 2))
+			{
+				return null;
+			}
+			context.Step("Nullable.HasValue check + Nullable.GetValueOrDefault pattern", block);
+			varPattern.CheckNotNull = true;
+			varPattern.Variable = newTargetVariable;
+			newTargetVariable.Kind = VariableKind.PatternLocal;
+			block.Instructions.Clear();
+			block.Instructions.Add(trueInst);
+			trueBlock.Instructions.RemoveAt(0);
+			return trueBlock;
 		}
 
 		private static bool PropertyOrFieldAccess(ILInstruction operand, [NotNullWhen(true)] out ILInstruction? target, [NotNullWhen(true)] out IMember? member)

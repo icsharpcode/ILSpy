@@ -6,10 +6,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		public class X
 		{
+			public int? NullableIntField;
+			public S? NullableCustomStructField;
 			public int I { get; set; }
 			public string Text { get; set; }
 			public object Obj { get; set; }
 			public S CustomStruct { get; set; }
+			public int? NullableIntProp { get; set; }
+			public S? NullableCustomStructProp { get; set; }
 		}
 
 		public struct S
@@ -480,6 +484,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			if (obj is X { Text: { Length: var length }, I: 42 } x)
 			{
 				Console.WriteLine("Test " + x.I + ": " + length);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePattern_NullableCustomStructProp_Const(object obj)
+		{
+			if (obj is X { NullableCustomStructProp: { I: 42, Obj: not null } nullableCustomStructProp })
+			{
+				Console.WriteLine("Test " + nullableCustomStructProp.Text);
 			}
 			else
 			{
