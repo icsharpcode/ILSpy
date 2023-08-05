@@ -189,6 +189,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		private static ILInstruction DetectPropertySubPatterns(MatchInstruction parentPattern, ILInstruction trueInst,
 			ILInstruction parentFalseInst, BlockContainer container, ILTransformContext context, ref ControlFlowGraph? cfg)
 		{
+			if (!context.Settings.RecursivePatternMatching)
+			{
+				return trueInst;
+			}
 			while (true)
 			{
 				Block? trueBlock = trueInst as Block;
@@ -230,13 +234,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					ExtensionMethods.Swap(ref trueInst, ref falseInst);
 					negate = true;
 				}
-				if (MatchInstruction.IsPatternMatch(condition, out var operand))
+				if (MatchInstruction.IsPatternMatch(condition, out var operand, context.Settings))
 				{
 					if (!PropertyOrFieldAccess(operand, out var target, out _))
 					{
 						return null;
 					}
 					if (!target.MatchLdLocRef(parentPattern.Variable))
+					{
+						return null;
+					}
+					if (negate && !context.Settings.PatternCombinators)
 					{
 						return null;
 					}
@@ -253,8 +261,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						return null;
 					}
-					context.Step("Move property sub pattern", condition);
-					parentPattern.SubPatterns.Add(new Comp(negate ? ComparisonKind.Equality : ComparisonKind.Inequality, Sign.None, condition, new LdcI4(0)));
+					if (!negate && !context.Settings.PatternCombinators)
+					{
+						return null;
+					}
+					context.Step("Sub pattern: implicit != 0", condition);
+					parentPattern.SubPatterns.Add(new Comp(negate ? ComparisonKind.Equality : ComparisonKind.Inequality,
+						Sign.None, condition, new LdcI4(0)));
 				}
 				else
 				{
@@ -376,7 +389,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				return null;
 			}
-			if (varPattern.Variable.AddressCount == 1)
+			if (varPattern.Variable.AddressCount == 1 && context.Settings.PatternCombinators)
 			{
 				context.Step("Nullable.HasValue check -> not null pattern", block);
 				varPattern.ReplaceWith(new Comp(ComparisonKind.Inequality, ComparisonLiftingKind.CSharp, StackType.O, Sign.None, varPattern.TestedOperand, new LdNull()));
@@ -412,6 +425,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					return null;
 				}
+				if (!(context.Settings.RelationalPatterns || comp.Kind is ComparisonKind.Equality or ComparisonKind.Inequality))
+				{
+					return null;
+				}
 				bool negated = false;
 				if (!DetectExitPoints.CompatibleExitInstruction(falseInst, parentFalseInst))
 				{
@@ -423,6 +440,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					negated = true;
 				}
 				if (comp.Kind == (negated ? ComparisonKind.Equality : ComparisonKind.Inequality))
+				{
+					return null;
+				}
+				if (negated && !context.Settings.PatternCombinators)
 				{
 					return null;
 				}

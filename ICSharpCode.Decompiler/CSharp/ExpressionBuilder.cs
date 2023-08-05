@@ -4575,7 +4575,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						}
 						foreach (var subPattern in matchInstruction.SubPatterns)
 						{
-							if (!MatchInstruction.IsPatternMatch(subPattern, out var testedOperand))
+							if (!MatchInstruction.IsPatternMatch(subPattern, out var testedOperand, settings))
 							{
 								Debug.Fail("Invalid sub pattern");
 								continue;

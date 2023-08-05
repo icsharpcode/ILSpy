@@ -119,7 +119,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// (even if the pattern fails to match!).
 		/// The pattern matching instruction evaluates to 1 (as I4) if the pattern matches, or 0 otherwise.
 		/// </summary>
-		public static bool IsPatternMatch(ILInstruction? inst, [NotNullWhen(true)] out ILInstruction? testedOperand)
+		public static bool IsPatternMatch(ILInstruction? inst, [NotNullWhen(true)] out ILInstruction? testedOperand, DecompilerSettings? settings)
 		{
 			switch (inst)
 			{
@@ -127,13 +127,23 @@ namespace ICSharpCode.Decompiler.IL
 					testedOperand = m.testedOperand;
 					return true;
 				case Comp comp:
-					if (comp.MatchLogicNot(out var operand) && IsPatternMatch(operand, out testedOperand))
+					if (comp.MatchLogicNot(out var operand) && IsPatternMatch(operand, out testedOperand, settings))
 					{
-						return true;
+						return settings?.PatternCombinators ?? true;
 					}
 					else
 					{
 						testedOperand = comp.Left;
+						if (!(settings?.RelationalPatterns ?? true))
+						{
+							if (comp.Kind is not (ComparisonKind.Equality or ComparisonKind.Inequality))
+								return false;
+						}
+						if (!(settings?.PatternCombinators ?? true))
+						{
+							if (comp.Kind is ComparisonKind.Inequality)
+								return false;
+						}
 						return IsConstant(comp.Right);
 					}
 				case Call call when IsCallToString_op_Equality(call):
@@ -201,7 +211,7 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(SubPatterns.Count >= NumPositionalPatterns);
 			foreach (var subPattern in SubPatterns)
 			{
-				if (!IsPatternMatch(subPattern, out ILInstruction? operand))
+				if (!IsPatternMatch(subPattern, out ILInstruction? operand, null))
 					throw new InvalidOperationException("Sub-Pattern must be a valid pattern");
 				// the first child is TestedOperand
 				int subPatternIndex = subPattern.ChildIndex - 1;

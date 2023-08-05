@@ -557,7 +557,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 				}
 			}
-			if (MatchInstruction.IsPatternMatch(inst.Condition, out _)
+			if (MatchInstruction.IsPatternMatch(inst.Condition, out _, context.Settings)
 				&& inst.TrueInst.MatchLdcI4(1) && inst.FalseInst.MatchLdcI4(0))
 			{
 				context.Step("match(x) ? true : false -> match(x)", inst);
