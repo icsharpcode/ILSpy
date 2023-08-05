@@ -347,6 +347,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		private static ILInstruction? MatchNullableHasValueCheckPattern(Block block, MatchInstruction varPattern,
 			ILInstruction parentFalseInst, ILTransformContext context, ref ControlFlowGraph? cfg)
 		{
+			if (!(varPattern.Variable.StoreCount == 1 && varPattern.Variable.LoadCount == 0))
+			{
+				return null;
+			}
 			if (!MatchBlockContainingOneCondition(block, out var condition, out var trueInst, out var falseInst))
 			{
 				return null;
@@ -357,13 +361,34 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (!DetectExitPoints.CompatibleExitInstruction(falseInst, parentFalseInst))
 			{
+				if (DetectExitPoints.CompatibleExitInstruction(trueInst, parentFalseInst))
+				{
+					if (!(varPattern.Variable.AddressCount == 1))
+					{
+						return null;
+					}
+
+					context.Step("Nullable.HasValue check -> null pattern", block);
+					varPattern.ReplaceWith(new Comp(ComparisonKind.Equality, ComparisonLiftingKind.CSharp, StackType.O, Sign.None, varPattern.TestedOperand, new LdNull()));
+					block.Instructions.Clear();
+					block.Instructions.Add(falseInst);
+					return falseInst;
+				}
 				return null;
 			}
-			if (!(trueInst.MatchBranch(out var trueBlock) && trueBlock.Parent == block.Parent && trueBlock.IncomingEdgeCount == 1))
+			if (varPattern.Variable.AddressCount == 1)
+			{
+				context.Step("Nullable.HasValue check -> not null pattern", block);
+				varPattern.ReplaceWith(new Comp(ComparisonKind.Inequality, ComparisonLiftingKind.CSharp, StackType.O, Sign.None, varPattern.TestedOperand, new LdNull()));
+				block.Instructions.Clear();
+				block.Instructions.Add(trueInst);
+				return trueInst;
+			}
+			else if (varPattern.Variable.AddressCount != 2)
 			{
 				return null;
 			}
-			if (!(varPattern.Variable.StoreCount == 1 && varPattern.Variable.LoadCount == 0 && varPattern.Variable.AddressCount == 2))
+			if (!(trueInst.MatchBranch(out var trueBlock) && trueBlock.Parent == block.Parent && trueBlock.IncomingEdgeCount == 1))
 			{
 				return null;
 			}
@@ -463,7 +488,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					if (!(loadTemp.MatchLdLoc(out var tempVar) && tempVar.IsSingleDefinition && tempVar.LoadCount == 1))
 						return false;
-					return block.Instructions[0].MatchStLoc(tempVar, out condition);
+					if (!block.Instructions[0].MatchStLoc(tempVar, out condition))
+						return false;
+					while (condition.MatchLogicNot(out var arg))
+					{
+						condition = arg;
+						ExtensionMethods.Swap(ref trueInst, ref falseInst);
+					}
+					return true;
 				default:
 					condition = null;
 					trueInst = null;

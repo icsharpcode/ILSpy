@@ -503,6 +503,29 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public void RecursivePattern_NullableIntField_Null(object obj)
+		{
+			if (obj is X { NullableIntField: null } x)
+			{
+				Console.WriteLine("Test " + x);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePattern_NullableIntField_NotNull(object obj)
+		{
+			if (obj is X { NullableIntField: not null } x)
+			{
+				Console.WriteLine("Test " + x);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
 
 		public void RecursivePattern_NullableIntField_Var(object obj)
 		{
@@ -527,6 +550,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("not Test");
 			}
 		}
+
+		public void RecursivePattern_NullableIntProp_Null(object obj)
+		{
+			if (obj is X { NullableIntProp: null } x)
+			{
+				Console.WriteLine("Test " + x);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePattern_NullableIntProp_NotNull(object obj)
+		{
+			if (obj is X { NullableIntProp: not null } x)
+			{
+				Console.WriteLine("Test " + x);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
 		public void RecursivePattern_NullableIntProp_Var(object obj)
 		{
 			if (obj is X { NullableIntProp: var nullableIntProp })
@@ -551,6 +599,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public void RecursivePattern_NullableCustomStructField_Null(object obj)
+		{
+			if (obj is X { NullableCustomStructField: null } x)
+			{
+				Console.WriteLine("Test " + x);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePattern_NullableCustomStructField_NotNull(object obj)
+		{
+			if (obj is X { NullableCustomStructField: not null } x)
+			{
+				Console.WriteLine("Test " + x);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
 		public void RecursivePattern_NullableCustomStructField_Var(object obj)
 		{
 			if (obj is X { NullableCustomStructField: var nullableCustomStructField, Obj: null })
@@ -568,6 +640,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			if (obj is X { NullableCustomStructProp: { I: 42, Obj: not null } nullableCustomStructProp })
 			{
 				Console.WriteLine("Test " + nullableCustomStructProp.Text);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePattern_NullableCustomStructProp_Null(object obj)
+		{
+			if (obj is X { NullableCustomStructProp: null } x)
+			{
+				Console.WriteLine("Test " + x);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePattern_NullableCustomStructProp_NotNull(object obj)
+		{
+			if (obj is X { NullableCustomStructProp: not null } x)
+			{
+				Console.WriteLine("Test " + x);
 			}
 			else
 			{
