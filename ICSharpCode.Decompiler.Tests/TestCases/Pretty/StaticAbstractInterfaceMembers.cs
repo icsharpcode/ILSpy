@@ -2,16 +2,54 @@
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.StaticAbstractInterfaceMembers
 {
-	public interface I
+	internal interface I<T> where T : I<T>
+	{
+		static abstract T P { get; set; }
+		static abstract event Action E;
+		static abstract void M();
+		static abstract T operator +(T l, T r);
+		static abstract bool operator ==(T l, T r);
+		static abstract bool operator !=(T l, T r);
+		static abstract implicit operator T(string s);
+		static abstract explicit operator string(T t);
+	}
+
+	public interface IAmSimple
 	{
 		static abstract int Capacity { get; }
 		static abstract int Count { get; set; }
 		static abstract int SetterOnly { set; }
 		static abstract event EventHandler E;
-		static abstract I CreateI();
+		static abstract IAmSimple CreateI();
 	}
 
-	public class X : I
+	internal interface IAmStatic<T> where T : IAmStatic<T>
+	{
+		static T P { get; set; }
+		static event Action E;
+		static void M()
+		{
+		}
+		static T operator +(IAmStatic<T> l, T r)
+		{
+			throw new NotImplementedException();
+		}
+	}
+
+	internal interface IAmVirtual<T> where T : IAmVirtual<T>
+	{
+		static virtual T P { get; set; }
+		static virtual event Action E;
+		static virtual void M()
+		{
+		}
+		static virtual T operator +(T l, T r)
+		{
+			throw new NotImplementedException();
+		}
+	}
+
+	public class X : IAmSimple
 	{
 		public static int Capacity { get; }
 
@@ -24,13 +62,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.StaticAbstractInterfaceM
 
 		public static event EventHandler E;
 
-		public static I CreateI()
+		public static IAmSimple CreateI()
 		{
 			return new X();
 		}
 	}
 
-	public class X2 : I
+	public class X2 : IAmSimple
 	{
 		public static int Capacity {
 			get {
@@ -61,7 +99,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.StaticAbstractInterfaceM
 			}
 		}
 
-		public static I CreateI()
+		public static IAmSimple CreateI()
 		{
 			throw new NotImplementedException();
 		}

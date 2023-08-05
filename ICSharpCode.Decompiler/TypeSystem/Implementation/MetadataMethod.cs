@@ -576,8 +576,23 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsStatic => (attributes & MethodAttributes.Static) != 0;
 		public bool IsAbstract => (attributes & MethodAttributes.Abstract) != 0;
 		public bool IsSealed => (attributes & (MethodAttributes.Abstract | MethodAttributes.Final | MethodAttributes.NewSlot | MethodAttributes.Static)) == MethodAttributes.Final;
-		public bool IsVirtual => (attributes & (MethodAttributes.Abstract | MethodAttributes.Virtual | MethodAttributes.NewSlot | MethodAttributes.Final)) == (MethodAttributes.Virtual | MethodAttributes.NewSlot);
-		public bool IsOverride => (attributes & (MethodAttributes.NewSlot | MethodAttributes.Virtual)) == MethodAttributes.Virtual;
+
+		public bool IsVirtual {
+			get {
+				if (IsStatic)
+				{
+					return (attributes & (MethodAttributes.Abstract | MethodAttributes.Virtual)) == MethodAttributes.Virtual;
+				}
+				else
+				{
+					const MethodAttributes mask = MethodAttributes.Abstract | MethodAttributes.Virtual
+						| MethodAttributes.NewSlot | MethodAttributes.Final;
+					return (attributes & mask) == (MethodAttributes.Virtual | MethodAttributes.NewSlot);
+				}
+			}
+		}
+
+		public bool IsOverride => (attributes & (MethodAttributes.NewSlot | MethodAttributes.Virtual | MethodAttributes.Static)) == MethodAttributes.Virtual;
 		public bool IsOverridable
 			=> (attributes & (MethodAttributes.Abstract | MethodAttributes.Virtual)) != 0
 			&& (attributes & MethodAttributes.Final) == 0;

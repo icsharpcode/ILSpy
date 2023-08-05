@@ -2373,8 +2373,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						{
 							m |= Modifiers.Sealed;
 						}
-						if (member.IsAbstract && member.IsStatic)
-							m |= Modifiers.Abstract;
+						if (member.IsStatic)
+						{
+							// modifiers of static members in interfaces:
+							if (member.IsAbstract)
+								m |= Modifiers.Abstract;
+							else if (member.IsVirtual && !member.IsOverride)
+								m |= Modifiers.Virtual;
+						}
 					}
 					else
 					{
