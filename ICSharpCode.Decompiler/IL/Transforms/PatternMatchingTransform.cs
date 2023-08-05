@@ -186,11 +186,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		private static ILInstruction? DetectPropertySubPatterns(MatchInstruction parentPattern, ILInstruction? trueInst,
+		private static ILInstruction DetectPropertySubPatterns(MatchInstruction parentPattern, ILInstruction trueInst,
 			ILInstruction parentFalseInst, BlockContainer container, ILTransformContext context, ref ControlFlowGraph? cfg)
 		{
-			ILInstruction? prevTrueInst = trueInst;
-			while (trueInst != null)
+			while (true)
 			{
 				Block? trueBlock = trueInst as Block;
 				if (!(trueBlock != null || trueInst.MatchBranch(out trueBlock)))
@@ -201,13 +200,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					break;
 				}
-				trueInst = DetectPropertySubPattern(parentPattern, trueBlock, parentFalseInst, context, ref cfg);
-				if (trueInst != null)
+				var nextTrueInst = DetectPropertySubPattern(parentPattern, trueBlock, parentFalseInst, context, ref cfg);
+				if (nextTrueInst != null)
 				{
-					prevTrueInst = trueInst;
+					trueInst = nextTrueInst;
+				}
+				else
+				{
+					break;
 				}
 			}
-			return prevTrueInst;
+			return trueInst;
 		}
 
 		private static ILInstruction? DetectPropertySubPattern(MatchInstruction parentPattern, Block block,
@@ -288,7 +291,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 				if (targetVariable.Type.IsKnownType(KnownTypeCode.NullableOfT))
 				{
-					return MatchNullableHasValueCheckPattern(block, varPattern, parentFalseInst, context, ref cfg);
+					return MatchNullableHasValueCheckPattern(block, varPattern, parentFalseInst, context, ref cfg)
+						?? block;
 				}
 
 				var instructionAfterNullCheck = MatchNullCheckPattern(block, varPattern, parentFalseInst, context);
@@ -339,6 +343,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			block.Instructions.Add(trueInst);
 			return trueInst;
 		}
+
 		private static ILInstruction? MatchNullableHasValueCheckPattern(Block block, MatchInstruction varPattern,
 			ILInstruction parentFalseInst, ILTransformContext context, ref ControlFlowGraph? cfg)
 		{

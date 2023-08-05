@@ -503,11 +503,83 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+
+		public void RecursivePattern_NullableIntField_Var(object obj)
+		{
+			if (obj is X { NullableIntField: var nullableIntField })
+			{
+				Console.WriteLine("Test " + nullableIntField.Value);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePattern_NullableIntProp_Const(object obj)
+		{
+			if (obj is X { NullableIntProp: 42 } x)
+			{
+				Console.WriteLine("Test " + x);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+		public void RecursivePattern_NullableIntProp_Var(object obj)
+		{
+			if (obj is X { NullableIntProp: var nullableIntProp })
+			{
+				Console.WriteLine("Test " + nullableIntProp.Value);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePattern_NullableCustomStructField_Const(object obj)
+		{
+			if (obj is X { NullableCustomStructField: { I: 42, Obj: not null } nullableCustomStructField })
+			{
+				Console.WriteLine("Test " + nullableCustomStructField.I);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePattern_NullableCustomStructField_Var(object obj)
+		{
+			if (obj is X { NullableCustomStructField: var nullableCustomStructField, Obj: null })
+			{
+				Console.WriteLine("Test " + nullableCustomStructField.Value);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
 		public void RecursivePattern_NullableCustomStructProp_Const(object obj)
 		{
 			if (obj is X { NullableCustomStructProp: { I: 42, Obj: not null } nullableCustomStructProp })
 			{
 				Console.WriteLine("Test " + nullableCustomStructProp.Text);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePattern_NullableCustomStructProp_Var(object obj)
+		{
+			if (obj is X { NullableCustomStructProp: var nullableCustomStructProp, Obj: null })
+			{
+				Console.WriteLine("Test " + nullableCustomStructProp.Value);
 			}
 			else
 			{
