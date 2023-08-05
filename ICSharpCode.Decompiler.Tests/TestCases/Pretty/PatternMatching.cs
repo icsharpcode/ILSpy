@@ -331,6 +331,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public void RecursivePattern_TypeAndConst(object x)
+		{
+			if (x is X { Obj: string obj, I: 42 })
+			{
+				Console.WriteLine("Test " + obj);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
 		public void RecursivePattern_Constant(object obj)
 		{
 			if (obj is X { Obj: null } x)
@@ -444,6 +456,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			if (obj is S { I: 42, Text: { Length: var length } } s)
 			{
 				Console.WriteLine("Test " + s.I + ": " + length);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePatternValueType_VarLengthPattern_SwappedProps(object obj)
+		{
+			if (obj is S { Text: { Length: var length }, I: 42 } s)
+			{
+				Console.WriteLine("Test " + s.I + ": " + length);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePattern_VarLengthPattern_SwappedProps(object obj)
+		{
+			if (obj is X { Text: { Length: var length }, I: 42 } x)
+			{
+				Console.WriteLine("Test " + x.I + ": " + length);
 			}
 			else
 			{

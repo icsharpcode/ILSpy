@@ -180,15 +180,37 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			block.Instructions.RemoveRange(pos, ifInst.ChildIndex - pos);
 			v.Kind = VariableKind.PatternLocal;
 
-			if (trueInst.MatchBranch(out var trueBlock) && trueBlock.IncomingEdgeCount == 1 && trueBlock.Parent == container)
-			{
-				DetectPropertySubPatterns((MatchInstruction)ifInst.Condition, trueBlock, falseInst, context, ref cfg);
-			}
+			DetectPropertySubPatterns((MatchInstruction)ifInst.Condition, trueInst, falseInst, container, context, ref cfg);
 
 			return true;
 		}
 
-		private static void DetectPropertySubPatterns(MatchInstruction parentPattern, Block block, ILInstruction parentFalseInst, ILTransformContext context, ref ControlFlowGraph? cfg)
+		private static ILInstruction? DetectPropertySubPatterns(MatchInstruction parentPattern, ILInstruction? trueInst,
+			ILInstruction parentFalseInst, BlockContainer container, ILTransformContext context, ref ControlFlowGraph? cfg)
+		{
+			ILInstruction? prevTrueInst = trueInst;
+			while (trueInst != null)
+			{
+				Block? trueBlock = trueInst as Block;
+				if (!(trueBlock != null || trueInst.MatchBranch(out trueBlock)))
+				{
+					break;
+				}
+				if (!(trueBlock.IncomingEdgeCount == 1 && trueBlock.Parent == container))
+				{
+					break;
+				}
+				trueInst = DetectPropertySubPattern(parentPattern, trueBlock, parentFalseInst, context, ref cfg);
+				if (trueInst != null)
+				{
+					prevTrueInst = trueInst;
+				}
+			}
+			return prevTrueInst;
+		}
+
+		private static ILInstruction? DetectPropertySubPattern(MatchInstruction parentPattern, Block block,
+			ILInstruction parentFalseInst, ILTransformContext context, ref ControlFlowGraph? cfg)
 		{
 			// if (match.notnull.type[System.String] (V_0 = callvirt get_C(ldloc V_2))) br IL_0022
 			// br IL_0037
@@ -199,7 +221,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					if (!DetectExitPoints.CompatibleExitInstruction(parentFalseInst, trueInst))
 					{
-						return;
+						return null;
 					}
 					ExtensionMethods.Swap(ref trueInst, ref falseInst);
 					negate = true;
@@ -208,11 +230,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					if (!PropertyOrFieldAccess(operand, out var target, out _))
 					{
-						return;
+						return null;
 					}
 					if (!target.MatchLdLocRef(parentPattern.Variable))
 					{
-						return;
+						return null;
 					}
 					context.Step("Move property sub pattern", condition);
 					if (negate)
@@ -225,40 +247,36 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					if (!target.MatchLdLocRef(parentPattern.Variable))
 					{
-						return;
+						return null;
 					}
 					context.Step("Move property sub pattern", condition);
 					parentPattern.SubPatterns.Add(new Comp(negate ? ComparisonKind.Equality : ComparisonKind.Inequality, Sign.None, condition, new LdcI4(0)));
 				}
 				else
 				{
-					return;
+					return null;
 				}
 				block.Instructions.Clear();
 				block.Instructions.Add(trueInst);
-
-				if (trueInst.MatchBranch(out var trueBlock) && trueBlock.IncomingEdgeCount == 1 && trueBlock.Parent == block.Parent)
-				{
-					DetectPropertySubPatterns(parentPattern, trueBlock, falseInst, context, ref cfg);
-				}
+				return trueInst;
 			}
 			else if (block.Instructions[0].MatchStLoc(out var targetVariable, out var operand))
 			{
 				if (!PropertyOrFieldAccess(operand, out var target, out var member))
 				{
-					return;
+					return null;
 				}
 				if (!target.MatchLdLocRef(parentPattern.Variable))
 				{
-					return;
+					return null;
 				}
 				if (!targetVariable.Type.Equals(member.ReturnType))
 				{
-					return;
+					return null;
 				}
 				if (!CheckAllUsesDominatedBy(targetVariable, (BlockContainer)block.Parent!, block, block.Instructions[0], null, context, ref cfg))
 				{
-					return;
+					return null;
 				}
 				context.Step("Property var pattern", block);
 				var varPattern = new MatchInstruction(targetVariable, operand)
@@ -266,22 +284,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				parentPattern.SubPatterns.Add(varPattern);
 				block.Instructions.RemoveAt(0);
 				targetVariable.Kind = VariableKind.PatternLocal;
-				if (!MatchNullCheckPattern(block, varPattern, parentFalseInst, context, ref cfg))
+
+				var instructionAfterNullCheck = MatchNullCheckPattern(block, varPattern, parentFalseInst, context, ref cfg);
+				if (instructionAfterNullCheck != null)
 				{
-					if (targetVariable.Type.IsReferenceType == false)
-					{
-						DetectPropertySubPatterns(varPattern, block, parentFalseInst, context, ref cfg);
-					}
-					DetectPropertySubPatterns(parentPattern, block, parentFalseInst, context, ref cfg);
+					return DetectPropertySubPatterns(varPattern, instructionAfterNullCheck, parentFalseInst, (BlockContainer)block.Parent!, context, ref cfg);
 				}
+				else if (targetVariable.Type.IsReferenceType == false)
+				{
+					return DetectPropertySubPatterns(varPattern, block, parentFalseInst, (BlockContainer)block.Parent!, context, ref cfg);
+				}
+				else
+				{
+					return block;
+				}
+			}
+			else
+			{
+				return null;
 			}
 		}
 
-		private static bool MatchNullCheckPattern(Block block, MatchInstruction varPattern, ILInstruction parentFalseInst, ILTransformContext context, ref ControlFlowGraph? cfg)
+		private static ILInstruction? MatchNullCheckPattern(Block block, MatchInstruction varPattern,
+			ILInstruction parentFalseInst, ILTransformContext context, ref ControlFlowGraph? cfg)
 		{
 			if (!MatchBlockContainingOneCondition(block, out var condition, out var trueInst, out var falseInst))
 			{
-				return false;
+				return null;
 			}
 			if (condition.MatchCompEqualsNull(out var arg) && arg.MatchLdLoc(varPattern.Variable))
 			{
@@ -292,21 +321,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			else
 			{
-				return false;
+				return null;
 			}
 			if (!DetectExitPoints.CompatibleExitInstruction(falseInst, parentFalseInst))
 			{
-				return false;
+				return null;
 			}
 			context.Step("Null check pattern", block);
 			varPattern.CheckNotNull = true;
 			block.Instructions.Clear();
 			block.Instructions.Add(trueInst);
-			if (trueInst.MatchBranch(out var trueBlock) && trueBlock.IncomingEdgeCount == 1 && trueBlock.Parent == block.Parent)
-			{
-				DetectPropertySubPatterns(varPattern, trueBlock, falseInst, context, ref cfg);
-			}
-			return true;
+			return trueInst;
 		}
 
 		private static bool PropertyOrFieldAccess(ILInstruction operand, [NotNullWhen(true)] out ILInstruction? target, [NotNullWhen(true)] out IMember? member)
@@ -466,7 +491,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// the pattern matching machinery to an offset belonging to an instruction in the then-block.
 			unboxBlock.SetILRange(unboxBlock.Instructions[0]);
 			storeToV.Variable.Kind = VariableKind.PatternLocal;
-			DetectPropertySubPatterns((MatchInstruction)ifInst.Condition, unboxBlock, falseInst, context, ref cfg);
+			DetectPropertySubPatterns((MatchInstruction)ifInst.Condition, unboxBlock, falseInst, container, context, ref cfg);
 			return true;
 		}
 
