@@ -21,6 +21,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public int I;
 			public string Text { get; set; }
 			public object Obj { get; set; }
+			public S2 S2 { get; set; }
+		}
+
+		public struct S2
+		{
+			public int I;
+			public float F;
+			public decimal D;
+			public string Text { get; set; }
+			public object Obj { get; set; }
 		}
 
 		public void SimpleTypePattern(object x)
@@ -676,6 +686,54 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			if (obj is X { NullableCustomStructProp: var nullableCustomStructProp, Obj: null })
 			{
 				Console.WriteLine("Test " + nullableCustomStructProp.Value);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePattern_CustomStructNested_Null(object obj)
+		{
+			if (obj is S { S2: { Obj: null } })
+			{
+				Console.WriteLine("Test " + obj);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePattern_CustomStructNested_TextLengthZero(object obj)
+		{
+			if (obj is S { S2: { Text: { Length: 0 } } })
+			{
+				Console.WriteLine("Test " + obj);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePattern_CustomStructNested_Float(object obj)
+		{
+			if (obj is S { S2: { F: 3.141f, Obj: null } })
+			{
+				Console.WriteLine("Test " + obj);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePattern_CustomStructNested_Decimal(object obj)
+		{
+			if (obj is S { S2: { D: 3.141m, Obj: null } })
+			{
+				Console.WriteLine("Test " + obj);
 			}
 			else
 			{

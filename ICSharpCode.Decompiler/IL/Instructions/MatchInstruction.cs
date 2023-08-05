@@ -146,19 +146,22 @@ namespace ICSharpCode.Decompiler.IL
 						}
 						return IsConstant(comp.Right);
 					}
-				case Call call when IsCallToString_op_Equality(call):
+				case Call call when IsCallToOpEquality(call, KnownTypeCode.String):
 					testedOperand = call.Arguments[0];
 					return call.Arguments[1].OpCode == OpCode.LdStr;
+				case Call call when IsCallToOpEquality(call, KnownTypeCode.Decimal):
+					testedOperand = call.Arguments[0];
+					return call.Arguments[1].OpCode == OpCode.LdcDecimal;
 				default:
 					testedOperand = null;
 					return false;
 			}
 		}
 
-		internal static bool IsCallToString_op_Equality(Call call)
+		internal static bool IsCallToOpEquality(Call call, KnownTypeCode knownType)
 		{
 			return call.Method.IsOperator && call.Method.Name == "op_Equality"
-				&& call.Method.DeclaringType.IsKnownType(KnownTypeCode.String)
+				&& call.Method.DeclaringType.IsKnownType(knownType)
 				&& call.Arguments.Count == 2;
 		}
 

@@ -4657,7 +4657,9 @@ namespace ICSharpCode.Decompiler.CSharp
 						default:
 							throw new InvalidOperationException("Unexpected comparison kind: " + comp.Kind);
 					}
-				case Call call when MatchInstruction.IsCallToString_op_Equality(call):
+				case Call call when MatchInstruction.IsCallToOpEquality(call, KnownTypeCode.String):
+					return Translate(call.Arguments[1]);
+				case Call call when MatchInstruction.IsCallToOpEquality(call, KnownTypeCode.Decimal):
 					return Translate(call.Arguments[1]);
 				default:
 					throw new NotImplementedException();
