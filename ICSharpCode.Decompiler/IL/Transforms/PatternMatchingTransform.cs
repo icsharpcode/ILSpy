@@ -50,6 +50,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						continue;
 					}
 				}
+				container.Blocks.RemoveAll(b => b.Instructions.Count == 0);
 			}
 		}
 
@@ -287,8 +288,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 				if (targetVariable.Type.IsKnownType(KnownTypeCode.NullableOfT))
 				{
-					var instructionAfterHasValueCheck = MatchNullableHasValueCheckPattern(block, varPattern, parentFalseInst, context);
-					return DetectPropertySubPatterns(varPattern, instructionAfterHasValueCheck, parentFalseInst, (BlockContainer)block.Parent!, context, ref cfg);
+					return MatchNullableHasValueCheckPattern(block, varPattern, parentFalseInst, context, ref cfg);
 				}
 
 				var instructionAfterNullCheck = MatchNullCheckPattern(block, varPattern, parentFalseInst, context);
@@ -340,7 +340,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return trueInst;
 		}
 		private static ILInstruction? MatchNullableHasValueCheckPattern(Block block, MatchInstruction varPattern,
-			ILInstruction parentFalseInst, ILTransformContext context)
+			ILInstruction parentFalseInst, ILTransformContext context, ref ControlFlowGraph? cfg)
 		{
 			if (!MatchBlockContainingOneCondition(block, out var condition, out var trueInst, out var falseInst))
 			{
@@ -358,26 +358,65 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return null;
 			}
-			if (!trueBlock.Instructions[0].MatchStLoc(out var newTargetVariable, out var getValueOrDefaultCall))
-			{
-				return null;
-			}
-			if (!NullableLiftingTransform.MatchGetValueOrDefault(getValueOrDefaultCall, varPattern.Variable))
-			{
-				return null;
-			}
 			if (!(varPattern.Variable.StoreCount == 1 && varPattern.Variable.LoadCount == 0 && varPattern.Variable.AddressCount == 2))
 			{
 				return null;
 			}
-			context.Step("Nullable.HasValue check + Nullable.GetValueOrDefault pattern", block);
-			varPattern.CheckNotNull = true;
-			varPattern.Variable = newTargetVariable;
-			newTargetVariable.Kind = VariableKind.PatternLocal;
-			block.Instructions.Clear();
-			block.Instructions.Add(trueInst);
-			trueBlock.Instructions.RemoveAt(0);
-			return trueBlock;
+			if (trueBlock.Instructions[0].MatchStLoc(out var newTargetVariable, out var getValueOrDefaultCall)
+				&& NullableLiftingTransform.MatchGetValueOrDefault(getValueOrDefaultCall, varPattern.Variable))
+			{
+				context.Step("Nullable.HasValue check + Nullable.GetValueOrDefault pattern", block);
+				varPattern.CheckNotNull = true;
+				varPattern.Variable = newTargetVariable;
+				newTargetVariable.Kind = VariableKind.PatternLocal;
+				block.Instructions.Clear();
+				block.Instructions.Add(trueInst);
+				trueBlock.Instructions.RemoveAt(0);
+				return DetectPropertySubPatterns(varPattern, trueBlock, parentFalseInst, (BlockContainer)block.Parent!, context, ref cfg);
+			}
+			else if (MatchBlockContainingOneCondition(trueBlock, out condition, out trueInst, out falseInst))
+			{
+				if (!(condition is Comp comp
+					&& MatchInstruction.IsConstant(comp.Right)
+					&& NullableLiftingTransform.MatchGetValueOrDefault(comp.Left, varPattern.Variable)))
+				{
+					return null;
+				}
+				bool negated = false;
+				if (!DetectExitPoints.CompatibleExitInstruction(falseInst, parentFalseInst))
+				{
+					if (!DetectExitPoints.CompatibleExitInstruction(trueInst, parentFalseInst))
+					{
+						return null;
+					}
+					ExtensionMethods.Swap(ref trueInst, ref falseInst);
+					negated = true;
+				}
+				if (comp.Kind == (negated ? ComparisonKind.Equality : ComparisonKind.Inequality))
+				{
+					return null;
+				}
+				context.Step("Nullable.HasValue check + Nullable.GetValueOrDefault pattern", block);
+				// varPattern: match (v = testedOperand)
+				// comp: comp.i4(call GetValueOrDefault(ldloca v) != ldc.i4 42)
+				// =>
+				// comp.i4.lifted(testedOperand != ldc.i4 42)
+				block.Instructions.Clear();
+				block.Instructions.Add(trueInst);
+				trueBlock.Instructions.Clear();
+				comp.Left = varPattern.TestedOperand;
+				comp.LiftingKind = ComparisonLiftingKind.CSharp;
+				if (negated)
+				{
+					comp = Comp.LogicNot(comp);
+				}
+				varPattern.ReplaceWith(comp);
+				return trueInst;
+			}
+			else
+			{
+				return null;
+			}
 		}
 
 		private static bool PropertyOrFieldAccess(ILInstruction operand, [NotNullWhen(true)] out ILInstruction? target, [NotNullWhen(true)] out IMember? member)

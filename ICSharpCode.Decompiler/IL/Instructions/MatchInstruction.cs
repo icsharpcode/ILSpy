@@ -152,7 +152,7 @@ namespace ICSharpCode.Decompiler.IL
 				&& call.Arguments.Count == 2;
 		}
 
-		private static bool IsConstant(ILInstruction inst)
+		internal static bool IsConstant(ILInstruction inst)
 		{
 			return inst.OpCode switch {
 				OpCode.LdcDecimal => true,

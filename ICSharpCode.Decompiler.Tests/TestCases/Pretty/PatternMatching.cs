@@ -491,6 +491,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public void RecursivePattern_NullableIntField_Const(object obj)
+		{
+			if (obj is X { NullableIntField: 42 } x)
+			{
+				Console.WriteLine("Test " + x);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
 		public void RecursivePattern_NullableCustomStructProp_Const(object obj)
 		{
 			if (obj is X { NullableCustomStructProp: { I: 42, Obj: not null } nullableCustomStructProp })
