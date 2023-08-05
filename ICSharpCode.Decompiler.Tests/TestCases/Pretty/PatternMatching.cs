@@ -717,6 +717,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public void RecursivePattern_CustomStructNested_EmptyString(object obj)
+		{
+			if (obj is S { S2: { Text: "" } })
+			{
+				Console.WriteLine("Test " + obj);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
 		public void RecursivePattern_CustomStructNested_Float(object obj)
 		{
 			if (obj is S { S2: { F: 3.141f, Obj: null } })
