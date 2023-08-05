@@ -4571,7 +4571,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						}
 						else
 						{
-							Debug.Assert(matchInstruction.CheckNotNull);
+							Debug.Assert(matchInstruction.CheckNotNull || matchInstruction.Variable.Type.IsReferenceType == false);
 						}
 						foreach (var subPattern in matchInstruction.SubPatterns)
 						{

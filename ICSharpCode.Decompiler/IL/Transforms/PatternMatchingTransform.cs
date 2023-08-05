@@ -268,6 +268,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				targetVariable.Kind = VariableKind.PatternLocal;
 				if (!MatchNullCheckPattern(block, varPattern, parentFalseInst, context, ref cfg))
 				{
+					if (targetVariable.Type.IsReferenceType == false)
+					{
+						DetectPropertySubPatterns(varPattern, block, parentFalseInst, context, ref cfg);
+					}
 					DetectPropertySubPatterns(parentPattern, block, parentFalseInst, context, ref cfg);
 				}
 			}

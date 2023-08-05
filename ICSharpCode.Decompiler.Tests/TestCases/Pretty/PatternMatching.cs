@@ -6,14 +6,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		public class X
 		{
-			public int A { get; set; }
-			public string B { get; set; }
-			public object C { get; set; }
+			public int I { get; set; }
+			public string Text { get; set; }
+			public object Obj { get; set; }
+			public S CustomStruct { get; set; }
 		}
 
 		public struct S
 		{
 			public int I;
+			public string Text { get; set; }
+			public object Obj { get; set; }
 		}
 
 		public void SimpleTypePattern(object x)
@@ -318,9 +321,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if CS80
 		public void RecursivePattern_Type(object x)
 		{
-			if (x is X { C: string c })
+			if (x is X { Obj: string obj })
 			{
-				Console.WriteLine("Test " + c);
+				Console.WriteLine("Test " + obj);
 			}
 			else
 			{
@@ -330,7 +333,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void RecursivePattern_Constant(object obj)
 		{
-			if (obj is X { C: null } x)
+			if (obj is X { Obj: null } x)
 			{
 				Console.WriteLine("Test " + x);
 			}
@@ -342,7 +345,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void RecursivePattern_StringConstant(object obj)
 		{
-			if (obj is X { B: "Hello" } x)
+			if (obj is X { Text: "Hello" } x)
 			{
 				Console.WriteLine("Test " + x);
 			}
@@ -354,7 +357,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void RecursivePattern_MultipleConstants(object obj)
 		{
-			if (obj is X { A: 42, B: "Hello" } x)
+			if (obj is X { I: 42, Text: "Hello" } x)
 			{
 				Console.WriteLine("Test " + x);
 			}
@@ -378,9 +381,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void RecursivePattern_MultipleConstantsMixedWithVar(object x)
 		{
-			if (x is X { A: 42, C: var c, B: "Hello" })
+			if (x is X { I: 42, Obj: var obj, Text: "Hello" })
 			{
-				Console.WriteLine("Test " + c);
+				Console.WriteLine("Test " + obj);
 			}
 			else
 			{
@@ -390,7 +393,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void RecursivePattern_NonTypePattern(object obj)
 		{
-			if (obj is X { A: 42, B: { Length: 0 } } x)
+			if (obj is X { I: 42, Text: { Length: 0 } } x)
 			{
 				Console.WriteLine("Test " + x);
 			}
@@ -400,11 +403,47 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public void RecursivePatternValueType_NonTypePatternTwoProps(object obj)
+		{
+			if (obj is X { I: 42, CustomStruct: { I: 0, Text: "Test" } } x)
+			{
+				Console.WriteLine("Test " + x);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePattern_NonTypePatternNotNull(object o)
+		{
+			if (o is X { I: 42, Text: not null, Obj: var obj } x)
+			{
+				Console.WriteLine("Test " + x.I + " " + obj.GetType());
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
 		public void RecursivePattern_VarLengthPattern(object obj)
 		{
-			if (obj is X { A: 42, B: { Length: var length } } x)
+			if (obj is X { I: 42, Text: { Length: var length } } x)
 			{
-				Console.WriteLine("Test " + x.A + ": " + length);
+				Console.WriteLine("Test " + x.I + ": " + length);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void RecursivePatternValueType_VarLengthPattern(object obj)
+		{
+			if (obj is S { I: 42, Text: { Length: var length } } s)
+			{
+				Console.WriteLine("Test " + s.I + ": " + length);
 			}
 			else
 			{

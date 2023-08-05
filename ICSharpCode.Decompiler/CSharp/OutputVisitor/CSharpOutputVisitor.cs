@@ -1302,7 +1302,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StartNode(unaryOperatorExpression);
 			UnaryOperatorType opType = unaryOperatorExpression.Operator;
 			var opSymbol = UnaryOperatorExpression.GetOperatorRole(opType);
-			if (opType == UnaryOperatorType.Await)
+			if (opType is UnaryOperatorType.Await or UnaryOperatorType.PatternNot)
 			{
 				WriteKeyword(opSymbol);
 				Space();
