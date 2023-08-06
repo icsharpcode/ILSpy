@@ -1740,6 +1740,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				case SymbolKind.Event:
 					return ConvertEvent((IEvent)entity);
 				case SymbolKind.Method:
+					if (entity.Name.Contains(".op_"))
+					{
+						goto case SymbolKind.Operator;
+					}
 					return ConvertMethod((IMethod)entity);
 				case SymbolKind.Operator:
 					return ConvertOperator((IMethod)entity);
@@ -2225,7 +2229,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		EntityDeclaration ConvertOperator(IMethod op)
 		{
-			OperatorType? opType = OperatorDeclaration.GetOperatorType(op.Name);
+			int dot = op.Name.LastIndexOf('.');
+			string name = op.Name.Substring(dot + 1);
+			OperatorType? opType = OperatorDeclaration.GetOperatorType(name);
 			if (opType == null)
 				return ConvertMethod(op);
 			if (opType == OperatorType.UnsignedRightShift && !SupportUnsignedRightShift)
@@ -2255,6 +2261,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				decl.AddAnnotation(new MemberResolveResult(null, op));
 			}
 			decl.Body = GenerateBodyBlock();
+			decl.PrivateImplementationType = GetExplicitInterfaceType(op);
 			return decl;
 		}
 

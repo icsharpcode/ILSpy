@@ -2574,6 +2574,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				operatorDeclaration.ReturnType.AcceptVisitor(this);
 			}
+			Space();
+			WritePrivateImplementationType(operatorDeclaration.PrivateImplementationType);
 			WriteKeyword(OperatorDeclaration.OperatorKeywordRole);
 			Space();
 			if (OperatorDeclaration.IsChecked(operatorDeclaration.OperatorType))
