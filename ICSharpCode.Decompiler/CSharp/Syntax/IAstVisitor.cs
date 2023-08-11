@@ -36,6 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		void VisitCheckedExpression(CheckedExpression checkedExpression);
 		void VisitConditionalExpression(ConditionalExpression conditionalExpression);
 		void VisitDeclarationExpression(DeclarationExpression declarationExpression);
+		void VisitRecursivePatternExpression(RecursivePatternExpression recursivePatternExpression);
 		void VisitDefaultValueExpression(DefaultValueExpression defaultValueExpression);
 		void VisitDirectionExpression(DirectionExpression directionExpression);
 		void VisitIdentifierExpression(IdentifierExpression identifierExpression);
@@ -184,6 +185,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		S VisitCheckedExpression(CheckedExpression checkedExpression);
 		S VisitConditionalExpression(ConditionalExpression conditionalExpression);
 		S VisitDeclarationExpression(DeclarationExpression declarationExpression);
+		S VisitRecursivePatternExpression(RecursivePatternExpression recursivePatternExpression);
 		S VisitDefaultValueExpression(DefaultValueExpression defaultValueExpression);
 		S VisitDirectionExpression(DirectionExpression directionExpression);
 		S VisitIdentifierExpression(IdentifierExpression identifierExpression);
@@ -332,6 +334,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		S VisitCheckedExpression(CheckedExpression checkedExpression, T data);
 		S VisitConditionalExpression(ConditionalExpression conditionalExpression, T data);
 		S VisitDeclarationExpression(DeclarationExpression declarationExpression, T data);
+		S VisitRecursivePatternExpression(RecursivePatternExpression recursivePatternExpression, T data);
 		S VisitDefaultValueExpression(DefaultValueExpression defaultValueExpression, T data);
 		S VisitDirectionExpression(DirectionExpression directionExpression, T data);
 		S VisitIdentifierExpression(IdentifierExpression identifierExpression, T data);

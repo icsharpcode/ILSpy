@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public readonly ComparisonLiftingKind LiftingKind;
+		public ComparisonLiftingKind LiftingKind;
 
 		/// <summary>
 		/// Gets the stack type of the comparison inputs.

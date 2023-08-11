@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2020 Siegfried Pammer
+﻿// Copyright (c) 2023 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -20,14 +20,17 @@ using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	/// <summary>
-	/// TypeName VariableDesignation
-	/// </summary>
-	public class DeclarationExpression : Expression
+	public class RecursivePatternExpression : Expression
 	{
+		public static readonly Role<Expression> SubPatternRole = new Role<Expression>("SubPattern", Syntax.Expression.Null);
+
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
+		}
+
+		public AstNodeCollection<Expression> SubPatterns {
+			get { return GetChildrenByRole(SubPatternRole); }
 		}
 
 		public VariableDesignation Designation {
@@ -35,25 +38,29 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.VariableDesignationRole, value); }
 		}
 
+		public bool IsPositional { get; set; }
+
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitDeclarationExpression(this);
+			visitor.VisitRecursivePatternExpression(this);
 		}
 
 		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitDeclarationExpression(this);
+			return visitor.VisitRecursivePatternExpression(this);
 		}
 
 		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitDeclarationExpression(this, data);
+			return visitor.VisitRecursivePatternExpression(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
-			return other is DeclarationExpression o
+			return other is RecursivePatternExpression o
 				&& Type.DoMatch(o.Type, match)
+				&& IsPositional == o.IsPositional
+				&& SubPatterns.DoMatch(o.SubPatterns, match)
 				&& Designation.DoMatch(o.Designation, match);
 		}
 	}

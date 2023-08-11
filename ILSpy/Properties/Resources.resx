@@ -405,6 +405,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.ParameterNullCheck" xml:space="preserve">
     <value>Use parameter null checking</value>
   </data>
+  <data name="DecompilerSettings.PatternCombinators" xml:space="preserve">
+    <value>Pattern combinators (and, or, not)</value>
+  </data>
   <data name="DecompilerSettings.PatternMatching" xml:space="preserve">
     <value>Use pattern matching expressions</value>
   </data>
@@ -422,6 +425,12 @@ Are you sure you want to continue?</value>
   </data>
   <data name="DecompilerSettings.RecordStructs" xml:space="preserve">
     <value>Record structs</value>
+  </data>
+  <data name="DecompilerSettings.RecursivePatternMatching" xml:space="preserve">
+    <value>Recursive pattern matching</value>
+  </data>
+  <data name="DecompilerSettings.RelationalPatterns" xml:space="preserve">
+    <value>Relational patterns</value>
   </data>
   <data name="DecompilerSettings.RemoveDeadAndSideEffectFreeCodeUseWithCaution" xml:space="preserve">
     <value>Remove dead and side effect free code (use with caution!)</value>
