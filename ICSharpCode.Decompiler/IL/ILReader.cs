@@ -462,6 +462,7 @@ namespace ICSharpCode.Decompiler.IL
 				blocksByOffset[0].Block.Instructions.Add(
 					new InvalidBranch("Empty body found. Decompiled assembly might be a reference assembly.")
 				);
+				stackVariables = Enumerable.Empty<ILVariable>();
 				return;
 			}
 			ILParser.SetBranchTargets(ref reader, isBranchTarget);
