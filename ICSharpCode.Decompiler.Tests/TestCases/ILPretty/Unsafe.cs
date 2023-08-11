@@ -150,7 +150,7 @@ namespace System.Runtime.CompilerServices
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public unsafe static T Read<T>(void* source)
 		{
-			return *(T*)source;
+			return Unsafe.Read<T>(source);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -168,7 +168,7 @@ namespace System.Runtime.CompilerServices
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public unsafe static void Write<T>(void* destination, T value)
 		{
-			*(T*)destination = value;
+			Unsafe.Write(destination, value);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -186,13 +186,13 @@ namespace System.Runtime.CompilerServices
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public unsafe static void Copy<T>(void* destination, ref T source)
 		{
-			*(T*)destination = source;
+			Unsafe.Write(destination, source);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public unsafe static void Copy<T>(ref T destination, void* source)
 		{
-			destination = *(T*)source;
+			destination = Unsafe.Read<T>(source);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
