@@ -48,8 +48,9 @@ namespace ICSharpCode.ILSpyX.Search
 			{
 				var lexer = new Lexer(new LATextReader(new System.IO.StringReader(terms[0])));
 				var value = lexer.NextToken();
+				var following = lexer.NextToken();
 
-				if (value != null && value.LiteralValue != null)
+				if (value != null && value.LiteralValue != null && following != null && following.TokenKind == TokenKind.EOF)
 				{
 					TypeCode valueType = Type.GetTypeCode(value.LiteralValue.GetType());
 					switch (valueType)
@@ -72,6 +73,11 @@ namespace ICSharpCode.ILSpyX.Search
 							searchTermLiteralValue = value.LiteralValue;
 							break;
 					}
+				}
+				else
+				{
+					searchTermLiteralType = TypeCode.String;
+					searchTermLiteralValue = terms[0];
 				}
 			}
 		}
