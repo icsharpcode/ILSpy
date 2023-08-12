@@ -74,12 +74,8 @@ namespace ICSharpCode.ILSpyX.Search
 							break;
 					}
 				}
-				else
-				{
-					searchTermLiteralType = TypeCode.String;
-					searchTermLiteralValue = terms[0];
-				}
 			}
+			// Note: if searchTermLiteralType remains TypeCode.Empty, we'll do a substring search via base.IsMatch
 		}
 
 		public override void Search(PEFile module, CancellationToken cancellationToken)
