@@ -3898,7 +3898,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				value = Translate(strToInt.Argument)
 					.ConvertTo(
-						typeSystem.FindType(KnownTypeCode.String),
+						strToInt.ExpectedType,
 						this,
 						allowImplicitConversion: false // switch-expression does not support implicit conversions
 					);
