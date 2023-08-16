@@ -24,7 +24,6 @@
 		<JUnitXmlTestLoggerVersion>3.0.124</JUnitXmlTestLoggerVersion>
 		<CoverletCollectorVersion>3.2.0</CoverletCollectorVersion>
 		<MicrosoftNETTestSdkVersion>17.5.0</MicrosoftNETTestSdkVersion>
-		<MoqVersion>4.18.4</MoqVersion>
 		<DiffLibVersion>2017.7.26.1241</DiffLibVersion>
 		<!-- Microsoft.CodeAnalysis.* -->
 		<RoslynVersion>4.6.0</RoslynVersion>
