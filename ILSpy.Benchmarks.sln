@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34004.107
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ILSpy.Benchmarks", "ILSpy.Benchmarks\ILSpy.Benchmarks.csproj", "{67E4B874-948E-4649-B8B5-4B2ED14C4019}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.Decompiler", "ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj", "{92CEF45B-D9B8-4F3B-957A-FF74E2D8415B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{67E4B874-948E-4649-B8B5-4B2ED14C4019}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67E4B874-948E-4649-B8B5-4B2ED14C4019}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67E4B874-948E-4649-B8B5-4B2ED14C4019}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67E4B874-948E-4649-B8B5-4B2ED14C4019}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92CEF45B-D9B8-4F3B-957A-FF74E2D8415B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92CEF45B-D9B8-4F3B-957A-FF74E2D8415B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92CEF45B-D9B8-4F3B-957A-FF74E2D8415B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92CEF45B-D9B8-4F3B-957A-FF74E2D8415B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F1EFB7E1-D81D-4E24-BD70-A2D313D4FB8F}
+	EndGlobalSection
+EndGlobal
