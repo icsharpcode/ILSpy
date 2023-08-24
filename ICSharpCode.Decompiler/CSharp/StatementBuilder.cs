@@ -214,7 +214,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				value = exprBuilder.Translate(strToInt.Argument)
 					.ConvertTo(
-						typeSystem.FindType(KnownTypeCode.String),
+						strToInt.ExpectedType,
 						exprBuilder,
 						// switch statement does support implicit conversions in general, however, the rules are
 						// not very intuitive and in order to prevent bugs, we emit an explicit cast.

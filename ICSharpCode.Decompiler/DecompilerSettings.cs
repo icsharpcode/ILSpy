@@ -1206,6 +1206,24 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool switchOnReadOnlySpanChar = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use C# 11.0 switch on (ReadOnly)Span&lt;char&gt;
+		/// </summary>
+		[Category("C# 11.0 / VS 2022.4")]
+		[Description("DecompilerSettings.SwitchOnReadOnlySpanChar")]
+		public bool SwitchOnReadOnlySpanChar {
+			get { return switchOnReadOnlySpanChar; }
+			set {
+				if (switchOnReadOnlySpanChar != value)
+				{
+					switchOnReadOnlySpanChar = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool unsignedRightShift = true;
 
 		/// <summary>

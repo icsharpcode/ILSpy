@@ -1509,5 +1509,54 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					break;
 			}
 		}
+
+
+#if CS110 && NET70
+		public static string SwitchOverReadOnlySpanChar1(ReadOnlySpan<char> text)
+		{
+			Console.WriteLine("SwitchOverReadOnlySpanChar1:");
+			switch (text)
+			{
+				case "First case":
+					return "Text1";
+				case "Second case":
+				case "2nd case":
+					return "Text2";
+				case "Third case":
+					return "Text3";
+				case "Fourth case":
+					return "Text4";
+				case "Fifth case":
+					return "Text5";
+				case "Sixth case":
+					return "Text6";
+				default:
+					return "Default";
+			}
+		}
+
+		public static string SwitchOverSpanChar1(Span<char> text)
+		{
+			Console.WriteLine("SwitchOverSpanChar1:");
+			switch (text)
+			{
+				case "First case":
+					return "Text1";
+				case "Second case":
+				case "2nd case":
+					return "Text2";
+				case "Third case":
+					return "Text3";
+				case "Fourth case":
+					return "Text4";
+				case "Fifth case":
+					return "Text5";
+				case "Sixth case":
+					return "Text6";
+				default:
+					return "Default";
+			}
+		}
+#endif
 	}
 }
