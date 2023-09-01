@@ -129,6 +129,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 						}
 					}
 				}
+				DecorateGCInfo(instr, baseInstrIP, readyToRunMethod.GcInfo);
 				formatter.Format(instr, tempOutput);
 				output.Write(instr.IP.ToString("X16"));
 				output.Write(" ");
@@ -150,6 +151,20 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				output.WriteLine();
 			}
 			output.WriteLine();
+		}
+
+		private void DecorateGCInfo(Instruction instr, ulong baseInstrIP, BaseGcInfo gcInfo)
+		{
+			ulong codeOffset = instr.IP - baseInstrIP;
+			if (gcInfo != null && gcInfo.Transitions != null && gcInfo.Transitions.TryGetValue((int)codeOffset, out List<BaseGcTransition> transitionsForOffset))
+			{
+				// this value comes from a manual count of the spaces used for each instruction in Disassemble()
+				string indent = new string(' ', 36);
+				foreach (var transition in transitionsForOffset)
+				{
+					WriteCommentLine(indent + transition.ToString());
+				}
+			}
 		}
 
 		private void WriteCommentLine(string comment)
