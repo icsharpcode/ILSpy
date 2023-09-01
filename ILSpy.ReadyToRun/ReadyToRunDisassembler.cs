@@ -47,9 +47,18 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		public void Disassemble(PEFile currentFile, int bitness, ulong address, bool showMetadataTokens, bool showMetadataTokensInBase10)
 		{
-			// TODO: Decorate the disassembly with GCInfo
 			ReadyToRunMethod readyToRunMethod = runtimeFunction.Method;
 			WriteCommentLine(readyToRunMethod.SignatureString);
+
+			if (readyToRunMethod.GcInfo != null)
+			{
+				string[] lines = readyToRunMethod.GcInfo.ToString().Split(Environment.NewLine);
+				WriteCommentLine("GC info:");
+				foreach (string line in lines)
+				{
+					WriteCommentLine(line);
+				}
+			}
 
 			Dictionary<ulong, UnwindCode> unwindInfo = null;
 			if (ReadyToRunOptions.GetIsShowUnwindInfo(null) && bitness == 64)
