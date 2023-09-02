@@ -105,27 +105,32 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			formatter.Options.FirstOperandCharIndex = 10;
 			var tempOutput = new StringOutput();
 			ulong baseInstrIP = instructions[0].IP;
+
+			var boundsMap = new Dictionary<uint, uint>();
+			foreach (var bound in runtimeFunction.DebugInfo.BoundsList)
+			{
+				// ignoring the return value assuming the same key is always mapped to the same value in runtimeFunction.DebugInfo.BoundsList
+				boundsMap.TryAdd(bound.NativeOffset, bound.ILOffset);
+			}
+
 			foreach (var instr in instructions)
 			{
 				int byteBaseIndex = (int)(instr.IP - address);
 				if (isShowDebugInfo && runtimeFunction.DebugInfo != null)
 				{
-					foreach (var bound in runtimeFunction.DebugInfo.BoundsList)
+					if (byteBaseIndex >= 0 && boundsMap.TryGetValue((uint)byteBaseIndex, out uint boundILOffset))
 					{
-						if (bound.NativeOffset == byteBaseIndex)
+						if (boundILOffset == (uint)DebugInfoBoundsType.Prolog)
 						{
-							if (bound.ILOffset == (uint)DebugInfoBoundsType.Prolog)
-							{
-								WriteCommentLine("Prolog");
-							}
-							else if (bound.ILOffset == (uint)DebugInfoBoundsType.Epilog)
-							{
-								WriteCommentLine("Epilog");
-							}
-							else
-							{
-								WriteCommentLine($"IL_{bound.ILOffset:x4}");
-							}
+							WriteCommentLine("Prolog");
+						}
+						else if (boundILOffset == (uint)DebugInfoBoundsType.Epilog)
+						{
+							WriteCommentLine("Epilog");
+						}
+						else
+						{
+							WriteCommentLine($"IL_{boundILOffset:x4}");
 						}
 					}
 				}
