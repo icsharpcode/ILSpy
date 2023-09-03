@@ -34,6 +34,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	public class SwitchOnStringTransform : IILTransform
 	{
 		ILTransformContext context;
+		private readonly SwitchAnalysis analysis = new SwitchAnalysis();
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{
@@ -1205,8 +1206,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				else
 				{
 					int length = (int)b.Length.Intervals[0].Start;
-					if (MatchSwitchOnCharBlock(b.TargetBlock, length, switchValueVar, out var mapping)
-						|| MatchIfElseOnCharBlock(b.TargetBlock, length, switchValueVar, out mapping))
+					if (MatchSwitchOnCharBlock(b.TargetBlock, length, switchValueVar, out var mapping))
 					{
 						foreach (var item in mapping)
 						{
@@ -1306,6 +1306,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (block.IncomingEdgeCount != 1)
 					return false;
 				SwitchInstruction @switch;
+				List<KeyValuePair<LongSet, ILInstruction>> sections;
 				int index;
 				switch (block.Instructions.Count)
 				{
@@ -1315,6 +1316,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return false;
 						if (!MatchGetChars(@switch.Value, switchValueVar, out index))
 							return false;
+						sections = @switch.Sections.SelectList(s => new KeyValuePair<LongSet, ILInstruction>(s.Labels, s.Body));
 						break;
 					case 2:
 						if (!block.Instructions[0].MatchStLoc(out var charTempVar, out var getCharsCall))
@@ -1328,19 +1330,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return false;
 						if (!@switch.Value.MatchLdLoc(charTempVar))
 							return false;
+						sections = @switch.Sections.SelectList(s => new KeyValuePair<LongSet, ILInstruction>(s.Labels, s.Body));
 						break;
 					default:
-						return false;
+						if (!analysis.AnalyzeBlock(block))
+						{
+							return false;
+						}
+						if (!block.Instructions[0].MatchStLoc(out charTempVar, out getCharsCall))
+							return false;
+						if (!MatchGetChars(getCharsCall, switchValueVar, out index))
+							return false;
+						if (index < 0)
+							return false;
+						if (analysis.SwitchVariable != charTempVar)
+							return false;
+						sections = analysis.Sections;
+						break;
 				}
 				if (index >= length)
 					return false;
-				SwitchSection defaultSection = null;
-				foreach (var section in @switch.Sections)
+				bool hasDefaultSection = false;
+				foreach (var (labels, body) in sections)
 				{
-					if (section.Labels.Count() == 1)
+					if (labels.Count() == 1)
 					{
-						char ch = unchecked((char)section.Labels.Values.Single());
-						if (!section.Body.MatchBranch(out var targetBlock))
+						char ch = unchecked((char)labels.Values.Single());
+						if (!body.MatchBranch(out var targetBlock))
 							return false;
 						if (length == 1)
 						{
@@ -1361,9 +1377,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							}
 						}
 					}
-					else if (defaultSection == null)
+					else if (!hasDefaultSection)
 					{
-						defaultSection = section;
+						hasDefaultSection = true;
 					}
 					else
 					{
@@ -1371,47 +1387,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 				}
 				return results?.Count > 0;
-			}
-
-			bool MatchIfElseOnCharBlock(Block startOfChainBlock, int length, ILVariable switchValueVar, out List<(string StringValue, ILInstruction BodyOrLeave)> results)
-			{
-				results = null;
-				if (startOfChainBlock.IncomingEdgeCount != 1)
-					return false;
-				if (startOfChainBlock.Instructions.Count != 3)
-					return false;
-				if (!startOfChainBlock.Instructions[0].MatchStLoc(out var charTempVar, out var getCharsCall))
-					return false;
-				if (!MatchGetChars(getCharsCall, switchValueVar, out int index))
-					return false;
-				if (index < 0)
-					return false;
-				if (index >= length)
-					return false;
-				var currentBlock = startOfChainBlock;
-				int offset = 1;
-				while (true)
-				{
-					if (!currentBlock.Instructions[offset].MatchIfInstruction(out var condition, out var gotoHead))
-						break;
-					if (!condition.MatchCompEquals(out var left, out var right))
-						break;
-					if (!left.MatchLdLoc(charTempVar) || !right.MatchLdcI4(out int i))
-						break;
-					if (!currentBlock.Instructions[offset + 1].MatchBranch(out var nextBlock))
-						break;
-					if (!gotoHead.MatchBranch(out var headBlock))
-						break;
-					if (!MatchRoslynCaseBlockHead(headBlock, switchValueVar, out var bodyOrLeave, out var exit, out var stringValue, out _))
-						break;
-					if (exit != defaultCase)
-						return false;
-					results ??= new();
-					results.Add((stringValue, bodyOrLeave));
-					offset = 0;
-					currentBlock = nextBlock;
-				}
-				return true;
 			}
 
 			bool MatchSwitchOnLengthBlock(ref ILVariable switchValueVar, Block switchOnLengthBlock, int startOffset, out List<(LongSet Length, Block TargetBlock)> blocks)
