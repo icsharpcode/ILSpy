@@ -95,5 +95,14 @@ namespace ILSpy.ReadyToRun.Properties {
                 return ResourceManager.GetString("ShowUnwindInfo", resourceCulture);
             }
         }
-    }
+
+		/// <summary>
+		///   Looks up a localized string similar to Show GC Info.
+		/// </summary>
+		public static string ShowGCInfo {
+			get {
+				return ResourceManager.GetString("ShowGCInfo", resourceCulture);
+			}
+		}
+	}
 }

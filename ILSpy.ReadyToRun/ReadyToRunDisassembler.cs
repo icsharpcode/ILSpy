@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			ReadyToRunMethod readyToRunMethod = runtimeFunction.Method;
 			WriteCommentLine(readyToRunMethod.SignatureString);
 
-			if (readyToRunMethod.GcInfo != null)
+			if (ReadyToRunOptions.GetIsShowGCInfo(null) && readyToRunMethod.GcInfo != null)
 			{
 				string[] lines = readyToRunMethod.GcInfo.ToString().Split(Environment.NewLine);
 				WriteCommentLine("GC info:");

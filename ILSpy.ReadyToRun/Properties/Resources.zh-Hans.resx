@@ -129,4 +129,7 @@
   <data name="ShowUnwindInfo" xml:space="preserve">
     <value>显示展开信息</value>
   </data>
+  <data name="ShowGCInfo" xml:space="preserve">
+    <value>?</value>
+  </data>
 </root>
