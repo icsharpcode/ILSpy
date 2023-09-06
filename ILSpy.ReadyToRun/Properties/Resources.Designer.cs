@@ -90,9 +90,9 @@ namespace ILSpy.ReadyToRun.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Show Unwind Info.
         /// </summary>
-        public static string ShowUnwindInfo {
+        public static string ShowStackUnwindInfo {
             get {
-                return ResourceManager.GetString("ShowUnwindInfo", resourceCulture);
+                return ResourceManager.GetString("ShowStackUnwindInfo", resourceCulture);
             }
         }
 
