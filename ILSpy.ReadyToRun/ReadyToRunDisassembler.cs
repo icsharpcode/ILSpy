@@ -50,13 +50,20 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			ReadyToRunMethod readyToRunMethod = runtimeFunction.Method;
 			WriteCommentLine(readyToRunMethod.SignatureString);
 
-			if (ReadyToRunOptions.GetIsShowGCInfo(null) && readyToRunMethod.GcInfo != null)
+			if (ReadyToRunOptions.GetIsShowGCInfo(null))
 			{
-				string[] lines = readyToRunMethod.GcInfo.ToString().Split(Environment.NewLine);
-				WriteCommentLine("GC info:");
-				foreach (string line in lines)
+				if (readyToRunMethod.GcInfo != null)
 				{
-					WriteCommentLine(line);
+					string[] lines = readyToRunMethod.GcInfo.ToString().Split(Environment.NewLine);
+					WriteCommentLine("GC info:");
+					foreach (string line in lines)
+					{
+						WriteCommentLine(line);
+					}
+				}
+				else
+				{
+					WriteCommentLine("GC Info is not available for this method");
 				}
 			}
 
