@@ -474,6 +474,7 @@ namespace ICSharpCode.Decompiler.IL
 				ImportedBlock block = importQueue.Dequeue();
 				ReadBlock(block, cancellationToken);
 			}
+			EnsureExceptionHandlersHaveBlocks();
 
 			// Merge different variables for same stack slot:
 			var unionFind = CheckOutgoingEdges();
@@ -614,6 +615,26 @@ namespace ICSharpCode.Decompiler.IL
 					StoreStackForOffset(eh.HandlerOffset, ehStack);
 				}
 			}
+		}
+
+		private void EnsureExceptionHandlersHaveBlocks()
+		{
+			// PrepareBranchTargetsAndStacksForExceptionHandlers enqueued filter/handler offsets
+			// so we have blocks for those; but it's possible that the TryOffset was never enqueued
+			// because it is unreachable.
+			// We need to ensure that we have blocks for all exception handler offsets,
+			// as otherwise the BlockBuilder will fail.
+			foreach (var eh in body.ExceptionRegions)
+			{
+				if (blocksByOffset.ContainsKey(eh.TryOffset))
+					continue;
+				// Create a dummy block for the try offset
+				var block = new ImportedBlock(eh.TryOffset, ImmutableStack<ILVariable>.Empty);
+				block.Block.Instructions.Add(new InvalidBranch("Unreachable try block"));
+				blocksByOffset.Add(eh.TryOffset, block);
+			}
+			// Note that after the BlockBuilder is done, it may delete the whole block containing
+			// the unreachable try-except construct, if it is completely unreachable.
 		}
 
 		private static bool IsSequencePointInstruction(ILInstruction instruction)
