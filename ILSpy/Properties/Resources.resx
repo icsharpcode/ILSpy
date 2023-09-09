@@ -901,8 +901,11 @@ Do you want to continue?</value>
   <data name="Show_allTypesAndMembers" xml:space="preserve">
     <value>Show _all types and members</value>
   </data>
+  <data name="Show_inheritedMembers" xml:space="preserve">
+    <value>Show in_herited members</value>
+  </data>
   <data name="Show_internalTypesMembers" xml:space="preserve">
-    <value>Show public, private and internal</value>
+    <value>Show public, private and _internal</value>
   </data>
   <data name="Show_publiconlyTypesMembers" xml:space="preserve">
     <value>Show only _public types and members</value>

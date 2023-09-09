@@ -31,6 +31,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 	public sealed class TypeTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
+		private bool? loadedInheritedMembers;
+
 		public TypeTreeNode(ITypeDefinition typeDefinition, AssemblyTreeNode parentAssemblyNode)
 		{
 			this.ParentAssemblyNode = parentAssemblyNode ?? throw new ArgumentNullException(nameof(parentAssemblyNode));
@@ -84,8 +86,23 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
+		protected override void OnFilterSettingsChanged()
+		{
+			base.OnFilterSettingsChanged();
+			if (loadedInheritedMembers != null && loadedInheritedMembers != FilterSettings.ShowApiInherited)
+			{
+				this.Children.Clear();
+				if (IsVisible)
+					LoadChildren();
+				else
+					LazyLoading = true;
+			}
+		}
+
 		protected override void LoadChildren()
 		{
+			loadedInheritedMembers = FilterSettings.ShowApiInherited;
+			GetMemberOptions inheritanceOptions = FilterSettings.ShowApiInherited ? GetMemberOptions.None : GetMemberOptions.IgnoreInheritedMembers;
 			if (TypeDefinition.DirectBaseTypes.Any())
 				this.Children.Add(new BaseTypesTreeNode(ParentAssemblyNode.LoadedAssembly.GetPEFileOrNull(), TypeDefinition));
 			if (!TypeDefinition.IsSealed)
@@ -104,20 +121,20 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			else
 			{
-				foreach (var field in TypeDefinition.Fields.OrderBy(f => f.Name, NaturalStringComparer.Instance))
+				foreach (var field in TypeDefinition.GetFields(null, inheritanceOptions).OrderBy(f => f.Name, NaturalStringComparer.Instance))
 				{
 					this.Children.Add(new FieldTreeNode(field));
 				}
 			}
-			foreach (var property in TypeDefinition.Properties.OrderBy(p => p.Name, NaturalStringComparer.Instance))
+			foreach (var property in TypeDefinition.GetProperties(null, inheritanceOptions).OrderBy(p => p.Name, NaturalStringComparer.Instance))
 			{
 				this.Children.Add(new PropertyTreeNode(property));
 			}
-			foreach (var ev in TypeDefinition.Events.OrderBy(e => e.Name, NaturalStringComparer.Instance))
+			foreach (var ev in TypeDefinition.GetEvents(null, inheritanceOptions).OrderBy(e => e.Name, NaturalStringComparer.Instance))
 			{
 				this.Children.Add(new EventTreeNode(ev));
 			}
-			foreach (var method in TypeDefinition.Methods.OrderBy(m => m.Name, NaturalStringComparer.Instance))
+			foreach (var method in TypeDefinition.GetMethods(null, inheritanceOptions).OrderBy(m => m.Name, NaturalStringComparer.Instance))
 			{
 				if (method.MetadataToken.IsNil)
 					continue;

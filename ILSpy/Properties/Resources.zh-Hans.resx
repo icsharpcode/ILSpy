@@ -872,6 +872,9 @@
   <data name="Show_allTypesAndMembers" xml:space="preserve">
     <value>显示所有类型和成员(_A)</value>
   </data>
+  <data name="Show_inheritedMembers" xml:space="preserve">
+    <value>显示继承成员(_H)</value>
+  </data>
   <data name="Show_internalTypesMembers" xml:space="preserve">
     <value>显示内部类型和成员(_I)</value>
   </data>
