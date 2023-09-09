@@ -19,7 +19,6 @@
 #nullable enable
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -334,7 +333,7 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(ilVar.StoreCount == 1); // count the initial store when the method is called with an argument
 			if (index < 0)
 				ilVar.Name = "this";
-			else if (string.IsNullOrEmpty(name))
+			else if (string.IsNullOrWhiteSpace(name))
 				ilVar.Name = "P_" + index;
 			else
 				ilVar.Name = name;
