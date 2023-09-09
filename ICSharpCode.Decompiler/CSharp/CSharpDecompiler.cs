@@ -30,7 +30,6 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Disassembler;
@@ -1270,9 +1269,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			int i = 0;
 			foreach (var parameter in entity.GetChildrenByRole(Roles.Parameter))
 			{
-				if (string.IsNullOrEmpty(parameter.Name) && !parameter.Type.IsArgList())
+				if (string.IsNullOrWhiteSpace(parameter.Name) && !parameter.Type.IsArgList())
 				{
-					// needs to be consistent with logic in ILReader.CreateILVarable(ParameterDefinition)
+					// needs to be consistent with logic in ILReader.CreateILVarable
 					parameter.Name = "P_" + i;
 				}
 				i++;
