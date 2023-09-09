@@ -71,7 +71,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			App.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new Action(EnsureLazyChildren));
 			foreach (ILSpyTreeNode child in this.Children)
 			{
-				child.Decompile(language, output, options);
+				if (child is IMemberTreeNode { Member: ITypeDefinition childType })
+					language.WriteCommentLine(output, language.TypeToString(childType, includeNamespace: true));
 			}
 		}
 	}
