@@ -47,9 +47,25 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		public void Disassemble(PEFile currentFile, int bitness, ulong address, bool showMetadataTokens, bool showMetadataTokensInBase10)
 		{
-			// TODO: Decorate the disassembly with GCInfo
 			ReadyToRunMethod readyToRunMethod = runtimeFunction.Method;
 			WriteCommentLine(readyToRunMethod.SignatureString);
+
+			if (ReadyToRunOptions.GetIsShowGCInfo(null))
+			{
+				if (readyToRunMethod.GcInfo != null)
+				{
+					string[] lines = readyToRunMethod.GcInfo.ToString().Split(Environment.NewLine);
+					WriteCommentLine("GC info:");
+					foreach (string line in lines)
+					{
+						WriteCommentLine(line);
+					}
+				}
+				else
+				{
+					WriteCommentLine("GC Info is not available for this method");
+				}
+			}
 
 			Dictionary<ulong, UnwindCode> unwindInfo = null;
 			if (ReadyToRunOptions.GetIsShowUnwindInfo(null) && bitness == 64)
@@ -96,30 +112,36 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			formatter.Options.FirstOperandCharIndex = 10;
 			var tempOutput = new StringOutput();
 			ulong baseInstrIP = instructions[0].IP;
+
+			var boundsMap = new Dictionary<uint, uint>();
+			foreach (var bound in runtimeFunction.DebugInfo.BoundsList)
+			{
+				// ignoring the return value assuming the same key is always mapped to the same value in runtimeFunction.DebugInfo.BoundsList
+				boundsMap.TryAdd(bound.NativeOffset, bound.ILOffset);
+			}
+
 			foreach (var instr in instructions)
 			{
 				int byteBaseIndex = (int)(instr.IP - address);
 				if (isShowDebugInfo && runtimeFunction.DebugInfo != null)
 				{
-					foreach (var bound in runtimeFunction.DebugInfo.BoundsList)
+					if (byteBaseIndex >= 0 && boundsMap.TryGetValue((uint)byteBaseIndex, out uint boundILOffset))
 					{
-						if (bound.NativeOffset == byteBaseIndex)
+						if (boundILOffset == (uint)DebugInfoBoundsType.Prolog)
 						{
-							if (bound.ILOffset == (uint)DebugInfoBoundsType.Prolog)
-							{
-								WriteCommentLine("Prolog");
-							}
-							else if (bound.ILOffset == (uint)DebugInfoBoundsType.Epilog)
-							{
-								WriteCommentLine("Epilog");
-							}
-							else
-							{
-								WriteCommentLine($"IL_{bound.ILOffset:x4}");
-							}
+							WriteCommentLine("Prolog");
+						}
+						else if (boundILOffset == (uint)DebugInfoBoundsType.Epilog)
+						{
+							WriteCommentLine("Epilog");
+						}
+						else
+						{
+							WriteCommentLine($"IL_{boundILOffset:x4}");
 						}
 					}
 				}
+				DecorateGCInfo(instr, baseInstrIP, readyToRunMethod.GcInfo);
 				formatter.Format(instr, tempOutput);
 				output.Write(instr.IP.ToString("X16"));
 				output.Write(" ");
@@ -141,6 +163,20 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				output.WriteLine();
 			}
 			output.WriteLine();
+		}
+
+		private void DecorateGCInfo(Instruction instr, ulong baseInstrIP, BaseGcInfo gcInfo)
+		{
+			ulong codeOffset = instr.IP - baseInstrIP;
+			if (gcInfo != null && gcInfo.Transitions != null && gcInfo.Transitions.TryGetValue((int)codeOffset, out List<BaseGcTransition> transitionsForOffset))
+			{
+				// this value comes from a manual count of the spaces used for each instruction in Disassemble()
+				string indent = new string(' ', 36);
+				foreach (var transition in transitionsForOffset)
+				{
+					WriteCommentLine(indent + transition.ToString());
+				}
+			}
 		}
 
 		private void WriteCommentLine(string comment)

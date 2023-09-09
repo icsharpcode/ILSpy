@@ -11,12 +11,15 @@
 			<RowDefinition Height="Auto" />
 			<RowDefinition Height="Auto" />
 			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
 		</Grid.RowDefinitions>
 		<TextBlock Margin="3" Text="{x:Static properties:Resources.DisassemblyFormat}" />
 		<ComboBox Grid.Column="1" Margin="3" ItemsSource="{Binding DisassemblyFormats}" SelectedItem="{Binding DisassemblyFormat}" />
-		<TextBlock Grid.Row="1" Margin="3" Text="{x:Static properties:Resources.ShowUnwindInfo}"/>
+		<TextBlock Grid.Row="1" Margin="3" Text="{x:Static properties:Resources.ShowStackUnwindInfo}"/>
 		<CheckBox Grid.Row="1" Grid.Column="1" Margin="3" IsChecked="{Binding IsShowUnwindInfo}" />
 		<TextBlock Grid.Row="2" Margin="3" Text="{x:Static properties:Resources.ShowDebugInfo}"/>
 		<CheckBox Grid.Row="2" Grid.Column="1" Margin="3" IsChecked="{Binding IsShowDebugInfo}" />
+		<TextBlock Grid.Row="3" Margin="3" Text="{x:Static properties:Resources.ShowGCInfo}"/>
+		<CheckBox Grid.Row="3" Grid.Column="1" Margin="3" IsChecked="{Binding IsShowGCInfo}" />
 	</Grid>
 </UserControl>
