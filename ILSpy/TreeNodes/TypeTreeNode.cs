@@ -106,12 +106,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				this.Children.Add(new BaseTypesTreeNode(ParentAssemblyNode.LoadedAssembly.GetPEFileOrNull(), TypeDefinition));
 			if (!TypeDefinition.IsSealed)
 				this.Children.Add(new DerivedTypesTreeNode(ParentAssemblyNode.AssemblyList, TypeDefinition));
-			loadedInheritedMembers = FilterSettings.ShowBaseApi;
-			IEnumerable<ITypeDefinition> nestedTypes = GetMembers(TypeDefinition, t => t.NestedTypes, FilterSettings.ShowBaseApi);
-			IEnumerable<IField> fields = GetMembers(TypeDefinition, t => t.Fields, FilterSettings.ShowBaseApi);
-			IEnumerable<IProperty> properties = GetMembers(TypeDefinition, t => t.Properties, FilterSettings.ShowBaseApi);
-			IEnumerable<IEvent> events = GetMembers(TypeDefinition, t => t.Events, FilterSettings.ShowBaseApi);
-			IEnumerable<IMethod> methods = GetMembers(TypeDefinition, t => t.Methods, FilterSettings.ShowBaseApi);
+			loadedInheritedMembers = FilterSettings?.ShowBaseApi;
+			IEnumerable<ITypeDefinition> nestedTypes = GetMembers(TypeDefinition, t => t.NestedTypes, FilterSettings?.ShowBaseApi);
+			IEnumerable<IField> fields = GetMembers(TypeDefinition, t => t.Fields, FilterSettings?.ShowBaseApi);
+			IEnumerable<IProperty> properties = GetMembers(TypeDefinition, t => t.Properties, FilterSettings?.ShowBaseApi);
+			IEnumerable<IEvent> events = GetMembers(TypeDefinition, t => t.Events, FilterSettings?.ShowBaseApi);
+			IEnumerable<IMethod> methods = GetMembers(TypeDefinition, t => t.Methods, FilterSettings?.ShowBaseApi);
 			foreach (var nestedType in nestedTypes.OrderBy(t => t.Name, NaturalStringComparer.Instance))
 			{
 				this.Children.Add(new TypeTreeNode(nestedType, ParentAssemblyNode));
@@ -147,10 +147,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		private IEnumerable<TMember> GetMembers<TMember>(ITypeDefinition type, Func<ITypeDefinition, IEnumerable<TMember>> selector, bool includeInherited)
+		private IEnumerable<TMember> GetMembers<TMember>(ITypeDefinition type, Func<ITypeDefinition, IEnumerable<TMember>> selector, bool? includeInherited)
 		{
 			IEnumerable<TMember> allMembers = selector(type);
-			if (includeInherited)
+			if (includeInherited == true)
 				foreach (var baseType in type.GetNonInterfaceBaseTypes().Reverse().Select(t => t.GetDefinition()))
 					if (baseType != null && baseType != type)
 						allMembers = allMembers.Concat(selector(baseType));
