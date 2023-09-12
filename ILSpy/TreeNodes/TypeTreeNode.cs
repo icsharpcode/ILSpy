@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Media;
 
@@ -101,13 +102,17 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			loadedInheritedMembers = FilterSettings.ShowApiInherited;
-			GetMemberOptions inheritanceOptions = FilterSettings.ShowApiInherited ? GetMemberOptions.None : GetMemberOptions.IgnoreInheritedMembers;
 			if (TypeDefinition.DirectBaseTypes.Any())
 				this.Children.Add(new BaseTypesTreeNode(ParentAssemblyNode.LoadedAssembly.GetPEFileOrNull(), TypeDefinition));
 			if (!TypeDefinition.IsSealed)
 				this.Children.Add(new DerivedTypesTreeNode(ParentAssemblyNode.AssemblyList, TypeDefinition));
-			foreach (var nestedType in TypeDefinition.NestedTypes.OrderBy(t => t.Name, NaturalStringComparer.Instance))
+			loadedInheritedMembers = FilterSettings.ShowApiInherited;
+			IEnumerable<ITypeDefinition> nestedTypes = GetMembers(TypeDefinition, t => t.NestedTypes, FilterSettings.ShowApiInherited);
+			IEnumerable<IField> fields = GetMembers(TypeDefinition, t => t.Fields, FilterSettings.ShowApiInherited);
+			IEnumerable<IProperty> properties = GetMembers(TypeDefinition, t => t.Properties, FilterSettings.ShowApiInherited);
+			IEnumerable<IEvent> events = GetMembers(TypeDefinition, t => t.Events, FilterSettings.ShowApiInherited);
+			IEnumerable<IMethod> methods = GetMembers(TypeDefinition, t => t.Methods, FilterSettings.ShowApiInherited);
+			foreach (var nestedType in nestedTypes.OrderBy(t => t.Name, NaturalStringComparer.Instance))
 			{
 				this.Children.Add(new TypeTreeNode(nestedType, ParentAssemblyNode));
 			}
@@ -121,25 +126,35 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			else
 			{
-				foreach (var field in TypeDefinition.GetFields(null, inheritanceOptions).OrderBy(f => f.Name, NaturalStringComparer.Instance))
+				foreach (var field in fields.OrderBy(f => f.Name, NaturalStringComparer.Instance))
 				{
 					this.Children.Add(new FieldTreeNode(field));
 				}
 			}
-			foreach (var property in TypeDefinition.GetProperties(null, inheritanceOptions).OrderBy(p => p.Name, NaturalStringComparer.Instance))
+			foreach (var property in properties.OrderBy(p => p.Name, NaturalStringComparer.Instance))
 			{
 				this.Children.Add(new PropertyTreeNode(property));
 			}
-			foreach (var ev in TypeDefinition.GetEvents(null, inheritanceOptions).OrderBy(e => e.Name, NaturalStringComparer.Instance))
+			foreach (var ev in events.OrderBy(e => e.Name, NaturalStringComparer.Instance))
 			{
 				this.Children.Add(new EventTreeNode(ev));
 			}
-			foreach (var method in TypeDefinition.GetMethods(null, inheritanceOptions).OrderBy(m => m.Name, NaturalStringComparer.Instance))
+			foreach (var method in methods.OrderBy(m => m.Name, NaturalStringComparer.Instance))
 			{
 				if (method.MetadataToken.IsNil)
 					continue;
 				this.Children.Add(new MethodTreeNode(method));
 			}
+		}
+
+		private IEnumerable<TMember> GetMembers<TMember>(ITypeDefinition type, Func<ITypeDefinition, IEnumerable<TMember>> selector, bool includeInherited)
+		{
+			IEnumerable<TMember> allMembers = selector(type);
+			if (includeInherited)
+				foreach (var baseType in type.GetNonInterfaceBaseTypes().Reverse().Select(t => t.GetDefinition()))
+					if (baseType != null && baseType != type)
+						allMembers = allMembers.Concat(selector(baseType));
+			return allMembers;
 		}
 
 		public override bool CanExpandRecursively => true;
