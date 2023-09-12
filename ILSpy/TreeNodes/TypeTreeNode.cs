@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		protected override void OnFilterSettingsChanged()
 		{
 			base.OnFilterSettingsChanged();
-			if (loadedInheritedMembers != null && loadedInheritedMembers != FilterSettings.ShowApiInherited)
+			if (loadedInheritedMembers != null && loadedInheritedMembers != FilterSettings.ShowBaseApi)
 			{
 				this.Children.Clear();
 				if (IsVisible)
@@ -106,12 +106,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				this.Children.Add(new BaseTypesTreeNode(ParentAssemblyNode.LoadedAssembly.GetPEFileOrNull(), TypeDefinition));
 			if (!TypeDefinition.IsSealed)
 				this.Children.Add(new DerivedTypesTreeNode(ParentAssemblyNode.AssemblyList, TypeDefinition));
-			loadedInheritedMembers = FilterSettings.ShowApiInherited;
-			IEnumerable<ITypeDefinition> nestedTypes = GetMembers(TypeDefinition, t => t.NestedTypes, FilterSettings.ShowApiInherited);
-			IEnumerable<IField> fields = GetMembers(TypeDefinition, t => t.Fields, FilterSettings.ShowApiInherited);
-			IEnumerable<IProperty> properties = GetMembers(TypeDefinition, t => t.Properties, FilterSettings.ShowApiInherited);
-			IEnumerable<IEvent> events = GetMembers(TypeDefinition, t => t.Events, FilterSettings.ShowApiInherited);
-			IEnumerable<IMethod> methods = GetMembers(TypeDefinition, t => t.Methods, FilterSettings.ShowApiInherited);
+			loadedInheritedMembers = FilterSettings.ShowBaseApi;
+			IEnumerable<ITypeDefinition> nestedTypes = GetMembers(TypeDefinition, t => t.NestedTypes, FilterSettings.ShowBaseApi);
+			IEnumerable<IField> fields = GetMembers(TypeDefinition, t => t.Fields, FilterSettings.ShowBaseApi);
+			IEnumerable<IProperty> properties = GetMembers(TypeDefinition, t => t.Properties, FilterSettings.ShowBaseApi);
+			IEnumerable<IEvent> events = GetMembers(TypeDefinition, t => t.Events, FilterSettings.ShowBaseApi);
+			IEnumerable<IMethod> methods = GetMembers(TypeDefinition, t => t.Methods, FilterSettings.ShowBaseApi);
 			foreach (var nestedType in nestedTypes.OrderBy(t => t.Name, NaturalStringComparer.Instance))
 			{
 				this.Children.Add(new TypeTreeNode(nestedType, ParentAssemblyNode));

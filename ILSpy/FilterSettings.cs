@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy
 		public FilterSettings(XElement element)
 		{
 			this.ShowApiLevel = (ApiVisibility?)(int?)element.Element("ShowAPILevel") ?? ApiVisibility.PublicAndInternal;
-			this.ShowApiInherited = (bool?)element.Element("ShowAPIInherited") ?? false;
+			this.ShowBaseApi = (bool?)element.Element("ShowBaseAPI") ?? false;
 			this.Language = Languages.GetLanguage((string)element.Element("Language"));
 			this.LanguageVersion = Language.LanguageVersions.FirstOrDefault(v => v.Version == (string)element.Element("LanguageVersion"));
 			if (this.LanguageVersion == default(LanguageVersion))
@@ -59,7 +59,7 @@ namespace ICSharpCode.ILSpy
 			return new XElement(
 				"FilterSettings",
 				new XElement("ShowAPILevel", (int)this.ShowApiLevel),
-				new XElement("ShowAPIInherited", this.ShowApiInherited),
+				new XElement("ShowBaseAPI", this.ShowBaseApi),
 				new XElement("Language", this.Language.Name),
 				new XElement("LanguageVersion", this.LanguageVersion?.Version)
 			);
@@ -144,15 +144,15 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		bool showApiInherited;
+		bool showBaseApi;
 
-		public bool ShowApiInherited {
-			get { return showApiInherited; }
+		public bool ShowBaseApi {
+			get { return showBaseApi; }
 			set {
-				if (showApiInherited != value)
+				if (showBaseApi != value)
 				{
-					showApiInherited = value;
-					OnPropertyChanged(nameof(ShowApiInherited));
+					showBaseApi = value;
+					OnPropertyChanged(nameof(ShowBaseApi));
 				}
 			}
 		}
