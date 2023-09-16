@@ -18,15 +18,11 @@
 
 #nullable enable
 
-using System;
 using System.Collections.Generic;
 using System.Reflection.PortableExecutable;
-using System.Windows.Controls;
-using System.Windows.Data;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -79,7 +75,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 					case DebugDirectoryEntryType.EmbeddedPortablePdb:
 						var embeddedPortablePdbReader = module.Reader.ReadEmbeddedPortablePdbDebugDirectoryData(entry).GetMetadataReader();
-						this.Children.Add(new DebugMetadataTreeNode(module, isEmbedded: true, provider: embeddedPortablePdbReader));
+						this.Children.Add(new DebugMetadataTreeNode(module));
 						break;
 
 					case DebugDirectoryEntryType.PdbChecksum:

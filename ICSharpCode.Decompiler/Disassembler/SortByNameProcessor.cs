@@ -30,52 +30,52 @@ namespace ICSharpCode.Decompiler.Disassembler
 {
 	public class SortByNameProcessor : IEntityProcessor
 	{
-		public IReadOnlyCollection<InterfaceImplementationHandle> Process(PEFile module,
+		public IReadOnlyCollection<InterfaceImplementationHandle> Process(MetadataFile module,
 			IReadOnlyCollection<InterfaceImplementationHandle> items)
 		{
 			return items.OrderBy(item => GetSortKey(item, module)).ToArray();
 		}
 
-		public IReadOnlyCollection<TypeDefinitionHandle> Process(PEFile module,
+		public IReadOnlyCollection<TypeDefinitionHandle> Process(MetadataFile module,
 			IReadOnlyCollection<TypeDefinitionHandle> items)
 		{
 			return items.OrderBy(item => GetSortKey(item, module)).ToArray();
 		}
 
-		public IReadOnlyCollection<MethodDefinitionHandle> Process(PEFile module,
+		public IReadOnlyCollection<MethodDefinitionHandle> Process(MetadataFile module,
 			IReadOnlyCollection<MethodDefinitionHandle> items)
 		{
 			return items.OrderBy(item => GetSortKey(item, module)).ToArray();
 		}
 
-		public IReadOnlyCollection<PropertyDefinitionHandle> Process(PEFile module,
+		public IReadOnlyCollection<PropertyDefinitionHandle> Process(MetadataFile module,
 			IReadOnlyCollection<PropertyDefinitionHandle> items)
 		{
 			return items.OrderBy(item => GetSortKey(item, module)).ToArray();
 		}
 
-		public IReadOnlyCollection<EventDefinitionHandle> Process(PEFile module,
+		public IReadOnlyCollection<EventDefinitionHandle> Process(MetadataFile module,
 			IReadOnlyCollection<EventDefinitionHandle> items)
 		{
 			return items.OrderBy(item => GetSortKey(item, module)).ToArray();
 		}
 
-		public IReadOnlyCollection<FieldDefinitionHandle> Process(PEFile module,
+		public IReadOnlyCollection<FieldDefinitionHandle> Process(MetadataFile module,
 			IReadOnlyCollection<FieldDefinitionHandle> items)
 		{
 			return items.OrderBy(item => GetSortKey(item, module)).ToArray();
 		}
 
-		public IReadOnlyCollection<CustomAttributeHandle> Process(PEFile module,
+		public IReadOnlyCollection<CustomAttributeHandle> Process(MetadataFile module,
 			IReadOnlyCollection<CustomAttributeHandle> items)
 		{
 			return items.OrderBy(item => GetSortKey(item, module)).ToArray();
 		}
 
-		private static string GetSortKey(TypeDefinitionHandle handle, PEFile module) =>
+		private static string GetSortKey(TypeDefinitionHandle handle, MetadataFile module) =>
 			handle.GetFullTypeName(module.Metadata).ToILNameString();
 
-		private static string GetSortKey(MethodDefinitionHandle handle, PEFile module)
+		private static string GetSortKey(MethodDefinitionHandle handle, MetadataFile module)
 		{
 			PlainTextOutput output = new PlainTextOutput();
 			MethodDefinition definition = module.Metadata.GetMethodDefinition(handle);
@@ -97,22 +97,22 @@ namespace ICSharpCode.Decompiler.Disassembler
 			return output.ToString();
 		}
 
-		private static string GetSortKey(InterfaceImplementationHandle handle, PEFile module) =>
+		private static string GetSortKey(InterfaceImplementationHandle handle, MetadataFile module) =>
 			module.Metadata.GetInterfaceImplementation(handle)
 				.Interface
 				.GetFullTypeName(module.Metadata)
 				.ToILNameString();
 
-		private static string GetSortKey(FieldDefinitionHandle handle, PEFile module) =>
+		private static string GetSortKey(FieldDefinitionHandle handle, MetadataFile module) =>
 			module.Metadata.GetString(module.Metadata.GetFieldDefinition(handle).Name);
 
-		private static string GetSortKey(PropertyDefinitionHandle handle, PEFile module) =>
+		private static string GetSortKey(PropertyDefinitionHandle handle, MetadataFile module) =>
 			module.Metadata.GetString(module.Metadata.GetPropertyDefinition(handle).Name);
 
-		private static string GetSortKey(EventDefinitionHandle handle, PEFile module) =>
+		private static string GetSortKey(EventDefinitionHandle handle, MetadataFile module) =>
 			module.Metadata.GetString(module.Metadata.GetEventDefinition(handle).Name);
 
-		private static string GetSortKey(CustomAttributeHandle handle, PEFile module) =>
+		private static string GetSortKey(CustomAttributeHandle handle, MetadataFile module) =>
 			module.Metadata.GetCustomAttribute(handle)
 				.Constructor
 				.GetDeclaringType(module.Metadata)

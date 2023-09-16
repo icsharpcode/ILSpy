@@ -22,19 +22,18 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
 	internal class ExportedTypeTableTreeNode : MetadataTableTreeNode
 	{
-		public ExportedTypeTableTreeNode(PEFile module)
-			: base(HandleKind.ExportedType, module)
+		public ExportedTypeTableTreeNode(MetadataFile metadataFile)
+			: base(HandleKind.ExportedType, metadataFile)
 		{
 		}
 
-		public override object Text => $"27 ExportedType ({module.Metadata.GetTableRowCount(TableIndex.ExportedType)})";
+		public override object Text => $"27 ExportedType ({metadataFile.Metadata.GetTableRowCount(TableIndex.ExportedType)})";
 
 		public override object Icon => Images.Literal;
 
@@ -44,13 +43,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.SupportsLanguageSwitching = false;
 
 			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = module.Metadata;
+			var metadata = metadataFile.Metadata;
 			var list = new List<ExportedTypeEntry>();
 			ExportedTypeEntry scrollTargetEntry = default;
 
 			foreach (var row in metadata.ExportedTypes)
 			{
-				ExportedTypeEntry entry = new ExportedTypeEntry(module.Reader.PEHeaders.MetadataStartOffset, module, row, metadata.GetExportedType(row));
+				ExportedTypeEntry entry = new ExportedTypeEntry(metadataFile, row, metadataFile.Metadata.GetExportedType(row));
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;
@@ -72,9 +71,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		struct ExportedTypeEntry
 		{
-			readonly int metadataOffset;
-			readonly PEFile module;
-			readonly MetadataReader metadata;
+			readonly MetadataFile metadataFile;
 			readonly ExportedTypeHandle handle;
 			readonly ExportedType type;
 
@@ -82,9 +79,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Token => MetadataTokens.GetToken(handle);
 
-			public int Offset => metadataOffset
-				+ metadata.GetTableMetadataOffset(TableIndex.ExportedType)
-				+ metadata.GetTableRowSize(TableIndex.ExportedType) * (RID - 1);
+			public int Offset => metadataFile.MetadataOffset
+				+ metadataFile.Metadata.GetTableMetadataOffset(TableIndex.ExportedType)
+				+ metadataFile.Metadata.GetTableRowSize(TableIndex.ExportedType) * (RID - 1);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public TypeAttributes Attributes => type.Attributes;
@@ -104,28 +101,26 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string TypeNameTooltip => $"{MetadataTokens.GetHeapOffset(type.Name):X} \"{TypeName}\"";
 
-			public string TypeName => metadata.GetString(type.Name);
+			public string TypeName => metadataFile.Metadata.GetString(type.Name);
 
 			public string TypeNamespaceTooltip => $"{MetadataTokens.GetHeapOffset(type.Namespace):X} \"{TypeNamespace}\"";
 
-			public string TypeNamespace => metadata.GetString(type.Namespace);
+			public string TypeNamespace => metadataFile.Metadata.GetString(type.Namespace);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Implementation => MetadataTokens.GetToken(type.Implementation);
 
 			public void OnImplementationClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, type.Implementation, protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, type.Implementation, protocol: "metadata"));
 			}
 
 			string implementationTooltip;
-			public string ImplementationTooltip => GenerateTooltip(ref implementationTooltip, module, type.Implementation);
+			public string ImplementationTooltip => GenerateTooltip(ref implementationTooltip, metadataFile, type.Implementation);
 
-			public ExportedTypeEntry(int metadataOffset, PEFile module, ExportedTypeHandle handle, ExportedType type)
+			public ExportedTypeEntry(MetadataFile metadataFile, ExportedTypeHandle handle, ExportedType type)
 			{
-				this.metadataOffset = metadataOffset;
-				this.module = module;
-				this.metadata = module.Metadata;
+				this.metadataFile = metadataFile;
 				this.handle = handle;
 				this.type = type;
 				this.implementationTooltip = null;

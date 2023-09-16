@@ -16,21 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.DebugInfo;
-using ICSharpCode.Decompiler.Disassembler;
-using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -39,10 +29,11 @@ namespace ICSharpCode.ILSpy.Metadata
 	{
 		readonly List<StringHeapEntry> list;
 
-		public StringHeapTreeNode(PEFile module, MetadataReader metadata)
-			: base(HandleKind.String, module, metadata)
+		public StringHeapTreeNode(MetadataFile metadataFile)
+			: base(HandleKind.String, metadataFile)
 		{
 			list = new List<StringHeapEntry>();
+			var metadata = metadataFile.Metadata;
 			StringHandle handle = MetadataTokens.StringHandle(0);
 			do
 			{

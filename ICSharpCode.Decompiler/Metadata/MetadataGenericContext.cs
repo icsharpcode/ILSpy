@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		readonly TypeDefinitionHandle declaringType;
 		readonly MethodDefinitionHandle method;
 
-		public MetadataGenericContext(MethodDefinitionHandle method, PEFile module)
+		public MetadataGenericContext(MethodDefinitionHandle method, MetadataFile module)
 		{
 			this.metadata = module.Metadata;
 			this.method = method;

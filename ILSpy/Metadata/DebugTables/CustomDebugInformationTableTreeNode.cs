@@ -19,33 +19,25 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.DebugInfo;
-using ICSharpCode.Decompiler.Disassembler;
-using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
 	internal class CustomDebugInformationTableTreeNode : DebugMetadataTableTreeNode
 	{
-		private readonly bool isEmbedded;
-
-		public CustomDebugInformationTableTreeNode(PEFile module, MetadataReader metadata, bool isEmbedded)
-			: base(HandleKind.CustomDebugInformation, module, metadata)
+		public CustomDebugInformationTableTreeNode(MetadataFile metadataFile)
+			: base(HandleKind.CustomDebugInformation, metadataFile)
 		{
-			this.isEmbedded = isEmbedded;
 		}
 
-		public override object Text => $"37 CustomDebugInformation ({metadata.GetTableRowCount(TableIndex.CustomDebugInformation)})";
+		public override object Text => $"37 CustomDebugInformation ({metadataFile.Metadata.GetTableRowCount(TableIndex.CustomDebugInformation)})";
 
 		public override object Icon => Images.Literal;
 
@@ -62,9 +54,9 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<CustomDebugInformationEntry>();
 			CustomDebugInformationEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.CustomDebugInformation)
+			foreach (var row in metadataFile.Metadata.CustomDebugInformation)
 			{
-				CustomDebugInformationEntry entry = new CustomDebugInformationEntry(module, metadata, isEmbedded, row);
+				CustomDebugInformationEntry entry = new CustomDebugInformationEntry(metadataFile, row);
 				if (entry.RID == scrollTarget)
 				{
 					scrollTargetEntry = entry;
@@ -105,8 +97,7 @@ namespace ICSharpCode.ILSpy.Metadata
 		class CustomDebugInformationEntry
 		{
 			readonly int? offset;
-			readonly PEFile module;
-			readonly MetadataReader metadata;
+			readonly MetadataFile metadataFile;
 			readonly CustomDebugInformationHandle handle;
 			readonly CustomDebugInformation debugInfo;
 			internal readonly CustomDebugInformationKind kind;
@@ -202,11 +193,11 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnParentClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, debugInfo.Parent, protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, debugInfo.Parent, protocol: "metadata"));
 			}
 
 			string parentTooltip;
-			public string ParentTooltip => GenerateTooltip(ref parentTooltip, module, debugInfo.Parent);
+			public string ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, debugInfo.Parent);
 
 			string kindString;
 			public string Kind {
@@ -217,7 +208,7 @@ namespace ICSharpCode.ILSpy.Metadata
 					Guid guid;
 					if (kind != CustomDebugInformationKind.None)
 					{
-						guid = metadata.GetGuid(debugInfo.Kind);
+						guid = metadataFile.Metadata.GetGuid(debugInfo.Kind);
 					}
 					else
 					{
@@ -251,7 +242,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				get {
 					if (debugInfo.Value.IsNil)
 						return "<nil>";
-					return metadata.GetBlobReader(debugInfo.Value).ToHexString();
+					return metadataFile.Metadata.GetBlobReader(debugInfo.Value).ToHexString();
 				}
 			}
 
@@ -265,7 +256,7 @@ namespace ICSharpCode.ILSpy.Metadata
 					if (debugInfo.Value.IsNil)
 						return null;
 
-					var reader = metadata.GetBlobReader(debugInfo.Value);
+					var reader = metadataFile.Metadata.GetBlobReader(debugInfo.Value);
 					ArrayList list;
 
 					switch (kind)
@@ -324,15 +315,14 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			public CustomDebugInformationEntry(PEFile module, MetadataReader metadata, bool isEmbedded, CustomDebugInformationHandle handle)
+			public CustomDebugInformationEntry(MetadataFile metadataFile, CustomDebugInformationHandle handle)
 			{
-				this.offset = isEmbedded ? null : (int?)metadata.GetTableMetadataOffset(TableIndex.CustomDebugInformation)
-					+ metadata.GetTableRowSize(TableIndex.CustomDebugInformation) * (MetadataTokens.GetRowNumber(handle) - 1);
-				this.module = module;
-				this.metadata = metadata;
+				this.metadataFile = metadataFile;
+				this.offset = metadataFile.IsEmbedded ? null : (int?)metadataFile.Metadata.GetTableMetadataOffset(TableIndex.CustomDebugInformation)
+					+ metadataFile.Metadata.GetTableRowSize(TableIndex.CustomDebugInformation) * (MetadataTokens.GetRowNumber(handle) - 1);
 				this.handle = handle;
-				this.debugInfo = metadata.GetCustomDebugInformation(handle);
-				this.kind = GetKind(metadata, debugInfo.Kind);
+				this.debugInfo = metadataFile.Metadata.GetCustomDebugInformation(handle);
+				this.kind = GetKind(metadataFile.Metadata, debugInfo.Kind);
 			}
 		}
 

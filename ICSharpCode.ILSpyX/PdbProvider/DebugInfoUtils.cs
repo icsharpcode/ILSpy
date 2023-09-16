@@ -39,7 +39,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 				// try to open portable pdb file/embedded pdb info:
 				if (TryOpenPortablePdb(module, out var provider, out var pdbFileName))
 				{
-					return new PortableDebugInfoProvider(module.FileName, provider, pdbFileName);
+					return new PortableDebugInfoProvider(module.FileName, provider, MetadataReaderOptions.Default, pdbFileName);
 				}
 				else
 				{
@@ -80,7 +80,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			{
 				stream.Position = 0;
 				var provider = MetadataReaderProvider.FromPortablePdbStream(stream);
-				return new PortableDebugInfoProvider(module.FileName, provider, pdbFileName);
+				return new PortableDebugInfoProvider(module.FileName, provider, MetadataReaderOptions.Default, pdbFileName);
 			}
 		}
 

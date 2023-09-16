@@ -68,10 +68,10 @@ namespace ICSharpCode.ILSpy.Metadata
 			this.Children.Add(new DataDirectoriesTreeNode(module));
 			this.Children.Add(new DebugDirectoryTreeNode(module));
 			this.Children.Add(new MetadataTablesTreeNode(module));
-			this.Children.Add(new StringHeapTreeNode(module, module.Metadata));
-			this.Children.Add(new UserStringHeapTreeNode(module, module.Metadata));
-			this.Children.Add(new GuidHeapTreeNode(module, module.Metadata));
-			this.Children.Add(new BlobHeapTreeNode(module, module.Metadata));
+			this.Children.Add(new StringHeapTreeNode(module));
+			this.Children.Add(new UserStringHeapTreeNode(module));
+			this.Children.Add(new GuidHeapTreeNode(module));
+			this.Children.Add(new BlobHeapTreeNode(module));
 		}
 
 		public MetadataTableTreeNode FindNodeByHandleKind(HandleKind kind)

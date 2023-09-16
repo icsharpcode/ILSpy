@@ -18,11 +18,9 @@
 
 using System.Linq;
 using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 
@@ -30,16 +28,12 @@ namespace ICSharpCode.ILSpy.Metadata
 {
 	class DebugMetadataTreeNode : ILSpyTreeNode
 	{
-		private PEFile module;
-		private MetadataReader provider;
-		private bool isEmbedded;
+		private MetadataFile metadataFile;
 
-		public DebugMetadataTreeNode(PEFile module, bool isEmbedded, MetadataReader provider)
+		public DebugMetadataTreeNode(MetadataFile metadataFile)
 		{
-			this.module = module;
-			this.provider = provider;
-			this.isEmbedded = isEmbedded;
-			this.Text = "Debug Metadata (" + (isEmbedded ? "Embedded" : "From portable PDB") + ")";
+			this.metadataFile = metadataFile;
+			this.Text = "Debug Metadata (" + (metadataFile.IsEmbedded ? "Embedded" : "From portable PDB") + ")";
 			this.LazyLoading = true;
 		}
 
@@ -62,11 +56,11 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		protected override void LoadChildren()
 		{
-			this.Children.Add(new DebugMetadataTablesTreeNode(module, this.isEmbedded, this.provider));
-			this.Children.Add(new StringHeapTreeNode(module, this.provider));
-			this.Children.Add(new UserStringHeapTreeNode(module, this.provider));
-			this.Children.Add(new GuidHeapTreeNode(module, this.provider));
-			this.Children.Add(new BlobHeapTreeNode(module, this.provider));
+			this.Children.Add(new DebugMetadataTablesTreeNode(metadataFile));
+			this.Children.Add(new StringHeapTreeNode(metadataFile));
+			this.Children.Add(new UserStringHeapTreeNode(metadataFile));
+			this.Children.Add(new GuidHeapTreeNode(metadataFile));
+			this.Children.Add(new BlobHeapTreeNode(metadataFile));
 		}
 
 		public MetadataTableTreeNode FindNodeByHandleKind(HandleKind kind)

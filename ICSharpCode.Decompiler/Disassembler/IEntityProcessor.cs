@@ -27,18 +27,18 @@ namespace ICSharpCode.Decompiler.Disassembler
 {
 	public interface IEntityProcessor
 	{
-		IReadOnlyCollection<InterfaceImplementationHandle> Process(PEFile module, IReadOnlyCollection<InterfaceImplementationHandle> items);
+		IReadOnlyCollection<InterfaceImplementationHandle> Process(MetadataFile module, IReadOnlyCollection<InterfaceImplementationHandle> items);
 
-		IReadOnlyCollection<TypeDefinitionHandle> Process(PEFile module, IReadOnlyCollection<TypeDefinitionHandle> items);
+		IReadOnlyCollection<TypeDefinitionHandle> Process(MetadataFile module, IReadOnlyCollection<TypeDefinitionHandle> items);
 
-		IReadOnlyCollection<MethodDefinitionHandle> Process(PEFile module, IReadOnlyCollection<MethodDefinitionHandle> items);
+		IReadOnlyCollection<MethodDefinitionHandle> Process(MetadataFile module, IReadOnlyCollection<MethodDefinitionHandle> items);
 
-		IReadOnlyCollection<PropertyDefinitionHandle> Process(PEFile module, IReadOnlyCollection<PropertyDefinitionHandle> items);
+		IReadOnlyCollection<PropertyDefinitionHandle> Process(MetadataFile module, IReadOnlyCollection<PropertyDefinitionHandle> items);
 
-		IReadOnlyCollection<EventDefinitionHandle> Process(PEFile module, IReadOnlyCollection<EventDefinitionHandle> items);
+		IReadOnlyCollection<EventDefinitionHandle> Process(MetadataFile module, IReadOnlyCollection<EventDefinitionHandle> items);
 
-		IReadOnlyCollection<FieldDefinitionHandle> Process(PEFile module, IReadOnlyCollection<FieldDefinitionHandle> items);
+		IReadOnlyCollection<FieldDefinitionHandle> Process(MetadataFile module, IReadOnlyCollection<FieldDefinitionHandle> items);
 
-		IReadOnlyCollection<CustomAttributeHandle> Process(PEFile module, IReadOnlyCollection<CustomAttributeHandle> items);
+		IReadOnlyCollection<CustomAttributeHandle> Process(MetadataFile module, IReadOnlyCollection<CustomAttributeHandle> items);
 	}
 }

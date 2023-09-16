@@ -21,7 +21,6 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
@@ -29,12 +28,12 @@ namespace ICSharpCode.ILSpy.Metadata
 {
 	internal class GenericParamConstraintTableTreeNode : MetadataTableTreeNode
 	{
-		public GenericParamConstraintTableTreeNode(PEFile module)
-			: base(HandleKind.GenericParameterConstraint, module)
+		public GenericParamConstraintTableTreeNode(MetadataFile metadataFile)
+			: base(HandleKind.GenericParameterConstraint, metadataFile)
 		{
 		}
 
-		public override object Text => $"2C GenericParamConstraint ({module.Metadata.GetTableRowCount(TableIndex.GenericParamConstraint)})";
+		public override object Text => $"2C GenericParamConstraint ({metadataFile.Metadata.GetTableRowCount(TableIndex.GenericParamConstraint)})";
 
 		public override object Icon => Images.Literal;
 
@@ -44,14 +43,14 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.SupportsLanguageSwitching = false;
 
 			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = module.Metadata;
+			var metadata = metadataFile.Metadata;
 
 			var list = new List<GenericParamConstraintEntry>();
 			GenericParamConstraintEntry scrollTargetEntry = default;
 
 			for (int row = 1; row <= metadata.GetTableRowCount(TableIndex.GenericParamConstraint); row++)
 			{
-				GenericParamConstraintEntry entry = new GenericParamConstraintEntry(module, MetadataTokens.GenericParameterConstraintHandle(row));
+				GenericParamConstraintEntry entry = new GenericParamConstraintEntry(metadataFile, MetadataTokens.GenericParameterConstraintHandle(row));
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;
@@ -72,9 +71,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		struct GenericParamConstraintEntry
 		{
-			readonly int metadataOffset;
-			readonly PEFile module;
-			readonly MetadataReader metadata;
+			readonly MetadataFile metadataFile;
 			readonly GenericParameterConstraintHandle handle;
 			readonly GenericParameterConstraint genericParamConstraint;
 
@@ -82,16 +79,16 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Token => MetadataTokens.GetToken(handle);
 
-			public int Offset => metadataOffset
-				+ metadata.GetTableMetadataOffset(TableIndex.GenericParamConstraint)
-				+ metadata.GetTableRowSize(TableIndex.GenericParamConstraint) * (RID - 1);
+			public int Offset => metadataFile.MetadataOffset
+				+ metadataFile.Metadata.GetTableMetadataOffset(TableIndex.GenericParamConstraint)
+				+ metadataFile.Metadata.GetTableRowSize(TableIndex.GenericParamConstraint) * (RID - 1);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Owner => MetadataTokens.GetToken(genericParamConstraint.Parameter);
 
 			public void OnOwnerClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, genericParamConstraint.Parameter, protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, genericParamConstraint.Parameter, protocol: "metadata"));
 			}
 
 			string ownerTooltip;
@@ -101,9 +98,9 @@ namespace ICSharpCode.ILSpy.Metadata
 					if (ownerTooltip == null)
 					{
 						ITextOutput output = new PlainTextOutput();
-						var p = metadata.GetGenericParameter(genericParamConstraint.Parameter);
-						output.Write("parameter " + p.Index + (p.Name.IsNil ? "" : " (" + metadata.GetString(p.Name) + ")") + " of ");
-						p.Parent.WriteTo(module, output, default);
+						var p = metadataFile.Metadata.GetGenericParameter(genericParamConstraint.Parameter);
+						output.Write("parameter " + p.Index + (p.Name.IsNil ? "" : " (" + metadataFile.Metadata.GetString(p.Name) + ")") + " of ");
+						p.Parent.WriteTo(metadataFile, output, default);
 						ownerTooltip = output.ToString();
 					}
 					return ownerTooltip;
@@ -115,19 +112,17 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnTypeClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, genericParamConstraint.Type, protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, genericParamConstraint.Type, protocol: "metadata"));
 			}
 
 			string typeTooltip;
-			public string TypeTooltip => GenerateTooltip(ref typeTooltip, module, genericParamConstraint.Type);
+			public string TypeTooltip => GenerateTooltip(ref typeTooltip, metadataFile, genericParamConstraint.Type);
 
-			public GenericParamConstraintEntry(PEFile module, GenericParameterConstraintHandle handle)
+			public GenericParamConstraintEntry(MetadataFile metadataFile, GenericParameterConstraintHandle handle)
 			{
-				this.metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
-				this.module = module;
-				this.metadata = module.Metadata;
+				this.metadataFile = metadataFile;
 				this.handle = handle;
-				this.genericParamConstraint = metadata.GetGenericParameterConstraint(handle);
+				this.genericParamConstraint = metadataFile.Metadata.GetGenericParameterConstraint(handle);
 				this.ownerTooltip = null;
 				this.typeTooltip = null;
 			}

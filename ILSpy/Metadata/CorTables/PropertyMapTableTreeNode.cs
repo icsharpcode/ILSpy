@@ -22,20 +22,18 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
-using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
 	class PropertyMapTableTreeNode : MetadataTableTreeNode
 	{
-		public PropertyMapTableTreeNode(PEFile module)
-			: base((HandleKind)0x15, module)
+		public PropertyMapTableTreeNode(MetadataFile metadataFile)
+			: base((HandleKind)0x15, metadataFile)
 		{
 		}
 
-		public override object Text => $"15 PropertyMap ({module.Metadata.GetTableRowCount(TableIndex.PropertyMap)})";
+		public override object Text => $"15 PropertyMap ({metadataFile.Metadata.GetTableRowCount(TableIndex.PropertyMap)})";
 
 		public override object Icon => Images.Literal;
 
@@ -45,17 +43,16 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.SupportsLanguageSwitching = false;
 
 			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = module.Metadata;
+			var metadata = metadataFile.Metadata;
 
 			var list = new List<PropertyMapEntry>();
 			PropertyMapEntry scrollTargetEntry = default;
 
 			var length = metadata.GetTableRowCount(TableIndex.PropertyMap);
 			ReadOnlySpan<byte> ptr = metadata.AsReadOnlySpan();
-			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++)
 			{
-				PropertyMapEntry entry = new PropertyMapEntry(module, ptr, metadataOffset, rid);
+				PropertyMapEntry entry = new PropertyMapEntry(metadataFile, ptr, rid);
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;
@@ -89,8 +86,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		struct PropertyMapEntry
 		{
-			readonly PEFile module;
-			readonly MetadataReader metadata;
+			readonly MetadataFile metadataFile;
 			readonly PropertyMap propertyMap;
 
 			public int RID { get; }
@@ -104,33 +100,32 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnParentClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, propertyMap.Parent, protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, propertyMap.Parent, protocol: "metadata"));
 			}
 
 			string parentTooltip;
-			public string ParentTooltip => GenerateTooltip(ref parentTooltip, module, propertyMap.Parent);
+			public string ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, propertyMap.Parent);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int PropertyList => MetadataTokens.GetToken(propertyMap.PropertyList);
 
 			public void OnPropertyListClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, propertyMap.PropertyList, protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, propertyMap.PropertyList, protocol: "metadata"));
 			}
 
 			string propertyListTooltip;
-			public string PropertyListTooltip => GenerateTooltip(ref propertyListTooltip, module, propertyMap.PropertyList);
+			public string PropertyListTooltip => GenerateTooltip(ref propertyListTooltip, metadataFile, propertyMap.PropertyList);
 
-			public PropertyMapEntry(PEFile module, ReadOnlySpan<byte> ptr, int metadataOffset, int row)
+			public PropertyMapEntry(MetadataFile metadataFile, ReadOnlySpan<byte> ptr, int row)
 			{
-				this.module = module;
-				this.metadata = module.Metadata;
+				this.metadataFile = metadataFile;
 				this.RID = row;
-				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.PropertyMap)
-					+ metadata.GetTableRowSize(TableIndex.PropertyMap) * (row - 1);
-				this.Offset = metadataOffset + rowOffset;
-				int typeDefSize = metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
-				int propertyDefSize = metadata.GetTableRowCount(TableIndex.Property) < ushort.MaxValue ? 2 : 4;
+				var rowOffset = metadataFile.Metadata.GetTableMetadataOffset(TableIndex.PropertyMap)
+					+ metadataFile.Metadata.GetTableRowSize(TableIndex.PropertyMap) * (row - 1);
+				this.Offset = metadataFile.MetadataOffset + rowOffset;
+				int typeDefSize = metadataFile.Metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
+				int propertyDefSize = metadataFile.Metadata.GetTableRowCount(TableIndex.Property) < ushort.MaxValue ? 2 : 4;
 				this.propertyMap = new PropertyMap(ptr.Slice(rowOffset), typeDefSize, propertyDefSize);
 				this.propertyListTooltip = null;
 				this.parentTooltip = null;

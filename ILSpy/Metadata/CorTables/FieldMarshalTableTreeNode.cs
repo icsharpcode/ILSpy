@@ -22,20 +22,18 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
-using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
 	internal class FieldMarshalTableTreeNode : MetadataTableTreeNode
 	{
-		public FieldMarshalTableTreeNode(PEFile module)
-			: base((HandleKind)0x0D, module)
+		public FieldMarshalTableTreeNode(MetadataFile metadataFile)
+			: base((HandleKind)0x0D, metadataFile)
 		{
 		}
 
-		public override object Text => $"0D FieldMarshal ({module.Metadata.GetTableRowCount(TableIndex.FieldMarshal)})";
+		public override object Text => $"0D FieldMarshal ({metadataFile.Metadata.GetTableRowCount(TableIndex.FieldMarshal)})";
 
 		public override object Icon => Images.Literal;
 
@@ -45,17 +43,16 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.SupportsLanguageSwitching = false;
 
 			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = module.Metadata;
+			var metadata = metadataFile.Metadata;
 
 			var list = new List<FieldMarshalEntry>();
 			FieldMarshalEntry scrollTargetEntry = default;
 
 			var length = metadata.GetTableRowCount(TableIndex.FieldMarshal);
 			ReadOnlySpan<byte> ptr = metadata.AsReadOnlySpan();
-			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++)
 			{
-				FieldMarshalEntry entry = new FieldMarshalEntry(module, ptr, metadataOffset, rid);
+				FieldMarshalEntry entry = new FieldMarshalEntry(metadataFile, ptr, rid);
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;
@@ -89,8 +86,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		struct FieldMarshalEntry
 		{
-			readonly PEFile module;
-			readonly MetadataReader metadata;
+			readonly MetadataFile metadataFile;
 			readonly FieldMarshal fieldMarshal;
 
 			public int RID { get; }
@@ -104,25 +100,24 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnParentClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, fieldMarshal.Parent, protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, fieldMarshal.Parent, protocol: "metadata"));
 			}
 
 			string parentTooltip;
-			public string ParentTooltip => GenerateTooltip(ref parentTooltip, module, fieldMarshal.Parent);
+			public string ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, fieldMarshal.Parent);
 
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int NativeType => MetadataTokens.GetHeapOffset(fieldMarshal.NativeType);
 
-			public FieldMarshalEntry(PEFile module, ReadOnlySpan<byte> ptr, int metadataOffset, int row)
+			public FieldMarshalEntry(MetadataFile metadataFile, ReadOnlySpan<byte> ptr, int row)
 			{
-				this.module = module;
-				this.metadata = module.Metadata;
+				this.metadataFile = metadataFile;
 				this.RID = row;
-				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.FieldMarshal)
-					+ metadata.GetTableRowSize(TableIndex.FieldMarshal) * (row - 1);
-				this.Offset = metadataOffset + rowOffset;
-				int hasFieldMarshalRefSize = metadata.ComputeCodedTokenSize(32768, TableMask.Field | TableMask.Param);
-				int blobHeapSize = metadata.GetHeapSize(HeapIndex.Blob) < ushort.MaxValue ? 2 : 4;
+				var rowOffset = metadataFile.Metadata.GetTableMetadataOffset(TableIndex.FieldMarshal)
+					+ metadataFile.Metadata.GetTableRowSize(TableIndex.FieldMarshal) * (row - 1);
+				this.Offset = metadataFile.MetadataOffset + rowOffset;
+				int hasFieldMarshalRefSize = metadataFile.Metadata.ComputeCodedTokenSize(32768, TableMask.Field | TableMask.Param);
+				int blobHeapSize = metadataFile.Metadata.GetHeapSize(HeapIndex.Blob) < ushort.MaxValue ? 2 : 4;
 				this.fieldMarshal = new FieldMarshal(ptr.Slice(rowOffset), blobHeapSize, hasFieldMarshalRefSize);
 				this.parentTooltip = null;
 			}

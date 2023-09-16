@@ -16,30 +16,23 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Text;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
 	internal class LocalConstantTableTreeNode : DebugMetadataTableTreeNode
 	{
-		private readonly bool isEmbedded;
-
-		public LocalConstantTableTreeNode(PEFile module, MetadataReader metadata, bool isEmbedded)
-			: base(HandleKind.LocalConstant, module, metadata)
+		public LocalConstantTableTreeNode(MetadataFile metadataFile)
+			: base(HandleKind.LocalConstant, metadataFile)
 		{
-			this.isEmbedded = isEmbedded;
 		}
 
-		public override object Text => $"34 LocalConstant ({metadata.GetTableRowCount(TableIndex.LocalConstant)})";
+		public override object Text => $"34 LocalConstant ({metadataFile.Metadata.GetTableRowCount(TableIndex.LocalConstant)})";
 
 		public override object Icon => Images.Literal;
 
@@ -52,9 +45,9 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<LocalConstantEntry>();
 			LocalConstantEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.LocalConstants)
+			foreach (var row in metadataFile.Metadata.LocalConstants)
 			{
-				LocalConstantEntry entry = new LocalConstantEntry(module, metadata, isEmbedded, row);
+				LocalConstantEntry entry = new LocalConstantEntry(metadataFile, row);
 				if (entry.RID == scrollTarget)
 				{
 					scrollTargetEntry = entry;
@@ -77,8 +70,7 @@ namespace ICSharpCode.ILSpy.Metadata
 		struct LocalConstantEntry
 		{
 			readonly int? offset;
-			readonly PEFile module;
-			readonly MetadataReader metadata;
+			readonly MetadataFile metadataFile;
 			readonly LocalConstantHandle handle;
 			readonly LocalConstant localConst;
 
@@ -88,21 +80,20 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public object Offset => offset == null ? "n/a" : (object)offset;
 
-			public string Name => metadata.GetString(localConst.Name);
+			public string Name => metadataFile.Metadata.GetString(localConst.Name);
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(localConst.Name):X} \"{Name}\"";
 
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(localConst.Signature);
 
-			public LocalConstantEntry(PEFile module, MetadataReader metadata, bool isEmbedded, LocalConstantHandle handle)
+			public LocalConstantEntry(MetadataFile metadataFile, LocalConstantHandle handle)
 			{
-				this.offset = isEmbedded ? null : (int?)metadata.GetTableMetadataOffset(TableIndex.LocalConstant)
-					+ metadata.GetTableRowSize(TableIndex.LocalConstant) * (MetadataTokens.GetRowNumber(handle) - 1);
-				this.module = module;
-				this.metadata = metadata;
+				this.offset = metadataFile.IsEmbedded ? null : (int?)metadataFile.Metadata.GetTableMetadataOffset(TableIndex.LocalConstant)
+					+ metadataFile.Metadata.GetTableRowSize(TableIndex.LocalConstant) * (MetadataTokens.GetRowNumber(handle) - 1);
+				this.metadataFile = metadataFile;
 				this.handle = handle;
-				this.localConst = metadata.GetLocalConstant(handle);
+				this.localConst = metadataFile.Metadata.GetLocalConstant(handle);
 			}
 		}
 
