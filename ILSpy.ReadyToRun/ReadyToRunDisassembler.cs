@@ -114,10 +114,13 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			ulong baseInstrIP = instructions[0].IP;
 
 			var boundsMap = new Dictionary<uint, uint>();
-			foreach (var bound in runtimeFunction.DebugInfo.BoundsList)
+			if (runtimeFunction.DebugInfo != null)
 			{
-				// ignoring the return value assuming the same key is always mapped to the same value in runtimeFunction.DebugInfo.BoundsList
-				boundsMap.TryAdd(bound.NativeOffset, bound.ILOffset);
+				foreach (var bound in runtimeFunction.DebugInfo.BoundsList)
+				{
+					// ignoring the return value assuming the same key is always mapped to the same value in runtimeFunction.DebugInfo.BoundsList
+					boundsMap.TryAdd(bound.NativeOffset, bound.ILOffset);
+				}
 			}
 
 			foreach (var instr in instructions)
@@ -141,7 +144,10 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 						}
 					}
 				}
-				DecorateGCInfo(instr, baseInstrIP, readyToRunMethod.GcInfo);
+				if (ReadyToRunOptions.GetIsShowGCInfo(null))
+				{
+					DecorateGCInfo(instr, baseInstrIP, readyToRunMethod.GcInfo);
+				}
 				formatter.Format(instr, tempOutput);
 				output.Write(instr.IP.ToString("X16"));
 				output.Write(" ");
