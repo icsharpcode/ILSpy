@@ -104,6 +104,7 @@ namespace ICSharpCode.Decompiler.IL
 					a = a.Pop();
 					b = b.Pop();
 				}
+				output.Reverse(); // restore correct stack order
 				this.InputStack = ImmutableStack.CreateRange(output);
 				this.ImportStarted = false;
 				return true;
@@ -492,6 +493,7 @@ namespace ICSharpCode.Decompiler.IL
 			block.ResetForReimport();
 			block.ImportStarted = true;
 			reader.Offset = block.StartILOffset;
+			//Debug.WriteLine($"Import block at IL_{block.StartILOffset:x4} with inputs {string.Join(", ", block.InputStack.Select(v => v.StackType.ToString()))}");
 			currentBlock = block;
 			currentStack = block.InputStack;
 			// Read instructions until we reach the end of the block.
