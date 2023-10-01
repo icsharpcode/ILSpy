@@ -34,6 +34,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		public static void Add<T>(this IList<KeyValuePair<string, string>> collection, string key, T value, Func<T, string> convert = null)
 		{
 		}
+
+		public static void Add(this TestCases collection, string key)
+		{
+		}
 	}
 
 	public class TestCases
@@ -1102,6 +1106,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			CustomList<int> customList = new CustomList<int>();
 			customList.Add<int>("int");
 			Console.WriteLine(customList);
+		}
+
+		public static TestCases NoCollectionInitializerBecauseOfMissingIEnumerable()
+		{
+			TestCases testCases = new TestCases();
+			testCases.Add("int");
+			testCases.Add("string");
+			return testCases;
 		}
 
 		public static void CollectionInitializerWithParamsMethod()

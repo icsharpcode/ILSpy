@@ -439,8 +439,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!"Add".Equals(method.Name, StringComparison.Ordinal) || arguments.Count == 0)
 				return false;
 			if (method.IsExtensionMethod)
-				return settings?.ExtensionMethodsInCollectionInitializers != false
-					&& CSharp.Transforms.IntroduceExtensionMethods.CanTransformToExtensionMethodCall(method, resolveContext, ignoreTypeArguments: true);
+			{
+				if (settings?.ExtensionMethodsInCollectionInitializers == false)
+					return false;
+				if (!CSharp.Transforms.IntroduceExtensionMethods.CanTransformToExtensionMethodCall(method, resolveContext, ignoreTypeArguments: true))
+					return false;
+			}
 			var targetType = GetReturnTypeFromInstruction(arguments[0]) ?? rootType;
 			if (targetType == null)
 				return false;
