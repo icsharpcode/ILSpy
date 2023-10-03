@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -6,8 +6,12 @@
     <StartupObject>ILSpy.Installer.Builder</StartupObject>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);$(PlatformForInstaller)</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="WixSharp" Version="1.20.4" />
+    <PackageReference Include="WixSharp" Version="1.22.0" />
     <PackageReference Include="WixSharp.wix.bin" Version="3.14.0" />
   </ItemGroup>
 

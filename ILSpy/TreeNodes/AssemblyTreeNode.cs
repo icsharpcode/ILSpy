@@ -413,7 +413,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			output.WriteLine("Entries:");
 			foreach (var entry in package.Entries)
 			{
-				output.WriteLine("  " + entry.Name);
+				output.WriteLine($" {entry.Name} ({entry.TryGetLength()} bytes)");
 			}
 		}
 

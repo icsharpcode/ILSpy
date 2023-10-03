@@ -17,6 +17,7 @@
     <EnableDefaultItems>false</EnableDefaultItems>
 
     <AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>
+    <EnableUnsafeBinaryFormatterSerialization>True</EnableUnsafeBinaryFormatterSerialization>
 
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
@@ -61,6 +62,7 @@
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
     <PackageReference Include="Microsoft.NETCore.ILAsm" Version="$(ILAsmVersion)" />
     <PackageReference Include="Microsoft.NETCore.ILDAsm" Version="$(ILDAsmVersion)" />
+    <PackageReference Include="System.Resources.Extensions" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -113,6 +115,7 @@
     <Compile Include="Output\InsertParenthesesVisitorTests.cs" />
     <Compile Include="ProjectDecompiler\TargetFrameworkTests.cs" />
     <Compile Include="TestAssemblyResolver.cs" />
+    <Compile Include="Util\ResourceReaderWriterTests.cs" />
     <None Include="TestCases\VBPretty\VBAutomaticEvents.vb" />
     <Compile Include="TestCases\VBPretty\VBAutomaticEvents.cs" />
     <Compile Include="TestCases\VBPretty\VBNonGenericForEach.cs" />
@@ -322,6 +325,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="TestCases\PdbGen\Members.xml" />
     <Content Include="TestCases\PdbGen\ProgressReporting.xml" />
     <Content Include="TestCases\PdbGen\ForLoopTests.xml" />
     <Content Include="TestCases\PdbGen\CustomPdbId.xml" />
@@ -337,6 +341,7 @@
     <None Include="TestCases\VBPretty\VBCompoundAssign.vb" />
     <None Include="TestCases\VBPretty\Async.vb" />
     <None Include="TestCases\VBPretty\VBPropertiesTest.vb" />
+    <EmbeddedResource Include="Util\Test.resources" />
   </ItemGroup>
 
 </Project>

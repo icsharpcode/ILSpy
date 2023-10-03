@@ -753,6 +753,10 @@ namespace ICSharpCode.ILSpy
 			{
 				flags |= ConversionFlags.SupportUnsignedRightShift;
 			}
+			if (settings.CheckedOperators)
+			{
+				flags |= ConversionFlags.SupportOperatorChecked;
+			}
 			if (settings.InitAccessors)
 			{
 				flags |= ConversionFlags.SupportInitAccessors;

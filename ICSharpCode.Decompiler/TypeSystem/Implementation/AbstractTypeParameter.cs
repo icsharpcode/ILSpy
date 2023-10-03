@@ -378,10 +378,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		static Predicate<T> FilterNonStatic<T>(Predicate<T> filter) where T : class, IMember
 		{
-			if (filter == null)
-				return member => !member.IsStatic;
-			else
-				return member => !member.IsStatic && filter(member);
+			return member => (!member.IsStatic || member.SymbolKind == SymbolKind.Operator || member.IsVirtual)
+				&& (filter == null || filter(member));
 		}
 
 		public sealed override bool Equals(object obj)

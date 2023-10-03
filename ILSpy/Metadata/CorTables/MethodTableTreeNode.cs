@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -92,7 +93,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.MethodDef)
 				+ metadata.GetTableRowSize(TableIndex.MethodDef) * (RID - 1);
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public MethodAttributes Attributes => methodDef.Attributes;
 
 			const MethodAttributes otherFlagsMask = ~(MethodAttributes.MemberAccessMask | MethodAttributes.VtableLayoutMask);
@@ -103,7 +104,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				FlagGroup.CreateMultipleChoiceGroup(typeof(MethodAttributes), "Flags:", (int)otherFlagsMask, (int)(methodDef.Attributes & otherFlagsMask), includeAll: false),
 			};
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public MethodImplAttributes ImplAttributes => methodDef.ImplAttributes;
 
 			public object ImplAttributesTooltip => new FlagsTooltip {
@@ -117,21 +118,28 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(methodDef.Name):X} \"{Name}\"";
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(methodDef.Signature);
 
 			string signatureTooltip;
 
-			public string SignatureTooltip {
+			public string SignatureTooltip => GenerateTooltip(ref signatureTooltip, module, handle);
+
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
+			public int ParamList => MetadataTokens.GetToken(methodDef.GetParameters().FirstOrDefault());
+
+			public void OnParamListClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, methodDef.GetParameters().FirstOrDefault(), protocol: "metadata"));
+			}
+
+			string paramListTooltip;
+			public string ParamListTooltip {
 				get {
-					if (signatureTooltip == null)
-					{
-						ITextOutput output = new PlainTextOutput();
-						var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
-						((EntityHandle)handle).WriteTo(module, output, context);
-						signatureTooltip = output.ToString();
-					}
-					return signatureTooltip;
+					var param = methodDef.GetParameters().FirstOrDefault();
+					if (param.IsNil)
+						return null;
+					return GenerateTooltip(ref paramListTooltip, module, param);
 				}
 			}
 
@@ -145,6 +153,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.handle = handle;
 				this.methodDef = metadata.GetMethodDefinition(handle);
 				this.signatureTooltip = null;
+				this.paramListTooltip = null;
 			}
 		}
 

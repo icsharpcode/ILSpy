@@ -19,7 +19,6 @@
 #nullable enable
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -105,6 +104,7 @@ namespace ICSharpCode.Decompiler.IL
 					a = a.Pop();
 					b = b.Pop();
 				}
+				output.Reverse(); // restore correct stack order
 				this.InputStack = ImmutableStack.CreateRange(output);
 				this.ImportStarted = false;
 				return true;
@@ -334,7 +334,7 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(ilVar.StoreCount == 1); // count the initial store when the method is called with an argument
 			if (index < 0)
 				ilVar.Name = "this";
-			else if (string.IsNullOrEmpty(name))
+			else if (string.IsNullOrWhiteSpace(name))
 				ilVar.Name = "P_" + index;
 			else
 				ilVar.Name = name;
@@ -462,6 +462,7 @@ namespace ICSharpCode.Decompiler.IL
 				blocksByOffset[0].Block.Instructions.Add(
 					new InvalidBranch("Empty body found. Decompiled assembly might be a reference assembly.")
 				);
+				stackVariables = Enumerable.Empty<ILVariable>();
 				return;
 			}
 			ILParser.SetBranchTargets(ref reader, isBranchTarget);
@@ -474,6 +475,7 @@ namespace ICSharpCode.Decompiler.IL
 				ImportedBlock block = importQueue.Dequeue();
 				ReadBlock(block, cancellationToken);
 			}
+			EnsureExceptionHandlersHaveBlocks();
 
 			// Merge different variables for same stack slot:
 			var unionFind = CheckOutgoingEdges();
@@ -491,6 +493,7 @@ namespace ICSharpCode.Decompiler.IL
 			block.ResetForReimport();
 			block.ImportStarted = true;
 			reader.Offset = block.StartILOffset;
+			//Debug.WriteLine($"Import block at IL_{block.StartILOffset:x4} with inputs {string.Join(", ", block.InputStack.Select(v => v.StackType.ToString()))}");
 			currentBlock = block;
 			currentStack = block.InputStack;
 			// Read instructions until we reach the end of the block.
@@ -614,6 +617,26 @@ namespace ICSharpCode.Decompiler.IL
 					StoreStackForOffset(eh.HandlerOffset, ehStack);
 				}
 			}
+		}
+
+		private void EnsureExceptionHandlersHaveBlocks()
+		{
+			// PrepareBranchTargetsAndStacksForExceptionHandlers enqueued filter/handler offsets
+			// so we have blocks for those; but it's possible that the TryOffset was never enqueued
+			// because it is unreachable.
+			// We need to ensure that we have blocks for all exception handler offsets,
+			// as otherwise the BlockBuilder will fail.
+			foreach (var eh in body.ExceptionRegions)
+			{
+				if (blocksByOffset.ContainsKey(eh.TryOffset))
+					continue;
+				// Create a dummy block for the try offset
+				var block = new ImportedBlock(eh.TryOffset, ImmutableStack<ILVariable>.Empty);
+				block.Block.Instructions.Add(new InvalidBranch("Unreachable try block"));
+				blocksByOffset.Add(eh.TryOffset, block);
+			}
+			// Note that after the BlockBuilder is done, it may delete the whole block containing
+			// the unreachable try-except construct, if it is completely unreachable.
 		}
 
 		private static bool IsSequencePointInstruction(ILInstruction instruction)

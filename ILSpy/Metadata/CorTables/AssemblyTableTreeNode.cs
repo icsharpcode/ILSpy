@@ -72,14 +72,14 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.Assembly)
 				+ metadata.GetTableRowSize(TableIndex.Assembly) * (RID - 1);
 
-			[StringFormat("X4")]
+			[ColumnInfo("X4", Kind = ColumnKind.Other)]
 			public AssemblyHashAlgorithm HashAlgorithm => assembly.HashAlgorithm;
 
 			public object HashAlgorithmTooltip => new FlagsTooltip() {
 				FlagGroup.CreateSingleChoiceGroup(typeof(AssemblyHashAlgorithm), selectedValue: (int)assembly.HashAlgorithm, defaultFlag: new Flag("None (0000)", 0, false), includeAny: false)
 			};
 
-			[StringFormat("X4")]
+			[ColumnInfo("X4", Kind = ColumnKind.Other)]
 			public AssemblyFlags Flags => assembly.Flags;
 
 			public object FlagsTooltip => new FlagsTooltip() {

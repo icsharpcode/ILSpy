@@ -87,12 +87,32 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-		public static void SetDisassemblyOptions(XElement root, string disassemblyFormat, bool isShowUnwindInfo, bool isShowDebugInfo)
+		public static bool GetIsShowGCInfo(ILSpySettings settings)
+		{
+			if (settings == null)
+			{
+				settings = ILSpySettings.Load();
+			}
+			XElement e = settings[ns + "ReadyToRunOptions"];
+			XAttribute a = e.Attribute("IsShowGCInfo");
+
+			if (a == null)
+			{
+				return false;
+			}
+			else
+			{
+				return (bool)a;
+			}
+		}
+
+		public static void SetDisassemblyOptions(XElement root, string disassemblyFormat, bool isShowUnwindInfo, bool isShowDebugInfo, bool isShowGCInfo)
 		{
 			XElement section = new XElement(ns + "ReadyToRunOptions");
 			section.SetAttributeValue("DisassemblyFormat", disassemblyFormat);
 			section.SetAttributeValue("IsShowUnwindInfo", isShowUnwindInfo);
 			section.SetAttributeValue("IsShowDebugInfo", isShowDebugInfo);
+			section.SetAttributeValue("IsShowGCInfo", isShowGCInfo);
 			XElement existingElement = root.Element(ns + "ReadyToRunOptions");
 			if (existingElement != null)
 			{

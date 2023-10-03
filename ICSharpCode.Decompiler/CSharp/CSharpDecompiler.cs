@@ -30,7 +30,6 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Disassembler;
@@ -531,6 +530,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			typeSystemAstBuilder.SupportRecordClasses = settings.RecordClasses;
 			typeSystemAstBuilder.SupportRecordStructs = settings.RecordStructs;
 			typeSystemAstBuilder.SupportUnsignedRightShift = settings.UnsignedRightShift;
+			typeSystemAstBuilder.SupportOperatorChecked = settings.CheckedOperators;
 			typeSystemAstBuilder.AlwaysUseGlobal = settings.AlwaysUseGlobal;
 			return typeSystemAstBuilder;
 		}
@@ -1269,9 +1269,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			int i = 0;
 			foreach (var parameter in entity.GetChildrenByRole(Roles.Parameter))
 			{
-				if (string.IsNullOrEmpty(parameter.Name) && !parameter.Type.IsArgList())
+				if (string.IsNullOrWhiteSpace(parameter.Name) && !parameter.Type.IsArgList())
 				{
-					// needs to be consistent with logic in ILReader.CreateILVarable(ParameterDefinition)
+					// needs to be consistent with logic in ILReader.CreateILVarable
 					parameter.Name = "P_" + i;
 				}
 				i++;
@@ -1584,7 +1584,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
 				var methodDecl = typeSystemAstBuilder.ConvertEntity(method);
 				int lastDot = method.Name.LastIndexOf('.');
-				if (method.IsExplicitInterfaceImplementation && lastDot >= 0)
+				if (methodDecl is not OperatorDeclaration && method.IsExplicitInterfaceImplementation && lastDot >= 0)
 				{
 					methodDecl.Name = method.Name.Substring(lastDot + 1);
 				}
@@ -1697,10 +1697,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var function = ilReader.ReadIL((MethodDefinitionHandle)method.MetadataToken, methodBody, cancellationToken: CancellationToken);
 				function.CheckInvariant(ILPhase.Normal);
 
-				if (entityDecl != null)
-				{
-					AddAnnotationsToDeclaration(method, entityDecl, function);
-				}
+				AddAnnotationsToDeclaration(method, entityDecl, function);
 
 				var localSettings = settings.Clone();
 				if (IsWindowsFormsInitializeComponentMethod(method))
@@ -1750,7 +1747,6 @@ namespace ICSharpCode.Decompiler.CSharp
 
 					entityDecl.AddChild(body, Roles.Body);
 				}
-				entityDecl.AddAnnotation(function);
 
 				CleanUpMethodDeclaration(entityDecl, body, function, localSettings.DecompileMemberBodies);
 			}

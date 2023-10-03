@@ -392,7 +392,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				else if (operatorCall.Arguments.Count == 1)
 				{
-					if (!(operatorCall.Method.Name == "op_Increment" || operatorCall.Method.Name == "op_Decrement"))
+					if (!UserDefinedCompoundAssign.IsIncrementOrDecrement(operatorCall.Method, context.Settings))
 						return false;
 					// use a dummy node so that we don't need a dedicated instruction for user-defined unary operator calls
 					rhs = new LdcI4(1);
@@ -988,7 +988,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (!operatorCall.Arguments[0].MatchLdLoc(tmpVar))
 					return false;
-				if (!(operatorCall.Method.Name == "op_Increment" || operatorCall.Method.Name == "op_Decrement"))
+				if (!UserDefinedCompoundAssign.IsIncrementOrDecrement(operatorCall.Method, context.Settings))
 					return false;
 				if (operatorCall.IsLifted)
 					return false; // TODO: add tests and think about whether nullables need special considerations

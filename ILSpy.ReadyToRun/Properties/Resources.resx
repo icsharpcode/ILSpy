@@ -126,7 +126,10 @@
   <data name="ShowDebugInfo" xml:space="preserve">
     <value>Show Debug Info</value>
   </data>
-  <data name="ShowUnwindInfo" xml:space="preserve">
-    <value>Show Unwind Info</value>
+  <data name="ShowGCInfo" xml:space="preserve">
+    <value>Show GC Info</value>
+  </data>
+  <data name="ShowStackUnwindInfo" xml:space="preserve">
+    <value>Show Stack Unwind Info</value>
   </data>
 </root>

@@ -755,7 +755,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				case HandleKind.TypeDefinition:
 				case HandleKind.TypeSpecification:
 				case HandleKind.ExportedType:
-					return ResolveType(entityHandle, context).GetDefinition();
+					// Using ResolveDeclaringType() here because ResolveType() might return
+					// nint/nuint which are SpecialTypes without a definition.
+					return ResolveDeclaringType(entityHandle, context).GetDefinition();
 				case HandleKind.MemberReference:
 					var memberReferenceHandle = (MemberReferenceHandle)entityHandle;
 					switch (metadata.GetMemberReference(memberReferenceHandle).GetKind())

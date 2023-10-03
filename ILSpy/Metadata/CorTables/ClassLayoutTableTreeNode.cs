@@ -100,8 +100,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset { get; }
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(classLayout.Parent);
 
 			public void OnParentClick()
@@ -109,19 +108,13 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, classLayout.Parent, protocol: "metadata"));
 			}
 
-			public string ParentTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)classLayout.Parent).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string parentTooltip;
+			public string ParentTooltip => GenerateTooltip(ref parentTooltip, module, classLayout.Parent);
 
-			[StringFormat("X4")]
+			[ColumnInfo("X4", Kind = ColumnKind.Other)]
 			public ushort PackingSize => classLayout.PackingSize;
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public uint ClassSize => classLayout.ClassSize;
 
 			public ClassLayoutEntry(PEFile module, byte* ptr, int metadataOffset, int row)
@@ -133,6 +126,7 @@ namespace ICSharpCode.ILSpy.Metadata
 					+ metadata.GetTableRowSize(TableIndex.ClassLayout) * (row - 1);
 				this.Offset = metadataOffset + rowOffset;
 				this.classLayout = new ClassLayout(ptr + rowOffset, metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4);
+				this.parentTooltip = null;
 			}
 		}
 

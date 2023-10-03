@@ -301,7 +301,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Thus, we have to ensure we're operating on an r-value.
 			// Additionally, we cannot inline in cases where the C# compiler prohibits the direct use
 			// of the rvalue (e.g. M(ref (MyStruct)obj); is invalid).
-			if (IsUsedAsThisPointerInCall(loadInst, out var method))
+			if (IsUsedAsThisPointerInCall(loadInst, out var method, out var constrainedTo))
 			{
 				if (options.HasFlag(InliningOptions.Aggressive))
 				{
@@ -321,7 +321,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					case ExpressionClassification.ReadonlyLValue:
 						// For struct method calls on readonly lvalues, the C# compiler
 						// only generates a temporary if it isn't a "readonly struct"
-						return MethodRequiresCopyForReadonlyLValue(method);
+						return MethodRequiresCopyForReadonlyLValue(method, constrainedTo);
 					default:
 						throw new InvalidOperationException("invalid expression classification");
 				}
@@ -337,11 +337,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		internal static bool MethodRequiresCopyForReadonlyLValue(IMethod method)
+		internal static bool MethodRequiresCopyForReadonlyLValue(IMethod method, IType constrainedTo = null)
 		{
 			if (method == null)
 				return true;
-			var type = method.DeclaringType;
+			var type = constrainedTo ?? method.DeclaringType;
 			if (type.IsReferenceType == true)
 				return false; // reference types are never implicitly copied
 			if (method.ThisIsRefReadOnly)
@@ -351,12 +351,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		internal static bool IsUsedAsThisPointerInCall(LdLoca ldloca)
 		{
-			return IsUsedAsThisPointerInCall(ldloca, out _);
+			return IsUsedAsThisPointerInCall(ldloca, out _, out _);
 		}
 
-		static bool IsUsedAsThisPointerInCall(LdLoca ldloca, out IMethod method)
+		static bool IsUsedAsThisPointerInCall(LdLoca ldloca, out IMethod method, out IType constrainedType)
 		{
 			method = null;
+			constrainedType = null;
 			if (ldloca.Variable.Type.IsReferenceType ?? false)
 				return false;
 			ILInstruction inst = ldloca;
@@ -370,7 +371,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				case OpCode.Call:
 				case OpCode.CallVirt:
-					method = ((CallInstruction)inst.Parent).Method;
+					var callInst = (CallInstruction)inst.Parent;
+					method = callInst.Method;
+					constrainedType = callInst.ConstrainedTo;
 					if (method.IsAccessor)
 					{
 						if (method.AccessorKind == MethodSemanticsAttributes.Getter)

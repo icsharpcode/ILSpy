@@ -25,6 +25,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -77,6 +78,7 @@ namespace ICSharpCode.ILSpy.TextView
 		readonly List<VisualLineElementGenerator?> activeCustomElementGenerators = new List<VisualLineElementGenerator?>();
 		readonly BracketHighlightRenderer bracketHighlightRenderer;
 		RichTextColorizer? activeRichTextColorizer;
+		RichTextModel? activeRichTextModel;
 		FoldingManager? foldingManager;
 		ILSpyTreeNode[]? decompiledNodes;
 		Uri? currentAddress;
@@ -145,6 +147,8 @@ namespace ICSharpCode.ILSpy.TextView
 			textEditor.TextArea.TextView.SetResourceReference(ICSharpCode.AvalonEdit.Rendering.TextView.LinkTextForegroundBrushProperty, ResourceKeys.LinkTextForegroundBrush);
 			textEditor.TextArea.TextView.SetResourceReference(ICSharpCode.AvalonEdit.Rendering.TextView.CurrentLineBackgroundProperty, ResourceKeys.CurrentLineBackgroundBrush);
 			textEditor.TextArea.TextView.SetResourceReference(ICSharpCode.AvalonEdit.Rendering.TextView.CurrentLineBorderProperty, ResourceKeys.CurrentLineBorderPen);
+
+			DataObject.AddSettingDataHandler(textEditor.TextArea, OnSettingData);
 
 			this.DataContextChanged += DecompilerTextView_DataContextChanged;
 		}
@@ -714,10 +718,12 @@ namespace ICSharpCode.ILSpy.TextView
 			textEditor.SyntaxHighlighting = highlighting;
 			textEditor.Options.EnableEmailHyperlinks = textOutput.EnableHyperlinks;
 			textEditor.Options.EnableHyperlinks = textOutput.EnableHyperlinks;
+			activeRichTextModel = null;
 			if (activeRichTextColorizer != null)
 				textEditor.TextArea.TextView.LineTransformers.Remove(activeRichTextColorizer);
 			if (textOutput.HighlightingModel != null)
 			{
+				activeRichTextModel = textOutput.HighlightingModel;
 				activeRichTextColorizer = new RichTextColorizer(textOutput.HighlightingModel);
 				textEditor.TextArea.TextView.LineTransformers.Insert(highlighting == null ? 0 : 1, activeRichTextColorizer);
 			}
@@ -1173,6 +1179,58 @@ namespace ICSharpCode.ILSpy.TextView
 				}));
 			thread.Start();
 			return tcs.Task;
+		}
+		#endregion
+
+		#region Clipboard
+		private void OnSettingData(object sender, DataObjectSettingDataEventArgs e)
+		{
+			if (e.Format == DataFormats.Html && e.DataObject is DataObject dataObject)
+			{
+				e.CancelCommand();
+				HtmlClipboard.SetHtml(dataObject, CreateHtmlFragmentFromSelection());
+			}
+		}
+
+		private string CreateHtmlFragmentFromSelection()
+		{
+			var options = new HtmlOptions(textEditor.TextArea.Options);
+			var highlighter = textEditor.TextArea.GetService(typeof(IHighlighter)) as IHighlighter;
+			var html = new StringBuilder();
+
+			foreach (var segment in textEditor.TextArea.Selection.Segments)
+			{
+				var line = textEditor.Document.GetLineByOffset(segment.StartOffset);
+
+				while (line != null && line.Offset < segment.EndOffset)
+				{
+					if (html.Length > 0)
+						html.AppendLine("<br>");
+
+					var s = GetOverlap(segment, line);
+					var highlightedLine = highlighter?.HighlightLine(line.LineNumber) ?? new HighlightedLine(textEditor.Document, line);
+
+					if (activeRichTextModel is not null)
+					{
+						var richTextHighlightedLine = new HighlightedLine(textEditor.Document, line);
+						foreach (HighlightedSection richTextSection in activeRichTextModel.GetHighlightedSections(s.Offset, s.Length))
+							richTextHighlightedLine.Sections.Add(richTextSection);
+						highlightedLine.MergeWith(richTextHighlightedLine);
+					}
+
+					html.Append(highlightedLine.ToHtml(s.Offset, s.Offset + s.Length, options));
+					line = line.NextLine;
+				}
+			}
+
+			return html.ToString();
+
+			static (int Offset, int Length) GetOverlap(ISegment segment1, ISegment segment2)
+			{
+				int start = Math.Max(segment1.Offset, segment2.Offset);
+				int end = Math.Min(segment1.EndOffset, segment2.EndOffset);
+				return (start, end - start);
+			}
 		}
 		#endregion
 

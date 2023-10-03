@@ -512,6 +512,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			VisitChildren(declarationExpression);
 		}
 
+		public virtual void VisitRecursivePatternExpression(RecursivePatternExpression recursivePatternExpression)
+		{
+			VisitChildren(recursivePatternExpression);
+		}
+
 		public virtual void VisitOutVarDeclarationExpression(OutVarDeclarationExpression outVarDeclarationExpression)
 		{
 			VisitChildren(outVarDeclarationExpression);
@@ -1190,6 +1195,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return VisitChildren(declarationExpression);
 		}
 
+		public virtual T VisitRecursivePatternExpression(RecursivePatternExpression recursivePatternExpression)
+		{
+			return VisitChildren(recursivePatternExpression);
+		}
+
 		public virtual T VisitOutVarDeclarationExpression(OutVarDeclarationExpression outVarDeclarationExpression)
 		{
 			return VisitChildren(outVarDeclarationExpression);
@@ -1866,6 +1876,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public virtual S VisitDeclarationExpression(DeclarationExpression declarationExpression, T data)
 		{
 			return VisitChildren(declarationExpression, data);
+		}
+
+		public virtual S VisitRecursivePatternExpression(RecursivePatternExpression recursivePatternExpression, T data)
+		{
+			return VisitChildren(recursivePatternExpression, data);
 		}
 
 		public virtual S VisitOutVarDeclarationExpression(OutVarDeclarationExpression outVarDeclarationExpression, T data)

@@ -44,6 +44,11 @@
 
   <ItemGroup>
     <PackageReference Include="DiffLib" Version="$(DiffLibVersion)" />
+    <PackageReference Include="NSubstitute" Version="5.0.0" />
+    <PackageReference Include="NSubstitute.Analyzers.CSharp" Version="1.0.16">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutableVersion)" />
     <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(RoslynVersion)" />
@@ -54,7 +59,6 @@
     <PackageReference Include="NUnit" Version="$(NUnitVersion)" />
     <!-- used for xml test result files -->
     <PackageReference Include="JunitXml.TestLogger" Version="$(JUnitXmlTestLoggerVersion)" />
-    <PackageReference Include="Moq" Version="$(MoqVersion)" />
   </ItemGroup>
 
   <ItemGroup>

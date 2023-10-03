@@ -16,9 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using ICSharpCode.Decompiler.Util;
+
 using NUnit.Framework;
 
-namespace ICSharpCode.Decompiler.Util
+namespace ICSharpCode.Decompiler.Tests.Util
 {
 	[TestFixture]
 	public class FileUtilityTests

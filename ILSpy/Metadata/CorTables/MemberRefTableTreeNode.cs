@@ -87,8 +87,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.MemberRef)
 				+ metadata.GetTableRowSize(TableIndex.MemberRef) * (RID - 1);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(memberRef.Parent);
 
 			public void OnParentClick()
@@ -96,29 +95,18 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, memberRef.Parent, protocol: "metadata"));
 			}
 
-			public string ParentTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					memberRef.Parent.WriteTo(module, output, default);
-					return output.ToString();
-				}
-			}
+			string parentTooltip;
+			public string ParentTooltip => GenerateTooltip(ref parentTooltip, module, memberRef.Parent);
 
 			public string Name => metadata.GetString(memberRef.Name);
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(memberRef.Name):X} \"{Name}\"";
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(memberRef.Signature);
 
-			public string SignatureTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)handle).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string signatureTooltip;
+			public string SignatureTooltip => GenerateTooltip(ref signatureTooltip, module, handle);
 
 			public MemberRefEntry(PEFile module, MemberReferenceHandle handle)
 			{
@@ -127,6 +115,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.memberRef = metadata.GetMemberReference(handle);
+				this.signatureTooltip = null;
+				this.parentTooltip = null;
 			}
 		}
 

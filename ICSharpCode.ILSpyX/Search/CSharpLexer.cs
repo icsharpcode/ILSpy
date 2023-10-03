@@ -70,6 +70,14 @@ namespace ICSharpCode.ILSpyX.Search
 		}
 	}
 
+	enum TokenKind : byte
+	{
+		EOF,
+		Literal,
+		Identifier,
+		Symbol,
+	}
+
 	enum LiteralFormat : byte
 	{
 		None,
@@ -83,10 +91,15 @@ namespace ICSharpCode.ILSpyX.Search
 
 	class Literal
 	{
+		internal readonly TokenKind tokenKind;
 		internal readonly LiteralFormat literalFormat;
 		internal readonly object literalValue;
 		internal readonly string val;
 		internal Literal next;
+
+		public TokenKind TokenKind {
+			get { return tokenKind; }
+		}
 
 		public LiteralFormat LiteralFormat {
 			get { return literalFormat; }
@@ -100,11 +113,18 @@ namespace ICSharpCode.ILSpyX.Search
 			get { return val; }
 		}
 
+		public Literal(string val, TokenKind tokenKind)
+		{
+			this.val = val;
+			this.tokenKind = tokenKind;
+		}
+
 		public Literal(string val, object literalValue, LiteralFormat literalFormat)
 		{
 			this.val = val;
 			this.literalValue = literalValue;
 			this.literalFormat = literalFormat;
+			this.tokenKind = TokenKind.Literal;
 		}
 	}
 
@@ -432,9 +452,8 @@ namespace ICSharpCode.ILSpyX.Search
 							}
 							else if (Char.IsLetterOrDigit(ch) || ch == '_')
 							{
-								bool canBeKeyword;
-								string s = ReadIdent(ch, out canBeKeyword);
-								return new Literal(null, null, LiteralFormat.None);
+								string s = ReadIdent(ch, out _);
+								return new Literal(s, TokenKind.Identifier);
 							}
 							else
 							{
@@ -450,9 +469,8 @@ namespace ICSharpCode.ILSpyX.Search
 						{
 							int x = Col - 1; // Col was incremented above, but we want the start of the identifier
 							int y = Line;
-							bool canBeKeyword;
-							string s = ReadIdent(ch, out canBeKeyword);
-							return new Literal(null, null, LiteralFormat.None);
+							string s = ReadIdent(ch, out _);
+							return new Literal(s, TokenKind.Identifier);
 						}
 						else if (Char.IsDigit(ch))
 						{
@@ -468,7 +486,7 @@ namespace ICSharpCode.ILSpyX.Search
 				}
 			}
 
-			return new Literal(null, null, LiteralFormat.None);
+			return new Literal(null, TokenKind.EOF);
 		}
 
 		// The C# compiler has a fixed size length therefore we'll use a fixed size char array for identifiers
@@ -607,7 +625,7 @@ namespace ICSharpCode.ILSpyX.Search
 					peek = (char)ReaderPeek();
 					if (!Char.IsDigit(peek))
 					{
-						nextToken = new Literal(null, null, LiteralFormat.None);
+						nextToken = new Literal(".", TokenKind.Symbol);
 						peek = '.';
 					}
 					else

@@ -172,5 +172,55 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				temp.ReplaceWith(replacement);
 			}
 		}
+
+		protected internal override void VisitNewObj(NewObj inst)
+		{
+			if (TransformDecimalCtorToConstant(inst, out LdcDecimal decimalConstant))
+			{
+				context.Step("TransformDecimalCtorToConstant", inst);
+				inst.ReplaceWith(decimalConstant);
+				return;
+			}
+
+			base.VisitNewObj(inst);
+		}
+
+		bool TransformDecimalCtorToConstant(NewObj inst, out LdcDecimal result)
+		{
+			IType t = inst.Method.DeclaringType;
+			result = null;
+			if (!t.IsKnownType(KnownTypeCode.Decimal))
+				return false;
+			var args = inst.Arguments;
+			if (args.Count == 1)
+			{
+				long val;
+				if (args[0].MatchLdcI(out val))
+				{
+					var paramType = inst.Method.Parameters[0].Type.GetDefinition()?.KnownTypeCode;
+					result = paramType switch {
+						KnownTypeCode.Int32 => new LdcDecimal(new decimal(unchecked((int)val))),
+						KnownTypeCode.UInt32 => new LdcDecimal(new decimal(unchecked((uint)val))),
+						KnownTypeCode.Int64 => new LdcDecimal(new decimal(val)),
+						KnownTypeCode.UInt64 => new LdcDecimal(new decimal(unchecked((ulong)val))),
+						_ => null
+					};
+					return result is not null;
+				}
+			}
+			else if (args.Count == 5)
+			{
+				int lo, mid, hi, isNegative, scale;
+				if (args[0].MatchLdcI4(out lo) && args[1].MatchLdcI4(out mid) &&
+					args[2].MatchLdcI4(out hi) && args[3].MatchLdcI4(out isNegative) &&
+					args[4].MatchLdcI4(out scale))
+				{
+					result = new LdcDecimal(new decimal(lo, mid, hi, isNegative != 0, (byte)scale));
+					return true;
+				}
+			}
+			return false;
+		}
+
 	}
 }

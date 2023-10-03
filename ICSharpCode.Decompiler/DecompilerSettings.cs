@@ -130,6 +130,7 @@ namespace ICSharpCode.Decompiler
 				staticLocalFunctions = false;
 				ranges = false;
 				switchExpressions = false;
+				recursivePatternMatching = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp9_0)
 			{
@@ -141,6 +142,8 @@ namespace ICSharpCode.Decompiler
 				withExpressions = false;
 				usePrimaryConstructorSyntax = false;
 				covariantReturns = false;
+				relationalPatterns = false;
+				patternCombinators = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp10_0)
 			{
@@ -155,20 +158,22 @@ namespace ICSharpCode.Decompiler
 				numericIntPtr = false;
 				utf8StringLiterals = false;
 				unsignedRightShift = false;
+				checkedOperators = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (parameterNullCheck || scopedRef || requiredMembers || numericIntPtr || utf8StringLiterals || unsignedRightShift)
+			if (parameterNullCheck || scopedRef || requiredMembers || numericIntPtr || utf8StringLiterals || unsignedRightShift || checkedOperators)
 				return CSharp.LanguageVersion.CSharp11_0;
 			if (fileScopedNamespaces || recordStructs)
 				return CSharp.LanguageVersion.CSharp10_0;
 			if (nativeIntegers || initAccessors || functionPointers || forEachWithGetEnumeratorExtension
-				|| recordClasses || withExpressions || usePrimaryConstructorSyntax || covariantReturns)
+				|| recordClasses || withExpressions || usePrimaryConstructorSyntax || covariantReturns
+				|| relationalPatterns || patternCombinators)
 				return CSharp.LanguageVersion.CSharp9_0;
 			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement
-				|| staticLocalFunctions || ranges || switchExpressions)
+				|| staticLocalFunctions || ranges || switchExpressions || recursivePatternMatching)
 				return CSharp.LanguageVersion.CSharp8_0;
 			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers
 				|| patternBasedFixedStatement)
@@ -378,6 +383,7 @@ namespace ICSharpCode.Decompiler
 		}
 
 		[Obsolete("Renamed to ScopedRef. This property will be removed in a future version of the decompiler.")]
+		[Browsable(false)]
 		public bool LifetimeAnnotations {
 			get { return ScopedRef; }
 			set { ScopedRef = value; }
@@ -1200,6 +1206,24 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool switchOnReadOnlySpanChar = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use C# 11.0 switch on (ReadOnly)Span&lt;char&gt;
+		/// </summary>
+		[Category("C# 11.0 / VS 2022.4")]
+		[Description("DecompilerSettings.SwitchOnReadOnlySpanChar")]
+		public bool SwitchOnReadOnlySpanChar {
+			get { return switchOnReadOnlySpanChar; }
+			set {
+				if (switchOnReadOnlySpanChar != value)
+				{
+					switchOnReadOnlySpanChar = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool unsignedRightShift = true;
 
 		/// <summary>
@@ -1213,6 +1237,24 @@ namespace ICSharpCode.Decompiler
 				if (unsignedRightShift != value)
 				{
 					unsignedRightShift = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool checkedOperators = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use C# 11.0 user-defined checked operators.
+		/// </summary>
+		[Category("C# 11.0 / VS 2022.4")]
+		[Description("DecompilerSettings.CheckedOperators")]
+		public bool CheckedOperators {
+			get { return checkedOperators; }
+			set {
+				if (checkedOperators != value)
+				{
+					checkedOperators = value;
 					OnPropertyChanged();
 				}
 			}
@@ -1653,6 +1695,60 @@ namespace ICSharpCode.Decompiler
 				if (patternMatching != value)
 				{
 					patternMatching = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool recursivePatternMatching = true;
+
+		/// <summary>
+		/// Gets/Sets whether C# 8.0 recursive patterns should be detected.
+		/// </summary>
+		[Category("C# 8.0 / VS 2019")]
+		[Description("DecompilerSettings.RecursivePatternMatching")]
+		public bool RecursivePatternMatching {
+			get { return recursivePatternMatching; }
+			set {
+				if (recursivePatternMatching != value)
+				{
+					recursivePatternMatching = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool patternCombinators = true;
+
+		/// <summary>
+		/// Gets/Sets whether C# 9.0 and, or, not patterns should be detected.
+		/// </summary>
+		[Category("C# 9.0 / VS 2019.8")]
+		[Description("DecompilerSettings.PatternCombinators")]
+		public bool PatternCombinators {
+			get { return patternCombinators; }
+			set {
+				if (patternCombinators != value)
+				{
+					patternCombinators = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool relationalPatterns = true;
+
+		/// <summary>
+		/// Gets/Sets whether C# 9.0 relational patterns should be detected.
+		/// </summary>
+		[Category("C# 9.0 / VS 2019.8")]
+		[Description("DecompilerSettings.RelationalPatterns")]
+		public bool RelationalPatterns {
+			get { return relationalPatterns; }
+			set {
+				if (relationalPatterns != value)
+				{
+					relationalPatterns = value;
 					OnPropertyChanged();
 				}
 			}

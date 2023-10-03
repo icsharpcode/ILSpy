@@ -231,6 +231,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public bool SupportUnsignedRightShift { get; set; }
 
 		/// <summary>
+		/// Controls whether C# 11 "operator checked" is supported.
+		/// </summary>
+		public bool SupportOperatorChecked { get; set; }
+
+		/// <summary>
 		/// Controls whether all fully qualified type names should be prefixed with "global::".
 		/// </summary>
 		public bool AlwaysUseGlobal { get; set; }
@@ -533,6 +538,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				// Handle nested types
 				result.Target = ConvertTypeHelper(genericType.DeclaringType, typeArguments);
+				AddTypeAnnotation(result.Target, genericType.DeclaringType);
 			}
 			else
 			{
@@ -1734,6 +1740,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				case SymbolKind.Event:
 					return ConvertEvent((IEvent)entity);
 				case SymbolKind.Method:
+					if (entity.Name.Contains(".op_"))
+					{
+						goto case SymbolKind.Operator;
+					}
 					return ConvertMethod((IMethod)entity);
 				case SymbolKind.Operator:
 					return ConvertOperator((IMethod)entity);
@@ -2219,10 +2229,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		EntityDeclaration ConvertOperator(IMethod op)
 		{
-			OperatorType? opType = OperatorDeclaration.GetOperatorType(op.Name);
+			int dot = op.Name.LastIndexOf('.');
+			string name = op.Name.Substring(dot + 1);
+			OperatorType? opType = OperatorDeclaration.GetOperatorType(name);
 			if (opType == null)
 				return ConvertMethod(op);
 			if (opType == OperatorType.UnsignedRightShift && !SupportUnsignedRightShift)
+				return ConvertMethod(op);
+			if (!SupportOperatorChecked && OperatorDeclaration.IsChecked(opType.Value))
 				return ConvertMethod(op);
 
 			OperatorDeclaration decl = new OperatorDeclaration();
@@ -2247,6 +2261,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				decl.AddAnnotation(new MemberResolveResult(null, op));
 			}
 			decl.Body = GenerateBodyBlock();
+			decl.PrivateImplementationType = GetExplicitInterfaceType(op);
 			return decl;
 		}
 
@@ -2365,8 +2380,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						{
 							m |= Modifiers.Sealed;
 						}
-						if (member.IsAbstract && member.IsStatic)
-							m |= Modifiers.Abstract;
+						if (member.IsStatic)
+						{
+							// modifiers of static members in interfaces:
+							if (member.IsAbstract)
+								m |= Modifiers.Abstract;
+							else if (member.IsVirtual && !member.IsOverride)
+								m |= Modifiers.Virtual;
+						}
 					}
 					else
 					{

@@ -136,6 +136,30 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			HandleMethod(anonymousMethodExpression);
 		}
 
+		public override void VisitPropertyDeclaration(PropertyDeclaration propertyDeclaration)
+		{
+			if (!propertyDeclaration.ExpressionBody.IsNull)
+			{
+				HandleMethod(propertyDeclaration.ExpressionBody, propertyDeclaration.Annotation<ILFunction>());
+			}
+			else
+			{
+				base.VisitPropertyDeclaration(propertyDeclaration);
+			}
+		}
+
+		public override void VisitIndexerDeclaration(IndexerDeclaration indexerDeclaration)
+		{
+			if (!indexerDeclaration.ExpressionBody.IsNull)
+			{
+				HandleMethod(indexerDeclaration.ExpressionBody, indexerDeclaration.Annotation<ILFunction>());
+			}
+			else
+			{
+				base.VisitIndexerDeclaration(indexerDeclaration);
+			}
+		}
+
 		public override void VisitQueryFromClause(QueryFromClause queryFromClause)
 		{
 			if (queryFromClause.Parent.FirstChild != queryFromClause)
@@ -232,7 +256,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 					if (v.Index != null && v.Kind.IsLocal())
 					{
 #if DEBUG
-						Debug.Assert(v.Index < types.Length && v.Type.Equals(types[v.Index.Value]));
+						Debug.Assert(v.Index < types.Length && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(v.Type, types[v.Index.Value]));
 #endif
 						localVariables.Add(v);
 					}

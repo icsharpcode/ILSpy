@@ -279,6 +279,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.AsyncEnumerator" xml:space="preserve">
     <value>Decompile async IAsyncEnumerator methods</value>
   </data>
+  <data name="DecompilerSettings.CheckedOperators" xml:space="preserve">
+    <value>User-defined checked operators</value>
+  </data>
   <data name="DecompilerSettings.DecompileAnonymousMethodsLambdas" xml:space="preserve">
     <value>Decompile anonymous methods/lambdas</value>
   </data>
@@ -402,6 +405,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.ParameterNullCheck" xml:space="preserve">
     <value>Use parameter null checking</value>
   </data>
+  <data name="DecompilerSettings.PatternCombinators" xml:space="preserve">
+    <value>Pattern combinators (and, or, not)</value>
+  </data>
   <data name="DecompilerSettings.PatternMatching" xml:space="preserve">
     <value>Use pattern matching expressions</value>
   </data>
@@ -419,6 +425,12 @@ Are you sure you want to continue?</value>
   </data>
   <data name="DecompilerSettings.RecordStructs" xml:space="preserve">
     <value>Record structs</value>
+  </data>
+  <data name="DecompilerSettings.RecursivePatternMatching" xml:space="preserve">
+    <value>Recursive pattern matching</value>
+  </data>
+  <data name="DecompilerSettings.RelationalPatterns" xml:space="preserve">
+    <value>Relational patterns</value>
   </data>
   <data name="DecompilerSettings.RemoveDeadAndSideEffectFreeCodeUseWithCaution" xml:space="preserve">
     <value>Remove dead and side effect free code (use with caution!)</value>
@@ -449,6 +461,9 @@ Are you sure you want to continue?</value>
   </data>
   <data name="DecompilerSettings.SwitchExpressions" xml:space="preserve">
     <value>Switch expressions</value>
+  </data>
+  <data name="DecompilerSettings.SwitchOnReadOnlySpanChar" xml:space="preserve">
+    <value>Use switch on (ReadOnly)Span&lt;char&gt;</value>
   </data>
   <data name="DecompilerSettings.UnsignedRightShift" xml:space="preserve">
     <value>Unsigned right shift (&gt;&gt;&gt;)</value>

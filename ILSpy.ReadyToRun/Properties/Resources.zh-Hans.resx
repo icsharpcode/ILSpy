@@ -126,7 +126,10 @@
   <data name="ShowDebugInfo" xml:space="preserve">
     <value>显示调试信息</value>
   </data>
-  <data name="ShowUnwindInfo" xml:space="preserve">
-    <value>显示展开信息</value>
+  <data name="ShowGCInfo" xml:space="preserve">
+    <value>显示垃圾回收信息</value>
+  </data>
+  <data name="ShowStackUnwindInfo" xml:space="preserve">
+    <value>显示堆栈展开信息</value>
   </data>
 </root>

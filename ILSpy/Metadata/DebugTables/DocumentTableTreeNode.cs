@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(document.Name):X} \"{Name}\"";
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int HashAlgorithm => MetadataTokens.GetHeapOffset(document.HashAlgorithm);
 
 			public string HashAlgorithmTooltip {
@@ -106,7 +106,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Hash => MetadataTokens.GetHeapOffset(document.Hash);
 
 			public string HashTooltip {
@@ -118,7 +118,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Language => MetadataTokens.GetHeapOffset(document.Language);
 
 			public string LanguageTooltip {

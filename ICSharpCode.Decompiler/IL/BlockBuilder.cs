@@ -136,7 +136,7 @@ namespace ICSharpCode.Decompiler.IL
 				cancellationToken.ThrowIfCancellationRequested();
 				int start = block.StartILOffset;
 				// Leave nested containers if necessary
-				while (start >= currentContainer.EndILOffset)
+				while (start >= currentContainer.EndILOffset && containerStack.Count > 0)
 				{
 					currentContainer = containerStack.Pop();
 				}

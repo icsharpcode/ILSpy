@@ -218,6 +218,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return;
 			propertyDeclaration.Modifiers |= propertyDeclaration.Getter.Modifiers;
 			propertyDeclaration.ExpressionBody = m.Get<Expression>("expression").Single().Detach();
+			propertyDeclaration.CopyAnnotationsFrom(propertyDeclaration.Getter);
 			propertyDeclaration.Getter.Remove();
 		}
 
@@ -230,6 +231,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return;
 			indexerDeclaration.Modifiers |= indexerDeclaration.Getter.Modifiers;
 			indexerDeclaration.ExpressionBody = m.Get<Expression>("expression").Single().Detach();
+			indexerDeclaration.CopyAnnotationsFrom(indexerDeclaration.Getter);
 			indexerDeclaration.Getter.Remove();
 		}
 	}

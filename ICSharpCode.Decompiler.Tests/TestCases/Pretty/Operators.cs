@@ -42,6 +42,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return null;
 		}
 
+#if CS110
+		public static AllOperators operator checked +(AllOperators a, AllOperators b)
+		{
+			return null;
+		}
+
+		public static AllOperators operator checked -(AllOperators a, AllOperators b)
+		{
+			return null;
+		}
+
+		public static AllOperators operator checked *(AllOperators a, AllOperators b)
+		{
+			return null;
+		}
+
+		public static AllOperators operator checked /(AllOperators a, AllOperators b)
+		{
+			return null;
+		}
+#endif
+
 		public static AllOperators operator %(AllOperators a, AllOperators b)
 		{
 			return null;
@@ -109,6 +131,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return null;
 		}
 
+#if CS110
+		public static AllOperators operator checked -(AllOperators a)
+		{
+			return null;
+		}
+
+		public static AllOperators operator checked ++(AllOperators a)
+		{
+			return null;
+		}
+
+		public static AllOperators operator checked --(AllOperators a)
+		{
+			return null;
+		}
+#endif
+
 		public static bool operator true(AllOperators a)
 		{
 			return false;
@@ -158,6 +197,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return 0;
 		}
+
+#if CS110
+		public static explicit operator checked int(AllOperators a)
+		{
+			return 0;
+		}
+#endif
 	}
 
 	public class UseAllOperators
@@ -171,6 +217,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			c = a - b;
 			c = a * b;
 			c = a / b;
+#if CS110
+			checked
+			{
+				c = a + b;
+				c = a - b;
+				c = a * b;
+				c = a / b;
+			}
+			// force end of checked block:
+			++a;
+#endif
+
 			c = a % b;
 			c = a & b;
 			c = a | b;
@@ -186,6 +244,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			c = +a;
 			c = ++a;
 			c = --a;
+#if CS110
+			checked
+			{
+				c = -a;
+				c = ++a;
+				c = --a;
+			}
+			// force end of checked block:
+			++a;
+#endif
 			if (a)
 			{
 				Console.WriteLine("a");
@@ -219,6 +287,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("a >= b");
 			}
 			int num = (int)a;
+#if CS110
+			num = checked((int)a);
+			// force end of checked block:
+			num = (int)a;
+#endif
 			a = num;
 		}
 	}

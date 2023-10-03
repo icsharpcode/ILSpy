@@ -88,7 +88,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.ManifestResource)
 				+ metadata.GetTableRowSize(TableIndex.ManifestResource) * (RID - 1);
 
-			[StringFormat("X8")]
+			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public ManifestResourceAttributes Attributes => manifestResource.Attributes;
 
 			public object AttributesTooltip => manifestResource.Attributes.ToString();
@@ -97,8 +97,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(manifestResource.Name):X} \"{Name}\"";
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Implementation => MetadataTokens.GetToken(manifestResource.Implementation);
 
 			public void OnImplementationClick()
@@ -106,16 +105,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, manifestResource.Implementation, protocol: "metadata"));
 			}
 
-			public string ImplementationTooltip {
-				get {
-					if (manifestResource.Implementation.IsNil)
-						return null;
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					manifestResource.Implementation.WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string implementationTooltip;
+			public string ImplementationTooltip => GenerateTooltip(ref implementationTooltip, module, manifestResource.Implementation);
 
 			public ManifestResourceEntry(PEFile module, ManifestResourceHandle handle)
 			{
@@ -124,6 +115,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.manifestResource = metadata.GetManifestResource(handle);
+				this.implementationTooltip = null;
 			}
 		}
 

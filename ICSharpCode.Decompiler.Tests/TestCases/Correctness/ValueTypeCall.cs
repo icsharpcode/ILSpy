@@ -16,6 +16,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public void Dispose()
 		{
 			Console.WriteLine("MutValueType disposed on {0}", val);
+			val = val + 1;
 		}
 
 		public override string ToString()
@@ -67,6 +68,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			gvt.Call(ref gvt);
 			new ValueTypeCall().InstanceFieldTests();
 			ForEach();
+#if CS73
+			DisposeMultipleTimes(ref m, in m);
+			ToStringGeneric(ref m, in m);
+#endif
 		}
 
 		static void RefParameter(ref MutValueType m)
@@ -213,5 +218,37 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 			Console.WriteLine("after: " + list[0].val);
 		}
+
+#if CS73
+		static void DisposeMultipleTimes<T>(ref T mutRef, in T immutableRef) where T : struct, IDisposable
+		{
+			Console.WriteLine("DisposeMultipleTimes:");
+			mutRef.Dispose();
+			mutRef.Dispose();
+			T copyFromMut = mutRef;
+			copyFromMut.Dispose();
+			immutableRef.Dispose();
+			immutableRef.Dispose();
+			T copyFromImmutable = immutableRef;
+			copyFromImmutable.Dispose();
+			mutRef.Dispose();
+			immutableRef.Dispose();
+		}
+
+		static void ToStringGeneric<T>(ref T mutRef, in T immutableRef) where T : struct
+		{
+			Console.WriteLine("ToStringGeneric:");
+			Console.WriteLine(mutRef.ToString());
+			Console.WriteLine(mutRef.ToString());
+			T copyFromMut = mutRef;
+			Console.WriteLine(copyFromMut.ToString());
+			Console.WriteLine(immutableRef.ToString());
+			Console.WriteLine(immutableRef.ToString());
+			T copyFromImmutable = immutableRef;
+			Console.WriteLine(copyFromImmutable.ToString());
+			Console.WriteLine(mutRef.ToString());
+			Console.WriteLine(immutableRef.ToString());
+		}
+#endif
 	}
 }

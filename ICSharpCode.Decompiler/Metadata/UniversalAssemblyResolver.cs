@@ -404,10 +404,37 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (assembly != null)
 				return assembly;
 
-			var framework_dir = Path.GetDirectoryName(typeof(object).Module.FullyQualifiedName)!;
-			var framework_dirs = decompilerRuntime == DecompilerRuntime.Mono
-				? new[] { framework_dir, Path.Combine(framework_dir, "Facades") }
-				: new[] { framework_dir };
+			string[] framework_dirs;
+			string framework_dir;
+
+			switch (decompilerRuntime)
+			{
+				case DecompilerRuntime.Mono:
+					framework_dir = Path.GetDirectoryName(typeof(object).Module.FullyQualifiedName)!;
+					framework_dirs = new[] { framework_dir, Path.Combine(framework_dir, "Facades") };
+					break;
+				case DecompilerRuntime.NETCoreApp:
+					string windir;
+					try
+					{
+						windir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+						if (string.IsNullOrEmpty(windir))
+						{
+							goto default;
+						}
+					}
+					catch (PlatformNotSupportedException)
+					{
+						goto default;
+					}
+					framework_dir = Path.Combine(windir, "Microsoft.NET", "Framework64", "v4.0.30319");
+					framework_dirs = new[] { framework_dir };
+					break;
+				default:
+					framework_dir = Path.GetDirectoryName(typeof(object).Module.FullyQualifiedName)!;
+					framework_dirs = new[] { framework_dir };
+					break;
+			}
 
 			if (IsSpecialVersionOrRetargetable(name))
 			{

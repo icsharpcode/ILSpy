@@ -98,8 +98,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset { get; }
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(eventMap.Parent);
 
 			public void OnParentClick()
@@ -107,17 +106,10 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, eventMap.Parent, protocol: "metadata"));
 			}
 
-			public string ParentTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)eventMap.Parent).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string parentTooltip;
+			public string ParentTooltip => GenerateTooltip(ref parentTooltip, module, eventMap.Parent);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int EventList => MetadataTokens.GetToken(eventMap.EventList);
 
 			public void OnEventListClick()
@@ -125,14 +117,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, eventMap.EventList, protocol: "metadata"));
 			}
 
-			public string EventListTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)eventMap.EventList).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string eventListTooltip;
+			public string EventListTooltip => GenerateTooltip(ref eventListTooltip, module, eventMap.EventList);
 
 			public EventMapEntry(PEFile module, byte* ptr, int metadataOffset, int row)
 			{
@@ -145,6 +131,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				int typeDefSize = metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
 				int eventDefSize = metadata.GetTableRowCount(TableIndex.Event) < ushort.MaxValue ? 2 : 4;
 				this.eventMap = new EventMap(ptr + rowOffset, typeDefSize, eventDefSize);
+				this.parentTooltip = null;
+				this.eventListTooltip = null;
 			}
 		}
 

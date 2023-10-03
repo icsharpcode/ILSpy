@@ -98,8 +98,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset { get; }
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(propertyMap.Parent);
 
 			public void OnParentClick()
@@ -107,17 +106,10 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, propertyMap.Parent, protocol: "metadata"));
 			}
 
-			public string ParentTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)propertyMap.Parent).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string parentTooltip;
+			public string ParentTooltip => GenerateTooltip(ref parentTooltip, module, propertyMap.Parent);
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int PropertyList => MetadataTokens.GetToken(propertyMap.PropertyList);
 
 			public void OnPropertyListClick()
@@ -125,14 +117,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, propertyMap.PropertyList, protocol: "metadata"));
 			}
 
-			public string PropertyListTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)propertyMap.PropertyList).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string propertyListTooltip;
+			public string PropertyListTooltip => GenerateTooltip(ref propertyListTooltip, module, propertyMap.PropertyList);
 
 			public PropertyMapEntry(PEFile module, byte* ptr, int metadataOffset, int row)
 			{
@@ -145,6 +131,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				int typeDefSize = metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
 				int propertyDefSize = metadata.GetTableRowCount(TableIndex.Property) < ushort.MaxValue ? 2 : 4;
 				this.propertyMap = new PropertyMap(ptr + rowOffset, typeDefSize, propertyDefSize);
+				this.propertyListTooltip = null;
+				this.parentTooltip = null;
 			}
 		}
 

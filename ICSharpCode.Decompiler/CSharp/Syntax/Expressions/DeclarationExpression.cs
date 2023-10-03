@@ -52,7 +52,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
-			return other is DeclarationExpression o && Designation.DoMatch(o.Designation, match);
+			return other is DeclarationExpression o
+				&& Type.DoMatch(o.Type, match)
+				&& Designation.DoMatch(o.Designation, match);
 		}
 	}
 }

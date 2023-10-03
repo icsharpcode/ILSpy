@@ -98,8 +98,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset { get; }
 
-			[StringFormat("X8")]
-			[LinkToTable]
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(fieldMarshal.Parent);
 
 			public void OnParentClick()
@@ -107,16 +106,10 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(module, fieldMarshal.Parent, protocol: "metadata"));
 			}
 
-			public string ParentTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)fieldMarshal.Parent).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
+			string parentTooltip;
+			public string ParentTooltip => GenerateTooltip(ref parentTooltip, module, fieldMarshal.Parent);
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int NativeType => MetadataTokens.GetHeapOffset(fieldMarshal.NativeType);
 
 			public FieldMarshalEntry(PEFile module, byte* ptr, int metadataOffset, int row)
@@ -130,6 +123,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				int hasFieldMarshalRefSize = metadata.ComputeCodedTokenSize(32768, TableMask.Field | TableMask.Param);
 				int blobHeapSize = metadata.GetHeapSize(HeapIndex.Blob) < ushort.MaxValue ? 2 : 4;
 				this.fieldMarshal = new FieldMarshal(ptr + rowOffset, blobHeapSize, hasFieldMarshalRefSize);
+				this.parentTooltip = null;
 			}
 		}
 

@@ -82,17 +82,17 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(moduleDef.Name):X} \"{Name}\"";
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Mvid => MetadataTokens.GetHeapOffset(moduleDef.Mvid);
 
 			public string MvidTooltip => metadata.GetGuid(moduleDef.Mvid).ToString();
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int GenerationId => MetadataTokens.GetHeapOffset(moduleDef.GenerationId);
 
 			public string GenerationIdTooltip => moduleDef.GenerationId.IsNil ? null : metadata.GetGuid(moduleDef.GenerationId).ToString();
 
-			[StringFormat("X")]
+			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int BaseGenerationId => MetadataTokens.GetHeapOffset(moduleDef.BaseGenerationId);
 
 			public string BaseGenerationIdTooltip => moduleDef.BaseGenerationId.IsNil ? null : metadata.GetGuid(moduleDef.BaseGenerationId).ToString();

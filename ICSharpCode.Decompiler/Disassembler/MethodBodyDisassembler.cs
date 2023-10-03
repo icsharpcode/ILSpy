@@ -234,8 +234,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 				case ILStructureType.Handler:
 					switch (s.ExceptionHandler.Kind)
 					{
-						case ExceptionRegionKind.Catch:
 						case ExceptionRegionKind.Filter:
+							// handler block of filter block has no header
+							break;
+						case ExceptionRegionKind.Catch:
 							output.Write("catch");
 							if (!s.ExceptionHandler.CatchType.IsNil)
 							{

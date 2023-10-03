@@ -60,13 +60,16 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				var vbcPath = roslynToolset.GetVBCompiler(roslynVersion);
 
 				IEnumerable<string> references;
+				string libPath;
 				if ((flags & CompilerOptions.UseRoslynMask) != 0 && (flags & CompilerOptions.TargetNet40) == 0)
 				{
 					references = coreDefaultReferences.Select(r => "-r:\"" + r + "\"");
+					libPath = coreRefAsmPath;
 				}
 				else
 				{
 					references = defaultReferences.Select(r => "-r:\"" + r + "\"");
+					libPath = RefAsmPath;
 				}
 				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic))
 				{
@@ -116,7 +119,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				}
 
 				var command = Cli.Wrap(vbcPath)
-					.WithArguments($"{otherOptions}{string.Join(" ", references)} -out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}")
+					.WithArguments($"{otherOptions}-libpath:\"{libPath}\" {string.Join(" ", references)} -out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}")
 					.WithValidation(CommandResultValidation.None);
 				Console.WriteLine($"\"{command.TargetFilePath}\" {command.Arguments}");
 

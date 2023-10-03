@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		public ILVariable SwitchVariable => switchVar;
 
 		/// <summary>
-		/// Whether at least one the analyzed blocks contained an IL switch constructors.
+		/// Whether at least one of the analyzed blocks contained an IL switch constructors.
 		/// </summary>
 		public bool ContainsILSwitch { get; private set; }
 

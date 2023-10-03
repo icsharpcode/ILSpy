@@ -26,6 +26,7 @@ using System.Text;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -781,7 +782,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						argumentNames = new string[method.Parameters.Count];
 					}
 					parameter = method.Parameters[argumentToParameterMap[i]];
-					if (argumentNames != null)
+					if (argumentNames != null && AssignVariableNames.IsValidName(parameter.Name))
 					{
 						argumentNames[arguments.Count] = parameter.Name;
 					}

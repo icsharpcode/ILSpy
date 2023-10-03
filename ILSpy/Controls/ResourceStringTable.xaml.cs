@@ -81,6 +81,23 @@ namespace ICSharpCode.ILSpy.Controls
 			StringBuilder sb = new StringBuilder();
 			foreach (var item in resourceListView.SelectedItems)
 			{
+				if (item is KeyValuePair<string, string> pair)
+				{
+					switch (args.Parameter)
+					{
+						case "Key":
+							sb.AppendLine(pair.Key);
+							continue;
+
+						case "Value":
+							sb.AppendLine(pair.Value);
+							continue;
+
+						default:
+							sb.AppendLine($"{pair.Key}\t{pair.Value}");
+							continue;
+					}
+				}
 				sb.AppendLine(item.ToString());
 			}
 			Clipboard.SetText(sb.ToString());

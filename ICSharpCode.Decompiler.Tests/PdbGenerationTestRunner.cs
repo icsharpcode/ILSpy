@@ -44,6 +44,13 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		[Ignore("Duplicate sequence points for local function")]
+		public void Members()
+		{
+			TestGeneratePdb();
+		}
+
+		[Test]
 		public void CustomPdbId()
 		{
 			// Generate a PDB for an assembly using a randomly-generated ID, then validate that the PDB uses the specified ID
@@ -155,7 +162,7 @@ namespace ICSharpCode.Decompiler.Tests
 			ProcessXmlFile(expectedFileName);
 			string generatedFileName = Path.ChangeExtension(xmlFile, ".generated.xml");
 			ProcessXmlFile(generatedFileName);
-			Assert.AreEqual(Normalize(expectedFileName), Normalize(generatedFileName));
+			CodeAssert.AreEqual(Normalize(expectedFileName), Normalize(generatedFileName));
 		}
 
 		private (string peFileName, string pdbFileName) CompileTestCase(string testName)

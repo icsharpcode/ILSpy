@@ -113,6 +113,10 @@ namespace ICSharpCode.Decompiler.Output
 		/// Support <c>&gt;&gt;&gt;</c> as unsigned right shift operator.
 		/// </summary>
 		SupportUnsignedRightShift = 0x80000,
+		/// <summary>
+		/// Support C# 11 <c>operator checked</c>.
+		/// </summary>
+		SupportOperatorChecked = 0x100000,
 
 		StandardConversionFlags = ShowParameterNames |
 			ShowAccessibility |
@@ -127,7 +131,7 @@ namespace ICSharpCode.Decompiler.Output
 			ShowDefinitionKeyword |
 			ShowBody,
 
-		All = 0x7ffff,
+		All = 0x1fffff,
 	}
 
 	/// <summary>
