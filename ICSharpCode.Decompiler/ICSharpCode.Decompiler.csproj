@@ -362,6 +362,7 @@
     <Compile Include="IL\Transforms\TransformDisplayClassUsage.cs" />
     <Compile Include="IL\Transforms\UserDefinedLogicTransform.cs" />
     <Compile Include="Metadata\AssemblyReferences.cs" />
+    <Compile Include="Metadata\TypeReferenceMetadata.cs" />
     <Compile Include="Metadata\CodeMappingInfo.cs" />
     <Compile Include="Metadata\EnumUnderlyingTypeResolveException.cs" />
     <Compile Include="Metadata\MetadataTokenHelpers.cs" />
