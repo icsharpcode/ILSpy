@@ -53,6 +53,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		public ControlFlowGraph ControlFlowGraph { get; set; }
 
+		/// <summary>
+		/// Initially equal to Block.Instructions.Count indicating that nothing has been transformed yet.
+		/// Set by <see cref="ConditionDetection"/> when another already transformed block is merged into
+		/// the current block. Subsequent <see cref="IBlockTransform"/>s must update this value, for example,
+		/// by resetting it to Block.Instructions.Count. <see cref="StatementTransform"/> will use this value to
+		/// skip already transformed instructions.
+		/// </summary>
+		public int IndexOfFirstAlreadyTransformedInstruction { get; set; }
+
 		public BlockTransformContext(ILTransformContext context) : base(context)
 		{
 		}
@@ -103,6 +112,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			context.ControlFlowNode = cfgNode;
 			context.Block = block;
+			context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
 			block.RunTransforms(PreOrderTransforms, context);
 
 			// First, process the children in the dominator tree.
@@ -115,6 +125,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			context.ControlFlowNode = cfgNode;
 			context.Block = block;
+			context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
 			block.RunTransforms(PostOrderTransforms, context);
 			context.StepEndGroup();
 		}

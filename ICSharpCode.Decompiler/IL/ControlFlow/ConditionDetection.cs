@@ -93,6 +93,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			PickBetterBlockExit(block, ifInst);
 			OrderIfBlocks(ifInst);
+			context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
 		}
 
 		/// <summary>
@@ -150,6 +151,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// The targetBlock was already processed, and is ready to embed
 			var targetBlock = ((Branch)exitInst).TargetBlock;
 			block.Instructions.RemoveAt(block.Instructions.Count - 1);
+			context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
 			block.Instructions.AddRange(targetBlock.Instructions);
 			targetBlock.Remove();
 

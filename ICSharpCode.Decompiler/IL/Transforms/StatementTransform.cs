@@ -114,7 +114,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			var ctx = new StatementTransformContext(context);
 			int pos = 0;
-			ctx.rerunPosition = block.Instructions.Count - 1;
+			if (context.IndexOfFirstAlreadyTransformedInstruction == 0)
+			{
+				return;
+			}
+			ctx.rerunPosition = context.IndexOfFirstAlreadyTransformedInstruction - 1;
 			while (pos >= 0)
 			{
 				if (ctx.rerunPosition != null)

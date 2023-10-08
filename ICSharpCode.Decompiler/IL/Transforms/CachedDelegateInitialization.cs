@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -32,36 +31,42 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.context = context;
 			if (!context.Settings.AnonymousMethods)
 				return;
-			for (int i = block.Instructions.Count - 1; i >= 0; i--)
+			for (int i = context.IndexOfFirstAlreadyTransformedInstruction - 1; i >= 0; i--)
 			{
 				if (block.Instructions[i] is IfInstruction inst)
 				{
 					if (CachedDelegateInitializationWithField(inst))
 					{
 						block.Instructions.RemoveAt(i);
+						context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
 						continue;
 					}
 					if (CachedDelegateInitializationWithLocal(inst))
 					{
 						ILInlining.InlineOneIfPossible(block, i, InliningOptions.Aggressive, context);
+						context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
 						continue;
 					}
 					if (CachedDelegateInitializationRoslynInStaticWithLocal(inst) || CachedDelegateInitializationRoslynWithLocal(inst))
 					{
 						block.Instructions.RemoveAt(i);
+						context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
 						continue;
 					}
 					if (CachedDelegateInitializationVB(inst))
 					{
+						context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
 						continue;
 					}
 					if (CachedDelegateInitializationVBWithReturn(inst))
 					{
 						block.Instructions.RemoveAt(i);
+						context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
 						continue;
 					}
 					if (CachedDelegateInitializationVBWithClosure(inst))
 					{
+						context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
 						continue;
 					}
 				}
