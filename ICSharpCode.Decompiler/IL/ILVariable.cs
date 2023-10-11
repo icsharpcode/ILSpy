@@ -652,9 +652,13 @@ namespace ICSharpCode.Decompiler.IL
 
 		public int GetHashCode(ILVariable obj)
 		{
-			if (obj.Kind == VariableKind.StackSlot)
+			if (obj.Kind is VariableKind.StackSlot or VariableKind.PatternLocal)
 				return obj.GetHashCode();
-			return (obj.Function, obj.Kind, obj.Index).GetHashCode();
+			if (obj.Index == null && obj.StateMachineField == null)
+				return obj.GetHashCode();
+			if (obj.Index != null)
+				return (obj.Function, obj.Kind, obj.Index).GetHashCode();
+			return (obj.Function, obj.Kind, obj.StateMachineField).GetHashCode();
 		}
 	}
 }
