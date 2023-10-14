@@ -236,29 +236,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 
 		/// <summary>
-		/// Opens a new scope for local variables.
-		/// </summary>
-		public CSharpResolver PushBlock()
-		{
-			return WithLocalVariableStack(localVariableStack.Push(null));
-		}
-
-		/// <summary>
-		/// Closes the current scope for local variables; removing all variables in that scope.
-		/// </summary>
-		public CSharpResolver PopBlock()
-		{
-			var stack = localVariableStack;
-			IVariable removedVar;
-			do
-			{
-				removedVar = stack.Peek();
-				stack = stack.Pop();
-			} while (removedVar != null);
-			return WithLocalVariableStack(stack);
-		}
-
-		/// <summary>
 		/// Adds a new variable or lambda parameter to the current block.
 		/// </summary>
 		public CSharpResolver AddVariable(IVariable variable)
@@ -266,16 +243,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (variable == null)
 				throw new ArgumentNullException(nameof(variable));
 			return WithLocalVariableStack(localVariableStack.Push(variable));
-		}
-
-		/// <summary>
-		/// Removes the variable that was just added.
-		/// </summary>
-		public CSharpResolver PopLastVariable()
-		{
-			if (localVariableStack.Peek() == null)
-				throw new InvalidOperationException("There is no variable within the current block.");
-			return WithLocalVariableStack(localVariableStack.Pop());
 		}
 
 		/// <summary>
