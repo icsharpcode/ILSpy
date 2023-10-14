@@ -67,5 +67,21 @@ namespace ICSharpCode.Decompiler.Tests.Util
 			bitset[200] = false;
 			Assert.IsFalse(bitset.All(1, 299));
 		}
+
+		[Test]
+		public void NextBitSet()
+		{
+			var bitset = new BitSet(300);
+			bitset.Set(0);
+			bitset.Set(2);
+			bitset.Set(3);
+			bitset.Set(130);
+			bitset.Set(135);
+			bitset.Set(150);
+			bitset.Set(190);
+			Assert.That(bitset.SetBits(0, 300), Is.EqualTo(new[] { 0, 2, 3, 130, 135, 150, 190 }));
+			Assert.That(bitset.SetBits(1, 5), Is.EqualTo(new[] { 2, 3 }));
+			Assert.That(bitset.SetBits(5, 132), Is.EqualTo(new[] { 130 }));
+		}
 	}
 }
