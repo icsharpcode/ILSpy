@@ -40,7 +40,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			SRM.MetadataReader metadata,
 			TypeSystemOptions options,
 			Nullability nullableContext,
-			bool typeChildrenOnly = false)
+			bool typeChildrenOnly = false,
+			SRM.CustomAttributeHandleCollection? additionalAttributes = null)
 		{
 			bool hasDynamicAttribute = false;
 			bool[] dynamicAttributeData = null;
@@ -57,71 +58,85 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				nullability = Nullability.Oblivious;
 			}
+
+			void ProcessAttribute(SRM.CustomAttributeHandle attrHandle)
+			{
+				var attr = metadata.GetCustomAttribute(attrHandle);
+				var attrType = attr.GetAttributeType(metadata);
+				if ((options & TypeSystemOptions.Dynamic) != 0 && attrType.IsKnownType(metadata, KnownAttribute.Dynamic))
+				{
+					hasDynamicAttribute = true;
+					var ctor = attr.DecodeValue(Metadata.MetadataExtensions.minimalCorlibTypeProvider);
+					if (ctor.FixedArguments.Length == 1)
+					{
+						var arg = ctor.FixedArguments[0];
+						if (arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values
+							&& values.All(v => v.Value is bool))
+						{
+							dynamicAttributeData = values.SelectArray(v => (bool)v.Value);
+						}
+					}
+				}
+				else if ((options & TypeSystemOptions.NativeIntegers) != 0 && attrType.IsKnownType(metadata, KnownAttribute.NativeInteger))
+				{
+					hasNativeIntegersAttribute = true;
+					var ctor = attr.DecodeValue(Metadata.MetadataExtensions.minimalCorlibTypeProvider);
+					if (ctor.FixedArguments.Length == 1)
+					{
+						var arg = ctor.FixedArguments[0];
+						if (arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values
+							&& values.All(v => v.Value is bool))
+						{
+							nativeIntegersAttributeData = values.SelectArray(v => (bool)v.Value);
+						}
+					}
+				}
+				else if ((options & TypeSystemOptions.Tuple) != 0 && attrType.IsKnownType(metadata, KnownAttribute.TupleElementNames))
+				{
+					var ctor = attr.DecodeValue(Metadata.MetadataExtensions.minimalCorlibTypeProvider);
+					if (ctor.FixedArguments.Length == 1)
+					{
+						var arg = ctor.FixedArguments[0];
+						if (arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values
+							&& values.All(v => v.Value is string || v.Value == null))
+						{
+							tupleElementNames = values.SelectArray(v => (string)v.Value);
+						}
+					}
+				}
+				else if ((options & TypeSystemOptions.NullabilityAnnotations) != 0 && attrType.IsKnownType(metadata, KnownAttribute.Nullable))
+				{
+					var ctor = attr.DecodeValue(Metadata.MetadataExtensions.minimalCorlibTypeProvider);
+					if (ctor.FixedArguments.Length == 1)
+					{
+						var arg = ctor.FixedArguments[0];
+						if (arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values
+							&& values.All(v => v.Value is byte b && b <= 2))
+						{
+							nullableAttributeData = values.SelectArray(v => (Nullability)(byte)v.Value);
+						}
+						else if (arg.Value is byte b && b <= 2)
+						{
+							nullability = (Nullability)b;
+						}
+					}
+				}
+			}
+
 			const TypeSystemOptions relevantOptions = TypeSystemOptions.Dynamic | TypeSystemOptions.Tuple | TypeSystemOptions.NullabilityAnnotations | TypeSystemOptions.NativeIntegers;
 			if (attributes != null && (options & relevantOptions) != 0)
 			{
 				foreach (var attrHandle in attributes.Value)
 				{
-					var attr = metadata.GetCustomAttribute(attrHandle);
-					var attrType = attr.GetAttributeType(metadata);
-					if ((options & TypeSystemOptions.Dynamic) != 0 && attrType.IsKnownType(metadata, KnownAttribute.Dynamic))
-					{
-						hasDynamicAttribute = true;
-						var ctor = attr.DecodeValue(Metadata.MetadataExtensions.minimalCorlibTypeProvider);
-						if (ctor.FixedArguments.Length == 1)
-						{
-							var arg = ctor.FixedArguments[0];
-							if (arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values
-								&& values.All(v => v.Value is bool))
-							{
-								dynamicAttributeData = values.SelectArray(v => (bool)v.Value);
-							}
-						}
-					}
-					else if ((options & TypeSystemOptions.NativeIntegers) != 0 && attrType.IsKnownType(metadata, KnownAttribute.NativeInteger))
-					{
-						hasNativeIntegersAttribute = true;
-						var ctor = attr.DecodeValue(Metadata.MetadataExtensions.minimalCorlibTypeProvider);
-						if (ctor.FixedArguments.Length == 1)
-						{
-							var arg = ctor.FixedArguments[0];
-							if (arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values
-								&& values.All(v => v.Value is bool))
-							{
-								nativeIntegersAttributeData = values.SelectArray(v => (bool)v.Value);
-							}
-						}
-					}
-					else if ((options & TypeSystemOptions.Tuple) != 0 && attrType.IsKnownType(metadata, KnownAttribute.TupleElementNames))
-					{
-						var ctor = attr.DecodeValue(Metadata.MetadataExtensions.minimalCorlibTypeProvider);
-						if (ctor.FixedArguments.Length == 1)
-						{
-							var arg = ctor.FixedArguments[0];
-							if (arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values
-								&& values.All(v => v.Value is string || v.Value == null))
-							{
-								tupleElementNames = values.SelectArray(v => (string)v.Value);
-							}
-						}
-					}
-					else if ((options & TypeSystemOptions.NullabilityAnnotations) != 0 && attrType.IsKnownType(metadata, KnownAttribute.Nullable))
-					{
-						var ctor = attr.DecodeValue(Metadata.MetadataExtensions.minimalCorlibTypeProvider);
-						if (ctor.FixedArguments.Length == 1)
-						{
-							var arg = ctor.FixedArguments[0];
-							if (arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values
-								&& values.All(v => v.Value is byte b && b <= 2))
-							{
-								nullableAttributeData = values.SelectArray(v => (Nullability)(byte)v.Value);
-							}
-							else if (arg.Value is byte b && b <= 2)
-							{
-								nullability = (Nullability)b;
-							}
-						}
-					}
+					ProcessAttribute(attrHandle);
+				}
+			}
+			if (additionalAttributes != null && (options & relevantOptions) != 0)
+			{
+				// Note: additional attributes will override the values from the normal attributes.
+				foreach (var attrHandle in additionalAttributes.Value)
+				{
+					ProcessAttribute(attrHandle);
 				}
 			}
 			if (hasDynamicAttribute || hasNativeIntegersAttribute || nullability != Nullability.Oblivious || nullableAttributeData != null

@@ -209,13 +209,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			MetadataModule module, IParameterizedMember owner,
 			MethodSignature<IType> signature, ParameterHandleCollection? parameterHandles,
 			Nullability nullableContext, TypeSystemOptions typeSystemOptions,
-			CustomAttributeHandleCollection? returnTypeAttributes = null)
+			CustomAttributeHandleCollection? additionalReturnTypeAttributes = null)
 		{
 			var metadata = module.metadata;
 			int i = 0;
 			IParameter[] parameters = new IParameter[signature.RequiredParameterCount
 				+ (signature.Header.CallingConvention == SignatureCallingConvention.VarArgs ? 1 : 0)];
 			IType parameterType;
+			CustomAttributeHandleCollection? returnTypeAttributes = null;
 			if (parameterHandles != null)
 			{
 				foreach (var parameterHandle in parameterHandles)
@@ -225,13 +226,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					{
 						// "parameter" holds return type attributes.
 						// Note: for properties, the attributes normally stored on a method's return type
-						// are instead stored as normal attributes on the property.
-						// So MetadataProperty provides a non-null value for returnTypeAttributes,
-						// which then should be preferred over the attributes on the accessor's parameters.
-						if (returnTypeAttributes == null)
-						{
-							returnTypeAttributes = par.GetCustomAttributes();
-						}
+						// are instead typically stored as normal attributes on the property.
+						// So MetadataProperty provides a non-null value for additionalReturnTypeAttributes,
+						// which then will be preferred over the attributes on the accessor's parameters.
+						// However if an attribute only exists on the accessor's parameters, we still want
+						// to process it here.
+						returnTypeAttributes = par.GetCustomAttributes();
 					}
 					else if (i < par.SequenceNumber && par.SequenceNumber <= signature.RequiredParameterCount)
 					{

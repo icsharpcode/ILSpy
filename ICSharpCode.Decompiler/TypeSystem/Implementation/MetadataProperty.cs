@@ -169,7 +169,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				(returnType, parameters, _) = MetadataMethod.DecodeSignature(
 					module, this, signature,
 					parameterHandles, nullableContext, typeOptions,
-					returnTypeAttributes: propertyDef.GetCustomAttributes());
+					additionalReturnTypeAttributes: propertyDef.GetCustomAttributes());
 			}
 			catch (BadImageFormatException)
 			{
