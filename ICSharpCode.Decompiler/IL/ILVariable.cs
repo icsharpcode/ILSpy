@@ -654,11 +654,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (obj.Kind is VariableKind.StackSlot or VariableKind.PatternLocal)
 				return obj.GetHashCode();
-			if (obj.Index == null && obj.StateMachineField == null)
-				return obj.GetHashCode();
 			if (obj.Index != null)
 				return (obj.Function, obj.Kind, obj.Index).GetHashCode();
-			return (obj.Function, obj.Kind, obj.StateMachineField).GetHashCode();
+			if (obj.StateMachineField != null)
+				return (obj.Function, obj.Kind, obj.StateMachineField).GetHashCode();
+			return obj.GetHashCode();
 		}
 	}
 }
