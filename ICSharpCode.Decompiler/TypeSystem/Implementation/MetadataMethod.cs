@@ -271,7 +271,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 			Debug.Assert(i == parameters.Length);
 			var returnType = ApplyAttributeTypeVisitor.ApplyAttributesToType(signature.ReturnType,
-				module.Compilation, returnTypeAttributes, metadata, typeSystemOptions, nullableContext);
+				module.Compilation, returnTypeAttributes, metadata, typeSystemOptions, nullableContext,
+				additionalAttributes: additionalReturnTypeAttributes);
 			return (returnType, parameters, signature.ReturnType as ModifiedType);
 		}
 		#endregion
