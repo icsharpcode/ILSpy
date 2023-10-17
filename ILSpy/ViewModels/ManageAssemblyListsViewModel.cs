@@ -71,7 +71,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 					continue;
 				foreach (var versionDir in Directory.GetDirectories(sdkDir))
 				{
-					var match = Regex.Match(versionDir, @"[/\\](?<name>[A-z0-9.]+)[/\\](?<version>\d+\.\d)+(.(?<revision>\d+))?(?<suffix>-preview.*)?$");
+					var match = Regex.Match(versionDir, @"[/\\](?<name>[A-z0-9.]+)[/\\](?<version>\d+\.\d+)(.(?<revision>\d+))?(?<suffix>-.*)?$");
 					if (!match.Success)
 						continue;
 					string name = match.Groups["name"].Value;
