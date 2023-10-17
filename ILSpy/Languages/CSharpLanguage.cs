@@ -28,9 +28,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 
-using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Highlighting;
-using ICSharpCode.AvalonEdit.Utils;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
@@ -42,7 +40,6 @@ using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpyX;
@@ -426,7 +423,7 @@ namespace ICSharpCode.ILSpy
 				if (globalType != null)
 				{
 					output.Write("// Global type: ");
-					output.WriteReference(globalType, globalType.FullName);
+					output.WriteReference(globalType, EscapeName(globalType.FullName));
 					output.WriteLine();
 				}
 				var metadata = module.Metadata;
@@ -438,7 +435,7 @@ namespace ICSharpCode.ILSpy
 					if (entrypoint != null)
 					{
 						output.Write("// Entry point: ");
-						output.WriteReference(entrypoint, entrypoint.DeclaringType.FullName + "." + entrypoint.Name);
+						output.WriteReference(entrypoint, EscapeName(entrypoint.DeclaringType.FullName + "." + entrypoint.Name));
 						output.WriteLine();
 					}
 				}
