@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Icon => Images.Literal;
 
-		public unsafe override bool View(ViewModels.TabPageModel tabPage)
+		public override bool View(ViewModels.TabPageModel tabPage)
 		{
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<StateMachineMethodEntry>();
 			StateMachineMethodEntry scrollTargetEntry = default;
 			var length = metadata.GetTableRowCount(TableIndex.StateMachineMethod);
-			var reader = new BlobReader(metadata.MetadataPointer, metadata.MetadataLength);
+			var reader = metadata.AsBlobReader();
 			reader.Offset = metadata.GetTableMetadataOffset(TableIndex.StateMachineMethod);
 
 			for (int rid = 1; rid <= length; rid++)

@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -38,7 +39,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Icon => Images.Literal;
 
-		public unsafe override bool View(ViewModels.TabPageModel tabPage)
+		public override bool View(ViewModels.TabPageModel tabPage)
 		{
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
@@ -50,7 +51,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			FieldRVAEntry scrollTargetEntry = default;
 
 			var length = metadata.GetTableRowCount(TableIndex.FieldRva);
-			byte* ptr = metadata.MetadataPointer;
+			ReadOnlySpan<byte> ptr = metadata.AsReadOnlySpan();
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++)
 			{
@@ -79,14 +80,14 @@ namespace ICSharpCode.ILSpy.Metadata
 			public readonly int Offset;
 			public readonly FieldDefinitionHandle Field;
 
-			public unsafe FieldRVA(byte* ptr, int fieldDefSize)
+			public FieldRVA(ReadOnlySpan<byte> ptr, int fieldDefSize)
 			{
 				Offset = Helpers.GetValue(ptr, 4);
-				Field = MetadataTokens.FieldDefinitionHandle(Helpers.GetValue(ptr + 4, fieldDefSize));
+				Field = MetadataTokens.FieldDefinitionHandle(Helpers.GetValue(ptr.Slice(4, fieldDefSize)));
 			}
 		}
 
-		unsafe struct FieldRVAEntry
+		struct FieldRVAEntry
 		{
 			readonly PEFile module;
 			readonly MetadataReader metadata;
@@ -112,7 +113,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public int FieldOffset => fieldRVA.Offset;
 
-			public FieldRVAEntry(PEFile module, byte* ptr, int metadataOffset, int row)
+			public FieldRVAEntry(PEFile module, ReadOnlySpan<byte> ptr, int metadataOffset, int row)
 			{
 				this.module = module;
 				this.metadata = module.Metadata;
@@ -121,7 +122,7 @@ namespace ICSharpCode.ILSpy.Metadata
 					+ metadata.GetTableRowSize(TableIndex.FieldRva) * (row - 1);
 				this.Offset = metadataOffset + rowOffset;
 				int fieldDefSize = metadata.GetTableRowCount(TableIndex.Field) < ushort.MaxValue ? 2 : 4;
-				this.fieldRVA = new FieldRVA(ptr + rowOffset, fieldDefSize);
+				this.fieldRVA = new FieldRVA(ptr.Slice(rowOffset), fieldDefSize);
 				this.fieldTooltip = null;
 			}
 		}

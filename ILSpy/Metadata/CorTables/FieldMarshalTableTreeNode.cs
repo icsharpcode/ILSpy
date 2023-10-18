@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -38,7 +39,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Icon => Images.Literal;
 
-		public unsafe override bool View(ViewModels.TabPageModel tabPage)
+		public override bool View(ViewModels.TabPageModel tabPage)
 		{
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
@@ -50,7 +51,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			FieldMarshalEntry scrollTargetEntry = default;
 
 			var length = metadata.GetTableRowCount(TableIndex.FieldMarshal);
-			byte* ptr = metadata.MetadataPointer;
+			ReadOnlySpan<byte> ptr = metadata.AsReadOnlySpan();
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++)
 			{
@@ -79,14 +80,14 @@ namespace ICSharpCode.ILSpy.Metadata
 			public readonly BlobHandle NativeType;
 			public readonly EntityHandle Parent;
 
-			public unsafe FieldMarshal(byte* ptr, int blobHeapSize, int hasFieldMarshalRefSize)
+			public FieldMarshal(ReadOnlySpan<byte> ptr, int blobHeapSize, int hasFieldMarshalRefSize)
 			{
 				Parent = Helpers.FromHasFieldMarshalTag((uint)Helpers.GetValue(ptr, hasFieldMarshalRefSize));
-				NativeType = MetadataTokens.BlobHandle(Helpers.GetValue(ptr + hasFieldMarshalRefSize, blobHeapSize));
+				NativeType = MetadataTokens.BlobHandle(Helpers.GetValue(ptr.Slice(hasFieldMarshalRefSize, blobHeapSize)));
 			}
 		}
 
-		unsafe struct FieldMarshalEntry
+		struct FieldMarshalEntry
 		{
 			readonly PEFile module;
 			readonly MetadataReader metadata;
@@ -112,7 +113,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int NativeType => MetadataTokens.GetHeapOffset(fieldMarshal.NativeType);
 
-			public FieldMarshalEntry(PEFile module, byte* ptr, int metadataOffset, int row)
+			public FieldMarshalEntry(PEFile module, ReadOnlySpan<byte> ptr, int metadataOffset, int row)
 			{
 				this.module = module;
 				this.metadata = module.Metadata;
@@ -122,7 +123,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.Offset = metadataOffset + rowOffset;
 				int hasFieldMarshalRefSize = metadata.ComputeCodedTokenSize(32768, TableMask.Field | TableMask.Param);
 				int blobHeapSize = metadata.GetHeapSize(HeapIndex.Blob) < ushort.MaxValue ? 2 : 4;
-				this.fieldMarshal = new FieldMarshal(ptr + rowOffset, blobHeapSize, hasFieldMarshalRefSize);
+				this.fieldMarshal = new FieldMarshal(ptr.Slice(rowOffset), blobHeapSize, hasFieldMarshalRefSize);
 				this.parentTooltip = null;
 			}
 		}

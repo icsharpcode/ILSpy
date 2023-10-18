@@ -212,11 +212,21 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
+		[Obsolete("Use ReadOnlySpan<byte> overload")]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static unsafe int GetValue(byte* ptr, int size)
+			=> GetValue(new ReadOnlySpan<byte>(ptr, size));
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static int GetValue(ReadOnlySpan<byte> ptr, int size)
+			=> GetValue(ptr.Slice(0, size));
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static int GetValue(ReadOnlySpan<byte> ptr)
 		{
+			// endianess?
 			int result = 0;
-			for (int i = 0; i < size; i += 2)
+			for (int i = 0; i < ptr.Length; i += 2)
 			{
 				result |= ptr[i] << 8 * i;
 				result |= ptr[i + 1] << 8 * (i + 1);

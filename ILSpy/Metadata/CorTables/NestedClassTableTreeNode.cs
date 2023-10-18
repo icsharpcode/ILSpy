@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -38,7 +39,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Icon => Images.Literal;
 
-		public unsafe override bool View(ViewModels.TabPageModel tabPage)
+		public override bool View(ViewModels.TabPageModel tabPage)
 		{
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
@@ -50,7 +51,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			NestedClassEntry scrollTargetEntry = default;
 
 			var length = metadata.GetTableRowCount(TableIndex.NestedClass);
-			byte* ptr = metadata.MetadataPointer;
+			ReadOnlySpan<byte> ptr = metadata.AsReadOnlySpan();
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++)
 			{
@@ -79,14 +80,14 @@ namespace ICSharpCode.ILSpy.Metadata
 			public readonly TypeDefinitionHandle Nested;
 			public readonly TypeDefinitionHandle Enclosing;
 
-			public unsafe NestedClass(byte* ptr, int typeDefSize)
+			public NestedClass(ReadOnlySpan<byte> ptr, int typeDefSize)
 			{
 				Nested = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr, typeDefSize));
-				Enclosing = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr + typeDefSize, typeDefSize));
+				Enclosing = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr.Slice(typeDefSize), typeDefSize));
 			}
 		}
 
-		unsafe struct NestedClassEntry
+		struct NestedClassEntry
 		{
 			readonly PEFile module;
 			readonly MetadataReader metadata;
@@ -120,7 +121,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			string enclosingClassTooltip;
 			public string EnclosingClassTooltip => GenerateTooltip(ref enclosingClassTooltip, module, nestedClass.Enclosing);
 
-			public unsafe NestedClassEntry(PEFile module, byte* ptr, int metadataOffset, int row)
+			public NestedClassEntry(PEFile module, ReadOnlySpan<byte> ptr, int metadataOffset, int row)
 			{
 				this.module = module;
 				this.metadata = module.Metadata;
@@ -129,7 +130,7 @@ namespace ICSharpCode.ILSpy.Metadata
 					+ metadata.GetTableRowSize(TableIndex.NestedClass) * (row - 1);
 				this.Offset = metadataOffset + rowOffset;
 				int typeDefSize = metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
-				this.nestedClass = new NestedClass(ptr + rowOffset, typeDefSize);
+				this.nestedClass = new NestedClass(ptr.Slice(rowOffset), typeDefSize);
 				this.nestedClassTooltip = null;
 				this.enclosingClassTooltip = null;
 			}

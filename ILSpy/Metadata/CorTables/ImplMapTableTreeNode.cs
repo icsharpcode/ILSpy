@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -40,7 +41,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Icon => Images.Literal;
 
-		public unsafe override bool View(ViewModels.TabPageModel tabPage)
+
+
+		public override bool View(ViewModels.TabPageModel tabPage)
 		{
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
@@ -52,11 +55,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			ImplMapEntry scrollTargetEntry = default;
 
 			var length = metadata.GetTableRowCount(TableIndex.ImplMap);
-			byte* ptr = metadata.MetadataPointer;
+			var span = metadata.AsReadOnlySpan();
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++)
 			{
-				ImplMapEntry entry = new ImplMapEntry(module, ptr, metadataOffset, rid);
+				ImplMapEntry entry = new ImplMapEntry(module, span, metadataOffset, rid);
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;
@@ -83,16 +86,16 @@ namespace ICSharpCode.ILSpy.Metadata
 			public readonly StringHandle ImportName;
 			public readonly ModuleReferenceHandle ImportScope;
 
-			public unsafe ImplMap(byte* ptr, int moduleRefSize, int memberForwardedTagRefSize, int stringHandleSize)
+			public ImplMap(ReadOnlySpan<byte> span, int moduleRefSize, int memberForwardedTagRefSize, int stringHandleSize)
 			{
-				MappingFlags = (PInvokeAttributes)Helpers.GetValue(ptr, 2);
-				MemberForwarded = Helpers.FromMemberForwardedTag((uint)Helpers.GetValue(ptr + 2, memberForwardedTagRefSize));
-				ImportName = MetadataTokens.StringHandle(Helpers.GetValue(ptr + 2 + memberForwardedTagRefSize, stringHandleSize));
-				ImportScope = MetadataTokens.ModuleReferenceHandle(Helpers.GetValue(ptr + 2 + memberForwardedTagRefSize + stringHandleSize, moduleRefSize));
+				MappingFlags = (PInvokeAttributes)Helpers.GetValue(span.Slice(0, 2));
+				MemberForwarded = Helpers.FromMemberForwardedTag((uint)Helpers.GetValue(span.Slice(2, memberForwardedTagRefSize)));
+				ImportName = MetadataTokens.StringHandle(Helpers.GetValue(span.Slice(2 + memberForwardedTagRefSize, stringHandleSize)));
+				ImportScope = MetadataTokens.ModuleReferenceHandle(Helpers.GetValue(span.Slice(2 + memberForwardedTagRefSize + stringHandleSize, moduleRefSize)));
 			}
 		}
 
-		unsafe struct ImplMapEntry
+		struct ImplMapEntry
 		{
 			readonly PEFile module;
 			readonly MetadataReader metadata;
@@ -141,7 +144,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string ImportNameTooltip => $"{MetadataTokens.GetHeapOffset(implMap.ImportName):X} \"{ImportName}\"";
 
-			public unsafe ImplMapEntry(PEFile module, byte* ptr, int metadataOffset, int row)
+			public ImplMapEntry(PEFile module, ReadOnlySpan<byte> span, int metadataOffset, int row)
 			{
 				this.module = module;
 				this.metadata = module.Metadata;
@@ -152,7 +155,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				int moduleRefSize = metadata.GetTableRowCount(TableIndex.ModuleRef) < ushort.MaxValue ? 2 : 4;
 				int memberForwardedTagRefSize = metadata.ComputeCodedTokenSize(32768, TableMask.MethodDef | TableMask.Field);
 				int stringHandleSize = metadata.GetHeapSize(HeapIndex.String) < ushort.MaxValue ? 2 : 4;
-				this.implMap = new ImplMap(ptr + rowOffset, moduleRefSize, memberForwardedTagRefSize, stringHandleSize);
+				this.implMap = new ImplMap(span.Slice(rowOffset), moduleRefSize, memberForwardedTagRefSize, stringHandleSize);
 				this.importScopeTooltip = null;
 				this.memberForwardedTooltip = null;
 			}
