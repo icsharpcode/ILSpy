@@ -658,6 +658,7 @@
     <Compile Include="Util\CSharpPrimitiveCast.cs" />
     <Compile Include="Util\EmptyList.cs" />
     <Compile Include="Util\ExtensionMethods.cs" />
+    <Compile Include="Util\GraphTraversal.cs" />
     <Compile Include="Util\Interval.cs" />
     <Compile Include="Util\LazyInit.cs" />
     <Compile Include="Util\LongSet.cs" />

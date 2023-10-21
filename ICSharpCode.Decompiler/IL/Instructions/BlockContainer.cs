@@ -279,7 +279,7 @@ namespace ICSharpCode.Decompiler.IL
 			// Visit blocks in post-order
 			BitSet visited = new BitSet(Blocks.Count);
 			List<Block> postOrder = new List<Block>();
-			Visit(EntryPoint);
+			GraphTraversal.DepthFirstSearch(new[] { EntryPoint }, Successors, postOrder.Add, MarkAsVisited, reverseSuccessors: true);
 			postOrder.Reverse();
 			if (!deleteUnreachableBlocks)
 			{
@@ -291,24 +291,30 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			return postOrder;
 
-			void Visit(Block block)
+			bool MarkAsVisited(Block block)
 			{
 				Debug.Assert(block.Parent == this);
 				if (!visited[block.ChildIndex])
 				{
 					visited[block.ChildIndex] = true;
-
-					foreach (var branch in block.Descendants.OfType<Branch>())
-					{
-						if (branch.TargetBlock.Parent == this)
-						{
-							Visit(branch.TargetBlock);
-						}
-					}
-
-					postOrder.Add(block);
+					return true;
 				}
-			};
+				else
+				{
+					return false;
+				}
+			}
+
+			IEnumerable<Block> Successors(Block block)
+			{
+				foreach (var branch in block.Descendants.OfType<Branch>())
+				{
+					if (branch.TargetBlock.Parent == this)
+					{
+						yield return branch.TargetBlock;
+					}
+				}
+			}
 		}
 
 		/// <summary>
