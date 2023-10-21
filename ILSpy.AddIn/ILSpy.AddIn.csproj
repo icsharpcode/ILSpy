@@ -86,10 +86,10 @@
   <Target Name="IncludeILSpyDistributionInVSIXSubFolder" AfterTargets="ResolveProjectReferences">
     <ItemGroup>
       <VSIXSourceItem Include="$(ILSpyBuildPath)zh-Hans\ILSpy.resources.dll;$(ILSpyBuildPath)zh-Hans\ILSpy.ReadyToRun.Plugin.resources.dll;">
-        <VSIXSubPath>\ILSpy\zh-Hans\</VSIXSubPath>
+        <VSIXSubPath>\x64\ILSpy\zh-Hans\</VSIXSubPath>
       </VSIXSourceItem>
       <VSIXSourceItem Include="$(ILSpyBuildPath)*.dll;$(ILSpyBuildPath)ILSpy.exe;$(ILSpyBuildPath)*.json">
-        <VSIXSubPath>\ILSpy</VSIXSubPath>
+        <VSIXSubPath>\x64\ILSpy</VSIXSubPath>
       </VSIXSourceItem>
     </ItemGroup>
   </Target>
