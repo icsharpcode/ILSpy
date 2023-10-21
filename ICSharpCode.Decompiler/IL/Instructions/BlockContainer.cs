@@ -279,7 +279,7 @@ namespace ICSharpCode.Decompiler.IL
 			// Visit blocks in post-order
 			BitSet visited = new BitSet(Blocks.Count);
 			List<Block> postOrder = new List<Block>();
-			GraphTraversal.DepthFirstSearch(new[] { EntryPoint }, Successors, postOrder.Add, MarkAsVisited, reverseSuccessors: true);
+			GraphTraversal.DepthFirstSearch(new[] { EntryPoint }, MarkAsVisited, Successors, postOrder.Add, reverseSuccessors: true);
 			postOrder.Reverse();
 			if (!deleteUnreachableBlocks)
 			{

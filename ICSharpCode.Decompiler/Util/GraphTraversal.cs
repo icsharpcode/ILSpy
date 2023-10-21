@@ -31,7 +31,8 @@ static class GraphTraversal
 	/// </summary>
 	/// <param name="startNodes">The start nodes.</param>
 	/// <param name="visitedFunc">Called multiple times per node. The first call should return true, subsequent calls must return false.
-	/// If this function is not provided, normal Equals/GetHashCode will be used to compare nodes.</param>
+	/// The first calls to this function occur in pre-order.
+	/// If null, normal Equals/GetHashCode will be used to compare nodes.</param>
 	/// <param name="successorFunc">The function that gets the successors of an element. Called in pre-order.</param>
 	/// <param name="postorderAction">Called in post-order.</param>
 	/// <param name="reverseSuccessors">
@@ -40,7 +41,7 @@ static class GraphTraversal
 	/// so that blocks which could be output in either order (e.g. then-block and else-block of an if)
 	/// will maintain the order of the edges (then-block before else-block).
 	/// </param>
-	public static void DepthFirstSearch<T>(IEnumerable<T> startNodes, Func<T, IEnumerable<T>?> successorFunc, Action<T> postorderAction, Func<T, bool>? visitedFunc = null, bool reverseSuccessors = false)
+	public static void DepthFirstSearch<T>(IEnumerable<T> startNodes, Func<T, bool>? visitedFunc, Func<T, IEnumerable<T>?> successorFunc, Action<T>? postorderAction = null, bool reverseSuccessors = false)
 	{
 		/*
         Pseudocode:
@@ -80,7 +81,7 @@ static class GraphTraversal
 			if (isPostOrderContinuation)
 			{
 				// Execute postorder_action
-				postorderAction(node);
+				postorderAction?.Invoke(node);
 				worklist.RemoveAt(worklist.Count - 1);
 				continue;
 			}
