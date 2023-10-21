@@ -2,9 +2,10 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace ICSharpCode.Decompiler.Util
+#if !NETCORE
+namespace System.Numerics
 {
-	internal class BitOperations
+	internal static class BitOperations
 	{
 		private static ReadOnlySpan<byte> TrailingZeroCountDeBruijn => new byte[32]
 {
@@ -48,3 +49,4 @@ namespace ICSharpCode.Decompiler.Util
 		}
 	}
 }
+#endif
