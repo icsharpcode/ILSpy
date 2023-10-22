@@ -24,7 +24,6 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -612,30 +611,30 @@ namespace ICSharpCode.ILSpy
 			return EntityToString(@event, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 
-		string ToCSharpString(MetadataReader metadata, TypeDefinitionHandle handle, bool fullName, bool omitGenerics)
+		static string ToCSharpString(MetadataReader metadata, TypeDefinitionHandle handle, bool fullName, bool omitGenerics)
 		{
-			StringBuilder builder = new StringBuilder();
 			var currentTypeDefHandle = handle;
 			var typeDef = metadata.GetTypeDefinition(currentTypeDefHandle);
+			List<string> builder = new List<string>();
 
 			while (!currentTypeDefHandle.IsNil)
 			{
-				if (builder.Length > 0)
-					builder.Insert(0, '.');
+				if (builder.Count > 0)
+					builder.Add(".");
 				typeDef = metadata.GetTypeDefinition(currentTypeDefHandle);
 				var part = ReflectionHelper.SplitTypeParameterCountFromReflectionName(metadata.GetString(typeDef.Name), out int typeParamCount);
 				var genericParams = typeDef.GetGenericParameters();
 				if (!omitGenerics && genericParams.Count > 0)
 				{
-					builder.Insert(0, '>');
+					builder.Add(">");
 					int firstIndex = genericParams.Count - typeParamCount;
 					for (int i = genericParams.Count - 1; i >= genericParams.Count - typeParamCount; i--)
 					{
-						builder.Insert(0, metadata.GetString(metadata.GetGenericParameter(genericParams[i]).Name));
-						builder.Insert(0, i == firstIndex ? '<' : ',');
+						builder.Add(metadata.GetString(metadata.GetGenericParameter(genericParams[i]).Name));
+						builder.Add(i == firstIndex ? "<" : ",");
 					}
 				}
-				builder.Insert(0, part);
+				builder.Add(part);
 				currentTypeDefHandle = typeDef.GetDeclaringType();
 				if (!fullName)
 					break;
@@ -643,11 +642,26 @@ namespace ICSharpCode.ILSpy
 
 			if (fullName && !typeDef.Namespace.IsNil)
 			{
-				builder.Insert(0, '.');
-				builder.Insert(0, metadata.GetString(typeDef.Namespace));
+				builder.Add(".");
+				builder.Add(metadata.GetString(typeDef.Namespace));
 			}
 
-			return builder.ToString();
+			switch (builder.Count)
+			{
+				case 0:
+					return string.Empty;
+				case 1:
+					return builder[0];
+				case 2:
+					return builder[1] + builder[0];
+				case 3:
+					return builder[2] + builder[1] + builder[0];
+				case 4:
+					return builder[3] + builder[2] + builder[1] + builder[0];
+				default:
+					builder.Reverse();
+					return string.Concat(builder);
+			}
 		}
 
 		public override string GetEntityName(PEFile module, EntityHandle handle, bool fullName, bool omitGenerics)
