@@ -212,19 +212,18 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		[Obsolete("Use ReadOnlySpan<byte> overload")]
+		[Obsolete("Use safe GetValueLittleEndian(ReadOnlySpan<byte>) or appropriate BinaryPrimitives.Read* method")]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static unsafe int GetValue(byte* ptr, int size)
-			=> GetValue(new ReadOnlySpan<byte>(ptr, size));
+			=> GetValueLittleEndian(new ReadOnlySpan<byte>(ptr, size));
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static int GetValue(ReadOnlySpan<byte> ptr, int size)
-			=> GetValue(ptr.Slice(0, size));
+		public static int GetValueLittleEndian(ReadOnlySpan<byte> ptr, int size)
+			=> GetValueLittleEndian(ptr.Slice(0, size));
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static int GetValue(ReadOnlySpan<byte> ptr)
+		public static int GetValueLittleEndian(ReadOnlySpan<byte> ptr)
 		{
-			// endianess?
 			int result = 0;
 			for (int i = 0; i < ptr.Length; i += 2)
 			{

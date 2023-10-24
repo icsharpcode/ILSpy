@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -82,8 +83,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public FieldLayout(ReadOnlySpan<byte> ptr, int fieldDefSize)
 			{
-				Offset = Helpers.GetValue(ptr, 4);
-				Field = MetadataTokens.FieldDefinitionHandle(Helpers.GetValue(ptr.Slice(4, fieldDefSize)));
+				Offset = BinaryPrimitives.ReadInt32LittleEndian(ptr);
+				Field = MetadataTokens.FieldDefinitionHandle(Helpers.GetValueLittleEndian(ptr.Slice(4, fieldDefSize)));
 			}
 		}
 

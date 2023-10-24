@@ -82,8 +82,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public InterfaceImpl(ReadOnlySpan<byte> ptr, int classSize, int interfaceSize)
 			{
-				Class = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr, classSize));
-				Interface = Helpers.FromTypeDefOrRefTag((uint)Helpers.GetValue(ptr.Slice(classSize, interfaceSize)));
+				Class = MetadataTokens.TypeDefinitionHandle(Helpers.GetValueLittleEndian(ptr, classSize));
+				Interface = Helpers.FromTypeDefOrRefTag((uint)Helpers.GetValueLittleEndian(ptr.Slice(classSize, interfaceSize)));
 			}
 		}
 

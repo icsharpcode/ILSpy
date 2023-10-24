@@ -82,8 +82,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public PropertyMap(ReadOnlySpan<byte> ptr, int typeDefSize, int propertyDefSize)
 			{
-				Parent = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr, typeDefSize));
-				PropertyList = MetadataTokens.PropertyDefinitionHandle(Helpers.GetValue(ptr.Slice(typeDefSize, propertyDefSize)));
+				Parent = MetadataTokens.TypeDefinitionHandle(Helpers.GetValueLittleEndian(ptr, typeDefSize));
+				PropertyList = MetadataTokens.PropertyDefinitionHandle(Helpers.GetValueLittleEndian(ptr.Slice(typeDefSize, propertyDefSize)));
 			}
 		}
 

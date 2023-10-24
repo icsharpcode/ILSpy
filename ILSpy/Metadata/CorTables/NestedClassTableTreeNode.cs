@@ -82,8 +82,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public NestedClass(ReadOnlySpan<byte> ptr, int typeDefSize)
 			{
-				Nested = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr, typeDefSize));
-				Enclosing = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr.Slice(typeDefSize), typeDefSize));
+				Nested = MetadataTokens.TypeDefinitionHandle(Helpers.GetValueLittleEndian(ptr, typeDefSize));
+				Enclosing = MetadataTokens.TypeDefinitionHandle(Helpers.GetValueLittleEndian(ptr.Slice(typeDefSize), typeDefSize));
 			}
 		}
 

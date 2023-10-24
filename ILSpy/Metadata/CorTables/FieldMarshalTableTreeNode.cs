@@ -82,8 +82,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public FieldMarshal(ReadOnlySpan<byte> ptr, int blobHeapSize, int hasFieldMarshalRefSize)
 			{
-				Parent = Helpers.FromHasFieldMarshalTag((uint)Helpers.GetValue(ptr, hasFieldMarshalRefSize));
-				NativeType = MetadataTokens.BlobHandle(Helpers.GetValue(ptr.Slice(hasFieldMarshalRefSize, blobHeapSize)));
+				Parent = Helpers.FromHasFieldMarshalTag((uint)Helpers.GetValueLittleEndian(ptr, hasFieldMarshalRefSize));
+				NativeType = MetadataTokens.BlobHandle(Helpers.GetValueLittleEndian(ptr.Slice(hasFieldMarshalRefSize, blobHeapSize)));
 			}
 		}
 

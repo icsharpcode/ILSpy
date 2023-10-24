@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -88,10 +89,10 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public ImplMap(ReadOnlySpan<byte> span, int moduleRefSize, int memberForwardedTagRefSize, int stringHandleSize)
 			{
-				MappingFlags = (PInvokeAttributes)Helpers.GetValue(span.Slice(0, 2));
-				MemberForwarded = Helpers.FromMemberForwardedTag((uint)Helpers.GetValue(span.Slice(2, memberForwardedTagRefSize)));
-				ImportName = MetadataTokens.StringHandle(Helpers.GetValue(span.Slice(2 + memberForwardedTagRefSize, stringHandleSize)));
-				ImportScope = MetadataTokens.ModuleReferenceHandle(Helpers.GetValue(span.Slice(2 + memberForwardedTagRefSize + stringHandleSize, moduleRefSize)));
+				MappingFlags = (PInvokeAttributes)BinaryPrimitives.ReadUInt16LittleEndian(span);
+				MemberForwarded = Helpers.FromMemberForwardedTag((uint)Helpers.GetValueLittleEndian(span.Slice(2, memberForwardedTagRefSize)));
+				ImportName = MetadataTokens.StringHandle(Helpers.GetValueLittleEndian(span.Slice(2 + memberForwardedTagRefSize, stringHandleSize)));
+				ImportScope = MetadataTokens.ModuleReferenceHandle(Helpers.GetValueLittleEndian(span.Slice(2 + memberForwardedTagRefSize + stringHandleSize, moduleRefSize)));
 			}
 		}
 

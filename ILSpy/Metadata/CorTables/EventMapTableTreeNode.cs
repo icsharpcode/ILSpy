@@ -82,8 +82,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public EventMap(ReadOnlySpan<byte> ptr, int typeDefSize, int eventDefSize)
 			{
-				Parent = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr, typeDefSize));
-				EventList = MetadataTokens.EventDefinitionHandle(Helpers.GetValue(ptr.Slice(typeDefSize, eventDefSize)));
+				Parent = MetadataTokens.TypeDefinitionHandle(Helpers.GetValueLittleEndian(ptr.Slice(0, typeDefSize)));
+				EventList = MetadataTokens.EventDefinitionHandle(Helpers.GetValueLittleEndian(ptr.Slice(typeDefSize, eventDefSize)));
 			}
 		}
 

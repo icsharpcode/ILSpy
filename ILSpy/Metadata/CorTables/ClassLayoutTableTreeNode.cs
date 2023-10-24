@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -83,9 +84,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public ClassLayout(ReadOnlySpan<byte> ptr, int typeDefSize)
 			{
-				PackingSize = (ushort)Helpers.GetValue(ptr, 2);
-				ClassSize = (uint)Helpers.GetValue(ptr.Slice(2, 4));
-				Parent = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr.Slice(6, typeDefSize)));
+				PackingSize = BinaryPrimitives.ReadUInt16LittleEndian(ptr);
+				ClassSize = BinaryPrimitives.ReadUInt32LittleEndian(ptr.Slice(2, 4));
+				Parent = MetadataTokens.TypeDefinitionHandle(Helpers.GetValueLittleEndian(ptr.Slice(6, typeDefSize)));
 			}
 		}
 
