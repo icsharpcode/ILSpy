@@ -50,6 +50,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			RemoveNullability = true,
 		};
 
+		internal static readonly NormalizeTypeVisitor IgnoreNullability = new NormalizeTypeVisitor {
+			ReplaceClassTypeParametersWithDummy = false,
+			ReplaceMethodTypeParametersWithDummy = false,
+			DynamicAndObject = false,
+			IntPtrToNInt = false,
+			TupleToUnderlyingType = false,
+			RemoveModOpt = true,
+			RemoveModReq = true,
+			RemoveNullability = true,
+		};
+
 		public bool EquivalentTypes(IType a, IType b)
 		{
 			a = a.AcceptVisitor(this);

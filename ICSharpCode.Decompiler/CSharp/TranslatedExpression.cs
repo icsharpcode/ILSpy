@@ -272,11 +272,20 @@ namespace ICSharpCode.Decompiler.CSharp
 				// Conversion of a tuple literal: convert element-wise
 				var newTupleExpr = new TupleExpression();
 				var newElementRRs = new List<ResolveResult>();
-				foreach (var (elementExpr, elementTargetType) in tupleExpr.Elements.Zip(targetTupleType.ElementTypes))
+				// element names: discard existing names and use targetTupleType instead
+				var newElementNames = targetTupleType.ElementNames;
+				foreach (var (index, elementExpr, elementTargetType) in tupleExpr.Elements.ZipWithIndex(targetTupleType.ElementTypes))
 				{
-					var newElementExpr = new TranslatedExpression(elementExpr.Detach())
+					var newElementExpr = new TranslatedExpression((elementExpr is NamedArgumentExpression nae ? nae.Expression : elementExpr).Detach())
 						.ConvertTo(elementTargetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
-					newTupleExpr.Elements.Add(newElementExpr.Expression);
+					if (newElementNames.IsDefaultOrEmpty || newElementNames.ElementAtOrDefault(index) is not string { Length: > 0 } name)
+					{
+						newTupleExpr.Elements.Add(newElementExpr.Expression);
+					}
+					else
+					{
+						newTupleExpr.Elements.Add(new NamedArgumentExpression(name, newElementExpr.Expression));
+					}
 					newElementRRs.Add(newElementExpr.ResolveResult);
 				}
 				return newTupleExpr.WithILInstruction(this.ILInstructions)

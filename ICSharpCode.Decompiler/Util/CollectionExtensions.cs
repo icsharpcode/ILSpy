@@ -21,6 +21,12 @@ namespace ICSharpCode.Decompiler.Util
 		}
 #endif
 
+		public static IEnumerable<(int, A, B)> ZipWithIndex<A, B>(this IEnumerable<A> input1, IEnumerable<B> input2)
+		{
+			int index = 0;
+			return input1.Zip(input2, (a, b) => (index++, a, b));
+		}
+
 		public static IEnumerable<(A?, B?)> ZipLongest<A, B>(this IEnumerable<A> input1, IEnumerable<B> input2)
 		{
 			using (var it1 = input1.GetEnumerator())

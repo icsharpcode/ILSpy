@@ -189,7 +189,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.typeSystem = typeSystem;
 		}
 
-		public TranslatedExpression Build(CallInstruction inst)
+		public TranslatedExpression Build(CallInstruction inst, IType typeHint = null)
 		{
 			if (inst is NewObj newobj && IL.Transforms.DelegateConstruction.MatchDelegateConstruction(newobj, out _, out _, out _))
 			{
@@ -198,20 +198,29 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (settings.TupleTypes && TupleTransform.MatchTupleConstruction(inst as NewObj, out var tupleElements) && tupleElements.Length >= 2)
 			{
 				var elementTypes = TupleType.GetTupleElementTypes(inst.Method.DeclaringType);
-				Debug.Assert(!elementTypes.IsDefault, "MatchTupleConstruction should not success unless we got a valid tuple type.");
+				var elementNames = typeHint is TupleType tt ? tt.ElementNames : default;
+				Debug.Assert(!elementTypes.IsDefault, "MatchTupleConstruction should not succeed unless we got a valid tuple type.");
 				Debug.Assert(elementTypes.Length == tupleElements.Length);
 				var tuple = new TupleExpression();
 				var elementRRs = new List<ResolveResult>();
-				foreach (var (element, elementType) in tupleElements.Zip(elementTypes))
+				foreach (var (index, element, elementType) in tupleElements.ZipWithIndex(elementTypes))
 				{
 					var translatedElement = expressionBuilder.Translate(element, elementType)
 						.ConvertTo(elementType, expressionBuilder, allowImplicitConversion: true);
-					tuple.Elements.Add(translatedElement.Expression);
+					if (elementNames.IsDefaultOrEmpty || elementNames.ElementAtOrDefault(index) is not string { Length: > 0 } name)
+					{
+						tuple.Elements.Add(translatedElement.Expression);
+					}
+					else
+					{
+						tuple.Elements.Add(new NamedArgumentExpression(name, translatedElement.Expression));
+					}
 					elementRRs.Add(translatedElement.ResolveResult);
 				}
 				return tuple.WithRR(new TupleResolveResult(
 					expressionBuilder.compilation,
 					elementRRs.ToImmutableArray(),
+					elementNames,
 					valueTupleAssembly: inst.Method.DeclaringType.GetDefinition()?.ParentModule
 				)).WithILInstruction(inst);
 			}
