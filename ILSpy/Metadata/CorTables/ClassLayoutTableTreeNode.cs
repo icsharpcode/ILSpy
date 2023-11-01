@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -38,7 +40,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Icon => Images.Literal;
 
-		public unsafe override bool View(ViewModels.TabPageModel tabPage)
+		public override bool View(ViewModels.TabPageModel tabPage)
 		{
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
@@ -49,7 +51,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<ClassLayoutEntry>();
 
 			var length = metadata.GetTableRowCount(TableIndex.ClassLayout);
-			byte* ptr = metadata.MetadataPointer;
+			ReadOnlySpan<byte> ptr = metadata.AsReadOnlySpan();
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			ClassLayoutEntry scrollTargetEntry = default;
 
@@ -80,15 +82,15 @@ namespace ICSharpCode.ILSpy.Metadata
 			public readonly EntityHandle Parent;
 			public readonly uint ClassSize;
 
-			public unsafe ClassLayout(byte* ptr, int typeDefSize)
+			public ClassLayout(ReadOnlySpan<byte> ptr, int typeDefSize)
 			{
-				PackingSize = (ushort)Helpers.GetValue(ptr, 2);
-				ClassSize = (uint)Helpers.GetValue(ptr + 2, 4);
-				Parent = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr + 6, typeDefSize));
+				PackingSize = BinaryPrimitives.ReadUInt16LittleEndian(ptr);
+				ClassSize = BinaryPrimitives.ReadUInt32LittleEndian(ptr.Slice(2, 4));
+				Parent = MetadataTokens.TypeDefinitionHandle(Helpers.GetValueLittleEndian(ptr.Slice(6, typeDefSize)));
 			}
 		}
 
-		unsafe struct ClassLayoutEntry
+		struct ClassLayoutEntry
 		{
 			readonly PEFile module;
 			readonly MetadataReader metadata;
@@ -117,7 +119,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public uint ClassSize => classLayout.ClassSize;
 
-			public ClassLayoutEntry(PEFile module, byte* ptr, int metadataOffset, int row)
+			public ClassLayoutEntry(PEFile module, ReadOnlySpan<byte> ptr, int metadataOffset, int row)
 			{
 				this.module = module;
 				this.metadata = module.Metadata;
@@ -125,7 +127,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.ClassLayout)
 					+ metadata.GetTableRowSize(TableIndex.ClassLayout) * (row - 1);
 				this.Offset = metadataOffset + rowOffset;
-				this.classLayout = new ClassLayout(ptr + rowOffset, metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4);
+				this.classLayout = new ClassLayout(ptr.Slice(rowOffset), metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4);
 				this.parentTooltip = null;
 			}
 		}

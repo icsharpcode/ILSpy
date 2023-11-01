@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -38,7 +39,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Icon => Images.Literal;
 
-		public unsafe override bool View(ViewModels.TabPageModel tabPage)
+		public override bool View(ViewModels.TabPageModel tabPage)
 		{
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
@@ -50,7 +51,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			InterfaceImplEntry scrollTargetEntry = default;
 
 			var length = metadata.GetTableRowCount(TableIndex.InterfaceImpl);
-			byte* ptr = metadata.MetadataPointer;
+			ReadOnlySpan<byte> ptr = metadata.AsReadOnlySpan();
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++)
 			{
@@ -79,14 +80,14 @@ namespace ICSharpCode.ILSpy.Metadata
 			public readonly EntityHandle Class;
 			public readonly EntityHandle Interface;
 
-			public unsafe InterfaceImpl(byte* ptr, int classSize, int interfaceSize)
+			public InterfaceImpl(ReadOnlySpan<byte> ptr, int classSize, int interfaceSize)
 			{
-				Class = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr, classSize));
-				Interface = Helpers.FromTypeDefOrRefTag((uint)Helpers.GetValue(ptr + classSize, interfaceSize));
+				Class = MetadataTokens.TypeDefinitionHandle(Helpers.GetValueLittleEndian(ptr, classSize));
+				Interface = Helpers.FromTypeDefOrRefTag((uint)Helpers.GetValueLittleEndian(ptr.Slice(classSize, interfaceSize)));
 			}
 		}
 
-		unsafe struct InterfaceImplEntry
+		struct InterfaceImplEntry
 		{
 			readonly PEFile module;
 			readonly MetadataReader metadata;
@@ -120,7 +121,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			string interfaceTooltip;
 			public string InterfaceTooltip => GenerateTooltip(ref interfaceTooltip, module, interfaceImpl.Interface);
 
-			public InterfaceImplEntry(PEFile module, byte* ptr, int metadataOffset, int row)
+			public InterfaceImplEntry(PEFile module, ReadOnlySpan<byte> ptr, int metadataOffset, int row)
 			{
 				this.module = module;
 				this.metadata = module.Metadata;
@@ -128,7 +129,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.InterfaceImpl)
 					+ metadata.GetTableRowSize(TableIndex.InterfaceImpl) * (row - 1);
 				this.Offset = metadataOffset + rowOffset;
-				this.interfaceImpl = new InterfaceImpl(ptr + rowOffset, metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4, metadata.ComputeCodedTokenSize(16384, TableMask.TypeDef | TableMask.TypeRef | TableMask.TypeSpec));
+				this.interfaceImpl = new InterfaceImpl(ptr.Slice(rowOffset), metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4, metadata.ComputeCodedTokenSize(16384, TableMask.TypeDef | TableMask.TypeRef | TableMask.TypeSpec));
 				this.interfaceTooltip = null;
 				this.classTooltip = null;
 			}
