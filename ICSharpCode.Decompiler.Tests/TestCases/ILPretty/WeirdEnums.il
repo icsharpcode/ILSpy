@@ -34,3 +34,33 @@
 	.field public static literal valuetype TestEnum.NativeIntEnum One = int64(1)
 	.field public static literal valuetype TestEnum.NativeIntEnum FortyTwo = int64(42)
 }
+
+.class nested public auto ansi sealed TestEnum.EnumWithNestedClass
+    extends [System.Runtime]System.Enum
+{
+        // Nested Types
+    .class nested public auto ansi beforefieldinit NestedClass
+        extends [mscorlib]System.Object
+    {
+        // Methods
+        .method public hidebysig specialname rtspecialname 
+            instance void .ctor () cil managed 
+        {
+            // Method begins at RVA 0x206c
+            // Code size 8 (0x8)
+            .maxstack 8
+
+            IL_0000: ldarg.0
+            IL_0001: call instance void [mscorlib]System.Object::.ctor()
+            IL_0006: nop
+            IL_0007: ret
+        } // end of method TestEnum.NestedClass::.ctor
+
+    } // end of class NestedClass
+
+    // Fields
+    .field public specialname rtspecialname int32 value__
+    .field public static literal valuetype TestEnum.EnumWithNestedClass Zero = int32(0)
+    .field public static literal valuetype TestEnum.EnumWithNestedClass One = int32(1)
+    
+} // end of class EnumWithNestedClass

@@ -1339,10 +1339,6 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				}
 
-				decompileRun.EnumValueDisplayMode = typeDef.Kind == TypeKind.Enum
-					? DetectBestEnumValueDisplayMode(typeDef, module.PEFile)
-					: null;
-
 				// With C# 9 records, the relative order of fields and properties matters:
 				IEnumerable<IMember> fieldsAndProperties = recordDecompiler?.FieldsAndProperties
 					?? typeDef.Fields.Concat<IMember>(typeDef.Properties);
@@ -1406,7 +1402,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				if (typeDecl.ClassType == ClassType.Enum)
 				{
-					switch (decompileRun.EnumValueDisplayMode)
+					Debug.Assert(typeDef.Kind == TypeKind.Enum);
+					EnumValueDisplayMode displayMode = DetectBestEnumValueDisplayMode(typeDef, module.PEFile);
+					switch (displayMode)
 					{
 						case EnumValueDisplayMode.FirstOnly:
 							foreach (var enumMember in typeDecl.Members.OfType<EnumMemberDeclaration>().Skip(1))
@@ -1425,13 +1423,33 @@ namespace ICSharpCode.Decompiler.CSharp
 							}
 							break;
 						case EnumValueDisplayMode.All:
-						case EnumValueDisplayMode.AllHex:
 							// nothing needs to be changed.
+							break;
+						case EnumValueDisplayMode.AllHex:
+							foreach (var enumMember in typeDecl.Members.OfType<EnumMemberDeclaration>())
+							{
+								var constantValue = (enumMember.GetSymbol() as IField).GetConstantValue();
+								if (constantValue == null || enumMember.Initializer is not PrimitiveExpression pe)
+								{
+									continue;
+								}
+								long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false);
+								if (initValue >= 10)
+								{
+									pe.Format = LiteralFormat.HexadecimalNumber;
+								}
+							}
 							break;
 						default:
 							throw new ArgumentOutOfRangeException();
 					}
-					decompileRun.EnumValueDisplayMode = null;
+					foreach (var item in typeDecl.Members)
+					{
+						if (item is not EnumMemberDeclaration)
+						{
+							typeDecl.InsertChildBefore(item, new Comment(" error: nested types are not permitted in C#."), Roles.Comment);
+						}
+					}
 				}
 				return typeDecl;
 			}
@@ -1927,13 +1945,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					object constantValue = field.GetConstantValue();
 					if (constantValue != null)
 					{
-						long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false);
 						enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, constantValue);
-						if (enumDec.Initializer is PrimitiveExpression primitive
-							&& initValue >= 10 && decompileRun.EnumValueDisplayMode == EnumValueDisplayMode.AllHex)
-						{
-							primitive.Format = LiteralFormat.HexadecimalNumber;
-						}
 					}
 					enumDec.Attributes.AddRange(field.GetAttributes().Select(a => new AttributeSection(typeSystemAstBuilder.ConvertAttribute(a))));
 					enumDec.AddAnnotation(new MemberResolveResult(null, field));
