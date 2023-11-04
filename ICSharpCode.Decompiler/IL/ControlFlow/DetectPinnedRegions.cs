@@ -621,7 +621,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						{
 							unpinBlock = br.TargetBlock;
 						}
-						else if (innerBlock.Instructions[0].MatchIfInstruction(out _, out var trueInstr) &&
+						else if (innerBlock.Instructions.Count == 2 &&
+								innerBlock.Instructions[0].MatchIfInstruction(out _, out var trueInstr) &&
 								trueInstr is Branch trueBr && trueBr.TargetContainer == sourceContainer &&
 								reachedEdgesPerBlock[trueBr.TargetBlock.ChildIndex] == 0)
 						{
