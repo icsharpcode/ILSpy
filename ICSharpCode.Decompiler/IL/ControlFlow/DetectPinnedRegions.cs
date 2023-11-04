@@ -614,14 +614,25 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 					Branch br = innerBlock.Instructions.LastOrDefault() as Branch;
 					if (br != null && br.TargetBlock.IncomingEdgeCount == 1
-						&& br.TargetContainer == sourceContainer && reachedEdgesPerBlock[br.TargetBlock.ChildIndex] == 0)
+						&& br.TargetContainer == sourceContainer)
 					{
-						// branch that leaves body.
+						Block unpinBlock = null;
+						if (reachedEdgesPerBlock[br.TargetBlock.ChildIndex] == 0)
+						{
+							unpinBlock = br.TargetBlock;
+						}
+						else if (innerBlock.Instructions[0].MatchIfInstruction(out _, out var trueInstr) &&
+								trueInstr is Branch trueBr && trueBr.TargetContainer == sourceContainer &&
+								reachedEdgesPerBlock[trueBr.TargetBlock.ChildIndex] == 0)
+						{
+							unpinBlock = trueBr.TargetBlock;
+						}
+
 						// The target block should have an instruction that resets the pin; delete that instruction:
-						StLoc unpin = br.TargetBlock.Instructions.First() as StLoc;
+						StLoc unpin = unpinBlock?.Instructions.First() as StLoc;
 						if (unpin != null && unpin.Variable == stLoc.Variable && IsNullOrZero(unpin.Value))
 						{
-							br.TargetBlock.Instructions.RemoveAt(0);
+							unpinBlock.Instructions.RemoveAt(0);
 						}
 					}
 					// move block into body
@@ -749,6 +760,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				// fixing a string
 				HandleStringToPointer(pinnedRegion);
+			}
+			else if (pinnedRegion.Init is Conv { Kind: ConversionKind.StopGCTracking, Argument: LdElema ldElema })
+			{
+				pinnedRegion.Init = ldElema;
 			}
 			// Detect nested pinned regions:
 			BlockContainer body = (BlockContainer)pinnedRegion.Body;
