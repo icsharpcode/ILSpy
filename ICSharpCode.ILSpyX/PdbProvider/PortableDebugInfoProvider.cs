@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2018 Siegfried Pammer
+// Copyright (c) 2018 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -160,6 +160,77 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 				}
 			}
 			return false;
+		}
+
+		public bool TryGetExtraTypeInfo(MethodDefinitionHandle method, int index,
+			[NotNullWhen(true)] out string?[]? tupleElementNames, [NotNullWhen(true)] out bool[]? dynamicFlags)
+		{
+			var metadata = GetMetadataReader();
+			tupleElementNames = null;
+			dynamicFlags = null;
+
+			if (metadata == null)
+				return false;
+
+			LocalVariableHandle localVariableHandle = default;
+			foreach (var h in metadata.GetLocalScopes(method))
+			{
+				var scope = metadata.GetLocalScope(h);
+				foreach (var v in scope.GetLocalVariables())
+				{
+					var var = metadata.GetLocalVariable(v);
+					if (var.Index == index)
+					{
+						localVariableHandle = v;
+						break;
+					}
+				}
+
+				if (!localVariableHandle.IsNil)
+					break;
+			}
+
+			foreach (var h in metadata.CustomDebugInformation)
+			{
+				var cdi = metadata.GetCustomDebugInformation(h);
+				if (cdi.Parent.IsNil || cdi.Parent.Kind != HandleKind.LocalVariable)
+					continue;
+				if (localVariableHandle != (LocalVariableHandle)cdi.Parent)
+					continue;
+				if (cdi.Value.IsNil || cdi.Kind.IsNil)
+					continue;
+				var reader = metadata.GetBlobReader(cdi.Value);
+				var kind = metadata.GetGuid(cdi.Kind);
+				if (kind == KnownGuids.TupleElementNames && tupleElementNames is null)
+				{
+					var list = new List<string?>();
+					while (reader.RemainingBytes > 0)
+					{
+						int length = reader.IndexOf(0);
+						string s = reader.ReadUTF8(length);
+						reader.ReadByte();
+						list.Add(string.IsNullOrWhiteSpace(s) ? null : s);
+					}
+
+					tupleElementNames = list.ToArray();
+				}
+				else if (kind == KnownGuids.DynamicLocalVariables && dynamicFlags is null)
+				{
+					dynamicFlags = new bool[reader.Length * 8];
+					int j = 0;
+					while (reader.Offset < reader.Length)
+					{
+						int b = reader.ReadByte();
+						for (int i = 1; i < 0x100; i <<= 1)
+							dynamicFlags[j++] = (b & i) != 0;
+					}
+				}
+
+				if (tupleElementNames != null && dynamicFlags != null)
+					break;
+			}
+
+			return tupleElementNames != null || dynamicFlags != null;
 		}
 	}
 }

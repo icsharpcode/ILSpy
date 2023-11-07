@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+// Copyright (c) 2014 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -304,6 +304,14 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				kind = VariableKind.Local;
 			}
+
+			if (UseDebugSymbols && DebugInfo is not null &&
+				DebugInfo.TryGetExtraTypeInfo((MethodDefinitionHandle)method.MetadataToken, index,
+					out string[] tupleElementNames, out bool[] dynamicFlags))
+			{
+				type = type.AcceptVisitor(new ApplyPdbLocalTypeInfoTypeVisitor(dynamicFlags, tupleElementNames));
+			}
+
 			ILVariable ilVar = new ILVariable(kind, type, index);
 			if (!UseDebugSymbols || DebugInfo == null || !DebugInfo.TryGetName((MethodDefinitionHandle)method.MetadataToken, index, out string name))
 			{
