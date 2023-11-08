@@ -218,7 +218,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 				{
 					dynamicFlags = new bool[reader.Length * 8];
 					int j = 0;
-					while (reader.Offset < reader.Length)
+					while (reader.RemainingBytes > 0)
 					{
 						int b = reader.ReadByte();
 						for (int i = 1; i < 0x100; i <<= 1)
