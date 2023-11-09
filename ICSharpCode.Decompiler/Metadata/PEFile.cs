@@ -177,6 +177,22 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
+		ImmutableArray<ModuleReferenceMetadata> moduleReferences;
+		public ImmutableArray<ModuleReferenceMetadata> ModuleReferences {
+			get {
+				var value = moduleReferences;
+				if (value.IsDefault)
+				{
+					value = Metadata.GetModuleReferences()
+							.Select(m => new ModuleReferenceMetadata(this, m))
+							.ToImmutableArray();
+
+					moduleReferences = value;
+				}
+				return value;
+			}
+		}
+
 		public ImmutableArray<Resource> Resources => GetResources().ToImmutableArray();
 
 		IEnumerable<Resource> GetResources()
