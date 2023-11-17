@@ -1444,7 +1444,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static bool DoNotRemoveAssignmentBeforeSwitch(string x, out ConsoleKey key)
 		{
+#if NET40 || !ROSLYN
 			key = (ConsoleKey)0;
+#else
+			key = ConsoleKey.None;
+#endif
 			switch (x)
 			{
 				case "A":
@@ -1457,7 +1461,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					key = ConsoleKey.C;
 					break;
 			}
+#if NET40 || !ROSLYN
 			return key != (ConsoleKey)0;
+#else
+			return key != ConsoleKey.None;
+#endif
 		}
 
 		public static void Issue1767(string s)
