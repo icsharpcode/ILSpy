@@ -74,8 +74,8 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <ILSpyBuildPathX64>..\ILSpy\bin\$(Configuration)\net6.0-windows\win-x64\publish\fwdependent\</ILSpyBuildPathX64>
-    <ILSpyBuildPathArm64>..\ILSpy\bin\$(Configuration)\net6.0-windows\win-arm64\publish\fwdependent\</ILSpyBuildPathArm64>
+    <ILSpyBuildPathX64>..\ILSpy\bin\$(Configuration)\net8.0-windows\win-x64\publish\fwdependent\</ILSpyBuildPathX64>
+    <ILSpyBuildPathArm64>..\ILSpy\bin\$(Configuration)\net8.0-windows\win-arm64\publish\fwdependent\</ILSpyBuildPathArm64>
   </PropertyGroup>
 
   <Target Name="IncludeILSpyDistributionInVSIXSubFolder" AfterTargets="ResolveProjectReferences">
