@@ -74,7 +74,7 @@
   <ItemGroup>
     <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
     <PackageReference Include="System.Reflection.Metadata" Version="6.0.0" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -84,7 +84,7 @@
     <PackageReference Include="TunnelVisionLabs.ReferenceAssemblyAnnotator" Version="1.0.0-alpha.160" PrivateAssets="all" />
 
     <!-- Specifies the version of Microsoft.NETCore.App.Ref to obtain nullability information from. -->
-    <PackageDownload Include="Microsoft.NETCore.App.Ref" Version="[6.0.0]" />
+    <PackageDownload Include="Microsoft.NETCore.App.Ref" Version="[8.0.0]" />
   </ItemGroup>
 
   <ItemGroup>
