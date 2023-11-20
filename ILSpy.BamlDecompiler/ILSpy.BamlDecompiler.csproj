@@ -26,8 +26,6 @@
     <OutputPath>..\ILSpy\bin\$(Configuration)\</OutputPath>
   </PropertyGroup>
 
-  <Import Project="..\packages.props" />
-
   <ItemGroup>
     <Compile Remove="Baml\KnownThings.gen.cs" />
   </ItemGroup>

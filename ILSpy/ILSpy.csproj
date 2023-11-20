@@ -42,15 +42,13 @@
     <CodeAnalysisRuleSet>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
 
-  <Import Project="..\packages.props" />
-
   <ItemGroup>
-    <PackageReference Include="AvalonEdit" Version="$(AvalonEditVersion)" />
-    <PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.1" />
-    <PackageReference Include="Microsoft.VisualStudio.Composition" Version="17.7.26" />
-    <PackageReference Include="DataGridExtensions" Version="2.5.15" />
-    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
-    <PackageReference Include="TomsToolbox.Wpf.Styles" Version="$(WpfStylesToolboxVersion)" />
+    <PackageReference Include="AvalonEdit" />
+    <PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" />
+    <PackageReference Include="Microsoft.VisualStudio.Composition" />
+    <PackageReference Include="DataGridExtensions" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" />
+    <PackageReference Include="TomsToolbox.Wpf.Styles" />
   </ItemGroup>
 
   <ItemGroup>
@@ -91,7 +89,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">
-    <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" Version="$(DSRConverterXmlVersion)" />
+    <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" />
   </ItemGroup>
 
   <PropertyGroup>

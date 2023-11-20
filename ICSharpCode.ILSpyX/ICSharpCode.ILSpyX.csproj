@@ -44,8 +44,6 @@
     <None Include="PackageReadme.md" Pack="true" PackagePath="\" />
   </ItemGroup>
   
-  <Import Project="..\packages.props" />
-  
   <ItemGroup>
     <Compile Remove="Properties\AssemblyInfo.template.cs" />
   </ItemGroup>
@@ -64,12 +62,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="$(SystemCompilerServicesUnsafeVersion)" />
-    <PackageReference Include="System.Composition" Version="$(SystemCompositionVersion)" />
-    <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
-    <PackageReference Include="K4os.Compression.LZ4" Version="1.3.6" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
+    <PackageReference Include="System.Reflection.Metadata" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" />
+    <PackageReference Include="System.Composition" />
+    <PackageReference Include="Mono.Cecil" />
+    <PackageReference Include="K4os.Compression.LZ4" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

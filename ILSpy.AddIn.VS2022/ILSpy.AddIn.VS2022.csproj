@@ -34,7 +34,9 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
-  <Import Project="..\packages.props" />
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.0.31902.203" />
@@ -45,14 +47,14 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
+    <PackageReference Include="Mono.Cecil" Version="0.11.5" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="TunnelVisionLabs.ReferenceAssemblyAnnotator" Version="1.0.0-alpha.160" PrivateAssets="all" />
 
     <!-- Specifies the version of Microsoft.NETCore.App.Ref to obtain nullability information from. -->
-    <PackageDownload Include="Microsoft.NETCore.App.Ref" Version="[6.0.0]" />
+    <PackageDownload Include="Microsoft.NETCore.App.Ref" Version="[8.0.0]" />
   </ItemGroup>
 
   <ItemGroup>
