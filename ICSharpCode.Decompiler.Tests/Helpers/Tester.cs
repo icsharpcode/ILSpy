@@ -109,8 +109,15 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 #else
 			testRunnerBasePath = Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/bin/Release/net8.0");
 #endif
-			packagesPropsFile = Path.Combine(TesterPath, "../../../../../packages.props");
-			roslynLatestVersion = XDocument.Load(packagesPropsFile).XPathSelectElement("//RoslynVersion").Value;
+			// To parse: <Project><ItemGroup><PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0-3.final" />
+			packagesPropsFile = Path.Combine(TesterPath, "../../../../../Directory.Packages.props");
+			roslynLatestVersion = ((IEnumerable<object>)(XDocument
+				.Load(packagesPropsFile)
+				.XPathEvaluate("//Project//ItemGroup//PackageVersion[@Include='Microsoft.CodeAnalysis.CSharp']/@Version")))
+				.OfType<XAttribute>()
+				.Single()
+				.Value;
+
 			roslynToolset = new RoslynToolset();
 			vswhereToolset = new VsWhereToolset();
 		}
