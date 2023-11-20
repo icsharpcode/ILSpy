@@ -50,6 +50,8 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" />
     <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" />
+	<PackageReference Include="Microsoft.DiaSymReader" />
+	<PackageReference Include="Microsoft.DiaSymReader.Native" />
     <PackageReference Include="NUnit3TestAdapter" />
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="NUnit" />
