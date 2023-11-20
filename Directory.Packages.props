@@ -17,6 +17,8 @@
 	<PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0-3.final" />
 	<PackageVersion Include="Microsoft.CodeAnalysis.VisualBasic" Version="4.8.0-3.final" />
 	<PackageVersion Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta2-22171-02" />
+	<PackageVersion Include="Microsoft.DiaSymReader" Version="1.4.0" />
+	<PackageVersion Include="Microsoft.DiaSymReader.Native" Version="17.0.0-beta1.21524.1" />
 	<PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
 	<PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
 	<PackageVersion Include="Microsoft.NETCore.ILAsm" Version="8.0.0" />
