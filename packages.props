@@ -26,7 +26,7 @@
 		<MicrosoftNETTestSdkVersion>17.8.0</MicrosoftNETTestSdkVersion>
 		<DiffLibVersion>2017.7.26.1241</DiffLibVersion>
 		<!-- Microsoft.CodeAnalysis.* -->
-		<RoslynVersion>4.6.0</RoslynVersion>
+		<RoslynVersion>4.8.0-3.final</RoslynVersion>
 		<!-- Microsoft.NETCore.ILAsm -->
 		<ILAsmVersion>8.0.0</ILAsmVersion>
 		<!-- Microsoft.NETCore.ILDAsm -->
