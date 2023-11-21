@@ -17,7 +17,6 @@
     <EnableDefaultItems>false</EnableDefaultItems>
 
     <AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>
-    <EnableUnsafeBinaryFormatterSerialization>True</EnableUnsafeBinaryFormatterSerialization>
 
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
