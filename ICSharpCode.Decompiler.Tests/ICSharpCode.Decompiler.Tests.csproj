@@ -40,28 +40,28 @@
     <DefineConstants>TRACE;ROSLYN;NET60;CS60;CS70;CS71;CS72;CS73;CS80;CS90;CS100</DefineConstants>
   </PropertyGroup>
 
-  <Import Project="..\packages.props" />
-
   <ItemGroup>
-    <PackageReference Include="DiffLib" Version="$(DiffLibVersion)" />
-    <PackageReference Include="CliWrap" Version="3.4.4" />
-    <PackageReference Include="NuGet.Protocol" Version="6.2.4" />
-    <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutableVersion)" />
-    <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(RoslynVersion)" />
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="$(RoslynVersion)" />
-    <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" Version="$(DSRConverterXmlVersion)" />
-    <PackageReference Include="NUnit3TestAdapter" Version="$(NUnitAdapterVersion)" />
-    <PackageReference Include="coverlet.collector" Version="$(CoverletCollectorVersion)" />
-    <PackageReference Include="NUnit" Version="$(NUnitVersion)" />
+    <PackageReference Include="DiffLib" />
+    <PackageReference Include="CliWrap" />
+    <PackageReference Include="NuGet.Protocol" />
+    <PackageReference Include="System.Collections.Immutable" />
+    <PackageReference Include="System.Reflection.Metadata" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" />
+    <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" />
+	<PackageReference Include="Microsoft.DiaSymReader" />
+	<PackageReference Include="Microsoft.DiaSymReader.Native" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="NUnit" />
     <!-- used for xml test result files -->
-    <PackageReference Include="JunitXml.TestLogger" Version="$(JUnitXmlTestLoggerVersion)" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
-    <PackageReference Include="System.Memory" Version="4.5.5" />
-    <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
-    <PackageReference Include="Microsoft.NETCore.ILAsm" Version="$(ILAsmVersion)" />
-    <PackageReference Include="Microsoft.NETCore.ILDAsm" Version="$(ILDAsmVersion)" />
-    <PackageReference Include="System.Resources.Extensions" Version="6.0.0" />
+    <PackageReference Include="JunitXml.TestLogger" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="System.Memory" />
+    <PackageReference Include="Mono.Cecil" />
+    <PackageReference Include="Microsoft.NETCore.ILAsm" />
+    <PackageReference Include="Microsoft.NETCore.ILDAsm" />
+    <PackageReference Include="System.Resources.Extensions" />
   </ItemGroup>
 
   <ItemGroup>

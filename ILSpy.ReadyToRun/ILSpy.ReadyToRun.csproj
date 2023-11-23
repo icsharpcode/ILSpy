@@ -34,18 +34,16 @@
     <ProjectReference Include="..\SharpTreeView\ICSharpCode.TreeView.csproj" />
   </ItemGroup>
 
-  <Import Project="../packages.props" />
-
   <ItemGroup>
-    <PackageReference Include="Iced" Version="1.18.0" />
-    <PackageReference Include="ILCompiler.Reflection.ReadyToRun.Experimental" Version="8.0.0-rc.2.23471.30" />
+    <PackageReference Include="Iced" />
+    <PackageReference Include="ILCompiler.Reflection.ReadyToRun.Experimental" />
     <!-- ILCompiler.Reflection.ReadyToRun has dependencies on System.Reflection.Metadata and
          System.Runtime.CompilerServices.Unsafe. Because the AddIn compiles into ILSpy's output
          directory, we're at risk of overwriting our dependencies with different versions.
          So ensure NuGet uses consistent versions (from our packages.props) for these.
          -->
-    <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="$(SystemCompilerServicesUnsafeVersion)" />
+    <PackageReference Include="System.Reflection.Metadata" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" />
   </ItemGroup>
 
 </Project>

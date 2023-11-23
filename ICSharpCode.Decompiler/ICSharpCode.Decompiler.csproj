@@ -69,7 +69,9 @@
     </GetPackageVersionDependsOn>
   </PropertyGroup>
 
-  <Import Project="..\packages.props" />
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
