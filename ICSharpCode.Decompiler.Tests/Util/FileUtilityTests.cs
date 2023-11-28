@@ -29,157 +29,157 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		[Test]
 		public void NormalizePath()
 		{
-			Assert.AreEqual(@"c:\temp\test.txt", FileUtility.NormalizePath(@"c:\temp\project\..\test.txt"));
-			Assert.AreEqual(@"c:\temp\test.txt", FileUtility.NormalizePath(@"c:\temp\project\.\..\test.txt"));
-			Assert.AreEqual(@"c:\temp\test.txt", FileUtility.NormalizePath(@"c:\temp\\test.txt")); // normalize double backslash
-			Assert.AreEqual(@"c:\temp", FileUtility.NormalizePath(@"c:\temp\."));
-			Assert.AreEqual(@"c:\temp", FileUtility.NormalizePath(@"c:\temp\subdir\.."));
+			Assert.That(FileUtility.NormalizePath(@"c:\temp\project\..\test.txt"), Is.EqualTo(@"c:\temp\test.txt"));
+			Assert.That(FileUtility.NormalizePath(@"c:\temp\project\.\..\test.txt"), Is.EqualTo(@"c:\temp\test.txt"));
+			Assert.That(FileUtility.NormalizePath(@"c:\temp\\test.txt"), Is.EqualTo(@"c:\temp\test.txt")); // normalize double backslash
+			Assert.That(FileUtility.NormalizePath(@"c:\temp\."), Is.EqualTo(@"c:\temp"));
+			Assert.That(FileUtility.NormalizePath(@"c:\temp\subdir\.."), Is.EqualTo(@"c:\temp"));
 		}
 
 		[Test]
 		public void NormalizePath_DriveRoot()
 		{
-			Assert.AreEqual(@"C:\", FileUtility.NormalizePath(@"C:\"));
-			Assert.AreEqual(@"C:\", FileUtility.NormalizePath(@"C:/"));
-			Assert.AreEqual(@"C:\", FileUtility.NormalizePath(@"C:"));
-			Assert.AreEqual(@"C:\", FileUtility.NormalizePath(@"C:/."));
-			Assert.AreEqual(@"C:\", FileUtility.NormalizePath(@"C:/.."));
-			Assert.AreEqual(@"C:\", FileUtility.NormalizePath(@"C:/./"));
-			Assert.AreEqual(@"C:\", FileUtility.NormalizePath(@"C:/..\"));
+			Assert.That(FileUtility.NormalizePath(@"C:\"), Is.EqualTo(@"C:\"));
+			Assert.That(FileUtility.NormalizePath(@"C:/"), Is.EqualTo(@"C:\"));
+			Assert.That(FileUtility.NormalizePath(@"C:"), Is.EqualTo(@"C:\"));
+			Assert.That(FileUtility.NormalizePath(@"C:/."), Is.EqualTo(@"C:\"));
+			Assert.That(FileUtility.NormalizePath(@"C:/.."), Is.EqualTo(@"C:\"));
+			Assert.That(FileUtility.NormalizePath(@"C:/./"), Is.EqualTo(@"C:\"));
+			Assert.That(FileUtility.NormalizePath(@"C:/..\"), Is.EqualTo(@"C:\"));
 		}
 
 		[Test]
 		public void NormalizePath_UNC()
 		{
-			Assert.AreEqual(@"\\server\share", FileUtility.NormalizePath(@"\\server\share"));
-			Assert.AreEqual(@"\\server\share", FileUtility.NormalizePath(@"\\server\share\"));
-			Assert.AreEqual(@"\\server\share", FileUtility.NormalizePath(@"//server/share/"));
-			Assert.AreEqual(@"\\server\share\otherdir", FileUtility.NormalizePath(@"//server/share/dir/..\otherdir"));
+			Assert.That(FileUtility.NormalizePath(@"\\server\share"), Is.EqualTo(@"\\server\share"));
+			Assert.That(FileUtility.NormalizePath(@"\\server\share\"), Is.EqualTo(@"\\server\share"));
+			Assert.That(FileUtility.NormalizePath(@"//server/share/"), Is.EqualTo(@"\\server\share"));
+			Assert.That(FileUtility.NormalizePath(@"//server/share/dir/..\otherdir"), Is.EqualTo(@"\\server\share\otherdir"));
 		}
 
 		[Test]
 		public void NormalizePath_Web()
 		{
-			Assert.AreEqual(@"http://danielgrunwald.de/path/", FileUtility.NormalizePath(@"http://danielgrunwald.de/path/"));
-			Assert.AreEqual(@"browser://http://danielgrunwald.de/path/", FileUtility.NormalizePath(@"browser://http://danielgrunwald.de/wrongpath/../path/"));
+			Assert.That(FileUtility.NormalizePath(@"http://danielgrunwald.de/path/"), Is.EqualTo(@"http://danielgrunwald.de/path/"));
+			Assert.That(FileUtility.NormalizePath(@"browser://http://danielgrunwald.de/wrongpath/../path/"), Is.EqualTo(@"browser://http://danielgrunwald.de/path/"));
 		}
 
 		[Test]
 		public void NormalizePath_Relative()
 		{
-			Assert.AreEqual(@"../b", FileUtility.NormalizePath(@"..\a\..\b"));
-			Assert.AreEqual(@".", FileUtility.NormalizePath(@"."));
-			Assert.AreEqual(@".", FileUtility.NormalizePath(@"a\.."));
+			Assert.That(FileUtility.NormalizePath(@"..\a\..\b"), Is.EqualTo(@"../b"));
+			Assert.That(FileUtility.NormalizePath(@"."), Is.EqualTo(@"."));
+			Assert.That(FileUtility.NormalizePath(@"a\.."), Is.EqualTo(@"."));
 		}
 
 		[Test]
 		public void NormalizePath_UnixStyle()
 		{
-			Assert.AreEqual("/", FileUtility.NormalizePath("/"));
-			Assert.AreEqual("/a/b", FileUtility.NormalizePath("/a/b"));
-			Assert.AreEqual("/a/b", FileUtility.NormalizePath("/c/../a/./b"));
-			Assert.AreEqual("/a/b", FileUtility.NormalizePath("/c/../../a/./b"));
+			Assert.That(FileUtility.NormalizePath("/"), Is.EqualTo("/"));
+			Assert.That(FileUtility.NormalizePath("/a/b"), Is.EqualTo("/a/b"));
+			Assert.That(FileUtility.NormalizePath("/c/../a/./b"), Is.EqualTo("/a/b"));
+			Assert.That(FileUtility.NormalizePath("/c/../../a/./b"), Is.EqualTo("/a/b"));
 		}
 		#endregion
 
 		[Test]
 		public void TestIsBaseDirectory()
 		{
-			Assert.IsTrue(FileUtility.IsBaseDirectory(@"C:\a", @"C:\A\b\hello"));
-			Assert.IsTrue(FileUtility.IsBaseDirectory(@"C:\a", @"C:\a"));
-			Assert.IsTrue(FileUtility.IsBaseDirectory(@"C:\a\", @"C:\a\"));
-			Assert.IsTrue(FileUtility.IsBaseDirectory(@"C:\a\", @"C:\a"));
-			Assert.IsTrue(FileUtility.IsBaseDirectory(@"C:\a", @"C:\a\"));
-			Assert.IsTrue(FileUtility.IsBaseDirectory(@"C:\A", @"C:\a"));
-			Assert.IsTrue(FileUtility.IsBaseDirectory(@"C:\a", @"C:\A"));
-			Assert.IsTrue(FileUtility.IsBaseDirectory(@"C:\a\x\fWufhweoe", @"C:\a\x\fwuFHweoe\a\b\hello"));
+			Assert.That(FileUtility.IsBaseDirectory(@"C:\a", @"C:\A\b\hello"));
+			Assert.That(FileUtility.IsBaseDirectory(@"C:\a", @"C:\a"));
+			Assert.That(FileUtility.IsBaseDirectory(@"C:\a\", @"C:\a\"));
+			Assert.That(FileUtility.IsBaseDirectory(@"C:\a\", @"C:\a"));
+			Assert.That(FileUtility.IsBaseDirectory(@"C:\a", @"C:\a\"));
+			Assert.That(FileUtility.IsBaseDirectory(@"C:\A", @"C:\a"));
+			Assert.That(FileUtility.IsBaseDirectory(@"C:\a", @"C:\A"));
+			Assert.That(FileUtility.IsBaseDirectory(@"C:\a\x\fWufhweoe", @"C:\a\x\fwuFHweoe\a\b\hello"));
 
-			Assert.IsTrue(FileUtility.IsBaseDirectory(@"C:\b\..\A", @"C:\a"));
-			Assert.IsTrue(FileUtility.IsBaseDirectory(@"C:\HELLO\..\B\..\a", @"C:\b\..\a"));
-			Assert.IsTrue(FileUtility.IsBaseDirectory(@"C:\.\B\..\.\.\a", @"C:\.\.\.\.\.\.\.\a"));
+			Assert.That(FileUtility.IsBaseDirectory(@"C:\b\..\A", @"C:\a"));
+			Assert.That(FileUtility.IsBaseDirectory(@"C:\HELLO\..\B\..\a", @"C:\b\..\a"));
+			Assert.That(FileUtility.IsBaseDirectory(@"C:\.\B\..\.\.\a", @"C:\.\.\.\.\.\.\.\a"));
 
-			Assert.IsFalse(FileUtility.IsBaseDirectory(@"C:\b", @"C:\a\b\hello"));
-			Assert.IsFalse(FileUtility.IsBaseDirectory(@"C:\a\b\hello", @"C:\b"));
-			Assert.IsFalse(FileUtility.IsBaseDirectory(@"C:\a\x\fwufhweoe", @"C:\a\x\fwuFHweoex\a\b\hello"));
-			Assert.IsTrue(FileUtility.IsBaseDirectory(@"C:\", @"C:\"));
-			Assert.IsTrue(FileUtility.IsBaseDirectory(@"C:\", @"C:\a\b\hello"));
-			Assert.IsFalse(FileUtility.IsBaseDirectory(@"C:\", @"D:\a\b\hello"));
+			Assert.That(!FileUtility.IsBaseDirectory(@"C:\b", @"C:\a\b\hello"));
+			Assert.That(!FileUtility.IsBaseDirectory(@"C:\a\b\hello", @"C:\b"));
+			Assert.That(!FileUtility.IsBaseDirectory(@"C:\a\x\fwufhweoe", @"C:\a\x\fwuFHweoex\a\b\hello"));
+			Assert.That(FileUtility.IsBaseDirectory(@"C:\", @"C:\"));
+			Assert.That(FileUtility.IsBaseDirectory(@"C:\", @"C:\a\b\hello"));
+			Assert.That(!FileUtility.IsBaseDirectory(@"C:\", @"D:\a\b\hello"));
 		}
 
 
 		[Test]
 		public void TestIsBaseDirectoryRelative()
 		{
-			Assert.IsTrue(FileUtility.IsBaseDirectory(@".", @"a\b"));
-			Assert.IsTrue(FileUtility.IsBaseDirectory(@".", @"a"));
-			Assert.IsFalse(FileUtility.IsBaseDirectory(@".", @"c:\"));
-			Assert.IsFalse(FileUtility.IsBaseDirectory(@".", @"/"));
+			Assert.That(FileUtility.IsBaseDirectory(@".", @"a\b"));
+			Assert.That(FileUtility.IsBaseDirectory(@".", @"a"));
+			Assert.That(!FileUtility.IsBaseDirectory(@".", @"c:\"));
+			Assert.That(!FileUtility.IsBaseDirectory(@".", @"/"));
 		}
 
 		[Test]
 		public void TestIsBaseDirectoryUnixStyle()
 		{
-			Assert.IsTrue(FileUtility.IsBaseDirectory(@"/", @"/"));
-			Assert.IsTrue(FileUtility.IsBaseDirectory(@"/", @"/a"));
-			Assert.IsTrue(FileUtility.IsBaseDirectory(@"/", @"/a/subdir"));
+			Assert.That(FileUtility.IsBaseDirectory(@"/", @"/"));
+			Assert.That(FileUtility.IsBaseDirectory(@"/", @"/a"));
+			Assert.That(FileUtility.IsBaseDirectory(@"/", @"/a/subdir"));
 		}
 
 		[Test]
 		public void TestIsBaseDirectoryUNC()
 		{
-			Assert.IsTrue(FileUtility.IsBaseDirectory(@"\\server\share", @"\\server\share\dir\subdir"));
-			Assert.IsTrue(FileUtility.IsBaseDirectory(@"\\server\share", @"\\server\share\dir\subdir"));
-			Assert.IsFalse(FileUtility.IsBaseDirectory(@"\\server2\share", @"\\server\share\dir\subdir"));
+			Assert.That(FileUtility.IsBaseDirectory(@"\\server\share", @"\\server\share\dir\subdir"));
+			Assert.That(FileUtility.IsBaseDirectory(@"\\server\share", @"\\server\share\dir\subdir"));
+			Assert.That(!FileUtility.IsBaseDirectory(@"\\server2\share", @"\\server\share\dir\subdir"));
 		}
 
 		[Test]
 		public void TestGetRelativePath()
 		{
-			Assert.AreEqual(@"blub", FileUtility.GetRelativePath(@"C:\hello\.\..\a", @"C:\.\a\blub"));
-			Assert.AreEqual(@"..\a\blub", FileUtility.GetRelativePath(@"C:\.\.\.\.\hello", @"C:\.\blub\.\..\.\a\.\blub"));
-			Assert.AreEqual(@"..\a\blub", FileUtility.GetRelativePath(@"C:\.\.\.\.\hello\", @"C:\.\blub\.\..\.\a\.\blub"));
-			Assert.AreEqual(@".", FileUtility.GetRelativePath(@"C:\hello", @"C:\.\hello"));
-			Assert.AreEqual(@".", FileUtility.GetRelativePath(@"C:\", @"C:\"));
-			Assert.AreEqual(@"blub", FileUtility.GetRelativePath(@"C:\", @"C:\blub"));
-			Assert.AreEqual(@"D:\", FileUtility.GetRelativePath(@"C:\", @"D:\"));
-			Assert.AreEqual(@"D:\def", FileUtility.GetRelativePath(@"C:\abc", @"D:\def"));
+			Assert.That(FileUtility.GetRelativePath(@"C:\hello\.\..\a", @"C:\.\a\blub"), Is.EqualTo(@"blub"));
+			Assert.That(FileUtility.GetRelativePath(@"C:\.\.\.\.\hello", @"C:\.\blub\.\..\.\a\.\blub"), Is.EqualTo(@"..\a\blub"));
+			Assert.That(FileUtility.GetRelativePath(@"C:\.\.\.\.\hello\", @"C:\.\blub\.\..\.\a\.\blub"), Is.EqualTo(@"..\a\blub"));
+			Assert.That(FileUtility.GetRelativePath(@"C:\hello", @"C:\.\hello"), Is.EqualTo(@"."));
+			Assert.That(FileUtility.GetRelativePath(@"C:\", @"C:\"), Is.EqualTo(@"."));
+			Assert.That(FileUtility.GetRelativePath(@"C:\", @"C:\blub"), Is.EqualTo(@"blub"));
+			Assert.That(FileUtility.GetRelativePath(@"C:\", @"D:\"), Is.EqualTo(@"D:\"));
+			Assert.That(FileUtility.GetRelativePath(@"C:\abc", @"D:\def"), Is.EqualTo(@"D:\def"));
 
 			// casing troubles
-			Assert.AreEqual(@"blub", FileUtility.GetRelativePath(@"C:\hello\.\..\A", @"C:\.\a\blub"));
-			Assert.AreEqual(@"..\a\blub", FileUtility.GetRelativePath(@"C:\.\.\.\.\HELlo", @"C:\.\blub\.\..\.\a\.\blub"));
-			Assert.AreEqual(@"..\a\blub", FileUtility.GetRelativePath(@"C:\.\.\.\.\heLLo\A\..", @"C:\.\blub\.\..\.\a\.\blub"));
+			Assert.That(FileUtility.GetRelativePath(@"C:\hello\.\..\A", @"C:\.\a\blub"), Is.EqualTo(@"blub"));
+			Assert.That(FileUtility.GetRelativePath(@"C:\.\.\.\.\HELlo", @"C:\.\blub\.\..\.\a\.\blub"), Is.EqualTo(@"..\a\blub"));
+			Assert.That(FileUtility.GetRelativePath(@"C:\.\.\.\.\heLLo\A\..", @"C:\.\blub\.\..\.\a\.\blub"), Is.EqualTo(@"..\a\blub"));
 		}
 
 		[Test]
 		public void RelativeGetRelativePath()
 		{
 			// Relative path
-			Assert.AreEqual(@"a", FileUtility.GetRelativePath(@".", @"a"));
-			Assert.AreEqual(@"..", FileUtility.GetRelativePath(@"a", @"."));
-			Assert.AreEqual(@"..\b", FileUtility.GetRelativePath(@"a", @"b"));
-			Assert.AreEqual(@"..\..", FileUtility.GetRelativePath(@"a", @".."));
+			Assert.That(FileUtility.GetRelativePath(@".", @"a"), Is.EqualTo(@"a"));
+			Assert.That(FileUtility.GetRelativePath(@"a", @"."), Is.EqualTo(@".."));
+			Assert.That(FileUtility.GetRelativePath(@"a", @"b"), Is.EqualTo(@"..\b"));
+			Assert.That(FileUtility.GetRelativePath(@"a", @".."), Is.EqualTo(@"..\.."));
 
 			// Getting a path from an absolute path to a relative path isn't really possible;
 			// so we just keep the existing relative path (don't introduce incorrect '..\').
-			Assert.AreEqual(@"def", FileUtility.GetRelativePath(@"C:\abc", @"def"));
+			Assert.That(FileUtility.GetRelativePath(@"C:\abc", @"def"), Is.EqualTo(@"def"));
 		}
 
 		[Test]
 		public void GetRelativePath_Unix()
 		{
-			Assert.AreEqual(@"a", FileUtility.GetRelativePath("/", "/a"));
-			Assert.AreEqual(@"a\b", FileUtility.GetRelativePath("/", "/a/b"));
-			Assert.AreEqual(@"b", FileUtility.GetRelativePath("/a", "/a/b"));
+			Assert.That(FileUtility.GetRelativePath("/", "/a"), Is.EqualTo(@"a"));
+			Assert.That(FileUtility.GetRelativePath("/", "/a/b"), Is.EqualTo(@"a\b"));
+			Assert.That(FileUtility.GetRelativePath("/a", "/a/b"), Is.EqualTo(@"b"));
 		}
 
 		[Test]
 		public void TestIsEqualFile()
 		{
-			Assert.IsTrue(FileUtility.IsEqualFileName(@"C:\.\Hello World.Exe", @"C:\HELLO WOrld.exe"));
-			Assert.IsTrue(FileUtility.IsEqualFileName(@"C:\bla\..\a\my.file.is.this", @"C:\gg\..\.\.\.\.\a\..\a\MY.FILE.IS.THIS"));
+			Assert.That(FileUtility.IsEqualFileName(@"C:\.\Hello World.Exe", @"C:\HELLO WOrld.exe"));
+			Assert.That(FileUtility.IsEqualFileName(@"C:\bla\..\a\my.file.is.this", @"C:\gg\..\.\.\.\.\a\..\a\MY.FILE.IS.THIS"));
 
-			Assert.IsFalse(FileUtility.IsEqualFileName(@"C:\.\Hello World.Exe", @"C:\HELLO_WOrld.exe"));
-			Assert.IsFalse(FileUtility.IsEqualFileName(@"C:\a\my.file.is.this", @"C:\gg\..\.\.\.\.\a\..\b\MY.FILE.IS.THIS"));
+			Assert.That(!FileUtility.IsEqualFileName(@"C:\.\Hello World.Exe", @"C:\HELLO_WOrld.exe"));
+			Assert.That(!FileUtility.IsEqualFileName(@"C:\a\my.file.is.this", @"C:\gg\..\.\.\.\.\a\..\b\MY.FILE.IS.THIS"));
 		}
 	}
 }

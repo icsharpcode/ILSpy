@@ -38,6 +38,7 @@
     <Compile Include="Analyzers\MethodUsesAnalyzerTests.cs" />
     <Compile Include="Analyzers\TestCases\MainAssembly.cs" />
     <Compile Include="Analyzers\TypeUsedByAnalyzerTests.cs" />
+    <Compile Include="Workaround4564.cs" />
   </ItemGroup>
 
   <ItemGroup>

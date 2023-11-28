@@ -45,6 +45,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\ILSpy.Tests\Workaround4564.cs" Link="Workaround4564.cs" />
     <Compile Include="BamlTestRunner.cs" />
     <Compile Include="Cases\AttachedEvent.xaml.cs">
       <DependentUpon>AttachedEvent.xaml</DependentUpon>
