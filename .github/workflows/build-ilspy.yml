@@ -51,11 +51,18 @@ jobs:
       run: msbuild ILSpy.sln /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform /m
 
     - name: Execute unit tests
-      run: dotnet test --logger "junit;LogFileName=${{ matrix.configuration }}.xml" --results-directory test-results $env:Tests1 $env:Tests2 $env:Tests3
+      run: dotnet test --logger "junit;LogFileName=${{ matrix.configuration }}.xml" --results-directory test-results --diag test-results/dotnettestdiag-${{ matrix.configuration }}.txt $env:Tests1 $env:Tests2 $env:Tests3
       env:
         Tests1: ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net8.0-windows\win-x64\ICSharpCode.Decompiler.Tests.dll
         Tests2: ILSpy.Tests\bin\${{ matrix.configuration }}\net8.0-windows\ILSpy.Tests.dll
         Tests3: ILSpy.BamlDecompiler.Tests\bin\${{ matrix.configuration }}\net8.0-windows\win-x64\ILSpy.BamlDecompiler.Tests.dll
+
+    - name: Upload dotnet test diag
+      uses: actions/upload-artifact@v3
+      if: success() || failure()
+      with:
+        name: test-diag-${{ matrix.configuration }}
+        path: 'test-results/dotnettestdiag-${{ matrix.configuration }}.txt'
 
     - name: Upload Test Logs
       uses: actions/upload-artifact@v3
