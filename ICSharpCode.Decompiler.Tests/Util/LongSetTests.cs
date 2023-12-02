@@ -32,94 +32,92 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		public void UpperBound()
 		{
 			var longSet = new LongSet(new[] { new LongInterval(1, 5), new LongInterval(6, 7) }.ToImmutableArray());
-			Assert.AreEqual(0, longSet.upper_bound(0));
+			Assert.That(longSet.upper_bound(0), Is.EqualTo(0));
 			for (int i = 1; i <= 5; i++)
-				Assert.AreEqual(1, longSet.upper_bound(i));
+				Assert.That(longSet.upper_bound(i), Is.EqualTo(1));
 			for (int i = 6; i <= 10; i++)
-				Assert.AreEqual(2, longSet.upper_bound(i));
+				Assert.That(longSet.upper_bound(i), Is.EqualTo(2));
 		}
 
 		[Test]
 		public void UniverseContainsAll()
 		{
-			Assert.IsTrue(LongSet.Universe.Contains(long.MinValue));
-			Assert.IsTrue(LongSet.Universe.Contains(1));
-			Assert.IsTrue(LongSet.Universe.Contains(long.MaxValue));
-			Assert.IsFalse(LongSet.Universe.IsEmpty);
+			Assert.That(LongSet.Universe.Contains(long.MinValue));
+			Assert.That(LongSet.Universe.Contains(1));
+			Assert.That(LongSet.Universe.Contains(long.MaxValue));
+			Assert.That(!LongSet.Universe.IsEmpty);
 		}
 
 		[Test]
 		public void IntersectUniverse()
 		{
-			Assert.AreEqual(LongSet.Universe, LongSet.Universe.IntersectWith(LongSet.Universe));
-			Assert.AreEqual(LongSet.Empty, LongSet.Universe.IntersectWith(LongSet.Empty));
-			Assert.AreEqual(new LongSet(long.MaxValue), LongSet.Universe.IntersectWith(new LongSet(long.MaxValue)));
+			Assert.That(LongSet.Universe.IntersectWith(LongSet.Universe), Is.EqualTo(LongSet.Universe));
+			Assert.That(LongSet.Universe.IntersectWith(LongSet.Empty), Is.EqualTo(LongSet.Empty));
+			Assert.That(LongSet.Universe.IntersectWith(new LongSet(long.MaxValue)), Is.EqualTo(new LongSet(long.MaxValue)));
 			var longSet = new LongSet(new[] { new LongInterval(1, 5), new LongInterval(6, 7) }.ToImmutableArray());
-			Assert.AreEqual(longSet, longSet.IntersectWith(LongSet.Universe));
+			Assert.That(longSet.IntersectWith(LongSet.Universe), Is.EqualTo(longSet));
 		}
 
 		[Test]
 		public void UnionUniverse()
 		{
-			Assert.AreEqual(LongSet.Universe, LongSet.Universe.UnionWith(LongSet.Universe));
-			Assert.AreEqual(LongSet.Universe, LongSet.Universe.UnionWith(LongSet.Empty));
-			Assert.AreEqual(LongSet.Universe, LongSet.Universe.UnionWith(new LongSet(long.MaxValue)));
+			Assert.That(LongSet.Universe.UnionWith(LongSet.Universe), Is.EqualTo(LongSet.Universe));
+			Assert.That(LongSet.Universe.UnionWith(LongSet.Empty), Is.EqualTo(LongSet.Universe));
+			Assert.That(LongSet.Universe.UnionWith(new LongSet(long.MaxValue)), Is.EqualTo(LongSet.Universe));
 			var longSet = new LongSet(new[] { new LongInterval(1, 5), new LongInterval(6, 7) }.ToImmutableArray());
-			Assert.AreEqual(LongSet.Universe, longSet.UnionWith(LongSet.Universe));
+			Assert.That(longSet.UnionWith(LongSet.Universe), Is.EqualTo(LongSet.Universe));
 		}
 
 		[Test]
 		public void ExceptWithUniverse()
 		{
-			Assert.AreEqual(LongSet.Universe, LongSet.Universe.ExceptWith(LongSet.Empty));
-			Assert.AreEqual(LongSet.Empty, LongSet.Universe.ExceptWith(LongSet.Universe));
-			Assert.AreEqual(LongSet.Empty, LongSet.Empty.ExceptWith(LongSet.Universe));
-			Assert.AreEqual(LongSet.Empty, LongSet.Empty.ExceptWith(LongSet.Empty));
+			Assert.That(LongSet.Universe.ExceptWith(LongSet.Empty), Is.EqualTo(LongSet.Universe));
+			Assert.That(LongSet.Universe.ExceptWith(LongSet.Universe), Is.EqualTo(LongSet.Empty));
+			Assert.That(LongSet.Empty.ExceptWith(LongSet.Universe), Is.EqualTo(LongSet.Empty));
+			Assert.That(LongSet.Empty.ExceptWith(LongSet.Empty), Is.EqualTo(LongSet.Empty));
 		}
 
 		[Test]
 		public void UnionWith()
 		{
-			Assert.AreEqual(new LongSet(new LongInterval(0, 2)),
-				new LongSet(0).UnionWith(new LongSet(1)));
+			Assert.That(new LongSet(0).UnionWith(new LongSet(1)), Is.EqualTo(new LongSet(new LongInterval(0, 2))));
 
-			Assert.AreEqual(LongSet.Universe, new LongSet(0).Invert().UnionWith(new LongSet(0)));
+			Assert.That(new LongSet(0).Invert().UnionWith(new LongSet(0)), Is.EqualTo(LongSet.Universe));
 		}
 
 		[Test]
 		public void AddTo()
 		{
-			Assert.AreEqual(new LongSet(1), new LongSet(0).AddOffset(1));
-			Assert.AreEqual(new LongSet(long.MinValue), new LongSet(long.MaxValue).AddOffset(1));
+			Assert.That(new LongSet(0).AddOffset(1), Is.EqualTo(new LongSet(1)));
+			Assert.That(new LongSet(long.MaxValue).AddOffset(1), Is.EqualTo(new LongSet(long.MinValue)));
 
 			TestAddTo(new LongSet(new LongInterval(-10, 10)), 5);
 			TestAddTo(new LongSet(new LongInterval(-10, 10)), long.MaxValue);
-			Assert.AreEqual(new LongSet(10).Invert(), new LongSet(0).Invert().AddOffset(10));
-			Assert.AreEqual(new LongSet(20).Invert(), new LongSet(30).Invert().AddOffset(-10));
+			Assert.That(new LongSet(0).Invert().AddOffset(10), Is.EqualTo(new LongSet(10).Invert()));
+			Assert.That(new LongSet(30).Invert().AddOffset(-10), Is.EqualTo(new LongSet(20).Invert()));
 		}
 
 		void TestAddTo(LongSet input, long constant)
 		{
-			Assert.AreEqual(
-				input.Values.Select(e => unchecked(e + constant)).OrderBy(e => e).ToList(),
-				input.AddOffset(constant).Values.ToList());
+			Assert.That(
+				input.AddOffset(constant).Values.ToList(), Is.EqualTo(input.Values.Select(e => unchecked(e + constant)).OrderBy(e => e).ToList()));
 		}
 
 		[Test]
 		public void Values()
 		{
-			Assert.IsFalse(LongSet.Empty.Values.Any());
-			Assert.IsTrue(LongSet.Universe.Values.Any());
-			Assert.AreEqual(new[] { 1, 2, 3 }, new LongSet(LongInterval.Inclusive(1, 3)).Values.ToArray());
+			Assert.That(!LongSet.Empty.Values.Any());
+			Assert.That(LongSet.Universe.Values.Any());
+			Assert.That(new LongSet(LongInterval.Inclusive(1, 3)).Values.ToArray(), Is.EqualTo(new[] { 1, 2, 3 }));
 		}
 
 		[Test]
 		public void ValueCount()
 		{
-			Assert.AreEqual(0, LongSet.Empty.Count());
-			Assert.AreEqual(ulong.MaxValue, new LongSet(3).Invert().Count());
-			Assert.AreEqual(ulong.MaxValue, LongSet.Universe.Count());
-			Assert.AreEqual(long.MaxValue + 2ul, new LongSet(LongInterval.Inclusive(-1, long.MaxValue)).Count());
+			Assert.That(LongSet.Empty.Count(), Is.EqualTo(0));
+			Assert.That(new LongSet(3).Invert().Count(), Is.EqualTo(ulong.MaxValue));
+			Assert.That(LongSet.Universe.Count(), Is.EqualTo(ulong.MaxValue));
+			Assert.That(new LongSet(LongInterval.Inclusive(-1, long.MaxValue)).Count(), Is.EqualTo(long.MaxValue + 2ul));
 		}
 	}
 }

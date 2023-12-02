@@ -198,7 +198,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			{
 				Console.WriteLine("errors:" + Environment.NewLine + result.StandardError);
 			}
-			Assert.AreEqual(0, result.ExitCode, "ilasm failed");
+			Assert.That(result.ExitCode, Is.EqualTo(0), "ilasm failed");
 
 			return outputFile;
 		}
@@ -251,7 +251,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			{
 				Console.WriteLine("errors:" + Environment.NewLine + result.StandardError);
 			}
-			Assert.AreEqual(0, result.ExitCode, "ildasm failed");
+			Assert.That(result.ExitCode, Is.EqualTo(0), "ildasm failed");
 
 			// Unlike the .imagebase directive (which is a fixed value when compiling with /deterministic),
 			// the image base comment still varies... ildasm putting a random number here?
@@ -520,7 +520,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					Console.WriteLine("errors:" + Environment.NewLine + result.StandardError);
 				}
 
-				Assert.AreEqual(0, result.ExitCode, "csc failed");
+				Assert.That(result.ExitCode, Is.EqualTo(0), "csc failed");
 
 				return results;
 			}
@@ -582,7 +582,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				{
 					Console.WriteLine("errors:" + Environment.NewLine + result.StandardError);
 				}
-				Assert.AreEqual(0, result.ExitCode, "mcs failed");
+				Assert.That(result.ExitCode, Is.EqualTo(0), "mcs failed");
 
 				return results;
 			}
@@ -764,8 +764,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				(result2, output2, error2) = await Run(decompiledOutputFile).ConfigureAwait(false);
 			}
 
-			Assert.AreEqual(0, result1, "Exit code != 0; did the test case crash?" + Environment.NewLine + error1);
-			Assert.AreEqual(0, result2, "Exit code != 0; did the decompiled code crash?" + Environment.NewLine + error2);
+			Assert.That(result1, Is.EqualTo(0), "Exit code != 0; did the test case crash?" + Environment.NewLine + error1);
+			Assert.That(result2, Is.EqualTo(0), "Exit code != 0; did the decompiled code crash?" + Environment.NewLine + error2);
 
 			if (output1 != output2 || error1 != error2)
 			{
@@ -851,7 +851,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				.WithValidation(CommandResultValidation.None);
 
 			var result = await command.ExecuteBufferedAsync().ConfigureAwait(false);
-			Assert.AreEqual(0, result.ExitCode, "sn failed");
+			Assert.That(result.ExitCode, Is.EqualTo(0), "sn failed");
 
 			if (!string.IsNullOrWhiteSpace(result.StandardOutput))
 			{

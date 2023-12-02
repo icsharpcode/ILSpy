@@ -59,10 +59,10 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 
 			var results = new TypeUsedByAnalyzer().Analyze(symbol, context).ToList();
 
-			Assert.IsNotEmpty(results);
+			Assert.That(results, Is.Not.Empty);
 			var method = results.OfType<IMethod>().SingleOrDefault(m => m.FullName == "ICSharpCode.ILSpy.Tests.Analyzers.TestCases.Main.MainAssembly.UsesInt32");
-			Assert.IsNotNull(method);
-			Assert.IsFalse(method.MetadataToken.IsNil);
+			Assert.That(method, Is.Not.Null);
+			Assert.That(!method.MetadataToken.IsNil);
 		}
 	}
 }

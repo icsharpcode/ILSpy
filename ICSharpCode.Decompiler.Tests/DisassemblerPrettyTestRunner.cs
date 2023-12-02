@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.Tests
 				if (file.Extension.Equals(".il", StringComparison.OrdinalIgnoreCase))
 				{
 					var testName = file.Name.Split('.')[0];
-					Assert.Contains(testName, testNames);
+					Assert.That(testNames, Has.Member(testName));
 				}
 			}
 		}

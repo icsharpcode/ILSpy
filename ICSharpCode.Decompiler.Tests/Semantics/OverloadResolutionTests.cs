@@ -86,10 +86,10 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		{
 			OverloadResolution r = new OverloadResolution(compilation, MakeArgumentList(typeof(ushort)));
 			var c1 = MakeMethod(typeof(int));
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(c1));
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeMethod(typeof(uint))));
-			Assert.IsFalse(r.IsAmbiguous);
-			Assert.AreSame(c1, r.BestCandidate);
+			Assert.That(r.AddCandidate(c1), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(r.AddCandidate(MakeMethod(typeof(uint))), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(!r.IsAmbiguous);
+			Assert.That(r.BestCandidate, Is.SameAs(c1));
 		}
 
 		[Test]
@@ -98,66 +98,66 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			ResolveResult[] args = { new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), 1) };
 			OverloadResolution r = new OverloadResolution(compilation, args);
 			var c1 = MakeMethod(typeof(uint));
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(c1));
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeMethod(typeof(long))));
-			Assert.IsFalse(r.IsAmbiguous);
-			Assert.AreSame(c1, r.BestCandidate);
+			Assert.That(r.AddCandidate(c1), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(r.AddCandidate(MakeMethod(typeof(long))), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(!r.IsAmbiguous);
+			Assert.That(r.BestCandidate, Is.SameAs(c1));
 		}
 
 		[Test]
 		public void NullableIntAndNullableUIntIsAmbiguous()
 		{
 			OverloadResolution r = new OverloadResolution(compilation, MakeArgumentList(typeof(ushort?)));
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeMethod(typeof(int?))));
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeMethod(typeof(uint?))));
-			Assert.AreEqual(OverloadResolutionErrors.AmbiguousMatch, r.BestCandidateErrors);
+			Assert.That(r.AddCandidate(MakeMethod(typeof(int?))), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(r.AddCandidate(MakeMethod(typeof(uint?))), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(r.BestCandidateErrors, Is.EqualTo(OverloadResolutionErrors.AmbiguousMatch));
 
 			// then adding a matching overload solves the ambiguity:
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeMethod(typeof(ushort?))));
-			Assert.AreEqual(OverloadResolutionErrors.None, r.BestCandidateErrors);
-			Assert.IsNull(r.BestCandidateAmbiguousWith);
+			Assert.That(r.AddCandidate(MakeMethod(typeof(ushort?))), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(r.BestCandidateErrors, Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(r.BestCandidateAmbiguousWith, Is.Null);
 		}
 
 		[Test]
 		public void ParamsMethodMatchesEmptyArgumentList()
 		{
 			OverloadResolution r = new OverloadResolution(compilation, MakeArgumentList());
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeParamsMethod(typeof(int[]))));
-			Assert.IsTrue(r.BestCandidateIsExpandedForm);
+			Assert.That(r.AddCandidate(MakeParamsMethod(typeof(int[]))), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(r.BestCandidateIsExpandedForm);
 		}
 
 		[Test]
 		public void ParamsMethodMatchesOneArgumentInExpandedForm()
 		{
 			OverloadResolution r = new OverloadResolution(compilation, MakeArgumentList(typeof(int)));
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeParamsMethod(typeof(int[]))));
-			Assert.IsTrue(r.BestCandidateIsExpandedForm);
+			Assert.That(r.AddCandidate(MakeParamsMethod(typeof(int[]))), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(r.BestCandidateIsExpandedForm);
 		}
 
 		[Test]
 		public void ParamsMethodMatchesInUnexpandedForm()
 		{
 			OverloadResolution r = new OverloadResolution(compilation, MakeArgumentList(typeof(int[])));
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeParamsMethod(typeof(int[]))));
-			Assert.IsFalse(r.BestCandidateIsExpandedForm);
+			Assert.That(r.AddCandidate(MakeParamsMethod(typeof(int[]))), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(!r.BestCandidateIsExpandedForm);
 		}
 
 		[Test]
 		public void LessArgumentsPassedToParamsIsBetter()
 		{
 			OverloadResolution r = new OverloadResolution(compilation, MakeArgumentList(typeof(int), typeof(int), typeof(int)));
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeParamsMethod(typeof(int[]))));
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeParamsMethod(typeof(int), typeof(int[]))));
-			Assert.IsFalse(r.IsAmbiguous);
-			Assert.AreEqual(2, r.BestCandidate.Parameters.Count);
+			Assert.That(r.AddCandidate(MakeParamsMethod(typeof(int[]))), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(r.AddCandidate(MakeParamsMethod(typeof(int), typeof(int[]))), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(!r.IsAmbiguous);
+			Assert.That(r.BestCandidate.Parameters.Count, Is.EqualTo(2));
 		}
 
 		[Test]
 		public void CallInvalidParamsDeclaration()
 		{
 			OverloadResolution r = new OverloadResolution(compilation, MakeArgumentList(typeof(int[,])));
-			Assert.AreEqual(OverloadResolutionErrors.ArgumentTypeMismatch, r.AddCandidate(MakeParamsMethod(typeof(int))));
-			Assert.IsFalse(r.BestCandidateIsExpandedForm);
+			Assert.That(r.AddCandidate(MakeParamsMethod(typeof(int))), Is.EqualTo(OverloadResolutionErrors.ArgumentTypeMismatch));
+			Assert.That(!r.BestCandidateIsExpandedForm);
 		}
 
 		[Test]
@@ -167,10 +167,10 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			var m2 = MakeMethod(1);
 
 			OverloadResolution r = new OverloadResolution(compilation, MakeArgumentList());
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(m1));
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(m2));
-			Assert.IsFalse(r.IsAmbiguous);
-			Assert.AreSame(m1, r.BestCandidate);
+			Assert.That(r.AddCandidate(m1), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(r.AddCandidate(m2), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(!r.IsAmbiguous);
+			Assert.That(r.BestCandidate, Is.SameAs(m1));
 		}
 
 		[Test]
@@ -186,22 +186,22 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			// Call: Foo<int>();
 			OverloadResolution o;
 			o = new OverloadResolution(compilation, new ResolveResult[0], typeArguments: new[] { compilation.FindType(typeof(int)) });
-			Assert.AreEqual(OverloadResolutionErrors.None, o.AddCandidate(resolvedM1));
-			Assert.AreEqual(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint, o.AddCandidate(resolvedM2));
-			Assert.AreSame(resolvedM1, o.BestCandidate);
+			Assert.That(o.AddCandidate(resolvedM1), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(o.AddCandidate(resolvedM2), Is.EqualTo(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint));
+			Assert.That(o.BestCandidate, Is.SameAs(resolvedM1));
 
 			// Call: Foo<string>();
 			o = new OverloadResolution(compilation, new ResolveResult[0], typeArguments: new[] { compilation.FindType(typeof(string)) });
-			Assert.AreEqual(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint, o.AddCandidate(resolvedM1));
-			Assert.AreEqual(OverloadResolutionErrors.None, o.AddCandidate(resolvedM2));
-			Assert.AreSame(resolvedM2, o.BestCandidate);
+			Assert.That(o.AddCandidate(resolvedM1), Is.EqualTo(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint));
+			Assert.That(o.AddCandidate(resolvedM2), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(o.BestCandidate, Is.SameAs(resolvedM2));
 
 			// Call: Foo<int?>();
 			o = new OverloadResolution(compilation, new ResolveResult[0], typeArguments: new[] { compilation.FindType(typeof(int?)) });
-			Assert.AreEqual(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint, o.AddCandidate(resolvedM1));
-			Assert.AreEqual(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint, o.AddCandidate(resolvedM2));
-			Assert.AreEqual(OverloadResolutionErrors.None, o.AddCandidate(resolvedM3));
-			Assert.AreSame(resolvedM3, o.BestCandidate);
+			Assert.That(o.AddCandidate(resolvedM1), Is.EqualTo(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint));
+			Assert.That(o.AddCandidate(resolvedM2), Is.EqualTo(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint));
+			Assert.That(o.AddCandidate(resolvedM3), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(o.BestCandidate, Is.SameAs(resolvedM3));
 		}
 
 		class SkeetEvilOverloadResolutionTestCase
@@ -276,10 +276,10 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			};
 
 			OverloadResolution r = new OverloadResolution(compilation, args);
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(m1));
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(m2));
-			Assert.AreSame(m2, r.BestCandidate);
-			Assert.AreEqual(OverloadResolutionErrors.None, r.BestCandidateErrors);
+			Assert.That(r.AddCandidate(m1), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(r.AddCandidate(m2), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(r.BestCandidate, Is.SameAs(m2));
+			Assert.That(r.BestCandidateErrors, Is.EqualTo(OverloadResolutionErrors.None));
 		}
 
 		[Test]
@@ -294,10 +294,10 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			};
 
 			OverloadResolution r = new OverloadResolution(compilation, args);
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(m1));
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(m2));
-			Assert.AreSame(m2, r.BestCandidate);
-			Assert.AreEqual(OverloadResolutionErrors.None, r.BestCandidateErrors);
+			Assert.That(r.AddCandidate(m1), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(r.AddCandidate(m2), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(r.BestCandidate, Is.SameAs(m2));
+			Assert.That(r.BestCandidateErrors, Is.EqualTo(OverloadResolutionErrors.None));
 		}
 
 		[Test]
@@ -312,9 +312,9 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			};
 
 			OverloadResolution r = new OverloadResolution(compilation, args);
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(m1));
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(m2));
-			Assert.AreEqual(OverloadResolutionErrors.AmbiguousMatch, r.BestCandidateErrors);
+			Assert.That(r.AddCandidate(m1), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(r.AddCandidate(m2), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(r.BestCandidateErrors, Is.EqualTo(OverloadResolutionErrors.AmbiguousMatch));
 		}
 
 		[Test, Ignore("Overload Resolution bug")]
@@ -329,10 +329,10 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			OverloadResolution r = new OverloadResolution(compilation, args);
 			foreach (var method in container.GetMethods(m => m.Name == "Method"))
 			{
-				Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(method));
+				Assert.That(r.AddCandidate(method), Is.EqualTo(OverloadResolutionErrors.None));
 			}
 
-			Assert.AreEqual(container.GetMethods(m => m.Name == "Method").Last(), r.BestCandidate);
+			Assert.That(r.BestCandidate, Is.EqualTo(container.GetMethods(m => m.Name == "Method").Last()));
 		}
 
 		class BetterFunctionMemberIsNotTransitiveTestCase

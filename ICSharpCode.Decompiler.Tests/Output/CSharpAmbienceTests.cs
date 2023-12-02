@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			}
 
 			var foundType = compilation.FindType(type).GetDefinition();
-			Assert.IsNotNull(foundType);
+			Assert.That(foundType, Is.Not.Null);
 			return foundType;
 		}
 
@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		{
 			var typeDef = GetDefinition(typeof(Dictionary<,>));
 			ambience.ConversionFlags = flags;
-			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(typeDef));
+			Assert.That(ambience.ConvertSymbol(typeDef), Is.EqualTo(expectedOutput));
 		}
 
 		[TestCase(None, "Object")]
@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		{
 			var typeDef = GetDefinition(typeof(object));
 			ambience.ConversionFlags = flags;
-			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(typeDef));
+			Assert.That(ambience.ConvertSymbol(typeDef), Is.EqualTo(expectedOutput));
 		}
 
 		[TestCase(None, "IEnumerable")]
@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		{
 			var typeDef = GetDefinition(typeof(IEnumerable<>));
 			ambience.ConversionFlags = flags;
-			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(typeDef));
+			Assert.That(ambience.ConvertSymbol(typeDef), Is.EqualTo(expectedOutput));
 		}
 
 		[TestCase(None, "Enumerator")]
@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		{
 			var typeDef = GetDefinition(typeof(List<>.Enumerator));
 			ambience.ConversionFlags = flags;
-			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(typeDef));
+			Assert.That(ambience.ConvertSymbol(typeDef), Is.EqualTo(expectedOutput));
 		}
 
 		[TestCase(None, "StaticClass")]
@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		{
 			var typeDef = GetDefinition(typeof(StaticClass));
 			ambience.ConversionFlags = flags;
-			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(typeDef));
+			Assert.That(ambience.ConvertSymbol(typeDef), Is.EqualTo(expectedOutput));
 		}
 
 		[TestCase(None, "SealedClass")]
@@ -153,7 +153,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		{
 			var typeDef = GetDefinition(typeof(SealedClass));
 			ambience.ConversionFlags = flags;
-			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(typeDef));
+			Assert.That(ambience.ConvertSymbol(typeDef), Is.EqualTo(expectedOutput));
 		}
 
 		[TestCase(None, "RefStruct")]
@@ -169,7 +169,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		{
 			var typeDef = GetDefinition(typeof(RefStruct));
 			ambience.ConversionFlags = flags;
-			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(typeDef));
+			Assert.That(ambience.ConvertSymbol(typeDef), Is.EqualTo(expectedOutput));
 		}
 
 		[TestCase(None, "ReadonlyStruct")]
@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		{
 			var typeDef = GetDefinition(typeof(ReadonlyStruct));
 			ambience.ConversionFlags = flags;
-			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(typeDef));
+			Assert.That(ambience.ConvertSymbol(typeDef), Is.EqualTo(expectedOutput));
 		}
 
 		[TestCase(None, "ReadonlyRefStruct")]
@@ -201,7 +201,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		{
 			var typeDef = GetDefinition(typeof(ReadonlyRefStruct));
 			ambience.ConversionFlags = flags;
-			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(typeDef));
+			Assert.That(ambience.ConvertSymbol(typeDef), Is.EqualTo(expectedOutput));
 		}
 		#endregion
 
@@ -219,7 +219,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		{
 			var func = GetDefinition(typeof(Func<,>));
 			ambience.ConversionFlags = flags;
-			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(func));
+			Assert.That(ambience.ConvertSymbol(func), Is.EqualTo(expectedOutput));
 		}
 		#endregion
 
@@ -232,7 +232,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			var field = GetDefinition(typeof(CSharpAmbienceTests.Program)).GetFields(f => f.Name == "test").Single();
 			ambience.ConversionFlags = flags;
 
-			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(field));
+			Assert.That(ambience.ConvertSymbol(field), Is.EqualTo(expectedOutput));
 		}
 
 		[TestCase(All & ~PlaceReturnTypeAfterParameterList, "private const int ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.Program.TEST2;")]
@@ -242,7 +242,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			var field = compilation.FindType(typeof(CSharpAmbienceTests.Program)).GetFields(f => f.Name == "TEST2").Single();
 			ambience.ConversionFlags = flags;
 
-			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(field));
+			Assert.That(ambience.ConvertSymbol(field), Is.EqualTo(expectedOutput));
 		}
 		#endregion
 
@@ -254,7 +254,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			ambience.ConversionFlags = ConversionFlags.StandardConversionFlags | ConversionFlags.ShowDeclaringType;
 			string result = ambience.ConvertSymbol(ev);
 
-			Assert.AreEqual("public event EventHandler Program.ProgramChanged;", result);
+			Assert.That(result, Is.EqualTo("public event EventHandler Program.ProgramChanged;"));
 		}
 
 		[Test]
@@ -264,7 +264,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			ambience.ConversionFlags = ConversionFlags.StandardConversionFlags;
 			string result = ambience.ConvertSymbol(ev);
 
-			Assert.AreEqual("public event EventHandler SomeEvent;", result);
+			Assert.That(result, Is.EqualTo("public event EventHandler SomeEvent;"));
 		}
 		#endregion
 
@@ -276,7 +276,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			var prop = compilation.FindType(typeof(CSharpAmbienceTests.Program)).GetProperties(p => p.Name == "Test").Single();
 			ambience.ConversionFlags = flags;
 
-			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(prop));
+			Assert.That(ambience.ConvertSymbol(prop), Is.EqualTo(expectedOutput));
 		}
 
 		[TestCase(StandardConversionFlags, "public int this[int index] { get; }")]
@@ -286,7 +286,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			var prop = compilation.FindType(typeof(CSharpAmbienceTests.Program)).GetProperties(p => p.IsIndexer).Single();
 			ambience.ConversionFlags = flags;
 
-			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(prop));
+			Assert.That(ambience.ConvertSymbol(prop), Is.EqualTo(expectedOutput));
 		}
 		#endregion
 
@@ -298,7 +298,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			var prop = compilation.FindType(typeof(CSharpAmbienceTests.Program)).GetConstructors().Single();
 			ambience.ConversionFlags = flags;
 
-			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(prop));
+			Assert.That(ambience.ConvertSymbol(prop), Is.EqualTo(expectedOutput));
 		}
 
 		[TestCase(StandardConversionFlags, "~Program();")]
@@ -309,7 +309,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 				.GetMembers(m => m.SymbolKind == SymbolKind.Destructor, GetMemberOptions.IgnoreInheritedMembers).Single();
 			ambience.ConversionFlags = flags;
 
-			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(dtor));
+			Assert.That(ambience.ConvertSymbol(dtor), Is.EqualTo(expectedOutput));
 		}
 		#endregion
 

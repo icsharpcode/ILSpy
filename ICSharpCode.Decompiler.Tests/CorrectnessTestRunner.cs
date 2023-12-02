@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.Tests
 				if (file.Extension == ".txt" || file.Extension == ".exe" || file.Extension == ".config")
 					continue;
 				var testName = Path.GetFileNameWithoutExtension(file.Name);
-				Assert.Contains(testName, testNames);
+				Assert.That(testNames, Has.Member(testName));
 			}
 		}
 
@@ -486,7 +486,7 @@ namespace ICSharpCode.Decompiler.Tests
 			bool optionsForce32Bit = options.HasFlag(CompilerOptions.Force32Bit);
 			bool asmOptionsForce32Bit = asmOptions.HasFlag(AssemblerOptions.Force32Bit);
 
-			Assert.AreEqual(optionsForce32Bit, asmOptionsForce32Bit, "Inconsistent architecture.");
+			Assert.That(asmOptionsForce32Bit, Is.EqualTo(optionsForce32Bit), "Inconsistent architecture.");
 
 			try
 			{

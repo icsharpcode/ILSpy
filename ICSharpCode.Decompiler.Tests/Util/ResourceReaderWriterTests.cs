@@ -100,9 +100,9 @@ namespace ICSharpCode.Decompiler.Tests.Util
 			using var testFile = ProduceResourcesTestFile(name, value);
 			using var reader = new ResourcesFile(testFile);
 			var items = reader.ToArray();
-			Assert.AreEqual(1, items.Length);
-			Assert.AreEqual(name, items[0].Key);
-			Assert.AreEqual(value, items[0].Value);
+			Assert.That(items.Length, Is.EqualTo(1));
+			Assert.That(items[0].Key, Is.EqualTo(name));
+			Assert.That(items[0].Value, Is.EqualTo(value));
 		}
 
 		[TestCase("Null", null, null, "System.Resources.ResXNullRef" + WinFormsAssemblyName)]
@@ -124,14 +124,14 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		public void Write(string name, object value, string serializedValue, string typeName)
 		{
 			var element = ProduceResXTest(name, value);
-			Assert.AreEqual(name, element.Attribute("name")?.Value);
+			Assert.That(element.Attribute("name")?.Value, Is.EqualTo(name));
 			if (typeName != null)
 			{
-				Assert.AreEqual(typeName, element.Attribute("type")?.Value);
+				Assert.That(element.Attribute("type")?.Value, Is.EqualTo(typeName));
 			}
 			var v = element.Element("value");
-			Assert.IsNotNull(v);
-			Assert.IsTrue(v.IsEmpty ? serializedValue == null : v.Value == serializedValue);
+			Assert.That(v, Is.Not.Null);
+			Assert.That(v.IsEmpty ? serializedValue == null : v.Value == serializedValue);
 		}
 
 		[Test]
@@ -149,10 +149,10 @@ namespace ICSharpCode.Decompiler.Tests.Util
 				.GetManifestResourceStream(typeof(ResourceReaderWriterTests).Namespace + ".Test.resources");
 			using var reader = new ResourcesFile(stream);
 			var items = reader.ToArray();
-			Assert.AreEqual(3, items.Length);
+			Assert.That(items.Length, Is.EqualTo(3));
 			var item = items.FirstOrDefault(i => i.Key == "Bitmap");
-			Assert.IsNotNull(item.Key);
-			Assert.IsInstanceOf<ResourceSerializedObject>(item.Value);
+			Assert.That(item.Key, Is.Not.Null);
+			Assert.That(item.Value, Is.InstanceOf<ResourceSerializedObject>());
 		}
 
 		[Test]
@@ -162,15 +162,15 @@ namespace ICSharpCode.Decompiler.Tests.Util
 				.GetManifestResourceStream(typeof(ResourceReaderWriterTests).Namespace + ".Test.resources");
 			using var reader = new ResourcesFile(stream);
 			var items = reader.ToArray();
-			Assert.AreEqual(3, items.Length);
+			Assert.That(items.Length, Is.EqualTo(3));
 			var item = items.FirstOrDefault(i => i.Key == "Byte[]");
-			Assert.IsNotNull(item.Key);
-			Assert.IsInstanceOf<byte[]>(item.Value);
+			Assert.That(item.Key, Is.Not.Null);
+			Assert.That(item.Value, Is.InstanceOf<byte[]>());
 			byte[] array = (byte[])item.Value;
-			Assert.AreEqual(3, array.Length);
-			Assert.AreEqual(42, array[0]);
-			Assert.AreEqual(43, array[1]);
-			Assert.AreEqual(44, array[2]);
+			Assert.That(array.Length, Is.EqualTo(3));
+			Assert.That(array[0], Is.EqualTo(42));
+			Assert.That(array[1], Is.EqualTo(43));
+			Assert.That(array[2], Is.EqualTo(44));
 		}
 
 		[Test]
@@ -180,10 +180,10 @@ namespace ICSharpCode.Decompiler.Tests.Util
 				.GetManifestResourceStream(typeof(ResourceReaderWriterTests).Namespace + ".Test.resources");
 			using var reader = new ResourcesFile(stream);
 			var items = reader.ToArray();
-			Assert.AreEqual(3, items.Length);
+			Assert.That(items.Length, Is.EqualTo(3));
 			var item = items.FirstOrDefault(i => i.Key == "MemoryStream");
-			Assert.IsNotNull(item.Key);
-			Assert.IsInstanceOf<MemoryStream>(item.Value);
+			Assert.That(item.Key, Is.Not.Null);
+			Assert.That(item.Value, Is.InstanceOf<MemoryStream>());
 		}
 	}
 }

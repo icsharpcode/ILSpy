@@ -57,8 +57,8 @@ namespace ICSharpCode.Decompiler.Tests
 			var targetFramework = new TargetFramework(identifier: null, version, profile: null);
 
 			// Assert
-			Assert.AreEqual(version, targetFramework.VersionNumber);
-			Assert.AreEqual(expectedVersion, targetFramework.VersionString);
+			Assert.That(targetFramework.VersionNumber, Is.EqualTo(version));
+			Assert.That(targetFramework.VersionString, Is.EqualTo(expectedVersion));
 		}
 
 		[Test]
@@ -71,8 +71,8 @@ namespace ICSharpCode.Decompiler.Tests
 			var targetFramework = new TargetFramework(identifier, 100, profile: null);
 
 			// Assert
-			Assert.IsTrue(targetFramework.IsPortableClassLibrary);
-			Assert.AreEqual(identifier, targetFramework.Identifier);
+			Assert.That(targetFramework.IsPortableClassLibrary);
+			Assert.That(targetFramework.Identifier, Is.EqualTo(identifier));
 		}
 
 		[Test]
@@ -87,8 +87,8 @@ namespace ICSharpCode.Decompiler.Tests
 			var targetFramework = new TargetFramework(identifier, 100, profile);
 
 			// Assert
-			Assert.AreEqual(identifier, targetFramework.Identifier);
-			Assert.AreEqual(profile, targetFramework.Profile);
+			Assert.That(targetFramework.Identifier, Is.EqualTo(identifier));
+			Assert.That(targetFramework.Profile, Is.EqualTo(profile));
 		}
 
 		[TestCase(null, 350, "net35")]
@@ -117,7 +117,7 @@ namespace ICSharpCode.Decompiler.Tests
 			var targetFramework = new TargetFramework(identifier, version, profile: null);
 
 			// Assert
-			Assert.AreEqual(expectedMoniker, targetFramework.Moniker);
+			Assert.That(targetFramework.Moniker, Is.EqualTo(expectedMoniker));
 		}
 	}
 }

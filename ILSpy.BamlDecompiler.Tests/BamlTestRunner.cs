@@ -179,7 +179,7 @@ namespace ILSpy.BamlDecompiler.Tests
 				resolver.AddSearchDirectory(Path.GetDirectoryName(asmPath));
 				var res = module.Resources.First();
 				Stream bamlStream = LoadBaml(res, name + ".baml");
-				Assert.IsNotNull(bamlStream);
+				Assert.That(bamlStream, Is.Not.Null);
 
 				BamlDecompilerTypeSystem typeSystem = new BamlDecompilerTypeSystem(module, resolver);
 				var decompiler = new XamlDecompiler(typeSystem, new BamlDecompilerSettings());
