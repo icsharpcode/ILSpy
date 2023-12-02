@@ -54,7 +54,7 @@
     <PackageReference Include="NUnit3TestAdapter" />
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="NUnit" />
-    <!-- used for xml test result files -->
+    <PackageReference Include="FluentAssertions" />
     <PackageReference Include="JunitXml.TestLogger" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="System.Memory" />
