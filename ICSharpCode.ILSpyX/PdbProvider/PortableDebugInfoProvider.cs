@@ -199,10 +199,10 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 					continue;
 				if (cdi.Value.IsNil || cdi.Kind.IsNil)
 					continue;
-				var reader = metadata.GetBlobReader(cdi.Value);
 				var kind = metadata.GetGuid(cdi.Kind);
 				if (kind == KnownGuids.TupleElementNames && tupleElementNames is null)
 				{
+					var reader = metadata.GetBlobReader(cdi.Value);
 					var list = new List<string?>();
 					while (reader.RemainingBytes > 0)
 					{
@@ -216,7 +216,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 				}
 				else if (kind == KnownGuids.DynamicLocalVariables && dynamicFlags is null)
 				{
-					dynamicFlags = new bool[reader.Length * 8];
+					var reader = metadata.GetBlobReader(cdi.Value);
 					int j = 0;
 					while (reader.RemainingBytes > 0)
 					{
