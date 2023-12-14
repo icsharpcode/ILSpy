@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Immutable;
 
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
@@ -16,10 +17,17 @@ namespace ICSharpCode.Decompiler.IL
 		private int dynamicTypeIndex = 0;
 		private int tupleTypeIndex = 0;
 
-		public ApplyPdbLocalTypeInfoTypeVisitor(bool[] dynamicData, string[] tupleElementNames)
+		private ApplyPdbLocalTypeInfoTypeVisitor(bool[] dynamicData, string[] tupleElementNames)
 		{
 			this.dynamicData = dynamicData;
 			this.tupleElementNames = tupleElementNames;
+		}
+
+		public static IType Apply(IType type, PdbExtraTypeInfo pdbExtraTypeInfo)
+		{
+			if (pdbExtraTypeInfo.DynamicFlags is null && pdbExtraTypeInfo.TupleElementNames is null)
+				return type;
+			return type.AcceptVisitor(new ApplyPdbLocalTypeInfoTypeVisitor(pdbExtraTypeInfo.DynamicFlags, pdbExtraTypeInfo.TupleElementNames));
 		}
 
 		public override IType VisitModOpt(ModifiedType type)

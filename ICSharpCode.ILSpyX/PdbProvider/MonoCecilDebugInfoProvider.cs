@@ -136,13 +136,11 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			return name != null;
 		}
 
-		public bool TryGetExtraTypeInfo(SRM.MethodDefinitionHandle method, int index,
-			[NotNullWhen(true)] out string[]? tupleElementNames, [NotNullWhen(true)] out bool[]? dynamicFlags)
+		public bool TryGetExtraTypeInfo(SRM.MethodDefinitionHandle method, int index, out PdbExtraTypeInfo extraTypeInfo)
 		{
 			// Mono.Cecil's WindowsPDB reader is unable to read tuple element names
 			// and dynamic flags custom debug information.
-			tupleElementNames = null;
-			dynamicFlags = null;
+			extraTypeInfo = default;
 			return false;
 		}
 	}

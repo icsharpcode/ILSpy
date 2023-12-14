@@ -306,10 +306,9 @@ namespace ICSharpCode.Decompiler.IL
 			}
 
 			if (UseDebugSymbols && DebugInfo is not null &&
-				DebugInfo.TryGetExtraTypeInfo((MethodDefinitionHandle)method.MetadataToken, index,
-					out string[] tupleElementNames, out bool[] dynamicFlags))
+				DebugInfo.TryGetExtraTypeInfo((MethodDefinitionHandle)method.MetadataToken, index, out var pdbExtraTypeInfo))
 			{
-				type = type.AcceptVisitor(new ApplyPdbLocalTypeInfoTypeVisitor(dynamicFlags, tupleElementNames));
+				type = ApplyPdbLocalTypeInfoTypeVisitor.Apply(type, pdbExtraTypeInfo);
 			}
 
 			ILVariable ilVar = new ILVariable(kind, type, index);

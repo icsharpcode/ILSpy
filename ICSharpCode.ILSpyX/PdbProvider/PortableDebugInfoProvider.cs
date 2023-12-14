@@ -162,12 +162,10 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			return false;
 		}
 
-		public bool TryGetExtraTypeInfo(MethodDefinitionHandle method, int index,
-			[NotNullWhen(true)] out string?[]? tupleElementNames, [NotNullWhen(true)] out bool[]? dynamicFlags)
+		public bool TryGetExtraTypeInfo(MethodDefinitionHandle method, int index, out PdbExtraTypeInfo extraTypeInfo)
 		{
 			var metadata = GetMetadataReader();
-			tupleElementNames = null;
-			dynamicFlags = null;
+			extraTypeInfo = default;
 
 			if (metadata == null)
 				return false;
@@ -200,7 +198,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 				if (cdi.Value.IsNil || cdi.Kind.IsNil)
 					continue;
 				var kind = metadata.GetGuid(cdi.Kind);
-				if (kind == KnownGuids.TupleElementNames && tupleElementNames is null)
+				if (kind == KnownGuids.TupleElementNames && extraTypeInfo.TupleElementNames is null)
 				{
 					var reader = metadata.GetBlobReader(cdi.Value);
 					var list = new List<string?>();
@@ -212,25 +210,26 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 						list.Add(string.IsNullOrWhiteSpace(s) ? null : s);
 					}
 
-					tupleElementNames = list.ToArray();
+					extraTypeInfo.TupleElementNames = list.ToArray();
 				}
-				else if (kind == KnownGuids.DynamicLocalVariables && dynamicFlags is null)
+				else if (kind == KnownGuids.DynamicLocalVariables && extraTypeInfo.DynamicFlags is null)
 				{
 					var reader = metadata.GetBlobReader(cdi.Value);
+					extraTypeInfo.DynamicFlags = new bool[reader.Length * 8];
 					int j = 0;
 					while (reader.RemainingBytes > 0)
 					{
 						int b = reader.ReadByte();
 						for (int i = 1; i < 0x100; i <<= 1)
-							dynamicFlags[j++] = (b & i) != 0;
+							extraTypeInfo.DynamicFlags[j++] = (b & i) != 0;
 					}
 				}
 
-				if (tupleElementNames != null && dynamicFlags != null)
+				if (extraTypeInfo.TupleElementNames != null && extraTypeInfo.DynamicFlags != null)
 					break;
 			}
 
-			return tupleElementNames != null || dynamicFlags != null;
+			return extraTypeInfo.TupleElementNames != null || extraTypeInfo.DynamicFlags != null;
 		}
 	}
 }
