@@ -19,11 +19,11 @@
 #nullable enable
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 using ICSharpCode.AvalonEdit.Highlighting;
 
@@ -31,6 +31,8 @@ namespace ICSharpCode.ILSpy.Themes
 {
 	public class ThemeManager
 	{
+		private const string _isThemeAwareKey = "ILSpy.IsThemeAware";
+
 		private string? _theme;
 		private readonly ResourceDictionary _themeDictionaryContainer = new();
 		private readonly Dictionary<string, SyntaxColor> _syntaxColors = new();
@@ -43,6 +45,8 @@ namespace ICSharpCode.ILSpy.Themes
 		}
 
 		public string DefaultTheme => "Light";
+
+		public bool IsDarkTheme { get; private set; }
 
 		public static IReadOnlyCollection<string> AllThemes => new[] {
 			"Light",
@@ -89,6 +93,13 @@ namespace ICSharpCode.ILSpy.Themes
 				if (color is not null)
 					syntaxColor.ApplyTo(color);
 			}
+
+			highlightingDefinition.Properties[_isThemeAwareKey] = bool.TrueString;
+		}
+
+		public bool IsThemeAware(IHighlightingDefinition highlightingDefinition)
+		{
+			return highlightingDefinition.Properties.TryGetValue(_isThemeAwareKey, out var value) && value == bool.TrueString;
 		}
 
 		private void UpdateTheme(string? themeName)
@@ -108,6 +119,8 @@ namespace ICSharpCode.ILSpy.Themes
 			// Load SyntaxColor info from theme XAML
 			var resourceDictionary = new ResourceDictionary { Source = new Uri($"/themes/Theme.{themeFileName}.xaml", UriKind.Relative) };
 			_themeDictionaryContainer.MergedDictionaries.Add(resourceDictionary);
+
+			IsDarkTheme = resourceDictionary[ResourceKeys.TextBackgroundBrush] is SolidColorBrush { Color: { R: < 128, G: < 128, B: < 128 } };
 
 			// Iterate over keys first, because we don't want to instantiate all values eagerly, if we don't need them.
 			foreach (var item in resourceDictionary.Keys)
