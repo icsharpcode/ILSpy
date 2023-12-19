@@ -23,7 +23,7 @@ jobs:
         fetch-depth: 0
     
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
 
@@ -36,4 +36,4 @@ jobs:
       run: dotnet build ILSpy.XPlat.slnf --configuration Release
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v3
