@@ -204,8 +204,10 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 					var list = new List<string?>();
 					while (reader.RemainingBytes > 0)
 					{
+						// Read a UTF8 null-terminated string
 						int length = reader.IndexOf(0);
 						string s = reader.ReadUTF8(length);
+						// Skip null terminator
 						reader.ReadByte();
 						list.Add(string.IsNullOrWhiteSpace(s) ? null : s);
 					}
