@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2018 Siegfried Pammer
+// Copyright (c) 2018 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -134,6 +134,14 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			var variable = info.Variables.FirstOrDefault(v => v.Index == index);
 			name = variable.Name;
 			return name != null;
+		}
+
+		public bool TryGetExtraTypeInfo(SRM.MethodDefinitionHandle method, int index, out PdbExtraTypeInfo extraTypeInfo)
+		{
+			// Mono.Cecil's WindowsPDB reader is unable to read tuple element names
+			// and dynamic flags custom debug information.
+			extraTypeInfo = default;
+			return false;
 		}
 	}
 }
