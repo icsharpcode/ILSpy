@@ -86,6 +86,7 @@ namespace ICSharpCode.ILSpy
 											  Hyperlink.RequestNavigateEvent,
 											  new RequestNavigateEventHandler(Window_RequestNavigate));
 			ILSpyTraceListener.Install();
+			RegisterFilesAssociation();
 		}
 
 		static Assembly ResolvePluginDependencies(AssemblyLoadContext context, AssemblyName assemblyName)
@@ -229,6 +230,50 @@ namespace ICSharpCode.ILSpy
 		void Window_RequestNavigate(object sender, RequestNavigateEventArgs e)
 		{
 			ILSpy.MainWindow.Instance.NavigateTo(e);
+		}
+
+		void RegisterFilesAssociation()
+		{
+			const string version = DecompilerVersionInfo.Major + "." + DecompilerVersionInfo.Minor + "." + DecompilerVersionInfo.Build + "." + DecompilerVersionInfo.Revision;
+			try
+			{
+				var exePath = Path.ChangeExtension(Assembly.GetEntryAssembly().Location, ".exe");
+				var extensions = new string[] { ".dll", ".nupkg", ".vsix", ".exe" };
+				var root = Microsoft.Win32.Registry.CurrentUser;
+
+				foreach (var ext in extensions)
+				{
+					RegisterFileAssociation(root, exePath, ext);
+				}
+			}
+			catch (Exception ex)
+			{
+				StartupExceptions.Add(new ExceptionData { Exception = ex });
+			}
+
+			void RegisterFileAssociation(Microsoft.Win32.RegistryKey root, string exePath, string extension)
+			{
+				var ILSpyProgId = $"{nameof(ILSpy)}{extension}.{version}";
+				var ILSpyProgIdKey = $"SOFTWARE\\Classes\\{ILSpyProgId}";
+
+				if (root.OpenSubKey(ILSpyProgIdKey) is null)
+				{
+					var ilSpy = root.CreateSubKey(ILSpyProgIdKey);
+
+					// Add DefaultIcon
+					ilSpy.CreateSubKey("DefaultIcon").SetValue(default, $"\"{exePath}\",0", Microsoft.Win32.RegistryValueKind.String);
+
+					// Add Command
+					var shell = root.CreateSubKey($"{ILSpyProgIdKey}\\shell\\ILSpy");
+					shell.SetValue(null, "Open with ILSpy", Microsoft.Win32.RegistryValueKind.String);
+					shell.SetValue("Icon", $"\"{exePath}\",0", Microsoft.Win32.RegistryValueKind.String);
+					shell.CreateSubKey("command").SetValue(default, $"\"{exePath}\", \"%1\"", Microsoft.Win32.RegistryValueKind.String);
+
+					// Add Entry to OpenWith Context Menu
+					root.CreateSubKey($"SOFTWARE\\Classes\\{extension}\\OpenWithProgids").SetValue(ILSpyProgId,string.Empty, Microsoft.Win32.RegistryValueKind.String);
+				}
+			}
+
 		}
 	}
 }
