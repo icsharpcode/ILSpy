@@ -123,6 +123,10 @@ namespace ICSharpCode.ILSpyX
 				view = null; // don't dispose the view, we're still using it in the bundle entries
 				return result;
 			}
+			catch (InvalidDataException)
+			{
+				return null;
+			}
 			finally
 			{
 				view?.Dispose();
