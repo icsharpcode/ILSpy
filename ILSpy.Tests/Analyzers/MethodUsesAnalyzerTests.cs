@@ -42,11 +42,11 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 
 			var results = new MethodUsesAnalyzer().Analyze(symbol, context).ToList();
 
-			Assert.IsTrue(results.Count == 1);
+			Assert.That(results.Count == 1);
 			var field = results.Single() as IField;
-			Assert.IsNotNull(field);
-			Assert.IsFalse(field.MetadataToken.IsNil);
-			Assert.AreEqual(field.FullName, "System.String.Empty");
+			Assert.That(field, Is.Not.Null);
+			Assert.That(!field.MetadataToken.IsNil);
+			Assert.That("System.String.Empty", Is.EqualTo(field.FullName));
 		}
 	}
 }

@@ -10,6 +10,10 @@
     <DefineConstants>$(DefineConstants);$(PlatformForInstaller)</DefineConstants>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="WixSharp" Version="1.22.0" />
     <PackageReference Include="WixSharp.wix.bin" Version="3.14.0" />

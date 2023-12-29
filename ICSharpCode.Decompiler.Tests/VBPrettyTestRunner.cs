@@ -45,8 +45,8 @@ namespace ICSharpCode.Decompiler.Tests
 				if (file.Extension.Equals(".vb", StringComparison.OrdinalIgnoreCase))
 				{
 					var testName = file.Name.Split('.')[0];
-					Assert.Contains(testName, testNames);
-					Assert.IsTrue(File.Exists(Path.Combine(TestCasePath, testName + ".cs")));
+					Assert.That(testNames, Has.Member(testName));
+					Assert.That(File.Exists(Path.Combine(TestCasePath, testName + ".cs")));
 				}
 			}
 		}

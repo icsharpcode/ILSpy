@@ -16,12 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -35,17 +29,38 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!context.Settings.LockStatement)
 				return;
 			this.context = context;
-			for (int i = block.Instructions.Count - 1; i >= 0; i--)
+			for (int i = context.IndexOfFirstAlreadyTransformedInstruction - 1; i >= 0; i--)
 			{
-				if (!TransformLockRoslyn(block, i))
-					if (!TransformLockV4(block, i))
-						if (!TransformLockV4YieldReturn(block, i))
-							if (!TransformLockV2(block, i))
-								TransformLockMCS(block, i);
+				bool changed = DoTransform(block, i);
+				if (changed)
+				{
+					context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
+				}
 				// This happens in some cases:
 				// Use correct index after transformation.
 				if (i >= block.Instructions.Count)
 					i = block.Instructions.Count;
+			}
+
+			bool DoTransform(Block block, int i)
+			{
+				if (TransformLockRoslyn(block, i))
+				{
+					return true;
+				}
+				if (TransformLockV4(block, i))
+				{
+					return true;
+				}
+				if (TransformLockV4YieldReturn(block, i))
+				{
+					return true;
+				}
+				if (TransformLockV2(block, i))
+				{
+					return true;
+				}
+				return TransformLockMCS(block, i);
 			}
 		}
 

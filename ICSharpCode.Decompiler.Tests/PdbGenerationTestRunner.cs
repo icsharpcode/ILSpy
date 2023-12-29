@@ -70,8 +70,8 @@ namespace ICSharpCode.Decompiler.Tests
 				var metadataReader = MetadataReaderProvider.FromPortablePdbStream(pdbStream).GetMetadataReader();
 				var generatedPdbId = new BlobContentId(metadataReader.DebugMetadataHeader.Id);
 
-				Assert.AreEqual(expectedPdbId.Guid, generatedPdbId.Guid);
-				Assert.AreEqual(expectedPdbId.Stamp, generatedPdbId.Stamp);
+				Assert.That(generatedPdbId.Guid, Is.EqualTo(expectedPdbId.Guid));
+				Assert.That(generatedPdbId.Stamp, Is.EqualTo(expectedPdbId.Stamp));
 			}
 		}
 
@@ -95,8 +95,8 @@ namespace ICSharpCode.Decompiler.Tests
 					totalFiles = progress.TotalUnits;
 				}
 
-				Assert.AreEqual(progress.TotalUnits, totalFiles);
-				Assert.AreEqual(progress.UnitsCompleted, lastFilesWritten + 1);
+				Assert.That(totalFiles, Is.EqualTo(progress.TotalUnits));
+				Assert.That(lastFilesWritten + 1, Is.EqualTo(progress.UnitsCompleted));
 
 				lastFilesWritten = progress.UnitsCompleted;
 			};
@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler.Tests
 				var generatedPdbId = new BlobContentId(metadataReader.DebugMetadataHeader.Id);
 			}
 
-			Assert.AreEqual(totalFiles, lastFilesWritten);
+			Assert.That(lastFilesWritten, Is.EqualTo(totalFiles));
 		}
 
 		private class TestProgressReporter : IProgress<DecompilationProgress>

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -141,11 +141,11 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 				if (KnownGuids.DynamicLocalVariables == guid)
 				{
-					return CustomDebugInformationKind.StateMachineHoistedLocalScopes;
+					return CustomDebugInformationKind.DynamicLocalVariables;
 				}
 				if (KnownGuids.DefaultNamespaces == guid)
 				{
-					return CustomDebugInformationKind.StateMachineHoistedLocalScopes;
+					return CustomDebugInformationKind.DefaultNamespaces;
 				}
 				if (KnownGuids.EditAndContinueLocalSlotMap == guid)
 				{

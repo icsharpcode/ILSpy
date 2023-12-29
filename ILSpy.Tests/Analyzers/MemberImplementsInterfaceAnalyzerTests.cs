@@ -69,7 +69,7 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 			var shouldShow = analyzer.Show(symbol: null);
 
 			// Assert
-			Assert.IsFalse(shouldShow, $"The analyzer will be unexpectedly shown for no symbol");
+			Assert.That(!shouldShow, $"The analyzer will be unexpectedly shown for no symbol");
 		}
 
 		[Test]
@@ -85,7 +85,7 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 			var shouldShow = analyzer.Show(symbolMock);
 
 			// Assert
-			Assert.IsFalse(shouldShow, $"The analyzer will be unexpectedly shown for symbol '{symbolKind}'");
+			Assert.That(!shouldShow, $"The analyzer will be unexpectedly shown for symbol '{symbolKind}'");
 		}
 
 		[Test]
@@ -100,7 +100,7 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 			var shouldShow = analyzer.Show(memberMock);
 
 			// Assert
-			Assert.IsFalse(shouldShow, $"The analyzer will be unexpectedly shown for static symbol '{symbolKind}'");
+			Assert.That(!shouldShow, $"The analyzer will be unexpectedly shown for static symbol '{symbolKind}'");
 		}
 
 		[Test]
@@ -117,7 +117,7 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 			var shouldShow = analyzer.Show(memberMock);
 
 			// Assert
-			Assert.IsFalse(shouldShow, $"The analyzer will be unexpectedly shown for symbol '{symbolKind}' and '{typeKind}'");
+			Assert.That(!shouldShow, $"The analyzer will be unexpectedly shown for symbol '{symbolKind}' and '{typeKind}'");
 		}
 
 		[Test]
@@ -134,7 +134,7 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 			var shouldShow = analyzer.Show(memberMock);
 
 			// Assert
-			Assert.IsTrue(shouldShow, $"The analyzer will not be shown for symbol '{symbolKind}' and '{typeKind}'");
+			Assert.That(shouldShow, $"The analyzer will not be shown for symbol '{symbolKind}' and '{typeKind}'");
 		}
 
 		[Test]
@@ -148,13 +148,13 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 			var results = analyzer.Analyze(symbol, new AnalyzerContext());
 
 			// Assert
-			Assert.IsNotNull(results);
-			Assert.AreEqual(1, results.Count());
+			Assert.That(results, Is.Not.Null);
+			Assert.That(results.Count(), Is.EqualTo(1));
 			var result = results.FirstOrDefault() as IMethod;
-			Assert.IsNotNull(result);
-			Assert.IsNotNull(result.DeclaringTypeDefinition);
-			Assert.AreEqual(TypeKind.Interface, result.DeclaringTypeDefinition.Kind);
-			Assert.AreEqual(nameof(ITestInterface), result.DeclaringTypeDefinition.Name);
+			Assert.That(result, Is.Not.Null);
+			Assert.That(result.DeclaringTypeDefinition, Is.Not.Null);
+			Assert.That(result.DeclaringTypeDefinition.Kind, Is.EqualTo(TypeKind.Interface));
+			Assert.That(result.DeclaringTypeDefinition.Name, Is.EqualTo(nameof(ITestInterface)));
 		}
 
 		private ISymbol SetupSymbolForAnalysis(Type type, string methodName)

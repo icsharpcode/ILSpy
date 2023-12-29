@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -384,11 +385,13 @@ namespace ICSharpCode.Decompiler.Metadata
 				yield return Read(row);
 			}
 
-			unsafe (Handle Handle, MethodSemanticsAttributes Semantics, MethodDefinitionHandle Method, EntityHandle Association) Read(int row)
+			(Handle Handle, MethodSemanticsAttributes Semantics, MethodDefinitionHandle Method, EntityHandle Association) Read(int row)
 			{
-				byte* ptr = metadata.MetadataPointer + offset + rowSize * row;
-				int methodDef = methodSmall ? *(ushort*)(ptr + 2) : (int)*(uint*)(ptr + 2);
-				int assocDef = assocSmall ? *(ushort*)(ptr + assocOffset) : (int)*(uint*)(ptr + assocOffset);
+				var span = metadata.AsReadOnlySpan();
+				var methodDefSpan = span.Slice(offset + rowSize * row + 2);
+				int methodDef = methodSmall ? BinaryPrimitives.ReadUInt16LittleEndian(methodDefSpan) : (int)BinaryPrimitives.ReadUInt32LittleEndian(methodDefSpan);
+				var assocSpan = span.Slice(assocOffset);
+				int assocDef = assocSmall ? BinaryPrimitives.ReadUInt16LittleEndian(assocSpan) : (int)BinaryPrimitives.ReadUInt32LittleEndian(assocSpan);
 				EntityHandle propOrEvent;
 				if ((assocDef & 0x1) == 1)
 				{
@@ -398,7 +401,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				{
 					propOrEvent = MetadataTokens.EventDefinitionHandle(assocDef >> 1);
 				}
-				return (MetadataTokens.Handle(0x18000000 | (row + 1)), (MethodSemanticsAttributes)(*(ushort*)ptr), MetadataTokens.MethodDefinitionHandle(methodDef), propOrEvent);
+				return (MetadataTokens.Handle(0x18000000 | (row + 1)), (MethodSemanticsAttributes)(BinaryPrimitives.ReadUInt16LittleEndian(span)), MetadataTokens.MethodDefinitionHandle(methodDef), propOrEvent);
 			}
 		}
 
@@ -411,9 +414,9 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public unsafe static (int Offset, FieldDefinitionHandle FieldDef) GetFieldLayout(this MetadataReader metadata, EntityHandle fieldLayoutHandle)
+		public static (int Offset, FieldDefinitionHandle FieldDef) GetFieldLayout(this MetadataReader metadata, EntityHandle fieldLayoutHandle)
 		{
-			byte* startPointer = metadata.MetadataPointer;
+			var startPointer = metadata.AsReadOnlySpan();
 			int offset = metadata.GetTableMetadataOffset(TableIndex.FieldLayout);
 			int rowSize = metadata.GetTableRowSize(TableIndex.FieldLayout);
 			int rowCount = metadata.GetTableRowCount(TableIndex.FieldLayout);
@@ -422,14 +425,31 @@ namespace ICSharpCode.Decompiler.Metadata
 			bool small = metadata.GetTableRowCount(TableIndex.Field) <= ushort.MaxValue;
 			for (int row = rowCount - 1; row >= 0; row--)
 			{
-				byte* ptr = startPointer + offset + rowSize * row;
-				uint rowNo = small ? *(ushort*)(ptr + 4) : *(uint*)(ptr + 4);
+				ReadOnlySpan<byte> ptr = startPointer.Slice(offset + rowSize * row);
+				var rowNoSpan = ptr.Slice(4);
+				uint rowNo = small ? BinaryPrimitives.ReadUInt16LittleEndian(rowNoSpan) : BinaryPrimitives.ReadUInt32LittleEndian(rowNoSpan);
 				if (fieldRowNo == rowNo)
 				{
-					return (*(int*)ptr, MetadataTokens.FieldDefinitionHandle(fieldRowNo));
+					return (BinaryPrimitives.ReadInt32LittleEndian(ptr), MetadataTokens.FieldDefinitionHandle(fieldRowNo));
 				}
 			}
 			return (0, default);
+		}
+
+		public static ReadOnlySpan<byte> AsReadOnlySpan(this MetadataReader metadataReader)
+		{
+			unsafe
+			{
+				return new(metadataReader.MetadataPointer, metadataReader.MetadataLength);
+			}
+		}
+
+		public static BlobReader AsBlobReader(this MetadataReader metadataReader)
+		{
+			unsafe
+			{
+				return new(metadataReader.MetadataPointer, metadataReader.MetadataLength);
+			}
 		}
 	}
 }

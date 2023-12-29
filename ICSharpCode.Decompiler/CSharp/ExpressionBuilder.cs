@@ -22,7 +22,6 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
-using System.Runtime.CompilerServices;
 using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
@@ -438,7 +437,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return TranslateStackAllocInitializer(b, type.TypeArguments[0]);
 				}
 			}
-			return new CallBuilder(this, typeSystem, settings).Build(inst);
+			return new CallBuilder(this, typeSystem, settings).Build(inst, context.TypeHint);
 		}
 
 		protected internal override TranslatedExpression VisitLdVirtDelegate(LdVirtDelegate inst, TranslationContext context)

@@ -69,12 +69,14 @@
     </GetPackageVersionDependsOn>
   </PropertyGroup>
 
-  <Import Project="..\packages.props" />
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
     <PackageReference Include="System.Reflection.Metadata" Version="6.0.0" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -84,7 +86,7 @@
     <PackageReference Include="TunnelVisionLabs.ReferenceAssemblyAnnotator" Version="1.0.0-alpha.160" PrivateAssets="all" />
 
     <!-- Specifies the version of Microsoft.NETCore.App.Ref to obtain nullability information from. -->
-    <PackageDownload Include="Microsoft.NETCore.App.Ref" Version="[6.0.0]" />
+    <PackageDownload Include="Microsoft.NETCore.App.Ref" Version="[8.0.0]" />
   </ItemGroup>
 
   <ItemGroup>
@@ -95,6 +97,7 @@
     <Compile Include="DecompilationProgress.cs" />
     <Compile Include="Disassembler\IEntityProcessor.cs" />
     <Compile Include="Disassembler\SortByNameProcessor.cs" />
+    <Compile Include="IL\ApplyPdbLocalTypeInfoTypeVisitor.cs" />
     <Compile Include="NRTAttributes.cs" />
     <Compile Include="PartialTypeInfo.cs" />
     <Compile Include="CSharp\ProjectDecompiler\IProjectFileWriter.cs" />
@@ -140,6 +143,7 @@
     <Compile Include="Metadata\ReferenceLoadInfo.cs" />
     <Compile Include="Properties\DecompilerVersionInfo.cs" />
     <Compile Include="TypeSystem\ITypeDefinitionOrUnknown.cs" />
+    <Compile Include="Util\BitOperations.cs" />
     <Compile Include="Util\Index.cs" />
     <None Include="Properties\DecompilerVersionInfo.template.cs" />
     <Compile Include="Semantics\OutVarResolveResult.cs" />
@@ -657,6 +661,7 @@
     <Compile Include="Util\CSharpPrimitiveCast.cs" />
     <Compile Include="Util\EmptyList.cs" />
     <Compile Include="Util\ExtensionMethods.cs" />
+    <Compile Include="Util\GraphTraversal.cs" />
     <Compile Include="Util\Interval.cs" />
     <Compile Include="Util\LazyInit.cs" />
     <Compile Include="Util\LongSet.cs" />

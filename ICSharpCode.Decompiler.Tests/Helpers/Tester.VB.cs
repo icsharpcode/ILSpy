@@ -133,7 +133,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				{
 					Console.WriteLine("errors:" + Environment.NewLine + result.StandardError);
 				}
-				Assert.AreEqual(0, result.ExitCode, "vbc failed");
+				Assert.That(result.ExitCode, Is.EqualTo(0), "vbc failed");
 
 				return results;
 			}

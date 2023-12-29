@@ -161,11 +161,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				CSharpResolver resolver = new CSharpResolver(context);
 				if (function != null)
 				{
+					var variables = new Dictionary<string, IVariable>();
 					foreach (var v in function.Variables)
 					{
-						if (v.Kind != IL.VariableKind.Parameter && v.Name != null)
-							resolver = resolver.AddVariable(new DefaultVariable(v.Type, v.Name));
+						if (v.Kind != IL.VariableKind.Parameter && v.Name != null && !variables.ContainsKey(v.Name))
+							variables.Add(v.Name, new DefaultVariable(v.Type, v.Name));
 					}
+					resolver = resolver.AddVariables(variables);
 				}
 
 				return new TypeSystemAstBuilder(resolver) {

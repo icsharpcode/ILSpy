@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.IO;
 
 namespace ICSharpCode.ILSpyX.Search
 {
@@ -66,7 +67,9 @@ namespace ICSharpCode.ILSpyX.Search
 		{
 			if (searchRequest.InAssembly != null)
 			{
-				if (entity.ParentModule == null || !entity.ParentModule.FullAssemblyName.Contains(searchRequest.InAssembly, StringComparison.OrdinalIgnoreCase))
+				if (entity.ParentModule?.PEFile == null ||
+					!(Path.GetFileName(entity.ParentModule.PEFile.FileName).Contains(searchRequest.InAssembly, StringComparison.OrdinalIgnoreCase)
+					|| entity.ParentModule.FullAssemblyName.Contains(searchRequest.InAssembly, StringComparison.OrdinalIgnoreCase)))
 				{
 					return false;
 				}

@@ -39,7 +39,9 @@
     <Reference Include="System.Design" />
   </ItemGroup>
 
-  <Import Project="..\packages.props" />
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.SDK" Version="15.0.1" />
@@ -51,14 +53,14 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
+    <PackageReference Include="Mono.Cecil" Version="0.11.5" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="TunnelVisionLabs.ReferenceAssemblyAnnotator" Version="1.0.0-alpha.160" PrivateAssets="all" />
 
     <!-- Specifies the version of Microsoft.NETCore.App.Ref to obtain nullability information from. -->
-    <PackageDownload Include="Microsoft.NETCore.App.Ref" Version="[6.0.0]" />
+    <PackageDownload Include="Microsoft.NETCore.App.Ref" Version="[8.0.0]" />
   </ItemGroup>
 
   <ItemGroup>
@@ -80,16 +82,16 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <ILSpyBuildPath>..\ILSpy\bin\$(Configuration)\net6.0-windows\win-x64\publish\fwdependent\</ILSpyBuildPath>
+    <ILSpyBuildPath>..\ILSpy\bin\$(Configuration)\net8.0-windows\win-x64\publish\fwdependent\</ILSpyBuildPath>
   </PropertyGroup>
 
   <Target Name="IncludeILSpyDistributionInVSIXSubFolder" AfterTargets="ResolveProjectReferences">
     <ItemGroup>
       <VSIXSourceItem Include="$(ILSpyBuildPath)zh-Hans\ILSpy.resources.dll;$(ILSpyBuildPath)zh-Hans\ILSpy.ReadyToRun.Plugin.resources.dll;">
-        <VSIXSubPath>\ILSpy\zh-Hans\</VSIXSubPath>
+        <VSIXSubPath>\x64\ILSpy\zh-Hans\</VSIXSubPath>
       </VSIXSourceItem>
       <VSIXSourceItem Include="$(ILSpyBuildPath)*.dll;$(ILSpyBuildPath)ILSpy.exe;$(ILSpyBuildPath)*.json">
-        <VSIXSubPath>\ILSpy</VSIXSubPath>
+        <VSIXSubPath>\x64\ILSpy</VSIXSubPath>
       </VSIXSourceItem>
     </ItemGroup>
   </Target>

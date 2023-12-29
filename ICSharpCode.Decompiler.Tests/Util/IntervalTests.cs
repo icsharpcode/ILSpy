@@ -27,54 +27,54 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		[Test]
 		public void DefaultIsEmpty()
 		{
-			Assert.IsTrue(default(Interval).IsEmpty);
-			Assert.IsFalse(default(Interval).Contains(-1));
-			Assert.IsFalse(default(Interval).Contains(0));
-			Assert.IsFalse(default(Interval).Contains(1));
+			Assert.That(default(Interval).IsEmpty);
+			Assert.That(!default(Interval).Contains(-1));
+			Assert.That(!default(Interval).Contains(0));
+			Assert.That(!default(Interval).Contains(1));
 		}
 		[Test]
 		public void EmptyAt1()
 		{
 			Interval i = new Interval(1, 1);
-			Assert.IsTrue(default(Interval).IsEmpty);
-			Assert.IsFalse(default(Interval).Contains(-1));
-			Assert.IsFalse(default(Interval).Contains(0));
-			Assert.IsFalse(default(Interval).Contains(1));
-			Assert.IsFalse(default(Interval).Contains(2));
+			Assert.That(default(Interval).IsEmpty);
+			Assert.That(!default(Interval).Contains(-1));
+			Assert.That(!default(Interval).Contains(0));
+			Assert.That(!default(Interval).Contains(1));
+			Assert.That(!default(Interval).Contains(2));
 		}
 
 		[Test]
 		public void OneToThree()
 		{
 			Interval i = new Interval(1, 3);
-			Assert.IsFalse(i.IsEmpty);
-			Assert.IsFalse(i.Contains(0));
-			Assert.IsTrue(i.Contains(1));
-			Assert.IsTrue(i.Contains(2));
-			Assert.IsFalse(i.Contains(3));
+			Assert.That(!i.IsEmpty);
+			Assert.That(!i.Contains(0));
+			Assert.That(i.Contains(1));
+			Assert.That(i.Contains(2));
+			Assert.That(!i.Contains(3));
 		}
 
 		[Test]
 		public void FullInterval()
 		{
 			Interval full = new Interval(int.MinValue, int.MinValue);
-			Assert.IsFalse(full.IsEmpty);
-			Assert.IsTrue(full.Contains(int.MinValue));
-			Assert.IsTrue(full.Contains(0));
-			Assert.IsTrue(full.Contains(int.MaxValue));
+			Assert.That(!full.IsEmpty);
+			Assert.That(full.Contains(int.MinValue));
+			Assert.That(full.Contains(0));
+			Assert.That(full.Contains(int.MaxValue));
 		}
 
 		[Test]
 		public void NonNegativeIntegers()
 		{
 			Interval i = new Interval(0, int.MinValue);
-			Assert.IsFalse(i.IsEmpty);
-			Assert.IsTrue(i.Contains(0));
-			Assert.IsTrue(i.Contains(1000));
-			Assert.IsTrue(i.Contains(int.MaxValue));
-			Assert.IsFalse(i.Contains(-1));
-			Assert.IsFalse(i.Contains(-1000));
-			Assert.IsFalse(i.Contains(int.MinValue));
+			Assert.That(!i.IsEmpty);
+			Assert.That(i.Contains(0));
+			Assert.That(i.Contains(1000));
+			Assert.That(i.Contains(int.MaxValue));
+			Assert.That(!i.Contains(-1));
+			Assert.That(!i.Contains(-1000));
+			Assert.That(!i.Contains(int.MinValue));
 		}
 
 		[Test]
@@ -87,12 +87,12 @@ namespace ICSharpCode.Decompiler.Tests.Util
 			Interval nonneg = new Interval(0, int.MinValue);
 			Interval nonpos = new Interval(int.MinValue, 1);
 			Interval maxval = new Interval(int.MaxValue, int.MinValue);
-			Assert.AreEqual(nonneg, full.Intersect(nonneg));
-			Assert.AreEqual(nonneg, nonneg.Intersect(full));
-			Assert.AreEqual(zero, nonneg.Intersect(zero));
-			Assert.AreEqual(zero, nonneg.Intersect(nonpos));
-			Assert.AreEqual(maxval, nonneg.Intersect(maxval));
-			Assert.AreEqual(empty, nonpos.Intersect(maxval));
+			Assert.That(full.Intersect(nonneg), Is.EqualTo(nonneg));
+			Assert.That(nonneg.Intersect(full), Is.EqualTo(nonneg));
+			Assert.That(nonneg.Intersect(zero), Is.EqualTo(zero));
+			Assert.That(nonneg.Intersect(nonpos), Is.EqualTo(zero));
+			Assert.That(nonneg.Intersect(maxval), Is.EqualTo(maxval));
+			Assert.That(nonpos.Intersect(maxval), Is.EqualTo(empty));
 		}
 	}
 }

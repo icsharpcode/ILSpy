@@ -10,6 +10,19 @@ namespace TestEnum
 		Max = byte.MaxValue
 	}
 
+	public enum EnumWithNestedClass
+	{
+#pragma warning disable format
+		// error: nested types are not permitted in C#.
+		public class NestedClass
+		{
+		}
+		,
+#pragma warning enable format
+		Zero,
+		One
+	}
+
 	public enum NativeIntEnum : IntPtr
 	{
 		Zero = 0L,

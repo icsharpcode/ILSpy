@@ -5,6 +5,7 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.IL.ControlFlow;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -53,6 +54,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		public ControlFlowGraph ControlFlowGraph { get; set; }
 
+		/// <summary>
+		/// Initially equal to Block.Instructions.Count indicating that nothing has been transformed yet.
+		/// Set by <see cref="ConditionDetection"/> when another already transformed block is merged into
+		/// the current block. Subsequent <see cref="IBlockTransform"/>s must update this value, for example,
+		/// by resetting it to Block.Instructions.Count. <see cref="StatementTransform"/> will use this value to
+		/// skip already transformed instructions.
+		/// </summary>
+		public int IndexOfFirstAlreadyTransformedInstruction { get; set; }
+
 		public BlockTransformContext(ILTransformContext context) : base(context)
 		{
 		}
@@ -96,27 +106,36 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		void VisitBlock(ControlFlowNode cfgNode, BlockTransformContext context)
+		/// <summary>
+		/// Walks the dominator tree rooted at entryNode, calling the transforms on each block.
+		/// </summary>
+		void VisitBlock(ControlFlowNode entryNode, BlockTransformContext context)
 		{
-			Block block = (Block)cfgNode.UserData;
-			context.StepStartGroup(block.Label, block);
-
-			context.ControlFlowNode = cfgNode;
-			context.Block = block;
-			block.RunTransforms(PreOrderTransforms, context);
-
-			// First, process the children in the dominator tree.
-			// The ConditionDetection transform requires dominated blocks to
-			// be already processed.
-			foreach (var child in cfgNode.DominatorTreeChildren)
+			IEnumerable<ControlFlowNode> Preorder(ControlFlowNode cfgNode)
 			{
-				VisitBlock(child, context);
+				// preorder processing:
+				Block block = (Block)cfgNode.UserData;
+				context.StepStartGroup(block.Label, block);
+
+				context.ControlFlowNode = cfgNode;
+				context.Block = block;
+				context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
+				block.RunTransforms(PreOrderTransforms, context);
+
+				// process the children
+				return cfgNode.DominatorTreeChildren;
 			}
 
-			context.ControlFlowNode = cfgNode;
-			context.Block = block;
-			block.RunTransforms(PostOrderTransforms, context);
-			context.StepEndGroup();
+			foreach (var cfgNode in TreeTraversal.PostOrder(entryNode, Preorder))
+			{
+				// in post-order:
+				Block block = (Block)cfgNode.UserData;
+				context.ControlFlowNode = cfgNode;
+				context.Block = block;
+				context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
+				block.RunTransforms(PostOrderTransforms, context);
+				context.StepEndGroup();
+			}
 		}
 	}
 }

@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				currentTypeDefinitionCache = new TypeDefinitionCache(context.CurrentTypeDefinition);
 		}
 
-		private CSharpResolver(ICompilation compilation, CSharpConversions conversions, CSharpTypeResolveContext context, bool checkForOverflow, bool isWithinLambdaExpression, TypeDefinitionCache currentTypeDefinitionCache, ImmutableStack<IVariable> localVariableStack, ObjectInitializerContext objectInitializerStack)
+		private CSharpResolver(ICompilation compilation, CSharpConversions conversions, CSharpTypeResolveContext context, bool checkForOverflow, bool isWithinLambdaExpression, TypeDefinitionCache currentTypeDefinitionCache, ImmutableStack<Dictionary<string, IVariable>> localVariableStack, ObjectInitializerContext objectInitializerStack)
 		{
 			this.compilation = compilation;
 			this.conversions = conversions;
@@ -228,54 +228,21 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		// The beginning of a block is marked by a null entry.
 
 		// This data structure is used to allow efficient cloning of the resolver with its local variable context.
-		readonly ImmutableStack<IVariable> localVariableStack = ImmutableStack<IVariable>.Empty;
+		readonly ImmutableStack<Dictionary<string, IVariable>> localVariableStack = ImmutableStack<Dictionary<string, IVariable>>.Empty;
 
-		CSharpResolver WithLocalVariableStack(ImmutableStack<IVariable> stack)
+		CSharpResolver WithLocalVariableStack(ImmutableStack<Dictionary<string, IVariable>> stack)
 		{
 			return new CSharpResolver(compilation, conversions, context, checkForOverflow, isWithinLambdaExpression, currentTypeDefinitionCache, stack, objectInitializerStack);
 		}
 
 		/// <summary>
-		/// Opens a new scope for local variables.
+		/// Adds new variableŝ or lambda parameters to the current block.
 		/// </summary>
-		public CSharpResolver PushBlock()
+		public CSharpResolver AddVariables(Dictionary<string, IVariable> variables)
 		{
-			return WithLocalVariableStack(localVariableStack.Push(null));
-		}
-
-		/// <summary>
-		/// Closes the current scope for local variables; removing all variables in that scope.
-		/// </summary>
-		public CSharpResolver PopBlock()
-		{
-			var stack = localVariableStack;
-			IVariable removedVar;
-			do
-			{
-				removedVar = stack.Peek();
-				stack = stack.Pop();
-			} while (removedVar != null);
-			return WithLocalVariableStack(stack);
-		}
-
-		/// <summary>
-		/// Adds a new variable or lambda parameter to the current block.
-		/// </summary>
-		public CSharpResolver AddVariable(IVariable variable)
-		{
-			if (variable == null)
-				throw new ArgumentNullException(nameof(variable));
-			return WithLocalVariableStack(localVariableStack.Push(variable));
-		}
-
-		/// <summary>
-		/// Removes the variable that was just added.
-		/// </summary>
-		public CSharpResolver PopLastVariable()
-		{
-			if (localVariableStack.Peek() == null)
-				throw new InvalidOperationException("There is no variable within the current block.");
-			return WithLocalVariableStack(localVariableStack.Pop());
+			if (variables == null)
+				throw new ArgumentNullException(nameof(variables));
+			return WithLocalVariableStack(localVariableStack.Push(variables));
 		}
 
 		/// <summary>
@@ -284,7 +251,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public IEnumerable<IVariable> LocalVariables {
 			get {
-				return localVariableStack.Where(v => v != null);
+				return localVariableStack.SelectMany(s => s.Values);
 			}
 		}
 		#endregion
@@ -1515,9 +1482,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (lookupMode == NameLookupMode.Expression || lookupMode == NameLookupMode.InvocationTarget)
 				{
 					// Look in local variables
-					foreach (IVariable v in this.LocalVariables)
+					foreach (Dictionary<string, IVariable> variables in localVariableStack)
 					{
-						if (v.Name == identifier)
+						if (variables.TryGetValue(identifier, out var v))
 						{
 							return new LocalResolveResult(v);
 						}

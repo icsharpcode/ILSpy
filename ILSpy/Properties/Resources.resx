@@ -186,6 +186,9 @@ Are you sure you want to continue?</value>
   <data name="Checking" xml:space="preserve">
     <value>Checking...</value>
   </data>
+  <data name="ClearAssemblyList" xml:space="preserve">
+    <value>Clear assembly list</value>
+  </data>
   <data name="Close" xml:space="preserve">
     <value>Close</value>
   </data>

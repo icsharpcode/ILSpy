@@ -16,11 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -35,18 +31,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!context.Settings.UsingStatement)
 				return;
 			this.context = context;
-			for (int i = block.Instructions.Count - 1; i >= 0; i--)
+			for (int i = context.IndexOfFirstAlreadyTransformedInstruction - 1; i >= 0; i--)
 			{
 				if (TransformUsing(block, i))
 				{
+					context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
 					continue;
 				}
 				if (TransformUsingVB(block, i))
 				{
+					context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
 					continue;
 				}
 				if (TransformAsyncUsing(block, i))
 				{
+					context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
 					continue;
 				}
 			}

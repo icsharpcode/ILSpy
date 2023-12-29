@@ -240,9 +240,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					else
 					{
-						// use the name from the debug symbols
-						// (but ensure we don't use the same name for two variables)
-						v.Name = GetAlternativeName(v.Name);
+						// use the name from the debug symbols and update index appended to duplicates
+						string nameWithoutNumber = SplitName(v.Name, out int newIndex);
+						if (!reservedVariableNames.TryGetValue(nameWithoutNumber, out int currentIndex))
+						{
+							currentIndex = 1;
+						}
+						reservedVariableNames[nameWithoutNumber] = Math.Max(newIndex, currentIndex);
 					}
 				}
 			}
@@ -274,7 +278,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var newName = localFunction.Name;
 				if (newName == null)
 				{
-					newName = GetAlternativeName("f");
+					string nameWithoutNumber = "f";
+					if (!reservedVariableNames.TryGetValue(nameWithoutNumber, out int currentIndex))
+					{
+						currentIndex = 1;
+					}
+					int count = Math.Max(1, currentIndex) + 1;
+					reservedVariableNames[nameWithoutNumber] = count;
+					if (count > 1)
+					{
+						newName = nameWithoutNumber + count.ToString();
+					}
+					else
+					{
+						newName = nameWithoutNumber;
+					}
 				}
 				localFunction.Name = newName;
 				localFunction.ReducedMethod.Name = newName;
@@ -340,42 +358,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 			}
 			return true;
-		}
-
-		public string GetAlternativeName(string oldVariableName)
-		{
-			if (oldVariableName.Length == 1 && oldVariableName[0] >= 'i' && oldVariableName[0] <= maxLoopVariableName)
-			{
-				for (char c = 'i'; c <= maxLoopVariableName; c++)
-				{
-					if (!reservedVariableNames.ContainsKey(c.ToString()))
-					{
-						reservedVariableNames.Add(c.ToString(), 1);
-						return c.ToString();
-					}
-				}
-			}
-
-			string nameWithoutDigits = SplitName(oldVariableName, out int number);
-
-			if (!reservedVariableNames.ContainsKey(nameWithoutDigits))
-			{
-				reservedVariableNames.Add(nameWithoutDigits, number - 1);
-			}
-			int count = ++reservedVariableNames[nameWithoutDigits];
-			string nameWithDigits = nameWithoutDigits + count.ToString();
-			if (oldVariableName == nameWithDigits)
-			{
-				return oldVariableName;
-			}
-			if (count != 1)
-			{
-				return nameWithDigits;
-			}
-			else
-			{
-				return nameWithoutDigits;
-			}
 		}
 
 		HashSet<ILVariable> CollectLoopCounters(ILFunction function)

@@ -212,7 +212,7 @@ namespace ICSharpCode.Decompiler.Tests
 					File.Copy(file, Path.Combine(outputDir, relFile));
 				}
 			}
-			Assert.IsNotNull(projectFile, $"Could not find {fileToRoundtrip}");
+			Assert.That(projectFile, Is.Not.Null, $"Could not find {fileToRoundtrip}");
 
 			await Compile(projectFile, outputDir);
 			testAction(outputDir);

@@ -54,16 +54,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			AssemblyList = assemblyList;
 			assemblyListSnapshot = assemblyList.GetSnapshot();
 			AnalyzedSymbol = entity;
-			if (entity is ITypeDefinition type)
-			{
-				typeScope = type;
-				effectiveAccessibility = DetermineEffectiveAccessibility(ref typeScope, Accessibility.Public);
-			}
-			else
-			{
-				typeScope = entity.DeclaringTypeDefinition;
-				effectiveAccessibility = DetermineEffectiveAccessibility(ref typeScope, entity.Accessibility);
-			}
+			DetermineEffectiveAccessibility(entity, out typeScope, out effectiveAccessibility);
 			IsLocal = effectiveAccessibility.LessThanOrEqual(Accessibility.Private);
 		}
 
@@ -112,20 +103,31 @@ namespace ICSharpCode.ILSpy.Analyzers
 			}
 		}
 
-		static Accessibility DetermineEffectiveAccessibility(ref ITypeDefinition typeScope, Accessibility memberAccessibility)
+		static void DetermineEffectiveAccessibility(IEntity input, out ITypeDefinition typeScope, out Accessibility accessibility)
 		{
-			Accessibility accessibility = memberAccessibility;
-			var ts = typeScope;
-			while (ts != null && !accessibility.LessThanOrEqual(Accessibility.Private))
+			if (input is ITypeDefinition td)
 			{
-				accessibility = accessibility.Intersect(ts.Accessibility);
-				typeScope = ts;
-				ts = ts.DeclaringTypeDefinition;
+				accessibility = Accessibility.Public;
+				typeScope = td;
+			}
+			else
+			{
+				accessibility = input.Accessibility;
+				typeScope = input.DeclaringTypeDefinition;
 			}
 			// Once we reach a private entity, we leave the loop with typeScope set to the class that
 			// contains the private entity = the scope that needs to be searched.
 			// Otherwise (if we don't find a private entity) we return the top-level class.
-			return accessibility;
+			var prevTypeScope = typeScope;
+			while (typeScope != null && !accessibility.LessThanOrEqual(Accessibility.Private))
+			{
+				accessibility = accessibility.Intersect(typeScope.Accessibility);
+				typeScope = prevTypeScope.DeclaringTypeDefinition;
+			}
+			if (typeScope == null)
+			{
+				typeScope = prevTypeScope;
+			}
 		}
 
 		#region Find modules

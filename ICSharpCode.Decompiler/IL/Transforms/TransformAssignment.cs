@@ -132,6 +132,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (block.Instructions[nextPos] is StObj stobj)
 			{
+				// unaligned.stobj cannot be inlined in C#
+				if (stobj.UnalignedPrefix > 0)
+					return false;
 				if (!stobj.Value.MatchLdLoc(inst.Variable))
 					return false;
 				if (!SemanticHelper.IsPure(stobj.Target.Flags) || inst.Variable.IsUsedWithin(stobj.Target))

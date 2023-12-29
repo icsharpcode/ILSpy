@@ -88,23 +88,31 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 
 		public void TraversePreOrder(Func<ControlFlowNode, IEnumerable<ControlFlowNode>> children, Action<ControlFlowNode> visitAction)
 		{
-			if (Visited)
-				return;
-			Visited = true;
-			visitAction(this);
-			foreach (ControlFlowNode t in children(this))
-				t.TraversePreOrder(children, visitAction);
+			GraphTraversal.DepthFirstSearch(new[] { this }, Visit, children);
+
+			bool Visit(ControlFlowNode node)
+			{
+				if (node.Visited)
+					return false;
+				node.Visited = true;
+				visitAction(node);
+				return true;
+			}
 		}
 
 		public void TraversePostOrder(Func<ControlFlowNode, IEnumerable<ControlFlowNode>> children, Action<ControlFlowNode> visitAction)
 		{
-			if (Visited)
-				return;
-			Visited = true;
-			foreach (ControlFlowNode t in children(this))
-				t.TraversePostOrder(children, visitAction);
-			visitAction(this);
+			GraphTraversal.DepthFirstSearch(new[] { this }, Visit, children, postorderAction: visitAction);
+
+			bool Visit(ControlFlowNode node)
+			{
+				if (node.Visited)
+					return false;
+				node.Visited = true;
+				return true;
+			}
 		}
+
 
 		/// <summary>
 		/// Gets whether <c>this</c> dominates <paramref name="node"/>.

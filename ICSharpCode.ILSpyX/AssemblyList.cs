@@ -23,7 +23,6 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -395,6 +394,16 @@ namespace ICSharpCode.ILSpyX
 			}
 		}
 
+		public void Clear()
+		{
+			VerifyAccess();
+			lock (lockObj)
+			{
+				dirty = true;
+				assemblies.Clear();
+				byFilename.Clear();
+			}
+		}
 		public void Sort(IComparer<LoadedAssembly> comparer)
 		{
 			Sort(0, int.MaxValue, comparer);

@@ -58,11 +58,11 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		[Test]
 		public void PointerConversion()
 		{
-			Assert.AreEqual(C.ExplicitPointerConversion, ExplicitConversion(typeof(int*), typeof(short)));
-			Assert.AreEqual(C.ExplicitPointerConversion, ExplicitConversion(typeof(short), typeof(void*)));
+			Assert.That(ExplicitConversion(typeof(int*), typeof(short)), Is.EqualTo(C.ExplicitPointerConversion));
+			Assert.That(ExplicitConversion(typeof(short), typeof(void*)), Is.EqualTo(C.ExplicitPointerConversion));
 
-			Assert.AreEqual(C.ExplicitPointerConversion, ExplicitConversion(typeof(void*), typeof(int*)));
-			Assert.AreEqual(C.ExplicitPointerConversion, ExplicitConversion(typeof(long*), typeof(byte*)));
+			Assert.That(ExplicitConversion(typeof(void*), typeof(int*)), Is.EqualTo(C.ExplicitPointerConversion));
+			Assert.That(ExplicitConversion(typeof(long*), typeof(byte*)), Is.EqualTo(C.ExplicitPointerConversion));
 		}
 
 		[Test]
@@ -70,60 +70,60 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		{
 			// Explicit dynamic conversion is for resolve results only;
 			// otherwise it's an explicit reference / unboxing conversion
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(dynamic), typeof(string)));
-			Assert.AreEqual(C.UnboxingConversion, ExplicitConversion(typeof(dynamic), typeof(int)));
+			Assert.That(ExplicitConversion(typeof(dynamic), typeof(string)), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(dynamic), typeof(int)), Is.EqualTo(C.UnboxingConversion));
 
 			var dynamicRR = new ResolveResult(SpecialType.Dynamic);
-			Assert.AreEqual(C.ExplicitDynamicConversion, conversions.ExplicitConversion(dynamicRR, compilation.FindType(typeof(string))));
-			Assert.AreEqual(C.ExplicitDynamicConversion, conversions.ExplicitConversion(dynamicRR, compilation.FindType(typeof(int))));
+			Assert.That(conversions.ExplicitConversion(dynamicRR, compilation.FindType(typeof(string))), Is.EqualTo(C.ExplicitDynamicConversion));
+			Assert.That(conversions.ExplicitConversion(dynamicRR, compilation.FindType(typeof(int))), Is.EqualTo(C.ExplicitDynamicConversion));
 		}
 
 		[Test]
 		public void NumericConversions()
 		{
-			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(sbyte), typeof(uint)));
-			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(sbyte), typeof(char)));
-			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(byte), typeof(char)));
-			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(byte), typeof(sbyte)));
+			Assert.That(ExplicitConversion(typeof(sbyte), typeof(uint)), Is.EqualTo(C.ExplicitNumericConversion));
+			Assert.That(ExplicitConversion(typeof(sbyte), typeof(char)), Is.EqualTo(C.ExplicitNumericConversion));
+			Assert.That(ExplicitConversion(typeof(byte), typeof(char)), Is.EqualTo(C.ExplicitNumericConversion));
+			Assert.That(ExplicitConversion(typeof(byte), typeof(sbyte)), Is.EqualTo(C.ExplicitNumericConversion));
 			// if an implicit conversion exists, ExplicitConversion() should return that
-			Assert.AreEqual(C.ImplicitNumericConversion, ExplicitConversion(typeof(byte), typeof(int)));
-			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(double), typeof(float)));
-			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(double), typeof(decimal)));
-			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(decimal), typeof(double)));
-			Assert.AreEqual(C.ImplicitNumericConversion, ExplicitConversion(typeof(int), typeof(decimal)));
+			Assert.That(ExplicitConversion(typeof(byte), typeof(int)), Is.EqualTo(C.ImplicitNumericConversion));
+			Assert.That(ExplicitConversion(typeof(double), typeof(float)), Is.EqualTo(C.ExplicitNumericConversion));
+			Assert.That(ExplicitConversion(typeof(double), typeof(decimal)), Is.EqualTo(C.ExplicitNumericConversion));
+			Assert.That(ExplicitConversion(typeof(decimal), typeof(double)), Is.EqualTo(C.ExplicitNumericConversion));
+			Assert.That(ExplicitConversion(typeof(int), typeof(decimal)), Is.EqualTo(C.ImplicitNumericConversion));
 
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(bool), typeof(int)));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(int), typeof(bool)));
+			Assert.That(ExplicitConversion(typeof(bool), typeof(int)), Is.EqualTo(C.None));
+			Assert.That(ExplicitConversion(typeof(int), typeof(bool)), Is.EqualTo(C.None));
 		}
 
 		[Test]
 		public void EnumerationConversions()
 		{
 			var explicitEnumerationConversion = C.EnumerationConversion(false, false);
-			Assert.AreEqual(explicitEnumerationConversion, ExplicitConversion(typeof(sbyte), typeof(StringComparison)));
-			Assert.AreEqual(explicitEnumerationConversion, ExplicitConversion(typeof(char), typeof(StringComparison)));
-			Assert.AreEqual(explicitEnumerationConversion, ExplicitConversion(typeof(int), typeof(StringComparison)));
-			Assert.AreEqual(explicitEnumerationConversion, ExplicitConversion(typeof(decimal), typeof(StringComparison)));
-			Assert.AreEqual(explicitEnumerationConversion, ExplicitConversion(typeof(StringComparison), typeof(char)));
-			Assert.AreEqual(explicitEnumerationConversion, ExplicitConversion(typeof(StringComparison), typeof(int)));
-			Assert.AreEqual(explicitEnumerationConversion, ExplicitConversion(typeof(StringComparison), typeof(decimal)));
-			Assert.AreEqual(explicitEnumerationConversion, ExplicitConversion(typeof(StringComparison), typeof(StringSplitOptions)));
+			Assert.That(ExplicitConversion(typeof(sbyte), typeof(StringComparison)), Is.EqualTo(explicitEnumerationConversion));
+			Assert.That(ExplicitConversion(typeof(char), typeof(StringComparison)), Is.EqualTo(explicitEnumerationConversion));
+			Assert.That(ExplicitConversion(typeof(int), typeof(StringComparison)), Is.EqualTo(explicitEnumerationConversion));
+			Assert.That(ExplicitConversion(typeof(decimal), typeof(StringComparison)), Is.EqualTo(explicitEnumerationConversion));
+			Assert.That(ExplicitConversion(typeof(StringComparison), typeof(char)), Is.EqualTo(explicitEnumerationConversion));
+			Assert.That(ExplicitConversion(typeof(StringComparison), typeof(int)), Is.EqualTo(explicitEnumerationConversion));
+			Assert.That(ExplicitConversion(typeof(StringComparison), typeof(decimal)), Is.EqualTo(explicitEnumerationConversion));
+			Assert.That(ExplicitConversion(typeof(StringComparison), typeof(StringSplitOptions)), Is.EqualTo(explicitEnumerationConversion));
 		}
 
 		[Test]
 		public void NullableConversion_BasedOnIdentityConversion()
 		{
-			Assert.AreEqual(C.IdentityConversion, ExplicitConversion(typeof(ArraySegment<dynamic>?), typeof(ArraySegment<object>?)));
-			Assert.AreEqual(C.ImplicitNullableConversion, ExplicitConversion(typeof(ArraySegment<dynamic>), typeof(ArraySegment<object>?)));
-			Assert.AreEqual(C.ExplicitNullableConversion, ExplicitConversion(typeof(ArraySegment<dynamic>?), typeof(ArraySegment<object>)));
+			Assert.That(ExplicitConversion(typeof(ArraySegment<dynamic>?), typeof(ArraySegment<object>?)), Is.EqualTo(C.IdentityConversion));
+			Assert.That(ExplicitConversion(typeof(ArraySegment<dynamic>), typeof(ArraySegment<object>?)), Is.EqualTo(C.ImplicitNullableConversion));
+			Assert.That(ExplicitConversion(typeof(ArraySegment<dynamic>?), typeof(ArraySegment<object>)), Is.EqualTo(C.ExplicitNullableConversion));
 		}
 
 		[Test]
 		public void NullableConversion_BasedOnImplicitNumericConversion()
 		{
-			Assert.AreEqual(C.ImplicitLiftedNumericConversion, ExplicitConversion(typeof(int?), typeof(long?)));
-			Assert.AreEqual(C.ImplicitLiftedNumericConversion, ExplicitConversion(typeof(int), typeof(long?)));
-			Assert.AreEqual(C.ExplicitLiftedNumericConversion, ExplicitConversion(typeof(int?), typeof(long)));
+			Assert.That(ExplicitConversion(typeof(int?), typeof(long?)), Is.EqualTo(C.ImplicitLiftedNumericConversion));
+			Assert.That(ExplicitConversion(typeof(int), typeof(long?)), Is.EqualTo(C.ImplicitLiftedNumericConversion));
+			Assert.That(ExplicitConversion(typeof(int?), typeof(long)), Is.EqualTo(C.ExplicitLiftedNumericConversion));
 		}
 
 		[Test]
@@ -131,160 +131,160 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		{
 			ResolveResult zero = new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), 0);
 			ResolveResult one = new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), 1);
-			Assert.AreEqual(C.EnumerationConversion(true, true), conversions.ExplicitConversion(zero, compilation.FindType(typeof(StringComparison?))));
-			Assert.AreEqual(C.EnumerationConversion(false, true), conversions.ExplicitConversion(one, compilation.FindType(typeof(StringComparison?))));
+			Assert.That(conversions.ExplicitConversion(zero, compilation.FindType(typeof(StringComparison?))), Is.EqualTo(C.EnumerationConversion(true, true)));
+			Assert.That(conversions.ExplicitConversion(one, compilation.FindType(typeof(StringComparison?))), Is.EqualTo(C.EnumerationConversion(false, true)));
 		}
 
 		[Test]
 		public void NullableConversion_BasedOnExplicitNumericConversion()
 		{
-			Assert.AreEqual(C.ExplicitLiftedNumericConversion, ExplicitConversion(typeof(int?), typeof(short?)));
-			Assert.AreEqual(C.ExplicitLiftedNumericConversion, ExplicitConversion(typeof(int), typeof(short?)));
-			Assert.AreEqual(C.ExplicitLiftedNumericConversion, ExplicitConversion(typeof(int?), typeof(short)));
+			Assert.That(ExplicitConversion(typeof(int?), typeof(short?)), Is.EqualTo(C.ExplicitLiftedNumericConversion));
+			Assert.That(ExplicitConversion(typeof(int), typeof(short?)), Is.EqualTo(C.ExplicitLiftedNumericConversion));
+			Assert.That(ExplicitConversion(typeof(int?), typeof(short)), Is.EqualTo(C.ExplicitLiftedNumericConversion));
 		}
 
 		[Test]
 		public void NullableConversion_BasedOnExplicitEnumerationConversion()
 		{
 			C c = C.EnumerationConversion(false, true); // c = explicit lifted enumeration conversion
-			Assert.AreEqual(c, ExplicitConversion(typeof(int?), typeof(StringComparison?)));
-			Assert.AreEqual(c, ExplicitConversion(typeof(int), typeof(StringComparison?)));
-			Assert.AreEqual(c, ExplicitConversion(typeof(int?), typeof(StringComparison)));
+			Assert.That(ExplicitConversion(typeof(int?), typeof(StringComparison?)), Is.EqualTo(c));
+			Assert.That(ExplicitConversion(typeof(int), typeof(StringComparison?)), Is.EqualTo(c));
+			Assert.That(ExplicitConversion(typeof(int?), typeof(StringComparison)), Is.EqualTo(c));
 
-			Assert.AreEqual(c, ExplicitConversion(typeof(StringComparison?), typeof(int?)));
-			Assert.AreEqual(c, ExplicitConversion(typeof(StringComparison), typeof(int?)));
-			Assert.AreEqual(c, ExplicitConversion(typeof(StringComparison?), typeof(int)));
+			Assert.That(ExplicitConversion(typeof(StringComparison?), typeof(int?)), Is.EqualTo(c));
+			Assert.That(ExplicitConversion(typeof(StringComparison), typeof(int?)), Is.EqualTo(c));
+			Assert.That(ExplicitConversion(typeof(StringComparison?), typeof(int)), Is.EqualTo(c));
 
-			Assert.AreEqual(c, ExplicitConversion(typeof(StringComparison?), typeof(StringSplitOptions?)));
-			Assert.AreEqual(c, ExplicitConversion(typeof(StringComparison), typeof(StringSplitOptions?)));
-			Assert.AreEqual(c, ExplicitConversion(typeof(StringComparison?), typeof(StringSplitOptions)));
+			Assert.That(ExplicitConversion(typeof(StringComparison?), typeof(StringSplitOptions?)), Is.EqualTo(c));
+			Assert.That(ExplicitConversion(typeof(StringComparison), typeof(StringSplitOptions?)), Is.EqualTo(c));
+			Assert.That(ExplicitConversion(typeof(StringComparison?), typeof(StringSplitOptions)), Is.EqualTo(c));
 		}
 
 		[Test]
 		public void ExplicitReferenceConversion_SealedClass()
 		{
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(object), typeof(string)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<char>), typeof(string)));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(IEnumerable<int>), typeof(string)));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(IEnumerable<object>), typeof(string)));
-			Assert.AreEqual(C.ImplicitReferenceConversion, ExplicitConversion(typeof(string), typeof(IEnumerable<char>)));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(string), typeof(IEnumerable<int>)));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(string), typeof(IEnumerable<object>)));
+			Assert.That(ExplicitConversion(typeof(object), typeof(string)), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<char>), typeof(string)), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<int>), typeof(string)), Is.EqualTo(C.None));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<object>), typeof(string)), Is.EqualTo(C.None));
+			Assert.That(ExplicitConversion(typeof(string), typeof(IEnumerable<char>)), Is.EqualTo(C.ImplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(string), typeof(IEnumerable<int>)), Is.EqualTo(C.None));
+			Assert.That(ExplicitConversion(typeof(string), typeof(IEnumerable<object>)), Is.EqualTo(C.None));
 		}
 
 		[Test]
 		public void ExplicitReferenceConversion_NonSealedClass()
 		{
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(object), typeof(List<string>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<object>), typeof(List<string>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<string>), typeof(List<string>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<int>), typeof(List<string>)));
+			Assert.That(ExplicitConversion(typeof(object), typeof(List<string>)), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<object>), typeof(List<string>)), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<string>), typeof(List<string>)), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<int>), typeof(List<string>)), Is.EqualTo(C.ExplicitReferenceConversion));
 
-			Assert.AreEqual(C.ImplicitReferenceConversion, ExplicitConversion(typeof(List<string>), typeof(IEnumerable<object>)));
-			Assert.AreEqual(C.ImplicitReferenceConversion, ExplicitConversion(typeof(List<string>), typeof(IEnumerable<string>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(List<string>), typeof(IEnumerable<int>)));
+			Assert.That(ExplicitConversion(typeof(List<string>), typeof(IEnumerable<object>)), Is.EqualTo(C.ImplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(List<string>), typeof(IEnumerable<string>)), Is.EqualTo(C.ImplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(List<string>), typeof(IEnumerable<int>)), Is.EqualTo(C.ExplicitReferenceConversion));
 
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(List<string>), typeof(List<object>)));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(List<string>), typeof(List<int>)));
+			Assert.That(ExplicitConversion(typeof(List<string>), typeof(List<object>)), Is.EqualTo(C.None));
+			Assert.That(ExplicitConversion(typeof(List<string>), typeof(List<int>)), Is.EqualTo(C.None));
 		}
 
 		[Test]
 		public void ExplicitReferenceConversion_Interfaces()
 		{
-			Assert.AreEqual(C.ImplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<string>), typeof(IEnumerable<object>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<int>), typeof(IEnumerable<object>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<object>), typeof(IEnumerable<string>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<object>), typeof(IEnumerable<int>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<object>), typeof(IConvertible)));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<string>), typeof(IEnumerable<object>)), Is.EqualTo(C.ImplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<int>), typeof(IEnumerable<object>)), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<object>), typeof(IEnumerable<string>)), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<object>), typeof(IEnumerable<int>)), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<object>), typeof(IConvertible)), Is.EqualTo(C.ExplicitReferenceConversion));
 		}
 
 		[Test]
 		public void ExplicitReferenceConversion_Arrays()
 		{
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(object[]), typeof(string[])));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(dynamic[]), typeof(string[])));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(object[]), typeof(object[,])));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(object[]), typeof(int[])));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(short[]), typeof(int[])));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(Array), typeof(int[])));
+			Assert.That(ExplicitConversion(typeof(object[]), typeof(string[])), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(dynamic[]), typeof(string[])), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(object[]), typeof(object[,])), Is.EqualTo(C.None));
+			Assert.That(ExplicitConversion(typeof(object[]), typeof(int[])), Is.EqualTo(C.None));
+			Assert.That(ExplicitConversion(typeof(short[]), typeof(int[])), Is.EqualTo(C.None));
+			Assert.That(ExplicitConversion(typeof(Array), typeof(int[])), Is.EqualTo(C.ExplicitReferenceConversion));
 		}
 
 		[Test]
 		public void ExplicitReferenceConversion_InterfaceToArray()
 		{
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(ICloneable), typeof(int[])));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<string>), typeof(string[])));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<object>), typeof(string[])));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<string>), typeof(object[])));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<string>), typeof(dynamic[])));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<int>), typeof(int[])));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(IEnumerable<string>), typeof(object[,])));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(IEnumerable<short>), typeof(object[])));
+			Assert.That(ExplicitConversion(typeof(ICloneable), typeof(int[])), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<string>), typeof(string[])), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<object>), typeof(string[])), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<string>), typeof(object[])), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<string>), typeof(dynamic[])), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<int>), typeof(int[])), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<string>), typeof(object[,])), Is.EqualTo(C.None));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<short>), typeof(object[])), Is.EqualTo(C.None));
 		}
 
 		[Test]
 		public void ExplicitReferenceConversion_ArrayToInterface()
 		{
-			Assert.AreEqual(C.ImplicitReferenceConversion, ExplicitConversion(typeof(int[]), typeof(ICloneable)));
-			Assert.AreEqual(C.ImplicitReferenceConversion, ExplicitConversion(typeof(string[]), typeof(IEnumerable<string>)));
-			Assert.AreEqual(C.ImplicitReferenceConversion, ExplicitConversion(typeof(string[]), typeof(IEnumerable<object>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(object[]), typeof(IEnumerable<string>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(dynamic[]), typeof(IEnumerable<string>)));
-			Assert.AreEqual(C.ImplicitReferenceConversion, ExplicitConversion(typeof(int[]), typeof(IEnumerable<int>)));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(object[,]), typeof(IEnumerable<string>)));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(object[]), typeof(IEnumerable<short>)));
+			Assert.That(ExplicitConversion(typeof(int[]), typeof(ICloneable)), Is.EqualTo(C.ImplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(string[]), typeof(IEnumerable<string>)), Is.EqualTo(C.ImplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(string[]), typeof(IEnumerable<object>)), Is.EqualTo(C.ImplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(object[]), typeof(IEnumerable<string>)), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(dynamic[]), typeof(IEnumerable<string>)), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(int[]), typeof(IEnumerable<int>)), Is.EqualTo(C.ImplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(object[,]), typeof(IEnumerable<string>)), Is.EqualTo(C.None));
+			Assert.That(ExplicitConversion(typeof(object[]), typeof(IEnumerable<short>)), Is.EqualTo(C.None));
 		}
 
 		[Test]
 		public void ExplicitReferenceConversion_Delegates()
 		{
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(MulticastDelegate), typeof(Action)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(Delegate), typeof(Action)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(ICloneable), typeof(Action)));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(System.Threading.ThreadStart), typeof(Action)));
+			Assert.That(ExplicitConversion(typeof(MulticastDelegate), typeof(Action)), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(Delegate), typeof(Action)), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(ICloneable), typeof(Action)), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(System.Threading.ThreadStart), typeof(Action)), Is.EqualTo(C.None));
 		}
 
 		[Test]
 		public void ExplicitReferenceConversion_GenericDelegates()
 		{
-			Assert.AreEqual(C.ImplicitReferenceConversion, ExplicitConversion(typeof(Action<object>), typeof(Action<string>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(Action<string>), typeof(Action<object>)));
+			Assert.That(ExplicitConversion(typeof(Action<object>), typeof(Action<string>)), Is.EqualTo(C.ImplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(Action<string>), typeof(Action<object>)), Is.EqualTo(C.ExplicitReferenceConversion));
 
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(Func<object>), typeof(Func<string>)));
-			Assert.AreEqual(C.ImplicitReferenceConversion, ExplicitConversion(typeof(Func<string>), typeof(Func<object>)));
+			Assert.That(ExplicitConversion(typeof(Func<object>), typeof(Func<string>)), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(Func<string>), typeof(Func<object>)), Is.EqualTo(C.ImplicitReferenceConversion));
 
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(Action<IFormattable>), typeof(Action<IConvertible>)));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(Action<IFormattable>), typeof(Action<int>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(Action<string>), typeof(Action<IEnumerable<int>>)));
+			Assert.That(ExplicitConversion(typeof(Action<IFormattable>), typeof(Action<IConvertible>)), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(Action<IFormattable>), typeof(Action<int>)), Is.EqualTo(C.None));
+			Assert.That(ExplicitConversion(typeof(Action<string>), typeof(Action<IEnumerable<int>>)), Is.EqualTo(C.ExplicitReferenceConversion));
 
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(Func<IFormattable>), typeof(Func<IConvertible>)));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(Func<IFormattable>), typeof(Func<int>)));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(Func<string>), typeof(Func<IEnumerable<int>>)));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(Func<string>), typeof(Func<IEnumerable<int>>)));
+			Assert.That(ExplicitConversion(typeof(Func<IFormattable>), typeof(Func<IConvertible>)), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(ExplicitConversion(typeof(Func<IFormattable>), typeof(Func<int>)), Is.EqualTo(C.None));
+			Assert.That(ExplicitConversion(typeof(Func<string>), typeof(Func<IEnumerable<int>>)), Is.EqualTo(C.None));
+			Assert.That(ExplicitConversion(typeof(Func<string>), typeof(Func<IEnumerable<int>>)), Is.EqualTo(C.None));
 		}
 
 		[Test]
 		public void UnboxingConversion()
 		{
-			Assert.AreEqual(C.UnboxingConversion, ExplicitConversion(typeof(object), typeof(int)));
-			Assert.AreEqual(C.UnboxingConversion, ExplicitConversion(typeof(object), typeof(decimal)));
-			Assert.AreEqual(C.UnboxingConversion, ExplicitConversion(typeof(ValueType), typeof(int)));
-			Assert.AreEqual(C.UnboxingConversion, ExplicitConversion(typeof(IFormattable), typeof(int)));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(IEnumerable<object>), typeof(int)));
-			Assert.AreEqual(C.UnboxingConversion, ExplicitConversion(typeof(Enum), typeof(StringComparison)));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(Enum), typeof(int)));
+			Assert.That(ExplicitConversion(typeof(object), typeof(int)), Is.EqualTo(C.UnboxingConversion));
+			Assert.That(ExplicitConversion(typeof(object), typeof(decimal)), Is.EqualTo(C.UnboxingConversion));
+			Assert.That(ExplicitConversion(typeof(ValueType), typeof(int)), Is.EqualTo(C.UnboxingConversion));
+			Assert.That(ExplicitConversion(typeof(IFormattable), typeof(int)), Is.EqualTo(C.UnboxingConversion));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<object>), typeof(int)), Is.EqualTo(C.None));
+			Assert.That(ExplicitConversion(typeof(Enum), typeof(StringComparison)), Is.EqualTo(C.UnboxingConversion));
+			Assert.That(ExplicitConversion(typeof(Enum), typeof(int)), Is.EqualTo(C.None));
 		}
 
 		[Test]
 		public void LiftedUnboxingConversion()
 		{
-			Assert.AreEqual(C.UnboxingConversion, ExplicitConversion(typeof(object), typeof(int?)));
-			Assert.AreEqual(C.UnboxingConversion, ExplicitConversion(typeof(object), typeof(decimal?)));
-			Assert.AreEqual(C.UnboxingConversion, ExplicitConversion(typeof(ValueType), typeof(int?)));
-			Assert.AreEqual(C.UnboxingConversion, ExplicitConversion(typeof(IFormattable), typeof(int?)));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(IEnumerable<object>), typeof(int?)));
-			Assert.AreEqual(C.UnboxingConversion, ExplicitConversion(typeof(Enum), typeof(StringComparison?)));
-			Assert.AreEqual(C.None, ExplicitConversion(typeof(Enum), typeof(int?)));
+			Assert.That(ExplicitConversion(typeof(object), typeof(int?)), Is.EqualTo(C.UnboxingConversion));
+			Assert.That(ExplicitConversion(typeof(object), typeof(decimal?)), Is.EqualTo(C.UnboxingConversion));
+			Assert.That(ExplicitConversion(typeof(ValueType), typeof(int?)), Is.EqualTo(C.UnboxingConversion));
+			Assert.That(ExplicitConversion(typeof(IFormattable), typeof(int?)), Is.EqualTo(C.UnboxingConversion));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<object>), typeof(int?)), Is.EqualTo(C.None));
+			Assert.That(ExplicitConversion(typeof(Enum), typeof(StringComparison?)), Is.EqualTo(C.UnboxingConversion));
+			Assert.That(ExplicitConversion(typeof(Enum), typeof(int?)), Is.EqualTo(C.None));
 		}
 
 		/* TODO: we should probably revive these tests somehow
@@ -477,8 +477,8 @@ class C {
 		C1 c1 = $(C1)c2$;
 	}
 }");
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.IsUserDefined);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.IsUserDefined);
 			Assert.AreEqual("op_Explicit", rr.Conversion.Method.Name);
 		}
 
@@ -496,8 +496,8 @@ class C {
 				T t = $(T)b$;
 			}
 		}");
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.IsUserDefined);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.IsUserDefined);
 			Assert.AreEqual("B", rr.Input.Type.Name);
 		}
 
@@ -513,10 +513,10 @@ class C {
 				int x = $(int)t$;
 			}
 		}");
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.IsUserDefined);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.IsUserDefined);
 			// even though the user-defined conversion is implicit, the combined conversion is explicit
-			Assert.IsTrue(rr.Conversion.IsExplicit);
+			Assert.That(rr.Conversion.IsExplicit);
 		}
 
 		[Test]
@@ -534,8 +534,8 @@ class C {
 				T t = $(T)b$;
 			}
 		}");
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.IsUserDefined);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.IsUserDefined);
 			Assert.AreEqual("b", rr.Conversion.Method.Parameters.Single().Name);
 		}
 
@@ -553,8 +553,8 @@ class Test {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.IsUserDefined);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.IsUserDefined);
 			Assert.AreEqual("i", rr.Conversion.Method.Parameters[0].Name);
 		}
 
@@ -572,8 +572,8 @@ class Test {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.IsUserDefined);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.IsUserDefined);
 			Assert.AreEqual("ui", rr.Conversion.Method.Parameters[0].Name);
 		}
 
@@ -591,8 +591,8 @@ class Test {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.IsUserDefined);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.IsUserDefined);
 			Assert.AreEqual("i", rr.Conversion.Method.Parameters[0].Name);
 		}
 
@@ -610,7 +610,7 @@ class Test {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsFalse(rr.Conversion.IsValid);
+			Assert.That(!rr.Conversion.IsValid);
 		}
 
 		[Test]
@@ -627,8 +627,8 @@ class Test {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.IsUserDefined);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.IsUserDefined);
 			Assert.AreEqual("i", rr.Conversion.Method.Parameters[0].Name);
 		}
 
@@ -646,8 +646,8 @@ class Test {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.IsUserDefined);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.IsUserDefined);
 			Assert.AreEqual("us", rr.Conversion.Method.Parameters[0].Name);
 		}
 
@@ -665,8 +665,8 @@ class Test {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.IsUserDefined);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.IsUserDefined);
 			Assert.AreEqual("ui", rr.Conversion.Method.Parameters[0].Name);
 		}
 
@@ -684,7 +684,7 @@ class Test {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsFalse(rr.Conversion.IsValid);
+			Assert.That(!rr.Conversion.IsValid);
 		}
 
 		[Test]
@@ -703,7 +703,7 @@ class Test {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsFalse(rr.Conversion.IsValid);
+			Assert.That(!rr.Conversion.IsValid);
 		}
 
 		[Test]
@@ -719,9 +719,9 @@ class Test {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.IsUserDefined);
-			Assert.IsTrue(rr.Conversion.IsLifted);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.IsUserDefined);
+			Assert.That(rr.Conversion.IsLifted);
 		}
 
 		[Test]
@@ -737,9 +737,9 @@ class Test {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.IsUserDefined);
-			Assert.IsFalse(rr.Conversion.IsLifted);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.IsUserDefined);
+			Assert.That(!rr.Conversion.IsLifted);
 		}
 
 		[Test]
@@ -756,9 +756,9 @@ class Test {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.IsUserDefined);
-			Assert.IsFalse(rr.Conversion.IsLifted);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.IsUserDefined);
+			Assert.That(!rr.Conversion.IsLifted);
 			Assert.AreEqual("i", rr.Conversion.Method.Parameters[0].Name);
 		}
 
@@ -776,9 +776,9 @@ class Test {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.IsUserDefined);
-			Assert.IsFalse(rr.Conversion.IsLifted);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.IsUserDefined);
+			Assert.That(!rr.Conversion.IsLifted);
 			Assert.AreEqual("ni", rr.Conversion.Method.Parameters[0].Name);
 		}
 
@@ -796,8 +796,8 @@ class Test {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.IsUserDefined);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.IsUserDefined);
 			Assert.AreEqual("ui", rr.Conversion.Method.Parameters[0].Name);
 		}
 
@@ -815,8 +815,8 @@ class Test {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.IsUserDefined);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.IsUserDefined);
 			Assert.AreEqual("ui", rr.Conversion.Method.Parameters[0].Name);
 		}
 
@@ -833,10 +833,10 @@ class Test {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.IsUserDefined);
-			Assert.IsTrue(rr.Conversion.IsLifted);
-			Assert.IsTrue(rr.Input is LocalResolveResult);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.IsUserDefined);
+			Assert.That(rr.Conversion.IsLifted);
+			Assert.That(rr.Input is LocalResolveResult);
 		}
 
 		[Test]
@@ -854,8 +854,8 @@ class Program {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.IsUserDefined);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.IsUserDefined);
 			Assert.AreEqual("System.Int16", rr.Conversion.Method.ReturnType.FullName);
 		}
 
@@ -874,8 +874,8 @@ class Program {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.IsUserDefined);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.IsUserDefined);
 			Assert.AreEqual("s", rr.Conversion.Method.Parameters[0].Name);
 		}
 
@@ -893,8 +893,8 @@ class Test {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.IsUserDefined);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.IsUserDefined);
 			Assert.AreEqual("ci", rr.Conversion.Method.Parameters[0].Name);
 		}
 
@@ -912,11 +912,11 @@ class Test {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.ConversionBeforeUserDefinedOperator.IsValid);
-			Assert.IsTrue(rr.Conversion.ConversionBeforeUserDefinedOperator.IsExplicit);
-			Assert.IsTrue(rr.Conversion.ConversionBeforeUserDefinedOperator.IsNumericConversion);
-			Assert.IsTrue(rr.Conversion.ConversionAfterUserDefinedOperator.IsIdentityConversion);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.ConversionBeforeUserDefinedOperator.IsValid);
+			Assert.That(rr.Conversion.ConversionBeforeUserDefinedOperator.IsExplicit);
+			Assert.That(rr.Conversion.ConversionBeforeUserDefinedOperator.IsNumericConversion);
+			Assert.That(rr.Conversion.ConversionAfterUserDefinedOperator.IsIdentityConversion);
 		}
 
 		[Test]
@@ -932,11 +932,11 @@ class Test {
 	}
 }";
 			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.IsTrue(rr.Conversion.IsValid);
-			Assert.IsTrue(rr.Conversion.ConversionBeforeUserDefinedOperator.IsIdentityConversion);
-			Assert.IsTrue(rr.Conversion.ConversionAfterUserDefinedOperator.IsValid);
-			Assert.IsTrue(rr.Conversion.ConversionAfterUserDefinedOperator.IsExplicit);
-			Assert.IsTrue(rr.Conversion.ConversionAfterUserDefinedOperator.IsNumericConversion);
+			Assert.That(rr.Conversion.IsValid);
+			Assert.That(rr.Conversion.ConversionBeforeUserDefinedOperator.IsIdentityConversion);
+			Assert.That(rr.Conversion.ConversionAfterUserDefinedOperator.IsValid);
+			Assert.That(rr.Conversion.ConversionAfterUserDefinedOperator.IsExplicit);
+			Assert.That(rr.Conversion.ConversionAfterUserDefinedOperator.IsNumericConversion);
 		}*/
 	}
 }

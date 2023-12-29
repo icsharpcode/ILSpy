@@ -99,6 +99,15 @@ namespace ICSharpCode.ILSpy.Controls
 			timer.Stop();
 			timer.Interval = this.UpdateDelay;
 			timer.Start();
+
+			UpdateWatermarkLabel();
+		}
+
+		private void UpdateWatermarkLabel()
+		{
+			Label wl = (Label)GetTemplateChild("WatermarkLabel");
+			if (wl != null)
+				wl.Visibility = HasText ? Visibility.Hidden : Visibility.Visible;
 		}
 
 		void timer_Tick(object sender, EventArgs e)
@@ -114,25 +123,13 @@ namespace ICSharpCode.ILSpy.Controls
 
 		protected override void OnLostFocus(RoutedEventArgs e)
 		{
-			if (!HasText)
-			{
-				Label wl = (Label)GetTemplateChild("WatermarkLabel");
-				if (wl != null)
-					wl.Visibility = Visibility.Visible;
-			}
-
+			UpdateWatermarkLabel();
 			base.OnLostFocus(e);
 		}
 
 		protected override void OnGotFocus(RoutedEventArgs e)
 		{
-			if (!HasText)
-			{
-				Label wl = (Label)GetTemplateChild("WatermarkLabel");
-				if (wl != null)
-					wl.Visibility = Visibility.Hidden;
-			}
-
+			UpdateWatermarkLabel();
 			base.OnGotFocus(e);
 		}
 

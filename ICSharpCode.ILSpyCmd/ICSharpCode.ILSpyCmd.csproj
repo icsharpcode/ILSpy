@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ServerGarbageCollection>true</ServerGarbageCollection>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IsPackable>true</IsPackable>
@@ -37,8 +37,6 @@
     <WarningsAsErrors>NU1605</WarningsAsErrors>
   </PropertyGroup>
 
-  <Import Project="..\packages.props" />
-
   <ItemGroup>
     <None Include="ILSpyCmdNuGetPackageIcon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
@@ -49,9 +47,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include=" McMaster.Extensions.Hosting.CommandLine" Version="4.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
-    <PackageReference Include="NuGet.Protocol" Version="6.6.1" />
+    <PackageReference Include="McMaster.Extensions.Hosting.CommandLine" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="NuGet.Protocol" />
   </ItemGroup>
 
   <Target Name="ILSpyUpdateAssemblyInfo" AfterTargets="ResolveProjectReferences">

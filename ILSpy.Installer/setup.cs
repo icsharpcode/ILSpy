@@ -25,7 +25,7 @@ namespace ILSpy.Installer
 #else
 			var buildPlatform = "x64";
 #endif
-			var buildOutputDir = $@"ILSpy\bin\{buildConfiguration}\net6.0-windows\win-{buildPlatform}\publish\fwdependent";
+			var buildOutputDir = $@"ILSpy\bin\{buildConfiguration}\net8.0-windows\win-{buildPlatform}\publish\fwdependent";
 
 			var project = new Project("ILSpy",
 							  new InstallDir(@"%LocalAppData%\Programs\ILSpy",

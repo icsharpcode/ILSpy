@@ -124,7 +124,7 @@ Examples:
 
 		private async Task<int> OnExecuteAsync(CommandLineApplication app)
 		{
-			Task<NuGetVersion> updateCheckTask = null;
+			Task<PackageCheckResult> updateCheckTask = null;
 			if (!DisableUpdateCheck)
 			{
 				updateCheckTask = DotNetToolUpdateChecker.CheckForPackageUpdateAsync("ilspycmd");
@@ -181,11 +181,11 @@ Examples:
 
 				if (null != updateCheckTask)
 				{
-					var latestVersion = await updateCheckTask;
-					if (null != latestVersion)
+					var checkResult = await updateCheckTask;
+					if (null != checkResult && checkResult.UpdateRecommendation)
 					{
 						Console.WriteLine("You are not using the latest version of the tool, please update.");
-						Console.WriteLine($"Latest version is '{latestVersion}'");
+						Console.WriteLine($"Latest version is '{checkResult.LatestVersion}' (yours is '{checkResult.RunningVersion}')");
 					}
 				}
 			}

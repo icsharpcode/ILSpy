@@ -36,7 +36,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{
 			e.Handled = true;
-			if (this.Member.MetadataToken.IsNil)
+			if (this.Member == null || this.Member.MetadataToken.IsNil)
 			{
 				MessageBox.Show(Properties.Resources.CannotAnalyzeMissingRef, "ILSpy");
 				return;
