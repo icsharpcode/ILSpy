@@ -58,6 +58,34 @@ namespace ICSharpCode.ILSpy.Metadata
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			language.WriteCommentLine(output, title);
+
+			DumpMetadataInfo(language, output, this.metadataFile.Metadata);
+		}
+
+		internal static void DumpMetadataInfo(Language language, ITextOutput output, MetadataReader metadata)
+		{
+			language.WriteCommentLine(output, "MetadataKind: " + metadata.MetadataKind);
+			language.WriteCommentLine(output, "MetadataVersion: " + metadata.MetadataVersion);
+
+			if (metadata.DebugMetadataHeader is { } header)
+			{
+				output.WriteLine();
+				language.WriteCommentLine(output, "Header:");
+				language.WriteCommentLine(output, "Id: " + header.Id.ToHexString(header.Id.Length));
+				language.WriteCommentLine(output, "EntryPoint: " + MetadataTokens.GetToken(header.EntryPoint).ToString("X8"));
+			}
+
+			output.WriteLine();
+			language.WriteCommentLine(output, "Tables:");
+
+			foreach (var table in Enum.GetValues<TableIndex>())
+			{
+				int count = metadata.GetTableRowCount(table);
+				if (count > 0)
+				{
+					language.WriteCommentLine(output, $"{(byte)table:X2} {table}: {count} rows");
+				}
+			}
 		}
 
 		protected override void LoadChildren()
