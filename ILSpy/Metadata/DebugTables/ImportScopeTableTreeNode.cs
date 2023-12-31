@@ -34,8 +34,6 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Text => $"35 ImportScope ({metadataFile.Metadata.GetTableRowCount(TableIndex.ImportScope)})";
 
-		public override object Icon => Images.Literal;
-
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
 			tabPage.Title = Text.ToString();

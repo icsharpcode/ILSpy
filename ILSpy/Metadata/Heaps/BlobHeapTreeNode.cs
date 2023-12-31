@@ -22,7 +22,6 @@ using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
@@ -46,8 +45,6 @@ namespace ICSharpCode.ILSpy.Metadata
 		}
 
 		public override object Text => $"Blob Heap ({list.Count})";
-
-		public override object Icon => Images.Literal;
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{

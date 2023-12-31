@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			 + "be present if multiple PDBs were produced during the build of the PE/COFF file\n"
 			 + "(for example, private and public symbols).";
 
-		public override object Icon => Images.Literal;
+		public override object Icon => Images.MetadataTable;
 
 		public override bool View(TabPageModel tabPage)
 		{

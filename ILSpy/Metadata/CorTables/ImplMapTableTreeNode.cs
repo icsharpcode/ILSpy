@@ -38,8 +38,6 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Text => $"1C ImplMap ({metadataFile.Metadata.GetTableRowCount(TableIndex.ImplMap)})";
 
-		public override object Icon => Images.Literal;
-
 
 
 		public override bool View(ViewModels.TabPageModel tabPage)

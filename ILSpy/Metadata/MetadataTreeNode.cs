@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Text => title;
 
-		public override object Icon => Images.Library;
+		public override object Icon => Images.Metadata;
 
 		public override bool View(TabPageModel tabPage)
 		{

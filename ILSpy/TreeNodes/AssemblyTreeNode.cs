@@ -29,7 +29,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpy.Metadata;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
@@ -98,7 +98,18 @@ namespace ICSharpCode.ILSpy.TreeNodes
 							_ => Images.Library,
 						};
 					}
-					return Images.Assembly;
+					if (loadResult.MetadataFile != null)
+					{
+						return loadResult.MetadataFile.Kind switch {
+							MetadataFile.MetadataFileKind.PortableExecutable => Images.Assembly,
+							MetadataFile.MetadataFileKind.ProgramDebugDatabase => Images.ProgramDebugDatabase,
+							_ => Images.MetadataFile,
+						};
+					}
+					else
+					{
+						return Images.Assembly;
+					}
 				}
 				else
 				{
@@ -382,6 +393,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				{
 					output.WriteLine("// " + LoadedAssembly.FileName);
 					DecompilePackage(loadResult.Package, output);
+				}
+				else if (loadResult.MetadataFile != null)
+				{
+					output.WriteLine("// " + LoadedAssembly.FileName);
 				}
 				else
 				{

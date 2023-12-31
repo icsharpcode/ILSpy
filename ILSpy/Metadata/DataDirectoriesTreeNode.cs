@@ -17,12 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Reflection.PortableExecutable;
-using System.Windows.Controls;
-using System.Windows.Data;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -38,7 +35,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Text => "Data Directories";
 
-		public override object Icon => Images.Literal;
+		public override object Icon => Images.ListFolder;
+		public override object ExpandedIcon => Images.ListFolderOpen;
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{

@@ -34,8 +34,6 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Text => $"33 LocalVariable ({metadataFile.Metadata.GetTableRowCount(TableIndex.LocalVariable)})";
 
-		public override object Icon => Images.Literal;
-
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
 			tabPage.Title = Text.ToString();

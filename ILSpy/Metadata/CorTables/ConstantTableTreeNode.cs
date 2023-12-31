@@ -35,8 +35,6 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Text => $"0B Constant ({metadataFile.Metadata.GetTableRowCount(TableIndex.Constant)})";
 
-		public override object Icon => Images.Literal;
-
 		public override bool View(TabPageModel tabPage)
 		{
 			tabPage.Title = Text.ToString();

@@ -21,7 +21,6 @@
 using System.Reflection.PortableExecutable;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 
@@ -39,7 +38,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object ToolTip => "Associated PDB file description.";
 
-		public override object Icon => Images.Literal;
+		public override object Icon => Images.MetadataTable;
 
 		public override bool View(TabPageModel tabPage)
 		{

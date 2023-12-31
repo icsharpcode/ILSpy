@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Text => "Optional Header";
 
-		public override object Icon => Images.Literal;
+		public override object Icon => Images.Header;
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{

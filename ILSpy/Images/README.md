@@ -10,7 +10,7 @@ Icons used in ILSpy:
 | Back                      |  x  |  x   | VS 2017 Icon Pack (Backward)                                                    |         |
 | Class                     |  x  |  x   | VS 2017 Icon Pack (Class)                                                       |         |
 | Close                     |  x  |  x   | VS 2017 Icon Pack (Clear)                                                       |         |
-| CollapseAll               |  x  |  x   | VS 2017 Icon Pack (CollapseAll)                                                 |         | 
+| CollapseAll               |  x  |  x   | VS 2017 Icon Pack (CollapseAll)                                                 |         |
 | Constructor               |  x  |  x   | based on VS 2017 Icon Pack (Method) using a different colour                    |         |
 | Copy                      |  x  |  x   | VS 2017 Icon Pack (Copy)                                                        |         |
 | Delegate                  |  x  |  x   | VS 2017 Icon Pack (Delegate)                                                    |         |
@@ -25,10 +25,18 @@ Icons used in ILSpy:
 | Folder.Closed             |  x  |  x   | VS 2017 Icon Pack (Folder)                                                      |         |
 | Folder.Open               |  x  |  x   | VS 2017 Icon Pack (FolderOpen)                                                  |         |
 | Forward                   |  x  |  x   | VS 2017 Icon Pack (Forward)                                                     |         |
+| Header                    |  x  |  x   | VS 2017 Icon Pack (PageHeader)                                                  |         |
+| Heap                      |  x  |  x   | VS 2017 Icon Pack (Datalist)                                                    |         |
 | Indexer                   |  x  |  x   | VS 2017 Icon Pack (Indexer)                                                     |         |
 | Interface                 |  x  |  x   | VS 2017 Icon Pack (Interface)                                                   |         |
 | Library                   |  x  |  x   | VS 2017 Icon Pack (Library)                                                     |         |
+| ListFolder                |  x  |  x   | VS 2017 Icon Pack (ListFolder)                                                  |         |
+| ListFolder.Open           |  x  |  x   | VS 2017 Icon Pack (ListFolderOpen)                                              |         |
 | Literal                   |  x  |  x   | VS 2017 Icon Pack (Literal)                                                     |         |
+| Metadata                  |  x  |  x   | VS 2017 Icon Pack (Metadata)                                                    |         |
+| MetadataFile              |  x  |  x   | combined ProgramDebugDatabase + Metadata                                        |         |
+| MetadataTable             |  x  |  x   | VS 2017 Icon Pack (LinkedTable)                                                 |         |
+| MetadataTableGroup        |  x  |  x   | VS 2017 Icon Pack (LinkedTableGroup)                                            |         |
 | Method                    |  x  |  x   | VS 2017 Icon Pack (Method)                                                      |         |
 | Namespace                 |  x  |  x   | VS 2017 Icon Pack (Namespace)                                                   |         |
 | OK                        |  x  |  x   | VS 2017 Icon Pack (StatusOK)                                                    |         |
@@ -42,6 +50,7 @@ Icons used in ILSpy:
 | OverlayProtectedInternal  |  x  |  x   | combined OverlayProtected and OverlayInternal                                   |         |
 | OverlayStatic             |  x  |  x   | custom                                                                          |         |
 | PInvokeMethod             |  x  |  x   | based on VS 2017 Icon Pack (ExtensionMethod) with rotated arrow                 |         |
+| ProgramDebugDatabase      |  x  |  x   | VS 2017 Icon Pack (ProgramDebugDatabase)                                        |         |
 | Property                  |  x  |  x   | VS 2017 Icon Pack (Property)                                                    |         |
 | ReferenceFolder           |  x  |  x   | combined VS 2017 Icon Pack (Reference) two times                                |         |
 | Refresh                   |  x  |  x   | VS 2017 Icon Pack (Refresh)                                                     |         |

@@ -37,8 +37,6 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Text => $"14 Event ({metadataFile.Metadata.GetTableRowCount(TableIndex.Event)})";
 
-		public override object Icon => Images.Literal;
-
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
 			tabPage.Title = Text.ToString();

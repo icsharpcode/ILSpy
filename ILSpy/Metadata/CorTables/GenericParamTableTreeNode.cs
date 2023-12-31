@@ -35,8 +35,6 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Text => $"2A GenericParam ({metadataFile.Metadata.GetTableRowCount(TableIndex.GenericParam)})";
 
-		public override object Icon => Images.Literal;
-
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
 			tabPage.Title = Text.ToString();

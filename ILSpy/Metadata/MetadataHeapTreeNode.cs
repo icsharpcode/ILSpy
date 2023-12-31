@@ -32,15 +32,12 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public HandleKind Kind { get; }
 
+		public override object Icon => Images.Heap;
+
 		public MetadataHeapTreeNode(HandleKind kind, MetadataFile metadataFile)
 		{
 			this.Kind = kind;
 			this.metadataFile = metadataFile;
-		}
-
-		internal void ScrollTo(Handle handle)
-		{
-			//this.scrollTarget = MetadataTokens.GetHeapOffset((EntityHandle)handle);
 		}
 
 		protected void ScrollItemIntoView(DataGrid view, object item)

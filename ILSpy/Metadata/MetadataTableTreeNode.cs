@@ -36,6 +36,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public HandleKind Kind { get; }
 
+		public override object Icon => Images.MetadataTable;
+
 		public MetadataTableTreeNode(HandleKind kind, MetadataFile metadataFile)
 		{
 			this.Kind = kind;
