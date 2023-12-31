@@ -194,6 +194,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					var package = loadResult.Package;
 					this.Children.AddRange(PackageFolderTreeNode.LoadChildrenForFolder(package.RootFolder));
 				}
+				else if (loadResult.MetadataFile != null)
+				{
+					var metadata = loadResult.MetadataFile;
+					this.Children.Add(new MetadataTablesTreeNode(metadata));
+					this.Children.Add(new StringHeapTreeNode(metadata));
+					this.Children.Add(new UserStringHeapTreeNode(metadata));
+					this.Children.Add(new GuidHeapTreeNode(metadata));
+					this.Children.Add(new BlobHeapTreeNode(metadata));
+				}
 			}
 			catch (Exception ex)
 			{
@@ -205,12 +214,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			typeSystem = LoadedAssembly.GetTypeSystemOrNull();
 			var assembly = (MetadataModule)typeSystem.MainModule;
-			this.Children.Add(new Metadata.MetadataTreeNode(module, this));
+			this.Children.Add(new MetadataTreeNode(module, Resources.Metadata));
 			Decompiler.DebugInfo.IDebugInfoProvider debugInfo = LoadedAssembly.GetDebugInfoOrNull();
 			if (debugInfo is PortableDebugInfoProvider ppdb
 				&& ppdb.GetMetadataReader() is System.Reflection.Metadata.MetadataReader reader)
 			{
-				this.Children.Add(new Metadata.DebugMetadataTreeNode(module, ppdb.IsEmbedded, reader));
+				this.Children.Add(new MetadataTreeNode(ppdb.ToMetadataFile(), $"Debug Metadata ({(ppdb.IsEmbedded ? "Embedded" : "From portable PDB")})"));
 			}
 			this.Children.Add(new ReferenceFolderTreeNode(module, this));
 			if (module.Resources.Any())

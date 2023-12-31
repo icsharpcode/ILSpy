@@ -34,7 +34,15 @@ namespace ICSharpCode.Decompiler.Metadata
 {
 	public class MetadataFile
 	{
+		public enum MetadataFileKind
+		{
+			PortableExecutable,
+			ProgramDebugDatabase,
+			Metadata
+		}
+
 		public string FileName { get; }
+		public MetadataFileKind Kind { get; }
 		public MetadataReader Metadata { get; }
 
 		public virtual int MetadataOffset { get; }
@@ -46,6 +54,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			this.Metadata = metadata.GetMetadataReader(metadataOptions);
 			this.MetadataOffset = metadataOffset;
 			this.IsEmbedded = isEmbedded;
+			this.Kind = isEmbedded || Path.GetExtension(fileName).Equals(".pdb", StringComparison.OrdinalIgnoreCase) ? MetadataFileKind.ProgramDebugDatabase : MetadataFileKind.Metadata;
 		}
 
 		private protected MetadataFile(string fileName, PEReader reader, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
@@ -55,6 +64,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (!reader.HasMetadata)
 				throw new PEFileNotSupportedException("PE file does not contain any managed metadata.");
 			this.Metadata = reader.GetMetadataReader(metadataOptions);
+			this.Kind = MetadataFileKind.PortableExecutable;
 		}
 	}
 

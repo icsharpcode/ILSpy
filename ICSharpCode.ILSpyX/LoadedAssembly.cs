@@ -268,31 +268,34 @@ namespace ICSharpCode.ILSpyX
 				if (IsLoaded && !HasLoadError)
 				{
 					var result = GetLoadResultAsync().GetAwaiter().GetResult();
-					if (result.PEFile != null)
+					if (result.MetadataFile != null)
 					{
-						var metadata = result.PEFile.Metadata;
-						string? versionOrInfo = null;
-						if (metadata != null)
+						switch (result.MetadataFile.Kind)
 						{
-							if (metadata.IsAssembly)
-							{
-								versionOrInfo = metadata.GetAssemblyDefinition().Version?.ToString();
-								string tfId = GetTargetFrameworkIdAsync().GetAwaiter().GetResult();
-								if (!string.IsNullOrEmpty(tfId))
-									versionOrInfo += ", " + tfId.Replace("Version=", " ");
-							}
-							else
-							{
-								versionOrInfo = ".netmodule";
-							}
+							case MetadataFile.MetadataFileKind.PortableExecutable:
+								var metadata = result.MetadataFile.Metadata;
+								string? versionOrInfo;
+								if (metadata.IsAssembly)
+								{
+									versionOrInfo = metadata.GetAssemblyDefinition().Version?.ToString();
+									string tfId = GetTargetFrameworkIdAsync().GetAwaiter().GetResult();
+									if (!string.IsNullOrEmpty(tfId))
+										versionOrInfo += ", " + tfId.Replace("Version=", " ");
+								}
+								else
+								{
+									versionOrInfo = ".netmodule";
+								}
+								if (versionOrInfo == null)
+									return ShortName;
+								return string.Format("{0} ({1})", ShortName, versionOrInfo);
+							case MetadataFile.MetadataFileKind.ProgramDebugDatabase:
+								return ShortName + " (Debug Metadata)";
+							case MetadataFile.MetadataFileKind.Metadata:
+								return ShortName + " (Metadata)";
+							default:
+								return ShortName;
 						}
-						if (versionOrInfo == null)
-							return ShortName;
-						return string.Format("{0} ({1})", ShortName, versionOrInfo);
-					}
-					else if (result.MetadataFile != null)
-					{
-						return ShortName + " (Metadata)";
 					}
 				}
 				return ShortName;
