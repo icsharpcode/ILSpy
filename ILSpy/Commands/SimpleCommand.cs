@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.ComponentModel;
 using System.Windows.Input;
 
 namespace ICSharpCode.ILSpy
@@ -29,6 +30,41 @@ namespace ICSharpCode.ILSpy
 		}
 
 		public abstract void Execute(object parameter);
+
+		public virtual bool CanExecute(object parameter)
+		{
+			return true;
+		}
+	}
+
+	public abstract class ToggleableCommand : ICommand, INotifyPropertyChanged
+	{
+		private bool isChecked;
+
+		public event EventHandler CanExecuteChanged {
+			add { CommandManager.RequerySuggested += value; }
+			remove { CommandManager.RequerySuggested -= value; }
+		}
+
+		public event PropertyChangedEventHandler PropertyChanged;
+
+		void ICommand.Execute(object parameter)
+		{
+			IsChecked = Execute(parameter);
+		}
+
+		public bool IsChecked {
+			get => isChecked;
+			set {
+				if (isChecked != value)
+				{
+					isChecked = value;
+					PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsChecked)));
+				}
+			}
+		}
+
+		public abstract bool Execute(object parameter);
 
 		public virtual bool CanExecute(object parameter)
 		{

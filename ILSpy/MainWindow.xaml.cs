@@ -29,6 +29,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -299,6 +300,12 @@ namespace ICSharpCode.ILSpy
 							}
 
 							menuItem.IsEnabled = entry.Metadata.IsEnabled;
+							if (entry.Value is ToggleableCommand toggle)
+							{
+								menuItem.IsCheckable = true;
+								menuItem.SetBinding(MenuItem.IsCheckedProperty, new Binding("IsChecked") { Source = entry.Value, Mode = BindingMode.OneWay });
+							}
+
 							menuItem.InputGestureText = entry.Metadata.InputGestureText;
 							parentMenuItem.Items.Add(menuItem);
 						}
