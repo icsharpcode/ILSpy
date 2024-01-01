@@ -56,8 +56,6 @@ namespace ICSharpCode.ILSpy
 		string MenuIcon { get; }
 		string Header { get; }
 		string ParentMenuID { get; }
-		[Obsolete("Please use ParentMenuID instead. We decided to rename the property for clarity. It will be removed in ILSpy 8.0.")]
-		string Menu { get; }
 		string MenuCategory { get; }
 		string InputGestureText { get; }
 		bool IsEnabled { get; }
@@ -93,8 +91,6 @@ namespace ICSharpCode.ILSpy
 		/// will lead to a stack-overflow and crash of ILSpy at startup.
 		/// </summary>
 		public string ParentMenuID { get; set; }
-		[Obsolete("Please use ParentMenuID instead. We decided to rename the property for clarity. It will be removed in ILSpy 8.0.")]
-		public string Menu { get => ParentMenuID; set => ParentMenuID = value; }
 		public string MenuCategory { get; set; }
 		public string InputGestureText { get; set; }
 		public bool IsEnabled { get; set; } = true;
