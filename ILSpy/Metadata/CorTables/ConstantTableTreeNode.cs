@@ -21,8 +21,6 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
-using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.ViewModels;
 
@@ -30,14 +28,12 @@ namespace ICSharpCode.ILSpy.Metadata
 {
 	internal class ConstantTableTreeNode : MetadataTableTreeNode
 	{
-		public ConstantTableTreeNode(PEFile module)
-			: base((HandleKind)0x0B, module)
+		public ConstantTableTreeNode(MetadataFile metadataFile)
+			: base((HandleKind)0x0B, metadataFile)
 		{
 		}
 
-		public override object Text => $"0B Constant ({module.Metadata.GetTableRowCount(TableIndex.Constant)})";
-
-		public override object Icon => Images.Literal;
+		public override object Text => $"0B Constant ({metadataFile.Metadata.GetTableRowCount(TableIndex.Constant)})";
 
 		public override bool View(TabPageModel tabPage)
 		{
@@ -45,14 +41,14 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.SupportsLanguageSwitching = false;
 
 			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = module.Metadata;
+			var metadata = metadataFile.Metadata;
 
 			var list = new List<ConstantEntry>();
 			ConstantEntry scrollTargetEntry = default;
 
 			for (int row = 1; row <= metadata.GetTableRowCount(TableIndex.Constant); row++)
 			{
-				ConstantEntry entry = new ConstantEntry(module, MetadataTokens.ConstantHandle(row));
+				ConstantEntry entry = new ConstantEntry(metadataFile, MetadataTokens.ConstantHandle(row));
 				if (scrollTarget == row)
 				{
 					scrollTargetEntry = entry;
@@ -73,9 +69,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		struct ConstantEntry
 		{
-			readonly int metadataOffset;
-			readonly PEFile module;
-			readonly MetadataReader metadata;
+			readonly MetadataFile metadataFile;
 			readonly EntityHandle handle;
 			readonly Constant constant;
 
@@ -83,9 +77,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Token => MetadataTokens.GetToken(handle);
 
-			public int Offset => metadataOffset
-				+ metadata.GetTableMetadataOffset(TableIndex.Constant)
-				+ metadata.GetTableRowSize(TableIndex.Constant) * (RID - 1);
+			public int Offset => metadataFile.MetadataOffset
+				+ metadataFile.Metadata.GetTableMetadataOffset(TableIndex.Constant)
+				+ metadataFile.Metadata.GetTableRowSize(TableIndex.Constant) * (RID - 1);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public ConstantTypeCode Type => constant.TypeCode;
@@ -97,11 +91,11 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnParentClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, constant.Parent, protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, constant.Parent, protocol: "metadata"));
 			}
 
 			string parentTooltip;
-			public string ParentTooltip => GenerateTooltip(ref parentTooltip, module, constant.Parent);
+			public string ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, constant.Parent);
 
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Value => MetadataTokens.GetHeapOffset(constant.Value);
@@ -112,13 +106,11 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			public ConstantEntry(PEFile module, ConstantHandle handle)
+			public ConstantEntry(MetadataFile metadataFile, ConstantHandle handle)
 			{
-				this.metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
-				this.module = module;
-				this.metadata = module.Metadata;
+				this.metadataFile = metadataFile;
 				this.handle = handle;
-				this.constant = metadata.GetConstant(handle);
+				this.constant = metadataFile.Metadata.GetConstant(handle);
 				this.parentTooltip = null;
 			}
 		}

@@ -28,7 +28,7 @@ namespace ICSharpCode.ILSpy
 	[DebuggerDisplay("EntityReference Module={Module}, Handle={Handle}, Protocol={Protocol}")]
 	public class EntityReference
 	{
-		readonly PEFile? peFile;
+		readonly MetadataFile? peFile;
 		public string Module { get; }
 		public Handle Handle { get; }
 		public string Protocol { get; }
@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy
 			this.Protocol = protocol ?? "decompile";
 		}
 
-		public EntityReference(PEFile module, Handle handle, string protocol = "decompile")
+		public EntityReference(MetadataFile module, Handle handle, string protocol = "decompile")
 		{
 			this.peFile = module;
 			this.Module = module.FileName;
@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy
 			this.Protocol = protocol;
 		}
 
-		public PEFile? ResolveAssembly(AssemblyList context)
+		public MetadataFile? ResolveAssembly(AssemblyList context)
 		{
 			return peFile ?? context.FindAssembly(Module)?.GetPEFileOrNull();
 		}

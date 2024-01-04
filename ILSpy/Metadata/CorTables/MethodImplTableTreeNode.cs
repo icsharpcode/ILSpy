@@ -21,22 +21,18 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
-using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
 	internal class MethodImplTableTreeNode : MetadataTableTreeNode
 	{
-		public MethodImplTableTreeNode(PEFile module)
-			: base((HandleKind)0x19, module)
+		public MethodImplTableTreeNode(MetadataFile metadataFile)
+			: base((HandleKind)0x19, metadataFile)
 		{
 		}
 
-		public override object Text => $"19 MethodImpl ({module.Metadata.GetTableRowCount(TableIndex.MethodImpl)})";
-
-		public override object Icon => Images.Literal;
+		public override object Text => $"19 MethodImpl ({metadataFile.Metadata.GetTableRowCount(TableIndex.MethodImpl)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -48,9 +44,9 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<MethodImplEntry>();
 			MethodImplEntry scrollTargetEntry = default;
 
-			for (int row = 1; row <= module.Metadata.GetTableRowCount(TableIndex.MethodImpl); row++)
+			for (int row = 1; row <= metadataFile.Metadata.GetTableRowCount(TableIndex.MethodImpl); row++)
 			{
-				MethodImplEntry entry = new MethodImplEntry(module, MetadataTokens.MethodImplementationHandle(row));
+				MethodImplEntry entry = new MethodImplEntry(metadataFile, MetadataTokens.MethodImplementationHandle(row));
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;
@@ -72,9 +68,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		struct MethodImplEntry
 		{
-			readonly int metadataOffset;
-			readonly PEFile module;
-			readonly MetadataReader metadata;
+			readonly MetadataFile metadataFile;
 			readonly MethodImplementationHandle handle;
 			readonly MethodImplementation methodImpl;
 
@@ -82,50 +76,48 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Token => MetadataTokens.GetToken(handle);
 
-			public int Offset => metadataOffset
-				+ metadata.GetTableMetadataOffset(TableIndex.MethodDef)
-				+ metadata.GetTableRowSize(TableIndex.MethodDef) * (RID - 1);
+			public int Offset => metadataFile.MetadataOffset
+				+ metadataFile.Metadata.GetTableMetadataOffset(TableIndex.MethodDef)
+				+ metadataFile.Metadata.GetTableRowSize(TableIndex.MethodDef) * (RID - 1);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int MethodDeclaration => MetadataTokens.GetToken(methodImpl.MethodDeclaration);
 
 			public void OnMethodDeclarationClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, methodImpl.MethodDeclaration, protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, methodImpl.MethodDeclaration, protocol: "metadata"));
 			}
 
 			string methodDeclarationTooltip;
-			public string MethodDeclarationTooltip => GenerateTooltip(ref methodDeclarationTooltip, module, methodImpl.MethodDeclaration);
+			public string MethodDeclarationTooltip => GenerateTooltip(ref methodDeclarationTooltip, metadataFile, methodImpl.MethodDeclaration);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int MethodBody => MetadataTokens.GetToken(methodImpl.MethodBody);
 
 			public void OnMethodBodyClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, methodImpl.MethodBody, protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, methodImpl.MethodBody, protocol: "metadata"));
 			}
 
 			string methodBodyTooltip;
-			public string MethodBodyTooltip => GenerateTooltip(ref methodBodyTooltip, module, methodImpl.MethodBody);
+			public string MethodBodyTooltip => GenerateTooltip(ref methodBodyTooltip, metadataFile, methodImpl.MethodBody);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Type => MetadataTokens.GetToken(methodImpl.Type);
 
 			public void OnTypeClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, methodImpl.Type, protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, methodImpl.Type, protocol: "metadata"));
 			}
 
 			string typeTooltip;
-			public string TypeTooltip => GenerateTooltip(ref typeTooltip, module, methodImpl.Type);
+			public string TypeTooltip => GenerateTooltip(ref typeTooltip, metadataFile, methodImpl.Type);
 
-			public MethodImplEntry(PEFile module, MethodImplementationHandle handle)
+			public MethodImplEntry(MetadataFile metadataFile, MethodImplementationHandle handle)
 			{
-				this.metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
-				this.module = module;
-				this.metadata = module.Metadata;
+				this.metadataFile = metadataFile;
 				this.handle = handle;
-				this.methodImpl = metadata.GetMethodImplementation(handle);
+				this.methodImpl = metadataFile.Metadata.GetMethodImplementation(handle);
 				this.typeTooltip = null;
 				this.methodBodyTooltip = null;
 				this.methodDeclarationTooltip = null;

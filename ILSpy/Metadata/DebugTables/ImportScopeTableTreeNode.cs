@@ -16,34 +16,23 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Text;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
-using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
 	internal class ImportScopeTableTreeNode : DebugMetadataTableTreeNode
 	{
-		private readonly bool isEmbedded;
-
-		public ImportScopeTableTreeNode(PEFile module, MetadataReader metadata, bool isEmbedded)
-			: base(HandleKind.ImportScope, module, metadata)
+		public ImportScopeTableTreeNode(MetadataFile metadataFile)
+			: base(HandleKind.ImportScope, metadataFile)
 		{
-			this.isEmbedded = isEmbedded;
 		}
 
-		public override object Text => $"35 ImportScope ({metadata.GetTableRowCount(TableIndex.ImportScope)})";
-
-		public override object Icon => Images.Literal;
+		public override object Text => $"35 ImportScope ({metadataFile.Metadata.GetTableRowCount(TableIndex.ImportScope)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -54,9 +43,9 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<ImportScopeEntry>();
 			ImportScopeEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.ImportScopes)
+			foreach (var row in metadataFile.Metadata.ImportScopes)
 			{
-				ImportScopeEntry entry = new ImportScopeEntry(module, metadata, isEmbedded, row);
+				ImportScopeEntry entry = new ImportScopeEntry(metadataFile, row);
 				if (entry.RID == scrollTarget)
 				{
 					scrollTargetEntry = entry;
@@ -76,11 +65,10 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		struct ImportScopeEntry
+		readonly struct ImportScopeEntry
 		{
 			readonly int? offset;
-			readonly PEFile module;
-			readonly MetadataReader metadata;
+			readonly MetadataFile metadataFile;
 			readonly ImportScopeHandle handle;
 			readonly ImportScope localScope;
 
@@ -88,27 +76,26 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Token => MetadataTokens.GetToken(handle);
 
-			public object Offset => offset == null ? "n/a" : (object)offset;
+			public object Offset => offset == null ? "n/a" : offset;
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(localScope.Parent);
 
 			public void OnParentClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, localScope.Parent, protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, localScope.Parent, protocol: "metadata"));
 			}
 
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Imports => MetadataTokens.GetHeapOffset(localScope.ImportsBlob);
 
-			public ImportScopeEntry(PEFile module, MetadataReader metadata, bool isEmbedded, ImportScopeHandle handle)
+			public ImportScopeEntry(MetadataFile metadataFile, ImportScopeHandle handle)
 			{
-				this.offset = isEmbedded ? null : (int?)metadata.GetTableMetadataOffset(TableIndex.ImportScope)
-					+ metadata.GetTableRowSize(TableIndex.ImportScope) * (MetadataTokens.GetRowNumber(handle) - 1);
-				this.module = module;
-				this.metadata = metadata;
+				this.metadataFile = metadataFile;
 				this.handle = handle;
-				this.localScope = metadata.GetImportScope(handle);
+				this.localScope = metadataFile.Metadata.GetImportScope(handle);
+				this.offset = metadataFile.IsEmbedded ? null : (int?)metadataFile.Metadata.GetTableMetadataOffset(TableIndex.ImportScope)
+					+ metadataFile.Metadata.GetTableRowSize(TableIndex.ImportScope) * (MetadataTokens.GetRowNumber(handle) - 1);
 			}
 		}
 

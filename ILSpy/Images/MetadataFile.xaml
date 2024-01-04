@@ -1,0 +1,29 @@
+<DrawingGroup xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" ClipGeometry="M0,0 V16 H16 V0 H0 Z">
+  <DrawingGroup Opacity="1">
+    <GeometryDrawing Geometry="F1 M16,16z M0,0z M0,0L16,0 16,16 0,16z">
+      <GeometryDrawing.Brush>
+        <SolidColorBrush Color="#FFF6F6F6" Opacity="0" />
+      </GeometryDrawing.Brush>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FFF6F6F6" Geometry="F1 M16,16z M0,0z M10.023,1L3.964,1C3.012,1,2,1.701,2,3L2,8.556C0.81,9.25 0,10.525 0,12 0,14.206 1.794,16 4,16A3.971,3.971,0,0,0,6.618,15L11.965,15C13.407,15,13.972,13.825,14,13L14,4.552z" />
+  </DrawingGroup>
+  <DrawingGroup Opacity="1">
+    <GeometryDrawing Brush="#FF424242" Geometry="F1 M16,16z M0,0z M6,6L8,6 8,7 6,7z M6,8L6,8.555C6.222,8.684,6.428,8.832,6.62,9L10,9 10,8z M7.858,11L10,11 10,10 7.445,10C7.626,10.311,7.766,10.644,7.858,11z" />
+    <GeometryDrawing Brush="#FF424242" Geometry="F1 M16,16z M0,0z M9.641,2L3.964,2C3.964,2,3,2,3,3L3,8.142A3.978,3.978,0,0,1,4,8L4,3 9,3 9,6 12,6 12,13 7.858,13A3.945,3.945,0,0,1,7.444,14L11.965,14C12.965,14,13,13,13,13L13,5z" />
+  </DrawingGroup>
+  <GeometryDrawing Brush="#FFF0EFF1" Geometry="F1 M16,16z M0,0z M9,6L9,3 4,3 4,8C4.735,8,5.417,8.213,6.009,8.562L6,8.555 6,8 10,8 10,9 6.62,9C6.615,8.995 6.608,8.992 6.602,8.987 6.946,9.285 7.235,9.636 7.462,10.034 7.456,10.023 7.452,10.011 7.445,10L10,10 10,11 7.858,11 7.853,10.983C7.939,11.311 8,11.646 8,12 8,12.348 7.941,12.679 7.858,13L12,13 12,6 9,6z M8,7L6,7 6,6 8,6 8,7z" />
+  <DrawingGroup Opacity="1" Transform="0.5,0,0,0.5,0,8">
+    <DrawingGroup Opacity="1">
+      <GeometryDrawing Geometry="F1 M16,16z M0,0z M0,0L16,0 16,16 0,16z">
+        <GeometryDrawing.Brush>
+          <SolidColorBrush Color="#FFF6F6F6" Opacity="0" />
+        </GeometryDrawing.Brush>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FFF6F6F6" Geometry="F1 M16,16z M0,0z M15,4.465L15,11.535 8.303,16 7.697,16 1,11.535 1,4.465 7.697,0 8.302,0z" />
+    </DrawingGroup>
+    <GeometryDrawing Brush="#FF424242" Geometry="F1 M16,16z M0,0z M8,1L2,5 2,11 8,15 14,11 14,5z M8,2.201L12.648,5.301 10.756,6.562 6.102,3.467z M7.5,13.465L3,10.465 3,8.935 7.5,11.935z M7.5,10.732L3,7.732 3,6.268 7.5,9.268z M3.353,5.301L5.202,4.069 9.855,7.163 8,8.398z M13,10.465L8.5,13.465 8.5,11.935 13,8.935z M13,7.732L8.5,10.732 8.5,9.268 13,6.268z" />
+    <DrawingGroup Opacity="1">
+      <GeometryDrawing Brush="#FFF0EFF1" Geometry="F1 M16,16z M0,0z M8,2.201L12.648,5.301 10.756,6.562 6.102,3.467z M7.5,13.465L3,10.465 3,8.935 7.5,11.935z M7.5,10.732L3,7.732 3,6.268 7.5,9.268z M3.353,5.301L5.201,4.068 9.854,7.162 8,8.398z M13,10.465L8.5,13.465 8.5,11.935 13,8.935z M13,7.732L8.5,10.732 8.5,9.268 13,6.268z" />
+    </DrawingGroup>
+  </DrawingGroup>
+</DrawingGroup>

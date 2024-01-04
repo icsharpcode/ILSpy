@@ -16,34 +16,24 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Text;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
-using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
 	internal class LocalScopeTableTreeNode : DebugMetadataTableTreeNode
 	{
-		private readonly bool isEmbedded;
-
-		public LocalScopeTableTreeNode(PEFile module, MetadataReader metadata, bool isEmbedded)
-			: base(HandleKind.LocalScope, module, metadata)
+		public LocalScopeTableTreeNode(MetadataFile metadataFile)
+			: base(HandleKind.LocalScope, metadataFile)
 		{
-			this.isEmbedded = isEmbedded;
 		}
 
-		public override object Text => $"32 LocalScope ({metadata.GetTableRowCount(TableIndex.LocalScope)})";
-
-		public override object Icon => Images.Literal;
+		public override object Text => $"32 LocalScope ({metadataFile.Metadata.GetTableRowCount(TableIndex.LocalScope)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -54,9 +44,9 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<LocalScopeEntry>();
 			LocalScopeEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.LocalScopes)
+			foreach (var row in metadataFile.Metadata.LocalScopes)
 			{
-				LocalScopeEntry entry = new LocalScopeEntry(module, metadata, isEmbedded, row);
+				LocalScopeEntry entry = new LocalScopeEntry(metadataFile, row);
 				if (entry.RID == scrollTarget)
 				{
 					scrollTargetEntry = entry;
@@ -79,8 +69,7 @@ namespace ICSharpCode.ILSpy.Metadata
 		struct LocalScopeEntry
 		{
 			readonly int? offset;
-			readonly PEFile module;
-			readonly MetadataReader metadata;
+			readonly MetadataFile metadataFile;
 			readonly LocalScopeHandle handle;
 			readonly LocalScope localScope;
 
@@ -95,18 +84,18 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnMethodClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, localScope.Method, protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, localScope.Method, protocol: "metadata"));
 			}
 
 			string methodTooltip;
-			public string MethodTooltip => GenerateTooltip(ref methodTooltip, module, localScope.Method);
+			public string MethodTooltip => GenerateTooltip(ref methodTooltip, metadataFile, localScope.Method);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int ImportScope => MetadataTokens.GetToken(localScope.ImportScope);
 
 			public void OnImportScopeClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, localScope.ImportScope, protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, localScope.ImportScope, protocol: "metadata"));
 			}
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
@@ -114,7 +103,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnVariableListClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, localScope.GetLocalVariables().FirstOrDefault(), protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, localScope.GetLocalVariables().FirstOrDefault(), protocol: "metadata"));
 			}
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
@@ -122,21 +111,20 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnConstantListClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, localScope.GetLocalConstants().FirstOrDefault(), protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, localScope.GetLocalConstants().FirstOrDefault(), protocol: "metadata"));
 			}
 
 			public int StartOffset => localScope.StartOffset;
 
 			public int Length => localScope.Length;
 
-			public LocalScopeEntry(PEFile module, MetadataReader metadata, bool isEmbedded, LocalScopeHandle handle)
+			public LocalScopeEntry(MetadataFile metadataFile, LocalScopeHandle handle)
 			{
-				this.offset = isEmbedded ? null : (int?)metadata.GetTableMetadataOffset(TableIndex.LocalScope)
-					+ metadata.GetTableRowSize(TableIndex.LocalScope) * (MetadataTokens.GetRowNumber(handle) - 1);
-				this.module = module;
-				this.metadata = metadata;
+				this.metadataFile = metadataFile;
+				this.offset = metadataFile.IsEmbedded ? null : (int?)metadataFile.Metadata.GetTableMetadataOffset(TableIndex.LocalScope)
+					+ metadataFile.Metadata.GetTableRowSize(TableIndex.LocalScope) * (MetadataTokens.GetRowNumber(handle) - 1);
 				this.handle = handle;
-				this.localScope = metadata.GetLocalScope(handle);
+				this.localScope = metadataFile.Metadata.GetLocalScope(handle);
 				this.methodTooltip = null;
 			}
 		}

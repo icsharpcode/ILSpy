@@ -16,12 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Collections.Generic;
+using System;
+using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 
@@ -29,91 +29,120 @@ namespace ICSharpCode.ILSpy.Metadata
 {
 	class MetadataTablesTreeNode : ILSpyTreeNode
 	{
-		private PEFile module;
+		readonly MetadataFile metadataFile;
 
-		public MetadataTablesTreeNode(PEFile module)
+		public MetadataTablesTreeNode(MetadataFile metadataFile)
 		{
-			this.module = module;
+			this.metadataFile = metadataFile;
 			this.LazyLoading = true;
 		}
 
 		public override object Text => "Tables";
 
-		public override object Icon => Images.Literal;
+		public override object Icon => Images.MetadataTableGroup;
 
 		protected override void LoadChildren()
 		{
-			if (ShowTable(TableIndex.Module))
-				this.Children.Add(new ModuleTableTreeNode(module));
-			if (ShowTable(TableIndex.TypeRef))
-				this.Children.Add(new TypeRefTableTreeNode(module));
-			if (ShowTable(TableIndex.TypeDef))
-				this.Children.Add(new TypeDefTableTreeNode(module));
-			if (ShowTable(TableIndex.Field))
-				this.Children.Add(new FieldTableTreeNode(module));
-			if (ShowTable(TableIndex.MethodDef))
-				this.Children.Add(new MethodTableTreeNode(module));
-			if (ShowTable(TableIndex.Param))
-				this.Children.Add(new ParamTableTreeNode(module));
-			if (ShowTable(TableIndex.InterfaceImpl))
-				this.Children.Add(new InterfaceImplTableTreeNode(module));
-			if (ShowTable(TableIndex.MemberRef))
-				this.Children.Add(new MemberRefTableTreeNode(module));
-			if (ShowTable(TableIndex.Constant))
-				this.Children.Add(new ConstantTableTreeNode(module));
-			if (ShowTable(TableIndex.CustomAttribute))
-				this.Children.Add(new CustomAttributeTableTreeNode(module));
-			if (ShowTable(TableIndex.FieldMarshal))
-				this.Children.Add(new FieldMarshalTableTreeNode(module));
-			if (ShowTable(TableIndex.DeclSecurity))
-				this.Children.Add(new DeclSecurityTableTreeNode(module));
-			if (ShowTable(TableIndex.ClassLayout))
-				this.Children.Add(new ClassLayoutTableTreeNode(module));
-			if (ShowTable(TableIndex.FieldLayout))
-				this.Children.Add(new FieldLayoutTableTreeNode(module));
-			if (ShowTable(TableIndex.StandAloneSig))
-				this.Children.Add(new StandAloneSigTableTreeNode(module));
-			if (ShowTable(TableIndex.EventMap))
-				this.Children.Add(new EventMapTableTreeNode(module));
-			if (ShowTable(TableIndex.Event))
-				this.Children.Add(new EventTableTreeNode(module));
-			if (ShowTable(TableIndex.PropertyMap))
-				this.Children.Add(new PropertyMapTableTreeNode(module));
-			if (ShowTable(TableIndex.Property))
-				this.Children.Add(new PropertyTableTreeNode(module));
-			if (ShowTable(TableIndex.MethodSemantics))
-				this.Children.Add(new MethodSemanticsTableTreeNode(module));
-			if (ShowTable(TableIndex.MethodImpl))
-				this.Children.Add(new MethodImplTableTreeNode(module));
-			if (ShowTable(TableIndex.ModuleRef))
-				this.Children.Add(new ModuleRefTableTreeNode(module));
-			if (ShowTable(TableIndex.TypeSpec))
-				this.Children.Add(new TypeSpecTableTreeNode(module));
-			if (ShowTable(TableIndex.ImplMap))
-				this.Children.Add(new ImplMapTableTreeNode(module));
-			if (ShowTable(TableIndex.FieldRva))
-				this.Children.Add(new FieldRVATableTreeNode(module));
-			if (ShowTable(TableIndex.Assembly))
-				this.Children.Add(new AssemblyTableTreeNode(module));
-			if (ShowTable(TableIndex.AssemblyRef))
-				this.Children.Add(new AssemblyRefTableTreeNode(module));
-			if (ShowTable(TableIndex.File))
-				this.Children.Add(new FileTableTreeNode(module));
-			if (ShowTable(TableIndex.ExportedType))
-				this.Children.Add(new ExportedTypeTableTreeNode(module));
-			if (ShowTable(TableIndex.ManifestResource))
-				this.Children.Add(new ManifestResourceTableTreeNode(module));
-			if (ShowTable(TableIndex.NestedClass))
-				this.Children.Add(new NestedClassTableTreeNode(module));
-			if (ShowTable(TableIndex.GenericParam))
-				this.Children.Add(new GenericParamTableTreeNode(module));
-			if (ShowTable(TableIndex.MethodSpec))
-				this.Children.Add(new MethodSpecTableTreeNode(module));
-			if (ShowTable(TableIndex.GenericParamConstraint))
-				this.Children.Add(new GenericParamConstraintTableTreeNode(module));
+			foreach (var table in Enum.GetValues<TableIndex>())
+			{
+				if (ShowTable(table, metadataFile.Metadata))
+					this.Children.Add(CreateTableTreeNode(table, metadataFile));
+			}
+		}
 
-			bool ShowTable(TableIndex table) => !MainWindow.Instance.CurrentDisplaySettings.HideEmptyMetadataTables || module.Metadata.GetTableRowCount(table) > 0;
+		internal static bool ShowTable(TableIndex table, MetadataReader metadata) => !MainWindow.Instance.CurrentDisplaySettings.HideEmptyMetadataTables || metadata.GetTableRowCount(table) > 0;
 
+		internal static MetadataTableTreeNode CreateTableTreeNode(TableIndex table, MetadataFile metadataFile)
+		{
+			switch (table)
+			{
+				case TableIndex.Module:
+					return new ModuleTableTreeNode(metadataFile);
+				case TableIndex.TypeRef:
+					return new TypeRefTableTreeNode(metadataFile);
+				case TableIndex.TypeDef:
+					return new TypeDefTableTreeNode(metadataFile);
+				case TableIndex.Field:
+					return new FieldTableTreeNode(metadataFile);
+				case TableIndex.MethodDef:
+					return new MethodTableTreeNode(metadataFile);
+				case TableIndex.Param:
+					return new ParamTableTreeNode(metadataFile);
+				case TableIndex.InterfaceImpl:
+					return new InterfaceImplTableTreeNode(metadataFile);
+				case TableIndex.MemberRef:
+					return new MemberRefTableTreeNode(metadataFile);
+				case TableIndex.Constant:
+					return new ConstantTableTreeNode(metadataFile);
+				case TableIndex.CustomAttribute:
+					return new CustomAttributeTableTreeNode(metadataFile);
+				case TableIndex.FieldMarshal:
+					return new FieldMarshalTableTreeNode(metadataFile);
+				case TableIndex.DeclSecurity:
+					return new DeclSecurityTableTreeNode(metadataFile);
+				case TableIndex.ClassLayout:
+					return new ClassLayoutTableTreeNode(metadataFile);
+				case TableIndex.FieldLayout:
+					return new FieldLayoutTableTreeNode(metadataFile);
+				case TableIndex.StandAloneSig:
+					return new StandAloneSigTableTreeNode(metadataFile);
+				case TableIndex.EventMap:
+					return new EventMapTableTreeNode(metadataFile);
+				case TableIndex.Event:
+					return new EventTableTreeNode(metadataFile);
+				case TableIndex.PropertyMap:
+					return new PropertyMapTableTreeNode(metadataFile);
+				case TableIndex.Property:
+					return new PropertyTableTreeNode(metadataFile);
+				case TableIndex.MethodSemantics:
+					return new MethodSemanticsTableTreeNode(metadataFile);
+				case TableIndex.MethodImpl:
+					return new MethodImplTableTreeNode(metadataFile);
+				case TableIndex.ModuleRef:
+					return new ModuleRefTableTreeNode(metadataFile);
+				case TableIndex.TypeSpec:
+					return new TypeSpecTableTreeNode(metadataFile);
+				case TableIndex.ImplMap:
+					return new ImplMapTableTreeNode(metadataFile);
+				case TableIndex.FieldRva:
+					return new FieldRVATableTreeNode(metadataFile);
+				case TableIndex.Assembly:
+					return new AssemblyTableTreeNode(metadataFile);
+				case TableIndex.AssemblyRef:
+					return new AssemblyRefTableTreeNode(metadataFile);
+				case TableIndex.File:
+					return new FileTableTreeNode(metadataFile);
+				case TableIndex.ExportedType:
+					return new ExportedTypeTableTreeNode(metadataFile);
+				case TableIndex.ManifestResource:
+					return new ManifestResourceTableTreeNode(metadataFile);
+				case TableIndex.NestedClass:
+					return new NestedClassTableTreeNode(metadataFile);
+				case TableIndex.GenericParam:
+					return new GenericParamTableTreeNode(metadataFile);
+				case TableIndex.MethodSpec:
+					return new MethodSpecTableTreeNode(metadataFile);
+				case TableIndex.GenericParamConstraint:
+					return new GenericParamConstraintTableTreeNode(metadataFile);
+				case TableIndex.Document:
+					return new DocumentTableTreeNode(metadataFile);
+				case TableIndex.MethodDebugInformation:
+					return new MethodDebugInformationTableTreeNode(metadataFile);
+				case TableIndex.LocalScope:
+					return new LocalScopeTableTreeNode(metadataFile);
+				case TableIndex.LocalVariable:
+					return new LocalVariableTableTreeNode(metadataFile);
+				case TableIndex.LocalConstant:
+					return new LocalConstantTableTreeNode(metadataFile);
+				case TableIndex.ImportScope:
+					return new ImportScopeTableTreeNode(metadataFile);
+				case TableIndex.StateMachineMethod:
+					return new StateMachineMethodTableTreeNode(metadataFile);
+				case TableIndex.CustomDebugInformation:
+					return new CustomDebugInformationTableTreeNode(metadataFile);
+				default:
+					throw new ArgumentException($"Unsupported table index: {table}");
+			}
 		}
 
 		public override bool View(TabPageModel tabPage)

@@ -22,22 +22,18 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
-using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
 	class InterfaceImplTableTreeNode : MetadataTableTreeNode
 	{
-		public InterfaceImplTableTreeNode(PEFile module)
-			: base((HandleKind)0x09, module)
+		public InterfaceImplTableTreeNode(MetadataFile metadataFile)
+			: base((HandleKind)0x09, metadataFile)
 		{
 		}
 
-		public override object Text => $"09 InterfaceImpl ({module.Metadata.GetTableRowCount(TableIndex.InterfaceImpl)})";
-
-		public override object Icon => Images.Literal;
+		public override object Text => $"09 InterfaceImpl ({metadataFile.Metadata.GetTableRowCount(TableIndex.InterfaceImpl)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -45,17 +41,17 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.SupportsLanguageSwitching = false;
 
 			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = module.Metadata;
+			var metadata = metadataFile.Metadata;
 
 			var list = new List<InterfaceImplEntry>();
 			InterfaceImplEntry scrollTargetEntry = default;
 
 			var length = metadata.GetTableRowCount(TableIndex.InterfaceImpl);
 			ReadOnlySpan<byte> ptr = metadata.AsReadOnlySpan();
-			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
+			int metadataOffset = metadataFile.MetadataOffset;
 			for (int rid = 1; rid <= length; rid++)
 			{
-				InterfaceImplEntry entry = new InterfaceImplEntry(module, ptr, metadataOffset, rid);
+				InterfaceImplEntry entry = new InterfaceImplEntry(metadataFile, ptr, rid);
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;
@@ -89,8 +85,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		struct InterfaceImplEntry
 		{
-			readonly PEFile module;
-			readonly MetadataReader metadata;
+			readonly MetadataFile metadataFile;
 			readonly InterfaceImpl interfaceImpl;
 
 			public int RID { get; }
@@ -104,32 +99,31 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnClassClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, interfaceImpl.Class, protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, interfaceImpl.Class, protocol: "metadata"));
 			}
 
 			string classTooltip;
-			public string ClassTooltip => GenerateTooltip(ref classTooltip, module, interfaceImpl.Class);
+			public string ClassTooltip => GenerateTooltip(ref classTooltip, metadataFile, interfaceImpl.Class);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Interface => MetadataTokens.GetToken(interfaceImpl.Interface);
 
 			public void OnInterfaceClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, interfaceImpl.Interface, protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, interfaceImpl.Interface, protocol: "metadata"));
 			}
 
 			string interfaceTooltip;
-			public string InterfaceTooltip => GenerateTooltip(ref interfaceTooltip, module, interfaceImpl.Interface);
+			public string InterfaceTooltip => GenerateTooltip(ref interfaceTooltip, metadataFile, interfaceImpl.Interface);
 
-			public InterfaceImplEntry(PEFile module, ReadOnlySpan<byte> ptr, int metadataOffset, int row)
+			public InterfaceImplEntry(MetadataFile metadataFile, ReadOnlySpan<byte> ptr, int row)
 			{
-				this.module = module;
-				this.metadata = module.Metadata;
+				this.metadataFile = metadataFile;
 				this.RID = row;
-				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.InterfaceImpl)
-					+ metadata.GetTableRowSize(TableIndex.InterfaceImpl) * (row - 1);
-				this.Offset = metadataOffset + rowOffset;
-				this.interfaceImpl = new InterfaceImpl(ptr.Slice(rowOffset), metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4, metadata.ComputeCodedTokenSize(16384, TableMask.TypeDef | TableMask.TypeRef | TableMask.TypeSpec));
+				var rowOffset = metadataFile.Metadata.GetTableMetadataOffset(TableIndex.InterfaceImpl)
+					+ metadataFile.Metadata.GetTableRowSize(TableIndex.InterfaceImpl) * (row - 1);
+				this.Offset = metadataFile.MetadataOffset + rowOffset;
+				this.interfaceImpl = new InterfaceImpl(ptr.Slice(rowOffset), metadataFile.Metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4, metadataFile.Metadata.ComputeCodedTokenSize(16384, TableMask.TypeDef | TableMask.TypeRef | TableMask.TypeSpec));
 				this.interfaceTooltip = null;
 				this.classTooltip = null;
 			}

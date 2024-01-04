@@ -52,7 +52,7 @@ namespace ICSharpCode.ILSpyX
 			return GetLoadedAssembly(file).GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(settings));
 		}
 
-		public static LoadedAssembly GetLoadedAssembly(this PEFile file)
+		public static LoadedAssembly GetLoadedAssembly(this MetadataFile file)
 		{
 			if (file == null)
 				throw new ArgumentNullException(nameof(file));

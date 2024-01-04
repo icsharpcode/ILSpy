@@ -56,6 +56,16 @@ namespace ICSharpCode.ILSpy
 
 		public static readonly ImageSource ReferenceFolder = Load("ReferenceFolder");
 		public static readonly ImageSource NuGet = Load(null, "Images/NuGet.png");
+		public static readonly ImageSource MetadataFile = Load("MetadataFile");
+		public static readonly ImageSource ProgramDebugDatabase = Load("ProgramDebugDatabase");
+
+		public static readonly ImageSource Metadata = Load("Metadata");
+		public static readonly ImageSource Heap = Load("Heap");
+		public static readonly ImageSource Header = Load("Header");
+		public static readonly ImageSource MetadataTable = Load("MetadataTable");
+		public static readonly ImageSource MetadataTableGroup = Load("MetadataTableGroup");
+		public static readonly ImageSource ListFolder = Load("ListFolder");
+		public static readonly ImageSource ListFolderOpen = Load("ListFolder.Open");
 
 		public static readonly ImageSource SubTypes = Load("SubTypes");
 		public static readonly ImageSource SuperTypes = Load("SuperTypes");

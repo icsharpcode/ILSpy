@@ -23,6 +23,7 @@ using System.IO;
 using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.DebugInfo;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 
 #nullable enable
@@ -34,15 +35,18 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 		string? pdbFileName;
 		string moduleFileName;
 		readonly MetadataReaderProvider provider;
+		MetadataReaderOptions options;
 		bool hasError;
 
 		internal bool IsEmbedded => pdbFileName == null;
 
 		public PortableDebugInfoProvider(string moduleFileName, MetadataReaderProvider provider,
+			MetadataReaderOptions options = MetadataReaderOptions.Default,
 			string? pdbFileName = null)
 		{
 			this.moduleFileName = moduleFileName ?? throw new ArgumentNullException(nameof(moduleFileName));
 			this.provider = provider ?? throw new ArgumentNullException(nameof(provider));
+			this.options = options;
 			this.pdbFileName = pdbFileName;
 		}
 
@@ -232,6 +236,11 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			}
 
 			return extraTypeInfo.TupleElementNames != null || extraTypeInfo.DynamicFlags != null;
+		}
+
+		public MetadataFile ToMetadataFile()
+		{
+			return new MetadataFile(SourceFileName, provider, options, 0, IsEmbedded);
 		}
 	}
 }

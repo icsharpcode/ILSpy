@@ -50,31 +50,38 @@ namespace ICSharpCode.ILSpyX
 	///   * a non-existant file
 	///   * a file of unknown format that could not be loaded
 	///   * a .nupkg file or .NET core bundle
+	///   * a standalone portable pdb file or metadata stream
 	///   * a file that is still being loaded in the background
 	/// </summary>
 	[DebuggerDisplay("[LoadedAssembly {shortName}]")]
 	public sealed class LoadedAssembly
 	{
 		/// <summary>
-		/// Maps from PEFile (successfully loaded .NET module) back to the LoadedAssembly instance
+		/// Maps from MetadataFile (successfully loaded .NET module) back to the LoadedAssembly instance
 		/// that was used to load the module.
 		/// </summary>
-		internal static readonly ConditionalWeakTable<PEFile, LoadedAssembly> loadedAssemblies = new ConditionalWeakTable<PEFile, LoadedAssembly>();
+		internal static readonly ConditionalWeakTable<MetadataFile, LoadedAssembly> loadedAssemblies = new ConditionalWeakTable<MetadataFile, LoadedAssembly>();
 
 		public sealed class LoadResult
 		{
-			public PEFile? PEFile { get; }
-			public Exception? PEFileLoadException { get; }
+			public MetadataFile? MetadataFile { get; }
+			public PEFile? PEFile => MetadataFile as PEFile;
+			public Exception? FileLoadException { get; }
 			public LoadedPackage? Package { get; }
 
 			public LoadResult(PEFile peFile)
 			{
-				this.PEFile = peFile ?? throw new ArgumentNullException(nameof(peFile));
+				this.MetadataFile = peFile ?? throw new ArgumentNullException(nameof(peFile));
 			}
-			public LoadResult(Exception peFileLoadException, LoadedPackage package)
+			public LoadResult(Exception fileLoadException, LoadedPackage package)
 			{
-				this.PEFileLoadException = peFileLoadException ?? throw new ArgumentNullException(nameof(peFileLoadException));
+				this.FileLoadException = fileLoadException ?? throw new ArgumentNullException(nameof(fileLoadException));
 				this.Package = package ?? throw new ArgumentNullException(nameof(package));
+			}
+			public LoadResult(Exception fileLoadException, MetadataFile metadataFile)
+			{
+				this.FileLoadException = fileLoadException ?? throw new ArgumentNullException(nameof(fileLoadException));
+				this.MetadataFile = metadataFile ?? throw new ArgumentNullException(nameof(metadataFile));
 			}
 		}
 
@@ -170,7 +177,7 @@ namespace ICSharpCode.ILSpyX
 			if (loadResult.PEFile != null)
 				return loadResult.PEFile;
 			else
-				throw loadResult.PEFileLoadException!;
+				throw loadResult.FileLoadException!;
 		}
 
 		/// <summary>
@@ -260,31 +267,38 @@ namespace ICSharpCode.ILSpyX
 			get {
 				if (IsLoaded && !HasLoadError)
 				{
-					PEFile? module = GetPEFileOrNull();
-					var metadata = module?.Metadata;
-					string? versionOrInfo = null;
-					if (metadata != null)
+					var result = GetLoadResultAsync().GetAwaiter().GetResult();
+					if (result.MetadataFile != null)
 					{
-						if (metadata.IsAssembly)
+						switch (result.MetadataFile.Kind)
 						{
-							versionOrInfo = metadata.GetAssemblyDefinition().Version?.ToString();
-							string tfId = GetTargetFrameworkIdAsync().GetAwaiter().GetResult();
-							if (!string.IsNullOrEmpty(tfId))
-								versionOrInfo += ", " + tfId.Replace("Version=", " ");
-						}
-						else
-						{
-							versionOrInfo = ".netmodule";
+							case MetadataFile.MetadataFileKind.PortableExecutable:
+								var metadata = result.MetadataFile.Metadata;
+								string? versionOrInfo;
+								if (metadata.IsAssembly)
+								{
+									versionOrInfo = metadata.GetAssemblyDefinition().Version?.ToString();
+									string tfId = GetTargetFrameworkIdAsync().GetAwaiter().GetResult();
+									if (!string.IsNullOrEmpty(tfId))
+										versionOrInfo += ", " + tfId.Replace("Version=", " ");
+								}
+								else
+								{
+									versionOrInfo = ".netmodule";
+								}
+								if (versionOrInfo == null)
+									return ShortName;
+								return string.Format("{0} ({1})", ShortName, versionOrInfo);
+							case MetadataFile.MetadataFileKind.ProgramDebugDatabase:
+								return ShortName + " (Debug Metadata)";
+							case MetadataFile.MetadataFileKind.Metadata:
+								return ShortName + " (Metadata)";
+							default:
+								return ShortName;
 						}
 					}
-					if (versionOrInfo == null)
-						return ShortName;
-					return string.Format("{0} ({1})", ShortName, versionOrInfo);
 				}
-				else
-				{
-					return ShortName;
-				}
+				return ShortName;
 			}
 		}
 
@@ -374,6 +388,24 @@ namespace ICSharpCode.ILSpyX
 				return new LoadResult(loadAssemblyException, zip);
 			}
 			catch (InvalidDataException)
+			{
+				// Not a compressed module, try other options below
+			}
+			// or it could be a standalone portable PDB
+			try
+			{
+				using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
+				{
+					var metadata = MetadataReaderProvider.FromMetadataStream(fileStream, MetadataStreamOptions.PrefetchMetadata);
+					var metadataFile = new MetadataFile(fileName, metadata);
+					lock (loadedAssemblies)
+					{
+						loadedAssemblies.Add(metadataFile, this);
+					}
+					return new LoadResult(loadAssemblyException, metadataFile);
+				}
+			}
+			catch (Exception)
 			{
 				throw loadAssemblyException;
 			}

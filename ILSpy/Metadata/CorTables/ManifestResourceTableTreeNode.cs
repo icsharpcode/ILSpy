@@ -22,22 +22,18 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
-using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
 	class ManifestResourceTableTreeNode : MetadataTableTreeNode
 	{
-		public ManifestResourceTableTreeNode(PEFile module)
-			: base(HandleKind.ManifestResource, module)
+		public ManifestResourceTableTreeNode(MetadataFile metadataFile)
+			: base(HandleKind.ManifestResource, metadataFile)
 		{
 		}
 
-		public override object Text => $"28 ManifestResource ({module.Metadata.GetTableRowCount(TableIndex.ManifestResource)})";
-
-		public override object Icon => Images.Literal;
+		public override object Text => $"28 ManifestResource ({metadataFile.Metadata.GetTableRowCount(TableIndex.ManifestResource)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -45,14 +41,14 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.SupportsLanguageSwitching = false;
 
 			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = module.Metadata;
+			var metadata = metadataFile.Metadata;
 
 			var list = new List<ManifestResourceEntry>();
 			ManifestResourceEntry scrollTargetEntry = default;
 
 			foreach (var row in metadata.ManifestResources)
 			{
-				ManifestResourceEntry entry = new ManifestResourceEntry(module, row);
+				ManifestResourceEntry entry = new ManifestResourceEntry(metadataFile, row);
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;
@@ -74,9 +70,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		struct ManifestResourceEntry
 		{
-			readonly int metadataOffset;
-			readonly PEFile module;
-			readonly MetadataReader metadata;
+			readonly MetadataFile metadataFile;
 			readonly ManifestResourceHandle handle;
 			readonly ManifestResource manifestResource;
 
@@ -84,16 +78,16 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Token => MetadataTokens.GetToken(handle);
 
-			public int Offset => metadataOffset
-				+ metadata.GetTableMetadataOffset(TableIndex.ManifestResource)
-				+ metadata.GetTableRowSize(TableIndex.ManifestResource) * (RID - 1);
+			public int Offset => metadataFile.MetadataOffset
+				+ metadataFile.Metadata.GetTableMetadataOffset(TableIndex.ManifestResource)
+				+ metadataFile.Metadata.GetTableRowSize(TableIndex.ManifestResource) * (RID - 1);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public ManifestResourceAttributes Attributes => manifestResource.Attributes;
 
 			public object AttributesTooltip => manifestResource.Attributes.ToString();
 
-			public string Name => metadata.GetString(manifestResource.Name);
+			public string Name => metadataFile.Metadata.GetString(manifestResource.Name);
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(manifestResource.Name):X} \"{Name}\"";
 
@@ -102,19 +96,17 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnImplementationClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, manifestResource.Implementation, protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, manifestResource.Implementation, protocol: "metadata"));
 			}
 
 			string implementationTooltip;
-			public string ImplementationTooltip => GenerateTooltip(ref implementationTooltip, module, manifestResource.Implementation);
+			public string ImplementationTooltip => GenerateTooltip(ref implementationTooltip, metadataFile, manifestResource.Implementation);
 
-			public ManifestResourceEntry(PEFile module, ManifestResourceHandle handle)
+			public ManifestResourceEntry(MetadataFile metadataFile, ManifestResourceHandle handle)
 			{
-				this.metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
-				this.module = module;
-				this.metadata = module.Metadata;
+				this.metadataFile = metadataFile;
 				this.handle = handle;
-				this.manifestResource = metadata.GetManifestResource(handle);
+				this.manifestResource = metadataFile.Metadata.GetManifestResource(handle);
 				this.implementationTooltip = null;
 			}
 		}

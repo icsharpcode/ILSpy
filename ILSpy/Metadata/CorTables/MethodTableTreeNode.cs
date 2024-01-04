@@ -16,18 +16,13 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Windows.Controls;
-using System.Windows.Threading;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
-using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -36,14 +31,12 @@ namespace ICSharpCode.ILSpy.Metadata
 {
 	internal class MethodTableTreeNode : MetadataTableTreeNode
 	{
-		public MethodTableTreeNode(PEFile module)
-			: base(HandleKind.MethodDefinition, module)
+		public MethodTableTreeNode(MetadataFile metadataFile)
+			: base(HandleKind.MethodDefinition, metadataFile)
 		{
 		}
 
-		public override object Text => $"06 Method ({module.Metadata.GetTableRowCount(TableIndex.MethodDef)})";
-
-		public override object Icon => Images.Literal;
+		public override object Text => $"06 Method ({metadataFile.Metadata.GetTableRowCount(TableIndex.MethodDef)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -51,13 +44,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.SupportsLanguageSwitching = false;
 
 			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = module.Metadata;
+			var metadata = metadataFile.Metadata;
 			var list = new List<MethodDefEntry>();
 			MethodDefEntry scrollTargetEntry = default;
 
 			foreach (var row in metadata.MethodDefinitions)
 			{
-				MethodDefEntry entry = new MethodDefEntry(module, row);
+				MethodDefEntry entry = new MethodDefEntry(metadataFile, row);
 				if (entry.RID == scrollTarget)
 				{
 					scrollTargetEntry = entry;
@@ -79,9 +72,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		struct MethodDefEntry : IMemberTreeNode
 		{
-			readonly int metadataOffset;
-			readonly PEFile module;
-			readonly MetadataReader metadata;
+			readonly MetadataFile metadataFile;
 			readonly MethodDefinitionHandle handle;
 			readonly MethodDefinition methodDef;
 
@@ -89,9 +80,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Token => MetadataTokens.GetToken(handle);
 
-			public int Offset => metadataOffset
-				+ metadata.GetTableMetadataOffset(TableIndex.MethodDef)
-				+ metadata.GetTableRowSize(TableIndex.MethodDef) * (RID - 1);
+			public int Offset => metadataFile.MetadataOffset
+				+ metadataFile.Metadata.GetTableMetadataOffset(TableIndex.MethodDef)
+				+ metadataFile.Metadata.GetTableRowSize(TableIndex.MethodDef) * (RID - 1);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public MethodAttributes Attributes => methodDef.Attributes;
@@ -114,7 +105,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int RVA => methodDef.RelativeVirtualAddress;
 
-			public string Name => metadata.GetString(methodDef.Name);
+			public string Name => metadataFile.Metadata.GetString(methodDef.Name);
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(methodDef.Name):X} \"{Name}\"";
 
@@ -123,14 +114,14 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			string signatureTooltip;
 
-			public string SignatureTooltip => GenerateTooltip(ref signatureTooltip, module, handle);
+			public string SignatureTooltip => GenerateTooltip(ref signatureTooltip, metadataFile, handle);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int ParamList => MetadataTokens.GetToken(methodDef.GetParameters().FirstOrDefault());
 
 			public void OnParamListClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(module, methodDef.GetParameters().FirstOrDefault(), protocol: "metadata"));
+				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, methodDef.GetParameters().FirstOrDefault(), protocol: "metadata"));
 			}
 
 			string paramListTooltip;
@@ -139,19 +130,17 @@ namespace ICSharpCode.ILSpy.Metadata
 					var param = methodDef.GetParameters().FirstOrDefault();
 					if (param.IsNil)
 						return null;
-					return GenerateTooltip(ref paramListTooltip, module, param);
+					return GenerateTooltip(ref paramListTooltip, metadataFile, param);
 				}
 			}
 
-			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule).GetDefinition(handle);
+			IEntity IMemberTreeNode.Member => ((MetadataModule)metadataFile.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule)?.GetDefinition(handle);
 
-			public MethodDefEntry(PEFile module, MethodDefinitionHandle handle)
+			public MethodDefEntry(MetadataFile metadataFile, MethodDefinitionHandle handle)
 			{
-				this.metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
-				this.module = module;
-				this.metadata = module.Metadata;
+				this.metadataFile = metadataFile;
 				this.handle = handle;
-				this.methodDef = metadata.GetMethodDefinition(handle);
+				this.methodDef = metadataFile.Metadata.GetMethodDefinition(handle);
 				this.signatureTooltip = null;
 				this.paramListTooltip = null;
 			}

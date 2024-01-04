@@ -21,11 +21,11 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Windows.Data;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 
@@ -33,19 +33,19 @@ namespace ICSharpCode.ILSpy.Metadata
 {
 	class MetadataTreeNode : ILSpyTreeNode
 	{
-		private readonly PEFile module;
-		private AssemblyTreeNode assemblyTreeNode;
+		private readonly MetadataFile metadataFile;
+		private readonly string title;
 
-		public MetadataTreeNode(PEFile module, AssemblyTreeNode assemblyTreeNode)
+		public MetadataTreeNode(MetadataFile module, string title)
 		{
-			this.module = module;
-			this.assemblyTreeNode = assemblyTreeNode;
+			this.metadataFile = module;
+			this.title = title;
 			this.LazyLoading = true;
 		}
 
-		public override object Text => Resources.Metadata;
+		public override object Text => title;
 
-		public override object Icon => Images.Library;
+		public override object Icon => Images.Metadata;
 
 		public override bool View(TabPageModel tabPage)
 		{
@@ -57,21 +57,52 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, "Metadata");
+			language.WriteCommentLine(output, title);
+
+			DumpMetadataInfo(language, output, this.metadataFile.Metadata);
+		}
+
+		internal static void DumpMetadataInfo(Language language, ITextOutput output, MetadataReader metadata)
+		{
+			language.WriteCommentLine(output, "MetadataKind: " + metadata.MetadataKind);
+			language.WriteCommentLine(output, "MetadataVersion: " + metadata.MetadataVersion);
+
+			if (metadata.DebugMetadataHeader is { } header)
+			{
+				output.WriteLine();
+				language.WriteCommentLine(output, "Header:");
+				language.WriteCommentLine(output, "Id: " + header.Id.ToHexString(header.Id.Length));
+				language.WriteCommentLine(output, "EntryPoint: " + MetadataTokens.GetToken(header.EntryPoint).ToString("X8"));
+			}
+
+			output.WriteLine();
+			language.WriteCommentLine(output, "Tables:");
+
+			foreach (var table in Enum.GetValues<TableIndex>())
+			{
+				int count = metadata.GetTableRowCount(table);
+				if (count > 0)
+				{
+					language.WriteCommentLine(output, $"{(byte)table:X2} {table}: {count} rows");
+				}
+			}
 		}
 
 		protected override void LoadChildren()
 		{
-			this.Children.Add(new DosHeaderTreeNode(module));
-			this.Children.Add(new CoffHeaderTreeNode(module));
-			this.Children.Add(new OptionalHeaderTreeNode(module));
-			this.Children.Add(new DataDirectoriesTreeNode(module));
-			this.Children.Add(new DebugDirectoryTreeNode(module));
-			this.Children.Add(new MetadataTablesTreeNode(module));
-			this.Children.Add(new StringHeapTreeNode(module, module.Metadata));
-			this.Children.Add(new UserStringHeapTreeNode(module, module.Metadata));
-			this.Children.Add(new GuidHeapTreeNode(module, module.Metadata));
-			this.Children.Add(new BlobHeapTreeNode(module, module.Metadata));
+			if (metadataFile is PEFile module)
+			{
+				this.Children.Add(new DosHeaderTreeNode(module));
+				this.Children.Add(new CoffHeaderTreeNode(module));
+				this.Children.Add(new OptionalHeaderTreeNode(module));
+				this.Children.Add(new DataDirectoriesTreeNode(module));
+				this.Children.Add(new DebugDirectoryTreeNode(module));
+			}
+			this.Children.Add(new MetadataTablesTreeNode(metadataFile));
+			this.Children.Add(new StringHeapTreeNode(metadataFile));
+			this.Children.Add(new UserStringHeapTreeNode(metadataFile));
+			this.Children.Add(new GuidHeapTreeNode(metadataFile));
+			this.Children.Add(new BlobHeapTreeNode(metadataFile));
 		}
 
 		public MetadataTableTreeNode FindNodeByHandleKind(HandleKind kind)
