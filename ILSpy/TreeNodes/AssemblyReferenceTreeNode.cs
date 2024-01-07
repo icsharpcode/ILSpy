@@ -75,7 +75,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver();
+			var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver(MainWindow.Instance.CurrentDecompilerSettings.AutoLoadAssemblyReferences);
 			var module = resolver.Resolve(r);
 			if (module != null)
 			{

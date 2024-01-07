@@ -1959,6 +1959,21 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool autoLoadAssemblyReferences = true;
+
+		[Category("DecompilerSettings.Other")]
+		[Description("DecompilerSettings.AutoLoadAssemblyReferences")]
+		public bool AutoLoadAssemblyReferences {
+			get { return autoLoadAssemblyReferences; }
+			set {
+				if (autoLoadAssemblyReferences != value)
+				{
+					autoLoadAssemblyReferences = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		#endregion
 
 		bool forStatement = true;

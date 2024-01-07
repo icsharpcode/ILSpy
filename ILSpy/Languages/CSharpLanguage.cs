@@ -122,7 +122,7 @@ namespace ICSharpCode.ILSpy
 
 		CSharpDecompiler CreateDecompiler(PEFile module, DecompilationOptions options)
 		{
-			CSharpDecompiler decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(), options.DecompilerSettings);
+			CSharpDecompiler decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(options.DecompilerSettings.AutoLoadAssemblyReferences), options.DecompilerSettings);
 			decompiler.CancellationToken = options.CancellationToken;
 			decompiler.DebugInfoProvider = module.GetDebugInfoOrNull();
 			while (decompiler.AstTransforms.Count > transformCount)
@@ -416,7 +416,7 @@ namespace ICSharpCode.ILSpy
 				base.DecompileAssembly(assembly, output, options);
 
 				// don't automatically load additional assemblies when an assembly node is selected in the tree view
-				IAssemblyResolver assemblyResolver = assembly.GetAssemblyResolver(loadOnDemand: options.FullDecompilation);
+				IAssemblyResolver assemblyResolver = assembly.GetAssemblyResolver(loadOnDemand: options.FullDecompilation && options.DecompilerSettings.AutoLoadAssemblyReferences);
 				var typeSystem = new DecompilerTypeSystem(module, assemblyResolver, options.DecompilerSettings);
 				var globalType = typeSystem.MainModule.TypeDefinitions.FirstOrDefault();
 				if (globalType != null)
@@ -507,7 +507,7 @@ namespace ICSharpCode.ILSpy
 			readonly DecompilationOptions options;
 
 			public ILSpyWholeProjectDecompiler(LoadedAssembly assembly, DecompilationOptions options)
-				: base(options.DecompilerSettings, assembly.GetAssemblyResolver(), assembly.GetAssemblyReferenceClassifier(options.DecompilerSettings.ApplyWindowsRuntimeProjections), assembly.GetDebugInfoOrNull())
+				: base(options.DecompilerSettings, assembly.GetAssemblyResolver(options.DecompilerSettings.AutoLoadAssemblyReferences, options.DecompilerSettings.ApplyWindowsRuntimeProjections), assembly.GetAssemblyReferenceClassifier(options.DecompilerSettings.ApplyWindowsRuntimeProjections), assembly.GetDebugInfoOrNull())
 			{
 				this.assembly = assembly;
 				this.options = options;
