@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Reflection.PortableExecutable;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -21,33 +18,11 @@ namespace ICSharpCode.Decompiler.Metadata
 {
 	public static class MetadataExtensions
 	{
-		static HashAlgorithm GetHashAlgorithm(this MetadataReader reader)
-		{
-			switch (reader.GetAssemblyDefinition().HashAlgorithm)
-			{
-				case AssemblyHashAlgorithm.None:
-					// only for multi-module assemblies?
-					return SHA1.Create();
-				case AssemblyHashAlgorithm.MD5:
-					return MD5.Create();
-				case AssemblyHashAlgorithm.Sha1:
-					return SHA1.Create();
-				case AssemblyHashAlgorithm.Sha256:
-					return SHA256.Create();
-				case AssemblyHashAlgorithm.Sha384:
-					return SHA384.Create();
-				case AssemblyHashAlgorithm.Sha512:
-					return SHA512.Create();
-				default:
-					return SHA1.Create(); // default?
-			}
-		}
-
 		static string CalculatePublicKeyToken(BlobHandle blob, MetadataReader reader)
 		{
 			// Calculate public key token:
-			// 1. hash the public key using the appropriate algorithm.
-			byte[] publicKeyTokenBytes = reader.GetHashAlgorithm().ComputeHash(reader.GetBlobBytes(blob));
+			// 1. hash the public key (always use SHA1).
+			byte[] publicKeyTokenBytes = SHA1.Create().ComputeHash(reader.GetBlobBytes(blob));
 			// 2. take the last 8 bytes
 			// 3. according to Cecil we need to reverse them, other sources did not mention this.
 			return publicKeyTokenBytes.TakeLast(8).Reverse().ToHexString(8);
