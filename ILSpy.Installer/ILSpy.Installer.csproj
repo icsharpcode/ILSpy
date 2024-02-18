@@ -15,8 +15,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="WixSharp" Version="1.22.0" />
-    <PackageReference Include="WixSharp.wix.bin" Version="3.14.0" />
+    <PackageReference Include="WixSharp" Version="1.25.1" />
+    <PackageReference Include="WixSharp.wix.bin" Version="3.14.0.1" />
   </ItemGroup>
 
   <ItemGroup>
