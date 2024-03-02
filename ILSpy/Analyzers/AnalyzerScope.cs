@@ -122,6 +122,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			while (typeScope != null && !accessibility.LessThanOrEqual(Accessibility.Private))
 			{
 				accessibility = accessibility.Intersect(typeScope.Accessibility);
+				prevTypeScope = typeScope;
 				typeScope = prevTypeScope.DeclaringTypeDefinition;
 			}
 			if (typeScope == null)
