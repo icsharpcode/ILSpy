@@ -1,14 +1,14 @@
 ﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -31,6 +31,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		readonly AssemblyReference r;
 		readonly AssemblyTreeNode parentAssembly;
+		private bool? moduleResolveFailed;
 
 		public AssemblyReferenceTreeNode(AssemblyReference r, AssemblyTreeNode parentAssembly)
 		{
@@ -45,7 +46,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			get { return Language.EscapeName(r.Name) + GetSuffixString(r.Handle); }
 		}
 
-		public override object Icon => Images.Assembly;
+		public override object Icon => moduleResolveFailed switch {
+			true => Images.AssemblyWarning,
+			_ => Images.Assembly
+		};
 
 		public override bool ShowExpander {
 			get {
@@ -79,9 +83,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			var module = resolver.Resolve(r);
 			if (module != null)
 			{
+				moduleResolveFailed = false;
 				foreach (var childRef in module.AssemblyReferences)
 					this.Children.Add(new AssemblyReferenceTreeNode(childRef, parentAssembly));
 			}
+			else
+			{
+				moduleResolveFailed = true;
+			}
+			RaisePropertyChanged(nameof(Icon));
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
@@ -100,7 +110,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				output.Indent();
 				language.WriteCommentLine(output, "Assembly reference loading information:");
 				if (info.HasErrors)
+				{
 					language.WriteCommentLine(output, "There were some problems during assembly reference load, see below for more information!");
+					moduleResolveFailed = true;
+				}
+				else
+				{
+					moduleResolveFailed = false;
+				}
 				foreach (var item in info.Messages)
 				{
 					language.WriteCommentLine(output, $"{item.Item1}: {item.Item2}");
@@ -108,6 +125,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				output.Unindent();
 				output.WriteLine();
 			}
+			RaisePropertyChanged(nameof(Icon));
 		}
 	}
 }
