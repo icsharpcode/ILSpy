@@ -165,6 +165,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
+		public string FullName {
+			get {
+				if (nestedTypes == null)
+					return topLevelType.Namespace + "." + topLevelType.Name;
+				StringBuilder b = new StringBuilder(topLevelType.Namespace);
+				b.Append('.');
+				b.Append(topLevelType.Name);
+				foreach (NestedTypeName nt in nestedTypes)
+				{
+					b.Append('.');
+					b.Append(nt.Name);
+				}
+				return b.ToString();
+			}
+		}
+
 		/// <summary>
 		/// Gets the total type parameter count.
 		/// </summary>
