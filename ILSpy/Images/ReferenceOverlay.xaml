@@ -1,0 +1,12 @@
+<DrawingGroup xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" ClipGeometry="M0,0 V16 H16 V0 H0 Z">
+	<DrawingGroup Opacity="1">
+		<GeometryDrawing Geometry="F1 M16,16z M0,0z M0,0L16,0 16,16 0,16z">
+			<GeometryDrawing.Brush>
+				<SolidColorBrush Color="#FFF6F6F6" Opacity="0" />
+			</GeometryDrawing.Brush>
+		</GeometryDrawing>
+		<GeometryDrawing Brush="#FFF6F6F6" Geometry="F1 M16,16z M0,0z M9,9L9,16 16,16 16,9z" />
+	</DrawingGroup>
+	<GeometryDrawing Brush="#FF424242" Geometry="F1 M16,16z M0,0z M10,10L10,15 15,15 15,10 10,10z M14,13L13,14 13,12.5 11.5,14 11,13.5 12.5,12 11,12 12,11 14,11 14,13z" />
+	<GeometryDrawing Brush="#FFF0EFF1" Geometry="F1 M16,16z M0,0z M14,11L14,13 13,14 13,12.5 11.5,14 11,13.5 12.5,12 11,12 12,11z" />
+</DrawingGroup>

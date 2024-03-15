@@ -1,0 +1,18 @@
+<DrawingGroup xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" ClipGeometry="M0,0 V16 H16 V0 H0 Z">
+	<DrawingGroup.Transform>
+		<TranslateTransform X="12.444443702697754" Y="12.444443702697754" />
+	</DrawingGroup.Transform>
+	<DrawingGroup Opacity="1" Transform="0.5625,0,0,1,7,12.444445">
+		<GeometryDrawing Geometry="F1 M16,16z M0,0z M16,-12.444444L16,3.5555556 -12.444444,3.5555556 -12.444444,-12.444444z">
+			<GeometryDrawing.Brush>
+				<SolidColorBrush Color="#FFF6F6F6" Opacity="0" />
+			</GeometryDrawing.Brush>
+		</GeometryDrawing>
+	</DrawingGroup>
+	<DrawingGroup Opacity="1" Transform="0.5625,0,0,0.5625,7,7">
+		<GeometryDrawing Brush="#FFF6F6F6" Geometry="F1 M16,16z M0,0z M5.793,0.879L8.621,3.707 7.328,5 10.5,5C13.533,5 16,7.467 16,10.5 16,13.532 13.533,16 10.5,16L9.5,16 9.5,12 10.5,12C11.327,12 12,11.327 12,10.5 12,9.673 11.327,9 10.5,9L7.328,9 8.621,10.293 5.793,13.121 0,7.328 0,6.672z" />
+	</DrawingGroup>
+	<DrawingGroup Opacity="1" Transform="0.5625,0,0,0.5625,7,7">
+		<GeometryDrawing Brush="#FF00539C" Geometry="F1 M16,16z M0,0z M5.793,2.293L7.207,3.707 4.914,6 10.5,6C12.981,6 15,8.019 15,10.5 15,12.981 12.981,15 10.5,15L10.5,13C11.878,13 13,11.879 13,10.5 13,9.121 11.878,8 10.5,8L4.914,8 7.207,10.293 5.793,11.707 1.086,7z" />
+	</DrawingGroup>
+</DrawingGroup>

@@ -50,9 +50,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override object Text => Signature + GetSuffixString(r.Handle);
 
 		public override object Icon => r.MemberReferenceKind switch {
-			MemberReferenceKind.Method => Images.Method,
-			MemberReferenceKind.Field => Images.Field,
-			_ => Images.Class,
+			MemberReferenceKind.Method => Images.MethodReference,
+			MemberReferenceKind.Field => Images.FieldReference,
+			_ => throw new NotSupportedException(),
 		};
 
 		public string Signature => resolvedMember is IMethod m ? Language.MethodToString(m, false, false, false) : Language.FieldToString((IField)resolvedMember, false, false, false);

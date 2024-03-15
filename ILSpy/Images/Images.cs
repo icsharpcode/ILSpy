@@ -27,6 +27,8 @@ namespace ICSharpCode.ILSpy
 {
 	static class Images
 	{
+		private static readonly Rect iconRect = new Rect(0, 0, 16, 16);
+
 		static ImageSource Load(string icon)
 		{
 			var image = new DrawingImage(LoadDrawingGroup(null, "Images/" + icon));
@@ -85,6 +87,7 @@ namespace ICSharpCode.ILSpy
 		public static readonly ImageSource Interface = Load("Interface");
 		public static readonly ImageSource Delegate = Load("Delegate");
 		public static readonly ImageSource Enum = Load("Enum");
+		public static readonly ImageSource Type = Load("ShowPublicOnly");
 
 		public static readonly ImageSource Field = Load("Field");
 		public static readonly ImageSource FieldReadOnly = Load("FieldReadOnly");
@@ -109,8 +112,14 @@ namespace ICSharpCode.ILSpy
 		private static readonly ImageSource OverlayPrivate = Load("OverlayPrivate");
 		private static readonly ImageSource OverlayPrivateProtected = Load("OverlayPrivateProtected");
 		private static readonly ImageSource OverlayCompilerControlled = Load("OverlayCompilerControlled");
+		private static readonly ImageSource OverlayReference = Load("ReferenceOverlay");
 
 		private static readonly ImageSource OverlayStatic = Load("OverlayStatic");
+
+		public static readonly ImageSource TypeReference = GetIcon("ShowPublicOnly", "ReferenceOverlay");
+		public static readonly ImageSource MethodReference = GetIcon("Method", "ReferenceOverlay");
+		public static readonly ImageSource FieldReference = GetIcon("Field", "ReferenceOverlay");
+		public static readonly ImageSource ExportedType = GetIcon("ShowPublicOnly", "ExportOverlay");
 
 		public static ImageSource Load(object part, string icon)
 		{
@@ -200,6 +209,45 @@ namespace ICSharpCode.ILSpy
 		{
 			lock (memberIconCache)
 				return memberIconCache.GetIcon(icon, overlay, isStatic);
+		}
+
+		private static ImageSource GetIcon(string baseImage, string overlay = null, bool isStatic = false)
+		{
+			ImageSource baseImageSource = Load(baseImage);
+			ImageSource overlayImageSource = overlay != null ? Load(overlay) : null;
+
+			return CreateOverlayImage(baseImageSource, overlayImageSource, isStatic);
+		}
+
+		private static ImageSource CreateOverlayImage(ImageSource baseImage, ImageSource overlay, bool isStatic)
+		{
+			var group = new DrawingGroup();
+
+			Drawing baseDrawing = new ImageDrawing(baseImage, iconRect);
+
+			if (overlay != null)
+			{
+				var nestedGroup = new DrawingGroup { Transform = new ScaleTransform(0.8, 0.8) };
+				nestedGroup.Children.Add(baseDrawing);
+				group.Children.Add(nestedGroup);
+				group.Children.Add(new ImageDrawing(overlay, iconRect));
+			}
+			else
+			{
+				group.Children.Add(baseDrawing);
+			}
+
+			if (isStatic)
+			{
+				group.Children.Add(new ImageDrawing(Images.OverlayStatic, iconRect));
+			}
+
+			var image = new DrawingImage(group);
+			if (image.CanFreeze)
+			{
+				image.Freeze();
+			}
+			return image;
 		}
 
 		#region icon caches & overlay management
@@ -379,39 +427,6 @@ namespace ICSharpCode.ILSpy
 						throw new ArgumentOutOfRangeException(nameof(overlay), $"AccessOverlayIcon.{overlay} is not supported!");
 				}
 				return overlayImage;
-			}
-
-			private static readonly Rect iconRect = new Rect(0, 0, 16, 16);
-
-			private static ImageSource CreateOverlayImage(ImageSource baseImage, ImageSource overlay, bool isStatic)
-			{
-				var group = new DrawingGroup();
-
-				Drawing baseDrawing = new ImageDrawing(baseImage, iconRect);
-
-				if (overlay != null)
-				{
-					var nestedGroup = new DrawingGroup { Transform = new ScaleTransform(0.8, 0.8) };
-					nestedGroup.Children.Add(baseDrawing);
-					group.Children.Add(nestedGroup);
-					group.Children.Add(new ImageDrawing(overlay, iconRect));
-				}
-				else
-				{
-					group.Children.Add(baseDrawing);
-				}
-
-				if (isStatic)
-				{
-					group.Children.Add(new ImageDrawing(Images.OverlayStatic, iconRect));
-				}
-
-				var image = new DrawingImage(group);
-				if (image.CanFreeze)
-				{
-					image.Freeze();
-				}
-				return image;
 			}
 		}
 

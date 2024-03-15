@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 
 		public override object Text => $"Referenced Types ({r.TypeReferences.Length + r.ExportedTypes.Length})";
-		public override object Icon => Images.Class;
+		public override object Icon => Images.MetadataTable;
 
 		protected override void LoadChildren()
 		{

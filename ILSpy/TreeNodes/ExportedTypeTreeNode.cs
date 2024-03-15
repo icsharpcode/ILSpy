@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override object Text
 			=> Language.TypeToString(resolvedType, includeNamespace: true) + GetSuffixString(r.Handle);
 
-		public override object Icon => Images.Library;
+		public override object Icon => Images.ExportedType;
 
 		protected override void LoadChildren()
 		{
