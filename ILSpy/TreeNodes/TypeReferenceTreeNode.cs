@@ -46,11 +46,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected override void LoadChildren()
 		{
+			foreach (var typeRef in r.TypeReferences)
+				this.Children.Add(new TypeReferenceTreeNode(module, typeRef));
+
 			foreach (var memberRef in r.MemberReferences)
 				this.Children.Add(new MemberReferenceTreeNode(module, memberRef));
 		}
 
-		public override bool ShowExpander => !r.MemberReferences.IsEmpty;
+		public override bool ShowExpander => !r.TypeReferences.IsEmpty || !r.MemberReferences.IsEmpty;
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
