@@ -362,7 +362,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			foreach (var p in methodDefinition.GetGenericParameters())
 			{
-				WriteGenericParameterAttributes(module, genericContext, p);
+				WriteGenericParametersAndAttributes(module, genericContext, p);
 			}
 			foreach (var p in methodDefinition.GetParameters())
 			{
@@ -1134,7 +1134,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteLine();
 		}
 
-		void WriteGenericParameterAttributes(PEFile module, MetadataGenericContext context, GenericParameterHandle handle)
+		void WriteGenericParametersAndAttributes(PEFile module, MetadataGenericContext context, GenericParameterHandle handle)
 		{
 			var metadata = module.Metadata;
 			var p = metadata.GetGenericParameter(handle);
@@ -1591,7 +1591,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			WriteSecurityDeclarations(module, typeDefinition.GetDeclarativeSecurityAttributes());
 			foreach (var tp in typeDefinition.GetGenericParameters())
 			{
-				WriteGenericParameterAttributes(module, genericContext, tp);
+				WriteGenericParametersAndAttributes(module, genericContext, tp);
 			}
 			var layout = typeDefinition.GetLayout();
 			if (!layout.IsDefault)
@@ -1808,6 +1808,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			foreach (CustomAttributeHandle a in Process(module, attributes))
 			{
 				output.Write(".custom ");
+				WriteMetadataToken(output, module, a, MetadataTokens.GetToken(a),
+					spaceAfter: true, spaceBefore: false, ShowMetadataTokens, ShowMetadataTokensInBase10);
 				var attr = metadata.GetCustomAttribute(a);
 				attr.Constructor.WriteTo(module, output, default);
 				if (!attr.Value.IsNil)
