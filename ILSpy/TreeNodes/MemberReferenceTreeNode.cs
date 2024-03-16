@@ -23,6 +23,7 @@ using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -31,16 +32,22 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class MemberReferenceTreeNode : ILSpyTreeNode
 	{
-		readonly PEFile module;
-		private readonly MemberReferenceMetadata r;
+		readonly MetadataModule module;
+		readonly MemberReferenceMetadata r;
+		readonly IMember resolvedMember;
 
-		public MemberReferenceTreeNode(PEFile module, MemberReferenceMetadata r)
+		public MemberReferenceTreeNode(MetadataModule module, MemberReferenceMetadata r)
 		{
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			this.r = r;
+			this.resolvedMember = r.MemberReferenceKind switch {
+				MemberReferenceKind.Method => module.ResolveMethod(r.Handle, default),
+				MemberReferenceKind.Field => (IMember)module.ResolveEntity(r.Handle),
+				_ => throw new NotSupportedException(),
+			};
 		}
 
-		public override object Text => r.Name + GetSuffixString(r.Handle);
+		public override object Text => Signature + GetSuffixString(r.Handle);
 
 		public override object Icon => r.MemberReferenceKind switch {
 			MemberReferenceKind.Method => Images.Method,
@@ -48,13 +55,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			_ => Images.Class,
 		};
 
-		public string Signature => Language.GetEntityName(module, r.Handle, fullName: true, omitGenerics: false);
+		public string Signature => resolvedMember is IMethod m ? Language.MethodToString(m, false, false, false) : Language.FieldToString((IField)resolvedMember, false, false, false);
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			language.WriteCommentLine(output, Signature);
 		}
 
-		public override object ToolTip => Signature;
+		public override object ToolTip => Language.GetRichTextTooltip(resolvedMember);
 	}
 }

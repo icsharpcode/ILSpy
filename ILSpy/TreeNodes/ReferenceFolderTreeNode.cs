@@ -22,6 +22,7 @@ using System.Windows.Threading;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -48,8 +49,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		protected override void LoadChildren()
 		{
 			var metadata = module.Metadata;
+			var metadataModule = (MetadataModule)module.GetTypeSystemWithCurrentOptionsOrNull().MainModule;
 			foreach (var r in module.AssemblyReferences.OrderBy(r => r.Name))
-				this.Children.Add(new AssemblyReferenceTreeNode(module, r, parentAssembly));
+				this.Children.Add(new AssemblyReferenceTreeNode(metadataModule, r, parentAssembly));
 			foreach (var r in metadata.GetModuleReferences().OrderBy(r => metadata.GetString(metadata.GetModuleReference(r).Name)))
 				this.Children.Add(new ModuleReferenceTreeNode(parentAssembly, r, module));
 		}

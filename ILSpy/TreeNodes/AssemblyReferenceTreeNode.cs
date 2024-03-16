@@ -21,6 +21,7 @@ using System.Windows.Threading;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -29,11 +30,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class AssemblyReferenceTreeNode : ILSpyTreeNode
 	{
-		readonly PEFile module;
+		readonly MetadataModule module;
 		readonly AssemblyReference r;
 		readonly AssemblyTreeNode parentAssembly;
 
-		public AssemblyReferenceTreeNode(PEFile module, AssemblyReference r, AssemblyTreeNode parentAssembly)
+		public AssemblyReferenceTreeNode(MetadataModule module, AssemblyReference r, AssemblyTreeNode parentAssembly)
 		{
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			this.r = r ?? throw new ArgumentNullException(nameof(r));
@@ -83,8 +84,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			var referencedModule = resolver.Resolve(r);
 			if (referencedModule != null)
 			{
+				var module = (MetadataModule)referencedModule.GetTypeSystemWithCurrentOptionsOrNull().MainModule;
 				foreach (var childRef in referencedModule.AssemblyReferences)
-					this.Children.Add(new AssemblyReferenceTreeNode(referencedModule, childRef, parentAssembly));
+					this.Children.Add(new AssemblyReferenceTreeNode(module, childRef, parentAssembly));
 			}
 		}
 

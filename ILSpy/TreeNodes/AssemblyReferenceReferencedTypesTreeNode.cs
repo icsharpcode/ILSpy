@@ -20,6 +20,7 @@ using System;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -28,10 +29,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class AssemblyReferenceReferencedTypesTreeNode : ILSpyTreeNode
 	{
-		private readonly PEFile module;
-		private readonly AssemblyReference r;
+		readonly MetadataModule module;
+		readonly AssemblyReference r;
 
-		public AssemblyReferenceReferencedTypesTreeNode(PEFile module, AssemblyReference r)
+		public AssemblyReferenceReferencedTypesTreeNode(MetadataModule module, AssemblyReference r)
 		{
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			this.r = r ?? throw new ArgumentNullException(nameof(r));

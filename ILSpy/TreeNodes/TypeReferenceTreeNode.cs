@@ -20,6 +20,7 @@ using System;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -28,19 +29,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class TypeReferenceTreeNode : ILSpyTreeNode
 	{
-		readonly PEFile module;
-		private readonly TypeReferenceMetadata r;
+		readonly MetadataModule module;
+		readonly TypeReferenceMetadata r;
+		readonly IType resolvedType;
 
-		public TypeReferenceTreeNode(PEFile module, TypeReferenceMetadata r)
+		public TypeReferenceTreeNode(MetadataModule module, TypeReferenceMetadata r)
 		{
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			this.r = r ?? throw new ArgumentNullException(nameof(r));
+			this.resolvedType = module.ResolveType(r.Handle, default);
 
 			this.LazyLoading = true;
 		}
 
 		public override object Text
-			=> Language.GetEntityName(module, r.Handle, fullName: true, omitGenerics: false) + GetSuffixString(r.Handle);
+			=> Language.TypeToString(resolvedType, includeNamespace: false) + GetSuffixString(r.Handle);
 
 		public override object Icon => Images.Class;
 
@@ -57,7 +60,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, $"{Language.GetEntityName(module, r.Handle, fullName: true, omitGenerics: false)}");
+			language.WriteCommentLine(output, Language.TypeToString(resolvedType, includeNamespace: true));
 			EnsureLazyChildren();
 			foreach (ILSpyTreeNode child in Children)
 			{

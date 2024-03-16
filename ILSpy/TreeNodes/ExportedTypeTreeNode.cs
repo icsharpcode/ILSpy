@@ -29,19 +29,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class ExportedTypeTreeNode : ILSpyTreeNode
 	{
-		readonly PEFile module;
-		private readonly ExportedTypeMetadata r;
+		readonly MetadataModule module;
+		readonly ExportedTypeMetadata r;
+		readonly IType resolvedType;
 
-		public ExportedTypeTreeNode(PEFile module, ExportedTypeMetadata r)
+		public ExportedTypeTreeNode(MetadataModule module, ExportedTypeMetadata r)
 		{
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			this.r = r ?? throw new ArgumentNullException(nameof(r));
+			this.resolvedType = module.ResolveType(r.Handle, default);
 
 			this.LazyLoading = true;
 		}
 
 		public override object Text
-			=> Language.GetEntityName(module, r.Handle, fullName: true, omitGenerics: false) + GetSuffixString(r.Handle);
+			=> Language.TypeToString(resolvedType, includeNamespace: true) + GetSuffixString(r.Handle);
 
 		public override object Icon => Images.Library;
 
@@ -55,7 +57,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, $"{Language.GetEntityName(module, r.Handle, fullName: true, omitGenerics: false)} (Exported, IsForwarder: {r.IsForwarder}, Attributes: {r.Attributes})");
+			language.WriteCommentLine(output, $"{Language.TypeToString(resolvedType, includeNamespace: true)} (Exported, IsForwarder: {r.IsForwarder}, Attributes: {(int)r.Attributes:X8})");
 		}
 	}
 }
