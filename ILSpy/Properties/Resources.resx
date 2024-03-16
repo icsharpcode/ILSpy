@@ -393,6 +393,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.NativeIntegers" xml:space="preserve">
     <value>Use nint/nuint types</value>
   </data>
+  <data name="DecompilerSettings.NaturalTypeForLambdaAndMethodGroup" xml:space="preserve">
+    <value>Use natural delegate types for lambdas and method groups</value>
+  </data>
   <data name="DecompilerSettings.NullPropagation" xml:space="preserve">
     <value>Decompile ?. and ?[] operators</value>
   </data>

@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 using System;
-using System.Collections.Generic;
 
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -66,6 +65,20 @@ namespace ICSharpCode.Decompiler
 			return false;
 		}
 
+		public static bool IsAnonymousDelegate(this IType type)
+		{
+			if (type == null)
+				return false;
+			if (string.IsNullOrEmpty(type.Namespace) && type.HasGeneratedName()
+				&& type.Kind == TypeKind.Delegate
+				&& (type.Name.Contains("AnonymousDelegate") || type.Name.StartsWith("<>F{")))
+			{
+				ITypeDefinition td = type.GetDefinition();
+				return td != null && td.IsCompilerGenerated();
+			}
+			return false;
+		}
+
 		public static bool ContainsAnonymousType(this IType type)
 		{
 			var visitor = new ContainsAnonTypeVisitor();
@@ -73,14 +86,31 @@ namespace ICSharpCode.Decompiler
 			return visitor.ContainsAnonType;
 		}
 
+		public static bool ContainsAnonymousDelegate(this IType type)
+		{
+			var visitor = new ContainsAnonTypeVisitor();
+			type.AcceptVisitor(visitor);
+			return visitor.ContainsAnonDelegate;
+		}
+
+		public static bool ContainsAnonymousTypeOrDelegate(this IType type)
+		{
+			var visitor = new ContainsAnonTypeVisitor();
+			type.AcceptVisitor(visitor);
+			return visitor.ContainsAnonType || visitor.ContainsAnonDelegate;
+		}
+
 		class ContainsAnonTypeVisitor : TypeVisitor
 		{
 			public bool ContainsAnonType;
+			public bool ContainsAnonDelegate;
 
 			public override IType VisitOtherType(IType type)
 			{
 				if (IsAnonymousType(type))
 					ContainsAnonType = true;
+				if (IsAnonymousDelegate(type))
+					ContainsAnonDelegate = true;
 				return base.VisitOtherType(type);
 			}
 
@@ -88,6 +118,8 @@ namespace ICSharpCode.Decompiler
 			{
 				if (IsAnonymousType(type))
 					ContainsAnonType = true;
+				if (IsAnonymousDelegate(type))
+					ContainsAnonDelegate = true;
 				return base.VisitTypeDefinition(type);
 			}
 		}

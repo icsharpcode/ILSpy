@@ -594,7 +594,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return name;
 			}
-			if (type.IsAnonymousType())
+			if (type.IsAnonymousType() || type.IsAnonymousDelegate())
 			{
 				name = "anon";
 			}

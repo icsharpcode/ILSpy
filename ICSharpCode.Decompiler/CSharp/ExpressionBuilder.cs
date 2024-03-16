@@ -2409,10 +2409,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				// C# 10 lambdas can have attributes, but anonymous methods cannot
 				isLambda = true;
 			}
-			else if (settings.UseLambdaSyntax && ame.Parameters.All(p => p.ParameterModifier == ParameterModifier.None))
+			else if (settings.UseLambdaSyntax)
 			{
 				// otherwise use lambda only if an expression lambda is possible
-				isLambda = (body.Statements.Count == 1 && body.Statements.Single() is ReturnStatement);
+				isLambda = body.Statements.Count == 1 && body.Statements.Single() is ReturnStatement;
 			}
 			// Remove the parameter list from an AnonymousMethodExpression if the parameters are not used in the method body
 			var parameterReferencingIdentifiers =

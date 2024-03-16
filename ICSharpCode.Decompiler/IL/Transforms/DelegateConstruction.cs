@@ -127,11 +127,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static bool ContainsAnonymousType(IMethod method)
 		{
-			if (method.ReturnType.ContainsAnonymousType())
+			if (method.ReturnType.ContainsAnonymousTypeOrDelegate())
 				return true;
 			foreach (var p in method.Parameters)
 			{
-				if (p.Type.ContainsAnonymousType())
+				if (p.Type.ContainsAnonymousTypeOrDelegate())
 					return true;
 			}
 			return false;

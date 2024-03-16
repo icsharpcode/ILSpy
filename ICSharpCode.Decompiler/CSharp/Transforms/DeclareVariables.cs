@@ -590,6 +590,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						type = new SimpleType("var");
 					}
+					else if (context.Settings.NaturalTypeForLambdaAndMethodGroup && v.Type.ContainsAnonymousDelegate())
+					{
+						type = new SimpleType("var");
+					}
 					else
 					{
 						type = context.TypeSystemAstBuilder.ConvertType(v.Type);
@@ -619,6 +623,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					// 'T v; SomeCall(out v);' can be combined to 'SomeCall(out T v);'
 					AstType type;
 					if (context.Settings.AnonymousTypes && v.Type.ContainsAnonymousType())
+					{
+						type = new SimpleType("var");
+					}
+					else if (context.Settings.NaturalTypeForLambdaAndMethodGroup && v.Type.ContainsAnonymousDelegate())
 					{
 						type = new SimpleType("var");
 					}

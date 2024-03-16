@@ -1110,6 +1110,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use natural delegate types for lambdas and method groups.
+        /// </summary>
+        public static string DecompilerSettings_NaturalTypeForLambdaAndMethodGroup {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.NaturalTypeForLambdaAndMethodGroup", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Nullable reference types.
         /// </summary>
         public static string DecompilerSettings_NullableReferenceTypes {

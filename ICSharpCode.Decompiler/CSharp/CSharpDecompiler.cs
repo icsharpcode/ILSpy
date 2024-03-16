@@ -327,6 +327,8 @@ namespace ICSharpCode.Decompiler.CSharp
 							return true;
 						if (settings.Dynamic && type.IsDelegate(metadata) && (name.StartsWith("<>A", StringComparison.Ordinal) || name.StartsWith("<>F", StringComparison.Ordinal)))
 							return true;
+						if (settings.AnonymousMethods && type.IsAnonymousDelegate(metadata))
+							return true;
 					}
 					if (settings.ArrayInitializers && settings.SwitchStatementOnString && name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
 						return true;
