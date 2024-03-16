@@ -362,6 +362,7 @@
     <Compile Include="IL\Transforms\TransformDisplayClassUsage.cs" />
     <Compile Include="IL\Transforms\UserDefinedLogicTransform.cs" />
     <Compile Include="Metadata\AssemblyReferences.cs" />
+    <Compile Include="Metadata\ExportedTypeMetadata.cs" />
     <Compile Include="Metadata\MemberReferenceMetadata.cs" />
     <Compile Include="Metadata\TypeReferenceMetadata.cs" />
     <Compile Include="Metadata\CodeMappingInfo.cs" />

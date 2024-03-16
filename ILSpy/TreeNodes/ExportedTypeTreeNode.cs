@@ -20,18 +20,19 @@ using System;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
-	/// Referenced Types node in assembly reference list
+	/// exported type within assembly reference list.
 	/// </summary>
-	public sealed class AssemblyReferenceReferencedTypesTreeNode : ILSpyTreeNode
+	public sealed class ExportedTypeTreeNode : ILSpyTreeNode
 	{
-		private readonly PEFile module;
-		private readonly AssemblyReference r;
+		readonly PEFile module;
+		private readonly ExportedTypeMetadata r;
 
-		public AssemblyReferenceReferencedTypesTreeNode(PEFile module, AssemblyReference r)
+		public ExportedTypeTreeNode(PEFile module, ExportedTypeMetadata r)
 		{
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			this.r = r ?? throw new ArgumentNullException(nameof(r));
@@ -39,25 +40,22 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.LazyLoading = true;
 		}
 
-		public override object Text => $"Referenced Types ({r.TypeReferences.Length + r.ExportedTypes.Length})";
-		public override object Icon => Images.Class;
+		public override object Text
+			=> Language.GetEntityName(module, r.Handle, fullName: true, omitGenerics: false) + GetSuffixString(r.Handle);
+
+		public override object Icon => Images.Library;
 
 		protected override void LoadChildren()
 		{
-			foreach (var typeRef in r.TypeReferences)
-				this.Children.Add(new TypeReferenceTreeNode(module, typeRef));
-
 			foreach (var exportedType in r.ExportedTypes)
 				this.Children.Add(new ExportedTypeTreeNode(module, exportedType));
 		}
 
-		public override bool ShowExpander => !r.TypeReferences.IsEmpty || !r.ExportedTypes.IsEmpty;
+		public override bool ShowExpander => !r.ExportedTypes.IsEmpty;
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			EnsureLazyChildren();
-			foreach (ILSpyTreeNode child in Children)
-				child.Decompile(language, output, options);
+			language.WriteCommentLine(output, $"{Language.GetEntityName(module, r.Handle, fullName: true, omitGenerics: false)} (Exported, IsForwarder: {r.IsForwarder}, Attributes: {r.Attributes})");
 		}
 	}
 }

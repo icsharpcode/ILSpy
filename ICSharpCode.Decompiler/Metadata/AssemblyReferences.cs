@@ -294,6 +294,24 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
+		ImmutableArray<ExportedTypeMetadata> exportedTypes;
+		public ImmutableArray<ExportedTypeMetadata> ExportedTypes {
+			get {
+				var value = exportedTypes;
+				if (value.IsDefault)
+				{
+					value = Metadata.ExportedTypes
+						.Select(r => new ExportedTypeMetadata(Metadata, r))
+						.Where(r => r.Implementation == Handle)
+						.OrderBy(r => r.Namespace)
+						.ThenBy(r => r.Name)
+						.ToImmutableArray();
+					exportedTypes = value;
+				}
+				return value;
+			}
+		}
+
 		public AssemblyReference(MetadataReader metadata, AssemblyReferenceHandle handle)
 		{
 			if (metadata == null)
