@@ -16,7 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
+using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
@@ -24,44 +27,34 @@ using ICSharpCode.Decompiler.Metadata;
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
-	/// referenced type within assembly reference list.
+	/// Reference to member from assembly reference list.
 	/// </summary>
-	public sealed class TypeReferenceTreeNode : ILSpyTreeNode
+	public sealed class MemberReferenceTreeNode : ILSpyTreeNode
 	{
 		readonly PEFile module;
-		private readonly TypeReferenceMetadata r;
+		private readonly MemberReferenceMetadata r;
 
-		public TypeReferenceTreeNode(PEFile module, TypeReferenceMetadata r)
+		public MemberReferenceTreeNode(PEFile module, MemberReferenceMetadata r)
 		{
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
-			this.r = r ?? throw new ArgumentNullException(nameof(r));
-
-			this.LazyLoading = true;
+			this.r = r;
 		}
 
-		public override object Text
-			=> Language.GetEntityName(module, r.Handle, fullName: true, omitGenerics: false) + GetSuffixString(r.Handle);
+		public override object Text => r.Name + GetSuffixString(r.Handle);
 
-		public override object Icon => Images.Class;
+		public override object Icon => r.MemberReferenceKind switch {
+			MemberReferenceKind.Method => Images.Method,
+			MemberReferenceKind.Field => Images.Field,
+			_ => Images.Class,
+		};
 
-		protected override void LoadChildren()
-		{
-			foreach (var memberRef in r.MemberReferences)
-				this.Children.Add(new MemberReferenceTreeNode(module, memberRef));
-		}
-
-		public override bool ShowExpander => !r.MemberReferences.IsEmpty;
+		public string Signature => Language.GetEntityName(module, r.Handle, fullName: true, omitGenerics: false);
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, $"{Language.GetEntityName(module, r.Handle, fullName: true, omitGenerics: false)}");
-			EnsureLazyChildren();
-			foreach (ILSpyTreeNode child in Children)
-			{
-				output.Indent();
-				child.Decompile(language, output, options);
-				output.Unindent();
-			}
+			language.WriteCommentLine(output, Signature);
 		}
+
+		public override object ToolTip => Signature;
 	}
 }

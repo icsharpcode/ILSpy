@@ -19,21 +19,23 @@
 #nullable enable
 
 using System;
-using System.Collections.Immutable;
-using System.Linq;
 using System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
 #if !VSADDIN
-	public sealed class TypeReferenceMetadata
+	/// <summary>
+	/// Convenience wrapper for <see cref="MemberReference"/> and <see cref="MemberReferenceHandle"/>.
+	/// </summary>
+	public sealed class MemberReferenceMetadata
 	{
-		readonly TypeReference entry;
+		readonly MemberReference entry;
 
 		public MetadataReader Metadata { get; }
-		public TypeReferenceHandle Handle { get; }
+		public MemberReferenceHandle Handle { get; }
 
 		string? name;
+
 		public string Name {
 			get {
 				try
@@ -42,71 +44,26 @@ namespace ICSharpCode.Decompiler.Metadata
 				}
 				catch (BadImageFormatException)
 				{
-					return name = $"TR:{Handle}";
+					return name = $"MR:{Handle}";
 				}
 			}
 		}
 
-		string? @namespace;
-		public string Namespace {
-			get {
-				try
-				{
-					return @namespace ??= Metadata.GetString(entry.Namespace);
-				}
-				catch (BadImageFormatException)
-				{
-					return @namespace = $"namespace(TR:{Handle})";
-				}
-			}
-		}
+		public EntityHandle Parent => entry.Parent;
 
-		public EntityHandle ResolutionScope => entry.ResolutionScope;
+		public MemberReferenceKind MemberReferenceKind => entry.GetKind();
 
-		ImmutableArray<MemberReferenceMetadata> memberReferences;
-		public ImmutableArray<MemberReferenceMetadata> MemberReferences {
-			get {
-				var value = memberReferences;
-				if (value.IsDefault)
-				{
-					value = Metadata.MemberReferences
-						.Select(r => new MemberReferenceMetadata(Metadata, r))
-						.Where(r => r.Parent == Handle)
-						.OrderBy(r => r.Name)
-						.ToImmutableArray();
-					memberReferences = value;
-				}
-				return value;
-			}
-		}
-
-		ImmutableArray<TypeReferenceMetadata> typeReferences;
-		public ImmutableArray<TypeReferenceMetadata> TypeReferences {
-			get {
-				var value = typeReferences;
-				if (value.IsDefault)
-				{
-					value = Metadata.TypeReferences
-						.Select(r => new TypeReferenceMetadata(Metadata, r))
-						.Where(r => r.ResolutionScope == Handle)
-						.OrderBy(r => r.Name)
-						.ToImmutableArray();
-					typeReferences = value;
-				}
-				return value;
-			}
-		}
-
-		public TypeReferenceMetadata(MetadataReader metadata, TypeReferenceHandle handle)
+		public MemberReferenceMetadata(MetadataReader metadata, MemberReferenceHandle handle)
 		{
 			Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
 			if (handle.IsNil)
 				throw new ArgumentNullException(nameof(handle));
 			Handle = handle;
-			entry = metadata.GetTypeReference(handle);
+			entry = metadata.GetMemberReference(handle);
 		}
 
-		public override string ToString() => $"{Namespace}::{Name}";
+		public override string ToString()
+			=> Name;
 	}
 #endif
 }
