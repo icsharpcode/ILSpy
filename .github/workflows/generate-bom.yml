@@ -19,7 +19,7 @@ jobs:
       run: dotnet tool install --global CycloneDX
       
     - name: Analyze
-      run: dotnet CycloneDX ILSpy/ILSpy.csproj --out sbom --recursive --exclude-dev --exclude-test-projects
+      run: dotnet-CycloneDX ILSpy/ILSpy.csproj --output sbom --recursive --exclude-dev --exclude-test-projects
 
     - name: Upload BOM
       uses: actions/upload-artifact@v4
