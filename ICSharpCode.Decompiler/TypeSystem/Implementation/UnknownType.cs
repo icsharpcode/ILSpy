@@ -95,6 +95,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return namespaceKnown ? fullTypeName.ReflectionName : "?"; }
 		}
 
+		public override string FullName {
+			get { return namespaceKnown ? fullTypeName.FullName : "?"; }
+		}
+
 		public FullTypeName FullTypeName => fullTypeName;
 
 		public override int TypeParameterCount => fullTypeName.TypeParameterCount;

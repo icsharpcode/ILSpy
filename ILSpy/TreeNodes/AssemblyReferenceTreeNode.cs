@@ -21,6 +21,7 @@ using System.Windows.Threading;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -29,17 +30,19 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class AssemblyReferenceTreeNode : ILSpyTreeNode
 	{
+		readonly MetadataModule module;
 		readonly AssemblyReference r;
 		readonly AssemblyTreeNode parentAssembly;
 
-		public AssemblyReferenceTreeNode(AssemblyReference r, AssemblyTreeNode parentAssembly)
+		public AssemblyReferenceTreeNode(MetadataModule module, AssemblyReference r, AssemblyTreeNode parentAssembly)
 		{
+			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			this.r = r ?? throw new ArgumentNullException(nameof(r));
 			this.parentAssembly = parentAssembly ?? throw new ArgumentNullException(nameof(parentAssembly));
 			this.LazyLoading = true;
 		}
 
-		public IAssemblyReference AssemblyNameReference => r;
+		public AssemblyReference AssemblyReference => r;
 
 		public override object Text {
 			get { return Language.EscapeName(r.Name) + GetSuffixString(r.Handle); }
@@ -75,12 +78,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected override void LoadChildren()
 		{
+			this.Children.Add(new AssemblyReferenceReferencedTypesTreeNode(module, r));
+
 			var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver(MainWindow.Instance.CurrentDecompilerSettings.AutoLoadAssemblyReferences);
-			var module = resolver.Resolve(r);
-			if (module != null)
+			var referencedModule = resolver.Resolve(r);
+			if (referencedModule != null)
 			{
-				foreach (var childRef in module.AssemblyReferences)
-					this.Children.Add(new AssemblyReferenceTreeNode(childRef, parentAssembly));
+				var module = (MetadataModule)referencedModule.GetTypeSystemWithCurrentOptionsOrNull().MainModule;
+				foreach (var childRef in referencedModule.AssemblyReferences)
+					this.Children.Add(new AssemblyReferenceTreeNode(module, childRef, parentAssembly));
 			}
 		}
 

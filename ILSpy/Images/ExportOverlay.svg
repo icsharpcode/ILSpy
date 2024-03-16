@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Generator: Adobe Illustrator 21.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+
+<svg
+   version="1.1"
+   x="0px"
+   y="0px"
+   viewBox="0 0 16 16"
+   style="enable-background:new 0 0 16 16;"
+   xml:space="preserve"
+   id="svg8"
+   sodipodi:docname="ExportOverlay.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   id="defs8" /><sodipodi:namedview
+   id="namedview8"
+   pagecolor="#ffffff"
+   bordercolor="#000000"
+   borderopacity="0.25"
+   inkscape:showpageshadow="2"
+   inkscape:pageopacity="0.0"
+   inkscape:pagecheckerboard="0"
+   inkscape:deskcolor="#d1d1d1"
+   inkscape:zoom="51.3125"
+   inkscape:cx="10.98173"
+   inkscape:cy="8"
+   inkscape:window-width="1920"
+   inkscape:window-height="1017"
+   inkscape:window-x="2552"
+   inkscape:window-y="-8"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="svg8" />
+<style
+   type="text/css"
+   id="style1">
+	.icon_x002D_canvas_x002D_transparent{opacity:0;fill:#F6F6F6;}
+	.icon_x002D_vs_x002D_out{fill:#F6F6F6;}
+	.icon_x002D_vs_x002D_action_x002D_blue{fill:#00539C;}
+</style>
+<g
+   id="canvas"
+   transform="matrix(0.5625,0,0,1,7,12.444445)">
+	<path
+   class="icon_x002D_canvas_x002D_transparent"
+   d="M 16,-12.444444 V 3.5555556 H -12.444444 V -12.444444 Z"
+   id="path1"
+   style="stroke-width:1.33333" />
+</g>
+<g
+   id="outline"
+   transform="matrix(0.5625,0,0,0.5625,7,7)">
+	<path
+   class="icon_x002D_vs_x002D_out"
+   d="M 5.793,0.879 8.621,3.707 7.328,5 H 10.5 c 3.033,0 5.5,2.467 5.5,5.5 0,3.032 -2.467,5.5 -5.5,5.5 h -1 v -4 h 1 C 11.327,12 12,11.327 12,10.5 12,9.673 11.327,9 10.5,9 H 7.328 L 8.621,10.293 5.793,13.121 0,7.328 V 6.672 Z"
+   id="path2" />
+</g>
+<g
+   id="iconBg"
+   transform="matrix(0.5625,0,0,0.5625,7,7)">
+	<path
+   class="icon_x002D_vs_x002D_action_x002D_blue"
+   d="M 5.793,2.293 7.207,3.707 4.914,6 H 10.5 C 12.981,6 15,8.019 15,10.5 15,12.981 12.981,15 10.5,15 V 13 C 11.878,13 13,11.879 13,10.5 13,9.121 11.878,8 10.5,8 H 4.914 L 7.207,10.293 5.793,11.707 1.086,7 Z"
+   id="path3" />
+	<g
+   id="g3">
+	</g>
+	<g
+   id="g4">
+	</g>
+	<g
+   id="g5">
+	</g>
+	<g
+   id="g6">
+	</g>
+	<g
+   id="g7">
+	</g>
+	<g
+   id="g8">
+	</g>
+</g>
+</svg>

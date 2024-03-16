@@ -17,9 +17,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Linq;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpy.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -28,6 +32,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	sealed class ModuleReferenceTreeNode : ILSpyTreeNode
 	{
+		readonly PEFile module;
 		readonly AssemblyTreeNode parentAssembly;
 		readonly MetadataReader metadata;
 		readonly ModuleReferenceHandle handle;
@@ -37,20 +42,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		readonly string moduleName;
 		readonly bool containsMetadata;
 
-		public ModuleReferenceTreeNode(AssemblyTreeNode parentAssembly, ModuleReferenceHandle r, MetadataReader module)
+		public ModuleReferenceTreeNode(AssemblyTreeNode parentAssembly, ModuleReferenceHandle r, PEFile module)
 		{
 			this.parentAssembly = parentAssembly ?? throw new ArgumentNullException(nameof(parentAssembly));
 			if (r.IsNil)
 				throw new ArgumentNullException(nameof(r));
-			this.metadata = module;
 			this.handle = r;
-			this.reference = module.GetModuleReference(r);
+			this.module = module ?? throw new ArgumentNullException(nameof(module));
+			this.metadata = module.Metadata;
+			this.reference = module.Metadata.GetModuleReference(r);
 			this.moduleName = Language.EscapeName(metadata.GetString(reference.Name));
 
-			foreach (var h in module.AssemblyFiles)
+			foreach (var h in metadata.AssemblyFiles)
 			{
-				var file = module.GetAssemblyFile(h);
-				if (module.StringComparer.Equals(file.Name, moduleName))
+				var file = metadata.GetAssemblyFile(h);
+				if (metadata.StringComparer.Equals(file.Name, moduleName))
 				{
 					this.file = file;
 					this.fileHandle = h;

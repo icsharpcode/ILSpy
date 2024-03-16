@@ -18,6 +18,7 @@ Icons used in ILSpy:
 | Enum                      |  x  |  x   | VS 2017 Icon Pack (Enumerator)                                                  |         |
 | EnumValue                 |  x  |  x   | VS 2017 Icon Pack (EnumItem)                                                    |         |
 | Event                     |  x  |  x   | VS 2017 Icon Pack (Event)                                                       |         |
+| ExportOverlay             |  x  |  x   | slightly modified VS 2017 Icon Pack (Export)                                    |         |
 | ExtensionMethod           |  x  |  x   | VS 2017 Icon Pack (ExtensionMethod)                                             |         |
 | Field                     |  x  |  x   | VS 2017 Icon Pack (Field)                                                       |         |
 | FieldReadOnly             |  x  |  x   | VS 2017 Icon Pack (Field) with different color                                  |         |
@@ -53,12 +54,13 @@ Icons used in ILSpy:
 | ProgramDebugDatabase      |  x  |  x   | VS 2017 Icon Pack (ProgramDebugDatabase)                                        |         |
 | Property                  |  x  |  x   | VS 2017 Icon Pack (Property)                                                    |         |
 | ReferenceFolder           |  x  |  x   | combined VS 2017 Icon Pack (Reference) two times                                |         |
+| ReferenceOverlay          |  x  |  x   | extracted arrow from VS 2017 Icon Pack (TypeShortcut)                           |         |
 | Refresh                   |  x  |  x   | VS 2017 Icon Pack (Refresh)                                                     |         |
 | Resource                  |  x  |  x   | VS 2017 Icon Pack (Document)                                                    |         |
 | ResourceImage             |  x  |  x   | VS 2017 Icon Pack (Image)                                                       |         |
 | ResourceResourcesFile     |  x  |  x   | VS 2017 Icon Pack (LocalResources)                                              |         |
 | ResourceXml               |  x  |  x   | VS 2017 Icon Pack (XMLFile)                                                     |         |
-| ResourceXsd               |  x  |  x   | combined VS 2017 Icon Pack (XMLSchema) with the "file symbol in ResourceXslt    |         |
+| ResourceXsd               |  x  |  x   | combined VS 2017 Icon Pack (XMLSchema) with the file symbol in ResourceXslt     |         |
 | ResourceXsl               |  x  |  x   | VS 2017 Icon Pack (XMLTransformation)                                           |         |
 | ResourceXslt              |  x  |  x   | VS 2017 Icon Pack (XSLTTemplate)                                                |         |
 | Save                      |  x  |  x   | VS 2017 Icon Pack (Save)                                                        |         |

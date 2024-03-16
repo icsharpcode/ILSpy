@@ -19,6 +19,7 @@
 #nullable enable
 
 using System;
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
@@ -273,6 +274,42 @@ namespace ICSharpCode.Decompiler.Metadata
 				return sha1.ComputeHash(bytes).Skip(12).ToArray();
 			}
 			return bytes;
+		}
+
+		ImmutableArray<TypeReferenceMetadata> typeReferences;
+		public ImmutableArray<TypeReferenceMetadata> TypeReferences {
+			get {
+				var value = typeReferences;
+				if (value.IsDefault)
+				{
+					value = Metadata.TypeReferences
+						.Select(r => new TypeReferenceMetadata(Metadata, r))
+						.Where(r => r.ResolutionScope == Handle)
+						.OrderBy(r => r.Namespace)
+						.ThenBy(r => r.Name)
+						.ToImmutableArray();
+					typeReferences = value;
+				}
+				return value;
+			}
+		}
+
+		ImmutableArray<ExportedTypeMetadata> exportedTypes;
+		public ImmutableArray<ExportedTypeMetadata> ExportedTypes {
+			get {
+				var value = exportedTypes;
+				if (value.IsDefault)
+				{
+					value = Metadata.ExportedTypes
+						.Select(r => new ExportedTypeMetadata(Metadata, r))
+						.Where(r => r.Implementation == Handle)
+						.OrderBy(r => r.Namespace)
+						.ThenBy(r => r.Name)
+						.ToImmutableArray();
+					exportedTypes = value;
+				}
+				return value;
+			}
 		}
 
 		public AssemblyReference(MetadataReader metadata, AssemblyReferenceHandle handle)
