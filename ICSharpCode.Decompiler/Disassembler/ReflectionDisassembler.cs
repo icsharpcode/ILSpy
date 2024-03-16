@@ -1609,7 +1609,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.Write(".interfaceimpl type ");
 					iface.Interface.WriteTo(module, output, genericContext, ILNameSyntax.TypeName);
 					output.WriteLine();
+					output.Indent();
 					WriteAttributes(module, customAttributes);
+					output.Unindent();
 					output.WriteLine();
 				}
 			}
