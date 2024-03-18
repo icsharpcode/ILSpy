@@ -15,7 +15,11 @@
   <ItemGroup>
     <Compile Remove="Properties\AssemblyInfo.template.cs" />
   </ItemGroup>
-  
+
+  <ItemGroup>
+    <Compile Remove="Baml\KnownThings.gen.cs" />
+  </ItemGroup>
+
   <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
