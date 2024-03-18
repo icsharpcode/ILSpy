@@ -23,6 +23,7 @@ using System.Linq;
 using System.Threading;
 using System.Xml.Linq;
 
+using ICSharpCode.BamlDecompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Tests.Helpers;
 using ICSharpCode.Decompiler.Util;

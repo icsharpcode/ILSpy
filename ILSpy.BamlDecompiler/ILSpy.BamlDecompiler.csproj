@@ -31,6 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ICSharpCode.BamlDecompiler\ICSharpCode.BamlDecompiler.csproj" />
     <ProjectReference Include="..\ILSpy\ILSpy.csproj" />
     <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
     <ProjectReference Include="..\SharpTreeView\ICSharpCode.TreeView.csproj" />
