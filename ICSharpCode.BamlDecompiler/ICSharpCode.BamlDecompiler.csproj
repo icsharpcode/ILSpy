@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
+    
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <GenerateAssemblyVersionAttribute>False</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyFileVersionAttribute>False</GenerateAssemblyFileVersionAttribute>
+    <GenerateAssemblyInformationalVersionAttribute>False</GenerateAssemblyInformationalVersionAttribute>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Properties\AssemblyInfo.template.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Baml\KnownThings.gen.cs" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <!-- Inject ILSpyUpdateAssemblyInfo as dependency of the GetPackageVersion
+    target so Pack uses the generated version when evaluating project references. -->
+  <PropertyGroup>
+    <GetPackageVersionDependsOn>
+      ILSpyUpdateAssemblyInfo;
+      $(GetPackageVersionDependsOn)
+    </GetPackageVersionDependsOn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
+  </ItemGroup>
+  
+  <Target Name="ILSpyUpdateAssemblyInfo" AfterTargets="ResolveProjectReferences">
+    <ReadLinesFromFile ContinueOnError="true" File="..\VERSION">
+      <Output TaskParameter="Lines" PropertyName="PackageVersion" />
+    </ReadLinesFromFile>
+  </Target>
+
+</Project>

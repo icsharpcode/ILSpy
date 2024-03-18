@@ -19,8 +19,8 @@
 using System;
 using System.ComponentModel.Composition;
 using System.IO;
-using System.Linq;
 
+using ICSharpCode.BamlDecompiler;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
