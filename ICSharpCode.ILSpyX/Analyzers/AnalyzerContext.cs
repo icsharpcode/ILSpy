@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable disable
+
 using System;
 using System.Collections.Concurrent;
 using System.Reflection.Metadata;
@@ -24,8 +26,9 @@ using System.Threading;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.Abstractions;
 
-namespace ICSharpCode.ILSpy.Analyzers
+namespace ICSharpCode.ILSpyX.Analyzers
 {
 	/// <summary>
 	/// Provides additional context for analyzers.
@@ -42,7 +45,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		/// <summary>
 		/// Currently used language.
 		/// </summary>
-		public Language Language { get; internal set; }
+		public ILanguage Language { get; internal set; }
 
 		/// <summary>
 		/// Allows the analyzer to control whether the tree nodes will be sorted.

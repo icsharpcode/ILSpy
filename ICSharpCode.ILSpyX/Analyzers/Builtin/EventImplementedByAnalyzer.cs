@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
@@ -23,13 +25,13 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.Analyzers.Builtin
+namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
 	/// <summary>
-	/// Shows events that override an event.
+	/// Shows events that implement an interface event.
 	/// </summary>
-	[ExportAnalyzer(Header = "Overridden By", Order = 20)]
-	class EventOverriddenByAnalyzer : IAnalyzer
+	[ExportAnalyzer(Header = "Implemented By", Order = 10)]
+	class EventImplementedByAnalyzer : IAnalyzer
 	{
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
@@ -53,19 +55,15 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 			foreach (var @event in type.Events)
 			{
-				if (!@event.IsOverride)
-					continue;
-				var baseMembers = InheritanceHelper.GetBaseMembers(@event, false);
-				if (baseMembers.Any(p => p.MetadataToken == token && p.ParentModule.PEFile == module))
-				{
+				var baseMembers = InheritanceHelper.GetBaseMembers(@event, true);
+				if (baseMembers.Any(m => m.MetadataToken == token && m.ParentModule.PEFile == module))
 					yield return @event;
-				}
 			}
 		}
 
 		public bool Show(ISymbol symbol)
 		{
-			return symbol is IEvent entity && entity.IsOverridable && entity.DeclaringType.Kind != TypeKind.Interface;
+			return symbol is IEvent entity && entity.DeclaringType.Kind == TypeKind.Interface;
 		}
 	}
 }

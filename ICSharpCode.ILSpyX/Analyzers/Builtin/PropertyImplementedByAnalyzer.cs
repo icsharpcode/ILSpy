@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
@@ -23,26 +25,26 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.Analyzers.Builtin
+namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
 	/// <summary>
-	/// Shows events that implement an interface event.
+	/// Shows properties that implement an interface property.
 	/// </summary>
 	[ExportAnalyzer(Header = "Implemented By", Order = 10)]
-	class EventImplementedByAnalyzer : IAnalyzer
+	class PropertyImplementedByAnalyzer : IAnalyzer
 	{
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
-			Debug.Assert(analyzedSymbol is IEvent);
-			var scope = context.GetScopeOf((IEvent)analyzedSymbol);
+			Debug.Assert(analyzedSymbol is IProperty);
+			var scope = context.GetScopeOf((IProperty)analyzedSymbol);
 			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
 			{
-				foreach (var result in AnalyzeType((IEvent)analyzedSymbol, type))
+				foreach (var result in AnalyzeType((IProperty)analyzedSymbol, type))
 					yield return result;
 			}
 		}
 
-		IEnumerable<IEntity> AnalyzeType(IEvent analyzedEntity, ITypeDefinition type)
+		IEnumerable<IEntity> AnalyzeType(IProperty analyzedEntity, ITypeDefinition type)
 		{
 			var token = analyzedEntity.MetadataToken;
 			var declaringTypeToken = analyzedEntity.DeclaringTypeDefinition.MetadataToken;
@@ -51,17 +53,17 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			if (!allTypes.Any(t => t.MetadataToken == declaringTypeToken && t.ParentModule.PEFile == module))
 				yield break;
 
-			foreach (var @event in type.Events)
+			foreach (var property in type.Properties)
 			{
-				var baseMembers = InheritanceHelper.GetBaseMembers(@event, true);
+				var baseMembers = InheritanceHelper.GetBaseMembers(property, true);
 				if (baseMembers.Any(m => m.MetadataToken == token && m.ParentModule.PEFile == module))
-					yield return @event;
+					yield return property;
 			}
 		}
 
 		public bool Show(ISymbol symbol)
 		{
-			return symbol is IEvent entity && entity.DeclaringType.Kind == TypeKind.Interface;
+			return symbol is IProperty entity && entity.DeclaringType.Kind == TypeKind.Interface;
 		}
 	}
 }

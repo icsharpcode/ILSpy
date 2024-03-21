@@ -31,11 +31,14 @@ using System.Windows.Navigation;
 using System.Windows.Threading;
 
 using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpyX.Analyzers;
 using ICSharpCode.ILSpyX.Settings;
 
 using Microsoft.VisualStudio.Composition;
 
 using TomsToolbox.Wpf.Styles;
+
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 namespace ICSharpCode.ILSpy
 {
@@ -132,6 +135,8 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 				// Add the built-in parts
+				var xParts = await discovery.CreatePartsAsync(typeof(IAnalyzer).Assembly);
+				catalog = catalog.AddParts(xParts);
 				var createdParts = await discovery.CreatePartsAsync(Assembly.GetExecutingAssembly());
 				catalog = catalog.AddParts(createdParts);
 				// If/When the project switches to .NET Standard/Core, this will be needed to allow metadata interfaces (as opposed

@@ -17,45 +17,31 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.Analyzers.Builtin
+namespace ICSharpCode.ILSpyX.Analyzers
 {
 	/// <summary>
-	/// Shows members from all corresponding interfaces the selected member implements.
+	/// Base interface for all analyzers. You can register an analyzer for any <see cref="ISymbol"/> by implementing
+	/// this interface and adding an <see cref="ExportAnalyzerAttribute"/>.
 	/// </summary>
-	[ExportAnalyzer(Header = "Implements", Order = 40)]
-	class MemberImplementsInterfaceAnalyzer : IAnalyzer
+	public interface IAnalyzer
 	{
-		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
-		{
-			Debug.Assert(analyzedSymbol is IMember);
-			var member = (IMember)analyzedSymbol;
+		/// <summary>
+		/// Returns true, if the analyzer should be shown for a symbol, otherwise false.
+		/// </summary>
+		bool Show(ISymbol symbol);
 
-			Debug.Assert(!member.IsStatic);
+		/// <summary>
+		/// Returns all symbols found by this analyzer.
+		/// </summary>
+		IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context);
+	}
 
-			var baseMembers = InheritanceHelper.GetBaseMembers(member, includeImplementedInterfaces: true);
-			return baseMembers.Where(m => m.DeclaringTypeDefinition.Kind == TypeKind.Interface);
-		}
-
-		public bool Show(ISymbol symbol)
-		{
-			switch (symbol?.SymbolKind)
-			{
-				case SymbolKind.Event:
-				case SymbolKind.Indexer:
-				case SymbolKind.Method:
-				case SymbolKind.Property:
-					var member = (IMember)symbol;
-					var type = member.DeclaringTypeDefinition;
-					return !member.IsStatic && type is not null && (type.Kind == TypeKind.Class || type.Kind == TypeKind.Struct);
-
-				default:
-					return false;
-			}
-		}
+	public interface IAnalyzerMetadata
+	{
+		string Header { get; }
+		int Order { get; }
 	}
 }

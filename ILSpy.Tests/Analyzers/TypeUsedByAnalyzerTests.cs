@@ -26,8 +26,8 @@ using System.Windows;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
-using ICSharpCode.ILSpy.Analyzers;
-using ICSharpCode.ILSpy.Analyzers.Builtin;
+using ICSharpCode.ILSpyX.Analyzers;
+using ICSharpCode.ILSpyX.Analyzers.Builtin;
 using ICSharpCode.ILSpyX;
 
 using NUnit.Framework;

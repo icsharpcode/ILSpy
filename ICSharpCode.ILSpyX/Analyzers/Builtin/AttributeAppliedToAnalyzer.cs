@@ -26,7 +26,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
-namespace ICSharpCode.ILSpy.Analyzers.Builtin
+namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
 	[ExportAnalyzer(Header = "Applied To", Order = 10)]
 	class AttributeAppliedToAnalyzer : IAnalyzer
