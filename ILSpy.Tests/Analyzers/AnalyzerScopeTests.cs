@@ -23,7 +23,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.Analyzers;
+using ICSharpCode.ILSpyX.Analyzers;
 
 using NUnit.Framework;
 

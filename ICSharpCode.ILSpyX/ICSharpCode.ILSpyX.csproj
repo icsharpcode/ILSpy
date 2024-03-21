@@ -62,6 +62,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.ComponentModel.Composition" />
     <PackageReference Include="System.Reflection.Metadata" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" />
     <PackageReference Include="System.Composition" />

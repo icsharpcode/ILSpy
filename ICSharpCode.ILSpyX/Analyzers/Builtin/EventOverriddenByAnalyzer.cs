@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
@@ -23,28 +25,26 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.Analyzers.Builtin
+namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
 	/// <summary>
-	/// Shows methods that override a method.
+	/// Shows events that override an event.
 	/// </summary>
-	[ExportAnalyzer(Header = "Overridden By", Order = 30)]
-	class MethodOverriddenByAnalyzer : IAnalyzer
+	[ExportAnalyzer(Header = "Overridden By", Order = 20)]
+	class EventOverriddenByAnalyzer : IAnalyzer
 	{
-		const GetMemberOptions Options = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
-
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
-			Debug.Assert(analyzedSymbol is IMethod);
-			var scope = context.GetScopeOf((IEntity)analyzedSymbol);
+			Debug.Assert(analyzedSymbol is IEvent);
+			var scope = context.GetScopeOf((IEvent)analyzedSymbol);
 			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
 			{
-				foreach (var result in AnalyzeType((IMethod)analyzedSymbol, type))
+				foreach (var result in AnalyzeType((IEvent)analyzedSymbol, type))
 					yield return result;
 			}
 		}
 
-		IEnumerable<IEntity> AnalyzeType(IMethod analyzedEntity, ITypeDefinition type)
+		IEnumerable<IEntity> AnalyzeType(IEvent analyzedEntity, ITypeDefinition type)
 		{
 			var token = analyzedEntity.MetadataToken;
 			var declaringTypeToken = analyzedEntity.DeclaringTypeDefinition.MetadataToken;
@@ -53,21 +53,21 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			if (!allTypes.Any(t => t.MetadataToken == declaringTypeToken && t.ParentModule.PEFile == module))
 				yield break;
 
-			foreach (var method in type.Methods)
+			foreach (var @event in type.Events)
 			{
-				if (!method.IsOverride)
+				if (!@event.IsOverride)
 					continue;
-				var baseMembers = InheritanceHelper.GetBaseMembers(method, false);
+				var baseMembers = InheritanceHelper.GetBaseMembers(@event, false);
 				if (baseMembers.Any(p => p.MetadataToken == token && p.ParentModule.PEFile == module))
 				{
-					yield return method;
+					yield return @event;
 				}
 			}
 		}
 
-		public bool Show(ISymbol entity)
+		public bool Show(ISymbol symbol)
 		{
-			return entity is IMethod method && method.IsOverridable && method.DeclaringType.Kind != TypeKind.Interface;
+			return symbol is IEvent entity && entity.IsOverridable && entity.DeclaringType.Kind != TypeKind.Interface;
 		}
 	}
 }

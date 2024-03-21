@@ -16,32 +16,48 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable disable
+
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.Analyzers
+namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
 	/// <summary>
-	/// Base interface for all analyzers. You can register an analyzer for any <see cref="ISymbol"/> by implementing
-	/// this interface and adding an <see cref="ExportAnalyzerAttribute"/>.
+	/// Shows members from all corresponding interfaces the selected member implements.
 	/// </summary>
-	public interface IAnalyzer
+	[ExportAnalyzer(Header = "Implements", Order = 40)]
+	class MemberImplementsInterfaceAnalyzer : IAnalyzer
 	{
-		/// <summary>
-		/// Returns true, if the analyzer should be shown for a symbol, otherwise false.
-		/// </summary>
-		bool Show(ISymbol symbol);
+		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
+		{
+			Debug.Assert(analyzedSymbol is IMember);
+			var member = (IMember)analyzedSymbol;
 
-		/// <summary>
-		/// Returns all symbols found by this analyzer.
-		/// </summary>
-		IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context);
-	}
+			Debug.Assert(!member.IsStatic);
 
-	public interface IAnalyzerMetadata
-	{
-		string Header { get; }
-		int Order { get; }
+			var baseMembers = InheritanceHelper.GetBaseMembers(member, includeImplementedInterfaces: true);
+			return baseMembers.Where(m => m.DeclaringTypeDefinition.Kind == TypeKind.Interface);
+		}
+
+		public bool Show(ISymbol symbol)
+		{
+			switch (symbol?.SymbolKind)
+			{
+				case SymbolKind.Event:
+				case SymbolKind.Indexer:
+				case SymbolKind.Method:
+				case SymbolKind.Property:
+					var member = (IMember)symbol;
+					var type = member.DeclaringTypeDefinition;
+					return !member.IsStatic && type is not null && (type.Kind == TypeKind.Class || type.Kind == TypeKind.Struct);
+
+				default:
+					return false;
+			}
+		}
 	}
 }

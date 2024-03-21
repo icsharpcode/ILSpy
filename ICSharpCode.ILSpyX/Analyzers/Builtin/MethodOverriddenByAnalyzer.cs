@@ -16,24 +16,25 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
+#nullable disable
+
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.Analyzers.Builtin
+namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
 	/// <summary>
-	/// Shows methods that implement an interface method.
+	/// Shows methods that override a method.
 	/// </summary>
-	[ExportAnalyzer(Header = "Implemented By", Order = 40)]
-	class MethodImplementedByAnalyzer : IAnalyzer
+	[ExportAnalyzer(Header = "Overridden By", Order = 30)]
+	class MethodOverriddenByAnalyzer : IAnalyzer
 	{
+		const GetMemberOptions Options = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
+
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
 			Debug.Assert(analyzedSymbol is IMethod);
@@ -56,15 +57,19 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 			foreach (var method in type.Methods)
 			{
-				var baseMembers = InheritanceHelper.GetBaseMembers(method, true);
-				if (baseMembers.Any(m => m.MetadataToken == token && m.ParentModule.PEFile == module))
+				if (!method.IsOverride)
+					continue;
+				var baseMembers = InheritanceHelper.GetBaseMembers(method, false);
+				if (baseMembers.Any(p => p.MetadataToken == token && p.ParentModule.PEFile == module))
+				{
 					yield return method;
+				}
 			}
 		}
 
 		public bool Show(ISymbol entity)
 		{
-			return entity is IMethod method && method.DeclaringType.Kind == TypeKind.Interface;
+			return entity is IMethod method && method.IsOverridable && method.DeclaringType.Kind != TypeKind.Interface;
 		}
 	}
 }

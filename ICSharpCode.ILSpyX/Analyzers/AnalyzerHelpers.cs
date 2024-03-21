@@ -16,12 +16,14 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable disable
+
 using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.Analyzers
+namespace ICSharpCode.ILSpyX.Analyzers
 {
 	internal static class AnalyzerHelpers
 	{

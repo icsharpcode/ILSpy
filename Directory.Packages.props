@@ -35,6 +35,7 @@
     <PackageVersion Include="NuGet.Protocol" Version="6.9.1" />
     <PackageVersion Include="PowerShellStandard.Library" Version="5.1.1" />
     <PackageVersion Include="System.Collections.Immutable" Version="8.0.0" />
+    <PackageVersion Include="System.ComponentModel.Composition" Version="8.0.0" />
     <PackageVersion Include="System.Composition" Version="8.0.0" />
     <PackageVersion Include="System.Memory" Version="4.5.5" />
     <PackageVersion Include="System.Reflection.Metadata" Version="8.0.0" />

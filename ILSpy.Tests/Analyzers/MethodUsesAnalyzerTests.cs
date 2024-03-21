@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 using System.Windows;
 
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.Analyzers;
-using ICSharpCode.ILSpy.Analyzers.Builtin;
+using ICSharpCode.ILSpyX.Analyzers;
+using ICSharpCode.ILSpyX.Analyzers.Builtin;
 using ICSharpCode.ILSpyX;
 
 using NUnit.Framework;

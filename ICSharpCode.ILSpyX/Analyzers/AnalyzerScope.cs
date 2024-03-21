@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -26,7 +28,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpyX;
 
-namespace ICSharpCode.ILSpy.Analyzers
+namespace ICSharpCode.ILSpyX.Analyzers
 {
 	using ICSharpCode.Decompiler.TypeSystem;
 
