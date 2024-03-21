@@ -38,8 +38,6 @@ using Microsoft.VisualStudio.Composition;
 
 using TomsToolbox.Wpf.Styles;
 
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
-
 namespace ICSharpCode.ILSpy
 {
 	/// <summary>
