@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Immutable;
+using System.IO;
+using System.IO.MemoryMappedFiles;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -747,6 +749,12 @@ namespace ICSharpCode.Decompiler
 				SignatureCallingConvention.Unmanaged => "unmanaged",
 				_ => callConv.ToString().ToLowerInvariant()
 			};
+		}
+
+		public static UnmanagedMemoryStream AsStream(this MemoryMappedViewAccessor view)
+		{
+			long size = checked((long)view.SafeMemoryMappedViewHandle.ByteLength);
+			return new UnmanagedMemoryStream(view.SafeMemoryMappedViewHandle, 0, size);
 		}
 	}
 }

@@ -51,6 +51,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 			PortableExecutable,
 			ProgramDebugDatabase,
+			WebCIL,
 			Metadata
 		}
 

@@ -383,6 +383,16 @@ namespace ICSharpCode.ILSpyX
 				bundle.LoadedAssembly = this;
 				return new LoadResult(loadAssemblyException, bundle);
 			}
+			// If it's not a .NET module, maybe it's a WASM module
+			var wasm = WebCilFile.FromStream(fileName);
+			if (wasm != null)
+			{
+				lock (loadedAssemblies)
+				{
+					loadedAssemblies.Add(wasm, this);
+				}
+				return new LoadResult(loadAssemblyException, wasm);
+			}
 			// If it's not a .NET module, maybe it's a zip archive (e.g. .nupkg)
 			try
 			{
