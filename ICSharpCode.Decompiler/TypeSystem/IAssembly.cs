@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the underlying metadata file. May return null, if the IAssembly was not created from a PE file.
 		/// </summary>
-		PEFile? PEFile { get; }
+		MetadataFile? MetadataFile { get; }
 
 		/// <summary>
 		/// Gets whether this assembly is the main assembly of the compilation.

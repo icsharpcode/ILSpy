@@ -311,7 +311,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				IMethod ctorMethod = staticCtor.GetSymbol() as IMethod;
 				if (!ctorMethod.MetadataToken.IsNil)
 				{
-					var metadata = context.TypeSystem.MainModule.PEFile.Metadata;
+					var metadata = context.TypeSystem.MainModule.MetadataFile.Metadata;
 					SRM.MethodDefinition ctorMethodDef = metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)ctorMethod.MetadataToken);
 					SRM.TypeDefinition declaringType = metadata.GetTypeDefinition(ctorMethodDef.GetDeclaringType());
 					bool declaringTypeIsBeforeFieldInit = declaringType.HasFlag(TypeAttributes.BeforeFieldInit);

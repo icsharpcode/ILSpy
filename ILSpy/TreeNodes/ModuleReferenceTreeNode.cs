@@ -17,13 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Linq;
 using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -32,7 +29,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	sealed class ModuleReferenceTreeNode : ILSpyTreeNode
 	{
-		readonly PEFile module;
+		readonly MetadataFile module;
 		readonly AssemblyTreeNode parentAssembly;
 		readonly MetadataReader metadata;
 		readonly ModuleReferenceHandle handle;
@@ -42,7 +39,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		readonly string moduleName;
 		readonly bool containsMetadata;
 
-		public ModuleReferenceTreeNode(AssemblyTreeNode parentAssembly, ModuleReferenceHandle r, PEFile module)
+		public ModuleReferenceTreeNode(AssemblyTreeNode parentAssembly, ModuleReferenceHandle r, MetadataFile module)
 		{
 			this.parentAssembly = parentAssembly ?? throw new ArgumentNullException(nameof(parentAssembly));
 			if (r.IsNil)
@@ -78,7 +75,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (assemblyListNode != null && containsMetadata)
 			{
 				var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver();
-				var mainModule = parentAssembly.LoadedAssembly.GetPEFileOrNull();
+				var mainModule = parentAssembly.LoadedAssembly.GetMetadataFileOrNull();
 				if (mainModule != null)
 				{
 					assemblyListNode.Select(assemblyListNode.FindAssemblyNode(resolver.ResolveModule(mainModule, metadata.GetString(reference.Name))));

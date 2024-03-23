@@ -19,15 +19,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Text;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -231,11 +228,11 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			this.functions.Add(function);
 			var method = function.MoveNextMethod ?? function.Method;
 			MethodDefinitionHandle handle = (MethodDefinitionHandle)method.MetadataToken;
-			var file = typeSystem.MainModule.PEFile;
+			var file = typeSystem.MainModule.MetadataFile;
 			MethodDefinition md = file.Metadata.GetMethodDefinition(handle);
 			if (md.HasBody())
 			{
-				HandleMethodBody(function, file.Reader.GetMethodBody(md.RelativeVirtualAddress));
+				HandleMethodBody(function, file.GetMethodBody(md.RelativeVirtualAddress));
 			}
 		}
 

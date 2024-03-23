@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpyX.Abstractions
 
 	public interface ITreeNodeFactory
 	{
-		ITreeNode CreateResourcesList(PEFile module);
+		ITreeNode CreateResourcesList(MetadataFile module);
 		ITreeNode Create(Resource resource);
 	}
 }

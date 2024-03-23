@@ -165,10 +165,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public AssemblyTreeNode FindAssemblyNode(IModule module)
 		{
-			return FindAssemblyNode(module.PEFile);
+			return FindAssemblyNode(module.MetadataFile);
 		}
 
-		public AssemblyTreeNode FindAssemblyNode(PEFile module)
+		public AssemblyTreeNode FindAssemblyNode(MetadataFile module)
 		{
 			if (module == null)
 				return null;

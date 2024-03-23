@@ -77,7 +77,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 					case DebugDirectoryEntryType.EmbeddedPortablePdb:
 						var embeddedPortablePdbProvider = module.Reader.ReadEmbeddedPortablePdbDebugDirectoryData(entry);
-						var embeddedPortablePdbMetadataFile = new MetadataFile(module.FileName, embeddedPortablePdbProvider, isEmbedded: true);
+						var embeddedPortablePdbMetadataFile = new MetadataFile(MetadataFile.MetadataFileKind.ProgramDebugDatabase, module.FileName, embeddedPortablePdbProvider, isEmbedded: true);
 						this.Children.Add(new MetadataTreeNode(embeddedPortablePdbMetadataFile, "Debug Metadata (Embedded)"));
 						break;
 

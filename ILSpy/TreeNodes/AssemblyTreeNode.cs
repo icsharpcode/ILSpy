@@ -128,7 +128,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				if (tooltip == null && LoadedAssembly.IsLoaded)
 				{
 					tooltip = new TextBlock();
-					var module = LoadedAssembly.GetPEFileOrNull();
+					var module = LoadedAssembly.GetMetadataFileOrNull() as PEFile;
 					var metadata = module?.Metadata;
 					if (metadata?.IsAssembly == true && metadata.TryGetFullAssemblyName(out var assemblyName))
 					{
@@ -196,23 +196,27 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			try
 			{
-				if (loadResult.PEFile != null)
+				if (loadResult.MetadataFile != null)
 				{
-					LoadChildrenForPEFile(loadResult.PEFile);
+					switch (loadResult.MetadataFile.Kind)
+					{
+						case MetadataFile.MetadataFileKind.PortableExecutable:
+							LoadChildrenForPEFile(loadResult.PEFile);
+							break;
+						default:
+							var metadata = loadResult.MetadataFile;
+							this.Children.Add(new MetadataTablesTreeNode(metadata));
+							this.Children.Add(new StringHeapTreeNode(metadata));
+							this.Children.Add(new UserStringHeapTreeNode(metadata));
+							this.Children.Add(new GuidHeapTreeNode(metadata));
+							this.Children.Add(new BlobHeapTreeNode(metadata));
+							break;
+					}
 				}
 				else if (loadResult.Package != null)
 				{
 					var package = loadResult.Package;
 					this.Children.AddRange(PackageFolderTreeNode.LoadChildrenForFolder(package.RootFolder));
-				}
-				else if (loadResult.MetadataFile != null)
-				{
-					var metadata = loadResult.MetadataFile;
-					this.Children.Add(new MetadataTablesTreeNode(metadata));
-					this.Children.Add(new StringHeapTreeNode(metadata));
-					this.Children.Add(new UserStringHeapTreeNode(metadata));
-					this.Children.Add(new GuidHeapTreeNode(metadata));
-					this.Children.Add(new BlobHeapTreeNode(metadata));
 				}
 			}
 			catch (Exception ex)
@@ -221,7 +225,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		void LoadChildrenForPEFile(PEFile module)
+		void LoadChildrenForPEFile(MetadataFile module)
 		{
 			typeSystem = LoadedAssembly.GetTypeSystemOrNull();
 			var assembly = (MetadataModule)typeSystem.MainModule;
@@ -400,7 +404,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				}
 				else
 				{
-					LoadedAssembly.GetPEFileOrNullAsync().GetAwaiter().GetResult();
+					LoadedAssembly.GetMetadataFileOrNullAsync().GetAwaiter().GetResult();
 				}
 			}
 			catch (BadImageFormatException badImage)
@@ -415,7 +419,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			{
 				HandleException(dirNotFound, "The directory was not found.");
 			}
-			catch (PEFileNotSupportedException notSupported)
+			catch (MetadataFileNotSupportedException notSupported)
 			{
 				HandleException(notSupported, notSupported.Message);
 			}
@@ -569,7 +573,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			{
 				var la = ((AssemblyTreeNode)node).LoadedAssembly;
 				var resolver = la.GetAssemblyResolver();
-				var module = la.GetPEFileOrNull();
+				var module = la.GetMetadataFileOrNull();
 				if (module != null)
 				{
 					var metadata = module.Metadata;

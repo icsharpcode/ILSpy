@@ -27,27 +27,27 @@ namespace ICSharpCode.ILSpyX
 			return Mono.Cecil.ModuleDefinition.ReadModule(new UnmanagedMemoryStream(image.Pointer, image.Length));
 		}
 
-		public static IAssemblyResolver GetAssemblyResolver(this PEFile file, bool loadOnDemand = true)
+		public static IAssemblyResolver GetAssemblyResolver(this MetadataFile file, bool loadOnDemand = true)
 		{
 			return GetLoadedAssembly(file).GetAssemblyResolver(loadOnDemand);
 		}
 
-		internal static IAssemblyResolver GetAssemblyResolver(this PEFile file, AssemblyListSnapshot snapshot, bool loadOnDemand = true)
+		internal static IAssemblyResolver GetAssemblyResolver(this MetadataFile file, AssemblyListSnapshot snapshot, bool loadOnDemand = true)
 		{
 			return GetLoadedAssembly(file).GetAssemblyResolver(snapshot, loadOnDemand);
 		}
 
-		public static IDebugInfoProvider? GetDebugInfoOrNull(this PEFile file)
+		public static IDebugInfoProvider? GetDebugInfoOrNull(this MetadataFile file)
 		{
 			return GetLoadedAssembly(file).GetDebugInfoOrNull();
 		}
 
-		public static ICompilation? GetTypeSystemOrNull(this PEFile file)
+		public static ICompilation? GetTypeSystemOrNull(this MetadataFile file)
 		{
 			return GetLoadedAssembly(file).GetTypeSystemOrNull();
 		}
 
-		public static ICompilation? GetTypeSystemWithDecompilerSettingsOrNull(this PEFile file, DecompilerSettings settings)
+		public static ICompilation? GetTypeSystemWithDecompilerSettingsOrNull(this MetadataFile file, DecompilerSettings settings)
 		{
 			return GetLoadedAssembly(file).GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(settings));
 		}

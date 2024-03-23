@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler
 
 		internal static string GetDocumentation(this IEntity entity)
 		{
-			var docProvider = XmlDocLoader.LoadDocumentation(entity.ParentModule.PEFile);
+			var docProvider = XmlDocLoader.LoadDocumentation(entity.ParentModule.MetadataFile);
 			if (docProvider == null)
 				return null;
 			return docProvider.GetDocumentation(entity);

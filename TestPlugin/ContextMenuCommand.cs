@@ -6,8 +6,6 @@ using System.Linq;
 using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.TreeNodes;
 
-using Microsoft.Win32;
-
 namespace TestPlugin
 {
 	[ExportContextMenuEntryAttribute(Header = "_Save Assembly")]
@@ -28,7 +26,7 @@ namespace TestPlugin
 			if (context.SelectedTreeNodes == null)
 				return;
 			AssemblyTreeNode node = (AssemblyTreeNode)context.SelectedTreeNodes[0];
-			var asm = node.LoadedAssembly.GetPEFileOrNull();
+			var asm = node.LoadedAssembly.GetMetadataFileOrNull();
 			if (asm != null)
 			{
 				/*SaveFileDialog dlg = new SaveFileDialog();

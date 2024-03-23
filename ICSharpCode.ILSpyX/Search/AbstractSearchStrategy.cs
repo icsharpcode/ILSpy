@@ -78,7 +78,7 @@ namespace ICSharpCode.ILSpyX.Search
 			this.omitGenerics = request.OmitGenerics;
 		}
 
-		public abstract void Search(PEFile module, CancellationToken cancellationToken);
+		public abstract void Search(MetadataFile module, CancellationToken cancellationToken);
 
 		protected virtual bool IsMatch(string name)
 		{

@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		string ISymbol.Name => "corlib";
 		SymbolKind ISymbol.SymbolKind => SymbolKind.Module;
 
-		Metadata.PEFile IModule.PEFile => null;
+		Metadata.MetadataFile IModule.MetadataFile => null;
 		INamespace IModule.RootNamespace => rootNamespace;
 
 		public IEnumerable<ITypeDefinition> TopLevelTypeDefinitions => typeDefinitions.Where(td => td != null);

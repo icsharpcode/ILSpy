@@ -25,7 +25,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 {
 	internal static class AnalyzerHelpers
 	{
-		public static bool IsPossibleReferenceTo(EntityHandle member, PEFile module, IMethod analyzedMethod)
+		public static bool IsPossibleReferenceTo(EntityHandle member, MetadataFile module, IMethod analyzedMethod)
 		{
 			if (member.IsNil)
 				return false;
@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			{
 				case HandleKind.MethodDefinition:
 					return member == analyzedMethod.MetadataToken
-						&& module == analyzedMethod.ParentModule.PEFile;
+						&& module == analyzedMethod.ParentModule.MetadataFile;
 				case HandleKind.MemberReference:
 					var mr = metadata.GetMemberReference((MemberReferenceHandle)member);
 					if (mr.GetKind() != MemberReferenceKind.Method)
@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public static ISymbol GetParentEntity(DecompilerTypeSystem ts, CustomAttribute customAttribute)
 		{
-			var metadata = ts.MainModule.PEFile.Metadata;
+			var metadata = ts.MainModule.MetadataFile.Metadata;
 			switch (customAttribute.Parent.Kind)
 			{
 				case HandleKind.MethodDefinition:

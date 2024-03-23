@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.Documentation
 	public static class XmlDocLoader
 	{
 		static readonly Lazy<XmlDocumentationProvider> mscorlibDocumentation = new Lazy<XmlDocumentationProvider>(LoadMscorlibDocumentation);
-		static readonly ConditionalWeakTable<PEFile, XmlDocumentationProvider> cache = new ConditionalWeakTable<PEFile, XmlDocumentationProvider>();
+		static readonly ConditionalWeakTable<MetadataFile, XmlDocumentationProvider> cache = new();
 
 		static XmlDocumentationProvider LoadMscorlibDocumentation()
 		{
@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			get { return mscorlibDocumentation.Value; }
 		}
 
-		public static XmlDocumentationProvider LoadDocumentation(PEFile module)
+		public static XmlDocumentationProvider LoadDocumentation(MetadataFile module)
 		{
 			if (module == null)
 				throw new ArgumentNullException(nameof(module));

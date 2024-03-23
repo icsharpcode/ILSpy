@@ -51,10 +51,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		readonly MetadataEvent[] eventDefs;
 		readonly IModule[] referencedAssemblies;
 
-		internal MetadataModule(ICompilation compilation, Metadata.PEFile peFile, TypeSystemOptions options)
+		internal MetadataModule(ICompilation compilation, MetadataFile peFile, TypeSystemOptions options)
 		{
 			this.Compilation = compilation;
-			this.PEFile = peFile;
+			this.MetadataFile = peFile;
 			this.metadata = peFile.Metadata;
 			this.options = options;
 			this.TypeProvider = new TypeProvider(this);
@@ -112,8 +112,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public TypeSystemOptions TypeSystemOptions => options;
 
-		#region IAssembly interface
-		public PEFile PEFile { get; }
+		#region IModule interface
+		public MetadataFile MetadataFile { get; }
 
 		public bool IsMainModule => this == Compilation.MainModule;
 
@@ -129,10 +129,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public ITypeDefinition GetTypeDefinition(TopLevelTypeName topLevelTypeName)
 		{
-			var typeDefHandle = PEFile.GetTypeDefinition(topLevelTypeName);
+			var typeDefHandle = MetadataFile.GetTypeDefinition(topLevelTypeName);
 			if (typeDefHandle.IsNil)
 			{
-				var forwarderHandle = PEFile.GetTypeForwarder(topLevelTypeName);
+				var forwarderHandle = MetadataFile.GetTypeForwarder(topLevelTypeName);
 				if (!forwarderHandle.IsNil)
 				{
 					var forwarder = metadata.GetExportedType(forwarderHandle);

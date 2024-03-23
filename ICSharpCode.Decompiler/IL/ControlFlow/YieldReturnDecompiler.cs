@@ -496,7 +496,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				classTypeParameters: (genericContext.ClassTypeParameters ?? EmptyList<ITypeParameter>.Instance)
 						.Concat(genericContext.MethodTypeParameters ?? EmptyList<ITypeParameter>.Instance).ToArray(),
 				methodTypeParameters: null);
-			var body = context.TypeSystem.MainModule.PEFile.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+			var body = context.TypeSystem.MainModule.MetadataFile.GetMethodBody(methodDef.RelativeVirtualAddress);
 			var il = context.CreateILReader()
 				.ReadIL(method, body, genericContext, ILFunctionKind.TopLevelFunction, context.CancellationToken);
 			il.RunTransforms(CSharpDecompiler.EarlyILTransforms(true),
@@ -1438,7 +1438,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				ITypeDefinition declaringTypeDefinition = call.Method.DeclaringTypeDefinition;
 				if (declaringTypeDefinition.MetadataToken != this.enumeratorType)
 					return false;
-				if (declaringTypeDefinition.ParentModule.PEFile.Metadata != metadata)
+				if (declaringTypeDefinition.ParentModule.MetadataFile.Metadata != metadata)
 					return false;
 				finallyMethod = call.Method;
 				return !call.Method.MetadataToken.IsNil;

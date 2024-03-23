@@ -710,7 +710,7 @@ namespace ICSharpCode.ILSpy
 						{
 							// FindNamespaceNode() blocks the UI if the assembly is not yet loaded,
 							// so use an async wait instead.
-							await asm.GetPEFileAsync().Catch<Exception>(ex => { });
+							await asm.GetMetadataFileAsync().Catch<Exception>(ex => { });
 							NamespaceTreeNode nsNode = asmNode.FindNamespaceNode(namespaceName);
 							if (nsNode != null)
 							{
@@ -736,7 +736,7 @@ namespace ICSharpCode.ILSpy
 					// Make sure we wait for assemblies being loaded...
 					// BeginInvoke in LoadedAssembly.LookupReferencedAssemblyInternal
 					await Dispatcher.InvokeAsync(delegate { }, DispatcherPriority.Normal);
-					if (mr != null && mr.ParentModule.PEFile != null)
+					if (mr != null && mr.ParentModule.MetadataFile != null)
 					{
 						found = true;
 						if (AssemblyTreeView.SelectedItem == initialSelection)
@@ -773,7 +773,7 @@ namespace ICSharpCode.ILSpy
 						{
 							// FindNodeByPath() blocks the UI if the assembly is not yet loaded,
 							// so use an async wait instead.
-							await asm.GetPEFileAsync().Catch<Exception>(ex => { });
+							await asm.GetMetadataFileAsync().Catch<Exception>(ex => { });
 						}
 					}
 					node = FindNodeByPath(activeTreeViewPath, true);
@@ -810,12 +810,12 @@ namespace ICSharpCode.ILSpy
 			}
 			foreach (LoadedAssembly asm in relevantAssemblies.ToList())
 			{
-				var module = asm.GetPEFileOrNull();
+				var module = asm.GetMetadataFileOrNull();
 				if (CanResolveTypeInPEFile(module, typeRef, out var typeHandle))
 				{
 					ICompilation compilation = typeHandle.Kind == HandleKind.ExportedType
 						? new DecompilerTypeSystem(module, module.GetAssemblyResolver())
-						: new SimpleCompilation(module, MinimalCorlib.Instance);
+						: new SimpleCompilation((PEFile)module, MinimalCorlib.Instance);
 					return memberRef == null
 						? typeRef.Resolve(new SimpleTypeResolveContext(compilation)) as ITypeDefinition
 						: (IEntity)memberRef.Resolve(new SimpleTypeResolveContext(compilation));
@@ -824,9 +824,9 @@ namespace ICSharpCode.ILSpy
 			return null;
 		}
 
-		static bool CanResolveTypeInPEFile(PEFile module, ITypeReference typeRef, out EntityHandle typeHandle)
+		static bool CanResolveTypeInPEFile(MetadataFile module, ITypeReference typeRef, out EntityHandle typeHandle)
 		{
-			if (module == null)
+			if (module is not PEFile)
 			{
 				typeHandle = default;
 				return false;
@@ -1259,7 +1259,7 @@ namespace ICSharpCode.ILSpy
 			{
 				case LoadedAssembly lasm:
 					return assemblyListTreeNode.FindAssemblyNode(lasm);
-				case PEFile asm:
+				case MetadataFile asm:
 					return assemblyListTreeNode.FindAssemblyNode(asm);
 				case Resource res:
 					return assemblyListTreeNode.FindResourceNode(res);

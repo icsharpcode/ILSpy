@@ -143,7 +143,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ MethodImplAttributes.AggressiveInlining, "aggressiveinlining" },
 		};
 
-		public void DisassembleMethod(PEFile module, MethodDefinitionHandle handle)
+		public void DisassembleMethod(MetadataFile module, MethodDefinitionHandle handle)
 		{
 			var genericContext = new MetadataGenericContext(handle, module);
 			// write method header
@@ -153,7 +153,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			DisassembleMethodBlock(module, handle, genericContext);
 		}
 
-		public void DisassembleMethodHeader(PEFile module, MethodDefinitionHandle handle)
+		public void DisassembleMethodHeader(MetadataFile module, MethodDefinitionHandle handle)
 		{
 			var genericContext = new MetadataGenericContext(handle, module);
 			// write method header
@@ -162,7 +162,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			DisassembleMethodHeaderInternal(module, handle, genericContext);
 		}
 
-		void DisassembleMethodHeaderInternal(PEFile module, MethodDefinitionHandle handle, MetadataGenericContext genericContext)
+		void DisassembleMethodHeaderInternal(MetadataFile module, MethodDefinitionHandle handle, MetadataGenericContext genericContext)
 		{
 			var metadata = module.Metadata;
 
@@ -310,7 +310,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.Unindent();
 		}
 
-		internal static void WriteMetadataToken(ITextOutput output, PEFile module, Handle? handle,
+		internal static void WriteMetadataToken(ITextOutput output, MetadataFile module, Handle? handle,
 			int metadataToken, bool spaceAfter, bool spaceBefore, bool showMetadataTokens, bool base10)
 		{
 			// handle can be null in case of errors, if that's the case, we always want to print a comment,
@@ -344,7 +344,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		void DisassembleMethodBlock(PEFile module, MethodDefinitionHandle handle,
+		void DisassembleMethodBlock(MetadataFile module, MethodDefinitionHandle handle,
 			MetadataGenericContext genericContext)
 		{
 			var metadata = module.Metadata;
@@ -380,7 +380,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		}
 
 		#region Write Security Declarations
-		void WriteSecurityDeclarations(PEFile module, DeclarativeSecurityAttributeHandleCollection secDeclProvider)
+		void WriteSecurityDeclarations(MetadataFile module, DeclarativeSecurityAttributeHandleCollection secDeclProvider)
 		{
 			if (secDeclProvider.Count == 0)
 				return;
@@ -479,9 +479,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			readonly ITextOutput output;
 			readonly IAssemblyResolver resolver;
-			readonly PEFile module;
+			readonly MetadataFile module;
 
-			public SecurityDeclarationDecoder(ITextOutput output, IAssemblyResolver resolver, PEFile module)
+			public SecurityDeclarationDecoder(ITextOutput output, IAssemblyResolver resolver, MetadataFile module)
 			{
 				this.output = output;
 				this.resolver = resolver;
@@ -535,11 +535,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 				return "type" == type.Item2;
 			}
 
-			(PEFile, TypeDefinitionHandle) ResolveType(string typeName, PEFile module)
+			(MetadataFile, TypeDefinitionHandle) ResolveType(string typeName, MetadataFile module)
 			{
 				string[] nameParts = typeName.Split(new[] { ", " }, 2, StringSplitOptions.None);
 				string[] typeNameParts = nameParts[0].Split('.');
-				PEFile containingModule = null;
+				MetadataFile containingModule = null;
 				TypeDefinitionHandle typeDefHandle = default;
 				// if we deal with an assembly-qualified name, resolve the assembly
 				if (nameParts.Length == 2)
@@ -564,7 +564,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 				return (containingModule, typeDefHandle);
 
-				TypeDefinitionHandle FindType(PEFile currentModule, string[] name)
+				TypeDefinitionHandle FindType(MetadataFile currentModule, string[] name)
 				{
 					var metadata = currentModule.Metadata;
 					var currentNamespace = metadata.GetNamespaceDefinitionRoot();
@@ -618,9 +618,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 				return typeCode;
 			}
 
-			PEFile mscorlib;
+			MetadataFile mscorlib;
 
-			bool TryResolveMscorlib(out PEFile mscorlib)
+			bool TryResolveMscorlib(out MetadataFile mscorlib)
 			{
 				mscorlib = null;
 				if (this.mscorlib != null)
@@ -637,7 +637,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		void TryDecodeSecurityDeclaration(TextOutputWithRollback output, BlobReader blob, PEFile module)
+		void TryDecodeSecurityDeclaration(TextOutputWithRollback output, BlobReader blob, MetadataFile module)
 		{
 			output.WriteLine(" = {");
 			output.Indent();
@@ -1134,7 +1134,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteLine();
 		}
 
-		void WriteGenericParametersAndAttributes(PEFile module, MetadataGenericContext context, GenericParameterHandle handle)
+		void WriteGenericParametersAndAttributes(MetadataFile module, MetadataGenericContext context, GenericParameterHandle handle)
 		{
 			var metadata = module.Metadata;
 			var p = metadata.GetGenericParameter(handle);
@@ -1161,7 +1161,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		void WriteParameterAttributes(PEFile module, ParameterHandle handle)
+		void WriteParameterAttributes(MetadataFile module, ParameterHandle handle)
 		{
 			var metadata = module.Metadata;
 			var p = metadata.GetParameter(handle);
@@ -1247,7 +1247,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ FieldAttributes.NotSerialized, "notserialized" },
 		};
 
-		public void DisassembleField(PEFile module, FieldDefinitionHandle handle)
+		public void DisassembleField(MetadataFile module, FieldDefinitionHandle handle)
 		{
 			var metadata = module.Metadata;
 			var fieldDefinition = metadata.GetFieldDefinition(handle);
@@ -1264,7 +1264,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{
 				// Field data as specified in II.16.3.1 of ECMA-335 6th edition
 				int rva = fieldDefinition.GetRelativeVirtualAddress();
-				int sectionIndex = module.Reader.PEHeaders.GetContainingSectionIndex(rva);
+				int sectionIndex = module.GetContainingSectionIndex(rva);
 				if (sectionIndex < 0)
 				{
 					output.WriteLine($"// RVA {rva:X8} invalid (not in any section)");
@@ -1274,7 +1274,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					BlobReader initVal;
 					try
 					{
-						initVal = fieldDefinition.GetInitialValue(module.Reader, null);
+						initVal = fieldDefinition.GetInitialValue(module, null);
 					}
 					catch (BadImageFormatException ex)
 					{
@@ -1283,7 +1283,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					}
 					if (initVal.Length > 0)
 					{
-						var sectionHeader = module.Reader.PEHeaders.SectionHeaders[sectionIndex];
+						var sectionHeader = module.SectionHeaders[sectionIndex];
 						output.Write(".data ");
 						if (sectionHeader.Name == ".text")
 						{
@@ -1293,7 +1293,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						{
 							output.Write("tls ");
 						}
-						else if (sectionHeader.Name != ".data")
+						else if (sectionHeader.Name is not (null or ".data"))
 						{
 							output.Write($"/* {sectionHeader.Name} */ ");
 						}
@@ -1305,14 +1305,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		public void DisassembleFieldHeader(PEFile module, FieldDefinitionHandle handle)
+		public void DisassembleFieldHeader(MetadataFile module, FieldDefinitionHandle handle)
 		{
 			var metadata = module.Metadata;
 			var fieldDefinition = metadata.GetFieldDefinition(handle);
 			DisassembleFieldHeaderInternal(module, handle, metadata, fieldDefinition);
 		}
 
-		private char DisassembleFieldHeaderInternal(PEFile module, FieldDefinitionHandle handle, MetadataReader metadata, FieldDefinition fieldDefinition)
+		private char DisassembleFieldHeaderInternal(MetadataFile module, FieldDefinitionHandle handle, MetadataReader metadata, FieldDefinition fieldDefinition)
 		{
 			output.WriteReference(module, handle, ".field", isDefinition: true);
 			WriteMetadataToken(output, module, handle, MetadataTokens.GetToken(handle),
@@ -1342,7 +1342,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			if (fieldDefinition.HasFlag(FieldAttributes.HasFieldRVA))
 			{
 				int rva = fieldDefinition.GetRelativeVirtualAddress();
-				sectionPrefix = GetRVASectionPrefix(module.Reader.PEHeaders, rva);
+				sectionPrefix = GetRVASectionPrefix(module, rva);
 				output.Write(" at {1}_{0:X8}", rva, sectionPrefix);
 			}
 
@@ -1356,12 +1356,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 			return sectionPrefix;
 		}
 
-		char GetRVASectionPrefix(System.Reflection.PortableExecutable.PEHeaders headers, int rva)
+		char GetRVASectionPrefix(MetadataFile module, int rva)
 		{
-			int sectionIndex = headers.GetContainingSectionIndex(rva);
+			if (module is not PEFile peFile)
+				throw new NotSupportedException("Cannot get RVA section prefix from module");
+			int sectionIndex = peFile.Reader.PEHeaders.GetContainingSectionIndex(rva);
 			if (sectionIndex < 0)
 				return 'D';
-			var sectionHeader = headers.SectionHeaders[sectionIndex];
+			var sectionHeader = peFile.Reader.PEHeaders.SectionHeaders[sectionIndex];
 			switch (sectionHeader.Name)
 			{
 				case ".tls":
@@ -1381,7 +1383,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ PropertyAttributes.HasDefault, "hasdefault" },
 		};
 
-		public void DisassembleProperty(PEFile module, PropertyDefinitionHandle property)
+		public void DisassembleProperty(MetadataFile module, PropertyDefinitionHandle property)
 		{
 			var metadata = module.Metadata;
 			var propertyDefinition = metadata.GetPropertyDefinition(property);
@@ -1398,14 +1400,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 			CloseBlock();
 		}
 
-		public void DisassemblePropertyHeader(PEFile module, PropertyDefinitionHandle property)
+		public void DisassemblePropertyHeader(MetadataFile module, PropertyDefinitionHandle property)
 		{
 			var metadata = module.Metadata;
 			var propertyDefinition = metadata.GetPropertyDefinition(property);
 			DisassemblePropertyHeaderInternal(module, property, metadata, propertyDefinition);
 		}
 
-		private PropertyAccessors DisassemblePropertyHeaderInternal(PEFile module, PropertyDefinitionHandle handle, MetadataReader metadata, PropertyDefinition propertyDefinition)
+		private PropertyAccessors DisassemblePropertyHeaderInternal(MetadataFile module, PropertyDefinitionHandle handle, MetadataReader metadata, PropertyDefinition propertyDefinition)
 		{
 			output.WriteReference(module, handle, ".property", isDefinition: true);
 			WriteMetadataToken(output, module, handle, MetadataTokens.GetToken(handle),
@@ -1436,7 +1438,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			return accessors;
 		}
 
-		void WriteNestedMethod(string keyword, PEFile module, MethodDefinitionHandle method)
+		void WriteNestedMethod(string keyword, MetadataFile module, MethodDefinitionHandle method)
 		{
 			if (method.IsNil)
 				return;
@@ -1454,7 +1456,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ EventAttributes.RTSpecialName, "rtspecialname" },
 		};
 
-		public void DisassembleEvent(PEFile module, EventDefinitionHandle handle)
+		public void DisassembleEvent(MetadataFile module, EventDefinitionHandle handle)
 		{
 			var eventDefinition = module.Metadata.GetEventDefinition(handle);
 			var accessors = eventDefinition.GetAccessors();
@@ -1471,14 +1473,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 			CloseBlock();
 		}
 
-		public void DisassembleEventHeader(PEFile module, EventDefinitionHandle handle)
+		public void DisassembleEventHeader(MetadataFile module, EventDefinitionHandle handle)
 		{
 			var eventDefinition = module.Metadata.GetEventDefinition(handle);
 			var accessors = eventDefinition.GetAccessors();
 			DisassembleEventHeaderInternal(module, handle, eventDefinition, accessors);
 		}
 
-		private void DisassembleEventHeaderInternal(PEFile module, EventDefinitionHandle handle, EventDefinition eventDefinition, EventAccessors accessors)
+		private void DisassembleEventHeaderInternal(MetadataFile module, EventDefinitionHandle handle, EventDefinition eventDefinition, EventAccessors accessors)
 		{
 			TypeDefinitionHandle declaringType;
 			if (!accessors.Adder.IsNil)
@@ -1555,7 +1557,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ TypeAttributes.HasSecurity, null },
 		};
 
-		public void DisassembleType(PEFile module, TypeDefinitionHandle type)
+		public void DisassembleType(MetadataFile module, TypeDefinitionHandle type)
 		{
 			var typeDefinition = module.Metadata.GetTypeDefinition(type);
 			MetadataGenericContext genericContext = new MetadataGenericContext(type, module);
@@ -1676,14 +1678,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 			isInType = oldIsInType;
 		}
 
-		public void DisassembleTypeHeader(PEFile module, TypeDefinitionHandle type)
+		public void DisassembleTypeHeader(MetadataFile module, TypeDefinitionHandle type)
 		{
 			var typeDefinition = module.Metadata.GetTypeDefinition(type);
 			MetadataGenericContext genericContext = new MetadataGenericContext(type, module);
 			DisassembleTypeHeaderInternal(module, type, typeDefinition, genericContext);
 		}
 
-		private void DisassembleTypeHeaderInternal(PEFile module, TypeDefinitionHandle handle, TypeDefinition typeDefinition, MetadataGenericContext genericContext)
+		private void DisassembleTypeHeaderInternal(MetadataFile module, TypeDefinitionHandle handle, TypeDefinition typeDefinition, MetadataGenericContext genericContext)
 		{
 			output.WriteReference(module, handle, ".class", isDefinition: true);
 			WriteMetadataToken(output, module, handle, MetadataTokens.GetToken(handle),
@@ -1712,7 +1714,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		void WriteTypeParameters(ITextOutput output, PEFile module, MetadataGenericContext context, GenericParameterHandleCollection p)
+		void WriteTypeParameters(ITextOutput output, MetadataFile module, MetadataGenericContext context, GenericParameterHandleCollection p)
 		{
 			if (p.Count > 0)
 			{
@@ -1765,37 +1767,37 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		#region Processing
 
-		private IReadOnlyCollection<InterfaceImplementationHandle> Process(PEFile module, IReadOnlyCollection<InterfaceImplementationHandle> items)
+		private IReadOnlyCollection<InterfaceImplementationHandle> Process(MetadataFile module, IReadOnlyCollection<InterfaceImplementationHandle> items)
 		{
 			return EntityProcessor?.Process(module, items) ?? items;
 		}
 
-		private IReadOnlyCollection<TypeDefinitionHandle> Process(PEFile module, IReadOnlyCollection<TypeDefinitionHandle> items)
+		private IReadOnlyCollection<TypeDefinitionHandle> Process(MetadataFile module, IReadOnlyCollection<TypeDefinitionHandle> items)
 		{
 			return EntityProcessor?.Process(module, items) ?? items;
 		}
 
-		private IReadOnlyCollection<MethodDefinitionHandle> Process(PEFile module, IReadOnlyCollection<MethodDefinitionHandle> items)
+		private IReadOnlyCollection<MethodDefinitionHandle> Process(MetadataFile module, IReadOnlyCollection<MethodDefinitionHandle> items)
 		{
 			return EntityProcessor?.Process(module, items) ?? items;
 		}
 
-		private IReadOnlyCollection<PropertyDefinitionHandle> Process(PEFile module, IReadOnlyCollection<PropertyDefinitionHandle> items)
+		private IReadOnlyCollection<PropertyDefinitionHandle> Process(MetadataFile module, IReadOnlyCollection<PropertyDefinitionHandle> items)
 		{
 			return EntityProcessor?.Process(module, items) ?? items;
 		}
 
-		private IReadOnlyCollection<EventDefinitionHandle> Process(PEFile module, IReadOnlyCollection<EventDefinitionHandle> items)
+		private IReadOnlyCollection<EventDefinitionHandle> Process(MetadataFile module, IReadOnlyCollection<EventDefinitionHandle> items)
 		{
 			return EntityProcessor?.Process(module, items) ?? items;
 		}
 
-		private IReadOnlyCollection<FieldDefinitionHandle> Process(PEFile module, IReadOnlyCollection<FieldDefinitionHandle> items)
+		private IReadOnlyCollection<FieldDefinitionHandle> Process(MetadataFile module, IReadOnlyCollection<FieldDefinitionHandle> items)
 		{
 			return EntityProcessor?.Process(module, items) ?? items;
 		}
 
-		private IReadOnlyCollection<CustomAttributeHandle> Process(PEFile module, IReadOnlyCollection<CustomAttributeHandle> items)
+		private IReadOnlyCollection<CustomAttributeHandle> Process(MetadataFile module, IReadOnlyCollection<CustomAttributeHandle> items)
 		{
 			return EntityProcessor?.Process(module, items) ?? items;
 		}
@@ -1804,7 +1806,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		#region Helper methods
 
-		void WriteAttributes(PEFile module, CustomAttributeHandleCollection attributes)
+		void WriteAttributes(MetadataFile module, CustomAttributeHandleCollection attributes)
 		{
 			var metadata = module.Metadata;
 			foreach (CustomAttributeHandle a in Process(module, attributes))
@@ -1931,7 +1933,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		}
 		#endregion
 
-		public void DisassembleNamespace(string nameSpace, PEFile module, IEnumerable<TypeDefinitionHandle> types)
+		public void DisassembleNamespace(string nameSpace, MetadataFile module, IEnumerable<TypeDefinitionHandle> types)
 		{
 			if (!string.IsNullOrEmpty(nameSpace))
 			{

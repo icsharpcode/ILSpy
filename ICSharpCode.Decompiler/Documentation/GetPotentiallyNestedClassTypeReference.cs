@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// </summary>
 		/// <returns>Either TypeDefinitionHandle, if the type is defined in the module or ExportedTypeHandle,
 		/// if the module contains a type forwarder. Returns a nil handle, if the type was not found.</returns>
-		public EntityHandle ResolveInPEFile(PEFile module)
+		public EntityHandle ResolveInPEFile(MetadataFile module)
 		{
 			string[] parts = typeName.Split('.');
 			for (int i = parts.Length - 1; i >= 0; i--)

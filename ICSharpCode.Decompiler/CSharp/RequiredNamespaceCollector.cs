@@ -58,10 +58,10 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void CollectNamespaces(IEntity entity, MetadataModule module, CodeMappingInfo mappingInfo = null)
 		{
-			if (entity == null || entity.MetadataToken.IsNil)
+			if (entity == null || entity.MetadataToken.IsNil || module.MetadataFile is not MetadataFile corFile)
 				return;
 			if (mappingInfo == null)
-				mappingInfo = CSharpDecompiler.GetCodeMappingInfo(entity.ParentModule.PEFile, entity.MetadataToken);
+				mappingInfo = CSharpDecompiler.GetCodeMappingInfo(corFile, entity.MetadataToken);
 			switch (entity)
 			{
 				case ITypeDefinition td:
@@ -104,7 +104,6 @@ namespace ICSharpCode.Decompiler.CSharp
 					CollectNamespacesForTypeReference(field.ReturnType);
 					break;
 				case IMethod method:
-					var reader = module.PEFile.Reader;
 					var parts = mappingInfo.GetMethodParts((MethodDefinitionHandle)method.MetadataToken).ToList();
 					foreach (var part in parts)
 					{
@@ -125,7 +124,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							MethodBodyBlock body;
 							try
 							{
-								body = reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+								body = module.MetadataFile.GetMethodBody(methodDef.RelativeVirtualAddress);
 							}
 							catch (BadImageFormatException)
 							{

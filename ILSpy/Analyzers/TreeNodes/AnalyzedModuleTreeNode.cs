@@ -54,12 +54,12 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 		public override void ActivateItem(RoutedEventArgs e)
 		{
 			e.Handled = true;
-			if (analyzedModule.PEFile == null)
+			if (analyzedModule.MetadataFile == null)
 			{
 				MessageBox.Show(Properties.Resources.CannotAnalyzeMissingRef, "ILSpy");
 				return;
 			}
-			MainWindow.Instance.JumpToReference(analyzedModule.PEFile);
+			MainWindow.Instance.JumpToReference(analyzedModule.MetadataFile);
 		}
 
 		public override IEntity Member => null;

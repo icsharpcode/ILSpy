@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				var firstParamType = method.Parameters[0].Type.GetDefinition();
 				if (firstParamType != null &&
 					firstParamType.MetadataToken == analyzedType.MetadataToken &&
-					firstParamType.ParentModule.PEFile == analyzedType.ParentModule.PEFile)
+					firstParamType.ParentModule.MetadataFile == analyzedType.ParentModule.MetadataFile)
 					yield return method;
 			}
 		}
