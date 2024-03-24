@@ -124,7 +124,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
 				{
 					var valuesList = new List<ILInstruction>();
-					var initialValue = field.GetInitialValue(context.PEFile.Reader, context.TypeSystem);
+					var initialValue = field.GetInitialValue(context.PEFile, context.TypeSystem);
 					if (context.Settings.Utf8StringLiterals &&
 						elementType.IsKnownType(KnownTypeCode.Byte) &&
 						DecodeUTF8String(initialValue, size, out string text))
@@ -311,7 +311,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
-			blob = fd.GetInitialValue(context.PEFile.Reader, context.TypeSystem);
+			blob = fd.GetInitialValue(context.PEFile, context.TypeSystem);
 			return true;
 		}
 
@@ -720,7 +720,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
 				{
 					var valuesList = new List<ILInstruction>();
-					var initialValue = field.GetInitialValue(context.PEFile.Reader, context.TypeSystem);
+					var initialValue = field.GetInitialValue(context.PEFile, context.TypeSystem);
 					if (DecodeArrayInitializer(arrayType, initialValue, arrayLength, valuesList))
 					{
 						values = valuesList.ToArray();
@@ -753,7 +753,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
 				return false;
 			var valuesList = new List<ILInstruction>();
-			var initialValue = field.GetInitialValue(context.PEFile.Reader, context.TypeSystem);
+			var initialValue = field.GetInitialValue(context.PEFile, context.TypeSystem);
 			if (!DecodeArrayInitializer(elementType, initialValue, arrayLength, valuesList))
 				return false;
 			context.Step("InlineRuntimeHelpersInitializeArray: single-dim", inst);

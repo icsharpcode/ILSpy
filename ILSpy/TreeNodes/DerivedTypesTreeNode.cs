@@ -64,10 +64,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		internal static IEnumerable<DerivedTypesEntryNode> FindDerivedTypes(AssemblyList list, ITypeDefinition type,
 			CancellationToken cancellationToken)
 		{
-			var definitionMetadata = type.ParentModule.PEFile.Metadata;
+			var definitionMetadata = type.ParentModule.MetadataFile.Metadata;
 			var metadataToken = (SRM.TypeDefinitionHandle)type.MetadataToken;
 			var assemblies = list.GetAllAssemblies().GetAwaiter().GetResult()
-				.Select(node => node.GetPEFileOrNull()).Where(asm => asm != null).ToArray();
+				.Select(node => node.GetMetadataFileOrNull()).Where(asm => asm != null).ToArray();
 			foreach (var module in assemblies)
 			{
 				var metadata = module.Metadata;

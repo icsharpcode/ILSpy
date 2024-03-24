@@ -1100,7 +1100,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var genericContext = new GenericContext(
 				classTypeParameters: recordTypeDef.TypeParameters,
 				methodTypeParameters: null);
-			var body = typeSystem.MainModule.PEFile.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+			var body = typeSystem.MainModule.MetadataFile.GetMethodBody(methodDef.RelativeVirtualAddress);
 			var ilReader = new ILReader(typeSystem.MainModule);
 			var il = ilReader.ReadIL(methodDefHandle, body, genericContext, ILFunctionKind.TopLevelFunction, cancellationToken);
 			var settings = new DecompilerSettings(LanguageVersion.CSharp1);

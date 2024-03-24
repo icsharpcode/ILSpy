@@ -59,7 +59,7 @@ namespace ICSharpCode.BamlDecompiler.Baml
 			}
 			catch (Exception ex)
 			{
-				throw new ICSharpCode.Decompiler.DecompilerException(typeSystem.MainModule.PEFile, ex.Message, ex);
+				throw new ICSharpCode.Decompiler.DecompilerException(typeSystem.MainModule.MetadataFile, ex.Message, ex);
 			}
 		}
 

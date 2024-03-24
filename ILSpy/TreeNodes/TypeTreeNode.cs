@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		private ITypeDefinition GetTypeDefinition()
 		{
 			return ((MetadataModule)ParentAssemblyNode.LoadedAssembly
-				.GetPEFileOrNull()
+				.GetMetadataFileOrNull()
 				?.GetTypeSystemWithCurrentOptionsOrNull()
 				?.MainModule).GetDefinition((SRM.TypeDefinitionHandle)TypeDefinition.MetadataToken);
 		}
@@ -87,7 +87,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		protected override void LoadChildren()
 		{
 			if (TypeDefinition.DirectBaseTypes.Any())
-				this.Children.Add(new BaseTypesTreeNode(ParentAssemblyNode.LoadedAssembly.GetPEFileOrNull(), TypeDefinition));
+				this.Children.Add(new BaseTypesTreeNode(ParentAssemblyNode.LoadedAssembly.GetMetadataFileOrNull(), TypeDefinition));
 			if (!TypeDefinition.IsSealed)
 				this.Children.Add(new DerivedTypesTreeNode(ParentAssemblyNode.AssemblyList, TypeDefinition));
 			foreach (var nestedType in TypeDefinition.NestedTypes.OrderBy(t => t.Name, NaturalStringComparer.Instance))

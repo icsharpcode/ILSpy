@@ -58,25 +58,25 @@ namespace ICSharpCode.ILSpy.Analyzers
 			IsLocal = effectiveAccessibility.LessThanOrEqual(Accessibility.Private);
 		}
 
-		public IEnumerable<PEFile> GetModulesInScope(CancellationToken ct)
+		public IEnumerable<MetadataFile> GetModulesInScope(CancellationToken ct)
 		{
 			if (IsLocal)
-				return new[] { TypeScope.ParentModule.PEFile };
+				return new[] { TypeScope.ParentModule.MetadataFile };
 
 			if (effectiveAccessibility.LessThanOrEqual(Accessibility.Internal))
 				return GetModuleAndAnyFriends(TypeScope, ct);
 
-			return GetReferencingModules(TypeScope.ParentModule.PEFile, ct);
+			return GetReferencingModules(TypeScope.ParentModule.MetadataFile, ct);
 		}
 
-		public IEnumerable<PEFile> GetAllModules()
+		public IEnumerable<MetadataFile> GetAllModules()
 		{
 			return assemblyListSnapshot.GetAllAssembliesAsync().GetAwaiter().GetResult()
-				.Select(asm => asm.GetPEFileOrNull())
+				.Select(asm => asm.GetMetadataFileOrNull())
 				.Where(x => x != null);
 		}
 
-		public DecompilerTypeSystem ConstructTypeSystem(PEFile module)
+		public DecompilerTypeSystem ConstructTypeSystem(MetadataFile module)
 		{
 			return new DecompilerTypeSystem(module, module.GetAssemblyResolver(assemblyListSnapshot, loadOnDemand: false));
 		}
@@ -132,7 +132,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		}
 
 		#region Find modules
-		IEnumerable<PEFile> GetReferencingModules(PEFile self, CancellationToken ct)
+		IEnumerable<MetadataFile> GetReferencingModules(MetadataFile self, CancellationToken ct)
 		{
 			yield return self;
 
@@ -140,8 +140,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 			if (typeScope.TypeParameterCount > 0)
 				reflectionTypeScopeName += "`" + typeScope.TypeParameterCount;
 
-			var toWalkFiles = new Stack<PEFile>();
-			var checkedFiles = new HashSet<PEFile>();
+			var toWalkFiles = new Stack<MetadataFile>();
+			var checkedFiles = new HashSet<MetadataFile>();
 
 			toWalkFiles.Push(self);
 			checkedFiles.Add(self);
@@ -149,12 +149,12 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 			do
 			{
-				PEFile curFile = toWalkFiles.Pop();
+				MetadataFile curFile = toWalkFiles.Pop();
 				foreach (var assembly in assemblies)
 				{
 					ct.ThrowIfCancellationRequested();
 					bool found = false;
-					var module = assembly.GetPEFileOrNull();
+					var module = assembly.GetMetadataFileOrNull();
 					if (module == null || !module.IsAssembly)
 						continue;
 					if (checkedFiles.Contains(module))
@@ -179,9 +179,9 @@ namespace ICSharpCode.ILSpy.Analyzers
 			} while (toWalkFiles.Count > 0);
 		}
 
-		IEnumerable<PEFile> GetModuleAndAnyFriends(ITypeDefinition typeScope, CancellationToken ct)
+		IEnumerable<MetadataFile> GetModuleAndAnyFriends(ITypeDefinition typeScope, CancellationToken ct)
 		{
-			var self = typeScope.ParentModule.PEFile;
+			var self = typeScope.ParentModule.MetadataFile;
 
 			yield return self;
 
@@ -206,7 +206,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 					ct.ThrowIfCancellationRequested();
 					if (friendAssemblies.Contains(assembly.ShortName))
 					{
-						var module = assembly.GetPEFileOrNull();
+						var module = assembly.GetMetadataFileOrNull();
 						if (module == null)
 							continue;
 						if (ModuleReferencesScopeType(module.Metadata, typeScope.Name, typeScope.Namespace))

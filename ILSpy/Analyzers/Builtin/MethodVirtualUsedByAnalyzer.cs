@@ -42,7 +42,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			Debug.Assert(analyzedSymbol is IMethod);
 			var analyzedMethod = (IMethod)analyzedSymbol;
 			var mapping = context.Language
-				.GetCodeMappingInfo(analyzedMethod.ParentModule.PEFile,
+				.GetCodeMappingInfo(analyzedMethod.ParentModule.MetadataFile,
 					analyzedMethod.DeclaringTypeDefinition.MetadataToken);
 
 			var parentMethod = mapping.GetParentMethod((MethodDefinitionHandle)analyzedMethod.MetadataToken);
@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
 			{
 				var parentModule = (MetadataModule)type.ParentModule;
-				mapping = context.Language.GetCodeMappingInfo(parentModule.PEFile, type.MetadataToken);
+				mapping = context.Language.GetCodeMappingInfo(parentModule.MetadataFile, type.MetadataToken);
 				var methods = type.GetMembers(m => m is IMethod, Options).OfType<IMethod>();
 				foreach (var method in methods)
 				{
@@ -131,7 +131,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 							case HandleKind.MethodSpecification:
 							case HandleKind.MemberReference:
 								var m = (mainModule.ResolveEntity(member, genericContext) as IMember)?.MemberDefinition;
-								if (m != null && m.MetadataToken == analyzedMethod.MetadataToken && m.ParentModule.PEFile == analyzedMethod.ParentModule.PEFile)
+								if (m != null && m.MetadataToken == analyzedMethod.MetadataToken && m.ParentModule.MetadataFile == analyzedMethod.ParentModule.MetadataFile)
 								{
 									return true;
 								}

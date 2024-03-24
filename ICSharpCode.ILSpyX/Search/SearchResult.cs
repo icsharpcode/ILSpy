@@ -28,9 +28,9 @@ namespace ICSharpCode.ILSpyX.Search
 	public interface ISearchResultFactory
 	{
 		MemberSearchResult Create(IEntity entity);
-		ResourceSearchResult Create(PEFile module, Resource resource, ITreeNode node, ITreeNode parent);
-		AssemblySearchResult Create(PEFile module);
-		NamespaceSearchResult Create(PEFile module, INamespace @namespace);
+		ResourceSearchResult Create(MetadataFile module, Resource resource, ITreeNode node, ITreeNode parent);
+		AssemblySearchResult Create(MetadataFile module);
+		NamespaceSearchResult Create(MetadataFile module, INamespace @namespace);
 	}
 
 	public class SearchResult
@@ -97,7 +97,7 @@ namespace ICSharpCode.ILSpyX.Search
 	public class AssemblySearchResult : SearchResult
 	{
 #nullable disable
-		public PEFile Module { get; set; }
+		public MetadataFile Module { get; set; }
 		public override object Reference => Module;
 #nullable enable
 	}

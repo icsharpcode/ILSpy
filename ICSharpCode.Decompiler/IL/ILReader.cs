@@ -690,7 +690,7 @@ namespace ICSharpCode.Decompiler.IL
 				output.WriteLine();
 			}
 			new Disassembler.MethodBodyDisassembler(output, cancellationToken) { DetectControlStructure = false }
-				.WriteExceptionHandlers(module.PEFile, method, body);
+				.WriteExceptionHandlers(module.MetadataFile, method, body);
 		}
 
 		/// <summary>

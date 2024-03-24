@@ -413,11 +413,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (definition == null)
 				return false;
-			if (definition.ParentModule.PEFile != context.PEFile)
+			if (definition.ParentModule.MetadataFile != context.PEFile)
 				return false;
 			// We do not want to accidentially transform state-machines and thus destroy them.
 			var token = (TypeDefinitionHandle)definition.MetadataToken;
-			var metadata = definition.ParentModule.PEFile.Metadata;
+			var metadata = definition.ParentModule.MetadataFile.Metadata;
 			if (YieldReturnDecompiler.IsCompilerGeneratorEnumerator(token, metadata))
 				return false;
 			if (AsyncAwaitDecompiler.IsCompilerGeneratedStateMachine(token, metadata))
@@ -440,13 +440,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				var handle = (MethodDefinitionHandle)method.MetadataToken;
 				var module = (MetadataModule)method.ParentModule;
-				var file = module.PEFile;
+				var file = module.MetadataFile;
 				if (handle.IsNil || file != context.PEFile)
 					return false;
 				var def = file.Metadata.GetMethodDefinition(handle);
 				if (def.RelativeVirtualAddress == 0)
 					return false;
-				var body = file.Reader.GetMethodBody(def.RelativeVirtualAddress);
+				var body = file.GetMethodBody(def.RelativeVirtualAddress);
 				// some compilers produce ctors with unused local variables
 				// see https://github.com/icsharpcode/ILSpy/issues/2174
 				//if (!body.LocalSignature.IsNil)

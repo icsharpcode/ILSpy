@@ -24,7 +24,7 @@ namespace ICSharpCode.ILSpyX.Abstractions
 	public interface ILanguage
 	{
 		bool ShowMember(IEntity member);
-		string GetEntityName(PEFile module, System.Reflection.Metadata.EntityHandle handle, bool fullName, bool omitGenerics);
+		string GetEntityName(MetadataFile module, System.Reflection.Metadata.EntityHandle handle, bool fullName, bool omitGenerics);
 		string GetTooltip(IEntity entity);
 
 		string TypeToString(IType type, bool includeNamespace);

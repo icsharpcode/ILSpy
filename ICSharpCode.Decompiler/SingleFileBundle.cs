@@ -104,18 +104,12 @@ namespace ICSharpCode.Decompiler
 			public string RelativePath; // Path of an embedded file, relative to the Bundle source-directory.
 		}
 
-		static UnmanagedMemoryStream AsStream(MemoryMappedViewAccessor view)
-		{
-			long size = checked((long)view.SafeMemoryMappedViewHandle.ByteLength);
-			return new UnmanagedMemoryStream(view.SafeMemoryMappedViewHandle, 0, size);
-		}
-
 		/// <summary>
 		/// Reads the manifest header from the memory mapping.
 		/// </summary>
 		public static Header ReadManifest(MemoryMappedViewAccessor view, long bundleHeaderOffset)
 		{
-			using var stream = AsStream(view);
+			using var stream = view.AsStream();
 			stream.Seek(bundleHeaderOffset, SeekOrigin.Begin);
 			return ReadManifest(stream);
 		}

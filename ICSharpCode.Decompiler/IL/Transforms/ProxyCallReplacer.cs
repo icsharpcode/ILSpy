@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var genericContext = new GenericContext(inst.Method);
 			// partially copied from CSharpDecompiler
 			var ilReader = context.CreateILReader();
-			var body = context.PEFile.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+			var body = context.PEFile.GetMethodBody(methodDef.RelativeVirtualAddress);
 			var proxyFunction = ilReader.ReadIL(handle, body, genericContext, ILFunctionKind.TopLevelFunction, context.CancellationToken);
 			var transformContext = new ILTransformContext(context, proxyFunction);
 			proxyFunction.RunTransforms(CSharp.CSharpDecompiler.EarlyILTransforms(), transformContext);

@@ -38,10 +38,10 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		public IEnumerable<ISymbol> Analyze(ISymbol symbol, AnalyzerContext context)
 		{
-			if (symbol is IMethod method)
+			if (symbol is IMethod method && method.ParentModule.MetadataFile is MetadataFile corFile)
 			{
-				var typeSystem = context.GetOrCreateTypeSystem(method.ParentModule.PEFile);
-				return context.Language.GetCodeMappingInfo(method.ParentModule.PEFile, method.MetadataToken)
+				var typeSystem = context.GetOrCreateTypeSystem(corFile);
+				return context.Language.GetCodeMappingInfo(corFile, method.MetadataToken)
 					.GetMethodParts((MethodDefinitionHandle)method.MetadataToken)
 					.SelectMany(h => ScanMethod(h, typeSystem)).Distinct();
 			}
@@ -51,14 +51,14 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		IEnumerable<IEntity> ScanMethod(MethodDefinitionHandle handle, DecompilerTypeSystem typeSystem)
 		{
 			var module = typeSystem.MainModule;
-			var md = module.PEFile.Metadata.GetMethodDefinition(handle);
+			var md = module.MetadataFile.Metadata.GetMethodDefinition(handle);
 			if (!md.HasBody())
 				yield break;
 
 			BlobReader blob;
 			try
 			{
-				blob = module.PEFile.Reader.GetMethodBody(md.RelativeVirtualAddress).GetILReader();
+				blob = module.MetadataFile.GetMethodBody(md.RelativeVirtualAddress).GetILReader();
 			}
 			catch (BadImageFormatException)
 			{

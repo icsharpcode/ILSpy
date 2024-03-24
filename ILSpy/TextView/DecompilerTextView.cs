@@ -451,9 +451,9 @@ namespace ICSharpCode.ILSpy.TextView
 			renderer.AddSignatureBlock(richText.Text, richText.ToRichTextModel());
 			try
 			{
-				if (resolved.ParentModule == null || resolved.ParentModule.PEFile == null)
+				if (resolved.ParentModule == null || resolved.ParentModule.MetadataFile == null)
 					return null;
-				var docProvider = XmlDocLoader.LoadDocumentation(resolved.ParentModule.PEFile);
+				var docProvider = XmlDocLoader.LoadDocumentation(resolved.ParentModule.MetadataFile);
 				if (docProvider != null)
 				{
 					string documentation = docProvider.GetDocumentation(resolved.GetIdString());

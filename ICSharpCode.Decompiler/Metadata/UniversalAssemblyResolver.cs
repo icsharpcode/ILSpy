@@ -209,13 +209,13 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 
 #if !VSADDIN
-		public PEFile? Resolve(IAssemblyReference name)
+		public MetadataFile? Resolve(IAssemblyReference name)
 		{
 			var file = FindAssemblyFile(name);
 			return CreatePEFileFromFileName(file, ex => new ResolutionException(name, file, ex));
 		}
 
-		public PEFile? ResolveModule(PEFile mainModule, string moduleName)
+		public MetadataFile? ResolveModule(MetadataFile mainModule, string moduleName)
 		{
 			string? baseDirectory = Path.GetDirectoryName(mainModule.FileName);
 			if (baseDirectory == null)
@@ -224,7 +224,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return CreatePEFileFromFileName(moduleFileName, ex => new ResolutionException(mainModule.FileName, moduleName, moduleFileName, ex));
 		}
 
-		private PEFile? CreatePEFileFromFileName(string? fileName, Func<Exception?, Exception> makeException)
+		private MetadataFile? CreatePEFileFromFileName(string? fileName, Func<Exception?, Exception> makeException)
 		{
 			if (fileName == null)
 			{
@@ -251,12 +251,12 @@ namespace ICSharpCode.Decompiler.Metadata
 			return null;
 		}
 
-		public Task<PEFile?> ResolveAsync(IAssemblyReference name)
+		public Task<MetadataFile?> ResolveAsync(IAssemblyReference name)
 		{
 			return Task.Run(() => Resolve(name));
 		}
 
-		public Task<PEFile?> ResolveModuleAsync(PEFile mainModule, string moduleName)
+		public Task<MetadataFile?> ResolveModuleAsync(MetadataFile mainModule, string moduleName)
 		{
 			return Task.Run(() => ResolveModule(mainModule, moduleName));
 		}

@@ -23,7 +23,6 @@ using System.IO;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Reflection.PortableExecutable;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
@@ -67,11 +66,11 @@ namespace ICSharpCode.Decompiler.Metadata
 
 	sealed class MetadataResource : Resource
 	{
-		public PEFile Module { get; }
+		public MetadataFile Module { get; }
 		public ManifestResourceHandle Handle { get; }
 		public bool IsNil => Handle.IsNil;
 
-		public MetadataResource(PEFile module, ManifestResourceHandle handle)
+		public MetadataResource(MetadataFile module, ManifestResourceHandle handle)
 		{
 			this.Module = module ?? throw new ArgumentNullException(nameof(module));
 			this.Handle = handle;
@@ -117,15 +116,13 @@ namespace ICSharpCode.Decompiler.Metadata
 			// embedded resources cannot be read from this binary.
 			if (ResourceType != ResourceType.Embedded)
 				return false;
-			// get cor header
-			var headers = Module.Reader.PEHeaders;
-			if (headers.CorHeader == null)
+			if (Module.CorHeader == null)
 				return false;
-			var resources = headers.CorHeader.ResourcesDirectory;
+			var resources = Module.CorHeader.ResourcesDirectory;
 			// validate resources directory, GetSectionData throws on negative RVAs
 			if (resources.RelativeVirtualAddress <= 0)
 				return false;
-			var sectionData = Module.Reader.GetSectionData(resources.RelativeVirtualAddress);
+			var sectionData = Module.GetSectionData(resources.RelativeVirtualAddress);
 			// validate section length: we need at least 4 bytes to extract
 			// the actual length of the resource blob.
 			if (sectionData.Length < 4)
@@ -144,7 +141,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 			if (!TryReadResource(out var ptr, out var length))
 				return null;
-			return new ResourceMemoryStream(Module.Reader, ptr + sizeof(int), length);
+			return new ResourceMemoryStream(Module, ptr + sizeof(int), length);
 		}
 
 		public unsafe override long? TryGetLength()
@@ -158,10 +155,10 @@ namespace ICSharpCode.Decompiler.Metadata
 	sealed unsafe class ResourceMemoryStream : UnmanagedMemoryStream
 	{
 #pragma warning disable IDE0052 // Remove unread private members
-		readonly PEReader peReader;
+		readonly MetadataFile peReader;
 #pragma warning restore IDE0052 // Remove unread private members
 
-		public ResourceMemoryStream(PEReader peReader, byte* data, long length)
+		public ResourceMemoryStream(MetadataFile peReader, byte* data, long length)
 			: base(data, length, length, FileAccess.Read)
 		{
 			// Keep the PEReader alive while the stream in in use.

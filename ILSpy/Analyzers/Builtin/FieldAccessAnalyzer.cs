@@ -17,20 +17,15 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
-using System.Threading;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.Analyzers;
 
 using ILOpCode = System.Reflection.Metadata.ILOpCode;
 
@@ -79,7 +74,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			var scope = context.GetScopeOf((IEntity)analyzedSymbol);
 			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
 			{
-				var mappingInfo = context.Language.GetCodeMappingInfo(type.ParentModule.PEFile, type.MetadataToken);
+				var mappingInfo = context.Language.GetCodeMappingInfo(type.ParentModule.MetadataFile, type.MetadataToken);
 				var methods = type.GetMembers(m => m is IMethod, Options).OfType<IMethod>();
 				foreach (var method in methods)
 				{
@@ -126,7 +121,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		{
 			if (method.MetadataToken.IsNil)
 				return false;
-			var module = method.ParentModule.PEFile;
+			var module = method.ParentModule.MetadataFile;
 			foreach (var part in mappingInfo.GetMethodParts((MethodDefinitionHandle)method.MetadataToken))
 			{
 				var md = module.Metadata.GetMethodDefinition(part);
@@ -135,7 +130,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				MethodBodyBlock body;
 				try
 				{
-					body = module.Reader.GetMethodBody(md.RelativeVirtualAddress);
+					body = module.GetMethodBody(md.RelativeVirtualAddress);
 				}
 				catch (BadImageFormatException)
 				{
@@ -188,7 +183,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					continue;
 
 				if (field.MetadataToken == analyzedField.MetadataToken
-					&& field.ParentModule.PEFile == analyzedField.ParentModule.PEFile)
+					&& field.ParentModule.MetadataFile == analyzedField.ParentModule.MetadataFile)
 					return true;
 			}
 

@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		private IMethod GetMethodDefinition()
 		{
-			return ((MetadataModule)MethodDefinition.ParentModule.PEFile
+			return ((MetadataModule)MethodDefinition.ParentModule.MetadataFile
 				?.GetTypeSystemWithCurrentOptionsOrNull()
 				?.MainModule)?.GetDefinition((MethodDefinitionHandle)MethodDefinition.MetadataToken) ?? MethodDefinition;
 		}

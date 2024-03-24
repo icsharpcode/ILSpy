@@ -248,12 +248,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override int GetHashCode()
 		{
-			return 0x51fc5b83 ^ module.PEFile.GetHashCode() ^ handle.GetHashCode();
+			return 0x51fc5b83 ^ module.MetadataFile.GetHashCode() ^ handle.GetHashCode();
 		}
 
 		public override bool Equals(IType other)
 		{
-			return other is MetadataTypeParameter tp && handle == tp.handle && module.PEFile == tp.module.PEFile;
+			return other is MetadataTypeParameter tp && handle == tp.handle && module.MetadataFile == tp.module.MetadataFile;
 		}
 
 		public override string ToString()

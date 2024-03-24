@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				.AsParallel().AsOrdered()
 				.SelectMany(AnalyzeModuleAndFilter);
 
-			IEnumerable<ISymbol> AnalyzeModuleAndFilter(PEFile module)
+			IEnumerable<ISymbol> AnalyzeModuleAndFilter(MetadataFile module)
 			{
 				return AnalyzeModule(analyzedType, scope, module)
 					.Distinct()
@@ -55,7 +55,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		static IEnumerable<ISymbol> AnalyzeModule(ITypeDefinition analyzedType, AnalyzerScope scope, PEFile module)
+		static IEnumerable<ISymbol> AnalyzeModule(ITypeDefinition analyzedType, AnalyzerScope scope, MetadataFile module)
 		{
 			var metadata = module.Metadata;
 			var typeSystem = scope.ConstructTypeSystem(module);
@@ -241,12 +241,12 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		static bool ScanMethodBody(ITypeDefinition analyzedType, PEFile module, in MethodDefinition md, FindTypeDecoder decoder)
+		static bool ScanMethodBody(ITypeDefinition analyzedType, MetadataFile module, in MethodDefinition md, FindTypeDecoder decoder)
 		{
 			if (!md.HasBody())
 				return false;
 
-			var methodBody = module.Reader.GetMethodBody(md.RelativeVirtualAddress);
+			var methodBody = module.GetMethodBody(md.RelativeVirtualAddress);
 			var metadata = module.Metadata;
 
 			if (!methodBody.LocalSignature.IsNil)
@@ -408,7 +408,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		public override IType VisitTypeDefinition(ITypeDefinition type)
 		{
 			Found |= TypeDefinition.MetadataToken == type.MetadataToken
-				&& TypeDefinition.ParentModule.PEFile == type.ParentModule.PEFile;
+				&& TypeDefinition.ParentModule.MetadataFile == type.ParentModule.MetadataFile;
 			return base.VisitTypeDefinition(type);
 		}
 

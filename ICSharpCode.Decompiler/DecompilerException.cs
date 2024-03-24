@@ -42,18 +42,18 @@ namespace ICSharpCode.Decompiler
 
 		public IEntity DecompiledEntity { get; }
 		public IModule Module { get; }
-		public PEFile File { get; }
+		public MetadataFile File { get; }
 
 		public DecompilerException(MetadataModule module, IEntity decompiledEntity,
 			Exception innerException, string message = null)
 			: base(message ?? GetDefaultMessage(decompiledEntity), innerException)
 		{
-			this.File = module.PEFile;
+			this.File = module.MetadataFile;
 			this.Module = module;
 			this.DecompiledEntity = decompiledEntity;
 		}
 
-		public DecompilerException(PEFile file, string message, Exception innerException)
+		public DecompilerException(MetadataFile file, string message, Exception innerException)
 			: base(message, innerException)
 		{
 			this.File = file;

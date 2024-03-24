@@ -251,7 +251,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <summary>
 		/// Creates a new <see cref="CSharpDecompiler"/> instance from the given <paramref name="module"/> using the given <paramref name="assemblyResolver"/> and <paramref name="settings"/>.
 		/// </summary>
-		public CSharpDecompiler(PEFile module, IAssemblyResolver assemblyResolver, DecompilerSettings settings)
+		public CSharpDecompiler(MetadataFile module, IAssemblyResolver assemblyResolver, DecompilerSettings settings)
 			: this(new DecompilerTypeSystem(module, assemblyResolver, settings), settings)
 		{
 		}
@@ -264,7 +264,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.typeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
 			this.settings = settings;
 			this.module = typeSystem.MainModule;
-			this.metadata = module.PEFile.Metadata;
+			this.metadata = module.MetadataFile.Metadata;
 			if (module.TypeSystemOptions.HasFlag(TypeSystemOptions.Uncached))
 				throw new ArgumentException("Cannot use an uncached type system in the decompiler.");
 		}
@@ -276,7 +276,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <param name="module">The module containing the member.</param>
 		/// <param name="member">The metadata token/handle of the member. Can be a TypeDef, MethodDef or FieldDef.</param>
 		/// <param name="settings">THe settings used to determine whether code should be hidden. E.g. if async methods are not transformed, async state machines are included in the decompiled code.</param>
-		public static bool MemberIsHidden(Metadata.PEFile module, EntityHandle member, DecompilerSettings settings)
+		public static bool MemberIsHidden(MetadataFile module, EntityHandle member, DecompilerSettings settings)
 		{
 			if (module == null || member.IsNil)
 				return false;
@@ -539,7 +539,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			try
 			{
-				return XmlDocLoader.LoadDocumentation(module.PEFile);
+				return XmlDocLoader.LoadDocumentation(module.MetadataFile);
 			}
 			catch (System.Xml.XmlException)
 			{
@@ -633,7 +633,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var typeDef = module.GetDefinition(typeDefHandle);
 				if (typeDef.Name == "<Module>" && typeDef.Members.Count == 0)
 					continue;
-				if (MemberIsHidden(module.PEFile, typeDefHandle, settings))
+				if (MemberIsHidden(module.MetadataFile, typeDefHandle, settings))
 					continue;
 				if (string.IsNullOrEmpty(typeDef.Namespace))
 				{
@@ -702,7 +702,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <summary>
 		/// Determines the "code-mappings" for a given TypeDef or MethodDef. See <see cref="CodeMappingInfo"/> for more information.
 		/// </summary>
-		public static CodeMappingInfo GetCodeMappingInfo(PEFile module, EntityHandle member)
+		public static CodeMappingInfo GetCodeMappingInfo(MetadataFile module, EntityHandle member)
 		{
 			var declaringType = (TypeDefinitionHandle)member.GetDeclaringType(module.Metadata);
 
@@ -744,7 +744,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return info;
 		}
 
-		private static void ReadCodeMappingInfo(PEFile module, CodeMappingInfo info, MethodDefinitionHandle parent, MethodDefinitionHandle part, Queue<MethodDefinitionHandle> connectedMethods, HashSet<TypeDefinitionHandle> processedNestedTypes)
+		private static void ReadCodeMappingInfo(MetadataFile module, CodeMappingInfo info, MethodDefinitionHandle parent, MethodDefinitionHandle part, Queue<MethodDefinitionHandle> connectedMethods, HashSet<TypeDefinitionHandle> processedNestedTypes)
 		{
 			var md = module.Metadata.GetMethodDefinition(part);
 
@@ -756,7 +756,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			var declaringType = md.GetDeclaringType();
 
-			var blob = module.Reader.GetMethodBody(md.RelativeVirtualAddress).GetILReader();
+			var blob = module.GetMethodBody(md.RelativeVirtualAddress).GetILReader();
 			while (blob.RemainingBytes > 0)
 			{
 				var code = blob.DecodeOpCode();
@@ -1357,7 +1357,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// Decompile members that are not compiler-generated.
 				foreach (var entity in allOrderedEntities)
 				{
-					if (entity.MetadataToken.IsNil || MemberIsHidden(module.PEFile, entity.MetadataToken, settings))
+					if (entity.MetadataToken.IsNil || MemberIsHidden(module.MetadataFile, entity.MetadataToken, settings))
 					{
 						continue;
 					}
@@ -1403,7 +1403,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (typeDecl.ClassType == ClassType.Enum)
 				{
 					Debug.Assert(typeDef.Kind == TypeKind.Enum);
-					EnumValueDisplayMode displayMode = DetectBestEnumValueDisplayMode(typeDef, module.PEFile);
+					EnumValueDisplayMode displayMode = DetectBestEnumValueDisplayMode(typeDef, module.MetadataFile);
 					switch (displayMode)
 					{
 						case EnumValueDisplayMode.FirstOnly:
@@ -1532,7 +1532,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		EnumValueDisplayMode DetectBestEnumValueDisplayMode(ITypeDefinition typeDef, PEFile module)
+		EnumValueDisplayMode DetectBestEnumValueDisplayMode(ITypeDefinition typeDef, MetadataFile module)
 		{
 			if (typeDef.HasAttribute(KnownAttribute.Flags))
 				return EnumValueDisplayMode.AllHex;
@@ -1608,7 +1608,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				FixParameterNames(methodDecl);
 				var methodDefinition = metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
-				if (!settings.LocalFunctions && LocalFunctionDecompiler.LocalFunctionNeedsAccessibilityChange(method.ParentModule.PEFile, (MethodDefinitionHandle)method.MetadataToken))
+				if (!settings.LocalFunctions && LocalFunctionDecompiler.LocalFunctionNeedsAccessibilityChange(method.ParentModule.MetadataFile, (MethodDefinitionHandle)method.MetadataToken))
 				{
 					// if local functions are not active and we're dealing with a local function,
 					// reduce the visibility of the method to private,
@@ -1701,7 +1701,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				MethodBodyBlock methodBody;
 				try
 				{
-					methodBody = module.PEFile.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+					methodBody = module.MetadataFile.GetMethodBody(methodDef.RelativeVirtualAddress);
 				}
 				catch (BadImageFormatException ex)
 				{
@@ -1980,7 +1980,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					string message;
 					try
 					{
-						var initVal = fieldDefinition.GetInitialValue(module.PEFile.Reader, TypeSystem);
+						var initVal = fieldDefinition.GetInitialValue(module.MetadataFile, TypeSystem);
 						message = string.Format(" Not supported: data({0}) ", BitConverter.ToString(initVal.ReadBytes(initVal.RemainingBytes)).Replace('-', ' '));
 					}
 					catch (BadImageFormatException ex)

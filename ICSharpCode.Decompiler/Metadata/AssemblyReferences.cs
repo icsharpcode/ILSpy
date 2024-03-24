@@ -61,10 +61,10 @@ namespace ICSharpCode.Decompiler.Metadata
 	public interface IAssemblyResolver
 	{
 #if !VSADDIN
-		PEFile? Resolve(IAssemblyReference reference);
-		PEFile? ResolveModule(PEFile mainModule, string moduleName);
-		Task<PEFile?> ResolveAsync(IAssemblyReference reference);
-		Task<PEFile?> ResolveModuleAsync(PEFile mainModule, string moduleName);
+		MetadataFile? Resolve(IAssemblyReference reference);
+		MetadataFile? ResolveModule(MetadataFile mainModule, string moduleName);
+		Task<MetadataFile?> ResolveAsync(IAssemblyReference reference);
+		Task<MetadataFile?> ResolveModuleAsync(MetadataFile mainModule, string moduleName);
 #endif
 	}
 
@@ -323,7 +323,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			entry = metadata.GetAssemblyReference(handle);
 		}
 
-		public AssemblyReference(PEFile module, AssemblyReferenceHandle handle)
+		public AssemblyReference(MetadataFile module, AssemblyReferenceHandle handle)
 		{
 			if (module == null)
 				throw new ArgumentNullException(nameof(module));

@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpy
 		public virtual ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, assembly.FileName);
-			var asm = assembly.GetPEFileOrNull();
+			var asm = assembly.GetMetadataFileOrNull();
 			if (asm == null)
 				return null;
 			if (options.FullDecompilation && options.SaveAsProjectDirectory != null)
@@ -442,7 +442,7 @@ namespace ICSharpCode.ILSpy
 			string entityName;
 			if (entity is ITypeDefinition t && !t.MetadataToken.IsNil)
 			{
-				MetadataReader metadata = t.ParentModule.PEFile.Metadata;
+				MetadataReader metadata = t.ParentModule.MetadataFile.Metadata;
 				var typeDef = metadata.GetTypeDefinition((TypeDefinitionHandle)t.MetadataToken);
 				entityName = EscapeName(metadata.GetString(typeDef.Name));
 			}
@@ -478,7 +478,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// This should produce a string representation of the entity for search to match search strings against.
 		/// </summary>
-		public virtual string GetEntityName(PEFile module, EntityHandle handle, bool fullName, bool omitGenerics)
+		public virtual string GetEntityName(MetadataFile module, EntityHandle handle, bool fullName, bool omitGenerics)
 		{
 			MetadataReader metadata = module.Metadata;
 			switch (handle.Kind)
@@ -522,7 +522,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public virtual CodeMappingInfo GetCodeMappingInfo(PEFile module, EntityHandle member)
+		public virtual CodeMappingInfo GetCodeMappingInfo(MetadataFile module, EntityHandle member)
 		{
 			var declaringType = (TypeDefinitionHandle)member.GetDeclaringType(module.Metadata);
 

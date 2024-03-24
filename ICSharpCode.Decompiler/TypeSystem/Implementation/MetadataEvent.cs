@@ -168,14 +168,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (obj is MetadataEvent ev)
 			{
-				return handle == ev.handle && module.PEFile == ev.module.PEFile;
+				return handle == ev.handle && module.MetadataFile == ev.module.MetadataFile;
 			}
 			return false;
 		}
 
 		public override int GetHashCode()
 		{
-			return 0x7937039a ^ module.PEFile.GetHashCode() ^ handle.GetHashCode();
+			return 0x7937039a ^ module.MetadataFile.GetHashCode() ^ handle.GetHashCode();
 		}
 
 		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)

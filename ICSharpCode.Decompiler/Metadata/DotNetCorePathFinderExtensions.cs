@@ -18,7 +18,6 @@
 
 using System;
 using System.Reflection.Metadata;
-using System.Reflection.PortableExecutable;
 using System.Text.RegularExpressions;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -40,7 +39,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			@"|(NuGetFallbackFolder[/\\](?<type>[^/\\]+)\\(?<version>[^/\\]+)([/\\].*)?[/\\]ref[/\\])" +
 			@"|(packs[/\\](?<type>[^/\\]+)\\(?<version>[^/\\]+)\\ref([/\\].*)?[/\\])";
 
-		public static string DetectTargetFrameworkId(this PEFile assembly)
+		public static string DetectTargetFrameworkId(this MetadataFile assembly)
 		{
 			return DetectTargetFrameworkId(assembly.Metadata, assembly.FileName);
 		}
@@ -178,17 +177,16 @@ namespace ICSharpCode.Decompiler.Metadata
 			return string.Empty;
 		}
 
-		public static bool IsReferenceAssembly(this PEFile assembly)
+		public static bool IsReferenceAssembly(this MetadataFile assembly)
 		{
-			return IsReferenceAssembly(assembly.Reader, assembly.FileName);
+			return IsReferenceAssembly(assembly.Metadata, assembly.FileName);
 		}
 
-		public static bool IsReferenceAssembly(this PEReader assembly, string assemblyPath)
+		public static bool IsReferenceAssembly(this MetadataReader metadata, string assemblyPath)
 		{
-			if (assembly == null)
-				throw new ArgumentNullException(nameof(assembly));
+			if (metadata == null)
+				throw new ArgumentNullException(nameof(metadata));
 
-			var metadata = assembly.GetMetadataReader();
 			if (metadata.GetCustomAttributes(Handle.AssemblyDefinition).HasKnownAttribute(metadata, KnownAttribute.ReferenceAssembly))
 				return true;
 
@@ -197,7 +195,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return refPathMatch.Success;
 		}
 
-		public static string DetectRuntimePack(this PEFile assembly)
+		public static string DetectRuntimePack(this MetadataFile assembly)
 		{
 			if (assembly is null)
 			{

@@ -128,7 +128,7 @@ namespace ICSharpCode.BamlDecompiler.Rewrite
 
 			IMethod connectMethod = null;
 			MethodDefinition connectMetadataEntry = default;
-			var module = ctx.TypeSystem.MainModule.PEFile;
+			var module = ctx.TypeSystem.MainModule.MetadataFile;
 
 			foreach (IMethod m in type.Methods)
 			{
@@ -171,9 +171,7 @@ namespace ICSharpCode.BamlDecompiler.Rewrite
 
 			ctx.GeneratedMembers.Add(connectMethod.MetadataToken);
 
-
-
-			var body = module.Reader.GetMethodBody(connectMetadataEntry.RelativeVirtualAddress);
+			var body = module.GetMethodBody(connectMetadataEntry.RelativeVirtualAddress);
 			var genericContext = new GenericContext(
 				classTypeParameters: connectMethod.DeclaringType?.TypeParameters,
 				methodTypeParameters: connectMethod.TypeParameters);

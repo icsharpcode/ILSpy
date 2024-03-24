@@ -41,14 +41,14 @@ namespace ICSharpCode.ILSpy.Analyzers
 				MessageBox.Show(Properties.Resources.CannotAnalyzeMissingRef, "ILSpy");
 				return;
 			}
-			MainWindow.Instance.JumpToReference(new EntityReference(this.Member.ParentModule.PEFile, this.Member.MetadataToken));
+			MainWindow.Instance.JumpToReference(new EntityReference(this.Member.ParentModule.MetadataFile, this.Member.MetadataToken));
 		}
 
 		public override bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies)
 		{
 			foreach (LoadedAssembly asm in removedAssemblies)
 			{
-				if (this.Member.ParentModule.PEFile == asm.GetPEFileOrNull())
+				if (this.Member.ParentModule.MetadataFile == asm.GetMetadataFileOrNull())
 					return false; // remove this node
 			}
 			this.Children.RemoveAll(

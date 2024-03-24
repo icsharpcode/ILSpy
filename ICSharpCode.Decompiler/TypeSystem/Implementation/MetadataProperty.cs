@@ -267,7 +267,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						// "protected internal" (ProtectedOrInternal) accessibility is "reduced"
 						// to "protected" accessibility across assembly boundaries.
 						if (baseMember.Accessibility == Accessibility.ProtectedOrInternal
-							&& this.ParentModule?.PEFile != baseMember.ParentModule?.PEFile)
+							&& this.ParentModule?.MetadataFile != baseMember.ParentModule?.MetadataFile)
 						{
 							return Accessibility.Protected;
 						}
@@ -302,14 +302,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (obj is MetadataProperty p)
 			{
-				return handle == p.handle && module.PEFile == p.module.PEFile;
+				return handle == p.handle && module.MetadataFile == p.module.MetadataFile;
 			}
 			return false;
 		}
 
 		public override int GetHashCode()
 		{
-			return 0x32b6a76c ^ module.PEFile.GetHashCode() ^ handle.GetHashCode();
+			return 0x32b6a76c ^ module.MetadataFile.GetHashCode() ^ handle.GetHashCode();
 		}
 
 		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)

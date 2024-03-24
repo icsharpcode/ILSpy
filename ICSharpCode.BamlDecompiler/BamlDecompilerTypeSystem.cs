@@ -40,7 +40,7 @@ namespace ICSharpCode.BamlDecompiler
 				"System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
 			};
 
-		public BamlDecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver)
+		public BamlDecompilerTypeSystem(MetadataFile mainModule, IAssemblyResolver assemblyResolver)
 		{
 			if (mainModule == null)
 				throw new ArgumentNullException(nameof(mainModule));
@@ -48,8 +48,8 @@ namespace ICSharpCode.BamlDecompiler
 				throw new ArgumentNullException(nameof(assemblyResolver));
 			// Load referenced assemblies and type-forwarder references.
 			// This is necessary to make .NET Core/PCL binaries work better.
-			var referencedAssemblies = new List<PEFile>();
-			var assemblyReferenceQueue = new Queue<(bool IsAssembly, PEFile MainModule, object Reference)>();
+			var referencedAssemblies = new List<MetadataFile>();
+			var assemblyReferenceQueue = new Queue<(bool IsAssembly, MetadataFile MainModule, object Reference)>();
 			var mainMetadata = mainModule.Metadata;
 			foreach (var h in mainMetadata.GetModuleReferences())
 			{
@@ -73,16 +73,16 @@ namespace ICSharpCode.BamlDecompiler
 			{
 				assemblyReferenceQueue.Enqueue((true, mainModule, AssemblyNameReference.Parse(bamlReference)));
 			}
-			var comparer = KeyComparer.Create(((bool IsAssembly, PEFile MainModule, object Reference) reference) =>
+			var comparer = KeyComparer.Create(((bool IsAssembly, MetadataFile MainModule, object Reference) reference) =>
 				reference.IsAssembly ? "A:" + ((IAssemblyReference)reference.Reference).FullName :
 									   "M:" + reference.Reference);
-			var processedAssemblyReferences = new HashSet<(bool IsAssembly, PEFile Parent, object Reference)>(comparer);
+			var processedAssemblyReferences = new HashSet<(bool IsAssembly, MetadataFile Parent, object Reference)>(comparer);
 			while (assemblyReferenceQueue.Count > 0)
 			{
 				var asmRef = assemblyReferenceQueue.Dequeue();
 				if (!processedAssemblyReferences.Add(asmRef))
 					continue;
-				PEFile asm;
+				MetadataFile asm;
 				if (asmRef.IsAssembly)
 				{
 					asm = assemblyResolver.Resolve((IAssemblyReference)asmRef.Reference);

@@ -55,11 +55,11 @@ namespace ICSharpCode.ILSpy.Analyzers
 		{
 			if (!method.HasBody || method.MetadataToken.IsNil)
 				return null;
-			var module = method.ParentModule.PEFile;
+			var module = method.ParentModule.MetadataFile;
 			var md = module.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
 			try
 			{
-				return module.Reader.GetMethodBody(md.RelativeVirtualAddress);
+				return module.GetMethodBody(md.RelativeVirtualAddress);
 			}
 			catch (BadImageFormatException)
 			{
@@ -72,9 +72,9 @@ namespace ICSharpCode.ILSpy.Analyzers
 			return new AnalyzerScope(AssemblyList, entity);
 		}
 
-		readonly ConcurrentDictionary<PEFile, DecompilerTypeSystem> typeSystemCache = new ConcurrentDictionary<PEFile, DecompilerTypeSystem>();
+		readonly ConcurrentDictionary<MetadataFile, DecompilerTypeSystem> typeSystemCache = new();
 
-		public DecompilerTypeSystem GetOrCreateTypeSystem(PEFile module)
+		public DecompilerTypeSystem GetOrCreateTypeSystem(MetadataFile module)
 		{
 			return typeSystemCache.GetOrAdd(module, m => new DecompilerTypeSystem(m, m.GetAssemblyResolver()));
 		}

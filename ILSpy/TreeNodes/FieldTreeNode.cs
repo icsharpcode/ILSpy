@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		private IField GetFieldDefinition()
 		{
-			return ((MetadataModule)FieldDefinition.ParentModule.PEFile
+			return ((MetadataModule)FieldDefinition.ParentModule.MetadataFile
 				?.GetTypeSystemWithCurrentOptionsOrNull()
 				?.MainModule)?.GetDefinition((FieldDefinitionHandle)FieldDefinition.MetadataToken) ?? FieldDefinition;
 		}

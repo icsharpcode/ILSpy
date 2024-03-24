@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpyX.Search
 		{
 		}
 
-		public override void Search(PEFile module, CancellationToken cancellationToken)
+		public override void Search(MetadataFile module, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			var typeSystem = module.GetTypeSystemWithDecompilerSettingsOrNull(searchRequest.DecompilerSettings);
@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpyX.Search
 			Search(module, root);
 		}
 
-		private void Search(PEFile module, INamespace ns)
+		private void Search(MetadataFile module, INamespace ns)
 		{
 			if (ns.Types.Any())
 			{
@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpyX.Search
 				Search(module, child);
 		}
 
-		void OnFoundResult(PEFile module, INamespace ns)
+		void OnFoundResult(MetadataFile module, INamespace ns)
 		{
 			OnFoundResult(searchRequest.SearchResultFactory.Create(module, ns));
 		}
