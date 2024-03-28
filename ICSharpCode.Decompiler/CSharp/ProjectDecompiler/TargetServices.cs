@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <param name="module">The module to get the target framework description for. Cannot be null.</param>
 		/// <returns>A new instance of the <see cref="TargetFramework"/> class that describes the specified <paramref name="module"/>.
 		/// </returns>
-		public static TargetFramework DetectTargetFramework(PEFile module)
+		public static TargetFramework DetectTargetFramework(MetadataFile module)
 		{
 			if (module is null)
 			{

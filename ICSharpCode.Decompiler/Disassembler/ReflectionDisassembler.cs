@@ -1955,7 +1955,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		public void WriteAssemblyHeader(PEFile module)
+		public void WriteAssemblyHeader(MetadataFile module)
 		{
 			var metadata = module.Metadata;
 			if (!metadata.IsAssembly)
@@ -2018,7 +2018,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		public void WriteModuleHeader(PEFile module, bool skipMVID = false)
+		public void WriteModuleHeader(MetadataFile module, bool skipMVID = false)
 		{
 			var metadata = module.Metadata;
 
@@ -2085,17 +2085,20 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.WriteLine("// MVID: {0}", metadata.GetGuid(moduleDefinition.Mvid).ToString("B").ToUpperInvariant());
 			}
 
-			var headers = module.Reader.PEHeaders;
-			output.WriteLine(".imagebase 0x{0:x8}", headers.PEHeader.ImageBase);
-			output.WriteLine(".file alignment 0x{0:x8}", headers.PEHeader.FileAlignment);
-			output.WriteLine(".stackreserve 0x{0:x8}", headers.PEHeader.SizeOfStackReserve);
-			output.WriteLine(".subsystem 0x{0:x} // {1}", headers.PEHeader.Subsystem, headers.PEHeader.Subsystem.ToString());
-			output.WriteLine(".corflags 0x{0:x} // {1}", headers.CorHeader.Flags, headers.CorHeader.Flags.ToString());
+			if (module is PEFile peFile)
+			{
+				var headers = peFile.Reader.PEHeaders;
+				output.WriteLine(".imagebase 0x{0:x8}", headers.PEHeader.ImageBase);
+				output.WriteLine(".file alignment 0x{0:x8}", headers.PEHeader.FileAlignment);
+				output.WriteLine(".stackreserve 0x{0:x8}", headers.PEHeader.SizeOfStackReserve);
+				output.WriteLine(".subsystem 0x{0:x} // {1}", headers.PEHeader.Subsystem, headers.PEHeader.Subsystem.ToString());
+				output.WriteLine(".corflags 0x{0:x} // {1}", headers.CorHeader.Flags, headers.CorHeader.Flags.ToString());
+			}
 
 			WriteAttributes(module, metadata.GetCustomAttributes(EntityHandle.ModuleDefinition));
 		}
 
-		public void WriteModuleContents(PEFile module)
+		public void WriteModuleContents(MetadataFile module)
 		{
 			foreach (var handle in Process(module, module.Metadata.GetTopLevelTypeDefinitions().ToArray()))
 			{

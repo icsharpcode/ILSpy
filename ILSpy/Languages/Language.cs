@@ -561,7 +561,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public static string GetRuntimeDisplayName(PEFile module)
+		public static string GetRuntimeDisplayName(MetadataFile module)
 		{
 			return module.Metadata.MetadataVersion;
 		}

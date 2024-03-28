@@ -133,10 +133,6 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		public void DecompileProject(MetadataFile file, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			if (file is not PEFile)
-			{
-				throw new NotSupportedException("Module is not a valid PE file!");
-			}
 			string projectFileName = Path.Combine(targetDirectory, CleanUpFileName(file.Name) + ".csproj");
 			using (var writer = new StreamWriter(projectFileName))
 			{
@@ -146,10 +142,6 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		public ProjectId DecompileProject(MetadataFile file, string targetDirectory, TextWriter projectFileWriter, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			if (file is not PEFile module)
-			{
-				throw new NotSupportedException("Module is not a valid PE file!");
-			}
 			if (string.IsNullOrEmpty(targetDirectory))
 			{
 				throw new InvalidOperationException("Must set TargetDirectory");
@@ -159,15 +151,19 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			var resources = WriteResourceFilesInProject(file).ToList();
 			var files = WriteCodeFilesInProject(file, resources.SelectMany(r => r.PartialTypes ?? Enumerable.Empty<PartialTypeInfo>()).ToList(), cancellationToken).ToList();
 			files.AddRange(resources);
-			files.AddRange(WriteMiscellaneousFilesInProject(module));
+			var module = file as PEFile;
+			if (module != null)
+			{
+				files.AddRange(WriteMiscellaneousFilesInProject(module));
+			}
 			if (StrongNameKeyFile != null)
 			{
 				File.Copy(StrongNameKeyFile, Path.Combine(targetDirectory, Path.GetFileName(StrongNameKeyFile)), overwrite: true);
 			}
 
-			projectWriter.Write(projectFileWriter, this, files, module);
+			projectWriter.Write(projectFileWriter, this, files, file);
 
-			string platformName = TargetServices.GetPlatformName(module);
+			string platformName = module != null ? TargetServices.GetPlatformName(module) : "AnyCPU";
 			return new ProjectId(platformName, ProjectGuid, ProjectTypeGuids.CSharpWindows);
 		}
 
@@ -764,7 +760,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		public static bool CanUseSdkStyleProjectFormat(PEFile module)
+		public static bool CanUseSdkStyleProjectFormat(MetadataFile module)
 		{
 			return TargetServices.DetectTargetFramework(module).Moniker != null;
 		}

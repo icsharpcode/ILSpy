@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			TextWriter target,
 			IProjectInfoProvider project,
 			IEnumerable<ProjectItemInfo> files,
-			PEFile module)
+			MetadataFile module)
 		{
 			using (XmlTextWriter xmlWriter = new XmlTextWriter(target))
 			{
@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static void Write(XmlTextWriter xml, IProjectInfoProvider project, IEnumerable<ProjectItemInfo> files, PEFile module)
+		static void Write(XmlTextWriter xml, IProjectInfoProvider project, IEnumerable<ProjectItemInfo> files, MetadataFile module)
 		{
 			xml.WriteStartElement("Project");
 
@@ -105,18 +105,30 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static void WriteAssemblyInfo(XmlTextWriter xml, PEFile module, IProjectInfoProvider project, ProjectType projectType)
+		static void WriteAssemblyInfo(XmlTextWriter xml, MetadataFile module, IProjectInfoProvider project, ProjectType projectType)
 		{
 			xml.WriteElementString("AssemblyName", module.Name);
 
 			// Since we create AssemblyInfo.cs manually, we need to disable the auto-generation
 			xml.WriteElementString("GenerateAssemblyInfo", FalseString);
 
-			WriteOutputType(xml, module.Reader.PEHeaders.IsDll, module.Reader.PEHeaders.PEHeader.Subsystem, projectType);
+			string platformName;
+			CorFlags flags;
+			if (module is PEFile { Reader.PEHeaders: var headers } peFile)
+			{
+				WriteOutputType(xml, headers.IsDll, headers.PEHeader.Subsystem, projectType);
+				platformName = TargetServices.GetPlatformName(peFile);
+				flags = headers.CorHeader.Flags;
+			}
+			else
+			{
+				WriteOutputType(xml, isDll: true, Subsystem.Unknown, projectType);
+				platformName = AnyCpuString;
+				flags = 0;
+			}
 
 			WriteDesktopExtensions(xml, projectType);
 
-			string platformName = TargetServices.GetPlatformName(module);
 			var targetFramework = TargetServices.DetectTargetFramework(module);
 			if (targetFramework.Identifier == ".NETFramework" && targetFramework.VersionNumber == 200)
 				targetFramework = TargetServices.DetectTargetFrameworkNET20(module, project.AssemblyResolver, targetFramework);
@@ -134,7 +146,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				xml.WriteElementString("PlatformTarget", platformName);
 			}
 
-			if (platformName == AnyCpuString && (module.Reader.PEHeaders.CorHeader.Flags & CorFlags.Prefers32Bit) != 0)
+			if (platformName == AnyCpuString && (flags & CorFlags.Prefers32Bit) != 0)
 			{
 				xml.WriteElementString("Prefer32Bit", TrueString);
 			}
@@ -238,7 +250,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static void WriteReferences(XmlTextWriter xml, PEFile module, IProjectInfoProvider project, ProjectType projectType)
+		static void WriteReferences(XmlTextWriter xml, MetadataFile module, IProjectInfoProvider project, ProjectType projectType)
 		{
 			bool isNetCoreApp = TargetServices.DetectTargetFramework(module).Identifier == ".NETCoreApp";
 			var targetPacks = new HashSet<string>();
@@ -292,7 +304,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static ProjectType GetProjectType(PEFile module)
+		static ProjectType GetProjectType(MetadataFile module)
 		{
 			foreach (var referenceName in module.AssemblyReferences.Select(r => r.Name))
 			{

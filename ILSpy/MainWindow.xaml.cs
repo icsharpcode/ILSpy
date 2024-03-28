@@ -826,12 +826,6 @@ namespace ICSharpCode.ILSpy
 
 		static bool CanResolveTypeInPEFile(MetadataFile module, ITypeReference typeRef, out EntityHandle typeHandle)
 		{
-			if (module is not PEFile)
-			{
-				typeHandle = default;
-				return false;
-			}
-
 			// We intentionally ignore reference assemblies, so that the loop continues looking for another assembly that might have a usable definition.
 			if (module.IsReferenceAssembly())
 			{
@@ -1314,7 +1308,7 @@ namespace ICSharpCode.ILSpy
 					break;
 				case EntityReference unresolvedEntity:
 					string protocol = unresolvedEntity.Protocol ?? "decompile";
-					PEFile file = unresolvedEntity.ResolveAssembly(assemblyList) as PEFile;
+					var file = unresolvedEntity.ResolveAssembly(assemblyList);
 					if (file == null)
 					{
 						break;

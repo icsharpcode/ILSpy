@@ -165,12 +165,7 @@ namespace ICSharpCode.ILSpy
 		{
 			output.WriteLine("// " + assembly.FileName);
 			output.WriteLine();
-			var module = assembly.GetMetadataFileOrNull() as PEFile;
-
-			if (module == null)
-			{
-				throw new NotSupportedException("This file is not a PE file");
-			}
+			var module = assembly.GetMetadataFileOrNull();
 
 			if (options.FullDecompilation && options.SaveAsProjectDirectory != null)
 			{

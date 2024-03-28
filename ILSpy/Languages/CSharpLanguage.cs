@@ -393,7 +393,7 @@ namespace ICSharpCode.ILSpy
 
 		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
-			var module = assembly.GetMetadataFileOrNull() as PEFile;
+			var module = assembly.GetMetadataFileOrNull();
 			if (module == null)
 			{
 				return null;
@@ -427,38 +427,49 @@ namespace ICSharpCode.ILSpy
 				}
 				var metadata = module.Metadata;
 				var corHeader = module.CorHeader;
-				var entrypointHandle = MetadataTokenHelpers.EntityHandleOrNil(corHeader.EntryPointTokenOrRelativeVirtualAddress);
-				if (!entrypointHandle.IsNil && entrypointHandle.Kind == HandleKind.MethodDefinition)
+				if (module is PEFile peFile && corHeader != null)
 				{
-					var entrypoint = typeSystem.MainModule.ResolveMethod(entrypointHandle, new Decompiler.TypeSystem.GenericContext());
-					if (entrypoint != null)
+					var entrypointHandle = MetadataTokenHelpers.EntityHandleOrNil(corHeader.EntryPointTokenOrRelativeVirtualAddress);
+					if (!entrypointHandle.IsNil && entrypointHandle.Kind == HandleKind.MethodDefinition)
 					{
-						output.Write("// Entry point: ");
-						output.WriteReference(entrypoint, EscapeName(entrypoint.DeclaringType.FullName + "." + entrypoint.Name));
-						output.WriteLine();
+						var entrypoint = typeSystem.MainModule.ResolveMethod(entrypointHandle, new Decompiler.TypeSystem.GenericContext());
+						if (entrypoint != null)
+						{
+							output.Write("// Entry point: ");
+							output.WriteReference(entrypoint, EscapeName(entrypoint.DeclaringType.FullName + "." + entrypoint.Name));
+							output.WriteLine();
+						}
+					}
+					output.WriteLine("// Architecture: " + GetPlatformDisplayName(peFile));
+					if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.ILOnly) == 0)
+					{
+						output.WriteLine("// This assembly contains unmanaged code.");
+					}
+					string runtimeName = GetRuntimeDisplayName(module);
+					if (runtimeName != null)
+					{
+						output.WriteLine("// Runtime: " + runtimeName);
+					}
+					if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.StrongNameSigned) != 0)
+					{
+						output.WriteLine("// This assembly is signed with a strong name key.");
+					}
+					if (peFile.Reader.ReadDebugDirectory().Any(d => d.Type == DebugDirectoryEntryType.Reproducible))
+					{
+						output.WriteLine("// This assembly was compiled using the /deterministic option.");
+					}
+					if (module.Metadata.MetadataKind != MetadataKind.Ecma335)
+					{
+						output.WriteLine("// This assembly was loaded with Windows Runtime projections applied.");
 					}
 				}
-				output.WriteLine("// Architecture: " + GetPlatformDisplayName(module));
-				if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.ILOnly) == 0)
+				else
 				{
-					output.WriteLine("// This assembly contains unmanaged code.");
-				}
-				string runtimeName = GetRuntimeDisplayName(module);
-				if (runtimeName != null)
-				{
-					output.WriteLine("// Runtime: " + runtimeName);
-				}
-				if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.StrongNameSigned) != 0)
-				{
-					output.WriteLine("// This assembly is signed with a strong name key.");
-				}
-				if (module.Reader.ReadDebugDirectory().Any(d => d.Type == DebugDirectoryEntryType.Reproducible))
-				{
-					output.WriteLine("// This assembly was compiled using the /deterministic option.");
-				}
-				if (module.Metadata.MetadataKind != MetadataKind.Ecma335)
-				{
-					output.WriteLine("// This assembly was loaded with Windows Runtime projections applied.");
+					string runtimeName = GetRuntimeDisplayName(module);
+					if (runtimeName != null)
+					{
+						output.WriteLine("// Runtime: " + runtimeName);
+					}
 				}
 				if (metadata.IsAssembly)
 				{

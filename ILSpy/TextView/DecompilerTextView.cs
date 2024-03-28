@@ -51,7 +51,6 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Documentation;
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AvalonEdit;
 using ICSharpCode.ILSpy.Options;
@@ -411,7 +410,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			else if (segment.Reference is EntityReference unresolvedEntity)
 			{
-				var module = unresolvedEntity.ResolveAssembly(MainWindow.Instance.CurrentAssemblyList) as PEFile;
+				var module = unresolvedEntity.ResolveAssembly(MainWindow.Instance.CurrentAssemblyList);
 				if (module == null)
 					return null;
 				var typeSystem = new DecompilerTypeSystem(module,

@@ -129,7 +129,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				if (tooltip == null && LoadedAssembly.IsLoaded)
 				{
 					tooltip = new TextBlock();
-					var module = LoadedAssembly.GetMetadataFileOrNull() as PEFile;
+					var module = LoadedAssembly.GetMetadataFileOrNull();
 					var metadata = module?.Metadata;
 					if (metadata?.IsAssembly == true && metadata.TryGetFullAssemblyName(out var assemblyName))
 					{
@@ -141,9 +141,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					tooltip.Inlines.Add(new Run(LoadedAssembly.FileName));
 					if (module != null)
 					{
-						tooltip.Inlines.Add(new LineBreak());
-						tooltip.Inlines.Add(new Bold(new Run("Architecture: ")));
-						tooltip.Inlines.Add(new Run(Language.GetPlatformDisplayName(module)));
+						if (module is PEFile peFile)
+						{
+							tooltip.Inlines.Add(new LineBreak());
+							tooltip.Inlines.Add(new Bold(new Run("Architecture: ")));
+							tooltip.Inlines.Add(new Run(Language.GetPlatformDisplayName(peFile)));
+						}
 						string runtimeName = Language.GetRuntimeDisplayName(module);
 						if (runtimeName != null)
 						{
