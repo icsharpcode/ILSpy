@@ -21,7 +21,7 @@ using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.Analyzers
+namespace ICSharpCode.ILSpyX.Analyzers
 {
 	internal static class AnalyzerHelpers
 	{
@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			{
 				case HandleKind.MethodDefinition:
 					return member == analyzedMethod.MetadataToken
-						&& module == analyzedMethod.ParentModule.MetadataFile;
+						&& module == analyzedMethod.ParentModule?.MetadataFile;
 				case HandleKind.MemberReference:
 					var mr = metadata.GetMemberReference((MemberReferenceHandle)member);
 					if (mr.GetKind() != MemberReferenceKind.Method)
@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			}
 		}
 
-		public static ISymbol GetParentEntity(DecompilerTypeSystem ts, CustomAttribute customAttribute)
+		public static ISymbol? GetParentEntity(DecompilerTypeSystem ts, CustomAttribute customAttribute)
 		{
 			var metadata = ts.MainModule.MetadataFile.Metadata;
 			switch (customAttribute.Parent.Kind)

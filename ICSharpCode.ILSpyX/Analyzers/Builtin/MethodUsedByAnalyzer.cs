@@ -18,17 +18,15 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.Analyzers.Builtin
+namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
 	/// <summary>
 	/// Shows entities that are used by a method.
@@ -46,9 +44,11 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 			var analyzedMethod = (IMethod)analyzedSymbol;
 			var analyzedBaseMethod = (IMethod)InheritanceHelper.GetBaseMember(analyzedMethod);
+			if (analyzedMethod.ParentModule?.MetadataFile == null)
+				yield break;
 			var mapping = context.Language
 				.GetCodeMappingInfo(analyzedMethod.ParentModule.MetadataFile,
-					analyzedMethod.DeclaringTypeDefinition.MetadataToken);
+					analyzedMethod.DeclaringTypeDefinition!.MetadataToken);
 
 			var parentMethod = mapping.GetParentMethod((MethodDefinitionHandle)analyzedMethod.MetadataToken);
 			if (parentMethod != analyzedMethod.MetadataToken)
@@ -57,6 +57,8 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			var scope = context.GetScopeOf(analyzedMethod);
 			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
 			{
+				if (type.ParentModule?.MetadataFile == null)
+					continue;
 				var parentModule = (MetadataModule)type.ParentModule;
 				mapping = null;
 				var methods = type.GetMembers(m => m is IMethod, Options).OfType<IMethod>();
@@ -110,9 +112,9 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			return ScanMethodBody(analyzedEntity, method, analyzedBaseMethod, context.GetMethodBody(method));
 		}
 
-		static bool ScanMethodBody(IMethod analyzedMethod, IMethod method, IMethod analyzedBaseMethod, MethodBodyBlock methodBody)
+		static bool ScanMethodBody(IMethod analyzedMethod, IMethod method, IMethod analyzedBaseMethod, MethodBodyBlock? methodBody)
 		{
-			if (methodBody == null)
+			if (methodBody == null || method.ParentModule?.MetadataFile == null)
 				return false;
 
 			var mainModule = (MetadataModule)method.ParentModule;
@@ -145,7 +147,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					}
 				}
 
-				IMember m;
+				IMember? m;
 				try
 				{
 					m = (mainModule.ResolveEntity(member, genericContext) as IMember)?.MemberDefinition;
@@ -192,7 +194,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		static bool IsSameMember(IMember analyzedMethod, IMember m)
 		{
 			return m.MetadataToken == analyzedMethod.MetadataToken
-				&& m.ParentModule.MetadataFile == analyzedMethod.ParentModule.MetadataFile;
+				&& m.ParentModule?.MetadataFile == analyzedMethod.ParentModule!.MetadataFile;
 		}
 	}
 }

@@ -42,18 +42,14 @@ namespace ICSharpCode.ILSpyX.Search
 
 		public float Fitness { get; set; }
 
-#nullable disable
-		public string Name { get; set; }
-		public string Location { get; set; }
-		public string Assembly { get; set; }
-#nullable enable
+		public required string Name { get; set; }
+		public required string Location { get; set; }
+		public required string Assembly { get; set; }
 		public object? ToolTip { get; set; }
-#nullable disable
-		public object Image { get; set; }
-		public object LocationImage { get; set; }
+		public required object Image { get; set; }
+		public required object LocationImage { get; set; }
 
-		public object AssemblyImage { get; set; }
-#nullable enable
+		public required object AssemblyImage { get; set; }
 
 		public override string ToString()
 		{

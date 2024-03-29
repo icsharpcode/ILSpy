@@ -25,8 +25,8 @@ using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
-using ICSharpCode.ILSpy.Analyzers;
-using ICSharpCode.ILSpy.Analyzers.Builtin;
+using ICSharpCode.ILSpyX.Analyzers;
+using ICSharpCode.ILSpyX.Analyzers.Builtin;
 
 using NSubstitute;
 
@@ -145,7 +145,7 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 			var analyzer = new MemberImplementsInterfaceAnalyzer();
 
 			// Act
-			var results = analyzer.Analyze(symbol, new AnalyzerContext());
+			var results = analyzer.Analyze(symbol, new AnalyzerContext() { AssemblyList = new ILSpyX.AssemblyList(), Language = new CSharpLanguage() });
 
 			// Assert
 			Assert.That(results, Is.Not.Null);

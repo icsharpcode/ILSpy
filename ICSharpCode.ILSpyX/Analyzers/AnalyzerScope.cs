@@ -24,9 +24,8 @@ using System.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.ILSpyX;
 
-namespace ICSharpCode.ILSpy.Analyzers
+namespace ICSharpCode.ILSpyX.Analyzers
 {
 	using ICSharpCode.Decompiler.TypeSystem;
 
@@ -61,19 +60,19 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public IEnumerable<MetadataFile> GetModulesInScope(CancellationToken ct)
 		{
 			if (IsLocal)
-				return new[] { TypeScope.ParentModule.MetadataFile };
+				return new[] { TypeScope.ParentModule!.MetadataFile! };
 
 			if (effectiveAccessibility.LessThanOrEqual(Accessibility.Internal))
 				return GetModuleAndAnyFriends(TypeScope, ct);
 
-			return GetReferencingModules(TypeScope.ParentModule.MetadataFile, ct);
+			return GetReferencingModules(TypeScope.ParentModule!.MetadataFile!, ct);
 		}
 
 		public IEnumerable<MetadataFile> GetAllModules()
 		{
 			return assemblyListSnapshot.GetAllAssembliesAsync().GetAwaiter().GetResult()
 				.Select(asm => asm.GetMetadataFileOrNull())
-				.Where(x => x != null);
+				.Where(x => x != null)!;
 		}
 
 		public DecompilerTypeSystem ConstructTypeSystem(MetadataFile module)
@@ -113,7 +112,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			else
 			{
 				accessibility = input.Accessibility;
-				typeScope = input.DeclaringTypeDefinition;
+				typeScope = input.DeclaringTypeDefinition!;
 			}
 			// Once we reach a private entity, we leave the loop with typeScope set to the class that
 			// contains the private entity = the scope that needs to be searched.
@@ -123,7 +122,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			{
 				accessibility = accessibility.Intersect(typeScope.Accessibility);
 				prevTypeScope = typeScope;
-				typeScope = prevTypeScope.DeclaringTypeDefinition;
+				typeScope = prevTypeScope.DeclaringTypeDefinition!;
 			}
 			if (typeScope == null)
 			{
@@ -181,7 +180,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		IEnumerable<MetadataFile> GetModuleAndAnyFriends(ITypeDefinition typeScope, CancellationToken ct)
 		{
-			var self = typeScope.ParentModule.MetadataFile;
+			var self = typeScope.ParentModule!.MetadataFile!;
 
 			yield return self;
 
@@ -191,9 +190,10 @@ namespace ICSharpCode.ILSpy.Analyzers
 			var friendAssemblies = new HashSet<string>();
 			foreach (var attribute in attributes)
 			{
-				string assemblyName = attribute.DecodeValue(typeProvider).FixedArguments[0].Value as string;
-				assemblyName = assemblyName.Split(',')[0]; // strip off any public key info
-				friendAssemblies.Add(assemblyName);
+				string? assemblyName = attribute.DecodeValue(typeProvider).FixedArguments[0].Value as string;
+				assemblyName = assemblyName?.Split(',')[0]; // strip off any public key info
+				if (assemblyName != null)
+					friendAssemblies.Add(assemblyName);
 			}
 
 			if (friendAssemblies.Count > 0)

@@ -26,7 +26,7 @@ using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.Analyzers.Builtin
+namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
 	/// <summary>
 	/// Shows entities that are used by a method.
@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		public IEnumerable<ISymbol> Analyze(ISymbol symbol, AnalyzerContext context)
 		{
-			if (symbol is IMethod method && method.ParentModule.MetadataFile is MetadataFile corFile)
+			if (symbol is IMethod method && method.ParentModule?.MetadataFile is MetadataFile corFile)
 			{
 				var typeSystem = context.GetOrCreateTypeSystem(corFile);
 				return context.Language.GetCodeMappingInfo(corFile, method.MetadataToken)
@@ -95,7 +95,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 							case HandleKind.TypeDefinition:
 							case HandleKind.TypeReference:
 							case HandleKind.TypeSpecification:
-								IType ty;
+								IType? ty;
 								try
 								{
 									ty = module.ResolveType(member, genericContext);
@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 							case HandleKind.MethodSpecification:
 							case HandleKind.MemberReference:
 							case HandleKind.FieldDefinition:
-								IEntity m;
+								IEntity? m;
 								try
 								{
 									m = module.ResolveEntity(member, genericContext);

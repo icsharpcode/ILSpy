@@ -18,43 +18,48 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.Analyzers.Builtin
+namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
 	/// <summary>
-	/// Shows members from all corresponding interfaces the selected member implements.
+	/// Finds all extension methods defined for a type.
 	/// </summary>
-	[ExportAnalyzer(Header = "Implements", Order = 40)]
-	class MemberImplementsInterfaceAnalyzer : IAnalyzer
+	[ExportAnalyzer(Header = "Extension Methods", Order = 50)]
+	class TypeExtensionMethodsAnalyzer : IAnalyzer
 	{
+		public bool Show(ISymbol symbol) => symbol is ITypeDefinition entity && !entity.IsStatic;
+
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
-			Debug.Assert(analyzedSymbol is IMember);
-			var member = (IMember)analyzedSymbol;
-
-			Debug.Assert(!member.IsStatic);
-
-			var baseMembers = InheritanceHelper.GetBaseMembers(member, includeImplementedInterfaces: true);
-			return baseMembers.Where(m => m.DeclaringTypeDefinition.Kind == TypeKind.Interface);
+			Debug.Assert(analyzedSymbol is ITypeDefinition);
+			var scope = context.GetScopeOf((ITypeDefinition)analyzedSymbol);
+			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
+			{
+				foreach (var result in ScanType((ITypeDefinition)analyzedSymbol, type, context))
+					yield return result;
+			}
 		}
 
-		public bool Show(ISymbol symbol)
+		IEnumerable<IEntity> ScanType(ITypeDefinition analyzedType, ITypeDefinition type, AnalyzerContext context)
 		{
-			switch (symbol?.SymbolKind)
-			{
-				case SymbolKind.Event:
-				case SymbolKind.Indexer:
-				case SymbolKind.Method:
-				case SymbolKind.Property:
-					var member = (IMember)symbol;
-					var type = member.DeclaringTypeDefinition;
-					return !member.IsStatic && type is not null && (type.Kind == TypeKind.Class || type.Kind == TypeKind.Struct);
+			if (!type.HasExtensionMethods)
+				yield break;
 
-				default:
-					return false;
+			if (analyzedType.ParentModule?.MetadataFile == null)
+				yield break;
+
+			foreach (IMethod method in type.Methods)
+			{
+				if (!method.IsExtensionMethod)
+					continue;
+
+				var firstParamType = method.Parameters[0].Type.GetDefinition();
+				if (firstParamType != null &&
+					firstParamType.MetadataToken == analyzedType.MetadataToken &&
+					firstParamType.ParentModule?.MetadataFile == analyzedType.ParentModule.MetadataFile)
+					yield return method;
 			}
 		}
 	}

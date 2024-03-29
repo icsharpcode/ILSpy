@@ -19,7 +19,7 @@
 using System;
 using System.ComponentModel.Composition;
 
-namespace ICSharpCode.ILSpy.Analyzers
+namespace ICSharpCode.ILSpyX.Analyzers
 {
 	[MetadataAttribute]
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
@@ -28,7 +28,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public ExportAnalyzerAttribute() : base("Analyzer", typeof(IAnalyzer))
 		{ }
 
-		public string Header { get; set; }
+		public required string Header { get; init; }
 
 		public int Order { get; set; }
 	}

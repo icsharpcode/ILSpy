@@ -18,19 +18,16 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
-using System.Text;
-using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.Analyzers.Builtin
+namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
 	/// <summary>
 	/// Shows methods that instantiate a type.
@@ -46,6 +43,8 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			var scope = context.GetScopeOf((ITypeDefinition)analyzedSymbol);
 			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
 			{
+				if (type.ParentModule?.MetadataFile == null)
+					continue;
 				var mappingInfo = context.Language.GetCodeMappingInfo(type.ParentModule.MetadataFile, type.MetadataToken);
 				var methods = type.GetMembers(m => m is IMethod, Options).OfType<IMethod>();
 				foreach (var method in methods)
@@ -94,9 +93,9 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			return ScanMethodBody(analyzedEntity, method, context.GetMethodBody(method));
 		}
 
-		bool ScanMethodBody(ITypeDefinition analyzedEntity, IMethod method, MethodBodyBlock methodBody)
+		bool ScanMethodBody(ITypeDefinition analyzedEntity, IMethod method, MethodBodyBlock? methodBody)
 		{
-			if (methodBody == null)
+			if (methodBody == null || method.ParentModule?.MetadataFile == null)
 				return false;
 			var blob = methodBody.GetILReader();
 			var module = (MetadataModule)method.ParentModule;
@@ -134,7 +133,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					continue;
 
 				if (ctor.DeclaringTypeDefinition?.MetadataToken == analyzedEntity.MetadataToken
-					&& ctor.ParentModule.MetadataFile == analyzedEntity.ParentModule.MetadataFile)
+					&& ctor.ParentModule?.MetadataFile == analyzedEntity.ParentModule!.MetadataFile)
 					return true;
 			}
 

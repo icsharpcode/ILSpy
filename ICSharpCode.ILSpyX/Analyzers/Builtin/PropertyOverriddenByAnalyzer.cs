@@ -17,19 +17,18 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.Analyzers.Builtin
+namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
 	/// <summary>
-	/// Shows properties that implement an interface property.
+	/// Shows properties that override a property.
 	/// </summary>
-	[ExportAnalyzer(Header = "Implemented By", Order = 10)]
-	class PropertyImplementedByAnalyzer : IAnalyzer
+	[ExportAnalyzer(Header = "Overridden By", Order = 20)]
+	class PropertyOverriddenByAnalyzer : IAnalyzer
 	{
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
@@ -44,24 +43,30 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		IEnumerable<IEntity> AnalyzeType(IProperty analyzedEntity, ITypeDefinition type)
 		{
+			if (analyzedEntity.DeclaringTypeDefinition?.ParentModule?.MetadataFile == null)
+				yield break;
 			var token = analyzedEntity.MetadataToken;
 			var declaringTypeToken = analyzedEntity.DeclaringTypeDefinition.MetadataToken;
 			var module = analyzedEntity.DeclaringTypeDefinition.ParentModule.MetadataFile;
 			var allTypes = type.GetAllBaseTypeDefinitions();
-			if (!allTypes.Any(t => t.MetadataToken == declaringTypeToken && t.ParentModule.MetadataFile == module))
+			if (!allTypes.Any(t => t.MetadataToken == declaringTypeToken && t.ParentModule?.MetadataFile == module))
 				yield break;
 
 			foreach (var property in type.Properties)
 			{
-				var baseMembers = InheritanceHelper.GetBaseMembers(property, true);
-				if (baseMembers.Any(m => m.MetadataToken == token && m.ParentModule.MetadataFile == module))
+				if (!property.IsOverride)
+					continue;
+				var baseMembers = InheritanceHelper.GetBaseMembers(property, false);
+				if (baseMembers.Any(p => p.MetadataToken == token && p.ParentModule?.MetadataFile == module))
+				{
 					yield return property;
+				}
 			}
 		}
 
-		public bool Show(ISymbol symbol)
+		public bool Show(ISymbol entity)
 		{
-			return symbol is IProperty entity && entity.DeclaringType.Kind == TypeKind.Interface;
+			return entity is IProperty property && property.IsOverridable && property.DeclaringType.Kind != TypeKind.Interface;
 		}
 	}
 }

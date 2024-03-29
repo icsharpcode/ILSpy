@@ -16,16 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 
-namespace ICSharpCode.ILSpy.Analyzers.Builtin
+namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
 	using ICSharpCode.Decompiler.TypeSystem;
 
@@ -52,7 +47,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		{
 			if (analyzedType.Kind == TypeKind.Enum
 				&& type.MetadataToken == analyzedType.MetadataToken
-				&& type.ParentModule.MetadataFile == analyzedType.ParentModule.MetadataFile)
+				&& type.ParentModule?.MetadataFile == analyzedType.ParentModule?.MetadataFile)
 				yield break;
 
 			if (!context.Language.ShowMember(type))

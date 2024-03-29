@@ -20,7 +20,7 @@ using System.Collections.Generic;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.Analyzers
+namespace ICSharpCode.ILSpyX.Analyzers
 {
 	/// <summary>
 	/// Base interface for all analyzers. You can register an analyzer for any <see cref="ISymbol"/> by implementing

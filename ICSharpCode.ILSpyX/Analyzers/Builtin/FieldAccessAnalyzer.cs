@@ -29,7 +29,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 using ILOpCode = System.Reflection.Metadata.ILOpCode;
 
-namespace ICSharpCode.ILSpy.Analyzers.Builtin
+namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
 	/// <summary>
 	/// Finds methods where this field is read.
@@ -74,6 +74,8 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			var scope = context.GetScopeOf((IEntity)analyzedSymbol);
 			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
 			{
+				if (type.ParentModule?.MetadataFile == null)
+					continue;
 				var mappingInfo = context.Language.GetCodeMappingInfo(type.ParentModule.MetadataFile, type.MetadataToken);
 				var methods = type.GetMembers(m => m is IMethod, Options).OfType<IMethod>();
 				foreach (var method in methods)
@@ -119,7 +121,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		bool IsUsedInMethod(IField analyzedField, IMethod method, CodeMappingInfo mappingInfo, AnalyzerContext context)
 		{
-			if (method.MetadataToken.IsNil)
+			if (method.MetadataToken.IsNil || method.ParentModule?.MetadataFile == null)
 				return false;
 			var module = method.ParentModule.MetadataFile;
 			foreach (var part in mappingInfo.GetMethodParts((MethodDefinitionHandle)method.MetadataToken))
@@ -144,7 +146,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		bool ScanMethodBody(IField analyzedField, IMethod method, MethodBodyBlock methodBody)
 		{
-			if (methodBody == null)
+			if (methodBody == null || method.ParentModule?.MetadataFile == null)
 				return false;
 
 			var mainModule = (MetadataModule)method.ParentModule;
@@ -170,7 +172,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				EntityHandle fieldHandle = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
 				if (!fieldHandle.Kind.IsMemberKind())
 					continue;
-				IField field;
+				IField? field;
 				try
 				{
 					field = mainModule.ResolveEntity(fieldHandle, genericContext) as IField;
@@ -183,7 +185,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					continue;
 
 				if (field.MetadataToken == analyzedField.MetadataToken
-					&& field.ParentModule.MetadataFile == analyzedField.ParentModule.MetadataFile)
+					&& field.ParentModule?.MetadataFile == analyzedField.ParentModule!.MetadataFile)
 					return true;
 			}
 

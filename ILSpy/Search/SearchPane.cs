@@ -218,7 +218,14 @@ namespace ICSharpCode.ILSpy.Search
 
 			if (resultsAdded > 0 && Results.Count == MAX_RESULTS)
 			{
-				Results.Add(new SearchResult { Name = Properties.Resources.SearchAbortedMoreThan1000ResultsFound });
+				Results.Add(new SearchResult {
+					Name = Properties.Resources.SearchAbortedMoreThan1000ResultsFound,
+					Location = null!,
+					Assembly = null!,
+					Image = null!,
+					LocationImage = null!,
+					AssemblyImage = null!,
+				});
 				currentSearch.Cancel();
 			}
 		}
