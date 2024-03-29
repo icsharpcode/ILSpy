@@ -29,7 +29,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 using ILOpCode = System.Reflection.Metadata.ILOpCode;
 
-namespace ICSharpCode.ILSpy.Analyzers.Builtin
+namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
 	/// <summary>
 	/// Finds methods where this field is read.

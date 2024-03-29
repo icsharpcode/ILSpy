@@ -19,7 +19,7 @@
 using System;
 using System.ComponentModel.Composition;
 
-namespace ICSharpCode.ILSpy.Analyzers
+namespace ICSharpCode.ILSpyX.Analyzers
 {
 	[MetadataAttribute]
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]

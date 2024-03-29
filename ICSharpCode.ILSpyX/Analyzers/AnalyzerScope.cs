@@ -26,7 +26,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpyX;
 
-namespace ICSharpCode.ILSpy.Analyzers
+namespace ICSharpCode.ILSpyX.Analyzers
 {
 	using ICSharpCode.Decompiler.TypeSystem;
 

@@ -17,51 +17,45 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.Analyzers.Builtin
+namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
 	/// <summary>
-	/// Shows events that implement an interface event.
+	/// Shows members from all corresponding interfaces the selected member implements.
 	/// </summary>
-	[ExportAnalyzer(Header = "Implemented By", Order = 10)]
-	class EventImplementedByAnalyzer : IAnalyzer
+	[ExportAnalyzer(Header = "Implements", Order = 40)]
+	class MemberImplementsInterfaceAnalyzer : IAnalyzer
 	{
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
-			Debug.Assert(analyzedSymbol is IEvent);
-			var scope = context.GetScopeOf((IEvent)analyzedSymbol);
-			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
-			{
-				foreach (var result in AnalyzeType((IEvent)analyzedSymbol, type))
-					yield return result;
-			}
-		}
+			Debug.Assert(analyzedSymbol is IMember);
+			var member = (IMember)analyzedSymbol;
 
-		IEnumerable<IEntity> AnalyzeType(IEvent analyzedEntity, ITypeDefinition type)
-		{
-			var token = analyzedEntity.MetadataToken;
-			var declaringTypeToken = analyzedEntity.DeclaringTypeDefinition.MetadataToken;
-			var module = analyzedEntity.DeclaringTypeDefinition.ParentModule.MetadataFile;
-			var allTypes = type.GetAllBaseTypeDefinitions();
-			if (!allTypes.Any(t => t.MetadataToken == declaringTypeToken && t.ParentModule.MetadataFile == module))
-				yield break;
+			Debug.Assert(!member.IsStatic);
 
-			foreach (var @event in type.Events)
-			{
-				var baseMembers = InheritanceHelper.GetBaseMembers(@event, true);
-				if (baseMembers.Any(m => m.MetadataToken == token && m.ParentModule.MetadataFile == module))
-					yield return @event;
-			}
+			var baseMembers = InheritanceHelper.GetBaseMembers(member, includeImplementedInterfaces: true);
+			return baseMembers.Where(m => m.DeclaringTypeDefinition.Kind == TypeKind.Interface);
 		}
 
 		public bool Show(ISymbol symbol)
 		{
-			return symbol is IEvent entity && entity.DeclaringType.Kind == TypeKind.Interface;
+			switch (symbol?.SymbolKind)
+			{
+				case SymbolKind.Event:
+				case SymbolKind.Indexer:
+				case SymbolKind.Method:
+				case SymbolKind.Property:
+					var member = (IMember)symbol;
+					var type = member.DeclaringTypeDefinition;
+					return !member.IsStatic && type is not null && (type.Kind == TypeKind.Class || type.Kind == TypeKind.Struct);
+
+				default:
+					return false;
+			}
 		}
 	}
 }

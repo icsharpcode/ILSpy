@@ -21,7 +21,7 @@ using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.Analyzers
+namespace ICSharpCode.ILSpyX.Analyzers
 {
 	internal static class AnalyzerHelpers
 	{

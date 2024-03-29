@@ -23,7 +23,7 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.Analyzers.Builtin
+namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
 	/// <summary>
 	/// Shows properties that implement an interface property.

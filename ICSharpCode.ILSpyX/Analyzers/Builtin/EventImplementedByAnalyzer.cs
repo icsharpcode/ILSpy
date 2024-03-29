@@ -16,36 +16,33 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.Analyzers.Builtin
+namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
 	/// <summary>
-	/// Shows properties that override a property.
+	/// Shows events that implement an interface event.
 	/// </summary>
-	[ExportAnalyzer(Header = "Overridden By", Order = 20)]
-	class PropertyOverriddenByAnalyzer : IAnalyzer
+	[ExportAnalyzer(Header = "Implemented By", Order = 10)]
+	class EventImplementedByAnalyzer : IAnalyzer
 	{
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
-			Debug.Assert(analyzedSymbol is IProperty);
-			var scope = context.GetScopeOf((IProperty)analyzedSymbol);
+			Debug.Assert(analyzedSymbol is IEvent);
+			var scope = context.GetScopeOf((IEvent)analyzedSymbol);
 			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
 			{
-				foreach (var result in AnalyzeType((IProperty)analyzedSymbol, type))
+				foreach (var result in AnalyzeType((IEvent)analyzedSymbol, type))
 					yield return result;
 			}
 		}
 
-		IEnumerable<IEntity> AnalyzeType(IProperty analyzedEntity, ITypeDefinition type)
+		IEnumerable<IEntity> AnalyzeType(IEvent analyzedEntity, ITypeDefinition type)
 		{
 			var token = analyzedEntity.MetadataToken;
 			var declaringTypeToken = analyzedEntity.DeclaringTypeDefinition.MetadataToken;
@@ -54,21 +51,17 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			if (!allTypes.Any(t => t.MetadataToken == declaringTypeToken && t.ParentModule.MetadataFile == module))
 				yield break;
 
-			foreach (var property in type.Properties)
+			foreach (var @event in type.Events)
 			{
-				if (!property.IsOverride)
-					continue;
-				var baseMembers = InheritanceHelper.GetBaseMembers(property, false);
-				if (baseMembers.Any(p => p.MetadataToken == token && p.ParentModule.MetadataFile == module))
-				{
-					yield return property;
-				}
+				var baseMembers = InheritanceHelper.GetBaseMembers(@event, true);
+				if (baseMembers.Any(m => m.MetadataToken == token && m.ParentModule.MetadataFile == module))
+					yield return @event;
 			}
 		}
 
-		public bool Show(ISymbol entity)
+		public bool Show(ISymbol symbol)
 		{
-			return entity is IProperty property && property.IsOverridable && property.DeclaringType.Kind != TypeKind.Interface;
+			return symbol is IEvent entity && entity.DeclaringType.Kind == TypeKind.Interface;
 		}
 	}
 }

@@ -25,7 +25,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 
-namespace ICSharpCode.ILSpy.Analyzers.Builtin
+namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
 	using ICSharpCode.Decompiler.TypeSystem;
 
