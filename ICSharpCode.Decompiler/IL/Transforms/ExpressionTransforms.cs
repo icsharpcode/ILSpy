@@ -274,6 +274,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		protected internal override void VisitCall(Call inst)
 		{
+			if (NullableLiftingTransform.MatchGetValueOrDefault(inst, out var nullableValue, out var fallback)
+				&& SemanticHelper.IsPure(fallback.Flags))
+			{
+				context.Step("call Nullable{T}.GetValueOrDefault(a, b) -> a ?? b", inst);
+				var ldObj = new LdObj(nullableValue, inst.Method.DeclaringType);
+				var replacement = new NullCoalescingInstruction(NullCoalescingKind.NullableWithValueFallback, ldObj, fallback) {
+					UnderlyingResultType = fallback.ResultType
+				};
+				inst.ReplaceWith(replacement.WithILRange(inst));
+				replacement.AcceptVisitor(this);
+				return;
+			}
 			base.VisitCall(inst);
 			TransformAssignment.HandleCompoundAssign(inst, context);
 		}
