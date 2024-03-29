@@ -26,10 +26,8 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
-using System.Runtime;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
@@ -49,7 +47,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 
 		public static bool HasCodeViewDebugDirectoryEntry(PEFile file)
 		{
-			return file.Reader.ReadDebugDirectory().Any(entry => entry.Type == DebugDirectoryEntryType.CodeView);
+			return file != null && file.Reader.ReadDebugDirectory().Any(entry => entry.Type == DebugDirectoryEntryType.CodeView);
 		}
 
 		private static bool IncludeTypeWhenGeneratingPdb(PEFile module, TypeDefinitionHandle type, DecompilerSettings settings)

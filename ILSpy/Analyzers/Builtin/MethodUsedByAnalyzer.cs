@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			var analyzedMethod = (IMethod)analyzedSymbol;
 			var analyzedBaseMethod = (IMethod)InheritanceHelper.GetBaseMember(analyzedMethod);
 			var mapping = context.Language
-				.GetCodeMappingInfo(analyzedMethod.ParentModule.PEFile,
+				.GetCodeMappingInfo(analyzedMethod.ParentModule.MetadataFile,
 					analyzedMethod.DeclaringTypeDefinition.MetadataToken);
 
 			var parentMethod = mapping.GetParentMethod((MethodDefinitionHandle)analyzedMethod.MetadataToken);
@@ -64,7 +64,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				{
 					if (IsUsedInMethod(analyzedMethod, analyzedBaseMethod, method, context))
 					{
-						mapping ??= context.Language.GetCodeMappingInfo(parentModule.PEFile, type.MetadataToken);
+						mapping ??= context.Language.GetCodeMappingInfo(parentModule.MetadataFile, type.MetadataToken);
 						var parent = mapping.GetParentMethod((MethodDefinitionHandle)method.MetadataToken);
 						yield return parentModule.GetDefinition(parent);
 					}
@@ -137,9 +137,9 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					return false; // unexpected end of blob
 				}
 				var member = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
-				if (!AnalyzerHelpers.IsPossibleReferenceTo(member, mainModule.PEFile, analyzedMethod))
+				if (!AnalyzerHelpers.IsPossibleReferenceTo(member, mainModule.MetadataFile, analyzedMethod))
 				{
-					if (analyzedBaseMethod == null || !AnalyzerHelpers.IsPossibleReferenceTo(member, mainModule.PEFile, analyzedBaseMethod))
+					if (analyzedBaseMethod == null || !AnalyzerHelpers.IsPossibleReferenceTo(member, mainModule.MetadataFile, analyzedBaseMethod))
 					{
 						continue;
 					}
@@ -192,7 +192,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		static bool IsSameMember(IMember analyzedMethod, IMember m)
 		{
 			return m.MetadataToken == analyzedMethod.MetadataToken
-				&& m.ParentModule.PEFile == analyzedMethod.ParentModule.PEFile;
+				&& m.ParentModule.MetadataFile == analyzedMethod.ParentModule.MetadataFile;
 		}
 	}
 }

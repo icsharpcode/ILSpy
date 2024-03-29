@@ -66,7 +66,7 @@ namespace ILSpy.BamlDecompiler
 		{
 			var asm = this.Ancestors().OfType<AssemblyTreeNode>().First().LoadedAssembly;
 			using var data = OpenStream();
-			BamlDecompilerTypeSystem typeSystem = new BamlDecompilerTypeSystem(asm.GetPEFileOrNull(), asm.GetAssemblyResolver());
+			BamlDecompilerTypeSystem typeSystem = new BamlDecompilerTypeSystem(asm.GetMetadataFileOrNull(), asm.GetAssemblyResolver());
 			var decompiler = new XamlDecompiler(typeSystem, new BamlDecompilerSettings());
 			decompiler.CancellationToken = cancellationToken;
 			var result = decompiler.Decompile(data);

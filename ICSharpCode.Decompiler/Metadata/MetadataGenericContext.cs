@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			this.declaringType = metadata.GetMethodDefinition(method).GetDeclaringType();
 		}
 
-		public MetadataGenericContext(TypeDefinitionHandle declaringType, PEFile module)
+		public MetadataGenericContext(TypeDefinitionHandle declaringType, MetadataFile module)
 		{
 			this.metadata = module.Metadata;
 			this.method = default;

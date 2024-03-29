@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		private IProperty GetPropertyDefinition()
 		{
-			return ((MetadataModule)PropertyDefinition.ParentModule.PEFile
+			return ((MetadataModule)PropertyDefinition.ParentModule.MetadataFile
 				?.GetTypeSystemWithCurrentOptionsOrNull()
 				?.MainModule)?.GetDefinition((PropertyDefinitionHandle)PropertyDefinition.MetadataToken) ?? PropertyDefinition;
 		}

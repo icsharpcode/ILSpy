@@ -21,7 +21,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -34,7 +33,6 @@ using System.Windows.Media;
 using System.Windows.Threading;
 
 using ICSharpCode.ILSpy.Docking;
-using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Extensions;
@@ -467,7 +465,7 @@ namespace ICSharpCode.ILSpy.Search
 						{
 							foreach (var loadedAssembly in assemblies)
 							{
-								var module = loadedAssembly.GetPEFileOrNull();
+								var module = loadedAssembly.GetMetadataFileOrNull();
 								if (module == null)
 									continue;
 								searcher.Search(module, cts.Token);

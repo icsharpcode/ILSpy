@@ -32,10 +32,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	sealed class ReferenceFolderTreeNode : ILSpyTreeNode
 	{
-		readonly PEFile module;
+		readonly MetadataFile module;
 		readonly AssemblyTreeNode parentAssembly;
 
-		public ReferenceFolderTreeNode(PEFile module, AssemblyTreeNode parentAssembly)
+		public ReferenceFolderTreeNode(MetadataFile module, AssemblyTreeNode parentAssembly)
 		{
 			this.module = module;
 			this.parentAssembly = parentAssembly;

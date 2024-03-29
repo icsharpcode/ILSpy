@@ -16,16 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
 
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpy.Analyzers.Builtin;
 using ICSharpCode.ILSpyX;
@@ -47,7 +40,7 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 		{
 			assemblyList = new AssemblyList();
 			testAssembly = assemblyList.OpenAssembly(typeof(MethodUsesAnalyzerTests).Assembly.Location);
-			testAssemblyTypeSystem = new DecompilerTypeSystem(testAssembly.GetPEFileOrNull(), testAssembly.GetAssemblyResolver());
+			testAssemblyTypeSystem = new DecompilerTypeSystem(testAssembly.GetMetadataFileOrNull(), testAssembly.GetAssemblyResolver());
 			language = new CSharpLanguage();
 		}
 

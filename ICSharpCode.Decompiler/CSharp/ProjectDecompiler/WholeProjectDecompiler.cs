@@ -37,8 +37,6 @@ using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
-using Microsoft.Win32;
-
 using static ICSharpCode.Decompiler.Metadata.MetadataExtensions;
 
 namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
@@ -133,16 +131,16 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		HashSet<string> directories = new HashSet<string>(Platform.FileNameComparer);
 		readonly IProjectFileWriter projectWriter;
 
-		public void DecompileProject(PEFile moduleDefinition, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
+		public void DecompileProject(MetadataFile file, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			string projectFileName = Path.Combine(targetDirectory, CleanUpFileName(moduleDefinition.Name) + ".csproj");
+			string projectFileName = Path.Combine(targetDirectory, CleanUpFileName(file.Name) + ".csproj");
 			using (var writer = new StreamWriter(projectFileName))
 			{
-				DecompileProject(moduleDefinition, targetDirectory, writer, cancellationToken);
+				DecompileProject(file, targetDirectory, writer, cancellationToken);
 			}
 		}
 
-		public ProjectId DecompileProject(PEFile moduleDefinition, string targetDirectory, TextWriter projectFileWriter, CancellationToken cancellationToken = default(CancellationToken))
+		public ProjectId DecompileProject(MetadataFile file, string targetDirectory, TextWriter projectFileWriter, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			if (string.IsNullOrEmpty(targetDirectory))
 			{
@@ -150,23 +148,27 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 			TargetDirectory = targetDirectory;
 			directories.Clear();
-			var resources = WriteResourceFilesInProject(moduleDefinition).ToList();
-			var files = WriteCodeFilesInProject(moduleDefinition, resources.SelectMany(r => r.PartialTypes ?? Enumerable.Empty<PartialTypeInfo>()).ToList(), cancellationToken).ToList();
+			var resources = WriteResourceFilesInProject(file).ToList();
+			var files = WriteCodeFilesInProject(file, resources.SelectMany(r => r.PartialTypes ?? Enumerable.Empty<PartialTypeInfo>()).ToList(), cancellationToken).ToList();
 			files.AddRange(resources);
-			files.AddRange(WriteMiscellaneousFilesInProject(moduleDefinition));
+			var module = file as PEFile;
+			if (module != null)
+			{
+				files.AddRange(WriteMiscellaneousFilesInProject(module));
+			}
 			if (StrongNameKeyFile != null)
 			{
 				File.Copy(StrongNameKeyFile, Path.Combine(targetDirectory, Path.GetFileName(StrongNameKeyFile)), overwrite: true);
 			}
 
-			projectWriter.Write(projectFileWriter, this, files, moduleDefinition);
+			projectWriter.Write(projectFileWriter, this, files, file);
 
-			string platformName = TargetServices.GetPlatformName(moduleDefinition);
+			string platformName = module != null ? TargetServices.GetPlatformName(module) : "AnyCPU";
 			return new ProjectId(platformName, ProjectGuid, ProjectTypeGuids.CSharpWindows);
 		}
 
 		#region WriteCodeFilesInProject
-		protected virtual bool IncludeTypeWhenDecompilingProject(PEFile module, TypeDefinitionHandle type)
+		protected virtual bool IncludeTypeWhenDecompilingProject(MetadataFile module, TypeDefinitionHandle type)
 		{
 			var metadata = module.Metadata;
 			var typeDef = metadata.GetTypeDefinition(type);
@@ -208,7 +210,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			return new[] { new ProjectItemInfo("Compile", assemblyInfo) };
 		}
 
-		IEnumerable<ProjectItemInfo> WriteCodeFilesInProject(Metadata.PEFile module, IList<PartialTypeInfo> partialTypes, CancellationToken cancellationToken)
+		IEnumerable<ProjectItemInfo> WriteCodeFilesInProject(MetadataFile module, IList<PartialTypeInfo> partialTypes, CancellationToken cancellationToken)
 		{
 			var metadata = module.Metadata;
 			var files = module.Metadata.GetTopLevelTypeDefinitions().Where(td => IncludeTypeWhenDecompilingProject(module, td))
@@ -306,7 +308,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		#endregion
 
 		#region WriteResourceFilesInProject
-		protected virtual IEnumerable<ProjectItemInfo> WriteResourceFilesInProject(Metadata.PEFile module)
+		protected virtual IEnumerable<ProjectItemInfo> WriteResourceFilesInProject(MetadataFile module)
 		{
 			foreach (var r in module.Resources.Where(r => r.ResourceType == ResourceType.Embedded))
 			{
@@ -758,7 +760,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		public static bool CanUseSdkStyleProjectFormat(PEFile module)
+		public static bool CanUseSdkStyleProjectFormat(MetadataFile module)
 		{
 			return TargetServices.DetectTargetFramework(module).Moniker != null;
 		}

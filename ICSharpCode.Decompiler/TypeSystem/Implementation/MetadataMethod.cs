@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.attributes = def.Attributes;
 
 			this.symbolKind = SymbolKind.Method;
-			var (accessorOwner, semanticsAttribute) = module.PEFile.MethodSemanticsLookup.GetSemantics(handle);
+			var (accessorOwner, semanticsAttribute) = module.MetadataFile.MethodSemanticsLookup.GetSemantics(handle);
 			const MethodAttributes finalizerAttributes = (MethodAttributes.Virtual | MethodAttributes.Family | MethodAttributes.HideBySig);
 			this.typeParameters = MetadataTypeParameter.Create(module, this, def.GetGenericParameters());
 			if (semanticsAttribute != 0 && !accessorOwner.IsNil
@@ -606,14 +606,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (obj is MetadataMethod m)
 			{
-				return handle == m.handle && module.PEFile == m.module.PEFile;
+				return handle == m.handle && module.MetadataFile == m.module.MetadataFile;
 			}
 			return false;
 		}
 
 		public override int GetHashCode()
 		{
-			return 0x5a00d671 ^ module.PEFile.GetHashCode() ^ handle.GetHashCode();
+			return 0x5a00d671 ^ module.MetadataFile.GetHashCode() ^ handle.GetHashCode();
 		}
 
 		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)

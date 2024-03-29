@@ -15,7 +15,6 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
-using System;
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Threading;
@@ -50,7 +49,7 @@ namespace ICSharpCode.ILSpyX.Search
 			return true;
 		}
 
-		public override void Search(PEFile module, CancellationToken cancellationToken)
+		public override void Search(MetadataFile module, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			var resourcesNode = treeNodeFactory.CreateResourcesList(module);
@@ -59,7 +58,7 @@ namespace ICSharpCode.ILSpyX.Search
 				Search(module, resource, resourcesNode, treeNodeFactory.Create(resource), cancellationToken);
 		}
 
-		void Search(PEFile module, Resource resource, ITreeNode parent, ITreeNode node, CancellationToken cancellationToken)
+		void Search(MetadataFile module, Resource resource, ITreeNode parent, ITreeNode node, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 
@@ -81,7 +80,7 @@ namespace ICSharpCode.ILSpyX.Search
 				Search(module, resource, node, child, cancellationToken);
 		}
 
-		void OnFoundResult(PEFile module, Resource resource, ITreeNode node, ITreeNode parent)
+		void OnFoundResult(MetadataFile module, Resource resource, ITreeNode node, ITreeNode parent)
 		{
 			OnFoundResult(searchRequest.SearchResultFactory.Create(module, resource, node, parent));
 		}

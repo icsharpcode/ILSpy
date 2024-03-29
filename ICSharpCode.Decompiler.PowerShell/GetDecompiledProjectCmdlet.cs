@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.IO;
 using System.Management.Automation;
 using System.Threading;
@@ -89,7 +88,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 
 		private void DoDecompile(string path)
 		{
-			PEFile module = Decompiler.TypeSystem.MainModule.PEFile;
+			MetadataFile module = Decompiler.TypeSystem.MainModule.MetadataFile;
 			var assemblyResolver = new UniversalAssemblyResolver(module.FileName, false, module.Metadata.DetectTargetFrameworkId());
 			WholeProjectDecompiler decompiler = new WholeProjectDecompiler(assemblyResolver);
 			decompiler.ProgressIndicator = this;

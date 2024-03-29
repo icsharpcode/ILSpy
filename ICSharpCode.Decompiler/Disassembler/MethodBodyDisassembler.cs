@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		int nextSequencePointIndex;
 
 		// cache info
-		PEFile module;
+		MetadataFile module;
 		MetadataReader metadata;
 		MetadataGenericContext genericContext;
 		DisassemblerSignatureTypeProvider signatureDecoder;
@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			this.cancellationToken = cancellationToken;
 		}
 
-		public virtual void Disassemble(PEFile module, MethodDefinitionHandle handle)
+		public virtual void Disassemble(MetadataFile module, MethodDefinitionHandle handle)
 		{
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			metadata = module.Metadata;
@@ -105,8 +105,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			BlobReader bodyBlockReader;
 			try
 			{
-				body = module.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
-				bodyBlockReader = module.Reader.GetSectionData(methodDefinition.RelativeVirtualAddress).GetReader();
+				body = module.GetMethodBody(methodDefinition.RelativeVirtualAddress);
+				bodyBlockReader = module.GetSectionData(methodDefinition.RelativeVirtualAddress).GetReader();
 			}
 			catch (BadImageFormatException ex)
 			{
@@ -119,7 +119,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteLine("// Code size: {0} (0x{0:x})", blob.Length);
 			output.WriteLine(".maxstack {0}", body.MaxStack);
 
-			var entrypointHandle = MetadataTokens.MethodDefinitionHandle(module.Reader.PEHeaders.CorHeader.EntryPointTokenOrRelativeVirtualAddress);
+			var entrypointHandle = MetadataTokens.MethodDefinitionHandle(module.CorHeader?.EntryPointTokenOrRelativeVirtualAddress ?? 0);
 			if (handle == entrypointHandle)
 				output.WriteLine(".entrypoint");
 
@@ -141,7 +141,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				while (blob.RemainingBytes > 0)
 				{
 					cancellationToken.ThrowIfCancellationRequested();
-					WriteInstruction(output, metadata, handle, ref blob, methodDefinition.RelativeVirtualAddress);
+					WriteInstruction(output, module, handle, ref blob, methodDefinition.RelativeVirtualAddress);
 				}
 				WriteExceptionHandlers(module, handle, body);
 			}
@@ -195,7 +195,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteLine(")");
 		}
 
-		internal void WriteExceptionHandlers(PEFile module, MethodDefinitionHandle handle, MethodBodyBlock body)
+		internal void WriteExceptionHandlers(MetadataFile module, MethodDefinitionHandle handle, MethodBodyBlock body)
 		{
 			this.module = module;
 			metadata = module.Metadata;
@@ -291,7 +291,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					}
 					var currentOpCode = ILParser.DecodeOpCode(ref body);
 					body.Offset = offset; // reset IL stream
-					WriteInstruction(output, metadata, s.MethodHandle, ref body, methodRva);
+					WriteInstruction(output, module, s.MethodHandle, ref body, methodRva);
 					prevInstructionWasBranch = currentOpCode.IsBranch()
 						|| currentOpCode.IsReturn()
 						|| currentOpCode == ILOpCode.Throw
@@ -324,8 +324,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		protected virtual void WriteInstruction(ITextOutput output, MetadataReader metadata, MethodDefinitionHandle methodHandle, ref BlobReader blob, int methodRva)
+		protected virtual void WriteInstruction(ITextOutput output, MetadataFile metadataFile, MethodDefinitionHandle methodHandle, ref BlobReader blob, int methodRva)
 		{
+			var metadata = metadataFile.Metadata;
 			int offset = blob.Offset;
 			if (ShowSequencePoints && nextSequencePointIndex < sequencePoints?.Count)
 			{

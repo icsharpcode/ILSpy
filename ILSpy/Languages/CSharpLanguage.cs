@@ -120,7 +120,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		CSharpDecompiler CreateDecompiler(PEFile module, DecompilationOptions options)
+		CSharpDecompiler CreateDecompiler(MetadataFile module, DecompilationOptions options)
 		{
 			CSharpDecompiler decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(options.DecompilerSettings.AutoLoadAssemblyReferences), options.DecompilerSettings);
 			decompiler.CancellationToken = options.CancellationToken;
@@ -148,7 +148,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
-			PEFile assembly = method.ParentModule.PEFile;
+			MetadataFile assembly = method.ParentModule.MetadataFile;
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
@@ -230,7 +230,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void DecompileProperty(IProperty property, ITextOutput output, DecompilationOptions options)
 		{
-			PEFile assembly = property.ParentModule.PEFile;
+			MetadataFile assembly = property.ParentModule.MetadataFile;
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
@@ -241,7 +241,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
 		{
-			PEFile assembly = field.ParentModule.PEFile;
+			MetadataFile assembly = field.ParentModule.MetadataFile;
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
@@ -310,7 +310,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void DecompileEvent(IEvent @event, ITextOutput output, DecompilationOptions options)
 		{
-			PEFile assembly = @event.ParentModule.PEFile;
+			MetadataFile assembly = @event.ParentModule.MetadataFile;
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
@@ -321,7 +321,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
-			PEFile assembly = type.ParentModule.PEFile;
+			MetadataFile assembly = type.ParentModule.MetadataFile;
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
@@ -330,9 +330,9 @@ namespace ICSharpCode.ILSpy
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(type.MetadataToken), decompiler.TypeSystem);
 		}
 
-		void AddReferenceWarningMessage(PEFile module, ITextOutput output)
+		void AddReferenceWarningMessage(MetadataFile module, ITextOutput output)
 		{
-			var loadedAssembly = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().FirstOrDefault(la => la.GetPEFileOrNull() == module);
+			var loadedAssembly = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().FirstOrDefault(la => la.GetMetadataFileOrNull() == module);
 			if (loadedAssembly == null || !loadedAssembly.LoadedAssemblyReferencesInfo.HasErrors)
 				return;
 			string line1 = Properties.Resources.WarningSomeAssemblyReference;
@@ -344,7 +344,7 @@ namespace ICSharpCode.ILSpy
 			});
 		}
 
-		void AddReferenceAssemblyWarningMessage(PEFile module, ITextOutput output)
+		void AddReferenceAssemblyWarningMessage(MetadataFile module, ITextOutput output)
 		{
 			var metadata = module.Metadata;
 			if (!metadata.GetCustomAttributes(Handle.AssemblyDefinition).HasKnownAttribute(metadata, KnownAttribute.ReferenceAssembly))
@@ -353,7 +353,7 @@ namespace ICSharpCode.ILSpy
 			AddWarningMessage(module, output, line1);
 		}
 
-		void AddWarningMessage(PEFile module, ITextOutput output, string line1, string line2 = null,
+		void AddWarningMessage(MetadataFile module, ITextOutput output, string line1, string line2 = null,
 			string buttonText = null, System.Windows.Media.ImageSource buttonImage = null, RoutedEventHandler buttonClickHandler = null)
 		{
 			if (output is ISmartTextOutput fancyOutput)
@@ -393,7 +393,7 @@ namespace ICSharpCode.ILSpy
 
 		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
-			var module = assembly.GetPEFileOrNull();
+			var module = assembly.GetMetadataFileOrNull();
 			if (module == null)
 			{
 				return null;
@@ -426,39 +426,50 @@ namespace ICSharpCode.ILSpy
 					output.WriteLine();
 				}
 				var metadata = module.Metadata;
-				var corHeader = module.Reader.PEHeaders.CorHeader;
-				var entrypointHandle = MetadataTokenHelpers.EntityHandleOrNil(corHeader.EntryPointTokenOrRelativeVirtualAddress);
-				if (!entrypointHandle.IsNil && entrypointHandle.Kind == HandleKind.MethodDefinition)
+				var corHeader = module.CorHeader;
+				if (module is PEFile peFile && corHeader != null)
 				{
-					var entrypoint = typeSystem.MainModule.ResolveMethod(entrypointHandle, new Decompiler.TypeSystem.GenericContext());
-					if (entrypoint != null)
+					var entrypointHandle = MetadataTokenHelpers.EntityHandleOrNil(corHeader.EntryPointTokenOrRelativeVirtualAddress);
+					if (!entrypointHandle.IsNil && entrypointHandle.Kind == HandleKind.MethodDefinition)
 					{
-						output.Write("// Entry point: ");
-						output.WriteReference(entrypoint, EscapeName(entrypoint.DeclaringType.FullName + "." + entrypoint.Name));
-						output.WriteLine();
+						var entrypoint = typeSystem.MainModule.ResolveMethod(entrypointHandle, new Decompiler.TypeSystem.GenericContext());
+						if (entrypoint != null)
+						{
+							output.Write("// Entry point: ");
+							output.WriteReference(entrypoint, EscapeName(entrypoint.DeclaringType.FullName + "." + entrypoint.Name));
+							output.WriteLine();
+						}
+					}
+					output.WriteLine("// Architecture: " + GetPlatformDisplayName(peFile));
+					if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.ILOnly) == 0)
+					{
+						output.WriteLine("// This assembly contains unmanaged code.");
+					}
+					string runtimeName = GetRuntimeDisplayName(module);
+					if (runtimeName != null)
+					{
+						output.WriteLine("// Runtime: " + runtimeName);
+					}
+					if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.StrongNameSigned) != 0)
+					{
+						output.WriteLine("// This assembly is signed with a strong name key.");
+					}
+					if (peFile.Reader.ReadDebugDirectory().Any(d => d.Type == DebugDirectoryEntryType.Reproducible))
+					{
+						output.WriteLine("// This assembly was compiled using the /deterministic option.");
+					}
+					if (module.Metadata.MetadataKind != MetadataKind.Ecma335)
+					{
+						output.WriteLine("// This assembly was loaded with Windows Runtime projections applied.");
 					}
 				}
-				output.WriteLine("// Architecture: " + GetPlatformDisplayName(module));
-				if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.ILOnly) == 0)
+				else
 				{
-					output.WriteLine("// This assembly contains unmanaged code.");
-				}
-				string runtimeName = GetRuntimeDisplayName(module);
-				if (runtimeName != null)
-				{
-					output.WriteLine("// Runtime: " + runtimeName);
-				}
-				if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.StrongNameSigned) != 0)
-				{
-					output.WriteLine("// This assembly is signed with a strong name key.");
-				}
-				if (module.Reader.ReadDebugDirectory().Any(d => d.Type == DebugDirectoryEntryType.Reproducible))
-				{
-					output.WriteLine("// This assembly was compiled using the /deterministic option.");
-				}
-				if (module.Metadata.MetadataKind != MetadataKind.Ecma335)
-				{
-					output.WriteLine("// This assembly was loaded with Windows Runtime projections applied.");
+					string runtimeName = GetRuntimeDisplayName(module);
+					if (runtimeName != null)
+					{
+						output.WriteLine("// Runtime: " + runtimeName);
+					}
 				}
 				if (metadata.IsAssembly)
 				{
@@ -664,7 +675,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public override string GetEntityName(PEFile module, EntityHandle handle, bool fullName, bool omitGenerics)
+		public override string GetEntityName(MetadataFile module, EntityHandle handle, bool fullName, bool omitGenerics)
 		{
 			MetadataReader metadata = module.Metadata;
 			switch (handle.Kind)
@@ -737,7 +748,7 @@ namespace ICSharpCode.ILSpy
 
 		public override bool ShowMember(IEntity member)
 		{
-			PEFile assembly = member.ParentModule.PEFile;
+			MetadataFile assembly = member.ParentModule.MetadataFile;
 			return showAllMembers || !CSharpDecompiler.MemberIsHidden(assembly, member.MetadataToken, MainWindow.Instance.CurrentDecompilerSettings);
 		}
 
@@ -782,7 +793,7 @@ namespace ICSharpCode.ILSpy
 			return new RichText(output.ToString(), writer.HighlightingModel);
 		}
 
-		public override CodeMappingInfo GetCodeMappingInfo(PEFile module, EntityHandle member)
+		public override CodeMappingInfo GetCodeMappingInfo(MetadataFile module, EntityHandle member)
 		{
 			return CSharpDecompiler.GetCodeMappingInfo(module, member);
 		}

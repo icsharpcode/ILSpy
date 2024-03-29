@@ -299,14 +299,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (obj is MetadataField f)
 			{
-				return handle == f.handle && module.PEFile == f.module.PEFile;
+				return handle == f.handle && module.MetadataFile == f.module.MetadataFile;
 			}
 			return false;
 		}
 
 		public override int GetHashCode()
 		{
-			return 0x11dda32b ^ module.PEFile.GetHashCode() ^ handle.GetHashCode();
+			return 0x11dda32b ^ module.MetadataFile.GetHashCode() ^ handle.GetHashCode();
 		}
 
 		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)

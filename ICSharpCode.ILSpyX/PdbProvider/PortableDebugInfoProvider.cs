@@ -26,6 +26,8 @@ using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 
+using static ICSharpCode.Decompiler.Metadata.MetadataFile;
+
 #nullable enable
 
 namespace ICSharpCode.ILSpyX.PdbProvider
@@ -240,7 +242,8 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 
 		public MetadataFile ToMetadataFile()
 		{
-			return new MetadataFile(SourceFileName, provider, options, 0, IsEmbedded);
+			var kind = IsEmbedded || Path.GetExtension(SourceFileName).Equals(".pdb", StringComparison.OrdinalIgnoreCase) ? MetadataFileKind.ProgramDebugDatabase : MetadataFileKind.Metadata;
+			return new MetadataFile(kind, SourceFileName, provider, options, 0, IsEmbedded);
 		}
 	}
 }

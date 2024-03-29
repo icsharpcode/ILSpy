@@ -15,7 +15,6 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
-using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Threading;
@@ -35,7 +34,7 @@ namespace ICSharpCode.ILSpyX.Search
 			this.searchKind = searchKind;
 		}
 
-		public override void Search(PEFile module, CancellationToken cancellationToken)
+		public override void Search(MetadataFile module, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 
@@ -61,7 +60,7 @@ namespace ICSharpCode.ILSpyX.Search
 				OnFoundResult(module);
 		}
 
-		string? GetNameToMatch(PEFile module, AssemblySearchKind kind)
+		string? GetNameToMatch(MetadataFile module, AssemblySearchKind kind)
 		{
 			switch (kind)
 			{
@@ -98,7 +97,7 @@ namespace ICSharpCode.ILSpyX.Search
 			return null;
 		}
 
-		void OnFoundResult(PEFile module)
+		void OnFoundResult(MetadataFile module)
 		{
 			OnFoundResult(searchRequest.SearchResultFactory.Create(module));
 		}

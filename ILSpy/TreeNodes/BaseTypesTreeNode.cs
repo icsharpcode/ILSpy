@@ -34,10 +34,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	sealed class BaseTypesTreeNode : ILSpyTreeNode
 	{
-		readonly PEFile module;
+		readonly MetadataFile module;
 		readonly ITypeDefinition type;
 
-		public BaseTypesTreeNode(PEFile module, ITypeDefinition type)
+		public BaseTypesTreeNode(MetadataFile module, ITypeDefinition type)
 		{
 			this.module = module;
 			this.type = type;
@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			AddBaseTypes(this.Children, module, type);
 		}
 
-		internal static void AddBaseTypes(SharpTreeNodeCollection children, PEFile module, ITypeDefinition typeDefinition)
+		internal static void AddBaseTypes(SharpTreeNodeCollection children, MetadataFile module, ITypeDefinition typeDefinition)
 		{
 			TypeDefinitionHandle handle = (TypeDefinitionHandle)typeDefinition.MetadataToken;
 			DecompilerTypeSystem typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver(),

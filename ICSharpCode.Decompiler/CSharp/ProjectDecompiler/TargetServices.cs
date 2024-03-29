@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <param name="module">The module to get the target framework description for. Cannot be null.</param>
 		/// <returns>A new instance of the <see cref="TargetFramework"/> class that describes the specified <paramref name="module"/>.
 		/// </returns>
-		public static TargetFramework DetectTargetFramework(PEFile module)
+		public static TargetFramework DetectTargetFramework(MetadataFile module)
 		{
 			if (module is null)
 			{
@@ -216,9 +216,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		};
 
 		/// <summary>
-		/// Gets exact <see cref="TargetFramework"/> if <see cref="PEFile.GetRuntime"/> is <see cref="TargetRuntime.Net_2_0"/>
+		/// Gets exact <see cref="TargetFramework"/> if <see cref="MetadataFile.GetRuntime"/> is <see cref="TargetRuntime.Net_2_0"/>
 		/// </summary>
-		public static TargetFramework DetectTargetFrameworkNET20(PEFile module, IAssemblyResolver assemblyResolver, TargetFramework targetFramework)
+		public static TargetFramework DetectTargetFrameworkNET20(MetadataFile module, IAssemblyResolver assemblyResolver, TargetFramework targetFramework)
 		{
 			var resolvedAssemblies = new HashSet<string>();
 			int version = 200;
@@ -226,7 +226,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			return new TargetFramework(targetFramework.Identifier, version, targetFramework.Profile);
 		}
 
-		static void GetFrameworkVersionNET20(PEFile module, IAssemblyResolver assemblyResolver, HashSet<string> resolvedAssemblies, ref int version)
+		static void GetFrameworkVersionNET20(MetadataFile module, IAssemblyResolver assemblyResolver, HashSet<string> resolvedAssemblies, ref int version)
 		{
 			foreach (var r in module.Metadata.AssemblyReferences)
 			{
@@ -245,7 +245,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					break;
 				}
 
-				PEFile resolvedReference;
+				MetadataFile resolvedReference;
 				try
 				{
 					resolvedReference = assemblyResolver.Resolve(reference);

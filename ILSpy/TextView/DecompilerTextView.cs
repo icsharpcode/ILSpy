@@ -51,7 +51,6 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Documentation;
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AvalonEdit;
 using ICSharpCode.ILSpy.Options;
@@ -411,7 +410,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			else if (segment.Reference is EntityReference unresolvedEntity)
 			{
-				var module = unresolvedEntity.ResolveAssembly(MainWindow.Instance.CurrentAssemblyList) as PEFile;
+				var module = unresolvedEntity.ResolveAssembly(MainWindow.Instance.CurrentAssemblyList);
 				if (module == null)
 					return null;
 				var typeSystem = new DecompilerTypeSystem(module,
@@ -451,9 +450,9 @@ namespace ICSharpCode.ILSpy.TextView
 			renderer.AddSignatureBlock(richText.Text, richText.ToRichTextModel());
 			try
 			{
-				if (resolved.ParentModule == null || resolved.ParentModule.PEFile == null)
+				if (resolved.ParentModule == null || resolved.ParentModule.MetadataFile == null)
 					return null;
-				var docProvider = XmlDocLoader.LoadDocumentation(resolved.ParentModule.PEFile);
+				var docProvider = XmlDocLoader.LoadDocumentation(resolved.ParentModule.MetadataFile);
 				if (docProvider != null)
 				{
 					string documentation = docProvider.GetDocumentation(resolved.GetIdString());

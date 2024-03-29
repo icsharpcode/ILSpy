@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy
 
 		public MetadataFile? ResolveAssembly(AssemblyList context)
 		{
-			return peFile ?? context.FindAssembly(Module)?.GetPEFileOrNull();
+			return peFile ?? context.FindAssembly(Module)?.GetMetadataFileOrNull();
 		}
 	}
 }
