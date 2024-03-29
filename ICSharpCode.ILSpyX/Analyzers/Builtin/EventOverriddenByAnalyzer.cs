@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 
@@ -44,11 +43,13 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 
 		IEnumerable<IEntity> AnalyzeType(IEvent analyzedEntity, ITypeDefinition type)
 		{
+			if (analyzedEntity.DeclaringTypeDefinition?.ParentModule?.MetadataFile == null)
+				yield break;
 			var token = analyzedEntity.MetadataToken;
 			var declaringTypeToken = analyzedEntity.DeclaringTypeDefinition.MetadataToken;
 			var module = analyzedEntity.DeclaringTypeDefinition.ParentModule.MetadataFile;
 			var allTypes = type.GetAllBaseTypeDefinitions();
-			if (!allTypes.Any(t => t.MetadataToken == declaringTypeToken && t.ParentModule.MetadataFile == module))
+			if (!allTypes.Any(t => t.MetadataToken == declaringTypeToken && t.ParentModule?.MetadataFile == module))
 				yield break;
 
 			foreach (var @event in type.Events)
@@ -56,7 +57,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 				if (!@event.IsOverride)
 					continue;
 				var baseMembers = InheritanceHelper.GetBaseMembers(@event, false);
-				if (baseMembers.Any(p => p.MetadataToken == token && p.ParentModule.MetadataFile == module))
+				if (baseMembers.Any(p => p.MetadataToken == token && p.ParentModule?.MetadataFile == module))
 				{
 					yield return @event;
 				}

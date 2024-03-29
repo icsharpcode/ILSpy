@@ -107,7 +107,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 				if (found || ScanMethodBody(analyzedType, module, md, decoder))
 				{
 					var method = typeSystem.MainModule.GetDefinition(h);
-					yield return method?.AccessorOwner ?? method;
+					yield return method.AccessorOwner ?? method;
 				}
 			}
 
@@ -221,7 +221,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			}
 			return false;
 
-			bool CheckAttributeValue(object value)
+			bool CheckAttributeValue(object? value)
 			{
 				if (value is TokenSearchResult typeofType)
 				{
@@ -408,7 +408,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 		public override IType VisitTypeDefinition(ITypeDefinition type)
 		{
 			Found |= TypeDefinition.MetadataToken == type.MetadataToken
-				&& TypeDefinition.ParentModule.MetadataFile == type.ParentModule.MetadataFile;
+				&& TypeDefinition.ParentModule!.MetadataFile == type.ParentModule?.MetadataFile;
 			return base.VisitTypeDefinition(type);
 		}
 

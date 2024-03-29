@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			Debug.Assert(!member.IsStatic);
 
 			var baseMembers = InheritanceHelper.GetBaseMembers(member, includeImplementedInterfaces: true);
-			return baseMembers.Where(m => m.DeclaringTypeDefinition.Kind == TypeKind.Interface);
+			return baseMembers.Where(m => m.DeclaringTypeDefinition?.Kind == TypeKind.Interface);
 		}
 
 		public bool Show(ISymbol symbol)

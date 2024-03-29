@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -48,6 +47,9 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			if (!type.HasExtensionMethods)
 				yield break;
 
+			if (analyzedType.ParentModule?.MetadataFile == null)
+				yield break;
+
 			foreach (IMethod method in type.Methods)
 			{
 				if (!method.IsExtensionMethod)
@@ -56,7 +58,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 				var firstParamType = method.Parameters[0].Type.GetDefinition();
 				if (firstParamType != null &&
 					firstParamType.MetadataToken == analyzedType.MetadataToken &&
-					firstParamType.ParentModule.MetadataFile == analyzedType.ParentModule.MetadataFile)
+					firstParamType.ParentModule?.MetadataFile == analyzedType.ParentModule.MetadataFile)
 					yield return method;
 			}
 		}

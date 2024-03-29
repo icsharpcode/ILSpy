@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpyX.Analyzers
 			{
 				case HandleKind.MethodDefinition:
 					return member == analyzedMethod.MetadataToken
-						&& module == analyzedMethod.ParentModule.MetadataFile;
+						&& module == analyzedMethod.ParentModule?.MetadataFile;
 				case HandleKind.MemberReference:
 					var mr = metadata.GetMemberReference((MemberReferenceHandle)member);
 					if (mr.GetKind() != MemberReferenceKind.Method)
@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpyX.Analyzers
 			}
 		}
 
-		public static ISymbol GetParentEntity(DecompilerTypeSystem ts, CustomAttribute customAttribute)
+		public static ISymbol? GetParentEntity(DecompilerTypeSystem ts, CustomAttribute customAttribute)
 		{
 			var metadata = ts.MainModule.MetadataFile.Metadata;
 			switch (customAttribute.Parent.Kind)

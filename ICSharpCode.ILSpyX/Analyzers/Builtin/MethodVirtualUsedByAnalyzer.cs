@@ -41,9 +41,16 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 		{
 			Debug.Assert(analyzedSymbol is IMethod);
 			var analyzedMethod = (IMethod)analyzedSymbol;
+
+			if (analyzedMethod.ParentModule?.MetadataFile == null)
+				yield break;
+
+			if (analyzedMethod.DeclaringTypeDefinition?.MetadataToken.IsNil != true)
+				yield break;
+
 			var mapping = context.Language
 				.GetCodeMappingInfo(analyzedMethod.ParentModule.MetadataFile,
-					analyzedMethod.DeclaringTypeDefinition.MetadataToken);
+					analyzedMethod.DeclaringTypeDefinition?.MetadataToken ?? default);
 
 			var parentMethod = mapping.GetParentMethod((MethodDefinitionHandle)analyzedMethod.MetadataToken);
 			if (parentMethod != analyzedMethod.MetadataToken)
@@ -52,7 +59,9 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			var scope = context.GetScopeOf(analyzedMethod);
 			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
 			{
-				var parentModule = (MetadataModule)type.ParentModule;
+				var parentModule = (MetadataModule?)type.ParentModule;
+				if (parentModule?.MetadataFile == null)
+					continue;
 				mapping = context.Language.GetCodeMappingInfo(parentModule.MetadataFile, type.MetadataToken);
 				var methods = type.GetMembers(m => m is IMethod, Options).OfType<IMethod>();
 				foreach (var method in methods)
@@ -105,9 +114,9 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			return ScanMethodBody(analyzedEntity, method, context.GetMethodBody(method));
 		}
 
-		static bool ScanMethodBody(IMethod analyzedMethod, IMethod method, MethodBodyBlock methodBody)
+		static bool ScanMethodBody(IMethod analyzedMethod, IMethod method, MethodBodyBlock? methodBody)
 		{
-			if (methodBody == null)
+			if (methodBody == null || method.ParentModule?.MetadataFile == null)
 				return false;
 			var mainModule = (MetadataModule)method.ParentModule;
 			var blob = methodBody.GetILReader();
@@ -131,7 +140,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 							case HandleKind.MethodSpecification:
 							case HandleKind.MemberReference:
 								var m = (mainModule.ResolveEntity(member, genericContext) as IMember)?.MemberDefinition;
-								if (m != null && m.MetadataToken == analyzedMethod.MetadataToken && m.ParentModule.MetadataFile == analyzedMethod.ParentModule.MetadataFile)
+								if (m != null && m.MetadataToken == analyzedMethod.MetadataToken && m.ParentModule?.MetadataFile == analyzedMethod.ParentModule!.MetadataFile)
 								{
 									return true;
 								}
