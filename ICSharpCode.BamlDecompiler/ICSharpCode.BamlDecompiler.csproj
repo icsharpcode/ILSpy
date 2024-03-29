@@ -12,6 +12,35 @@
     <GenerateAssemblyInformationalVersionAttribute>False</GenerateAssemblyInformationalVersionAttribute>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackageId>ICSharpCode.BamlDecompiler</PackageId>
+    <PackageVersion>8.0.0.0-noversion</PackageVersion>
+    <Title>ILSpy BAML Decompiler</Title>
+    <Authors>ILSpy Contributors</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/icsharpcode/ILSpy/</PackageProjectUrl>
+    <Description>Cross-Platform library for decompiling BAML.</Description>
+    <PackageReadmeFile>PackageReadme.md</PackageReadmeFile>
+    <Company>ic#code</Company>
+    <Product>BamlDecompiler</Product>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/icsharpcode/ILSpy.git</RepositoryUrl>
+    <PackageIconUrl>../ICSharpCode.Decompiler/DecompilerNuGetPackageIcon.png</PackageIconUrl>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Copyright>Copyright 2024-$([System.DateTime]::Now.Year) AlphaSierraPapa</Copyright>
+    <PackageTags>C# Decompiler ILSpy</PackageTags>
+	
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <None Include="PackageReadme.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
   <ItemGroup>
     <Compile Remove="Properties\AssemblyInfo.template.cs" />
   </ItemGroup>
