@@ -294,6 +294,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				keepAssignmentBefore = true;
 				switchValue = new LdLoc(switchValueVar);
 			}
+			if (!switchValueVar.Type.IsKnownType(KnownTypeCode.String))
+			{
+				if (!context.Settings.SwitchOnReadOnlySpanChar)
+					return false;
+				if (!switchValueVar.Type.IsKnownType(KnownTypeCode.ReadOnlySpanOfT)
+					&& !switchValueVar.Type.IsKnownType(KnownTypeCode.SpanOfT))
+				{
+					return false;
+				}
+			}
 			// if instruction must be followed by a branch to the next case
 			if (!nextCaseJump.MatchBranch(out Block currentCaseBlock))
 				return false;
@@ -335,7 +345,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			int offset = firstBlock == null ? 1 : 0;
 			var sections = new List<SwitchSection>(values.Skip(offset).SelectWithIndex((index, s) => new SwitchSection { Labels = new LongSet(index), Body = s.Item2 is Block b ? new Branch(b) : s.Item2.Clone() }));
 			sections.Add(new SwitchSection { Labels = new LongSet(new LongInterval(0, sections.Count)).Invert(), Body = currentCaseBlock != null ? (ILInstruction)new Branch(currentCaseBlock) : new Leave((BlockContainer)nextCaseBlock) });
-			var stringToInt = new StringToInt(switchValue, values.Skip(offset).Select(item => item.Item1).ToArray(), context.TypeSystem.FindType(KnownTypeCode.String));
+			var stringToInt = new StringToInt(switchValue, values.Skip(offset).Select(item => item.Item1).ToArray(), switchValueVar.Type);
 			var inst = new SwitchInstruction(stringToInt);
 			inst.Sections.AddRange(sections);
 			if (removeExtraLoad)
@@ -1008,7 +1018,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!(switchBlockInstructionsOffset + 1 < switchBlockInstructions.Count
 				&& switchBlockInstructions[switchBlockInstructionsOffset + 1] is SwitchInstruction switchInst
 				&& switchInst.Value.MatchLdLoc(out var switchValueVar)
-				&& MatchComputeStringHashCall(switchBlockInstructions[switchBlockInstructionsOffset],
+				&& MatchComputeStringOrReadOnlySpanHashCall(switchBlockInstructions[switchBlockInstructionsOffset],
 											  switchValueVar, out LdLoc switchValueLoad)))
 			{
 				return false;
@@ -1643,19 +1653,28 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		/// <summary>
-		/// Matches 'stloc(targetVar, call ComputeStringHash(ldloc switchValue))'
+		/// Matches
+		/// 'stloc(targetVar, call ComputeStringHash(ldloc switchValue))'
+		/// - or -
+		/// 'stloc(targetVar, call ComputeSpanHash(ldloc switchValue))'
+		/// - or -
+		/// 'stloc(targetVar, call ComputeReadOnlySpanHash(ldloc switchValue))'
 		/// </summary>
-		internal static bool MatchComputeStringHashCall(ILInstruction inst, ILVariable targetVar, out LdLoc switchValue)
+		internal static bool MatchComputeStringOrReadOnlySpanHashCall(ILInstruction inst, ILVariable targetVar, out LdLoc switchValue)
 		{
 			switchValue = null;
 			if (!inst.MatchStLoc(targetVar, out var value))
 				return false;
-			if (!(value is Call c && c.Arguments.Count == 1 && c.Method.Name == "ComputeStringHash" && c.Method.IsCompilerGeneratedOrIsInCompilerGeneratedClass()))
-				return false;
-			if (!(c.Arguments[0] is LdLoc))
-				return false;
-			switchValue = (LdLoc)c.Arguments[0];
-			return true;
+			if (value is Call c && c.Arguments.Count == 1
+				&& c.Method.Name is "ComputeStringHash" or "ComputeSpanHash" or "ComputeReadOnlySpanHash"
+				&& c.Method.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+			{
+				if (c.Arguments[0] is not LdLoc ldloc)
+					return false;
+				switchValue = ldloc;
+				return true;
+			}
+			return false;
 		}
 
 		/// <summary>

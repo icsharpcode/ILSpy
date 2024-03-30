@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -1044,6 +1043,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (call.Method.DeclaringTypeDefinition?.KnownTypeCode != KnownTypeCode.NullableOfT)
 				return false;
 			arg = call.Arguments[0];
+			return true;
+		}
+
+		/// <summary>
+		/// Matches 'call nullableValue.GetValueOrDefault(fallback)'
+		/// </summary>
+		internal static bool MatchGetValueOrDefault(ILInstruction inst, out ILInstruction nullableValue, out ILInstruction fallback)
+		{
+			nullableValue = null;
+			fallback = null;
+			if (!(inst is Call call))
+				return false;
+			if (call.Method.Name != "GetValueOrDefault" || call.Arguments.Count != 2)
+				return false;
+			if (call.Method.DeclaringTypeDefinition?.KnownTypeCode != KnownTypeCode.NullableOfT)
+				return false;
+			nullableValue = call.Arguments[0];
+			fallback = call.Arguments[1];
 			return true;
 		}
 
