@@ -8,6 +8,7 @@
 			"ICSharpCode.ILSpyX\\ICSharpCode.ILSpyX.csproj",
 			"ILSpy.BamlDecompiler.Tests\\ILSpy.BamlDecompiler.Tests.csproj",
 			"ILSpy.BamlDecompiler\\ILSpy.BamlDecompiler.csproj",
+			"ICSharpCode.BamlDecompiler\\ICSharpCode.BamlDecompiler.csproj",
 			"ILSpy.ReadyToRun\\ILSpy.ReadyToRun.csproj",
 			"ILSpy.Tests\\ILSpy.Tests.csproj",
 			"ILSpy\\ILSpy.csproj",
