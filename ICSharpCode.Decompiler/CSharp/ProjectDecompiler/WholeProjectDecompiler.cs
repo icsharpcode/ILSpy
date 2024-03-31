@@ -246,7 +246,18 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				{
 					string dir = Settings.UseNestedDirectoriesForNamespaces ? CleanUpPath(ns) : CleanUpDirectoryName(ns);
 					if (directories.Add(dir))
-						Directory.CreateDirectory(Path.Combine(TargetDirectory, dir));
+					{
+						var path = Path.Combine(TargetDirectory, dir);
+						try
+						{
+							Directory.CreateDirectory(path);
+						}
+						catch (IOException)
+						{
+							File.Delete(path);
+							Directory.CreateDirectory(path);
+						}
+					}
 					return Path.Combine(dir, file);
 				}
 			}
