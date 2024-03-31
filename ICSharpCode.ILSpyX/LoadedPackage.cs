@@ -339,6 +339,7 @@ namespace ICSharpCode.ILSpyX
 				{
 					asm = new LoadedAssembly(
 						package.LoadedAssembly, entry.Name,
+						fileLoaders: package.LoadedAssembly.AssemblyList.LoaderRegistry,
 						assemblyResolver: this,
 						stream: Task.Run(entry.TryOpenStream),
 						applyWinRTProjections: package.LoadedAssembly.AssemblyList.ApplyWinRTProjections,

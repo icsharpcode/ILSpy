@@ -33,6 +33,7 @@ using ICSharpCode.ILSpy.Metadata;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.FileLoaders;
 using ICSharpCode.ILSpyX.PdbProvider;
 using ICSharpCode.TreeView;
 
@@ -188,7 +189,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			LoadedAssembly.LoadResult loadResult;
+			LoadResult loadResult;
 			try
 			{
 				loadResult = LoadedAssembly.GetLoadResultAsync().GetAwaiter().GetResult();
@@ -205,7 +206,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					switch (loadResult.MetadataFile.Kind)
 					{
 						case MetadataFile.MetadataFileKind.PortableExecutable:
-							LoadChildrenForPEFile(loadResult.PEFile);
+							LoadChildrenForPEFile(loadResult.MetadataFile);
 							break;
 						case MetadataFile.MetadataFileKind.WebCIL:
 							LoadChildrenForWebCilFile((WebCilFile)loadResult.MetadataFile);
@@ -462,7 +463,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			try
 			{
 				var loadResult = LoadedAssembly.GetLoadResultAsync().GetAwaiter().GetResult();
-				if (loadResult.PEFile != null)
+				if (loadResult.MetadataFile != null)
 				{
 					language.DecompileAssembly(LoadedAssembly, output, options);
 				}
@@ -471,13 +472,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					output.WriteLine("// " + LoadedAssembly.FileName);
 					DecompilePackage(loadResult.Package, output);
 				}
-				else if (loadResult.MetadataFile != null)
+				else if (loadResult.FileLoadException != null)
 				{
-					output.WriteLine("// " + LoadedAssembly.FileName);
-				}
-				else
-				{
-					LoadedAssembly.GetMetadataFileOrNullAsync().GetAwaiter().GetResult();
+					HandleException(loadResult.FileLoadException, loadResult.FileLoadException.Message);
 				}
 			}
 			catch (BadImageFormatException badImage)
