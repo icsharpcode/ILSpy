@@ -24,8 +24,6 @@ using McMaster.Extensions.CommandLineUtils;
 
 using Microsoft.Extensions.Hosting;
 
-using NuGet.Versioning;
-
 namespace ICSharpCode.ILSpyCmd
 {
 	[Command(Name = "ilspycmd", Description = "dotnet tool for decompiling .NET assemblies and generating portable PDBs",
@@ -314,7 +312,7 @@ Examples:
 			{
 				resolver.AddSearchDirectory(path);
 			}
-			var decompiler = new WholeProjectDecompiler(GetSettings(module), resolver, resolver, TryLoadPDB(module));
+			var decompiler = new WholeProjectDecompiler(GetSettings(module), resolver, null, resolver, TryLoadPDB(module));
 			using (var projectFileWriter = new StreamWriter(File.OpenWrite(projectFileName)))
 				return decompiler.DecompileProject(module, Path.GetDirectoryName(projectFileName), projectFileWriter);
 		}

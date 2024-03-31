@@ -289,8 +289,8 @@ namespace ICSharpCode.Decompiler.Tests
 
 		class TestProjectDecompiler : WholeProjectDecompiler
 		{
-			public TestProjectDecompiler(Guid projecGuid, IAssemblyResolver resolver, AssemblyReferenceClassifier assemblyReferenceClassifier, DecompilerSettings settings)
-				: base(settings, projecGuid, resolver, assemblyReferenceClassifier, debugInfoProvider: null)
+			public TestProjectDecompiler(Guid projectGuid, IAssemblyResolver resolver, AssemblyReferenceClassifier assemblyReferenceClassifier, DecompilerSettings settings)
+				: base(settings, projectGuid, resolver, null, assemblyReferenceClassifier, debugInfoProvider: null)
 			{
 			}
 		}

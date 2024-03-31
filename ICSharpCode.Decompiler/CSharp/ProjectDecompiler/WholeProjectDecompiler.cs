@@ -99,16 +99,17 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		#endregion
 
 		public WholeProjectDecompiler(IAssemblyResolver assemblyResolver)
-			: this(new DecompilerSettings(), assemblyResolver, assemblyReferenceClassifier: null, debugInfoProvider: null)
+			: this(new DecompilerSettings(), assemblyResolver, projectWriter: null, assemblyReferenceClassifier: null, debugInfoProvider: null)
 		{
 		}
 
 		public WholeProjectDecompiler(
 			DecompilerSettings settings,
 			IAssemblyResolver assemblyResolver,
+			IProjectFileWriter projectWriter,
 			AssemblyReferenceClassifier assemblyReferenceClassifier,
 			IDebugInfoProvider debugInfoProvider)
-			: this(settings, Guid.NewGuid(), assemblyResolver, assemblyReferenceClassifier, debugInfoProvider)
+			: this(settings, Guid.NewGuid(), assemblyResolver, projectWriter, assemblyReferenceClassifier, debugInfoProvider)
 		{
 		}
 
@@ -116,6 +117,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			DecompilerSettings settings,
 			Guid projectGuid,
 			IAssemblyResolver assemblyResolver,
+			IProjectFileWriter projectWriter,
 			AssemblyReferenceClassifier assemblyReferenceClassifier,
 			IDebugInfoProvider debugInfoProvider)
 		{
@@ -124,7 +126,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			AssemblyResolver = assemblyResolver ?? throw new ArgumentNullException(nameof(assemblyResolver));
 			AssemblyReferenceClassifier = assemblyReferenceClassifier ?? new AssemblyReferenceClassifier();
 			DebugInfoProvider = debugInfoProvider;
-			projectWriter = Settings.UseSdkStyleProjectFormat ? ProjectFileWriterSdkStyle.Create() : ProjectFileWriterDefault.Create();
+			this.projectWriter = projectWriter ?? (Settings.UseSdkStyleProjectFormat ? ProjectFileWriterSdkStyle.Create() : ProjectFileWriterDefault.Create());
 		}
 
 		// per-run members
