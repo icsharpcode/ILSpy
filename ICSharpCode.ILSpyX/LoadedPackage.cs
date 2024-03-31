@@ -71,7 +71,10 @@ namespace ICSharpCode.ILSpyX
 			foreach (var entry in this.Entries)
 			{
 				var (dirname, filename) = SplitName(entry.Name);
-				GetFolder(dirname).Entries.Add(new FolderEntry(filename, entry));
+				if (!string.IsNullOrEmpty(filename))
+				{
+					GetFolder(dirname).Entries.Add(new FolderEntry(filename, entry));
+				}
 			}
 			this.RootFolder = rootFolder;
 
