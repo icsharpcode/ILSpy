@@ -144,6 +144,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1788
 {
+#pragma warning disable CS8981
 	[AsyncMethodBuilder(typeof(builder))]
 	internal class async
 	{

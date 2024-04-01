@@ -139,6 +139,7 @@ namespace ICSharpCode.Decompiler.Tests.Pretty
 			}
 		}
 
+#pragma warning disable CS8981
 		private class i
 		{
 			public static void Test()
