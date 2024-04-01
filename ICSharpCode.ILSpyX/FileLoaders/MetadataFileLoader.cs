@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2020 Siegfried Pammer
+﻿// Copyright (c) 2024 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,26 +16,33 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Collections.Generic;
+using System;
 using System.IO;
+using System.Reflection.Metadata;
+using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
+using static ICSharpCode.Decompiler.Metadata.MetadataFile;
+
+namespace ICSharpCode.ILSpyX.FileLoaders
 {
-	/// <summary>
-	/// An interface for a service that creates and writes a project file structure
-	/// for a specific module being decompiled.
-	/// </summary>
-	public interface IProjectFileWriter
+	public sealed class MetadataFileLoader : IFileLoader
 	{
-		/// <summary>
-		/// Writes the content of a new project file for the specified <paramref name="module"/> being decompiled.
-		/// </summary>
-		/// <param name="target">The target to write to.</param>
-		/// <param name="project">The information about the project being created.</param>
-		/// <param name="files">A collection of source files to be included into the project.</param>
-		/// <param name="module">The module being decompiled.</param>
-		void Write(TextWriter target, IProjectInfoProvider project, IEnumerable<ProjectItemInfo> files, MetadataFile module);
+		public Task<LoadResult?> Load(string fileName, Stream stream, FileLoadSettings settings)
+		{
+			try
+			{
+				var kind = Path.GetExtension(fileName).Equals(".pdb", StringComparison.OrdinalIgnoreCase)
+					? MetadataFileKind.ProgramDebugDatabase : MetadataFileKind.Metadata;
+				var metadata = MetadataReaderProvider.FromMetadataStream(stream, MetadataStreamOptions.PrefetchMetadata | MetadataStreamOptions.LeaveOpen);
+				var metadataFile = new MetadataFile(kind, fileName, metadata);
+				return Task.FromResult<LoadResult?>(new LoadResult { MetadataFile = metadataFile });
+			}
+			catch (BadImageFormatException)
+			{
+				return Task.FromResult<LoadResult?>(null);
+			}
+		}
 	}
 }

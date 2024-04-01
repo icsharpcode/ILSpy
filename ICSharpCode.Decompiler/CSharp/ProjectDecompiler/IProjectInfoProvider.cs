@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 	/// <summary>
 	/// An interface that provides common information for a project being decompiled to.
 	/// </summary>
-	interface IProjectInfoProvider
+	public interface IProjectInfoProvider
 	{
 		/// <summary>
 		/// Gets the assembly resolver active for the project.

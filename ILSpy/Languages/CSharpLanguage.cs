@@ -518,7 +518,7 @@ namespace ICSharpCode.ILSpy
 			readonly DecompilationOptions options;
 
 			public ILSpyWholeProjectDecompiler(LoadedAssembly assembly, DecompilationOptions options)
-				: base(options.DecompilerSettings, assembly.GetAssemblyResolver(options.DecompilerSettings.AutoLoadAssemblyReferences, options.DecompilerSettings.ApplyWindowsRuntimeProjections), assembly.GetAssemblyReferenceClassifier(options.DecompilerSettings.ApplyWindowsRuntimeProjections), assembly.GetDebugInfoOrNull())
+				: base(options.DecompilerSettings, assembly.GetAssemblyResolver(options.DecompilerSettings.AutoLoadAssemblyReferences, options.DecompilerSettings.ApplyWindowsRuntimeProjections), null, assembly.GetAssemblyReferenceClassifier(options.DecompilerSettings.ApplyWindowsRuntimeProjections), assembly.GetDebugInfoOrNull())
 			{
 				this.assembly = assembly;
 				this.options = options;

@@ -27,6 +27,7 @@ using System.Threading.Tasks;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpyX.Extensions;
+using ICSharpCode.ILSpyX.FileLoaders;
 
 namespace ICSharpCode.ILSpyX
 {
@@ -156,7 +157,7 @@ namespace ICSharpCode.ILSpyX
 
 			foreach (var asm in assemblies)
 			{
-				LoadedAssembly.LoadResult result;
+				LoadResult result;
 				try
 				{
 					result = await asm.GetLoadResultAsync().ConfigureAwait(false);

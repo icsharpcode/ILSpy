@@ -71,7 +71,10 @@ namespace ICSharpCode.ILSpyX
 			foreach (var entry in this.Entries)
 			{
 				var (dirname, filename) = SplitName(entry.Name);
-				GetFolder(dirname).Entries.Add(new FolderEntry(filename, entry));
+				if (!string.IsNullOrEmpty(filename))
+				{
+					GetFolder(dirname).Entries.Add(new FolderEntry(filename, entry));
+				}
 			}
 			this.RootFolder = rootFolder;
 
@@ -336,6 +339,7 @@ namespace ICSharpCode.ILSpyX
 				{
 					asm = new LoadedAssembly(
 						package.LoadedAssembly, entry.Name,
+						fileLoaders: package.LoadedAssembly.AssemblyList.LoaderRegistry,
 						assemblyResolver: this,
 						stream: Task.Run(entry.TryOpenStream),
 						applyWinRTProjections: package.LoadedAssembly.AssemblyList.ApplyWinRTProjections,

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2020 Siegfried Pammer
+﻿// Copyright (c) 2024 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,26 +16,34 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
-using System.IO;
 
-using ICSharpCode.Decompiler.Metadata;
-
-namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
+namespace ICSharpCode.ILSpyX.FileLoaders
 {
-	/// <summary>
-	/// An interface for a service that creates and writes a project file structure
-	/// for a specific module being decompiled.
-	/// </summary>
-	public interface IProjectFileWriter
+	public sealed class FileLoaderRegistry
 	{
-		/// <summary>
-		/// Writes the content of a new project file for the specified <paramref name="module"/> being decompiled.
-		/// </summary>
-		/// <param name="target">The target to write to.</param>
-		/// <param name="project">The information about the project being created.</param>
-		/// <param name="files">A collection of source files to be included into the project.</param>
-		/// <param name="module">The module being decompiled.</param>
-		void Write(TextWriter target, IProjectInfoProvider project, IEnumerable<ProjectItemInfo> files, MetadataFile module);
+		readonly List<IFileLoader> registeredLoaders = new List<IFileLoader>();
+
+		public IReadOnlyList<IFileLoader> RegisteredLoaders => registeredLoaders;
+
+		public void Register(IFileLoader loader)
+		{
+			if (loader is null)
+			{
+				throw new ArgumentNullException(nameof(loader));
+			}
+
+			registeredLoaders.Add(loader);
+		}
+
+		public FileLoaderRegistry()
+		{
+			Register(new XamarinCompressedFileLoader());
+			Register(new WebCilFileLoader());
+			Register(new MetadataFileLoader());
+			Register(new BundleFileLoader());
+			Register(new ArchiveFileLoader());
+		}
 	}
 }

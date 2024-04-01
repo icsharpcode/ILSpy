@@ -54,6 +54,7 @@ using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.Updates;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.FileLoaders;
 using ICSharpCode.ILSpyX.Settings;
 using ICSharpCode.TreeView;
 
@@ -152,6 +153,7 @@ namespace ICSharpCode.ILSpy
 			InitMainMenu();
 			InitWindowMenu();
 			InitToolbar();
+			InitFileLoaders();
 			ContextMenuProvider.Add(AssemblyTreeView);
 
 			this.Loaded += MainWindow_Loaded;
@@ -577,6 +579,19 @@ namespace ICSharpCode.ILSpy
 			}
 			model.Show();
 		}
+		#endregion
+
+		#region File Loader extensibility
+
+		void InitFileLoaders()
+		{
+			// TODO
+			foreach (var loader in App.ExportProvider.GetExportedValues<IFileLoader>())
+			{
+
+			}
+		}
+
 		#endregion
 
 		#region Message Hook
