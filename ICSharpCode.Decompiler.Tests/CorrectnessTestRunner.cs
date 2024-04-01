@@ -336,10 +336,6 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task UnsafeCode([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
-			if (options.HasFlag(CompilerOptions.UseMcs2_6_4))
-			{
-				Assert.Ignore("Decompiler bug with mono!");
-			}
 			await RunCS(options: options);
 		}
 

@@ -95,11 +95,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 
 		/// May throw <see cref="StepLimitReachedException"/> in debug mode.
 		/// </summary>
+		[DebuggerStepThrough]
 		public void Step(string description, ILInstruction? near = null)
 		{
 			StepInternal(description, near);
 		}
 
+		[DebuggerStepThrough]
 		private Node StepInternal(string description, ILInstruction? near)
 		{
 			if (step == StepLimit)
@@ -123,6 +125,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return stepNode;
 		}
 
+		[DebuggerStepThrough]
 		public void StartGroup(string description, ILInstruction? near = null)
 		{
 			groups.Push(StepInternal(description, near));
