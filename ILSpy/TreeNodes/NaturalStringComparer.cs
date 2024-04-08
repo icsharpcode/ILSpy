@@ -16,8 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+
+using NaturalSort.Extension;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -27,7 +31,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		[DllImport("shlwapi.dll", CharSet = CharSet.Unicode)]
 		static extern int StrCmpLogicalW(string psz1, string psz2);
 
-		public static readonly NaturalStringComparer Instance = new NaturalStringComparer();
+		// public static readonly NaturalStringComparer Instance = new NaturalStringComparer();
+		public static readonly IComparer<string> Instance = StringComparison.OrdinalIgnoreCase.WithNaturalSort();
 
 		public int Compare(string x, string y)
 		{

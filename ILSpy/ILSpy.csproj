@@ -48,6 +48,7 @@
     <PackageReference Include="Microsoft.VisualStudio.Composition" />
     <PackageReference Include="DataGridExtensions" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" />
+    <PackageReference Include="NaturalSort.Extension" />
     <PackageReference Include="TomsToolbox.Wpf.Styles" />
   </ItemGroup>
 
