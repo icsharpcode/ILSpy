@@ -28,7 +28,7 @@
     <PackageVersion Include="Microsoft.VisualStudio.Composition" Version="17.7.40" />
     <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.5" />
-    <PackageVersion Include="NaturalSort.Extension" Version="4.2.0" />
+    <PackageVersion Include="NaturalSort.Extension" Version="4.3.0" />
     <PackageVersion Include="NSubstitute" Version="5.1.0" />
     <PackageVersion Include="NSubstitute.Analyzers.CSharp" Version="1.0.17" />
     <PackageVersion Include="NUnit" Version="4.1.0" />

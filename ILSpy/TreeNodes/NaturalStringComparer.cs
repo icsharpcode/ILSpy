@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
@@ -25,18 +24,29 @@ using NaturalSort.Extension;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
+	/// <summary>
+	/// .NET natural string comparison emulating .Instance behavior of original native-interop variant
+	/// </summary>
+	public sealed class NaturalStringComparer
+	{
+		public static readonly IComparer<string> Instance = StringComparison.CurrentCultureIgnoreCase.WithNaturalSort();
+		// public static readonly NaturalStringComparer Instance = new NaturalStringComparer();
+	}
+
+#if WINDOWS
+	/// <summary>
+	/// Native-Interop natural string comparion using StrCmpLogicalW from shlwapi.dll
+	/// </summary>
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1060:MovePInvokesToNativeMethodsClass")]
-	public sealed class NaturalStringComparer : IComparer<string>
+	public sealed class NativeNaturalStringComparer : IComparer<string>
 	{
 		[DllImport("shlwapi.dll", CharSet = CharSet.Unicode)]
 		static extern int StrCmpLogicalW(string psz1, string psz2);
-
-		// public static readonly NaturalStringComparer Instance = new NaturalStringComparer();
-		public static readonly IComparer<string> Instance = StringComparison.OrdinalIgnoreCase.WithNaturalSort();
 
 		public int Compare(string x, string y)
 		{
 			return StrCmpLogicalW(x, y);
 		}
 	}
+#endif
 }
