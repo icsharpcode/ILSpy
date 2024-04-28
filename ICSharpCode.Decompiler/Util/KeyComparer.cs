@@ -81,7 +81,8 @@ namespace ICSharpCode.Decompiler.Util
 
 		public int GetHashCode(TElement obj)
 		{
-			return keyEqualityComparer.GetHashCode(keySelector(obj));
+			var key = keySelector(obj)!;
+			return keyEqualityComparer.GetHashCode(key);
 		}
 	}
 }

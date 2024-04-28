@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-#if !NETCORE
+#if !NET8_0_OR_GREATER
 namespace System.Numerics
 {
 	internal static class BitOperations
