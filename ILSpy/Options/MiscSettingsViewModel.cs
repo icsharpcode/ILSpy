@@ -79,7 +79,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		private void AddRemoveShellIntegration(object obj)
 		{
-			string commandLine = NativeMethods.ArgumentArrayToCommandLine(Path.ChangeExtension(Assembly.GetEntryAssembly().Location, ".exe")) + " \"%L\"";
+			string commandLine = CommandLineTools.ArgumentArrayToCommandLine(Path.ChangeExtension(Assembly.GetEntryAssembly().Location, ".exe")) + " \"%L\"";
 			if (RegistryEntriesExist())
 			{
 				if (MessageBox.Show(string.Format(Properties.Resources.RemoveShellIntegrationMessage, commandLine), "ILSpy", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
