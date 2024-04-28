@@ -293,7 +293,7 @@ namespace ICSharpCode.ILSpy.Search
 
 			SearchRequest Parse(string input)
 			{
-				string[] parts = NativeMethods.CommandLineToArgumentArray(input);
+				string[] parts = CommandLineTools.CommandLineToArgumentArray(input);
 
 				SearchRequest request = new SearchRequest();
 				List<string> keywords = new List<string>();
@@ -338,7 +338,7 @@ namespace ICSharpCode.ILSpy.Search
 					string searchTerm = part.Substring(prefixLength + delimiterLength).Trim();
 					if (searchTerm.Length > 0)
 					{
-						searchTerm = NativeMethods.CommandLineToArgumentArray(searchTerm)[0];
+						searchTerm = CommandLineTools.CommandLineToArgumentArray(searchTerm)[0];
 					}
 					else
 					{

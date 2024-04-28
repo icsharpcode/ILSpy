@@ -30,7 +30,7 @@ namespace ICSharpCode.ILSpy
 		{
 			string ns = GetNamespace(context);
 			string searchTerm = MainWindow.Instance.SearchPane.SearchTerm;
-			string[] args = NativeMethods.CommandLineToArgumentArray(searchTerm);
+			string[] args = CommandLineTools.CommandLineToArgumentArray(searchTerm);
 			bool replaced = false;
 			for (int i = 0; i < args.Length; i++)
 			{
@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy
 			}
 			else
 			{
-				searchTerm = NativeMethods.ArgumentArrayToCommandLine(args);
+				searchTerm = CommandLineTools.ArgumentArrayToCommandLine(args);
 			}
 			MainWindow.Instance.SearchPane.SearchTerm = searchTerm;
 		}
