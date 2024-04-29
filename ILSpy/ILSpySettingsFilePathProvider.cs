@@ -31,7 +31,7 @@ namespace ICSharpCode.ILSpy
 				return App.CommandLineArguments.ConfigFile;
 
 			var assemblyLocation = typeof(MainWindow).Assembly.Location;
-			if (!String.IsNullOrEmpty(assemblyLocation))
+			if (!String.IsNullOrWhiteSpace(assemblyLocation))
 			{
 				string localPath = Path.Combine(Path.GetDirectoryName(assemblyLocation), "ILSpy.xml");
 				if (File.Exists(localPath))
