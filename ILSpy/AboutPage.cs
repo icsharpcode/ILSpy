@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy
 			};
 			output.WriteLine(Resources.ILSpyVersion + DecompilerVersionInfo.FullVersion);
 
-			string prodVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(typeof(Uri).Assembly.Location).ProductVersion;
+			string prodVersion = GetDotnetProductVersion();
 			output.WriteLine(Resources.NETFrameworkVersion + prodVersion);
 
 			output.AddUIElement(
@@ -102,6 +102,27 @@ namespace ICSharpCode.ILSpy
 			output.AddVisualLineElementGenerator(new MyLinkElementGenerator("MIT License", "resource:license.txt"));
 			output.AddVisualLineElementGenerator(new MyLinkElementGenerator("third-party notices", "resource:third-party-notices.txt"));
 			textView.ShowText(output);
+		}
+
+		private static string GetDotnetProductVersion()
+		{
+			// In case of AOT .Location is null, we need a fallback for that
+			string assemblyLocation = typeof(Uri).Assembly.Location;
+
+			if (!String.IsNullOrWhiteSpace(assemblyLocation))
+			{
+				return System.Diagnostics.FileVersionInfo.GetVersionInfo(assemblyLocation).ProductVersion;
+			}
+			else
+			{
+				var version = typeof(Object).Assembly.GetName().Version;
+				if (version != null)
+				{
+					return version.ToString();
+				}
+			}
+
+			return "UNKNOWN";
 		}
 
 		sealed class MyLinkElementGenerator : LinkElementGenerator

@@ -29,10 +29,16 @@ namespace ICSharpCode.ILSpy
 		{
 			if (App.CommandLineArguments.ConfigFile != null)
 				return App.CommandLineArguments.ConfigFile;
-			string localPath = Path.Combine(Path.GetDirectoryName(typeof(MainWindow).Assembly.Location), "ILSpy.xml");
-			if (File.Exists(localPath))
-				return localPath;
-			return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ICSharpCode\\ILSpy.xml");
+
+			var assemblyLocation = typeof(MainWindow).Assembly.Location;
+			if (!String.IsNullOrWhiteSpace(assemblyLocation))
+			{
+				string localPath = Path.Combine(Path.GetDirectoryName(assemblyLocation), "ILSpy.xml");
+				if (File.Exists(localPath))
+					return localPath;
+			}
+
+			return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ICSharpCode", "ILSpy.xml");
 		}
 	}
 }
