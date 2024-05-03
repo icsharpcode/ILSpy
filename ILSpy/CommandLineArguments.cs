@@ -16,13 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using McMaster.Extensions.CommandLineUtils;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
-using McMaster.Extensions.CommandLineUtils;
-
-using TomsToolbox.Essentials;
 
 namespace ICSharpCode.ILSpy
 {
