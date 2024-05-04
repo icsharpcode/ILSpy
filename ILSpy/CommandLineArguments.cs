@@ -39,6 +39,9 @@ namespace ICSharpCode.ILSpy
 			var app = new CommandLineApplication() {
 				// https://natemcmaster.github.io/CommandLineUtils/docs/response-file-parsing.html?tabs=using-attributes
 				ResponseFileHandling = ResponseFileHandling.ParseArgsAsSpaceSeparated,
+
+				// Note: options are case-sensitive (!), and, default behavior would be UnrecognizedArgumentHandling.Throw on Parse()
+				// UnrecognizedArgumentHandling = UnrecognizedArgumentHandling.CollectAndContinue
 			};
 
 			var oForceNewInstance = app.Option("--newinstance",

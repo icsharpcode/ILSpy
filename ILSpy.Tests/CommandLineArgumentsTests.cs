@@ -1,4 +1,6 @@
-﻿using FluentAssertions;
+﻿using System;
+
+using FluentAssertions;
 
 using NUnit.Framework;
 
@@ -34,6 +36,22 @@ namespace ICSharpCode.ILSpy.Tests
 			const string navigateTo = "MyNamespace.MyClass";
 			var cmdLineArgs = new CommandLineArguments(new string[] { "--navigateto", navigateTo });
 			cmdLineArgs.NavigateTo.Should().BeEquivalentTo(navigateTo);
+		}
+
+		[Test]
+		public void VerifyNavigateToOption_NoneTest_Matching_VSAddin()
+		{
+			var cmdLineArgs = new CommandLineArguments(new string[] { "--navigateto:none" });
+			cmdLineArgs.NavigateTo.Should().BeEquivalentTo("none");
+		}
+
+		[Test]
+		public void VerifyCaseSensitivityOfOptionsThrows()
+		{
+			Action act = () => new CommandLineArguments(new string[] { "--navigateTo:none" });
+
+			act.Should().Throw<McMaster.Extensions.CommandLineUtils.UnrecognizedCommandParsingException>()
+				.WithMessage("Unrecognized option '--navigateTo:none'");
 		}
 
 		[Test]
