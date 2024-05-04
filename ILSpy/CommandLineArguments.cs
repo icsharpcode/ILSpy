@@ -18,18 +18,11 @@
 
 using McMaster.Extensions.CommandLineUtils;
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace ICSharpCode.ILSpy
 {
-	internal enum InstancingMode
-	{
-		Single,
-		Multi
-	}
-
 	sealed class CommandLineArguments
 	{
 		// see /doc/Command Line.txt for details
@@ -44,12 +37,13 @@ namespace ICSharpCode.ILSpy
 		public CommandLineArguments(IEnumerable<string> arguments)
 		{
 			var app = new CommandLineApplication() {
+				// https://natemcmaster.github.io/CommandLineUtils/docs/response-file-parsing.html?tabs=using-attributes
 				ResponseFileHandling = ResponseFileHandling.ParseArgsAsSpaceSeparated,
 			};
 
-			var oInstancing = app.Option("-i|--instancing <single/multi>",
-				"Single or multi instance",
-				CommandOptionType.SingleValue);
+			var oForceNewInstance = app.Option("--newinstance",
+				"Start a new instance of ILSpy even if the user configuration is set to single-instance",
+				CommandOptionType.NoValue);
 
 			var oNavigateTo = app.Option<string>("-n|--navigateto <TYPENAME>",
 				"Navigates to the member specified by the given ID string.\r\nThe member is searched for only in the assemblies specified on the command line.\r\nExample: 'ILSpy ILSpy.exe --navigateTo:T:ICSharpCode.ILSpy.CommandLineArguments'",
@@ -79,26 +73,11 @@ namespace ICSharpCode.ILSpy
 			// To enable this, MultipleValues must be set to true, and the argument must be the last one specified.
 			var files = app.Argument("Assemblies", "Assemblies to load", multipleValues: true);
 
-
 			// string helptext = app.GetHelpText();
-
 			app.Parse(arguments.ToArray());
 
-			if (oInstancing.Value != null)
-			{
-				if (Enum.TryParse<InstancingMode>(oInstancing.Value(), true, out var mode))
-				{
-					switch (mode)
-					{
-						case InstancingMode.Single:
-							SingleInstance = true;
-							break;
-						case InstancingMode.Multi:
-							SingleInstance = false;
-							break;
-					}
-				}
-			}
+			if (oForceNewInstance.HasValue())
+				SingleInstance = false;
 
 			NavigateTo = oNavigateTo.ParsedValue;
 			Search = oSearch.ParsedValue;

@@ -22,17 +22,10 @@ namespace ICSharpCode.ILSpy.Tests
 		}
 
 		[Test]
-		public void VerifySeparateOption()
+		public void VerifyForceNewInstanceOption()
 		{
-			var cmdLineArgs = new CommandLineArguments(new string[] { "--instancing", "Multi" });
+			var cmdLineArgs = new CommandLineArguments(new string[] { "--newinstance" });
 			cmdLineArgs.SingleInstance.Should().BeFalse();
-		}
-
-		[Test]
-		public void VerifySingleInstanceOption()
-		{
-			var cmdLineArgs = new CommandLineArguments(new string[] { "--instancing", "Single" });
-			cmdLineArgs.SingleInstance.Should().BeTrue();
 		}
 
 		[Test]
@@ -86,7 +79,7 @@ namespace ICSharpCode.ILSpy.Tests
 		{
 			string filepath = System.IO.Path.GetTempFileName();
 
-			System.IO.File.WriteAllText(filepath, "assembly1 assembly2 assembly3 --instancing multi --noactivate");
+			System.IO.File.WriteAllText(filepath, "assembly1 assembly2 assembly3 --newinstance --noactivate");
 
 			var cmdLineArgs = new CommandLineArguments(new string[] { $"@{filepath}" });
 
