@@ -47,16 +47,40 @@ namespace ICSharpCode.ILSpy
 				ResponseFileHandling = ResponseFileHandling.ParseArgsAsSpaceSeparated,
 			};
 
-			var oInstancing = app.Option("-i|--instancing <single/multi>", "Single or multi instance", CommandOptionType.SingleValue);
-			var oNavigateTo = app.Option("-n|--navigateto <TYPENAME>", "Navigates to the member specified by the given ID string", CommandOptionType.SingleValue);
-			var oSearch = app.Option("-s|--search <STRING>", "Search for", CommandOptionType.SingleValue);
-			var oLanguage = app.Option("-l|--language <STRING>", "Selects the specified language", CommandOptionType.SingleValue);
-			var oConfig = app.Option("-c|--config <STRING>", "Search for", CommandOptionType.SingleValue);
-			var oNoActivate = app.Option("--noactivate", "Search for", CommandOptionType.NoValue);
+			var oInstancing = app.Option("-i|--instancing <single/multi>",
+				"Single or multi instance",
+				CommandOptionType.SingleValue);
+
+			var oNavigateTo = app.Option<string>("-n|--navigateto <TYPENAME>",
+				"Navigates to the member specified by the given ID string.\r\nThe member is searched for only in the assemblies specified on the command line.\r\nExample: 'ILSpy ILSpy.exe --navigateTo:T:ICSharpCode.ILSpy.CommandLineArguments'",
+				CommandOptionType.SingleValue);
+			oNavigateTo.DefaultValue = null;
+
+			var oSearch = app.Option<string>("-s|--search <SEARCHTERM>",
+				"Search for t:TypeName, m:Member or c:Constant; use exact match (=term), 'should not contain' (-term) or 'must contain' (+term); use /reg(ular)?Ex(pressions)?/ or both - t:/Type(Name)?/...",
+				CommandOptionType.SingleValue);
+			oSearch.DefaultValue = null;
+
+			var oLanguage = app.Option<string>("-l|--language <LANGUAGEIDENTIFIER>",
+				"Selects the specified language.\r\nExample: 'ILSpy --language:C#' or 'ILSpy --language:IL'",
+				CommandOptionType.SingleValue);
+			oLanguage.DefaultValue = null;
+
+			var oConfig = app.Option<string>("-c|--config <CONFIGFILENAME>",
+				"Provide a specific configuration file.\r\nExample: 'ILSpy --config:myconfig.xml'",
+				CommandOptionType.SingleValue);
+			oConfig.DefaultValue = null;
+
+			var oNoActivate = app.Option("--noactivate",
+				"Do not activate the existing ILSpy instance. This option has no effect if a new ILSpy instance is being started.",
+				CommandOptionType.NoValue);
 
 			// https://natemcmaster.github.io/CommandLineUtils/docs/arguments.html#variable-numbers-of-arguments
 			// To enable this, MultipleValues must be set to true, and the argument must be the last one specified.
 			var files = app.Argument("Assemblies", "Assemblies to load", multipleValues: true);
+
+
+			// string helptext = app.GetHelpText();
 
 			app.Parse(arguments.ToArray());
 
@@ -76,17 +100,10 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 
-			if (oNavigateTo.Value != null)
-				NavigateTo = oNavigateTo.Value();
-
-			if (oSearch.Value != null)
-				Search = oSearch.Value();
-
-			if (oLanguage.Value != null)
-				Language = oLanguage.Value();
-
-			if (oConfig.Value != null)
-				ConfigFile = oConfig.Value();
+			NavigateTo = oNavigateTo.ParsedValue;
+			Search = oSearch.ParsedValue;
+			Language = oLanguage.ParsedValue;
+			ConfigFile = oConfig.ParsedValue;
 
 			if (oNoActivate.HasValue())
 				NoActivate = true;
