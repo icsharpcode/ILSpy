@@ -24,6 +24,13 @@ namespace ICSharpCode.ILSpy.Tests
 		}
 
 		[Test]
+		public void VerifyHelpOption()
+		{
+			var cmdLineArgs = new CommandLineArguments(new string[] { "--help" });
+			cmdLineArgs.ArgumentsParser.IsShowingInformation.Should().BeTrue();
+		}
+
+		[Test]
 		public void VerifyForceNewInstanceOption()
 		{
 			var cmdLineArgs = new CommandLineArguments(new string[] { "--newinstance" });

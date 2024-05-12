@@ -23,7 +23,7 @@ using System.Linq;
 
 namespace ICSharpCode.ILSpy
 {
-	sealed class CommandLineArguments
+	public sealed class CommandLineArguments
 	{
 		// see /doc/Command Line.txt for details
 		public List<string> AssembliesToLoad = new List<string>();
@@ -34,6 +34,8 @@ namespace ICSharpCode.ILSpy
 		public bool NoActivate;
 		public string ConfigFile;
 
+		public CommandLineApplication ArgumentsParser { get; }
+
 		public CommandLineArguments(IEnumerable<string> arguments)
 		{
 			var app = new CommandLineApplication() {
@@ -43,6 +45,9 @@ namespace ICSharpCode.ILSpy
 				// Note: options are case-sensitive (!), and, default behavior would be UnrecognizedArgumentHandling.Throw on Parse()
 				// UnrecognizedArgumentHandling = UnrecognizedArgumentHandling.CollectAndContinue
 			};
+
+			app.HelpOption();
+			ArgumentsParser = app;
 
 			var oForceNewInstance = app.Option("--newinstance",
 				"Start a new instance of ILSpy even if the user configuration is set to single-instance",
@@ -76,7 +81,6 @@ namespace ICSharpCode.ILSpy
 			// To enable this, MultipleValues must be set to true, and the argument must be the last one specified.
 			var files = app.Argument("Assemblies", "Assemblies to load", multipleValues: true);
 
-			// string helptext = app.GetHelpText();
 			app.Parse(arguments.ToArray());
 
 			if (oForceNewInstance.HasValue())
