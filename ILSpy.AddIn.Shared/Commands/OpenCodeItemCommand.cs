@@ -140,7 +140,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				return;
 			}
 
-			OpenAssembliesInILSpy(new ILSpyParameters(validRefs.Select(r => r.AssemblyFile), "/navigateTo:" +
+			OpenAssembliesInILSpy(new ILSpyParameters(validRefs.Select(r => r.AssemblyFile), "--navigateto:" +
 				(symbol.OriginalDefinition ?? symbol).GetDocumentationCommentId()));
 		}
 
