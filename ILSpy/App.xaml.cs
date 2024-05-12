@@ -87,6 +87,11 @@ namespace ICSharpCode.ILSpy
 											  Hyperlink.RequestNavigateEvent,
 											  new RequestNavigateEventHandler(Window_RequestNavigate));
 			ILSpyTraceListener.Install();
+
+			if (App.CommandLineArguments.ArgumentsParser.IsShowingInformation)
+			{
+				MessageBox.Show(App.CommandLineArguments.ArgumentsParser.GetHelpText(), "ILSpy Command Line Arguments");
+			}
 		}
 
 		static Assembly ResolvePluginDependencies(AssemblyLoadContext context, AssemblyName assemblyName)

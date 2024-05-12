@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy
 				CommandOptionType.NoValue);
 
 			var oNavigateTo = app.Option<string>("-n|--navigateto <TYPENAME>",
-				"Navigates to the member specified by the given ID string.\r\nThe member is searched for only in the assemblies specified on the command line.\r\nExample: 'ILSpy ILSpy.exe --navigateTo:T:ICSharpCode.ILSpy.CommandLineArguments'",
+				"Navigates to the member specified by the given ID string.\r\nThe member is searched for only in the assemblies specified on the command line.\r\nExample: 'ILSpy ILSpy.exe --navigateto:T:ICSharpCode.ILSpy.CommandLineArguments'",
 				CommandOptionType.SingleValue);
 			oNavigateTo.DefaultValue = null;
 
