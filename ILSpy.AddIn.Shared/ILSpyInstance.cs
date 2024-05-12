@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -20,8 +21,9 @@ namespace ICSharpCode.ILSpy.AddIn
 
 	class ILSpyInstance
 	{
-		readonly ILSpyParameters parameters;
+		internal static readonly ConcurrentStack<string> TempFiles = new ConcurrentStack<string>();
 
+		readonly ILSpyParameters parameters;
 		public ILSpyInstance(ILSpyParameters parameters = null)
 		{
 			this.parameters = parameters;
@@ -54,6 +56,8 @@ namespace ICSharpCode.ILSpy.AddIn
 
 				string filepath = Path.GetTempFileName();
 				File.WriteAllText(filepath, assemblyArguments);
+
+				TempFiles.Push(filepath);
 
 				argumentsToPass = $"@\"{filepath}\"";
 			}
