@@ -100,13 +100,21 @@ namespace ICSharpCode.ILSpy.Tests
 		}
 
 		[Test]
-		public void PassAtFileArgumentsSpaceSeparated()
+		public void PassAtFileArguments()
 		{
 			string filepath = System.IO.Path.GetTempFileName();
 
-			System.IO.File.WriteAllText(filepath, "assembly1 assembly2 assembly3 --newinstance --noactivate");
+			System.IO.File.WriteAllText(filepath, "assembly1\r\nassembly2\r\nassembly3\r\n--newinstance\r\n--noactivate");
 
 			var cmdLineArgs = new CommandLineArguments(new string[] { $"@{filepath}" });
+
+			try
+			{
+				System.IO.File.Delete(filepath);
+			}
+			catch (Exception)
+			{
+			}
 
 			cmdLineArgs.SingleInstance.Should().BeFalse();
 			cmdLineArgs.NoActivate.Should().BeTrue();

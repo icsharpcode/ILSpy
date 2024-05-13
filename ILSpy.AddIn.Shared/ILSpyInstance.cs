@@ -52,7 +52,7 @@ namespace ICSharpCode.ILSpy.AddIn
 
 			if ((commandLineArguments != null) && commandLineArguments.Any())
 			{
-				string assemblyArguments = string.Join(" ", commandLineArguments);
+				string assemblyArguments = string.Join("\r\n", commandLineArguments);
 
 				string filepath = Path.GetTempFileName();
 				File.WriteAllText(filepath, assemblyArguments);
