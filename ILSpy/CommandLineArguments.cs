@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy
 				ResponseFileHandling = ResponseFileHandling.ParseArgsAsLineSeparated,
 
 				// Note: options are case-sensitive (!), and, default behavior would be UnrecognizedArgumentHandling.Throw on Parse()
-				// UnrecognizedArgumentHandling = UnrecognizedArgumentHandling.CollectAndContinue
+				UnrecognizedArgumentHandling = UnrecognizedArgumentHandling.CollectAndContinue
 			};
 
 			app.HelpOption();

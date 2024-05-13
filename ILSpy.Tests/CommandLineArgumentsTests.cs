@@ -53,12 +53,11 @@ namespace ICSharpCode.ILSpy.Tests
 		}
 
 		[Test]
-		public void VerifyCaseSensitivityOfOptionsThrows()
+		public void VerifyCaseSensitivityOfOptionsDoesntThrow()
 		{
-			Action act = () => new CommandLineArguments(new string[] { "--navigateTo:none" });
+			var cmdLineArgs = new CommandLineArguments(new string[] { "--navigateTo:none" });
 
-			act.Should().Throw<McMaster.Extensions.CommandLineUtils.UnrecognizedCommandParsingException>()
-				.WithMessage("Unrecognized option '--navigateTo:none'");
+			cmdLineArgs.ArgumentsParser.RemainingArguments.Should().HaveCount(1);
 		}
 
 		[Test]
