@@ -23,5 +23,5 @@ Options:
 
 Note on @ResponseFile.rsp: 
 
-* The response file should contain the arguments as if they were passed on the command line (space-separated).
+* The response file should contain the arguments, one argument per line (not space-separated!).
 * Use it when the list of assemblies is too long to fit on the command line.
