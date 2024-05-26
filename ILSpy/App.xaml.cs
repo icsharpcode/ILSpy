@@ -106,13 +106,7 @@ namespace ICSharpCode.ILSpy
 
 		private static void SingleInstance_NewInstanceDetected(object? sender, NewInstanceEventArgs e)
 		{
-			var mainWindow = ICSharpCode.ILSpy.MainWindow.Instance;
-
-			var args = new CommandLineArguments(e.Args);
-			if (mainWindow.HandleCommandLineArguments(args))
-			{
-				mainWindow.HandleCommandLineArgumentsAfterShowList(args);
-			}
+			ICSharpCode.ILSpy.MainWindow.Instance.HandleSingleInstanceCommandLineArguments(e.Args);
 		}
 
 		static Assembly ResolvePluginDependencies(AssemblyLoadContext context, AssemblyName assemblyName)

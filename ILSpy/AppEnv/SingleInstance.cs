@@ -54,9 +54,10 @@ public static class SingleInstance
 
 	private static string[] GetILSpyCommandLineArgs()
 	{
-		var cmdArgs = Environment.GetCommandLineArgs().Skip(1);
-		cmdArgs = cmdArgs.Select(CommandLineTools.FullyQualifyPath);
-		return cmdArgs.ToArray();
+		// Note: NO Skip(1) here because .Args property on SingleInstanceArguments does this for us
+		return Environment.GetCommandLineArgs().AsEnumerable()
+			.Select(CommandLineTools.FullyQualifyPath)
+			.ToArray();
 	}
 
 	/// <summary>

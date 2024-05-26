@@ -652,7 +652,19 @@ namespace ICSharpCode.ILSpy
 
 		List<LoadedAssembly> commandLineLoadedAssemblies = new List<LoadedAssembly>();
 
-		internal bool HandleCommandLineArguments(CommandLineArguments args)
+		internal async Task HandleSingleInstanceCommandLineArguments(string[] args)
+		{
+			var cmdArgs = new CommandLineArguments(args);
+
+			await Dispatcher.InvokeAsync(() => {
+				if (HandleCommandLineArguments(cmdArgs))
+				{
+					HandleCommandLineArgumentsAfterShowList(cmdArgs);
+				}
+			});
+		}
+
+		bool HandleCommandLineArguments(CommandLineArguments args)
 		{
 			LoadAssemblies(args.AssembliesToLoad, commandLineLoadedAssemblies, focusNode: false);
 			if (args.Language != null)
@@ -664,7 +676,7 @@ namespace ICSharpCode.ILSpy
 		/// Called on startup or when passed arguments via WndProc from a second instance.
 		/// In the format case, spySettings is non-null; in the latter it is null.
 		/// </summary>
-		internal void HandleCommandLineArgumentsAfterShowList(CommandLineArguments args, ILSpySettings spySettings = null)
+		void HandleCommandLineArgumentsAfterShowList(CommandLineArguments args, ILSpySettings spySettings = null)
 		{
 			var relevantAssemblies = commandLineLoadedAssemblies.ToList();
 			commandLineLoadedAssemblies.Clear(); // clear references once we don't need them anymore
