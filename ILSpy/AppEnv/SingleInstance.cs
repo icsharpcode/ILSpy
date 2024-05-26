@@ -19,6 +19,7 @@ namespace Medo.Application;
 using System;
 using System.Diagnostics;
 using System.IO.Pipes;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -26,6 +27,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
+
+using ICSharpCode.ILSpy.AppEnv;
 
 /// <summary>
 /// Handles detection and communication of programs multiple instances.
@@ -49,6 +52,13 @@ public static class SingleInstance
 		return Attach(false);
 	}
 
+	private static string[] GetILSpyCommandLineArgs()
+	{
+		var cmdArgs = Environment.GetCommandLineArgs().Skip(1);
+		cmdArgs = cmdArgs.Select(CommandLineTools.FullyQualifyPath);
+		return cmdArgs.ToArray();
+	}
+
 	/// <summary>
 	/// Returns true if this application is not already started.
 	/// Another instance is contacted via named pipe.
@@ -67,7 +77,7 @@ public static class SingleInstance
 				{ //we need to contact previous instance
 					var contentObject = new SingleInstanceArguments() {
 						CommandLine = Environment.CommandLine,
-						CommandLineArgs = Environment.GetCommandLineArgs(),
+						CommandLineArgs = GetILSpyCommandLineArgs(),
 					};
 					var contentBytes = JsonSerializer.SerializeToUtf8Bytes(contentObject);
 					using var clientPipe = new NamedPipeClientStream(".",
