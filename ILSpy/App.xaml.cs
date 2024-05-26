@@ -30,6 +30,7 @@ using System.Windows.Documents;
 using System.Windows.Navigation;
 using System.Windows.Threading;
 
+using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpyX.Analyzers;
 using ICSharpCode.ILSpyX.Settings;

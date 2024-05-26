@@ -20,7 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace ICSharpCode.ILSpy
+namespace ICSharpCode.ILSpy.AppEnv
 {
 	public class CommandLineTools
 	{

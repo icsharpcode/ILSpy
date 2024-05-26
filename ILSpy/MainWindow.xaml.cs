@@ -44,6 +44,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.ILSpy.Analyzers;
+using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Commands;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Options;
