@@ -659,6 +659,9 @@ namespace ICSharpCode.ILSpy
 			await Dispatcher.InvokeAsync(() => {
 				if (HandleCommandLineArguments(cmdArgs))
 				{
+					if (!cmdArgs.NoActivate && WindowState == WindowState.Minimized)
+						WindowState = WindowState.Normal;
+
 					HandleCommandLineArgumentsAfterShowList(cmdArgs);
 				}
 			});
