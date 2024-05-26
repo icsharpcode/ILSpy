@@ -231,24 +231,11 @@ public static class SingleInstance
 	[Serializable]
 	private sealed record SingleInstanceArguments
 	{  // just a storage
-#if NET7_0_OR_GREATER
 		[JsonInclude]
 		public required string CommandLine;
 
 		[JsonInclude]
 		public required string[] CommandLineArgs;
-#else
-		public SingleInstanceArguments() {
-			CommandLine = string.Empty;
-			CommandLineArgs = Array.Empty<string>();
-		}
-
-		[JsonInclude]
-		public string CommandLine;
-
-		[JsonInclude]
-		public string[] CommandLineArgs;
-#endif
 	}
 
 }
