@@ -35,6 +35,8 @@ using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpyX.Analyzers;
 using ICSharpCode.ILSpyX.Settings;
 
+using Medo.Application;
+
 using Microsoft.VisualStudio.Composition;
 
 using TomsToolbox.Wpf.Styles;
@@ -69,7 +71,8 @@ namespace ICSharpCode.ILSpy
 				&& !MiscSettingsPanel.CurrentMiscSettings.AllowMultipleInstances;
 			if (forceSingleInstance)
 			{
-				SingleInstanceHandling.ForceSingleInstance(cmdArgs);
+				SingleInstance.Attach();  // will auto-exit for second instance
+				SingleInstance.NewInstanceDetected += SingleInstance_NewInstanceDetected;
 			}
 
 			InitializeComponent();
@@ -98,6 +101,17 @@ namespace ICSharpCode.ILSpy
 			{
 				string unknownArguments = string.Join(", ", App.CommandLineArguments.ArgumentsParser.RemainingArguments);
 				MessageBox.Show(unknownArguments, "ILSpy Unknown Command Line Arguments Passed");
+			}
+		}
+
+		private static void SingleInstance_NewInstanceDetected(object? sender, NewInstanceEventArgs e)
+		{
+			var mainWindow = ICSharpCode.ILSpy.MainWindow.Instance;
+
+			var args = new CommandLineArguments(e.Args);
+			if (mainWindow.HandleCommandLineArguments(args))
+			{
+				mainWindow.HandleCommandLineArgumentsAfterShowList(args);
 			}
 		}
 

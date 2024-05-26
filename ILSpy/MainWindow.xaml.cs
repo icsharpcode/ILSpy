@@ -600,12 +600,7 @@ namespace ICSharpCode.ILSpy
 		{
 			base.OnSourceInitialized(e);
 			PresentationSource source = PresentationSource.FromVisual(this);
-			HwndSource hwndSource = source as HwndSource;
-			if (hwndSource != null)
-			{
-				hwndSource.AddHook(WndProc);
-			}
-			SingleInstanceHandling.ReleaseSingleInstanceMutex();
+
 			// Validate and Set Window Bounds
 			Rect bounds = Rect.Transform(sessionSettings.WindowBounds, source.CompositionTarget.TransformToDevice);
 			var boundsRect = new System.Drawing.Rectangle((int)bounds.Left, (int)bounds.Top, (int)bounds.Width, (int)bounds.Height);
@@ -624,35 +619,6 @@ namespace ICSharpCode.ILSpy
 			this.WindowState = sessionSettings.WindowState;
 		}
 
-		unsafe IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
-		{
-			if (msg == NativeMethods.WM_COPYDATA)
-			{
-				CopyDataStruct* copyData = (CopyDataStruct*)lParam;
-				string data = new string((char*)copyData->Buffer, 0, copyData->Size / sizeof(char));
-				if (data.StartsWith("ILSpy:\r\n", StringComparison.Ordinal))
-				{
-					data = data.Substring(8);
-					List<string> lines = new List<string>();
-					using (StringReader r = new StringReader(data))
-					{
-						string line;
-						while ((line = r.ReadLine()) != null)
-							lines.Add(line);
-					}
-					var args = new CommandLineArguments(lines);
-					if (HandleCommandLineArguments(args))
-					{
-						if (!args.NoActivate && WindowState == WindowState.Minimized)
-							WindowState = WindowState.Normal;
-						HandleCommandLineArgumentsAfterShowList(args);
-						handled = true;
-						return (IntPtr)1;
-					}
-				}
-			}
-			return IntPtr.Zero;
-		}
 		#endregion
 
 		protected override void OnKeyDown(KeyEventArgs e)
@@ -686,7 +652,7 @@ namespace ICSharpCode.ILSpy
 
 		List<LoadedAssembly> commandLineLoadedAssemblies = new List<LoadedAssembly>();
 
-		bool HandleCommandLineArguments(CommandLineArguments args)
+		internal bool HandleCommandLineArguments(CommandLineArguments args)
 		{
 			LoadAssemblies(args.AssembliesToLoad, commandLineLoadedAssemblies, focusNode: false);
 			if (args.Language != null)
@@ -698,7 +664,7 @@ namespace ICSharpCode.ILSpy
 		/// Called on startup or when passed arguments via WndProc from a second instance.
 		/// In the format case, spySettings is non-null; in the latter it is null.
 		/// </summary>
-		void HandleCommandLineArgumentsAfterShowList(CommandLineArguments args, ILSpySettings spySettings = null)
+		internal void HandleCommandLineArgumentsAfterShowList(CommandLineArguments args, ILSpySettings spySettings = null)
 		{
 			var relevantAssemblies = commandLineLoadedAssemblies.ToList();
 			commandLineLoadedAssemblies.Clear(); // clear references once we don't need them anymore

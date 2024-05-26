@@ -2,6 +2,8 @@
 
 using FluentAssertions;
 
+using ICSharpCode.ILSpy.AppEnv;
+
 using NUnit.Framework;
 
 namespace ICSharpCode.ILSpy.Tests
