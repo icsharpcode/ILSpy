@@ -45,6 +45,7 @@
   <ItemGroup>
     <PackageReference Include="AvalonEdit" />
     <PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" />
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" />
     <PackageReference Include="Microsoft.VisualStudio.Composition" />
     <PackageReference Include="DataGridExtensions" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" />
@@ -65,7 +66,6 @@
     <EmbeddedResource Include="TextView\ILAsm-Mode.xshd" />
     <EmbeddedResource Include="TextView\Asm-Mode.xshd" />
     <EmbeddedResource Include="TextView\XML-Mode.xshd" />
-    <None Remove="Properties\launchSettings.json" />
   </ItemGroup>
 
   <ItemGroup>

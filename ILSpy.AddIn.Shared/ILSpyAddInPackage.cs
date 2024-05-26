@@ -97,6 +97,24 @@ namespace ICSharpCode.ILSpy.AddIn
 			OpenReferenceCommand.Register(this);
 			OpenCodeItemCommand.Register(this);
 		}
+
+		protected override int QueryClose(out bool canClose)
+		{
+			var tempFiles = ILSpyInstance.TempFiles;
+			while (tempFiles.TryPop(out var filename))
+			{
+				try
+				{
+					System.IO.File.Delete(filename);
+				}
+				catch (Exception)
+				{
+				}
+			}
+
+			return base.QueryClose(out canClose);
+		}
+
 		#endregion
 
 		public void ShowMessage(string format, params object[] items)

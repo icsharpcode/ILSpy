@@ -87,6 +87,17 @@ namespace ICSharpCode.ILSpy
 											  Hyperlink.RequestNavigateEvent,
 											  new RequestNavigateEventHandler(Window_RequestNavigate));
 			ILSpyTraceListener.Install();
+
+			if (App.CommandLineArguments.ArgumentsParser.IsShowingInformation)
+			{
+				MessageBox.Show(App.CommandLineArguments.ArgumentsParser.GetHelpText(), "ILSpy Command Line Arguments");
+			}
+
+			if (App.CommandLineArguments.ArgumentsParser.RemainingArguments.Any())
+			{
+				string unknownArguments = string.Join(", ", App.CommandLineArguments.ArgumentsParser.RemainingArguments);
+				MessageBox.Show(unknownArguments, "ILSpy Unknown Command Line Arguments Passed");
+			}
 		}
 
 		static Assembly ResolvePluginDependencies(AssemblyLoadContext context, AssemblyName assemblyName)

@@ -1,13 +1,13 @@
 {
-  "profiles": {
-    "ILSpy": {
-      "commandName": "Executable",
-      "executablePath": ".\\ILSpy.exe",
-      "commandLineArgs": "/separate"
-    },
-    "ILSpy single-instance": {
-      "commandName": "Executable",
-      "executablePath": ".\\ILSpy.exe"
-    }
-  }
+	"profiles": {
+		"ILSpy": {
+			"commandName": "Executable",
+			"executablePath": "./ilspy.exe",
+			"commandLineArgs": "--newinstance"
+		},
+		"ILSpy single-instance": {
+			"commandName": "Executable",
+			"executablePath": "./ilspy.exe"
+		}
+	}
 }

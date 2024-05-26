@@ -16,12 +16,14 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
+using McMaster.Extensions.CommandLineUtils;
+
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ICSharpCode.ILSpy
 {
-	sealed class CommandLineArguments
+	public sealed class CommandLineArguments
 	{
 		// see /doc/Command Line.txt for details
 		public List<string> AssembliesToLoad = new List<string>();
@@ -32,33 +34,70 @@ namespace ICSharpCode.ILSpy
 		public bool NoActivate;
 		public string ConfigFile;
 
+		public CommandLineApplication ArgumentsParser { get; }
+
 		public CommandLineArguments(IEnumerable<string> arguments)
 		{
-			foreach (string arg in arguments)
+			var app = new CommandLineApplication() {
+				// https://natemcmaster.github.io/CommandLineUtils/docs/response-file-parsing.html?tabs=using-attributes
+				ResponseFileHandling = ResponseFileHandling.ParseArgsAsLineSeparated,
+
+				// Note: options are case-sensitive (!), and, default behavior would be UnrecognizedArgumentHandling.Throw on Parse()
+				UnrecognizedArgumentHandling = UnrecognizedArgumentHandling.CollectAndContinue
+			};
+
+			app.HelpOption();
+			ArgumentsParser = app;
+
+			var oForceNewInstance = app.Option("--newinstance",
+				"Start a new instance of ILSpy even if the user configuration is set to single-instance",
+				CommandOptionType.NoValue);
+
+			var oNavigateTo = app.Option<string>("-n|--navigateto <TYPENAME>",
+				"Navigates to the member specified by the given ID string.\r\nThe member is searched for only in the assemblies specified on the command line.\r\nExample: 'ILSpy ILSpy.exe --navigateto:T:ICSharpCode.ILSpy.CommandLineArguments'",
+				CommandOptionType.SingleValue);
+			oNavigateTo.DefaultValue = null;
+
+			var oSearch = app.Option<string>("-s|--search <SEARCHTERM>",
+				"Search for t:TypeName, m:Member or c:Constant; use exact match (=term), 'should not contain' (-term) or 'must contain' (+term); use /reg(ular)?Ex(pressions)?/ or both - t:/Type(Name)?/...",
+				CommandOptionType.SingleValue);
+			oSearch.DefaultValue = null;
+
+			var oLanguage = app.Option<string>("-l|--language <LANGUAGEIDENTIFIER>",
+				"Selects the specified language.\r\nExample: 'ILSpy --language:C#' or 'ILSpy --language:IL'",
+				CommandOptionType.SingleValue);
+			oLanguage.DefaultValue = null;
+
+			var oConfig = app.Option<string>("-c|--config <CONFIGFILENAME>",
+				"Provide a specific configuration file.\r\nExample: 'ILSpy --config:myconfig.xml'",
+				CommandOptionType.SingleValue);
+			oConfig.DefaultValue = null;
+
+			var oNoActivate = app.Option("--noactivate",
+				"Do not activate the existing ILSpy instance. This option has no effect if a new ILSpy instance is being started.",
+				CommandOptionType.NoValue);
+
+			// https://natemcmaster.github.io/CommandLineUtils/docs/arguments.html#variable-numbers-of-arguments
+			// To enable this, MultipleValues must be set to true, and the argument must be the last one specified.
+			var files = app.Argument("Assemblies", "Assemblies to load", multipleValues: true);
+
+			app.Parse(arguments.ToArray());
+
+			if (oForceNewInstance.HasValue())
+				SingleInstance = false;
+
+			NavigateTo = oNavigateTo.ParsedValue;
+			Search = oSearch.ParsedValue;
+			Language = oLanguage.ParsedValue;
+			ConfigFile = oConfig.ParsedValue;
+
+			if (oNoActivate.HasValue())
+				NoActivate = true;
+
+			foreach (var assembly in files.Values)
 			{
-				if (arg.Length == 0)
-					continue;
-				if (arg[0] == '/')
-				{
-					if (arg.Equals("/singleInstance", StringComparison.OrdinalIgnoreCase))
-						this.SingleInstance = true;
-					else if (arg.Equals("/separate", StringComparison.OrdinalIgnoreCase))
-						this.SingleInstance = false;
-					else if (arg.StartsWith("/navigateTo:", StringComparison.OrdinalIgnoreCase))
-						this.NavigateTo = arg.Substring("/navigateTo:".Length);
-					else if (arg.StartsWith("/search:", StringComparison.OrdinalIgnoreCase))
-						this.Search = arg.Substring("/search:".Length);
-					else if (arg.StartsWith("/language:", StringComparison.OrdinalIgnoreCase))
-						this.Language = arg.Substring("/language:".Length);
-					else if (arg.Equals("/noActivate", StringComparison.OrdinalIgnoreCase))
-						this.NoActivate = true;
-					else if (arg.StartsWith("/config:", StringComparison.OrdinalIgnoreCase))
-						this.ConfigFile = arg.Substring("/config:".Length);
-				}
-				else
-				{
-					this.AssembliesToLoad.Add(arg);
-				}
+				if (!string.IsNullOrWhiteSpace(assembly))
+					AssembliesToLoad.Add(assembly);
 			}
 		}
 	}

@@ -64,10 +64,14 @@ namespace ICSharpCode.ILSpy
 		{
 			// Fully qualify the paths before passing them to another process,
 			// because that process might use a different current directory.
-			if (string.IsNullOrEmpty(argument) || argument[0] == '/')
+			if (string.IsNullOrEmpty(argument) || argument[0] == '-')
 				return argument;
 			try
 			{
+				if (argument.StartsWith("@"))
+				{
+					return "@" + FullyQualifyPath(argument.Substring(1));
+				}
 				return Path.Combine(Environment.CurrentDirectory, argument);
 			}
 			catch (ArgumentException)
