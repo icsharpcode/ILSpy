@@ -28,6 +28,12 @@ namespace ICSharpCode.ILSpyX.FileLoaders
 	{
 		public Task<LoadResult?> Load(string fileName, Stream stream, FileLoadSettings settings)
 		{
+
+			if (!File.Exists(fileName))
+			{
+				return Task.FromResult<LoadResult?>(null);
+			}
+
 			MetadataReaderOptions options = settings.ApplyWinRTProjections
 						? MetadataReaderOptions.ApplyWindowsRuntimeProjections
 						: MetadataReaderOptions.None;

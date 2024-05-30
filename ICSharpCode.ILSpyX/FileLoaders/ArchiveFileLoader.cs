@@ -25,6 +25,11 @@ namespace ICSharpCode.ILSpyX.FileLoaders
 	{
 		public Task<LoadResult?> Load(string fileName, Stream stream, FileLoadSettings settings)
 		{
+			if (!File.Exists(fileName))
+			{
+				return Task.FromResult<LoadResult?>(null);
+			}
+
 			try
 			{
 				var zip = LoadedPackage.FromZipFile(fileName);

@@ -25,6 +25,10 @@ namespace ICSharpCode.ILSpyX.FileLoaders
 	{
 		public Task<LoadResult?> Load(string fileName, Stream stream, FileLoadSettings settings)
 		{
+			if (!File.Exists(fileName))
+			{
+				return Task.FromResult(default(LoadResult?));
+			}
 			var bundle = LoadedPackage.FromBundle(fileName);
 			var result = bundle != null ? new LoadResult { Package = bundle } : null;
 			return Task.FromResult(result);
