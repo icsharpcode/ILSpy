@@ -21,16 +21,19 @@ using System.Runtime.InteropServices;
 
 namespace ICSharpCode.ILSpy
 {
-	static class NativeMethods
+	// Uses https://learn.microsoft.com/en-us/dotnet/standard/native-interop/pinvoke-source-generation
+	internal static partial class NativeMethods
 	{
-		[DllImport("dwmapi.dll", PreserveSig = true)]
-		public static extern int DwmSetWindowAttribute(IntPtr hwnd, DwmWindowAttribute attr, ref int attrValue, int attrSize);
+		const int S_OK = 0;
+
+		[LibraryImport("dwmapi.dll", EntryPoint = "DwmSetWindowAttribute")]
+		internal static partial int DwmSetWindowAttribute(IntPtr hwnd, DwmWindowAttribute attr, ref int attrValue, int attrSize);
 
 		public static bool UseImmersiveDarkMode(IntPtr hWnd, bool enable)
 		{
 			int darkMode = enable ? 1 : 0;
-			int hr = DwmSetWindowAttribute(hWnd, DwmWindowAttribute.UseImmersiveDarkMode, ref darkMode, sizeof(int));
-			return hr >= 0;
+			int hResult = DwmSetWindowAttribute(hWnd, DwmWindowAttribute.UseImmersiveDarkMode, ref darkMode, sizeof(int));
+			return hResult > S_OK;
 		}
 	}
 
