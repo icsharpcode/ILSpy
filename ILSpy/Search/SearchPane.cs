@@ -32,6 +32,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 
+using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;

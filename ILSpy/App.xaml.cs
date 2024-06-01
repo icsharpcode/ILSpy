@@ -30,9 +30,12 @@ using System.Windows.Documents;
 using System.Windows.Navigation;
 using System.Windows.Threading;
 
+using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpyX.Analyzers;
 using ICSharpCode.ILSpyX.Settings;
+
+using Medo.Application;
 
 using Microsoft.VisualStudio.Composition;
 
@@ -62,13 +65,14 @@ namespace ICSharpCode.ILSpy
 			ILSpySettings.SettingsFilePathProvider = new ILSpySettingsFilePathProvider();
 
 			var cmdArgs = Environment.GetCommandLineArgs().Skip(1);
-			App.CommandLineArguments = new CommandLineArguments(cmdArgs);
+			App.CommandLineArguments = CommandLineArguments.Create(cmdArgs);
 
 			bool forceSingleInstance = (App.CommandLineArguments.SingleInstance ?? true)
 				&& !MiscSettingsPanel.CurrentMiscSettings.AllowMultipleInstances;
 			if (forceSingleInstance)
 			{
-				SingleInstanceHandling.ForceSingleInstance(cmdArgs);
+				SingleInstance.Attach();  // will auto-exit for second instance
+				SingleInstance.NewInstanceDetected += SingleInstance_NewInstanceDetected;
 			}
 
 			InitializeComponent();
@@ -98,6 +102,11 @@ namespace ICSharpCode.ILSpy
 				string unknownArguments = string.Join(", ", App.CommandLineArguments.ArgumentsParser.RemainingArguments);
 				MessageBox.Show(unknownArguments, "ILSpy Unknown Command Line Arguments Passed");
 			}
+		}
+
+		private static void SingleInstance_NewInstanceDetected(object? sender, NewInstanceEventArgs e)
+		{
+			ICSharpCode.ILSpy.MainWindow.Instance.HandleSingleInstanceCommandLineArguments(e.Args);
 		}
 
 		static Assembly ResolvePluginDependencies(AssemblyLoadContext context, AssemblyName assemblyName)

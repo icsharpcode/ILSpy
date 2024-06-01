@@ -20,6 +20,7 @@
 using System;
 
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
 

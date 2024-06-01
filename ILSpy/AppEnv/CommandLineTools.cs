@@ -18,9 +18,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
-namespace ICSharpCode.ILSpy
+namespace ICSharpCode.ILSpy.AppEnv
 {
 	public class CommandLineTools
 	{
@@ -108,6 +109,26 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 				b.Append('"');
+			}
+		}
+
+		public static string FullyQualifyPath(string argument)
+		{
+			// Fully qualify the paths before passing them to another process,
+			// because that process might use a different current directory.
+			if (string.IsNullOrEmpty(argument) || argument[0] == '-')
+				return argument;
+			try
+			{
+				if (argument.StartsWith("@"))
+				{
+					return "@" + FullyQualifyPath(argument.Substring(1));
+				}
+				return Path.Combine(Environment.CurrentDirectory, argument);
+			}
+			catch (ArgumentException)
+			{
+				return argument;
 			}
 		}
 	}

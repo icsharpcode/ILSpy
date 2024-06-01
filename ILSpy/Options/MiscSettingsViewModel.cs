@@ -24,6 +24,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
 
+using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Commands;
 using ICSharpCode.ILSpyX.Settings;
 
