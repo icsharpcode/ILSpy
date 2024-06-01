@@ -654,7 +654,7 @@ namespace ICSharpCode.ILSpy
 
 		internal async Task HandleSingleInstanceCommandLineArguments(string[] args)
 		{
-			var cmdArgs = new CommandLineArguments(args);
+			var cmdArgs = CommandLineArguments.Create(args);
 
 			await Dispatcher.InvokeAsync(() => {
 				if (HandleCommandLineArguments(cmdArgs))

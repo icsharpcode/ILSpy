@@ -65,7 +65,7 @@ namespace ICSharpCode.ILSpy
 			ILSpySettings.SettingsFilePathProvider = new ILSpySettingsFilePathProvider();
 
 			var cmdArgs = Environment.GetCommandLineArgs().Skip(1);
-			App.CommandLineArguments = new CommandLineArguments(cmdArgs);
+			App.CommandLineArguments = CommandLineArguments.Create(cmdArgs);
 
 			bool forceSingleInstance = (App.CommandLineArguments.SingleInstance ?? true)
 				&& !MiscSettingsPanel.CurrentMiscSettings.AllowMultipleInstances;

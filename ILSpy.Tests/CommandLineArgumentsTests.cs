@@ -14,7 +14,7 @@ namespace ICSharpCode.ILSpy.Tests
 		[Test]
 		public void VerifyEmptyArgumentsArray()
 		{
-			var cmdLineArgs = new CommandLineArguments(new string[] { });
+			var cmdLineArgs = CommandLineArguments.Create(new string[] { });
 
 			cmdLineArgs.AssembliesToLoad.Should().BeEmpty();
 			cmdLineArgs.SingleInstance.Should().BeNull();
@@ -28,14 +28,14 @@ namespace ICSharpCode.ILSpy.Tests
 		[Test]
 		public void VerifyHelpOption()
 		{
-			var cmdLineArgs = new CommandLineArguments(new string[] { "--help" });
+			var cmdLineArgs = CommandLineArguments.Create(new string[] { "--help" });
 			cmdLineArgs.ArgumentsParser.IsShowingInformation.Should().BeTrue();
 		}
 
 		[Test]
 		public void VerifyForceNewInstanceOption()
 		{
-			var cmdLineArgs = new CommandLineArguments(new string[] { "--newinstance" });
+			var cmdLineArgs = CommandLineArguments.Create(new string[] { "--newinstance" });
 			cmdLineArgs.SingleInstance.Should().BeFalse();
 		}
 
@@ -43,21 +43,21 @@ namespace ICSharpCode.ILSpy.Tests
 		public void VerifyNavigateToOption()
 		{
 			const string navigateTo = "MyNamespace.MyClass";
-			var cmdLineArgs = new CommandLineArguments(new string[] { "--navigateto", navigateTo });
+			var cmdLineArgs = CommandLineArguments.Create(new string[] { "--navigateto", navigateTo });
 			cmdLineArgs.NavigateTo.Should().BeEquivalentTo(navigateTo);
 		}
 
 		[Test]
 		public void VerifyNavigateToOption_NoneTest_Matching_VSAddin()
 		{
-			var cmdLineArgs = new CommandLineArguments(new string[] { "--navigateto:none" });
+			var cmdLineArgs = CommandLineArguments.Create(new string[] { "--navigateto:none" });
 			cmdLineArgs.NavigateTo.Should().BeEquivalentTo("none");
 		}
 
 		[Test]
 		public void VerifyCaseSensitivityOfOptionsDoesntThrow()
 		{
-			var cmdLineArgs = new CommandLineArguments(new string[] { "--navigateTo:none" });
+			var cmdLineArgs = CommandLineArguments.Create(new string[] { "--navigateTo:none" });
 
 			cmdLineArgs.ArgumentsParser.RemainingArguments.Should().HaveCount(1);
 		}
@@ -66,7 +66,7 @@ namespace ICSharpCode.ILSpy.Tests
 		public void VerifySearchOption()
 		{
 			const string searchWord = "TestContainers";
-			var cmdLineArgs = new CommandLineArguments(new string[] { "--search", searchWord });
+			var cmdLineArgs = CommandLineArguments.Create(new string[] { "--search", searchWord });
 			cmdLineArgs.Search.Should().BeEquivalentTo(searchWord);
 		}
 
@@ -74,7 +74,7 @@ namespace ICSharpCode.ILSpy.Tests
 		public void VerifyLanguageOption()
 		{
 			const string language = "csharp";
-			var cmdLineArgs = new CommandLineArguments(new string[] { "--language", language });
+			var cmdLineArgs = CommandLineArguments.Create(new string[] { "--language", language });
 			cmdLineArgs.Language.Should().BeEquivalentTo(language);
 		}
 
@@ -82,21 +82,21 @@ namespace ICSharpCode.ILSpy.Tests
 		public void VerifyConfigOption()
 		{
 			const string configFile = "myilspyoptions.xml";
-			var cmdLineArgs = new CommandLineArguments(new string[] { "--config", configFile });
+			var cmdLineArgs = CommandLineArguments.Create(new string[] { "--config", configFile });
 			cmdLineArgs.ConfigFile.Should().BeEquivalentTo(configFile);
 		}
 
 		[Test]
 		public void VerifyNoActivateOption()
 		{
-			var cmdLineArgs = new CommandLineArguments(new string[] { "--noactivate" });
+			var cmdLineArgs = CommandLineArguments.Create(new string[] { "--noactivate" });
 			cmdLineArgs.NoActivate.Should().BeTrue();
 		}
 
 		[Test]
 		public void MultipleAssembliesAsArguments()
 		{
-			var cmdLineArgs = new CommandLineArguments(new string[] { "assembly1", "assembly2", "assembly3" });
+			var cmdLineArgs = CommandLineArguments.Create(new string[] { "assembly1", "assembly2", "assembly3" });
 			cmdLineArgs.AssembliesToLoad.Should().HaveCount(3);
 		}
 
@@ -107,7 +107,7 @@ namespace ICSharpCode.ILSpy.Tests
 
 			System.IO.File.WriteAllText(filepath, "assembly1\r\nassembly2\r\nassembly3\r\n--newinstance\r\n--noactivate");
 
-			var cmdLineArgs = new CommandLineArguments(new string[] { $"@{filepath}" });
+			var cmdLineArgs = CommandLineArguments.Create(new string[] { $"@{filepath}" });
 
 			try
 			{
