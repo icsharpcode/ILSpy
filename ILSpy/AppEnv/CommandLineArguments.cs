@@ -108,7 +108,7 @@ namespace ICSharpCode.ILSpy.AppEnv
 						instance.AssembliesToLoad.Add(assembly);
 				}
 			}
-			catch (Exception ex)
+			catch (Exception)
 			{
 				// Intentionally ignore exceptions if any, this is only added to always have an exception-free startup
 			}

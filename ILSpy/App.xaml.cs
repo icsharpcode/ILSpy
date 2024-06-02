@@ -104,9 +104,11 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		private static void SingleInstance_NewInstanceDetected(object? sender, NewInstanceEventArgs e)
+		private static void SingleInstance_NewInstanceDetected(object sender, NewInstanceEventArgs e)
 		{
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 			ICSharpCode.ILSpy.MainWindow.Instance.HandleSingleInstanceCommandLineArguments(e.Args);
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 		}
 
 		static Assembly ResolvePluginDependencies(AssemblyLoadContext context, AssemblyName assemblyName)

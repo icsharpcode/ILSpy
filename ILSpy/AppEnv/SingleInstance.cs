@@ -14,6 +14,8 @@
 //2008-01-03: Added Resources
 //2007-12-29: New version
 
+#nullable enable
+
 namespace Medo.Application;
 
 using System;
