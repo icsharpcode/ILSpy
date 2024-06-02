@@ -26,13 +26,18 @@ namespace ICSharpCode.ILSpyX.FileLoaders
 {
 	public sealed class WebCilFileLoader : IFileLoader
 	{
-		public Task<LoadResult?> Load(string fileName, Stream stream, FileLoadSettings settings)
+		public Task<LoadResult?> Load(string fileName, Stream stream, FileLoadContext settings)
 		{
-			MetadataReaderOptions options = settings.ApplyWinRTProjections
-						? MetadataReaderOptions.ApplyWindowsRuntimeProjections
-						: MetadataReaderOptions.None;
+			if (settings.ParentBundle != null)
+			{
+				return Task.FromResult<LoadResult?>(null);
+			}
 
-			var wasm = WebCilFile.FromStream(fileName, options);
+			MetadataReaderOptions options = settings.ApplyWinRTProjections
+							? MetadataReaderOptions.ApplyWindowsRuntimeProjections
+							: MetadataReaderOptions.None;
+
+			var wasm = WebCilFile.FromFile(fileName, options);
 			var result = wasm != null ? new LoadResult { MetadataFile = wasm } : null;
 			return Task.FromResult(result);
 		}

@@ -314,7 +314,7 @@ namespace ICSharpCode.ILSpyX
 		async Task<LoadResult> LoadAsync(Task<Stream?>? streamTask)
 		{
 			using var stream = await PrepareStream();
-			FileLoadSettings settings = new FileLoadSettings(applyWinRTProjections);
+			FileLoadContext settings = new FileLoadContext(applyWinRTProjections, ParentBundle);
 
 			LoadResult? result = null;
 
@@ -322,16 +322,33 @@ namespace ICSharpCode.ILSpyX
 			{
 				foreach (var loader in fileLoaders.RegisteredLoaders)
 				{
+					// In each iteration any of the following things may happen:
+					// Load returns null because the loader is unable to handle the file, we simply continue without recording the result.
+					// Load returns a non-null value that is either a valid result or an exception:
+					// - if it's a success, we use that and end the loop,
+					// - if it's an error, we remember the error, discarding any previous errors.
+					// Load throws an exception, remember the error, discarding any previous errors.
 					stream.Position = 0;
-					result = await loader.Load(fileName, stream, settings).ConfigureAwait(false);
-					if (result != null)
+					try
 					{
-						break;
+						var nextResult = await loader.Load(fileName, stream, settings).ConfigureAwait(false);
+						if (nextResult != null)
+						{
+							result = nextResult;
+							if (result.IsSuccess)
+							{
+								break;
+							}
+						}
+					}
+					catch (Exception ex)
+					{
+						result = new LoadResult { FileLoadException = ex };
 					}
 				}
 			}
 
-			if (result == null)
+			if (result?.IsSuccess != true)
 			{
 				stream.Position = 0;
 				try

@@ -31,7 +31,7 @@ namespace ICSharpCode.ILSpyX.FileLoaders
 {
 	public sealed class XamarinCompressedFileLoader : IFileLoader
 	{
-		public async Task<LoadResult?> Load(string fileName, Stream stream, FileLoadSettings settings)
+		public async Task<LoadResult?> Load(string fileName, Stream stream, FileLoadContext context)
 		{
 			const uint CompressedDataMagic = 0x5A4C4158; // Magic used for Xamarin compressed module header ('XALZ', little-endian)
 			using var fileReader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true);
@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpyX.FileLoaders
 				// Load module from decompressed data buffer
 				using (var uncompressedStream = new MemoryStream(dst, writable: false))
 				{
-					MetadataReaderOptions options = settings.ApplyWinRTProjections
+					MetadataReaderOptions options = context.ApplyWinRTProjections
 						? MetadataReaderOptions.ApplyWindowsRuntimeProjections
 						: MetadataReaderOptions.None;
 

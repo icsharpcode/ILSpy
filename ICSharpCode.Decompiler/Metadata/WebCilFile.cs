@@ -47,9 +47,14 @@ namespace ICSharpCode.Decompiler.Metadata
 			this.WasmSections = wasmSections;
 		}
 
-		public static WebCilFile? FromStream(string fileName, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
+		public static WebCilFile? FromFile(string fileName, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
 		{
-			using var memoryMappedFile = MemoryMappedFile.CreateFromFile(fileName, FileMode.Open, null, 0, MemoryMappedFileAccess.Read);
+			using var memoryMappedFile = TryCreateFromFile(fileName);
+			if (memoryMappedFile == null)
+			{
+				return null;
+			}
+
 			var view = memoryMappedFile.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read);
 			try
 			{
@@ -123,6 +128,18 @@ namespace ICSharpCode.Decompiler.Metadata
 			finally
 			{
 				view?.Dispose();
+			}
+
+			static MemoryMappedFile? TryCreateFromFile(string fileName)
+			{
+				try
+				{
+					return MemoryMappedFile.CreateFromFile(fileName, FileMode.Open, null, 0, MemoryMappedFileAccess.Read);
+				}
+				catch (IOException)
+				{
+					return null;
+				}
 			}
 		}
 

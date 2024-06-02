@@ -29,7 +29,7 @@ namespace ICSharpCode.ILSpyX.FileLoaders
 {
 	public sealed class MetadataFileLoader : IFileLoader
 	{
-		public Task<LoadResult?> Load(string fileName, Stream stream, FileLoadSettings settings)
+		public Task<LoadResult?> Load(string fileName, Stream stream, FileLoadContext settings)
 		{
 			try
 			{

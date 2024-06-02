@@ -23,8 +23,13 @@ namespace ICSharpCode.ILSpyX.FileLoaders
 {
 	public sealed class ArchiveFileLoader : IFileLoader
 	{
-		public Task<LoadResult?> Load(string fileName, Stream stream, FileLoadSettings settings)
+		public Task<LoadResult?> Load(string fileName, Stream stream, FileLoadContext settings)
 		{
+			if (settings.ParentBundle != null)
+			{
+				return Task.FromResult<LoadResult?>(null);
+			}
+
 			try
 			{
 				var zip = LoadedPackage.FromZipFile(fileName);

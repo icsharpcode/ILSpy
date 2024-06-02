@@ -23,8 +23,13 @@ namespace ICSharpCode.ILSpyX.FileLoaders
 {
 	public sealed class BundleFileLoader : IFileLoader
 	{
-		public Task<LoadResult?> Load(string fileName, Stream stream, FileLoadSettings settings)
+		public Task<LoadResult?> Load(string fileName, Stream stream, FileLoadContext settings)
 		{
+			if (settings.ParentBundle != null)
+			{
+				return Task.FromResult<LoadResult?>(null);
+			}
+
 			var bundle = LoadedPackage.FromBundle(fileName);
 			var result = bundle != null ? new LoadResult { Package = bundle } : null;
 			return Task.FromResult(result);
