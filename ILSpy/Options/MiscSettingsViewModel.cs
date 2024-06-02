@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.ComponentModel;
 using System.IO;
 using System.Reflection;
@@ -42,7 +41,10 @@ namespace ICSharpCode.ILSpy.Options
 			AllowMultipleInstances = s.AllowMultipleInstances;
 			LoadPreviousAssemblies = s.LoadPreviousAssemblies;
 
-			AddRemoveShellIntegrationCommand = new DelegateCommand<object>(AddRemoveShellIntegration);
+			if (EnableShellIntegrationCommand)
+			{
+				AddRemoveShellIntegrationCommand = new DelegateCommand<object>(AddRemoveShellIntegration);
+			}
 		}
 
 		/// <summary>
@@ -74,6 +76,7 @@ namespace ICSharpCode.ILSpy.Options
 		}
 
 		public ICommand AddRemoveShellIntegrationCommand { get; }
+		public bool EnableShellIntegrationCommand => AppEnvironment.IsWindows;
 
 		const string rootPath = @"Software\Classes\{0}\shell";
 		const string fullPath = @"Software\Classes\{0}\shell\Open with ILSpy\command";
