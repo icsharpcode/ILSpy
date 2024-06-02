@@ -16,12 +16,19 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Properties;
+
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.OpenFrom_GAC), MenuIcon = "Images/AssemblyListGAC", MenuCategory = nameof(Resources.Open), MenuOrder = 1)]
 	sealed class OpenFromGacCommand : SimpleCommand
 	{
+		public override bool CanExecute(object parameter)
+		{
+			return AppEnvironment.IsWindows;
+		}
+
 		public override void Execute(object parameter)
 		{
 			OpenFromGacDialog dlg = new OpenFromGacDialog();

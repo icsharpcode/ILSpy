@@ -11,7 +11,7 @@
 			<StackPanel Margin="10">
 				<CheckBox IsChecked="{Binding AllowMultipleInstances}" Content="{x:Static properties:Resources.AllowMultipleInstances}" />
 				<CheckBox IsChecked="{Binding LoadPreviousAssemblies}" Content="{x:Static properties:Resources.LoadAssembliesThatWereLoadedInTheLastInstance}"/>
-				<Button Command="{Binding AddRemoveShellIntegrationCommand}" Content="{Binding AddRemoveShellIntegrationText}" Margin="3" />
+				<Button Command="{Binding AddRemoveShellIntegrationCommand}" IsEnabled="{Binding EnableShellIntegrationCommand}" Content="{Binding AddRemoveShellIntegrationText}" Margin="3" />
 			</StackPanel>
 		</GroupBox>
 	</StackPanel>
