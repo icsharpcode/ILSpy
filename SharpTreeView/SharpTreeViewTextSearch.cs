@@ -28,10 +28,10 @@ namespace ICSharpCode.TreeView
 	/// Custom TextSearch-implementation.
 	/// Fixes #67 - Moving to class member in tree view by typing in first character of member name selects parent assembly
 	/// </summary>
-	public class SharpTreeViewTextSearch : DependencyObject
+	public partial class SharpTreeViewTextSearch : DependencyObject
 	{
-		[DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
-		static extern int GetDoubleClickTime();
+		[LibraryImport("user32.dll")]
+		internal static partial int GetDoubleClickTime();
 
 		static readonly DependencyPropertyKey TextSearchInstancePropertyKey = DependencyProperty.RegisterAttachedReadOnly("TextSearchInstance",
 			typeof(SharpTreeViewTextSearch), typeof(SharpTreeViewTextSearch), new FrameworkPropertyMetadata(null));

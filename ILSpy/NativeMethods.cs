@@ -26,7 +26,7 @@ namespace ICSharpCode.ILSpy
 	{
 		const int S_OK = 0;
 
-		[LibraryImport("dwmapi.dll", EntryPoint = "DwmSetWindowAttribute")]
+		[LibraryImport("dwmapi.dll")]
 		internal static partial int DwmSetWindowAttribute(IntPtr hwnd, DwmWindowAttribute attr, ref int attrValue, int attrSize);
 
 		public static bool UseImmersiveDarkMode(IntPtr hWnd, bool enable)
