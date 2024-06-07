@@ -6,7 +6,7 @@ To install:
 dotnet tool install ilspycmd -g
 ```
 
-Help output (`ilspycmd ---help`):
+Help output (`ilspycmd --help`):
 
 ```
 ilspycmd: 8.0.0.7007
