@@ -4515,6 +4515,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						expr.Elements.Add(ConstructTuple(subPattern));
 					}
 				}
+				expr.AddAnnotation(matchInstruction);
 				return expr;
 			}
 

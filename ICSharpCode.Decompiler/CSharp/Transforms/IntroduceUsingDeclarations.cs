@@ -24,6 +24,7 @@ using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -102,11 +103,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			public override void VisitSimpleType(SimpleType simpleType)
 			{
 				var trr = simpleType.Annotation<TypeResolveResult>();
-				if (trr != null && !IsParentOfCurrentNamespace(trr.Type.Namespace))
-				{
-					ImportedNamespaces.Add(trr.Type.Namespace);
-				}
+				AddImportedNamespace(trr?.Type);
 				base.VisitSimpleType(simpleType); // also visit type arguments
+			}
+
+			private void AddImportedNamespace(IType type)
+			{
+				if (type != null && !IsParentOfCurrentNamespace(type.Namespace))
+				{
+					ImportedNamespaces.Add(type.Namespace);
+				}
 			}
 
 			public override void VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration)
@@ -119,6 +125,49 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 				base.VisitNamespaceDeclaration(namespaceDeclaration);
 				currentNamespace = oldNamespace;
+			}
+
+			public override void VisitForeachStatement(ForeachStatement foreachStatement)
+			{
+				var annotation = foreachStatement.Annotation<ForeachAnnotation>();
+				if (annotation?.GetEnumeratorCall is CallInstruction { Method.DeclaringType: var type })
+				{
+					AddImportedNamespace(type);
+				}
+				base.VisitForeachStatement(foreachStatement);
+			}
+
+			public override void VisitParenthesizedVariableDesignation(ParenthesizedVariableDesignation parenthesizedVariableDesignation)
+			{
+				var annotation = parenthesizedVariableDesignation.Annotation<MatchInstruction>();
+				if (annotation?.Method is IMethod { DeclaringType: var type })
+				{
+					AddImportedNamespace(type);
+				}
+				base.VisitParenthesizedVariableDesignation(parenthesizedVariableDesignation);
+			}
+
+			public override void VisitTupleExpression(TupleExpression tupleExpression)
+			{
+				var annotation = tupleExpression.Annotation<MatchInstruction>();
+				if (annotation?.Method is IMethod { DeclaringType: var type })
+				{
+					AddImportedNamespace(type);
+				}
+				base.VisitTupleExpression(tupleExpression);
+			}
+
+			public override void VisitArrayInitializerExpression(ArrayInitializerExpression arrayInitializerExpression)
+			{
+				foreach (var item in arrayInitializerExpression.Elements)
+				{
+					var optionalCall = item.Annotation<CallInstruction>();
+					if (optionalCall?.Method is { IsExtensionMethod: true, Name: "Add" })
+					{
+						AddImportedNamespace(optionalCall.Method.DeclaringType);
+					}
+				}
+				base.VisitArrayInitializerExpression(arrayInitializerExpression);
 			}
 		}
 

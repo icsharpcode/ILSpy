@@ -863,6 +863,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						designations.VariableDesignations.Add(ConstructDesignation(subPattern));
 					}
 				}
+				designations.AddAnnotation(matchInstruction);
 				return designations;
 			}
 		}
