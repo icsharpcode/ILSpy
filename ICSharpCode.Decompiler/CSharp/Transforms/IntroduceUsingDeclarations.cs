@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			public override void VisitForeachStatement(ForeachStatement foreachStatement)
 			{
 				var annotation = foreachStatement.Annotation<ForeachAnnotation>();
-				if (annotation?.GetEnumeratorCall is CallInstruction { Method.DeclaringType: var type })
+				if (annotation?.GetEnumeratorCall is CallInstruction { Method: { IsExtensionMethod: true, DeclaringType: var type } })
 				{
 					AddImportedNamespace(type);
 				}
