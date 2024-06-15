@@ -1780,7 +1780,15 @@ namespace ICSharpCode.Decompiler.IL
 
 		DecodedInstruction DecodeCallIndirect()
 		{
-			var signatureHandle = (StandaloneSignatureHandle)ReadAndDecodeMetadataToken();
+			StandaloneSignatureHandle signatureHandle;
+			try
+			{
+				signatureHandle = (StandaloneSignatureHandle)ReadAndDecodeMetadataToken();
+			}
+			catch (InvalidCastException ex)
+			{
+				throw new BadImageFormatException("Invalid calli metadata token", ex);
+			}
 			var (header, fpt) = module.DecodeMethodSignature(signatureHandle, genericContext);
 			var functionPointer = Pop(StackType.I);
 			int firstArgument = header.IsInstance ? 1 : 0;

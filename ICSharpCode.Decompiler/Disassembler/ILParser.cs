@@ -30,18 +30,24 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public static ILOpCode DecodeOpCode(this ref BlobReader blob)
 		{
 			byte opCodeByte = blob.ReadByte();
-			return (ILOpCode)(opCodeByte == 0xFE ? 0xFE00 + blob.ReadByte() : opCodeByte);
+			if (opCodeByte == 0xFE && blob.RemainingBytes >= 1)
+			{
+				return (ILOpCode)(0xFE00 + blob.ReadByte());
+			}
+			else
+			{
+				return (ILOpCode)opCodeByte;
+			}
 		}
 
-		public static void SkipOperand(this ref BlobReader blob, ILOpCode opCode)
+		internal static int OperandSize(this OperandType opType)
 		{
-			switch (opCode.GetOperandType())
+			switch (opType)
 			{
 				// 64-bit
 				case OperandType.I8:
 				case OperandType.R:
-					blob.Offset += 8;
-					break;
+					return 8;
 				// 32-bit
 				case OperandType.BrTarget:
 				case OperandType.Field:
@@ -52,37 +58,91 @@ namespace ICSharpCode.Decompiler.Disassembler
 				case OperandType.Tok:
 				case OperandType.Type:
 				case OperandType.ShortR:
-					blob.Offset += 4;
-					break;
+					return 4;
 				// (n + 1) * 32-bit
 				case OperandType.Switch:
-					uint n = blob.ReadUInt32();
-					blob.Offset += (int)(n * 4);
-					break;
-				// 16-bit
-				case OperandType.Variable:
-					blob.Offset += 2;
-					break;
+					return 4; // minimum 4, usually more
+				case OperandType.Variable: // 16-bit
+					return 2;
 				// 8-bit
 				case OperandType.ShortVariable:
 				case OperandType.ShortBrTarget:
 				case OperandType.ShortI:
-					blob.Offset++;
-					break;
+					return 1;
+				default:
+					return 0;
+			}
+		}
+
+		public static void SkipOperand(this ref BlobReader blob, ILOpCode opCode)
+		{
+			var opType = opCode.GetOperandType();
+			int operandSize;
+			if (opType == OperandType.Switch)
+			{
+				uint n = blob.RemainingBytes >= 4 ? blob.ReadUInt32() : uint.MaxValue;
+				if (n < int.MaxValue / 4)
+				{
+					operandSize = (int)(n * 4);
+				}
+				else
+				{
+					operandSize = int.MaxValue;
+				}
+			}
+			else
+			{
+				operandSize = opType.OperandSize();
+			}
+			if (operandSize <= blob.RemainingBytes)
+			{
+				blob.Offset += operandSize;
+			}
+			else
+			{
+				// ignore missing/partial operand at end of body
+				blob.Offset = blob.Length;
 			}
 		}
 
 		public static int DecodeBranchTarget(this ref BlobReader blob, ILOpCode opCode)
 		{
-			return (opCode.GetBranchOperandSize() == 4 ? blob.ReadInt32() : blob.ReadSByte()) + blob.Offset;
+			int opSize = opCode.GetBranchOperandSize();
+			if (opSize <= blob.RemainingBytes)
+			{
+				int relOffset = opSize == 4 ? blob.ReadInt32() : blob.ReadSByte();
+				return unchecked(relOffset + blob.Offset);
+			}
+			else
+			{
+				return int.MinValue;
+			}
 		}
 
 		public static int[] DecodeSwitchTargets(this ref BlobReader blob)
 		{
-			int[] targets = new int[blob.ReadUInt32()];
+			if (blob.RemainingBytes < 4)
+			{
+				blob.Offset += blob.RemainingBytes;
+				return new int[0];
+			}
+			uint numTargets = blob.ReadUInt32();
+			bool numTargetOverflow = false;
+			if (numTargets > blob.RemainingBytes / 4)
+			{
+				numTargets = (uint)(blob.RemainingBytes / 4);
+				numTargetOverflow = true;
+			}
+			int[] targets = new int[numTargets];
 			int offset = blob.Offset + 4 * targets.Length;
 			for (int i = 0; i < targets.Length; i++)
-				targets[i] = blob.ReadInt32() + offset;
+			{
+				targets[i] = unchecked(blob.ReadInt32() + offset);
+			}
+			if (numTargetOverflow)
+			{
+				blob.Offset += blob.RemainingBytes;
+			}
 			return targets;
 		}
 

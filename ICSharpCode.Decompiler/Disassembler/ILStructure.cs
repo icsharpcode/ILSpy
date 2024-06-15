@@ -171,6 +171,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			// special case: don't consider the loop-like structure of "continue;" statements to be nested loops
 			if (this.Type == ILStructureType.Loop && newStructure.Type == ILStructureType.Loop && newStructure.StartOffset == this.StartOffset)
 				return false;
+			if (newStructure.StartOffset < 0)
+				return false;
 
 			// use <= for end-offset comparisons because both end and EndOffset are exclusive
 			Debug.Assert(StartOffset <= newStructure.StartOffset && newStructure.EndOffset <= EndOffset);
