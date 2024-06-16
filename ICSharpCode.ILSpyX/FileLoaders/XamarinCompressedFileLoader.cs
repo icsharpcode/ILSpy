@@ -59,7 +59,7 @@ namespace ICSharpCode.ILSpyX.FileLoaders
 						: MetadataReaderOptions.None;
 
 					return new LoadResult {
-						MetadataFile = new PEFile(fileName, stream, PEStreamOptions.PrefetchEntireImage, metadataOptions: options)
+						MetadataFile = new PEFile(fileName, uncompressedStream, PEStreamOptions.PrefetchEntireImage, metadataOptions: options)
 					};
 				}
 			}
