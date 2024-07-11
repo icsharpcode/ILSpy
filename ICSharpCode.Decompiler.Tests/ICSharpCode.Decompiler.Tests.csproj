@@ -50,6 +50,8 @@
   <ItemGroup>
     <PackageReference Include="DiffLib" />
     <PackageReference Include="CliWrap" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
     <PackageReference Include="NuGet.Protocol" />
     <PackageReference Include="System.Collections.Immutable" />
     <PackageReference Include="System.Reflection.Metadata" />

@@ -17,24 +17,56 @@
 // DEALINGS IN THE SOFTWARE.
 
 
+using System;
 using System.IO;
+
+using Microsoft.Extensions.Configuration;
 
 namespace ICSharpCode.Decompiler.Tests.Helpers
 {
 	/// <summary>
 	/// Centralizes all file-path generation for compilation output (assemblies)
-	/// Here a redirect can be added to a different location for the output (ie a directory that is excluded from virus scanning)
+	/// 
+	/// DecompilerTests.config.json file format:
+	/// {
+	/// 	"TestsAssemblyTempPath": "d:\\test\\"
+	/// }
 	/// </summary>
 	internal static class TestsAssemblyOutput
 	{
+		static string? TestsAssemblyTempPath = null;
+
+		private static bool UseCustomPath => !string.IsNullOrWhiteSpace(TestsAssemblyTempPath);
+
+		static TestsAssemblyOutput()
+		{
+			var builder = new ConfigurationBuilder()
+				.AddJsonFile("DecompilerTests.config.json", optional: true, reloadOnChange: false);
+
+			IConfigurationRoot configuration = builder.Build();
+			var pathRedirectIfAny = configuration["TestsAssemblyTempPath"];
+
+			if (!string.IsNullOrWhiteSpace(pathRedirectIfAny))
+			{
+				TestsAssemblyTempPath = pathRedirectIfAny;
+			}
+		}
+
 		public static string GetFilePath(string testCasePath, string testName, string computedExtension)
 		{
-			return Path.Combine(testCasePath, testName) + computedExtension;
+			if (!UseCustomPath)
+				return Path.Combine(testCasePath, testName) + computedExtension;
+
+			// As we are using the TestsAssemblyTempPath flat, we need to make sure that duplicated test names don't create file name clashes
+			return Path.Combine(TestsAssemblyTempPath, testName) + Guid.NewGuid().ToString() + computedExtension;
 		}
 
 		public static string GetTempFileName()
 		{
-			return Path.GetTempFileName();
+			if (!UseCustomPath)
+				return Path.GetTempFileName();
+
+			return Path.Combine(TestsAssemblyTempPath, Path.GetRandomFileName());
 		}
 	}
 }
