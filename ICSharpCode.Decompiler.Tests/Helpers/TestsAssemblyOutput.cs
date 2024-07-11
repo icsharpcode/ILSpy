@@ -40,6 +40,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		static TestsAssemblyOutput()
 		{
+			if (!File.Exists("DecompilerTests.config.json"))
+				return;
+
 			var builder = new ConfigurationBuilder()
 				.AddJsonFile("DecompilerTests.config.json", optional: true, reloadOnChange: false);
 
