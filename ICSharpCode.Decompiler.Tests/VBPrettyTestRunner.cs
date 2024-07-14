@@ -147,7 +147,7 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			var vbFile = Path.Combine(TestCasePath, testName + ".vb");
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
-			var exeFile = Path.Combine(TestCasePath, testName) + Tester.GetSuffix(options) + ".exe";
+			var exeFile = TestsAssemblyOutput.GetFilePath(TestCasePath, testName, Tester.GetSuffix(options) + ".exe");
 			if (options.HasFlag(CompilerOptions.Library))
 			{
 				exeFile = Path.ChangeExtension(exeFile, ".dll");

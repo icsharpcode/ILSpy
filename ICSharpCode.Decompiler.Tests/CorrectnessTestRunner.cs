@@ -408,13 +408,13 @@ namespace ICSharpCode.Decompiler.Tests
 			if ((options & CompilerOptions.UseRoslynMask) != 0 && (options & CompilerOptions.TargetNet40) == 0)
 				options |= CompilerOptions.UseTestRunner;
 			string testFileName = testName + ".cs";
-			string testOutputFileName = testName + Tester.GetSuffix(options) + ".exe";
+			string testOutputFileName = TestsAssemblyOutput.GetFilePath(TestCasePath, testName, Tester.GetSuffix(options) + ".exe");
 			CompilerResults outputFile = null, decompiledOutputFile = null;
 
 			try
 			{
 				outputFile = await Tester.CompileCSharp(Path.Combine(TestCasePath, testFileName), options,
-					outputFileName: Path.Combine(TestCasePath, testOutputFileName)).ConfigureAwait(false);
+					outputFileName: testOutputFileName).ConfigureAwait(false);
 				string decompiledCodeFile = await Tester.DecompileCSharp(outputFile.PathToAssembly, Tester.GetSettings(options)).ConfigureAwait(false);
 				if ((options & CompilerOptions.UseMcsMask) != 0)
 				{
@@ -452,13 +452,13 @@ namespace ICSharpCode.Decompiler.Tests
 			if ((options & CompilerOptions.UseRoslynMask) != 0)
 				options |= CompilerOptions.UseTestRunner;
 			string testFileName = testName + ".vb";
-			string testOutputFileName = testName + Tester.GetSuffix(options) + ".exe";
+			string testOutputFileName = TestsAssemblyOutput.GetFilePath(TestCasePath, testName, Tester.GetSuffix(options) + ".exe");
 			CompilerResults outputFile = null, decompiledOutputFile = null;
 
 			try
 			{
 				outputFile = await Tester.CompileVB(Path.Combine(TestCasePath, testFileName), options,
-					outputFileName: Path.Combine(TestCasePath, testOutputFileName)).ConfigureAwait(false);
+					outputFileName: testOutputFileName).ConfigureAwait(false);
 				string decompiledCodeFile = await Tester.DecompileCSharp(outputFile.PathToAssembly, Tester.GetSettings(options)).ConfigureAwait(false);
 				decompiledOutputFile = await Tester.CompileCSharp(decompiledCodeFile, options).ConfigureAwait(false);
 

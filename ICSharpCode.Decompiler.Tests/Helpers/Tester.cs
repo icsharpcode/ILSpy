@@ -886,7 +886,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			get {
 				if (pathToAssembly == null)
 				{
-					pathToAssembly = Path.GetTempFileName();
+					pathToAssembly = TestsAssemblyOutput.GetTempFileName();
 					tempFiles.Add(pathToAssembly);
 				}
 				return pathToAssembly;
