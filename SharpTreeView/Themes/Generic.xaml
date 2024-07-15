@@ -1,7 +1,8 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:Default="clr-namespace:ICSharpCode.TreeView"
-                    xmlns:styles="urn:TomsToolbox.Wpf.Styles">
+                    xmlns:styles="urn:TomsToolbox.Wpf.Styles"
+					xmlns:ws="https://schemas.elecho.dev/wpfsuite">
 
     <Style x:Key="ExpandCollapseToggleStyle"
            TargetType="{x:Type ToggleButton}" BasedOn="{StaticResource {x:Type ToggleButton}}">
@@ -85,7 +86,7 @@
                             BorderThickness="1"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
                             Padding="0 1 2 0">
-                        <ScrollViewer Name="PART_ContentHost" />
+                        <ws:ScrollViewer Name="PART_ContentHost" />
                     </Border>
                 </ControlTemplate>
             </Setter.Value>
@@ -93,8 +94,9 @@
     </Style>
     
     <Style TargetType="{x:Type Default:SharpTreeView}"
-           BasedOn="{StaticResource {x:Static styles:ResourceKeys.ListBoxStyle}}">
-        <Style.Triggers>
+           BasedOn="{StaticResource {x:Type ws:ListView}}">
+		<Setter Property="Background" Value="Transparent"/>
+		<Style.Triggers>
             <Trigger Property="ShowRoot"
                      Value="False">
                 <Setter Property="Padding"

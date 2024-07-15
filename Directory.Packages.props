@@ -9,6 +9,7 @@
     <PackageVersion Include="DataGridExtensions" Version="2.6.0" />
     <PackageVersion Include="DiffLib" Version="2017.7.26.1241" />
     <PackageVersion Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.1" />
+    <PackageVersion Include="EleCho.WpfSuite" Version="0.6.0" />
     <PackageVersion Include="FluentAssertions" Version="6.12.0" />
     <PackageVersion Include="ILCompiler.Reflection.ReadyToRun.Experimental" Version="8.0.0-rc.2.23471.30" />
     <PackageVersion Include="Iced" Version="1.21.0" />

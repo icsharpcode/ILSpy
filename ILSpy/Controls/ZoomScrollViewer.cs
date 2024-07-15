@@ -30,7 +30,7 @@ using System.Windows.Media;
 
 namespace ICSharpCode.ILSpy.Controls
 {
-	public class ZoomScrollViewer : ScrollViewer
+	public class ZoomScrollViewer : EleCho.WpfSuite.ScrollViewer
 	{
 		static ZoomScrollViewer()
 		{
