@@ -5,7 +5,6 @@
              xmlns:toms="urn:TomsToolbox"
              xmlns:ilSpy="clr-namespace:ICSharpCode.ILSpy"
              xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
-             xmlns:ws="https://schemas.elecho.dev/wpfsuite"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <Style x:Key="DialogWindow" TargetType="{x:Type Window}">
@@ -21,27 +20,10 @@
             </Setter>
         </Style>
 
-        <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Static styles:ResourceKeys.ButtonStyle}}">
-            <Setter Property="MinWidth" Value="73" />
-            <Setter Property="Padding" Value="9,1,9,1" />
-        </Style>
-
-        <Style TargetType="{x:Type ws:ScrollBar}"
-               BasedOn="{StaticResource {x:Type ws:ScrollBar}}">
-			<Setter Property="BorderThickness" Value="0"/>
-			<Setter Property="Margin" Value="-1"/>
-
-			<Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
-			<Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
-			<Setter Property="GlyphBrush" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
-			<Setter Property="HoverBackground" Value="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"/>
-			<Setter Property="HoverBorderBrush" Value="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"/>
-			<Setter Property="HoverGlyphBrush" Value="{x:Null}"/>
-			<Setter Property="DisabledBackground" Value="{x:Null}"/>
-			<Setter Property="DisabledBorderBrush" Value="{x:Null}"/>
-			<Setter Property="DisabledGlyphBrush" Value="{x:Null}"/>
-			<Setter Property="ThumbBrush" Value="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"/>
+		<Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Static styles:ResourceKeys.ButtonStyle}}">
+			<Setter Property="MinWidth" Value="73" />
+			<Setter Property="Padding" Value="9,1,9,1" />
 		</Style>
 
-    </Application.Resources>
+	</Application.Resources>
 </Application>

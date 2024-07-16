@@ -33,43 +33,27 @@
     <Page Remove="Controls\FrameResources.xaml" />
     <Page Remove="Controls\GroupBoxResources.xaml" />
     <Page Remove="Controls\ImageResources.xaml" />
-    <Page Remove="Controls\ListBoxItemResources.xaml" />
     <Page Remove="Controls\ListBoxResources.xaml" />
-    <Page Remove="Controls\ListViewItemResources.xaml" />
     <Page Remove="Controls\ListViewResources.xaml" />
     <Page Remove="Controls\MenuItemResources.xaml" />
     <Page Remove="Controls\MenuResources.xaml" />
     <Page Remove="Controls\PasswordBoxResources.xaml" />
     <Page Remove="Controls\PopupResources.xaml" />
     <Page Remove="Controls\ProgressBarResources.xaml" />
-    <Page Remove="Controls\RepeatButtonResources.xaml" />
-    <Page Remove="Controls\ScrollBarResources.xaml" />
-    <Page Remove="Controls\ScrollViewerResources.xaml" />
     <Page Remove="Controls\SlicedImageResources.xaml" />
     <Page Remove="Controls\TabControlResources.xaml" />
     <Page Remove="Controls\TabItemResources.xaml" />
     <Page Remove="Controls\TextBoxResources.xaml" />
-    <Page Remove="Controls\ThumbResources.xaml" />
     <Page Remove="Controls\ToggleButtonResources.xaml" />
     <Page Remove="Controls\TooltipResources.xaml" />
     <Page Remove="Controls\TransitioningContentControlResources.xaml" />
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Controls\ListBoxItemResources.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Resource>
     <Resource Include="Controls\ListBoxResources.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Resource>
-    <Resource Include="Controls\ListViewItemResources.xaml" />
     <Resource Include="Controls\ListViewResources.xaml" />
-    <Resource Include="Controls\RepeatButtonResources.xaml" />
-    <Resource Include="Controls\ScrollBarResources.xaml" />
-    <Resource Include="Controls\ScrollViewerResources.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Resource>
-    <Resource Include="Controls\ThumbResources.xaml" />
   </ItemGroup>
 
   <ItemGroup>

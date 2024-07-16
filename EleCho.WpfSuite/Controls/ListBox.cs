@@ -51,23 +51,11 @@ namespace EleCho.WpfSuite
             set { SetValue(DisabledBorderBrushProperty, value); }
         }
 
-        /// <inheritdoc/>
-        protected override DependencyObject GetContainerForItemOverride()
-        {
-            return new ListBoxItem();
-        }
-
-        /// <inheritdoc/>
-        protected override bool IsItemItsOwnContainerOverride(object item)
-        {
-            return item is ListBoxItem;
-        }
-
         /// <summary>
         /// DependencyProperty of <see cref="CornerRadius"/> property
         /// </summary>
         public static readonly DependencyProperty CornerRadiusProperty =
-            Border.CornerRadiusProperty.AddOwner(typeof(ListBox));
+            System.Windows.Controls.Border.CornerRadiusProperty.AddOwner(typeof(ListBox));
 
         /// <summary>
         /// The DependencyProperty of <see cref="DisabledBackground"/> property

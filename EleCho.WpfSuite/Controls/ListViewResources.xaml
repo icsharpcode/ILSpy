@@ -22,7 +22,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ws:ListView}">
-                    <ws:Border x:Name="Part_BD"
+                    <Border x:Name="Part_BD"
                                Background="{TemplateBinding Background}"
                                BorderBrush="{TemplateBinding BorderBrush}"
                                BorderThickness="{TemplateBinding BorderThickness}"
@@ -33,14 +33,9 @@
                                          Focusable="false" Padding="{TemplateBinding Padding}">
                             <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
                         </ws:ScrollViewer>
-                    </ws:Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="ClipToBounds" Value="True">
-                            <Setter TargetName="PART_Content"
-                                    Property="Clip"
-                                    Value="{Binding ElementName=Part_BD,Path=ContentClip}"/>
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
+                    </Border>
+					<ControlTemplate.Triggers>
+						<Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Part_BD" Property="Background">
                                 <Setter.Value>
                                     <MultiBinding Converter="{x:Static ws:FallbackConverter.Instance}">
