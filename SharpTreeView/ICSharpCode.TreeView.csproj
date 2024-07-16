@@ -22,8 +22,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EleCho.WpfSuite" />
     <PackageReference Include="TomsToolbox.Wpf.Styles" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EleCho.WpfSuite\EleCho.WpfSuite.csproj" />
   </ItemGroup>
 
 </Project>

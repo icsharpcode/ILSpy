@@ -36,7 +36,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.Decompiler.Test
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.ILSpyX", "ICSharpCode.ILSpyX\ICSharpCode.ILSpyX.csproj", "{F8EFCF9D-B9A3-4BA0-A1B2-B026A71DAC22}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ICSharpCode.BamlDecompiler", "ICSharpCode.BamlDecompiler\ICSharpCode.BamlDecompiler.csproj", "{81A30182-3378-4952-8880-F44822390040}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.BamlDecompiler", "ICSharpCode.BamlDecompiler\ICSharpCode.BamlDecompiler.csproj", "{81A30182-3378-4952-8880-F44822390040}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EleCho.WpfSuite", "EleCho.WpfSuite\EleCho.WpfSuite.csproj", "{486469B9-51AF-43D0-ABCE-F5FA7E5FBE4C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -100,6 +102,10 @@ Global
 		{81A30182-3378-4952-8880-F44822390040}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{81A30182-3378-4952-8880-F44822390040}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{81A30182-3378-4952-8880-F44822390040}.Release|Any CPU.Build.0 = Release|Any CPU
+		{486469B9-51AF-43D0-ABCE-F5FA7E5FBE4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{486469B9-51AF-43D0-ABCE-F5FA7E5FBE4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{486469B9-51AF-43D0-ABCE-F5FA7E5FBE4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{486469B9-51AF-43D0-ABCE-F5FA7E5FBE4C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

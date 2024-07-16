@@ -45,7 +45,6 @@
   <ItemGroup>
     <PackageReference Include="AvalonEdit" />
     <PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" />
-    <PackageReference Include="EleCho.WpfSuite" />
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" />
     <PackageReference Include="Microsoft.VisualStudio.Composition" />
     <PackageReference Include="DataGridExtensions" />
@@ -85,6 +84,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\EleCho.WpfSuite\EleCho.WpfSuite.csproj" />
     <ProjectReference Include="..\ICSharpCode.ILSpyX\ICSharpCode.ILSpyX.csproj" />
     <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
     <ProjectReference Include="..\SharpTreeView\ICSharpCode.TreeView.csproj" />

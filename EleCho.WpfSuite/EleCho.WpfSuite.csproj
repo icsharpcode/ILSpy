@@ -1,0 +1,87 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0-windows;net6.0-windows;net48;net47;net46;net45</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RootNamespace>EleCho.WpfSuite</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <Version>0.6.0</Version>
+
+    <Authors>EleCho</Authors>
+    <Copyright>Copyright © 2024 EleCho</Copyright>
+    <PackageProjectUrl>https://wpfsuite.elecho.dev</PackageProjectUrl>
+    <PackageIcon>logo.png</PackageIcon>
+    <PackageTags>WPF;MVVM;XAML;Toolkit;Control;Layout;Transition;Converter;Animation;MarkupExtension;BindingProxy</PackageTags>
+    <Description>WPF layout panels, controls, value converters, markup extensions, transitions and utilities</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/OrgEleCho/EleCho.WpfSuite</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Page Remove="Controls\ButtonResources.xaml" />
+    <Page Remove="Controls\CheckBoxResources.xaml" />
+    <Page Remove="Controls\ComboBoxItemResources.xaml" />
+    <Page Remove="Controls\ComboBoxResources.xaml" />
+    <Page Remove="Controls\ConditionalControlResources.xaml" />
+    <Page Remove="Controls\ContextMenuResources.xaml" />
+    <Page Remove="Controls\FrameResources.xaml" />
+    <Page Remove="Controls\GroupBoxResources.xaml" />
+    <Page Remove="Controls\ImageResources.xaml" />
+    <Page Remove="Controls\ListBoxItemResources.xaml" />
+    <Page Remove="Controls\ListBoxResources.xaml" />
+    <Page Remove="Controls\ListViewItemResources.xaml" />
+    <Page Remove="Controls\ListViewResources.xaml" />
+    <Page Remove="Controls\MenuItemResources.xaml" />
+    <Page Remove="Controls\MenuResources.xaml" />
+    <Page Remove="Controls\PasswordBoxResources.xaml" />
+    <Page Remove="Controls\PopupResources.xaml" />
+    <Page Remove="Controls\ProgressBarResources.xaml" />
+    <Page Remove="Controls\RepeatButtonResources.xaml" />
+    <Page Remove="Controls\ScrollBarResources.xaml" />
+    <Page Remove="Controls\ScrollViewerResources.xaml" />
+    <Page Remove="Controls\SlicedImageResources.xaml" />
+    <Page Remove="Controls\TabControlResources.xaml" />
+    <Page Remove="Controls\TabItemResources.xaml" />
+    <Page Remove="Controls\TextBoxResources.xaml" />
+    <Page Remove="Controls\ThumbResources.xaml" />
+    <Page Remove="Controls\ToggleButtonResources.xaml" />
+    <Page Remove="Controls\TooltipResources.xaml" />
+    <Page Remove="Controls\TransitioningContentControlResources.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Controls\ListBoxItemResources.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Resource>
+    <Resource Include="Controls\ListBoxResources.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Resource>
+    <Resource Include="Controls\ListViewItemResources.xaml" />
+    <Resource Include="Controls\ListViewResources.xaml" />
+    <Resource Include="Controls\RepeatButtonResources.xaml" />
+    <Resource Include="Controls\ScrollBarResources.xaml" />
+    <Resource Include="Controls\ScrollViewerResources.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Resource>
+    <Resource Include="Controls\ThumbResources.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Controls\ListBoxItemResources.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+    <None Update="Controls\ListBoxResources.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+    <None Update="Controls\ScrollViewerResources.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+  </ItemGroup>
+
+</Project>
