@@ -714,7 +714,7 @@ namespace ICSharpCode.Decompiler.Tests
 		async Task Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
-			var exeFile = Path.Combine(TestCasePath, testName) + Tester.GetSuffix(cscOptions) + ".exe";
+			var exeFile = TestsAssemblyOutput.GetFilePath(TestCasePath, testName, Tester.GetSuffix(cscOptions) + ".exe");
 			if (cscOptions.HasFlag(CompilerOptions.Library))
 			{
 				exeFile = Path.ChangeExtension(exeFile, ".dll");
