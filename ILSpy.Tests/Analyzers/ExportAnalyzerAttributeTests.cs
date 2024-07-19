@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2018 Siegfried Pammer
+// Copyright (c) 2024 Andreas Weizel
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,35 +16,26 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Linq;
-using System.Reflection;
 
-namespace ICSharpCode.ILSpyX.Analyzers
+using ICSharpCode.ILSpyX.Analyzers;
+
+using NUnit.Framework;
+
+namespace ICSharpCode.ILSpy.Tests.Analyzers
 {
-	[MetadataAttribute]
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-	public class ExportAnalyzerAttribute : ExportAttribute, IAnalyzerMetadata
+	[TestFixture]
+	public class ExportAnalyzerAttributeTests
 	{
-		public ExportAnalyzerAttribute() : base("Analyzer", typeof(IAnalyzer))
-		{ }
-
-		public required string Header { get; init; }
-
-		public int Order { get; set; }
-
-		public static IEnumerable<(ExportAnalyzerAttribute AttributeData, Type AnalyzerType)> GetAnnotatedAnalyzers()
+		[Test]
+		public void CollectAnalyzers()
 		{
-			foreach (var type in typeof(ExportAnalyzerAttribute).Assembly.GetTypes())
-			{
-				var exportAnalyzerAttribute = type.GetCustomAttribute(typeof(ExportAnalyzerAttribute), false) as ExportAnalyzerAttribute;
-				if (exportAnalyzerAttribute is not null)
-				{
-					yield return (exportAnalyzerAttribute, type);
-				}
-			}
+			var analyzerNames = ExportAnalyzerAttribute.GetAnnotatedAnalyzers().Select(analyzer => analyzer.AnalyzerType.Name);
+			Assert.That(analyzerNames.Contains("AttributeAppliedToAnalyzer"));
+			Assert.That(analyzerNames.Contains("EventImplementedByAnalyzer"));
+			Assert.That(analyzerNames.Contains("MethodUsedByAnalyzer"));
+			Assert.That(analyzerNames.Contains("PropertyOverriddenByAnalyzer"));
+			Assert.That(analyzerNames.Contains("TypeInstantiatedByAnalyzer"));
 		}
 	}
 }
