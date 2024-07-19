@@ -183,6 +183,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				typeSystemOptions |= TypeSystemOptions.ScopedRef;
 			if (settings.NumericIntPtr)
 				typeSystemOptions |= TypeSystemOptions.NativeIntegersWithoutAttribute;
+			if (settings.RefReadOnlyParameters)
+				typeSystemOptions |= TypeSystemOptions.RefReadOnlyParameters;
 			return typeSystemOptions;
 		}
 

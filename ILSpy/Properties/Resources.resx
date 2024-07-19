@@ -432,6 +432,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.RecursivePatternMatching" xml:space="preserve">
     <value>Recursive pattern matching</value>
   </data>
+  <data name="DecompilerSettings.RefReadOnlyParameters" xml:space="preserve">
+    <value>'ref readonly' parameters</value>
+  </data>
   <data name="DecompilerSettings.RelationalPatterns" xml:space="preserve">
     <value>Relational patterns</value>
   </data>

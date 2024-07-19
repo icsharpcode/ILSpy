@@ -95,6 +95,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		CallerFilePath,
 		CallerLineNumber,
 		ScopedRef,
+		RequiresLocation,
 
 		// Type parameter attributes:
 		IsUnmanaged,
@@ -173,6 +174,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CallerFilePathAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CallerLineNumberAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", "ScopedRefAttribute"),
+			new TopLevelTypeName("System.Runtime.CompilerServices", "RequiresLocationAttribute"),
 			// Type parameter attributes:
 			new TopLevelTypeName("System.Runtime.CompilerServices", "IsUnmanagedAttribute"),
 			// Marshalling attributes:

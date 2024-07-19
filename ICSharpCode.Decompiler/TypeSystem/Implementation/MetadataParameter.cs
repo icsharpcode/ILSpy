@@ -105,6 +105,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly))
 					return ReferenceKind.In;
 			}
+			if ((module.TypeSystemOptions & TypeSystemOptions.RefReadOnlyParameters) != 0
+				&& (attributes & inOut) == ParameterAttributes.In)
+			{
+				var metadata = module.metadata;
+				var parameterDef = metadata.GetParameter(handle);
+				if (parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.RequiresLocation))
+					return ReferenceKind.RefReadOnly;
+			}
 			return ReferenceKind.Ref;
 		}
 

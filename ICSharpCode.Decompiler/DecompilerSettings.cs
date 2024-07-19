@@ -159,10 +159,16 @@ namespace ICSharpCode.Decompiler
 				unsignedRightShift = false;
 				checkedOperators = false;
 			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp12_0)
+			{
+				refReadOnlyParameters = false;
+			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
+			if (refReadOnlyParameters)
+				return CSharp.LanguageVersion.CSharp12_0;
 			if (scopedRef || requiredMembers || numericIntPtr || utf8StringLiterals || unsignedRightShift || checkedOperators)
 				return CSharp.LanguageVersion.CSharp11_0;
 			if (fileScopedNamespaces || recordStructs)
@@ -1986,6 +1992,24 @@ namespace ICSharpCode.Decompiler
 				if (doWhileStatement != value)
 				{
 					doWhileStatement = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool refReadOnlyParameters = true;
+
+		/// <summary>
+		/// Gets/sets whether RequiresLocationAttribute on parameters should be replaced with 'ref readonly' modifiers.
+		/// </summary>
+		[Category("C# 12.0 / VS 2022.8")]
+		[Description("DecompilerSettings.RefReadOnlyParameters")]
+		public bool RefReadOnlyParameters {
+			get { return refReadOnlyParameters; }
+			set {
+				if (refReadOnlyParameters != value)
+				{
+					refReadOnlyParameters = value;
 					OnPropertyChanged();
 				}
 			}

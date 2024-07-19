@@ -4188,7 +4188,13 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (!(input.Expression is DirectionExpression dirExpr && input.ResolveResult is ByReferenceResolveResult brrr))
 				return input;
-			dirExpr.FieldDirection = (FieldDirection)kind;
+			dirExpr.FieldDirection = kind switch {
+				ReferenceKind.Ref => FieldDirection.Ref,
+				ReferenceKind.Out => FieldDirection.Out,
+				ReferenceKind.In => FieldDirection.In,
+				ReferenceKind.RefReadOnly => FieldDirection.In,
+				_ => throw new NotSupportedException("Unsupported reference kind: " + kind)
+			};
 			dirExpr.RemoveAnnotations<ByReferenceResolveResult>();
 			if (brrr.ElementResult == null)
 				brrr = new ByReferenceResolveResult(brrr.ElementType, kind);
