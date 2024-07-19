@@ -152,7 +152,6 @@ namespace ICSharpCode.Decompiler
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp11_0)
 			{
-				parameterNullCheck = false;
 				scopedRef = false;
 				requiredMembers = false;
 				numericIntPtr = false;
@@ -164,7 +163,7 @@ namespace ICSharpCode.Decompiler
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (parameterNullCheck || scopedRef || requiredMembers || numericIntPtr || utf8StringLiterals || unsignedRightShift || checkedOperators)
+			if (scopedRef || requiredMembers || numericIntPtr || utf8StringLiterals || unsignedRightShift || checkedOperators)
 				return CSharp.LanguageVersion.CSharp11_0;
 			if (fileScopedNamespaces || recordStructs)
 				return CSharp.LanguageVersion.CSharp10_0;
@@ -438,26 +437,6 @@ namespace ICSharpCode.Decompiler
 				if (fileScopedNamespaces != value)
 				{
 					fileScopedNamespaces = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		bool parameterNullCheck = false;
-
-		/// <summary>
-		/// Use C# 11 preview parameter null-checking (<code>string param!!</code>).
-		/// </summary>
-		[Category("C# 11.0 / VS 2022.4")]
-		[Description("DecompilerSettings.ParameterNullCheck")]
-		[Browsable(false)]
-		[Obsolete("This feature did not make it into C# 11, and may be removed in a future version of the decompiler.")]
-		public bool ParameterNullCheck {
-			get { return parameterNullCheck; }
-			set {
-				if (parameterNullCheck != value)
-				{
-					parameterNullCheck = value;
 					OnPropertyChanged();
 				}
 			}

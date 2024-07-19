@@ -91,7 +91,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				new InlineReturnTransform(), // must run before DetectPinnedRegions
 				new RemoveInfeasiblePathTransform(),
 				new DetectPinnedRegions(), // must run after inlining but before non-critical control flow transforms
-				new ParameterNullCheckTransform(), // must run after inlining but before yield/async
 				new YieldReturnDecompiler(), // must run after inlining but before loop detection
 				new AsyncAwaitDecompiler(),  // must run after inlining but before loop detection
 				new DetectCatchWhenConditionBlocks(), // must run after inlining but before loop detection
@@ -185,7 +184,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				new AddCheckedBlocks(),
 				new DeclareVariables(), // should run after most transforms that modify statements
 				new TransformFieldAndConstructorInitializers(), // must run after DeclareVariables
-				new DecimalConstantTransform(),
 				new PrettifyAssignments(), // must run after DeclareVariables
 				new IntroduceUsingDeclarations(),
 				new IntroduceExtensionMethods(), // must run after IntroduceUsingDeclarations
