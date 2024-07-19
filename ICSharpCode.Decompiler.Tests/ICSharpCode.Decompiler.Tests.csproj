@@ -153,7 +153,7 @@
     <None Include="TestCases\Pretty\Records.cs" />
     <Compile Include="TestCases\VBPretty\Issue2192.cs" />
     <Compile Include="Util\FileUtilityTests.cs" />
-    <None Include="TestCases\Pretty\FunctionPointers.cs" />
+    <Compile Include="TestCases\Pretty\FunctionPointers.cs" />
     <None Include="TestCases\Pretty\CS9_ExtensionGetEnumerator.cs" />
     <None Include="TestCases\Pretty\UsingVariables.cs" />
     <None Include="TestCases\Pretty\AsyncForeach.cs" />

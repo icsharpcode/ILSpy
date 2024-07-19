@@ -326,17 +326,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return ref x;
 		}
+
 		public ref readonly int M2(ref readonly int x)
 		{
 			return ref x;
 		}
 
-	public void Test()
-	{
-		int x = 32;
-		M(in x);
-		M2(in x);
-	}
+		public void Test()
+		{
+			int x = 32;
+			M(in x);
+			M2(in x);
+		}
 #endif
-}
+	}
 }

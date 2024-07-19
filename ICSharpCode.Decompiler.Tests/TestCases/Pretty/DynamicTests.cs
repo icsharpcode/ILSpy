@@ -1,4 +1,7 @@
 ﻿using System;
+#if CS120
+using System.Collections.Generic;
+#endif
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -70,6 +73,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 #if CS70
 		private static void CallWithIn(in dynamic d)
+		{
+		}
+#endif
+
+#if CS120
+		private static void CallWithRefReadonly(ref readonly Dictionary<object, dynamic> d)
 		{
 		}
 #endif
