@@ -367,7 +367,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					disposeCall = cv;
 				}
-				if (disposeCall.Method.FullName != disposeMethodFullName)
+				if (disposeCall.Method.IsStatic)
+					return false;
+				if (disposeCall.Method.Name != "DisposeAsync")
 					return false;
 				if (disposeCall.Method.Parameters.Count > 0)
 					return false;
@@ -505,9 +507,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!awaitInstruction.MatchAwait(out var arg))
 				return false;
-			if (!arg.MatchAddressOf(out awaitInstruction, out var type))
-				return false;
-			// TODO check type: does it match the structural 'Awaitable' pattern?
+			if (arg.MatchAddressOf(out var awaitInstructionInAddressOf, out var type))
+			{
+				awaitInstruction = awaitInstructionInAddressOf;
+			}
+			else
+			{
+				awaitInstruction = arg;
+			}
 			return true;
 		}
 	}
