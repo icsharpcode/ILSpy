@@ -124,8 +124,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// will be reported as custom attribute.
 		/// </summary>
 		ScopedRef = 0x4000,
-		[Obsolete("Use ScopedRef instead")]
-		LifetimeAnnotations = ScopedRef,
 		/// <summary>
 		/// Replace 'IntPtr' types with the 'nint' type even in absence of [NativeIntegerAttribute].
 		/// Note: DecompilerTypeSystem constructor removes this setting from the options if
@@ -133,11 +131,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		NativeIntegersWithoutAttribute = 0x8000,
 		/// <summary>
+		/// If this option is active, [RequiresLocationAttribute] on parameters is removed
+		/// and parameters are marked as ref readonly.
+		/// Otherwise, the attribute is preserved but the parameters are not marked
+		/// as if it was a ref parameter without any attributes.
+		/// </summary>
+		RefReadOnlyParameters = 0x10000,
+		/// <summary>
 		/// Default settings: typical options for the decompiler, with all C# languages features enabled.
 		/// </summary>
 		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants | ReadOnlyStructsAndParameters
 			| RefStructs | UnmanagedConstraints | NullabilityAnnotations | ReadOnlyMethods
 			| NativeIntegers | FunctionPointers | ScopedRef | NativeIntegersWithoutAttribute
+			| RefReadOnlyParameters
 	}
 
 	/// <summary>

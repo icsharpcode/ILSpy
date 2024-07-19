@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				ResolveResult GetResolveResult(int index, TranslatedExpression expression)
 				{
 					var param = expectedParameters[index];
-					if (useImplicitlyTypedOut && param.IsOut && expression.Type is ByReferenceType brt)
+					if (useImplicitlyTypedOut && param.ReferenceKind == ReferenceKind.Out && expression.Type is ByReferenceType brt)
 						return new OutVarResolveResult(brt.ElementType);
 					return expression.ResolveResult;
 				}

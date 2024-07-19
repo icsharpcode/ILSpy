@@ -389,7 +389,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		private static bool ValidateParameter(ParameterDeclaration p)
 		{
-			return p.ParameterModifier == ParameterModifier.None && p.Attributes.Count == 0;
+			return p.ParameterModifier == Decompiler.TypeSystem.ReferenceKind.None && p.Attributes.Count == 0;
 		}
 	}
 }

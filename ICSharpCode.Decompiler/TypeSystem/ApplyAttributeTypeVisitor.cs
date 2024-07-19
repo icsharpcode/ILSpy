@@ -343,6 +343,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					ReferenceKind.Ref => 1,
 					ReferenceKind.Out => 2, // in/out also count the modreq
 					ReferenceKind.In => 2,
+					ReferenceKind.RefReadOnly => 2, // counts the modopt
 					_ => throw new NotSupportedException()
 				};
 				parameters[i] = type.ParameterTypes[i].AcceptVisitor(this);

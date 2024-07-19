@@ -285,7 +285,7 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				IParameter parameter = method.Parameters[paramIndex - offset];
 				ILVariable ilVar = CreateILVariable(paramIndex - offset, parameter.Type, parameter.Name);
-				ilVar.IsRefReadOnly = parameter.IsIn;
+				ilVar.IsRefReadOnly = parameter.ReferenceKind is ReferenceKind.In or ReferenceKind.RefReadOnly;
 				parameterVariables[paramIndex] = ilVar;
 				paramIndex++;
 			}
