@@ -97,7 +97,6 @@
     <Compile Include="DecompilationProgress.cs" />
     <Compile Include="Disassembler\IEntityProcessor.cs" />
     <Compile Include="Disassembler\SortByNameProcessor.cs" />
-    <Compile Include="IL\ApplyPdbLocalTypeInfoTypeVisitor.cs" />
     <Compile Include="Metadata\MetadataFile.cs" />
     <Compile Include="Metadata\ModuleReferenceMetadata.cs" />
     <Compile Include="NRTAttributes.cs" />

@@ -308,7 +308,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (UseDebugSymbols && DebugInfo is not null &&
 				DebugInfo.TryGetExtraTypeInfo((MethodDefinitionHandle)method.MetadataToken, index, out var pdbExtraTypeInfo))
 			{
-				type = ApplyPdbLocalTypeInfoTypeVisitor.Apply(type, pdbExtraTypeInfo);
+				type = ApplyAttributeTypeVisitor.ApplyAttributesToType(type, compilation, module.TypeSystemOptions, pdbExtraTypeInfo);
 			}
 
 			ILVariable ilVar = new ILVariable(kind, type, index);

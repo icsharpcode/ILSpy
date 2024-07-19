@@ -21,6 +21,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
@@ -161,6 +162,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				return inputType;
 			}
+		}
+
+		public static IType ApplyAttributesToType(IType inputType, ICompilation compilation, TypeSystemOptions options, PdbExtraTypeInfo pdbExtraTypeInfo)
+		{
+			if (pdbExtraTypeInfo.DynamicFlags is null && pdbExtraTypeInfo.TupleElementNames is null)
+				return inputType;
+			return inputType.AcceptVisitor(new ApplyAttributeTypeVisitor(compilation, pdbExtraTypeInfo.DynamicFlags != null, pdbExtraTypeInfo.DynamicFlags, false, null, options, pdbExtraTypeInfo.TupleElementNames, Nullability.Oblivious, null));
 		}
 
 		readonly ICompilation compilation;
