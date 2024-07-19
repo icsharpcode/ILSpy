@@ -408,9 +408,6 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.Other" xml:space="preserve">
     <value>Other</value>
   </data>
-  <data name="DecompilerSettings.ParameterNullCheck" xml:space="preserve">
-    <value>Use parameter null checking</value>
-  </data>
   <data name="DecompilerSettings.PatternCombinators" xml:space="preserve">
     <value>Pattern combinators (and, or, not)</value>
   </data>
