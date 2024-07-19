@@ -35,7 +35,7 @@ jobs:
       uses: microsoft/setup-msbuild@v2
 
     - name: Install dotnet-format
-      run: dotnet tool install -g dotnet-format --version "6.2.315104" --add-source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet6/nuget/v3/index.json
+      run: dotnet tool install -g dotnet-format --version "8.0.453106" --add-source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet8/nuget/v3/index.json
 
     - name: Get Version
       id: version
