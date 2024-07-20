@@ -96,8 +96,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			}
 			else if (inst.Kind == ComparisonKind.Inequality && inst.LiftingKind == ComparisonLiftingKind.None
-			  && inst.Right.MatchLdcI4(0) && (IfInstruction.IsInConditionSlot(inst) || inst.Left is Comp)
-		  )
+				&& inst.Right.MatchLdcI4(0) && (IfInstruction.IsInConditionSlot(inst) || inst.Left is Comp))
 			{
 				// if (comp(x != 0)) ==> if (x)
 				// comp(comp(...) != 0) => comp(...)
@@ -107,6 +106,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				inst.Left.AcceptVisitor(this);
 				return;
 			}
+			new NullableLiftingTransform(context).Run(inst);
 
 			base.VisitComp(inst);
 			if (inst.IsLifted)

@@ -85,6 +85,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
+		/// <summary>
+		/// VS2022.10 / Roslyn 4.10.0 adds an optimization that turns
+		/// a == 42 into a.GetValueOrDefault() == 42 without any HasValue check.
+		/// </summary>
+		public void Run(Comp comp)
+		{
+			if (!comp.IsLifted && comp.Kind.IsEqualityOrInequality())
+			{
+				var left = comp.Left;
+				var right = comp.Right;
+				if (MatchGetValueOrDefault(left, out ILInstruction arg)
+					&& right.MatchLdcI(out var value) && value != 0)
+				{
+					context.Step("comp(a.GetValueOrDefault() == const) -> comp.lifted(a == const)", comp);
+					comp.LiftingKind = ComparisonLiftingKind.CSharp;
+					comp.Left = new LdObj(arg, ((Call)left).Method.DeclaringType);
+				}
+				else if (MatchGetValueOrDefault(right, out arg)
+					&& left.MatchLdcI(out value) && value != 0)
+				{
+					context.Step("comp(const == a.GetValueOrDefault()) -> comp.lifted(const == a)", comp);
+					comp.LiftingKind = ComparisonLiftingKind.CSharp;
+					comp.Right = new LdObj(arg, ((Call)right).Method.DeclaringType);
+				}
+			}
+		}
+
 		public bool RunStatements(Block block, int pos)
 		{
 			// e.g.:

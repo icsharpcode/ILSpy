@@ -373,6 +373,20 @@ namespace ICSharpCode.Decompiler.CSharp
 				return HandleImplicitConversion(method, argumentList.Arguments[0]);
 			}
 
+			if (settings.LiftNullables && method.Name == "GetValueOrDefault"
+				&& method.DeclaringType.IsKnownType(KnownTypeCode.NullableOfT)
+				&& method.DeclaringType.TypeArguments[0].IsKnownType(KnownTypeCode.Boolean)
+				&& argumentList.Length == 0)
+			{
+				argumentList.CheckNoNamedOrOptionalArguments();
+				return new BinaryOperatorExpression(
+					target.Expression,
+					BinaryOperatorType.Equality,
+					new PrimitiveExpression(true))
+					.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, method,
+						argumentList.GetArgumentResolveResults(), isExpandedForm: argumentList.IsExpandedForm));
+			}
+
 			var transform = GetRequiredTransformationsForCall(expectedTargetDetails, method, ref target,
 				ref argumentList, CallTransformation.All, out IParameterizedMember foundMethod);
 
