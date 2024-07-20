@@ -33,7 +33,7 @@ using ICSharpCode.Decompiler.Tests.Helpers;
 
 using NUnit.Framework;
 
-namespace ICSharpCode.Decompiler.Tests
+namespace ICSharpCode.Decompiler.Tests.Roundtrip
 {
 	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class RoundtripAssembly

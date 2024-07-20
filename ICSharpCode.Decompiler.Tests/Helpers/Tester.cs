@@ -528,7 +528,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			{
 				CompilerResults results = new CompilerResults();
 				results.PathToAssembly = outputFileName;
-				string testBasePath = RoundtripAssembly.TestDir;
+				string testBasePath = Roundtrip.RoundtripAssembly.TestDir;
 				if (!Directory.Exists(testBasePath))
 				{
 					Assert.Ignore($"Compilation with mcs ignored: test directory '{testBasePath}' needs to be checked out separately." + Environment.NewLine +
