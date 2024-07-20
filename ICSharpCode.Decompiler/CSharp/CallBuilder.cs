@@ -971,7 +971,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			RequireTarget = 1,
 			RequireTypeArguments = 2,
 			NoOptionalArgumentAllowed = 4,
-			All = 7
+			/// <summary>
+			/// Add calls to AsRefReadOnly for in parameters that did not have an explicit DirectionExpression yet.
+			/// </summary>
+			EnforceExplicitIn = 8,
+			All = 0xf,
 		}
 
 		private CallTransformation GetRequiredTransformationsForCall(ExpectedTargetDetails expectedTargetDetails, IMethod method,
@@ -1122,6 +1126,11 @@ namespace ICSharpCode.Decompiler.CSharp
 							requireTypeArguments = true;
 							typeArguments = method.TypeArguments.ToArray();
 						}
+						else if ((allowedTransforms & CallTransformation.EnforceExplicitIn) != 0)
+						{
+							EnforceExplicitIn(argumentList.Arguments, argumentList.ExpectedParameters);
+							allowedTransforms &= ~CallTransformation.EnforceExplicitIn;
+						}
 						else
 						{
 							break;
@@ -1139,6 +1148,32 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (argumentList.FirstOptionalArgumentIndex < 0)
 				transform |= CallTransformation.NoOptionalArgumentAllowed;
 			return transform;
+		}
+
+		private void EnforceExplicitIn(TranslatedExpression[] arguments, IParameter[] expectedParameters)
+		{
+			for (int i = 0; i < arguments.Length; i++)
+			{
+				if (expectedParameters[i].ReferenceKind != ReferenceKind.In)
+					continue;
+				if (arguments[i].Expression is DirectionExpression)
+					continue;
+
+				arguments[i] = WrapInAsRefReadOnly(arguments[i]);
+				expressionBuilder.statementBuilder.EmitAsRefReadOnly = true;
+			}
+		}
+
+		private TranslatedExpression WrapInAsRefReadOnly(TranslatedExpression arg)
+		{
+			return new DirectionExpression(
+				FieldDirection.In,
+				new InvocationExpression {
+					Target = new IdentifierExpression("ILSpyHelper_AsRefReadOnly"),
+					Arguments = { arg.Expression }
+				}
+			).WithRR(new ByReferenceResolveResult(arg.Type, ReferenceKind.In))
+			.WithoutILInstruction();
 		}
 
 		private bool IsPossibleExtensionMethodCallOnNull(IMethod method, IList<TranslatedExpression> arguments)
