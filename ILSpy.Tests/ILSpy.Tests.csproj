@@ -34,6 +34,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Analyzers\ExportAnalyzerAttributeTests.cs" />
     <Compile Include="Analyzers\AnalyzerScopeTests.cs" />
     <Compile Include="Analyzers\MemberImplementsInterfaceAnalyzerTests.cs" />
     <Compile Include="Analyzers\MethodUsesAnalyzerTests.cs" />
