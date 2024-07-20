@@ -134,8 +134,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					if (!useImplicitlyTypedOut)
 						return expression;
-					if (expression.GetResolveResult() is ByReferenceResolveResult brrr
-						&& brrr.IsOut)
+					if (expression.GetResolveResult() is ByReferenceResolveResult { ReferenceKind: ReferenceKind.Out } brrr)
 					{
 						expression.AddAnnotation(UseImplicitlyTypedOutAnnotation.Instance);
 					}
