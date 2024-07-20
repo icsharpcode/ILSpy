@@ -369,8 +369,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				if (disposeCall.Method.IsStatic)
 					return false;
-				if (disposeCall.Method.Name != "DisposeAsync")
-					return false;
+				if (disposeTypeCode == KnownTypeCode.IAsyncDisposable)
+				{
+					if (disposeCall.Method.Name != "DisposeAsync")
+						return false;
+				}
+				else
+				{
+					if (disposeCall.Method.FullName != disposeMethodFullName)
+						return false;
+				}
+
 				if (disposeCall.Method.Parameters.Count > 0)
 					return false;
 				if (disposeCall.Arguments.Count != 1)
