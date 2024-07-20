@@ -30,7 +30,9 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 		[Test]
 		public void CollectAnalyzers()
 		{
-			var analyzerNames = ExportAnalyzerAttribute.GetAnnotatedAnalyzers().Select(analyzer => analyzer.AnalyzerType.Name);
+			var analyzerNames = ExportAnalyzerAttribute.GetAnnotatedAnalyzers()
+				.Select(analyzer => analyzer.AnalyzerType.Name)
+				.ToArray();
 			Assert.That(analyzerNames.Contains("AttributeAppliedToAnalyzer"));
 			Assert.That(analyzerNames.Contains("EventImplementedByAnalyzer"));
 			Assert.That(analyzerNames.Contains("MethodUsedByAnalyzer"));

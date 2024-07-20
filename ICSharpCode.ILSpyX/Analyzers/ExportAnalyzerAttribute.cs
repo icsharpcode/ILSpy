@@ -39,8 +39,7 @@ namespace ICSharpCode.ILSpyX.Analyzers
 		{
 			foreach (var type in typeof(ExportAnalyzerAttribute).Assembly.GetTypes())
 			{
-				var exportAnalyzerAttribute = type.GetCustomAttribute(typeof(ExportAnalyzerAttribute), false) as ExportAnalyzerAttribute;
-				if (exportAnalyzerAttribute is not null)
+				if (type.GetCustomAttribute(typeof(ExportAnalyzerAttribute), false) is ExportAnalyzerAttribute exportAnalyzerAttribute)
 				{
 					yield return (exportAnalyzerAttribute, type);
 				}
