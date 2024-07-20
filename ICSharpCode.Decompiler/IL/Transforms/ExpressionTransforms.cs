@@ -106,7 +106,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				inst.Left.AcceptVisitor(this);
 				return;
 			}
-			new NullableLiftingTransform(context).Run(inst);
+			if (context.Settings.LiftNullables)
+			{
+				new NullableLiftingTransform(context).Run(inst);
+			}
 
 			base.VisitComp(inst);
 			if (inst.IsLifted)
