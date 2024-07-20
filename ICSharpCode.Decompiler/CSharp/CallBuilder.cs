@@ -345,69 +345,11 @@ namespace ICSharpCode.Decompiler.CSharp
 						argumentList.GetArgumentResolveResults(), isExpandedForm: argumentList.IsExpandedForm, isDelegateInvocation: true));
 			}
 
-			if (settings.StringInterpolation && IsInterpolatedStringCreation(method, argumentList) &&
-				TryGetStringInterpolationTokens(argumentList, out string format, out var tokens))
+			if (settings.StringInterpolation && IsInterpolatedStringCreation(method, argumentList))
 			{
-				var arguments = argumentList.Arguments;
-				var content = new List<InterpolatedStringContent>();
-
-				bool unpackSingleElementArray = !argumentList.IsExpandedForm && argumentList.Length == 2
-					&& argumentList.Arguments[1].Expression is ArrayCreateExpression ace
-					&& ace.Initializer?.Elements.Count == 1;
-
-				void UnpackSingleElementArray(ref TranslatedExpression argument)
-				{
-					if (!unpackSingleElementArray)
-						return;
-					var arrayCreation = (ArrayCreateExpression)argumentList.Arguments[1].Expression;
-					var arrayCreationRR = (ArrayCreateResolveResult)argumentList.Arguments[1].ResolveResult;
-					var element = arrayCreation.Initializer.Elements.First().Detach();
-					argument = new TranslatedExpression(element, arrayCreationRR.InitializerElements.First());
-				}
-
-				if (tokens.Count > 0)
-				{
-					foreach (var (kind, index, alignment, text) in tokens)
-					{
-						TranslatedExpression argument;
-						switch (kind)
-						{
-							case TokenKind.String:
-								content.Add(new InterpolatedStringText(text));
-								break;
-							case TokenKind.Argument:
-								argument = arguments[index + 1];
-								UnpackSingleElementArray(ref argument);
-								content.Add(new Interpolation(argument));
-								break;
-							case TokenKind.ArgumentWithFormat:
-								argument = arguments[index + 1];
-								UnpackSingleElementArray(ref argument);
-								content.Add(new Interpolation(argument, suffix: text));
-								break;
-							case TokenKind.ArgumentWithAlignment:
-								argument = arguments[index + 1];
-								UnpackSingleElementArray(ref argument);
-								content.Add(new Interpolation(argument, alignment));
-								break;
-							case TokenKind.ArgumentWithAlignmentAndFormat:
-								argument = arguments[index + 1];
-								UnpackSingleElementArray(ref argument);
-								content.Add(new Interpolation(argument, alignment, text));
-								break;
-						}
-					}
-					var formattableStringType = expressionBuilder.compilation.FindType(KnownTypeCode.FormattableString);
-					var isrr = new InterpolatedStringResolveResult(expressionBuilder.compilation.FindType(KnownTypeCode.String),
-						format, argumentList.GetArgumentResolveResults(1).ToArray());
-					var expr = new InterpolatedStringExpression();
-					expr.Content.AddRange(content);
-					if (method.Name == "Format")
-						return expr.WithRR(isrr);
-					return new CastExpression(expressionBuilder.ConvertType(formattableStringType),
-						expr.WithRR(isrr))
-						.WithRR(new ConversionResolveResult(formattableStringType, isrr, Conversion.ImplicitInterpolatedStringConversion));
-				}
+				var result = HandleStringInterpolation(method, argumentList);
+				if (result.Expression != null)
+					return result;
 			}
 
 			int allowedParamCount = (method.ReturnType.IsKnownType(KnownTypeCode.Void) ? 1 : 0);
@@ -480,6 +422,75 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new InvocationExpression(targetExpr, argumentList.GetArgumentExpressions())
 				.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, foundMethod,
 					argumentList.GetArgumentResolveResultsDirect(), isExpandedForm: argumentList.IsExpandedForm));
+		}
+
+		private ExpressionWithResolveResult HandleStringInterpolation(IMethod method, ArgumentList argumentList)
+		{
+			if (!TryGetStringInterpolationTokens(argumentList, out string format, out var tokens))
+				return default;
+
+			var arguments = argumentList.Arguments;
+			var content = new List<InterpolatedStringContent>();
+
+			bool unpackSingleElementArray = !argumentList.IsExpandedForm && argumentList.Length == 2
+				&& argumentList.Arguments[1].Expression is ArrayCreateExpression ace
+				&& ace.Initializer?.Elements.Count == 1;
+
+			void UnpackSingleElementArray(ref TranslatedExpression argument)
+			{
+				if (!unpackSingleElementArray)
+					return;
+				var arrayCreation = (ArrayCreateExpression)argumentList.Arguments[1].Expression;
+				var arrayCreationRR = (ArrayCreateResolveResult)argumentList.Arguments[1].ResolveResult;
+				var element = arrayCreation.Initializer.Elements.First().Detach();
+				argument = new TranslatedExpression(element, arrayCreationRR.InitializerElements.First());
+			}
+
+			if (tokens.Count == 0)
+			{
+				return default;
+			}
+
+			foreach (var (kind, index, alignment, text) in tokens)
+			{
+				TranslatedExpression argument;
+				switch (kind)
+				{
+					case TokenKind.String:
+						content.Add(new InterpolatedStringText(text));
+						break;
+					case TokenKind.Argument:
+						argument = arguments[index + 1];
+						UnpackSingleElementArray(ref argument);
+						content.Add(new Interpolation(argument));
+						break;
+					case TokenKind.ArgumentWithFormat:
+						argument = arguments[index + 1];
+						UnpackSingleElementArray(ref argument);
+						content.Add(new Interpolation(argument, suffix: text));
+						break;
+					case TokenKind.ArgumentWithAlignment:
+						argument = arguments[index + 1];
+						UnpackSingleElementArray(ref argument);
+						content.Add(new Interpolation(argument, alignment));
+						break;
+					case TokenKind.ArgumentWithAlignmentAndFormat:
+						argument = arguments[index + 1];
+						UnpackSingleElementArray(ref argument);
+						content.Add(new Interpolation(argument, alignment, text));
+						break;
+				}
+			}
+			var formattableStringType = expressionBuilder.compilation.FindType(KnownTypeCode.FormattableString);
+			var isrr = new InterpolatedStringResolveResult(expressionBuilder.compilation.FindType(KnownTypeCode.String),
+				format, argumentList.GetArgumentResolveResults(1).ToArray());
+			var expr = new InterpolatedStringExpression();
+			expr.Content.AddRange(content);
+			if (method.Name == "Format")
+				return expr.WithRR(isrr);
+			return new CastExpression(expressionBuilder.ConvertType(formattableStringType),
+				expr.WithRR(isrr))
+				.WithRR(new ConversionResolveResult(formattableStringType, isrr, Conversion.ImplicitInterpolatedStringConversion));
 		}
 
 		/// <summary>
