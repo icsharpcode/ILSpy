@@ -867,7 +867,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				if (parameter.ReferenceKind != ReferenceKind.None)
 				{
-					arg = ExpressionBuilder.ChangeDirectionExpressionTo(arg, parameter.ReferenceKind);
+					arg = ExpressionBuilder.ChangeDirectionExpressionTo(arg, parameter.ReferenceKind, callArguments[i] is AddressOf);
 				}
 
 				arguments.Add(arg);
@@ -1179,14 +1179,20 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				else
 				{
+					IParameter parameter = expectedParameters[i];
 					IType parameterType;
-					if (expectedParameters[i].Type.Kind == TypeKind.Dynamic)
+					if (parameter.Type.Kind == TypeKind.Dynamic)
 					{
 						parameterType = expressionBuilder.compilation.FindType(KnownTypeCode.Object);
 					}
 					else
 					{
-						parameterType = expectedParameters[i].Type;
+						parameterType = parameter.Type;
+					}
+
+					if (parameter.ReferenceKind == ReferenceKind.In && parameterType is ByReferenceType brt && arguments[i].Type is not ByReferenceType)
+					{
+						parameterType = brt.ElementType;
 					}
 
 					arguments[i] = arguments[i].ConvertTo(parameterType, expressionBuilder, allowImplicitConversion: false);
@@ -1295,7 +1301,10 @@ namespace ICSharpCode.Decompiler.CSharp
 						resolver.CurrentTypeDefinition == method.DeclaringTypeDefinition;
 					if (lookup.IsAccessible(ctor, allowProtectedAccess))
 					{
-						or.AddCandidate(ctor);
+						Log.Indent();
+						OverloadResolutionErrors errors = or.AddCandidate(ctor);
+						Log.Unindent();
+						or.LogCandidateAddingResult("  Candidate", ctor, errors);
 					}
 				}
 			}

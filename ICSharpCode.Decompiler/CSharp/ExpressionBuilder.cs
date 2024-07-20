@@ -4174,7 +4174,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			if (info.HasFlag(CSharpArgumentInfoFlags.IsOut))
 			{
-				translatedExpression = ChangeDirectionExpressionTo(translatedExpression, ReferenceKind.Out);
+				translatedExpression = ChangeDirectionExpressionTo(translatedExpression, ReferenceKind.Out, argument is AddressOf);
 			}
 			if (info.HasFlag(CSharpArgumentInfoFlags.NamedArgument) && !string.IsNullOrWhiteSpace(info.Name))
 			{
@@ -4184,10 +4184,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			return translatedExpression;
 		}
 
-		internal static TranslatedExpression ChangeDirectionExpressionTo(TranslatedExpression input, ReferenceKind kind)
+		internal static TranslatedExpression ChangeDirectionExpressionTo(TranslatedExpression input, ReferenceKind kind, bool isAddressOf)
 		{
 			if (!(input.Expression is DirectionExpression dirExpr && input.ResolveResult is ByReferenceResolveResult brrr))
 				return input;
+			if (isAddressOf && kind is ReferenceKind.In or ReferenceKind.RefReadOnly)
+			{
+				return input.UnwrapChild(dirExpr.Expression);
+			}
 			dirExpr.FieldDirection = kind switch {
 				ReferenceKind.Ref => FieldDirection.Ref,
 				ReferenceKind.Out => FieldDirection.Out,
@@ -4454,7 +4458,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var arg = Translate(argInst, typeHint: paramType).ConvertTo(paramType, this, allowImplicitConversion: true);
 				if (paramRefKind != ReferenceKind.None)
 				{
-					arg = ChangeDirectionExpressionTo(arg, paramRefKind);
+					arg = ChangeDirectionExpressionTo(arg, paramRefKind, argInst is AddressOf);
 				}
 				invocation.Arguments.Add(arg);
 			}

@@ -244,7 +244,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var loadInst = r.LoadInst;
 				if (loadInst.OpCode == OpCode.LdLoca)
 				{
-					if (!IsGeneratedValueTypeTemporary((LdLoca)loadInst, v, inlinedExpression, options))
+					if (!IsGeneratedTemporaryForAddressOf((LdLoca)loadInst, v, inlinedExpression, options))
 						return false;
 				}
 				else
@@ -289,7 +289,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		/// <param name="loadInst">The load instruction (a descendant within 'next')</param>
 		/// <param name="v">The variable being inlined.</param>
-		static bool IsGeneratedValueTypeTemporary(LdLoca loadInst, ILVariable v, ILInstruction inlinedExpression, InliningOptions options)
+		static bool IsGeneratedTemporaryForAddressOf(LdLoca loadInst, ILVariable v, ILInstruction inlinedExpression, InliningOptions options)
 		{
 			Debug.Assert(loadInst.Variable == v);
 			if (!options.HasFlag(InliningOptions.AllowInliningOfLdloca))
@@ -301,7 +301,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Thus, we have to ensure we're operating on an r-value.
 			// Additionally, we cannot inline in cases where the C# compiler prohibits the direct use
 			// of the rvalue (e.g. M(ref (MyStruct)obj); is invalid).
-			if (IsUsedAsThisPointerInCall(loadInst, out var method, out var constrainedTo))
+			if (IsUsedAsThisPointerInCall(loadInst, out var method, out var constrainedTo) || IsPassedToInParameter(loadInst, out method))
 			{
 				if (options.HasFlag(InliningOptions.Aggressive))
 				{
@@ -413,6 +413,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				inst = ldflda;
 			}
 			return inst != ldloca && inst.Parent is LdObj;
+		}
+
+		static bool IsPassedToInParameter(LdLoca ldloca, out IMethod method)
+		{
+			method = null;
+			if (ldloca.Parent is not CallInstruction call)
+			{
+				return false;
+			}
+			method = call.Method;
+			return call.GetParameter(ldloca.ChildIndex)?.ReferenceKind is ReferenceKind.In;
 		}
 
 		/// <summary>
