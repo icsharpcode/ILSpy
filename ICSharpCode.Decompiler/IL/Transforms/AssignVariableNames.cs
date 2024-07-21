@@ -233,7 +233,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 				void AssignName()
 				{
-					if (v.HasGeneratedName || !IsValidName(v.Name) || ConflictWithLocal(v))
+					if (v.HasGeneratedName || !IsValidName(v.Name))
 					{
 						// don't use the name from the debug symbols if it looks like a generated name
 						v.Name = null;
@@ -335,16 +335,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				default:
 					return false;
 			}
-		}
-
-		bool ConflictWithLocal(ILVariable v)
-		{
-			if (v.Kind == VariableKind.UsingLocal || v.Kind == VariableKind.ForeachLocal)
-			{
-				if (reservedVariableNames.ContainsKey(v.Name))
-					return true;
-			}
-			return false;
 		}
 
 		internal static bool IsValidName(string varName)
