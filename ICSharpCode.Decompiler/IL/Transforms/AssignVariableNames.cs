@@ -326,6 +326,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			switch (arg)
 			{
+				case GetPinnableReference _:
 				case LdObj _:
 				case LdFlda _:
 				case LdsFlda _:
@@ -431,6 +432,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (!currentLowerCaseTypeOrMemberNames.Contains(name))
 							proposedNameForStores.Add(name);
 					}
+					else if (store is PinnedRegion pinnedRegion)
+					{
+						var name = GetNameFromInstruction(pinnedRegion.Init);
+						if (!currentLowerCaseTypeOrMemberNames.Contains(name))
+							proposedNameForStores.Add(name);
+					}
 				}
 				if (proposedNameForStores.Count == 1)
 				{
@@ -485,9 +492,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			switch (inst)
 			{
+				case GetPinnableReference getPinnableReference:
+					return GetNameFromInstruction(getPinnableReference.Argument);
 				case LdObj ldobj:
 					return GetNameFromInstruction(ldobj.Target);
 				case LdFlda ldflda:
+					if (ldflda.Field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+						return GetNameFromInstruction(ldflda.Target);
 					return CleanUpVariableName(ldflda.Field.Name);
 				case LdsFlda ldsflda:
 					return CleanUpVariableName(ldsflda.Field.Name);
@@ -566,6 +577,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (m.Name == "ToString")
 				return true;
 			if (m.Name == "Concat" && m.DeclaringType.IsKnownType(KnownTypeCode.String))
+				return true;
+			if (m.Name == "GetPinnableReference")
 				return true;
 			return false;
 		}
