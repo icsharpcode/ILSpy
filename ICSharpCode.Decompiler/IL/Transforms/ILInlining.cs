@@ -537,6 +537,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
+		/// <summary>
+		/// Gets whether the ILInstruction will turn into a C# expresion that is considered readonly by the C# compiler.
+		/// </summary>
 		internal static bool IsReadonlyReference(ILInstruction addr)
 		{
 			switch (addr)
