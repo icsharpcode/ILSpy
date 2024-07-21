@@ -223,8 +223,74 @@ namespace ICSharpCode.Decompiler.CSharp
 					valueTupleAssembly: inst.Method.DeclaringType.GetDefinition()?.ParentModule
 				)).WithILInstruction(inst);
 			}
+			if (settings.StringConcat && IsSpanBasedStringConcat(inst, out var operands))
+			{
+				return BuildStringConcat(inst.Method, operands).WithILInstruction(inst);
+			}
 			return Build(inst.OpCode, inst.Method, inst.Arguments, constrainedTo: inst.ConstrainedTo)
 				.WithILInstruction(inst);
+		}
+
+		private ExpressionWithResolveResult BuildStringConcat(IMethod method, List<(ILInstruction Instruction, KnownTypeCode TypeCode)> operands)
+		{
+			IType type = typeSystem.FindType(operands[0].TypeCode);
+			ExpressionWithResolveResult result = expressionBuilder.Translate(operands[0].Instruction, type).ConvertTo(type, expressionBuilder);
+			var rr = new MemberResolveResult(null, method);
+
+			for (int i = 1; i < operands.Count; i++)
+			{
+				type = typeSystem.FindType(operands[i].TypeCode);
+				var expr = expressionBuilder.Translate(operands[i].Instruction, type).ConvertTo(type, expressionBuilder);
+				result = new BinaryOperatorExpression(result.Expression, BinaryOperatorType.Add, expr).WithRR(rr);
+			}
+
+			return result;
+		}
+
+		private bool IsSpanBasedStringConcat(CallInstruction call, out List<(ILInstruction, KnownTypeCode)> operands)
+		{
+			operands = null;
+
+			if (call.Method is not { Name: "Concat", IsStatic: true })
+			{
+				return false;
+			}
+			if (!call.Method.DeclaringType.IsKnownType(KnownTypeCode.String))
+			{
+				return false;
+			}
+
+			int? firstStringArgumentIndex = null;
+			operands = new();
+
+			foreach (var arg in call.Arguments)
+			{
+				if (arg is Call opImplicit && IsStringToReadOnlySpanCharImplicitConversion(opImplicit.Method))
+				{
+					firstStringArgumentIndex ??= arg.ChildIndex;
+					operands.Add((opImplicit.Arguments.Single(), KnownTypeCode.String));
+				}
+				else if (arg is NewObj { Arguments: [AddressOf addressOf] } newObj && ILInlining.IsReadOnlySpanCharCtor(newObj.Method))
+				{
+					operands.Add((addressOf.Value, KnownTypeCode.Char));
+				}
+				else
+				{
+					return false;
+				}
+			}
+
+			return call.Arguments.Count >= 2 && firstStringArgumentIndex <= 1;
+		}
+
+		private bool IsStringToReadOnlySpanCharImplicitConversion(IMethod method)
+		{
+			return method.IsOperator
+				&& method.Name == "op_Implicit"
+				&& method.Parameters.Count == 1
+				&& method.ReturnType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT)
+				&& method.ReturnType.TypeArguments[0].IsKnownType(KnownTypeCode.Char)
+				&& method.Parameters[0].Type.IsKnownType(KnownTypeCode.String);
 		}
 
 		public ExpressionWithResolveResult Build(OpCode callOpCode, IMethod method,
