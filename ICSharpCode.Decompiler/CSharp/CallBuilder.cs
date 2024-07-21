@@ -247,15 +247,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			return result;
 		}
 
-		private bool IsSpanBasedStringConcat(CallInstruction call, out List<(ILInstruction, KnownTypeCode)> operands)
+		static bool IsSpanBasedStringConcat(CallInstruction call, out List<(ILInstruction, KnownTypeCode)> operands)
 		{
 			operands = null;
 
-			if (call.Method is not { Name: "Concat", IsStatic: true })
-			{
-				return false;
-			}
-			if (!call.Method.DeclaringType.IsKnownType(KnownTypeCode.String))
+			if (!IsSpanBasedStringConcat(call.Method))
 			{
 				return false;
 			}
@@ -283,7 +279,29 @@ namespace ICSharpCode.Decompiler.CSharp
 			return call.Arguments.Count >= 2 && firstStringArgumentIndex <= 1;
 		}
 
-		private bool IsStringToReadOnlySpanCharImplicitConversion(IMethod method)
+		internal static bool IsSpanBasedStringConcat(IMethod method)
+		{
+			if (method is not { Name: "Concat", IsStatic: true })
+			{
+				return false;
+			}
+			if (!method.DeclaringType.IsKnownType(KnownTypeCode.String))
+			{
+				return false;
+			}
+
+			foreach (var p in method.Parameters)
+			{
+				if (!p.Type.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
+					return false;
+				if (!p.Type.TypeArguments[0].IsKnownType(KnownTypeCode.Char))
+					return false;
+			}
+
+			return true;
+		}
+
+		internal static bool IsStringToReadOnlySpanCharImplicitConversion(IMethod method)
 		{
 			return method.IsOperator
 				&& method.Name == "op_Implicit"

@@ -1799,7 +1799,17 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitUserDefinedCompoundAssign(UserDefinedCompoundAssign inst, TranslationContext context)
 		{
-			IType loadType = inst.Method.Parameters[0].Type;
+			IType loadType;
+			bool isSpanBasedStringConcat = CallBuilder.IsSpanBasedStringConcat(inst.Method);
+			if (isSpanBasedStringConcat)
+			{
+				loadType = typeSystem.FindType(KnownTypeCode.String);
+			}
+			else
+			{
+				loadType = inst.Method.Parameters[0].Type;
+			}
+
 			ExpressionWithResolveResult target;
 			if (inst.TargetKind == CompoundTargetKind.Address)
 			{
@@ -1821,11 +1831,24 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (UserDefinedCompoundAssign.IsStringConcat(inst.Method))
 			{
 				Debug.Assert(inst.Method.Parameters.Count == 2);
-				var value = Translate(inst.Value).ConvertTo(inst.Method.Parameters[1].Type, this, allowImplicitConversion: true);
-				var valueExpr = ReplaceMethodCallsWithOperators.RemoveRedundantToStringInConcat(value, inst.Method, isLastArgument: true).Detach();
+				Expression valueExpr;
+				ResolveResult valueResolveResult;
+				if (isSpanBasedStringConcat && inst.Value is NewObj { Arguments: [AddressOf addressOf] })
+				{
+					IType charType = typeSystem.FindType(KnownTypeCode.Char);
+					var value = Translate(addressOf.Value, charType).ConvertTo(charType, this);
+					valueExpr = value.Expression;
+					valueResolveResult = value.ResolveResult;
+				}
+				else
+				{
+					var value = Translate(inst.Value).ConvertTo(inst.Method.Parameters[1].Type, this, allowImplicitConversion: true);
+					valueExpr = ReplaceMethodCallsWithOperators.RemoveRedundantToStringInConcat(value, inst.Method, isLastArgument: true).Detach();
+					valueResolveResult = value.ResolveResult;
+				}
 				return new AssignmentExpression(target, AssignmentOperatorType.Add, valueExpr)
 					.WithILInstruction(inst)
-					.WithRR(new OperatorResolveResult(inst.Method.ReturnType, ExpressionType.AddAssign, inst.Method, inst.IsLifted, new[] { target.ResolveResult, value.ResolveResult }));
+					.WithRR(new OperatorResolveResult(inst.Method.ReturnType, ExpressionType.AddAssign, inst.Method, inst.IsLifted, new[] { target.ResolveResult, valueResolveResult }));
 			}
 			else if (inst.Method.Parameters.Count == 2)
 			{
