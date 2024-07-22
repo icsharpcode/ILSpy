@@ -34,49 +34,49 @@ namespace ICSharpCode.ILSpyX.Analyzers
 	{
 		public required AssemblyList AssemblyList { get; init; }
 
-	/// <summary>
-	/// CancellationToken. Currently Analyzers do not support cancellation from the UI, but it should be checked nonetheless.
-	/// </summary>
-	public CancellationToken CancellationToken { get; init; }
+		/// <summary>
+		/// CancellationToken. Currently Analyzers do not support cancellation from the UI, but it should be checked nonetheless.
+		/// </summary>
+		public CancellationToken CancellationToken { get; init; }
 
-	/// <summary>
-	/// Currently used language.
-	/// </summary>
-	public required ILanguage Language { get; init; }
+		/// <summary>
+		/// Currently used language.
+		/// </summary>
+		public required ILanguage Language { get; init; }
 
-/// <summary>
-/// Allows the analyzer to control whether the tree nodes will be sorted.
-/// Must be set within <see cref="IAnalyzer.Analyze(ISymbol, AnalyzerContext)"/>
-/// before the results are enumerated.
-/// </summary>
-public bool SortResults { get; set; }
+		/// <summary>
+		/// Allows the analyzer to control whether the tree nodes will be sorted.
+		/// Must be set within <see cref="IAnalyzer.Analyze(ISymbol, AnalyzerContext)"/>
+		/// before the results are enumerated.
+		/// </summary>
+		public bool SortResults { get; set; }
 
-public MethodBodyBlock? GetMethodBody(IMethod method)
-{
-	if (!method.HasBody || method.MetadataToken.IsNil || method.ParentModule?.MetadataFile == null)
-		return null;
-	var module = method.ParentModule.MetadataFile;
-	var md = module.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
-	try
-	{
-		return module.GetMethodBody(md.RelativeVirtualAddress);
-	}
-	catch (BadImageFormatException)
-	{
-		return null;
-	}
-}
+		public MethodBodyBlock? GetMethodBody(IMethod method)
+		{
+			if (!method.HasBody || method.MetadataToken.IsNil || method.ParentModule?.MetadataFile == null)
+				return null;
+			var module = method.ParentModule.MetadataFile;
+			var md = module.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
+			try
+			{
+				return module.GetMethodBody(md.RelativeVirtualAddress);
+			}
+			catch (BadImageFormatException)
+			{
+				return null;
+			}
+		}
 
-public AnalyzerScope GetScopeOf(IEntity entity)
-{
-	return new AnalyzerScope(AssemblyList, entity);
-}
+		public AnalyzerScope GetScopeOf(IEntity entity)
+		{
+			return new AnalyzerScope(AssemblyList, entity);
+		}
 
-readonly ConcurrentDictionary<MetadataFile, DecompilerTypeSystem> typeSystemCache = new();
+		readonly ConcurrentDictionary<MetadataFile, DecompilerTypeSystem> typeSystemCache = new();
 
-public DecompilerTypeSystem GetOrCreateTypeSystem(MetadataFile module)
-{
-	return typeSystemCache.GetOrAdd(module, m => new DecompilerTypeSystem(m, m.GetAssemblyResolver()));
-}
+		public DecompilerTypeSystem GetOrCreateTypeSystem(MetadataFile module)
+		{
+			return typeSystemCache.GetOrAdd(module, m => new DecompilerTypeSystem(m, m.GetAssemblyResolver()));
+		}
 	}
 }

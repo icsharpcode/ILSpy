@@ -36,6 +36,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Issue1747();
 			CallAmbiguousOutParam();
 			CallWithInParam();
+			CallWithRefReadOnlyParam();
 #if CS90
 			NativeIntTests(new IntPtr(1), 2);
 #endif
@@ -275,6 +276,73 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			AmbiguousOutParam(out a);
 			AmbiguousOutParam(out b);
 		}
+		#endregion
+
+		#region Ref readonly Parameter
+
+		static void CallWithRefReadOnlyParam()
+		{
+#if CS120
+#pragma warning disable CS9193
+			Console.WriteLine("OverloadSetWithRefReadOnlyParam:");
+			OverloadSetWithRefReadOnlyParam(1);
+			OverloadSetWithRefReadOnlyParam(2L);
+			int i = 3;
+			OverloadSetWithRefReadOnlyParam(in i);
+			OverloadSetWithRefReadOnlyParam((long)4);
+
+			Console.WriteLine("OverloadSetWithRefReadOnlyParam2:");
+			OverloadSetWithRefReadOnlyParam2(1);
+			OverloadSetWithRefReadOnlyParam2((object)1);
+
+			Console.WriteLine("OverloadSetWithRefReadOnlyParam3:");
+			OverloadSetWithRefReadOnlyParam3(1);
+			OverloadSetWithRefReadOnlyParam3<int>(2);
+			OverloadSetWithRefReadOnlyParam3((object)3);
+
+			Console.WriteLine("RefReadOnlyVsRegularParam:");
+			RefReadOnlyVsRegularParam(1);
+			i = 2;
+			RefReadOnlyVsRegularParam(in i);
+#endif
+		}
+
+#if CS120
+		static void OverloadSetWithRefReadOnlyParam(ref readonly int i)
+		{
+			Console.WriteLine("ref readonly int " + i);
+		}
+		static void OverloadSetWithRefReadOnlyParam(long l)
+		{
+			Console.WriteLine("long " + l);
+		}
+		static void OverloadSetWithRefReadOnlyParam2(ref readonly long i)
+		{
+			Console.WriteLine("ref readonly long " + i);
+		}
+		static void OverloadSetWithRefReadOnlyParam2(object o)
+		{
+			Console.WriteLine("object " + o);
+		}
+		static void OverloadSetWithRefReadOnlyParam3(ref readonly int i)
+		{
+			Console.WriteLine("ref readonly int " + i);
+		}
+		static void OverloadSetWithRefReadOnlyParam3<T>(T a)
+		{
+			Console.WriteLine("T " + a);
+		}
+		static void RefReadOnlyVsRegularParam(ref readonly int i)
+		{
+			Console.WriteLine("ref readonly int " + i);
+		}
+		static void RefReadOnlyVsRegularParam(int i)
+		{
+			Console.WriteLine("int " + i);
+		}
+
+#endif
+
 		#endregion
 
 		#region In Parameter

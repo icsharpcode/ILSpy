@@ -95,14 +95,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public unsafe delegate*<object, ref readonly dynamic> F12;
 		public unsafe delegate*<in dynamic, object> F13;
 		public unsafe delegate*<out dynamic, object> F14;
-		public unsafe D<delegate*<dynamic>[], dynamic> F15;
-		public unsafe delegate*<A<object>.B<dynamic>> F16;
+#if CS120
+		public unsafe delegate*<ref readonly dynamic, object> F15;
+#endif
+		public unsafe D<delegate*<dynamic>[], dynamic> F16;
+		public unsafe delegate*<A<object>.B<dynamic>> F17;
 	}
 
 	internal class FunctionPointersWithNativeIntegerTypes
 	{
 		public unsafe delegate*<nint, nint, nint> F1;
-		#if !(CS110 && NET70)
+#if !(CS110 && NET70)
 		public unsafe delegate*<IntPtr, IntPtr, nint> F2;
 		public unsafe delegate*<nint, IntPtr, IntPtr> F3;
 		public unsafe delegate*<IntPtr, nint, IntPtr> F4;
@@ -111,7 +114,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public unsafe delegate*<delegate*<IntPtr, IntPtr, nint>, IntPtr> F7;
 		public unsafe delegate*<IntPtr, delegate*<IntPtr, nint, IntPtr>> F8;
 		public unsafe delegate*<IntPtr, delegate*<IntPtr, IntPtr, IntPtr>> F9;
-		#endif
+#endif
 	}
 
 	internal class FunctionPointersWithRefParams

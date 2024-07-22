@@ -556,9 +556,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		internal static bool IsClosureParameter(IParameter parameter, ITypeResolveContext context)
 		{
-			if (!parameter.IsRef)
+			if (parameter.Type is not ByReferenceType brt)
 				return false;
-			var type = ((ByReferenceType)parameter.Type).ElementType.GetDefinition();
+			var type = brt.ElementType.GetDefinition();
 			return type != null
 				&& type.Kind == TypeKind.Struct
 				&& TransformDisplayClassUsage.IsPotentialClosure(context.CurrentTypeDefinition, type);

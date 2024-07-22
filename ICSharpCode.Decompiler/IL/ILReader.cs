@@ -285,7 +285,7 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				IParameter parameter = method.Parameters[paramIndex - offset];
 				ILVariable ilVar = CreateILVariable(paramIndex - offset, parameter.Type, parameter.Name);
-				ilVar.IsRefReadOnly = parameter.IsIn;
+				ilVar.IsRefReadOnly = parameter.ReferenceKind is ReferenceKind.In or ReferenceKind.RefReadOnly;
 				parameterVariables[paramIndex] = ilVar;
 				paramIndex++;
 			}
@@ -308,7 +308,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (UseDebugSymbols && DebugInfo is not null &&
 				DebugInfo.TryGetExtraTypeInfo((MethodDefinitionHandle)method.MetadataToken, index, out var pdbExtraTypeInfo))
 			{
-				type = ApplyPdbLocalTypeInfoTypeVisitor.Apply(type, pdbExtraTypeInfo);
+				type = ApplyAttributeTypeVisitor.ApplyAttributesToType(type, compilation, module.TypeSystemOptions, pdbExtraTypeInfo);
 			}
 
 			ILVariable ilVar = new ILVariable(kind, type, index);

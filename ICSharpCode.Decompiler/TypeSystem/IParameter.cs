@@ -32,7 +32,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		None,
 		Out,
 		Ref,
-		In
+		In,
+		RefReadOnly,
 	}
 
 	public struct LifetimeAnnotation
@@ -70,21 +71,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// C# 11 scoped annotation.
 		/// </summary>
 		LifetimeAnnotation Lifetime { get; }
-
-		/// <summary>
-		/// Gets whether this parameter is a C# 'ref' parameter.
-		/// </summary>
-		bool IsRef { get; }
-
-		/// <summary>
-		/// Gets whether this parameter is a C# 'out' parameter.
-		/// </summary>
-		bool IsOut { get; }
-
-		/// <summary>
-		/// Gets whether this parameter is a C# 'in' parameter.
-		/// </summary>
-		bool IsIn { get; }
 
 		/// <summary>
 		/// Gets whether this parameter is a C# 'params' parameter.

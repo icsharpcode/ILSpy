@@ -196,7 +196,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						return false;
 					if (!target.MatchLdThis())
 						return false;
-					if (method.Parameters[i].IsIn)
+					if (method.Parameters[i].ReferenceKind is ReferenceKind.In or ReferenceKind.RefReadOnly)
 					{
 						if (!valueInst.MatchLdObj(out valueInst, out _))
 							return false;
@@ -1012,11 +1012,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				var deconstruct = method.Parameters[i];
 				var ctor = primaryCtor.Parameters[i];
 
-				if (!deconstruct.IsOut)
+				if (deconstruct.ReferenceKind != ReferenceKind.Out)
 					return false;
 
 				IType ctorType = ctor.Type;
-				if (ctor.IsIn)
+				if (ctor.ReferenceKind is ReferenceKind.In or ReferenceKind.RefReadOnly)
 					ctorType = ((ByReferenceType)ctorType).ElementType;
 				if (!ctorType.Equals(((ByReferenceType)deconstruct.Type).ElementType))
 					return false;

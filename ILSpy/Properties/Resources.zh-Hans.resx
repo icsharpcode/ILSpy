@@ -399,9 +399,6 @@
   <data name="DecompilerSettings.Other" xml:space="preserve">
     <value>其他</value>
   </data>
-  <data name="DecompilerSettings.ParameterNullCheck" xml:space="preserve">
-    <value>使用方法参数非空校验</value>
-  </data>
   <data name="DecompilerSettings.PatternMatching" xml:space="preserve">
     <value>使用模式匹配表达式</value>
   </data>

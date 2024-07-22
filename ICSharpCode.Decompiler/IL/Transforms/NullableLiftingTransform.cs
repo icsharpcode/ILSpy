@@ -85,6 +85,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
+		/// <summary>
+		/// VS2022.10 / Roslyn 4.10.0 adds an optimization that turns
+		/// a == 42 into a.GetValueOrDefault() == 42 without any HasValue check.
+		/// </summary>
+		public void Run(Comp comp)
+		{
+			if (!comp.IsLifted && comp.Kind.IsEqualityOrInequality())
+			{
+				var left = comp.Left;
+				var right = comp.Right;
+				if (MatchGetValueOrDefault(left, out ILInstruction arg)
+					&& right.MatchLdcI(out var value) && value != 0)
+				{
+					context.Step("comp(a.GetValueOrDefault() == const) -> comp.lifted(a == const)", comp);
+					comp.LiftingKind = ComparisonLiftingKind.CSharp;
+					comp.Left = new LdObj(arg, ((Call)left).Method.DeclaringType);
+				}
+				else if (MatchGetValueOrDefault(right, out arg)
+					&& left.MatchLdcI(out value) && value != 0)
+				{
+					context.Step("comp(const == a.GetValueOrDefault()) -> comp.lifted(const == a)", comp);
+					comp.LiftingKind = ComparisonLiftingKind.CSharp;
+					comp.Right = new LdObj(arg, ((Call)right).Method.DeclaringType);
+				}
+			}
+		}
+
 		public bool RunStatements(Block block, int pos)
 		{
 			// e.g.:
@@ -198,14 +225,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return LiftCSharpEqualityComparison(comp, ComparisonKind.Inequality, trueInst)
 							?? LiftCSharpUserEqualityComparison(comp, ComparisonKind.Inequality, trueInst);
 					}
-					else if (IsGenericNewPattern(comp.Left, comp.Right, trueInst, falseInst))
+					else if (!comp.IsLifted && IsGenericNewPattern(comp.Left, comp.Right, trueInst, falseInst))
 					{
 						// (default(T) == null) ? Activator.CreateInstance<T>() : default(T)
 						// => Activator.CreateInstance<T>()
 						return trueInst;
 					}
 				}
-				else
+				else if (!comp.IsLifted)
 				{
 					// Not (in)equality, but one of < <= > >=.
 					// Returns false unless all HasValue bits are true.
@@ -374,11 +401,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			result = default(CompOrDecimal);
 			result.Instruction = inst;
-			if (inst is Comp comp && !comp.IsLifted)
+			if (inst is Comp comp)
 			{
 				result.Kind = comp.Kind;
 				result.Left = comp.Left;
 				result.Right = comp.Right;
+				result.IsLifted = comp.IsLifted;
 				return true;
 			}
 			else if (inst is Call call && call.Method.IsOperator && call.Arguments.Count == 2 && !call.IsLifted)
@@ -422,6 +450,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			public ComparisonKind Kind;
 			public ILInstruction Left;
 			public ILInstruction Right;
+			public bool IsLifted;
 
 			public IType LeftExpectedType {
 				get {
@@ -501,6 +530,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// The HasValue comparison must be the same operator as the Value comparison.
 			if (hasValueTest is Comp hasValueComp)
 			{
+				if (valueComp.IsLifted || hasValueComp.IsLifted)
+					return null;
 				// Comparing two nullables: HasValue comparison must be the same operator as the Value comparison
 				if ((hasValueTestNegated ? hasValueComp.Kind.Negate() : hasValueComp.Kind) != newComparisonKind)
 					return null;
@@ -549,6 +580,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		ILInstruction LiftCSharpComparison(CompOrDecimal comp, ComparisonKind newComparisonKind)
 		{
+			if (comp.IsLifted)
+			{
+				// Happens when legacy csc generates 'num.GetValueOrDefault() == const && num.HasValue',
+				// checking HasValue is redundant here, modern Roslyn versions optimize it and our
+				// NullableLifting transform on Comp will already lift the lhs of the logic.and.
+				// Treat this case as if the transform had not undone the optimization yet.
+				if (nullableVars.Count != 1)
+				{
+					return null;
+				}
+
+				if (comp.Left.MatchLdLoc(nullableVars[0]) || comp.Right.MatchLdLoc(nullableVars[0]))
+				{
+					return comp.MakeLifted(newComparisonKind, comp.Left.Clone(), comp.Right.Clone());
+				}
+
+				return null;
+			}
 			var (left, right, bits) = DoLiftBinary(comp.Left, comp.Right, comp.LeftExpectedType, comp.RightExpectedType);
 			// due to the restrictions on side effects, we only allow instructions that are pure after lifting.
 			// (we can't check this before lifting due to the calls to GetValueOrDefault())
@@ -584,7 +633,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			//         call op_Inequality(call GetValueOrDefault(ldloca nullable1), call GetValueOrDefault(ldloca nullable2))
 			//      else
 			//         ldc.i4 0
-
+			if (hasValueComp.IsLifted)
+				return null;
 			if (!MatchHasValueCall(hasValueComp.Left, out ILVariable nullable1))
 				return null;
 			if (!MatchHasValueCall(hasValueComp.Right, out ILVariable nullable2))

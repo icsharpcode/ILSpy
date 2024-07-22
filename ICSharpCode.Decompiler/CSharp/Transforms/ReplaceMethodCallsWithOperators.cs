@@ -274,12 +274,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			foreach (var arg in arguments)
 			{
-				if (arg.GetResolveResult() is InvocationResolveResult rr && IsStringConcat(rr.Member))
+				var rr = arg.GetResolveResult();
+				if (rr is InvocationResolveResult irr && IsStringConcat(irr.Member))
 				{
 					// Roslyn + mcs also flatten nested string.Concat() invocations within a operator+ use,
 					// which causes it to use the incorrect evaluation order despite the code using an
 					// explicit string.Concat() call.
 					// This problem is avoided if the outer call remains string.Concat() as well.
+					return false;
+				}
+				if (rr.Type.IsByRefLike)
+				{
+					// ref structs cannot be converted to object for use with +
 					return false;
 				}
 			}

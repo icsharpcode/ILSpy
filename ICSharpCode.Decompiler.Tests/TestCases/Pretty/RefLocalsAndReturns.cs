@@ -320,5 +320,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			LastOrDefault() = 10000;
 			Console.WriteLine(ElementAtOrDefault(-5));
 		}
+
+#if CS120
+		public ref readonly int M(in int x)
+		{
+			return ref x;
+		}
+
+		public ref readonly int M2(ref readonly int x)
+		{
+			return ref x;
+		}
+
+		public void Test()
+		{
+			int x = 32;
+			M(in x);
+			M2(in x);
+		}
+#endif
 	}
 }

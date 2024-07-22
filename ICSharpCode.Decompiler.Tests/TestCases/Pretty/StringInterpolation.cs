@@ -117,5 +117,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void RequiresCast(IFormattable value)
 		{
 		}
+
+		public string ConcatStringCharSC(string s, char c)
+		{
+			return s + c;
+		}
+
+		public string ConcatStringCharCS(string s, char c)
+		{
+			return c + s;
+		}
+
+		public string ConcatStringCharSCS(string s, char c)
+		{
+			return s + c + s;
+		}
+
+		public string ConcatStringCharCSS(string s, char c)
+		{
+			return c + s + s;
+		}
+
+		public string ConcatStringCharCSSC(string s, char c)
+		{
+			return c + s + s + c;
+		}
 	}
 }

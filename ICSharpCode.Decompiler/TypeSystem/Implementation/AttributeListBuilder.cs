@@ -255,6 +255,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						case "ScopedRefAttribute":
 							return (options & TypeSystemOptions.ScopedRef) != 0
 								&& (target == SymbolKind.Parameter);
+						case "RequiresLocationAttribute":
+							return (options & TypeSystemOptions.RefReadOnlyParameters) != 0
+								&& (target == SymbolKind.Parameter);
 						default:
 							return false;
 					}

@@ -135,7 +135,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				{
 					if ((ConversionFlags & ConversionFlags.ShowParameterModifiers) == 0)
 					{
-						param.ParameterModifier = ParameterModifier.None;
+						param.ParameterModifier = ReferenceKind.None;
+						param.IsScopedRef = false;
+						param.IsParams = false;
 					}
 					if ((ConversionFlags & ConversionFlags.ShowParameterDefaultValues) == 0)
 					{

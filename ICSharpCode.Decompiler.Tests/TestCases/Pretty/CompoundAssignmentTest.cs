@@ -4719,12 +4719,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 
-		private static void StringPropertyCompoundAssign()
+		private static void StringPropertyCompoundAssign(char c)
 		{
 			StaticStringProperty += "a";
 			StaticStringProperty += 1;
+			StaticStringProperty += c;
 			new CustomClass().StringProp += "a";
 			new CustomClass().StringProp += 1;
+			new CustomClass().StringProp += c;
 		}
 
 		public uint PreIncrementIndexer(string name)
