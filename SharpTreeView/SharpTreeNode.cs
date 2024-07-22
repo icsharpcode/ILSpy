@@ -22,9 +22,8 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Windows;
-using System.Windows.Input;
-using System.Windows.Media;
+
+using ICSharpCode.TreeView.PlatformAbstractions;
 
 namespace ICSharpCode.TreeView
 {
@@ -584,7 +583,7 @@ namespace ICSharpCode.TreeView
 			throw new NotSupportedException(GetType().Name + " does not support deletion");
 		}
 
-		public virtual IDataObject Copy(SharpTreeNode[] nodes)
+		public virtual IPlatformDataObject Copy(SharpTreeNode[] nodes)
 		{
 			throw new NotSupportedException(GetType().Name + " does not support copy/paste or drag'n'drop");
 		}
@@ -614,25 +613,26 @@ namespace ICSharpCode.TreeView
 			return false;
 		}
 
-		public virtual void StartDrag(DependencyObject dragSource, SharpTreeNode[] nodes)
+		public virtual void StartDrag(object dragSource, SharpTreeNode[] nodes, IPlatformDragDrop dragdropManager)
 		{
-			DragDropEffects effects = DragDropEffects.All;
+			XPlatDragDropEffects effects = XPlatDragDropEffects.All;
 			if (!nodes.All(n => n.CanDelete()))
-				effects &= ~DragDropEffects.Move;
-			DragDropEffects result = DragDrop.DoDragDrop(dragSource, Copy(nodes), effects);
-			if (result == DragDropEffects.Move)
+				effects &= ~XPlatDragDropEffects.Move;
+
+			XPlatDragDropEffects result = dragdropManager.DoDragDrop(dragSource, Copy(nodes), effects);
+			if (result == XPlatDragDropEffects.Move)
 			{
 				foreach (SharpTreeNode node in nodes)
 					node.DeleteCore();
 			}
 		}
 
-		public virtual bool CanDrop(DragEventArgs e, int index)
+		public virtual bool CanDrop(IPlatformDragEventArgs e, int index)
 		{
 			return false;
 		}
 
-		internal void InternalDrop(DragEventArgs e, int index)
+		internal void InternalDrop(IPlatformDragEventArgs e, int index)
 		{
 			if (LazyLoading)
 			{
@@ -643,7 +643,7 @@ namespace ICSharpCode.TreeView
 			Drop(e, index);
 		}
 
-		public virtual void Drop(DragEventArgs e, int index)
+		public virtual void Drop(IPlatformDragEventArgs e, int index)
 		{
 			throw new NotSupportedException(GetType().Name + " does not support Drop()");
 		}
@@ -703,14 +703,14 @@ namespace ICSharpCode.TreeView
 		/// <summary>
 		/// Gets called when the item is double-clicked.
 		/// </summary>
-		public virtual void ActivateItem(RoutedEventArgs e)
+		public virtual void ActivateItem(IPlatformRoutedEventArgs e)
 		{
 		}
 
 		/// <summary>
 		/// Gets called when the item is clicked with the middle mouse button.
 		/// </summary>
-		public virtual void ActivateItemSecondary(RoutedEventArgs e)
+		public virtual void ActivateItemSecondary(IPlatformRoutedEventArgs e)
 		{
 		}
 

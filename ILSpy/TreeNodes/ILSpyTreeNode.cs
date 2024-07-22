@@ -31,6 +31,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpyX.Abstractions;
 using ICSharpCode.TreeView;
+using ICSharpCode.TreeView.PlatformAbstractions;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -77,7 +78,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return false;
 		}
 
-		public override void ActivateItemSecondary(RoutedEventArgs e)
+		public override void ActivateItemSecondary(IPlatformRoutedEventArgs e)
 		{
 			MainWindow.Instance.SelectNode(this, inNewTabPage: true);
 			MainWindow.Instance.Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)MainWindow.Instance.RefreshDecompiledView);

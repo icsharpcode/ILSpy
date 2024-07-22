@@ -22,6 +22,7 @@ using System.Windows.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.TreeView.PlatformAbstractions;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -66,7 +67,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		public override void ActivateItem(System.Windows.RoutedEventArgs e)
+		public override void ActivateItem(IPlatformRoutedEventArgs e)
 		{
 			if (parentAssembly.Parent is AssemblyListTreeNode assemblyListNode)
 			{

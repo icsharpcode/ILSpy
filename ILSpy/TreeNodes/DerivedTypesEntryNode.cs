@@ -26,6 +26,7 @@ using ICSharpCode.ILSpyX;
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	using ICSharpCode.Decompiler.TypeSystem;
+	using ICSharpCode.TreeView.PlatformAbstractions;
 
 	class DerivedTypesEntryNode : ILSpyTreeNode, IMemberTreeNode
 	{
@@ -89,7 +90,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return DerivedTypesTreeNode.FindDerivedTypes(list, type, ct);
 		}
 
-		public override void ActivateItem(System.Windows.RoutedEventArgs e)
+		public override void ActivateItem(IPlatformRoutedEventArgs e)
 		{
 			e.Handled = BaseTypesEntryNode.ActivateItem(this, type);
 		}

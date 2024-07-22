@@ -22,6 +22,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
+using ICSharpCode.TreeView.PlatformAbstractions.WpfWindows;
+
 namespace ICSharpCode.TreeView
 {
 	public class SharpTreeViewItem : ListViewItem
@@ -103,7 +105,7 @@ namespace ICSharpCode.TreeView
 					var selection = ParentTreeView.GetTopLevelSelection().ToArray();
 					if (Node.CanDrag(selection))
 					{
-						Node.StartDrag(this, selection);
+						Node.StartDrag(this, selection, new WpfWindowsDragDropManager());
 					}
 				}
 			}
@@ -114,7 +116,7 @@ namespace ICSharpCode.TreeView
 			if (wasDoubleClick)
 			{
 				wasDoubleClick = false;
-				Node.ActivateItem(e);
+				Node.ActivateItem(new WpfWindowsRoutedEventArgs(e));
 				if (!e.Handled)
 				{
 					if (!Node.IsRoot || ParentTreeView.ShowRootExpander)
@@ -135,7 +137,7 @@ namespace ICSharpCode.TreeView
 		{
 			if (e.ChangedButton == MouseButton.Middle)
 			{
-				Node.ActivateItemSecondary(e);
+				Node.ActivateItemSecondary(new WpfWindowsRoutedEventArgs(e));
 			}
 			else
 			{

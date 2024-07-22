@@ -27,6 +27,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.TreeView;
+using ICSharpCode.TreeView.PlatformAbstractions;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -81,21 +82,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			};
 		}
 
-		public override bool CanDrop(DragEventArgs e, int index)
+		public override bool CanDrop(IPlatformDragEventArgs e, int index)
 		{
-			e.Effects = DragDropEffects.Move | DragDropEffects.Copy | DragDropEffects.Link;
+			e.Effects = XPlatDragDropEffects.Move | XPlatDragDropEffects.Copy | XPlatDragDropEffects.Link;
 			if (e.Data.GetDataPresent(AssemblyTreeNode.DataFormat))
 				return true;
 			else if (e.Data.GetDataPresent(DataFormats.FileDrop))
 				return true;
 			else
 			{
-				e.Effects = DragDropEffects.None;
+				e.Effects = XPlatDragDropEffects.None;
 				return false;
 			}
 		}
 
-		public override void Drop(DragEventArgs e, int index)
+		public override void Drop(IPlatformDragEventArgs e, int index)
 		{
 			string[] files = e.Data.GetData(AssemblyTreeNode.DataFormat) as string[];
 			if (files == null)

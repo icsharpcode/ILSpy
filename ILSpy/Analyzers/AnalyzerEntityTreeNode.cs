@@ -23,6 +23,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.TreeView;
+using ICSharpCode.TreeView.PlatformAbstractions;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
@@ -33,7 +34,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 	{
 		public abstract IEntity Member { get; }
 
-		public override void ActivateItem(System.Windows.RoutedEventArgs e)
+		public override void ActivateItem(IPlatformRoutedEventArgs e)
 		{
 			e.Handled = true;
 			if (this.Member == null || this.Member.MetadataToken.IsNil)
