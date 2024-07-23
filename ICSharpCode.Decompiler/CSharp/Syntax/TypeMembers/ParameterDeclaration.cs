@@ -164,26 +164,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		bool hasNullCheck;
-
-		public CSharpTokenNode DoubleExclamationToken {
-			get {
-				if (hasNullCheck)
-				{
-					return GetChildByRole(Roles.DoubleExclamation);
-				}
-				return CSharpTokenNode.Null;
-			}
-		}
-
-		public bool HasNullCheck {
-			get { return hasNullCheck; }
-			set {
-				ThrowIfFrozen();
-				hasNullCheck = value;
-			}
-		}
-
 		public CSharpTokenNode AssignToken {
 			get { return GetChildByRole(Roles.Assign); }
 		}
@@ -213,7 +193,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			var o = other as ParameterDeclaration;
 			return o != null && this.Attributes.DoMatch(o.Attributes, match) && this.ParameterModifier == o.ParameterModifier
 				&& this.Type.DoMatch(o.Type, match) && MatchString(this.Name, o.Name)
-				&& this.HasNullCheck == o.HasNullCheck
 				&& this.DefaultExpression.DoMatch(o.DefaultExpression, match);
 		}
 
