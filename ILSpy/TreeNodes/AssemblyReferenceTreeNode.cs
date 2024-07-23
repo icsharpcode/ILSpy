@@ -24,6 +24,8 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.TreeView.PlatformAbstractions;
 
+using TomsToolbox.Wpf.Controls;
+
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
@@ -49,7 +51,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			get { return Language.EscapeName(r.Name) + GetSuffixString(r.Handle); }
 		}
 
-		public override object Icon => Images.Assembly;
+		public override object Icon => ImagesProvider.Assembly;
 
 		public override bool ShowExpander {
 			get {

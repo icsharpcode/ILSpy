@@ -34,6 +34,7 @@ using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpyX.Analyzers;
 using ICSharpCode.ILSpyX.Settings;
+using ICSharpCode.TreeView;
 
 using Medo.Application;
 
@@ -74,6 +75,8 @@ namespace ICSharpCode.ILSpy
 				SingleInstance.Attach();  // will auto-exit for second instance
 				SingleInstance.NewInstanceDetected += SingleInstance_NewInstanceDetected;
 			}
+
+			SharpTreeNode.ImagesProvider = new WpfWindowsTreeNodeImagesProvider();
 
 			InitializeComponent();
 
