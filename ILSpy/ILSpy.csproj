@@ -84,9 +84,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EleCho.WpfSuite\EleCho.WpfSuite.csproj" />
     <ProjectReference Include="..\ICSharpCode.ILSpyX\ICSharpCode.ILSpyX.csproj" />
     <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
+    <ProjectReference Include="..\LibScrollingOptimization\LibScrollingOptimization.csproj" />
     <ProjectReference Include="..\SharpTreeView\ICSharpCode.TreeView.csproj" />
   </ItemGroup>
 

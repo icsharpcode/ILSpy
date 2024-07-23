@@ -7,12 +7,16 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
-			 xmlns:ws="https://schemas.elecho.dev/wpfsuite"
+			 xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
+			 xmlns:scroll="clr-namespace:LibScrollingOptimization;assembly=LibScrollingOptimization"
              d:DataContext="{d:DesignInstance local:DisplaySettingsViewModel}">
     <UserControl.Resources>
         <local:FontSizeConverter x:Key="fontSizeConv" />
     </UserControl.Resources>
-    <ws:ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+		<behaviors:Interaction.Behaviors>
+			<scroll:SmoothScrollingBehavior/>
+		</behaviors:Interaction.Behaviors>
         <StackPanel Orientation="Vertical">
             <DockPanel>
                 <Label DockPanel.Dock="Left" Content="{x:Static properties:Resources.DisplaySettingsPanel_Theme}" />
@@ -106,5 +110,5 @@
                 </StackPanel>
             </GroupBox>
         </StackPanel>
-    </ws:ScrollViewer>
+    </ScrollViewer>
 </UserControl>

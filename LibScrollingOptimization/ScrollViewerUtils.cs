@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 
-namespace EleCho.WpfSuite
+namespace LibScrollingOptimization
 {
 	/// <summary>
 	/// ScrollViewer Utilities

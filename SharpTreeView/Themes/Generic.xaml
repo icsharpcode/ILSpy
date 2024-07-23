@@ -86,15 +86,15 @@
                             BorderThickness="1"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
                             Padding="0 1 2 0">
-                        <ws:ScrollViewer Name="PART_ContentHost" />
+                        <ScrollViewer Name="PART_ContentHost" />
                     </Border>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
-    
-    <Style TargetType="{x:Type Default:SharpTreeView}"
-           BasedOn="{StaticResource {x:Type ws:ListView}}">
+
+	<Style TargetType="{x:Type Default:SharpTreeView}"
+           BasedOn="{StaticResource {x:Static styles:ResourceKeys.ListBoxStyle}}">
 		<Setter Property="Background" Value="Transparent"/>
 		<Style.Triggers>
             <Trigger Property="ShowRoot"

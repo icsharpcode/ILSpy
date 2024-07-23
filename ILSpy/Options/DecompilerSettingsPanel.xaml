@@ -4,7 +4,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
              xmlns:options="clr-namespace:ICSharpCode.ILSpy.Options"
-             xmlns:ws="https://schemas.elecho.dev/wpfsuite">
+			 xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
+			 xmlns:scroll="clr-namespace:LibScrollingOptimization;assembly=LibScrollingOptimization">
     <UserControl.Resources>
         <CollectionViewSource x:Key="SettingsCollection" Source="{Binding Settings}">
             <CollectionViewSource.GroupDescriptions>
@@ -21,18 +22,21 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <TextBlock Margin="3" Grid.ColumnSpan="3" TextWrapping="Wrap" Text="{x:Static properties:Resources.DecompilerSettingsPanelLongText}" />
-        <ws:ListBox Grid.Row="1" 
+        <ListBox Grid.Row="1" 
 					ItemsSource="{Binding Source={StaticResource SettingsCollection}}"
 					Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
 					BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
 					Padding="-1">
-            <ws:ListBox.ItemContainerStyle>
+			<behaviors:Interaction.Behaviors>
+				<scroll:SmoothScrollingBehavior/>
+			</behaviors:Interaction.Behaviors>
+            <ListBox.ItemContainerStyle>
                 <Style TargetType="ListBoxItem">
                     <Setter Property="IsTabStop" Value="False"/>
                     <Setter Property="Focusable" Value="False"/>
                 </Style>
-            </ws:ListBox.ItemContainerStyle>
-            <ws:ListBox.GroupStyle>
+            </ListBox.ItemContainerStyle>
+            <ListBox.GroupStyle>
                 <GroupStyle>
                     <GroupStyle.Panel>
                         <ItemsPanelTemplate>
@@ -57,12 +61,12 @@
                         </Style>
                     </GroupStyle.ContainerStyle>
                 </GroupStyle>
-            </ws:ListBox.GroupStyle>
+            </ListBox.GroupStyle>
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <CheckBox Margin="19,0,0,0" IsChecked="{Binding IsEnabled}" Content="{Binding Description}" />
                 </DataTemplate>
             </ListBox.ItemTemplate>
-        </ws:ListBox>
+        </ListBox>
     </Grid>
 </UserControl>

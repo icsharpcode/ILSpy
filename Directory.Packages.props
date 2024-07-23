@@ -30,7 +30,7 @@
     <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="8.0.0" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
     <PackageVersion Include="Microsoft.VisualStudio.Composition" Version="17.10.37" />
-    <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
+    <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.122" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.5" />
     <PackageVersion Include="NaturalSort.Extension" Version="4.3.0" />
     <PackageVersion Include="NSubstitute" Version="5.1.0" />
@@ -46,6 +46,7 @@
     <PackageVersion Include="System.Reflection.Metadata" Version="8.0.0" />
     <PackageVersion Include="System.Resources.Extensions" Version="8.0.0" />
     <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
+    <PackageVersion Include="TomsToolbox.Wpf" Version="2.15.0" />
     <PackageVersion Include="TomsToolbox.Wpf.Styles" Version="2.14.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.2" />
   </ItemGroup>

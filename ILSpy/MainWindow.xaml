@@ -21,6 +21,8 @@
 	xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
 	xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
 	xmlns:toms="urn:TomsToolbox"
+	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
+	xmlns:scroll="clr-namespace:LibScrollingOptimization;assembly=LibScrollingOptimization"
 	d:DataContext="{d:DesignInstance local:MainWindowViewModel}"
 >
 	<Window.Resources>
@@ -34,6 +36,9 @@
 				AllowDropOrder="True"
 				AllowDrop="True"
 				BorderThickness="0" Visibility="Visible">
+			<behaviors:Interaction.Behaviors>
+				<scroll:SmoothScrollingBehavior/>
+			</behaviors:Interaction.Behaviors>
 			<tv:SharpTreeView.ItemContainerStyle>
 				<Style TargetType="tv:SharpTreeViewItem">
 

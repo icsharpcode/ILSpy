@@ -30,7 +30,7 @@ using System.Windows.Threading;
 
 namespace ICSharpCode.TreeView
 {
-	public class SharpTreeView : EleCho.WpfSuite.ListView
+	public class SharpTreeView : ListView
 	{
 		static SharpTreeView()
 		{

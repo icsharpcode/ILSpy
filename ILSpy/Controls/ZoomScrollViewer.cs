@@ -30,7 +30,7 @@ using System.Windows.Media;
 
 namespace ICSharpCode.ILSpy.Controls
 {
-	public class ZoomScrollViewer : EleCho.WpfSuite.ScrollViewer
+	public class ZoomScrollViewer : ScrollViewer
 	{
 		static ZoomScrollViewer()
 		{
@@ -108,7 +108,7 @@ namespace ICSharpCode.ILSpy.Controls
 				z.ComputedZoomButtonCollapsed = (z.AlwaysShowZoomButtons == false) && (z.CurrentZoom == 1.0);
 		}
 
-		protected override void OnMouseWheel(MouseWheelEventArgs e)
+		protected override void OnPreviewMouseWheel(MouseWheelEventArgs e)
 		{
 			if (!e.Handled && Keyboard.Modifiers == ModifierKeys.Control && MouseWheelZoom)
 			{
@@ -165,7 +165,8 @@ namespace ICSharpCode.ILSpy.Controls
 
 				e.Handled = true;
 			}
-			base.OnMouseWheel(e);
+
+			base.OnPreviewMouseWheel(e);
 		}
 
 		internal static double RoundToOneIfClose(double val)
