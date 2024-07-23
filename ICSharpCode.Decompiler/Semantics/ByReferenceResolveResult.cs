@@ -30,9 +30,6 @@ namespace ICSharpCode.Decompiler.Semantics
 	public class ByReferenceResolveResult : ResolveResult
 	{
 		public ReferenceKind ReferenceKind { get; }
-		public bool IsOut => ReferenceKind == ReferenceKind.Out;
-		public bool IsRef => ReferenceKind == ReferenceKind.Ref;
-		public bool IsIn => ReferenceKind == ReferenceKind.In;
 
 		public readonly ResolveResult ElementResult;
 

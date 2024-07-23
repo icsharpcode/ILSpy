@@ -17,7 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Linq;
+using System.Reflection;
 
 namespace ICSharpCode.ILSpyX.Analyzers
 {
@@ -31,5 +34,16 @@ namespace ICSharpCode.ILSpyX.Analyzers
 		public required string Header { get; init; }
 
 		public int Order { get; set; }
+
+		public static IEnumerable<(ExportAnalyzerAttribute AttributeData, Type AnalyzerType)> GetAnnotatedAnalyzers()
+		{
+			foreach (var type in typeof(ExportAnalyzerAttribute).Assembly.GetTypes())
+			{
+				if (type.GetCustomAttribute(typeof(ExportAnalyzerAttribute), false) is ExportAnalyzerAttribute exportAnalyzerAttribute)
+				{
+					yield return (exportAnalyzerAttribute, type);
+				}
+			}
+		}
 	}
 }

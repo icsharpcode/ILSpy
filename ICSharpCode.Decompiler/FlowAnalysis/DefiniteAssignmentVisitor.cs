@@ -262,7 +262,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			bool hasOutArgs = false;
 			foreach (var arg in call.Arguments)
 			{
-				if (arg.MatchLdLoca(out var v) && call.GetParameter(arg.ChildIndex)?.IsOut == true)
+				if (arg.MatchLdLoca(out var v) && call.GetParameter(arg.ChildIndex)?.ReferenceKind == ReferenceKind.Out)
 				{
 					// Visiting ldloca would require the variable to be initialized,
 					// but we don't need out arguments to be initialized.
@@ -278,7 +278,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			{
 				foreach (var arg in call.Arguments)
 				{
-					if (arg.MatchLdLoca(out var v) && call.GetParameter(arg.ChildIndex)?.IsOut == true)
+					if (arg.MatchLdLoca(out var v) && call.GetParameter(arg.ChildIndex)?.ReferenceKind == ReferenceKind.Out)
 					{
 						HandleStore(v);
 					}

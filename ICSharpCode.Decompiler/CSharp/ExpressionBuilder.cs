@@ -1799,7 +1799,17 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitUserDefinedCompoundAssign(UserDefinedCompoundAssign inst, TranslationContext context)
 		{
-			IType loadType = inst.Method.Parameters[0].Type;
+			IType loadType;
+			bool isSpanBasedStringConcat = CallBuilder.IsSpanBasedStringConcat(inst.Method);
+			if (isSpanBasedStringConcat)
+			{
+				loadType = typeSystem.FindType(KnownTypeCode.String);
+			}
+			else
+			{
+				loadType = inst.Method.Parameters[0].Type;
+			}
+
 			ExpressionWithResolveResult target;
 			if (inst.TargetKind == CompoundTargetKind.Address)
 			{
@@ -1821,11 +1831,24 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (UserDefinedCompoundAssign.IsStringConcat(inst.Method))
 			{
 				Debug.Assert(inst.Method.Parameters.Count == 2);
-				var value = Translate(inst.Value).ConvertTo(inst.Method.Parameters[1].Type, this, allowImplicitConversion: true);
-				var valueExpr = ReplaceMethodCallsWithOperators.RemoveRedundantToStringInConcat(value, inst.Method, isLastArgument: true).Detach();
+				Expression valueExpr;
+				ResolveResult valueResolveResult;
+				if (isSpanBasedStringConcat && inst.Value is NewObj { Arguments: [AddressOf addressOf] })
+				{
+					IType charType = typeSystem.FindType(KnownTypeCode.Char);
+					var value = Translate(addressOf.Value, charType).ConvertTo(charType, this);
+					valueExpr = value.Expression;
+					valueResolveResult = value.ResolveResult;
+				}
+				else
+				{
+					var value = Translate(inst.Value).ConvertTo(inst.Method.Parameters[1].Type, this, allowImplicitConversion: true);
+					valueExpr = ReplaceMethodCallsWithOperators.RemoveRedundantToStringInConcat(value, inst.Method, isLastArgument: true).Detach();
+					valueResolveResult = value.ResolveResult;
+				}
 				return new AssignmentExpression(target, AssignmentOperatorType.Add, valueExpr)
 					.WithILInstruction(inst)
-					.WithRR(new OperatorResolveResult(inst.Method.ReturnType, ExpressionType.AddAssign, inst.Method, inst.IsLifted, new[] { target.ResolveResult, value.ResolveResult }));
+					.WithRR(new OperatorResolveResult(inst.Method.ReturnType, ExpressionType.AddAssign, inst.Method, inst.IsLifted, new[] { target.ResolveResult, valueResolveResult }));
 			}
 			else if (inst.Method.Parameters.Count == 2)
 			{
@@ -2409,7 +2432,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// C# 10 lambdas can have attributes, but anonymous methods cannot
 				isLambda = true;
 			}
-			else if (settings.UseLambdaSyntax && ame.Parameters.All(p => p.ParameterModifier == ParameterModifier.None))
+			else if (settings.UseLambdaSyntax && ame.Parameters.All(p => p.ParameterModifier == ReferenceKind.None && !p.IsParams))
 			{
 				// otherwise use lambda only if an expression lambda is possible
 				isLambda = (body.Statements.Count == 1 && body.Statements.Single() is ReturnStatement);
@@ -4174,7 +4197,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			if (info.HasFlag(CSharpArgumentInfoFlags.IsOut))
 			{
-				translatedExpression = ChangeDirectionExpressionTo(translatedExpression, ReferenceKind.Out);
+				translatedExpression = ChangeDirectionExpressionTo(translatedExpression, ReferenceKind.Out, argument is AddressOf);
 			}
 			if (info.HasFlag(CSharpArgumentInfoFlags.NamedArgument) && !string.IsNullOrWhiteSpace(info.Name))
 			{
@@ -4184,11 +4207,21 @@ namespace ICSharpCode.Decompiler.CSharp
 			return translatedExpression;
 		}
 
-		internal static TranslatedExpression ChangeDirectionExpressionTo(TranslatedExpression input, ReferenceKind kind)
+		internal static TranslatedExpression ChangeDirectionExpressionTo(TranslatedExpression input, ReferenceKind kind, bool isAddressOf)
 		{
 			if (!(input.Expression is DirectionExpression dirExpr && input.ResolveResult is ByReferenceResolveResult brrr))
 				return input;
-			dirExpr.FieldDirection = (FieldDirection)kind;
+			if (isAddressOf && kind is ReferenceKind.In or ReferenceKind.RefReadOnly)
+			{
+				return input.UnwrapChild(dirExpr.Expression);
+			}
+			dirExpr.FieldDirection = kind switch {
+				ReferenceKind.Ref => FieldDirection.Ref,
+				ReferenceKind.Out => FieldDirection.Out,
+				ReferenceKind.In => FieldDirection.In,
+				ReferenceKind.RefReadOnly => FieldDirection.In,
+				_ => throw new NotSupportedException("Unsupported reference kind: " + kind)
+			};
 			dirExpr.RemoveAnnotations<ByReferenceResolveResult>();
 			if (brrr.ElementResult == null)
 				brrr = new ByReferenceResolveResult(brrr.ElementType, kind);
@@ -4448,7 +4481,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var arg = Translate(argInst, typeHint: paramType).ConvertTo(paramType, this, allowImplicitConversion: true);
 				if (paramRefKind != ReferenceKind.None)
 				{
-					arg = ChangeDirectionExpressionTo(arg, paramRefKind);
+					arg = ChangeDirectionExpressionTo(arg, paramRefKind, argInst is AddressOf);
 				}
 				invocation.Arguments.Add(arg);
 			}

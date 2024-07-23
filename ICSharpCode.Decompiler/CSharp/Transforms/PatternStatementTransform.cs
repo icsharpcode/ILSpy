@@ -1167,6 +1167,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			return base.VisitBinaryOperatorExpression(expr);
 		}
+
+		public override AstNode VisitUnaryOperatorExpression(UnaryOperatorExpression expr)
+		{
+			if (expr.Operator == UnaryOperatorType.Not && expr.Expression is BinaryOperatorExpression { Operator: BinaryOperatorType.Equality } binary)
+			{
+				binary.Operator = BinaryOperatorType.InEquality;
+				expr.ReplaceWith(binary.Detach());
+				return VisitBinaryOperatorExpression(binary);
+			}
+			return base.VisitUnaryOperatorExpression(expr);
+		}
 		#endregion
 
 		#region C# 7.3 pattern based fixed (for value types)

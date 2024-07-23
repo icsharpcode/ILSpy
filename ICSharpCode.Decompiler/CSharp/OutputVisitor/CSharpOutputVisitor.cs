@@ -1077,7 +1077,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				return true;
 			}
 			var p = lambdaExpression.Parameters.Single();
-			return !(p.Type.IsNull && p.ParameterModifier == ParameterModifier.None);
+			return !(p.Type.IsNull && p.ParameterModifier == ReferenceKind.None && !p.IsParams);
 		}
 
 		public virtual void VisitMemberReferenceExpression(MemberReferenceExpression memberReferenceExpression)
@@ -2608,6 +2608,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				WriteKeyword(ParameterDeclaration.ThisModifierRole);
 				Space();
 			}
+			if (parameterDeclaration.IsParams)
+			{
+				WriteKeyword(ParameterDeclaration.ParamsModifierRole);
+				Space();
+			}
 			if (parameterDeclaration.IsScopedRef)
 			{
 				WriteKeyword(ParameterDeclaration.ScopedRefRole);
@@ -2615,19 +2620,20 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			switch (parameterDeclaration.ParameterModifier)
 			{
-				case ParameterModifier.Ref:
+				case ReferenceKind.Ref:
 					WriteKeyword(ParameterDeclaration.RefModifierRole);
 					Space();
 					break;
-				case ParameterModifier.Out:
+				case ReferenceKind.RefReadOnly:
+					WriteKeyword(ParameterDeclaration.RefModifierRole);
+					WriteKeyword(ParameterDeclaration.ReadonlyModifierRole);
+					Space();
+					break;
+				case ReferenceKind.Out:
 					WriteKeyword(ParameterDeclaration.OutModifierRole);
 					Space();
 					break;
-				case ParameterModifier.Params:
-					WriteKeyword(ParameterDeclaration.ParamsModifierRole);
-					Space();
-					break;
-				case ParameterModifier.In:
+				case ReferenceKind.In:
 					WriteKeyword(ParameterDeclaration.InModifierRole);
 					Space();
 					break;

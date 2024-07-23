@@ -267,7 +267,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			for (int i = firstOutParam; i < method.Parameters.Count; i++)
 			{
-				if (!method.Parameters[i].IsOut)
+				if (method.Parameters[i].ReferenceKind != ReferenceKind.Out)
 					return false;
 			}
 

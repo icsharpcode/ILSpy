@@ -97,7 +97,6 @@
     <Compile Include="DecompilationProgress.cs" />
     <Compile Include="Disassembler\IEntityProcessor.cs" />
     <Compile Include="Disassembler\SortByNameProcessor.cs" />
-    <Compile Include="IL\ApplyPdbLocalTypeInfoTypeVisitor.cs" />
     <Compile Include="Metadata\MetadataFile.cs" />
     <Compile Include="Metadata\ModuleReferenceMetadata.cs" />
     <Compile Include="NRTAttributes.cs" />
@@ -135,7 +134,6 @@
     <Compile Include="IL\Transforms\InterpolatedStringTransform.cs" />
     <Compile Include="IL\Transforms\IntroduceNativeIntTypeOnLocals.cs" />
     <Compile Include="IL\Transforms\LdLocaDupInitObjTransform.cs" />
-    <Compile Include="IL\Transforms\ParameterNullCheckTransform.cs" />
     <Compile Include="IL\Transforms\PatternMatchingTransform.cs" />
     <Compile Include="IL\Transforms\RemoveInfeasiblePathTransform.cs" />
     <Compile Include="Instrumentation\DecompilerEventSource.cs" />
@@ -336,7 +334,6 @@
     <Compile Include="DecompilerException.cs" />
     <Compile Include="DecompilerSettings.cs" />
     <Compile Include="CSharp\Transforms\ContextTrackingVisitor.cs" />
-    <Compile Include="CSharp\Transforms\DecimalConstantTransform.cs" />
     <Compile Include="CSharp\Transforms\DeclareVariables.cs" />
     <Compile Include="CSharp\Transforms\EscapeInvalidIdentifiers.cs" />
     <Compile Include="CSharp\Transforms\FixNameCollisions.cs" />

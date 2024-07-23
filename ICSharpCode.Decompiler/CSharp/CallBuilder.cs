@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				ResolveResult GetResolveResult(int index, TranslatedExpression expression)
 				{
 					var param = expectedParameters[index];
-					if (useImplicitlyTypedOut && param.IsOut && expression.Type is ByReferenceType brt)
+					if (useImplicitlyTypedOut && param.ReferenceKind == ReferenceKind.Out && expression.Type is ByReferenceType brt)
 						return new OutVarResolveResult(brt.ElementType);
 					return expression.ResolveResult;
 				}
@@ -134,8 +134,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					if (!useImplicitlyTypedOut)
 						return expression;
-					if (expression.GetResolveResult() is ByReferenceResolveResult brrr
-						&& brrr.IsOut)
+					if (expression.GetResolveResult() is ByReferenceResolveResult { ReferenceKind: ReferenceKind.Out } brrr)
 					{
 						expression.AddAnnotation(UseImplicitlyTypedOutAnnotation.Instance);
 					}
@@ -224,8 +223,92 @@ namespace ICSharpCode.Decompiler.CSharp
 					valueTupleAssembly: inst.Method.DeclaringType.GetDefinition()?.ParentModule
 				)).WithILInstruction(inst);
 			}
+			if (settings.StringConcat && IsSpanBasedStringConcat(inst, out var operands))
+			{
+				return BuildStringConcat(inst.Method, operands).WithILInstruction(inst);
+			}
 			return Build(inst.OpCode, inst.Method, inst.Arguments, constrainedTo: inst.ConstrainedTo)
 				.WithILInstruction(inst);
+		}
+
+		private ExpressionWithResolveResult BuildStringConcat(IMethod method, List<(ILInstruction Instruction, KnownTypeCode TypeCode)> operands)
+		{
+			IType type = typeSystem.FindType(operands[0].TypeCode);
+			ExpressionWithResolveResult result = expressionBuilder.Translate(operands[0].Instruction, type).ConvertTo(type, expressionBuilder);
+			var rr = new MemberResolveResult(null, method);
+
+			for (int i = 1; i < operands.Count; i++)
+			{
+				type = typeSystem.FindType(operands[i].TypeCode);
+				var expr = expressionBuilder.Translate(operands[i].Instruction, type).ConvertTo(type, expressionBuilder);
+				result = new BinaryOperatorExpression(result.Expression, BinaryOperatorType.Add, expr).WithRR(rr);
+			}
+
+			return result;
+		}
+
+		static bool IsSpanBasedStringConcat(CallInstruction call, out List<(ILInstruction, KnownTypeCode)> operands)
+		{
+			operands = null;
+
+			if (!IsSpanBasedStringConcat(call.Method))
+			{
+				return false;
+			}
+
+			int? firstStringArgumentIndex = null;
+			operands = new();
+
+			foreach (var arg in call.Arguments)
+			{
+				if (arg is Call opImplicit && IsStringToReadOnlySpanCharImplicitConversion(opImplicit.Method))
+				{
+					firstStringArgumentIndex ??= arg.ChildIndex;
+					operands.Add((opImplicit.Arguments.Single(), KnownTypeCode.String));
+				}
+				else if (arg is NewObj { Arguments: [AddressOf addressOf] } newObj && ILInlining.IsReadOnlySpanCharCtor(newObj.Method))
+				{
+					operands.Add((addressOf.Value, KnownTypeCode.Char));
+				}
+				else
+				{
+					return false;
+				}
+			}
+
+			return call.Arguments.Count >= 2 && firstStringArgumentIndex <= 1;
+		}
+
+		internal static bool IsSpanBasedStringConcat(IMethod method)
+		{
+			if (method is not { Name: "Concat", IsStatic: true })
+			{
+				return false;
+			}
+			if (!method.DeclaringType.IsKnownType(KnownTypeCode.String))
+			{
+				return false;
+			}
+
+			foreach (var p in method.Parameters)
+			{
+				if (!p.Type.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
+					return false;
+				if (!p.Type.TypeArguments[0].IsKnownType(KnownTypeCode.Char))
+					return false;
+			}
+
+			return true;
+		}
+
+		internal static bool IsStringToReadOnlySpanCharImplicitConversion(IMethod method)
+		{
+			return method.IsOperator
+				&& method.Name == "op_Implicit"
+				&& method.Parameters.Count == 1
+				&& method.ReturnType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT)
+				&& method.ReturnType.TypeArguments[0].IsKnownType(KnownTypeCode.Char)
+				&& method.Parameters[0].Type.IsKnownType(KnownTypeCode.String);
 		}
 
 		public ExpressionWithResolveResult Build(OpCode callOpCode, IMethod method,
@@ -345,69 +428,11 @@ namespace ICSharpCode.Decompiler.CSharp
 						argumentList.GetArgumentResolveResults(), isExpandedForm: argumentList.IsExpandedForm, isDelegateInvocation: true));
 			}
 
-			if (settings.StringInterpolation && IsInterpolatedStringCreation(method, argumentList) &&
-				TryGetStringInterpolationTokens(argumentList, out string format, out var tokens))
+			if (settings.StringInterpolation && IsInterpolatedStringCreation(method, argumentList))
 			{
-				var arguments = argumentList.Arguments;
-				var content = new List<InterpolatedStringContent>();
-
-				bool unpackSingleElementArray = !argumentList.IsExpandedForm && argumentList.Length == 2
-					&& argumentList.Arguments[1].Expression is ArrayCreateExpression ace
-					&& ace.Initializer?.Elements.Count == 1;
-
-				void UnpackSingleElementArray(ref TranslatedExpression argument)
-				{
-					if (!unpackSingleElementArray)
-						return;
-					var arrayCreation = (ArrayCreateExpression)argumentList.Arguments[1].Expression;
-					var arrayCreationRR = (ArrayCreateResolveResult)argumentList.Arguments[1].ResolveResult;
-					var element = arrayCreation.Initializer.Elements.First().Detach();
-					argument = new TranslatedExpression(element, arrayCreationRR.InitializerElements.First());
-				}
-
-				if (tokens.Count > 0)
-				{
-					foreach (var (kind, index, alignment, text) in tokens)
-					{
-						TranslatedExpression argument;
-						switch (kind)
-						{
-							case TokenKind.String:
-								content.Add(new InterpolatedStringText(text));
-								break;
-							case TokenKind.Argument:
-								argument = arguments[index + 1];
-								UnpackSingleElementArray(ref argument);
-								content.Add(new Interpolation(argument));
-								break;
-							case TokenKind.ArgumentWithFormat:
-								argument = arguments[index + 1];
-								UnpackSingleElementArray(ref argument);
-								content.Add(new Interpolation(argument, suffix: text));
-								break;
-							case TokenKind.ArgumentWithAlignment:
-								argument = arguments[index + 1];
-								UnpackSingleElementArray(ref argument);
-								content.Add(new Interpolation(argument, alignment));
-								break;
-							case TokenKind.ArgumentWithAlignmentAndFormat:
-								argument = arguments[index + 1];
-								UnpackSingleElementArray(ref argument);
-								content.Add(new Interpolation(argument, alignment, text));
-								break;
-						}
-					}
-					var formattableStringType = expressionBuilder.compilation.FindType(KnownTypeCode.FormattableString);
-					var isrr = new InterpolatedStringResolveResult(expressionBuilder.compilation.FindType(KnownTypeCode.String),
-						format, argumentList.GetArgumentResolveResults(1).ToArray());
-					var expr = new InterpolatedStringExpression();
-					expr.Content.AddRange(content);
-					if (method.Name == "Format")
-						return expr.WithRR(isrr);
-					return new CastExpression(expressionBuilder.ConvertType(formattableStringType),
-						expr.WithRR(isrr))
-						.WithRR(new ConversionResolveResult(formattableStringType, isrr, Conversion.ImplicitInterpolatedStringConversion));
-				}
+				var result = HandleStringInterpolation(method, argumentList);
+				if (result.Expression != null)
+					return result;
 			}
 
 			int allowedParamCount = (method.ReturnType.IsKnownType(KnownTypeCode.Void) ? 1 : 0);
@@ -429,6 +454,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				argumentList.CheckNoNamedOrOptionalArguments();
 				return HandleImplicitConversion(method, argumentList.Arguments[0]);
+			}
+
+			if (settings.LiftNullables && method.Name == "GetValueOrDefault"
+				&& method.DeclaringType.IsKnownType(KnownTypeCode.NullableOfT)
+				&& method.DeclaringType.TypeArguments[0].IsKnownType(KnownTypeCode.Boolean)
+				&& argumentList.Length == 0)
+			{
+				argumentList.CheckNoNamedOrOptionalArguments();
+				return new BinaryOperatorExpression(
+					target.Expression,
+					BinaryOperatorType.Equality,
+					new PrimitiveExpression(true))
+					.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, method,
+						argumentList.GetArgumentResolveResults(), isExpandedForm: argumentList.IsExpandedForm));
 			}
 
 			var transform = GetRequiredTransformationsForCall(expectedTargetDetails, method, ref target,
@@ -480,6 +519,75 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new InvocationExpression(targetExpr, argumentList.GetArgumentExpressions())
 				.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, foundMethod,
 					argumentList.GetArgumentResolveResultsDirect(), isExpandedForm: argumentList.IsExpandedForm));
+		}
+
+		private ExpressionWithResolveResult HandleStringInterpolation(IMethod method, ArgumentList argumentList)
+		{
+			if (!TryGetStringInterpolationTokens(argumentList, out string format, out var tokens))
+				return default;
+
+			var arguments = argumentList.Arguments;
+			var content = new List<InterpolatedStringContent>();
+
+			bool unpackSingleElementArray = !argumentList.IsExpandedForm && argumentList.Length == 2
+				&& argumentList.Arguments[1].Expression is ArrayCreateExpression ace
+				&& ace.Initializer?.Elements.Count == 1;
+
+			void UnpackSingleElementArray(ref TranslatedExpression argument)
+			{
+				if (!unpackSingleElementArray)
+					return;
+				var arrayCreation = (ArrayCreateExpression)argumentList.Arguments[1].Expression;
+				var arrayCreationRR = (ArrayCreateResolveResult)argumentList.Arguments[1].ResolveResult;
+				var element = arrayCreation.Initializer.Elements.First().Detach();
+				argument = new TranslatedExpression(element, arrayCreationRR.InitializerElements.First());
+			}
+
+			if (tokens.Count == 0)
+			{
+				return default;
+			}
+
+			foreach (var (kind, index, alignment, text) in tokens)
+			{
+				TranslatedExpression argument;
+				switch (kind)
+				{
+					case TokenKind.String:
+						content.Add(new InterpolatedStringText(text));
+						break;
+					case TokenKind.Argument:
+						argument = arguments[index + 1];
+						UnpackSingleElementArray(ref argument);
+						content.Add(new Interpolation(argument));
+						break;
+					case TokenKind.ArgumentWithFormat:
+						argument = arguments[index + 1];
+						UnpackSingleElementArray(ref argument);
+						content.Add(new Interpolation(argument, suffix: text));
+						break;
+					case TokenKind.ArgumentWithAlignment:
+						argument = arguments[index + 1];
+						UnpackSingleElementArray(ref argument);
+						content.Add(new Interpolation(argument, alignment));
+						break;
+					case TokenKind.ArgumentWithAlignmentAndFormat:
+						argument = arguments[index + 1];
+						UnpackSingleElementArray(ref argument);
+						content.Add(new Interpolation(argument, alignment, text));
+						break;
+				}
+			}
+			var formattableStringType = expressionBuilder.compilation.FindType(KnownTypeCode.FormattableString);
+			var isrr = new InterpolatedStringResolveResult(expressionBuilder.compilation.FindType(KnownTypeCode.String),
+				format, argumentList.GetArgumentResolveResults(1).ToArray());
+			var expr = new InterpolatedStringExpression();
+			expr.Content.AddRange(content);
+			if (method.Name == "Format")
+				return expr.WithRR(isrr);
+			return new CastExpression(expressionBuilder.ConvertType(formattableStringType),
+				expr.WithRR(isrr))
+				.WithRR(new ConversionResolveResult(formattableStringType, isrr, Conversion.ImplicitInterpolatedStringConversion));
 		}
 
 		/// <summary>
@@ -843,7 +951,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				if (parameter.ReferenceKind != ReferenceKind.None)
 				{
-					arg = ExpressionBuilder.ChangeDirectionExpressionTo(arg, parameter.ReferenceKind);
+					arg = ExpressionBuilder.ChangeDirectionExpressionTo(arg, parameter.ReferenceKind, callArguments[i] is AddressOf);
 				}
 
 				arguments.Add(arg);
@@ -947,7 +1055,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			RequireTarget = 1,
 			RequireTypeArguments = 2,
 			NoOptionalArgumentAllowed = 4,
-			All = 7
+			/// <summary>
+			/// Add calls to AsRefReadOnly for in parameters that did not have an explicit DirectionExpression yet.
+			/// </summary>
+			EnforceExplicitIn = 8,
+			All = 0xf,
 		}
 
 		private CallTransformation GetRequiredTransformationsForCall(ExpectedTargetDetails expectedTargetDetails, IMethod method,
@@ -1098,6 +1210,11 @@ namespace ICSharpCode.Decompiler.CSharp
 							requireTypeArguments = true;
 							typeArguments = method.TypeArguments.ToArray();
 						}
+						else if ((allowedTransforms & CallTransformation.EnforceExplicitIn) != 0)
+						{
+							EnforceExplicitIn(argumentList.Arguments, argumentList.ExpectedParameters);
+							allowedTransforms &= ~CallTransformation.EnforceExplicitIn;
+						}
 						else
 						{
 							break;
@@ -1115,6 +1232,32 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (argumentList.FirstOptionalArgumentIndex < 0)
 				transform |= CallTransformation.NoOptionalArgumentAllowed;
 			return transform;
+		}
+
+		private void EnforceExplicitIn(TranslatedExpression[] arguments, IParameter[] expectedParameters)
+		{
+			for (int i = 0; i < arguments.Length; i++)
+			{
+				if (expectedParameters[i].ReferenceKind != ReferenceKind.In)
+					continue;
+				if (arguments[i].Expression is DirectionExpression)
+					continue;
+
+				arguments[i] = WrapInAsRefReadOnly(arguments[i]);
+				expressionBuilder.statementBuilder.EmitAsRefReadOnly = true;
+			}
+		}
+
+		private TranslatedExpression WrapInAsRefReadOnly(TranslatedExpression arg)
+		{
+			return new DirectionExpression(
+				FieldDirection.In,
+				new InvocationExpression {
+					Target = new IdentifierExpression("ILSpyHelper_AsRefReadOnly"),
+					Arguments = { arg.Expression }
+				}
+			).WithRR(new ByReferenceResolveResult(arg.Type, ReferenceKind.In))
+			.WithoutILInstruction();
 		}
 
 		private bool IsPossibleExtensionMethodCallOnNull(IMethod method, IList<TranslatedExpression> arguments)
@@ -1155,14 +1298,20 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				else
 				{
+					IParameter parameter = expectedParameters[i];
 					IType parameterType;
-					if (expectedParameters[i].Type.Kind == TypeKind.Dynamic)
+					if (parameter.Type.Kind == TypeKind.Dynamic)
 					{
 						parameterType = expressionBuilder.compilation.FindType(KnownTypeCode.Object);
 					}
 					else
 					{
-						parameterType = expectedParameters[i].Type;
+						parameterType = parameter.Type;
+					}
+
+					if (parameter.ReferenceKind == ReferenceKind.In && parameterType is ByReferenceType brt && arguments[i].Type is not ByReferenceType)
+					{
+						parameterType = brt.ElementType;
 					}
 
 					arguments[i] = arguments[i].ConvertTo(parameterType, expressionBuilder, allowImplicitConversion: false);
@@ -1271,7 +1420,10 @@ namespace ICSharpCode.Decompiler.CSharp
 						resolver.CurrentTypeDefinition == method.DeclaringTypeDefinition;
 					if (lookup.IsAccessible(ctor, allowProtectedAccess))
 					{
-						or.AddCandidate(ctor);
+						Log.Indent();
+						OverloadResolutionErrors errors = or.AddCandidate(ctor);
+						Log.Unindent();
+						or.LogCandidateAddingResult("  Candidate", ctor, errors);
 					}
 				}
 			}

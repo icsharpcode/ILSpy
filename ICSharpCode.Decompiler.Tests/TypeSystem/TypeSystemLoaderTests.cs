@@ -1390,18 +1390,18 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		{
 			ITypeDefinition impl = GetTypeDefinition(typeof(ExplicitGenericInterfaceImplementation));
 			IType genericInterfaceOfString = compilation.FindType(typeof(IGenericInterface<string>));
-			IMethod implMethod1 = impl.Methods.Single(m => !m.IsConstructor && !m.Parameters[1].IsRef);
-			IMethod implMethod2 = impl.Methods.Single(m => !m.IsConstructor && m.Parameters[1].IsRef);
+			IMethod implMethod1 = impl.Methods.Single(m => !m.IsConstructor && m.Parameters[1].ReferenceKind == ReferenceKind.None);
+			IMethod implMethod2 = impl.Methods.Single(m => !m.IsConstructor && m.Parameters[1].ReferenceKind == ReferenceKind.Ref);
 			Assert.That(implMethod1.IsExplicitInterfaceImplementation);
 			Assert.That(implMethod2.IsExplicitInterfaceImplementation);
 
 			IMethod interfaceMethod1 = (IMethod)implMethod1.ExplicitlyImplementedInterfaceMembers.Single();
 			Assert.That(interfaceMethod1.DeclaringType, Is.EqualTo(genericInterfaceOfString));
-			Assert.That(!interfaceMethod1.Parameters[1].IsRef);
+			Assert.That(interfaceMethod1.Parameters[1].ReferenceKind == ReferenceKind.None);
 
 			IMethod interfaceMethod2 = (IMethod)implMethod2.ExplicitlyImplementedInterfaceMembers.Single();
 			Assert.That(interfaceMethod2.DeclaringType, Is.EqualTo(genericInterfaceOfString));
-			Assert.That(interfaceMethod2.Parameters[1].IsRef);
+			Assert.That(interfaceMethod2.Parameters[1].ReferenceKind == ReferenceKind.Ref);
 		}
 
 		[Test]

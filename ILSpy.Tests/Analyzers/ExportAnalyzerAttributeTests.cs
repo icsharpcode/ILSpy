@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2018 Daniel Grunwald
+// Copyright (c) 2024 Andreas Weizel
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,26 +16,28 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-namespace ICSharpCode.Decompiler.CSharp
+using System.Linq;
+
+using ICSharpCode.ILSpyX.Analyzers;
+
+using NUnit.Framework;
+
+namespace ICSharpCode.ILSpy.Tests.Analyzers
 {
-	public enum LanguageVersion
+	[TestFixture]
+	public class ExportAnalyzerAttributeTests
 	{
-		CSharp1 = 1,
-		CSharp2 = 2,
-		CSharp3 = 3,
-		CSharp4 = 4,
-		CSharp5 = 5,
-		CSharp6 = 6,
-		CSharp7 = 7,
-		CSharp7_1 = 701,
-		CSharp7_2 = 702,
-		CSharp7_3 = 703,
-		CSharp8_0 = 800,
-		CSharp9_0 = 900,
-		CSharp10_0 = 1000,
-		CSharp11_0 = 1100,
-		CSharp12_0 = 1200,
-		Preview = 1100,
-		Latest = 0x7FFFFFFF
+		[Test]
+		public void CollectAnalyzers()
+		{
+			var analyzerNames = ExportAnalyzerAttribute.GetAnnotatedAnalyzers()
+				.Select(analyzer => analyzer.AnalyzerType.Name)
+				.ToArray();
+			Assert.That(analyzerNames.Contains("AttributeAppliedToAnalyzer"));
+			Assert.That(analyzerNames.Contains("EventImplementedByAnalyzer"));
+			Assert.That(analyzerNames.Contains("MethodUsedByAnalyzer"));
+			Assert.That(analyzerNames.Contains("PropertyOverriddenByAnalyzer"));
+			Assert.That(analyzerNames.Contains("TypeInstantiatedByAnalyzer"));
+		}
 	}
 }

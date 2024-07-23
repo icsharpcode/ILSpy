@@ -5,16 +5,21 @@
 
 set -eu
 
-DOTNET_FORMAT_VERSION=6.2.315104
+DOTNET_FORMAT_VERSION=8.0.453106
 DOTNET_PATH="$LOCALAPPDATA/ICSharpCode/ILSpy/dotnet-format-$DOTNET_FORMAT_VERSION"
 if [ ! -d "$DOTNET_PATH" ]; then
- dotnet tool install --tool-path "$DOTNET_PATH" dotnet-format --version "$DOTNET_FORMAT_VERSION" --add-source "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet6/nuget/v3/index.json"
+ echo "Downloading dotnet-format $DOTNET_FORMAT_VERSION..."
+ dotnet tool install --tool-path "$DOTNET_PATH" dotnet-format --version "$DOTNET_FORMAT_VERSION" --add-source "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet8/nuget/v3/index.json"
 fi
 
 "$DOTNET_PATH/dotnet-format.exe" --version
-if git diff --quiet --ignore-submodules; then
+if [ "${1:-}" = "--format" ]; then
+	# called via format.bat
+	"$DOTNET_PATH/dotnet-format.exe" whitespace --no-restore --verbosity detailed ILSpy.sln
+elif git diff --quiet --ignore-submodules; then
 	"$DOTNET_PATH/dotnet-format.exe" whitespace --no-restore --verbosity detailed ILSpy.sln
 	git add -u -- \*\*.cs
 else
+	echo Partial commit: only verifying formatting
 	exec "$DOTNET_PATH/dotnet-format.exe" whitespace --verify-no-changes --no-restore --verbosity detailed ILSpy.sln
 fi

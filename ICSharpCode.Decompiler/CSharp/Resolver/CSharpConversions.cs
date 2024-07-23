@@ -1128,7 +1128,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			foreach (IMethod op in operators)
 			{
 				IType sourceType = op.Parameters[0].Type;
-				if (sourceType.Kind == TypeKind.ByReference && op.Parameters[0].IsIn && fromType.Kind != TypeKind.ByReference)
+				if (sourceType.Kind == TypeKind.ByReference && op.Parameters[0].ReferenceKind == ReferenceKind.In && fromType.Kind != TypeKind.ByReference)
 				{
 					sourceType = ((ByReferenceType)sourceType).ElementType;
 				}
@@ -1235,7 +1235,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				// type, as long as no parameter of D has the out parameter modifier.
 				foreach (IParameter p in d.Parameters)
 				{
-					if (p.IsOut)
+					if (p.ReferenceKind == ReferenceKind.Out)
 						return Conversion.None;
 				}
 			}

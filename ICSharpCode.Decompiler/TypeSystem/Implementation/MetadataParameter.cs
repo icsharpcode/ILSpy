@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Text;
 
 using ICSharpCode.Decompiler.Util;
 
@@ -64,7 +63,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var metadata = module.metadata;
 			var parameter = metadata.GetParameter(handle);
 
-			bool defaultValueAssignmentAllowed = ReferenceKind is ReferenceKind.None or ReferenceKind.In;
+			bool defaultValueAssignmentAllowed = ReferenceKind is ReferenceKind.None or ReferenceKind.In or ReferenceKind.RefReadOnly;
 
 			if (IsOptional && (!defaultValueAssignmentAllowed || !HasConstantValueInSignature))
 			{
@@ -76,13 +75,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				b.Add(KnownAttribute.DefaultParameterValue, KnownTypeCode.Object, GetConstantValue(throwOnInvalidMetadata: false));
 			}
 
-			if (!IsOut && !IsIn)
-			{
-				if ((attributes & ParameterAttributes.In) == ParameterAttributes.In)
-					b.Add(KnownAttribute.In);
-				if ((attributes & ParameterAttributes.Out) == ParameterAttributes.Out)
-					b.Add(KnownAttribute.Out);
-			}
+			if ((attributes & ParameterAttributes.In) == ParameterAttributes.In && ReferenceKind is not (ReferenceKind.In or ReferenceKind.RefReadOnly))
+				b.Add(KnownAttribute.In);
+			if ((attributes & ParameterAttributes.Out) == ParameterAttributes.Out && ReferenceKind != ReferenceKind.Out)
+				b.Add(KnownAttribute.Out);
 			b.Add(parameter.GetCustomAttributes(), SymbolKind.Parameter);
 			b.AddMarshalInfo(parameter.GetMarshallingDescriptor());
 
@@ -93,9 +89,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		const ParameterAttributes inOut = ParameterAttributes.In | ParameterAttributes.Out;
 
 		public ReferenceKind ReferenceKind => DetectRefKind();
-		public bool IsRef => DetectRefKind() == ReferenceKind.Ref;
-		public bool IsOut => Type.Kind == TypeKind.ByReference && (attributes & inOut) == ParameterAttributes.Out;
-		public bool IsIn => DetectRefKind() == ReferenceKind.In;
 
 		public bool IsOptional => (attributes & ParameterAttributes.Optional) != 0;
 
@@ -111,6 +104,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var parameterDef = metadata.GetParameter(handle);
 				if (parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly))
 					return ReferenceKind.In;
+			}
+			if ((module.TypeSystemOptions & TypeSystemOptions.RefReadOnlyParameters) != 0
+				&& (attributes & inOut) == ParameterAttributes.In)
+			{
+				var metadata = module.metadata;
+				var parameterDef = metadata.GetParameter(handle);
+				if (parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.RequiresLocation))
+					return ReferenceKind.RefReadOnly;
 			}
 			return ReferenceKind.Ref;
 		}
