@@ -29,7 +29,8 @@ namespace ICSharpCode.TreeView
 {
 	public partial class SharpTreeNode : INotifyPropertyChanged
 	{
-		public static ITreeNodeImagesProvider ImagesProvider { get; set; }
+		protected static ITreeNodeImagesProvider ImagesProvider { get; private set; }
+		public static void SetImagesProvider(ITreeNodeImagesProvider provider) => ImagesProvider = provider;
 
 		SharpTreeNodeCollection modelChildren;
 		internal SharpTreeNode modelParent;

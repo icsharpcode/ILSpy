@@ -76,7 +76,7 @@ namespace ICSharpCode.ILSpy
 				SingleInstance.NewInstanceDetected += SingleInstance_NewInstanceDetected;
 			}
 
-			SharpTreeNode.ImagesProvider = new WpfWindowsTreeNodeImagesProvider();
+			SharpTreeNode.SetImagesProvider(new WpfWindowsTreeNodeImagesProvider());
 
 			InitializeComponent();
 
