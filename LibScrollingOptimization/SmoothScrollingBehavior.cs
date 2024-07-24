@@ -428,27 +428,27 @@ namespace LibScrollingOptimization
 		/// </summary>
 		public static readonly DependencyProperty ScrollWithWheelDeltaProperty =
 			DependencyProperty.RegisterAttached(nameof(ScrollWithWheelDelta), typeof(bool), typeof(SmoothScrollingBehavior),
-				new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits));
+				new FrameworkPropertyMetadata(true));
 
 		/// <summary>
 		/// The DependencyProperty of <see cref="EnableScrollingAnimation"/> property.
 		/// </summary>
 		public static readonly DependencyProperty EnableScrollingAnimationProperty =
 			DependencyProperty.RegisterAttached(nameof(EnableScrollingAnimation), typeof(bool), typeof(SmoothScrollingBehavior),
-				new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits));
+				new FrameworkPropertyMetadata(true));
 
 		/// <summary>
 		/// The DependencyProperty of <see cref="ScrollingAnimationDuration"/> property.
 		/// </summary>
 		public static readonly DependencyProperty ScrollingAnimationDurationProperty =
 			DependencyProperty.RegisterAttached(nameof(ScrollingAnimationDuration), typeof(Duration), typeof(SmoothScrollingBehavior),
-				new FrameworkPropertyMetadata(new Duration(TimeSpan.FromMilliseconds(250)), FrameworkPropertyMetadataOptions.Inherits), ValidateScrollingAnimationDuration);
+				new FrameworkPropertyMetadata(new Duration(TimeSpan.FromMilliseconds(250))), ValidateScrollingAnimationDuration);
 
 		/// <summary>
 		/// The DependencyProperty of <see cref="AlwaysHandleMouseWheelScrolling"/> property
 		/// </summary>
 		public static readonly DependencyProperty AlwaysHandleMouseWheelScrollingProperty =
-			DependencyProperty.RegisterAttached(nameof(AlwaysHandleMouseWheelScrolling), typeof(bool), typeof(SmoothScrollingBehavior), new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits));
+			DependencyProperty.RegisterAttached(nameof(AlwaysHandleMouseWheelScrolling), typeof(bool), typeof(SmoothScrollingBehavior), new FrameworkPropertyMetadata(true));
 
 		/// <summary>
 		/// The DependencyProperty of <see cref="MouseScrollDeltaFactor"/> property
