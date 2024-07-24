@@ -22,11 +22,7 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <TextBlock Margin="3" Grid.ColumnSpan="3" TextWrapping="Wrap" Text="{x:Static properties:Resources.DecompilerSettingsPanelLongText}" />
-        <ListBox Grid.Row="1" 
-					ItemsSource="{Binding Source={StaticResource SettingsCollection}}"
-					Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-					BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-					Padding="-1">
+        <ListBox Grid.Row="1" ItemsSource="{Binding Source={StaticResource SettingsCollection}}">
 			<behaviors:Interaction.Behaviors>
 				<scroll:SmoothScrollingBehavior/>
 			</behaviors:Interaction.Behaviors>

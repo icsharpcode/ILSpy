@@ -1,8 +1,7 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:Default="clr-namespace:ICSharpCode.TreeView"
-                    xmlns:styles="urn:TomsToolbox.Wpf.Styles"
-					xmlns:ws="https://schemas.elecho.dev/wpfsuite">
+                    xmlns:styles="urn:TomsToolbox.Wpf.Styles">
 
     <Style x:Key="ExpandCollapseToggleStyle"
            TargetType="{x:Type ToggleButton}" BasedOn="{StaticResource {x:Type ToggleButton}}">
@@ -95,7 +94,6 @@
 
 	<Style TargetType="{x:Type Default:SharpTreeView}"
            BasedOn="{StaticResource {x:Static styles:ResourceKeys.ListBoxStyle}}">
-		<Setter Property="Background" Value="Transparent"/>
 		<Style.Triggers>
             <Trigger Property="ShowRoot"
                      Value="False">
