@@ -57,9 +57,10 @@ using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.FileLoaders;
 using ICSharpCode.ILSpyX.Settings;
-using ICSharpCode.TreeView;
+using ICSharpCode.ILSpy.Controls.TreeView;
 
 using Microsoft.Win32;
+using ICSharpCode.ILSpyX.TreeView;
 
 namespace ICSharpCode.ILSpy
 {

@@ -22,7 +22,7 @@ using System.Windows;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.Analyzers;
-using ICSharpCode.TreeView.PlatformAbstractions;
+using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {

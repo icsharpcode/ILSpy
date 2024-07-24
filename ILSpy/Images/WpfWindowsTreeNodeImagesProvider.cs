@@ -1,4 +1,4 @@
-﻿using ICSharpCode.TreeView.PlatformAbstractions;
+﻿using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 namespace ICSharpCode.ILSpy
 {

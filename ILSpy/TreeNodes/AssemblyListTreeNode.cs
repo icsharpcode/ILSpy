@@ -26,8 +26,8 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpyX;
-using ICSharpCode.TreeView;
-using ICSharpCode.TreeView.PlatformAbstractions;
+using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
+using ICSharpCode.ILSpyX.TreeView;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -187,7 +187,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				if (bundle == null)
 					return null;
 				bundle.EnsureLazyChildren();
-				foreach (var node in TreeTraversal.PreOrder(bundle.Children, ExpandAndGetChildren).OfType<AssemblyTreeNode>())
+				foreach (var node in ILSpyX.TreeView.TreeTraversal.PreOrder(bundle.Children, ExpandAndGetChildren).OfType<AssemblyTreeNode>())
 				{
 					if (node.LoadedAssembly == asm)
 						return node;

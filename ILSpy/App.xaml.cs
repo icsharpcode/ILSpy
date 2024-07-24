@@ -34,13 +34,13 @@ using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpyX.Analyzers;
 using ICSharpCode.ILSpyX.Settings;
-using ICSharpCode.TreeView;
 
 using Medo.Application;
 
 using Microsoft.VisualStudio.Composition;
 
 using TomsToolbox.Wpf.Styles;
+using ICSharpCode.ILSpyX.TreeView;
 
 namespace ICSharpCode.ILSpy
 {

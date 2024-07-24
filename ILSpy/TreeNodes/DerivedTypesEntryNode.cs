@@ -26,7 +26,7 @@ using ICSharpCode.ILSpyX;
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	using ICSharpCode.Decompiler.TypeSystem;
-	using ICSharpCode.TreeView.PlatformAbstractions;
+	using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 	class DerivedTypesEntryNode : ILSpyTreeNode, IMemberTreeNode
 	{
