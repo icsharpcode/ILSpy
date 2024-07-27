@@ -77,5 +77,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine(*memory2);
 			}
 		}
+
+		private static void ForLoopNamingConflict(int i)
+		{
+			for (int j = 0; j < i; j++)
+			{
+				Console.WriteLine(i + " of " + j);
+			}
+		}
 	}
 }
