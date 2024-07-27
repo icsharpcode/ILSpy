@@ -549,7 +549,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// "dc.field = v; v = 42; use(dc.field)" cannot turn to "v = 42; use(v);"
 						return null;
 					}
-					if (!(expectedType == null || v.Kind == VariableKind.StackSlot || v.Type.Equals(expectedType)))
+					if (!(expectedType == null || v.Kind == VariableKind.StackSlot || NormalizeTypeVisitor.IgnoreNullability.EquivalentTypes(v.Type, expectedType)))
 						return null;
 					return v;
 				case LdObj ldfld:
