@@ -22,7 +22,7 @@ using System.Linq;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpyX;
-using ICSharpCode.TreeView;
+using ICSharpCode.ILSpyX.TreeView;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {

@@ -20,7 +20,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace ICSharpCode.TreeView
+#nullable disable
+
+namespace ICSharpCode.ILSpyX.TreeView
 {
 	// This part of SharpTreeNode controls the 'flat list' data structure, which emulates
 	// a big flat list containing the whole tree; allowing access by visible index.

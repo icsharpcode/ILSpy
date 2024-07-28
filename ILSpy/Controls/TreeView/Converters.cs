@@ -16,36 +16,31 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
+using System;
+using System.Globalization;
 using System.Windows;
-using System.Windows.Media;
+using System.Windows.Data;
+using System.Windows.Markup;
 
-namespace ICSharpCode.TreeView
+namespace ICSharpCode.ILSpy.Controls.TreeView
 {
-	static class ExtensionMethods
+	public class CollapsedWhenFalse : MarkupExtension, IValueConverter
 	{
-		public static T FindAncestor<T>(this DependencyObject d) where T : class
+		public static CollapsedWhenFalse Instance = new CollapsedWhenFalse();
+
+		public override object ProvideValue(IServiceProvider serviceProvider)
 		{
-			return AncestorsAndSelf(d).OfType<T>().FirstOrDefault();
+			return Instance;
 		}
 
-		public static IEnumerable<DependencyObject> AncestorsAndSelf(this DependencyObject d)
+		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			while (d != null)
-			{
-				yield return d;
-				d = VisualTreeHelper.GetParent(d);
-			}
+			return (bool)value ? Visibility.Visible : Visibility.Collapsed;
 		}
 
-		public static void AddOnce(this IList list, object item)
+		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			if (!list.Contains(item))
-			{
-				list.Add(item);
-			}
+			throw new NotImplementedException();
 		}
 	}
 }

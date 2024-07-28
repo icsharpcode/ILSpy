@@ -16,17 +16,36 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
+using System.Windows.Media;
 
-namespace ICSharpCode.TreeView
+namespace ICSharpCode.ILSpy.Controls.TreeView
 {
-	public class InsertMarker : Control
+	static class ExtensionMethods
 	{
-		static InsertMarker()
+		public static T FindAncestor<T>(this DependencyObject d) where T : class
 		{
-			DefaultStyleKeyProperty.OverrideMetadata(typeof(InsertMarker),
-				new FrameworkPropertyMetadata(typeof(InsertMarker)));
+			return AncestorsAndSelf(d).OfType<T>().FirstOrDefault();
+		}
+
+		public static IEnumerable<DependencyObject> AncestorsAndSelf(this DependencyObject d)
+		{
+			while (d != null)
+			{
+				yield return d;
+				d = VisualTreeHelper.GetParent(d);
+			}
+		}
+
+		public static void AddOnce(this IList list, object item)
+		{
+			if (!list.Contains(item))
+			{
+				list.Add(item);
+			}
 		}
 	}
 }

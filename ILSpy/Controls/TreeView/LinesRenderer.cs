@@ -20,7 +20,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
 
-namespace ICSharpCode.TreeView
+namespace ICSharpCode.ILSpy.Controls.TreeView
 {
 	class LinesRenderer : FrameworkElement
 	{

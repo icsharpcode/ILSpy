@@ -16,31 +16,65 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Globalization;
 using System.Windows;
-using System.Windows.Data;
-using System.Windows.Markup;
+using System.Windows.Documents;
+using System.Windows.Media;
 
-namespace ICSharpCode.TreeView
+namespace ICSharpCode.ILSpy.Controls.TreeView
 {
-	public class CollapsedWhenFalse : MarkupExtension, IValueConverter
+	public class GeneralAdorner : Adorner
 	{
-		public static CollapsedWhenFalse Instance = new CollapsedWhenFalse();
-
-		public override object ProvideValue(IServiceProvider serviceProvider)
+		public GeneralAdorner(UIElement target)
+			: base(target)
 		{
-			return Instance;
 		}
 
-		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-		{
-			return (bool)value ? Visibility.Visible : Visibility.Collapsed;
+		FrameworkElement child;
+
+		public FrameworkElement Child {
+			get {
+				return child;
+			}
+			set {
+				if (child != value)
+				{
+					RemoveVisualChild(child);
+					RemoveLogicalChild(child);
+					child = value;
+					AddLogicalChild(value);
+					AddVisualChild(value);
+					InvalidateMeasure();
+				}
+			}
 		}
 
-		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+		protected override int VisualChildrenCount {
+			get { return child == null ? 0 : 1; }
+		}
+
+		protected override Visual GetVisualChild(int index)
 		{
-			throw new NotImplementedException();
+			return child;
+		}
+
+		protected override Size MeasureOverride(Size constraint)
+		{
+			if (child != null)
+			{
+				child.Measure(constraint);
+				return child.DesiredSize;
+			}
+			return new Size();
+		}
+
+		protected override Size ArrangeOverride(Size finalSize)
+		{
+			if (child != null)
+			{
+				child.Arrange(new Rect(finalSize));
+				return finalSize;
+			}
+			return new Size();
 		}
 	}
 }

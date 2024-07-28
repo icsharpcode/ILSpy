@@ -16,19 +16,17 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Windows.Automation.Peers;
+using System.Windows;
+using System.Windows.Controls;
 
-namespace ICSharpCode.TreeView
+namespace ICSharpCode.ILSpy.Controls.TreeView
 {
-	class SharpTreeViewAutomationPeer : FrameworkElementAutomationPeer
+	public class InsertMarker : Control
 	{
-		internal SharpTreeViewAutomationPeer(SharpTreeView owner) : base(owner)
+		static InsertMarker()
 		{
-		}
-
-		protected override AutomationControlType GetAutomationControlTypeCore()
-		{
-			return AutomationControlType.Tree;
+			DefaultStyleKeyProperty.OverrideMetadata(typeof(InsertMarker),
+				new FrameworkPropertyMetadata(typeof(InsertMarker)));
 		}
 	}
 }

@@ -28,7 +28,9 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Threading;
 
-namespace ICSharpCode.TreeView
+using ICSharpCode.ILSpyX.TreeView;
+
+namespace ICSharpCode.ILSpy.Controls.TreeView
 {
 	public class SharpTreeView : ListView
 	{
@@ -303,7 +305,7 @@ namespace ICSharpCode.TreeView
 					if (container != null && Keyboard.Modifiers == ModifierKeys.None && this.SelectedItems.Count == 1 && this.SelectedItem == container.Node)
 					{
 						e.Handled = true;
-						container.Node.ActivateItem(e);
+						container.Node.ActivateItem(new WpfWindowsRoutedEventArgs(e));
 					}
 					break;
 				case Key.Space:
@@ -319,7 +321,7 @@ namespace ICSharpCode.TreeView
 						}
 						else
 						{
-							container.Node.ActivateItem(e);
+							container.Node.ActivateItem(new WpfWindowsRoutedEventArgs(e));
 						}
 					}
 					break;
@@ -462,7 +464,7 @@ namespace ICSharpCode.TreeView
 			if (Root != null && !ShowRoot)
 			{
 				e.Handled = true;
-				Root.CanDrop(e, Root.Children.Count);
+				Root.CanDrop(new WpfWindowsDragEventArgs(e), Root.Children.Count);
 			}
 		}
 
@@ -473,7 +475,7 @@ namespace ICSharpCode.TreeView
 			if (Root != null && !ShowRoot)
 			{
 				e.Handled = true;
-				Root.InternalDrop(e, Root.Children.Count);
+				Root.InternalDrop(new WpfWindowsDragEventArgs(e), Root.Children.Count);
 			}
 		}
 
@@ -504,7 +506,7 @@ namespace ICSharpCode.TreeView
 				if (target != null)
 				{
 					e.Handled = true;
-					target.Node.InternalDrop(e, target.Index);
+					target.Node.InternalDrop(new WpfWindowsDragEventArgs(e), target.Index);
 				}
 			}
 			catch (Exception ex)
@@ -612,7 +614,7 @@ namespace ICSharpCode.TreeView
 			if (node != null)
 			{
 				e.Effects = DragDropEffects.None;
-				if (node.CanDrop(e, index))
+				if (node.CanDrop(new WpfWindowsDragEventArgs(e), index))
 				{
 					DropTarget target = new DropTarget() {
 						Item = item,

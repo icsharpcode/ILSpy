@@ -20,7 +20,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace ICSharpCode.TreeView
+using ICSharpCode.ILSpyX.TreeView;
+
+namespace ICSharpCode.ILSpy.Controls.TreeView
 {
 	class EditTextBox : TextBox
 	{

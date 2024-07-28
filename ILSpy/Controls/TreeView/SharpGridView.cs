@@ -17,64 +17,24 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Windows;
-using System.Windows.Documents;
-using System.Windows.Media;
+using System.Windows.Controls;
 
-namespace ICSharpCode.TreeView
+namespace ICSharpCode.ILSpy.Controls.TreeView
 {
-	public class GeneralAdorner : Adorner
+	public class SharpGridView : GridView
 	{
-		public GeneralAdorner(UIElement target)
-			: base(target)
+		static SharpGridView()
 		{
+			ItemContainerStyleKey =
+				new ComponentResourceKey(typeof(SharpTreeView), "GridViewItemContainerStyleKey");
 		}
 
-		FrameworkElement child;
+		public static ResourceKey ItemContainerStyleKey { get; private set; }
 
-		public FrameworkElement Child {
+		protected override object ItemContainerDefaultStyleKey {
 			get {
-				return child;
+				return ItemContainerStyleKey;
 			}
-			set {
-				if (child != value)
-				{
-					RemoveVisualChild(child);
-					RemoveLogicalChild(child);
-					child = value;
-					AddLogicalChild(value);
-					AddVisualChild(value);
-					InvalidateMeasure();
-				}
-			}
-		}
-
-		protected override int VisualChildrenCount {
-			get { return child == null ? 0 : 1; }
-		}
-
-		protected override Visual GetVisualChild(int index)
-		{
-			return child;
-		}
-
-		protected override Size MeasureOverride(Size constraint)
-		{
-			if (child != null)
-			{
-				child.Measure(constraint);
-				return child.DesiredSize;
-			}
-			return new Size();
-		}
-
-		protected override Size ArrangeOverride(Size finalSize)
-		{
-			if (child != null)
-			{
-				child.Arrange(new Rect(finalSize));
-				return finalSize;
-			}
-			return new Size();
 		}
 	}
 }

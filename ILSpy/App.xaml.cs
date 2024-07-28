@@ -40,6 +40,7 @@ using Medo.Application;
 using Microsoft.VisualStudio.Composition;
 
 using TomsToolbox.Wpf.Styles;
+using ICSharpCode.ILSpyX.TreeView;
 
 namespace ICSharpCode.ILSpy
 {
@@ -74,6 +75,8 @@ namespace ICSharpCode.ILSpy
 				SingleInstance.Attach();  // will auto-exit for second instance
 				SingleInstance.NewInstanceDetected += SingleInstance_NewInstanceDetected;
 			}
+
+			SharpTreeNode.SetImagesProvider(new WpfWindowsTreeNodeImagesProvider());
 
 			InitializeComponent();
 

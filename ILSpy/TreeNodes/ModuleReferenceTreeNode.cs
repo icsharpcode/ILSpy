@@ -21,6 +21,7 @@ using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -69,7 +70,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Icon => Images.Library;
 
-		public override void ActivateItem(System.Windows.RoutedEventArgs e)
+		public override void ActivateItem(IPlatformRoutedEventArgs e)
 		{
 			var assemblyListNode = parentAssembly.Parent as AssemblyListTreeNode;
 			if (assemblyListNode != null && containsMetadata)

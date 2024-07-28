@@ -23,14 +23,13 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Windows;
 using System.Windows.Threading;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpyX.Abstractions;
-using ICSharpCode.TreeView;
+using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
+using ICSharpCode.ILSpyX.TreeView;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -77,7 +76,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return false;
 		}
 
-		public override void ActivateItemSecondary(RoutedEventArgs e)
+		public override void ActivateItemSecondary(IPlatformRoutedEventArgs e)
 		{
 			MainWindow.Instance.SelectNode(this, inNewTabPage: true);
 			MainWindow.Instance.Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)MainWindow.Instance.RefreshDecompiledView);
@@ -93,7 +92,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return false;
 		}
 
-		protected override void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
+		internal protected override void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
 		{
 			if (e.NewItems != null)
 			{
