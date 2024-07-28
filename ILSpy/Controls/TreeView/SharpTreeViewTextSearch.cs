@@ -32,9 +32,6 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 	/// </summary>
 	public partial class SharpTreeViewTextSearch : DependencyObject
 	{
-		[LibraryImport("user32.dll")]
-		internal static partial int GetDoubleClickTime();
-
 		static readonly DependencyPropertyKey TextSearchInstancePropertyKey = DependencyProperty.RegisterAttachedReadOnly("TextSearchInstance",
 			typeof(SharpTreeViewTextSearch), typeof(SharpTreeViewTextSearch), new FrameworkPropertyMetadata(null));
 		static readonly DependencyProperty TextSearchInstanceProperty = TextSearchInstancePropertyKey.DependencyProperty;
@@ -169,7 +166,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			{
 				timer.Stop();
 			}
-			timer.Interval = TimeSpan.FromMilliseconds(GetDoubleClickTime() * 2);
+			timer.Interval = TimeSpan.FromMilliseconds(NativeMethods.GetDoubleClickTime() * 2);
 			timer.Start();
 		}
 	}
