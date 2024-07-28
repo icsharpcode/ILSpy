@@ -146,8 +146,7 @@
 						<Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Type MenuItem}}">
 							<Setter Property="Command" Value="{x:Static local:ILSpyCommands.SetTheme}" />
 							<Setter Property="CommandParameter" Value="{Binding}" />
-							<Setter Property="IsCheckable" Value="True" />
-							<!-- Required by AvalonDock's MenuItem style to show the checkmark -->
+							<Setter Property="IsCheckable" Value="True" /><!-- Required by AvalonDock's MenuItem style to show the checkmark -->
 							<Setter Property="IsChecked">
 								<Setter.Value>
 									<MultiBinding Converter="{x:Static toms:BinaryOperationConverter.Equality}" Mode="OneWay">
