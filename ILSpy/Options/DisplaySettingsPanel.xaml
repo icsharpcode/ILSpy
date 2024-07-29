@@ -7,11 +7,12 @@
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
+			 xmlns:toms="urn:TomsToolbox"
 			 d:DataContext="{d:DesignInstance local:DisplaySettingsViewModel}">
 	<UserControl.Resources>
 		<local:FontSizeConverter x:Key="fontSizeConv" />
 	</UserControl.Resources>
-	<ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+	<ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" toms:SmoothScrollingBehavior.Register="True">
 		<StackPanel Orientation="Vertical">
 			<DockPanel>
 				<Label DockPanel.Dock="Left" Content="{x:Static properties:Resources.DisplaySettingsPanel_Theme}" />
