@@ -2647,10 +2647,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				WriteIdentifier(parameterDeclaration.NameToken);
 			}
-			if (parameterDeclaration.HasNullCheck)
-			{
-				WriteToken(Roles.DoubleExclamation);
-			}
 			if (!parameterDeclaration.DefaultExpression.IsNull)
 			{
 				Space(policy.SpaceAroundAssignment);

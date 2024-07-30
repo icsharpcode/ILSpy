@@ -22,6 +22,7 @@ using System.Windows;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.Analyzers;
+using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
@@ -52,7 +53,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 			}
 		}
 
-		public override void ActivateItem(RoutedEventArgs e)
+		public override void ActivateItem(IPlatformRoutedEventArgs e)
 		{
 			e.Handled = true;
 			if (analyzedModule.MetadataFile == null)

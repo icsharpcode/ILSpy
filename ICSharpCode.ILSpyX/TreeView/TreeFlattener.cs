@@ -22,7 +22,9 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 
-namespace ICSharpCode.TreeView
+#nullable disable
+
+namespace ICSharpCode.ILSpyX.TreeView
 {
 	sealed class TreeFlattener : IList, INotifyCollectionChanged
 	{

@@ -12,7 +12,6 @@
 			"ILSpy.ReadyToRun\\ILSpy.ReadyToRun.csproj",
 			"ILSpy.Tests\\ILSpy.Tests.csproj",
 			"ILSpy\\ILSpy.csproj",
-			"SharpTreeView\\ICSharpCode.TreeView.csproj",
 			"TestPlugin\\TestPlugin.csproj"
 		]
 	}

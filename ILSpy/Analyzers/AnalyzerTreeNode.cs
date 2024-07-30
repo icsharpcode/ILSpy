@@ -21,7 +21,7 @@ using System.Collections.Specialized;
 using System.Linq;
 
 using ICSharpCode.ILSpyX;
-using ICSharpCode.TreeView;
+using ICSharpCode.ILSpyX.TreeView;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			DeleteCore();
 		}
 
-		protected override void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
+		internal protected override void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
 		{
 			if (e.NewItems != null)
 			{

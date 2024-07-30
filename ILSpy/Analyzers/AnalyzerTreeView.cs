@@ -27,7 +27,8 @@ using ICSharpCode.ILSpy.Analyzers.TreeNodes;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
-using ICSharpCode.TreeView;
+using ICSharpCode.ILSpy.Controls.TreeView;
+using ICSharpCode.ILSpyX.TreeView;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {

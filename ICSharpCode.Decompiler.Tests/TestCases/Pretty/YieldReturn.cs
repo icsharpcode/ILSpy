@@ -1,4 +1,4 @@
-// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -426,13 +426,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			Console.WriteLine("normal exit");
 		}
-
-#if CS110 && false
-		public IEnumerable<object> YieldBangBang(object x!!)
-		{
-			yield return x;
-		}
-#endif
 
 		internal IEnumerable<int> ForLoopWithYieldReturn(int end, int evil)
 		{

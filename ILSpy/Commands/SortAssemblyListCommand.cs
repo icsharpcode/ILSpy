@@ -21,7 +21,7 @@ using System.Collections.Generic;
 
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX;
-using ICSharpCode.TreeView;
+using ICSharpCode.ILSpyX.TreeView;
 
 namespace ICSharpCode.ILSpy
 {

@@ -20,7 +20,8 @@ using System.Linq;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.TreeView;
+using ICSharpCode.ILSpyX.TreeView;
+using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -37,7 +38,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Icon => type.Kind == TypeKind.Interface ? Images.Interface : Images.Class;
 
-		public override void ActivateItem(System.Windows.RoutedEventArgs e)
+		public override void ActivateItem(IPlatformRoutedEventArgs e)
 		{
 			e.Handled = ActivateItem(this, type);
 		}

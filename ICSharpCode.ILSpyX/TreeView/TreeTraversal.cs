@@ -19,7 +19,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ICSharpCode.TreeView
+namespace ICSharpCode.ILSpyX.TreeView
 {
 	/// <summary>
 	/// Static helper methods for traversing trees.

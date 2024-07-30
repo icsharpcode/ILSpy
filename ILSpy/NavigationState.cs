@@ -22,7 +22,7 @@ using System.Diagnostics;
 
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
-using ICSharpCode.TreeView;
+using ICSharpCode.ILSpyX.TreeView;
 
 namespace ICSharpCode.ILSpy
 {

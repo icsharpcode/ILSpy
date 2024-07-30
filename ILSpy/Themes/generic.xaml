@@ -5,8 +5,9 @@
 	<ResourceDictionary.MergedDictionaries>
 		<ResourceDictionary Source="../Controls/SearchBoxStyle.xaml" />
 		<ResourceDictionary Source="../Controls/ZoomScrollViewer.xaml" />
+		<ResourceDictionary Source="../Controls/TreeView/SharpTreeView.xaml" />
 	</ResourceDictionary.MergedDictionaries>
-	
+
 	<!-- SortableGridViewColumn.
 		Displays an up arrow or down arrow in the column header when the grid is sorted using that column.
 	-->

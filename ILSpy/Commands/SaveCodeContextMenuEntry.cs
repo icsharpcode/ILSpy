@@ -27,9 +27,9 @@ using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
-using ICSharpCode.TreeView;
 
 using Microsoft.Win32;
+using ICSharpCode.ILSpyX.TreeView;
 
 namespace ICSharpCode.ILSpy.TextView
 {

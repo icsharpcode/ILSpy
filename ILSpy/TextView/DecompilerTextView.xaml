@@ -7,6 +7,7 @@
              xmlns:editing="clr-namespace:ICSharpCode.AvalonEdit.Editing;assembly=ICSharpCode.AvalonEdit"
              xmlns:folding="clr-namespace:ICSharpCode.AvalonEdit.Folding;assembly=ICSharpCode.AvalonEdit"
              xmlns:styles="urn:TomsToolbox.Wpf.Styles"
+             xmlns:toms="urn:TomsToolbox"
              xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes">
 	<UserControl.Resources>
 		<BooleanToVisibilityConverter x:Key="boolToVisibility" />
@@ -81,7 +82,8 @@
 								Padding="{TemplateBinding Padding}"
 								BorderBrush="{TemplateBinding BorderBrush}"
 								BorderThickness="{TemplateBinding BorderThickness}"
-								TextOptions.TextFormattingMode="{Binding CurrentZoom, ElementName=PART_ScrollViewer, Converter={x:Static local:ZoomLevelToTextFormattingModeConverter.Instance}}" />
+								TextOptions.TextFormattingMode="{Binding CurrentZoom, ElementName=PART_ScrollViewer, Converter={x:Static local:ZoomLevelToTextFormattingModeConverter.Instance}}" 
+								toms:SmoothScrollingBehavior.Register="true"/>
 							<ControlTemplate.Triggers>
 								<Trigger Property="WordWrap"
 								         Value="True">

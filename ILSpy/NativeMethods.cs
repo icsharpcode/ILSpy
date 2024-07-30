@@ -26,6 +26,9 @@ namespace ICSharpCode.ILSpy
 	{
 		const int S_OK = 0;
 
+		[LibraryImport("user32.dll")]
+		internal static partial int GetDoubleClickTime();
+
 		[LibraryImport("dwmapi.dll")]
 		internal static partial int DwmSetWindowAttribute(IntPtr hwnd, DwmWindowAttribute attr, ref int attrValue, int attrSize);
 

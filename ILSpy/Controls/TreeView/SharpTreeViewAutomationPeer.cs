@@ -16,25 +16,19 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Windows;
-using System.Windows.Controls;
+using System.Windows.Automation.Peers;
 
-namespace ICSharpCode.TreeView
+namespace ICSharpCode.ILSpy.Controls.TreeView
 {
-	public class SharpGridView : GridView
+	class SharpTreeViewAutomationPeer : FrameworkElementAutomationPeer
 	{
-		static SharpGridView()
+		internal SharpTreeViewAutomationPeer(SharpTreeView owner) : base(owner)
 		{
-			ItemContainerStyleKey =
-				new ComponentResourceKey(typeof(SharpTreeView), "GridViewItemContainerStyleKey");
 		}
 
-		public static ResourceKey ItemContainerStyleKey { get; private set; }
-
-		protected override object ItemContainerDefaultStyleKey {
-			get {
-				return ItemContainerStyleKey;
-			}
+		protected override AutomationControlType GetAutomationControlTypeCore()
+		{
+			return AutomationControlType.Tree;
 		}
 	}
 }

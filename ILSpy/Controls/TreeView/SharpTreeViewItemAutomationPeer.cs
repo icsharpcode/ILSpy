@@ -22,7 +22,9 @@ using System.Windows.Automation;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
 
-namespace ICSharpCode.TreeView
+using ICSharpCode.ILSpyX.TreeView;
+
+namespace ICSharpCode.ILSpy.Controls.TreeView
 {
 	class SharpTreeViewItemAutomationPeer : FrameworkElementAutomationPeer, IExpandCollapseProvider
 	{

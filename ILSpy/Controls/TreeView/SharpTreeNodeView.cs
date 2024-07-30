@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
@@ -24,7 +23,9 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 
-namespace ICSharpCode.TreeView
+using ICSharpCode.ILSpyX.TreeView;
+
+namespace ICSharpCode.ILSpy.Controls.TreeView
 {
 	public class SharpTreeNodeView : Control
 	{

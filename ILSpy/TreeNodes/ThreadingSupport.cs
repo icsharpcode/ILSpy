@@ -28,7 +28,7 @@ using System.Windows.Threading;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Properties;
-using ICSharpCode.TreeView;
+using ICSharpCode.ILSpyX.TreeView;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {

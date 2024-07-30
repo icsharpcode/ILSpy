@@ -22,7 +22,9 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
 
-namespace ICSharpCode.TreeView
+#nullable disable
+
+namespace ICSharpCode.ILSpyX.TreeView
 {
 	/// <summary>
 	/// Collection that validates that inserted nodes do not have another parent.

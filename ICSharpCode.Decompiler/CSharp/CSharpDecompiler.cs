@@ -1825,14 +1825,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				RemoveAttribute(entityDecl, KnownAttribute.AsyncStateMachine);
 				RemoveAttribute(entityDecl, KnownAttribute.DebuggerStepThrough);
 			}
-			foreach (var parameter in entityDecl.GetChildrenByRole(Roles.Parameter))
-			{
-				var variable = parameter.Annotation<ILVariableResolveResult>()?.Variable;
-				if (variable != null && variable.HasNullCheck)
-				{
-					parameter.HasNullCheck = true;
-				}
-			}
 		}
 
 		internal static bool RemoveAttribute(EntityDeclaration entityDecl, KnownAttribute attributeType)

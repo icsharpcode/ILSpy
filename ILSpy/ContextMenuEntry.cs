@@ -28,7 +28,8 @@ using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpyX.Search;
-using ICSharpCode.TreeView;
+using ICSharpCode.ILSpy.Controls.TreeView;
+using ICSharpCode.ILSpyX.TreeView;
 
 namespace ICSharpCode.ILSpy
 {

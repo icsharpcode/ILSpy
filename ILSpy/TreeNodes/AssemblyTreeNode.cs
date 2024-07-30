@@ -35,11 +35,13 @@ using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.FileLoaders;
 using ICSharpCode.ILSpyX.PdbProvider;
-using ICSharpCode.TreeView;
+using ICSharpCode.ILSpy.Controls.TreeView;
+using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 using Microsoft.Win32;
 
 using TypeDefinitionHandle = System.Reflection.Metadata.TypeDefinitionHandle;
+using ICSharpCode.ILSpyX.TreeView;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -410,9 +412,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return nodes.All(n => n is AssemblyTreeNode { PackageEntry: null });
 		}
 
-		public override void StartDrag(DependencyObject dragSource, SharpTreeNode[] nodes)
+		public override void StartDrag(object dragSource, SharpTreeNode[] nodes, IPlatformDragDrop dragdropManager)
 		{
-			DragDrop.DoDragDrop(dragSource, Copy(nodes), DragDropEffects.All);
+			dragdropManager.DoDragDrop(dragSource, Copy(nodes), XPlatDragDropEffects.All);
 		}
 
 		public override bool CanDelete()
@@ -433,9 +435,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		internal const string DataFormat = "ILSpyAssemblies";
 
-		public override IDataObject Copy(SharpTreeNode[] nodes)
+		public override IPlatformDataObject Copy(SharpTreeNode[] nodes)
 		{
-			DataObject dataObject = new DataObject();
+			var dataObject = new WpfWindowsDataObject(new DataObject());
 			dataObject.SetData(DataFormat, nodes.OfType<AssemblyTreeNode>().Select(n => n.LoadedAssembly.FileName).ToArray());
 			return dataObject;
 		}
