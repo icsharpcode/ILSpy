@@ -72,7 +72,7 @@ namespace ICSharpCode.ILSpyX.Analyzers
 		{
 			return assemblyListSnapshot.GetAllAssembliesAsync().GetAwaiter().GetResult()
 				.Select(asm => asm.GetMetadataFileOrNull())
-				.Where(x => x != null)!;
+				.Where(x => x != null && !x.IsMetadataOnly)!;
 		}
 
 		public DecompilerTypeSystem ConstructTypeSystem(MetadataFile module)
@@ -207,7 +207,7 @@ namespace ICSharpCode.ILSpyX.Analyzers
 					if (friendAssemblies.Contains(assembly.ShortName))
 					{
 						var module = assembly.GetMetadataFileOrNull();
-						if (module == null)
+						if (module == null || module.IsMetadataOnly)
 							continue;
 						if (ModuleReferencesScopeType(module.Metadata, typeScope.Name, typeScope.Namespace))
 							yield return module;

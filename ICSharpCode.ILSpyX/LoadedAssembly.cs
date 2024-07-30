@@ -211,7 +211,7 @@ namespace ICSharpCode.ILSpyX
 		{
 			return LazyInitializer.EnsureInitialized(ref this.typeSystem, () => {
 				var module = GetMetadataFileOrNull();
-				if (module == null)
+				if (module == null || module.IsMetadataOnly)
 					return null!;
 				return new SimpleCompilation(
 					module.WithOptions(TypeSystemOptions.Default | TypeSystemOptions.Uncached | TypeSystemOptions.KeepModifiers),
@@ -230,7 +230,7 @@ namespace ICSharpCode.ILSpyX
 				if (typeSystemWithOptions != null && options == currentTypeSystemOptions)
 					return typeSystemWithOptions;
 				var module = GetMetadataFileOrNull();
-				if (module == null)
+				if (module == null || module.IsMetadataOnly)
 					return null;
 				currentTypeSystemOptions = options;
 				return typeSystemWithOptions = new SimpleCompilation(
