@@ -35,8 +35,7 @@
 				ShowRoot="False"
 				AllowDropOrder="True"
 				AllowDrop="True"
-				BorderThickness="0" Visibility="Visible"
-				toms:AdvancedScrollWheelBehavior.Attach="WithoutAnimation">
+				BorderThickness="0" Visibility="Visible">
 			<tv:SharpTreeView.ItemContainerStyle>
 				<Style TargetType="tv:SharpTreeViewItem">
 
@@ -86,7 +85,7 @@
 			<ContentControl Content="{StaticResource SearchPane}" />
 		</DataTemplate>
 
-		<analyzers:AnalyzerTreeView x:Key="AnalyzerTreeView" toms:AdvancedScrollWheelBehavior.Attach="WithoutAnimation" />
+		<analyzers:AnalyzerTreeView x:Key="AnalyzerTreeView" />
 
 		<DataTemplate x:Key="AnalyzerPaneTemplate">
 			<ContentControl Content="{StaticResource AnalyzerTreeView}" />

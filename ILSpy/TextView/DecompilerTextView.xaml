@@ -81,8 +81,7 @@
 								Padding="{TemplateBinding Padding}"
 								BorderBrush="{TemplateBinding BorderBrush}"
 								BorderThickness="{TemplateBinding BorderThickness}"
-								TextOptions.TextFormattingMode="{Binding CurrentZoom, ElementName=PART_ScrollViewer, Converter={x:Static local:ZoomLevelToTextFormattingModeConverter.Instance}}"
-								toms:AdvancedScrollWheelBehavior.Attach="WithAnimation" />
+								TextOptions.TextFormattingMode="{Binding CurrentZoom, ElementName=PART_ScrollViewer, Converter={x:Static local:ZoomLevelToTextFormattingModeConverter.Instance}}"/>
 							<ControlTemplate.Triggers>
 								<Trigger Property="WordWrap"
 								         Value="True">
