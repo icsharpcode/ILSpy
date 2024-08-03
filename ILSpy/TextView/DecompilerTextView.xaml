@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="ICSharpCode.ILSpy.TextView.DecompilerTextView" x:ClassModifier="public" x:Name="self"
+﻿<UserControl x:Class="ICSharpCode.ILSpy.TextView.DecompilerTextView" x:Name="self"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
@@ -10,7 +10,6 @@
              xmlns:toms="urn:TomsToolbox"
              xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes">
 	<UserControl.Resources>
-		<BooleanToVisibilityConverter x:Key="boolToVisibility" />
 		<SolidColorBrush x:Key="waitAdornerBackgoundBrush" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" Opacity=".75" />
 		<Style TargetType="{x:Type editing:TextArea}">
 			<Setter Property="FocusVisualStyle" Value="{x:Null}" />
@@ -82,8 +81,7 @@
 								Padding="{TemplateBinding Padding}"
 								BorderBrush="{TemplateBinding BorderBrush}"
 								BorderThickness="{TemplateBinding BorderThickness}"
-								TextOptions.TextFormattingMode="{Binding CurrentZoom, ElementName=PART_ScrollViewer, Converter={x:Static local:ZoomLevelToTextFormattingModeConverter.Instance}}" 
-								toms:SmoothScrollingBehavior.Register="true"/>
+								TextOptions.TextFormattingMode="{Binding CurrentZoom, ElementName=PART_ScrollViewer, Converter={x:Static local:ZoomLevelToTextFormattingModeConverter.Instance}}"/>
 							<ControlTemplate.Triggers>
 								<Trigger Property="WordWrap"
 								         Value="True">
