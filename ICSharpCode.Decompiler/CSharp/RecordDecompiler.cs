@@ -43,8 +43,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly IType baseClass;
 		readonly Dictionary<IField, IProperty> backingFieldToAutoProperty = new Dictionary<IField, IProperty>();
 		readonly Dictionary<IProperty, IField> autoPropertyToBackingField = new Dictionary<IProperty, IField>();
-		readonly Dictionary<IParameter, IProperty> primaryCtorParameterToAutoProperty = new Dictionary<IParameter, IProperty>();
-		readonly Dictionary<IProperty, IParameter> autoPropertyToPrimaryCtorParameter = new Dictionary<IProperty, IParameter>();
+		readonly Dictionary<IParameter, IMember> primaryCtorParameterToAutoPropertyOrBackingField = new Dictionary<IParameter, IMember>();
+		readonly Dictionary<IMember, IParameter> autoPropertyOrBackingFieldToPrimaryCtorParameter = new Dictionary<IMember, IParameter>();
 
 		public RecordDecompiler(IDecompilerTypeSystem dts, ITypeDefinition recordTypeDef, DecompilerSettings settings, CancellationToken cancellationToken)
 		{
@@ -78,6 +78,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool IsAutoProperty(IProperty p, out IField field)
 			{
 				field = null;
+				if (p.IsStatic)
+					return false;
 				if (p.Parameters.Count != 0)
 					return false;
 				if (p.Getter != null)
@@ -158,8 +160,18 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		IMethod DetectPrimaryConstructor()
 		{
-			if (!settings.UsePrimaryConstructorSyntax)
-				return null;
+			if (recordTypeDef.IsRecord)
+			{
+				if (!settings.UsePrimaryConstructorSyntax)
+					return null;
+			}
+			else
+			{
+				if (!settings.UsePrimaryConstructorSyntaxForNonRecordTypes)
+					return null;
+				if (isStruct)
+					return null;
+			}
 
 			var subst = recordTypeDef.AsParameterizedType().GetSubstitution();
 			foreach (var method in recordTypeDef.Methods)
@@ -170,8 +182,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				var m = method.Specialize(subst);
 				if (IsPrimaryConstructor(m, method))
 					return method;
-				primaryCtorParameterToAutoProperty.Clear();
-				autoPropertyToPrimaryCtorParameter.Clear();
+				primaryCtorParameterToAutoPropertyOrBackingField.Clear();
+				autoPropertyOrBackingFieldToPrimaryCtorParameter.Clear();
 			}
 
 			return null;
@@ -205,10 +217,18 @@ namespace ICSharpCode.Decompiler.CSharp
 						return false;
 					if (!(value.Kind == VariableKind.Parameter && value.Index == i))
 						return false;
-					if (!backingFieldToAutoProperty.TryGetValue(field, out var property))
-						return false;
-					primaryCtorParameterToAutoProperty.Add(unspecializedMethod.Parameters[i], property);
-					autoPropertyToPrimaryCtorParameter.Add(property, unspecializedMethod.Parameters[i]);
+					IMember backingMember;
+					if (backingFieldToAutoProperty.TryGetValue(field, out var property))
+					{
+						backingMember = property;
+					}
+					else
+					{
+						backingMember = field;
+					}
+
+					primaryCtorParameterToAutoPropertyOrBackingField.Add(unspecializedMethod.Parameters[i], backingMember);
+					autoPropertyOrBackingFieldToPrimaryCtorParameter.Add(backingMember, unspecializedMethod.Parameters[i]);
 				}
 
 				if (!isStruct)
@@ -261,6 +281,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public bool MethodIsGenerated(IMethod method)
 		{
+			if (!recordTypeDef.IsRecord)
+				return false;
+
 			if (IsCopyConstructor(method))
 			{
 				return IsGeneratedCopyConstructor(method);
@@ -320,6 +343,9 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal bool PropertyIsGenerated(IProperty property)
 		{
+			if (!recordTypeDef.IsRecord)
+				return false;
+
 			switch (property.Name)
 			{
 				case "EqualityContract" when !isStruct:
@@ -329,17 +355,35 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		internal bool FieldIsGenerated(IField field)
+		{
+			if (!settings.UsePrimaryConstructorSyntaxForNonRecordTypes)
+				return false;
+
+			var name = field.Name;
+			return name.StartsWith("<", StringComparison.Ordinal)
+				&& name.EndsWith(">P", StringComparison.Ordinal)
+				&& field.IsCompilerGenerated();
+		}
+
 		public bool IsPropertyDeclaredByPrimaryConstructor(IProperty property)
 		{
 			var subst = recordTypeDef.AsParameterizedType().GetSubstitution();
 			return primaryCtor != null
-				&& autoPropertyToPrimaryCtorParameter.ContainsKey((IProperty)property.Specialize(subst));
+				&& autoPropertyOrBackingFieldToPrimaryCtorParameter.ContainsKey((IProperty)property.Specialize(subst));
 		}
 
 		internal (IProperty prop, IField field) GetPropertyInfoByPrimaryConstructorParameter(IParameter parameter)
 		{
-			var prop = primaryCtorParameterToAutoProperty[parameter];
-			return (prop, autoPropertyToBackingField[prop]);
+			var member = primaryCtorParameterToAutoPropertyOrBackingField[parameter];
+			if (member is IField field)
+				return (null, field);
+			return ((IProperty)member, autoPropertyToBackingField[(IProperty)member]);
+		}
+
+		internal IParameter GetPrimaryConstructorParameterFromBackingField(IField field)
+		{
+			return autoPropertyOrBackingFieldToPrimaryCtorParameter[field];
 		}
 
 		public bool IsCopyConstructor(IMethod method)
