@@ -1479,6 +1479,16 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use primary constructor syntax for non-record types.
+        /// </summary>
+        public static string DecompilerSettings_UsePrimaryConstructorDecompilerSettings_SyntaxForNonRecordTypes {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.UsePrimaryConstructorDecompilerSettings.SyntaxForNonRecordType" +
+                        "s", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use primary constructor  syntax with records.
         /// </summary>
         public static string DecompilerSettings_UsePrimaryConstructorSyntax {

@@ -80,5 +80,58 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public unsafe static int StaticSizeOf = sizeof(SimpleStruct);
 			public unsafe int SizeOf = sizeof(SimpleStruct);
 		}
+
+
+#if CS120
+		public class ClassWithPrimaryCtorUsingGlobalParameter(int a)
+		{
+			public void Print()
+			{
+				Console.WriteLine(a);
+			}
+		}
+
+		public class ClassWithPrimaryCtorUsingGlobalParameterAssignedToField(int a)
+		{
+			private readonly int a = a;
+
+			public void Print()
+			{
+				Console.WriteLine(a);
+			}
+		}
+
+		public class ClassWithPrimaryCtorUsingGlobalParameterAssignedToFieldAndUsedInMethod(int a)
+		{
+#pragma warning disable CS9124 // Parameter is captured into the state of the enclosing type and its value is also used to initialize a field, property, or event.
+			private readonly int _a = a;
+#pragma warning restore CS9124 // Parameter is captured into the state of the enclosing type and its value is also used to initialize a field, property, or event.
+
+			public void Print()
+			{
+				Console.WriteLine(a);
+			}
+		}
+
+		public class ClassWithPrimaryCtorUsingGlobalParameterAssignedToProperty(int a)
+		{
+			public int A { get; set; } = a;
+
+			public void Print()
+			{
+				Console.WriteLine(A);
+			}
+		}
+
+		public class ClassWithPrimaryCtorUsingGlobalParameterAssignedToEvent(EventHandler a)
+		{
+			public event EventHandler A = a;
+
+			public void Print()
+			{
+				Console.WriteLine(this.A);
+			}
+		}
+#endif
 	}
 }

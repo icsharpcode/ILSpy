@@ -162,12 +162,13 @@ namespace ICSharpCode.Decompiler
 			if (languageVersion < CSharp.LanguageVersion.CSharp12_0)
 			{
 				refReadOnlyParameters = false;
+				usePrimaryConstructorSyntaxForNonRecordTypes = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (refReadOnlyParameters)
+			if (refReadOnlyParameters || usePrimaryConstructorSyntaxForNonRecordTypes)
 				return CSharp.LanguageVersion.CSharp12_0;
 			if (scopedRef || requiredMembers || numericIntPtr || utf8StringLiterals || unsignedRightShift || checkedOperators)
 				return CSharp.LanguageVersion.CSharp11_0;
@@ -2010,6 +2011,24 @@ namespace ICSharpCode.Decompiler
 				if (refReadOnlyParameters != value)
 				{
 					refReadOnlyParameters = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool usePrimaryConstructorSyntaxForNonRecordTypes = true;
+
+		/// <summary>
+		/// Use primary constructor syntax with classes and structs.
+		/// </summary>
+		[Category("C# 12.0 / VS 2022.8")]
+		[Description("DecompilerSettings.UsePrimaryConstructorSyntaxForNonRecordTypes")]
+		public bool UsePrimaryConstructorSyntaxForNonRecordTypes {
+			get { return usePrimaryConstructorSyntaxForNonRecordTypes; }
+			set {
+				if (usePrimaryConstructorSyntaxForNonRecordTypes != value)
+				{
+					usePrimaryConstructorSyntaxForNonRecordTypes = value;
 					OnPropertyChanged();
 				}
 			}
