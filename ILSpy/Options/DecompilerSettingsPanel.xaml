@@ -7,16 +7,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:options="clr-namespace:ICSharpCode.ILSpy.Options"
              d:DataContext="{d:DesignInstance options:DecompilerSettingsViewModel}">
-	<Grid>
-		<Grid.RowDefinitions>
-			<RowDefinition Height="Auto" />
-			<RowDefinition Height="*" />
-		</Grid.RowDefinitions>
-		<Grid.ColumnDefinitions>
-			<ColumnDefinition Width="*" />
-		</Grid.ColumnDefinitions>
-		<TextBlock Margin="3" Grid.ColumnSpan="3" TextWrapping="Wrap" Text="{x:Static properties:Resources.DecompilerSettingsPanelLongText}" />
-		<ScrollViewer Grid.Row="1">
+	<DockPanel>
+		<TextBlock Margin="3" DockPanel.Dock="Top" TextWrapping="Wrap" Text="{x:Static properties:Resources.DecompilerSettingsPanelLongText}" />
+		<ScrollViewer>
 			<ItemsControl ItemsSource="{Binding Settings}">
 				<ItemsControl.ItemTemplate>
 					<DataTemplate>
@@ -41,5 +34,5 @@
 				</ItemsControl.ItemTemplate>
 			</ItemsControl>
 		</ScrollViewer>
-	</Grid>
+	</DockPanel>
 </UserControl>
