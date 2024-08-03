@@ -7,13 +7,6 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:options="clr-namespace:ICSharpCode.ILSpy.Options"
              d:DataContext="{d:DesignInstance options:DecompilerSettingsViewModel}">
-	<UserControl.Resources>
-		<CollectionViewSource x:Key="SettingsCollection" Source="{Binding Settings}">
-			<CollectionViewSource.GroupDescriptions>
-				<PropertyGroupDescription PropertyName="Category" />
-			</CollectionViewSource.GroupDescriptions>
-		</CollectionViewSource>
-	</UserControl.Resources>
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
@@ -24,33 +17,26 @@
 		</Grid.ColumnDefinitions>
 		<TextBlock Margin="3" Grid.ColumnSpan="3" TextWrapping="Wrap" Text="{x:Static properties:Resources.DecompilerSettingsPanelLongText}" />
 		<ScrollViewer Grid.Row="1">
-			<ItemsControl ItemsSource="{Binding Source={StaticResource SettingsCollection}}">
-				<ItemsControl.GroupStyle>
-					<GroupStyle>
-						<GroupStyle.ContainerStyle>
-							<Style TargetType="{x:Type GroupItem}" BasedOn="{StaticResource {x:Type GroupItem}}">
-								<Setter Property="Template">
-									<Setter.Value>
-										<ControlTemplate TargetType="GroupItem">
-											<Expander Padding="0" BorderThickness="0" IsExpanded="True">
-												<Expander.Header>
-													<CheckBox Checked="OnGroupChecked" Unchecked="OnGroupUnchecked" Loaded="OnGroupLoaded" VerticalContentAlignment="Center" 
-													          FontSize="16" FontWeight="Bold" 
-													          d:DataContext="{d:DesignInstance GroupItem}" 
-													          Content="{Binding Name}" />
-												</Expander.Header>
-												<ItemsPresenter />
-											</Expander>
-										</ControlTemplate>
-									</Setter.Value>
-								</Setter>
-							</Style>
-						</GroupStyle.ContainerStyle>
-					</GroupStyle>
-				</ItemsControl.GroupStyle>
+			<ItemsControl ItemsSource="{Binding Settings}">
 				<ItemsControl.ItemTemplate>
 					<DataTemplate>
-						<CheckBox Margin="19,0,0,0" IsChecked="{Binding IsEnabled}" Content="{Binding Description}" />
+						<Grid>
+							<Expander Padding="0" BorderThickness="0" IsExpanded="True">
+								<Expander.Header>
+									<CheckBox VerticalContentAlignment="Center" 
+									          FontSize="16" FontWeight="Bold" 
+									          Content="{Binding Category}"
+									          IsChecked="{Binding AreAllItemsChecked, Mode=TwoWay}"/>
+								</Expander.Header>
+								<ItemsControl ItemsSource="{Binding Settings}">
+									<ItemsControl.ItemTemplate>
+										<DataTemplate>
+											<CheckBox Margin="28,0,0,0" IsChecked="{Binding IsEnabled}" Content="{Binding Description}" />
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+							</Expander>
+						</Grid>
 					</DataTemplate>
 				</ItemsControl.ItemTemplate>
 			</ItemsControl>
