@@ -337,6 +337,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						if (settings.AnonymousMethods && IsAnonymousMethodCacheField(field, metadata))
 							return true;
+						if (settings.UsePrimaryConstructorSyntaxForNonRecordTypes && IsPrimaryConstructorParameterBackingField(field, metadata))
+							return true;
 						if (settings.AutomaticProperties && IsAutomaticPropertyBackingField(field, metadata, out var propertyName))
 						{
 							if (!settings.GetterOnlyAutomaticProperties && IsGetterOnlyProperty(propertyName))
@@ -389,6 +391,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			return false;
+		}
+		static bool IsPrimaryConstructorParameterBackingField(SRM.FieldDefinition field, MetadataReader metadata)
+		{
+			var name = metadata.GetString(field.Name);
+			return name.StartsWith("<", StringComparison.Ordinal) && name.EndsWith(">P", StringComparison.Ordinal);
 		}
 
 		static bool IsSwitchOnStringCache(SRM.FieldDefinition field, MetadataReader metadata)
@@ -1303,12 +1310,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					// e.g. DelegateDeclaration
 					return entityDecl;
 				}
-				bool isRecord = typeDef.Kind switch {
-					TypeKind.Class => settings.RecordClasses && typeDef.IsRecord,
-					TypeKind.Struct => settings.RecordStructs && typeDef.IsRecord,
+				bool isRecordLike = typeDef.Kind switch {
+					TypeKind.Class => (settings.RecordClasses && typeDef.IsRecord) || settings.UsePrimaryConstructorSyntaxForNonRecordTypes,
+					TypeKind.Struct => (settings.RecordStructs && typeDef.IsRecord) || settings.UsePrimaryConstructorSyntaxForNonRecordTypes,
 					_ => false,
 				};
-				RecordDecompiler recordDecompiler = isRecord ? new RecordDecompiler(typeSystem, typeDef, settings, CancellationToken) : null;
+				RecordDecompiler recordDecompiler = isRecordLike ? new RecordDecompiler(typeSystem, typeDef, settings, CancellationToken) : null;
 				if (recordDecompiler != null)
 					decompileRun.RecordDecompilers.Add(typeDef, recordDecompiler);
 
@@ -1318,33 +1325,41 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						ParameterDeclaration pd = typeSystemAstBuilder.ConvertParameter(p);
 						(IProperty prop, IField field) = recordDecompiler.GetPropertyInfoByPrimaryConstructorParameter(p);
-						Syntax.Attribute[] attributes = prop.GetAttributes().Select(attr => typeSystemAstBuilder.ConvertAttribute(attr)).ToArray();
-						if (attributes.Length > 0)
+
+						if (prop != null)
 						{
-							var section = new AttributeSection {
-								AttributeTarget = "property"
-							};
-							section.Attributes.AddRange(attributes);
-							pd.Attributes.Add(section);
+							var attributes = prop?.GetAttributes().Select(attr => typeSystemAstBuilder.ConvertAttribute(attr)).ToArray();
+							if (attributes?.Length > 0)
+							{
+								var section = new AttributeSection {
+									AttributeTarget = "property"
+								};
+								section.Attributes.AddRange(attributes);
+								pd.Attributes.Add(section);
+							}
 						}
-						attributes = field.GetAttributes()
-							.Where(a => !PatternStatementTransform.attributeTypesToRemoveFromAutoProperties.Contains(a.AttributeType.FullName))
-							.Select(attr => typeSystemAstBuilder.ConvertAttribute(attr)).ToArray();
-						if (attributes.Length > 0)
+						if (field != null && (recordDecompiler.FieldIsGenerated(field) || typeDef.IsRecord))
 						{
-							var section = new AttributeSection {
-								AttributeTarget = "field"
-							};
-							section.Attributes.AddRange(attributes);
-							pd.Attributes.Add(section);
+							var attributes = field.GetAttributes()
+								.Where(a => !PatternStatementTransform.attributeTypesToRemoveFromAutoProperties.Contains(a.AttributeType.FullName))
+								.Select(attr => typeSystemAstBuilder.ConvertAttribute(attr)).ToArray();
+							if (attributes.Length > 0)
+							{
+								var section = new AttributeSection {
+									AttributeTarget = "field"
+								};
+								section.Attributes.AddRange(attributes);
+								pd.Attributes.Add(section);
+							}
 						}
 						typeDecl.PrimaryConstructorParameters.Add(pd);
 					}
 				}
 
 				// With C# 9 records, the relative order of fields and properties matters:
-				IEnumerable<IMember> fieldsAndProperties = recordDecompiler?.FieldsAndProperties
-					?? typeDef.Fields.Concat<IMember>(typeDef.Properties);
+				IEnumerable<IMember> fieldsAndProperties = isRecordLike && typeDef.IsRecord
+					? recordDecompiler.FieldsAndProperties
+					: typeDef.Fields.Concat<IMember>(typeDef.Properties);
 
 				// For COM interop scenarios, the relative order of virtual functions/properties matters:
 				IEnumerable<IMember> allOrderedMembers = RequiresNativeOrdering(typeDef) ? GetMembersWithNativeOrdering(typeDef) :
@@ -1478,6 +1493,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					case IField field:
 						if (typeDef.Kind == TypeKind.Enum && !field.IsConst)
+						{
+							return;
+						}
+						if (recordDecompiler?.FieldIsGenerated(field) == true)
 						{
 							return;
 						}
