@@ -16,9 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Windows.Threading;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -101,7 +103,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			threading.Decompile(language, output, options, EnsureLazyChildren);
+			App.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new Action(EnsureLazyChildren));
+			for (int i = 0; i < Children.Count; i++)
+			{
+				// LazyChildren are async and will not be ready on first call, avoid foreach.
+				if (Children[i] is IMemberTreeNode { Member: ITypeDefinition childType })
+					language.WriteCommentLine(output, language.TypeToString(childType, includeNamespace: true));
+			}
 		}
 	}
 }
