@@ -20,7 +20,7 @@
 			<ColumnDefinition Width="*" />
 		</Grid.ColumnDefinitions>
 		<TextBlock Margin="3" Grid.ColumnSpan="3" TextWrapping="Wrap" Text="{x:Static properties:Resources.DecompilerSettingsPanelLongText}" />
-		<ListBox Grid.Row="1" ItemsSource="{Binding Source={StaticResource SettingsCollection}}" toms:SmoothScrollingBehavior.Register="True">
+		<ListBox Grid.Row="1" ItemsSource="{Binding Source={StaticResource SettingsCollection}}">
 			<ListBox.ItemContainerStyle>
 				<Style TargetType="ListBoxItem">
 					<Setter Property="IsTabStop" Value="False"/>

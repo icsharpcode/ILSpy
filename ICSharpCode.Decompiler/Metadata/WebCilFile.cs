@@ -183,6 +183,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 
 		public override int MetadataOffset { get; }
+		public override bool IsMetadataOnly => false;
 
 		private static int GetContainingSectionIndex(IEnumerable<SectionHeader> sections, int rva)
 		{

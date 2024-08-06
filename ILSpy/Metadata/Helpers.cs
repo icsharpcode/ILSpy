@@ -42,6 +42,8 @@ using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 
+using TomsToolbox.Wpf.Interactivity;
+
 namespace ICSharpCode.ILSpy.Metadata
 {
 	static class Helpers
@@ -69,6 +71,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				ContextMenuProvider.Add(view);
 				DataGridFilter.SetIsAutoFilterEnabled(view, true);
 				DataGridFilter.SetContentFilterFactory(view, new RegexContentFilterFactory());
+				AdvancedScrollWheelBehavior.SetAttach(view, AdvancedScrollWheelMode.WithoutAnimation);
 			}
 			DataGridFilter.GetFilter(view).Clear();
 			view.RowDetailsTemplateSelector = null;

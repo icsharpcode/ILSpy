@@ -12,7 +12,7 @@
 	<UserControl.Resources>
 		<local:FontSizeConverter x:Key="fontSizeConv" />
 	</UserControl.Resources>
-	<ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" toms:SmoothScrollingBehavior.Register="True">
+	<ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
 		<StackPanel Orientation="Vertical">
 			<DockPanel>
 				<Label DockPanel.Dock="Left" Content="{x:Static properties:Resources.DisplaySettingsPanel_Theme}" />

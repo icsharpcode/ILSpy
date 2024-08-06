@@ -467,7 +467,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				var loadResult = LoadedAssembly.GetLoadResultAsync().GetAwaiter().GetResult();
 				if (loadResult.MetadataFile != null)
 				{
-					language.DecompileAssembly(LoadedAssembly, output, options);
+					switch (loadResult.MetadataFile.Kind)
+					{
+						case MetadataFile.MetadataFileKind.ProgramDebugDatabase:
+						case MetadataFile.MetadataFileKind.Metadata:
+							output.WriteLine("// " + LoadedAssembly.FileName);
+							break;
+						default:
+							language.DecompileAssembly(LoadedAssembly, output, options);
+							break;
+					}
 				}
 				else if (loadResult.Package != null)
 				{

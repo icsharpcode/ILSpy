@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:styles="urn:TomsToolbox.Wpf.Styles"
              xmlns:toms="urn:TomsToolbox"
-             xmlns:ilSpy="clr-namespace:ICSharpCode.ILSpy"
              xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
              StartupUri="MainWindow.xaml">
 	<Application.Resources>
@@ -23,6 +22,10 @@
 		<Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Static styles:ResourceKeys.ButtonStyle}}">
 			<Setter Property="MinWidth" Value="73" />
 			<Setter Property="Padding" Value="9,1,9,1" />
+		</Style>
+
+		<Style TargetType="ScrollViewer">
+			<Setter Property="toms:AdvancedScrollWheelBehavior.Attach" Value="WithAnimation" />
 		</Style>
 
 	</Application.Resources>

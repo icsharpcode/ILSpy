@@ -53,6 +53,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public override bool IsEmbedded => false;
 		public override int MetadataOffset => Reader.PEHeaders.MetadataStartOffset;
+		public override bool IsMetadataOnly => false;
 
 		public void Dispose()
 		{

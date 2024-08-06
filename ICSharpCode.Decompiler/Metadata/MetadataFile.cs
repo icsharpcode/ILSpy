@@ -61,6 +61,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public virtual int MetadataOffset { get; }
 		public virtual bool IsEmbedded { get; }
+		public virtual bool IsMetadataOnly { get; } = true;
 
 		public bool IsAssembly => Metadata.IsAssembly;
 
