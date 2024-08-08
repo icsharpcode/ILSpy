@@ -16,83 +16,120 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
 
+using TomsToolbox.Wpf;
+
 namespace ICSharpCode.ILSpy.Options
 {
-	public class DecompilerSettingsViewModel : INotifyPropertyChanged
+	public sealed class DecompilerSettingsViewModel : ObservableObjectBase
 	{
-		public CSharpDecompilerSetting[] Settings { get; set; }
+		public DecompilerSettingsGroupViewModel[] Settings { get; }
 
 		public DecompilerSettingsViewModel(Decompiler.DecompilerSettings settings)
 		{
 			Settings = typeof(Decompiler.DecompilerSettings).GetProperties()
 				.Where(p => p.GetCustomAttribute<BrowsableAttribute>()?.Browsable != false)
-				.Select(p => new CSharpDecompilerSetting(p) { IsEnabled = (bool)p.GetValue(settings) })
+				.Select(p => new DecompilerSettingsItemViewModel(p) { IsEnabled = p.GetValue(settings) is true })
 				.OrderBy(item => item.Category, NaturalStringComparer.Instance)
-				.ThenBy(item => item.Description)
+				.GroupBy(p => p.Category)
+				.Select(g => new DecompilerSettingsGroupViewModel(g.Key, g.OrderBy(i => i.Description).ToArray()))
 				.ToArray();
-		}
-
-		public event PropertyChangedEventHandler PropertyChanged;
-
-		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 
 		public Decompiler.DecompilerSettings ToDecompilerSettings()
 		{
 			var settings = new Decompiler.DecompilerSettings();
-			foreach (var item in Settings)
+
+			foreach (var item in Settings.SelectMany(group => group.Settings))
 			{
 				item.Property.SetValue(settings, item.IsEnabled);
 			}
+
 			return settings;
 		}
 	}
-	public class CSharpDecompilerSetting : INotifyPropertyChanged
-	{
-		bool isEnabled;
 
-		public CSharpDecompilerSetting(PropertyInfo p)
+	public sealed class DecompilerSettingsGroupViewModel : ObservableObjectBase
+	{
+		private bool? _areAllItemsChecked;
+
+		public DecompilerSettingsGroupViewModel(string category, DecompilerSettingsItemViewModel[] settings)
 		{
-			this.Property = p;
-			this.Category = GetResourceString(p.GetCustomAttribute<CategoryAttribute>()?.Category ?? Resources.Other);
-			this.Description = GetResourceString(p.GetCustomAttribute<DescriptionAttribute>()?.Description ?? p.Name);
+			Settings = settings;
+			Category = category;
+
+			_areAllItemsChecked = GetAreAllItemsChecked(Settings);
+
+			foreach (DecompilerSettingsItemViewModel viewModel in settings)
+			{
+				viewModel.PropertyChanged += Item_PropertyChanged;
+			}
 		}
 
-		public PropertyInfo Property { get; }
-
-		public bool IsEnabled {
-			get => isEnabled;
+		public bool? AreAllItemsChecked {
+			get => _areAllItemsChecked;
 			set {
-				if (value != isEnabled)
+				SetProperty(ref _areAllItemsChecked, value);
+
+				if (!value.HasValue)
+					return;
+
+				foreach (var setting in Settings)
 				{
-					isEnabled = value;
-					OnPropertyChanged();
+					setting.IsEnabled = value.Value;
 				}
 			}
 		}
 
-		public string Description { get; set; }
+		public string Category { get; }
 
-		public string Category { get; set; }
+		public DecompilerSettingsItemViewModel[] Settings { get; }
 
-		public event PropertyChangedEventHandler PropertyChanged;
-
-		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+		private void Item_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+			if (e.PropertyName == nameof(DecompilerSettingsItemViewModel.IsEnabled))
+			{
+				AreAllItemsChecked = GetAreAllItemsChecked(Settings);
+			}
 		}
 
-		static string GetResourceString(string key)
+		private static bool? GetAreAllItemsChecked(ICollection<DecompilerSettingsItemViewModel> settings)
+		{
+			var numberOfEnabledItems = settings.Count(item => item.IsEnabled);
+
+			if (numberOfEnabledItems == settings.Count)
+				return true;
+
+			if (numberOfEnabledItems == 0)
+				return false;
+
+			return null;
+		}
+	}
+
+	public sealed class DecompilerSettingsItemViewModel(PropertyInfo property) : ObservableObjectBase
+	{
+		private bool _isEnabled;
+
+		public PropertyInfo Property { get; } = property;
+
+		public bool IsEnabled {
+			get => _isEnabled;
+			set => SetProperty(ref _isEnabled, value);
+		}
+
+		public string Description { get; set; } = GetResourceString(property.GetCustomAttribute<DescriptionAttribute>()?.Description ?? property.Name);
+
+		public string Category { get; set; } = GetResourceString(property.GetCustomAttribute<CategoryAttribute>()?.Category ?? Resources.Other);
+
+		private static string GetResourceString(string key)
 		{
 			var str = !string.IsNullOrEmpty(key) ? Resources.ResourceManager.GetString(key) : null;
 			return string.IsNullOrEmpty(key) || string.IsNullOrEmpty(str) ? key : str;
