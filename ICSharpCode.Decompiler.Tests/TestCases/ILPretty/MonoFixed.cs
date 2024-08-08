@@ -6,13 +6,13 @@ public class MonoFixed
 	{
 		fixed (char* ptr = text)
 		{
-			fixed (char* ptr2 = Environment.UserName)
+			fixed (char* userName = Environment.UserName)
 			{
-				fixed (char* ptr3 = text)
+				fixed (char* ptr2 = text)
 				{
 					*ptr = 'c';
-					*ptr2 = 'd';
-					*ptr3 = 'e';
+					*userName = 'd';
+					*ptr2 = 'e';
 				}
 			}
 		}

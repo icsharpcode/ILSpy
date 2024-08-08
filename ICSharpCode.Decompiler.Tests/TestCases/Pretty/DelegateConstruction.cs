@@ -353,19 +353,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 
 		public static void NameConflict()
 		{
-			// i is captured variable,
-			// j is parameter in anonymous method
+			// i is local in main method,
+			// j is captured variable,
+			// k is parameter in anonymous method
 			// l is local in anonymous method,
-			// k is local in main method
 			// Ensure that the decompiler doesn't introduce name conflicts
 			List<Action<int>> list = new List<Action<int>>();
-			for (int k = 0; k < 10; k++)
+			for (int i = 0; i < 10; i++)
 			{
-				int i;
-				for (i = 0; i < 10; i++)
+				int j;
+				for (j = 0; j < 10; j++)
 				{
-					list.Add(delegate (int j) {
-						for (int l = 0; l < i; l += j)
+					list.Add(delegate (int k) {
+						for (int l = 0; l < j; l += k)
 						{
 							Console.WriteLine();
 						}
