@@ -45,7 +45,9 @@
     <PackageVersion Include="System.Reflection.Metadata" Version="8.0.0" />
     <PackageVersion Include="System.Resources.Extensions" Version="8.0.0" />
     <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
-    <PackageVersion Include="TomsToolbox.Wpf.Styles" Version="2.17.3" />
-    <PackageVersion Include="coverlet.collector" Version="6.0.2" />
+    <PackageVersion Include="TomsToolbox.Composition.Analyzer" Version="2.18.1" />
+    <PackageVersion Include="TomsToolbox.Wpf.Composition" Version="2.18.1" />
+    <PackageVersion Include="TomsToolbox.Wpf.Styles" Version="2.18.1" />
+	  <PackageVersion Include="coverlet.collector" Version="6.0.2" />
   </ItemGroup>
 </Project>

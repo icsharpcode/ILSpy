@@ -62,6 +62,8 @@ using ICSharpCode.ILSpy.Controls.TreeView;
 using Microsoft.Win32;
 using ICSharpCode.ILSpyX.TreeView;
 
+using TomsToolbox.Composition;
+
 namespace ICSharpCode.ILSpy
 {
 	/// <summary>
@@ -245,7 +247,7 @@ namespace ICSharpCode.ILSpy
 
 		}
 
-		Button MakeToolbarItem(Lazy<ICommand, IToolbarCommandMetadata> command)
+		Button MakeToolbarItem(IExport<ICommand, IToolbarCommandMetadata> command)
 		{
 			return new Button {
 				Style = ThemeManager.Current.CreateToolBarButtonStyle(),

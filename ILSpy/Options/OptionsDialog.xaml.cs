@@ -28,6 +28,8 @@ using System.Xml.Linq;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX.Settings;
 
+using TomsToolbox.Composition;
+
 namespace ICSharpCode.ILSpy.Options
 {
 	public class TabItemViewModel
@@ -47,16 +49,12 @@ namespace ICSharpCode.ILSpy.Options
 	/// </summary>
 	public partial class OptionsDialog : Window
 	{
-
-		readonly Lazy<UIElement, IOptionsMetadata>[] optionPages;
+		readonly IExport<UIElement, IOptionsMetadata>[] optionPages;
 
 		public OptionsDialog()
 		{
 			InitializeComponent();
-			// These used to have [ImportMany(..., RequiredCreationPolicy = CreationPolicy.NonShared)], so they use their own
-			// ExportProvider instance.
-			// FIXME: Ideally, the export provider should be disposed when it's no longer needed.
-			var ep = App.ExportProviderFactory.CreateExportProvider();
+			var ep = App.ExportProvider;
 			this.optionPages = ep.GetExports<UIElement, IOptionsMetadata>("OptionPages").ToArray();
 			ILSpySettings settings = ILSpySettings.Load();
 			foreach (var optionPage in optionPages.OrderBy(p => p.Metadata.Order))

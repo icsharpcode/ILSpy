@@ -22,6 +22,8 @@ using System.Linq;
 
 using Microsoft.VisualStudio.Composition;
 
+using TomsToolbox.Composition;
+
 namespace ICSharpCode.ILSpy
 {
 	public static class Languages
@@ -39,7 +41,7 @@ namespace ICSharpCode.ILSpy
 			get { return allLanguages; }
 		}
 
-		internal static void Initialize(ExportProvider ep)
+		internal static void Initialize(IExportProvider ep)
 		{
 			List<Language> languages = new List<Language>();
 			languages.AddRange(ep.GetExportedValues<Language>());
