@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.Util;
@@ -35,6 +31,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// but the ILAst blocks may be moved/reordered by transforms.
 		/// </summary>
 		internal readonly ControlFlowNode[] cfg;
+
+		/// <inheritdoc cref="cfg"/>
+		public IReadOnlyList<ControlFlowNode> Nodes => cfg;
 
 		/// <summary>
 		/// Dictionary from Block to ControlFlowNode.
