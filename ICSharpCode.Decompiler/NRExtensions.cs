@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 using System;
-using System.Collections.Generic;
+using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -98,6 +98,14 @@ namespace ICSharpCode.Decompiler
 			if (docProvider == null)
 				return null;
 			return docProvider.GetDocumentation(entity);
+		}
+
+		internal static System.Reflection.TypeAttributes GetMetadataAttributes(this ITypeDefinition type)
+		{
+			var metadata = type.ParentModule.MetadataFile?.Metadata;
+			if (metadata == null || type.MetadataToken.IsNil)
+				return 0;
+			return metadata.GetTypeDefinition((TypeDefinitionHandle)type.MetadataToken).Attributes;
 		}
 	}
 }

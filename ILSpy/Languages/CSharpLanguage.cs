@@ -205,19 +205,33 @@ namespace ICSharpCode.ILSpy
 								removedSymbols.Add(fd.GetSymbol());
 							}
 							break;
+						case EventDeclaration ed:
+							// Remove any events without initializers
+							if (ed.Variables.All(v => v.Initializer.IsNull))
+							{
+								ed.Remove();
+								removedSymbols.Add(ed.GetSymbol());
+							}
+							break;
+						case PropertyDeclaration pd:
+							// Remove any properties without initializers
+							if (pd.Initializer.IsNull)
+							{
+								pd.Remove();
+								removedSymbols.Add(pd.GetSymbol());
+							}
+							break;
 					}
 				}
 				if (ctorDecl?.Initializer.ConstructorInitializerType == ConstructorInitializerType.This)
 				{
-					// remove all fields
+					// remove all non-constructor declarations
 					foreach (var node in rootNode.Children)
 					{
-						switch (node)
+						if (node is not ConstructorDeclaration)
 						{
-							case FieldDeclaration fd:
-								fd.Remove();
-								removedSymbols.Add(fd.GetSymbol());
-								break;
+							node.Remove();
+							removedSymbols.Add(node.GetSymbol());
 						}
 					}
 				}
@@ -268,6 +282,16 @@ namespace ICSharpCode.ILSpy
 			{
 				if (!field.MetadataToken.IsNil && field.IsStatic == isStatic)
 					members.Add(field.MetadataToken);
+			}
+			foreach (var e in type.Events)
+			{
+				if (!e.MetadataToken.IsNil && e.IsStatic == isStatic)
+					members.Add(e.MetadataToken);
+			}
+			foreach (var p in type.Properties)
+			{
+				if (!p.MetadataToken.IsNil && p.IsStatic == isStatic)
+					members.Add(p.MetadataToken);
 			}
 			foreach (var ctor in type.Methods)
 			{
