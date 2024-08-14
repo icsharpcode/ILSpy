@@ -131,11 +131,14 @@ namespace ICSharpCode.ILSpy.TextView
 			searchPanel.RegisterCommands(Application.Current.MainWindow.CommandBindings);
 			searchPanel.SetResourceReference(SearchPanel.MarkerBrushProperty, ResourceKeys.SearchResultBackgroundBrush);
 			searchPanel.Loaded += (_, _) => {
-				// HACK: fix the hardcoded but misaligned margin of the search text box.
-				var textBox = searchPanel.VisualDescendants().OfType<TextBox>().FirstOrDefault();
+				// HACK: fix search text box
+				var textBox = searchPanel.Template.FindName("PART_searchTextBox", searchPanel) as TextBox;
 				if (textBox != null)
 				{
+					// the hardcoded but misaligned margin
 					textBox.Margin = new Thickness(3);
+					// the hardcoded height
+					textBox.Height = double.NaN;
 				}
 			};
 
