@@ -31,7 +31,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Navigation;
 using System.Windows.Threading;
@@ -98,15 +97,9 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public AnalyzerTreeView AnalyzerTreeView {
-			get {
-				return !IsLoaded ? null : FindResource("AnalyzerTreeView") as AnalyzerTreeView;
-			}
-		}
-
 		public SearchPane SearchPane {
 			get {
-				return FindResource("SearchPane") as SearchPane;
+				return App.ExportProvider.GetExportedValue<SearchPane>();
 			}
 		}
 

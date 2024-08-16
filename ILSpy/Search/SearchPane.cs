@@ -40,11 +40,15 @@ using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Extensions;
 using ICSharpCode.ILSpyX.Search;
 
+using TomsToolbox.Wpf.Composition.Mef;
+
 namespace ICSharpCode.ILSpy.Search
 {
 	/// <summary>
 	/// Search pane
 	/// </summary>
+	[DataTemplate(typeof(SearchPaneModel))]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	public partial class SearchPane : UserControl
 	{
 		const int MAX_RESULTS = 1000;

@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.ComponentModel.Composition;
 using System.Linq;
 using System.Windows;
 
@@ -30,11 +31,16 @@ using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpy.Controls.TreeView;
 using ICSharpCode.ILSpyX.TreeView;
 
+using TomsToolbox.Wpf.Composition.Mef;
+
 namespace ICSharpCode.ILSpy.Analyzers
 {
 	/// <summary>
 	/// Analyzer tree view.
 	/// </summary>
+	[DataTemplate(typeof(AnalyzerPaneModel))]
+	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Export]
 	public class AnalyzerTreeView : SharpTreeView
 	{
 		FilterSettings filterSettings;

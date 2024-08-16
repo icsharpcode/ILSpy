@@ -2,8 +2,8 @@
 <Window
 	x:Class="ICSharpCode.ILSpy.MainWindow"
 	x:ClassModifier="public"
-	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
-	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:tv="clr-namespace:ICSharpCode.ILSpy.Controls.TreeView"
 	xmlns:local="clr-namespace:ICSharpCode.ILSpy"
 	xmlns:search="clr-namespace:ICSharpCode.ILSpy.Search"
@@ -67,27 +67,8 @@
 				</Style>
 			</tv:SharpTreeView.ItemContainerStyle>
 		</tv:SharpTreeView>
-
 		<DataTemplate DataType="{x:Type viewModels:AssemblyListPaneModel}">
 			<ContentControl Content="{StaticResource AssemblyTreeView}" />
-		</DataTemplate>
-
-		<local:DebugSteps x:Key="DebugSteps" />
-
-		<DataTemplate DataType="{x:Type viewModels:DebugStepsPaneModel}">
-			<ContentControl Content="{StaticResource DebugSteps}" />
-		</DataTemplate>
-
-		<search:SearchPane x:Key="SearchPane" />
-
-		<DataTemplate DataType="{x:Type viewModels:SearchPaneModel}">
-			<ContentControl Content="{StaticResource SearchPane}" />
-		</DataTemplate>
-
-		<analyzers:AnalyzerTreeView x:Key="AnalyzerTreeView" />
-
-		<DataTemplate DataType="{x:Type viewModels:AnalyzerPaneModel}">
-			<ContentControl Content="{StaticResource AnalyzerTreeView}" />
 		</DataTemplate>
 
 		<DataTemplate DataType="{x:Type viewModels:TabPageModel}">
