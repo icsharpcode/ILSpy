@@ -17,12 +17,11 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.ComponentModel.Composition;
-using System.Windows;
 using System.Windows.Input;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
-	[ExportToolPane(ContentId = PaneContentId)]
+	[ExportToolPane]
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	public class AnalyzerPaneModel : ToolPaneModel
 	{
@@ -35,7 +34,5 @@ namespace ICSharpCode.ILSpy.ViewModels
 			ShortcutKey = new KeyGesture(Key.R, ModifierKeys.Control);
 			AssociatedCommand = ILSpyCommands.Analyze;
 		}
-
-		public override DataTemplate Template => (DataTemplate)MainWindow.Instance.FindResource("AnalyzerPaneTemplate");
 	}
 }

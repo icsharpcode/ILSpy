@@ -39,8 +39,6 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		public object Content { get; }
 
-		public override DataTemplate Template => throw new NotSupportedException();
-
 		public LegacyToolPaneLocation Location { get; }
 	}
 }

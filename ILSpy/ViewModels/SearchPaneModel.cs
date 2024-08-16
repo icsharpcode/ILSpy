@@ -22,7 +22,7 @@ using System.Windows.Input;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
-	[ExportToolPane(ContentId = PaneContentId)]
+	[ExportToolPane]
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	public class SearchPaneModel : ToolPaneModel
 	{
@@ -42,7 +42,5 @@ namespace ICSharpCode.ILSpy.ViewModels
 			base.Show();
 			MainWindow.Instance.SearchPane.Show();
 		}
-
-		public override DataTemplate Template => (DataTemplate)MainWindow.Instance.FindResource("SearchPaneTemplate");
 	}
 }

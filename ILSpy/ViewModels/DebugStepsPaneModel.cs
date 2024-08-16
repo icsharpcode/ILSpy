@@ -22,7 +22,7 @@ using System.Windows;
 namespace ICSharpCode.ILSpy.ViewModels
 {
 #if DEBUG
-	[ExportToolPane(ContentId = PaneContentId)]
+	[ExportToolPane]
 	[PartCreationPolicy(CreationPolicy.Shared)]
 #endif
 	public class DebugStepsPaneModel : ToolPaneModel
@@ -34,7 +34,5 @@ namespace ICSharpCode.ILSpy.ViewModels
 			ContentId = PaneContentId;
 			Title = Properties.Resources.DebugSteps;
 		}
-
-		public override DataTemplate Template => (DataTemplate)MainWindow.Instance.FindResource("DebugStepsPaneTemplate");
 	}
 }

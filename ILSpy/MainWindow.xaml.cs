@@ -58,6 +58,7 @@ using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.FileLoaders;
 using ICSharpCode.ILSpyX.Settings;
 using ICSharpCode.ILSpy.Controls.TreeView;
+using ICSharpCode.ILSpyX.Extensions;
 
 using Microsoft.Win32;
 using ICSharpCode.ILSpyX.TreeView;
@@ -365,25 +366,12 @@ namespace ICSharpCode.ILSpy
 		#endregion
 
 		#region Tool Pane extensibility
+		
 		private void InitToolPanes()
 		{
-			var toolPanes = App.ExportProvider.GetExports<ToolPaneModel, IToolPaneMetadata>("ToolPane");
-			var templateSelector = new PaneTemplateSelector();
-			templateSelector.Mappings.Add(new TemplateMapping {
-				Type = typeof(TabPageModel),
-				Template = (DataTemplate)FindResource("DefaultContentTemplate")
-			});
-			templateSelector.Mappings.Add(new TemplateMapping {
-				Type = typeof(LegacyToolPaneModel),
-				Template = (DataTemplate)FindResource("DefaultContentTemplate")
-			});
-			foreach (var toolPane in toolPanes)
-			{
-				ToolPaneModel model = toolPane.Value;
-				templateSelector.Mappings.Add(new TemplateMapping { Type = model.GetType(), Template = model.Template });
-				DockWorkspace.Instance.ToolPanes.Add(model);
-			}
-			DockManager.LayoutItemTemplateSelector = templateSelector;
+			var toolPanes = App.ExportProvider.GetExportedValues<ToolPaneModel>("ToolPane");
+
+			DockWorkspace.Instance.ToolPanes.AddRange(toolPanes);
 		}
 
 		private void InitWindowMenu()

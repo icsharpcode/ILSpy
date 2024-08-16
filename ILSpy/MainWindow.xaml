@@ -23,6 +23,7 @@
 	xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
 	xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
 	xmlns:toms="urn:TomsToolbox"
+	xmlns:viewModels="clr-namespace:ICSharpCode.ILSpy.ViewModels"
 	d:DataContext="{d:DesignInstance local:MainWindowViewModel}"
 >
 	<Window.Resources>
@@ -69,29 +70,33 @@
 			</tv:SharpTreeView.ItemContainerStyle>
 		</tv:SharpTreeView>
 
-		<DataTemplate x:Key="AssemblyListPaneTemplate">
+		<DataTemplate DataType="{x:Type viewModels:AssemblyListPaneModel}">
 			<ContentControl Content="{StaticResource AssemblyTreeView}" />
 		</DataTemplate>
 
 		<local:DebugSteps x:Key="DebugSteps" />
 
-		<DataTemplate x:Key="DebugStepsPaneTemplate">
+		<DataTemplate DataType="{x:Type viewModels:DebugStepsPaneModel}">
 			<ContentControl Content="{StaticResource DebugSteps}" />
 		</DataTemplate>
 
 		<search:SearchPane x:Key="SearchPane" />
 
-		<DataTemplate x:Key="SearchPaneTemplate">
+		<DataTemplate DataType="{x:Type viewModels:SearchPaneModel}">
 			<ContentControl Content="{StaticResource SearchPane}" />
 		</DataTemplate>
 
 		<analyzers:AnalyzerTreeView x:Key="AnalyzerTreeView" />
 
-		<DataTemplate x:Key="AnalyzerPaneTemplate">
+		<DataTemplate DataType="{x:Type viewModels:AnalyzerPaneModel}">
 			<ContentControl Content="{StaticResource AnalyzerTreeView}" />
 		</DataTemplate>
 
-		<DataTemplate x:Key="DefaultContentTemplate">
+		<DataTemplate DataType="{x:Type viewModels:TabPageModel}">
+			<ContentPresenter Content="{Binding Content}" />
+		</DataTemplate>
+
+		<DataTemplate DataType="{x:Type viewModels:LegacyToolPaneModel}">
 			<ContentPresenter Content="{Binding Content}" />
 		</DataTemplate>
 
