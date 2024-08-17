@@ -29,19 +29,19 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Controls.TreeView;
 using ICSharpCode.ILSpy.Metadata;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.FileLoaders;
 using ICSharpCode.ILSpyX.PdbProvider;
-using ICSharpCode.ILSpy.Controls.TreeView;
+using ICSharpCode.ILSpyX.TreeView;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 using Microsoft.Win32;
 
 using TypeDefinitionHandle = System.Reflection.Metadata.TypeDefinitionHandle;
-using ICSharpCode.ILSpyX.TreeView;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -166,6 +166,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 				return tooltip;
 			}
+		}
+
+		public void UpdateToolTip()
+		{
+			tooltip = null;
+			RaisePropertyChanged(nameof(ToolTip));
 		}
 
 		public override bool ShowExpander {
