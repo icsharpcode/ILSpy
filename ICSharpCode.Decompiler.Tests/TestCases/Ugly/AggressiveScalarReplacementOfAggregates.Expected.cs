@@ -96,25 +96,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 				thisField = this,
 				field1 = i
 			};
-			int field1 = default(int);
-			string field2 = default(string);
+			int field5 = default(int);
+			string field4 = default(string);
 			DisplayClass field3 = default(DisplayClass);
 			while (true)
 			{
 				switch (Rand())
 				{
 					case 1:
-						field1 = Rand();
+						field5 = Rand();
 						continue;
 					case 2:
-						field2 = Rand().ToString();
+						field4 = Rand().ToString();
 						continue;
 					case 3:
 						field3 = displayClass;
 						continue;
 				}
-				Console.WriteLine(field1);
-				Console.WriteLine(field2);
+				Console.WriteLine(field5);
+				Console.WriteLine(field4);
 				Console.WriteLine(field3);
 			}
 		}

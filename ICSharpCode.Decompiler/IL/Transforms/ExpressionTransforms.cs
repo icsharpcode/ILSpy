@@ -898,7 +898,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			context.Step("TransformCatchVariable", entryPoint.Instructions[0]);
 			exceptionVar.Kind = VariableKind.ExceptionLocal;
+			exceptionVar.Name = handler.Variable.Name;
 			exceptionVar.Type = handler.Variable.Type;
+			exceptionVar.HasGeneratedName = handler.Variable.HasGeneratedName;
 			handler.Variable = exceptionVar;
 			if (isCatchBlock)
 			{

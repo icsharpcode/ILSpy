@@ -431,9 +431,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public unsafe void PinFixedMember(ref StructWithFixedSizeMembers m)
 		{
-			fixed (int* ptr = m.Integers)
+			fixed (int* integers = m.Integers)
 			{
-				UsePointer(ptr);
+				UsePointer(integers);
 			}
 		}
 
