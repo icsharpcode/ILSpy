@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.ComponentModel.Composition;
 using System.Windows.Controls;
 using System.Xml.Linq;
 
@@ -27,6 +28,7 @@ namespace ICSharpCode.ILSpy.Options
 	/// Interaction logic for MiscSettingsPanel.xaml
 	/// </summary>
 	[ExportOptionPage(Title = nameof(Properties.Resources.Misc), Order = 30)]
+	[PartCreationPolicy(CreationPolicy.NonShared)]
 	public partial class MiscSettingsPanel : UserControl, IOptionPage
 	{
 		public MiscSettingsPanel()

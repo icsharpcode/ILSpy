@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 using System;
+using System.ComponentModel.Composition;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AppEnv;
@@ -25,6 +26,7 @@ using ICSharpCode.ILSpy.TreeNodes;
 namespace ICSharpCode.ILSpy
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.ScopeSearchToThisNamespace), Category = nameof(Resources.Analyze), Order = 9999)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	public class ScopeSearchToNamespace : IContextMenuEntry
 	{
 		public void Execute(TextViewContext context)

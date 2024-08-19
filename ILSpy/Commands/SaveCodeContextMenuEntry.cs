@@ -30,10 +30,12 @@ using ICSharpCode.ILSpy.ViewModels;
 
 using Microsoft.Win32;
 using ICSharpCode.ILSpyX.TreeView;
+using System.ComponentModel.Composition;
 
 namespace ICSharpCode.ILSpy.TextView
 {
 	[ExportContextMenuEntry(Header = nameof(Resources._SaveCode), Category = nameof(Resources.Save), Icon = "Images/Save")]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class SaveCodeContextMenuEntry : IContextMenuEntry
 	{
 		public void Execute(TextViewContext context)

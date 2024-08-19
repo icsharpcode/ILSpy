@@ -22,12 +22,15 @@ using System.Diagnostics;
 
 namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
+	using System.ComponentModel.Composition;
+
 	using ICSharpCode.Decompiler.TypeSystem;
 
 	/// <summary>
 	/// Finds all entities that expose a type.
 	/// </summary>
 	[ExportAnalyzer(Header = "Exposed By", Order = 40)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	class TypeExposedByAnalyzer : IAnalyzer
 	{
 		public bool Show(ISymbol entity) => entity is ITypeDefinition;

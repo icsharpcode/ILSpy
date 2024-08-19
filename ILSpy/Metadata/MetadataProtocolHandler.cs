@@ -26,6 +26,7 @@ using ICSharpCode.ILSpy.TreeNodes;
 namespace ICSharpCode.ILSpy.Metadata
 {
 	[Export(typeof(IProtocolHandler))]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	class MetadataProtocolHandler : IProtocolHandler
 	{
 		public ILSpyTreeNode Resolve(string protocol, MetadataFile module, Handle handle, out bool newTabPage)

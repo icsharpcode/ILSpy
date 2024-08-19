@@ -121,6 +121,7 @@ namespace ICSharpCode.ILSpy.Options
 	}
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources._Options), MenuCategory = nameof(Resources.Options), MenuOrder = 999)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class ShowOptionsCommand : SimpleCommand
 	{
 		public override void Execute(object parameter)

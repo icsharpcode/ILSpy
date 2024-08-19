@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.ComponentModel.Composition;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -34,6 +35,7 @@ namespace ICSharpCode.ILSpy.Options
 	/// Interaction logic for DisplaySettingsPanel.xaml
 	/// </summary>
 	[ExportOptionPage(Title = nameof(Properties.Resources.Display), Order = 20)]
+	[PartCreationPolicy(CreationPolicy.NonShared)]
 	public partial class DisplaySettingsPanel : UserControl, IOptionPage
 	{
 		public DisplaySettingsPanel()

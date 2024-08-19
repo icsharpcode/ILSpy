@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -171,6 +172,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 
 		[ExportContextMenuEntry(Header = nameof(Resources.CopyErrorMessage))]
+		[PartCreationPolicy(CreationPolicy.Shared)]
 		sealed class CopyErrorMessageContextMenu : IContextMenuEntry
 		{
 			public bool IsVisible(TextViewContext context)

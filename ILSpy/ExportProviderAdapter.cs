@@ -15,7 +15,7 @@ namespace ICSharpCode.ILSpy;
 /// <summary>
 /// Adapter for Microsoft.VisualStudio.Composition.<see cref="ExportProvider"/> to <see cref="IExportProvider"/>.
 /// </summary>
-public class ExportProviderAdapter : IExportProvider
+public sealed class ExportProviderAdapter : IExportProvider
 {
 	private static readonly Type DefaultMetadataType = typeof(Dictionary<string, object>);
 
@@ -42,10 +42,7 @@ public class ExportProviderAdapter : IExportProvider
 		return _exportProvider.GetExportedValues<T>(contractName).SingleOrDefault();
 	}
 
-#pragma warning disable CS8769 // Nullability of reference types in type of parameter doesn't match implemented member (possibly because of nullability attributes).
-	// can't apply NotNullWhen here, because ICSharpCode.Decompiler defines a duplicate attribute, and uses InternalsVisibleTo("ILSpy"), so this attribute is now ambiguous!
-	bool IExportProvider.TryGetExportedValue<T>(string? contractName, /*[NotNullWhen(true)]*/ out T? value) where T : class
-#pragma warning restore CS8769 // Nullability of reference types in type of parameter doesn't match implemented member (possibly because of nullability attributes).
+	bool IExportProvider.TryGetExportedValue<T>(string? contractName, [NotNullWhen(true)] out T? value) where T : class
 	{
 		value = _exportProvider.GetExportedValues<T>(contractName).SingleOrDefault();
 

@@ -53,6 +53,7 @@ namespace ICSharpCode.ILSpy
 	/// please directly use the CSharpDecompiler class.
 	/// </summary>
 	[Export(typeof(Language))]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	public class CSharpLanguage : Language
 	{
 		string name = "C#";

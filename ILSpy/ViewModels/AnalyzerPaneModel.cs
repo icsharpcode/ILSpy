@@ -16,17 +16,19 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.ComponentModel.Composition;
 using System.Windows;
 using System.Windows.Input;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
 	[ExportToolPane(ContentId = PaneContentId)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	public class AnalyzerPaneModel : ToolPaneModel
 	{
 		public const string PaneContentId = "analyzerPane";
 
-		private AnalyzerPaneModel()
+		public AnalyzerPaneModel()
 		{
 			ContentId = PaneContentId;
 			Title = Properties.Resources.Analyze;

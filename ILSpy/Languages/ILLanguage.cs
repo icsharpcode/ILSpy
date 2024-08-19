@@ -42,6 +42,7 @@ namespace ICSharpCode.ILSpy
 	/// flat IL (detectControlStructure=false) and structured IL (detectControlStructure=true).
 	/// </remarks>
 	[Export(typeof(Language))]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	public class ILLanguage : Language
 	{
 		protected bool detectControlStructure = true;
