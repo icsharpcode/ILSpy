@@ -20,9 +20,11 @@ using System;
 using System.ComponentModel;
 using System.Windows.Input;
 
+using TomsToolbox.Wpf;
+
 namespace ICSharpCode.ILSpy.ViewModels
 {
-	public abstract class PaneModel : INotifyPropertyChanged
+	public abstract class PaneModel : ObservableObject
 	{
 		class CloseCommandImpl : ICommand
 		{
@@ -60,13 +62,6 @@ namespace ICSharpCode.ILSpy.ViewModels
 			this.closeCommand = new CloseCommandImpl(this);
 		}
 
-		public event PropertyChangedEventHandler PropertyChanged;
-
-		protected void RaisePropertyChanged(string propertyName)
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-		}
-
 		private bool isSelected = false;
 		public bool IsSelected {
 			get => isSelected;
@@ -74,7 +69,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				if (isSelected != value)
 				{
 					isSelected = value;
-					RaisePropertyChanged(nameof(IsSelected));
+					OnPropertyChanged(nameof(IsSelected));
 				}
 			}
 		}
@@ -86,7 +81,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				if (isActive != value)
 				{
 					isActive = value;
-					RaisePropertyChanged(nameof(IsActive));
+					OnPropertyChanged(nameof(IsActive));
 				}
 			}
 		}
@@ -98,7 +93,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				if (isVisible != value)
 				{
 					isVisible = value;
-					RaisePropertyChanged(nameof(IsVisible));
+					OnPropertyChanged(nameof(IsVisible));
 				}
 			}
 		}
@@ -110,7 +105,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				if (isCloseable != value)
 				{
 					isCloseable = value;
-					RaisePropertyChanged(nameof(IsCloseable));
+					OnPropertyChanged(nameof(IsCloseable));
 				}
 			}
 		}
@@ -122,7 +117,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				if (closeCommand != value)
 				{
 					closeCommand = value;
-					RaisePropertyChanged(nameof(CloseCommand));
+					OnPropertyChanged(nameof(CloseCommand));
 				}
 			}
 		}
@@ -134,7 +129,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				if (contentId != value)
 				{
 					contentId = value;
-					RaisePropertyChanged(nameof(ContentId));
+					OnPropertyChanged(nameof(ContentId));
 				}
 			}
 		}
@@ -146,7 +141,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				if (title != value)
 				{
 					title = value;
-					RaisePropertyChanged(nameof(Title));
+					OnPropertyChanged(nameof(Title));
 				}
 			}
 		}

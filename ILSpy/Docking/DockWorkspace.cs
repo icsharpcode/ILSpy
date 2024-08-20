@@ -35,6 +35,7 @@ using AvalonDock.Layout;
 using AvalonDock.Layout.Serialization;
 
 using ICSharpCode.AvalonEdit.Highlighting;
+using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.ViewModels;
@@ -45,17 +46,17 @@ namespace ICSharpCode.ILSpy.Docking
 {
 	public class DockWorkspace : ObservableObject, ILayoutUpdateStrategy
 	{
-		private SessionSettings sessionSettings;
+		private static SessionSettings SessionSettings => SettingsService.Instance.SessionSettings;
 
 		public static readonly DockWorkspace Instance = new();
 
 		private DockWorkspace()
 		{
 			this.TabPages.CollectionChanged += Documents_CollectionChanged;
-			MessageBus<CurrentAssemblyListChangedEventArgs>.Subscribers += (sender, e) => MainWindow_Instance_CurrentAssemblyListChanged(sender, e);
+			MessageBus<CurrentAssemblyListChangedEventArgs>.Subscribers += (sender, e) => CurrentAssemblyList_Changed(sender, e);
 		}
 
-		private void MainWindow_Instance_CurrentAssemblyListChanged(object sender, NotifyCollectionChangedEventArgs e)
+		private void CurrentAssemblyList_Changed(object sender, NotifyCollectionChangedEventArgs e)
 		{
 			if (e.OldItems == null)
 			{
@@ -158,7 +159,7 @@ namespace ICSharpCode.ILSpy.Docking
 			serializer.LayoutSerializationCallback += LayoutSerializationCallback;
 			try
 			{
-				sessionSettings.DockLayout.Deserialize(serializer);
+				SessionSettings.DockLayout.Deserialize(serializer);
 			}
 			finally
 			{
@@ -201,11 +202,6 @@ namespace ICSharpCode.ILSpy.Docking
 			ActiveTabPage.ShowTextView(textView => textView.ShowNodes(output, nodes, highlighting));
 		}
 
-		internal void LoadSettings(SessionSettings sessionSettings)
-		{
-			this.sessionSettings = sessionSettings;
-		}
-
 		internal void CloseAllTabs()
 		{
 			foreach (var doc in TabPages.ToArray())
@@ -222,7 +218,7 @@ namespace ICSharpCode.ILSpy.Docking
 				pane.IsVisible = false;
 			}
 			CloseAllTabs();
-			sessionSettings.DockLayout.Reset();
+			SessionSettings.DockLayout.Reset();
 			InitializeLayout(MainWindow.Instance.DockManager);
 			MainWindow.Instance.Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)MainWindow.Instance.RefreshDecompiledView);
 		}
@@ -243,7 +239,7 @@ namespace ICSharpCode.ILSpy.Docking
 					previousContainer.Children.Add(anchorableToShow);
 					return true;
 				case LegacyToolPaneLocation.Bottom:
-					previousContainer = GetContainer<AnalyzerPaneModel>();
+					previousContainer = GetContainer<AnalyzerTreeViewModel>();
 					previousContainer.Children.Add(anchorableToShow);
 					return true;
 				default:

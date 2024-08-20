@@ -27,9 +27,9 @@ namespace ICSharpCode.ILSpy.Analyzers
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.Analyze), Icon = "Images/Search", Category = nameof(Resources.Analyze), InputGestureText = "Ctrl+R", Order = 100)]
 	[PartCreationPolicy(CreationPolicy.Shared)]
-	internal sealed class AnalyzeCommand : SimpleCommand, IContextMenuEntry
+	internal sealed class AnalyzeContextMenuCommand : IContextMenuEntry
 	{
-		private static readonly AnalyzerTreeView AnalyzerTreeView = App.ExportProvider.GetExportedValue<AnalyzerTreeView>();
+		private static readonly AnalyzerTreeViewModel AnalyzerTreeView = App.ExportProvider.GetExportedValue<AnalyzerTreeViewModel>();
 
 		public bool IsVisible(TextViewContext context)
 		{
@@ -70,29 +70,22 @@ namespace ICSharpCode.ILSpy.Analyzers
 				AnalyzerTreeView.Analyze(entity);
 			}
 		}
+	}
+
+	internal sealed class AnalyzeCommand : SimpleCommand
+	{
+		private static readonly AnalyzerTreeViewModel AnalyzerTreeView = App.ExportProvider.GetExportedValue<AnalyzerTreeViewModel>();
 
 		public override bool CanExecute(object parameter)
 		{
-			return AnalyzerTreeView.IsKeyboardFocusWithin
-				? AnalyzerTreeView.SelectedItems.OfType<object>().All(n => n is IMemberTreeNode)
-				: MainWindow.Instance.SelectedNodes.All(n => n is IMemberTreeNode);
+			return MainWindow.Instance.SelectedNodes.All(n => n is IMemberTreeNode);
 		}
 
 		public override void Execute(object parameter)
 		{
-			if (AnalyzerTreeView.IsKeyboardFocusWithin)
+			foreach (var node in MainWindow.Instance.SelectedNodes.OfType<IMemberTreeNode>())
 			{
-				foreach (var node in AnalyzerTreeView.SelectedItems.OfType<IMemberTreeNode>().ToArray())
-				{
-					AnalyzerTreeView.Analyze(node.Member);
-				}
-			}
-			else
-			{
-				foreach (var node in MainWindow.Instance.SelectedNodes.OfType<IMemberTreeNode>())
-				{
-					AnalyzerTreeView.Analyze(node.Member);
-				}
+				AnalyzerTreeView.Analyze(node.Member);
 			}
 		}
 	}

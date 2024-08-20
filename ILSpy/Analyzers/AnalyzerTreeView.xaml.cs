@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2019 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -17,22 +17,34 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.ComponentModel.Composition;
-using System.Windows.Input;
+using System.Windows.Controls;
 
-namespace ICSharpCode.ILSpy.ViewModels
+using ICSharpCode.ILSpyX.TreeView;
+
+using TomsToolbox.Wpf.Composition.Mef;
+
+namespace ICSharpCode.ILSpy.Analyzers
 {
-	[ExportToolPane]
-	[PartCreationPolicy(CreationPolicy.Shared)]
-	public class AnalyzerPaneModel : ToolPaneModel
+	/// <summary>
+	/// Interaction logic for AnalyzerTreeView.xaml
+	/// </summary>
+	[DataTemplate(typeof(AnalyzerTreeViewModel))]
+	[PartCreationPolicy(CreationPolicy.NonShared)]
+	[Export]
+	public partial class AnalyzerTreeView
 	{
-		public const string PaneContentId = "analyzerPane";
-
-		public AnalyzerPaneModel()
+		public AnalyzerTreeView()
 		{
-			ContentId = PaneContentId;
-			Title = Properties.Resources.Analyze;
-			ShortcutKey = new KeyGesture(Key.R, ModifierKeys.Control);
-			AssociatedCommand = ILSpyCommands.Analyze;
+			InitializeComponent();
+			ContextMenuProvider.Add(this);
+		}
+
+		private void AnalyzerTreeView_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+		{
+			if (SelectedItem is SharpTreeNode sharpTreeNode)
+			{
+				FocusNode(sharpTreeNode);
+			}
 		}
 	}
 }

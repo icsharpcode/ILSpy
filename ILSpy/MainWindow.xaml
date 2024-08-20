@@ -35,7 +35,6 @@
 				BorderThickness="0" Visibility="Visible">
 			<tv:SharpTreeView.ItemContainerStyle>
 				<Style TargetType="tv:SharpTreeViewItem">
-
 					<Setter Property="Template">
 						<Setter.Value>
 							<ControlTemplate TargetType="{x:Type tv:SharpTreeViewItem}">
@@ -65,6 +64,7 @@
 				</Style>
 			</tv:SharpTreeView.ItemContainerStyle>
 		</tv:SharpTreeView>
+
 		<DataTemplate DataType="{x:Type viewModels:AssemblyListPaneModel}">
 			<ContentControl Content="{StaticResource AssemblyTreeView}" />
 		</DataTemplate>

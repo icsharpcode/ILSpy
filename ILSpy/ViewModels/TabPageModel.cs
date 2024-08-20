@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				if (supportsLanguageSwitching != value)
 				{
 					supportsLanguageSwitching = value;
-					RaisePropertyChanged(nameof(SupportsLanguageSwitching));
+					OnPropertyChanged(nameof(SupportsLanguageSwitching));
 				}
 			}
 		}
@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				if (content != value)
 				{
 					content = value;
-					RaisePropertyChanged(nameof(Content));
+					OnPropertyChanged(nameof(Content));
 				}
 			}
 		}

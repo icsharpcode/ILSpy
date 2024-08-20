@@ -135,7 +135,6 @@ namespace ICSharpCode.ILSpy
 			{
 				System.Threading.Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo(sessionSettings.CurrentCulture);
 			}
-			DockWorkspace.Instance.LoadSettings(sessionSettings);
 			InitializeComponent();
 			InitToolPanes();
 			DockWorkspace.Instance.InitializeLayout(DockManager);
@@ -352,7 +351,7 @@ namespace ICSharpCode.ILSpy
 
 		private void InitToolPanes()
 		{
-			var toolPanes = App.ExportProvider.GetExportedValues<ToolPaneModel>("ToolPane");
+			var toolPanes = App.ExportProvider.GetExportedValues<ToolPaneModel>("ToolPane").OrderBy(item => item.Title);
 
 			DockWorkspace.Instance.ToolPanes.AddRange(toolPanes);
 		}
