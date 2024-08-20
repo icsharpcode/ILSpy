@@ -831,8 +831,7 @@ namespace ICSharpCode.ILSpy
 
 		void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
-			DockWorkspace.Instance.TabPages.Add(new() { });
-			DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.First();
+			DockWorkspace.Instance.TabPages.Add();
 
 			var loadPreviousAssemblies = Options.MiscSettingsPanel.CurrentMiscSettings.LoadPreviousAssemblies;
 
@@ -1087,8 +1086,7 @@ namespace ICSharpCode.ILSpy
 				{
 					if (inNewTabPage)
 					{
-						DockWorkspace.Instance.TabPages.Add(new TabPageModel() { });
-						DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.Last();
+						DockWorkspace.Instance.TabPages.Add();
 						AssemblyTreeView.SelectedItem = null;
 					}
 
@@ -1130,8 +1128,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (inNewTabPage)
 			{
-				DockWorkspace.Instance.TabPages.Add(new TabPageModel() { });
-				DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.Last();
+				DockWorkspace.Instance.TabPages.Add();
 			}
 
 			// Ensure nodes exist
@@ -1575,8 +1572,7 @@ namespace ICSharpCode.ILSpy
 			{
 				if (inNewTabPage)
 				{
-					DockWorkspace.Instance.TabPages.Add(new() { });
-					DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.Last();
+					DockWorkspace.Instance.TabPages.Add();
 				}
 
 				if (e.Uri.Host == "aboutpage")

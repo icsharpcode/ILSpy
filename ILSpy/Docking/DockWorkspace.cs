@@ -88,6 +88,11 @@ namespace ICSharpCode.ILSpy.Docking
 		private void Documents_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
 			var collection = (PaneCollection<TabPageModel>)sender;
+			if (e.Action == NotifyCollectionChangedAction.Add)
+			{
+				ActiveTabPage = e.NewItems?[0] as TabPageModel;
+			}
+
 			bool canClose = collection.Count > 1;
 			foreach (var item in collection)
 			{
