@@ -47,28 +47,12 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public AnalyzerTreeView()
 		{
 			this.ShowRoot = false;
-			this.BorderThickness = new Thickness(0);
+			this.BorderThickness = new();
+			this.Root = new AnalyzerRootNode();
 			ContextMenuProvider.Add(this);
 			MessageBus<CurrentAssemblyListChangedEventArgs>.Subscribers += (sender, e) => CurrentAssemblyList_Changed(sender, e);
-			MessageBus<DockWorkspaceActiveTabPageChangedEventArgs>.Subscribers += DockWorkspace_ActiveTabPageChanged;
-			MessageBus<LanguageSettingsChangedEventArgs>.Subscribers += (sender, e) => LanguageSettings_PropertyChanged(sender, e);
 		}
 
-		private void DockWorkspace_ActiveTabPageChanged(object sender, EventArgs e)
-		{
-			this.Root ??= new AnalyzerRootNode { Language = MainWindow.Instance.CurrentLanguage };
-		}
-
-		private void LanguageSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-		{
-			switch (e.PropertyName)
-			{
-				case "Language":
-				case "LanguageVersion":
-					((AnalyzerRootNode)this.Root).Language = MainWindow.Instance.CurrentLanguage;
-					break;
-			}
-		}
 
 		void CurrentAssemblyList_Changed(object sender, NotifyCollectionChangedEventArgs e)
 		{

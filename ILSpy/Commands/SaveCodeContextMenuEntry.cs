@@ -32,6 +32,8 @@ using Microsoft.Win32;
 using ICSharpCode.ILSpyX.TreeView;
 using System.ComponentModel.Composition;
 
+using ICSharpCode.ILSpy.Util;
+
 namespace ICSharpCode.ILSpy.TextView
 {
 	[ExportContextMenuEntry(Header = nameof(Resources._SaveCode), Category = nameof(Resources.Save), Icon = "Images/Save")]
@@ -60,7 +62,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public static void Execute(IReadOnlyList<SharpTreeNode> selectedNodes)
 		{
-			var currentLanguage = MainWindow.Instance.CurrentLanguage;
+			var currentLanguage = SettingsService.Instance.SessionSettings.LanguageSettings.Language;
 			var tabPage = Docking.DockWorkspace.Instance.ActiveTabPage;
 			tabPage.ShowTextView(textView => {
 				if (selectedNodes.Count == 1 && selectedNodes[0] is ILSpyTreeNode singleSelection)

@@ -98,7 +98,6 @@ namespace ICSharpCode.ILSpy
 			// Add data templates registered via MEF.
 			Resources.MergedDictionaries.Add(DataTemplateManager.CreateDynamicDataTemplates(ExportProvider));
 
-			Languages.Initialize(ExportProvider);
 			EventManager.RegisterClassHandler(typeof(Window),
 											  Hyperlink.RequestNavigateEvent,
 											  new RequestNavigateEventHandler(Window_RequestNavigate));

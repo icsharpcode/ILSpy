@@ -17,15 +17,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using System.ComponentModel.Composition;
 using System.Diagnostics;
 
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
-	using System.ComponentModel.Composition;
-
-	using ICSharpCode.Decompiler.TypeSystem;
-
 	/// <summary>
 	/// Finds all entities that expose a type.
 	/// </summary>

@@ -28,6 +28,7 @@ using System.Threading.Tasks;
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX;
 
 using TomsToolbox.Essentials;
@@ -94,7 +95,7 @@ namespace ICSharpCode.ILSpy
 		public override void Execute(object parameter)
 		{
 			const int numRuns = 100;
-			var language = MainWindow.Instance.CurrentLanguage;
+			var language = SettingsService.Instance.SessionSettings.LanguageSettings.Language;
 			var nodes = MainWindow.Instance.SelectedNodes.ToArray();
 			var options = MainWindow.Instance.CreateDecompilationOptions();
 			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {

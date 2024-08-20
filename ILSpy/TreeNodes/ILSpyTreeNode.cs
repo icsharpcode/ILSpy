@@ -48,9 +48,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		LanguageSettings LanguageSettings => SettingsService.Instance.SessionSettings.LanguageSettings;
 
-		public Language Language {
-			get { return LanguageSettings.Language ?? Languages.AllLanguages[0]; }
-		}
+		public Language Language => LanguageSettings.Language;
 
 		public virtual FilterResult Filter(LanguageSettings settings)
 		{

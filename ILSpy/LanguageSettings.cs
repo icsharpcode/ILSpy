@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy
 		public LanguageSettings(XElement element)
 		{
 			this.ShowApiLevel = (ApiVisibility?)(int?)element.Element("ShowAPILevel") ?? ApiVisibility.PublicAndInternal;
-			this.Language = Languages.GetLanguage((string)element.Element("Language"));
+			this.Language = Languages.GetLanguage((string)element.Element("Language")) ?? Languages.AllLanguages.First();
 			this.LanguageVersion = Language.LanguageVersions.FirstOrDefault(v => v.Version == (string)element.Element("LanguageVersion"))
 								   ?? Language.LanguageVersions.LastOrDefault();
 		}
