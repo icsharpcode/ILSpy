@@ -18,13 +18,10 @@
 
 using System.ComponentModel.Composition;
 using System.Linq;
-using System.Windows;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
-
-using TomsToolbox.Composition;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
@@ -32,13 +29,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	internal sealed class AnalyzeCommand : SimpleCommand, IContextMenuEntry
 	{
-		private static readonly IExport<AnalyzerTreeView> analyzerTreeViewExport = App.ExportProvider.GetExports<AnalyzerTreeView>().Single();
-
-		private static AnalyzerTreeView AnalyzerTreeView {
-			get {
-				return Application.Current?.MainWindow?.IsLoaded != true ? null : analyzerTreeViewExport.Value;
-			}
-		}
+		private static readonly AnalyzerTreeView AnalyzerTreeView = App.ExportProvider.GetExportedValue<AnalyzerTreeView>();
 
 		public bool IsVisible(TextViewContext context)
 		{
@@ -60,17 +51,13 @@ namespace ICSharpCode.ILSpy.Analyzers
 				.All(node => IsValidReference(node.Member));
 		}
 
-		bool IsValidReference(object reference)
+		static bool IsValidReference(object reference)
 		{
-			return reference is IEntity && !(reference is IField f && f.IsConst);
+			return reference is IEntity and not IField { IsConst: true };
 		}
 
 		public void Execute(TextViewContext context)
 		{
-			if (AnalyzerTreeView is null)
-			{
-				return;
-			}
 			if (context.SelectedTreeNodes != null)
 			{
 				foreach (var node in context.SelectedTreeNodes.OfType<IMemberTreeNode>().ToArray())
@@ -86,25 +73,13 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public override bool CanExecute(object parameter)
 		{
-			if (AnalyzerTreeView is null)
-			{
-				return false;
-			}
-
-			if (AnalyzerTreeView is { IsKeyboardFocusWithin: true })
-			{
-				return AnalyzerTreeView.SelectedItems.OfType<object>().All(n => n is IMemberTreeNode);
-			}
-
-			return MainWindow.Instance.SelectedNodes.All(n => n is IMemberTreeNode);
+			return AnalyzerTreeView.IsKeyboardFocusWithin
+				? AnalyzerTreeView.SelectedItems.OfType<object>().All(n => n is IMemberTreeNode)
+				: MainWindow.Instance.SelectedNodes.All(n => n is IMemberTreeNode);
 		}
 
 		public override void Execute(object parameter)
 		{
-			if (AnalyzerTreeView is null)
-			{
-				return;
-			}
 			if (AnalyzerTreeView.IsKeyboardFocusWithin)
 			{
 				foreach (var node in AnalyzerTreeView.SelectedItems.OfType<IMemberTreeNode>().ToArray())

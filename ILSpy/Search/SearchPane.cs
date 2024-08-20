@@ -35,6 +35,7 @@ using System.Windows.Threading;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Extensions;
@@ -82,7 +83,7 @@ namespace ICSharpCode.ILSpy.Search
 			searchModeComboBox.Items.Add(new { Image = Images.Namespace, Name = "Namespace" });
 
 			ContextMenuProvider.Add(listBox);
-			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
+			MessageBus<CurrentAssemblyListChangedEventArgs>.Subscribers += (sender, e) => MainWindow_Instance_CurrentAssemblyListChanged(sender, e);
 			filterSettings = MainWindow.Instance.SessionSettings.FilterSettings;
 			CompositionTarget.Rendering += UpdateResults;
 

@@ -42,7 +42,6 @@ using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
-using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Commands;
 using ICSharpCode.ILSpy.Docking;
@@ -57,6 +56,7 @@ using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.FileLoaders;
 using ICSharpCode.ILSpyX.Settings;
 using ICSharpCode.ILSpy.Controls.TreeView;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX.Extensions;
 
 using Microsoft.Win32;
@@ -130,7 +130,7 @@ namespace ICSharpCode.ILSpy
 			this.Icon = Images.ILSpyIcon;
 
 			this.DataContext = new MainWindowViewModel {
-				Workspace = new DockWorkspace(this),
+				Workspace = DockWorkspace.Instance,
 				SessionSettings = sessionSettings,
 				AssemblyListManager = AssemblyListManager
 			};
@@ -147,7 +147,7 @@ namespace ICSharpCode.ILSpy
 			sessionSettings.PropertyChanged += SessionSettings_PropertyChanged;
 			filterSettings = sessionSettings.FilterSettings;
 			filterSettings.PropertyChanged += filterSettings_PropertyChanged;
-			DockWorkspace.Instance.PropertyChanged += DockWorkspace_PropertyChanged;
+			MessageBus<DockWorkspaceActiveTabPageChangedEventArgs>.Subscribers += DockWorkspace_ActiveTabPageChanged;
 			InitMainMenu();
 			InitWindowMenu();
 			InitToolbar();
@@ -157,25 +157,20 @@ namespace ICSharpCode.ILSpy
 			this.Loaded += MainWindow_Loaded;
 		}
 
-		private void DockWorkspace_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		private void DockWorkspace_ActiveTabPageChanged(object sender, EventArgs e)
 		{
-			switch (e.PropertyName)
-			{
-				case nameof(DockWorkspace.Instance.ActiveTabPage):
-					DockWorkspace dock = DockWorkspace.Instance;
-					filterSettings.PropertyChanged -= filterSettings_PropertyChanged;
-					filterSettings = dock.ActiveTabPage.FilterSettings;
-					filterSettings.PropertyChanged += filterSettings_PropertyChanged;
+			DockWorkspace dock = DockWorkspace.Instance;
+			filterSettings.PropertyChanged -= filterSettings_PropertyChanged;
+			filterSettings = dock.ActiveTabPage.FilterSettings;
+			filterSettings.PropertyChanged += filterSettings_PropertyChanged;
 
-					var windowMenuItem = mainMenu.Items.OfType<MenuItem>().First(m => (string)m.Tag == nameof(Properties.Resources._Window));
-					foreach (MenuItem menuItem in windowMenuItem.Items.OfType<MenuItem>())
-					{
-						if (menuItem.IsCheckable && menuItem.Tag is TabPageModel)
-						{
-							menuItem.IsChecked = menuItem.Tag == dock.ActiveTabPage;
-						}
-					}
-					break;
+			var windowMenuItem = mainMenu.Items.OfType<MenuItem>().First(m => (string)m.Tag == nameof(Properties.Resources._Window));
+			foreach (MenuItem menuItem in windowMenuItem.Items.OfType<MenuItem>())
+			{
+				if (menuItem.IsCheckable && menuItem.Tag is TabPageModel)
+				{
+					menuItem.IsChecked = menuItem.Tag == dock.ActiveTabPage;
+				}
 			}
 		}
 
@@ -359,7 +354,7 @@ namespace ICSharpCode.ILSpy
 		#endregion
 
 		#region Tool Pane extensibility
-		
+
 		private void InitToolPanes()
 		{
 			var toolPanes = App.ExportProvider.GetExportedValues<ToolPaneModel>("ToolPane");
@@ -631,8 +626,6 @@ namespace ICSharpCode.ILSpy
 		public AssemblyList CurrentAssemblyList {
 			get { return assemblyList; }
 		}
-
-		public event NotifyCollectionChangedEventHandler CurrentAssemblyListChanged;
 
 		List<LoadedAssembly> commandLineLoadedAssemblies = new List<LoadedAssembly>();
 
@@ -1038,7 +1031,8 @@ namespace ICSharpCode.ILSpy
 					nd => nd.AncestorsAndSelf().OfType<AssemblyTreeNode>().Any(
 						a => oldAssemblies.Contains(a.LoadedAssembly))));
 			}
-			CurrentAssemblyListChanged?.Invoke(this, e);
+
+			MessageBus.Send(this, new CurrentAssemblyListChangedEventArgs(e));
 		}
 
 		void LoadInitialAssemblies()
@@ -1527,8 +1521,6 @@ namespace ICSharpCode.ILSpy
 
 		public Language CurrentLanguage => DockWorkspace.Instance.ActiveTabPage.FilterSettings.Language;
 		public LanguageVersion CurrentLanguageVersion => DockWorkspace.Instance.ActiveTabPage.FilterSettings.LanguageVersion;
-
-		public bool SupportsLanguageSwitching => DockWorkspace.Instance.ActiveTabPage.SupportsLanguageSwitching;
 
 		public event SelectionChangedEventHandler SelectionChanged;
 

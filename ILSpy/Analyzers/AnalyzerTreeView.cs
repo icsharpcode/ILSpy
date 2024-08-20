@@ -29,6 +29,7 @@ using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpy.Controls.TreeView;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX.TreeView;
 
 using TomsToolbox.Wpf.Composition.Mef;
@@ -48,25 +49,21 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public AnalyzerTreeView()
 		{
 			this.ShowRoot = false;
-			this.Root = new AnalyzerRootNode { Language = MainWindow.Instance.CurrentLanguage };
 			this.BorderThickness = new Thickness(0);
 			ContextMenuProvider.Add(this);
-			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
-			DockWorkspace.Instance.PropertyChanged += DockWorkspace_PropertyChanged;
+			MessageBus<CurrentAssemblyListChangedEventArgs>.Subscribers += (sender, e) => MainWindow_Instance_CurrentAssemblyListChanged(sender, e);
+			MessageBus<DockWorkspaceActiveTabPageChangedEventArgs>.Subscribers += DockWorkspace_ActiveTabPageChanged;
 			filterSettings = MainWindow.Instance.SessionSettings.FilterSettings;
 			filterSettings.PropertyChanged += FilterSettings_PropertyChanged;
 		}
 
-		private void DockWorkspace_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void DockWorkspace_ActiveTabPageChanged(object sender, EventArgs e)
 		{
-			switch (e.PropertyName)
-			{
-				case nameof(DockWorkspace.Instance.ActiveTabPage):
-					filterSettings.PropertyChanged -= FilterSettings_PropertyChanged;
-					filterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings;
-					filterSettings.PropertyChanged += FilterSettings_PropertyChanged;
-					break;
-			}
+			this.Root ??= new AnalyzerRootNode { Language = MainWindow.Instance.CurrentLanguage };
+
+			filterSettings.PropertyChanged -= FilterSettings_PropertyChanged;
+			filterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings;
+			filterSettings.PropertyChanged += FilterSettings_PropertyChanged;
 		}
 
 		private void FilterSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)

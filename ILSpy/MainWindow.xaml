@@ -26,8 +26,6 @@
 	d:DataContext="{d:DesignInstance local:MainWindowViewModel}"
 >
 	<Window.Resources>
-		<docking:ActiveTabPageConverter x:Key="ActiveTabPageConverter"/>
-
 		<tv:SharpTreeView x:Key="AssemblyTreeView"
 				AutomationProperties.Name="Assemblies and Classes"
 				SelectionChanged="TreeView_SelectionChanged"
@@ -82,6 +80,7 @@
 		<controls:CultureSelectionConverter x:Key="cultureSelectionConverter" />
 
 	</Window.Resources>
+
 	<b:Interaction.Behaviors>
 		<themes:WindowStyleManagerBehavior />
 	</b:Interaction.Behaviors>
@@ -109,12 +108,15 @@
 			Command="Search"
 			Executed="SearchCommandExecuted" />
 	</Window.CommandBindings>
+
 	<Window.InputBindings>
 		<KeyBinding Key="R" Modifiers="Control" Command="{x:Static local:ILSpyCommands.Analyze}" />
 	</Window.InputBindings>
+
 	<Window.TaskbarItemInfo>
 		<TaskbarItemInfo />
 	</Window.TaskbarItemInfo>
+
 	<DockPanel>
 		<!-- Main menu -->
 		<Menu DockPanel.Dock="Top" Name="mainMenu" Height="23" KeyboardNavigation.TabNavigation="None">
@@ -207,6 +209,7 @@
 			          ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}"
 			          SelectedItem="{Binding Workspace.ActiveTabPage.FilterSettings.LanguageVersion, UpdateSourceTrigger=PropertyChanged}"/>
 		</ToolBar>
+		<!-- Update panel -->
 		<Border DockPanel.Dock="Top" BorderBrush="Black" BorderThickness="1" Name="updatePanel" Visibility="Collapsed">
 			<DockPanel KeyboardNavigation.TabNavigation="Contained">
 				<Button DockPanel.Dock="Right" Click="updatePanelCloseButtonClick" MinWidth="0">X</Button>
@@ -231,7 +234,7 @@
 									DataContext="{Binding Workspace}"
 									AnchorablesSource="{Binding ToolPanes}"
 									DocumentsSource="{Binding TabPages}"
-									ActiveContent="{Binding ActiveTabPage, Mode=TwoWay, Converter={StaticResource ActiveTabPageConverter}}"
+									ActiveContent="{Binding ActiveTabPage, Mode=TwoWay, Converter={docking:TabPageGuardConverter}}"
 									AllowMixedOrientation="True">
 
 			<avalondock:DockingManager.DocumentHeaderTemplate>

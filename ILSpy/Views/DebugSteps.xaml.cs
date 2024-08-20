@@ -8,6 +8,7 @@ using System.Windows.Input;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.ViewModels;
 
 using TomsToolbox.Wpf.Composition.Mef;
@@ -35,7 +36,7 @@ namespace ICSharpCode.ILSpy
 			InitializeComponent();
 
 #if DEBUG
-			DockWorkspace.Instance.PropertyChanged += DockWorkspace_PropertyChanged;
+			MessageBus<DockWorkspaceActiveTabPageChangedEventArgs>.Subscribers += DockWorkspace_ActiveTabPageChanged;
 			filterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings;
 			filterSettings.PropertyChanged += FilterSettings_PropertyChanged;
 			MainWindow.Instance.SelectionChanged += SelectionChanged;
@@ -50,16 +51,11 @@ namespace ICSharpCode.ILSpy
 #endif
 		}
 
-		private void DockWorkspace_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		private void DockWorkspace_ActiveTabPageChanged(object sender, EventArgs e)
 		{
-			switch (e.PropertyName)
-			{
-				case nameof(DockWorkspace.Instance.ActiveTabPage):
-					filterSettings.PropertyChanged -= FilterSettings_PropertyChanged;
-					filterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings;
-					filterSettings.PropertyChanged += FilterSettings_PropertyChanged;
-					break;
-			}
+			filterSettings.PropertyChanged -= FilterSettings_PropertyChanged;
+			filterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings;
+			filterSettings.PropertyChanged += FilterSettings_PropertyChanged;
 		}
 
 		private void WritingOptions_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)

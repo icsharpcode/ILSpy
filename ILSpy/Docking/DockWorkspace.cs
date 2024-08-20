@@ -36,23 +36,23 @@ using AvalonDock.Layout.Serialization;
 
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.ViewModels;
+
+using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpy.Docking
 {
-	public class DockWorkspace : INotifyPropertyChanged, ILayoutUpdateStrategy
+	public class DockWorkspace : ObservableObject, ILayoutUpdateStrategy
 	{
 		private SessionSettings sessionSettings;
 
-		public event PropertyChangedEventHandler PropertyChanged;
+		public static readonly DockWorkspace Instance = new();
 
-		public static DockWorkspace Instance { get; private set; }
-
-		internal DockWorkspace(MainWindow parent)
+		private DockWorkspace()
 		{
-			Instance = this;
 			this.TabPages.CollectionChanged += Documents_CollectionChanged;
-			parent.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
+			MessageBus<CurrentAssemblyListChangedEventArgs>.Subscribers += (sender, e) => MainWindow_Instance_CurrentAssemblyListChanged(sender, e);
 		}
 
 		private void MainWindow_Instance_CurrentAssemblyListChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -118,31 +118,31 @@ namespace ICSharpCode.ILSpy.Docking
 				tool.IsVisible = false;
 		}
 
-		private TabPageModel _activeTabPage = null;
+		private TabPageModel activeTabPage = null;
 		public TabPageModel ActiveTabPage {
 			get {
-				return _activeTabPage;
+				return activeTabPage;
 			}
 			set {
-				if (_activeTabPage != value)
+				if (!SetProperty(ref activeTabPage, value))
 				{
-					_activeTabPage = value;
-					var state = value.GetState();
-					if (state != null)
-					{
-						if (state.DecompiledNodes != null)
-						{
-							MainWindow.Instance.SelectNodes(state.DecompiledNodes,
-								inNewTabPage: false, setFocus: true, changingActiveTab: true);
-						}
-						else
-						{
-							MainWindow.Instance.NavigateTo(new RequestNavigateEventArgs(state.ViewedUri, null));
-						}
-					}
-
-					RaisePropertyChanged(nameof(ActiveTabPage));
+					return;
 				}
+
+				var state = value.GetState();
+				if (state != null)
+				{
+					if (state.DecompiledNodes != null)
+					{
+						MainWindow.Instance.SelectNodes(state.DecompiledNodes,
+							inNewTabPage: false, setFocus: true, changingActiveTab: true);
+					}
+					else
+					{
+						MainWindow.Instance.NavigateTo(new(state.ViewedUri, null));
+					}
+				}
+				MessageBus.Send(this, new DockWorkspaceActiveTabPageChangedEventArgs());
 			}
 		}
 
@@ -179,11 +179,6 @@ namespace ICSharpCode.ILSpy.Docking
 					e.Cancel = true;
 					break;
 			}
-		}
-
-		protected void RaisePropertyChanged([CallerMemberName] string propertyName = null)
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 
 		public void ShowText(AvalonEditTextOutput textOutput)
