@@ -73,9 +73,7 @@ namespace ICSharpCode.ILSpy
 	{
 		bool refreshInProgress, changingActiveTab;
 		readonly NavigationHistory<NavigationState> history = new NavigationHistory<NavigationState>();
-		ILSpySettings spySettingsForMainWindow_Loaded;
-		SessionSettings sessionSettings;
-		FilterSettings filterSettings;
+
 		AssemblyList assemblyList;
 		AssemblyListTreeNode assemblyListTreeNode;
 
@@ -83,10 +81,6 @@ namespace ICSharpCode.ILSpy
 
 		public static MainWindow Instance {
 			get { return instance; }
-		}
-
-		public SessionSettings SessionSettings {
-			get { return sessionSettings; }
 		}
 
 		internal AssemblyListManager AssemblyListManager { get; }
@@ -116,9 +110,10 @@ namespace ICSharpCode.ILSpy
 		public MainWindow()
 		{
 			instance = this;
-			var spySettings = ILSpySettings.Load();
-			this.spySettingsForMainWindow_Loaded = spySettings;
-			this.sessionSettings = new SessionSettings(spySettings);
+
+			var spySettings = SettingsService.Instance.SpySettings;
+			var sessionSettings = SettingsService.Instance.SessionSettings;
+
 			this.CurrentDecompilerSettings = DecompilerSettingsPanel.LoadDecompilerSettings(spySettings);
 			this.CurrentDisplaySettings = DisplaySettingsPanel.LoadDisplaySettings(spySettings);
 			this.AssemblyListManager = new AssemblyListManager(spySettings) {
@@ -144,10 +139,11 @@ namespace ICSharpCode.ILSpy
 			InitializeComponent();
 			InitToolPanes();
 			DockWorkspace.Instance.InitializeLayout(DockManager);
-			sessionSettings.PropertyChanged += SessionSettings_PropertyChanged;
-			filterSettings = sessionSettings.FilterSettings;
-			filterSettings.PropertyChanged += filterSettings_PropertyChanged;
+
+			MessageBus<SessionSettingsChangedEventArgs>.Subscribers += (sender, e) => SessionSettings_PropertyChanged(sender, e);
+			MessageBus<LanguageSettingsChangedEventArgs>.Subscribers += (sender, e) => filterSettings_PropertyChanged(sender, e);
 			MessageBus<DockWorkspaceActiveTabPageChangedEventArgs>.Subscribers += DockWorkspace_ActiveTabPageChanged;
+
 			InitMainMenu();
 			InitWindowMenu();
 			InitToolbar();
@@ -160,9 +156,6 @@ namespace ICSharpCode.ILSpy
 		private void DockWorkspace_ActiveTabPageChanged(object sender, EventArgs e)
 		{
 			DockWorkspace dock = DockWorkspace.Instance;
-			filterSettings.PropertyChanged -= filterSettings_PropertyChanged;
-			filterSettings = dock.ActiveTabPage.FilterSettings;
-			filterSettings.PropertyChanged += filterSettings_PropertyChanged;
 
 			var windowMenuItem = mainMenu.Items.OfType<MenuItem>().First(m => (string)m.Tag == nameof(Properties.Resources._Window));
 			foreach (MenuItem menuItem in windowMenuItem.Items.OfType<MenuItem>())
@@ -176,6 +169,8 @@ namespace ICSharpCode.ILSpy
 
 		private void SessionSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
+			var sessionSettings = SettingsService.Instance.SessionSettings;
+
 			switch (e.PropertyName)
 			{
 				case nameof(SessionSettings.ActiveAssemblyList):
@@ -580,6 +575,8 @@ namespace ICSharpCode.ILSpy
 			base.OnSourceInitialized(e);
 			PresentationSource source = PresentationSource.FromVisual(this);
 
+			var sessionSettings = SettingsService.Instance.SessionSettings;
+
 			// Validate and Set Window Bounds
 			Rect bounds = Rect.Transform(sessionSettings.WindowBounds, source.CompositionTarget.TransformToDevice);
 			var boundsRect = new System.Drawing.Rectangle((int)bounds.Left, (int)bounds.Top, (int)bounds.Width, (int)bounds.Height);
@@ -648,7 +645,7 @@ namespace ICSharpCode.ILSpy
 		{
 			LoadAssemblies(args.AssembliesToLoad, commandLineLoadedAssemblies, focusNode: false);
 			if (args.Language != null)
-				filterSettings.Language = Languages.GetLanguage(args.Language);
+				SettingsService.Instance.SessionSettings.LanguageSettings.Language = Languages.GetLanguage(args.Language);
 			return true;
 		}
 
@@ -658,6 +655,8 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		void HandleCommandLineArgumentsAfterShowList(CommandLineArguments args, ILSpySettings spySettings = null)
 		{
+			var sessionSettings = SettingsService.Instance.SessionSettings;
+
 			var relevantAssemblies = commandLineLoadedAssemblies.ToList();
 			commandLineLoadedAssemblies.Clear(); // clear references once we don't need them anymore
 			NavigateOnLaunch(args.NavigateTo, sessionSettings.ActiveTreeViewPath, spySettings, relevantAssemblies);
@@ -832,14 +831,12 @@ namespace ICSharpCode.ILSpy
 
 		void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
-			DockWorkspace.Instance.TabPages.Add(new TabPageModel() {
-				FilterSettings = filterSettings.Clone()
-			});
+			DockWorkspace.Instance.TabPages.Add(new() { });
 			DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.First();
 
-			ILSpySettings spySettings = this.spySettingsForMainWindow_Loaded;
-			this.spySettingsForMainWindow_Loaded = null;
 			var loadPreviousAssemblies = Options.MiscSettingsPanel.CurrentMiscSettings.LoadPreviousAssemblies;
+
+			var sessionSettings = SettingsService.Instance.SessionSettings;
 
 			if (loadPreviousAssemblies)
 			{
@@ -870,7 +867,7 @@ namespace ICSharpCode.ILSpy
 				this.assemblyList.Open(sessionSettings.ActiveAutoLoadedAssembly, true);
 			}
 
-			Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() => OpenAssemblies(spySettings)));
+			Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() => OpenAssemblies(SettingsService.Instance.SpySettings)));
 		}
 
 		void OpenAssemblies(ILSpySettings spySettings)
@@ -1000,7 +997,6 @@ namespace ICSharpCode.ILSpy
 			assemblyList.CollectionChanged += assemblyList_Assemblies_CollectionChanged;
 
 			assemblyListTreeNode = new AssemblyListTreeNode(assemblyList);
-			assemblyListTreeNode.FilterSettings = filterSettings.Clone();
 			assemblyListTreeNode.Select = x => SelectNode(x, inNewTabPage: false);
 			AssemblyTreeView.Root = assemblyListTreeNode;
 
@@ -1064,13 +1060,7 @@ namespace ICSharpCode.ILSpy
 
 		public void RefreshTreeViewFilter()
 		{
-			// filterSettings is mutable; but the ILSpyTreeNode filtering assumes that filter settings are immutable.
-			// Thus, the main window will use one mutable instance (for data-binding), and assign a new clone to the ILSpyTreeNodes whenever the main
-			// mutable instance changes.
-			FilterSettings filterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings.Clone();
-			if (assemblyListTreeNode != null)
-				assemblyListTreeNode.FilterSettings = filterSettings;
-			SearchPane.UpdateFilter(filterSettings);
+			SearchPane.UpdateFilter();
 		}
 
 		internal AssemblyListTreeNode AssemblyListTreeNode {
@@ -1097,10 +1087,7 @@ namespace ICSharpCode.ILSpy
 				{
 					if (inNewTabPage)
 					{
-						DockWorkspace.Instance.TabPages.Add(
-							new TabPageModel() {
-								FilterSettings = filterSettings.Clone()
-							});
+						DockWorkspace.Instance.TabPages.Add(new TabPageModel() { });
 						DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.Last();
 						AssemblyTreeView.SelectedItem = null;
 					}
@@ -1143,10 +1130,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (inNewTabPage)
 			{
-				DockWorkspace.Instance.TabPages.Add(
-					new TabPageModel() {
-						FilterSettings = filterSettings.Clone()
-					});
+				DockWorkspace.Instance.TabPages.Add(new TabPageModel() { });
 				DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.Last();
 			}
 
@@ -1519,8 +1503,9 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public Language CurrentLanguage => DockWorkspace.Instance.ActiveTabPage.FilterSettings.Language;
-		public LanguageVersion CurrentLanguageVersion => DockWorkspace.Instance.ActiveTabPage.FilterSettings.LanguageVersion;
+		public Language CurrentLanguage => SettingsService.Instance.SessionSettings.LanguageSettings.Language;
+
+		public LanguageVersion CurrentLanguageVersion => SettingsService.Instance.SessionSettings.LanguageSettings.LanguageVersion;
 
 		public event SelectionChangedEventHandler SelectionChanged;
 
@@ -1590,10 +1575,7 @@ namespace ICSharpCode.ILSpy
 			{
 				if (inNewTabPage)
 				{
-					DockWorkspace.Instance.TabPages.Add(
-						new TabPageModel() {
-							FilterSettings = filterSettings.Clone()
-						});
+					DockWorkspace.Instance.TabPages.Add(new() { });
 					DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.Last();
 				}
 
@@ -1646,18 +1628,19 @@ namespace ICSharpCode.ILSpy
 			base.OnStateChanged(e);
 			// store window state in settings only if it's not minimized
 			if (this.WindowState != System.Windows.WindowState.Minimized)
-				sessionSettings.WindowState = this.WindowState;
+				SettingsService.Instance.SessionSettings.WindowState = this.WindowState;
 		}
 
 		protected override void OnClosing(CancelEventArgs e)
 		{
 			base.OnClosing(e);
+			var sessionSettings = SettingsService.Instance.SessionSettings;
+
 			sessionSettings.ActiveAssemblyList = assemblyList.ListName;
 			sessionSettings.ActiveTreeViewPath = GetPathForNode(AssemblyTreeView.SelectedItem as SharpTreeNode);
 			sessionSettings.ActiveAutoLoadedAssembly = GetAutoLoadedAssemblyNode(AssemblyTreeView.SelectedItem as SharpTreeNode);
 			sessionSettings.WindowBounds = this.RestoreBounds;
 			sessionSettings.DockLayout.Serialize(new XmlLayoutSerializer(DockManager));
-			sessionSettings.FilterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings.Clone();
 			sessionSettings.Save();
 		}
 

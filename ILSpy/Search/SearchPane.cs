@@ -50,6 +50,7 @@ namespace ICSharpCode.ILSpy.Search
 	/// </summary>
 	[DataTemplate(typeof(SearchPaneModel))]
 	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Export]
 	public partial class SearchPane : UserControl
 	{
 		const int MAX_RESULTS = 1000;
@@ -57,7 +58,6 @@ namespace ICSharpCode.ILSpy.Search
 		RunningSearch currentSearch;
 		bool runSearchOnNextShow;
 		IComparer<SearchResult> resultsComparer;
-		FilterSettings filterSettings;
 
 		public static readonly DependencyProperty ResultsProperty =
 			DependencyProperty.Register("Results", typeof(ObservableCollection<SearchResult>), typeof(SearchPane),
@@ -84,11 +84,10 @@ namespace ICSharpCode.ILSpy.Search
 
 			ContextMenuProvider.Add(listBox);
 			MessageBus<CurrentAssemblyListChangedEventArgs>.Subscribers += (sender, e) => MainWindow_Instance_CurrentAssemblyListChanged(sender, e);
-			filterSettings = MainWindow.Instance.SessionSettings.FilterSettings;
 			CompositionTarget.Rendering += UpdateResults;
 
 			// This starts empty search right away, so do at the end (we're still in ctor)
-			searchModeComboBox.SelectedIndex = (int)MainWindow.Instance.SessionSettings.SelectedSearchMode;
+			searchModeComboBox.SelectedIndex = (int)SettingsService.Instance.SessionSettings.SelectedSearchMode;
 		}
 
 		void MainWindow_Instance_CurrentAssemblyListChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -104,10 +103,8 @@ namespace ICSharpCode.ILSpy.Search
 			}
 		}
 
-		internal void UpdateFilter(FilterSettings settings)
+		internal void UpdateFilter()
 		{
-			this.filterSettings = settings;
-
 			if (IsVisible)
 			{
 				StartSearch(this.SearchTerm);
@@ -155,7 +152,7 @@ namespace ICSharpCode.ILSpy.Search
 
 		void SearchModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
-			MainWindow.Instance.SessionSettings.SelectedSearchMode = (SearchMode)searchModeComboBox.SelectedIndex;
+			SettingsService.Instance.SessionSettings.SelectedSearchMode = (SearchMode)searchModeComboBox.SelectedIndex;
 			StartSearch(this.SearchTerm);
 		}
 
@@ -258,7 +255,7 @@ namespace ICSharpCode.ILSpy.Search
 				searchProgressBar.IsIndeterminate = true;
 				startedSearch = new RunningSearch(await mainWindow.CurrentAssemblyList.GetAllAssemblies(), searchTerm,
 					(SearchMode)searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage,
-					filterSettings.ShowApiLevel);
+					SettingsService.Instance.SessionSettings.LanguageSettings.ShowApiLevel);
 				currentSearch = startedSearch;
 
 				await startedSearch.Run();

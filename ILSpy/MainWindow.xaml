@@ -123,9 +123,9 @@
 			<MenuItem Header="{x:Static properties:Resources._File}" Tag="_File" />
 			<!-- contents of file menu are added using MEF -->
 			<MenuItem Header="{x:Static properties:Resources._View}" Tag="_View">
-				<MenuItem Header="{x:Static properties:Resources.Show_publiconlyTypesMembers}" IsCheckable="True" IsChecked="{Binding Workspace.ActiveTabPage.FilterSettings.ApiVisPublicOnly}" />
-				<MenuItem Header="{x:Static properties:Resources.Show_internalTypesMembers}" IsCheckable="True" IsChecked="{Binding Workspace.ActiveTabPage.FilterSettings.ApiVisPublicAndInternal}" />
-				<MenuItem Header="{x:Static properties:Resources.Show_allTypesAndMembers}" IsCheckable="True" IsChecked="{Binding Workspace.ActiveTabPage.FilterSettings.ApiVisAll}" />
+				<MenuItem Header="{x:Static properties:Resources.Show_publiconlyTypesMembers}" IsCheckable="True" IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisPublicOnly}" />
+				<MenuItem Header="{x:Static properties:Resources.Show_internalTypesMembers}" IsCheckable="True" IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisPublicAndInternal}" />
+				<MenuItem Header="{x:Static properties:Resources.Show_allTypesAndMembers}" IsCheckable="True" IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisAll}" />
 				<Separator/>
 				<MenuItem Header="{x:Static properties:Resources.Theme}" ItemsSource="{x:Static themes:ThemeManager.AllThemes}">
 					<MenuItem.ItemContainerStyle>
@@ -189,25 +189,25 @@
 				<Image Width="16" Height="16" Source="{controls:XamlResource Images/AssemblyList}" Style="{StaticResource DarkModeAwareImageStyle}"/>
 			</Button>
 			<Separator />
-			<CheckBox IsChecked="{Binding Workspace.ActiveTabPage.FilterSettings.ApiVisPublicOnly}" ToolTip="{x:Static properties:Resources.ShowPublicOnlyTypesMembers}">
+			<CheckBox IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisPublicOnly}" ToolTip="{x:Static properties:Resources.ShowPublicOnlyTypesMembers}">
 				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowPublicOnly}" Style="{StaticResource DarkModeAwareImageStyle}"/>
 			</CheckBox>
-			<CheckBox IsChecked="{Binding Workspace.ActiveTabPage.FilterSettings.ApiVisPublicAndInternal}" ToolTip="{x:Static properties:Resources.ShowInternalTypesMembers}">
+			<CheckBox IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisPublicAndInternal}" ToolTip="{x:Static properties:Resources.ShowInternalTypesMembers}">
 				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowPrivateInternal}" Style="{StaticResource DarkModeAwareImageStyle}"/>
 			</CheckBox>
-			<CheckBox IsChecked="{Binding Workspace.ActiveTabPage.FilterSettings.ApiVisAll}" ToolTip="{x:Static properties:Resources.ShowAllTypesAndMembers}">
+			<CheckBox IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisAll}" ToolTip="{x:Static properties:Resources.ShowAllTypesAndMembers}">
 				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowAll}" Style="{StaticResource DarkModeAwareImageStyle}"/>
 			</CheckBox>
 			<Separator />
 			<ComboBox Name="languageComboBox" DisplayMemberPath="Name" Width="100" MaxDropDownHeight="Auto"
 					  IsEnabled="{Binding Workspace.ActiveTabPage.SupportsLanguageSwitching}"
 			          ItemsSource="{x:Static local:Languages.AllLanguages}" ToolTip="{x:Static properties:Resources.SelectLanguageDropdownTooltip}"
-			          SelectedItem="{Binding Workspace.ActiveTabPage.FilterSettings.Language}"/>
+			          SelectedItem="{Binding SessionSettings.LanguageSettings.Language}"/>
 			<ComboBox Name="languageVersionComboBox" DisplayMemberPath="DisplayName" Width="120" MaxDropDownHeight="Auto" ToolTip="{x:Static properties:Resources.SelectVersionDropdownTooltip}"
 			          Visibility="{Binding SelectedItem.HasLanguageVersions, ElementName=languageComboBox, Converter={toms:BooleanToVisibilityConverter}}"
 					  IsEnabled="{Binding Workspace.ActiveTabPage.SupportsLanguageSwitching}"
 			          ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}"
-			          SelectedItem="{Binding Workspace.ActiveTabPage.FilterSettings.LanguageVersion, UpdateSourceTrigger=PropertyChanged}"/>
+			          SelectedItem="{Binding SessionSettings.LanguageSettings.LanguageVersion, UpdateSourceTrigger=PropertyChanged}"/>
 		</ToolBar>
 		<!-- Update panel -->
 		<Border DockPanel.Dock="Top" BorderBrush="Black" BorderThickness="1" Name="updatePanel" Visibility="Collapsed">

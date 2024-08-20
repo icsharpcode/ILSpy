@@ -44,29 +44,22 @@ namespace ICSharpCode.ILSpy.Analyzers
 	[Export]
 	public class AnalyzerTreeView : SharpTreeView
 	{
-		FilterSettings filterSettings;
-
 		public AnalyzerTreeView()
 		{
 			this.ShowRoot = false;
 			this.BorderThickness = new Thickness(0);
 			ContextMenuProvider.Add(this);
-			MessageBus<CurrentAssemblyListChangedEventArgs>.Subscribers += (sender, e) => MainWindow_Instance_CurrentAssemblyListChanged(sender, e);
+			MessageBus<CurrentAssemblyListChangedEventArgs>.Subscribers += (sender, e) => CurrentAssemblyList_Changed(sender, e);
 			MessageBus<DockWorkspaceActiveTabPageChangedEventArgs>.Subscribers += DockWorkspace_ActiveTabPageChanged;
-			filterSettings = MainWindow.Instance.SessionSettings.FilterSettings;
-			filterSettings.PropertyChanged += FilterSettings_PropertyChanged;
+			MessageBus<LanguageSettingsChangedEventArgs>.Subscribers += (sender, e) => LanguageSettings_PropertyChanged(sender, e);
 		}
 
 		private void DockWorkspace_ActiveTabPageChanged(object sender, EventArgs e)
 		{
 			this.Root ??= new AnalyzerRootNode { Language = MainWindow.Instance.CurrentLanguage };
-
-			filterSettings.PropertyChanged -= FilterSettings_PropertyChanged;
-			filterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings;
-			filterSettings.PropertyChanged += FilterSettings_PropertyChanged;
 		}
 
-		private void FilterSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void LanguageSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 			switch (e.PropertyName)
 			{
@@ -77,7 +70,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			}
 		}
 
-		void MainWindow_Instance_CurrentAssemblyListChanged(object sender, NotifyCollectionChangedEventArgs e)
+		void CurrentAssemblyList_Changed(object sender, NotifyCollectionChangedEventArgs e)
 		{
 			if (e.Action == NotifyCollectionChangedAction.Reset)
 			{

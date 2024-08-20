@@ -71,7 +71,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				MethodTreeNode.GetOverlayIcon(property.Accessibility), property.IsStatic);
 		}
 
-		public override FilterResult Filter(FilterSettings settings)
+		public override FilterResult Filter(LanguageSettings settings)
 		{
 			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
 				return FilterResult.Hidden;

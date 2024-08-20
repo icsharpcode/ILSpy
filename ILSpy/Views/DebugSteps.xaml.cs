@@ -29,16 +29,13 @@ namespace ICSharpCode.ILSpy
 #if DEBUG
 		ILAstLanguage language;
 #endif
-		FilterSettings filterSettings;
-
 		public DebugSteps()
 		{
 			InitializeComponent();
 
 #if DEBUG
-			MessageBus<DockWorkspaceActiveTabPageChangedEventArgs>.Subscribers += DockWorkspace_ActiveTabPageChanged;
-			filterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings;
-			filterSettings.PropertyChanged += FilterSettings_PropertyChanged;
+			MessageBus<LanguageSettingsChangedEventArgs>.Subscribers += (sender, e) => LanguageSettings_PropertyChanged(sender, e);
+
 			MainWindow.Instance.SelectionChanged += SelectionChanged;
 			writingOptions.PropertyChanged += WritingOptions_PropertyChanged;
 
@@ -49,13 +46,6 @@ namespace ICSharpCode.ILSpy
 				ILAstStepperUpdated(null, null);
 			}
 #endif
-		}
-
-		private void DockWorkspace_ActiveTabPageChanged(object sender, EventArgs e)
-		{
-			filterSettings.PropertyChanged -= FilterSettings_PropertyChanged;
-			filterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings;
-			filterSettings.PropertyChanged += FilterSettings_PropertyChanged;
 		}
 
 		private void WritingOptions_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -71,7 +61,7 @@ namespace ICSharpCode.ILSpy
 			});
 		}
 
-		private void FilterSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void LanguageSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 #if DEBUG
 			if (e.PropertyName == "Language")

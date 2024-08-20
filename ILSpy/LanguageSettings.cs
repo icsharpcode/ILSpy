@@ -23,6 +23,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy
@@ -30,12 +31,7 @@ namespace ICSharpCode.ILSpy
 	/// <summary>
 	/// Represents the filters applied to the tree view.
 	/// </summary>
-	/// <remarks>
-	/// This class is mutable; but the ILSpyTreeNode filtering assumes that filter settings are immutable.
-	/// Thus, the main window will use one mutable instance (for data-binding), and will assign a new
-	/// clone to the ILSpyTreeNodes whenever the main mutable instance changes.
-	/// </remarks>
-	public class FilterSettings : INotifyPropertyChanged
+	public class LanguageSettings : INotifyPropertyChanged
 	{
 		/// <summary>
 		/// This dictionary is necessary to remember language versions across language changes. For example, 
@@ -44,13 +40,12 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		private readonly Dictionary<Language, LanguageVersion> languageVersionHistory = new Dictionary<Language, LanguageVersion>();
 
-		public FilterSettings(XElement element)
+		public LanguageSettings(XElement element)
 		{
 			this.ShowApiLevel = (ApiVisibility?)(int?)element.Element("ShowAPILevel") ?? ApiVisibility.PublicAndInternal;
 			this.Language = Languages.GetLanguage((string)element.Element("Language"));
-			this.LanguageVersion = Language.LanguageVersions.FirstOrDefault(v => v.Version == (string)element.Element("LanguageVersion"));
-			if (this.LanguageVersion == default(LanguageVersion))
-				this.LanguageVersion = language.LanguageVersions.LastOrDefault();
+			this.LanguageVersion = Language.LanguageVersions.FirstOrDefault(v => v.Version == (string)element.Element("LanguageVersion"))
+								   ?? Language.LanguageVersions.LastOrDefault();
 		}
 
 		public XElement SaveAsXml()
@@ -61,33 +56,6 @@ namespace ICSharpCode.ILSpy
 				new XElement("Language", this.Language.Name),
 				new XElement("LanguageVersion", this.LanguageVersion?.Version)
 			);
-		}
-
-		string searchTerm;
-
-		/// <summary>
-		/// Gets/Sets the search term.
-		/// Only tree nodes containing the search term will be shown.
-		/// </summary>
-		public string SearchTerm {
-			get { return searchTerm; }
-			set {
-				if (searchTerm != value)
-				{
-					searchTerm = value;
-					OnPropertyChanged(nameof(SearchTerm));
-				}
-			}
-		}
-
-		/// <summary>
-		/// Gets whether a node with the specified text is matched by the current search term.
-		/// </summary>
-		public virtual bool SearchTermMatches(string text)
-		{
-			if (string.IsNullOrEmpty(searchTerm))
-				return true;
-			return text.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0;
 		}
 
 		ApiVisibility showApiLevel;
@@ -211,15 +179,23 @@ namespace ICSharpCode.ILSpy
 		{
 			if (PropertyChanged != null)
 			{
-				PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+				var args = new PropertyChangedEventArgs(propertyName);
+
+				PropertyChanged(this, args);
+				MessageBus.Send(this, new LanguageSettingsChangedEventArgs(args));
 			}
 		}
 
-		public FilterSettings Clone()
+
+		// This class has been initially called FilterSettings, but then has been Hijacked to store language settings as well.
+		// While the filter settings were some sort of local, the language settings are global. This is a bit of a mess.
+		// There has been a lot of workarounds cloning the FilterSettings to pass them down to the tree nodes, without messing up the global language settings.
+		// Finally, this filtering was not used at all, so this SearchTerm is just a placeholder to make the filtering code compile, in case someone wants to reactivate filtering in the future.
+		public string SearchTerm => string.Empty;
+
+		public bool SearchTermMatches(string value)
 		{
-			FilterSettings f = (FilterSettings)MemberwiseClone();
-			f.PropertyChanged = null;
-			return f;
+			return true;
 		}
 	}
 }

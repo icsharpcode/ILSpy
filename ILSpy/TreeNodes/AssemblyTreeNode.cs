@@ -449,7 +449,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return dataObject;
 		}
 
-		public override FilterResult Filter(FilterSettings settings)
+		public override FilterResult Filter(LanguageSettings settings)
 		{
 			if (settings.SearchTermMatches(LoadedAssembly.ShortName))
 				return FilterResult.Match;

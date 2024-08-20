@@ -17,11 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy.ViewModels
@@ -31,29 +30,6 @@ namespace ICSharpCode.ILSpy.ViewModels
 		public TabPageModel()
 		{
 			this.Title = Properties.Resources.NewTab;
-		}
-
-		private FilterSettings filterSettings;
-
-		public FilterSettings FilterSettings {
-			get => filterSettings;
-			set {
-				if (filterSettings != value)
-				{
-					filterSettings = value;
-					RaisePropertyChanged(nameof(FilterSettings));
-				}
-			}
-		}
-
-		public Language Language {
-			get => filterSettings.Language;
-			set => filterSettings.Language = value;
-		}
-
-		public LanguageVersion LanguageVersion {
-			get => filterSettings.LanguageVersion;
-			set => filterSettings.LanguageVersion = value;
 		}
 
 		private bool supportsLanguageSwitching = true;

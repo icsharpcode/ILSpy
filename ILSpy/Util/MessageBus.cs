@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Specialized;
+using System.ComponentModel;
 
 using TomsToolbox.Essentials;
 
@@ -50,6 +51,10 @@ namespace ICSharpCode.ILSpy.Util
 	}
 
 	public class CurrentAssemblyListChangedEventArgs(NotifyCollectionChangedEventArgs e) : WrappedEventArgs<NotifyCollectionChangedEventArgs>(e);
+
+	public class LanguageSettingsChangedEventArgs(PropertyChangedEventArgs e) : WrappedEventArgs<PropertyChangedEventArgs>(e);
+
+	public class SessionSettingsChangedEventArgs(PropertyChangedEventArgs e) : WrappedEventArgs<PropertyChangedEventArgs>(e);
 
 	public class DockWorkspaceActiveTabPageChangedEventArgs : EventArgs;
 }

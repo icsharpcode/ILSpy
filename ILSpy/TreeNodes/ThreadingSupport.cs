@@ -138,7 +138,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				get { return Resources.Loading; }
 			}
 
-			public override FilterResult Filter(FilterSettings settings)
+			public override FilterResult Filter(LanguageSettings settings)
 			{
 				return FilterResult.Match;
 			}
@@ -161,7 +161,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				this.text = text;
 			}
 
-			public override FilterResult Filter(FilterSettings settings)
+			public override FilterResult Filter(LanguageSettings settings)
 			{
 				return FilterResult.Match;
 			}

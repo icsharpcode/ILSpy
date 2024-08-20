@@ -27,6 +27,7 @@ using System.Windows.Input;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Commands;
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy.ViewModels
@@ -174,7 +175,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				return;
 			manager.ClearAll();
 			manager.CreateDefaultAssemblyLists();
-			MainWindow.Instance.SessionSettings.ActiveAssemblyList = manager.AssemblyLists[0];
+			SettingsService.Instance.SessionSettings.ActiveAssemblyList = manager.AssemblyLists[0];
 		}
 
 		private void ExecuteDelete()
@@ -189,9 +190,9 @@ namespace ICSharpCode.ILSpy.ViewModels
 			if (manager.AssemblyLists.Count > 0)
 			{
 				SelectedAssemblyList = manager.AssemblyLists[Math.Max(0, index - 1)];
-				if (MainWindow.Instance.SessionSettings.ActiveAssemblyList == assemblyList)
+				if (SettingsService.Instance.SessionSettings.ActiveAssemblyList == assemblyList)
 				{
-					MainWindow.Instance.SessionSettings.ActiveAssemblyList = SelectedAssemblyList;
+					SettingsService.Instance.SessionSettings.ActiveAssemblyList = SelectedAssemblyList;
 				}
 			}
 		}
@@ -232,9 +233,9 @@ namespace ICSharpCode.ILSpy.ViewModels
 				string assemblyList = SelectedAssemblyList;
 				SelectedAssemblyList = dlg.ListName;
 				manager.RenameList(assemblyList, dlg.ListName);
-				if (MainWindow.Instance.SessionSettings.ActiveAssemblyList == assemblyList)
+				if (SettingsService.Instance.SessionSettings.ActiveAssemblyList == assemblyList)
 				{
-					MainWindow.Instance.SessionSettings.ActiveAssemblyList = manager.AssemblyLists[manager.AssemblyLists.Count - 1];
+					SettingsService.Instance.SessionSettings.ActiveAssemblyList = manager.AssemblyLists[manager.AssemblyLists.Count - 1];
 				}
 			}
 		}
@@ -272,7 +273,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		private void ExecuteSelectAssemblyList()
 		{
-			MainWindow.Instance.SessionSettings.ActiveAssemblyList = SelectedAssemblyList;
+			SettingsService.Instance.SessionSettings.ActiveAssemblyList = SelectedAssemblyList;
 			this.parent.Close();
 		}
 	}
