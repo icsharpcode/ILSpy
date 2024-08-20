@@ -38,6 +38,7 @@ using Microsoft.Win32;
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	[Export(typeof(IResourceNodeFactory))]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class ResourcesFileTreeNodeFactory : IResourceNodeFactory
 	{
 		public ITreeNode CreateNode(Resource resource)

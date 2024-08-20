@@ -31,6 +31,7 @@ using ICSharpCode.ILSpyX.Abstractions;
 namespace ICSharpCode.ILSpy.Xaml
 {
 	[Export(typeof(IResourceNodeFactory))]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class XmlResourceNodeFactory : IResourceNodeFactory
 	{
 		private readonly static string[] xmlFileExtensions = { ".xml", ".xsd", ".xslt" };

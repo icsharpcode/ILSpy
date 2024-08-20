@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2018 Siegfried Pammer
+﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -14,31 +14,37 @@
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-// DEALINGS IN THE SOFTWARE
+// DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Globalization;
-using System.Windows;
-using System.Windows.Data;
+using System.ComponentModel.Composition;
+using System.Windows.Controls;
 
-namespace ICSharpCode.ILSpy.Controls
+using ICSharpCode.ILSpyX.TreeView;
+
+using TomsToolbox.Wpf.Composition.Mef;
+
+namespace ICSharpCode.ILSpy.Analyzers
 {
-	public class BoolToVisibilityConverter : IValueConverter
+	/// <summary>
+	/// Interaction logic for AnalyzerTreeView.xaml
+	/// </summary>
+	[DataTemplate(typeof(AnalyzerTreeViewModel))]
+	[PartCreationPolicy(CreationPolicy.NonShared)]
+	[Export]
+	public partial class AnalyzerTreeView
 	{
-		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+		public AnalyzerTreeView()
 		{
-			if (!(parameter is Visibility notVisible))
-				notVisible = Visibility.Collapsed;
-			if (!(value is bool b))
-				return notVisible;
-			return b ? Visibility.Visible : notVisible;
+			InitializeComponent();
+			ContextMenuProvider.Add(this);
 		}
 
-		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+		private void AnalyzerTreeView_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
-			if (!(value is Visibility visibility))
-				return false;
-			return visibility == Visibility.Visible;
+			if (SelectedItem is SharpTreeNode sharpTreeNode)
+			{
+				FocusNode(sharpTreeNode);
+			}
 		}
 	}
 }

@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -34,6 +35,7 @@ using Microsoft.Win32;
 namespace ICSharpCode.ILSpy
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.ExtractPackageEntry), Category = nameof(Resources.Save), Icon = "Images/Save")]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class ExtractPackageEntryContextMenuEntry : IContextMenuEntry
 	{
 		public void Execute(TextViewContext context)

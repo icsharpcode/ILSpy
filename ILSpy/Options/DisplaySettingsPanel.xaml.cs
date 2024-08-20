@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.ComponentModel.Composition;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -26,6 +27,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using System.Xml.Linq;
 
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy.Options
@@ -34,6 +36,7 @@ namespace ICSharpCode.ILSpy.Options
 	/// Interaction logic for DisplaySettingsPanel.xaml
 	/// </summary>
 	[ExportOptionPage(Title = nameof(Properties.Resources.Display), Order = 20)]
+	[PartCreationPolicy(CreationPolicy.NonShared)]
 	public partial class DisplaySettingsPanel : UserControl, IOptionPage
 	{
 		public DisplaySettingsPanel()
@@ -121,7 +124,7 @@ namespace ICSharpCode.ILSpy.Options
 			s.ShowRawOffsetsAndBytesBeforeInstruction = (bool?)e.Attribute("ShowRawOffsetsAndBytesBeforeInstruction") ?? false;
 			s.StyleWindowTitleBar = (bool?)e.Attribute("StyleWindowTitleBar") ?? false;
 
-			s.Theme = MainWindow.Instance.SessionSettings.Theme;
+			s.Theme = SettingsService.Instance.SessionSettings.Theme;
 
 			return s;
 		}
@@ -152,8 +155,8 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("ShowRawOffsetsAndBytesBeforeInstruction", s.ShowRawOffsetsAndBytesBeforeInstruction);
 			section.SetAttributeValue("StyleWindowTitleBar", s.StyleWindowTitleBar);
 
-			MainWindow.Instance.SessionSettings.Theme = s.Theme;
-			var sessionSettings = MainWindow.Instance.SessionSettings.ToXml();
+			SettingsService.Instance.SessionSettings.Theme = s.Theme;
+			var sessionSettings = SettingsService.Instance.SessionSettings.ToXml();
 
 			MainWindow.Instance.CurrentDisplaySettings.CopyValues(s);
 

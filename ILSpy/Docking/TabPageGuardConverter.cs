@@ -21,24 +21,20 @@ using System.Windows.Data;
 
 using ICSharpCode.ILSpy.ViewModels;
 
+using TomsToolbox.Wpf.Converters;
+
 namespace ICSharpCode.ILSpy.Docking
 {
-	public class ActiveTabPageConverter : IValueConverter
+	public class TabPageGuardConverter : ValueConverter
 	{
-		public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+		protected override object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{
-			if (value is TabPageModel)
-				return value;
-
-			return Binding.DoNothing;
+			return value is TabPageModel ? value : Binding.DoNothing;
 		}
 
-		public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+		protected override object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{
-			if (value is TabPageModel)
-				return value;
-
-			return Binding.DoNothing;
+			return value is TabPageModel ? value : Binding.DoNothing;
 		}
 	}
 }

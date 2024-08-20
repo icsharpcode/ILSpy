@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Composition;
 using System.Windows;
 
 using ICSharpCode.Decompiler.FlowAnalysis;
@@ -11,6 +12,7 @@ namespace ICSharpCode.ILSpy.Commands
 {
 #if DEBUG
 	[ExportContextMenuEntry(Header = "DEBUG -- Show CFG")]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	internal class ShowCFGContextMenuEntry : IContextMenuEntry
 	{
 		public void Execute(TextViewContext context)

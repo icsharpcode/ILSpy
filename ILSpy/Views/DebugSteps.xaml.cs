@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.ComponentModel.Composition;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -7,11 +8,15 @@ using System.Windows.Input;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.ILSpy.Docking;
-using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.ViewModels;
+
+using TomsToolbox.Wpf.Composition.Mef;
 
 namespace ICSharpCode.ILSpy
 {
+	[DataTemplate(typeof(DebugStepsPaneModel))]
+	[PartCreationPolicy(CreationPolicy.NonShared)]
 	public partial class DebugSteps : UserControl
 	{
 		static readonly ILAstWritingOptions writingOptions = new ILAstWritingOptions {
@@ -24,38 +29,23 @@ namespace ICSharpCode.ILSpy
 #if DEBUG
 		ILAstLanguage language;
 #endif
-		FilterSettings filterSettings;
-
 		public DebugSteps()
 		{
 			InitializeComponent();
 
 #if DEBUG
-			DockWorkspace.Instance.PropertyChanged += DockWorkspace_PropertyChanged;
-			filterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings;
-			filterSettings.PropertyChanged += FilterSettings_PropertyChanged;
+			MessageBus<LanguageSettingsChangedEventArgs>.Subscribers += (sender, e) => LanguageSettings_PropertyChanged(sender, e);
+
 			MainWindow.Instance.SelectionChanged += SelectionChanged;
 			writingOptions.PropertyChanged += WritingOptions_PropertyChanged;
 
-			if (MainWindow.Instance.CurrentLanguage is ILAstLanguage l)
+			if (SettingsService.Instance.SessionSettings.LanguageSettings.Language is ILAstLanguage l)
 			{
 				l.StepperUpdated += ILAstStepperUpdated;
 				language = l;
 				ILAstStepperUpdated(null, null);
 			}
 #endif
-		}
-
-		private void DockWorkspace_PropertyChanged(object sender, PropertyChangedEventArgs e)
-		{
-			switch (e.PropertyName)
-			{
-				case nameof(DockWorkspace.Instance.ActiveTabPage):
-					filterSettings.PropertyChanged -= FilterSettings_PropertyChanged;
-					filterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings;
-					filterSettings.PropertyChanged += FilterSettings_PropertyChanged;
-					break;
-			}
 		}
 
 		private void WritingOptions_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -71,7 +61,7 @@ namespace ICSharpCode.ILSpy
 			});
 		}
 
-		private void FilterSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void LanguageSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 #if DEBUG
 			if (e.PropertyName == "Language")
@@ -80,7 +70,7 @@ namespace ICSharpCode.ILSpy
 				{
 					language.StepperUpdated -= ILAstStepperUpdated;
 				}
-				if (MainWindow.Instance.CurrentLanguage is ILAstLanguage l)
+				if (SettingsService.Instance.SessionSettings.LanguageSettings.Language is ILAstLanguage l)
 				{
 					l.StepperUpdated += ILAstStepperUpdated;
 					language = l;

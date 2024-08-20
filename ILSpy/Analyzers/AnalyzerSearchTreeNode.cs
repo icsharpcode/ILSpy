@@ -86,29 +86,17 @@ namespace ICSharpCode.ILSpy.Analyzers
 			switch (symbol)
 			{
 				case IModule module:
-					return new AnalyzedModuleTreeNode(module) {
-						Language = this.Language
-					};
+					return new AnalyzedModuleTreeNode(module) { };
 				case ITypeDefinition td:
-					return new AnalyzedTypeTreeNode(td) {
-						Language = this.Language
-					};
+					return new AnalyzedTypeTreeNode(td) { };
 				case IField fd:
-					return new AnalyzedFieldTreeNode(fd) {
-						Language = this.Language
-					};
+					return new AnalyzedFieldTreeNode(fd) { };
 				case IMethod md:
-					return new AnalyzedMethodTreeNode(md) {
-						Language = this.Language
-					};
+					return new AnalyzedMethodTreeNode(md) { };
 				case IProperty pd:
-					return new AnalyzedPropertyTreeNode(pd) {
-						Language = this.Language
-					};
+					return new AnalyzedPropertyTreeNode(pd) { };
 				case IEvent ed:
-					return new AnalyzedEventTreeNode(ed) {
-						Language = this.Language
-					};
+					return new AnalyzedEventTreeNode(ed) { };
 				default:
 					throw new ArgumentOutOfRangeException(nameof(symbol), $"Symbol {symbol.GetType().FullName} is not supported.");
 			}

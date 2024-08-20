@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.ComponentModel.Composition;
 using System.Xml.Linq;
 
 using ICSharpCode.ILSpyX.Settings;
@@ -26,6 +27,7 @@ namespace ICSharpCode.ILSpy.Options
 	/// Interaction logic for DecompilerSettingsPanel.xaml
 	/// </summary>
 	[ExportOptionPage(Title = nameof(Properties.Resources.Decompiler), Order = 10)]
+	[PartCreationPolicy(CreationPolicy.NonShared)]
 	internal partial class DecompilerSettingsPanel : IOptionPage
 	{
 		public DecompilerSettingsPanel()

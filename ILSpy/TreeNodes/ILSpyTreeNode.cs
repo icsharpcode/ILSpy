@@ -27,6 +27,7 @@ using System.Windows.Threading;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX.Abstractions;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 using ICSharpCode.ILSpyX.TreeView;
@@ -38,25 +39,18 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public abstract class ILSpyTreeNode : SharpTreeNode, ITreeNode
 	{
-		FilterSettings filterSettings;
 		bool childrenNeedFiltering;
 
-		public FilterSettings FilterSettings {
-			get { return filterSettings; }
-			set {
-				if (filterSettings != value)
-				{
-					filterSettings = value;
-					OnFilterSettingsChanged();
-				}
-			}
+		public ILSpyTreeNode()
+		{
+			MessageBus<LanguageSettingsChangedEventArgs>.Subscribers += LanguageSettings_Changed;
 		}
 
-		public Language Language {
-			get { return filterSettings != null ? filterSettings.Language : Languages.AllLanguages[0]; }
-		}
+		LanguageSettings LanguageSettings => SettingsService.Instance.SessionSettings.LanguageSettings;
 
-		public virtual FilterResult Filter(FilterSettings settings)
+		public Language Language => LanguageSettings.Language;
+
+		public virtual FilterResult Filter(LanguageSettings settings)
 		{
 			if (string.IsNullOrEmpty(settings.SearchTerm))
 				return FilterResult.Match;
@@ -92,7 +86,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return false;
 		}
 
-		internal protected override void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
+		protected internal override void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
 		{
 			if (e.NewItems != null)
 			{
@@ -111,27 +105,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		void ApplyFilterToChild(ILSpyTreeNode child)
 		{
-			FilterResult r;
-			if (this.FilterSettings == null)
-				r = FilterResult.Match;
-			else
-				r = child.Filter(this.FilterSettings);
+			FilterResult r = child.Filter(this.LanguageSettings);
+
 			switch (r)
 			{
 				case FilterResult.Hidden:
 					child.IsHidden = true;
 					break;
 				case FilterResult.Match:
-					child.FilterSettings = StripSearchTerm(this.FilterSettings);
 					child.IsHidden = false;
 					break;
 				case FilterResult.Recurse:
-					child.FilterSettings = this.FilterSettings;
 					child.EnsureChildrenFiltered();
 					child.IsHidden = child.Children.All(c => c.IsHidden);
 					break;
 				case FilterResult.MatchAndRecurse:
-					child.FilterSettings = StripSearchTerm(this.FilterSettings);
 					child.EnsureChildrenFiltered();
 					child.IsHidden = child.Children.All(c => c.IsHidden);
 					break;
@@ -140,19 +128,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		static FilterSettings StripSearchTerm(FilterSettings filterSettings)
-		{
-			if (filterSettings == null)
-				return null;
-			if (!string.IsNullOrEmpty(filterSettings.SearchTerm))
-			{
-				filterSettings = filterSettings.Clone();
-				filterSettings.SearchTerm = null;
-			}
-			return filterSettings;
-		}
-
-		protected virtual void OnFilterSettingsChanged()
+		protected virtual void LanguageSettings_Changed(object sender, EventArgs e)
 		{
 			RaisePropertyChanged(nameof(Text));
 			if (IsVisible)
@@ -166,11 +142,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		/*protected override void OnIsVisibleChanged()
-		{
-			base.OnIsVisibleChanged();
-			EnsureChildrenFiltered();
-		}*/
 
 		internal void EnsureChildrenFiltered()
 		{

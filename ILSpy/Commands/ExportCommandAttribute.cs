@@ -99,21 +99,15 @@ namespace ICSharpCode.ILSpy
 	#endregion
 
 	#region Tool Panes
-	public interface IToolPaneMetadata
-	{
-		string ContentId { get; }
-	}
 
 	[MetadataAttribute]
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-	public class ExportToolPaneAttribute : ExportAttribute, IToolPaneMetadata
+	[AttributeUsage(AttributeTargets.Class)]
+	public class ExportToolPaneAttribute : ExportAttribute
 	{
 		public ExportToolPaneAttribute()
 			: base("ToolPane", typeof(ViewModels.ToolPaneModel))
 		{
 		}
-
-		public string ContentId { get; set; }
 	}
 	#endregion
 }

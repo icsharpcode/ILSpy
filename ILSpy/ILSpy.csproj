@@ -50,6 +50,8 @@
     <PackageReference Include="DataGridExtensions" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" />
     <PackageReference Include="NaturalSort.Extension" />
+    <PackageReference Include="TomsToolbox.Wpf.Composition" />
+    <PackageReference Include="TomsToolbox.Wpf.Composition.Mef" />
     <PackageReference Include="TomsToolbox.Wpf.Styles" />
   </ItemGroup>
 
@@ -90,8 +92,8 @@
 
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">
     <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" />
-	<PackageReference Include="Microsoft.DiaSymReader" />
-	<PackageReference Include="Microsoft.DiaSymReader.Native" />
+    <PackageReference Include="Microsoft.DiaSymReader" />
+    <PackageReference Include="Microsoft.DiaSymReader.Native" />
   </ItemGroup>
 
   <PropertyGroup>

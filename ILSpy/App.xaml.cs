@@ -42,6 +42,10 @@ using Microsoft.VisualStudio.Composition;
 using TomsToolbox.Wpf.Styles;
 using ICSharpCode.ILSpyX.TreeView;
 
+using TomsToolbox.Composition;
+using TomsToolbox.Wpf.Composition;
+using System.ComponentModel.Composition.Hosting;
+
 namespace ICSharpCode.ILSpy
 {
 	/// <summary>
@@ -52,8 +56,7 @@ namespace ICSharpCode.ILSpy
 		internal static CommandLineArguments CommandLineArguments;
 		internal static readonly IList<ExceptionData> StartupExceptions = new List<ExceptionData>();
 
-		public static ExportProvider ExportProvider { get; private set; }
-		public static IExportProviderFactory ExportProviderFactory { get; private set; }
+		public static IExportProvider ExportProvider { get; private set; }
 
 		internal class ExceptionData
 		{
@@ -89,7 +92,12 @@ namespace ICSharpCode.ILSpy
 			}
 			TaskScheduler.UnobservedTaskException += DotNet40_UnobservedTaskException;
 			InitializeMef().GetAwaiter().GetResult();
-			Languages.Initialize(ExportProvider);
+
+			// Register the export provider so that it can be accessed from WPF/XAML components.
+			ExportProviderLocator.Register(ExportProvider);
+			// Add data templates registered via MEF.
+			Resources.MergedDictionaries.Add(DataTemplateManager.CreateDynamicDataTemplates(ExportProvider));
+
 			EventManager.RegisterClassHandler(typeof(Window),
 											  Hyperlink.RequestNavigateEvent,
 											  new RequestNavigateEventHandler(Window_RequestNavigate));
@@ -170,8 +178,9 @@ namespace ICSharpCode.ILSpy
 				// If/When any part needs to import ICompositionService, this will be needed:
 				//   catalog.WithCompositionService();
 				var config = CompositionConfiguration.Create(catalog);
-				ExportProviderFactory = config.CreateExportProviderFactory();
-				ExportProvider = ExportProviderFactory.CreateExportProvider();
+				var exportProviderFactory = config.CreateExportProviderFactory();
+				ExportProvider = new ExportProviderAdapter(exportProviderFactory.CreateExportProvider());
+
 				// This throws exceptions for composition failures. Alternatively, the configuration's CompositionErrors property
 				// could be used to log the errors directly. Used at the end so that it does not prevent the export provider setup.
 				config.ThrowOnErrors();

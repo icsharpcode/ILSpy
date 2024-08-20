@@ -2,6 +2,7 @@
 // This code is distributed under MIT X11 license (for details please see \doc\license.txt)
 
 using System.ComponentModel;
+using System.ComponentModel.Composition;
 using System.Windows.Controls;
 using System.Xml.Linq;
 
@@ -12,6 +13,7 @@ using ICSharpCode.ILSpyX.Settings;
 namespace TestPlugin
 {
 	[ExportOptionPage(Title = "TestPlugin", Order = 0)]
+	[PartCreationPolicy(CreationPolicy.NonShared)]
 	partial class CustomOptionPage : UserControl, IOptionPage
 	{
 		static readonly XNamespace ns = "http://www.ilspy.net/testplugin";

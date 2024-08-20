@@ -56,6 +56,7 @@ using ICSharpCode.ILSpy.AvalonEdit;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 
@@ -392,7 +393,7 @@ namespace ICSharpCode.ILSpy.TextView
 			if (segment.Reference is ICSharpCode.Decompiler.Disassembler.OpCodeInfo code)
 			{
 				XmlDocumentationProvider docProvider = XmlDocLoader.MscorlibDocumentation;
-				DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), MainWindow.Instance.CurrentLanguage.SyntaxHighlighting);
+				DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), SettingsService.Instance.SessionSettings.LanguageSettings.Language.SyntaxHighlighting);
 				renderer.AddSignatureBlock($"{code.Name} (0x{code.Code:x})");
 				if (docProvider != null)
 				{
@@ -442,7 +443,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		static FlowDocument? CreateTooltipForEntity(IEntity resolved)
 		{
-			Language currentLanguage = MainWindow.Instance.CurrentLanguage;
+			Language currentLanguage = SettingsService.Instance.SessionSettings.LanguageSettings.Language;
 			DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), currentLanguage.SyntaxHighlighting);
 			RichText richText = currentLanguage.GetRichTextTooltip(resolved);
 			if (richText == null)
@@ -533,7 +534,7 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			if (MainWindow.Instance.CurrentDisplaySettings.HighlightMatchingBraces)
 			{
-				var result = MainWindow.Instance.CurrentLanguage.BracketSearcher.SearchBracket(textEditor.Document, textEditor.CaretOffset);
+				var result = SettingsService.Instance.SessionSettings.LanguageSettings.Language.BracketSearcher.SearchBracket(textEditor.Document, textEditor.CaretOffset);
 				bracketHighlightRenderer.SetHighlight(result);
 			}
 			else

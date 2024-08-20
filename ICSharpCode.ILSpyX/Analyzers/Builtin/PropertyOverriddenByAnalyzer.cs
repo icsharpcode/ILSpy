@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 
@@ -28,6 +29,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 	/// Shows properties that override a property.
 	/// </summary>
 	[ExportAnalyzer(Header = "Overridden By", Order = 20)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	class PropertyOverriddenByAnalyzer : IAnalyzer
 	{
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)

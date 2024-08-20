@@ -182,7 +182,7 @@ namespace ICSharpCode.ILSpyX.TreeView
 		#endregion
 
 		#region OnChildrenChanged
-		internal protected virtual void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
+		protected internal virtual void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
 		{
 			if (e.OldItems != null)
 			{

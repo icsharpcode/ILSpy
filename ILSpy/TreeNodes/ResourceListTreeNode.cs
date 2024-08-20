@@ -51,7 +51,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				this.Children.Add(ResourceTreeNode.Create(r));
 		}
 
-		public override FilterResult Filter(FilterSettings settings)
+		public override FilterResult Filter(LanguageSettings settings)
 		{
 			if (string.IsNullOrEmpty(settings.SearchTerm))
 				return FilterResult.MatchAndRecurse;

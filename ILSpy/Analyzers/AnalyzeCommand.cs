@@ -16,10 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
+using System.ComponentModel.Composition;
 using System.Linq;
 
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -27,8 +26,11 @@ using ICSharpCode.ILSpy.TreeNodes;
 namespace ICSharpCode.ILSpy.Analyzers
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.Analyze), Icon = "Images/Search", Category = nameof(Resources.Analyze), InputGestureText = "Ctrl+R", Order = 100)]
-	internal sealed class AnalyzeCommand : SimpleCommand, IContextMenuEntry
+	[PartCreationPolicy(CreationPolicy.Shared)]
+	internal sealed class AnalyzeContextMenuCommand : IContextMenuEntry
 	{
+		private static readonly AnalyzerTreeViewModel AnalyzerTreeView = App.ExportProvider.GetExportedValue<AnalyzerTreeViewModel>();
+
 		public bool IsVisible(TextViewContext context)
 		{
 			if (context.TreeView is AnalyzerTreeView && context.SelectedTreeNodes != null && context.SelectedTreeNodes.All(n => n.Parent.IsRoot))
@@ -41,70 +43,49 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public bool IsEnabled(TextViewContext context)
 		{
 			if (context.SelectedTreeNodes == null)
-				return context.Reference != null && context.Reference.Reference is IEntity;
-			foreach (IMemberTreeNode node in context.SelectedTreeNodes)
 			{
-				if (!IsValidReference(node.Member))
-					return false;
+				return context.Reference is { Reference: IEntity };
 			}
-
-			return true;
+			return context.SelectedTreeNodes
+				.OfType<IMemberTreeNode>()
+				.All(node => IsValidReference(node.Member));
 		}
 
-		bool IsValidReference(object reference)
+		static bool IsValidReference(object reference)
 		{
-			return reference is IEntity && !(reference is IField f && f.IsConst);
+			return reference is IEntity and not IField { IsConst: true };
 		}
 
 		public void Execute(TextViewContext context)
 		{
-			AnalyzerTreeView analyzerTreeView = MainWindow.Instance.AnalyzerTreeView;
-			if (analyzerTreeView == null)
-			{
-				return;
-			}
 			if (context.SelectedTreeNodes != null)
 			{
-				foreach (IMemberTreeNode node in context.SelectedTreeNodes)
+				foreach (var node in context.SelectedTreeNodes.OfType<IMemberTreeNode>().ToArray())
 				{
-					analyzerTreeView.Analyze(node.Member);
+					AnalyzerTreeView.Analyze(node.Member);
 				}
 			}
-			else if (context.Reference != null && context.Reference.Reference is IEntity entity)
+			else if (context.Reference is { Reference: IEntity entity })
 			{
-				analyzerTreeView.Analyze(entity);
+				AnalyzerTreeView.Analyze(entity);
 			}
 		}
+	}
+
+	internal sealed class AnalyzeCommand : SimpleCommand
+	{
+		private static readonly AnalyzerTreeViewModel AnalyzerTreeView = App.ExportProvider.GetExportedValue<AnalyzerTreeViewModel>();
 
 		public override bool CanExecute(object parameter)
 		{
-			AnalyzerTreeView analyzerTreeView = MainWindow.Instance.AnalyzerTreeView;
-			if (analyzerTreeView != null && analyzerTreeView.IsKeyboardFocusWithin)
-			{
-				return analyzerTreeView.SelectedItems.OfType<object>().All(n => n is IMemberTreeNode);
-			}
-			else
-			{
-				return MainWindow.Instance.SelectedNodes.All(n => n is IMemberTreeNode);
-			}
+			return MainWindow.Instance.SelectedNodes.All(n => n is IMemberTreeNode);
 		}
 
 		public override void Execute(object parameter)
 		{
-			AnalyzerTreeView analyzerTreeView = MainWindow.Instance.AnalyzerTreeView;
-			if (analyzerTreeView != null && analyzerTreeView.IsKeyboardFocusWithin)
+			foreach (var node in MainWindow.Instance.SelectedNodes.OfType<IMemberTreeNode>())
 			{
-				foreach (IMemberTreeNode node in MainWindow.Instance.AnalyzerTreeView.SelectedItems.OfType<IMemberTreeNode>().ToArray())
-				{
-					MainWindow.Instance.AnalyzerTreeView.Analyze(node.Member);
-				}
-			}
-			else
-			{
-				foreach (IMemberTreeNode node in MainWindow.Instance.SelectedNodes)
-				{
-					MainWindow.Instance.AnalyzerTreeView.Analyze(node.Member);
-				}
+				AnalyzerTreeView.Analyze(node.Member);
 			}
 		}
 	}

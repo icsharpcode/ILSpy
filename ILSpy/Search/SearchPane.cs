@@ -21,6 +21,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -34,16 +35,22 @@ using System.Windows.Threading;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Extensions;
 using ICSharpCode.ILSpyX.Search;
+
+using TomsToolbox.Wpf.Composition.Mef;
 
 namespace ICSharpCode.ILSpy.Search
 {
 	/// <summary>
 	/// Search pane
 	/// </summary>
+	[DataTemplate(typeof(SearchPaneModel))]
+	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Export]
 	public partial class SearchPane : UserControl
 	{
 		const int MAX_RESULTS = 1000;
@@ -51,7 +58,6 @@ namespace ICSharpCode.ILSpy.Search
 		RunningSearch currentSearch;
 		bool runSearchOnNextShow;
 		IComparer<SearchResult> resultsComparer;
-		FilterSettings filterSettings;
 
 		public static readonly DependencyProperty ResultsProperty =
 			DependencyProperty.Register("Results", typeof(ObservableCollection<SearchResult>), typeof(SearchPane),
@@ -77,12 +83,11 @@ namespace ICSharpCode.ILSpy.Search
 			searchModeComboBox.Items.Add(new { Image = Images.Namespace, Name = "Namespace" });
 
 			ContextMenuProvider.Add(listBox);
-			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
-			filterSettings = MainWindow.Instance.SessionSettings.FilterSettings;
+			MessageBus<CurrentAssemblyListChangedEventArgs>.Subscribers += (sender, e) => MainWindow_Instance_CurrentAssemblyListChanged(sender, e);
 			CompositionTarget.Rendering += UpdateResults;
 
 			// This starts empty search right away, so do at the end (we're still in ctor)
-			searchModeComboBox.SelectedIndex = (int)MainWindow.Instance.SessionSettings.SelectedSearchMode;
+			searchModeComboBox.SelectedIndex = (int)SettingsService.Instance.SessionSettings.SelectedSearchMode;
 		}
 
 		void MainWindow_Instance_CurrentAssemblyListChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -98,10 +103,8 @@ namespace ICSharpCode.ILSpy.Search
 			}
 		}
 
-		internal void UpdateFilter(FilterSettings settings)
+		internal void UpdateFilter()
 		{
-			this.filterSettings = settings;
-
 			if (IsVisible)
 			{
 				StartSearch(this.SearchTerm);
@@ -149,7 +152,7 @@ namespace ICSharpCode.ILSpy.Search
 
 		void SearchModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
-			MainWindow.Instance.SessionSettings.SelectedSearchMode = (SearchMode)searchModeComboBox.SelectedIndex;
+			SettingsService.Instance.SessionSettings.SelectedSearchMode = (SearchMode)searchModeComboBox.SelectedIndex;
 			StartSearch(this.SearchTerm);
 		}
 
@@ -252,7 +255,7 @@ namespace ICSharpCode.ILSpy.Search
 				searchProgressBar.IsIndeterminate = true;
 				startedSearch = new RunningSearch(await mainWindow.CurrentAssemblyList.GetAllAssemblies(), searchTerm,
 					(SearchMode)searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage,
-					filterSettings.ShowApiLevel);
+					SettingsService.Instance.SessionSettings.LanguageSettings.ShowApiLevel);
 				currentSearch = startedSearch;
 
 				await startedSearch.Run();
@@ -531,6 +534,7 @@ namespace ICSharpCode.ILSpy.Search
 	}
 
 	[ExportToolbarCommand(ToolTip = nameof(Properties.Resources.SearchCtrlShiftFOrCtrlE), ToolbarIcon = "Images/Search", ToolbarCategory = nameof(Properties.Resources.View), ToolbarOrder = 100)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class ShowSearchCommand : CommandWrapper
 	{
 		public ShowSearchCommand()

@@ -42,6 +42,7 @@ namespace ICSharpCode.ILSpy
 	using SequencePoint = ICSharpCode.Decompiler.DebugInfo.SequencePoint;
 
 	[Export(typeof(Language))]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	class CSharpILMixedLanguage : ILLanguage
 	{
 		public override string Name => "IL with C#";

@@ -35,27 +35,28 @@ using AvalonDock.Layout;
 using AvalonDock.Layout.Serialization;
 
 using ICSharpCode.AvalonEdit.Highlighting;
+using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.ViewModels;
+
+using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpy.Docking
 {
-	public class DockWorkspace : INotifyPropertyChanged, ILayoutUpdateStrategy
+	public class DockWorkspace : ObservableObject, ILayoutUpdateStrategy
 	{
-		private SessionSettings sessionSettings;
+		private static SessionSettings SessionSettings => SettingsService.Instance.SessionSettings;
 
-		public event PropertyChangedEventHandler PropertyChanged;
+		public static readonly DockWorkspace Instance = new();
 
-		public static DockWorkspace Instance { get; private set; }
-
-		internal DockWorkspace(MainWindow parent)
+		private DockWorkspace()
 		{
-			Instance = this;
 			this.TabPages.CollectionChanged += Documents_CollectionChanged;
-			parent.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
+			MessageBus<CurrentAssemblyListChangedEventArgs>.Subscribers += (sender, e) => CurrentAssemblyList_Changed(sender, e);
 		}
 
-		private void MainWindow_Instance_CurrentAssemblyListChanged(object sender, NotifyCollectionChangedEventArgs e)
+		private void CurrentAssemblyList_Changed(object sender, NotifyCollectionChangedEventArgs e)
 		{
 			if (e.OldItems == null)
 			{
@@ -88,6 +89,11 @@ namespace ICSharpCode.ILSpy.Docking
 		private void Documents_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
 			var collection = (PaneCollection<TabPageModel>)sender;
+			if (e.Action == NotifyCollectionChangedAction.Add)
+			{
+				ActiveTabPage = e.NewItems?[0] as TabPageModel;
+			}
+
 			bool canClose = collection.Count > 1;
 			foreach (var item in collection)
 			{
@@ -118,31 +124,31 @@ namespace ICSharpCode.ILSpy.Docking
 				tool.IsVisible = false;
 		}
 
-		private TabPageModel _activeTabPage = null;
+		private TabPageModel activeTabPage = null;
 		public TabPageModel ActiveTabPage {
 			get {
-				return _activeTabPage;
+				return activeTabPage;
 			}
 			set {
-				if (_activeTabPage != value)
+				if (!SetProperty(ref activeTabPage, value))
 				{
-					_activeTabPage = value;
-					var state = value.GetState();
-					if (state != null)
-					{
-						if (state.DecompiledNodes != null)
-						{
-							MainWindow.Instance.SelectNodes(state.DecompiledNodes,
-								inNewTabPage: false, setFocus: true, changingActiveTab: true);
-						}
-						else
-						{
-							MainWindow.Instance.NavigateTo(new RequestNavigateEventArgs(state.ViewedUri, null));
-						}
-					}
-
-					RaisePropertyChanged(nameof(ActiveTabPage));
+					return;
 				}
+
+				var state = value.GetState();
+				if (state != null)
+				{
+					if (state.DecompiledNodes != null)
+					{
+						MainWindow.Instance.SelectNodes(state.DecompiledNodes,
+							inNewTabPage: false, setFocus: true, changingActiveTab: true);
+					}
+					else
+					{
+						MainWindow.Instance.NavigateTo(new(state.ViewedUri, null));
+					}
+				}
+				MessageBus.Send(this, new DockWorkspaceActiveTabPageChangedEventArgs());
 			}
 		}
 
@@ -153,7 +159,7 @@ namespace ICSharpCode.ILSpy.Docking
 			serializer.LayoutSerializationCallback += LayoutSerializationCallback;
 			try
 			{
-				sessionSettings.DockLayout.Deserialize(serializer);
+				SessionSettings.DockLayout.Deserialize(serializer);
 			}
 			finally
 			{
@@ -181,11 +187,6 @@ namespace ICSharpCode.ILSpy.Docking
 			}
 		}
 
-		protected void RaisePropertyChanged([CallerMemberName] string propertyName = null)
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-		}
-
 		public void ShowText(AvalonEditTextOutput textOutput)
 		{
 			ActiveTabPage.ShowTextView(textView => textView.ShowText(textOutput));
@@ -199,11 +200,6 @@ namespace ICSharpCode.ILSpy.Docking
 		internal void ShowNodes(AvalonEditTextOutput output, TreeNodes.ILSpyTreeNode[] nodes, IHighlightingDefinition highlighting)
 		{
 			ActiveTabPage.ShowTextView(textView => textView.ShowNodes(output, nodes, highlighting));
-		}
-
-		internal void LoadSettings(SessionSettings sessionSettings)
-		{
-			this.sessionSettings = sessionSettings;
 		}
 
 		internal void CloseAllTabs()
@@ -222,7 +218,7 @@ namespace ICSharpCode.ILSpy.Docking
 				pane.IsVisible = false;
 			}
 			CloseAllTabs();
-			sessionSettings.DockLayout.Reset();
+			SessionSettings.DockLayout.Reset();
 			InitializeLayout(MainWindow.Instance.DockManager);
 			MainWindow.Instance.Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)MainWindow.Instance.RefreshDecompiledView);
 		}
@@ -243,7 +239,7 @@ namespace ICSharpCode.ILSpy.Docking
 					previousContainer.Children.Add(anchorableToShow);
 					return true;
 				case LegacyToolPaneLocation.Bottom:
-					previousContainer = GetContainer<AnalyzerPaneModel>();
+					previousContainer = GetContainer<AnalyzerTreeViewModel>();
 					previousContainer.Children.Add(anchorableToShow);
 					return true;
 				default:

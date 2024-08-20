@@ -57,7 +57,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.isPublicAPI = value;
 		}
 
-		public override FilterResult Filter(FilterSettings settings)
+		public override FilterResult Filter(LanguageSettings settings)
 		{
 			if (settings.SearchTermMatches(name))
 				return FilterResult.MatchAndRecurse;

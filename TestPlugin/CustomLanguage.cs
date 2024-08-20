@@ -15,6 +15,7 @@ namespace TestPlugin
 	/// Adds a new language to the decompiler.
 	/// </summary>
 	[Export(typeof(Language))]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	public class CustomLanguage : Language
 	{
 		public override string Name {

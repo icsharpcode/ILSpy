@@ -16,39 +16,31 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Collections.Generic;
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 
-using Microsoft.VisualStudio.Composition;
+using TomsToolbox.Composition;
 
 namespace ICSharpCode.ILSpy
 {
 	public static class Languages
 	{
-		// Start with a dummy list with an IL entry so that crashes
-		// in Initialize() (e.g. due to invalid plugins) don't lead to
-		// confusing follow-up errors in GetLanguage().
-		private static ReadOnlyCollection<Language> allLanguages = new ReadOnlyCollection<Language>(
-			new Language[] { new ILLanguage() });
-
 		/// <summary>
 		/// A list of all languages.
 		/// </summary>
-		public static ReadOnlyCollection<Language> AllLanguages {
-			get { return allLanguages; }
-		}
+		public static ReadOnlyCollection<Language> AllLanguages { get; } = Initialize(App.ExportProvider);
 
-		internal static void Initialize(ExportProvider ep)
+		static ReadOnlyCollection<Language> Initialize(IExportProvider ep)
 		{
-			List<Language> languages = new List<Language>();
-			languages.AddRange(ep.GetExportedValues<Language>());
-			languages.Sort((a, b) => a.Name.CompareTo(b.Name));
+			var languages = ep.GetExportedValues<Language>().ToList();
+
+			languages.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
 #if DEBUG
 			languages.AddRange(ILAstLanguage.GetDebugLanguages());
 			languages.AddRange(CSharpLanguage.GetDebugLanguages());
 #endif
-			allLanguages = languages.AsReadOnly();
+			return languages.AsReadOnly();
 		}
 
 		/// <summary>
