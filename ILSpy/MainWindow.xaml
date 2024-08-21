@@ -10,7 +10,6 @@
 	xmlns:avalondock="https://github.com/Dirkster99/AvalonDock"
 	xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
 	xmlns:docking="clr-namespace:ICSharpCode.ILSpy.Docking"
-	xmlns:analyzers="clr-namespace:ICSharpCode.ILSpy.Analyzers"
 	xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
 	Title="ILSpy"
 	MinWidth="250"
@@ -79,6 +78,8 @@
 
 		<controls:CultureSelectionConverter x:Key="cultureSelectionConverter" />
 
+		<toms:BindingRelay x:Key="WindowBinding" DataContext="{Binding}"/>
+
 	</Window.Resources>
 
 	<b:Interaction.Behaviors>
@@ -137,7 +138,7 @@
 								<Setter.Value>
 									<MultiBinding Converter="{x:Static toms:BinaryOperationConverter.Equality}" Mode="OneWay">
 										<Binding />
-										<Binding RelativeSource="{RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}" Path="SessionSettings.Theme" />
+										<Binding Source="{StaticResource WindowBinding}" Path="DataContext.SessionSettings.Theme" />
 									</MultiBinding>
 								</Setter.Value>
 							</Setter>
