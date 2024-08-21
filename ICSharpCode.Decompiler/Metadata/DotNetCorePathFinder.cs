@@ -253,9 +253,11 @@ namespace ICSharpCode.Decompiler.Metadata
 				.Where(v => v.version != null);
 			foreach (var folder in foundVersions.OrderBy(v => v.version))
 			{
-				if (folder.version >= version)
-					if(folder.directory.EnumerateFiles().Any())
-						return folder.directory.Name;
+				if (folder.version >= version
+					&& folder.directory.EnumerateFiles("*.dll", SearchOption.AllDirectories).Any())
+				{
+					return folder.directory.Name;
+				}
 			}
 			return version.ToString();
 		}
