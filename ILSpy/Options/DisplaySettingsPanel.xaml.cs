@@ -99,7 +99,7 @@ namespace ICSharpCode.ILSpy.Options
 					select ff).ToArray();
 		}
 
-		public static DisplaySettingsViewModel LoadDisplaySettings(ILSpySettings settings)
+		public static DisplaySettingsViewModel LoadDisplaySettings(ILSpySettings settings, SessionSettings sessionSettings = null)
 		{
 			XElement e = settings["DisplaySettings"];
 			var s = new DisplaySettingsViewModel();
@@ -124,7 +124,7 @@ namespace ICSharpCode.ILSpy.Options
 			s.ShowRawOffsetsAndBytesBeforeInstruction = (bool?)e.Attribute("ShowRawOffsetsAndBytesBeforeInstruction") ?? false;
 			s.StyleWindowTitleBar = (bool?)e.Attribute("StyleWindowTitleBar") ?? false;
 
-			s.Theme = SettingsService.Instance.SessionSettings.Theme;
+			s.Theme = (sessionSettings ?? SettingsService.Instance.SessionSettings).Theme;
 
 			return s;
 		}
@@ -158,7 +158,7 @@ namespace ICSharpCode.ILSpy.Options
 			SettingsService.Instance.SessionSettings.Theme = s.Theme;
 			var sessionSettings = SettingsService.Instance.SessionSettings.ToXml();
 
-			MainWindow.Instance.CurrentDisplaySettings.CopyValues(s);
+			SettingsService.Instance.DisplaySettings.CopyValues(s);
 
 			Update(section);
 			Update(sessionSettings);
@@ -190,8 +190,8 @@ namespace ICSharpCode.ILSpy.Options
 
 		public void LoadDefaults()
 		{
-			MainWindow.Instance.CurrentDisplaySettings.CopyValues(new DisplaySettingsViewModel());
-			this.DataContext = MainWindow.Instance.CurrentDisplaySettings;
+			SettingsService.Instance.DisplaySettings.CopyValues(new DisplaySettingsViewModel());
+			this.DataContext = SettingsService.Instance.DisplaySettings;
 		}
 	}
 

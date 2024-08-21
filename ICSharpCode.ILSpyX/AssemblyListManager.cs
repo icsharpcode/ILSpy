@@ -56,6 +56,7 @@ namespace ICSharpCode.ILSpyX
 		}
 
 		public bool ApplyWinRTProjections { get; set; }
+
 		public bool UseDebugSymbols { get; set; }
 
 		public ObservableCollection<string> AssemblyLists { get; } = new ObservableCollection<string>();

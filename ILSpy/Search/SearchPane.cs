@@ -243,7 +243,7 @@ namespace ICSharpCode.ILSpy.Search
 			}
 
 			MainWindow mainWindow = MainWindow.Instance;
-			resultsComparer = mainWindow.CurrentDisplaySettings.SortResults ?
+			resultsComparer = SettingsService.Instance.DisplaySettings.SortResults ?
 				SearchResult.ComparerByFitness :
 				SearchResult.ComparerByName;
 			Results.Clear();
@@ -454,7 +454,7 @@ namespace ICSharpCode.ILSpy.Search
 				request.RegEx = regex;
 				request.SearchResultFactory = new SearchResultFactory(language);
 				request.TreeNodeFactory = new TreeNodeFactory();
-				request.DecompilerSettings = MainWindow.Instance.CurrentDecompilerSettings;
+				request.DecompilerSettings = SettingsService.Instance.DecompilerSettings;
 
 				return request;
 			}

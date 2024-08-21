@@ -21,6 +21,7 @@ using System.Reflection.Metadata.Ecma335;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -58,7 +59,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			if (ShowTable(TableIndex.CustomDebugInformation))
 				this.Children.Add(new CustomDebugInformationTableTreeNode(metadataFile));
 
-			bool ShowTable(TableIndex table) => !MainWindow.Instance.CurrentDisplaySettings.HideEmptyMetadataTables || metadataFile.Metadata.GetTableRowCount(table) > 0;
+			bool ShowTable(TableIndex table) => !SettingsService.Instance.DisplaySettings.HideEmptyMetadataTables || metadataFile.Metadata.GetTableRowCount(table) > 0;
 		}
 
 		public override bool View(TabPageModel tabPage)

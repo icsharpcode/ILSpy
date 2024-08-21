@@ -24,6 +24,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 
 using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpy.Util;
 
 using TomsToolbox.Essentials;
 using TomsToolbox.Wpf;
@@ -42,7 +43,7 @@ namespace ICSharpCode.ILSpy.Themes
 		{
 			base.OnAttached();
 
-			MainWindow.Instance.CurrentDisplaySettings.PropertyChanged += DisplaySettings_PropertyChanged;
+			SettingsService.Instance.DisplaySettings.PropertyChanged += DisplaySettings_PropertyChanged;
 
 			_foreground = AssociatedObject.Track(Control.ForegroundProperty);
 			_background = AssociatedObject.Track(Control.BackgroundProperty);
@@ -61,7 +62,7 @@ namespace ICSharpCode.ILSpy.Themes
 			_foreground.Changed -= Color_Changed;
 			_background.Changed -= Color_Changed;
 
-			MainWindow.Instance.CurrentDisplaySettings.PropertyChanged -= DisplaySettings_PropertyChanged;
+			SettingsService.Instance.DisplaySettings.PropertyChanged -= DisplaySettings_PropertyChanged;
 		}
 
 		private void Color_Changed(object sender, EventArgs e)
@@ -73,7 +74,7 @@ namespace ICSharpCode.ILSpy.Themes
 		{
 			var window = AssociatedObject;
 
-			if (MainWindow.Instance.CurrentDisplaySettings.StyleWindowTitleBar)
+			if (SettingsService.Instance.DisplaySettings.StyleWindowTitleBar)
 				window.Style = (Style)window.FindResource(TomsToolbox.Wpf.Styles.ResourceKeys.WindowStyle);
 		}
 
@@ -86,7 +87,7 @@ namespace ICSharpCode.ILSpy.Themes
 		{
 			if (e.PropertyName == nameof(DisplaySettingsViewModel.StyleWindowTitleBar))
 			{
-				if (!MainWindow.Instance.CurrentDisplaySettings.StyleWindowTitleBar)
+				if (!SettingsService.Instance.DisplaySettings.StyleWindowTitleBar)
 				{
 					restartNotificationThrottle.Tick();
 					return;

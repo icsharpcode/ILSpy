@@ -83,8 +83,6 @@ namespace ICSharpCode.ILSpy
 			get { return instance; }
 		}
 
-		internal AssemblyListManager AssemblyListManager { get; }
-
 		public SharpTreeView AssemblyTreeView {
 			get {
 				return FindResource("AssemblyTreeView") as SharpTreeView;
@@ -97,29 +95,17 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public DecompilerSettings CurrentDecompilerSettings { get; internal set; }
-
-		public DisplaySettingsViewModel CurrentDisplaySettings { get; internal set; }
-
 		public DecompilationOptions CreateDecompilationOptions()
 		{
 			var decompilerView = DockWorkspace.Instance.ActiveTabPage.Content as IProgress<DecompilationProgress>;
-			return new DecompilationOptions(CurrentLanguageVersion, CurrentDecompilerSettings, CurrentDisplaySettings) { Progress = decompilerView };
+			return new DecompilationOptions(CurrentLanguageVersion, SettingsService.Instance.DecompilerSettings, SettingsService.Instance.DisplaySettings) { Progress = decompilerView };
 		}
 
 		public MainWindow()
 		{
 			instance = this;
 
-			var spySettings = SettingsService.Instance.SpySettings;
 			var sessionSettings = SettingsService.Instance.SessionSettings;
-
-			this.CurrentDecompilerSettings = DecompilerSettingsPanel.LoadDecompilerSettings(spySettings);
-			this.CurrentDisplaySettings = DisplaySettingsPanel.LoadDisplaySettings(spySettings);
-			this.AssemblyListManager = new AssemblyListManager(spySettings) {
-				ApplyWinRTProjections = CurrentDecompilerSettings.ApplyWindowsRuntimeProjections,
-				UseDebugSymbols = CurrentDecompilerSettings.UseDebugSymbols
-			};
 
 			// Make sure Images are initialized on the UI thread.
 			this.Icon = Images.ILSpyIcon;
@@ -127,10 +113,10 @@ namespace ICSharpCode.ILSpy
 			this.DataContext = new MainWindowViewModel {
 				Workspace = DockWorkspace.Instance,
 				SessionSettings = sessionSettings,
-				AssemblyListManager = AssemblyListManager
+				AssemblyListManager = SettingsService.Instance.AssemblyListManager
 			};
 
-			AssemblyListManager.CreateDefaultAssemblyLists();
+			SettingsService.Instance.AssemblyListManager.CreateDefaultAssemblyLists();
 			if (!string.IsNullOrEmpty(sessionSettings.CurrentCulture))
 			{
 				System.Threading.Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo(sessionSettings.CurrentCulture);
@@ -840,12 +826,12 @@ namespace ICSharpCode.ILSpy
 			{
 				// Load AssemblyList only in Loaded event so that WPF is initialized before we start the CPU-heavy stuff.
 				// This makes the UI come up a bit faster.
-				this.assemblyList = AssemblyListManager.LoadList(sessionSettings.ActiveAssemblyList);
+				this.assemblyList = SettingsService.Instance.AssemblyListManager.LoadList(sessionSettings.ActiveAssemblyList);
 			}
 			else
 			{
-				AssemblyListManager.ClearAll();
-				this.assemblyList = AssemblyListManager.CreateList(AssemblyListManager.DefaultListName);
+				SettingsService.Instance.AssemblyListManager.ClearAll();
+				this.assemblyList = SettingsService.Instance.AssemblyListManager.CreateList(AssemblyListManager.DefaultListName);
 			}
 
 			HandleCommandLineArguments(App.CommandLineArguments);
@@ -877,44 +863,15 @@ namespace ICSharpCode.ILSpy
 				DockWorkspace.Instance.ShowText(output);
 		}
 
-		bool FormatExceptions(App.ExceptionData[] exceptions, ITextOutput output)
+		static bool FormatExceptions(App.ExceptionData[] exceptions, ITextOutput output)
 		{
 			var stringBuilder = new StringBuilder();
-			var result = FormatExceptions(exceptions, stringBuilder);
+			var result = exceptions.FormatExceptions(stringBuilder);
 			if (result)
 			{
 				output.Write(stringBuilder.ToString());
 			}
 			return result;
-		}
-
-		internal static bool FormatExceptions(App.ExceptionData[] exceptions, StringBuilder output)
-		{
-			if (exceptions.Length == 0)
-				return false;
-			bool first = true;
-
-			foreach (var item in exceptions)
-			{
-				if (first)
-					first = false;
-				else
-					output.AppendLine("-------------------------------------------------");
-				output.AppendLine("Error(s) loading plugin: " + item.PluginName);
-				if (item.Exception is System.Reflection.ReflectionTypeLoadException)
-				{
-					var e = (System.Reflection.ReflectionTypeLoadException)item.Exception;
-					foreach (var ex in e.LoaderExceptions)
-					{
-						output.AppendLine(ex.ToString());
-						output.AppendLine();
-					}
-				}
-				else
-					output.AppendLine(item.Exception.ToString());
-			}
-
-			return true;
 		}
 
 		#region Update Check
@@ -974,7 +931,7 @@ namespace ICSharpCode.ILSpy
 
 		public void ShowAssemblyList(string name)
 		{
-			AssemblyList list = this.AssemblyListManager.LoadList(name);
+			AssemblyList list = SettingsService.Instance.AssemblyListManager.LoadList(name);
 			//Only load a new list when it is a different one
 			if (list.ListName != CurrentAssemblyList.ListName)
 			{
@@ -1388,7 +1345,7 @@ namespace ICSharpCode.ILSpy
 			{
 				refreshInProgress = true;
 				var path = GetPathForNode(AssemblyTreeView.SelectedItem as SharpTreeNode);
-				ShowAssemblyList(AssemblyListManager.LoadList(assemblyList.ListName));
+				ShowAssemblyList(SettingsService.Instance.AssemblyListManager.LoadList(assemblyList.ListName));
 				SelectNode(FindNodeByPath(path, true), inNewTabPage: false, AssemblyTreeView.IsFocused);
 			}
 			finally

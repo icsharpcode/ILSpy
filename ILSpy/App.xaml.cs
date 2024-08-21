@@ -201,7 +201,8 @@ namespace ICSharpCode.ILSpy
 		protected override void OnStartup(StartupEventArgs e)
 		{
 			var output = new StringBuilder();
-			if (ILSpy.MainWindow.FormatExceptions(StartupExceptions.ToArray(), output))
+
+			if (StartupExceptions.FormatExceptions(output))
 			{
 				MessageBox.Show(output.ToString(), "Sorry we crashed!");
 				Environment.Exit(1);

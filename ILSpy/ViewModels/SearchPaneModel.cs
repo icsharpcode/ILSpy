@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			ContentId = PaneContentId;
 			Title = Properties.Resources.SearchPane_Search;
 			Icon = "Images/Search";
-			ShortcutKey = new KeyGesture(Key.F, ModifierKeys.Control | ModifierKeys.Shift);
+			ShortcutKey = new(Key.F, ModifierKeys.Control | ModifierKeys.Shift);
 			IsCloseable = true;
 		}
 
