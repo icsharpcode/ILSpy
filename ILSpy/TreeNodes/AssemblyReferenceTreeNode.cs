@@ -17,14 +17,16 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Windows;
+using System.Windows.Media;
 using System.Windows.Threading;
 
+using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
-
-using TomsToolbox.Wpf.Controls;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -98,24 +100,65 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			var loaded = parentAssembly.LoadedAssembly.LoadedAssemblyReferencesInfo.TryGetInfo(r.FullName, out var info);
 			if (r.IsWindowsRuntime)
 			{
-				language.WriteCommentLine(output, r.FullName + " [WinRT]" + (!loaded ? " (unresolved)" : ""));
+				output.WriteLine(r.FullName + " [WinRT]" + (!loaded ? " (unresolved)" : ""));
 			}
 			else
 			{
-				language.WriteCommentLine(output, r.FullName + (!loaded ? " (unresolved)" : ""));
+				output.WriteLine(r.FullName + (!loaded ? " (unresolved)" : ""));
 			}
 			if (loaded)
 			{
 				output.Indent();
-				language.WriteCommentLine(output, "Assembly reference loading information:");
+				output.WriteLine("Assembly reference loading information:");
 				if (info.HasErrors)
-					language.WriteCommentLine(output, "There were some problems during assembly reference load, see below for more information!");
-				foreach (var item in info.Messages)
 				{
-					language.WriteCommentLine(output, $"{item.Item1}: {item.Item2}");
+					output.WriteLine("There were some problems during assembly reference load, see below for more information!");
 				}
+				PrintAssemblyLoadLogMessages(output, info);
 				output.Unindent();
 				output.WriteLine();
+			}
+		}
+
+		internal static void PrintAssemblyLoadLogMessages(ITextOutput output, UnresolvedAssemblyNameReference asm)
+		{
+			HighlightingColor red = GetColor(Colors.Red);
+			HighlightingColor yellow = GetColor(Colors.Yellow);
+
+			var smartOutput = output as ISmartTextOutput;
+
+			foreach (var item in asm.Messages)
+			{
+				switch (item.Item1)
+				{
+					case MessageKind.Error:
+						smartOutput?.BeginSpan(red);
+						output.Write("Error: ");
+						smartOutput?.EndSpan();
+						break;
+					case MessageKind.Warning:
+						smartOutput?.BeginSpan(yellow);
+						output.Write("Warning: ");
+						smartOutput?.EndSpan();
+						break;
+					default:
+						output.Write(item.Item1 + ": ");
+						break;
+				}
+				output.WriteLine(item.Item2);
+			}
+
+			static HighlightingColor GetColor(Color color)
+			{
+				var hc = new HighlightingColor {
+					Foreground = new SimpleHighlightingBrush(color),
+					FontWeight = FontWeights.Bold
+				};
+				if (ThemeManager.Current.IsDarkTheme)
+				{
+					return ThemeManager.GetColorForDarkTheme(hc);
+				}
+				return hc;
 			}
 		}
 	}

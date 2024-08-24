@@ -87,8 +87,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, moduleName);
-			language.WriteCommentLine(output, containsMetadata ? "contains metadata" : "contains no metadata");
+			output.WriteLine(moduleName);
+			output.WriteLine(containsMetadata ? "contains metadata" : "contains no metadata");
 		}
 	}
 }
