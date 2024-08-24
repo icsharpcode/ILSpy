@@ -121,49 +121,27 @@ csharp_space_between_parentheses = false
 csharp_space_between_square_brackets = false
 
 # Naming rules
-dotnet_naming_rule.constants_rule.severity = warning
-dotnet_naming_rule.constants_rule.style = upper_camel_case_style
-dotnet_naming_rule.constants_rule.symbols = constants_symbols
-dotnet_naming_rule.private_constants_rule.severity = warning
-dotnet_naming_rule.private_constants_rule.style = upper_camel_case_style
-dotnet_naming_rule.private_constants_rule.symbols = private_constants_symbols
-dotnet_naming_rule.private_instance_fields_rule.severity = warning
-dotnet_naming_rule.private_instance_fields_rule.style = lower_camel_case_style
-dotnet_naming_rule.private_instance_fields_rule.symbols = private_instance_fields_symbols
-dotnet_naming_rule.private_static_fields_rule.severity = warning
-dotnet_naming_rule.private_static_fields_rule.style = lower_camel_case_style
-dotnet_naming_rule.private_static_fields_rule.symbols = private_static_fields_symbols
-dotnet_naming_rule.private_static_readonly_rule.severity = warning
-dotnet_naming_rule.private_static_readonly_rule.style = upper_camel_case_style
-dotnet_naming_rule.private_static_readonly_rule.symbols = private_static_readonly_symbols
-dotnet_naming_rule.public_static_fields_rule.severity = warning
-dotnet_naming_rule.public_static_fields_rule.style = lower_camel_case_style
-dotnet_naming_rule.public_static_fields_rule.symbols = public_static_fields_symbols
-dotnet_naming_rule.static_readonly_rule.severity = warning
-dotnet_naming_rule.static_readonly_rule.style = upper_camel_case_style
-dotnet_naming_rule.static_readonly_rule.symbols = static_readonly_symbols
+# Naming styles:
 dotnet_naming_style.lower_camel_case_style.capitalization = camel_case
 dotnet_naming_style.upper_camel_case_style.capitalization = pascal_case
-dotnet_naming_symbols.constants_symbols.applicable_accessibilities = public,internal,protected,protected_internal,private_protected
-dotnet_naming_symbols.constants_symbols.applicable_kinds = field
-dotnet_naming_symbols.constants_symbols.required_modifiers = const
-dotnet_naming_symbols.private_constants_symbols.applicable_accessibilities = private
-dotnet_naming_symbols.private_constants_symbols.applicable_kinds = field
-dotnet_naming_symbols.private_constants_symbols.required_modifiers = const
-dotnet_naming_symbols.private_instance_fields_symbols.applicable_accessibilities = private
-dotnet_naming_symbols.private_instance_fields_symbols.applicable_kinds = field
-dotnet_naming_symbols.private_static_fields_symbols.applicable_accessibilities = private
-dotnet_naming_symbols.private_static_fields_symbols.applicable_kinds = field
-dotnet_naming_symbols.private_static_fields_symbols.required_modifiers = static
-dotnet_naming_symbols.private_static_readonly_symbols.applicable_accessibilities = private
-dotnet_naming_symbols.private_static_readonly_symbols.applicable_kinds = field
-dotnet_naming_symbols.private_static_readonly_symbols.required_modifiers = readonly,static
-dotnet_naming_symbols.public_static_fields_symbols.applicable_accessibilities = public,internal,protected,protected_internal,private_protected
-dotnet_naming_symbols.public_static_fields_symbols.applicable_kinds = field
-dotnet_naming_symbols.public_static_fields_symbols.required_modifiers = static
-dotnet_naming_symbols.static_readonly_symbols.applicable_accessibilities = public,internal,protected,protected_internal,private_protected
-dotnet_naming_symbols.static_readonly_symbols.applicable_kinds = field
-dotnet_naming_symbols.static_readonly_symbols.required_modifiers = readonly,static
+
+# Symbol groups:
+# all non-private fields
+dotnet_naming_symbols.fields_symbols.applicable_accessibilities = *
+dotnet_naming_symbols.fields_symbols.applicable_kinds = field
+# all private/protected fields except constants
+dotnet_naming_symbols.private_fields_symbols.applicable_accessibilities = private,protected,private_protected
+dotnet_naming_symbols.private_fields_symbols.applicable_kinds = field
+
+# Naming rules:
+# all non-private fields are pascal case
+dotnet_naming_rule.fields_rule.severity = warning
+dotnet_naming_rule.fields_rule.style = upper_camel_case_style
+dotnet_naming_rule.fields_rule.symbols = fields_symbols
+# all private fields are camel case
+dotnet_naming_rule.private_fields_rule.severity = warning
+dotnet_naming_rule.private_fields_rule.style = lower_camel_case_style
+dotnet_naming_rule.private_fields_rule.symbols = private_fields_symbols
 
 # Errors and warnings
 
