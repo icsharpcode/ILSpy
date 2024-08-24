@@ -89,12 +89,6 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public SearchPane SearchPane {
-			get {
-				return App.ExportProvider.GetExportedValue<SearchPane>();
-			}
-		}
-
 		public DecompilationOptions CreateDecompilationOptions()
 		{
 			var decompilerView = DockWorkspace.Instance.ActiveTabPage.Content as IProgress<DecompilationProgress>;
@@ -123,10 +117,10 @@ namespace ICSharpCode.ILSpy
 			}
 			InitializeComponent();
 			InitToolPanes();
-			DockWorkspace.Instance.InitializeLayout(DockManager);
+			DockWorkspace.Instance.InitializeLayout(dockManager);
 
 			MessageBus<SessionSettingsChangedEventArgs>.Subscribers += (sender, e) => SessionSettings_PropertyChanged(sender, e);
-			MessageBus<LanguageSettingsChangedEventArgs>.Subscribers += (sender, e) => filterSettings_PropertyChanged(sender, e);
+			MessageBus<LanguageSettingsChangedEventArgs>.Subscribers += (sender, e) => LanguageSettings_PropertyChanged(sender, e);
 			MessageBus<DockWorkspaceActiveTabPageChangedEventArgs>.Subscribers += DockWorkspace_ActiveTabPageChanged;
 
 			InitMainMenu();
@@ -647,8 +641,10 @@ namespace ICSharpCode.ILSpy
 			NavigateOnLaunch(args.NavigateTo, sessionSettings.ActiveTreeViewPath, spySettings, relevantAssemblies);
 			if (args.Search != null)
 			{
-				SearchPane.SearchTerm = args.Search;
-				SearchPane.Show();
+				var searchPane = App.ExportProvider.GetExportedValue<SearchPaneModel>();
+
+				searchPane.SearchTerm = args.Search;
+				searchPane.Show();
 			}
 		}
 
@@ -1004,18 +1000,12 @@ namespace ICSharpCode.ILSpy
 				assemblyList.OpenAssembly(asm.Location);
 		}
 
-		void filterSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		void LanguageSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			RefreshTreeViewFilter();
 			if (e.PropertyName == "Language" || e.PropertyName == "LanguageVersion")
 			{
 				DecompileSelectedNodes(recordHistory: false);
 			}
-		}
-
-		public void RefreshTreeViewFilter()
-		{
-			SearchPane.UpdateFilter();
 		}
 
 		internal AssemblyListTreeNode AssemblyListTreeNode {
@@ -1592,7 +1582,7 @@ namespace ICSharpCode.ILSpy
 			sessionSettings.ActiveTreeViewPath = GetPathForNode(AssemblyTreeView.SelectedItem as SharpTreeNode);
 			sessionSettings.ActiveAutoLoadedAssembly = GetAutoLoadedAssemblyNode(AssemblyTreeView.SelectedItem as SharpTreeNode);
 			sessionSettings.WindowBounds = this.RestoreBounds;
-			sessionSettings.DockLayout.Serialize(new XmlLayoutSerializer(DockManager));
+			sessionSettings.DockLayout.Serialize(new XmlLayoutSerializer(dockManager));
 			sessionSettings.Save();
 		}
 
@@ -1622,8 +1612,8 @@ namespace ICSharpCode.ILSpy
 		{
 			if (this.statusBar.Visibility == Visibility.Collapsed)
 				this.statusBar.Visibility = Visibility.Visible;
-			this.StatusLabel.Foreground = foreground;
-			this.StatusLabel.Text = status;
+			this.statusLabel.Foreground = foreground;
+			this.statusLabel.Text = status;
 		}
 
 		public ItemCollection GetMainMenuItems()

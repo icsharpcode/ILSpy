@@ -21,6 +21,7 @@ using System.ComponentModel.Composition;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.Search;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy
@@ -29,10 +30,18 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	public class ScopeSearchToNamespace : IContextMenuEntry
 	{
+		private readonly SearchPaneModel searchPane;
+
+		[ImportingConstructor]
+		public ScopeSearchToNamespace(SearchPaneModel searchPane)
+		{
+			this.searchPane = searchPane;
+		}
+
 		public void Execute(TextViewContext context)
 		{
 			string ns = GetNamespace(context);
-			string searchTerm = MainWindow.Instance.SearchPane.SearchTerm;
+			string searchTerm = searchPane.SearchTerm;
 			string[] args = CommandLineTools.CommandLineToArgumentArray(searchTerm);
 			bool replaced = false;
 			for (int i = 0; i < args.Length; i++)
@@ -52,7 +61,8 @@ namespace ICSharpCode.ILSpy
 			{
 				searchTerm = CommandLineTools.ArgumentArrayToCommandLine(args);
 			}
-			MainWindow.Instance.SearchPane.SearchTerm = searchTerm;
+
+			searchPane.SearchTerm = searchTerm;
 		}
 
 		public bool IsEnabled(TextViewContext context)

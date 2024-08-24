@@ -27,7 +27,7 @@ namespace ICSharpCode.ILSpy.Util
 
 		public DecompilerSettings DecompilerSettings { get; set; }
 
-		public DisplaySettingsViewModel DisplaySettings { get; }
+		public DisplaySettings DisplaySettings { get; }
 
 		public AssemblyListManager AssemblyListManager { get; }
 	}

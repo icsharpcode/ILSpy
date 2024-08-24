@@ -17,15 +17,28 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.ComponentModel.Composition;
-using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 
-namespace ICSharpCode.ILSpy.ViewModels
+using ICSharpCode.ILSpy.Util;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpyX.Search;
+
+namespace ICSharpCode.ILSpy.Search
 {
+	public class SearchModeModel
+	{
+		public SearchMode Mode { get; init; }
+		public string Name { get; init; }
+		public ImageSource Image { get; init; }
+	}
+
 	[ExportToolPane]
 	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Export]
 	public class SearchPaneModel : ToolPaneModel
 	{
+		private string searchTerm;
 		public const string PaneContentId = "searchPane";
 
 		public SearchPaneModel()
@@ -37,10 +50,26 @@ namespace ICSharpCode.ILSpy.ViewModels
 			IsCloseable = true;
 		}
 
-		public override void Show()
-		{
-			base.Show();
-			MainWindow.Instance.SearchPane.Show();
+		public SearchModeModel[] SearchModes { get; } = [
+			new() { Mode = SearchMode.TypeAndMember, Image = Images.Library, Name = "Types and Members" },
+			new() { Mode = SearchMode.Type, Image = Images.Class, Name = "Type" },
+			new() { Mode = SearchMode.Member, Image = Images.Property, Name = "Member" },
+			new() { Mode = SearchMode.Method, Image = Images.Method, Name = "Method" },
+			new() { Mode = SearchMode.Field, Image = Images.Field, Name = "Field" },
+			new() { Mode = SearchMode.Property, Image = Images.Property, Name = "Property" },
+			new() { Mode = SearchMode.Event, Image = Images.Event, Name = "Event" },
+			new() { Mode = SearchMode.Literal, Image = Images.Literal, Name = "Constant" },
+			new() { Mode = SearchMode.Token, Image = Images.Library, Name = "Metadata Token" },
+			new() { Mode = SearchMode.Resource, Image = Images.Resource, Name = "Resource" },
+			new() { Mode = SearchMode.Assembly, Image = Images.Assembly, Name = "Assembly" },
+			new() { Mode = SearchMode.Namespace, Image = Images.Namespace, Name = "Namespace" }
+		];
+
+		public SessionSettings SessionSettings => SettingsService.Instance.SessionSettings;
+
+		public string SearchTerm {
+			get => searchTerm;
+			set => SetProperty(ref searchTerm, value);
 		}
 	}
 }

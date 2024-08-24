@@ -99,10 +99,10 @@ namespace ICSharpCode.ILSpy.Options
 					select ff).ToArray();
 		}
 
-		public static DisplaySettingsViewModel LoadDisplaySettings(ILSpySettings settings, SessionSettings sessionSettings = null)
+		public static DisplaySettings LoadDisplaySettings(ILSpySettings settings, SessionSettings sessionSettings = null)
 		{
 			XElement e = settings["DisplaySettings"];
-			var s = new DisplaySettingsViewModel();
+			var s = new DisplaySettings();
 			s.SelectedFont = new FontFamily((string)e.Attribute("Font") ?? "Consolas");
 			s.SelectedFontSize = (double?)e.Attribute("FontSize") ?? 10.0 * 4 / 3;
 			s.ShowLineNumbers = (bool?)e.Attribute("ShowLineNumbers") ?? false;
@@ -131,7 +131,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		public void Save(XElement root)
 		{
-			var s = (DisplaySettingsViewModel)this.DataContext;
+			var s = (DisplaySettings)this.DataContext;
 
 			var section = new XElement("DisplaySettings");
 			section.SetAttributeValue("Font", s.SelectedFont.Source);
@@ -190,7 +190,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		public void LoadDefaults()
 		{
-			SettingsService.Instance.DisplaySettings.CopyValues(new DisplaySettingsViewModel());
+			SettingsService.Instance.DisplaySettings.CopyValues(new DisplaySettings());
 			this.DataContext = SettingsService.Instance.DisplaySettings;
 		}
 	}
