@@ -19,6 +19,7 @@
 using System.ComponentModel.Composition;
 using System.Xml.Linq;
 
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy.Options
@@ -50,15 +51,15 @@ namespace ICSharpCode.ILSpy.Options
 			var newSettings = ((DecompilerSettingsViewModel)this.DataContext).ToDecompilerSettings();
 			ISettingsProvider.SaveDecompilerSettings(root, newSettings);
 
-			MainWindow.Instance.CurrentDecompilerSettings = newSettings;
-			MainWindow.Instance.AssemblyListManager.ApplyWinRTProjections = newSettings.ApplyWindowsRuntimeProjections;
-			MainWindow.Instance.AssemblyListManager.UseDebugSymbols = newSettings.UseDebugSymbols;
+			SettingsService.Instance.DecompilerSettings = newSettings;
+			SettingsService.Instance.AssemblyListManager.ApplyWinRTProjections = newSettings.ApplyWindowsRuntimeProjections;
+			SettingsService.Instance.AssemblyListManager.UseDebugSymbols = newSettings.UseDebugSymbols;
 		}
 
 		public void LoadDefaults()
 		{
-			MainWindow.Instance.CurrentDecompilerSettings = new();
-			this.DataContext = new DecompilerSettingsViewModel(MainWindow.Instance.CurrentDecompilerSettings);
+			SettingsService.Instance.DecompilerSettings = new();
+			this.DataContext = new DecompilerSettingsViewModel(SettingsService.Instance.DecompilerSettings);
 		}
 	}
 }

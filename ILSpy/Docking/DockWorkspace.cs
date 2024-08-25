@@ -17,17 +17,12 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.ComponentModel;
-using System.ComponentModel.Composition;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Navigation;
 using System.Windows.Threading;
 
 using AvalonDock;
@@ -36,6 +31,7 @@ using AvalonDock.Layout.Serialization;
 
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.ILSpy.Analyzers;
+using ICSharpCode.ILSpy.Search;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.ViewModels;
@@ -219,7 +215,7 @@ namespace ICSharpCode.ILSpy.Docking
 			}
 			CloseAllTabs();
 			SessionSettings.DockLayout.Reset();
-			InitializeLayout(MainWindow.Instance.DockManager);
+			InitializeLayout(MainWindow.Instance.dockManager);
 			MainWindow.Instance.Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)MainWindow.Instance.RefreshDecompiledView);
 		}
 
@@ -268,5 +264,8 @@ namespace ICSharpCode.ILSpy.Docking
 		public void AfterInsertDocument(LayoutRoot layout, LayoutDocument anchorableShown)
 		{
 		}
+
+		// Dummy property to make the XAML designer happy, the model is provided by the AvalonDock PaneStyleSelectors, not by the DockWorkspace, but the designer assumes the data context in the PaneStyleSelectors is the DockWorkspace.
+		public PaneModel Model { get; } = null;
 	}
 }

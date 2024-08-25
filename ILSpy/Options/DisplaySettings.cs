@@ -27,9 +27,9 @@ namespace ICSharpCode.ILSpy.Options
 	/// <summary>
 	/// Description of DisplaySettings.
 	/// </summary>
-	public class DisplaySettingsViewModel : INotifyPropertyChanged
+	public class DisplaySettings : INotifyPropertyChanged
 	{
-		public DisplaySettingsViewModel()
+		public DisplaySettings()
 		{
 			this.theme = ThemeManager.Current.DefaultTheme;
 			this.selectedFont = new FontFamily("Consolas");
@@ -328,7 +328,7 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
-		public void CopyValues(DisplaySettingsViewModel s)
+		public void CopyValues(DisplaySettings s)
 		{
 			this.Theme = s.Theme;
 			this.SelectedFont = s.selectedFont;

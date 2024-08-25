@@ -67,7 +67,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Gets the settings for the decompiler.
 		/// </summary>
-		public Decompiler.DecompilerSettings DecompilerSettings { get; private set; }
+		public DecompilerSettings DecompilerSettings { get; private set; }
 
 		/// <summary>
 		/// Gets/sets an optional state of a decompiler text view.
@@ -83,7 +83,7 @@ namespace ICSharpCode.ILSpy
 		internal int StepLimit = int.MaxValue;
 		internal bool IsDebug = false;
 
-		public DecompilationOptions(LanguageVersion version, Decompiler.DecompilerSettings settings, DisplaySettingsViewModel displaySettings)
+		public DecompilationOptions(LanguageVersion version, DecompilerSettings settings, DisplaySettings displaySettings)
 		{
 			if (!Enum.TryParse(version?.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
 				languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
@@ -96,7 +96,7 @@ namespace ICSharpCode.ILSpy
 			newSettings.CSharpFormattingOptions.IndentationString = GetIndentationString(displaySettings);
 		}
 
-		private string GetIndentationString(DisplaySettingsViewModel displaySettings)
+		private string GetIndentationString(DisplaySettings displaySettings)
 		{
 			if (displaySettings.IndentationUseTabs)
 			{

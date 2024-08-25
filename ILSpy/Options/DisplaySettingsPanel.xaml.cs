@@ -99,10 +99,10 @@ namespace ICSharpCode.ILSpy.Options
 					select ff).ToArray();
 		}
 
-		public static DisplaySettingsViewModel LoadDisplaySettings(ILSpySettings settings)
+		public static DisplaySettings LoadDisplaySettings(ILSpySettings settings, SessionSettings sessionSettings = null)
 		{
 			XElement e = settings["DisplaySettings"];
-			var s = new DisplaySettingsViewModel();
+			var s = new DisplaySettings();
 			s.SelectedFont = new FontFamily((string)e.Attribute("Font") ?? "Consolas");
 			s.SelectedFontSize = (double?)e.Attribute("FontSize") ?? 10.0 * 4 / 3;
 			s.ShowLineNumbers = (bool?)e.Attribute("ShowLineNumbers") ?? false;
@@ -124,14 +124,14 @@ namespace ICSharpCode.ILSpy.Options
 			s.ShowRawOffsetsAndBytesBeforeInstruction = (bool?)e.Attribute("ShowRawOffsetsAndBytesBeforeInstruction") ?? false;
 			s.StyleWindowTitleBar = (bool?)e.Attribute("StyleWindowTitleBar") ?? false;
 
-			s.Theme = SettingsService.Instance.SessionSettings.Theme;
+			s.Theme = (sessionSettings ?? SettingsService.Instance.SessionSettings).Theme;
 
 			return s;
 		}
 
 		public void Save(XElement root)
 		{
-			var s = (DisplaySettingsViewModel)this.DataContext;
+			var s = (DisplaySettings)this.DataContext;
 
 			var section = new XElement("DisplaySettings");
 			section.SetAttributeValue("Font", s.SelectedFont.Source);
@@ -158,7 +158,7 @@ namespace ICSharpCode.ILSpy.Options
 			SettingsService.Instance.SessionSettings.Theme = s.Theme;
 			var sessionSettings = SettingsService.Instance.SessionSettings.ToXml();
 
-			MainWindow.Instance.CurrentDisplaySettings.CopyValues(s);
+			SettingsService.Instance.DisplaySettings.CopyValues(s);
 
 			Update(section);
 			Update(sessionSettings);
@@ -190,8 +190,8 @@ namespace ICSharpCode.ILSpy.Options
 
 		public void LoadDefaults()
 		{
-			MainWindow.Instance.CurrentDisplaySettings.CopyValues(new DisplaySettingsViewModel());
-			this.DataContext = MainWindow.Instance.CurrentDisplaySettings;
+			SettingsService.Instance.DisplaySettings.CopyValues(new DisplaySettings());
+			this.DataContext = SettingsService.Instance.DisplaySettings;
 		}
 	}
 

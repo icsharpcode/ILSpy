@@ -39,7 +39,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		public ManageAssemblyListsViewModel(Window parent)
 		{
-			this.manager = MainWindow.Instance.AssemblyListManager;
+			this.manager = SettingsService.Instance.AssemblyListManager;
 			this.parent = parent;
 
 			NewCommand = new DelegateCommand(ExecuteNew);

@@ -83,43 +83,23 @@ namespace ICSharpCode.ILSpy
 			get { return instance; }
 		}
 
-		internal AssemblyListManager AssemblyListManager { get; }
-
 		public SharpTreeView AssemblyTreeView {
 			get {
 				return FindResource("AssemblyTreeView") as SharpTreeView;
 			}
 		}
 
-		public SearchPane SearchPane {
-			get {
-				return App.ExportProvider.GetExportedValue<SearchPane>();
-			}
-		}
-
-		public DecompilerSettings CurrentDecompilerSettings { get; internal set; }
-
-		public DisplaySettingsViewModel CurrentDisplaySettings { get; internal set; }
-
 		public DecompilationOptions CreateDecompilationOptions()
 		{
 			var decompilerView = DockWorkspace.Instance.ActiveTabPage.Content as IProgress<DecompilationProgress>;
-			return new DecompilationOptions(CurrentLanguageVersion, CurrentDecompilerSettings, CurrentDisplaySettings) { Progress = decompilerView };
+			return new DecompilationOptions(CurrentLanguageVersion, SettingsService.Instance.DecompilerSettings, SettingsService.Instance.DisplaySettings) { Progress = decompilerView };
 		}
 
 		public MainWindow()
 		{
 			instance = this;
 
-			var spySettings = SettingsService.Instance.SpySettings;
 			var sessionSettings = SettingsService.Instance.SessionSettings;
-
-			this.CurrentDecompilerSettings = DecompilerSettingsPanel.LoadDecompilerSettings(spySettings);
-			this.CurrentDisplaySettings = DisplaySettingsPanel.LoadDisplaySettings(spySettings);
-			this.AssemblyListManager = new AssemblyListManager(spySettings) {
-				ApplyWinRTProjections = CurrentDecompilerSettings.ApplyWindowsRuntimeProjections,
-				UseDebugSymbols = CurrentDecompilerSettings.UseDebugSymbols
-			};
 
 			// Make sure Images are initialized on the UI thread.
 			this.Icon = Images.ILSpyIcon;
@@ -127,20 +107,20 @@ namespace ICSharpCode.ILSpy
 			this.DataContext = new MainWindowViewModel {
 				Workspace = DockWorkspace.Instance,
 				SessionSettings = sessionSettings,
-				AssemblyListManager = AssemblyListManager
+				AssemblyListManager = SettingsService.Instance.AssemblyListManager
 			};
 
-			AssemblyListManager.CreateDefaultAssemblyLists();
+			SettingsService.Instance.AssemblyListManager.CreateDefaultAssemblyLists();
 			if (!string.IsNullOrEmpty(sessionSettings.CurrentCulture))
 			{
 				System.Threading.Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo(sessionSettings.CurrentCulture);
 			}
 			InitializeComponent();
 			InitToolPanes();
-			DockWorkspace.Instance.InitializeLayout(DockManager);
+			DockWorkspace.Instance.InitializeLayout(dockManager);
 
 			MessageBus<SessionSettingsChangedEventArgs>.Subscribers += (sender, e) => SessionSettings_PropertyChanged(sender, e);
-			MessageBus<LanguageSettingsChangedEventArgs>.Subscribers += (sender, e) => filterSettings_PropertyChanged(sender, e);
+			MessageBus<LanguageSettingsChangedEventArgs>.Subscribers += (sender, e) => LanguageSettings_PropertyChanged(sender, e);
 			MessageBus<DockWorkspaceActiveTabPageChangedEventArgs>.Subscribers += DockWorkspace_ActiveTabPageChanged;
 
 			InitMainMenu();
@@ -661,8 +641,10 @@ namespace ICSharpCode.ILSpy
 			NavigateOnLaunch(args.NavigateTo, sessionSettings.ActiveTreeViewPath, spySettings, relevantAssemblies);
 			if (args.Search != null)
 			{
-				SearchPane.SearchTerm = args.Search;
-				SearchPane.Show();
+				var searchPane = App.ExportProvider.GetExportedValue<SearchPaneModel>();
+
+				searchPane.SearchTerm = args.Search;
+				searchPane.Show();
 			}
 		}
 
@@ -840,12 +822,12 @@ namespace ICSharpCode.ILSpy
 			{
 				// Load AssemblyList only in Loaded event so that WPF is initialized before we start the CPU-heavy stuff.
 				// This makes the UI come up a bit faster.
-				this.assemblyList = AssemblyListManager.LoadList(sessionSettings.ActiveAssemblyList);
+				this.assemblyList = SettingsService.Instance.AssemblyListManager.LoadList(sessionSettings.ActiveAssemblyList);
 			}
 			else
 			{
-				AssemblyListManager.ClearAll();
-				this.assemblyList = AssemblyListManager.CreateList(AssemblyListManager.DefaultListName);
+				SettingsService.Instance.AssemblyListManager.ClearAll();
+				this.assemblyList = SettingsService.Instance.AssemblyListManager.CreateList(AssemblyListManager.DefaultListName);
 			}
 
 			HandleCommandLineArguments(App.CommandLineArguments);
@@ -877,44 +859,15 @@ namespace ICSharpCode.ILSpy
 				DockWorkspace.Instance.ShowText(output);
 		}
 
-		bool FormatExceptions(App.ExceptionData[] exceptions, ITextOutput output)
+		static bool FormatExceptions(App.ExceptionData[] exceptions, ITextOutput output)
 		{
 			var stringBuilder = new StringBuilder();
-			var result = FormatExceptions(exceptions, stringBuilder);
+			var result = exceptions.FormatExceptions(stringBuilder);
 			if (result)
 			{
 				output.Write(stringBuilder.ToString());
 			}
 			return result;
-		}
-
-		internal static bool FormatExceptions(App.ExceptionData[] exceptions, StringBuilder output)
-		{
-			if (exceptions.Length == 0)
-				return false;
-			bool first = true;
-
-			foreach (var item in exceptions)
-			{
-				if (first)
-					first = false;
-				else
-					output.AppendLine("-------------------------------------------------");
-				output.AppendLine("Error(s) loading plugin: " + item.PluginName);
-				if (item.Exception is System.Reflection.ReflectionTypeLoadException)
-				{
-					var e = (System.Reflection.ReflectionTypeLoadException)item.Exception;
-					foreach (var ex in e.LoaderExceptions)
-					{
-						output.AppendLine(ex.ToString());
-						output.AppendLine();
-					}
-				}
-				else
-					output.AppendLine(item.Exception.ToString());
-			}
-
-			return true;
 		}
 
 		#region Update Check
@@ -974,7 +927,7 @@ namespace ICSharpCode.ILSpy
 
 		public void ShowAssemblyList(string name)
 		{
-			AssemblyList list = this.AssemblyListManager.LoadList(name);
+			AssemblyList list = SettingsService.Instance.AssemblyListManager.LoadList(name);
 			//Only load a new list when it is a different one
 			if (list.ListName != CurrentAssemblyList.ListName)
 			{
@@ -1047,18 +1000,12 @@ namespace ICSharpCode.ILSpy
 				assemblyList.OpenAssembly(asm.Location);
 		}
 
-		void filterSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		void LanguageSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			RefreshTreeViewFilter();
 			if (e.PropertyName == "Language" || e.PropertyName == "LanguageVersion")
 			{
 				DecompileSelectedNodes(recordHistory: false);
 			}
-		}
-
-		public void RefreshTreeViewFilter()
-		{
-			SearchPane.UpdateFilter();
 		}
 
 		internal AssemblyListTreeNode AssemblyListTreeNode {
@@ -1388,7 +1335,7 @@ namespace ICSharpCode.ILSpy
 			{
 				refreshInProgress = true;
 				var path = GetPathForNode(AssemblyTreeView.SelectedItem as SharpTreeNode);
-				ShowAssemblyList(AssemblyListManager.LoadList(assemblyList.ListName));
+				ShowAssemblyList(SettingsService.Instance.AssemblyListManager.LoadList(assemblyList.ListName));
 				SelectNode(FindNodeByPath(path, true), inNewTabPage: false, AssemblyTreeView.IsFocused);
 			}
 			finally
@@ -1635,7 +1582,7 @@ namespace ICSharpCode.ILSpy
 			sessionSettings.ActiveTreeViewPath = GetPathForNode(AssemblyTreeView.SelectedItem as SharpTreeNode);
 			sessionSettings.ActiveAutoLoadedAssembly = GetAutoLoadedAssemblyNode(AssemblyTreeView.SelectedItem as SharpTreeNode);
 			sessionSettings.WindowBounds = this.RestoreBounds;
-			sessionSettings.DockLayout.Serialize(new XmlLayoutSerializer(DockManager));
+			sessionSettings.DockLayout.Serialize(new XmlLayoutSerializer(dockManager));
 			sessionSettings.Save();
 		}
 
@@ -1665,8 +1612,8 @@ namespace ICSharpCode.ILSpy
 		{
 			if (this.statusBar.Visibility == Visibility.Collapsed)
 				this.statusBar.Visibility = Visibility.Visible;
-			this.StatusLabel.Foreground = foreground;
-			this.StatusLabel.Text = status;
+			this.statusLabel.Foreground = foreground;
+			this.statusLabel.Text = status;
 		}
 
 		public ItemCollection GetMainMenuItems()
