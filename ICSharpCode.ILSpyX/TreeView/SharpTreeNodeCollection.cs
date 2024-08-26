@@ -73,7 +73,10 @@ namespace ICSharpCode.ILSpyX.TreeView
 
 		public SharpTreeNode this[int index] {
 			get {
-				return list[index];
+				if (index >= 0)
+					return list[index];
+				else
+					return null;
 			}
 			set {
 				ThrowOnReentrancy();

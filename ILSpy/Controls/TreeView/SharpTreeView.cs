@@ -561,8 +561,12 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			{
 				if (node.IsExpanded && node.Children.Count > 0)
 				{
-					var firstChildItem = ItemContainerGenerator.ContainerFromItem(node.Children[0]) as SharpTreeViewItem;
-					TryAddDropTarget(result, firstChildItem, DropPlace.Before, e);
+					var nodeChild = node.Children[0];
+					if (nodeChild != null)
+					{
+						var firstChildItem = ItemContainerGenerator.ContainerFromItem(node.Children[0]) as SharpTreeViewItem;
+						TryAddDropTarget(result, firstChildItem, DropPlace.Before, e);
+					}
 				}
 				else
 				{
