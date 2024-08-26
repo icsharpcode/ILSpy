@@ -73,7 +73,7 @@ namespace ICSharpCode.ILSpyX.TreeView
 
 		public SharpTreeNode this[int index] {
 			get {
-				if (index >= 0)
+				if (index >= 0 && index < list.Count)
 					return list[index];
 				else
 					return null;
