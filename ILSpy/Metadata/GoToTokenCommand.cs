@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.ComponentModel.Composition;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
@@ -31,6 +32,7 @@ using ICSharpCode.ILSpy.Properties;
 namespace ICSharpCode.ILSpy.Commands
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.GoToToken), Order = 10)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	class GoToTokenCommand : IContextMenuEntry
 	{
 		public void Execute(TextViewContext context)
@@ -68,6 +70,7 @@ namespace ICSharpCode.ILSpy.Commands
 	}
 
 	[ExportContextMenuEntry(Header = nameof(Resources.Copy), Order = 10)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	class CopyCommand : IContextMenuEntry
 	{
 		public void Execute(TextViewContext context)

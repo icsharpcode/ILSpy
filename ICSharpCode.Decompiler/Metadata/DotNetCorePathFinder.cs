@@ -249,21 +249,24 @@ namespace ICSharpCode.Decompiler.Metadata
 		static string GetClosestVersionFolder(string basePath, Version version)
 		{
 			var foundVersions = new DirectoryInfo(basePath).GetDirectories()
-				.Select(d => ConvertToVersion(d.Name))
+				.Select(ConvertToVersion)
 				.Where(v => v.version != null);
 			foreach (var folder in foundVersions.OrderBy(v => v.version))
 			{
-				if (folder.version >= version)
-					return folder.directoryName;
+				if (folder.version >= version
+					&& folder.directory.EnumerateFiles("*.dll", SearchOption.AllDirectories).Any())
+				{
+					return folder.directory.Name;
+				}
 			}
 			return version.ToString();
 		}
 
-		internal static (Version version, string directoryName) ConvertToVersion(string name)
+		internal static (Version version, DirectoryInfo directory) ConvertToVersion(DirectoryInfo directory)
 		{
 			string RemoveTrailingVersionInfo()
 			{
-				string shortName = name;
+				string shortName = directory.Name;
 				int dashIndex = shortName.IndexOf('-');
 				if (dashIndex > 0)
 				{
@@ -274,7 +277,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			try
 			{
-				return (new Version(RemoveTrailingVersionInfo()), name);
+				return (new Version(RemoveTrailingVersionInfo()), directory);
 			}
 			catch (Exception ex)
 			{

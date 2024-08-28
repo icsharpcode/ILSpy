@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.ComponentModel.Composition;
 using System.Linq;
 
 using ICSharpCode.ILSpy.Properties;
@@ -23,6 +24,7 @@ using ICSharpCode.ILSpy.Properties;
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources._RemoveAssembliesWithLoadErrors), MenuCategory = nameof(Resources.Remove), MenuOrder = 2.6)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	class RemoveAssembliesWithLoadErrors : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)
@@ -44,6 +46,7 @@ namespace ICSharpCode.ILSpy
 	}
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.ClearAssemblyList), MenuCategory = nameof(Resources.Remove), MenuOrder = 2.6)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	class ClearAssemblyList : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)

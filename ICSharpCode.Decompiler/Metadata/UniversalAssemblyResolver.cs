@@ -386,11 +386,11 @@ namespace ICSharpCode.Decompiler.Metadata
 		string FindClosestVersionDirectory(string basePath, Version? version)
 		{
 			string? path = null;
-			foreach (var folder in new DirectoryInfo(basePath).GetDirectories().Select(d => DotNetCorePathFinder.ConvertToVersion(d.Name))
+			foreach (var folder in new DirectoryInfo(basePath).GetDirectories().Select(DotNetCorePathFinder.ConvertToVersion)
 				.Where(v => v.Item1 != null).OrderByDescending(v => v.Item1))
 			{
 				if (path == null || version == null || folder.Item1 >= version)
-					path = folder.Item2;
+					path = folder.Item2.Name;
 			}
 			return path ?? version?.ToString() ?? ".";
 		}

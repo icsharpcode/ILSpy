@@ -19,10 +19,11 @@
 using System;
 using System.Globalization;
 using System.Windows.Data;
+using System.Windows.Markup;
 
 namespace ICSharpCode.ILSpy.Controls
 {
-	public class CultureSelectionConverter : IValueConverter
+	public class CultureSelectionConverter : MarkupExtension, IValueConverter
 	{
 		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
@@ -36,6 +37,11 @@ namespace ICSharpCode.ILSpy.Controls
 			if ((bool)value)
 				return parameter;
 			return Binding.DoNothing;
+		}
+
+		public override object ProvideValue(IServiceProvider serviceProvider)
+		{
+			return this;
 		}
 	}
 }

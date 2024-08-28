@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Composition;
 using System.Linq;
 using System.Windows.Threading;
 
@@ -30,6 +31,7 @@ using ICSharpCode.ILSpy.TreeNodes;
 namespace ICSharpCode.ILSpy.Commands
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.DecompileToNewPanel), InputGestureText = "MMB", Icon = "images/Search", Category = nameof(Resources.Analyze), Order = 90)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	internal sealed class DecompileInNewViewCommand : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)

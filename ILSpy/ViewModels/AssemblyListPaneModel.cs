@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.ComponentModel.Composition;
 using System.Windows;
 using System.Windows.Input;
 
@@ -23,19 +24,18 @@ using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
-	[ExportToolPane(ContentId = PaneContentId)]
+	[ExportToolPane]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	public class AssemblyListPaneModel : ToolPaneModel
 	{
 		public const string PaneContentId = "assemblyListPane";
 
-		private AssemblyListPaneModel()
+		public AssemblyListPaneModel()
 		{
 			Title = Resources.Assemblies;
 			ContentId = PaneContentId;
 			IsCloseable = false;
 			ShortcutKey = new KeyGesture(Key.F6);
 		}
-
-		public override DataTemplate Template => (DataTemplate)MainWindow.Instance.FindResource("AssemblyListPaneTemplate");
 	}
 }

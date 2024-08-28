@@ -16,11 +16,14 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.ComponentModel.Composition;
+
 using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy.TextView
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.Copy), Category = nameof(Resources.Editor))]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class CopyContextMenuEntry : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
@@ -40,6 +43,7 @@ namespace ICSharpCode.ILSpy.TextView
 	}
 
 	[ExportContextMenuEntry(Header = nameof(Resources.Select), Category = nameof(Resources.Editor))]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class SelectAllContextMenuEntry : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)

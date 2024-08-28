@@ -31,6 +31,7 @@ using ICSharpCode.ILSpyX.Abstractions;
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	[Export(typeof(IResourceNodeFactory))]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class CursorResourceNodeFactory : IResourceNodeFactory
 	{
 		static readonly string[] imageFileExtensions = { ".cur" };

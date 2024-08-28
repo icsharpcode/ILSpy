@@ -20,12 +20,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy
@@ -75,7 +77,7 @@ namespace ICSharpCode.ILSpy
 		public static ICompilation? GetTypeSystemWithCurrentOptionsOrNull(this MetadataFile file)
 		{
 			return LoadedAssemblyExtensions.GetLoadedAssembly(file)
-				.GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(MainWindow.Instance.CurrentDecompilerSettings));
+				.GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(SettingsService.Instance.DecompilerSettings));
 		}
 
 		#region DPI independence
@@ -161,6 +163,35 @@ namespace ICSharpCode.ILSpy
 		public static double ToGray(this Color? color)
 		{
 			return color?.R * 0.3 + color?.G * 0.6 + color?.B * 0.1 ?? 0.0;
+		}
+
+		internal static bool FormatExceptions(this IList<App.ExceptionData> exceptions, StringBuilder output)
+		{
+			if (exceptions.Count == 0)
+				return false;
+			bool first = true;
+
+			foreach (var item in exceptions)
+			{
+				if (first)
+					first = false;
+				else
+					output.AppendLine("-------------------------------------------------");
+				output.AppendLine("Error(s) loading plugin: " + item.PluginName);
+				if (item.Exception is System.Reflection.ReflectionTypeLoadException)
+				{
+					var e = (System.Reflection.ReflectionTypeLoadException)item.Exception;
+					foreach (var ex in e.LoaderExceptions)
+					{
+						output.AppendLine(ex.ToString());
+						output.AppendLine();
+					}
+				}
+				else
+					output.AppendLine(item.Exception.ToString());
+			}
+
+			return true;
 		}
 	}
 }

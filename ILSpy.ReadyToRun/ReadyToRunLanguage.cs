@@ -33,6 +33,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX;
 
 using ILCompiler.Reflection.ReadyToRun;
@@ -95,6 +96,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 #endif
 
 	[Export(typeof(Language))]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	internal class ReadyToRunLanguage : Language
 	{
 		private static readonly ConditionalWeakTable<MetadataFile, ReadyToRunReaderCacheEntry> readyToRunReaders = new ConditionalWeakTable<MetadataFile, ReadyToRunReaderCacheEntry>();
@@ -173,7 +175,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 							.GroupBy(m => m.MethodHandle)
 							.ToDictionary(g => g.Key, g => g.ToArray());
 				}
-				var displaySettings = MainWindow.Instance.CurrentDisplaySettings;
+				var displaySettings = SettingsService.Instance.DisplaySettings;
 				bool showMetadataTokens = displaySettings.ShowMetadataTokens;
 				bool showMetadataTokensInBase10 = displaySettings.ShowMetadataTokensInBase10;
 #if STRESS

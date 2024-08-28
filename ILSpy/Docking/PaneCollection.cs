@@ -20,15 +20,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.ComponentModel;
-using System.Linq;
 
 using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Docking
 {
 	public class PaneCollection<T> : INotifyCollectionChanged, ICollection<T>
-		where T : PaneModel
+		where T : PaneModel, new()
 	{
 		private ObservableCollection<T> observableCollection = new ObservableCollection<T>();
 
@@ -39,8 +37,10 @@ namespace ICSharpCode.ILSpy.Docking
 			observableCollection.CollectionChanged += (sender, e) => CollectionChanged?.Invoke(this, e);
 		}
 
-		public void Add(T item)
+		public void Add(T item = null)
 		{
+			item ??= new T();
+
 			observableCollection.Add(item);
 
 			item.IsVisible = true;

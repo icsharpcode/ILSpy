@@ -79,4 +79,7 @@
     <Rule Id="ProhibitedModifiersAnalyzer" Action="None" />
     <Rule Id="RECS0001" Action="Info" />
   </Rules>
+  <Rules AnalyzerId="TomsToolbox.Composition.Analyzer" RuleNamespace="TomsToolbox.Composition.Analyzer">
+    <Rule Id="MEF006" Action="Hidden" />
+  </Rules>
 </RuleSet>

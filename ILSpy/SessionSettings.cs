@@ -28,6 +28,7 @@ using System.Xml.Linq;
 
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Themes;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX.Search;
 using ICSharpCode.ILSpyX.Settings;
 
@@ -47,7 +48,7 @@ namespace ICSharpCode.ILSpy
 			if (filterSettings == null)
 				filterSettings = new XElement("FilterSettings");
 
-			this.FilterSettings = new FilterSettings(filterSettings);
+			this.LanguageSettings = new LanguageSettings(filterSettings);
 
 			this.ActiveAssemblyList = (string)doc.Element("ActiveAssemblyList");
 
@@ -72,10 +73,15 @@ namespace ICSharpCode.ILSpy
 
 		void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+			var args = new PropertyChangedEventArgs(propertyName);
+
+			PropertyChanged?.Invoke(this, args);
+
+			MessageBus.Send(this, new SessionSettingsChangedEventArgs(args));
 		}
 
-		public FilterSettings FilterSettings { get; internal set; }
+		public LanguageSettings LanguageSettings { get; }
+
 		public SearchMode SelectedSearchMode { get; set; }
 
 		public string Theme {
@@ -113,16 +119,16 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public WindowState WindowState = WindowState.Normal;
+		public WindowState WindowState;
 		public Rect WindowBounds;
 		internal static Rect DefaultWindowBounds = new Rect(10, 10, 750, 550);
 
-		public DockLayoutSettings DockLayout { get; private set; }
+		public DockLayoutSettings DockLayout { get; }
 
 		public XElement ToXml()
 		{
 			XElement doc = new XElement("SessionSettings");
-			doc.Add(this.FilterSettings.SaveAsXml());
+			doc.Add(this.LanguageSettings.SaveAsXml());
 			if (this.ActiveAssemblyList != null)
 			{
 				doc.Add(new XElement("ActiveAssemblyList", this.ActiveAssemblyList));

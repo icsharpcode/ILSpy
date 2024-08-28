@@ -19,6 +19,7 @@
 #if DEBUG
 
 using System.Collections.Generic;
+using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -34,6 +35,7 @@ using Microsoft.DiaSymReader.Tools;
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDumpPDBAsXML), MenuCategory = nameof(Resources.Open), MenuOrder = 2.6)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class Pdb2XmlCommand : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)
@@ -70,6 +72,7 @@ namespace ICSharpCode.ILSpy
 	}
 
 	[ExportContextMenuEntry(Header = nameof(Resources.DEBUGDumpPDBAsXML))]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	class Pdb2XmlCommandContextMenuEntry : IContextMenuEntry
 	{
 		public void Execute(TextViewContext context)

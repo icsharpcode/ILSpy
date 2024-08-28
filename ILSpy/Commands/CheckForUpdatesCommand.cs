@@ -17,12 +17,15 @@
 // DEALINGS IN THE SOFTWARE.
 
 
+using System.ComponentModel.Composition;
+
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._Help), Header = nameof(Resources._CheckUpdates), MenuOrder = 5000)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class CheckForUpdatesCommand : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)

@@ -16,31 +16,25 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Windows;
-using System.Windows.Input;
+using System;
+using System.Windows.Data;
 
-namespace ICSharpCode.ILSpy.ViewModels
+using ICSharpCode.ILSpy.ViewModels;
+
+using TomsToolbox.Wpf.Converters;
+
+namespace ICSharpCode.ILSpy.Docking
 {
-	[ExportToolPane(ContentId = PaneContentId)]
-	public class SearchPaneModel : ToolPaneModel
+	public class TabPageGuardConverter : ValueConverter
 	{
-		public const string PaneContentId = "searchPane";
-
-		private SearchPaneModel()
+		protected override object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{
-			ContentId = PaneContentId;
-			Title = Properties.Resources.SearchPane_Search;
-			Icon = "Images/Search";
-			ShortcutKey = new KeyGesture(Key.F, ModifierKeys.Control | ModifierKeys.Shift);
-			IsCloseable = true;
+			return value is TabPageModel ? value : Binding.DoNothing;
 		}
 
-		public override void Show()
+		protected override object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{
-			base.Show();
-			MainWindow.Instance.SearchPane.Show();
+			return value is TabPageModel ? value : Binding.DoNothing;
 		}
-
-		public override DataTemplate Template => (DataTemplate)MainWindow.Instance.FindResource("SearchPaneTemplate");
 	}
 }

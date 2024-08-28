@@ -31,6 +31,7 @@ using ICSharpCode.ILSpyX.Abstractions;
 namespace ICSharpCode.ILSpy.Xaml
 {
 	[Export(typeof(IResourceNodeFactory))]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class XamlResourceNodeFactory : IResourceNodeFactory
 	{
 		public ITreeNode CreateNode(Resource resource)

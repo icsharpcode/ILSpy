@@ -31,6 +31,8 @@ using ICSharpCode.ILSpyX.Search;
 using ICSharpCode.ILSpy.Controls.TreeView;
 using ICSharpCode.ILSpyX.TreeView;
 
+using TomsToolbox.Composition;
+
 namespace ICSharpCode.ILSpy
 {
 	public interface IContextMenuEntry
@@ -205,7 +207,7 @@ namespace ICSharpCode.ILSpy
 		readonly DecompilerTextView textView;
 		readonly ListBox listBox;
 		readonly DataGrid dataGrid;
-		readonly Lazy<IContextMenuEntry, IContextMenuEntryMetadata>[] entries;
+		readonly IExport<IContextMenuEntry, IContextMenuEntryMetadata>[] entries;
 
 		private ContextMenuProvider()
 		{
@@ -288,8 +290,8 @@ namespace ICSharpCode.ILSpy
 		bool ShowContextMenu(TextViewContext context, out ContextMenu menu)
 		{
 			menu = new ContextMenu();
-			var menuGroups = new Dictionary<string, Lazy<IContextMenuEntry, IContextMenuEntryMetadata>[]>();
-			Lazy<IContextMenuEntry, IContextMenuEntryMetadata>[] topLevelGroup = null;
+			var menuGroups = new Dictionary<string, IExport<IContextMenuEntry, IContextMenuEntryMetadata>[]>();
+			IExport<IContextMenuEntry, IContextMenuEntryMetadata>[] topLevelGroup = null;
 			foreach (var group in entries.OrderBy(c => c.Metadata.Order).GroupBy(c => c.Metadata.ParentMenuID))
 			{
 				if (group.Key == null)
@@ -301,10 +303,10 @@ namespace ICSharpCode.ILSpy
 					menuGroups.Add(group.Key, group.ToArray());
 				}
 			}
-			BuildMenu(topLevelGroup ?? Array.Empty<Lazy<IContextMenuEntry, IContextMenuEntryMetadata>>(), menu.Items);
+			BuildMenu(topLevelGroup ?? Array.Empty<IExport<IContextMenuEntry, IContextMenuEntryMetadata>>(), menu.Items);
 			return menu.Items.Count > 0;
 
-			void BuildMenu(Lazy<IContextMenuEntry, IContextMenuEntryMetadata>[] menuGroup, ItemCollection parent)
+			void BuildMenu(IExport<IContextMenuEntry, IContextMenuEntryMetadata>[] menuGroup, ItemCollection parent)
 			{
 				foreach (var category in menuGroup.GroupBy(c => c.Metadata.Category))
 				{

@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.ComponentModel;
+using System.ComponentModel.Composition;
 using System.Windows.Controls;
 using System.Xml.Linq;
 
@@ -26,6 +27,7 @@ using ICSharpCode.ILSpyX.Settings;
 namespace ICSharpCode.ILSpy.ReadyToRun
 {
 	[ExportOptionPage(Title = nameof(global::ILSpy.ReadyToRun.Properties.Resources.ReadyToRun), Order = 40)]
+	[PartCreationPolicy(CreationPolicy.NonShared)]
 	partial class ReadyToRunOptionPage : UserControl, IOptionPage
 	{
 		public ReadyToRunOptionPage()

@@ -16,11 +16,13 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.ComponentModel.Composition;
 using System.Linq;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
 	[ExportContextMenuEntry(Header = "Remove", Icon = "images/Delete", Category = "Analyze", Order = 200)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	internal sealed class RemoveAnalyzeContextMenuEntry : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)

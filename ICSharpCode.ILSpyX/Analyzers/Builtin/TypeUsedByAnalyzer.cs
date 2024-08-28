@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -34,6 +35,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 	/// Shows entities that use a type.
 	/// </summary>
 	[ExportAnalyzer(Header = "Used By", Order = 30)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	class TypeUsedByAnalyzer : IAnalyzer
 	{
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)

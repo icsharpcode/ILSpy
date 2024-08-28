@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.ComponentModel.Composition;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -26,6 +27,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using System.Xml.Linq;
 
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy.Options
@@ -34,6 +36,7 @@ namespace ICSharpCode.ILSpy.Options
 	/// Interaction logic for DisplaySettingsPanel.xaml
 	/// </summary>
 	[ExportOptionPage(Title = nameof(Properties.Resources.Display), Order = 20)]
+	[PartCreationPolicy(CreationPolicy.NonShared)]
 	public partial class DisplaySettingsPanel : UserControl, IOptionPage
 	{
 		public DisplaySettingsPanel()
@@ -96,10 +99,10 @@ namespace ICSharpCode.ILSpy.Options
 					select ff).ToArray();
 		}
 
-		public static DisplaySettingsViewModel LoadDisplaySettings(ILSpySettings settings)
+		public static DisplaySettings LoadDisplaySettings(ILSpySettings settings, SessionSettings sessionSettings = null)
 		{
 			XElement e = settings["DisplaySettings"];
-			var s = new DisplaySettingsViewModel();
+			var s = new DisplaySettings();
 			s.SelectedFont = new FontFamily((string)e.Attribute("Font") ?? "Consolas");
 			s.SelectedFontSize = (double?)e.Attribute("FontSize") ?? 10.0 * 4 / 3;
 			s.ShowLineNumbers = (bool?)e.Attribute("ShowLineNumbers") ?? false;
@@ -121,14 +124,14 @@ namespace ICSharpCode.ILSpy.Options
 			s.ShowRawOffsetsAndBytesBeforeInstruction = (bool?)e.Attribute("ShowRawOffsetsAndBytesBeforeInstruction") ?? false;
 			s.StyleWindowTitleBar = (bool?)e.Attribute("StyleWindowTitleBar") ?? false;
 
-			s.Theme = MainWindow.Instance.SessionSettings.Theme;
+			s.Theme = (sessionSettings ?? SettingsService.Instance.SessionSettings).Theme;
 
 			return s;
 		}
 
 		public void Save(XElement root)
 		{
-			var s = (DisplaySettingsViewModel)this.DataContext;
+			var s = (DisplaySettings)this.DataContext;
 
 			var section = new XElement("DisplaySettings");
 			section.SetAttributeValue("Font", s.SelectedFont.Source);
@@ -152,10 +155,10 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("ShowRawOffsetsAndBytesBeforeInstruction", s.ShowRawOffsetsAndBytesBeforeInstruction);
 			section.SetAttributeValue("StyleWindowTitleBar", s.StyleWindowTitleBar);
 
-			MainWindow.Instance.SessionSettings.Theme = s.Theme;
-			var sessionSettings = MainWindow.Instance.SessionSettings.ToXml();
+			SettingsService.Instance.SessionSettings.Theme = s.Theme;
+			var sessionSettings = SettingsService.Instance.SessionSettings.ToXml();
 
-			MainWindow.Instance.CurrentDisplaySettings.CopyValues(s);
+			SettingsService.Instance.DisplaySettings.CopyValues(s);
 
 			Update(section);
 			Update(sessionSettings);
@@ -187,8 +190,8 @@ namespace ICSharpCode.ILSpy.Options
 
 		public void LoadDefaults()
 		{
-			MainWindow.Instance.CurrentDisplaySettings.CopyValues(new DisplaySettingsViewModel());
-			this.DataContext = MainWindow.Instance.CurrentDisplaySettings;
+			SettingsService.Instance.DisplaySettings.CopyValues(new DisplaySettings());
+			this.DataContext = SettingsService.Instance.DisplaySettings;
 		}
 	}
 

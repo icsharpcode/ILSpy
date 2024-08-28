@@ -39,10 +39,10 @@ namespace LocalFunctions
 #pragma warning disable CS0219
 				T2 t2 = default(T2);
 				object z = this;
-				for (int j = 0; j < 10; j++)
+				for (int i = 0; i < 10; i++)
 				{
-					int i = 0;
-					i += NonStaticMethod6<object>(0);
+					int i2 = 0;
+					i2 += NonStaticMethod6<object>(0);
 #if CS90
 					[My]
 					[return: My]
@@ -56,7 +56,7 @@ namespace LocalFunctions
 						return NonStaticMethod6_1<T1>() + NonStaticMethod6_1<T2>() + z.GetHashCode();
 						int NonStaticMethod6_1<T4>()
 						{
-							return i + l + NonStaticMethod6<T4>(0) + StaticMethod1<decimal>();
+							return i2 + l + NonStaticMethod6<T4>(0) + StaticMethod1<decimal>();
 						}
 					}
 				}
@@ -119,10 +119,10 @@ namespace LocalFunctions
 			{
 				T2 t2 = default(T2);
 				object z = this;
-				for (int j = 0; j < 10; j++)
+				for (int i = 0; i < 10; i++)
 				{
-					int i = 0;
-					i += StaticInvokeAsFunc(NonStaticMethod6<object>);
+					int i2 = 0;
+					i2 += StaticInvokeAsFunc(NonStaticMethod6<object>);
 					int NonStaticMethod6<T3>()
 					{
 						t2 = default(T2);
@@ -130,7 +130,7 @@ namespace LocalFunctions
 						return StaticInvokeAsFunc(NonStaticMethod6_1<T1>) + StaticInvokeAsFunc(NonStaticMethod6_1<T2>) + z.GetHashCode();
 						int NonStaticMethod6_1<T4>()
 						{
-							return i + l + StaticInvokeAsFunc(NonStaticMethod6<T4>) + StaticInvokeAsFunc(StaticMethod1<decimal>);
+							return i2 + l + StaticInvokeAsFunc(NonStaticMethod6<T4>) + StaticInvokeAsFunc(StaticMethod1<decimal>);
 						}
 					}
 				}
@@ -743,12 +743,12 @@ namespace LocalFunctions
 				int ZZZ_1()
 				{
 					t0 = 0;
-					int t = t0;
+					int t3 = t0;
 					return new Func<int>(ZZZ_1_0)();
 					int ZZZ_1_0()
 					{
 						t0 = 0;
-						t = 0;
+						t3 = 0;
 						return 0;
 					}
 				}
@@ -779,14 +779,14 @@ namespace LocalFunctions
 				int ZZZ_1()
 				{
 					t0 = 0;
-					int t1 = t0;
+					int t3 = t0;
 #if !OPT
 					Func<int> func = delegate {
 #else
 					return ((Func<int>)delegate {
 #endif
 						t0 = 0;
-						t1 = 0;
+						t3 = 0;
 						return 0;
 #if !OPT
 					};
@@ -822,14 +822,14 @@ namespace LocalFunctions
 				int ZZZ_1()
 				{
 					t0 = 0;
-					int t1 = t0;
+					int t3 = t0;
 #if !OPT
 					Func<int> func = delegate {
 #else
 					return ((Func<int>)delegate {
 #endif
 						t0 = 0;
-						t1 = 0;
+						t3 = 0;
 						return 0;
 #if !OPT
 					};

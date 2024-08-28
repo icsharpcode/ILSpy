@@ -18,11 +18,16 @@
 
 using System;
 using System.ComponentModel;
+using System.Windows;
 using System.Windows.Input;
+
+using ICSharpCode.ILSpy.Docking;
+
+using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
-	public abstract class PaneModel : INotifyPropertyChanged
+	public abstract class PaneModel : ObservableObject
 	{
 		class CloseCommandImpl : ICommand
 		{
@@ -55,100 +60,81 @@ namespace ICSharpCode.ILSpy.ViewModels
 			}
 		}
 
-		public PaneModel()
-		{
-			this.closeCommand = new CloseCommandImpl(this);
-		}
+		private bool isSelected;
 
-		public event PropertyChangedEventHandler PropertyChanged;
-
-		protected void RaisePropertyChanged(string propertyName)
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-		}
-
-		private bool isSelected = false;
 		public bool IsSelected {
 			get => isSelected;
-			set {
-				if (isSelected != value)
-				{
-					isSelected = value;
-					RaisePropertyChanged(nameof(IsSelected));
-				}
-			}
+			set => SetProperty(ref isSelected, value);
 		}
 
-		private bool isActive = false;
+		private bool isActive;
+
 		public bool IsActive {
 			get => isActive;
-			set {
-				if (isActive != value)
-				{
-					isActive = value;
-					RaisePropertyChanged(nameof(IsActive));
-				}
-			}
+			set => SetProperty(ref isActive, value);
 		}
 
 		private bool isVisible;
+
 		public bool IsVisible {
 			get { return isVisible; }
 			set {
-				if (isVisible != value)
+				if (SetProperty(ref isVisible, value) && !value)
 				{
-					isVisible = value;
-					RaisePropertyChanged(nameof(IsVisible));
+					// When the pane is hidden, it should no longer be marked as active, else it won't raise an event when it is activated again.
+					IsActive = false;
 				}
 			}
 		}
 
 		private bool isCloseable = true;
+
 		public bool IsCloseable {
-			get { return isCloseable; }
-			set {
-				if (isCloseable != value)
-				{
-					isCloseable = value;
-					RaisePropertyChanged(nameof(IsCloseable));
-				}
-			}
+			get => isCloseable;
+			set => SetProperty(ref isCloseable, value);
 		}
 
-		private ICommand closeCommand;
-		public ICommand CloseCommand {
-			get { return closeCommand; }
-			set {
-				if (closeCommand != value)
-				{
-					closeCommand = value;
-					RaisePropertyChanged(nameof(CloseCommand));
-				}
-			}
-		}
+		public ICommand CloseCommand => new CloseCommandImpl(this);
 
 		private string contentId;
+
 		public string ContentId {
 			get => contentId;
-			set {
-				if (contentId != value)
-				{
-					contentId = value;
-					RaisePropertyChanged(nameof(ContentId));
-				}
-			}
+			set => SetProperty(ref contentId, value);
 		}
 
 		private string title;
+
 		public string Title {
 			get => title;
-			set {
-				if (title != value)
-				{
-					title = value;
-					RaisePropertyChanged(nameof(Title));
-				}
-			}
+			set => SetProperty(ref title, value);
+		}
+	}
+
+	public static class Pane
+	{
+		// Helper properties to enable binding state properties from the model to the view.
+
+		public static readonly DependencyProperty IsActiveProperty = DependencyProperty.RegisterAttached(
+			"IsActive", typeof(bool), typeof(Pane), new FrameworkPropertyMetadata(default(bool)));
+		public static void SetIsActive(DependencyObject element, bool value)
+		{
+			element.SetValue(IsActiveProperty, value);
+		}
+		public static bool GetIsActive(DependencyObject element)
+		{
+			return (bool)element.GetValue(IsActiveProperty);
+		}
+
+		public static readonly DependencyProperty IsVisibleProperty = DependencyProperty.RegisterAttached(
+			"IsVisible", typeof(bool), typeof(Pane), new FrameworkPropertyMetadata(default(bool)));
+		public static void SetIsVisible(DependencyObject element, bool value)
+		{
+			element.SetValue(IsVisibleProperty, value);
+		}
+		public static bool GetIsVisible(DependencyObject element)
+		{
+			return (bool)element.GetValue(IsVisibleProperty);
 		}
 	}
 }

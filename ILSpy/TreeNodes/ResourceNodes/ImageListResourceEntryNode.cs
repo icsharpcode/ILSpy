@@ -28,6 +28,7 @@ using ICSharpCode.ILSpyX.Abstractions;
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	[Export(typeof(IResourceNodeFactory))]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class ImageListResourceEntryNodeFactory : IResourceNodeFactory
 	{
 		public ITreeNode CreateNode(Resource resource)

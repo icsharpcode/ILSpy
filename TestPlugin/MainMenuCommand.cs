@@ -1,6 +1,8 @@
 ﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
 // This code is distributed under MIT X11 license (for details please see \doc\license.txt)
 
+using System.ComponentModel.Composition;
+
 using ICSharpCode.ILSpy;
 
 namespace TestPlugin
@@ -16,6 +18,7 @@ namespace TestPlugin
 	// ToolbarCategory: optional, used for grouping related toolbar items together. A separator is added between different groups.
 	// ToolbarOrder: controls the order in which the items appear (items are sorted by this value)
 	[ExportToolbarCommand(ToolTip = "Clears the current assembly list", ToolbarIcon = "Clear.png", ToolbarCategory = "Open", ToolbarOrder = 1.5)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	public class UnloadAllAssembliesCommand : SimpleCommand
 	{
 		public override void Execute(object parameter)

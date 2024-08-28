@@ -50,24 +50,17 @@ public static class Program
 	[Serializable]
 	[SpecialName]
 	[CompilationMapping(SourceConstructFlags.Closure)]
-	internal sealed class getSeq_00405 : GeneratedSequenceBase<int>
+	internal sealed class getSeq_00405(int pc, int current) : GeneratedSequenceBase<int>()
 	{
 		[DebuggerNonUserCode]
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		[CompilerGenerated]
-		public int pc;
+		public int pc = pc;
 
 		[DebuggerNonUserCode]
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		[CompilerGenerated]
-		public int current;
-
-		public getSeq_00405(int pc, int current)
-		{
-			this.pc = pc;
-			this.current = current;
-			base._002Ector();
-		}
+		public int current = current;
 
 		public override int GenerateNext(ref IEnumerable<int> next)
 		{

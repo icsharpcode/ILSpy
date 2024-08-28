@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.ComponentModel.Composition;
 using System.Windows.Input;
 
 using ICSharpCode.ILSpy.Properties;
@@ -23,6 +24,7 @@ using ICSharpCode.ILSpy.Properties;
 namespace ICSharpCode.ILSpy
 {
 	[ExportToolbarCommand(ToolTip = nameof(Resources.Forward), ToolbarIcon = "Images/Forward", ToolbarCategory = nameof(Resources.Navigation), ToolbarOrder = 1)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class BrowseForwardCommand : CommandWrapper
 	{
 		public BrowseForwardCommand()

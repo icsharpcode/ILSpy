@@ -11,6 +11,7 @@ using ICSharpCode.ILSpy;
 namespace TestPlugin
 {
 	[Export(typeof(IAboutPageAddition))]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	public class AboutPageAddition : IAboutPageAddition
 	{
 		public void Write(ISmartTextOutput textOutput)

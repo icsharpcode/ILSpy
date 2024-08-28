@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 
@@ -28,6 +29,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 	/// Shows members from all corresponding interfaces the selected member implements.
 	/// </summary>
 	[ExportAnalyzer(Header = "Implements", Order = 40)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	class MemberImplementsInterfaceAnalyzer : IAnalyzer
 	{
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)

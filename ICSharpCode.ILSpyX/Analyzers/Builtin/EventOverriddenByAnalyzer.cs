@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 
@@ -28,6 +29,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 	/// Shows events that override an event.
 	/// </summary>
 	[ExportAnalyzer(Header = "Overridden By", Order = 20)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	class EventOverriddenByAnalyzer : IAnalyzer
 	{
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)

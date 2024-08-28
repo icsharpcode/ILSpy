@@ -99,7 +99,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			language.DecompileMethod(MethodDefinition, output, options);
 		}
 
-		public override FilterResult Filter(FilterSettings settings)
+		public override FilterResult Filter(LanguageSettings settings)
 		{
 			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
 				return FilterResult.Hidden;

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2019 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,29 +16,35 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Windows.Data;
+using System.ComponentModel.Composition;
+using System.Windows.Controls;
 
-using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpyX.TreeView;
 
-namespace ICSharpCode.ILSpy.Docking
+using TomsToolbox.Wpf.Composition.Mef;
+
+namespace ICSharpCode.ILSpy.Analyzers
 {
-	public class ActiveTabPageConverter : IValueConverter
+	/// <summary>
+	/// Interaction logic for AnalyzerTreeView.xaml
+	/// </summary>
+	[DataTemplate(typeof(AnalyzerTreeViewModel))]
+	[PartCreationPolicy(CreationPolicy.NonShared)]
+	[Export]
+	public partial class AnalyzerTreeView
 	{
-		public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+		public AnalyzerTreeView()
 		{
-			if (value is TabPageModel)
-				return value;
-
-			return Binding.DoNothing;
+			InitializeComponent();
+			ContextMenuProvider.Add(this);
 		}
 
-		public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+		private void AnalyzerTreeView_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
-			if (value is TabPageModel)
-				return value;
-
-			return Binding.DoNothing;
+			if (SelectedItem is SharpTreeNode sharpTreeNode)
+			{
+				FocusNode(sharpTreeNode);
+			}
 		}
 	}
 }

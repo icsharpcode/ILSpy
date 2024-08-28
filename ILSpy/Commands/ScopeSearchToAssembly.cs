@@ -18,22 +18,33 @@
 #nullable enable
 
 using System;
+using System.ComponentModel.Composition;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.Search;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.ScopeSearchToThisAssembly), Category = nameof(Resources.Analyze), Order = 9999)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	public class ScopeSearchToAssembly : IContextMenuEntry
 	{
+		private readonly SearchPaneModel searchPane;
+
+		[ImportingConstructor]
+		public ScopeSearchToAssembly(SearchPaneModel searchPane)
+		{
+			this.searchPane = searchPane;
+		}
+
 		public void Execute(TextViewContext context)
 		{
 			// asmName cannot be null here, because Execute is only called if IsEnabled/IsVisible return true.
 			string asmName = GetAssembly(context)!;
-			string searchTerm = MainWindow.Instance.SearchPane.SearchTerm;
+			string searchTerm = searchPane.SearchTerm;
 			string[] args = CommandLineTools.CommandLineToArgumentArray(searchTerm);
 			bool replaced = false;
 			for (int i = 0; i < args.Length; i++)
@@ -53,7 +64,7 @@ namespace ICSharpCode.ILSpy
 			{
 				searchTerm = CommandLineTools.ArgumentArrayToCommandLine(args);
 			}
-			MainWindow.Instance.SearchPane.SearchTerm = searchTerm;
+			searchPane.SearchTerm = searchTerm;
 		}
 
 		public bool IsEnabled(TextViewContext context)

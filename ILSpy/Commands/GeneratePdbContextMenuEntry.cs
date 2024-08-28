@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -38,6 +39,7 @@ using Microsoft.Win32;
 namespace ICSharpCode.ILSpy
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.GeneratePortable))]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	class GeneratePdbContextMenuEntry : IContextMenuEntry
 	{
 		public void Execute(TextViewContext context)
@@ -103,6 +105,7 @@ namespace ICSharpCode.ILSpy
 	}
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.GeneratePortable), MenuCategory = nameof(Resources.Save))]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	class GeneratePdbMainMenuEntry : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)

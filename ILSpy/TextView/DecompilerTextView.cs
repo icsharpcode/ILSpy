@@ -56,6 +56,7 @@ using ICSharpCode.ILSpy.AvalonEdit;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 
@@ -112,9 +113,9 @@ namespace ICSharpCode.ILSpy.TextView
 			textEditor.TextArea.Caret.PositionChanged += HighlightBrackets;
 			textEditor.MouseMove += TextEditorMouseMove;
 			textEditor.MouseLeave += TextEditorMouseLeave;
-			textEditor.SetBinding(Control.FontFamilyProperty, new Binding { Source = MainWindow.Instance.CurrentDisplaySettings, Path = new PropertyPath("SelectedFont") });
-			textEditor.SetBinding(Control.FontSizeProperty, new Binding { Source = MainWindow.Instance.CurrentDisplaySettings, Path = new PropertyPath("SelectedFontSize") });
-			textEditor.SetBinding(TextEditor.WordWrapProperty, new Binding { Source = MainWindow.Instance.CurrentDisplaySettings, Path = new PropertyPath("EnableWordWrap") });
+			textEditor.SetBinding(Control.FontFamilyProperty, new Binding { Source = SettingsService.Instance.DisplaySettings, Path = new PropertyPath("SelectedFont") });
+			textEditor.SetBinding(Control.FontSizeProperty, new Binding { Source = SettingsService.Instance.DisplaySettings, Path = new PropertyPath("SelectedFontSize") });
+			textEditor.SetBinding(TextEditor.WordWrapProperty, new Binding { Source = SettingsService.Instance.DisplaySettings, Path = new PropertyPath("EnableWordWrap") });
 
 			// disable Tab editing command (useless for read-only editor); allow using tab for focus navigation instead
 			RemoveEditCommand(EditingCommands.TabForward);
@@ -124,18 +125,21 @@ namespace ICSharpCode.ILSpy.TextView
 			textEditor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
 			textEditor.TextArea.TextView.LineTransformers.Add(textMarkerService);
 			textEditor.ShowLineNumbers = true;
-			MainWindow.Instance.CurrentDisplaySettings.PropertyChanged += CurrentDisplaySettings_PropertyChanged;
+			SettingsService.Instance.DisplaySettings.PropertyChanged += CurrentDisplaySettings_PropertyChanged;
 
 			// SearchPanel
 			SearchPanel searchPanel = SearchPanel.Install(textEditor.TextArea);
 			searchPanel.RegisterCommands(Application.Current.MainWindow.CommandBindings);
 			searchPanel.SetResourceReference(SearchPanel.MarkerBrushProperty, ResourceKeys.SearchResultBackgroundBrush);
 			searchPanel.Loaded += (_, _) => {
-				// HACK: fix the hardcoded but misaligned margin of the search text box.
-				var textBox = searchPanel.VisualDescendants().OfType<TextBox>().FirstOrDefault();
+				// HACK: fix search text box
+				var textBox = searchPanel.Template.FindName("PART_searchTextBox", searchPanel) as TextBox;
 				if (textBox != null)
 				{
+					// the hardcoded but misaligned margin
 					textBox.Margin = new Thickness(3);
+					// the hardcoded height
+					textBox.Height = double.NaN;
 				}
 			};
 
@@ -177,11 +181,11 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void CurrentDisplaySettings_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(DisplaySettingsViewModel.ShowLineNumbers))
+			if (e.PropertyName == nameof(DisplaySettings.ShowLineNumbers))
 			{
 				ShowLineMargin();
 			}
-			else if (e.PropertyName == nameof(DisplaySettingsViewModel.HighlightCurrentLine))
+			else if (e.PropertyName == nameof(DisplaySettings.HighlightCurrentLine))
 			{
 				SetHighlightCurrentLine();
 			}
@@ -193,14 +197,14 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				if (margin is LineNumberMargin || margin is System.Windows.Shapes.Line)
 				{
-					margin.Visibility = MainWindow.Instance.CurrentDisplaySettings.ShowLineNumbers ? Visibility.Visible : Visibility.Collapsed;
+					margin.Visibility = SettingsService.Instance.DisplaySettings.ShowLineNumbers ? Visibility.Visible : Visibility.Collapsed;
 				}
 			}
 		}
 
 		void SetHighlightCurrentLine()
 		{
-			textEditor.Options.HighlightCurrentLine = MainWindow.Instance.CurrentDisplaySettings.HighlightCurrentLine;
+			textEditor.Options.HighlightCurrentLine = SettingsService.Instance.DisplaySettings.HighlightCurrentLine;
 		}
 
 		#endregion
@@ -389,7 +393,7 @@ namespace ICSharpCode.ILSpy.TextView
 			if (segment.Reference is ICSharpCode.Decompiler.Disassembler.OpCodeInfo code)
 			{
 				XmlDocumentationProvider docProvider = XmlDocLoader.MscorlibDocumentation;
-				DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), MainWindow.Instance.CurrentLanguage.SyntaxHighlighting);
+				DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), SettingsService.Instance.SessionSettings.LanguageSettings.Language.SyntaxHighlighting);
 				renderer.AddSignatureBlock($"{code.Name} (0x{code.Code:x})");
 				if (docProvider != null)
 				{
@@ -439,7 +443,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		static FlowDocument? CreateTooltipForEntity(IEntity resolved)
 		{
-			Language currentLanguage = MainWindow.Instance.CurrentLanguage;
+			Language currentLanguage = SettingsService.Instance.SessionSettings.LanguageSettings.Language;
 			DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), currentLanguage.SyntaxHighlighting);
 			RichText richText = currentLanguage.GetRichTextTooltip(resolved);
 			if (richText == null)
@@ -481,7 +485,7 @@ namespace ICSharpCode.ILSpy.TextView
 			public FlowDocumentTooltip(FlowDocument document)
 			{
 				TextOptions.SetTextFormattingMode(this, TextFormattingMode.Display);
-				double fontSize = MainWindow.Instance.CurrentDisplaySettings.SelectedFontSize;
+				double fontSize = SettingsService.Instance.DisplaySettings.SelectedFontSize;
 				viewer = new FlowDocumentScrollViewer() {
 					Width = document.MinPageWidth + fontSize * 5,
 					MaxWidth = MainWindow.Instance.ActualWidth
@@ -528,9 +532,9 @@ namespace ICSharpCode.ILSpy.TextView
 		#region Highlight brackets
 		void HighlightBrackets(object? sender, EventArgs e)
 		{
-			if (MainWindow.Instance.CurrentDisplaySettings.HighlightMatchingBraces)
+			if (SettingsService.Instance.DisplaySettings.HighlightMatchingBraces)
 			{
-				var result = MainWindow.Instance.CurrentLanguage.BracketSearcher.SearchBracket(textEditor.Document, textEditor.CaretOffset);
+				var result = SettingsService.Instance.SessionSettings.LanguageSettings.Language.BracketSearcher.SearchBracket(textEditor.Document, textEditor.CaretOffset);
 				bracketHighlightRenderer.SetHighlight(result);
 			}
 			else
@@ -750,7 +754,7 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				if (state != null)
 				{
-					state.RestoreFoldings(textOutput.Foldings, MainWindow.Instance.CurrentDisplaySettings.ExpandMemberDefinitions);
+					state.RestoreFoldings(textOutput.Foldings, SettingsService.Instance.DisplaySettings.ExpandMemberDefinitions);
 					textEditor.ScrollToVerticalOffset(state.VerticalOffset);
 					textEditor.ScrollToHorizontalOffset(state.HorizontalOffset);
 				}
@@ -774,7 +778,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			currentAddress = textOutput.Address;
 			currentTitle = textOutput.Title;
-			expandMemberDefinitions = MainWindow.Instance.CurrentDisplaySettings.ExpandMemberDefinitions;
+			expandMemberDefinitions = SettingsService.Instance.DisplaySettings.ExpandMemberDefinitions;
 		}
 		#endregion
 
@@ -1285,7 +1289,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public void Dispose()
 		{
-			MainWindow.Instance.CurrentDisplaySettings.PropertyChanged -= CurrentDisplaySettings_PropertyChanged;
+			SettingsService.Instance.DisplaySettings.PropertyChanged -= CurrentDisplaySettings_PropertyChanged;
 		}
 
 		#region Unfold

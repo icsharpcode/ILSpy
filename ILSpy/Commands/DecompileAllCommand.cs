@@ -20,6 +20,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -27,6 +28,7 @@ using System.Threading.Tasks;
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX;
 
 using TomsToolbox.Essentials;
@@ -34,6 +36,7 @@ using TomsToolbox.Essentials;
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile), MenuCategory = nameof(Resources.Open), MenuOrder = 2.5)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class DecompileAllCommand : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)
@@ -86,12 +89,13 @@ namespace ICSharpCode.ILSpy
 	}
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile100x), MenuCategory = nameof(Resources.Open), MenuOrder = 2.6)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class Decompile100TimesCommand : SimpleCommand
 	{
 		public override void Execute(object parameter)
 		{
 			const int numRuns = 100;
-			var language = MainWindow.Instance.CurrentLanguage;
+			var language = SettingsService.Instance.SessionSettings.LanguageSettings.Language;
 			var nodes = MainWindow.Instance.SelectedNodes.ToArray();
 			var options = MainWindow.Instance.CreateDecompilationOptions();
 			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {

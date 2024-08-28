@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.ComponentModel.Composition;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -36,6 +37,7 @@ using ICSharpCode.ILSpyX.Settings;
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._Help), Header = nameof(Resources._About), MenuOrder = 99999)]
+	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class AboutPage : SimpleCommand
 	{
 		public override void Execute(object parameter)
