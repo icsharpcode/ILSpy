@@ -22,7 +22,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 using Mono.Cecil;
@@ -32,13 +31,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	class ImplMapTableTreeNode : MetadataTableTreeNode
 	{
 		public ImplMapTableTreeNode(MetadataFile metadataFile)
-			: base((HandleKind)0x1C, metadataFile)
+			: base(TableIndex.ImplMap, metadataFile)
 		{
 		}
-
-		public override object Text => $"1C ImplMap ({metadataFile.Metadata.GetTableRowCount(TableIndex.ImplMap)})";
-
-
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -153,11 +148,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.importScopeTooltip = null;
 				this.memberForwardedTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "ImplMap");
 		}
 	}
 }

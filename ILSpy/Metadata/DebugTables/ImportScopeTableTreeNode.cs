@@ -20,7 +20,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -28,11 +27,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class ImportScopeTableTreeNode : DebugMetadataTableTreeNode
 	{
 		public ImportScopeTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.ImportScope, metadataFile)
+			: base(TableIndex.ImportScope, metadataFile)
 		{
 		}
-
-		public override object Text => $"35 ImportScope ({metadataFile.Metadata.GetTableRowCount(TableIndex.ImportScope)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -97,11 +94,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.offset = metadataFile.IsEmbedded ? null : (int?)metadataFile.Metadata.GetTableMetadataOffset(TableIndex.ImportScope)
 					+ metadataFile.Metadata.GetTableRowSize(TableIndex.ImportScope) * (MetadataTokens.GetRowNumber(handle) - 1);
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "ImportScope");
 		}
 	}
 }

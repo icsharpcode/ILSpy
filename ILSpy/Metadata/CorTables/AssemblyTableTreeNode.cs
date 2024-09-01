@@ -21,7 +21,6 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -29,11 +28,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class AssemblyTableTreeNode : MetadataTableTreeNode
 	{
 		public AssemblyTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.AssemblyDefinition, metadataFile)
+			: base(TableIndex.Assembly, metadataFile)
 		{
 		}
-
-		public override object Text => $"20 Assembly ({metadataFile.Metadata.GetTableRowCount(TableIndex.Assembly)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -98,11 +95,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadataOffset = metadataOffset;
 				this.assembly = metadata.GetAssemblyDefinition();
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "Assembly");
 		}
 	}
 }

@@ -29,11 +29,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class MethodSpecTableTreeNode : MetadataTableTreeNode
 	{
 		public MethodSpecTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.MethodSpecification, metadataFile)
+			: base(TableIndex.MethodSpec, metadataFile)
 		{
 		}
-
-		public override object Text => $"2B MethodSpec ({metadataFile.Metadata.GetTableRowCount(TableIndex.MethodSpec)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -120,11 +118,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.methodSpec = metadataFile.Metadata.GetMethodSpecification(handle);
 				this.methodTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "MethodSpecs");
 		}
 	}
 }

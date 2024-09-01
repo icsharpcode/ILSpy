@@ -24,7 +24,6 @@ using System.Reflection.Metadata.Ecma335;
 using System.Windows;
 using System.Windows.Controls;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 
@@ -33,11 +32,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class CustomDebugInformationTableTreeNode : DebugMetadataTableTreeNode
 	{
 		public CustomDebugInformationTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.CustomDebugInformation, metadataFile)
+			: base(TableIndex.CustomDebugInformation, metadataFile)
 		{
 		}
-
-		public override object Text => $"37 CustomDebugInformation ({metadataFile.Metadata.GetTableRowCount(TableIndex.CustomDebugInformation)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -322,11 +319,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.debugInfo = metadataFile.Metadata.GetCustomDebugInformation(handle);
 				this.kind = GetKind(metadataFile.Metadata, debugInfo.Kind);
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "CustomDebugInformation");
 		}
 	}
 }

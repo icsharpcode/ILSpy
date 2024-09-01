@@ -29,11 +29,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class GenericParamConstraintTableTreeNode : MetadataTableTreeNode
 	{
 		public GenericParamConstraintTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.GenericParameterConstraint, metadataFile)
+			: base(TableIndex.GenericParamConstraint, metadataFile)
 		{
 		}
-
-		public override object Text => $"2C GenericParamConstraint ({metadataFile.Metadata.GetTableRowCount(TableIndex.GenericParamConstraint)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -124,11 +122,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.ownerTooltip = null;
 				this.typeTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "GenericParamConstraints");
 		}
 	}
 }

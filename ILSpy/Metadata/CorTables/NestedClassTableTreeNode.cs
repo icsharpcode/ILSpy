@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -29,11 +28,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	class NestedClassTableTreeNode : MetadataTableTreeNode
 	{
 		public NestedClassTableTreeNode(MetadataFile metadataFile)
-			: base((HandleKind)0x29, metadataFile)
+			: base(TableIndex.NestedClass, metadataFile)
 		{
 		}
-
-		public override object Text => $"29 NestedClass ({metadataFile.Metadata.GetTableRowCount(TableIndex.NestedClass)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -127,11 +124,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.nestedClassTooltip = null;
 				this.enclosingClassTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "NestedClass");
 		}
 	}
 }

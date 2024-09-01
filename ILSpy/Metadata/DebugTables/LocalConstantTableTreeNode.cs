@@ -20,7 +20,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -28,11 +27,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class LocalConstantTableTreeNode : DebugMetadataTableTreeNode
 	{
 		public LocalConstantTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.LocalConstant, metadataFile)
+			: base(TableIndex.LocalConstant, metadataFile)
 		{
 		}
-
-		public override object Text => $"34 LocalConstant ({metadataFile.Metadata.GetTableRowCount(TableIndex.LocalConstant)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -93,11 +90,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.handle = handle;
 				this.localConst = metadataFile.Metadata.GetLocalConstant(handle);
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "Document");
 		}
 	}
 }

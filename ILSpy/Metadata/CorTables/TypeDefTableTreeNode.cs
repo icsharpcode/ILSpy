@@ -33,11 +33,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class TypeDefTableTreeNode : MetadataTableTreeNode
 	{
 		public TypeDefTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.TypeDefinition, metadataFile)
+			: base(TableIndex.TypeDef, metadataFile)
 		{
 		}
-
-		public override object Text => $"02 TypeDef ({metadataFile.Metadata.GetTableRowCount(TableIndex.TypeDef)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -185,11 +183,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.methodListTooltip = null;
 				this.fieldListTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "TypeDefs");
 		}
 	}
 }

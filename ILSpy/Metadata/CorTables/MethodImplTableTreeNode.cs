@@ -20,7 +20,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -28,11 +27,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class MethodImplTableTreeNode : MetadataTableTreeNode
 	{
 		public MethodImplTableTreeNode(MetadataFile metadataFile)
-			: base((HandleKind)0x19, metadataFile)
+			: base(TableIndex.MethodImpl, metadataFile)
 		{
 		}
-
-		public override object Text => $"19 MethodImpl ({metadataFile.Metadata.GetTableRowCount(TableIndex.MethodImpl)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -122,11 +119,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.methodBodyTooltip = null;
 				this.methodDeclarationTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "MethodImpls");
 		}
 	}
 }

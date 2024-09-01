@@ -20,7 +20,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -28,11 +27,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class StateMachineMethodTableTreeNode : DebugMetadataTableTreeNode
 	{
 		public StateMachineMethodTableTreeNode(MetadataFile metadataFile)
-			: base((HandleKind)0x36, metadataFile)
+			: base(TableIndex.StateMachineMethod, metadataFile)
 		{
 		}
-
-		public override object Text => $"36 StateMachineMethod ({metadataFile.Metadata.GetTableRowCount(TableIndex.StateMachineMethod)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -118,11 +115,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.moveNextMethodTooltip = null;
 			}
 
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "StateMachineMethod");
 		}
 	}
 }

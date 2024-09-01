@@ -20,7 +20,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -28,11 +27,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class MemberRefTableTreeNode : MetadataTableTreeNode
 	{
 		public MemberRefTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.MemberReference, metadataFile)
+			: base(TableIndex.MemberRef, metadataFile)
 		{
 		}
-
-		public override object Text => $"0A MemberRef ({metadataFile.Metadata.GetTableRowCount(TableIndex.MemberRef)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -110,11 +107,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.signatureTooltip = null;
 				this.parentTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "MemberRefs");
 		}
 	}
 }

@@ -22,7 +22,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -30,11 +29,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class FieldLayoutTableTreeNode : MetadataTableTreeNode
 	{
 		public FieldLayoutTableTreeNode(MetadataFile metadataFile)
-			: base((HandleKind)0x10, metadataFile)
+			: base(TableIndex.FieldLayout, metadataFile)
 		{
 		}
-
-		public override object Text => $"10 FieldLayout ({metadataFile.Metadata.GetTableRowCount(TableIndex.FieldLayout)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -119,11 +116,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.fieldLayout = new FieldLayout(ptr.Slice(rowOffset), fieldDefSize);
 				this.fieldTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "FieldLayouts");
 		}
 	}
 }

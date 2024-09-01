@@ -21,7 +21,6 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -31,11 +30,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class EventTableTreeNode : MetadataTableTreeNode
 	{
 		public EventTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.EventDefinition, metadataFile)
+			: base(TableIndex.Event, metadataFile)
 		{
 		}
-
-		public override object Text => $"14 Event ({metadataFile.Metadata.GetTableRowCount(TableIndex.Event)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -119,11 +116,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.eventDef = metadataFile.Metadata.GetEventDefinition(handle);
 				this.typeTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "EventDefs");
 		}
 	}
 }

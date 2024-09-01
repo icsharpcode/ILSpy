@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -29,11 +28,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	class EventMapTableTreeNode : MetadataTableTreeNode
 	{
 		public EventMapTableTreeNode(MetadataFile metadataFile)
-			: base((HandleKind)0x12, metadataFile)
+			: base(TableIndex.EventMap, metadataFile)
 		{
 		}
-
-		public override object Text => $"12 EventMap ({metadataFile.Metadata.GetTableRowCount(TableIndex.EventMap)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -128,11 +125,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.parentTooltip = null;
 				this.eventListTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "EventMap");
 		}
 	}
 }

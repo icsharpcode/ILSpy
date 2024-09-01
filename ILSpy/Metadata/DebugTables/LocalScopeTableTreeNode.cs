@@ -21,7 +21,6 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -29,11 +28,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class LocalScopeTableTreeNode : DebugMetadataTableTreeNode
 	{
 		public LocalScopeTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.LocalScope, metadataFile)
+			: base(TableIndex.LocalScope, metadataFile)
 		{
 		}
-
-		public override object Text => $"32 LocalScope ({metadataFile.Metadata.GetTableRowCount(TableIndex.LocalScope)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -127,11 +124,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.localScope = metadataFile.Metadata.GetLocalScope(handle);
 				this.methodTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "LocalScope");
 		}
 	}
 }

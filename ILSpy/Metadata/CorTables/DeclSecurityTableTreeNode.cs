@@ -21,7 +21,6 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -29,11 +28,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	class DeclSecurityTableTreeNode : MetadataTableTreeNode
 	{
 		public DeclSecurityTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.DeclarativeSecurityAttribute, metadataFile)
+			: base(TableIndex.DeclSecurity, metadataFile)
 		{
 		}
-
-		public override object Text => $"0E DeclSecurity ({metadataFile.Metadata.GetTableRowCount(TableIndex.DeclSecurity)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -118,11 +115,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.declSecAttr = metadataFile.Metadata.GetDeclarativeSecurityAttribute(handle);
 				this.parentTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "DeclSecurityAttrs");
 		}
 	}
 }

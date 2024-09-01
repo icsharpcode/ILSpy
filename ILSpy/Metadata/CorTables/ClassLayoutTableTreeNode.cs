@@ -22,7 +22,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -30,11 +29,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	class ClassLayoutTableTreeNode : MetadataTableTreeNode
 	{
 		public ClassLayoutTableTreeNode(MetadataFile metadataFile)
-			: base((HandleKind)0x0F, metadataFile)
+			: base(TableIndex.ClassLayout, metadataFile)
 		{
 		}
-
-		public override object Text => $"0F ClassLayout ({metadataFile.Metadata.GetTableRowCount(TableIndex.ClassLayout)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -123,11 +120,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.classLayout = new ClassLayout(ptr.Slice(rowOffset), metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4);
 				this.parentTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "ClassLayouts");
 		}
 	}
 }

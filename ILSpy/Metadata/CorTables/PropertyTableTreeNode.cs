@@ -21,7 +21,6 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -31,11 +30,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class PropertyTableTreeNode : MetadataTableTreeNode
 	{
 		public PropertyTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.PropertyDefinition, metadataFile)
+			: base(TableIndex.Property, metadataFile)
 		{
 		}
-
-		public override object Text => $"17 Property ({metadataFile.Metadata.GetTableRowCount(TableIndex.Property)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -110,11 +107,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.propertyDef = metadataFile.Metadata.GetPropertyDefinition(handle);
 				this.signatureTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "PropertyDefs");
 		}
 	}
 }

@@ -21,7 +21,6 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -29,11 +28,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class ExportedTypeTableTreeNode : MetadataTableTreeNode
 	{
 		public ExportedTypeTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.ExportedType, metadataFile)
+			: base(TableIndex.ExportedType, metadataFile)
 		{
 		}
-
-		public override object Text => $"27 ExportedType ({metadataFile.Metadata.GetTableRowCount(TableIndex.ExportedType)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -123,11 +120,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.type = type;
 				this.implementationTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "ExportedType");
 		}
 	}
 }

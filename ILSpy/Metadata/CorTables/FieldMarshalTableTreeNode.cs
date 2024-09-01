@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -29,11 +28,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class FieldMarshalTableTreeNode : MetadataTableTreeNode
 	{
 		public FieldMarshalTableTreeNode(MetadataFile metadataFile)
-			: base((HandleKind)0x0D, metadataFile)
+			: base(TableIndex.FieldMarshal, metadataFile)
 		{
 		}
-
-		public override object Text => $"0D FieldMarshal ({metadataFile.Metadata.GetTableRowCount(TableIndex.FieldMarshal)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -119,11 +116,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.fieldMarshal = new FieldMarshal(ptr.Slice(rowOffset), blobHeapSize, hasFieldMarshalRefSize);
 				this.parentTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "FieldMarshals");
 		}
 	}
 }

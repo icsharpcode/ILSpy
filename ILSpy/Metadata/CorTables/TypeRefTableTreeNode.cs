@@ -20,7 +20,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -28,11 +27,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class TypeRefTableTreeNode : MetadataTableTreeNode
 	{
 		public TypeRefTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.TypeReference, metadataFile)
+			: base(TableIndex.TypeRef, metadataFile)
 		{
 		}
-
-		public override object Text => $"01 TypeRef ({metadataFile.Metadata.GetTableRowCount(TableIndex.TypeRef)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -107,11 +104,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.typeRef = metadataFile.Metadata.GetTypeReference(handle);
 				this.resolutionScopeTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "TypeRefs");
 		}
 	}
 }

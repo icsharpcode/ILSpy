@@ -20,7 +20,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.ViewModels;
 
@@ -29,11 +28,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class ConstantTableTreeNode : MetadataTableTreeNode
 	{
 		public ConstantTableTreeNode(MetadataFile metadataFile)
-			: base((HandleKind)0x0B, metadataFile)
+			: base(TableIndex.Constant, metadataFile)
 		{
 		}
-
-		public override object Text => $"0B Constant ({metadataFile.Metadata.GetTableRowCount(TableIndex.Constant)})";
 
 		public override bool View(TabPageModel tabPage)
 		{
@@ -113,11 +110,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.constant = metadataFile.Metadata.GetConstant(handle);
 				this.parentTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "Constants");
 		}
 	}
 }
