@@ -141,6 +141,12 @@ namespace ICSharpCode.ILSpy.Metadata
 					return new StateMachineMethodTableTreeNode(metadataFile);
 				case TableIndex.CustomDebugInformation:
 					return new CustomDebugInformationTableTreeNode(metadataFile);
+				case TableIndex.FieldPtr:
+				case TableIndex.EventPtr:
+				case TableIndex.MethodPtr:
+				case TableIndex.ParamPtr:
+				case TableIndex.PropertyPtr:
+					return new PtrTableTreeNode(table, metadataFile);
 				default:
 					return new UnsupportedMetadataTableTreeNode(table, metadataFile);
 			}
