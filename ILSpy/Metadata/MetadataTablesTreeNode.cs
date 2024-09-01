@@ -142,7 +142,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				case TableIndex.CustomDebugInformation:
 					return new CustomDebugInformationTableTreeNode(metadataFile);
 				default:
-					throw new ArgumentException($"Unsupported table index: {table}");
+					return new UnsupportedMetadataTableTreeNode(table, metadataFile);
 			}
 		}
 

@@ -145,4 +145,18 @@ namespace ICSharpCode.ILSpy.Metadata
 		{
 		}
 	}
+
+	internal class UnsupportedMetadataTableTreeNode : MetadataTableTreeNode
+	{
+		public UnsupportedMetadataTableTreeNode(TableIndex kind, MetadataFile file)
+			: base(kind, file)
+		{
+		}
+		public override object Text => $"{(int)Kind:X2} {Kind.ToString()} [unsupported] ({metadataFile.Metadata.GetTableRowCount(Kind)})";
+
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		{
+			output.WriteLine($"Unsupported table '{(int)Kind:X2} {Kind}' contains {metadataFile.Metadata.GetTableRowCount(Kind)} rows.");
+		}
+	}
 }
