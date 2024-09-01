@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnMethodClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, method, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, method, protocol: "metadata")));
 			}
 
 			string methodTooltip;
@@ -101,7 +101,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnAssociationClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, association, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, association, protocol: "metadata")));
 			}
 
 			string associationTooltip;

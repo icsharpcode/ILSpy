@@ -84,7 +84,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnOwnerClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, genericParamConstraint.Parameter, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, genericParamConstraint.Parameter, protocol: "metadata")));
 			}
 
 			string ownerTooltip;
@@ -108,7 +108,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnTypeClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, genericParamConstraint.Type, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, genericParamConstraint.Type, protocol: "metadata")));
 			}
 
 			string typeTooltip;

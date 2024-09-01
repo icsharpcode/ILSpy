@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.Commands
 		public void Execute(TextViewContext context)
 		{
 			int token = GetSelectedToken(context.DataGrid, out MetadataFile module).Value;
-			MainWindow.Instance.JumpToReference(new EntityReference(module, MetadataTokens.Handle(token), protocol: "metadata"));
+			MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(module, MetadataTokens.Handle(token), protocol: "metadata")));
 		}
 
 		public bool IsEnabled(TextViewContext context)

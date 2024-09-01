@@ -32,7 +32,6 @@ using Microsoft.Win32;
 using ICSharpCode.ILSpyX.TreeView;
 using System.ComponentModel.Composition;
 
-using ICSharpCode.ILSpy.Util;
 
 namespace ICSharpCode.ILSpy.TextView
 {

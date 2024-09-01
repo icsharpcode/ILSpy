@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -32,6 +33,7 @@ using ICSharpCode.ILSpy.Controls.TreeView;
 using ICSharpCode.ILSpyX.TreeView;
 
 using TomsToolbox.Composition;
+using TomsToolbox.Essentials;
 
 namespace ICSharpCode.ILSpy
 {
@@ -168,6 +170,13 @@ namespace ICSharpCode.ILSpy
 
 	internal class ContextMenuProvider
 	{
+		private static readonly WeakEventSource<EventArgs> ContextMenuClosedEventSource = new();
+
+		public static event EventHandler<EventArgs> ContextMenuClosed {
+			add => ContextMenuClosedEventSource.Subscribe(value);
+			remove => ContextMenuClosedEventSource.Unsubscribe(value);
+		}
+
 		/// <summary>
 		/// Enables extensible context menu support for the specified tree view.
 		/// </summary>
@@ -203,37 +212,40 @@ namespace ICSharpCode.ILSpy
 			dataGrid.ContextMenu = new ContextMenu();
 		}
 
+		readonly Control control;
 		readonly SharpTreeView treeView;
 		readonly DecompilerTextView textView;
 		readonly ListBox listBox;
 		readonly DataGrid dataGrid;
 		readonly IExport<IContextMenuEntry, IContextMenuEntryMetadata>[] entries;
 
-		private ContextMenuProvider()
+		private ContextMenuProvider(Control control)
 		{
 			entries = App.ExportProvider.GetExports<IContextMenuEntry, IContextMenuEntryMetadata>().ToArray();
+
+			this.control = control;
 		}
 
 		ContextMenuProvider(DecompilerTextView textView)
-			: this()
+			: this((Control)textView)
 		{
 			this.textView = textView ?? throw new ArgumentNullException(nameof(textView));
 		}
 
 		ContextMenuProvider(SharpTreeView treeView)
-			: this()
+			: this((Control)treeView)
 		{
 			this.treeView = treeView ?? throw new ArgumentNullException(nameof(treeView));
 		}
 
 		ContextMenuProvider(ListBox listBox)
-			: this()
+			: this((Control)listBox)
 		{
 			this.listBox = listBox ?? throw new ArgumentNullException(nameof(listBox));
 		}
 
 		ContextMenuProvider(DataGrid dataGrid)
-			: this()
+			: this((Control)dataGrid)
 		{
 			this.dataGrid = dataGrid ?? throw new ArgumentNullException(nameof(dataGrid));
 		}
@@ -289,7 +301,18 @@ namespace ICSharpCode.ILSpy
 
 		bool ShowContextMenu(TextViewContext context, out ContextMenu menu)
 		{
+			// Closing event is raised on the control where mouse is clicked, not on the control that opened the menu, so we hook on the global window event.
+			var window = Window.GetWindow(control)!;
+			window.ContextMenuClosing += ContextMenu_Closing;
+
+			void ContextMenu_Closing(object sender, EventArgs e)
+			{
+				window.ContextMenuClosing -= ContextMenu_Closing;
+				ContextMenuClosedEventSource.Raise(this, EventArgs.Empty);
+			}
+
 			menu = new ContextMenu();
+
 			var menuGroups = new Dictionary<string, IExport<IContextMenuEntry, IContextMenuEntryMetadata>[]>();
 			IExport<IContextMenuEntry, IContextMenuEntryMetadata>[] topLevelGroup = null;
 			foreach (var group in entries.OrderBy(c => c.Metadata.Order).GroupBy(c => c.Metadata.ParentMenuID))

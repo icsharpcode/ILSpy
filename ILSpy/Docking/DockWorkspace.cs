@@ -33,7 +33,6 @@ using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpy.Search;
 using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.ViewModels;
 
 using TomsToolbox.Wpf;
@@ -136,8 +135,7 @@ namespace ICSharpCode.ILSpy.Docking
 				{
 					if (state.DecompiledNodes != null)
 					{
-						MainWindow.Instance.SelectNodes(state.DecompiledNodes,
-							inNewTabPage: false, setFocus: true, changingActiveTab: true);
+						MainWindow.Instance.AssemblyTreeModel.SelectNodes(state.DecompiledNodes, inNewTabPage: false, setFocus: true, changingTab: true);
 					}
 					else
 					{
@@ -216,7 +214,7 @@ namespace ICSharpCode.ILSpy.Docking
 			CloseAllTabs();
 			SessionSettings.DockLayout.Reset();
 			InitializeLayout(MainWindow.Instance.dockManager);
-			MainWindow.Instance.Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)MainWindow.Instance.RefreshDecompiledView);
+			MainWindow.Instance.Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)MainWindow.Instance.AssemblyTreeModel.RefreshDecompiledView);
 		}
 
 		static readonly PropertyInfo previousContainerProperty = typeof(LayoutContent).GetProperty("PreviousContainer", BindingFlags.NonPublic | BindingFlags.Instance);

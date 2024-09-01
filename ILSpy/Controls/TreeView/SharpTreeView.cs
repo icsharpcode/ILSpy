@@ -158,6 +158,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			if (flattener != null)
 			{
 				flattener.Stop();
+				flattener.CollectionChanged -= flattener_CollectionChanged;
 			}
 			if (Root != null)
 			{

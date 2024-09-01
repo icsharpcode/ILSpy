@@ -21,52 +21,8 @@
 	xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
 	xmlns:toms="urn:TomsToolbox"
 	xmlns:viewModels="clr-namespace:ICSharpCode.ILSpy.ViewModels"
-	xmlns:treeNodes="clr-namespace:ICSharpCode.ILSpy.TreeNodes"
-	xmlns:util="clr-namespace:ICSharpCode.ILSpy.Util"
 	d:DataContext="{d:DesignInstance local:MainWindowViewModel}">
 	<Window.Resources>
-		<tv:SharpTreeView x:Key="AssemblyTreeView"
-		                  AutomationProperties.Name="Assemblies and Classes"
-		                  SelectionChanged="TreeView_SelectionChanged"
-		                  ShowRoot="False"
-		                  AllowDropOrder="True"
-		                  AllowDrop="True"
-		                  BorderThickness="0" Visibility="Visible">
-			<tv:SharpTreeView.ItemContainerStyle>
-				<Style TargetType="tv:SharpTreeViewItem">
-					<Setter Property="Template">
-						<Setter.Value>
-							<ControlTemplate TargetType="{x:Type tv:SharpTreeViewItem}" d:DataContext="{d:DesignInstance treeNodes:ILSpyTreeNode}">
-								<Border Background="Transparent">
-									<Border Background="{TemplateBinding Background}">
-										<tv:SharpTreeNodeView x:Name="nodeView" HorizontalAlignment="Left" />
-									</Border>
-								</Border>
-								<ControlTemplate.Triggers>
-									<DataTrigger Binding="{Binding IsAutoLoaded}" Value="True">
-										<Setter Property="Foreground" Value="SteelBlue" />
-									</DataTrigger>
-									<DataTrigger Binding="{Binding IsPublicAPI}" Value="False">
-										<Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
-									</DataTrigger>
-									<Trigger Property="IsSelected" Value="True">
-										<Setter TargetName="nodeView" Property="TextBackground" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
-										<Setter TargetName="nodeView" Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" />
-									</Trigger>
-									<Trigger Property="IsEnabled" Value="False">
-										<Setter TargetName="nodeView" Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
-									</Trigger>
-								</ControlTemplate.Triggers>
-							</ControlTemplate>
-						</Setter.Value>
-					</Setter>
-				</Style>
-			</tv:SharpTreeView.ItemContainerStyle>
-		</tv:SharpTreeView>
-
-		<DataTemplate DataType="{x:Type viewModels:AssemblyListPaneModel}">
-			<ContentControl Content="{StaticResource AssemblyTreeView}" />
-		</DataTemplate>
 
 		<DataTemplate DataType="{x:Type viewModels:TabPageModel}">
 			<ContentPresenter Content="{Binding Content}" />
@@ -223,7 +179,7 @@
 		<!-- Update panel -->
 		<Border DockPanel.Dock="Top" BorderBrush="Black" BorderThickness="1" Name="updatePanel" Visibility="Collapsed">
 			<DockPanel KeyboardNavigation.TabNavigation="Contained">
-				<Button DockPanel.Dock="Right" Click="updatePanelCloseButtonClick" MinWidth="0">X</Button>
+				<Button DockPanel.Dock="Right" Click="UpdatePanelCloseButtonClick" MinWidth="0">X</Button>
 				<StackPanel Orientation="Horizontal">
 					<TextBlock Name="updatePanelMessage" Margin="4,0" VerticalAlignment="Center"
 					           Text="{x:Static properties:Resources.ILSpyVersionAvailable}" />

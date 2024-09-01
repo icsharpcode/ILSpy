@@ -29,16 +29,16 @@ namespace ICSharpCode.ILSpy
 	{
 		public override bool CanExecute(object parameter)
 		{
-			return MainWindow.Instance.CurrentAssemblyList?.GetAssemblies().Any(l => l.HasLoadError) == true;
+			return MainWindow.Instance.AssemblyTreeModel.CurrentAssemblyList?.GetAssemblies().Any(l => l.HasLoadError) == true;
 		}
 
 		public override void Execute(object parameter)
 		{
-			foreach (var asm in MainWindow.Instance.CurrentAssemblyList.GetAssemblies())
+			foreach (var asm in MainWindow.Instance.AssemblyTreeModel.CurrentAssemblyList.GetAssemblies())
 			{
 				if (!asm.HasLoadError)
 					continue;
-				var node = MainWindow.Instance.AssemblyListTreeNode.FindAssemblyNode(asm);
+				var node = MainWindow.Instance.AssemblyTreeModel.FindAssemblyNode(asm);
 				if (node != null && node.CanDelete())
 					node.Delete();
 			}
@@ -51,12 +51,12 @@ namespace ICSharpCode.ILSpy
 	{
 		public override bool CanExecute(object parameter)
 		{
-			return MainWindow.Instance.CurrentAssemblyList?.Count > 0;
+			return MainWindow.Instance.AssemblyTreeModel.CurrentAssemblyList?.Count > 0;
 		}
 
 		public override void Execute(object parameter)
 		{
-			MainWindow.Instance.CurrentAssemblyList?.Clear();
+			MainWindow.Instance.AssemblyTreeModel.CurrentAssemblyList?.Clear();
 		}
 	}
 }

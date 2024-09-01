@@ -28,7 +28,6 @@ using System.Threading.Tasks;
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX;
 
 using TomsToolbox.Essentials;
@@ -49,7 +48,7 @@ namespace ICSharpCode.ILSpy
 			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
 				Parallel.ForEach(
-					Partitioner.Create(MainWindow.Instance.CurrentAssemblyList.GetAssemblies(), loadBalance: true),
+					Partitioner.Create(MainWindow.Instance.AssemblyTreeModel.CurrentAssemblyList.GetAssemblies(), loadBalance: true),
 					new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct },
 					delegate (LoadedAssembly asm) {
 						if (!asm.HasLoadError)
@@ -96,7 +95,7 @@ namespace ICSharpCode.ILSpy
 		{
 			const int numRuns = 100;
 			var language = SettingsService.Instance.SessionSettings.LanguageSettings.Language;
-			var nodes = MainWindow.Instance.SelectedNodes.ToArray();
+			var nodes = MainWindow.Instance.AssemblyTreeModel.SelectedNodes.ToArray();
 			var options = MainWindow.Instance.CreateDecompilationOptions();
 			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				options.CancellationToken = ct;

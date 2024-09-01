@@ -32,7 +32,6 @@ using System.Windows.Media;
 using System.Windows.Threading;
 
 using ICSharpCode.ILSpy.AppEnv;
-using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Extensions;
@@ -250,8 +249,8 @@ namespace ICSharpCode.ILSpy.Search
 			{
 
 				searchProgressBar.IsIndeterminate = true;
-				startedSearch = new(await mainWindow.CurrentAssemblyList.GetAllAssemblies(), searchTerm,
-					(SearchMode)searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage,
+				startedSearch = new(await mainWindow.AssemblyTreeModel.CurrentAssemblyList.GetAllAssemblies(), searchTerm,
+					(SearchMode)searchModeComboBox.SelectedIndex, mainWindow.AssemblyTreeModel.CurrentLanguage,
 					SettingsService.Instance.SessionSettings.LanguageSettings.ShowApiLevel);
 				currentSearch = startedSearch;
 
@@ -269,7 +268,7 @@ namespace ICSharpCode.ILSpy.Search
 		{
 			if (listBox.SelectedItem is SearchResult result)
 			{
-				MainWindow.Instance.JumpToReference(result.Reference);
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(result.Reference));
 			}
 		}
 

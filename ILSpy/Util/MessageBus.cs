@@ -57,4 +57,13 @@ namespace ICSharpCode.ILSpy.Util
 	public class SessionSettingsChangedEventArgs(PropertyChangedEventArgs e) : WrappedEventArgs<PropertyChangedEventArgs>(e);
 
 	public class DockWorkspaceActiveTabPageChangedEventArgs : EventArgs;
+
+	public class NavigateToReferenceEventArgs(object reference, bool inNewTabPage = false) : EventArgs
+	{
+		public object Reference { get; } = reference;
+
+		public bool InNewTabPage { get; } = inNewTabPage;
+	}
+
+	public class AssemblyTreeSelectionChangedEventArgs() : EventArgs;
 }

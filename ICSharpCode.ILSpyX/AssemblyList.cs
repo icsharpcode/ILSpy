@@ -281,8 +281,9 @@ namespace ICSharpCode.ILSpyX
 		{
 			file = Path.GetFullPath(file);
 			return OpenAssembly(file, () => {
-				var newAsm = new LoadedAssembly(this, file, fileLoaders: manager?.LoaderRegistry, applyWinRTProjections: ApplyWinRTProjections, useDebugSymbols: UseDebugSymbols);
-				newAsm.IsAutoLoaded = isAutoLoaded;
+				var newAsm = new LoadedAssembly(this, file, fileLoaders: manager?.LoaderRegistry, applyWinRTProjections: ApplyWinRTProjections, useDebugSymbols: UseDebugSymbols) {
+					IsAutoLoaded = isAutoLoaded
+				};
 				return newAsm;
 			});
 		}

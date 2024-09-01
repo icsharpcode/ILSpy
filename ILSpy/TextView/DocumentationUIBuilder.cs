@@ -37,7 +37,6 @@ using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Options;
-using ICSharpCode.ILSpy.Util;
 
 namespace ICSharpCode.ILSpy.TextView
 {
@@ -339,7 +338,7 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			var h = new Hyperlink(new Run(ambience.ConvertSymbol(referencedEntity)));
 			h.Click += (sender, e) => {
-				MainWindow.Instance.JumpToReference(referencedEntity);
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(referencedEntity));
 			};
 			return h;
 		}
@@ -382,7 +381,7 @@ namespace ICSharpCode.ILSpy.TextView
 				{
 					Hyperlink link = new Hyperlink();
 					link.Click += (sender, e) => {
-						MainWindow.Instance.JumpToReference(referencedEntity);
+						MessageBus.Send(this, new NavigateToReferenceEventArgs(referencedEntity));
 					};
 					AddSpan(link, element.Children);
 				}

@@ -30,10 +30,10 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Controls.TreeView;
 using ICSharpCode.ILSpy.Metadata;
 using ICSharpCode.ILSpy.Properties;
-using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.FileLoaders;
@@ -630,13 +630,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			{
 				foreach (var node in context.SelectedTreeNodes)
 				{
-					paths.Add(MainWindow.GetPathForNode(node));
+					paths.Add(AssemblyListPaneModel.GetPathForNode(node));
 					var la = ((AssemblyTreeNode)node).LoadedAssembly;
 					la.AssemblyList.ReloadAssembly(la.FileName);
 				}
 			}
-			MainWindow.Instance.SelectNodes(paths.Select(p => MainWindow.Instance.FindNodeByPath(p, true)).ToArray());
-			MainWindow.Instance.RefreshDecompiledView();
+			MainWindow.Instance.AssemblyTreeModel.SelectNodes(paths.Select(p => MainWindow.Instance.AssemblyTreeModel.FindNodeByPath(p, true)).ToArray());
+			MainWindow.Instance.AssemblyTreeModel.RefreshDecompiledView();
 		}
 	}
 
@@ -676,7 +676,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				}
 			}
 			await Task.WhenAll(tasks);
-			MainWindow.Instance.RefreshDecompiledView();
+			MainWindow.Instance.AssemblyTreeModel.RefreshDecompiledView();
 		}
 	}
 
@@ -711,7 +711,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					node.RaisePropertyChanged(nameof(ILSpyTreeNode.IsAutoLoaded));
 				}
 			}
-			MainWindow.Instance.CurrentAssemblyList.RefreshSave();
+			MainWindow.Instance.AssemblyTreeModel.CurrentAssemblyList.RefreshSave();
 		}
 	}
 

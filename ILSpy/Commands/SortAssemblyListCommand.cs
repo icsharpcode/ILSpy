@@ -29,17 +29,11 @@ namespace ICSharpCode.ILSpy
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources.SortAssembly_listName), MenuIcon = "Images/Sort", MenuCategory = nameof(Resources.View))]
 	[ExportToolbarCommand(ToolTip = nameof(Resources.SortAssemblyListName), ToolbarIcon = "Images/Sort", ToolbarCategory = nameof(Resources.View))]
 	[PartCreationPolicy(CreationPolicy.Shared)]
-	sealed class SortAssemblyListCommand : SimpleCommand, IComparer<LoadedAssembly>
+	sealed class SortAssemblyListCommand : SimpleCommand
 	{
 		public override void Execute(object parameter)
 		{
-			using (MainWindow.Instance.AssemblyTreeView.LockUpdates())
-				MainWindow.Instance.CurrentAssemblyList.Sort(this);
-		}
-
-		int IComparer<LoadedAssembly>.Compare(LoadedAssembly x, LoadedAssembly y)
-		{
-			return string.Compare(x.ShortName, y.ShortName, StringComparison.CurrentCulture);
+			MainWindow.Instance.AssemblyTreeModel.SortAssemblyList();
 		}
 	}
 
@@ -50,19 +44,8 @@ namespace ICSharpCode.ILSpy
 	{
 		public override void Execute(object parameter)
 		{
-			using (MainWindow.Instance.AssemblyTreeView.LockUpdates())
-				CollapseChildren(MainWindow.Instance.AssemblyTreeView.Root);
+			MainWindow.Instance.AssemblyTreeModel.CollapseAll();
 
-			void CollapseChildren(SharpTreeNode node)
-			{
-				foreach (var child in node.Children)
-				{
-					if (!child.IsExpanded)
-						continue;
-					CollapseChildren(child);
-					child.IsExpanded = false;
-				}
-			}
 		}
 	}
 }

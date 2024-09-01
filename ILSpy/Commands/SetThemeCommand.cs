@@ -1,5 +1,4 @@
-﻿using ICSharpCode.ILSpy.Util;
-
+﻿
 namespace ICSharpCode.ILSpy.Commands
 {
 	public class SetThemeCommand : SimpleCommand

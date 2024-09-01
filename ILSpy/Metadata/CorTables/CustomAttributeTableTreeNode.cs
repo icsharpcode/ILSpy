@@ -83,7 +83,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnParentClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, customAttr.Parent, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, customAttr.Parent, protocol: "metadata")));
 			}
 
 			string parentTooltip;
@@ -94,7 +94,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnConstructorClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, customAttr.Constructor, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, customAttr.Constructor, protocol: "metadata")));
 			}
 
 			string constructorTooltip;

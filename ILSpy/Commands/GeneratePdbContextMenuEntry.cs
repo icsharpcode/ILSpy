@@ -110,14 +110,14 @@ namespace ICSharpCode.ILSpy
 	{
 		public override bool CanExecute(object parameter)
 		{
-			return MainWindow.Instance.SelectedNodes?.Count() == 1
-				&& MainWindow.Instance.SelectedNodes?.FirstOrDefault() is AssemblyTreeNode tn
+			return MainWindow.Instance.AssemblyTreeModel.SelectedNodes?.Count() == 1
+				&& MainWindow.Instance.AssemblyTreeModel.SelectedNodes?.FirstOrDefault() is AssemblyTreeNode tn
 				&& !tn.LoadedAssembly.HasLoadError;
 		}
 
 		public override void Execute(object parameter)
 		{
-			var assembly = (MainWindow.Instance.SelectedNodes?.FirstOrDefault() as AssemblyTreeNode)?.LoadedAssembly;
+			var assembly = (MainWindow.Instance.AssemblyTreeModel.SelectedNodes?.FirstOrDefault() as AssemblyTreeNode)?.LoadedAssembly;
 			if (assembly == null)
 				return;
 			GeneratePdbContextMenuEntry.GeneratePdbForAssembly(assembly);
