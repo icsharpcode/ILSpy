@@ -1,5 +1,8 @@
-﻿using ICSharpCode.Decompiler;
+﻿using System;
+
+using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Settings;
 
@@ -30,5 +33,10 @@ namespace ICSharpCode.ILSpy.Util
 		public DisplaySettings DisplaySettings { get; }
 
 		public AssemblyListManager AssemblyListManager { get; }
+
+		public DecompilationOptions CreateDecompilationOptions(TabPageModel tabPage)
+		{
+			return new(SessionSettings.LanguageSettings.LanguageVersion, DecompilerSettings, DisplaySettings) { Progress = tabPage.Content as IProgress<DecompilationProgress> };
+		}
 	}
 }

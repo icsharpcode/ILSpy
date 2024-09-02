@@ -29,6 +29,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpyX;
 
@@ -197,7 +198,10 @@ namespace ICSharpCode.ILSpy
 		public override RichText GetRichTextTooltip(IEntity entity)
 		{
 			var output = new AvalonEditTextOutput() { IgnoreNewLineAndIndent = true };
-			var disasm = CreateDisassembler(output, MainWindow.Instance.CreateDecompilationOptions());
+			var settingsService = SettingsService.Instance;
+			var dockWorkspace = DockWorkspace.Instance;
+
+			var disasm = CreateDisassembler(output, settingsService.CreateDecompilationOptions(dockWorkspace.ActiveTabPage));
 			MetadataFile module = entity.ParentModule?.MetadataFile;
 			if (module == null)
 			{

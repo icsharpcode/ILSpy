@@ -766,20 +766,21 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			if (SelectedItems.Count == 0 && refreshInProgress)
 				return;
 
+			var activeTabPage = DockWorkspace.Instance.ActiveTabPage;
+
 			if (recordHistory)
 			{
-				var tabPage = DockWorkspace.Instance.ActiveTabPage;
-				var currentState = tabPage.GetState();
+				var currentState = activeTabPage.GetState();
 				if (currentState != null)
-					history.UpdateCurrent(new NavigationState(tabPage, currentState));
-				history.Record(new NavigationState(tabPage, SelectedItems));
+					history.UpdateCurrent(new NavigationState(activeTabPage, currentState));
+				history.Record(new NavigationState(activeTabPage, SelectedItems));
 			}
 
-			DockWorkspace.Instance.ActiveTabPage.SupportsLanguageSwitching = true;
+			activeTabPage.SupportsLanguageSwitching = true;
 
 			if (SelectedItems.Count == 1)
 			{
-				if (SelectedItem is ILSpyTreeNode node && node.View(DockWorkspace.Instance.ActiveTabPage))
+				if (SelectedItem is ILSpyTreeNode node && node.View(activeTabPage))
 					return;
 			}
 			if (newState?.ViewedUri != null)
@@ -787,9 +788,9 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				MainWindow.Instance.NavigateTo(new(newState.ViewedUri, null), recordHistory: false);
 				return;
 			}
-			var options = MainWindow.Instance.CreateDecompilationOptions();
+			var options = SettingsService.Instance.CreateDecompilationOptions(activeTabPage);
 			options.TextViewState = newState;
-			DockWorkspace.Instance.ActiveTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, options));
+			activeTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, options));
 		}
 
 		public void RefreshDecompiledView()

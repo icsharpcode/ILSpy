@@ -59,7 +59,7 @@ namespace ICSharpCode.ILSpy.Options
 			ILSpySettings settings = ILSpySettings.Load();
 			foreach (var optionPage in optionPages.OrderBy(p => p.Metadata.Order))
 			{
-				var tabItem = new TabItemViewModel(MainWindow.GetResourceString(optionPage.Metadata.Title), optionPage.Value);
+				var tabItem = new TabItemViewModel(Util.ResourceHelper.GetString(optionPage.Metadata.Title), optionPage.Value);
 
 				tabControl.Items.Add(tabItem);
 

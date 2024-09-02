@@ -26,6 +26,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpyX;
@@ -59,7 +60,7 @@ namespace ICSharpCode.ILSpy
 							{
 								try
 								{
-									var options = MainWindow.Instance.CreateDecompilationOptions();
+									var options = SettingsService.Instance.CreateDecompilationOptions(DockWorkspace.Instance.ActiveTabPage);
 									options.CancellationToken = ct;
 									options.FullDecompilation = true;
 									new CSharpLanguage().DecompileAssembly(asm, new PlainTextOutput(writer), options);
@@ -96,8 +97,9 @@ namespace ICSharpCode.ILSpy
 			const int numRuns = 100;
 			var language = SettingsService.Instance.SessionSettings.LanguageSettings.Language;
 			var nodes = MainWindow.Instance.AssemblyTreeModel.SelectedNodes.ToArray();
-			var options = MainWindow.Instance.CreateDecompilationOptions();
-			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
+			DockWorkspace dockWorkspace = DockWorkspace.Instance;
+			var options = SettingsService.Instance.CreateDecompilationOptions(dockWorkspace.ActiveTabPage);
+			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				options.CancellationToken = ct;
 				Stopwatch w = Stopwatch.StartNew();
 				for (int i = 0; i < numRuns; ++i)
@@ -112,7 +114,7 @@ namespace ICSharpCode.ILSpy
 				double msPerRun = w.Elapsed.TotalMilliseconds / numRuns;
 				output.Write($"Average time: {msPerRun.ToString("f1")}ms\n");
 				return output;
-			}, ct)).Then(output => Docking.DockWorkspace.Instance.ShowText(output)).HandleExceptions();
+			}, ct)).Then(output => dockWorkspace.ShowText(output)).HandleExceptions();
 		}
 	}
 }

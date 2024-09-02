@@ -345,7 +345,7 @@ namespace ICSharpCode.ILSpy
 								needSeparatorForCategory = false;
 							}
 							MenuItem menuItem = new MenuItem();
-							menuItem.Header = MainWindow.GetResourceString(entryPair.Metadata.Header);
+							menuItem.Header = ResourceHelper.GetString(entryPair.Metadata.Header);
 							menuItem.InputGestureText = entryPair.Metadata.InputGestureText;
 							if (!string.IsNullOrEmpty(entryPair.Metadata.Icon))
 							{

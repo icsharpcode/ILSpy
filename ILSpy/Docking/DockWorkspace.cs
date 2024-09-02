@@ -34,7 +34,9 @@ using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpy.Search;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpyX.Extensions;
 
+using TomsToolbox.Composition;
 using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpy.Docking
@@ -42,6 +44,8 @@ namespace ICSharpCode.ILSpy.Docking
 	public class DockWorkspace : ObservableObject, ILayoutUpdateStrategy
 	{
 		private static SessionSettings SessionSettings => SettingsService.Instance.SessionSettings;
+
+		private readonly IExportProvider exportProvider = App.ExportProvider;
 
 		public static readonly DockWorkspace Instance = new();
 
@@ -148,6 +152,9 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public void InitializeLayout(DockingManager manager)
 		{
+			var toolPanes = exportProvider.GetExportedValues<ToolPaneModel>("ToolPane").OrderBy(item => item.Title);
+			ToolPanes.AddRange(toolPanes);
+
 			manager.LayoutUpdateStrategy = this;
 			XmlLayoutSerializer serializer = new XmlLayoutSerializer(manager);
 			serializer.LayoutSerializationCallback += LayoutSerializationCallback;
