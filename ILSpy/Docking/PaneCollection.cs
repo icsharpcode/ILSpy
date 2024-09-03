@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -25,10 +26,10 @@ using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Docking
 {
-	public class PaneCollection<T> : INotifyCollectionChanged, ICollection<T>
+	public class PaneCollection<T> : INotifyCollectionChanged, IList<T>
 		where T : PaneModel, new()
 	{
-		private ObservableCollection<T> observableCollection = new ObservableCollection<T>();
+		private readonly ObservableCollection<T> observableCollection = [];
 
 		public event NotifyCollectionChangedEventHandler CollectionChanged;
 
@@ -46,7 +47,6 @@ namespace ICSharpCode.ILSpy.Docking
 			item.IsVisible = true;
 			item.IsActive = true;
 		}
-
 		public int Count => observableCollection.Count;
 		public bool IsReadOnly => false;
 		public void Clear() => observableCollection.Clear();
@@ -55,5 +55,12 @@ namespace ICSharpCode.ILSpy.Docking
 		public bool Remove(T item) => observableCollection.Remove(item);
 		public IEnumerator<T> GetEnumerator() => observableCollection.GetEnumerator();
 		IEnumerator IEnumerable.GetEnumerator() => observableCollection.GetEnumerator();
+		int IList<T>.IndexOf(T item) => observableCollection.IndexOf(item);
+		void IList<T>.Insert(int index, T item) => throw new NotImplementedException("Only Add is supported");
+		void IList<T>.RemoveAt(int index) => observableCollection.RemoveAt(index);
+		T IList<T>.this[int index] {
+			get => observableCollection[index];
+			set => observableCollection[index] = value;
+		}
 	}
 }
