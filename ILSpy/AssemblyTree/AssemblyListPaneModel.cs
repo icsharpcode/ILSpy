@@ -481,7 +481,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 			if (inNewTabPage)
 			{
-				DockWorkspace.Instance.TabPages.Add();
+				DockWorkspace.Instance.AddTabPage();
 				SelectedItem = null;
 			}
 
@@ -505,7 +505,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 				if (inNewTabPage)
 				{
-					DockWorkspace.Instance.TabPages.Add();
+					DockWorkspace.Instance.AddTabPage();
 				}
 
 				// Ensure nodes exist

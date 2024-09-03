@@ -191,7 +191,7 @@ namespace ICSharpCode.ILSpy
 
 		void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
-			DockWorkspace.Instance.TabPages.Add();
+			DockWorkspace.Instance.AddTabPage();
 
 			AssemblyTreeModel.Initialize();
 		}
@@ -380,7 +380,7 @@ namespace ICSharpCode.ILSpy
 			{
 				if (inNewTabPage)
 				{
-					DockWorkspace.Instance.TabPages.Add();
+					DockWorkspace.Instance.AddTabPage();
 				}
 
 				if (e.Uri.Host == "aboutpage")
