@@ -19,12 +19,9 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
 
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.ILSpy.TextView;
@@ -88,36 +85,40 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public TextViewPosition? Position { get; private set; }
 
-		public Point MousePosition { get; private set; }
+		/// <summary>
+		/// Returns the original source of the context menu event.
+		/// </summary>
+		public DependencyObject OriginalSource { get; private set; }
 
-		public static TextViewContext Create(SharpTreeView treeView = null, DecompilerTextView textView = null, ListBox listBox = null, DataGrid dataGrid = null)
+		public static TextViewContext Create(ContextMenuEventArgs eventArgs, SharpTreeView treeView = null, DecompilerTextView textView = null, ListBox listBox = null, DataGrid dataGrid = null)
 		{
 			ReferenceSegment reference;
-			if (textView != null)
+
+			if (textView is not null)
+			{
 				reference = textView.GetReferenceSegmentAtMousePosition();
-			else if (listBox?.SelectedItem is SearchResult result)
-				reference = new ReferenceSegment { Reference = result.Reference };
-			else if (listBox?.SelectedItem is TreeNodes.IMemberTreeNode provider)
-				reference = new ReferenceSegment { Reference = provider.Member };
-			else if (listBox?.SelectedItem != null)
-				reference = new ReferenceSegment { Reference = listBox.SelectedItem };
-			else if (dataGrid?.SelectedItem is TreeNodes.IMemberTreeNode provider2)
-				reference = new ReferenceSegment { Reference = provider2.Member };
-			else if (dataGrid?.SelectedItem != null)
-				reference = new ReferenceSegment { Reference = dataGrid.SelectedItem };
+			}
 			else
-				reference = null;
-			var position = textView != null ? textView.GetPositionFromMousePosition() : null;
-			var selectedTreeNodes = treeView != null ? treeView.GetTopLevelSelection().ToArray() : null;
-			return new TextViewContext {
+			{
+				reference = (listBox?.SelectedItem ?? dataGrid?.SelectedItem) switch {
+					SearchResult searchResult => new() { Reference = searchResult.Reference },
+					TreeNodes.IMemberTreeNode treeNode => new() { Reference = treeNode.Member }, { } value => new() { Reference = value },
+					_ => null
+				};
+			}
+
+			var position = textView?.GetPositionFromMousePosition();
+			var selectedTreeNodes = treeView?.GetTopLevelSelection().ToArray();
+
+			return new() {
 				ListBox = listBox,
 				DataGrid = dataGrid,
 				TreeView = treeView,
-				SelectedTreeNodes = selectedTreeNodes,
 				TextView = textView,
+				SelectedTreeNodes = selectedTreeNodes,
 				Reference = reference,
 				Position = position,
-				MousePosition = ((Visual)textView ?? treeView ?? (Visual)listBox ?? dataGrid).PointToScreen(Mouse.GetPosition((IInputElement)textView ?? treeView ?? (IInputElement)listBox ?? dataGrid))
+				OriginalSource = eventArgs.OriginalSource as DependencyObject
 			};
 		}
 	}
@@ -252,14 +253,14 @@ namespace ICSharpCode.ILSpy
 
 		void treeView_ContextMenuOpening(object sender, ContextMenuEventArgs e)
 		{
-			TextViewContext context = TextViewContext.Create(treeView);
+			var context = TextViewContext.Create(e, treeView: treeView);
 			if (context.SelectedTreeNodes.Length == 0)
 			{
 				e.Handled = true; // don't show the menu
 				return;
 			}
-			ContextMenu menu;
-			if (ShowContextMenu(context, out menu))
+
+			if (ShowContextMenu(context, out var menu))
 				treeView.ContextMenu = menu;
 			else
 				// hide the context menu.
@@ -268,9 +269,8 @@ namespace ICSharpCode.ILSpy
 
 		void textView_ContextMenuOpening(object sender, ContextMenuEventArgs e)
 		{
-			TextViewContext context = TextViewContext.Create(textView: textView);
-			ContextMenu menu;
-			if (ShowContextMenu(context, out menu))
+			var context = TextViewContext.Create(e, textView: textView);
+			if (ShowContextMenu(context, out var menu))
 				textView.ContextMenu = menu;
 			else
 				// hide the context menu.
@@ -279,9 +279,8 @@ namespace ICSharpCode.ILSpy
 
 		void listBox_ContextMenuOpening(object sender, ContextMenuEventArgs e)
 		{
-			TextViewContext context = TextViewContext.Create(listBox: listBox);
-			ContextMenu menu;
-			if (ShowContextMenu(context, out menu))
+			var context = TextViewContext.Create(e, listBox: listBox);
+			if (ShowContextMenu(context, out var menu))
 				listBox.ContextMenu = menu;
 			else
 				// hide the context menu.
@@ -290,9 +289,8 @@ namespace ICSharpCode.ILSpy
 
 		void dataGrid_ContextMenuOpening(object sender, ContextMenuEventArgs e)
 		{
-			TextViewContext context = TextViewContext.Create(dataGrid: dataGrid);
-			ContextMenu menu;
-			if (ShowContextMenu(context, out menu))
+			var context = TextViewContext.Create(e, dataGrid: dataGrid);
+			if (ShowContextMenu(context, out var menu))
 				dataGrid.ContextMenu = menu;
 			else
 				// hide the context menu.
@@ -333,10 +331,10 @@ namespace ICSharpCode.ILSpy
 			{
 				foreach (var category in menuGroup.GroupBy(c => c.Metadata.Category))
 				{
-					bool needSeparatorForCategory = parent.Count > 0;
+					var needSeparatorForCategory = parent.Count > 0;
 					foreach (var entryPair in category)
 					{
-						IContextMenuEntry entry = entryPair.Value;
+						var entry = entryPair.Value;
 						if (entry.IsVisible(context))
 						{
 							if (needSeparatorForCategory)
@@ -344,7 +342,7 @@ namespace ICSharpCode.ILSpy
 								parent.Add(new Separator());
 								needSeparatorForCategory = false;
 							}
-							MenuItem menuItem = new MenuItem();
+							var menuItem = new MenuItem();
 							menuItem.Header = ResourceHelper.GetString(entryPair.Metadata.Header);
 							menuItem.InputGestureText = entryPair.Metadata.InputGestureText;
 							if (!string.IsNullOrEmpty(entryPair.Metadata.Icon))

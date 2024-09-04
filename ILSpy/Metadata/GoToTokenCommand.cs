@@ -23,11 +23,12 @@ using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Metadata;
 using ICSharpCode.ILSpy.Properties;
+
+using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpy.Commands
 {
@@ -75,7 +76,7 @@ namespace ICSharpCode.ILSpy.Commands
 	{
 		public void Execute(TextViewContext context)
 		{
-			string content = GetSelectedCellContent(context.DataGrid, context.MousePosition);
+			string content = GetSelectedCellContent(context.OriginalSource);
 			Clipboard.SetText(content);
 		}
 
@@ -87,21 +88,14 @@ namespace ICSharpCode.ILSpy.Commands
 		public bool IsVisible(TextViewContext context)
 		{
 			return context.DataGrid?.Name == "MetadataView"
-				&& GetSelectedCellContent(context.DataGrid, context.MousePosition) != null;
+				&& GetSelectedCellContent(context.OriginalSource) != null;
 		}
 
-		private string GetSelectedCellContent(DataGrid grid, Point position)
+		private static string GetSelectedCellContent(DependencyObject originalSource)
 		{
-			position = grid.PointFromScreen(position);
-			var hit = VisualTreeHelper.HitTest(grid, position);
-			if (hit == null)
-				return null;
-			var cell = hit.VisualHit.GetParent<DataGridCell>();
-			if (cell == null)
-				return null;
-			return cell.DataContext.GetType()
-				.GetProperty(cell.Column.Header.ToString(), BindingFlags.Instance | BindingFlags.Public)
-				.GetValue(cell.DataContext).ToString();
+			var cell = originalSource.AncestorsAndSelf().OfType<DataGridCell>().FirstOrDefault();
+
+			return cell?.Column.OnCopyingCellClipboardContent(cell.DataContext).ToString();
 		}
 	}
 }
