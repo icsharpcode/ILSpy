@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy
 			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new();
 				Parallel.ForEach(
-					Partitioner.Create(MainWindow.Instance.AssemblyTreeModel.CurrentAssemblyList.GetAssemblies(), loadBalance: true),
+					Partitioner.Create(MainWindow.Instance.AssemblyTreeModel.AssemblyList.GetAssemblies(), loadBalance: true),
 					new() { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct },
 					asm => {
 						if (!asm.HasLoadError)

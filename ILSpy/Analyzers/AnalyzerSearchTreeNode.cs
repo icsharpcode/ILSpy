@@ -61,7 +61,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 				var context = new AnalyzerContext() {
 					CancellationToken = ct,
 					Language = Language,
-					AssemblyList = MainWindow.Instance.AssemblyTreeModel.CurrentAssemblyList
+					AssemblyList = MainWindow.Instance.AssemblyTreeModel.AssemblyList
 				};
 				var results = analyzer.Analyze(symbol, context).Select(SymbolTreeNodeFactory);
 				if (context.SortResults)

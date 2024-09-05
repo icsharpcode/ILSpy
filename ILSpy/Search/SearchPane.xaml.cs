@@ -249,7 +249,7 @@ namespace ICSharpCode.ILSpy.Search
 			{
 
 				searchProgressBar.IsIndeterminate = true;
-				startedSearch = new(await mainWindow.AssemblyTreeModel.CurrentAssemblyList.GetAllAssemblies(), searchTerm,
+				startedSearch = new(await mainWindow.AssemblyTreeModel.AssemblyList.GetAllAssemblies(), searchTerm,
 					(SearchMode)searchModeComboBox.SelectedIndex, mainWindow.AssemblyTreeModel.CurrentLanguage,
 					SettingsService.Instance.SessionSettings.LanguageSettings.ShowApiLevel);
 				currentSearch = startedSearch;

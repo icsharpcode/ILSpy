@@ -439,7 +439,7 @@ namespace ICSharpCode.ILSpy
 			base.OnClosing(e);
 			var sessionSettings = SettingsService.Instance.SessionSettings;
 
-			sessionSettings.ActiveAssemblyList = AssemblyTreeModel.CurrentAssemblyList.ListName;
+			sessionSettings.ActiveAssemblyList = AssemblyTreeModel.AssemblyList.ListName;
 			sessionSettings.ActiveTreeViewPath = AssemblyTreeModel.SelectedPath;
 			sessionSettings.ActiveAutoLoadedAssembly = GetAutoLoadedAssemblyNode(AssemblyTreeModel.SelectedItem);
 			sessionSettings.WindowBounds = this.RestoreBounds;

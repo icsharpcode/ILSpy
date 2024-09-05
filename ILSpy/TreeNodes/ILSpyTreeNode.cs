@@ -85,7 +85,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return false;
 		}
 
-		protected internal override void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
+		public override void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
 		{
 			if (e.NewItems != null)
 			{

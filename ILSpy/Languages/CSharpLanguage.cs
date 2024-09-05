@@ -358,7 +358,7 @@ namespace ICSharpCode.ILSpy
 
 		void AddReferenceWarningMessage(MetadataFile module, ITextOutput output)
 		{
-			var loadedAssembly = MainWindow.Instance.AssemblyTreeModel.CurrentAssemblyList.GetAssemblies().FirstOrDefault(la => la.GetMetadataFileOrNull() == module);
+			var loadedAssembly = MainWindow.Instance.AssemblyTreeModel.AssemblyList.GetAssemblies().FirstOrDefault(la => la.GetMetadataFileOrNull() == module);
 			if (loadedAssembly == null || !loadedAssembly.LoadedAssemblyReferencesInfo.HasErrors)
 				return;
 			string line1 = Properties.Resources.WarningSomeAssemblyReference;

@@ -414,7 +414,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			else if (segment.Reference is EntityReference unresolvedEntity)
 			{
-				var module = unresolvedEntity.ResolveAssembly(MainWindow.Instance.AssemblyTreeModel.CurrentAssemblyList);
+				var module = unresolvedEntity.ResolveAssembly(MainWindow.Instance.AssemblyTreeModel.AssemblyList);
 				if (module == null)
 					return null;
 				var typeSystem = new DecompilerTypeSystem(module,
@@ -474,7 +474,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 			IEntity? ResolveReference(string idString)
 			{
-				return AssemblyListPaneModel.FindEntityInRelevantAssemblies(idString, MainWindow.Instance.AssemblyTreeModel.CurrentAssemblyList.GetAssemblies());
+				return AssemblyListPaneModel.FindEntityInRelevantAssemblies(idString, MainWindow.Instance.AssemblyTreeModel.AssemblyList.GetAssemblies());
 			}
 		}
 

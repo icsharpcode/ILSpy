@@ -22,16 +22,16 @@ namespace ICSharpCode.ILSpy.Util
 	public static class MessageBus<T>
 		where T : EventArgs
 	{
-		private static readonly WeakEventSource<T> Subscriptions = new();
+		private static readonly WeakEventSource<T> subscriptions = new();
 
 		public static event EventHandler<T> Subscribers {
-			add => Subscriptions.Subscribe(value);
-			remove => Subscriptions.Unsubscribe(value);
+			add => subscriptions.Subscribe(value);
+			remove => subscriptions.Unsubscribe(value);
 		}
 
 		public static void Send(object sender, T e)
 		{
-			Subscriptions.Raise(sender, e);
+			subscriptions.Raise(sender, e);
 		}
 	}
 
@@ -55,8 +55,6 @@ namespace ICSharpCode.ILSpy.Util
 	public class LanguageSettingsChangedEventArgs(PropertyChangedEventArgs e) : WrappedEventArgs<PropertyChangedEventArgs>(e);
 
 	public class SessionSettingsChangedEventArgs(PropertyChangedEventArgs e) : WrappedEventArgs<PropertyChangedEventArgs>(e);
-
-	public class DockWorkspaceActiveTabPageChangedEventArgs : EventArgs;
 
 	public class NavigateToReferenceEventArgs(object reference, bool inNewTabPage = false) : EventArgs
 	{

@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
@@ -38,6 +37,7 @@ using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX.Extensions;
 
 using TomsToolbox.Composition;
+using TomsToolbox.Essentials;
 using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpy.Docking
@@ -71,20 +71,15 @@ namespace ICSharpCode.ILSpy.Docking
 			foreach (var tab in tabPages.ToArray())
 			{
 				var state = tab.GetState();
-				if (state == null || state.DecompiledNodes == null)
-				{
+				var decompiledNodes = state?.DecompiledNodes;
+				if (decompiledNodes == null)
 					continue;
-				}
-				bool found = false;
-				foreach (var node in state.DecompiledNodes)
-				{
-					var assemblyNode = node.Ancestors().OfType<TreeNodes.AssemblyTreeNode>().LastOrDefault();
-					if (assemblyNode != null && !e.OldItems.Contains(assemblyNode.LoadedAssembly))
-					{
-						found = true;
-						break;
-					}
-				}
+
+				bool found = decompiledNodes
+					.Select(node => node.Ancestors().OfType<TreeNodes.AssemblyTreeNode>().LastOrDefault())
+					.ExceptNullItems()
+					.Any(assemblyNode => !e.OldItems.Contains(assemblyNode.LoadedAssembly));
+
 				if (!found && tabPages.Count > 1)
 				{
 					tabPages.Remove(tab);
@@ -156,22 +151,21 @@ namespace ICSharpCode.ILSpy.Docking
 				{
 					if (state.DecompiledNodes != null)
 					{
-						MainWindow.Instance.AssemblyTreeModel.SelectNodes(state.DecompiledNodes, inNewTabPage: false, setFocus: true, changingTab: true);
+						MainWindow.Instance.AssemblyTreeModel.SelectNodes(state.DecompiledNodes);
 					}
 					else
 					{
 						MainWindow.Instance.NavigateTo(new(state.ViewedUri, null));
 					}
 				}
-				MessageBus.Send(this, new DockWorkspaceActiveTabPageChangedEventArgs());
 			}
 		}
 
 		public void InitializeLayout(DockingManager manager)
 		{
-			var toolPanes = exportProvider.GetExportedValues<ToolPaneModel>("ToolPane").OrderBy(item => item.Title);
+			var panes = exportProvider.GetExportedValues<ToolPaneModel>("ToolPane").OrderBy(item => item.Title);
 
-			this.toolPanes.AddRange(toolPanes);
+			this.toolPanes.AddRange(panes);
 
 			manager.LayoutUpdateStrategy = this;
 			XmlLayoutSerializer serializer = new XmlLayoutSerializer(manager);

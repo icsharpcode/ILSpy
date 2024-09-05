@@ -24,6 +24,7 @@ using System.Windows;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;

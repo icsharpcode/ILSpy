@@ -27,6 +27,8 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpyX.Extensions;
 
+using TomsToolbox.Essentials;
+
 namespace ICSharpCode.ILSpy.Metadata
 {
 	class OptionalHeaderTreeNode : ILSpyTreeNode

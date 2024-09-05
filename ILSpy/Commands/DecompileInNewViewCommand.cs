@@ -23,6 +23,7 @@ using System.Linq;
 using System.Windows.Threading;
 
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
 
@@ -84,7 +85,9 @@ namespace ICSharpCode.ILSpy.Commands
 			if (nodes.Length == 0)
 				return;
 
-			MainWindow.Instance.AssemblyTreeModel.SelectNodes(nodes, inNewTabPage: true);
+			DockWorkspace.Instance.AddTabPage();
+
+			MainWindow.Instance.AssemblyTreeModel.SelectNodes(nodes);
 		}
 	}
 }

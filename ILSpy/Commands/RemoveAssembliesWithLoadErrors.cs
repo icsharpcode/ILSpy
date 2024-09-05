@@ -29,12 +29,12 @@ namespace ICSharpCode.ILSpy
 	{
 		public override bool CanExecute(object parameter)
 		{
-			return MainWindow.Instance.AssemblyTreeModel.CurrentAssemblyList?.GetAssemblies().Any(l => l.HasLoadError) == true;
+			return MainWindow.Instance.AssemblyTreeModel.AssemblyList?.GetAssemblies().Any(l => l.HasLoadError) == true;
 		}
 
 		public override void Execute(object parameter)
 		{
-			foreach (var asm in MainWindow.Instance.AssemblyTreeModel.CurrentAssemblyList.GetAssemblies())
+			foreach (var asm in MainWindow.Instance.AssemblyTreeModel.AssemblyList.GetAssemblies())
 			{
 				if (!asm.HasLoadError)
 					continue;
@@ -51,12 +51,12 @@ namespace ICSharpCode.ILSpy
 	{
 		public override bool CanExecute(object parameter)
 		{
-			return MainWindow.Instance.AssemblyTreeModel.CurrentAssemblyList?.Count > 0;
+			return MainWindow.Instance.AssemblyTreeModel.AssemblyList?.Count > 0;
 		}
 
 		public override void Execute(object parameter)
 		{
-			MainWindow.Instance.AssemblyTreeModel.CurrentAssemblyList?.Clear();
+			MainWindow.Instance.AssemblyTreeModel.AssemblyList?.Clear();
 		}
 	}
 }

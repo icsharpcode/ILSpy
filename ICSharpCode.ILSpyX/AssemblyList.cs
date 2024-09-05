@@ -186,7 +186,7 @@ namespace ICSharpCode.ILSpyX
 			get { return listName; }
 		}
 
-		internal void Move(LoadedAssembly[] assembliesToMove, int index)
+		public void Move(LoadedAssembly[] assembliesToMove, int index)
 		{
 			VerifyAccess();
 			lock (lockObj)
@@ -230,7 +230,7 @@ namespace ICSharpCode.ILSpyX
 			}
 		}
 
-		internal void RefreshSave()
+		public void RefreshSave()
 		{
 			// Whenever the assembly list is modified, mark it as dirty
 			// and enqueue a task that saves it once the UI has finished modifying the assembly list.

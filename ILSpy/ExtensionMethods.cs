@@ -195,5 +195,21 @@ namespace ICSharpCode.ILSpy
 
 			return true;
 		}
+
+		public static IDisposable PreserveFocus(this IInputElement? inputElement, bool preserve = true)
+		{
+			return new RestoreFocusHelper(inputElement, preserve);
+		}
+
+		private sealed class RestoreFocusHelper(IInputElement? inputElement, bool preserve) : IDisposable
+		{
+			public void Dispose()
+			{
+				if (preserve)
+				{
+					inputElement?.Focus();
+				}
+			}
+		}
 	}
 }

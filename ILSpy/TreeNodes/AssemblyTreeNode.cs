@@ -712,7 +712,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					node.RaisePropertyChanged(nameof(ILSpyTreeNode.IsAutoLoaded));
 				}
 			}
-			MainWindow.Instance.AssemblyTreeModel.CurrentAssemblyList.RefreshSave();
+			MainWindow.Instance.AssemblyTreeModel.AssemblyList.RefreshSave();
 		}
 	}
 
