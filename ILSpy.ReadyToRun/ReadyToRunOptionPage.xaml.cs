@@ -37,13 +37,13 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		public string Title => global::ILSpy.ReadyToRun.Properties.Resources.ReadyToRun;
 
-		public void Load(ILSpySettings settings)
+		public void Load(ILSpySettings spySettings)
 		{
 			Options s = new Options();
-			s.DisassemblyFormat = ReadyToRunOptions.GetDisassemblyFormat(settings);
-			s.IsShowUnwindInfo = ReadyToRunOptions.GetIsShowUnwindInfo(settings);
-			s.IsShowDebugInfo = ReadyToRunOptions.GetIsShowDebugInfo(settings);
-			s.IsShowGCInfo = ReadyToRunOptions.GetIsShowGCInfo(settings);
+			s.DisassemblyFormat = ReadyToRunOptions.GetDisassemblyFormat(spySettings);
+			s.IsShowUnwindInfo = ReadyToRunOptions.GetIsShowUnwindInfo(spySettings);
+			s.IsShowDebugInfo = ReadyToRunOptions.GetIsShowDebugInfo(spySettings);
+			s.IsShowGCInfo = ReadyToRunOptions.GetIsShowGCInfo(spySettings);
 
 			this.DataContext = s;
 		}

@@ -18,54 +18,87 @@
 
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.Composition;
 using System.Linq;
 using System.Reflection;
+using System.Xml.Linq;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpyX.Settings;
 
 using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpy.Options
 {
-	public sealed class DecompilerSettingsViewModel : ObservableObjectBase
+	[ExportOptionPage(Order = 10)]
+	[PartCreationPolicy(CreationPolicy.NonShared)]
+	public sealed class DecompilerSettingsViewModel : ObservableObjectBase, IOptionPage
 	{
-		public DecompilerSettingsGroupViewModel[] Settings { get; }
+		private DecompilerSettingsGroupViewModel[] settings;
 
-		public DecompilerSettingsViewModel(Decompiler.DecompilerSettings settings)
+		public string Title => Resources.Decompiler;
+
+		public DecompilerSettingsGroupViewModel[] Settings {
+			get => settings;
+			set => SetProperty(ref settings, value);
+		}
+
+		public void Load(ILSpySettings spySettings)
 		{
-			Settings = typeof(Decompiler.DecompilerSettings).GetProperties()
+			Load(ISettingsProvider.LoadDecompilerSettings(spySettings));
+		}
+
+		private void Load(DecompilerSettings decompilerSettings)
+		{
+			this.Settings = typeof(Decompiler.DecompilerSettings).GetProperties()
 				.Where(p => p.GetCustomAttribute<BrowsableAttribute>()?.Browsable != false)
-				.Select(p => new DecompilerSettingsItemViewModel(p) { IsEnabled = p.GetValue(settings) is true })
+				.Select(p => new DecompilerSettingsItemViewModel(p) { IsEnabled = p.GetValue(decompilerSettings) is true })
 				.OrderBy(item => item.Category, NaturalStringComparer.Instance)
 				.GroupBy(p => p.Category)
 				.Select(g => new DecompilerSettingsGroupViewModel(g.Key, g.OrderBy(i => i.Description).ToArray()))
 				.ToArray();
 		}
 
-		public Decompiler.DecompilerSettings ToDecompilerSettings()
+		public void Save(XElement root)
 		{
-			var settings = new Decompiler.DecompilerSettings();
+			var newSettings = ToDecompilerSettings();
+			ISettingsProvider.SaveDecompilerSettings(root, newSettings);
+
+			SettingsService.Instance.DecompilerSettings = newSettings;
+			SettingsService.Instance.AssemblyListManager.ApplyWinRTProjections = newSettings.ApplyWindowsRuntimeProjections;
+			SettingsService.Instance.AssemblyListManager.UseDebugSymbols = newSettings.UseDebugSymbols;
+		}
+
+		public void LoadDefaults()
+		{
+			Load(new DecompilerSettings());
+		}
+
+		private DecompilerSettings ToDecompilerSettings()
+		{
+			var newSettings = new DecompilerSettings();
 
 			foreach (var item in Settings.SelectMany(group => group.Settings))
 			{
-				item.Property.SetValue(settings, item.IsEnabled);
+				item.Property.SetValue(newSettings, item.IsEnabled);
 			}
 
-			return settings;
+			return newSettings;
 		}
 	}
 
 	public sealed class DecompilerSettingsGroupViewModel : ObservableObjectBase
 	{
-		private bool? _areAllItemsChecked;
+		private bool? areAllItemsChecked;
 
 		public DecompilerSettingsGroupViewModel(string category, DecompilerSettingsItemViewModel[] settings)
 		{
 			Settings = settings;
 			Category = category;
 
-			_areAllItemsChecked = GetAreAllItemsChecked(Settings);
+			areAllItemsChecked = GetAreAllItemsChecked(Settings);
 
 			foreach (DecompilerSettingsItemViewModel viewModel in settings)
 			{
@@ -74,9 +107,9 @@ namespace ICSharpCode.ILSpy.Options
 		}
 
 		public bool? AreAllItemsChecked {
-			get => _areAllItemsChecked;
+			get => areAllItemsChecked;
 			set {
-				SetProperty(ref _areAllItemsChecked, value);
+				SetProperty(ref areAllItemsChecked, value);
 
 				if (!value.HasValue)
 					return;
@@ -116,13 +149,13 @@ namespace ICSharpCode.ILSpy.Options
 
 	public sealed class DecompilerSettingsItemViewModel(PropertyInfo property) : ObservableObjectBase
 	{
-		private bool _isEnabled;
+		private bool isEnabled;
 
 		public PropertyInfo Property { get; } = property;
 
 		public bool IsEnabled {
-			get => _isEnabled;
-			set => SetProperty(ref _isEnabled, value);
+			get => isEnabled;
+			set => SetProperty(ref isEnabled, value);
 		}
 
 		public string Description { get; set; } = GetResourceString(property.GetCustomAttribute<DescriptionAttribute>()?.Description ?? property.Name);

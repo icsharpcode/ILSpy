@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.Options
 	public interface IOptionPage
 	{
 		string Title { get; }
-		void Load(ILSpySettings settings);
+		void Load(ILSpySettings spySettings);
 		void Save(XElement root);
 		void LoadDefaults();
 	}

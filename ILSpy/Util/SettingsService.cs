@@ -16,7 +16,7 @@ namespace ICSharpCode.ILSpy.Util
 		{
 			SpySettings = ILSpySettings.Load();
 			SessionSettings = new(SpySettings);
-			DecompilerSettings = DecompilerSettingsPanel.LoadDecompilerSettings(SpySettings);
+			DecompilerSettings = ISettingsProvider.LoadDecompilerSettings(SpySettings);
 			DisplaySettings = DisplaySettingsPanel.LoadDisplaySettings(SpySettings, SessionSettings);
 			MiscSettings = MiscSettings.Load(SpySettings);
 			AssemblyListManager = new(SpySettings) {

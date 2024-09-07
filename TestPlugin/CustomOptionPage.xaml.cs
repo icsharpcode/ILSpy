@@ -24,11 +24,11 @@ namespace TestPlugin
 
 		public string Title => "TestPlugin";
 
-		public void Load(ILSpySettings settings)
+		public void Load(ILSpySettings spySettings)
 		{
 			// For loading options, use ILSpySetting's indexer.
 			// If the specified section does exist, the indexer will return a new empty element.
-			XElement e = settings[ns + "CustomOptions"];
+			XElement e = spySettings[ns + "CustomOptions"];
 			// Now load the options from the XML document:
 			Options s = new Options();
 			s.UselessOption1 = (bool?)e.Attribute("useless1") ?? s.UselessOption1;

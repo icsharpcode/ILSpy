@@ -21,46 +21,20 @@ using System.Xml.Linq;
 
 using ICSharpCode.ILSpyX.Settings;
 
+using TomsToolbox.Wpf.Composition.Mef;
+
 namespace ICSharpCode.ILSpy.Options
 {
 	/// <summary>
 	/// Interaction logic for DecompilerSettingsPanel.xaml
 	/// </summary>
-	[ExportOptionPage(Order = 10)]
+	[DataTemplate(typeof(DecompilerSettingsViewModel))]
 	[PartCreationPolicy(CreationPolicy.NonShared)]
-	internal partial class DecompilerSettingsPanel : IOptionPage
+	internal partial class DecompilerSettingsPanel
 	{
 		public DecompilerSettingsPanel()
 		{
 			InitializeComponent();
-		}
-
-		public string Title => Properties.Resources.Decompiler;
-
-		public static Decompiler.DecompilerSettings LoadDecompilerSettings(ILSpySettings settings)
-		{
-			return ISettingsProvider.LoadDecompilerSettings(settings);
-		}
-
-		public void Load(ILSpySettings settings)
-		{
-			this.DataContext = new DecompilerSettingsViewModel(LoadDecompilerSettings(settings));
-		}
-
-		public void Save(XElement root)
-		{
-			var newSettings = ((DecompilerSettingsViewModel)this.DataContext).ToDecompilerSettings();
-			ISettingsProvider.SaveDecompilerSettings(root, newSettings);
-
-			SettingsService.Instance.DecompilerSettings = newSettings;
-			SettingsService.Instance.AssemblyListManager.ApplyWinRTProjections = newSettings.ApplyWindowsRuntimeProjections;
-			SettingsService.Instance.AssemblyListManager.UseDebugSymbols = newSettings.UseDebugSymbols;
-		}
-
-		public void LoadDefaults()
-		{
-			SettingsService.Instance.DecompilerSettings = new();
-			this.DataContext = new DecompilerSettingsViewModel(SettingsService.Instance.DecompilerSettings);
 		}
 	}
 }

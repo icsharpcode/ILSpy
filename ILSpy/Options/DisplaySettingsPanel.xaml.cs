@@ -69,9 +69,9 @@ namespace ICSharpCode.ILSpy.Options
 
 		public string Title => Properties.Resources.Display;
 
-		public void Load(ILSpySettings settings)
+		public void Load(ILSpySettings spySettings)
 		{
-			this.DataContext = LoadDisplaySettings(settings);
+			this.DataContext = LoadDisplaySettings(spySettings);
 		}
 
 		static bool IsSymbolFont(FontFamily fontFamily)

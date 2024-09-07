@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		public string Title => Properties.Resources.Misc;
 
-		public void Load(ILSpySettings settings)
+		public void Load(ILSpySettings spySettings)
 		{
 			this.DataContext = new MiscSettingsViewModel(SettingsService.Instance.MiscSettings);
 		}
