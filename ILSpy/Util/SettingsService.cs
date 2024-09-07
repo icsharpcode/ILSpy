@@ -17,7 +17,7 @@ namespace ICSharpCode.ILSpy.Util
 			SpySettings = ILSpySettings.Load();
 			SessionSettings = new(SpySettings);
 			DecompilerSettings = ISettingsProvider.LoadDecompilerSettings(SpySettings);
-			DisplaySettings = DisplaySettingsPanel.LoadDisplaySettings(SpySettings, SessionSettings);
+			DisplaySettings = DisplaySettings.Load(SpySettings, SessionSettings);
 			MiscSettings = MiscSettings.Load(SpySettings);
 			AssemblyListManager = new(SpySettings) {
 				ApplyWinRTProjections = DecompilerSettings.ApplyWindowsRuntimeProjections,

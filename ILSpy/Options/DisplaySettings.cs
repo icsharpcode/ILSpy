@@ -16,18 +16,20 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Windows.Media;
+using System.Xml.Linq;
 
 using ICSharpCode.ILSpy.Themes;
+using ICSharpCode.ILSpyX.Settings;
+
+using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpy.Options
 {
 	/// <summary>
 	/// Description of DisplaySettings.
 	/// </summary>
-	public class DisplaySettings : INotifyPropertyChanged
+	public class DisplaySettings : ObservableObject
 	{
 		public DisplaySettings()
 		{
@@ -41,291 +43,151 @@ namespace ICSharpCode.ILSpy.Options
 			this.highlightMatchingBraces = true;
 		}
 
-		#region INotifyPropertyChanged implementation
-		public event PropertyChangedEventHandler PropertyChanged;
-
-		protected virtual void OnPropertyChanged(PropertyChangedEventArgs e)
-		{
-			PropertyChanged?.Invoke(this, e);
-		}
-
-		protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
-		{
-			OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
-		}
-		#endregion
-
 		string theme;
 
 		public string Theme {
-			get { return theme; }
-			set {
-				if (theme != value)
-				{
-					theme = value;
-					OnPropertyChanged();
-				}
-			}
+			get => theme;
+			set => SetProperty(ref theme, value);
 		}
 
 		FontFamily selectedFont;
 
 		public FontFamily SelectedFont {
-			get { return selectedFont; }
-			set {
-				if (selectedFont != value)
-				{
-					selectedFont = value;
-					OnPropertyChanged();
-				}
-			}
+			get => selectedFont;
+			set => SetProperty(ref selectedFont, value);
 		}
 
 		double selectedFontSize;
 
 		public double SelectedFontSize {
-			get { return selectedFontSize; }
-			set {
-				if (selectedFontSize != value)
-				{
-					selectedFontSize = value;
-					OnPropertyChanged();
-				}
-			}
+			get => selectedFontSize;
+			set => SetProperty(ref selectedFontSize, value);
 		}
 
 		bool showLineNumbers;
 
 		public bool ShowLineNumbers {
-			get { return showLineNumbers; }
-			set {
-				if (showLineNumbers != value)
-				{
-					showLineNumbers = value;
-					OnPropertyChanged();
-				}
-			}
+			get => showLineNumbers;
+			set => SetProperty(ref showLineNumbers, value);
 		}
 
 		bool showMetadataTokens;
 
 		public bool ShowMetadataTokens {
-			get { return showMetadataTokens; }
-			set {
-				if (showMetadataTokens != value)
-				{
-					showMetadataTokens = value;
-					OnPropertyChanged();
-				}
-			}
+			get => showMetadataTokens;
+			set => SetProperty(ref showMetadataTokens, value);
 		}
 
 		bool showMetadataTokensInBase10;
 
 		public bool ShowMetadataTokensInBase10 {
-			get { return showMetadataTokensInBase10; }
-			set {
-				if (showMetadataTokensInBase10 != value)
-				{
-					showMetadataTokensInBase10 = value;
-					OnPropertyChanged();
-				}
-			}
+			get => showMetadataTokensInBase10;
+			set => SetProperty(ref showMetadataTokensInBase10, value);
 		}
 
 		bool enableWordWrap;
 
 		public bool EnableWordWrap {
-			get { return enableWordWrap; }
-			set {
-				if (enableWordWrap != value)
-				{
-					enableWordWrap = value;
-					OnPropertyChanged();
-				}
-			}
+			get => enableWordWrap;
+			set => SetProperty(ref enableWordWrap, value);
 		}
 
-		bool sortResults = true;
+		bool sortResults;
 
 		public bool SortResults {
-			get { return sortResults; }
-			set {
-				if (sortResults != value)
-				{
-					sortResults = value;
-					OnPropertyChanged();
-				}
-			}
+			get => sortResults;
+			set => SetProperty(ref sortResults, value);
 		}
 
-		bool foldBraces = false;
+		bool foldBraces;
 
 		public bool FoldBraces {
-			get { return foldBraces; }
-			set {
-				if (foldBraces != value)
-				{
-					foldBraces = value;
-					OnPropertyChanged();
-				}
-			}
+			get => foldBraces;
+			set => SetProperty(ref foldBraces, value);
 		}
 
-		bool expandMemberDefinitions = false;
+		bool expandMemberDefinitions;
 
 		public bool ExpandMemberDefinitions {
-			get { return expandMemberDefinitions; }
-			set {
-				if (expandMemberDefinitions != value)
-				{
-					expandMemberDefinitions = value;
-					OnPropertyChanged();
-				}
-			}
+			get => expandMemberDefinitions;
+			set => SetProperty(ref expandMemberDefinitions, value);
 		}
 
-		bool expandUsingDeclarations = false;
+		bool expandUsingDeclarations;
 
 		public bool ExpandUsingDeclarations {
-			get { return expandUsingDeclarations; }
-			set {
-				if (expandUsingDeclarations != value)
-				{
-					expandUsingDeclarations = value;
-					OnPropertyChanged();
-				}
-			}
+			get => expandUsingDeclarations;
+			set => SetProperty(ref expandUsingDeclarations, value);
 		}
 
 		bool showDebugInfo;
 
 		public bool ShowDebugInfo {
-			get { return showDebugInfo; }
-			set {
-				if (showDebugInfo != value)
-				{
-					showDebugInfo = value;
-					OnPropertyChanged();
-				}
-			}
+			get => showDebugInfo;
+			set => SetProperty(ref showDebugInfo, value);
 		}
 
-		bool indentationUseTabs = true;
+		bool indentationUseTabs;
 
 		public bool IndentationUseTabs {
-			get { return indentationUseTabs; }
-			set {
-				if (indentationUseTabs != value)
-				{
-					indentationUseTabs = value;
-					OnPropertyChanged();
-				}
-			}
+			get => indentationUseTabs;
+			set => SetProperty(ref indentationUseTabs, value);
 		}
 
-		int indentationTabSize = 4;
+		int indentationTabSize;
 
 		public int IndentationTabSize {
-			get { return indentationTabSize; }
-			set {
-				if (indentationTabSize != value)
-				{
-					indentationTabSize = value;
-					OnPropertyChanged();
-				}
-			}
+			get => indentationTabSize;
+			set => SetProperty(ref indentationTabSize, value);
 		}
 
-		int indentationSize = 4;
+		int indentationSize;
 
 		public int IndentationSize {
-			get { return indentationSize; }
-			set {
-				if (indentationSize != value)
-				{
-					indentationSize = value;
-					OnPropertyChanged();
-				}
-			}
+			get => indentationSize;
+			set => SetProperty(ref indentationSize, value);
 		}
 
-		bool highlightMatchingBraces = true;
+		bool highlightMatchingBraces;
 
 		public bool HighlightMatchingBraces {
-			get { return highlightMatchingBraces; }
-			set {
-				if (highlightMatchingBraces != value)
-				{
-					highlightMatchingBraces = value;
-					OnPropertyChanged();
-				}
-			}
+			get => highlightMatchingBraces;
+			set => SetProperty(ref highlightMatchingBraces, value);
 		}
 
-		bool highlightCurrentLine = false;
+		bool highlightCurrentLine;
 
 		public bool HighlightCurrentLine {
-			get { return highlightCurrentLine; }
-			set {
-				if (highlightCurrentLine != value)
-				{
-					highlightCurrentLine = value;
-					OnPropertyChanged();
-				}
-			}
+			get => highlightCurrentLine;
+			set => SetProperty(ref highlightCurrentLine, value);
 		}
 
-		bool hideEmptyMetadataTables = true;
+		bool hideEmptyMetadataTables;
 
 		public bool HideEmptyMetadataTables {
-			get { return hideEmptyMetadataTables; }
-			set {
-				if (hideEmptyMetadataTables != value)
-				{
-					hideEmptyMetadataTables = value;
-					OnPropertyChanged();
-				}
-			}
+			get => hideEmptyMetadataTables;
+			set => SetProperty(ref hideEmptyMetadataTables, value);
 		}
 
-		bool useNestedNamespaceNodes = true;
+		bool useNestedNamespaceNodes;
 
 		public bool UseNestedNamespaceNodes {
-			get { return useNestedNamespaceNodes; }
-			set {
-				if (useNestedNamespaceNodes != value)
-				{
-					useNestedNamespaceNodes = value;
-					OnPropertyChanged();
-				}
-			}
+			get => useNestedNamespaceNodes;
+			set => SetProperty(ref useNestedNamespaceNodes, value);
 		}
 
 		private bool styleWindowTitleBar;
 
 		public bool StyleWindowTitleBar {
-			get { return styleWindowTitleBar; }
-			set {
-				if (styleWindowTitleBar != value)
-				{
-					styleWindowTitleBar = value;
-					OnPropertyChanged();
-				}
-			}
+			get => styleWindowTitleBar;
+			set => SetProperty(ref styleWindowTitleBar, value);
 		}
 
 		private bool showRawOffsetsAndBytesBeforeInstruction;
 
 		public bool ShowRawOffsetsAndBytesBeforeInstruction {
-			get { return showRawOffsetsAndBytesBeforeInstruction; }
-			set {
-				if (showRawOffsetsAndBytesBeforeInstruction != value)
-				{
-					showRawOffsetsAndBytesBeforeInstruction = value;
-					OnPropertyChanged();
-				}
-			}
+			get => showRawOffsetsAndBytesBeforeInstruction;
+			set => SetProperty(ref showRawOffsetsAndBytesBeforeInstruction, value);
 		}
 
 		public void CopyValues(DisplaySettings s)
@@ -351,6 +213,80 @@ namespace ICSharpCode.ILSpy.Options
 			this.UseNestedNamespaceNodes = s.useNestedNamespaceNodes;
 			this.ShowRawOffsetsAndBytesBeforeInstruction = s.showRawOffsetsAndBytesBeforeInstruction;
 			this.StyleWindowTitleBar = s.styleWindowTitleBar;
+		}
+
+		public static DisplaySettings Load(ILSpySettings settings, SessionSettings sessionSettings = null)
+		{
+			XElement e = settings["DisplaySettings"];
+			var s = new DisplaySettings {
+				SelectedFont = new FontFamily((string)e.Attribute("Font") ?? "Consolas"),
+				SelectedFontSize = (double?)e.Attribute("FontSize") ?? 10.0 * 4 / 3,
+				ShowLineNumbers = (bool?)e.Attribute("ShowLineNumbers") ?? false,
+				ShowMetadataTokens = (bool?)e.Attribute("ShowMetadataTokens") ?? false,
+				ShowMetadataTokensInBase10 = (bool?)e.Attribute("ShowMetadataTokensInBase10") ?? false,
+				ShowDebugInfo = (bool?)e.Attribute("ShowDebugInfo") ?? false,
+				EnableWordWrap = (bool?)e.Attribute("EnableWordWrap") ?? false,
+				SortResults = (bool?)e.Attribute("SortResults") ?? true,
+				FoldBraces = (bool?)e.Attribute("FoldBraces") ?? false,
+				ExpandMemberDefinitions = (bool?)e.Attribute("ExpandMemberDefinitions") ?? false,
+				ExpandUsingDeclarations = (bool?)e.Attribute("ExpandUsingDeclarations") ?? false,
+				IndentationUseTabs = (bool?)e.Attribute("IndentationUseTabs") ?? true,
+				IndentationSize = (int?)e.Attribute("IndentationSize") ?? 4,
+				IndentationTabSize = (int?)e.Attribute("IndentationTabSize") ?? 4,
+				HighlightMatchingBraces = (bool?)e.Attribute("HighlightMatchingBraces") ?? true,
+				HighlightCurrentLine = (bool?)e.Attribute("HighlightCurrentLine") ?? false,
+				HideEmptyMetadataTables = (bool?)e.Attribute("HideEmptyMetadataTables") ?? true,
+				UseNestedNamespaceNodes = (bool?)e.Attribute("UseNestedNamespaceNodes") ?? false,
+				ShowRawOffsetsAndBytesBeforeInstruction = (bool?)e.Attribute("ShowRawOffsetsAndBytesBeforeInstruction") ?? false,
+				StyleWindowTitleBar = (bool?)e.Attribute("StyleWindowTitleBar") ?? false,
+				Theme = (sessionSettings ?? SettingsService.Instance.SessionSettings).Theme
+			};
+
+			return s;
+		}
+
+		public void Save(XElement root)
+		{
+			var s = this;
+
+			var section = new XElement("DisplaySettings");
+			section.SetAttributeValue("Font", s.SelectedFont.Source);
+			section.SetAttributeValue("FontSize", s.SelectedFontSize);
+			section.SetAttributeValue("ShowLineNumbers", s.ShowLineNumbers);
+			section.SetAttributeValue("ShowMetadataTokens", s.ShowMetadataTokens);
+			section.SetAttributeValue("ShowMetadataTokensInBase10", s.ShowMetadataTokensInBase10);
+			section.SetAttributeValue("ShowDebugInfo", s.ShowDebugInfo);
+			section.SetAttributeValue("EnableWordWrap", s.EnableWordWrap);
+			section.SetAttributeValue("SortResults", s.SortResults);
+			section.SetAttributeValue("FoldBraces", s.FoldBraces);
+			section.SetAttributeValue("ExpandMemberDefinitions", s.ExpandMemberDefinitions);
+			section.SetAttributeValue("ExpandUsingDeclarations", s.ExpandUsingDeclarations);
+			section.SetAttributeValue("IndentationUseTabs", s.IndentationUseTabs);
+			section.SetAttributeValue("IndentationSize", s.IndentationSize);
+			section.SetAttributeValue("IndentationTabSize", s.IndentationTabSize);
+			section.SetAttributeValue("HighlightMatchingBraces", s.HighlightMatchingBraces);
+			section.SetAttributeValue("HighlightCurrentLine", s.HighlightCurrentLine);
+			section.SetAttributeValue("HideEmptyMetadataTables", s.HideEmptyMetadataTables);
+			section.SetAttributeValue("UseNestedNamespaceNodes", s.UseNestedNamespaceNodes);
+			section.SetAttributeValue("ShowRawOffsetsAndBytesBeforeInstruction", s.ShowRawOffsetsAndBytesBeforeInstruction);
+			section.SetAttributeValue("StyleWindowTitleBar", s.StyleWindowTitleBar);
+
+			SettingsService.Instance.SessionSettings.Theme = s.Theme;
+			var sessionSettings = SettingsService.Instance.SessionSettings.ToXml();
+
+			SettingsService.Instance.DisplaySettings.CopyValues(s);
+
+			Update(section);
+			Update(sessionSettings);
+
+			void Update(XElement element)
+			{
+				var existingElement = root.Element(element.Name);
+				if (existingElement != null)
+					existingElement.ReplaceWith(element);
+				else
+					root.Add(element);
+			}
 		}
 	}
 }
