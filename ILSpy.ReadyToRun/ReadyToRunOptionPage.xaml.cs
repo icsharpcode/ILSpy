@@ -26,7 +26,7 @@ using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy.ReadyToRun
 {
-	[ExportOptionPage(Title = nameof(global::ILSpy.ReadyToRun.Properties.Resources.ReadyToRun), Order = 40)]
+	[ExportOptionPage(Order = 40)]
 	[PartCreationPolicy(CreationPolicy.NonShared)]
 	partial class ReadyToRunOptionPage : UserControl, IOptionPage
 	{
@@ -34,6 +34,8 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		{
 			InitializeComponent();
 		}
+
+		public string Title => global::ILSpy.ReadyToRun.Properties.Resources.ReadyToRun;
 
 		public void Load(ILSpySettings settings)
 		{

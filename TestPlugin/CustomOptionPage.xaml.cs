@@ -6,13 +6,12 @@ using System.ComponentModel.Composition;
 using System.Windows.Controls;
 using System.Xml.Linq;
 
-using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpyX.Settings;
 
 namespace TestPlugin
 {
-	[ExportOptionPage(Title = "TestPlugin", Order = 0)]
+	[ExportOptionPage(Order = 0)]
 	[PartCreationPolicy(CreationPolicy.NonShared)]
 	partial class CustomOptionPage : UserControl, IOptionPage
 	{
@@ -22,6 +21,8 @@ namespace TestPlugin
 		{
 			InitializeComponent();
 		}
+
+		public string Title => "TestPlugin";
 
 		public void Load(ILSpySettings settings)
 		{

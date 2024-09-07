@@ -27,7 +27,7 @@ namespace ICSharpCode.ILSpy.Options
 	/// <summary>
 	/// Interaction logic for MiscSettingsPanel.xaml
 	/// </summary>
-	[ExportOptionPage(Title = nameof(Properties.Resources.Misc), Order = 30)]
+	[ExportOptionPage(Order = 30)]
 	[PartCreationPolicy(CreationPolicy.NonShared)]
 	public partial class MiscSettingsPanel : UserControl, IOptionPage
 	{
@@ -35,6 +35,8 @@ namespace ICSharpCode.ILSpy.Options
 		{
 			InitializeComponent();
 		}
+
+		public string Title => Properties.Resources.Misc;
 
 		public void Load(ILSpySettings settings)
 		{
