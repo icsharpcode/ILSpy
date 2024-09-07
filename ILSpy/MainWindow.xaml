@@ -1,25 +1,24 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-
 <Window x:Class="ICSharpCode.ILSpy.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:local="clr-namespace:ICSharpCode.ILSpy"
-        xmlns:avalondock="https://github.com/Dirkster99/AvalonDock"
-        xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
-        xmlns:docking="clr-namespace:ICSharpCode.ILSpy.Docking"
-        xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
-        Title="ILSpy"
-        MinWidth="250"
-        MinHeight="200"
-        UseLayoutRounding="True"
-        TextOptions.TextFormattingMode="Display"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008" d:DesignHeight="500" d:DesignWidth="500"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
-        xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
-        xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
-        xmlns:toms="urn:TomsToolbox"
-        xmlns:viewModels="clr-namespace:ICSharpCode.ILSpy.ViewModels"
-        d:DataContext="{d:DesignInstance local:MainWindowViewModel}">
+		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:local="clr-namespace:ICSharpCode.ILSpy"
+		xmlns:avalondock="https://github.com/Dirkster99/AvalonDock"
+		xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
+		xmlns:docking="clr-namespace:ICSharpCode.ILSpy.Docking"
+		xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
+		Title="ILSpy"
+		MinWidth="250"
+		MinHeight="200"
+		UseLayoutRounding="True"
+		TextOptions.TextFormattingMode="Display"
+		xmlns:d="http://schemas.microsoft.com/expression/blend/2008" d:DesignHeight="500" d:DesignWidth="500"
+		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
+		xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
+		xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
+		xmlns:toms="urn:TomsToolbox"
+		xmlns:viewModels="clr-namespace:ICSharpCode.ILSpy.ViewModels"
+		d:DataContext="{d:DesignInstance local:MainWindowViewModel}">
 	<Window.Resources>
 
 		<DataTemplate DataType="{x:Type viewModels:TabPageModel}">
@@ -77,11 +76,11 @@
 			<!-- contents of file menu are added using MEF -->
 			<MenuItem Header="{x:Static properties:Resources._View}" Tag="_View">
 				<MenuItem Header="{x:Static properties:Resources.Show_publiconlyTypesMembers}" IsCheckable="True"
-				          IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisPublicOnly}" />
+						  IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisPublicOnly}" />
 				<MenuItem Header="{x:Static properties:Resources.Show_internalTypesMembers}" IsCheckable="True"
-				          IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisPublicAndInternal}" />
+						  IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisPublicAndInternal}" />
 				<MenuItem Header="{x:Static properties:Resources.Show_allTypesAndMembers}" IsCheckable="True"
-				          IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisAll}" />
+						  IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisAll}" />
 				<Separator />
 				<MenuItem Header="{x:Static properties:Resources.Theme}" ItemsSource="{x:Static themes:ThemeManager.AllThemes}">
 					<MenuItem.ItemContainerStyle>
@@ -103,11 +102,11 @@
 				</MenuItem>
 				<MenuItem Header="{x:Static properties:Resources.UILanguage}">
 					<MenuItem Header="{x:Static properties:Resources.UILanguage_System}" IsCheckable="True"
-					          IsChecked="{Binding SessionSettings.CurrentCulture, Converter={controls:CultureSelectionConverter}, ConverterParameter={x:Null}}" />
+							  IsChecked="{Binding SessionSettings.CurrentCulture, Converter={controls:CultureSelectionConverter}, ConverterParameter={x:Null}}" />
 					<MenuItem Header="English" IsCheckable="True"
-					          IsChecked="{Binding SessionSettings.CurrentCulture, Converter={controls:CultureSelectionConverter}, ConverterParameter=en-US}" />
+							  IsChecked="{Binding SessionSettings.CurrentCulture, Converter={controls:CultureSelectionConverter}, ConverterParameter=en-US}" />
 					<MenuItem Header="中文" IsCheckable="True"
-					          IsChecked="{Binding SessionSettings.CurrentCulture, Converter={controls:CultureSelectionConverter}, ConverterParameter=zh-Hans}" />
+							  IsChecked="{Binding SessionSettings.CurrentCulture, Converter={controls:CultureSelectionConverter}, ConverterParameter=zh-Hans}" />
 				</MenuItem>
 			</MenuItem>
 			<MenuItem Header="{x:Static properties:Resources._Window}" Tag="_Window" />
@@ -143,42 +142,42 @@
 			<!-- 'Open' toolbar category is inserted here -->
 			<Separator />
 			<ComboBox Name="assemblyListComboBox" Width="100" MaxDropDownHeight="Auto"
-			          ItemsSource="{Binding AssemblyListManager.AssemblyLists}"
-			          ToolTip="{x:Static properties:Resources.SelectAssemblyListDropdownTooltip}"
-			          SelectedItem="{Binding SessionSettings.ActiveAssemblyList}" />
+					  ItemsSource="{Binding AssemblyListManager.AssemblyLists}"
+					  ToolTip="{x:Static properties:Resources.SelectAssemblyListDropdownTooltip}"
+					  SelectedItem="{Binding SessionSettings.ActiveAssemblyList}" />
 			<Button Command="{x:Static local:ILSpyCommands.ManageAssemblyListsCommand}"
-			        ToolTip="{x:Static properties:Resources.ManageAssemblyLists}">
+					ToolTip="{x:Static properties:Resources.ManageAssemblyLists}">
 				<Image Width="16" Height="16" Source="{controls:XamlResource Images/AssemblyList}"
-				       Style="{StaticResource DarkModeAwareImageStyle}" />
+					   Style="{StaticResource DarkModeAwareImageStyle}" />
 			</Button>
 			<Separator />
 			<CheckBox IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisPublicOnly}"
-			          ToolTip="{x:Static properties:Resources.ShowPublicOnlyTypesMembers}">
+					  ToolTip="{x:Static properties:Resources.ShowPublicOnlyTypesMembers}">
 				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowPublicOnly}"
-				       Style="{StaticResource DarkModeAwareImageStyle}" />
+					   Style="{StaticResource DarkModeAwareImageStyle}" />
 			</CheckBox>
 			<CheckBox IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisPublicAndInternal}"
-			          ToolTip="{x:Static properties:Resources.ShowInternalTypesMembers}">
+					  ToolTip="{x:Static properties:Resources.ShowInternalTypesMembers}">
 				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowPrivateInternal}"
-				       Style="{StaticResource DarkModeAwareImageStyle}" />
+					   Style="{StaticResource DarkModeAwareImageStyle}" />
 			</CheckBox>
 			<CheckBox IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisAll}"
-			          ToolTip="{x:Static properties:Resources.ShowAllTypesAndMembers}">
+					  ToolTip="{x:Static properties:Resources.ShowAllTypesAndMembers}">
 				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowAll}"
-				       Style="{StaticResource DarkModeAwareImageStyle}" />
+					   Style="{StaticResource DarkModeAwareImageStyle}" />
 			</CheckBox>
 			<Separator />
 			<ComboBox Name="languageComboBox" DisplayMemberPath="Name" Width="100" MaxDropDownHeight="Auto"
-			          IsEnabled="{Binding Workspace.ActiveTabPage.SupportsLanguageSwitching}"
-			          ItemsSource="{x:Static local:Languages.AllLanguages}"
-			          ToolTip="{x:Static properties:Resources.SelectLanguageDropdownTooltip}"
-			          SelectedItem="{Binding SessionSettings.LanguageSettings.Language}" />
+					  IsEnabled="{Binding Workspace.ActiveTabPage.SupportsLanguageSwitching}"
+					  ItemsSource="{x:Static local:Languages.AllLanguages}"
+					  ToolTip="{x:Static properties:Resources.SelectLanguageDropdownTooltip}"
+					  SelectedItem="{Binding SessionSettings.LanguageSettings.Language}" />
 			<ComboBox Name="languageVersionComboBox" DisplayMemberPath="DisplayName" Width="120" MaxDropDownHeight="Auto"
-			          ToolTip="{x:Static properties:Resources.SelectVersionDropdownTooltip}"
-			          Visibility="{Binding SelectedItem.HasLanguageVersions, ElementName=languageComboBox, Converter={toms:BooleanToVisibilityConverter}}"
-			          IsEnabled="{Binding Workspace.ActiveTabPage.SupportsLanguageSwitching}"
-			          ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}"
-			          SelectedItem="{Binding SessionSettings.LanguageSettings.LanguageVersion, UpdateSourceTrigger=PropertyChanged}" />
+					  ToolTip="{x:Static properties:Resources.SelectVersionDropdownTooltip}"
+					  Visibility="{Binding SelectedItem.HasLanguageVersions, ElementName=languageComboBox, Converter={toms:BooleanToVisibilityConverter}}"
+					  IsEnabled="{Binding Workspace.ActiveTabPage.SupportsLanguageSwitching}"
+					  ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}"
+					  SelectedItem="{Binding SessionSettings.LanguageSettings.LanguageVersion, UpdateSourceTrigger=PropertyChanged}" />
 		</ToolBar>
 		<!-- Update panel -->
 		<Border DockPanel.Dock="Top" BorderBrush="Black" BorderThickness="1" Name="updatePanel" Visibility="Collapsed">
@@ -186,9 +185,9 @@
 				<Button DockPanel.Dock="Right" Click="UpdatePanelCloseButtonClick" MinWidth="0">X</Button>
 				<StackPanel Orientation="Horizontal">
 					<TextBlock Name="updatePanelMessage" Margin="4,0" VerticalAlignment="Center"
-					           Text="{x:Static properties:Resources.ILSpyVersionAvailable}" />
+							   Text="{x:Static properties:Resources.ILSpyVersionAvailable}" />
 					<Button Name="downloadOrCheckUpdateButton" Click="downloadOrCheckUpdateButtonClick"
-					        Content="{x:Static properties:Resources.Download}" />
+							Content="{x:Static properties:Resources.Download}" />
 				</StackPanel>
 			</DockPanel>
 		</Border>
@@ -196,19 +195,19 @@
 		<StatusBar x:Name="statusBar" DockPanel.Dock="Bottom" Height="26" Visibility="Collapsed">
 			<StatusBarItem DockPanel.Dock="Right">
 				<TextBlock VerticalAlignment="Center"
-				           HorizontalAlignment="Right"
-				           x:Name="statusLabel"
-				           ToolTip="{x:Static properties:Resources.Status}"
-				           Text="{x:Static properties:Resources.StandBy}" />
+						   HorizontalAlignment="Right"
+						   x:Name="statusLabel"
+						   ToolTip="{x:Static properties:Resources.Status}"
+						   Text="{x:Static properties:Resources.StandBy}" />
 			</StatusBarItem>
 		</StatusBar>
 
 		<avalondock:DockingManager x:Name="dockManager"
-		                           DataContext="{Binding Workspace}"
-		                           AnchorablesSource="{Binding ToolPanes}"
-		                           DocumentsSource="{Binding TabPages}"
-		                           ActiveContent="{Binding ActiveTabPage, Mode=TwoWay, Converter={docking:TabPageGuardConverter}}"
-		                           AllowMixedOrientation="True">
+								   DataContext="{Binding Workspace}"
+								   AnchorablesSource="{Binding ToolPanes}"
+								   DocumentsSource="{Binding TabPages}"
+								   ActiveContent="{Binding ActiveTabPage, Mode=TwoWay, Converter={docking:TabPageGuardConverter}}"
+								   AllowMixedOrientation="True">
 
 			<avalondock:DockingManager.DocumentHeaderTemplate>
 				<DataTemplate DataType="{x:Type viewModels:PaneModel}">

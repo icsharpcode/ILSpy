@@ -21,25 +21,21 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Navigation;
 
 using AvalonDock.Layout.Serialization;
 
-using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Search;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.Updates;
-using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX.FileLoaders;
 using ICSharpCode.ILSpyX.Settings;
 using ICSharpCode.ILSpyX.TreeView;
@@ -89,6 +85,7 @@ namespace ICSharpCode.ILSpy
 			{
 				Thread.CurrentThread.CurrentUICulture = new CultureInfo(sessionSettings.CurrentCulture);
 			}
+
 			InitializeComponent();
 
 			DockWorkspace.Instance.InitializeLayout(dockManager);
@@ -96,8 +93,6 @@ namespace ICSharpCode.ILSpy
 			MenuService.Instance.Init(mainMenu, toolBar, InputBindings);
 
 			InitFileLoaders();
-
-			this.Loaded += MainWindow_Loaded;
 		}
 
 		void SetWindowBounds(Rect bounds)
@@ -132,19 +127,12 @@ namespace ICSharpCode.ILSpy
 			var sessionSettings = SettingsService.Instance.SessionSettings;
 
 			// Validate and Set Window Bounds
-			Rect bounds = Rect.Transform(sessionSettings.WindowBounds, source?.CompositionTarget?.TransformToDevice ?? Matrix.Identity);
-			var boundsRect = new Rectangle((int)bounds.Left, (int)bounds.Top, (int)bounds.Width, (int)bounds.Height);
-			bool boundsOK = false;
-			foreach (var screen in Screen.AllScreens)
-			{
-				var intersection = Rectangle.Intersect(boundsRect, screen.WorkingArea);
-				if (intersection.Width > 10 && intersection.Height > 10)
-					boundsOK = true;
-			}
-			if (boundsOK)
-				SetWindowBounds(sessionSettings.WindowBounds);
-			else
-				SetWindowBounds(SessionSettings.DefaultWindowBounds);
+			var windowBounds = Rect.Transform(sessionSettings.WindowBounds, source?.CompositionTarget?.TransformToDevice ?? Matrix.Identity);
+			var boundsRect = new Rectangle((int)windowBounds.Left, (int)windowBounds.Top, (int)windowBounds.Width, (int)windowBounds.Height);
+
+			bool areBoundsValid = Screen.AllScreens.Any(screen => Rectangle.Intersect(boundsRect, screen.WorkingArea) is { Width: > 10, Height: > 10 });
+
+			SetWindowBounds(areBoundsValid ? sessionSettings.WindowBounds : SessionSettings.DefaultWindowBounds);
 
 			this.WindowState = sessionSettings.WindowState;
 		}
@@ -172,28 +160,6 @@ namespace ICSharpCode.ILSpy
 						break;
 				}
 			}
-		}
-
-		internal async Task HandleSingleInstanceCommandLineArguments(string[] args)
-		{
-			var cmdArgs = CommandLineArguments.Create(args);
-
-			await Dispatcher.InvokeAsync(() => {
-				if (AssemblyTreeModel.HandleCommandLineArguments(cmdArgs))
-				{
-					if (!cmdArgs.NoActivate && WindowState == WindowState.Minimized)
-						WindowState = WindowState.Normal;
-
-					AssemblyTreeModel.HandleCommandLineArgumentsAfterShowList(cmdArgs);
-				}
-			});
-		}
-
-		void MainWindow_Loaded(object sender, RoutedEventArgs e)
-		{
-			DockWorkspace.Instance.AddTabPage();
-
-			AssemblyTreeModel.Initialize();
 		}
 
 		#region Update Check
@@ -229,7 +195,7 @@ namespace ICSharpCode.ILSpy
 			else
 			{
 				updatePanel.Visibility = Visibility.Collapsed;
-				string downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesAsync(ILSpySettings.Load());
+				string downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesAsync(SettingsService.Instance.SpySettings);
 				AdjustUpdateUIAfterCheck(downloadUrl, true);
 			}
 		}
@@ -340,7 +306,7 @@ namespace ICSharpCode.ILSpy
 			if (history.CanNavigateBack)
 			{
 				e.Handled = true;
-				NavigateHistory(false);
+				AssemblyTreeModel.NavigateHistory(false);
 			}
 		}
 
@@ -355,76 +321,10 @@ namespace ICSharpCode.ILSpy
 			if (history.CanNavigateForward)
 			{
 				e.Handled = true;
-				NavigateHistory(true);
+				AssemblyTreeModel.NavigateHistory(true);
 			}
-		}
-
-		void NavigateHistory(bool forward)
-		{
-			TabPageModel tabPage = DockWorkspace.Instance.ActiveTabPage;
-			var state = tabPage.GetState();
-			if (state != null)
-				history.UpdateCurrent(new NavigationState(tabPage, state));
-			var newState = forward ? history.GoForward() : history.GoBack();
-
-			DockWorkspace.Instance.ActiveTabPage = newState.TabPage;
-
-			AssemblyTreeModel.SelectNodes(newState.TreeNodes, ignoreCompilationRequests: true);
-			AssemblyTreeModel.DecompileSelectedNodes(newState.ViewState as DecompilerTextViewState, false);
 		}
 		#endregion
-
-		internal void NavigateTo(RequestNavigateEventArgs e, bool recordHistory = true, bool inNewTabPage = false)
-		{
-			if (e.Uri.Scheme == "resource")
-			{
-				if (inNewTabPage)
-				{
-					DockWorkspace.Instance.AddTabPage();
-				}
-
-				if (e.Uri.Host == "aboutpage")
-				{
-					RecordHistory();
-					DockWorkspace.Instance.ActiveTabPage.ShowTextView(AboutPage.Display);
-					e.Handled = true;
-					return;
-				}
-				AvalonEditTextOutput output = new AvalonEditTextOutput {
-					Address = e.Uri,
-					Title = e.Uri.AbsolutePath,
-					EnableHyperlinks = true
-				};
-				using (Stream s = typeof(App).Assembly.GetManifestResourceStream(typeof(App), e.Uri.AbsolutePath))
-				{
-					using (StreamReader r = new StreamReader(s))
-					{
-						string line;
-						while ((line = r.ReadLine()) != null)
-						{
-							output.Write(line);
-							output.WriteLine();
-						}
-					}
-				}
-				RecordHistory();
-				DockWorkspace.Instance.ShowText(output);
-				e.Handled = true;
-			}
-
-			void RecordHistory()
-			{
-				if (!recordHistory)
-					return;
-				TabPageModel tabPage = DockWorkspace.Instance.ActiveTabPage;
-				var currentState = tabPage.GetState();
-				if (currentState != null)
-					history.UpdateCurrent(new NavigationState(tabPage, currentState));
-
-				AssemblyTreeModel.UnselectAll(ignoreCompilationRequests: true);
-				history.Record(new NavigationState(tabPage, new ViewState { ViewedUri = e.Uri }));
-			}
-		}
 
 		protected override void OnStateChanged(EventArgs e)
 		{
@@ -447,21 +347,18 @@ namespace ICSharpCode.ILSpy
 			sessionSettings.Save();
 		}
 
-		private string GetAutoLoadedAssemblyNode(SharpTreeNode node)
+		private static string GetAutoLoadedAssemblyNode(SharpTreeNode node)
 		{
-			if (node == null)
-				return null;
-			while (!(node is AssemblyTreeNode) && node.Parent != null)
-			{
-				node = node.Parent;
-			}
-			//this should be an assembly node
-			var assyNode = node as AssemblyTreeNode;
-			var loadedAssy = assyNode.LoadedAssembly;
-			if (!(loadedAssy.IsLoaded && loadedAssy.IsAutoLoaded))
-				return null;
+			var assemblyTreeNode = node?
+				.AncestorsAndSelf()
+				.OfType<AssemblyTreeNode>()
+				.FirstOrDefault();
 
-			return loadedAssy.FileName;
+			var loadedAssembly = assemblyTreeNode?.LoadedAssembly;
+
+			return loadedAssembly is not { IsLoaded: true, IsAutoLoaded: true }
+				? null
+				: loadedAssembly.FileName;
 		}
 	}
 }

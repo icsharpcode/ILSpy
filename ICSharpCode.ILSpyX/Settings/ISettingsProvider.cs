@@ -22,8 +22,6 @@ using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
 
-using static System.Collections.Specialized.BitVector32;
-
 namespace ICSharpCode.ILSpyX.Settings
 {
 	public interface ISettingsProvider
@@ -31,9 +29,8 @@ namespace ICSharpCode.ILSpyX.Settings
 		XElement this[XName section] { get; }
 
 		void Update(Action<XElement> action);
-		ISettingsProvider Load();
 
-		public static ICSharpCode.Decompiler.DecompilerSettings LoadDecompilerSettings(ISettingsProvider settingsProvider)
+		public static Decompiler.DecompilerSettings LoadDecompilerSettings(ISettingsProvider settingsProvider)
 		{
 			XElement e = settingsProvider["DecompilerSettings"];
 			var newSettings = new Decompiler.DecompilerSettings();
@@ -48,7 +45,7 @@ namespace ICSharpCode.ILSpyX.Settings
 			return newSettings;
 		}
 
-		public static void SaveDecompilerSettings(XElement root, ICSharpCode.Decompiler.DecompilerSettings newSettings)
+		public static void SaveDecompilerSettings(XElement root, Decompiler.DecompilerSettings newSettings)
 		{
 			var properties = typeof(Decompiler.DecompilerSettings).GetProperties()
 				.Where(p => p.GetCustomAttribute<BrowsableAttribute>()?.Browsable != false);

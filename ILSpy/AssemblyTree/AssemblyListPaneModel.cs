@@ -53,6 +53,7 @@ using System.Text;
 
 using TomsToolbox.Essentials;
 using TomsToolbox.Wpf;
+using System.Windows.Navigation;
 
 namespace ICSharpCode.ILSpy.AssemblyTree
 {
@@ -149,6 +150,26 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				searchPane.SearchTerm = args.Search;
 				searchPane.Show();
 			}
+		}
+
+		public async Task HandleSingleInstanceCommandLineArguments(string[] args)
+		{
+			var cmdArgs = CommandLineArguments.Create(args);
+
+			await Dispatcher.InvokeAsync(() => {
+
+				if (!HandleCommandLineArguments(cmdArgs))
+					return;
+
+				var window = Application.Current.MainWindow;
+
+				if (!cmdArgs.NoActivate && window is { WindowState: WindowState.Minimized })
+				{
+					window.WindowState = WindowState.Normal;
+				}
+
+				HandleCommandLineArgumentsAfterShowList(cmdArgs);
+			});
 		}
 
 		public async void NavigateOnLaunch(string navigateTo, string[] activeTreeViewPath, ILSpySettings spySettings, List<LoadedAssembly> relevantAssemblies)
@@ -315,22 +336,11 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		public void Initialize()
 		{
-			var loadPreviousAssemblies = Options.MiscSettingsPanel.CurrentMiscSettings.LoadPreviousAssemblies;
-
-			var sessionSettings = SettingsService.Instance.SessionSettings;
-
-			if (loadPreviousAssemblies)
-			{
-				this.AssemblyList = SettingsService.Instance.AssemblyListManager.LoadList(sessionSettings.ActiveAssemblyList);
-			}
-			else
-			{
-				SettingsService.Instance.AssemblyListManager.ClearAll();
-				this.AssemblyList = SettingsService.Instance.AssemblyListManager.CreateList(AssemblyListManager.DefaultListName);
-			}
+			this.AssemblyList = SettingsService.Instance.LoadInitialAssemblyList();
 
 			HandleCommandLineArguments(App.CommandLineArguments);
 
+			var loadPreviousAssemblies = SettingsService.Instance.MiscSettings.LoadPreviousAssemblies;
 			if (AssemblyList.GetAssemblies().Length == 0
 				&& AssemblyList.ListName == AssemblyListManager.DefaultListName
 				&& loadPreviousAssemblies)
@@ -340,6 +350,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 			ShowAssemblyList(this.AssemblyList);
 
+			var sessionSettings = SettingsService.Instance.SessionSettings;
 			if (sessionSettings.ActiveAutoLoadedAssembly != null
 				&& File.Exists(sessionSettings.ActiveAutoLoadedAssembly))
 			{
@@ -742,7 +753,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 			if (newState?.ViewedUri != null)
 			{
-				MainWindow.Instance.NavigateTo(new(newState.ViewedUri, null), recordHistory: false);
+				MainWindow.Instance.AssemblyTreeModel.NavigateTo(new(newState.ViewedUri, null), recordHistory: false);
 				return;
 			}
 
@@ -768,6 +779,72 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		#endregion
 
+		public void NavigateHistory(bool forward)
+		{
+			TabPageModel tabPage = DockWorkspace.Instance.ActiveTabPage;
+			var state = tabPage.GetState();
+			if (state != null)
+				history.UpdateCurrent(new NavigationState(tabPage, state));
+			var newState = forward ? history.GoForward() : history.GoBack();
+
+			DockWorkspace.Instance.ActiveTabPage = newState.TabPage;
+
+			SelectNodes(newState.TreeNodes, ignoreCompilationRequests: true);
+			DecompileSelectedNodes(newState.ViewState as DecompilerTextViewState, false);
+		}
+
+		internal void NavigateTo(RequestNavigateEventArgs e, bool recordHistory = true, bool inNewTabPage = false)
+		{
+			if (e.Uri.Scheme == "resource")
+			{
+				if (inNewTabPage)
+				{
+					DockWorkspace.Instance.AddTabPage();
+				}
+
+				if (e.Uri.Host == "aboutpage")
+				{
+					RecordHistory();
+					DockWorkspace.Instance.ActiveTabPage.ShowTextView(AboutPage.Display);
+					e.Handled = true;
+					return;
+				}
+				AvalonEditTextOutput output = new AvalonEditTextOutput {
+					Address = e.Uri,
+					Title = e.Uri.AbsolutePath,
+					EnableHyperlinks = true
+				};
+				using (Stream s = typeof(App).Assembly.GetManifestResourceStream(typeof(App), e.Uri.AbsolutePath))
+				{
+					using (StreamReader r = new StreamReader(s))
+					{
+						string line;
+						while ((line = r.ReadLine()) != null)
+						{
+							output.Write(line);
+							output.WriteLine();
+						}
+					}
+				}
+				RecordHistory();
+				DockWorkspace.Instance.ShowText(output);
+				e.Handled = true;
+			}
+
+			void RecordHistory()
+			{
+				if (!recordHistory)
+					return;
+				TabPageModel tabPage = DockWorkspace.Instance.ActiveTabPage;
+				var currentState = tabPage.GetState();
+				if (currentState != null)
+					history.UpdateCurrent(new NavigationState(tabPage, currentState));
+
+				UnselectAll(ignoreCompilationRequests: true);
+
+				history.Record(new NavigationState(tabPage, new ViewState { ViewedUri = e.Uri }));
+			}
+		}
 
 		public void Refresh()
 		{

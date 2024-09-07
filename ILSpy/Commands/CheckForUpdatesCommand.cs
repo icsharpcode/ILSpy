@@ -35,7 +35,7 @@ namespace ICSharpCode.ILSpy
 
 		public override async void Execute(object parameter)
 		{
-			await MainWindow.Instance.ShowMessageIfUpdatesAvailableAsync(ILSpySettings.Load(), forceCheck: true);
+			await MainWindow.Instance.ShowMessageIfUpdatesAvailableAsync(SettingsService.Instance.SpySettings, forceCheck: true);
 		}
 	}
 }

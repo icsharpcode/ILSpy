@@ -24,14 +24,15 @@ using System.Windows;
 using System.Windows.Input;
 
 using ICSharpCode.ILSpy.AppEnv;
-using ICSharpCode.ILSpy.Commands;
 using ICSharpCode.ILSpyX.Settings;
 
 using Microsoft.Win32;
 
+using TomsToolbox.Wpf;
+
 namespace ICSharpCode.ILSpy.Options
 {
-	public class MiscSettingsViewModel : IMiscSettings, INotifyPropertyChanged
+	public class MiscSettingsViewModel : ObservableObject, IMiscSettings
 	{
 		bool allowMultipleInstances;
 		bool loadPreviousAssemblies = true;
@@ -40,65 +41,53 @@ namespace ICSharpCode.ILSpy.Options
 		{
 			AllowMultipleInstances = s.AllowMultipleInstances;
 			LoadPreviousAssemblies = s.LoadPreviousAssemblies;
-
-			if (EnableShellIntegrationCommand)
-			{
-				AddRemoveShellIntegrationCommand = new DelegateCommand<object>(AddRemoveShellIntegration);
-			}
 		}
 
 		/// <summary>
 		/// Allow multiple instances.
 		/// </summary>
 		public bool AllowMultipleInstances {
-			get { return allowMultipleInstances; }
-			set {
-				if (allowMultipleInstances != value)
-				{
-					allowMultipleInstances = value;
-					OnPropertyChanged();
-				}
-			}
+			get => allowMultipleInstances;
+			set => SetProperty(ref allowMultipleInstances, value);
 		}
 
 		/// <summary>
 		/// Load assemblies that were loaded in the previous instance
 		/// </summary>
 		public bool LoadPreviousAssemblies {
-			get { return loadPreviousAssemblies; }
-			set {
-				if (loadPreviousAssemblies != value)
-				{
-					loadPreviousAssemblies = value;
-					OnPropertyChanged();
-				}
-			}
+			get => loadPreviousAssemblies;
+			set => SetProperty(ref loadPreviousAssemblies, value);
 		}
 
-		public ICommand AddRemoveShellIntegrationCommand { get; }
-		public bool EnableShellIntegrationCommand => AppEnvironment.IsWindows;
+		public ICommand AddRemoveShellIntegrationCommand => new DelegateCommand(() => AppEnvironment.IsWindows, AddRemoveShellIntegration);
 
 		const string rootPath = @"Software\Classes\{0}\shell";
 		const string fullPath = @"Software\Classes\{0}\shell\Open with ILSpy\command";
 
-		private void AddRemoveShellIntegration(object obj)
+		private void AddRemoveShellIntegration()
 		{
-			string commandLine = CommandLineTools.ArgumentArrayToCommandLine(Path.ChangeExtension(Assembly.GetEntryAssembly().Location, ".exe")) + " \"%L\"";
+			string commandLine = CommandLineTools.ArgumentArrayToCommandLine(Path.ChangeExtension(Assembly.GetEntryAssembly()?.Location, ".exe")) + " \"%L\"";
 			if (RegistryEntriesExist())
 			{
 				if (MessageBox.Show(string.Format(Properties.Resources.RemoveShellIntegrationMessage, commandLine), "ILSpy", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
 				{
-					Registry.CurrentUser.CreateSubKey(string.Format(rootPath, "dllfile")).DeleteSubKeyTree("Open with ILSpy");
-					Registry.CurrentUser.CreateSubKey(string.Format(rootPath, "exefile")).DeleteSubKeyTree("Open with ILSpy");
+					Registry.CurrentUser
+						.CreateSubKey(string.Format(rootPath, "dllfile"))?
+						.DeleteSubKeyTree("Open with ILSpy");
+					Registry.CurrentUser
+						.CreateSubKey(string.Format(rootPath, "exefile"))?
+						.DeleteSubKeyTree("Open with ILSpy");
 				}
 			}
 			else
 			{
 				if (MessageBox.Show(string.Format(Properties.Resources.AddShellIntegrationMessage, commandLine), "ILSpy", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
 				{
-					Registry.CurrentUser.CreateSubKey(string.Format(fullPath, "dllfile"))?
+					Registry.CurrentUser
+						.CreateSubKey(string.Format(fullPath, "dllfile"))?
 						.SetValue("", commandLine);
-					Registry.CurrentUser.CreateSubKey(string.Format(fullPath, "exefile"))?
+					Registry.CurrentUser
+						.CreateSubKey(string.Format(fullPath, "exefile"))?
 						.SetValue("", commandLine);
 				}
 			}
@@ -116,21 +105,5 @@ namespace ICSharpCode.ILSpy.Options
 				return RegistryEntriesExist() ? Properties.Resources.RemoveShellIntegration : Properties.Resources.AddShellIntegration;
 			}
 		}
-
-		#region INotifyPropertyChanged Implementation
-
-		public event PropertyChangedEventHandler PropertyChanged;
-
-		protected virtual void OnPropertyChanged(PropertyChangedEventArgs e)
-		{
-			PropertyChanged?.Invoke(this, e);
-		}
-
-		protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
-		{
-			OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
-		}
-
-		#endregion
 	}
 }

@@ -23,12 +23,12 @@ namespace ICSharpCode.ILSpyX.Settings
 {
 	public class MiscSettings : IMiscSettings, ISettingsSection<MiscSettings>
 	{
-		private MiscSettings()
+		public MiscSettings()
 		{
 		}
 
 		public bool AllowMultipleInstances { get; set; }
-		public bool LoadPreviousAssemblies { get; set; }
+		public bool LoadPreviousAssemblies { get; set; } = true;
 
 		public static MiscSettings Load(ISettingsProvider settingsProvider)
 		{

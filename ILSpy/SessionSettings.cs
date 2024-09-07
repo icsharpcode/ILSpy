@@ -62,8 +62,8 @@ namespace ICSharpCode.ILSpy
 			this.WindowBounds = FromString((string)doc.Element("WindowBounds"), DefaultWindowBounds);
 			this.SelectedSearchMode = FromString((string)doc.Element("SelectedSearchMode"), SearchMode.TypeAndMember);
 			this.Theme = FromString((string)doc.Element(nameof(Theme)), ThemeManager.Current.DefaultTheme);
-			string currentCulture = (string)doc.Element(nameof(CurrentCulture));
-			this.CurrentCulture = string.IsNullOrEmpty(currentCulture) ? null : currentCulture;
+			var culture = (string)doc.Element(nameof(CurrentCulture));
+			this.CurrentCulture = string.IsNullOrEmpty(culture) ? null : culture;
 
 			this.DockLayout = new DockLayoutSettings(doc.Element("DockLayout"));
 		}
@@ -161,7 +161,7 @@ namespace ICSharpCode.ILSpy
 		public void Save()
 		{
 			var doc = ToXml();
-			ILSpySettings.SaveSettings(doc);
+			SettingsService.Instance.SpySettings.SaveSettings(doc);
 		}
 
 		static Regex regex = new Regex("\\\\x(?<num>[0-9A-f]{4})");

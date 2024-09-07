@@ -59,6 +59,9 @@ namespace ICSharpCode.ILSpy.Docking
 			TabPages = new(tabPages);
 			ToolPanes = new(toolPanes);
 
+			// Make sure there is at least one tab open
+			AddTabPage();
+
 			MessageBus<CurrentAssemblyListChangedEventArgs>.Subscribers += (sender, e) => CurrentAssemblyList_Changed(sender, e);
 		}
 
@@ -146,7 +149,7 @@ namespace ICSharpCode.ILSpy.Docking
 					return;
 				}
 
-				var state = value.GetState();
+				var state = value?.GetState();
 				if (state != null)
 				{
 					if (state.DecompiledNodes != null)
@@ -155,7 +158,7 @@ namespace ICSharpCode.ILSpy.Docking
 					}
 					else
 					{
-						MainWindow.Instance.NavigateTo(new(state.ViewedUri, null));
+						MainWindow.Instance.AssemblyTreeModel.NavigateTo(new(state.ViewedUri, null));
 					}
 				}
 			}

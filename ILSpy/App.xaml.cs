@@ -31,6 +31,7 @@ using System.Windows.Navigation;
 using System.Windows.Threading;
 
 using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpyX.Analyzers;
 using ICSharpCode.ILSpyX.Settings;
@@ -44,7 +45,6 @@ using ICSharpCode.ILSpyX.TreeView;
 
 using TomsToolbox.Composition;
 using TomsToolbox.Wpf.Composition;
-using System.ComponentModel.Composition.Hosting;
 
 namespace ICSharpCode.ILSpy
 {
@@ -69,15 +69,7 @@ namespace ICSharpCode.ILSpy
 			ILSpySettings.SettingsFilePathProvider = new ILSpySettingsFilePathProvider();
 
 			var cmdArgs = Environment.GetCommandLineArgs().Skip(1);
-			App.CommandLineArguments = CommandLineArguments.Create(cmdArgs);
-
-			bool forceSingleInstance = (App.CommandLineArguments.SingleInstance ?? true)
-				&& !MiscSettingsPanel.CurrentMiscSettings.AllowMultipleInstances;
-			if (forceSingleInstance)
-			{
-				SingleInstance.Attach();  // will auto-exit for second instance
-				SingleInstance.NewInstanceDetected += SingleInstance_NewInstanceDetected;
-			}
+			CommandLineArguments = CommandLineArguments.Create(cmdArgs);
 
 			SharpTreeNode.SetImagesProvider(new WpfWindowsTreeNodeImagesProvider());
 
@@ -85,13 +77,21 @@ namespace ICSharpCode.ILSpy
 
 			Resources.RegisterDefaultStyles();
 
-			if (!System.Diagnostics.Debugger.IsAttached)
+			if (!Debugger.IsAttached)
 			{
 				AppDomain.CurrentDomain.UnhandledException += ShowErrorBox;
 				Dispatcher.CurrentDispatcher.UnhandledException += Dispatcher_UnhandledException;
 			}
 			TaskScheduler.UnobservedTaskException += DotNet40_UnobservedTaskException;
 			InitializeMef().GetAwaiter().GetResult();
+
+			bool forceSingleInstance = (CommandLineArguments.SingleInstance ?? true)
+									   && !SettingsService.Instance.MiscSettings.AllowMultipleInstances;
+			if (forceSingleInstance)
+			{
+				SingleInstance.Attach();  // will auto-exit for second instance
+				SingleInstance.NewInstanceDetected += SingleInstance_NewInstanceDetected;
+			}
 
 			// Register the export provider so that it can be accessed from WPF/XAML components.
 			ExportProviderLocator.Register(ExportProvider);
@@ -103,24 +103,19 @@ namespace ICSharpCode.ILSpy
 											  new RequestNavigateEventHandler(Window_RequestNavigate));
 			ILSpyTraceListener.Install();
 
-			if (App.CommandLineArguments.ArgumentsParser.IsShowingInformation)
+			if (CommandLineArguments.ArgumentsParser.IsShowingInformation)
 			{
-				MessageBox.Show(App.CommandLineArguments.ArgumentsParser.GetHelpText(), "ILSpy Command Line Arguments");
+				MessageBox.Show(CommandLineArguments.ArgumentsParser.GetHelpText(), "ILSpy Command Line Arguments");
 			}
 
-			if (App.CommandLineArguments.ArgumentsParser.RemainingArguments.Any())
+			if (CommandLineArguments.ArgumentsParser.RemainingArguments.Any())
 			{
-				string unknownArguments = string.Join(", ", App.CommandLineArguments.ArgumentsParser.RemainingArguments);
+				string unknownArguments = string.Join(", ", CommandLineArguments.ArgumentsParser.RemainingArguments);
 				MessageBox.Show(unknownArguments, "ILSpy Unknown Command Line Arguments Passed");
 			}
 		}
 
-		private static void SingleInstance_NewInstanceDetected(object sender, NewInstanceEventArgs e)
-		{
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-			ICSharpCode.ILSpy.MainWindow.Instance.HandleSingleInstanceCommandLineArguments(e.Args);
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-		}
+		private static void SingleInstance_NewInstanceDetected(object sender, NewInstanceEventArgs e) => ExportProvider.GetExportedValue<AssemblyListPaneModel>().HandleSingleInstanceCommandLineArguments(e.Args).HandleExceptions();
 
 		static Assembly ResolvePluginDependencies(AssemblyLoadContext context, AssemblyName assemblyName)
 		{
@@ -200,6 +195,8 @@ namespace ICSharpCode.ILSpy
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
+			base.OnStartup(e);
+
 			var output = new StringBuilder();
 
 			if (StartupExceptions.FormatExceptions(output))
@@ -207,7 +204,12 @@ namespace ICSharpCode.ILSpy
 				MessageBox.Show(output.ToString(), "Sorry we crashed!");
 				Environment.Exit(1);
 			}
-			base.OnStartup(e);
+
+			MainWindow = new MainWindow();
+			MainWindow.Loaded += (sender, args) => {
+				ExportProvider.GetExportedValue<AssemblyListPaneModel>().Initialize();
+			};
+			MainWindow.Show();
 		}
 
 		void DotNet40_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
@@ -268,7 +270,7 @@ namespace ICSharpCode.ILSpy
 
 		void Window_RequestNavigate(object sender, RequestNavigateEventArgs e)
 		{
-			ILSpy.MainWindow.Instance.NavigateTo(e);
+			ExportProvider.GetExportedValue<AssemblyListPaneModel>().NavigateTo(e);
 		}
 	}
 }

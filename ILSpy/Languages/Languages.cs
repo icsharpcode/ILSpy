@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -53,6 +55,7 @@ namespace ICSharpCode.ILSpy
 		}
 
 		static ILLanguage ilLanguage;
+
 		public static ILLanguage ILLanguage {
 			get {
 				if (ilLanguage == null)

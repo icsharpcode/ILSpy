@@ -18,6 +18,7 @@
 
 using System.Xml.Linq;
 
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Settings;
 
@@ -33,10 +34,8 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		public static string GetDisassemblyFormat(ILSpySettings settings)
 		{
-			if (settings == null)
-			{
-				settings = ILSpySettings.Load();
-			}
+			settings ??= SettingsService.Instance.SpySettings;
+
 			XElement e = settings[ns + "ReadyToRunOptions"];
 			XAttribute a = e.Attribute("DisassemblyFormat");
 			if (a == null)
@@ -51,10 +50,8 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		public static bool GetIsShowUnwindInfo(ILSpySettings settings)
 		{
-			if (settings == null)
-			{
-				settings = ILSpySettings.Load();
-			}
+			settings ??= SettingsService.Instance.SpySettings;
+
 			XElement e = settings[ns + "ReadyToRunOptions"];
 			XAttribute a = e.Attribute("IsShowUnwindInfo");
 
@@ -70,10 +67,8 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		public static bool GetIsShowDebugInfo(ILSpySettings settings)
 		{
-			if (settings == null)
-			{
-				settings = ILSpySettings.Load();
-			}
+			settings ??= SettingsService.Instance.SpySettings;
+
 			XElement e = settings[ns + "ReadyToRunOptions"];
 			XAttribute a = e.Attribute("IsShowDebugInfo");
 
@@ -89,10 +84,8 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		public static bool GetIsShowGCInfo(ILSpySettings settings)
 		{
-			if (settings == null)
-			{
-				settings = ILSpySettings.Load();
-			}
+			settings ??= SettingsService.Instance.SpySettings;
+
 			XElement e = settings[ns + "ReadyToRunOptions"];
 			XAttribute a = e.Attribute("IsShowGCInfo");
 

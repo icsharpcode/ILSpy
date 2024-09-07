@@ -75,7 +75,7 @@ namespace ICSharpCode.ILSpy.Updates
 			updateSettings.Add(new XElement("AutomaticUpdateCheckEnabled", automaticUpdateCheckEnabled));
 			if (lastSuccessfulUpdateCheck != null)
 				updateSettings.Add(new XElement("LastSuccessfulUpdateCheck", lastSuccessfulUpdateCheck));
-			ILSpySettings.SaveSettings(updateSettings);
+			SettingsService.Instance.SpySettings.SaveSettings(updateSettings);
 		}
 
 		public event PropertyChangedEventHandler PropertyChanged;

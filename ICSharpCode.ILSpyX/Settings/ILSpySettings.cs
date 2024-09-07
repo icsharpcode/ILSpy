@@ -34,16 +34,11 @@ namespace ICSharpCode.ILSpyX.Settings
 		/// </summary>
 		public static ISettingsFilePathProvider? SettingsFilePathProvider { get; set; }
 
-		readonly XElement root;
+		XElement root;
 
-		ILSpySettings()
+		ILSpySettings(XElement? root = null)
 		{
-			this.root = new XElement("ILSpy");
-		}
-
-		ILSpySettings(XElement root)
-		{
-			this.root = root;
+			this.root = root ?? new XElement("ILSpy");
 		}
 
 		public XElement this[XName section] {
@@ -64,13 +59,7 @@ namespace ICSharpCode.ILSpyX.Settings
 			{
 				try
 				{
-					XDocument doc = LoadWithoutCheckingCharacters(GetConfigFile());
-					if (null == doc.Root)
-					{
-						return new ILSpySettings();
-					}
-
-					return new ILSpySettings(doc.Root);
+					return new ILSpySettings(LoadFile(GetConfigFile()).Root);
 				}
 				catch (IOException)
 				{
@@ -83,7 +72,7 @@ namespace ICSharpCode.ILSpyX.Settings
 			}
 		}
 
-		static XDocument LoadWithoutCheckingCharacters(string fileName)
+		static XDocument LoadFile(string fileName)
 		{
 			return XDocument.Load(fileName, LoadOptions.None);
 		}
@@ -91,16 +80,15 @@ namespace ICSharpCode.ILSpyX.Settings
 		/// <summary>
 		/// Saves a setting section.
 		/// </summary>
-		public static void SaveSettings(XElement section)
+		public void SaveSettings(XElement section)
 		{
-			Update(
-				delegate (XElement root) {
-					XElement? existingElement = root.Element(section.Name);
-					if (existingElement != null)
-						existingElement.ReplaceWith(section);
-					else
-						root.Add(section);
-				});
+			Update(rootElement => {
+				XElement? existingElement = rootElement.Element(section.Name);
+				if (existingElement != null)
+					existingElement.ReplaceWith(section);
+				else
+					rootElement.Add(section);
+			});
 		}
 
 		/// <summary>
@@ -108,7 +96,7 @@ namespace ICSharpCode.ILSpyX.Settings
 		/// We always reload the file on updates to ensure we aren't overwriting unrelated changes performed
 		/// by another ILSpy instance.
 		/// </summary>
-		public static void Update(Action<XElement> action)
+		public void Update(Action<XElement> action)
 		{
 			using (new MutexProtector(ConfigFileMutex))
 			{
@@ -116,7 +104,7 @@ namespace ICSharpCode.ILSpyX.Settings
 				XDocument doc;
 				try
 				{
-					doc = LoadWithoutCheckingCharacters(config);
+					doc = LoadFile(config);
 				}
 				catch (IOException)
 				{
@@ -131,6 +119,7 @@ namespace ICSharpCode.ILSpyX.Settings
 				doc.Root!.SetAttributeValue("version", DecompilerVersionInfo.Major + "." + DecompilerVersionInfo.Minor + "." + DecompilerVersionInfo.Build + "." + DecompilerVersionInfo.Revision);
 				action(doc.Root);
 				doc.Save(config, SaveOptions.None);
+				this.root = doc.Root;
 			}
 		}
 
@@ -146,11 +135,6 @@ namespace ICSharpCode.ILSpyX.Settings
 
 			throw new ArgumentNullException(nameof(SettingsFilePathProvider));
 			// return "ILSpy.xml";
-		}
-
-		ISettingsProvider ISettingsProvider.Load()
-		{
-			return Load();
 		}
 
 		const string ConfigFileMutex = "01A91708-49D1-410D-B8EB-4DE2662B3971";

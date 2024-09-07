@@ -20,9 +20,6 @@ using System;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Documents;
-using System.Windows.Media;
 using System.Xml.Linq;
 
 using ICSharpCode.ILSpy.Properties;
@@ -41,6 +38,7 @@ namespace ICSharpCode.ILSpy.Options
 		}
 
 		public string Header { get; }
+
 		public UIElement Content { get; }
 	}
 
@@ -56,7 +54,7 @@ namespace ICSharpCode.ILSpy.Options
 			InitializeComponent();
 			var ep = App.ExportProvider;
 			this.optionPages = ep.GetExports<UIElement, IOptionsMetadata>("OptionPages").ToArray();
-			ILSpySettings settings = ILSpySettings.Load();
+			ILSpySettings settings = SettingsService.Instance.SpySettings;
 			foreach (var optionPage in optionPages.OrderBy(p => p.Metadata.Order))
 			{
 				var tabItem = new TabItemViewModel(Util.ResourceHelper.GetString(optionPage.Metadata.Title), optionPage.Value);
@@ -71,8 +69,8 @@ namespace ICSharpCode.ILSpy.Options
 
 		void OKButton_Click(object sender, RoutedEventArgs e)
 		{
-			ILSpySettings.Update(
-				delegate (XElement root) {
+			SettingsService.Instance.SpySettings.Update(
+				root => {
 					foreach (var optionPage in optionPages)
 					{
 						IOptionPage page = optionPage.Value as IOptionPage;
@@ -126,8 +124,9 @@ namespace ICSharpCode.ILSpy.Options
 	{
 		public override void Execute(object parameter)
 		{
-			OptionsDialog dlg = new OptionsDialog();
-			dlg.Owner = MainWindow.Instance;
+			OptionsDialog dlg = new() {
+				Owner = MainWindow.Instance
+			};
 			if (dlg.ShowDialog() == true)
 			{
 				new RefreshCommand().Execute(parameter);

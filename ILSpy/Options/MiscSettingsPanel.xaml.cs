@@ -38,35 +38,25 @@ namespace ICSharpCode.ILSpy.Options
 
 		public void Load(ILSpySettings settings)
 		{
-			this.DataContext = LoadMiscSettings(settings);
-		}
-
-		static MiscSettingsViewModel currentMiscSettings;
-
-		public static MiscSettingsViewModel CurrentMiscSettings {
-			get {
-				return currentMiscSettings ?? (currentMiscSettings = LoadMiscSettings(ILSpySettings.Load()));
-			}
-		}
-
-		public static MiscSettingsViewModel LoadMiscSettings(ILSpySettings settings)
-		{
-			var s = MiscSettings.Load(settings);
-			return new MiscSettingsViewModel(s);
+			this.DataContext = new MiscSettingsViewModel(SettingsService.Instance.MiscSettings);
 		}
 
 		public void Save(XElement root)
 		{
-			var s = (MiscSettingsViewModel)this.DataContext;
-			IMiscSettings.Save(root, s);
+			if (DataContext is not IMiscSettings miscSettings)
+				return;
 
-			currentMiscSettings = null; // invalidate cached settings
+			IMiscSettings.Save(root, miscSettings);
+
+			SettingsService.Instance.MiscSettings = new() {
+				AllowMultipleInstances = miscSettings.AllowMultipleInstances,
+				LoadPreviousAssemblies = miscSettings.LoadPreviousAssemblies
+			};
 		}
 
 		public void LoadDefaults()
 		{
-			currentMiscSettings = new MiscSettingsViewModel(MiscSettings.Load(ILSpySettings.Load()));
-			this.DataContext = currentMiscSettings;
+			this.DataContext = new MiscSettingsViewModel(new());
 		}
 	}
 }
