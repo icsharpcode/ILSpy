@@ -33,9 +33,9 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public static ReadOnlyCollection<Language> AllLanguages { get; } = Initialize(App.ExportProvider);
 
-		static ReadOnlyCollection<Language> Initialize(IExportProvider ep)
+		static ReadOnlyCollection<Language> Initialize(IExportProvider exportProvider)
 		{
-			var languages = ep.GetExportedValues<Language>().ToList();
+			var languages = exportProvider.GetExportedValues<Language>().ToList();
 
 			languages.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
 #if DEBUG

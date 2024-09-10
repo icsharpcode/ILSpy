@@ -10,7 +10,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 	/// <summary>
 	/// Interaction logic for AssemblyListPane.xaml
 	/// </summary>
-	[DataTemplate(typeof(AssemblyListPaneModel))]
+	[DataTemplate(typeof(AssemblyTreeModel))]
 	[PartCreationPolicy(CreationPolicy.NonShared)]
 	public partial class AssemblyListPane
 	{
@@ -27,7 +27,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 			if (e.Property == DataContextProperty)
 			{
-				if (e.NewValue is not AssemblyListPaneModel model)
+				if (e.NewValue is not AssemblyTreeModel model)
 					return;
 
 				model.SetActiveView(this);

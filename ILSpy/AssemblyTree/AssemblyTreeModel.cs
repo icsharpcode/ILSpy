@@ -45,7 +45,6 @@ using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using System.Reflection.Metadata;
 
-using ICSharpCode.ILSpyX.Extensions;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Search;
 using ICSharpCode.Decompiler;
@@ -60,16 +59,16 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 	[ExportToolPane]
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	[Export]
-	public class AssemblyListPaneModel : ToolPaneModel
+	public class AssemblyTreeModel : ToolPaneModel
 	{
 		public const string PaneContentId = "assemblyListPane";
 
 		AssemblyListPane activeView;
 		AssemblyListTreeNode assemblyListTreeNode;
 
-		readonly NavigationHistoryService history = NavigationHistoryService.Instance;
+		readonly NavigationHistory<NavigationState> history = new();
 
-		public AssemblyListPaneModel()
+		public AssemblyTreeModel()
 		{
 			Title = Resources.Assemblies;
 			ContentId = PaneContentId;
@@ -795,6 +794,10 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			DecompileSelectedNodes(newState.ViewState as DecompilerTextViewState, false);
 		}
 
+		public bool CanNavigateBack => history.CanNavigateBack;
+
+		public bool CanNavigateForward => history.CanNavigateForward;
+
 		internal void NavigateTo(RequestNavigateEventArgs e, bool recordHistory = true, bool inNewTabPage = false)
 		{
 			if (e.Uri.Scheme == "resource")
@@ -913,6 +916,17 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				CollapseChildren(child);
 				child.IsExpanded = false;
 			}
+		}
+
+		public void OpenFiles(string[] fileNames, bool focusNode = true)
+		{
+			if (fileNames == null)
+				throw new ArgumentNullException(nameof(fileNames));
+
+			if (focusNode)
+				UnselectAll();
+
+			LoadAssemblies(fileNames, focusNode: focusNode);
 		}
 	}
 }

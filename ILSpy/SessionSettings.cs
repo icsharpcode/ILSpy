@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy
 		{
 			XElement filterSettings = section.Element("FilterSettings") ?? new XElement("FilterSettings");
 
-			LanguageSettings = new(filterSettings);
+			LanguageSettings = new(filterSettings, this);
 			LanguageSettings.PropertyChanged += (sender, e) => PropertyChanged?.Invoke(sender, e);
 
 			ActiveAssemblyList = (string)section.Element("ActiveAssemblyList");

@@ -15,6 +15,11 @@ using DecompilerSettings = ICSharpCode.ILSpy.Options.DecompilerSettings;
 
 namespace ICSharpCode.ILSpy.Util
 {
+	public interface IChildSettings
+	{
+		ISettingsSection Parent { get; }
+	}
+
 	public interface ISettingsSection : INotifyPropertyChanged
 	{
 		XName SectionName { get; }
@@ -49,6 +54,19 @@ namespace ICSharpCode.ILSpy.Util
 			});
 		}
 
+		protected void SaveSection(ISettingsSection section, XElement root)
+		{
+			var element = SpySettings[section.SectionName];
+
+			section.SaveToSection(element);
+
+			var existingElement = root.Element(section.SectionName);
+			if (existingElement != null)
+				existingElement.ReplaceWith(element);
+			else
+				root.Add(element);
+		}
+
 		protected virtual void Section_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 		}
@@ -68,15 +86,7 @@ namespace ICSharpCode.ILSpy.Util
 			SpySettings.Update(root => {
 				foreach (var section in sections.Values)
 				{
-					var element = SpySettings[section.SectionName];
-
-					section.SaveToSection(element);
-
-					var existingElement = root.Element(section.SectionName);
-					if (existingElement != null)
-						existingElement.ReplaceWith(element);
-					else
-						root.Add(element);
+					SaveSection(section, root);
 				}
 			});
 
@@ -160,7 +170,14 @@ namespace ICSharpCode.ILSpy.Util
 
 			if (!reloading)
 			{
-				throw new InvalidOperationException("Settings are read only, use a snapshot to modify.");
+				var section = (sender as IChildSettings)?.Parent ?? sender as ISettingsSection;
+
+				if (section != null)
+				{
+					SpySettings.Update(root => {
+						SaveSection(section, root);
+					});
+				};
 			}
 
 			if (sender is DecompilerSettings decompilerSettings && assemblyListManager != null)

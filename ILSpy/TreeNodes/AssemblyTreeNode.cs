@@ -631,7 +631,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			{
 				foreach (var node in context.SelectedTreeNodes)
 				{
-					paths.Add(AssemblyListPaneModel.GetPathForNode(node));
+					paths.Add(AssemblyTreeModel.GetPathForNode(node));
 					var la = ((AssemblyTreeNode)node).LoadedAssembly;
 					la.AssemblyList.ReloadAssembly(la.FileName);
 				}

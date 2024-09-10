@@ -19,7 +19,10 @@
 using System.ComponentModel.Composition;
 using System.Windows.Input;
 
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Properties;
+
+using Microsoft.Win32;
 
 namespace ICSharpCode.ILSpy
 {
@@ -28,9 +31,30 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class OpenCommand : CommandWrapper
 	{
-		public OpenCommand()
+		private readonly AssemblyTreeModel assemblyTreeModel;
+
+		[ImportingConstructor]
+		public OpenCommand(AssemblyTreeModel assemblyTreeModel)
 			: base(ApplicationCommands.Open)
 		{
+			this.assemblyTreeModel = assemblyTreeModel;
+		}
+
+		protected override void OnExecute(object sender, ExecutedRoutedEventArgs e)
+		{
+			base.OnExecute(sender, e);
+
+			e.Handled = true;
+			OpenFileDialog dlg = new OpenFileDialog {
+				Filter = ".NET assemblies|*.dll;*.exe;*.winmd;*.wasm|Nuget Packages (*.nupkg)|*.nupkg|Portable Program Database (*.pdb)|*.pdb|All files|*.*",
+				Multiselect = true,
+				RestoreDirectory = true
+			};
+
+			if (dlg.ShowDialog() == true)
+			{
+				assemblyTreeModel.OpenFiles(dlg.FileNames);
+			}
 		}
 	}
 }

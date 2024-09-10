@@ -33,6 +33,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 
 using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Extensions;
@@ -545,6 +546,13 @@ namespace ICSharpCode.ILSpy.Search
 			gestures.Clear();
 			gestures.Add(new KeyGesture(Key.F, ModifierKeys.Control | ModifierKeys.Shift));
 			gestures.Add(new KeyGesture(Key.E, ModifierKeys.Control));
+		}
+
+		protected override void OnExecute(object sender, ExecutedRoutedEventArgs e)
+		{
+			base.OnExecute(sender, e);
+
+			DockWorkspace.Instance.ShowToolPane(SearchPaneModel.PaneContentId);
 		}
 	}
 }

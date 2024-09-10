@@ -18,10 +18,9 @@
 
 using System;
 using System.ComponentModel.Composition;
-using System.Xml.Linq;
 
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Properties;
-using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy.Options
 {
@@ -62,6 +61,14 @@ namespace ICSharpCode.ILSpy.Options
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class ShowOptionsCommand : SimpleCommand
 	{
+		private readonly AssemblyTreeModel assemblyTreeModel;
+
+		[ImportingConstructor]
+		public ShowOptionsCommand(AssemblyTreeModel assemblyTreeModel)
+		{
+			this.assemblyTreeModel = assemblyTreeModel;
+		}
+
 		public override void Execute(object parameter)
 		{
 			OptionsDialog dlg = new() {
@@ -69,7 +76,7 @@ namespace ICSharpCode.ILSpy.Options
 			};
 			if (dlg.ShowDialog() == true)
 			{
-				new RefreshCommand().Execute(parameter);
+				assemblyTreeModel.Refresh();
 			}
 		}
 	}

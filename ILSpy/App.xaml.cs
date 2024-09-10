@@ -43,6 +43,9 @@ using ICSharpCode.ILSpyX.TreeView;
 
 using TomsToolbox.Composition;
 using TomsToolbox.Wpf.Composition;
+using ICSharpCode.ILSpy.Themes;
+using System.Globalization;
+using System.Threading;
 
 namespace ICSharpCode.ILSpy
 {
@@ -75,24 +78,33 @@ namespace ICSharpCode.ILSpy
 				SingleInstance.NewInstanceDetected += SingleInstance_NewInstanceDetected;
 			}
 
-			SharpTreeNode.SetImagesProvider(new WpfWindowsTreeNodeImagesProvider());
-
 			InitializeComponent();
-
-			Resources.RegisterDefaultStyles();
 
 			if (!Debugger.IsAttached)
 			{
 				AppDomain.CurrentDomain.UnhandledException += ShowErrorBox;
 				Dispatcher.CurrentDispatcher.UnhandledException += Dispatcher_UnhandledException;
 			}
+
 			TaskScheduler.UnobservedTaskException += DotNet40_UnobservedTaskException;
+
+			SharpTreeNode.SetImagesProvider(new WpfWindowsTreeNodeImagesProvider());
+
+			Resources.RegisterDefaultStyles();
+
 			InitializeMef().GetAwaiter().GetResult();
 
 			// Register the export provider so that it can be accessed from WPF/XAML components.
 			ExportProviderLocator.Register(ExportProvider);
 			// Add data templates registered via MEF.
 			Resources.MergedDictionaries.Add(DataTemplateManager.CreateDynamicDataTemplates(ExportProvider));
+
+			var sessionSettings = SettingsService.Instance.SessionSettings;
+			ThemeManager.Current.Theme = sessionSettings.Theme;
+			if (!string.IsNullOrEmpty(sessionSettings.CurrentCulture))
+			{
+				Thread.CurrentThread.CurrentUICulture = CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo(sessionSettings.CurrentCulture);
+			}
 
 			EventManager.RegisterClassHandler(typeof(Window),
 											  Hyperlink.RequestNavigateEvent,
@@ -109,9 +121,11 @@ namespace ICSharpCode.ILSpy
 				string unknownArguments = string.Join(", ", CommandLineArguments.ArgumentsParser.RemainingArguments);
 				MessageBox.Show(unknownArguments, "ILSpy Unknown Command Line Arguments Passed");
 			}
+
+			SettingsService.Instance.AssemblyListManager.CreateDefaultAssemblyLists();
 		}
 
-		private static void SingleInstance_NewInstanceDetected(object sender, NewInstanceEventArgs e) => ExportProvider.GetExportedValue<AssemblyListPaneModel>().HandleSingleInstanceCommandLineArguments(e.Args).HandleExceptions();
+		private static void SingleInstance_NewInstanceDetected(object sender, NewInstanceEventArgs e) => ExportProvider.GetExportedValue<AssemblyTreeModel>().HandleSingleInstanceCommandLineArguments(e.Args).HandleExceptions();
 
 		static Assembly ResolvePluginDependencies(AssemblyLoadContext context, AssemblyName assemblyName)
 		{
@@ -203,7 +217,7 @@ namespace ICSharpCode.ILSpy
 
 			MainWindow = new MainWindow();
 			MainWindow.Loaded += (sender, args) => {
-				ExportProvider.GetExportedValue<AssemblyListPaneModel>().Initialize();
+				ExportProvider.GetExportedValue<AssemblyTreeModel>().Initialize();
 			};
 			MainWindow.Show();
 		}
@@ -266,7 +280,7 @@ namespace ICSharpCode.ILSpy
 
 		void Window_RequestNavigate(object sender, RequestNavigateEventArgs e)
 		{
-			ExportProvider.GetExportedValue<AssemblyListPaneModel>().NavigateTo(e);
+			ExportProvider.GetExportedValue<AssemblyTreeModel>().NavigateTo(e);
 		}
 	}
 }

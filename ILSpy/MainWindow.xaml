@@ -35,30 +35,6 @@
 		<themes:WindowStyleManagerBehavior />
 	</b:Interaction.Behaviors>
 
-	<Window.CommandBindings>
-		<CommandBinding
-			Command="Open"
-			Executed="OpenCommandExecuted" />
-		<CommandBinding
-			Command="Refresh"
-			Executed="RefreshCommandExecuted" />
-		<CommandBinding
-			Command="Save"
-			CanExecute="SaveCommandCanExecute"
-			Executed="SaveCommandExecuted" />
-		<CommandBinding
-			Command="BrowseBack"
-			CanExecute="BackCommandCanExecute"
-			Executed="BackCommandExecuted" />
-		<CommandBinding
-			Command="BrowseForward"
-			CanExecute="ForwardCommandCanExecute"
-			Executed="ForwardCommandExecuted" />
-		<CommandBinding
-			Command="Search"
-			Executed="SearchCommandExecuted" />
-	</Window.CommandBindings>
-
 	<Window.InputBindings>
 		<KeyBinding Key="R" Modifiers="Control" Command="{x:Static local:ILSpyCommands.Analyze}" />
 	</Window.InputBindings>
@@ -184,7 +160,7 @@
 				<StackPanel Orientation="Horizontal">
 					<TextBlock Name="updatePanelMessage" Margin="4,0" VerticalAlignment="Center"
 							   Text="{x:Static properties:Resources.ILSpyVersionAvailable}" />
-					<Button Name="downloadOrCheckUpdateButton" Click="downloadOrCheckUpdateButtonClick"
+					<Button Name="downloadOrCheckUpdateButton" Click="DownloadOrCheckUpdateButtonClick"
 							Content="{x:Static properties:Resources.Download}" />
 				</StackPanel>
 			</DockPanel>

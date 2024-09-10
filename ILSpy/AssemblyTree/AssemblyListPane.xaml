@@ -8,7 +8,7 @@
 						xmlns:assemblyTree="clr-namespace:ICSharpCode.ILSpy.AssemblyTree"
 						xmlns:toms="urn:TomsToolbox"
 						mc:Ignorable="d" d:DesignHeight="450" d:DesignWidth="800"
-						d:DataContext="{d:DesignInstance assemblyTree:AssemblyListPaneModel}"
+						d:DataContext="{d:DesignInstance assemblyTree:AssemblyTreeModel}"
 						AutomationProperties.Name="Assemblies and Classes"
 						ShowRoot="False"
 						AllowDropOrder="True"

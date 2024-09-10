@@ -20,9 +20,7 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
-using System.Globalization;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -32,16 +30,11 @@ using AvalonDock.Layout.Serialization;
 
 using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Docking;
-using ICSharpCode.ILSpy.Search;
-using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.Updates;
 using ICSharpCode.ILSpyX.FileLoaders;
 using ICSharpCode.ILSpyX.Settings;
 using ICSharpCode.ILSpyX.TreeView;
-
-using Microsoft.Win32;
 
 using Screen = System.Windows.Forms.Screen;
 
@@ -52,17 +45,17 @@ namespace ICSharpCode.ILSpy
 	/// </summary>
 	partial class MainWindow : Window
 	{
-		readonly NavigationHistoryService history = NavigationHistoryService.Instance;
-
 		static MainWindow instance;
+
+		private readonly MainWindowViewModel mainWindowViewModel = new();
 
 		public static MainWindow Instance {
 			get { return instance; }
 		}
 
-		public AssemblyListPaneModel AssemblyTreeModel {
+		public AssemblyTreeModel AssemblyTreeModel {
 			get {
-				return App.ExportProvider.GetExportedValue<AssemblyListPaneModel>();
+				return App.ExportProvider.GetExportedValue<AssemblyTreeModel>();
 			}
 		}
 
@@ -70,27 +63,14 @@ namespace ICSharpCode.ILSpy
 		{
 			instance = this;
 
-			var sessionSettings = SettingsService.Instance.SessionSettings;
-			ThemeManager.Current.Theme = sessionSettings.Theme;
-
 			// Make sure Images are initialized on the UI thread.
 			this.Icon = Images.ILSpyIcon;
 
-			this.DataContext = new MainWindowViewModel {
-				Workspace = DockWorkspace.Instance,
-				SessionSettings = sessionSettings,
-				AssemblyListManager = SettingsService.Instance.AssemblyListManager
-			};
-
-			SettingsService.Instance.AssemblyListManager.CreateDefaultAssemblyLists();
-			if (!string.IsNullOrEmpty(sessionSettings.CurrentCulture))
-			{
-				Thread.CurrentThread.CurrentUICulture = new CultureInfo(sessionSettings.CurrentCulture);
-			}
+			this.DataContext = mainWindowViewModel;
 
 			InitializeComponent();
 
-			DockWorkspace.Instance.InitializeLayout(dockManager);
+			mainWindowViewModel.Workspace.InitializeLayout(dockManager);
 
 			MenuService.Instance.Init(mainMenu, toolBar, InputBindings);
 
@@ -165,6 +145,7 @@ namespace ICSharpCode.ILSpy
 		}
 
 		#region Update Check
+
 		string updateAvailableDownloadUrl;
 
 		public async Task ShowMessageIfUpdatesAvailableAsync(ISettingsProvider spySettings, bool forceCheck = false)
@@ -188,7 +169,7 @@ namespace ICSharpCode.ILSpy
 			updatePanel.Visibility = Visibility.Collapsed;
 		}
 
-		async void downloadOrCheckUpdateButtonClick(object sender, RoutedEventArgs e)
+		async void DownloadOrCheckUpdateButtonClick(object sender, RoutedEventArgs e)
 		{
 			if (updateAvailableDownloadUrl != null)
 			{
@@ -217,6 +198,7 @@ namespace ICSharpCode.ILSpy
 				downloadOrCheckUpdateButton.Content = Properties.Resources.CheckAgain;
 			}
 		}
+
 		#endregion
 
 		public static void OpenLink(string link)
@@ -248,85 +230,6 @@ namespace ICSharpCode.ILSpy
 				// just ignore all of them.
 			}
 		}
-
-		#region Open/Refresh
-		void OpenCommandExecuted(object sender, ExecutedRoutedEventArgs e)
-		{
-			e.Handled = true;
-			OpenFileDialog dlg = new OpenFileDialog();
-			dlg.Filter = ".NET assemblies|*.dll;*.exe;*.winmd;*.wasm|Nuget Packages (*.nupkg)|*.nupkg|Portable Program Database (*.pdb)|*.pdb|All files|*.*";
-			dlg.Multiselect = true;
-			dlg.RestoreDirectory = true;
-			if (dlg.ShowDialog() == true)
-			{
-				OpenFiles(dlg.FileNames);
-			}
-		}
-
-		public void OpenFiles(string[] fileNames, bool focusNode = true)
-		{
-			if (fileNames == null)
-				throw new ArgumentNullException(nameof(fileNames));
-
-			if (focusNode)
-				AssemblyTreeModel.UnselectAll();
-
-			AssemblyTreeModel.LoadAssemblies(fileNames, focusNode: focusNode);
-		}
-
-		void RefreshCommandExecuted(object sender, ExecutedRoutedEventArgs e)
-		{
-			AssemblyTreeModel.Refresh();
-		}
-
-		void SearchCommandExecuted(object sender, ExecutedRoutedEventArgs e)
-		{
-			DockWorkspace.Instance.ShowToolPane(SearchPaneModel.PaneContentId);
-		}
-		#endregion
-
-		void SaveCommandCanExecute(object sender, CanExecuteRoutedEventArgs e)
-		{
-			e.Handled = true;
-			e.CanExecute = SaveCodeContextMenuEntry.CanExecute(AssemblyTreeModel.SelectedNodes.ToList());
-		}
-
-		void SaveCommandExecuted(object sender, ExecutedRoutedEventArgs e)
-		{
-			SaveCodeContextMenuEntry.Execute(AssemblyTreeModel.SelectedNodes.ToList());
-		}
-
-		#region Back/Forward navigation
-		void BackCommandCanExecute(object sender, CanExecuteRoutedEventArgs e)
-		{
-			e.Handled = true;
-			e.CanExecute = history.CanNavigateBack;
-		}
-
-		void BackCommandExecuted(object sender, ExecutedRoutedEventArgs e)
-		{
-			if (history.CanNavigateBack)
-			{
-				e.Handled = true;
-				AssemblyTreeModel.NavigateHistory(false);
-			}
-		}
-
-		void ForwardCommandCanExecute(object sender, CanExecuteRoutedEventArgs e)
-		{
-			e.Handled = true;
-			e.CanExecute = history.CanNavigateForward;
-		}
-
-		void ForwardCommandExecuted(object sender, ExecutedRoutedEventArgs e)
-		{
-			if (history.CanNavigateForward)
-			{
-				e.Handled = true;
-				AssemblyTreeModel.NavigateHistory(true);
-			}
-		}
-		#endregion
 
 		protected override void OnStateChanged(EventArgs e)
 		{

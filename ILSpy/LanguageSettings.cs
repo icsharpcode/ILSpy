@@ -16,11 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 
 using ICSharpCode.ILSpyX;
@@ -32,7 +29,7 @@ namespace ICSharpCode.ILSpy
 	/// <summary>
 	/// Represents the filters applied to the tree view.
 	/// </summary>
-	public class LanguageSettings : ObservableObject
+	public class LanguageSettings : ObservableObject, IChildSettings
 	{
 		/// <summary>
 		/// This dictionary is necessary to remember language versions across language changes. For example, 
@@ -41,13 +38,16 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		private readonly Dictionary<Language, LanguageVersion> languageVersionHistory = new Dictionary<Language, LanguageVersion>();
 
-		public LanguageSettings(XElement element)
+		public LanguageSettings(XElement element, ISettingsSection parent)
 		{
+			Parent = parent;
 			this.ShowApiLevel = (ApiVisibility?)(int?)element.Element("ShowAPILevel") ?? ApiVisibility.PublicAndInternal;
 			this.Language = Languages.GetLanguage((string)element.Element("Language")) ?? Languages.AllLanguages.First();
 			this.LanguageVersion = Language.LanguageVersions.FirstOrDefault(v => v.Version == (string)element.Element("LanguageVersion"))
 								   ?? Language.LanguageVersions.LastOrDefault();
 		}
+
+		public ISettingsSection Parent { get; }
 
 		public XElement SaveAsXml()
 		{

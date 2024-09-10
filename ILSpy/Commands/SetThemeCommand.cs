@@ -7,12 +7,7 @@ namespace ICSharpCode.ILSpy.Commands
 		{
 			if (parameter is string theme)
 			{
-				var snapshot = SettingsService.Instance.CreateSnapshot();
-				var sessionSettings = snapshot.GetSettings<SessionSettings>();
-
-				sessionSettings.Theme = theme;
-
-				snapshot.Save();
+				SettingsService.Instance.SessionSettings.Theme = theme;
 			}
 		}
 	}

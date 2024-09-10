@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Windows;
 using System.Windows.Input;
 
 namespace ICSharpCode.ILSpy
@@ -28,15 +29,16 @@ namespace ICSharpCode.ILSpy
 		public CommandWrapper(ICommand wrappedCommand)
 		{
 			this.wrappedCommand = wrappedCommand;
+
+			Application.Current.MainWindow?.CommandBindings.Add(new CommandBinding(wrappedCommand, OnExecute, OnCanExecute));
 		}
 
 		public static ICommand Unwrap(ICommand command)
 		{
-			CommandWrapper w = command as CommandWrapper;
-			if (w != null)
+			if (command is CommandWrapper w)
 				return w.wrappedCommand;
-			else
-				return command;
+
+			return command;
 		}
 
 		public event EventHandler CanExecuteChanged {
@@ -52,6 +54,15 @@ namespace ICSharpCode.ILSpy
 		public bool CanExecute(object parameter)
 		{
 			return wrappedCommand.CanExecute(parameter);
+		}
+
+		protected virtual void OnExecute(object sender, ExecutedRoutedEventArgs e)
+		{
+		}
+
+		protected virtual void OnCanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = true;
 		}
 	}
 }
