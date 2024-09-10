@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows;
 
 using TomsToolbox.Wpf;
+using ICSharpCode.ILSpy.Themes;
 
 namespace ICSharpCode.ILSpy.Options
 {
@@ -17,6 +18,7 @@ namespace ICSharpCode.ILSpy.Options
 	{
 		private DisplaySettings settings = new();
 		private FontFamily[] fontFamilies;
+		private SessionSettings sessionSettings;
 
 		public DisplaySettingsViewModel()
 		{
@@ -40,6 +42,11 @@ namespace ICSharpCode.ILSpy.Options
 			set => SetProperty(ref settings, value);
 		}
 
+		public SessionSettings SessionSettings {
+			get => sessionSettings;
+			set => SetProperty(ref sessionSettings, value);
+		}
+
 		public FontFamily[] FontFamilies {
 			get => fontFamilies;
 			set => SetProperty(ref fontFamilies, value);
@@ -47,9 +54,10 @@ namespace ICSharpCode.ILSpy.Options
 
 		public int[] FontSizes { get; } = Enumerable.Range(6, 24 - 6 + 1).ToArray();
 
-		public void Load(ILSpySettings spySettings)
+		public void Load(SettingsSnapshot snapshot)
 		{
-			Settings = DisplaySettings.Load(spySettings);
+			Settings = snapshot.GetSettings<DisplaySettings>();
+			SessionSettings = snapshot.GetSettings<SessionSettings>();
 		}
 
 		static bool IsSymbolFont(FontFamily fontFamily)
@@ -77,14 +85,10 @@ namespace ICSharpCode.ILSpy.Options
 				.ToArray();
 		}
 
-		public void Save(XElement root)
-		{
-			Settings.Save(root);
-		}
-
 		public void LoadDefaults()
 		{
-			Settings = new();
+			Settings.LoadFromSection(new XElement("empty"));
+			SessionSettings.Theme = ThemeManager.Current.DefaultTheme;
 		}
 	}
 }

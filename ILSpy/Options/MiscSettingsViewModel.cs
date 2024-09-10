@@ -16,12 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel;
+using System.ComponentModel.Composition;
 using System.IO;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
+using System.Xml.Linq;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpyX.Settings;
@@ -32,31 +32,14 @@ using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpy.Options
 {
-	public class MiscSettingsViewModel : ObservableObject, IMiscSettings
+	[ExportOptionPage(Order = 30)]
+	[PartCreationPolicy(CreationPolicy.NonShared)]
+	public class MiscSettingsViewModel : ObservableObject, IOptionPage
 	{
-		bool allowMultipleInstances;
-		bool loadPreviousAssemblies = true;
-
-		public MiscSettingsViewModel(MiscSettings s)
-		{
-			AllowMultipleInstances = s.AllowMultipleInstances;
-			LoadPreviousAssemblies = s.LoadPreviousAssemblies;
-		}
-
-		/// <summary>
-		/// Allow multiple instances.
-		/// </summary>
-		public bool AllowMultipleInstances {
-			get => allowMultipleInstances;
-			set => SetProperty(ref allowMultipleInstances, value);
-		}
-
-		/// <summary>
-		/// Load assemblies that were loaded in the previous instance
-		/// </summary>
-		public bool LoadPreviousAssemblies {
-			get => loadPreviousAssemblies;
-			set => SetProperty(ref loadPreviousAssemblies, value);
+		private MiscSettings settings;
+		public MiscSettings Settings {
+			get => settings;
+			set => SetProperty(ref settings, value);
 		}
 
 		public ICommand AddRemoveShellIntegrationCommand => new DelegateCommand(() => AppEnvironment.IsWindows, AddRemoveShellIntegration);
@@ -104,6 +87,18 @@ namespace ICSharpCode.ILSpy.Options
 			get {
 				return RegistryEntriesExist() ? Properties.Resources.RemoveShellIntegration : Properties.Resources.AddShellIntegration;
 			}
+		}
+
+		public string Title => Properties.Resources.Misc;
+
+		public void Load(SettingsSnapshot settings)
+		{
+			Settings = settings.GetSettings<MiscSettings>();
+		}
+
+		public void LoadDefaults()
+		{
+			Settings.LoadFromSection(new XElement("dummy"));
 		}
 	}
 }

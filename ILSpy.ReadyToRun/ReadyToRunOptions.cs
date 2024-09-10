@@ -19,102 +19,72 @@
 using System.Xml.Linq;
 
 using ICSharpCode.ILSpy.Util;
-using ICSharpCode.ILSpyX;
-using ICSharpCode.ILSpyX.Settings;
+
+using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpy.ReadyToRun
 {
-	internal class ReadyToRunOptions
+	internal partial class ReadyToRunOptions : ObservableObject, ISettingsSection
 	{
 		private static readonly XNamespace ns = "http://www.ilspy.net/ready-to-run";
 
 		internal static string intel = "Intel";
 		internal static string gas = "AT & T";
-		internal static string[] disassemblyFormats = new string[] { intel, gas };
+		internal static string[] disassemblyFormats = [intel, gas];
 
-		public static string GetDisassemblyFormat(ILSpySettings settings)
-		{
-			settings ??= SettingsService.Instance.SpySettings;
-
-			XElement e = settings[ns + "ReadyToRunOptions"];
-			XAttribute a = e.Attribute("DisassemblyFormat");
-			if (a == null)
-			{
-				return ReadyToRunOptions.intel;
-			}
-			else
-			{
-				return (string)a;
+		public string[] DisassemblyFormats {
+			get {
+				return disassemblyFormats;
 			}
 		}
 
-		public static bool GetIsShowUnwindInfo(ILSpySettings settings)
-		{
-			settings ??= SettingsService.Instance.SpySettings;
-
-			XElement e = settings[ns + "ReadyToRunOptions"];
-			XAttribute a = e.Attribute("IsShowUnwindInfo");
-
-			if (a == null)
-			{
-				return false;
-			}
-			else
-			{
-				return (bool)a;
-			}
+		private bool isShowUnwindInfo;
+		public bool IsShowUnwindInfo {
+			get => isShowUnwindInfo;
+			set => SetProperty(ref isShowUnwindInfo, value);
 		}
 
-		public static bool GetIsShowDebugInfo(ILSpySettings settings)
-		{
-			settings ??= SettingsService.Instance.SpySettings;
-
-			XElement e = settings[ns + "ReadyToRunOptions"];
-			XAttribute a = e.Attribute("IsShowDebugInfo");
-
-			if (a == null)
-			{
-				return true;
-			}
-			else
-			{
-				return (bool)a;
-			}
+		private bool isShowDebugInfo;
+		public bool IsShowDebugInfo {
+			get => isShowDebugInfo;
+			set => SetProperty(ref isShowDebugInfo, value);
 		}
 
-		public static bool GetIsShowGCInfo(ILSpySettings settings)
-		{
-			settings ??= SettingsService.Instance.SpySettings;
-
-			XElement e = settings[ns + "ReadyToRunOptions"];
-			XAttribute a = e.Attribute("IsShowGCInfo");
-
-			if (a == null)
-			{
-				return false;
-			}
-			else
-			{
-				return (bool)a;
-			}
+		private bool isShowGCInfo;
+		public bool IsShowGCInfo {
+			get => isShowGCInfo;
+			set => SetProperty(ref isShowGCInfo, value);
 		}
 
-		public static void SetDisassemblyOptions(XElement root, string disassemblyFormat, bool isShowUnwindInfo, bool isShowDebugInfo, bool isShowGCInfo)
+		private string disassemblyFormat;
+		public string DisassemblyFormat {
+			get => disassemblyFormat;
+			set => SetProperty(ref disassemblyFormat, value);
+		}
+
+		public XName SectionName { get; } = ns + "ReadyToRunOptions";
+
+		public void LoadFromSection(XElement e)
 		{
-			XElement section = new XElement(ns + "ReadyToRunOptions");
+			XAttribute format = e.Attribute("DisassemblyFormat");
+			DisassemblyFormat = format == null ? intel : (string)format;
+
+			XAttribute unwind = e.Attribute("IsShowUnwindInfo");
+			IsShowUnwindInfo = unwind != null && (bool)unwind;
+
+			XAttribute debug = e.Attribute("IsShowDebugInfo");
+			IsShowDebugInfo = debug == null || (bool)debug;
+
+			XAttribute showGc = e.Attribute("IsShowGCInfo");
+			IsShowGCInfo = showGc != null && (bool)showGc;
+		}
+
+		public void SaveToSection(XElement section)
+		{
 			section.SetAttributeValue("DisassemblyFormat", disassemblyFormat);
 			section.SetAttributeValue("IsShowUnwindInfo", isShowUnwindInfo);
 			section.SetAttributeValue("IsShowDebugInfo", isShowDebugInfo);
 			section.SetAttributeValue("IsShowGCInfo", isShowGCInfo);
-			XElement existingElement = root.Element(ns + "ReadyToRunOptions");
-			if (existingElement != null)
-			{
-				existingElement.ReplaceWith(section);
-			}
-			else
-			{
-				root.Add(section);
-			}
 		}
 	}
 }

@@ -25,12 +25,14 @@ using System.Xml.Linq;
 
 using ICSharpCode.ILSpyX;
 
+using TomsToolbox.Wpf;
+
 namespace ICSharpCode.ILSpy
 {
 	/// <summary>
 	/// Represents the filters applied to the tree view.
 	/// </summary>
-	public class LanguageSettings : INotifyPropertyChanged
+	public class LanguageSettings : ObservableObject
 	{
 		/// <summary>
 		/// This dictionary is necessary to remember language versions across language changes. For example, 
@@ -171,20 +173,6 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 		}
-
-		public event PropertyChangedEventHandler PropertyChanged;
-
-		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-		{
-			if (PropertyChanged != null)
-			{
-				var args = new PropertyChangedEventArgs(propertyName);
-
-				PropertyChanged(this, args);
-				MessageBus.Send(this, new LanguageSettingsChangedEventArgs(args));
-			}
-		}
-
 
 		// This class has been initially called FilterSettings, but then has been Hijacked to store language settings as well.
 		// While the filter settings were some sort of local, the language settings are global. This is a bit of a mess.

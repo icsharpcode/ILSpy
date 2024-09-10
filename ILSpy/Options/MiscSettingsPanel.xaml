@@ -2,16 +2,17 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" mc:Ignorable="d" 
 			 xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
-			 mc:Ignorable="d" 
+			 xmlns:options="clr-namespace:ICSharpCode.ILSpy.Options"
+			 d:DataContext="{d:DesignInstance options:MiscSettingsViewModel}"
              d:DesignHeight="300" d:DesignWidth="300">
 	<StackPanel Orientation="Vertical">
 		<GroupBox Header="{x:Static properties:Resources.Misc}">
 			<StackPanel Margin="10">
-				<CheckBox IsChecked="{Binding AllowMultipleInstances}" Content="{x:Static properties:Resources.AllowMultipleInstances}" />
-				<CheckBox IsChecked="{Binding LoadPreviousAssemblies}" Content="{x:Static properties:Resources.LoadAssembliesThatWereLoadedInTheLastInstance}"/>
-				<Button Command="{Binding AddRemoveShellIntegrationCommand}" Content="{Binding AddRemoveShellIntegrationText}" Margin="3" />
+				<CheckBox IsChecked="{Binding Settings.AllowMultipleInstances}" Content="{x:Static properties:Resources.AllowMultipleInstances}" />
+				<CheckBox IsChecked="{Binding Settings.LoadPreviousAssemblies}" Content="{x:Static properties:Resources.LoadAssembliesThatWereLoadedInTheLastInstance}"/>
+				<Button Command="{Binding AddRemoveShellIntegrationCommand}" Content="{Binding AddRemoveShellIntegrationText, FallbackValue=temp}" Margin="3" />
 			</StackPanel>
 		</GroupBox>
 	</StackPanel>

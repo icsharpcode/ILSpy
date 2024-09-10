@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy
 			InitializeComponent();
 
 #if DEBUG
-			MessageBus<LanguageSettingsChangedEventArgs>.Subscribers += (sender, e) => LanguageSettings_PropertyChanged(sender, e);
+			MessageBus<SettingsChangedEventArgs>.Subscribers += (sender, e) => Settings_PropertyChanged(sender, e);
 			MessageBus<AssemblyTreeSelectionChangedEventArgs>.Subscribers += SelectionChanged;
 
 			writingOptions.PropertyChanged += WritingOptions_PropertyChanged;
@@ -60,10 +60,13 @@ namespace ICSharpCode.ILSpy
 			});
 		}
 
-		private void LanguageSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void Settings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 #if DEBUG
-			if (e.PropertyName == "Language")
+			if (sender is not LanguageSettings)
+				return;
+
+			if (e.PropertyName == nameof(LanguageSettings.Language))
 			{
 				if (language != null)
 				{

@@ -29,8 +29,6 @@
 			<ContentPresenter Content="{Binding Content}" />
 		</DataTemplate>
 
-		<toms:BindingRelay x:Key="WindowBinding" DataContext="{Binding}" />
-
 	</Window.Resources>
 
 	<b:Interaction.Behaviors>
@@ -93,7 +91,7 @@
 								<Setter.Value>
 									<MultiBinding Converter="{x:Static toms:BinaryOperationConverter.Equality}" Mode="OneWay">
 										<Binding />
-										<Binding Source="{StaticResource WindowBinding}" Path="DataContext.SessionSettings.Theme" />
+										<Binding Path="DataContext.SessionSettings.Theme" RelativeSource="{RelativeSource FindAncestor, AncestorType=Window}"/>
 									</MultiBinding>
 								</Setter.Value>
 							</Setter>

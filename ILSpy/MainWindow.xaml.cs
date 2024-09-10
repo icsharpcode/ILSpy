@@ -34,6 +34,7 @@ using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Search;
 using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.Updates;
 using ICSharpCode.ILSpyX.FileLoaders;
@@ -70,6 +71,7 @@ namespace ICSharpCode.ILSpy
 			instance = this;
 
 			var sessionSettings = SettingsService.Instance.SessionSettings;
+			ThemeManager.Current.Theme = sessionSettings.Theme;
 
 			// Make sure Images are initialized on the UI thread.
 			this.Icon = Images.ILSpyIcon;
@@ -165,7 +167,7 @@ namespace ICSharpCode.ILSpy
 		#region Update Check
 		string updateAvailableDownloadUrl;
 
-		public async Task ShowMessageIfUpdatesAvailableAsync(ILSpySettings spySettings, bool forceCheck = false)
+		public async Task ShowMessageIfUpdatesAvailableAsync(ISettingsProvider spySettings, bool forceCheck = false)
 		{
 			string downloadUrl;
 			if (forceCheck)
@@ -337,14 +339,18 @@ namespace ICSharpCode.ILSpy
 		protected override void OnClosing(CancelEventArgs e)
 		{
 			base.OnClosing(e);
-			var sessionSettings = SettingsService.Instance.SessionSettings;
+
+			var snapshot = SettingsService.Instance.CreateSnapshot();
+
+			var sessionSettings = snapshot.GetSettings<SessionSettings>();
 
 			sessionSettings.ActiveAssemblyList = AssemblyTreeModel.AssemblyList.ListName;
 			sessionSettings.ActiveTreeViewPath = AssemblyTreeModel.SelectedPath;
 			sessionSettings.ActiveAutoLoadedAssembly = GetAutoLoadedAssemblyNode(AssemblyTreeModel.SelectedItem);
 			sessionSettings.WindowBounds = this.RestoreBounds;
 			sessionSettings.DockLayout.Serialize(new XmlLayoutSerializer(dockManager));
-			sessionSettings.Save();
+
+			snapshot.Save();
 		}
 
 		private static string GetAutoLoadedAssemblyNode(SharpTreeNode node)

@@ -32,9 +32,7 @@ using System.Windows.Threading;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AssemblyTree;
-using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpyX.Analyzers;
-using ICSharpCode.ILSpyX.Settings;
 
 using Medo.Application;
 
@@ -66,10 +64,16 @@ namespace ICSharpCode.ILSpy
 
 		public App()
 		{
-			ILSpySettings.SettingsFilePathProvider = new ILSpySettingsFilePathProvider();
-
 			var cmdArgs = Environment.GetCommandLineArgs().Skip(1);
 			CommandLineArguments = CommandLineArguments.Create(cmdArgs);
+
+			bool forceSingleInstance = (CommandLineArguments.SingleInstance ?? true)
+									   && !SettingsService.Instance.MiscSettings.AllowMultipleInstances;
+			if (forceSingleInstance)
+			{
+				SingleInstance.Attach();  // will auto-exit for second instance
+				SingleInstance.NewInstanceDetected += SingleInstance_NewInstanceDetected;
+			}
 
 			SharpTreeNode.SetImagesProvider(new WpfWindowsTreeNodeImagesProvider());
 
@@ -84,14 +88,6 @@ namespace ICSharpCode.ILSpy
 			}
 			TaskScheduler.UnobservedTaskException += DotNet40_UnobservedTaskException;
 			InitializeMef().GetAwaiter().GetResult();
-
-			bool forceSingleInstance = (CommandLineArguments.SingleInstance ?? true)
-									   && !SettingsService.Instance.MiscSettings.AllowMultipleInstances;
-			if (forceSingleInstance)
-			{
-				SingleInstance.Attach();  // will auto-exit for second instance
-				SingleInstance.NewInstanceDetected += SingleInstance_NewInstanceDetected;
-			}
 
 			// Register the export provider so that it can be accessed from WPF/XAML components.
 			ExportProviderLocator.Register(ExportProvider);

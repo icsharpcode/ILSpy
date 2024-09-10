@@ -40,9 +40,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		bool childrenNeedFiltering;
 
-		public ILSpyTreeNode()
+		protected ILSpyTreeNode()
 		{
-			MessageBus<LanguageSettingsChangedEventArgs>.Subscribers += LanguageSettings_Changed;
+			MessageBus<SettingsChangedEventArgs>.Subscribers += (sender, e) => Settings_Changed(sender, e);
 		}
 
 		LanguageSettings LanguageSettings => SettingsService.Instance.SessionSettings.LanguageSettings;
@@ -127,8 +127,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		protected virtual void LanguageSettings_Changed(object sender, EventArgs e)
+		protected virtual void Settings_Changed(object sender, PropertyChangedEventArgs e)
 		{
+			if (sender is not ILSpy.LanguageSettings)
+				return;
+			if (e.PropertyName is not (nameof(LanguageSettings.Language) or nameof(LanguageSettings.LanguageVersion)))
+				return;
+
 			RaisePropertyChanged(nameof(Text));
 			if (IsVisible)
 			{

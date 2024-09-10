@@ -3,7 +3,6 @@
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
 			 xmlns:local="clr-namespace:ICSharpCode.ILSpy.Options"
-			 xmlns:system="clr-namespace:System;assembly=mscorlib"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
@@ -12,7 +11,7 @@
 		<StackPanel Orientation="Vertical">
 			<DockPanel>
 				<Label DockPanel.Dock="Left" Content="{x:Static properties:Resources.DisplaySettingsPanel_Theme}" />
-				<ComboBox ItemsSource="{x:Static themes:ThemeManager.AllThemes}" SelectedItem="{Binding Settings.Theme}" VerticalContentAlignment="Center" Margin="0,0,8,0" />
+				<ComboBox ItemsSource="{x:Static themes:ThemeManager.AllThemes}" SelectedItem="{Binding SessionSettings.Theme}" VerticalContentAlignment="Center" Margin="0,0,8,0" />
 			</DockPanel>
 			<GroupBox Header="{x:Static properties:Resources.Font}">
 				<Grid>

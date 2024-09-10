@@ -20,6 +20,8 @@ namespace ICSharpCode.ILSpy.Options
 	{
 		private IOptionPage? selectedPage;
 
+		private SettingsSnapshot snapshot;
+
 		private readonly IOptionPage[] optionPages = App.ExportProvider.GetExports<IOptionPage, IOptionsMetadata>("OptionPages")
 			.OrderBy(page => page.Metadata?.Order)
 			.Select(item => item.Value)
@@ -28,11 +30,11 @@ namespace ICSharpCode.ILSpy.Options
 
 		public OptionsDialogViewModel()
 		{
-			var settings = SettingsService.Instance.SpySettings;
+			this.snapshot = SettingsService.Instance.CreateSnapshot();
 
 			foreach (var optionPage in optionPages)
 			{
-				optionPage.Load(settings);
+				optionPage.Load(this.snapshot);
 			}
 
 			OptionPages = optionPages.Select(page => new OptionsItemViewModel(page)).ToArray();
@@ -60,12 +62,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		private void Commit()
 		{
-			SettingsService.Instance.SpySettings.Update(root => {
-				foreach (var optionPage in optionPages)
-				{
-					optionPage.Save(root);
-				}
-			});
+			snapshot.Save();
 		}
 	}
 }

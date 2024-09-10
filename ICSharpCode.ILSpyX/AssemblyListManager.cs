@@ -59,9 +59,9 @@ namespace ICSharpCode.ILSpyX
 
 		public bool UseDebugSymbols { get; set; }
 
-		public ObservableCollection<string> AssemblyLists { get; } = new ObservableCollection<string>();
+		public ObservableCollection<string> AssemblyLists { get; } = [];
 
-		public FileLoaderRegistry LoaderRegistry { get; } = new FileLoaderRegistry();
+		public FileLoaderRegistry LoaderRegistry { get; } = new();
 
 		/// <summary>
 		/// Loads an assembly list from the ILSpySettings.

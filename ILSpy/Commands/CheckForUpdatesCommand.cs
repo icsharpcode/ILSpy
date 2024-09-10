@@ -20,7 +20,6 @@
 using System.ComponentModel.Composition;
 
 using ICSharpCode.ILSpy.Properties;
-using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy
 {

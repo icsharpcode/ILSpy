@@ -20,6 +20,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
@@ -66,7 +67,7 @@ namespace ICSharpCode.ILSpy.Search
 
 			ContextMenuProvider.Add(listBox);
 			MessageBus<CurrentAssemblyListChangedEventArgs>.Subscribers += (sender, e) => CurrentAssemblyList_Changed();
-			MessageBus<LanguageSettingsChangedEventArgs>.Subscribers += (sender, e) => LanguageSettings_PropertyChanged();
+			MessageBus<SettingsChangedEventArgs>.Subscribers += (sender, e) => Settings_PropertyChanged(sender, e);
 
 			CompositionTarget.Rendering += UpdateResults;
 		}
@@ -84,8 +85,11 @@ namespace ICSharpCode.ILSpy.Search
 			}
 		}
 
-		void LanguageSettings_PropertyChanged()
+		void Settings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
+			if (sender is not LanguageSettings)
+				return;
+
 			UpdateFilter();
 		}
 

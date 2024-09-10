@@ -123,11 +123,6 @@ namespace ICSharpCode.ILSpyX.Settings
 			}
 		}
 
-		void ISettingsProvider.Update(Action<XElement> action)
-		{
-			Update(action);
-		}
-
 		static string GetConfigFile()
 		{
 			if (null != SettingsFilePathProvider)
@@ -148,17 +143,16 @@ namespace ICSharpCode.ILSpyX.Settings
 
 			public MutexProtector(string name)
 			{
-				bool createdNew;
-				this.mutex = new Mutex(true, name, out createdNew);
-				if (!createdNew)
+				this.mutex = new Mutex(true, name, out bool createdNew);
+				if (createdNew)
+					return;
+
+				try
 				{
-					try
-					{
-						mutex.WaitOne();
-					}
-					catch (AbandonedMutexException)
-					{
-					}
+					mutex.WaitOne();
+				}
+				catch (AbandonedMutexException)
+				{
 				}
 			}
 

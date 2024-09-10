@@ -52,9 +52,7 @@ namespace ICSharpCode.ILSpy.Util
 
 	public class CurrentAssemblyListChangedEventArgs(NotifyCollectionChangedEventArgs e) : WrappedEventArgs<NotifyCollectionChangedEventArgs>(e);
 
-	public class LanguageSettingsChangedEventArgs(PropertyChangedEventArgs e) : WrappedEventArgs<PropertyChangedEventArgs>(e);
-
-	public class SessionSettingsChangedEventArgs(PropertyChangedEventArgs e) : WrappedEventArgs<PropertyChangedEventArgs>(e);
+	public class SettingsChangedEventArgs(PropertyChangedEventArgs e) : WrappedEventArgs<PropertyChangedEventArgs>(e);
 
 	public class NavigateToReferenceEventArgs(object reference, bool inNewTabPage = false) : EventArgs
 	{

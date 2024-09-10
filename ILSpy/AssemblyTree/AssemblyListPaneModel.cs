@@ -77,30 +77,40 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			ShortcutKey = new KeyGesture(Key.F6);
 
 			MessageBus<NavigateToReferenceEventArgs>.Subscribers += JumpToReference;
-			MessageBus<SessionSettingsChangedEventArgs>.Subscribers += (sender, e) => SessionSettings_PropertyChanged(sender, e);
-			MessageBus<LanguageSettingsChangedEventArgs>.Subscribers += (sender, e) => LanguageSettings_PropertyChanged(sender, e);
+			MessageBus<SettingsChangedEventArgs>.Subscribers += (sender, e) => Settings_PropertyChanged(sender, e);
 
 			var selectionChangeThrottle = new DispatcherThrottle(DispatcherPriority.Background, TreeView_SelectionChanged);
 			SelectedItems.CollectionChanged += (_, _) => selectionChangeThrottle.Tick();
 		}
 
-		private void SessionSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		private void Settings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			var sessionSettings = SettingsService.Instance.SessionSettings;
-
-			switch (e.PropertyName)
+			if (sender is SessionSettings sessionSettings)
 			{
-				case nameof(SessionSettings.ActiveAssemblyList):
-					ShowAssemblyList(sessionSettings.ActiveAssemblyList);
-					break;
-				case nameof(SessionSettings.Theme):
-					// update syntax highlighting and force reload (AvalonEdit does not automatically refresh on highlighting change)
-					DecompilerTextView.RegisterHighlighting();
-					DecompileSelectedNodes(DockWorkspace.Instance.ActiveTabPage.GetState() as DecompilerTextViewState);
-					break;
-				case nameof(SessionSettings.CurrentCulture):
-					MessageBox.Show(Properties.Resources.SettingsChangeRestartRequired, "ILSpy");
-					break;
+				switch (e.PropertyName)
+				{
+					case nameof(SessionSettings.ActiveAssemblyList):
+						ShowAssemblyList(sessionSettings.ActiveAssemblyList);
+						break;
+					case nameof(SessionSettings.Theme):
+						// update syntax highlighting and force reload (AvalonEdit does not automatically refresh on highlighting change)
+						DecompilerTextView.RegisterHighlighting();
+						DecompileSelectedNodes(
+							DockWorkspace.Instance.ActiveTabPage.GetState() as DecompilerTextViewState);
+						break;
+					case nameof(SessionSettings.CurrentCulture):
+						MessageBox.Show(Properties.Resources.SettingsChangeRestartRequired, "ILSpy");
+						break;
+				}
+			}
+			else if (sender is LanguageSettings)
+			{
+				switch (e.PropertyName)
+				{
+					case nameof(LanguageSettings.Language) or nameof(LanguageSettings.LanguageVersion):
+						DecompileSelectedNodes(recordHistory: false);
+						break;
+				}
 			}
 		}
 
@@ -136,7 +146,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		/// Called on startup or when passed arguments via WndProc from a second instance.
 		/// In the format case, spySettings is non-null; in the latter it is null.
 		/// </summary>
-		public void HandleCommandLineArgumentsAfterShowList(CommandLineArguments args, ILSpySettings spySettings = null)
+		public void HandleCommandLineArgumentsAfterShowList(CommandLineArguments args, ISettingsProvider spySettings = null)
 		{
 			var sessionSettings = SettingsService.Instance.SessionSettings;
 
@@ -172,7 +182,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			});
 		}
 
-		public async void NavigateOnLaunch(string navigateTo, string[] activeTreeViewPath, ILSpySettings spySettings, List<LoadedAssembly> relevantAssemblies)
+		public async void NavigateOnLaunch(string navigateTo, string[] activeTreeViewPath, ISettingsProvider spySettings, List<LoadedAssembly> relevantAssemblies)
 		{
 			var initialSelection = SelectedItem;
 			if (navigateTo != null)
@@ -456,14 +466,6 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			};
 			foreach (System.Reflection.Assembly asm in initialAssemblies)
 				AssemblyList.OpenAssembly(asm.Location);
-		}
-
-		void LanguageSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName is nameof(LanguageSettings.Language) or nameof(LanguageSettings.LanguageVersion))
-			{
-				DecompileSelectedNodes(recordHistory: false);
-			}
 		}
 
 		public AssemblyTreeNode FindAssemblyNode(LoadedAssembly asm)

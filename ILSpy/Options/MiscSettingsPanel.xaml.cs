@@ -20,45 +20,20 @@ using System.ComponentModel.Composition;
 using System.Windows.Controls;
 using System.Xml.Linq;
 
-using ICSharpCode.ILSpyX.Settings;
+using TomsToolbox.Wpf.Composition.Mef;
 
 namespace ICSharpCode.ILSpy.Options
 {
 	/// <summary>
 	/// Interaction logic for MiscSettingsPanel.xaml
 	/// </summary>
-	[ExportOptionPage(Order = 30)]
+	[DataTemplate(typeof(MiscSettingsViewModel))]
 	[PartCreationPolicy(CreationPolicy.NonShared)]
-	public partial class MiscSettingsPanel : UserControl, IOptionPage
+	public partial class MiscSettingsPanel
 	{
 		public MiscSettingsPanel()
 		{
 			InitializeComponent();
-		}
-
-		public string Title => Properties.Resources.Misc;
-
-		public void Load(ILSpySettings spySettings)
-		{
-			this.DataContext = new MiscSettingsViewModel(SettingsService.Instance.MiscSettings);
-		}
-
-		public void Save(XElement root)
-		{
-			if (DataContext is not IMiscSettings miscSettings)
-				return;
-
-			IMiscSettings.Save(root, miscSettings);
-
-			SettingsService.Instance.MiscSettings = new() {
-				AllowMultipleInstances = miscSettings.AllowMultipleInstances,
-				LoadPreviousAssemblies = miscSettings.LoadPreviousAssemblies
-			};
-		}
-
-		public void LoadDefaults()
-		{
-			this.DataContext = new MiscSettingsViewModel(new());
 		}
 	}
 }
