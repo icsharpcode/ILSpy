@@ -295,6 +295,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// special case for loop counters,
 					// we don't want them to be named i, i2, ..., but i, j, ...
 					newName = GenerateNameForVariable(v);
+					nameWithoutNumber = newName;
+					newIndex = 1;
 				}
 				else
 				{

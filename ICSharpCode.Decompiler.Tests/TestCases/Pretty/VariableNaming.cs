@@ -60,5 +60,33 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #pragma warning restore CS0219
 		}
 #endif
+
+		private static void NestedForLoopTest(int sizeX, int sizeY, int[] array)
+		{
+			for (int y = 0; y < sizeY; y++)
+			{
+				for (int x = 0; x < sizeX; x++)
+				{
+					array[y * sizeX + x] = 0;
+				}
+			}
+#if !EXPECTED_OUTPUT || (LEGACY_CSC && !OPT)
+			for (int y = 0; y < sizeY; y++)
+			{
+				for (int x = 0; x < sizeX; x++)
+				{
+					array[y * sizeX + x] = 1;
+				}
+			}
+#else
+			for (int i = 0; i < sizeY; i++)
+			{
+				for (int j = 0; j < sizeX; j++)
+				{
+					array[i * sizeX + j] = 1;
+				}
+			}
+#endif
+		}
 	}
 }
