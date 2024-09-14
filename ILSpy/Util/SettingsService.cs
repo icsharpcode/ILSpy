@@ -24,9 +24,9 @@ namespace ICSharpCode.ILSpy.Util
 	{
 		XName SectionName { get; }
 
-		void LoadFromSection(XElement section);
+		void LoadFromXml(XElement section);
 
-		void SaveToSection(XElement section);
+		XElement SaveToXml();
 	}
 
 	public abstract class SettingsServiceBase
@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy.Util
 
 				var sectionElement = SpySettings[section.SectionName];
 
-				section.LoadFromSection(sectionElement);
+				section.LoadFromXml(sectionElement);
 				section.PropertyChanged += Section_PropertyChanged;
 
 				return section;
@@ -56,9 +56,7 @@ namespace ICSharpCode.ILSpy.Util
 
 		protected void SaveSection(ISettingsSection section, XElement root)
 		{
-			var element = SpySettings[section.SectionName];
-
-			section.SaveToSection(element);
+			var element = section.SaveToXml();
 
 			var existingElement = root.Element(section.SectionName);
 			if (existingElement != null)
@@ -150,7 +148,7 @@ namespace ICSharpCode.ILSpy.Util
 				{
 					var element = SpySettings[section.SectionName];
 
-					section.LoadFromSection(element);
+					section.LoadFromXml(element);
 				}
 			}
 			finally

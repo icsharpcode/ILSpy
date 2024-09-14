@@ -40,8 +40,6 @@ namespace ICSharpCode.ILSpy
 
 		protected override void OnExecute(object sender, ExecutedRoutedEventArgs e)
 		{
-			base.OnExecute(sender, e);
-
 			assemblyTreeModel.Refresh();
 		}
 	}

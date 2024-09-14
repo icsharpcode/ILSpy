@@ -550,8 +550,6 @@ namespace ICSharpCode.ILSpy.Search
 
 		protected override void OnExecute(object sender, ExecutedRoutedEventArgs e)
 		{
-			base.OnExecute(sender, e);
-
 			DockWorkspace.Instance.ShowToolPane(SearchPaneModel.PaneContentId);
 		}
 	}

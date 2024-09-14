@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy
 	{
 		public XName SectionName => "SessionSettings";
 
-		public void LoadFromSection(XElement section)
+		public void LoadFromXml(XElement section)
 		{
 			XElement filterSettings = section.Element("FilterSettings") ?? new XElement("FilterSettings");
 
@@ -103,9 +103,9 @@ namespace ICSharpCode.ILSpy
 
 		public DockLayoutSettings DockLayout { get; set; }
 
-		public void SaveToSection(XElement section)
+		public XElement SaveToXml()
 		{
-			section.RemoveAll();
+			var section = new XElement(SectionName);
 
 			section.Add(this.LanguageSettings.SaveAsXml());
 			if (this.ActiveAssemblyList != null)
@@ -134,6 +134,8 @@ namespace ICSharpCode.ILSpy
 				dockLayoutElement.Add(DockLayout.SaveAsXml());
 			}
 			section.Add(dockLayoutElement);
+
+			return section;
 		}
 
 		static Regex regex = new("\\\\x(?<num>[0-9A-f]{4})");

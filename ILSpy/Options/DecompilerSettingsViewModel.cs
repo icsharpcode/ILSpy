@@ -138,7 +138,7 @@ namespace ICSharpCode.ILSpy.Options
 	{
 		private bool isEnabled = property.GetValue(decompilerSettings) is true;
 
-		public PropertyInfo Property { get; } = property;
+		public PropertyInfo Property => property;
 
 		public bool IsEnabled {
 			get => isEnabled;

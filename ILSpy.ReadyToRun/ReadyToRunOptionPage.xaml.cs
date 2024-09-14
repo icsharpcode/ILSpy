@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		public void LoadDefaults()
 		{
-			Options.LoadFromSection(new("empty"));
+			Options.LoadFromXml(new("empty"));
 		}
 	}
 }

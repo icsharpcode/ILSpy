@@ -17,15 +17,19 @@ namespace ICSharpCode.ILSpy.Options
 
 		public XName SectionName => "DecompilerSettings";
 
-		public void SaveToSection(XElement section)
+		public XElement SaveToXml()
 		{
+			var section = new XElement(SectionName);
+
 			foreach (var p in properties)
 			{
 				section.SetAttributeValue(p.Name, p.GetValue(this));
 			}
+
+			return section;
 		}
 
-		public void LoadFromSection(XElement section)
+		public void LoadFromXml(XElement section)
 		{
 			foreach (var p in properties)
 			{
@@ -37,10 +41,10 @@ namespace ICSharpCode.ILSpy.Options
 
 		public new DecompilerSettings Clone()
 		{
-			var section = new XElement("DecompilerSettings");
-			SaveToSection(section);
+			var section = SaveToXml();
+
 			var newSettings = new DecompilerSettings();
-			newSettings.LoadFromSection(section);
+			newSettings.LoadFromXml(section);
 
 			return newSettings;
 		}

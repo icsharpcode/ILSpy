@@ -98,7 +98,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		public void LoadDefaults()
 		{
-			Settings.LoadFromSection(new XElement("dummy"));
+			Settings.LoadFromXml(new XElement("dummy"));
 		}
 	}
 }

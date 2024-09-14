@@ -87,7 +87,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		public void LoadDefaults()
 		{
-			Settings.LoadFromSection(new XElement("empty"));
+			Settings.LoadFromXml(new XElement("empty"));
 			SessionSettings.Theme = ThemeManager.Current.DefaultTheme;
 		}
 	}

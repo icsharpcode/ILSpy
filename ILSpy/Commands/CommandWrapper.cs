@@ -22,11 +22,11 @@ using System.Windows.Input;
 
 namespace ICSharpCode.ILSpy
 {
-	class CommandWrapper : ICommand
+	abstract class CommandWrapper : ICommand
 	{
 		private readonly ICommand wrappedCommand;
 
-		public CommandWrapper(ICommand wrappedCommand)
+		protected CommandWrapper(ICommand wrappedCommand)
 		{
 			this.wrappedCommand = wrappedCommand;
 
@@ -56,9 +56,7 @@ namespace ICSharpCode.ILSpy
 			return wrappedCommand.CanExecute(parameter);
 		}
 
-		protected virtual void OnExecute(object sender, ExecutedRoutedEventArgs e)
-		{
-		}
+		protected abstract void OnExecute(object sender, ExecutedRoutedEventArgs e);
 
 		protected virtual void OnCanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{

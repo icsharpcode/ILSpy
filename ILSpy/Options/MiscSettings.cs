@@ -40,16 +40,20 @@ namespace ICSharpCode.ILSpyX.Settings
 
 		public XName SectionName => "MiscSettings";
 
-		public void LoadFromSection(XElement e)
+		public void LoadFromXml(XElement e)
 		{
 			AllowMultipleInstances = (bool?)e.Attribute(nameof(AllowMultipleInstances)) ?? false;
 			LoadPreviousAssemblies = (bool?)e.Attribute(nameof(LoadPreviousAssemblies)) ?? true;
 		}
 
-		public void SaveToSection(XElement section)
+		public XElement SaveToXml()
 		{
+			var section = new XElement(SectionName);
+
 			section.SetAttributeValue(nameof(AllowMultipleInstances), AllowMultipleInstances);
 			section.SetAttributeValue(nameof(LoadPreviousAssemblies), LoadPreviousAssemblies);
+
+			return section;
 		}
 	}
 }

@@ -23,6 +23,7 @@ namespace TestPlugin
 	}
 
 	[ExportOptionPage(Order = 0)]
+	[PartCreationPolicy(CreationPolicy.NonShared)]
 	class CustomOptionsViewModel : ObservableObject, IOptionPage
 	{
 		private Options options;
@@ -41,7 +42,7 @@ namespace TestPlugin
 
 		public void LoadDefaults()
 		{
-			Options.LoadFromSection(new XElement("dummy"));
+			Options.LoadFromXml(new XElement("dummy"));
 		}
 	}
 
@@ -65,16 +66,20 @@ namespace TestPlugin
 
 		public XName SectionName { get; } = ns + "CustomOptions";
 
-		public void LoadFromSection(XElement e)
+		public void LoadFromXml(XElement e)
 		{
 			UselessOption1 = (bool?)e.Attribute("useless1") ?? false;
 			UselessOption2 = (double?)e.Attribute("useless2") ?? 50.0;
 		}
 
-		public void SaveToSection(XElement section)
+		public XElement SaveToXml()
 		{
+			var section = new XElement(SectionName);
+
 			section.SetAttributeValue("useless1", UselessOption1);
 			section.SetAttributeValue("useless2", UselessOption2);
+
+			return section;
 		}
 	}
 }

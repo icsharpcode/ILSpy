@@ -150,7 +150,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		public XName SectionName => "DisplaySettings";
 
-		public void LoadFromSection(XElement section)
+		public void LoadFromXml(XElement section)
 		{
 			SelectedFont = new FontFamily((string)section.Attribute("Font") ?? "Consolas");
 			SelectedFontSize = (double?)section.Attribute("FontSize") ?? 10.0 * 4 / 3;
@@ -174,8 +174,10 @@ namespace ICSharpCode.ILSpy.Options
 			StyleWindowTitleBar = (bool?)section.Attribute("StyleWindowTitleBar") ?? false;
 		}
 
-		public void SaveToSection(XElement section)
+		public XElement SaveToXml()
 		{
+			var section = new XElement(SectionName);
+
 			section.SetAttributeValue("Font", SelectedFont.Source);
 			section.SetAttributeValue("FontSize", SelectedFontSize);
 			section.SetAttributeValue("ShowLineNumbers", ShowLineNumbers);
@@ -196,6 +198,8 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("UseNestedNamespaceNodes", UseNestedNamespaceNodes);
 			section.SetAttributeValue("ShowRawOffsetsAndBytesBeforeInstruction", ShowRawOffsetsAndBytesBeforeInstruction);
 			section.SetAttributeValue("StyleWindowTitleBar", StyleWindowTitleBar);
+
+			return section;
 		}
 	}
 }

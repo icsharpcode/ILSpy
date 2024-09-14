@@ -47,8 +47,6 @@ namespace ICSharpCode.ILSpy
 
 		protected override void OnExecute(object sender, ExecutedRoutedEventArgs e)
 		{
-			base.OnExecute(sender, e);
-
 			SaveCodeContextMenuEntry.Execute(assemblyTreeModel.SelectedNodes.ToList());
 		}
 	}

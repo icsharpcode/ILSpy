@@ -42,8 +42,6 @@ namespace ICSharpCode.ILSpy
 
 		protected override void OnExecute(object sender, ExecutedRoutedEventArgs e)
 		{
-			base.OnExecute(sender, e);
-
 			e.Handled = true;
 			OpenFileDialog dlg = new OpenFileDialog {
 				Filter = ".NET assemblies|*.dll;*.exe;*.winmd;*.wasm|Nuget Packages (*.nupkg)|*.nupkg|Portable Program Database (*.pdb)|*.pdb|All files|*.*",

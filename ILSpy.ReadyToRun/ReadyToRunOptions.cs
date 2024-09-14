@@ -64,7 +64,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		public XName SectionName { get; } = ns + "ReadyToRunOptions";
 
-		public void LoadFromSection(XElement e)
+		public void LoadFromXml(XElement e)
 		{
 			XAttribute format = e.Attribute("DisassemblyFormat");
 			DisassemblyFormat = format == null ? intel : (string)format;
@@ -79,12 +79,16 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			IsShowGCInfo = showGc != null && (bool)showGc;
 		}
 
-		public void SaveToSection(XElement section)
+		public XElement SaveToXml()
 		{
+			var section = new XElement(SectionName);
+
 			section.SetAttributeValue("DisassemblyFormat", disassemblyFormat);
 			section.SetAttributeValue("IsShowUnwindInfo", isShowUnwindInfo);
 			section.SetAttributeValue("IsShowDebugInfo", isShowDebugInfo);
 			section.SetAttributeValue("IsShowGCInfo", isShowGCInfo);
+
+			return section;
 		}
 	}
 }
