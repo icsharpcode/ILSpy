@@ -193,7 +193,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitPreProcessorDirective(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			PreProcessorDirective? o = other as PreProcessorDirective;
 			return o != null && Type == o.Type && MatchString(Argument, o.Argument);

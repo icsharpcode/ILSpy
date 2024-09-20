@@ -27,12 +27,12 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class OpenFromGacCommand : SimpleCommand
 	{
-		public override bool CanExecute(object parameter)
+		public override bool CanExecute(object? parameter)
 		{
 			return AppEnvironment.IsWindows;
 		}
 
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			OpenFromGacDialog dlg = new OpenFromGacDialog();
 			dlg.Owner = MainWindow.Instance;

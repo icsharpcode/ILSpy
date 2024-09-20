@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitPointerReferenceExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			PointerReferenceExpression? o = other as PointerReferenceExpression;
 			return o != null && MatchString(this.MemberName, o.MemberName) && this.TypeArguments.DoMatch(o.TypeArguments, match);

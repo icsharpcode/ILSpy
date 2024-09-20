@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return unchecked(elementType.GetHashCode() * 71681 + dimensions);
 		}
 
-		public override bool Equals(IType other)
+		public override bool Equals(IType? other)
 		{
 			ArrayType? a = other as ArrayType;
 			return a != null && elementType.Equals(a.elementType) && a.dimensions == dimensions && a.nullability == nullability;

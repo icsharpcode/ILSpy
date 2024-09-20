@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitNamespaceDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			NamespaceDeclaration? o = other as NamespaceDeclaration;
 			return o != null && MatchString(this.Name, o.Name) && this.Members.DoMatch(o.Members, match);

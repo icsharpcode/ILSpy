@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitWithInitializerExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			return other is WithInitializerExpression o
 				&& this.Expression.DoMatch(o.Expression, match)

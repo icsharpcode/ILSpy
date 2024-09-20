@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitPropertyDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			PropertyDeclaration? o = other as PropertyDeclaration;
 			return o != null && MatchString(this.Name, o.Name)

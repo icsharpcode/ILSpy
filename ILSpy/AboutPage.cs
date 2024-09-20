@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class AboutPage : SimpleCommand
 	{
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			MainWindow.Instance.NavigateTo(
 				new RequestNavigateEventArgs(new Uri("resource://aboutpage"), null),

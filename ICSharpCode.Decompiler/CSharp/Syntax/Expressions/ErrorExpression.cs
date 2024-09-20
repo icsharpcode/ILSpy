@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitErrorNode(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			var o = other as ErrorExpression;
 			return o != null;

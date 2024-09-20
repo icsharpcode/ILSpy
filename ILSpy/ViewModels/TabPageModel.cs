@@ -102,6 +102,6 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 	public interface IHaveState
 	{
-		ViewState GetState();
+		ViewState? GetState();
 	}
 }

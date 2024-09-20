@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitNamedExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			var o = other as NamedExpression;
 			return o != null && MatchString(this.Name, o.Name) && this.Expression.DoMatch(o.Expression, match);

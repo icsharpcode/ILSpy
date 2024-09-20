@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy
 		}
 
 
-		public bool Equals(NavigationState other)
+		public bool Equals(NavigationState? other)
 		{
 			if (!this.treeNodes.SetEquals(other.treeNodes))
 				return false;

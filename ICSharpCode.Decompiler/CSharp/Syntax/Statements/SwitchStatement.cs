@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitSwitchStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			SwitchStatement? o = other as SwitchStatement;
 			return o != null && this.Expression.DoMatch(o.Expression, match) && this.SwitchSections.DoMatch(o.SwitchSections, match);
@@ -122,7 +122,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitPatternPlaceholder(this, child, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 			{
 				return child.DoMatch(other, match);
 			}
@@ -165,7 +165,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitSwitchSection(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			SwitchSection? o = other as SwitchSection;
 			return o != null && this.CaseLabels.DoMatch(o.CaseLabels, match) && this.Statements.DoMatch(o.Statements, match);
@@ -219,7 +219,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitCaseLabel(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			CaseLabel? o = other as CaseLabel;
 			return o != null && this.Expression.DoMatch(o.Expression, match);

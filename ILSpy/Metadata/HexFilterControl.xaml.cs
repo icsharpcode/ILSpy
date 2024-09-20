@@ -71,7 +71,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.filter = filter;
 			}
 
-			public bool IsMatch(object value)
+			public bool IsMatch(object? value)
 			{
 				if (string.IsNullOrWhiteSpace(filter))
 					return true;

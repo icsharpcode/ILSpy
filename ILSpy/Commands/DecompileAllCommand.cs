@@ -39,12 +39,12 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class DecompileAllCommand : SimpleCommand
 	{
-		public override bool CanExecute(object parameter)
+		public override bool CanExecute(object? parameter)
 		{
 			return System.IO.Directory.Exists("c:\\temp\\decompiled");
 		}
 
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
@@ -92,7 +92,7 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class Decompile100TimesCommand : SimpleCommand
 	{
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			const int numRuns = 100;
 			var language = SettingsService.Instance.SessionSettings.LanguageSettings.Language;

@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitThrowExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			ThrowExpression? o = other as ThrowExpression;
 			return o != null && this.Expression.DoMatch(o.Expression, match);

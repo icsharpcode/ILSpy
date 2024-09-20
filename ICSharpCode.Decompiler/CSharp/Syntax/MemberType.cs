@@ -112,7 +112,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitMemberType(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			MemberType? o = other as MemberType;
 			return o != null && this.IsDoubleColon == o.IsDoubleColon

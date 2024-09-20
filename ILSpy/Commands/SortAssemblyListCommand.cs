@@ -31,13 +31,13 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class SortAssemblyListCommand : SimpleCommand, IComparer<LoadedAssembly>
 	{
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			using (MainWindow.Instance.AssemblyTreeView.LockUpdates())
 				MainWindow.Instance.CurrentAssemblyList.Sort(this);
 		}
 
-		int IComparer<LoadedAssembly>.Compare(LoadedAssembly x, LoadedAssembly y)
+		int IComparer<LoadedAssembly>.Compare(LoadedAssembly? x, LoadedAssembly? y)
 		{
 			return string.Compare(x.ShortName, y.ShortName, StringComparison.CurrentCulture);
 		}
@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class CollapseAllCommand : SimpleCommand
 	{
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			using (MainWindow.Instance.AssemblyTreeView.LockUpdates())
 				CollapseChildren(MainWindow.Instance.AssemblyTreeView.Root);

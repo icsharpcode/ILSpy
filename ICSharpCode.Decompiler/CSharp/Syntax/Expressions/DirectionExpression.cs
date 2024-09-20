@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitDirectionExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			DirectionExpression? o = other as DirectionExpression;
 			return o != null && this.FieldDirection == o.FieldDirection && this.Expression.DoMatch(o.Expression, match);

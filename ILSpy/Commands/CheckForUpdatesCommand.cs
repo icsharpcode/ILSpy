@@ -28,12 +28,12 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class CheckForUpdatesCommand : SimpleCommand
 	{
-		public override bool CanExecute(object parameter)
+		public override bool CanExecute(object? parameter)
 		{
 			return base.CanExecute(parameter);
 		}
 
-		public override async void Execute(object parameter)
+		public override async void Execute(object? parameter)
 		{
 			await MainWindow.Instance.ShowMessageIfUpdatesAvailableAsync(ILSpySettings.Load(), forceCheck: true);
 		}

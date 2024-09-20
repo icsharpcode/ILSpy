@@ -220,7 +220,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public override string ReflectionName => UnderlyingType.ReflectionName;
 		public override string Namespace => UnderlyingType.Namespace;
 
-		public override bool Equals(IType other)
+		public override bool Equals(IType? other)
 		{
 			var o = other as TupleType;
 			if (o == null)

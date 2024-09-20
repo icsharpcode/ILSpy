@@ -32,7 +32,7 @@ namespace ICSharpCode.ILSpy.Metadata
 	class MetaDataGrid : DataGrid, IHaveState
 	{
 		private readonly MouseHoverLogic hoverLogic;
-		private ToolTip toolTip;
+		private ToolTip? toolTip;
 
 		public ILSpyTreeNode SelectedTreeNode { get; set; }
 
@@ -76,7 +76,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			var pi = data?.GetType().GetProperty(name + "Tooltip");
 			if (pi == null)
 				return;
-			object tooltip = pi.GetValue(data);
+			object? tooltip = pi.GetValue(data);
 			if (tooltip is string s)
 			{
 				if (string.IsNullOrWhiteSpace(s))
@@ -107,7 +107,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		public ViewState GetState()
+		public ViewState? GetState()
 		{
 			return new ViewState {
 				DecompiledNodes = SelectedTreeNode == null

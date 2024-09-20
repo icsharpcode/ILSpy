@@ -27,12 +27,12 @@ namespace ICSharpCode.ILSpy.Docking
 {
 	public class TabPageGuardConverter : ValueConverter
 	{
-		protected override object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+		protected override object Convert(object value, Type? targetType, object? parameter, System.Globalization.CultureInfo? culture)
 		{
 			return value is TabPageModel ? value : Binding.DoNothing;
 		}
 
-		protected override object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+		protected override object ConvertBack(object value, Type? targetType, object? parameter, System.Globalization.CultureInfo? culture)
 		{
 			return value is TabPageModel ? value : Binding.DoNothing;
 		}

@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitDelegateDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			DelegateDeclaration? o = other as DelegateDeclaration;
 			return o != null && MatchString(this.Name, o.Name)

@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public static bool operator ==(OpCodeInfo lhs, OpCodeInfo rhs) => lhs.Equals(rhs);
 		public static bool operator !=(OpCodeInfo lhs, OpCodeInfo rhs) => !(lhs == rhs);
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			if (obj is OpCodeInfo opCode)
 				return Equals(opCode);

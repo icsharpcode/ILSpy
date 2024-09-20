@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitMethodDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			MethodDeclaration? o = other as MethodDeclaration;
 			return o != null && MatchString(this.Name, o.Name)

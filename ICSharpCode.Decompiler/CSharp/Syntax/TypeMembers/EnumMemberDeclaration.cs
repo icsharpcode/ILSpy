@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitEnumMemberDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			EnumMemberDeclaration? o = other as EnumMemberDeclaration;
 			return o != null && this.MatchAttributesAndModifiers(o, match)

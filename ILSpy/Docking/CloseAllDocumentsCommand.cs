@@ -13,7 +13,7 @@ namespace ICSharpCode.ILSpy.Docking
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	class CloseAllDocumentsCommand : SimpleCommand
 	{
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			DockWorkspace.Instance.CloseAllTabs();
 		}
@@ -23,7 +23,7 @@ namespace ICSharpCode.ILSpy.Docking
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	class ResetLayoutCommand : SimpleCommand
 	{
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			DockWorkspace.Instance.ResetLayout();
 		}

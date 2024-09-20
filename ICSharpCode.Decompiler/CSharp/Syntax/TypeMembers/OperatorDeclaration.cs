@@ -353,7 +353,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { throw new NotSupportedException(); }
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			OperatorDeclaration? o = other as OperatorDeclaration;
 			return o != null && this.MatchAttributesAndModifiers(o, match)

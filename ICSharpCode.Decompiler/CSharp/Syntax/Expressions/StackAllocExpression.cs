@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitStackAllocExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			StackAllocExpression? o = other as StackAllocExpression;
 			return o != null && this.Type.DoMatch(o.Type, match)

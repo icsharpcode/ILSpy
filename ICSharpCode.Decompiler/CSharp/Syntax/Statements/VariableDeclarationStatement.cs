@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitVariableDeclarationStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			VariableDeclarationStatement? o = other as VariableDeclarationStatement;
 			return o != null && this.Modifiers == o.Modifiers && this.Type.DoMatch(o.Type, match) && this.Variables.DoMatch(o.Variables, match);

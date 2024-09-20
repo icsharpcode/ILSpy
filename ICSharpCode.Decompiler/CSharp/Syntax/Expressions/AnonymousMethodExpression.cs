@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitAnonymousMethodExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			AnonymousMethodExpression? o = other as AnonymousMethodExpression;
 			return o != null && this.IsAsync == o.IsAsync && this.HasParameterList == o.HasParameterList

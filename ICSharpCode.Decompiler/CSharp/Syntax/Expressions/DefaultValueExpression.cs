@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitDefaultValueExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			DefaultValueExpression? o = other as DefaultValueExpression;
 			return o != null && this.Type.DoMatch(o.Type, match);

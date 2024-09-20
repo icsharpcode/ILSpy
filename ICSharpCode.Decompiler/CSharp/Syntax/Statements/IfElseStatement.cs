@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitIfElseStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			IfElseStatement? o = other as IfElseStatement;
 			return o != null && this.Condition.DoMatch(o.Condition, match) && this.TrueStatement.DoMatch(o.TrueStatement, match) && this.FalseStatement.DoMatch(o.FalseStatement, match);

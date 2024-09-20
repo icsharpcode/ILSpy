@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitLabelStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			LabelStatement? o = other as LabelStatement;
 			return o != null && MatchString(this.Label, o.Label);

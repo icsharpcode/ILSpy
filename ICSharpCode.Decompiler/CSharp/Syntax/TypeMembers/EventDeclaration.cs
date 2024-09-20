@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitEventDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			EventDeclaration? o = other as EventDeclaration;
 			return o != null && this.MatchAttributesAndModifiers(o, match)
@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitCustomEventDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			CustomEventDeclaration? o = other as CustomEventDeclaration;
 			return o != null && MatchString(this.Name, o.Name)

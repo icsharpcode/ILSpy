@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitArrayCreateExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			ArrayCreateExpression? o = other as ArrayCreateExpression;
 			return o != null && this.Type.DoMatch(o.Type, match)

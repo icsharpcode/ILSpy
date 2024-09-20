@@ -95,7 +95,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitUndocumentedExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			UndocumentedExpression? o = other as UndocumentedExpression;
 			return o != null && this.UndocumentedExpressionType == o.UndocumentedExpressionType && this.Arguments.DoMatch(o.Arguments, match);

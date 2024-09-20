@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitAnonymousTypeCreateExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			var o = other as AnonymousTypeCreateExpression;
 			return o != null && this.Initializers.DoMatch(o.Initializers, match);

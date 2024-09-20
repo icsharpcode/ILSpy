@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitGotoStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			GotoStatement? o = other as GotoStatement;
 			return o != null && MatchString(this.Label, o.Label);
@@ -128,7 +128,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitGotoCaseStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			GotoCaseStatement? o = other as GotoCaseStatement;
 			return o != null && this.LabelExpression.DoMatch(o.LabelExpression, match);
@@ -170,7 +170,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitGotoDefaultStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			GotoDefaultStatement? o = other as GotoDefaultStatement;
 			return o != null;

@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitInterpolatedStringExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			InterpolatedStringExpression? o = other as InterpolatedStringExpression;
 			return o != null && !o.IsNull && this.Content.DoMatch(o.Content, match);
@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 			{
 				return other == null || other.IsNull;
 			}
@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitInterpolation(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			Interpolation? o = other as Interpolation;
 			return o != null && this.Expression.DoMatch(o.Expression, match);
@@ -175,7 +175,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitInterpolatedStringText(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			InterpolatedStringText? o = other as InterpolatedStringText;
 			return o != null && o.Text == this.Text;

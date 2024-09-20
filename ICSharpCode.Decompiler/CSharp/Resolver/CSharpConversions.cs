@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				this.ToType = toType;
 			}
 
-			public override bool Equals(object obj)
+			public override bool Equals(object? obj)
 			{
 				return (obj is TypePair) && Equals((TypePair)obj);
 			}

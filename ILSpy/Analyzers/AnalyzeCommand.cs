@@ -76,12 +76,12 @@ namespace ICSharpCode.ILSpy.Analyzers
 	{
 		private static readonly AnalyzerTreeViewModel AnalyzerTreeView = App.ExportProvider.GetExportedValue<AnalyzerTreeViewModel>();
 
-		public override bool CanExecute(object parameter)
+		public override bool CanExecute(object? parameter)
 		{
 			return MainWindow.Instance.SelectedNodes.All(n => n is IMemberTreeNode);
 		}
 
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			foreach (var node in MainWindow.Instance.SelectedNodes.OfType<IMemberTreeNode>())
 			{

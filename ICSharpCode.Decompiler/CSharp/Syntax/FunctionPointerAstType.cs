@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitFunctionPointerType(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is FunctionPointerAstType o
 				&& this.CallingConventions.DoMatch(o.CallingConventions, match)

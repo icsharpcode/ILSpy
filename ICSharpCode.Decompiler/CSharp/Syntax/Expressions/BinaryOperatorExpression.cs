@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitBinaryOperatorExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			BinaryOperatorExpression? o = other as BinaryOperatorExpression;
 			return o != null && (this.Operator == BinaryOperatorType.Any || this.Operator == o.Operator)

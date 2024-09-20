@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.Expression = expression;
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			ExpressionStatement? o = other as ExpressionStatement;
 			return o != null && this.Expression.DoMatch(o.Expression, match);

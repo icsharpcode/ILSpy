@@ -28,12 +28,12 @@ namespace ICSharpCode.ILSpy.Commands
 			this.canExecute = canExecute;
 		}
 
-		public bool CanExecute(object parameter)
+		public bool CanExecute(object? parameter)
 		{
 			return canExecute();
 		}
 
-		public void Execute(object parameter)
+		public void Execute(object? parameter)
 		{
 			action();
 		}
@@ -60,12 +60,12 @@ namespace ICSharpCode.ILSpy.Commands
 			this.canExecute = canExecute;
 		}
 
-		public bool CanExecute(object parameter)
+		public bool CanExecute(object? parameter)
 		{
 			return canExecute((T)parameter);
 		}
 
-		public void Execute(object parameter)
+		public void Execute(object? parameter)
 		{
 			action((T)parameter);
 		}

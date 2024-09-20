@@ -117,7 +117,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			SyntaxTree? o = other as SyntaxTree;
 			return o != null && this.Members.DoMatch(o.Members, match);

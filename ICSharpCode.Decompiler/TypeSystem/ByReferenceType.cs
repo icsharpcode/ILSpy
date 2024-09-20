@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return elementType.GetHashCode() ^ 91725813;
 		}
 
-		public override bool Equals(IType other)
+		public override bool Equals(IType? other)
 		{
 			ByReferenceType? a = other as ByReferenceType;
 			return a != null && elementType.Equals(a.elementType);

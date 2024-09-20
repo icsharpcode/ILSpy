@@ -49,12 +49,12 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 			public event EventHandler CanExecuteChanged;
 
-			public bool CanExecute(object parameter)
+			public bool CanExecute(object? parameter)
 			{
 				return model.IsCloseable;
 			}
 
-			public void Execute(object parameter)
+			public void Execute(object? parameter)
 			{
 				Docking.DockWorkspace.Instance.Remove(model);
 			}

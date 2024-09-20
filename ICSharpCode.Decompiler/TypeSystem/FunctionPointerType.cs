@@ -179,7 +179,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					ParameterReferenceKinds);
 		}
 
-		public override bool Equals(IType other)
+		public override bool Equals(IType? other)
 		{
 			return other is FunctionPointerType fpt
 				&& CallingConvention == fpt.CallingConvention

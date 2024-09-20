@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitInvocationType(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			return other is InvocationAstType o
 				&& this.BaseType.DoMatch(o.BaseType, match)

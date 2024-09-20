@@ -200,7 +200,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return node.GetHashCode() ^ role.GetHashCode();
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			AstNodeCollection<T>? other = obj as AstNodeCollection<T>;
 			if (other == null)

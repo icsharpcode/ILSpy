@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 			{
 				return other == null || other.IsNull;
 			}
@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitQueryExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			QueryExpression? o = other as QueryExpression;
 			return o != null && !o.IsNull && this.Clauses.DoMatch(o.Clauses, match);
@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitQueryContinuationClause(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			QueryContinuationClause? o = other as QueryContinuationClause;
 			return o != null && MatchString(this.Identifier, o.Identifier) && this.PrecedingQuery.DoMatch(o.PrecedingQuery, match);
@@ -206,7 +206,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitQueryFromClause(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			QueryFromClause? o = other as QueryFromClause;
 			return o != null && this.Type.DoMatch(o.Type, match) && MatchString(this.Identifier, o.Identifier)
@@ -259,7 +259,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitQueryLetClause(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			QueryLetClause? o = other as QueryLetClause;
 			return o != null && MatchString(this.Identifier, o.Identifier) && this.Expression.DoMatch(o.Expression, match);
@@ -295,7 +295,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitQueryWhereClause(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			QueryWhereClause? o = other as QueryWhereClause;
 			return o != null && this.Condition.DoMatch(o.Condition, match);
@@ -404,7 +404,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitQueryJoinClause(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			QueryJoinClause? o = other as QueryJoinClause;
 			return o != null && this.IsGroupJoin == o.IsGroupJoin
@@ -443,7 +443,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitQueryOrderClause(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			QueryOrderClause? o = other as QueryOrderClause;
 			return o != null && this.Orderings.DoMatch(o.Orderings, match);
@@ -488,7 +488,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitQueryOrdering(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			QueryOrdering? o = other as QueryOrdering;
 			return o != null && this.Direction == o.Direction && this.Expression.DoMatch(o.Expression, match);
@@ -530,7 +530,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitQuerySelectClause(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			QuerySelectClause? o = other as QuerySelectClause;
 			return o != null && this.Expression.DoMatch(o.Expression, match);
@@ -577,7 +577,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitQueryGroupClause(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			QueryGroupClause? o = other as QueryGroupClause;
 			return o != null && this.Projection.DoMatch(o.Projection, match) && this.Key.DoMatch(o.Key, match);

@@ -112,7 +112,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitMemberReferenceExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			MemberReferenceExpression? o = other as MemberReferenceExpression;
 			return o != null && this.Target.DoMatch(o.Target, match) && MatchString(this.MemberName, o.MemberName) && this.TypeArguments.DoMatch(o.TypeArguments, match);

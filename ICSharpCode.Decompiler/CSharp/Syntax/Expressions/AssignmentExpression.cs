@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitAssignmentExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			AssignmentExpression? o = other as AssignmentExpression;
 			return o != null && (this.Operator == AssignmentOperatorType.Any || this.Operator == o.Operator)

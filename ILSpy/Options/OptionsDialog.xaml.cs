@@ -124,7 +124,7 @@ namespace ICSharpCode.ILSpy.Options
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class ShowOptionsCommand : SimpleCommand
 	{
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			OptionsDialog dlg = new OptionsDialog();
 			dlg.Owner = MainWindow.Instance;

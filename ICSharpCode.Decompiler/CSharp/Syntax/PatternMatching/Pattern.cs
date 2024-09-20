@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		/// </summary>
 		public static readonly string AnyString = "$any$";
 
-		public static bool MatchString(string pattern, string text)
+		public static bool MatchString(string? pattern, string? text)
 		{
 			return pattern == AnyString || pattern == text;
 		}

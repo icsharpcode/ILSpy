@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitParenthesizedExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			ParenthesizedExpression? o = other as ParenthesizedExpression;
 			return o != null && this.Expression.DoMatch(o.Expression, match);

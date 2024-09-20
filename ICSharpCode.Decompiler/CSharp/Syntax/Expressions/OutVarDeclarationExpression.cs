@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitOutVarDeclarationExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			var o = other as OutVarDeclarationExpression;
 			return o != null && this.Type.DoMatch(o.Type, match) && this.Variable.DoMatch(o.Variable, match);

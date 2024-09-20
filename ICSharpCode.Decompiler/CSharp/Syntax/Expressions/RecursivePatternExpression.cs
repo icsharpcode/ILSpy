@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitRecursivePatternExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			return other is RecursivePatternExpression o
 				&& Type.DoMatch(o.Type, match)
