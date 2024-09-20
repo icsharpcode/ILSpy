@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return visitor.VisitModOpt(this);
 		}
 
-		public override bool Equals(IType other)
+		public override bool Equals(IType? other)
 		{
 			return other is ModifiedType o && kind == o.kind && modifier.Equals(o.modifier) && elementType.Equals(o.elementType);
 		}

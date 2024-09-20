@@ -157,7 +157,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return baseMember.SymbolKind; }
 		}
 
-		public ITypeDefinition DeclaringTypeDefinition {
+		public ITypeDefinition? DeclaringTypeDefinition {
 			get { return baseMember.DeclaringTypeDefinition; }
 		}
 
@@ -214,7 +214,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return baseMember.Compilation; }
 		}
 
-		public IModule ParentModule {
+		public IModule? ParentModule {
 			get { return baseMember.ParentModule; }
 		}
 
@@ -223,7 +223,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return baseMember.Specialize(TypeParameterSubstitution.Compose(newSubstitution, this.substitution));
 		}
 
-		public virtual bool Equals(IMember obj, TypeVisitor typeNormalization)
+		public virtual bool Equals(IMember? obj, TypeVisitor typeNormalization)
 		{
 			SpecializedMember? other = obj as SpecializedMember;
 			if (other == null)
@@ -232,7 +232,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				&& this.substitution.Equals(other.substitution, typeNormalization);
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			SpecializedMember? other = obj as SpecializedMember;
 			if (other == null)

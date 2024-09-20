@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			};
 		}
 
-		public bool Equals(IReadOnlyList<IParameter> x, IReadOnlyList<IParameter> y)
+		public bool Equals(IReadOnlyList<IParameter>? x, IReadOnlyList<IParameter>? y)
 		{
 			if (x == y)
 				return true;
@@ -125,7 +125,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static readonly SignatureComparer Ordinal = new SignatureComparer(StringComparer.Ordinal);
 
-		public bool Equals(IMember x, IMember y)
+		public bool Equals(IMember? x, IMember? y)
 		{
 			if (x == y)
 				return true;

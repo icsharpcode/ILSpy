@@ -476,7 +476,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return b.HasAttribute(metadata, def.GetCustomAttributes(), attribute, symbolKind);
 		}
 
-		public IAttribute GetAttribute(KnownAttribute attribute)
+		public IAttribute? GetAttribute(KnownAttribute attribute)
 		{
 			if (!attribute.IsCustomAttribute())
 			{

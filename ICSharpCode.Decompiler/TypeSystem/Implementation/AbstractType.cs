@@ -83,16 +83,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return EmptyList<IType>.Instance; }
 		}
 
-		public virtual IType DeclaringType {
+		public virtual IType? DeclaringType {
 			get { return null; }
 		}
 
-		public virtual ITypeDefinition GetDefinition()
+		public virtual ITypeDefinition? GetDefinition()
 		{
 			return null;
 		}
 
-		public virtual ITypeDefinitionOrUnknown GetDefinitionOrUnknown()
+		public virtual ITypeDefinitionOrUnknown? GetDefinitionOrUnknown()
 		{
 			return null;
 		}
@@ -165,7 +165,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return TypeParameterSubstitution.Identity;
 		}
 
-		public override sealed bool Equals(object obj)
+		public override sealed bool Equals(object? obj)
 		{
 			return Equals(obj as IType);
 		}
@@ -175,7 +175,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return base.GetHashCode();
 		}
 
-		public virtual bool Equals(IType other)
+		public virtual bool Equals(IType? other)
 		{
 			return this == other; // use reference equality by default
 		}

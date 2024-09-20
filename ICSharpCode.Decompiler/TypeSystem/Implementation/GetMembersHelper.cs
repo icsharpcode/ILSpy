@@ -98,12 +98,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 
 		#region GetMethods
-		public static IEnumerable<IMethod> GetMethods(IType type, Predicate<IMethod> filter, GetMemberOptions options)
+		public static IEnumerable<IMethod> GetMethods(IType type, Predicate<IMethod>? filter, GetMemberOptions options)
 		{
 			return GetMethods(type, null, filter, options);
 		}
 
-		public static IEnumerable<IMethod> GetMethods(IType type, IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter, GetMemberOptions options)
+		public static IEnumerable<IMethod> GetMethods(IType type, IReadOnlyList<IType>? typeArguments, Predicate<IMethod>? filter, GetMemberOptions options)
 		{
 			if (typeArguments != null && typeArguments.Count > 0)
 			{
@@ -127,7 +127,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		const GetMemberOptions declaredMembers = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
 
-		static IEnumerable<IMethod> GetMethodsImpl(IType baseType, IReadOnlyList<IType>? methodTypeArguments, Predicate<IMethod> filter, GetMemberOptions options)
+		static IEnumerable<IMethod> GetMethodsImpl(IType baseType, IReadOnlyList<IType>? methodTypeArguments, Predicate<IMethod>? filter, GetMemberOptions options)
 		{
 			IEnumerable<IMethod> declaredMethods = baseType.GetMethods(filter, options | declaredMembers);
 
@@ -164,7 +164,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 
 		#region GetAccessors
-		public static IEnumerable<IMethod> GetAccessors(IType type, Predicate<IMethod> filter, GetMemberOptions options)
+		public static IEnumerable<IMethod> GetAccessors(IType type, Predicate<IMethod>? filter, GetMemberOptions options)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 			{
@@ -323,7 +323,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 
 		#region GetMembers
-		public static IEnumerable<IMember> GetMembers(IType type, Predicate<IMember> filter, GetMemberOptions options)
+		public static IEnumerable<IMember> GetMembers(IType type, Predicate<IMember>? filter, GetMemberOptions options)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 			{
@@ -335,7 +335,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		static IEnumerable<IMember> GetMembersImpl(IType baseType, Predicate<IMember> filter, GetMemberOptions options)
+		static IEnumerable<IMember> GetMembersImpl(IType baseType, Predicate<IMember>? filter, GetMemberOptions options)
 		{
 			foreach (var m in GetMethodsImpl(baseType, null, filter, options))
 				yield return m;

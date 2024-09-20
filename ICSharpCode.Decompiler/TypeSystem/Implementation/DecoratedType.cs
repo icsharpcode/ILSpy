@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		Nullability IType.Nullability => baseType.Nullability;
 		public abstract IType ChangeNullability(Nullability nullability);
 
-		IType IType.DeclaringType => baseType.DeclaringType;
+		IType? IType.DeclaringType => baseType.DeclaringType;
 
 		int IType.TypeParameterCount => baseType.TypeParameterCount;
 
@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public abstract IType AcceptVisitor(TypeVisitor visitor);
 
-		public abstract bool Equals(IType other);
+		public abstract bool Equals(IType? other);
 
 		IEnumerable<IMethod> IType.GetAccessors(Predicate<IMethod>? filter, GetMemberOptions options)
 		{
@@ -54,12 +54,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return baseType.GetConstructors(filter, options);
 		}
 
-		ITypeDefinition IType.GetDefinition()
+		ITypeDefinition? IType.GetDefinition()
 		{
 			return baseType.GetDefinition();
 		}
 
-		ITypeDefinitionOrUnknown IType.GetDefinitionOrUnknown()
+		ITypeDefinitionOrUnknown? IType.GetDefinitionOrUnknown()
 		{
 			return baseType.GetDefinitionOrUnknown();
 		}

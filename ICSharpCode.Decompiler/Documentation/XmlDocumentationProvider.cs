@@ -437,7 +437,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		}
 		#endregion
 
-		public virtual void OnDeserialization(object sender)
+		public virtual void OnDeserialization(object? sender)
 		{
 			cache = new XmlDocumentationCache();
 		}

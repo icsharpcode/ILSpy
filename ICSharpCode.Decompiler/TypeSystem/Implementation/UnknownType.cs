@@ -122,7 +122,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return (namespaceKnown ? 812571 : 12651) ^ fullTypeName.GetHashCode();
 		}
 
-		public override bool Equals(IType other)
+		public override bool Equals(IType? other)
 		{
 			UnknownType? o = other as UnknownType;
 			if (o == null)

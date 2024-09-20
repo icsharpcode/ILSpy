@@ -140,7 +140,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return cacheManager; }
 		}
 
-		public virtual INamespace GetNamespaceForExternAlias(string alias)
+		public virtual INamespace? GetNamespaceForExternAlias(string? alias)
 		{
 			if (string.IsNullOrEmpty(alias))
 				return this.RootNamespace;

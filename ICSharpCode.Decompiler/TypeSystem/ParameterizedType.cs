@@ -291,12 +291,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return GetMembersHelper.GetAccessors(this, filter, options);
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			return Equals(obj as IType);
 		}
 
-		public bool Equals(IType other)
+		public bool Equals(IType? other)
 		{
 			if (this == other)
 				return true;
