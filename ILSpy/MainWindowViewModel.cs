@@ -19,12 +19,14 @@
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpyX;
 
+using TomsToolbox.Wpf;
+
 namespace ICSharpCode.ILSpy
 {
-	class MainWindowViewModel
+	class MainWindowViewModel : ObservableObject
 	{
-		public DockWorkspace Workspace { get; set; }
-		public SessionSettings SessionSettings { get; set; }
-		public AssemblyListManager AssemblyListManager { get; set; }
+		public DockWorkspace Workspace => DockWorkspace.Instance;
+		public SessionSettings SessionSettings => SettingsService.Instance.SessionSettings;
+		public AssemblyListManager AssemblyListManager => SettingsService.Instance.AssemblyListManager;
 	}
 }

@@ -16,112 +16,47 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel;
 using System.ComponentModel.Composition;
-using System.Windows.Controls;
-using System.Xml.Linq;
 
 using ICSharpCode.ILSpy.Options;
-using ICSharpCode.ILSpyX.Settings;
+using ICSharpCode.ILSpy.Util;
+
+using TomsToolbox.Wpf;
+using TomsToolbox.Wpf.Composition.Mef;
 
 namespace ICSharpCode.ILSpy.ReadyToRun
 {
-	[ExportOptionPage(Title = nameof(global::ILSpy.ReadyToRun.Properties.Resources.ReadyToRun), Order = 40)]
+	[DataTemplate(typeof(ReadyToRunOptionsViewModel))]
 	[PartCreationPolicy(CreationPolicy.NonShared)]
-	partial class ReadyToRunOptionPage : UserControl, IOptionPage
+	partial class ReadyToRunOptionPage
 	{
 		public ReadyToRunOptionPage()
 		{
 			InitializeComponent();
 		}
+	}
 
-		public void Load(ILSpySettings settings)
+	[ExportOptionPage(Order = 40)]
+	[PartCreationPolicy(CreationPolicy.NonShared)]
+	class ReadyToRunOptionsViewModel : ObservableObject, IOptionPage
+	{
+		private ReadyToRunOptions options;
+
+		public ReadyToRunOptions Options {
+			get => options;
+			set => SetProperty(ref options, value);
+		}
+
+		public string Title => global::ILSpy.ReadyToRun.Properties.Resources.ReadyToRun;
+
+		public void Load(SettingsSnapshot snapshot)
 		{
-			Options s = new Options();
-			s.DisassemblyFormat = ReadyToRunOptions.GetDisassemblyFormat(settings);
-			s.IsShowUnwindInfo = ReadyToRunOptions.GetIsShowUnwindInfo(settings);
-			s.IsShowDebugInfo = ReadyToRunOptions.GetIsShowDebugInfo(settings);
-			s.IsShowGCInfo = ReadyToRunOptions.GetIsShowGCInfo(settings);
-
-			this.DataContext = s;
+			Options = snapshot.GetSettings<ReadyToRunOptions>();
 		}
 
 		public void LoadDefaults()
 		{
-			this.DataContext = new Options();
-		}
-
-		public void Save(XElement root)
-		{
-			Options s = (Options)this.DataContext;
-			ReadyToRunOptions.SetDisassemblyOptions(root, s.DisassemblyFormat, s.IsShowUnwindInfo, s.IsShowDebugInfo, s.IsShowGCInfo);
-		}
-	}
-
-	internal class Options : INotifyPropertyChanged
-	{
-		public string[] DisassemblyFormats {
-			get {
-				return ReadyToRunOptions.disassemblyFormats;
-			}
-		}
-
-		private bool isShowUnwindInfo;
-		public bool IsShowUnwindInfo {
-			get {
-				return isShowUnwindInfo;
-			}
-			set {
-				isShowUnwindInfo = value;
-				OnPropertyChanged(nameof(IsShowUnwindInfo));
-			}
-		}
-
-		private bool isShowDebugInfo;
-
-		public bool IsShowDebugInfo {
-			get {
-				return isShowDebugInfo;
-			}
-			set {
-				isShowDebugInfo = value;
-				OnPropertyChanged(nameof(IsShowDebugInfo));
-			}
-		}
-
-		private bool isShowGCInfo;
-
-		public bool IsShowGCInfo {
-			get {
-				return isShowGCInfo;
-			}
-			set {
-				isShowGCInfo = value;
-				OnPropertyChanged(nameof(IsShowGCInfo));
-			}
-		}
-
-		private string disassemblyFormat;
-
-		public string DisassemblyFormat {
-			get { return disassemblyFormat; }
-			set {
-				if (disassemblyFormat != value)
-				{
-					disassemblyFormat = value;
-					OnPropertyChanged(nameof(DisassemblyFormat));
-				}
-			}
-		}
-
-		public event PropertyChangedEventHandler PropertyChanged;
-
-		protected virtual void OnPropertyChanged(string propertyName)
-		{
-			if (PropertyChanged != null)
-			{
-				PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-			}
+			Options.LoadFromXml(new("empty"));
 		}
 	}
 }

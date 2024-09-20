@@ -112,7 +112,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnHandleClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, handlePtr.Handle, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, handlePtr.Handle, protocol: "metadata")));
 			}
 
 			string handleTooltip;

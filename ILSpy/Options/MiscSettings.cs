@@ -17,16 +17,44 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Xml.Linq;
+
+using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpyX.Settings
 {
-	public interface ISettingsSection<TSelf>
+	public class MiscSettings : ObservableObject, ISettingsSection
 	{
-		// This should be abstract, but that needs C# 11.0 (see IParseable<TSelf>)
-		// Keep it to be enabled in the future
-		public static TSelf Load(ISettingsProvider settingsProvider)
+		private bool allowMultipleInstances;
+		private bool loadPreviousAssemblies = true;
+
+		public bool AllowMultipleInstances {
+			get => allowMultipleInstances;
+			set => SetProperty(ref allowMultipleInstances, value);
+		}
+
+		public bool LoadPreviousAssemblies {
+			get => loadPreviousAssemblies;
+			set => SetProperty(ref loadPreviousAssemblies, value);
+		}
+
+		public XName SectionName => "MiscSettings";
+
+		public void LoadFromXml(XElement e)
 		{
-			throw new NotImplementedException();
+			AllowMultipleInstances = (bool?)e.Attribute(nameof(AllowMultipleInstances)) ?? false;
+			LoadPreviousAssemblies = (bool?)e.Attribute(nameof(LoadPreviousAssemblies)) ?? true;
+		}
+
+		public XElement SaveToXml()
+		{
+			var section = new XElement(SectionName);
+
+			section.SetAttributeValue(nameof(AllowMultipleInstances), AllowMultipleInstances);
+			section.SetAttributeValue(nameof(LoadPreviousAssemblies), LoadPreviousAssemblies);
+
+			return section;
 		}
 	}
 }
+

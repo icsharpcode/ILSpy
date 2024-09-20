@@ -111,7 +111,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnBaseTypeClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, typeDef.BaseType, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, typeDef.BaseType, protocol: "metadata")));
 			}
 
 			public string BaseTypeTooltip {
@@ -142,7 +142,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnFieldListClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, typeDef.GetFields().FirstOrDefault(), protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, typeDef.GetFields().FirstOrDefault(), protocol: "metadata")));
 			}
 
 			string fieldListTooltip;
@@ -160,7 +160,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnMethodListClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, typeDef.GetMethods().FirstOrDefault(), protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, typeDef.GetMethods().FirstOrDefault(), protocol: "metadata")));
 			}
 
 			string methodListTooltip;

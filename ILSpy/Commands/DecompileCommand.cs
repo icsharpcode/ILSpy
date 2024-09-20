@@ -66,7 +66,7 @@ namespace ICSharpCode.ILSpy.Commands
 				selection = entity;
 			}
 			if (selection != null)
-				MainWindow.Instance.JumpToReference(selection);
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(selection));
 		}
 	}
 }

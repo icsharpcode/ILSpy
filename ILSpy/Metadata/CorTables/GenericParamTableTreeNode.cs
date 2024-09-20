@@ -92,7 +92,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnOwnerClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, genericParam.Parent, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, genericParam.Parent, protocol: "metadata")));
 			}
 
 			string ownerTooltip;

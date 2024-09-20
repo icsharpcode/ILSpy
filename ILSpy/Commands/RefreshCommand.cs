@@ -19,6 +19,7 @@
 using System.ComponentModel.Composition;
 using System.Windows.Input;
 
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy
@@ -28,9 +29,18 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class RefreshCommand : CommandWrapper
 	{
-		public RefreshCommand()
+		private readonly AssemblyTreeModel assemblyTreeModel;
+
+		[ImportingConstructor]
+		public RefreshCommand(AssemblyTreeModel assemblyTreeModel)
 			: base(NavigationCommands.Refresh)
 		{
+			this.assemblyTreeModel = assemblyTreeModel;
+		}
+
+		protected override void OnExecute(object sender, ExecutedRoutedEventArgs e)
+		{
+			assemblyTreeModel.Refresh();
 		}
 	}
 }

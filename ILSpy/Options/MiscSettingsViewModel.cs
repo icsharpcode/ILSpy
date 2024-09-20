@@ -16,89 +16,61 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel;
+using System.ComponentModel.Composition;
 using System.IO;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
+using System.Xml.Linq;
 
 using ICSharpCode.ILSpy.AppEnv;
-using ICSharpCode.ILSpy.Commands;
 using ICSharpCode.ILSpyX.Settings;
 
 using Microsoft.Win32;
 
+using TomsToolbox.Wpf;
+
 namespace ICSharpCode.ILSpy.Options
 {
-	public class MiscSettingsViewModel : IMiscSettings, INotifyPropertyChanged
+	[ExportOptionPage(Order = 30)]
+	[PartCreationPolicy(CreationPolicy.NonShared)]
+	public class MiscSettingsViewModel : ObservableObject, IOptionPage
 	{
-		bool allowMultipleInstances;
-		bool loadPreviousAssemblies = true;
-
-		public MiscSettingsViewModel(MiscSettings s)
-		{
-			AllowMultipleInstances = s.AllowMultipleInstances;
-			LoadPreviousAssemblies = s.LoadPreviousAssemblies;
-
-			if (EnableShellIntegrationCommand)
-			{
-				AddRemoveShellIntegrationCommand = new DelegateCommand<object>(AddRemoveShellIntegration);
-			}
+		private MiscSettings settings;
+		public MiscSettings Settings {
+			get => settings;
+			set => SetProperty(ref settings, value);
 		}
 
-		/// <summary>
-		/// Allow multiple instances.
-		/// </summary>
-		public bool AllowMultipleInstances {
-			get { return allowMultipleInstances; }
-			set {
-				if (allowMultipleInstances != value)
-				{
-					allowMultipleInstances = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		/// <summary>
-		/// Load assemblies that were loaded in the previous instance
-		/// </summary>
-		public bool LoadPreviousAssemblies {
-			get { return loadPreviousAssemblies; }
-			set {
-				if (loadPreviousAssemblies != value)
-				{
-					loadPreviousAssemblies = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		public ICommand AddRemoveShellIntegrationCommand { get; }
-		public bool EnableShellIntegrationCommand => AppEnvironment.IsWindows;
+		public ICommand AddRemoveShellIntegrationCommand => new DelegateCommand(() => AppEnvironment.IsWindows, AddRemoveShellIntegration);
 
 		const string rootPath = @"Software\Classes\{0}\shell";
 		const string fullPath = @"Software\Classes\{0}\shell\Open with ILSpy\command";
 
-		private void AddRemoveShellIntegration(object obj)
+		private void AddRemoveShellIntegration()
 		{
-			string commandLine = CommandLineTools.ArgumentArrayToCommandLine(Path.ChangeExtension(Assembly.GetEntryAssembly().Location, ".exe")) + " \"%L\"";
+			string commandLine = CommandLineTools.ArgumentArrayToCommandLine(Path.ChangeExtension(Assembly.GetEntryAssembly()?.Location, ".exe")) + " \"%L\"";
 			if (RegistryEntriesExist())
 			{
 				if (MessageBox.Show(string.Format(Properties.Resources.RemoveShellIntegrationMessage, commandLine), "ILSpy", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
 				{
-					Registry.CurrentUser.CreateSubKey(string.Format(rootPath, "dllfile")).DeleteSubKeyTree("Open with ILSpy");
-					Registry.CurrentUser.CreateSubKey(string.Format(rootPath, "exefile")).DeleteSubKeyTree("Open with ILSpy");
+					Registry.CurrentUser
+						.CreateSubKey(string.Format(rootPath, "dllfile"))?
+						.DeleteSubKeyTree("Open with ILSpy");
+					Registry.CurrentUser
+						.CreateSubKey(string.Format(rootPath, "exefile"))?
+						.DeleteSubKeyTree("Open with ILSpy");
 				}
 			}
 			else
 			{
 				if (MessageBox.Show(string.Format(Properties.Resources.AddShellIntegrationMessage, commandLine), "ILSpy", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
 				{
-					Registry.CurrentUser.CreateSubKey(string.Format(fullPath, "dllfile"))?
+					Registry.CurrentUser
+						.CreateSubKey(string.Format(fullPath, "dllfile"))?
 						.SetValue("", commandLine);
-					Registry.CurrentUser.CreateSubKey(string.Format(fullPath, "exefile"))?
+					Registry.CurrentUser
+						.CreateSubKey(string.Format(fullPath, "exefile"))?
 						.SetValue("", commandLine);
 				}
 			}
@@ -117,20 +89,16 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
-		#region INotifyPropertyChanged Implementation
+		public string Title => Properties.Resources.Misc;
 
-		public event PropertyChangedEventHandler PropertyChanged;
-
-		protected virtual void OnPropertyChanged(PropertyChangedEventArgs e)
+		public void Load(SettingsSnapshot settings)
 		{
-			PropertyChanged?.Invoke(this, e);
+			Settings = settings.GetSettings<MiscSettings>();
 		}
 
-		protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+		public void LoadDefaults()
 		{
-			OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
+			Settings.LoadFromXml(new XElement("dummy"));
 		}
-
-		#endregion
 	}
 }

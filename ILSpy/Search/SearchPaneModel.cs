@@ -20,7 +20,6 @@ using System.ComponentModel.Composition;
 using System.Windows.Input;
 using System.Windows.Media;
 
-using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX.Search;
 

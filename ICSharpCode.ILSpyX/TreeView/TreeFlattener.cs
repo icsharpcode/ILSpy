@@ -26,7 +26,7 @@ using System.Diagnostics;
 
 namespace ICSharpCode.ILSpyX.TreeView
 {
-	sealed class TreeFlattener : IList, INotifyCollectionChanged
+	public sealed class TreeFlattener : IList, INotifyCollectionChanged
 	{
 		/// <summary>
 		/// The root node of the flat list tree.

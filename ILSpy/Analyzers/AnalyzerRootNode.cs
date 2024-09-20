@@ -2,7 +2,6 @@
 using System.Collections.Specialized;
 using System.Linq;
 
-using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 

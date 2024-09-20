@@ -23,7 +23,7 @@ namespace TestPlugin
 	{
 		public override void Execute(object parameter)
 		{
-			foreach (var loadedAssembly in MainWindow.Instance.CurrentAssemblyList.GetAssemblies())
+			foreach (var loadedAssembly in MainWindow.Instance.AssemblyTreeModel.AssemblyList.GetAssemblies())
 			{
 				loadedAssembly.AssemblyList.Unload(loadedAssembly);
 			}

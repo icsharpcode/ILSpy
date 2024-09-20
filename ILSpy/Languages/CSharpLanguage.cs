@@ -41,7 +41,6 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX;
 
 using LanguageVersion = ICSharpCode.ILSpyX.LanguageVersion;
@@ -359,15 +358,15 @@ namespace ICSharpCode.ILSpy
 
 		void AddReferenceWarningMessage(MetadataFile module, ITextOutput output)
 		{
-			var loadedAssembly = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().FirstOrDefault(la => la.GetMetadataFileOrNull() == module);
+			var loadedAssembly = MainWindow.Instance.AssemblyTreeModel.AssemblyList.GetAssemblies().FirstOrDefault(la => la.GetMetadataFileOrNull() == module);
 			if (loadedAssembly == null || !loadedAssembly.LoadedAssemblyReferencesInfo.HasErrors)
 				return;
 			string line1 = Properties.Resources.WarningSomeAssemblyReference;
 			string line2 = Properties.Resources.PropertyManuallyMissingReferencesListLoadedAssemblies;
 			AddWarningMessage(module, output, line1, line2, Properties.Resources.ShowAssemblyLoad, Images.ViewCode, delegate {
-				ILSpyTreeNode assemblyNode = MainWindow.Instance.FindTreeNode(module);
+				ILSpyTreeNode assemblyNode = MainWindow.Instance.AssemblyTreeModel.FindTreeNode(module);
 				assemblyNode.EnsureLazyChildren();
-				MainWindow.Instance.SelectNode(assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single());
+				MainWindow.Instance.AssemblyTreeModel.SelectNode(assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single());
 			});
 		}
 

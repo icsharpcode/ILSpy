@@ -27,7 +27,6 @@ using System.Windows.Input;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Commands;
 using ICSharpCode.ILSpy.Properties;
-using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy.ViewModels

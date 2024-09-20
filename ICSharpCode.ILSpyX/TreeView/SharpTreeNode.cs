@@ -182,7 +182,7 @@ namespace ICSharpCode.ILSpyX.TreeView
 		#endregion
 
 		#region OnChildrenChanged
-		protected internal virtual void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
+		public virtual void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
 		{
 			if (e.OldItems != null)
 			{
@@ -359,7 +359,7 @@ namespace ICSharpCode.ILSpyX.TreeView
 			return TreeTraversal.PreOrder(this.Children.Where(c => c.isVisible), n => n.Children.Where(c => c.isVisible));
 		}
 
-		internal IEnumerable<SharpTreeNode> VisibleDescendantsAndSelf()
+		public IEnumerable<SharpTreeNode> VisibleDescendantsAndSelf()
 		{
 			return TreeTraversal.PreOrder(this, n => n.Children.Where(c => c.isVisible));
 		}
@@ -637,7 +637,7 @@ namespace ICSharpCode.ILSpyX.TreeView
 			return false;
 		}
 
-		internal void InternalDrop(IPlatformDragEventArgs e, int index)
+		public void InternalDrop(IPlatformDragEventArgs e, int index)
 		{
 			if (LazyLoading)
 			{

@@ -1,34 +1,196 @@
-﻿using ICSharpCode.Decompiler;
+﻿using System;
+using System.Collections.Concurrent;
+using System.ComponentModel;
+using System.Xml.Linq;
+
+using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Settings;
 
+using DecompilerSettings = ICSharpCode.ILSpy.Options.DecompilerSettings;
+
+#nullable enable
+
 namespace ICSharpCode.ILSpy.Util
 {
-	public class SettingsService
+	public interface IChildSettings
+	{
+		ISettingsSection Parent { get; }
+	}
+
+	public interface ISettingsSection : INotifyPropertyChanged
+	{
+		XName SectionName { get; }
+
+		void LoadFromXml(XElement section);
+
+		XElement SaveToXml();
+	}
+
+	public abstract class SettingsServiceBase
+	{
+		protected readonly ConcurrentDictionary<Type, ISettingsSection> sections = new();
+
+		public ISettingsProvider SpySettings;
+
+		protected SettingsServiceBase(ISettingsProvider spySettings)
+		{
+			SpySettings = spySettings;
+		}
+
+		public T GetSettings<T>() where T : ISettingsSection, new()
+		{
+			return (T)sections.GetOrAdd(typeof(T), _ => {
+				T section = new T();
+
+				var sectionElement = SpySettings[section.SectionName];
+
+				section.LoadFromXml(sectionElement);
+				section.PropertyChanged += Section_PropertyChanged;
+
+				return section;
+			});
+		}
+
+		protected void SaveSection(ISettingsSection section, XElement root)
+		{
+			var element = section.SaveToXml();
+
+			var existingElement = root.Element(section.SectionName);
+			if (existingElement != null)
+				existingElement.ReplaceWith(element);
+			else
+				root.Add(element);
+		}
+
+		protected virtual void Section_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+		}
+	}
+
+	public class SettingsSnapshot : SettingsServiceBase
+	{
+		private readonly SettingsService parent;
+
+		public SettingsSnapshot(SettingsService parent) : base(parent.SpySettings)
+		{
+			this.parent = parent;
+		}
+
+		public void Save()
+		{
+			SpySettings.Update(root => {
+				foreach (var section in sections.Values)
+				{
+					SaveSection(section, root);
+				}
+			});
+
+			parent.Reload();
+		}
+	}
+
+	public class SettingsService : SettingsServiceBase
 	{
 		public static readonly SettingsService Instance = new();
 
-		private SettingsService()
+		private SettingsService() : base(LoadSettings())
 		{
-			SpySettings = ILSpySettings.Load();
-			SessionSettings = new(SpySettings);
-			DecompilerSettings = DecompilerSettingsPanel.LoadDecompilerSettings(SpySettings);
-			DisplaySettings = DisplaySettingsPanel.LoadDisplaySettings(SpySettings, SessionSettings);
-			AssemblyListManager = new(SpySettings) {
-				ApplyWinRTProjections = DecompilerSettings.ApplyWindowsRuntimeProjections,
-				UseDebugSymbols = DecompilerSettings.UseDebugSymbols
-			};
 		}
 
-		public ILSpySettings SpySettings { get; }
+		public SessionSettings SessionSettings => GetSettings<SessionSettings>();
 
-		public SessionSettings SessionSettings { get; }
+		public DecompilerSettings DecompilerSettings => GetSettings<DecompilerSettings>();
 
-		public DecompilerSettings DecompilerSettings { get; set; }
+		public DisplaySettings DisplaySettings => GetSettings<DisplaySettings>();
 
-		public DisplaySettings DisplaySettings { get; }
+		public MiscSettings MiscSettings => GetSettings<MiscSettings>();
 
-		public AssemblyListManager AssemblyListManager { get; }
+		private AssemblyListManager? assemblyListManager;
+		public AssemblyListManager AssemblyListManager => assemblyListManager ??= new(SpySettings) {
+			ApplyWinRTProjections = DecompilerSettings.ApplyWindowsRuntimeProjections,
+			UseDebugSymbols = DecompilerSettings.UseDebugSymbols
+		};
+
+		public DecompilationOptions CreateDecompilationOptions(TabPageModel tabPage)
+		{
+			return new(SessionSettings.LanguageSettings.LanguageVersion, DecompilerSettings, DisplaySettings) { Progress = tabPage.Content as IProgress<DecompilationProgress> };
+		}
+
+		public AssemblyList LoadInitialAssemblyList()
+		{
+			var loadPreviousAssemblies = MiscSettings.LoadPreviousAssemblies;
+
+			if (loadPreviousAssemblies)
+			{
+				return AssemblyListManager.LoadList(SessionSettings.ActiveAssemblyList);
+			}
+			else
+			{
+				AssemblyListManager.ClearAll();
+				return AssemblyListManager.CreateList(AssemblyListManager.DefaultListName);
+			}
+		}
+
+		private bool reloading;
+
+		public void Reload()
+		{
+			reloading = true;
+
+			try
+			{
+				SpySettings = ILSpySettings.Load();
+
+				foreach (var section in sections.Values)
+				{
+					var element = SpySettings[section.SectionName];
+
+					section.LoadFromXml(element);
+				}
+			}
+			finally
+			{
+				reloading = false;
+			}
+		}
+
+		public SettingsSnapshot CreateSnapshot()
+		{
+			return new(this);
+		}
+
+		protected override void Section_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			base.Section_PropertyChanged(sender, e);
+
+			if (!reloading)
+			{
+				var section = (sender as IChildSettings)?.Parent ?? sender as ISettingsSection;
+
+				if (section != null)
+				{
+					SpySettings.Update(root => {
+						SaveSection(section, root);
+					});
+				};
+			}
+
+			if (sender is DecompilerSettings decompilerSettings && assemblyListManager != null)
+			{
+				assemblyListManager.ApplyWinRTProjections = decompilerSettings.ApplyWindowsRuntimeProjections;
+				assemblyListManager.UseDebugSymbols = decompilerSettings.UseDebugSymbols;
+			}
+
+			MessageBus.Send(sender, new SettingsChangedEventArgs(e));
+		}
+
+		private static ILSpySettings LoadSettings()
+		{
+			ILSpySettings.SettingsFilePathProvider = new ILSpySettingsFilePathProvider();
+			return ILSpySettings.Load();
+		}
 	}
 }

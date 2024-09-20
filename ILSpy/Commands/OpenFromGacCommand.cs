@@ -19,6 +19,7 @@
 using System.ComponentModel.Composition;
 
 using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy
@@ -27,6 +28,14 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class OpenFromGacCommand : SimpleCommand
 	{
+		private readonly AssemblyTreeModel assemblyTreeModel;
+
+		[ImportingConstructor]
+		public OpenFromGacCommand(AssemblyTreeModel assemblyTreeModel)
+		{
+			this.assemblyTreeModel = assemblyTreeModel;
+		}
+
 		public override bool CanExecute(object parameter)
 		{
 			return AppEnvironment.IsWindows;
@@ -34,10 +43,14 @@ namespace ICSharpCode.ILSpy
 
 		public override void Execute(object parameter)
 		{
-			OpenFromGacDialog dlg = new OpenFromGacDialog();
-			dlg.Owner = MainWindow.Instance;
+			OpenFromGacDialog dlg = new OpenFromGacDialog {
+				Owner = MainWindow.Instance
+			};
+
 			if (dlg.ShowDialog() == true)
-				MainWindow.Instance.OpenFiles(dlg.SelectedFileNames);
+			{
+				assemblyTreeModel.OpenFiles(dlg.SelectedFileNames);
+			}
 		}
 	}
 }
