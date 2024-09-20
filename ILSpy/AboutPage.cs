@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy
 				Title = Resources.About,
 				EnableHyperlinks = true
 			};
-			output.WriteLine(Resources.ILSpyVersion + DecompilerVersionInfo.FullVersion);
+			output.WriteLine(Resources.ILSpyVersion + DecompilerVersionInfo.FullVersionWithCommitHash);
 
 			string prodVersion = GetDotnetProductVersion();
 			output.WriteLine(Resources.NETFrameworkVersion + prodVersion);
