@@ -658,8 +658,9 @@ namespace ICSharpCode.ILSpyX.TreeView
 
 		public bool IsLast {
 			get {
-				return Parent == null ||
-					Parent.Children[Parent.Children.Count - 1] == this;
+				return Parent == null
+					|| Parent.Children.Count == 0
+					|| Parent.Children[^1] == this;
 			}
 		}
 
