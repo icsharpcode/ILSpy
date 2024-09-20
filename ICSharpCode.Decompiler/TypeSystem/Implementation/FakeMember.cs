@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Reflection;
 using System.Reflection.Metadata;
 
@@ -94,7 +95,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		string INamedElement.Namespace => DeclaringType?.Namespace;
 
-		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
+		bool IMember.Equals(IMember? obj, TypeVisitor typeNormalization)
 		{
 			return Equals(obj);
 		}
@@ -152,10 +153,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		bool IMethod.HasBody => false;
 		public bool IsAccessor => AccessorOwner is not null;
-		public IMember AccessorOwner { get; set; }
+		public IMember? AccessorOwner { get; set; }
 		public MethodSemanticsAttributes AccessorKind { get; set; }
 
-		IMethod IMethod.ReducedFrom => null;
+		IMethod? IMethod.ReducedFrom => null;
 
 		public IReadOnlyList<IParameter> Parameters { get; set; } = EmptyList<IParameter>.Instance;
 
@@ -195,11 +196,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public bool CanGet => Getter is not null;
 		public bool CanSet => Setter is not null;
-		public IMethod Getter { get; set; }
-		public IMethod Setter { get; set; }
+		public IMethod? Getter { get; set; }
+		public IMethod? Setter { get; set; }
 		public bool IsIndexer { get; set; }
 		public bool ReturnTypeIsRefReadOnly => false;
-		public IReadOnlyList<IParameter> Parameters { get; set; }
+		public IReadOnlyList<IParameter> Parameters { get; set; } = ImmutableArray<IParameter>.Empty;
 
 		public override string ToString() =>
 			"FakeProperty " + ReturnType + " " + DeclaringType.Name + "." + Name +
@@ -226,8 +227,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool CanAdd => AddAccessor is not null;
 		public bool CanRemove => RemoveAccessor is not null;
 		public bool CanInvoke => InvokeAccessor is not null;
-		public IMethod AddAccessor { get; set; }
-		public IMethod RemoveAccessor { get; set; }
-		public IMethod InvokeAccessor { get; set; }
+		public IMethod? AddAccessor { get; set; }
+		public IMethod? RemoveAccessor { get; set; }
+		public IMethod? InvokeAccessor { get; set; }
 	}
 }

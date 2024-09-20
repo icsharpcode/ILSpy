@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return visitor.VisitNullabilityAnnotatedType(this);
 		}
 
-		public override bool Equals(IType other)
+		public override bool Equals(IType? other)
 		{
 			return other is NullabilityAnnotatedType nat
 				&& nat.nullability == nullability

@@ -154,7 +154,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return WithContext(context.WithCurrentMember(member));
 		}
 
-		ITypeResolveContext ITypeResolveContext.WithCurrentMember(IMember member)
+		ITypeResolveContext ITypeResolveContext.WithCurrentMember(IMember? member)
 		{
 			return WithCurrentMember(member);
 		}
@@ -188,7 +188,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <summary>
 		/// Sets the current type definition.
 		/// </summary>
-		public CSharpResolver WithCurrentTypeDefinition(ITypeDefinition typeDefinition)
+		public CSharpResolver WithCurrentTypeDefinition(ITypeDefinition? typeDefinition)
 		{
 			if (this.CurrentTypeDefinition == typeDefinition)
 				return this;
@@ -203,7 +203,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 									  checkForOverflow, isWithinLambdaExpression, newTypeDefinitionCache, localVariableStack, objectInitializerStack);
 		}
 
-		ITypeResolveContext ITypeResolveContext.WithCurrentTypeDefinition(ITypeDefinition typeDefinition)
+		ITypeResolveContext ITypeResolveContext.WithCurrentTypeDefinition(ITypeDefinition? typeDefinition)
 		{
 			return WithCurrentTypeDefinition(typeDefinition);
 		}

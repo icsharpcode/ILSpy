@@ -298,7 +298,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public string ReflectionName => $"{DeclaringType?.ReflectionName}.{Name}";
 		public string Namespace => DeclaringType?.Namespace ?? string.Empty;
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			if (obj is MetadataProperty p)
 			{
@@ -312,7 +312,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return 0x32b6a76c ^ module.MetadataFile.GetHashCode() ^ handle.GetHashCode();
 		}
 
-		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
+		bool IMember.Equals(IMember? obj, TypeVisitor typeNormalization)
 		{
 			return Equals(obj);
 		}

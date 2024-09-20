@@ -549,7 +549,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return this;
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			if (obj is MetadataTypeDefinition td)
 			{
@@ -563,7 +563,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return 0x2e0520f2 ^ module.MetadataFile.GetHashCode() ^ handle.GetHashCode();
 		}
 
-		bool IEquatable<IType>.Equals(IType other)
+		bool IEquatable<IType>.Equals(IType? other)
 		{
 			return Equals(other);
 		}

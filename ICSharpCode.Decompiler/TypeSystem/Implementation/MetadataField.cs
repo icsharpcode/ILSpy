@@ -258,7 +258,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public object GetConstantValue(bool throwOnInvalidMetadata)
+		public object? GetConstantValue(bool throwOnInvalidMetadata)
 		{
 			object val = LazyInit.VolatileRead(ref this.constantValue);
 			if (val != null)
@@ -295,7 +295,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			if (obj is MetadataField f)
 			{
@@ -309,7 +309,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return 0x11dda32b ^ module.MetadataFile.GetHashCode() ^ handle.GetHashCode();
 		}
 
-		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
+		bool IMember.Equals(IMember? obj, TypeVisitor typeNormalization)
 		{
 			return Equals(obj);
 		}
