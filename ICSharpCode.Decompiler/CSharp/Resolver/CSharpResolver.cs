@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
@@ -1597,7 +1598,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		public bool IsVariableReferenceWithSameType(ResolveResult rr, string identifier, out TypeResolveResult? trr)
+		public bool IsVariableReferenceWithSameType(ResolveResult rr, string identifier, [NotNullWhen(true)] out TypeResolveResult? trr)
 		{
 			if (!(rr is MemberResolveResult || rr is LocalResolveResult))
 			{

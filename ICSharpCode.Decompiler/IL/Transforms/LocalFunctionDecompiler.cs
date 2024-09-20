@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
@@ -831,7 +832,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		static readonly Regex functionNameRegex = new Regex(@"^<(.*)>g__([^\|]*)\|{0,1}\d+(_\d+)?$", RegexOptions.Compiled);
 
-		internal static bool ParseLocalFunctionName(string name, out string? callerName, out string? functionName)
+		internal static bool ParseLocalFunctionName(string name, [NotNullWhen(true)] out string? callerName, [NotNullWhen(true)] out string? functionName)
 		{
 			callerName = null;
 			functionName = null;

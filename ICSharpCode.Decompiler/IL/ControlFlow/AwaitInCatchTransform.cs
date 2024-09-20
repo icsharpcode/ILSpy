@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using ICSharpCode.Decompiler.IL.Transforms;
@@ -223,7 +224,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// Analyzes all catch handlers and returns every handler that follows the await catch handler pattern.
 		/// </summary>
 		static bool AnalyzeHandlers(InstructionCollection<TryCatchHandler> handlers, out ILVariable? catchHandlerIdentifier,
-			out List<CatchBlockInfo> transformableCatchBlocks)
+			[NotNullWhen(true)] out List<CatchBlockInfo> transformableCatchBlocks)
 		{
 			transformableCatchBlocks = new List<CatchBlockInfo>();
 			catchHandlerIdentifier = null;
@@ -254,9 +255,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// stloc V_5(ldc.i4 2)		- store id of catch block in 'identifierVariable'
 		/// br IL_0075				- jump out of catch block to the head of the catch-handler jump table
 		/// </summary>
-		static bool MatchAwaitCatchHandler(TryCatchHandler handler, out int id, out ILVariable? identifierVariable,
-			out Block? realEntryPoint, out ILInstruction? nextBlockOrExitContainer,
-			out ILInstruction? jumpTableEntry, out ILVariable? objectVariable)
+		static bool MatchAwaitCatchHandler(TryCatchHandler handler, out int id, [NotNullWhen(true)] out ILVariable? identifierVariable,
+			[NotNullWhen(true)] out Block? realEntryPoint, out ILInstruction? nextBlockOrExitContainer,
+			[NotNullWhen(true)] out ILInstruction? jumpTableEntry, out ILVariable? objectVariable)
 		{
 			id = 0;
 			identifierVariable = null;
@@ -266,7 +267,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			nextBlockOrExitContainer = null;
 			var exceptionVariable = handler.Variable;
 			var catchBlock = ((BlockContainer)handler.Body).EntryPoint;
-			ILInstruction value;
+			ILInstruction? value;
 			switch (catchBlock.Instructions.Count)
 			{
 				case 3:
@@ -326,7 +327,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 			}
 
-			bool ParseSwitchJumpTable(int id, SwitchInstruction jumpTable, ILVariable identifierVariable, out Block? realEntryPoint, out ILInstruction? nextBlockOrExitContainer, out ILInstruction? jumpTableEntry)
+			bool ParseSwitchJumpTable(int id, SwitchInstruction jumpTable, ILVariable identifierVariable, [NotNullWhen(true)] out Block? realEntryPoint, out ILInstruction? nextBlockOrExitContainer, [NotNullWhen(true)] out ILInstruction? jumpTableEntry)
 			{
 				realEntryPoint = null;
 				nextBlockOrExitContainer = null;

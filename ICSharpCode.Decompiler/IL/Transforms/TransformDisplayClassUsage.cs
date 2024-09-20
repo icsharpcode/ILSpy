@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection.Metadata;
 
@@ -588,7 +589,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		internal static bool IsClosure(ILTransformContext context, ILVariable variable, out ITypeDefinition? closureType, out ILInstruction? initializer)
+		internal static bool IsClosure(ILTransformContext context, ILVariable variable, [NotNullWhen(true)] out ITypeDefinition? closureType, [NotNullWhen(true)] out ILInstruction? initializer)
 		{
 			closureType = null;
 			initializer = null;
@@ -610,7 +611,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		static bool IsClosureInit(ILTransformContext context, StLoc inst, out ITypeDefinition? closureType)
+		static bool IsClosureInit(ILTransformContext context, StLoc inst, [NotNullWhen(true)] out ITypeDefinition? closureType)
 		{
 			if (inst.Value is NewObj newObj)
 			{
@@ -840,18 +841,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			EarlyExpressionTransforms.LdObjToLdLoc(inst, context);
 		}
 
-		private bool IsDisplayClassLoad(ILInstruction target, out ILVariable variable)
+		private bool IsDisplayClassLoad(ILInstruction target, [NotNullWhen(true)] out ILVariable? variable)
 		{
 			// We cannot use MatchLdLocRef here because local functions use ref parameters
 			if (!target.MatchLdLoc(out variable) && !target.MatchLdLoca(out variable))
 				return false;
-			if (displayClassCopyMap.TryGetValue(variable, out ILVariable other))
+			if (displayClassCopyMap.TryGetValue(variable, out ILVariable? other))
 				variable = other;
 			return true;
 		}
 
 		private bool IsDisplayClassFieldAccess(ILInstruction inst,
-			out ILVariable? displayClassVar, out DisplayClass? displayClass, out IField? field)
+			[NotNullWhen(true)] out ILVariable? displayClassVar, [NotNullWhen(true)] out DisplayClass? displayClass, [NotNullWhen(true)] out IField? field)
 		{
 			displayClass = null;
 			displayClassVar = null;
@@ -867,7 +868,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			base.VisitLdFlda(inst);
 			// Get display class info
-			if (!IsDisplayClassFieldAccess(inst, out _, out DisplayClass displayClass, out IField field))
+			if (!IsDisplayClassFieldAccess(inst, out _, out DisplayClass? displayClass, out IField? field))
 				return;
 			var keyField = (IField)field.MemberDefinition;
 			var v = displayClass.VariablesToDeclare[keyField];

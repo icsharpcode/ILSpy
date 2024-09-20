@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -121,7 +122,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 	stloc V_2(dynamic.getmember B(target))
 		/// }
 		/// </summary>
-		static bool MatchLhsCacheIfInstruction(ILInstruction ifInst, ILVariable flagVar, out StLoc? cacheStore)
+		static bool MatchLhsCacheIfInstruction(ILInstruction ifInst, ILVariable flagVar, [NotNullWhen(true)] out StLoc? cacheStore)
 		{
 			cacheStore = null;
 			if (!ifInst.MatchIfInstruction(out var condition, out var trueInst))

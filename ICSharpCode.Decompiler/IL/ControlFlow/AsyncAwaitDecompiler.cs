@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection.Metadata;
 
@@ -482,7 +483,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Matches a (potentially virtual) instance method call.
 		/// </summary>
-		static bool MatchCall(ILInstruction inst, string name, out InstructionCollection<ILInstruction>? args)
+		static bool MatchCall(ILInstruction inst, string name, [NotNullWhen(true)] out InstructionCollection<ILInstruction>? args)
 		{
 			if (inst is CallInstruction call && (call.OpCode == OpCode.Call || call.OpCode == OpCode.CallVirt)
 				&& call.Method.Name == name && !call.Method.IsStatic)
@@ -497,7 +498,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Matches a store to the state machine.
 		/// </summary>
-		static bool MatchStFld(ILInstruction stfld, ILVariable stateMachineVar, out IField field, out ILInstruction value)
+		static bool MatchStFld(ILInstruction stfld, ILVariable stateMachineVar, [NotNullWhen(true)] out IField? field, [NotNullWhen(true)] out ILInstruction? value)
 		{
 			if (!stfld.MatchStFld(out var target, out field, out value))
 				return false;
@@ -869,7 +870,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return blockContainer.Blocks[setResultReturnBlockIndex];
 		}
 
-		private bool MatchDisposeCombinedTokens(BlockContainer blockContainer, ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst, bool[] blocksAnalyzed, out Block? setResultAndExitBlock)
+		private bool MatchDisposeCombinedTokens(BlockContainer blockContainer, ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst, bool[] blocksAnalyzed, [NotNullWhen(true)] out Block? setResultAndExitBlock)
 		{
 			setResultAndExitBlock = null;
 			// 	...
@@ -1423,7 +1424,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		bool AnalyzeAwaitBlock(Block block, out ILVariable? awaiter, out IField? awaiterField, out int state, out int yieldOffset)
+		bool AnalyzeAwaitBlock(Block block, [NotNullWhen(true)] out ILVariable? awaiter, [NotNullWhen(true)] out IField? awaiterField, out int state, out int yieldOffset)
 		{
 			awaiter = null;
 			awaiterField = null;
@@ -1522,6 +1523,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				pos--;
 			}
+
 			block.Instructions.RemoveRange(pos, block.Instructions.Count - pos);
 			return true;
 		}
@@ -1538,7 +1540,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return inst;
 		}
 
-		private bool AnalyzeYieldReturn(Block block, out ILInstruction? yieldValue, out int newState)
+		private bool AnalyzeYieldReturn(Block block, [NotNullWhen(true)] out ILInstruction? yieldValue, out int newState)
 		{
 			yieldValue = default;
 			newState = default;
@@ -1584,7 +1586,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return true;
 		}
 
-		bool MatchCurrentAssignment(ILInstruction inst, out ILInstruction value)
+		bool MatchCurrentAssignment(ILInstruction inst, [NotNullWhen(true)] out ILInstruction? value)
 		{
 			if (!inst.MatchStFld(out var target, out var field, out value))
 				return false;
@@ -1701,7 +1703,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return inst;
 		}
 
-		bool CheckAwaitBlock(Block block, out Block? resumeBlock, out IField? stackField)
+		bool CheckAwaitBlock(Block block, [NotNullWhen(true)] out Block? resumeBlock, out IField? stackField)
 		{
 			// awaitBlock:
 			//   (pre-roslyn: save stack)

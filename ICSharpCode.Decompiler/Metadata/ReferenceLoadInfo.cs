@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace ICSharpCode.Decompiler.Metadata
@@ -58,7 +59,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public bool TryGetInfo(string fullName, out UnresolvedAssemblyNameReference info)
+		public bool TryGetInfo(string fullName, [NotNullWhen(true)] out UnresolvedAssemblyNameReference? info)
 		{
 			lock (loadedAssemblyReferences)
 			{

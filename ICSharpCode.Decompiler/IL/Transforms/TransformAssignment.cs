@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 
@@ -677,8 +678,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 
 		/// Every IsCompoundStore() call should be followed by an IsMatchingCompoundLoad() call.
 		/// </remarks>
-		static bool IsCompoundStore(ILInstruction inst, out IType? storeType,
-			out ILInstruction? value, ICompilation compilation)
+		static bool IsCompoundStore(ILInstruction inst, [NotNullWhen(true)] out IType? storeType,
+			[NotNullWhen(true)] out ILInstruction? value, ICompilation compilation)
 		{
 			value = null;
 			storeType = null;
@@ -1025,7 +1026,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		static bool IsSameMember(IMember a, IMember b)
+		static bool IsSameMember(IMember? a, IMember? b)
 		{
 			if (a == null || b == null)
 				return false;

@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Text;
@@ -114,7 +115,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		internal static bool TransformSpanTArrayInitialization(NewObj inst, StatementTransformContext context, out ILInstruction? replacement)
+		internal static bool TransformSpanTArrayInitialization(NewObj inst, StatementTransformContext context, [NotNullWhen(true)] out ILInstruction? replacement)
 		{
 			replacement = null;
 			if (!context.Settings.ArrayInitializers)
@@ -143,7 +144,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		private static unsafe bool DecodeUTF8String(BlobReader blob, int size, out string? text)
+		private static unsafe bool DecodeUTF8String(BlobReader blob, int size, [NotNullWhen(true)] out string? text)
 		{
 			if (size > blob.RemainingBytes)
 			{
@@ -166,7 +167,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return MemoryExtensions.SequenceEqual(bytes, new ReadOnlySpan<byte>(blob.CurrentPointer, size));
 		}
 
-		static bool MatchSpanTCtorWithPointerAndSize(NewObj newObj, StatementTransformContext context, out IType? elementType, out FieldDefinition field, out int size)
+		static bool MatchSpanTCtorWithPointerAndSize(NewObj newObj, StatementTransformContext context, [NotNullWhen(true)] out IType? elementType, [NotNullWhen(true)] out FieldDefinition field, out int size)
 		{
 			field = default;
 			size = default;
@@ -288,7 +289,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool HandleCpblkInitializer(Block block, int pos, ILVariable v, long length, out BlobReader blob, out IType? elementType)
+		bool HandleCpblkInitializer(Block block, int pos, ILVariable v, long length, [NotNullWhen(true)] out BlobReader blob, [NotNullWhen(true)] out IType? elementType)
 		{
 			blob = default;
 			elementType = null;
@@ -334,7 +335,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchGetStaticFieldAddress(ILInstruction input, out IField field)
+		bool MatchGetStaticFieldAddress(ILInstruction input, [NotNullWhen(true)] out IField? field)
 		{
 			if (input.MatchLdsFlda(out field))
 				return true;
@@ -359,7 +360,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static bool IsRuntimeHelpers(IType type) => type is { Name: "RuntimeHelpers", Namespace: "System.Runtime.CompilerServices" };
 
-		unsafe bool HandleSequentialLocAllocInitializer(Block block, int pos, ILVariable store, ILInstruction locAllocInstruction, out IType? elementType, out StObj[]? values, out int instructionsToRemove)
+		unsafe bool HandleSequentialLocAllocInitializer(Block block, int pos, ILVariable store, ILInstruction locAllocInstruction, [NotNullWhen(true)] out IType? elementType, [NotNullWhen(true)] out StObj[]? values, out int instructionsToRemove)
 		{
 			int elementCount = 0;
 			long minExpectedOffset = 0;
@@ -399,7 +400,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			for (int i = pos; i < block.Instructions.Count; i++)
 			{
 				// match the basic stobj pattern
-				if (!block.Instructions[i].MatchStObj(out ILInstruction target, out var value, out var currentType)
+				if (!block.Instructions[i].MatchStObj(out ILInstruction? target, out var value, out var currentType)
 					|| value.Descendants.OfType<IInstructionWithVariableOperand>().Any(inst => inst.Variable == store))
 					break;
 				// first
@@ -462,7 +463,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				elementType = ((PointerType)finalStore.Variable.Type).ElementType;
 			}
 			instructionsToRemove += elementCount;
-
 			return elementCount <= values.Length;
 		}
 
@@ -498,7 +498,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Handle simple case where RuntimeHelpers.InitializeArray is not used.
 		/// </summary>
-		internal static bool HandleSimpleArrayInitializer(ILFunction function, Block block, int pos, ILVariable store, int[] arrayLength, out (ILInstruction[] Indices, ILInstruction Value)[]? values, out int instructionsToRemove)
+		internal static bool HandleSimpleArrayInitializer(ILFunction function, Block block, int pos, ILVariable store, int[] arrayLength, [NotNullWhen(true)] out (ILInstruction[] Indices, ILInstruction? Value)[]? values, out int instructionsToRemove)
 		{
 			instructionsToRemove = 0;
 			int elementCount = 0;
@@ -508,11 +508,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// To prevent excessive allocations, use min(|block|, arraySize) als initial capacity.
 			// This should prevent list-resizing as well as out-of-memory errors.
 			values = null;
-			var valuesList = new List<(ILInstruction[] Indices, ILInstruction Value)>(Math.Min(block.Instructions.Count, length));
+			var valuesList = new List<(ILInstruction[] Indices, ILInstruction? Value)>(Math.Min(block.Instructions.Count, length));
 
 			int[] nextMinimumIndex = new int[arrayLength.Length];
 
-			ILInstruction[] CalculateNextIndices(InstructionCollection<ILInstruction> indices, out bool exactMatch)
+			ILInstruction[]? CalculateNextIndices(InstructionCollection<ILInstruction>? indices, out bool exactMatch)
 			{
 				var nextIndices = new ILInstruction[arrayLength.Length];
 				exactMatch = true;
@@ -565,7 +565,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				InstructionCollection<ILInstruction> indices;
 				// stobj elementType(ldelema elementType(ldloc store, indices), value)
-				if (block.Instructions[i].MatchStObj(out ILInstruction target, out ILInstruction value, out IType type))
+				if (block.Instructions[i].MatchStObj(out var target, out var value, out var type))
 				{
 					if (!(target is LdElema ldelem && ldelem.Array.MatchLdLoc(store)))
 						break;
@@ -620,7 +620,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (i < block.Instructions.Count)
 			{
-				if (block.Instructions[i].MatchStObj(out ILInstruction target, out ILInstruction value, out IType type))
+				if (block.Instructions[i].MatchStObj(out var target, out var value, out var type))
 				{
 					// An element of the array is modified directly after the initializer:
 					// Abort transform, so that partial initializers are not constructed. 
@@ -671,7 +671,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				// 1. Instruction: (optional) temporary copy of store
 				bool hasTemporaryCopy = block.Instructions[pos].MatchStLoc(out var temp, out var storeLoad) && storeLoad.MatchLdLoc(store);
-				ILInstruction initializer;
+				ILInstruction? initializer;
 				if (hasTemporaryCopy)
 				{
 					if (!MatchJaggedArrayStore(block, pos + 1, temp, i, out initializer, out _))
@@ -703,7 +703,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchJaggedArrayStore(Block block, int pos, ILVariable store, int index, out ILInstruction? initializer, out IType? type)
+		bool MatchJaggedArrayStore(Block block, int pos, ILVariable store, int index, [NotNullWhen(true)] out ILInstruction? initializer, [NotNullWhen(true)] out IType? type)
 		{
 			initializer = null;
 			type = null;
@@ -751,7 +751,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return block;
 		}
 
-		static bool MatchNewArr(ILInstruction instruction, out IType? arrayType, out int[]? length)
+		static bool MatchNewArr(ILInstruction instruction, [NotNullWhen(true)] out IType? arrayType, [NotNullWhen(true)] out int[]? length)
 		{
 			length = null;
 			arrayType = null;
@@ -769,7 +769,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchInitializeArrayCall(ILInstruction instruction, out ILInstruction? array, out FieldDefinition field)
+		bool MatchInitializeArrayCall(ILInstruction instruction, [NotNullWhen(true)] out ILInstruction? array, [NotNullWhen(true)] out FieldDefinition field)
 		{
 			array = null;
 			field = default;
@@ -789,7 +789,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool HandleRuntimeHelpersInitializeArray(Block body, int pos, ILVariable array, IType arrayType, int[] arrayLength, out ILInstruction[]? values, out int foundPos)
+		bool HandleRuntimeHelpersInitializeArray(Block body, int pos, ILVariable array, IType arrayType, int[] arrayLength, [NotNullWhen(true)] out ILInstruction[]? values, out int foundPos)
 		{
 			if (MatchInitializeArrayCall(body.Instructions[pos], out var arrayInst, out var field) && arrayInst.MatchLdLoc(array))
 			{

@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using ICSharpCode.Decompiler.FlowAnalysis;
@@ -610,7 +611,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// Determine if the specified instruction necessarily exits (EndPointUnreachable)
 		/// and if so return last (or single) exit instruction
 		/// </summary>
-		private static bool TryGetExit(ILInstruction inst, out ILInstruction? exitInst)
+		private static bool TryGetExit(ILInstruction inst, [NotNullWhen(true)] out ILInstruction? exitInst)
 		{
 			if (inst is Block block && block.Instructions.Count > 0)
 				inst = block.Instructions.Last();

@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection.Metadata;
 
@@ -1426,7 +1427,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			context.StepEndGroup(keepIfEmpty: true);
 
-			bool IsCallToMonoFinallyMethod(Call call, out IMethod? finallyMethod)
+			bool IsCallToMonoFinallyMethod(Call call, [NotNullWhen(true)] out IMethod? finallyMethod)
 			{
 				finallyMethod = default;
 				if (call == null)

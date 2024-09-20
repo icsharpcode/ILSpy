@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -237,7 +238,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			).WithILRange(ifInst));
 		}
 
-		bool IsValidAccessChain(ILVariable testedVar, Mode mode, ILInstruction inst, out ILInstruction? finalLoad)
+		bool IsValidAccessChain(ILVariable testedVar, Mode mode, ILInstruction inst, [NotNullWhen(true)] out ILInstruction? finalLoad)
 		{
 			finalLoad = null;
 			int chainLength = 0;
@@ -475,7 +476,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		// stloc resultTemporary(constrained[type].call_instruction(ldloc target, ...))
 		// br endBlock
-		private bool MatchStLocResultTemporary(Block block, int pos, IType type, ILVariable target, ILVariable defaultTemporary, ILInstruction fallbackBlock, out ILInstruction? nonNullInst, out ILInstruction? nullInst, out Block? endBlock)
+		private bool MatchStLocResultTemporary(Block block, int pos, IType type, ILVariable target, ILVariable defaultTemporary, ILInstruction fallbackBlock, [NotNullWhen(true)] out ILInstruction? nonNullInst, [NotNullWhen(true)] out ILInstruction? nullInst, [NotNullWhen(true)] out Block? endBlock)
 		{
 			endBlock = null;
 			nonNullInst = null;
@@ -496,7 +497,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		private bool MatchLeaveResult(Block block, int pos, IType type, ILVariable target, ILVariable defaultTemporary, ILInstruction fallbackBlock, out ILInstruction? nonNullInst, out ILInstruction? nullInst)
+		private bool MatchLeaveResult(Block block, int pos, IType type, ILVariable target, ILVariable defaultTemporary, ILInstruction fallbackBlock, [NotNullWhen(true)] out ILInstruction? nonNullInst, [NotNullWhen(true)] out ILInstruction? nullInst)
 		{
 			nonNullInst = null;
 			nullInst = null;
@@ -508,6 +509,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Analyze Block fallbackBlock
 			if (!(fallbackBlock is Block b && IsFallbackBlock(b, type, target, defaultTemporary, null, leave.TargetContainer, out nullInst)))
 				return false;
+
 			return true;
 		}
 
@@ -519,7 +521,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		// 		br endBlock
 		// 	}
 		// }
-		private bool IsFallbackBlock(Block block, IType type, ILVariable target, ILVariable defaultTemporary, ILVariable resultTemporary, ILInstruction endBlockOrLeaveContainer, out ILInstruction? nullInst)
+		private bool IsFallbackBlock(Block block, IType type, ILVariable target, ILVariable defaultTemporary, ILVariable? resultTemporary, ILInstruction endBlockOrLeaveContainer, [NotNullWhen(true)] out ILInstruction? nullInst)
 		{
 			nullInst = null;
 			if (!(block.Instructions.Count == 3))

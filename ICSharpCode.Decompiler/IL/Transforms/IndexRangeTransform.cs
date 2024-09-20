@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -152,7 +153,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			int startPos = pos;
 			ILVariable? containerVar = null;
 			// The container length access may be a separate instruction, or it may be inline with the variable's use
-			if (MatchContainerLengthStore(block.Instructions[pos], out ILVariable containerLengthVar, ref containerVar))
+			if (MatchContainerLengthStore(block.Instructions[pos], out var containerLengthVar, ref containerVar))
 			{
 				//  stloc containerLengthVar(call get_Length/get_Count(ldloc container))
 				pos++;
@@ -465,7 +466,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		private bool MatchIndexImplicitConv(ILInstruction inst, out ILInstruction? offsetInst)
+		private bool MatchIndexImplicitConv(ILInstruction inst, [NotNullWhen(true)] out ILInstruction? offsetInst)
 		{
 			offsetInst = null;
 			if (!(inst is CallInstruction call))
@@ -607,7 +608,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Matches the instruction:
 		///    stloc containerLengthVar(call get_Length/get_Count(ldloc containerVar))
 		/// </summary>
-		static bool MatchContainerLengthStore(ILInstruction inst, out ILVariable lengthVar, ref ILVariable containerVar)
+		static bool MatchContainerLengthStore(ILInstruction inst, [NotNullWhen(true)] out ILVariable? lengthVar, ref ILVariable? containerVar)
 		{
 			if (!inst.MatchStLoc(out lengthVar, out var init))
 				return false;
@@ -624,7 +625,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///	Otherwise, matches the instruction:
 		///		call get_Length/get_Count(ldloc containerVar)
 		/// </summary>
-		static bool MatchContainerLength(ILInstruction init, ILVariable lengthVar, ref ILVariable containerVar)
+		static bool MatchContainerLength(ILInstruction init, ILVariable? lengthVar, ref ILVariable? containerVar)
 		{
 			if (lengthVar != null)
 			{
@@ -658,7 +659,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return MatchContainerVar(call.Arguments[0], ref containerVar);
 		}
 
-		static bool MatchContainerVar(ILInstruction inst, ref ILVariable containerVar)
+		static bool MatchContainerVar(ILInstruction inst, [NotNullWhen(true)] ref ILVariable? containerVar)
 		{
 			if (containerVar != null)
 			{
@@ -745,7 +746,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Matches an instruction computing a slice length:
 		///    binary.sub.i4(call GetOffset(endIndexLoad, ldloc length), ldloc startOffset))
 		/// </summary>
-		static bool MatchSliceLength(ILInstruction inst, out IndexKind endIndexKind, out ILInstruction? endIndexLoad, ILVariable containerLengthVar, ref ILVariable containerVar, ILVariable startOffsetVar)
+		static bool MatchSliceLength(ILInstruction inst, out IndexKind endIndexKind, [NotNullWhen(true)] out ILInstruction? endIndexLoad, ILVariable containerLengthVar, ref ILVariable containerVar, ILVariable startOffsetVar)
 		{
 			endIndexKind = default;
 			endIndexLoad = default;

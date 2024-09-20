@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -488,7 +489,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool CheckAsyncResourceType(IType type, out string? disposeMethodFullName)
+		bool CheckAsyncResourceType(IType type, [NotNullWhen(true)] out string? disposeMethodFullName)
 		{
 			disposeMethodFullName = null;
 			IType t = NullableType.GetUnderlyingType(type);

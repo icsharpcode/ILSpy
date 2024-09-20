@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.MethodTypeParameters = null;
 		}
 
-		public GenericContext(IReadOnlyList<ITypeParameter> classTypeParameters, IReadOnlyList<ITypeParameter> methodTypeParameters)
+		public GenericContext(IReadOnlyList<ITypeParameter>? classTypeParameters, IReadOnlyList<ITypeParameter>? methodTypeParameters)
 		{
 			this.ClassTypeParameters = classTypeParameters;
 			this.MethodTypeParameters = methodTypeParameters;

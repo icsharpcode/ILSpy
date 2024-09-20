@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 
@@ -342,7 +343,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// =>
 		/// ldvirtdelegate System.Delegate TargetMethod(target)
 		/// </summary>
-		bool TransformDelegateCtorLdVirtFtnToLdVirtDelegate(NewObj inst, out LdVirtDelegate? ldVirtDelegate)
+		bool TransformDelegateCtorLdVirtFtnToLdVirtDelegate(NewObj inst, [NotNullWhen(true)] out LdVirtDelegate? ldVirtDelegate)
 		{
 			ldVirtDelegate = null;
 			if (inst.Method.DeclaringType.Kind != TypeKind.Delegate)
@@ -379,7 +380,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///		final: ldloc I_0
 		/// }
 		/// </summary>
-		bool TransformSpanTCtorContainingStackAlloc(NewObj newObj, out ILInstruction? locallocSpan)
+		bool TransformSpanTCtorContainingStackAlloc(NewObj newObj, [NotNullWhen(true)] out ILInstruction? locallocSpan)
 		{
 			locallocSpan = null;
 			IType type = newObj.Method.DeclaringType;
@@ -428,7 +429,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool TransformDecimalFieldToConstant(LdObj inst, out LdcDecimal? result)
+		bool TransformDecimalFieldToConstant(LdObj inst, [NotNullWhen(true)] out LdcDecimal? result)
 		{
 			if (inst.MatchLdsFld(out var field) && field.DeclaringType.IsKnownType(KnownTypeCode.Decimal))
 			{

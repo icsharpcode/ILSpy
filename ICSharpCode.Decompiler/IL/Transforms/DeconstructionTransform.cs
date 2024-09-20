@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Resources;
 
@@ -35,9 +36,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		StatementTransformContext context;
 		readonly Dictionary<ILVariable, int> deconstructionResultsLookup = new Dictionary<ILVariable, int>();
-		ILVariable[] deconstructionResults;
-		ILVariable tupleVariable;
-		TupleType tupleType;
+		ILVariable[]? deconstructionResults;
+		ILVariable? tupleVariable;
+		TupleType? tupleType;
 
 		/*
 			stloc tuple(call MakeIntIntTuple(ldloc this))
@@ -262,8 +263,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchDeconstruction(ILInstruction inst, out IMethod? deconstructMethod,
-			out ILInstruction? testedOperand)
+		bool MatchDeconstruction(ILInstruction inst, [NotNullWhen(true)] out IMethod? deconstructMethod,
+			[NotNullWhen(true)] out ILInstruction? testedOperand)
 		{
 			testedOperand = null;
 			deconstructMethod = null;
@@ -328,8 +329,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchConversion(ILInstruction inst, out ILInstruction? inputInstruction,
-			out ILVariable outputVariable, out ConversionInfo info)
+		bool MatchConversion(ILInstruction inst, [NotNullWhen(true)] out ILInstruction? inputInstruction,
+			[NotNullWhen(true)] out ILVariable? outputVariable, [NotNullWhen(true)] out ConversionInfo info)
 		{
 			info = default;
 			inputInstruction = null;
@@ -433,7 +434,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool MatchAssignment(ILInstruction inst, out IType? targetType, out ILInstruction? valueInst, out Action<DeconstructInstruction>? addAssignment)
+		bool MatchAssignment(ILInstruction inst, out IType? targetType, [NotNullWhen(true)] out ILInstruction? valueInst, [NotNullWhen(true)] out Action<DeconstructInstruction>? addAssignment)
 		{
 			targetType = null;
 			valueInst = null;

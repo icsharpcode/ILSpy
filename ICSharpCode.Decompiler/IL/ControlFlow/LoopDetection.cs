@@ -613,6 +613,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// skip blocks that only branch to another block
 				entryPoint = targetBlock;
 			}
+
 			return entryPoint == loopHead;
 		}
 		#endregion

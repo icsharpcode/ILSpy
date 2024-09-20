@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
@@ -59,10 +60,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets whether the specified type is a Task-like type.
 		/// </summary>
-		public static bool IsCustomTask(IType type, out IType? builderType)
+		public static bool IsCustomTask(IType type, [NotNullWhen(true)] out IType? builderType)
 		{
 			builderType = null;
-			ITypeDefinition def = type.GetDefinition();
+			ITypeDefinition? def = type.GetDefinition();
 			if (def != null)
 			{
 				if (def.TypeParameterCount > 1)

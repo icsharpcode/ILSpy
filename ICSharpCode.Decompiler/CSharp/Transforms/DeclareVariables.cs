@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
@@ -552,7 +553,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		bool IsMatchingAssignment(VariableToDeclare v, out AssignmentExpression assignment)
+		bool IsMatchingAssignment(VariableToDeclare v, [NotNullWhen(true)] out AssignmentExpression? assignment)
 		{
 			assignment = v.InsertionPoint.nextNode as AssignmentExpression;
 			if (assignment == null)
@@ -731,7 +732,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		private bool CanBeDeclaredAsOutVariable(VariableToDeclare v, out DirectionExpression dirExpr)
+		private bool CanBeDeclaredAsOutVariable(VariableToDeclare v, [NotNullWhen(true)] out DirectionExpression? dirExpr)
 		{
 			dirExpr = v.FirstUse.Parent as DirectionExpression;
 			if (dirExpr == null || dirExpr.FieldDirection != FieldDirection.Out)
@@ -740,7 +741,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return false;
 			if (v.DefaultInitialization != VariableInitKind.None)
 				return false;
-			for (AstNode node = v.FirstUse; node != null; node = node.Parent)
+			for (AstNode? node = v.FirstUse; node != null; node = node.Parent)
 			{
 				if (node.Role == Roles.EmbeddedStatement)
 				{

@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -175,7 +176,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		protected internal override void VisitNewObj(NewObj inst)
 		{
-			if (TransformDecimalCtorToConstant(inst, out LdcDecimal decimalConstant))
+			if (TransformDecimalCtorToConstant(inst, out var decimalConstant))
 			{
 				context.Step("TransformDecimalCtorToConstant", inst);
 				inst.ReplaceWith(decimalConstant);
@@ -185,7 +186,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			base.VisitNewObj(inst);
 		}
 
-		bool TransformDecimalCtorToConstant(NewObj inst, out LdcDecimal? result)
+		bool TransformDecimalCtorToConstant(NewObj inst, [NotNullWhen(true)] out LdcDecimal? result)
 		{
 			IType t = inst.Method.DeclaringType;
 			result = null;

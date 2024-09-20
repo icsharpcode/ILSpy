@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -371,7 +372,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				compRight.MatchLdNull();
 		}
 
-		private bool MatchThreeValuedLogicConditionPattern(ILInstruction condition, out ILVariable? nullable1, out ILVariable? nullable2)
+		private bool MatchThreeValuedLogicConditionPattern(ILInstruction condition, [NotNullWhen(true)] out ILVariable? nullable1, [NotNullWhen(true)] out ILVariable? nullable2)
 		{
 			// Try to match: nullable1.GetValueOrDefault() || (!nullable2.GetValueOrDefault() && !nullable1.HasValue)
 			nullable1 = null;
@@ -518,7 +519,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		#endregion
 
 		#region Lift...Comparison
-		ILInstruction LiftCSharpEqualityComparison(CompOrDecimal valueComp, ComparisonKind newComparisonKind, ILInstruction hasValueTest)
+		ILInstruction? LiftCSharpEqualityComparison(CompOrDecimal valueComp, ComparisonKind newComparisonKind, ILInstruction hasValueTest)
 		{
 			Debug.Assert(newComparisonKind.IsEqualityOrInequality());
 			bool hasValueTestNegated = false;
@@ -535,9 +536,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// Comparing two nullables: HasValue comparison must be the same operator as the Value comparison
 				if ((hasValueTestNegated ? hasValueComp.Kind.Negate() : hasValueComp.Kind) != newComparisonKind)
 					return null;
-				if (!MatchHasValueCall(hasValueComp.Left, out ILVariable leftVar))
+				if (!MatchHasValueCall(hasValueComp.Left, out ILVariable? leftVar))
 					return null;
-				if (!MatchHasValueCall(hasValueComp.Right, out ILVariable rightVar))
+				if (!MatchHasValueCall(hasValueComp.Right, out ILVariable? rightVar))
 					return null;
 				nullableVars = new List<ILVariable> { leftVar };
 				var (left, leftBits) = DoLift(valueComp.Left);
@@ -551,7 +552,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return valueComp.MakeLifted(newComparisonKind, left, right);
 				}
 			}
-			else if (newComparisonKind == ComparisonKind.Equality && !hasValueTestNegated && MatchHasValueCall(hasValueTest, out ILVariable v))
+			else if (newComparisonKind == ComparisonKind.Equality && !hasValueTestNegated && MatchHasValueCall(hasValueTest, out ILVariable? v))
 			{
 				// Comparing nullable with non-nullable -> we can fall back to the normal comparison code.
 				nullableVars = new List<ILVariable> { v };
@@ -578,7 +579,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// This means unlike LiftNormal(), we cannot rely on the input instruction not being evaluated if
 		/// a variable is <c>null</c>.
 		/// </summary>
-		ILInstruction LiftCSharpComparison(CompOrDecimal comp, ComparisonKind newComparisonKind)
+		ILInstruction? LiftCSharpComparison(CompOrDecimal comp, ComparisonKind newComparisonKind)
 		{
 			if (comp.IsLifted)
 			{
@@ -614,7 +615,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return null;
 		}
 
-		ILInstruction LiftCSharpUserEqualityComparison(CompOrDecimal hasValueComp, ComparisonKind newComparisonKind, ILInstruction nestedIfInst)
+		ILInstruction? LiftCSharpUserEqualityComparison(CompOrDecimal hasValueComp, ComparisonKind newComparisonKind, ILInstruction nestedIfInst)
 		{
 			// User-defined equality operator:
 			//   if (comp(call get_HasValue(ldloca nullable1) == call get_HasValue(ldloca nullable2)))
@@ -635,13 +636,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			//         ldc.i4 0
 			if (hasValueComp.IsLifted)
 				return null;
-			if (!MatchHasValueCall(hasValueComp.Left, out ILVariable nullable1))
+			if (!MatchHasValueCall(hasValueComp.Left, out ILVariable? nullable1))
 				return null;
-			if (!MatchHasValueCall(hasValueComp.Right, out ILVariable nullable2))
+			if (!MatchHasValueCall(hasValueComp.Right, out ILVariable? nullable2))
 				return null;
 			if (!nestedIfInst.MatchIfInstructionPositiveCondition(out var condition, out var trueInst, out var falseInst))
 				return null;
-			if (!MatchHasValueCall(condition, out ILVariable nullable))
+			if (!MatchHasValueCall(condition, out ILVariable? nullable))
 				return null;
 			if (nullable != nullable1 && nullable != nullable2)
 				return null;
@@ -687,7 +688,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return null;
 		}
 
-		ILInstruction LiftCSharpUserComparison(ILInstruction trueInst, ILInstruction falseInst)
+		ILInstruction? LiftCSharpUserComparison(ILInstruction trueInst, ILInstruction falseInst)
 		{
 			// (v1 != null && ... && vn != null) ? trueInst : falseInst
 			bool trueInstNegated = false;
@@ -745,13 +746,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// where the v1,...,vn are the <c>this.nullableVars</c>.
 		/// If lifting fails, returns <c>null</c>.
 		/// </summary>
-		ILInstruction LiftNormal(ILInstruction trueInst, ILInstruction falseInst)
+		ILInstruction? LiftNormal(ILInstruction trueInst, ILInstruction falseInst)
 		{
 			if (trueInst.MatchIfInstructionPositiveCondition(out var nestedCondition, out var nestedTrue, out var nestedFalse))
 			{
 				// Sometimes Roslyn generates pointless conditions like:
 				//   if (nullable.HasValue && (!nullable.HasValue || nullable.GetValueOrDefault() == b))
-				if (MatchHasValueCall(nestedCondition, out ILVariable v) && nullableVars.Contains(v))
+				if (MatchHasValueCall(nestedCondition, out ILVariable? v) && nullableVars.Contains(v))
 				{
 					trueInst = nestedTrue;
 				}
@@ -851,9 +852,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// If any relevant variable is null, the new instruction is guaranteed to evaluate to <c>null</c>
 		/// without having any other effect.
 		/// </summary>
-		(ILInstruction, BitSet) DoLift(ILInstruction inst)
+		(ILInstruction?, BitSet?) DoLift(ILInstruction inst)
 		{
-			if (MatchGetValueOrDefault(inst, out ILVariable inputVar))
+			if (MatchGetValueOrDefault(inst, out ILVariable? inputVar))
 			{
 				// n.GetValueOrDefault() lifted => n.
 				BitSet foundIndices = new BitSet(nullableVars.Count);
@@ -916,7 +917,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			else if (inst is Comp comp && !comp.IsLifted && comp.Kind == ComparisonKind.Equality
-			  && MatchGetValueOrDefault(comp.Left, out ILVariable v) && nullableVars.Contains(v)
+			  && MatchGetValueOrDefault(comp.Left, out ILVariable? v) && nullableVars.Contains(v)
 			  && NullableType.GetUnderlyingType(v.Type).IsKnownType(KnownTypeCode.Boolean)
 			  && comp.Right.MatchLdcI4(0)
 		  )
@@ -934,8 +935,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var liftedOperator = CSharp.Resolver.CSharpOperators.LiftUserDefinedOperator(call.Method);
 				if (liftedOperator == null || !NullableType.IsNullable(liftedOperator.ReturnType))
 					return (null, null);
-				ILInstruction[] newArgs;
-				BitSet newBits;
+				ILInstruction?[] newArgs;
+				BitSet? newBits;
 				if (call.Arguments.Count == 1)
 				{
 					var (arg, bits) = DoLift(call.Arguments[0]);
@@ -969,7 +970,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return (null, null);
 		}
 
-		(ILInstruction, ILInstruction, BitSet) DoLiftBinary(ILInstruction lhs, ILInstruction rhs, IType leftExpectedType, IType rightExpectedType)
+		(ILInstruction?, ILInstruction?, BitSet?) DoLiftBinary(ILInstruction lhs, ILInstruction rhs, IType leftExpectedType, IType rightExpectedType)
 		{
 			var (left, leftBits) = DoLift(lhs);
 			var (right, rightBits) = DoLift(rhs);
@@ -1018,7 +1019,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call get_HasValue(arg)'
 		/// </summary>
-		internal static bool MatchHasValueCall(ILInstruction inst, out ILInstruction? arg)
+		internal static bool MatchHasValueCall(ILInstruction inst, [NotNullWhen(true)] out ILInstruction? arg)
 		{
 			arg = null;
 			if (!(inst is Call call))
@@ -1036,9 +1037,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call get_HasValue(ldloca v)'
 		/// </summary>
-		internal static bool MatchHasValueCall(ILInstruction inst, out ILVariable? v)
+		internal static bool MatchHasValueCall(ILInstruction inst, [NotNullWhen(true)] out ILVariable? v)
 		{
-			if (MatchHasValueCall(inst, out ILInstruction arg))
+			if (MatchHasValueCall(inst, out ILInstruction? arg))
 			{
 				return arg.MatchLdLoca(out v);
 			}
@@ -1051,7 +1052,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		internal static bool MatchHasValueCall(ILInstruction inst, ILVariable v)
 		{
-			return MatchHasValueCall(inst, out ILVariable v2) && v == v2;
+			return MatchHasValueCall(inst, out ILVariable? v2) && v == v2;
 		}
 
 		/// <summary>
@@ -1065,7 +1066,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'newobj Nullable{underlyingType}.ctor(arg)'
 		/// </summary>
-		internal static bool MatchNullableCtor(ILInstruction inst, out IType? underlyingType, out ILInstruction? arg)
+		internal static bool MatchNullableCtor(ILInstruction inst, [NotNullWhen(true)] out IType? underlyingType, [NotNullWhen(true)] out ILInstruction? arg)
 		{
 			underlyingType = null;
 			arg = null;
@@ -1083,7 +1084,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call Nullable{T}.GetValueOrDefault(arg)'
 		/// </summary>
-		internal static bool MatchGetValueOrDefault(ILInstruction inst, out ILInstruction? arg)
+		internal static bool MatchGetValueOrDefault(ILInstruction inst, [NotNullWhen(true)] out ILInstruction? arg)
 		{
 			arg = null;
 			if (!(inst is Call call))
@@ -1099,7 +1100,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call nullableValue.GetValueOrDefault(fallback)'
 		/// </summary>
-		internal static bool MatchGetValueOrDefault(ILInstruction inst, out ILInstruction? nullableValue, out ILInstruction? fallback)
+		internal static bool MatchGetValueOrDefault(ILInstruction inst, [NotNullWhen(true)] out ILInstruction? nullableValue, [NotNullWhen(true)] out ILInstruction? fallback)
 		{
 			nullableValue = null;
 			fallback = null;
@@ -1117,10 +1118,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call Nullable{T}.GetValueOrDefault(ldloca v)'
 		/// </summary>
-		internal static bool MatchGetValueOrDefault(ILInstruction inst, out ILVariable? v)
+		internal static bool MatchGetValueOrDefault(ILInstruction inst, [NotNullWhen(true)] out ILVariable? v)
 		{
 			v = null;
-			return MatchGetValueOrDefault(inst, out ILInstruction arg)
+			return MatchGetValueOrDefault(inst, out ILInstruction? arg)
 				&& arg.MatchLdLoca(out v);
 		}
 
@@ -1129,13 +1130,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		internal static bool MatchGetValueOrDefault(ILInstruction inst, ILVariable v)
 		{
-			return MatchGetValueOrDefault(inst, out ILVariable v2) && v == v2;
+			return MatchGetValueOrDefault(inst, out ILVariable? v2) && v == v2;
 		}
 
-		static bool MatchNull(ILInstruction inst, out IType? underlyingType)
+		static bool MatchNull(ILInstruction inst, [NotNullWhen(true)] out IType? underlyingType)
 		{
 			underlyingType = null;
-			if (inst.MatchDefaultValue(out IType type))
+			if (inst.MatchDefaultValue(out var type))
 			{
 				underlyingType = NullableType.GetUnderlyingType(type);
 				return NullableType.IsNullable(type);

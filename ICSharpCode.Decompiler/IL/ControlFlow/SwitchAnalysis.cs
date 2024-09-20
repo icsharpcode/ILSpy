@@ -314,7 +314,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				trueValues = new LongSet(0).Invert();
 				return true;
 			}
-			else if (condition.MatchLogicNot(out ILInstruction arg))
+			else if (condition.MatchLogicNot(out var arg))
 			{
 				// if (logic.not(X)) --> branch for all values where if (X) does not branch
 				bool res = AnalyzeCondition(arg, out LongSet falseValues);

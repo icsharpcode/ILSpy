@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 
@@ -116,7 +117,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		static bool MatchCondition(ILInstruction condition, out ILVariable? v, out string? name)
+		static bool MatchCondition(ILInstruction condition, [NotNullWhen(true)] out ILVariable? v, [NotNullWhen(true)] out string? name)
 		{
 			v = null;
 			name = null;

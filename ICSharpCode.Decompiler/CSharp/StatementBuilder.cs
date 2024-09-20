@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 
@@ -875,7 +876,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return NormalizeTypeVisitor.TypeErasure.EquivalentTypes(a, b);
 		}
 
-		private bool IsDynamicCastToIEnumerable(Expression expr, out Expression? dynamicExpr)
+		private bool IsDynamicCastToIEnumerable(Expression expr, [NotNullWhen(true)] out Expression? dynamicExpr)
 		{
 			if (!(expr is CastExpression cast))
 			{

@@ -23,6 +23,8 @@ using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
+	using System.Diagnostics.CodeAnalysis;
+
 	using ICSharpCode.Decompiler.TypeSystem;
 	using ICSharpCode.ILSpyX.Analyzers;
 
@@ -68,7 +70,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 			}
 		}
 
-		bool TryFindBackingField(IEvent analyzedEvent, out IField backingField)
+		bool TryFindBackingField(IEvent analyzedEvent, [NotNullWhen(true)] out IField? backingField)
 		{
 			backingField = null;
 			foreach (var field in analyzedEvent.DeclaringTypeDefinition.GetFields(options: GetMemberOptions.IgnoreInheritedMembers))

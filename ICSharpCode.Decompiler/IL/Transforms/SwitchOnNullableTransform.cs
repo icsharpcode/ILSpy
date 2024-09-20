@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using ICSharpCode.Decompiler.IL.ControlFlow;
@@ -77,7 +78,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches legacy C# switch on nullable.
 		/// </summary>
-		bool MatchSwitchOnNullable(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction? newSwitch)
+		bool MatchSwitchOnNullable(InstructionCollection<ILInstruction> instructions, int i, [NotNullWhen(true)] out SwitchInstruction? newSwitch)
 		{
 			newSwitch = null;
 			// match first block:
@@ -133,7 +134,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches Roslyn C# switch on nullable.
 		/// </summary>
-		bool MatchRoslynSwitchOnNullable(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction? newSwitch)
+		bool MatchRoslynSwitchOnNullable(InstructionCollection<ILInstruction> instructions, int i, [NotNullWhen(true)] out SwitchInstruction? newSwitch)
 		{
 			newSwitch = null;
 			// match first block:
@@ -143,7 +144,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!instructions[i + 1].MatchBranch(out var switchBlock) || !trueInst.MatchBranch(out var nullCaseBlock))
 				return false;
-			if (!condition.MatchLogicNot(out var getHasValue) || !NullableLiftingTransform.MatchHasValueCall(getHasValue, out ILInstruction target) || !SemanticHelper.IsPure(target.Flags))
+			if (!condition.MatchLogicNot(out var getHasValue) || !NullableLiftingTransform.MatchHasValueCall(getHasValue, out ILInstruction? target) || !SemanticHelper.IsPure(target.Flags))
 				return false;
 			// match second block: switchBlock
 			// note: I have seen cases where switchVar is inlined into the switch.
@@ -165,7 +166,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					if (!switchVar.IsSingleDefinition || switchVar.LoadCount != 1)
 						return false;
-					if (!(NullableLiftingTransform.MatchGetValueOrDefault(getValueOrDefault, out ILInstruction target2) && target2.Match(target).Success))
+					if (!(NullableLiftingTransform.MatchGetValueOrDefault(getValueOrDefault, out ILInstruction? target2) && target2.Match(target).Success))
 						return false;
 					if (!(switchBlock.Instructions[1] is SwitchInstruction si))
 						return false;

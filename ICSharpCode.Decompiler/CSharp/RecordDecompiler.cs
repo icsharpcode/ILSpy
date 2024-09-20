@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Threading;
@@ -39,8 +40,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly bool isInheritedRecord;
 		readonly bool isStruct;
 		readonly bool isSealed;
-		readonly IMethod primaryCtor;
-		readonly IType baseClass;
+		readonly IMethod? primaryCtor;
+		readonly IType? baseClass;
 		readonly Dictionary<IField, IProperty> backingFieldToAutoProperty = new Dictionary<IField, IProperty>();
 		readonly Dictionary<IProperty, IField> autoPropertyToBackingField = new Dictionary<IProperty, IField>();
 		readonly Dictionary<IParameter, IMember> primaryCtorParameterToAutoPropertyOrBackingField = new Dictionary<IParameter, IMember>();
@@ -75,7 +76,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 
-			bool IsAutoProperty(IProperty p, out IField? field)
+			bool IsAutoProperty(IProperty p, [NotNullWhen(true)] out IField? field)
 			{
 				field = null;
 				if (p.IsStatic)
@@ -108,7 +109,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return field.Name == $"<{p.Name}>k__BackingField";
 			}
 
-			bool IsAutoGetter(IMethod method, out IField? field)
+			bool IsAutoGetter(IMethod method, [NotNullWhen(true)] out IField? field)
 			{
 				field = null;
 				var body = DecompileBody(method);
@@ -129,7 +130,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 
-			bool IsAutoSetter(IMethod method, out IField? field)
+			bool IsAutoSetter(IMethod method, [NotNullWhen(true)] out IField? field)
 			{
 				field = null;
 				Debug.Assert(!method.IsStatic);
@@ -137,7 +138,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (body == null)
 					return false;
 				// this.field = value;
-				ILInstruction valueInst;
+				ILInstruction? valueInst;
 				if (method.IsStatic)
 				{
 					if (!body.Instructions[0].MatchStsFld(out field, out valueInst))
@@ -158,7 +159,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		IMethod DetectPrimaryConstructor()
+		IMethod? DetectPrimaryConstructor()
 		{
 			if (recordTypeDef.IsRecord)
 			{
@@ -373,7 +374,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				&& autoPropertyOrBackingFieldToPrimaryCtorParameter.ContainsKey((IProperty)property.Specialize(subst));
 		}
 
-		internal (IProperty prop, IField field) GetPropertyInfoByPrimaryConstructorParameter(IParameter parameter)
+		internal (IProperty? prop, IField field) GetPropertyInfoByPrimaryConstructorParameter(IParameter parameter)
 		{
 			var member = primaryCtorParameterToAutoPropertyOrBackingField[parameter];
 			if (member is IField field)
@@ -450,8 +451,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				if (!(member is IField field))
 				{
-					if (!autoPropertyToBackingField.TryGetValue((IProperty)member, out field))
+					if (!autoPropertyToBackingField.TryGetValue((IProperty)member, out var fieldHolder))
+					{
 						continue;
+					}
+					else
+					{
+						field = fieldHolder;
+					}
 				}
 				if (pos >= body.Instructions.Count)
 					return false;
@@ -516,7 +523,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!(body.Instructions.Single() is Leave leave))
 				return false;
 			// leave IL_0000 (call GetTypeFromHandle(ldtypetoken R))
-			if (!TransformExpressionTrees.MatchGetTypeFromHandle(leave.Value, out IType ty))
+			if (!TransformExpressionTrees.MatchGetTypeFromHandle(leave.Value, out IType? ty))
 				return false;
 			return IsRecordType(ty);
 		}
@@ -569,7 +576,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				trueInst = Block.Unwrap(trueInst);
 				if (!MatchStringBuilderAppend(trueInst, builder, out var val))
 					return false;
-				if (!(val.MatchLdStr(out string text) && text == ", "))
+				if (!(val.MatchLdStr(out string? text) && text == ", "))
 					return false;
 				pos++;
 
@@ -601,7 +608,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				callvirt Append(ldloc builder, ldstr " = ")
 				callvirt Append(ldloc builder, constrained[System.Int32].callvirt ToString(ldflda B(ldloc this)))
 				leave IL_0000 (ldc.i4 1) */
-				if (!MatchStringBuilderAppendConstant(out string text))
+				if (!MatchStringBuilderAppendConstant(out string? text))
 					return false;
 				string expectedText = (needsComma ? ", " : "") + member.Name + " = ";
 				if (text != expectedText)
@@ -672,10 +679,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				return true;
 			}
 
-			bool MatchStringBuilderAppendConstant(out string? text)
+			bool MatchStringBuilderAppendConstant([NotNullWhen(true)] out string? text)
 			{
 				text = null;
-				while (MatchStringBuilderAppend(body.Instructions[pos], builder, out var val) && val.MatchLdStr(out string valText))
+				while (MatchStringBuilderAppend(body.Instructions[pos], builder, out var val) && val.MatchLdStr(out string? valText))
 				{
 					text += valText;
 					pos++;
@@ -684,7 +691,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		private bool MatchStringBuilderAppend(ILInstruction inst, ILVariable sb, out ILInstruction? val)
+		private bool MatchStringBuilderAppend(ILInstruction inst, ILVariable sb, [NotNullWhen(true)] out ILInstruction? val)
 		{
 			val = null;
 			if (!(inst is CallVirt { Method: { Name: "Append", DeclaringType: { Namespace: "System.Text", Name: "StringBuilder" } } } call))
@@ -760,7 +767,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					return val != null && val.Length == 1 && call.Arguments[1].MatchLdcI4(val[0]);
 				}
-				return call.Arguments[1].MatchLdStr(out string val1) && val1 == val;
+				return call.Arguments[1].MatchLdStr(out string? val1) && val1 == val;
 			}
 		}
 
@@ -912,7 +919,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		private bool MatchGetEqualityContract(ILInstruction inst, out ILInstruction? target)
+		private bool MatchGetEqualityContract(ILInstruction inst, [NotNullWhen(true)] out ILInstruction? target)
 		{
 			target = null;
 			if (!(inst is CallInstruction { Method: { Name: "get_EqualityContract" } } call))
@@ -1099,7 +1106,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return returnInst != null && returnInst.MatchReturn(out var retVal) && retVal.MatchNop();
 		}
 
-		bool MatchMemberAccess(ILInstruction inst, out ILInstruction? target, out IMember? member)
+		bool MatchMemberAccess(ILInstruction inst, [NotNullWhen(true)] out ILInstruction? target, [NotNullWhen(true)] out IMember? member)
 		{
 			target = null;
 			member = null;
@@ -1116,12 +1123,17 @@ namespace ICSharpCode.Decompiler.CSharp
 				member = property;
 				return true;
 			}
-			else if (inst.MatchLdFld(out target, out IField field))
+			else if (inst.MatchLdFld(out target, out IField? field))
 			{
-				if (backingFieldToAutoProperty.TryGetValue(field, out property))
+				if (backingFieldToAutoProperty.TryGetValue(field, out var propertyHolder))
+				{
+					property = propertyHolder;
 					member = property;
+				}
 				else
+				{
 					member = field;
+				}
 				return true;
 			}
 			else
@@ -1130,7 +1142,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		Block DecompileBody(IMethod method)
+		Block? DecompileBody(IMethod method)
 		{
 			if (method == null || method.MetadataToken.IsNil)
 				return null;

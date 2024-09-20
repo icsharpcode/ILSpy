@@ -152,6 +152,7 @@ dotnet_diagnostic.MEF006.severity = silent
 dotnet_diagnostic.IDE2003.severity = silent
 
 #cleared null error types
+dotnet_diagnostic.CS8612.severity = error
 dotnet_diagnostic.CS8714.severity = error
 dotnet_diagnostic.CS8765.severity = error
 dotnet_diagnostic.CS8766.severity = error

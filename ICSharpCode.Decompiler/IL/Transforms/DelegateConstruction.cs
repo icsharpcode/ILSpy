@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection.Metadata;
 
@@ -80,7 +81,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		internal static bool MatchDelegateConstruction(ILInstruction inst, out IMethod? targetMethod,
-			out ILInstruction? target, out IType? delegateType, bool allowTransformed = false)
+			[NotNullWhen(true)] out ILInstruction? target, [NotNullWhen(true)] out IType? delegateType, bool allowTransformed = false)
 		{
 			targetMethod = null;
 			target = null;

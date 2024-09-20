@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Diagnostics.CodeAnalysis;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -331,7 +333,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchLockEntryPoint(Block entryPoint, ILVariable flag, out StLoc? obj)
+		bool MatchLockEntryPoint(Block entryPoint, ILVariable flag, [NotNullWhen(true)] out StLoc? obj)
 		{
 			obj = null;
 			if (entryPoint.Instructions.Count == 0 || entryPoint.IncomingEdgeCount != 1)
@@ -341,14 +343,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchLockEntryPoint(Block entryPoint, ILVariable flag, out ILVariable? exitVairable, out StLoc? obj)
+		bool MatchLockEntryPoint(Block entryPoint, ILVariable flag, [NotNullWhen(true)] out ILVariable? exitVariable, [NotNullWhen(true)] out StLoc? obj)
 		{
 			// This pattern is commonly seen in yield return state machines emitted by the legacy C# compiler.
 			obj = null;
-			exitVairable = null;
+			exitVariable = null;
 			if (entryPoint.Instructions.Count < 1 || entryPoint.IncomingEdgeCount != 1)
 				return false;
-			if (entryPoint.Instructions[0].MatchStLoc(out exitVairable, out var value) && value is StLoc nestedStloc)
+			if (entryPoint.Instructions[0].MatchStLoc(out exitVariable, out var value) && value is StLoc nestedStloc)
 			{
 				obj = nestedStloc;
 				if (!MatchCall(entryPoint.Instructions[1] as Call, "Enter", nestedStloc.Variable, flag))
@@ -358,7 +360,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		bool MatchCall(Call call, string methodName, ILVariable flag, out StLoc? obj)
+		bool MatchCall(Call? call, string methodName, ILVariable flag, [NotNullWhen(true)] out StLoc? obj)
 		{
 			obj = null;
 			const string ThreadingMonitor = "System.Threading.Monitor";
@@ -371,7 +373,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchCall(Call call, string methodName, params ILVariable[] variables)
+		bool MatchCall(Call? call, string methodName, params ILVariable[] variables)
 		{
 			const string ThreadingMonitor = "System.Threading.Monitor";
 			if (call == null || call.Method.Name != methodName || call.Method.DeclaringType.FullName != ThreadingMonitor ||
