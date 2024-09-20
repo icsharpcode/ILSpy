@@ -73,7 +73,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					continue;
 				var metadata = module.Metadata;
 				var assembly = module.GetTypeSystemOrNull()?.MainModule as MetadataModule;
-				if (assembly != null)
+				if (assembly == null)
 					continue;
 				foreach (var h in metadata.TypeDefinitions)
 				{
