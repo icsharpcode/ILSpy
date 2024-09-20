@@ -355,7 +355,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			OperatorDeclaration o = other as OperatorDeclaration;
+			OperatorDeclaration? o = other as OperatorDeclaration;
 			return o != null && this.MatchAttributesAndModifiers(o, match)
 				&& this.PrivateImplementationType.DoMatch(o.PrivateImplementationType, match)
 				&& this.OperatorType == o.OperatorType

@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			NullReferenceExpression o = other as NullReferenceExpression;
+			NullReferenceExpression? o = other as NullReferenceExpression;
 			return o != null;
 		}
 	}

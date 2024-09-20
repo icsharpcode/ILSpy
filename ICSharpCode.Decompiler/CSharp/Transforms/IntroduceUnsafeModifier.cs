@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public override bool VisitMemberReferenceExpression(MemberReferenceExpression memberReferenceExpression)
 		{
 			bool result = base.VisitMemberReferenceExpression(memberReferenceExpression);
-			UnaryOperatorExpression uoe = memberReferenceExpression.Target as UnaryOperatorExpression;
+			UnaryOperatorExpression? uoe = memberReferenceExpression.Target as UnaryOperatorExpression;
 			if (uoe != null && uoe.Operator == UnaryOperatorType.Dereference)
 			{
 				PointerReferenceExpression pre = new PointerReferenceExpression();

@@ -650,7 +650,7 @@ namespace ICSharpCode.Decompiler
 			readonly MetadataModule module;
 			readonly int pointerSize;
 
-			public FieldValueSizeDecoder(ICompilation typeSystem = null)
+			public FieldValueSizeDecoder(ICompilation? typeSystem = null)
 			{
 				this.module = (MetadataModule)typeSystem?.MainModule;
 				if (module?.MetadataFile is not PEFile pefile)

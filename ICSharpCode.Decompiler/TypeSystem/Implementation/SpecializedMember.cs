@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (result != null)
 					return result;
 				IType definitionDeclaringType = baseMember.DeclaringType;
-				ITypeDefinition definitionDeclaringTypeDef = definitionDeclaringType as ITypeDefinition;
+				ITypeDefinition? definitionDeclaringTypeDef = definitionDeclaringType as ITypeDefinition;
 				if (definitionDeclaringTypeDef != null && definitionDeclaringType.TypeParameterCount > 0)
 				{
 					if (substitution.ClassTypeArguments != null && substitution.ClassTypeArguments.Count == definitionDeclaringType.TypeParameterCount)
@@ -225,7 +225,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public virtual bool Equals(IMember obj, TypeVisitor typeNormalization)
 		{
-			SpecializedMember other = obj as SpecializedMember;
+			SpecializedMember? other = obj as SpecializedMember;
 			if (other == null)
 				return false;
 			return this.baseMember.Equals(other.baseMember, typeNormalization)
@@ -234,7 +234,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override bool Equals(object obj)
 		{
-			SpecializedMember other = obj as SpecializedMember;
+			SpecializedMember? other = obj as SpecializedMember;
 			if (other == null)
 				return false;
 			return this.baseMember.Equals(other.baseMember) && this.substitution.Equals(other.substitution);

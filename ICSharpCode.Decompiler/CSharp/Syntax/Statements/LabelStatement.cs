@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			LabelStatement o = other as LabelStatement;
+			LabelStatement? o = other as LabelStatement;
 			return o != null && MatchString(this.Label, o.Label);
 		}
 	}

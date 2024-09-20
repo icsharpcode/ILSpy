@@ -95,7 +95,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 
 		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkIdString, string preferredRuntimePack,
-			TargetFrameworkIdentifier targetFramework, Version targetFrameworkVersion, ReferenceLoadInfo loadInfo = null)
+			TargetFrameworkIdentifier targetFramework, Version targetFrameworkVersion, ReferenceLoadInfo? loadInfo = null)
 			: this(targetFramework, targetFrameworkVersion, preferredRuntimePack)
 		{
 			string assemblyName = Path.GetFileNameWithoutExtension(parentAssemblyFileName);
@@ -211,7 +211,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public string TryResolveDotNetCoreShared(IAssemblyReference name, out string runtimePack)
+		public string TryResolveDotNetCoreShared(IAssemblyReference name, out string? runtimePack)
 		{
 			if (dotnetBasePath == null)
 			{

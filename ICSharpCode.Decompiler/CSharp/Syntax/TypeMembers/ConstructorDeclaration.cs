@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ConstructorDeclaration o = other as ConstructorDeclaration;
+			ConstructorDeclaration? o = other as ConstructorDeclaration;
 			return o != null && this.MatchAttributesAndModifiers(o, match) && this.Parameters.DoMatch(o.Parameters, match)
 				&& this.Initializer.DoMatch(o.Initializer, match) && this.Body.DoMatch(o.Body, match);
 		}
@@ -182,7 +182,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ConstructorInitializer o = other as ConstructorInitializer;
+			ConstructorInitializer? o = other as ConstructorInitializer;
 			return o != null && !o.IsNull
 				&& (this.ConstructorInitializerType == ConstructorInitializerType.Any || this.ConstructorInitializerType == o.ConstructorInitializerType)
 				&& this.Arguments.DoMatch(o.Arguments, match);

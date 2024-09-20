@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches legacy C# switch on nullable.
 		/// </summary>
-		bool MatchSwitchOnNullable(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction newSwitch)
+		bool MatchSwitchOnNullable(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction? newSwitch)
 		{
 			newSwitch = null;
 			// match first block:
@@ -133,7 +133,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches Roslyn C# switch on nullable.
 		/// </summary>
-		bool MatchRoslynSwitchOnNullable(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction newSwitch)
+		bool MatchRoslynSwitchOnNullable(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction? newSwitch)
 		{
 			newSwitch = null;
 			// match first block:

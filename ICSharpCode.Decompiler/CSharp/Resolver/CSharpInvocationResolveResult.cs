@@ -57,9 +57,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			bool isExtensionMethodInvocation = false,
 			bool isExpandedForm = false,
 			bool isDelegateInvocation = false,
-			IReadOnlyList<int> argumentToParameterMap = null,
-			IList<ResolveResult> initializerStatements = null,
-			IType returnTypeOverride = null
+			IReadOnlyList<int>? argumentToParameterMap = null,
+			IList<ResolveResult>? initializerStatements = null,
+			IType? returnTypeOverride = null
 		)
 			: base(targetResult, member, arguments, initializerStatements, returnTypeOverride)
 		{
@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public override IList<ResolveResult> GetArgumentsForCall()
 		{
 			ResolveResult[] results = new ResolveResult[Member.Parameters.Count];
-			List<ResolveResult> paramsArguments = IsExpandedForm ? new List<ResolveResult>() : null;
+			List<ResolveResult>? paramsArguments = IsExpandedForm ? new List<ResolveResult>() : null;
 			// map arguments to parameters:
 			for (int i = 0; i < Arguments.Count; i++)
 			{

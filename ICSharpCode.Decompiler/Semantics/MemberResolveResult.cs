@@ -33,11 +33,11 @@ namespace ICSharpCode.Decompiler.Semantics
 	{
 		readonly IMember member;
 		readonly bool isConstant;
-		readonly object constantValue;
-		readonly ResolveResult targetResult;
+		readonly object? constantValue;
+		readonly ResolveResult? targetResult;
 		readonly bool isVirtualCall;
 
-		public MemberResolveResult(ResolveResult targetResult, IMember member, IType returnTypeOverride = null)
+		public MemberResolveResult(ResolveResult? targetResult, IMember member, IType? returnTypeOverride = null)
 			: base(returnTypeOverride ?? ComputeType(member))
 		{
 			this.targetResult = targetResult;
@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			var thisRR = targetResult as ThisResolveResult;
 			this.isVirtualCall = member.IsOverridable && !(thisRR != null && thisRR.CausesNonVirtualInvocation);
 
-			IField field = member as IField;
+			IField? field = member as IField;
 			if (field != null)
 			{
 				isConstant = field.IsConst;
@@ -54,13 +54,13 @@ namespace ICSharpCode.Decompiler.Semantics
 			}
 		}
 
-		public MemberResolveResult(ResolveResult targetResult, IMember member, bool isVirtualCall, IType returnTypeOverride = null)
+		public MemberResolveResult(ResolveResult? targetResult, IMember member, bool isVirtualCall, IType? returnTypeOverride = null)
 			: base(returnTypeOverride ?? ComputeType(member))
 		{
 			this.targetResult = targetResult;
 			this.member = member;
 			this.isVirtualCall = isVirtualCall;
-			IField field = member as IField;
+			IField? field = member as IField;
 			if (field != null)
 			{
 				isConstant = field.IsConst;
@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.isVirtualCall = isVirtualCall;
 		}
 
-		public ResolveResult TargetResult {
+		public ResolveResult? TargetResult {
 			get { return targetResult; }
 		}
 
@@ -127,7 +127,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			get { return isConstant; }
 		}
 
-		public override object ConstantValue {
+		public override object? ConstantValue {
 			get { return constantValue; }
 		}
 

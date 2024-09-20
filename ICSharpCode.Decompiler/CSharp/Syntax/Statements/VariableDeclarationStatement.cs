@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public VariableDeclarationStatement(AstType type, string name, Expression initializer = null)
+		public VariableDeclarationStatement(AstType type, string name, Expression? initializer = null)
 		{
 			this.Type = type;
 			this.Variables.Add(new VariableInitializer(name, initializer));
@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			VariableDeclarationStatement o = other as VariableDeclarationStatement;
+			VariableDeclarationStatement? o = other as VariableDeclarationStatement;
 			return o != null && this.Modifiers == o.Modifiers && this.Type.DoMatch(o.Type, match) && this.Variables.DoMatch(o.Variables, match);
 		}
 	}

@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		bool MatchParameterVariableAssignment(ILInstruction expr, out ILVariable parameterReferenceVar, out IType type, out string name)
+		bool MatchParameterVariableAssignment(ILInstruction expr, out ILVariable parameterReferenceVar, out IType? type, out string? name)
 		{
 			// stloc(v, call(Expression::Parameter, call(Type::GetTypeFromHandle, ldtoken(...)), ldstr(...)))
 			type = null;
@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(initCall.Method.FullNameIs("System.Linq.Expressions.Expression", "Parameter")))
 				return false;
-			CallInstruction typeArg = initCall.Arguments[0] as CallInstruction;
+			CallInstruction? typeArg = initCall.Arguments[0] as CallInstruction;
 			if (typeArg == null || typeArg.Arguments.Count != 1)
 				return false;
 			if (!typeArg.Method.FullNameIs("System.Type", "GetTypeFromHandle"))
@@ -266,7 +266,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		(Func<ILInstruction>, IType) ConvertInstruction(ILInstruction instruction, IType typeHint = null)
+		(Func<ILInstruction>, IType) ConvertInstruction(ILInstruction instruction, IType? typeHint = null)
 		{
 			var (inst, type) = Convert();
 
@@ -578,9 +578,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (invocation.Arguments.Count < 2)
 				return (null, SpecialType.UnknownType);
-			IList<ILInstruction> arguments = null;
-			Func<ILInstruction> targetConverter = null;
-			IType targetType = null;
+			IList<ILInstruction>? arguments = null;
+			Func<ILInstruction>? targetConverter = null;
+			IType? targetType = null;
 			if (MatchGetMethodFromHandle(invocation.Arguments[0], out var member))
 			{
 				// static method
@@ -853,7 +853,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (invocation.Arguments.Count != 2)
 				return (null, SpecialType.UnknownType);
-			Func<ILInstruction> targetConverter = null;
+			Func<ILInstruction>? targetConverter = null;
 			if (!invocation.Arguments[0].MatchLdNull())
 			{
 				targetConverter = ConvertInstruction(invocation.Arguments[0]).Item1;
@@ -1124,7 +1124,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return (BuildInitializer, arrayType);
 		}
 
-		bool MatchNew(CallInstruction invocation, out IMethod ctor)
+		bool MatchNew(CallInstruction invocation, out IMethod? ctor)
 		{
 			ctor = null;
 			if (invocation.Method.Name != "New")
@@ -1233,8 +1233,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (invocation.Arguments.Count < 2)
 				return (null, SpecialType.UnknownType);
-			Func<ILInstruction> targetConverter = null;
-			IType targetType = null;
+			Func<ILInstruction>? targetConverter = null;
+			IType? targetType = null;
 			if (!invocation.Arguments[0].MatchLdNull())
 			{
 				(targetConverter, targetType) = ConvertInstruction(invocation.Arguments[0]);
@@ -1413,7 +1413,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return variable.Type.FullName == "System.Linq.Expressions.ParameterExpression";
 		}
 
-		bool MatchConstantCall(ILInstruction inst, out ILInstruction value, out IType type)
+		bool MatchConstantCall(ILInstruction inst, out ILInstruction? value, out IType? type)
 		{
 			value = null;
 			type = null;
@@ -1436,7 +1436,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		internal static bool MatchGetTypeFromHandle(ILInstruction inst, out IType type)
+		internal static bool MatchGetTypeFromHandle(ILInstruction inst, out IType? type)
 		{
 			type = null;
 			return inst is CallInstruction getTypeCall
@@ -1445,7 +1445,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				&& getTypeCall.Arguments[0].MatchLdTypeToken(out type);
 		}
 
-		bool MatchGetMethodFromHandle(ILInstruction inst, out IMember member)
+		bool MatchGetMethodFromHandle(ILInstruction inst, out IMember? member)
 		{
 			member = null;
 			//castclass System.Reflection.MethodInfo(call GetMethodFromHandle(ldmembertoken op_Addition))
@@ -1458,7 +1458,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return MatchFromHandleParameterList(call, out member);
 		}
 
-		bool MatchGetConstructorFromHandle(ILInstruction inst, out IMember member)
+		bool MatchGetConstructorFromHandle(ILInstruction inst, out IMember? member)
 		{
 			member = null;
 			//castclass System.Reflection.ConstructorInfo(call GetMethodFromHandle(ldmembertoken op_Addition))
@@ -1471,7 +1471,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return MatchFromHandleParameterList(call, out member);
 		}
 
-		bool MatchGetFieldFromHandle(ILInstruction inst, out IMember member)
+		bool MatchGetFieldFromHandle(ILInstruction inst, out IMember? member)
 		{
 			member = null;
 			if (!(inst is CallInstruction call && call.Method.FullName == "System.Reflection.FieldInfo.GetFieldFromHandle"))
@@ -1479,7 +1479,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return MatchFromHandleParameterList(call, out member);
 		}
 
-		static bool MatchFromHandleParameterList(CallInstruction call, out IMember member)
+		static bool MatchFromHandleParameterList(CallInstruction call, out IMember? member)
 		{
 			member = null;
 			switch (call.Arguments.Count)
@@ -1500,7 +1500,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchArgumentList(ILInstruction inst, out IList<ILInstruction> arguments)
+		bool MatchArgumentList(ILInstruction inst, out IList<ILInstruction>? arguments)
 		{
 			arguments = null;
 			if (!(inst is Block block && block.Kind == BlockKind.ArrayInitializer))

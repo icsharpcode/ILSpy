@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public LinePreprocessorDirective(string argument = null) : base(PreProcessorDirectiveType.Line, argument)
+		public LinePreprocessorDirective(string? argument = null) : base(PreProcessorDirectiveType.Line, argument)
 		{
 		}
 	}
@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public PragmaWarningPreprocessorDirective(string argument = null) : base(PreProcessorDirectiveType.Pragma, argument)
+		public PragmaWarningPreprocessorDirective(string? argument = null) : base(PreProcessorDirectiveType.Pragma, argument)
 		{
 		}
 
@@ -172,7 +172,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.endLocation = endLocation;
 		}
 
-		public PreProcessorDirective(PreProcessorDirectiveType type, string argument = null)
+		public PreProcessorDirective(PreProcessorDirectiveType type, string? argument = null)
 		{
 			this.Type = type;
 			this.Argument = argument;
@@ -195,7 +195,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			PreProcessorDirective o = other as PreProcessorDirective;
+			PreProcessorDirective? o = other as PreProcessorDirective;
 			return o != null && Type == o.Type && MatchString(Argument, o.Argument);
 		}
 	}

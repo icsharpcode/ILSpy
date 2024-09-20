@@ -142,7 +142,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			BlockStatement o = other as BlockStatement;
+			BlockStatement? o = other as BlockStatement;
 			return o != null && !o.IsNull && this.Statements.DoMatch(o.Statements, match);
 		}
 

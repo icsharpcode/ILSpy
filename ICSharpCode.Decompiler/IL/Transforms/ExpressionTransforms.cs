@@ -301,7 +301,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		protected internal override void VisitNewObj(NewObj inst)
 		{
-			Block block;
+			Block? block;
 			if (TransformSpanTCtorContainingStackAlloc(inst, out ILInstruction locallocSpan))
 			{
 				context.Step("new Span<T>(stackalloc) -> stackalloc Span<T>", inst);
@@ -342,7 +342,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// =>
 		/// ldvirtdelegate System.Delegate TargetMethod(target)
 		/// </summary>
-		bool TransformDelegateCtorLdVirtFtnToLdVirtDelegate(NewObj inst, out LdVirtDelegate ldVirtDelegate)
+		bool TransformDelegateCtorLdVirtFtnToLdVirtDelegate(NewObj inst, out LdVirtDelegate? ldVirtDelegate)
 		{
 			ldVirtDelegate = null;
 			if (inst.Method.DeclaringType.Kind != TypeKind.Delegate)
@@ -379,7 +379,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///		final: ldloc I_0
 		/// }
 		/// </summary>
-		bool TransformSpanTCtorContainingStackAlloc(NewObj newObj, out ILInstruction locallocSpan)
+		bool TransformSpanTCtorContainingStackAlloc(NewObj newObj, out ILInstruction? locallocSpan)
 		{
 			locallocSpan = null;
 			IType type = newObj.Method.DeclaringType;
@@ -428,7 +428,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool TransformDecimalFieldToConstant(LdObj inst, out LdcDecimal result)
+		bool TransformDecimalFieldToConstant(LdObj inst, out LdcDecimal? result)
 		{
 			if (inst.MatchLdsFld(out var field) && field.DeclaringType.IsKnownType(KnownTypeCode.Decimal))
 			{
@@ -542,10 +542,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		IfInstruction HandleConditionalOperator(IfInstruction inst)
 		{
 			// if (cond) stloc A(V1) else stloc A(V2) --> stloc A(if (cond) V1 else V2)
-			Block trueInst = inst.TrueInst as Block;
+			Block? trueInst = inst.TrueInst as Block;
 			if (trueInst == null || trueInst.Instructions.Count != 1)
 				return inst;
-			Block falseInst = inst.FalseInst as Block;
+			Block? falseInst = inst.FalseInst as Block;
 			if (falseInst == null || falseInst.Instructions.Count != 1)
 				return inst;
 			ILVariable v;
@@ -570,8 +570,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Debug.Assert(container.ResultType == StackType.Void);
 			var defaultSection = switchInst.GetDefaultSection();
 			StackType resultType = StackType.Void;
-			BlockContainer leaveTarget = null;
-			ILVariable resultVariable = null;
+			BlockContainer? leaveTarget = null;
+			ILVariable? resultVariable = null;
 			foreach (var section in switchInst.Sections)
 			{
 				if (section != defaultSection)

@@ -406,7 +406,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		static readonly Regex automaticPropertyBackingFieldRegex = new Regex(@"^<(.*)>k__BackingField$",
 			RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-		static bool IsAutomaticPropertyBackingField(FieldDefinition field, MetadataReader metadata, out string propertyName)
+		static bool IsAutomaticPropertyBackingField(FieldDefinition field, MetadataReader metadata, out string? propertyName)
 		{
 			propertyName = null;
 			var name = metadata.GetString(field.Name);
@@ -631,8 +631,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void DoDecompileTypes(IEnumerable<TypeDefinitionHandle> types, DecompileRun decompileRun, ITypeResolveContext decompilationContext, SyntaxTree syntaxTree)
 		{
-			string currentNamespace = null;
-			AstNode groupNode = null;
+			string? currentNamespace = null;
+			AstNode? groupNode = null;
 			foreach (var typeDefHandle in types)
 			{
 				var typeDef = module.GetDefinition(typeDefHandle);
@@ -1027,7 +1027,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			bool first = true;
-			ITypeDefinition parentTypeDef = null;
+			ITypeDefinition? parentTypeDef = null;
 
 			foreach (var entity in definitions)
 			{
@@ -1315,7 +1315,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					TypeKind.Struct => (settings.RecordStructs && typeDef.IsRecord) || settings.UsePrimaryConstructorSyntaxForNonRecordTypes,
 					_ => false,
 				};
-				RecordDecompiler recordDecompiler = isRecordLike ? new RecordDecompiler(typeSystem, typeDef, settings, CancellationToken) : null;
+				RecordDecompiler? recordDecompiler = isRecordLike ? new RecordDecompiler(typeSystem, typeDef, settings, CancellationToken) : null;
 				if (recordDecompiler != null)
 					decompileRun.RecordDecompilers.Add(typeDef, recordDecompiler);
 
@@ -1779,7 +1779,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					);
 					body = statementBuilder.ConvertAsBlock(function.Body);
 
-					Comment prev = null;
+					Comment? prev = null;
 					foreach (string warning in function.Warnings)
 					{
 						body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
@@ -1916,7 +1916,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return found;
 		}
 
-		bool FindAttribute(EntityDeclaration entityDecl, KnownAttribute attributeType, out Syntax.Attribute attribute)
+		bool FindAttribute(EntityDeclaration entityDecl, KnownAttribute attributeType, out Syntax.Attribute? attribute)
 		{
 			attribute = null;
 			foreach (var section in entityDecl.Attributes)
@@ -2016,7 +2016,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		internal static bool IsFixedField(IField field, out IType type, out int elementCount)
+		internal static bool IsFixedField(IField field, out IType? type, out int elementCount)
 		{
 			type = null;
 			elementCount = 0;

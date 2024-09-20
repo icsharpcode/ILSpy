@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			IType type = variable.Type;
 			if (type.Kind == TypeKind.ByReference)
 			{
-				IParameter p = variable as IParameter;
+				IParameter? p = variable as IParameter;
 				if (p != null && p.ReferenceKind != ReferenceKind.None)
 					return ((ByReferenceType)type).ElementType;
 			}

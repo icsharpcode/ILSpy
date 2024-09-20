@@ -175,7 +175,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override bool Equals(IMember obj, TypeVisitor typeNormalization)
 		{
-			SpecializedMethod other = obj as SpecializedMethod;
+			SpecializedMethod? other = obj as SpecializedMethod;
 			if (other == null)
 				return false;
 			return this.baseMember.Equals(other.baseMember, typeNormalization)
@@ -184,7 +184,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override bool Equals(object obj)
 		{
-			SpecializedMethod other = obj as SpecializedMethod;
+			SpecializedMethod? other = obj as SpecializedMethod;
 			if (other == null)
 				return false;
 			return this.baseMember.Equals(other.baseMember) && this.substitutionWithoutSpecializedTypeParameters.Equals(other.substitutionWithoutSpecializedTypeParameters);
@@ -270,7 +270,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			public override bool Equals(IType other)
 			{
 				// Compare the owner, not the substitution, because the substitution may contain this specialized type parameter recursively
-				SpecializedTypeParameter o = other as SpecializedTypeParameter;
+				SpecializedTypeParameter? o = other as SpecializedTypeParameter;
 				return o != null && baseTp.Equals(o.baseTp) && this.Owner.Equals(o.Owner);
 			}
 

@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			get { return false; }
 		}
 
-		public virtual object ConstantValue {
+		public virtual object? ConstantValue {
 			get { return null; }
 		}
 

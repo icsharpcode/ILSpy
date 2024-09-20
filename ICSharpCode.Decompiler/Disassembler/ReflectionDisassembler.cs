@@ -322,7 +322,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.Write(' ');
 				}
 				output.Write("/* ");
-				string format = base10 ? null : "X8";
+				string? format = base10 ? null : "X8";
 				if (handle == null || !handle.Value.IsEntityHandle())
 				{
 					output.Write(metadataToken.ToString(format));
@@ -539,7 +539,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{
 				string[] nameParts = typeName.Split(new[] { ", " }, 2, StringSplitOptions.None);
 				string[] typeNameParts = nameParts[0].Split('.');
-				MetadataFile containingModule = null;
+				MetadataFile? containingModule = null;
 				TypeDefinitionHandle typeDefHandle = default;
 				// if we deal with an assembly-qualified name, resolve the assembly
 				if (nameParts.Length == 2)
@@ -620,7 +620,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			MetadataFile mscorlib;
 
-			bool TryResolveMscorlib(out MetadataFile mscorlib)
+			bool TryResolveMscorlib(out MetadataFile? mscorlib)
 			{
 				mscorlib = null;
 				if (this.mscorlib != null)
@@ -642,8 +642,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteLine(" = {");
 			output.Indent();
 
-			string currentAssemblyName = null;
-			string currentFullAssemblyName = null;
+			string? currentAssemblyName = null;
+			string? currentFullAssemblyName = null;
 			if (module.Metadata.IsAssembly)
 			{
 				try
@@ -1862,7 +1862,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.Indent();
 		}
 
-		void CloseBlock(string comment = null)
+		void CloseBlock(string? comment = null)
 		{
 			output.Unindent();
 			output.Write("}");

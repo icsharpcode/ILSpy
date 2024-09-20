@@ -245,7 +245,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			numObjVarLoadsInCheck = 2;
 			ILInstruction disposeInvocation;
-			CallInstruction disposeCall;
+			CallInstruction? disposeCall;
 			if (objVar.Type.IsKnownType(KnownTypeCode.NullableOfT))
 			{
 				if (checkInst.MatchIfInstruction(out var condition, out var disposeInst))
@@ -488,7 +488,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool CheckAsyncResourceType(IType type, out string disposeMethodFullName)
+		bool CheckAsyncResourceType(IType type, out string? disposeMethodFullName)
 		{
 			disposeMethodFullName = null;
 			IType t = NullableType.GetUnderlyingType(type);

@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			BreakStatement o = other as BreakStatement;
+			BreakStatement? o = other as BreakStatement;
 			return o != null;
 		}
 	}

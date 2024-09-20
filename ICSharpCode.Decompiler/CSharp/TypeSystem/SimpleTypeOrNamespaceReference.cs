@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 
 		public override IType ResolveType(CSharpResolver resolver)
 		{
-			TypeResolveResult trr = Resolve(resolver) as TypeResolveResult;
+			TypeResolveResult? trr = Resolve(resolver) as TypeResolveResult;
 			return trr != null ? trr.Type : new UnknownType(null, identifier, typeArguments.Count);
 		}
 
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			SimpleTypeOrNamespaceReference o = other as SimpleTypeOrNamespaceReference;
+			SimpleTypeOrNamespaceReference? o = other as SimpleTypeOrNamespaceReference;
 			return o != null && this.identifier == o.identifier
 				&& this.typeArguments == o.typeArguments && this.lookupMode == o.lookupMode;
 		}

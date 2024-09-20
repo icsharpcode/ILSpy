@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return DetectTargetFrameworkId(assembly.Metadata, assembly.FileName);
 		}
 
-		public static string DetectTargetFrameworkId(this MetadataReader metadata, string assemblyPath = null)
+		public static string DetectTargetFrameworkId(this MetadataReader metadata, string? assemblyPath = null)
 		{
 			if (metadata == null)
 				throw new ArgumentNullException(nameof(metadata));

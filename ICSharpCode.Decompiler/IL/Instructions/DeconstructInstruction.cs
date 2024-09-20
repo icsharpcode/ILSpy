@@ -190,7 +190,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.MarkFoldEnd();
 		}
 
-		internal static bool IsConversionStLoc(ILInstruction inst, out ILVariable variable, out ILVariable inputVariable)
+		internal static bool IsConversionStLoc(ILInstruction inst, out ILVariable variable, out ILVariable? inputVariable)
 		{
 			inputVariable = null;
 			if (!inst.MatchStLoc(out variable, out var value))
@@ -210,7 +210,7 @@ namespace ICSharpCode.Decompiler.IL
 			return input.MatchLdLoc(out inputVariable) || input.MatchLdLoca(out inputVariable);
 		}
 
-		internal static bool IsAssignment(ILInstruction inst, ICompilation typeSystem, out IType expectedType, out ILInstruction value)
+		internal static bool IsAssignment(ILInstruction inst, ICompilation typeSystem, out IType? expectedType, out ILInstruction? value)
 		{
 			expectedType = null;
 			value = null;

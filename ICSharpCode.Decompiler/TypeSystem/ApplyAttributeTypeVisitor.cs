@@ -45,12 +45,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			SRM.CustomAttributeHandleCollection? additionalAttributes = null)
 		{
 			bool hasDynamicAttribute = false;
-			bool[] dynamicAttributeData = null;
+			bool[]? dynamicAttributeData = null;
 			bool hasNativeIntegersAttribute = (options & TypeSystemOptions.NativeIntegersWithoutAttribute) != 0;
-			bool[] nativeIntegersAttributeData = null;
-			string[] tupleElementNames = null;
+			bool[]? nativeIntegersAttributeData = null;
+			string[]? tupleElementNames = null;
 			Nullability nullability;
-			Nullability[] nullableAttributeData = null;
+			Nullability[]? nullableAttributeData = null;
 			if ((options & TypeSystemOptions.NullabilityAnnotations) != 0)
 			{
 				nullability = nullableContext;
@@ -253,7 +253,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return base.VisitByReferenceType(type);
 		}
 
-		public override IType VisitParameterizedType(ParameterizedType type)
+		public override IType VisitParameterizedType(ParameterizedType? type)
 		{
 			bool useTupleTypes = (options & TypeSystemOptions.Tuple) != 0;
 			if (useTupleTypes && TupleType.IsTupleCompatible(type, out int tupleCardinality))

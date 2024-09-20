@@ -1130,7 +1130,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var fieldDef = (IField)ldflda.Field.MemberDefinition;
 				if (!fieldToVariableMap.TryGetValue(fieldDef, out var v))
 				{
-					string name = null;
+					string? name = null;
 					if (!string.IsNullOrEmpty(fieldDef.Name) && fieldDef.Name[0] == '<')
 					{
 						int pos = fieldDef.Name.IndexOf('>');
@@ -1334,7 +1334,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			IMethod FindFinallyMethod(int state)
 			{
-				IMethod foundMethod = null;
+				IMethod? foundMethod = null;
 				foreach (var (method, stateRange) in finallyMethodToStateRange)
 				{
 					if (stateRange.Contains(state))
@@ -1426,7 +1426,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			context.StepEndGroup(keepIfEmpty: true);
 
-			bool IsCallToMonoFinallyMethod(Call call, out IMethod finallyMethod)
+			bool IsCallToMonoFinallyMethod(Call call, out IMethod? finallyMethod)
 			{
 				finallyMethod = default;
 				if (call == null)

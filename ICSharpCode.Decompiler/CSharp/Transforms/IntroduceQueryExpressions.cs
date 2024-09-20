@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 				// See if the data source of this query is a degenerate query,
 				// and combine the queries if possible.
-				QueryExpression innerQuery = fromClause.Expression as QueryExpression;
+				QueryExpression? innerQuery = fromClause.Expression as QueryExpression;
 				while (IsDegenerateQuery(innerQuery))
 				{
 					QueryFromClause innerFromClause = (QueryFromClause)innerQuery.Clauses.First();
@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						break;
 					// Replace the fromClause with all clauses from the inner query
 					fromClause.Remove();
-					QueryClause insertionPos = null;
+					QueryClause? insertionPos = null;
 					foreach (var clause in innerQuery.Clauses)
 					{
 						query.Clauses.InsertAfter(insertionPos, insertionPos = clause.Detach());
@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (invocation == null)
 				return null;
-			MemberReferenceExpression mre = invocation.Target as MemberReferenceExpression;
+			MemberReferenceExpression? mre = invocation.Target as MemberReferenceExpression;
 			if (mre == null || IsNullConditional(mre.Target))
 				return null;
 			switch (mre.MemberName)
@@ -170,7 +170,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						return null;
 					if (IsNullConditional(collectionSelector))
 						return null;
-					LambdaExpression lambda = invocation.Arguments.ElementAt(1) as LambdaExpression;
+					LambdaExpression? lambda = invocation.Arguments.ElementAt(1) as LambdaExpression;
 					if (lambda != null && lambda.Parameters.Count == 2 && lambda.Body is Expression)
 					{
 						ParameterDeclaration p1 = lambda.Parameters.ElementAt(0);
@@ -261,7 +261,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					Expression innerLambda = invocation.Arguments.ElementAt(2);
 					if (!MatchSimpleLambda(innerLambda, out ParameterDeclaration element2, out Expression key2))
 						return null;
-					LambdaExpression lambda = invocation.Arguments.ElementAt(3) as LambdaExpression;
+					LambdaExpression? lambda = invocation.Arguments.ElementAt(3) as LambdaExpression;
 					if (lambda != null && lambda.Parameters.Count == 2 && lambda.Body is Expression)
 					{
 						ParameterDeclaration p1 = lambda.Parameters.ElementAt(0);
@@ -370,7 +370,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 
 		/// <summary>Matches simple lambdas of the form "a => b"</summary>
-		bool MatchSimpleLambda(Expression expr, out ParameterDeclaration parameter, out Expression body)
+		bool MatchSimpleLambda(Expression expr, out ParameterDeclaration? parameter, out Expression? body)
 		{
 			if (expr is LambdaExpression lambda && lambda.Parameters.Count == 1 && lambda.Body is Expression)
 			{

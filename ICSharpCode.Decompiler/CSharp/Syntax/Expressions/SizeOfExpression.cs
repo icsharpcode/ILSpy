@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			SizeOfExpression o = other as SizeOfExpression;
+			SizeOfExpression? o = other as SizeOfExpression;
 			return o != null && this.Type.DoMatch(o.Type, match);
 		}
 	}

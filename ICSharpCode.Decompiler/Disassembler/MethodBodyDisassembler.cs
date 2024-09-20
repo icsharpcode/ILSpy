@@ -440,7 +440,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						metadataToken = blob.ReadInt32();
 						output.Write(' ');
 						UserStringHandle? userString;
-						string text;
+						string? text;
 						try
 						{
 							userString = MetadataTokens.UserStringHandle(metadataToken);

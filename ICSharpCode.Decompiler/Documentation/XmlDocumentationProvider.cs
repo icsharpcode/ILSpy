@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.Documentation
 				this.entries = new KeyValuePair<string, string>[size];
 			}
 
-			internal bool TryGet(string key, out string value)
+			internal bool TryGet(string key, out string? value)
 			{
 				foreach (var pair in entries)
 				{

@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Returns the first element for which the predicate returns true,
 		/// or the null node (AstNode with IsNull=true) if no such object is found.
 		/// </summary>
-		public T FirstOrNullObject(Func<T, bool> predicate = null)
+		public T FirstOrNullObject(Func<T, bool>? predicate = null)
 		{
 			foreach (T item in this)
 				if (predicate == null || predicate(item))
@@ -161,7 +161,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Returns the last element for which the predicate returns true,
 		/// or the null node (AstNode with IsNull=true) if no such object is found.
 		/// </summary>
-		public T LastOrNullObject(Func<T, bool> predicate = null)
+		public T LastOrNullObject(Func<T, bool>? predicate = null)
 		{
 			T result = role.NullObject;
 			foreach (T item in this)
@@ -202,7 +202,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public override bool Equals(object obj)
 		{
-			AstNodeCollection<T> other = obj as AstNodeCollection<T>;
+			AstNodeCollection<T>? other = obj as AstNodeCollection<T>;
 			if (other == null)
 				return false;
 			return this.node == other.node && this.role == other.role;

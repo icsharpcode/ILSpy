@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			public HashSet<ILInstruction> Initializers { get; } = new HashSet<ILInstruction>();
 
-			public VariableToDeclare(DisplayClass container, IField field, ILVariable declaredVariable = null)
+			public VariableToDeclare(DisplayClass container, IField field, ILVariable? declaredVariable = null)
 			{
 				this.container = container;
 				this.field = field;
@@ -266,7 +266,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		DisplayClass DetectDisplayClass(ILVariable v)
 		{
-			ITypeDefinition definition;
+			ITypeDefinition? definition;
 			if (v.Kind != VariableKind.StackSlot)
 			{
 				definition = v.Type.GetDefinition();
@@ -363,7 +363,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ILInstruction VisitChildren(ILInstruction inst)
 			{
 				// Visit all children of the instruction
-				ILInstruction result = null;
+				ILInstruction? result = null;
 				foreach (var child in inst.Children)
 				{
 					var newResult = Visit(child);
@@ -519,7 +519,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// If a value does not match either LdLoc or a LdObj LdLdFlda* LdLoc chain, null is returned.
 		/// The if any of the variables/fields in the chain cannot be propagated, null is returned.
 		/// </summary>
-		ILVariable ResolveVariableToPropagate(ILInstruction value, IType expectedType = null)
+		ILVariable ResolveVariableToPropagate(ILInstruction value, IType? expectedType = null)
 		{
 			ILVariable v;
 			switch (value)
@@ -553,7 +553,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return null;
 					return v;
 				case LdObj ldfld:
-					DisplayClass currentDisplayClass = null;
+					DisplayClass? currentDisplayClass = null;
 					foreach (var item in ldfld.Target.Descendants)
 					{
 						if (IsDisplayClassLoad(item, out v))
@@ -588,7 +588,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		internal static bool IsClosure(ILTransformContext context, ILVariable variable, out ITypeDefinition closureType, out ILInstruction initializer)
+		internal static bool IsClosure(ILTransformContext context, ILVariable variable, out ITypeDefinition? closureType, out ILInstruction? initializer)
 		{
 			closureType = null;
 			initializer = null;
@@ -610,7 +610,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		static bool IsClosureInit(ILTransformContext context, StLoc inst, out ITypeDefinition closureType)
+		static bool IsClosureInit(ILTransformContext context, StLoc inst, out ITypeDefinition? closureType)
 		{
 			if (inst.Value is NewObj newObj)
 			{
@@ -673,7 +673,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			return displayClass;
 
-			bool FindThisField(out IField foundField)
+			bool FindThisField(out IField? foundField)
 			{
 				foundField = null;
 				foreach (var field in closureType.GetFields(f2 => !f2.IsStatic && !displayClass.VariablesToDeclare.ContainsKey(f2) && f2.Type.GetDefinition() == decompilationContext.CurrentTypeDefinition))
@@ -851,7 +851,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		private bool IsDisplayClassFieldAccess(ILInstruction inst,
-			out ILVariable displayClassVar, out DisplayClass displayClass, out IField field)
+			out ILVariable? displayClassVar, out DisplayClass? displayClass, out IField? field)
 		{
 			displayClass = null;
 			displayClassVar = null;

@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// </summary>
 		public readonly ResolveResult Argument;
 
-		public NamedArgumentResolveResult(IParameter parameter, ResolveResult argument, IParameterizedMember member = null)
+		public NamedArgumentResolveResult(IParameter parameter, ResolveResult argument, IParameterizedMember? member = null)
 			: base(argument.Type)
 		{
 			if (parameter == null)

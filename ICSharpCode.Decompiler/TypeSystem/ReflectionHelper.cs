@@ -229,7 +229,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static TypeCode GetTypeCode(this IType type)
 		{
-			ITypeDefinition def = type as ITypeDefinition;
+			ITypeDefinition? def = type as ITypeDefinition;
 			if (def != null)
 			{
 				KnownTypeCode typeCode = def.KnownTypeCode;
@@ -321,7 +321,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				// not a type parameter reference: read the actual type name
 				string typeName = ReadTypeName(reflectionTypeName, ref pos, out int tpc);
-				string assemblyName = local ? null : SkipAheadAndReadAssemblyName(reflectionTypeName, pos);
+				string? assemblyName = local ? null : SkipAheadAndReadAssemblyName(reflectionTypeName, pos);
 				reference = CreateGetClassTypeReference(assemblyName, typeName, tpc);
 			}
 			// read type suffixes
@@ -426,7 +426,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		static ITypeReference CreateGetClassTypeReference(string assemblyName, string typeName, int tpc)
 		{
-			IModuleReference assemblyReference;
+			IModuleReference? assemblyReference;
 			if (assemblyName != null)
 			{
 				assemblyReference = new DefaultAssemblyReference(assemblyName);

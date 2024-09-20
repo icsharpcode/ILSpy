@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ThisReferenceExpression o = other as ThisReferenceExpression;
+			ThisReferenceExpression? o = other as ThisReferenceExpression;
 			return o != null;
 		}
 	}

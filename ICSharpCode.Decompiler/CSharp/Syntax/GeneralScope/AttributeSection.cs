@@ -131,7 +131,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			AttributeSection o = other as AttributeSection;
+			AttributeSection? o = other as AttributeSection;
 			return o != null && MatchString(this.AttributeTarget, o.AttributeTarget) && this.Attributes.DoMatch(o.Attributes, match);
 		}
 

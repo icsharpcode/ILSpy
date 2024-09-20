@@ -331,7 +331,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchLockEntryPoint(Block entryPoint, ILVariable flag, out StLoc obj)
+		bool MatchLockEntryPoint(Block entryPoint, ILVariable flag, out StLoc? obj)
 		{
 			obj = null;
 			if (entryPoint.Instructions.Count == 0 || entryPoint.IncomingEdgeCount != 1)
@@ -341,7 +341,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchLockEntryPoint(Block entryPoint, ILVariable flag, out ILVariable exitVairable, out StLoc obj)
+		bool MatchLockEntryPoint(Block entryPoint, ILVariable flag, out ILVariable? exitVairable, out StLoc? obj)
 		{
 			// This pattern is commonly seen in yield return state machines emitted by the legacy C# compiler.
 			obj = null;
@@ -358,7 +358,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		bool MatchCall(Call call, string methodName, ILVariable flag, out StLoc obj)
+		bool MatchCall(Call call, string methodName, ILVariable flag, out StLoc? obj)
 		{
 			obj = null;
 			const string ThreadingMonitor = "System.Threading.Monitor";

@@ -143,11 +143,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			SimpleType o = other as SimpleType;
+			SimpleType? o = other as SimpleType;
 			return o != null && MatchString(this.Identifier, o.Identifier) && this.TypeArguments.DoMatch(o.TypeArguments, match);
 		}
 
-		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)
+		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider? interningProvider = null)
 		{
 			if (interningProvider == null)
 				interningProvider = InterningProvider.Dummy;

@@ -200,7 +200,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			var commonExits = elseExits.Where(e1 => thenExits.Any(e2 => DetectExitPoints.CompatibleExitInstruction(e1, e2)));
 
 			// find the common exit with the highest block exit priority
-			ILInstruction commonExit = null;
+			ILInstruction? commonExit = null;
 			foreach (var exit in commonExits)
 			{
 				if (commonExit == null || CompareBlockExitPriority(exit, commonExit) > 0)
@@ -610,7 +610,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// Determine if the specified instruction necessarily exits (EndPointUnreachable)
 		/// and if so return last (or single) exit instruction
 		/// </summary>
-		private static bool TryGetExit(ILInstruction inst, out ILInstruction exitInst)
+		private static bool TryGetExit(ILInstruction inst, out ILInstruction? exitInst)
 		{
 			if (inst is Block block && block.Instructions.Count > 0)
 				inst = block.Instructions.Last();

@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			collector.CollectNamespaces(entity, module);
 		}
 
-		void CollectNamespaces(IEntity entity, MetadataModule module, CodeMappingInfo mappingInfo = null)
+		void CollectNamespaces(IEntity entity, MetadataModule module, CodeMappingInfo? mappingInfo = null)
 		{
 			if (entity == null || entity.MetadataToken.IsNil || module.MetadataFile is not MetadataFile corFile)
 				return;
@@ -334,7 +334,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							case HandleKind.MethodDefinition:
 							case HandleKind.MethodSpecification:
 							case HandleKind.MemberReference:
-								IMember member;
+								IMember? member;
 								try
 								{
 									member = module.ResolveEntity(handle, genericContext) as IMember;

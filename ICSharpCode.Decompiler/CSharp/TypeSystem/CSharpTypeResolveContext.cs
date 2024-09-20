@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		readonly IMember currentMember;
 		readonly string[] methodTypeParameterNames;
 
-		public CSharpTypeResolveContext(IModule module, ResolvedUsingScope usingScope = null, ITypeDefinition typeDefinition = null, IMember member = null)
+		public CSharpTypeResolveContext(IModule module, ResolvedUsingScope? usingScope = null, ITypeDefinition? typeDefinition = null, IMember? member = null)
 		{
 			if (module == null)
 				throw new ArgumentNullException(nameof(module));

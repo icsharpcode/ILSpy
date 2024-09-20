@@ -471,7 +471,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Class type arguments are provided by the declaring type stored in the memberRef.
 		/// Method type arguments are provided by the caller.
 		/// </remarks>
-		IMethod ResolveMethodReference(MemberReferenceHandle memberRefHandle, GenericContext context, IReadOnlyList<IType> methodTypeArguments = null, bool expandVarArgs = true)
+		IMethod ResolveMethodReference(MemberReferenceHandle memberRefHandle, GenericContext context, IReadOnlyList<IType>? methodTypeArguments = null, bool expandVarArgs = true)
 		{
 			var memberRef = metadata.GetMemberReference(memberRefHandle);
 			if (memberRef.GetKind() != MemberReferenceKind.Method)
@@ -479,8 +479,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new BadImageFormatException($"Member reference must be method, but was: {memberRef.GetKind()}");
 			}
 			MethodSignature<IType> signature;
-			IReadOnlyList<IType> classTypeArguments = null;
-			IMethod method;
+			IReadOnlyList<IType>? classTypeArguments = null;
+			IMethod? method;
 			if (memberRef.Parent.Kind == HandleKind.MethodDefinition)
 			{
 				method = ResolveMethodDefinition((MethodDefinitionHandle)memberRef.Parent, expandVarArgs: false);
@@ -600,7 +600,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			m.ReturnType = signature.ReturnType;
 			m.IsStatic = !signature.Header.IsInstance;
 
-			TypeParameterSubstitution substitution = null;
+			TypeParameterSubstitution? substitution = null;
 			if (signature.GenericParameterCount > 0)
 			{
 				var typeParameters = new List<ITypeParameter>();

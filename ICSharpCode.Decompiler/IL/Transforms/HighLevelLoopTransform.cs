@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool MatchWhileLoop(BlockContainer loop, out IfInstruction condition, out Block loopBody)
+		bool MatchWhileLoop(BlockContainer loop, out IfInstruction? condition, out Block loopBody)
 		{
 			// ConditionDetection favours leave inside if and branch at end of block
 			// while-loop:
@@ -199,7 +199,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				loop.Blocks.MoveElementToEnd(originalBlock);
 			}
 			// combine all conditions and the exit instruction into one IfInstruction:
-			IfInstruction condition = null;
+			IfInstruction? condition = null;
 			conditionBlock.AddILRange(exit);
 			foreach (var inst in conditions)
 			{
@@ -356,7 +356,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		// early match before block containers have been constructed
-		internal static bool MatchDoWhileConditionBlock(Block block, out Block target1, out Block target2)
+		internal static bool MatchDoWhileConditionBlock(Block block, out Block target1, out Block? target2)
 		{
 			target1 = target2 = null;
 			if (block.Instructions.Count < 2)
@@ -419,7 +419,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// split conditions:
 				var conditions = new List<ILInstruction>();
 				SplitConditions(whileCondition.Condition, conditions);
-				IfInstruction forCondition = null;
+				IfInstruction? forCondition = null;
 				int numberOfConditions = 0;
 				foreach (var condition in conditions)
 				{

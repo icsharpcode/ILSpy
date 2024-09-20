@@ -105,20 +105,20 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public override void WriteKeyword(Role role, string keyword)
 		{
 			TextLocation start = locationProvider.Location;
-			CSharpTokenNode t = null;
+			CSharpTokenNode? t = null;
 			if (role is TokenRole)
 				t = new CSharpTokenNode(start, (TokenRole)role);
 			else if (role == EntityDeclaration.ModifierRole)
 				t = new CSharpModifierToken(start, CSharpModifierToken.GetModifierValue(keyword));
 			else if (keyword == "this")
 			{
-				ThisReferenceExpression node = nodes.Peek().LastOrDefault() as ThisReferenceExpression;
+				ThisReferenceExpression? node = nodes.Peek().LastOrDefault() as ThisReferenceExpression;
 				if (node != null)
 					node.Location = start;
 			}
 			else if (keyword == "base")
 			{
-				BaseReferenceExpression node = nodes.Peek().LastOrDefault() as BaseReferenceExpression;
+				BaseReferenceExpression? node = nodes.Peek().LastOrDefault() as BaseReferenceExpression;
 				if (node != null)
 					node.Location = start;
 			}
@@ -140,7 +140,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
 		{
-			Expression node = nodes.Peek().LastOrDefault() as Expression;
+			Expression? node = nodes.Peek().LastOrDefault() as Expression;
 			var startLocation = locationProvider.Location;
 			base.WritePrimitiveValue(value, format);
 			if (node is PrimitiveExpression)
@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public override void WritePrimitiveType(string type)
 		{
-			PrimitiveType node = nodes.Peek().LastOrDefault() as PrimitiveType;
+			PrimitiveType? node = nodes.Peek().LastOrDefault() as PrimitiveType;
 			if (node != null)
 				node.SetStartLocation(locationProvider.Location);
 			base.WritePrimitiveType(type);

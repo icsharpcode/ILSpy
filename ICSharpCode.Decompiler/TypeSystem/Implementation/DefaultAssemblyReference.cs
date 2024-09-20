@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			DefaultAssemblyReference o = other as DefaultAssemblyReference;
+			DefaultAssemblyReference? o = other as DefaultAssemblyReference;
 			return o != null && shortName == o.shortName;
 		}
 

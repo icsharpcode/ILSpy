@@ -431,7 +431,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				)
 			)));
 
-		bool MatchLowerBound(int indexNum, out IL.ILVariable index, IL.ILVariable collection, Statement statement)
+		bool MatchLowerBound(int indexNum, out IL.ILVariable? index, IL.ILVariable collection, Statement statement)
 		{
 			index = null;
 			var m = variableAssignLowerBoundPattern.Match(statement);
@@ -443,7 +443,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return m.Get<IdentifierExpression>("collection").Single().GetILVariable() == collection;
 		}
 
-		bool MatchForeachOnMultiDimArray(IL.ILVariable[] upperBounds, IL.ILVariable collection, Statement firstInitializerStatement, out IdentifierExpression foreachVariable, out IList<Statement> statements, out IL.ILVariable[] lowerBounds)
+		bool MatchForeachOnMultiDimArray(IL.ILVariable[] upperBounds, IL.ILVariable collection, Statement firstInitializerStatement, out IdentifierExpression? foreachVariable, out IList<Statement>? statements, out IL.ILVariable[] lowerBounds)
 		{
 			int i = 0;
 			foreachVariable = null;
@@ -482,8 +482,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return null;
 			Match m;
 			Statement stmt = expressionStatement;
-			IL.ILVariable collection = null;
-			IL.ILVariable[] upperBounds = null;
+			IL.ILVariable? collection = null;
+			IL.ILVariable[]? upperBounds = null;
 			List<Statement> statementsToDelete = new List<Statement>();
 			int i = 0;
 			// first we look for all the upper bound initializations
@@ -610,10 +610,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		PropertyDeclaration TransformAutomaticProperty(PropertyDeclaration propertyDeclaration)
 		{
-			IProperty property = propertyDeclaration.GetSymbol() as IProperty;
+			IProperty? property = propertyDeclaration.GetSymbol() as IProperty;
 			if (!CanTransformToAutomaticProperty(property, !property.DeclaringTypeDefinition.Fields.Any(f => f.Name == "_" + property.Name && f.IsCompilerGenerated())))
 				return null;
-			IField field = null;
+			IField? field = null;
 			Match m = automaticPropertyPattern.Match(propertyDeclaration);
 			if (m.Success)
 			{
@@ -702,7 +702,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return base.VisitIdentifier(identifier);
 		}
 
-		internal static bool IsBackingFieldOfAutomaticProperty(IField field, out IProperty property)
+		internal static bool IsBackingFieldOfAutomaticProperty(IField field, out IProperty? property)
 		{
 			property = null;
 			if (!NameCouldBeBackingFieldOfAutomaticProperty(field.Name, out string propertyName))
@@ -725,7 +725,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		static readonly System.Text.RegularExpressions.Regex automaticPropertyBackingFieldNameRegex
 			= new System.Text.RegularExpressions.Regex(@"^(<(?<name>.+)>k__BackingField|_(?<name>.+))$");
 
-		static bool NameCouldBeBackingFieldOfAutomaticProperty(string name, out string propertyName)
+		static bool NameCouldBeBackingFieldOfAutomaticProperty(string name, out string? propertyName)
 		{
 			propertyName = null;
 			var m = automaticPropertyBackingFieldNameRegex.Match(name);

@@ -170,7 +170,7 @@ namespace ICSharpCode.Decompiler.Semantics
 
 			public override bool Equals(Conversion other)
 			{
-				NumericOrEnumerationConversion o = other as NumericOrEnumerationConversion;
+				NumericOrEnumerationConversion? o = other as NumericOrEnumerationConversion;
 				return o != null && isImplicit == o.isImplicit && isLifted == o.isLifted && isEnumeration == o.isEnumeration;
 			}
 
@@ -247,7 +247,7 @@ namespace ICSharpCode.Decompiler.Semantics
 
 			public override string ToString()
 			{
-				string name = null;
+				string? name = null;
 				switch (type)
 				{
 					case 0:
@@ -337,7 +337,7 @@ namespace ICSharpCode.Decompiler.Semantics
 
 			public override bool Equals(Conversion other)
 			{
-				UserDefinedConv o = other as UserDefinedConv;
+				UserDefinedConv? o = other as UserDefinedConv;
 				return o != null && isLifted == o.isLifted && isImplicit == o.isImplicit && isValid == o.isValid && method.Equals(o.method);
 			}
 
@@ -396,7 +396,7 @@ namespace ICSharpCode.Decompiler.Semantics
 
 			public override bool Equals(Conversion other)
 			{
-				MethodGroupConv o = other as MethodGroupConv;
+				MethodGroupConv? o = other as MethodGroupConv;
 				return o != null && method.Equals(o.method);
 			}
 

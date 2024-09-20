@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		static bool MatchCondition(ILInstruction condition, out ILVariable v, out string name)
+		static bool MatchCondition(ILInstruction condition, out ILVariable? v, out string? name)
 		{
 			v = null;
 			name = null;
@@ -232,7 +232,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			// Check trueInst:
-			DynamicUnaryOperatorInstruction rhsUnary;
+			DynamicUnaryOperatorInstruction? rhsUnary;
 			if (trueInst.MatchLdLoc(lhsVar))
 			{
 				// OK, typical pattern where the expression evaluates to 'dynamic'

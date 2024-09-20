@@ -229,12 +229,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return string.Format("[{0} with {1} method(s)]", GetType().Name, this.Methods.Count());
 		}
 
-		public OverloadResolution PerformOverloadResolution(ICompilation compilation, ResolveResult[] arguments, string[] argumentNames = null,
+		public OverloadResolution PerformOverloadResolution(ICompilation compilation, ResolveResult[] arguments, string[]? argumentNames = null,
 															bool allowExtensionMethods = true,
 															bool allowExpandingParams = true,
 															bool allowOptionalParameters = true,
 															bool allowImplicitIn = true,
-															bool checkForOverflow = false, CSharpConversions conversions = null)
+															bool checkForOverflow = false, CSharpConversions? conversions = null)
 		{
 			Log.WriteLine("Performing overload resolution for " + this);
 			Log.WriteCollection("  Arguments: ", arguments);
@@ -260,7 +260,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					ResolveResult[] extArguments = new ResolveResult[arguments.Length + 1];
 					extArguments[0] = new ResolveResult(this.TargetType);
 					arguments.CopyTo(extArguments, 1);
-					string[] extArgumentNames = null;
+					string[]? extArgumentNames = null;
 					if (argumentNames != null)
 					{
 						extArgumentNames = new string[argumentNames.Length + 1];

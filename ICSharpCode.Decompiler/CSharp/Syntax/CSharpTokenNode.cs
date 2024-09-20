@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			CSharpTokenNode o = other as CSharpTokenNode;
+			CSharpTokenNode? o = other as CSharpTokenNode;
 			return o != null && !o.IsNull && !(o is CSharpModifierToken);
 		}
 	}

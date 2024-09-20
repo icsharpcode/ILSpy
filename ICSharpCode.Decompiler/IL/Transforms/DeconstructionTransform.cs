@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Get index of deconstruction result or tuple element
 		/// Returns -1 on failure.
 		/// </summary>
-		int FindIndex(ILInstruction inst, out Action<DeconstructInstruction> delayedActions)
+		int FindIndex(ILInstruction inst, out Action<DeconstructInstruction>? delayedActions)
 		{
 			delayedActions = null;
 			if (inst.MatchLdLoc(out var v))
@@ -189,7 +189,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool TransformDeconstruction(Block block, int pos)
 		{
 			int startPos = pos;
-			Action<DeconstructInstruction> delayedActions = null;
+			Action<DeconstructInstruction>? delayedActions = null;
 			if (MatchDeconstruction(block.Instructions[pos], out IMethod deconstructMethod,
 				out ILInstruction rootTestedOperand))
 			{
@@ -262,8 +262,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchDeconstruction(ILInstruction inst, out IMethod deconstructMethod,
-			out ILInstruction testedOperand)
+		bool MatchDeconstruction(ILInstruction inst, out IMethod? deconstructMethod,
+			out ILInstruction? testedOperand)
 		{
 			testedOperand = null;
 			deconstructMethod = null;
@@ -328,7 +328,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchConversion(ILInstruction inst, out ILInstruction inputInstruction,
+		bool MatchConversion(ILInstruction inst, out ILInstruction? inputInstruction,
 			out ILVariable outputVariable, out ConversionInfo info)
 		{
 			info = default;
@@ -433,7 +433,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool MatchAssignment(ILInstruction inst, out IType targetType, out ILInstruction valueInst, out Action<DeconstructInstruction> addAssignment)
+		bool MatchAssignment(ILInstruction inst, out IType? targetType, out ILInstruction? valueInst, out Action<DeconstructInstruction>? addAssignment)
 		{
 			targetType = null;
 			valueInst = null;

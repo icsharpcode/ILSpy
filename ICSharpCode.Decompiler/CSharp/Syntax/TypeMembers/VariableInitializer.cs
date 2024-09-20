@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public VariableInitializer(string name, Expression initializer = null)
+		public VariableInitializer(string name, Expression? initializer = null)
 		{
 			this.Name = name;
 			this.Initializer = initializer;
@@ -168,7 +168,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			VariableInitializer o = other as VariableInitializer;
+			VariableInitializer? o = other as VariableInitializer;
 			return o != null && MatchString(this.Name, o.Name) && this.Initializer.DoMatch(o.Initializer, match);
 		}
 	}

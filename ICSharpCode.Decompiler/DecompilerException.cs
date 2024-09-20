@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler
 		public MetadataFile File { get; }
 
 		public DecompilerException(MetadataModule module, IEntity decompiledEntity,
-			Exception innerException, string message = null)
+			Exception innerException, string? message = null)
 			: base(message ?? GetDefaultMessage(decompiledEntity), innerException)
 		{
 			this.File = module.MetadataFile;
@@ -170,7 +170,7 @@ namespace ICSharpCode.Decompiler
 				// source location
 				if (frame.GetILOffset() >= 0)
 				{
-					string filename = null;
+					string? filename = null;
 					try
 					{
 						string fullpath = frame.GetFileName();

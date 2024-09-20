@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (blockContainer.Blocks.Count != 1)
 				return;
 			var block = blockContainer.Blocks[0];
-			Call call;
+			Call? call;
 			ILInstruction returnValue;
 			switch (block.Instructions.Count)
 			{

@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override bool Equals(IType other)
 		{
-			IntersectionType o = other as IntersectionType;
+			IntersectionType? o = other as IntersectionType;
 			if (o != null && types.Count == o.types.Count)
 			{
 				for (int i = 0; i < types.Count; i++)

@@ -241,8 +241,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		//      stloc V_1(get.pinnable.reference(ldloc mem))
 		//      stloc ptr(conv ref->u (ldloc V_1))
 		//      br targetBlock
-		private bool IsCustomRefPinPattern(Block block, out ILInstruction ldlocMem, out CallInstruction callGPR,
-			out ILVariable v, out StLoc ptrAssign, out Block targetBlock, out Block nullBlock, out Block notNullBlock)
+		private bool IsCustomRefPinPattern(Block block, out ILInstruction? ldlocMem, out CallInstruction? callGPR,
+			out ILVariable? v, out StLoc? ptrAssign, out Block? targetBlock, out Block? nullBlock, out Block? notNullBlock)
 		{
 			ldlocMem = null;
 			callGPR = null;
@@ -356,7 +356,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		//   ...
 		//   stloc P(array.to.pointer(V))
 		//   br B_target
-		bool IsNullSafeArrayToPointerPattern(Block block, out ILVariable v, out ILVariable p, out Block targetBlock)
+		bool IsNullSafeArrayToPointerPattern(Block block, out ILVariable? v, out ILVariable? p, out Block? targetBlock)
 		{
 			v = null;
 			p = null;
@@ -495,7 +495,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return block.Instructions[1].MatchBranch(targetBlock);
 		}
 
-		bool IsNullSafeArrayToPointerNullOrEmptyBlock(Block block, out ILVariable p, out Block targetBlock)
+		bool IsNullSafeArrayToPointerNullOrEmptyBlock(Block block, out ILVariable? p, out Block? targetBlock)
 		{
 			p = null;
 			targetBlock = null;
@@ -602,7 +602,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			context.Step("CreatePinnedRegion", block);
 			BlockContainer body = new BlockContainer();
-			Block[] clonedBlocks = cloneBlocks ? new Block[sourceContainer.Blocks.Count] : null;
+			Block[]? clonedBlocks = cloneBlocks ? new Block[sourceContainer.Blocks.Count] : null;
 			for (int i = 0; i < sourceContainer.Blocks.Count; i++)
 			{
 				if (reachedEdgesPerBlock[i] > 0)
@@ -704,7 +704,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				// branch that leaves body.
 				// The target block should have an instruction that resets the pin; delete that instruction:
-				StLoc unpin = branch.TargetBlock.Instructions.First() as StLoc;
+				StLoc? unpin = branch.TargetBlock.Instructions.First() as StLoc;
 				if (unpin != null && unpin.Variable == pinnedRegionVar && IsNullOrZero(unpin.Value))
 				{
 					branch.TargetBlock.Instructions.RemoveAt(0);
@@ -790,7 +790,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// and then uses array.to.pointer immediately within the region.
 			Debug.Assert(pinnedRegion.Variable.Type.Kind == TypeKind.Array);
 			// Find the single load of the variable within the pinnedRegion:
-			LdLoc ldloc = null;
+			LdLoc? ldloc = null;
 			foreach (var inst in pinnedRegion.Descendants.OfType<IInstructionWithVariableOperand>())
 			{
 				if (inst.Variable == pinnedRegion.Variable && inst != pinnedRegion)
@@ -863,7 +863,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return slotInfo == Block.InstructionSlot || slotInfo == LdObj.TargetSlot || slotInfo == StObj.TargetSlot;
 		}
 
-		bool IsBranchOnNull(ILInstruction condBranch, ILVariable nativeVar, out Block targetBlock)
+		bool IsBranchOnNull(ILInstruction condBranch, ILVariable nativeVar, out Block? targetBlock)
 		{
 			targetBlock = null;
 			// if (comp(ldloc nativeVar == conv i4->i <sign extend>(ldc.i4 0))) br targetBlock
@@ -903,7 +903,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return;
 
 			Block targetBlock;
-			Block adjustOffsetToStringData = null;
+			Block? adjustOffsetToStringData = null;
 			if (body.EntryPoint.Instructions.Count == 2)
 			{
 				if (!initInst.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out ILInstruction left, out ILInstruction right))
@@ -1014,7 +1014,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		bool IsOffsetToStringDataCall(ILInstruction inst)
 		{
-			Call call = inst.UnwrapConv(ConversionKind.SignExtend) as Call;
+			Call? call = inst.UnwrapConv(ConversionKind.SignExtend) as Call;
 			return call != null && call.Method.FullName == "System.Runtime.CompilerServices.RuntimeHelpers.get_OffsetToStringData";
 		}
 

@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public ObjectCreateExpression(AstType type, IEnumerable<Expression> arguments = null)
+		public ObjectCreateExpression(AstType type, IEnumerable<Expression>? arguments = null)
 		{
 			AddChild(type, Roles.Type);
 			if (arguments != null)
@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ObjectCreateExpression o = other as ObjectCreateExpression;
+			ObjectCreateExpression? o = other as ObjectCreateExpression;
 			return o != null && this.Type.DoMatch(o.Type, match) && this.Arguments.DoMatch(o.Arguments, match) && this.Initializer.DoMatch(o.Initializer, match);
 		}
 	}

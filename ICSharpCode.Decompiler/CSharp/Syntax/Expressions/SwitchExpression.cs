@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			SwitchExpression o = other as SwitchExpression;
+			SwitchExpression? o = other as SwitchExpression;
 			return o != null && this.Expression.DoMatch(o.Expression, match) && this.SwitchSections.DoMatch(o.SwitchSections, match);
 		}
 	}
@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			SwitchExpressionSection o = other as SwitchExpressionSection;
+			SwitchExpressionSection? o = other as SwitchExpressionSection;
 			return o != null && this.Pattern.DoMatch(o.Pattern, match) && this.Body.DoMatch(o.Body, match);
 		}
 	}

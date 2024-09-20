@@ -151,7 +151,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			IType r = ReturnType.AcceptVisitor(visitor);
 			// Keep ta == null as long as no elements changed, allocate the array only if necessary.
-			IType[] pt = (r != ReturnType) ? new IType[ParameterTypes.Length] : null;
+			IType[]? pt = (r != ReturnType) ? new IType[ParameterTypes.Length] : null;
 			for (int i = 0; i < ParameterTypes.Length; i++)
 			{
 				IType p = ParameterTypes[i].AcceptVisitor(visitor);

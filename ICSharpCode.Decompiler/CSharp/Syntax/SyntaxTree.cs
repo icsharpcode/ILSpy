@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildrenByRole(MemberRole); }
 		}
 
-		IList<string> conditionalSymbols = null;
+		IList<string>? conditionalSymbols = null;
 
 		/// <summary>
 		/// Gets the conditional symbols used to parse the source file. Note that this list contains
@@ -119,7 +119,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			SyntaxTree o = other as SyntaxTree;
+			SyntaxTree? o = other as SyntaxTree;
 			return o != null && this.Members.DoMatch(o.Members, match);
 		}
 

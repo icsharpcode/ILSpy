@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			UnaryOperatorExpression o = other as UnaryOperatorExpression;
+			UnaryOperatorExpression? o = other as UnaryOperatorExpression;
 			return o != null && (this.Operator == UnaryOperatorType.Any || this.Operator == o.Operator)
 				&& this.Expression.DoMatch(o.Expression, match);
 		}

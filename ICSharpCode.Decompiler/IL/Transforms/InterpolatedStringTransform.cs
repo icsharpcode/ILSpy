@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		private bool FindToStringAndClear(Block block, int pos, int interpolationStart, int interpolationEnd, ILVariable v, out ILInstruction insertionPoint)
+		private bool FindToStringAndClear(Block block, int pos, int interpolationStart, int interpolationEnd, ILVariable v, out ILInstruction? insertionPoint)
 		{
 			insertionPoint = null;
 			if (pos >= block.Instructions.Count)

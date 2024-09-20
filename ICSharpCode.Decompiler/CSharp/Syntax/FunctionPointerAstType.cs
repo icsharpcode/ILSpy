@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				&& this.ReturnType.DoMatch(o.ReturnType, match);
 		}
 
-		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)
+		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider? interningProvider = null)
 		{
 			throw new NotImplementedException();
 		}

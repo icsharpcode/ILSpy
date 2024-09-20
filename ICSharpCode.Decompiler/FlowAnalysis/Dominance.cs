@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				{
 					ControlFlowNode b = nodes[i];
 					// Compute new immediate dominator:
-					ControlFlowNode newIdom = null;
+					ControlFlowNode? newIdom = null;
 					foreach (var p in b.Predecessors)
 					{
 						// Ignore predecessors that were not processed yet

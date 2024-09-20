@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		static void RunOnBlock(Block block, ILTransformContext context, HashSet<ILVariable> splitVariables = null)
+		static void RunOnBlock(Block block, ILTransformContext context, HashSet<ILVariable>? splitVariables = null)
 		{
 			for (int i = 0; i < block.Instructions.Count; i++)
 			{

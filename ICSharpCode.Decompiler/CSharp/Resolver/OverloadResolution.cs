@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			public bool IsGenericMethod {
 				get {
-					IMethod method = Member as IMethod;
+					IMethod? method = Member as IMethod;
 					return method != null && method.TypeParameters.Count > 0;
 				}
 			}
@@ -108,7 +108,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				// (without any type parameter substitution, not even class type parameters)
 				// We'll re-substitute them as part of RunTypeInference().
 				this.Parameters = memberDefinition.Parameters;
-				IMethod methodDefinition = memberDefinition as IMethod;
+				IMethod? methodDefinition = memberDefinition as IMethod;
 				if (methodDefinition != null && methodDefinition.TypeParameters.Count > 0)
 				{
 					this.TypeParameters = methodDefinition.TypeParameters;
@@ -136,7 +136,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		OverloadResolutionErrors bestCandidateValidationResult;
 
 		#region Constructor
-		public OverloadResolution(ICompilation compilation, ResolveResult[] arguments, string[] argumentNames = null, IType[] typeArguments = null, CSharpConversions conversions = null)
+		public OverloadResolution(ICompilation compilation, ResolveResult[] arguments, string[]? argumentNames = null, IType[]? typeArguments = null, CSharpConversions? conversions = null)
 		{
 			if (compilation == null)
 				throw new ArgumentNullException(nameof(compilation));
@@ -286,7 +286,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 				if (candidate.IsExpandedForm && i == candidate.Parameters.Count - 1)
 				{
-					ArrayType arrayType = type as ArrayType;
+					ArrayType? arrayType = type as ArrayType;
 					if (arrayType != null && arrayType.Dimensions == 1)
 						type = arrayType.ElementType;
 					else
@@ -311,7 +311,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (methodLists == null)
 				throw new ArgumentNullException(nameof(methodLists));
 			// Base types come first, so go through the list backwards (derived types first)
-			bool[] isHiddenByDerivedType;
+			bool[]? isHiddenByDerivedType;
 			if (methodLists.Count > 1)
 				isHiddenByDerivedType = new bool[methodLists.Count];
 			else
@@ -436,8 +436,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				ResolveParameterTypes(candidate, true);
 				return;
 			}
-			ParameterizedType parameterizedDeclaringType = candidate.Member.DeclaringType as ParameterizedType;
-			IReadOnlyList<IType> classTypeArguments;
+			ParameterizedType? parameterizedDeclaringType = candidate.Member.DeclaringType as ParameterizedType;
+			IReadOnlyList<IType>? classTypeArguments;
 			if (parameterizedDeclaringType != null)
 			{
 				classTypeArguments = parameterizedDeclaringType.TypeArguments;
@@ -504,7 +504,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (newType != type && ConstraintsValid)
 				{
 					// something was changed, so we need to validate the constraints
-					ParameterizedType newParameterizedType = newType as ParameterizedType;
+					ParameterizedType? newParameterizedType = newType as ParameterizedType;
 					if (newParameterizedType != null)
 					{
 						// C# 4.0 spec: §4.4.4 Satisfying constraints
@@ -552,7 +552,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// The substitution is used to check constraints that depend on other type parameters (or recursively on the same type parameter).
 		/// May be null if no substitution should be used.</param>
 		/// <returns>True if the constraints are satisfied; false otherwise.</returns>
-		public static bool ValidateConstraints(ITypeParameter typeParameter, IType typeArgument, TypeVisitor substitution = null)
+		public static bool ValidateConstraints(ITypeParameter typeParameter, IType typeArgument, TypeVisitor? substitution = null)
 		{
 			if (typeParameter == null)
 				throw new ArgumentNullException(nameof(typeParameter));
@@ -791,8 +791,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return r;
 
 				// prefer non-lifted operators
-				ILiftedOperator lift1 = c1.Member as ILiftedOperator;
-				ILiftedOperator lift2 = c2.Member as ILiftedOperator;
+				ILiftedOperator? lift1 = c1.Member as ILiftedOperator;
+				ILiftedOperator? lift2 = c2.Member as ILiftedOperator;
 				if (lift1 == null && lift2 != null)
 					return 1;
 				if (lift1 != null && lift2 == null)
@@ -843,16 +843,16 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if ((t2 is ITypeParameter) && !(t1 is ITypeParameter))
 				return 1;
 
-			ParameterizedType p1 = t1 as ParameterizedType;
-			ParameterizedType p2 = t2 as ParameterizedType;
+			ParameterizedType? p1 = t1 as ParameterizedType;
+			ParameterizedType? p2 = t2 as ParameterizedType;
 			if (p1 != null && p2 != null && p1.TypeParameterCount == p2.TypeParameterCount)
 			{
 				int r = MoreSpecificFormalParameters(p1.TypeArguments, p2.TypeArguments);
 				if (r > 0)
 					return r;
 			}
-			TypeWithElementType tew1 = t1 as TypeWithElementType;
-			TypeWithElementType tew2 = t2 as TypeWithElementType;
+			TypeWithElementType? tew1 = t1 as TypeWithElementType;
+			TypeWithElementType? tew2 = t2 as TypeWithElementType;
 			if (tew1 != null && tew2 != null)
 			{
 				return MoreSpecificFormalParameter(tew1.ElementType, tew2.ElementType);
@@ -1041,7 +1041,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			if (bestCandidate == null)
 				return null;
-			IMethod method = bestCandidate.Member as IMethod;
+			IMethod? method = bestCandidate.Member as IMethod;
 			if (method != null && method.TypeParameters.Count > 0)
 			{
 				return ((IMethod)method.MemberDefinition).Specialize(GetSubstitution(bestCandidate));
@@ -1072,7 +1072,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <param name="returnTypeOverride">
 		/// If not null, use this instead of the ReturnType of the member as the type of the created resolve result.
 		/// </param>
-		public CSharpInvocationResolveResult CreateResolveResult(ResolveResult targetResolveResult, IList<ResolveResult> initializerStatements = null, IType returnTypeOverride = null)
+		public CSharpInvocationResolveResult CreateResolveResult(ResolveResult targetResolveResult, IList<ResolveResult>? initializerStatements = null, IType? returnTypeOverride = null)
 		{
 			IParameterizedMember member = GetBestCandidateWithSubstitutedTypeArguments();
 			if (member == null)

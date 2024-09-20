@@ -54,11 +54,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				next = child.NextSibling;
 				CombineQueries(child, fromOrLetIdentifiers);
 			}
-			QueryExpression query = node as QueryExpression;
+			QueryExpression? query = node as QueryExpression;
 			if (query != null)
 			{
 				QueryFromClause fromClause = (QueryFromClause)query.Clauses.First();
-				QueryExpression innerQuery = fromClause.Expression as QueryExpression;
+				QueryExpression? innerQuery = fromClause.Expression as QueryExpression;
 				if (innerQuery != null)
 				{
 					if (TryRemoveTransparentIdentifier(query, fromClause, innerQuery, fromOrLetIdentifiers))
@@ -107,7 +107,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (!CSharpDecompiler.IsTransparentIdentifier(fromClause.Identifier))
 				return false;
-			QuerySelectClause selectClause = innerQuery.Clauses.Last() as QuerySelectClause;
+			QuerySelectClause? selectClause = innerQuery.Clauses.Last() as QuerySelectClause;
 			Match match = selectTransparentIdentifierPattern.Match(selectClause);
 			if (!match.Success)
 				return false;
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			fromClause.Remove();
 			selectClause.Remove();
 			// Move clauses from innerQuery to query
-			QueryClause insertionPos = null;
+			QueryClause? insertionPos = null;
 			foreach (var clause in innerQuery.Clauses)
 			{
 				query.Clauses.InsertAfter(insertionPos, insertionPos = clause.Detach());
@@ -165,10 +165,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				RemoveTransparentIdentifierReferences(child, fromOrLetIdentifiers);
 			}
-			MemberReferenceExpression mre = node as MemberReferenceExpression;
+			MemberReferenceExpression? mre = node as MemberReferenceExpression;
 			if (mre != null)
 			{
-				IdentifierExpression ident = mre.Target as IdentifierExpression;
+				IdentifierExpression? ident = mre.Target as IdentifierExpression;
 				if (ident != null && CSharpDecompiler.IsTransparentIdentifier(ident.Identifier))
 				{
 					IdentifierExpression newIdent = new IdentifierExpression(mre.MemberName);

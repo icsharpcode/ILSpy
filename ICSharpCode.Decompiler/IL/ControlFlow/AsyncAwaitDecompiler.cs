@@ -482,7 +482,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Matches a (potentially virtual) instance method call.
 		/// </summary>
-		static bool MatchCall(ILInstruction inst, string name, out InstructionCollection<ILInstruction> args)
+		static bool MatchCall(ILInstruction inst, string name, out InstructionCollection<ILInstruction>? args)
 		{
 			if (inst is CallInstruction call && (call.OpCode == OpCode.Call || call.OpCode == OpCode.CallVirt)
 				&& call.Method.Name == name && !call.Method.IsStatic)
@@ -609,7 +609,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		}
 
 		static bool MatchEnumeratorCreationNewObj(ILInstruction inst, ILTransformContext context,
-			out int initialState, out ITypeDefinition stateMachineType)
+			out int initialState, out ITypeDefinition? stateMachineType)
 		{
 			initialState = default;
 			stateMachineType = default;
@@ -644,7 +644,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return false;
 		}
 
-		static void AnalyzeEnumeratorCtor(IMethod ctor, ILTransformContext context, out IField builderField, out IType builderType, out IField stateField)
+		static void AnalyzeEnumeratorCtor(IMethod ctor, ILTransformContext context, out IField? builderField, out IType builderType, out IField? stateField)
 		{
 			builderField = null;
 			stateField = null;
@@ -824,7 +824,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				pos++;
 			}
 			// [vb-only] stloc S_11(ldc.i4 -2)
-			ILVariable finalStateSlot = null;
+			ILVariable? finalStateSlot = null;
 			int? finalStateSlotValue = null;
 			if (block.Instructions[pos] is StLoc stlocFinalState && stlocFinalState.Value is LdcI4 ldcI4 &&
 				stlocFinalState.Variable.Kind == VariableKind.StackSlot)
@@ -869,7 +869,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return blockContainer.Blocks[setResultReturnBlockIndex];
 		}
 
-		private bool MatchDisposeCombinedTokens(BlockContainer blockContainer, ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst, bool[] blocksAnalyzed, out Block setResultAndExitBlock)
+		private bool MatchDisposeCombinedTokens(BlockContainer blockContainer, ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst, bool[] blocksAnalyzed, out Block? setResultAndExitBlock)
 		{
 			setResultAndExitBlock = null;
 			// 	...
@@ -1423,7 +1423,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		bool AnalyzeAwaitBlock(Block block, out ILVariable awaiter, out IField awaiterField, out int state, out int yieldOffset)
+		bool AnalyzeAwaitBlock(Block block, out ILVariable? awaiter, out IField? awaiterField, out int state, out int yieldOffset)
 		{
 			awaiter = null;
 			awaiterField = null;
@@ -1538,7 +1538,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return inst;
 		}
 
-		private bool AnalyzeYieldReturn(Block block, out ILInstruction yieldValue, out int newState)
+		private bool AnalyzeYieldReturn(Block block, out ILInstruction? yieldValue, out int newState)
 		{
 			yieldValue = default;
 			newState = default;
@@ -1701,7 +1701,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return inst;
 		}
 
-		bool CheckAwaitBlock(Block block, out Block resumeBlock, out IField stackField)
+		bool CheckAwaitBlock(Block block, out Block? resumeBlock, out IField? stackField)
 		{
 			// awaitBlock:
 			//   (pre-roslyn: save stack)
@@ -1819,7 +1819,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// stloc S_28(ldc.i4 -1)
 				// stloc cachedStateVar(ldloc S_28)
 				// stfld <>1__state(ldloc this, ldloc S_28)
-				ILVariable m1Var = null;
+				ILVariable? m1Var = null;
 				if (block.Instructions[pos] is StLoc stlocM1 && stlocM1.Value.MatchLdcI4(initialState) && stlocM1.Variable.Kind == VariableKind.StackSlot)
 				{
 					m1Var = stlocM1.Variable;

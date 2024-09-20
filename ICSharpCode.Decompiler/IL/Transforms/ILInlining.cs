@@ -170,7 +170,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public static bool InlineOneIfPossible(Block block, int pos, InliningOptions options, ILTransformContext context)
 		{
 			context.CancellationToken.ThrowIfCancellationRequested();
-			StLoc stloc = block.Instructions[pos] as StLoc;
+			StLoc? stloc = block.Instructions[pos] as StLoc;
 			if (stloc == null || stloc.Variable.Kind == VariableKind.PinnedLocal)
 				return false;
 			ILVariable v = stloc.Variable;
@@ -370,7 +370,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		internal static bool MethodRequiresCopyForReadonlyLValue(IMethod method, IType constrainedTo = null)
+		internal static bool MethodRequiresCopyForReadonlyLValue(IMethod method, IType? constrainedTo = null)
 		{
 			if (method == null)
 				return true;
@@ -387,7 +387,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return IsUsedAsThisPointerInCall(ldloca, out _, out _);
 		}
 
-		static bool IsUsedAsThisPointerInCall(LdLoca ldloca, out IMethod method, out IType constrainedType)
+		static bool IsUsedAsThisPointerInCall(LdLoca ldloca, out IMethod? method, out IType? constrainedType)
 		{
 			method = null;
 			constrainedType = null;

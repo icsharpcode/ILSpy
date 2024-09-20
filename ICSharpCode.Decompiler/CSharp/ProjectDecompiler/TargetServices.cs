@@ -66,8 +66,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					break;
 			}
 
-			string targetFrameworkIdentifier = null;
-			string targetFrameworkProfile = null;
+			string? targetFrameworkIdentifier = null;
+			string? targetFrameworkProfile = null;
 
 			string targetFramework = module.DetectTargetFrameworkId();
 			if (!string.IsNullOrEmpty(targetFramework))
@@ -245,7 +245,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					break;
 				}
 
-				MetadataFile resolvedReference;
+				MetadataFile? resolvedReference;
 				try
 				{
 					resolvedReference = assemblyResolver.Resolve(reference);

@@ -71,13 +71,13 @@ namespace ICSharpCode.Decompiler.Documentation
 				b.Append('#');
 			}
 			b.Append(member.Name.Replace('.', '#').Replace('<', '{').Replace('>', '}'));
-			IMethod method = member as IMethod;
+			IMethod? method = member as IMethod;
 			if (method != null && method.TypeParameters.Count > 0)
 			{
 				b.Append("``");
 				b.Append(method.TypeParameters.Count);
 			}
-			IParameterizedMember parameterizedMember = member as IParameterizedMember;
+			IParameterizedMember? parameterizedMember = member as IParameterizedMember;
 			if (parameterizedMember != null && parameterizedMember.Parameters.Count > 0)
 			{
 				b.Append('(');
@@ -180,7 +180,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			int tpc = type.TypeParameterCount - outerTypeParameterCount;
 			if (tpc > 0)
 			{
-				ParameterizedType pt = type as ParameterizedType;
+				ParameterizedType? pt = type as ParameterizedType;
 				if (pt != null)
 				{
 					b.Append('{');

@@ -247,7 +247,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Ensure the block will stay a basic block -- we don't want extended basic blocks prior to LoopDetection.
 			if (block.Instructions.Count > 1 && block.Instructions[block.Instructions.Count - 2].HasFlag(InstructionFlags.MayBranch))
 				return false;
-			Branch br = block.Instructions.Last() as Branch;
+			Branch? br = block.Instructions.Last() as Branch;
 			// Check whether we can combine the target block with this block
 			if (br == null || br.TargetBlock.Parent != container || br.TargetBlock.IncomingEdgeCount != 1)
 				return false;

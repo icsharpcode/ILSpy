@@ -162,7 +162,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///   br falseBlock
 		/// }
 		/// </summary>
-		bool MatchCatchWhenEntryPoint(ILVariable exceptionVar, BlockContainer container, Block entryPoint, out IType exceptionType, out ILInstruction exceptionSlot, out Block whenConditionBlock)
+		bool MatchCatchWhenEntryPoint(ILVariable exceptionVar, BlockContainer container, Block entryPoint, out IType? exceptionType, out ILInstruction? exceptionSlot, out Block? whenConditionBlock)
 		{
 			exceptionType = null;
 			exceptionSlot = null;
@@ -218,7 +218,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///   br exitBlock
 		/// }
 		/// </summary>
-		bool MatchFalseBlock(BlockContainer container, Block falseBlock, out ILVariable returnVar, out Block exitBlock)
+		bool MatchFalseBlock(BlockContainer container, Block falseBlock, out ILVariable? returnVar, out Block? exitBlock)
 		{
 			returnVar = null;
 			exitBlock = null;

@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override bool Equals(IType other)
 		{
-			ByReferenceType a = other as ByReferenceType;
+			ByReferenceType? a = other as ByReferenceType;
 			return a != null && elementType.Equals(a.elementType);
 		}
 
@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			ByReferenceTypeReference brt = other as ByReferenceTypeReference;
+			ByReferenceTypeReference? brt = other as ByReferenceTypeReference;
 			return brt != null && this.elementType == brt.elementType;
 		}
 	}

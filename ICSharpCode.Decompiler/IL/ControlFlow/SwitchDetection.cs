@@ -403,7 +403,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Determines if the analysed switch can be constructed without any gotos
 		/// </summary>
-		private bool SwitchUsesGoto(List<ControlFlowNode> flowNodes, List<ControlFlowNode> caseNodes, out Block breakBlock)
+		private bool SwitchUsesGoto(List<ControlFlowNode> flowNodes, List<ControlFlowNode> caseNodes, out Block? breakBlock)
 		{
 			// cases with predecessors that aren't part of the switch logic 
 			// must either require "goto case" statements, or consist of a single "break;"

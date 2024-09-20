@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			UsingStatement o = other as UsingStatement;
+			UsingStatement? o = other as UsingStatement;
 			return o != null && this.IsAsync == o.IsAsync && this.ResourceAcquisition.DoMatch(o.ResourceAcquisition, match) && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
 		}
 	}

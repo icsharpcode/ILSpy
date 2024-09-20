@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public override bool DoMatch(PatternMatching.INode other, PatternMatching.Match match)
 		{
-			IdentifierExpression ident = other as IdentifierExpression;
+			IdentifierExpression? ident = other as IdentifierExpression;
 			if (ident == null || ident.TypeArguments.Any())
 				return false;
 			AstNode referenced = (AstNode)match.Get(referencedGroupName).Last();

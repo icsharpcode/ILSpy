@@ -48,8 +48,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.attributes = EmptyList<IAttribute>.Instance;
 		}
 
-		public DefaultParameter(IType type, string name, IParameterizedMember owner = null, IReadOnlyList<IAttribute> attributes = null,
-								ReferenceKind referenceKind = ReferenceKind.None, bool isParams = false, bool isOptional = false, object defaultValue = null)
+		public DefaultParameter(IType type, string name, IParameterizedMember? owner = null, IReadOnlyList<IAttribute>? attributes = null,
+								ReferenceKind referenceKind = ReferenceKind.None, bool isParams = false, bool isOptional = false, object? defaultValue = null)
 		{
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));

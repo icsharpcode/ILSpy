@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (call.ResultType != StackType.Void || call.Arguments.Count == 0)
 					return false;
-				IProperty property = call.Method.AccessorOwner as IProperty;
+				IProperty? property = call.Method.AccessorOwner as IProperty;
 				if (property == null)
 					return false;
 				if (!call.Method.Equals(property.Setter))
@@ -264,7 +264,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		static bool MatchingGetterAndSetterCalls(CallInstruction getterCall, CallInstruction setterCall, out Action<ILTransformContext> finalizeMatch)
+		static bool MatchingGetterAndSetterCalls(CallInstruction getterCall, CallInstruction setterCall, out Action<ILTransformContext>? finalizeMatch)
 		{
 			finalizeMatch = null;
 			if (getterCall == null || setterCall == null || !IsSameMember(getterCall.Method.AccessorOwner, setterCall.Method.AccessorOwner))
@@ -677,8 +677,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 
 		/// Every IsCompoundStore() call should be followed by an IsMatchingCompoundLoad() call.
 		/// </remarks>
-		static bool IsCompoundStore(ILInstruction inst, out IType storeType,
-			out ILInstruction value, ICompilation compilation)
+		static bool IsCompoundStore(ILInstruction inst, out IType? storeType,
+			out ILInstruction? value, ICompilation compilation)
 		{
 			value = null;
 			storeType = null;
@@ -766,10 +766,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Instruction preceding the load.
 		/// </param>
 		static bool IsMatchingCompoundLoad(ILInstruction load, ILInstruction store,
-			out ILInstruction target, out CompoundTargetKind targetKind,
-			out Action<ILTransformContext> finalizeMatch,
-			ILVariable forbiddenVariable = null,
-			ILInstruction previousInstruction = null)
+			out ILInstruction? target, out CompoundTargetKind targetKind,
+			out Action<ILTransformContext>? finalizeMatch,
+			ILVariable? forbiddenVariable = null,
+			ILInstruction? previousInstruction = null)
 		{
 			target = null;
 			targetKind = 0;
@@ -870,7 +870,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
-			StLoc stloc;
+			StLoc? stloc;
 			var binary = UnwrapSmallIntegerConv(value, out var conv) as BinaryNumericInstruction;
 			if (binary != null && (binary.Right.MatchLdcI(1) || binary.Right.MatchLdcF4(1) || binary.Right.MatchLdcF8(1)))
 			{

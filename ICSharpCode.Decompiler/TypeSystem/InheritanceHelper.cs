@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			baseMember = baseMember.MemberDefinition;
 			bool includeInterfaces = baseMember.DeclaringTypeDefinition.Kind == TypeKind.Interface;
-			IMethod method = baseMember as IMethod;
+			IMethod? method = baseMember as IMethod;
 			if (method != null)
 			{
 				foreach (IMethod derivedMethod in derivedType.Methods)
@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					}
 				}
 			}
-			IProperty property = baseMember as IProperty;
+			IProperty? property = baseMember as IProperty;
 			if (property != null)
 			{
 				foreach (IProperty derivedProperty in derivedType.Properties)

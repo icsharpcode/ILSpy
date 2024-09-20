@@ -146,7 +146,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ComposedType o = other as ComposedType;
+			ComposedType? o = other as ComposedType;
 			return o != null
 				&& this.HasNullableSpecifier == o.HasNullableSpecifier
 				&& this.PointerRank == o.PointerRank
@@ -201,7 +201,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return this;
 		}
 
-		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)
+		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider? interningProvider = null)
 		{
 			if (interningProvider == null)
 				interningProvider = InterningProvider.Dummy;
@@ -289,7 +289,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ArraySpecifier o = other as ArraySpecifier;
+			ArraySpecifier? o = other as ArraySpecifier;
 			return o != null && this.Dimensions == o.Dimensions;
 		}
 

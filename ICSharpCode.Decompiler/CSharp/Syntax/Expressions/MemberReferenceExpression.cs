@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public MemberReferenceExpression(Expression target, string memberName, IEnumerable<AstType> arguments = null)
+		public MemberReferenceExpression(Expression target, string memberName, IEnumerable<AstType>? arguments = null)
 		{
 			AddChild(target, Roles.TargetExpression);
 			MemberName = memberName;
@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			MemberReferenceExpression o = other as MemberReferenceExpression;
+			MemberReferenceExpression? o = other as MemberReferenceExpression;
 			return o != null && this.Target.DoMatch(o.Target, match) && MatchString(this.MemberName, o.MemberName) && this.TypeArguments.DoMatch(o.TypeArguments, match);
 		}
 	}

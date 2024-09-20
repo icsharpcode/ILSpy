@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		public DefaultVariable(IType type, string name,
-							   bool isConst = false, object constantValue = null)
+							   bool isConst = false, object? constantValue = null)
 			: this(type, name)
 		{
 			this.isConst = isConst;

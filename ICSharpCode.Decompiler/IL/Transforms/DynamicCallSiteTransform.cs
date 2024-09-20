@@ -272,7 +272,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool ScanCallSiteInitBlock(Block callSiteInitBlock, IField callSiteCacheField, IType callSiteDelegateType, out CallSiteInfo callSiteInfo, out Block blockAfterInit)
+		bool ScanCallSiteInitBlock(Block callSiteInitBlock, IField callSiteCacheField, IType callSiteDelegateType, out CallSiteInfo callSiteInfo, out Block? blockAfterInit)
 		{
 			callSiteInfo = default(CallSiteInfo);
 			blockAfterInit = null;
@@ -560,7 +560,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchCallSiteCacheNullCheck(ILInstruction condition, out IField callSiteCacheField, out IType callSiteDelegate, out bool invertBranches)
+		bool MatchCallSiteCacheNullCheck(ILInstruction condition, out IField? callSiteCacheField, out IType? callSiteDelegate, out bool invertBranches)
 		{
 			callSiteCacheField = null;
 			callSiteDelegate = null;

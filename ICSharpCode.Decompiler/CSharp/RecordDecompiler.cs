@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 
-			bool IsAutoProperty(IProperty p, out IField field)
+			bool IsAutoProperty(IProperty p, out IField? field)
 			{
 				field = null;
 				if (p.IsStatic)
@@ -108,7 +108,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return field.Name == $"<{p.Name}>k__BackingField";
 			}
 
-			bool IsAutoGetter(IMethod method, out IField field)
+			bool IsAutoGetter(IMethod method, out IField? field)
 			{
 				field = null;
 				var body = DecompileBody(method);
@@ -129,7 +129,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 
-			bool IsAutoSetter(IMethod method, out IField field)
+			bool IsAutoSetter(IMethod method, out IField? field)
 			{
 				field = null;
 				Debug.Assert(!method.IsStatic);
@@ -672,7 +672,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return true;
 			}
 
-			bool MatchStringBuilderAppendConstant(out string text)
+			bool MatchStringBuilderAppendConstant(out string? text)
 			{
 				text = null;
 				while (MatchStringBuilderAppend(body.Instructions[pos], builder, out var val) && val.MatchLdStr(out string valText))
@@ -684,7 +684,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		private bool MatchStringBuilderAppend(ILInstruction inst, ILVariable sb, out ILInstruction val)
+		private bool MatchStringBuilderAppend(ILInstruction inst, ILVariable sb, out ILInstruction? val)
 		{
 			val = null;
 			if (!(inst is CallVirt { Method: { Name: "Append", DeclaringType: { Namespace: "System.Text", Name: "StringBuilder" } } } call))
@@ -912,7 +912,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		private bool MatchGetEqualityContract(ILInstruction inst, out ILInstruction target)
+		private bool MatchGetEqualityContract(ILInstruction inst, out ILInstruction? target)
 		{
 			target = null;
 			if (!(inst is CallInstruction { Method: { Name: "get_EqualityContract" } } call))
@@ -1099,7 +1099,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return returnInst != null && returnInst.MatchReturn(out var retVal) && retVal.MatchNop();
 		}
 
-		bool MatchMemberAccess(ILInstruction inst, out ILInstruction target, out IMember member)
+		bool MatchMemberAccess(ILInstruction inst, out ILInstruction? target, out IMember? member)
 		{
 			target = null;
 			member = null;

@@ -199,11 +199,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					if (!lookupGroupDict.TryGetValue(entityGroup.Key, out lookupGroups))
 						lookupGroupDict.Add(entityGroup.Key, lookupGroups = new List<LookupGroup>());
 
-					List<IType> newNestedTypes = null;
-					List<IParameterizedMember> newMethods = null;
-					IMember newNonMethod = null;
+					List<IType>? newNestedTypes = null;
+					List<IParameterizedMember>? newMethods = null;
+					IMember? newNonMethod = null;
 
-					IEnumerable<IType> typeBaseTypes = null;
+					IEnumerable<IType>? typeBaseTypes = null;
 
 					if (!targetIsTypeParameter)
 					{
@@ -310,8 +310,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				foreach (IType type in declaringType.GetNonInterfaceBaseTypes())
 				{
-					List<IType> newNestedTypes = null;
-					IEnumerable<IType> typeBaseTypes = null;
+					List<IType>? newNestedTypes = null;
+					IEnumerable<IType>? typeBaseTypes = null;
 
 					IEnumerable<IType> nestedTypes;
 					if (parameterizeResultType)
@@ -389,11 +389,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			foreach (IType type in targetResolveResult.Type.GetNonInterfaceBaseTypes())
 			{
 
-				List<IType> newNestedTypes = null;
-				List<IParameterizedMember> newMethods = null;
-				IMember newNonMethod = null;
+				List<IType>? newNestedTypes = null;
+				List<IParameterizedMember>? newMethods = null;
+				IMember? newNonMethod = null;
 
-				IEnumerable<IType> typeBaseTypes = null;
+				IEnumerable<IType>? typeBaseTypes = null;
 
 				if (!isInvocation && !targetIsTypeParameter)
 				{
@@ -452,10 +452,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			List<LookupGroup> lookupGroups = new List<LookupGroup>();
 			foreach (IType type in targetType.GetNonInterfaceBaseTypes())
 			{
-				List<IParameterizedMember> newMethods = null;
-				IMember newNonMethod = null;
+				List<IParameterizedMember>? newMethods = null;
+				IMember? newNonMethod = null;
 
-				IEnumerable<IType> typeBaseTypes = null;
+				IEnumerable<IType>? typeBaseTypes = null;
 
 				var members = type.GetProperties(filter, GetMemberOptions.IgnoreInheritedMembers);
 				AddMembers(type, members, allowProtectedAccess, lookupGroups, true, ref typeBaseTypes, ref newMethods, ref newNonMethod);
@@ -551,7 +551,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (!IsAccessible(member, allowProtectedAccess))
 					continue;
 
-				IParameterizedMember method;
+				IParameterizedMember? method;
 				if (treatAllParameterizedMembersAsMethods)
 					method = member as IParameterizedMember;
 				else
@@ -753,7 +753,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				if (isInEnumMemberInitializer)
 				{
-					IField field = resultGroup.NonMethod as IField;
+					IField? field = resultGroup.NonMethod as IField;
 					if (field != null && field.DeclaringTypeDefinition != null && field.DeclaringTypeDefinition.Kind == TypeKind.Enum)
 					{
 						return new MemberResolveResult(

@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets whether the specified type is a Task-like type.
 		/// </summary>
-		public static bool IsCustomTask(IType type, out IType builderType)
+		public static bool IsCustomTask(IType type, out IType? builderType)
 		{
 			builderType = null;
 			ITypeDefinition def = type.GetDefinition();

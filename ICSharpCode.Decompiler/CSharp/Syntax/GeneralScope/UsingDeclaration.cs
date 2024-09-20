@@ -117,7 +117,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			UsingDeclaration o = other as UsingDeclaration;
+			UsingDeclaration? o = other as UsingDeclaration;
 			return o != null && this.Import.DoMatch(o.Import, match);
 		}
 	}

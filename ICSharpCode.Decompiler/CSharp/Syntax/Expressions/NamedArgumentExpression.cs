@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			NamedArgumentExpression o = other as NamedArgumentExpression;
+			NamedArgumentExpression? o = other as NamedArgumentExpression;
 			return o != null && MatchString(this.Name, o.Name) && this.Expression.DoMatch(o.Expression, match);
 		}
 	}

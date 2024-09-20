@@ -133,7 +133,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public bool IsVar()
 		{
-			SimpleType st = this as SimpleType;
+			SimpleType? st = this as SimpleType;
 			return st != null && st.Identifier == "var" && st.TypeArguments.Count == 0;
 		}
 
@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// For resolving simple names, the current namespace and usings from the CurrentUsingScope
 		/// (on CSharpTypeResolveContext only) is used.
 		/// </remarks>
-		public ITypeReference ToTypeReference(InterningProvider interningProvider = null)
+		public ITypeReference ToTypeReference(InterningProvider? interningProvider = null)
 		{
 			return ToTypeReference(GetNameLookupMode(), interningProvider);
 		}
@@ -163,7 +163,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// For resolving simple names, the current namespace and usings from the CurrentUsingScope
 		/// (on CSharpTypeResolveContext only) is used.
 		/// </remarks>
-		public abstract ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null);
+		public abstract ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider? interningProvider = null);
 
 		/// <summary>
 		/// Gets the name lookup mode from the context (looking at the ancestors of this <see cref="AstType"/>).

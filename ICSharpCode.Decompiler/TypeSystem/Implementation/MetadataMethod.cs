@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var genericContext = new GenericContext(DeclaringType.TypeParameters, this.TypeParameters);
 			IType returnType;
 			IParameter[] parameters;
-			ModifiedType mod;
+			ModifiedType? mod;
 			try
 			{
 				var nullableContext = methodDef.GetCustomAttributes().GetNullableContext(module.metadata) ?? DeclaringTypeDefinition.NullableContext;

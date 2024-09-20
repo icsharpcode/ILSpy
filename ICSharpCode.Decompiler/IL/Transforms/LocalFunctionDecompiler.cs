@@ -758,7 +758,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return IsLocalFunctionMethod(method.ParentModule.MetadataFile, (MethodDefinitionHandle)method.MetadataToken, context);
 		}
 
-		public static bool IsLocalFunctionMethod(MetadataFile module, MethodDefinitionHandle methodHandle, ILTransformContext context = null)
+		public static bool IsLocalFunctionMethod(MetadataFile module, MethodDefinitionHandle methodHandle, ILTransformContext? context = null)
 		{
 			if (context != null && context.PEFile != module)
 				return false;
@@ -797,7 +797,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		public static bool IsLocalFunctionDisplayClass(MetadataFile module, TypeDefinitionHandle typeHandle, ILTransformContext context = null)
+		public static bool IsLocalFunctionDisplayClass(MetadataFile module, TypeDefinitionHandle typeHandle, ILTransformContext? context = null)
 		{
 			if (context != null && context.PEFile != module)
 				return false;
@@ -831,7 +831,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		static readonly Regex functionNameRegex = new Regex(@"^<(.*)>g__([^\|]*)\|{0,1}\d+(_\d+)?$", RegexOptions.Compiled);
 
-		internal static bool ParseLocalFunctionName(string name, out string callerName, out string functionName)
+		internal static bool ParseLocalFunctionName(string name, out string? callerName, out string? functionName)
 		{
 			callerName = null;
 			functionName = null;

@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ArrayInitializerExpression o = other as ArrayInitializerExpression;
+			ArrayInitializerExpression? o = other as ArrayInitializerExpression;
 			return o != null && this.Elements.DoMatch(o.Elements, match);
 		}
 

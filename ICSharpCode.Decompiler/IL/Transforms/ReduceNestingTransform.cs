@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <param name="block"></param>
 		/// <param name="continueTarget">Marks the target block of continue statements.</param>
 		/// <param name="nextInstruction">The instruction following the end point of the block. Can only be null if the end point is unreachable.</param>
-		private void Visit(Block block, Block continueTarget, ILInstruction nextInstruction = null)
+		private void Visit(Block block, Block continueTarget, ILInstruction? nextInstruction = null)
 		{
 			Debug.Assert(block.HasFlag(InstructionFlags.EndPointUnreachable) || nextInstruction != null);
 

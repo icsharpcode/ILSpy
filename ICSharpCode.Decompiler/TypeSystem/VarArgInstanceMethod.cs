@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override bool Equals(object obj)
 		{
-			VarArgInstanceMethod other = obj as VarArgInstanceMethod;
+			VarArgInstanceMethod? other = obj as VarArgInstanceMethod;
 			return other != null && baseMethod.Equals(other.baseMethod);
 		}
 
@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public bool Equals(IMember obj, TypeVisitor typeNormalization)
 		{
-			VarArgInstanceMethod other = obj as VarArgInstanceMethod;
+			VarArgInstanceMethod? other = obj as VarArgInstanceMethod;
 			return other != null && baseMethod.Equals(other.baseMethod, typeNormalization);
 		}
 

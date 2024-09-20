@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// }
 		/// </summary>
 		static bool MatchIsEventAssignmentIfInstruction(ILInstruction ifInst, DynamicIsEventInstruction isEvent, ILVariable flagVar, ILVariable getMemberVar,
-			out DynamicSetMemberInstruction setMemberInst, out ILInstruction getMemberVarUse, out ILInstruction isEventConditionUse)
+			out DynamicSetMemberInstruction? setMemberInst, out ILInstruction? getMemberVarUse, out ILInstruction? isEventConditionUse)
 		{
 			setMemberInst = null;
 			getMemberVarUse = null;
@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 	stloc V_2(dynamic.getmember B(target))
 		/// }
 		/// </summary>
-		static bool MatchLhsCacheIfInstruction(ILInstruction ifInst, ILVariable flagVar, out StLoc cacheStore)
+		static bool MatchLhsCacheIfInstruction(ILInstruction ifInst, ILVariable flagVar, out StLoc? cacheStore)
 		{
 			cacheStore = null;
 			if (!ifInst.MatchIfInstruction(out var condition, out var trueInst))

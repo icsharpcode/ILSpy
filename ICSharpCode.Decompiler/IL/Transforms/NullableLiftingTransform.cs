@@ -371,7 +371,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				compRight.MatchLdNull();
 		}
 
-		private bool MatchThreeValuedLogicConditionPattern(ILInstruction condition, out ILVariable nullable1, out ILVariable nullable2)
+		private bool MatchThreeValuedLogicConditionPattern(ILInstruction condition, out ILVariable? nullable1, out ILVariable? nullable2)
 		{
 			// Try to match: nullable1.GetValueOrDefault() || (!nullable2.GetValueOrDefault() && !nullable1.HasValue)
 			nullable1 = null;
@@ -1018,7 +1018,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call get_HasValue(arg)'
 		/// </summary>
-		internal static bool MatchHasValueCall(ILInstruction inst, out ILInstruction arg)
+		internal static bool MatchHasValueCall(ILInstruction inst, out ILInstruction? arg)
 		{
 			arg = null;
 			if (!(inst is Call call))
@@ -1036,7 +1036,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call get_HasValue(ldloca v)'
 		/// </summary>
-		internal static bool MatchHasValueCall(ILInstruction inst, out ILVariable v)
+		internal static bool MatchHasValueCall(ILInstruction inst, out ILVariable? v)
 		{
 			if (MatchHasValueCall(inst, out ILInstruction arg))
 			{
@@ -1065,7 +1065,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'newobj Nullable{underlyingType}.ctor(arg)'
 		/// </summary>
-		internal static bool MatchNullableCtor(ILInstruction inst, out IType underlyingType, out ILInstruction arg)
+		internal static bool MatchNullableCtor(ILInstruction inst, out IType? underlyingType, out ILInstruction? arg)
 		{
 			underlyingType = null;
 			arg = null;
@@ -1083,7 +1083,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call Nullable{T}.GetValueOrDefault(arg)'
 		/// </summary>
-		internal static bool MatchGetValueOrDefault(ILInstruction inst, out ILInstruction arg)
+		internal static bool MatchGetValueOrDefault(ILInstruction inst, out ILInstruction? arg)
 		{
 			arg = null;
 			if (!(inst is Call call))
@@ -1099,7 +1099,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call nullableValue.GetValueOrDefault(fallback)'
 		/// </summary>
-		internal static bool MatchGetValueOrDefault(ILInstruction inst, out ILInstruction nullableValue, out ILInstruction fallback)
+		internal static bool MatchGetValueOrDefault(ILInstruction inst, out ILInstruction? nullableValue, out ILInstruction? fallback)
 		{
 			nullableValue = null;
 			fallback = null;
@@ -1117,7 +1117,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call Nullable{T}.GetValueOrDefault(ldloca v)'
 		/// </summary>
-		internal static bool MatchGetValueOrDefault(ILInstruction inst, out ILVariable v)
+		internal static bool MatchGetValueOrDefault(ILInstruction inst, out ILVariable? v)
 		{
 			v = null;
 			return MatchGetValueOrDefault(inst, out ILInstruction arg)
@@ -1132,7 +1132,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return MatchGetValueOrDefault(inst, out ILVariable v2) && v == v2;
 		}
 
-		static bool MatchNull(ILInstruction inst, out IType underlyingType)
+		static bool MatchNull(ILInstruction inst, out IType? underlyingType)
 		{
 			underlyingType = null;
 			if (inst.MatchDefaultValue(out IType type))

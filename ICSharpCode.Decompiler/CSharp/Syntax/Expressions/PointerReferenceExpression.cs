@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			PointerReferenceExpression o = other as PointerReferenceExpression;
+			PointerReferenceExpression? o = other as PointerReferenceExpression;
 			return o != null && MatchString(this.MemberName, o.MemberName) && this.TypeArguments.DoMatch(o.TypeArguments, match);
 		}
 	}

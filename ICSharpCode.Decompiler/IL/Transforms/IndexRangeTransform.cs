@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!context.Settings.Ranges)
 				return;
 			int startPos = pos;
-			ILVariable containerVar = null;
+			ILVariable? containerVar = null;
 			// The container length access may be a separate instruction, or it may be inline with the variable's use
 			if (MatchContainerLengthStore(block.Instructions[pos], out ILVariable containerLengthVar, ref containerVar))
 			{
@@ -410,7 +410,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				Debug.Assert(containerLengthVar.IsSingleDefinition);
 				Debug.Assert(containerLengthVar.LoadCount == 1 || containerLengthVar.LoadCount == 2);
-				NewObj rangeCtorCall = null;
+				NewObj? rangeCtorCall = null;
 				foreach (var inst in containerLengthVar.LoadInstructions[0].Ancestors)
 				{
 					if (inst is NewObj newobj && IndexMethods.IsRangeCtor(newobj.Method))
@@ -465,7 +465,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		private bool MatchIndexImplicitConv(ILInstruction inst, out ILInstruction offsetInst)
+		private bool MatchIndexImplicitConv(ILInstruction inst, out ILInstruction? offsetInst)
 		{
 			offsetInst = null;
 			if (!(inst is CallInstruction call))
@@ -745,7 +745,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Matches an instruction computing a slice length:
 		///    binary.sub.i4(call GetOffset(endIndexLoad, ldloc length), ldloc startOffset))
 		/// </summary>
-		static bool MatchSliceLength(ILInstruction inst, out IndexKind endIndexKind, out ILInstruction endIndexLoad, ILVariable containerLengthVar, ref ILVariable containerVar, ILVariable startOffsetVar)
+		static bool MatchSliceLength(ILInstruction inst, out IndexKind endIndexKind, out ILInstruction? endIndexLoad, ILVariable containerLengthVar, ref ILVariable containerVar, ILVariable startOffsetVar)
 		{
 			endIndexKind = default;
 			endIndexLoad = default;

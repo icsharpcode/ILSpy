@@ -371,7 +371,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		string GenerateNameForVariable(ILVariable variable)
 		{
-			string proposedName = null;
+			string? proposedName = null;
 			if (variable.Type.IsKnownType(KnownTypeCode.Int32))
 			{
 				// test whether the variable might be a loop counter
@@ -701,7 +701,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		internal static string GenerateForeachVariableName(ILFunction function, ILInstruction valueContext,
-			ILVariable existingVariable = null, bool mustResolveConflicts = false)
+			ILVariable? existingVariable = null, bool mustResolveConflicts = false)
 		{
 			if (function == null)
 				throw new ArgumentNullException(nameof(function));
@@ -760,7 +760,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		internal static string GenerateVariableName(ILFunction function, IType type,
-			ILInstruction valueContext = null, ILVariable existingVariable = null,
+			ILInstruction? valueContext = null, ILVariable? existingVariable = null,
 			bool mustResolveConflicts = false)
 		{
 			if (function == null)

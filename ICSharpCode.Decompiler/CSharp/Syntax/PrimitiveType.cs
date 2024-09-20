@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			PrimitiveType o = other as PrimitiveType;
+			PrimitiveType? o = other as PrimitiveType;
 			return o != null && MatchString(this.Keyword, o.Keyword);
 		}
 
@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return Keyword;
 		}
 
-		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)
+		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider? interningProvider = null)
 		{
 			KnownTypeCode typeCode = GetTypeCodeForPrimitiveType(this.Keyword);
 			if (typeCode == KnownTypeCode.None)

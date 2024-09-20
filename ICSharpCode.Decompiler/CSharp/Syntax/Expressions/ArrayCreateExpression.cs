@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ArrayCreateExpression o = other as ArrayCreateExpression;
+			ArrayCreateExpression? o = other as ArrayCreateExpression;
 			return o != null && this.Type.DoMatch(o.Type, match)
 				&& this.Arguments.DoMatch(o.Arguments, match)
 				&& this.AdditionalArraySpecifiers.DoMatch(o.AdditionalArraySpecifiers, match)

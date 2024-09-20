@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool CachedDelegateInitializationWithField(IfInstruction inst)
 		{
 
-			Block trueInst = inst.TrueInst as Block;
+			Block? trueInst = inst.TrueInst as Block;
 			if (trueInst == null || trueInst.Instructions.Count != 1 || !inst.FalseInst.MatchNop())
 				return false;
 			var storeInst = trueInst.Instructions[0];
@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool CachedDelegateInitializationWithLocal(IfInstruction inst)
 		{
-			Block trueInst = inst.TrueInst as Block;
+			Block? trueInst = inst.TrueInst as Block;
 			if (trueInst == null || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
 				return false;
 			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdLoc(out ILVariable v) || !right.MatchLdNull())
@@ -154,7 +154,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool CachedDelegateInitializationRoslynInStaticWithLocal(IfInstruction inst)
 		{
-			Block trueInst = inst.TrueInst as Block;
+			Block? trueInst = inst.TrueInst as Block;
 			if (trueInst == null || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
 				return false;
 			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdLoc(out ILVariable s) || !right.MatchLdNull())
@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool CachedDelegateInitializationRoslynWithLocal(IfInstruction inst)
 		{
-			Block trueInst = inst.TrueInst as Block;
+			Block? trueInst = inst.TrueInst as Block;
 			if (trueInst == null || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
 				return false;
 			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdLoc(out ILVariable s) || !right.MatchLdNull())

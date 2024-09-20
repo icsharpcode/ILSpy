@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			CheckedStatement o = other as CheckedStatement;
+			CheckedStatement? o = other as CheckedStatement;
 			return o != null && this.Body.DoMatch(o.Body, match);
 		}
 	}

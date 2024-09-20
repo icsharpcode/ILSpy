@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			base.VisitNewObj(inst);
 		}
 
-		bool TransformDecimalCtorToConstant(NewObj inst, out LdcDecimal result)
+		bool TransformDecimalCtorToConstant(NewObj inst, out LdcDecimal? result)
 		{
 			IType t = inst.Method.DeclaringType;
 			result = null;

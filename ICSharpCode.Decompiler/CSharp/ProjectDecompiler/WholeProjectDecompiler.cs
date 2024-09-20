@@ -636,7 +636,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			if (pos > 0)
 				text = text.Substring(0, pos);
 			text = text.Trim();
-			string extension = null;
+			string? extension = null;
 			int currentSegmentLength = 0;
 			if (treatAsFileName)
 			{
@@ -781,9 +781,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 	public record struct ProjectItemInfo(string ItemType, string FileName)
 	{
-		public List<PartialTypeInfo> PartialTypes { get; set; } = null;
+		public List<PartialTypeInfo>? PartialTypes { get; set; } = null;
 
-		public Dictionary<string, string> AdditionalProperties { get; set; } = null;
+		public Dictionary<string, string>? AdditionalProperties { get; set; } = null;
 
 		public ProjectItemInfo With(string name, string value)
 		{

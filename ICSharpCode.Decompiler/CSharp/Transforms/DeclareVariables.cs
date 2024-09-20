@@ -284,7 +284,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// </remarks>
 		void FindInsertionPoints(AstNode node, int nodeLevel)
 		{
-			BlockContainer scope = node.Annotation<BlockContainer>();
+			BlockContainer? scope = node.Annotation<BlockContainer>();
 			if (scope != null && IsRelevantScope(scope))
 			{
 				// track loops and function bodies as scopes, for comparison with CaptureScope.
@@ -657,7 +657,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				else
 				{
 					// Insert a separate declaration statement.
-					Expression initializer = null;
+					Expression? initializer = null;
 					AstType type = context.TypeSystemAstBuilder.ConvertType(v.Type);
 					if (v.DefaultInitialization == VariableInitKind.NeedsDefaultValue)
 					{

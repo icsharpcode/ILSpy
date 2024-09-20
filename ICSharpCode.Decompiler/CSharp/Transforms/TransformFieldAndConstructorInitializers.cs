@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public override void VisitConstructorDeclaration(ConstructorDeclaration constructorDeclaration)
 		{
 			var currentCtor = (IMethod)constructorDeclaration.GetSymbol();
-			ConstructorInitializer ci = null;
+			ConstructorInitializer? ci = null;
 			if (constructorDeclaration.Body.Statements.FirstOrDefault() is ExpressionStatement stmt)
 			{
 				switch (stmt.Expression)
@@ -330,7 +330,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (staticCtor != null)
 			{
 				bool ctorIsUnsafe = staticCtor.HasModifier(Modifiers.Unsafe);
-				IMethod ctorMethod = staticCtor.GetSymbol() as IMethod;
+				IMethod? ctorMethod = staticCtor.GetSymbol() as IMethod;
 				if (!ctorMethod.MetadataToken.IsNil)
 				{
 					var metadata = context.TypeSystem.MainModule.MetadataFile.Metadata;
@@ -340,10 +340,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					int pos = 0;
 					while (pos < staticCtor.Body.Statements.Count)
 					{
-						ExpressionStatement es = staticCtor.Body.Statements.ElementAtOrDefault(pos) as ExpressionStatement;
+						ExpressionStatement? es = staticCtor.Body.Statements.ElementAtOrDefault(pos) as ExpressionStatement;
 						if (es == null)
 							break;
-						AssignmentExpression assignment = es.Expression as AssignmentExpression;
+						AssignmentExpression? assignment = es.Expression as AssignmentExpression;
 						if (assignment == null || assignment.Operator != AssignmentOperatorType.Assign)
 							break;
 						IMember fieldOrProperty = (assignment.Left.GetSymbol() as IMember)?.MemberDefinition;

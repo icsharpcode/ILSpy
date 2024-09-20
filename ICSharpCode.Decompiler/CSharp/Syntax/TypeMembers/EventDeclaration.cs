@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			EventDeclaration o = other as EventDeclaration;
+			EventDeclaration? o = other as EventDeclaration;
 			return o != null && this.MatchAttributesAndModifiers(o, match)
 				&& this.ReturnType.DoMatch(o.ReturnType, match) && this.Variables.DoMatch(o.Variables, match);
 		}
@@ -141,7 +141,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			CustomEventDeclaration o = other as CustomEventDeclaration;
+			CustomEventDeclaration? o = other as CustomEventDeclaration;
 			return o != null && MatchString(this.Name, o.Name)
 				&& this.MatchAttributesAndModifiers(o, match) && this.ReturnType.DoMatch(o.ReturnType, match)
 				&& this.PrivateImplementationType.DoMatch(o.PrivateImplementationType, match)

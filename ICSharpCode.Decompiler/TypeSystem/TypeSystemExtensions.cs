@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets whether this type definition is derived from the base type definition.
 		/// </summary>
-		public static bool IsDerivedFrom(this ITypeDefinition type, ITypeDefinition baseType)
+		public static bool IsDerivedFrom(this ITypeDefinition type, ITypeDefinition? baseType)
 		{
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
@@ -234,7 +234,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </remarks>
 		public static bool IsUnmanagedType(this IType type, bool allowGenerics)
 		{
-			HashSet<IType> types = null;
+			HashSet<IType>? types = null;
 			return IsUnmanagedTypeInternal(type);
 
 			bool IsUnmanagedTypeInternal(IType type)
@@ -660,7 +660,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					KnownTypeCode typeCode = baseTypeDef.KnownTypeCode;
 					if (typeCode == KnownTypeCode.IEnumerableOfT || (allowIEnumerator && typeCode == KnownTypeCode.IEnumeratorOfT))
 					{
-						ParameterizedType pt = baseType as ParameterizedType;
+						ParameterizedType? pt = baseType as ParameterizedType;
 						if (pt != null)
 						{
 							isGeneric = true;

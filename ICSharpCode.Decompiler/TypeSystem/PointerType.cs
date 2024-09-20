@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override bool Equals(IType other)
 		{
-			PointerType a = other as PointerType;
+			PointerType? a = other as PointerType;
 			return a != null && elementType.Equals(a.elementType);
 		}
 
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			PointerTypeReference o = other as PointerTypeReference;
+			PointerTypeReference? o = other as PointerTypeReference;
 			return o != null && this.elementType == o.elementType;
 		}
 	}

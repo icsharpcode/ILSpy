@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		public ResolvedUsingScope Resolve(ICompilation compilation)
 		{
 			CacheManager cache = compilation.CacheManager;
-			ResolvedUsingScope resolved = cache.GetShared(this) as ResolvedUsingScope;
+			ResolvedUsingScope? resolved = cache.GetShared(this) as ResolvedUsingScope;
 			if (resolved == null)
 			{
 				var csContext = new CSharpTypeResolveContext(compilation.MainModule, parent != null ? parent.Resolve(compilation) : null);

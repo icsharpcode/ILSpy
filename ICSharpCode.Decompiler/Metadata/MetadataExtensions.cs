@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				$"PublicKeyToken={publicKey}";
 		}
 
-		public static bool TryGetFullAssemblyName(this MetadataReader reader, out string assemblyName)
+		public static bool TryGetFullAssemblyName(this MetadataReader reader, out string? assemblyName)
 		{
 			try
 			{
@@ -124,7 +124,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return builder.ToString();
 		}
 
-		public static bool TryGetFullAssemblyName(this SRM.AssemblyReference reference, MetadataReader reader, out string assemblyName)
+		public static bool TryGetFullAssemblyName(this SRM.AssemblyReference reference, MetadataReader reader, out string? assemblyName)
 		{
 			try
 			{
