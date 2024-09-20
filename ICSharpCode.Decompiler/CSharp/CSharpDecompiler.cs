@@ -1799,7 +1799,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal static void AddAnnotationsToDeclaration(IMethod method, EntityDeclaration entityDecl, ILFunction function)
 		{
 			int i = 0;
-			var parameters = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
+			//if the variable is a parameter is a parameter then index "should not" be null, would indicate an deeper under lying problem if it is so we assert not null (!)
+			var parameters = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index!.Value);
 			foreach (var parameter in entityDecl.GetChildrenByRole(Roles.Parameter))
 			{
 				if (parameters.TryGetValue(i, out var v))

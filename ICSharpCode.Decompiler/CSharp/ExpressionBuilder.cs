@@ -2544,7 +2544,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		IEnumerable<ParameterDeclaration> MakeParameters(IReadOnlyList<IParameter> parameters, ILFunction function)
 		{
-			var variables = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
+			//if the variable is a parameter is a parameter then index "should not" be null, would indicate an deeper under lying problem if it is so we assert not null (!)
+			var variables = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index!.Value);
 			int i = 0;
 			foreach (var parameter in parameters)
 			{
