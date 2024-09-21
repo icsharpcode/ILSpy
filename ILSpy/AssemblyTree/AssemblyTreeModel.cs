@@ -502,36 +502,26 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 		}
 
-		internal void SelectNodes(IEnumerable<SharpTreeNode> nodes, bool ignoreCompilationRequests = false)
+		internal void SelectNodes(IEnumerable<SharpTreeNode> nodes)
 		{
-			this.ignoreDecompilationRequests = ignoreCompilationRequests;
+			// Ensure nodes exist
+			var nodesList = nodes.Select(n => FindNodeByPath(GetPathForNode(n), true))
+				.Where(n => n != null)
+				.ToArray();
 
-			try
+			if (!nodesList.Any() || nodesList.Any(n => n.AncestorsAndSelf().Any(a => a.IsHidden)))
 			{
-				// Ensure nodes exist
-				var nodesList = nodes.Select(n => FindNodeByPath(GetPathForNode(n), true))
-					.Where(n => n != null)
-					.ToArray();
-
-				if (!nodesList.Any() || nodesList.Any(n => n.AncestorsAndSelf().Any(a => a.IsHidden)))
-				{
-					return;
-				}
-
-				if (SelectedItems.SequenceEqual(nodesList))
-				{
-					Dispatcher.BeginInvoke(RefreshDecompiledView);
-					return;
-				}
-
-				SelectedItems.Clear();
-				SelectedItems.AddRange(nodesList);
-			}
-			finally
-			{
-				this.ignoreDecompilationRequests = false;
+				return;
 			}
 
+			if (SelectedItems.SequenceEqual(nodesList))
+			{
+				Dispatcher.BeginInvoke(RefreshDecompiledView);
+				return;
+			}
+
+			SelectedItems.Clear();
+			SelectedItems.AddRange(nodesList);
 		}
 
 		/// <summary>
@@ -700,15 +690,18 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		void TreeView_SelectionChanged()
 		{
-			var delayDecompilationRequestDueToContextMenu = Mouse.RightButton == MouseButtonState.Pressed;
+			if (SelectedItems.Count > 0)
+			{
+				var delayDecompilationRequestDueToContextMenu = Mouse.RightButton == MouseButtonState.Pressed;
 
-			if (!delayDecompilationRequestDueToContextMenu)
-			{
-				DecompileSelectedNodes();
-			}
-			else
-			{
-				ContextMenuProvider.ContextMenuClosed += ContextMenuClosed;
+				if (!delayDecompilationRequestDueToContextMenu)
+				{
+					DecompileSelectedNodes();
+				}
+				else
+				{
+					ContextMenuProvider.ContextMenuClosed += ContextMenuClosed;
+				}
 			}
 
 			MessageBus.Send(this, new AssemblyTreeSelectionChangedEventArgs());
@@ -728,13 +721,8 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 		}
 
-		private bool ignoreDecompilationRequests;
-
 		public void DecompileSelectedNodes(DecompilerTextViewState newState = null, bool recordHistory = true)
 		{
-			if (ignoreDecompilationRequests)
-				return;
-
 			var activeTabPage = DockWorkspace.Instance.ActiveTabPage;
 
 			if (recordHistory)
@@ -790,7 +778,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 			DockWorkspace.Instance.ActiveTabPage = newState.TabPage;
 
-			SelectNodes(newState.TreeNodes, ignoreCompilationRequests: true);
+			SelectNodes(newState.TreeNodes);
 			DecompileSelectedNodes(newState.ViewState as DecompilerTextViewState, false);
 		}
 
@@ -845,7 +833,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				if (currentState != null)
 					history.UpdateCurrent(new NavigationState(tabPage, currentState));
 
-				UnselectAll(ignoreCompilationRequests: true);
+				UnselectAll();
 
 				history.Record(new NavigationState(tabPage, new ViewState { ViewedUri = e.Uri }));
 			}
@@ -861,11 +849,9 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 		}
 
-		public void UnselectAll(bool ignoreCompilationRequests = false)
+		private void UnselectAll()
 		{
-			this.ignoreDecompilationRequests = ignoreCompilationRequests;
 			SelectedItems.Clear();
-			this.ignoreDecompilationRequests = false;
 		}
 
 		public IEnumerable<SharpTreeNode> GetTopLevelSelection()
