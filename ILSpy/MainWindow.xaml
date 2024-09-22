@@ -37,6 +37,7 @@
 
 	<Window.InputBindings>
 		<KeyBinding Key="R" Modifiers="Control" Command="{x:Static local:ILSpyCommands.Analyze}" />
+		<KeyBinding Key="Z" Modifiers="Control" Command="{x:Static NavigationCommands.BrowseBack}" />
 	</Window.InputBindings>
 
 	<Window.TaskbarItemInfo>
