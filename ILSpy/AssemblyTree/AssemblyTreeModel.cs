@@ -44,15 +44,15 @@ using System.Windows;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using System.Reflection.Metadata;
+using System.Text;
+using System.Windows.Navigation;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Search;
 using ICSharpCode.Decompiler;
-using System.Text;
 
 using TomsToolbox.Essentials;
 using TomsToolbox.Wpf;
-using System.Windows.Navigation;
 
 namespace ICSharpCode.ILSpy.AssemblyTree
 {
@@ -67,6 +67,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		AssemblyListTreeNode assemblyListTreeNode;
 
 		readonly NavigationHistory<NavigationState> history = new();
+		private bool isNavigatingHistory;
 
 		public AssemblyTreeModel()
 		{
@@ -78,7 +79,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			MessageBus<NavigateToReferenceEventArgs>.Subscribers += JumpToReference;
 			MessageBus<SettingsChangedEventArgs>.Subscribers += (sender, e) => Settings_PropertyChanged(sender, e);
 
-			var selectionChangeThrottle = new DispatcherThrottle(DispatcherPriority.Background, TreeView_SelectionChanged);
+			var selectionChangeThrottle = new DispatcherThrottle(DispatcherPriority.Input, TreeView_SelectionChanged);
 			SelectedItems.CollectionChanged += (_, _) => selectionChangeThrottle.Tick();
 		}
 
@@ -94,8 +95,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 					case nameof(SessionSettings.Theme):
 						// update syntax highlighting and force reload (AvalonEdit does not automatically refresh on highlighting change)
 						DecompilerTextView.RegisterHighlighting();
-						DecompileSelectedNodes(
-							DockWorkspace.Instance.ActiveTabPage.GetState() as DecompilerTextViewState);
+						DecompileSelectedNodes(DockWorkspace.Instance.ActiveTabPage.GetState() as DecompilerTextViewState);
 						break;
 					case nameof(SessionSettings.CurrentCulture):
 						MessageBox.Show(Properties.Resources.SettingsChangeRestartRequired, "ILSpy");
@@ -107,7 +107,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				switch (e.PropertyName)
 				{
 					case nameof(LanguageSettings.Language) or nameof(LanguageSettings.LanguageVersion):
-						DecompileSelectedNodes(recordHistory: false);
+						DecompileSelectedNodes();
 						break;
 				}
 			}
@@ -502,36 +502,26 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 		}
 
-		internal void SelectNodes(IEnumerable<SharpTreeNode> nodes, bool ignoreCompilationRequests = false)
+		internal void SelectNodes(IEnumerable<SharpTreeNode> nodes)
 		{
-			this.ignoreDecompilationRequests = ignoreCompilationRequests;
+			// Ensure nodes exist
+			var nodesList = nodes.Select(n => FindNodeByPath(GetPathForNode(n), true))
+				.Where(n => n != null)
+				.ToArray();
 
-			try
+			if (!nodesList.Any() || nodesList.Any(n => n.AncestorsAndSelf().Any(a => a.IsHidden)))
 			{
-				// Ensure nodes exist
-				var nodesList = nodes.Select(n => FindNodeByPath(GetPathForNode(n), true))
-					.Where(n => n != null)
-					.ToArray();
-
-				if (!nodesList.Any() || nodesList.Any(n => n.AncestorsAndSelf().Any(a => a.IsHidden)))
-				{
-					return;
-				}
-
-				if (SelectedItems.SequenceEqual(nodesList))
-				{
-					Dispatcher.BeginInvoke(RefreshDecompiledView);
-					return;
-				}
-
-				SelectedItems.Clear();
-				SelectedItems.AddRange(nodesList);
-			}
-			finally
-			{
-				this.ignoreDecompilationRequests = false;
+				return;
 			}
 
+			if (SelectedItems.SequenceEqual(nodesList))
+			{
+				Dispatcher.BeginInvoke(RefreshDecompiledView);
+				return;
+			}
+
+			SelectedItems.Clear();
+			SelectedItems.AddRange(nodesList);
 		}
 
 		/// <summary>
@@ -700,15 +690,27 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		void TreeView_SelectionChanged()
 		{
-			var delayDecompilationRequestDueToContextMenu = Mouse.RightButton == MouseButtonState.Pressed;
+			if (SelectedItems.Count > 0)
+			{
+				if (!isNavigatingHistory)
+				{
+					var activeTabPage = DockWorkspace.Instance.ActiveTabPage;
+					var currentState = activeTabPage.GetState();
+					if (currentState != null)
+						history.UpdateCurrent(new NavigationState(activeTabPage, currentState));
+					history.Record(new NavigationState(activeTabPage, SelectedItems));
+				}
 
-			if (!delayDecompilationRequestDueToContextMenu)
-			{
-				DecompileSelectedNodes();
-			}
-			else
-			{
-				ContextMenuProvider.ContextMenuClosed += ContextMenuClosed;
+				var delayDecompilationRequestDueToContextMenu = Mouse.RightButton == MouseButtonState.Pressed;
+
+				if (!delayDecompilationRequestDueToContextMenu)
+				{
+					DecompileSelectedNodes();
+				}
+				else
+				{
+					ContextMenuProvider.ContextMenuClosed += ContextMenuClosed;
+				}
 			}
 
 			MessageBus.Send(this, new AssemblyTreeSelectionChangedEventArgs());
@@ -728,22 +730,9 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 		}
 
-		private bool ignoreDecompilationRequests;
-
-		public void DecompileSelectedNodes(DecompilerTextViewState newState = null, bool recordHistory = true)
+		private void DecompileSelectedNodes(DecompilerTextViewState newState = null)
 		{
-			if (ignoreDecompilationRequests)
-				return;
-
 			var activeTabPage = DockWorkspace.Instance.ActiveTabPage;
-
-			if (recordHistory)
-			{
-				var currentState = activeTabPage.GetState();
-				if (currentState != null)
-					history.UpdateCurrent(new NavigationState(activeTabPage, currentState));
-				history.Record(new NavigationState(activeTabPage, SelectedItems));
-			}
 
 			activeTabPage.SupportsLanguageSwitching = true;
 
@@ -754,7 +743,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 			if (newState?.ViewedUri != null)
 			{
-				MainWindow.Instance.AssemblyTreeModel.NavigateTo(new(newState.ViewedUri, null), recordHistory: false);
+				NavigateTo(new(newState.ViewedUri, null), recordHistory: false);
 				return;
 			}
 
@@ -782,6 +771,9 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		public void NavigateHistory(bool forward)
 		{
+			isNavigatingHistory = true;
+			this.Dispatcher.BeginInvoke(DispatcherPriority.Background, () => isNavigatingHistory = false);
+
 			TabPageModel tabPage = DockWorkspace.Instance.ActiveTabPage;
 			var state = tabPage.GetState();
 			if (state != null)
@@ -790,8 +782,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 			DockWorkspace.Instance.ActiveTabPage = newState.TabPage;
 
-			SelectNodes(newState.TreeNodes, ignoreCompilationRequests: true);
-			DecompileSelectedNodes(newState.ViewState as DecompilerTextViewState, false);
+			SelectNodes(newState.TreeNodes);
 		}
 
 		public bool CanNavigateBack => history.CanNavigateBack;
@@ -814,6 +805,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 					e.Handled = true;
 					return;
 				}
+
 				AvalonEditTextOutput output = new AvalonEditTextOutput {
 					Address = e.Uri,
 					Title = e.Uri.AbsolutePath,
@@ -845,7 +837,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				if (currentState != null)
 					history.UpdateCurrent(new NavigationState(tabPage, currentState));
 
-				UnselectAll(ignoreCompilationRequests: true);
+				UnselectAll();
 
 				history.Record(new NavigationState(tabPage, new ViewState { ViewedUri = e.Uri }));
 			}
@@ -861,11 +853,9 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 		}
 
-		public void UnselectAll(bool ignoreCompilationRequests = false)
+		private void UnselectAll()
 		{
-			this.ignoreDecompilationRequests = ignoreCompilationRequests;
 			SelectedItems.Clear();
-			this.ignoreDecompilationRequests = false;
 		}
 
 		public IEnumerable<SharpTreeNode> GetTopLevelSelection()
