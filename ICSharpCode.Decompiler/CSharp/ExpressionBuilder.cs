@@ -265,7 +265,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		internal ILFunction ResolveLocalFunction(IMethod method)
+		internal ILFunction? ResolveLocalFunction(IMethod method)
 		{
 			Debug.Assert(method.IsLocalFunction);
 			method = (IMethod)((IMethod)method.MemberDefinition).ReducedFrom.MemberDefinition;

@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </summary>
 		public FullTypeName FullTypeName { get { return fullTypeName; } }
 
-		internal static IType ResolveInAllAssemblies(ICompilation compilation, in FullTypeName fullTypeName)
+		internal static IType? ResolveInAllAssemblies(ICompilation compilation, in FullTypeName fullTypeName)
 		{
 			foreach (var asm in compilation.Modules)
 			{

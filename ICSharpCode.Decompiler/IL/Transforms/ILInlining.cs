@@ -577,7 +577,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (findResult.Type == FindResultType.NamedArgument)
 			{
-				var originalStore = (StLoc)inlinedExpression.Parent;
+				var originalStore = inlinedExpression.Parent as StLoc;
 				return !originalStore.ILStackWasEmpty;
 			}
 			Debug.Assert(findResult.Type == FindResultType.Found);
@@ -784,7 +784,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (expr.MatchLdLoc(v) || expr.MatchLdLoca(v))
 			{
 				// Match found, we can inline
-				if (expr.SlotInfo == StObj.TargetSlot && !((StObj)expr.Parent).CanInlineIntoTargetSlot(expressionBeingMoved))
+				if (expr.SlotInfo == StObj.TargetSlot && !(expr.Parent as StObj).CanInlineIntoTargetSlot(expressionBeingMoved))
 				{
 					if ((options & InliningOptions.AllowChangingOrderOfEvaluationForExceptions) != 0)
 					{
@@ -867,7 +867,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Finds the first call instruction within the instructions that were inlined into inst.
 		/// </summary>
-		internal static CallInstruction FindFirstInlinedCall(ILInstruction inst)
+		internal static CallInstruction? FindFirstInlinedCall(ILInstruction inst)
 		{
 			foreach (var child in inst.Children)
 			{

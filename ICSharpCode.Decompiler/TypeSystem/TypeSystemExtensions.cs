@@ -354,7 +354,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <remarks>
 		/// Returns null if the type is not a delegate type; or if the invoke method could not be found.
 		/// </remarks>
-		public static IMethod GetDelegateInvokeMethod(this IType type)
+		public static IMethod? GetDelegateInvokeMethod(this IType type)
 		{
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
@@ -461,7 +461,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the type definition for the specified unresolved type.
 		/// Returns null if the unresolved type does not belong to this assembly.
 		/// </summary>
-		public static ITypeDefinition GetTypeDefinition(this IModule module, FullTypeName fullTypeName)
+		public static ITypeDefinition? GetTypeDefinition(this IModule module, FullTypeName fullTypeName)
 		{
 			if (module == null)
 				throw new ArgumentNullException("assembly");
@@ -481,7 +481,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return typeDef;
 		}
 
-		static ITypeDefinition FindNestedType(ITypeDefinition typeDef, string name, int typeParameterCount)
+		static ITypeDefinition? FindNestedType(ITypeDefinition typeDef, string name, int typeParameterCount)
 		{
 			foreach (var nestedType in typeDef.NestedTypes)
 			{
@@ -626,7 +626,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 
 		#region ResolveResult
-		public static ISymbol GetSymbol(this ResolveResult rr)
+		public static ISymbol? GetSymbol(this ResolveResult rr)
 		{
 			if (rr is LocalResolveResult)
 			{
@@ -713,7 +713,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return false;
 		}
 
-		public static IModule FindModuleByReference(this ICompilation compilation, IAssemblyReference assemblyName)
+		public static IModule? FindModuleByReference(this ICompilation compilation, IAssemblyReference assemblyName)
 		{
 			foreach (var module in compilation.Modules)
 			{
@@ -749,7 +749,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		public static INamespace GetNamespaceByFullName(this ICompilation compilation, string name)
+		public static INamespace? GetNamespaceByFullName(this ICompilation compilation, string name)
 		{
 			if (string.IsNullOrEmpty(name))
 				return compilation.RootNamespace;

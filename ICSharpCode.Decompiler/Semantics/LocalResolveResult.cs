@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			get { return variable.IsConst; }
 		}
 
-		public override object ConstantValue {
+		public override object? ConstantValue {
 			get { return IsParameter ? null : variable.GetConstantValue(); }
 		}
 

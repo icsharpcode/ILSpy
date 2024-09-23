@@ -565,7 +565,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 
 		#region GetOverloadableOperatorName
-		static string GetOverloadableOperatorName(UnaryOperatorType op)
+		static string? GetOverloadableOperatorName(UnaryOperatorType op)
 		{
 			switch (op)
 			{
@@ -980,7 +980,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 
 		#region Enum helper methods
-		IType GetEnumUnderlyingType(IType enumType)
+		IType? GetEnumUnderlyingType(IType enumType)
 		{
 			ITypeDefinition? def = enumType.GetDefinition();
 			return def != null ? def.EnumUnderlyingType : SpecialType.UnknownType;
@@ -1203,7 +1203,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 
 		#region GetOverloadableOperatorName
-		static string GetOverloadableOperatorName(BinaryOperatorType op)
+		static string? GetOverloadableOperatorName(BinaryOperatorType op)
 		{
 			switch (op)
 			{

@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		internal static bool MatchDelegateConstruction(ILInstruction inst, out IMethod? targetMethod,
+		internal static bool MatchDelegateConstruction(ILInstruction? inst, out IMethod? targetMethod,
 			[NotNullWhen(true)] out ILInstruction? target, [NotNullWhen(true)] out IType? delegateType, bool allowTransformed = false)
 		{
 			targetMethod = null;
@@ -165,7 +165,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return new GenericContext(classTypeParameters, methodTypeParameters);
 		}
 
-		ILFunction TransformDelegateConstruction(
+		ILFunction? TransformDelegateConstruction(
 			ILInstruction value, IMethod targetMethod,
 			ILInstruction target, IType delegateType)
 		{

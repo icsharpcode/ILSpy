@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Main entry point for lifting; called by both the expression-transform
 		/// and the block transform.
 		/// </summary>
-		ILInstruction Lift(ILInstruction ifInst, ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst)
+		ILInstruction? Lift(ILInstruction ifInst, ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst)
 		{
 			// ifInst is usually the IfInstruction to which condition belongs;
 			// but can also be a BinaryNumericInstruction.
@@ -479,7 +479,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 
-			internal ILInstruction MakeLifted(ComparisonKind newComparisonKind, ILInstruction left, ILInstruction right)
+			internal ILInstruction? MakeLifted(ComparisonKind newComparisonKind, ILInstruction left, ILInstruction right)
 			{
 				if (Instruction is Comp comp)
 				{

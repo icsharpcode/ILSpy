@@ -108,7 +108,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return GetChildNamespaces().Values; }
 		}
 
-		public INamespace GetChildNamespace(string name)
+		public INamespace? GetChildNamespace(string name)
 		{
 			INamespace ns;
 			if (GetChildNamespaces().TryGetValue(name, out ns))

@@ -156,7 +156,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		bool IVariable.IsConst => false;
 
-		public object GetConstantValue(bool throwOnInvalidMetadata)
+		public object? GetConstantValue(bool throwOnInvalidMetadata)
 		{
 			try
 			{

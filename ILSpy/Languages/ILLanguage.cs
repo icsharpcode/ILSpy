@@ -163,7 +163,7 @@ namespace ICSharpCode.ILSpy
 			dis.DisassembleNamespace(nameSpace, module, types.Select(t => (TypeDefinitionHandle)t.MetadataToken));
 		}
 
-		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
+		public override ProjectId? DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			output.WriteLine("// " + assembly.FileName);
 			output.WriteLine();
@@ -195,7 +195,7 @@ namespace ICSharpCode.ILSpy
 			return null;
 		}
 
-		public override RichText GetRichTextTooltip(IEntity entity)
+		public override RichText? GetRichTextTooltip(IEntity entity)
 		{
 			var output = new AvalonEditTextOutput() { IgnoreNewLineAndIndent = true };
 			var disasm = CreateDisassembler(output, MainWindow.Instance.CreateDecompilationOptions());

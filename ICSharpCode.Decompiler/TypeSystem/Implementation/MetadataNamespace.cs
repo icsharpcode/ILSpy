@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		ICompilation ICompilationProvider.Compilation => module.Compilation;
 
-		INamespace INamespace.GetChildNamespace(string name)
+		INamespace? INamespace.GetChildNamespace(string name)
 		{
 			foreach (var ns in ChildNamespaces)
 			{

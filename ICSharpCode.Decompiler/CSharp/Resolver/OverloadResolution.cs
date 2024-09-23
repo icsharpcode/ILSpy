@@ -891,7 +891,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 
 		#region Output Properties
-		public IParameterizedMember BestCandidate {
+		public IParameterizedMember? BestCandidate {
 			get { return bestCandidate != null ? bestCandidate.Member : null; }
 		}
 
@@ -919,7 +919,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			get { return bestCandidate != null && IsApplicable(bestCandidate.Errors); }
 		}
 
-		public IParameterizedMember BestCandidateAmbiguousWith {
+		public IParameterizedMember? BestCandidateAmbiguousWith {
 			get { return bestCandidateAmbiguousWith != null ? bestCandidateAmbiguousWith.Member : null; }
 		}
 
@@ -958,7 +958,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// 
 		/// parameterIndex = GetArgumentToParameterMap()[argumentIndex]
 		/// </summary>
-		public IReadOnlyList<int> GetArgumentToParameterMap()
+		public IReadOnlyList<int>? GetArgumentToParameterMap()
 		{
 			if (bestCandidate != null)
 				return bestCandidate.ArgumentToParameterMap;
@@ -1037,7 +1037,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return args;
 		}
 
-		public IParameterizedMember GetBestCandidateWithSubstitutedTypeArguments()
+		public IParameterizedMember? GetBestCandidateWithSubstitutedTypeArguments()
 		{
 			if (bestCandidate == null)
 				return null;

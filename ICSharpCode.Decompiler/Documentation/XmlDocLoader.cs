@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		static readonly Lazy<XmlDocumentationProvider> mscorlibDocumentation = new Lazy<XmlDocumentationProvider>(LoadMscorlibDocumentation);
 		static readonly ConditionalWeakTable<MetadataFile, XmlDocumentationProvider> cache = new();
 
-		static XmlDocumentationProvider LoadMscorlibDocumentation()
+		static XmlDocumentationProvider? LoadMscorlibDocumentation()
 		{
 			string xmlDocFile = FindXmlDocumentation("mscorlib.dll", TargetRuntime.Net_4_0)
 				?? FindXmlDocumentation("mscorlib.dll", TargetRuntime.Net_2_0);
@@ -120,7 +120,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// Given the assembly file name, looks up the XML documentation file name.
 		/// Returns null if no XML documentation file is found.
 		/// </summary>
-		internal static string LookupLocalizedXmlDoc(string fileName)
+		internal static string? LookupLocalizedXmlDoc(string fileName)
 		{
 			if (string.IsNullOrEmpty(fileName))
 				return null;

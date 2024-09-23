@@ -101,7 +101,7 @@ namespace ICSharpCode.ILSpy.TextView
 		/// will be used.</param>
 		/// 
 		/// <returns>The full path of the selected target file, or <c>null</c> if the user canceled.</returns>
-		static string SelectSolutionFile()
+		static string? SelectSolutionFile()
 		{
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.FileName = "Solution.sln";

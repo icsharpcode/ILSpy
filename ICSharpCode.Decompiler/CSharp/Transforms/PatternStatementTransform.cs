@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public override AstNode VisitExpressionStatement(ExpressionStatement expressionStatement)
 		{
-			AstNode result = TransformForeachOnMultiDimArray(expressionStatement);
+			AstNode? result = TransformForeachOnMultiDimArray(expressionStatement);
 			if (result != null)
 				return result;
 			result = TransformFor(expressionStatement);
@@ -182,7 +182,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!m1.Success)
 				return null;
 			var variable = m1.Get<IdentifierExpression>("variable").Single().GetILVariable();
-			AstNode next = node.NextSibling;
+			AstNode? next = node.NextSibling;
 			if (next is ForStatement forStatement && ForStatementUsesVariable(forStatement, variable))
 			{
 				node.Remove();
@@ -477,7 +477,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		Statement TransformForeachOnMultiDimArray(ExpressionStatement expressionStatement)
+		Statement? TransformForeachOnMultiDimArray(ExpressionStatement expressionStatement)
 		{
 			if (!context.Settings.ForEachStatement)
 				return null;
@@ -609,7 +609,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		PropertyDeclaration TransformAutomaticProperty(PropertyDeclaration propertyDeclaration)
+		PropertyDeclaration? TransformAutomaticProperty(PropertyDeclaration propertyDeclaration)
 		{
 			IProperty? property = propertyDeclaration.GetSymbol() as IProperty;
 			if (!CanTransformToAutomaticProperty(property, !property.DeclaringTypeDefinition.Fields.Any(f => f.Name == "_" + property.Name && f.IsCompilerGenerated())))
@@ -736,7 +736,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		Identifier ReplaceBackingFieldUsage(Identifier identifier)
+		Identifier? ReplaceBackingFieldUsage(Identifier identifier)
 		{
 			if (NameCouldBeBackingFieldOfAutomaticProperty(identifier.Name, out _))
 			{
@@ -757,7 +757,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return null;
 		}
 
-		Identifier ReplaceEventFieldAnnotation(Identifier identifier)
+		Identifier? ReplaceEventFieldAnnotation(Identifier identifier)
 		{
 			var parent = identifier.Parent;
 			var mrr = parent.Annotation<MemberResolveResult>();
@@ -995,7 +995,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		EventDeclaration TransformAutomaticEvents(CustomEventDeclaration ev)
+		EventDeclaration? TransformAutomaticEvents(CustomEventDeclaration ev)
 		{
 			if (!ev.PrivateImplementationType.IsNull)
 				return null;
@@ -1055,7 +1055,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			Body = destructorBodyPattern
 		};
 
-		DestructorDeclaration TransformDestructor(MethodDeclaration methodDef)
+		DestructorDeclaration? TransformDestructor(MethodDeclaration methodDef)
 		{
 			Match m = destructorPattern.Match(methodDef);
 			if (m.Success)
@@ -1072,7 +1072,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return null;
 		}
 
-		DestructorDeclaration TransformDestructorBody(DestructorDeclaration dtorDef)
+		DestructorDeclaration? TransformDestructorBody(DestructorDeclaration dtorDef)
 		{
 			Match m = destructorBodyPattern.Match(dtorDef.Body);
 			if (m.Success)
@@ -1099,7 +1099,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// Simplify nested 'try { try {} catch {} } finally {}'.
 		/// This transformation must run after the using/lock tranformations.
 		/// </summary>
-		TryCatchStatement TransformTryCatchFinally(TryCatchStatement tryFinally)
+		TryCatchStatement? TransformTryCatchFinally(TryCatchStatement tryFinally)
 		{
 			if (tryCatchFinallyPattern.IsMatch(tryFinally))
 			{
@@ -1130,7 +1130,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		AstNode SimplifyCascadingIfElseStatements(IfElseStatement node)
+		AstNode? SimplifyCascadingIfElseStatements(IfElseStatement node)
 		{
 			Match m = cascadingIfElsePattern.Match(node);
 			if (m.Success)

@@ -61,7 +61,7 @@ namespace ICSharpCode.ILSpy.Updates
 		/// Returns the download URL if an update is available.
 		/// Returns null if no update is available, or if no check was performed.
 		/// </summary>
-		public static async Task<string> CheckForUpdatesIfEnabledAsync(ILSpySettings spySettings)
+		public static async Task<string?> CheckForUpdatesIfEnabledAsync(ILSpySettings spySettings)
 		{
 			UpdateSettings s = new UpdateSettings(spySettings);
 
@@ -93,7 +93,7 @@ namespace ICSharpCode.ILSpy.Updates
 			return CheckForUpdateInternal(s);
 		}
 
-		static async Task<string> CheckForUpdateInternal(UpdateSettings s)
+		static async Task<string?> CheckForUpdateInternal(UpdateSettings s)
 		{
 			try
 			{

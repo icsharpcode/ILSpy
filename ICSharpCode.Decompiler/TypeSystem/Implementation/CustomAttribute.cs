@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		internal static IMember MemberForNamedArgument(IType attributeType, CustomAttributeNamedArgument<IType> namedArgument)
+		internal static IMember? MemberForNamedArgument(IType attributeType, CustomAttributeNamedArgument<IType> namedArgument)
 		{
 			switch (namedArgument.Kind)
 			{

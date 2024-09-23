@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 													 new FrameworkPropertyMetadata(typeof(SharpTreeViewItem)));
 		}
 
-		public SharpTreeNode Node {
+		public SharpTreeNode? Node {
 			get { return DataContext as SharpTreeNode; }
 		}
 

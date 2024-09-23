@@ -1443,7 +1443,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		const float MathF_PI = 3.14159274f;
 		const float MathF_E = 2.71828175f;
 
-		Expression TryExtractExpression(IType mathType, IType type, object literalValue, string memberName, bool isDouble)
+		Expression? TryExtractExpression(IType mathType, IType type, object literalValue, string memberName, bool isDouble)
 		{
 			Expression MakeFieldReference()
 			{
@@ -1464,7 +1464,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return new CastExpression(ConvertType(type), fieldRef);
 			}
 
-			Expression ExtractExpression(long n, long d)
+			Expression? ExtractExpression(long n, long d)
 			{
 				Expression fieldReference = MakeFieldReference();
 
@@ -2400,7 +2400,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return decl;
 		}
 
-		internal Constraint ConvertTypeParameterConstraint(ITypeParameter tp)
+		internal Constraint? ConvertTypeParameterConstraint(ITypeParameter tp)
 		{
 			if (!tp.HasDefaultConstructorConstraint && !tp.HasReferenceTypeConstraint && !tp.HasValueTypeConstraint && tp.NullabilityConstraint != Nullability.NotNullable && tp.DirectBaseTypes.All(IsObjectOrValueType))
 			{

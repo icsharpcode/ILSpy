@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy.TextView
 	{
 		public static readonly DefaultBracketSearcher DefaultInstance = new DefaultBracketSearcher();
 
-		public BracketSearchResult SearchBracket(IDocument document, int offset)
+		public BracketSearchResult? SearchBracket(IDocument document, int offset)
 		{
 			return null;
 		}

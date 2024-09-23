@@ -442,7 +442,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new GetClassTypeReference(assemblyReference, typeName.Substring(0, pos), typeName.Substring(pos + 1), tpc);
 		}
 
-		static string SkipAheadAndReadAssemblyName(string reflectionTypeName, int pos)
+		static string? SkipAheadAndReadAssemblyName(string reflectionTypeName, int pos)
 		{
 			int nestingLevel = 0;
 			while (pos < reflectionTypeName.Length)

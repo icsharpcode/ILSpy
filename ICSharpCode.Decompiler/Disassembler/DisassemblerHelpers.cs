@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				writer.WriteLocalReference(name, "param_" + index);
 			}
 
-			string GetParameterName(int parameterNumber)
+			string? GetParameterName(int parameterNumber)
 			{
 				var methodDefinition = metadata.GetMethodDefinition(handle);
 				if ((methodDefinition.Attributes & System.Reflection.MethodAttributes.Static) != 0)
@@ -339,7 +339,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 			return sb.ToString();
 		}
-		public static string PrimitiveTypeName(string fullName)
+		public static string? PrimitiveTypeName(string fullName)
 		{
 			switch (fullName)
 			{

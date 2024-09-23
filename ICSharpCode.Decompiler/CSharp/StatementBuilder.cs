@@ -624,7 +624,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		Statement TransformToForeach(UsingInstruction inst, Expression resource)
+		Statement? TransformToForeach(UsingInstruction inst, Expression resource)
 		{
 			if (!settings.ForEachStatement)
 			{

@@ -144,7 +144,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Construct a tuple type (without element names) from the given underlying type.
 		/// Returns null if the input is not a valid underlying type.
 		/// </summary>
-		public static TupleType FromUnderlyingType(ICompilation compilation, IType type)
+		public static TupleType? FromUnderlyingType(ICompilation compilation, IType type)
 		{
 			var elementTypes = GetTupleElementTypes(type);
 			if (elementTypes.Length > 0)

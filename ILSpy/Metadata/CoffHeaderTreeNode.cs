@@ -116,7 +116,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			this.detailsFieldName = detailsFieldName;
 		}
 
-		public override DataTemplate SelectTemplate(object item, DependencyObject container)
+		public override DataTemplate? SelectTemplate(object item, DependencyObject container)
 		{
 			if (((Entry)item).Member == detailsFieldName)
 				return (DataTemplate)MetadataTableViews.Instance["HeaderFlagsDetailsDataGrid"];

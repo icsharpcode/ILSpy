@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				trueValues = trueValues.IntersectWith(inputValues);
 				if (trueValues.SetEquals(inputValues) || trueValues.IsEmpty)
 					return false;
-				Block trueBlock;
+				Block? trueBlock;
 				if (trueInst.MatchBranch(out trueBlock) && AnalyzeBlock(trueBlock, trueValues))
 				{
 					// OK, true block was further analyzed.
@@ -159,7 +159,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			var remainingValues = inputValues.ExceptWith(trueValues);
 			ILInstruction falseInst = block.Instructions.Last();
-			Block falseBlock;
+			Block? falseBlock;
 			if (falseInst.MatchBranch(out falseBlock) && AnalyzeBlock(falseBlock, remainingValues))
 			{
 				// OK, false block was further analyzed.
@@ -237,7 +237,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				return;
 			}
-			if (inst.MatchBranch(out Block targetBlock))
+			if (inst.MatchBranch(out Block? targetBlock))
 			{
 				if (targetBlockToSectionIndex.TryGetValue(targetBlock, out int index))
 				{
@@ -252,7 +252,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					Sections.Add(new KeyValuePair<LongSet, ILInstruction>(values, inst));
 				}
 			}
-			else if (inst.MatchLeave(out BlockContainer targetContainer))
+			else if (inst.MatchLeave(out BlockContainer? targetContainer))
 			{
 				if (targetContainerToSectionIndex.TryGetValue(targetContainer, out int index))
 				{

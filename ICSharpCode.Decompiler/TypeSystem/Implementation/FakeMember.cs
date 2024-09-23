@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IEnumerable<IAttribute> IEntity.GetAttributes() => EmptyList<IAttribute>.Instance;
 		bool IEntity.HasAttribute(KnownAttribute attribute) => false;
-		IAttribute IEntity.GetAttribute(KnownAttribute attribute) => null;
+		IAttribute? IEntity.GetAttribute(KnownAttribute attribute) => null;
 
 		public Accessibility Accessibility { get; set; } = Accessibility.Public;
 
@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool IField.IsVolatile => false;
 
 		bool IVariable.IsConst => false;
-		object IVariable.GetConstantValue(bool throwOnInvalidMetadata) => null;
+		object? IVariable.GetConstantValue(bool throwOnInvalidMetadata) => null;
 		IType IVariable.Type => ReturnType;
 
 		public override SymbolKind SymbolKind => SymbolKind.Field;

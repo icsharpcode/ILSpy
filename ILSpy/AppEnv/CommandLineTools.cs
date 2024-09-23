@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy.AppEnv
 		/// - (2n) + 1 backslashes followed by a quotation mark again produce n backslashes followed by a quotation mark.
 		/// - n backslashes not followed by a quotation mark simply produce n backslashes.
 		/// </remarks>
-		public static string ArgumentArrayToCommandLine(params string[] arguments)
+		public static string? ArgumentArrayToCommandLine(params string[] arguments)
 		{
 			if (arguments == null)
 				return null;

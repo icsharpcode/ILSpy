@@ -122,7 +122,7 @@ namespace ICSharpCode.ILSpy
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 		}
 
-		static Assembly ResolvePluginDependencies(AssemblyLoadContext context, AssemblyName assemblyName)
+		static Assembly? ResolvePluginDependencies(AssemblyLoadContext context, AssemblyName assemblyName)
 		{
 			var rootPath = Path.GetDirectoryName(typeof(App).Assembly.Location);
 			var assemblyFileName = Path.Combine(rootPath, assemblyName.Name + ".dll");

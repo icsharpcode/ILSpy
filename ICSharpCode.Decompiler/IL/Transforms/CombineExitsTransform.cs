@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ExpressionTransforms.RunOnSingleStatement(combinedExit, context);
 		}
 
-		static Leave CombineExits(Block block)
+		static Leave? CombineExits(Block block)
 		{
 			if (!(block.Instructions.SecondToLastOrDefault() is IfInstruction ifInst && block.Instructions.LastOrDefault() is Leave leaveElse))
 				return null;

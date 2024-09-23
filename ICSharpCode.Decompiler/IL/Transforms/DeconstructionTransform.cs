@@ -191,8 +191,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			int startPos = pos;
 			Action<DeconstructInstruction>? delayedActions = null;
-			if (MatchDeconstruction(block.Instructions[pos], out IMethod deconstructMethod,
-				out ILInstruction rootTestedOperand))
+			if (MatchDeconstruction(block.Instructions[pos], out IMethod? deconstructMethod,
+				out ILInstruction? rootTestedOperand))
 			{
 				pos++;
 			}

@@ -474,7 +474,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		ISymbol GetCurrentDefinition()
+		ISymbol? GetCurrentDefinition()
 		{
 			if (nodeStack == null || nodeStack.Count == 0)
 				return null;
@@ -488,7 +488,7 @@ namespace ICSharpCode.ILSpy
 			return null;
 		}
 
-		ISymbol GetCurrentMemberReference()
+		ISymbol? GetCurrentMemberReference()
 		{
 			if (nodeStack == null || nodeStack.Count == 0)
 				return null;

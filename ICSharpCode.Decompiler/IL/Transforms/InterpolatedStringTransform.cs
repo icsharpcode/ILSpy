@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			int interpolationStart = pos;
 			int interpolationEnd;
-			ILInstruction insertionPoint;
+			ILInstruction? insertionPoint;
 			// stloc v(newobj DefaultInterpolatedStringHandler..ctor(ldc.i4 literalLength, ldc.i4 formattedCount))
 			if (block.Instructions[pos] is StLoc {
 				Variable: ILVariable { Kind: VariableKind.Local } v,

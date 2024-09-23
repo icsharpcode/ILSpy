@@ -387,7 +387,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// <summary>
 		/// Finds the node for a top-level type.
 		/// </summary>
-		public TypeTreeNode FindTypeNode(ITypeDefinition type)
+		public TypeTreeNode? FindTypeNode(ITypeDefinition type)
 		{
 			if (type == null)
 				return null;
@@ -402,7 +402,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// <summary>
 		/// Finds the node for a namespace.
 		/// </summary>
-		public NamespaceTreeNode FindNamespaceNode(string namespaceName)
+		public NamespaceTreeNode? FindNamespaceNode(string namespaceName)
 		{
 			if (string.IsNullOrEmpty(namespaceName))
 				return null;
@@ -730,7 +730,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				});
 		}
 
-		internal static AssemblyTreeNode GetAssemblyTreeNode(SharpTreeNode node)
+		internal static AssemblyTreeNode? GetAssemblyTreeNode(SharpTreeNode node)
 		{
 			while (node != null)
 			{

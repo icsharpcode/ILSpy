@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				&& this.Expression.DoMatch(o.Expression, match);
 		}
 
-		public static TokenRole GetOperatorRole(UnaryOperatorType op)
+		public static TokenRole? GetOperatorRole(UnaryOperatorType op)
 		{
 			switch (op)
 			{

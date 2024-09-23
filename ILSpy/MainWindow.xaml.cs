@@ -83,7 +83,7 @@ namespace ICSharpCode.ILSpy
 			get { return instance; }
 		}
 
-		public SharpTreeView AssemblyTreeView {
+		public SharpTreeView? AssemblyTreeView {
 			get {
 				return FindResource("AssemblyTreeView") as SharpTreeView;
 			}
@@ -312,7 +312,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		internal static string GetResourceString(string key)
+		internal static string? GetResourceString(string key)
 		{
 			if (string.IsNullOrEmpty(key))
 			{
@@ -1109,7 +1109,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Retrieves a node using the .ToString() representations of its ancestors.
 		/// </summary>
-		public SharpTreeNode FindNodeByPath(string[] path, bool returnBestMatch)
+		public SharpTreeNode? FindNodeByPath(string[] path, bool returnBestMatch)
 		{
 			if (path == null)
 				return null;
@@ -1135,7 +1135,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Gets the .ToString() representation of the node's ancestors.
 		/// </summary>
-		public static string[] GetPathForNode(SharpTreeNode node)
+		public static string[]? GetPathForNode(SharpTreeNode node)
 		{
 			if (node == null)
 				return null;
@@ -1149,7 +1149,7 @@ namespace ICSharpCode.ILSpy
 			return path.ToArray();
 		}
 
-		public ILSpyTreeNode FindTreeNode(object reference)
+		public ILSpyTreeNode? FindTreeNode(object reference)
 		{
 			switch (reference)
 			{
@@ -1586,7 +1586,7 @@ namespace ICSharpCode.ILSpy
 			sessionSettings.Save();
 		}
 
-		private string GetAutoLoadedAssemblyNode(SharpTreeNode node)
+		private string? GetAutoLoadedAssemblyNode(SharpTreeNode node)
 		{
 			if (node == null)
 				return null;

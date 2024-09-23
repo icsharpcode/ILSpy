@@ -119,7 +119,7 @@ namespace Humanizer.Inflections
 			return result ?? word;
 		}
 
-		private string ApplyRules(IList<Rule> rules, string word, bool skipFirstRule)
+		private string? ApplyRules(IList<Rule> rules, string word, bool skipFirstRule)
 		{
 			if (word == null)
 			{
@@ -164,7 +164,7 @@ namespace Humanizer.Inflections
 				_replacement = replacement;
 			}
 
-			public string Apply(string word)
+			public string? Apply(string word)
 			{
 				if (!_regex.IsMatch(word))
 				{

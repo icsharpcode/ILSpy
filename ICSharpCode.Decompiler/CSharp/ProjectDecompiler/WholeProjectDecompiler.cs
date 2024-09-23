@@ -488,7 +488,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		const int RT_ICON = 3;
 		const int RT_GROUP_ICON = 14;
 
-		unsafe static byte[] CreateApplicationIcon(Win32ResourceDirectory resources)
+		unsafe static byte[]? CreateApplicationIcon(Win32ResourceDirectory resources)
 		{
 			var iconGroup = resources.Find(new Win32ResourceName(RT_GROUP_ICON))?.FirstDirectory()?.FirstData()?.Data;
 			if (iconGroup == null)

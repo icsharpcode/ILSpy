@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return attributeHandles.HasKnownAttribute(module.metadata, KnownAttribute.DecimalConstant);
 		}
 
-		public static object GetDecimalConstantValue(MetadataModule module, CustomAttributeHandleCollection attributeHandles)
+		public static object? GetDecimalConstantValue(MetadataModule module, CustomAttributeHandleCollection attributeHandles)
 		{
 			var metadata = module.metadata;
 			foreach (var attributeHandle in attributeHandles)

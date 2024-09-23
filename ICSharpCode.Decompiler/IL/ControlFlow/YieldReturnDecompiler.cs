@@ -269,7 +269,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			}
 
-			ILInstruction newObj;
+			ILInstruction? newObj;
 			if (body.Instructions.Count == 1)
 			{
 				// No parameters passed to enumerator (not even 'this'):
@@ -943,7 +943,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			void ConvertBranchAfterYieldReturn(Block newBlock, Block oldBlock, int pos)
 			{
-				Block targetBlock;
+				Block? targetBlock;
 				if (isCompiledWithMono && disposingField != null)
 				{
 					// Mono skips over the state assignment if 'this.disposing' is set:
@@ -1233,7 +1233,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				context.CancellationToken.ThrowIfCancellationRequested();
 				int oldState = blockState[block.ChildIndex];
-				BlockContainer container; // new container for the block
+				BlockContainer? container; // new container for the block
 				if (GetNewState(block) is int newState)
 				{
 					// OK, state change
@@ -1436,7 +1436,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 				if (!call.Method.Name.StartsWith("<>__Finally"))
 					return false;
-				ITypeDefinition declaringTypeDefinition = call.Method.DeclaringTypeDefinition;
+				ITypeDefinition? declaringTypeDefinition = call.Method.DeclaringTypeDefinition;
 				if (declaringTypeDefinition.MetadataToken != this.enumeratorType)
 					return false;
 				if (declaringTypeDefinition.ParentModule.MetadataFile.Metadata != metadata)

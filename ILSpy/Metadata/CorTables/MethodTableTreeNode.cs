@@ -122,7 +122,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 
 			string paramListTooltip;
-			public string ParamListTooltip {
+			public string? ParamListTooltip {
 				get {
 					var param = methodDef.GetParameters().FirstOrDefault();
 					if (param.IsNil)

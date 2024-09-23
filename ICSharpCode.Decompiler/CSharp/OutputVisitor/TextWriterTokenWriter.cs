@@ -437,7 +437,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// Gets the escape sequence for the specified character.
 		/// </summary>
 		/// <remarks>This method does not convert ' or ".</remarks>
-		static string ConvertChar(char ch)
+		static string? ConvertChar(char ch)
 		{
 			switch (ch)
 			{

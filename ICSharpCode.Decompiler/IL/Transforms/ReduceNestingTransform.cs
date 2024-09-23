@@ -451,7 +451,7 @@ namespace ICSharpCode.Decompiler.IL
 		///
 		/// [else-]if (parent-cond) else { ifInst }
 		/// </summary>
-		private IfInstruction GetElseIfParent(IfInstruction ifInst)
+		private IfInstruction? GetElseIfParent(IfInstruction ifInst)
 		{
 			Debug.Assert(ifInst.Parent is Block);
 			if (Block.Unwrap(ifInst.Parent) == ifInst && // only instruction in block

@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.substitution = TypeParameterSubstitution.Compose(newSubstitution, this.substitution);
 		}
 
-		internal IMethod WrapAccessor(ref IMethod cachingField, IMethod accessorDefinition)
+		internal IMethod? WrapAccessor(ref IMethod cachingField, IMethod accessorDefinition)
 		{
 			if (accessorDefinition == null)
 				return null;

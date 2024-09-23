@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Finds the member declared in 'derivedType' that has the same signature (could override) 'baseMember'.
 		/// </summary>
-		public static IMember GetDerivedMember(IMember baseMember, ITypeDefinition derivedType)
+		public static IMember? GetDerivedMember(IMember baseMember, ITypeDefinition derivedType)
 		{
 			if (baseMember == null)
 				throw new ArgumentNullException(nameof(baseMember));
@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		internal static IAttribute GetAttribute(ITypeDefinition typeDef, KnownAttribute attributeType)
+		internal static IAttribute? GetAttribute(ITypeDefinition typeDef, KnownAttribute attributeType)
 		{
 			foreach (var baseType in typeDef.GetNonInterfaceBaseTypes().Reverse())
 			{
@@ -217,7 +217,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			} while (member.IsOverride && (member = InheritanceHelper.GetBaseMember(member)) != null);
 		}
 
-		internal static IAttribute GetAttribute(IMember member, KnownAttribute attributeType)
+		internal static IAttribute? GetAttribute(IMember member, KnownAttribute attributeType)
 		{
 			HashSet<IMember> visitedMembers = new HashSet<IMember>();
 			do

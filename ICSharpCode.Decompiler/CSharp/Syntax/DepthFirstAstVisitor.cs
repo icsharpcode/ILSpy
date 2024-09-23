@@ -713,7 +713,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public abstract class DepthFirstAstVisitor<T> : IAstVisitor<T>
 	{
-		protected virtual T VisitChildren(AstNode node)
+		protected virtual T? VisitChildren(AstNode node)
 		{
 			AstNode? next;
 			for (var child = node.FirstChild; child != null; child = next)
@@ -726,7 +726,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return default(T);
 		}
 
-		public virtual T VisitNullNode(AstNode nullNode)
+		public virtual T? VisitNullNode(AstNode nullNode)
 		{
 			// Should we call VisitChildren here?
 			// We usually want to ignore null nodes.

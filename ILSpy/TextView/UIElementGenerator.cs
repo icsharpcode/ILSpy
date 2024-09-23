@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy.TextView
 				return -1;
 		}
 
-		public override VisualLineElement ConstructElement(int offset)
+		public override VisualLineElement? ConstructElement(int offset)
 		{
 			if (this.UIElements == null)
 				return null;

@@ -156,21 +156,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool MatchDoWhileLoop(BlockContainer loop)
 		{
-			(List<IfInstruction>? conditions, ILInstruction exit, bool swap, bool split, bool unwrap) = AnalyzeDoWhileConditions(loop);
+			(List<IfInstruction>? conditions, ILInstruction? exit, bool swap, bool split, bool unwrap) = AnalyzeDoWhileConditions(loop);
 			// not a do-while loop, exit.
 			if (conditions == null || conditions.Count == 0)
 				return false;
 			context.Step("Transform to do-while loop: " + loop.EntryPoint.Label, loop);
 			Block conditionBlock;
 			// first we remove all extracted instructions from the original block.
-			var originalBlock = (Block)exit.Parent;
+			var originalBlock = exit.Parent as Block;
 			if (unwrap)
 			{
 				// we found a condition block nested in a condition that is followed by a return statement:
 				// we flip the condition and swap the blocks
 				Debug.Assert(originalBlock.Parent is IfInstruction);
 				var returnCondition = (IfInstruction)originalBlock.Parent;
-				var topLevelBlock = (Block)returnCondition.Parent;
+				var topLevelBlock = returnCondition.Parent as Block;
 				Debug.Assert(topLevelBlock.Parent == loop);
 				var leaveFunction = topLevelBlock.Instructions[returnCondition.ChildIndex + 1];
 				Debug.Assert(leaveFunction.MatchReturn(out _));

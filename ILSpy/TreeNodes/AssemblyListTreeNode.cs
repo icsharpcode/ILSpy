@@ -130,7 +130,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 
 		#region Find*Node
-		public ILSpyTreeNode FindResourceNode(Resource resource)
+		public ILSpyTreeNode? FindResourceNode(Resource resource)
 		{
 			if (resource == null)
 				return null;
@@ -169,14 +169,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return FindAssemblyNode(module.MetadataFile);
 		}
 
-		public AssemblyTreeNode FindAssemblyNode(MetadataFile module)
+		public AssemblyTreeNode? FindAssemblyNode(MetadataFile module)
 		{
 			if (module == null)
 				return null;
 			return FindAssemblyNode(module.GetLoadedAssembly());
 		}
 
-		public AssemblyTreeNode FindAssemblyNode(LoadedAssembly asm)
+		public AssemblyTreeNode? FindAssemblyNode(LoadedAssembly asm)
 		{
 			if (asm == null)
 				return null;
@@ -203,7 +203,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			return null;
 
-			static SharpTreeNodeCollection ExpandAndGetChildren(SharpTreeNode node)
+			static SharpTreeNodeCollection? ExpandAndGetChildren(SharpTreeNode node)
 			{
 				if (node is not PackageFolderTreeNode)
 					return null;
@@ -216,7 +216,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// Looks up the type node corresponding to the type definition.
 		/// Returns null if no matching node is found.
 		/// </summary>
-		public TypeTreeNode FindTypeNode(ITypeDefinition def)
+		public TypeTreeNode? FindTypeNode(ITypeDefinition def)
 		{
 			if (def == null)
 				return null;
@@ -245,7 +245,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// Looks up the method node corresponding to the method definition.
 		/// Returns null if no matching node is found.
 		/// </summary>
-		public ILSpyTreeNode FindMethodNode(IMethod def)
+		public ILSpyTreeNode? FindMethodNode(IMethod def)
 		{
 			TypeTreeNode typeNode = FindTypeNode(def.DeclaringTypeDefinition);
 			if (typeNode == null)
@@ -286,7 +286,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// Looks up the field node corresponding to the field definition.
 		/// Returns null if no matching node is found.
 		/// </summary>
-		public FieldTreeNode FindFieldNode(IField def)
+		public FieldTreeNode? FindFieldNode(IField def)
 		{
 			TypeTreeNode typeNode = FindTypeNode(def.DeclaringTypeDefinition);
 			if (typeNode == null)
@@ -299,7 +299,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// Looks up the property node corresponding to the property definition.
 		/// Returns null if no matching node is found.
 		/// </summary>
-		public PropertyTreeNode FindPropertyNode(IProperty def)
+		public PropertyTreeNode? FindPropertyNode(IProperty def)
 		{
 			TypeTreeNode typeNode = FindTypeNode(def.DeclaringTypeDefinition);
 			if (typeNode == null)
@@ -312,7 +312,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// Looks up the event node corresponding to the event definition.
 		/// Returns null if no matching node is found.
 		/// </summary>
-		public EventTreeNode FindEventNode(IEvent def)
+		public EventTreeNode? FindEventNode(IEvent def)
 		{
 			TypeTreeNode typeNode = FindTypeNode(def.DeclaringTypeDefinition);
 			if (typeNode == null)
@@ -325,7 +325,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// Looks up the event node corresponding to the namespace definition.
 		/// Returns null if no matching node is found.
 		/// </summary>
-		public NamespaceTreeNode FindNamespaceNode(INamespace def)
+		public NamespaceTreeNode? FindNamespaceNode(INamespace def)
 		{
 			var module = def.ContributingModules.FirstOrDefault();
 			if (module == null)

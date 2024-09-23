@@ -114,7 +114,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, typeDef.BaseType, protocol: "metadata"));
 			}
 
-			public string BaseTypeTooltip {
+			public string? BaseTypeTooltip {
 				get {
 					var output = new PlainTextOutput();
 					var provider = new DisassemblerSignatureTypeProvider(metadataFile, output);
@@ -146,7 +146,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 
 			string fieldListTooltip;
-			public string FieldListTooltip {
+			public string? FieldListTooltip {
 				get {
 					var field = typeDef.GetFields().FirstOrDefault();
 					if (field.IsNil)
@@ -164,7 +164,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 
 			string methodListTooltip;
-			public string MethodListTooltip {
+			public string? MethodListTooltip {
 				get {
 					var method = typeDef.GetMethods().FirstOrDefault();
 					if (method.IsNil)

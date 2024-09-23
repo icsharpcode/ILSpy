@@ -211,7 +211,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public string TryResolveDotNetCoreShared(IAssemblyReference name, out string? runtimePack)
+		public string? TryResolveDotNetCoreShared(IAssemblyReference name, out string? runtimePack)
 		{
 			if (dotnetBasePath == null)
 			{
@@ -286,7 +286,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public static string FindDotNetExeDirectory()
+		public static string? FindDotNetExeDirectory()
 		{
 			string dotnetExeName = (Environment.OSVersion.Platform == PlatformID.Unix) ? "dotnet" : "dotnet.exe";
 			foreach (var item in Environment.GetEnvironmentVariable("PATH").Split(Path.PathSeparator))
@@ -312,7 +312,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return null;
 		}
 
-		static unsafe string GetRealPath(string path, Encoding encoding)
+		static unsafe string? GetRealPath(string path, Encoding encoding)
 		{
 			var bytes = encoding.GetBytes(path);
 			fixed (byte* input = bytes)

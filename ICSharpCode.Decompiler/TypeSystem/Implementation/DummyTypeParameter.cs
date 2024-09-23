@@ -163,7 +163,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return VarianceModifier.Invariant; }
 		}
 
-		IEntity ITypeParameter.Owner {
+		IEntity? ITypeParameter.Owner {
 			get { return null; }
 		}
 

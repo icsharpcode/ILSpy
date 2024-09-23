@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override TypeKind Kind => ((module.TypeSystemOptions & TypeSystemOptions.FunctionPointers) != 0) ? TypeKind.FunctionPointer : TypeKind.Struct;
 
-		public override ITypeDefinition GetDefinition()
+		public override ITypeDefinition? GetDefinition()
 		{
 			if ((module.TypeSystemOptions & TypeSystemOptions.FunctionPointers) != 0)
 			{

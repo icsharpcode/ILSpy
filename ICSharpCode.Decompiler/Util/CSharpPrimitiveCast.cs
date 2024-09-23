@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// </summary>
 		/// <exception cref="OverflowException">Overflow checking is enabled and an overflow occurred.</exception>
 		/// <exception cref="InvalidCastException">The cast is invalid, e.g. casting a boolean to an integer.</exception>
-		public static object Cast(TypeCode targetType, object input, bool checkForOverflow)
+		public static object? Cast(TypeCode targetType, object input, bool checkForOverflow)
 		{
 			if (input == null)
 				return null;

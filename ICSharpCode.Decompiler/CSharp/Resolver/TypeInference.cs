@@ -698,7 +698,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		TP GetTPForType(IType v)
+		TP? GetTPForType(IType v)
 		{
 			if (v is NullabilityAnnotatedTypeParameter natp)
 			{

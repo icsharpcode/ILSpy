@@ -293,7 +293,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Gets the method name for the operator type. ("op_Addition", "op_Implicit", etc.)
 		/// </summary>
-		public static string GetName(OperatorType? type)
+		public static string? GetName(OperatorType? type)
 		{
 			if (type == null)
 				return null;

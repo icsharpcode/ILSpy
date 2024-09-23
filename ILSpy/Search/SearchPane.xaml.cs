@@ -435,7 +435,7 @@ namespace ICSharpCode.ILSpy.Search
 					}
 				}
 
-				Regex CreateRegex(string s)
+				Regex? CreateRegex(string s)
 				{
 					try
 					{
@@ -492,7 +492,7 @@ namespace ICSharpCode.ILSpy.Search
 				}
 			}
 
-			AbstractSearchStrategy GetSearchStrategy(SearchRequest request)
+			AbstractSearchStrategy? GetSearchStrategy(SearchRequest request)
 			{
 				if (request.Keywords.Length == 0 && request.RegEx == null)
 					return null;

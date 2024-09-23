@@ -554,7 +554,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// For IList{T}, ICollection{T}, IEnumerable{T} and IReadOnlyList{T}, returns T.
 		/// Otherwise, returns null.
 		/// </summary>
-		IType UnpackGenericArrayInterface(IType interfaceType)
+		IType? UnpackGenericArrayInterface(IType interfaceType)
 		{
 			ParameterizedType? pt = interfaceType as ParameterizedType;
 			if (pt != null)
@@ -938,7 +938,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				&& (StandardImplicitConversion(a, b).IsValid || StandardImplicitConversion(b, a).IsValid);
 		}
 
-		IType FindMostEncompassedType(IEnumerable<IType> candidates)
+		IType? FindMostEncompassedType(IEnumerable<IType> candidates)
 		{
 			IType? best = null;
 			foreach (var current in candidates)
@@ -951,7 +951,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return best;
 		}
 
-		IType FindMostEncompassingType(IEnumerable<IType> candidates)
+		IType? FindMostEncompassingType(IEnumerable<IType> candidates)
 		{
 			IType? best = null;
 			foreach (var current in candidates)
@@ -1482,7 +1482,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <summary>
 		/// Unpacks the generic Task[T]. Returns null if the input is not Task[T].
 		/// </summary>
-		static IType UnpackTask(IType type)
+		static IType? UnpackTask(IType type)
 		{
 			ParameterizedType? pt = type as ParameterizedType;
 			if (pt != null && pt.TypeParameterCount == 1 && pt.Name == "Task" && pt.Namespace == "System.Threading.Tasks")

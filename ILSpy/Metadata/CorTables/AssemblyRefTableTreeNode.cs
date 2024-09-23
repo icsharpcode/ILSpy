@@ -89,7 +89,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int PublicKeyOrToken => MetadataTokens.GetHeapOffset(assemblyRef.PublicKeyOrToken);
 
-			public string PublicKeyOrTokenTooltip {
+			public string? PublicKeyOrTokenTooltip {
 				get {
 					if (assemblyRef.PublicKeyOrToken.IsNil)
 						return null;

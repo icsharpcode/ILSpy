@@ -227,7 +227,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					var v = i.Variable;
 					// if there is already a valid name for the variable slot, just use it
-					if (variableMapping.TryGetValue(v, out string name))
+					if (variableMapping.TryGetValue(v, out string? name))
 					{
 						v.Name = name;
 						continue;
@@ -463,7 +463,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return SplitName(proposedName, out _);
 		}
 
-		static string GetNameFromInstruction(ILInstruction inst)
+		static string? GetNameFromInstruction(ILInstruction inst)
 		{
 			switch (inst)
 			{
@@ -506,7 +506,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return null;
 		}
 
-		static string GetNameForArgument(ILInstruction parent, int i)
+		static string? GetNameForArgument(ILInstruction parent, int i)
 		{
 			switch (parent)
 			{
@@ -566,7 +566,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				type = NullableType.GetUnderlyingType(((TypeWithElementType)type).ElementType);
 			}
 
-			string name = type.Kind switch {
+			string? name = type.Kind switch {
 				TypeKind.Array => "array",
 				TypeKind.Pointer => "ptr",
 				TypeKind.TypeParameter => "val",
@@ -637,7 +637,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return name;
 		}
 
-		static string CleanUpVariableName(string name)
+		static string? CleanUpVariableName(string name)
 		{
 			// remove the backtick (generics)
 			int pos = name.IndexOf('`');

@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy
 		string openingBrackets = "([{";
 		string closingBrackets = ")]}";
 
-		public BracketSearchResult SearchBracket(IDocument document, int offset)
+		public BracketSearchResult? SearchBracket(IDocument document, int offset)
 		{
 			if (offset > 0)
 			{

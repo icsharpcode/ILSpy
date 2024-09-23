@@ -283,7 +283,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return false;
 		}
 
-		internal IAttribute GetAttribute(MetadataReader metadata, CustomAttributeHandleCollection customAttributes, KnownAttribute attribute, SymbolKind symbolKind)
+		internal IAttribute? GetAttribute(MetadataReader metadata, CustomAttributeHandleCollection customAttributes, KnownAttribute attribute, SymbolKind symbolKind)
 		{
 			Debug.Assert(attribute.IsCustomAttribute());
 			foreach (var h in customAttributes)

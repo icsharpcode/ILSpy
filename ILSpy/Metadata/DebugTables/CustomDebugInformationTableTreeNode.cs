@@ -243,7 +243,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			object rowDetails;
 
-			public object RowDetails {
+			public object? RowDetails {
 				get {
 					if (rowDetails != null)
 						return rowDetails;

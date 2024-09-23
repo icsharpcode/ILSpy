@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpy.Commands
 				&& GetSelectedCellContent(context.DataGrid, context.MousePosition) != null;
 		}
 
-		private string GetSelectedCellContent(DataGrid grid, Point position)
+		private string? GetSelectedCellContent(DataGrid grid, Point position)
 		{
 			position = grid.PointFromScreen(position);
 			var hit = VisualTreeHelper.HitTest(grid, position);

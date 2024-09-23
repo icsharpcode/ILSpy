@@ -311,7 +311,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// 3) otherwise (exit point unknown, heuristically extend loop): null
 		/// </returns>
 		/// <remarks>This method must not write to the Visited flags on the CFG.</remarks>
-		internal ControlFlowNode FindExitPoint(ControlFlowNode loopHead, IReadOnlyList<ControlFlowNode> naturalLoop)
+		internal ControlFlowNode? FindExitPoint(ControlFlowNode loopHead, IReadOnlyList<ControlFlowNode> naturalLoop)
 		{
 			bool hasReachableExit = HasReachableExit(loopHead);
 			if (!hasReachableExit)

@@ -175,7 +175,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Given 'ldloc ref_local' and 'ldloca target; stloc ref_local', returns the ldloca.
 		/// This function must return a non-null LdLoca for every use of a SupportedRefLocal.
 		/// </summary>
-		static LdLoca GetAddressLoadForRefLocalUse(LdLoc ldloc)
+		static LdLoca? GetAddressLoadForRefLocalUse(LdLoc ldloc)
 		{
 			if (!ldloc.Variable.IsSingleDefinition)
 				return null; // only single-definition variables can be supported ref locals

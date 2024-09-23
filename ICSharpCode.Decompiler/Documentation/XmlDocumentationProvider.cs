@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.Documentation
 				return false;
 			}
 
-			internal void Add(string key, string value)
+			internal void Add(string key, string? value)
 			{
 				entries[pos++] = new KeyValuePair<string, string>(key, value);
 				if (pos == entries.Length)
@@ -279,7 +279,7 @@ namespace ICSharpCode.Decompiler.Documentation
 						if (reader.LocalName == "member")
 						{
 							int pos = linePosMapper.GetPositionForLine(reader.LineNumber) + Math.Max(reader.LinePosition - 2, 0);
-							string memberAttr = reader.GetAttribute("name");
+							string? memberAttr = reader.GetAttribute("name");
 							if (memberAttr != null)
 								indexList.Add(new IndexEntry(GetHashCode(memberAttr), pos));
 							reader.Skip();
@@ -330,7 +330,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			return GetDocumentation(entity.GetIdString());
 		}
 
-		string GetDocumentation(string key, bool allowReload)
+		string? GetDocumentation(string key, bool allowReload)
 		{
 			int hashcode = GetHashCode(key);
 			var index = this.index; // read volatile field
@@ -347,7 +347,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			XmlDocumentationCache cache = this.cache;
 			lock (cache)
 			{
-				if (!cache.TryGet(key, out string val))
+				if (!cache.TryGet(key, out string? val))
 				{
 					try
 					{
@@ -376,7 +376,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			}
 		}
 
-		string ReloadAndGetDocumentation(string key)
+		string? ReloadAndGetDocumentation(string key)
 		{
 			try
 			{
@@ -407,7 +407,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		#endregion
 
 		#region Load / Read XML
-		string LoadDocumentation(string key, int positionInFile)
+		string? LoadDocumentation(string key, int positionInFile)
 		{
 			using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
 			{
@@ -420,7 +420,7 @@ namespace ICSharpCode.Decompiler.Documentation
 					{
 						if (r.NodeType == XmlNodeType.Element)
 						{
-							string memberAttr = r.GetAttribute("name");
+							string? memberAttr = r.GetAttribute("name");
 							if (memberAttr == key)
 							{
 								return r.ReadInnerXml();

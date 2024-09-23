@@ -103,7 +103,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Value => MetadataTokens.GetHeapOffset(customAttr.Value);
 
-			public string ValueTooltip {
+			public string? ValueTooltip {
 				get {
 					return null;
 				}

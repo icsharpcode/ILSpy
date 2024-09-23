@@ -192,7 +192,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return LazyInit.GetOrSet(ref this.internalsVisibleTo, result);
 		}
 
-		static string GetShortName(string fullAssemblyName)
+		static string? GetShortName(string fullAssemblyName)
 		{
 			if (fullAssemblyName == null)
 				return null;
@@ -217,7 +217,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		public ITypeDefinition GetDefinition(TypeDefinitionHandle handle)
+		public ITypeDefinition? GetDefinition(TypeDefinitionHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -233,7 +233,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return LazyInit.GetOrSet(ref typeDefs[row], typeDef);
 		}
 
-		public IField GetDefinition(FieldDefinitionHandle handle)
+		public IField? GetDefinition(FieldDefinitionHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -249,7 +249,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return LazyInit.GetOrSet(ref fieldDefs[row], field);
 		}
 
-		public IMethod GetDefinition(MethodDefinitionHandle handle)
+		public IMethod? GetDefinition(MethodDefinitionHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -266,7 +266,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return LazyInit.GetOrSet(ref methodDefs[row], method);
 		}
 
-		public IProperty GetDefinition(PropertyDefinitionHandle handle)
+		public IProperty? GetDefinition(PropertyDefinitionHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -283,7 +283,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return LazyInit.GetOrSet(ref propertyDefs[row], property);
 		}
 
-		public IEvent GetDefinition(EventDefinitionHandle handle)
+		public IEvent? GetDefinition(EventDefinitionHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -308,7 +308,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region Resolve Module
 
-		public IModule ResolveModule(AssemblyReferenceHandle handle)
+		public IModule? ResolveModule(AssemblyReferenceHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -332,7 +332,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return Compilation.FindModuleByReference(asmRef);
 		}
 
-		public IModule ResolveModule(ModuleReferenceHandle handle)
+		public IModule? ResolveModule(ModuleReferenceHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -348,7 +348,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return null;
 		}
 
-		public IModule GetDeclaringModule(TypeReferenceHandle handle)
+		public IModule? GetDeclaringModule(TypeReferenceHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -747,7 +747,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// * May return specialized members, where generics are involved.
 		/// * Other types of handles that don't correspond to TS entities, will return <c>null</c>.
 		/// </remarks>
-		public IEntity ResolveEntity(EntityHandle entityHandle, GenericContext context = default)
+		public IEntity? ResolveEntity(EntityHandle entityHandle, GenericContext context = default)
 		{
 			switch (entityHandle.Kind)
 			{
@@ -904,7 +904,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			return new UnknownType(typeName);
 
-			IModule ResolveModule(ExportedType type)
+			IModule? ResolveModule(ExportedType type)
 			{
 				switch (type.Implementation.Kind)
 				{

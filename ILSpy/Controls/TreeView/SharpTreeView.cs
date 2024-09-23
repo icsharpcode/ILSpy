@@ -420,7 +420,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			base.ScrollIntoView(node);
 		}
 
-		object OnFocusItem(object item)
+		object? OnFocusItem(object item)
 		{
 			FrameworkElement element = this.ItemContainerGenerator.ContainerFromItem(item) as FrameworkElement;
 			if (element != null)
@@ -531,7 +531,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			public int Index;
 		}
 
-		DropTarget GetDropTarget(SharpTreeViewItem item, DragEventArgs e)
+		DropTarget? GetDropTarget(SharpTreeViewItem item, DragEventArgs e)
 		{
 			var dropTargets = BuildDropTargets(item, e);
 			var y = e.GetPosition(item).Y;

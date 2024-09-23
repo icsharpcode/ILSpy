@@ -52,7 +52,7 @@ namespace ICSharpCode.ILSpy.TextView
 			return segment != null ? segment.StartOffset : -1;
 		}
 
-		public override VisualLineElement ConstructElement(int offset)
+		public override VisualLineElement? ConstructElement(int offset)
 		{
 			if (this.References == null)
 				return null;

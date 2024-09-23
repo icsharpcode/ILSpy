@@ -418,7 +418,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
+		public override ProjectId? DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			var module = assembly.GetMetadataFileOrNull();
 			if (module == null)
@@ -702,7 +702,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public override string GetEntityName(MetadataFile module, EntityHandle handle, bool fullName, bool omitGenerics)
+		public override string? GetEntityName(MetadataFile module, EntityHandle handle, bool fullName, bool omitGenerics)
 		{
 			MetadataReader metadata = module.Metadata;
 			switch (handle.Kind)

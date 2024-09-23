@@ -329,7 +329,7 @@ namespace LightJson
 		/// Gets this value as a String type.
 		/// </summary>
 		/// <value>This value as a String type.</value>
-		public string AsString {
+		public string? AsString {
 			get {
 				switch (this.Type)
 				{
@@ -354,7 +354,7 @@ namespace LightJson
 		/// Gets this value as an JsonObject.
 		/// </summary>
 		/// <value>This value as an JsonObject.</value>
-		public JsonObject AsJsonObject {
+		public JsonObject? AsJsonObject {
 			get {
 				return this.IsJsonObject
 					? (JsonObject)this.reference
@@ -366,7 +366,7 @@ namespace LightJson
 		/// Gets this value as an JsonArray.
 		/// </summary>
 		/// <value>This value as an JsonArray.</value>
-		public JsonArray AsJsonArray {
+		public JsonArray? AsJsonArray {
 			get {
 				return this.IsJsonArray
 					? (JsonArray)this.reference
@@ -397,7 +397,7 @@ namespace LightJson
 		/// Gets this (inner) value as a System.object.
 		/// </summary>
 		/// <value>This (inner) value as a System.object.</value>
-		public object AsObject {
+		public object? AsObject {
 			get {
 				switch (this.Type)
 				{
@@ -808,7 +808,7 @@ namespace LightJson
 			}
 
 			[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-			public JsonObject ObjectView {
+			public JsonObject? ObjectView {
 				get {
 					if (this.jsonValue.IsJsonObject)
 					{
@@ -822,7 +822,7 @@ namespace LightJson
 			}
 
 			[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-			public JsonArray ArrayView {
+			public JsonArray? ArrayView {
 				get {
 					if (this.jsonValue.IsJsonArray)
 					{

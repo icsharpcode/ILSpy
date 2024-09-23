@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Check if "condition ? trueInst : falseInst" can be simplified using the null-conditional operator.
 		/// Returns the replacement instruction, or null if no replacement is possible.
 		/// </summary>
-		internal ILInstruction Run(ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst)
+		internal ILInstruction? Run(ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst)
 		{
 			Debug.Assert(context.Settings.NullPropagation);
 			Debug.Assert(!condition.MatchLogicNot(out _), "Caller should pass in positive condition");
@@ -107,7 +107,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// testedVar != null ? nonNullInst : nullInst
 		/// </summary>
-		ILInstruction TryNullPropagation(ILVariable testedVar, ILInstruction nonNullInst, ILInstruction nullInst,
+		ILInstruction? TryNullPropagation(ILVariable testedVar, ILInstruction nonNullInst, ILInstruction nullInst,
 			Mode mode)
 		{
 			bool removedRewrapOrNullableCtor = false;

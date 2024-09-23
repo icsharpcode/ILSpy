@@ -102,7 +102,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int PermissionSet => MetadataTokens.GetHeapOffset(declSecAttr.PermissionSet);
 
-			public string PermissionSetTooltip {
+			public string? PermissionSetTooltip {
 				get {
 					return null;
 				}

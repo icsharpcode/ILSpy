@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </summary>
 		public bool IsPortableClassLibrary { get; }
 
-		static string GetTargetFrameworkMoniker(string frameworkIdentifier, int version)
+		static string? GetTargetFrameworkMoniker(string frameworkIdentifier, int version)
 		{
 			// Reference: https://docs.microsoft.com/en-us/dotnet/standard/frameworks
 			switch (frameworkIdentifier)

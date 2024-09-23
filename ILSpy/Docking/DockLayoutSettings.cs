@@ -77,7 +77,7 @@ namespace ICSharpCode.ILSpy.Docking
 			}
 		}
 
-		public XElement SaveAsXml()
+		public XElement? SaveAsXml()
 		{
 			try
 			{

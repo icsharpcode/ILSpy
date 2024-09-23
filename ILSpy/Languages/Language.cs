@@ -52,7 +52,7 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public abstract string FileExtension { get; }
 
-		public virtual string ProjectFileExtension {
+		public virtual string? ProjectFileExtension {
 			get { return null; }
 		}
 
@@ -107,7 +107,7 @@ namespace ICSharpCode.ILSpy
 			WriteCommentLine(output, nameSpace);
 		}
 
-		public virtual ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
+		public virtual ProjectId? DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, assembly.FileName);
 			var asm = assembly.GetMetadataFileOrNull();
@@ -478,7 +478,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// This should produce a string representation of the entity for search to match search strings against.
 		/// </summary>
-		public virtual string GetEntityName(MetadataFile module, EntityHandle handle, bool fullName, bool omitGenerics)
+		public virtual string? GetEntityName(MetadataFile module, EntityHandle handle, bool fullName, bool omitGenerics)
 		{
 			MetadataReader metadata = module.Metadata;
 			switch (handle.Kind)

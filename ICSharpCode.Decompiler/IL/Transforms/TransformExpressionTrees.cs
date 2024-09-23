@@ -459,7 +459,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!MatchArgumentList(invocation.Arguments[1], out var arguments))
 				arguments = new[] { invocation.Arguments[1] };
 
-			ILInstruction Convert()
+			ILInstruction? Convert()
 			{
 				Func<ILInstruction>[] toBeConverted = new Func<ILInstruction>[arguments.Count];
 				for (int i = 0; i < arguments.Count; i++)
@@ -683,7 +683,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return call.Arguments[0];
 		}
 
-		Func<ILInstruction>[] ConvertCallArguments(IList<ILInstruction> arguments, IMethod method)
+		Func<ILInstruction>[]? ConvertCallArguments(IList<ILInstruction> arguments, IMethod method)
 		{
 			var converted = new Func<ILInstruction>[arguments.Count];
 			Debug.Assert(arguments.Count == method.Parameters.Count);
@@ -1359,7 +1359,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return (null, SpecialType.UnknownType);
 		}
 
-		ILInstruction ConvertValue(ILInstruction value, ILInstruction context)
+		ILInstruction? ConvertValue(ILInstruction value, ILInstruction context)
 		{
 			switch (value)
 			{

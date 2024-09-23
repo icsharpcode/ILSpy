@@ -75,7 +75,7 @@ namespace ICSharpCode.ILSpy
 			return GetNamespace(context) != null;
 		}
 
-		string GetNamespace(TextViewContext context)
+		string? GetNamespace(TextViewContext context)
 		{
 			if (context.Reference?.Reference is IEntity entity)
 				return entity.Namespace;

@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			set { SetValue(TextBackgroundProperty, value); }
 		}
 
-		public SharpTreeNode Node {
+		public SharpTreeNode? Node {
 			get { return DataContext as SharpTreeNode; }
 		}
 
