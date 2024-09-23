@@ -127,7 +127,7 @@ namespace ICSharpCode.BamlDecompiler.Rewrite
 				return;
 			var connect = connectorInterface.GetMethods(m => m.Name == "Connect").SingleOrDefault();
 
-			IMethod connectMethod = null;
+			IMethod? connectMethod = null;
 			MethodDefinition connectMetadataEntry = default;
 			var module = ctx.TypeSystem.MainModule.MetadataFile;
 

@@ -128,7 +128,7 @@ namespace ICSharpCode.ILSpy.TextView
 			AddBlock(block);
 		}
 
-		public void AddXmlDocumentation(string xmlDocumentation, IEntity declaringEntity, Func<string, IEntity?> resolver)
+		public void AddXmlDocumentation(string xmlDocumentation, IEntity? declaringEntity, Func<string, IEntity?>? resolver)
 		{
 			if (xmlDocumentation == null)
 				return;
@@ -375,7 +375,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void AddSee(XmlDocumentationElement element)
 		{
-			IEntity referencedEntity = element.ReferencedEntity;
+			IEntity? referencedEntity = element.ReferencedEntity;
 			if (referencedEntity != null)
 			{
 				if (element.Children.Any())
@@ -397,7 +397,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			else if (element.GetAttribute("href") != null)
 			{
-				Uri uri;
+				Uri? uri;
 				if (Uri.TryCreate(element.GetAttribute("href"), UriKind.Absolute, out uri))
 				{
 					if (element.Children.Any())

@@ -55,7 +55,7 @@ namespace ICSharpCode.ILSpy
 						if (!asm.HasLoadError)
 						{
 							Stopwatch w = Stopwatch.StartNew();
-							Exception exception = null;
+							Exception? exception = null;
 							using (var writer = new System.IO.StreamWriter("c:\\temp\\decompiled\\" + asm.ShortName + ".cs"))
 							{
 								try

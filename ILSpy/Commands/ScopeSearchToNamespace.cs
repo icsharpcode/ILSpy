@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy
 		public void Execute(TextViewContext context)
 		{
 			string ns = GetNamespace(context);
-			string searchTerm = searchPane.SearchTerm;
+			string? searchTerm = searchPane.SearchTerm;
 			string[] args = CommandLineTools.CommandLineToArgumentArray(searchTerm);
 			bool replaced = false;
 			for (int i = 0; i < args.Length; i++)

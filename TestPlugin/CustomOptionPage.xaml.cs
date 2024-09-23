@@ -50,7 +50,7 @@ namespace TestPlugin
 
 			// Replace the existing section in the settings file, or add a new section,
 			// if required.
-			XElement existingElement = root.Element(ns + "CustomOptions");
+			XElement? existingElement = root.Element(ns + "CustomOptions");
 			if (existingElement != null)
 				existingElement.ReplaceWith(section);
 			else

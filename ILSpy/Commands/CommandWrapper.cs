@@ -32,7 +32,7 @@ namespace ICSharpCode.ILSpy
 
 		public static ICommand Unwrap(ICommand command)
 		{
-			CommandWrapper w = command as CommandWrapper;
+			CommandWrapper? w = command as CommandWrapper;
 			if (w != null)
 				return w.wrappedCommand;
 			else

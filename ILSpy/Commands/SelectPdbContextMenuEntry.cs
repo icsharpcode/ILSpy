@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpy
 				await assembly.LoadDebugInfo(dlg.FileName);
 			}
 
-			var node = (AssemblyTreeNode)MainWindow.Instance.FindNodeByPath(new[] { assembly.FileName }, true);
+			var node = (AssemblyTreeNode?)MainWindow.Instance.FindNodeByPath(new[] { assembly.FileName }, true);
 			node.UpdateToolTip();
 			MainWindow.Instance.SelectNode(node);
 			MainWindow.Instance.RefreshDecompiledView();

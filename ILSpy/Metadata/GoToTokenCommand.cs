@@ -51,7 +51,7 @@ namespace ICSharpCode.ILSpy.Commands
 			return context.DataGrid?.Name == "MetadataView" && GetSelectedToken(context.DataGrid, out _) != null;
 		}
 
-		private int? GetSelectedToken(DataGrid grid, out MetadataFile module)
+		private int? GetSelectedToken(DataGrid grid, out MetadataFile? module)
 		{
 			module = null;
 			if (grid == null)
@@ -75,7 +75,7 @@ namespace ICSharpCode.ILSpy.Commands
 	{
 		public void Execute(TextViewContext context)
 		{
-			string content = GetSelectedCellContent(context.DataGrid, context.MousePosition);
+			string? content = GetSelectedCellContent(context.DataGrid, context.MousePosition);
 			Clipboard.SetText(content);
 		}
 

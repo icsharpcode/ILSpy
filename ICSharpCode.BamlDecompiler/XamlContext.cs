@@ -143,7 +143,7 @@ namespace ICSharpCode.BamlDecompiler
 
 			XamlType type;
 			string name;
-			IMember member;
+			IMember? member;
 
 			if (id > 0x7fff)
 			{

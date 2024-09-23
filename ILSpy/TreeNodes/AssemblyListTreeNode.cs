@@ -98,7 +98,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Drop(IPlatformDragEventArgs e, int index)
 		{
-			string[] files = e.Data.GetData(AssemblyTreeNode.DataFormat) as string[];
+			string[]? files = e.Data.GetData(AssemblyTreeNode.DataFormat) as string[];
 			if (files == null)
 				files = e.Data.GetData(DataFormats.FileDrop) as string[];
 			if (files != null)
@@ -225,7 +225,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			var declaringType = def.DeclaringTypeDefinition;
 			if (declaringType != null)
 			{
-				TypeTreeNode decl = FindTypeNode(declaringType);
+				TypeTreeNode? decl = FindTypeNode(declaringType);
 				if (decl != null)
 				{
 					decl.EnsureLazyChildren();
@@ -249,12 +249,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public ILSpyTreeNode? FindMethodNode(IMethod def)
 		{
-			TypeTreeNode typeNode = FindTypeNode(def.DeclaringTypeDefinition);
+			TypeTreeNode? typeNode = FindTypeNode(def.DeclaringTypeDefinition);
 			if (typeNode == null)
 				return null;
 			// method might be an accessor, must look for parent node
-			ILSpyTreeNode parentNode = typeNode;
-			MethodTreeNode methodNode;
+			ILSpyTreeNode? parentNode = typeNode;
+			MethodTreeNode? methodNode;
 			parentNode.EnsureLazyChildren();
 			switch (def.AccessorOwner)
 			{
@@ -290,7 +290,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public FieldTreeNode? FindFieldNode(IField def)
 		{
-			TypeTreeNode typeNode = FindTypeNode(def.DeclaringTypeDefinition);
+			TypeTreeNode? typeNode = FindTypeNode(def.DeclaringTypeDefinition);
 			if (typeNode == null)
 				return null;
 			typeNode.EnsureLazyChildren();
@@ -303,7 +303,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public PropertyTreeNode? FindPropertyNode(IProperty def)
 		{
-			TypeTreeNode typeNode = FindTypeNode(def.DeclaringTypeDefinition);
+			TypeTreeNode? typeNode = FindTypeNode(def.DeclaringTypeDefinition);
 			if (typeNode == null)
 				return null;
 			typeNode.EnsureLazyChildren();
@@ -316,7 +316,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public EventTreeNode? FindEventNode(IEvent def)
 		{
-			TypeTreeNode typeNode = FindTypeNode(def.DeclaringTypeDefinition);
+			TypeTreeNode? typeNode = FindTypeNode(def.DeclaringTypeDefinition);
 			if (typeNode == null)
 				return null;
 			typeNode.EnsureLazyChildren();

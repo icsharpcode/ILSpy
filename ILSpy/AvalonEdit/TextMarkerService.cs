@@ -102,7 +102,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 		{
 			if (marker == null)
 				throw new ArgumentNullException(nameof(marker));
-			TextMarker m = marker as TextMarker;
+			TextMarker? m = marker as TextMarker;
 			if (markers != null && markers.Remove(m))
 			{
 				Redraw(m);
@@ -131,7 +131,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 			int lineEnd = lineStart + line.Length;
 			foreach (TextMarker marker in markers.FindOverlappingSegments(lineStart, line.Length))
 			{
-				Brush foregroundBrush = null;
+				Brush? foregroundBrush = null;
 				if (marker.ForegroundColor != null)
 				{
 					foregroundBrush = new SolidColorBrush(marker.ForegroundColor.Value);

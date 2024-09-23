@@ -71,7 +71,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			var sizeInBytesText = sizeInBytes == null ? "" : ", " + sizeInBytes + " bytes";
 			language.WriteCommentLine(output, $"{Resource.Name} ({Resource.ResourceType}, {Resource.Attributes}{sizeInBytesText})");
 
-			ISmartTextOutput smartOutput = output as ISmartTextOutput;
+			ISmartTextOutput? smartOutput = output as ISmartTextOutput;
 			if (smartOutput != null)
 			{
 				smartOutput.AddButton(Images.Save, Resources.Save, delegate { Save(Docking.DockWorkspace.Instance.ActiveTabPage); });
@@ -81,7 +81,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool View(TabPageModel tabPage)
 		{
-			Stream s = Resource.TryOpenStream();
+			Stream? s = Resource.TryOpenStream();
 			if (s != null && s.Length < DecompilerTextView.DefaultOutputLengthLimit)
 			{
 				s.Position = 0;
@@ -107,7 +107,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool Save(TabPageModel tabPage)
 		{
-			Stream s = Resource.TryOpenStream();
+			Stream? s = Resource.TryOpenStream();
 			if (s == null)
 				return false;
 			SaveFileDialog dlg = new SaveFileDialog();

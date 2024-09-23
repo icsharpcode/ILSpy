@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpy
 		{
 			XElement doc = spySettings["SessionSettings"];
 
-			XElement filterSettings = doc.Element("FilterSettings");
+			XElement? filterSettings = doc.Element("FilterSettings");
 			if (filterSettings == null)
 				filterSettings = new XElement("FilterSettings");
 
@@ -52,7 +52,7 @@ namespace ICSharpCode.ILSpy
 
 			this.ActiveAssemblyList = (string)doc.Element("ActiveAssemblyList");
 
-			XElement activeTreeViewPath = doc.Element("ActiveTreeViewPath");
+			XElement? activeTreeViewPath = doc.Element("ActiveTreeViewPath");
 			if (activeTreeViewPath != null)
 			{
 				this.ActiveTreeViewPath = activeTreeViewPath.Elements().Select(e => Unescape((string)e)).ToArray();
@@ -63,7 +63,7 @@ namespace ICSharpCode.ILSpy
 			this.WindowBounds = FromString((string)doc.Element("WindowBounds"), DefaultWindowBounds);
 			this.SelectedSearchMode = FromString((string)doc.Element("SelectedSearchMode"), SearchMode.TypeAndMember);
 			this.Theme = FromString((string)doc.Element(nameof(Theme)), ThemeManager.Current.DefaultTheme);
-			string currentCulture = (string)doc.Element(nameof(CurrentCulture));
+			string? currentCulture = (string)doc.Element(nameof(CurrentCulture));
 			this.CurrentCulture = string.IsNullOrEmpty(currentCulture) ? null : currentCulture;
 
 			this.DockLayout = new DockLayoutSettings(doc.Element("DockLayout"));
@@ -108,7 +108,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public string ActiveAssemblyList {
+		public string? ActiveAssemblyList {
 			get => activeAssemblyList;
 			set {
 				if (value != null && value != activeAssemblyList)
@@ -166,7 +166,7 @@ namespace ICSharpCode.ILSpy
 		}
 
 		static Regex regex = new Regex("\\\\x(?<num>[0-9A-f]{4})");
-		private string activeAssemblyList;
+		private string? activeAssemblyList;
 
 		static string Escape(string p)
 		{
@@ -186,7 +186,7 @@ namespace ICSharpCode.ILSpy
 			return regex.Replace(p, m => ((char)int.Parse(m.Groups["num"].Value, NumberStyles.HexNumber)).ToString());
 		}
 
-		static T FromString<T>(string s, T defaultValue)
+		static T FromString<T>(string? s, T defaultValue)
 		{
 			if (s == null)
 				return defaultValue;

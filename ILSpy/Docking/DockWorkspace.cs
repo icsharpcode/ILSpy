@@ -84,7 +84,7 @@ namespace ICSharpCode.ILSpy.Docking
 
 		private void Documents_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
-			var collection = (PaneCollection<TabPageModel>)sender;
+			var collection = (PaneCollection<TabPageModel>?)sender;
 			if (e.Action == NotifyCollectionChangedAction.Add)
 			{
 				ActiveTabPage = e.NewItems?[0] as TabPageModel;
@@ -246,7 +246,7 @@ namespace ICSharpCode.ILSpy.Docking
 			{
 				var anchorable = layout.Descendents().OfType<LayoutAnchorable>().FirstOrDefault(x => x.Content is T)
 					?? layout.Hidden.First(x => x.Content is T);
-				return (LayoutAnchorablePane)previousContainerProperty.GetValue(anchorable) ?? (LayoutAnchorablePane)anchorable.Parent;
+				return (LayoutAnchorablePane?)previousContainerProperty.GetValue(anchorable) ?? (LayoutAnchorablePane)anchorable.Parent;
 			}
 		}
 

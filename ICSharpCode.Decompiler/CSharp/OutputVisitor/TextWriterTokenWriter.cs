@@ -499,7 +499,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StringBuilder sb = new StringBuilder();
 			foreach (char ch in str)
 			{
-				string s = ch == '"' ? "\\\"" : ConvertChar(ch);
+				string? s = ch == '"' ? "\\\"" : ConvertChar(ch);
 				if (s != null)
 					sb.Append(s);
 				else

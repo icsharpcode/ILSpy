@@ -248,7 +248,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			typeSystem = LoadedAssembly.GetTypeSystemOrNull();
 			var assembly = (MetadataModule)typeSystem.MainModule;
 			this.Children.Add(new MetadataTreeNode(module, Resources.Metadata));
-			Decompiler.DebugInfo.IDebugInfoProvider debugInfo = LoadedAssembly.GetDebugInfoOrNull();
+			Decompiler.DebugInfo.IDebugInfoProvider? debugInfo = LoadedAssembly.GetDebugInfoOrNull();
 			if (debugInfo is PortableDebugInfoProvider ppdb
 				&& ppdb.GetMetadataReader() is System.Reflection.Metadata.MetadataReader reader)
 			{
@@ -280,7 +280,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 			NamespaceTreeNode GetOrCreateNamespaceTreeNode(string @namespace)
 			{
-				if (!namespaces.TryGetValue(@namespace, out NamespaceTreeNode ns))
+				if (!namespaces.TryGetValue(@namespace, out NamespaceTreeNode? ns))
 				{
 					if (useNestedStructure)
 					{
@@ -346,7 +346,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 			NamespaceTreeNode GetOrCreateNamespaceTreeNode(string @namespace)
 			{
-				if (!namespaces.TryGetValue(@namespace, out NamespaceTreeNode ns))
+				if (!namespaces.TryGetValue(@namespace, out NamespaceTreeNode? ns))
 				{
 					if (useNestedStructure)
 					{
@@ -392,7 +392,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (type == null)
 				return null;
 			EnsureLazyChildren();
-			TypeTreeNode node;
+			TypeTreeNode? node;
 			if (typeDict.TryGetValue((TypeDefinitionHandle)type.MetadataToken, out node))
 				return node;
 			else

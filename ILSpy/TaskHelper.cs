@@ -174,7 +174,7 @@ namespace ICSharpCode.ILSpy
 			return task.ContinueWith(t => {
 				if (t.IsFaulted)
 				{
-					Exception ex = t.Exception;
+					Exception? ex = t.Exception;
 					while (ex is AggregateException)
 						ex = ex.InnerException;
 					if (ex is TException)

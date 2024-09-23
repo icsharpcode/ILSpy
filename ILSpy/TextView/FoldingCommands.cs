@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			if (null == context.TextView)
 				return;
-			FoldingManager foldingManager = context.TextView.FoldingManager;
+			FoldingManager? foldingManager = context.TextView.FoldingManager;
 			if (null == foldingManager)
 				return;
 			bool doFold = true;
@@ -82,7 +82,7 @@ namespace ICSharpCode.ILSpy.TextView
 			if (null == textView)
 				return;
 			var editor = textView.textEditor;
-			FoldingManager foldingManager = context.TextView.FoldingManager;
+			FoldingManager? foldingManager = context.TextView.FoldingManager;
 			if (null == foldingManager)
 				return;
 			// TODO: or use Caret if position is not given?
@@ -91,7 +91,7 @@ namespace ICSharpCode.ILSpy.TextView
 				return;
 			TextViewPosition pos = posBox.Value;
 			// look for folding on this line:
-			FoldingSection folding = foldingManager.GetNextFolding(editor.Document.GetOffset(pos.Line, 1));
+			FoldingSection? folding = foldingManager.GetNextFolding(editor.Document.GetOffset(pos.Line, 1));
 			if (folding == null || editor.Document.GetLineByOffset(folding.StartOffset).LineNumber != pos.Line)
 			{
 				// no folding found on current line: find innermost folding containing the mouse position

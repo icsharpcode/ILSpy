@@ -137,7 +137,7 @@ namespace ICSharpCode.ILSpy.Controls
 		{
 			base.OnApplyTemplate();
 
-			Border iconBorder = GetTemplateChild("PART_IconBorder") as Border;
+			Border? iconBorder = GetTemplateChild("PART_IconBorder") as Border;
 			if (iconBorder != null)
 			{
 				iconBorder.MouseLeftButtonUp += IconBorder_MouseLeftButtonUp;

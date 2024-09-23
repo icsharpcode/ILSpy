@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy.Updates
 			var bands = doc.Root.Elements("band");
 			var currentBand = bands.FirstOrDefault(b => (string)b.Attribute("id") == band) ?? bands.First();
 			Version version = new Version((string)currentBand.Element("latestVersion"));
-			string url = (string)currentBand.Element("downloadUrl");
+			string? url = (string)currentBand.Element("downloadUrl");
 			if (!(url.StartsWith("http://", StringComparison.Ordinal) || url.StartsWith("https://", StringComparison.Ordinal)))
 				url = null; // don't accept non-urls
 

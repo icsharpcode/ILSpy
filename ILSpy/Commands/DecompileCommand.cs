@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy.Commands
 
 		public void Execute(TextViewContext context)
 		{
-			IEntity selection = null;
+			IEntity? selection = null;
 			if (context.SelectedTreeNodes?[0] is IMemberTreeNode node)
 			{
 				selection = node.Member;

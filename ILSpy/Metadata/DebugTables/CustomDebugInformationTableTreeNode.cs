@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			view.RowDetailsTemplateSelector = new CustomDebugInformationDetailsTemplateSelector();
 
 			var list = new List<CustomDebugInformationEntry>();
-			CustomDebugInformationEntry scrollTargetEntry = default;
+			CustomDebugInformationEntry? scrollTargetEntry = default;
 
 			foreach (var row in metadataFile.Metadata.CustomDebugInformation)
 			{

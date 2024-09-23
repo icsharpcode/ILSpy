@@ -67,14 +67,14 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				}
 			}
 
-			Dictionary<ulong, UnwindCode> unwindInfo = null;
+			Dictionary<ulong, UnwindCode>? unwindInfo = null;
 			if (ReadyToRunOptions.GetIsShowUnwindInfo(null) && bitness == 64)
 			{
 				unwindInfo = WriteUnwindInfo();
 			}
 
 			bool isShowDebugInfo = ReadyToRunOptions.GetIsShowDebugInfo(null);
-			DebugInfoHelper debugInfo = null;
+			DebugInfoHelper? debugInfo = null;
 			if (isShowDebugInfo)
 			{
 				debugInfo = WriteDebugInfo();
@@ -98,7 +98,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 
 			string disassemblyFormat = ReadyToRunOptions.GetDisassemblyFormat(null);
-			Formatter formatter = null;
+			Formatter? formatter = null;
 			if (disassemblyFormat.Equals(ReadyToRunOptions.intel))
 			{
 				formatter = new NasmFormatter();

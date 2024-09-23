@@ -90,11 +90,11 @@ namespace ICSharpCode.ILSpy
 				plugin.Write(output);
 			output.WriteLine();
 			output.Address = new Uri("resource://AboutPage");
-			using (Stream s = typeof(AboutPage).Assembly.GetManifestResourceStream(typeof(AboutPage), Resources.ILSpyAboutPageTxt))
+			using (Stream? s = typeof(AboutPage).Assembly.GetManifestResourceStream(typeof(AboutPage), Resources.ILSpyAboutPageTxt))
 			{
 				using (StreamReader r = new StreamReader(s))
 				{
-					string line;
+					string? line;
 					while ((line = r.ReadLine()) != null)
 					{
 						output.WriteLine(line);

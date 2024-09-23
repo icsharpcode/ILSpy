@@ -318,7 +318,7 @@ namespace ICSharpCode.ILSpy
 			{
 				return null;
 			}
-			string value = Properties.Resources.ResourceManager.GetString(key);
+			string? value = Properties.Resources.ResourceManager.GetString(key);
 			if (!string.IsNullOrEmpty(value))
 			{
 				return value;
@@ -659,13 +659,13 @@ namespace ICSharpCode.ILSpy
 					string namespaceName = navigateTo.Substring(2);
 					foreach (LoadedAssembly asm in relevantAssemblies)
 					{
-						AssemblyTreeNode asmNode = assemblyListTreeNode.FindAssemblyNode(asm);
+						AssemblyTreeNode? asmNode = assemblyListTreeNode.FindAssemblyNode(asm);
 						if (asmNode != null)
 						{
 							// FindNamespaceNode() blocks the UI if the assembly is not yet loaded,
 							// so use an async wait instead.
 							await asm.GetMetadataFileAsync().Catch<Exception>(ex => { });
-							NamespaceTreeNode nsNode = asmNode.FindNamespaceNode(namespaceName);
+							NamespaceTreeNode? nsNode = asmNode.FindNamespaceNode(namespaceName);
 							if (nsNode != null)
 							{
 								found = true;
@@ -686,7 +686,7 @@ namespace ICSharpCode.ILSpy
 				}
 				else
 				{
-					IEntity mr = await Task.Run(() => FindEntityInRelevantAssemblies(navigateTo, relevantAssemblies));
+					IEntity? mr = await Task.Run(() => FindEntityInRelevantAssemblies(navigateTo, relevantAssemblies));
 					// Make sure we wait for assemblies being loaded...
 					// BeginInvoke in LoadedAssembly.LookupReferencedAssemblyInternal
 					await Dispatcher.InvokeAsync(delegate { }, DispatcherPriority.Normal);
@@ -710,7 +710,7 @@ namespace ICSharpCode.ILSpy
 			{
 				// NavigateTo == null and an assembly was given on the command-line:
 				// Select the newly loaded assembly
-				AssemblyTreeNode asmNode = assemblyListTreeNode.FindAssemblyNode(relevantAssemblies[0]);
+				AssemblyTreeNode? asmNode = assemblyListTreeNode.FindAssemblyNode(relevantAssemblies[0]);
 				if (asmNode != null && AssemblyTreeView.SelectedItem == initialSelection)
 				{
 					SelectNode(asmNode);
@@ -718,7 +718,7 @@ namespace ICSharpCode.ILSpy
 			}
 			else if (spySettings != null)
 			{
-				SharpTreeNode node = null;
+				SharpTreeNode? node = null;
 				if (activeTreeViewPath?.Length > 0)
 				{
 					foreach (var asm in CurrentAssemblyList.GetAssemblies())
@@ -772,7 +772,7 @@ namespace ICSharpCode.ILSpy
 						: new SimpleCompilation((PEFile)module, MinimalCorlib.Instance);
 					return memberRef == null
 						? typeRef.Resolve(new SimpleTypeResolveContext(compilation)) as ITypeDefinition
-						: (IEntity)memberRef.Resolve(new SimpleTypeResolveContext(compilation));
+						: (IEntity?)memberRef.Resolve(new SimpleTypeResolveContext(compilation));
 				}
 			}
 			return null;
@@ -875,7 +875,7 @@ namespace ICSharpCode.ILSpy
 
 		public async Task ShowMessageIfUpdatesAvailableAsync(ILSpySettings spySettings, bool forceCheck = false)
 		{
-			string downloadUrl;
+			string? downloadUrl;
 			if (forceCheck)
 			{
 				downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesAsync(spySettings);
@@ -903,12 +903,12 @@ namespace ICSharpCode.ILSpy
 			else
 			{
 				updatePanel.Visibility = Visibility.Collapsed;
-				string downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesAsync(ILSpySettings.Load());
+				string? downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesAsync(ILSpySettings.Load());
 				AdjustUpdateUIAfterCheck(downloadUrl, true);
 			}
 		}
 
-		void AdjustUpdateUIAfterCheck(string downloadUrl, bool displayMessage)
+		void AdjustUpdateUIAfterCheck(string? downloadUrl, bool displayMessage)
 		{
 			updateAvailableDownloadUrl = downloadUrl;
 			updatePanel.Visibility = displayMessage ? Visibility.Visible : Visibility.Collapsed;
@@ -1113,8 +1113,8 @@ namespace ICSharpCode.ILSpy
 		{
 			if (path == null)
 				return null;
-			SharpTreeNode node = AssemblyTreeView.Root;
-			SharpTreeNode bestMatch = node;
+			SharpTreeNode? node = AssemblyTreeView.Root;
+			SharpTreeNode? bestMatch = node;
 			foreach (var element in path)
 			{
 				if (node == null)
@@ -1237,7 +1237,7 @@ namespace ICSharpCode.ILSpy
 					}
 					break;
 				default:
-					ILSpyTreeNode treeNode = FindTreeNode(reference);
+					ILSpyTreeNode? treeNode = FindTreeNode(reference);
 					if (treeNode != null)
 						SelectNode(treeNode, inNewTabPage);
 					break;
@@ -1301,9 +1301,9 @@ namespace ICSharpCode.ILSpy
 			LoadAssemblies(fileNames, focusNode: focusNode);
 		}
 
-		void LoadAssemblies(IEnumerable<string> fileNames, List<LoadedAssembly> loadedAssemblies = null, bool focusNode = true)
+		void LoadAssemblies(IEnumerable<string> fileNames, List<LoadedAssembly>? loadedAssemblies = null, bool focusNode = true)
 		{
-			SharpTreeNode lastNode = null;
+			SharpTreeNode? lastNode = null;
 			foreach (string file in fileNames)
 			{
 				var asm = assemblyList.OpenAssembly(file);
@@ -1367,7 +1367,7 @@ namespace ICSharpCode.ILSpy
 
 		void TreeView_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
-			DecompilerTextViewState state = null;
+			DecompilerTextViewState? state = null;
 			if (refreshInProgress || changingActiveTab)
 			{
 				state = DockWorkspace.Instance.ActiveTabPage.GetState() as DecompilerTextViewState;
@@ -1385,7 +1385,7 @@ namespace ICSharpCode.ILSpy
 		Task decompilationTask;
 		bool ignoreDecompilationRequests;
 
-		void DecompileSelectedNodes(DecompilerTextViewState newState = null, bool recordHistory = true)
+		void DecompileSelectedNodes(DecompilerTextViewState? newState = null, bool recordHistory = true)
 		{
 			if (ignoreDecompilationRequests)
 				return;
@@ -1406,7 +1406,7 @@ namespace ICSharpCode.ILSpy
 
 			if (AssemblyTreeView.SelectedItems.Count == 1)
 			{
-				ILSpyTreeNode node = AssemblyTreeView.SelectedItem as ILSpyTreeNode;
+				ILSpyTreeNode? node = AssemblyTreeView.SelectedItem as ILSpyTreeNode;
 				if (node != null && node.View(DockWorkspace.Instance.ActiveTabPage))
 					return;
 			}
@@ -1533,11 +1533,11 @@ namespace ICSharpCode.ILSpy
 					Title = e.Uri.AbsolutePath,
 					EnableHyperlinks = true
 				};
-				using (Stream s = typeof(App).Assembly.GetManifestResourceStream(typeof(App), e.Uri.AbsolutePath))
+				using (Stream? s = typeof(App).Assembly.GetManifestResourceStream(typeof(App), e.Uri.AbsolutePath))
 				{
 					using (StreamReader r = new StreamReader(s))
 					{
-						string line;
+						string? line;
 						while ((line = r.ReadLine()) != null)
 						{
 							output.Write(line);

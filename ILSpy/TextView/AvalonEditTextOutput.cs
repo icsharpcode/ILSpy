@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy.TextView
 	/// </summary>
 	public sealed class ReferenceSegment : TextSegment
 	{
-		public object Reference;
+		public object? Reference;
 		public bool IsLocal;
 		public bool IsDefinition;
 	}

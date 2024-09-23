@@ -116,7 +116,7 @@ namespace ICSharpCode.BamlDecompiler.Baml
 
 		private IModule FindMatchingReference(AssemblyNameReference name)
 		{
-			IModule bestMatch = null;
+			IModule? bestMatch = null;
 			foreach (var module in TypeSystem.ReferencedModules)
 			{
 				if (module.AssemblyName == name.Name)

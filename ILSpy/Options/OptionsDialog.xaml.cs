@@ -63,7 +63,7 @@ namespace ICSharpCode.ILSpy.Options
 
 				tabControl.Items.Add(tabItem);
 
-				IOptionPage page = optionPage.Value as IOptionPage;
+				IOptionPage? page = optionPage.Value as IOptionPage;
 				if (page != null)
 					page.Load(settings);
 			}
@@ -75,7 +75,7 @@ namespace ICSharpCode.ILSpy.Options
 				delegate (XElement root) {
 					foreach (var optionPage in optionPages)
 					{
-						IOptionPage page = optionPage.Value as IOptionPage;
+						IOptionPage? page = optionPage.Value as IOptionPage;
 						if (page != null)
 							page.Save(root);
 					}

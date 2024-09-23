@@ -92,7 +92,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string Name => metadataFile.Metadata.GetString(eventDef.Name);
 
-			IEntity IMemberTreeNode.Member {
+			IEntity? IMemberTreeNode.Member {
 				get {
 					return ((MetadataModule)metadataFile.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule)?.GetDefinition(handle);
 				}

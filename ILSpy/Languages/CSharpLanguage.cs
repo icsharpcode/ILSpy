@@ -95,7 +95,7 @@ namespace ICSharpCode.ILSpy
 			get { return ".csproj"; }
 		}
 
-		IReadOnlyList<LanguageVersion> versions;
+		IReadOnlyList<LanguageVersion>? versions;
 
 		public override IReadOnlyList<LanguageVersion> LanguageVersions {
 			get {
@@ -151,7 +151,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
-			MetadataFile assembly = method.ParentModule.MetadataFile;
+			MetadataFile? assembly = method.ParentModule.MetadataFile;
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
@@ -182,7 +182,7 @@ namespace ICSharpCode.ILSpy
 
 			public void Run(AstNode rootNode, TransformContext context)
 			{
-				ConstructorDeclaration ctorDecl = null;
+				ConstructorDeclaration? ctorDecl = null;
 				foreach (var node in rootNode.Children)
 				{
 					switch (node)
@@ -247,7 +247,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void DecompileProperty(IProperty property, ITextOutput output, DecompilationOptions options)
 		{
-			MetadataFile assembly = property.ParentModule.MetadataFile;
+			MetadataFile? assembly = property.ParentModule.MetadataFile;
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
@@ -258,7 +258,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
 		{
-			MetadataFile assembly = field.ParentModule.MetadataFile;
+			MetadataFile? assembly = field.ParentModule.MetadataFile;
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
@@ -348,7 +348,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
-			MetadataFile assembly = type.ParentModule.MetadataFile;
+			MetadataFile? assembly = type.ParentModule.MetadataFile;
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
@@ -380,8 +380,8 @@ namespace ICSharpCode.ILSpy
 			AddWarningMessage(module, output, line1);
 		}
 
-		void AddWarningMessage(MetadataFile module, ITextOutput output, string line1, string line2 = null,
-			string buttonText = null, System.Windows.Media.ImageSource buttonImage = null, RoutedEventHandler buttonClickHandler = null)
+		void AddWarningMessage(MetadataFile module, ITextOutput output, string line1, string? line2 = null,
+			string? buttonText = null, System.Windows.Media.ImageSource? buttonImage = null, RoutedEventHandler? buttonClickHandler = null)
 		{
 			if (output is ISmartTextOutput fancyOutput)
 			{
@@ -775,7 +775,7 @@ namespace ICSharpCode.ILSpy
 
 		public override bool ShowMember(IEntity member)
 		{
-			MetadataFile assembly = member.ParentModule.MetadataFile;
+			MetadataFile? assembly = member.ParentModule?.MetadataFile;
 			return showAllMembers || !CSharpDecompiler.MemberIsHidden(assembly, member.MetadataToken, SettingsService.Instance.DecompilerSettings);
 		}
 

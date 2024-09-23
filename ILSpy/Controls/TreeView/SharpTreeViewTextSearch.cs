@@ -116,7 +116,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 				var item = (SharpTreeNode)treeView.Items[i];
 				if (item != null && item.Text != null)
 				{
-					string text = item.Text.ToString();
+					string text = item.Text.ToString() ?? "";
 					if (text.StartsWith(needle, comparisonType))
 					{
 						charWasUsed = true;

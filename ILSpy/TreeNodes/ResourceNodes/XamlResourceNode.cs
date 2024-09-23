@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.Xaml
 		public override bool View(TabPageModel tabPage)
 		{
 			AvalonEditTextOutput output = new AvalonEditTextOutput();
-			IHighlightingDefinition highlighting = null;
+			IHighlightingDefinition? highlighting = null;
 
 			tabPage.ShowTextView(textView => textView.RunWithCancellation(
 				token => Task.Factory.StartNew(

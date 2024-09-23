@@ -150,12 +150,12 @@ namespace ICSharpCode.ILSpy
 			return image;
 		}
 
-		public static Drawing LoadDrawingGroup(object part, string icon)
+		public static Drawing LoadDrawingGroup(object? part, string icon)
 		{
 			return (Drawing)Application.LoadComponent(GetUri(part, icon + ".xaml", absolute: false));
 		}
 
-		private static Uri GetUri(object part, string icon, bool absolute = true)
+		private static Uri GetUri(object? part, string icon, bool absolute = true)
 		{
 			Uri uri;
 			var assembly = part?.GetType().Assembly;
@@ -212,15 +212,15 @@ namespace ICSharpCode.ILSpy
 				return memberIconCache.GetIcon(icon, overlay, isStatic);
 		}
 
-		private static ImageSource GetIcon(string baseImage, string overlay = null, bool isStatic = false)
+		private static ImageSource GetIcon(string baseImage, string? overlay = null, bool isStatic = false)
 		{
 			ImageSource baseImageSource = Load(baseImage);
-			ImageSource overlayImageSource = overlay != null ? Load(overlay) : null;
+			ImageSource? overlayImageSource = overlay != null ? Load(overlay) : null;
 
 			return CreateOverlayImage(baseImageSource, overlayImageSource, isStatic);
 		}
 
-		private static ImageSource CreateOverlayImage(ImageSource baseImage, ImageSource overlay, bool isStatic)
+		private static ImageSource CreateOverlayImage(ImageSource baseImage, ImageSource? overlay, bool isStatic)
 		{
 			var group = new DrawingGroup();
 
@@ -391,16 +391,16 @@ namespace ICSharpCode.ILSpy
 			private ImageSource BuildMemberIcon(T icon, AccessOverlayIcon overlay, bool isStatic)
 			{
 				ImageSource baseImage = GetBaseImage(icon);
-				ImageSource overlayImage = GetOverlayImage(overlay);
+				ImageSource? overlayImage = GetOverlayImage(overlay);
 
 				return CreateOverlayImage(baseImage, overlayImage, isStatic);
 			}
 
 			protected abstract ImageSource GetBaseImage(T icon);
 
-			private static ImageSource GetOverlayImage(AccessOverlayIcon overlay)
+			private static ImageSource? GetOverlayImage(AccessOverlayIcon overlay)
 			{
-				ImageSource overlayImage;
+				ImageSource? overlayImage;
 				switch (overlay)
 				{
 					case AccessOverlayIcon.Public:

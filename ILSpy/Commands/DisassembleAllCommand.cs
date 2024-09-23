@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy
 						if (!asm.HasLoadError)
 						{
 							Stopwatch w = Stopwatch.StartNew();
-							Exception exception = null;
+							Exception? exception = null;
 							using (var writer = new System.IO.StreamWriter("c:\\temp\\disassembled\\" + asm.Text.Replace("(", "").Replace(")", "").Replace(' ', '_') + ".il"))
 							{
 								try

@@ -176,8 +176,8 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			// Deselect nodes that are being hidden, if any remain in the tree
 			if (e.Action == NotifyCollectionChangedAction.Remove && Items.Count > 0)
 			{
-				List<SharpTreeNode> selectedOldItems = null;
-				foreach (SharpTreeNode node in e.OldItems)
+				List<SharpTreeNode>? selectedOldItems = null;
+				foreach (SharpTreeNode node in e.OldItems!)
 				{
 					if (node.IsSelected)
 					{
@@ -194,7 +194,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			}
 		}
 
-		void UpdateFocusedNode(List<SharpTreeNode> newSelection, int topSelectedIndex)
+		void UpdateFocusedNode(List<SharpTreeNode>? newSelection, int topSelectedIndex)
 		{
 			if (updatesLocked)
 				return;
@@ -222,7 +222,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 		protected override void PrepareContainerForItemOverride(DependencyObject element, object item)
 		{
 			base.PrepareContainerForItemOverride(element, item);
-			SharpTreeViewItem container = element as SharpTreeViewItem;
+			SharpTreeViewItem? container = element as SharpTreeViewItem;
 			container.ParentTreeView = this;
 			// Make sure that the line renderer takes into account the new bound data
 			if (container.NodeView != null)
@@ -244,7 +244,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			SharpTreeNode lastVisibleChild = node;
 			while (true)
 			{
-				SharpTreeNode tmp = lastVisibleChild.Children.LastOrDefault(c => c.IsVisible);
+				SharpTreeNode? tmp = lastVisibleChild.Children.LastOrDefault(c => c.IsVisible);
 				if (tmp != null)
 				{
 					lastVisibleChild = tmp;
@@ -269,7 +269,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 
 		protected override void OnKeyDown(KeyEventArgs e)
 		{
-			SharpTreeViewItem container = e.OriginalSource as SharpTreeViewItem;
+			SharpTreeViewItem? container = e.OriginalSource as SharpTreeViewItem;
 			switch (e.Key)
 			{
 				case Key.Left:
@@ -422,7 +422,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 
 		object? OnFocusItem(object item)
 		{
-			FrameworkElement element = this.ItemContainerGenerator.ContainerFromItem(item) as FrameworkElement;
+			FrameworkElement? element = this.ItemContainerGenerator.ContainerFromItem(item) as FrameworkElement;
 			if (element != null)
 			{
 				element.Focus();
@@ -606,7 +606,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 
 		void TryAddDropTarget(List<DropTarget> targets, SharpTreeViewItem item, DropPlace place, DragEventArgs e)
 		{
-			SharpTreeNode node;
+			SharpTreeNode? node;
 			int index;
 
 			GetNodeAndIndex(item, place, out node, out index);
@@ -627,7 +627,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			}
 		}
 
-		void GetNodeAndIndex(SharpTreeViewItem item, DropPlace place, out SharpTreeNode node, out int index)
+		void GetNodeAndIndex(SharpTreeViewItem item, DropPlace place, out SharpTreeNode? node, out int index)
 		{
 			node = null;
 			index = 0;
@@ -697,7 +697,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 
 				insertMarker.Margin = new Thickness(p.X, p.Y, 0, 0);
 
-				SharpTreeNodeView secondNodeView = null;
+				SharpTreeNodeView? secondNodeView = null;
 				var index = flattener.IndexOf(item.Node);
 
 				if (place == DropPlace.Before)

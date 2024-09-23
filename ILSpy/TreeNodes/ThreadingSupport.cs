@@ -67,7 +67,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			CancellationToken ct = cancellationTokenSource.Token;
 
 			var fetchChildrenEnumerable = fetchChildren(ct);
-			Task<List<SharpTreeNode>> thisTask = null;
+			Task<List<SharpTreeNode>>? thisTask = null;
 			thisTask = new Task<List<SharpTreeNode>>(
 				delegate {
 					List<SharpTreeNode> result = new List<SharpTreeNode>();

@@ -62,7 +62,7 @@ namespace ICSharpCode.BamlDecompiler.Xaml
 			// Since XmlnsProperty records are inside the element,
 			// the namespace is resolved after processing the element body.
 
-			string xmlNs = null;
+			string? xmlNs = null;
 			if (elem.Annotation<XmlnsScope>() != null)
 				xmlNs = elem.Annotation<XmlnsScope>().LookupXmlns(FullAssemblyName, TypeNamespace);
 			if (xmlNs == null)

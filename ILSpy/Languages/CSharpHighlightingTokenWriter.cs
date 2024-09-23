@@ -122,7 +122,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void WriteKeyword(Role role, string keyword)
 		{
-			HighlightingColor color = null;
+			HighlightingColor? color = null;
 			switch (keyword)
 			{
 				case "namespace":
@@ -299,7 +299,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void WritePrimitiveType(string type)
 		{
-			HighlightingColor color = null;
+			HighlightingColor? color = null;
 			switch (type)
 			{
 				case "new":
@@ -348,7 +348,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void WriteIdentifier(Identifier identifier)
 		{
-			HighlightingColor color = null;
+			HighlightingColor? color = null;
 			if (identifier.Parent?.GetResolveResult() is ILVariableResolveResult rr)
 			{
 				if (rr.Variable.Kind == VariableKind.Parameter)
@@ -454,7 +454,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void WritePrimitiveValue(object value, Decompiler.CSharp.Syntax.LiteralFormat format)
 		{
-			HighlightingColor color = null;
+			HighlightingColor? color = null;
 			if (value is null)
 			{
 				color = valueKeywordColor;

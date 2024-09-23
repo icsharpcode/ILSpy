@@ -99,11 +99,11 @@ namespace ICSharpCode.ILSpy.Options
 					select ff).ToArray();
 		}
 
-		public static DisplaySettings LoadDisplaySettings(ILSpySettings settings, SessionSettings sessionSettings = null)
+		public static DisplaySettings LoadDisplaySettings(ILSpySettings settings, SessionSettings? sessionSettings = null)
 		{
 			XElement e = settings["DisplaySettings"];
 			var s = new DisplaySettings();
-			s.SelectedFont = new FontFamily((string)e.Attribute("Font") ?? "Consolas");
+			s.SelectedFont = new FontFamily((string?)e.Attribute("Font") ?? "Consolas");
 			s.SelectedFontSize = (double?)e.Attribute("FontSize") ?? 10.0 * 4 / 3;
 			s.ShowLineNumbers = (bool?)e.Attribute("ShowLineNumbers") ?? false;
 			s.ShowMetadataTokens = (bool?)e.Attribute("ShowMetadataTokens") ?? false;

@@ -122,7 +122,7 @@ Examples:
 
 		private async Task<int> OnExecuteAsync(CommandLineApplication app)
 		{
-			Task<PackageCheckResult> updateCheckTask = null;
+			Task<PackageCheckResult>? updateCheckTask = null;
 			if (!DisableUpdateCheck)
 			{
 				updateCheckTask = DotNetToolUpdateChecker.CheckForPackageUpdateAsync("ilspycmd");
@@ -214,7 +214,7 @@ Examples:
 				}
 				else if (CreateDebugInfoFlag)
 				{
-					string pdbFileName = null;
+					string? pdbFileName = null;
 					if (outputDirectory != null)
 					{
 						string outputName = Path.GetFileNameWithoutExtension(fileName);
