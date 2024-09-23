@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <summary>
 		/// Gets the target framework identifier. Can be null if not defined.
 		/// </summary>
-		public string Identifier { get; }
+		public string? Identifier { get; }
 
 		/// <summary>
 		/// Gets the target framework moniker. Can be null if not supported.

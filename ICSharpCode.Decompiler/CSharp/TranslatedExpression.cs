@@ -156,7 +156,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (descendant == Expression)
 				return this;
-			for (AstNode parent = descendant.Parent; parent != null; parent = parent.Parent)
+			for (AstNode? parent = descendant.Parent; parent != null; parent = parent.Parent)
 			{
 				foreach (var inst in parent.Annotations.OfType<ILInstruction>())
 					descendant.AddAnnotation(inst);

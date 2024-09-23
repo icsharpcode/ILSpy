@@ -202,7 +202,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return parent; }
 		}
 
-		public Role Role {
+		public Role? Role {
 			get {
 				return Role.GetByIndex(flags & roleIndexMask);
 			}

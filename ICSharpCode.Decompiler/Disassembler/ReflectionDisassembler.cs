@@ -1040,10 +1040,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.Write("lpstruct");
 					break;
 				case 0x2c: // CustomMarshaler
-					string guidValue = blob.ReadSerializedString();
-					string unmanagedType = blob.ReadSerializedString();
-					string managedType = blob.ReadSerializedString();
-					string cookie = blob.ReadSerializedString();
+					string? guidValue = blob.ReadSerializedString();
+					string? unmanagedType = blob.ReadSerializedString();
+					string? managedType = blob.ReadSerializedString();
+					string? cookie = blob.ReadSerializedString();
 
 					var guid = !string.IsNullOrEmpty(guidValue) ? new Guid(guidValue) : Guid.Empty;
 

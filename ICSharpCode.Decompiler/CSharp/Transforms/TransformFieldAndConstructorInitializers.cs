@@ -206,7 +206,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					Match m = fieldInitializerPattern.Match(instanceCtorsNotChainingWithThis[0].Body.FirstOrDefault());
 					if (!m.Success)
 						break;
-					IMember fieldOrPropertyOrEvent = (m.Get<AstNode>("fieldAccess").Single().GetSymbol() as IMember)?.MemberDefinition;
+					IMember? fieldOrPropertyOrEvent = (m.Get<AstNode>("fieldAccess").Single().GetSymbol() as IMember)?.MemberDefinition;
 					if (!(fieldOrPropertyOrEvent is IField) && !(fieldOrPropertyOrEvent is IProperty) && !(fieldOrPropertyOrEvent is IEvent))
 						break;
 					var fieldOrPropertyOrEventDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrPropertyOrEvent) as EntityDeclaration;
@@ -346,7 +346,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						AssignmentExpression? assignment = es.Expression as AssignmentExpression;
 						if (assignment == null || assignment.Operator != AssignmentOperatorType.Assign)
 							break;
-						IMember fieldOrProperty = (assignment.Left.GetSymbol() as IMember)?.MemberDefinition;
+						IMember? fieldOrProperty = (assignment.Left.GetSymbol() as IMember)?.MemberDefinition;
 						if (!(fieldOrProperty is IField || fieldOrProperty is IProperty) || !fieldOrProperty.IsStatic)
 							break;
 						// Only move fields that are constants, if the declaring type is not marked beforefieldinit.

@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.Documentation
 					b.Append('@');
 					break;
 				default:
-					IType declType = type.DeclaringType;
+					IType? declType = type.DeclaringType;
 					if (declType != null)
 					{
 						AppendTypeName(b, declType, explicitInterfaceImpl);

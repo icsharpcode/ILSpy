@@ -1574,7 +1574,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				arguments.Remove(value);
 			}
 
-			IMember foundMember;
+			IMember? foundMember;
 			while (!IsUnambiguousAccess(expectedTargetDetails, targetResolveResult, method, arguments, argumentNames, out foundMember))
 			{
 				if (!argumentsCasted)

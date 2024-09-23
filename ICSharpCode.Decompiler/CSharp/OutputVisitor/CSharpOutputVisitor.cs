@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// </summary>
 		/// <param name="nextNode">The next node after the comma.</param>
 		/// <param name="noSpaceAfterComma">When set prevents printing a space after comma.</param>
-		protected virtual void Comma(AstNode nextNode, bool noSpaceAfterComma = false)
+		protected virtual void Comma(AstNode? nextNode, bool noSpaceAfterComma = false)
 		{
 			Space(policy.SpaceBeforeBracketComma);
 			// TODO: Comma policy has changed.
@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// <summary>
 		/// Writes an optional comma, e.g. at the end of an enum declaration or in an array initializer
 		/// </summary>
-		protected virtual void OptionalComma(AstNode pos)
+		protected virtual void OptionalComma(AstNode? pos)
 		{
 			// Look if there's a comma after the current node, and insert it if it exists.
 			while (pos != null && pos.NodeType == NodeType.Whitespace)
@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// <summary>
 		/// Writes an optional semicolon, e.g. at the end of a type or namespace declaration.
 		/// </summary>
-		protected virtual void OptionalSemicolon(AstNode pos)
+		protected virtual void OptionalSemicolon(AstNode? pos)
 		{
 			// Look if there's a semicolon after the current node, and insert it if it exists.
 			while (pos != null && pos.NodeType == NodeType.Whitespace)
@@ -1947,7 +1947,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteIdentifier(labelStatement.GetChildByRole(Roles.Identifier));
 			WriteToken(Roles.Colon);
 			bool foundLabelledStatement = false;
-			for (AstNode tmp = labelStatement.NextSibling; tmp != null; tmp = tmp.NextSibling)
+			for (AstNode? tmp = labelStatement.NextSibling; tmp != null; tmp = tmp.NextSibling)
 			{
 				if (tmp.Role == labelStatement.Role)
 				{

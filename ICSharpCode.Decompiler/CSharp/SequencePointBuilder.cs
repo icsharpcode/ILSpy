@@ -547,7 +547,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 
 
-				List<int> sequencePointCandidates = function.SequencePointCandidates;
+				List<int>? sequencePointCandidates = function.SequencePointCandidates;
 				int currSPCandidateIndex = 0;
 
 				for (int i = 0; i < newList.Count - 1; i++)

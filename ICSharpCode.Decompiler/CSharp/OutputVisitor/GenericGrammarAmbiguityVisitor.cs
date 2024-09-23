@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			var v = new GenericGrammarAmbiguityVisitor();
 			v.genericNestingLevel = 1;
 
-			for (AstNode node = binaryOperatorExpression.Right; node != null; node = node.GetNextNode())
+			for (AstNode? node = binaryOperatorExpression.Right; node != null; node = node.GetNextNode())
 			{
 				if (node.AcceptVisitor(v))
 					return v.ambiguityFound;

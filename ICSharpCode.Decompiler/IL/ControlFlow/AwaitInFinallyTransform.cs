@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// stloc V_6(ldloc V_3)	- store exception in 'global' object variable
 				// br IL_0075				- jump out of catch block to the head of the finallyBlock
 				var catchBlockEntry = catchBlockContainer.EntryPoint;
-				ILVariable objectVariable;
+				ILVariable? objectVariable;
 				switch (catchBlockEntry.Instructions.Count)
 				{
 					case 2:
@@ -127,7 +127,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 				StateRangeAnalysis sra = new StateRangeAnalysis(StateRangeAnalysisMode.AwaitInFinally, null, stateVariable);
 				sra.AssignStateRanges(noThrowBlock, Util.LongSet.Universe);
-				var mapping = sra.GetBlockStateSetMapping((BlockContainer)noThrowBlock.Parent);
+				var mapping = sra.GetBlockStateSetMapping(noThrowBlock.Parent as BlockContainer);
 				var mappingForLeave = sra.GetBlockStateSetMappingForLeave();
 
 				context.StepStartGroup("Inline finally block with await", tryCatch.Handlers[0]);

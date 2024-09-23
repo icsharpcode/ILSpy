@@ -44,6 +44,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Controls.TreeView;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.Search;
@@ -51,16 +52,15 @@ using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.Updates;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.Extensions;
 using ICSharpCode.ILSpyX.FileLoaders;
 using ICSharpCode.ILSpyX.Settings;
-using ICSharpCode.ILSpy.Controls.TreeView;
-using ICSharpCode.ILSpy.Util;
-using ICSharpCode.ILSpyX.Extensions;
+using ICSharpCode.ILSpyX.TreeView;
 
 using Microsoft.Win32;
-using ICSharpCode.ILSpyX.TreeView;
 
 using TomsToolbox.Composition;
 
@@ -749,10 +749,10 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		internal static IEntity FindEntityInRelevantAssemblies(string navigateTo, IEnumerable<LoadedAssembly> relevantAssemblies)
+		internal static IEntity? FindEntityInRelevantAssemblies(string navigateTo, IEnumerable<LoadedAssembly> relevantAssemblies)
 		{
-			ITypeReference typeRef = null;
-			IMemberReference memberRef = null;
+			ITypeReference? typeRef = null;
+			IMemberReference? memberRef = null;
 			if (navigateTo.StartsWith("T:", StringComparison.Ordinal))
 			{
 				typeRef = IdStringProvider.ParseTypeName(navigateTo);

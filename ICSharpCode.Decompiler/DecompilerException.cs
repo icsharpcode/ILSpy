@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler
 
 		static string GetTypeName(Exception exception)
 		{
-			string type = exception.GetType().FullName;
+			string? type = exception.GetType().FullName;
 			if (exception is ExternalException || exception is IOException)
 				return type + " (" + Marshal.GetHRForException(exception).ToString("x8") + ")";
 			else
@@ -114,8 +114,8 @@ namespace ICSharpCode.Decompiler
 			StringBuilder b = new StringBuilder();
 			for (int i = 0; i < stackTrace.FrameCount; i++)
 			{
-				StackFrame frame = stackTrace.GetFrame(i);
-				MethodBase method = frame.GetMethod();
+				StackFrame? frame = stackTrace.GetFrame(i);
+				MethodBase? method = frame.GetMethod();
 				if (method == null)
 					continue;
 
@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler
 					b.AppendLine();
 
 				b.Append("   at ");
-				Type declaringType = method.DeclaringType;
+				Type? declaringType = method.DeclaringType;
 				if (declaringType != null)
 				{
 					b.Append(declaringType.FullName.Replace('+', '.'));
@@ -173,7 +173,7 @@ namespace ICSharpCode.Decompiler
 					string? filename = null;
 					try
 					{
-						string fullpath = frame.GetFileName();
+						string? fullpath = frame.GetFileName();
 						if (fullpath != null)
 							filename = Path.GetFileName(fullpath);
 					}

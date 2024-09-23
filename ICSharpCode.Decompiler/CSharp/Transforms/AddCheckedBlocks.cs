@@ -244,7 +244,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			BlockStatement? block = node as BlockStatement;
 			if (block == null)
 			{
-				for (AstNode child = node.FirstChild; child != null; child = child.NextSibling)
+				for (AstNode? child = node.FirstChild; child != null; child = child.NextSibling)
 				{
 					Run(child, context);
 				}
@@ -275,7 +275,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			InsertedNode? nodesUncheckedContextCheckedBlockOpen = null;
 			Statement? checkedBlockStart = null;
 
-			Statement statement = block.Statements.FirstOrDefault();
+			Statement? statement = block.Statements.FirstOrDefault();
 			while (true)
 			{
 				// Blocks can be closed 'for free'. We use '<=' so that blocks are closed as late as possible (goal 4b)
@@ -340,7 +340,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (node is BlockStatement)
 				return GetResultFromBlock((BlockStatement)node);
 			Result result = new Result();
-			for (AstNode child = node.FirstChild; child != null; child = child.NextSibling)
+			for (AstNode? child = node.FirstChild; child != null; child = child.NextSibling)
 			{
 				Result childResult = GetResult(child);
 				result.CostInCheckedContext += childResult.CostInCheckedContext;

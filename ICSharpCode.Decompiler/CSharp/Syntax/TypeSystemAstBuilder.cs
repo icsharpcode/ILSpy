@@ -462,13 +462,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		AstType ConvertTypeHelper(IType genericType, IReadOnlyList<IType> typeArguments)
 		{
-			ITypeDefinition typeDef = genericType.GetDefinition();
+			ITypeDefinition? typeDef = genericType.GetDefinition();
 			Debug.Assert(typeDef != null || genericType.Kind == TypeKind.Unknown);
 			Debug.Assert(typeArguments.Count >= genericType.TypeParameterCount);
 
 			if (UseKeywordsForBuiltinTypes && typeDef != null)
 			{
-				string keyword = KnownTypeReference.GetCSharpNameByTypeCode(typeDef.KnownTypeCode);
+				string? keyword = KnownTypeReference.GetCSharpNameByTypeCode(typeDef.KnownTypeCode);
 				if (keyword != null)
 				{
 					return new PrimitiveType(keyword);
@@ -1053,7 +1053,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					}
 					if (underlyingType.IsKnownType(KnownTypeCode.Double) || underlyingType.IsKnownType(KnownTypeCode.Single))
 						return ConvertFloatingPointLiteral(underlyingType, constantValue);
-					IType literalType = underlyingType;
+					IType? literalType = underlyingType;
 					bool integerTypeMismatch = underlyingType.IsCSharpSmallIntegerType() || underlyingType.IsCSharpNativeIntegerType();
 					if (integerTypeMismatch)
 					{
@@ -1213,7 +1213,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		Expression ConvertEnumValue(IType type, long val)
 		{
-			ITypeDefinition enumDefinition = type.GetDefinition();
+			ITypeDefinition? enumDefinition = type.GetDefinition();
 			TypeCode enumBaseTypeCode = ReflectionHelper.GetTypeCode(enumDefinition.EnumUnderlyingType);
 			var fields = enumDefinition.Fields
 				.Select(PrepareConstant)
@@ -1295,7 +1295,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				if (!field.IsConst)
 					return (-1, null);
-				object constantValue = field.GetConstantValue();
+				object? constantValue = field.GetConstantValue();
 				if (constantValue == null)
 					return (-1, null);
 				return ((long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, checkForOverflow: false), field);
@@ -1890,7 +1890,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		DelegateDeclaration ConvertDelegate(IMethod invokeMethod, Modifiers modifiers)
 		{
-			ITypeDefinition d = invokeMethod.DeclaringTypeDefinition;
+			ITypeDefinition? d = invokeMethod.DeclaringTypeDefinition;
 
 			DelegateDeclaration decl = new DelegateDeclaration();
 			decl.Modifiers = modifiers & ~Modifiers.Sealed;
@@ -2019,7 +2019,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				decl.Modifiers = ModifierFromAccessibility(accessor.Accessibility);
 			if (this.ShowModifiers && accessor.HasReadonlyModifier())
 				decl.Modifiers |= Modifiers.Readonly;
-			TokenRole keywordRole = kind switch {
+			TokenRole? keywordRole = kind switch {
 				MethodSemanticsAttributes.Getter => PropertyDeclaration.GetKeywordRole,
 				MethodSemanticsAttributes.Setter => PropertyDeclaration.SetKeywordRole,
 				MethodSemanticsAttributes.Adder => CustomEventDeclaration.AddKeywordRole,
@@ -2460,7 +2460,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		static bool IsObjectOrValueType(IType type)
 		{
-			ITypeDefinition d = type.GetDefinition();
+			ITypeDefinition? d = type.GetDefinition();
 			return d != null && (d.KnownTypeCode == KnownTypeCode.Object || d.KnownTypeCode == KnownTypeCode.ValueType);
 		}
 		#endregion

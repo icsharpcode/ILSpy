@@ -1084,8 +1084,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		bool IsBuilderFieldOnThis(ILInstruction inst)
 		{
-			IField field;
-			ILInstruction target;
+			IField? field;
+			ILInstruction? target;
 			if (builderType.IsReferenceType == true)
 			{
 				// ldfld(StateMachine::<>t__builder, ldloc(this))

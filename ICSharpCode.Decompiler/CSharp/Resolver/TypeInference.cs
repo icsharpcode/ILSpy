@@ -1109,7 +1109,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// Now filter out candidates that violate the upper bounds:
 			foreach (IType ub in upperBounds)
 			{
-				ITypeDefinition ubDef = ub.GetDefinition();
+				ITypeDefinition? ubDef = ub.GetDefinition();
 				if (ubDef != null)
 				{
 					candidateTypeDefinitions.RemoveAll(c => !c.IsDerivedFrom(ubDef));

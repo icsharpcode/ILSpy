@@ -31,12 +31,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class ImageListResourceEntryNodeFactory : IResourceNodeFactory
 	{
-		public ITreeNode CreateNode(Resource resource)
+		public ITreeNode? CreateNode(Resource resource)
 		{
 			return null;
 		}
 
-		public ILSpyTreeNode CreateNode(string key, object data)
+		public ILSpyTreeNode? CreateNode(string key, object data)
 		{
 			if (data is ImageListStreamer)
 				return new ImageListResourceEntryNode(key, (ImageListStreamer)data);

@@ -47,8 +47,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		void CombineQueries(AstNode node, Dictionary<string, object> fromOrLetIdentifiers)
 		{
-			AstNode next;
-			for (AstNode child = node.FirstChild; child != null; child = next)
+			AstNode? next;
+			for (AstNode? child = node.FirstChild; child != null; child = next)
 			{
 				// store reference to next child before transformation
 				next = child.NextSibling;

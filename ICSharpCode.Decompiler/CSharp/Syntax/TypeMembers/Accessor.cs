@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public CSharpTokenNode Keyword {
 			get {
-				for (AstNode child = this.FirstChild; child != null; child = child.NextSibling)
+				for (AstNode? child = this.FirstChild; child != null; child = child.NextSibling)
 				{
 					if (child.Role == PropertyDeclaration.GetKeywordRole || child.Role == PropertyDeclaration.SetKeywordRole
 						|| child.Role == PropertyDeclaration.InitKeywordRole

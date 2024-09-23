@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.Xaml
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class XamlResourceNodeFactory : IResourceNodeFactory
 	{
-		public ITreeNode CreateNode(Resource resource)
+		public ITreeNode? CreateNode(Resource resource)
 		{
 			if (resource.Name.EndsWith(".xaml", StringComparison.OrdinalIgnoreCase))
 				return new XamlResourceEntryNode(resource.Name, resource.TryOpenStream);
@@ -45,9 +45,9 @@ namespace ICSharpCode.ILSpy.Xaml
 
 	sealed class XamlResourceEntryNode : ResourceEntryNode
 	{
-		string xaml;
+		string? xaml;
 
-		public XamlResourceEntryNode(string key, Func<Stream> openStream) : base(key, openStream)
+		public XamlResourceEntryNode(string key, Func<Stream?> openStream) : base(key, openStream)
 		{
 		}
 

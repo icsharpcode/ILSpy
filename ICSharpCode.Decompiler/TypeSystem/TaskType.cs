@@ -74,8 +74,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				var arg = attribute.FixedArguments[0];
 				if (!arg.Type.IsKnownType(KnownTypeCode.Type))
 					return false;
-				builderType = (IType)arg.Value;
-				return true;
+				builderType = arg.Value as IType;
+				return builderType != null;
 			}
 			return false;
 		}

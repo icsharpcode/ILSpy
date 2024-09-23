@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// </summary>
 		void WriteSpecials(AstNode start, AstNode end)
 		{
-			for (AstNode pos = start; pos != end; pos = pos.NextSibling)
+			for (AstNode? pos = start; pos != end; pos = pos.NextSibling)
 			{
 				if (pos.Role == Roles.Comment)
 				{
@@ -125,7 +125,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				return;
 			}
 			// Look for the role between the current position and the nextNode.
-			for (AstNode pos = positionStack.Peek(); pos != null && pos != nextNode; pos = pos.NextSibling)
+			for (AstNode? pos = positionStack.Peek(); pos != null && pos != nextNode; pos = pos.NextSibling)
 			{
 				if (pos.Role == role)
 				{
@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				return;
 			}
-			for (AstNode pos = positionStack.Peek(); pos != null; pos = pos.NextSibling)
+			for (AstNode? pos = positionStack.Peek(); pos != null; pos = pos.NextSibling)
 			{
 				if (pos == node)
 				{

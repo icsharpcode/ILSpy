@@ -582,7 +582,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			if (typeParameter.HasDefaultConstructorConstraint)
 			{
-				ITypeDefinition def = typeArgument.GetDefinition();
+				ITypeDefinition? def = typeArgument.GetDefinition();
 				if (def != null && def.IsAbstract)
 					return false;
 				var ctors = typeArgument.GetConstructors(

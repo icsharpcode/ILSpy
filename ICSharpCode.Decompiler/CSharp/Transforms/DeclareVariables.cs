@@ -297,7 +297,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			try
 			{
-				for (AstNode child = node.FirstChild; child != null; child = child.NextSibling)
+				for (AstNode? child = node.FirstChild; child != null; child = child.NextSibling)
 				{
 					FindInsertionPoints(child, nodeLevel + 1);
 				}
@@ -321,7 +321,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						InsertionPoint newPoint;
 						int startIndex = scopeTracking.Count - 1;
-						BlockContainer captureScope = variable.CaptureScope;
+						BlockContainer? captureScope = variable.CaptureScope;
 						while (captureScope != null && !IsRelevantScope(captureScope))
 						{
 							captureScope = BlockContainer.FindClosestContainer(captureScope.Parent);
@@ -356,7 +356,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 								}
 							}
 						}
-						if (variableDict.TryGetValue(variable, out VariableToDeclare v))
+						if (variableDict.TryGetValue(variable, out VariableToDeclare? v))
 						{
 							v.InsertionPoint = FindCommonParent(v.InsertionPoint, newPoint);
 						}

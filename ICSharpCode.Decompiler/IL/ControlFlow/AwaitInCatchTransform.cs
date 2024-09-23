@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							break;
 						case SwitchSection jumpTableEntry:
 							Debug.Assert(switchInstructionOpt == null || jumpTableEntry.Parent == switchInstructionOpt);
-							switchInstructionOpt = (SwitchInstruction)jumpTableEntry.Parent;
+							switchInstructionOpt = jumpTableEntry.Parent as SwitchInstruction;
 							break;
 					}
 
@@ -142,7 +142,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					if (result.NextBlockOrExitContainer is Block nextBlock && nextBlock.IncomingEdgeCount == 0)
 					{
 						List<Block> dependentBlocks = new List<Block>();
-						Block current = nextBlock;
+						Block? current = nextBlock;
 
 						do
 						{
@@ -201,8 +201,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			ILVariable? v = null;
 			if (MatchExceptionCaptureBlock(context, block,
-				ref v, out StLoc typedExceptionVariableStore,
-				out Block captureBlock, out Block throwBlock))
+				ref v, out StLoc? typedExceptionVariableStore,
+				out Block? captureBlock, out Block? throwBlock))
 			{
 				context.Step($"ExceptionDispatchInfo.Capture({v.Name}).Throw() => throw;", typedExceptionVariableStore);
 				block.Instructions.RemoveRange(typedExceptionVariableStore.ChildIndex + 1, 2);
@@ -355,7 +355,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			}
 
-			bool ParseIfJumpTable(int id, Block jumpTableEntryBlock, ILVariable identifierVariable, out Block? realEntryPoint, out ILInstruction? nextBlockOrExitContainer, out ILInstruction? jumpTableEntry)
+			bool ParseIfJumpTable(int id, Block jumpTableEntryBlock, ILVariable identifierVariable, [NotNullWhen(true)] out Block? realEntryPoint, out ILInstruction? nextBlockOrExitContainer, [NotNullWhen(true)] out ILInstruction? jumpTableEntry)
 			{
 				realEntryPoint = null;
 				nextBlockOrExitContainer = null;
@@ -420,7 +420,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		// =>
 		// throw(ldloc result.Handler.Variable)
 		internal static bool MatchExceptionCaptureBlock(ILTransformContext context, Block block,
-			ref ILVariable objectVariable, out StLoc? typedExceptionVariableStore, out Block? captureBlock, out Block? throwBlock)
+			ref ILVariable? objectVariable, out StLoc? typedExceptionVariableStore, out Block? captureBlock, out Block? throwBlock)
 		{
 			bool DerivesFromException(IType t) => t.GetAllBaseTypes().Any(ty => ty.IsKnownType(KnownTypeCode.Exception));
 

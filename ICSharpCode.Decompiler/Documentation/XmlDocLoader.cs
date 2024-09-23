@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.Documentation
 				throw new ArgumentNullException(nameof(module));
 			lock (cache)
 			{
-				if (!cache.TryGetValue(module, out XmlDocumentationProvider xmlDoc))
+				if (!cache.TryGetValue(module, out XmlDocumentationProvider? xmlDoc))
 				{
 					string xmlDocFile = LookupLocalizedXmlDoc(module.FileName);
 					if (xmlDocFile == null)

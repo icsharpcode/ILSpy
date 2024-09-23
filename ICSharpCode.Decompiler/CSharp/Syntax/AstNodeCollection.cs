@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				int count = 0;
 				uint roleIndex = role.Index;
-				for (AstNode cur = node.FirstChild; cur != null; cur = cur.NextSibling)
+				for (AstNode? cur = node.FirstChild; cur != null; cur = cur.NextSibling)
 				{
 					if (cur.RoleIndex == roleIndex)
 						count++;
@@ -177,8 +177,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public IEnumerator<T> GetEnumerator()
 		{
 			uint roleIndex = role.Index;
-			AstNode next;
-			for (AstNode cur = node.FirstChild; cur != null; cur = next)
+			AstNode? next;
+			for (AstNode? cur = node.FirstChild; cur != null; cur = next)
 			{
 				Debug.Assert(cur.Parent == node);
 				// Remember next before yielding cur.
@@ -214,7 +214,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return Pattern.DoMatchCollection(role, node.FirstChild, other.node.FirstChild, match);
 		}
 
-		public void InsertAfter(T existingItem, T newItem)
+		public void InsertAfter(T? existingItem, T newItem)
 		{
 			node.InsertChildAfter(existingItem, newItem, role);
 		}
@@ -230,8 +230,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public void AcceptVisitor(IAstVisitor visitor)
 		{
 			uint roleIndex = role.Index;
-			AstNode next;
-			for (AstNode cur = node.FirstChild; cur != null; cur = next)
+			AstNode? next;
+			for (AstNode? cur = node.FirstChild; cur != null; cur = next)
 			{
 				Debug.Assert(cur.Parent == node);
 				// Remember next before yielding cur.

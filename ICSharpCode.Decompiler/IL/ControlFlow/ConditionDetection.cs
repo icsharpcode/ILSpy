@@ -45,9 +45,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			Other
 		}
 
-		private BlockTransformContext context;
-		private ControlFlowNode cfgNode;
-		private BlockContainer currentContainer;
+		private BlockTransformContext? context;
+		private ControlFlowNode? cfgNode;
+		private BlockContainer? currentContainer;
 
 		/// <summary>
 		/// Builds structured control flow for the block associated with the control flow node.
@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		public void Run(Block block, BlockTransformContext context)
 		{
 			this.context = context;
-			currentContainer = (BlockContainer)block.Parent;
+			currentContainer = block.Parent as BlockContainer;
 
 			// We only embed blocks into this block if they aren't referenced anywhere else,
 			// so those blocks are dominated by this block.

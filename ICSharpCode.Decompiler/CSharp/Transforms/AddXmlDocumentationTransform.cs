@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		static void InsertXmlDocumentation(AstNode node, StringReader r)
 		{
 			// Find the first non-empty line:
-			string firstLine;
+			string? firstLine;
 			do
 			{
 				firstLine = r.ReadLine();
@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					return;
 			} while (string.IsNullOrWhiteSpace(firstLine));
 			string indentation = firstLine.Substring(0, firstLine.Length - firstLine.TrimStart().Length);
-			string line = firstLine;
+			string? line = firstLine;
 			int skippedWhitespaceLines = 0;
 			// Copy all lines from input to output, except for empty lines at the end.
 			while (line != null)

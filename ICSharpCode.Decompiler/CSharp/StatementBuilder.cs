@@ -213,7 +213,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			TranslatedExpression value;
 			IType type;
-			if (inst.Value is StringToInt strToInt)
+			var strToInt = inst.Value as StringToInt;
+			if (strToInt != null)
 			{
 				value = exprBuilder.Translate(strToInt.Argument)
 					.ConvertTo(
@@ -328,7 +329,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					Debug.Assert(block.FinalInstruction.OpCode == OpCode.Nop);
 				}
-				if (endContainerLabels.TryGetValue(switchContainer, out string label))
+				if (endContainerLabels.TryGetValue(switchContainer, out string? label))
 				{
 					lastSectionStatements.Add(new LabelStatement { Label = label });
 					lastSectionStatements.Add(new BreakStatement());
@@ -411,7 +412,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				else
 					return new ReturnStatement().WithILInstruction(inst);
 			}
-			if (!endContainerLabels.TryGetValue(inst.TargetContainer, out string label))
+			if (!endContainerLabels.TryGetValue(inst.TargetContainer, out string? label))
 			{
 				label = "end_" + inst.TargetLabel;
 				if (!duplicateLabels.TryGetValue(label, out int count))
@@ -1261,8 +1262,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		Statement ConvertLoop(BlockContainer container)
 		{
-			ILInstruction condition;
-			Block loopBody;
+			ILInstruction? condition;
+			Block? loopBody;
 			BlockStatement blockStatement;
 			continueCount = 0;
 			breakTarget = container;
@@ -1480,7 +1481,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					blockStatement.Add(Convert(block.FinalInstruction));
 				}
 			}
-			if (endContainerLabels.TryGetValue(container, out string label))
+			if (endContainerLabels.TryGetValue(container, out string? label))
 			{
 				if (isLoop && !(blockStatement.LastOrDefault() is ContinueStatement))
 				{
@@ -1500,7 +1501,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		string EnsureUniqueLabel(Block block)
 		{
-			if (labels.TryGetValue(block, out string label))
+			if (labels.TryGetValue(block, out string? label))
 				return label;
 			if (!duplicateLabels.TryGetValue(block.Label, out int count))
 			{

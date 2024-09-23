@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			if (targetType.Kind == TypeKind.TypeParameter)
 				targetType = ((ITypeParameter)targetType).EffectiveBaseClass;
-			ITypeDefinition typeDef = targetType.GetDefinition();
+			ITypeDefinition? typeDef = targetType.GetDefinition();
 			if (typeDef == null)
 				return false;
 			for (ITypeDefinition c = currentTypeDefinition; c != null; c = c.DeclaringTypeDefinition)
@@ -195,7 +195,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				foreach (var entityGroup in entities.GroupBy(e => e.Name))
 				{
 
-					List<LookupGroup> lookupGroups = new List<LookupGroup>();
+					List<LookupGroup>? lookupGroups = new List<LookupGroup>();
 					if (!lookupGroupDict.TryGetValue(entityGroup.Key, out lookupGroups))
 						lookupGroupDict.Add(entityGroup.Key, lookupGroups = new List<LookupGroup>());
 
@@ -243,7 +243,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					{
 						foreach (IType type in lookupGroup.NestedTypes)
 						{
-							ITypeDefinition typeDef = type.GetDefinition();
+							ITypeDefinition? typeDef = type.GetDefinition();
 							if (typeDef != null)
 								yield return typeDef;
 						}
@@ -691,7 +691,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// return true if type is an interface or System.Object
 			if (type.Kind == TypeKind.Interface)
 				return true;
-			ITypeDefinition d = type.GetDefinition();
+			ITypeDefinition? d = type.GetDefinition();
 			return d != null && d.KnownTypeCode == KnownTypeCode.Object;
 		}
 		#endregion

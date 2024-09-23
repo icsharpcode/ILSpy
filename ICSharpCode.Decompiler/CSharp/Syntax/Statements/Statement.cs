@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		#endregion
 
 		#region PatternPlaceholder
-		public static implicit operator Statement(PatternMatching.Pattern pattern)
+		public static implicit operator Statement?(PatternMatching.Pattern? pattern)
 		{
 			return pattern != null ? new PatternPlaceholder(pattern) : null;
 		}
@@ -86,12 +86,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				visitor.VisitPatternPlaceholder(this, child);
 			}
 
-			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+			public override T? AcceptVisitor<T>(IAstVisitor<T> visitor)
 			{
 				return visitor.VisitPatternPlaceholder(this, child);
 			}
 
-			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+			public override S? AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 			{
 				return visitor.VisitPatternPlaceholder(this, child, data);
 			}

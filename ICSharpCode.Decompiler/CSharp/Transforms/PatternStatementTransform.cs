@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// Go through the children, and keep visiting a node as long as it changes.
 			// Because some transforms delete/replace nodes before and after the node being transformed, we rely
 			// on the transform's return value to know where we need to keep iterating.
-			for (AstNode child = node.FirstChild; child != null; child = child.NextSibling)
+			for (AstNode? child = node.FirstChild; child != null; child = child.NextSibling)
 			{
 				AstNode oldChild;
 				do
@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public override AstNode VisitForStatement(ForStatement forStatement)
 		{
-			AstNode result = TransformForeachOnArray(forStatement);
+			AstNode? result = TransformForeachOnArray(forStatement);
 			if (result != null)
 				return result;
 			return base.VisitForStatement(forStatement);
@@ -174,7 +174,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		public ForStatement TransformFor(ExpressionStatement node)
+		public ForStatement? TransformFor(ExpressionStatement node)
 		{
 			if (!context.Settings.ForStatement)
 				return null;
@@ -339,7 +339,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return false;
 		}
 
-		Statement TransformForeachOnArray(ForStatement forStatement)
+		Statement? TransformForeachOnArray(ForStatement forStatement)
 		{
 			if (!context.Settings.ForEachStatement)
 				return null;

@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				for (int j = 0; j < block.Instructions.Count - 1; j++)
 				{
 					var inst = block.Instructions[j];
-					if (inst.MatchStLoc(out ILVariable v, out var value) && v.Kind == VariableKind.PinnedLocal)
+					if (inst.MatchStLoc(out ILVariable? v, out var value) && v.Kind == VariableKind.PinnedLocal)
 					{
 						if (block.Instructions[j + 1].OpCode != OpCode.Branch)
 						{

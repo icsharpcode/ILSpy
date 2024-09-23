@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (compilation == null)
 				throw new ArgumentNullException(nameof(compilation));
 			CacheManager cache = compilation.CacheManager;
-			CSharpConversions operators = (CSharpConversions)cache.GetShared(typeof(CSharpConversions));
+			CSharpConversions? operators = (CSharpConversions)cache.GetShared(typeof(CSharpConversions));
 			if (operators == null)
 			{
 				operators = (CSharpConversions)cache.GetOrAddShared(typeof(CSharpConversions), new CSharpConversions(compilation));
@@ -182,7 +182,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				throw new ArgumentNullException(nameof(toType));
 
 			TypePair pair = new TypePair(fromType, toType);
-			if (implicitConversionCache.TryGetValue(pair, out Conversion c))
+			if (implicitConversionCache.TryGetValue(pair, out Conversion? c))
 				return c;
 
 			c = ImplicitConversion(fromType, toType, allowUserDefined: true, allowTuple: true);
@@ -600,7 +600,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		bool IdentityOrVarianceConversion(IType s, IType t, int subtypeCheckNestingDepth)
 		{
-			ITypeDefinition def = s.GetDefinition();
+			ITypeDefinition? def = s.GetDefinition();
 			if (def != null)
 			{
 				if (!def.Equals(t.GetDefinition()))
@@ -697,7 +697,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			else if (fromType.Kind == TypeKind.Delegate && toType.Kind == TypeKind.Delegate)
 			{
-				ITypeDefinition def = fromType.GetDefinition();
+				ITypeDefinition? def = fromType.GetDefinition();
 				if (def == null || !def.Equals(toType.GetDefinition()))
 					return false;
 				ParameterizedType? ps = fromType as ParameterizedType;
@@ -811,7 +811,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			else if (fromTypeCode == TypeCode.Int32)
 			{
-				object cv = rr.ConstantValue;
+				object? cv = rr.ConstantValue;
 				if (cv == null)
 					return false;
 				int val = (int)cv;

@@ -506,7 +506,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			else if (expression.IsCompileTimeConstant && m.CanEvaluateAtCompileTime)
 			{
-				object val;
+				object? val;
 				try
 				{
 					val = m.Invoke(this, expression.ConstantValue);
@@ -923,7 +923,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			else if (lhs.IsCompileTimeConstant && rhs.IsCompileTimeConstant && m.CanEvaluateAtCompileTime)
 			{
-				object val;
+				object? val;
 				try
 				{
 					val = m.Invoke(this, lhs.ConstantValue, rhs.ConstantValue);
@@ -982,7 +982,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#region Enum helper methods
 		IType GetEnumUnderlyingType(IType enumType)
 		{
-			ITypeDefinition def = enumType.GetDefinition();
+			ITypeDefinition? def = enumType.GetDefinition();
 			return def != null ? def.EnumUnderlyingType : SpecialType.UnknownType;
 		}
 
@@ -1609,12 +1609,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return trr != null && trr.Type.Equals(rr.Type);
 		}
 
-		ResolveResult LookInCurrentType(string identifier, IReadOnlyList<IType> typeArguments, NameLookupMode lookupMode, bool parameterizeResultType)
+		ResolveResult? LookInCurrentType(string identifier, IReadOnlyList<IType> typeArguments, NameLookupMode lookupMode, bool parameterizeResultType)
 		{
 			int k = typeArguments.Count;
 			MemberLookup lookup = CreateMemberLookup(lookupMode);
 			// look in current type definitions
-			for (ITypeDefinition t = this.CurrentTypeDefinition; t != null; t = t.DeclaringTypeDefinition)
+			for (ITypeDefinition? t = this.CurrentTypeDefinition; t != null; t = t.DeclaringTypeDefinition)
 			{
 				if (k == 0)
 				{
@@ -1651,7 +1651,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return null;
 		}
 
-		ResolveResult LookInCurrentUsingScope(string identifier, IReadOnlyList<IType> typeArguments, bool isInUsingDeclaration, bool parameterizeResultType)
+		ResolveResult? LookInCurrentUsingScope(string identifier, IReadOnlyList<IType> typeArguments, bool isInUsingDeclaration, bool parameterizeResultType)
 		{
 			// look in current namespace definitions
 			ResolvedUsingScope currentUsingScope = this.CurrentUsingScope;
@@ -1684,7 +1684,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					IType? firstResult = null;
 					foreach (var importedNamespace in u.Usings)
 					{
-						ITypeDefinition def = importedNamespace.GetTypeDefinition(identifier, typeArguments.Count);
+						ITypeDefinition? def = importedNamespace.GetTypeDefinition(identifier, typeArguments.Count);
 						if (def != null)
 						{
 							IType resultType;
@@ -1712,7 +1712,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return null;
 		}
 
-		ResolveResult LookInUsingScopeNamespace(ResolvedUsingScope usingScope, INamespace n, string identifier, IReadOnlyList<IType> typeArguments, bool parameterizeResultType)
+		ResolveResult? LookInUsingScopeNamespace(ResolvedUsingScope usingScope, INamespace n, string identifier, IReadOnlyList<IType> typeArguments, bool parameterizeResultType)
 		{
 			if (n == null)
 				return null;
@@ -1720,7 +1720,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			int k = typeArguments.Count;
 			if (k == 0)
 			{
-				INamespace childNamespace = n.GetChildNamespace(identifier);
+				INamespace? childNamespace = n.GetChildNamespace(identifier);
 				if (childNamespace != null)
 				{
 					if (usingScope != null && usingScope.HasAlias(identifier))
@@ -1729,7 +1729,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 			}
 			// then look for a type
-			ITypeDefinition def = n.GetTypeDefinition(identifier, k);
+			ITypeDefinition? def = n.GetTypeDefinition(identifier, k);
 			if (def != null && TopLevelTypeDefinitionIsAccessible(def))
 			{
 				IType result = def;
@@ -1781,7 +1781,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		ResolveResult ResolveExternAlias(string alias)
 		{
-			INamespace ns = compilation.GetNamespaceForExternAlias(alias);
+			INamespace? ns = compilation.GetNamespaceForExternAlias(alias);
 			if (ns != null)
 				return new NamespaceResolveResult(ns);
 			else
@@ -1854,11 +1854,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			if (typeArguments.Count == 0)
 			{
-				INamespace childNamespace = nrr.Namespace.GetChildNamespace(identifier);
+				INamespace? childNamespace = nrr.Namespace.GetChildNamespace(identifier);
 				if (childNamespace != null)
 					return new NamespaceResolveResult(childNamespace);
 			}
-			ITypeDefinition def = nrr.Namespace.GetTypeDefinition(identifier, typeArguments.Count);
+			ITypeDefinition? def = nrr.Namespace.GetTypeDefinition(identifier, typeArguments.Count);
 			if (def != null)
 			{
 				if (parameterizeResultType && typeArguments.Count > 0)
@@ -1985,13 +1985,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			elementType = expression.Type.GetElementTypeFromIEnumerable(compilation, false, out bool? isGeneric);
 			if (isGeneric == true)
 			{
-				ITypeDefinition enumerableOfT = compilation.FindType(KnownTypeCode.IEnumerableOfT).GetDefinition();
+				ITypeDefinition? enumerableOfT = compilation.FindType(KnownTypeCode.IEnumerableOfT).GetDefinition();
 				if (enumerableOfT != null)
 					collectionType = new ParameterizedType(enumerableOfT, new[] { elementType });
 				else
 					collectionType = SpecialType.UnknownType;
 
-				ITypeDefinition enumeratorOfT = compilation.FindType(KnownTypeCode.IEnumeratorOfT).GetDefinition();
+				ITypeDefinition? enumeratorOfT = compilation.FindType(KnownTypeCode.IEnumeratorOfT).GetDefinition();
 				if (enumeratorOfT != null)
 					enumeratorType = new ParameterizedType(enumeratorOfT, new[] { elementType });
 				else
@@ -2060,7 +2060,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		///    new List { all extensions from SomeExtensions }
 		/// }
 		/// </remarks>
-		public List<List<IMethod>> GetExtensionMethods(IType targetType, string? name = null, IReadOnlyList<IType>? typeArguments = null, bool substituteInferredTypes = false)
+		public List<List<IMethod>> GetExtensionMethods(IType? targetType, string? name = null, IReadOnlyList<IType>? typeArguments = null, bool substituteInferredTypes = false)
 		{
 			var lookup = CreateMemberLookup();
 			List<List<IMethod>> extensionMethodGroups = new List<List<IMethod>>();
@@ -2073,7 +2073,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						continue;
 					if (!lookup.IsAccessible(method, false))
 						continue;
-					IType[] inferredTypes;
+					IType[]? inferredTypes;
 					if (typeArguments != null && typeArguments.Count > 0)
 					{
 						if (method.TypeParameters.Count != typeArguments.Count)
@@ -2118,7 +2118,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// If an array is returned, any slot with an uninferred type argument will be set to the method's
 		/// corresponding type parameter.
 		/// </param>
-		public static bool IsEligibleExtensionMethod(IType targetType, IMethod method, bool useTypeInference, out IType[] outInferredTypes)
+		public static bool IsEligibleExtensionMethod(IType targetType, IMethod method, bool useTypeInference, out IType[]? outInferredTypes)
 		{
 			if (targetType == null)
 				throw new ArgumentNullException(nameof(targetType));
@@ -2128,7 +2128,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return IsEligibleExtensionMethod(compilation, CSharpConversions.Get(compilation), targetType, method, useTypeInference, out outInferredTypes);
 		}
 
-		static bool IsEligibleExtensionMethod(ICompilation compilation, CSharpConversions conversions, IType targetType, IMethod method, bool useTypeInference, out IType[]? outInferredTypes)
+		static bool IsEligibleExtensionMethod(ICompilation compilation, CSharpConversions conversions, IType? targetType, IMethod method, bool useTypeInference, out IType[]? outInferredTypes)
 		{
 			outInferredTypes = null;
 			if (targetType == null)
@@ -2814,9 +2814,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return new ConstantResolveResult(type, GetDefaultValue(type));
 		}
 
-		public static object GetDefaultValue(IType type)
+		public static object? GetDefaultValue(IType type)
 		{
-			ITypeDefinition typeDef = type.GetDefinition();
+			ITypeDefinition? typeDef = type.GetDefinition();
 			if (typeDef == null)
 				return null;
 			if (typeDef.Kind == TypeKind.Enum)

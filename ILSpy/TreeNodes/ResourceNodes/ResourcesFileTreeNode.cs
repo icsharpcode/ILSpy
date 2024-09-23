@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class ResourcesFileTreeNodeFactory : IResourceNodeFactory
 	{
-		public ITreeNode CreateNode(Resource resource)
+		public ITreeNode? CreateNode(Resource resource)
 		{
 			if (resource.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
 			{
@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return null;
 		}
 
-		public ILSpyTreeNode CreateNode(string key, object data)
+		public ILSpyTreeNode? CreateNode(string key, object data)
 		{
 			return null;
 		}

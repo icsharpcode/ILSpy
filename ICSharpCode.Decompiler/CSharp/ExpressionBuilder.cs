@@ -2535,7 +2535,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (resultType.Kind == TypeKind.Void)
 				return compilation.FindType(KnownTypeCode.Task);
 
-			ITypeDefinition def = compilation.FindType(KnownTypeCode.TaskOfT).GetDefinition();
+			ITypeDefinition? def = compilation.FindType(KnownTypeCode.TaskOfT).GetDefinition();
 			if (def != null)
 				return new ParameterizedType(def, new[] { resultType });
 			else
@@ -2988,7 +2988,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				memberName = "LongLength";
 				code = KnownTypeCode.Int64;
 			}
-			IProperty member = arrayType.GetProperties(p => p.Name == memberName).FirstOrDefault();
+			IProperty? member = arrayType.GetProperties(p => p.Name == memberName).FirstOrDefault();
 			ResolveResult rr = member == null
 				? new ResolveResult(compilation.FindType(code))
 				: new MemberResolveResult(arrayExpr.ResolveResult, member);
@@ -3917,7 +3917,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			TranslatedExpression value;
 			IType type;
-			if (inst.Value is StringToInt strToInt)
+			var strToInt = inst.Value as StringToInt;
+			if (strToInt != null)
 			{
 				value = Translate(strToInt.Argument)
 					.ConvertTo(
@@ -4534,7 +4535,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						if (subPattern.HasDesignator)
 						{
-							if (!conversionMapping.TryGetValue(subPattern.Variable, out ILVariable value))
+							if (!conversionMapping.TryGetValue(subPattern.Variable, out ILVariable? value))
 							{
 								value = subPattern.Variable;
 							}
@@ -4639,7 +4640,7 @@ namespace ICSharpCode.Decompiler.CSharp
 								Debug.Fail("Invalid sub pattern");
 								continue;
 							}
-							IMember member;
+							IMember? member;
 							if (testedOperand is CallInstruction call)
 							{
 								member = call.Method.AccessorOwner;

@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			{
 				string[] frameworkParts = targetFramework.Split(',');
 				targetFrameworkIdentifier = frameworkParts.FirstOrDefault(a => !a.StartsWith(VersionToken, StringComparison.OrdinalIgnoreCase) && !a.StartsWith(ProfileToken, StringComparison.OrdinalIgnoreCase));
-				string frameworkVersion = frameworkParts.FirstOrDefault(a => a.StartsWith(VersionToken, StringComparison.OrdinalIgnoreCase));
+				string? frameworkVersion = frameworkParts.FirstOrDefault(a => a.StartsWith(VersionToken, StringComparison.OrdinalIgnoreCase));
 
 				if (frameworkVersion != null)
 				{
@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						versionNumber *= 10;
 				}
 
-				string frameworkProfile = frameworkParts.FirstOrDefault(a => a.StartsWith(ProfileToken, StringComparison.OrdinalIgnoreCase));
+				string? frameworkProfile = frameworkParts.FirstOrDefault(a => a.StartsWith(ProfileToken, StringComparison.OrdinalIgnoreCase));
 				if (frameworkProfile != null)
 					targetFrameworkProfile = frameworkProfile.Substring(ProfileToken.Length);
 			}

@@ -1213,7 +1213,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <param name="member">The node of the member which new modifier state should be determined.</param>
 		void SetNewModifier(EntityDeclaration member)
 		{
-			var entity = (IEntity)member.GetSymbol();
+			var entity = member.GetSymbol() as IEntity;
 			var lookup = new MemberLookup(entity.DeclaringTypeDefinition, entity.ParentModule);
 
 			var baseTypes = entity.DeclaringType.GetNonInterfaceBaseTypes().Where(t => entity.DeclaringType != t).ToList();
@@ -1325,7 +1325,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					foreach (var p in recordDecompiler.PrimaryConstructor.Parameters)
 					{
 						ParameterDeclaration pd = typeSystemAstBuilder.ConvertParameter(p);
-						(IProperty prop, IField field) = recordDecompiler.GetPropertyInfoByPrimaryConstructorParameter(p);
+						(IProperty? prop, IField field) = recordDecompiler.GetPropertyInfoByPrimaryConstructorParameter(p);
 
 						if (prop != null)
 						{
@@ -1567,7 +1567,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				if (MemberIsHidden(module, field.MetadataToken, settings))
 					continue;
-				object constantValue = field.GetConstantValue();
+				object? constantValue = field.GetConstantValue();
 				if (constantValue == null)
 					continue;
 				long currentValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false);
@@ -1958,7 +1958,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (decompilationContext.CurrentTypeDefinition.Kind == TypeKind.Enum && field.IsConst)
 				{
 					var enumDec = new EnumMemberDeclaration { Name = field.Name };
-					object constantValue = field.GetConstantValue();
+					object? constantValue = field.GetConstantValue();
 					if (constantValue != null)
 					{
 						enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, constantValue);
@@ -2022,7 +2022,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			type = null;
 			elementCount = 0;
-			IAttribute attr = field.GetAttribute(KnownAttribute.FixedBuffer);
+			IAttribute? attr = field.GetAttribute(KnownAttribute.FixedBuffer);
 			if (attr != null && attr.FixedArguments.Length == 2)
 			{
 				if (attr.FixedArguments[0].Value is IType trr && attr.FixedArguments[1].Value is int length)

@@ -67,8 +67,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				if (node is IdentifierExpression || node is MemberReferenceExpression)
 				{
-					ISymbol symbol = node.GetSymbol();
-					if (symbol != null && renamedSymbols.TryGetValue(symbol, out string newName))
+					ISymbol? symbol = node.GetSymbol();
+					if (symbol != null && renamedSymbols.TryGetValue(symbol, out string? newName))
 					{
 						node.GetChildByRole(Roles.Identifier).Name = newName;
 					}

@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (!context.Settings.Ranges)
 				return false;
-			if (!ldelema.Array.MatchLdLoc(out ILVariable array))
+			if (!ldelema.Array.MatchLdLoc(out ILVariable? array))
 				return false;
 			if (ldelema.Indices.Count != 1)
 				return false; // the index/range feature doesn't support multi-dimensional arrays
@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			// stloc startOffsetVar(call GetOffset(startIndexLoad, ldloc length))
-			if (!(block.Instructions[pos].MatchStLoc(out ILVariable startOffsetVar, out ILInstruction startOffsetVarInit)
+			if (!(block.Instructions[pos].MatchStLoc(out ILVariable? startOffsetVar, out ILInstruction? startOffsetVarInit)
 				&& startOffsetVar.IsSingleDefinition && startOffsetVar.StackType == StackType.I4))
 			{
 				// Not our primary indexing/slicing pattern.

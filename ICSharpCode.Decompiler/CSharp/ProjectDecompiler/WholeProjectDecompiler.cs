@@ -325,7 +325,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			foreach (var r in module.Resources.Where(r => r.ResourceType == ResourceType.Embedded))
 			{
-				Stream stream = r.TryOpenStream();
+				Stream? stream = r.TryOpenStream();
 				stream.Position = 0;
 
 				if (r.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
@@ -341,7 +341,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 							{
 								string fileName = SanitizeFileName(name)
 									.Replace('/', Path.DirectorySeparatorChar);
-								string dirName = Path.GetDirectoryName(fileName);
+								string? dirName = Path.GetDirectoryName(fileName);
 								if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName))
 								{
 									Directory.CreateDirectory(Path.Combine(TargetDirectory, dirName));

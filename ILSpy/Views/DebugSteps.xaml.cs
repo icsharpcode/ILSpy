@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpy
 #endif
 		}
 
-		private void WritingOptions_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void WritingOptions_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 			DecompileAsync(lastSelectedStep);
 		}
@@ -80,7 +80,7 @@ namespace ICSharpCode.ILSpy
 #endif
 		}
 
-		private void ILAstStepperUpdated(object sender, EventArgs e)
+		private void ILAstStepperUpdated(object? sender, EventArgs? e)
 		{
 #if DEBUG
 			if (language == null)

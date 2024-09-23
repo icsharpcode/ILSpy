@@ -88,9 +88,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (trueInst == null || trueInst.Instructions.Count != 1 || !inst.FalseInst.MatchNop())
 				return false;
 			var storeInst = trueInst.Instructions[0];
-			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdsFld(out IField field) || !right.MatchLdNull())
+			if (!inst.Condition.MatchCompEquals(out ILInstruction? left, out ILInstruction? right) || !left.MatchLdsFld(out IField? field) || !right.MatchLdNull())
 				return false;
-			if (!storeInst.MatchStsFld(out IField field2, out ILInstruction value) || !field.Equals(field2) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+			if (!storeInst.MatchStsFld(out IField? field2, out ILInstruction? value) || !field.Equals(field2) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 				return false;
 			if (!DelegateConstruction.MatchDelegateConstruction(value.UnwrapConv(ConversionKind.Invalid) as NewObj, out _, out _, out _, true))
 				return false;
@@ -117,10 +117,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Block? trueInst = inst.TrueInst as Block;
 			if (trueInst == null || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
 				return false;
-			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdLoc(out ILVariable v) || !right.MatchLdNull())
+			if (!inst.Condition.MatchCompEquals(out ILInstruction? left, out ILInstruction? right) || !left.MatchLdLoc(out ILVariable? v) || !right.MatchLdNull())
 				return false;
 			var storeInst = trueInst.Instructions.Last();
-			if (!storeInst.MatchStLoc(v, out ILInstruction value))
+			if (!storeInst.MatchStLoc(v, out ILInstruction? value))
 				return false;
 			if (!DelegateConstruction.MatchDelegateConstruction(value as NewObj, out _, out _, out _, true))
 				return false;
@@ -157,7 +157,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Block? trueInst = inst.TrueInst as Block;
 			if (trueInst == null || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
 				return false;
-			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdLoc(out ILVariable s) || !right.MatchLdNull())
+			if (!inst.Condition.MatchCompEquals(out ILInstruction? left, out ILInstruction? right) || !left.MatchLdLoc(out ILVariable? s) || !right.MatchLdNull())
 				return false;
 			var storeInst = trueInst.Instructions.Last() as StLoc;
 			var storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
@@ -189,7 +189,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Block? trueInst = inst.TrueInst as Block;
 			if (trueInst == null || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
 				return false;
-			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdLoc(out ILVariable s) || !right.MatchLdNull())
+			if (!inst.Condition.MatchCompEquals(out ILInstruction? left, out ILInstruction? right) || !left.MatchLdLoc(out ILVariable? s) || !right.MatchLdNull())
 				return false;
 			var storeInst = trueInst.Instructions.Last() as StLoc;
 			var storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
@@ -240,7 +240,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
-			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !right.MatchLdNull())
+			if (!inst.Condition.MatchCompEquals(out ILInstruction? left, out ILInstruction? right) || !right.MatchLdNull())
 				return false;
 			if (!ldobj.Match(left).Success)
 				return false;
@@ -311,7 +311,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
-			if (!inst.Condition.MatchCompNotEqualsNull(out ILInstruction left))
+			if (!inst.Condition.MatchCompNotEqualsNull(out ILInstruction? left))
 				return false;
 			if (!ldobj.Match(left).Success)
 				return false;

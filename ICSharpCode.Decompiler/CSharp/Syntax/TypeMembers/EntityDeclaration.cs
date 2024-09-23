@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		internal static void SetModifiers(AstNode node, Modifiers newValue)
 		{
 			Modifiers oldValue = GetModifiers(node);
-			AstNode insertionPos = node.GetChildrenByRole(AttributeRole).LastOrDefault();
+			AstNode? insertionPos = node.GetChildrenByRole(AttributeRole).LastOrDefault();
 			foreach (Modifiers m in CSharpModifierToken.AllModifiers)
 			{
 				if ((m & newValue) != 0)

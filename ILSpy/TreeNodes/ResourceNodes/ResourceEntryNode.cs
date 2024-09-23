@@ -34,18 +34,18 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	public class ResourceEntryNode : ILSpyTreeNode
 	{
 		private readonly string key;
-		private readonly Func<Stream> openStream;
+		private readonly Func<Stream?> openStream;
 
 		public override object Text => Language.EscapeName(key);
 
 		public override object Icon => Images.Resource;
 
-		protected Stream OpenStream()
+		protected Stream? OpenStream()
 		{
 			return openStream();
 		}
 
-		public ResourceEntryNode(string key, Func<Stream> openStream)
+		public ResourceEntryNode(string key, Func<Stream?> openStream)
 		{
 			if (key == null)
 				throw new ArgumentNullException(nameof(key));
@@ -57,7 +57,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static ILSpyTreeNode Create(Resource resource)
 		{
-			ILSpyTreeNode result = null;
+			ILSpyTreeNode? result = null;
 			foreach (var factory in App.ExportProvider.GetExportedValues<IResourceNodeFactory>())
 			{
 				result = factory.CreateNode(resource) as ILSpyTreeNode;
@@ -78,13 +78,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			language.WriteCommentLine(output, string.Format("{0} = {1}", key, data));
 		}
 
-		public override bool Save(ViewModels.TabPageModel tabPage)
+		public override bool Save(ViewModels.TabPageModel? tabPage)
 		{
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.FileName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(key));
 			if (dlg.ShowDialog() == true)
 			{
 				using var data = OpenStream();
+
 				using var fs = dlg.OpenFile();
 				data.CopyTo(fs);
 			}

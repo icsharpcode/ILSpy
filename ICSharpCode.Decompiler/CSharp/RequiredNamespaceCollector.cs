@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var collector = new RequiredNamespaceCollector(namespaces);
 			foreach (var type in module.TypeDefinitions)
 			{
-				collector.CollectNamespaces(type, module, (CodeMappingInfo)null);
+				collector.CollectNamespaces(type, module, (CodeMappingInfo?)null);
 			}
 			collector.HandleAttributes(module.GetAssemblyAttributes());
 			collector.HandleAttributes(module.GetModuleAttributes());

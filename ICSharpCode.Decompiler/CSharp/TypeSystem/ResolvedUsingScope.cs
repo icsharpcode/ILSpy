@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 
 		public INamespace Namespace {
 			get {
-				INamespace result = LazyInit.VolatileRead(ref this.@namespace);
+				INamespace? result = LazyInit.VolatileRead(ref this.@namespace);
 				if (result != null)
 				{
 					return result;
