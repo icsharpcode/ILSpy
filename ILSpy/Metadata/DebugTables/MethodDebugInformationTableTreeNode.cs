@@ -83,7 +83,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnDocumentClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, debugInfo.Document, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, debugInfo.Document, protocol: "metadata")));
 			}
 
 			public string? DocumentTooltip {
@@ -116,7 +116,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnLocalSignatureClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, debugInfo.LocalSignature, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, debugInfo.LocalSignature, protocol: "metadata")));
 			}
 
 			public string? LocalSignatureTooltip {

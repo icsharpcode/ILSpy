@@ -78,12 +78,12 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public override bool CanExecute(object? parameter)
 		{
-			return MainWindow.Instance.SelectedNodes.All(n => n is IMemberTreeNode);
+			return MainWindow.Instance.AssemblyTreeModel.SelectedNodes.All(n => n is IMemberTreeNode);
 		}
 
 		public override void Execute(object? parameter)
 		{
-			foreach (var node in MainWindow.Instance.SelectedNodes.OfType<IMemberTreeNode>())
+			foreach (var node in MainWindow.Instance.AssemblyTreeModel.SelectedNodes.OfType<IMemberTreeNode>())
 			{
 				AnalyzerTreeView.Analyze(node.Member);
 			}

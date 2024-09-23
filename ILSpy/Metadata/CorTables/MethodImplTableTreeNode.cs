@@ -82,7 +82,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnMethodDeclarationClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, methodImpl.MethodDeclaration, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, methodImpl.MethodDeclaration, protocol: "metadata")));
 			}
 
 			string? methodDeclarationTooltip;
@@ -93,7 +93,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnMethodBodyClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, methodImpl.MethodBody, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, methodImpl.MethodBody, protocol: "metadata")));
 			}
 
 			string? methodBodyTooltip;
@@ -104,7 +104,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnTypeClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, methodImpl.Type, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, methodImpl.Type, protocol: "metadata")));
 			}
 
 			string? typeTooltip;

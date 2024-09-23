@@ -16,22 +16,20 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 
-using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX;
+
+using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpy
 {
 	/// <summary>
 	/// Represents the filters applied to the tree view.
 	/// </summary>
-	public class LanguageSettings : INotifyPropertyChanged
+	public class LanguageSettings : ObservableObject, IChildSettings
 	{
 		/// <summary>
 		/// This dictionary is necessary to remember language versions across language changes. For example, 
@@ -40,13 +38,16 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		private readonly Dictionary<Language, LanguageVersion?> languageVersionHistory = new Dictionary<Language, LanguageVersion?>();
 
-		public LanguageSettings(XElement element)
+		public LanguageSettings(XElement element, ISettingsSection parent)
 		{
+			Parent = parent;
 			this.ShowApiLevel = (ApiVisibility?)(int?)element.Element("ShowAPILevel") ?? ApiVisibility.PublicAndInternal;
 			this.Language = Languages.GetLanguage((string)element.Element("Language")) ?? Languages.AllLanguages.First();
 			this.LanguageVersion = Language.LanguageVersions.FirstOrDefault(v => v.Version == (string)element.Element("LanguageVersion"))
 								   ?? Language.LanguageVersions.LastOrDefault();
 		}
+
+		public ISettingsSection Parent { get; }
 
 		public XElement SaveAsXml()
 		{
@@ -172,20 +173,6 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 		}
-
-		public event PropertyChangedEventHandler? PropertyChanged;
-
-		protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-		{
-			if (PropertyChanged != null)
-			{
-				var args = new PropertyChangedEventArgs(propertyName);
-
-				PropertyChanged(this, args);
-				MessageBus.Send(this, new LanguageSettingsChangedEventArgs(args));
-			}
-		}
-
 
 		// This class has been initially called FilterSettings, but then has been Hijacked to store language settings as well.
 		// While the filter settings were some sort of local, the language settings are global. This is a bit of a mess.

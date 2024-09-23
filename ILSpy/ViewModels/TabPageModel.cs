@@ -20,8 +20,6 @@ using System;
 using System.Threading.Tasks;
 
 using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.Util;
-using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {

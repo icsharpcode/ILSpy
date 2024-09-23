@@ -118,7 +118,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnParamListClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, methodDef.GetParameters().FirstOrDefault(), protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, methodDef.GetParameters().FirstOrDefault(), protocol: "metadata")));
 			}
 
 			string? paramListTooltip;

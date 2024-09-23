@@ -95,7 +95,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnNestedClassClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, nestedClass.Nested, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, nestedClass.Nested, protocol: "metadata")));
 			}
 
 			string? nestedClassTooltip;
@@ -106,7 +106,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnEnclosingClassClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, nestedClass.Enclosing, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, nestedClass.Enclosing, protocol: "metadata")));
 			}
 
 			string? enclosingClassTooltip;

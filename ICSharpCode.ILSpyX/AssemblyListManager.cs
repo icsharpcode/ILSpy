@@ -39,7 +39,7 @@ namespace ICSharpCode.ILSpyX
 		public const string DotNet35List = ".NET 3.5";
 		public const string ASPDotNetMVC3List = "ASP.NET (MVC3)";
 
-		private ISettingsProvider settingsProvider;
+		private readonly ISettingsProvider settingsProvider;
 
 		public AssemblyListManager(ISettingsProvider settingsProvider)
 		{
@@ -59,9 +59,9 @@ namespace ICSharpCode.ILSpyX
 
 		public bool UseDebugSymbols { get; set; }
 
-		public ObservableCollection<string> AssemblyLists { get; } = new ObservableCollection<string>();
+		public ObservableCollection<string> AssemblyLists { get; } = [];
 
-		public FileLoaderRegistry LoaderRegistry { get; } = new FileLoaderRegistry();
+		public FileLoaderRegistry LoaderRegistry { get; } = new();
 
 		/// <summary>
 		/// Loads an assembly list from the ILSpySettings.
@@ -69,14 +69,13 @@ namespace ICSharpCode.ILSpyX
 		/// </summary>
 		public AssemblyList LoadList(string listName)
 		{
-			this.settingsProvider = this.settingsProvider.Load();
 			AssemblyList list = DoLoadList(listName);
 			if (!AssemblyLists.Contains(list.ListName))
 				AssemblyLists.Add(list.ListName);
 			return list;
 		}
 
-		AssemblyList DoLoadList(string listName)
+		AssemblyList DoLoadList(string? listName)
 		{
 			XElement doc = this.settingsProvider["AssemblyLists"];
 			if (listName != null)

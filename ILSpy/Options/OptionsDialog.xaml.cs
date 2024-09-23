@@ -18,105 +18,42 @@
 
 using System;
 using System.ComponentModel.Composition;
-using System.Linq;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Documents;
-using System.Windows.Media;
-using System.Xml.Linq;
 
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Properties;
-using ICSharpCode.ILSpyX.Settings;
-
-using TomsToolbox.Composition;
 
 namespace ICSharpCode.ILSpy.Options
 {
-	public class TabItemViewModel
-	{
-		public TabItemViewModel(string header, UIElement content)
-		{
-			Header = header;
-			Content = content;
-		}
-
-		public string Header { get; }
-		public UIElement Content { get; }
-	}
-
 	/// <summary>
 	/// Interaction logic for OptionsDialog.xaml
 	/// </summary>
-	public partial class OptionsDialog : Window
+	public sealed partial class OptionsDialog
 	{
-		readonly IExport<UIElement, IOptionsMetadata>[] optionPages;
-
 		public OptionsDialog()
 		{
+			DataContext = new OptionsDialogViewModel();
 			InitializeComponent();
-			var ep = App.ExportProvider;
-			this.optionPages = ep.GetExports<UIElement, IOptionsMetadata>("OptionPages").ToArray();
-			ILSpySettings settings = ILSpySettings.Load();
-			foreach (var optionPage in optionPages.OrderBy(p => p.Metadata.Order))
-			{
-				var tabItem = new TabItemViewModel(MainWindow.GetResourceString(optionPage.Metadata.Title), optionPage.Value);
-
-				tabControl.Items.Add(tabItem);
-
-				IOptionPage? page = optionPage.Value as IOptionPage;
-				if (page != null)
-					page.Load(settings);
-			}
-		}
-
-		void OKButton_Click(object sender, RoutedEventArgs e)
-		{
-			ILSpySettings.Update(
-				delegate (XElement root) {
-					foreach (var optionPage in optionPages)
-					{
-						IOptionPage? page = optionPage.Value as IOptionPage;
-						if (page != null)
-							page.Save(root);
-					}
-				});
-			this.DialogResult = true;
-			Close();
-		}
-
-		private void DefaultsButton_Click(object sender, RoutedEventArgs e)
-		{
-			if (MessageBox.Show(Properties.Resources.ResetToDefaultsConfirmationMessage, "ILSpy", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-			{
-				var page = tabControl.SelectedValue as IOptionPage;
-				if (page != null)
-					page.LoadDefaults();
-			}
 		}
 	}
 
 	public interface IOptionsMetadata
 	{
-		string Title { get; }
 		int Order { get; }
 	}
 
 	public interface IOptionPage
 	{
-		void Load(ILSpySettings settings);
-		void Save(XElement root);
+		string Title { get; }
+
+		void Load(SettingsSnapshot settings);
+
 		void LoadDefaults();
 	}
 
 	[MetadataAttribute]
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-	public class ExportOptionPageAttribute : ExportAttribute
+	[AttributeUsage(AttributeTargets.Class)]
+	public sealed class ExportOptionPageAttribute() : ExportAttribute("OptionPages", typeof(IOptionPage)), IOptionsMetadata
 	{
-		public ExportOptionPageAttribute() : base("OptionPages", typeof(UIElement))
-		{ }
-
-		public string Title { get; set; }
-
 		public int Order { get; set; }
 	}
 
@@ -124,13 +61,22 @@ namespace ICSharpCode.ILSpy.Options
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class ShowOptionsCommand : SimpleCommand
 	{
-		public override void Execute(object? parameter)
+		private readonly AssemblyTreeModel assemblyTreeModel;
+
+		[ImportingConstructor]
+		public ShowOptionsCommand(AssemblyTreeModel assemblyTreeModel)
 		{
-			OptionsDialog dlg = new OptionsDialog();
-			dlg.Owner = MainWindow.Instance;
+			this.assemblyTreeModel = assemblyTreeModel;
+		}
+
+		public override void Execute(object parameter)
+		{
+			OptionsDialog dlg = new() {
+				Owner = MainWindow.Instance,
+			};
 			if (dlg.ShowDialog() == true)
 			{
-				new RefreshCommand().Execute(parameter);
+				assemblyTreeModel.Refresh();
 			}
 		}
 	}

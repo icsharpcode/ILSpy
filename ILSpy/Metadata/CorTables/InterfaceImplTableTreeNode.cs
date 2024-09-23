@@ -96,7 +96,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnClassClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, interfaceImpl.Class, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, interfaceImpl.Class, protocol: "metadata")));
 			}
 
 			string? classTooltip;
@@ -107,7 +107,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnInterfaceClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, interfaceImpl.Interface, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, interfaceImpl.Interface, protocol: "metadata")));
 			}
 
 			string? interfaceTooltip;

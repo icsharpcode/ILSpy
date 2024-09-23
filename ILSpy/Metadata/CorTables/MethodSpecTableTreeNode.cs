@@ -85,7 +85,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnMethodClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, methodSpec.Method, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, methodSpec.Method, protocol: "metadata")));
 			}
 
 			string? methodTooltip;

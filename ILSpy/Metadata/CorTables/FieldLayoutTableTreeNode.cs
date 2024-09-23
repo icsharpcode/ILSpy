@@ -96,7 +96,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnFieldClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, fieldLayout.Field, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, fieldLayout.Field, protocol: "metadata")));
 			}
 
 			string? fieldTooltip;

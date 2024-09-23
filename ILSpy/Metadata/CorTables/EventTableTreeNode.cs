@@ -103,7 +103,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnTypeClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, eventDef.Type, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, eventDef.Type, protocol: "metadata")));
 			}
 
 			string? typeTooltip;

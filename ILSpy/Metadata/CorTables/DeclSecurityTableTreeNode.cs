@@ -84,7 +84,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnParentClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, declSecAttr.Parent, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, declSecAttr.Parent, protocol: "metadata")));
 			}
 
 			string? parentTooltip;

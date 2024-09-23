@@ -26,7 +26,7 @@ namespace ICSharpCode.ILSpy.Updates
 {
 	sealed class UpdateSettings : INotifyPropertyChanged
 	{
-		public UpdateSettings(ILSpySettings spySettings)
+		public UpdateSettings(ISettingsProvider spySettings)
 		{
 			XElement s = spySettings["UpdateSettings"];
 			this.automaticUpdateCheckEnabled = (bool?)s.Element("AutomaticUpdateCheckEnabled") ?? true;
@@ -75,7 +75,7 @@ namespace ICSharpCode.ILSpy.Updates
 			updateSettings.Add(new XElement("AutomaticUpdateCheckEnabled", automaticUpdateCheckEnabled));
 			if (lastSuccessfulUpdateCheck != null)
 				updateSettings.Add(new XElement("LastSuccessfulUpdateCheck", lastSuccessfulUpdateCheck));
-			ILSpySettings.SaveSettings(updateSettings);
+			SettingsService.Instance.SpySettings.SaveSettings(updateSettings);
 		}
 
 		public event PropertyChangedEventHandler? PropertyChanged;

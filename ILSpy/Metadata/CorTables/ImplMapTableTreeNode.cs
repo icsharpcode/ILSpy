@@ -113,7 +113,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnMemberForwardedClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, implMap.MemberForwarded, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, implMap.MemberForwarded, protocol: "metadata")));
 			}
 
 			string? memberForwardedTooltip;
@@ -124,7 +124,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnImportScopeClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, implMap.ImportScope, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, implMap.ImportScope, protocol: "metadata")));
 			}
 
 			string? importScopeTooltip;

@@ -27,7 +27,6 @@ using System.Windows.Threading;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX.Abstractions;
 using ICSharpCode.ILSpyX.TreeView;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
@@ -41,9 +40,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		bool childrenNeedFiltering;
 
-		public ILSpyTreeNode()
+		protected ILSpyTreeNode()
 		{
-			MessageBus<LanguageSettingsChangedEventArgs>.Subscribers += LanguageSettings_Changed;
+			MessageBus<SettingsChangedEventArgs>.Subscribers += (sender, e) => Settings_Changed(sender, e);
 		}
 
 		LanguageSettings LanguageSettings => SettingsService.Instance.SessionSettings.LanguageSettings;
@@ -72,8 +71,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void ActivateItemSecondary(IPlatformRoutedEventArgs e)
 		{
-			MainWindow.Instance.SelectNode(this, inNewTabPage: true);
-			MainWindow.Instance.Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)MainWindow.Instance.RefreshDecompiledView);
+			MainWindow.Instance.AssemblyTreeModel.SelectNode(this, inNewTabPage: true);
+			MainWindow.Instance.Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)MainWindow.Instance.AssemblyTreeModel.RefreshDecompiledView);
 		}
 
 		/// <summary>
@@ -86,7 +85,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return false;
 		}
 
-		protected internal override void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
+		public override void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
 		{
 			if (e.NewItems != null)
 			{
@@ -128,8 +127,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		protected virtual void LanguageSettings_Changed(object? sender, EventArgs e)
+		protected virtual void Settings_Changed(object? sender, PropertyChangedEventArgs e)
 		{
+			if (sender is not ILSpy.LanguageSettings)
+				return;
+			if (e.PropertyName is not (nameof(LanguageSettings.Language) or nameof(LanguageSettings.LanguageVersion)))
+				return;
+
 			RaisePropertyChanged(nameof(Text));
 			if (IsVisible)
 			{

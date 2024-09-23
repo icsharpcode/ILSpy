@@ -52,11 +52,11 @@ using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.AvalonEdit;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 
@@ -414,7 +414,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			else if (segment.Reference is EntityReference unresolvedEntity)
 			{
-				var module = unresolvedEntity.ResolveAssembly(MainWindow.Instance.CurrentAssemblyList);
+				var module = unresolvedEntity.ResolveAssembly(MainWindow.Instance.AssemblyTreeModel.AssemblyList);
 				if (module == null)
 					return null;
 				var typeSystem = new DecompilerTypeSystem(module,
@@ -474,7 +474,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 			IEntity? ResolveReference(string idString)
 			{
-				return MainWindow.FindEntityInRelevantAssemblies(idString, MainWindow.Instance.CurrentAssemblyList.GetAssemblies());
+				return AssemblyTreeModel.FindEntityInRelevantAssemblies(idString, MainWindow.Instance.AssemblyTreeModel.AssemblyList.GetAssemblies());
 			}
 		}
 
@@ -1001,7 +1001,7 @@ namespace ICSharpCode.ILSpy.TextView
 					return;
 				}
 			}
-			MainWindow.Instance.JumpToReference(reference, openInNewTab);
+			MessageBus.Send(this, new NavigateToReferenceEventArgs(reference, openInNewTab));
 		}
 
 		Point? mouseDownPos;

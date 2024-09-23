@@ -95,7 +95,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnParentClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, eventMap.Parent, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, eventMap.Parent, protocol: "metadata")));
 			}
 
 			string? parentTooltip;
@@ -106,7 +106,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnEventListClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, eventMap.EventList, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, eventMap.EventList, protocol: "metadata")));
 			}
 
 			string? eventListTooltip;

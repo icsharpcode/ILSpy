@@ -107,7 +107,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnImplementationClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, type.Implementation, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, type.Implementation, protocol: "metadata")));
 			}
 
 			string? implementationTooltip;

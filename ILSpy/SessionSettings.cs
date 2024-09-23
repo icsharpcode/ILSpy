@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
@@ -28,9 +29,7 @@ using System.Xml.Linq;
 
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Themes;
-using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX.Search;
-using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy
 {
@@ -38,58 +37,37 @@ namespace ICSharpCode.ILSpy
 	/// Per-session setting:
 	/// Loaded at startup; saved at exit.
 	/// </summary>
-	public sealed class SessionSettings : INotifyPropertyChanged
+	public sealed class SessionSettings : ISettingsSection
 	{
-		public SessionSettings(ILSpySettings spySettings)
+		public XName SectionName => "SessionSettings";
+
+		public void LoadFromXml(XElement section)
 		{
-			XElement doc = spySettings["SessionSettings"];
+			XElement filterSettings = section.Element("FilterSettings") ?? new XElement("FilterSettings");
 
-			XElement? filterSettings = doc.Element("FilterSettings");
-			if (filterSettings == null)
-				filterSettings = new XElement("FilterSettings");
+			LanguageSettings = new(filterSettings, this);
+			LanguageSettings.PropertyChanged += (sender, e) => PropertyChanged?.Invoke(sender, e);
 
-			this.LanguageSettings = new LanguageSettings(filterSettings);
-
-			this.ActiveAssemblyList = (string)doc.Element("ActiveAssemblyList");
-
-			XElement? activeTreeViewPath = doc.Element("ActiveTreeViewPath");
-			if (activeTreeViewPath != null)
-			{
-				this.ActiveTreeViewPath = activeTreeViewPath.Elements().Select(e => Unescape((string)e)).ToArray();
-			}
-			this.ActiveAutoLoadedAssembly = (string)doc.Element("ActiveAutoLoadedAssembly");
-
-			this.WindowState = FromString((string)doc.Element("WindowState"), WindowState.Normal);
-			this.WindowBounds = FromString((string)doc.Element("WindowBounds"), DefaultWindowBounds);
-			this.SelectedSearchMode = FromString((string)doc.Element("SelectedSearchMode"), SearchMode.TypeAndMember);
-			this.Theme = FromString((string)doc.Element(nameof(Theme)), ThemeManager.Current.DefaultTheme);
-			string? currentCulture = (string)doc.Element(nameof(CurrentCulture));
-			this.CurrentCulture = string.IsNullOrEmpty(currentCulture) ? null : currentCulture;
-
-			this.DockLayout = new DockLayoutSettings(doc.Element("DockLayout"));
+			ActiveAssemblyList = (string)section.Element("ActiveAssemblyList");
+			ActiveTreeViewPath = section.Element("ActiveTreeViewPath")?.Elements().Select(e => Unescape((string)e)).ToArray();
+			ActiveAutoLoadedAssembly = (string)section.Element("ActiveAutoLoadedAssembly");
+			WindowState = FromString((string)section.Element("WindowState"), WindowState.Normal);
+			WindowBounds = FromString((string)section.Element("WindowBounds"), DefaultWindowBounds);
+			SelectedSearchMode = FromString((string)section.Element("SelectedSearchMode"), SearchMode.TypeAndMember);
+			Theme = FromString((string)section.Element(nameof(Theme)), ThemeManager.Current.DefaultTheme);
+			var culture = (string)section.Element(nameof(CurrentCulture));
+			CurrentCulture = string.IsNullOrEmpty(culture) ? null : culture;
+			DockLayout = new(section.Element("DockLayout"));
 		}
 
-		public event PropertyChangedEventHandler? PropertyChanged;
-
-		void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-		{
-			var args = new PropertyChangedEventArgs(propertyName);
-
-			PropertyChanged?.Invoke(this, args);
-
-			MessageBus.Send(this, new SessionSettingsChangedEventArgs(args));
-		}
-
-		public LanguageSettings LanguageSettings { get; }
+		public LanguageSettings LanguageSettings { get; set; }
 
 		public SearchMode SelectedSearchMode { get; set; }
 
+		private string theme;
 		public string Theme {
-			get => ThemeManager.Current.Theme;
-			set {
-				ThemeManager.Current.Theme = value;
-				OnPropertyChanged();
-			}
+			get => theme;
+			set => SetProperty(ref theme, value);
 		}
 
 		public string[] ActiveTreeViewPath;
@@ -121,56 +99,51 @@ namespace ICSharpCode.ILSpy
 
 		public WindowState WindowState;
 		public Rect WindowBounds;
-		internal static Rect DefaultWindowBounds = new Rect(10, 10, 750, 550);
+		internal static Rect DefaultWindowBounds = new(10, 10, 750, 550);
 
-		public DockLayoutSettings DockLayout { get; }
+		public DockLayoutSettings DockLayout { get; set; }
 
-		public XElement ToXml()
+		public XElement SaveToXml()
 		{
-			XElement doc = new XElement("SessionSettings");
-			doc.Add(this.LanguageSettings.SaveAsXml());
+			var section = new XElement(SectionName);
+
+			section.Add(this.LanguageSettings.SaveAsXml());
 			if (this.ActiveAssemblyList != null)
 			{
-				doc.Add(new XElement("ActiveAssemblyList", this.ActiveAssemblyList));
+				section.Add(new XElement("ActiveAssemblyList", this.ActiveAssemblyList));
 			}
 			if (this.ActiveTreeViewPath != null)
 			{
-				doc.Add(new XElement("ActiveTreeViewPath", ActiveTreeViewPath.Select(p => new XElement("Node", Escape(p)))));
+				section.Add(new XElement("ActiveTreeViewPath", ActiveTreeViewPath.Select(p => new XElement("Node", Escape(p)))));
 			}
 			if (this.ActiveAutoLoadedAssembly != null)
 			{
-				doc.Add(new XElement("ActiveAutoLoadedAssembly", this.ActiveAutoLoadedAssembly));
+				section.Add(new XElement("ActiveAutoLoadedAssembly", this.ActiveAutoLoadedAssembly));
 			}
-			doc.Add(new XElement("WindowState", ToString(this.WindowState)));
-			doc.Add(new XElement("WindowBounds", ToString(this.WindowBounds)));
-			doc.Add(new XElement("SelectedSearchMode", ToString(this.SelectedSearchMode)));
-			doc.Add(new XElement(nameof(Theme), ToString(this.Theme)));
+			section.Add(new XElement("WindowState", ToString(this.WindowState)));
+			section.Add(new XElement("WindowBounds", ToString(this.WindowBounds)));
+			section.Add(new XElement("SelectedSearchMode", ToString(this.SelectedSearchMode)));
+			section.Add(new XElement(nameof(Theme), ToString(this.Theme)));
 			if (this.CurrentCulture != null)
 			{
-				doc.Add(new XElement(nameof(CurrentCulture), this.CurrentCulture));
+				section.Add(new XElement(nameof(CurrentCulture), this.CurrentCulture));
 			}
-
 			var dockLayoutElement = new XElement("DockLayout");
 			if (DockLayout.Valid)
 			{
 				dockLayoutElement.Add(DockLayout.SaveAsXml());
 			}
-			doc.Add(dockLayoutElement);
-			return doc;
+			section.Add(dockLayoutElement);
+
+			return section;
 		}
 
-		public void Save()
-		{
-			var doc = ToXml();
-			ILSpySettings.SaveSettings(doc);
-		}
-
-		static Regex regex = new Regex("\\\\x(?<num>[0-9A-f]{4})");
+		static Regex regex = new("\\\\x(?<num>[0-9A-f]{4})");
 		private string? activeAssemblyList;
 
 		static string Escape(string p)
 		{
-			StringBuilder sb = new StringBuilder();
+			StringBuilder sb = new();
 			foreach (char ch in p)
 			{
 				if (char.IsLetterOrDigit(ch))
@@ -205,6 +178,22 @@ namespace ICSharpCode.ILSpy
 		{
 			TypeConverter c = TypeDescriptor.GetConverter(typeof(T));
 			return c.ConvertToInvariantString(obj);
+		}
+
+		public event PropertyChangedEventHandler PropertyChanged;
+
+		private void OnPropertyChanged([CallerMemberName] string propertyName = null)
+		{
+			PropertyChanged?.Invoke(this, new(propertyName));
+		}
+
+		private bool SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+		{
+			if (EqualityComparer<T>.Default.Equals(field, value))
+				return false;
+			field = value;
+			OnPropertyChanged(propertyName);
+			return true;
 		}
 	}
 }

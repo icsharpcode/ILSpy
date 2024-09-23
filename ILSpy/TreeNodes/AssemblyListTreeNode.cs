@@ -87,13 +87,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			e.Effects = XPlatDragDropEffects.Move | XPlatDragDropEffects.Copy | XPlatDragDropEffects.Link;
 			if (e.Data.GetDataPresent(AssemblyTreeNode.DataFormat))
 				return true;
-			else if (e.Data.GetDataPresent(DataFormats.FileDrop))
+			if (e.Data.GetDataPresent(DataFormats.FileDrop))
 				return true;
-			else
-			{
-				e.Effects = XPlatDragDropEffects.None;
-				return false;
-			}
+			e.Effects = XPlatDragDropEffects.None;
+			return false;
 		}
 
 		public override void Drop(IPlatformDragEventArgs e, int index)
@@ -110,8 +107,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					.Distinct()
 					.ToArray();
 				assemblyList.Move(assemblies, index);
-				var nodes = assemblies.SelectArray(MainWindow.Instance.FindTreeNode);
-				MainWindow.Instance.SelectNodes(nodes);
+				var nodes = assemblies.SelectArray(MainWindow.Instance.AssemblyTreeModel.FindTreeNode);
+				MainWindow.Instance.AssemblyTreeModel.SelectNodes(nodes);
 			}
 		}
 
@@ -187,7 +184,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				if (bundle == null)
 					return null;
 				bundle.EnsureLazyChildren();
-				foreach (var node in ILSpyX.TreeView.TreeTraversal.PreOrder(bundle.Children, ExpandAndGetChildren).OfType<AssemblyTreeNode>())
+				foreach (var node in TreeTraversal.PreOrder(bundle.Children, ExpandAndGetChildren).OfType<AssemblyTreeNode>())
 				{
 					if (node.LoadedAssembly == asm)
 						return node;

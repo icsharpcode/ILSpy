@@ -61,7 +61,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 				MessageBox.Show(Properties.Resources.CannotAnalyzeMissingRef, "ILSpy");
 				return;
 			}
-			MainWindow.Instance.JumpToReference(analyzedModule.MetadataFile);
+			MessageBus.Send(this, new NavigateToReferenceEventArgs(analyzedModule.MetadataFile));
 		}
 
 		public override IEntity? Member => null;

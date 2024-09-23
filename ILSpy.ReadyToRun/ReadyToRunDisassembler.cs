@@ -26,6 +26,7 @@ using Iced.Intel;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpy.Util;
 
 using ILCompiler.Reflection.ReadyToRun;
 using ILCompiler.Reflection.ReadyToRun.Amd64;
@@ -50,11 +51,13 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			ReadyToRunMethod readyToRunMethod = runtimeFunction.Method;
 			WriteCommentLine(readyToRunMethod.SignatureString);
 
-			if (ReadyToRunOptions.GetIsShowGCInfo(null))
+			var options = SettingsService.Instance.GetSettings<ReadyToRunOptions>();
+
+			if (options.IsShowGCInfo)
 			{
 				if (readyToRunMethod.GcInfo != null)
 				{
-					string[] lines = readyToRunMethod.GcInfo.ToString().Split(Environment.NewLine);
+					string[] lines = readyToRunMethod.GcInfo.ToString()?.Split(Environment.NewLine) ?? [];
 					WriteCommentLine("GC info:");
 					foreach (string line in lines)
 					{
@@ -68,12 +71,12 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 
 			Dictionary<ulong, UnwindCode>? unwindInfo = null;
-			if (ReadyToRunOptions.GetIsShowUnwindInfo(null) && bitness == 64)
+			if (options.IsShowUnwindInfo && bitness == 64)
 			{
 				unwindInfo = WriteUnwindInfo();
 			}
 
-			bool isShowDebugInfo = ReadyToRunOptions.GetIsShowDebugInfo(null);
+			bool isShowDebugInfo = options.IsShowDebugInfo;
 			DebugInfoHelper? debugInfo = null;
 			if (isShowDebugInfo)
 			{
@@ -97,7 +100,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				decoder.Decode(out instructions.AllocUninitializedElement());
 			}
 
-			string disassemblyFormat = ReadyToRunOptions.GetDisassemblyFormat(null);
+			string disassemblyFormat = options.DisassemblyFormat;
 			Formatter? formatter = null;
 			if (disassemblyFormat.Equals(ReadyToRunOptions.intel))
 			{
@@ -144,7 +147,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 						}
 					}
 				}
-				if (ReadyToRunOptions.GetIsShowGCInfo(null))
+				if (options.IsShowGCInfo)
 				{
 					DecorateGCInfo(instr, baseInstrIP, readyToRunMethod.GcInfo);
 				}

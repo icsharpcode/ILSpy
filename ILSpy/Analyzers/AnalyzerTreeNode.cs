@@ -18,7 +18,6 @@
 
 using System.Collections.Generic;
 
-using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 

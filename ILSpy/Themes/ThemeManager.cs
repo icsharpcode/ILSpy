@@ -20,6 +20,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -42,6 +43,7 @@ namespace ICSharpCode.ILSpy.Themes
 		private ThemeManager()
 		{
 			Application.Current.Resources.MergedDictionaries.Add(_themeDictionaryContainer);
+			MessageBus<SettingsChangedEventArgs>.Subscribers += (sender, e) => Settings_Changed(sender, e);
 		}
 
 		public string DefaultTheme => "Light";
@@ -198,6 +200,14 @@ namespace ICSharpCode.ILSpy.Themes
 			var g = (byte)((g1 + m) * 255f);
 			var b = (byte)((b1 + m) * 255f);
 			return (r, g, b);
+		}
+
+		private void Settings_Changed(object? sender, PropertyChangedEventArgs e)
+		{
+			if (sender is not SessionSettings settings || e.PropertyName != nameof(SessionSettings.Theme))
+				return;
+
+			Theme = settings.Theme;
 		}
 	}
 }

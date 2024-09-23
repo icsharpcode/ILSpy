@@ -28,6 +28,8 @@ using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX.Extensions;
 
+using TomsToolbox.Essentials;
+
 namespace ICSharpCode.ILSpy.Metadata
 {
 	class CoffHeaderTreeNode : ILSpyTreeNode

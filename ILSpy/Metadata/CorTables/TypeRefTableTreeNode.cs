@@ -83,7 +83,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnResolutionScopeClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, typeRef.ResolutionScope, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, typeRef.ResolutionScope, protocol: "metadata")));
 			}
 
 			string? resolutionScopeTooltip;

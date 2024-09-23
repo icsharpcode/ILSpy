@@ -198,7 +198,7 @@ namespace ICSharpCode.ILSpy
 		public static void HandleExceptions(this Task task)
 		{
 			task.Catch<Exception>(exception => MainWindow.Instance.Dispatcher.BeginInvoke(new Action(delegate {
-				AvalonEditTextOutput output = new AvalonEditTextOutput();
+				AvalonEditTextOutput output = new();
 				output.Write(exception.ToString());
 				Docking.DockWorkspace.Instance.ShowText(output);
 			}))).IgnoreExceptions();
