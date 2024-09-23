@@ -418,17 +418,22 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 			Root = assemblyListTreeNode;
 
+			var mainWindow = Application.Current?.MainWindow;
+
+			if (mainWindow == null)
+				return;
+
 			if (assemblyList.ListName == AssemblyListManager.DefaultListName)
 #if DEBUG
-				this.Title = $"ILSpy {DecompilerVersionInfo.FullVersion}";
+				mainWindow.Title = $"ILSpy {DecompilerVersionInfo.FullVersion}";
 #else
-				this.Title = "ILSpy";
+				mainWindow.Title = "ILSpy";
 #endif
 			else
 #if DEBUG
-				this.Title = $"ILSpy {DecompilerVersionInfo.FullVersion} - " + assemblyList.ListName;
+				mainWindow.Title = $"ILSpy {DecompilerVersionInfo.FullVersion} - " + assemblyList.ListName;
 #else
-				this.Title = "ILSpy - " + assemblyList.ListName;
+				mainWindow.Title = "ILSpy - " + assemblyList.ListName;
 #endif
 		}
 
