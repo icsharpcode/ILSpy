@@ -4,6 +4,7 @@
   <PropertyGroup>
     <IsWindowsX64 Condition="$([MSBuild]::IsOsPlatform('Windows')) And $([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) == X64">true</IsWindowsX64>
     <IsWindowsARM64 Condition="$([MSBuild]::IsOsPlatform('Windows')) And $([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) == ARM64">true</IsWindowsARM64>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <PropertyGroup>

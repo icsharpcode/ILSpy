@@ -114,9 +114,9 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-		public event PropertyChangedEventHandler PropertyChanged;
+		public event PropertyChangedEventHandler? PropertyChanged;
 
-		protected virtual void OnPropertyChanged(string propertyName)
+		protected virtual void OnPropertyChanged(string? propertyName)
 		{
 			if (PropertyChanged != null)
 			{

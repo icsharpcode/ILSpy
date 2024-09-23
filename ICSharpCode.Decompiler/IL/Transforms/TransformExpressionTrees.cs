@@ -447,7 +447,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return delegateType;
 		}
 
-		(Func<ILInstruction>?, IType) ConvertArrayIndex(CallInstruction invocation)
+		(Func<ILInstruction?>?, IType) ConvertArrayIndex(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count != 2)
 				return (null, SpecialType.UnknownType);

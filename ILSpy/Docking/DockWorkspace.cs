@@ -82,7 +82,7 @@ namespace ICSharpCode.ILSpy.Docking
 			}
 		}
 
-		private void Documents_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+		private void Documents_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
 			var collection = (PaneCollection<TabPageModel>)sender;
 			if (e.Action == NotifyCollectionChangedAction.Add)

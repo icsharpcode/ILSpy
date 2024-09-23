@@ -31,8 +31,8 @@ namespace ICSharpCode.Decompiler.Documentation
 	/// </summary>
 	public static class XmlDocLoader
 	{
-		static readonly Lazy<XmlDocumentationProvider> mscorlibDocumentation = new Lazy<XmlDocumentationProvider>(LoadMscorlibDocumentation);
-		static readonly ConditionalWeakTable<MetadataFile, XmlDocumentationProvider> cache = new();
+		static readonly Lazy<XmlDocumentationProvider?> mscorlibDocumentation = new Lazy<XmlDocumentationProvider?>(LoadMscorlibDocumentation);
+		static readonly ConditionalWeakTable<MetadataFile, XmlDocumentationProvider?> cache = new();
 
 		static XmlDocumentationProvider? LoadMscorlibDocumentation()
 		{
@@ -44,11 +44,11 @@ namespace ICSharpCode.Decompiler.Documentation
 				return null;
 		}
 
-		public static XmlDocumentationProvider MscorlibDocumentation {
+		public static XmlDocumentationProvider? MscorlibDocumentation {
 			get { return mscorlibDocumentation.Value; }
 		}
 
-		public static XmlDocumentationProvider LoadDocumentation(MetadataFile module)
+		public static XmlDocumentationProvider? LoadDocumentation(MetadataFile module)
 		{
 			if (module == null)
 				throw new ArgumentNullException(nameof(module));
@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			{
 				if (!cache.TryGetValue(module, out XmlDocumentationProvider? xmlDoc))
 				{
-					string xmlDocFile = LookupLocalizedXmlDoc(module.FileName);
+					string? xmlDocFile = LookupLocalizedXmlDoc(module.FileName);
 					if (xmlDocFile == null)
 					{
 						xmlDocFile = FindXmlDocumentation(Path.GetFileName(module.FileName), module.GetRuntime());
@@ -79,9 +79,9 @@ namespace ICSharpCode.Decompiler.Documentation
 		static readonly string referenceAssembliesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Reference Assemblies\Microsoft\\Framework");
 		static readonly string frameworkPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), @"Microsoft.NET\Framework");
 
-		static string FindXmlDocumentation(string assemblyFileName, TargetRuntime runtime)
+		static string? FindXmlDocumentation(string assemblyFileName, TargetRuntime runtime)
 		{
-			string fileName;
+			string? fileName;
 			switch (runtime)
 			{
 				case TargetRuntime.Net_1_0:

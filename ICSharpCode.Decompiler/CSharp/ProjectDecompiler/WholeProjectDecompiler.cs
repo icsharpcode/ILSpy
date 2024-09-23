@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		public AssemblyReferenceClassifier AssemblyReferenceClassifier { get; }
 
-		public IDebugInfoProvider DebugInfoProvider { get; }
+		public IDebugInfoProvider? DebugInfoProvider { get; }
 
 		/// <summary>
 		/// The MSBuild ProjectGuid to use for the new project.
@@ -106,9 +106,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		public WholeProjectDecompiler(
 			DecompilerSettings settings,
 			IAssemblyResolver assemblyResolver,
-			IProjectFileWriter projectWriter,
-			AssemblyReferenceClassifier assemblyReferenceClassifier,
-			IDebugInfoProvider debugInfoProvider)
+			IProjectFileWriter? projectWriter,
+			AssemblyReferenceClassifier? assemblyReferenceClassifier,
+			IDebugInfoProvider? debugInfoProvider)
 			: this(settings, Guid.NewGuid(), assemblyResolver, projectWriter, assemblyReferenceClassifier, debugInfoProvider)
 		{
 		}
@@ -117,9 +117,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			DecompilerSettings settings,
 			Guid projectGuid,
 			IAssemblyResolver assemblyResolver,
-			IProjectFileWriter projectWriter,
-			AssemblyReferenceClassifier assemblyReferenceClassifier,
-			IDebugInfoProvider debugInfoProvider)
+			IProjectFileWriter? projectWriter,
+			AssemblyReferenceClassifier? assemblyReferenceClassifier,
+			IDebugInfoProvider? debugInfoProvider)
 		{
 			Settings = settings ?? throw new ArgumentNullException(nameof(settings));
 			ProjectGuid = projectGuid;

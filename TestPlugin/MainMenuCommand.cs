@@ -21,7 +21,7 @@ namespace TestPlugin
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	public class UnloadAllAssembliesCommand : SimpleCommand
 	{
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			foreach (var loadedAssembly in MainWindow.Instance.CurrentAssemblyList.GetAssemblies())
 			{

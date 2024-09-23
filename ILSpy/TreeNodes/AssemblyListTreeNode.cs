@@ -203,7 +203,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			return null;
 
-			static SharpTreeNodeCollection? ExpandAndGetChildren(SharpTreeNode node)
+
+
+			static SharpTreeNodeCollection ExpandAndGetChildren(SharpTreeNode node)
 			{
 				if (node is not PackageFolderTreeNode)
 					return null;

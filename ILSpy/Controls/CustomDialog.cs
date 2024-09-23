@@ -113,9 +113,9 @@ namespace ICSharpCode.ILSpy.Controls
 			}
 		}
 
-		void ButtonClick(object sender, EventArgs e)
+		void ButtonClick(object? sender, EventArgs e)
 		{
-			result = (int)((Control)sender).Tag;
+			result = ((int?)(sender as Control)?.Tag) ?? -1;
 			this.Close();
 		}
 

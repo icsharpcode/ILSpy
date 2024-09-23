@@ -14,7 +14,7 @@ namespace ICSharpCode.ILSpyCmd
 		{
 		}
 
-		protected override ValidationResult IsValid(object value, ValidationContext context)
+		protected override ValidationResult? IsValid(object? value, ValidationContext context)
 		{
 			if (value is ILSpyCmdProgram obj)
 			{
@@ -30,7 +30,7 @@ namespace ICSharpCode.ILSpyCmd
 	[AttributeUsage(AttributeTargets.Property)]
 	public sealed class FileExistsOrNullAttribute : ValidationAttribute
 	{
-		protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+		protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
 		{
 			var path = value as string;
 			if (string.IsNullOrEmpty(path))
@@ -55,7 +55,7 @@ namespace ICSharpCode.ILSpyCmd
 	[AttributeUsage(AttributeTargets.Property)]
 	public sealed class FilesExistAttribute : ValidationAttribute
 	{
-		protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+		protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
 		{
 			switch (value)
 			{
@@ -65,7 +65,7 @@ namespace ICSharpCode.ILSpyCmd
 				{
 					foreach (string path in paths)
 					{
-						ValidationResult result = ValidatePath(path);
+						ValidationResult? result = ValidatePath(path);
 						if (result != ValidationResult.Success)
 							return result;
 					}
@@ -75,7 +75,7 @@ namespace ICSharpCode.ILSpyCmd
 					return new ValidationResult($"File '{value}' does not exist!");
 			}
 
-			ValidationResult ValidatePath(string path)
+			ValidationResult? ValidatePath(string path)
 			{
 				if (!string.IsNullOrWhiteSpace(path))
 				{

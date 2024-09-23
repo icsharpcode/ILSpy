@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 	sealed class CursorResourceEntryNode : ResourceEntryNode
 	{
-		public CursorResourceEntryNode(string key, Func<Stream> openStream)
+		public CursorResourceEntryNode(string key, Func<Stream?> openStream)
 			: base(key, openStream)
 		{
 		}

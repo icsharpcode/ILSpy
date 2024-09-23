@@ -35,6 +35,7 @@
     <DebugSymbols>true</DebugSymbols>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   
   <ItemGroup>
