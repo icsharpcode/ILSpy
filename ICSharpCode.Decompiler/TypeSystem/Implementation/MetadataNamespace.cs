@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public string FullName { get; }
 		public string Name { get; }
 
-		public MetadataNamespace(MetadataModule module, INamespace parent, string fullName, NamespaceDefinition ns)
+		public MetadataNamespace(MetadataModule module, INamespace? parent, string fullName, NamespaceDefinition ns)
 		{
 			Debug.Assert(module != null);
 			Debug.Assert(fullName != null);

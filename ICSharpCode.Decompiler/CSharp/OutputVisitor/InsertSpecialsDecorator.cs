@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// <summary>
 		/// Writes all specials from start to end (exclusive). Does not touch the positionStack.
 		/// </summary>
-		void WriteSpecials(AstNode start, AstNode end)
+		void WriteSpecials(AstNode start, AstNode? end)
 		{
 			for (AstNode? pos = start; pos != end; pos = pos.NextSibling)
 			{
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteSpecialsUpToRole(role, null);
 		}
 
-		void WriteSpecialsUpToRole(Role role, AstNode nextNode)
+		void WriteSpecialsUpToRole(Role role, AstNode? nextNode)
 		{
 			if (positionStack.Count == 0)
 			{

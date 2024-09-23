@@ -307,10 +307,10 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		private class ReadyToRunReaderCacheEntry
 		{
-			public ReadyToRunReader readyToRunReader;
-			public ReadyToRunReader compositeReadyToRunReader;
-			public string failureReason;
-			public Dictionary<EntityHandle, ReadyToRunMethod[]> methodMap;
+			public ReadyToRunReader? readyToRunReader;
+			public ReadyToRunReader? compositeReadyToRunReader;
+			public string? failureReason;
+			public Dictionary<EntityHandle, ReadyToRunMethod[]>? methodMap;
 		}
 	}
 }

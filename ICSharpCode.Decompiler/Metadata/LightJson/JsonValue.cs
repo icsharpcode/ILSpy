@@ -24,7 +24,7 @@ namespace LightJson
 		public static readonly JsonValue Null = new JsonValue(JsonValueType.Null, default(double), null);
 
 		private readonly JsonValueType type;
-		private readonly object reference;
+		private readonly object? reference;
 		private readonly double value;
 
 		/// <summary>
@@ -139,7 +139,7 @@ namespace LightJson
 		/// The internal value reference of the JsonValue.
 		/// This value is used when the Json type is String, JsonObject, or JsonArray.
 		/// </param>
-		private JsonValue(JsonValueType type, double value, object reference)
+		private JsonValue(JsonValueType type, double value, object? reference)
 		{
 			this.type = type;
 			this.value = value;
@@ -357,7 +357,7 @@ namespace LightJson
 		public JsonObject? AsJsonObject {
 			get {
 				return this.IsJsonObject
-					? (JsonObject)this.reference
+					? (JsonObject?)this.reference
 					: null;
 			}
 		}
@@ -369,7 +369,7 @@ namespace LightJson
 		public JsonArray? AsJsonArray {
 			get {
 				return this.IsJsonArray
-					? (JsonArray)this.reference
+					? (JsonArray?)this.reference
 					: null;
 			}
 		}
@@ -382,7 +382,7 @@ namespace LightJson
 			get {
 				DateTime value;
 
-				if (this.IsString && DateTime.TryParse((string)this.reference, out value))
+				if (this.IsString && DateTime.TryParse((string?)this.reference, out value))
 				{
 					return value;
 				}
@@ -427,7 +427,7 @@ namespace LightJson
 			get {
 				if (this.IsJsonObject)
 				{
-					return ((JsonObject)this.reference)[key];
+					return ((JsonObject?)this.reference)[key];
 				}
 				else
 				{
@@ -438,7 +438,7 @@ namespace LightJson
 			set {
 				if (this.IsJsonObject)
 				{
-					((JsonObject)this.reference)[key] = value;
+					((JsonObject?)this.reference)[key] = value;
 				}
 				else
 				{
@@ -458,7 +458,7 @@ namespace LightJson
 			get {
 				if (this.IsJsonArray)
 				{
-					return ((JsonArray)this.reference)[index];
+					return ((JsonArray?)this.reference)[index];
 				}
 				else
 				{
@@ -469,7 +469,7 @@ namespace LightJson
 			set {
 				if (this.IsJsonArray)
 				{
-					((JsonArray)this.reference)[index] = value;
+					((JsonArray?)this.reference)[index] = value;
 				}
 				else
 				{

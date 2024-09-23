@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// The variable that is used to represent the switch expression.
 		/// <c>null</c> while analyzing the first block.
 		/// </summary>
-		ILVariable switchVar;
+		ILVariable? switchVar;
 
 		/// <summary>
 		/// The variable to be used as the argument of the switch instruction.

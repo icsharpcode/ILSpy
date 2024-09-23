@@ -45,12 +45,12 @@ namespace ICSharpCode.Decompiler.Util
 #endif
 	class ResXResourceWriter : IDisposable
 	{
-		private string filename;
-		private Stream stream;
-		private TextWriter textwriter;
-		private XmlTextWriter writer;
+		private string? filename;
+		private Stream? stream;
+		private TextWriter? textwriter;
+		private XmlTextWriter? writer;
 		private bool written;
-		private string base_path;
+		private string? base_path;
 
 		public static readonly string BinSerializedObjectMimeType = "application/x-microsoft.net.object.binary.base64";
 		public static readonly string ByteArraySerializedObjectMimeType = "application/x-microsoft.net.object.bytearray.base64";
@@ -131,7 +131,7 @@ namespace ICSharpCode.Decompiler.Util
 			writer.WriteString(base64);
 		}
 
-		void WriteBytes(string name, string type, byte[] value, int offset, int length, string comment)
+		void WriteBytes(string name, string? type, byte[] value, int offset, int length, string comment)
 		{
 			writer.WriteStartElement("data");
 			writer.WriteAttributeString("name", name);
@@ -165,7 +165,7 @@ namespace ICSharpCode.Decompiler.Util
 			writer.WriteEndElement();
 		}
 
-		void WriteString(string name, string value, string type, string comment)
+		void WriteString(string name, string value, string? type, string comment)
 		{
 			writer.WriteStartElement("data");
 			writer.WriteAttributeString("name", name);

@@ -106,8 +106,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, eventDef.Type, protocol: "metadata"));
 			}
 
-			string typeTooltip;
-			public string TypeTooltip => GenerateTooltip(ref typeTooltip, metadataFile, eventDef.Type);
+			string? typeTooltip;
+			public string? TypeTooltip => GenerateTooltip(ref typeTooltip, metadataFile, eventDef.Type);
 
 			public EventDefEntry(MetadataFile metadataFile, EventDefinitionHandle handle)
 			{

@@ -122,7 +122,7 @@ namespace ICSharpCode.ILSpy
 		public static readonly ImageSource FieldReference = GetIcon("Field", "ReferenceOverlay");
 		public static readonly ImageSource ExportedType = GetIcon("ShowPublicOnly", "ExportOverlay");
 
-		public static ImageSource Load(object part, string icon)
+		public static ImageSource Load(object? part, string icon)
 		{
 			if (icon.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
 				return LoadImage(part, icon);
@@ -139,7 +139,7 @@ namespace ICSharpCode.ILSpy
 			return LoadImage(part, icon + ".png");
 		}
 
-		static BitmapImage LoadImage(object part, string icon)
+		static BitmapImage LoadImage(object? part, string icon)
 		{
 			Uri uri = GetUri(part, icon);
 			BitmapImage image = new BitmapImage(uri);

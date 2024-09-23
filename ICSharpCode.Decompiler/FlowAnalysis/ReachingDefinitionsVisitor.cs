@@ -331,7 +331,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			for (int vi = 0; vi < storesByVar.Length; vi++)
 			{
 				if (activeVariables[vi])
-					storesByVar[vi] = new List<ILInstruction> { null };
+					storesByVar[vi] = new List<ILInstruction?> { null };
 			}
 			foreach (var inst in scope.Descendants)
 			{

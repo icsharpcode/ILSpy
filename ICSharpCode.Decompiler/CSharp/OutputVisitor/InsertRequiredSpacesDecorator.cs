@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			lastWritten = LastWritten.Whitespace;
 		}
 
-		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
+		public override void WritePrimitiveValue(object? value, LiteralFormat format = LiteralFormat.None)
 		{
 			if (lastWritten == LastWritten.KeywordOrIdentifier)
 			{

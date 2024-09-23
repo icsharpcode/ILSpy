@@ -73,7 +73,7 @@ namespace ICSharpCode.ILSpy
 
 		public RichTextModel HighlightingModel { get; } = new RichTextModel();
 
-		public CSharpHighlightingTokenWriter(TokenWriter decoratedWriter, ISmartTextOutput textOutput = null, ILocatable locatable = null)
+		public CSharpHighlightingTokenWriter(TokenWriter decoratedWriter, ISmartTextOutput? textOutput = null, ILocatable? locatable = null)
 			: base(decoratedWriter)
 		{
 			var highlighting = HighlightingManager.Instance.GetDefinition("C#");
@@ -452,7 +452,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public override void WritePrimitiveValue(object value, Decompiler.CSharp.Syntax.LiteralFormat format)
+		public override void WritePrimitiveValue(object? value, Decompiler.CSharp.Syntax.LiteralFormat format)
 		{
 			HighlightingColor? color = null;
 			if (value is null)
@@ -529,8 +529,8 @@ namespace ICSharpCode.ILSpy
 		readonly Stack<HighlightingColor> colorStack = new Stack<HighlightingColor>();
 		HighlightingColor currentColor = new HighlightingColor();
 		int currentColorBegin = -1;
-		readonly ILocatable locatable;
-		readonly ISmartTextOutput textOutput;
+		readonly ILocatable? locatable;
+		readonly ISmartTextOutput? textOutput;
 
 		private void BeginSpan(HighlightingColor highlightingColor)
 		{

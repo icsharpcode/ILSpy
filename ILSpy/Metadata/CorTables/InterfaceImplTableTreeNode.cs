@@ -99,8 +99,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, interfaceImpl.Class, protocol: "metadata"));
 			}
 
-			string classTooltip;
-			public string ClassTooltip => GenerateTooltip(ref classTooltip, metadataFile, interfaceImpl.Class);
+			string? classTooltip;
+			public string? ClassTooltip => GenerateTooltip(ref classTooltip, metadataFile, interfaceImpl.Class);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Interface => MetadataTokens.GetToken(interfaceImpl.Interface);
@@ -110,8 +110,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, interfaceImpl.Interface, protocol: "metadata"));
 			}
 
-			string interfaceTooltip;
-			public string InterfaceTooltip => GenerateTooltip(ref interfaceTooltip, metadataFile, interfaceImpl.Interface);
+			string? interfaceTooltip;
+			public string? InterfaceTooltip => GenerateTooltip(ref interfaceTooltip, metadataFile, interfaceImpl.Interface);
 
 			public InterfaceImplEntry(MetadataFile metadataFile, ReadOnlySpan<byte> ptr, int row)
 			{

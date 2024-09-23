@@ -1712,7 +1712,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return null;
 		}
 
-		ResolveResult? LookInUsingScopeNamespace(ResolvedUsingScope usingScope, INamespace n, string identifier, IReadOnlyList<IType> typeArguments, bool parameterizeResultType)
+		ResolveResult? LookInUsingScopeNamespace(ResolvedUsingScope? usingScope, INamespace n, string identifier, IReadOnlyList<IType> typeArguments, bool parameterizeResultType)
 		{
 			if (n == null)
 				return null;
@@ -2222,7 +2222,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		#region ResolveInvocation
 
-		IList<ResolveResult> AddArgumentNamesIfNecessary(ResolveResult[] arguments, string[] argumentNames)
+		IList<ResolveResult> AddArgumentNamesIfNecessary(ResolveResult[] arguments, string[]? argumentNames)
 		{
 			if (argumentNames == null)
 			{
@@ -2239,7 +2239,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		private ResolveResult ResolveInvocation(ResolveResult target, ResolveResult[] arguments, string[] argumentNames, bool allowOptionalParameters)
+		private ResolveResult ResolveInvocation(ResolveResult target, ResolveResult[] arguments, string[]? argumentNames, bool allowOptionalParameters)
 		{
 			// C# 4.0 spec: §7.6.5
 

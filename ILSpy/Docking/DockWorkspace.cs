@@ -120,8 +120,8 @@ namespace ICSharpCode.ILSpy.Docking
 				tool.IsVisible = false;
 		}
 
-		private TabPageModel activeTabPage = null;
-		public TabPageModel ActiveTabPage {
+		private TabPageModel? activeTabPage = null;
+		public TabPageModel? ActiveTabPage {
 			get {
 				return activeTabPage;
 			}
@@ -131,7 +131,7 @@ namespace ICSharpCode.ILSpy.Docking
 					return;
 				}
 
-				var state = value.GetState();
+				var state = value?.GetState();
 				if (state != null)
 				{
 					if (state.DecompiledNodes != null)
@@ -193,7 +193,7 @@ namespace ICSharpCode.ILSpy.Docking
 			return ActiveTabPage.ShowTextViewAsync(textView => textView.RunWithCancellation(taskCreation));
 		}
 
-		internal void ShowNodes(AvalonEditTextOutput output, TreeNodes.ILSpyTreeNode[] nodes, IHighlightingDefinition highlighting)
+		internal void ShowNodes(AvalonEditTextOutput output, TreeNodes.ILSpyTreeNode[]? nodes, IHighlightingDefinition highlighting)
 		{
 			ActiveTabPage.ShowTextView(textView => textView.ShowNodes(output, nodes, highlighting));
 		}
@@ -266,6 +266,6 @@ namespace ICSharpCode.ILSpy.Docking
 		}
 
 		// Dummy property to make the XAML designer happy, the model is provided by the AvalonDock PaneStyleSelectors, not by the DockWorkspace, but the designer assumes the data context in the PaneStyleSelectors is the DockWorkspace.
-		public PaneModel Model { get; } = null;
+		public PaneModel? Model { get; } = null;
 	}
 }

@@ -78,7 +78,7 @@ namespace ICSharpCode.BamlDecompiler.Xaml
 		public BamlElement KeyElement { get; set; }
 		public IList<BamlNode> StaticResources { get; }
 
-		public static XamlResourceKey FindKeyInSiblings(BamlNode node)
+		public static XamlResourceKey? FindKeyInSiblings(BamlNode node)
 		{
 			var children = node.Parent.Children;
 			var index = children.IndexOf(node);
@@ -90,9 +90,9 @@ namespace ICSharpCode.BamlDecompiler.Xaml
 			return null;
 		}
 
-		public static XamlResourceKey FindKeyInAncestors(BamlNode node) => FindKeyInAncestors(node, out var found);
+		public static XamlResourceKey? FindKeyInAncestors(BamlNode node) => FindKeyInAncestors(node, out var found);
 
-		public static XamlResourceKey FindKeyInAncestors(BamlNode node, out BamlNode found)
+		public static XamlResourceKey? FindKeyInAncestors(BamlNode node, out BamlNode? found)
 		{
 			BamlNode n = node;
 			do

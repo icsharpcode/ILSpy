@@ -88,8 +88,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, methodSpec.Method, protocol: "metadata"));
 			}
 
-			string methodTooltip;
-			public string MethodTooltip => GenerateTooltip(ref methodTooltip, metadataFile, methodSpec.Method);
+			string? methodTooltip;
+			public string? MethodTooltip => GenerateTooltip(ref methodTooltip, metadataFile, methodSpec.Method);
 
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(methodSpec.Signature);

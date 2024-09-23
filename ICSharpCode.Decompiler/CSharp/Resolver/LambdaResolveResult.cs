@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// This method determines the return type inferred from the lambda body, which is used as part of C# type inference.
 		/// Use the <see cref="ReturnType"/> property to retrieve the actual return type as determined by the target delegate type.
 		/// </remarks>
-		public abstract IType GetInferredReturnType(IType[] parameterTypes);
+		public abstract IType GetInferredReturnType(IType[]? parameterTypes);
 
 		/// <summary>
 		/// Gets the list of parameters.
@@ -138,7 +138,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		public override ResolveResult Body { get; }
 
-		public override IType GetInferredReturnType(IType[] parameterTypes)
+		public override IType GetInferredReturnType(IType[]? parameterTypes)
 		{
 			// We don't know how to compute which type would be inferred if
 			// given other parameter types.

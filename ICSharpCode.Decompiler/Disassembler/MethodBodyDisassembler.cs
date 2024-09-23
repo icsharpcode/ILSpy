@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		/// </summary>
 		public IDebugInfoProvider DebugInfo { get; set; }
 
-		IList<DebugInfo.SequencePoint> sequencePoints;
+		IList<DebugInfo.SequencePoint>? sequencePoints;
 		int nextSequencePointIndex;
 
 		// cache info

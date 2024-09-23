@@ -22,10 +22,9 @@
 
 using System.Collections.Generic;
 
+using ICSharpCode.BamlDecompiler.Xaml;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-
-using ICSharpCode.BamlDecompiler.Xaml;
 
 namespace ICSharpCode.BamlDecompiler
 {
@@ -58,7 +57,7 @@ namespace ICSharpCode.BamlDecompiler
 
 		public XmlnsDictionary() => CurrentScope = null;
 
-		public XmlnsScope CurrentScope { get; set; }
+		public XmlnsScope? CurrentScope { get; set; }
 
 		public void PushScope(BamlElement element) => CurrentScope = new XmlnsScope(CurrentScope, element);
 

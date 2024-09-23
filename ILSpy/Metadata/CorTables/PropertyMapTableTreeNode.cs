@@ -98,8 +98,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, propertyMap.Parent, protocol: "metadata"));
 			}
 
-			string parentTooltip;
-			public string ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, propertyMap.Parent);
+			string? parentTooltip;
+			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, propertyMap.Parent);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int PropertyList => MetadataTokens.GetToken(propertyMap.PropertyList);
@@ -109,8 +109,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, propertyMap.PropertyList, protocol: "metadata"));
 			}
 
-			string propertyListTooltip;
-			public string PropertyListTooltip => GenerateTooltip(ref propertyListTooltip, metadataFile, propertyMap.PropertyList);
+			string? propertyListTooltip;
+			public string? PropertyListTooltip => GenerateTooltip(ref propertyListTooltip, metadataFile, propertyMap.PropertyList);
 
 			public PropertyMapEntry(MetadataFile metadataFile, ReadOnlySpan<byte> ptr, int row)
 			{

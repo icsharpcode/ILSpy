@@ -211,7 +211,7 @@ namespace ICSharpCode.Decompiler.IL
 			return input.MatchLdLoc(out inputVariable) || input.MatchLdLoca(out inputVariable);
 		}
 
-		internal static bool IsAssignment(ILInstruction inst, ICompilation typeSystem, [NotNullWhen(true)] out IType? expectedType, [NotNullWhen(true)] out ILInstruction? value)
+		internal static bool IsAssignment(ILInstruction inst, ICompilation? typeSystem, [NotNullWhen(true)] out IType? expectedType, [NotNullWhen(true)] out ILInstruction? value)
 		{
 			expectedType = null;
 			value = null;

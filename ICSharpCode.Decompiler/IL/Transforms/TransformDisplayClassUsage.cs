@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			private readonly DisplayClass container;
 			private readonly IField field;
-			private ILVariable declaredVariable;
+			private ILVariable? declaredVariable;
 
 			public string Name => field.Name;
 
@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				Debug.Assert(declaredVariable == null || declaredVariable.StateMachineField == field);
 			}
 
-			public void Propagate(ILVariable variable)
+			public void Propagate(ILVariable? variable)
 			{
 				this.declaredVariable = variable;
 				this.CanPropagate = variable != null;
@@ -94,8 +94,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			public readonly ILVariable Variable;
 			public readonly ITypeDefinition Type;
 			public readonly Dictionary<IField, VariableToDeclare> VariablesToDeclare;
-			public BlockContainer CaptureScope;
-			public ILInstruction Initializer;
+			public BlockContainer? CaptureScope;
+			public ILInstruction? Initializer;
 
 			public DisplayClass(ILVariable variable, ITypeDefinition type)
 			{
@@ -105,8 +105,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		ILTransformContext context;
-		ITypeResolveContext decompilationContext;
+		ILTransformContext? context;
+		ITypeResolveContext? decompilationContext;
 		readonly Dictionary<ILVariable, DisplayClass> displayClasses = new Dictionary<ILVariable, DisplayClass>();
 		readonly Dictionary<ILVariable, ILVariable> displayClassCopyMap = new Dictionary<ILVariable, ILVariable>();
 
@@ -502,7 +502,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return code;
 		}
 
-		VariableToDeclare AddVariable(DisplayClass result, StObj statement, IField field)
+		VariableToDeclare AddVariable(DisplayClass result, StObj? statement, IField field)
 		{
 			VariableToDeclare variable = new VariableToDeclare(result, field);
 			if (statement != null)

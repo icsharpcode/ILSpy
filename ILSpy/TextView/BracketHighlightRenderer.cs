@@ -71,12 +71,12 @@ namespace ICSharpCode.ILSpy.TextView
 
 	public class BracketHighlightRenderer : IBackgroundRenderer
 	{
-		BracketSearchResult result;
+		BracketSearchResult? result;
 		Pen borderPen;
 		Brush backgroundBrush;
 		ICSharpCode.AvalonEdit.Rendering.TextView textView;
 
-		public void SetHighlight(BracketSearchResult result)
+		public void SetHighlight(BracketSearchResult? result)
 		{
 			if (this.result != result)
 			{

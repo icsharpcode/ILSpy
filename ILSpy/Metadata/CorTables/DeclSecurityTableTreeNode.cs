@@ -87,8 +87,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, declSecAttr.Parent, protocol: "metadata"));
 			}
 
-			string parentTooltip;
-			public string ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, declSecAttr.Parent);
+			string? parentTooltip;
+			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, declSecAttr.Parent);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public DeclarativeSecurityAction Action => declSecAttr.Action;

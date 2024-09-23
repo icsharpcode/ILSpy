@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public readonly ILOpCode Code;
 		public readonly string Name;
 
-		string encodedName;
+		string? encodedName;
 
 		public OpCodeInfo(ILOpCode code, string name)
 		{

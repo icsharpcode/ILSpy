@@ -82,7 +82,7 @@ namespace ICSharpCode.BamlDecompiler.Xaml
 			return true;
 		}
 
-		public XName ToXName(XamlContext ctx, XElement parent, bool isFullName = true)
+		public XName ToXName(XamlContext ctx, XElement? parent, bool isFullName = true)
 		{
 			var typeName = DeclaringType.ToXName(ctx);
 			XName name;

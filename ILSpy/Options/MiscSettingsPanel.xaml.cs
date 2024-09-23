@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy.Options
 			this.DataContext = LoadMiscSettings(settings);
 		}
 
-		static MiscSettingsViewModel currentMiscSettings;
+		static MiscSettingsViewModel? currentMiscSettings;
 
 		public static MiscSettingsViewModel CurrentMiscSettings {
 			get {

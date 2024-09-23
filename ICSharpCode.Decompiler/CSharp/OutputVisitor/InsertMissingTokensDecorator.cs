@@ -138,7 +138,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			base.WriteIdentifier(identifier);
 		}
 
-		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
+		public override void WritePrimitiveValue(object? value, LiteralFormat format = LiteralFormat.None)
 		{
 			Expression? node = nodes.Peek().LastOrDefault() as Expression;
 			var startLocation = locationProvider.Location;

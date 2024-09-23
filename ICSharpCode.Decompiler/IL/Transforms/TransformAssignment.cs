@@ -545,7 +545,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		internal static bool IsImplicitTruncation(ILInstruction value, IType type, ICompilation compilation, bool allowNullableValue = false)
+		internal static bool IsImplicitTruncation(ILInstruction value, IType type, ICompilation? compilation, bool allowNullableValue = false)
 		{
 			return CheckImplicitTruncation(value, type, compilation, allowNullableValue) != ImplicitTruncationResult.ValuePreserved;
 		}
@@ -571,7 +571,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Gets whether 'stobj type(..., value)' would evaluate to a different value than 'value'
 		/// due to implicit truncation.
 		/// </summary>
-		internal static ImplicitTruncationResult CheckImplicitTruncation(ILInstruction value, IType type, ICompilation compilation, bool allowNullableValue = false)
+		internal static ImplicitTruncationResult CheckImplicitTruncation(ILInstruction value, IType type, ICompilation? compilation, bool allowNullableValue = false)
 		{
 			if (!type.IsSmallIntegerType())
 			{

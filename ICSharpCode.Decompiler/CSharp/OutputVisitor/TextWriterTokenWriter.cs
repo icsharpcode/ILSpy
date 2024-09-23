@@ -233,7 +233,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			return writer.ToString();
 		}
 
-		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
+		public override void WritePrimitiveValue(object? value, LiteralFormat format = LiteralFormat.None)
 		{
 			if (value == null)
 			{

@@ -22,10 +22,9 @@
 
 using System.Xml.Linq;
 
-using ICSharpCode.Decompiler.TypeSystem;
-
 using ICSharpCode.BamlDecompiler.Baml;
 using ICSharpCode.BamlDecompiler.Xaml;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.BamlDecompiler.Handlers
 {
@@ -33,7 +32,7 @@ namespace ICSharpCode.BamlDecompiler.Handlers
 	{
 		public BamlRecordType Type => BamlRecordType.PropertyTypeReference;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
 			var record = (PropertyTypeReferenceRecord)((BamlRecordNode)node).Record;
 			var attr = ctx.ResolveProperty(record.AttributeId);

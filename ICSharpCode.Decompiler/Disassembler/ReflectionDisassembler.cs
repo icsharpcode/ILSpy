@@ -1912,16 +1912,16 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		}
 
-		sealed class EnumNameCollection<T> : IEnumerable<KeyValuePair<long, string>> where T : struct
+		sealed class EnumNameCollection<T> : IEnumerable<KeyValuePair<long, string?>> where T : struct
 		{
-			List<KeyValuePair<long, string>> names = new List<KeyValuePair<long, string>>();
+			List<KeyValuePair<long, string?>> names = new List<KeyValuePair<long, string?>>();
 
-			public void Add(T flag, string name)
+			public void Add(T flag, string? name)
 			{
-				this.names.Add(new KeyValuePair<long, string>(Convert.ToInt64(flag), name));
+				this.names.Add(new KeyValuePair<long, string?>(Convert.ToInt64(flag), name));
 			}
 
-			public IEnumerator<KeyValuePair<long, string>> GetEnumerator()
+			public IEnumerator<KeyValuePair<long, string?>> GetEnumerator()
 			{
 				return names.GetEnumerator();
 			}

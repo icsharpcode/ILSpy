@@ -317,7 +317,7 @@ Examples:
 				return decompiler.DecompileProject(module, Path.GetDirectoryName(projectFileName), projectFileWriter);
 		}
 
-		int Decompile(string assemblyFileName, TextWriter output, string typeName = null)
+		int Decompile(string assemblyFileName, TextWriter output, string? typeName = null)
 		{
 			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName);
 

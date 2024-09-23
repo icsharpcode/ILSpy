@@ -36,7 +36,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			typeof(SharpTreeViewTextSearch), typeof(SharpTreeViewTextSearch), new FrameworkPropertyMetadata(null));
 		static readonly DependencyProperty TextSearchInstanceProperty = TextSearchInstancePropertyKey.DependencyProperty;
 
-		DispatcherTimer timer;
+		DispatcherTimer? timer;
 
 		bool isActive;
 		int lastMatchIndex;

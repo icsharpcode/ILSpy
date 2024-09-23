@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			/// <summary>
 			/// The function containing this sequence point.
 			/// </summary>
-			internal ILFunction Function;
+			internal ILFunction? Function;
 
 			public StatePerSequencePoint(AstNode primaryNode)
 			{

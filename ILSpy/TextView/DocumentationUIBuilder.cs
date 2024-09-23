@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.TextView
 		readonly IHighlightingDefinition highlightingDefinition;
 		readonly FlowDocument document;
 		BlockCollection blockCollection;
-		InlineCollection inlineCollection;
+		InlineCollection? inlineCollection;
 
 		public DocumentationUIBuilder(IAmbience ambience, IHighlightingDefinition highlightingDefinition)
 		{
@@ -107,7 +107,7 @@ namespace ICSharpCode.ILSpy.TextView
 			AddBlock(block);
 		}
 
-		public void AddSignatureBlock(string signature, RichTextModel highlighting = null)
+		public void AddSignatureBlock(string signature, RichTextModel? highlighting = null)
 		{
 			var document = new TextDocument(signature);
 			var richText = highlighting ?? DocumentPrinter.ConvertTextDocumentToRichText(document, new DocumentHighlighter(document, highlightingDefinition)).ToRichTextModel();

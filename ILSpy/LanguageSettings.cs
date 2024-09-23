@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy
 		/// the user first select C# 10, then switches to IL, then switches back to C#. After that we must be
 		/// able to restore the original selection (i.e., C# 10).
 		/// </summary>
-		private readonly Dictionary<Language, LanguageVersion> languageVersionHistory = new Dictionary<Language, LanguageVersion>();
+		private readonly Dictionary<Language, LanguageVersion?> languageVersionHistory = new Dictionary<Language, LanguageVersion?>();
 
 		public LanguageSettings(XElement element)
 		{
@@ -149,7 +149,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		LanguageVersion languageVersion;
+		LanguageVersion? languageVersion;
 
 		/// <summary>
 		/// Gets/Sets the current language version.
@@ -158,7 +158,7 @@ namespace ICSharpCode.ILSpy
 		/// While this isn't related to filtering, having it as part of the FilterSettings
 		/// makes it easy to pass it down into all tree nodes.
 		/// </remarks>
-		public LanguageVersion LanguageVersion {
+		public LanguageVersion? LanguageVersion {
 			get { return languageVersion; }
 			set {
 				if (languageVersion != value)

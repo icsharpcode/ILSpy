@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	struct NullableLiftingTransform
 	{
 		readonly ILTransformContext context;
-		List<ILVariable> nullableVars;
+		List<ILVariable>? nullableVars;
 
 		public NullableLiftingTransform(ILTransformContext context)
 		{

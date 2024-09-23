@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 
 		readonly Dictionary<ILVariable, VariableToDeclare> variableDict = new Dictionary<ILVariable, VariableToDeclare>();
-		TransformContext context;
+		TransformContext? context;
 
 		public void Run(AstNode rootNode, TransformContext context)
 		{

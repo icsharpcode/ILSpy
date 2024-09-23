@@ -741,10 +741,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		internal readonly struct FindResult
 		{
 			public readonly FindResultType Type;
-			public readonly ILInstruction LoadInst; // ldloc or ldloca instruction that loads the variable to be inlined
-			public readonly ILInstruction CallArgument; // argument of call that needs to be promoted to a named argument
+			public readonly ILInstruction? LoadInst; // ldloc or ldloca instruction that loads the variable to be inlined
+			public readonly ILInstruction? CallArgument; // argument of call that needs to be promoted to a named argument
 
-			private FindResult(FindResultType type, ILInstruction loadInst, ILInstruction callArg)
+			private FindResult(FindResultType type, ILInstruction? loadInst, ILInstruction? callArg)
 			{
 				this.Type = type;
 				this.LoadInst = loadInst;

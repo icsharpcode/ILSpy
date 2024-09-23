@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	class DeconstructionTransform : IStatementTransform
 	{
-		StatementTransformContext context;
+		StatementTransformContext? context;
 		readonly Dictionary<ILVariable, int> deconstructionResultsLookup = new Dictionary<ILVariable, int>();
 		ILVariable[]? deconstructionResults;
 		ILVariable? tupleVariable;

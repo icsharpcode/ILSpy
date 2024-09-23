@@ -250,7 +250,7 @@ namespace ICSharpCode.BamlDecompiler.Rewrite
 			}
 		}
 
-		bool MatchFieldAssignment(ILInstruction inst, [NotNullWhen(true)] out FieldAssignment field)
+		bool MatchFieldAssignment(ILInstruction inst, [NotNullWhen(true)] out FieldAssignment? field)
 		{
 			field = null;
 			if (!inst.MatchStFld(out _, out var fld, out var value) || !value.MatchCastClass(out var arg, out _)

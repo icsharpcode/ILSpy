@@ -84,8 +84,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, localScope.Method, protocol: "metadata"));
 			}
 
-			string methodTooltip;
-			public string MethodTooltip => GenerateTooltip(ref methodTooltip, metadataFile, localScope.Method);
+			string? methodTooltip;
+			public string? MethodTooltip => GenerateTooltip(ref methodTooltip, metadataFile, localScope.Method);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int ImportScope => MetadataTokens.GetToken(localScope.ImportScope);

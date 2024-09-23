@@ -61,7 +61,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 		}
 
-		internal AssemblyTreeNode(LoadedAssembly assembly, PackageEntry packageEntry)
+		internal AssemblyTreeNode(LoadedAssembly assembly, PackageEntry? packageEntry)
 		{
 			this.LoadedAssembly = assembly ?? throw new ArgumentNullException(nameof(assembly));
 			this.LazyLoading = true;
@@ -79,7 +79,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// If this assembly was loaded from a bundle; this property returns the bundle entry that the
 		/// assembly was loaded from.
 		/// </summary>
-		public PackageEntry PackageEntry { get; }
+		public PackageEntry? PackageEntry { get; }
 
 		public override bool IsAutoLoaded {
 			get {
@@ -124,7 +124,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		TextBlock tooltip;
+		TextBlock? tooltip;
 
 		public override object ToolTip {
 			get {

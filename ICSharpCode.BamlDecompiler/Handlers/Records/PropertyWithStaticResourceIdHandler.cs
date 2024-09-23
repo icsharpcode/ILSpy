@@ -32,7 +32,7 @@ namespace ICSharpCode.BamlDecompiler.Handlers
 	{
 		public BamlRecordType Type => BamlRecordType.PropertyWithStaticResourceId;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
 			var record = (PropertyWithStaticResourceIdRecord)((BamlRecordNode)node).Record;
 			var doc = new BamlElement(node);
@@ -43,8 +43,8 @@ namespace ICSharpCode.BamlDecompiler.Handlers
 			doc.Xaml.Element.AddAnnotation(elemAttr);
 			parent.Xaml.Element.Add(doc.Xaml.Element);
 
-			BamlNode found = node;
-			XamlResourceKey key;
+			BamlNode? found = node;
+			XamlResourceKey? key;
 			do
 			{
 				key = XamlResourceKey.FindKeyInAncestors(found.Parent, out found);

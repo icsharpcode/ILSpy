@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			MemberName = "TypeHandle"
 		};
 
-		TransformContext context;
+		TransformContext? context;
 
 		public override void VisitInvocationExpression(InvocationExpression invocationExpression)
 		{

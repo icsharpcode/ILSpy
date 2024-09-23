@@ -41,13 +41,13 @@ namespace ICSharpCode.BamlDecompiler
 			String = value;
 		}
 
-		public readonly XElement Element;
-		public readonly string String;
+		public readonly XElement? Element;
+		public readonly string? String;
 
 		public static implicit operator XamlNode(XElement value) => new XamlNode(value);
 		public static implicit operator XamlNode(string value) => new XamlNode(value);
-		public static implicit operator XElement(XamlNode node) => node.Element;
-		public static implicit operator string(XamlNode node) => node.String;
+		public static implicit operator XElement?(XamlNode node) => node.Element;
+		public static implicit operator string?(XamlNode node) => node.String;
 	}
 
 	internal class BamlElement
@@ -55,7 +55,7 @@ namespace ICSharpCode.BamlDecompiler
 		public BamlNode Node { get; }
 		public XamlNode Xaml { get; set; }
 
-		public BamlElement Parent { get; set; }
+		public BamlElement? Parent { get; set; }
 		public IList<BamlElement> Children { get; }
 
 		public BamlElement(BamlNode node)

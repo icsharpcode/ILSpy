@@ -632,7 +632,7 @@ namespace ICSharpCode.ILSpy
 		/// Called on startup or when passed arguments via WndProc from a second instance.
 		/// In the format case, spySettings is non-null; in the latter it is null.
 		/// </summary>
-		void HandleCommandLineArgumentsAfterShowList(CommandLineArguments args, ILSpySettings spySettings = null)
+		void HandleCommandLineArgumentsAfterShowList(CommandLineArguments args, ILSpySettings? spySettings = null)
 		{
 			var sessionSettings = SettingsService.Instance.SessionSettings;
 
@@ -648,7 +648,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		async void NavigateOnLaunch(string navigateTo, string[] activeTreeViewPath, ILSpySettings spySettings, List<LoadedAssembly> relevantAssemblies)
+		async void NavigateOnLaunch(string navigateTo, string[] activeTreeViewPath, ILSpySettings? spySettings, List<LoadedAssembly> relevantAssemblies)
 		{
 			var initialSelection = AssemblyTreeView.SelectedItem;
 			if (navigateTo != null)
@@ -1448,7 +1448,7 @@ namespace ICSharpCode.ILSpy
 
 		public Language CurrentLanguage => SettingsService.Instance.SessionSettings.LanguageSettings.Language;
 
-		public LanguageVersion CurrentLanguageVersion => SettingsService.Instance.SessionSettings.LanguageSettings.LanguageVersion;
+		public LanguageVersion? CurrentLanguageVersion => SettingsService.Instance.SessionSettings.LanguageSettings.LanguageVersion;
 
 		public event SelectionChangedEventHandler SelectionChanged;
 

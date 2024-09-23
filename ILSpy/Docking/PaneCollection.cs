@@ -37,7 +37,7 @@ namespace ICSharpCode.ILSpy.Docking
 			observableCollection.CollectionChanged += (sender, e) => CollectionChanged?.Invoke(this, e);
 		}
 
-		public void Add(T item = null)
+		public void Add(T? item = null)
 		{
 			item ??= new T();
 

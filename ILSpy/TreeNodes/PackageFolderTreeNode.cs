@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		readonly PackageFolder folder;
 
-		public PackageFolderTreeNode(PackageFolder folder, string text = null)
+		public PackageFolderTreeNode(PackageFolder folder, string? text = null)
 		{
 			this.folder = folder;
 			this.Text = text ?? folder.Name;

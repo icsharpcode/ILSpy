@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	{
 		// TODO: maybe we should add an implicit Match->bool conversion? (implicit operator bool(Match m) { return m != null; })
 
-		List<KeyValuePair<string, INode>> results;
+		List<KeyValuePair<string, INode?>>? results;
 
 		public bool Success {
 			get { return results != null; }
@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		internal static Match CreateNew()
 		{
 			Match m;
-			m.results = new List<KeyValuePair<string, INode>>();
+			m.results = new List<KeyValuePair<string, INode?>>();
 			return m;
 		}
 
@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		{
 			if (groupName != null && node != null)
 			{
-				results.Add(new KeyValuePair<string, INode>(groupName, node));
+				results.Add(new KeyValuePair<string, INode?>(groupName, node));
 			}
 		}
 
@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		{
 			if (groupName != null)
 			{
-				results.Add(new KeyValuePair<string, INode>(groupName, null));
+				results.Add(new KeyValuePair<string, INode?>(groupName, null));
 			}
 		}
 	}

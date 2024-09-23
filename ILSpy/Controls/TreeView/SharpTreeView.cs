@@ -655,7 +655,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			}
 		}
 
-		SharpTreeNodeView previewNodeView;
+		SharpTreeNodeView? previewNodeView;
 		InsertMarker insertMarker;
 		DropPlace previewPlace;
 

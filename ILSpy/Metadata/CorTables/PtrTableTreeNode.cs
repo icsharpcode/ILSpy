@@ -115,8 +115,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, handlePtr.Handle, protocol: "metadata"));
 			}
 
-			string handleTooltip;
-			public string HandleTooltip => GenerateTooltip(ref handleTooltip, metadataFile, handlePtr.Handle);
+			string? handleTooltip;
+			public string? HandleTooltip => GenerateTooltip(ref handleTooltip, metadataFile, handlePtr.Handle);
 
 			public PtrEntry(MetadataFile metadataFile, TableIndex kind, TableIndex handleKind, int handleDefSize, ReadOnlySpan<byte> ptr, int row)
 			{

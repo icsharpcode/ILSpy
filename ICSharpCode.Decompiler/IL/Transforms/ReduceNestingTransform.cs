@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		private void Visit(BlockContainer container, Block continueTarget)
+		private void Visit(BlockContainer container, Block? continueTarget)
 		{
 			switch (container.Kind)
 			{
@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <param name="block"></param>
 		/// <param name="continueTarget">Marks the target block of continue statements.</param>
 		/// <param name="nextInstruction">The instruction following the end point of the block. Can only be null if the end point is unreachable.</param>
-		private void Visit(Block block, Block continueTarget, ILInstruction? nextInstruction = null)
+		private void Visit(Block block, Block? continueTarget, ILInstruction? nextInstruction = null)
 		{
 			Debug.Assert(block.HasFlag(InstructionFlags.EndPointUnreachable) || nextInstruction != null);
 
@@ -174,7 +174,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// For an if statement with an unreachable end point and no else block,
 		/// inverts to match IL order of the first statement of each branch
 		/// </summary>
-		private void ImproveILOrdering(Block block, IfInstruction ifInst, Block continueTarget)
+		private void ImproveILOrdering(Block block, IfInstruction ifInst, Block? continueTarget)
 		{
 			if (!block.HasFlag(InstructionFlags.EndPointUnreachable)
 				|| !ifInst.TrueInst.HasFlag(InstructionFlags.EndPointUnreachable)
@@ -368,7 +368,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Checks if an exit is a duplicable keyword exit (return; break; continue;)
 		/// </summary>
-		private bool CanDuplicateExit(ILInstruction exit, Block continueTarget, out ILInstruction keywordExit)
+		private bool CanDuplicateExit(ILInstruction exit, Block? continueTarget, out ILInstruction keywordExit)
 		{
 			keywordExit = exit;
 			if (exit != null && exit.MatchBranch(continueTarget))

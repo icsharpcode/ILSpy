@@ -31,7 +31,7 @@ namespace ICSharpCode.BamlDecompiler.Handlers
 	{
 		BamlRecordType IHandler.Type => BamlRecordType.KeyElementStart;
 
-		BamlElement IHandler.Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		BamlElement? IHandler.Translate(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
 			XamlResourceKey.Create(node);
 			return null;

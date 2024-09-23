@@ -628,7 +628,7 @@ namespace ICSharpCode.Decompiler
 		#endregion
 
 		public static unsafe BlobReader GetInitialValue(this FieldDefinition field, MetadataFile pefile,
-			ICompilation typeSystem)
+			ICompilation? typeSystem)
 		{
 			if (!field.HasFlag(FieldAttributes.HasFieldRVA))
 				return default;
@@ -647,7 +647,7 @@ namespace ICSharpCode.Decompiler
 
 		sealed class FieldValueSizeDecoder : ISignatureTypeProvider<int, GenericContext>
 		{
-			readonly MetadataModule module;
+			readonly MetadataModule? module;
 			readonly int pointerSize;
 
 			public FieldValueSizeDecoder(ICompilation? typeSystem = null)

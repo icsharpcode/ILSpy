@@ -73,15 +73,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		/// <summary>The field in the compiler-generated class holding the current state of the state machine</summary>
 		/// <remarks>Set in AnalyzeCtor() for MS, MatchEnumeratorCreationPattern() or AnalyzeMoveNext() for Mono</remarks>
-		IField stateField;
+		IField? stateField;
 
 		/// <summary>The backing field of the 'Current' property in the compiler-generated class</summary>
 		/// <remarks>Set in AnalyzeCurrentProperty()</remarks>
-		IField currentField;
+		IField? currentField;
 
 		/// <summary>The disposing field of the compiler-generated enumerator class.</summary>
 		/// <remarks>Set in ConstructExceptionTable() for assembly compiled with Mono</remarks>
-		IField disposingField;
+		IField? disposingField;
 
 		/// <summary>Maps the fields of the compiler-generated class to the original parameters.</summary>
 		/// <remarks>Set in MatchEnumeratorCreationPattern() and ResolveIEnumerableIEnumeratorFieldMapping()</remarks>
@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>This dictionary stores the information extracted from the Dispose() method:
 		/// for each "Finally Method", it stores the set of states for which the method is being called.</summary>
 		/// <remarks>Set in ConstructExceptionTable()</remarks>
-		Dictionary<IMethod, LongSet> finallyMethodToStateRange;
+		Dictionary<IMethod, LongSet>? finallyMethodToStateRange;
 
 		/// <summary>
 		/// For each finally method, stores the target state when entering the finally block,
@@ -106,17 +106,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Local bool variable in MoveNext() that signifies whether to skip finally bodies.
 		/// </summary>
-		ILVariable skipFinallyBodies;
+		ILVariable? skipFinallyBodies;
 
 		/// <summary>
 		/// Local bool variable in MoveNext() that signifies whether to execute finally bodies.
 		/// </summary>
-		ILVariable doFinallyBodies;
+		ILVariable? doFinallyBodies;
 
 		/// <summary>
 		/// Set of variables might hold copies of the generated state field.
 		/// </summary>
-		HashSet<ILVariable> cachedStateVars;
+		HashSet<ILVariable>? cachedStateVars;
 
 		#region Run() method
 		public void Run(ILFunction function, ILTransformContext context)

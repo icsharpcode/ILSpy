@@ -94,11 +94,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 		#endregion
 
-		TP[] typeParameters;
-		IType[] parameterTypes;
-		ResolveResult[] arguments;
-		bool[,] dependencyMatrix;
-		IReadOnlyList<IType> classTypeArguments;
+		TP[]? typeParameters;
+		IType[]? parameterTypes;
+		ResolveResult[]? arguments;
+		bool[,]? dependencyMatrix;
+		IReadOnlyList<IType>? classTypeArguments;
 
 		#region InferTypeArguments (main function)
 		/// <summary>

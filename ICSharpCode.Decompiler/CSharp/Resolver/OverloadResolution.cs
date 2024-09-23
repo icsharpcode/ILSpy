@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		readonly CSharpConversions conversions;
 		//List<Candidate> candidates = new List<Candidate>();
 		Candidate bestCandidate;
-		Candidate bestCandidateAmbiguousWith;
+		Candidate? bestCandidateAmbiguousWith;
 		IType[] explicitlyGivenTypeArguments;
 		bool bestCandidateWasValidated;
 		OverloadResolutionErrors bestCandidateValidationResult;
@@ -994,7 +994,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return GetArgumentsWithConversions(null, GetBestCandidateWithSubstitutedTypeArguments());
 		}
 
-		IList<ResolveResult> GetArgumentsWithConversions(ResolveResult targetResolveResult, IParameterizedMember bestCandidateForNamedArguments)
+		IList<ResolveResult> GetArgumentsWithConversions(ResolveResult? targetResolveResult, IParameterizedMember? bestCandidateForNamedArguments)
 		{
 			var conversions = this.ArgumentConversions;
 			ResolveResult[] args = new ResolveResult[arguments.Length];
@@ -1072,9 +1072,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <param name="returnTypeOverride">
 		/// If not null, use this instead of the ReturnType of the member as the type of the created resolve result.
 		/// </param>
-		public CSharpInvocationResolveResult CreateResolveResult(ResolveResult targetResolveResult, IList<ResolveResult>? initializerStatements = null, IType? returnTypeOverride = null)
+		public CSharpInvocationResolveResult CreateResolveResult(ResolveResult? targetResolveResult, IList<ResolveResult>? initializerStatements = null, IType? returnTypeOverride = null)
 		{
-			IParameterizedMember member = GetBestCandidateWithSubstitutedTypeArguments();
+			IParameterizedMember? member = GetBestCandidateWithSubstitutedTypeArguments();
 			if (member == null)
 				throw new InvalidOperationException();
 

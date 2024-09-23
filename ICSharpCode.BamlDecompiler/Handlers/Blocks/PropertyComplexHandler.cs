@@ -30,7 +30,7 @@ namespace ICSharpCode.BamlDecompiler.Handlers
 	{
 		public BamlRecordType Type => BamlRecordType.PropertyComplexStart;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
 			var record = (PropertyComplexStartRecord)((BamlBlockNode)node).Header;
 			var doc = new BamlElement(node);

@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode(TextLocation location, TokenRole role)
+		public CSharpTokenNode(TextLocation location, TokenRole? role)
 		{
 			this.startLocation = location;
 			if (role != null)

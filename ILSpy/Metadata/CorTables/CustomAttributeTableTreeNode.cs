@@ -86,8 +86,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, customAttr.Parent, protocol: "metadata"));
 			}
 
-			string parentTooltip;
-			public string ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, customAttr.Parent);
+			string? parentTooltip;
+			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, customAttr.Parent);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Constructor => MetadataTokens.GetToken(customAttr.Constructor);
@@ -97,8 +97,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, customAttr.Constructor, protocol: "metadata"));
 			}
 
-			string constructorTooltip;
-			public string ConstructorTooltip => GenerateTooltip(ref constructorTooltip, metadataFile, customAttr.Constructor);
+			string? constructorTooltip;
+			public string? ConstructorTooltip => GenerateTooltip(ref constructorTooltip, metadataFile, customAttr.Constructor);
 
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Value => MetadataTokens.GetHeapOffset(customAttr.Value);

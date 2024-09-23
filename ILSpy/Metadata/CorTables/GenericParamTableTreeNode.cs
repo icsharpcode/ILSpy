@@ -95,8 +95,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, genericParam.Parent, protocol: "metadata"));
 			}
 
-			string ownerTooltip;
-			public string OwnerTooltip => GenerateTooltip(ref ownerTooltip, metadataFile, genericParam.Parent);
+			string? ownerTooltip;
+			public string? OwnerTooltip => GenerateTooltip(ref ownerTooltip, metadataFile, genericParam.Parent);
 
 			public string Name => metadataFile.Metadata.GetString(genericParam.Name);
 

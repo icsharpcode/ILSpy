@@ -145,7 +145,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, typeDef.GetFields().FirstOrDefault(), protocol: "metadata"));
 			}
 
-			string fieldListTooltip;
+			string? fieldListTooltip;
 			public string? FieldListTooltip {
 				get {
 					var field = typeDef.GetFields().FirstOrDefault();
@@ -163,7 +163,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, typeDef.GetMethods().FirstOrDefault(), protocol: "metadata"));
 			}
 
-			string methodListTooltip;
+			string? methodListTooltip;
 			public string? MethodListTooltip {
 				get {
 					var method = typeDef.GetMethods().FirstOrDefault();

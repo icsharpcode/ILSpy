@@ -98,8 +98,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, eventMap.Parent, protocol: "metadata"));
 			}
 
-			string parentTooltip;
-			public string ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, eventMap.Parent);
+			string? parentTooltip;
+			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, eventMap.Parent);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int EventList => MetadataTokens.GetToken(eventMap.EventList);
@@ -109,8 +109,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, eventMap.EventList, protocol: "metadata"));
 			}
 
-			string eventListTooltip;
-			public string EventListTooltip => GenerateTooltip(ref eventListTooltip, metadataFile, eventMap.EventList);
+			string? eventListTooltip;
+			public string? EventListTooltip => GenerateTooltip(ref eventListTooltip, metadataFile, eventMap.EventList);
 
 			public EventMapEntry(MetadataFile metadataFile, ReadOnlySpan<byte> ptr, int row)
 			{

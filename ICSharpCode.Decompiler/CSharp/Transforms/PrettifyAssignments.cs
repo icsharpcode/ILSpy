@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </remarks>
 	class PrettifyAssignments : DepthFirstAstVisitor, IAstTransform
 	{
-		TransformContext context;
+		TransformContext? context;
 
 		public override void VisitAssignmentExpression(AssignmentExpression assignment)
 		{

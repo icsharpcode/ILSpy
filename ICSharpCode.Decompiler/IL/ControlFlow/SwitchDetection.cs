@@ -38,10 +38,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	{
 		private readonly SwitchAnalysis analysis = new SwitchAnalysis();
 
-		private ILTransformContext context;
-		private BlockContainer currentContainer;
-		private ControlFlowGraph controlFlowGraph;
-		private LoopContext loopContext;
+		private ILTransformContext? context;
+		private BlockContainer? currentContainer;
+		private ControlFlowGraph? controlFlowGraph;
+		private LoopContext? loopContext;
 
 		/// <summary>
 		/// When detecting a switch, it is important to distinguish Branch instructions which will

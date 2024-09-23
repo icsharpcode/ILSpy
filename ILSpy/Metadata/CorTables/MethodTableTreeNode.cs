@@ -109,9 +109,9 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(methodDef.Signature);
 
-			string signatureTooltip;
+			string? signatureTooltip;
 
-			public string SignatureTooltip => GenerateTooltip(ref signatureTooltip, metadataFile, handle);
+			public string? SignatureTooltip => GenerateTooltip(ref signatureTooltip, metadataFile, handle);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int ParamList => MetadataTokens.GetToken(methodDef.GetParameters().FirstOrDefault());
@@ -121,7 +121,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, methodDef.GetParameters().FirstOrDefault(), protocol: "metadata"));
 			}
 
-			string paramListTooltip;
+			string? paramListTooltip;
 			public string? ParamListTooltip {
 				get {
 					var param = methodDef.GetParameters().FirstOrDefault();

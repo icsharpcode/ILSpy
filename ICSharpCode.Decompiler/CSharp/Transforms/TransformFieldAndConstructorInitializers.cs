@@ -37,8 +37,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public class TransformFieldAndConstructorInitializers : DepthFirstAstVisitor, IAstTransform
 	{
-		TransformContext context;
-		Dictionary<IField, IL.ILVariable> fieldToVariableMap;
+		TransformContext? context;
+		Dictionary<IField, IL.ILVariable>? fieldToVariableMap;
 
 		public void Run(AstNode node, TransformContext context)
 		{

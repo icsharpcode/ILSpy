@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public IndexerExpression(Expression target, IEnumerable<Expression>? arguments)
+		public IndexerExpression(Expression? target, IEnumerable<Expression>? arguments)
 		{
 			AddChild(target, Roles.TargetExpression);
 			if (arguments != null)

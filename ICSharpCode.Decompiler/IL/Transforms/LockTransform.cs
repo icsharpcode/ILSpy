@@ -294,7 +294,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchExitBlock(Block entryPoint, ILVariable flag, ILVariable obj)
+		bool MatchExitBlock(Block entryPoint, ILVariable? flag, ILVariable obj)
 		{
 			if (entryPoint.Instructions.Count != 2 || entryPoint.IncomingEdgeCount != 1)
 				return false;

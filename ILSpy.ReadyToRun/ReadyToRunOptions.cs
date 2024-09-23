@@ -31,14 +31,14 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		internal static string gas = "AT & T";
 		internal static string[] disassemblyFormats = new string[] { intel, gas };
 
-		public static string GetDisassemblyFormat(ILSpySettings settings)
+		public static string GetDisassemblyFormat(ILSpySettings? settings)
 		{
 			if (settings == null)
 			{
 				settings = ILSpySettings.Load();
 			}
 			XElement e = settings[ns + "ReadyToRunOptions"];
-			XAttribute a = e.Attribute("DisassemblyFormat");
+			XAttribute? a = e.Attribute("DisassemblyFormat");
 			if (a == null)
 			{
 				return ReadyToRunOptions.intel;
@@ -49,14 +49,14 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-		public static bool GetIsShowUnwindInfo(ILSpySettings settings)
+		public static bool GetIsShowUnwindInfo(ILSpySettings? settings)
 		{
 			if (settings == null)
 			{
 				settings = ILSpySettings.Load();
 			}
 			XElement e = settings[ns + "ReadyToRunOptions"];
-			XAttribute a = e.Attribute("IsShowUnwindInfo");
+			XAttribute? a = e.Attribute("IsShowUnwindInfo");
 
 			if (a == null)
 			{
@@ -68,14 +68,14 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-		public static bool GetIsShowDebugInfo(ILSpySettings settings)
+		public static bool GetIsShowDebugInfo(ILSpySettings? settings)
 		{
 			if (settings == null)
 			{
 				settings = ILSpySettings.Load();
 			}
 			XElement e = settings[ns + "ReadyToRunOptions"];
-			XAttribute a = e.Attribute("IsShowDebugInfo");
+			XAttribute? a = e.Attribute("IsShowDebugInfo");
 
 			if (a == null)
 			{
@@ -87,14 +87,14 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-		public static bool GetIsShowGCInfo(ILSpySettings settings)
+		public static bool GetIsShowGCInfo(ILSpySettings? settings)
 		{
 			if (settings == null)
 			{
 				settings = ILSpySettings.Load();
 			}
 			XElement e = settings[ns + "ReadyToRunOptions"];
-			XAttribute a = e.Attribute("IsShowGCInfo");
+			XAttribute? a = e.Attribute("IsShowGCInfo");
 
 			if (a == null)
 			{
@@ -113,7 +113,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			section.SetAttributeValue("IsShowUnwindInfo", isShowUnwindInfo);
 			section.SetAttributeValue("IsShowDebugInfo", isShowDebugInfo);
 			section.SetAttributeValue("IsShowGCInfo", isShowGCInfo);
-			XElement existingElement = root.Element(ns + "ReadyToRunOptions");
+			XElement? existingElement = root.Element(ns + "ReadyToRunOptions");
 			if (existingElement != null)
 			{
 				existingElement.ReplaceWith(section);

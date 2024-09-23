@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// <summary>
 		/// User data.
 		/// </summary>
-		public object UserData;
+		public object? UserData;
 
 		/// <summary>
 		/// Visited flag, used in various algorithms.
@@ -62,13 +62,13 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// Gets the immediate dominator (the parent in the dominator tree).
 		/// Null if dominance has not been calculated; or if the node is unreachable.
 		/// </summary>
-		public ControlFlowNode ImmediateDominator { get; internal set; }
+		public ControlFlowNode? ImmediateDominator { get; internal set; }
 
 		/// <summary>
 		/// List of children in the dominator tree.
 		/// Null if dominance has not been calculated; or if the node is unreachable.
 		/// </summary>
-		public List<ControlFlowNode> DominatorTreeChildren { get; internal set; }
+		public List<ControlFlowNode>? DominatorTreeChildren { get; internal set; }
 
 		/// <summary>
 		/// List of incoming control flow edges.
@@ -120,7 +120,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		public bool Dominates(ControlFlowNode node)
 		{
 			// TODO: this can be made O(1) by numbering the dominator tree
-			ControlFlowNode tmp = node;
+			ControlFlowNode? tmp = node;
 			while (tmp != null)
 			{
 				if (tmp == this)

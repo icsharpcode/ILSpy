@@ -27,10 +27,9 @@ using System.Reflection.Metadata;
 using System.Threading;
 using System.Xml.Linq;
 
-using ICSharpCode.Decompiler.TypeSystem;
-
 using ICSharpCode.BamlDecompiler.Baml;
 using ICSharpCode.BamlDecompiler.Xaml;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.BamlDecompiler
 {
@@ -207,8 +206,8 @@ namespace ICSharpCode.BamlDecompiler
 					continue;
 				var xmlNs = attr.FixedArguments[0].Value as string;
 				var typeNs = attr.FixedArguments[1].Value as string;
-				Debug.Assert((object)xmlNs != null && (object)typeNs != null);
-				if ((object)xmlNs == null || (object)typeNs == null)
+				Debug.Assert((object?)xmlNs != null && (object?)typeNs != null);
+				if ((object?)xmlNs == null || (object?)typeNs == null)
 					continue;
 
 				if (typeNamespace == typeNs)
@@ -221,7 +220,7 @@ namespace ICSharpCode.BamlDecompiler
 			return possibleXmlNs.FirstOrDefault();
 		}
 
-		public XName GetKnownNamespace(string name, string xmlNamespace, XElement context = null)
+		public XName GetKnownNamespace(string name, string xmlNamespace, XElement? context = null)
 		{
 			var xNs = GetXmlNamespace(xmlNamespace);
 			XName xName;

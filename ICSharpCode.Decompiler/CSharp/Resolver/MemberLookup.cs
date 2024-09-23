@@ -259,18 +259,18 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			public readonly IType DeclaringType;
 
 			// When a nested type is hidden, it is simply removed from the list.
-			public List<IType> NestedTypes;
+			public List<IType>? NestedTypes;
 
 			// When members are hidden, they are merely marked as hidden.
 			// We still need to store the hidden methods so that the 'override' processing can
 			// find them, so that it won't introduce the override as a new method.
-			public readonly List<IParameterizedMember> Methods;
+			public readonly List<IParameterizedMember>? Methods;
 			public bool MethodsAreHidden;
 
-			public IMember NonMethod;
+			public IMember? NonMethod;
 			public bool NonMethodIsHidden;
 
-			public LookupGroup(IType declaringType, List<IType> nestedTypes, List<IParameterizedMember> methods, IMember nonMethod)
+			public LookupGroup(IType declaringType, List<IType>? nestedTypes, List<IParameterizedMember>? methods, IMember? nonMethod)
 			{
 				this.DeclaringType = declaringType;
 				this.NestedTypes = nestedTypes;

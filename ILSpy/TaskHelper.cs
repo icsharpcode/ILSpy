@@ -26,7 +26,7 @@ namespace ICSharpCode.ILSpy
 {
 	public static class TaskHelper
 	{
-		public static readonly Task CompletedTask = FromResult<object>(null);
+		public static readonly Task CompletedTask = FromResult<object?>(null);
 
 		public static Task<T> FromResult<T>(T result)
 		{
@@ -73,7 +73,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Sets the result of the TaskCompletionSource based on the result of the finished task.
 		/// </summary>
-		public static void SetFromTask(this TaskCompletionSource<object> tcs, Task task)
+		public static void SetFromTask(this TaskCompletionSource<object?> tcs, Task task)
 		{
 			switch (task.Status)
 			{
@@ -84,7 +84,7 @@ namespace ICSharpCode.ILSpy
 					tcs.SetCanceled();
 					break;
 				case TaskStatus.Faulted:
-					tcs.SetException(task.Exception.InnerExceptions);
+					tcs.SetException(task.Exception!.InnerExceptions); //the exceptuion must be set if we are faulted sow we igonre nullability warning
 					break;
 				default:
 					throw new InvalidOperationException("The input task must have already finished");

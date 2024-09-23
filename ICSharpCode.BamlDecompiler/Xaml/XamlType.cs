@@ -37,7 +37,7 @@ namespace ICSharpCode.BamlDecompiler.Xaml
 		public string TypeNamespace { get; }
 		public string TypeName { get; }
 
-		public XNamespace Namespace { get; private set; }
+		public XNamespace? Namespace { get; private set; }
 		public IType ResolvedType { get; set; }
 
 		public XamlType(IModule assembly, string fullAssemblyName, string ns, string name)
@@ -45,7 +45,7 @@ namespace ICSharpCode.BamlDecompiler.Xaml
 		{
 		}
 
-		public XamlType(IModule assembly, string fullAssemblyName, string ns, string name, XNamespace xmlns)
+		public XamlType(IModule assembly, string fullAssemblyName, string ns, string name, XNamespace? xmlns)
 		{
 			Assembly = assembly;
 			FullAssemblyName = fullAssemblyName;

@@ -84,7 +84,7 @@ namespace ICSharpCode.ILSpy.Controls
 
 		#region Overrides
 
-		DispatcherTimer timer;
+		DispatcherTimer? timer;
 
 		protected override void OnTextChanged(TextChangedEventArgs e)
 		{

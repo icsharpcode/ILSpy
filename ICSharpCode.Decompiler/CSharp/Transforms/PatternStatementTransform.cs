@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	public sealed class PatternStatementTransform : ContextTrackingVisitor<AstNode>, IAstTransform
 	{
 		readonly DeclareVariables declareVariables = new DeclareVariables();
-		TransformContext context;
+		TransformContext? context;
 
 		public void Run(AstNode rootNode, TransformContext context)
 		{

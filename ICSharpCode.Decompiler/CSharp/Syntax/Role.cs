@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class Role<T> : Role where T : class?
 	{
 		readonly string name; // helps with debugging the AST
-		readonly T nullObject;
+		readonly T? nullObject;
 
 		/// <summary>
 		/// Gets the null object used when there's no node with this role.
@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Roles used for non-collections should always have a null object, so that no AST property returns null.
 		/// However, if a role used for collections only, it may leave out the null object.
 		/// </remarks>
-		public T NullObject {
+		public T? NullObject {
 			get { return nullObject; }
 		}
 
@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.nullObject = null!;
 		}
 
-		public Role(string name, T nullObject)
+		public Role(string name, T? nullObject)
 		{
 			this.name = name ?? throw new ArgumentNullException(nameof(name));
 			this.nullObject = nullObject;

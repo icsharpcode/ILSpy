@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	public class TransformArrayInitializers : IStatementTransform
 	{
-		StatementTransformContext context;
+		StatementTransformContext? context;
 
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{

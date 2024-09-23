@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetNestedTypes(type, null, filter, options);
 		}
 
-		public static IEnumerable<IType> GetNestedTypes(IType type, IReadOnlyList<IType> nestedTypeArguments, Predicate<ITypeDefinition> filter, GetMemberOptions options)
+		public static IEnumerable<IType> GetNestedTypes(IType type, IReadOnlyList<IType>? nestedTypeArguments, Predicate<ITypeDefinition> filter, GetMemberOptions options)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 			{
@@ -53,9 +53,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		static IEnumerable<IType> GetNestedTypesImpl(IType outerType, IReadOnlyList<IType> nestedTypeArguments, Predicate<ITypeDefinition> filter, GetMemberOptions options)
+		static IEnumerable<IType> GetNestedTypesImpl(IType outerType, IReadOnlyList<IType>? nestedTypeArguments, Predicate<ITypeDefinition>? filter, GetMemberOptions options)
 		{
-			ITypeDefinition outerTypeDef = outerType.GetDefinition();
+			ITypeDefinition? outerTypeDef = outerType.GetDefinition();
 			if (outerTypeDef == null)
 				yield break;
 

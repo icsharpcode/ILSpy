@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		readonly string methodName;
 
 		public MethodGroupResolveResult(ResolveResult? targetResult, string methodName,
-			IReadOnlyList<MethodListWithDeclaringType> methods, IReadOnlyList<IType> typeArguments)
+			IReadOnlyList<MethodListWithDeclaringType> methods, IReadOnlyList<IType>? typeArguments)
 			: base(SpecialType.NoType)
 		{
 			if (methods == null)
@@ -143,10 +143,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// List of extension methods, used to avoid re-calculating it in ResolveInvocation() when it was already
 		/// calculated by ResolveMemberAccess().
 		/// </summary>
-		internal List<List<IMethod>> extensionMethods;
+		internal List<List<IMethod>>? extensionMethods;
 
 		// the resolver is used to fetch extension methods on demand
-		internal CSharpResolver resolver;
+		internal CSharpResolver? resolver;
 
 		/// <summary>
 		/// Gets all candidate extension methods.

@@ -53,10 +53,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the names of the tuple elements.
 		/// </summary>
-		public ImmutableArray<string> ElementNames { get; }
+		public ImmutableArray<string?> ElementNames { get; }
 
 		public TupleType(ICompilation compilation, ImmutableArray<IType> elementTypes,
-			ImmutableArray<string> elementNames = default(ImmutableArray<string>),
+			ImmutableArray<string?> elementNames = default(ImmutableArray<string?>),
 			IModule? valueTupleAssembly = null)
 		{
 			this.Compilation = compilation;
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.ElementTypes = elementTypes;
 			if (elementNames.IsDefault)
 			{
-				this.ElementNames = Enumerable.Repeat<string>(null, elementTypes.Length).ToImmutableArray();
+				this.ElementNames = Enumerable.Repeat<string?>(null, elementTypes.Length).ToImmutableArray();
 			}
 			else
 			{
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		static ParameterizedType CreateUnderlyingType(ICompilation compilation, ImmutableArray<IType> elementTypes, IModule valueTupleAssembly)
+		static ParameterizedType CreateUnderlyingType(ICompilation compilation, ImmutableArray<IType> elementTypes, IModule? valueTupleAssembly)
 		{
 			int remainder = (elementTypes.Length - 1) % (RestPosition - 1) + 1;
 			Debug.Assert(remainder >= 1 && remainder < RestPosition);
@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return type;
 		}
 
-		private static IType FindValueTupleType(ICompilation compilation, IModule valueTupleAssembly, int tpc)
+		private static IType FindValueTupleType(ICompilation compilation, IModule? valueTupleAssembly, int tpc)
 		{
 			var typeName = new TopLevelTypeName("System", "ValueTuple", tpc);
 			if (valueTupleAssembly != null)
@@ -236,7 +236,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			unchecked
 			{
 				int hash = UnderlyingType.GetHashCode();
-				foreach (string name in ElementNames)
+				foreach (string? name in ElementNames)
 				{
 					hash *= 31;
 					hash += name != null ? name.GetHashCode() : 0;
@@ -387,7 +387,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public ImmutableArray<string> ElementNames { get; }
 
-		public IModuleReference ValueTupleAssembly { get; }
+		public IModuleReference? ValueTupleAssembly { get; }
 
 		public TupleTypeReference(ImmutableArray<ITypeReference> elementTypes)
 		{

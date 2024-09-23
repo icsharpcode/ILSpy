@@ -98,8 +98,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, nestedClass.Nested, protocol: "metadata"));
 			}
 
-			string nestedClassTooltip;
-			public string NestedClassTooltip => GenerateTooltip(ref nestedClassTooltip, metadataFile, nestedClass.Nested);
+			string? nestedClassTooltip;
+			public string? NestedClassTooltip => GenerateTooltip(ref nestedClassTooltip, metadataFile, nestedClass.Nested);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int EnclosingClass => MetadataTokens.GetToken(nestedClass.Enclosing);
@@ -109,8 +109,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, nestedClass.Enclosing, protocol: "metadata"));
 			}
 
-			string enclosingClassTooltip;
-			public string EnclosingClassTooltip => GenerateTooltip(ref enclosingClassTooltip, metadataFile, nestedClass.Enclosing);
+			string? enclosingClassTooltip;
+			public string? EnclosingClassTooltip => GenerateTooltip(ref enclosingClassTooltip, metadataFile, nestedClass.Enclosing);
 
 			public NestedClassEntry(MetadataFile metadataFile, ReadOnlySpan<byte> ptr, int row)
 			{

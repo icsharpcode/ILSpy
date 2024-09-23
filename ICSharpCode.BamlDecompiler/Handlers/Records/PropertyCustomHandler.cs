@@ -179,7 +179,7 @@ namespace ICSharpCode.BamlDecompiler.Handlers
 			return property.IsAttachedTo(type);
 		}
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
 			var record = (PropertyCustomRecord)((BamlRecordNode)node).Record;
 			var serTypeId = ((short)record.SerializerTypeId & 0xfff);

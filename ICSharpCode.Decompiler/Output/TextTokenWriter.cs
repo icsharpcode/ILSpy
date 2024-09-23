@@ -363,7 +363,7 @@ namespace ICSharpCode.Decompiler
 			output.WriteLine();
 		}
 
-		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
+		public override void WritePrimitiveValue(object? value, LiteralFormat format = LiteralFormat.None)
 		{
 			new TextWriterTokenWriter(new TextOutputWriter(output)).WritePrimitiveValue(value, format);
 		}

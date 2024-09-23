@@ -175,11 +175,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		readonly bool hasDynamicAttribute;
 		readonly bool[] dynamicAttributeData;
 		readonly bool hasNativeIntegersAttribute;
-		readonly bool[] nativeIntegersAttributeData;
+		readonly bool[]? nativeIntegersAttributeData;
 		readonly TypeSystemOptions options;
 		readonly string[] tupleElementNames;
 		readonly Nullability defaultNullability;
-		readonly Nullability[] nullableAttributeData;
+		readonly Nullability[]? nullableAttributeData;
 		int dynamicTypeIndex = 0;
 		int tupleTypeIndex = 0;
 		int nullabilityTypeIndex = 0;
@@ -187,9 +187,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		private ApplyAttributeTypeVisitor(ICompilation compilation,
 			bool hasDynamicAttribute, bool[] dynamicAttributeData,
-			bool hasNativeIntegersAttribute, bool[] nativeIntegersAttributeData,
+			bool hasNativeIntegersAttribute, bool[]? nativeIntegersAttributeData,
 			TypeSystemOptions options, string[] tupleElementNames,
-			Nullability defaultNullability, Nullability[] nullableAttributeData)
+			Nullability defaultNullability, Nullability[]? nullableAttributeData)
 		{
 			this.compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
 			this.hasDynamicAttribute = hasDynamicAttribute;

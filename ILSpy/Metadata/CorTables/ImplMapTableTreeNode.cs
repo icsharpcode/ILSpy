@@ -116,8 +116,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, implMap.MemberForwarded, protocol: "metadata"));
 			}
 
-			string memberForwardedTooltip;
-			public string MemberForwardedTooltip => GenerateTooltip(ref memberForwardedTooltip, metadataFile, implMap.MemberForwarded);
+			string? memberForwardedTooltip;
+			public string? MemberForwardedTooltip => GenerateTooltip(ref memberForwardedTooltip, metadataFile, implMap.MemberForwarded);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int ImportScope => MetadataTokens.GetToken(implMap.ImportScope);
@@ -127,8 +127,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, implMap.ImportScope, protocol: "metadata"));
 			}
 
-			string importScopeTooltip;
-			public string ImportScopeTooltip => GenerateTooltip(ref importScopeTooltip, metadataFile, implMap.ImportScope);
+			string? importScopeTooltip;
+			public string? ImportScopeTooltip => GenerateTooltip(ref importScopeTooltip, metadataFile, implMap.ImportScope);
 
 			public string ImportName => metadataFile.Metadata.GetString(implMap.ImportName);
 

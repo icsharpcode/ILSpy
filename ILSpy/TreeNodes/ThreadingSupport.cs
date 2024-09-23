@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		readonly Stopwatch stopwatch = new Stopwatch();
 		CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-		Task<List<SharpTreeNode>> loadChildrenTask;
+		Task<List<SharpTreeNode>>? loadChildrenTask;
 
 		public bool IsRunning {
 			get { return loadChildrenTask != null && !loadChildrenTask.IsCompleted; }

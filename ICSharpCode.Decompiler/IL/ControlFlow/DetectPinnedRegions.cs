@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// </summary>
 	public class DetectPinnedRegions : IILTransform
 	{
-		ILTransformContext context;
+		ILTransformContext? context;
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{

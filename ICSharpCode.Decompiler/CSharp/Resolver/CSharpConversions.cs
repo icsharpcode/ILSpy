@@ -792,7 +792,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 
 		#region Implicit Constant-Expression Conversion
-		bool ImplicitConstantExpressionConversion(ResolveResult rr, IType toType)
+		bool ImplicitConstantExpressionConversion(ResolveResult? rr, IType toType)
 		{
 			if (rr == null || !rr.IsCompileTimeConstant)
 				return false;
@@ -983,7 +983,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return Conversion.UserDefinedConversion(selected[0].Method, isLifted: selected[0].IsLifted, isImplicit: isImplicit, isAmbiguous: true, conversionBeforeUserDefinedOperator: ExplicitConversion(source, mostSpecificSource), conversionAfterUserDefinedOperator: ExplicitConversion(mostSpecificTarget, target));
 		}
 
-		Conversion UserDefinedImplicitConversion(ResolveResult fromResult, IType fromType, IType toType)
+		Conversion UserDefinedImplicitConversion(ResolveResult? fromResult, IType fromType, IType toType)
 		{
 			// C# 4.0 spec §6.4.4 User-defined implicit conversions
 			var operators = GetApplicableConversionOperators(fromResult, fromType, toType, false);
@@ -1025,7 +1025,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		Conversion UserDefinedExplicitConversion(ResolveResult fromResult, IType fromType, IType toType)
+		Conversion UserDefinedExplicitConversion(ResolveResult? fromResult, IType fromType, IType toType)
 		{
 			// C# 4.0 spec §6.4.5 User-defined explicit conversions
 			var operators = GetApplicableConversionOperators(fromResult, fromType, toType, true);
@@ -1112,7 +1112,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return NullableType.GetUnderlyingType(type);
 		}
 
-		List<OperatorInfo> GetApplicableConversionOperators(ResolveResult fromResult, IType fromType, IType toType, bool isExplicit)
+		List<OperatorInfo> GetApplicableConversionOperators(ResolveResult? fromResult, IType fromType, IType toType, bool isExplicit)
 		{
 			// Find the candidate operators:
 			Predicate<IMethod> opFilter;

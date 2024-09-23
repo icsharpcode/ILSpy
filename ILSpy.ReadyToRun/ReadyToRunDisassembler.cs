@@ -171,10 +171,10 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			output.WriteLine();
 		}
 
-		private void DecorateGCInfo(Instruction instr, ulong baseInstrIP, BaseGcInfo gcInfo)
+		private void DecorateGCInfo(Instruction instr, ulong baseInstrIP, BaseGcInfo? gcInfo)
 		{
 			ulong codeOffset = instr.IP - baseInstrIP;
-			if (gcInfo != null && gcInfo.Transitions != null && gcInfo.Transitions.TryGetValue((int)codeOffset, out List<BaseGcTransition> transitionsForOffset))
+			if (gcInfo != null && gcInfo.Transitions != null && gcInfo.Transitions.TryGetValue((int)codeOffset, out List<BaseGcTransition>? transitionsForOffset))
 			{
 				// this value comes from a manual count of the spaces used for each instruction in Disassemble()
 				string indent = new string(' ', 36);
@@ -192,17 +192,17 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		private class NativeVarInfoRecord
 		{
-			public ulong codeOffset;
-			public bool isStart;
-			public bool isRegRelative;
-			public string register;
+			public required ulong codeOffset;
+			public required bool isStart;
+			public required bool isRegRelative;
+			public required string register;
 			public int registerOffset;
-			public Variable variable;
+			public required Variable variable;
 		}
 
 		private class DebugInfoHelper
 		{
-			public List<NativeVarInfoRecord> records;
+			public List<NativeVarInfoRecord>? records;
 			public int i;
 			public Dictionary<string, Dictionary<int, HashSet<Variable>>> registerRelativeVariables;
 			public Dictionary<string, HashSet<Variable>> registerVariables;
