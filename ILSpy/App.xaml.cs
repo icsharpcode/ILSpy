@@ -18,13 +18,14 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition.Hosting;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
@@ -33,8 +34,8 @@ using System.Windows.Threading;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpyX.Analyzers;
-using ICSharpCode.ILSpyX.Settings;
 using ICSharpCode.ILSpyX.TreeView;
 
 using Medo.Application;
@@ -43,9 +44,6 @@ using Microsoft.VisualStudio.Composition;
 
 using TomsToolbox.Composition;
 using TomsToolbox.Wpf.Composition;
-using ICSharpCode.ILSpy.Themes;
-using System.Globalization;
-using System.Threading;
 using TomsToolbox.Wpf.Styles;
 
 namespace ICSharpCode.ILSpy

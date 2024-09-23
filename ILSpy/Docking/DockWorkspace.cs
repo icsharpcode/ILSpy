@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpy.Docking
 			}
 		}
 
-		public void AddTabPage(TabPageModel tabPage = null)
+		public void AddTabPage(TabPageModel? tabPage = null)
 		{
 			tabPages.Add(tabPage ?? new TabPageModel());
 		}

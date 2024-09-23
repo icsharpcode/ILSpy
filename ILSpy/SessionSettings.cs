@@ -180,14 +180,14 @@ namespace ICSharpCode.ILSpy
 			return c.ConvertToInvariantString(obj);
 		}
 
-		public event PropertyChangedEventHandler PropertyChanged;
+		public event PropertyChangedEventHandler? PropertyChanged;
 
-		private void OnPropertyChanged([CallerMemberName] string propertyName = null)
+		private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
 		{
 			PropertyChanged?.Invoke(this, new(propertyName));
 		}
 
-		private bool SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+		private bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
 		{
 			if (EqualityComparer<T>.Default.Equals(field, value))
 				return false;

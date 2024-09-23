@@ -29,7 +29,6 @@ using System.Windows.Media;
 using AvalonDock.Layout.Serialization;
 
 using ICSharpCode.ILSpy.AssemblyTree;
-using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.Updates;
 using ICSharpCode.ILSpyX.FileLoaders;

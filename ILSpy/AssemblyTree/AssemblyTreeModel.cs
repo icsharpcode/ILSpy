@@ -16,40 +16,38 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.IO;
+using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
+using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Navigation;
 using System.Windows.Threading;
 
+using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Documentation;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.Search;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Settings;
 using ICSharpCode.ILSpyX.TreeView;
-using System.Collections.Specialized;
-using System.ComponentModel;
-using System.Linq;
-using ICSharpCode.Decompiler.Metadata;
-
-using System.Reflection.Metadata.Ecma335;
-using System.Windows;
-using ICSharpCode.Decompiler.Documentation;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
-using System.Reflection.Metadata;
-using System.Text;
-using System.Windows.Navigation;
-
-using ICSharpCode.ILSpy.AppEnv;
-using ICSharpCode.ILSpy.Search;
-using ICSharpCode.Decompiler;
 
 using TomsToolbox.Essentials;
 using TomsToolbox.Wpf;
@@ -121,8 +119,8 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			set => SetProperty(ref root, value);
 		}
 
-		private SharpTreeNode selectedItem;
-		public SharpTreeNode SelectedItem {
+		private SharpTreeNode? selectedItem;
+		public SharpTreeNode? SelectedItem {
 			get => selectedItem;
 			set => SetProperty(ref selectedItem, value);
 		}
@@ -145,7 +143,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		/// Called on startup or when passed arguments via WndProc from a second instance.
 		/// In the format case, spySettings is non-null; in the latter it is null.
 		/// </summary>
-		public void HandleCommandLineArgumentsAfterShowList(CommandLineArguments args, ISettingsProvider spySettings = null)
+		public void HandleCommandLineArgumentsAfterShowList(CommandLineArguments args, ISettingsProvider? spySettings = null)
 		{
 			var sessionSettings = SettingsService.Instance.SessionSettings;
 
@@ -432,7 +430,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 #endif
 		}
 
-		void assemblyList_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+		void assemblyList_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
 			if (e.Action == NotifyCollectionChangedAction.Reset)
 			{
@@ -595,7 +593,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 		}
 
-		private void JumpToReference(object sender, NavigateToReferenceEventArgs e)
+		private void JumpToReference(object? sender, NavigateToReferenceEventArgs e)
 		{
 			JumpToReferenceAsync(e.Reference, e.InNewTabPage).HandleExceptions();
 		}
@@ -655,11 +653,11 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		#endregion
 
-		public void LoadAssemblies(IEnumerable<string> fileNames, List<LoadedAssembly> loadedAssemblies = null, bool focusNode = true)
+		public void LoadAssemblies(IEnumerable<string> fileNames, List<LoadedAssembly>? loadedAssemblies = null, bool focusNode = true)
 		{
 			using (Keyboard.FocusedElement.PreserveFocus(!focusNode))
 			{
-				AssemblyTreeNode lastNode = null;
+				AssemblyTreeNode? lastNode = null;
 
 				foreach (string file in fileNames)
 				{
@@ -717,7 +715,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 			return;
 
-			void ContextMenuClosed(object sender, EventArgs e)
+			void ContextMenuClosed(object? sender, EventArgs e)
 			{
 				ContextMenuProvider.ContextMenuClosed -= ContextMenuClosed;
 
@@ -730,7 +728,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 		}
 
-		private void DecompileSelectedNodes(DecompilerTextViewState newState = null)
+		private void DecompileSelectedNodes(DecompilerTextViewState? newState = null)
 		{
 			var activeTabPage = DockWorkspace.Instance.ActiveTabPage;
 
@@ -882,7 +880,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		private class AssemblyComparer : IComparer<LoadedAssembly>
 		{
 			public static readonly AssemblyComparer Instance = new();
-			int IComparer<LoadedAssembly>.Compare(LoadedAssembly x, LoadedAssembly y)
+			int IComparer<LoadedAssembly>.Compare(LoadedAssembly? x, LoadedAssembly? y)
 			{
 				return string.Compare(x?.ShortName, y?.ShortName, StringComparison.CurrentCulture);
 			}

@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public DependencyObject OriginalSource { get; private set; }
 
-		public static TextViewContext Create(ContextMenuEventArgs eventArgs, SharpTreeView?? treeView = null, DecompilerTextView textView = null, ListBox? listBox = null, DataGrid? dataGrid = null)
+		public static TextViewContext Create(ContextMenuEventArgs eventArgs, SharpTreeView? treeView = null, DecompilerTextView? textView = null, ListBox? listBox = null, DataGrid? dataGrid = null)
 		{
 			ReferenceSegment? reference;
 

@@ -69,7 +69,7 @@ namespace ICSharpCode.ILSpy.Options
 
 	public sealed class FontSizeConverter : ValueConverter
 	{
-		protected override object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+		protected override object Convert(object value, Type? targetType, object? parameter, System.Globalization.CultureInfo? culture)
 		{
 			if (value is double d)
 			{
@@ -79,7 +79,7 @@ namespace ICSharpCode.ILSpy.Options
 			return DependencyProperty.UnsetValue;
 		}
 
-		protected override object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+		protected override object ConvertBack(object value, Type? targetType, object? parameter, System.Globalization.CultureInfo? culture)
 		{
 			if (value is not string s)
 				return DependencyProperty.UnsetValue;

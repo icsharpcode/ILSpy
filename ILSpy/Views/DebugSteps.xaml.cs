@@ -52,7 +52,7 @@ namespace ICSharpCode.ILSpy
 			DecompileAsync(lastSelectedStep);
 		}
 
-		private void SelectionChanged(object sender, EventArgs e)
+		private void SelectionChanged(object? sender, EventArgs e)
 		{
 			Dispatcher.Invoke(() => {
 				tree.ItemsSource = null;
@@ -60,7 +60,7 @@ namespace ICSharpCode.ILSpy
 			});
 		}
 
-		private void Settings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void Settings_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 #if DEBUG
 			if (sender is not LanguageSettings)
