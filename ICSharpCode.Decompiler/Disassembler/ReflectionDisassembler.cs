@@ -475,7 +475,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		class SecurityDeclarationDecoder : ICustomAttributeTypeProvider<(PrimitiveTypeCode, string)>
+		class SecurityDeclarationDecoder : ICustomAttributeTypeProvider<(PrimitiveTypeCode, string?)>
 		{
 			readonly ITextOutput output;
 			readonly IAssemblyResolver resolver;
@@ -488,32 +488,32 @@ namespace ICSharpCode.Decompiler.Disassembler
 				this.module = module;
 			}
 
-			public (PrimitiveTypeCode, string) GetPrimitiveType(PrimitiveTypeCode typeCode)
+			public (PrimitiveTypeCode, string?) GetPrimitiveType(PrimitiveTypeCode typeCode)
 			{
 				return (typeCode, null);
 			}
 
-			public (PrimitiveTypeCode, string) GetSystemType()
+			public (PrimitiveTypeCode, string?) GetSystemType()
 			{
 				return (0, "type");
 			}
 
-			public (PrimitiveTypeCode, string) GetSZArrayType((PrimitiveTypeCode, string) elementType)
+			public (PrimitiveTypeCode, string?) GetSZArrayType((PrimitiveTypeCode, string?) elementType)
 			{
 				return (elementType.Item1, (elementType.Item2 ?? PrimitiveTypeCodeToString(elementType.Item1)) + "[]");
 			}
 
-			public (PrimitiveTypeCode, string) GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
+			public (PrimitiveTypeCode, string?) GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
 			{
 				throw new NotImplementedException();
 			}
 
-			public (PrimitiveTypeCode, string) GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
+			public (PrimitiveTypeCode, string?) GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
 			{
 				throw new NotImplementedException();
 			}
 
-			public (PrimitiveTypeCode, string) GetTypeFromSerializedName(string name)
+			public (PrimitiveTypeCode, string?) GetTypeFromSerializedName(string name)
 			{
 				if (resolver == null)
 					throw new EnumUnderlyingTypeResolveException();
@@ -525,12 +525,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 				return (0, name);
 			}
 
-			public PrimitiveTypeCode GetUnderlyingEnumType((PrimitiveTypeCode, string) type)
+			public PrimitiveTypeCode GetUnderlyingEnumType((PrimitiveTypeCode, string?) type)
 			{
 				return type.Item1;
 			}
 
-			public bool IsSystemType((PrimitiveTypeCode, string) type)
+			public bool IsSystemType((PrimitiveTypeCode, string?) type)
 			{
 				return "type" == type.Item2;
 			}

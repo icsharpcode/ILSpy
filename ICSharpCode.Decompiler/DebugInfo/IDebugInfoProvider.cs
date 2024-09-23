@@ -20,8 +20,8 @@ namespace ICSharpCode.Decompiler.DebugInfo
 
 	public struct PdbExtraTypeInfo
 	{
-		public string[] TupleElementNames;
-		public bool[] DynamicFlags;
+		public string?[]? TupleElementNames;
+		public bool[]? DynamicFlags;
 	}
 
 	public interface IDebugInfoProvider

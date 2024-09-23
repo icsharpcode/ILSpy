@@ -152,7 +152,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new IfElseStatement(condition, trueStatement, falseStatement).WithILInstruction(inst);
 		}
 
-		internal IEnumerable<ConstantResolveResult> CreateTypedCaseLabel(long i, IType type, List<(string Key, int Value)>? map = null)
+		internal IEnumerable<ConstantResolveResult> CreateTypedCaseLabel(long i, IType type, List<(string? Key, int Value)>? map = null)
 		{
 			object value;
 			// unpack nullable type, if necessary:
@@ -204,7 +204,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return TranslateSwitch(null, inst).WithILInstruction(inst);
 		}
 
-		SwitchStatement TranslateSwitch(BlockContainer switchContainer, SwitchInstruction inst)
+		SwitchStatement TranslateSwitch(BlockContainer? switchContainer, SwitchInstruction inst)
 		{
 			var oldBreakTarget = breakTarget;
 			breakTarget = switchContainer; // 'break' within a switch would only leave the switch
@@ -385,7 +385,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		/// <summary>Target container that a 'break;' statement would break out of</summary>
-		BlockContainer breakTarget;
+		BlockContainer? breakTarget;
 		/// <summary>Dictionary from BlockContainer to label name for 'goto of_container';</summary>
 		readonly Dictionary<BlockContainer, string> endContainerLabels = new Dictionary<BlockContainer, string>();
 

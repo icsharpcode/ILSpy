@@ -1291,7 +1291,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			return new CastExpression(ConvertType(type), new PrimitiveExpression(CSharpPrimitiveCast.Cast(enumBaseTypeCode, val, false)));
 
-			(long value, IField field) PrepareConstant(IField field)
+			(long value, IField? field) PrepareConstant(IField field)
 			{
 				if (!field.IsConst)
 					return (-1, null);

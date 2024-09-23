@@ -711,7 +711,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			tokens = new List<(TokenKind Kind, int Index, int Alignment, string? Format)>();
 			int i = 0;
-			format = (string)crr.ConstantValue;
+			format = (string?)crr.ConstantValue;
 			foreach (var (kind, data) in TokenizeFormatString(format))
 			{
 				int index;
@@ -1827,7 +1827,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			ExpressionBuilder expressionBuilder = this.expressionBuilder;
 			ExpressionWithResolveResult targetExpression;
-			(TranslatedExpression target, bool addTypeArguments, string methodName, ResolveResult result) = DisambiguateDelegateReference(method, invokeMethod, expectedTargetDetails, thisArg);
+			(TranslatedExpression target, bool addTypeArguments, string? methodName, ResolveResult result) = DisambiguateDelegateReference(method, invokeMethod, expectedTargetDetails, thisArg);
 			if (target.Expression != null)
 			{
 				var mre = new MemberReferenceExpression(target, methodName);

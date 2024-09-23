@@ -398,7 +398,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						{
 							if (function.Kind == ILFunctionKind.ExpressionTree)
 							{
-								function.DelegateType = UnwrapExpressionTree(function.DelegateType);
+								function.DelegateType = UnwrapExpressionTree(function.DelegateType!);
 								function.Kind = ILFunctionKind.Delegate;
 							}
 							return function;
@@ -536,7 +536,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		(Func<ILVariable, ILInstruction>, IType) ConvertBind(CallInstruction invocation)
+		(Func<ILVariable, ILInstruction>?, IType) ConvertBind(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count != 2)
 				return (null, SpecialType.UnknownType);

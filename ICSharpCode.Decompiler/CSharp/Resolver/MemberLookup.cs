@@ -189,7 +189,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				{
 					var nestedTypes = type.GetNestedTypes(options: GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions);
 					// GetDefinition() might return null if some IType has a strange implementation of GetNestedTypes.
-					entities.AddRange(nestedTypes.Select(t => t.GetDefinition()).Where(td => td != null));
+					entities.AddRange(nestedTypes.Select(t => t.GetDefinition()).OfType<ITypeDefinition>());
 				}
 
 				foreach (var entityGroup in entities.GroupBy(e => e.Name))

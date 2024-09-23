@@ -422,8 +422,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			switchValueVar = switchValueVarCopy;
 			int conditionOffset = 1;
-			Block currentCaseBlock = isInternedBlock;
-			var values = new List<(string, ILInstruction)>();
+			Block? currentCaseBlock = isInternedBlock;
+			var values = new List<(string?, ILInstruction)>();
 
 			if (!switchValueVarCopy.IsSingleDefinition)
 				return false;
@@ -440,9 +440,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					break;
 				if (!left.MatchLdLoc(switchValueVar))
 					break;
-				if (!right.MatchLdStr(out string value))
+				if (!right.MatchLdStr(out string? value))
 					break;
-				if (!(caseBlockJump.MatchBranch(out var caseBlock) || caseBlockJump.MatchLeave((BlockContainer)currentCaseBlock.Parent)))
+				if (!(caseBlockJump.MatchBranch(out var caseBlock) || caseBlockJump.MatchLeave((BlockContainer?)currentCaseBlock.Parent)))
 					break;
 				if (!currentCaseBlock.Instructions[conditionOffset + 1].MatchBranch(out currentCaseBlock))
 					break;
@@ -705,7 +705,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool FixCasesWithoutValue(List<SwitchSection> sections, List<(string, int)> stringValues)
+		bool FixCasesWithoutValue(List<SwitchSection> sections, List<(string?, int)> stringValues)
 		{
 			bool HasLabel(SwitchSection section)
 			{

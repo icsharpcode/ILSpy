@@ -420,7 +420,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		// =>
 		// throw(ldloc result.Handler.Variable)
 		internal static bool MatchExceptionCaptureBlock(ILTransformContext context, Block block,
-			ref ILVariable? objectVariable, out StLoc? typedExceptionVariableStore, out Block? captureBlock, out Block? throwBlock)
+			[NotNullWhen(true)] ref ILVariable? objectVariable, [NotNullWhen(true)] out StLoc? typedExceptionVariableStore, [NotNullWhen(true)] out Block? captureBlock, [NotNullWhen(true)] out Block? throwBlock)
 		{
 			bool DerivesFromException(IType t) => t.GetAllBaseTypes().Any(ty => ty.IsKnownType(KnownTypeCode.Exception));
 
