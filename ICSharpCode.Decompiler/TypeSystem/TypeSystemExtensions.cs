@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
 
-			return type.GetAllBaseTypes().Select(t => t.GetDefinition()).Where(d => d != null).Distinct();
+			return type.GetAllBaseTypes().Select(t => t.GetDefinition()).OfType<ITypeDefinition>().Distinct();
 		}
 
 		/// <summary>

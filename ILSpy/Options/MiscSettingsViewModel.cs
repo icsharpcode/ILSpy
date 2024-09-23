@@ -119,14 +119,14 @@ namespace ICSharpCode.ILSpy.Options
 
 		#region INotifyPropertyChanged Implementation
 
-		public event PropertyChangedEventHandler PropertyChanged;
+		public event PropertyChangedEventHandler? PropertyChanged;
 
 		protected virtual void OnPropertyChanged(PropertyChangedEventArgs e)
 		{
 			PropertyChanged?.Invoke(this, e);
 		}
 
-		protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+		protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
 		{
 			OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
 		}

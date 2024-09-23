@@ -777,7 +777,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			ArgumentWithAlignmentAndFormat,
 		}
 
-		private IEnumerable<(TokenKind, string)> TokenizeFormatString(string value)
+		private IEnumerable<(TokenKind, string?)> TokenizeFormatString(string value)
 		{
 			int pos = -1;
 
@@ -1395,7 +1395,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		OverloadResolutionErrors IsUnambiguousCall(ExpectedTargetDetails expectedTargetDetails, IMethod method,
-			ResolveResult target, IType[] typeArguments, ResolveResult[] arguments,
+			ResolveResult? target, IType[] typeArguments, ResolveResult[] arguments,
 			string[]? argumentNames, int firstOptionalArgumentIndex,
 			out IParameterizedMember? foundMember, out bool bestCandidateIsExpandedForm)
 		{
@@ -1676,7 +1676,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return false;
 		}
 
-		ExpressionWithResolveResult HandleConstructorCall(ExpectedTargetDetails expectedTargetDetails, ResolveResult target, IMethod method, ArgumentList argumentList)
+		ExpressionWithResolveResult HandleConstructorCall(ExpectedTargetDetails expectedTargetDetails, ResolveResult? target, IMethod method, ArgumentList argumentList)
 		{
 			if (settings.AnonymousTypes && method.DeclaringType.IsAnonymousType())
 			{
@@ -1823,7 +1823,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return expr.Expression.WithRR(new MemberResolveResult(null, method));
 		}
 
-		ExpressionWithResolveResult BuildDelegateReference(IMethod method, IMethod? invokeMethod, ExpectedTargetDetails expectedTargetDetails, ILInstruction thisArg)
+		ExpressionWithResolveResult BuildDelegateReference(IMethod method, IMethod? invokeMethod, ExpectedTargetDetails expectedTargetDetails, ILInstruction? thisArg)
 		{
 			ExpressionBuilder expressionBuilder = this.expressionBuilder;
 			ExpressionWithResolveResult targetExpression;
@@ -1850,11 +1850,11 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		}
 
-		(TranslatedExpression target, bool addTypeArguments, string methodName, ResolveResult result) DisambiguateDelegateReference(IMethod method, IMethod invokeMethod, ExpectedTargetDetails expectedTargetDetails, ILInstruction thisArg)
+		(TranslatedExpression target, bool addTypeArguments, string? methodName, ResolveResult result) DisambiguateDelegateReference(IMethod method, IMethod invokeMethod, ExpectedTargetDetails expectedTargetDetails, ILInstruction? thisArg)
 		{
 			if (method.IsLocalFunction)
 			{
-				ILFunction localFunction = expressionBuilder.ResolveLocalFunction(method);
+				ILFunction? localFunction = expressionBuilder.ResolveLocalFunction(method);
 				Debug.Assert(localFunction != null);
 				return (default, addTypeArguments: true, localFunction.Name, ToMethodGroup(method, localFunction));
 			}

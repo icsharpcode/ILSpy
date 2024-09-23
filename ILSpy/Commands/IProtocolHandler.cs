@@ -25,6 +25,6 @@ namespace ICSharpCode.ILSpy
 {
 	public interface IProtocolHandler
 	{
-		ILSpyTreeNode Resolve(string protocol, MetadataFile module, Handle handle, out bool newTabPage);
+		ILSpyTreeNode? Resolve(string protocol, MetadataFile module, Handle handle, out bool newTabPage);
 	}
 }

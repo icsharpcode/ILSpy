@@ -216,7 +216,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-		public override RichText GetRichTextTooltip(IEntity entity)
+		public override RichText? GetRichTextTooltip(IEntity entity)
 		{
 			return Languages.ILLanguage.GetRichTextTooltip(entity);
 		}

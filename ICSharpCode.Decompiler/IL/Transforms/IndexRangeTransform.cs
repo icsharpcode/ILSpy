@@ -275,8 +275,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			void TransformSlicing(bool sliceLengthWasMisdetectedAsStartOffset = false)
 			{
-				ILVariable sliceLengthVar;
-				ILInstruction sliceLengthVarInit;
+				ILVariable? sliceLengthVar;
+				ILInstruction? sliceLengthVarInit;
 				if (sliceLengthWasMisdetectedAsStartOffset)
 				{
 					// Special case: when slicing without a start point, the slice length calculation is mis-detected as the start offset,
@@ -303,7 +303,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 				if (!(sliceLengthVar.IsSingleDefinition && sliceLengthVar.LoadCount == 1))
 					return;
-				if (!MatchSliceLength(sliceLengthVarInit, out IndexKind endIndexKind, out ILInstruction endIndexLoad, containerLengthVar, ref containerVar, startOffsetVar))
+				if (!MatchSliceLength(sliceLengthVarInit, out IndexKind endIndexKind, out ILInstruction? endIndexLoad, containerLengthVar, ref containerVar, startOffsetVar))
 					return;
 				if (!CheckContainerLengthVariableUseCount(containerLengthVar, startIndexKind, endIndexKind))
 				{

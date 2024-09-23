@@ -267,7 +267,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <summary>
 		/// Gets the detected primary constructor. Returns null, if there was no primary constructor detected.
 		/// </summary>
-		public IMethod PrimaryConstructor => primaryCtor;
+		public IMethod? PrimaryConstructor => primaryCtor;
 
 		public bool IsInheritedRecord => isInheritedRecord;
 

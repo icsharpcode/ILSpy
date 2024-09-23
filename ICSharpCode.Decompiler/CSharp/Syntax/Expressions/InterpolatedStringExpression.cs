@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public int Alignment { get; }
 
-		public string Suffix { get; }
+		public string? Suffix { get; }
 
 		public CSharpTokenNode RBraceToken {
 			get { return GetChildByRole(RBrace); }

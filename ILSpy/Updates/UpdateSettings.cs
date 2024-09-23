@@ -78,9 +78,9 @@ namespace ICSharpCode.ILSpy.Updates
 			ILSpySettings.SaveSettings(updateSettings);
 		}
 
-		public event PropertyChangedEventHandler PropertyChanged;
+		public event PropertyChangedEventHandler? PropertyChanged;
 
-		void OnPropertyChanged(string propertyName)
+		void OnPropertyChanged(string? propertyName)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}

@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		void DecompileQueries(AstNode node)
 		{
-			Expression query = DecompileQuery(node as InvocationExpression);
+			Expression? query = DecompileQuery(node as InvocationExpression);
 			if (query != null)
 			{
 				if (node.Parent is ExpressionStatement && CanUseDiscardAssignment())
@@ -351,13 +351,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>
 		/// Ensure that all ThenBy's are correct, and that the list of ThenBy's is terminated by an 'OrderBy' invocation.
 		/// </summary>
-		bool ValidateThenByChain(InvocationExpression invocation, string expectedParameterName)
+		bool ValidateThenByChain(InvocationExpression? invocation, string expectedParameterName)
 		{
 			if (invocation == null || invocation.Arguments.Count != 1)
 				return false;
 			if (!(invocation.Target is MemberReferenceExpression mre))
 				return false;
-			if (!MatchSimpleLambda(invocation.Arguments.Single(), out ParameterDeclaration parameter, out _))
+			if (!MatchSimpleLambda(invocation.Arguments.Single(), out ParameterDeclaration? parameter, out _))
 				return false;
 			if (parameter.Name != expectedParameterName)
 				return false;

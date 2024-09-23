@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			bool[]? dynamicAttributeData = null;
 			bool hasNativeIntegersAttribute = (options & TypeSystemOptions.NativeIntegersWithoutAttribute) != 0;
 			bool[]? nativeIntegersAttributeData = null;
-			string[]? tupleElementNames = null;
+			string?[]? tupleElementNames = null;
 			Nullability nullability;
 			Nullability[]? nullableAttributeData = null;
 			if ((options & TypeSystemOptions.NullabilityAnnotations) != 0)

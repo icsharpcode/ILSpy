@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpy.Controls
 				wl.Visibility = HasText ? Visibility.Hidden : Visibility.Visible;
 		}
 
-		void timer_Tick(object sender, EventArgs e)
+		void timer_Tick(object? sender, EventArgs e)
 		{
 			timer.Stop();
 			timer = null;

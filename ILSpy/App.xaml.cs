@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Composition.Hosting;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -34,17 +35,15 @@ using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpyX.Analyzers;
 using ICSharpCode.ILSpyX.Settings;
+using ICSharpCode.ILSpyX.TreeView;
 
 using Medo.Application;
 
 using Microsoft.VisualStudio.Composition;
 
-using TomsToolbox.Wpf.Styles;
-using ICSharpCode.ILSpyX.TreeView;
-
 using TomsToolbox.Composition;
 using TomsToolbox.Wpf.Composition;
-using System.ComponentModel.Composition.Hosting;
+using TomsToolbox.Wpf.Styles;
 
 namespace ICSharpCode.ILSpy
 {
@@ -115,7 +114,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		private static void SingleInstance_NewInstanceDetected(object sender, NewInstanceEventArgs e)
+		private static void SingleInstance_NewInstanceDetected(object? sender, NewInstanceEventArgs e)
 		{
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 			ICSharpCode.ILSpy.MainWindow.Instance.HandleSingleInstanceCommandLineArguments(e.Args);
@@ -210,7 +209,7 @@ namespace ICSharpCode.ILSpy
 			base.OnStartup(e);
 		}
 
-		void DotNet40_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+		void DotNet40_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
 		{
 			// On .NET 4.0, an unobserved exception in a task terminates the process unless we mark it as observed
 			e.SetObserved();

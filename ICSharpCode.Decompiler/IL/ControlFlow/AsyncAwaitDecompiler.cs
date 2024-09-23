@@ -74,29 +74,29 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		ILTransformContext context;
 
 		// These fields are set by MatchTaskCreationPattern() or MatchEnumeratorCreationNewObj()
-		IType taskType; // return type of the async method; or IAsyncEnumerable{T}/IAsyncEnumerator{T}
-		IType underlyingReturnType; // return type of the method (only the "T" for Task{T}), for async enumerators this is the type being yielded
+		IType? taskType; // return type of the async method; or IAsyncEnumerable{T}/IAsyncEnumerator{T}
+		IType? underlyingReturnType; // return type of the method (only the "T" for Task{T}), for async enumerators this is the type being yielded
 		AsyncMethodType methodType;
-		ITypeDefinition stateMachineType;
-		IType builderType;
-		IField builderField;
-		IField stateField;
+		ITypeDefinition? stateMachineType;
+		IType? builderType;
+		IField? builderField;
+		IField? stateField;
 		int initialState;
 		Dictionary<IField, ILVariable> fieldToParameterMap = new Dictionary<IField, ILVariable>();
 		Dictionary<ILVariable, ILVariable> cachedFieldToParameterMap = new Dictionary<ILVariable, ILVariable>();
-		IField disposeModeField; // 'disposeMode' field (IAsyncEnumerable/IAsyncEnumerator only)
+		IField? disposeModeField; // 'disposeMode' field (IAsyncEnumerable/IAsyncEnumerator only)
 
 		// These fields are set by AnalyzeMoveNext():
-		ILFunction moveNextFunction;
-		ILVariable cachedStateVar; // variable in MoveNext that caches the stateField.
-		TryCatch mainTryCatch;
-		Block setResultReturnBlock; // block that is jumped to for return statements
-									// Note: for async enumerators, a jump to setResultReturnBlock is a 'yield break;'
+		ILFunction? moveNextFunction;
+		ILVariable? cachedStateVar; // variable in MoveNext that caches the stateField.
+		TryCatch? mainTryCatch;
+		Block? setResultReturnBlock; // block that is jumped to for return statements
+									 // Note: for async enumerators, a jump to setResultReturnBlock is a 'yield break;'
 		int finalState;       // final state after the setResultAndExitBlock
 		bool finalStateKnown;
-		ILVariable resultVar; // the variable that gets returned by the setResultAndExitBlock
-		Block setResultYieldBlock; // block that is jumped to for 'yield return' statements
-		ILVariable doFinallyBodies;
+		ILVariable? resultVar; // the variable that gets returned by the setResultAndExitBlock
+		Block? setResultYieldBlock; // block that is jumped to for 'yield return' statements
+		ILVariable? doFinallyBodies;
 
 		// These fields are set by AnalyzeStateMachine():
 		int smallestAwaiterVarIndex;
@@ -295,15 +295,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			if (startCall.Arguments.Count != 2)
 				return false;
-			ILInstruction loadBuilderExpr = startCall.Arguments[0];
-			if (!startCall.Arguments[1].MatchLdLoca(out ILVariable stateMachineVar))
+			ILInstruction? loadBuilderExpr = startCall.Arguments[0];
+			if (!startCall.Arguments[1].MatchLdLoca(out ILVariable? stateMachineVar))
 				return false;
 			stateMachineType = stateMachineVar.Type.GetDefinition();
 			if (stateMachineType == null)
 				return false;
 			pos--;
 
-			if (loadBuilderExpr.MatchLdLocRef(out ILVariable builderVar))
+			if (loadBuilderExpr.MatchLdLocRef(out ILVariable? builderVar))
 			{
 				// Check third-to-last instruction (copy of builder)
 				// stloc builder(ldfld StateMachine::<>t__builder(ldloc stateMachine))
@@ -340,8 +340,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 				if (!MatchCall(returnValue, "get_Task", out var getTaskArgs) || getTaskArgs.Count != 1)
 					return false;
-				ILInstruction target;
-				IField builderField2;
+				ILInstruction? target;
+				IField? builderField2;
 				if (builderType.IsReferenceType == true)
 				{
 					if (!getTaskArgs[0].MatchLdFld(out target, out builderField2))
@@ -804,7 +804,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return block.Instructions[1].MatchLeave(blockContainer);
 		}
 
-		private Block CheckSetResultReturnBlock(BlockContainer blockContainer, int setResultReturnBlockIndex, bool[] blocksAnalyzed)
+		private Block? CheckSetResultReturnBlock(BlockContainer blockContainer, int setResultReturnBlockIndex, bool[] blocksAnalyzed)
 		{
 			if (setResultReturnBlockIndex >= blockContainer.Blocks.Count)
 			{
@@ -1931,7 +1931,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			context.StepEndGroup(keepIfEmpty: true);
 		}
 
-		internal static Block GetBodyEntryPoint(BlockContainer body)
+		internal static Block? GetBodyEntryPoint(BlockContainer? body)
 		{
 			if (body == null)
 				return null;

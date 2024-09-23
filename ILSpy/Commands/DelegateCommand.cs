@@ -12,7 +12,7 @@ namespace ICSharpCode.ILSpy.Commands
 		private readonly Action action;
 		private readonly Func<bool> canExecute;
 
-		public event EventHandler CanExecuteChanged {
+		public event EventHandler? CanExecuteChanged {
 			add { CommandManager.RequerySuggested += value; }
 			remove { CommandManager.RequerySuggested -= value; }
 		}
@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpy.Commands
 		private readonly Action<T> action;
 		private readonly Func<T, bool> canExecute;
 
-		public event EventHandler CanExecuteChanged {
+		public event EventHandler? CanExecuteChanged {
 			add { CommandManager.RequerySuggested += value; }
 			remove { CommandManager.RequerySuggested -= value; }
 		}

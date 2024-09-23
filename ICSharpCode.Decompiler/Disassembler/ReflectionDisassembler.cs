@@ -1188,7 +1188,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					break;
 				default:
 					var blob = metadata.GetBlobReader(constant.Value);
-					object value;
+					object? value;
 					try
 					{
 						value = blob.ReadConstant(constant.TypeCode);

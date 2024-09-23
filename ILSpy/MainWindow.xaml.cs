@@ -132,7 +132,7 @@ namespace ICSharpCode.ILSpy
 			this.Loaded += MainWindow_Loaded;
 		}
 
-		private void DockWorkspace_ActiveTabPageChanged(object sender, EventArgs e)
+		private void DockWorkspace_ActiveTabPageChanged(object? sender, EventArgs e)
 		{
 			DockWorkspace dock = DockWorkspace.Instance;
 
@@ -350,7 +350,7 @@ namespace ICSharpCode.ILSpy
 			ToolsChanged(dock.ToolPanes, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 			TabsChanged(dock.TabPages, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 
-			void ToolsChanged(object sender, NotifyCollectionChangedEventArgs e)
+			void ToolsChanged(object? sender, NotifyCollectionChangedEventArgs e)
 			{
 				int endIndex = windowMenuItem.Items.IndexOf(separatorBeforeDocuments);
 				int startIndex = windowMenuItem.Items.IndexOf(separatorBeforeTools) + 1;
@@ -429,7 +429,7 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 
-			void TabsChanged(object sender, NotifyCollectionChangedEventArgs e)
+			void TabsChanged(object? sender, NotifyCollectionChangedEventArgs e)
 			{
 				int endIndex = windowMenuItem.Items.Count;
 				int startIndex = windowMenuItem.Items.IndexOf(separatorBeforeDocuments) + 1;
@@ -498,7 +498,7 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 
-			static void TabPageChanged(object sender, PropertyChangedEventArgs e)
+			static void TabPageChanged(object? sender, PropertyChangedEventArgs e)
 			{
 				var windowMenuItem = Instance.mainMenu.Items.OfType<MenuItem>().First(m => (string)m.Tag == nameof(Properties.Resources._Window));
 				foreach (MenuItem menuItem in windowMenuItem.Items.OfType<MenuItem>())
@@ -965,7 +965,7 @@ namespace ICSharpCode.ILSpy
 #endif
 		}
 
-		void assemblyList_Assemblies_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+		void assemblyList_Assemblies_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
 			if (e.Action == NotifyCollectionChangedAction.Reset)
 			{

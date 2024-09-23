@@ -171,7 +171,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			}
 		}
 
-		void flattener_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+		void flattener_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
 			// Deselect nodes that are being hidden, if any remain in the tree
 			if (e.Action == NotifyCollectionChangedAction.Remove && Items.Count > 0)

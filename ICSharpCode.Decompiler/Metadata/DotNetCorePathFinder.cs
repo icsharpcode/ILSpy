@@ -262,7 +262,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return version.ToString();
 		}
 
-		internal static (Version version, DirectoryInfo directory) ConvertToVersion(DirectoryInfo directory)
+		internal static (Version? version, DirectoryInfo? directory) ConvertToVersion(DirectoryInfo directory)
 		{
 			string RemoveTrailingVersionInfo()
 			{
@@ -289,7 +289,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		public static string? FindDotNetExeDirectory()
 		{
 			string dotnetExeName = (Environment.OSVersion.Platform == PlatformID.Unix) ? "dotnet" : "dotnet.exe";
-			foreach (var item in Environment.GetEnvironmentVariable("PATH").Split(Path.PathSeparator))
+			foreach (var item in Environment.GetEnvironmentVariable("PATH")!.Split(Path.PathSeparator))
 			{
 				try
 				{

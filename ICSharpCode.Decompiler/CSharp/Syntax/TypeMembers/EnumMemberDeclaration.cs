@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.Assign); }
 		}
 
-		public Expression Initializer {
+		public Expression? Initializer {
 			get { return GetChildByRole(InitializerRole); }
 			set { SetChildByRole(InitializerRole, value); }
 		}

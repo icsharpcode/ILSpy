@@ -160,7 +160,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return type ?? new UnknownType(fullTypeName, IsReferenceType(reader, handle, rawTypeKind));
 		}
 
-		public IType? GetTypeFromSerializedName(string name)
+		public IType GetTypeFromSerializedName(string name)
 		{
 			if (name == null)
 			{

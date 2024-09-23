@@ -92,7 +92,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		public DecompilerSettingsItemViewModel[] Settings { get; }
 
-		private void Item_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		private void Item_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(DecompilerSettingsItemViewModel.IsEnabled))
 			{

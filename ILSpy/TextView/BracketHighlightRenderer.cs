@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy.TextView
 		/// Searches for a matching bracket from the given offset to the start of the document.
 		/// </summary>
 		/// <returns>A BracketSearchResult that contains the positions and lengths of the brackets. Return null if there is nothing to highlight.</returns>
-		BracketSearchResult SearchBracket(IDocument document, int offset);
+		BracketSearchResult? SearchBracket(IDocument document, int offset);
 	}
 
 	public class DefaultBracketSearcher : IBracketSearcher

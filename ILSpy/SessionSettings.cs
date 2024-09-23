@@ -69,9 +69,9 @@ namespace ICSharpCode.ILSpy
 			this.DockLayout = new DockLayoutSettings(doc.Element("DockLayout"));
 		}
 
-		public event PropertyChangedEventHandler PropertyChanged;
+		public event PropertyChangedEventHandler? PropertyChanged;
 
-		void OnPropertyChanged([CallerMemberName] string propertyName = null)
+		void OnPropertyChanged([CallerMemberName] string? propertyName = null)
 		{
 			var args = new PropertyChangedEventArgs(propertyName);
 

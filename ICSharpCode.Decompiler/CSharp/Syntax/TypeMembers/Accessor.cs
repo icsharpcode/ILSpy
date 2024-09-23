@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public BlockStatement Body {
+		public BlockStatement? Body {
 			get { return GetChildByRole(Roles.Body); }
 			set { SetChildByRole(Roles.Body, value); }
 		}

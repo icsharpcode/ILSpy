@@ -203,7 +203,7 @@ namespace ICSharpCode.ILSpy.Search
 			listBox.SelectedIndex = 0;
 		}
 
-		void UpdateResults(object sender, EventArgs e)
+		void UpdateResults(object? sender, EventArgs e)
 		{
 			if (currentSearch == null)
 				return;

@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 	/// </summary>
 	sealed class TextMarkerService : DocumentColorizingTransformer, IBackgroundRenderer, ITextMarkerService
 	{
-		TextSegmentCollection<TextMarker> markers;
+		TextSegmentCollection<TextMarker>? markers;
 		TextView textView;
 
 		public TextMarkerService(TextView textView)
@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 			OnDocumentChanged(null, null);
 		}
 
-		void OnDocumentChanged(object sender, EventArgs e)
+		void OnDocumentChanged(object? sender, EventArgs? e)
 		{
 			if (textView.Document != null)
 				markers = new TextSegmentCollection<TextMarker>(textView.Document);

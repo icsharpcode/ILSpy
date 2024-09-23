@@ -184,7 +184,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (instanceCtorsNotChainingWithThis.Length > 0)
 			{
 				var ctorMethodDef = instanceCtorsNotChainingWithThis[0].GetSymbol() as IMethod;
-				ITypeDefinition declaringTypeDefinition = ctorMethodDef?.DeclaringTypeDefinition;
+				ITypeDefinition? declaringTypeDefinition = ctorMethodDef?.DeclaringTypeDefinition;
 				if (ctorMethodDef != null && declaringTypeDefinition?.IsReferenceType == false && !declaringTypeDefinition.IsRecord)
 					return;
 

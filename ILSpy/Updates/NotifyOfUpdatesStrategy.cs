@@ -87,7 +87,7 @@ namespace ICSharpCode.ILSpy.Updates
 			}
 		}
 
-		public static Task<string> CheckForUpdatesAsync(ILSpySettings spySettings)
+		public static Task<string?> CheckForUpdatesAsync(ILSpySettings spySettings)
 		{
 			UpdateSettings s = new UpdateSettings(spySettings);
 			return CheckForUpdateInternal(s);

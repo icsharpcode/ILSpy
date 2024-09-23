@@ -52,7 +52,7 @@ namespace ICSharpCode.ILSpy.Docking
 			MessageBus<CurrentAssemblyListChangedEventArgs>.Subscribers += (sender, e) => CurrentAssemblyList_Changed(sender, e);
 		}
 
-		private void CurrentAssemblyList_Changed(object sender, NotifyCollectionChangedEventArgs e)
+		private void CurrentAssemblyList_Changed(object? sender, NotifyCollectionChangedEventArgs e)
 		{
 			if (e.OldItems == null)
 			{
@@ -163,7 +163,7 @@ namespace ICSharpCode.ILSpy.Docking
 			}
 		}
 
-		void LayoutSerializationCallback(object sender, LayoutSerializationCallbackEventArgs e)
+		void LayoutSerializationCallback(object? sender, LayoutSerializationCallbackEventArgs e)
 		{
 			switch (e.Model)
 			{

@@ -36,15 +36,15 @@ namespace ICSharpCode.Decompiler
 	/// </summary>
 	public class DecompilerException : Exception, ISerializable
 	{
-		public string AssemblyName => File.Name;
+		public string? AssemblyName => File?.Name;
 
-		public string FileName => File.FileName;
+		public string? FileName => File?.FileName;
 
-		public IEntity DecompiledEntity { get; }
-		public IModule Module { get; }
-		public MetadataFile File { get; }
+		public IEntity? DecompiledEntity { get; }
+		public IModule? Module { get; }
+		public MetadataFile? File { get; }
 
-		public DecompilerException(MetadataModule module, IEntity decompiledEntity,
+		public DecompilerException(MetadataModule module, IEntity? decompiledEntity,
 			Exception innerException, string? message = null)
 			: base(message ?? GetDefaultMessage(decompiledEntity), innerException)
 		{
@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler
 			for (int i = 0; i < stackTrace.FrameCount; i++)
 			{
 				StackFrame? frame = stackTrace.GetFrame(i);
-				MethodBase? method = frame.GetMethod();
+				MethodBase? method = frame?.GetMethod();
 				if (method == null)
 					continue;
 
@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler
 				Type? declaringType = method.DeclaringType;
 				if (declaringType != null)
 				{
-					b.Append(declaringType.FullName.Replace('+', '.'));
+					b.Append(declaringType.FullName?.Replace('+', '.'));
 					b.Append('.');
 				}
 				b.Append(method.Name);
@@ -168,7 +168,7 @@ namespace ICSharpCode.Decompiler
 				b.Append(')');
 
 				// source location
-				if (frame.GetILOffset() >= 0)
+				if (frame?.GetILOffset() >= 0)
 				{
 					string? filename = null;
 					try

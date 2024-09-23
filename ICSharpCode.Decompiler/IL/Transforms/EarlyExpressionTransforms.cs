@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		internal static bool LdObjToLdLoc(LdObj inst, ILTransformContext context)
 		{
-			if (inst.Target.MatchLdLoca(out ILVariable v)
+			if (inst.Target.MatchLdLoca(out ILVariable? v)
 				&& TypeUtils.IsCompatibleTypeForMemoryAccess(v.Type, inst.Type)
 				&& inst.UnalignedPrefix == 0
 				&& !inst.IsVolatile)

@@ -163,7 +163,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			for (int i = 0; i < container.Blocks.Count; i++)
 			{
 				var block = container.Blocks[i];
-				if (IsNullSafeArrayToPointerPattern(block, out ILVariable v, out ILVariable p, out Block targetBlock))
+				if (IsNullSafeArrayToPointerPattern(block, out ILVariable? v, out ILVariable? p, out Block? targetBlock))
 				{
 					context.Step("NullSafeArrayToPointerPattern", block);
 					ILInstruction arrayToPointer = new GetPinnableReference(new LdLoc(v), null);
@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					((Branch)block.Instructions.Last()).TargetBlock = targetBlock;
 					modified = true;
 				}
-				else if (IsCustomRefPinPattern(block, out ILInstruction ldlocMem, out var callGPR, out v, out var stlocPtr,
+				else if (IsCustomRefPinPattern(block, out ILInstruction? ldlocMem, out var callGPR, out v, out var stlocPtr,
 					out targetBlock, out var nullBlock, out var notNullBlock))
 				{
 					context.Step("CustomRefPinPattern", block);
@@ -432,7 +432,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 			condition = condition.UnwrapConv(ConversionKind.Truncate);
-			if (condition.MatchLdLen(StackType.I, out ILInstruction array))
+			if (condition.MatchLdLen(StackType.I, out ILInstruction? array))
 			{
 				// OK
 			}
@@ -451,7 +451,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			if (!array.MatchLdLoc(v))
 				return false;
-			if (!trueInst.MatchBranch(out Block notNullAndNotEmptyBlock))
+			if (!trueInst.MatchBranch(out Block? notNullAndNotEmptyBlock))
 				return false;
 			if (notNullAndNotEmptyBlock.Parent != block.Parent)
 				return false;
@@ -468,7 +468,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// }
 			if (block.Instructions.Count != 2)
 				return false;
-			if (!block.Instructions[0].MatchStLoc(out var p2, out ILInstruction value))
+			if (!block.Instructions[0].MatchStLoc(out var p2, out ILInstruction? value))
 				return false;
 			if (p != p2)
 			{
@@ -950,8 +950,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			pinnedRegion.Init = new GetPinnableReference(pinnedRegion.Init, null);
 
-			ILVariable otherVar;
-			ILInstruction otherVarInit;
+			ILVariable? otherVar;
+			ILInstruction? otherVarInit;
 			// In optimized builds, the 'nativeVar' may end up being a stack slot,
 			// and only gets assigned to a real variable after the offset adjustment.
 			if (nativeVar.Kind == VariableKind.StackSlot && nativeVar.LoadCount == 1

@@ -52,6 +52,6 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 			}
 		}
 
-		public override IEntity Member => analyzedField;
+		public override IEntity? Member => analyzedField;
 	}
 }

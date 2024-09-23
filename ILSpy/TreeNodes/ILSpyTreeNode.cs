@@ -29,8 +29,8 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX.Abstractions;
-using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 using ICSharpCode.ILSpyX.TreeView;
+using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -128,7 +128,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		protected virtual void LanguageSettings_Changed(object sender, EventArgs e)
+		protected virtual void LanguageSettings_Changed(object? sender, EventArgs e)
 		{
 			RaisePropertyChanged(nameof(Text));
 			if (IsVisible)

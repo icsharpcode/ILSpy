@@ -26,8 +26,8 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpyX;
-using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 using ICSharpCode.ILSpyX.TreeView;
+using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -57,7 +57,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			this.Children.Clear();
 			this.Children.AddRange(collection.GetAssemblies().Select(a => new AssemblyTreeNode(a)));
-			collection.CollectionChanged += delegate (object sender, NotifyCollectionChangedEventArgs e) {
+			collection.CollectionChanged += delegate (object? sender, NotifyCollectionChangedEventArgs e) {
 				switch (e.Action)
 				{
 					case NotifyCollectionChangedAction.Add:

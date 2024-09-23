@@ -188,7 +188,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (method == null)
 				return EmptyList<IMember>.Instance;
-			return method.ExplicitlyImplementedInterfaceMembers.Select(m => ((IMethod)m).AccessorOwner).Where(m => m != null);
+			return method.ExplicitlyImplementedInterfaceMembers.Select(m => ((IMethod)m).AccessorOwner).OfType<IMember>();
 		}
 
 		public ITypeDefinition DeclaringTypeDefinition => AnyAccessor?.DeclaringTypeDefinition;

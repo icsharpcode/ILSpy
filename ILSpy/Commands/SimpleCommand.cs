@@ -24,7 +24,7 @@ namespace ICSharpCode.ILSpy
 {
 	public abstract class SimpleCommand : ICommand
 	{
-		public event EventHandler CanExecuteChanged {
+		public event EventHandler? CanExecuteChanged {
 			add { CommandManager.RequerySuggested += value; }
 			remove { CommandManager.RequerySuggested -= value; }
 		}
@@ -41,12 +41,12 @@ namespace ICSharpCode.ILSpy
 	{
 		private bool isChecked;
 
-		public event EventHandler CanExecuteChanged {
+		public event EventHandler? CanExecuteChanged {
 			add { CommandManager.RequerySuggested += value; }
 			remove { CommandManager.RequerySuggested -= value; }
 		}
 
-		public event PropertyChangedEventHandler PropertyChanged;
+		public event PropertyChangedEventHandler? PropertyChanged;
 
 		void ICommand.Execute(object? parameter)
 		{

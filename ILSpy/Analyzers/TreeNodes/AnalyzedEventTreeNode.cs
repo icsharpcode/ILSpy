@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 			this.LazyLoading = true;
 		}
 
-		public override IEntity Member => analyzedEvent;
+		public override IEntity? Member => analyzedEvent;
 
 		public override object Icon => EventTreeNode.GetIcon(analyzedEvent);
 

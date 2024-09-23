@@ -79,10 +79,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	{
 		readonly IReadOnlyList<MethodListWithDeclaringType> methodLists;
 		readonly IReadOnlyList<IType> typeArguments;
-		readonly ResolveResult targetResult;
+		readonly ResolveResult? targetResult;
 		readonly string methodName;
 
-		public MethodGroupResolveResult(ResolveResult targetResult, string methodName,
+		public MethodGroupResolveResult(ResolveResult? targetResult, string methodName,
 			IReadOnlyList<MethodListWithDeclaringType> methods, IReadOnlyList<IType> typeArguments)
 			: base(SpecialType.NoType)
 		{

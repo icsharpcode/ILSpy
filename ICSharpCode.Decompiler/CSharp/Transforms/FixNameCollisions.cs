@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (fieldDecl.Variables.Count != 1)
 						continue;
 					string oldName = fieldDecl.Variables.Single().Name;
-					ISymbol symbol = fieldDecl.GetSymbol();
+					ISymbol? symbol = fieldDecl.GetSymbol();
 					if (memberNames.Contains(oldName) && ((IField)symbol).Accessibility == Accessibility.Private)
 					{
 						string newName = PickNewName(memberNames, oldName);

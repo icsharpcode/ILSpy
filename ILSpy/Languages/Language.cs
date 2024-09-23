@@ -364,7 +364,7 @@ namespace ICSharpCode.ILSpy
 		/// Converts a member signature to a string.
 		/// This is used for displaying the tooltip on a member reference.
 		/// </summary>
-		public virtual RichText GetRichTextTooltip(IEntity entity)
+		public virtual RichText? GetRichTextTooltip(IEntity entity)
 		{
 			return GetTooltip(entity);
 		}
