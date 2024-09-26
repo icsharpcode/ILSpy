@@ -17,9 +17,12 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.ComponentModel.Composition;
+using System.Linq;
 using System.Windows.Input;
 
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.TextView;
 
 namespace ICSharpCode.ILSpy
 {
@@ -27,9 +30,24 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class SaveCommand : CommandWrapper
 	{
-		public SaveCommand()
+		private AssemblyTreeModel assemblyTreeModel;
+
+		[ImportingConstructor]
+		public SaveCommand(AssemblyTreeModel assemblyTreeModel)
 			: base(ApplicationCommands.Save)
 		{
+			this.assemblyTreeModel = assemblyTreeModel;
+		}
+
+		protected override void OnCanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.Handled = true;
+			e.CanExecute = SaveCodeContextMenuEntry.CanExecute(assemblyTreeModel.SelectedNodes.ToList());
+		}
+
+		protected override void OnExecute(object sender, ExecutedRoutedEventArgs e)
+		{
+			SaveCodeContextMenuEntry.Execute(assemblyTreeModel.SelectedNodes.ToList());
 		}
 	}
 }

@@ -28,6 +28,7 @@ using System.Threading.Tasks;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.Util;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpyX;
 
@@ -212,7 +213,7 @@ namespace ICSharpCode.ILSpy
 				using (var projectFileWriter = new StreamWriter(projectFileName))
 				{
 					var projectFileOutput = new PlainTextOutput(projectFileWriter);
-					var options = MainWindow.Instance.CreateDecompilationOptions();
+					var options = SettingsService.Instance.CreateDecompilationOptions(DockWorkspace.Instance.ActiveTabPage);
 					options.FullDecompilation = true;
 					options.CancellationToken = ct;
 					options.SaveAsProjectDirectory = targetDirectory;

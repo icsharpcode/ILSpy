@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -29,11 +28,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	class InterfaceImplTableTreeNode : MetadataTableTreeNode
 	{
 		public InterfaceImplTableTreeNode(MetadataFile metadataFile)
-			: base((HandleKind)0x09, metadataFile)
+			: base(TableIndex.InterfaceImpl, metadataFile)
 		{
 		}
-
-		public override object Text => $"09 InterfaceImpl ({metadataFile.Metadata.GetTableRowCount(TableIndex.InterfaceImpl)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -99,7 +96,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnClassClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, interfaceImpl.Class, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, interfaceImpl.Class, protocol: "metadata")));
 			}
 
 			string classTooltip;
@@ -110,7 +107,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnInterfaceClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, interfaceImpl.Interface, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, interfaceImpl.Interface, protocol: "metadata")));
 			}
 
 			string interfaceTooltip;
@@ -127,11 +124,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.interfaceTooltip = null;
 				this.classTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "InterfaceImpls");
 		}
 	}
 }

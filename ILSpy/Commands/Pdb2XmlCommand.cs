@@ -40,14 +40,14 @@ namespace ICSharpCode.ILSpy
 	{
 		public override bool CanExecute(object parameter)
 		{
-			var selectedNodes = MainWindow.Instance.SelectedNodes;
+			var selectedNodes = MainWindow.Instance.AssemblyTreeModel.SelectedNodes;
 			return selectedNodes?.Any() == true
 				&& selectedNodes.All(n => n is AssemblyTreeNode asm && !asm.LoadedAssembly.HasLoadError);
 		}
 
 		public override void Execute(object parameter)
 		{
-			Execute(MainWindow.Instance.SelectedNodes.OfType<AssemblyTreeNode>());
+			Execute(MainWindow.Instance.AssemblyTreeModel.SelectedNodes.OfType<AssemblyTreeNode>());
 		}
 
 		internal static void Execute(IEnumerable<AssemblyTreeNode> nodes)

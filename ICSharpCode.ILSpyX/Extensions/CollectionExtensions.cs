@@ -27,7 +27,7 @@ namespace ICSharpCode.ILSpyX.Extensions
 {
 	public static class CollectionExtensions
 	{
-		public static void AddRange<T>(this ICollection<T> list, IEnumerable<T> items)
+		internal static void AddRange<T>(this ICollection<T> list, IEnumerable<T> items)
 		{
 			foreach (T item in items)
 				if (!list.Contains(item))

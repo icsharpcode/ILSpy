@@ -16,13 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -32,11 +30,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class FieldTableTreeNode : MetadataTableTreeNode
 	{
 		public FieldTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.FieldDefinition, metadataFile)
+			: base(TableIndex.Field, metadataFile)
 		{
 		}
-
-		public override object Text => $"04 Field ({metadataFile.Metadata.GetTableRowCount(TableIndex.Field)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -115,29 +111,5 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.signatureTooltip = null;
 			}
 		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "FieldDefs");
-		}
-	}
-}
-
-class Time : IDisposable
-{
-	readonly System.Diagnostics.Stopwatch stopwatch;
-	readonly string title;
-
-	public Time(string title)
-	{
-		this.title = title;
-		this.stopwatch = new System.Diagnostics.Stopwatch();
-		stopwatch.Start();
-	}
-
-	public void Dispose()
-	{
-		stopwatch.Stop();
-		System.Diagnostics.Debug.WriteLine(title + " took " + stopwatch.ElapsedMilliseconds + "ms");
 	}
 }

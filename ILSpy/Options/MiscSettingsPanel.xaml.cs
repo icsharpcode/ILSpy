@@ -20,53 +20,20 @@ using System.ComponentModel.Composition;
 using System.Windows.Controls;
 using System.Xml.Linq;
 
-using ICSharpCode.ILSpyX.Settings;
+using TomsToolbox.Wpf.Composition.Mef;
 
 namespace ICSharpCode.ILSpy.Options
 {
 	/// <summary>
 	/// Interaction logic for MiscSettingsPanel.xaml
 	/// </summary>
-	[ExportOptionPage(Title = nameof(Properties.Resources.Misc), Order = 30)]
+	[DataTemplate(typeof(MiscSettingsViewModel))]
 	[PartCreationPolicy(CreationPolicy.NonShared)]
-	public partial class MiscSettingsPanel : UserControl, IOptionPage
+	public partial class MiscSettingsPanel
 	{
 		public MiscSettingsPanel()
 		{
 			InitializeComponent();
-		}
-
-		public void Load(ILSpySettings settings)
-		{
-			this.DataContext = LoadMiscSettings(settings);
-		}
-
-		static MiscSettingsViewModel currentMiscSettings;
-
-		public static MiscSettingsViewModel CurrentMiscSettings {
-			get {
-				return currentMiscSettings ?? (currentMiscSettings = LoadMiscSettings(ILSpySettings.Load()));
-			}
-		}
-
-		public static MiscSettingsViewModel LoadMiscSettings(ILSpySettings settings)
-		{
-			var s = MiscSettings.Load(settings);
-			return new MiscSettingsViewModel(s);
-		}
-
-		public void Save(XElement root)
-		{
-			var s = (MiscSettingsViewModel)this.DataContext;
-			IMiscSettings.Save(root, s);
-
-			currentMiscSettings = null; // invalidate cached settings
-		}
-
-		public void LoadDefaults()
-		{
-			currentMiscSettings = new MiscSettingsViewModel(MiscSettings.Load(ILSpySettings.Load()));
-			this.DataContext = currentMiscSettings;
 		}
 	}
 }

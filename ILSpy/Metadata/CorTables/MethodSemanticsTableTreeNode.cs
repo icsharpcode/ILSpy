@@ -21,7 +21,6 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -29,11 +28,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class MethodSemanticsTableTreeNode : MetadataTableTreeNode
 	{
 		public MethodSemanticsTableTreeNode(MetadataFile metadataFile)
-			: base((HandleKind)0x18, metadataFile)
+			: base(TableIndex.MethodSemantics, metadataFile)
 		{
 		}
-
-		public override object Text => $"18 MethodSemantics ({metadataFile.Metadata.GetTableRowCount(TableIndex.MethodSemantics)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -93,7 +90,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnMethodClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, method, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, method, protocol: "metadata")));
 			}
 
 			string methodTooltip;
@@ -104,7 +101,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnAssociationClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, association, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, association, protocol: "metadata")));
 			}
 
 			string associationTooltip;
@@ -120,11 +117,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.methodTooltip = null;
 				this.associationTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "MethodDefs");
 		}
 	}
 }

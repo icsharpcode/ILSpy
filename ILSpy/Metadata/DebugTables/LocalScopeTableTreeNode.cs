@@ -21,7 +21,6 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -29,11 +28,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class LocalScopeTableTreeNode : DebugMetadataTableTreeNode
 	{
 		public LocalScopeTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.LocalScope, metadataFile)
+			: base(TableIndex.LocalScope, metadataFile)
 		{
 		}
-
-		public override object Text => $"32 LocalScope ({metadataFile.Metadata.GetTableRowCount(TableIndex.LocalScope)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -84,7 +81,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnMethodClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, localScope.Method, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, localScope.Method, protocol: "metadata")));
 			}
 
 			string methodTooltip;
@@ -95,7 +92,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnImportScopeClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, localScope.ImportScope, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, localScope.ImportScope, protocol: "metadata")));
 			}
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
@@ -103,7 +100,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnVariableListClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, localScope.GetLocalVariables().FirstOrDefault(), protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, localScope.GetLocalVariables().FirstOrDefault(), protocol: "metadata")));
 			}
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
@@ -111,7 +108,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnConstantListClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, localScope.GetLocalConstants().FirstOrDefault(), protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, localScope.GetLocalConstants().FirstOrDefault(), protocol: "metadata")));
 			}
 
 			public int StartOffset => localScope.StartOffset;
@@ -127,11 +124,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.localScope = metadataFile.Metadata.GetLocalScope(handle);
 				this.methodTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "LocalScope");
 		}
 	}
 }

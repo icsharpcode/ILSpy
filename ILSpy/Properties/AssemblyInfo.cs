@@ -1,6 +1,5 @@
 ﻿#region Using directives
 
-using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Resources;
@@ -26,7 +25,7 @@ using System.Runtime.Versioning;
 [assembly: ComVisible(false)]
 
 [assembly: AssemblyVersion(DecompilerVersionInfo.Major + "." + DecompilerVersionInfo.Minor + "." + DecompilerVersionInfo.Build + "." + DecompilerVersionInfo.Revision)]
-[assembly: AssemblyInformationalVersion(DecompilerVersionInfo.FullVersionWithShortCommitHash)]
+[assembly: AssemblyInformationalVersion(DecompilerVersionInfo.FullVersionWithCommitHash)]
 [assembly: NeutralResourcesLanguage("en-US")]
 
 [assembly: SupportedOSPlatform("Windows7.0")]

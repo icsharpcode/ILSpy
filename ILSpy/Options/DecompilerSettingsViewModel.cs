@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.Composition;
 using System.Linq;
 using System.Reflection;
 
@@ -28,44 +29,63 @@ using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpy.Options
 {
-	public sealed class DecompilerSettingsViewModel : ObservableObjectBase
+	[ExportOptionPage(Order = 10)]
+	[PartCreationPolicy(CreationPolicy.NonShared)]
+	public sealed class DecompilerSettingsViewModel : ObservableObjectBase, IOptionPage
 	{
-		public DecompilerSettingsGroupViewModel[] Settings { get; }
+		private static readonly PropertyInfo[] propertyInfos = typeof(Decompiler.DecompilerSettings).GetProperties()
+			.Where(p => p.GetCustomAttribute<BrowsableAttribute>()?.Browsable != false)
+			.ToArray();
 
-		public DecompilerSettingsViewModel(Decompiler.DecompilerSettings settings)
+		public string Title => Resources.Decompiler;
+
+		private DecompilerSettingsGroupViewModel[] settings;
+		public DecompilerSettingsGroupViewModel[] Settings {
+			get => settings;
+			set => SetProperty(ref settings, value);
+		}
+
+		private DecompilerSettings decompilerSettings;
+
+		public void Load(SettingsSnapshot snapshot)
 		{
-			Settings = typeof(Decompiler.DecompilerSettings).GetProperties()
-				.Where(p => p.GetCustomAttribute<BrowsableAttribute>()?.Browsable != false)
-				.Select(p => new DecompilerSettingsItemViewModel(p) { IsEnabled = p.GetValue(settings) is true })
+			decompilerSettings = snapshot.GetSettings<DecompilerSettings>();
+			LoadSettings();
+		}
+
+		private void LoadSettings()
+		{
+			this.Settings = propertyInfos
+				.Select(p => new DecompilerSettingsItemViewModel(p, decompilerSettings))
 				.OrderBy(item => item.Category, NaturalStringComparer.Instance)
 				.GroupBy(p => p.Category)
 				.Select(g => new DecompilerSettingsGroupViewModel(g.Key, g.OrderBy(i => i.Description).ToArray()))
 				.ToArray();
 		}
 
-		public Decompiler.DecompilerSettings ToDecompilerSettings()
+		public void LoadDefaults()
 		{
-			var settings = new Decompiler.DecompilerSettings();
+			var defaults = new Decompiler.DecompilerSettings();
 
-			foreach (var item in Settings.SelectMany(group => group.Settings))
+			foreach (var propertyInfo in propertyInfos)
 			{
-				item.Property.SetValue(settings, item.IsEnabled);
+				propertyInfo.SetValue(decompilerSettings, propertyInfo.GetValue(defaults));
 			}
 
-			return settings;
+			LoadSettings();
 		}
 	}
 
 	public sealed class DecompilerSettingsGroupViewModel : ObservableObjectBase
 	{
-		private bool? _areAllItemsChecked;
+		private bool? areAllItemsChecked;
 
 		public DecompilerSettingsGroupViewModel(string category, DecompilerSettingsItemViewModel[] settings)
 		{
 			Settings = settings;
 			Category = category;
 
-			_areAllItemsChecked = GetAreAllItemsChecked(Settings);
+			areAllItemsChecked = GetAreAllItemsChecked(Settings);
 
 			foreach (DecompilerSettingsItemViewModel viewModel in settings)
 			{
@@ -74,9 +94,9 @@ namespace ICSharpCode.ILSpy.Options
 		}
 
 		public bool? AreAllItemsChecked {
-			get => _areAllItemsChecked;
+			get => areAllItemsChecked;
 			set {
-				SetProperty(ref _areAllItemsChecked, value);
+				SetProperty(ref areAllItemsChecked, value);
 
 				if (!value.HasValue)
 					return;
@@ -114,15 +134,20 @@ namespace ICSharpCode.ILSpy.Options
 		}
 	}
 
-	public sealed class DecompilerSettingsItemViewModel(PropertyInfo property) : ObservableObjectBase
+	public sealed class DecompilerSettingsItemViewModel(PropertyInfo property, DecompilerSettings decompilerSettings) : ObservableObjectBase
 	{
-		private bool _isEnabled;
+		private bool isEnabled = property.GetValue(decompilerSettings) is true;
 
-		public PropertyInfo Property { get; } = property;
+		public PropertyInfo Property => property;
 
 		public bool IsEnabled {
-			get => _isEnabled;
-			set => SetProperty(ref _isEnabled, value);
+			get => isEnabled;
+			set {
+				if (SetProperty(ref isEnabled, value))
+				{
+					property.SetValue(decompilerSettings, value);
+				}
+			}
 		}
 
 		public string Description { get; set; } = GetResourceString(property.GetCustomAttribute<DescriptionAttribute>()?.Description ?? property.Name);

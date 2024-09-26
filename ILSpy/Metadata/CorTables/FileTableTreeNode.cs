@@ -20,7 +20,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -28,11 +27,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	class FileTableTreeNode : MetadataTableTreeNode
 	{
 		public FileTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.AssemblyFile, metadataFile)
+			: base(TableIndex.File, metadataFile)
 		{
 		}
-
-		public override object Text => $"26 File ({metadataFile.Metadata.GetTableRowCount(TableIndex.File)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -110,9 +107,5 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "Files");
-		}
 	}
 }

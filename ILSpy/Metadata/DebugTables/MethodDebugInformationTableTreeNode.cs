@@ -30,11 +30,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class MethodDebugInformationTableTreeNode : DebugMetadataTableTreeNode
 	{
 		public MethodDebugInformationTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.MethodDebugInformation, metadataFile)
+			: base(TableIndex.MethodDebugInformation, metadataFile)
 		{
 		}
-
-		public override object Text => $"31 MethodDebugInformation ({metadataFile.Metadata.GetTableRowCount(TableIndex.MethodDebugInformation)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -85,7 +83,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnDocumentClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, debugInfo.Document, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, debugInfo.Document, protocol: "metadata")));
 			}
 
 			public string DocumentTooltip {
@@ -118,7 +116,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnLocalSignatureClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, debugInfo.LocalSignature, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, debugInfo.LocalSignature, protocol: "metadata")));
 			}
 
 			public string LocalSignatureTooltip {
@@ -150,11 +148,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.handle = handle;
 				this.debugInfo = metadataFile.Metadata.GetMethodDebugInformation(handle);
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "MethodDebugInformation");
 		}
 	}
 }

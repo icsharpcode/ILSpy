@@ -27,8 +27,9 @@ using System.Windows.Media;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX;
+
+using TomsToolbox.Essentials;
 
 namespace ICSharpCode.ILSpy
 {
@@ -125,9 +126,9 @@ namespace ICSharpCode.ILSpy
 				for (int i = 0; i < VisualTreeHelper.GetChildrenCount(depObj); i++)
 				{
 					DependencyObject child = VisualTreeHelper.GetChild(depObj, i);
-					if (child != null && child is T)
+					if (child is T dependencyObject)
 					{
-						return (T)child;
+						return dependencyObject;
 					}
 
 					T? childItem = FindVisualChild<T>(child);
@@ -178,20 +179,37 @@ namespace ICSharpCode.ILSpy
 				else
 					output.AppendLine("-------------------------------------------------");
 				output.AppendLine("Error(s) loading plugin: " + item.PluginName);
-				if (item.Exception is System.Reflection.ReflectionTypeLoadException)
+				if (item.Exception is System.Reflection.ReflectionTypeLoadException exception)
 				{
-					var e = (System.Reflection.ReflectionTypeLoadException)item.Exception;
-					foreach (var ex in e.LoaderExceptions)
+					foreach (var ex in exception.LoaderExceptions.ExceptNullItems())
 					{
 						output.AppendLine(ex.ToString());
 						output.AppendLine();
 					}
 				}
 				else
+				{
 					output.AppendLine(item.Exception.ToString());
+				}
 			}
 
 			return true;
+		}
+
+		public static IDisposable PreserveFocus(this IInputElement? inputElement, bool preserve = true)
+		{
+			return new RestoreFocusHelper(inputElement, preserve);
+		}
+
+		private sealed class RestoreFocusHelper(IInputElement? inputElement, bool preserve) : IDisposable
+		{
+			public void Dispose()
+			{
+				if (preserve)
+				{
+					inputElement?.Focus();
+				}
+			}
 		}
 	}
 }

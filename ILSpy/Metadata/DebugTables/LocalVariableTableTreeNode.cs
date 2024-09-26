@@ -20,7 +20,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -28,11 +27,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class LocalVariableTableTreeNode : DebugMetadataTableTreeNode
 	{
 		public LocalVariableTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.LocalVariable, metadataFile)
+			: base(TableIndex.LocalVariable, metadataFile)
 		{
 		}
-
-		public override object Text => $"33 LocalVariable ({metadataFile.Metadata.GetTableRowCount(TableIndex.LocalVariable)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -99,11 +96,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.handle = handle;
 				this.localVar = metadataFile.Metadata.GetLocalVariable(handle);
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "Document");
 		}
 	}
 }

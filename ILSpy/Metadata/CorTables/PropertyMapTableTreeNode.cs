@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -29,11 +28,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	class PropertyMapTableTreeNode : MetadataTableTreeNode
 	{
 		public PropertyMapTableTreeNode(MetadataFile metadataFile)
-			: base((HandleKind)0x15, metadataFile)
+			: base(TableIndex.PropertyMap, metadataFile)
 		{
 		}
-
-		public override object Text => $"15 PropertyMap ({metadataFile.Metadata.GetTableRowCount(TableIndex.PropertyMap)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -98,7 +95,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnParentClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, propertyMap.Parent, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, propertyMap.Parent, protocol: "metadata")));
 			}
 
 			string parentTooltip;
@@ -109,7 +106,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnPropertyListClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, propertyMap.PropertyList, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, propertyMap.PropertyList, protocol: "metadata")));
 			}
 
 			string propertyListTooltip;
@@ -128,11 +125,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.propertyListTooltip = null;
 				this.parentTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "PropertyMap");
 		}
 	}
 }

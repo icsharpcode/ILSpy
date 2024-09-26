@@ -20,6 +20,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
@@ -32,7 +33,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 
 using ICSharpCode.ILSpy.AppEnv;
-using ICSharpCode.ILSpy.Util;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Extensions;
@@ -67,7 +68,7 @@ namespace ICSharpCode.ILSpy.Search
 
 			ContextMenuProvider.Add(listBox);
 			MessageBus<CurrentAssemblyListChangedEventArgs>.Subscribers += (sender, e) => CurrentAssemblyList_Changed();
-			MessageBus<LanguageSettingsChangedEventArgs>.Subscribers += (sender, e) => LanguageSettings_PropertyChanged();
+			MessageBus<SettingsChangedEventArgs>.Subscribers += (sender, e) => Settings_PropertyChanged(sender, e);
 
 			CompositionTarget.Rendering += UpdateResults;
 		}
@@ -85,8 +86,11 @@ namespace ICSharpCode.ILSpy.Search
 			}
 		}
 
-		void LanguageSettings_PropertyChanged()
+		void Settings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
+			if (sender is not LanguageSettings)
+				return;
+
 			UpdateFilter();
 		}
 
@@ -250,8 +254,8 @@ namespace ICSharpCode.ILSpy.Search
 			{
 
 				searchProgressBar.IsIndeterminate = true;
-				startedSearch = new(await mainWindow.CurrentAssemblyList.GetAllAssemblies(), searchTerm,
-					(SearchMode)searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage,
+				startedSearch = new(await mainWindow.AssemblyTreeModel.AssemblyList.GetAllAssemblies(), searchTerm,
+					(SearchMode)searchModeComboBox.SelectedIndex, mainWindow.AssemblyTreeModel.CurrentLanguage,
 					SettingsService.Instance.SessionSettings.LanguageSettings.ShowApiLevel);
 				currentSearch = startedSearch;
 
@@ -269,7 +273,7 @@ namespace ICSharpCode.ILSpy.Search
 		{
 			if (listBox.SelectedItem is SearchResult result)
 			{
-				MainWindow.Instance.JumpToReference(result.Reference);
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(result.Reference));
 			}
 		}
 
@@ -542,6 +546,11 @@ namespace ICSharpCode.ILSpy.Search
 			gestures.Clear();
 			gestures.Add(new KeyGesture(Key.F, ModifierKeys.Control | ModifierKeys.Shift));
 			gestures.Add(new KeyGesture(Key.E, ModifierKeys.Control));
+		}
+
+		protected override void OnExecute(object sender, ExecutedRoutedEventArgs e)
+		{
+			DockWorkspace.Instance.ShowToolPane(SearchPaneModel.PaneContentId);
 		}
 	}
 }

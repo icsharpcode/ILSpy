@@ -22,7 +22,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -30,7 +29,7 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class FieldRVATableTreeNode : MetadataTableTreeNode
 	{
 		public FieldRVATableTreeNode(MetadataFile metadataFile)
-			: base((HandleKind)0x1D, metadataFile)
+			: base(TableIndex.FieldRva, metadataFile)
 		{
 		}
 
@@ -100,7 +99,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnFieldClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, fieldRVA.Field, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, fieldRVA.Field, protocol: "metadata")));
 			}
 
 			string fieldTooltip;
@@ -120,11 +119,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.fieldRVA = new FieldRVA(ptr.Slice(rowOffset), fieldDefSize);
 				this.fieldTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "FieldRVAs");
 		}
 	}
 }

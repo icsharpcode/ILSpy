@@ -34,13 +34,15 @@ namespace ICSharpCode.ILSpy.Metadata
 		protected readonly MetadataFile metadataFile;
 		protected int scrollTarget;
 
-		public HandleKind Kind { get; }
+		public TableIndex Kind { get; }
+
+		public override object Text => $"{(int)Kind:X2} {Kind} ({metadataFile.Metadata.GetTableRowCount(Kind)})";
 
 		public override object Icon => Images.MetadataTable;
 
-		public MetadataTableTreeNode(HandleKind kind, MetadataFile metadataFile)
+		public MetadataTableTreeNode(TableIndex table, MetadataFile metadataFile)
 		{
-			this.Kind = kind;
+			this.Kind = table;
 			this.metadataFile = metadataFile;
 		}
 
@@ -130,13 +132,31 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 			return tooltip;
 		}
+
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		{
+		}
 	}
 
 	internal abstract class DebugMetadataTableTreeNode : MetadataTableTreeNode
 	{
-		public DebugMetadataTableTreeNode(HandleKind kind, MetadataFile metadataFile)
+		public DebugMetadataTableTreeNode(TableIndex kind, MetadataFile metadataFile)
 			: base(kind, metadataFile)
 		{
+		}
+	}
+
+	internal class UnsupportedMetadataTableTreeNode : MetadataTableTreeNode
+	{
+		public UnsupportedMetadataTableTreeNode(TableIndex kind, MetadataFile file)
+			: base(kind, file)
+		{
+		}
+		public override object Text => $"{(int)Kind:X2} {Kind.ToString()} [unsupported] ({metadataFile.Metadata.GetTableRowCount(Kind)})";
+
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		{
+			output.WriteLine($"Unsupported table '{(int)Kind:X2} {Kind}' contains {metadataFile.Metadata.GetTableRowCount(Kind)} rows.");
 		}
 	}
 }

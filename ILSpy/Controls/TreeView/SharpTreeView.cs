@@ -158,6 +158,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			if (flattener != null)
 			{
 				flattener.Stop();
+				flattener.CollectionChanged -= flattener_CollectionChanged;
 			}
 			if (Root != null)
 			{
@@ -818,9 +819,9 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 		/// </summary>
 		public IEnumerable<SharpTreeNode> GetTopLevelSelection()
 		{
-			var selection = this.SelectedItems.OfType<SharpTreeNode>();
-			var selectionHash = new HashSet<SharpTreeNode>(selection);
-			return selection.Where(item => item.Ancestors().All(a => !selectionHash.Contains(a)));
+			var selection = this.SelectedItems.OfType<SharpTreeNode>().ToHashSet();
+
+			return selection.Where(item => item.Ancestors().All(a => !selection.Contains(a)));
 		}
 
 		#endregion

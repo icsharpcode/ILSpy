@@ -29,11 +29,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class TypeSpecTableTreeNode : MetadataTableTreeNode
 	{
 		public TypeSpecTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.TypeSpecification, metadataFile)
+			: base(TableIndex.TypeSpec, metadataFile)
 		{
 		}
-
-		public override object Text => $"1B TypeSpec ({metadataFile.Metadata.GetTableRowCount(TableIndex.TypeSpec)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -103,11 +101,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.handle = handle;
 				this.typeSpec = metadata.GetTypeSpecification(handle);
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "TypeSpecs");
 		}
 	}
 }

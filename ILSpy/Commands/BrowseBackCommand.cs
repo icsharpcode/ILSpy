@@ -19,6 +19,7 @@
 using System.ComponentModel.Composition;
 using System.Windows.Input;
 
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy
@@ -27,9 +28,30 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class BrowseBackCommand : CommandWrapper
 	{
-		public BrowseBackCommand()
+		readonly AssemblyTreeModel assemblyTreeModel;
+
+		[ImportingConstructor]
+		public BrowseBackCommand(AssemblyTreeModel assemblyTreeModel)
 			: base(NavigationCommands.BrowseBack)
 		{
+			this.assemblyTreeModel = assemblyTreeModel;
+		}
+
+		protected override void OnCanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			base.OnCanExecute(sender, e);
+
+			e.Handled = true;
+			e.CanExecute = assemblyTreeModel.CanNavigateBack;
+		}
+
+		protected override void OnExecute(object sender, ExecutedRoutedEventArgs e)
+		{
+			if (assemblyTreeModel.CanNavigateBack)
+			{
+				e.Handled = true;
+				assemblyTreeModel.NavigateHistory(false);
+			}
 		}
 	}
 }

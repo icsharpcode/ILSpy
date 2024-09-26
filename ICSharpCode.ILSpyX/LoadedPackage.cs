@@ -51,14 +51,14 @@ namespace ICSharpCode.ILSpyX
 
 		public PackageKind Kind { get; }
 
-		internal SingleFileBundle.Header BundleHeader { get; set; }
+		public SingleFileBundle.Header BundleHeader { get; set; }
 
 		/// <summary>
 		/// List of all entries, including those in sub-directories within the package.
 		/// </summary>
 		public IReadOnlyList<PackageEntry> Entries { get; }
 
-		internal PackageFolder RootFolder { get; }
+		public PackageFolder RootFolder { get; }
 
 		public LoadedPackage(PackageKind kind, IEnumerable<PackageEntry> entries)
 		{
@@ -256,7 +256,7 @@ namespace ICSharpCode.ILSpyX
 		public abstract string FullName { get; }
 	}
 
-	sealed class PackageFolder : IAssemblyResolver
+	public sealed class PackageFolder : IAssemblyResolver
 	{
 		/// <summary>
 		/// Gets the short name of the folder.
@@ -326,7 +326,7 @@ namespace ICSharpCode.ILSpyX
 
 		readonly Dictionary<string, LoadedAssembly?> assemblies = new Dictionary<string, LoadedAssembly?>(StringComparer.OrdinalIgnoreCase);
 
-		internal LoadedAssembly? ResolveFileName(string name)
+		public LoadedAssembly? ResolveFileName(string name)
 		{
 			if (package.LoadedAssembly == null)
 				return null;

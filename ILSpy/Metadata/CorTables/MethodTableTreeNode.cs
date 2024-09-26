@@ -22,7 +22,6 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -32,11 +31,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class MethodTableTreeNode : MetadataTableTreeNode
 	{
 		public MethodTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.MethodDefinition, metadataFile)
+			: base(TableIndex.MethodDef, metadataFile)
 		{
 		}
-
-		public override object Text => $"06 Method ({metadataFile.Metadata.GetTableRowCount(TableIndex.MethodDef)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -121,7 +118,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnParamListClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, methodDef.GetParameters().FirstOrDefault(), protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, methodDef.GetParameters().FirstOrDefault(), protocol: "metadata")));
 			}
 
 			string paramListTooltip;
@@ -144,11 +141,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.signatureTooltip = null;
 				this.paramListTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "MethodDefs");
 		}
 	}
 }

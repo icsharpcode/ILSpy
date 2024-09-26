@@ -26,7 +26,6 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Themes;
-using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 namespace ICSharpCode.ILSpy.TreeNodes

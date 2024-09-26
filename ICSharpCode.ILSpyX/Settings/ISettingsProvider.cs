@@ -17,12 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.ComponentModel;
-using System.Linq;
-using System.Reflection;
 using System.Xml.Linq;
-
-using static System.Collections.Specialized.BitVector32;
 
 namespace ICSharpCode.ILSpyX.Settings
 {
@@ -31,39 +26,7 @@ namespace ICSharpCode.ILSpyX.Settings
 		XElement this[XName section] { get; }
 
 		void Update(Action<XElement> action);
-		ISettingsProvider Load();
 
-		public static ICSharpCode.Decompiler.DecompilerSettings LoadDecompilerSettings(ISettingsProvider settingsProvider)
-		{
-			XElement e = settingsProvider["DecompilerSettings"];
-			var newSettings = new Decompiler.DecompilerSettings();
-			var properties = typeof(Decompiler.DecompilerSettings).GetProperties()
-				.Where(p => p.GetCustomAttribute<BrowsableAttribute>()?.Browsable != false);
-			foreach (var p in properties)
-			{
-				var value = (bool?)e.Attribute(p.Name);
-				if (value.HasValue)
-					p.SetValue(newSettings, value.Value);
-			}
-			return newSettings;
-		}
-
-		public static void SaveDecompilerSettings(XElement root, ICSharpCode.Decompiler.DecompilerSettings newSettings)
-		{
-			var properties = typeof(Decompiler.DecompilerSettings).GetProperties()
-				.Where(p => p.GetCustomAttribute<BrowsableAttribute>()?.Browsable != false);
-
-			XElement section = new XElement("DecompilerSettings");
-			foreach (var p in properties)
-			{
-				section.SetAttributeValue(p.Name, p.GetValue(newSettings));
-			}
-
-			XElement? existingElement = root.Element("DecompilerSettings");
-			if (existingElement != null)
-				existingElement.ReplaceWith(section);
-			else
-				root.Add(section);
-		}
+		void SaveSettings(XElement section);
 	}
 }

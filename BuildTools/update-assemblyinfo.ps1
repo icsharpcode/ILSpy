@@ -69,6 +69,17 @@ function gitCommitHash() {
     }
 }
 
+function gitShortCommitHash() {
+    if (No-Git) {
+        return "00000000";
+    }
+    try {
+        return (git rev-parse --short=8 (git rev-list --max-count 1 HEAD));
+    } catch {
+        return "00000000";
+    }	
+}
+
 function gitBranch() {
     if (No-Git) {
         return "no-branch";
@@ -117,6 +128,7 @@ try {
     $revision = gitVersion;
     $branchName = gitBranch;
     $gitCommitHash = gitCommitHash;
+	$gitShortCommitHash = gitShortCommitHash;
 
     if ($branchName -match $masterBranches) {
         $postfixBranchName = "";
@@ -150,7 +162,7 @@ try {
 		$out = $out.Replace('$INSERTMAJORVERSION$', $major);
 		$out = $out.Replace('$INSERTREVISION$', $revision);
 		$out = $out.Replace('$INSERTCOMMITHASH$', $gitCommitHash);
-		$out = $out.Replace('$INSERTSHORTCOMMITHASH$', $gitCommitHash.Substring(0, 8));
+		$out = $out.Replace('$INSERTSHORTCOMMITHASH$', $gitShortCommitHash);
 		$out = $out.Replace('$INSERTDATE$', [System.DateTime]::Now.ToString("MM/dd/yyyy"));
 		$out = $out.Replace('$INSERTYEAR$', [System.DateTime]::Now.Year.ToString());
 		$out = $out.Replace('$INSERTBRANCHNAME$', $branchName);

@@ -32,7 +32,7 @@ using static ICSharpCode.Decompiler.Metadata.MetadataFile;
 
 namespace ICSharpCode.ILSpyX.PdbProvider
 {
-	class PortableDebugInfoProvider : IDebugInfoProvider
+	public class PortableDebugInfoProvider : IDebugInfoProvider
 	{
 		string? pdbFileName;
 		string moduleFileName;
@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 		MetadataReaderOptions options;
 		bool hasError;
 
-		internal bool IsEmbedded => pdbFileName == null;
+		public bool IsEmbedded => pdbFileName == null;
 
 		public PortableDebugInfoProvider(string moduleFileName, MetadataReaderProvider provider,
 			MetadataReaderOptions options = MetadataReaderOptions.Default,
@@ -69,7 +69,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			}
 		}
 
-		internal MetadataReader? GetMetadataReader()
+		public MetadataReader? GetMetadataReader()
 		{
 			try
 			{

@@ -20,7 +20,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -28,11 +27,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class ModuleTableTreeNode : MetadataTableTreeNode
 	{
 		public ModuleTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.ModuleDefinition, metadataFile)
+			: base(TableIndex.Module, metadataFile)
 		{
 		}
-
-		public override object Text => $"00 Module ({metadataFile.Metadata.GetTableRowCount(TableIndex.Module)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -99,11 +96,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.handle = handle;
 				this.moduleDef = metadataFile.Metadata.GetModuleDefinition();
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "Modules");
 		}
 	}
 }

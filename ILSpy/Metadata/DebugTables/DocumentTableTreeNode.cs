@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 
@@ -30,11 +29,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class DocumentTableTreeNode : DebugMetadataTableTreeNode
 	{
 		public DocumentTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.Document, metadataFile)
+			: base(TableIndex.Document, metadataFile)
 		{
 		}
-
-		public override object Text => $"30 Document ({metadataFile.Metadata.GetTableRowCount(TableIndex.Document)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -138,11 +135,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.handle = handle;
 				this.document = metadataFile.Metadata.GetDocument(handle);
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "Document");
 		}
 	}
 }

@@ -1,12 +1,8 @@
 ﻿#region Using directives
 
-using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using System.Resources;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 
 #endregion
 
@@ -15,7 +11,7 @@ using System.Runtime.Versioning;
 [assembly: ComVisible(false)]
 
 [assembly: AssemblyVersion(DecompilerVersionInfo.Major + "." + DecompilerVersionInfo.Minor + "." + DecompilerVersionInfo.Build + "." + DecompilerVersionInfo.Revision)]
-[assembly: AssemblyInformationalVersion(DecompilerVersionInfo.FullVersionWithShortCommitHash)]
+[assembly: AssemblyInformationalVersion(DecompilerVersionInfo.FullVersionWithCommitHash)]
 
 [assembly: SuppressMessage("Microsoft.Usage", "CA2243:AttributeStringLiteralsShouldParseCorrectly",
 	Justification = "AssemblyInformationalVersion does not need to be a parsable version")]

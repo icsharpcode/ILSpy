@@ -6,7 +6,6 @@ using System.Windows;
 using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.ControlFlow;
-using ICSharpCode.ILSpy.Util;
 
 namespace ICSharpCode.ILSpy.Commands
 {

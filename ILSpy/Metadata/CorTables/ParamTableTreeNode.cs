@@ -21,7 +21,6 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -29,11 +28,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class ParamTableTreeNode : MetadataTableTreeNode
 	{
 		public ParamTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.Parameter, metadataFile)
+			: base(TableIndex.Param, metadataFile)
 		{
 		}
-
-		public override object Text => $"08 Param ({metadataFile.Metadata.GetTableRowCount(TableIndex.Param)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -100,11 +97,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.handle = handle;
 				this.param = metadataFile.Metadata.GetParameter(handle);
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "Params");
 		}
 	}
 }

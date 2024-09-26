@@ -108,7 +108,7 @@ namespace ICSharpCode.ILSpy.Metadata
 		public MetadataTableTreeNode FindNodeByHandleKind(HandleKind kind)
 		{
 			return this.Children.OfType<MetadataTablesTreeNode>().Single()
-				.Children.OfType<MetadataTableTreeNode>().SingleOrDefault(x => x.Kind == kind);
+				.Children.OfType<MetadataTableTreeNode>().SingleOrDefault(x => x.Kind == (TableIndex)kind);
 		}
 	}
 

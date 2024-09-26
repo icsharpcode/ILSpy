@@ -8,7 +8,6 @@ using System.Windows.Input;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.ILSpy.Docking;
-using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.ViewModels;
 
 using TomsToolbox.Wpf.Composition.Mef;
@@ -34,9 +33,9 @@ namespace ICSharpCode.ILSpy
 			InitializeComponent();
 
 #if DEBUG
-			MessageBus<LanguageSettingsChangedEventArgs>.Subscribers += (sender, e) => LanguageSettings_PropertyChanged(sender, e);
+			MessageBus<SettingsChangedEventArgs>.Subscribers += (sender, e) => Settings_PropertyChanged(sender, e);
+			MessageBus<AssemblyTreeSelectionChangedEventArgs>.Subscribers += SelectionChanged;
 
-			MainWindow.Instance.SelectionChanged += SelectionChanged;
 			writingOptions.PropertyChanged += WritingOptions_PropertyChanged;
 
 			if (SettingsService.Instance.SessionSettings.LanguageSettings.Language is ILAstLanguage l)
@@ -53,7 +52,7 @@ namespace ICSharpCode.ILSpy
 			DecompileAsync(lastSelectedStep);
 		}
 
-		private void SelectionChanged(object sender, SelectionChangedEventArgs e)
+		private void SelectionChanged(object sender, EventArgs e)
 		{
 			Dispatcher.Invoke(() => {
 				tree.ItemsSource = null;
@@ -61,10 +60,13 @@ namespace ICSharpCode.ILSpy
 			});
 		}
 
-		private void LanguageSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void Settings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 #if DEBUG
-			if (e.PropertyName == "Language")
+			if (sender is not LanguageSettings)
+				return;
+
+			if (e.PropertyName == nameof(LanguageSettings.Language))
 			{
 				if (language != null)
 				{
@@ -123,8 +125,8 @@ namespace ICSharpCode.ILSpy
 			lastSelectedStep = step;
 			var window = MainWindow.Instance;
 			var state = DockWorkspace.Instance.ActiveTabPage.GetState();
-			DockWorkspace.Instance.ActiveTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(window.CurrentLanguage, window.SelectedNodes,
-				new DecompilationOptions(window.CurrentLanguageVersion, SettingsService.Instance.DecompilerSettings, SettingsService.Instance.DisplaySettings) {
+			DockWorkspace.Instance.ActiveTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(window.AssemblyTreeModel.CurrentLanguage, window.AssemblyTreeModel.SelectedNodes,
+				new DecompilationOptions(window.AssemblyTreeModel.CurrentLanguageVersion, SettingsService.Instance.DecompilerSettings, SettingsService.Instance.DisplaySettings) {
 					StepLimit = step,
 					IsDebug = isDebug,
 					TextViewState = state as TextView.DecompilerTextViewState

@@ -33,11 +33,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal class TypeDefTableTreeNode : MetadataTableTreeNode
 	{
 		public TypeDefTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.TypeDefinition, metadataFile)
+			: base(TableIndex.TypeDef, metadataFile)
 		{
 		}
-
-		public override object Text => $"02 TypeDef ({metadataFile.Metadata.GetTableRowCount(TableIndex.TypeDef)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -113,7 +111,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnBaseTypeClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, typeDef.BaseType, protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, typeDef.BaseType, protocol: "metadata")));
 			}
 
 			public string BaseTypeTooltip {
@@ -144,7 +142,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnFieldListClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, typeDef.GetFields().FirstOrDefault(), protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, typeDef.GetFields().FirstOrDefault(), protocol: "metadata")));
 			}
 
 			string fieldListTooltip;
@@ -162,7 +160,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public void OnMethodListClick()
 			{
-				MainWindow.Instance.JumpToReference(new EntityReference(metadataFile, typeDef.GetMethods().FirstOrDefault(), protocol: "metadata"));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, typeDef.GetMethods().FirstOrDefault(), protocol: "metadata")));
 			}
 
 			string methodListTooltip;
@@ -185,11 +183,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.methodListTooltip = null;
 				this.fieldListTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "TypeDefs");
 		}
 	}
 }

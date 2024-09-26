@@ -28,6 +28,8 @@ using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX.Extensions;
 
+using TomsToolbox.Essentials;
+
 namespace ICSharpCode.ILSpy.Metadata
 {
 	class CoffHeaderTreeNode : ILSpyTreeNode
@@ -104,7 +106,6 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, "COFF Header");
 		}
 	}
 

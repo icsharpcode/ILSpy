@@ -289,27 +289,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			string nameWithoutNumber = SplitName(newName, out int newIndex);
 			if (reservedVariableNames.TryGetValue(nameWithoutNumber, out int lastUsedIndex))
 			{
-				// name without number was already used
 				if (v.Type.IsKnownType(KnownTypeCode.Int32) && loopCounters.Contains(v))
 				{
 					// special case for loop counters,
 					// we don't want them to be named i, i2, ..., but i, j, ...
 					newName = GenerateNameForVariable(v);
+					nameWithoutNumber = newName;
+					newIndex = 1;
+				}
+			}
+			if (reservedVariableNames.TryGetValue(nameWithoutNumber, out lastUsedIndex))
+			{
+				// name without number was already used
+				if (newIndex > lastUsedIndex)
+				{
+					// new index is larger than last, so we can use it
 				}
 				else
 				{
-					if (newIndex > lastUsedIndex)
-					{
-						// new index is larger than last, so we can use it
-					}
-					else
-					{
-						// new index is smaller or equal, so we use the next value
-						newIndex = lastUsedIndex + 1;
-					}
-					// resolve conflicts by appending the index to the new name:
-					newName = nameWithoutNumber + newIndex.ToString();
+					// new index is smaller or equal, so we use the next value
+					newIndex = lastUsedIndex + 1;
 				}
+				// resolve conflicts by appending the index to the new name:
+				newName = nameWithoutNumber + newIndex.ToString();
 			}
 			// update the last used index
 			reservedVariableNames[nameWithoutNumber] = newIndex;

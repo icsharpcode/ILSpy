@@ -24,7 +24,6 @@ using System.Windows.Interop;
 using System.Windows.Media;
 
 using ICSharpCode.ILSpy.Options;
-using ICSharpCode.ILSpy.Util;
 
 using TomsToolbox.Essentials;
 using TomsToolbox.Wpf;

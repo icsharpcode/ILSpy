@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -31,9 +33,9 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public static ReadOnlyCollection<Language> AllLanguages { get; } = Initialize(App.ExportProvider);
 
-		static ReadOnlyCollection<Language> Initialize(IExportProvider ep)
+		static ReadOnlyCollection<Language> Initialize(IExportProvider exportProvider)
 		{
-			var languages = ep.GetExportedValues<Language>().ToList();
+			var languages = exportProvider.GetExportedValues<Language>().ToList();
 
 			languages.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
 #if DEBUG
@@ -52,7 +54,8 @@ namespace ICSharpCode.ILSpy
 			return AllLanguages.FirstOrDefault(l => l.Name == name) ?? AllLanguages.First();
 		}
 
-		static ILLanguage ilLanguage;
+		static ILLanguage? ilLanguage;
+
 		public static ILLanguage ILLanguage {
 			get {
 				if (ilLanguage == null)

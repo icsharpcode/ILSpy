@@ -20,6 +20,7 @@ using System.Reflection.Metadata;
 using System.Windows.Controls;
 using System.Windows.Threading;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TreeNodes;
 
@@ -53,6 +54,10 @@ namespace ICSharpCode.ILSpy.Metadata
 			sv.ScrollToVerticalOffset(scrollTarget - 1);
 			view.Loaded -= View_Loaded;
 			this.scrollTarget = default;
+		}
+
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		{
 		}
 	}
 }

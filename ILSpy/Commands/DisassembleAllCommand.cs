@@ -26,7 +26,6 @@ using System.Threading.Tasks;
 
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy
 {
@@ -41,12 +40,14 @@ namespace ICSharpCode.ILSpy
 
 		public override void Execute(object parameter)
 		{
-			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
-				AvalonEditTextOutput output = new AvalonEditTextOutput();
+			var dockWorkspace = Docking.DockWorkspace.Instance;
+
+			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
+				AvalonEditTextOutput output = new();
 				Parallel.ForEach(
-					Partitioner.Create(MainWindow.Instance.CurrentAssemblyList.GetAssemblies(), loadBalance: true),
-					new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct },
-					delegate (LoadedAssembly asm) {
+					Partitioner.Create(MainWindow.Instance.AssemblyTreeModel.AssemblyList.GetAssemblies(), loadBalance: true),
+					new() { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct },
+					asm => {
 						if (!asm.HasLoadError)
 						{
 							Stopwatch w = Stopwatch.StartNew();
@@ -55,7 +56,7 @@ namespace ICSharpCode.ILSpy
 							{
 								try
 								{
-									var options = MainWindow.Instance.CreateDecompilationOptions();
+									var options = SettingsService.Instance.CreateDecompilationOptions(dockWorkspace.ActiveTabPage);
 									options.FullDecompilation = true;
 									options.CancellationToken = ct;
 									new ILLanguage().DecompileAssembly(asm, new Decompiler.PlainTextOutput(writer), options);
@@ -79,7 +80,7 @@ namespace ICSharpCode.ILSpy
 						}
 					});
 				return output;
-			}, ct)).Then(output => Docking.DockWorkspace.Instance.ShowText(output)).HandleExceptions();
+			}, ct)).Then(dockWorkspace.ShowText).HandleExceptions();
 		}
 	}
 }

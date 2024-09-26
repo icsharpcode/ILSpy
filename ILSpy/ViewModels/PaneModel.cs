@@ -21,7 +21,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 
-using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.Decompiler.IL;
 
 using TomsToolbox.Wpf;
 
@@ -29,6 +29,13 @@ namespace ICSharpCode.ILSpy.ViewModels
 {
 	public abstract class PaneModel : ObservableObject
 	{
+		private Throttle titleChangeThrottle;
+
+		protected PaneModel()
+		{
+			titleChangeThrottle = new Throttle(() => OnPropertyChanged(nameof(Title)));
+		}
+
 		class CloseCommandImpl : ICommand
 		{
 			readonly PaneModel model;
@@ -107,7 +114,10 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		public string Title {
 			get => title;
-			set => SetProperty(ref title, value);
+			set {
+				title = value;
+				titleChangeThrottle.Tick();
+			}
 		}
 	}
 

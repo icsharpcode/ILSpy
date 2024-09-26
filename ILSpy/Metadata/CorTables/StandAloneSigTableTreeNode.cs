@@ -20,7 +20,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -28,11 +27,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	class StandAloneSigTableTreeNode : MetadataTableTreeNode
 	{
 		public StandAloneSigTableTreeNode(MetadataFile metadataFile)
-			: base(HandleKind.StandaloneSignature, metadataFile)
+			: base(TableIndex.StandAloneSig, metadataFile)
 		{
 		}
-
-		public override object Text => $"11 StandAloneSig ({metadataFile.Metadata.GetTableRowCount(TableIndex.StandAloneSig)})";
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
@@ -93,11 +90,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.standaloneSig = metadataFile.Metadata.GetStandaloneSignature(handle);
 				this.signatureTooltip = null;
 			}
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "StandAloneSigs");
 		}
 	}
 }
