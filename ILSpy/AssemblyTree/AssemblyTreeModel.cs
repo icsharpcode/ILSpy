@@ -879,6 +879,10 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				var path = GetPathForNode(SelectedItem);
 				ShowAssemblyList(SettingsService.Instance.AssemblyListManager.LoadList(AssemblyList.ListName));
 				SelectNode(FindNodeByPath(path, true), inNewTabPage: false);
+				if (DockWorkspace.Instance.ActiveTabPage?.GetState()?.DecompiledNodes?.Any() == true)
+				{
+					DecompileSelectedNodes();
+				}
 			}
 		}
 
