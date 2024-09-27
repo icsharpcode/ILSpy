@@ -418,17 +418,22 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 			Root = assemblyListTreeNode;
 
+			var mainWindow = Application.Current?.MainWindow;
+
+			if (mainWindow == null)
+				return;
+
 			if (assemblyList.ListName == AssemblyListManager.DefaultListName)
 #if DEBUG
-				this.Title = $"ILSpy {DecompilerVersionInfo.FullVersion}";
+				mainWindow.Title = $"ILSpy {DecompilerVersionInfo.FullVersion}";
 #else
-				this.Title = "ILSpy";
+				mainWindow.Title = "ILSpy";
 #endif
 			else
 #if DEBUG
-				this.Title = $"ILSpy {DecompilerVersionInfo.FullVersion} - " + assemblyList.ListName;
+				mainWindow.Title = $"ILSpy {DecompilerVersionInfo.FullVersion} - " + assemblyList.ListName;
 #else
-				this.Title = "ILSpy - " + assemblyList.ListName;
+				mainWindow.Title = "ILSpy - " + assemblyList.ListName;
 #endif
 		}
 
@@ -506,7 +511,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		{
 			// Ensure nodes exist
 			var nodesList = nodes.Select(n => FindNodeByPath(GetPathForNode(n), true))
-				.Where(n => n != null)
+				.ExceptNullItems()
 				.ToArray();
 
 			if (!nodesList.Any() || nodesList.Any(n => n.AncestorsAndSelf().Any(a => a.IsHidden)))
@@ -516,12 +521,22 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 			if (SelectedItems.SequenceEqual(nodesList))
 			{
-				Dispatcher.BeginInvoke(RefreshDecompiledView);
 				return;
 			}
 
-			SelectedItems.Clear();
-			SelectedItems.AddRange(nodesList);
+			if (this.isNavigatingHistory)
+			{
+				SelectedItems.Clear();
+				SelectedItems.AddRange(nodesList);
+			}
+			else
+			{
+				// defer selection change, so it does not interfere with the focus of the tab page.
+				Dispatcher.BeginInvoke(() => {
+					SelectedItems.Clear();
+					SelectedItems.AddRange(nodesList);
+				});
+			}
 		}
 
 		/// <summary>
@@ -543,10 +558,8 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 					ilSpyTreeNode.EnsureChildrenFiltered();
 				node = node.Children.FirstOrDefault(c => c.ToString() == element);
 			}
-			if (returnBestMatch)
-				return node ?? bestMatch;
-			else
-				return node;
+
+			return returnBestMatch ? node ?? bestMatch : node;
 		}
 
 		/// <summary>
@@ -692,12 +705,10 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		{
 			if (SelectedItems.Count > 0)
 			{
+				var activeTabPage = DockWorkspace.Instance.ActiveTabPage;
+
 				if (!isNavigatingHistory)
 				{
-					var activeTabPage = DockWorkspace.Instance.ActiveTabPage;
-					var currentState = activeTabPage.GetState();
-					if (currentState != null)
-						history.UpdateCurrent(new NavigationState(activeTabPage, currentState));
 					history.Record(new NavigationState(activeTabPage, SelectedItems));
 				}
 
@@ -705,7 +716,17 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 				if (!delayDecompilationRequestDueToContextMenu)
 				{
-					DecompileSelectedNodes();
+					var decompiledNodes = activeTabPage
+						.GetState()
+						?.DecompiledNodes
+						?.Select(n => FindNodeByPath(GetPathForNode(n), true))
+						.ExceptNullItems()
+						.ToArray() ?? [];
+
+					if (!decompiledNodes.SequenceEqual(SelectedItems))
+					{
+						DecompileSelectedNodes();
+					}
 				}
 				else
 				{
@@ -743,7 +764,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 			if (newState?.ViewedUri != null)
 			{
-				NavigateTo(new(newState.ViewedUri, null), recordHistory: false);
+				NavigateTo(new(newState.ViewedUri, null));
 				return;
 			}
 
@@ -780,7 +801,12 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				history.UpdateCurrent(new NavigationState(tabPage, state));
 			var newState = forward ? history.GoForward() : history.GoBack();
 
-			DockWorkspace.Instance.ActiveTabPage = newState.TabPage;
+			TabPageModel activeTabPage = newState.TabPage;
+
+			if (!DockWorkspace.Instance.TabPages.Contains(activeTabPage))
+				DockWorkspace.Instance.AddTabPage(activeTabPage);
+			else
+				DockWorkspace.Instance.ActiveTabPage = activeTabPage;
 
 			SelectNodes(newState.TreeNodes);
 		}
@@ -789,7 +815,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		public bool CanNavigateForward => history.CanNavigateForward;
 
-		internal void NavigateTo(RequestNavigateEventArgs e, bool recordHistory = true, bool inNewTabPage = false)
+		internal void NavigateTo(RequestNavigateEventArgs e, bool inNewTabPage = false)
 		{
 			if (e.Uri.Scheme == "resource")
 			{
@@ -830,7 +856,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 			void RecordHistory()
 			{
-				if (!recordHistory)
+				if (isNavigatingHistory)
 					return;
 				TabPageModel tabPage = DockWorkspace.Instance.ActiveTabPage;
 				var currentState = tabPage.GetState();

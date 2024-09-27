@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel.Composition;
 using System.Windows;
-
-using ICSharpCode.ILSpyX.TreeView;
+using System.Windows.Threading;
 
 using TomsToolbox.Wpf.Composition.Mef;
 
@@ -31,13 +30,16 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 					return;
 
 				model.SetActiveView(this);
-			}
-			else if (e.Property == SelectedItemProperty)
-			{
-				if (e.NewValue is not SharpTreeNode treeNode)
-					return;
 
-				FocusNode(treeNode);
+				// If there is already a selected item in the model, we need to scroll it into view, so it can be selected in the UI.
+				var selected = model.SelectedItem;
+				if (selected != null)
+				{
+					this.Dispatcher.BeginInvoke(DispatcherPriority.Background, () => {
+						ScrollIntoView(selected);
+						this.SelectedItem = selected;
+					});
+				}
 			}
 		}
 	}
