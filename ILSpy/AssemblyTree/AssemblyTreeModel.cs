@@ -109,6 +109,9 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 					case nameof(LanguageSettings.Language) or nameof(LanguageSettings.LanguageVersion):
 						DecompileSelectedNodes();
 						break;
+					default:
+						Refresh();
+						break;
 				}
 			}
 		}
