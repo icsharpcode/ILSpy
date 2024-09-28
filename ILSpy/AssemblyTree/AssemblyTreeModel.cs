@@ -67,6 +67,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		AssemblyListPane? activeView;
 		AssemblyListTreeNode? assemblyListTreeNode;
+		private readonly DispatcherThrottle refreshThrottle;
 
 		readonly NavigationHistory<NavigationState> history = new();
 		private bool isNavigatingHistory;
@@ -83,6 +84,8 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 			var selectionChangeThrottle = new DispatcherThrottle(DispatcherPriority.Input, TreeView_SelectionChanged);
 			SelectedItems.CollectionChanged += (_, _) => selectionChangeThrottle.Tick();
+
+			refreshThrottle = new DispatcherThrottle(DispatcherPriority.Background, RefreshInternal);
 		}
 
 		private void Settings_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -897,6 +900,11 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		}
 
 		public void Refresh()
+		{
+			refreshThrottle.Tick();
+		}
+		
+		private void RefreshInternal()
 		{
 			using (Keyboard.FocusedElement.PreserveFocus())
 			{
