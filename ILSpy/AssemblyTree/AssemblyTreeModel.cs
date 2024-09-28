@@ -530,14 +530,22 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			if (this.isNavigatingHistory)
 			{
 				SelectedItems.Clear();
-				SelectedItems.AddRange(nodesList);
+				foreach (var node in nodesList)
+				{
+					activeView.ScrollIntoView(node);
+					SelectedItems.Add(node);
+				}
 			}
 			else
 			{
 				// defer selection change, so it does not interfere with the focus of the tab page.
 				Dispatcher.BeginInvoke(() => {
 					SelectedItems.Clear();
-					SelectedItems.AddRange(nodesList);
+					foreach (var node in nodesList)
+					{
+						activeView.ScrollIntoView(node);
+						SelectedItems.Add(node);
+					}
 				});
 			}
 		}
@@ -691,6 +699,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 						if (node != null && focusNode)
 						{
 							lastNode = node;
+							activeView?.ScrollIntoView(node);
 							SelectedItems.Add(node);
 						}
 					}
