@@ -100,7 +100,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 					case nameof(SessionSettings.Theme):
 						// update syntax highlighting and force reload (AvalonEdit does not automatically refresh on highlighting change)
 						DecompilerTextView.RegisterHighlighting();
-						DecompileSelectedNodes(DockWorkspace.Instance.ActiveTabPage.GetState() as DecompilerTextViewState);
+						RefreshDecompiledView();
 						break;
 					case nameof(SessionSettings.CurrentCulture):
 						MessageBox.Show(Resources.SettingsChangeRestartRequired, "ILSpy");
@@ -112,7 +112,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				switch (e.PropertyName)
 				{
 					case nameof(LanguageSettings.Language) or nameof(LanguageSettings.LanguageVersion):
-						DecompileSelectedNodes();
+						RefreshDecompiledView();
 						break;
 					default:
 						Refresh();
@@ -353,7 +353,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		public void Initialize()
 		{
-			this.AssemblyList = SettingsService.Instance.LoadInitialAssemblyList();
+			AssemblyList = SettingsService.Instance.LoadInitialAssemblyList();
 
 			HandleCommandLineArguments(App.CommandLineArguments);
 
@@ -362,16 +362,16 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				&& AssemblyList.ListName == AssemblyListManager.DefaultListName
 				&& loadPreviousAssemblies)
 			{
-				LoadInitialAssemblies();
+				LoadInitialAssemblies(AssemblyList);
 			}
 
-			ShowAssemblyList(this.AssemblyList);
+			ShowAssemblyList(AssemblyList);
 
 			var sessionSettings = SettingsService.Instance.SessionSettings;
 			if (sessionSettings.ActiveAutoLoadedAssembly != null
 				&& File.Exists(sessionSettings.ActiveAutoLoadedAssembly))
 			{
-				this.AssemblyList.Open(sessionSettings.ActiveAutoLoadedAssembly, true);
+				AssemblyList.Open(sessionSettings.ActiveAutoLoadedAssembly, true);
 			}
 
 			Dispatcher.BeginInvoke(DispatcherPriority.Loaded, OpenAssemblies);
@@ -462,11 +462,8 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			MessageBus.Send(this, new CurrentAssemblyListChangedEventArgs(e));
 		}
 
-		void LoadInitialAssemblies()
+		static void LoadInitialAssemblies(AssemblyList assemblyList)
 		{
-			if (AssemblyList is null)
-				return;
-
 			// Called when loading an empty assembly list; so that
 			// the user can see something initially.
 			System.Reflection.Assembly[] initialAssemblies = {
@@ -480,7 +477,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				typeof(System.Windows.FrameworkElement).Assembly
 			};
 			foreach (System.Reflection.Assembly asm in initialAssemblies)
-				AssemblyList.OpenAssembly(asm.Location);
+				assemblyList.OpenAssembly(asm.Location);
 		}
 
 		public AssemblyTreeNode? FindAssemblyNode(LoadedAssembly asm)
@@ -774,7 +771,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				Dispatcher.BeginInvoke(DispatcherPriority.Background, () => {
 					if (Mouse.RightButton != MouseButtonState.Pressed)
 					{
-						DecompileSelectedNodes(DockWorkspace.Instance.ActiveTabPage.GetState() as DecompilerTextViewState);
+						RefreshDecompiledView();
 					}
 				});
 			}
@@ -804,7 +801,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		public void RefreshDecompiledView()
 		{
-			DecompileSelectedNodes();
+			DecompileSelectedNodes(DockWorkspace.Instance.ActiveTabPage.GetState() as DecompilerTextViewState);
 		}
 
 		public Language CurrentLanguage => SettingsService.Instance.SessionSettings.LanguageSettings.Language;
@@ -917,10 +914,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 				SelectNode(FindNodeByPath(path, true), inNewTabPage: false);
 
-				if (DockWorkspace.Instance.ActiveTabPage?.GetState()?.DecompiledNodes?.Any() == true)
-				{
-					DecompileSelectedNodes();
-				}
+				RefreshDecompiledView();
 			}
 		}
 
