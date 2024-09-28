@@ -237,7 +237,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 #if DEBUG
 			Debug.Assert(initialized, "Initialize() was not called");
 
-			if (debugDict.TryGetValue(inst, out State previousState))
+			if (debugDict.TryGetValue(inst, out State? previousState))
 			{
 				Debug.Assert(previousState.LessThanOrEqual(state));
 				previousState.JoinWith(state);
@@ -350,7 +350,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// </remarks>
 		State GetBlockInputState(Block block)
 		{
-			if (stateOnBranch.TryGetValue(block, out State s))
+			if (stateOnBranch.TryGetValue(block, out State? s))
 			{
 				return s;
 			}
@@ -398,7 +398,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				state.ReplaceWith(stateOnBranch[block]);
 				block.AcceptVisitor(this);
 			}
-			if (stateOnLeave.TryGetValue(container, out State stateOnExit))
+			if (stateOnLeave.TryGetValue(container, out State? stateOnExit))
 			{
 				state.ReplaceWith(stateOnExit);
 			}
@@ -463,7 +463,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 
 		void MergeBranchStateIntoStateOnLeave(Leave inst, State branchState)
 		{
-			if (stateOnLeave.TryGetValue(inst.TargetContainer, out State targetState))
+			if (stateOnLeave.TryGetValue(inst.TargetContainer, out State? targetState))
 			{
 				targetState.JoinWith(branchState);
 			}
@@ -505,7 +505,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		protected State HandleTryBlock(TryInstruction inst)
 		{
 			State oldStateOnException = currentStateOnException;
-			if (stateOnException.TryGetValue(inst, out State newStateOnException))
+			if (stateOnException.TryGetValue(inst, out State? newStateOnException))
 			{
 				newStateOnException.JoinWith(state);
 			}

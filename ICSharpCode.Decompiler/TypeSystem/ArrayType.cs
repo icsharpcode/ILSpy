@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.dimensions = dimensions;
 			this.nullability = nullability;
 
-			ICompilationProvider p = elementType as ICompilationProvider;
+			ICompilationProvider? p = elementType as ICompilationProvider;
 			if (p != null && p.Compilation != compilation)
 				throw new InvalidOperationException("Cannot create an array type using a different compilation from the element type.");
 		}
@@ -85,9 +85,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return unchecked(elementType.GetHashCode() * 71681 + dimensions);
 		}
 
-		public override bool Equals(IType other)
+		public override bool Equals(IType? other)
 		{
-			ArrayType a = other as ArrayType;
+			ArrayType? a = other as ArrayType;
 			return a != null && elementType.Equals(a.elementType) && a.dimensions == dimensions && a.nullability == nullability;
 		}
 
@@ -113,7 +113,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (dimensions == 1 && elementType.Kind != TypeKind.Pointer)
 				{
 					// single-dimensional arrays implement IList<T>
-					ITypeDefinition def = compilation.FindType(KnownTypeCode.IListOfT) as ITypeDefinition;
+					ITypeDefinition? def = compilation.FindType(KnownTypeCode.IListOfT) as ITypeDefinition;
 					if (def != null)
 						baseTypes.Add(new ParameterizedType(def, new[] { elementType }));
 					// And in .NET 4.5 they also implement IReadOnlyList<T>
@@ -125,7 +125,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
@@ -133,7 +133,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return compilation.FindType(KnownTypeCode.Array).GetMethods(filter, options);
 		}
 
-		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
@@ -141,7 +141,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return compilation.FindType(KnownTypeCode.Array).GetMethods(typeArguments, filter, options);
 		}
 
-		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return compilation.FindType(KnownTypeCode.Array).GetAccessors(filter, options);
 		}
 
-		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IProperty>.Instance;
@@ -216,7 +216,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			ArrayTypeReference o = other as ArrayTypeReference;
+			ArrayTypeReference? o = other as ArrayTypeReference;
 			return o != null && elementType == o.elementType && dimensions == o.dimensions;
 		}
 	}

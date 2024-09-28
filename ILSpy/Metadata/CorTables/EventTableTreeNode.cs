@@ -92,7 +92,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string Name => metadataFile.Metadata.GetString(eventDef.Name);
 
-			IEntity IMemberTreeNode.Member {
+			IEntity? IMemberTreeNode.Member {
 				get {
 					return ((MetadataModule)metadataFile.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule)?.GetDefinition(handle);
 				}
@@ -106,8 +106,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, eventDef.Type, protocol: "metadata")));
 			}
 
-			string typeTooltip;
-			public string TypeTooltip => GenerateTooltip(ref typeTooltip, metadataFile, eventDef.Type);
+			string? typeTooltip;
+			public string? TypeTooltip => GenerateTooltip(ref typeTooltip, metadataFile, eventDef.Type);
 
 			public EventDefEntry(MetadataFile metadataFile, EventDefinitionHandle handle)
 			{

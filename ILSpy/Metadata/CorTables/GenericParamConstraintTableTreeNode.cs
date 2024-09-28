@@ -87,9 +87,9 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, genericParamConstraint.Parameter, protocol: "metadata")));
 			}
 
-			string ownerTooltip;
+			string? ownerTooltip;
 
-			public string OwnerTooltip {
+			public string? OwnerTooltip {
 				get {
 					if (ownerTooltip == null)
 					{
@@ -111,8 +111,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, genericParamConstraint.Type, protocol: "metadata")));
 			}
 
-			string typeTooltip;
-			public string TypeTooltip => GenerateTooltip(ref typeTooltip, metadataFile, genericParamConstraint.Type);
+			string? typeTooltip;
+			public string? TypeTooltip => GenerateTooltip(ref typeTooltip, metadataFile, genericParamConstraint.Type);
 
 			public GenericParamConstraintEntry(MetadataFile metadataFile, GenericParameterConstraintHandle handle)
 			{

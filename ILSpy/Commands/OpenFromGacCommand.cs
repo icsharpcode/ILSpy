@@ -36,12 +36,12 @@ namespace ICSharpCode.ILSpy
 			this.assemblyTreeModel = assemblyTreeModel;
 		}
 
-		public override bool CanExecute(object parameter)
+		public override bool CanExecute(object? parameter)
 		{
 			return AppEnvironment.IsWindows;
 		}
 
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			OpenFromGacDialog dlg = new OpenFromGacDialog {
 				Owner = MainWindow.Instance

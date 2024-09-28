@@ -25,16 +25,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 {
 	public readonly struct GenericContext
 	{
-		public readonly IReadOnlyList<ITypeParameter> ClassTypeParameters;
-		public readonly IReadOnlyList<ITypeParameter> MethodTypeParameters;
+		public readonly IReadOnlyList<ITypeParameter>? ClassTypeParameters;
+		public readonly IReadOnlyList<ITypeParameter>? MethodTypeParameters;
 
-		public GenericContext(IReadOnlyList<ITypeParameter> classTypeParameters)
+		public GenericContext(IReadOnlyList<ITypeParameter>? classTypeParameters)
 		{
 			this.ClassTypeParameters = classTypeParameters;
 			this.MethodTypeParameters = null;
 		}
 
-		public GenericContext(IReadOnlyList<ITypeParameter> classTypeParameters, IReadOnlyList<ITypeParameter> methodTypeParameters)
+		public GenericContext(IReadOnlyList<ITypeParameter>? classTypeParameters, IReadOnlyList<ITypeParameter>? methodTypeParameters)
 		{
 			this.ClassTypeParameters = classTypeParameters;
 			this.MethodTypeParameters = methodTypeParameters;

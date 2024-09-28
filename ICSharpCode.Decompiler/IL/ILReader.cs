@@ -312,7 +312,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 
 			ILVariable ilVar = new ILVariable(kind, type, index);
-			if (!UseDebugSymbols || DebugInfo == null || !DebugInfo.TryGetName((MethodDefinitionHandle)method.MetadataToken, index, out string name))
+			if (!UseDebugSymbols || DebugInfo == null || !DebugInfo.TryGetName((MethodDefinitionHandle)method.MetadataToken, index, out string? name))
 			{
 				ilVar.Name = "V_" + index;
 				ilVar.HasGeneratedName = true;

@@ -31,7 +31,7 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class SortAssemblyListCommand : SimpleCommand
 	{
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			MainWindow.Instance.AssemblyTreeModel.SortAssemblyList();
 		}
@@ -42,7 +42,7 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class CollapseAllCommand : SimpleCommand
 	{
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			MainWindow.Instance.AssemblyTreeModel.CollapseAll();
 

@@ -73,7 +73,7 @@ namespace ICSharpCode.ILSpy
 
 		public RichTextModel HighlightingModel { get; } = new RichTextModel();
 
-		public CSharpHighlightingTokenWriter(TokenWriter decoratedWriter, ISmartTextOutput textOutput = null, ILocatable locatable = null)
+		public CSharpHighlightingTokenWriter(TokenWriter decoratedWriter, ISmartTextOutput? textOutput = null, ILocatable? locatable = null)
 			: base(decoratedWriter)
 		{
 			var highlighting = HighlightingManager.Instance.GetDefinition("C#");
@@ -122,7 +122,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void WriteKeyword(Role role, string keyword)
 		{
-			HighlightingColor color = null;
+			HighlightingColor? color = null;
 			switch (keyword)
 			{
 				case "namespace":
@@ -299,7 +299,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void WritePrimitiveType(string type)
 		{
-			HighlightingColor color = null;
+			HighlightingColor? color = null;
 			switch (type)
 			{
 				case "new":
@@ -348,7 +348,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void WriteIdentifier(Identifier identifier)
 		{
-			HighlightingColor color = null;
+			HighlightingColor? color = null;
 			if (identifier.Parent?.GetResolveResult() is ILVariableResolveResult rr)
 			{
 				if (rr.Variable.Kind == VariableKind.Parameter)
@@ -452,9 +452,9 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public override void WritePrimitiveValue(object value, Decompiler.CSharp.Syntax.LiteralFormat format)
+		public override void WritePrimitiveValue(object? value, Decompiler.CSharp.Syntax.LiteralFormat format)
 		{
-			HighlightingColor color = null;
+			HighlightingColor? color = null;
 			if (value is null)
 			{
 				color = valueKeywordColor;
@@ -474,7 +474,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		ISymbol GetCurrentDefinition()
+		ISymbol? GetCurrentDefinition()
 		{
 			if (nodeStack == null || nodeStack.Count == 0)
 				return null;
@@ -488,7 +488,7 @@ namespace ICSharpCode.ILSpy
 			return null;
 		}
 
-		ISymbol GetCurrentMemberReference()
+		ISymbol? GetCurrentMemberReference()
 		{
 			if (nodeStack == null || nodeStack.Count == 0)
 				return null;
@@ -529,8 +529,8 @@ namespace ICSharpCode.ILSpy
 		readonly Stack<HighlightingColor> colorStack = new Stack<HighlightingColor>();
 		HighlightingColor currentColor = new HighlightingColor();
 		int currentColorBegin = -1;
-		readonly ILocatable locatable;
-		readonly ISmartTextOutput textOutput;
+		readonly ILocatable? locatable;
+		readonly ISmartTextOutput? textOutput;
 
 		private void BeginSpan(HighlightingColor highlightingColor)
 		{

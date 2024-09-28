@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
@@ -50,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 				// See if the data source of this query is a degenerate query,
 				// and combine the queries if possible.
-				QueryExpression innerQuery = fromClause.Expression as QueryExpression;
+				QueryExpression? innerQuery = fromClause.Expression as QueryExpression;
 				while (IsDegenerateQuery(innerQuery))
 				{
 					QueryFromClause innerFromClause = (QueryFromClause)innerQuery.Clauses.First();
@@ -58,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						break;
 					// Replace the fromClause with all clauses from the inner query
 					fromClause.Remove();
-					QueryClause insertionPos = null;
+					QueryClause? insertionPos = null;
 					foreach (var clause in innerQuery.Clauses)
 					{
 						query.Clauses.InsertAfter(insertionPos, insertionPos = clause.Detach());
@@ -79,7 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		void DecompileQueries(AstNode node)
 		{
-			Expression query = DecompileQuery(node as InvocationExpression);
+			Expression? query = DecompileQuery(node as InvocationExpression);
 			if (query != null)
 			{
 				if (node.Parent is ExpressionStatement && CanUseDiscardAssignment())
@@ -87,8 +88,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				node.ReplaceWith(query);
 			}
 
-			AstNode next;
-			for (AstNode child = (query ?? node).FirstChild; child != null; child = next)
+			AstNode? next;
+			for (AstNode? child = (query ?? node).FirstChild; child != null; child = next)
 			{
 				// store reference to next child before transformation
 				next = child.NextSibling;
@@ -102,11 +103,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return context.Settings.Discards;
 		}
 
-		QueryExpression DecompileQuery(InvocationExpression invocation)
+		QueryExpression? DecompileQuery(InvocationExpression? invocation)
 		{
 			if (invocation == null)
 				return null;
-			MemberReferenceExpression mre = invocation.Target as MemberReferenceExpression;
+			MemberReferenceExpression? mre = invocation.Target as MemberReferenceExpression;
 			if (mre == null || IsNullConditional(mre.Target))
 				return null;
 			switch (mre.MemberName)
@@ -118,7 +119,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (!IsComplexQuery(mre))
 						return null;
 					Expression expr = invocation.Arguments.Single();
-					if (MatchSimpleLambda(expr, out ParameterDeclaration parameter, out Expression body))
+					if (MatchSimpleLambda(expr, out ParameterDeclaration? parameter, out Expression? body))
 					{
 						QueryExpression query = new QueryExpression();
 						query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
@@ -133,8 +134,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						Expression keyLambda = invocation.Arguments.ElementAt(0);
 						Expression projectionLambda = invocation.Arguments.ElementAt(1);
-						if (MatchSimpleLambda(keyLambda, out ParameterDeclaration parameter1, out Expression keySelector)
-							&& MatchSimpleLambda(projectionLambda, out ParameterDeclaration parameter2, out Expression elementSelector)
+						if (MatchSimpleLambda(keyLambda, out ParameterDeclaration? parameter1, out Expression? keySelector)
+							&& MatchSimpleLambda(projectionLambda, out ParameterDeclaration? parameter2, out Expression? elementSelector)
 							&& parameter1.Name == parameter2.Name)
 						{
 							QueryExpression query = new QueryExpression();
@@ -151,7 +152,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					else if (invocation.Arguments.Count == 1)
 					{
 						Expression lambda = invocation.Arguments.Single();
-						if (MatchSimpleLambda(lambda, out ParameterDeclaration parameter, out Expression keySelector))
+						if (MatchSimpleLambda(lambda, out ParameterDeclaration? parameter, out Expression? keySelector))
 						{
 							QueryExpression query = new QueryExpression();
 							query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
@@ -166,11 +167,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (invocation.Arguments.Count != 2)
 						return null;
 					var fromExpressionLambda = invocation.Arguments.ElementAt(0);
-					if (!MatchSimpleLambda(fromExpressionLambda, out ParameterDeclaration parameter, out Expression collectionSelector))
+					if (!MatchSimpleLambda(fromExpressionLambda, out ParameterDeclaration? parameter, out Expression? collectionSelector))
 						return null;
 					if (IsNullConditional(collectionSelector))
 						return null;
-					LambdaExpression lambda = invocation.Arguments.ElementAt(1) as LambdaExpression;
+					LambdaExpression? lambda = invocation.Arguments.ElementAt(1) as LambdaExpression;
 					if (lambda != null && lambda.Parameters.Count == 2 && lambda.Body is Expression)
 					{
 						ParameterDeclaration p1 = lambda.Parameters.ElementAt(0);
@@ -193,7 +194,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (!IsComplexQuery(mre))
 						return null;
 					Expression expr = invocation.Arguments.Single();
-					if (MatchSimpleLambda(expr, out ParameterDeclaration parameter, out Expression body))
+					if (MatchSimpleLambda(expr, out ParameterDeclaration? parameter, out Expression? body))
 					{
 						QueryExpression query = new QueryExpression();
 						query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
@@ -212,7 +213,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (!IsComplexQuery(mre))
 						return null;
 					var lambda = invocation.Arguments.Single();
-					if (MatchSimpleLambda(lambda, out ParameterDeclaration parameter, out Expression orderExpression))
+					if (MatchSimpleLambda(lambda, out ParameterDeclaration? parameter, out Expression? orderExpression))
 					{
 						if (ValidateThenByChain(invocation, parameter.Name))
 						{
@@ -256,12 +257,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (IsNullConditional(source2))
 						return null;
 					Expression outerLambda = invocation.Arguments.ElementAt(1);
-					if (!MatchSimpleLambda(outerLambda, out ParameterDeclaration element1, out Expression key1))
+					if (!MatchSimpleLambda(outerLambda, out ParameterDeclaration? element1, out Expression? key1))
 						return null;
 					Expression innerLambda = invocation.Arguments.ElementAt(2);
-					if (!MatchSimpleLambda(innerLambda, out ParameterDeclaration element2, out Expression key2))
+					if (!MatchSimpleLambda(innerLambda, out ParameterDeclaration? element2, out Expression? key2))
 						return null;
-					LambdaExpression lambda = invocation.Arguments.ElementAt(3) as LambdaExpression;
+					LambdaExpression? lambda = invocation.Arguments.ElementAt(3) as LambdaExpression;
 					if (lambda != null && lambda.Parameters.Count == 2 && lambda.Body is Expression)
 					{
 						ParameterDeclaration p1 = lambda.Parameters.ElementAt(0);
@@ -350,13 +351,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>
 		/// Ensure that all ThenBy's are correct, and that the list of ThenBy's is terminated by an 'OrderBy' invocation.
 		/// </summary>
-		bool ValidateThenByChain(InvocationExpression invocation, string expectedParameterName)
+		bool ValidateThenByChain(InvocationExpression? invocation, string expectedParameterName)
 		{
 			if (invocation == null || invocation.Arguments.Count != 1)
 				return false;
 			if (!(invocation.Target is MemberReferenceExpression mre))
 				return false;
-			if (!MatchSimpleLambda(invocation.Arguments.Single(), out ParameterDeclaration parameter, out _))
+			if (!MatchSimpleLambda(invocation.Arguments.Single(), out ParameterDeclaration? parameter, out _))
 				return false;
 			if (parameter.Name != expectedParameterName)
 				return false;
@@ -370,7 +371,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 
 		/// <summary>Matches simple lambdas of the form "a => b"</summary>
-		bool MatchSimpleLambda(Expression expr, out ParameterDeclaration parameter, out Expression body)
+		bool MatchSimpleLambda(Expression expr, [NotNullWhen(true)] out ParameterDeclaration? parameter, [NotNullWhen(true)] out Expression? body)
 		{
 			if (expr is LambdaExpression lambda && lambda.Parameters.Count == 1 && lambda.Body is Expression)
 			{

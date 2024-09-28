@@ -66,7 +66,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			this.scrollTarget = default;
 		}
 
-		protected static string GenerateTooltip(ref string tooltip, MetadataFile module, EntityHandle handle)
+		protected static string? GenerateTooltip(ref string? tooltip, MetadataFile module, EntityHandle handle)
 		{
 			if (tooltip == null)
 			{

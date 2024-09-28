@@ -69,7 +69,7 @@ namespace ICSharpCode.ILSpy.Options
 			this.assemblyTreeModel = assemblyTreeModel;
 		}
 
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			OptionsDialog dlg = new() {
 				Owner = MainWindow.Instance,

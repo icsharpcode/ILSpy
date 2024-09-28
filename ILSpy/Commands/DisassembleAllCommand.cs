@@ -33,12 +33,12 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class DisassembleAllCommand : SimpleCommand
 	{
-		public override bool CanExecute(object parameter)
+		public override bool CanExecute(object? parameter)
 		{
 			return System.IO.Directory.Exists("c:\\temp\\disassembled");
 		}
 
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			var dockWorkspace = Docking.DockWorkspace.Instance;
 
@@ -51,7 +51,7 @@ namespace ICSharpCode.ILSpy
 						if (!asm.HasLoadError)
 						{
 							Stopwatch w = Stopwatch.StartNew();
-							Exception exception = null;
+							Exception? exception = null;
 							using (var writer = new System.IO.StreamWriter("c:\\temp\\disassembled\\" + asm.Text.Replace("(", "").Replace(")", "").Replace(' ', '_') + ".il"))
 							{
 								try

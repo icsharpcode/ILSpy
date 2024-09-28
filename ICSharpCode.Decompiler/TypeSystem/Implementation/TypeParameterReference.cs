@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (ownerType == SymbolKind.Method)
 			{
-				IMethod method = context.CurrentMember as IMethod;
+				IMethod? method = context.CurrentMember as IMethod;
 				if (method != null && index < method.TypeParameters.Count)
 				{
 					return method.TypeParameters[index];

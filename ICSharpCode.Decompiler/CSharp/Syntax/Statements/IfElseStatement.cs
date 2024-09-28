@@ -84,9 +84,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitIfElseStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			IfElseStatement o = other as IfElseStatement;
+			IfElseStatement? o = other as IfElseStatement;
 			return o != null && this.Condition.DoMatch(o.Condition, match) && this.TrueStatement.DoMatch(o.TrueStatement, match) && this.FalseStatement.DoMatch(o.FalseStatement, match);
 		}
 
@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public IfElseStatement(Expression condition, Statement trueStatement, Statement falseStatement = null)
+		public IfElseStatement(Expression condition, Statement trueStatement, Statement? falseStatement = null)
 		{
 			this.Condition = condition;
 			this.TrueStatement = trueStatement;

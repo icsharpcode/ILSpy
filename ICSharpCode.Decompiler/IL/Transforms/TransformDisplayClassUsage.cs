@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection.Metadata;
 
@@ -51,7 +52,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			private readonly DisplayClass container;
 			private readonly IField field;
-			private ILVariable declaredVariable;
+			private ILVariable? declaredVariable;
 
 			public string Name => field.Name;
 
@@ -60,7 +61,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			public HashSet<ILInstruction> Initializers { get; } = new HashSet<ILInstruction>();
 
-			public VariableToDeclare(DisplayClass container, IField field, ILVariable declaredVariable = null)
+			public VariableToDeclare(DisplayClass container, IField field, ILVariable? declaredVariable = null)
 			{
 				this.container = container;
 				this.field = field;
@@ -69,7 +70,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				Debug.Assert(declaredVariable == null || declaredVariable.StateMachineField == field);
 			}
 
-			public void Propagate(ILVariable variable)
+			public void Propagate(ILVariable? variable)
 			{
 				this.declaredVariable = variable;
 				this.CanPropagate = variable != null;
@@ -93,8 +94,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			public readonly ILVariable Variable;
 			public readonly ITypeDefinition Type;
 			public readonly Dictionary<IField, VariableToDeclare> VariablesToDeclare;
-			public BlockContainer CaptureScope;
-			public ILInstruction Initializer;
+			public BlockContainer? CaptureScope;
+			public ILInstruction? Initializer;
 
 			public DisplayClass(ILVariable variable, ITypeDefinition type)
 			{
@@ -104,8 +105,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		ILTransformContext context;
-		ITypeResolveContext decompilationContext;
+		ILTransformContext? context;
+		ITypeResolveContext? decompilationContext;
 		readonly Dictionary<ILVariable, DisplayClass> displayClasses = new Dictionary<ILVariable, DisplayClass>();
 		readonly Dictionary<ILVariable, ILVariable> displayClassCopyMap = new Dictionary<ILVariable, ILVariable>();
 
@@ -245,7 +246,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		private DisplayClass AnalyzeVariable(ILVariable v)
+		private DisplayClass? AnalyzeVariable(ILVariable v)
 		{
 			switch (v.Kind)
 			{
@@ -264,9 +265,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		DisplayClass DetectDisplayClass(ILVariable v)
+		DisplayClass? DetectDisplayClass(ILVariable v)
 		{
-			ITypeDefinition definition;
+			ITypeDefinition? definition;
 			if (v.Kind != VariableKind.StackSlot)
 			{
 				definition = v.Type.GetDefinition();
@@ -363,7 +364,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ILInstruction VisitChildren(ILInstruction inst)
 			{
 				// Visit all children of the instruction
-				ILInstruction result = null;
+				ILInstruction? result = null;
 				foreach (var child in inst.Children)
 				{
 					var newResult = Visit(child);
@@ -384,7 +385,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		DisplayClass DetectDisplayClassInitializer(ILVariable v)
+		DisplayClass? DetectDisplayClassInitializer(ILVariable v)
 		{
 			if (v.StoreInstructions.Count != 1 || !(v.StoreInstructions[0] is StLoc store && store.Parent is Block initializerBlock && initializerBlock.Kind == BlockKind.ObjectInitializer))
 				return null;
@@ -501,7 +502,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return code;
 		}
 
-		VariableToDeclare AddVariable(DisplayClass result, StObj statement, IField field)
+		VariableToDeclare AddVariable(DisplayClass result, StObj? statement, IField field)
 		{
 			VariableToDeclare variable = new VariableToDeclare(result, field);
 			if (statement != null)
@@ -519,7 +520,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// If a value does not match either LdLoc or a LdObj LdLdFlda* LdLoc chain, null is returned.
 		/// The if any of the variables/fields in the chain cannot be propagated, null is returned.
 		/// </summary>
-		ILVariable ResolveVariableToPropagate(ILInstruction value, IType expectedType = null)
+		ILVariable? ResolveVariableToPropagate(ILInstruction value, IType? expectedType = null)
 		{
 			ILVariable v;
 			switch (value)
@@ -553,7 +554,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return null;
 					return v;
 				case LdObj ldfld:
-					DisplayClass currentDisplayClass = null;
+					DisplayClass? currentDisplayClass = null;
 					foreach (var item in ldfld.Target.Descendants)
 					{
 						if (IsDisplayClassLoad(item, out v))
@@ -588,7 +589,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		internal static bool IsClosure(ILTransformContext context, ILVariable variable, out ITypeDefinition closureType, out ILInstruction initializer)
+		internal static bool IsClosure(ILTransformContext context, ILVariable variable, [NotNullWhen(true)] out ITypeDefinition? closureType, [NotNullWhen(true)] out ILInstruction? initializer)
 		{
 			closureType = null;
 			initializer = null;
@@ -610,7 +611,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		static bool IsClosureInit(ILTransformContext context, StLoc inst, out ITypeDefinition closureType)
+		static bool IsClosureInit(ILTransformContext context, StLoc inst, [NotNullWhen(true)] out ITypeDefinition? closureType)
 		{
 			if (inst.Value is NewObj newObj)
 			{
@@ -633,7 +634,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// mcs likes to optimize closures in yield state machines away by moving the captured variables' fields into the state machine type,
 		/// We construct a <see cref="DisplayClass"/> that spans the whole method body.
 		/// </summary>
-		DisplayClass HandleMonoStateMachine(ILFunction function, ILVariable thisVariable)
+		DisplayClass? HandleMonoStateMachine(ILFunction function, ILVariable thisVariable)
 		{
 			if (!(function.StateMachineCompiledWithMono && thisVariable.IsThis()))
 				return null;
@@ -673,7 +674,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			return displayClass;
 
-			bool FindThisField(out IField foundField)
+			bool FindThisField(out IField? foundField)
 			{
 				foundField = null;
 				foreach (var field in closureType.GetFields(f2 => !f2.IsStatic && !displayClass.VariablesToDeclare.ContainsKey(f2) && f2.Type.GetDefinition() == decompilationContext.CurrentTypeDefinition))
@@ -840,18 +841,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			EarlyExpressionTransforms.LdObjToLdLoc(inst, context);
 		}
 
-		private bool IsDisplayClassLoad(ILInstruction target, out ILVariable variable)
+		private bool IsDisplayClassLoad(ILInstruction target, [NotNullWhen(true)] out ILVariable? variable)
 		{
 			// We cannot use MatchLdLocRef here because local functions use ref parameters
 			if (!target.MatchLdLoc(out variable) && !target.MatchLdLoca(out variable))
 				return false;
-			if (displayClassCopyMap.TryGetValue(variable, out ILVariable other))
+			if (displayClassCopyMap.TryGetValue(variable, out ILVariable? other))
 				variable = other;
 			return true;
 		}
 
 		private bool IsDisplayClassFieldAccess(ILInstruction inst,
-			out ILVariable displayClassVar, out DisplayClass displayClass, out IField field)
+			[NotNullWhen(true)] out ILVariable? displayClassVar, [NotNullWhen(true)] out DisplayClass? displayClass, [NotNullWhen(true)] out IField? field)
 		{
 			displayClass = null;
 			displayClassVar = null;
@@ -867,7 +868,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			base.VisitLdFlda(inst);
 			// Get display class info
-			if (!IsDisplayClassFieldAccess(inst, out _, out DisplayClass displayClass, out IField field))
+			if (!IsDisplayClassFieldAccess(inst, out _, out DisplayClass? displayClass, out IField? field))
 				return;
 			var keyField = (IField)field.MemberDefinition;
 			var v = displayClass.VariablesToDeclare[keyField];

@@ -205,7 +205,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				this.astBuilder = CreateAstBuilder(currentContext);
 			}
 
-			TypeSystemAstBuilder CreateAstBuilder(CSharpTypeResolveContext context, IL.ILFunction function = null)
+			TypeSystemAstBuilder CreateAstBuilder(CSharpTypeResolveContext context, IL.ILFunction? function = null)
 			{
 				CSharpResolver resolver = new CSharpResolver(context);
 				if (function != null)

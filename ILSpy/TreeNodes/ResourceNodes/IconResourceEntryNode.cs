@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class IconResourceNodeFactory : IResourceNodeFactory
 	{
-		public ITreeNode CreateNode(Resource resource)
+		public ITreeNode? CreateNode(Resource resource)
 		{
 			if (resource.Name.EndsWith(".ico", StringComparison.OrdinalIgnoreCase))
 			{
@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 	sealed class IconResourceEntryNode : ResourceEntryNode
 	{
-		public IconResourceEntryNode(string key, Func<Stream> data)
+		public IconResourceEntryNode(string key, Func<Stream?> data)
 			: base(key, data)
 		{
 		}

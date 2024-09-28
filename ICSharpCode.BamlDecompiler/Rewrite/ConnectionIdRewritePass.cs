@@ -22,15 +22,16 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Xml.Linq;
 
+using ICSharpCode.BamlDecompiler.Xaml;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Util;
 
-using ICSharpCode.BamlDecompiler.Xaml;
-
 namespace ICSharpCode.BamlDecompiler.Rewrite
 {
+	using System.Diagnostics.CodeAnalysis;
+
 	using ICSharpCode.Decompiler.TypeSystem;
 
 	internal class ConnectionIdRewritePass : IRewritePass
@@ -126,7 +127,7 @@ namespace ICSharpCode.BamlDecompiler.Rewrite
 				return;
 			var connect = connectorInterface.GetMethods(m => m.Name == "Connect").SingleOrDefault();
 
-			IMethod connectMethod = null;
+			IMethod? connectMethod = null;
 			MethodDefinition connectMetadataEntry = default;
 			var module = ctx.TypeSystem.MainModule.MetadataFile;
 
@@ -249,7 +250,7 @@ namespace ICSharpCode.BamlDecompiler.Rewrite
 			}
 		}
 
-		bool MatchFieldAssignment(ILInstruction inst, out FieldAssignment field)
+		bool MatchFieldAssignment(ILInstruction inst, [NotNullWhen(true)] out FieldAssignment? field)
 		{
 			field = null;
 			if (!inst.MatchStFld(out _, out var fld, out var value) || !value.MatchCastClass(out var arg, out _)
@@ -293,7 +294,7 @@ namespace ICSharpCode.BamlDecompiler.Rewrite
 		// callvirt set_Event(ldloc v, ldsfld eventName)
 		// callvirt set_Handler(ldloc v, newobj RoutedEventHandler..ctor(ldloc this, ldftn eventHandler))
 		// callvirt Add(callvirt get_Setters(castclass System.Windows.Style(ldloc target)), ldloc v)
-		bool MatchEventSetterCreation(Block b, ref int pos, out EventRegistration @event)
+		bool MatchEventSetterCreation(Block b, ref int pos, [NotNullWhen(true)] out EventRegistration? @event)
 		{
 			@event = null;
 			if (!b.FinalInstruction.MatchNop())
@@ -362,7 +363,7 @@ namespace ICSharpCode.BamlDecompiler.Rewrite
 			return true;
 		}
 
-		bool MatchSimpleEventRegistration(ILInstruction inst, out EventRegistration @event)
+		bool MatchSimpleEventRegistration(ILInstruction inst, [NotNullWhen(true)] out EventRegistration? @event)
 		{
 			@event = null;
 			if (!(inst is CallInstruction call) || call.OpCode == OpCode.NewObj)

@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class AboutPage : SimpleCommand
 	{
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			MainWindow.Instance.AssemblyTreeModel.NavigateTo(
 				new RequestNavigateEventArgs(new Uri("resource://aboutpage"), null),
@@ -90,11 +90,11 @@ namespace ICSharpCode.ILSpy
 				plugin.Write(output);
 			output.WriteLine();
 			output.Address = new Uri("resource://AboutPage");
-			using (Stream s = typeof(AboutPage).Assembly.GetManifestResourceStream(typeof(AboutPage), Resources.ILSpyAboutPageTxt))
+			using (Stream? s = typeof(AboutPage).Assembly.GetManifestResourceStream(typeof(AboutPage), Resources.ILSpyAboutPageTxt))
 			{
 				using (StreamReader r = new StreamReader(s))
 				{
-					string line;
+					string? line;
 					while ((line = r.ReadLine()) != null)
 					{
 						output.WriteLine(line);

@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return TypeName.ToString() + ", " + AssemblyName;
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			return (obj is AssemblyQualifiedTypeName) && Equals((AssemblyQualifiedTypeName)obj);
 		}

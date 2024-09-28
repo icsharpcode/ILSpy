@@ -28,8 +28,8 @@ using System.Windows.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.Abstractions;
-using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 using ICSharpCode.ILSpyX.TreeView;
+using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -127,7 +127,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		protected virtual void Settings_Changed(object sender, PropertyChangedEventArgs e)
+		protected virtual void Settings_Changed(object? sender, PropertyChangedEventArgs e)
 		{
 			if (sender is not ILSpy.LanguageSettings)
 				return;

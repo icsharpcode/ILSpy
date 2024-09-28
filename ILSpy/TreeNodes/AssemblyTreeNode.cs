@@ -62,7 +62,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 		}
 
-		internal AssemblyTreeNode(LoadedAssembly assembly, PackageEntry packageEntry)
+		internal AssemblyTreeNode(LoadedAssembly assembly, PackageEntry? packageEntry)
 		{
 			this.LoadedAssembly = assembly ?? throw new ArgumentNullException(nameof(assembly));
 			this.LazyLoading = true;
@@ -80,7 +80,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// If this assembly was loaded from a bundle; this property returns the bundle entry that the
 		/// assembly was loaded from.
 		/// </summary>
-		public PackageEntry PackageEntry { get; }
+		public PackageEntry? PackageEntry { get; }
 
 		public override bool IsAutoLoaded {
 			get {
@@ -125,7 +125,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		TextBlock tooltip;
+		TextBlock? tooltip;
 
 		public override object ToolTip {
 			get {
@@ -249,7 +249,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			typeSystem = LoadedAssembly.GetTypeSystemOrNull();
 			var assembly = (MetadataModule)typeSystem.MainModule;
 			this.Children.Add(new MetadataTreeNode(module, Resources.Metadata));
-			Decompiler.DebugInfo.IDebugInfoProvider debugInfo = LoadedAssembly.GetDebugInfoOrNull();
+			Decompiler.DebugInfo.IDebugInfoProvider? debugInfo = LoadedAssembly.GetDebugInfoOrNull();
 			if (debugInfo is PortableDebugInfoProvider ppdb
 				&& ppdb.GetMetadataReader() is System.Reflection.Metadata.MetadataReader reader)
 			{
@@ -281,7 +281,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 			NamespaceTreeNode GetOrCreateNamespaceTreeNode(string @namespace)
 			{
-				if (!namespaces.TryGetValue(@namespace, out NamespaceTreeNode ns))
+				if (!namespaces.TryGetValue(@namespace, out NamespaceTreeNode? ns))
 				{
 					if (useNestedStructure)
 					{
@@ -347,7 +347,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 			NamespaceTreeNode GetOrCreateNamespaceTreeNode(string @namespace)
 			{
-				if (!namespaces.TryGetValue(@namespace, out NamespaceTreeNode ns))
+				if (!namespaces.TryGetValue(@namespace, out NamespaceTreeNode? ns))
 				{
 					if (useNestedStructure)
 					{
@@ -388,12 +388,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// <summary>
 		/// Finds the node for a top-level type.
 		/// </summary>
-		public TypeTreeNode FindTypeNode(ITypeDefinition type)
+		public TypeTreeNode? FindTypeNode(ITypeDefinition type)
 		{
 			if (type == null)
 				return null;
 			EnsureLazyChildren();
-			TypeTreeNode node;
+			TypeTreeNode? node;
 			if (typeDict.TryGetValue((TypeDefinitionHandle)type.MetadataToken, out node))
 				return node;
 			else
@@ -403,7 +403,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// <summary>
 		/// Finds the node for a namespace.
 		/// </summary>
-		public NamespaceTreeNode FindNamespaceNode(string namespaceName)
+		public NamespaceTreeNode? FindNamespaceNode(string namespaceName)
 		{
 			if (string.IsNullOrEmpty(namespaceName))
 				return null;
@@ -731,7 +731,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				});
 		}
 
-		internal static AssemblyTreeNode GetAssemblyTreeNode(SharpTreeNode node)
+		internal static AssemblyTreeNode? GetAssemblyTreeNode(SharpTreeNode node)
 		{
 			while (node != null)
 			{

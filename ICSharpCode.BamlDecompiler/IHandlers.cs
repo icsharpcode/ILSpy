@@ -31,7 +31,7 @@ namespace ICSharpCode.BamlDecompiler
 	internal interface IHandler
 	{
 		BamlRecordType Type { get; }
-		BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent);
+		BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent);
 	}
 
 	internal interface IDeferHandler

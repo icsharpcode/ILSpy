@@ -36,7 +36,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		static readonly string[] imageFileExtensions = { ".cur" };
 
-		public ITreeNode CreateNode(Resource resource)
+		public ITreeNode? CreateNode(Resource resource)
 		{
 			string key = resource.Name;
 			foreach (string fileExt in imageFileExtensions)
@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 	sealed class CursorResourceEntryNode : ResourceEntryNode
 	{
-		public CursorResourceEntryNode(string key, Func<Stream> openStream)
+		public CursorResourceEntryNode(string key, Func<Stream?> openStream)
 			: base(key, openStream)
 		{
 		}
@@ -70,7 +70,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						return false;
 					//HACK: windows imaging does not understand that .cur files have the same layout as .ico
 					// so load to data, and modify the ResourceType in the header to make look like an icon...
-					MemoryStream s = data as MemoryStream;
+					MemoryStream? s = data as MemoryStream;
 					if (s == null)
 					{
 						// data was stored in another stream type (e.g. PinnedBufferedMemoryStream)

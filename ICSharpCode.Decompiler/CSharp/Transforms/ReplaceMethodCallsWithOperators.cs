@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			MemberName = "TypeHandle"
 		};
 
-		TransformContext context;
+		TransformContext? context;
 
 		public override void VisitInvocationExpression(InvocationExpression invocationExpression)
 		{
@@ -495,7 +495,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			Match m = getMethodOrConstructorFromHandlePattern.Match(castExpression);
 			if (m.Success)
 			{
-				IMethod method = m.Get<AstNode>("method").Single().GetSymbol() as IMethod;
+				IMethod? method = m.Get<AstNode>("method").Single().GetSymbol() as IMethod;
 				if (m.Has("declaringType") && method != null)
 				{
 					Expression newNode = new MemberReferenceExpression(new TypeReferenceExpression(m.Get<AstType>("declaringType").Single().Detach()), method.Name);

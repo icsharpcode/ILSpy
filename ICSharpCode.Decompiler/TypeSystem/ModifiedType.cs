@@ -63,52 +63,52 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return elementType.GetDefinitionOrUnknown();
 		}
 
-		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return elementType.GetAccessors(filter, options);
 		}
 
-		public override IEnumerable<IMethod> GetConstructors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
+		public override IEnumerable<IMethod> GetConstructors(Predicate<IMethod>? filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
 		{
 			return elementType.GetConstructors(filter, options);
 		}
 
-		public override IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IEvent> GetEvents(Predicate<IEvent>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return elementType.GetEvents(filter, options);
 		}
 
-		public override IEnumerable<IField> GetFields(Predicate<IField> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IField> GetFields(Predicate<IField>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return elementType.GetFields(filter, options);
 		}
 
-		public override IEnumerable<IMember> GetMembers(Predicate<IMember> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMember> GetMembers(Predicate<IMember>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return elementType.GetMembers(filter, options);
 		}
 
-		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return elementType.GetMethods(typeArguments, filter, options);
 		}
 
-		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return elementType.GetMethods(filter, options);
 		}
 
-		public override IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType> typeArguments, Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType> typeArguments, Predicate<ITypeDefinition>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return elementType.GetNestedTypes(typeArguments, filter, options);
 		}
 
-		public override IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return elementType.GetNestedTypes(filter, options);
 		}
 
-		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return elementType.GetProperties(filter, options);
 		}
@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return visitor.VisitModOpt(this);
 		}
 
-		public override bool Equals(IType other)
+		public override bool Equals(IType? other)
 		{
 			return other is ModifiedType o && kind == o.kind && modifier.Equals(o.modifier) && elementType.Equals(o.elementType);
 		}

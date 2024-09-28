@@ -42,20 +42,20 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <summary>
 		/// Property representing the IsCompleted property on the awaiter type. Can be null if the awaiter type or the property was not found, or when awaiting a dynamic expression.
 		/// </summary>
-		public readonly IProperty IsCompletedProperty;
+		public readonly IProperty? IsCompletedProperty;
 
 		/// <summary>
 		/// Method representing the OnCompleted method on the awaiter type. Can be null if the awaiter type or the method was not found, or when awaiting a dynamic expression.
 		/// This can also refer to an UnsafeOnCompleted method, if the awaiter type implements <c>System.Runtime.CompilerServices.ICriticalNotifyCompletion</c>.
 		/// </summary>
-		public readonly IMethod OnCompletedMethod;
+		public readonly IMethod? OnCompletedMethod;
 
 		/// <summary>
 		/// Method representing the GetResult method on the awaiter type. Can be null if the awaiter type or the method was not found, or when awaiting a dynamic expression.
 		/// </summary>
-		public readonly IMethod GetResultMethod;
+		public readonly IMethod? GetResultMethod;
 
-		public AwaitResolveResult(IType resultType, ResolveResult getAwaiterInvocation, IType awaiterType, IProperty isCompletedProperty, IMethod onCompletedMethod, IMethod getResultMethod)
+		public AwaitResolveResult(IType resultType, ResolveResult getAwaiterInvocation, IType awaiterType, IProperty? isCompletedProperty, IMethod? onCompletedMethod, IMethod? getResultMethod)
 			: base(resultType)
 		{
 			if (awaiterType == null)

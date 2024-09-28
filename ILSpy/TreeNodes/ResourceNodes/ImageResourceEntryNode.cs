@@ -36,7 +36,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		static readonly string[] imageFileExtensions = { ".png", ".gif", ".bmp", ".jpg" };
 
-		public ITreeNode CreateNode(Resource resource)
+		public ITreeNode? CreateNode(Resource resource)
 		{
 			string key = resource.Name;
 			foreach (string fileExt in imageFileExtensions)
@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 	sealed class ImageResourceEntryNode : ResourceEntryNode
 	{
-		public ImageResourceEntryNode(string key, Func<Stream> openStream)
+		public ImageResourceEntryNode(string key, Func<Stream?> openStream)
 			: base(key, openStream)
 		{
 		}

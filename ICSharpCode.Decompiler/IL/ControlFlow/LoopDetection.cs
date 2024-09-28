@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			Debug.Assert(h.UserData == block);
 			Debug.Assert(!TreeTraversal.PreOrder(h, n => n.DominatorTreeChildren).Any(n => n.Visited));
 
-			List<ControlFlowNode> loop = null;
+			List<ControlFlowNode>? loop = null;
 			foreach (var t in h.Predecessors)
 			{
 				if (h.Dominates(t))
@@ -311,7 +311,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// 3) otherwise (exit point unknown, heuristically extend loop): null
 		/// </returns>
 		/// <remarks>This method must not write to the Visited flags on the CFG.</remarks>
-		internal ControlFlowNode FindExitPoint(ControlFlowNode loopHead, IReadOnlyList<ControlFlowNode> naturalLoop)
+		internal ControlFlowNode? FindExitPoint(ControlFlowNode loopHead, IReadOnlyList<ControlFlowNode> naturalLoop)
 		{
 			bool hasReachableExit = HasReachableExit(loopHead);
 			if (!hasReachableExit)
@@ -332,7 +332,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 					return NoExitPoint;
 				}
-				ControlFlowNode exitPoint = null;
+				ControlFlowNode? exitPoint = null;
 				int exitPointILOffset = -1;
 				ConsiderReturnAsExitPoint((Block)loopHead.UserData, ref exitPoint, ref exitPointILOffset);
 				foreach (var node in loopHead.DominatorTreeChildren)
@@ -540,7 +540,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				rev[i] = new ControlFlowNode { UserIndex = i, UserData = cfg[i].UserData };
 			}
-			ControlFlowNode nodeTreatedAsExitNode = null;
+			ControlFlowNode? nodeTreatedAsExitNode = null;
 			bool multipleNodesTreatedAsExitNodes = false;
 			ControlFlowNode exitNode = new ControlFlowNode { UserIndex = -1 };
 			rev[cfg.Length] = exitNode;
@@ -584,7 +584,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return rev;
 		}
 
-		static bool IsPossibleForeachLoop(Block loopHead, out Branch exitBranch)
+		static bool IsPossibleForeachLoop(Block loopHead, out Branch? exitBranch)
 		{
 			exitBranch = null;
 			var container = (BlockContainer)loopHead.Parent;
@@ -613,6 +613,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// skip blocks that only branch to another block
 				entryPoint = targetBlock;
 			}
+
 			return entryPoint == loopHead;
 		}
 		#endregion

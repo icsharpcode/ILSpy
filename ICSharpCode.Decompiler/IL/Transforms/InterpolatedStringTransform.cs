@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -31,7 +32,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			int interpolationStart = pos;
 			int interpolationEnd;
-			ILInstruction insertionPoint;
+			ILInstruction? insertionPoint;
 			// stloc v(newobj DefaultInterpolatedStringHandler..ctor(ldc.i4 literalLength, ldc.i4 formattedCount))
 			if (block.Instructions[pos] is StLoc {
 				Variable: ILVariable { Kind: VariableKind.Local } v,
@@ -104,7 +105,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		private bool FindToStringAndClear(Block block, int pos, int interpolationStart, int interpolationEnd, ILVariable v, out ILInstruction insertionPoint)
+		private bool FindToStringAndClear(Block block, int pos, int interpolationStart, int interpolationEnd, ILVariable v, [NotNullWhen(true)] out ILInstruction? insertionPoint)
 		{
 			insertionPoint = null;
 			if (pos >= block.Instructions.Count)

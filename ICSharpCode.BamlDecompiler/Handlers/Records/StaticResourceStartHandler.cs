@@ -29,7 +29,7 @@ namespace ICSharpCode.BamlDecompiler.Handlers
 	{
 		public BamlRecordType Type => BamlRecordType.StaticResourceStart;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
 			var record = (StaticResourceStartRecord)((BamlBlockNode)node).Record;
 			var key = XamlResourceKey.FindKeyInSiblings(node);

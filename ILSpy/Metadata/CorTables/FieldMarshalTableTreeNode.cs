@@ -98,8 +98,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, fieldMarshal.Parent, protocol: "metadata")));
 			}
 
-			string parentTooltip;
-			public string ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, fieldMarshal.Parent);
+			string? parentTooltip;
+			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, fieldMarshal.Parent);
 
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int NativeType => MetadataTokens.GetHeapOffset(fieldMarshal.NativeType);

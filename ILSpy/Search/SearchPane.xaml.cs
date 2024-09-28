@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.Search
 	{
 		const int MAX_RESULTS = 1000;
 		const int MAX_REFRESH_TIME_MS = 10; // More means quicker forward of data, fewer means better responsibility
-		RunningSearch currentSearch;
+		RunningSearch? currentSearch;
 		bool runSearchOnNextShow;
 		IComparer<SearchResult> resultsComparer;
 
@@ -207,7 +207,7 @@ namespace ICSharpCode.ILSpy.Search
 			listBox.SelectedIndex = 0;
 		}
 
-		void UpdateResults(object sender, EventArgs e)
+		void UpdateResults(object? sender, EventArgs e)
 		{
 			if (currentSearch == null)
 				return;
@@ -235,7 +235,7 @@ namespace ICSharpCode.ILSpy.Search
 			currentSearch.Cancel();
 		}
 
-		async void StartSearch(string searchTerm)
+		async void StartSearch(string? searchTerm)
 		{
 			if (currentSearch != null)
 			{
@@ -249,7 +249,7 @@ namespace ICSharpCode.ILSpy.Search
 				SearchResult.ComparerByName;
 			Results.Clear();
 
-			RunningSearch startedSearch = null;
+			RunningSearch? startedSearch = null;
 			if (!string.IsNullOrEmpty(searchTerm))
 			{
 
@@ -303,7 +303,7 @@ namespace ICSharpCode.ILSpy.Search
 
 				SearchRequest request = new();
 				List<string> keywords = new();
-				Regex regex = null;
+				Regex? regex = null;
 				request.Mode = searchMode;
 
 				foreach (string part in parts)
@@ -329,7 +329,7 @@ namespace ICSharpCode.ILSpy.Search
 						prefixLength = part.IndexOf(':', 0, prefixLength);
 						delimiterLength = 1;
 					}
-					string prefix;
+					string? prefix;
 					if (prefixLength <= 0)
 					{
 						prefix = null;
@@ -439,7 +439,7 @@ namespace ICSharpCode.ILSpy.Search
 					}
 				}
 
-				Regex CreateRegex(string s)
+				Regex? CreateRegex(string s)
 				{
 					try
 					{
@@ -496,7 +496,7 @@ namespace ICSharpCode.ILSpy.Search
 				}
 			}
 
-			AbstractSearchStrategy GetSearchStrategy(SearchRequest request)
+			AbstractSearchStrategy? GetSearchStrategy(SearchRequest request)
 			{
 				if (request.Keywords.Length == 0 && request.RegEx == null)
 					return null;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection.Metadata;
 using System.Text;
 
@@ -19,8 +20,8 @@ namespace ICSharpCode.Decompiler.DebugInfo
 
 	public struct PdbExtraTypeInfo
 	{
-		public string[] TupleElementNames;
-		public bool[] DynamicFlags;
+		public string?[]? TupleElementNames;
+		public bool[]? DynamicFlags;
 	}
 
 	public interface IDebugInfoProvider
@@ -28,8 +29,8 @@ namespace ICSharpCode.Decompiler.DebugInfo
 		string Description { get; }
 		IList<SequencePoint> GetSequencePoints(MethodDefinitionHandle method);
 		IList<Variable> GetVariables(MethodDefinitionHandle method);
-		bool TryGetName(MethodDefinitionHandle method, int index, out string name);
-		bool TryGetExtraTypeInfo(MethodDefinitionHandle method, int index, out PdbExtraTypeInfo extraTypeInfo);
+		bool TryGetName(MethodDefinitionHandle method, int index, [NotNullWhen(true)] out string? name);
+		bool TryGetExtraTypeInfo(MethodDefinitionHandle method, int index, [NotNullWhen(true)] out PdbExtraTypeInfo extraTypeInfo);
 		string SourceFileName { get; }
 	}
 }

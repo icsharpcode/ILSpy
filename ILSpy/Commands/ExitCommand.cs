@@ -25,7 +25,7 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class ExitCommand : SimpleCommand
 	{
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			MainWindow.Instance.Close();
 		}

@@ -42,10 +42,10 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// </summary>
 		public readonly IList<ResolveResult> InitializerStatements;
 
-		public InvocationResolveResult(ResolveResult targetResult, IParameterizedMember member,
-									   IList<ResolveResult> arguments = null,
-									   IList<ResolveResult> initializerStatements = null,
-									   IType returnTypeOverride = null)
+		public InvocationResolveResult(ResolveResult? targetResult, IParameterizedMember member,
+									   IList<ResolveResult>? arguments = null,
+									   IList<ResolveResult>? initializerStatements = null,
+									   IType? returnTypeOverride = null)
 			: base(targetResult, member, returnTypeOverride)
 		{
 			this.Arguments = arguments ?? EmptyList<ResolveResult>.Instance;

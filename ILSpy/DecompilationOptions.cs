@@ -85,7 +85,7 @@ namespace ICSharpCode.ILSpy
 		internal int StepLimit = int.MaxValue;
 		internal bool IsDebug = false;
 
-		public DecompilationOptions(LanguageVersion version, DecompilerSettings settings, DisplaySettings displaySettings)
+		public DecompilationOptions(LanguageVersion? version, DecompilerSettings settings, DisplaySettings displaySettings)
 		{
 			if (!Enum.TryParse(version?.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
 				languageVersion = Decompiler.CSharp.LanguageVersion.Latest;

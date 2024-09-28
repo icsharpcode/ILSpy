@@ -41,17 +41,17 @@ namespace ICSharpCode.ILSpy
 			return command;
 		}
 
-		public event EventHandler CanExecuteChanged {
+		public event EventHandler? CanExecuteChanged {
 			add { wrappedCommand.CanExecuteChanged += value; }
 			remove { wrappedCommand.CanExecuteChanged -= value; }
 		}
 
-		public void Execute(object parameter)
+		public void Execute(object? parameter)
 		{
 			wrappedCommand.Execute(parameter);
 		}
 
-		public bool CanExecute(object parameter)
+		public bool CanExecute(object? parameter)
 		{
 			return wrappedCommand.CanExecute(parameter);
 		}

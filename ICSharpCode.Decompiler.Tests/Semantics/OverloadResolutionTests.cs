@@ -258,7 +258,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 				get { throw new NotImplementedException(); }
 			}
 
-			public override IType GetInferredReturnType(IType[] parameterTypes)
+			public override IType GetInferredReturnType(IType[]? parameterTypes)
 			{
 				return inferredReturnType;
 			}

@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public AnonymousMethodExpression(BlockStatement body, IEnumerable<ParameterDeclaration> parameters = null)
+		public AnonymousMethodExpression(BlockStatement body, IEnumerable<ParameterDeclaration>? parameters = null)
 		{
 			if (parameters != null)
 			{
@@ -109,9 +109,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitAnonymousMethodExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			AnonymousMethodExpression o = other as AnonymousMethodExpression;
+			AnonymousMethodExpression? o = other as AnonymousMethodExpression;
 			return o != null && this.IsAsync == o.IsAsync && this.HasParameterList == o.HasParameterList
 				&& this.Parameters.DoMatch(o.Parameters, match) && this.Body.DoMatch(o.Body, match);
 		}

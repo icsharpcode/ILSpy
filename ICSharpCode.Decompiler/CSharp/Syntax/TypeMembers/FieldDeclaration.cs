@@ -70,9 +70,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitFieldDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			FieldDeclaration o = other as FieldDeclaration;
+			FieldDeclaration? o = other as FieldDeclaration;
 			return o != null && this.MatchAttributesAndModifiers(o, match)
 				&& this.ReturnType.DoMatch(o.ReturnType, match) && this.Variables.DoMatch(o.Variables, match);
 		}

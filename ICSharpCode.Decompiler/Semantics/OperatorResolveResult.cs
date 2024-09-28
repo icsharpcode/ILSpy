@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	public class OperatorResolveResult : ResolveResult
 	{
 		readonly ExpressionType operatorType;
-		readonly IMethod userDefinedOperatorMethod;
+		readonly IMethod? userDefinedOperatorMethod;
 		readonly IList<ResolveResult> operands;
 		readonly bool isLiftedOperator;
 
@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.operands = operands;
 		}
 
-		public OperatorResolveResult(IType resultType, ExpressionType operatorType, IMethod userDefinedOperatorMethod, bool isLiftedOperator, IList<ResolveResult> operands)
+		public OperatorResolveResult(IType resultType, ExpressionType operatorType, IMethod? userDefinedOperatorMethod, bool isLiftedOperator, IList<ResolveResult> operands)
 			: base(resultType)
 		{
 			if (operands == null)

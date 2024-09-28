@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -26,11 +27,11 @@ using ICSharpCode.Decompiler.IL;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpyX.TreeView;
 
 using Microsoft.Win32;
-using ICSharpCode.ILSpyX.TreeView;
-using System.ComponentModel.Composition;
 
 using ICSharpCode.ILSpy.Docking;
 
@@ -105,7 +106,7 @@ namespace ICSharpCode.ILSpy.TextView
 		/// will be used.</param>
 		/// 
 		/// <returns>The full path of the selected target file, or <c>null</c> if the user canceled.</returns>
-		static string SelectSolutionFile()
+		static string? SelectSolutionFile()
 		{
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.FileName = "Solution.sln";
@@ -116,7 +117,7 @@ namespace ICSharpCode.ILSpy.TextView
 				return null;
 			}
 
-			string selectedPath = Path.GetDirectoryName(dlg.FileName);
+			string? selectedPath = Path.GetDirectoryName(dlg.FileName);
 			bool directoryNotEmpty;
 			try
 			{

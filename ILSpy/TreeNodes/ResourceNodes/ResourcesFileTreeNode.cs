@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class ResourcesFileTreeNodeFactory : IResourceNodeFactory
 	{
-		public ITreeNode CreateNode(Resource resource)
+		public ITreeNode? CreateNode(Resource resource)
 		{
 			if (resource.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
 			{
@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return null;
 		}
 
-		public ILSpyTreeNode CreateNode(string key, object data)
+		public ILSpyTreeNode? CreateNode(string key, object data)
 		{
 			return null;
 		}
@@ -71,7 +71,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			Stream s = Resource.TryOpenStream();
+			Stream? s = Resource.TryOpenStream();
 			if (s == null)
 				return;
 			s.Position = 0;
@@ -128,7 +128,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool Save(TabPageModel tabPage)
 		{
-			Stream s = Resource.TryOpenStream();
+			Stream? s = Resource.TryOpenStream();
 			if (s == null)
 				return false;
 			SaveFileDialog dlg = new SaveFileDialog();
@@ -179,7 +179,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			var textView = (DecompilerTextView)Docking.DockWorkspace.Instance.ActiveTabPage.Content;
 			if (stringTableEntries.Count != 0)
 			{
-				ISmartTextOutput smartOutput = output as ISmartTextOutput;
+				ISmartTextOutput? smartOutput = output as ISmartTextOutput;
 				if (null != smartOutput)
 				{
 					smartOutput.AddUIElement(
@@ -193,7 +193,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			if (otherEntries.Count != 0)
 			{
-				ISmartTextOutput smartOutput = output as ISmartTextOutput;
+				ISmartTextOutput? smartOutput = output as ISmartTextOutput;
 				if (null != smartOutput)
 				{
 					smartOutput.AddUIElement(

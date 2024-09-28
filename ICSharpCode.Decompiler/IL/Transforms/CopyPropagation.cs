@@ -61,11 +61,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		static void RunOnBlock(Block block, ILTransformContext context, HashSet<ILVariable> splitVariables = null)
+		static void RunOnBlock(Block block, ILTransformContext context, HashSet<ILVariable>? splitVariables = null)
 		{
 			for (int i = 0; i < block.Instructions.Count; i++)
 			{
-				if (block.Instructions[i].MatchStLoc(out ILVariable v, out ILInstruction copiedExpr))
+				if (block.Instructions[i].MatchStLoc(out ILVariable? v, out ILInstruction? copiedExpr))
 				{
 					if (v.IsSingleDefinition && v.LoadCount == 0 && v.Kind == VariableKind.StackSlot)
 					{

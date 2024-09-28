@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		string INamedElement.ReflectionName => underlyingMethod.ReflectionName;
 		string INamedElement.Namespace => underlyingMethod.Namespace;
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			return obj is SyntheticRangeIndexAccessor g
 				&& this.underlyingMethod.Equals(g.underlyingMethod)
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return underlyingMethod.GetHashCode() ^ indexOrRangeType.GetHashCode();
 		}
 
-		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
+		bool IMember.Equals(IMember? obj, TypeVisitor typeNormalization)
 		{
 			return obj is SyntheticRangeIndexAccessor g
 				&& this.underlyingMethod.Equals(g.underlyingMethod, typeNormalization)

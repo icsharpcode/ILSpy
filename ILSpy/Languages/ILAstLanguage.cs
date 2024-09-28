@@ -39,9 +39,9 @@ namespace ICSharpCode.ILSpy
 	/// </summary>
 	abstract class ILAstLanguage : Language
 	{
-		public event EventHandler StepperUpdated;
+		public event EventHandler? StepperUpdated;
 
-		protected virtual void OnStepperUpdated(EventArgs e = null)
+		protected virtual void OnStepperUpdated(EventArgs? e = null)
 		{
 			StepperUpdated?.Invoke(this, e ?? new EventArgs());
 		}

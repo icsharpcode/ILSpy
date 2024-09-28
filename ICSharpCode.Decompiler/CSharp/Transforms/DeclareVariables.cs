@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
@@ -138,7 +139,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 
 		readonly Dictionary<ILVariable, VariableToDeclare> variableDict = new Dictionary<ILVariable, VariableToDeclare>();
-		TransformContext context;
+		TransformContext? context;
 
 		public void Run(AstNode rootNode, TransformContext context)
 		{
@@ -284,7 +285,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// </remarks>
 		void FindInsertionPoints(AstNode node, int nodeLevel)
 		{
-			BlockContainer scope = node.Annotation<BlockContainer>();
+			BlockContainer? scope = node.Annotation<BlockContainer>();
 			if (scope != null && IsRelevantScope(scope))
 			{
 				// track loops and function bodies as scopes, for comparison with CaptureScope.
@@ -296,7 +297,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			try
 			{
-				for (AstNode child = node.FirstChild; child != null; child = child.NextSibling)
+				for (AstNode? child = node.FirstChild; child != null; child = child.NextSibling)
 				{
 					FindInsertionPoints(child, nodeLevel + 1);
 				}
@@ -320,7 +321,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						InsertionPoint newPoint;
 						int startIndex = scopeTracking.Count - 1;
-						BlockContainer captureScope = variable.CaptureScope;
+						BlockContainer? captureScope = variable.CaptureScope;
 						while (captureScope != null && !IsRelevantScope(captureScope))
 						{
 							captureScope = BlockContainer.FindClosestContainer(captureScope.Parent);
@@ -355,7 +356,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 								}
 							}
 						}
-						if (variableDict.TryGetValue(variable, out VariableToDeclare v))
+						if (variableDict.TryGetValue(variable, out VariableToDeclare? v))
 						{
 							v.InsertionPoint = FindCommonParent(v.InsertionPoint, newPoint);
 						}
@@ -552,7 +553,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		bool IsMatchingAssignment(VariableToDeclare v, out AssignmentExpression assignment)
+		bool IsMatchingAssignment(VariableToDeclare v, [NotNullWhen(true)] out AssignmentExpression? assignment)
 		{
 			assignment = v.InsertionPoint.nextNode as AssignmentExpression;
 			if (assignment == null)
@@ -657,7 +658,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				else
 				{
 					// Insert a separate declaration statement.
-					Expression initializer = null;
+					Expression? initializer = null;
 					AstType type = context.TypeSystemAstBuilder.ConvertType(v.Type);
 					if (v.DefaultInitialization == VariableInitKind.NeedsDefaultValue)
 					{
@@ -731,7 +732,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		private bool CanBeDeclaredAsOutVariable(VariableToDeclare v, out DirectionExpression dirExpr)
+		private bool CanBeDeclaredAsOutVariable(VariableToDeclare v, [NotNullWhen(true)] out DirectionExpression? dirExpr)
 		{
 			dirExpr = v.FirstUse.Parent as DirectionExpression;
 			if (dirExpr == null || dirExpr.FieldDirection != FieldDirection.Out)
@@ -740,7 +741,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return false;
 			if (v.DefaultInitialization != VariableInitKind.None)
 				return false;
-			for (AstNode node = v.FirstUse; node != null; node = node.Parent)
+			for (AstNode? node = v.FirstUse; node != null; node = node.Parent)
 			{
 				if (node.Role == Roles.EmbeddedStatement)
 				{
@@ -765,7 +766,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			foreach (var node in rootNode.Descendants)
 			{
-				ILVariable ilVar;
+				ILVariable? ilVar;
 				switch (node)
 				{
 					case IdentifierExpression id:

@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.substitution = TypeParameterSubstitution.Compose(newSubstitution, this.substitution);
 		}
 
-		internal IMethod WrapAccessor(ref IMethod cachingField, IMethod accessorDefinition)
+		internal IMethod? WrapAccessor(ref IMethod cachingField, IMethod accessorDefinition)
 		{
 			if (accessorDefinition == null)
 				return null;
@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (result != null)
 					return result;
 				IType definitionDeclaringType = baseMember.DeclaringType;
-				ITypeDefinition definitionDeclaringTypeDef = definitionDeclaringType as ITypeDefinition;
+				ITypeDefinition? definitionDeclaringTypeDef = definitionDeclaringType as ITypeDefinition;
 				if (definitionDeclaringTypeDef != null && definitionDeclaringType.TypeParameterCount > 0)
 				{
 					if (substitution.ClassTypeArguments != null && substitution.ClassTypeArguments.Count == definitionDeclaringType.TypeParameterCount)
@@ -157,7 +157,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return baseMember.SymbolKind; }
 		}
 
-		public ITypeDefinition DeclaringTypeDefinition {
+		public ITypeDefinition? DeclaringTypeDefinition {
 			get { return baseMember.DeclaringTypeDefinition; }
 		}
 
@@ -214,7 +214,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return baseMember.Compilation; }
 		}
 
-		public IModule ParentModule {
+		public IModule? ParentModule {
 			get { return baseMember.ParentModule; }
 		}
 
@@ -223,18 +223,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return baseMember.Specialize(TypeParameterSubstitution.Compose(newSubstitution, this.substitution));
 		}
 
-		public virtual bool Equals(IMember obj, TypeVisitor typeNormalization)
+		public virtual bool Equals(IMember? obj, TypeVisitor typeNormalization)
 		{
-			SpecializedMember other = obj as SpecializedMember;
+			SpecializedMember? other = obj as SpecializedMember;
 			if (other == null)
 				return false;
 			return this.baseMember.Equals(other.baseMember, typeNormalization)
 				&& this.substitution.Equals(other.substitution, typeNormalization);
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
-			SpecializedMember other = obj as SpecializedMember;
+			SpecializedMember? other = obj as SpecializedMember;
 			if (other == null)
 				return false;
 			return this.baseMember.Equals(other.baseMember) && this.substitution.Equals(other.substitution);

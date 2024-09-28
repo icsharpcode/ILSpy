@@ -67,9 +67,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitUncheckedStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			UncheckedStatement o = other as UncheckedStatement;
+			UncheckedStatement? o = other as UncheckedStatement;
 			return o != null && this.Body.DoMatch(o.Body, match);
 		}
 	}

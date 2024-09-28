@@ -109,9 +109,9 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(methodDef.Signature);
 
-			string signatureTooltip;
+			string? signatureTooltip;
 
-			public string SignatureTooltip => GenerateTooltip(ref signatureTooltip, metadataFile, handle);
+			public string? SignatureTooltip => GenerateTooltip(ref signatureTooltip, metadataFile, handle);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int ParamList => MetadataTokens.GetToken(methodDef.GetParameters().FirstOrDefault());
@@ -121,8 +121,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, methodDef.GetParameters().FirstOrDefault(), protocol: "metadata")));
 			}
 
-			string paramListTooltip;
-			public string ParamListTooltip {
+			string? paramListTooltip;
+			public string? ParamListTooltip {
 				get {
 					var param = methodDef.GetParameters().FirstOrDefault();
 					if (param.IsNil)
@@ -131,7 +131,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			IEntity IMemberTreeNode.Member => ((MetadataModule)metadataFile.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule)?.GetDefinition(handle);
+			IEntity? IMemberTreeNode.Member => ((MetadataModule)metadataFile.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule)?.GetDefinition(handle);
 
 			public MethodDefEntry(MetadataFile metadataFile, MethodDefinitionHandle handle)
 			{

@@ -108,7 +108,7 @@ namespace ICSharpCode.Decompiler
 			output.Write(name);
 		}
 
-		ISymbol GetCurrentMemberReference()
+		ISymbol? GetCurrentMemberReference()
 		{
 			AstNode node = nodeStack.Peek();
 			var symbol = node.GetSymbol();
@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler
 			return FilterMember(symbol);
 		}
 
-		ISymbol FilterMember(ISymbol symbol)
+		ISymbol? FilterMember(ISymbol symbol)
 		{
 			if (symbol == null)
 				return null;
@@ -141,7 +141,7 @@ namespace ICSharpCode.Decompiler
 			return symbol;
 		}
 
-		object GetCurrentLocalReference()
+		object? GetCurrentLocalReference()
 		{
 			AstNode node = nodeStack.Peek();
 			ILVariable variable = node.Annotation<ILVariableResolveResult>()?.Variable;
@@ -169,7 +169,7 @@ namespace ICSharpCode.Decompiler
 			return null;
 		}
 
-		object GetCurrentLocalDefinition(Identifier id)
+		object? GetCurrentLocalDefinition(Identifier id)
 		{
 			AstNode node = nodeStack.Peek();
 			if (node is Identifier && node.Parent != null)
@@ -213,7 +213,7 @@ namespace ICSharpCode.Decompiler
 			return null;
 		}
 
-		ISymbol GetCurrentDefinition()
+		ISymbol? GetCurrentDefinition()
 		{
 			if (nodeStack == null || nodeStack.Count == 0)
 				return null;
@@ -363,7 +363,7 @@ namespace ICSharpCode.Decompiler
 			output.WriteLine();
 		}
 
-		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
+		public override void WritePrimitiveValue(object? value, LiteralFormat format = LiteralFormat.None)
 		{
 			new TextWriterTokenWriter(new TextOutputWriter(output)).WritePrimitiveValue(value, format);
 		}

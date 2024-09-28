@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// <summary>
 		/// Writes a primitive/literal value
 		/// </summary>
-		public abstract void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None);
+		public abstract void WritePrimitiveValue(object? value, LiteralFormat format = LiteralFormat.None);
 
 		public abstract void WritePrimitiveType(string type);
 
@@ -129,7 +129,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			decoratedWriter.WriteToken(role, token);
 		}
 
-		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
+		public override void WritePrimitiveValue(object? value, LiteralFormat format = LiteralFormat.None)
 		{
 			decoratedWriter.WritePrimitiveValue(value, format);
 		}

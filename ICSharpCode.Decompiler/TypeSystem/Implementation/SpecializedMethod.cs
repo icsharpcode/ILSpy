@@ -146,13 +146,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public MethodSemanticsAttributes AccessorKind => methodDefinition.AccessorKind;
 
-		public IMethod ReducedFrom {
+		public IMethod? ReducedFrom {
 			get { return null; }
 		}
 
-		IMember accessorOwner;
+		IMember? accessorOwner;
 
-		public IMember AccessorOwner {
+		public IMember? AccessorOwner {
 			get {
 				var result = LazyInit.VolatileRead(ref accessorOwner);
 				if (result != null)
@@ -173,18 +173,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public override bool Equals(IMember obj, TypeVisitor typeNormalization)
+		public override bool Equals(IMember? obj, TypeVisitor typeNormalization)
 		{
-			SpecializedMethod other = obj as SpecializedMethod;
+			SpecializedMethod? other = obj as SpecializedMethod;
 			if (other == null)
 				return false;
 			return this.baseMember.Equals(other.baseMember, typeNormalization)
 				&& this.substitutionWithoutSpecializedTypeParameters.Equals(other.substitutionWithoutSpecializedTypeParameters, typeNormalization);
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
-			SpecializedMethod other = obj as SpecializedMethod;
+			SpecializedMethod? other = obj as SpecializedMethod;
 			if (other == null)
 				return false;
 			return this.baseMember.Equals(other.baseMember) && this.substitutionWithoutSpecializedTypeParameters.Equals(other.substitutionWithoutSpecializedTypeParameters);
@@ -267,11 +267,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return baseTp.GetHashCode() ^ this.Owner.GetHashCode();
 			}
 
-			public override bool Equals(IType other)
+			public override bool Equals(IType? other)
 			{
 				// Compare the owner, not the substitution, because the substitution may contain this specialized type parameter recursively
-				SpecializedTypeParameter o = other as SpecializedTypeParameter;
-				return o != null && baseTp.Equals(o.baseTp) && this.Owner.Equals(o.Owner);
+				SpecializedTypeParameter? o = other as SpecializedTypeParameter;
+				return o != null && baseTp.Equals(o.baseTp) && this.Owner?.Equals(o.Owner) == true;
 			}
 
 			public override bool HasValueTypeConstraint => baseTp.HasValueTypeConstraint;

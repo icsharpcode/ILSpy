@@ -170,7 +170,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public static bool InlineOneIfPossible(Block block, int pos, InliningOptions options, ILTransformContext context)
 		{
 			context.CancellationToken.ThrowIfCancellationRequested();
-			StLoc stloc = block.Instructions[pos] as StLoc;
+			StLoc? stloc = block.Instructions[pos] as StLoc;
 			if (stloc == null || stloc.Variable.Kind == VariableKind.PinnedLocal)
 				return false;
 			ILVariable v = stloc.Variable;
@@ -370,7 +370,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		internal static bool MethodRequiresCopyForReadonlyLValue(IMethod method, IType constrainedTo = null)
+		internal static bool MethodRequiresCopyForReadonlyLValue(IMethod method, IType? constrainedTo = null)
 		{
 			if (method == null)
 				return true;
@@ -387,7 +387,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return IsUsedAsThisPointerInCall(ldloca, out _, out _);
 		}
 
-		static bool IsUsedAsThisPointerInCall(LdLoca ldloca, out IMethod method, out IType constrainedType)
+		static bool IsUsedAsThisPointerInCall(LdLoca ldloca, out IMethod? method, out IType? constrainedType)
 		{
 			method = null;
 			constrainedType = null;
@@ -577,7 +577,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (findResult.Type == FindResultType.NamedArgument)
 			{
-				var originalStore = (StLoc)inlinedExpression.Parent;
+				var originalStore = inlinedExpression.Parent as StLoc;
 				return !originalStore.ILStackWasEmpty;
 			}
 			Debug.Assert(findResult.Type == FindResultType.Found);
@@ -741,10 +741,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		internal readonly struct FindResult
 		{
 			public readonly FindResultType Type;
-			public readonly ILInstruction LoadInst; // ldloc or ldloca instruction that loads the variable to be inlined
-			public readonly ILInstruction CallArgument; // argument of call that needs to be promoted to a named argument
+			public readonly ILInstruction? LoadInst; // ldloc or ldloca instruction that loads the variable to be inlined
+			public readonly ILInstruction? CallArgument; // argument of call that needs to be promoted to a named argument
 
-			private FindResult(FindResultType type, ILInstruction loadInst, ILInstruction callArg)
+			private FindResult(FindResultType type, ILInstruction? loadInst, ILInstruction? callArg)
 			{
 				this.Type = type;
 				this.LoadInst = loadInst;
@@ -784,7 +784,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (expr.MatchLdLoc(v) || expr.MatchLdLoca(v))
 			{
 				// Match found, we can inline
-				if (expr.SlotInfo == StObj.TargetSlot && !((StObj)expr.Parent).CanInlineIntoTargetSlot(expressionBeingMoved))
+				if (expr.SlotInfo == StObj.TargetSlot && !(expr.Parent as StObj).CanInlineIntoTargetSlot(expressionBeingMoved))
 				{
 					if ((options & InliningOptions.AllowChangingOrderOfEvaluationForExceptions) != 0)
 					{
@@ -867,7 +867,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Finds the first call instruction within the instructions that were inlined into inst.
 		/// </summary>
-		internal static CallInstruction FindFirstInlinedCall(ILInstruction inst)
+		internal static CallInstruction? FindFirstInlinedCall(ILInstruction inst)
 		{
 			foreach (var child in inst.Children)
 			{

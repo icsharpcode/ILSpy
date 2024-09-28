@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		/// </summary>
 		public IDebugInfoProvider DebugInfo { get; set; }
 
-		IList<DebugInfo.SequencePoint> sequencePoints;
+		IList<DebugInfo.SequencePoint>? sequencePoints;
 		int nextSequencePointIndex;
 
 		// cache info
@@ -440,7 +440,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						metadataToken = blob.ReadInt32();
 						output.Write(' ');
 						UserStringHandle? userString;
-						string text;
+						string? text;
 						try
 						{
 							userString = MetadataTokens.UserStringHandle(metadataToken);

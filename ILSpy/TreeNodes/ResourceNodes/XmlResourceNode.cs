@@ -36,7 +36,7 @@ namespace ICSharpCode.ILSpy.Xaml
 	{
 		private readonly static string[] xmlFileExtensions = { ".xml", ".xsd", ".xslt" };
 
-		public ITreeNode CreateNode(Resource resource)
+		public ITreeNode? CreateNode(Resource resource)
 		{
 			string key = resource.Name;
 			foreach (string fileExt in xmlFileExtensions)
@@ -50,9 +50,9 @@ namespace ICSharpCode.ILSpy.Xaml
 
 	sealed class XmlResourceEntryNode : ResourceEntryNode
 	{
-		string xml;
+		string? xml;
 
-		public XmlResourceEntryNode(string key, Func<Stream> data)
+		public XmlResourceEntryNode(string key, Func<Stream?> data)
 			: base(key, data)
 		{
 		}
@@ -74,7 +74,7 @@ namespace ICSharpCode.ILSpy.Xaml
 		public override bool View(TabPageModel tabPage)
 		{
 			AvalonEditTextOutput output = new AvalonEditTextOutput();
-			IHighlightingDefinition highlighting = null;
+			IHighlightingDefinition? highlighting = null;
 
 			tabPage.ShowTextView(textView => textView.RunWithCancellation(
 				token => Task.Factory.StartNew(

@@ -28,6 +28,6 @@ namespace ICSharpCode.BamlDecompiler.Handlers
 	{
 		public BamlRecordType Type => BamlRecordType.AttributeInfo;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) => null;
+		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent) => null;
 	}
 }

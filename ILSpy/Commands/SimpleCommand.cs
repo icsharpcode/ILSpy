@@ -24,14 +24,14 @@ namespace ICSharpCode.ILSpy
 {
 	public abstract class SimpleCommand : ICommand
 	{
-		public event EventHandler CanExecuteChanged {
+		public event EventHandler? CanExecuteChanged {
 			add { CommandManager.RequerySuggested += value; }
 			remove { CommandManager.RequerySuggested -= value; }
 		}
 
-		public abstract void Execute(object parameter);
+		public abstract void Execute(object? parameter);
 
-		public virtual bool CanExecute(object parameter)
+		public virtual bool CanExecute(object? parameter)
 		{
 			return true;
 		}
@@ -41,14 +41,14 @@ namespace ICSharpCode.ILSpy
 	{
 		private bool isChecked;
 
-		public event EventHandler CanExecuteChanged {
+		public event EventHandler? CanExecuteChanged {
 			add { CommandManager.RequerySuggested += value; }
 			remove { CommandManager.RequerySuggested -= value; }
 		}
 
-		public event PropertyChangedEventHandler PropertyChanged;
+		public event PropertyChangedEventHandler? PropertyChanged;
 
-		void ICommand.Execute(object parameter)
+		void ICommand.Execute(object? parameter)
 		{
 			IsChecked = Execute(parameter);
 		}
@@ -64,9 +64,9 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public abstract bool Execute(object parameter);
+		public abstract bool Execute(object? parameter);
 
-		public virtual bool CanExecute(object parameter)
+		public virtual bool CanExecute(object? parameter)
 		{
 			return true;
 		}

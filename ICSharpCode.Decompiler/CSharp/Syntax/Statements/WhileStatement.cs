@@ -71,9 +71,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitWhileStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			WhileStatement o = other as WhileStatement;
+			WhileStatement? o = other as WhileStatement;
 			return o != null && this.Condition.DoMatch(o.Condition, match) && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
 		}
 

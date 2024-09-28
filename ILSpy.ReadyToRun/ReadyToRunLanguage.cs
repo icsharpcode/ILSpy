@@ -114,7 +114,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
-			PEFile module = assembly.GetMetadataFileAsync().GetAwaiter().GetResult() as PEFile;
+			PEFile? module = assembly.GetMetadataFileAsync().GetAwaiter().GetResult() as PEFile;
 			ReadyToRunReaderCacheEntry cacheEntry = GetReader(assembly, module);
 			if (cacheEntry.readyToRunReader == null)
 			{
@@ -137,7 +137,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
-			PEFile module = method.ParentModule.MetadataFile as PEFile;
+			PEFile? module = method.ParentModule.MetadataFile as PEFile;
 			ReadyToRunReaderCacheEntry cacheEntry = GetReader(module.GetLoadedAssembly(), module);
 			if (cacheEntry.readyToRunReader == null)
 			{
@@ -158,7 +158,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				}
 				if (cacheEntry.methodMap == null)
 				{
-					IEnumerable<ReadyToRunMethod> readyToRunMethods = null;
+					IEnumerable<ReadyToRunMethod>? readyToRunMethods = null;
 					if (cacheEntry.compositeReadyToRunReader == null)
 					{
 						readyToRunMethods = reader.Methods;
@@ -192,8 +192,8 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 #endif
 						foreach (RuntimeFunction runtimeFunction in readyToRunMethod.RuntimeFunctions)
 						{
-							PEFile file = null;
-							ReadyToRunReader disassemblingReader = null;
+							PEFile? file = null;
+							ReadyToRunReader? disassemblingReader = null;
 							if (cacheEntry.compositeReadyToRunReader == null)
 							{
 								disassemblingReader = reader;
@@ -216,7 +216,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-		public override RichText GetRichTextTooltip(IEntity entity)
+		public override RichText? GetRichTextTooltip(IEntity entity)
 		{
 			return Languages.ILLanguage.GetRichTextTooltip(entity);
 		}
@@ -307,10 +307,10 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		private class ReadyToRunReaderCacheEntry
 		{
-			public ReadyToRunReader readyToRunReader;
-			public ReadyToRunReader compositeReadyToRunReader;
-			public string failureReason;
-			public Dictionary<EntityHandle, ReadyToRunMethod[]> methodMap;
+			public ReadyToRunReader? readyToRunReader;
+			public ReadyToRunReader? compositeReadyToRunReader;
+			public string? failureReason;
+			public Dictionary<EntityHandle, ReadyToRunMethod[]>? methodMap;
 		}
 	}
 }

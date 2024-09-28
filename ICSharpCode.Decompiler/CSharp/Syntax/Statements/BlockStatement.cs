@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 			{
 				return other == null || other.IsNull;
 			}
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitPatternPlaceholder(this, child, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 			{
 				return child.DoMatch(other, match);
 			}
@@ -140,9 +140,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitBlockStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			BlockStatement o = other as BlockStatement;
+			BlockStatement? o = other as BlockStatement;
 			return o != null && !o.IsNull && this.Statements.DoMatch(o.Statements, match);
 		}
 

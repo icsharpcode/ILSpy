@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -406,7 +407,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		static readonly Regex automaticPropertyBackingFieldRegex = new Regex(@"^<(.*)>k__BackingField$",
 			RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-		static bool IsAutomaticPropertyBackingField(FieldDefinition field, MetadataReader metadata, out string propertyName)
+		static bool IsAutomaticPropertyBackingField(FieldDefinition field, MetadataReader metadata, [NotNullWhen(true)] out string? propertyName)
 		{
 			propertyName = null;
 			var name = metadata.GetString(field.Name);
@@ -540,7 +541,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return typeSystemAstBuilder;
 		}
 
-		IDocumentationProvider CreateDefaultDocumentationProvider()
+		IDocumentationProvider? CreateDefaultDocumentationProvider()
 		{
 			try
 			{
@@ -631,8 +632,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void DoDecompileTypes(IEnumerable<TypeDefinitionHandle> types, DecompileRun decompileRun, ITypeResolveContext decompilationContext, SyntaxTree syntaxTree)
 		{
-			string currentNamespace = null;
-			AstNode groupNode = null;
+			string? currentNamespace = null;
+			AstNode? groupNode = null;
 			foreach (var typeDefHandle in types)
 			{
 				var typeDef = module.GetDefinition(typeDefHandle);
@@ -1027,7 +1028,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			bool first = true;
-			ITypeDefinition parentTypeDef = null;
+			ITypeDefinition? parentTypeDef = null;
 
 			foreach (var entity in definitions)
 			{
@@ -1095,7 +1096,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return syntaxTree;
 		}
 
-		ITypeDefinition FindCommonDeclaringTypeDefinition(ITypeDefinition a, ITypeDefinition b)
+		ITypeDefinition? FindCommonDeclaringTypeDefinition(ITypeDefinition a, ITypeDefinition b)
 		{
 			if (a == null || b == null)
 				return null;
@@ -1212,7 +1213,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <param name="member">The node of the member which new modifier state should be determined.</param>
 		void SetNewModifier(EntityDeclaration member)
 		{
-			var entity = (IEntity)member.GetSymbol();
+			var entity = member.GetSymbol() as IEntity;
 			var lookup = new MemberLookup(entity.DeclaringTypeDefinition, entity.ParentModule);
 
 			var baseTypes = entity.DeclaringType.GetNonInterfaceBaseTypes().Where(t => entity.DeclaringType != t).ToList();
@@ -1315,7 +1316,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					TypeKind.Struct => (settings.RecordStructs && typeDef.IsRecord) || settings.UsePrimaryConstructorSyntaxForNonRecordTypes,
 					_ => false,
 				};
-				RecordDecompiler recordDecompiler = isRecordLike ? new RecordDecompiler(typeSystem, typeDef, settings, CancellationToken) : null;
+				RecordDecompiler? recordDecompiler = isRecordLike ? new RecordDecompiler(typeSystem, typeDef, settings, CancellationToken) : null;
 				if (recordDecompiler != null)
 					decompileRun.RecordDecompilers.Add(typeDef, recordDecompiler);
 
@@ -1324,7 +1325,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					foreach (var p in recordDecompiler.PrimaryConstructor.Parameters)
 					{
 						ParameterDeclaration pd = typeSystemAstBuilder.ConvertParameter(p);
-						(IProperty prop, IField field) = recordDecompiler.GetPropertyInfoByPrimaryConstructorParameter(p);
+						(IProperty? prop, IField field) = recordDecompiler.GetPropertyInfoByPrimaryConstructorParameter(p);
 
 						if (prop != null)
 						{
@@ -1566,7 +1567,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				if (MemberIsHidden(module, field.MetadataToken, settings))
 					continue;
-				object constantValue = field.GetConstantValue();
+				object? constantValue = field.GetConstantValue();
 				if (constantValue == null)
 					continue;
 				long currentValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false);
@@ -1779,7 +1780,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					);
 					body = statementBuilder.ConvertAsBlock(function.Body);
 
-					Comment prev = null;
+					Comment? prev = null;
 					foreach (string warning in function.Warnings)
 					{
 						body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
@@ -1799,7 +1800,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal static void AddAnnotationsToDeclaration(IMethod method, EntityDeclaration entityDecl, ILFunction function)
 		{
 			int i = 0;
-			var parameters = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
+			//if the variable is a parameter is a parameter then index "should not" be null, would indicate an deeper under lying problem if it is so we assert not null (!)
+			var parameters = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index!.Value);
 			foreach (var parameter in entityDecl.GetChildrenByRole(Roles.Parameter))
 			{
 				if (parameters.TryGetValue(i, out var v))
@@ -1916,7 +1918,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return found;
 		}
 
-		bool FindAttribute(EntityDeclaration entityDecl, KnownAttribute attributeType, out Syntax.Attribute attribute)
+		bool FindAttribute(EntityDeclaration entityDecl, KnownAttribute attributeType, [NotNullWhen(true)] out Syntax.Attribute? attribute)
 		{
 			attribute = null;
 			foreach (var section in entityDecl.Attributes)
@@ -1956,7 +1958,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (decompilationContext.CurrentTypeDefinition.Kind == TypeKind.Enum && field.IsConst)
 				{
 					var enumDec = new EnumMemberDeclaration { Name = field.Name };
-					object constantValue = field.GetConstantValue();
+					object? constantValue = field.GetConstantValue();
 					if (constantValue != null)
 					{
 						enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, constantValue);
@@ -2016,11 +2018,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		internal static bool IsFixedField(IField field, out IType type, out int elementCount)
+		internal static bool IsFixedField(IField field, out IType? type, out int elementCount)
 		{
 			type = null;
 			elementCount = 0;
-			IAttribute attr = field.GetAttribute(KnownAttribute.FixedBuffer);
+			IAttribute? attr = field.GetAttribute(KnownAttribute.FixedBuffer);
 			if (attr != null && attr.FixedArguments.Length == 2)
 			{
 				if (attr.FixedArguments[0].Value is IType trr && attr.FixedArguments[1].Value is int length)

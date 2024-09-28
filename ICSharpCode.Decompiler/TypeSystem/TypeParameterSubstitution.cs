@@ -33,8 +33,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static readonly TypeParameterSubstitution Identity = new TypeParameterSubstitution(null, null);
 
-		readonly IReadOnlyList<IType> classTypeArguments;
-		readonly IReadOnlyList<IType> methodTypeArguments;
+		readonly IReadOnlyList<IType>? classTypeArguments;
+		readonly IReadOnlyList<IType>? methodTypeArguments;
 
 		/// <summary>
 		/// Creates a new type parameter substitution.
@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// The type arguments to substitute for method type parameters.
 		/// Pass <c>null</c> to keep method type parameters unmodified.
 		/// </param>
-		public TypeParameterSubstitution(IReadOnlyList<IType> classTypeArguments, IReadOnlyList<IType> methodTypeArguments)
+		public TypeParameterSubstitution(IReadOnlyList<IType>? classTypeArguments, IReadOnlyList<IType>? methodTypeArguments)
 		{
 			this.classTypeArguments = classTypeArguments;
 			this.methodTypeArguments = methodTypeArguments;
@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the list of class type arguments.
 		/// Returns <c>null</c> if this substitution keeps class type parameters unmodified.
 		/// </summary>
-		public IReadOnlyList<IType> ClassTypeArguments {
+		public IReadOnlyList<IType>? ClassTypeArguments {
 			get { return classTypeArguments; }
 		}
 
@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the list of method type arguments.
 		/// Returns <c>null</c> if this substitution keeps method type parameters unmodified.
 		/// </summary>
-		public IReadOnlyList<IType> MethodTypeArguments {
+		public IReadOnlyList<IType>? MethodTypeArguments {
 			get { return methodTypeArguments; }
 		}
 
@@ -109,9 +109,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				&& TypeListEquals(methodTypeArguments, other.methodTypeArguments, normalization);
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
-			TypeParameterSubstitution other = obj as TypeParameterSubstitution;
+			TypeParameterSubstitution? other = obj as TypeParameterSubstitution;
 			if (other == null)
 				return false;
 			return TypeListEquals(classTypeArguments, other.classTypeArguments)
@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		static bool TypeListEquals(IReadOnlyList<IType> a, IReadOnlyList<IType> b)
+		static bool TypeListEquals(IReadOnlyList<IType>? a, IReadOnlyList<IType>? b)
 		{
 			if (a == b)
 				return true;
@@ -142,7 +142,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return true;
 		}
 
-		static bool TypeListEquals(IReadOnlyList<IType> a, IReadOnlyList<IType> b, TypeVisitor normalization)
+		static bool TypeListEquals(IReadOnlyList<IType>? a, IReadOnlyList<IType>? b, TypeVisitor normalization)
 		{
 			if (a == b)
 				return true;
@@ -160,7 +160,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return true;
 		}
 
-		static int TypeListHashCode(IReadOnlyList<IType> obj)
+		static int TypeListHashCode(IReadOnlyList<IType>? obj)
 		{
 			if (obj == null)
 				return 0;

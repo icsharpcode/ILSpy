@@ -86,8 +86,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, memberRef.Parent, protocol: "metadata")));
 			}
 
-			string parentTooltip;
-			public string ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, memberRef.Parent);
+			string? parentTooltip;
+			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, memberRef.Parent);
 
 			public string Name => metadataFile.Metadata.GetString(memberRef.Name);
 
@@ -96,8 +96,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(memberRef.Signature);
 
-			string signatureTooltip;
-			public string SignatureTooltip => GenerateTooltip(ref signatureTooltip, metadataFile, handle);
+			string? signatureTooltip;
+			public string? SignatureTooltip => GenerateTooltip(ref signatureTooltip, metadataFile, handle);
 
 			public MemberRefEntry(MetadataFile metadataFile, MemberReferenceHandle handle)
 			{

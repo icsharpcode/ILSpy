@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (v.Kind == VariableKind.StackSlot && v.StackType == StackType.Ref && v.AddressCount == 0)
 				{
-					IType newType = null;
+					IType? newType = null;
 					// Multiple store are possible in case of (c ? ref a : ref b) += 1, for example.
 					foreach (var stloc in v.StoreInstructions.OfType<StLoc>())
 					{

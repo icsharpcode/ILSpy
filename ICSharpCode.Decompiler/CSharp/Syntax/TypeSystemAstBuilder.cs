@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -461,13 +462,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		AstType ConvertTypeHelper(IType genericType, IReadOnlyList<IType> typeArguments)
 		{
-			ITypeDefinition typeDef = genericType.GetDefinition();
+			ITypeDefinition? typeDef = genericType.GetDefinition();
 			Debug.Assert(typeDef != null || genericType.Kind == TypeKind.Unknown);
 			Debug.Assert(typeArguments.Count >= genericType.TypeParameterCount);
 
 			if (UseKeywordsForBuiltinTypes && typeDef != null)
 			{
-				string keyword = KnownTypeReference.GetCSharpNameByTypeCode(typeDef.KnownTypeCode);
+				string? keyword = KnownTypeReference.GetCSharpNameByTypeCode(typeDef.KnownTypeCode);
 				if (keyword != null)
 				{
 					return new PrimitiveType(keyword);
@@ -509,7 +510,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					localTypeArguments = Empty<IType>.Array;
 				}
 				ResolveResult rr = resolver.LookupSimpleNameOrTypeName(typeDef.Name, localTypeArguments, NameLookupMode);
-				TypeResolveResult trr = rr as TypeResolveResult;
+				TypeResolveResult? trr = rr as TypeResolveResult;
 				if (trr != null || (localTypeArguments.Length == 0 && resolver.IsVariableReferenceWithSameType(rr, typeDef.Name, out trr)))
 				{
 					if (!trr.IsError && TypeMatches(trr.Type, typeDef, typeArguments))
@@ -567,7 +568,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				if (!TypeDefMatches(typeDef, type.GetDefinition()))
 					return false;
-				ParameterizedType pt = type as ParameterizedType;
+				ParameterizedType? pt = type as ParameterizedType;
 				if (pt == null)
 				{
 					return typeArguments.All(t => t.Kind == TypeKind.UnboundTypeArgument);
@@ -623,7 +624,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return ConvertNamespace(namespaceName, out nrr, requiresGlobalPrefix: false);
 		}
 
-		AstType ConvertNamespace(string namespaceName, out NamespaceResolveResult nrr, bool requiresGlobalPrefix)
+		AstType ConvertNamespace(string namespaceName, out NamespaceResolveResult? nrr, bool requiresGlobalPrefix)
 		{
 			if (resolver != null)
 			{
@@ -707,7 +708,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		bool IsValidNamespace(string firstNamespacePart, out NamespaceResolveResult nrr)
+		bool IsValidNamespace(string firstNamespacePart, out NamespaceResolveResult? nrr)
 		{
 			nrr = null;
 			if (resolver == null)
@@ -813,7 +814,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				throw new ArgumentNullException(nameof(type));
 			AstType astType = ConvertTypeHelper(type);
 
-			string shortName = null;
+			string? shortName = null;
 			if (type.Name.Length > 9 && type.Name.EndsWith("Attribute", StringComparison.Ordinal))
 			{
 				shortName = type.Name.Remove(type.Name.Length - 9);
@@ -844,7 +845,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			switch (astType)
 			{
 				case SimpleType st:
-					ResolveResult shortRR = null;
+					ResolveResult? shortRR = null;
 					ResolveResult withExtraAttrSuffix = resolver.LookupSimpleNameOrTypeName(type.Name + "Attribute", EmptyList<IType>.Instance, NameLookupMode.Type);
 					if (shortName != null)
 					{
@@ -1052,7 +1053,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					}
 					if (underlyingType.IsKnownType(KnownTypeCode.Double) || underlyingType.IsKnownType(KnownTypeCode.Single))
 						return ConvertFloatingPointLiteral(underlyingType, constantValue);
-					IType literalType = underlyingType;
+					IType? literalType = underlyingType;
 					bool integerTypeMismatch = underlyingType.IsCSharpSmallIntegerType() || underlyingType.IsCSharpNativeIntegerType();
 					if (integerTypeMismatch)
 					{
@@ -1081,7 +1082,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		bool IsSpecialConstant(IType expectedType, object constant, out Expression expression)
+		bool IsSpecialConstant(IType expectedType, object constant, [NotNullWhen(true)] out Expression? expression)
 		{
 			expression = null;
 			if (!specialConstants.TryGetValue(constant, out var info))
@@ -1212,7 +1213,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		Expression ConvertEnumValue(IType type, long val)
 		{
-			ITypeDefinition enumDefinition = type.GetDefinition();
+			ITypeDefinition? enumDefinition = type.GetDefinition();
 			TypeCode enumBaseTypeCode = ReflectionHelper.GetTypeCode(enumDefinition.EnumUnderlyingType);
 			var fields = enumDefinition.Fields
 				.Select(PrepareConstant)
@@ -1231,7 +1232,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (IsFlagsEnum(enumDefinition))
 			{
 				long enumValue = val;
-				Expression expr = null;
+				Expression? expr = null;
 				long negatedEnumValue = ~val;
 				// limit negatedEnumValue to the appropriate range
 				switch (enumBaseTypeCode)
@@ -1249,7 +1250,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						negatedEnumValue &= uint.MaxValue;
 						break;
 				}
-				Expression negatedExpr = null;
+				Expression? negatedExpr = null;
 				foreach (var (fieldValue, field) in fields.OrderByDescending(f => CalculateHammingWeight(unchecked((ulong)f.value))))
 				{
 					if (fieldValue == 0)
@@ -1290,11 +1291,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			return new CastExpression(ConvertType(type), new PrimitiveExpression(CSharpPrimitiveCast.Cast(enumBaseTypeCode, val, false)));
 
-			(long value, IField field) PrepareConstant(IField field)
+			(long value, IField? field) PrepareConstant(IField field)
 			{
 				if (!field.IsConst)
 					return (-1, null);
-				object constantValue = field.GetConstantValue();
+				object? constantValue = field.GetConstantValue();
 				if (constantValue == null)
 					return (-1, null);
 				return ((long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, checkForOverflow: false), field);
@@ -1363,7 +1364,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			constantValue = CSharpPrimitiveCast.Cast(type.GetTypeCode(), constantValue, false);
 			bool isDouble = type.IsKnownType(KnownTypeCode.Double);
 			ICompilation compilation = type.GetDefinition().Compilation;
-			Expression expr = null;
+			Expression? expr = null;
 
 			string str;
 			if (isDouble)
@@ -1442,7 +1443,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		const float MathF_PI = 3.14159274f;
 		const float MathF_E = 2.71828175f;
 
-		Expression TryExtractExpression(IType mathType, IType type, object literalValue, string memberName, bool isDouble)
+		Expression? TryExtractExpression(IType mathType, IType type, object literalValue, string memberName, bool isDouble)
 		{
 			Expression MakeFieldReference()
 			{
@@ -1463,7 +1464,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return new CastExpression(ConvertType(type), fieldRef);
 			}
 
-			Expression ExtractExpression(long n, long d)
+			Expression? ExtractExpression(long n, long d)
 			{
 				Expression fieldReference = MakeFieldReference();
 
@@ -1698,7 +1699,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				case SymbolKind.TypeParameter:
 					return ConvertTypeParameter((ITypeParameter)symbol);
 				default:
-					IEntity entity = symbol as IEntity;
+					IEntity? entity = symbol as IEntity;
 					if (entity != null)
 						return ConvertEntity(entity);
 					throw new ArgumentException("Invalid value for SymbolKind: " + symbol.SymbolKind);
@@ -1889,7 +1890,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		DelegateDeclaration ConvertDelegate(IMethod invokeMethod, Modifiers modifiers)
 		{
-			ITypeDefinition d = invokeMethod.DeclaringTypeDefinition;
+			ITypeDefinition? d = invokeMethod.DeclaringTypeDefinition;
 
 			DelegateDeclaration decl = new DelegateDeclaration();
 			decl.Modifiers = modifiers & ~Modifiers.Sealed;
@@ -1970,7 +1971,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				ct.HasReadOnlySpecifier = true;
 			}
-			Expression initializer = null;
+			Expression? initializer = null;
 			if (field.IsConst && this.ShowConstantValues)
 			{
 				try
@@ -2018,7 +2019,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				decl.Modifiers = ModifierFromAccessibility(accessor.Accessibility);
 			if (this.ShowModifiers && accessor.HasReadonlyModifier())
 				decl.Modifiers |= Modifiers.Readonly;
-			TokenRole keywordRole = kind switch {
+			TokenRole? keywordRole = kind switch {
 				MethodSemanticsAttributes.Getter => PropertyDeclaration.GetKeywordRole,
 				MethodSemanticsAttributes.Setter => PropertyDeclaration.SetKeywordRole,
 				MethodSemanticsAttributes.Adder => CustomEventDeclaration.AddKeywordRole,
@@ -2399,7 +2400,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return decl;
 		}
 
-		internal Constraint ConvertTypeParameterConstraint(ITypeParameter tp)
+		internal Constraint? ConvertTypeParameterConstraint(ITypeParameter tp)
 		{
 			if (!tp.HasDefaultConstructorConstraint && !tp.HasReferenceTypeConstraint && !tp.HasValueTypeConstraint && tp.NullabilityConstraint != Nullability.NotNullable && tp.DirectBaseTypes.All(IsObjectOrValueType))
 			{
@@ -2459,7 +2460,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		static bool IsObjectOrValueType(IType type)
 		{
-			ITypeDefinition d = type.GetDefinition();
+			ITypeDefinition? d = type.GetDefinition();
 			return d != null && (d.KnownTypeCode == KnownTypeCode.Object || d.KnownTypeCode == KnownTypeCode.ValueType);
 		}
 		#endregion
@@ -2470,7 +2471,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			VariableDeclarationStatement decl = new VariableDeclarationStatement();
 			decl.Modifiers = v.IsConst ? Modifiers.Const : Modifiers.None;
 			decl.Type = ConvertType(v.Type);
-			Expression initializer = null;
+			Expression? initializer = null;
 			if (v.IsConst)
 			{
 				try
@@ -2492,7 +2493,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return new NamespaceDeclaration(ns.FullName);
 		}
 
-		AstType GetExplicitInterfaceType(IMember member)
+		AstType? GetExplicitInterfaceType(IMember member)
 		{
 			if (member.IsExplicitInterfaceImplementation)
 			{

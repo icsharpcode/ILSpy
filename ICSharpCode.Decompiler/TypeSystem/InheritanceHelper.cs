@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Finds the member declared in 'derivedType' that has the same signature (could override) 'baseMember'.
 		/// </summary>
-		public static IMember GetDerivedMember(IMember baseMember, ITypeDefinition derivedType)
+		public static IMember? GetDerivedMember(IMember baseMember, ITypeDefinition derivedType)
 		{
 			if (baseMember == null)
 				throw new ArgumentNullException(nameof(baseMember));
@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			baseMember = baseMember.MemberDefinition;
 			bool includeInterfaces = baseMember.DeclaringTypeDefinition.Kind == TypeKind.Interface;
-			IMethod method = baseMember as IMethod;
+			IMethod? method = baseMember as IMethod;
 			if (method != null)
 			{
 				foreach (IMethod derivedMethod in derivedType.Methods)
@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					}
 				}
 			}
-			IProperty property = baseMember as IProperty;
+			IProperty? property = baseMember as IProperty;
 			if (property != null)
 			{
 				foreach (IProperty derivedProperty in derivedType.Properties)
@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		internal static IAttribute GetAttribute(ITypeDefinition typeDef, KnownAttribute attributeType)
+		internal static IAttribute? GetAttribute(ITypeDefinition typeDef, KnownAttribute attributeType)
 		{
 			foreach (var baseType in typeDef.GetNonInterfaceBaseTypes().Reverse())
 			{
@@ -217,7 +217,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			} while (member.IsOverride && (member = InheritanceHelper.GetBaseMember(member)) != null);
 		}
 
-		internal static IAttribute GetAttribute(IMember member, KnownAttribute attributeType)
+		internal static IAttribute? GetAttribute(IMember member, KnownAttribute attributeType)
 		{
 			HashSet<IMember> visitedMembers = new HashSet<IMember>();
 			do

@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.NumberOfCompilerGeneratedTypeParameters = numberOfCompilerGeneratedTypeParameters;
 		}
 
-		public bool Equals(IMember obj, TypeVisitor typeNormalization)
+		public bool Equals(IMember? obj, TypeVisitor typeNormalization)
 		{
 			if (!(obj is LocalFunctionMethod other))
 				return false;
@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				&& IsStaticLocalFunction == other.IsStaticLocalFunction;
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			if (!(obj is LocalFunctionMethod other))
 				return false;
@@ -108,7 +108,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsOperator => baseMethod.IsOperator;
 		public bool HasBody => baseMethod.HasBody;
 		public bool IsAccessor => baseMethod.IsAccessor;
-		public IMember AccessorOwner => baseMethod.AccessorOwner;
+		public IMember? AccessorOwner => baseMethod.AccessorOwner;
 		public MethodSemanticsAttributes AccessorKind => baseMethod.AccessorKind;
 		public IMethod ReducedFrom => baseMethod;
 
@@ -141,12 +141,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public System.Reflection.Metadata.EntityHandle MetadataToken => baseMethod.MetadataToken;
 		public SymbolKind SymbolKind => baseMethod.SymbolKind;
-		public ITypeDefinition DeclaringTypeDefinition => baseMethod.DeclaringTypeDefinition;
+		public ITypeDefinition? DeclaringTypeDefinition => baseMethod.DeclaringTypeDefinition;
 		public IType DeclaringType => baseMethod.DeclaringType;
-		public IModule ParentModule => baseMethod.ParentModule;
+		public IModule? ParentModule => baseMethod.ParentModule;
 		IEnumerable<IAttribute> IEntity.GetAttributes() => baseMethod.GetAttributes();
 		bool IEntity.HasAttribute(KnownAttribute attribute) => baseMethod.HasAttribute(attribute);
-		IAttribute IEntity.GetAttribute(KnownAttribute attribute) => baseMethod.GetAttribute(attribute);
+		IAttribute? IEntity.GetAttribute(KnownAttribute attribute) => baseMethod.GetAttribute(attribute);
 		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => baseMethod.GetReturnTypeAttributes();
 		bool IMethod.ReturnTypeIsRefReadOnly => baseMethod.ReturnTypeIsRefReadOnly;
 		bool IMethod.ThisIsRefReadOnly => baseMethod.ThisIsRefReadOnly;

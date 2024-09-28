@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		/// </summary>
 		public static readonly string AnyString = "$any$";
 
-		public static bool MatchString(string pattern, string text)
+		public static bool MatchString(string? pattern, string? text)
 		{
 			return pattern == AnyString || pattern == text;
 		}
@@ -52,15 +52,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			get { return false; }
 		}
 
-		Role INode.Role {
+		Role? INode.Role {
 			get { return null; }
 		}
 
-		INode INode.NextSibling {
+		INode? INode.NextSibling {
 			get { return null; }
 		}
 
-		INode INode.FirstChild {
+		INode? INode.FirstChild {
 			get { return null; }
 		}
 
@@ -80,8 +80,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			stack.Push(new PossibleMatch(firstOtherChild, match.CheckPoint()));
 			while (stack.Count > 0)
 			{
-				INode cur1 = patternStack.Pop();
-				INode cur2 = stack.Peek().NextOther;
+				INode? cur1 = patternStack.Pop();
+				INode? cur2 = stack.Peek().NextOther;
 				match.RestoreCheckPoint(stack.Pop().Checkpoint);
 				bool success = true;
 				while (cur1 != null && success)

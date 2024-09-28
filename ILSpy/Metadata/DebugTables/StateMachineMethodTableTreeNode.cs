@@ -86,8 +86,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, moveNextMethod, protocol: "metadata")));
 			}
 
-			string moveNextMethodTooltip;
-			public string MoveNextMethodTooltip => GenerateTooltip(ref moveNextMethodTooltip, metadataFile, moveNextMethod);
+			string? moveNextMethodTooltip;
+			public string? MoveNextMethodTooltip => GenerateTooltip(ref moveNextMethodTooltip, metadataFile, moveNextMethod);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int KickoffMethod => MetadataTokens.GetToken(kickoffMethod);
@@ -97,8 +97,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, kickoffMethod, protocol: "metadata")));
 			}
 
-			string kickoffMethodTooltip;
-			public string KickoffMethodTooltip => GenerateTooltip(ref kickoffMethodTooltip, metadataFile, kickoffMethod);
+			string? kickoffMethodTooltip;
+			public string? KickoffMethodTooltip => GenerateTooltip(ref kickoffMethodTooltip, metadataFile, kickoffMethod);
 
 			public StateMachineMethodEntry(MetadataFile metadataFile, ref BlobReader reader, int row)
 			{

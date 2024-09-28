@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// If this parameter is null, the GetClassTypeReference will search in all
 		/// assemblies belonging to the compilation.
 		/// </param>
-		public GetClassTypeReference(FullTypeName fullTypeName, IModuleReference module = null, bool? isReferenceType = null)
+		public GetClassTypeReference(FullTypeName fullTypeName, IModuleReference? module = null, bool? isReferenceType = null)
 		{
 			this.fullTypeName = fullTypeName;
 			this.module = module;
@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </summary>
 		public FullTypeName FullTypeName { get { return fullTypeName; } }
 
-		internal static IType ResolveInAllAssemblies(ICompilation compilation, in FullTypeName fullTypeName)
+		internal static IType? ResolveInAllAssemblies(ICompilation compilation, in FullTypeName fullTypeName)
 		{
 			foreach (var asm in compilation.Modules)
 			{
@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (context == null)
 				throw new ArgumentNullException(nameof(context));
 
-			IType type = null;
+			IType? type = null;
 			if (module == null)
 			{
 				// No assembly specified: look in all assemblies, but prefer the current assembly
@@ -147,7 +147,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			GetClassTypeReference o = other as GetClassTypeReference;
+			GetClassTypeReference? o = other as GetClassTypeReference;
 			return o != null && module == o.module && fullTypeName == o.fullTypeName && isReferenceType == o.isReferenceType;
 		}
 	}

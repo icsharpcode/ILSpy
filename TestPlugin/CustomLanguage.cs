@@ -41,7 +41,7 @@ namespace TestPlugin
 				var methodBody = module.GetMethodBody(methodDef.RelativeVirtualAddress);
 				output.WriteLine("Size of method: {0} bytes", methodBody.GetCodeSize());
 
-				ISmartTextOutput smartOutput = output as ISmartTextOutput;
+				ISmartTextOutput? smartOutput = output as ISmartTextOutput;
 				if (smartOutput != null)
 				{
 					// when writing to the text view (but not when writing to a file), we can even add UI elements such as buttons:

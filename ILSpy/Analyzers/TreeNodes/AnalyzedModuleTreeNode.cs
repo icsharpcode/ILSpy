@@ -64,6 +64,6 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 			MessageBus.Send(this, new NavigateToReferenceEventArgs(analyzedModule.MetadataFile));
 		}
 
-		public override IEntity Member => null;
+		public override IEntity? Member => null;
 	}
 }

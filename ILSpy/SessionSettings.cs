@@ -86,7 +86,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public string ActiveAssemblyList {
+		public string? ActiveAssemblyList {
 			get => activeAssemblyList;
 			set {
 				if (value != null && value != activeAssemblyList)
@@ -139,7 +139,7 @@ namespace ICSharpCode.ILSpy
 		}
 
 		static Regex regex = new("\\\\x(?<num>[0-9A-f]{4})");
-		private string activeAssemblyList;
+		private string? activeAssemblyList;
 
 		static string Escape(string p)
 		{
@@ -159,7 +159,7 @@ namespace ICSharpCode.ILSpy
 			return regex.Replace(p, m => ((char)int.Parse(m.Groups["num"].Value, NumberStyles.HexNumber)).ToString());
 		}
 
-		static T FromString<T>(string s, T defaultValue)
+		static T FromString<T>(string? s, T defaultValue)
 		{
 			if (s == null)
 				return defaultValue;
@@ -180,14 +180,14 @@ namespace ICSharpCode.ILSpy
 			return c.ConvertToInvariantString(obj);
 		}
 
-		public event PropertyChangedEventHandler PropertyChanged;
+		public event PropertyChangedEventHandler? PropertyChanged;
 
-		private void OnPropertyChanged([CallerMemberName] string propertyName = null)
+		private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
 		{
 			PropertyChanged?.Invoke(this, new(propertyName));
 		}
 
-		private bool SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+		private bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
 		{
 			if (EqualityComparer<T>.Default.Equals(field, value))
 				return false;

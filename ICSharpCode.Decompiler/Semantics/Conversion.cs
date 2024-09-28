@@ -168,9 +168,9 @@ namespace ICSharpCode.Decompiler.Semantics
 					+ " conversion";
 			}
 
-			public override bool Equals(Conversion other)
+			public override bool Equals(Conversion? other)
 			{
-				NumericOrEnumerationConversion o = other as NumericOrEnumerationConversion;
+				NumericOrEnumerationConversion? o = other as NumericOrEnumerationConversion;
 				return o != null && isImplicit == o.isImplicit && isLifted == o.isLifted && isEnumeration == o.isEnumeration;
 			}
 
@@ -247,7 +247,7 @@ namespace ICSharpCode.Decompiler.Semantics
 
 			public override string ToString()
 			{
-				string name = null;
+				string? name = null;
 				switch (type)
 				{
 					case 0:
@@ -335,9 +335,9 @@ namespace ICSharpCode.Decompiler.Semantics
 				get { return method; }
 			}
 
-			public override bool Equals(Conversion other)
+			public override bool Equals(Conversion? other)
 			{
-				UserDefinedConv o = other as UserDefinedConv;
+				UserDefinedConv? o = other as UserDefinedConv;
 				return o != null && isLifted == o.isLifted && isImplicit == o.isImplicit && isValid == o.isValid && method.Equals(o.method);
 			}
 
@@ -394,9 +394,9 @@ namespace ICSharpCode.Decompiler.Semantics
 				get { return method; }
 			}
 
-			public override bool Equals(Conversion other)
+			public override bool Equals(Conversion? other)
 			{
-				MethodGroupConv o = other as MethodGroupConv;
+				MethodGroupConv? o = other as MethodGroupConv;
 				return o != null && method.Equals(o.method);
 			}
 
@@ -419,7 +419,7 @@ namespace ICSharpCode.Decompiler.Semantics
 				this.IsImplicit = elementConversions.All(c => c.IsImplicit);
 			}
 
-			public override bool Equals(Conversion other)
+			public override bool Equals(Conversion? other)
 			{
 				return other is TupleConv o
 					&& ElementConversions.SequenceEqual(o.ElementConversions);
@@ -534,14 +534,14 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// <summary>
 		/// The conversion that is applied to the input before the user-defined conversion operator is invoked.
 		/// </summary>
-		public virtual Conversion ConversionBeforeUserDefinedOperator {
+		public virtual Conversion? ConversionBeforeUserDefinedOperator {
 			get { return null; }
 		}
 
 		/// <summary>
 		/// The conversion that is applied to the result of the user-defined conversion operator.
 		/// </summary>
-		public virtual Conversion ConversionAfterUserDefinedOperator {
+		public virtual Conversion? ConversionAfterUserDefinedOperator {
 			get { return null; }
 		}
 
@@ -602,7 +602,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// For user-defined conversions, this is the method being called.
 		/// For method-group conversions, this is the method that was chosen from the group.
 		/// </summary>
-		public virtual IMethod Method {
+		public virtual IMethod? Method {
 			get { return null; }
 		}
 
@@ -621,7 +621,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// </summary>
 		public virtual ImmutableArray<Conversion> ElementConversions => default(ImmutableArray<Conversion>);
 
-		public override sealed bool Equals(object obj)
+		public override sealed bool Equals(object? obj)
 		{
 			return Equals(obj as Conversion);
 		}
@@ -631,7 +631,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			return base.GetHashCode();
 		}
 
-		public virtual bool Equals(Conversion other)
+		public virtual bool Equals(Conversion? other)
 		{
 			return this == other;
 		}

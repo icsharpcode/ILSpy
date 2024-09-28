@@ -96,8 +96,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, manifestResource.Implementation, protocol: "metadata")));
 			}
 
-			string implementationTooltip;
-			public string ImplementationTooltip => GenerateTooltip(ref implementationTooltip, metadataFile, manifestResource.Implementation);
+			string? implementationTooltip;
+			public string? ImplementationTooltip => GenerateTooltip(ref implementationTooltip, metadataFile, manifestResource.Implementation);
 
 			public ManifestResourceEntry(MetadataFile metadataFile, ManifestResourceHandle handle)
 			{

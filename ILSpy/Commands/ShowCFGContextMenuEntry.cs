@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.Commands
 			return context.Reference?.Reference is BlockContainer;
 		}
 
-		internal static GraphVizGraph ExportGraph(IReadOnlyList<ControlFlowNode> nodes, Func<ControlFlowNode, string> labelFunc = null)
+		internal static GraphVizGraph ExportGraph(IReadOnlyList<ControlFlowNode> nodes, Func<ControlFlowNode, string?>? labelFunc = null)
 		{
 			if (labelFunc == null)
 			{

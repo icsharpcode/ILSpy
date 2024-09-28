@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 
 		/// May return null if extraction is not possible.
 		/// </summary>
-		public static ILVariable Extract(ILInstruction instToExtract, ILTransformContext context)
+		public static ILVariable? Extract(ILInstruction instToExtract, ILTransformContext context)
 		{
 			var function = instToExtract.Ancestors.OfType<ILFunction>().First();
 			ExtractionContext ctx = new ExtractionContext(function, context);

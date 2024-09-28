@@ -52,25 +52,25 @@ namespace ICSharpCode.ILSpy.Controls
 
 		static void AutoWidthPropertyChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
 		{
-			ListView grid = sender as ListView;
+			ListView? grid = sender as ListView;
 			if (grid == null)
 				return;
 			grid.SizeChanged += delegate (object listView, SizeChangedEventArgs e) {
-				ListView lv = listView as ListView;
+				ListView? lv = listView as ListView;
 				if (lv == null)
 					return;
-				GridView v = lv.View as GridView;
+				GridView? v = lv.View as GridView;
 				if (v == null)
 					return;
 				CalculateSizes(v, GetAutoWidth(lv), e.NewSize.Width);
 			};
-			GridView view = grid.View as GridView;
+			GridView? view = grid.View as GridView;
 			if (view == null)
 				return;
 			CalculateSizes(view, args.NewValue as string, grid.ActualWidth);
 		}
 
-		static void CalculateSizes(GridView view, string sizeValue, double fullWidth)
+		static void CalculateSizes(GridView view, string? sizeValue, double fullWidth)
 		{
 			string[] sizes = (sizeValue ?? "").Split(';');
 

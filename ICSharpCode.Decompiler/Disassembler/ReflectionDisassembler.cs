@@ -322,7 +322,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.Write(' ');
 				}
 				output.Write("/* ");
-				string format = base10 ? null : "X8";
+				string? format = base10 ? null : "X8";
 				if (handle == null || !handle.Value.IsEntityHandle())
 				{
 					output.Write(metadataToken.ToString(format));
@@ -475,7 +475,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		class SecurityDeclarationDecoder : ICustomAttributeTypeProvider<(PrimitiveTypeCode, string)>
+		class SecurityDeclarationDecoder : ICustomAttributeTypeProvider<(PrimitiveTypeCode, string?)>
 		{
 			readonly ITextOutput output;
 			readonly IAssemblyResolver resolver;
@@ -488,32 +488,32 @@ namespace ICSharpCode.Decompiler.Disassembler
 				this.module = module;
 			}
 
-			public (PrimitiveTypeCode, string) GetPrimitiveType(PrimitiveTypeCode typeCode)
+			public (PrimitiveTypeCode, string?) GetPrimitiveType(PrimitiveTypeCode typeCode)
 			{
 				return (typeCode, null);
 			}
 
-			public (PrimitiveTypeCode, string) GetSystemType()
+			public (PrimitiveTypeCode, string?) GetSystemType()
 			{
 				return (0, "type");
 			}
 
-			public (PrimitiveTypeCode, string) GetSZArrayType((PrimitiveTypeCode, string) elementType)
+			public (PrimitiveTypeCode, string?) GetSZArrayType((PrimitiveTypeCode, string?) elementType)
 			{
 				return (elementType.Item1, (elementType.Item2 ?? PrimitiveTypeCodeToString(elementType.Item1)) + "[]");
 			}
 
-			public (PrimitiveTypeCode, string) GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
+			public (PrimitiveTypeCode, string?) GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
 			{
 				throw new NotImplementedException();
 			}
 
-			public (PrimitiveTypeCode, string) GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
+			public (PrimitiveTypeCode, string?) GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
 			{
 				throw new NotImplementedException();
 			}
 
-			public (PrimitiveTypeCode, string) GetTypeFromSerializedName(string name)
+			public (PrimitiveTypeCode, string?) GetTypeFromSerializedName(string name)
 			{
 				if (resolver == null)
 					throw new EnumUnderlyingTypeResolveException();
@@ -525,12 +525,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 				return (0, name);
 			}
 
-			public PrimitiveTypeCode GetUnderlyingEnumType((PrimitiveTypeCode, string) type)
+			public PrimitiveTypeCode GetUnderlyingEnumType((PrimitiveTypeCode, string?) type)
 			{
 				return type.Item1;
 			}
 
-			public bool IsSystemType((PrimitiveTypeCode, string) type)
+			public bool IsSystemType((PrimitiveTypeCode, string?) type)
 			{
 				return "type" == type.Item2;
 			}
@@ -539,7 +539,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{
 				string[] nameParts = typeName.Split(new[] { ", " }, 2, StringSplitOptions.None);
 				string[] typeNameParts = nameParts[0].Split('.');
-				MetadataFile containingModule = null;
+				MetadataFile? containingModule = null;
 				TypeDefinitionHandle typeDefHandle = default;
 				// if we deal with an assembly-qualified name, resolve the assembly
 				if (nameParts.Length == 2)
@@ -620,7 +620,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			MetadataFile mscorlib;
 
-			bool TryResolveMscorlib(out MetadataFile mscorlib)
+			bool TryResolveMscorlib(out MetadataFile? mscorlib)
 			{
 				mscorlib = null;
 				if (this.mscorlib != null)
@@ -642,8 +642,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteLine(" = {");
 			output.Indent();
 
-			string currentAssemblyName = null;
-			string currentFullAssemblyName = null;
+			string? currentAssemblyName = null;
+			string? currentFullAssemblyName = null;
 			if (module.Metadata.IsAssembly)
 			{
 				try
@@ -1040,10 +1040,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.Write("lpstruct");
 					break;
 				case 0x2c: // CustomMarshaler
-					string guidValue = blob.ReadSerializedString();
-					string unmanagedType = blob.ReadSerializedString();
-					string managedType = blob.ReadSerializedString();
-					string cookie = blob.ReadSerializedString();
+					string? guidValue = blob.ReadSerializedString();
+					string? unmanagedType = blob.ReadSerializedString();
+					string? managedType = blob.ReadSerializedString();
+					string? cookie = blob.ReadSerializedString();
 
 					var guid = !string.IsNullOrEmpty(guidValue) ? new Guid(guidValue) : Guid.Empty;
 
@@ -1188,7 +1188,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					break;
 				default:
 					var blob = metadata.GetBlobReader(constant.Value);
-					object value;
+					object? value;
 					try
 					{
 						value = blob.ReadConstant(constant.TypeCode);
@@ -1862,7 +1862,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.Indent();
 		}
 
-		void CloseBlock(string comment = null)
+		void CloseBlock(string? comment = null)
 		{
 			output.Unindent();
 			output.Write("}");
@@ -1912,16 +1912,16 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		}
 
-		sealed class EnumNameCollection<T> : IEnumerable<KeyValuePair<long, string>> where T : struct
+		sealed class EnumNameCollection<T> : IEnumerable<KeyValuePair<long, string?>> where T : struct
 		{
-			List<KeyValuePair<long, string>> names = new List<KeyValuePair<long, string>>();
+			List<KeyValuePair<long, string?>> names = new List<KeyValuePair<long, string?>>();
 
-			public void Add(T flag, string name)
+			public void Add(T flag, string? name)
 			{
-				this.names.Add(new KeyValuePair<long, string>(Convert.ToInt64(flag), name));
+				this.names.Add(new KeyValuePair<long, string?>(Convert.ToInt64(flag), name));
 			}
 
-			public IEnumerator<KeyValuePair<long, string>> GetEnumerator()
+			public IEnumerator<KeyValuePair<long, string?>> GetEnumerator()
 			{
 				return names.GetEnumerator();
 			}

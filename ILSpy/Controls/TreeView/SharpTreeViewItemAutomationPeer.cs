@@ -32,7 +32,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			: base(owner)
 		{
 			SharpTreeViewItem.DataContextChanged += OnDataContextChanged;
-			SharpTreeNode node = SharpTreeViewItem.DataContext as SharpTreeNode;
+			SharpTreeNode? node = SharpTreeViewItem.DataContext as SharpTreeNode;
 			if (node == null)
 				return;
 
@@ -61,18 +61,18 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 
 		public ExpandCollapseState ExpandCollapseState {
 			get {
-				SharpTreeNode node = SharpTreeViewItem.DataContext as SharpTreeNode;
+				SharpTreeNode? node = SharpTreeViewItem.DataContext as SharpTreeNode;
 				if (node == null || !node.ShowExpander)
 					return ExpandCollapseState.LeafNode;
 				return node.IsExpanded ? ExpandCollapseState.Expanded : ExpandCollapseState.Collapsed;
 			}
 		}
 
-		private void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
+		private void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName != "IsExpanded")
 				return;
-			SharpTreeNode node = sender as SharpTreeNode;
+			SharpTreeNode? node = sender as SharpTreeNode;
 			if (node == null || node.Children.Count == 0)
 				return;
 			bool newValue = node.IsExpanded;
@@ -83,12 +83,12 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 				newValue ? ExpandCollapseState.Expanded : ExpandCollapseState.Collapsed);
 		}
 
-		private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+		private void OnDataContextChanged(object? sender, DependencyPropertyChangedEventArgs e)
 		{
-			SharpTreeNode oldNode = e.OldValue as SharpTreeNode;
+			SharpTreeNode? oldNode = e.OldValue as SharpTreeNode;
 			if (oldNode != null)
 				oldNode.PropertyChanged -= OnPropertyChanged;
-			SharpTreeNode newNode = e.NewValue as SharpTreeNode;
+			SharpTreeNode? newNode = e.NewValue as SharpTreeNode;
 			if (newNode != null)
 				newNode.PropertyChanged += OnPropertyChanged;
 		}

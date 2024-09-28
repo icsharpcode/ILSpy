@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy.Updates
 			var bands = doc.Root.Elements("band");
 			var currentBand = bands.FirstOrDefault(b => (string)b.Attribute("id") == band) ?? bands.First();
 			Version version = new Version((string)currentBand.Element("latestVersion"));
-			string url = (string)currentBand.Element("downloadUrl");
+			string? url = (string)currentBand.Element("downloadUrl");
 			if (!(url.StartsWith("http://", StringComparison.Ordinal) || url.StartsWith("https://", StringComparison.Ordinal)))
 				url = null; // don't accept non-urls
 
@@ -61,7 +61,7 @@ namespace ICSharpCode.ILSpy.Updates
 		/// Returns the download URL if an update is available.
 		/// Returns null if no update is available, or if no check was performed.
 		/// </summary>
-		public static async Task<string> CheckForUpdatesIfEnabledAsync(ISettingsProvider spySettings)
+		public static async Task<string?> CheckForUpdatesIfEnabledAsync(ISettingsProvider spySettings)
 		{
 			UpdateSettings s = new UpdateSettings(spySettings);
 
@@ -87,13 +87,13 @@ namespace ICSharpCode.ILSpy.Updates
 			}
 		}
 
-		public static Task<string> CheckForUpdatesAsync(ISettingsProvider spySettings)
+		public static Task<string?> CheckForUpdatesAsync(ISettingsProvider spySettings)
 		{
 			UpdateSettings s = new UpdateSettings(spySettings);
 			return CheckForUpdateInternal(s);
 		}
 
-		static async Task<string> CheckForUpdateInternal(UpdateSettings s)
+		static async Task<string?> CheckForUpdateInternal(UpdateSettings s)
 		{
 			try
 			{

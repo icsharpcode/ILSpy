@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -59,7 +60,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Matches 'newobj TupleType(...)'.
 		/// Takes care of flattening long tuples.
 		/// </summary>
-		public static bool MatchTupleConstruction(NewObj newobj, out ILInstruction[] arguments)
+		public static bool MatchTupleConstruction(NewObj? newobj, [NotNullWhen(true)] out ILInstruction[]? arguments)
 		{
 			arguments = null;
 			if (newobj == null)

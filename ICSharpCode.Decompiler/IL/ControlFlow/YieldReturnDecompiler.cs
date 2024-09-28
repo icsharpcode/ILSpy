@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection.Metadata;
 
@@ -72,15 +73,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		/// <summary>The field in the compiler-generated class holding the current state of the state machine</summary>
 		/// <remarks>Set in AnalyzeCtor() for MS, MatchEnumeratorCreationPattern() or AnalyzeMoveNext() for Mono</remarks>
-		IField stateField;
+		IField? stateField;
 
 		/// <summary>The backing field of the 'Current' property in the compiler-generated class</summary>
 		/// <remarks>Set in AnalyzeCurrentProperty()</remarks>
-		IField currentField;
+		IField? currentField;
 
 		/// <summary>The disposing field of the compiler-generated enumerator class.</summary>
 		/// <remarks>Set in ConstructExceptionTable() for assembly compiled with Mono</remarks>
-		IField disposingField;
+		IField? disposingField;
 
 		/// <summary>Maps the fields of the compiler-generated class to the original parameters.</summary>
 		/// <remarks>Set in MatchEnumeratorCreationPattern() and ResolveIEnumerableIEnumeratorFieldMapping()</remarks>
@@ -89,7 +90,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>This dictionary stores the information extracted from the Dispose() method:
 		/// for each "Finally Method", it stores the set of states for which the method is being called.</summary>
 		/// <remarks>Set in ConstructExceptionTable()</remarks>
-		Dictionary<IMethod, LongSet> finallyMethodToStateRange;
+		Dictionary<IMethod, LongSet>? finallyMethodToStateRange;
 
 		/// <summary>
 		/// For each finally method, stores the target state when entering the finally block,
@@ -105,17 +106,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Local bool variable in MoveNext() that signifies whether to skip finally bodies.
 		/// </summary>
-		ILVariable skipFinallyBodies;
+		ILVariable? skipFinallyBodies;
 
 		/// <summary>
 		/// Local bool variable in MoveNext() that signifies whether to execute finally bodies.
 		/// </summary>
-		ILVariable doFinallyBodies;
+		ILVariable? doFinallyBodies;
 
 		/// <summary>
 		/// Set of variables might hold copies of the generated state field.
 		/// </summary>
-		HashSet<ILVariable> cachedStateVars;
+		HashSet<ILVariable>? cachedStateVars;
 
 		#region Run() method
 		public void Run(ILFunction function, ILTransformContext context)
@@ -268,7 +269,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			}
 
-			ILInstruction newObj;
+			ILInstruction? newObj;
 			if (body.Instructions.Count == 1)
 			{
 				// No parameters passed to enumerator (not even 'this'):
@@ -942,7 +943,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			void ConvertBranchAfterYieldReturn(Block newBlock, Block oldBlock, int pos)
 			{
-				Block targetBlock;
+				Block? targetBlock;
 				if (isCompiledWithMono && disposingField != null)
 				{
 					// Mono skips over the state assignment if 'this.disposing' is set:
@@ -1130,7 +1131,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var fieldDef = (IField)ldflda.Field.MemberDefinition;
 				if (!fieldToVariableMap.TryGetValue(fieldDef, out var v))
 				{
-					string name = null;
+					string? name = null;
 					if (!string.IsNullOrEmpty(fieldDef.Name) && fieldDef.Name[0] == '<')
 					{
 						int pos = fieldDef.Name.IndexOf('>');
@@ -1232,7 +1233,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				context.CancellationToken.ThrowIfCancellationRequested();
 				int oldState = blockState[block.ChildIndex];
-				BlockContainer container; // new container for the block
+				BlockContainer? container; // new container for the block
 				if (GetNewState(block) is int newState)
 				{
 					// OK, state change
@@ -1334,7 +1335,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			IMethod FindFinallyMethod(int state)
 			{
-				IMethod foundMethod = null;
+				IMethod? foundMethod = null;
 				foreach (var (method, stateRange) in finallyMethodToStateRange)
 				{
 					if (stateRange.Contains(state))
@@ -1426,7 +1427,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			context.StepEndGroup(keepIfEmpty: true);
 
-			bool IsCallToMonoFinallyMethod(Call call, out IMethod finallyMethod)
+			bool IsCallToMonoFinallyMethod(Call call, [NotNullWhen(true)] out IMethod? finallyMethod)
 			{
 				finallyMethod = default;
 				if (call == null)
@@ -1435,7 +1436,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 				if (!call.Method.Name.StartsWith("<>__Finally"))
 					return false;
-				ITypeDefinition declaringTypeDefinition = call.Method.DeclaringTypeDefinition;
+				ITypeDefinition? declaringTypeDefinition = call.Method.DeclaringTypeDefinition;
 				if (declaringTypeDefinition.MetadataToken != this.enumeratorType)
 					return false;
 				if (declaringTypeDefinition.ParentModule.MetadataFile.Metadata != metadata)

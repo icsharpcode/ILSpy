@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				this.model.PropertyChanged += Model_PropertyChanged;
 			}
 
-			private void Model_PropertyChanged(object sender, PropertyChangedEventArgs e)
+			private void Model_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 			{
 				if (e.PropertyName == nameof(model.IsCloseable))
 				{
@@ -54,14 +54,14 @@ namespace ICSharpCode.ILSpy.ViewModels
 				}
 			}
 
-			public event EventHandler CanExecuteChanged;
+			public event EventHandler? CanExecuteChanged;
 
-			public bool CanExecute(object parameter)
+			public bool CanExecute(object? parameter)
 			{
 				return model.IsCloseable;
 			}
 
-			public void Execute(object parameter)
+			public void Execute(object? parameter)
 			{
 				Docking.DockWorkspace.Instance.Remove(model);
 			}

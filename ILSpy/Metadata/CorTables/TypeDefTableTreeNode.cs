@@ -114,7 +114,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, typeDef.BaseType, protocol: "metadata")));
 			}
 
-			public string BaseTypeTooltip {
+			public string? BaseTypeTooltip {
 				get {
 					var output = new PlainTextOutput();
 					var provider = new DisassemblerSignatureTypeProvider(metadataFile, output);
@@ -145,8 +145,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, typeDef.GetFields().FirstOrDefault(), protocol: "metadata")));
 			}
 
-			string fieldListTooltip;
-			public string FieldListTooltip {
+			string? fieldListTooltip;
+			public string? FieldListTooltip {
 				get {
 					var field = typeDef.GetFields().FirstOrDefault();
 					if (field.IsNil)
@@ -163,8 +163,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, typeDef.GetMethods().FirstOrDefault(), protocol: "metadata")));
 			}
 
-			string methodListTooltip;
-			public string MethodListTooltip {
+			string? methodListTooltip;
+			public string? MethodListTooltip {
 				get {
 					var method = typeDef.GetMethods().FirstOrDefault();
 					if (method.IsNil)
@@ -173,7 +173,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			IEntity IMemberTreeNode.Member => ((MetadataModule)metadataFile.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule).GetDefinition(handle);
+			IEntity? IMemberTreeNode.Member => ((MetadataModule)metadataFile.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule).GetDefinition(handle);
 
 			public TypeDefEntry(MetadataFile metadataFile, TypeDefinitionHandle handle)
 			{

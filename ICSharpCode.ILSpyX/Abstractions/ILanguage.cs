@@ -27,7 +27,7 @@ namespace ICSharpCode.ILSpyX.Abstractions
 	{
 		bool ShowMember(IEntity member);
 		CodeMappingInfo GetCodeMappingInfo(MetadataFile module, EntityHandle member);
-		string GetEntityName(MetadataFile module, System.Reflection.Metadata.EntityHandle handle, bool fullName, bool omitGenerics);
+		string? GetEntityName(MetadataFile module, System.Reflection.Metadata.EntityHandle handle, bool fullName, bool omitGenerics);
 		string GetTooltip(IEntity entity);
 
 		string TypeToString(IType type, bool includeNamespace);

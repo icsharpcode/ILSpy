@@ -73,7 +73,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			MetadataFile module = method.ParentModule.MetadataFile;
+			MetadataFile? module = method.ParentModule?.MetadataFile;
 			dis.AssemblyResolver = module.GetAssemblyResolver();
 			dis.DebugInfo = module.GetDebugInfoOrNull();
 			dis.DisassembleMethod(module, (MethodDefinitionHandle)method.MetadataToken);
@@ -82,7 +82,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			MetadataFile module = field.ParentModule.MetadataFile;
+			MetadataFile? module = field.ParentModule?.MetadataFile;
 			dis.AssemblyResolver = module.GetAssemblyResolver();
 			dis.DebugInfo = module.GetDebugInfoOrNull();
 			dis.DisassembleField(module, (FieldDefinitionHandle)field.MetadataToken);
@@ -91,7 +91,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileProperty(IProperty property, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			MetadataFile module = property.ParentModule.MetadataFile;
+			MetadataFile? module = property.ParentModule?.MetadataFile;
 			dis.AssemblyResolver = module.GetAssemblyResolver();
 			dis.DebugInfo = module.GetDebugInfoOrNull();
 			dis.DisassembleProperty(module, (PropertyDefinitionHandle)property.MetadataToken);
@@ -117,7 +117,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileEvent(IEvent ev, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			MetadataFile module = ev.ParentModule.MetadataFile;
+			MetadataFile? module = ev.ParentModule?.MetadataFile;
 			dis.AssemblyResolver = module.GetAssemblyResolver();
 			dis.DebugInfo = module.GetDebugInfoOrNull();
 			dis.DisassembleEvent(module, (EventDefinitionHandle)ev.MetadataToken);
@@ -148,7 +148,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			MetadataFile module = type.ParentModule.MetadataFile;
+			MetadataFile? module = type.ParentModule?.MetadataFile;
 			dis.AssemblyResolver = module.GetAssemblyResolver();
 			dis.DebugInfo = module.GetDebugInfoOrNull();
 			dis.DisassembleType(module, (TypeDefinitionHandle)type.MetadataToken);
@@ -157,13 +157,13 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileNamespace(string nameSpace, IEnumerable<ITypeDefinition> types, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			MetadataFile module = types.FirstOrDefault()?.ParentModule.MetadataFile;
+			MetadataFile? module = types.FirstOrDefault()?.ParentModule?.MetadataFile;
 			dis.AssemblyResolver = module.GetAssemblyResolver();
 			dis.DebugInfo = module.GetDebugInfoOrNull();
 			dis.DisassembleNamespace(nameSpace, module, types.Select(t => (TypeDefinitionHandle)t.MetadataToken));
 		}
 
-		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
+		public override ProjectId? DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			output.WriteLine("// " + assembly.FileName);
 			output.WriteLine();
@@ -195,14 +195,14 @@ namespace ICSharpCode.ILSpy
 			return null;
 		}
 
-		public override RichText GetRichTextTooltip(IEntity entity)
+		public override RichText? GetRichTextTooltip(IEntity entity)
 		{
 			var output = new AvalonEditTextOutput() { IgnoreNewLineAndIndent = true };
 			var settingsService = SettingsService.Instance;
 			var dockWorkspace = DockWorkspace.Instance;
 
 			var disasm = CreateDisassembler(output, settingsService.CreateDecompilationOptions(dockWorkspace.ActiveTabPage));
-			MetadataFile module = entity.ParentModule?.MetadataFile;
+			MetadataFile? module = entity.ParentModule?.MetadataFile;
 			if (module == null)
 			{
 				return null;

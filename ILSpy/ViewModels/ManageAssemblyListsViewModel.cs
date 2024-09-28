@@ -100,9 +100,9 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		public List<PreconfiguredAssemblyList> PreconfiguredAssemblyLists { get; }
 
-		private string selectedAssemblyList;
+		private string? selectedAssemblyList;
 
-		public string SelectedAssemblyList {
+		public string? SelectedAssemblyList {
 			get => selectedAssemblyList;
 			set {
 				if (selectedAssemblyList != value)
@@ -282,7 +282,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 		public string Name { get; }
 		public string Path { get; }
 
-		public PreconfiguredAssemblyList(string name, string path = null)
+		public PreconfiguredAssemblyList(string name, string? path = null)
 		{
 			this.Name = name;
 			this.Path = path;

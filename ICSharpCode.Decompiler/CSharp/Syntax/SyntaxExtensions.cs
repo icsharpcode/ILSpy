@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public static Statement GetNextStatement(this Statement statement)
 		{
-			AstNode next = statement.NextSibling;
+			AstNode? next = statement.NextSibling;
 			while (next != null && !(next is Statement))
 				next = next.NextSibling;
 			return (Statement)next;

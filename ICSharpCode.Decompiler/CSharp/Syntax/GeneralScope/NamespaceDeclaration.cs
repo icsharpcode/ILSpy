@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public string FullName {
 			get {
-				NamespaceDeclaration parentNamespace = Parent as NamespaceDeclaration;
+				NamespaceDeclaration? parentNamespace = Parent as NamespaceDeclaration;
 				if (parentNamespace != null)
 					return BuildQualifiedName(parentNamespace.FullName, Name);
 				return Name;
@@ -150,9 +150,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitNamespaceDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			NamespaceDeclaration o = other as NamespaceDeclaration;
+			NamespaceDeclaration? o = other as NamespaceDeclaration;
 			return o != null && MatchString(this.Name, o.Name) && this.Members.DoMatch(o.Members, match);
 		}
 	}

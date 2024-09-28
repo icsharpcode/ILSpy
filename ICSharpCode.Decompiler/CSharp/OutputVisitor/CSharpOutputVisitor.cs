@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// </summary>
 		/// <param name="nextNode">The next node after the comma.</param>
 		/// <param name="noSpaceAfterComma">When set prevents printing a space after comma.</param>
-		protected virtual void Comma(AstNode nextNode, bool noSpaceAfterComma = false)
+		protected virtual void Comma(AstNode? nextNode, bool noSpaceAfterComma = false)
 		{
 			Space(policy.SpaceBeforeBracketComma);
 			// TODO: Comma policy has changed.
@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// <summary>
 		/// Writes an optional comma, e.g. at the end of an enum declaration or in an array initializer
 		/// </summary>
-		protected virtual void OptionalComma(AstNode pos)
+		protected virtual void OptionalComma(AstNode? pos)
 		{
 			// Look if there's a comma after the current node, and insert it if it exists.
 			while (pos != null && pos.NodeType == NodeType.Whitespace)
@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// <summary>
 		/// Writes an optional semicolon, e.g. at the end of a type or namespace declaration.
 		/// </summary>
-		protected virtual void OptionalSemicolon(AstNode pos)
+		protected virtual void OptionalSemicolon(AstNode? pos)
 		{
 			// Look if there's a semicolon after the current node, and insert it if it exists.
 			while (pos != null && pos.NodeType == NodeType.Whitespace)
@@ -200,7 +200,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteKeyword(tokenRole.Token, tokenRole);
 		}
 
-		protected virtual void WriteKeyword(string token, Role tokenRole = null)
+		protected virtual void WriteKeyword(string token, Role? tokenRole = null)
 		{
 			writer.WriteKeyword(tokenRole, token);
 			isAtStartOfLine = false;
@@ -529,7 +529,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				NewLine();
 				return;
 			}
-			BlockStatement block = embeddedStatement as BlockStatement;
+			BlockStatement? block = embeddedStatement as BlockStatement;
 			if (block != null)
 			{
 				WriteBlock(block, policy.StatementBraceStyle);
@@ -672,7 +672,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			// "int a; new List<int> { a = 1 };" is an object initalizers and invalid, but
 			// "int a; new List<int> { { a = 1 } };" is a valid collection initializer.
-			AssignmentExpression ae = expr as AssignmentExpression;
+			AssignmentExpression? ae = expr as AssignmentExpression;
 			return ae != null && ae.Operator == AssignmentOperatorType.Assign;
 		}
 
@@ -703,7 +703,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			OpenBrace(wrap ? policy.ArrayInitializerBraceStyle : BraceStyle.EndOfLine, newLine: wrap);
 			if (!wrap)
 				Space();
-			AstNode last = null;
+			AstNode? last = null;
 			foreach (var (idx, node) in elements.WithIndex())
 			{
 				if (idx > 0)
@@ -1658,7 +1658,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				if (typeDeclaration.ClassType == ClassType.Enum)
 				{
 					bool first = true;
-					AstNode last = null;
+					AstNode? last = null;
 					foreach (var member in typeDeclaration.Members)
 					{
 						if (first)
@@ -1947,7 +1947,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteIdentifier(labelStatement.GetChildByRole(Roles.Identifier));
 			WriteToken(Roles.Colon);
 			bool foundLabelledStatement = false;
-			for (AstNode tmp = labelStatement.NextSibling; tmp != null; tmp = tmp.NextSibling)
+			for (AstNode? tmp = labelStatement.NextSibling; tmp != null; tmp = tmp.NextSibling)
 			{
 				if (tmp.Role == labelStatement.Role)
 				{
@@ -2340,7 +2340,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StartNode(constructorDeclaration);
 			WriteAttributes(constructorDeclaration.Attributes);
 			WriteModifiers(constructorDeclaration.ModifierTokens);
-			TypeDeclaration type = constructorDeclaration.Parent as TypeDeclaration;
+			TypeDeclaration? type = constructorDeclaration.Parent as TypeDeclaration;
 			if (type != null && type.Name != constructorDeclaration.Name)
 				WriteIdentifier((Identifier)type.NameToken.Clone());
 			else
@@ -2386,7 +2386,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				Space();
 			}
 			WriteToken(DestructorDeclaration.TildeRole);
-			TypeDeclaration type = destructorDeclaration.Parent as TypeDeclaration;
+			TypeDeclaration? type = destructorDeclaration.Parent as TypeDeclaration;
 			if (type != null && type.Name != destructorDeclaration.Name)
 				WriteIdentifier((Identifier)type.NameToken.Clone());
 			else
@@ -2949,7 +2949,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public virtual void VisitCSharpTokenNode(CSharpTokenNode cSharpTokenNode)
 		{
-			CSharpModifierToken mod = cSharpTokenNode as CSharpModifierToken;
+			CSharpModifierToken? mod = cSharpTokenNode as CSharpModifierToken;
 			if (mod != null)
 			{
 				// ITokenWriter assumes that each node processed between a

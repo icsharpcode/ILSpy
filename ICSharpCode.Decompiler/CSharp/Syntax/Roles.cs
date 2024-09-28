@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public static class Roles
 	{
-		public static readonly Role<AstNode> Root = AstNode.RootRole;
+		public static readonly Role<AstNode?> Root = AstNode.RootRole;
 
 		// some pre defined constants for common roles
 		public static readonly Role<Identifier> Identifier = new Role<Identifier>("Identifier", Syntax.Identifier.Null);

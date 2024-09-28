@@ -73,7 +73,7 @@ namespace ICSharpCode.ILSpy.Controls
 
 		static void OnSortDirectionChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
 		{
-			ListView grid = sender as ListView;
+			ListView? grid = sender as ListView;
 			if (grid != null)
 			{
 				SortableGridViewColumn col = GetCurrentSortColumn(grid);
@@ -101,7 +101,7 @@ namespace ICSharpCode.ILSpy.Controls
 
 		static void OnCurrentSortColumnChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
 		{
-			ListView grid = sender as ListView;
+			ListView? grid = sender as ListView;
 			if (grid != null)
 			{
 				SortableGridViewColumn oldColumn = (SortableGridViewColumn)args.OldValue;
@@ -134,7 +134,7 @@ namespace ICSharpCode.ILSpy.Controls
 
 		static void OnSortModeChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
 		{
-			ListView grid = sender as ListView;
+			ListView? grid = sender as ListView;
 			if (grid != null)
 			{
 				if ((ListViewSortMode)args.NewValue != ListViewSortMode.None)
@@ -146,8 +146,8 @@ namespace ICSharpCode.ILSpy.Controls
 
 		static void GridViewColumnHeaderClickHandler(object sender, RoutedEventArgs e)
 		{
-			ListView grid = sender as ListView;
-			GridViewColumnHeader headerClicked = e.OriginalSource as GridViewColumnHeader;
+			ListView? grid = sender as ListView;
+			GridViewColumnHeader? headerClicked = e.OriginalSource as GridViewColumnHeader;
 			if (grid != null && headerClicked != null && headerClicked.Role != GridViewColumnHeaderRole.Padding)
 			{
 				if (headerClicked.Column == GetCurrentSortColumn(grid))
@@ -188,7 +188,7 @@ namespace ICSharpCode.ILSpy.Controls
 				string sortBy = column.SortBy;
 				if (sortBy == null)
 				{
-					Binding binding = column.DisplayMemberBinding as Binding;
+					Binding? binding = column.DisplayMemberBinding as Binding;
 					if (binding != null && binding.Path != null)
 					{
 						sortBy = binding.Path.Path;

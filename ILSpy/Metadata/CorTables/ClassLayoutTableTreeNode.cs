@@ -100,8 +100,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference("metadata", classLayout.Parent)));
 			}
 
-			string parentTooltip;
-			public string ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, classLayout.Parent);
+			string? parentTooltip;
+			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, classLayout.Parent);
 
 			[ColumnInfo("X4", Kind = ColumnKind.Other)]
 			public ushort PackingSize => classLayout.PackingSize;

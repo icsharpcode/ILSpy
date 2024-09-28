@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitDeclarationExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			return other is DeclarationExpression o
 				&& Type.DoMatch(o.Type, match)

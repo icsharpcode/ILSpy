@@ -86,7 +86,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, debugInfo.Document, protocol: "metadata")));
 			}
 
-			public string DocumentTooltip {
+			public string? DocumentTooltip {
 				get {
 					if (debugInfo.Document.IsNil)
 						return null;
@@ -98,7 +98,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int SequencePoints => MetadataTokens.GetHeapOffset(debugInfo.SequencePointsBlob);
 
-			public string SequencePointsTooltip {
+			public string? SequencePointsTooltip {
 				get {
 					if (debugInfo.SequencePointsBlob.IsNil)
 						return null;
@@ -119,7 +119,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, debugInfo.LocalSignature, protocol: "metadata")));
 			}
 
-			public string LocalSignatureTooltip {
+			public string? LocalSignatureTooltip {
 				get {
 					if (debugInfo.LocalSignature.IsNil)
 						return null;

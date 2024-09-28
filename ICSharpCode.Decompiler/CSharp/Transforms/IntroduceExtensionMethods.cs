@@ -147,9 +147,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 
 		static bool CanTransformToExtensionMethodCall(CSharpResolver resolver,
-			InvocationExpression invocationExpression, out MemberReferenceExpression memberRefExpr,
-			out ResolveResult target,
-			out Expression firstArgument)
+			InvocationExpression invocationExpression, out MemberReferenceExpression? memberRefExpr,
+			out ResolveResult? target,
+			out Expression? firstArgument)
 		{
 			var method = invocationExpression.GetSymbol() as IMethod;
 			memberRefExpr = null;
@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			Debug.Assert(target != null);
 			ResolveResult[] args = new ResolveResult[invocationExpression.Arguments.Count - 1];
-			string[] argNames = null;
+			string[]? argNames = null;
 			int pos = 0;
 			foreach (var arg in invocationExpression.Arguments.Skip(1))
 			{

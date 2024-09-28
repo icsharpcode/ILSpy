@@ -33,14 +33,14 @@ namespace ICSharpCode.ILSpy.TextView
 		/// Searches for a matching bracket from the given offset to the start of the document.
 		/// </summary>
 		/// <returns>A BracketSearchResult that contains the positions and lengths of the brackets. Return null if there is nothing to highlight.</returns>
-		BracketSearchResult SearchBracket(IDocument document, int offset);
+		BracketSearchResult? SearchBracket(IDocument document, int offset);
 	}
 
 	public class DefaultBracketSearcher : IBracketSearcher
 	{
 		public static readonly DefaultBracketSearcher DefaultInstance = new DefaultBracketSearcher();
 
-		public BracketSearchResult SearchBracket(IDocument document, int offset)
+		public BracketSearchResult? SearchBracket(IDocument document, int offset)
 		{
 			return null;
 		}
@@ -71,12 +71,12 @@ namespace ICSharpCode.ILSpy.TextView
 
 	public class BracketHighlightRenderer : IBackgroundRenderer
 	{
-		BracketSearchResult result;
+		BracketSearchResult? result;
 		Pen borderPen;
 		Brush backgroundBrush;
 		ICSharpCode.AvalonEdit.Rendering.TextView textView;
 
-		public void SetHighlight(BracketSearchResult result)
+		public void SetHighlight(BracketSearchResult? result)
 		{
 			if (this.result != result)
 			{

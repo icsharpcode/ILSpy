@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.Metadata
 	/// </summary>
 	public partial class FlagsTooltip : IEnumerable<FlagGroup>
 	{
-		public FlagsTooltip(int value = 0, Type flagsType = null)
+		public FlagsTooltip(int value = 0, Type? flagsType = null)
 		{
 			InitializeComponent();
 		}
@@ -94,7 +94,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 	public abstract class FlagGroup
 	{
-		public static MultipleChoiceGroup CreateMultipleChoiceGroup(Type flagsType, string header = null, int mask = -1, int selectedValue = 0, bool includeAll = true)
+		public static MultipleChoiceGroup CreateMultipleChoiceGroup(Type flagsType, string? header = null, int mask = -1, int selectedValue = 0, bool includeAll = true)
 		{
 			MultipleChoiceGroup group = new MultipleChoiceGroup(GetFlags(flagsType, mask, selectedValue, includeAll ? "<All>" : null));
 			group.Header = header;
@@ -102,7 +102,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return group;
 		}
 
-		public static SingleChoiceGroup CreateSingleChoiceGroup(Type flagsType, string header = null, int mask = -1, int selectedValue = 0, Flag defaultFlag = default, bool includeAny = true)
+		public static SingleChoiceGroup CreateSingleChoiceGroup(Type flagsType, string? header = null, int mask = -1, int selectedValue = 0, Flag defaultFlag = default, bool includeAny = true)
 		{
 			var group = new SingleChoiceGroup(GetFlags(flagsType, mask, selectedValue, includeAny ? "<Any>" : null));
 			group.Header = header;
@@ -114,7 +114,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return group;
 		}
 
-		public static IEnumerable<Flag> GetFlags(Type flagsType, int mask = -1, int selectedValues = 0, string neutralItem = null)
+		public static IEnumerable<Flag> GetFlags(Type flagsType, int mask = -1, int selectedValues = 0, string? neutralItem = null)
 		{
 			if (neutralItem != null)
 				yield return new Flag(neutralItem, -1, false);
@@ -130,7 +130,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		public string Header { get; set; }
+		public string? Header { get; set; }
 
 		public IList<Flag> Flags { get; protected set; }
 	}

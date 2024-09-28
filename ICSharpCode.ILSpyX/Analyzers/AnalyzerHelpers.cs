@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpyX.Analyzers
 			switch (customAttribute.Parent.Kind)
 			{
 				case HandleKind.MethodDefinition:
-					IMethod parent = (IMethod)ts.MainModule.ResolveEntity(customAttribute.Parent);
+					IMethod? parent = (IMethod?)ts.MainModule.ResolveEntity(customAttribute.Parent);
 					return parent?.AccessorOwner ?? parent;
 				case HandleKind.FieldDefinition:
 				case HandleKind.PropertyDefinition:

@@ -45,12 +45,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			SRM.CustomAttributeHandleCollection? additionalAttributes = null)
 		{
 			bool hasDynamicAttribute = false;
-			bool[] dynamicAttributeData = null;
+			bool[]? dynamicAttributeData = null;
 			bool hasNativeIntegersAttribute = (options & TypeSystemOptions.NativeIntegersWithoutAttribute) != 0;
-			bool[] nativeIntegersAttributeData = null;
-			string[] tupleElementNames = null;
+			bool[]? nativeIntegersAttributeData = null;
+			string?[]? tupleElementNames = null;
 			Nullability nullability;
-			Nullability[] nullableAttributeData = null;
+			Nullability[]? nullableAttributeData = null;
 			if ((options & TypeSystemOptions.NullabilityAnnotations) != 0)
 			{
 				nullability = nullableContext;
@@ -175,11 +175,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		readonly bool hasDynamicAttribute;
 		readonly bool[] dynamicAttributeData;
 		readonly bool hasNativeIntegersAttribute;
-		readonly bool[] nativeIntegersAttributeData;
+		readonly bool[]? nativeIntegersAttributeData;
 		readonly TypeSystemOptions options;
 		readonly string[] tupleElementNames;
 		readonly Nullability defaultNullability;
-		readonly Nullability[] nullableAttributeData;
+		readonly Nullability[]? nullableAttributeData;
 		int dynamicTypeIndex = 0;
 		int tupleTypeIndex = 0;
 		int nullabilityTypeIndex = 0;
@@ -187,9 +187,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		private ApplyAttributeTypeVisitor(ICompilation compilation,
 			bool hasDynamicAttribute, bool[] dynamicAttributeData,
-			bool hasNativeIntegersAttribute, bool[] nativeIntegersAttributeData,
+			bool hasNativeIntegersAttribute, bool[]? nativeIntegersAttributeData,
 			TypeSystemOptions options, string[] tupleElementNames,
-			Nullability defaultNullability, Nullability[] nullableAttributeData)
+			Nullability defaultNullability, Nullability[]? nullableAttributeData)
 		{
 			this.compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
 			this.hasDynamicAttribute = hasDynamicAttribute;
@@ -253,7 +253,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return base.VisitByReferenceType(type);
 		}
 
-		public override IType VisitParameterizedType(ParameterizedType type)
+		public override IType VisitParameterizedType(ParameterizedType? type)
 		{
 			bool useTupleTypes = (options & TypeSystemOptions.Tuple) != 0;
 			if (useTupleTypes && TupleType.IsTupleCompatible(type, out int tupleCardinality))

@@ -12,7 +12,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	{
 		TransformContext context;
 		bool hasNamespace;
-		NamespaceDeclaration singleNamespaceDeclaration;
+		NamespaceDeclaration? singleNamespaceDeclaration;
 
 		public override void VisitSyntaxTree(SyntaxTree syntaxTree)
 		{

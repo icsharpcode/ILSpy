@@ -143,9 +143,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return new TextLocation(line, col);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			PrimitiveExpression o = other as PrimitiveExpression;
+			PrimitiveExpression? o = other as PrimitiveExpression;
 			return o != null && (this.Value == AnyValue || object.Equals(this.Value, o.Value));
 		}
 	}

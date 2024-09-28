@@ -27,7 +27,7 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class ManageAssemblyListsCommand : SimpleCommand
 	{
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			ManageAssemblyListsDialog dlg = new ManageAssemblyListsDialog();
 			dlg.Owner = MainWindow.Instance;

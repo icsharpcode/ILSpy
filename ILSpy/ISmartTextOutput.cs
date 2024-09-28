@@ -52,7 +52,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Creates a button.
 		/// </summary>
-		public static void AddButton(this ISmartTextOutput output, ImageSource icon, string text, RoutedEventHandler click)
+		public static void AddButton(this ISmartTextOutput output, ImageSource? icon, string text, RoutedEventHandler click)
 		{
 			output.AddUIElement(
 				delegate {

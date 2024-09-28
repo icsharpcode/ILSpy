@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy
 		public NavigationState(TabPageModel tabPage, ViewState viewState)
 		{
 			this.TabPage = tabPage;
-			this.treeNodes = new HashSet<SharpTreeNode>((IEnumerable<SharpTreeNode>)viewState.DecompiledNodes ?? Array.Empty<SharpTreeNode>());
+			this.treeNodes = new HashSet<SharpTreeNode>((IEnumerable<SharpTreeNode>?)viewState.DecompiledNodes ?? Array.Empty<SharpTreeNode>());
 			ViewState = viewState;
 		}
 
@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy
 		}
 
 
-		public bool Equals(NavigationState other)
+		public bool Equals(NavigationState? other)
 		{
 			if (!this.treeNodes.SetEquals(other.treeNodes))
 				return false;

@@ -84,7 +84,7 @@ namespace ICSharpCode.ILSpy.Controls
 
 		#region Overrides
 
-		DispatcherTimer timer;
+		DispatcherTimer? timer;
 
 		protected override void OnTextChanged(TextChangedEventArgs e)
 		{
@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpy.Controls
 				wl.Visibility = HasText ? Visibility.Hidden : Visibility.Visible;
 		}
 
-		void timer_Tick(object sender, EventArgs e)
+		void timer_Tick(object? sender, EventArgs e)
 		{
 			timer.Stop();
 			timer = null;
@@ -137,7 +137,7 @@ namespace ICSharpCode.ILSpy.Controls
 		{
 			base.OnApplyTemplate();
 
-			Border iconBorder = GetTemplateChild("PART_IconBorder") as Border;
+			Border? iconBorder = GetTemplateChild("PART_IconBorder") as Border;
 			if (iconBorder != null)
 			{
 				iconBorder.MouseLeftButtonUp += IconBorder_MouseLeftButtonUp;

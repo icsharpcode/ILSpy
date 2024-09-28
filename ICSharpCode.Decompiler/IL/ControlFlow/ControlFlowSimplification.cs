@@ -120,11 +120,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// (where 'v' has no other uses)
 			// Simplify these to a simple `ret(<inst>)` so that they match the release build version.
 			// 
-			if (block.Instructions.Count == 2 && block.Instructions[1].MatchReturn(out ILInstruction value))
+			if (block.Instructions.Count == 2 && block.Instructions[1].MatchReturn(out ILInstruction? value))
 			{
 				var ret = (Leave)block.Instructions[1];
-				if (value.MatchLdLoc(out ILVariable v)
-					&& v.IsSingleDefinition && v.LoadCount == 1 && block.Instructions[0].MatchStLoc(v, out ILInstruction inst))
+				if (value.MatchLdLoc(out ILVariable? v)
+					&& v.IsSingleDefinition && v.LoadCount == 1 && block.Instructions[0].MatchStLoc(v, out ILInstruction? inst))
 				{
 					context.Step("Inline variable in return block", block);
 					inst.AddILRange(ret.Value);
@@ -228,7 +228,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!value.MatchLdLoc(out var returnVar))
 				return false;
 			var container = branch.TargetContainer;
-			for (ILInstruction inst = branch; inst != container; inst = inst.Parent)
+			for (ILInstruction? inst = branch; inst != container; inst = inst.Parent)
 			{
 				if (inst.Parent is TryFinally tryFinally && inst.SlotInfo == TryFinally.TryBlockSlot)
 				{
@@ -247,7 +247,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Ensure the block will stay a basic block -- we don't want extended basic blocks prior to LoopDetection.
 			if (block.Instructions.Count > 1 && block.Instructions[block.Instructions.Count - 2].HasFlag(InstructionFlags.MayBranch))
 				return false;
-			Branch br = block.Instructions.Last() as Branch;
+			Branch? br = block.Instructions.Last() as Branch;
 			// Check whether we can combine the target block with this block
 			if (br == null || br.TargetBlock.Parent != container || br.TargetBlock.IncomingEdgeCount != 1)
 				return false;

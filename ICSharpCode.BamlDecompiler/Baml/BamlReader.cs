@@ -91,7 +91,7 @@ namespace ICSharpCode.BamlDecompiler.Baml
 
 				long pos = str.Position;
 				var type = (BamlRecordType)reader.ReadByte();
-				BamlRecord rec = null;
+				BamlRecord? rec = null;
 				switch (type)
 				{
 					case BamlRecordType.AssemblyInfo:

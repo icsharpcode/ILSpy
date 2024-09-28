@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 			{
 				return other == null || other.IsNull;
 			}
@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitPatternPlaceholder(this, child, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 			{
 				return child.DoMatch(other, match);
 			}
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public VariableInitializer(string name, Expression initializer = null)
+		public VariableInitializer(string name, Expression? initializer = null)
 		{
 			this.Name = name;
 			this.Initializer = initializer;
@@ -166,9 +166,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitVariableInitializer(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			VariableInitializer o = other as VariableInitializer;
+			VariableInitializer? o = other as VariableInitializer;
 			return o != null && MatchString(this.Name, o.Name) && this.Initializer.DoMatch(o.Initializer, match);
 		}
 	}

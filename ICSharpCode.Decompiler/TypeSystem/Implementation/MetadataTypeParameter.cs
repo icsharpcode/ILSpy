@@ -251,7 +251,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return 0x51fc5b83 ^ module.MetadataFile.GetHashCode() ^ handle.GetHashCode();
 		}
 
-		public override bool Equals(IType other)
+		public override bool Equals(IType? other)
 		{
 			return other is MetadataTypeParameter tp && handle == tp.handle && module.MetadataFile == tp.module.MetadataFile;
 		}

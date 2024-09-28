@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			get { return groupName; }
 		}
 
-		public AnyNodeOrNull(string groupName = null)
+		public AnyNodeOrNull(string? groupName = null)
 		{
 			this.groupName = groupName;
 		}

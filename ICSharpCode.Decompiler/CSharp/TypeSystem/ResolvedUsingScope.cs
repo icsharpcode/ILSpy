@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 
 		public INamespace Namespace {
 			get {
-				INamespace result = LazyInit.VolatileRead(ref this.@namespace);
+				INamespace? result = LazyInit.VolatileRead(ref this.@namespace);
 				if (result != null)
 				{
 					return result;
@@ -213,12 +213,12 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 				get { return parentNamespace.Compilation; }
 			}
 
-			INamespace INamespace.GetChildNamespace(string name)
+			INamespace? INamespace.GetChildNamespace(string name)
 			{
 				return null;
 			}
 
-			ITypeDefinition INamespace.GetTypeDefinition(string name, int typeParameterCount)
+			ITypeDefinition? INamespace.GetTypeDefinition(string name, int typeParameterCount)
 			{
 				return null;
 			}

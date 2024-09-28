@@ -32,7 +32,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 
 		static Pen pen;
 
-		SharpTreeNodeView NodeView {
+		SharpTreeNodeView? NodeView {
 			get { return TemplatedParent as SharpTreeNodeView; }
 		}
 

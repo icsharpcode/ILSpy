@@ -43,9 +43,9 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		/// <summary>
 		/// Returns the namespace that is referenced; or null if no such namespace is found.
 		/// </summary>
-		public INamespace ResolveNamespace(CSharpResolver resolver)
+		public INamespace? ResolveNamespace(CSharpResolver resolver)
 		{
-			NamespaceResolveResult nrr = Resolve(resolver) as NamespaceResolveResult;
+			NamespaceResolveResult? nrr = Resolve(resolver) as NamespaceResolveResult;
 			return nrr != null ? nrr.Namespace : null;
 		}
 

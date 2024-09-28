@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
 			AstNode node = astBuilder.ConvertSymbol(symbol);
 			writer.StartNode(node);
-			EntityDeclaration entityDecl = node as EntityDeclaration;
+			EntityDeclaration? entityDecl = node as EntityDeclaration;
 			if (entityDecl != null)
 				PrintModifiers(entityDecl.Modifiers, writer);
 

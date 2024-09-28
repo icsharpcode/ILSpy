@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </remarks>
 	class PrettifyAssignments : DepthFirstAstVisitor, IAstTransform
 	{
-		TransformContext context;
+		TransformContext? context;
 
 		public override void VisitAssignmentExpression(AssignmentExpression assignment)
 		{
@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// Also supports "x = (T)(x op y)" -> "x op= y", if x.GetType() == T
 			// and y is implicitly convertible to T.
 			Expression rhs = assignment.Right;
-			IType expectedType = null;
+			IType? expectedType = null;
 			if (assignment.Right is CastExpression { Type: var astType } cast)
 			{
 				rhs = cast.Expression;
@@ -132,13 +132,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		static bool CanConvertToCompoundAssignment(Expression left)
 		{
-			MemberReferenceExpression mre = left as MemberReferenceExpression;
+			MemberReferenceExpression? mre = left as MemberReferenceExpression;
 			if (mre != null)
 				return IsWithoutSideEffects(mre.Target);
-			IndexerExpression ie = left as IndexerExpression;
+			IndexerExpression? ie = left as IndexerExpression;
 			if (ie != null)
 				return IsWithoutSideEffects(ie.Target) && ie.Arguments.All(IsWithoutSideEffects);
-			UnaryOperatorExpression uoe = left as UnaryOperatorExpression;
+			UnaryOperatorExpression? uoe = left as UnaryOperatorExpression;
 			if (uoe != null && uoe.Operator == UnaryOperatorType.Dereference)
 				return IsWithoutSideEffects(uoe.Expression);
 			return IsWithoutSideEffects(left);

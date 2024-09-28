@@ -120,9 +120,9 @@ namespace ICSharpCode.ILSpy.Metadata
 		public object Value { get; }
 		public string Meaning { get; }
 
-		public IList<BitEntry> RowDetails { get; }
+		public IList<BitEntry>? RowDetails { get; }
 
-		public Entry(int offset, object value, int size, string member, string meaning, IList<BitEntry> rowDetails = null)
+		public Entry(int offset, object value, int size, string member, string meaning, IList<BitEntry>? rowDetails = null)
 		{
 			this.Member = member;
 			this.Offset = offset;

@@ -65,7 +65,7 @@ namespace ICSharpCode.ILSpy.Docking
 			MessageBus<CurrentAssemblyListChangedEventArgs>.Subscribers += (sender, e) => CurrentAssemblyList_Changed(sender, e);
 		}
 
-		private void CurrentAssemblyList_Changed(object sender, NotifyCollectionChangedEventArgs e)
+		private void CurrentAssemblyList_Changed(object? sender, NotifyCollectionChangedEventArgs e)
 		{
 			if (e.OldItems == null)
 			{
@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpy.Docking
 			}
 		}
 
-		private void TabPages_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+		private void TabPages_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
 			if (e.Action == NotifyCollectionChangedAction.Add)
 			{
@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpy.Docking
 			}
 		}
 
-		public void AddTabPage(TabPageModel tabPage = null)
+		public void AddTabPage(TabPageModel? tabPage = null)
 		{
 			tabPages.Add(tabPage ?? new TabPageModel());
 		}
@@ -138,8 +138,8 @@ namespace ICSharpCode.ILSpy.Docking
 				tool.IsVisible = false;
 		}
 
-		private TabPageModel activeTabPage = null;
-		public TabPageModel ActiveTabPage {
+		private TabPageModel? activeTabPage = null;
+		public TabPageModel? ActiveTabPage {
 			get {
 				return activeTabPage;
 			}
@@ -183,7 +183,7 @@ namespace ICSharpCode.ILSpy.Docking
 			}
 		}
 
-		void LayoutSerializationCallback(object sender, LayoutSerializationCallbackEventArgs e)
+		void LayoutSerializationCallback(object? sender, LayoutSerializationCallbackEventArgs e)
 		{
 			switch (e.Model)
 			{
@@ -213,7 +213,7 @@ namespace ICSharpCode.ILSpy.Docking
 			return ActiveTabPage.ShowTextViewAsync(textView => textView.RunWithCancellation(taskCreation));
 		}
 
-		internal void ShowNodes(AvalonEditTextOutput output, TreeNodes.ILSpyTreeNode[] nodes, IHighlightingDefinition highlighting)
+		internal void ShowNodes(AvalonEditTextOutput output, TreeNodes.ILSpyTreeNode[]? nodes, IHighlightingDefinition highlighting)
 		{
 			ActiveTabPage.ShowTextView(textView => textView.ShowNodes(output, nodes, highlighting));
 		}
@@ -266,7 +266,7 @@ namespace ICSharpCode.ILSpy.Docking
 			{
 				var anchorable = layout.Descendents().OfType<LayoutAnchorable>().FirstOrDefault(x => x.Content is T)
 					?? layout.Hidden.First(x => x.Content is T);
-				return (LayoutAnchorablePane)previousContainerProperty.GetValue(anchorable) ?? (LayoutAnchorablePane)anchorable.Parent;
+				return (LayoutAnchorablePane?)previousContainerProperty.GetValue(anchorable) ?? (LayoutAnchorablePane)anchorable.Parent;
 			}
 		}
 
@@ -286,6 +286,6 @@ namespace ICSharpCode.ILSpy.Docking
 		}
 
 		// Dummy property to make the XAML designer happy, the model is provided by the AvalonDock PaneStyleSelectors, not by the DockWorkspace, but the designer assumes the data context in the PaneStyleSelectors is the DockWorkspace.
-		public PaneModel Model { get; } = null;
+		public PaneModel? Model { get; } = null;
 	}
 }

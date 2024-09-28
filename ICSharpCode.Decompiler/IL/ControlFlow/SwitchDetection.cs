@@ -38,10 +38,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	{
 		private readonly SwitchAnalysis analysis = new SwitchAnalysis();
 
-		private ILTransformContext context;
-		private BlockContainer currentContainer;
-		private ControlFlowGraph controlFlowGraph;
-		private LoopContext loopContext;
+		private ILTransformContext? context;
+		private BlockContainer? currentContainer;
+		private ControlFlowGraph? controlFlowGraph;
+		private LoopContext? loopContext;
 
 		/// <summary>
 		/// When detecting a switch, it is important to distinguish Branch instructions which will
@@ -233,9 +233,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			var dict = new Dictionary<Block, SwitchSection>(); // branch target -> switch section
 			sw.Sections.RemoveAll(
 				section => {
-					if (section.Body.MatchBranch(out Block target))
+					if (section.Body.MatchBranch(out Block? target))
 					{
-						if (dict.TryGetValue(target, out SwitchSection primarySection))
+						if (dict.TryGetValue(target, out SwitchSection? primarySection))
 						{
 							primarySection.Labels = primarySection.Labels.UnionWith(section.Labels);
 							primarySection.HasNullLabel |= section.HasNullLabel;
@@ -403,7 +403,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Determines if the analysed switch can be constructed without any gotos
 		/// </summary>
-		private bool SwitchUsesGoto(List<ControlFlowNode> flowNodes, List<ControlFlowNode> caseNodes, out Block breakBlock)
+		private bool SwitchUsesGoto(List<ControlFlowNode> flowNodes, List<ControlFlowNode> caseNodes, out Block? breakBlock)
 		{
 			// cases with predecessors that aren't part of the switch logic 
 			// must either require "goto case" statements, or consist of a single "break;"
@@ -438,13 +438,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			// if (comp(logic.not(call get_HasValue(ldloca nullableVar))) br NullCase
 			// br RootBlock
-			var nullableBlock = (Block)controlFlowGraph.GetNode(analysis.RootBlock).Predecessors.SingleOrDefault()?.UserData;
+			var nullableBlock = (Block?)controlFlowGraph.GetNode(analysis.RootBlock).Predecessors.SingleOrDefault()?.UserData;
 			if (nullableBlock == null ||
 				nullableBlock.Instructions.Count < 2 ||
 				!nullableBlock.Instructions.Last().MatchBranch(analysis.RootBlock) ||
 				!nullableBlock.Instructions.SecondToLastOrDefault().MatchIfInstruction(out var cond, out var trueInst) ||
 				!cond.MatchLogicNot(out var getHasValue) ||
-				!NullableLiftingTransform.MatchHasValueCall(getHasValue, out ILInstruction nullableInst))
+				!NullableLiftingTransform.MatchHasValueCall(getHasValue, out ILInstruction? nullableInst))
 				return;
 
 			// could check that nullableInst is ldloc or ldloca and that the switch variable matches a GetValueOrDefault

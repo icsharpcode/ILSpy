@@ -75,9 +75,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitUncheckedExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			UncheckedExpression o = other as UncheckedExpression;
+			UncheckedExpression? o = other as UncheckedExpression;
 			return o != null && this.Expression.DoMatch(o.Expression, match);
 		}
 	}

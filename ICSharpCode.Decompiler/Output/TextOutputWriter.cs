@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler
 			output.Write(value);
 		}
 
-		public override void Write(string value)
+		public override void Write(string? value)
 		{
 			output.Write(value);
 		}

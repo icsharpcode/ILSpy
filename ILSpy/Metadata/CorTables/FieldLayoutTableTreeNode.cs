@@ -99,8 +99,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, fieldLayout.Field, protocol: "metadata")));
 			}
 
-			string fieldTooltip;
-			public string FieldTooltip => GenerateTooltip(ref fieldTooltip, metadataFile, fieldLayout.Field);
+			string? fieldTooltip;
+			public string? FieldTooltip => GenerateTooltip(ref fieldTooltip, metadataFile, fieldLayout.Field);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public int FieldOffset => fieldLayout.Offset;

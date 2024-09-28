@@ -25,9 +25,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// </summary>
 	public interface INode
 	{
-		Role Role { get; }
-		INode FirstChild { get; }
-		INode NextSibling { get; }
+		Role? Role { get; }
+		INode? FirstChild { get; }
+		INode? NextSibling { get; }
 		bool IsNull { get; }
 
 		bool DoMatch(INode other, Match match);

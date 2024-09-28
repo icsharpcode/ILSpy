@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitLocalFunctionDeclarationStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			return other is LocalFunctionDeclarationStatement o && Declaration.DoMatch(o.Declaration, match);
 		}

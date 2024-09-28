@@ -24,9 +24,9 @@ using System.Windows;
 using System.Windows.Controls;
 
 using ICSharpCode.AvalonEdit;
+using ICSharpCode.ILSpy.Controls.TreeView;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpyX.Search;
-using ICSharpCode.ILSpy.Controls.TreeView;
 using ICSharpCode.ILSpyX.TreeView;
 
 using TomsToolbox.Composition;
@@ -47,37 +47,37 @@ namespace ICSharpCode.ILSpy
 		/// Returns the selected nodes in the tree view.
 		/// Returns null, if context menu does not belong to a tree view.
 		/// </summary>
-		public SharpTreeNode[] SelectedTreeNodes { get; private set; }
+		public SharpTreeNode[]? SelectedTreeNodes { get; private set; }
 
 		/// <summary>
 		/// Returns the tree view the context menu is assigned to.
 		/// Returns null, if context menu is not assigned to a tree view.
 		/// </summary>
-		public SharpTreeView TreeView { get; private set; }
+		public SharpTreeView? TreeView { get; private set; }
 
 		/// <summary>
 		/// Returns the text view the context menu is assigned to.
 		/// Returns null, if context menu is not assigned to a text view.
 		/// </summary>
-		public DecompilerTextView TextView { get; private set; }
+		public DecompilerTextView? TextView { get; private set; }
 
 		/// <summary>
 		/// Returns the list box the context menu is assigned to.
 		/// Returns null, if context menu is not assigned to a list box.
 		/// </summary>
-		public ListBox ListBox { get; private set; }
+		public ListBox? ListBox { get; private set; }
 
 		/// <summary>
 		/// Returns the data grid the context menu is assigned to.
 		/// Returns null, if context menu is not assigned to a data grid.
 		/// </summary>
-		public DataGrid DataGrid { get; private set; }
+		public DataGrid? DataGrid { get; private set; }
 
 		/// <summary>
 		/// Returns the reference the mouse cursor is currently hovering above.
 		/// Returns null, if there was no reference found.
 		/// </summary>
-		public ReferenceSegment Reference { get; private set; }
+		public ReferenceSegment? Reference { get; private set; }
 
 		/// <summary>
 		/// Returns the position in TextView the mouse cursor is currently hovering above.
@@ -90,9 +90,9 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public DependencyObject OriginalSource { get; private set; }
 
-		public static TextViewContext Create(ContextMenuEventArgs eventArgs, SharpTreeView treeView = null, DecompilerTextView textView = null, ListBox listBox = null, DataGrid dataGrid = null)
+		public static TextViewContext Create(ContextMenuEventArgs eventArgs, SharpTreeView? treeView = null, DecompilerTextView? textView = null, ListBox? listBox = null, DataGrid? dataGrid = null)
 		{
-			ReferenceSegment reference;
+			ReferenceSegment? reference;
 
 			if (textView is not null)
 			{
@@ -312,7 +312,7 @@ namespace ICSharpCode.ILSpy
 			menu = new ContextMenu();
 
 			var menuGroups = new Dictionary<string, IExport<IContextMenuEntry, IContextMenuEntryMetadata>[]>();
-			IExport<IContextMenuEntry, IContextMenuEntryMetadata>[] topLevelGroup = null;
+			IExport<IContextMenuEntry, IContextMenuEntryMetadata>[]? topLevelGroup = null;
 			foreach (var group in entries.OrderBy(c => c.Metadata.Order).GroupBy(c => c.Metadata.ParentMenuID))
 			{
 				if (group.Key == null)

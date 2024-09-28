@@ -93,8 +93,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, method, protocol: "metadata")));
 			}
 
-			string methodTooltip;
-			public string MethodTooltip => GenerateTooltip(ref methodTooltip, metadataFile, method);
+			string? methodTooltip;
+			public string? MethodTooltip => GenerateTooltip(ref methodTooltip, metadataFile, method);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Association => MetadataTokens.GetToken(association);
@@ -104,8 +104,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, association, protocol: "metadata")));
 			}
 
-			string associationTooltip;
-			public string AssociationTooltip => GenerateTooltip(ref associationTooltip, metadataFile, association);
+			string? associationTooltip;
+			public string? AssociationTooltip => GenerateTooltip(ref associationTooltip, metadataFile, association);
 
 			public MethodSemanticsEntry(MetadataFile metadataFile, Handle handle, MethodSemanticsAttributes semantics, MethodDefinitionHandle method, EntityHandle association)
 			{

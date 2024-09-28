@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
@@ -307,7 +308,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		private ILInstruction FindCompatibleArgument(LocalFunctionInfo info, IList<ILInstruction> arguments, bool ignoreStructure = false)
+		private ILInstruction? FindCompatibleArgument(LocalFunctionInfo info, IList<ILInstruction> arguments, bool ignoreStructure = false)
 		{
 			foreach (var arg in arguments)
 			{
@@ -320,7 +321,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return null;
 		}
 
-		private ILVariable ResolveAncestorScopeReference(ILInstruction inst)
+		private ILVariable? ResolveAncestorScopeReference(ILInstruction inst)
 		{
 			if (!inst.MatchLdFld(out var target, out var field))
 				return null;
@@ -337,7 +338,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return null;
 		}
 
-		private ILFunction GetDeclaringFunction(ILFunction localFunction)
+		private ILFunction? GetDeclaringFunction(ILFunction localFunction)
 		{
 			if (localFunction.DeclarationScope == null)
 				return null;
@@ -445,7 +446,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		ILFunction ReadLocalFunctionDefinition(ILFunction rootFunction, IMethod targetMethod, int skipCount)
+		ILFunction? ReadLocalFunctionDefinition(ILFunction rootFunction, IMethod targetMethod, int skipCount)
 		{
 			var methodDefinition = context.PEFile.Metadata.GetMethodDefinition((MethodDefinitionHandle)targetMethod.MetadataToken);
 			var genericContext = GenericContextFromTypeArguments(targetMethod, skipCount);
@@ -722,7 +723,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				function.DeclarationScope = FindCommonAncestorInstruction<BlockContainer>(function.DeclarationScope, closureVar.CaptureScope);
 			return true;
 
-			ILInstruction GetClosureInitializer(ILVariable variable)
+			ILInstruction? GetClosureInitializer(ILVariable variable)
 			{
 				var type = variable.Type.UnwrapByRef().GetDefinition();
 				if (type == null)
@@ -758,7 +759,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return IsLocalFunctionMethod(method.ParentModule.MetadataFile, (MethodDefinitionHandle)method.MetadataToken, context);
 		}
 
-		public static bool IsLocalFunctionMethod(MetadataFile module, MethodDefinitionHandle methodHandle, ILTransformContext context = null)
+		public static bool IsLocalFunctionMethod(MetadataFile module, MethodDefinitionHandle methodHandle, ILTransformContext? context = null)
 		{
 			if (context != null && context.PEFile != module)
 				return false;
@@ -797,7 +798,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		public static bool IsLocalFunctionDisplayClass(MetadataFile module, TypeDefinitionHandle typeHandle, ILTransformContext context = null)
+		public static bool IsLocalFunctionDisplayClass(MetadataFile module, TypeDefinitionHandle typeHandle, ILTransformContext? context = null)
 		{
 			if (context != null && context.PEFile != module)
 				return false;
@@ -831,7 +832,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		static readonly Regex functionNameRegex = new Regex(@"^<(.*)>g__([^\|]*)\|{0,1}\d+(_\d+)?$", RegexOptions.Compiled);
 
-		internal static bool ParseLocalFunctionName(string name, out string callerName, out string functionName)
+		internal static bool ParseLocalFunctionName(string name, [NotNullWhen(true)] out string? callerName, [NotNullWhen(true)] out string? functionName)
 		{
 			callerName = null;
 			functionName = null;

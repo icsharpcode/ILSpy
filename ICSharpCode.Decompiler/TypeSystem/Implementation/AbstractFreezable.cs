@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public static void Freeze(object item)
 		{
-			IFreezable f = item as IFreezable;
+			IFreezable? f = item as IFreezable;
 			if (f != null)
 				f.Freeze();
 		}

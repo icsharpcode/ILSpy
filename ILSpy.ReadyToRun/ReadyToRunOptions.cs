@@ -66,16 +66,16 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		public void LoadFromXml(XElement e)
 		{
-			XAttribute format = e.Attribute("DisassemblyFormat");
+			XAttribute? format = e.Attribute("DisassemblyFormat");
 			DisassemblyFormat = format == null ? intel : (string)format;
 
-			XAttribute unwind = e.Attribute("IsShowUnwindInfo");
+			XAttribute? unwind = e.Attribute("IsShowUnwindInfo");
 			IsShowUnwindInfo = unwind != null && (bool)unwind;
 
-			XAttribute debug = e.Attribute("IsShowDebugInfo");
+			XAttribute? debug = e.Attribute("IsShowDebugInfo");
 			IsShowDebugInfo = debug == null || (bool)debug;
 
-			XAttribute showGc = e.Attribute("IsShowGCInfo");
+			XAttribute? showGc = e.Attribute("IsShowGCInfo");
 			IsShowGCInfo = showGc != null && (bool)showGc;
 		}
 

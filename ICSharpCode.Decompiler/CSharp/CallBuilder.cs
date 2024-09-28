@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 
@@ -47,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			public TranslatedExpression[] Arguments;
 			public IParameter[] ExpectedParameters;
 			public string[] ParameterNames;
-			public string[] ArgumentNames;
+			public string[]? ArgumentNames;
 			public int FirstOptionalArgumentIndex;
 			public BitSet IsPrimitiveValue;
 			public IReadOnlyList<int> ArgumentToParameterMap;
@@ -146,7 +147,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				for (int i = 0; i < Arguments.Length; i++)
 				{
-					string inferredName;
+					string? inferredName;
 					switch (Arguments[i].Expression)
 					{
 						case IdentifierExpression identifier:
@@ -188,13 +189,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.typeSystem = typeSystem;
 		}
 
-		public TranslatedExpression Build(CallInstruction inst, IType typeHint = null)
+		public TranslatedExpression Build(CallInstruction inst, IType? typeHint = null)
 		{
 			if (inst is NewObj newobj && IL.Transforms.DelegateConstruction.MatchDelegateConstruction(newobj, out _, out _, out _))
 			{
 				return HandleDelegateConstruction(newobj);
 			}
-			if (settings.TupleTypes && TupleTransform.MatchTupleConstruction(inst as NewObj, out var tupleElements) && tupleElements.Length >= 2)
+			if (settings.TupleTypes && TupleTransform.MatchTupleConstruction(inst as NewObj, out var tupleElements) && tupleElements?.Length >= 2)
 			{
 				var elementTypes = TupleType.GetTupleElementTypes(inst.Method.DeclaringType);
 				var elementNames = typeHint is TupleType tt ? tt.ElementNames : default;
@@ -247,7 +248,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			return result;
 		}
 
-		static bool IsSpanBasedStringConcat(CallInstruction call, out List<(ILInstruction, KnownTypeCode)> operands)
+
+		static bool IsSpanBasedStringConcat(CallInstruction call, [NotNullWhen(true)] out List<(ILInstruction, KnownTypeCode)>? operands)
 		{
 			operands = null;
 
@@ -313,8 +315,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public ExpressionWithResolveResult Build(OpCode callOpCode, IMethod method,
 			IReadOnlyList<ILInstruction> callArguments,
-			IReadOnlyList<int> argumentToParameterMap = null,
-			IType constrainedTo = null)
+			IReadOnlyList<int>? argumentToParameterMap = null,
+			IType? constrainedTo = null)
 		{
 			if (method.IsExplicitInterfaceImplementation && callOpCode == OpCode.Call)
 			{
@@ -332,7 +334,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var expectedTargetDetails = new ExpectedTargetDetails {
 				CallOpCode = callOpCode
 			};
-			ILFunction localFunction = null;
+			ILFunction? localFunction = null;
 			if (method.IsLocalFunction)
 			{
 				localFunction = expressionBuilder.ResolveLocalFunction(method);
@@ -523,7 +525,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		private ExpressionWithResolveResult HandleStringInterpolation(IMethod method, ArgumentList argumentList)
 		{
-			if (!TryGetStringInterpolationTokens(argumentList, out string format, out var tokens))
+			if (!TryGetStringInterpolationTokens(argumentList, out string? format, out var tokens))
 				return default;
 
 			var arguments = argumentList.Arguments;
@@ -543,7 +545,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				argument = new TranslatedExpression(element, arrayCreationRR.InitializerElements.First());
 			}
 
-			if (tokens.Count == 0)
+			if (tokens == null || tokens.Count == 0)
 			{
 				return default;
 			}
@@ -655,7 +657,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		public ExpressionWithResolveResult BuildDictionaryInitializerExpression(OpCode callOpCode, IMethod method,
-			InitializedObjectResolveResult target, IReadOnlyList<ILInstruction> indices, ILInstruction value = null)
+			InitializedObjectResolveResult target, IReadOnlyList<ILInstruction> indices, ILInstruction? value = null)
 		{
 			if (method is null)
 				throw new ArgumentNullException(nameof(method));
@@ -696,7 +698,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			);
 		}
 
-		private bool TryGetStringInterpolationTokens(ArgumentList argumentList, out string format, out List<(TokenKind Kind, int Index, int Alignment, string Format)> tokens)
+		private bool TryGetStringInterpolationTokens(ArgumentList argumentList, [NotNullWhen(true)] out string? format, [NotNullWhen(true)] out List<(TokenKind Kind, int Index, int Alignment, string? Format)>? tokens)
 		{
 			tokens = null;
 			format = null;
@@ -707,9 +709,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			if (!arguments.Skip(1).All(a => !a.Expression.DescendantsAndSelf.OfType<PrimitiveExpression>().Any(p => p.Value is string)))
 				return false;
-			tokens = new List<(TokenKind Kind, int Index, int Alignment, string Format)>();
+			tokens = new List<(TokenKind Kind, int Index, int Alignment, string? Format)>();
 			int i = 0;
-			format = (string)crr.ConstantValue;
+			format = (string?)crr.ConstantValue;
 			foreach (var (kind, data) in TokenizeFormatString(format))
 			{
 				int index;
@@ -775,7 +777,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			ArgumentWithAlignmentAndFormat,
 		}
 
-		private IEnumerable<(TokenKind, string)> TokenizeFormatString(string value)
+		private IEnumerable<(TokenKind, string?)> TokenizeFormatString(string value)
 		{
 			int pos = -1;
 
@@ -867,14 +869,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		private ArgumentList BuildArgumentList(ExpectedTargetDetails expectedTargetDetails, ResolveResult target, IMethod method,
-			int firstParamIndex, IReadOnlyList<ILInstruction> callArguments, IReadOnlyList<int> argumentToParameterMap)
+		private ArgumentList BuildArgumentList(ExpectedTargetDetails expectedTargetDetails, ResolveResult? target, IMethod method,
+			int firstParamIndex, IReadOnlyList<ILInstruction> callArguments, IReadOnlyList<int>? argumentToParameterMap)
 		{
 			ArgumentList list = new ArgumentList();
 
 			// Translate arguments to the expected parameter types
 			var arguments = new List<TranslatedExpression>(method.Parameters.Count);
-			string[] argumentNames = null;
+			string[]? argumentNames = null;
 			Debug.Assert(callArguments.Count == firstParamIndex + method.Parameters.Count);
 			var expectedParameters = new List<IParameter>(method.Parameters.Count); // parameters, but in argument order
 			bool isExpandedForm = false;
@@ -978,11 +980,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			return p.Type.IsKnownType(KnownTypeCode.Boolean);
 		}
 
-		private bool TransformParamsArgument(ExpectedTargetDetails expectedTargetDetails, ResolveResult targetResolveResult,
+		private bool TransformParamsArgument(ExpectedTargetDetails expectedTargetDetails, ResolveResult? targetResolveResult,
 			IMethod method, IParameter parameter, TranslatedExpression arg, ref List<IParameter> expectedParameters,
 			ref List<TranslatedExpression> arguments)
 		{
-			if (CheckArgument(out int length, out IType elementType))
+			if (CheckArgument(out int length, out IType? elementType))
 			{
 				var expandedParameters = new List<IParameter>(expectedParameters);
 				var expandedArguments = new List<TranslatedExpression>(arguments);
@@ -1010,7 +1012,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return false;
 
-			bool CheckArgument(out int len, out IType t)
+			bool CheckArgument(out int len, [NotNullWhen(true)] out IType? t)
 			{
 				len = 0;
 				t = null;
@@ -1069,7 +1071,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			// initialize requireTarget flag
 			bool requireTarget;
-			ResolveResult targetResolveResult;
+			ResolveResult? targetResolveResult;
 			if ((allowedTransforms & CallTransformation.RequireTarget) != 0)
 			{
 				if (settings.AlwaysQualifyMemberReferences || expressionBuilder.HidesVariableWithName(method.Name))
@@ -1393,9 +1395,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		OverloadResolutionErrors IsUnambiguousCall(ExpectedTargetDetails expectedTargetDetails, IMethod method,
-			ResolveResult target, IType[] typeArguments, ResolveResult[] arguments,
-			string[] argumentNames, int firstOptionalArgumentIndex,
-			out IParameterizedMember foundMember, out bool bestCandidateIsExpandedForm)
+			ResolveResult? target, IType[] typeArguments, ResolveResult[] arguments,
+			string[]? argumentNames, int firstOptionalArgumentIndex,
+			out IParameterizedMember? foundMember, out bool bestCandidateIsExpandedForm)
 		{
 			foundMember = null;
 			bestCandidateIsExpandedForm = false;
@@ -1504,7 +1506,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		bool IsUnambiguousAccess(ExpectedTargetDetails expectedTargetDetails, ResolveResult target, IMethod method,
-			IList<TranslatedExpression> arguments, string[] argumentNames, out IMember foundMember)
+			IList<TranslatedExpression> arguments, string[] argumentNames, out IMember? foundMember)
 		{
 			Log.WriteLine("IsUnambiguousAccess: Performing overload resolution for " + method);
 			Log.WriteCollection("  Arguments: ", arguments.Select(a => a.ResolveResult));
@@ -1551,7 +1553,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		ExpressionWithResolveResult HandleAccessorCall(ExpectedTargetDetails expectedTargetDetails, IMethod method,
-			TranslatedExpression target, List<TranslatedExpression> arguments, string[] argumentNames)
+			TranslatedExpression target, List<TranslatedExpression> arguments, string[]? argumentNames)
 		{
 			bool requireTarget;
 			if (settings.AlwaysQualifyMemberReferences || method.AccessorOwner.SymbolKind == SymbolKind.Indexer || expressionBuilder.HidesVariableWithName(method.AccessorOwner.Name))
@@ -1572,7 +1574,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				arguments.Remove(value);
 			}
 
-			IMember foundMember;
+			IMember? foundMember;
 			while (!IsUnambiguousAccess(expectedTargetDetails, targetResolveResult, method, arguments, argumentNames, out foundMember))
 			{
 				if (!argumentsCasted)
@@ -1674,7 +1676,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return false;
 		}
 
-		ExpressionWithResolveResult HandleConstructorCall(ExpectedTargetDetails expectedTargetDetails, ResolveResult target, IMethod method, ArgumentList argumentList)
+		ExpressionWithResolveResult HandleConstructorCall(ExpectedTargetDetails expectedTargetDetails, ResolveResult? target, IMethod method, ArgumentList argumentList)
 		{
 			if (settings.AnonymousTypes && method.DeclaringType.IsAnonymousType())
 			{
@@ -1715,7 +1717,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					CastArguments(argumentList.Arguments, argumentList.ExpectedParameters);
 					break; // make sure that we don't not end up in an infinite loop
 				}
-				IType returnTypeOverride = null;
+				IType? returnTypeOverride = null;
 				if (typeSystem.MainModule.TypeSystemOptions.HasFlag(TypeSystemOptions.NativeIntegersWithoutAttribute))
 				{
 					// For DeclaringType, we don't use nint/nuint (so that DeclaringType.GetConstructors etc. works),
@@ -1821,11 +1823,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			return expr.Expression.WithRR(new MemberResolveResult(null, method));
 		}
 
-		ExpressionWithResolveResult BuildDelegateReference(IMethod method, IMethod invokeMethod, ExpectedTargetDetails expectedTargetDetails, ILInstruction thisArg)
+		ExpressionWithResolveResult BuildDelegateReference(IMethod method, IMethod? invokeMethod, ExpectedTargetDetails expectedTargetDetails, ILInstruction? thisArg)
 		{
 			ExpressionBuilder expressionBuilder = this.expressionBuilder;
 			ExpressionWithResolveResult targetExpression;
-			(TranslatedExpression target, bool addTypeArguments, string methodName, ResolveResult result) = DisambiguateDelegateReference(method, invokeMethod, expectedTargetDetails, thisArg);
+			(TranslatedExpression target, bool addTypeArguments, string? methodName, ResolveResult result) = DisambiguateDelegateReference(method, invokeMethod, expectedTargetDetails, thisArg);
 			if (target.Expression != null)
 			{
 				var mre = new MemberReferenceExpression(target, methodName);
@@ -1848,11 +1850,11 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		}
 
-		(TranslatedExpression target, bool addTypeArguments, string methodName, ResolveResult result) DisambiguateDelegateReference(IMethod method, IMethod invokeMethod, ExpectedTargetDetails expectedTargetDetails, ILInstruction thisArg)
+		(TranslatedExpression target, bool addTypeArguments, string? methodName, ResolveResult result) DisambiguateDelegateReference(IMethod method, IMethod invokeMethod, ExpectedTargetDetails expectedTargetDetails, ILInstruction? thisArg)
 		{
 			if (method.IsLocalFunction)
 			{
-				ILFunction localFunction = expressionBuilder.ResolveLocalFunction(method);
+				ILFunction? localFunction = expressionBuilder.ResolveLocalFunction(method);
 				Debug.Assert(localFunction != null);
 				return (default, addTypeArguments: true, localFunction.Name, ToMethodGroup(method, localFunction));
 			}
@@ -1932,7 +1934,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				bool targetCasted = false;
 				bool addTypeArguments = false;
 				// Initial inputs for IsUnambiguousMethodReference:
-				ResolveResult targetResolveResult = targetAdded ? target.ResolveResult : null;
+				ResolveResult? targetResolveResult = targetAdded ? target.ResolveResult : null;
 				IReadOnlyList<IType> typeArguments = EmptyList<IType>.Instance;
 				// Find somewhat minimal solution:
 				ResolveResult result;
@@ -1981,7 +1983,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return oce;
 		}
 
-		bool IsUnambiguousMethodReference(ExpectedTargetDetails expectedTargetDetails, IMethod method, ResolveResult target, IReadOnlyList<IType> typeArguments, bool isExtensionMethodReference, out ResolveResult result)
+		bool IsUnambiguousMethodReference(ExpectedTargetDetails expectedTargetDetails, IMethod method, ResolveResult target, IReadOnlyList<IType> typeArguments, bool isExtensionMethodReference, [NotNullWhen(true)] out ResolveResult result)
 		{
 			Log.WriteLine("IsUnambiguousMethodReference: Performing overload resolution for " + method);
 

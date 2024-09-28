@@ -19,6 +19,7 @@
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -73,7 +74,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				$"PublicKeyToken={publicKey}";
 		}
 
-		public static bool TryGetFullAssemblyName(this MetadataReader reader, out string assemblyName)
+		public static bool TryGetFullAssemblyName(this MetadataReader reader, [NotNullWhen(true)] out string? assemblyName)
 		{
 			try
 			{
@@ -124,7 +125,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return builder.ToString();
 		}
 
-		public static bool TryGetFullAssemblyName(this SRM.AssemblyReference reference, MetadataReader reader, out string assemblyName)
+		public static bool TryGetFullAssemblyName(this SRM.AssemblyReference reference, MetadataReader reader, [NotNullWhen(true)] out string? assemblyName)
 		{
 			try
 			{

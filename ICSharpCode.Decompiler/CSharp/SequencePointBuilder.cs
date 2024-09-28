@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			/// <summary>
 			/// The function containing this sequence point.
 			/// </summary>
-			internal ILFunction Function;
+			internal ILFunction? Function;
 
 			public StatePerSequencePoint(AstNode primaryNode)
 			{
@@ -547,7 +547,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 
 
-				List<int> sequencePointCandidates = function.SequencePointCandidates;
+				List<int>? sequencePointCandidates = function.SequencePointCandidates;
 				int currSPCandidateIndex = 0;
 
 				for (int i = 0; i < newList.Count - 1; i++)

@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 
@@ -151,7 +152,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new IfElseStatement(condition, trueStatement, falseStatement).WithILInstruction(inst);
 		}
 
-		internal IEnumerable<ConstantResolveResult> CreateTypedCaseLabel(long i, IType type, List<(string Key, int Value)> map = null)
+		internal IEnumerable<ConstantResolveResult> CreateTypedCaseLabel(long i, IType type, List<(string? Key, int Value)>? map = null)
 		{
 			object value;
 			// unpack nullable type, if necessary:
@@ -203,7 +204,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return TranslateSwitch(null, inst).WithILInstruction(inst);
 		}
 
-		SwitchStatement TranslateSwitch(BlockContainer switchContainer, SwitchInstruction inst)
+		SwitchStatement TranslateSwitch(BlockContainer? switchContainer, SwitchInstruction inst)
 		{
 			var oldBreakTarget = breakTarget;
 			breakTarget = switchContainer; // 'break' within a switch would only leave the switch
@@ -212,7 +213,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			TranslatedExpression value;
 			IType type;
-			if (inst.Value is StringToInt strToInt)
+			var strToInt = inst.Value as StringToInt;
+			if (strToInt != null)
 			{
 				value = exprBuilder.Translate(strToInt.Argument)
 					.ConvertTo(
@@ -243,7 +245,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			foreach (var section in inst.Sections)
 			{
 				// This is used in the block-label mapping.
-				ConstantResolveResult firstValueResolveResult;
+				ConstantResolveResult? firstValueResolveResult;
 				var astSection = new Syntax.SwitchSection();
 				// Create case labels:
 				if (section == defaultSection)
@@ -327,7 +329,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					Debug.Assert(block.FinalInstruction.OpCode == OpCode.Nop);
 				}
-				if (endContainerLabels.TryGetValue(switchContainer, out string label))
+				if (endContainerLabels.TryGetValue(switchContainer, out string? label))
 				{
 					lastSectionStatements.Add(new LabelStatement { Label = label });
 					lastSectionStatements.Add(new BreakStatement());
@@ -346,7 +348,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!bodyInst.HasFlag(InstructionFlags.EndPointUnreachable))
 			{
 				// we need to insert 'break;'
-				BlockStatement block = body as BlockStatement;
+				BlockStatement? block = body as BlockStatement;
 				if (block != null)
 				{
 					block.Add(new BreakStatement());
@@ -383,7 +385,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		/// <summary>Target container that a 'break;' statement would break out of</summary>
-		BlockContainer breakTarget;
+		BlockContainer? breakTarget;
 		/// <summary>Dictionary from BlockContainer to label name for 'goto of_container';</summary>
 		readonly Dictionary<BlockContainer, string> endContainerLabels = new Dictionary<BlockContainer, string>();
 
@@ -410,7 +412,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				else
 					return new ReturnStatement().WithILInstruction(inst);
 			}
-			if (!endContainerLabels.TryGetValue(inst.TargetContainer, out string label))
+			if (!endContainerLabels.TryGetValue(inst.TargetContainer, out string? label))
 			{
 				label = "end_" + inst.TargetLabel;
 				if (!duplicateLabels.TryGetValue(label, out int count))
@@ -622,7 +624,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		Statement TransformToForeach(UsingInstruction inst, Expression resource)
+		Statement? TransformToForeach(UsingInstruction inst, Expression resource)
 		{
 			if (!settings.ForEachStatement)
 			{
@@ -731,7 +733,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					break;
 			}
 
-			VariableDesignation designation = null;
+			VariableDesignation? designation = null;
 
 			// Handle the required foreach-variable transformation:
 			switch (transformation)
@@ -875,7 +877,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return NormalizeTypeVisitor.TypeErasure.EquivalentTypes(a, b);
 		}
 
-		private bool IsDynamicCastToIEnumerable(Expression expr, out Expression dynamicExpr)
+		private bool IsDynamicCastToIEnumerable(Expression expr, [NotNullWhen(true)] out Expression? dynamicExpr)
 		{
 			if (!(expr is CastExpression cast))
 			{
@@ -898,7 +900,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// Otherwise returns the unmodified container.
 		/// </summary>
 		/// <param name="optionalLeaveInst">If the leave is a return/break and has no side-effects, we can move the return out of the using-block and put it after the loop, otherwise returns null.</param>
-		BlockContainer UnwrapNestedContainerIfPossible(BlockContainer container, out Leave optionalLeaveInst)
+		BlockContainer UnwrapNestedContainerIfPossible(BlockContainer container, out Leave? optionalLeaveInst)
 		{
 			optionalLeaveInst = null;
 			// Check block structure:
@@ -978,7 +980,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <param name="singleGetter">Returns the call instruction invoking Current's getter.</param>
 		/// <param name="foreachVariable">Returns the the foreach variable, if a suitable was found. This variable is only assigned once and its assignment is the first statement in <paramref name="loopBody"/>.</param>
 		/// <returns><see cref="RequiredGetCurrentTransformation"/> for details.</returns>
-		RequiredGetCurrentTransformation DetectGetCurrentTransformation(BlockContainer usingContainer, Block loopBody, BlockContainer loopContainer, ILVariable enumerator, ILInstruction moveNextUsage, out CallInstruction singleGetter, out ILVariable foreachVariable)
+		RequiredGetCurrentTransformation DetectGetCurrentTransformation(BlockContainer usingContainer, Block loopBody, BlockContainer loopContainer, ILVariable enumerator, ILInstruction moveNextUsage, out CallInstruction? singleGetter, out ILVariable? foreachVariable)
 		{
 			singleGetter = null;
 			foreachVariable = null;
@@ -1260,8 +1262,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		Statement ConvertLoop(BlockContainer container)
 		{
-			ILInstruction condition;
-			Block loopBody;
+			ILInstruction? condition;
+			Block? loopBody;
 			BlockStatement blockStatement;
 			continueCount = 0;
 			breakTarget = container;
@@ -1425,7 +1427,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 					method.Body = nestedBuilder.ConvertAsBlock(function.Body);
 
-					Comment prev = null;
+					Comment? prev = null;
 					foreach (string warning in function.Warnings)
 					{
 						method.Body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
@@ -1479,7 +1481,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					blockStatement.Add(Convert(block.FinalInstruction));
 				}
 			}
-			if (endContainerLabels.TryGetValue(container, out string label))
+			if (endContainerLabels.TryGetValue(container, out string? label))
 			{
 				if (isLoop && !(blockStatement.LastOrDefault() is ContinueStatement))
 				{
@@ -1499,7 +1501,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		string EnsureUniqueLabel(Block block)
 		{
-			if (labels.TryGetValue(block, out string label))
+			if (labels.TryGetValue(block, out string? label))
 				return label;
 			if (!duplicateLabels.TryGetValue(block.Label, out int count))
 			{

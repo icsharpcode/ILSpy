@@ -58,9 +58,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return parameters; }
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
-			VarArgInstanceMethod other = obj as VarArgInstanceMethod;
+			VarArgInstanceMethod? other = obj as VarArgInstanceMethod;
 			return other != null && baseMethod.Equals(other.baseMethod);
 		}
 
@@ -69,9 +69,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return baseMethod.GetHashCode();
 		}
 
-		public bool Equals(IMember obj, TypeVisitor typeNormalization)
+		public bool Equals(IMember? obj, TypeVisitor typeNormalization)
 		{
-			VarArgInstanceMethod other = obj as VarArgInstanceMethod;
+			VarArgInstanceMethod? other = obj as VarArgInstanceMethod;
 			return other != null && baseMethod.Equals(other.baseMethod, typeNormalization);
 		}
 
@@ -119,7 +119,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		IEnumerable<IAttribute> IEntity.GetAttributes() => baseMethod.GetAttributes();
 		bool IEntity.HasAttribute(KnownAttribute attribute) => baseMethod.HasAttribute(attribute);
-		IAttribute IEntity.GetAttribute(KnownAttribute attribute) => baseMethod.GetAttribute(attribute);
+		IAttribute? IEntity.GetAttribute(KnownAttribute attribute) => baseMethod.GetAttribute(attribute);
 
 		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => baseMethod.GetReturnTypeAttributes();
 		bool IMethod.ReturnTypeIsRefReadOnly => baseMethod.ReturnTypeIsRefReadOnly;

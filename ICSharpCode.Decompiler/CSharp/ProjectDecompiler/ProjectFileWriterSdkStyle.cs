@@ -272,7 +272,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 			foreach (var reference in module.AssemblyReferences.Where(r => !ImplicitReferences.Contains(r.Name)))
 			{
-				if (isNetCoreApp && project.AssemblyReferenceClassifier.IsSharedAssembly(reference, out string runtimePack) && targetPacks.Contains(runtimePack))
+				if (isNetCoreApp && project.AssemblyReferenceClassifier.IsSharedAssembly(reference, out string? runtimePack) && targetPacks.Contains(runtimePack))
 				{
 					continue;
 				}

@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override TypeKind Kind => ((module.TypeSystemOptions & TypeSystemOptions.FunctionPointers) != 0) ? TypeKind.FunctionPointer : TypeKind.Struct;
 
-		public override ITypeDefinition GetDefinition()
+		public override ITypeDefinition? GetDefinition()
 		{
 			if ((module.TypeSystemOptions & TypeSystemOptions.FunctionPointers) != 0)
 			{
@@ -151,7 +151,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			IType r = ReturnType.AcceptVisitor(visitor);
 			// Keep ta == null as long as no elements changed, allocate the array only if necessary.
-			IType[] pt = (r != ReturnType) ? new IType[ParameterTypes.Length] : null;
+			IType[]? pt = (r != ReturnType) ? new IType[ParameterTypes.Length] : null;
 			for (int i = 0; i < ParameterTypes.Length; i++)
 			{
 				IType p = ParameterTypes[i].AcceptVisitor(visitor);
@@ -179,7 +179,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					ParameterReferenceKinds);
 		}
 
-		public override bool Equals(IType other)
+		public override bool Equals(IType? other)
 		{
 			return other is FunctionPointerType fpt
 				&& CallingConvention == fpt.CallingConvention

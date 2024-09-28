@@ -82,9 +82,9 @@ namespace ICSharpCode.ILSpy
 		{
 			readonly DecompilationOptions options;
 			// list sorted by IL offset
-			IList<SequencePoint> sequencePoints;
+			IList<SequencePoint>? sequencePoints;
 			// lines of raw c# source code
-			string[] codeLines;
+			string[]? codeLines;
 
 			public MixedMethodBodyDisassembler(ITextOutput output, DecompilationOptions options)
 				: base(output, options.CancellationToken)

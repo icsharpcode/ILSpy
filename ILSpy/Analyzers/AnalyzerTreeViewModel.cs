@@ -73,7 +73,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		{
 			Show();
 
-			AnalyzerTreeNode target = default;
+			AnalyzerTreeNode? target = default;
 
 			if (node is AnalyzerEntityTreeNode { Member: { } member })
 			{

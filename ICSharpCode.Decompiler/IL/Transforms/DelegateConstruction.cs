@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection.Metadata;
 
@@ -79,8 +80,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		internal static bool MatchDelegateConstruction(ILInstruction inst, out IMethod targetMethod,
-			out ILInstruction target, out IType delegateType, bool allowTransformed = false)
+		internal static bool MatchDelegateConstruction(ILInstruction? inst, out IMethod? targetMethod,
+			[NotNullWhen(true)] out ILInstruction? target, [NotNullWhen(true)] out IType? delegateType, bool allowTransformed = false)
 		{
 			targetMethod = null;
 			target = null;
@@ -164,7 +165,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return new GenericContext(classTypeParameters, methodTypeParameters);
 		}
 
-		ILFunction TransformDelegateConstruction(
+		ILFunction? TransformDelegateConstruction(
 			ILInstruction value, IMethod targetMethod,
 			ILInstruction target, IType delegateType)
 		{
@@ -285,7 +286,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (function == thisVariable?.Function)
 				{
-					ILVariable v = null;
+					ILVariable? v = null;
 					switch (target)
 					{
 						case LdLoc l:

@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetNestedTypes(type, null, filter, options);
 		}
 
-		public static IEnumerable<IType> GetNestedTypes(IType type, IReadOnlyList<IType> nestedTypeArguments, Predicate<ITypeDefinition> filter, GetMemberOptions options)
+		public static IEnumerable<IType> GetNestedTypes(IType type, IReadOnlyList<IType>? nestedTypeArguments, Predicate<ITypeDefinition> filter, GetMemberOptions options)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 			{
@@ -53,14 +53,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		static IEnumerable<IType> GetNestedTypesImpl(IType outerType, IReadOnlyList<IType> nestedTypeArguments, Predicate<ITypeDefinition> filter, GetMemberOptions options)
+		static IEnumerable<IType> GetNestedTypesImpl(IType outerType, IReadOnlyList<IType>? nestedTypeArguments, Predicate<ITypeDefinition>? filter, GetMemberOptions options)
 		{
-			ITypeDefinition outerTypeDef = outerType.GetDefinition();
+			ITypeDefinition? outerTypeDef = outerType.GetDefinition();
 			if (outerTypeDef == null)
 				yield break;
 
 			int outerTypeParameterCount = outerTypeDef.TypeParameterCount;
-			ParameterizedType pt = outerType as ParameterizedType;
+			ParameterizedType? pt = outerType as ParameterizedType;
 			foreach (ITypeDefinition nestedType in outerTypeDef.NestedTypes)
 			{
 				int totalTypeParameterCount = nestedType.TypeParameterCount;
@@ -98,12 +98,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 
 		#region GetMethods
-		public static IEnumerable<IMethod> GetMethods(IType type, Predicate<IMethod> filter, GetMemberOptions options)
+		public static IEnumerable<IMethod> GetMethods(IType type, Predicate<IMethod>? filter, GetMemberOptions options)
 		{
 			return GetMethods(type, null, filter, options);
 		}
 
-		public static IEnumerable<IMethod> GetMethods(IType type, IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter, GetMemberOptions options)
+		public static IEnumerable<IMethod> GetMethods(IType type, IReadOnlyList<IType>? typeArguments, Predicate<IMethod>? filter, GetMemberOptions options)
 		{
 			if (typeArguments != null && typeArguments.Count > 0)
 			{
@@ -127,15 +127,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		const GetMemberOptions declaredMembers = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
 
-		static IEnumerable<IMethod> GetMethodsImpl(IType baseType, IReadOnlyList<IType> methodTypeArguments, Predicate<IMethod> filter, GetMemberOptions options)
+		static IEnumerable<IMethod> GetMethodsImpl(IType baseType, IReadOnlyList<IType>? methodTypeArguments, Predicate<IMethod>? filter, GetMemberOptions options)
 		{
 			IEnumerable<IMethod> declaredMethods = baseType.GetMethods(filter, options | declaredMembers);
 
-			ParameterizedType pt = baseType as ParameterizedType;
+			ParameterizedType? pt = baseType as ParameterizedType;
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == 0
 				&& (pt != null || (methodTypeArguments != null && methodTypeArguments.Count > 0)))
 			{
-				TypeParameterSubstitution substitution = null;
+				TypeParameterSubstitution? substitution = null;
 				foreach (IMethod m in declaredMethods)
 				{
 					if (methodTypeArguments != null && methodTypeArguments.Count > 0)
@@ -164,7 +164,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 
 		#region GetAccessors
-		public static IEnumerable<IMethod> GetAccessors(IType type, Predicate<IMethod> filter, GetMemberOptions options)
+		public static IEnumerable<IMethod> GetAccessors(IType type, Predicate<IMethod>? filter, GetMemberOptions options)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 			{
@@ -183,7 +183,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 
 		#region GetConstructors
-		public static IEnumerable<IMethod> GetConstructors(IType type, Predicate<IMethod> filter, GetMemberOptions options)
+		public static IEnumerable<IMethod> GetConstructors(IType type, Predicate<IMethod>? filter, GetMemberOptions options)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 			{
@@ -195,7 +195,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		static IEnumerable<IMethod> GetConstructorsImpl(IType baseType, Predicate<IMethod> filter, GetMemberOptions options)
+		static IEnumerable<IMethod> GetConstructorsImpl(IType baseType, Predicate<IMethod>? filter, GetMemberOptions options)
 		{
 			return GetConstructorsOrAccessorsImpl(baseType, baseType.GetConstructors(filter, options | declaredMembers), options);
 		}
@@ -207,7 +207,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return declaredMembers;
 			}
 
-			ParameterizedType pt = baseType as ParameterizedType;
+			ParameterizedType? pt = baseType as ParameterizedType;
 			if (pt != null)
 			{
 				var substitution = pt.GetSubstitution();
@@ -241,7 +241,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return declaredProperties;
 			}
 
-			ParameterizedType pt = baseType as ParameterizedType;
+			ParameterizedType? pt = baseType as ParameterizedType;
 			if (pt != null)
 			{
 				var substitution = pt.GetSubstitution();
@@ -267,7 +267,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		static IEnumerable<IField> GetFieldsImpl(IType baseType, Predicate<IField> filter, GetMemberOptions options)
+		static IEnumerable<IField> GetFieldsImpl(IType baseType, Predicate<IField>? filter, GetMemberOptions options)
 		{
 			IEnumerable<IField> declaredFields = baseType.GetFields(filter, options | declaredMembers);
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
@@ -275,7 +275,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return declaredFields;
 			}
 
-			ParameterizedType pt = baseType as ParameterizedType;
+			ParameterizedType? pt = baseType as ParameterizedType;
 			if (pt != null)
 			{
 				var substitution = pt.GetSubstitution();
@@ -309,7 +309,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return declaredEvents;
 			}
 
-			ParameterizedType pt = baseType as ParameterizedType;
+			ParameterizedType? pt = baseType as ParameterizedType;
 			if (pt != null)
 			{
 				var substitution = pt.GetSubstitution();
@@ -323,7 +323,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 
 		#region GetMembers
-		public static IEnumerable<IMember> GetMembers(IType type, Predicate<IMember> filter, GetMemberOptions options)
+		public static IEnumerable<IMember> GetMembers(IType type, Predicate<IMember>? filter, GetMemberOptions options)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 			{
@@ -335,7 +335,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		static IEnumerable<IMember> GetMembersImpl(IType baseType, Predicate<IMember> filter, GetMemberOptions options)
+		static IEnumerable<IMember> GetMembersImpl(IType baseType, Predicate<IMember>? filter, GetMemberOptions options)
 		{
 			foreach (var m in GetMethodsImpl(baseType, null, filter, options))
 				yield return m;

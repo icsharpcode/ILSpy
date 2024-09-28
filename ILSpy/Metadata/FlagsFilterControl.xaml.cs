@@ -114,7 +114,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			this.Mask = mask;
 		}
 
-		public bool IsMatch(object value)
+		public bool IsMatch(object? value)
 		{
 			if (value == null)
 				return true;

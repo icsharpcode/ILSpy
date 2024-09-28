@@ -84,7 +84,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int HashAlgorithm => MetadataTokens.GetHeapOffset(document.HashAlgorithm);
 
-			public string HashAlgorithmTooltip {
+			public string? HashAlgorithmTooltip {
 				get {
 					if (document.HashAlgorithm.IsNil)
 						return null;
@@ -100,7 +100,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Hash => MetadataTokens.GetHeapOffset(document.Hash);
 
-			public string HashTooltip {
+			public string? HashTooltip {
 				get {
 					if (document.Hash.IsNil)
 						return null;
@@ -112,7 +112,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Language => MetadataTokens.GetHeapOffset(document.Language);
 
-			public string LanguageTooltip {
+			public string? LanguageTooltip {
 				get {
 					if (document.Language.IsNil)
 						return null;

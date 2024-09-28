@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public bool HasBody => module.metadata.GetMethodDefinition(handle).HasBody();
 
-		public IMember AccessorOwner {
+		public IMember? AccessorOwner {
 			get {
 				if (accessorOwner.IsNil)
 					return null;
@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var genericContext = new GenericContext(DeclaringType.TypeParameters, this.TypeParameters);
 			IType returnType;
 			IParameter[] parameters;
-			ModifiedType mod;
+			ModifiedType? mod;
 			try
 			{
 				var nullableContext = methodDef.GetCustomAttributes().GetNullableContext(module.metadata) ?? DeclaringTypeDefinition.NullableContext;
@@ -294,7 +294,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		IMember IMember.MemberDefinition => this;
-		IMethod IMethod.ReducedFrom => null;
+		IMethod? IMethod.ReducedFrom => null;
 		TypeParameterSubstitution IMember.Substitution => TypeParameterSubstitution.Identity;
 
 		public ITypeDefinition DeclaringTypeDefinition {
@@ -476,7 +476,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return b.HasAttribute(metadata, def.GetCustomAttributes(), attribute, symbolKind);
 		}
 
-		public IAttribute GetAttribute(KnownAttribute attribute)
+		public IAttribute? GetAttribute(KnownAttribute attribute)
 		{
 			if (!attribute.IsCustomAttribute())
 			{
@@ -602,7 +602,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public string ReflectionName => $"{DeclaringType?.ReflectionName}.{Name}";
 		public string Namespace => DeclaringType?.Namespace ?? string.Empty;
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			if (obj is MetadataMethod m)
 			{
@@ -616,7 +616,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return 0x5a00d671 ^ module.MetadataFile.GetHashCode() ^ handle.GetHashCode();
 		}
 
-		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
+		bool IMember.Equals(IMember? obj, TypeVisitor typeNormalization)
 		{
 			return Equals(obj);
 		}

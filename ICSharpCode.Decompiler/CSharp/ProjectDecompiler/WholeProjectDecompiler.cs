@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		public AssemblyReferenceClassifier AssemblyReferenceClassifier { get; }
 
-		public IDebugInfoProvider DebugInfoProvider { get; }
+		public IDebugInfoProvider? DebugInfoProvider { get; }
 
 		/// <summary>
 		/// The MSBuild ProjectGuid to use for the new project.
@@ -106,9 +106,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		public WholeProjectDecompiler(
 			DecompilerSettings settings,
 			IAssemblyResolver assemblyResolver,
-			IProjectFileWriter projectWriter,
-			AssemblyReferenceClassifier assemblyReferenceClassifier,
-			IDebugInfoProvider debugInfoProvider)
+			IProjectFileWriter? projectWriter,
+			AssemblyReferenceClassifier? assemblyReferenceClassifier,
+			IDebugInfoProvider? debugInfoProvider)
 			: this(settings, Guid.NewGuid(), assemblyResolver, projectWriter, assemblyReferenceClassifier, debugInfoProvider)
 		{
 		}
@@ -117,9 +117,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			DecompilerSettings settings,
 			Guid projectGuid,
 			IAssemblyResolver assemblyResolver,
-			IProjectFileWriter projectWriter,
-			AssemblyReferenceClassifier assemblyReferenceClassifier,
-			IDebugInfoProvider debugInfoProvider)
+			IProjectFileWriter? projectWriter,
+			AssemblyReferenceClassifier? assemblyReferenceClassifier,
+			IDebugInfoProvider? debugInfoProvider)
 		{
 			Settings = settings ?? throw new ArgumentNullException(nameof(settings));
 			ProjectGuid = projectGuid;
@@ -325,7 +325,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			foreach (var r in module.Resources.Where(r => r.ResourceType == ResourceType.Embedded))
 			{
-				Stream stream = r.TryOpenStream();
+				Stream? stream = r.TryOpenStream();
 				stream.Position = 0;
 
 				if (r.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
@@ -341,7 +341,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 							{
 								string fileName = SanitizeFileName(name)
 									.Replace('/', Path.DirectorySeparatorChar);
-								string dirName = Path.GetDirectoryName(fileName);
+								string? dirName = Path.GetDirectoryName(fileName);
 								if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName))
 								{
 									Directory.CreateDirectory(Path.Combine(TargetDirectory, dirName));
@@ -488,7 +488,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		const int RT_ICON = 3;
 		const int RT_GROUP_ICON = 14;
 
-		unsafe static byte[] CreateApplicationIcon(Win32ResourceDirectory resources)
+		unsafe static byte[]? CreateApplicationIcon(Win32ResourceDirectory resources)
 		{
 			var iconGroup = resources.Find(new Win32ResourceName(RT_GROUP_ICON))?.FirstDirectory()?.FirstData()?.Data;
 			if (iconGroup == null)
@@ -636,7 +636,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			if (pos > 0)
 				text = text.Substring(0, pos);
 			text = text.Trim();
-			string extension = null;
+			string? extension = null;
 			int currentSegmentLength = 0;
 			if (treatAsFileName)
 			{
@@ -781,9 +781,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 	public record struct ProjectItemInfo(string ItemType, string FileName)
 	{
-		public List<PartialTypeInfo> PartialTypes { get; set; } = null;
+		public List<PartialTypeInfo>? PartialTypes { get; set; } = null;
 
-		public Dictionary<string, string> AdditionalProperties { get; set; } = null;
+		public Dictionary<string, string>? AdditionalProperties { get; set; } = null;
 
 		public ProjectItemInfo With(string name, string value)
 		{

@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (method == null)
 				return EmptyList<IMember>.Instance;
-			return method.ExplicitlyImplementedInterfaceMembers.Select(m => ((IMethod)m).AccessorOwner).Where(m => m != null);
+			return method.ExplicitlyImplementedInterfaceMembers.Select(m => ((IMethod)m).AccessorOwner).OfType<IMember>();
 		}
 
 		public ITypeDefinition DeclaringTypeDefinition => AnyAccessor?.DeclaringTypeDefinition;
@@ -164,7 +164,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public string ReflectionName => $"{DeclaringType?.ReflectionName}.{Name}";
 		public string Namespace => DeclaringType?.Namespace ?? string.Empty;
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			if (obj is MetadataEvent ev)
 			{
@@ -178,7 +178,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return 0x7937039a ^ module.MetadataFile.GetHashCode() ^ handle.GetHashCode();
 		}
 
-		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
+		bool IMember.Equals(IMember? obj, TypeVisitor typeNormalization)
 		{
 			return Equals(obj);
 		}

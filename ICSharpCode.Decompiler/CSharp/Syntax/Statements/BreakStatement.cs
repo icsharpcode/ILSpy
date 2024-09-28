@@ -57,9 +57,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitBreakStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			BreakStatement o = other as BreakStatement;
+			BreakStatement? o = other as BreakStatement;
 			return o != null;
 		}
 	}

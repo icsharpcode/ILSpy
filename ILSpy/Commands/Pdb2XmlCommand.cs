@@ -38,14 +38,14 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class Pdb2XmlCommand : SimpleCommand
 	{
-		public override bool CanExecute(object parameter)
+		public override bool CanExecute(object? parameter)
 		{
 			var selectedNodes = MainWindow.Instance.AssemblyTreeModel.SelectedNodes;
 			return selectedNodes?.Any() == true
 				&& selectedNodes.All(n => n is AssemblyTreeNode asm && !asm.LoadedAssembly.HasLoadError);
 		}
 
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			Execute(MainWindow.Instance.AssemblyTreeModel.SelectedNodes.OfType<AssemblyTreeNode>());
 		}

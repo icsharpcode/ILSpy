@@ -27,12 +27,12 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	class RemoveAssembliesWithLoadErrors : SimpleCommand
 	{
-		public override bool CanExecute(object parameter)
+		public override bool CanExecute(object? parameter)
 		{
 			return MainWindow.Instance.AssemblyTreeModel.AssemblyList?.GetAssemblies().Any(l => l.HasLoadError) == true;
 		}
 
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			foreach (var asm in MainWindow.Instance.AssemblyTreeModel.AssemblyList.GetAssemblies())
 			{
@@ -49,12 +49,12 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	class ClearAssemblyList : SimpleCommand
 	{
-		public override bool CanExecute(object parameter)
+		public override bool CanExecute(object? parameter)
 		{
 			return MainWindow.Instance.AssemblyTreeModel.AssemblyList?.Count > 0;
 		}
 
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			MainWindow.Instance.AssemblyTreeModel.AssemblyList?.Clear();
 		}

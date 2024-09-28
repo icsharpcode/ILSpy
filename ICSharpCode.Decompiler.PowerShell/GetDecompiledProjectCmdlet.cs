@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 		readonly object syncObject = new object();
 		int completed;
 		string fileName;
-		ProgressRecord progress;
+		ProgressRecord? progress;
 
 		public void Report(DecompilationProgress value)
 		{

@@ -205,11 +205,11 @@ namespace ILSpy.BamlDecompiler.Tests
 			return line.Trim();
 		}
 
-		Stream LoadBaml(Resource res, string name)
+		Stream? LoadBaml(Resource res, string name)
 		{
 			if (res.ResourceType != ResourceType.Embedded)
 				return null;
-			Stream s = res.TryOpenStream();
+			Stream? s = res.TryOpenStream();
 			if (s == null)
 				return null;
 			s.Position = 0;

@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -162,7 +163,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///   br falseBlock
 		/// }
 		/// </summary>
-		bool MatchCatchWhenEntryPoint(ILVariable exceptionVar, BlockContainer container, Block entryPoint, out IType exceptionType, out ILInstruction exceptionSlot, out Block whenConditionBlock)
+		bool MatchCatchWhenEntryPoint(ILVariable exceptionVar, BlockContainer container, Block entryPoint, [NotNullWhen(true)] out IType? exceptionType, [NotNullWhen(true)] out ILInstruction? exceptionSlot, [NotNullWhen(true)] out Block? whenConditionBlock)
 		{
 			exceptionType = null;
 			exceptionSlot = null;
@@ -206,6 +207,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (right.MatchLdNull())
 				{
+
 					return branch.MatchBranch(out whenConditionBlock);
 				}
 			}
@@ -218,7 +220,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///   br exitBlock
 		/// }
 		/// </summary>
-		bool MatchFalseBlock(BlockContainer container, Block falseBlock, out ILVariable returnVar, out Block exitBlock)
+		bool MatchFalseBlock(BlockContainer container, Block falseBlock, [NotNullWhen(true)] out ILVariable? returnVar, [NotNullWhen(true)] out Block? exitBlock)
 		{
 			returnVar = null;
 			exitBlock = null;

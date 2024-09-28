@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 
@@ -146,7 +147,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				container.SortBlocks(deleteUnreachableBlocks: true);
 		}
 
-		ILInstruction MakeDynamicInstruction(CallSiteInfo callsite, CallVirt targetInvokeCall, List<ILInstruction> deadArguments)
+		ILInstruction? MakeDynamicInstruction(CallSiteInfo callsite, CallVirt targetInvokeCall, List<ILInstruction> deadArguments)
 		{
 			switch (callsite.Kind)
 			{
@@ -272,7 +273,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool ScanCallSiteInitBlock(Block callSiteInitBlock, IField callSiteCacheField, IType callSiteDelegateType, out CallSiteInfo callSiteInfo, out Block blockAfterInit)
+		bool ScanCallSiteInitBlock(Block callSiteInitBlock, IField callSiteCacheField, IType callSiteDelegateType, out CallSiteInfo callSiteInfo, [NotNullWhen(true)] out Block? blockAfterInit)
 		{
 			callSiteInfo = default(CallSiteInfo);
 			blockAfterInit = null;
@@ -300,7 +301,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (!binderCall.Arguments[0].MatchLdcI4(out int binderFlagsInteger))
 						return false;
 					callSiteInfo.Flags = (CSharpBinderFlags)binderFlagsInteger;
-					if (!binderCall.Arguments[1].MatchLdStr(out string name))
+					if (!binderCall.Arguments[1].MatchLdStr(out var name))
 						return false;
 					callSiteInfo.MemberName = name;
 					if (!TransformExpressionTrees.MatchGetTypeFromHandle(binderCall.Arguments[2], out var contextType))
@@ -551,7 +552,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!createCall.Arguments[0].MatchLdcI4(out var argumentInfoFlags))
 					return false;
-				if (!createCall.Arguments[1].MatchLdStr(out string argumentName))
+				if (!createCall.Arguments[1].MatchLdStr(out var argumentName))
 					if (!createCall.Arguments[1].MatchLdNull())
 						return false;
 				callSiteInfo.ArgumentInfos[i] = new CSharpArgumentInfo { Flags = (CSharpArgumentInfoFlags)argumentInfoFlags, Name = argumentName, CompileTimeType = compileTimeTypes[i + 1] };
@@ -560,7 +561,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchCallSiteCacheNullCheck(ILInstruction condition, out IField callSiteCacheField, out IType callSiteDelegate, out bool invertBranches)
+		bool MatchCallSiteCacheNullCheck(ILInstruction condition, [NotNullWhen(true)] out IField? callSiteCacheField, [NotNullWhen(true)] out IType? callSiteDelegate, out bool invertBranches)
 		{
 			callSiteCacheField = null;
 			callSiteDelegate = null;

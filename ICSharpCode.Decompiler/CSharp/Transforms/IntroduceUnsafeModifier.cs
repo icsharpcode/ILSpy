@@ -40,8 +40,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		protected override bool VisitChildren(AstNode node)
 		{
 			bool result = false;
-			AstNode next;
-			for (AstNode child = node.FirstChild; child != null; child = next)
+			AstNode? next;
+			for (AstNode? child = node.FirstChild; child != null; child = next)
 			{
 				// Store next to allow the loop to continue
 				// if the visitor removes/replaces child.
@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public override bool VisitMemberReferenceExpression(MemberReferenceExpression memberReferenceExpression)
 		{
 			bool result = base.VisitMemberReferenceExpression(memberReferenceExpression);
-			UnaryOperatorExpression uoe = memberReferenceExpression.Target as UnaryOperatorExpression;
+			UnaryOperatorExpression? uoe = memberReferenceExpression.Target as UnaryOperatorExpression;
 			if (uoe != null && uoe.Operator == UnaryOperatorType.Dereference)
 			{
 				PointerReferenceExpression pre = new PointerReferenceExpression();

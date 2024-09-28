@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <param name="pointerElementType">The target type of the pointer type.</param>
 		/// <param name="checkForOverflow">Whether the pointer arithmetic operation checks for overflow.</param>
 		/// <param name="unwrapZeroExtension">Whether to allow zero extensions in the mul argument.</param>
-		public static ILInstruction Detect(ILInstruction byteOffsetInst, IType pointerElementType,
+		public static ILInstruction? Detect(ILInstruction byteOffsetInst, IType pointerElementType,
 			bool checkForOverflow,
 			bool unwrapZeroExtension = false)
 		{

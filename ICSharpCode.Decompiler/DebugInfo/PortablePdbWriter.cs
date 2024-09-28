@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			Stream targetStream,
 			bool noLogo = false,
 			BlobContentId? pdbId = null,
-			IProgress<DecompilationProgress> progress = null)
+			IProgress<DecompilationProgress>? progress = null)
 		{
 			MetadataBuilder metadata = new MetadataBuilder();
 			MetadataReader reader = file.Metadata;
@@ -249,7 +249,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			{
 				var methodDef = reader.GetMethodDefinition(method);
 				int localSignatureRowId;
-				MethodBodyBlock methodBody;
+				MethodBodyBlock? methodBody;
 				if (methodDef.RelativeVirtualAddress != 0)
 				{
 					methodBody = file.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);

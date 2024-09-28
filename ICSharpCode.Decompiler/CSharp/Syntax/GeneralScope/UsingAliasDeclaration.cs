@@ -99,9 +99,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitUsingAliasDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			UsingAliasDeclaration o = other as UsingAliasDeclaration;
+			UsingAliasDeclaration? o = other as UsingAliasDeclaration;
 			return o != null && MatchString(this.Alias, o.Alias) && this.Import.DoMatch(o.Import, match);
 		}
 	}

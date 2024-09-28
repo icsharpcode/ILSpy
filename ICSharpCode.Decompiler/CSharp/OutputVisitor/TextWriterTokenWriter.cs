@@ -233,7 +233,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			return writer.ToString();
 		}
 
-		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
+		public override void WritePrimitiveValue(object? value, LiteralFormat format = LiteralFormat.None)
 		{
 			if (value == null)
 			{
@@ -437,7 +437,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// Gets the escape sequence for the specified character.
 		/// </summary>
 		/// <remarks>This method does not convert ' or ".</remarks>
-		static string ConvertChar(char ch)
+		static string? ConvertChar(char ch)
 		{
 			switch (ch)
 			{
@@ -499,7 +499,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StringBuilder sb = new StringBuilder();
 			foreach (char ch in str)
 			{
-				string s = ch == '"' ? "\\\"" : ConvertChar(ch);
+				string? s = ch == '"' ? "\\\"" : ConvertChar(ch);
 				if (s != null)
 					sb.Append(s);
 				else

@@ -19,11 +19,13 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
@@ -32,20 +34,17 @@ using System.Windows.Threading;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpyX.Analyzers;
+using ICSharpCode.ILSpyX.TreeView;
 
 using Medo.Application;
 
 using Microsoft.VisualStudio.Composition;
 
-using TomsToolbox.Wpf.Styles;
-using ICSharpCode.ILSpyX.TreeView;
-
 using TomsToolbox.Composition;
 using TomsToolbox.Wpf.Composition;
-using ICSharpCode.ILSpy.Themes;
-using System.Globalization;
-using System.Threading;
+using TomsToolbox.Wpf.Styles;
 
 namespace ICSharpCode.ILSpy
 {
@@ -125,9 +124,9 @@ namespace ICSharpCode.ILSpy
 			SettingsService.Instance.AssemblyListManager.CreateDefaultAssemblyLists();
 		}
 
-		private static void SingleInstance_NewInstanceDetected(object sender, NewInstanceEventArgs e) => ExportProvider.GetExportedValue<AssemblyTreeModel>().HandleSingleInstanceCommandLineArguments(e.Args).HandleExceptions();
+		private static void SingleInstance_NewInstanceDetected(object? sender, NewInstanceEventArgs e) => ExportProvider.GetExportedValue<AssemblyTreeModel>().HandleSingleInstanceCommandLineArguments(e.Args).HandleExceptions();
 
-		static Assembly ResolvePluginDependencies(AssemblyLoadContext context, AssemblyName assemblyName)
+		static Assembly? ResolvePluginDependencies(AssemblyLoadContext context, AssemblyName assemblyName)
 		{
 			var rootPath = Path.GetDirectoryName(typeof(App).Assembly.Location);
 			var assemblyFileName = Path.Combine(rootPath, assemblyName.Name + ".dll");
@@ -222,7 +221,7 @@ namespace ICSharpCode.ILSpy
 			MainWindow.Show();
 		}
 
-		void DotNet40_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+		void DotNet40_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
 		{
 			// On .NET 4.0, an unobserved exception in a task terminates the process unless we mark it as observed
 			e.SetObserved();
@@ -237,7 +236,7 @@ namespace ICSharpCode.ILSpy
 
 		static void ShowErrorBox(object sender, UnhandledExceptionEventArgs e)
 		{
-			Exception ex = e.ExceptionObject as Exception;
+			Exception? ex = e.ExceptionObject as Exception;
 			if (ex != null)
 			{
 				UnhandledException(ex);
@@ -250,13 +249,13 @@ namespace ICSharpCode.ILSpy
 		internal static void UnhandledException(Exception exception)
 		{
 			Debug.WriteLine(exception.ToString());
-			for (Exception ex = exception; ex != null; ex = ex.InnerException)
+			for (Exception? ex = exception; ex != null; ex = ex.InnerException)
 			{
-				ReflectionTypeLoadException rtle = ex as ReflectionTypeLoadException;
+				ReflectionTypeLoadException? rtle = ex as ReflectionTypeLoadException;
 				if (rtle != null && rtle.LoaderExceptions.Length > 0)
 				{
 					exception = rtle.LoaderExceptions[0];
-					Debug.WriteLine(exception.ToString());
+					Debug.WriteLine(exception?.ToString());
 					break;
 				}
 			}

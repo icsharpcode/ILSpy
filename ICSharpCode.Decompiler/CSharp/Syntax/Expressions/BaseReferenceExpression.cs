@@ -63,9 +63,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitBaseReferenceExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			BaseReferenceExpression o = other as BaseReferenceExpression;
+			BaseReferenceExpression? o = other as BaseReferenceExpression;
 			return o != null;
 		}
 	}

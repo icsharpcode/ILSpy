@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			set { SetValue(TextBackgroundProperty, value); }
 		}
 
-		public SharpTreeNode Node {
+		public SharpTreeNode? Node {
 			get { return DataContext as SharpTreeNode; }
 		}
 
@@ -103,7 +103,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			}
 		}
 
-		void Node_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		void Node_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == "IsEditing")
 			{

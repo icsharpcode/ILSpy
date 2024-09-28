@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 
@@ -116,7 +117,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		static bool MatchCondition(ILInstruction condition, out ILVariable v, out string name)
+		static bool MatchCondition(ILInstruction condition, [NotNullWhen(true)] out ILVariable? v, [NotNullWhen(true)] out string? name)
 		{
 			v = null;
 			name = null;
@@ -146,7 +147,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///       if (call op_True(ldloc lhsVar)) ldloc lhsVar else call op_BitwiseOr(ldloc lhsVar, rhsInst)
 		///    -> user.logic op_BitwiseOr(ldloc lhsVar, rhsInst)
 		/// </summary>
-		public static ILInstruction Transform(ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst)
+		public static ILInstruction? Transform(ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst)
 		{
 			if (!MatchCondition(condition, out var lhsVar, out var conditionMethodName))
 				return null;
@@ -163,7 +164,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return result;
 		}
 
-		public static ILInstruction TransformDynamic(ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst)
+		public static ILInstruction? TransformDynamic(ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst)
 		{
 			// Check condition:
 			System.Linq.Expressions.ExpressionType unaryOp;
@@ -232,7 +233,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			// Check trueInst:
-			DynamicUnaryOperatorInstruction rhsUnary;
+			DynamicUnaryOperatorInstruction? rhsUnary;
 			if (trueInst.MatchLdLoc(lhsVar))
 			{
 				// OK, typical pattern where the expression evaluates to 'dynamic'

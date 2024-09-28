@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// - If target is not null: returns target.
 		/// </summary>
 		[return: NotNullIfNotNull("newValue")]
-		public static T? GetOrSet<T>(ref T? target, T? newValue) where T : class
+		public static T? GetOrSet<T>([NotNullIfNotNull(nameof(newValue))] ref T? target, T? newValue) where T : class
 		{
 			T? oldValue = Interlocked.CompareExchange(ref target, newValue, null);
 			return oldValue ?? newValue;

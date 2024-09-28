@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			};
 		}
 
-		public bool Equals(IReadOnlyList<IParameter> x, IReadOnlyList<IParameter> y)
+		public bool Equals(IReadOnlyList<IParameter>? x, IReadOnlyList<IParameter>? y)
 		{
 			if (x == y)
 				return true;
@@ -125,18 +125,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static readonly SignatureComparer Ordinal = new SignatureComparer(StringComparer.Ordinal);
 
-		public bool Equals(IMember x, IMember y)
+		public bool Equals(IMember? x, IMember? y)
 		{
 			if (x == y)
 				return true;
 			if (x == null || y == null || x.SymbolKind != y.SymbolKind || !nameComparer.Equals(x.Name, y.Name))
 				return false;
-			IParameterizedMember px = x as IParameterizedMember;
-			IParameterizedMember py = y as IParameterizedMember;
+			IParameterizedMember? px = x as IParameterizedMember;
+			IParameterizedMember? py = y as IParameterizedMember;
 			if (px != null && py != null)
 			{
-				IMethod mx = x as IMethod;
-				IMethod my = y as IMethod;
+				IMethod? mx = x as IMethod;
+				IMethod? my = y as IMethod;
 				if (mx != null && my != null && mx.TypeParameters.Count != my.TypeParameters.Count)
 					return false;
 				return ParameterListComparer.Instance.Equals(px.Parameters, py.Parameters);
@@ -152,12 +152,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			unchecked
 			{
 				int hash = (int)obj.SymbolKind * 33 + nameComparer.GetHashCode(obj.Name);
-				IParameterizedMember pm = obj as IParameterizedMember;
+				IParameterizedMember? pm = obj as IParameterizedMember;
 				if (pm != null)
 				{
 					hash *= 27;
 					hash += ParameterListComparer.Instance.GetHashCode(pm.Parameters);
-					IMethod m = pm as IMethod;
+					IMethod? m = pm as IMethod;
 					if (m != null)
 						hash += m.TypeParameters.Count;
 				}

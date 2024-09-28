@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <param name="compilation">The main compilation.</param>
 		/// <param name="namespaces">The individual namespaces being merged.</param>
 		/// <param name="externAlias">The extern alias for this namespace.</param>
-		public MergedNamespace(ICompilation compilation, INamespace[] namespaces, string externAlias = null)
+		public MergedNamespace(ICompilation compilation, INamespace[] namespaces, string? externAlias = null)
 		{
 			if (compilation == null)
 				throw new ArgumentNullException(nameof(compilation));
@@ -108,7 +108,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return GetChildNamespaces().Values; }
 		}
 
-		public INamespace GetChildNamespace(string name)
+		public INamespace? GetChildNamespace(string name)
 		{
 			INamespace ns;
 			if (GetChildNamespaces().TryGetValue(name, out ns))
@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public ITypeDefinition GetTypeDefinition(string name, int typeParameterCount)
 		{
-			ITypeDefinition anyTypeDef = null;
+			ITypeDefinition? anyTypeDef = null;
 			foreach (var ns in namespaces)
 			{
 				ITypeDefinition typeDef = ns.GetTypeDefinition(name, typeParameterCount);

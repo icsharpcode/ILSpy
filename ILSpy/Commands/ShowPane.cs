@@ -13,7 +13,7 @@ namespace ICSharpCode.ILSpy.Commands
 			this.contentId = contentId;
 		}
 
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			DockWorkspace.Instance.ShowToolPane(contentId);
 		}
@@ -28,7 +28,7 @@ namespace ICSharpCode.ILSpy.Commands
 			this.model = model;
 		}
 
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
 			DockWorkspace.Instance.ActiveTabPage = model;
 		}

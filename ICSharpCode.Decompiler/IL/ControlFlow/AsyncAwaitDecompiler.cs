@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection.Metadata;
 
@@ -73,29 +74,29 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		ILTransformContext context;
 
 		// These fields are set by MatchTaskCreationPattern() or MatchEnumeratorCreationNewObj()
-		IType taskType; // return type of the async method; or IAsyncEnumerable{T}/IAsyncEnumerator{T}
-		IType underlyingReturnType; // return type of the method (only the "T" for Task{T}), for async enumerators this is the type being yielded
+		IType? taskType; // return type of the async method; or IAsyncEnumerable{T}/IAsyncEnumerator{T}
+		IType? underlyingReturnType; // return type of the method (only the "T" for Task{T}), for async enumerators this is the type being yielded
 		AsyncMethodType methodType;
-		ITypeDefinition stateMachineType;
-		IType builderType;
-		IField builderField;
-		IField stateField;
+		ITypeDefinition? stateMachineType;
+		IType? builderType;
+		IField? builderField;
+		IField? stateField;
 		int initialState;
 		Dictionary<IField, ILVariable> fieldToParameterMap = new Dictionary<IField, ILVariable>();
 		Dictionary<ILVariable, ILVariable> cachedFieldToParameterMap = new Dictionary<ILVariable, ILVariable>();
-		IField disposeModeField; // 'disposeMode' field (IAsyncEnumerable/IAsyncEnumerator only)
+		IField? disposeModeField; // 'disposeMode' field (IAsyncEnumerable/IAsyncEnumerator only)
 
 		// These fields are set by AnalyzeMoveNext():
-		ILFunction moveNextFunction;
-		ILVariable cachedStateVar; // variable in MoveNext that caches the stateField.
-		TryCatch mainTryCatch;
-		Block setResultReturnBlock; // block that is jumped to for return statements
-									// Note: for async enumerators, a jump to setResultReturnBlock is a 'yield break;'
+		ILFunction? moveNextFunction;
+		ILVariable? cachedStateVar; // variable in MoveNext that caches the stateField.
+		TryCatch? mainTryCatch;
+		Block? setResultReturnBlock; // block that is jumped to for return statements
+									 // Note: for async enumerators, a jump to setResultReturnBlock is a 'yield break;'
 		int finalState;       // final state after the setResultAndExitBlock
 		bool finalStateKnown;
-		ILVariable resultVar; // the variable that gets returned by the setResultAndExitBlock
-		Block setResultYieldBlock; // block that is jumped to for 'yield return' statements
-		ILVariable doFinallyBodies;
+		ILVariable? resultVar; // the variable that gets returned by the setResultAndExitBlock
+		Block? setResultYieldBlock; // block that is jumped to for 'yield return' statements
+		ILVariable? doFinallyBodies;
 
 		// These fields are set by AnalyzeStateMachine():
 		int smallestAwaiterVarIndex;
@@ -294,15 +295,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			if (startCall.Arguments.Count != 2)
 				return false;
-			ILInstruction loadBuilderExpr = startCall.Arguments[0];
-			if (!startCall.Arguments[1].MatchLdLoca(out ILVariable stateMachineVar))
+			ILInstruction? loadBuilderExpr = startCall.Arguments[0];
+			if (!startCall.Arguments[1].MatchLdLoca(out ILVariable? stateMachineVar))
 				return false;
 			stateMachineType = stateMachineVar.Type.GetDefinition();
 			if (stateMachineType == null)
 				return false;
 			pos--;
 
-			if (loadBuilderExpr.MatchLdLocRef(out ILVariable builderVar))
+			if (loadBuilderExpr.MatchLdLocRef(out ILVariable? builderVar))
 			{
 				// Check third-to-last instruction (copy of builder)
 				// stloc builder(ldfld StateMachine::<>t__builder(ldloc stateMachine))
@@ -339,8 +340,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 				if (!MatchCall(returnValue, "get_Task", out var getTaskArgs) || getTaskArgs.Count != 1)
 					return false;
-				ILInstruction target;
-				IField builderField2;
+				ILInstruction? target;
+				IField? builderField2;
 				if (builderType.IsReferenceType == true)
 				{
 					if (!getTaskArgs[0].MatchLdFld(out target, out builderField2))
@@ -482,7 +483,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Matches a (potentially virtual) instance method call.
 		/// </summary>
-		static bool MatchCall(ILInstruction inst, string name, out InstructionCollection<ILInstruction> args)
+		static bool MatchCall(ILInstruction inst, string name, [NotNullWhen(true)] out InstructionCollection<ILInstruction>? args)
 		{
 			if (inst is CallInstruction call && (call.OpCode == OpCode.Call || call.OpCode == OpCode.CallVirt)
 				&& call.Method.Name == name && !call.Method.IsStatic)
@@ -497,7 +498,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Matches a store to the state machine.
 		/// </summary>
-		static bool MatchStFld(ILInstruction stfld, ILVariable stateMachineVar, out IField field, out ILInstruction value)
+		static bool MatchStFld(ILInstruction stfld, ILVariable stateMachineVar, [NotNullWhen(true)] out IField? field, [NotNullWhen(true)] out ILInstruction? value)
 		{
 			if (!stfld.MatchStFld(out var target, out field, out value))
 				return false;
@@ -609,7 +610,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		}
 
 		static bool MatchEnumeratorCreationNewObj(ILInstruction inst, ILTransformContext context,
-			out int initialState, out ITypeDefinition stateMachineType)
+			out int initialState, out ITypeDefinition? stateMachineType)
 		{
 			initialState = default;
 			stateMachineType = default;
@@ -644,7 +645,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return false;
 		}
 
-		static void AnalyzeEnumeratorCtor(IMethod ctor, ILTransformContext context, out IField builderField, out IType builderType, out IField stateField)
+		static void AnalyzeEnumeratorCtor(IMethod ctor, ILTransformContext context, out IField? builderField, out IType builderType, out IField? stateField)
 		{
 			builderField = null;
 			stateField = null;
@@ -803,7 +804,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return block.Instructions[1].MatchLeave(blockContainer);
 		}
 
-		private Block CheckSetResultReturnBlock(BlockContainer blockContainer, int setResultReturnBlockIndex, bool[] blocksAnalyzed)
+		private Block? CheckSetResultReturnBlock(BlockContainer blockContainer, int setResultReturnBlockIndex, bool[] blocksAnalyzed)
 		{
 			if (setResultReturnBlockIndex >= blockContainer.Blocks.Count)
 			{
@@ -824,7 +825,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				pos++;
 			}
 			// [vb-only] stloc S_11(ldc.i4 -2)
-			ILVariable finalStateSlot = null;
+			ILVariable? finalStateSlot = null;
 			int? finalStateSlotValue = null;
 			if (block.Instructions[pos] is StLoc stlocFinalState && stlocFinalState.Value is LdcI4 ldcI4 &&
 				stlocFinalState.Variable.Kind == VariableKind.StackSlot)
@@ -869,7 +870,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return blockContainer.Blocks[setResultReturnBlockIndex];
 		}
 
-		private bool MatchDisposeCombinedTokens(BlockContainer blockContainer, ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst, bool[] blocksAnalyzed, out Block setResultAndExitBlock)
+		private bool MatchDisposeCombinedTokens(BlockContainer blockContainer, ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst, bool[] blocksAnalyzed, [NotNullWhen(true)] out Block? setResultAndExitBlock)
 		{
 			setResultAndExitBlock = null;
 			// 	...
@@ -1083,8 +1084,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		bool IsBuilderFieldOnThis(ILInstruction inst)
 		{
-			IField field;
-			ILInstruction target;
+			IField? field;
+			ILInstruction? target;
 			if (builderType.IsReferenceType == true)
 			{
 				// ldfld(StateMachine::<>t__builder, ldloc(this))
@@ -1423,7 +1424,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		bool AnalyzeAwaitBlock(Block block, out ILVariable awaiter, out IField awaiterField, out int state, out int yieldOffset)
+		bool AnalyzeAwaitBlock(Block block, [NotNullWhen(true)] out ILVariable? awaiter, [NotNullWhen(true)] out IField? awaiterField, out int state, out int yieldOffset)
 		{
 			awaiter = null;
 			awaiterField = null;
@@ -1522,6 +1523,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				pos--;
 			}
+
 			block.Instructions.RemoveRange(pos, block.Instructions.Count - pos);
 			return true;
 		}
@@ -1538,7 +1540,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return inst;
 		}
 
-		private bool AnalyzeYieldReturn(Block block, out ILInstruction yieldValue, out int newState)
+		private bool AnalyzeYieldReturn(Block block, [NotNullWhen(true)] out ILInstruction? yieldValue, out int newState)
 		{
 			yieldValue = default;
 			newState = default;
@@ -1584,7 +1586,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return true;
 		}
 
-		bool MatchCurrentAssignment(ILInstruction inst, out ILInstruction value)
+		bool MatchCurrentAssignment(ILInstruction inst, [NotNullWhen(true)] out ILInstruction? value)
 		{
 			if (!inst.MatchStFld(out var target, out var field, out value))
 				return false;
@@ -1701,7 +1703,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return inst;
 		}
 
-		bool CheckAwaitBlock(Block block, out Block resumeBlock, out IField stackField)
+		bool CheckAwaitBlock(Block block, [NotNullWhen(true)] out Block? resumeBlock, out IField? stackField)
 		{
 			// awaitBlock:
 			//   (pre-roslyn: save stack)
@@ -1819,7 +1821,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// stloc S_28(ldc.i4 -1)
 				// stloc cachedStateVar(ldloc S_28)
 				// stfld <>1__state(ldloc this, ldloc S_28)
-				ILVariable m1Var = null;
+				ILVariable? m1Var = null;
 				if (block.Instructions[pos] is StLoc stlocM1 && stlocM1.Value.MatchLdcI4(initialState) && stlocM1.Variable.Kind == VariableKind.StackSlot)
 				{
 					m1Var = stlocM1.Variable;
@@ -1929,7 +1931,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			context.StepEndGroup(keepIfEmpty: true);
 		}
 
-		internal static Block GetBodyEntryPoint(BlockContainer body)
+		internal static Block? GetBodyEntryPoint(BlockContainer? body)
 		{
 			if (body == null)
 				return null;

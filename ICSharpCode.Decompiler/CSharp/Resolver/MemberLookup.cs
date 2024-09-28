@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			if (targetType.Kind == TypeKind.TypeParameter)
 				targetType = ((ITypeParameter)targetType).EffectiveBaseClass;
-			ITypeDefinition typeDef = targetType.GetDefinition();
+			ITypeDefinition? typeDef = targetType.GetDefinition();
 			if (typeDef == null)
 				return false;
 			for (ITypeDefinition c = currentTypeDefinition; c != null; c = c.DeclaringTypeDefinition)
@@ -189,21 +189,21 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				{
 					var nestedTypes = type.GetNestedTypes(options: GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions);
 					// GetDefinition() might return null if some IType has a strange implementation of GetNestedTypes.
-					entities.AddRange(nestedTypes.Select(t => t.GetDefinition()).Where(td => td != null));
+					entities.AddRange(nestedTypes.Select(t => t.GetDefinition()).OfType<ITypeDefinition>());
 				}
 
 				foreach (var entityGroup in entities.GroupBy(e => e.Name))
 				{
 
-					List<LookupGroup> lookupGroups = new List<LookupGroup>();
+					List<LookupGroup>? lookupGroups = new List<LookupGroup>();
 					if (!lookupGroupDict.TryGetValue(entityGroup.Key, out lookupGroups))
 						lookupGroupDict.Add(entityGroup.Key, lookupGroups = new List<LookupGroup>());
 
-					List<IType> newNestedTypes = null;
-					List<IParameterizedMember> newMethods = null;
-					IMember newNonMethod = null;
+					List<IType>? newNestedTypes = null;
+					List<IParameterizedMember>? newMethods = null;
+					IMember? newNonMethod = null;
 
-					IEnumerable<IType> typeBaseTypes = null;
+					IEnumerable<IType>? typeBaseTypes = null;
 
 					if (!targetIsTypeParameter)
 					{
@@ -243,7 +243,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					{
 						foreach (IType type in lookupGroup.NestedTypes)
 						{
-							ITypeDefinition typeDef = type.GetDefinition();
+							ITypeDefinition? typeDef = type.GetDefinition();
 							if (typeDef != null)
 								yield return typeDef;
 						}
@@ -259,18 +259,18 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			public readonly IType DeclaringType;
 
 			// When a nested type is hidden, it is simply removed from the list.
-			public List<IType> NestedTypes;
+			public List<IType>? NestedTypes;
 
 			// When members are hidden, they are merely marked as hidden.
 			// We still need to store the hidden methods so that the 'override' processing can
 			// find them, so that it won't introduce the override as a new method.
-			public readonly List<IParameterizedMember> Methods;
+			public readonly List<IParameterizedMember>? Methods;
 			public bool MethodsAreHidden;
 
-			public IMember NonMethod;
+			public IMember? NonMethod;
 			public bool NonMethodIsHidden;
 
-			public LookupGroup(IType declaringType, List<IType> nestedTypes, List<IParameterizedMember> methods, IMember nonMethod)
+			public LookupGroup(IType declaringType, List<IType>? nestedTypes, List<IParameterizedMember>? methods, IMember? nonMethod)
 			{
 				this.DeclaringType = declaringType;
 				this.NestedTypes = nestedTypes;
@@ -310,8 +310,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				foreach (IType type in declaringType.GetNonInterfaceBaseTypes())
 				{
-					List<IType> newNestedTypes = null;
-					IEnumerable<IType> typeBaseTypes = null;
+					List<IType>? newNestedTypes = null;
+					IEnumerable<IType>? typeBaseTypes = null;
 
 					IEnumerable<IType> nestedTypes;
 					if (parameterizeResultType)
@@ -389,11 +389,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			foreach (IType type in targetResolveResult.Type.GetNonInterfaceBaseTypes())
 			{
 
-				List<IType> newNestedTypes = null;
-				List<IParameterizedMember> newMethods = null;
-				IMember newNonMethod = null;
+				List<IType>? newNestedTypes = null;
+				List<IParameterizedMember>? newMethods = null;
+				IMember? newNonMethod = null;
 
-				IEnumerable<IType> typeBaseTypes = null;
+				IEnumerable<IType>? typeBaseTypes = null;
 
 				if (!isInvocation && !targetIsTypeParameter)
 				{
@@ -452,10 +452,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			List<LookupGroup> lookupGroups = new List<LookupGroup>();
 			foreach (IType type in targetType.GetNonInterfaceBaseTypes())
 			{
-				List<IParameterizedMember> newMethods = null;
-				IMember newNonMethod = null;
+				List<IParameterizedMember>? newMethods = null;
+				IMember? newNonMethod = null;
 
-				IEnumerable<IType> typeBaseTypes = null;
+				IEnumerable<IType>? typeBaseTypes = null;
 
 				var members = type.GetProperties(filter, GetMemberOptions.IgnoreInheritedMembers);
 				AddMembers(type, members, allowProtectedAccess, lookupGroups, true, ref typeBaseTypes, ref newMethods, ref newNonMethod);
@@ -551,7 +551,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (!IsAccessible(member, allowProtectedAccess))
 					continue;
 
-				IParameterizedMember method;
+				IParameterizedMember? method;
 				if (treatAllParameterizedMembersAsMethods)
 					method = member as IParameterizedMember;
 				else
@@ -691,7 +691,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// return true if type is an interface or System.Object
 			if (type.Kind == TypeKind.Interface)
 				return true;
-			ITypeDefinition d = type.GetDefinition();
+			ITypeDefinition? d = type.GetDefinition();
 			return d != null && d.KnownTypeCode == KnownTypeCode.Object;
 		}
 		#endregion
@@ -753,7 +753,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				if (isInEnumMemberInitializer)
 				{
-					IField field = resultGroup.NonMethod as IField;
+					IField? field = resultGroup.NonMethod as IField;
 					if (field != null && field.DeclaringTypeDefinition != null && field.DeclaringTypeDefinition.Kind == TypeKind.Enum)
 					{
 						return new MemberResolveResult(

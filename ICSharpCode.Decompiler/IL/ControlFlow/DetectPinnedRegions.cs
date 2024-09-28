@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 
@@ -56,7 +57,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// </summary>
 	public class DetectPinnedRegions : IILTransform
 	{
-		ILTransformContext context;
+		ILTransformContext? context;
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{
@@ -105,7 +106,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				for (int j = 0; j < block.Instructions.Count - 1; j++)
 				{
 					var inst = block.Instructions[j];
-					if (inst.MatchStLoc(out ILVariable v, out var value) && v.Kind == VariableKind.PinnedLocal)
+					if (inst.MatchStLoc(out ILVariable? v, out var value) && v.Kind == VariableKind.PinnedLocal)
 					{
 						if (block.Instructions[j + 1].OpCode != OpCode.Branch)
 						{
@@ -162,7 +163,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			for (int i = 0; i < container.Blocks.Count; i++)
 			{
 				var block = container.Blocks[i];
-				if (IsNullSafeArrayToPointerPattern(block, out ILVariable v, out ILVariable p, out Block targetBlock))
+				if (IsNullSafeArrayToPointerPattern(block, out ILVariable? v, out ILVariable? p, out Block? targetBlock))
 				{
 					context.Step("NullSafeArrayToPointerPattern", block);
 					ILInstruction arrayToPointer = new GetPinnableReference(new LdLoc(v), null);
@@ -175,7 +176,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					((Branch)block.Instructions.Last()).TargetBlock = targetBlock;
 					modified = true;
 				}
-				else if (IsCustomRefPinPattern(block, out ILInstruction ldlocMem, out var callGPR, out v, out var stlocPtr,
+				else if (IsCustomRefPinPattern(block, out ILInstruction? ldlocMem, out var callGPR, out v, out var stlocPtr,
 					out targetBlock, out var nullBlock, out var notNullBlock))
 				{
 					context.Step("CustomRefPinPattern", block);
@@ -241,8 +242,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		//      stloc V_1(get.pinnable.reference(ldloc mem))
 		//      stloc ptr(conv ref->u (ldloc V_1))
 		//      br targetBlock
-		private bool IsCustomRefPinPattern(Block block, out ILInstruction ldlocMem, out CallInstruction callGPR,
-			out ILVariable v, out StLoc ptrAssign, out Block targetBlock, out Block nullBlock, out Block notNullBlock)
+		private bool IsCustomRefPinPattern(Block block, [NotNullWhen(true)] out ILInstruction? ldlocMem, [NotNullWhen(true)] out CallInstruction? callGPR,
+			[NotNullWhen(true)] out ILVariable? v, out StLoc? ptrAssign, [NotNullWhen(true)] out Block? targetBlock, out Block? nullBlock, [NotNullWhen(true)] out Block? notNullBlock)
 		{
 			ldlocMem = null;
 			callGPR = null;
@@ -356,7 +357,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		//   ...
 		//   stloc P(array.to.pointer(V))
 		//   br B_target
-		bool IsNullSafeArrayToPointerPattern(Block block, out ILVariable v, out ILVariable p, out Block targetBlock)
+		bool IsNullSafeArrayToPointerPattern(Block block, [NotNullWhen(true)] out ILVariable? v, [NotNullWhen(true)] out ILVariable? p, [NotNullWhen(true)] out Block? targetBlock)
 		{
 			v = null;
 			p = null;
@@ -384,7 +385,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					usingPreviousVar = true;
 				}
 			}
-			if (!ifInst.TrueInst.MatchBranch(out Block nullOrEmptyBlock))
+			if (!ifInst.TrueInst.MatchBranch(out Block? nullOrEmptyBlock))
 				return false;
 			if (!ifInst.FalseInst.MatchNop())
 				return false;
@@ -394,7 +395,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (!(p.Kind == VariableKind.PinnedLocal || (usingPreviousVar && v.Kind == VariableKind.PinnedLocal)))
 				return false;
-			if (!block.Instructions.Last().MatchBranch(out Block notNullBlock))
+			if (!block.Instructions.Last().MatchBranch(out Block? notNullBlock))
 				return false;
 			if (notNullBlock.Parent != block.Parent)
 				return false;
@@ -409,7 +410,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// }
 			if (block.Instructions.Count != 2)
 				return false;
-			if (!block.Instructions[0].MatchIfInstruction(out ILInstruction condition, out ILInstruction trueInst))
+			if (!block.Instructions[0].MatchIfInstruction(out var condition, out var trueInst))
 				return false;
 			var falseInst = block.Instructions[1];
 			if (condition is Comp comp && comp.Right.MatchLdcI(0))
@@ -431,7 +432,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 			condition = condition.UnwrapConv(ConversionKind.Truncate);
-			if (condition.MatchLdLen(StackType.I, out ILInstruction array))
+			if (condition.MatchLdLen(StackType.I, out ILInstruction? array))
 			{
 				// OK
 			}
@@ -450,7 +451,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			if (!array.MatchLdLoc(v))
 				return false;
-			if (!trueInst.MatchBranch(out Block notNullAndNotEmptyBlock))
+			if (!trueInst.MatchBranch(out Block? notNullAndNotEmptyBlock))
 				return false;
 			if (notNullAndNotEmptyBlock.Parent != block.Parent)
 				return false;
@@ -467,7 +468,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// }
 			if (block.Instructions.Count != 2)
 				return false;
-			if (!block.Instructions[0].MatchStLoc(out var p2, out ILInstruction value))
+			if (!block.Instructions[0].MatchStLoc(out var p2, out ILInstruction? value))
 				return false;
 			if (p != p2)
 			{
@@ -495,7 +496,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return block.Instructions[1].MatchBranch(targetBlock);
 		}
 
-		bool IsNullSafeArrayToPointerNullOrEmptyBlock(Block block, out ILVariable p, out Block targetBlock)
+		bool IsNullSafeArrayToPointerNullOrEmptyBlock(Block block, [NotNullWhen(true)] out ILVariable? p, [NotNullWhen(true)] out Block? targetBlock)
 		{
 			p = null;
 			targetBlock = null;
@@ -503,7 +504,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			//   stloc P(conv i4->u(ldc.i4 0))
 			//   br B_target
 			// }
-			ILInstruction value;
+			ILInstruction? value;
 			return block.Instructions.Count == 2
 				&& block.Instructions[0].MatchStLoc(out p, out value)
 				&& (p.Kind == VariableKind.PinnedLocal || p.Kind == VariableKind.Local)
@@ -602,7 +603,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			context.Step("CreatePinnedRegion", block);
 			BlockContainer body = new BlockContainer();
-			Block[] clonedBlocks = cloneBlocks ? new Block[sourceContainer.Blocks.Count] : null;
+			Block[]? clonedBlocks = cloneBlocks ? new Block[sourceContainer.Blocks.Count] : null;
 			for (int i = 0; i < sourceContainer.Blocks.Count; i++)
 			{
 				if (reachedEdgesPerBlock[i] > 0)
@@ -704,7 +705,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				// branch that leaves body.
 				// The target block should have an instruction that resets the pin; delete that instruction:
-				StLoc unpin = branch.TargetBlock.Instructions.First() as StLoc;
+				StLoc? unpin = branch.TargetBlock.Instructions.First() as StLoc;
 				if (unpin != null && unpin.Variable == pinnedRegionVar && IsNullOrZero(unpin.Value))
 				{
 					branch.TargetBlock.Instructions.RemoveAt(0);
@@ -790,7 +791,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// and then uses array.to.pointer immediately within the region.
 			Debug.Assert(pinnedRegion.Variable.Type.Kind == TypeKind.Array);
 			// Find the single load of the variable within the pinnedRegion:
-			LdLoc ldloc = null;
+			LdLoc? ldloc = null;
 			foreach (var inst in pinnedRegion.Descendants.OfType<IInstructionWithVariableOperand>())
 			{
 				if (inst.Variable == pinnedRegion.Variable && inst != pinnedRegion)
@@ -863,13 +864,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return slotInfo == Block.InstructionSlot || slotInfo == LdObj.TargetSlot || slotInfo == StObj.TargetSlot;
 		}
 
-		bool IsBranchOnNull(ILInstruction condBranch, ILVariable nativeVar, out Block targetBlock)
+		bool IsBranchOnNull(ILInstruction condBranch, ILVariable nativeVar, [NotNullWhen(true)] out Block? targetBlock)
 		{
 			targetBlock = null;
 			// if (comp(ldloc nativeVar == conv i4->i <sign extend>(ldc.i4 0))) br targetBlock
-			ILInstruction condition, trueInst, left, right;
-			return condBranch.MatchIfInstruction(out condition, out trueInst)
-				&& condition.MatchCompEquals(out left, out right)
+			return condBranch.MatchIfInstruction(out var condition, out var trueInst)
+				&& condition.MatchCompEquals(out var left, out var right)
 				&& left.MatchLdLoc(nativeVar) && IsNullOrZero(right)
 				&& trueInst.MatchBranch(out targetBlock);
 		}
@@ -884,7 +884,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// if (comp(ldloc nativeVar == conv i4->i <sign extend>(ldc.i4 0))) br targetBlock
 			// br adjustOffsetToStringData
 			ILVariable newVar;
-			if (!body.EntryPoint.Instructions[0].MatchStLoc(out ILVariable nativeVar, out ILInstruction initInst))
+			if (!body.EntryPoint.Instructions[0].MatchStLoc(out var nativeVar, out var initInst))
 			{
 				// potentially a special case with legacy csc and an unused pinned variable:
 				if (pinnedRegion.Variable.AddressCount == 0 && pinnedRegion.Variable.LoadCount == 0)
@@ -902,11 +902,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (nativeVar.Type.GetStackType() != StackType.I)
 				return;
 
-			Block targetBlock;
-			Block adjustOffsetToStringData = null;
+			Block? targetBlock;
+			Block? adjustOffsetToStringData = null;
 			if (body.EntryPoint.Instructions.Count == 2)
 			{
-				if (!initInst.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out ILInstruction left, out ILInstruction right))
+				if (!initInst.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out var left, out var right))
 					return;
 				if (!left.UnwrapConv(ConversionKind.StopGCTracking).MatchLdLoc(pinnedRegion.Variable))
 					return;
@@ -950,8 +950,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			pinnedRegion.Init = new GetPinnableReference(pinnedRegion.Init, null);
 
-			ILVariable otherVar;
-			ILInstruction otherVarInit;
+			ILVariable? otherVar;
+			ILInstruction? otherVarInit;
 			// In optimized builds, the 'nativeVar' may end up being a stack slot,
 			// and only gets assigned to a real variable after the offset adjustment.
 			if (nativeVar.Kind == VariableKind.StackSlot && nativeVar.LoadCount == 1
@@ -977,13 +977,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			ReplacePinnedVar(pinnedRegion.Variable, newVar, pinnedRegion);
 		}
 
-		bool IsOffsetToStringDataBlock(Block block, ILVariable nativeVar, Block targetBlock)
+		bool IsOffsetToStringDataBlock(Block block, ILVariable nativeVar, Block? targetBlock)
 		{
 			// stloc nativeVar(add(ldloc nativeVar, conv i4->i <sign extend>(call [Accessor System.Runtime.CompilerServices.RuntimeHelpers.get_OffsetToStringData():System.Int32]())))
 			// br IL_0011
 			if (block.Instructions.Count != 2)
 				return false;
-			ILInstruction value;
+			ILInstruction? value;
 			if (nativeVar.IsSingleDefinition && nativeVar.LoadCount == 2)
 			{
 				// If there are no loads (except for the two in the string-to-pointer pattern),
@@ -1003,7 +1003,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				return false;
 			}
-			if (!value.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out ILInstruction left, out ILInstruction right))
+			if (!value.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out var left, out var right))
 				return false;
 			if (!left.MatchLdLoc(nativeVar))
 				return false;
@@ -1014,7 +1014,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		bool IsOffsetToStringDataCall(ILInstruction inst)
 		{
-			Call call = inst.UnwrapConv(ConversionKind.SignExtend) as Call;
+			Call? call = inst.UnwrapConv(ConversionKind.SignExtend) as Call;
 			return call != null && call.Method.FullName == "System.Runtime.CompilerServices.RuntimeHelpers.get_OffsetToStringData";
 		}
 

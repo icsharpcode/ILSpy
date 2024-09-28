@@ -14,7 +14,7 @@ public sealed class AnalyzerRootNode : AnalyzerTreeNode
 		MessageBus<CurrentAssemblyListChangedEventArgs>.Subscribers += (sender, e) => CurrentAssemblyList_Changed(sender, e);
 	}
 
-	void CurrentAssemblyList_Changed(object sender, NotifyCollectionChangedEventArgs e)
+	void CurrentAssemblyList_Changed(object? sender, NotifyCollectionChangedEventArgs e)
 	{
 		if (e.Action == NotifyCollectionChangedAction.Reset)
 		{
@@ -33,7 +33,7 @@ public sealed class AnalyzerRootNode : AnalyzerTreeNode
 	{
 		this.Children.RemoveAll(
 			delegate (SharpTreeNode n) {
-				AnalyzerTreeNode an = n as AnalyzerTreeNode;
+				AnalyzerTreeNode? an = n as AnalyzerTreeNode;
 				return an == null || !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
 			});
 		return true;

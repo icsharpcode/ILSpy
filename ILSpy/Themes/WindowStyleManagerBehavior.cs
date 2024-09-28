@@ -64,7 +64,7 @@ namespace ICSharpCode.ILSpy.Themes
 			SettingsService.Instance.DisplaySettings.PropertyChanged -= DisplaySettings_PropertyChanged;
 		}
 
-		private void Color_Changed(object sender, EventArgs e)
+		private void Color_Changed(object? sender, EventArgs e)
 		{
 			ApplyThemeToWindowCaption();
 		}
@@ -82,7 +82,7 @@ namespace ICSharpCode.ILSpy.Themes
 			MessageBox.Show(Properties.Resources.SettingsChangeRestartRequired);
 		}
 
-		private void DisplaySettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		private void DisplaySettings_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(DisplaySettings.StyleWindowTitleBar))
 			{
@@ -113,7 +113,7 @@ namespace ICSharpCode.ILSpy.Themes
 			}
 			else
 			{
-				void Initialized(object o, EventArgs eventArgs)
+				void Initialized(object? o, EventArgs eventArgs)
 				{
 					ApplyThemeToWindowCaption();
 					window.SourceInitialized -= Initialized;

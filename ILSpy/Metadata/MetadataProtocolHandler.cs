@@ -29,7 +29,7 @@ namespace ICSharpCode.ILSpy.Metadata
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	class MetadataProtocolHandler : IProtocolHandler
 	{
-		public ILSpyTreeNode Resolve(string protocol, MetadataFile module, Handle handle, out bool newTabPage)
+		public ILSpyTreeNode? Resolve(string protocol, MetadataFile module, Handle handle, out bool newTabPage)
 		{
 			newTabPage = true;
 			if (protocol != "metadata")

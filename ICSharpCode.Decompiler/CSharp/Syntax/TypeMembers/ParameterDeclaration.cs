@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		bool isParams;
 		bool isScopedRef;
 
-		public CSharpTokenNode ThisKeyword {
+		public CSharpTokenNode? ThisKeyword {
 			get {
 				if (hasThisModifier)
 				{
@@ -141,21 +141,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstType Type {
+		public AstType? Type {
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
 		}
 
 		public string Name {
 			get {
-				return GetChildByRole(Roles.Identifier).Name;
+				return GetChildByRole(Roles.Identifier)?.Name ?? "";
 			}
 			set {
 				SetChildByRole(Roles.Identifier, Identifier.Create(value));
 			}
 		}
 
-		public Identifier NameToken {
+		public Identifier? NameToken {
 			get {
 				return GetChildByRole(Roles.Identifier);
 			}
@@ -164,11 +164,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode AssignToken {
+		public CSharpTokenNode? AssignToken {
 			get { return GetChildByRole(Roles.Assign); }
 		}
 
-		public Expression DefaultExpression {
+		public Expression? DefaultExpression {
 			get { return GetChildByRole(Roles.Expression); }
 			set { SetChildByRole(Roles.Expression, value); }
 		}

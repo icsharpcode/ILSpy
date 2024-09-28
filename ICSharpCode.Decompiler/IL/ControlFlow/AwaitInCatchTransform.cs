@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using ICSharpCode.Decompiler.IL.Transforms;
@@ -66,7 +67,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var cfg = new ControlFlowGraph(container, context.CancellationToken);
 				if (transformableCatchBlocks.Count > 0)
 					changedContainers.Add(container);
-				SwitchInstruction switchInstructionOpt = null;
+				SwitchInstruction? switchInstructionOpt = null;
 				foreach (var result in transformableCatchBlocks)
 				{
 					removedBlocks.Clear();
@@ -101,7 +102,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							break;
 						case SwitchSection jumpTableEntry:
 							Debug.Assert(switchInstructionOpt == null || jumpTableEntry.Parent == switchInstructionOpt);
-							switchInstructionOpt = (SwitchInstruction)jumpTableEntry.Parent;
+							switchInstructionOpt = jumpTableEntry.Parent as SwitchInstruction;
 							break;
 					}
 
@@ -141,7 +142,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					if (result.NextBlockOrExitContainer is Block nextBlock && nextBlock.IncomingEdgeCount == 0)
 					{
 						List<Block> dependentBlocks = new List<Block>();
-						Block current = nextBlock;
+						Block? current = nextBlock;
 
 						do
 						{
@@ -198,10 +199,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		private static void TransformAsyncThrowToThrow(ILTransformContext context, HashSet<Block> removedBlocks, Block block)
 		{
-			ILVariable v = null;
+			ILVariable? v = null;
 			if (MatchExceptionCaptureBlock(context, block,
-				ref v, out StLoc typedExceptionVariableStore,
-				out Block captureBlock, out Block throwBlock))
+				ref v, out StLoc? typedExceptionVariableStore,
+				out Block? captureBlock, out Block? throwBlock))
 			{
 				context.Step($"ExceptionDispatchInfo.Capture({v.Name}).Throw() => throw;", typedExceptionVariableStore);
 				block.Instructions.RemoveRange(typedExceptionVariableStore.ChildIndex + 1, 2);
@@ -222,8 +223,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Analyzes all catch handlers and returns every handler that follows the await catch handler pattern.
 		/// </summary>
-		static bool AnalyzeHandlers(InstructionCollection<TryCatchHandler> handlers, out ILVariable catchHandlerIdentifier,
-			out List<CatchBlockInfo> transformableCatchBlocks)
+		static bool AnalyzeHandlers(InstructionCollection<TryCatchHandler> handlers, out ILVariable? catchHandlerIdentifier,
+			[NotNullWhen(true)] out List<CatchBlockInfo> transformableCatchBlocks)
 		{
 			transformableCatchBlocks = new List<CatchBlockInfo>();
 			catchHandlerIdentifier = null;
@@ -254,9 +255,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// stloc V_5(ldc.i4 2)		- store id of catch block in 'identifierVariable'
 		/// br IL_0075				- jump out of catch block to the head of the catch-handler jump table
 		/// </summary>
-		static bool MatchAwaitCatchHandler(TryCatchHandler handler, out int id, out ILVariable identifierVariable,
-			out Block realEntryPoint, out ILInstruction nextBlockOrExitContainer,
-			out ILInstruction jumpTableEntry, out ILVariable objectVariable)
+		static bool MatchAwaitCatchHandler(TryCatchHandler handler, out int id, [NotNullWhen(true)] out ILVariable? identifierVariable,
+			[NotNullWhen(true)] out Block? realEntryPoint, out ILInstruction? nextBlockOrExitContainer,
+			[NotNullWhen(true)] out ILInstruction? jumpTableEntry, out ILVariable? objectVariable)
 		{
 			id = 0;
 			identifierVariable = null;
@@ -266,7 +267,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			nextBlockOrExitContainer = null;
 			var exceptionVariable = handler.Variable;
 			var catchBlock = ((BlockContainer)handler.Body).EntryPoint;
-			ILInstruction value;
+			ILInstruction? value;
 			switch (catchBlock.Instructions.Count)
 			{
 				case 3:
@@ -326,7 +327,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 			}
 
-			bool ParseSwitchJumpTable(int id, SwitchInstruction jumpTable, ILVariable identifierVariable, out Block realEntryPoint, out ILInstruction nextBlockOrExitContainer, out ILInstruction jumpTableEntry)
+			bool ParseSwitchJumpTable(int id, SwitchInstruction jumpTable, ILVariable identifierVariable, [NotNullWhen(true)] out Block? realEntryPoint, out ILInstruction? nextBlockOrExitContainer, [NotNullWhen(true)] out ILInstruction? jumpTableEntry)
 			{
 				realEntryPoint = null;
 				nextBlockOrExitContainer = null;
@@ -354,7 +355,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			}
 
-			bool ParseIfJumpTable(int id, Block jumpTableEntryBlock, ILVariable identifierVariable, out Block realEntryPoint, out ILInstruction nextBlockOrExitContainer, out ILInstruction jumpTableEntry)
+			bool ParseIfJumpTable(int id, Block jumpTableEntryBlock, ILVariable identifierVariable, [NotNullWhen(true)] out Block? realEntryPoint, out ILInstruction? nextBlockOrExitContainer, [NotNullWhen(true)] out ILInstruction? jumpTableEntry)
 			{
 				realEntryPoint = null;
 				nextBlockOrExitContainer = null;
@@ -419,7 +420,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		// =>
 		// throw(ldloc result.Handler.Variable)
 		internal static bool MatchExceptionCaptureBlock(ILTransformContext context, Block block,
-			ref ILVariable objectVariable, out StLoc typedExceptionVariableStore, out Block captureBlock, out Block throwBlock)
+			[NotNullWhen(true)] ref ILVariable? objectVariable, [NotNullWhen(true)] out StLoc? typedExceptionVariableStore, [NotNullWhen(true)] out Block? captureBlock, [NotNullWhen(true)] out Block? throwBlock)
 		{
 			bool DerivesFromException(IType t) => t.GetAllBaseTypes().Any(ty => ty.IsKnownType(KnownTypeCode.Exception));
 

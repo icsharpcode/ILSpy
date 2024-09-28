@@ -87,8 +87,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, declSecAttr.Parent, protocol: "metadata")));
 			}
 
-			string parentTooltip;
-			public string ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, declSecAttr.Parent);
+			string? parentTooltip;
+			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, declSecAttr.Parent);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public DeclarativeSecurityAction Action => declSecAttr.Action;
@@ -102,7 +102,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int PermissionSet => MetadataTokens.GetHeapOffset(declSecAttr.PermissionSet);
 
-			public string PermissionSetTooltip {
+			public string? PermissionSetTooltip {
 				get {
 					return null;
 				}

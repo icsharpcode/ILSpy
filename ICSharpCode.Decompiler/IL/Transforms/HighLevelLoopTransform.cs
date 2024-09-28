@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using ICSharpCode.Decompiler.IL.ControlFlow;
@@ -53,7 +54,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool MatchWhileLoop(BlockContainer loop, out IfInstruction condition, out Block loopBody)
+		bool MatchWhileLoop(BlockContainer loop, [NotNullWhen(true)] out IfInstruction? condition, out Block loopBody)
 		{
 			// ConditionDetection favours leave inside if and branch at end of block
 			// while-loop:
@@ -115,7 +116,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					ExpressionTransforms.RunOnSingleStatment(inst, context);
 				}
 			}*/
-
 			return true;
 		}
 
@@ -156,21 +156,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool MatchDoWhileLoop(BlockContainer loop)
 		{
-			(List<IfInstruction> conditions, ILInstruction exit, bool swap, bool split, bool unwrap) = AnalyzeDoWhileConditions(loop);
+			(List<IfInstruction>? conditions, ILInstruction? exit, bool swap, bool split, bool unwrap) = AnalyzeDoWhileConditions(loop);
 			// not a do-while loop, exit.
 			if (conditions == null || conditions.Count == 0)
 				return false;
 			context.Step("Transform to do-while loop: " + loop.EntryPoint.Label, loop);
 			Block conditionBlock;
 			// first we remove all extracted instructions from the original block.
-			var originalBlock = (Block)exit.Parent;
+			var originalBlock = exit.Parent as Block;
 			if (unwrap)
 			{
 				// we found a condition block nested in a condition that is followed by a return statement:
 				// we flip the condition and swap the blocks
 				Debug.Assert(originalBlock.Parent is IfInstruction);
 				var returnCondition = (IfInstruction)originalBlock.Parent;
-				var topLevelBlock = (Block)returnCondition.Parent;
+				var topLevelBlock = returnCondition.Parent as Block;
 				Debug.Assert(topLevelBlock.Parent == loop);
 				var leaveFunction = topLevelBlock.Instructions[returnCondition.ChildIndex + 1];
 				Debug.Assert(leaveFunction.MatchReturn(out _));
@@ -199,7 +199,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				loop.Blocks.MoveElementToEnd(originalBlock);
 			}
 			// combine all conditions and the exit instruction into one IfInstruction:
-			IfInstruction condition = null;
+			IfInstruction? condition = null;
 			conditionBlock.AddILRange(exit);
 			foreach (var inst in conditions)
 			{
@@ -240,7 +240,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		static (List<IfInstruction> conditions, ILInstruction exit, bool swap, bool split, bool unwrap) AnalyzeDoWhileConditions(BlockContainer loop)
+		static (List<IfInstruction>? conditions, ILInstruction? exit, bool swap, bool split, bool unwrap) AnalyzeDoWhileConditions(BlockContainer loop)
 		{
 			// we iterate over all blocks from the bottom, because the entry-point
 			// should only be considered as condition block, if there are no other blocks.
@@ -356,7 +356,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		// early match before block containers have been constructed
-		internal static bool MatchDoWhileConditionBlock(Block block, out Block target1, out Block target2)
+		internal static bool MatchDoWhileConditionBlock(Block block, out Block? target1, out Block? target2)
 		{
 			target1 = target2 = null;
 			if (block.Instructions.Count < 2)
@@ -370,7 +370,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				   (last.MatchBranch(out target2) || last.MatchReturn(out var _));
 		}
 
-		internal static Block GetIncrementBlock(BlockContainer loop, Block whileLoopBody) =>
+		internal static Block? GetIncrementBlock(BlockContainer loop, Block whileLoopBody) =>
 			loop.Blocks.SingleOrDefault(b => b != whileLoopBody
 										  && b.Instructions.Last().MatchBranch(loop.EntryPoint)
 										  && b.Instructions.SkipLast(1).All(IsSimpleStatement));
@@ -419,7 +419,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// split conditions:
 				var conditions = new List<ILInstruction>();
 				SplitConditions(whileCondition.Condition, conditions);
-				IfInstruction forCondition = null;
+				IfInstruction? forCondition = null;
 				int numberOfConditions = 0;
 				foreach (var condition in conditions)
 				{
@@ -480,7 +480,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Returns true if the instruction is stloc v(add(ldloc v, arg))
 		/// or compound.assign(ldloca v, arg)
 		/// </summary>
-		public static bool MatchIncrement(ILInstruction inst, out ILVariable variable)
+		public static bool MatchIncrement(ILInstruction inst, [NotNullWhen(true)] out ILVariable? variable)
 		{
 			if (inst.MatchStLoc(out variable, out var value))
 			{

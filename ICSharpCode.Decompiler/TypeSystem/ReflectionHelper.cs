@@ -227,9 +227,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the type code for the specified type, or TypeCode.Empty if none of the other type codes match.
 		/// </summary>
-		public static TypeCode GetTypeCode(this IType type)
+		public static TypeCode GetTypeCode(this IType? type)
 		{
-			ITypeDefinition def = type as ITypeDefinition;
+			ITypeDefinition? def = type as ITypeDefinition;
 			if (def != null)
 			{
 				KnownTypeCode typeCode = def.KnownTypeCode;
@@ -321,7 +321,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				// not a type parameter reference: read the actual type name
 				string typeName = ReadTypeName(reflectionTypeName, ref pos, out int tpc);
-				string assemblyName = local ? null : SkipAheadAndReadAssemblyName(reflectionTypeName, pos);
+				string? assemblyName = local ? null : SkipAheadAndReadAssemblyName(reflectionTypeName, pos);
 				reference = CreateGetClassTypeReference(assemblyName, typeName, tpc);
 			}
 			// read type suffixes
@@ -426,7 +426,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		static ITypeReference CreateGetClassTypeReference(string assemblyName, string typeName, int tpc)
 		{
-			IModuleReference assemblyReference;
+			IModuleReference? assemblyReference;
 			if (assemblyName != null)
 			{
 				assemblyReference = new DefaultAssemblyReference(assemblyName);
@@ -442,7 +442,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new GetClassTypeReference(assemblyReference, typeName.Substring(0, pos), typeName.Substring(pos + 1), tpc);
 		}
 
-		static string SkipAheadAndReadAssemblyName(string reflectionTypeName, int pos)
+		static string? SkipAheadAndReadAssemblyName(string reflectionTypeName, int pos)
 		{
 			int nestingLevel = 0;
 			while (pos < reflectionTypeName.Length)

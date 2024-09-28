@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// Retrieves the <see cref="ISymbol"/> associated with this AstNode, or null if no symbol
 		/// is associated with the node.
 		/// </summary>
-		public static ISymbol GetSymbol(this AstNode node)
+		public static ISymbol? GetSymbol(this AstNode node)
 		{
 			var rr = node.Annotation<ResolveResult>();
 			if (rr is MethodGroupResolveResult)
@@ -175,7 +175,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// Retrieves the <see cref="ILVariable"/> associated with this <see cref="IdentifierExpression"/>,
 		/// or <c>null</c> if no variable is associated with this identifier.
 		/// </summary>
-		public static ILVariable GetILVariable(this IdentifierExpression expr)
+		public static ILVariable? GetILVariable(this IdentifierExpression expr)
 		{
 			if (expr.Annotation<ResolveResult>() is ILVariableResolveResult rr)
 				return rr.Variable;
@@ -187,7 +187,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// Retrieves the <see cref="ILVariable"/> associated with this <see cref="VariableInitializer"/>,
 		/// or <c>null</c> if no variable is associated with this initializer.
 		/// </summary>
-		public static ILVariable GetILVariable(this VariableInitializer vi)
+		public static ILVariable? GetILVariable(this VariableInitializer vi)
 		{
 			if (vi.Annotation<ResolveResult>() is ILVariableResolveResult rr)
 				return rr.Variable;
@@ -199,7 +199,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// Retrieves the <see cref="ILVariable"/> associated with this <see cref="ForeachStatement"/>,
 		/// or <c>null</c> if no variable is associated with this foreach statement.
 		/// </summary>
-		public static ILVariable GetILVariable(this ForeachStatement loop)
+		public static ILVariable? GetILVariable(this ForeachStatement loop)
 		{
 			if (loop.Annotation<ResolveResult>() is ILVariableResolveResult rr)
 				return rr.Variable;

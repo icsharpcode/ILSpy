@@ -22,8 +22,8 @@ using System.Windows;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpyX;
-using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 using ICSharpCode.ILSpyX.TreeView;
+using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
@@ -32,7 +32,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 	/// </summary>
 	public abstract class AnalyzerEntityTreeNode : AnalyzerTreeNode, IMemberTreeNode
 	{
-		public abstract IEntity Member { get; }
+		public abstract IEntity? Member { get; }
 
 		public override void ActivateItem(IPlatformRoutedEventArgs e)
 		{
@@ -55,7 +55,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			}
 			this.Children.RemoveAll(
 				delegate (SharpTreeNode n) {
-					AnalyzerTreeNode an = n as AnalyzerTreeNode;
+					AnalyzerTreeNode? an = n as AnalyzerTreeNode;
 					return an == null || !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
 				});
 			return true;

@@ -37,7 +37,7 @@ namespace ICSharpCode.BamlDecompiler.Baml
 		public IDecompilerTypeSystem TypeSystem { get; }
 		public KnownThings KnownThings { get; }
 
-		Dictionary<ushort, (string FullAssemblyName, IModule Assembly)> assemblyMap = new Dictionary<ushort, (string FullAssemblyName, IModule Assembly)>();
+		Dictionary<ushort, (string? FullAssemblyName, IModule? Assembly)> assemblyMap = new Dictionary<ushort, (string? FullAssemblyName, IModule? Assembly)>();
 
 		public Dictionary<ushort, AssemblyInfoRecord> AssemblyIdMap { get; }
 		public Dictionary<ushort, AttributeInfoRecord> AttributeIdMap { get; }
@@ -88,7 +88,7 @@ namespace ICSharpCode.BamlDecompiler.Baml
 			return ctx;
 		}
 
-		public (string FullAssemblyName, IModule Assembly) ResolveAssembly(ushort id)
+		public (string? FullAssemblyName, IModule? Assembly) ResolveAssembly(ushort id)
 		{
 			id &= 0xfff;
 			if (!assemblyMap.TryGetValue(id, out var assembly))
@@ -116,7 +116,7 @@ namespace ICSharpCode.BamlDecompiler.Baml
 
 		private IModule FindMatchingReference(AssemblyNameReference name)
 		{
-			IModule bestMatch = null;
+			IModule? bestMatch = null;
 			foreach (var module in TypeSystem.ReferencedModules)
 			{
 				if (module.AssemblyName == name.Name)

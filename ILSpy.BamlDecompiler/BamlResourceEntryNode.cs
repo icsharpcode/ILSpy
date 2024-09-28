@@ -33,13 +33,13 @@ namespace ILSpy.BamlDecompiler
 {
 	public sealed class BamlResourceEntryNode : ResourceEntryNode
 	{
-		public BamlResourceEntryNode(string key, Func<Stream> data) : base(key, data)
+		public BamlResourceEntryNode(string key, Func<Stream?> data) : base(key, data)
 		{
 		}
 
 		public override bool View(TabPageModel tabPage)
 		{
-			IHighlightingDefinition highlighting = null;
+			IHighlightingDefinition? highlighting = null;
 
 			tabPage.SupportsLanguageSwitching = false;
 			tabPage.ShowTextView(textView => textView.RunWithCancellation(

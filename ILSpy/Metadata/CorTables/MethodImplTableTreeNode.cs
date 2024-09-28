@@ -85,8 +85,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, methodImpl.MethodDeclaration, protocol: "metadata")));
 			}
 
-			string methodDeclarationTooltip;
-			public string MethodDeclarationTooltip => GenerateTooltip(ref methodDeclarationTooltip, metadataFile, methodImpl.MethodDeclaration);
+			string? methodDeclarationTooltip;
+			public string? MethodDeclarationTooltip => GenerateTooltip(ref methodDeclarationTooltip, metadataFile, methodImpl.MethodDeclaration);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int MethodBody => MetadataTokens.GetToken(methodImpl.MethodBody);
@@ -96,8 +96,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, methodImpl.MethodBody, protocol: "metadata")));
 			}
 
-			string methodBodyTooltip;
-			public string MethodBodyTooltip => GenerateTooltip(ref methodBodyTooltip, metadataFile, methodImpl.MethodBody);
+			string? methodBodyTooltip;
+			public string? MethodBodyTooltip => GenerateTooltip(ref methodBodyTooltip, metadataFile, methodImpl.MethodBody);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Type => MetadataTokens.GetToken(methodImpl.Type);
@@ -107,8 +107,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, methodImpl.Type, protocol: "metadata")));
 			}
 
-			string typeTooltip;
-			public string TypeTooltip => GenerateTooltip(ref typeTooltip, metadataFile, methodImpl.Type);
+			string? typeTooltip;
+			public string? TypeTooltip => GenerateTooltip(ref typeTooltip, metadataFile, methodImpl.Type);
 
 			public MethodImplEntry(MetadataFile metadataFile, MethodImplementationHandle handle)
 			{

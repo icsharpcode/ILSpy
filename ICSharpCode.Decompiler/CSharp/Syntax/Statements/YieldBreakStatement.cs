@@ -62,9 +62,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitYieldBreakStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			YieldBreakStatement o = other as YieldBreakStatement;
+			YieldBreakStatement? o = other as YieldBreakStatement;
 			return o != null;
 		}
 	}

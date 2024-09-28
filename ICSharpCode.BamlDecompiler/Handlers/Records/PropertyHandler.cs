@@ -31,7 +31,7 @@ namespace ICSharpCode.BamlDecompiler.Handlers
 	{
 		public virtual BamlRecordType Type => BamlRecordType.Property;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
 			var record = (PropertyRecord)((BamlRecordNode)node).Record;
 

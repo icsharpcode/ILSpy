@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				shortName = assemblyName;
 		}
 
-		public IModule Resolve(ITypeResolveContext context)
+		public IModule? Resolve(ITypeResolveContext context)
 		{
 			IModule current = context.CurrentModule;
 			if (current != null && string.Equals(shortName, current.AssemblyName, StringComparison.OrdinalIgnoreCase))
@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			DefaultAssemblyReference o = other as DefaultAssemblyReference;
+			DefaultAssemblyReference? o = other as DefaultAssemblyReference;
 			return o != null && shortName == o.shortName;
 		}
 

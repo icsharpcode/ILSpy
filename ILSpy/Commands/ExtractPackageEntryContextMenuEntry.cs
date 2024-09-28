@@ -57,7 +57,7 @@ namespace ICSharpCode.ILSpy
 				return;
 
 			string fileName = dlg.FileName;
-			string outputFolderOrFileName = fileName;
+			string? outputFolderOrFileName = fileName;
 			if (selectedNodes.Length > 1)
 				outputFolderOrFileName = Path.GetDirectoryName(outputFolderOrFileName);
 
@@ -89,7 +89,7 @@ namespace ICSharpCode.ILSpy
 		void SaveEntry(ITextOutput output, PackageEntry entry, string targetFileName)
 		{
 			output.Write(entry.Name + ": ");
-			using Stream stream = entry.TryOpenStream();
+			using Stream? stream = entry.TryOpenStream();
 			if (stream == null)
 			{
 				output.WriteLine("Could not open stream!");

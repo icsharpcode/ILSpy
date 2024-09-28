@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public FixedVariableInitializer(string name, Expression initializer = null)
+		public FixedVariableInitializer(string name, Expression? initializer = null)
 		{
 			this.Name = name;
 			this.CountExpression = initializer;
@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitFixedVariableInitializer(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			var o = other as FixedVariableInitializer;
 			return o != null && MatchString(this.Name, o.Name) && this.CountExpression.DoMatch(o.CountExpression, match);

@@ -52,7 +52,7 @@ namespace ICSharpCode.BamlDecompiler.Handlers
 			}
 		}
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
 			var record = (XmlnsPropertyRecord)((BamlRecordNode)node).Record;
 			foreach (var asmId in record.AssemblyIds)

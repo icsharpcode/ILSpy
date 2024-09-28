@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			AliasNamespaceReference anr = other as AliasNamespaceReference;
+			AliasNamespaceReference? anr = other as AliasNamespaceReference;
 			return anr != null && this.identifier == anr.identifier;
 		}
 	}

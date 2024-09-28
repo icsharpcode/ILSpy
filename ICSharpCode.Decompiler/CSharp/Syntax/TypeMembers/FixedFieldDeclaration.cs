@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitFixedFieldDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			var o = other as FixedFieldDeclaration;
 			return o != null && this.MatchAttributesAndModifiers(o, match)

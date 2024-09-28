@@ -29,7 +29,6 @@ using System.Windows.Media;
 using AvalonDock.Layout.Serialization;
 
 using ICSharpCode.ILSpy.AssemblyTree;
-using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.Updates;
 using ICSharpCode.ILSpyX.FileLoaders;
@@ -150,7 +149,7 @@ namespace ICSharpCode.ILSpy
 
 		public async Task ShowMessageIfUpdatesAvailableAsync(ISettingsProvider spySettings, bool forceCheck = false)
 		{
-			string downloadUrl;
+			string? downloadUrl;
 			if (forceCheck)
 			{
 				downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesAsync(spySettings);
@@ -178,12 +177,12 @@ namespace ICSharpCode.ILSpy
 			else
 			{
 				updatePanel.Visibility = Visibility.Collapsed;
-				string downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesAsync(SettingsService.Instance.SpySettings);
+				string? downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesAsync(SettingsService.Instance.SpySettings);
 				AdjustUpdateUIAfterCheck(downloadUrl, true);
 			}
 		}
 
-		void AdjustUpdateUIAfterCheck(string downloadUrl, bool displayMessage)
+		void AdjustUpdateUIAfterCheck(string? downloadUrl, bool displayMessage)
 		{
 			updateAvailableDownloadUrl = downloadUrl;
 			updatePanel.Visibility = displayMessage ? Visibility.Visible : Visibility.Collapsed;

@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 
@@ -140,7 +141,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			else if (rightWithoutConv.MatchLdcI4(0) && inst.Kind.IsEqualityOrInequality())
 			{
-				if (inst.Left.MatchLdLen(StackType.I, out ILInstruction array))
+				if (inst.Left.MatchLdLen(StackType.I, out ILInstruction? array))
 				{
 					// comp.unsigned(ldlen array == conv i4->i(ldc.i4 0))
 					// => comp(ldlen.i4 array == ldc.i4 0)
@@ -166,7 +167,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		protected internal override void VisitConv(Conv inst)
 		{
 			inst.Argument.AcceptVisitor(this);
-			if (inst.Argument.MatchLdLen(StackType.I, out ILInstruction array) && inst.TargetType.IsIntegerType()
+			if (inst.Argument.MatchLdLen(StackType.I, out ILInstruction? array) && inst.TargetType.IsIntegerType()
 				&& (!inst.CheckForOverflow || context.Settings.AssumeArrayLengthFitsIntoInt32))
 			{
 				context.Step("conv.i4(ldlen array) => ldlen.i4(array)", inst);
@@ -301,8 +302,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		protected internal override void VisitNewObj(NewObj inst)
 		{
-			Block block;
-			if (TransformSpanTCtorContainingStackAlloc(inst, out ILInstruction locallocSpan))
+			Block? block;
+			if (TransformSpanTCtorContainingStackAlloc(inst, out ILInstruction? locallocSpan))
 			{
 				context.Step("new Span<T>(stackalloc) -> stackalloc Span<T>", inst);
 				inst.ReplaceWith(locallocSpan);
@@ -328,7 +329,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				inst.ReplaceWith(replacement);
 				return;
 			}
-			if (TransformDelegateCtorLdVirtFtnToLdVirtDelegate(inst, out LdVirtDelegate ldVirtDelegate))
+			if (TransformDelegateCtorLdVirtFtnToLdVirtDelegate(inst, out LdVirtDelegate? ldVirtDelegate))
 			{
 				context.Step("new Delegate(target, ldvirtftn Method) -> ldvirtdelegate Delegate Method(target)", inst);
 				inst.ReplaceWith(ldVirtDelegate);
@@ -342,7 +343,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// =>
 		/// ldvirtdelegate System.Delegate TargetMethod(target)
 		/// </summary>
-		bool TransformDelegateCtorLdVirtFtnToLdVirtDelegate(NewObj inst, out LdVirtDelegate ldVirtDelegate)
+		bool TransformDelegateCtorLdVirtFtnToLdVirtDelegate(NewObj inst, [NotNullWhen(true)] out LdVirtDelegate? ldVirtDelegate)
 		{
 			ldVirtDelegate = null;
 			if (inst.Method.DeclaringType.Kind != TypeKind.Delegate)
@@ -379,7 +380,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///		final: ldloc I_0
 		/// }
 		/// </summary>
-		bool TransformSpanTCtorContainingStackAlloc(NewObj newObj, out ILInstruction locallocSpan)
+		bool TransformSpanTCtorContainingStackAlloc(NewObj newObj, [NotNullWhen(true)] out ILInstruction? locallocSpan)
 		{
 			locallocSpan = null;
 			IType type = newObj.Method.DeclaringType;
@@ -428,7 +429,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool TransformDecimalFieldToConstant(LdObj inst, out LdcDecimal result)
+		bool TransformDecimalFieldToConstant(LdObj inst, [NotNullWhen(true)] out LdcDecimal? result)
 		{
 			if (inst.MatchLdsFld(out var field) && field.DeclaringType.IsKnownType(KnownTypeCode.Decimal))
 			{
@@ -461,7 +462,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			EarlyExpressionTransforms.AddressOfLdLocToLdLoca(inst, context);
 			if (EarlyExpressionTransforms.LdObjToLdLoc(inst, context))
 				return;
-			if (TransformDecimalFieldToConstant(inst, out LdcDecimal decimalConstant))
+			if (TransformDecimalFieldToConstant(inst, out LdcDecimal? decimalConstant))
 			{
 				context.Step("TransformDecimalFieldToConstant", inst);
 				inst.ReplaceWith(decimalConstant);
@@ -542,14 +543,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		IfInstruction HandleConditionalOperator(IfInstruction inst)
 		{
 			// if (cond) stloc A(V1) else stloc A(V2) --> stloc A(if (cond) V1 else V2)
-			Block trueInst = inst.TrueInst as Block;
+			Block? trueInst = inst.TrueInst as Block;
 			if (trueInst == null || trueInst.Instructions.Count != 1)
 				return inst;
-			Block falseInst = inst.FalseInst as Block;
+			Block? falseInst = inst.FalseInst as Block;
 			if (falseInst == null || falseInst.Instructions.Count != 1)
 				return inst;
-			ILVariable v;
-			ILInstruction value1, value2;
+			ILVariable? v;
+			ILInstruction? value1, value2;
 			if (trueInst.Instructions[0].MatchStLoc(out v, out value1) && falseInst.Instructions[0].MatchStLoc(v, out value2))
 			{
 				context.Step("conditional operator", inst);
@@ -570,8 +571,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Debug.Assert(container.ResultType == StackType.Void);
 			var defaultSection = switchInst.GetDefaultSection();
 			StackType resultType = StackType.Void;
-			BlockContainer leaveTarget = null;
-			ILVariable resultVariable = null;
+			BlockContainer? leaveTarget = null;
+			ILVariable? resultVariable = null;
 			foreach (var section in switchInst.Sections)
 			{
 				if (section != defaultSection)
@@ -628,7 +629,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				// validate that each integer is used for exactly one value
 				var integersUsed = new HashSet<int>();
-				foreach ((string key, int val) in str2int.Map)
+				foreach ((string? key, int val) in str2int.Map)
 				{
 					if (!integersUsed.Add(val))
 						return;

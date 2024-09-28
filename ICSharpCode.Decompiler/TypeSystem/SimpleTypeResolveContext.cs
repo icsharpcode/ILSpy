@@ -79,12 +79,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return currentMember; }
 		}
 
-		public ITypeResolveContext WithCurrentTypeDefinition(ITypeDefinition typeDefinition)
+		public ITypeResolveContext WithCurrentTypeDefinition(ITypeDefinition? typeDefinition)
 		{
 			return new SimpleTypeResolveContext(compilation, currentModule, typeDefinition, currentMember);
 		}
 
-		public ITypeResolveContext WithCurrentMember(IMember member)
+		public ITypeResolveContext WithCurrentMember(IMember? member)
 		{
 			return new SimpleTypeResolveContext(compilation, currentModule, currentTypeDefinition, member);
 		}

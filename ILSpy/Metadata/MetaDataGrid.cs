@@ -32,7 +32,7 @@ namespace ICSharpCode.ILSpy.Metadata
 	class MetaDataGrid : DataGrid, IHaveState
 	{
 		private readonly MouseHoverLogic hoverLogic;
-		private ToolTip toolTip;
+		private ToolTip? toolTip;
 
 		public ILSpyTreeNode SelectedTreeNode { get; set; }
 
@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			this.hoverLogic.MouseHoverStopped += HoverLogic_MouseHoverStopped;
 		}
 
-		private void HoverLogic_MouseHoverStopped(object sender, System.Windows.Input.MouseEventArgs e)
+		private void HoverLogic_MouseHoverStopped(object? sender, System.Windows.Input.MouseEventArgs e)
 		{
 			// Non-popup tooltips get closed as soon as the mouse starts moving again
 			if (toolTip != null)
@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		private void HoverLogic_MouseHover(object sender, System.Windows.Input.MouseEventArgs e)
+		private void HoverLogic_MouseHover(object? sender, System.Windows.Input.MouseEventArgs e)
 		{
 			var position = e.GetPosition(this);
 			var hit = VisualTreeHelper.HitTest(this, position);
@@ -76,7 +76,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			var pi = data?.GetType().GetProperty(name + "Tooltip");
 			if (pi == null)
 				return;
-			object tooltip = pi.GetValue(data);
+			object? tooltip = pi.GetValue(data);
 			if (tooltip is string s)
 			{
 				if (string.IsNullOrWhiteSpace(s))
@@ -107,7 +107,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		public ViewState GetState()
+		public ViewState? GetState()
 		{
 			return new ViewState {
 				DecompiledNodes = SelectedTreeNode == null

@@ -144,9 +144,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitComposedType(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			ComposedType o = other as ComposedType;
+			ComposedType? o = other as ComposedType;
 			return o != null
 				&& this.HasNullableSpecifier == o.HasNullableSpecifier
 				&& this.PointerRank == o.PointerRank
@@ -156,7 +156,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				&& this.ArraySpecifiers.DoMatch(o.ArraySpecifiers, match);
 		}
 
-		public override string ToString(CSharpFormattingOptions formattingOptions)
+		public override string ToString(CSharpFormattingOptions? formattingOptions)
 		{
 			StringBuilder b = new StringBuilder();
 			if (this.HasRefSpecifier)
@@ -201,7 +201,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return this;
 		}
 
-		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)
+		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider? interningProvider = null)
 		{
 			if (interningProvider == null)
 				interningProvider = InterningProvider.Dummy;
@@ -287,13 +287,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitArraySpecifier(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			ArraySpecifier o = other as ArraySpecifier;
+			ArraySpecifier? o = other as ArraySpecifier;
 			return o != null && this.Dimensions == o.Dimensions;
 		}
 
-		public override string ToString(CSharpFormattingOptions formattingOptions)
+		public override string ToString(CSharpFormattingOptions? formattingOptions)
 		{
 			return "[" + new string(',', this.Dimensions - 1) + "]";
 		}

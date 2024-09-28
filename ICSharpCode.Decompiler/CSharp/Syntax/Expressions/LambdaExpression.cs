@@ -82,9 +82,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitLambdaExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			LambdaExpression o = other as LambdaExpression;
+			LambdaExpression? o = other as LambdaExpression;
 			return o != null && this.IsAsync == o.IsAsync && this.Parameters.DoMatch(o.Parameters, match) && this.Body.DoMatch(o.Body, match);
 		}
 	}

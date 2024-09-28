@@ -392,7 +392,7 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			if (segment.Reference is ICSharpCode.Decompiler.Disassembler.OpCodeInfo code)
 			{
-				XmlDocumentationProvider docProvider = XmlDocLoader.MscorlibDocumentation;
+				XmlDocumentationProvider? docProvider = XmlDocLoader.MscorlibDocumentation;
 				DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), SettingsService.Instance.SessionSettings.LanguageSettings.Language.SyntaxHighlighting);
 				renderer.AddSignatureBlock($"{code.Name} (0x{code.Code:x})");
 				if (docProvider != null)
@@ -425,7 +425,7 @@ namespace ICSharpCode.ILSpy.TextView
 					Handle handle = unresolvedEntity.Handle;
 					if (!handle.IsEntityHandle())
 						return null;
-					IEntity resolved = typeSystem.MainModule.ResolveEntity((EntityHandle)handle);
+					IEntity? resolved = typeSystem.MainModule.ResolveEntity((EntityHandle)handle);
 					if (resolved == null)
 						return null;
 					var document = CreateTooltipForEntity(resolved);
@@ -445,7 +445,7 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			Language currentLanguage = SettingsService.Instance.SessionSettings.LanguageSettings.Language;
 			DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), currentLanguage.SyntaxHighlighting);
-			RichText richText = currentLanguage.GetRichTextTooltip(resolved);
+			RichText? richText = currentLanguage.GetRichTextTooltip(resolved);
 			if (richText == null)
 			{
 				return null;

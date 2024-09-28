@@ -112,23 +112,23 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitMemberType(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			MemberType o = other as MemberType;
+			MemberType? o = other as MemberType;
 			return o != null && this.IsDoubleColon == o.IsDoubleColon
 				&& MatchString(this.MemberName, o.MemberName) && this.Target.DoMatch(o.Target, match)
 				&& this.TypeArguments.DoMatch(o.TypeArguments, match);
 		}
 
-		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)
+		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider? interningProvider = null)
 		{
 			if (interningProvider == null)
 				interningProvider = InterningProvider.Dummy;
 
-			TypeOrNamespaceReference t;
+			TypeOrNamespaceReference? t;
 			if (this.IsDoubleColon)
 			{
-				SimpleType st = this.Target as SimpleType;
+				SimpleType? st = this.Target as SimpleType;
 				if (st != null)
 				{
 					t = interningProvider.Intern(new AliasNamespaceReference(interningProvider.Intern(st.Identifier)));

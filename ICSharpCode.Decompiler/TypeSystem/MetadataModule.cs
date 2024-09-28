@@ -192,7 +192,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return LazyInit.GetOrSet(ref this.internalsVisibleTo, result);
 		}
 
-		static string GetShortName(string fullAssemblyName)
+		static string? GetShortName(string fullAssemblyName)
 		{
 			if (fullAssemblyName == null)
 				return null;
@@ -217,7 +217,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		public ITypeDefinition GetDefinition(TypeDefinitionHandle handle)
+		public ITypeDefinition? GetDefinition(TypeDefinitionHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -233,7 +233,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return LazyInit.GetOrSet(ref typeDefs[row], typeDef);
 		}
 
-		public IField GetDefinition(FieldDefinitionHandle handle)
+		public IField? GetDefinition(FieldDefinitionHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -249,7 +249,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return LazyInit.GetOrSet(ref fieldDefs[row], field);
 		}
 
-		public IMethod GetDefinition(MethodDefinitionHandle handle)
+		public IMethod? GetDefinition(MethodDefinitionHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -266,7 +266,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return LazyInit.GetOrSet(ref methodDefs[row], method);
 		}
 
-		public IProperty GetDefinition(PropertyDefinitionHandle handle)
+		public IProperty? GetDefinition(PropertyDefinitionHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -283,7 +283,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return LazyInit.GetOrSet(ref propertyDefs[row], property);
 		}
 
-		public IEvent GetDefinition(EventDefinitionHandle handle)
+		public IEvent? GetDefinition(EventDefinitionHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -308,7 +308,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region Resolve Module
 
-		public IModule ResolveModule(AssemblyReferenceHandle handle)
+		public IModule? ResolveModule(AssemblyReferenceHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -332,7 +332,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return Compilation.FindModuleByReference(asmRef);
 		}
 
-		public IModule ResolveModule(ModuleReferenceHandle handle)
+		public IModule? ResolveModule(ModuleReferenceHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -348,7 +348,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return null;
 		}
 
-		public IModule GetDeclaringModule(TypeReferenceHandle handle)
+		public IModule? GetDeclaringModule(TypeReferenceHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -471,7 +471,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Class type arguments are provided by the declaring type stored in the memberRef.
 		/// Method type arguments are provided by the caller.
 		/// </remarks>
-		IMethod ResolveMethodReference(MemberReferenceHandle memberRefHandle, GenericContext context, IReadOnlyList<IType> methodTypeArguments = null, bool expandVarArgs = true)
+		IMethod ResolveMethodReference(MemberReferenceHandle memberRefHandle, GenericContext context, IReadOnlyList<IType>? methodTypeArguments = null, bool expandVarArgs = true)
 		{
 			var memberRef = metadata.GetMemberReference(memberRefHandle);
 			if (memberRef.GetKind() != MemberReferenceKind.Method)
@@ -479,8 +479,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new BadImageFormatException($"Member reference must be method, but was: {memberRef.GetKind()}");
 			}
 			MethodSignature<IType> signature;
-			IReadOnlyList<IType> classTypeArguments = null;
-			IMethod method;
+			IReadOnlyList<IType>? classTypeArguments = null;
+			IMethod? method;
 			if (memberRef.Parent.Kind == HandleKind.MethodDefinition)
 			{
 				method = ResolveMethodDefinition((MethodDefinitionHandle)memberRef.Parent, expandVarArgs: false);
@@ -600,7 +600,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			m.ReturnType = signature.ReturnType;
 			m.IsStatic = !signature.Header.IsInstance;
 
-			TypeParameterSubstitution substitution = null;
+			TypeParameterSubstitution? substitution = null;
 			if (signature.GenericParameterCount > 0)
 			{
 				var typeParameters = new List<ITypeParameter>();
@@ -747,7 +747,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// * May return specialized members, where generics are involved.
 		/// * Other types of handles that don't correspond to TS entities, will return <c>null</c>.
 		/// </remarks>
-		public IEntity ResolveEntity(EntityHandle entityHandle, GenericContext context = default)
+		public IEntity? ResolveEntity(EntityHandle entityHandle, GenericContext context = default)
 		{
 			switch (entityHandle.Kind)
 			{
@@ -904,7 +904,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			return new UnknownType(typeName);
 
-			IModule ResolveModule(ExportedType type)
+			IModule? ResolveModule(ExportedType type)
 			{
 				switch (type.Implementation.Kind)
 				{

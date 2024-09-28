@@ -53,18 +53,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the names of the tuple elements.
 		/// </summary>
-		public ImmutableArray<string> ElementNames { get; }
+		public ImmutableArray<string?> ElementNames { get; }
 
 		public TupleType(ICompilation compilation, ImmutableArray<IType> elementTypes,
-			ImmutableArray<string> elementNames = default(ImmutableArray<string>),
-			IModule valueTupleAssembly = null)
+			ImmutableArray<string?> elementNames = default(ImmutableArray<string?>),
+			IModule? valueTupleAssembly = null)
 		{
 			this.Compilation = compilation;
 			this.UnderlyingType = CreateUnderlyingType(compilation, elementTypes, valueTupleAssembly);
 			this.ElementTypes = elementTypes;
 			if (elementNames.IsDefault)
 			{
-				this.ElementNames = Enumerable.Repeat<string>(null, elementTypes.Length).ToImmutableArray();
+				this.ElementNames = Enumerable.Repeat<string?>(null, elementTypes.Length).ToImmutableArray();
 			}
 			else
 			{
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		static ParameterizedType CreateUnderlyingType(ICompilation compilation, ImmutableArray<IType> elementTypes, IModule valueTupleAssembly)
+		static ParameterizedType CreateUnderlyingType(ICompilation compilation, ImmutableArray<IType> elementTypes, IModule? valueTupleAssembly)
 		{
 			int remainder = (elementTypes.Length - 1) % (RestPosition - 1) + 1;
 			Debug.Assert(remainder >= 1 && remainder < RestPosition);
@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return type;
 		}
 
-		private static IType FindValueTupleType(ICompilation compilation, IModule valueTupleAssembly, int tpc)
+		private static IType FindValueTupleType(ICompilation compilation, IModule? valueTupleAssembly, int tpc)
 		{
 			var typeName = new TopLevelTypeName("System", "ValueTuple", tpc);
 			if (valueTupleAssembly != null)
@@ -144,7 +144,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Construct a tuple type (without element names) from the given underlying type.
 		/// Returns null if the input is not a valid underlying type.
 		/// </summary>
-		public static TupleType FromUnderlyingType(ICompilation compilation, IType type)
+		public static TupleType? FromUnderlyingType(ICompilation compilation, IType type)
 		{
 			var elementTypes = GetTupleElementTypes(type);
 			if (elementTypes.Length > 0)
@@ -166,7 +166,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static ImmutableArray<IType> GetTupleElementTypes(IType tupleType)
 		{
-			List<IType> output = null;
+			List<IType>? output = null;
 			if (Collect(tupleType))
 			{
 				return output.ToImmutableArray();
@@ -220,7 +220,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public override string ReflectionName => UnderlyingType.ReflectionName;
 		public override string Namespace => UnderlyingType.Namespace;
 
-		public override bool Equals(IType other)
+		public override bool Equals(IType? other)
 		{
 			var o = other as TupleType;
 			if (o == null)
@@ -236,7 +236,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			unchecked
 			{
 				int hash = UnderlyingType.GetHashCode();
-				foreach (string name in ElementNames)
+				foreach (string? name in ElementNames)
 				{
 					hash *= 31;
 					hash += name != null ? name.GetHashCode() : 0;
@@ -271,7 +271,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override IType VisitChildren(TypeVisitor visitor)
 		{
-			IType[] newElementTypes = null;
+			IType[]? newElementTypes = null;
 			for (int i = 0; i < ElementTypes.Length; i++)
 			{
 				IType type = ElementTypes[i];
@@ -296,12 +296,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return UnderlyingType.GetAccessors(filter, options);
 		}
 
-		public override IEnumerable<IMethod> GetConstructors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
+		public override IEnumerable<IMethod> GetConstructors(Predicate<IMethod>? filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
 		{
 			// CS8181 'new' cannot be used with tuple type. Use a tuple literal expression instead.
 			return EmptyList<IMethod>.Instance;
@@ -317,12 +317,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return UnderlyingType.GetDefinitionOrUnknown();
 		}
 
-		public override IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IEvent> GetEvents(Predicate<IEvent>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return UnderlyingType.GetEvents(filter, options);
 		}
 
-		public override IEnumerable<IField> GetFields(Predicate<IField> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IField> GetFields(Predicate<IField>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			// The fields from the underlying type (Item1..Item7 and Rest)
 			foreach (var field in UnderlyingType.GetFields(filter, options))
@@ -349,27 +349,27 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return new TupleElementField(f, Compilation.TypeResolveContext);
 		}*/
 
-		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return UnderlyingType.GetMethods(filter, options);
 		}
 
-		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return UnderlyingType.GetMethods(typeArguments, filter, options);
 		}
 
-		public override IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return UnderlyingType.GetNestedTypes(filter, options);
 		}
 
-		public override IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType> typeArguments, Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType> typeArguments, Predicate<ITypeDefinition>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return UnderlyingType.GetNestedTypes(typeArguments, filter, options);
 		}
 
-		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return UnderlyingType.GetProperties(filter, options);
 		}
@@ -387,7 +387,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public ImmutableArray<string> ElementNames { get; }
 
-		public IModuleReference ValueTupleAssembly { get; }
+		public IModuleReference? ValueTupleAssembly { get; }
 
 		public TupleTypeReference(ImmutableArray<ITypeReference> elementTypes)
 		{
@@ -396,7 +396,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public TupleTypeReference(ImmutableArray<ITypeReference> elementTypes,
 			ImmutableArray<string> elementNames = default(ImmutableArray<string>),
-			IModuleReference valueTupleAssembly = null)
+			IModuleReference? valueTupleAssembly = null)
 		{
 			this.ValueTupleAssembly = valueTupleAssembly;
 			this.ElementTypes = elementTypes;

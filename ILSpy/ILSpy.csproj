@@ -8,6 +8,7 @@
     <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
     <GenerateSupportedRuntime>false</GenerateSupportedRuntime>
     <UseWpf>true</UseWpf>
+    <Nullable>enable</Nullable>
     <RootNamespace>ICSharpCode.ILSpy</RootNamespace>
 
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>

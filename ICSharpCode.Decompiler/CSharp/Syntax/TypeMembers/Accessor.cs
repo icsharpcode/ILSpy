@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 			{
 				return other == null || other.IsNull;
 			}
@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public CSharpTokenNode Keyword {
 			get {
-				for (AstNode child = this.FirstChild; child != null; child = child.NextSibling)
+				for (AstNode? child = this.FirstChild; child != null; child = child.NextSibling)
 				{
 					if (child.Role == PropertyDeclaration.GetKeywordRole || child.Role == PropertyDeclaration.SetKeywordRole
 						|| child.Role == PropertyDeclaration.InitKeywordRole
@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public BlockStatement Body {
+		public BlockStatement? Body {
 			get { return GetChildByRole(Roles.Body); }
 			set { SetChildByRole(Roles.Body, value); }
 		}
@@ -109,9 +109,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitAccessor(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			Accessor o = other as Accessor;
+			Accessor? o = other as Accessor;
 			return o != null && !o.IsNull && this.MatchAttributesAndModifiers(o, match) && this.Body.DoMatch(o.Body, match);
 		}
 	}

@@ -110,8 +110,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, type.Implementation, protocol: "metadata")));
 			}
 
-			string implementationTooltip;
-			public string ImplementationTooltip => GenerateTooltip(ref implementationTooltip, metadataFile, type.Implementation);
+			string? implementationTooltip;
+			public string? ImplementationTooltip => GenerateTooltip(ref implementationTooltip, metadataFile, type.Implementation);
 
 			public ExportedTypeEntry(MetadataFile metadataFile, ExportedTypeHandle handle, ExportedType type)
 			{

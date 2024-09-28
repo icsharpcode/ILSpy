@@ -8,7 +8,7 @@
     <IsPackable>true</IsPackable>
     <PackAsTool>true</PackAsTool>
     <InvariantGlobalization>true</InvariantGlobalization>
-
+    <Nullable>enable</Nullable>
     <NeutralLanguage>en-US</NeutralLanguage>
     <GenerateAssemblyVersionAttribute>False</GenerateAssemblyVersionAttribute>
     <GenerateAssemblyFileVersionAttribute>False</GenerateAssemblyFileVersionAttribute>

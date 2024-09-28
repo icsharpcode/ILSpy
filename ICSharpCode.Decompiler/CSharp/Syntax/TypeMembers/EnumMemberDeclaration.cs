@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.Assign); }
 		}
 
-		public Expression Initializer {
+		public Expression? Initializer {
 			get { return GetChildByRole(InitializerRole); }
 			set { SetChildByRole(InitializerRole, value); }
 		}
@@ -60,9 +60,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitEnumMemberDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			EnumMemberDeclaration o = other as EnumMemberDeclaration;
+			EnumMemberDeclaration? o = other as EnumMemberDeclaration;
 			return o != null && this.MatchAttributesAndModifiers(o, match)
 				&& MatchString(this.Name, o.Name) && this.Initializer.DoMatch(o.Initializer, match);
 		}

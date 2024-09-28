@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool IsExtensionMethod {
 			get {
-				ParameterDeclaration pd = (ParameterDeclaration)GetChildByRole(Roles.Parameter);
+				ParameterDeclaration? pd = GetChildByRole(Roles.Parameter) as ParameterDeclaration;
 				return pd != null && pd.HasThisModifier;
 			}
 		}
@@ -90,9 +90,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitMethodDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			MethodDeclaration o = other as MethodDeclaration;
+			MethodDeclaration? o = other as MethodDeclaration;
 			return o != null && MatchString(this.Name, o.Name)
 				&& this.MatchAttributesAndModifiers(o, match) && this.ReturnType.DoMatch(o.ReturnType, match)
 				&& this.PrivateImplementationType.DoMatch(o.PrivateImplementationType, match)

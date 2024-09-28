@@ -33,11 +33,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public DefaultTypeParameter(
 			IEntity owner,
-			int index, string name = null,
+			int index, string? name = null,
 			VarianceModifier variance = VarianceModifier.Invariant,
-			IReadOnlyList<IAttribute> attributes = null,
+			IReadOnlyList<IAttribute>? attributes = null,
 			bool hasValueTypeConstraint = false, bool hasReferenceTypeConstraint = false, bool hasDefaultConstructorConstraint = false,
-			IReadOnlyList<IType> constraints = null, Nullability nullabilityConstraint = Nullability.Oblivious)
+			IReadOnlyList<IType>? constraints = null, Nullability nullabilityConstraint = Nullability.Oblivious)
 			: base(owner, index, name, variance)
 		{
 			this.hasValueTypeConstraint = hasValueTypeConstraint;
@@ -50,11 +50,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public DefaultTypeParameter(
 			ICompilation compilation, SymbolKind ownerType,
-			int index, string name = null,
+			int index, string? name = null,
 			VarianceModifier variance = VarianceModifier.Invariant,
-			IReadOnlyList<IAttribute> attributes = null,
+			IReadOnlyList<IAttribute>? attributes = null,
 			bool hasValueTypeConstraint = false, bool hasReferenceTypeConstraint = false, bool hasDefaultConstructorConstraint = false,
-			IReadOnlyList<IType> constraints = null, Nullability nullabilityConstraint = Nullability.Oblivious)
+			IReadOnlyList<IType>? constraints = null, Nullability nullabilityConstraint = Nullability.Oblivious)
 			: base(compilation, ownerType, index, name, variance)
 		{
 			this.hasValueTypeConstraint = hasValueTypeConstraint;
@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override IReadOnlyList<TypeConstraint> TypeConstraints { get; }
 
-		IReadOnlyList<TypeConstraint> MakeConstraints(IReadOnlyList<IType> constraints)
+		IReadOnlyList<TypeConstraint> MakeConstraints(IReadOnlyList<IType>? constraints)
 		{
 			var result = new List<TypeConstraint>();
 			bool hasNonInterfaceConstraint = false;

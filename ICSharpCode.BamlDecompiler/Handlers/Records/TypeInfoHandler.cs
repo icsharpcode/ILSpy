@@ -28,13 +28,13 @@ namespace ICSharpCode.BamlDecompiler.Handlers
 	{
 		public BamlRecordType Type => BamlRecordType.TypeInfo;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) => null;
+		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent) => null;
 	}
 
 	internal class TypeSerializerInfoHandler : IHandler
 	{
 		public BamlRecordType Type => BamlRecordType.TypeSerializerInfo;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) => null;
+		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent) => null;
 	}
 }

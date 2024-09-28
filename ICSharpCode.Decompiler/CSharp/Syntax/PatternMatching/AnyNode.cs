@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			get { return groupName; }
 		}
 
-		public AnyNode(string groupName = null)
+		public AnyNode(string? groupName = null)
 		{
 			this.groupName = groupName;
 		}

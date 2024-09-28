@@ -111,7 +111,7 @@ namespace ICSharpCode.BamlDecompiler.Baml
 		{
 			Debug.Assert(document.Count > 0 && document[0].Type == BamlRecordType.DocumentStart);
 
-			BamlBlockNode current = null;
+			BamlBlockNode? current = null;
 			var stack = new Stack<BamlBlockNode>();
 
 			for (int i = 0; i < document.Count; i++)

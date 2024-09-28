@@ -202,7 +202,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return parent; }
 		}
 
-		public Role Role {
+		public Role? Role {
 			get {
 				return Role.GetByIndex(flags & roleIndexMask);
 			}
@@ -340,7 +340,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Gets the first child with the specified role.
 		/// Returns the role's null object if the child is not found.
 		/// </summary>
-		public T GetChildByRole<T>(Role<T> role) where T : AstNode?
+		public T? GetChildByRole<T>(Role<T> role) where T : AstNode
 		{
 			if (role == null)
 				throw new ArgumentNullException(nameof(role));
@@ -348,7 +348,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			for (var cur = firstChild; cur != null; cur = cur.nextSibling)
 			{
 				if ((cur.flags & roleIndexMask) == roleIndex)
-					return (T)cur;
+					return (T?)cur;
 			}
 			return role.NullObject;
 		}
@@ -368,16 +368,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return new AstNodeCollection<T>(this, role);
 		}
 
-		protected void SetChildByRole<T>(Role<T> role, T newChild) where T : AstNode
+		protected void SetChildByRole<T>(Role<T> role, T? newChild) where T : AstNode
 		{
-			AstNode oldChild = GetChildByRole(role);
-			if (oldChild.IsNull)
+			AstNode? oldChild = GetChildByRole(role);
+			if (oldChild?.IsNull != false)
 				AddChild(newChild, role);
 			else
 				oldChild.ReplaceWith(newChild);
 		}
 
-		public void AddChild<T>(T child, Role<T> role) where T : AstNode
+		public void AddChild<T>(T? child, Role<T> role) where T : AstNode
 		{
 			if (role == null)
 				throw new ArgumentNullException(nameof(role));
