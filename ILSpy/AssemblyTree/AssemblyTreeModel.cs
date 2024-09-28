@@ -903,12 +903,13 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		{
 			refreshThrottle.Tick();
 		}
-		
+
 		private void RefreshInternal()
 		{
 			using (Keyboard.FocusedElement.PreserveFocus())
 			{
 				var path = GetPathForNode(SelectedItem);
+
 				if (AssemblyList != null)
 				{
 					ShowAssemblyList(SettingsService.Instance.AssemblyListManager.LoadList(AssemblyList.ListName));
