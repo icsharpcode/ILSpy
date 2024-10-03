@@ -25,6 +25,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 using AvalonDock.Layout.Serialization;
 
@@ -70,11 +71,14 @@ namespace ICSharpCode.ILSpy
 
 			InitializeComponent();
 
-			mainWindowViewModel.Workspace.InitializeLayout(dockManager);
-
-			MenuService.Instance.Init(mainMenu, toolBar, InputBindings);
-
 			InitFileLoaders();
+
+			Dispatcher.BeginInvoke(DispatcherPriority.Background, () => {
+				mainWindowViewModel.Workspace.InitializeLayout(dockManager);
+				MenuService.Instance.Init(mainMenu, toolBar, InputBindings);
+
+				Dispatcher.BeginInvoke(DispatcherPriority.Background, AssemblyTreeModel.Initialize);
+			});
 		}
 
 		void SetWindowBounds(Rect bounds)

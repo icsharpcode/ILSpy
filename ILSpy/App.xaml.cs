@@ -216,9 +216,6 @@ namespace ICSharpCode.ILSpy
 			}
 
 			MainWindow = new MainWindow();
-			MainWindow.Loaded += (sender, args) => {
-				ExportProvider.GetExportedValue<AssemblyTreeModel>().Initialize();
-			};
 			MainWindow.Show();
 		}
 

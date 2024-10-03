@@ -113,14 +113,16 @@ namespace ICSharpCode.ILSpyX
 		public void SaveList(AssemblyList list)
 		{
 			this.settingsProvider.Update(
-				delegate (XElement root) {
+				root => {
 					XElement? doc = root.Element("AssemblyLists");
 					if (doc == null)
 					{
 						doc = new XElement("AssemblyLists");
 						root.Add(doc);
 					}
-					XElement? listElement = doc.Elements("List").FirstOrDefault(e => (string?)e.Attribute("name") == list.ListName);
+
+					XElement? listElement = doc.Elements("List")
+						.FirstOrDefault(e => (string?)e.Attribute("name") == list.ListName);
 					if (listElement != null)
 						listElement.ReplaceWith(list.SaveAsXml());
 					else
@@ -163,13 +165,9 @@ namespace ICSharpCode.ILSpyX
 		{
 			AssemblyLists.Clear();
 			this.settingsProvider.Update(
-				delegate (XElement root) {
+				root => {
 					XElement? doc = root.Element("AssemblyLists");
-					if (doc == null)
-					{
-						return;
-					}
-					doc.Remove();
+					doc?.Remove();
 				});
 		}
 

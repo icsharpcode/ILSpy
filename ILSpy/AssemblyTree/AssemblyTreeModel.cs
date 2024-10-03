@@ -86,6 +86,8 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			SelectedItems.CollectionChanged += (_, _) => selectionChangeThrottle.Tick();
 
 			refreshThrottle = new DispatcherThrottle(DispatcherPriority.Background, RefreshInternal);
+
+			AssemblyList = SettingsService.Instance.CreateEmptyAssemblyList();
 		}
 
 		private void Settings_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -121,7 +123,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 		}
 
-		public AssemblyList? AssemblyList { get; private set; }
+		public AssemblyList AssemblyList { get; private set; }
 
 		private SharpTreeNode? root;
 		public SharpTreeNode? Root {
@@ -205,7 +207,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 						{
 							// FindNamespaceNode() blocks the UI if the assembly is not yet loaded,
 							// so use an async wait instead.
-							await asm.GetMetadataFileAsync().Catch<Exception>(ex => { });
+							await asm.GetMetadataFileAsync().Catch<Exception>(_ => { });
 							NamespaceTreeNode nsNode = asmNode.FindNamespaceNode(namespaceName);
 							if (nsNode != null)
 							{
@@ -260,7 +262,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			else if (spySettings != null)
 			{
 				SharpTreeNode? node = null;
-				if (activeTreeViewPath?.Length > 0 && AssemblyList != null)
+				if (activeTreeViewPath?.Length > 0)
 				{
 					foreach (var asm in AssemblyList.GetAssemblies())
 					{
@@ -268,7 +270,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 						{
 							// FindNodeByPath() blocks the UI if the assembly is not yet loaded,
 							// so use an async wait instead.
-							await asm.GetMetadataFileAsync().Catch<Exception>(ex => { });
+							await asm.GetMetadataFileAsync().Catch<Exception>(_ => { });
 						}
 					}
 					node = FindNodeByPath(activeTreeViewPath, true);
@@ -401,7 +403,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		{
 			AssemblyList list = SettingsService.Instance.AssemblyListManager.LoadList(name);
 			//Only load a new list when it is a different one
-			if (list.ListName != AssemblyList?.ListName)
+			if (list.ListName != AssemblyList.ListName)
 			{
 				ShowAssemblyList(list);
 				SelectNode(Root);
@@ -411,12 +413,9 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		private void ShowAssemblyList(AssemblyList assemblyList)
 		{
 			history.Clear();
-			if (this.AssemblyList != null)
-			{
-				this.AssemblyList.CollectionChanged -= assemblyList_CollectionChanged;
-			}
 
-			this.AssemblyList = assemblyList;
+			AssemblyList.CollectionChanged -= assemblyList_CollectionChanged;
+			AssemblyList = assemblyList;
 
 			assemblyList.CollectionChanged += assemblyList_CollectionChanged;
 
@@ -523,11 +522,6 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				.ToArray();
 
 			if (!nodesList.Any() || nodesList.Any(n => n.AncestorsAndSelf().Any(a => a.IsHidden)))
-			{
-				return;
-			}
-
-			if (SelectedItems.SequenceEqual(nodesList))
 			{
 				return;
 			}
@@ -649,8 +643,6 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 					MainWindow.OpenLink(opCode.Link);
 					break;
 				case EntityReference unresolvedEntity:
-					if (AssemblyList is null)
-						break;
 					string protocol = unresolvedEntity.Protocol;
 					var file = unresolvedEntity.ResolveAssembly(AssemblyList);
 					if (file == null)
@@ -696,8 +688,6 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				AssemblyTreeNode? lastNode = null;
 
 				var assemblyList = AssemblyList;
-				if (assemblyList is null)
-					return;
 
 				foreach (string file in fileNames)
 				{
@@ -907,11 +897,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			{
 				var path = GetPathForNode(SelectedItem);
 
-				if (AssemblyList != null)
-				{
-					ShowAssemblyList(SettingsService.Instance.AssemblyListManager.LoadList(AssemblyList.ListName));
-				}
-
+				ShowAssemblyList(SettingsService.Instance.AssemblyListManager.LoadList(AssemblyList.ListName));
 				SelectNode(FindNodeByPath(path, true), inNewTabPage: false);
 
 				RefreshDecompiledView();
@@ -940,7 +926,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		{
 			using (activeView?.LockUpdates())
 			{
-				AssemblyList?.Sort(AssemblyComparer.Instance);
+				AssemblyList.Sort(AssemblyComparer.Instance);
 			}
 		}
 

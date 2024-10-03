@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
@@ -51,13 +52,17 @@ namespace ICSharpCode.ILSpy.Docking
 		public static readonly DockWorkspace Instance = new();
 
 		private readonly ObservableCollection<TabPageModel> tabPages = [];
-		private readonly ObservableCollection<ToolPaneModel> toolPanes = [];
 
 		private DockWorkspace()
 		{
 			this.tabPages.CollectionChanged += TabPages_CollectionChanged;
 			TabPages = new(tabPages);
-			ToolPanes = new(toolPanes);
+
+			ToolPanes = exportProvider
+				.GetExportedValues<ToolPaneModel>("ToolPane")
+				.OrderBy(item => item.Title)
+				.ToArray()
+				.AsReadOnly();
 
 			// Make sure there is at least one tab open
 			AddTabPage();
@@ -83,10 +88,15 @@ namespace ICSharpCode.ILSpy.Docking
 					.ExceptNullItems()
 					.Any(assemblyNode => !e.OldItems.Contains(assemblyNode.LoadedAssembly));
 
-				if (!found && tabPages.Count > 1)
+				if (!found)
 				{
 					tabPages.Remove(tab);
 				}
+			}
+
+			if (tabPages.Count == 0)
+			{
+				AddTabPage();
 			}
 		}
 
@@ -117,11 +127,11 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public ReadOnlyObservableCollection<TabPageModel> TabPages { get; }
 
-		public ReadOnlyObservableCollection<ToolPaneModel> ToolPanes { get; }
+		public ReadOnlyCollection<ToolPaneModel> ToolPanes { get; }
 
 		public bool ShowToolPane(string contentId)
 		{
-			var pane = toolPanes.FirstOrDefault(p => p.ContentId == contentId);
+			var pane = ToolPanes.FirstOrDefault(p => p.ContentId == contentId);
 			if (pane != null)
 			{
 				pane.Show();
@@ -132,10 +142,15 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public void Remove(PaneModel model)
 		{
-			if (model is TabPageModel document)
-				tabPages.Remove(document);
-			if (model is ToolPaneModel tool)
-				tool.IsVisible = false;
+			switch (model)
+			{
+				case TabPageModel document:
+					tabPages.Remove(document);
+					break;
+				case ToolPaneModel tool:
+					tool.IsVisible = false;
+					break;
+			}
 		}
 
 		private TabPageModel activeTabPage = null;
@@ -166,10 +181,6 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public void InitializeLayout(DockingManager manager)
 		{
-			var panes = exportProvider.GetExportedValues<ToolPaneModel>("ToolPane").OrderBy(item => item.Title);
-
-			this.toolPanes.AddRange(panes);
-
 			manager.LayoutUpdateStrategy = this;
 			XmlLayoutSerializer serializer = new XmlLayoutSerializer(manager);
 			serializer.LayoutSerializationCallback += LayoutSerializationCallback;
@@ -188,13 +199,13 @@ namespace ICSharpCode.ILSpy.Docking
 			switch (e.Model)
 			{
 				case LayoutAnchorable la:
-					e.Content = this.toolPanes.FirstOrDefault(p => p.ContentId == la.ContentId);
+					e.Content = this.ToolPanes.FirstOrDefault(p => p.ContentId == la.ContentId);
 					e.Cancel = e.Content == null;
 					la.CanDockAsTabbedDocument = false;
-					if (!e.Cancel)
+					if (e.Content is ToolPaneModel toolPaneModel)
 					{
-						e.Cancel = ((ToolPaneModel)e.Content).IsVisible;
-						((ToolPaneModel)e.Content).IsVisible = true;
+						e.Cancel = toolPaneModel.IsVisible;
+						toolPaneModel.IsVisible = true;
 					}
 					break;
 				default:
@@ -220,16 +231,14 @@ namespace ICSharpCode.ILSpy.Docking
 
 		internal void CloseAllTabs()
 		{
-			foreach (var doc in tabPages.ToArray())
-			{
-				if (doc.IsCloseable)
-					tabPages.Remove(doc);
-			}
+			var activePage = ActiveTabPage;
+
+			tabPages.RemoveWhere(page => page != activePage);
 		}
 
 		internal void ResetLayout()
 		{
-			foreach (var pane in toolPanes)
+			foreach (var pane in ToolPanes)
 			{
 				pane.IsVisible = false;
 			}

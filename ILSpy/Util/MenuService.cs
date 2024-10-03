@@ -142,7 +142,7 @@ namespace ICSharpCode.ILSpy.Util
 
 			windowMenuItem.Items.Clear();
 
-			var toolItems = dockWorkspace.ToolPanes.ObservableSelect(toolPane => CreateMenuItem(toolPane, inputBindings));
+			var toolItems = dockWorkspace.ToolPanes.Select(toolPane => CreateMenuItem(toolPane, inputBindings)).ToArray();
 			var tabItems = dockWorkspace.TabPages.ObservableSelect(tabPage => CreateMenuItem(tabPage, dockWorkspace));
 
 			var allItems = new ObservableCompositeCollection<Control>(defaultItems, [new Separator()], toolItems, [new Separator()], tabItems);
