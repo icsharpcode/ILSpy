@@ -35,7 +35,6 @@ using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpy.Search;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
-using ICSharpCode.ILSpyX.Extensions;
 
 using TomsToolbox.Composition;
 using TomsToolbox.Essentials;
@@ -52,6 +51,8 @@ namespace ICSharpCode.ILSpy.Docking
 		public static readonly DockWorkspace Instance = new();
 
 		private readonly ObservableCollection<TabPageModel> tabPages = [];
+
+		private DockingManager dockingManager;
 
 		private DockWorkspace()
 		{
@@ -179,8 +180,17 @@ namespace ICSharpCode.ILSpy.Docking
 			}
 		}
 
+		public PaneModel ActivePane {
+			get => dockingManager?.ActiveContent as PaneModel;
+			set {
+				if (dockingManager is not null)
+					dockingManager.ActiveContent = value;
+			}
+		}
+
 		public void InitializeLayout(DockingManager manager)
 		{
+			this.dockingManager = manager;
 			manager.LayoutUpdateStrategy = this;
 			XmlLayoutSerializer serializer = new XmlLayoutSerializer(manager);
 			serializer.LayoutSerializationCallback += LayoutSerializationCallback;

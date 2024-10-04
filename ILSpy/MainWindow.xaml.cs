@@ -77,7 +77,10 @@ namespace ICSharpCode.ILSpy
 				mainWindowViewModel.Workspace.InitializeLayout(dockManager);
 				MenuService.Instance.Init(mainMenu, toolBar, InputBindings);
 
-				Dispatcher.BeginInvoke(DispatcherPriority.Background, AssemblyTreeModel.Initialize);
+				Dispatcher.BeginInvoke(DispatcherPriority.Background, () => {
+					AssemblyTreeModel.Initialize();
+					AssemblyTreeModel.Show();
+				});
 			});
 		}
 

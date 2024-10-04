@@ -17,8 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Windows;
@@ -38,8 +36,6 @@ namespace ICSharpCode.ILSpy.Analyzers
 	[Export]
 	public class AnalyzerTreeViewModel : ToolPaneModel
 	{
-		private AnalyzerTreeNode selectedItem;
-
 		public const string PaneContentId = "analyzerPane";
 
 		public AnalyzerTreeViewModel()
@@ -52,14 +48,20 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public AnalyzerRootNode Root { get; } = new();
 
-		public AnalyzerTreeNode SelectedItem {
-			get => selectedItem;
-			set => SetProperty(ref selectedItem, value);
-		}
-
 		public ICommand AnalyzeCommand => new DelegateCommand(AnalyzeSelected);
 
-		public ObservableCollection<AnalyzerTreeNode> SelectedItems { get; } = [];
+		private AnalyzerTreeNode[] selectedItems = [];
+
+		public AnalyzerTreeNode[] SelectedItems {
+			get => selectedItems ?? [];
+			set {
+				if (SelectedItems.SequenceEqual(value))
+					return;
+
+				selectedItems = value;
+				OnPropertyChanged();
+			}
+		}
 
 		private void AnalyzeSelected()
 		{
@@ -87,7 +89,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			}
 
 			target.IsExpanded = true;
-			this.SelectedItem = target;
+			this.SelectedItems = [target];
 		}
 
 		public void Analyze(IEntity entity)

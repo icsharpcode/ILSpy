@@ -12,8 +12,7 @@
 	ShowRoot="False"
 	BorderThickness="0"
 	Root="{Binding Root}"
-	toms:MultiSelectorExtensions.SelectionBinding="{Binding SelectedItems}"
-	SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+	toms:MultiSelectorExtensions.SelectionBinding="{Binding SelectedItems, Mode=TwoWay}"
 	SelectionChanged="AnalyzerTreeView_OnSelectionChanged">
 
 	<UIElement.InputBindings>

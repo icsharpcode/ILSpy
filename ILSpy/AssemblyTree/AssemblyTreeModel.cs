@@ -18,7 +18,6 @@
 
 using System.Collections.Generic;
 using System;
-using System.Collections.ObjectModel;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Threading.Tasks;
@@ -82,9 +81,6 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			MessageBus<NavigateToReferenceEventArgs>.Subscribers += JumpToReference;
 			MessageBus<SettingsChangedEventArgs>.Subscribers += (sender, e) => Settings_PropertyChanged(sender, e);
 
-			var selectionChangeThrottle = new DispatcherThrottle(DispatcherPriority.Input, TreeView_SelectionChanged);
-			SelectedItems.CollectionChanged += (_, _) => selectionChangeThrottle.Tick();
-
 			refreshThrottle = new DispatcherThrottle(DispatcherPriority.Background, RefreshInternal);
 
 			AssemblyList = SettingsService.Instance.CreateEmptyAssemblyList();
@@ -131,13 +127,23 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			set => SetProperty(ref root, value);
 		}
 
-		private SharpTreeNode? selectedItem;
 		public SharpTreeNode? SelectedItem {
-			get => selectedItem;
-			set => SetProperty(ref selectedItem, value);
+			get => SelectedItems.FirstOrDefault();
+			set => SelectedItems = value is null ? [] : [value];
 		}
 
-		public ObservableCollection<SharpTreeNode> SelectedItems { get; } = [];
+		private SharpTreeNode[] selectedItems = [];
+		public SharpTreeNode[] SelectedItems {
+			get => selectedItems;
+			set {
+				if (selectedItems.SequenceEqual(value))
+					return;
+
+				selectedItems = value;
+				OnPropertyChanged();
+				TreeView_SelectionChanged();
+			}
+		}
 
 		public string[]? SelectedPath => GetPathForNode(SelectedItem);
 
@@ -230,9 +236,11 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				else
 				{
 					IEntity? mr = await Task.Run(() => FindEntityInRelevantAssemblies(navigateTo, relevantAssemblies));
+
 					// Make sure we wait for assemblies being loaded...
 					// BeginInvoke in LoadedAssembly.LookupReferencedAssemblyInternal
 					await Dispatcher.InvokeAsync(delegate { }, DispatcherPriority.Normal);
+
 					if (mr is { ParentModule.MetadataFile: not null })
 					{
 						found = true;
@@ -511,6 +519,10 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			{
 				activeView?.ScrollIntoView(node);
 				SelectedItem = node;
+
+				Dispatcher.BeginInvoke(DispatcherPriority.Background, () => {
+					activeView?.ScrollIntoView(node);
+				});
 			}
 		}
 
@@ -526,27 +538,12 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				return;
 			}
 
-			if (this.isNavigatingHistory)
+			foreach (var node in nodesList)
 			{
-				SelectedItems.Clear();
-				foreach (var node in nodesList)
-				{
-					activeView?.ScrollIntoView(node);
-					SelectedItems.Add(node);
-				}
+				activeView?.ScrollIntoView(node);
 			}
-			else
-			{
-				// defer selection change, so it does not interfere with the focus of the tab page.
-				Dispatcher.BeginInvoke(() => {
-					SelectedItems.Clear();
-					foreach (var node in nodesList)
-					{
-						activeView?.ScrollIntoView(node);
-						SelectedItems.Add(node);
-					}
-				});
-			}
+
+			SelectedItems = nodesList.ToArray();
 		}
 
 		/// <summary>
@@ -704,7 +701,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 						{
 							lastNode = node;
 							activeView?.ScrollIntoView(node);
-							SelectedItems.Add(node);
+							SelectedItems = [.. SelectedItems, node];
 						}
 					}
 				}
@@ -719,7 +716,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		private void TreeView_SelectionChanged()
 		{
-			if (SelectedItems.Count > 0)
+			if (SelectedItems.Length > 0)
 			{
 				var activeTabPage = DockWorkspace.Instance.ActiveTabPage;
 
@@ -767,13 +764,13 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 		}
 
-		private void DecompileSelectedNodes(DecompilerTextViewState? newState = null)
+		public void DecompileSelectedNodes(DecompilerTextViewState? newState = null)
 		{
 			var activeTabPage = DockWorkspace.Instance.ActiveTabPage;
 
 			activeTabPage.SupportsLanguageSwitching = true;
 
-			if (SelectedItems.Count == 1)
+			if (SelectedItems.Length == 1)
 			{
 				if (SelectedItem is ILSpyTreeNode node && node.View(activeTabPage))
 					return;
@@ -808,23 +805,29 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		public void NavigateHistory(bool forward)
 		{
-			isNavigatingHistory = true;
-			this.Dispatcher.BeginInvoke(DispatcherPriority.Background, () => isNavigatingHistory = false);
+			try
+			{
+				isNavigatingHistory = true;
 
-			TabPageModel tabPage = DockWorkspace.Instance.ActiveTabPage;
-			var state = tabPage.GetState();
-			if (state != null)
-				history.UpdateCurrent(new NavigationState(tabPage, state));
-			var newState = forward ? history.GoForward() : history.GoBack();
+				TabPageModel tabPage = DockWorkspace.Instance.ActiveTabPage;
+				var state = tabPage.GetState();
+				if (state != null)
+					history.UpdateCurrent(new NavigationState(tabPage, state));
+				var newState = forward ? history.GoForward() : history.GoBack();
 
-			TabPageModel activeTabPage = newState.TabPage;
+				TabPageModel activeTabPage = newState.TabPage;
 
-			if (!DockWorkspace.Instance.TabPages.Contains(activeTabPage))
-				DockWorkspace.Instance.AddTabPage(activeTabPage);
-			else
-				DockWorkspace.Instance.ActiveTabPage = activeTabPage;
+				if (!DockWorkspace.Instance.TabPages.Contains(activeTabPage))
+					DockWorkspace.Instance.AddTabPage(activeTabPage);
+				else
+					DockWorkspace.Instance.ActiveTabPage = activeTabPage;
 
-			SelectNodes(newState.TreeNodes);
+				SelectNodes(newState.TreeNodes);
+			}
+			finally
+			{
+				isNavigatingHistory = false;
+			}
 		}
 
 		public bool CanNavigateBack => history.CanNavigateBack;
@@ -906,7 +909,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		private void UnselectAll()
 		{
-			SelectedItems.Clear();
+			SelectedItems = [];
 		}
 
 		private IEnumerable<SharpTreeNode> GetTopLevelSelection()

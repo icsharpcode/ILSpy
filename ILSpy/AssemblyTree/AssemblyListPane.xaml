@@ -15,8 +15,7 @@
 						AllowDrop="True"
 						BorderThickness="0" Visibility="Visible"
 						Root="{Binding Root}"
-						SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
-						toms:MultiSelectorExtensions.SelectionBinding="{Binding SelectedItems}">
+						toms:MultiSelectorExtensions.SelectionBinding="{Binding SelectedItems, Mode=TwoWay}">
 	<treeView:SharpTreeView.ItemContainerStyle>
 		<Style TargetType="treeView:SharpTreeViewItem">
 			<Setter Property="Template">

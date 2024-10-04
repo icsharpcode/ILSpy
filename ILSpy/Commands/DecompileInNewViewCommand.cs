@@ -23,9 +23,11 @@ using System.Linq;
 using System.Windows.Threading;
 
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 
 using TomsToolbox.Essentials;
 
@@ -35,6 +37,14 @@ namespace ICSharpCode.ILSpy.Commands
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	internal sealed class DecompileInNewViewCommand : IContextMenuEntry
 	{
+		private readonly AssemblyTreeModel assemblyTreeModel;
+
+		[ImportingConstructor]
+		public DecompileInNewViewCommand(AssemblyTreeModel assemblyTreeModel)
+		{
+			this.assemblyTreeModel = assemblyTreeModel;
+		}
+
 		public bool IsVisible(TextViewContext context)
 		{
 			return context.SelectedTreeNodes != null || context.Reference?.Reference is IEntity;
@@ -47,14 +57,18 @@ namespace ICSharpCode.ILSpy.Commands
 
 		public void Execute(TextViewContext context)
 		{
+			var activePane = DockWorkspace.Instance.ActivePane;
+
 			DecompileNodes(GetNodes(context).ToArray());
+
+			DockWorkspace.Instance.ActivePane = activePane;
 		}
 
 		IEnumerable<ILSpyTreeNode> GetNodes(TextViewContext context)
 		{
 			if (context.SelectedTreeNodes != null)
 			{
-				if (context.TreeView.DataContext != MainWindow.Instance.AssemblyTreeModel)
+				if (context.TreeView.DataContext != assemblyTreeModel)
 				{
 					return context.SelectedTreeNodes.OfType<IMemberTreeNode>().Select(FindTreeNode).ExceptNullItems();
 				}
@@ -65,7 +79,7 @@ namespace ICSharpCode.ILSpy.Commands
 			}
 			else if (context.Reference?.Reference is IEntity entity)
 			{
-				if (MainWindow.Instance.AssemblyTreeModel.FindTreeNode(entity) is { } node)
+				if (assemblyTreeModel.FindTreeNode(entity) is { } node)
 				{
 					return new[] { node };
 				}
@@ -76,18 +90,21 @@ namespace ICSharpCode.ILSpy.Commands
 			{
 				if (node is ILSpyTreeNode ilspyNode)
 					return ilspyNode;
-				return MainWindow.Instance.AssemblyTreeModel.FindTreeNode(node.Member);
+				return assemblyTreeModel.FindTreeNode(node.Member);
 			}
 		}
 
-		static void DecompileNodes(ILSpyTreeNode[] nodes)
+		void DecompileNodes(ILSpyTreeNode[] nodes)
 		{
 			if (nodes.Length == 0)
 				return;
 
 			DockWorkspace.Instance.AddTabPage();
 
-			MainWindow.Instance.AssemblyTreeModel.SelectNodes(nodes);
+			if (assemblyTreeModel.SelectedItems.SequenceEqual(nodes))
+				assemblyTreeModel.DecompileSelectedNodes();
+			else
+				assemblyTreeModel.SelectNodes(nodes);
 		}
 	}
 }
