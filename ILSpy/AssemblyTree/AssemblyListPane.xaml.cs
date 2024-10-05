@@ -20,6 +20,9 @@ using System.ComponentModel.Composition;
 using System.Windows;
 using System.Windows.Threading;
 
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpyX.TreeView;
+
 using TomsToolbox.Wpf.Composition.Mef;
 
 namespace ICSharpCode.ILSpy.AssemblyTree
@@ -57,6 +60,20 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 						ScrollIntoView(selected);
 						this.SelectedItem = selected;
 					});
+				}
+			}
+			else if (e.Property == Pane.IsActiveProperty)
+			{
+				if (!true.Equals(e.NewValue))
+					return;
+
+				if (SelectedItem is SharpTreeNode selectedItem)
+				{
+					FocusNode(selectedItem);
+				}
+				else
+				{
+					Focus();
 				}
 			}
 		}
