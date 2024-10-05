@@ -17,9 +17,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 
 using ICSharpCode.ILSpy.TextView;
+
+using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
@@ -95,6 +99,19 @@ namespace ICSharpCode.ILSpy.ViewModels
 			}
 			tabPage.Title = Properties.Resources.Decompiling;
 			action(textView);
+		}
+
+		public static void Focus(this TabPageModel tabPage)
+		{
+			if (tabPage.Content is not FrameworkElement content)
+				return;
+
+			var focusable = content
+				.VisualDescendantsAndSelf()
+				.OfType<FrameworkElement>()
+				.FirstOrDefault(item => item.Focusable);
+
+			focusable?.Focus();
 		}
 	}
 

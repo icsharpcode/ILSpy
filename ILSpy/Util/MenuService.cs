@@ -207,7 +207,8 @@ namespace ICSharpCode.ILSpy.Util
 			menuItem.SetBinding(MenuItem.IsCheckedProperty, new Binding(nameof(dock.ActiveTabPage)) {
 				Source = dock,
 				ConverterParameter = pane,
-				Converter = BinaryOperationConverter.Equality
+				Converter = BinaryOperationConverter.Equality,
+				Mode = BindingMode.OneWay
 			});
 
 			return menuItem;
