@@ -7,6 +7,7 @@
 						xmlns:treeNodes="clr-namespace:ICSharpCode.ILSpy.TreeNodes"
 						xmlns:assemblyTree="clr-namespace:ICSharpCode.ILSpy.AssemblyTree"
 						xmlns:toms="urn:TomsToolbox"
+						xmlns:viewModels="clr-namespace:ICSharpCode.ILSpy.ViewModels"
 						mc:Ignorable="d" d:DesignHeight="450" d:DesignWidth="800"
 						d:DataContext="{d:DesignInstance assemblyTree:AssemblyTreeModel}"
 						AutomationProperties.Name="Assemblies and Classes"
@@ -15,8 +16,8 @@
 						AllowDrop="True"
 						BorderThickness="0" Visibility="Visible"
 						Root="{Binding Root}"
-						SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
-						toms:MultiSelectorExtensions.SelectionBinding="{Binding SelectedItems}">
+						toms:MultiSelectorExtensions.SelectionBinding="{Binding SelectedItems, Mode=TwoWay}"
+						viewModels:Pane.IsActive="{Binding IsActive}">
 	<treeView:SharpTreeView.ItemContainerStyle>
 		<Style TargetType="treeView:SharpTreeViewItem">
 			<Setter Property="Template">

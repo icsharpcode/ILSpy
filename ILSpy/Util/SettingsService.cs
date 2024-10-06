@@ -152,6 +152,11 @@ namespace ICSharpCode.ILSpy.Util
 			}
 		}
 
+		public AssemblyList CreateEmptyAssemblyList()
+		{
+			return AssemblyListManager.CreateList(string.Empty);
+		}
+
 		private bool reloading;
 
 		public void Reload()

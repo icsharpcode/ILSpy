@@ -19,6 +19,7 @@
 using System.ComponentModel.Composition;
 using System.Linq;
 
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy
@@ -27,18 +28,26 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	class RemoveAssembliesWithLoadErrors : SimpleCommand
 	{
+		private readonly AssemblyTreeModel assemblyTreeModel;
+
+		[ImportingConstructor]
+		public RemoveAssembliesWithLoadErrors(AssemblyTreeModel assemblyTreeModel)
+		{
+			this.assemblyTreeModel = assemblyTreeModel;
+		}
+
 		public override bool CanExecute(object parameter)
 		{
-			return MainWindow.Instance.AssemblyTreeModel.AssemblyList?.GetAssemblies().Any(l => l.HasLoadError) == true;
+			return assemblyTreeModel.AssemblyList.GetAssemblies().Any(l => l.HasLoadError);
 		}
 
 		public override void Execute(object parameter)
 		{
-			foreach (var asm in MainWindow.Instance.AssemblyTreeModel.AssemblyList.GetAssemblies())
+			foreach (var assembly in assemblyTreeModel.AssemblyList.GetAssemblies())
 			{
-				if (!asm.HasLoadError)
+				if (!assembly.HasLoadError)
 					continue;
-				var node = MainWindow.Instance.AssemblyTreeModel.FindAssemblyNode(asm);
+				var node = MainWindow.Instance.AssemblyTreeModel.FindAssemblyNode(assembly);
 				if (node != null && node.CanDelete())
 					node.Delete();
 			}
@@ -49,14 +58,22 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	class ClearAssemblyList : SimpleCommand
 	{
+		private readonly AssemblyTreeModel assemblyTreeModel;
+
+		[ImportingConstructor]
+		public ClearAssemblyList(AssemblyTreeModel assemblyTreeModel)
+		{
+			this.assemblyTreeModel = assemblyTreeModel;
+		}
+
 		public override bool CanExecute(object parameter)
 		{
-			return MainWindow.Instance.AssemblyTreeModel.AssemblyList?.Count > 0;
+			return assemblyTreeModel.AssemblyList.Count > 0;
 		}
 
 		public override void Execute(object parameter)
 		{
-			MainWindow.Instance.AssemblyTreeModel.AssemblyList?.Clear();
+			assemblyTreeModel.AssemblyList.Clear();
 		}
 	}
 }

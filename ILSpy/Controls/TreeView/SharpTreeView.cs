@@ -416,7 +416,9 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 				throw new ArgumentNullException("node");
 			doNotScrollOnExpanding = true;
 			foreach (SharpTreeNode ancestor in node.Ancestors())
+			{
 				ancestor.IsExpanded = true;
+			}
 			doNotScrollOnExpanding = false;
 			base.ScrollIntoView(node);
 		}

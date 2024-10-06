@@ -1,5 +1,4 @@
 ﻿using ICSharpCode.ILSpy.Docking;
-using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Commands
@@ -30,7 +29,13 @@ namespace ICSharpCode.ILSpy.Commands
 
 		public override void Execute(object parameter)
 		{
-			DockWorkspace.Instance.ActiveTabPage = model;
+			var workspace = DockWorkspace.Instance;
+
+			// ensure the tab control is focused before setting the active tab page, else the tab will not be focused
+			workspace.ActiveTabPage?.Focus();
+			// reset first, else clicking on the already active tab will not focus the tab and the menu checkmark will not be updated
+			workspace.ActiveTabPage = null;
+			workspace.ActiveTabPage = model;
 		}
 	}
 }
