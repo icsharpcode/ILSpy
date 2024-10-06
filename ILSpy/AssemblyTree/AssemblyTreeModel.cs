@@ -716,7 +716,12 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		private void TreeView_SelectionChanged()
 		{
-			if (SelectedItems.Length > 0)
+			if (SelectedItems.Length <= 0)
+			{
+				// To cancel any pending decompilation requests and show an empty tab
+				DecompileSelectedNodes();
+			}
+			else
 			{
 				var activeTabPage = DockWorkspace.Instance.ActiveTabPage;
 
