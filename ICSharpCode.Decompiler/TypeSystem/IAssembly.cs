@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public interface IModule : ISymbol, ICompilationProvider
 	{
 		/// <summary>
-		/// Gets the underlying metadata file. May return null, if the IAssembly was not created from a PE file.
+		/// Gets the underlying metadata file. May return null, if the module was not created from a file.
 		/// </summary>
 		MetadataFile? MetadataFile { get; }
 
@@ -77,12 +77,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		string FullAssemblyName { get; }
 
 		/// <summary>
-		/// Gets the list of all assembly attributes in the project.
+		/// Gets all assembly attributes.
 		/// </summary>
 		IEnumerable<IAttribute> GetAssemblyAttributes();
 
 		/// <summary>
-		/// Gets the list of all module attributes in the project.
+		/// Gets all module attributes.
 		/// </summary>
 		IEnumerable<IAttribute> GetModuleAttributes();
 
