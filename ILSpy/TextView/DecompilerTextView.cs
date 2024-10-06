@@ -72,7 +72,7 @@ namespace ICSharpCode.ILSpy.TextView
 	/// Manages the TextEditor showing the decompiled code.
 	/// Contains all the threading logic that makes the decompiler work in the background.
 	/// </summary>
-	public sealed partial class DecompilerTextView : UserControl, IDisposable, IHaveState, IProgress<DecompilationProgress>
+	public sealed partial class DecompilerTextView : UserControl, IHaveState, IProgress<DecompilationProgress>
 	{
 		readonly ReferenceElementGenerator referenceElementGenerator;
 		readonly UIElementGenerator uiElementGenerator;
@@ -125,7 +125,8 @@ namespace ICSharpCode.ILSpy.TextView
 			textEditor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
 			textEditor.TextArea.TextView.LineTransformers.Add(textMarkerService);
 			textEditor.ShowLineNumbers = true;
-			SettingsService.Instance.DisplaySettings.PropertyChanged += CurrentDisplaySettings_PropertyChanged;
+
+			MessageBus<SettingsChangedEventArgs>.Subscribers += Settings_Changed;
 
 			// SearchPanel
 			SearchPanel searchPanel = SearchPanel.Install(textEditor.TextArea);
@@ -179,15 +180,24 @@ namespace ICSharpCode.ILSpy.TextView
 
 		#region Line margin
 
-		void CurrentDisplaySettings_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		private void Settings_Changed(object? sender, SettingsChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(DisplaySettings.ShowLineNumbers))
+			Settings_PropertyChanged(sender, e);
+		}
+
+		private void Settings_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (sender is not DisplaySettings)
+				return;
+
+			switch (e.PropertyName)
 			{
-				ShowLineMargin();
-			}
-			else if (e.PropertyName == nameof(DisplaySettings.HighlightCurrentLine))
-			{
-				SetHighlightCurrentLine();
+				case nameof(DisplaySettings.ShowLineNumbers):
+					ShowLineMargin();
+					break;
+				case nameof(DisplaySettings.HighlightCurrentLine):
+					SetHighlightCurrentLine();
+					break;
 			}
 		}
 
@@ -1284,12 +1294,6 @@ namespace ICSharpCode.ILSpy.TextView
 			HighlightingManager.Instance.RegisterHighlighting("C#", new[] { ".cs" }, "CSharp-Mode");
 			HighlightingManager.Instance.RegisterHighlighting("Asm", new[] { ".s", ".asm" }, "Asm-Mode");
 			HighlightingManager.Instance.RegisterHighlighting("xml", new[] { ".xml", ".baml" }, "XML-Mode");
-		}
-
-
-		public void Dispose()
-		{
-			SettingsService.Instance.DisplaySettings.PropertyChanged -= CurrentDisplaySettings_PropertyChanged;
 		}
 
 		#region Unfold
