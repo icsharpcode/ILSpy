@@ -392,7 +392,9 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 			AvalonEditTextOutput output = new();
 			if (FormatExceptions(App.StartupExceptions.ToArray(), output))
+			{
 				DockWorkspace.Instance.ShowText(output);
+			}
 		}
 
 		private static bool FormatExceptions(App.ExceptionData[] exceptions, ITextOutput output)
@@ -413,7 +415,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			if (list.ListName != AssemblyList.ListName)
 			{
 				ShowAssemblyList(list);
-				SelectNode(Root);
+				SelectNode(Root?.Children.FirstOrDefault());
 			}
 		}
 
