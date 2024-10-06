@@ -36,6 +36,8 @@ using System.IO;
 using System.Text;
 using System.Xml;
 
+using ICSharpCode.Decompiler.Metadata;
+
 namespace ICSharpCode.Decompiler.Util
 {
 #if INSIDE_SYSTEM_WEB
@@ -150,7 +152,7 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				writer.WriteAttributeString("mimetype", BinSerializedObjectMimeType);
 				writer.WriteStartElement("value");
-				writer.WriteBase64(value, offset, length);
+				WriteNiceBase64(value, offset, length);
 			}
 
 			writer.WriteEndElement();
@@ -274,7 +276,7 @@ namespace ICSharpCode.Decompiler.Util
 					break;
 				case ResourceSerializedObject rso:
 					var bytes = rso.GetBytes();
-					WriteBytes(name, null, bytes, 0, bytes.Length, comment);
+					WriteBytes(name, rso.TypeName, bytes, 0, bytes.Length, comment);
 					break;
 				default:
 					throw new NotSupportedException($"Value '{value}' of type {value.GetType().FullName} is not supported by this version of ResXResourceWriter. Use byte arrays or streams instead.");

@@ -130,7 +130,6 @@
     <Compile Include="ProjectDecompiler\TargetFrameworkTests.cs" />
     <Compile Include="TestAssemblyResolver.cs" />
     <Compile Include="TestCases\ILPretty\MonoFixed.cs" />
-    <Compile Include="Util\ResourceReaderWriterTests.cs" />
     <None Include="TestCases\VBPretty\VBAutomaticEvents.vb" />
     <Compile Include="TestCases\VBPretty\VBAutomaticEvents.cs" />
     <Compile Include="TestCases\VBPretty\VBNonGenericForEach.cs" />
@@ -356,7 +355,6 @@
     <None Include="TestCases\VBPretty\VBCompoundAssign.vb" />
     <None Include="TestCases\VBPretty\Async.vb" />
     <None Include="TestCases\VBPretty\VBPropertiesTest.vb" />
-    <EmbeddedResource Include="Util\Test.resources" />
   </ItemGroup>
 
 </Project>

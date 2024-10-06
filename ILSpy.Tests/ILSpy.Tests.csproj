@@ -41,6 +41,19 @@
     <Compile Include="Analyzers\TestCases\MainAssembly.cs" />
     <Compile Include="Analyzers\TypeUsedByAnalyzerTests.cs" />
     <Compile Include="CommandLineArgumentsTests.cs" />
+    <Compile Include="ResourceReaderWriterTests.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Icon.ico" />
+    <EmbeddedResource Include="Test.resources" />
+    <EmbeddedResource Include="IconContainer.resx">
+      <Generator>ResXCodeGenerator</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="BitmapContainer.resources" />
   </ItemGroup>
 
   <ItemGroup>
