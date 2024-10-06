@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<DrawingGroup  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<DrawingGroup.ClipGeometry>
+		<RectangleGeometry Rect="0.0,0.0,16.0,16.0"/>
+	</DrawingGroup.ClipGeometry>
+	<GeometryDrawing Brush="#fff6f6f6">
+		<GeometryDrawing.Geometry>
+			<PathGeometry Figures="M 16 3 v 9 H 8 V 9 H 6 v 2 H 0 V 4 h 6 v 2 h 2 V 3 h 8 z" FillRule="Nonzero"/>
+		</GeometryDrawing.Geometry>
+	</GeometryDrawing>
+	<GeometryDrawing Brush="#ff424242">
+		<GeometryDrawing.Geometry>
+			<PathGeometry Figures="M 1 5 h 4 v 5 H 1 z M 9 4 h 6 v 7 H 9 z M 6 7 h 2 v 1 H 6 z" FillRule="Nonzero"/>
+		</GeometryDrawing.Geometry>
+	</GeometryDrawing>
+	<GeometryDrawing Brush="#fff6f6f6">
+		<GeometryDrawing.Geometry>
+			<PathGeometry Figures="m 16 12 c 0 2.2055 -1.7945 4 -4 4 C 9.7945 16 8 14.2055 8 12 A 3.995 3.995 0 0 1 8.544 10 H 8 v -2 H 12 V 12 h -2 c 0 1.103 0.896999 2 2 2 c 1.103 0 2 -0.897 2 -2 c 0 -0.672 -0.3345 -1.295 -0.895 -1.667 l -0.4165 -0.277 l 1.1075 -1.666 l 0.4165 0.2765 A 3.996 3.996 0 0 1 16 12 Z" FillRule="Nonzero"/>
+		</GeometryDrawing.Geometry>
+	</GeometryDrawing>
+	<DrawingGroup Transform="0.49999992,0.0,0.0,0.49999992,8.000001,8.000001">
+		<GeometryDrawing Brush="#ff00539c">
+			<GeometryDrawing.Geometry>
+				<PathGeometry Figures="m 15 8 c 0 3.859 -3.141 7 -7 7 C 4.14 15 1 11.859 1 8 A 7 7 0 0 1 3.12 3 H 1 V 1 H 7 V 7 H 5 V 4.002 A 5.01 5.01 0 0 0 3 8 c 0 2.757 2.243 5 5 5 c 2.757 0 5 -2.243 5 -5 A 4.993 4.993 0 0 0 10.764 3.833 L 11.871 2.167 A 6.989 6.989 0 0 1 15 8 Z" FillRule="Nonzero"/>
+			</GeometryDrawing.Geometry>
+		</GeometryDrawing>
+	</DrawingGroup>
+</DrawingGroup>
