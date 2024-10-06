@@ -23,7 +23,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -106,45 +105,65 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			while (blob.RemainingBytes > 0)
 			{
 				ILOpCode opCode;
+				EntityHandle handle;
 				try
 				{
 					opCode = blob.DecodeOpCode();
-					if (!CanBeReference(opCode))
+					switch (opCode)
 					{
-						blob.SkipOperand(opCode);
-						continue;
+						case ILOpCode.Newobj:
+						case ILOpCode.Call when analyzedEntity.Kind == TypeKind.Struct:
+						case ILOpCode.Initobj:
+							handle = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
+							break;
+						default:
+							blob.SkipOperand(opCode);
+							continue;
 					}
 				}
 				catch (BadImageFormatException)
 				{
-					return false;
-				}
-				EntityHandle methodHandle = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
-				if (!methodHandle.Kind.IsMemberKind())
 					continue;
-				IMethod ctor;
+				}
+				ITypeDefinition? foundTypeDefinition;
 				try
 				{
-					ctor = module.ResolveMethod(methodHandle, genericContext);
+					switch (handle.Kind)
+					{
+						case HandleKind.MethodDefinition:
+						case HandleKind.MemberReference:
+							var ctor = module.ResolveMethod(handle, genericContext);
+							if (ctor == null || !ctor.IsConstructor)
+							{
+								continue;
+							}
+							foundTypeDefinition = ctor.DeclaringTypeDefinition;
+							break;
+						case HandleKind.TypeDefinition:
+						case HandleKind.TypeReference:
+							foundTypeDefinition = module.ResolveType(handle, genericContext)?.GetDefinition();
+							break;
+						default:
+							continue;
+					}
 				}
 				catch (BadImageFormatException)
 				{
 					continue;
 				}
-				if (ctor == null || !ctor.IsConstructor)
+				if (foundTypeDefinition?.ParentModule == null)
+				{
 					continue;
+				}
 
-				if (ctor.DeclaringTypeDefinition?.MetadataToken == analyzedEntity.MetadataToken
-					&& ctor.ParentModule?.MetadataFile == analyzedEntity.ParentModule!.MetadataFile)
+				if (foundTypeDefinition.MetadataToken == analyzedEntity.MetadataToken
+					&& foundTypeDefinition.ParentModule.MetadataFile == analyzedEntity.ParentModule!.MetadataFile)
+				{
 					return true;
+				}
 			}
 
 			return false;
-		}
-
-		bool CanBeReference(ILOpCode opCode)
-		{
-			return opCode == ILOpCode.Newobj || opCode == ILOpCode.Initobj;
 		}
 
 		public bool Show(ISymbol symbol) => symbol is ITypeDefinition entity && !entity.IsAbstract && !entity.IsStatic;
