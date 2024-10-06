@@ -507,6 +507,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					targetExpr = new MemberReferenceExpression(castExpression, methodName);
 					typeArgumentList = ((MemberReferenceExpression)targetExpr).TypeArguments;
 				}
+				if (constrainedTo != null && targetExpr is MemberReferenceExpression { Target: CastExpression cast })
+				{
+					cast.AddChild(new Comment("cast due to .constrained prefix", CommentType.MultiLine), Roles.Comment);
+				}
 			}
 			else
 			{
