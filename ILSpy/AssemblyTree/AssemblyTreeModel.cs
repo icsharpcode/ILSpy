@@ -16,39 +16,37 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.IO;
+using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
+using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Navigation;
 using System.Windows.Threading;
 
+using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Documentation;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.Search;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Settings;
 using ICSharpCode.ILSpyX.TreeView;
-using System.Collections.Specialized;
-using System.ComponentModel;
-using System.Linq;
-using ICSharpCode.Decompiler.Metadata;
-
-using System.Reflection.Metadata.Ecma335;
-using System.Windows;
-using ICSharpCode.Decompiler.Documentation;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
-using System.Reflection.Metadata;
-using System.Text;
-using System.Windows.Navigation;
-
-using ICSharpCode.ILSpy.AppEnv;
-using ICSharpCode.ILSpy.Search;
-using ICSharpCode.Decompiler;
 
 using TomsToolbox.Essentials;
 using TomsToolbox.Wpf;
@@ -94,6 +92,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				{
 					case nameof(SessionSettings.ActiveAssemblyList):
 						ShowAssemblyList(sessionSettings.ActiveAssemblyList);
+						RefreshDecompiledView();
 						break;
 					case nameof(SessionSettings.Theme):
 						// update syntax highlighting and force reload (AvalonEdit does not automatically refresh on highlighting change)
