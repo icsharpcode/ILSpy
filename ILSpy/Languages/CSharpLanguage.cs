@@ -38,7 +38,6 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpyX;
@@ -56,18 +55,26 @@ namespace ICSharpCode.ILSpy
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	public class CSharpLanguage : Language
 	{
+		readonly IReadOnlyCollection<IResourceFileHandler> resourceFileHandlers;
+
 		string name = "C#";
 		bool showAllMembers = false;
 		int transformCount = int.MaxValue;
 
+		[ImportingConstructor]
+		public CSharpLanguage([ImportMany] IEnumerable<IResourceFileHandler> resourceFileHandlers)
+		{
+			this.resourceFileHandlers = resourceFileHandlers.ToArray();
+		}
+
 #if DEBUG
-		internal static IEnumerable<CSharpLanguage> GetDebugLanguages()
+		internal static IEnumerable<CSharpLanguage> GetDebugLanguages(IReadOnlyCollection<IResourceFileHandler> resourceFileHandlers)
 		{
 			string lastTransformName = "no transforms";
 			int transformCount = 0;
 			foreach (var transform in CSharpDecompiler.GetAstTransforms())
 			{
-				yield return new CSharpLanguage {
+				yield return new CSharpLanguage(resourceFileHandlers) {
 					transformCount = transformCount,
 					name = "C# - " + lastTransformName,
 					showAllMembers = true
@@ -75,7 +82,7 @@ namespace ICSharpCode.ILSpy
 				lastTransformName = "after " + transform.GetType().Name;
 				transformCount++;
 			}
-			yield return new CSharpLanguage {
+			yield return new CSharpLanguage(resourceFileHandlers) {
 				name = "C# - " + lastTransformName,
 				showAllMembers = true
 			};
@@ -430,8 +437,9 @@ namespace ICSharpCode.ILSpy
 				{
 					options.DecompilerSettings.UseSdkStyleProjectFormat = false;
 				}
-				var decompiler = new ILSpyWholeProjectDecompiler(assembly, options);
-				decompiler.ProgressIndicator = options.Progress;
+				var decompiler = new ILSpyWholeProjectDecompiler(assembly, options, resourceFileHandlers) {
+					ProgressIndicator = options.Progress
+				};
 				return decompiler.DecompileProject(module, options.SaveAsProjectDirectory, new TextOutputWriter(output), options.CancellationToken);
 			}
 			else
@@ -542,18 +550,20 @@ namespace ICSharpCode.ILSpy
 		{
 			readonly LoadedAssembly assembly;
 			readonly DecompilationOptions options;
+			private readonly IReadOnlyCollection<IResourceFileHandler> resourceFileHandlers;
 
-			public ILSpyWholeProjectDecompiler(LoadedAssembly assembly, DecompilationOptions options)
+			public ILSpyWholeProjectDecompiler(LoadedAssembly assembly, DecompilationOptions options, IReadOnlyCollection<IResourceFileHandler> resourceFileHandlers)
 				: base(options.DecompilerSettings, assembly.GetAssemblyResolver(options.DecompilerSettings.AutoLoadAssemblyReferences, options.DecompilerSettings.ApplyWindowsRuntimeProjections), null, assembly.GetAssemblyReferenceClassifier(options.DecompilerSettings.ApplyWindowsRuntimeProjections), assembly.GetDebugInfoOrNull())
 			{
 				this.assembly = assembly;
 				this.options = options;
+				this.resourceFileHandlers = resourceFileHandlers;
 			}
 
 			protected override IEnumerable<ProjectItemInfo> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 			{
 				var context = new ResourceFileHandlerContext(options);
-				foreach (var handler in App.ExportProvider.GetExportedValues<IResourceFileHandler>())
+				foreach (var handler in resourceFileHandlers)
 				{
 					if (handler.CanHandle(fileName, context))
 					{

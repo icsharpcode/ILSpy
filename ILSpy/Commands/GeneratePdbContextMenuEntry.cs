@@ -75,7 +75,7 @@ namespace ICSharpCode.ILSpy
 			if (dlg.ShowDialog() != true)
 				return;
 			DockWorkspace dockWorkspace = DockWorkspace.Instance;
-			DecompilationOptions options = SettingsService.Instance.CreateDecompilationOptions(dockWorkspace.ActiveTabPage);
+			DecompilationOptions options = LanguageService.Instance.CreateDecompilationOptions(dockWorkspace.ActiveTabPage);
 			string fileName = dlg.FileName;
 			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();

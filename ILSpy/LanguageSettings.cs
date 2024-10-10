@@ -17,12 +17,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.Linq;
 using System.Xml.Linq;
 
 using ICSharpCode.ILSpyX;
 
 using TomsToolbox.Wpf;
+
+#nullable enable
 
 namespace ICSharpCode.ILSpy
 {
@@ -42,9 +43,8 @@ namespace ICSharpCode.ILSpy
 		{
 			Parent = parent;
 			this.ShowApiLevel = (ApiVisibility?)(int?)element.Element("ShowAPILevel") ?? ApiVisibility.PublicAndInternal;
-			this.Language = Languages.GetLanguage((string)element.Element("Language")) ?? Languages.AllLanguages.First();
-			this.LanguageVersion = Language.LanguageVersions.FirstOrDefault(v => v.Version == (string)element.Element("LanguageVersion"))
-								   ?? Language.LanguageVersions.LastOrDefault();
+			this.LanguageId = (string?)element.Element("Language");
+			this.LanguageVersionId = (string?)element.Element("LanguageVersion");
 		}
 
 		public ISettingsSection Parent { get; }
@@ -54,8 +54,8 @@ namespace ICSharpCode.ILSpy
 			return new XElement(
 				"FilterSettings",
 				new XElement("ShowAPILevel", (int)this.ShowApiLevel),
-				new XElement("Language", this.Language.Name),
-				new XElement("LanguageVersion", this.LanguageVersion?.Version)
+				new XElement("Language", this.LanguageId),
+				new XElement("LanguageVersion", this.LanguageVersionId)
 			);
 		}
 
@@ -111,7 +111,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		Language language;
+		string? languageId;
 
 		/// <summary>
 		/// Gets/Sets the current language.
@@ -120,37 +120,12 @@ namespace ICSharpCode.ILSpy
 		/// While this isn't related to filtering, having it as part of the FilterSettings
 		/// makes it easy to pass it down into all tree nodes.
 		/// </remarks>
-		public Language Language {
-			get { return language; }
-			set {
-				if (language != value)
-				{
-					if (language != null && language.HasLanguageVersions)
-					{
-						languageVersionHistory[language] = languageVersion;
-					}
-					language = value;
-					OnPropertyChanged();
-					if (language.HasLanguageVersions)
-					{
-						if (languageVersionHistory.TryGetValue(value, out var version))
-						{
-							LanguageVersion = version;
-						}
-						else
-						{
-							LanguageVersion = Language.LanguageVersions.Last();
-						}
-					}
-					else
-					{
-						LanguageVersion = default;
-					}
-				}
-			}
+		public string? LanguageId {
+			get => languageId;
+			set => SetProperty(ref languageId, value);
 		}
 
-		LanguageVersion languageVersion;
+		string? languageVersionId;
 
 		/// <summary>
 		/// Gets/Sets the current language version.
@@ -159,19 +134,9 @@ namespace ICSharpCode.ILSpy
 		/// While this isn't related to filtering, having it as part of the FilterSettings
 		/// makes it easy to pass it down into all tree nodes.
 		/// </remarks>
-		public LanguageVersion LanguageVersion {
-			get { return languageVersion; }
-			set {
-				if (languageVersion != value)
-				{
-					languageVersion = value;
-					if (language.HasLanguageVersions)
-					{
-						languageVersionHistory[language] = languageVersion;
-					}
-					OnPropertyChanged();
-				}
-			}
+		public string? LanguageVersionId {
+			get { return languageVersionId; }
+			set => SetProperty(ref languageVersionId, value);
 		}
 
 		// This class has been initially called FilterSettings, but then has been Hijacked to store language settings as well.
