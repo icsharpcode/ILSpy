@@ -20,6 +20,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
@@ -31,14 +32,20 @@ using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpyX;
 
-using TomsToolbox.Essentials;
-
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile), MenuCategory = nameof(Resources.Open), MenuOrder = 2.5)]
 	[PartCreationPolicy(CreationPolicy.Shared)]
 	sealed class DecompileAllCommand : SimpleCommand
 	{
+		private readonly IReadOnlyCollection<IResourceFileHandler> resourceFileHandlers;
+
+		[ImportingConstructor]
+		public DecompileAllCommand([ImportMany] IEnumerable<IResourceFileHandler> resourceFileHandlers)
+		{
+			this.resourceFileHandlers = resourceFileHandlers.ToArray();
+		}
+
 		public override bool CanExecute(object parameter)
 		{
 			return System.IO.Directory.Exists("c:\\temp\\decompiled");
@@ -60,10 +67,10 @@ namespace ICSharpCode.ILSpy
 							{
 								try
 								{
-									var options = SettingsService.Instance.CreateDecompilationOptions(DockWorkspace.Instance.ActiveTabPage);
+									var options = LanguageService.Instance.CreateDecompilationOptions(DockWorkspace.Instance.ActiveTabPage);
 									options.CancellationToken = ct;
 									options.FullDecompilation = true;
-									new CSharpLanguage().DecompileAssembly(asm, new PlainTextOutput(writer), options);
+									new CSharpLanguage(resourceFileHandlers).DecompileAssembly(asm, new PlainTextOutput(writer), options);
 								}
 								catch (Exception ex)
 								{
@@ -95,10 +102,10 @@ namespace ICSharpCode.ILSpy
 		public override void Execute(object parameter)
 		{
 			const int numRuns = 100;
-			var language = SettingsService.Instance.SessionSettings.LanguageSettings.Language;
+			var language = LanguageService.Instance.Language;
 			var nodes = MainWindow.Instance.AssemblyTreeModel.SelectedNodes.ToArray();
 			DockWorkspace dockWorkspace = DockWorkspace.Instance;
-			var options = SettingsService.Instance.CreateDecompilationOptions(dockWorkspace.ActiveTabPage);
+			var options = LanguageService.Instance.CreateDecompilationOptions(dockWorkspace.ActiveTabPage);
 			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				options.CancellationToken = ct;
 				Stopwatch w = Stopwatch.StartNew();

@@ -218,7 +218,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		public override RichText GetRichTextTooltip(IEntity entity)
 		{
-			return Languages.ILLanguage.GetRichTextTooltip(entity);
+			return LanguageService.Instance.ILLanguage.GetRichTextTooltip(entity);
 		}
 
 		private ReadyToRunReaderCacheEntry GetReader(LoadedAssembly assembly, MetadataFile file)

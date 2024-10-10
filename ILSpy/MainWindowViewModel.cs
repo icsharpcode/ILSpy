@@ -27,6 +27,7 @@ namespace ICSharpCode.ILSpy
 	{
 		public DockWorkspace Workspace => DockWorkspace.Instance;
 		public SessionSettings SessionSettings => SettingsService.Instance.SessionSettings;
+		public LanguageService LanguageService => LanguageService.Instance;
 		public AssemblyListManager AssemblyListManager => SettingsService.Instance.AssemblyListManager;
 	}
 }

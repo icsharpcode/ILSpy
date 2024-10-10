@@ -547,7 +547,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			dlg.Filter = language.Name + " project|*" + language.ProjectFileExtension + "|" + language.Name + " single file|*" + language.FileExtension + "|All files|*.*";
 			if (dlg.ShowDialog() == true)
 			{
-				var options = SettingsService.Instance.CreateDecompilationOptions(DockWorkspace.Instance.ActiveTabPage);
+				var options = LanguageService.Instance.CreateDecompilationOptions(DockWorkspace.Instance.ActiveTabPage);
 				options.FullDecompilation = true;
 				if (dlg.FilterIndex == 1)
 				{

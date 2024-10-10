@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy
 
 			writingOptions.PropertyChanged += WritingOptions_PropertyChanged;
 
-			if (SettingsService.Instance.SessionSettings.LanguageSettings.Language is ILAstLanguage l)
+			if (LanguageService.Instance.Language is ILAstLanguage l)
 			{
 				l.StepperUpdated += ILAstStepperUpdated;
 				language = l;
@@ -66,13 +66,13 @@ namespace ICSharpCode.ILSpy
 			if (sender is not LanguageSettings)
 				return;
 
-			if (e.PropertyName == nameof(LanguageSettings.Language))
+			if (e.PropertyName == nameof(LanguageSettings.LanguageId))
 			{
 				if (language != null)
 				{
 					language.StepperUpdated -= ILAstStepperUpdated;
 				}
-				if (SettingsService.Instance.SessionSettings.LanguageSettings.Language is ILAstLanguage l)
+				if (LanguageService.Instance.Language is ILAstLanguage l)
 				{
 					l.StepperUpdated += ILAstStepperUpdated;
 					language = l;

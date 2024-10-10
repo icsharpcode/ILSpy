@@ -30,7 +30,7 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 			testAssembly = assemblyList.OpenAssembly(typeof(MethodUsesAnalyzerTests).Assembly.Location);
 			assemblyList.OpenAssembly(typeof(void).Assembly.Location);
 			testAssemblyTypeSystem = testAssembly.GetTypeSystemOrNull();
-			language = new CSharpLanguage();
+			language = new CSharpLanguage([]);
 			typeDefinition = testAssemblyTypeSystem.FindType(typeof(TestCases.Main.MainAssembly)).GetDefinition();
 		}
 
