@@ -132,11 +132,6 @@ namespace ICSharpCode.ILSpy.Util
 			UseDebugSymbols = DecompilerSettings.UseDebugSymbols
 		};
 
-		public DecompilationOptions CreateDecompilationOptions(TabPageModel tabPage)
-		{
-			return new(SessionSettings.LanguageSettings.LanguageVersion, DecompilerSettings, DisplaySettings) { Progress = tabPage.Content as IProgress<DecompilationProgress> };
-		}
-
 		public AssemblyList LoadInitialAssemblyList()
 		{
 			var loadPreviousAssemblies = MiscSettings.LoadPreviousAssemblies;

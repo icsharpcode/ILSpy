@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 
 using ICSharpCode.Decompiler;
@@ -56,7 +55,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return FilterResult.Hidden;
 			if (settings.SearchTermMatches(type.Name))
 			{
-				if (type.DeclaringType != null && (settings.ShowApiLevel != ApiVisibility.All || !settings.Language.ShowMember(type)))
+				if (type.DeclaringType != null && (settings.ShowApiLevel != ApiVisibility.All || !LanguageService.Instance.Language.ShowMember(type)))
 					return FilterResult.Hidden;
 				else
 					return FilterResult.Match;

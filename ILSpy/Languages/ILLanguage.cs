@@ -201,7 +201,7 @@ namespace ICSharpCode.ILSpy
 			var settingsService = SettingsService.Instance;
 			var dockWorkspace = DockWorkspace.Instance;
 
-			var disasm = CreateDisassembler(output, settingsService.CreateDecompilationOptions(dockWorkspace.ActiveTabPage));
+			var disasm = CreateDisassembler(output, LanguageService.Instance.CreateDecompilationOptions(dockWorkspace.ActiveTabPage));
 			MetadataFile module = entity.ParentModule?.MetadataFile;
 			if (module == null)
 			{

@@ -213,7 +213,7 @@ namespace ICSharpCode.ILSpy
 				using (var projectFileWriter = new StreamWriter(projectFileName))
 				{
 					var projectFileOutput = new PlainTextOutput(projectFileWriter);
-					var options = SettingsService.Instance.CreateDecompilationOptions(DockWorkspace.Instance.ActiveTabPage);
+					var options = LanguageService.Instance.CreateDecompilationOptions(DockWorkspace.Instance.ActiveTabPage);
 					options.FullDecompilation = true;
 					options.CancellationToken = ct;
 					options.SaveAsProjectDirectory = targetDirectory;
