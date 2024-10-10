@@ -299,7 +299,7 @@ namespace ICSharpCode.ILSpyX
 		/// </summary>
 		public bool IsLoadedAsValidAssembly {
 			get {
-				return loadingTask.Status == TaskStatus.RanToCompletion && loadingTask.Result.MetadataFile != null;
+				return loadingTask.Status == TaskStatus.RanToCompletion && loadingTask.Result.MetadataFile is { IsMetadataOnly: false };
 			}
 		}
 

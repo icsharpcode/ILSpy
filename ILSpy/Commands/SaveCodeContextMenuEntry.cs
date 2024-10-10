@@ -18,21 +18,17 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Windows;
 
-using ICSharpCode.Decompiler.IL;
-using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpyX.TreeView;
 
 using Microsoft.Win32;
-using ICSharpCode.ILSpyX.TreeView;
-using System.ComponentModel.Composition;
-
-using ICSharpCode.ILSpy.Docking;
 
 
 namespace ICSharpCode.ILSpy.TextView
@@ -76,7 +72,7 @@ namespace ICSharpCode.ILSpy.TextView
 					if (singleSelection.Save(tabPage))
 						return;
 				}
-				else if (selectedNodes.Count > 1 && selectedNodes.All(n => n is AssemblyTreeNode))
+				else if (selectedNodes.Count > 1 && selectedNodes.All(n => n is AssemblyTreeNode { LoadedAssembly.IsLoadedAsValidAssembly: true }))
 				{
 					var selectedPath = SelectSolutionFile();
 
