@@ -86,8 +86,19 @@ namespace ICSharpCode.ILSpy.ViewModels
 				textView = new DecompilerTextView();
 				tabPage.Content = textView;
 			}
+			string oldTitle = tabPage.Title;
 			tabPage.Title = Properties.Resources.Decompiling;
-			return action(textView);
+			try
+			{
+				return action(textView);
+			}
+			finally
+			{
+				if (tabPage.Title == Properties.Resources.Decompiling)
+				{
+					tabPage.Title = oldTitle;
+				}
+			}
 		}
 
 		public static void ShowTextView(this TabPageModel tabPage, Action<DecompilerTextView> action)
@@ -97,8 +108,13 @@ namespace ICSharpCode.ILSpy.ViewModels
 				textView = new DecompilerTextView();
 				tabPage.Content = textView;
 			}
+			string oldTitle = tabPage.Title;
 			tabPage.Title = Properties.Resources.Decompiling;
 			action(textView);
+			if (tabPage.Title == Properties.Resources.Decompiling)
+			{
+				tabPage.Title = oldTitle;
+			}
 		}
 
 		public static void Focus(this TabPageModel tabPage)
