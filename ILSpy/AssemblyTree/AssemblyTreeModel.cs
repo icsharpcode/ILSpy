@@ -108,7 +108,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			{
 				switch (e.PropertyName)
 				{
-					case nameof(LanguageSettings.Language) or nameof(LanguageSettings.LanguageVersion):
+					case nameof(LanguageSettings.LanguageId) or nameof(LanguageSettings.LanguageVersionId):
 						RefreshDecompiledView();
 						break;
 					default:
@@ -152,7 +152,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		{
 			LoadAssemblies(args.AssembliesToLoad, commandLineLoadedAssemblies, focusNode: false);
 			if (args.Language != null)
-				SettingsService.Instance.SessionSettings.LanguageSettings.Language = Languages.GetLanguage(args.Language);
+				LanguageService.Instance.Language = LanguageService.Instance.GetLanguage(args.Language);
 			return true;
 		}
 
@@ -787,7 +787,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				return;
 			}
 
-			var options = SettingsService.Instance.CreateDecompilationOptions(activeTabPage);
+			var options = LanguageService.Instance.CreateDecompilationOptions(activeTabPage);
 			options.TextViewState = newState;
 			activeTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, options));
 		}
@@ -797,9 +797,9 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			DecompileSelectedNodes(DockWorkspace.Instance.ActiveTabPage.GetState() as DecompilerTextViewState);
 		}
 
-		public Language CurrentLanguage => SettingsService.Instance.SessionSettings.LanguageSettings.Language;
+		public Language CurrentLanguage => LanguageService.Instance.Language;
 
-		public LanguageVersion CurrentLanguageVersion => SettingsService.Instance.SessionSettings.LanguageSettings.LanguageVersion;
+		public LanguageVersion? CurrentLanguageVersion => LanguageService.Instance.LanguageVersion;
 
 		public IEnumerable<ILSpyTreeNode> SelectedNodes {
 			get {
