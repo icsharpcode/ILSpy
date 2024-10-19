@@ -146,7 +146,7 @@
 			</CheckBox>
 			<Separator />
 			<Grid Margin="2,0">
-				<ItemsControl ItemsSource="{x:Static local:Languages.AllLanguages}"  DisplayMemberPath="Name" Height="0" Margin="15,0" />
+				<ItemsControl ItemsSource="{Binding LanguageService.AllLanguages}"  DisplayMemberPath="Name" Height="0" Margin="15,0" />
 				<ComboBox Name="languageComboBox" DisplayMemberPath="Name" MaxDropDownHeight="Auto"
 						  IsEnabled="{Binding Workspace.ActiveTabPage.SupportsLanguageSwitching}"
 						  ItemsSource="{Binding LanguageService.AllLanguages}"
