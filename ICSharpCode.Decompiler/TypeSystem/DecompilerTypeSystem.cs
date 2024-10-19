@@ -327,14 +327,39 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				typeSystemOptions &= ~TypeSystemOptions.NativeIntegersWithoutAttribute;
 			}
 			var mainModuleWithOptions = mainModule.WithOptions(typeSystemOptions);
-			var referencedAssembliesWithOptions = referencedAssemblies.Select(file => file.WithOptions(typeSystemOptions));
+			// create IModuleReferences for all references
+			var referencedAssembliesWithOptions = new List<IModuleReference>(referencedAssemblies.Count);
+			Dictionary<string, (Version version, int insertionIndex)> referenceAssemblyVersionMap = new();
+			foreach (var file in referencedAssemblies)
+			{
+				// if the file is an assembly, we need to make sure to deduplicate all assemblies,
+				// with the same name, but different version. We keep the highest version number.
+				if (file.IsAssembly)
+				{
+					var newFileVersion = file.Metadata.GetAssemblyDefinition().Version;
+					if (referenceAssemblyVersionMap.TryGetValue(file.Name, out var info))
+					{
+						if (newFileVersion >= info.version)
+						{
+							referencedAssembliesWithOptions[info.insertionIndex] = file.WithOptions(typeSystemOptions);
+							referenceAssemblyVersionMap[file.Name] = (newFileVersion, info.insertionIndex);
+						}
+						continue;
+					}
+					else
+					{
+						referenceAssemblyVersionMap[file.Name] = (file.Metadata.GetAssemblyDefinition().Version, referencedAssembliesWithOptions.Count);
+					}
+				}
+				referencedAssembliesWithOptions.Add(file.WithOptions(typeSystemOptions));
+			}
 			// Primitive types are necessary to avoid assertions in ILReader.
 			// Other known types are necessary in order for transforms to work (e.g. Task<T> for async transform).
 			// Figure out which known types are missing from our type system so far:
 			var missingKnownTypes = KnownTypeReference.AllKnownTypes.Where(IsMissing).ToList();
 			if (missingKnownTypes.Count > 0)
 			{
-				Init(mainModule.WithOptions(typeSystemOptions), referencedAssembliesWithOptions.Concat(new[] { MinimalCorlib.CreateWithTypes(missingKnownTypes) }));
+				Init(mainModuleWithOptions, referencedAssembliesWithOptions.Concat(new[] { MinimalCorlib.CreateWithTypes(missingKnownTypes) }));
 			}
 			else
 			{
