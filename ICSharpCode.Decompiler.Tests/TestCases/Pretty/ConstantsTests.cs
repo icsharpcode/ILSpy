@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ExpectUInt64(a & 7);
 			ExpectUInt64(a & 0x7FFFFFFF);
 			ExpectUInt64(a & 0xFFFFFFFFu);
-			ExpectUInt64(a & 0x7FFFFFFFFFFFFFFFuL);
+			ExpectUInt64(a & 0x7FFFFFFFFFFFFFFFL);
 			ExpectUInt64(a & 0xFFFFFFFFFFFFFFFFuL);
 		}
 
@@ -97,8 +97,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void BitwiseAndWithConstantUInt32(uint a)
 		{
-			ExpectUInt32(a & 7u);
-			ExpectUInt32(a & 0x7FFFFFFFu);
+			ExpectUInt32(a & 7);
+			ExpectUInt32(a & 0x7FFFFFFF);
 			ExpectUInt32(a & 0xFFFFFFFFu);
 		}
 
@@ -110,9 +110,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void BitwiseAndWithConstantUInt16(ushort a)
 		{
-			ExpectUInt16((ushort)(a & 7u));
-			ExpectUInt16((ushort)(a & 0x7FFFu));
-			ExpectUInt16((ushort)(a & 0xFFFFu));
+			ExpectUInt16((ushort)(a & 7));
+			ExpectUInt16((ushort)(a & 0x7FFF));
+			ExpectUInt16((ushort)(a & 0xFFFF));
 		}
 
 		public void BitwiseAndWithConstantInt16(short a)
@@ -123,9 +123,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void BitwiseAndWithConstantUInt8(byte a)
 		{
-			ExpectUInt8((byte)(a & 7u));
-			ExpectUInt8((byte)(a & 0x7Fu));
-			ExpectUInt8((byte)(a & 0xFFu));
+			ExpectUInt8((byte)(a & 7));
+			ExpectUInt8((byte)(a & 0x7F));
+			ExpectUInt8((byte)(a & 0xFF));
 		}
 
 		public void BitwiseAndWithConstantInt8(sbyte a)
@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ExpectUInt64(a | 7);
 			ExpectUInt64(a | 0x7FFFFFFF);
 			ExpectUInt64(a | 0xFFFFFFFFu);
-			ExpectUInt64(a | 0x7FFFFFFFFFFFFFFFuL);
+			ExpectUInt64(a | 0x7FFFFFFFFFFFFFFFL);
 			ExpectUInt64(a | 0xFFFFFFFFFFFFFFFFuL);
 		}
 
@@ -153,8 +153,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void BitwiseOrWithConstantUInt32(uint a)
 		{
-			ExpectUInt32(a | 7u);
-			ExpectUInt32(a | 0x7FFFFFFFu);
+			ExpectUInt32(a | 7);
+			ExpectUInt32(a | 0x7FFFFFFF);
 			ExpectUInt32(a | 0xFFFFFFFFu);
 		}
 
@@ -166,9 +166,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void BitwiseOrWithConstantUInt16(ushort a)
 		{
-			ExpectUInt16((ushort)(a | 7u));
-			ExpectUInt16((ushort)(a | 0x7FFFu));
-			ExpectUInt16((ushort)(a | 0xFFFFu));
+			ExpectUInt16((ushort)(a | 7));
+			ExpectUInt16((ushort)(a | 0x7FFF));
+			ExpectUInt16((ushort)(a | 0xFFFF));
 		}
 
 		public void BitwiseOrWithConstantInt16(short a)
@@ -179,9 +179,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void BitwiseOrWithConstantUInt8(byte a)
 		{
-			ExpectUInt8((byte)(a | 7u));
-			ExpectUInt8((byte)(a | 0x7Fu));
-			ExpectUInt8((byte)(a | 0xFFu));
+			ExpectUInt8((byte)(a | 7));
+			ExpectUInt8((byte)(a | 0x7F));
+			ExpectUInt8((byte)(a | 0xFF));
 		}
 
 		public void BitwiseOrWithConstantInt8(sbyte a)
@@ -195,7 +195,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ExpectUInt64(a ^ 7);
 			ExpectUInt64(a ^ 0x7FFFFFFF);
 			ExpectUInt64(a ^ 0xFFFFFFFFu);
-			ExpectUInt64(a ^ 0x7FFFFFFFFFFFFFFFuL);
+			ExpectUInt64(a ^ 0x7FFFFFFFFFFFFFFFL);
 			ExpectUInt64(a ^ 0xFFFFFFFFFFFFFFFFuL);
 		}
 
@@ -209,8 +209,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void BitwiseXorWithConstantUInt32(uint a)
 		{
-			ExpectUInt32(a ^ 7u);
-			ExpectUInt32(a ^ 0x7FFFFFFFu);
+			ExpectUInt32(a ^ 7);
+			ExpectUInt32(a ^ 0x7FFFFFFF);
 			ExpectUInt32(a ^ 0xFFFFFFFFu);
 		}
 
@@ -222,9 +222,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void BitwiseXorWithConstantUInt16(ushort a)
 		{
-			ExpectUInt16((ushort)(a ^ 7u));
-			ExpectUInt16((ushort)(a ^ 0x7FFFu));
-			ExpectUInt16((ushort)(a ^ 0xFFFFu));
+			ExpectUInt16((ushort)(a ^ 7));
+			ExpectUInt16((ushort)(a ^ 0x7FFF));
+			ExpectUInt16((ushort)(a ^ 0xFFFF));
 		}
 
 		public void BitwiseXorWithConstantInt16(short a)
@@ -235,15 +235,29 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void BitwiseXorWithConstantUInt8(byte a)
 		{
-			ExpectUInt8((byte)(a ^ 7u));
-			ExpectUInt8((byte)(a ^ 0x7Fu));
-			ExpectUInt8((byte)(a ^ 0xFFu));
+			ExpectUInt8((byte)(a ^ 7));
+			ExpectUInt8((byte)(a ^ 0x7F));
+			ExpectUInt8((byte)(a ^ 0xFF));
 		}
 
 		public void BitwiseXorWithConstantInt8(sbyte a)
 		{
 			ExpectInt8((sbyte)(a ^ 7));
 			ExpectInt8((sbyte)(a ^ 0x7F));
+		}
+
+		public int Issue2166a(int x)
+		{
+			if ((x & 0x10) != 0)
+			{
+				return 1;
+			}
+			return 0;
+		}
+
+		public byte Issue2166b(int x)
+		{
+			return (byte)(x & 0x10);
 		}
 
 		private void ExpectUInt64(ulong _)

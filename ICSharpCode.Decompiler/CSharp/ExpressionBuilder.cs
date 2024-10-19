@@ -541,8 +541,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			rr = AdjustConstantToType(rr, context.TypeHint);
 			return ConvertConstantValue(
 				rr,
-				allowImplicitConversion: true,
-				ShouldDisplayAsHex(inst.Value, rr.Type, inst.Parent)
+				allowImplicitConversion: true
 			).WithILInstruction(inst);
 		}
 
@@ -566,29 +565,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			rr = AdjustConstantToType(rr, context.TypeHint);
 			return ConvertConstantValue(
 				rr,
-				allowImplicitConversion: true,
-				ShouldDisplayAsHex(inst.Value, rr.Type, inst.Parent)
+				allowImplicitConversion: true
 			).WithILInstruction(inst);
 		}
 
-		private bool ShouldDisplayAsHex(long value, IType type, ILInstruction parent)
+		private bool ShouldDisplayAsHex(long value, IType type)
 		{
-			if (parent is Conv conv)
-				parent = conv.Parent;
 			if (value >= 0 && value <= 9)
 				return false;
 			if (value < 0 && type.GetSign() == Sign.Signed)
 				return false;
-			switch (parent)
-			{
-				case BinaryNumericInstruction bni:
-					if (bni.Operator == BinaryNumericOperator.BitAnd
-						|| bni.Operator == BinaryNumericOperator.BitOr
-						|| bni.Operator == BinaryNumericOperator.BitXor)
-						return true;
-					break;
-			}
-			return false;
+			return true;
 		}
 
 		protected internal override TranslatedExpression VisitLdcF4(LdcF4 inst, TranslationContext context)
@@ -1525,8 +1512,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		TranslatedExpression HandleBinaryNumeric(BinaryNumericInstruction inst, BinaryOperatorType op, TranslationContext context)
 		{
 			var resolverWithOverflowCheck = resolver.WithCheckForOverflow(inst.CheckForOverflow);
-			var left = Translate(inst.Left, op.IsBitwise() ? context.TypeHint : null);
-			var right = Translate(inst.Right, op.IsBitwise() ? context.TypeHint : null);
+			bool propagateTypeHint = op.IsBitwise() && inst.LeftInputType != inst.RightInputType;
+			var left = Translate(inst.Left, propagateTypeHint ? context.TypeHint : null);
+			var right = Translate(inst.Right, propagateTypeHint ? context.TypeHint : null);
 
 			if (inst.UnderlyingResultType == StackType.Ref)
 			{
@@ -1613,7 +1601,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					left = ConvertConstantValue(
 						left.ResolveResult,
 						allowImplicitConversion: false,
-						ShouldDisplayAsHex(value, left.Type, inst)
+						ShouldDisplayAsHex(value, left.Type)
 					).WithILInstruction(left.ILInstructions);
 				}
 				if (right.ResolveResult.ConstantValue != null)
@@ -1623,7 +1611,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					right = ConvertConstantValue(
 						right.ResolveResult,
 						allowImplicitConversion: false,
-						ShouldDisplayAsHex(value, right.Type, inst)
+						ShouldDisplayAsHex(value, right.Type)
 					).WithILInstruction(right.ILInstructions);
 				}
 			}

@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				return (ushort)((uint64Field & 0xFFFF000000000000uL) >> 48);
 			}
 			set {
-				uint64Field = (uint64Field & 0xFFFFFFFFFFFFuL) | ((ulong)value << 48);
+				uint64Field = (uint64Field & 0xFFFFFFFFFFFFL) | ((ulong)value << 48);
 			}
 		}
 

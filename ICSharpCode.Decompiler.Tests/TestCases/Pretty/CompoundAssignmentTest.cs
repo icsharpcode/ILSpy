@@ -2943,8 +2943,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void UintBitAndTest(uint p, CustomClass c, CustomStruct2 s)
 		{
 			uint num = 0u;
-			p &= 5u;
-			num &= 5u;
+			p &= 5;
+			num &= 5;
 			Use(ref num);
 			uintField &= 5u;
 			UintProp &= 5u;
@@ -2970,8 +2970,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void UintBitOrTest(uint p, CustomClass c, CustomStruct2 s)
 		{
 			uint num = 0u;
-			p |= 5u;
-			num |= 5u;
+			p |= 5;
+			num |= 5;
 			Use(ref num);
 			uintField |= 5u;
 			UintProp |= 5u;
@@ -2997,8 +2997,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void UintBitXorTest(uint p, CustomClass c, CustomStruct2 s)
 		{
 			uint num = 0u;
-			p ^= 5u;
-			num ^= 5u;
+			p ^= 5;
+			num ^= 5;
 			Use(ref num);
 			uintField ^= 5u;
 			UintProp ^= 5u;
