@@ -103,7 +103,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
 				return FilterResult.Hidden;
-			if (settings.SearchTermMatches(MethodDefinition.Name) && (settings.ShowApiLevel == ApiVisibility.All || settings.Language.ShowMember(MethodDefinition)))
+			if (settings.SearchTermMatches(MethodDefinition.Name) && (settings.ShowApiLevel == ApiVisibility.All || LanguageService.Instance.Language.ShowMember(MethodDefinition)))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;
@@ -127,7 +127,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override string ToString()
 		{
-			return Languages.ILLanguage.MethodToString(MethodDefinition, false, false, false);
+			return LanguageService.Instance.ILLanguage.MethodToString(MethodDefinition, false, false, false);
 		}
 	}
 }

@@ -146,12 +146,12 @@
 			</CheckBox>
 			<Separator />
 			<Grid Margin="2,0">
-				<ItemsControl ItemsSource="{x:Static local:Languages.AllLanguages}"  DisplayMemberPath="Name" Height="0" Margin="15,0" />
+				<ItemsControl ItemsSource="{Binding LanguageService.AllLanguages}"  DisplayMemberPath="Name" Height="0" Margin="15,0" />
 				<ComboBox Name="languageComboBox" DisplayMemberPath="Name" MaxDropDownHeight="Auto"
 						  IsEnabled="{Binding Workspace.ActiveTabPage.SupportsLanguageSwitching}"
-						  ItemsSource="{x:Static local:Languages.AllLanguages}"
+						  ItemsSource="{Binding LanguageService.AllLanguages}"
 						  ToolTip="{x:Static properties:Resources.SelectLanguageDropdownTooltip}"
-						  SelectedItem="{Binding SessionSettings.LanguageSettings.Language}" />
+						  SelectedItem="{Binding LanguageService.Language}" />
 			</Grid>
 			<Grid Margin="2,0">
 				<ItemsControl ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}" DisplayMemberPath="DisplayName" Height="0" Margin="15,0" />
@@ -160,7 +160,7 @@
 						  Visibility="{Binding SelectedItem.HasLanguageVersions, ElementName=languageComboBox, Converter={toms:BooleanToVisibilityConverter}}"
 						  IsEnabled="{Binding Workspace.ActiveTabPage.SupportsLanguageSwitching}"
 						  ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}"
-						  SelectedItem="{Binding SessionSettings.LanguageSettings.LanguageVersion, UpdateSourceTrigger=PropertyChanged}" />
+						  SelectedItem="{Binding LanguageService.LanguageVersion, UpdateSourceTrigger=PropertyChanged}" />
 			</Grid>
 		</ToolBar>
 		<!-- Update panel -->

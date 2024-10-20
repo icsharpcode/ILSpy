@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		LanguageSettings LanguageSettings => SettingsService.Instance.SessionSettings.LanguageSettings;
 
-		public Language Language => LanguageSettings.Language;
+		public Language Language => LanguageService.Instance.Language;
 
 		public virtual FilterResult Filter(LanguageSettings settings)
 		{
@@ -131,7 +131,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (sender is not ILSpy.LanguageSettings)
 				return;
-			if (e.PropertyName is not (nameof(LanguageSettings.Language) or nameof(LanguageSettings.LanguageVersion)))
+			if (e.PropertyName is not (nameof(LanguageSettings.LanguageId) or nameof(LanguageSettings.LanguageVersionId)))
 				return;
 
 			RaisePropertyChanged(nameof(Text));

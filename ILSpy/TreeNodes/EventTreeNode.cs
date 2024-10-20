@@ -72,7 +72,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
 				return FilterResult.Hidden;
-			if (settings.SearchTermMatches(EventDefinition.Name) && (settings.ShowApiLevel == ApiVisibility.All || settings.Language.ShowMember(EventDefinition)))
+			if (settings.SearchTermMatches(EventDefinition.Name) && (settings.ShowApiLevel == ApiVisibility.All || LanguageService.Instance.Language.ShowMember(EventDefinition)))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;

@@ -25,7 +25,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 {
 	public abstract class AnalyzerTreeNode : SharpTreeNode
 	{
-		public Language Language => SettingsService.Instance.SessionSettings.LanguageSettings.Language;
+		public Language Language => LanguageService.Instance.Language;
 
 		public override bool CanDelete()
 		{

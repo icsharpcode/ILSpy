@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy
 							{
 								try
 								{
-									var options = SettingsService.Instance.CreateDecompilationOptions(dockWorkspace.ActiveTabPage);
+									var options = LanguageService.Instance.CreateDecompilationOptions(dockWorkspace.ActiveTabPage);
 									options.FullDecompilation = true;
 									options.CancellationToken = ct;
 									new ILLanguage().DecompileAssembly(asm, new Decompiler.PlainTextOutput(writer), options);

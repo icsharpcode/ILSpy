@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 			assemblyList = new AssemblyList();
 			testAssembly = assemblyList.OpenAssembly(typeof(MethodUsesAnalyzerTests).Assembly.Location);
 			testAssemblyTypeSystem = new DecompilerTypeSystem(testAssembly.GetMetadataFileOrNull(), testAssembly.GetAssemblyResolver());
-			language = new CSharpLanguage();
+			language = new CSharpLanguage([]);
 		}
 
 		[Test]
