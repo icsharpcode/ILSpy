@@ -147,3 +147,5 @@ dotnet_naming_rule.private_fields_rule.symbols = private_fields_symbols
 
 # MEF006: No importing constructor
 dotnet_diagnostic.MEF006.severity = silent
+# MEF002: Import attributes, to be removed after final DI migration
+dotnet_diagnostic.MEF002.severity = silent
