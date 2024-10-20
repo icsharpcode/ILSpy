@@ -20,6 +20,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -166,34 +167,37 @@ namespace ICSharpCode.ILSpy
 			return color?.R * 0.3 + color?.G * 0.6 + color?.B * 0.1 ?? 0.0;
 		}
 
-		internal static bool FormatExceptions(this IList<App.ExceptionData> exceptions, StringBuilder output)
+		internal static string? FormatExceptions(this IList<App.ExceptionData> exceptions)
 		{
 			if (exceptions.Count == 0)
-				return false;
-			bool first = true;
+				return null;
 
-			foreach (var item in exceptions)
-			{
-				if (first)
-					first = false;
-				else
-					output.AppendLine("-------------------------------------------------");
+			string delimiter = $"-------------------------------------------------{Environment.NewLine}";
+
+			return string.Join(delimiter, exceptions.Select(FormatException));
+		}
+
+		private static string FormatException(App.ExceptionData item)
+		{
+			var output = new StringBuilder();
+
+			if (!item.PluginName.IsNullOrEmpty())
 				output.AppendLine("Error(s) loading plugin: " + item.PluginName);
-				if (item.Exception is System.Reflection.ReflectionTypeLoadException exception)
+
+			if (item.Exception is System.Reflection.ReflectionTypeLoadException exception)
+			{
+				foreach (var ex in exception.LoaderExceptions.ExceptNullItems())
 				{
-					foreach (var ex in exception.LoaderExceptions.ExceptNullItems())
-					{
-						output.AppendLine(ex.ToString());
-						output.AppendLine();
-					}
-				}
-				else
-				{
-					output.AppendLine(item.Exception.ToString());
+					output.AppendLine(ex.ToString());
+					output.AppendLine();
 				}
 			}
+			else
+			{
+				output.AppendLine(item.Exception.ToString());
+			}
 
-			return true;
+			return output.ToString();
 		}
 
 		public static IDisposable PreserveFocus(this IInputElement? inputElement, bool preserve = true)

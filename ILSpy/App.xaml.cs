@@ -23,7 +23,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
@@ -36,8 +35,6 @@ using ICSharpCode.ILSpyX.Analyzers;
 
 using Medo.Application;
 
-using Microsoft.VisualStudio.Composition;
-
 using TomsToolbox.Wpf.Styles;
 using ICSharpCode.ILSpyX.TreeView;
 
@@ -46,6 +43,11 @@ using TomsToolbox.Wpf.Composition;
 using ICSharpCode.ILSpy.Themes;
 using System.Globalization;
 using System.Threading;
+
+using Microsoft.Extensions.DependencyInjection;
+
+using TomsToolbox.Composition.MicrosoftExtensions;
+using TomsToolbox.Essentials;
 
 namespace ICSharpCode.ILSpy
 {
@@ -59,10 +61,9 @@ namespace ICSharpCode.ILSpy
 
 		public static IExportProvider ExportProvider { get; private set; }
 
-		internal class ExceptionData
+		internal record ExceptionData(Exception Exception)
 		{
-			public Exception Exception;
-			public string PluginName;
+			public string PluginName { get; init; }
 		}
 
 		public App()
@@ -80,6 +81,14 @@ namespace ICSharpCode.ILSpy
 
 			InitializeComponent();
 
+			if (!InitializeDependencyInjection(SettingsService.Instance))
+			{
+				// There is something completely wrong with DI, probably some service registration is missing => nothing we can do to recover, so stop and shut down.
+				Exit += (_, _) => MessageBox.Show(StartupExceptions.FormatExceptions(), "Sorry we crashed!");
+				Shutdown(1);
+				return;
+			}
+
 			if (!Debugger.IsAttached)
 			{
 				AppDomain.CurrentDomain.UnhandledException += ShowErrorBox;
@@ -92,8 +101,6 @@ namespace ICSharpCode.ILSpy
 
 			Resources.RegisterDefaultStyles();
 
-			InitializeMef().GetAwaiter().GetResult();
-
 			// Register the export provider so that it can be accessed from WPF/XAML components.
 			ExportProviderLocator.Register(ExportProvider);
 			// Add data templates registered via MEF.
@@ -103,7 +110,7 @@ namespace ICSharpCode.ILSpy
 			ThemeManager.Current.Theme = sessionSettings.Theme;
 			if (!string.IsNullOrEmpty(sessionSettings.CurrentCulture))
 			{
-				Thread.CurrentThread.CurrentUICulture = CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo(sessionSettings.CurrentCulture);
+				Thread.CurrentThread.CurrentUICulture = CultureInfo.DefaultThreadCurrentUICulture = new(sessionSettings.CurrentCulture);
 			}
 
 			EventManager.RegisterClassHandler(typeof(Window),
@@ -125,6 +132,13 @@ namespace ICSharpCode.ILSpy
 			SettingsService.Instance.AssemblyListManager.CreateDefaultAssemblyLists();
 		}
 
+		public new static App Current => (App)Application.Current;
+
+		public new MainWindow MainWindow {
+			get => (MainWindow)base.MainWindow;
+			set => base.MainWindow = value;
+		}
+
 		private static void SingleInstance_NewInstanceDetected(object sender, NewInstanceEventArgs e) => ExportProvider.GetExportedValue<AssemblyTreeModel>().HandleSingleInstanceCommandLineArguments(e.Args).HandleExceptions();
 
 		static Assembly ResolvePluginDependencies(AssemblyLoadContext context, AssemblyName assemblyName)
@@ -136,22 +150,17 @@ namespace ICSharpCode.ILSpy
 			return context.LoadFromAssemblyPath(assemblyFileName);
 		}
 
-		private static async Task InitializeMef()
+		private static bool InitializeDependencyInjection(SettingsService settingsService)
 		{
 			// Add custom logic for resolution of dependencies.
 			// This necessary because the AssemblyLoadContext.LoadFromAssemblyPath and related methods,
 			// do not automatically load dependencies.
 			AssemblyLoadContext.Default.Resolving += ResolvePluginDependencies;
-			// Cannot show MessageBox here, because WPF would crash with a XamlParseException
-			// Remember and show exceptions in text output, once MainWindow is properly initialized
 			try
 			{
-				// Set up VS MEF. For now, only do MEF1 part discovery, since that was in use before.
-				// To support both MEF1 and MEF2 parts, just change this to:
-				// var discovery = PartDiscovery.Combine(new AttributedPartDiscoveryV1(Resolver.DefaultInstance),
-				//                                       new AttributedPartDiscovery(Resolver.DefaultInstance));
-				var discovery = new AttributedPartDiscoveryV1(Resolver.DefaultInstance);
-				var catalog = ComposableCatalog.Create(Resolver.DefaultInstance);
+				var services = new ServiceCollection();
+
+
 				var pluginDir = Path.GetDirectoryName(typeof(App).Module.FullyQualifiedName);
 				if (pluginDir != null)
 				{
@@ -160,46 +169,39 @@ namespace ICSharpCode.ILSpy
 						var name = Path.GetFileNameWithoutExtension(plugin);
 						try
 						{
-							var asm = AssemblyLoadContext.Default.LoadFromAssemblyPath(plugin);
-							var parts = await discovery.CreatePartsAsync(asm);
-							catalog = catalog.AddParts(parts);
+							var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(plugin);
+							services.BindExports(assembly);
 						}
 						catch (Exception ex)
 						{
-							StartupExceptions.Add(new ExceptionData { Exception = ex, PluginName = name });
+							// Cannot show MessageBox here, because WPF would crash with a XamlParseException
+							// Remember and show exceptions in text output, once MainWindow is properly initialized
+							StartupExceptions.Add(new(ex) { PluginName = name });
 						}
 					}
 				}
+
 				// Add the built-in parts: First, from ILSpyX
-				var xParts = await discovery.CreatePartsAsync(typeof(IAnalyzer).Assembly);
-				catalog = catalog.AddParts(xParts);
+				services.BindExports(typeof(IAnalyzer).Assembly);
 				// Then from ILSpy itself
-				var createdParts = await discovery.CreatePartsAsync(Assembly.GetExecutingAssembly());
-				catalog = catalog.AddParts(createdParts);
+				services.BindExports(Assembly.GetExecutingAssembly());
+				// Add the settings service
+				services.AddSingleton(settingsService);
 
-				// If/When the project switches to .NET Standard/Core, this will be needed to allow metadata interfaces (as opposed
-				// to metadata classes). When running on .NET Framework, it's automatic.
-				//   catalog.WithDesktopSupport();
-				// If/When any part needs to import ICompositionService, this will be needed:
-				//   catalog.WithCompositionService();
-				var config = CompositionConfiguration.Create(catalog);
-				var exportProviderFactory = config.CreateExportProviderFactory();
-				ExportProvider = new ExportProviderAdapter(exportProviderFactory.CreateExportProvider());
+				var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
 
-				// This throws exceptions for composition failures. Alternatively, the configuration's CompositionErrors property
-				// could be used to log the errors directly. Used at the end so that it does not prevent the export provider setup.
-				config.ThrowOnErrors();
-			}
-			catch (CompositionFailedException ex) when (ex.InnerException is AggregateException agex)
-			{
-				foreach (var inner in agex.InnerExceptions)
-				{
-					StartupExceptions.Add(new ExceptionData { Exception = inner });
-				}
+				ExportProvider = new ExportProviderAdapter(serviceProvider);
+
+				return true;
 			}
 			catch (Exception ex)
 			{
-				StartupExceptions.Add(new ExceptionData { Exception = ex });
+				if (ex is AggregateException aggregate)
+					StartupExceptions.AddRange(aggregate.InnerExceptions.Select(item => new ExceptionData(ex)));
+				else
+					StartupExceptions.Add(new(ex));
+
+				return false;
 			}
 		}
 
@@ -207,15 +209,7 @@ namespace ICSharpCode.ILSpy
 		{
 			base.OnStartup(e);
 
-			var output = new StringBuilder();
-
-			if (StartupExceptions.FormatExceptions(output))
-			{
-				MessageBox.Show(output.ToString(), "Sorry we crashed!");
-				Environment.Exit(1);
-			}
-
-			MainWindow = new MainWindow();
+			MainWindow = new();
 			MainWindow.Show();
 		}
 
