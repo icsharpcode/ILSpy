@@ -16,11 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Windows.Controls;
 using System.Xml.Linq;
 
-using TomsToolbox.Wpf.Composition.Mef;
+using TomsToolbox.Wpf.Composition.AttributedModel;
 
 namespace ICSharpCode.ILSpy.Options
 {
@@ -28,7 +28,7 @@ namespace ICSharpCode.ILSpy.Options
 	/// Interaction logic for MiscSettingsPanel.xaml
 	/// </summary>
 	[DataTemplate(typeof(MiscSettingsViewModel))]
-	[PartCreationPolicy(CreationPolicy.NonShared)]
+	[NonShared]
 	public partial class MiscSettingsPanel
 	{
 		public MiscSettingsPanel()

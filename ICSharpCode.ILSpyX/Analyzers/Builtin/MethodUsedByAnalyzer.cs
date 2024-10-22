@@ -18,7 +18,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 	/// Shows entities that are used by a method.
 	/// </summary>
 	[ExportAnalyzer(Header = "Used By", Order = 20)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	class MethodUsedByAnalyzer : IAnalyzer
 	{
 		const GetMemberOptions Options = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;

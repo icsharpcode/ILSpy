@@ -15,7 +15,7 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Windows;
 
 using ICSharpCode.ILSpy.Properties;
@@ -24,7 +24,7 @@ using ICSharpCode.ILSpy.TreeNodes;
 namespace ICSharpCode.ILSpy
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.CopyName), Icon = "images/Copy", Order = 9999)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	public class CopyFullyQualifiedNameContextMenuEntry : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)

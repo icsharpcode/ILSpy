@@ -21,7 +21,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -41,7 +41,7 @@ using ICSharpCode.ILSpyX.Search;
 
 using TomsToolbox.Essentials;
 using TomsToolbox.Wpf;
-using TomsToolbox.Wpf.Composition.Mef;
+using TomsToolbox.Wpf.Composition.AttributedModel;
 
 namespace ICSharpCode.ILSpy.Search
 {
@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy.Search
 	/// Search pane
 	/// </summary>
 	[DataTemplate(typeof(SearchPaneModel))]
-	[PartCreationPolicy(CreationPolicy.NonShared)]
+	[NonShared]
 	public partial class SearchPane
 	{
 		const int MAX_RESULTS = 1000;
@@ -535,7 +535,7 @@ namespace ICSharpCode.ILSpy.Search
 	}
 
 	[ExportToolbarCommand(ToolTip = nameof(Properties.Resources.SearchCtrlShiftFOrCtrlE), ToolbarIcon = "Images/Search", ToolbarCategory = nameof(Properties.Resources.View), ToolbarOrder = 100)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	sealed class ShowSearchCommand : CommandWrapper
 	{
 		public ShowSearchCommand()

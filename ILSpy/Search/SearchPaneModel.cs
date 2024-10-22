@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Windows.Input;
 using System.Windows.Media;
 
@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy.Search
 	}
 
 	[ExportToolPane]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	[Export]
 	public class SearchPaneModel : ToolPaneModel
 	{

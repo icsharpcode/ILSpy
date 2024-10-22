@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Windows.Input;
 
 using ICSharpCode.ILSpy.AssemblyTree;
@@ -28,12 +28,11 @@ namespace ICSharpCode.ILSpy
 {
 	[ExportToolbarCommand(ToolTip = nameof(Resources.Open), ToolbarIcon = "Images/Open", ToolbarCategory = nameof(Resources.Open), ToolbarOrder = 0)]
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources._Open), MenuIcon = "Images/Open", MenuCategory = nameof(Resources.Open), MenuOrder = 0)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	sealed class OpenCommand : CommandWrapper
 	{
 		private readonly AssemblyTreeModel assemblyTreeModel;
 
-		[ImportingConstructor]
 		public OpenCommand(AssemblyTreeModel assemblyTreeModel)
 			: base(ApplicationCommands.Open)
 		{

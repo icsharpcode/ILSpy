@@ -23,7 +23,7 @@
     <PackageVersion Include="Microsoft.DiaSymReader.Native" Version="17.0.0-beta1.21524.1" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageVersion Include="Microsoft.NETCore.ILAsm" Version="8.0.0" />
@@ -38,16 +38,15 @@
     <PackageVersion Include="NUnit3TestAdapter" Version="4.6.0" />
     <PackageVersion Include="NuGet.Protocol" Version="6.11.1" />
     <PackageVersion Include="PowerShellStandard.Library" Version="5.1.1" />
+    <PackageVersion Include="System.Composition.AttributedModel" Version="8.0.0" />
     <PackageVersion Include="System.Collections.Immutable" Version="8.0.0" />
-    <PackageVersion Include="System.ComponentModel.Composition" Version="8.0.0" />
-    <PackageVersion Include="System.Composition" Version="8.0.0" />
     <PackageVersion Include="System.Memory" Version="4.5.5" />
     <PackageVersion Include="System.Reflection.Metadata" Version="8.0.1" />
     <PackageVersion Include="System.Resources.Extensions" Version="8.0.0" />
     <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
     <PackageVersion Include="TomsToolbox.Composition.MicrosoftExtensions" Version="2.20.0" />
     <PackageVersion Include="TomsToolbox.Wpf.Composition" Version="2.20.0" />
-    <PackageVersion Include="TomsToolbox.Wpf.Composition.Mef" Version="2.20.0" />
+    <PackageVersion Include="TomsToolbox.Wpf.Composition.AttributedModel" Version="2.20.0" />
     <PackageVersion Include="TomsToolbox.Wpf.Styles" Version="2.20.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.2" />
   </ItemGroup>

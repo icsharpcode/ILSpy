@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Linq;
 using System.Reflection.Metadata;
 
@@ -26,7 +26,7 @@ using ICSharpCode.ILSpy.TreeNodes;
 namespace ICSharpCode.ILSpy.Metadata
 {
 	[Export(typeof(IProtocolHandler))]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	class MetadataProtocolHandler : IProtocolHandler
 	{
 		public ILSpyTreeNode Resolve(string protocol, MetadataFile module, Handle handle, out bool newTabPage)

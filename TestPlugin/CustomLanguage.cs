@@ -1,7 +1,7 @@
 ﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
 // This code is distributed under MIT X11 license (for details please see \doc\license.txt)
 
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Reflection.Metadata;
 using System.Windows.Controls;
 
@@ -15,7 +15,7 @@ namespace TestPlugin
 	/// Adds a new language to the decompiler.
 	/// </summary>
 	[Export(typeof(Language))]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	public class CustomLanguage : Language
 	{
 		public override string Name {

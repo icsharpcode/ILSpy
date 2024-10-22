@@ -1,6 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -10,12 +10,12 @@ using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.ViewModels;
 
-using TomsToolbox.Wpf.Composition.Mef;
+using TomsToolbox.Wpf.Composition.AttributedModel;
 
 namespace ICSharpCode.ILSpy
 {
 	[DataTemplate(typeof(DebugStepsPaneModel))]
-	[PartCreationPolicy(CreationPolicy.NonShared)]
+	[NonShared]
 	public partial class DebugSteps : UserControl
 	{
 		static readonly ILAstWritingOptions writingOptions = new ILAstWritingOptions {

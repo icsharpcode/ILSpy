@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Linq;
 
 using ICSharpCode.ILSpy.AssemblyTree;
@@ -25,12 +25,11 @@ using ICSharpCode.ILSpy.Properties;
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources._RemoveAssembliesWithLoadErrors), MenuCategory = nameof(Resources.Remove), MenuOrder = 2.6)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	class RemoveAssembliesWithLoadErrors : SimpleCommand
 	{
 		private readonly AssemblyTreeModel assemblyTreeModel;
 
-		[ImportingConstructor]
 		public RemoveAssembliesWithLoadErrors(AssemblyTreeModel assemblyTreeModel)
 		{
 			this.assemblyTreeModel = assemblyTreeModel;
@@ -55,12 +54,11 @@ namespace ICSharpCode.ILSpy
 	}
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.ClearAssemblyList), MenuCategory = nameof(Resources.Remove), MenuOrder = 2.6)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	class ClearAssemblyList : SimpleCommand
 	{
 		private readonly AssemblyTreeModel assemblyTreeModel;
 
-		[ImportingConstructor]
 		public ClearAssemblyList(AssemblyTreeModel assemblyTreeModel)
 		{
 			this.assemblyTreeModel = assemblyTreeModel;

@@ -23,12 +23,12 @@ using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
 namespace ICSharpCode.ILSpy
 {
-	using System.ComponentModel.Composition;
+	using System.Composition;
 
 	using ICSharpCode.Decompiler.TypeSystem;
 
 	[ExportContextMenuEntry(Header = nameof(Resources.SearchMSDN), Icon = "images/SearchMsdn", Order = 9999)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	internal sealed class SearchMsdnContextMenuEntry : IContextMenuEntry
 	{
 		private static string msdnAddress = "https://docs.microsoft.com/dotnet/api/{0}";

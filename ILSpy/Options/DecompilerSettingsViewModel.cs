@@ -18,7 +18,7 @@
 
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Linq;
 using System.Reflection;
 
@@ -30,7 +30,7 @@ using TomsToolbox.Wpf;
 namespace ICSharpCode.ILSpy.Options
 {
 	[ExportOptionPage(Order = 10)]
-	[PartCreationPolicy(CreationPolicy.NonShared)]
+	[NonShared]
 	public sealed class DecompilerSettingsViewModel : ObservableObjectBase, IOptionPage
 	{
 		private static readonly PropertyInfo[] propertyInfos = typeof(Decompiler.DecompilerSettings).GetProperties()

@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
@@ -32,7 +32,7 @@ using TomsToolbox.Wpf;
 namespace ICSharpCode.ILSpy.Analyzers
 {
 	[ExportToolPane]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	[Export]
 	public class AnalyzerTreeViewModel : ToolPaneModel
 	{

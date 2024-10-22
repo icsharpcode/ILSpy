@@ -66,10 +66,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.ComponentModel.Composition" />
+    <PackageReference Include="System.Composition.AttributedModel" />
     <PackageReference Include="System.Reflection.Metadata" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" />
-    <PackageReference Include="System.Composition" />
     <PackageReference Include="Mono.Cecil" />
     <PackageReference Include="K4os.Compression.LZ4" />
     <PackageReference Include="Microsoft.SourceLink.GitHub">

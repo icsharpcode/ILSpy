@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Diagnostics;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -28,7 +28,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 	/// Finds all extension methods defined for a type.
 	/// </summary>
 	[ExportAnalyzer(Header = "Extension Methods", Order = 50)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	class TypeExtensionMethodsAnalyzer : IAnalyzer
 	{
 		public bool Show(ISymbol symbol) => symbol is ITypeDefinition entity && !entity.IsStatic;

@@ -16,14 +16,14 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Windows;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
 #if DEBUG
 	[ExportToolPane]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 #endif
 	public class DebugStepsPaneModel : ToolPaneModel
 	{

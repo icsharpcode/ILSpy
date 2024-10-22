@@ -2,7 +2,7 @@
 using System.Windows.Media;
 using System.Xml.Linq;
 using System;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -13,7 +13,7 @@ using ICSharpCode.ILSpy.Themes;
 namespace ICSharpCode.ILSpy.Options
 {
 	[ExportOptionPage(Order = 20)]
-	[PartCreationPolicy(CreationPolicy.NonShared)]
+	[NonShared]
 	public class DisplaySettingsViewModel : ObservableObject, IOptionPage
 	{
 		private DisplaySettings settings = new();

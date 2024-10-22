@@ -16,14 +16,14 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Windows;
 using System.Windows.Threading;
 
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX.TreeView;
 
-using TomsToolbox.Wpf.Composition.Mef;
+using TomsToolbox.Wpf.Composition.AttributedModel;
 
 namespace ICSharpCode.ILSpy.AssemblyTree
 {
@@ -31,7 +31,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 	/// Interaction logic for AssemblyListPane.xaml
 	/// </summary>
 	[DataTemplate(typeof(AssemblyTreeModel))]
-	[PartCreationPolicy(CreationPolicy.NonShared)]
+	[NonShared]
 	public partial class AssemblyListPane
 	{
 		public AssemblyListPane()

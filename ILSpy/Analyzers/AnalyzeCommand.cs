@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -26,7 +26,7 @@ using ICSharpCode.ILSpy.TreeNodes;
 namespace ICSharpCode.ILSpy.Analyzers
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.Analyze), Icon = "Images/Search", Category = nameof(Resources.Analyze), InputGestureText = "Ctrl+R", Order = 100)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	internal sealed class AnalyzeContextMenuCommand : IContextMenuEntry
 	{
 		private static readonly AnalyzerTreeViewModel AnalyzerTreeView = App.ExportProvider.GetExportedValue<AnalyzerTreeViewModel>();

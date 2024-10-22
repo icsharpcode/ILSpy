@@ -16,12 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Xml.Linq;
 
 using ICSharpCode.ILSpyX.Settings;
 
-using TomsToolbox.Wpf.Composition.Mef;
+using TomsToolbox.Wpf.Composition.AttributedModel;
 
 namespace ICSharpCode.ILSpy.Options
 {
@@ -29,7 +29,7 @@ namespace ICSharpCode.ILSpy.Options
 	/// Interaction logic for DecompilerSettingsPanel.xaml
 	/// </summary>
 	[DataTemplate(typeof(DecompilerSettingsViewModel))]
-	[PartCreationPolicy(CreationPolicy.NonShared)]
+	[NonShared]
 	internal partial class DecompilerSettingsPanel
 	{
 		public DecompilerSettingsPanel()

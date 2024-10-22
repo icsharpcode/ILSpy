@@ -20,7 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
@@ -55,7 +55,7 @@ using TomsToolbox.Wpf;
 namespace ICSharpCode.ILSpy.AssemblyTree
 {
 	[ExportToolPane]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	[Export]
 	public class AssemblyTreeModel : ToolPaneModel
 	{

@@ -18,7 +18,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Linq;
 using System.Windows.Threading;
 
@@ -34,12 +34,11 @@ using TomsToolbox.Essentials;
 namespace ICSharpCode.ILSpy.Commands
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.DecompileToNewPanel), InputGestureText = "MMB", Icon = "images/Search", Category = nameof(Resources.Analyze), Order = 90)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	internal sealed class DecompileInNewViewCommand : IContextMenuEntry
 	{
 		private readonly AssemblyTreeModel assemblyTreeModel;
 
-		[ImportingConstructor]
 		public DecompileInNewViewCommand(AssemblyTreeModel assemblyTreeModel)
 		{
 			this.assemblyTreeModel = assemblyTreeModel;

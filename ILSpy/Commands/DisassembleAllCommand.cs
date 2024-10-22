@@ -20,7 +20,7 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
@@ -30,7 +30,7 @@ using ICSharpCode.ILSpy.TextView;
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDisassemble), MenuCategory = nameof(Resources.Open), MenuOrder = 2.5)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	sealed class DisassembleAllCommand : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)

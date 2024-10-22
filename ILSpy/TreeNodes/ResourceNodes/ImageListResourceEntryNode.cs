@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
@@ -28,7 +28,7 @@ using ICSharpCode.ILSpyX.Abstractions;
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	[Export(typeof(IResourceNodeFactory))]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	sealed class ImageListResourceEntryNodeFactory : IResourceNodeFactory
 	{
 		public ITreeNode CreateNode(Resource resource)
