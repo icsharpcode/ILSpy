@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Diagnostics;
 using System.Linq;
 
@@ -29,7 +29,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 	/// Shows methods that override a method.
 	/// </summary>
 	[ExportAnalyzer(Header = "Overridden By", Order = 30)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	class MethodOverriddenByAnalyzer : IAnalyzer
 	{
 		const GetMemberOptions Options = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;

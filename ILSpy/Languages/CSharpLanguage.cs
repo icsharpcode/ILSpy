@@ -18,7 +18,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -52,7 +52,7 @@ namespace ICSharpCode.ILSpy
 	/// please directly use the CSharpDecompiler class.
 	/// </summary>
 	[Export(typeof(Language))]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	public class CSharpLanguage : Language
 	{
 		readonly IReadOnlyCollection<IResourceFileHandler> resourceFileHandlers;
@@ -61,8 +61,7 @@ namespace ICSharpCode.ILSpy
 		bool showAllMembers = false;
 		int transformCount = int.MaxValue;
 
-		[ImportingConstructor]
-		public CSharpLanguage([ImportMany] IEnumerable<IResourceFileHandler> resourceFileHandlers)
+		public CSharpLanguage(IEnumerable<IResourceFileHandler> resourceFileHandlers)
 		{
 			this.resourceFileHandlers = resourceFileHandlers.ToArray();
 		}

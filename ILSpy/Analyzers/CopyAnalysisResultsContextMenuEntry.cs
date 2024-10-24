@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Linq;
 using System.Text;
 using System.Windows;
@@ -24,7 +24,7 @@ using System.Windows;
 namespace ICSharpCode.ILSpy.Analyzers
 {
 	[ExportContextMenuEntry(Header = "Copy results", Category = "Analyze", Order = 200)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	internal sealed class CopyAnalysisResultsContextMenuEntry : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)

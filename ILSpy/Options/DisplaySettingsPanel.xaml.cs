@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -29,7 +29,7 @@ using System.Xml.Linq;
 
 using ICSharpCode.ILSpyX.Settings;
 
-using TomsToolbox.Wpf.Composition.Mef;
+using TomsToolbox.Wpf.Composition.AttributedModel;
 using TomsToolbox.Wpf.Converters;
 
 namespace ICSharpCode.ILSpy.Options
@@ -37,7 +37,7 @@ namespace ICSharpCode.ILSpy.Options
 	/// <summary>
 	/// Interaction logic for DisplaySettingsPanel.xaml
 	/// </summary>
-	[PartCreationPolicy(CreationPolicy.NonShared)]
+	[NonShared]
 	[DataTemplate(typeof(DisplaySettingsViewModel))]
 	public partial class DisplaySettingsPanel
 	{

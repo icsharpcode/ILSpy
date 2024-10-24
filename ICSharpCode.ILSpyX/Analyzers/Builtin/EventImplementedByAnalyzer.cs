@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Diagnostics;
 using System.Linq;
 
@@ -29,7 +29,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 	/// Shows events that implement an interface event.
 	/// </summary>
 	[ExportAnalyzer(Header = "Implemented By", Order = 10)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	class EventImplementedByAnalyzer : IAnalyzer
 	{
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)

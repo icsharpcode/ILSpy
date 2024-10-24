@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.IO;
 
 using ICSharpCode.BamlDecompiler;
@@ -32,7 +32,7 @@ using ICSharpCode.ILSpyX.Abstractions;
 namespace ILSpy.BamlDecompiler
 {
 	[Export(typeof(IResourceNodeFactory))]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	public sealed class BamlResourceNodeFactory : IResourceNodeFactory
 	{
 		public ITreeNode CreateNode(Resource resource)
@@ -45,7 +45,7 @@ namespace ILSpy.BamlDecompiler
 	}
 
 	[Export(typeof(IResourceFileHandler))]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	public sealed class BamlResourceFileHandler : IResourceFileHandler
 	{
 		public string EntryType => "Page";

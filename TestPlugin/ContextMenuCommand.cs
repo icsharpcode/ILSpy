@@ -1,7 +1,7 @@
 ﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
 // This code is distributed under MIT X11 license (for details please see \doc\license.txt)
 
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Linq;
 
 using ICSharpCode.ILSpy;
@@ -10,7 +10,7 @@ using ICSharpCode.ILSpy.TreeNodes;
 namespace TestPlugin
 {
 	[ExportContextMenuEntryAttribute(Header = "_Save Assembly")]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	public class SaveAssembly : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)

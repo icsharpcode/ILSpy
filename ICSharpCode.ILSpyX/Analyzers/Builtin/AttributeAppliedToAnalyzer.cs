@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Threading;
@@ -30,7 +30,7 @@ using ICSharpCode.Decompiler.Util;
 namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
 	[ExportAnalyzer(Header = "Applied To", Order = 10)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	class AttributeAppliedToAnalyzer : IAnalyzer
 	{
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)

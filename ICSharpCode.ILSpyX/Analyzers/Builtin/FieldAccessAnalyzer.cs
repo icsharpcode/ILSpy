@@ -18,7 +18,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -36,7 +36,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 	/// Finds methods where this field is read.
 	/// </summary>
 	[ExportAnalyzer(Header = "Assigned By", Order = 20)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	class AssignedByFieldAccessAnalyzer : FieldAccessAnalyzer
 	{
 		public AssignedByFieldAccessAnalyzer() : base(true) { }
@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 	/// Finds methods where this field is written.
 	/// </summary>
 	[ExportAnalyzer(Header = "Read By", Order = 10)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	class ReadByFieldAccessAnalyzer : FieldAccessAnalyzer
 	{
 		public ReadByFieldAccessAnalyzer() : base(false) { }

@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -26,7 +26,7 @@ using ICSharpCode.ILSpy.TreeNodes;
 namespace ICSharpCode.ILSpy.Commands
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.Decompile), Order = 10)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	class DecompileCommand : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)

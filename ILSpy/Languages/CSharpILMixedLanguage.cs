@@ -18,7 +18,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -42,7 +42,7 @@ namespace ICSharpCode.ILSpy
 	using SequencePoint = ICSharpCode.Decompiler.DebugInfo.SequencePoint;
 
 	[Export(typeof(Language))]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	class CSharpILMixedLanguage : ILLanguage
 	{
 		public override string Name => "IL with C#";

@@ -1,7 +1,7 @@
 ﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
 // This code is distributed under MIT X11 license (for details please see \doc\license.txt)
 
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Windows;
 using System.Windows.Media;
 
@@ -11,7 +11,7 @@ using ICSharpCode.ILSpy;
 namespace TestPlugin
 {
 	[Export(typeof(IAboutPageAddition))]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	public class AboutPageAddition : IAboutPageAddition
 	{
 		public void Write(ISmartTextOutput textOutput)

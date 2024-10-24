@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.ComponentModel.Composition;
+using System.Composition;
 
 using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Properties;
@@ -58,12 +58,11 @@ namespace ICSharpCode.ILSpy.Options
 	}
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources._Options), MenuCategory = nameof(Resources.Options), MenuOrder = 999)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	sealed class ShowOptionsCommand : SimpleCommand
 	{
 		private readonly AssemblyTreeModel assemblyTreeModel;
 
-		[ImportingConstructor]
 		public ShowOptionsCommand(AssemblyTreeModel assemblyTreeModel)
 		{
 			this.assemblyTreeModel = assemblyTreeModel;

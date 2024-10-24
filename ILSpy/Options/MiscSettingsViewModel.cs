@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.IO;
 using System.Reflection;
 using System.Windows;
@@ -33,7 +33,7 @@ using TomsToolbox.Wpf;
 namespace ICSharpCode.ILSpy.Options
 {
 	[ExportOptionPage(Order = 30)]
-	[PartCreationPolicy(CreationPolicy.NonShared)]
+	[NonShared]
 	public class MiscSettingsViewModel : ObservableObject, IOptionPage
 	{
 		private MiscSettings settings;

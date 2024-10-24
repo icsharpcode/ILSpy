@@ -18,7 +18,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -34,7 +34,7 @@ using Microsoft.Win32;
 namespace ICSharpCode.ILSpy.TextView
 {
 	[ExportContextMenuEntry(Header = nameof(Resources._SaveCode), Category = nameof(Resources.Save), Icon = "Images/Save")]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	sealed class SaveCodeContextMenuEntry : IContextMenuEntry
 	{
 		public void Execute(TextViewContext context)

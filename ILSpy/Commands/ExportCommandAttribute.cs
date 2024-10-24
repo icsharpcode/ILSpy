@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Windows.Input;
 
 namespace ICSharpCode.ILSpy

@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.IO;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -31,7 +31,7 @@ using ICSharpCode.ILSpyX.Abstractions;
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	[Export(typeof(IResourceNodeFactory))]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	sealed class CursorResourceNodeFactory : IResourceNodeFactory
 	{
 		static readonly string[] imageFileExtensions = { ".cur" };

@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Linq;
 using System.Windows.Input;
 
@@ -27,12 +27,11 @@ using ICSharpCode.ILSpy.TextView;
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources._SaveCode), MenuIcon = "Images/Save", MenuCategory = nameof(Resources.Save), MenuOrder = 0)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	sealed class SaveCommand : CommandWrapper
 	{
 		private AssemblyTreeModel assemblyTreeModel;
 
-		[ImportingConstructor]
 		public SaveCommand(AssemblyTreeModel assemblyTreeModel)
 			: base(ApplicationCommands.Save)
 		{

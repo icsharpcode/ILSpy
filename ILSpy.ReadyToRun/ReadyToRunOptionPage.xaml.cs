@@ -16,18 +16,18 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel.Composition;
+using System.Composition;
 
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.Util;
 
 using TomsToolbox.Wpf;
-using TomsToolbox.Wpf.Composition.Mef;
+using TomsToolbox.Wpf.Composition.AttributedModel;
 
 namespace ICSharpCode.ILSpy.ReadyToRun
 {
 	[DataTemplate(typeof(ReadyToRunOptionsViewModel))]
-	[PartCreationPolicy(CreationPolicy.NonShared)]
+	[NonShared]
 	partial class ReadyToRunOptionPage
 	{
 		public ReadyToRunOptionPage()
@@ -37,7 +37,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 	}
 
 	[ExportOptionPage(Order = 40)]
-	[PartCreationPolicy(CreationPolicy.NonShared)]
+	[NonShared]
 	class ReadyToRunOptionsViewModel : ObservableObject, IOptionPage
 	{
 		private ReadyToRunOptions options;

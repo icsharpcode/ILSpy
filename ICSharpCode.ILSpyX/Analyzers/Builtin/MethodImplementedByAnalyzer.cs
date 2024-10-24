@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Diagnostics;
 using System.Linq;
 
@@ -29,7 +29,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 	/// Shows methods that implement an interface method.
 	/// </summary>
 	[ExportAnalyzer(Header = "Implemented By", Order = 40)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	class MethodImplementedByAnalyzer : IAnalyzer
 	{
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)

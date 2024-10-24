@@ -19,7 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.IO;
 using System.Linq;
 
@@ -38,7 +38,7 @@ using Microsoft.Win32;
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	[Export(typeof(IResourceNodeFactory))]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	sealed class ResourcesFileTreeNodeFactory : IResourceNodeFactory
 	{
 		public ITreeNode CreateNode(Resource resource)

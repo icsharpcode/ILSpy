@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Diagnostics;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -28,7 +28,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 	/// Finds all entities that expose a type.
 	/// </summary>
 	[ExportAnalyzer(Header = "Exposed By", Order = 40)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	class TypeExposedByAnalyzer : IAnalyzer
 	{
 		public bool Show(ISymbol entity) => entity is ITypeDefinition;

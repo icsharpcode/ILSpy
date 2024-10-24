@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Linq;
 
 using ICSharpCode.AvalonEdit;
@@ -26,7 +26,7 @@ using ICSharpCode.ILSpy.Properties;
 namespace ICSharpCode.ILSpy.TextView
 {
 	[ExportContextMenuEntryAttribute(Header = nameof(Resources.ToggleFolding), Category = nameof(Resources.Folding))]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	internal sealed class ToggleAllContextMenuEntry : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
@@ -63,7 +63,7 @@ namespace ICSharpCode.ILSpy.TextView
 	}
 
 	[ExportContextMenuEntryAttribute(Header = nameof(Resources._ToggleFolding), Category = nameof(Resources.Folding))]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	internal sealed class ToggleContextMenuEntry : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)

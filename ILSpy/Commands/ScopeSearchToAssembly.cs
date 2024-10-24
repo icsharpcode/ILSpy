@@ -18,7 +18,7 @@
 #nullable enable
 
 using System;
-using System.ComponentModel.Composition;
+using System.Composition;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AppEnv;
@@ -29,12 +29,11 @@ using ICSharpCode.ILSpy.TreeNodes;
 namespace ICSharpCode.ILSpy
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.ScopeSearchToThisAssembly), Category = nameof(Resources.Analyze), Order = 9999)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	public class ScopeSearchToAssembly : IContextMenuEntry
 	{
 		private readonly SearchPaneModel searchPane;
 
-		[ImportingConstructor]
 		public ScopeSearchToAssembly(SearchPaneModel searchPane)
 		{
 			this.searchPane = searchPane;

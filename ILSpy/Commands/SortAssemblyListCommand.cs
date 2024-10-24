@@ -18,7 +18,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
+using System.Composition;
 
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX;
@@ -28,7 +28,7 @@ namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources.SortAssembly_listName), MenuIcon = "Images/Sort", MenuCategory = nameof(Resources.View))]
 	[ExportToolbarCommand(ToolTip = nameof(Resources.SortAssemblyListName), ToolbarIcon = "Images/Sort", ToolbarCategory = nameof(Resources.View))]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	sealed class SortAssemblyListCommand : SimpleCommand
 	{
 		public override void Execute(object parameter)
@@ -39,7 +39,7 @@ namespace ICSharpCode.ILSpy
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources._CollapseTreeNodes), MenuIcon = "Images/CollapseAll", MenuCategory = nameof(Resources.View))]
 	[ExportToolbarCommand(ToolTip = nameof(Resources.CollapseTreeNodes), ToolbarIcon = "Images/CollapseAll", ToolbarCategory = nameof(Resources.View))]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	sealed class CollapseAllCommand : SimpleCommand
 	{
 		public override void Execute(object parameter)

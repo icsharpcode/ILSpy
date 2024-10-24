@@ -45,12 +45,12 @@
     <PackageReference Include="AvalonEdit" />
     <PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" />
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" />
-    <PackageReference Include="Microsoft.VisualStudio.Composition" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="DataGridExtensions" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" />
     <PackageReference Include="NaturalSort.Extension" />
-    <PackageReference Include="TomsToolbox.Wpf.Composition" />
-    <PackageReference Include="TomsToolbox.Wpf.Composition.Mef" />
+    <PackageReference Include="TomsToolbox.Composition.MicrosoftExtensions" />
+    <PackageReference Include="TomsToolbox.Wpf.Composition.AttributedModel" />
     <PackageReference Include="TomsToolbox.Wpf.Styles" />
   </ItemGroup>
 

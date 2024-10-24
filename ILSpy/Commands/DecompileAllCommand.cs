@@ -21,7 +21,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
+using System.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -35,13 +35,12 @@ using ICSharpCode.ILSpyX;
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile), MenuCategory = nameof(Resources.Open), MenuOrder = 2.5)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	sealed class DecompileAllCommand : SimpleCommand
 	{
 		private readonly IReadOnlyCollection<IResourceFileHandler> resourceFileHandlers;
 
-		[ImportingConstructor]
-		public DecompileAllCommand([ImportMany] IEnumerable<IResourceFileHandler> resourceFileHandlers)
+		public DecompileAllCommand(IEnumerable<IResourceFileHandler> resourceFileHandlers)
 		{
 			this.resourceFileHandlers = resourceFileHandlers.ToArray();
 		}
@@ -96,7 +95,7 @@ namespace ICSharpCode.ILSpy
 	}
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile100x), MenuCategory = nameof(Resources.Open), MenuOrder = 2.6)]
-	[PartCreationPolicy(CreationPolicy.Shared)]
+	[Shared]
 	sealed class Decompile100TimesCommand : SimpleCommand
 	{
 		public override void Execute(object parameter)
