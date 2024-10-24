@@ -137,5 +137,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 #endif
+
+		public class NoRecordButCopyConstructorLike
+		{
+			private NoRecordButCopyConstructorLike parent;
+
+			public NoRecordButCopyConstructorLike(NoRecordButCopyConstructorLike parent)
+			{
+				this.parent = parent;
+			}
+		}
 	}
 }

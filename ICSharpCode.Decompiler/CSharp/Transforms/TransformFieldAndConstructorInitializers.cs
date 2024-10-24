@@ -190,11 +190,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 				bool ctorIsUnsafe = instanceCtorsNotChainingWithThis.All(c => c.HasModifier(Modifiers.Unsafe));
 
-				if (!context.DecompileRun.RecordDecompilers.TryGetValue(ctorMethodDef.DeclaringTypeDefinition, out var record))
+				if (!context.DecompileRun.RecordDecompilers.TryGetValue(declaringTypeDefinition, out var record))
 					record = null;
 
 				// Filter out copy constructor of records
-				if (record != null)
+				if (record != null && declaringTypeDefinition.IsRecord)
 					instanceCtorsNotChainingWithThis = instanceCtorsNotChainingWithThis.Where(ctor => !record.IsCopyConstructor(ctor.GetSymbol() as IMethod)).ToArray();
 
 				// Recognize field or property initializers:
