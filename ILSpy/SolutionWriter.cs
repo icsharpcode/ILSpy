@@ -30,6 +30,7 @@ using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy
@@ -213,7 +214,7 @@ namespace ICSharpCode.ILSpy
 				using (var projectFileWriter = new StreamWriter(projectFileName))
 				{
 					var projectFileOutput = new PlainTextOutput(projectFileWriter);
-					var options = LanguageService.Instance.CreateDecompilationOptions(DockWorkspace.Instance.ActiveTabPage);
+					var options = DockWorkspace.Instance.ActiveTabPage.CreateDecompilationOptions();
 					options.FullDecompilation = true;
 					options.CancellationToken = ct;
 					options.SaveAsProjectDirectory = targetDirectory;

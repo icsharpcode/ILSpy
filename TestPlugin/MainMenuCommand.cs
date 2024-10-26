@@ -4,6 +4,7 @@
 using System.Composition;
 
 using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.AssemblyTree;
 
 namespace TestPlugin
 {
@@ -19,11 +20,11 @@ namespace TestPlugin
 	// ToolbarOrder: controls the order in which the items appear (items are sorted by this value)
 	[ExportToolbarCommand(ToolTip = "Clears the current assembly list", ToolbarIcon = "Clear.png", ToolbarCategory = "Open", ToolbarOrder = 1.5)]
 	[Shared]
-	public class UnloadAllAssembliesCommand : SimpleCommand
+	public class UnloadAllAssembliesCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
 	{
 		public override void Execute(object parameter)
 		{
-			foreach (var loadedAssembly in MainWindow.Instance.AssemblyTreeModel.AssemblyList.GetAssemblies())
+			foreach (var loadedAssembly in assemblyTreeModel.AssemblyList.GetAssemblies())
 			{
 				loadedAssembly.AssemblyList.Unload(loadedAssembly);
 			}

@@ -20,17 +20,18 @@ using System.Composition;
 using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
+
+using TomsToolbox.Composition;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.Analyze), Icon = "Images/Search", Category = nameof(Resources.Analyze), InputGestureText = "Ctrl+R", Order = 100)]
 	[Shared]
-	internal sealed class AnalyzeContextMenuCommand : IContextMenuEntry
+	internal sealed class AnalyzeContextMenuCommand(AnalyzerTreeViewModel analyzerTreeView) : IContextMenuEntry
 	{
-		private static readonly AnalyzerTreeViewModel AnalyzerTreeView = App.ExportProvider.GetExportedValue<AnalyzerTreeViewModel>();
-
 		public bool IsVisible(TextViewContext context)
 		{
 			if (context.TreeView is AnalyzerTreeView && context.SelectedTreeNodes != null && context.SelectedTreeNodes.All(n => n.Parent.IsRoot))
@@ -62,30 +63,28 @@ namespace ICSharpCode.ILSpy.Analyzers
 			{
 				foreach (var node in context.SelectedTreeNodes.OfType<IMemberTreeNode>().ToArray())
 				{
-					AnalyzerTreeView.Analyze(node.Member);
+					analyzerTreeView.Analyze(node.Member);
 				}
 			}
 			else if (context.Reference is { Reference: IEntity entity })
 			{
-				AnalyzerTreeView.Analyze(entity);
+				analyzerTreeView.Analyze(entity);
 			}
 		}
 	}
 
-	internal sealed class AnalyzeCommand : SimpleCommand
+	public sealed class AnalyzeCommand(AssemblyTreeModel assemblyTreeModel, AnalyzerTreeViewModel analyzerTreeViewModel) : SimpleCommand
 	{
-		private static readonly AnalyzerTreeViewModel AnalyzerTreeView = App.ExportProvider.GetExportedValue<AnalyzerTreeViewModel>();
-
 		public override bool CanExecute(object parameter)
 		{
-			return MainWindow.Instance.AssemblyTreeModel.SelectedNodes.All(n => n is IMemberTreeNode);
+			return assemblyTreeModel.SelectedNodes.All(n => n is IMemberTreeNode);
 		}
 
 		public override void Execute(object parameter)
 		{
-			foreach (var node in MainWindow.Instance.AssemblyTreeModel.SelectedNodes.OfType<IMemberTreeNode>())
+			foreach (var node in assemblyTreeModel.SelectedNodes.OfType<IMemberTreeNode>())
 			{
-				AnalyzerTreeView.Analyze(node.Member);
+				analyzerTreeViewModel.Analyze(node.Member);
 			}
 		}
 	}

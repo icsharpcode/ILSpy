@@ -32,6 +32,7 @@ using AvalonDock.Layout.Serialization;
 
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.ILSpy.Analyzers;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Search;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
@@ -44,15 +45,21 @@ namespace ICSharpCode.ILSpy.Docking
 {
 	public class DockWorkspace : ObservableObject, ILayoutUpdateStrategy
 	{
-		private static SessionSettings SessionSettings => SettingsService.Instance.SessionSettings;
+		private static readonly IExportProvider exportProvider = App.ExportProvider;
 
-		private readonly IExportProvider exportProvider = App.ExportProvider;
+		private static SettingsService SettingsService => exportProvider.GetExportedValue<SettingsService>();
+
+		private static LanguageService LanguageService => exportProvider.GetExportedValue<LanguageService>();
+
+		private static SessionSettings SessionSettings => SettingsService.SessionSettings;
 
 		public static readonly DockWorkspace Instance = new();
 
 		private readonly ObservableCollection<TabPageModel> tabPages = [];
 
-		private DockingManager dockingManager;
+		private DockingManager DockingManager => exportProvider.GetExportedValue<DockingManager>();
+
+		AssemblyTreeModel AssemblyTreeModel => exportProvider.GetExportedValue<AssemblyTreeModel>();
 
 		private DockWorkspace()
 		{
@@ -123,7 +130,7 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public void AddTabPage(TabPageModel tabPage = null)
 		{
-			tabPages.Add(tabPage ?? new TabPageModel());
+			tabPages.Add(tabPage ?? new TabPageModel(AssemblyTreeModel, SettingsService, LanguageService));
 		}
 
 		public ReadOnlyObservableCollection<TabPageModel> TabPages { get; }
@@ -170,29 +177,28 @@ namespace ICSharpCode.ILSpy.Docking
 				{
 					if (state.DecompiledNodes != null)
 					{
-						MainWindow.Instance.AssemblyTreeModel.SelectNodes(state.DecompiledNodes);
+						AssemblyTreeModel.SelectNodes(state.DecompiledNodes);
 					}
 					else
 					{
-						MainWindow.Instance.AssemblyTreeModel.NavigateTo(new(state.ViewedUri, null));
+						AssemblyTreeModel.NavigateTo(new(state.ViewedUri, null));
 					}
 				}
 			}
 		}
 
 		public PaneModel ActivePane {
-			get => dockingManager?.ActiveContent as PaneModel;
+			get => DockingManager?.ActiveContent as PaneModel;
 			set {
-				if (dockingManager is not null)
-					dockingManager.ActiveContent = value;
+				if (DockingManager is not null)
+					DockingManager.ActiveContent = value;
 			}
 		}
 
-		public void InitializeLayout(DockingManager manager)
+		public void InitializeLayout()
 		{
-			this.dockingManager = manager;
-			manager.LayoutUpdateStrategy = this;
-			XmlLayoutSerializer serializer = new XmlLayoutSerializer(manager);
+			DockingManager.LayoutUpdateStrategy = this;
+			XmlLayoutSerializer serializer = new XmlLayoutSerializer(DockingManager);
 			serializer.LayoutSerializationCallback += LayoutSerializationCallback;
 			try
 			{
@@ -254,8 +260,8 @@ namespace ICSharpCode.ILSpy.Docking
 			}
 			CloseAllTabs();
 			SessionSettings.DockLayout.Reset();
-			InitializeLayout(MainWindow.Instance.dockManager);
-			MainWindow.Instance.Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)MainWindow.Instance.AssemblyTreeModel.RefreshDecompiledView);
+			InitializeLayout();
+			App.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, AssemblyTreeModel.RefreshDecompiledView);
 		}
 
 		static readonly PropertyInfo previousContainerProperty = typeof(LayoutContent).GetProperty("PreviousContainer", BindingFlags.NonPublic | BindingFlags.Instance);

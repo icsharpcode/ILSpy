@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Windows;
@@ -25,6 +26,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
@@ -45,7 +47,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public AssemblyListTreeNode(AssemblyList assemblyList)
 		{
-			this.assemblyList = assemblyList ?? throw new ArgumentNullException(nameof(assemblyList));
+			ArgumentNullException.ThrowIfNull(assemblyList);
+
+			this.assemblyList = assemblyList;
+			
 			BindToObservableCollection(assemblyList);
 		}
 
@@ -107,8 +112,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					.Distinct()
 					.ToArray();
 				assemblyList.Move(assemblies, index);
-				var nodes = assemblies.SelectArray(MainWindow.Instance.AssemblyTreeModel.FindTreeNode);
-				MainWindow.Instance.AssemblyTreeModel.SelectNodes(nodes);
+				var nodes = assemblies.SelectArray(AssemblyTreeModel.FindTreeNode);
+				AssemblyTreeModel.SelectNodes(nodes);
 			}
 		}
 

@@ -21,6 +21,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
+using ICSharpCode.Decompiler;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.TextView;
 
 using TomsToolbox.Wpf;
@@ -29,8 +31,16 @@ namespace ICSharpCode.ILSpy.ViewModels
 {
 	public class TabPageModel : PaneModel
 	{
-		public TabPageModel()
+		public AssemblyTreeModel AssemblyTreeModel { get; }
+		public SettingsService SettingsService { get; }
+		public LanguageService LanguageService { get; }
+
+		public TabPageModel(AssemblyTreeModel assemblyTreeModel, SettingsService settingsService, LanguageService languageService)
 		{
+			AssemblyTreeModel = assemblyTreeModel;
+			SettingsService = settingsService;
+			LanguageService = languageService;
+
 			this.Title = Properties.Resources.NewTab;
 		}
 
@@ -72,7 +82,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 		{
 			if (!(tabPage.Content is DecompilerTextView textView))
 			{
-				textView = new DecompilerTextView();
+				textView = new DecompilerTextView(tabPage);
 				tabPage.Content = textView;
 			}
 			tabPage.Title = Properties.Resources.Decompiling;
@@ -83,7 +93,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 		{
 			if (!(tabPage.Content is DecompilerTextView textView))
 			{
-				textView = new DecompilerTextView();
+				textView = new DecompilerTextView(tabPage);
 				tabPage.Content = textView;
 			}
 			string oldTitle = tabPage.Title;
@@ -105,7 +115,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 		{
 			if (!(tabPage.Content is DecompilerTextView textView))
 			{
-				textView = new DecompilerTextView();
+				textView = new DecompilerTextView(tabPage);
 				tabPage.Content = textView;
 			}
 			string oldTitle = tabPage.Title;
@@ -128,6 +138,11 @@ namespace ICSharpCode.ILSpy.ViewModels
 				.FirstOrDefault(item => item.Focusable);
 
 			focusable?.Focus();
+		}
+
+		public static DecompilationOptions CreateDecompilationOptions(this TabPageModel tabPage)
+		{
+			return new(tabPage.LanguageService.LanguageVersion, tabPage.SettingsService.DecompilerSettings, tabPage.SettingsService.DisplaySettings) { Progress = tabPage.Content as IProgress<DecompilationProgress> };
 		}
 	}
 

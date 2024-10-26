@@ -35,11 +35,13 @@ namespace ICSharpCode.ILSpy.ViewModels
 	{
 		private readonly AssemblyListManager manager;
 		private readonly Window parent;
+		private readonly SessionSettings sessionSettings;
 
-		public ManageAssemblyListsViewModel(Window parent)
+		public ManageAssemblyListsViewModel(Window parent, SettingsService settingsService)
 		{
-			this.manager = SettingsService.Instance.AssemblyListManager;
+			this.manager = settingsService.AssemblyListManager;
 			this.parent = parent;
+			this.sessionSettings = settingsService.SessionSettings;
 
 			NewCommand = new DelegateCommand(ExecuteNew);
 			CloneCommand = new DelegateCommand(ExecuteClone, CanExecuteClone);
@@ -174,7 +176,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				return;
 			manager.ClearAll();
 			manager.CreateDefaultAssemblyLists();
-			SettingsService.Instance.SessionSettings.ActiveAssemblyList = manager.AssemblyLists[0];
+			sessionSettings.ActiveAssemblyList = manager.AssemblyLists[0];
 		}
 
 		private void ExecuteDelete()
@@ -189,9 +191,9 @@ namespace ICSharpCode.ILSpy.ViewModels
 			if (manager.AssemblyLists.Count > 0)
 			{
 				SelectedAssemblyList = manager.AssemblyLists[Math.Max(0, index - 1)];
-				if (SettingsService.Instance.SessionSettings.ActiveAssemblyList == assemblyList)
+				if (sessionSettings.ActiveAssemblyList == assemblyList)
 				{
-					SettingsService.Instance.SessionSettings.ActiveAssemblyList = SelectedAssemblyList;
+					sessionSettings.ActiveAssemblyList = SelectedAssemblyList;
 				}
 			}
 		}
@@ -232,9 +234,9 @@ namespace ICSharpCode.ILSpy.ViewModels
 				string assemblyList = SelectedAssemblyList;
 				SelectedAssemblyList = dlg.ListName;
 				manager.RenameList(assemblyList, dlg.ListName);
-				if (SettingsService.Instance.SessionSettings.ActiveAssemblyList == assemblyList)
+				if (sessionSettings.ActiveAssemblyList == assemblyList)
 				{
-					SettingsService.Instance.SessionSettings.ActiveAssemblyList = manager.AssemblyLists[manager.AssemblyLists.Count - 1];
+					sessionSettings.ActiveAssemblyList = manager.AssemblyLists[manager.AssemblyLists.Count - 1];
 				}
 			}
 		}
@@ -272,7 +274,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		private void ExecuteSelectAssemblyList()
 		{
-			SettingsService.Instance.SessionSettings.ActiveAssemblyList = SelectedAssemblyList;
+			sessionSettings.ActiveAssemblyList = SelectedAssemblyList;
 			this.parent.Close();
 		}
 	}

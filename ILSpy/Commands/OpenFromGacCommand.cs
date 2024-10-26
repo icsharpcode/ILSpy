@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy
 		public override void Execute(object parameter)
 		{
 			OpenFromGacDialog dlg = new OpenFromGacDialog {
-				Owner = MainWindow.Instance
+				Owner = App.Current.MainWindow
 			};
 
 			if (dlg.ShowDialog() == true)

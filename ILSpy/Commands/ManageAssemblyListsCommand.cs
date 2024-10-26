@@ -25,12 +25,12 @@ namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.ManageAssembly_Lists), MenuIcon = "Images/AssemblyList", MenuCategory = nameof(Resources.Open), MenuOrder = 1.7)]
 	[Shared]
-	sealed class ManageAssemblyListsCommand : SimpleCommand
+	sealed class ManageAssemblyListsCommand(SettingsService settingsService) : SimpleCommand
 	{
 		public override void Execute(object parameter)
 		{
-			ManageAssemblyListsDialog dlg = new ManageAssemblyListsDialog();
-			dlg.Owner = MainWindow.Instance;
+			ManageAssemblyListsDialog dlg = new ManageAssemblyListsDialog(settingsService);
+			dlg.Owner = App.Current.MainWindow;
 			dlg.ShowDialog();
 		}
 	}

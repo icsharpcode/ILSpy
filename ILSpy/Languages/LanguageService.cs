@@ -21,26 +21,23 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Composition;
 using System.Linq;
 
-using ICSharpCode.Decompiler;
-using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 
 using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpy
 {
+	[Export]
+	[Shared]
 	public class LanguageService : ObservableObjectBase
 	{
-		public static readonly LanguageService Instance = new(App.ExportProvider.GetExportedValues<Language>(), App.ExportProvider.GetExportedValues<IResourceFileHandler>(), SettingsService.Instance);
-
 		private readonly LanguageSettings languageSettings;
-		private readonly SettingsService settingsService;
 
-		public LanguageService(IEnumerable<Language> languages, IEnumerable<IResourceFileHandler> resourceFileHandlers, SettingsService settingsService)
+		public LanguageService(IEnumerable<Language> languages, SettingsService settingsService)
 		{
-			this.settingsService = settingsService;
 			languageSettings = settingsService.SessionSettings.LanguageSettings;
 
 			var sortedLanguages = languages.ToList();
@@ -48,7 +45,7 @@ namespace ICSharpCode.ILSpy
 			sortedLanguages.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
 #if DEBUG
 			sortedLanguages.AddRange(ILAstLanguage.GetDebugLanguages());
-			sortedLanguages.AddRange(CSharpLanguage.GetDebugLanguages(resourceFileHandlers.ToArray()));
+			sortedLanguages.AddRange(CSharpLanguage.GetDebugLanguages());
 #endif
 			AllLanguages = sortedLanguages.AsReadOnly();
 
@@ -142,11 +139,6 @@ namespace ICSharpCode.ILSpy
 
 				languageSettings.LanguageVersionId = languageVersion?.Version;
 			}
-		}
-
-		public DecompilationOptions CreateDecompilationOptions(TabPageModel tabPage)
-		{
-			return new(LanguageVersion, settingsService.DecompilerSettings, settingsService.DisplaySettings) { Progress = tabPage.Content as IProgress<DecompilationProgress> };
 		}
 	}
 }

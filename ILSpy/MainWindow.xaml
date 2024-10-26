@@ -18,6 +18,8 @@
 		xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
 		xmlns:toms="urn:TomsToolbox"
 		xmlns:viewModels="clr-namespace:ICSharpCode.ILSpy.ViewModels"
+		xmlns:composition="urn:TomsToolbox.Composition"
+		xmlns:commands="clr-namespace:ICSharpCode.ILSpy.Commands"
 		d:DataContext="{d:DesignInstance local:MainWindowViewModel}">
 	<Window.Resources>
 
@@ -36,7 +38,7 @@
 	</b:Interaction.Behaviors>
 
 	<Window.InputBindings>
-		<KeyBinding Key="R" Modifiers="Control" Command="{x:Static local:ILSpyCommands.Analyze}" />
+		<KeyBinding Key="R" Modifiers="Control" Command="{Binding AnalyzeCommand}" />
 		<KeyBinding Key="Z" Modifiers="Control" Command="{x:Static NavigationCommands.BrowseBack}" />
 	</Window.InputBindings>
 
@@ -60,7 +62,7 @@
 				<MenuItem Header="{x:Static properties:Resources.Theme}" ItemsSource="{x:Static themes:ThemeManager.AllThemes}">
 					<MenuItem.ItemContainerStyle>
 						<Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Type MenuItem}}">
-							<Setter Property="Command" Value="{x:Static local:ILSpyCommands.SetTheme}" />
+							<Setter Property="Command" Value="{composition:Import {x:Type commands:SetThemeCommand}}" />
 							<Setter Property="CommandParameter" Value="{Binding}" />
 							<Setter Property="IsCheckable" Value="True" />
 							<!-- Required by AvalonDock's MenuItem style to show the checkmark -->
@@ -123,7 +125,7 @@
 						  ToolTip="{x:Static properties:Resources.SelectAssemblyListDropdownTooltip}"
 						  SelectedItem="{Binding SessionSettings.ActiveAssemblyList}" />
 			</Grid>
-			<Button Command="{x:Static local:ILSpyCommands.ManageAssemblyListsCommand}"
+			<Button Command="{composition:Import {x:Type local:ManageAssemblyListsCommand}}"
 					ToolTip="{x:Static properties:Resources.ManageAssemblyLists}">
 				<Image Width="16" Height="16" Source="{controls:XamlResource Images/AssemblyList}"
 					   Style="{StaticResource DarkModeAwareImageStyle}" />
@@ -186,7 +188,7 @@
 			</StatusBarItem>
 		</StatusBar>
 
-		<avalondock:DockingManager x:Name="dockManager"
+		<avalondock:DockingManager x:Name="DockManager"
 								   DataContext="{Binding Workspace}"
 								   AnchorablesSource="{Binding ToolPanes}"
 								   DocumentsSource="{Binding TabPages}"

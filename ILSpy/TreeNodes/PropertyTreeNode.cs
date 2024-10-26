@@ -53,8 +53,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		private IProperty GetPropertyDefinition()
 		{
-			return ((MetadataModule)PropertyDefinition.ParentModule.MetadataFile
-				?.GetTypeSystemWithCurrentOptionsOrNull()
+			return ((MetadataModule)PropertyDefinition.ParentModule?.MetadataFile
+				?.GetTypeSystemWithCurrentOptionsOrNull(SettingsService)
 				?.MainModule)?.GetDefinition((PropertyDefinitionHandle)PropertyDefinition.MetadataToken) ?? PropertyDefinition;
 		}
 
@@ -75,7 +75,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
 				return FilterResult.Hidden;
-			if (settings.SearchTermMatches(PropertyDefinition.Name) && (settings.ShowApiLevel == ApiVisibility.All || LanguageService.Instance.Language.ShowMember(PropertyDefinition)))
+			if (settings.SearchTermMatches(PropertyDefinition.Name) && (settings.ShowApiLevel == ApiVisibility.All || LanguageService.Language.ShowMember(PropertyDefinition)))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;
@@ -104,7 +104,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override string ToString()
 		{
-			return LanguageService.Instance.ILLanguage.PropertyToString(PropertyDefinition, false, false, false);
+			return LanguageService.ILLanguage.PropertyToString(PropertyDefinition, false, false, false);
 		}
 	}
 }

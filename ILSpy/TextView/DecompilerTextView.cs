@@ -74,6 +74,9 @@ namespace ICSharpCode.ILSpy.TextView
 	/// </summary>
 	public sealed partial class DecompilerTextView : UserControl, IHaveState, IProgress<DecompilationProgress>
 	{
+		readonly AssemblyTreeModel assemblyTreeModel;
+		readonly SettingsService settingsService;
+		private readonly LanguageService languageService;
 		readonly ReferenceElementGenerator referenceElementGenerator;
 		readonly UIElementGenerator uiElementGenerator;
 		readonly List<VisualLineElementGenerator?> activeCustomElementGenerators = new List<VisualLineElementGenerator?>();
@@ -94,8 +97,12 @@ namespace ICSharpCode.ILSpy.TextView
 		readonly List<ITextMarker> localReferenceMarks = new List<ITextMarker>();
 
 		#region Constructor
-		public DecompilerTextView()
+		public DecompilerTextView(TabPageModel tabPage)
 		{
+			this.assemblyTreeModel = tabPage.AssemblyTreeModel;
+			this.settingsService = tabPage.SettingsService;
+			this.languageService = tabPage.LanguageService;
+
 			RegisterHighlighting();
 
 			InitializeComponent();
@@ -113,9 +120,9 @@ namespace ICSharpCode.ILSpy.TextView
 			textEditor.TextArea.Caret.PositionChanged += HighlightBrackets;
 			textEditor.MouseMove += TextEditorMouseMove;
 			textEditor.MouseLeave += TextEditorMouseLeave;
-			textEditor.SetBinding(Control.FontFamilyProperty, new Binding { Source = SettingsService.Instance.DisplaySettings, Path = new PropertyPath("SelectedFont") });
-			textEditor.SetBinding(Control.FontSizeProperty, new Binding { Source = SettingsService.Instance.DisplaySettings, Path = new PropertyPath("SelectedFontSize") });
-			textEditor.SetBinding(TextEditor.WordWrapProperty, new Binding { Source = SettingsService.Instance.DisplaySettings, Path = new PropertyPath("EnableWordWrap") });
+			textEditor.SetBinding(Control.FontFamilyProperty, new Binding { Source = settingsService.DisplaySettings, Path = new PropertyPath("SelectedFont") });
+			textEditor.SetBinding(Control.FontSizeProperty, new Binding { Source = settingsService.DisplaySettings, Path = new PropertyPath("SelectedFontSize") });
+			textEditor.SetBinding(TextEditor.WordWrapProperty, new Binding { Source = settingsService.DisplaySettings, Path = new PropertyPath("EnableWordWrap") });
 
 			// disable Tab editing command (useless for read-only editor); allow using tab for focus navigation instead
 			RemoveEditCommand(EditingCommands.TabForward);
@@ -130,7 +137,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 			// SearchPanel
 			SearchPanel searchPanel = SearchPanel.Install(textEditor.TextArea);
-			searchPanel.RegisterCommands(Application.Current.MainWindow.CommandBindings);
+			searchPanel.RegisterCommands(App.Current.MainWindow.CommandBindings);
 			searchPanel.SetResourceReference(SearchPanel.MarkerBrushProperty, ResourceKeys.SearchResultBackgroundBrush);
 			searchPanel.Loaded += (_, _) => {
 				// HACK: fix search text box
@@ -207,14 +214,14 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				if (margin is LineNumberMargin || margin is System.Windows.Shapes.Line)
 				{
-					margin.Visibility = SettingsService.Instance.DisplaySettings.ShowLineNumbers ? Visibility.Visible : Visibility.Collapsed;
+					margin.Visibility = settingsService.DisplaySettings.ShowLineNumbers ? Visibility.Visible : Visibility.Collapsed;
 				}
 			}
 		}
 
 		void SetHighlightCurrentLine()
 		{
-			textEditor.Options.HighlightCurrentLine = SettingsService.Instance.DisplaySettings.HighlightCurrentLine;
+			textEditor.Options.HighlightCurrentLine = settingsService.DisplaySettings.HighlightCurrentLine;
 		}
 
 		#endregion
@@ -400,10 +407,12 @@ namespace ICSharpCode.ILSpy.TextView
 
 		object? GenerateTooltip(ReferenceSegment segment)
 		{
+			var fontSize = settingsService.DisplaySettings.SelectedFontSize;
+
 			if (segment.Reference is ICSharpCode.Decompiler.Disassembler.OpCodeInfo code)
 			{
 				XmlDocumentationProvider docProvider = XmlDocLoader.MscorlibDocumentation;
-				DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), LanguageService.Instance.Language.SyntaxHighlighting);
+				DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), languageService.Language.SyntaxHighlighting, settingsService.DisplaySettings);
 				renderer.AddSignatureBlock($"{code.Name} (0x{code.Code:x})");
 				if (docProvider != null)
 				{
@@ -413,18 +422,18 @@ namespace ICSharpCode.ILSpy.TextView
 						renderer.AddXmlDocumentation(documentation, null, null);
 					}
 				}
-				return new FlowDocumentTooltip(renderer.CreateDocument());
+				return new FlowDocumentTooltip(renderer.CreateDocument(), fontSize);
 			}
 			else if (segment.Reference is IEntity entity)
 			{
 				var document = CreateTooltipForEntity(entity);
 				if (document == null)
 					return null;
-				return new FlowDocumentTooltip(document);
+				return new FlowDocumentTooltip(document, fontSize);
 			}
 			else if (segment.Reference is EntityReference unresolvedEntity)
 			{
-				var module = unresolvedEntity.ResolveAssembly(MainWindow.Instance.AssemblyTreeModel.AssemblyList);
+				var module = unresolvedEntity.ResolveAssembly(assemblyTreeModel.AssemblyList);
 				if (module == null)
 					return null;
 				var typeSystem = new DecompilerTypeSystem(module,
@@ -441,7 +450,7 @@ namespace ICSharpCode.ILSpy.TextView
 					var document = CreateTooltipForEntity(resolved);
 					if (document == null)
 						return null;
-					return new FlowDocumentTooltip(document);
+					return new FlowDocumentTooltip(document, fontSize);
 				}
 				catch (BadImageFormatException)
 				{
@@ -451,10 +460,10 @@ namespace ICSharpCode.ILSpy.TextView
 			return null;
 		}
 
-		static FlowDocument? CreateTooltipForEntity(IEntity resolved)
+		FlowDocument? CreateTooltipForEntity(IEntity resolved)
 		{
-			Language currentLanguage = LanguageService.Instance.Language;
-			DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), currentLanguage.SyntaxHighlighting);
+			Language currentLanguage = languageService.Language;
+			DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), currentLanguage.SyntaxHighlighting, settingsService.DisplaySettings);
 			RichText richText = currentLanguage.GetRichTextTooltip(resolved);
 			if (richText == null)
 			{
@@ -484,7 +493,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 			IEntity? ResolveReference(string idString)
 			{
-				return AssemblyTreeModel.FindEntityInRelevantAssemblies(idString, MainWindow.Instance.AssemblyTreeModel.AssemblyList.GetAssemblies());
+				return AssemblyTreeModel.FindEntityInRelevantAssemblies(idString, assemblyTreeModel.AssemblyList.GetAssemblies());
 			}
 		}
 
@@ -492,13 +501,12 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			readonly FlowDocumentScrollViewer viewer;
 
-			public FlowDocumentTooltip(FlowDocument document)
+			public FlowDocumentTooltip(FlowDocument document, double fontSize)
 			{
 				TextOptions.SetTextFormattingMode(this, TextFormattingMode.Display);
-				double fontSize = SettingsService.Instance.DisplaySettings.SelectedFontSize;
 				viewer = new FlowDocumentScrollViewer() {
 					Width = document.MinPageWidth + fontSize * 5,
-					MaxWidth = MainWindow.Instance.ActualWidth
+					MaxWidth = App.Current.MainWindow.ActualWidth
 				};
 				viewer.Document = document;
 				Border border = new Border {
@@ -542,9 +550,9 @@ namespace ICSharpCode.ILSpy.TextView
 		#region Highlight brackets
 		void HighlightBrackets(object? sender, EventArgs e)
 		{
-			if (SettingsService.Instance.DisplaySettings.HighlightMatchingBraces)
+			if (settingsService.DisplaySettings.HighlightMatchingBraces)
 			{
-				var result = LanguageService.Instance.Language.BracketSearcher.SearchBracket(textEditor.Document, textEditor.CaretOffset);
+				var result = languageService.Language.BracketSearcher.SearchBracket(textEditor.Document, textEditor.CaretOffset);
 				bracketHighlightRenderer.SetHighlight(result);
 			}
 			else
@@ -564,7 +572,7 @@ namespace ICSharpCode.ILSpy.TextView
 				progressTitle.Text = !string.IsNullOrWhiteSpace(value.Title) ? value.Title : Properties.Resources.Decompiling;
 				progressText.Text = value.Status;
 				progressText.Visibility = !string.IsNullOrWhiteSpace(progressText.Text) ? Visibility.Visible : Visibility.Collapsed;
-				var taskBar = MainWindow.Instance.TaskbarItemInfo;
+				var taskBar = App.Current.MainWindow.TaskbarItemInfo;
 				if (taskBar != null)
 				{
 					taskBar.ProgressState = System.Windows.Shell.TaskbarItemProgressState.Normal;
@@ -594,7 +602,7 @@ namespace ICSharpCode.ILSpy.TextView
 				progressText.Text = null;
 				progressText.Visibility = Visibility.Collapsed;
 				waitAdorner.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, new Duration(TimeSpan.FromSeconds(0.5)), FillBehavior.Stop));
-				var taskBar = MainWindow.Instance.TaskbarItemInfo;
+				var taskBar = App.Current.MainWindow.TaskbarItemInfo;
 				if (taskBar != null)
 				{
 					taskBar.ProgressState = System.Windows.Shell.TaskbarItemProgressState.Indeterminate;
@@ -633,7 +641,7 @@ namespace ICSharpCode.ILSpy.TextView
 						progressBar.IsIndeterminate = false;
 						progressText.Text = null;
 						progressText.Visibility = Visibility.Collapsed;
-						var taskBar = MainWindow.Instance.TaskbarItemInfo;
+						var taskBar = App.Current.MainWindow.TaskbarItemInfo;
 						if (taskBar != null)
 						{
 							taskBar.ProgressState = System.Windows.Shell.TaskbarItemProgressState.None;
@@ -764,7 +772,7 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				if (state != null)
 				{
-					state.RestoreFoldings(textOutput.Foldings, SettingsService.Instance.DisplaySettings.ExpandMemberDefinitions);
+					state.RestoreFoldings(textOutput.Foldings, settingsService.DisplaySettings.ExpandMemberDefinitions);
 					textEditor.ScrollToVerticalOffset(state.VerticalOffset);
 					textEditor.ScrollToHorizontalOffset(state.HorizontalOffset);
 				}
@@ -788,7 +796,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			currentAddress = textOutput.Address;
 			currentTitle = textOutput.Title;
-			expandMemberDefinitions = SettingsService.Instance.DisplaySettings.ExpandMemberDefinitions;
+			expandMemberDefinitions = settingsService.DisplaySettings.ExpandMemberDefinitions;
 		}
 		#endregion
 

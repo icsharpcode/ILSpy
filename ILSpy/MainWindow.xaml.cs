@@ -17,7 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Composition;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
@@ -30,7 +32,6 @@ using System.Windows.Threading;
 using AvalonDock.Layout.Serialization;
 
 using ICSharpCode.ILSpy.AssemblyTree;
-using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.Updates;
 using ICSharpCode.ILSpyX.FileLoaders;
@@ -44,25 +45,22 @@ namespace ICSharpCode.ILSpy
 	/// <summary>
 	/// The main window of the application.
 	/// </summary>
-	partial class MainWindow : Window
+	[Export]
+	[Shared]
+#pragma warning disable MEF003 // Main window is a singleton
+	partial class MainWindow
 	{
-		static MainWindow instance;
+		private readonly AssemblyTreeModel assemblyTreeModel;
+		private readonly IEnumerable<IFileLoader> fileLoaders;
+		private readonly MenuService menuService;
+		private readonly SettingsService settingsService;
 
-		private readonly MainWindowViewModel mainWindowViewModel = new();
-
-		public static MainWindow Instance {
-			get { return instance; }
-		}
-
-		public AssemblyTreeModel AssemblyTreeModel {
-			get {
-				return App.ExportProvider.GetExportedValue<AssemblyTreeModel>();
-			}
-		}
-
-		public MainWindow()
+		public MainWindow(MainWindowViewModel mainWindowViewModel, AssemblyTreeModel assemblyTreeModel, IEnumerable<IFileLoader> fileLoaders, MenuService menuService, SettingsService settingsService)
 		{
-			instance = this;
+			this.assemblyTreeModel = assemblyTreeModel;
+			this.fileLoaders = fileLoaders;
+			this.menuService = menuService;
+			this.settingsService = settingsService;
 
 			// Make sure Images are initialized on the UI thread.
 			this.Icon = Images.ILSpyIcon;
@@ -74,12 +72,12 @@ namespace ICSharpCode.ILSpy
 			InitFileLoaders();
 
 			Dispatcher.BeginInvoke(DispatcherPriority.Background, () => {
-				mainWindowViewModel.Workspace.InitializeLayout(dockManager);
-				MenuService.Instance.Init(mainMenu, toolBar, InputBindings);
+				mainWindowViewModel.Workspace.InitializeLayout();
+				menuService.Init(mainMenu, toolBar, InputBindings);
 
 				Dispatcher.BeginInvoke(DispatcherPriority.Background, () => {
-					AssemblyTreeModel.Initialize();
-					AssemblyTreeModel.Show();
+					assemblyTreeModel.Initialize();
+					assemblyTreeModel.Show();
 				});
 			});
 		}
@@ -97,9 +95,8 @@ namespace ICSharpCode.ILSpy
 		void InitFileLoaders()
 		{
 			// TODO
-			foreach (var loader in App.ExportProvider.GetExportedValues<IFileLoader>())
+			foreach (var loader in fileLoaders)
 			{
-
 			}
 		}
 
@@ -113,7 +110,7 @@ namespace ICSharpCode.ILSpy
 
 			var source = PresentationSource.FromVisual(this);
 
-			var sessionSettings = SettingsService.Instance.SessionSettings;
+			var sessionSettings = settingsService.SessionSettings;
 
 			// Validate and Set Window Bounds
 			var windowBounds = Rect.Transform(sessionSettings.WindowBounds, source?.CompositionTarget?.TransformToDevice ?? Matrix.Identity);
@@ -185,7 +182,7 @@ namespace ICSharpCode.ILSpy
 			else
 			{
 				updatePanel.Visibility = Visibility.Collapsed;
-				string downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesAsync(SettingsService.Instance.SpySettings);
+				string downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesAsync(settingsService.SpySettings);
 				AdjustUpdateUIAfterCheck(downloadUrl, true);
 			}
 		}
@@ -243,22 +240,22 @@ namespace ICSharpCode.ILSpy
 			base.OnStateChanged(e);
 			// store window state in settings only if it's not minimized
 			if (this.WindowState != WindowState.Minimized)
-				SettingsService.Instance.SessionSettings.WindowState = this.WindowState;
+				settingsService.SessionSettings.WindowState = this.WindowState;
 		}
 
 		protected override void OnClosing(CancelEventArgs e)
 		{
 			base.OnClosing(e);
 
-			var snapshot = SettingsService.Instance.CreateSnapshot();
+			var snapshot = settingsService.CreateSnapshot();
 
 			var sessionSettings = snapshot.GetSettings<SessionSettings>();
 
-			sessionSettings.ActiveAssemblyList = AssemblyTreeModel.AssemblyList.ListName;
-			sessionSettings.ActiveTreeViewPath = AssemblyTreeModel.SelectedPath;
-			sessionSettings.ActiveAutoLoadedAssembly = GetAutoLoadedAssemblyNode(AssemblyTreeModel.SelectedItem);
+			sessionSettings.ActiveAssemblyList = assemblyTreeModel.AssemblyList.ListName;
+			sessionSettings.ActiveTreeViewPath = assemblyTreeModel.SelectedPath;
+			sessionSettings.ActiveAutoLoadedAssembly = GetAutoLoadedAssemblyNode(assemblyTreeModel.SelectedItem);
 			sessionSettings.WindowBounds = this.RestoreBounds;
-			sessionSettings.DockLayout.Serialize(new XmlLayoutSerializer(dockManager));
+			sessionSettings.DockLayout.Serialize(new XmlLayoutSerializer(DockManager));
 
 			snapshot.Save();
 		}

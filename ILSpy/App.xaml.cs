@@ -71,8 +71,10 @@ namespace ICSharpCode.ILSpy
 			var cmdArgs = Environment.GetCommandLineArgs().Skip(1);
 			CommandLineArguments = CommandLineArguments.Create(cmdArgs);
 
+			var settingsService = new SettingsService();
+
 			bool forceSingleInstance = (CommandLineArguments.SingleInstance ?? true)
-									   && !SettingsService.Instance.MiscSettings.AllowMultipleInstances;
+									   && !settingsService.MiscSettings.AllowMultipleInstances;
 			if (forceSingleInstance)
 			{
 				SingleInstance.Attach();  // will auto-exit for second instance
@@ -81,7 +83,7 @@ namespace ICSharpCode.ILSpy
 
 			InitializeComponent();
 
-			if (!InitializeDependencyInjection(SettingsService.Instance))
+			if (!InitializeDependencyInjection(settingsService))
 			{
 				// There is something completely wrong with DI, probably some service registration is missing => nothing we can do to recover, so stop and shut down.
 				Exit += (_, _) => MessageBox.Show(StartupExceptions.FormatExceptions(), "Sorry we crashed!");
@@ -106,7 +108,7 @@ namespace ICSharpCode.ILSpy
 			// Add data templates registered via MEF.
 			Resources.MergedDictionaries.Add(DataTemplateManager.CreateDynamicDataTemplates(ExportProvider));
 
-			var sessionSettings = SettingsService.Instance.SessionSettings;
+			var sessionSettings = settingsService.SessionSettings;
 			ThemeManager.Current.Theme = sessionSettings.Theme;
 			if (!string.IsNullOrEmpty(sessionSettings.CurrentCulture))
 			{
@@ -129,7 +131,7 @@ namespace ICSharpCode.ILSpy
 				MessageBox.Show(unknownArguments, "ILSpy Unknown Command Line Arguments Passed");
 			}
 
-			SettingsService.Instance.AssemblyListManager.CreateDefaultAssemblyLists();
+			settingsService.AssemblyListManager.CreateDefaultAssemblyLists();
 		}
 
 		public new static App Current => (App)Application.Current;
@@ -187,6 +189,10 @@ namespace ICSharpCode.ILSpy
 				services.BindExports(Assembly.GetExecutingAssembly());
 				// Add the settings service
 				services.AddSingleton(settingsService);
+				// Add the export provider
+				services.AddSingleton(_ => ExportProvider);
+				// Add the docking manager
+				services.AddSingleton(serviceProvider => serviceProvider.GetService<MainWindow>().DockManager);
 
 				var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
 
@@ -209,7 +215,7 @@ namespace ICSharpCode.ILSpy
 		{
 			base.OnStartup(e);
 
-			MainWindow = new();
+			MainWindow = ExportProvider.GetExportedValue<MainWindow>();
 			MainWindow.Show();
 		}
 

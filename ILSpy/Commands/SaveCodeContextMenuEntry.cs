@@ -35,11 +35,11 @@ namespace ICSharpCode.ILSpy.TextView
 {
 	[ExportContextMenuEntry(Header = nameof(Resources._SaveCode), Category = nameof(Resources.Save), Icon = "Images/Save")]
 	[Shared]
-	sealed class SaveCodeContextMenuEntry : IContextMenuEntry
+	sealed class SaveCodeContextMenuEntry(LanguageService languageService) : IContextMenuEntry
 	{
 		public void Execute(TextViewContext context)
 		{
-			Execute(context.SelectedTreeNodes);
+			Execute(context.SelectedTreeNodes, languageService);
 		}
 
 		public bool IsEnabled(TextViewContext context) => true;
@@ -57,12 +57,11 @@ namespace ICSharpCode.ILSpy.TextView
 				|| (selectedNodes.Count > 1 && (selectedNodes.All(n => n is AssemblyTreeNode) || selectedNodes.All(n => n is IMemberTreeNode)));
 		}
 
-		public static void Execute(IReadOnlyList<SharpTreeNode> selectedNodes)
+		public static void Execute(IReadOnlyList<SharpTreeNode> selectedNodes, LanguageService languageService)
 		{
-			var settingsService = SettingsService.Instance;
 			var dockWorkspace = Docking.DockWorkspace.Instance;
 
-			var currentLanguage = LanguageService.Instance.Language;
+			var currentLanguage = languageService.Language;
 			var tabPage = dockWorkspace.ActiveTabPage;
 			tabPage.ShowTextView(textView => {
 				if (selectedNodes.Count == 1 && selectedNodes[0] is ILSpyTreeNode singleSelection)
@@ -88,7 +87,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 				// Fallback: if nobody was able to handle the request, use default behavior.
 				// try to save all nodes to disk.
-				var options = LanguageService.Instance.CreateDecompilationOptions(dockWorkspace.ActiveTabPage);
+				var options = dockWorkspace.ActiveTabPage.CreateDecompilationOptions();
 				options.FullDecompilation = true;
 				textView.SaveToDisk(currentLanguage, selectedNodes.OfType<ILSpyTreeNode>(), options);
 			});

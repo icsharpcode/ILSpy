@@ -51,8 +51,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		private IEvent GetEventDefinition()
 		{
-			return ((MetadataModule)EventDefinition.ParentModule.MetadataFile
-				?.GetTypeSystemWithCurrentOptionsOrNull()
+			return ((MetadataModule)EventDefinition.ParentModule?.MetadataFile
+				?.GetTypeSystemWithCurrentOptionsOrNull(SettingsService)
 				?.MainModule)?.GetDefinition((EventDefinitionHandle)EventDefinition.MetadataToken) ?? EventDefinition;
 		}
 
@@ -72,7 +72,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
 				return FilterResult.Hidden;
-			if (settings.SearchTermMatches(EventDefinition.Name) && (settings.ShowApiLevel == ApiVisibility.All || LanguageService.Instance.Language.ShowMember(EventDefinition)))
+			if (settings.SearchTermMatches(EventDefinition.Name) && (settings.ShowApiLevel == ApiVisibility.All || LanguageService.Language.ShowMember(EventDefinition)))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;

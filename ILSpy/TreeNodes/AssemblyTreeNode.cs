@@ -263,7 +263,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				ns.Children.Clear();
 			}
 			namespaces.Clear();
-			bool useNestedStructure = SettingsService.Instance.DisplaySettings.UseNestedNamespaceNodes;
+			bool useNestedStructure = SettingsService.DisplaySettings.UseNestedNamespaceNodes;
 			foreach (var type in assembly.TopLevelTypeDefinitions.OrderBy(t => t.ReflectionName, NaturalStringComparer.Instance))
 			{
 				var ns = GetOrCreateNamespaceTreeNode(type.Namespace);
@@ -329,7 +329,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				ns.Children.Clear();
 			}
 			namespaces.Clear();
-			bool useNestedStructure = SettingsService.Instance.DisplaySettings.UseNestedNamespaceNodes;
+			bool useNestedStructure = SettingsService.DisplaySettings.UseNestedNamespaceNodes;
 			foreach (var type in assembly.TopLevelTypeDefinitions.OrderBy(t => t.ReflectionName, NaturalStringComparer.Instance))
 			{
 				var ns = GetOrCreateNamespaceTreeNode(type.Namespace);
@@ -547,7 +547,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			dlg.Filter = language.Name + " project|*" + language.ProjectFileExtension + "|" + language.Name + " single file|*" + language.FileExtension + "|All files|*.*";
 			if (dlg.ShowDialog() == true)
 			{
-				var options = LanguageService.Instance.CreateDecompilationOptions(DockWorkspace.Instance.ActiveTabPage);
+				var options = DockWorkspace.Instance.ActiveTabPage.CreateDecompilationOptions();
 				options.FullDecompilation = true;
 				if (dlg.FilterIndex == 1)
 				{
@@ -608,7 +608,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 	[ExportContextMenuEntry(Header = nameof(Resources._Reload), Icon = "images/Refresh")]
 	[Shared]
-	sealed class ReloadAssembly : IContextMenuEntry
+	sealed class ReloadAssembly(AssemblyTreeModel assemblyTreeModel) : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
 		{
@@ -636,14 +636,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					la.AssemblyList.ReloadAssembly(la.FileName);
 				}
 			}
-			MainWindow.Instance.AssemblyTreeModel.SelectNodes(paths.Select(p => MainWindow.Instance.AssemblyTreeModel.FindNodeByPath(p, true)).ToArray());
-			MainWindow.Instance.AssemblyTreeModel.RefreshDecompiledView();
+			assemblyTreeModel.SelectNodes(paths.Select(p => assemblyTreeModel.FindNodeByPath(p, true)).ToArray());
+			assemblyTreeModel.RefreshDecompiledView();
 		}
 	}
 
 	[ExportContextMenuEntry(Header = nameof(Resources._LoadDependencies), Category = nameof(Resources.Dependencies))]
 	[Shared]
-	sealed class LoadDependencies : IContextMenuEntry
+	sealed class LoadDependencies(AssemblyTreeModel assemblyTreeModel) : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
 		{
@@ -677,13 +677,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				}
 			}
 			await Task.WhenAll(tasks);
-			MainWindow.Instance.AssemblyTreeModel.RefreshDecompiledView();
+			assemblyTreeModel.RefreshDecompiledView();
 		}
 	}
 
 	[ExportContextMenuEntry(Header = nameof(Resources._AddMainList), Category = nameof(Resources.Dependencies))]
 	[Shared]
-	sealed class AddToMainList : IContextMenuEntry
+	sealed class AddToMainList(AssemblyTreeModel assemblyTreeModel) : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
 		{
@@ -712,7 +712,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					node.RaisePropertyChanged(nameof(ILSpyTreeNode.IsAutoLoaded));
 				}
 			}
-			MainWindow.Instance.AssemblyTreeModel.AssemblyList.RefreshSave();
+			
+			assemblyTreeModel.AssemblyList.RefreshSave();
 		}
 	}
 

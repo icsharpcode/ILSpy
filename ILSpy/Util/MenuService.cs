@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using System.Composition;
 using System.Globalization;
 using System.Linq;
 using System.Windows;
@@ -35,10 +36,10 @@ using TomsToolbox.Wpf.Converters;
 
 namespace ICSharpCode.ILSpy.Util
 {
-	internal class MenuService
+	[Export]
+	[Shared]
+	public class MenuService(IExportProvider exportProvider)
 	{
-		public static readonly MenuService Instance = new();
-
 		private readonly DockWorkspace dockWorkspace = DockWorkspace.Instance;
 
 		public void Init(Menu mainMenu, ToolBar toolBar, InputBindingCollection inputBindings)
@@ -48,9 +49,9 @@ namespace ICSharpCode.ILSpy.Util
 			InitToolbar(toolBar);
 		}
 
-		static void InitMainMenu(Menu mainMenu)
+		void InitMainMenu(Menu mainMenu)
 		{
-			var mainMenuCommands = App.ExportProvider.GetExports<ICommand, IMainMenuCommandMetadata>("MainMenuCommand");
+			var mainMenuCommands = exportProvider.GetExports<ICommand, IMainMenuCommandMetadata>("MainMenuCommand");
 			// Start by constructing the individual flat menus
 			var parentMenuItems = new Dictionary<string, MenuItem>();
 			var menuGroups = mainMenuCommands.OrderBy(c => c.Metadata?.MenuOrder).GroupBy(c => c.Metadata?.ParentMenuID).ToArray();
@@ -150,11 +151,11 @@ namespace ICSharpCode.ILSpy.Util
 			windowMenuItem.ItemsSource = allItems;
 		}
 
-		static void InitToolbar(ToolBar toolBar)
+		void InitToolbar(ToolBar toolBar)
 		{
 			int navigationPos = 0;
 			int openPos = 1;
-			var toolbarCommandsByTitle = App.ExportProvider.GetExports<ICommand, IToolbarCommandMetadata>("ToolbarCommand")
+			var toolbarCommandsByTitle = exportProvider.GetExports<ICommand, IToolbarCommandMetadata>("ToolbarCommand")
 				.OrderBy(c => c.Metadata?.ToolbarOrder)
 				.GroupBy(c => c.Metadata?.ToolbarCategory);
 

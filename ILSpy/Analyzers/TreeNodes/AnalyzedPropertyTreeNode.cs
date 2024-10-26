@@ -17,11 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.ILSpyX.Analyzers;
 
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
@@ -48,11 +46,8 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedProperty.Getter, "get"));
 			if (analyzedProperty.CanSet)
 				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedProperty.Setter, "set"));
-			//foreach (var accessor in analyzedProperty.OtherMethods)
-			//	this.Children.Add(new AnalyzedPropertyAccessorTreeNode(accessor, null));
 
-			var analyzers = App.ExportProvider.GetExports<IAnalyzer, IAnalyzerMetadata>("Analyzer");
-			foreach (var lazy in analyzers.OrderBy(item => item.Metadata.Order))
+			foreach (var lazy in Analyzers)
 			{
 				var analyzer = lazy.Value;
 				if (analyzer.Show(analyzedProperty))

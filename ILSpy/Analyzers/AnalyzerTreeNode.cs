@@ -17,15 +17,20 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using System.Linq;
 
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.Analyzers;
 using ICSharpCode.ILSpyX.TreeView;
+
+using TomsToolbox.Composition;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
 	public abstract class AnalyzerTreeNode : SharpTreeNode
 	{
-		public Language Language => LanguageService.Instance.Language;
+		public static Language Language => App.ExportProvider.GetExportedValue<LanguageService>().Language;
 
 		public override bool CanDelete()
 		{
@@ -41,6 +46,13 @@ namespace ICSharpCode.ILSpy.Analyzers
 		{
 			DeleteCore();
 		}
+
+		public static AssemblyTreeModel AssemblyTreeModel { get; } = App.ExportProvider.GetExportedValue<AssemblyTreeModel>();
+
+		public static ICollection<IExport<IAnalyzer, IAnalyzerMetadata>> Analyzers => App.ExportProvider
+			.GetExports<IAnalyzer, IAnalyzerMetadata>("Analyzer")
+			.OrderBy(item => item.Metadata?.Order)
+			.ToArray();
 
 		/// <summary>
 		/// Handles changes to the assembly list.

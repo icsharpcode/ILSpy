@@ -43,13 +43,13 @@ namespace ICSharpCode.ILSpy
 
 	[Export(typeof(Language))]
 	[Shared]
-	class CSharpILMixedLanguage : ILLanguage
+	class CSharpILMixedLanguage(SettingsService settingsService) : ILLanguage
 	{
 		public override string Name => "IL with C#";
 
 		protected override ReflectionDisassembler CreateDisassembler(ITextOutput output, DecompilationOptions options)
 		{
-			var displaySettings = SettingsService.Instance.DisplaySettings;
+			var displaySettings = settingsService.DisplaySettings;
 			return new ReflectionDisassembler(output,
 				new MixedMethodBodyDisassembler(output, options) {
 					DetectControlStructure = detectControlStructure,

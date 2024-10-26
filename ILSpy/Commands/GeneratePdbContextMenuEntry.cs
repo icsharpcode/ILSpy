@@ -29,10 +29,12 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 
 using Microsoft.Win32;
@@ -41,14 +43,14 @@ namespace ICSharpCode.ILSpy
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.GeneratePortable))]
 	[Shared]
-	class GeneratePdbContextMenuEntry : IContextMenuEntry
+	class GeneratePdbContextMenuEntry(LanguageService languageService) : IContextMenuEntry
 	{
 		public void Execute(TextViewContext context)
 		{
 			var assembly = (context.SelectedTreeNodes?.FirstOrDefault() as AssemblyTreeNode)?.LoadedAssembly;
 			if (assembly == null)
 				return;
-			GeneratePdbForAssembly(assembly);
+			GeneratePdbForAssembly(assembly, languageService);
 		}
 
 		public bool IsEnabled(TextViewContext context) => true;
@@ -60,7 +62,7 @@ namespace ICSharpCode.ILSpy
 				&& tn.LoadedAssembly.IsLoadedAsValidAssembly;
 		}
 
-		internal static void GeneratePdbForAssembly(LoadedAssembly assembly)
+		internal static void GeneratePdbForAssembly(LoadedAssembly assembly, LanguageService languageService)
 		{
 			var file = assembly.GetMetadataFileOrNull() as PEFile;
 			if (!PortablePdbWriter.HasCodeViewDebugDirectoryEntry(file))
@@ -75,7 +77,7 @@ namespace ICSharpCode.ILSpy
 			if (dlg.ShowDialog() != true)
 				return;
 			DockWorkspace dockWorkspace = DockWorkspace.Instance;
-			DecompilationOptions options = LanguageService.Instance.CreateDecompilationOptions(dockWorkspace.ActiveTabPage);
+			DecompilationOptions options = dockWorkspace.ActiveTabPage.CreateDecompilationOptions();
 			string fileName = dlg.FileName;
 			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
@@ -108,21 +110,21 @@ namespace ICSharpCode.ILSpy
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.GeneratePortable), MenuCategory = nameof(Resources.Save))]
 	[Shared]
-	class GeneratePdbMainMenuEntry : SimpleCommand
+	class GeneratePdbMainMenuEntry(AssemblyTreeModel assemblyTreeModel, LanguageService languageService) : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)
 		{
-			return MainWindow.Instance.AssemblyTreeModel.SelectedNodes?.Count() == 1
-				&& MainWindow.Instance.AssemblyTreeModel.SelectedNodes?.FirstOrDefault() is AssemblyTreeNode tn
+			return assemblyTreeModel.SelectedNodes?.Count() == 1
+				&& assemblyTreeModel.SelectedNodes?.FirstOrDefault() is AssemblyTreeNode tn
 				&& !tn.LoadedAssembly.HasLoadError;
 		}
 
 		public override void Execute(object parameter)
 		{
-			var assembly = (MainWindow.Instance.AssemblyTreeModel.SelectedNodes?.FirstOrDefault() as AssemblyTreeNode)?.LoadedAssembly;
+			var assembly = (assemblyTreeModel.SelectedNodes?.FirstOrDefault() as AssemblyTreeNode)?.LoadedAssembly;
 			if (assembly == null)
 				return;
-			GeneratePdbContextMenuEntry.GeneratePdbForAssembly(assembly);
+			GeneratePdbContextMenuEntry.GeneratePdbForAssembly(assembly, languageService);
 		}
 	}
 }

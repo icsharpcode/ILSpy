@@ -24,14 +24,16 @@ using System.Composition;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDisassemble), MenuCategory = nameof(Resources.Open), MenuOrder = 2.5)]
 	[Shared]
-	sealed class DisassembleAllCommand : SimpleCommand
+	sealed class DisassembleAllCommand(AssemblyTreeModel assemblyTreeModel, LanguageService languageService) : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)
 		{
@@ -45,7 +47,7 @@ namespace ICSharpCode.ILSpy
 			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new();
 				Parallel.ForEach(
-					Partitioner.Create(MainWindow.Instance.AssemblyTreeModel.AssemblyList.GetAssemblies(), loadBalance: true),
+					Partitioner.Create(assemblyTreeModel.AssemblyList.GetAssemblies(), loadBalance: true),
 					new() { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct },
 					asm => {
 						if (!asm.HasLoadError)
@@ -56,7 +58,7 @@ namespace ICSharpCode.ILSpy
 							{
 								try
 								{
-									var options = LanguageService.Instance.CreateDecompilationOptions(dockWorkspace.ActiveTabPage);
+									var options = dockWorkspace.ActiveTabPage.CreateDecompilationOptions();
 									options.FullDecompilation = true;
 									options.CancellationToken = ct;
 									new ILLanguage().DecompileAssembly(asm, new Decompiler.PlainTextOutput(writer), options);

@@ -49,8 +49,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			return ((MetadataModule)ParentAssemblyNode.LoadedAssembly
 				.GetMetadataFileOrNull()
-				?.GetTypeSystemWithCurrentOptionsOrNull()
-				?.MainModule).GetDefinition((SRM.TypeDefinitionHandle)TypeDefinition.MetadataToken);
+				?.GetTypeSystemWithCurrentOptionsOrNull(SettingsService)
+				?.MainModule)?.GetDefinition((SRM.TypeDefinitionHandle)TypeDefinition.MetadataToken);
 		}
 
 		public override bool IsPublicAPI {
@@ -73,7 +73,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return FilterResult.Hidden;
 			if (settings.SearchTermMatches(TypeDefinition.Name))
 			{
-				if (settings.ShowApiLevel == ApiVisibility.All || LanguageService.Instance.Language.ShowMember(TypeDefinition))
+				if (settings.ShowApiLevel == ApiVisibility.All || LanguageService.Language.ShowMember(TypeDefinition))
 					return FilterResult.Match;
 				else
 					return FilterResult.Hidden;

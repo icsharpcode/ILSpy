@@ -7,6 +7,7 @@ using System.Windows.Input;
 
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.ViewModels;
 
@@ -18,6 +19,10 @@ namespace ICSharpCode.ILSpy
 	[NonShared]
 	public partial class DebugSteps : UserControl
 	{
+		private readonly AssemblyTreeModel assemblyTreeModel;
+		private readonly SettingsService settingsService;
+		private readonly LanguageService languageService;
+
 		static readonly ILAstWritingOptions writingOptions = new ILAstWritingOptions {
 			UseFieldSugar = true,
 			UseLogicOperationSugar = true
@@ -28,8 +33,12 @@ namespace ICSharpCode.ILSpy
 #if DEBUG
 		ILAstLanguage language;
 #endif
-		public DebugSteps()
+		public DebugSteps(AssemblyTreeModel assemblyTreeModel, SettingsService settingsService, LanguageService languageService)
 		{
+			this.assemblyTreeModel = assemblyTreeModel;
+			this.settingsService = settingsService;
+			this.languageService = languageService;
+			
 			InitializeComponent();
 
 #if DEBUG
@@ -38,7 +47,7 @@ namespace ICSharpCode.ILSpy
 
 			writingOptions.PropertyChanged += WritingOptions_PropertyChanged;
 
-			if (LanguageService.Instance.Language is ILAstLanguage l)
+			if (languageService.Language is ILAstLanguage l)
 			{
 				l.StepperUpdated += ILAstStepperUpdated;
 				language = l;
@@ -72,7 +81,7 @@ namespace ICSharpCode.ILSpy
 				{
 					language.StepperUpdated -= ILAstStepperUpdated;
 				}
-				if (LanguageService.Instance.Language is ILAstLanguage l)
+				if (languageService.Language is ILAstLanguage l)
 				{
 					l.StepperUpdated += ILAstStepperUpdated;
 					language = l;
@@ -123,10 +132,9 @@ namespace ICSharpCode.ILSpy
 		void DecompileAsync(int step, bool isDebug = false)
 		{
 			lastSelectedStep = step;
-			var window = MainWindow.Instance;
 			var state = DockWorkspace.Instance.ActiveTabPage.GetState();
-			DockWorkspace.Instance.ActiveTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(window.AssemblyTreeModel.CurrentLanguage, window.AssemblyTreeModel.SelectedNodes,
-				new DecompilationOptions(window.AssemblyTreeModel.CurrentLanguageVersion, SettingsService.Instance.DecompilerSettings, SettingsService.Instance.DisplaySettings) {
+			DockWorkspace.Instance.ActiveTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(assemblyTreeModel.CurrentLanguage, assemblyTreeModel.SelectedNodes,
+				new DecompilationOptions(assemblyTreeModel.CurrentLanguageVersion, settingsService.DecompilerSettings, settingsService.DisplaySettings) {
 					StepLimit = step,
 					IsDebug = isDebug,
 					TextViewState = state as TextView.DecompilerTextViewState

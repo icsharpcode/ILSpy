@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Composition;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -28,6 +29,7 @@ using System.Windows.Navigation;
 
 using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.Decompiler;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.Themes;
@@ -38,17 +40,22 @@ namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._Help), Header = nameof(Resources._About), MenuOrder = 99999)]
 	[Shared]
-	sealed class AboutPage : SimpleCommand
+	public sealed class AboutPageCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
 	{
 		public override void Execute(object parameter)
 		{
-			MainWindow.Instance.AssemblyTreeModel.NavigateTo(
+			assemblyTreeModel.NavigateTo(
 				new RequestNavigateEventArgs(new Uri("resource://aboutpage"), null),
 				inNewTabPage: true
 			);
 		}
+	}
 
-		public static void Display(DecompilerTextView textView)
+	[Export]
+	[Shared]
+	public sealed class AboutPage(IEnumerable<IAboutPageAddition> aboutPageAdditions)
+	{
+		public void Display(DecompilerTextView textView)
 		{
 			AvalonEditTextOutput output = new AvalonEditTextOutput() {
 				Title = Resources.About,
@@ -86,7 +93,7 @@ namespace ICSharpCode.ILSpy
 			});
 			output.WriteLine();
 
-			foreach (var plugin in App.ExportProvider.GetExportedValues<IAboutPageAddition>())
+			foreach (var plugin in aboutPageAdditions)
 				plugin.Write(output);
 			output.WriteLine();
 			output.Address = new Uri("resource://AboutPage");

@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.Composition;
 using System.Xml.Linq;
 
 using ICSharpCode.Decompiler;
@@ -110,13 +111,9 @@ namespace ICSharpCode.ILSpy.Util
 		}
 	}
 
-	public class SettingsService : SettingsServiceBase
+	public class SettingsService() : SettingsServiceBase(LoadSettings())
 	{
-		public static readonly SettingsService Instance = new();
-
-		private SettingsService() : base(LoadSettings())
-		{
-		}
+		public static readonly SettingsService Instance = App.ExportProvider.GetExportedValue<SettingsService>();
 
 		public SessionSettings SessionSettings => GetSettings<SessionSettings>();
 

@@ -27,7 +27,7 @@ namespace ICSharpCode.ILSpy
 	{
 		public override void Execute(object parameter)
 		{
-			MainWindow.Instance.Close();
+			App.Current.MainWindow.Close();
 		}
 	}
 }

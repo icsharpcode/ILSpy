@@ -47,6 +47,7 @@ using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Settings;
 using ICSharpCode.ILSpyX.TreeView;
 
+using TomsToolbox.Composition;
 using TomsToolbox.Essentials;
 using TomsToolbox.Wpf;
 
@@ -67,9 +68,20 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		private readonly NavigationHistory<NavigationState> history = new();
 		private bool isNavigatingHistory;
+		private readonly AboutPage aboutPage;
+		private readonly SearchPaneModel searchPaneModel;
+		private readonly SettingsService settingsService;
+		private readonly LanguageService languageService;
+		private readonly IExportProvider exportProvider;
 
-		public AssemblyTreeModel()
+		public AssemblyTreeModel(AboutPage aboutPage, SearchPaneModel searchPaneModel, SettingsService settingsService, LanguageService languageService, IExportProvider exportProvider)
 		{
+			this.aboutPage = aboutPage;
+			this.searchPaneModel = searchPaneModel;
+			this.settingsService = settingsService;
+			this.languageService = languageService;
+			this.exportProvider = exportProvider;
+
 			Title = Resources.Assemblies;
 			ContentId = PaneContentId;
 			IsCloseable = false;
@@ -80,7 +92,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 			refreshThrottle = new DispatcherThrottle(DispatcherPriority.Background, RefreshInternal);
 
-			AssemblyList = SettingsService.Instance.CreateEmptyAssemblyList();
+			AssemblyList = settingsService.CreateEmptyAssemblyList();
 		}
 
 		private void Settings_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -151,7 +163,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		{
 			LoadAssemblies(args.AssembliesToLoad, commandLineLoadedAssemblies, focusNode: false);
 			if (args.Language != null)
-				LanguageService.Instance.Language = LanguageService.Instance.GetLanguage(args.Language);
+				languageService.Language = languageService.GetLanguage(args.Language);
 			return true;
 		}
 
@@ -161,7 +173,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		/// </summary>
 		private async Task HandleCommandLineArgumentsAfterShowList(CommandLineArguments args, ISettingsProvider? spySettings = null)
 		{
-			var sessionSettings = SettingsService.Instance.SessionSettings;
+			var sessionSettings = settingsService.SessionSettings;
 
 			var relevantAssemblies = commandLineLoadedAssemblies.ToList();
 			commandLineLoadedAssemblies.Clear(); // clear references once we don't need them anymore
@@ -170,10 +182,8 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 			if (args.Search != null)
 			{
-				var searchPane = App.ExportProvider.GetExportedValue<SearchPaneModel>();
-
-				searchPane.SearchTerm = args.Search;
-				searchPane.Show();
+				this.searchPaneModel.SearchTerm = args.Search;
+				this.searchPaneModel.Show();
 			}
 		}
 
@@ -290,11 +300,11 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 						SelectNode(node);
 
 						// only if not showing the about page, perform the update check:
-						await MainWindow.Instance.ShowMessageIfUpdatesAvailableAsync(spySettings);
+						await App.Current.MainWindow.ShowMessageIfUpdatesAvailableAsync(spySettings);
 					}
 					else
 					{
-						DockWorkspace.Instance.ActiveTabPage.ShowTextView(AboutPage.Display);
+						DockWorkspace.Instance.ActiveTabPage.ShowTextView(aboutPage.Display);
 					}
 				}
 			}
@@ -363,11 +373,11 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		public void Initialize()
 		{
-			AssemblyList = SettingsService.Instance.LoadInitialAssemblyList();
+			AssemblyList = settingsService.LoadInitialAssemblyList();
 
 			HandleCommandLineArguments(App.CommandLineArguments);
 
-			var loadPreviousAssemblies = SettingsService.Instance.MiscSettings.LoadPreviousAssemblies;
+			var loadPreviousAssemblies = settingsService.MiscSettings.LoadPreviousAssemblies;
 			if (AssemblyList.GetAssemblies().Length == 0
 				&& AssemblyList.ListName == AssemblyListManager.DefaultListName
 				&& loadPreviousAssemblies)
@@ -377,7 +387,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 			ShowAssemblyList(AssemblyList);
 
-			var sessionSettings = SettingsService.Instance.SessionSettings;
+			var sessionSettings = settingsService.SessionSettings;
 			if (sessionSettings.ActiveAutoLoadedAssembly != null
 				&& File.Exists(sessionSettings.ActiveAutoLoadedAssembly))
 			{
@@ -389,7 +399,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		private async Task OpenAssemblies()
 		{
-			await HandleCommandLineArgumentsAfterShowList(App.CommandLineArguments, SettingsService.Instance.SpySettings);
+			await HandleCommandLineArgumentsAfterShowList(App.CommandLineArguments, settingsService.SpySettings);
 
 			if (FormatExceptions(App.StartupExceptions.ToArray(), out var output))
 			{
@@ -416,7 +426,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		private void ShowAssemblyList(string name)
 		{
-			AssemblyList list = SettingsService.Instance.AssemblyListManager.LoadList(name);
+			AssemblyList list = settingsService.AssemblyListManager.LoadList(name);
 			//Only load a new list when it is a different one
 			if (list.ListName != AssemblyList.ListName)
 			{
@@ -655,8 +665,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 					}
 					if (protocol != "decompile")
 					{
-						var protocolHandlers = App.ExportProvider.GetExportedValues<IProtocolHandler>();
-						foreach (var handler in protocolHandlers)
+						foreach (var handler in exportProvider.GetExportedValues<IProtocolHandler>())
 						{
 							var node = handler.Resolve(protocol, file, unresolvedEntity.Handle, out bool newTabPage);
 							if (node != null)
@@ -793,7 +802,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				return;
 			}
 
-			var options = LanguageService.Instance.CreateDecompilationOptions(activeTabPage);
+			var options = activeTabPage.CreateDecompilationOptions();
 			options.TextViewState = newState;
 			activeTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, options));
 		}
@@ -803,9 +812,9 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			DecompileSelectedNodes(DockWorkspace.Instance.ActiveTabPage.GetState() as DecompilerTextViewState);
 		}
 
-		public Language CurrentLanguage => LanguageService.Instance.Language;
+		public Language CurrentLanguage => languageService.Language;
 
-		public LanguageVersion? CurrentLanguageVersion => LanguageService.Instance.LanguageVersion;
+		public LanguageVersion? CurrentLanguageVersion => languageService.LanguageVersion;
 
 		public IEnumerable<ILSpyTreeNode> SelectedNodes {
 			get {
@@ -858,7 +867,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				if (e.Uri.Host == "aboutpage")
 				{
 					RecordHistory();
-					DockWorkspace.Instance.ActiveTabPage.ShowTextView(AboutPage.Display);
+					DockWorkspace.Instance.ActiveTabPage.ShowTextView(aboutPage.Display);
 					e.Handled = true;
 					return;
 				}
@@ -912,7 +921,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			{
 				var path = GetPathForNode(SelectedItem);
 
-				ShowAssemblyList(SettingsService.Instance.AssemblyListManager.LoadList(AssemblyList.ListName));
+				ShowAssemblyList(settingsService.AssemblyListManager.LoadList(AssemblyList.ListName));
 				SelectNode(FindNodeByPath(path, true), inNewTabPage: false);
 
 				RefreshDecompiledView();

@@ -25,16 +25,11 @@ namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._Help), Header = nameof(Resources._CheckUpdates), MenuOrder = 5000)]
 	[Shared]
-	sealed class CheckForUpdatesCommand : SimpleCommand
+	sealed class CheckForUpdatesCommand(SettingsService settingsService) : SimpleCommand
 	{
-		public override bool CanExecute(object parameter)
-		{
-			return base.CanExecute(parameter);
-		}
-
 		public override async void Execute(object parameter)
 		{
-			await MainWindow.Instance.ShowMessageIfUpdatesAvailableAsync(SettingsService.Instance.SpySettings, forceCheck: true);
+			await App.Current.MainWindow.ShowMessageIfUpdatesAvailableAsync(settingsService.SpySettings, forceCheck: true);
 		}
 	}
 }

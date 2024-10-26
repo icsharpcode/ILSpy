@@ -26,6 +26,7 @@ using System.Threading.Tasks;
 
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -36,18 +37,18 @@ namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDumpPDBAsXML), MenuCategory = nameof(Resources.Open), MenuOrder = 2.6)]
 	[Shared]
-	sealed class Pdb2XmlCommand : SimpleCommand
+	sealed class Pdb2XmlCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)
 		{
-			var selectedNodes = MainWindow.Instance.AssemblyTreeModel.SelectedNodes;
+			var selectedNodes = assemblyTreeModel.SelectedNodes;
 			return selectedNodes?.Any() == true
 				&& selectedNodes.All(n => n is AssemblyTreeNode asm && !asm.LoadedAssembly.HasLoadError);
 		}
 
 		public override void Execute(object parameter)
 		{
-			Execute(MainWindow.Instance.AssemblyTreeModel.SelectedNodes.OfType<AssemblyTreeNode>());
+			Execute(assemblyTreeModel.SelectedNodes.OfType<AssemblyTreeNode>());
 		}
 
 		internal static void Execute(IEnumerable<AssemblyTreeNode> nodes)

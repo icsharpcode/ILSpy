@@ -21,20 +21,21 @@ using System.Linq;
 using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
 	[Export(typeof(IProtocolHandler))]
 	[Shared]
-	class MetadataProtocolHandler : IProtocolHandler
+	class MetadataProtocolHandler(AssemblyTreeModel assemblyTreeModel) : IProtocolHandler
 	{
 		public ILSpyTreeNode Resolve(string protocol, MetadataFile module, Handle handle, out bool newTabPage)
 		{
 			newTabPage = true;
 			if (protocol != "metadata")
 				return null;
-			var assemblyTreeNode = MainWindow.Instance.AssemblyTreeModel.FindTreeNode(module) as AssemblyTreeNode;
+			var assemblyTreeNode = assemblyTreeModel.FindTreeNode(module) as AssemblyTreeNode;
 			if (assemblyTreeNode == null)
 				return null;
 			var mxNode = assemblyTreeNode.Children.OfType<MetadataTreeNode>().FirstOrDefault();

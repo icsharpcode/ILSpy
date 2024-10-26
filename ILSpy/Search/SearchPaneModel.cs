@@ -37,11 +37,14 @@ namespace ICSharpCode.ILSpy.Search
 	[Export]
 	public class SearchPaneModel : ToolPaneModel
 	{
-		private string searchTerm;
 		public const string PaneContentId = "searchPane";
 
-		public SearchPaneModel()
+		private readonly SettingsService settingsService;
+		private string searchTerm;
+
+		public SearchPaneModel(SettingsService settingsService)
 		{
+			this.settingsService = settingsService;
 			ContentId = PaneContentId;
 			Title = Properties.Resources.SearchPane_Search;
 			Icon = "Images/Search";
@@ -64,7 +67,7 @@ namespace ICSharpCode.ILSpy.Search
 			new() { Mode = SearchMode.Namespace, Image = Images.Namespace, Name = "Namespace" }
 		];
 
-		public SessionSettings SessionSettings => SettingsService.Instance.SessionSettings;
+		public SessionSettings SessionSettings => settingsService.SessionSettings;
 
 		public string SearchTerm {
 			get => searchTerm;

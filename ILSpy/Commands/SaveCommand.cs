@@ -28,16 +28,8 @@ namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources._SaveCode), MenuIcon = "Images/Save", MenuCategory = nameof(Resources.Save), MenuOrder = 0)]
 	[Shared]
-	sealed class SaveCommand : CommandWrapper
+	sealed class SaveCommand(AssemblyTreeModel assemblyTreeModel, LanguageService languageService) : CommandWrapper(ApplicationCommands.Save)
 	{
-		private AssemblyTreeModel assemblyTreeModel;
-
-		public SaveCommand(AssemblyTreeModel assemblyTreeModel)
-			: base(ApplicationCommands.Save)
-		{
-			this.assemblyTreeModel = assemblyTreeModel;
-		}
-
 		protected override void OnCanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
 			e.Handled = true;
@@ -46,7 +38,7 @@ namespace ICSharpCode.ILSpy
 
 		protected override void OnExecute(object sender, ExecutedRoutedEventArgs e)
 		{
-			SaveCodeContextMenuEntry.Execute(assemblyTreeModel.SelectedNodes.ToList());
+			SaveCodeContextMenuEntry.Execute(assemblyTreeModel.SelectedNodes.ToList(), languageService);
 		}
 	}
 }

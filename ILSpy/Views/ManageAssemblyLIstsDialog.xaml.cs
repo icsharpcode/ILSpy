@@ -29,10 +29,10 @@ namespace ICSharpCode.ILSpy
 	/// </summary>
 	public partial class ManageAssemblyListsDialog : Window
 	{
-		public ManageAssemblyListsDialog()
+		public ManageAssemblyListsDialog(SettingsService settingsService)
 		{
 			InitializeComponent();
-			DataContext = new ManageAssemblyListsViewModel(this);
+			DataContext = new ManageAssemblyListsViewModel(this, settingsService);
 		}
 
 		private void PreconfiguredAssemblyListsMenuClick(object sender, RoutedEventArgs e)
