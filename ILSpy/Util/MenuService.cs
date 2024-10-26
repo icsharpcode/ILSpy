@@ -38,10 +38,8 @@ namespace ICSharpCode.ILSpy.Util
 {
 	[Export]
 	[Shared]
-	public class MenuService(IExportProvider exportProvider)
+	public class MenuService(IExportProvider exportProvider, DockWorkspace dockWorkspace)
 	{
-		private readonly DockWorkspace dockWorkspace = DockWorkspace.Instance;
-
 		public void Init(Menu mainMenu, ToolBar toolBar, InputBindingCollection inputBindings)
 		{
 			InitMainMenu(mainMenu);
@@ -144,7 +142,7 @@ namespace ICSharpCode.ILSpy.Util
 			windowMenuItem.Items.Clear();
 
 			var toolItems = dockWorkspace.ToolPanes.Select(toolPane => CreateMenuItem(toolPane, inputBindings)).ToArray();
-			var tabItems = dockWorkspace.TabPages.ObservableSelect(tabPage => CreateMenuItem(tabPage, dockWorkspace));
+			var tabItems = dockWorkspace.TabPages.ObservableSelect(tabPage => CreateMenuItem(tabPage));
 
 			var allItems = new ObservableCompositeCollection<Control>(defaultItems, [new Separator()], toolItems, [new Separator()], tabItems);
 
@@ -188,7 +186,7 @@ namespace ICSharpCode.ILSpy.Util
 
 		}
 
-		static Control CreateMenuItem(TabPageModel pane, DockWorkspace dock)
+		Control CreateMenuItem(TabPageModel pane)
 		{
 			var header = new TextBlock {
 				MaxWidth = 200,
@@ -200,13 +198,13 @@ namespace ICSharpCode.ILSpy.Util
 			});
 
 			MenuItem menuItem = new() {
-				Command = new TabPageCommand(pane),
+				Command = new TabPageCommand(pane, dockWorkspace),
 				Header = header,
 				IsCheckable = true
 			};
 
-			menuItem.SetBinding(MenuItem.IsCheckedProperty, new Binding(nameof(dock.ActiveTabPage)) {
-				Source = dock,
+			menuItem.SetBinding(MenuItem.IsCheckedProperty, new Binding(nameof(dockWorkspace.ActiveTabPage)) {
+				Source = dockWorkspace,
 				ConverterParameter = pane,
 				Converter = BinaryOperationConverter.Equality,
 				Mode = BindingMode.OneWay
@@ -215,10 +213,10 @@ namespace ICSharpCode.ILSpy.Util
 			return menuItem;
 		}
 
-		static Control CreateMenuItem(ToolPaneModel pane, InputBindingCollection inputBindings)
+		Control CreateMenuItem(ToolPaneModel pane, InputBindingCollection inputBindings)
 		{
 			MenuItem menuItem = new() {
-				Command = pane.AssociatedCommand ?? new ToolPaneCommand(pane.ContentId),
+				Command = pane.AssociatedCommand ?? new ToolPaneCommand(pane.ContentId, dockWorkspace),
 				Header = pane.Title
 			};
 			var shortcutKey = pane.ShortcutKey;

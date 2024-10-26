@@ -25,6 +25,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 
 using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
@@ -33,7 +34,7 @@ namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDisassemble), MenuCategory = nameof(Resources.Open), MenuOrder = 2.5)]
 	[Shared]
-	sealed class DisassembleAllCommand(AssemblyTreeModel assemblyTreeModel, LanguageService languageService) : SimpleCommand
+	sealed class DisassembleAllCommand(AssemblyTreeModel assemblyTreeModel, DockWorkspace dockWorkspace) : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)
 		{
@@ -42,8 +43,6 @@ namespace ICSharpCode.ILSpy
 
 		public override void Execute(object parameter)
 		{
-			var dockWorkspace = Docking.DockWorkspace.Instance;
-
 			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new();
 				Parallel.ForEach(
@@ -61,7 +60,7 @@ namespace ICSharpCode.ILSpy
 									var options = dockWorkspace.ActiveTabPage.CreateDecompilationOptions();
 									options.FullDecompilation = true;
 									options.CancellationToken = ct;
-									new ILLanguage().DecompileAssembly(asm, new Decompiler.PlainTextOutput(writer), options);
+									new ILLanguage(dockWorkspace).DecompileAssembly(asm, new Decompiler.PlainTextOutput(writer), options);
 								}
 								catch (Exception ex)
 								{

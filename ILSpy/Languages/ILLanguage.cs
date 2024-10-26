@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy
 	/// </remarks>
 	[Export(typeof(Language))]
 	[Shared]
-	public class ILLanguage : Language
+	public class ILLanguage(DockWorkspace dockWorkspace) : Language
 	{
 		protected bool detectControlStructure = true;
 
@@ -199,7 +199,6 @@ namespace ICSharpCode.ILSpy
 		public override RichText GetRichTextTooltip(IEntity entity)
 		{
 			var output = new AvalonEditTextOutput() { IgnoreNewLineAndIndent = true };
-			var dockWorkspace = DockWorkspace.Instance;
 
 			var disasm = CreateDisassembler(output, dockWorkspace.ActiveTabPage.CreateDecompilationOptions());
 			MetadataFile module = entity.ParentModule?.MetadataFile;

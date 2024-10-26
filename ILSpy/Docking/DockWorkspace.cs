@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Composition;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -43,37 +44,33 @@ using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpy.Docking
 {
+	[Export]
+	[Shared]
 	public class DockWorkspace : ObservableObject, ILayoutUpdateStrategy
 	{
-		private static readonly IExportProvider exportProvider = App.ExportProvider;
+		private readonly IExportProvider exportProvider;
+		
+		private SettingsService SettingsService { get; }
 
-		private static SettingsService SettingsService => exportProvider.GetExportedValue<SettingsService>();
+		private LanguageService LanguageService => exportProvider.GetExportedValue<LanguageService>();
 
-		private static LanguageService LanguageService => exportProvider.GetExportedValue<LanguageService>();
-
-		private static SessionSettings SessionSettings => SettingsService.SessionSettings;
-
-		public static readonly DockWorkspace Instance = new();
+		private SessionSettings SessionSettings { get; }
 
 		private readonly ObservableCollection<TabPageModel> tabPages = [];
 
 		private DockingManager DockingManager => exportProvider.GetExportedValue<DockingManager>();
 
-		AssemblyTreeModel AssemblyTreeModel => exportProvider.GetExportedValue<AssemblyTreeModel>();
+		private AssemblyTreeModel AssemblyTreeModel => exportProvider.GetExportedValue<AssemblyTreeModel>();
 
-		private DockWorkspace()
+		public DockWorkspace(SettingsService settingsService, IExportProvider exportProvider)
 		{
+			this.exportProvider = exportProvider;
+			
+			SettingsService = settingsService;
+			SessionSettings = settingsService.SessionSettings;
+
 			this.tabPages.CollectionChanged += TabPages_CollectionChanged;
 			TabPages = new(tabPages);
-
-			ToolPanes = exportProvider
-				.GetExportedValues<ToolPaneModel>("ToolPane")
-				.OrderBy(item => item.Title)
-				.ToArray()
-				.AsReadOnly();
-
-			// Make sure there is at least one tab open
-			AddTabPage();
 
 			MessageBus<CurrentAssemblyListChangedEventArgs>.Subscribers += (sender, e) => CurrentAssemblyList_Changed(sender, e);
 		}
@@ -135,7 +132,11 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public ReadOnlyObservableCollection<TabPageModel> TabPages { get; }
 
-		public ReadOnlyCollection<ToolPaneModel> ToolPanes { get; }
+		public ReadOnlyCollection<ToolPaneModel> ToolPanes => exportProvider
+			.GetExportedValues<ToolPaneModel>("ToolPane")
+			.OrderBy(item => item.Title)
+			.ToArray()
+			.AsReadOnly();
 
 		public bool ShowToolPane(string contentId)
 		{
@@ -188,15 +189,15 @@ namespace ICSharpCode.ILSpy.Docking
 		}
 
 		public PaneModel ActivePane {
-			get => DockingManager?.ActiveContent as PaneModel;
-			set {
-				if (DockingManager is not null)
-					DockingManager.ActiveContent = value;
-			}
+			get => DockingManager.ActiveContent as PaneModel;
+			set => DockingManager.ActiveContent = value;
 		}
 
 		public void InitializeLayout()
 		{
+			// Make sure there is at least one tab open
+			AddTabPage();
+
 			DockingManager.LayoutUpdateStrategy = this;
 			XmlLayoutSerializer serializer = new XmlLayoutSerializer(DockingManager);
 			serializer.LayoutSerializationCallback += LayoutSerializationCallback;

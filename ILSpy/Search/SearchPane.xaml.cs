@@ -554,9 +554,12 @@ namespace ICSharpCode.ILSpy.Search
 	[Shared]
 	sealed class ShowSearchCommand : CommandWrapper
 	{
-		public ShowSearchCommand()
+		private readonly DockWorkspace dockWorkspace;
+
+		public ShowSearchCommand(DockWorkspace dockWorkspace)
 			: base(NavigationCommands.Search)
 		{
+			this.dockWorkspace = dockWorkspace;
 			var gestures = NavigationCommands.Search.InputGestures;
 
 			gestures.Clear();
@@ -566,7 +569,7 @@ namespace ICSharpCode.ILSpy.Search
 
 		protected override void OnExecute(object sender, ExecutedRoutedEventArgs e)
 		{
-			DockWorkspace.Instance.ShowToolPane(SearchPaneModel.PaneContentId);
+			dockWorkspace.ShowToolPane(SearchPaneModel.PaneContentId);
 		}
 	}
 }

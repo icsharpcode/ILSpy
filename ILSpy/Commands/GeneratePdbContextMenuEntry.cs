@@ -43,14 +43,14 @@ namespace ICSharpCode.ILSpy
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.GeneratePortable))]
 	[Shared]
-	class GeneratePdbContextMenuEntry(LanguageService languageService) : IContextMenuEntry
+	class GeneratePdbContextMenuEntry(LanguageService languageService, DockWorkspace dockWorkspace) : IContextMenuEntry
 	{
 		public void Execute(TextViewContext context)
 		{
 			var assembly = (context.SelectedTreeNodes?.FirstOrDefault() as AssemblyTreeNode)?.LoadedAssembly;
 			if (assembly == null)
 				return;
-			GeneratePdbForAssembly(assembly, languageService);
+			GeneratePdbForAssembly(assembly, languageService, dockWorkspace);
 		}
 
 		public bool IsEnabled(TextViewContext context) => true;
@@ -62,7 +62,7 @@ namespace ICSharpCode.ILSpy
 				&& tn.LoadedAssembly.IsLoadedAsValidAssembly;
 		}
 
-		internal static void GeneratePdbForAssembly(LoadedAssembly assembly, LanguageService languageService)
+		internal static void GeneratePdbForAssembly(LoadedAssembly assembly, LanguageService languageService, DockWorkspace dockWorkspace)
 		{
 			var file = assembly.GetMetadataFileOrNull() as PEFile;
 			if (!PortablePdbWriter.HasCodeViewDebugDirectoryEntry(file))
@@ -76,7 +76,6 @@ namespace ICSharpCode.ILSpy
 			dlg.InitialDirectory = Path.GetDirectoryName(assembly.FileName);
 			if (dlg.ShowDialog() != true)
 				return;
-			DockWorkspace dockWorkspace = DockWorkspace.Instance;
 			DecompilationOptions options = dockWorkspace.ActiveTabPage.CreateDecompilationOptions();
 			string fileName = dlg.FileName;
 			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
@@ -104,13 +103,13 @@ namespace ICSharpCode.ILSpy
 				output.AddButton(null, Resources.OpenExplorer, delegate { Process.Start("explorer", "/select,\"" + fileName + "\""); });
 				output.WriteLine();
 				return output;
-			}, ct)).Then(output => Docking.DockWorkspace.Instance.ShowText(output)).HandleExceptions();
+			}, ct)).Then(dockWorkspace.ShowText).HandleExceptions();
 		}
 	}
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.GeneratePortable), MenuCategory = nameof(Resources.Save))]
 	[Shared]
-	class GeneratePdbMainMenuEntry(AssemblyTreeModel assemblyTreeModel, LanguageService languageService) : SimpleCommand
+	class GeneratePdbMainMenuEntry(AssemblyTreeModel assemblyTreeModel, LanguageService languageService, DockWorkspace dockWorkspace) : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)
 		{
@@ -124,7 +123,7 @@ namespace ICSharpCode.ILSpy
 			var assembly = (assemblyTreeModel.SelectedNodes?.FirstOrDefault() as AssemblyTreeNode)?.LoadedAssembly;
 			if (assembly == null)
 				return;
-			GeneratePdbContextMenuEntry.GeneratePdbForAssembly(assembly, languageService);
+			GeneratePdbContextMenuEntry.GeneratePdbForAssembly(assembly, languageService, dockWorkspace);
 		}
 	}
 }

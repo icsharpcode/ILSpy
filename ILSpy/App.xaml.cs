@@ -86,7 +86,7 @@ namespace ICSharpCode.ILSpy
 			if (!InitializeDependencyInjection(settingsService))
 			{
 				// There is something completely wrong with DI, probably some service registration is missing => nothing we can do to recover, so stop and shut down.
-				Exit += (_, _) => MessageBox.Show(StartupExceptions.FormatExceptions(), "Sorry we crashed!");
+				Exit += (_, _) => MessageBox.Show(StartupExceptions.FormatExceptions(), "Sorry we crashed!", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
 				Shutdown(1);
 				return;
 			}

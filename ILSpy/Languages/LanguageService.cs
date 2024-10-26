@@ -24,6 +24,7 @@ using System.Collections.ObjectModel;
 using System.Composition;
 using System.Linq;
 
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpyX;
 
 using TomsToolbox.Wpf;
@@ -36,7 +37,7 @@ namespace ICSharpCode.ILSpy
 	{
 		private readonly LanguageSettings languageSettings;
 
-		public LanguageService(IEnumerable<Language> languages, SettingsService settingsService)
+		public LanguageService(IEnumerable<Language> languages, SettingsService settingsService, DockWorkspace dockWorkspace)
 		{
 			languageSettings = settingsService.SessionSettings.LanguageSettings;
 
@@ -44,7 +45,7 @@ namespace ICSharpCode.ILSpy
 
 			sortedLanguages.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
 #if DEBUG
-			sortedLanguages.AddRange(ILAstLanguage.GetDebugLanguages());
+			sortedLanguages.AddRange(ILAstLanguage.GetDebugLanguages(dockWorkspace));
 			sortedLanguages.AddRange(CSharpLanguage.GetDebugLanguages());
 #endif
 			AllLanguages = sortedLanguages.AsReadOnly();

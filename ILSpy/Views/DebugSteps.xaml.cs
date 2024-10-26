@@ -22,6 +22,7 @@ namespace ICSharpCode.ILSpy
 		private readonly AssemblyTreeModel assemblyTreeModel;
 		private readonly SettingsService settingsService;
 		private readonly LanguageService languageService;
+		private readonly DockWorkspace dockWorkspace;
 
 		static readonly ILAstWritingOptions writingOptions = new ILAstWritingOptions {
 			UseFieldSugar = true,
@@ -33,12 +34,13 @@ namespace ICSharpCode.ILSpy
 #if DEBUG
 		ILAstLanguage language;
 #endif
-		public DebugSteps(AssemblyTreeModel assemblyTreeModel, SettingsService settingsService, LanguageService languageService)
+		public DebugSteps(AssemblyTreeModel assemblyTreeModel, SettingsService settingsService, LanguageService languageService, DockWorkspace dockWorkspace)
 		{
 			this.assemblyTreeModel = assemblyTreeModel;
 			this.settingsService = settingsService;
 			this.languageService = languageService;
-			
+			this.dockWorkspace = dockWorkspace;
+
 			InitializeComponent();
 
 #if DEBUG
@@ -132,8 +134,8 @@ namespace ICSharpCode.ILSpy
 		void DecompileAsync(int step, bool isDebug = false)
 		{
 			lastSelectedStep = step;
-			var state = DockWorkspace.Instance.ActiveTabPage.GetState();
-			DockWorkspace.Instance.ActiveTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(assemblyTreeModel.CurrentLanguage, assemblyTreeModel.SelectedNodes,
+			var state = dockWorkspace.ActiveTabPage.GetState();
+			dockWorkspace.ActiveTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(assemblyTreeModel.CurrentLanguage, assemblyTreeModel.SelectedNodes,
 				new DecompilationOptions(assemblyTreeModel.CurrentLanguageVersion, settingsService.DecompilerSettings, settingsService.DisplaySettings) {
 					StepLimit = step,
 					IsDebug = isDebug,

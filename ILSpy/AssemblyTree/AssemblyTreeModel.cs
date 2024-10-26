@@ -264,7 +264,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				{
 					AvalonEditTextOutput output = new AvalonEditTextOutput();
 					output.Write($"Cannot find '{navigateTo}' in command line specified assemblies.");
-					DockWorkspace.Instance.ShowText(output);
+					DockWorkspace.ShowText(output);
 				}
 			}
 			else if (relevantAssemblies.Count == 1)
@@ -304,7 +304,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 					}
 					else
 					{
-						DockWorkspace.Instance.ActiveTabPage.ShowTextView(aboutPage.Display);
+						DockWorkspace.ActiveTabPage.ShowTextView(aboutPage.Display);
 					}
 				}
 			}
@@ -405,8 +405,8 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			{
 				output.Title = "Startup errors";
 
-				DockWorkspace.Instance.AddTabPage();
-				DockWorkspace.Instance.ShowText(output);
+				DockWorkspace.AddTabPage();
+				DockWorkspace.ShowText(output);
 			}
 		}
 
@@ -524,7 +524,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 			if (inNewTabPage)
 			{
-				DockWorkspace.Instance.AddTabPage();
+				DockWorkspace.AddTabPage();
 				SelectedItem = null;
 			}
 
@@ -739,7 +739,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 			else
 			{
-				var activeTabPage = DockWorkspace.Instance.ActiveTabPage;
+				var activeTabPage = DockWorkspace.ActiveTabPage;
 
 				if (!isNavigatingHistory)
 				{
@@ -787,7 +787,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		public void DecompileSelectedNodes(DecompilerTextViewState? newState = null)
 		{
-			var activeTabPage = DockWorkspace.Instance.ActiveTabPage;
+			var activeTabPage = DockWorkspace.ActiveTabPage;
 
 			activeTabPage.SupportsLanguageSwitching = true;
 
@@ -809,7 +809,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		public void RefreshDecompiledView()
 		{
-			DecompileSelectedNodes(DockWorkspace.Instance.ActiveTabPage.GetState() as DecompilerTextViewState);
+			DecompileSelectedNodes(DockWorkspace.ActiveTabPage.GetState() as DecompilerTextViewState);
 		}
 
 		public Language CurrentLanguage => languageService.Language;
@@ -830,7 +830,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			{
 				isNavigatingHistory = true;
 
-				TabPageModel tabPage = DockWorkspace.Instance.ActiveTabPage;
+				TabPageModel tabPage = DockWorkspace.ActiveTabPage;
 				var state = tabPage.GetState();
 				if (state != null)
 					history.UpdateCurrent(new NavigationState(tabPage, state));
@@ -838,10 +838,10 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 				TabPageModel activeTabPage = newState.TabPage;
 
-				if (!DockWorkspace.Instance.TabPages.Contains(activeTabPage))
-					DockWorkspace.Instance.AddTabPage(activeTabPage);
+				if (!DockWorkspace.TabPages.Contains(activeTabPage))
+					DockWorkspace.AddTabPage(activeTabPage);
 				else
-					DockWorkspace.Instance.ActiveTabPage = activeTabPage;
+					DockWorkspace.ActiveTabPage = activeTabPage;
 
 				SelectNodes(newState.TreeNodes);
 			}
@@ -861,13 +861,13 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			{
 				if (inNewTabPage)
 				{
-					DockWorkspace.Instance.AddTabPage();
+					DockWorkspace.AddTabPage();
 				}
 
 				if (e.Uri.Host == "aboutpage")
 				{
 					RecordHistory();
-					DockWorkspace.Instance.ActiveTabPage.ShowTextView(aboutPage.Display);
+					DockWorkspace.ActiveTabPage.ShowTextView(aboutPage.Display);
 					e.Handled = true;
 					return;
 				}
@@ -891,7 +891,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 					}
 				}
 				RecordHistory();
-				DockWorkspace.Instance.ShowText(output);
+				DockWorkspace.ShowText(output);
 				e.Handled = true;
 			}
 
@@ -899,7 +899,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			{
 				if (isNavigatingHistory)
 					return;
-				TabPageModel tabPage = DockWorkspace.Instance.ActiveTabPage;
+				TabPageModel tabPage = DockWorkspace.ActiveTabPage;
 				var currentState = tabPage.GetState();
 				if (currentState != null)
 					history.UpdateCurrent(new NavigationState(tabPage, currentState));

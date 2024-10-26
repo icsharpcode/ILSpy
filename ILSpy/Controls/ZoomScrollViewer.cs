@@ -176,21 +176,4 @@ namespace ICSharpCode.ILSpy.Controls
 				return val;
 		}
 	}
-
-	sealed class IsNormalZoomConverter : IValueConverter
-	{
-		public static readonly IsNormalZoomConverter Instance = new IsNormalZoomConverter();
-
-		public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-		{
-			if (parameter is bool && (bool)parameter)
-				return true;
-			return ((double)value) == 1.0;
-		}
-
-		public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-		{
-			throw new NotImplementedException();
-		}
-	}
 }

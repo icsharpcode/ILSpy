@@ -27,6 +27,7 @@ using System.Windows.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpyX.Abstractions;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 using ICSharpCode.ILSpyX.TreeView;
@@ -56,6 +57,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public static SettingsService SettingsService { get; } = App.ExportProvider.GetExportedValue<SettingsService>();
 
 		public static LanguageService LanguageService { get; } = App.ExportProvider.GetExportedValue<LanguageService>();
+
+		public static DockWorkspace DockWorkspace { get; } = App.ExportProvider.GetExportedValue<DockWorkspace>();
 
 		public virtual FilterResult Filter(LanguageSettings settings)
 		{

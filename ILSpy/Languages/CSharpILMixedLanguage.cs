@@ -34,6 +34,7 @@ using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Extensions;
 
@@ -43,7 +44,7 @@ namespace ICSharpCode.ILSpy
 
 	[Export(typeof(Language))]
 	[Shared]
-	class CSharpILMixedLanguage(SettingsService settingsService) : ILLanguage
+	class CSharpILMixedLanguage(SettingsService settingsService, DockWorkspace dockWorkspace) : ILLanguage(dockWorkspace)
 	{
 		public override string Name => "IL with C#";
 

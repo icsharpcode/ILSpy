@@ -26,6 +26,7 @@ using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 
@@ -41,13 +42,6 @@ namespace ICSharpCode.ILSpy
 	{
 		public event EventHandler StepperUpdated;
 
-		protected virtual void OnStepperUpdated(EventArgs e = null)
-		{
-			StepperUpdated?.Invoke(this, e ?? new EventArgs());
-		}
-
-		public Stepper Stepper { get; set; } = new Stepper();
-
 		readonly string name;
 
 		protected ILAstLanguage(string name)
@@ -55,12 +49,19 @@ namespace ICSharpCode.ILSpy
 			this.name = name;
 		}
 
+		protected virtual void OnStepperUpdated(EventArgs e = null)
+		{
+			StepperUpdated?.Invoke(this, e ?? new EventArgs());
+		}
+
+		public Stepper Stepper { get; set; } = new Stepper();
+
 		public override string Name { get { return name; } }
 
-		internal static IEnumerable<ILAstLanguage> GetDebugLanguages()
+		internal static IEnumerable<ILAstLanguage> GetDebugLanguages(DockWorkspace dockWorkspace)
 		{
 			yield return new TypedIL();
-			yield return new BlockIL(CSharpDecompiler.GetILTransforms());
+			yield return new BlockIL(CSharpDecompiler.GetILTransforms(), dockWorkspace);
 		}
 
 		public override string FileExtension {
@@ -78,10 +79,8 @@ namespace ICSharpCode.ILSpy
 			output.WriteLine();
 		}
 
-		class TypedIL : ILAstLanguage
+		class TypedIL() : ILAstLanguage("Typed IL")
 		{
-			public TypedIL() : base("Typed IL") { }
-
 			public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 			{
 				base.DecompileMethod(method, output, options);
@@ -96,15 +95,8 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		class BlockIL : ILAstLanguage
+		class BlockIL(IReadOnlyList<IILTransform> transforms, DockWorkspace dockWorkspace) : ILAstLanguage("ILAst")
 		{
-			readonly IReadOnlyList<IILTransform> transforms;
-
-			public BlockIL(IReadOnlyList<IILTransform> transforms) : base("ILAst")
-			{
-				this.transforms = transforms;
-			}
-
 			public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 			{
 				base.DecompileMethod(method, output, options);
@@ -146,7 +138,7 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 				(output as ISmartTextOutput)?.AddButton(Images.ViewCode, "Show Steps", delegate {
-					Docking.DockWorkspace.Instance.ShowToolPane(DebugStepsPaneModel.PaneContentId);
+					dockWorkspace.ShowToolPane(DebugStepsPaneModel.PaneContentId);
 				});
 				output.WriteLine();
 				il.WriteTo(output, DebugSteps.Options);

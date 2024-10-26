@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile), MenuCategory = nameof(Resources.Open), MenuOrder = 2.5)]
 	[Shared]
-	sealed class DecompileAllCommand(AssemblyTreeModel assemblyTreeModel, LanguageService languageService) : SimpleCommand
+	sealed class DecompileAllCommand(AssemblyTreeModel assemblyTreeModel, DockWorkspace dockWorkspace) : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)
 		{
@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void Execute(object parameter)
 		{
-			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
+			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
 				Parallel.ForEach(
 					Partitioner.Create(assemblyTreeModel.AssemblyList.GetAssemblies(), loadBalance: true),
@@ -61,7 +61,7 @@ namespace ICSharpCode.ILSpy
 							{
 								try
 								{
-									var options = DockWorkspace.Instance.ActiveTabPage.CreateDecompilationOptions();
+									var options = dockWorkspace.ActiveTabPage.CreateDecompilationOptions();
 									options.CancellationToken = ct;
 									options.FullDecompilation = true;
 									new CSharpLanguage().DecompileAssembly(asm, new PlainTextOutput(writer), options);
@@ -85,20 +85,19 @@ namespace ICSharpCode.ILSpy
 						}
 					});
 				return output;
-			}, ct)).Then(output => Docking.DockWorkspace.Instance.ShowText(output)).HandleExceptions();
+			}, ct)).Then(dockWorkspace.ShowText).HandleExceptions();
 		}
 	}
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile100x), MenuCategory = nameof(Resources.Open), MenuOrder = 2.6)]
 	[Shared]
-	sealed class Decompile100TimesCommand(AssemblyTreeModel assemblyTreeModel, LanguageService languageService) : SimpleCommand
+	sealed class Decompile100TimesCommand(AssemblyTreeModel assemblyTreeModel, LanguageService languageService, DockWorkspace dockWorkspace) : SimpleCommand
 	{
 		public override void Execute(object parameter)
 		{
 			const int numRuns = 100;
 			var language = languageService.Language;
 			var nodes = assemblyTreeModel.SelectedNodes.ToArray();
-			DockWorkspace dockWorkspace = DockWorkspace.Instance;
 			var options = dockWorkspace.ActiveTabPage.CreateDecompilationOptions();
 			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				options.CancellationToken = ct;

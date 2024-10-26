@@ -23,6 +23,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
@@ -35,11 +36,11 @@ namespace ICSharpCode.ILSpy.TextView
 {
 	[ExportContextMenuEntry(Header = nameof(Resources._SaveCode), Category = nameof(Resources.Save), Icon = "Images/Save")]
 	[Shared]
-	sealed class SaveCodeContextMenuEntry(LanguageService languageService) : IContextMenuEntry
+	sealed class SaveCodeContextMenuEntry(LanguageService languageService, DockWorkspace dockWorkspace) : IContextMenuEntry
 	{
 		public void Execute(TextViewContext context)
 		{
-			Execute(context.SelectedTreeNodes, languageService);
+			Execute(context.SelectedTreeNodes, languageService, dockWorkspace);
 		}
 
 		public bool IsEnabled(TextViewContext context) => true;
@@ -57,10 +58,8 @@ namespace ICSharpCode.ILSpy.TextView
 				|| (selectedNodes.Count > 1 && (selectedNodes.All(n => n is AssemblyTreeNode) || selectedNodes.All(n => n is IMemberTreeNode)));
 		}
 
-		public static void Execute(IReadOnlyList<SharpTreeNode> selectedNodes, LanguageService languageService)
+		public static void Execute(IReadOnlyList<SharpTreeNode> selectedNodes, LanguageService languageService, DockWorkspace dockWorkspace)
 		{
-			var dockWorkspace = Docking.DockWorkspace.Instance;
-
 			var currentLanguage = languageService.Language;
 			var tabPage = dockWorkspace.ActiveTabPage;
 			tabPage.ShowTextView(textView => {
@@ -80,7 +79,7 @@ namespace ICSharpCode.ILSpy.TextView
 						var assemblies = selectedNodes.OfType<AssemblyTreeNode>()
 							.Select(n => n.LoadedAssembly)
 							.Where(a => a.IsLoadedAsValidAssembly).ToArray();
-						SolutionWriter.CreateSolution(textView, selectedPath, currentLanguage, assemblies);
+						SolutionWriter.CreateSolution(tabPage, textView, selectedPath, currentLanguage, assemblies);
 					}
 					return;
 				}

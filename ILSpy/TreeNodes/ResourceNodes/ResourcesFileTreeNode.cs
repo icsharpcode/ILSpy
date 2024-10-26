@@ -176,7 +176,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			EnsureLazyChildren();
 			base.Decompile(language, output, options);
-			var textView = (DecompilerTextView)Docking.DockWorkspace.Instance.ActiveTabPage.Content;
+			var textView = (DecompilerTextView)DockWorkspace.ActiveTabPage.Content;
 			if (stringTableEntries.Count != 0)
 			{
 				ISmartTextOutput smartOutput = output as ISmartTextOutput;
