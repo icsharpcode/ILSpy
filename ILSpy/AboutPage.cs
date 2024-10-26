@@ -23,6 +23,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Navigation;
@@ -34,7 +35,6 @@ using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpy.Updates;
-using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy
 {
@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy
 
 	[Export]
 	[Shared]
-	public sealed class AboutPage(IEnumerable<IAboutPageAddition> aboutPageAdditions)
+	public sealed class AboutPage(IEnumerable<IAboutPageAddition> aboutPageAdditions, SettingsService settingsService)
 	{
 		public void Display(DecompilerTextView textView)
 		{
@@ -68,9 +68,10 @@ namespace ICSharpCode.ILSpy
 
 			output.AddUIElement(
 			delegate {
-				StackPanel stackPanel = new StackPanel();
-				stackPanel.HorizontalAlignment = HorizontalAlignment.Center;
-				stackPanel.Orientation = Orientation.Horizontal;
+				StackPanel stackPanel = new() {
+					HorizontalAlignment = HorizontalAlignment.Center,
+					Orientation = Orientation.Horizontal
+				};
 				if (NotifyOfUpdatesStrategy.LatestAvailableVersion == null)
 				{
 					AddUpdateCheckButton(stackPanel, textView);
@@ -80,11 +81,13 @@ namespace ICSharpCode.ILSpy
 					// we already retrieved the latest version sometime earlier
 					ShowAvailableVersion(NotifyOfUpdatesStrategy.LatestAvailableVersion, stackPanel);
 				}
-				CheckBox checkBox = new CheckBox();
-				checkBox.Margin = new Thickness(4);
-				checkBox.Content = Resources.AutomaticallyCheckUpdatesEveryWeek;
-				UpdateSettings settings = new UpdateSettings(SettingsService.Instance.SpySettings);
-				checkBox.SetBinding(CheckBox.IsCheckedProperty, new Binding("AutomaticUpdateCheckEnabled") { Source = settings });
+				CheckBox checkBox = new() {
+					Margin = new Thickness(4),
+					Content = Resources.AutomaticallyCheckUpdatesEveryWeek
+				};
+
+				var settings = settingsService.GetSettings<UpdateSettings>();
+				checkBox.SetBinding(ToggleButton.IsCheckedProperty, new Binding("AutomaticUpdateCheckEnabled") { Source = settings });
 				return new StackPanel {
 					Margin = new Thickness(0, 4, 0, 0),
 					Cursor = Cursors.Arrow,

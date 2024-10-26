@@ -152,16 +152,16 @@ namespace ICSharpCode.ILSpy
 
 		string updateAvailableDownloadUrl;
 
-		public async Task ShowMessageIfUpdatesAvailableAsync(ISettingsProvider spySettings, bool forceCheck = false)
+		public async Task ShowMessageIfUpdatesAvailableAsync(UpdateSettings settings, bool forceCheck = false)
 		{
 			string downloadUrl;
 			if (forceCheck)
 			{
-				downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesAsync(spySettings);
+				downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesAsync(settings);
 			}
 			else
 			{
-				downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesIfEnabledAsync(spySettings);
+				downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesIfEnabledAsync(settings);
 			}
 
 			// The Update Panel is only available for NotifyOfUpdatesStrategy, AutoUpdate will have differing UI requirements
@@ -182,7 +182,7 @@ namespace ICSharpCode.ILSpy
 			else
 			{
 				updatePanel.Visibility = Visibility.Collapsed;
-				string downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesAsync(settingsService.SpySettings);
+				string downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesAsync(settingsService.GetSettings<UpdateSettings>());
 				AdjustUpdateUIAfterCheck(downloadUrl, true);
 			}
 		}

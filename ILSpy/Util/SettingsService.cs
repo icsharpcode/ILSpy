@@ -19,12 +19,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.ComponentModel;
-using System.Composition;
 using System.Xml.Linq;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Options;
-using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Settings;
 
@@ -48,16 +45,11 @@ namespace ICSharpCode.ILSpy.Util
 		XElement SaveToXml();
 	}
 
-	public abstract class SettingsServiceBase
+	public abstract class SettingsServiceBase(ISettingsProvider spySettings)
 	{
 		protected readonly ConcurrentDictionary<Type, ISettingsSection> sections = new();
 
-		public ISettingsProvider SpySettings;
-
-		protected SettingsServiceBase(ISettingsProvider spySettings)
-		{
-			SpySettings = spySettings;
-		}
+		protected ISettingsProvider SpySettings { get; set; } = spySettings;
 
 		public T GetSettings<T>() where T : ISettingsSection, new()
 		{
@@ -73,7 +65,7 @@ namespace ICSharpCode.ILSpy.Util
 			});
 		}
 
-		protected void SaveSection(ISettingsSection section, XElement root)
+		protected static void SaveSection(ISettingsSection section, XElement root)
 		{
 			var element = section.SaveToXml();
 
@@ -89,15 +81,8 @@ namespace ICSharpCode.ILSpy.Util
 		}
 	}
 
-	public class SettingsSnapshot : SettingsServiceBase
+	public class SettingsSnapshot(SettingsService parent, ISettingsProvider spySettings) : SettingsServiceBase(spySettings)
 	{
-		private readonly SettingsService parent;
-
-		public SettingsSnapshot(SettingsService parent) : base(parent.SpySettings)
-		{
-			this.parent = parent;
-		}
-
 		public void Save()
 		{
 			SpySettings.Update(root => {
@@ -113,8 +98,6 @@ namespace ICSharpCode.ILSpy.Util
 
 	public class SettingsService() : SettingsServiceBase(LoadSettings())
 	{
-		public static readonly SettingsService Instance = App.ExportProvider.GetExportedValue<SettingsService>();
-
 		public SessionSettings SessionSettings => GetSettings<SessionSettings>();
 
 		public DecompilerSettings DecompilerSettings => GetSettings<DecompilerSettings>();
@@ -174,7 +157,7 @@ namespace ICSharpCode.ILSpy.Util
 
 		public SettingsSnapshot CreateSnapshot()
 		{
-			return new(this);
+			return new(this, SpySettings);
 		}
 
 		protected override void Section_PropertyChanged(object? sender, PropertyChangedEventArgs e)

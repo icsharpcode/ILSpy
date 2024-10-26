@@ -17,22 +17,36 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.ComponentModel;
 using System.Xml.Linq;
 
-using ICSharpCode.ILSpyX.Settings;
+using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpy.Updates
 {
-	sealed class UpdateSettings : INotifyPropertyChanged
+	public sealed class UpdateSettings : ObservableObjectBase, ISettingsSection
 	{
-		public UpdateSettings(ISettingsProvider spySettings)
+		public XName SectionName => "UpdateSettings";
+
+		bool automaticUpdateCheckEnabled;
+
+		public bool AutomaticUpdateCheckEnabled {
+			get => automaticUpdateCheckEnabled;
+			set => SetProperty(ref automaticUpdateCheckEnabled, value);
+		}
+
+		DateTime? lastSuccessfulUpdateCheck;
+
+		public DateTime? LastSuccessfulUpdateCheck {
+			get => lastSuccessfulUpdateCheck;
+			set => SetProperty(ref lastSuccessfulUpdateCheck, value);
+		}
+
+		public void LoadFromXml(XElement section)
 		{
-			XElement s = spySettings["UpdateSettings"];
-			this.automaticUpdateCheckEnabled = (bool?)s.Element("AutomaticUpdateCheckEnabled") ?? true;
+			AutomaticUpdateCheckEnabled = (bool?)section.Element("AutomaticUpdateCheckEnabled") ?? true;
 			try
 			{
-				this.lastSuccessfulUpdateCheck = (DateTime?)s.Element("LastSuccessfulUpdateCheck");
+				LastSuccessfulUpdateCheck = (DateTime?)section.Element("LastSuccessfulUpdateCheck");
 			}
 			catch (FormatException)
 			{
@@ -41,49 +55,18 @@ namespace ICSharpCode.ILSpy.Updates
 			}
 		}
 
-		bool automaticUpdateCheckEnabled;
-
-		public bool AutomaticUpdateCheckEnabled {
-			get { return automaticUpdateCheckEnabled; }
-			set {
-				if (automaticUpdateCheckEnabled != value)
-				{
-					automaticUpdateCheckEnabled = value;
-					Save();
-					OnPropertyChanged(nameof(AutomaticUpdateCheckEnabled));
-				}
-			}
-		}
-
-		DateTime? lastSuccessfulUpdateCheck;
-
-		public DateTime? LastSuccessfulUpdateCheck {
-			get { return lastSuccessfulUpdateCheck; }
-			set {
-				if (lastSuccessfulUpdateCheck != value)
-				{
-					lastSuccessfulUpdateCheck = value;
-					Save();
-					OnPropertyChanged(nameof(LastSuccessfulUpdateCheck));
-				}
-			}
-		}
-
-		public void Save()
+		public XElement SaveToXml()
 		{
-			XElement updateSettings = new XElement("UpdateSettings");
-			updateSettings.Add(new XElement("AutomaticUpdateCheckEnabled", automaticUpdateCheckEnabled));
-			if (lastSuccessfulUpdateCheck != null)
-				updateSettings.Add(new XElement("LastSuccessfulUpdateCheck", lastSuccessfulUpdateCheck));
-			SettingsService.Instance.SpySettings.SaveSettings(updateSettings);
-		}
+			var section = new XElement(SectionName);
 
-		public event PropertyChangedEventHandler PropertyChanged;
+			section.Add(new XElement("AutomaticUpdateCheckEnabled", AutomaticUpdateCheckEnabled));
 
-		void OnPropertyChanged(string propertyName)
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+			if (LastSuccessfulUpdateCheck != null)
+			{
+				section.Add(new XElement("LastSuccessfulUpdateCheck", LastSuccessfulUpdateCheck));
+			}
+
+			return section;
 		}
 	}
-
 }

@@ -42,6 +42,7 @@ using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.Search;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Updates;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Settings;
@@ -169,16 +170,16 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		/// <summary>
 		/// Called on startup or when passed arguments via WndProc from a second instance.
-		/// In the format case, spySettings is non-null; in the latter it is null.
+		/// In the format case, updateSettings is non-null; in the latter it is null.
 		/// </summary>
-		private async Task HandleCommandLineArgumentsAfterShowList(CommandLineArguments args, ISettingsProvider? spySettings = null)
+		private async Task HandleCommandLineArgumentsAfterShowList(CommandLineArguments args, UpdateSettings? updateSettings = null)
 		{
 			var sessionSettings = settingsService.SessionSettings;
 
 			var relevantAssemblies = commandLineLoadedAssemblies.ToList();
 			commandLineLoadedAssemblies.Clear(); // clear references once we don't need them anymore
 
-			await NavigateOnLaunch(args.NavigateTo, sessionSettings.ActiveTreeViewPath, spySettings, relevantAssemblies);
+			await NavigateOnLaunch(args.NavigateTo, sessionSettings.ActiveTreeViewPath, updateSettings, relevantAssemblies);
 
 			if (args.Search != null)
 			{
@@ -207,7 +208,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			});
 		}
 
-		private async Task NavigateOnLaunch(string? navigateTo, string[]? activeTreeViewPath, ISettingsProvider? spySettings, List<LoadedAssembly> relevantAssemblies)
+		private async Task NavigateOnLaunch(string? navigateTo, string[]? activeTreeViewPath, UpdateSettings? updateSettings, List<LoadedAssembly> relevantAssemblies)
 		{
 			var initialSelection = SelectedItem;
 			if (navigateTo != null)
@@ -277,7 +278,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 					SelectNode(asmNode);
 				}
 			}
-			else if (spySettings != null)
+			else if (updateSettings != null)
 			{
 				SharpTreeNode? node = null;
 				if (activeTreeViewPath?.Length > 0)
@@ -300,7 +301,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 						SelectNode(node);
 
 						// only if not showing the about page, perform the update check:
-						await App.Current.MainWindow.ShowMessageIfUpdatesAvailableAsync(spySettings);
+						await App.Current.MainWindow.ShowMessageIfUpdatesAvailableAsync(updateSettings);
 					}
 					else
 					{
@@ -399,7 +400,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		private async Task OpenAssemblies()
 		{
-			await HandleCommandLineArgumentsAfterShowList(App.CommandLineArguments, settingsService.SpySettings);
+			await HandleCommandLineArgumentsAfterShowList(App.CommandLineArguments, settingsService.GetSettings<UpdateSettings>());
 
 			if (FormatExceptions(App.StartupExceptions.ToArray(), out var output))
 			{

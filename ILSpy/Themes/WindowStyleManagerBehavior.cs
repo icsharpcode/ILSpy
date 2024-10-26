@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy.Themes
 		{
 			base.OnAttached();
 
-			MessageBus<SettingsChangedEventArgs>.Subscribers += (sender, e) => DisplaySettings_PropertyChanged(sender, e);
+			MessageBus<SettingsChangedEventArgs>.Subscribers += (sender, e) => Settings_PropertyChanged(sender, e);
 
 			_foreground = AssociatedObject.Track(Control.ForegroundProperty);
 			_background = AssociatedObject.Track(Control.BackgroundProperty);
@@ -83,7 +83,7 @@ namespace ICSharpCode.ILSpy.Themes
 			MessageBox.Show(Properties.Resources.SettingsChangeRestartRequired);
 		}
 
-		private void DisplaySettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		private void Settings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			if (sender is not DisplaySettings displaySettings)
 				return;

@@ -20,6 +20,7 @@
 using System.Composition;
 
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.Updates;
 
 namespace ICSharpCode.ILSpy
 {
@@ -29,7 +30,7 @@ namespace ICSharpCode.ILSpy
 	{
 		public override async void Execute(object parameter)
 		{
-			await App.Current.MainWindow.ShowMessageIfUpdatesAvailableAsync(settingsService.SpySettings, forceCheck: true);
+			await App.Current.MainWindow.ShowMessageIfUpdatesAvailableAsync(settingsService.GetSettings<UpdateSettings>(), forceCheck: true);
 		}
 	}
 }
