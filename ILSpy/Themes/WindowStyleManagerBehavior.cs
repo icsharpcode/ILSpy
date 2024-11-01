@@ -27,6 +27,7 @@ using ICSharpCode.ILSpy.Options;
 
 using TomsToolbox.Essentials;
 using TomsToolbox.Wpf;
+using TomsToolbox.Wpf.Composition;
 using TomsToolbox.Wpf.Interactivity;
 
 namespace ICSharpCode.ILSpy.Themes
@@ -42,7 +43,7 @@ namespace ICSharpCode.ILSpy.Themes
 		{
 			base.OnAttached();
 
-			SettingsService.Instance.DisplaySettings.PropertyChanged += DisplaySettings_PropertyChanged;
+			MessageBus<SettingsChangedEventArgs>.Subscribers += (sender, e) => Settings_PropertyChanged(sender, e);
 
 			_foreground = AssociatedObject.Track(Control.ForegroundProperty);
 			_background = AssociatedObject.Track(Control.BackgroundProperty);
@@ -50,7 +51,7 @@ namespace ICSharpCode.ILSpy.Themes
 			_foreground.Changed += Color_Changed;
 			_background.Changed += Color_Changed;
 
-			UpdateWindowStyle();
+			UpdateWindowStyle(AssociatedObject.GetExportProvider().GetExportedValue<SettingsService>().DisplaySettings);
 			ApplyThemeToWindowCaption();
 		}
 
@@ -60,8 +61,6 @@ namespace ICSharpCode.ILSpy.Themes
 
 			_foreground.Changed -= Color_Changed;
 			_background.Changed -= Color_Changed;
-
-			SettingsService.Instance.DisplaySettings.PropertyChanged -= DisplaySettings_PropertyChanged;
 		}
 
 		private void Color_Changed(object sender, EventArgs e)
@@ -69,12 +68,14 @@ namespace ICSharpCode.ILSpy.Themes
 			ApplyThemeToWindowCaption();
 		}
 
-		private void UpdateWindowStyle()
+		private void UpdateWindowStyle(DisplaySettings displaySettings)
 		{
 			var window = AssociatedObject;
 
-			if (SettingsService.Instance.DisplaySettings.StyleWindowTitleBar)
+			if (displaySettings.StyleWindowTitleBar)
+			{
 				window.Style = (Style)window.FindResource(TomsToolbox.Wpf.Styles.ResourceKeys.WindowStyle);
+			}
 		}
 
 		private static void ShowRestartNotification()
@@ -82,18 +83,21 @@ namespace ICSharpCode.ILSpy.Themes
 			MessageBox.Show(Properties.Resources.SettingsChangeRestartRequired);
 		}
 
-		private void DisplaySettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		private void Settings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(DisplaySettings.StyleWindowTitleBar))
-			{
-				if (!SettingsService.Instance.DisplaySettings.StyleWindowTitleBar)
-				{
-					restartNotificationThrottle.Tick();
-					return;
-				}
+			if (sender is not DisplaySettings displaySettings)
+				return;
 
-				UpdateWindowStyle();
+			if (e.PropertyName != nameof(DisplaySettings.StyleWindowTitleBar))
+				return;
+
+			if (!displaySettings.StyleWindowTitleBar)
+			{
+				restartNotificationThrottle.Tick();
+				return;
 			}
+
+			UpdateWindowStyle(displaySettings);
 		}
 
 		private void ApplyThemeToWindowCaption()

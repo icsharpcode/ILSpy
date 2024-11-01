@@ -38,12 +38,14 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		private readonly ITextOutput output;
 		private readonly ReadyToRunReader reader;
 		private readonly RuntimeFunction runtimeFunction;
+		private readonly SettingsService settingsService;
 
-		public ReadyToRunDisassembler(ITextOutput output, ReadyToRunReader reader, RuntimeFunction runtimeFunction)
+		public ReadyToRunDisassembler(ITextOutput output, ReadyToRunReader reader, RuntimeFunction runtimeFunction, SettingsService settingsService)
 		{
 			this.output = output;
 			this.reader = reader;
 			this.runtimeFunction = runtimeFunction;
+			this.settingsService = settingsService;
 		}
 
 		public void Disassemble(PEFile currentFile, int bitness, ulong address, bool showMetadataTokens, bool showMetadataTokensInBase10)
@@ -51,7 +53,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			ReadyToRunMethod readyToRunMethod = runtimeFunction.Method;
 			WriteCommentLine(readyToRunMethod.SignatureString);
 
-			var options = SettingsService.Instance.GetSettings<ReadyToRunOptions>();
+			var options = settingsService.GetSettings<ReadyToRunOptions>();
 
 			if (options.IsShowGCInfo)
 			{

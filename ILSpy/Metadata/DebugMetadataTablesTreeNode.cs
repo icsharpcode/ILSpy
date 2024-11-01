@@ -58,7 +58,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			if (ShowTable(TableIndex.CustomDebugInformation))
 				this.Children.Add(new CustomDebugInformationTableTreeNode(metadataFile));
 
-			bool ShowTable(TableIndex table) => !SettingsService.Instance.DisplaySettings.HideEmptyMetadataTables || metadataFile.Metadata.GetTableRowCount(table) > 0;
+			bool ShowTable(TableIndex table) => !SettingsService.DisplaySettings.HideEmptyMetadataTables || metadataFile.Metadata.GetTableRowCount(table) > 0;
 		}
 
 		public override bool View(TabPageModel tabPage)

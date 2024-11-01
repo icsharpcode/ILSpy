@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 using System;
+using System.Collections.Generic;
+using System.Composition;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler.Metadata;
@@ -158,6 +160,8 @@ namespace ICSharpCode.ILSpy.Search
 		}
 	}
 
+	[Export(typeof(ITreeNodeFactory))]
+	[Shared]
 	internal class TreeNodeFactory : ITreeNodeFactory
 	{
 		public ITreeNode Create(Resource resource)

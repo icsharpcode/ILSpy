@@ -34,6 +34,7 @@ using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Extensions;
 
@@ -43,13 +44,13 @@ namespace ICSharpCode.ILSpy
 
 	[Export(typeof(Language))]
 	[Shared]
-	class CSharpILMixedLanguage : ILLanguage
+	class CSharpILMixedLanguage(SettingsService settingsService, DockWorkspace dockWorkspace) : ILLanguage(dockWorkspace)
 	{
 		public override string Name => "IL with C#";
 
 		protected override ReflectionDisassembler CreateDisassembler(ITextOutput output, DecompilationOptions options)
 		{
-			var displaySettings = SettingsService.Instance.DisplaySettings;
+			var displaySettings = settingsService.DisplaySettings;
 			return new ReflectionDisassembler(output,
 				new MixedMethodBodyDisassembler(output, options) {
 					DetectControlStructure = detectControlStructure,

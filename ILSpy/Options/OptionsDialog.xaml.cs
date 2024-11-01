@@ -29,9 +29,9 @@ namespace ICSharpCode.ILSpy.Options
 	/// </summary>
 	public sealed partial class OptionsDialog
 	{
-		public OptionsDialog()
+		public OptionsDialog(SettingsService settingsService)
 		{
-			DataContext = new OptionsDialogViewModel();
+			DataContext = new OptionsDialogViewModel(settingsService);
 			InitializeComponent();
 		}
 	}
@@ -59,20 +59,14 @@ namespace ICSharpCode.ILSpy.Options
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources._Options), MenuCategory = nameof(Resources.Options), MenuOrder = 999)]
 	[Shared]
-	sealed class ShowOptionsCommand : SimpleCommand
+	sealed class ShowOptionsCommand(AssemblyTreeModel assemblyTreeModel, SettingsService settingsService, MainWindow mainWindow) : SimpleCommand
 	{
-		private readonly AssemblyTreeModel assemblyTreeModel;
-
-		public ShowOptionsCommand(AssemblyTreeModel assemblyTreeModel)
-		{
-			this.assemblyTreeModel = assemblyTreeModel;
-		}
-
 		public override void Execute(object parameter)
 		{
-			OptionsDialog dlg = new() {
-				Owner = MainWindow.Instance,
+			OptionsDialog dlg = new(settingsService) {
+				Owner = mainWindow
 			};
+
 			if (dlg.ShowDialog() == true)
 			{
 				assemblyTreeModel.Refresh();

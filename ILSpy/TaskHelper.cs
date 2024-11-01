@@ -20,6 +20,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TextView;
 
 namespace ICSharpCode.ILSpy
@@ -197,10 +198,10 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public static void HandleExceptions(this Task task)
 		{
-			task.Catch<Exception>(exception => MainWindow.Instance.Dispatcher.BeginInvoke(new Action(delegate {
+			task.Catch<Exception>(exception => App.Current.Dispatcher.BeginInvoke(new Action(delegate {
 				AvalonEditTextOutput output = new();
 				output.Write(exception.ToString());
-				Docking.DockWorkspace.Instance.ShowText(output);
+				App.ExportProvider.GetExportedValue<DockWorkspace>().ShowText(output);
 			}))).IgnoreExceptions();
 		}
 	}

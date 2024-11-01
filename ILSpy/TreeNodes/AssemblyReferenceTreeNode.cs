@@ -85,11 +85,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			this.Children.Add(new AssemblyReferenceReferencedTypesTreeNode(module, r));
 
-			var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver(SettingsService.Instance.DecompilerSettings.AutoLoadAssemblyReferences);
+			var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver(SettingsService.DecompilerSettings.AutoLoadAssemblyReferences);
 			var referencedModule = resolver.Resolve(r);
 			if (referencedModule != null)
 			{
-				var module = (MetadataModule)referencedModule.GetTypeSystemWithCurrentOptionsOrNull().MainModule;
+				var module = (MetadataModule)referencedModule.GetTypeSystemWithCurrentOptionsOrNull(SettingsService)?.MainModule;
 				foreach (var childRef in referencedModule.AssemblyReferences)
 					this.Children.Add(new AssemblyReferenceTreeNode(module, childRef, parentAssembly));
 			}

@@ -31,6 +31,7 @@ using ICSharpCode.ILSpyX.TreeView;
 
 using TomsToolbox.Composition;
 using TomsToolbox.Essentials;
+using TomsToolbox.Wpf.Composition;
 
 namespace ICSharpCode.ILSpy
 {
@@ -222,7 +223,7 @@ namespace ICSharpCode.ILSpy
 
 		private ContextMenuProvider(Control control)
 		{
-			entries = App.ExportProvider.GetExports<IContextMenuEntry, IContextMenuEntryMetadata>().ToArray();
+			entries = control.GetExportProvider().GetExports<IContextMenuEntry, IContextMenuEntryMetadata>().ToArray();
 
 			this.control = control;
 		}

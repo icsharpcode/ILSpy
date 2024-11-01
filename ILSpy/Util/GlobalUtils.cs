@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2019 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2024 Tom Englert for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,18 +16,37 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
+using System;
+using System.Diagnostics;
 
-namespace ICSharpCode.ILSpy.ViewModels
+namespace ICSharpCode.ILSpy.Util
 {
-	public abstract class ViewModelBase : INotifyPropertyChanged
+	static class GlobalUtils
 	{
-		public event PropertyChangedEventHandler PropertyChanged;
-
-		protected void RaisePropertyChanged([CallerMemberName] string propertyName = null)
+		public static void OpenLink(string link)
 		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+			try
+			{
+				Process.Start(new ProcessStartInfo { FileName = link, UseShellExecute = true });
+			}
+			catch (Exception)
+			{
+				// Process.Start can throw several errors (not all of them documented),
+				// just ignore all of them.
+			}
+		}
+
+		public static void ExecuteCommand(string fileName, string arguments)
+		{
+			try
+			{
+				Process.Start(fileName, arguments);
+			}
+			catch (Exception)
+			{
+				// Process.Start can throw several errors (not all of them documented),
+				// just ignore all of them.
+			}
 		}
 	}
 }

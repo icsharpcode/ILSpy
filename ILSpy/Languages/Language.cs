@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text;
@@ -29,6 +30,7 @@ using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Abstractions;
 
@@ -42,6 +44,12 @@ namespace ICSharpCode.ILSpy
 	/// </remarks>
 	public abstract class Language : ILanguage
 	{
+		protected static SettingsService SettingsService { get; } = App.ExportProvider.GetExportedValue<SettingsService>();
+
+		protected static AssemblyTreeModel AssemblyTreeModel { get; } = App.ExportProvider.GetExportedValue<AssemblyTreeModel>();
+
+		protected static ICollection<IResourceFileHandler> ResourceFileHandlers { get; } = App.ExportProvider.GetExportedValues<IResourceFileHandler>().ToArray();
+
 		/// <summary>
 		/// Gets the name of the language (as shown in the UI)
 		/// </summary>

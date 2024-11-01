@@ -19,15 +19,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
-using System.Xml;
 using System.Xml.Linq;
 
 using ICSharpCode.AvalonEdit.Document;
@@ -47,14 +44,18 @@ namespace ICSharpCode.ILSpy.TextView
 	{
 		readonly IAmbience ambience;
 		readonly IHighlightingDefinition highlightingDefinition;
+		readonly DisplaySettings displaySettings;
+		readonly MainWindow mainWindow;
 		readonly FlowDocument document;
 		BlockCollection blockCollection;
 		InlineCollection inlineCollection;
 
-		public DocumentationUIBuilder(IAmbience ambience, IHighlightingDefinition highlightingDefinition)
+		public DocumentationUIBuilder(IAmbience ambience, IHighlightingDefinition highlightingDefinition, DisplaySettings displaySettings, MainWindow mainWindow)
 		{
 			this.ambience = ambience;
 			this.highlightingDefinition = highlightingDefinition;
+			this.displaySettings = displaySettings;
+			this.mainWindow = mainWindow;
 			this.document = new FlowDocument();
 			this.blockCollection = document.Blocks;
 
@@ -115,12 +116,12 @@ namespace ICSharpCode.ILSpy.TextView
 			// Paragraph sadly does not support TextWrapping.NoWrap
 			var text = new TextBlock {
 				FontFamily = GetCodeFont(),
-				FontSize = SettingsService.Instance.DisplaySettings.SelectedFontSize,
+				FontSize = displaySettings.SelectedFontSize,
 				TextAlignment = TextAlignment.Left
 			};
 			text.Inlines.AddRange(richText.CreateRuns(document));
 			text.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-			this.document.MinPageWidth = Math.Min(text.DesiredSize.Width, MainWindow.Instance.ActualWidth);
+			this.document.MinPageWidth = Math.Min(text.DesiredSize.Width, mainWindow.ActualWidth);
 			block.Inlines.AddRange(richText.CreateRuns(document));
 			block.FontFamily = GetCodeFont();
 			block.TextAlignment = TextAlignment.Left;
@@ -435,7 +436,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		FontFamily GetCodeFont()
 		{
-			return SettingsService.Instance.DisplaySettings.SelectedFont;
+			return displaySettings.SelectedFont;
 		}
 
 		public void AddInline(Inline inline)

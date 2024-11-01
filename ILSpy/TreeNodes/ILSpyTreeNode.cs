@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -27,6 +26,8 @@ using System.Windows.Threading;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpyX.Abstractions;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 using ICSharpCode.ILSpyX.TreeView;
@@ -45,9 +46,19 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			MessageBus<SettingsChangedEventArgs>.Subscribers += (sender, e) => Settings_Changed(sender, e);
 		}
 
-		LanguageSettings LanguageSettings => SettingsService.Instance.SessionSettings.LanguageSettings;
+		LanguageSettings LanguageSettings => SettingsService.SessionSettings.LanguageSettings;
 
-		public Language Language => LanguageService.Instance.Language;
+		public Language Language => LanguageService.Language;
+
+		protected static AssemblyTreeModel AssemblyTreeModel { get; } = App.ExportProvider.GetExportedValue<AssemblyTreeModel>();
+
+		protected static ICollection<IResourceNodeFactory> ResourceNodeFactories { get; } = App.ExportProvider.GetExportedValues<IResourceNodeFactory>().ToArray();
+
+		protected static SettingsService SettingsService { get; } = App.ExportProvider.GetExportedValue<SettingsService>();
+
+		protected static LanguageService LanguageService { get; } = App.ExportProvider.GetExportedValue<LanguageService>();
+
+		protected static DockWorkspace DockWorkspace { get; } = App.ExportProvider.GetExportedValue<DockWorkspace>();
 
 		public virtual FilterResult Filter(LanguageSettings settings)
 		{
@@ -71,8 +82,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void ActivateItemSecondary(IPlatformRoutedEventArgs e)
 		{
-			MainWindow.Instance.AssemblyTreeModel.SelectNode(this, inNewTabPage: true);
-			MainWindow.Instance.Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)MainWindow.Instance.AssemblyTreeModel.RefreshDecompiledView);
+			var assemblyTreeModel = AssemblyTreeModel;
+
+			assemblyTreeModel.SelectNode(this, inNewTabPage: true);
+
+			App.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, assemblyTreeModel.RefreshDecompiledView);
 		}
 
 		/// <summary>
@@ -87,6 +101,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
 		{
+			base.OnChildrenChanged(e);
+
 			if (e.NewItems != null)
 			{
 				if (IsVisible)
@@ -99,7 +115,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					childrenNeedFiltering = true;
 				}
 			}
-			base.OnChildrenChanged(e);
 		}
 
 		void ApplyFilterToChild(ILSpyTreeNode child)
@@ -162,11 +177,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected string GetSuffixString(EntityHandle handle)
 		{
-			if (!SettingsService.Instance.DisplaySettings.ShowMetadataTokens)
+			if (!SettingsService.DisplaySettings.ShowMetadataTokens)
 				return string.Empty;
 
 			int token = MetadataTokens.GetToken(handle);
-			if (SettingsService.Instance.DisplaySettings.ShowMetadataTokensInBase10)
+			if (SettingsService.DisplaySettings.ShowMetadataTokensInBase10)
 				return " @" + token;
 			return " @" + token.ToString("x8");
 		}

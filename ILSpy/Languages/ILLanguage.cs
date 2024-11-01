@@ -31,6 +31,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy
@@ -44,7 +45,7 @@ namespace ICSharpCode.ILSpy
 	/// </remarks>
 	[Export(typeof(Language))]
 	[Shared]
-	public class ILLanguage : Language
+	public class ILLanguage(DockWorkspace dockWorkspace) : Language
 	{
 		protected bool detectControlStructure = true;
 
@@ -58,7 +59,7 @@ namespace ICSharpCode.ILSpy
 
 		protected virtual ReflectionDisassembler CreateDisassembler(ITextOutput output, DecompilationOptions options)
 		{
-			var displaySettings = SettingsService.Instance.DisplaySettings;
+			var displaySettings = SettingsService.DisplaySettings;
 			output.IndentationString = options.DecompilerSettings.CSharpFormattingOptions.IndentationString;
 			return new ReflectionDisassembler(output, options.CancellationToken) {
 				DetectControlStructure = detectControlStructure,
@@ -198,10 +199,8 @@ namespace ICSharpCode.ILSpy
 		public override RichText GetRichTextTooltip(IEntity entity)
 		{
 			var output = new AvalonEditTextOutput() { IgnoreNewLineAndIndent = true };
-			var settingsService = SettingsService.Instance;
-			var dockWorkspace = DockWorkspace.Instance;
 
-			var disasm = CreateDisassembler(output, LanguageService.Instance.CreateDecompilationOptions(dockWorkspace.ActiveTabPage));
+			var disasm = CreateDisassembler(output, dockWorkspace.ActiveTabPage.CreateDecompilationOptions());
 			MetadataFile module = entity.ParentModule?.MetadataFile;
 			if (module == null)
 			{

@@ -38,6 +38,10 @@ using ICSharpCode.ILSpyX;
 
 using ILCompiler.Reflection.ReadyToRun;
 
+using TomsToolbox.Composition;
+
+using MetadataReader = System.Reflection.Metadata.MetadataReader;
+
 namespace ICSharpCode.ILSpy.ReadyToRun
 {
 #if STRESS
@@ -97,7 +101,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 	[Export(typeof(Language))]
 	[Shared]
-	internal class ReadyToRunLanguage : Language
+	internal class ReadyToRunLanguage(SettingsService settingsService, IExportProvider exportProvider) : Language
 	{
 		private static readonly ConditionalWeakTable<MetadataFile, ReadyToRunReaderCacheEntry> readyToRunReaders = new ConditionalWeakTable<MetadataFile, ReadyToRunReaderCacheEntry>();
 
@@ -175,7 +179,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 							.GroupBy(m => m.MethodHandle)
 							.ToDictionary(g => g.Key, g => g.ToArray());
 				}
-				var displaySettings = SettingsService.Instance.DisplaySettings;
+				var displaySettings = settingsService.DisplaySettings;
 				bool showMetadataTokens = displaySettings.ShowMetadataTokens;
 				bool showMetadataTokensInBase10 = displaySettings.ShowMetadataTokensInBase10;
 #if STRESS
@@ -205,7 +209,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 								file = ((IlSpyAssemblyMetadata)readyToRunMethod.ComponentReader).Module;
 							}
 
-							new ReadyToRunDisassembler(output, disassemblingReader, runtimeFunction).Disassemble(file, bitness, (ulong)runtimeFunction.StartAddress, showMetadataTokens, showMetadataTokensInBase10);
+							new ReadyToRunDisassembler(output, disassemblingReader, runtimeFunction, settingsService).Disassemble(file, bitness, (ulong)runtimeFunction.StartAddress, showMetadataTokens, showMetadataTokensInBase10);
 						}
 					}
 				}
@@ -218,7 +222,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		public override RichText GetRichTextTooltip(IEntity entity)
 		{
-			return LanguageService.Instance.ILLanguage.GetRichTextTooltip(entity);
+			return exportProvider.GetExportedValue<LanguageService>().ILLanguage.GetRichTextTooltip(entity);
 		}
 
 		private ReadyToRunReaderCacheEntry GetReader(LoadedAssembly assembly, MetadataFile file)

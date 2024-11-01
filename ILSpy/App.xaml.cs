@@ -25,8 +25,6 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Documents;
-using System.Windows.Navigation;
 using System.Windows.Threading;
 
 using ICSharpCode.ILSpy.AppEnv;
@@ -71,8 +69,10 @@ namespace ICSharpCode.ILSpy
 			var cmdArgs = Environment.GetCommandLineArgs().Skip(1);
 			CommandLineArguments = CommandLineArguments.Create(cmdArgs);
 
+			var settingsService = new SettingsService();
+
 			bool forceSingleInstance = (CommandLineArguments.SingleInstance ?? true)
-									   && !SettingsService.Instance.MiscSettings.AllowMultipleInstances;
+									   && !settingsService.MiscSettings.AllowMultipleInstances;
 			if (forceSingleInstance)
 			{
 				SingleInstance.Attach();  // will auto-exit for second instance
@@ -81,10 +81,10 @@ namespace ICSharpCode.ILSpy
 
 			InitializeComponent();
 
-			if (!InitializeDependencyInjection(SettingsService.Instance))
+			if (!InitializeDependencyInjection(settingsService))
 			{
 				// There is something completely wrong with DI, probably some service registration is missing => nothing we can do to recover, so stop and shut down.
-				Exit += (_, _) => MessageBox.Show(StartupExceptions.FormatExceptions(), "Sorry we crashed!");
+				Exit += (_, _) => MessageBox.Show(StartupExceptions.FormatExceptions(), "Sorry we crashed!", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
 				Shutdown(1);
 				return;
 			}
@@ -106,16 +106,13 @@ namespace ICSharpCode.ILSpy
 			// Add data templates registered via MEF.
 			Resources.MergedDictionaries.Add(DataTemplateManager.CreateDynamicDataTemplates(ExportProvider));
 
-			var sessionSettings = SettingsService.Instance.SessionSettings;
+			var sessionSettings = settingsService.SessionSettings;
 			ThemeManager.Current.Theme = sessionSettings.Theme;
 			if (!string.IsNullOrEmpty(sessionSettings.CurrentCulture))
 			{
 				Thread.CurrentThread.CurrentUICulture = CultureInfo.DefaultThreadCurrentUICulture = new(sessionSettings.CurrentCulture);
 			}
 
-			EventManager.RegisterClassHandler(typeof(Window),
-											  Hyperlink.RequestNavigateEvent,
-											  new RequestNavigateEventHandler(Window_RequestNavigate));
 			ILSpyTraceListener.Install();
 
 			if (CommandLineArguments.ArgumentsParser.IsShowingInformation)
@@ -129,14 +126,14 @@ namespace ICSharpCode.ILSpy
 				MessageBox.Show(unknownArguments, "ILSpy Unknown Command Line Arguments Passed");
 			}
 
-			SettingsService.Instance.AssemblyListManager.CreateDefaultAssemblyLists();
+			settingsService.AssemblyListManager.CreateDefaultAssemblyLists();
 		}
 
 		public new static App Current => (App)Application.Current;
 
 		public new MainWindow MainWindow {
 			get => (MainWindow)base.MainWindow;
-			set => base.MainWindow = value;
+			private set => base.MainWindow = value;
 		}
 
 		private static void SingleInstance_NewInstanceDetected(object sender, NewInstanceEventArgs e) => ExportProvider.GetExportedValue<AssemblyTreeModel>().HandleSingleInstanceCommandLineArguments(e.Args).HandleExceptions();
@@ -150,7 +147,7 @@ namespace ICSharpCode.ILSpy
 			return context.LoadFromAssemblyPath(assemblyFileName);
 		}
 
-		private static bool InitializeDependencyInjection(SettingsService settingsService)
+		private bool InitializeDependencyInjection(SettingsService settingsService)
 		{
 			// Add custom logic for resolution of dependencies.
 			// This necessary because the AssemblyLoadContext.LoadFromAssemblyPath and related methods,
@@ -187,10 +184,17 @@ namespace ICSharpCode.ILSpy
 				services.BindExports(Assembly.GetExecutingAssembly());
 				// Add the settings service
 				services.AddSingleton(settingsService);
+				// Add the export provider
+				services.AddSingleton(_ => ExportProvider);
+				// Add the docking manager
+				services.AddSingleton(serviceProvider => serviceProvider.GetService<MainWindow>().DockManager);
+				services.AddTransient(serviceProvider => serviceProvider.GetService<AssemblyTreeModel>().AssemblyList);
 
 				var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
 
 				ExportProvider = new ExportProviderAdapter(serviceProvider);
+
+				Exit += (_, _) => serviceProvider.Dispose();
 
 				return true;
 			}
@@ -209,7 +213,7 @@ namespace ICSharpCode.ILSpy
 		{
 			base.OnStartup(e);
 
-			MainWindow = new();
+			MainWindow = ExportProvider.GetExportedValue<MainWindow>();
 			MainWindow.Show();
 		}
 
@@ -268,10 +272,5 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 		#endregion
-
-		void Window_RequestNavigate(object sender, RequestNavigateEventArgs e)
-		{
-			ExportProvider.GetExportedValue<AssemblyTreeModel>().NavigateTo(e);
-		}
 	}
 }

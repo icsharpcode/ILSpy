@@ -40,17 +40,14 @@ namespace ICSharpCode.ILSpyX.Analyzers
 		/// </summary>
 		public bool IsLocal { get; }
 
-		public AssemblyList AssemblyList { get; }
-
 		public ISymbol AnalyzedSymbol { get; }
 
 		public ITypeDefinition TypeScope => typeScope;
 
-		Accessibility effectiveAccessibility;
+		readonly Accessibility effectiveAccessibility;
 
 		public AnalyzerScope(AssemblyList assemblyList, IEntity entity)
 		{
-			AssemblyList = assemblyList;
 			assemblyListSnapshot = assemblyList.GetSnapshot();
 			AnalyzedSymbol = entity;
 			DetermineEffectiveAccessibility(entity, out typeScope, out effectiveAccessibility);

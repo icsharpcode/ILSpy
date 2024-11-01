@@ -27,24 +27,19 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile), MenuCategory = nameof(Resources.Open), MenuOrder = 2.5)]
 	[Shared]
-	sealed class DecompileAllCommand : SimpleCommand
+	sealed class DecompileAllCommand(AssemblyTreeModel assemblyTreeModel, DockWorkspace dockWorkspace) : SimpleCommand
 	{
-		private readonly IReadOnlyCollection<IResourceFileHandler> resourceFileHandlers;
-
-		public DecompileAllCommand(IEnumerable<IResourceFileHandler> resourceFileHandlers)
-		{
-			this.resourceFileHandlers = resourceFileHandlers.ToArray();
-		}
-
 		public override bool CanExecute(object parameter)
 		{
 			return System.IO.Directory.Exists("c:\\temp\\decompiled");
@@ -52,10 +47,10 @@ namespace ICSharpCode.ILSpy
 
 		public override void Execute(object parameter)
 		{
-			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
+			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
 				Parallel.ForEach(
-					Partitioner.Create(MainWindow.Instance.AssemblyTreeModel.AssemblyList.GetAssemblies(), loadBalance: true),
+					Partitioner.Create(assemblyTreeModel.AssemblyList.GetAssemblies(), loadBalance: true),
 					new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct },
 					delegate (LoadedAssembly asm) {
 						if (!asm.HasLoadError)
@@ -66,10 +61,10 @@ namespace ICSharpCode.ILSpy
 							{
 								try
 								{
-									var options = LanguageService.Instance.CreateDecompilationOptions(DockWorkspace.Instance.ActiveTabPage);
+									var options = dockWorkspace.ActiveTabPage.CreateDecompilationOptions();
 									options.CancellationToken = ct;
 									options.FullDecompilation = true;
-									new CSharpLanguage(resourceFileHandlers).DecompileAssembly(asm, new PlainTextOutput(writer), options);
+									new CSharpLanguage().DecompileAssembly(asm, new PlainTextOutput(writer), options);
 								}
 								catch (Exception ex)
 								{
@@ -90,21 +85,20 @@ namespace ICSharpCode.ILSpy
 						}
 					});
 				return output;
-			}, ct)).Then(output => Docking.DockWorkspace.Instance.ShowText(output)).HandleExceptions();
+			}, ct)).Then(dockWorkspace.ShowText).HandleExceptions();
 		}
 	}
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile100x), MenuCategory = nameof(Resources.Open), MenuOrder = 2.6)]
 	[Shared]
-	sealed class Decompile100TimesCommand : SimpleCommand
+	sealed class Decompile100TimesCommand(AssemblyTreeModel assemblyTreeModel, LanguageService languageService, DockWorkspace dockWorkspace) : SimpleCommand
 	{
 		public override void Execute(object parameter)
 		{
 			const int numRuns = 100;
-			var language = LanguageService.Instance.Language;
-			var nodes = MainWindow.Instance.AssemblyTreeModel.SelectedNodes.ToArray();
-			DockWorkspace dockWorkspace = DockWorkspace.Instance;
-			var options = LanguageService.Instance.CreateDecompilationOptions(dockWorkspace.ActiveTabPage);
+			var language = languageService.Language;
+			var nodes = assemblyTreeModel.SelectedNodes.ToArray();
+			var options = dockWorkspace.ActiveTabPage.CreateDecompilationOptions();
 			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				options.CancellationToken = ct;
 				Stopwatch w = Stopwatch.StartNew();

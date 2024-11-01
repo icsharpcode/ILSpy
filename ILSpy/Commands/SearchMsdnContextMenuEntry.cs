@@ -136,7 +136,7 @@ namespace ICSharpCode.ILSpy
 
 			address = address.ToLower();
 			if (!string.IsNullOrEmpty(address))
-				MainWindow.OpenLink(address);
+				GlobalUtils.OpenLink(address);
 		}
 	}
 }

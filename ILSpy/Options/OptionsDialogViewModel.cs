@@ -46,9 +46,9 @@ namespace ICSharpCode.ILSpy.Options
 			.ExceptNullItems()
 			.ToArray();
 
-		public OptionsDialogViewModel()
+		public OptionsDialogViewModel(SettingsService settingsService)
 		{
-			this.snapshot = SettingsService.Instance.CreateSnapshot();
+			this.snapshot = settingsService.CreateSnapshot();
 
 			foreach (var optionPage in optionPages)
 			{

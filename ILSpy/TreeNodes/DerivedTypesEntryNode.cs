@@ -55,7 +55,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return FilterResult.Hidden;
 			if (settings.SearchTermMatches(type.Name))
 			{
-				if (type.DeclaringType != null && (settings.ShowApiLevel != ApiVisibility.All || !LanguageService.Instance.Language.ShowMember(type)))
+				if (type.DeclaringType != null && (settings.ShowApiLevel != ApiVisibility.All || !LanguageService.Language.ShowMember(type)))
 					return FilterResult.Hidden;
 				else
 					return FilterResult.Match;

@@ -19,14 +19,20 @@
 using System;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Windows.Navigation;
+
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.ViewModels;
 
 using TomsToolbox.Essentials;
+
+#nullable enable
 
 namespace ICSharpCode.ILSpy.Util
 {
 	public static class MessageBus
 	{
-		public static void Send<T>(object sender, T e)
+		public static void Send<T>(object? sender, T e)
 			where T : EventArgs
 		{
 			MessageBus<T>.Send(sender, e);
@@ -47,9 +53,9 @@ namespace ICSharpCode.ILSpy.Util
 			remove => subscriptions.Unsubscribe(value);
 		}
 
-		public static void Send(object sender, T e)
+		public static void Send(object? sender, T e)
 		{
-			subscriptions.Raise(sender, e);
+			subscriptions.Raise(sender!, e);
 		}
 	}
 
@@ -79,5 +85,41 @@ namespace ICSharpCode.ILSpy.Util
 		public bool InNewTabPage { get; } = inNewTabPage;
 	}
 
+	public class NavigateToEventArgs(RequestNavigateEventArgs request, bool inNewTabPage = false) : EventArgs
+	{
+		public RequestNavigateEventArgs Request { get; } = request;
+
+		public bool InNewTabPage { get; } = inNewTabPage;
+	}
+
 	public class AssemblyTreeSelectionChangedEventArgs() : EventArgs;
+
+	public class ApplySessionSettingsEventArgs(SessionSettings sessionSettings) : EventArgs
+	{
+		public SessionSettings SessionSettings { get; } = sessionSettings;
+	}
+
+	public class MainWindowLoadedEventArgs() : EventArgs;
+
+	public class ActiveTabPageChangedEventArgs(ViewState? viewState) : EventArgs
+	{
+		public ViewState? ViewState { get; } = viewState;
+	}
+
+	public class ResetLayoutEventArgs : EventArgs;
+
+	public class ShowAboutPageEventArgs(TabPageModel tabPage) : EventArgs
+	{
+		public TabPageModel TabPage { get; } = tabPage;
+	}
+
+	public class ShowSearchPageEventArgs(string? searchTerm) : EventArgs
+	{
+		public string? SearchTerm { get; } = searchTerm;
+	}
+
+	public class CheckIfUpdateAvailableEventArgs(bool notify = false) : EventArgs
+	{
+		public bool Notify { get; } = notify;
+	}
 }

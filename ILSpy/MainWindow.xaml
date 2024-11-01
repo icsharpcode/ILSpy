@@ -18,6 +18,9 @@
 		xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
 		xmlns:toms="urn:TomsToolbox"
 		xmlns:viewModels="clr-namespace:ICSharpCode.ILSpy.ViewModels"
+		xmlns:composition="urn:TomsToolbox.Composition"
+		xmlns:commands="clr-namespace:ICSharpCode.ILSpy.Commands"
+		xmlns:analyzers="clr-namespace:ICSharpCode.ILSpy.Analyzers"
 		d:DataContext="{d:DesignInstance local:MainWindowViewModel}">
 	<Window.Resources>
 
@@ -36,7 +39,7 @@
 	</b:Interaction.Behaviors>
 
 	<Window.InputBindings>
-		<KeyBinding Key="R" Modifiers="Control" Command="{x:Static local:ILSpyCommands.Analyze}" />
+		<KeyBinding Key="R" Modifiers="Control" Command="{composition:Import analyzers:AnalyzeCommand}" />
 		<KeyBinding Key="Z" Modifiers="Control" Command="{x:Static NavigationCommands.BrowseBack}" />
 	</Window.InputBindings>
 
@@ -47,8 +50,9 @@
 	<DockPanel>
 		<!-- Main menu -->
 		<Menu DockPanel.Dock="Top" Name="mainMenu" Height="23" KeyboardNavigation.TabNavigation="None">
-			<MenuItem Header="{x:Static properties:Resources._File}" Tag="_File" />
-			<!-- contents of file menu are added using MEF -->
+			<MenuItem Header="{x:Static properties:Resources._File}" Tag="_File">
+				<!-- content of file menu is added using MEF -->
+			</MenuItem>
 			<MenuItem Header="{x:Static properties:Resources._View}" Tag="_View">
 				<MenuItem Header="{x:Static properties:Resources.Show_publiconlyTypesMembers}" IsCheckable="True"
 						  IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisPublicOnly}" />
@@ -60,7 +64,7 @@
 				<MenuItem Header="{x:Static properties:Resources.Theme}" ItemsSource="{x:Static themes:ThemeManager.AllThemes}">
 					<MenuItem.ItemContainerStyle>
 						<Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Type MenuItem}}">
-							<Setter Property="Command" Value="{x:Static local:ILSpyCommands.SetTheme}" />
+							<Setter Property="Command" Value="{composition:Import commands:SetThemeCommand}" />
 							<Setter Property="CommandParameter" Value="{Binding}" />
 							<Setter Property="IsCheckable" Value="True" />
 							<!-- Required by AvalonDock's MenuItem style to show the checkmark -->
@@ -84,7 +88,9 @@
 							  IsChecked="{Binding SessionSettings.CurrentCulture, Converter={controls:CultureSelectionConverter}, ConverterParameter=zh-Hans}" />
 				</MenuItem>
 			</MenuItem>
-			<MenuItem Header="{x:Static properties:Resources._Window}" Tag="_Window" />
+			<MenuItem Header="{x:Static properties:Resources._Window}" Tag="_Window" >
+				<!-- content of window menu is added using MEF -->
+			</MenuItem>
 		</Menu>
 		<!-- ToolBar -->
 		<ToolBar
@@ -123,7 +129,8 @@
 						  ToolTip="{x:Static properties:Resources.SelectAssemblyListDropdownTooltip}"
 						  SelectedItem="{Binding SessionSettings.ActiveAssemblyList}" />
 			</Grid>
-			<Button Command="{x:Static local:ILSpyCommands.ManageAssemblyListsCommand}"
+			<Button Command="{composition:Import local:ManageAssemblyListsCommand}"
+					CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}"
 					ToolTip="{x:Static properties:Resources.ManageAssemblyLists}">
 				<Image Width="16" Height="16" Source="{controls:XamlResource Images/AssemblyList}"
 					   Style="{StaticResource DarkModeAwareImageStyle}" />
@@ -164,17 +171,7 @@
 			</Grid>
 		</ToolBar>
 		<!-- Update panel -->
-		<Border DockPanel.Dock="Top" BorderBrush="Black" BorderThickness="1" Name="updatePanel" Visibility="Collapsed">
-			<DockPanel KeyboardNavigation.TabNavigation="Contained">
-				<Button DockPanel.Dock="Right" Click="UpdatePanelCloseButtonClick" MinWidth="0">X</Button>
-				<StackPanel Orientation="Horizontal">
-					<TextBlock Name="updatePanelMessage" Margin="4,0" VerticalAlignment="Center"
-							   Text="{x:Static properties:Resources.ILSpyVersionAvailable}" />
-					<Button Name="downloadOrCheckUpdateButton" Click="DownloadOrCheckUpdateButtonClick"
-							Content="{x:Static properties:Resources.Download}" />
-				</StackPanel>
-			</DockPanel>
-		</Border>
+		<ContentControl DockPanel.Dock="Top" Content="{composition:Import viewModels:UpdatePanelViewModel}" />
 		<!-- Status bar -->
 		<StatusBar x:Name="statusBar" DockPanel.Dock="Bottom" Height="26" Visibility="Collapsed">
 			<StatusBarItem DockPanel.Dock="Right">
@@ -186,7 +183,7 @@
 			</StatusBarItem>
 		</StatusBar>
 
-		<avalondock:DockingManager x:Name="dockManager"
+		<avalondock:DockingManager x:Name="DockManager"
 								   DataContext="{Binding Workspace}"
 								   AnchorablesSource="{Binding ToolPanes}"
 								   DocumentsSource="{Binding TabPages}"

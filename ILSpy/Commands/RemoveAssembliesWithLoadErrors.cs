@@ -26,15 +26,8 @@ namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources._RemoveAssembliesWithLoadErrors), MenuCategory = nameof(Resources.Remove), MenuOrder = 2.6)]
 	[Shared]
-	class RemoveAssembliesWithLoadErrors : SimpleCommand
+	class RemoveAssembliesWithLoadErrors(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
 	{
-		private readonly AssemblyTreeModel assemblyTreeModel;
-
-		public RemoveAssembliesWithLoadErrors(AssemblyTreeModel assemblyTreeModel)
-		{
-			this.assemblyTreeModel = assemblyTreeModel;
-		}
-
 		public override bool CanExecute(object parameter)
 		{
 			return assemblyTreeModel.AssemblyList.GetAssemblies().Any(l => l.HasLoadError);
@@ -46,7 +39,7 @@ namespace ICSharpCode.ILSpy
 			{
 				if (!assembly.HasLoadError)
 					continue;
-				var node = MainWindow.Instance.AssemblyTreeModel.FindAssemblyNode(assembly);
+				var node = assemblyTreeModel.FindAssemblyNode(assembly);
 				if (node != null && node.CanDelete())
 					node.Delete();
 			}

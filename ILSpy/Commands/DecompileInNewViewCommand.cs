@@ -35,15 +35,8 @@ namespace ICSharpCode.ILSpy.Commands
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.DecompileToNewPanel), InputGestureText = "MMB", Icon = "images/Search", Category = nameof(Resources.Analyze), Order = 90)]
 	[Shared]
-	internal sealed class DecompileInNewViewCommand : IContextMenuEntry
+	internal sealed class DecompileInNewViewCommand(AssemblyTreeModel assemblyTreeModel, DockWorkspace dockWorkspace) : IContextMenuEntry
 	{
-		private readonly AssemblyTreeModel assemblyTreeModel;
-
-		public DecompileInNewViewCommand(AssemblyTreeModel assemblyTreeModel)
-		{
-			this.assemblyTreeModel = assemblyTreeModel;
-		}
-
 		public bool IsVisible(TextViewContext context)
 		{
 			return context.SelectedTreeNodes != null || context.Reference?.Reference is IEntity;
@@ -56,11 +49,11 @@ namespace ICSharpCode.ILSpy.Commands
 
 		public void Execute(TextViewContext context)
 		{
-			var activePane = DockWorkspace.Instance.ActivePane;
+			var activePane = dockWorkspace.ActivePane;
 
 			DecompileNodes(GetNodes(context).ToArray());
 
-			DockWorkspace.Instance.ActivePane = activePane;
+			dockWorkspace.ActivePane = activePane;
 		}
 
 		IEnumerable<ILSpyTreeNode> GetNodes(TextViewContext context)
@@ -98,7 +91,7 @@ namespace ICSharpCode.ILSpy.Commands
 			if (nodes.Length == 0)
 				return;
 
-			DockWorkspace.Instance.AddTabPage();
+			dockWorkspace.AddTabPage();
 
 			if (assemblyTreeModel.SelectedItems.SequenceEqual(nodes))
 				assemblyTreeModel.DecompileSelectedNodes();

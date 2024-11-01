@@ -76,10 +76,11 @@ namespace ICSharpCode.ILSpy
 			return result;
 		}
 
-		public static ICompilation? GetTypeSystemWithCurrentOptionsOrNull(this MetadataFile file)
+		public static ICompilation? GetTypeSystemWithCurrentOptionsOrNull(this MetadataFile file, SettingsService settingsService)
 		{
-			return LoadedAssemblyExtensions.GetLoadedAssembly(file)
-				.GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(SettingsService.Instance.DecompilerSettings));
+			return file
+				.GetLoadedAssembly()
+				.GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(settingsService.DecompilerSettings));
 		}
 
 		#region DPI independence

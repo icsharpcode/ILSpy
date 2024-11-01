@@ -1,13 +1,17 @@
 ﻿
+using System.Composition;
+
 namespace ICSharpCode.ILSpy.Commands
 {
-	public class SetThemeCommand : SimpleCommand
+	[Export]
+	[Shared]
+	public class SetThemeCommand(SettingsService settingsService) : SimpleCommand
 	{
 		public override void Execute(object parameter)
 		{
 			if (parameter is string theme)
 			{
-				SettingsService.Instance.SessionSettings.Theme = theme;
+				settingsService.SessionSettings.Theme = theme;
 			}
 		}
 	}

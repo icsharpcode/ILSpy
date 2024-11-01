@@ -17,50 +17,48 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Composition;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.TextView;
 
+using TomsToolbox.Composition;
 using TomsToolbox.Wpf;
+
+#nullable enable
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
+	[Export]
+	[NonShared]
 	public class TabPageModel : PaneModel
 	{
-		public TabPageModel()
+		public IExportProvider ExportProvider { get; }
+
+		public TabPageModel(IExportProvider exportProvider)
 		{
-			this.Title = Properties.Resources.NewTab;
+			ExportProvider = exportProvider;
+			Title = Properties.Resources.NewTab;
 		}
 
 		private bool supportsLanguageSwitching = true;
 
 		public bool SupportsLanguageSwitching {
 			get => supportsLanguageSwitching;
-			set {
-				if (supportsLanguageSwitching != value)
-				{
-					supportsLanguageSwitching = value;
-					OnPropertyChanged(nameof(SupportsLanguageSwitching));
-				}
-			}
+			set => SetProperty(ref supportsLanguageSwitching, value);
 		}
 
-		private object content;
+		private object? content;
 
-		public object Content {
+		public object? Content {
 			get => content;
-			set {
-				if (content != value)
-				{
-					content = value;
-					OnPropertyChanged(nameof(Content));
-				}
-			}
+			set => SetProperty(ref content, value);
 		}
 
-		public ViewState GetState()
+		public ViewState? GetState()
 		{
 			return (Content as IHaveState)?.GetState();
 		}
@@ -70,9 +68,9 @@ namespace ICSharpCode.ILSpy.ViewModels
 	{
 		public static Task<T> ShowTextViewAsync<T>(this TabPageModel tabPage, Func<DecompilerTextView, Task<T>> action)
 		{
-			if (!(tabPage.Content is DecompilerTextView textView))
+			if (tabPage.Content is not DecompilerTextView textView)
 			{
-				textView = new DecompilerTextView();
+				textView = new DecompilerTextView(tabPage.ExportProvider);
 				tabPage.Content = textView;
 			}
 			tabPage.Title = Properties.Resources.Decompiling;
@@ -81,9 +79,9 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		public static Task ShowTextViewAsync(this TabPageModel tabPage, Func<DecompilerTextView, Task> action)
 		{
-			if (!(tabPage.Content is DecompilerTextView textView))
+			if (tabPage.Content is not DecompilerTextView textView)
 			{
-				textView = new DecompilerTextView();
+				textView = new DecompilerTextView(tabPage.ExportProvider);
 				tabPage.Content = textView;
 			}
 			string oldTitle = tabPage.Title;
@@ -103,9 +101,9 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		public static void ShowTextView(this TabPageModel tabPage, Action<DecompilerTextView> action)
 		{
-			if (!(tabPage.Content is DecompilerTextView textView))
+			if (tabPage.Content is not DecompilerTextView textView)
 			{
-				textView = new DecompilerTextView();
+				textView = new DecompilerTextView(tabPage.ExportProvider);
 				tabPage.Content = textView;
 			}
 			string oldTitle = tabPage.Title;
@@ -129,10 +127,19 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 			focusable?.Focus();
 		}
+
+		public static DecompilationOptions CreateDecompilationOptions(this TabPageModel tabPage)
+		{
+			var exportProvider = tabPage.ExportProvider;
+			var languageService = exportProvider.GetExportedValue<LanguageService>();
+			var settingsService = exportProvider.GetExportedValue<SettingsService>();
+
+			return new(languageService.LanguageVersion, settingsService.DecompilerSettings, settingsService.DisplaySettings) { Progress = tabPage.Content as IProgress<DecompilationProgress> };
+		}
 	}
 
 	public interface IHaveState
 	{
-		ViewState GetState();
+		ViewState? GetState();
 	}
 }

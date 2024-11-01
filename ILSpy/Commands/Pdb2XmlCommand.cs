@@ -26,6 +26,8 @@ using System.Threading.Tasks;
 
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -36,25 +38,25 @@ namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDumpPDBAsXML), MenuCategory = nameof(Resources.Open), MenuOrder = 2.6)]
 	[Shared]
-	sealed class Pdb2XmlCommand : SimpleCommand
+	sealed class Pdb2XmlCommand(AssemblyTreeModel assemblyTreeModel, DockWorkspace dockWorkspace) : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)
 		{
-			var selectedNodes = MainWindow.Instance.AssemblyTreeModel.SelectedNodes;
+			var selectedNodes = assemblyTreeModel.SelectedNodes;
 			return selectedNodes?.Any() == true
 				&& selectedNodes.All(n => n is AssemblyTreeNode asm && !asm.LoadedAssembly.HasLoadError);
 		}
 
 		public override void Execute(object parameter)
 		{
-			Execute(MainWindow.Instance.AssemblyTreeModel.SelectedNodes.OfType<AssemblyTreeNode>());
+			Execute(assemblyTreeModel.SelectedNodes.OfType<AssemblyTreeNode>(), dockWorkspace);
 		}
 
-		internal static void Execute(IEnumerable<AssemblyTreeNode> nodes)
+		internal static void Execute(IEnumerable<AssemblyTreeNode> nodes, DockWorkspace dockWorkspace)
 		{
 			var highlighting = HighlightingManager.Instance.GetDefinitionByExtension(".xml");
 			var options = PdbToXmlOptions.IncludeEmbeddedSources | PdbToXmlOptions.IncludeMethodSpans | PdbToXmlOptions.IncludeTokens;
-			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
+			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
 				var writer = new TextOutputWriter(output);
 				foreach (var node in nodes)
@@ -67,17 +69,17 @@ namespace ICSharpCode.ILSpy
 						PdbToXmlConverter.ToXml(writer, pdbStream, peStream, options);
 				}
 				return output;
-			}, ct)).Then(output => Docking.DockWorkspace.Instance.ShowNodes(output, null, highlighting)).HandleExceptions();
+			}, ct)).Then(output => dockWorkspace.ShowNodes(output, null, highlighting)).HandleExceptions();
 		}
 	}
 
 	[ExportContextMenuEntry(Header = nameof(Resources.DEBUGDumpPDBAsXML))]
 	[Shared]
-	class Pdb2XmlCommandContextMenuEntry : IContextMenuEntry
+	class Pdb2XmlCommandContextMenuEntry(DockWorkspace dockWorkspace) : IContextMenuEntry
 	{
 		public void Execute(TextViewContext context)
 		{
-			Pdb2XmlCommand.Execute(context.SelectedTreeNodes.OfType<AssemblyTreeNode>());
+			Pdb2XmlCommand.Execute(context.SelectedTreeNodes.OfType<AssemblyTreeNode>(), dockWorkspace);
 		}
 
 		public bool IsEnabled(TextViewContext context) => true;

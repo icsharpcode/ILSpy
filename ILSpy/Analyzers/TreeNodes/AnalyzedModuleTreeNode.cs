@@ -17,11 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Linq;
 using System.Windows;
 
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpyX.Analyzers;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
@@ -42,8 +40,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			var analyzers = App.ExportProvider.GetExports<IAnalyzer, IAnalyzerMetadata>("Analyzer");
-			foreach (var lazy in analyzers.OrderBy(item => item.Metadata.Order))
+			foreach (var lazy in Analyzers)
 			{
 				var analyzer = lazy.Value;
 				if (analyzer.Show(analyzedModule))

@@ -22,7 +22,6 @@ using System.IO;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpyX.Abstractions;
 
 using Microsoft.Win32;
 
@@ -58,7 +57,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public static ILSpyTreeNode Create(Resource resource)
 		{
 			ILSpyTreeNode result = null;
-			foreach (var factory in App.ExportProvider.GetExportedValues<IResourceNodeFactory>())
+			foreach (var factory in ResourceNodeFactories)
 			{
 				result = factory.CreateNode(resource) as ILSpyTreeNode;
 				if (result != null)

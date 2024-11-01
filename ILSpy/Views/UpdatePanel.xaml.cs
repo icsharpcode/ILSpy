@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2018 Siegfried Pammer
+﻿// Copyright (c) 2024 Tom Englert for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,22 +16,24 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Input;
+using System.Composition;
 
-using ICSharpCode.ILSpy.Analyzers;
-using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ICSharpCode.ILSpy
+using TomsToolbox.Wpf.Composition.AttributedModel;
+
+namespace ICSharpCode.ILSpy.Views
 {
-	static class ILSpyCommands
+	/// <summary>
+	/// Interaction logic for UpdatePanel.xaml
+	/// </summary>
+	[DataTemplate(typeof(UpdatePanelViewModel))]
+	[NonShared]
+	public partial class UpdatePanel
 	{
-		public static readonly AnalyzeCommand Analyze = new AnalyzeCommand();
-		public static readonly ManageAssemblyListsCommand ManageAssemblyListsCommand = new ManageAssemblyListsCommand();
-		public static readonly SetThemeCommand SetTheme = new SetThemeCommand();
+		public UpdatePanel()
+		{
+			InitializeComponent();
+		}
 	}
 }

@@ -24,6 +24,7 @@ using System.Windows.Input;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Analyzers.TreeNodes;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 
@@ -38,12 +39,12 @@ namespace ICSharpCode.ILSpy.Analyzers
 	{
 		public const string PaneContentId = "analyzerPane";
 
-		public AnalyzerTreeViewModel()
+		public AnalyzerTreeViewModel(AssemblyTreeModel assemblyTreeModel)
 		{
 			ContentId = PaneContentId;
 			Title = Properties.Resources.Analyze;
 			ShortcutKey = new(Key.R, ModifierKeys.Control);
-			AssociatedCommand = ILSpyCommands.Analyze;
+			AssociatedCommand = new AnalyzeCommand(assemblyTreeModel, this);
 		}
 
 		public AnalyzerRootNode Root { get; } = new();

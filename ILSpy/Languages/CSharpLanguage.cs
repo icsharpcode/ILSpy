@@ -38,6 +38,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpyX;
@@ -55,25 +56,18 @@ namespace ICSharpCode.ILSpy
 	[Shared]
 	public class CSharpLanguage : Language
 	{
-		readonly IReadOnlyCollection<IResourceFileHandler> resourceFileHandlers;
-
 		string name = "C#";
 		bool showAllMembers = false;
 		int transformCount = int.MaxValue;
 
-		public CSharpLanguage(IEnumerable<IResourceFileHandler> resourceFileHandlers)
-		{
-			this.resourceFileHandlers = resourceFileHandlers.ToArray();
-		}
-
 #if DEBUG
-		internal static IEnumerable<CSharpLanguage> GetDebugLanguages(IReadOnlyCollection<IResourceFileHandler> resourceFileHandlers)
+		internal static IEnumerable<CSharpLanguage> GetDebugLanguages()
 		{
 			string lastTransformName = "no transforms";
 			int transformCount = 0;
 			foreach (var transform in CSharpDecompiler.GetAstTransforms())
 			{
-				yield return new CSharpLanguage(resourceFileHandlers) {
+				yield return new() {
 					transformCount = transformCount,
 					name = "C# - " + lastTransformName,
 					showAllMembers = true
@@ -81,7 +75,7 @@ namespace ICSharpCode.ILSpy
 				lastTransformName = "after " + transform.GetType().Name;
 				transformCount++;
 			}
-			yield return new CSharpLanguage(resourceFileHandlers) {
+			yield return new() {
 				name = "C# - " + lastTransformName,
 				showAllMembers = true
 			};
@@ -364,15 +358,15 @@ namespace ICSharpCode.ILSpy
 
 		void AddReferenceWarningMessage(MetadataFile module, ITextOutput output)
 		{
-			var loadedAssembly = MainWindow.Instance.AssemblyTreeModel.AssemblyList.GetAssemblies().FirstOrDefault(la => la.GetMetadataFileOrNull() == module);
+			var loadedAssembly = AssemblyTreeModel.AssemblyList.GetAssemblies().FirstOrDefault(la => la.GetMetadataFileOrNull() == module);
 			if (loadedAssembly == null || !loadedAssembly.LoadedAssemblyReferencesInfo.HasErrors)
 				return;
 			string line1 = Properties.Resources.WarningSomeAssemblyReference;
 			string line2 = Properties.Resources.PropertyManuallyMissingReferencesListLoadedAssemblies;
 			AddWarningMessage(module, output, line1, line2, Properties.Resources.ShowAssemblyLoad, Images.ViewCode, delegate {
-				ILSpyTreeNode assemblyNode = MainWindow.Instance.AssemblyTreeModel.FindTreeNode(module);
+				ILSpyTreeNode assemblyNode = AssemblyTreeModel.FindTreeNode(module);
 				assemblyNode.EnsureLazyChildren();
-				MainWindow.Instance.AssemblyTreeModel.SelectNode(assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single());
+				AssemblyTreeModel.SelectNode(assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single());
 			});
 		}
 
@@ -436,7 +430,7 @@ namespace ICSharpCode.ILSpy
 				{
 					options.DecompilerSettings.UseSdkStyleProjectFormat = false;
 				}
-				var decompiler = new ILSpyWholeProjectDecompiler(assembly, options, resourceFileHandlers) {
+				var decompiler = new ILSpyWholeProjectDecompiler(assembly, options) {
 					ProgressIndicator = options.Progress
 				};
 				return decompiler.DecompileProject(module, options.SaveAsProjectDirectory, new TextOutputWriter(output), options.CancellationToken);
@@ -549,20 +543,18 @@ namespace ICSharpCode.ILSpy
 		{
 			readonly LoadedAssembly assembly;
 			readonly DecompilationOptions options;
-			private readonly IReadOnlyCollection<IResourceFileHandler> resourceFileHandlers;
 
-			public ILSpyWholeProjectDecompiler(LoadedAssembly assembly, DecompilationOptions options, IReadOnlyCollection<IResourceFileHandler> resourceFileHandlers)
+			public ILSpyWholeProjectDecompiler(LoadedAssembly assembly, DecompilationOptions options)
 				: base(options.DecompilerSettings, assembly.GetAssemblyResolver(options.DecompilerSettings.AutoLoadAssemblyReferences, options.DecompilerSettings.ApplyWindowsRuntimeProjections), null, assembly.GetAssemblyReferenceClassifier(options.DecompilerSettings.ApplyWindowsRuntimeProjections), assembly.GetDebugInfoOrNull())
 			{
 				this.assembly = assembly;
 				this.options = options;
-				this.resourceFileHandlers = resourceFileHandlers;
 			}
 
 			protected override IEnumerable<ProjectItemInfo> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 			{
 				var context = new ResourceFileHandlerContext(options);
-				foreach (var handler in resourceFileHandlers)
+				foreach (var handler in ResourceFileHandlers)
 				{
 					if (handler.CanHandle(fileName, context))
 					{
@@ -576,19 +568,19 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		static CSharpAmbience CreateAmbience()
+		CSharpAmbience CreateAmbience()
 		{
 			CSharpAmbience ambience = new CSharpAmbience();
 			// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewTypeFlags, if this ever changes.
 			ambience.ConversionFlags = ConversionFlags.ShowTypeParameterList | ConversionFlags.PlaceReturnTypeAfterParameterList;
-			if (SettingsService.Instance.DecompilerSettings.LiftNullables)
+			if (SettingsService.DecompilerSettings.LiftNullables)
 			{
 				ambience.ConversionFlags |= ConversionFlags.UseNullableSpecifierForValueTypes;
 			}
 			return ambience;
 		}
 
-		static string EntityToString(IEntity entity, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
+		string EntityToString(IEntity entity, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			// Do not forget to update CSharpAmbienceTests, if this ever changes.
 			var ambience = CreateAmbience();
@@ -784,7 +776,7 @@ namespace ICSharpCode.ILSpy
 		public override bool ShowMember(IEntity member)
 		{
 			MetadataFile assembly = member.ParentModule.MetadataFile;
-			return showAllMembers || !CSharpDecompiler.MemberIsHidden(assembly, member.MetadataToken, SettingsService.Instance.DecompilerSettings);
+			return showAllMembers || !CSharpDecompiler.MemberIsHidden(assembly, member.MetadataToken, SettingsService.DecompilerSettings);
 		}
 
 		public override RichText GetRichTextTooltip(IEntity entity)
@@ -793,7 +785,7 @@ namespace ICSharpCode.ILSpy
 			var output = new StringWriter();
 			var decoratedWriter = new TextWriterTokenWriter(output);
 			var writer = new CSharpHighlightingTokenWriter(TokenWriter.InsertRequiredSpaces(decoratedWriter), locatable: decoratedWriter);
-			var settings = SettingsService.Instance.DecompilerSettings;
+			var settings = SettingsService.DecompilerSettings;
 			if (!settings.LiftNullables)
 			{
 				flags &= ~ConversionFlags.UseNullableSpecifierForValueTypes;

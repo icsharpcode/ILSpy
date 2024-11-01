@@ -74,7 +74,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			ISmartTextOutput smartOutput = output as ISmartTextOutput;
 			if (smartOutput != null)
 			{
-				smartOutput.AddButton(Images.Save, Resources.Save, delegate { Save(Docking.DockWorkspace.Instance.ActiveTabPage); });
+				smartOutput.AddButton(Images.Save, Resources.Save, delegate { Save(DockWorkspace.ActiveTabPage); });
 				output.WriteLine();
 			}
 		}

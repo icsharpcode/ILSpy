@@ -33,9 +33,11 @@ using System.Windows.Media;
 using System.Windows.Threading;
 
 using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.Abstractions;
 using ICSharpCode.ILSpyX.Extensions;
 using ICSharpCode.ILSpyX.Search;
 
@@ -57,13 +59,20 @@ namespace ICSharpCode.ILSpy.Search
 		RunningSearch currentSearch;
 		bool runSearchOnNextShow;
 		IComparer<SearchResult> resultsComparer;
+		readonly AssemblyTreeModel assemblyTreeModel;
+		readonly ITreeNodeFactory treeNodeFactory;
+		readonly SettingsService settingsService;
 
 		public ObservableCollection<SearchResult> Results { get; } = [];
 
 		string SearchTerm => searchBox.Text;
 
-		public SearchPane()
+		public SearchPane(AssemblyTreeModel assemblyTreeModel, ITreeNodeFactory treeNodeFactory, SettingsService settingsService)
 		{
+			this.assemblyTreeModel = assemblyTreeModel;
+			this.treeNodeFactory = treeNodeFactory;
+			this.settingsService = settingsService;
+
 			InitializeComponent();
 
 			ContextMenuProvider.Add(listBox);
@@ -214,7 +223,7 @@ namespace ICSharpCode.ILSpy.Search
 
 			var timer = Stopwatch.StartNew();
 			int resultsAdded = 0;
-			while (Results.Count < MAX_RESULTS && timer.ElapsedMilliseconds < MAX_REFRESH_TIME_MS && currentSearch.resultQueue.TryTake(out var result))
+			while (Results.Count < MAX_RESULTS && timer.ElapsedMilliseconds < MAX_REFRESH_TIME_MS && currentSearch.ResultQueue.TryTake(out var result))
 			{
 				Results.InsertSorted(result, resultsComparer);
 				++resultsAdded;
@@ -243,8 +252,7 @@ namespace ICSharpCode.ILSpy.Search
 				currentSearch = null;
 			}
 
-			MainWindow mainWindow = MainWindow.Instance;
-			resultsComparer = SettingsService.Instance.DisplaySettings.SortResults ?
+			resultsComparer = settingsService.DisplaySettings.SortResults ?
 				SearchResult.ComparerByFitness :
 				SearchResult.ComparerByName;
 			Results.Clear();
@@ -254,9 +262,12 @@ namespace ICSharpCode.ILSpy.Search
 			{
 
 				searchProgressBar.IsIndeterminate = true;
-				startedSearch = new(await mainWindow.AssemblyTreeModel.AssemblyList.GetAllAssemblies(), searchTerm,
-					(SearchMode)searchModeComboBox.SelectedIndex, mainWindow.AssemblyTreeModel.CurrentLanguage,
-					SettingsService.Instance.SessionSettings.LanguageSettings.ShowApiLevel);
+				startedSearch = new(await assemblyTreeModel.AssemblyList.GetAllAssemblies(),
+					searchTerm,
+					(SearchMode)searchModeComboBox.SelectedIndex,
+					assemblyTreeModel.CurrentLanguage,
+					treeNodeFactory,
+					settingsService);
 				currentSearch = startedSearch;
 
 				await startedSearch.Run();
@@ -285,15 +296,20 @@ namespace ICSharpCode.ILSpy.Search
 			readonly SearchMode searchMode;
 			readonly Language language;
 			readonly ApiVisibility apiVisibility;
-			public readonly IProducerConsumerCollection<SearchResult> resultQueue = new ConcurrentQueue<SearchResult>();
+			readonly ITreeNodeFactory treeNodeFactory;
+			readonly SettingsService settingsService;
+
+			public IProducerConsumerCollection<SearchResult> ResultQueue { get; } = new ConcurrentQueue<SearchResult>();
 
 			public RunningSearch(IList<LoadedAssembly> assemblies, string searchTerm, SearchMode searchMode,
-				Language language, ApiVisibility apiVisibility)
+				Language language, ITreeNodeFactory treeNodeFactory, SettingsService settingsService)
 			{
 				this.assemblies = assemblies;
 				this.language = language;
 				this.searchMode = searchMode;
-				this.apiVisibility = apiVisibility;
+				this.apiVisibility = settingsService.SessionSettings.LanguageSettings.ShowApiLevel;
+				this.treeNodeFactory = treeNodeFactory;
+				this.settingsService = settingsService;
 				this.searchRequest = Parse(searchTerm);
 			}
 
@@ -454,8 +470,8 @@ namespace ICSharpCode.ILSpy.Search
 				request.Keywords = keywords.ToArray();
 				request.RegEx = regex;
 				request.SearchResultFactory = new SearchResultFactory(language);
-				request.TreeNodeFactory = new TreeNodeFactory();
-				request.DecompilerSettings = SettingsService.Instance.DecompilerSettings;
+				request.TreeNodeFactory = this.treeNodeFactory;
+				request.DecompilerSettings = settingsService.DecompilerSettings;
 
 				return request;
 			}
@@ -504,29 +520,29 @@ namespace ICSharpCode.ILSpy.Search
 				switch (request.Mode)
 				{
 					case SearchMode.TypeAndMember:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue);
+						return new MemberSearchStrategy(language, apiVisibility, request, ResultQueue);
 					case SearchMode.Type:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Type);
+						return new MemberSearchStrategy(language, apiVisibility, request, ResultQueue, MemberSearchKind.Type);
 					case SearchMode.Member:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, request.MemberSearchKind);
+						return new MemberSearchStrategy(language, apiVisibility, request, ResultQueue, request.MemberSearchKind);
 					case SearchMode.Literal:
-						return new LiteralSearchStrategy(language, apiVisibility, request, resultQueue);
+						return new LiteralSearchStrategy(language, apiVisibility, request, ResultQueue);
 					case SearchMode.Method:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Method);
+						return new MemberSearchStrategy(language, apiVisibility, request, ResultQueue, MemberSearchKind.Method);
 					case SearchMode.Field:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Field);
+						return new MemberSearchStrategy(language, apiVisibility, request, ResultQueue, MemberSearchKind.Field);
 					case SearchMode.Property:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Property);
+						return new MemberSearchStrategy(language, apiVisibility, request, ResultQueue, MemberSearchKind.Property);
 					case SearchMode.Event:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Event);
+						return new MemberSearchStrategy(language, apiVisibility, request, ResultQueue, MemberSearchKind.Event);
 					case SearchMode.Token:
-						return new MetadataTokenSearchStrategy(language, apiVisibility, request, resultQueue);
+						return new MetadataTokenSearchStrategy(language, apiVisibility, request, ResultQueue);
 					case SearchMode.Resource:
-						return new ResourceSearchStrategy(apiVisibility, request, resultQueue);
+						return new ResourceSearchStrategy(apiVisibility, request, ResultQueue);
 					case SearchMode.Assembly:
-						return new AssemblySearchStrategy(request, resultQueue, AssemblySearchKind.NameOrFileName);
+						return new AssemblySearchStrategy(request, ResultQueue, AssemblySearchKind.NameOrFileName);
 					case SearchMode.Namespace:
-						return new NamespaceSearchStrategy(request, resultQueue);
+						return new NamespaceSearchStrategy(request, ResultQueue);
 				}
 
 				return null;
@@ -538,9 +554,12 @@ namespace ICSharpCode.ILSpy.Search
 	[Shared]
 	sealed class ShowSearchCommand : CommandWrapper
 	{
-		public ShowSearchCommand()
+		private readonly DockWorkspace dockWorkspace;
+
+		public ShowSearchCommand(DockWorkspace dockWorkspace)
 			: base(NavigationCommands.Search)
 		{
+			this.dockWorkspace = dockWorkspace;
 			var gestures = NavigationCommands.Search.InputGestures;
 
 			gestures.Clear();
@@ -550,7 +569,7 @@ namespace ICSharpCode.ILSpy.Search
 
 		protected override void OnExecute(object sender, ExecutedRoutedEventArgs e)
 		{
-			DockWorkspace.Instance.ShowToolPane(SearchPaneModel.PaneContentId);
+			dockWorkspace.ShowToolPane(SearchPaneModel.PaneContentId);
 		}
 	}
 }

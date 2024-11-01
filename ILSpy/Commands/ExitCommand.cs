@@ -23,11 +23,11 @@ namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.E_xit), MenuOrder = 99999, MenuCategory = nameof(Resources.Exit))]
 	[Shared]
-	sealed class ExitCommand : SimpleCommand
+	sealed class ExitCommand(MainWindow mainWindow) : SimpleCommand
 	{
 		public override void Execute(object parameter)
 		{
-			MainWindow.Instance.Close();
+			mainWindow.Close();
 		}
 	}
 }

@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		internal static bool ShowTable(TableIndex table, MetadataReader metadata) => !SettingsService.Instance.DisplaySettings.HideEmptyMetadataTables || metadata.GetTableRowCount(table) > 0;
+		internal static bool ShowTable(TableIndex table, MetadataReader metadata) => !SettingsService.DisplaySettings.HideEmptyMetadataTables || metadata.GetTableRowCount(table) > 0;
 
 		internal static MetadataTableTreeNode CreateTableTreeNode(TableIndex table, MetadataFile metadataFile)
 		{

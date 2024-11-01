@@ -94,7 +94,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			IEntity IMemberTreeNode.Member {
 				get {
-					return ((MetadataModule)metadataFile.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule)?.GetDefinition(handle);
+					return ((MetadataModule)metadataFile.GetTypeSystemWithCurrentOptionsOrNull(SettingsService)?.MainModule)?.GetDefinition(handle);
 				}
 			}
 

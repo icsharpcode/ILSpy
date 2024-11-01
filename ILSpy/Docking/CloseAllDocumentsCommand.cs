@@ -6,21 +6,21 @@ namespace ICSharpCode.ILSpy.Docking
 {
 	[ExportMainMenuCommand(Header = nameof(Resources.Window_CloseAllDocuments), ParentMenuID = nameof(Resources._Window))]
 	[Shared]
-	class CloseAllDocumentsCommand : SimpleCommand
+	class CloseAllDocumentsCommand(DockWorkspace dockWorkspace) : SimpleCommand
 	{
 		public override void Execute(object parameter)
 		{
-			DockWorkspace.Instance.CloseAllTabs();
+			dockWorkspace.CloseAllTabs();
 		}
 	}
 
 	[ExportMainMenuCommand(Header = nameof(Resources.Window_ResetLayout), ParentMenuID = nameof(Resources._Window))]
 	[Shared]
-	class ResetLayoutCommand : SimpleCommand
+	class ResetLayoutCommand(DockWorkspace dockWorkspace) : SimpleCommand
 	{
 		public override void Execute(object parameter)
 		{
-			DockWorkspace.Instance.ResetLayout();
+			dockWorkspace.ResetLayout();
 		}
 	}
 }

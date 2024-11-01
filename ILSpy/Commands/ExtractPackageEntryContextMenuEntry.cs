@@ -25,6 +25,7 @@ using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -36,7 +37,7 @@ namespace ICSharpCode.ILSpy
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.ExtractPackageEntry), Category = nameof(Resources.Save), Icon = "Images/Save")]
 	[Shared]
-	sealed class ExtractPackageEntryContextMenuEntry : IContextMenuEntry
+	sealed class ExtractPackageEntryContextMenuEntry(DockWorkspace dockWorkspace) : IContextMenuEntry
 	{
 		public void Execute(TextViewContext context)
 		{
@@ -61,7 +62,7 @@ namespace ICSharpCode.ILSpy
 			if (selectedNodes.Length > 1)
 				outputFolderOrFileName = Path.GetDirectoryName(outputFolderOrFileName);
 
-			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
+			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				stopwatch.Stop();
@@ -83,7 +84,7 @@ namespace ICSharpCode.ILSpy
 				output.AddButton(null, Resources.OpenExplorer, delegate { Process.Start("explorer", "/select,\"" + fileName + "\""); });
 				output.WriteLine();
 				return output;
-			}, ct)).Then(output => Docking.DockWorkspace.Instance.ShowText(output)).HandleExceptions();
+			}, ct)).Then(dockWorkspace.ShowText).HandleExceptions();
 		}
 
 		void SaveEntry(ITextOutput output, PackageEntry entry, string targetFileName)
