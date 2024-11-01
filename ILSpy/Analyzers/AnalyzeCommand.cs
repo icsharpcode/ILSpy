@@ -73,6 +73,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 		}
 	}
 
+	[Export]
+	[Shared]
 	public sealed class AnalyzeCommand(AssemblyTreeModel assemblyTreeModel, AnalyzerTreeViewModel analyzerTreeViewModel) : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)

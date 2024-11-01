@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			ArgumentNullException.ThrowIfNull(assemblyList);
 
 			this.assemblyList = assemblyList;
-			
+
 			BindToObservableCollection(assemblyList);
 		}
 

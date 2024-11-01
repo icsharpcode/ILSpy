@@ -21,7 +21,6 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 
-using ICSharpCode.Decompiler.IL;
 using ICSharpCode.ILSpy.Docking;
 
 using TomsToolbox.Wpf;
@@ -30,9 +29,9 @@ namespace ICSharpCode.ILSpy.ViewModels
 {
 	public abstract class PaneModel : ObservableObject
 	{
-		private Throttle titleChangeThrottle;
+		private readonly Throttle titleChangeThrottle;
 
-		public static DockWorkspace DockWorkspace => App.ExportProvider.GetExportedValue<DockWorkspace>();
+		protected static DockWorkspace DockWorkspace => App.ExportProvider.GetExportedValue<DockWorkspace>();
 
 		protected PaneModel()
 		{

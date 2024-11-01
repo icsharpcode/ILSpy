@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2019 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2024 Tom Englert for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,18 +16,24 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
+using System.Composition;
 
-namespace ICSharpCode.ILSpy.ViewModels
+using ICSharpCode.ILSpy.ViewModels;
+
+using TomsToolbox.Wpf.Composition.AttributedModel;
+
+namespace ICSharpCode.ILSpy.Views
 {
-	public abstract class ViewModelBase : INotifyPropertyChanged
+	/// <summary>
+	/// Interaction logic for UpdatePanel.xaml
+	/// </summary>
+	[DataTemplate(typeof(UpdatePanelViewModel))]
+	[NonShared]
+	public partial class UpdatePanel
 	{
-		public event PropertyChangedEventHandler PropertyChanged;
-
-		protected void RaisePropertyChanged([CallerMemberName] string propertyName = null)
+		public UpdatePanel()
 		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+			InitializeComponent();
 		}
 	}
 }

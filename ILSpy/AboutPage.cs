@@ -26,36 +26,42 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
-using System.Windows.Navigation;
 
 using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.Decompiler;
-using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpy.Updates;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._Help), Header = nameof(Resources._About), MenuOrder = 99999)]
 	[Shared]
-	public sealed class AboutPageCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
+	public sealed class AboutPage : SimpleCommand
 	{
+		readonly SettingsService settingsService;
+		readonly IEnumerable<IAboutPageAddition> aboutPageAdditions;
+
+		public AboutPage(SettingsService settingsService, IEnumerable<IAboutPageAddition> aboutPageAdditions)
+		{
+			this.settingsService = settingsService;
+			this.aboutPageAdditions = aboutPageAdditions;
+			MessageBus<ShowAboutPageEventArgs>.Subscribers += (_, e) => ShowAboutPage(e.TabPage);
+		}
+
 		public override void Execute(object parameter)
 		{
-			assemblyTreeModel.NavigateTo(
-				new RequestNavigateEventArgs(new Uri("resource://aboutpage"), null),
-				inNewTabPage: true
-			);
+			MessageBus.Send(this, new NavigateToEventArgs(new(new("resource://aboutpage"), null), inNewTabPage: true));
 		}
-	}
 
-	[Export]
-	[Shared]
-	public sealed class AboutPage(IEnumerable<IAboutPageAddition> aboutPageAdditions, SettingsService settingsService)
-	{
-		public void Display(DecompilerTextView textView)
+		private void ShowAboutPage(TabPageModel tabPage)
+		{
+			tabPage.ShowTextView(Display);
+		}
+
+		private void Display(DecompilerTextView textView)
 		{
 			AvalonEditTextOutput output = new AvalonEditTextOutput() {
 				Title = Resources.About,
@@ -72,14 +78,14 @@ namespace ICSharpCode.ILSpy
 					HorizontalAlignment = HorizontalAlignment.Center,
 					Orientation = Orientation.Horizontal
 				};
-				if (NotifyOfUpdatesStrategy.LatestAvailableVersion == null)
+				if (UpdateService.LatestAvailableVersion == null)
 				{
 					AddUpdateCheckButton(stackPanel, textView);
 				}
 				else
 				{
 					// we already retrieved the latest version sometime earlier
-					ShowAvailableVersion(NotifyOfUpdatesStrategy.LatestAvailableVersion, stackPanel);
+					ShowAvailableVersion(UpdateService.LatestAvailableVersion, stackPanel);
 				}
 				CheckBox checkBox = new() {
 					Margin = new Thickness(4),
@@ -104,8 +110,7 @@ namespace ICSharpCode.ILSpy
 			{
 				using (StreamReader r = new StreamReader(s))
 				{
-					string line;
-					while ((line = r.ReadLine()) != null)
+					while (r.ReadLine() is { } line)
 					{
 						output.WriteLine(line);
 					}
@@ -166,7 +171,7 @@ namespace ICSharpCode.ILSpy
 
 				try
 				{
-					AvailableVersionInfo vInfo = await NotifyOfUpdatesStrategy.GetLatestVersionAsync();
+					AvailableVersionInfo vInfo = await UpdateService.GetLatestVersionAsync();
 					stackPanel.Children.Clear();
 					ShowAvailableVersion(vInfo, stackPanel);
 				}
@@ -209,7 +214,7 @@ namespace ICSharpCode.ILSpy
 					button.Content = Resources.Download;
 					button.Cursor = Cursors.Arrow;
 					button.Click += delegate {
-						MainWindow.OpenLink(availableVersion.DownloadUrl);
+						GlobalUtils.OpenLink(availableVersion.DownloadUrl);
 					};
 					stackPanel.Children.Add(button);
 				}

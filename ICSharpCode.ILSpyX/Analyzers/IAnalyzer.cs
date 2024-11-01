@@ -42,6 +42,7 @@ namespace ICSharpCode.ILSpyX.Analyzers
 	public interface IAnalyzerMetadata
 	{
 		string Header { get; }
+
 		int Order { get; }
 	}
 }

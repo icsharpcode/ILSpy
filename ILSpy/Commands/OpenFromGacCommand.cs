@@ -26,15 +26,8 @@ namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.OpenFrom_GAC), MenuIcon = "Images/AssemblyListGAC", MenuCategory = nameof(Resources.Open), MenuOrder = 1)]
 	[Shared]
-	sealed class OpenFromGacCommand : SimpleCommand
+	sealed class OpenFromGacCommand(AssemblyTreeModel assemblyTreeModel, MainWindow mainWindow) : SimpleCommand
 	{
-		private readonly AssemblyTreeModel assemblyTreeModel;
-
-		public OpenFromGacCommand(AssemblyTreeModel assemblyTreeModel)
-		{
-			this.assemblyTreeModel = assemblyTreeModel;
-		}
-
 		public override bool CanExecute(object parameter)
 		{
 			return AppEnvironment.IsWindows;
@@ -42,8 +35,8 @@ namespace ICSharpCode.ILSpy
 
 		public override void Execute(object parameter)
 		{
-			OpenFromGacDialog dlg = new OpenFromGacDialog {
-				Owner = App.Current.MainWindow
+			OpenFromGacDialog dlg = new() {
+				Owner = mainWindow
 			};
 
 			if (dlg.ShowDialog() == true)

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2024 Tom Englert for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,32 +16,37 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.Diagnostics;
 
-using System.Composition;
-using System.Windows;
-using System.Windows.Data;
-
-using ICSharpCode.ILSpy.Properties;
-
-namespace ICSharpCode.ILSpy
+namespace ICSharpCode.ILSpy.Util
 {
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.ManageAssembly_Lists), MenuIcon = "Images/AssemblyList", MenuCategory = nameof(Resources.Open), MenuOrder = 1.7)]
-	[Shared]
-	sealed class ManageAssemblyListsCommand(SettingsService settingsService) : SimpleCommand, IProvideParameterBinding
+	static class GlobalUtils
 	{
-		public override void Execute(object parameter)
+		public static void OpenLink(string link)
 		{
-			ManageAssemblyListsDialog dlg = new(settingsService) {
-				Owner = parameter as Window
-			};
-
-			dlg.ShowDialog();
+			try
+			{
+				Process.Start(new ProcessStartInfo { FileName = link, UseShellExecute = true });
+			}
+			catch (Exception)
+			{
+				// Process.Start can throw several errors (not all of them documented),
+				// just ignore all of them.
+			}
 		}
 
-		public Binding ParameterBinding => new() {
-			RelativeSource = new(RelativeSourceMode.FindAncestor) {
-				AncestorType = typeof(Window)
+		public static void ExecuteCommand(string fileName, string arguments)
+		{
+			try
+			{
+				Process.Start(fileName, arguments);
 			}
-		};
+			catch (Exception)
+			{
+				// Process.Start can throw several errors (not all of them documented),
+				// just ignore all of them.
+			}
+		}
 	}
 }

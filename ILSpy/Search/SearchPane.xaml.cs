@@ -262,11 +262,11 @@ namespace ICSharpCode.ILSpy.Search
 			{
 
 				searchProgressBar.IsIndeterminate = true;
-				startedSearch = new(await assemblyTreeModel.AssemblyList.GetAllAssemblies(), 
+				startedSearch = new(await assemblyTreeModel.AssemblyList.GetAllAssemblies(),
 					searchTerm,
-					(SearchMode)searchModeComboBox.SelectedIndex, 
+					(SearchMode)searchModeComboBox.SelectedIndex,
 					assemblyTreeModel.CurrentLanguage,
-					treeNodeFactory, 
+					treeNodeFactory,
 					settingsService);
 				currentSearch = startedSearch;
 
@@ -298,7 +298,7 @@ namespace ICSharpCode.ILSpy.Search
 			readonly ApiVisibility apiVisibility;
 			readonly ITreeNodeFactory treeNodeFactory;
 			readonly SettingsService settingsService;
-			
+
 			public IProducerConsumerCollection<SearchResult> ResultQueue { get; } = new ConcurrentQueue<SearchResult>();
 
 			public RunningSearch(IList<LoadedAssembly> assemblies, string searchTerm, SearchMode searchMode,

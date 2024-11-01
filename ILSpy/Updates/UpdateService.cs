@@ -23,11 +23,9 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-using ICSharpCode.ILSpyX.Settings;
-
 namespace ICSharpCode.ILSpy.Updates
 {
-	internal static class NotifyOfUpdatesStrategy
+	internal static class UpdateService
 	{
 		static readonly Uri UpdateUrl = new Uri("https://ilspy.net/updates.xml");
 		const string band = "stable";
@@ -68,8 +66,8 @@ namespace ICSharpCode.ILSpy.Updates
 			// perform update check if we never did one before;
 			// or if the last check wasn't in the past 7 days
 			if (settings.LastSuccessfulUpdateCheck == null
-			    || settings.LastSuccessfulUpdateCheck < DateTime.UtcNow.AddDays(-7)
-			    || settings.LastSuccessfulUpdateCheck > DateTime.UtcNow)
+				|| settings.LastSuccessfulUpdateCheck < DateTime.UtcNow.AddDays(-7)
+				|| settings.LastSuccessfulUpdateCheck > DateTime.UtcNow)
 			{
 				return await CheckForUpdateInternal(settings).ConfigureAwait(false);
 			}

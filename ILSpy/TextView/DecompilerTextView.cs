@@ -62,6 +62,7 @@ using ICSharpCode.ILSpyX;
 
 using Microsoft.Win32;
 
+using TomsToolbox.Composition;
 using TomsToolbox.Wpf;
 
 using ResourceKeys = ICSharpCode.ILSpy.Themes.ResourceKeys;
@@ -74,9 +75,10 @@ namespace ICSharpCode.ILSpy.TextView
 	/// </summary>
 	public sealed partial class DecompilerTextView : UserControl, IHaveState, IProgress<DecompilationProgress>
 	{
-		readonly AssemblyTreeModel assemblyTreeModel;
+		readonly IExportProvider exportProvider;
 		readonly SettingsService settingsService;
-		private readonly LanguageService languageService;
+		readonly LanguageService languageService;
+		readonly MainWindow mainWindow;
 		readonly ReferenceElementGenerator referenceElementGenerator;
 		readonly UIElementGenerator uiElementGenerator;
 		readonly List<VisualLineElementGenerator?> activeCustomElementGenerators = new List<VisualLineElementGenerator?>();
@@ -97,11 +99,12 @@ namespace ICSharpCode.ILSpy.TextView
 		readonly List<ITextMarker> localReferenceMarks = new List<ITextMarker>();
 
 		#region Constructor
-		public DecompilerTextView(TabPageModel tabPage)
+		public DecompilerTextView(IExportProvider exportProvider)
 		{
-			this.assemblyTreeModel = tabPage.AssemblyTreeModel;
-			this.settingsService = tabPage.SettingsService;
-			this.languageService = tabPage.LanguageService;
+			this.exportProvider = exportProvider;
+			settingsService = exportProvider.GetExportedValue<SettingsService>();
+			languageService = exportProvider.GetExportedValue<LanguageService>();
+			mainWindow = exportProvider.GetExportedValue<MainWindow>();
 
 			RegisterHighlighting();
 
@@ -137,7 +140,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 			// SearchPanel
 			SearchPanel searchPanel = SearchPanel.Install(textEditor.TextArea);
-			searchPanel.RegisterCommands(App.Current.MainWindow.CommandBindings);
+			searchPanel.RegisterCommands(mainWindow.CommandBindings);
 			searchPanel.SetResourceReference(SearchPanel.MarkerBrushProperty, ResourceKeys.SearchResultBackgroundBrush);
 			searchPanel.Loaded += (_, _) => {
 				// HACK: fix search text box
@@ -412,7 +415,7 @@ namespace ICSharpCode.ILSpy.TextView
 			if (segment.Reference is ICSharpCode.Decompiler.Disassembler.OpCodeInfo code)
 			{
 				XmlDocumentationProvider docProvider = XmlDocLoader.MscorlibDocumentation;
-				DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), languageService.Language.SyntaxHighlighting, settingsService.DisplaySettings);
+				DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), languageService.Language.SyntaxHighlighting, settingsService.DisplaySettings, mainWindow);
 				renderer.AddSignatureBlock($"{code.Name} (0x{code.Code:x})");
 				if (docProvider != null)
 				{
@@ -422,18 +425,19 @@ namespace ICSharpCode.ILSpy.TextView
 						renderer.AddXmlDocumentation(documentation, null, null);
 					}
 				}
-				return new FlowDocumentTooltip(renderer.CreateDocument(), fontSize);
+				return new FlowDocumentTooltip(renderer.CreateDocument(), fontSize, mainWindow.ActualWidth);
 			}
 			else if (segment.Reference is IEntity entity)
 			{
 				var document = CreateTooltipForEntity(entity);
 				if (document == null)
 					return null;
-				return new FlowDocumentTooltip(document, fontSize);
+				return new FlowDocumentTooltip(document, fontSize, mainWindow.ActualWidth);
 			}
 			else if (segment.Reference is EntityReference unresolvedEntity)
 			{
-				var module = unresolvedEntity.ResolveAssembly(assemblyTreeModel.AssemblyList);
+				var assemblyList = exportProvider.GetExportedValue<AssemblyList>();
+				var module = unresolvedEntity.ResolveAssembly(assemblyList);
 				if (module == null)
 					return null;
 				var typeSystem = new DecompilerTypeSystem(module,
@@ -450,7 +454,7 @@ namespace ICSharpCode.ILSpy.TextView
 					var document = CreateTooltipForEntity(resolved);
 					if (document == null)
 						return null;
-					return new FlowDocumentTooltip(document, fontSize);
+					return new FlowDocumentTooltip(document, fontSize, mainWindow.ActualWidth);
 				}
 				catch (BadImageFormatException)
 				{
@@ -463,7 +467,7 @@ namespace ICSharpCode.ILSpy.TextView
 		FlowDocument? CreateTooltipForEntity(IEntity resolved)
 		{
 			Language currentLanguage = languageService.Language;
-			DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), currentLanguage.SyntaxHighlighting, settingsService.DisplaySettings);
+			DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), currentLanguage.SyntaxHighlighting, settingsService.DisplaySettings, mainWindow);
 			RichText richText = currentLanguage.GetRichTextTooltip(resolved);
 			if (richText == null)
 			{
@@ -493,7 +497,8 @@ namespace ICSharpCode.ILSpy.TextView
 
 			IEntity? ResolveReference(string idString)
 			{
-				return AssemblyTreeModel.FindEntityInRelevantAssemblies(idString, assemblyTreeModel.AssemblyList.GetAssemblies());
+				var assemblyList = exportProvider.GetExportedValue<AssemblyList>();
+				return AssemblyTreeModel.FindEntityInRelevantAssemblies(idString, assemblyList.GetAssemblies());
 			}
 		}
 
@@ -501,14 +506,14 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			readonly FlowDocumentScrollViewer viewer;
 
-			public FlowDocumentTooltip(FlowDocument document, double fontSize)
+			public FlowDocumentTooltip(FlowDocument document, double fontSize, double maxWith)
 			{
 				TextOptions.SetTextFormattingMode(this, TextFormattingMode.Display);
-				viewer = new FlowDocumentScrollViewer() {
+				viewer = new() {
 					Width = document.MinPageWidth + fontSize * 5,
-					MaxWidth = App.Current.MainWindow.ActualWidth
+					MaxWidth = maxWith,
+					Document = document
 				};
-				viewer.Document = document;
 				Border border = new Border {
 					BorderThickness = new Thickness(1),
 					MaxHeight = 400,
@@ -572,7 +577,7 @@ namespace ICSharpCode.ILSpy.TextView
 				progressTitle.Text = !string.IsNullOrWhiteSpace(value.Title) ? value.Title : Properties.Resources.Decompiling;
 				progressText.Text = value.Status;
 				progressText.Visibility = !string.IsNullOrWhiteSpace(progressText.Text) ? Visibility.Visible : Visibility.Collapsed;
-				var taskBar = App.Current.MainWindow.TaskbarItemInfo;
+				var taskBar = mainWindow.TaskbarItemInfo;
 				if (taskBar != null)
 				{
 					taskBar.ProgressState = System.Windows.Shell.TaskbarItemProgressState.Normal;
@@ -602,7 +607,7 @@ namespace ICSharpCode.ILSpy.TextView
 				progressText.Text = null;
 				progressText.Visibility = Visibility.Collapsed;
 				waitAdorner.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, new Duration(TimeSpan.FromSeconds(0.5)), FillBehavior.Stop));
-				var taskBar = App.Current.MainWindow.TaskbarItemInfo;
+				var taskBar = mainWindow.TaskbarItemInfo;
 				if (taskBar != null)
 				{
 					taskBar.ProgressState = System.Windows.Shell.TaskbarItemProgressState.Indeterminate;
@@ -641,7 +646,7 @@ namespace ICSharpCode.ILSpy.TextView
 						progressBar.IsIndeterminate = false;
 						progressText.Text = null;
 						progressText.Visibility = Visibility.Collapsed;
-						var taskBar = App.Current.MainWindow.TaskbarItemInfo;
+						var taskBar = mainWindow.TaskbarItemInfo;
 						if (taskBar != null)
 						{
 							taskBar.ProgressState = System.Windows.Shell.TaskbarItemProgressState.None;

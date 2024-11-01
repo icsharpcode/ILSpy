@@ -34,7 +34,6 @@ namespace ICSharpCode.ILSpy.Search
 
 	[ExportToolPane]
 	[Shared]
-	[Export]
 	public class SearchPaneModel : ToolPaneModel
 	{
 		public const string PaneContentId = "searchPane";
@@ -50,6 +49,11 @@ namespace ICSharpCode.ILSpy.Search
 			Icon = "Images/Search";
 			ShortcutKey = new(Key.F, ModifierKeys.Control | ModifierKeys.Shift);
 			IsCloseable = true;
+
+			MessageBus<ShowSearchPageEventArgs>.Subscribers += (_, e) => {
+				SearchTerm = e.SearchTerm;
+				Show();
+			};
 		}
 
 		public SearchModeModel[] SearchModes { get; } = [

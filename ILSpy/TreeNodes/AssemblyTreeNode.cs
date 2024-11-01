@@ -712,7 +712,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					node.RaisePropertyChanged(nameof(ILSpyTreeNode.IsAutoLoaded));
 				}
 			}
-			
+
 			assemblyTreeModel.AssemblyList.RefreshSave();
 		}
 	}
@@ -764,7 +764,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				var path = node.LoadedAssembly.FileName;
 				if (File.Exists(path))
 				{
-					MainWindow.ExecuteCommand("explorer.exe", $"/select,\"{path}\"");
+					GlobalUtils.ExecuteCommand("explorer.exe", $"/select,\"{path}\"");
 				}
 			}
 		}
@@ -806,7 +806,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				var path = Path.GetDirectoryName(node.LoadedAssembly.FileName);
 				if (Directory.Exists(path))
 				{
-					MainWindow.ExecuteCommand("cmd.exe", $"/k \"cd {path}\"");
+					GlobalUtils.ExecuteCommand("cmd.exe", $"/k \"cd {path}\"");
 				}
 			}
 		}

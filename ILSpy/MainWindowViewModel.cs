@@ -18,8 +18,6 @@
 
 using System.Composition;
 
-using ICSharpCode.ILSpy.Analyzers;
-using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpyX;
 
@@ -29,7 +27,7 @@ namespace ICSharpCode.ILSpy
 {
 	[Export]
 	[Shared]
-	public class MainWindowViewModel(AssemblyTreeModel assemblyTreeModel, AnalyzerTreeViewModel analyzerTreeViewModel, SettingsService settingsService, LanguageService languageService, DockWorkspace dockWorkspace) : ObservableObject
+	public class MainWindowViewModel(SettingsService settingsService, LanguageService languageService, DockWorkspace dockWorkspace) : ObservableObject
 	{
 		public DockWorkspace Workspace { get; } = dockWorkspace;
 
@@ -38,7 +36,5 @@ namespace ICSharpCode.ILSpy
 		public LanguageService LanguageService => languageService;
 
 		public AssemblyListManager AssemblyListManager => settingsService.AssemblyListManager;
-
-		public AnalyzeCommand AnalyzeCommand { get; } = new(assemblyTreeModel, analyzerTreeViewModel);
 	}
 }

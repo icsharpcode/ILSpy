@@ -25,13 +25,16 @@ using System.Windows;
 using System.Windows.Input;
 
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.Commands;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX;
 
+using TomsToolbox.Wpf;
+
+using DelegateCommand = ICSharpCode.ILSpy.Commands.DelegateCommand;
+
 namespace ICSharpCode.ILSpy.ViewModels
 {
-	public class ManageAssemblyListsViewModel : ViewModelBase
+	public class ManageAssemblyListsViewModel : ObservableObject
 	{
 		private readonly AssemblyListManager manager;
 		private readonly Window parent;
@@ -106,13 +109,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		public string SelectedAssemblyList {
 			get => selectedAssemblyList;
-			set {
-				if (selectedAssemblyList != value)
-				{
-					selectedAssemblyList = value;
-					RaisePropertyChanged();
-				}
-			}
+			set => SetProperty(ref selectedAssemblyList, value);
 		}
 
 		public ICommand NewCommand { get; }

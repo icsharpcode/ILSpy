@@ -17,26 +17,14 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Composition;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-
-using AvalonDock.Layout.Serialization;
-
-using ICSharpCode.ILSpy.AssemblyTree;
-using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.ILSpy.Updates;
-using ICSharpCode.ILSpyX.FileLoaders;
-using ICSharpCode.ILSpyX.Settings;
-using ICSharpCode.ILSpyX.TreeView;
 
 using Screen = System.Windows.Forms.Screen;
 
@@ -50,16 +38,10 @@ namespace ICSharpCode.ILSpy
 #pragma warning disable MEF003 // Main window is a singleton
 	partial class MainWindow
 	{
-		private readonly AssemblyTreeModel assemblyTreeModel;
-		private readonly IEnumerable<IFileLoader> fileLoaders;
-		private readonly MenuService menuService;
 		private readonly SettingsService settingsService;
 
-		public MainWindow(MainWindowViewModel mainWindowViewModel, AssemblyTreeModel assemblyTreeModel, IEnumerable<IFileLoader> fileLoaders, MenuService menuService, SettingsService settingsService)
+		public MainWindow(MainWindowViewModel mainWindowViewModel, MenuService menuService, SettingsService settingsService)
 		{
-			this.assemblyTreeModel = assemblyTreeModel;
-			this.fileLoaders = fileLoaders;
-			this.menuService = menuService;
 			this.settingsService = settingsService;
 
 			// Make sure Images are initialized on the UI thread.
@@ -69,16 +51,10 @@ namespace ICSharpCode.ILSpy
 
 			InitializeComponent();
 
-			InitFileLoaders();
-
 			Dispatcher.BeginInvoke(DispatcherPriority.Background, () => {
 				mainWindowViewModel.Workspace.InitializeLayout();
 				menuService.Init(mainMenu, toolBar, InputBindings);
-
-				Dispatcher.BeginInvoke(DispatcherPriority.Background, () => {
-					assemblyTreeModel.Initialize();
-					assemblyTreeModel.Show();
-				});
+				MessageBus.Send(this, new MainWindowLoadedEventArgs());
 			});
 		}
 
@@ -89,20 +65,6 @@ namespace ICSharpCode.ILSpy
 			this.Width = bounds.Width;
 			this.Height = bounds.Height;
 		}
-
-		#region File Loader extensibility
-
-		void InitFileLoaders()
-		{
-			// TODO
-			foreach (var loader in fileLoaders)
-			{
-			}
-		}
-
-		#endregion
-
-		#region Message Hook
 
 		protected override void OnSourceInitialized(EventArgs e)
 		{
@@ -122,8 +84,6 @@ namespace ICSharpCode.ILSpy
 
 			this.WindowState = sessionSettings.WindowState;
 		}
-
-		#endregion
 
 		protected override void OnKeyDown(KeyEventArgs e)
 		{
@@ -148,93 +108,6 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		#region Update Check
-
-		string updateAvailableDownloadUrl;
-
-		public async Task ShowMessageIfUpdatesAvailableAsync(UpdateSettings settings, bool forceCheck = false)
-		{
-			string downloadUrl;
-			if (forceCheck)
-			{
-				downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesAsync(settings);
-			}
-			else
-			{
-				downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesIfEnabledAsync(settings);
-			}
-
-			// The Update Panel is only available for NotifyOfUpdatesStrategy, AutoUpdate will have differing UI requirements
-			AdjustUpdateUIAfterCheck(downloadUrl, forceCheck);
-		}
-
-		void UpdatePanelCloseButtonClick(object sender, RoutedEventArgs e)
-		{
-			updatePanel.Visibility = Visibility.Collapsed;
-		}
-
-		async void DownloadOrCheckUpdateButtonClick(object sender, RoutedEventArgs e)
-		{
-			if (updateAvailableDownloadUrl != null)
-			{
-				OpenLink(updateAvailableDownloadUrl);
-			}
-			else
-			{
-				updatePanel.Visibility = Visibility.Collapsed;
-				string downloadUrl = await NotifyOfUpdatesStrategy.CheckForUpdatesAsync(settingsService.GetSettings<UpdateSettings>());
-				AdjustUpdateUIAfterCheck(downloadUrl, true);
-			}
-		}
-
-		void AdjustUpdateUIAfterCheck(string downloadUrl, bool displayMessage)
-		{
-			updateAvailableDownloadUrl = downloadUrl;
-			updatePanel.Visibility = displayMessage ? Visibility.Visible : Visibility.Collapsed;
-			if (downloadUrl != null)
-			{
-				updatePanelMessage.Text = Properties.Resources.ILSpyVersionAvailable;
-				downloadOrCheckUpdateButton.Content = Properties.Resources.Download;
-			}
-			else
-			{
-				updatePanelMessage.Text = Properties.Resources.UpdateILSpyFound;
-				downloadOrCheckUpdateButton.Content = Properties.Resources.CheckAgain;
-			}
-		}
-
-		#endregion
-
-		public static void OpenLink(string link)
-		{
-			try
-			{
-				Process.Start(new ProcessStartInfo { FileName = link, UseShellExecute = true });
-#pragma warning disable RECS0022 // A catch clause that catches System.Exception and has an empty body
-			}
-			catch (Exception)
-			{
-#pragma warning restore RECS0022 // A catch clause that catches System.Exception and has an empty body
-				// Process.Start can throw several errors (not all of them documented),
-				// just ignore all of them.
-			}
-		}
-
-		public static void ExecuteCommand(string fileName, string arguments)
-		{
-			try
-			{
-				Process.Start(fileName, arguments);
-#pragma warning disable RECS0022 // A catch clause that catches System.Exception and has an empty body
-			}
-			catch (Exception)
-			{
-#pragma warning restore RECS0022 // A catch clause that catches System.Exception and has an empty body
-				// Process.Start can throw several errors (not all of them documented),
-				// just ignore all of them.
-			}
-		}
-
 		protected override void OnStateChanged(EventArgs e)
 		{
 			base.OnStateChanged(e);
@@ -251,27 +124,12 @@ namespace ICSharpCode.ILSpy
 
 			var sessionSettings = snapshot.GetSettings<SessionSettings>();
 
-			sessionSettings.ActiveAssemblyList = assemblyTreeModel.AssemblyList.ListName;
-			sessionSettings.ActiveTreeViewPath = assemblyTreeModel.SelectedPath;
-			sessionSettings.ActiveAutoLoadedAssembly = GetAutoLoadedAssemblyNode(assemblyTreeModel.SelectedItem);
+			MessageBus.Send(this, new ApplySessionSettingsEventArgs(sessionSettings));
+
 			sessionSettings.WindowBounds = this.RestoreBounds;
-			sessionSettings.DockLayout.Serialize(new XmlLayoutSerializer(DockManager));
+			sessionSettings.DockLayout.Serialize(new(DockManager));
 
 			snapshot.Save();
-		}
-
-		private static string GetAutoLoadedAssemblyNode(SharpTreeNode node)
-		{
-			var assemblyTreeNode = node?
-				.AncestorsAndSelf()
-				.OfType<AssemblyTreeNode>()
-				.FirstOrDefault();
-
-			var loadedAssembly = assemblyTreeNode?.LoadedAssembly;
-
-			return loadedAssembly is not { IsLoaded: true, IsAutoLoaded: true }
-				? null
-				: loadedAssembly.FileName;
 		}
 	}
 }

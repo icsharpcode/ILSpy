@@ -30,7 +30,9 @@ namespace ICSharpCode.ILSpy.Analyzers
 {
 	public abstract class AnalyzerTreeNode : SharpTreeNode
 	{
-		public static Language Language => App.ExportProvider.GetExportedValue<LanguageService>().Language;
+		protected static Language Language => App.ExportProvider.GetExportedValue<LanguageService>().Language;
+
+		protected static AssemblyList AssemblyList => App.ExportProvider.GetExportedValue<AssemblyList>();
 
 		public override bool CanDelete()
 		{
@@ -46,8 +48,6 @@ namespace ICSharpCode.ILSpy.Analyzers
 		{
 			DeleteCore();
 		}
-
-		public static AssemblyTreeModel AssemblyTreeModel { get; } = App.ExportProvider.GetExportedValue<AssemblyTreeModel>();
 
 		public static ICollection<IExport<IAnalyzer, IAnalyzerMetadata>> Analyzers => App.ExportProvider
 			.GetExports<IAnalyzer, IAnalyzerMetadata>("Analyzer")

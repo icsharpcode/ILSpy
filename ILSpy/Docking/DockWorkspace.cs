@@ -33,7 +33,6 @@ using AvalonDock.Layout.Serialization;
 
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.ILSpy.Analyzers;
-using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Search;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
@@ -49,25 +48,18 @@ namespace ICSharpCode.ILSpy.Docking
 	public class DockWorkspace : ObservableObject, ILayoutUpdateStrategy
 	{
 		private readonly IExportProvider exportProvider;
-		
-		private SettingsService SettingsService { get; }
-
-		private LanguageService LanguageService => exportProvider.GetExportedValue<LanguageService>();
-
-		private SessionSettings SessionSettings { get; }
 
 		private readonly ObservableCollection<TabPageModel> tabPages = [];
 
-		private DockingManager DockingManager => exportProvider.GetExportedValue<DockingManager>();
+		readonly SessionSettings sessionSettings;
 
-		private AssemblyTreeModel AssemblyTreeModel => exportProvider.GetExportedValue<AssemblyTreeModel>();
+		private DockingManager DockingManager => exportProvider.GetExportedValue<DockingManager>();
 
 		public DockWorkspace(SettingsService settingsService, IExportProvider exportProvider)
 		{
 			this.exportProvider = exportProvider;
-			
-			SettingsService = settingsService;
-			SessionSettings = settingsService.SessionSettings;
+
+			sessionSettings = settingsService.SessionSettings;
 
 			this.tabPages.CollectionChanged += TabPages_CollectionChanged;
 			TabPages = new(tabPages);
@@ -77,10 +69,9 @@ namespace ICSharpCode.ILSpy.Docking
 
 		private void CurrentAssemblyList_Changed(object sender, NotifyCollectionChangedEventArgs e)
 		{
-			if (e.OldItems == null)
-			{
+			if (e.OldItems is not { } oldItems)
 				return;
-			}
+
 			foreach (var tab in tabPages.ToArray())
 			{
 				var state = tab.GetState();
@@ -91,7 +82,7 @@ namespace ICSharpCode.ILSpy.Docking
 				bool found = decompiledNodes
 					.Select(node => node.Ancestors().OfType<TreeNodes.AssemblyTreeNode>().LastOrDefault())
 					.ExceptNullItems()
-					.Any(assemblyNode => !e.OldItems.Contains(assemblyNode.LoadedAssembly));
+					.Any(assemblyNode => !oldItems.Contains(assemblyNode.LoadedAssembly));
 
 				if (!found)
 				{
@@ -127,7 +118,7 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public void AddTabPage(TabPageModel tabPage = null)
 		{
-			tabPages.Add(tabPage ?? new TabPageModel(AssemblyTreeModel, SettingsService, LanguageService));
+			tabPages.Add(tabPage ?? exportProvider.GetExportedValue<TabPageModel>());
 		}
 
 		public ReadOnlyObservableCollection<TabPageModel> TabPages { get; }
@@ -169,22 +160,13 @@ namespace ICSharpCode.ILSpy.Docking
 			}
 			set {
 				if (!SetProperty(ref activeTabPage, value))
-				{
 					return;
-				}
 
 				var state = value?.GetState();
-				if (state != null)
-				{
-					if (state.DecompiledNodes != null)
-					{
-						AssemblyTreeModel.SelectNodes(state.DecompiledNodes);
-					}
-					else
-					{
-						AssemblyTreeModel.NavigateTo(new(state.ViewedUri, null));
-					}
-				}
+				if (state == null)
+					return;
+
+				MessageBus.Send(this, new ActiveTabPageChangedEventArgs(value?.GetState()));
 			}
 		}
 
@@ -195,15 +177,18 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public void InitializeLayout()
 		{
-			// Make sure there is at least one tab open
-			AddTabPage();
+			if (tabPages.Count == 0)
+			{
+				// Make sure there is at least one tab open
+				AddTabPage();
+			}
 
 			DockingManager.LayoutUpdateStrategy = this;
 			XmlLayoutSerializer serializer = new XmlLayoutSerializer(DockingManager);
 			serializer.LayoutSerializationCallback += LayoutSerializationCallback;
 			try
 			{
-				SessionSettings.DockLayout.Deserialize(serializer);
+				sessionSettings.DockLayout.Deserialize(serializer);
 			}
 			finally
 			{
@@ -260,9 +245,10 @@ namespace ICSharpCode.ILSpy.Docking
 				pane.IsVisible = false;
 			}
 			CloseAllTabs();
-			SessionSettings.DockLayout.Reset();
+			sessionSettings.DockLayout.Reset();
 			InitializeLayout();
-			App.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, AssemblyTreeModel.RefreshDecompiledView);
+
+			App.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, () => MessageBus.Send(this, new ResetLayoutEventArgs()));
 		}
 
 		static readonly PropertyInfo previousContainerProperty = typeof(LayoutContent).GetProperty("PreviousContainer", BindingFlags.NonPublic | BindingFlags.Instance);

@@ -59,13 +59,14 @@ namespace ICSharpCode.ILSpy.Options
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources._Options), MenuCategory = nameof(Resources.Options), MenuOrder = 999)]
 	[Shared]
-	sealed class ShowOptionsCommand(AssemblyTreeModel assemblyTreeModel, SettingsService settingsService) : SimpleCommand
+	sealed class ShowOptionsCommand(AssemblyTreeModel assemblyTreeModel, SettingsService settingsService, MainWindow mainWindow) : SimpleCommand
 	{
 		public override void Execute(object parameter)
 		{
 			OptionsDialog dlg = new(settingsService) {
-				Owner = App.Current.MainWindow,
+				Owner = mainWindow
 			};
+
 			if (dlg.ShowDialog() == true)
 			{
 				assemblyTreeModel.Refresh();

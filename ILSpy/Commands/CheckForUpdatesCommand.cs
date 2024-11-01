@@ -20,17 +20,16 @@
 using System.Composition;
 
 using ICSharpCode.ILSpy.Properties;
-using ICSharpCode.ILSpy.Updates;
 
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._Help), Header = nameof(Resources._CheckUpdates), MenuOrder = 5000)]
 	[Shared]
-	sealed class CheckForUpdatesCommand(SettingsService settingsService) : SimpleCommand
+	sealed class CheckForUpdatesCommand : SimpleCommand
 	{
-		public override async void Execute(object parameter)
+		public override void Execute(object parameter)
 		{
-			await App.Current.MainWindow.ShowMessageIfUpdatesAvailableAsync(settingsService.GetSettings<UpdateSettings>(), forceCheck: true);
+			MessageBus.Send(this, new CheckIfUpdateAvailableEventArgs(notify: true));
 		}
 	}
 }

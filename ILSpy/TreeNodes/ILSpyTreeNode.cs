@@ -50,15 +50,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public Language Language => LanguageService.Language;
 
-		public static AssemblyTreeModel AssemblyTreeModel { get; } = App.ExportProvider.GetExportedValue<AssemblyTreeModel>();
+		protected static AssemblyTreeModel AssemblyTreeModel { get; } = App.ExportProvider.GetExportedValue<AssemblyTreeModel>();
 
-		public static ICollection<IResourceNodeFactory> ResourceNodeFactories { get; } = App.ExportProvider.GetExportedValues<IResourceNodeFactory>().ToArray();
+		protected static ICollection<IResourceNodeFactory> ResourceNodeFactories { get; } = App.ExportProvider.GetExportedValues<IResourceNodeFactory>().ToArray();
 
-		public static SettingsService SettingsService { get; } = App.ExportProvider.GetExportedValue<SettingsService>();
+		protected static SettingsService SettingsService { get; } = App.ExportProvider.GetExportedValue<SettingsService>();
 
-		public static LanguageService LanguageService { get; } = App.ExportProvider.GetExportedValue<LanguageService>();
+		protected static LanguageService LanguageService { get; } = App.ExportProvider.GetExportedValue<LanguageService>();
 
-		public static DockWorkspace DockWorkspace { get; } = App.ExportProvider.GetExportedValue<DockWorkspace>();
+		protected static DockWorkspace DockWorkspace { get; } = App.ExportProvider.GetExportedValue<DockWorkspace>();
 
 		public virtual FilterResult Filter(LanguageSettings settings)
 		{
@@ -85,7 +85,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			var assemblyTreeModel = AssemblyTreeModel;
 
 			assemblyTreeModel.SelectNode(this, inNewTabPage: true);
-			
+
 			App.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, assemblyTreeModel.RefreshDecompiledView);
 		}
 

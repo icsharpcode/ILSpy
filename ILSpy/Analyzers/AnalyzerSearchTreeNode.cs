@@ -58,10 +58,10 @@ namespace ICSharpCode.ILSpy.Analyzers
 		{
 			if (symbol is IEntity)
 			{
-				var context = new AnalyzerContext() {
+				var context = new AnalyzerContext {
 					CancellationToken = ct,
 					Language = Language,
-					AssemblyList = AssemblyTreeModel.AssemblyList
+					AssemblyList = AssemblyList
 				};
 				var results = analyzer.Analyze(symbol, context).Select(SymbolTreeNodeFactory);
 				if (context.SortResults)

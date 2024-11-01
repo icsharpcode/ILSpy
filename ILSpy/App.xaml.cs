@@ -25,8 +25,6 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Documents;
-using System.Windows.Navigation;
 using System.Windows.Threading;
 
 using ICSharpCode.ILSpy.AppEnv;
@@ -115,9 +113,6 @@ namespace ICSharpCode.ILSpy
 				Thread.CurrentThread.CurrentUICulture = CultureInfo.DefaultThreadCurrentUICulture = new(sessionSettings.CurrentCulture);
 			}
 
-			EventManager.RegisterClassHandler(typeof(Window),
-											  Hyperlink.RequestNavigateEvent,
-											  new RequestNavigateEventHandler(Window_RequestNavigate));
 			ILSpyTraceListener.Install();
 
 			if (CommandLineArguments.ArgumentsParser.IsShowingInformation)
@@ -138,7 +133,7 @@ namespace ICSharpCode.ILSpy
 
 		public new MainWindow MainWindow {
 			get => (MainWindow)base.MainWindow;
-			set => base.MainWindow = value;
+			private set => base.MainWindow = value;
 		}
 
 		private static void SingleInstance_NewInstanceDetected(object sender, NewInstanceEventArgs e) => ExportProvider.GetExportedValue<AssemblyTreeModel>().HandleSingleInstanceCommandLineArguments(e.Args).HandleExceptions();
@@ -152,7 +147,7 @@ namespace ICSharpCode.ILSpy
 			return context.LoadFromAssemblyPath(assemblyFileName);
 		}
 
-		private static bool InitializeDependencyInjection(SettingsService settingsService)
+		private bool InitializeDependencyInjection(SettingsService settingsService)
 		{
 			// Add custom logic for resolution of dependencies.
 			// This necessary because the AssemblyLoadContext.LoadFromAssemblyPath and related methods,
@@ -193,10 +188,13 @@ namespace ICSharpCode.ILSpy
 				services.AddSingleton(_ => ExportProvider);
 				// Add the docking manager
 				services.AddSingleton(serviceProvider => serviceProvider.GetService<MainWindow>().DockManager);
+				services.AddTransient(serviceProvider => serviceProvider.GetService<AssemblyTreeModel>().AssemblyList);
 
 				var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
 
 				ExportProvider = new ExportProviderAdapter(serviceProvider);
+
+				Exit += (_, _) => serviceProvider.Dispose();
 
 				return true;
 			}
@@ -274,10 +272,5 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 		#endregion
-
-		void Window_RequestNavigate(object sender, RequestNavigateEventArgs e)
-		{
-			ExportProvider.GetExportedValue<AssemblyTreeModel>().NavigateTo(e);
-		}
 	}
 }

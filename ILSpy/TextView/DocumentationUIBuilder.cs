@@ -45,15 +45,17 @@ namespace ICSharpCode.ILSpy.TextView
 		readonly IAmbience ambience;
 		readonly IHighlightingDefinition highlightingDefinition;
 		readonly DisplaySettings displaySettings;
+		readonly MainWindow mainWindow;
 		readonly FlowDocument document;
 		BlockCollection blockCollection;
 		InlineCollection inlineCollection;
 
-		public DocumentationUIBuilder(IAmbience ambience, IHighlightingDefinition highlightingDefinition, DisplaySettings displaySettings)
+		public DocumentationUIBuilder(IAmbience ambience, IHighlightingDefinition highlightingDefinition, DisplaySettings displaySettings, MainWindow mainWindow)
 		{
 			this.ambience = ambience;
 			this.highlightingDefinition = highlightingDefinition;
 			this.displaySettings = displaySettings;
+			this.mainWindow = mainWindow;
 			this.document = new FlowDocument();
 			this.blockCollection = document.Blocks;
 
@@ -119,7 +121,7 @@ namespace ICSharpCode.ILSpy.TextView
 			};
 			text.Inlines.AddRange(richText.CreateRuns(document));
 			text.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-			this.document.MinPageWidth = Math.Min(text.DesiredSize.Width, App.Current.MainWindow.ActualWidth);
+			this.document.MinPageWidth = Math.Min(text.DesiredSize.Width, mainWindow.ActualWidth);
 			block.Inlines.AddRange(richText.CreateRuns(document));
 			block.FontFamily = GetCodeFont();
 			block.TextAlignment = TextAlignment.Left;

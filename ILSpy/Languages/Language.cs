@@ -44,11 +44,11 @@ namespace ICSharpCode.ILSpy
 	/// </remarks>
 	public abstract class Language : ILanguage
 	{
-		public static SettingsService SettingsService { get; } = App.ExportProvider.GetExportedValue<SettingsService>();
+		protected static SettingsService SettingsService { get; } = App.ExportProvider.GetExportedValue<SettingsService>();
 
-		public static AssemblyTreeModel AssemblyTreeModel { get; } = App.ExportProvider.GetExportedValue<AssemblyTreeModel>();
+		protected static AssemblyTreeModel AssemblyTreeModel { get; } = App.ExportProvider.GetExportedValue<AssemblyTreeModel>();
 
-		public static ICollection<IResourceFileHandler> ResourceFileHandlers { get; } = App.ExportProvider.GetExportedValues<IResourceFileHandler>().ToArray();
+		protected static ICollection<IResourceFileHandler> ResourceFileHandlers { get; } = App.ExportProvider.GetExportedValues<IResourceFileHandler>().ToArray();
 
 		/// <summary>
 		/// Gets the name of the language (as shown in the UI)
