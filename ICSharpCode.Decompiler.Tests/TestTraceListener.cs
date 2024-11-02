@@ -23,7 +23,7 @@ using ICSharpCode.Decompiler.Tests.Helpers;
 
 using NUnit.Framework;
 
-namespace ICSharpCode.Decompiler.Tests
+namespace ICSharpCode.Decompiler
 {
 	[SetUpFixture]
 	public class TestTraceListener : DefaultTraceListener
