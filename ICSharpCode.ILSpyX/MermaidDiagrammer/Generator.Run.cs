@@ -90,14 +90,10 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 
 		private void GenerateOutput(string assemblyPath, ClassDiagrammer model)
 		{
-			var htmlSourcePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "html");
 			string modelJson = SerializeModel(model);
 
-			var outputFolder = OutputFolder ??
-				/* If no out folder is specified and export mode is JsonOnly,
-                 * default to the HTML diagrammer source folder -  that's where it's most likely used.
-                 * Otherwise default to a "netAmermaid" folder next to the input assembly. */
-				(JsonOnly ? htmlSourcePath : Path.Combine(Path.GetDirectoryName(assemblyPath) ?? string.Empty, "netAmermaid"));
+			// If no out folder is specified, default to a "netAmermaid" folder next to the input assembly.
+			var outputFolder = OutputFolder ?? Path.Combine(Path.GetDirectoryName(assemblyPath) ?? string.Empty, "netAmermaid");
 
 			if (!Directory.Exists(outputFolder))
 				Directory.CreateDirectory(outputFolder);
@@ -109,7 +105,7 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 			}
 			else
 			{
-				var htmlTemplate = File.ReadAllText(Path.Combine(htmlSourcePath, "template.html"));
+				var htmlTemplate = EmbeddedResource.ReadText("template.html");
 
 				var html = htmlTemplate
 					.Replace("{{SourceAssemblyName}}", model.SourceAssemblyName)
@@ -121,8 +117,8 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 				File.WriteAllText(Path.Combine(outputFolder, "class-diagrammer.html"), html);
 
 				// copy required resources to output folder while flattening paths if required
-				foreach (var path in new[] { "styles.css", "netAmermaid.ico", "script.js" })
-					File.Copy(Path.Combine(htmlSourcePath, path), Path.Combine(outputFolder, Path.GetFileName(path)), overwrite: true);
+				foreach (var resource in new[] { "styles.css", "netAmermaid.ico", "script.js" })
+					EmbeddedResource.CopyTo(outputFolder, resource);
 
 				Console.WriteLine("Successfully generated HTML diagrammer.");
 			}
