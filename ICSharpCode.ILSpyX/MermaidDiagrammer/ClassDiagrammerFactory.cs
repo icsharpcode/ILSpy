@@ -47,6 +47,7 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 		{
 			this.xmlDocs = xmlDocs;
 
+			//TODO not sure LanguageVersion.Latest is the wisest choice here; maybe cap this for better mermaid compatibility?
 			decompilerSettings = new DecompilerSettings(Decompiler.CSharp.LanguageVersion.Latest) {
 				AutomaticProperties = true // for IsHidden to return true for backing fields
 			};

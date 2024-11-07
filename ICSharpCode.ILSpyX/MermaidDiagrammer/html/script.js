@@ -321,6 +321,8 @@
                         }
                     },
 
+                    /*  TODO watch https://github.com/mermaid-js/mermaid/issues/6034 for a solution to render multiple self-references,
+                        which is currently broken. E.g. for LightJson.JsonValue (compare console log) */
                     // renders HasOne and HasMany relations
                     renderRelations = (typeId, relations, many) => {
                         if (relations) // expecting object; only process if not null or undefined
