@@ -24,7 +24,7 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 	/// To use it outside of that context, set its properties and call <see cref="Run"/>.</summary>
 	public partial class GenerateHtmlDiagrammer
 	{
-		internal const string RepoUrl = "https://github.com/h0lg/netAmermaid";
+		internal const string RepoUrl = "https://github.com/icsharpcode/ILSpy";
 
 		public required string Assembly { get; set; }
 		public string? OutputFolder { get; set; }
