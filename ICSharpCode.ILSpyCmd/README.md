@@ -94,35 +94,35 @@ Examples:
         ilspycmd sample.dll --generate-diagrammer -o c:\diagrammer --generate-diagrammer-include LightJson\\..+ --generate-diagrammer-exclude LightJson\\.Serialization\\..+
 ```
 
-# Generate a HTML diagrammer using the console app
+## Generate HTML diagrammers
 
 Once you have an output folder in mind, you can adopt either of the following strategies
 to generate a HTML diagrammer from a .Net assembly using the console app.
 
-## Manually before use
+### Manually before use
 
 **Create the output folder** in your location of choice and inside it **a new shell script**.
 
 Using the CMD shell in a Windows environment for example, you'd create a `regenerate.cmd` looking somewhat like this:
 
 <pre>
-..\..\path\to\netAmermaid.exe --assembly ..\path\to\your\assembly.dll --output-folder .
+..\..\path\to\ilspycmd.exe ..\path\to\your\assembly.dll --generate-diagrammer --outputdir .
 </pre>
 
-With this script in place, run it to (re-)generate the HTML diagrammer at your leisure. Note that `--output-folder .` directs the output to the current directory.
+With this script in place, run it to (re-)generate the HTML diagrammer at your leisure. Note that `--outputdir .` directs the output to the current directory.
 
-## Automatically
+### Automatically
 
 If you want to deploy an up-to-date HTML diagrammer as part of your live documentation,
 you'll want to automate its regeneration to keep it in sync with your code base.
 
 For example, you might like to share the diagrammer on a web server or - in general - with users
-who cannot or may not regenerate it; lacking either access to the netAmermaid console app or permission to use it.
+who cannot or may not regenerate it; lacking either access to the ilspycmd console app or permission to use it.
 
 In such cases, you can dangle the regeneration off the end of either your build or deployment pipeline.
 Note that the macros used here apply to [MSBuild](https://learn.microsoft.com/en-us/visualstudio/msbuild/msbuild) for [Visual Studio](https://learn.microsoft.com/en-us/visualstudio/ide/reference/pre-build-event-post-build-event-command-line-dialog-box) and your mileage may vary with VS for Mac or VS Code.
 
-### After building
+#### After building
 
 To regenerate the HTML diagrammer from your output assembly after building,
 add something like the following to your project file.
@@ -130,43 +130,43 @@ Note that the `Condition` here is optional and configures this step to only run 
 
 ```xml
 <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
-  <Exec Command="$(SolutionDir)..\path\to\netAmermaid.exe --assembly $(TargetPath) --output-folder $(ProjectDir)netAmermaid" />
+  <Exec Command="$(SolutionDir)..\path\to\ilspycmd.exe $(TargetPath) --generate-diagrammer --outputdir $(ProjectDir)diagrammer" />
 </Target>
 ```
 
-### After publishing
+#### After publishing
 
 If you'd rather regenerate the diagram after publishing instead of building, all you have to do is change the `AfterTargets` to `Publish`.
 Note that the `Target` `Name` doesn't matter here and that the diagrammer is generated into a folder in the `PublishDir` instead of the `ProjectDir`.
 
 ```xml
 <Target Name="GenerateHtmlDiagrammer" AfterTargets="Publish">
-  <Exec Command="$(SolutionDir)..\path\to\netAmermaid.exe --assembly $(TargetPath) --output-folder $(PublishDir)netAmermaid" />
+  <Exec Command="$(SolutionDir)..\path\to\ilspycmd.exe $(TargetPath) --generate-diagrammer --outputdir $(PublishDir)diagrammer" />
 </Target>
 ```
 
-## Tips for using the console app
+### Usage tips
 
 **Compiler-generated** types and their nested types are **excluded by default**.
 
 Consider sussing out **big source assemblies** using [ILSpy](https://github.com/icsharpcode/ILSpy) first to get an idea about which subdomains to include in your diagrammers. Otherwise you may experience long build times and large file sizes for the diagrammer as well as a looong type selection opening it. At some point, mermaid may refuse to render all types in your selection because their definitions exceed the maximum input size. If that's where you find yourself, you may want to consider
-- using `--include` and `--exclude` to **limit the scope of the individual diagrammer to a certain subdomain**
+- using `--generate-diagrammer-include` and `--generate-diagrammer-exclude` to **limit the scope of the individual diagrammer to a certain subdomain**
 - generating **multiple diagrammers for different subdomains**.
 
-## Advanced configuration examples
+### Advanced configuration examples
 
 Above examples show how the most important options are used. Let's have a quick look at the remaining ones, which allow for customization in your project setup and diagrams.
 
-### Filter extracted types
+#### Filter extracted types
 
 Sometimes the source assembly contains way more types than are sensible to diagram. Types with metadata for validation or mapping for example. Or auto-generated types.
 Especially if you want to tailor a diagrammer for a certain target audience and hide away most of the supporting type system to avoid noise and unnecessary questions.
 
-In these scenarios you can supply Regular Expressions for types to `--include` (white-list) and `--exclude` (black-list).
-A third option `--report-excluded` will output a `.txt` containing the list of effectively excluded types next to the HTML diagrammer containing the effectively included types.
+In these scenarios you can supply Regular Expressions for types to `--generate-diagrammer-include` (white-list) and `--generate-diagrammer-exclude` (black-list).
+A third option `--generate-diagrammer-report-excluded` will output a `.txt` containing the list of effectively excluded types next to the HTML diagrammer containing the effectively included types.
 
 <pre>
-netAmermaid.exe <b>--include Your\.Models\..+ --exclude .+\+Metadata|.+\.Data\..+Map --report-excluded</b> --assembly ..\path\to\your\assembly.dll --output-folder .
+ilspycmd.exe <b>--generate-diagrammer-include Your\.Models\..+ --generate-diagrammer-exclude .+\+Metadata|.+\.Data\..+Map --generate-diagrammer-report-excluded</b> ..\path\to\your\assembly.dll --generate-diagrammer --outputdir .
 </pre>
 
 This example
@@ -175,21 +175,21 @@ This example
   - nested types called `Metadata` and
   - types ending in `Map` in descendant `.Data.` namespaces.
 
-### Strip namespaces from XML comments
+#### Strip namespaces from XML comments
 
-You can reduce the noise in the member lists of classes on your diagrams by supplying a space-separated list of namespaces to omit from the output like so:
+You can reduce the noise in the XML documentation comments on classes on your diagrams by supplying a space-separated list of namespaces to omit from the output like so:
 
 <pre>
-netAmermaid.exe <b>--strip-namespaces System.Collections.Generic System</b> --assembly ..\path\to\your\assembly.dll --output-folder .
+ilspycmd.exe <b>--generate-diagrammer-strip-namespaces System.Collections.Generic System</b> ..\path\to\your\assembly.dll --generate-diagrammer --output-folder .
 </pre>
 
 Note how `System` is replaced **after** other namespaces starting with `System.` to achieve complete removal.
 Otherwise `System.Collections.Generic` wouldn't match the `Collections.Generic` left over after removing `System.`, resulting in partial removal only.
 
-### Adjust for custom XML documentation file names
+#### Adjust for custom XML documentation file names
 
 If - for whatever reason - you have customized your XML documentation file output name, you can specify a custom path to pick it up from.
 
 <pre>
-netAmermaid.exe <b>--docs ..\path\to\your\docs.xml</b> --assembly ..\path\to\your\assembly.dll --output-folder .
+ilspycmd.exe <b>--generate-diagrammer-docs ..\path\to\your\docs.xml</b> ..\path\to\your\assembly.dll --generate-diagrammer --output-folder .
 </pre>

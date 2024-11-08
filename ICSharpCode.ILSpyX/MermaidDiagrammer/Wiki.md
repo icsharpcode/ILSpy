@@ -1,6 +1,6 @@
-﻿# netAmermaid
+﻿# Generating diagrammers
 
-An automated documentation tool for visually exploring
+ILSpy may be used as an automated documentation tool for visually exploring
 [.NET assemblies](https://learn.microsoft.com/en-us/dotnet/standard/assembly/) (_*.dll_ files)
 along type relations using rapid diagramming.
 
@@ -16,9 +16,9 @@ And what's the point? Like any other hand-crafted documentation, **they're alway
 After a while their usability becomes a function of **how much time you want to spend maintaining** them.
 Also, they're next to useless in conversations about the *boundaries* of whatever subdomain or Aggregate you're looking at - because they **lack the interactivity to let you peek beyond the boundary**.
 
-**netAmermaid** helps you create useful on-the-fly class diagrams within seconds in two simple steps:
+**ILSpy** helps you create useful on-the-fly class diagrams within seconds in two simple steps:
 
-1. Point the **command line tool** at an assembly to extract its type information
+1. Point the [**command line tool**](https://github.com/icsharpcode/ILSpy/tree/master/ICSharpCode.ILSpyCmd#readme) at an assembly to extract its type information
 and **build a [HTML5](https://en.wikipedia.org/wiki/HTML5#New_APIs) diagramming app** from it.
 To get it hot off your latest build, you can script this step and run it just before using the diagrammer - or
 hook it into your build pipeline to automate it for Continuous Integration.
@@ -29,15 +29,15 @@ or export it as either SVG, PNG or in [mermaid class diagram syntax](https://mer
 
 If [**XML documentation comments** are available for the source assembly](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/xmldoc/#create-xml-documentation-output), they're **used to annotate types and members on the generated diagrams**. Commented symbols show up highlighted, making the documentation accessible on hover.
 
-What netAmermaid offers is an **overview** over types, their members and **relations** and the ability to **unfold the domain** along them until you have enough **context** to make an informed decision. Use it as
+Generated diagrammers offer an **overview** over types, their members and **relations** and the ability to **unfold the domain** along them until you have enough **context** to make an informed decision. Use them as
 - a **mental mapping** tool to get your bearings in an **unknown domain**.
 - a **communication** tool for **your own domain** - when talking about the bigger picture with your team mates or even non-technical shareholders like product owners and users.
 
 # Check out the demo
 
-Have a look at the diagrammer generated for [SubTubular](https://github.com/h0lg/SubTubular):
-It's got some [type relations](https://raw.githack.com/h0lg/SubTubular/netAmermaid2/netAmermaid/class-diagrammer.html?d=LR&i=tim&t=Caption-CaptionTrack-PaddedMatch-IncludedMatch-Video-VideoSearchResult-CaptionTrackResult)
-and [inheritance](https://raw.githack.com/h0lg/SubTubular/netAmermaid2/netAmermaid/class-diagrammer.html?d=LR&i=tim&t=RemoteValidated-SearchChannel-SearchCommand-Shows-SearchPlaylist-SearchPlaylistCommand-OrderOptions-SearchVideos)
+Have a look at the diagrammer generated for the [ICSharpCode.Decompiler.TypeSystem namespace](https://github.com/icsharpcode/ILSpy/tree/master/ICSharpCode.Decompiler/TypeSystem):
+It's got some [type relations](https://ilspy.net/ICSharpCode.Decompiler/diagrammer/index.html?t=IType-ITypeDefinition&d=LR&i=tm)
+and [inheritance](https://ilspy.net/ICSharpCode.Decompiler/diagrammer/index.html?t=IEntity-IEvent-IField-IMember-IMethod-IModule-INamedElement-INamespace-IParameter-IProperty-ISymbol-IVariable&d=LR&i=tim)
 going on that offer a decent playground.
 
 # Optimized for exploration and sharing

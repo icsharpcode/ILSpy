@@ -1,6 +1,6 @@
-# How does it work?
+﻿# How does it work?
 
-To **extract the type info from the source assembly**, the netAmermaid CLI side-loads it including all its dependencies.
+To **extract the type info from the source assembly**, ILSpy side-loads it including all its dependencies.
 
 The extracted type info is **structured into a model optimized for the HTML diagrammer** and serialized to JSON. The model is a mix between drop-in type definitions in mermaid class diagram syntax and destructured metadata about relations, inheritance and documentation comments.
 
