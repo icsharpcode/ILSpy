@@ -9,10 +9,13 @@
             "group": "build",
             "type": "shell",
             "command": [
-                "if (Test-Path '../bin/Release/net8.0/netAmermaid.exe') {",
-                "    ../bin/Release/net8.0/netAmermaid.exe -a ../bin/Release/net8.0/netAmermaid.dll -n NetAmermaid System -j -o .",
+                "$folder = '../../../ICSharpCode.ILSpyCmd/bin/Debug/net8.0/';", // to avoid repetition
+                "$exePath = $folder + 'ilspycmd.exe';",
+                "$assemblyPath = $folder + 'ICSharpCode.Decompiler.dll';", // comes with XML docs for testing the integration
+                "if (Test-Path $exePath) {",
+                "    & $exePath $assemblyPath --generate-diagrammer --generate-diagrammer-json-only --outputdir .",
                 "} else {",
-                "    Write-Host 'netAmermaid.exe Release build not found. Please build it first.';",
+                "    Write-Host 'ilspycmd.exe Debug build not found. Please build it first.';",
                 "    exit 1",
                 "}"
             ],
