@@ -276,48 +276,48 @@ select option:checked {
 #output g.nodes g.label .nodeLabel[title] {
   color: darkgoldenrod;
 }
-#netAmermaid {
+#about {
   position: absolute;
   bottom: 2em;
   right: 2em;
   align-items: end;
 }
-#netAmermaid #toaster {
+#about #toaster {
   margin-right: 2.8em;
 }
-#netAmermaid #toaster span {
+#about #toaster span {
   animation: 0.5s ease-in fadeIn;
   border-radius: 0.5em;
   padding: 0.5em;
   background-color: rgba(0, 0, 0, calc(3/16 * 2));
   color: whitesmoke;
 }
-#netAmermaid #toaster span.leaving {
+#about #toaster span.leaving {
   animation: 1s ease-in-out fadeOut;
 }
-#netAmermaid .build-info {
+#about .build-info {
   align-items: end;
   height: 2.3em;
   border-radius: 7px;
   background-color: rgba(0, 0, 0, calc(3/16 * 3));
   color: whitesmoke;
 }
-#netAmermaid .build-info > * {
+#about .build-info > * {
   height: 100%;
 }
-#netAmermaid .build-info #build-info {
+#about .build-info #build-info {
   text-align: right;
 }
-#netAmermaid .build-info #build-info > * {
+#about .build-info #build-info > * {
   padding: 0 0.5em;
 }
-#netAmermaid .build-info #build-info a {
+#about .build-info #build-info a {
   color: whitesmoke;
 }
-#netAmermaid .build-info #build-info a:not(.project) {
+#about .build-info #build-info a:not(.project) {
   text-decoration: none;
 }
-#netAmermaid .build-info #build-info a span {
+#about .build-info #build-info a span {
   display: inline-block;
 }
 #pressed-keys {
@@ -353,7 +353,7 @@ select option:checked {
 @media print {
   #filter,
   #filter-toggle,
-  #netAmermaid,
+  #about,
   img,
   .bubbles {
     display: none;
