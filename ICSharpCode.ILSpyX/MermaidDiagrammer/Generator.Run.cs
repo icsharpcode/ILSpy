@@ -92,8 +92,11 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 		{
 			string modelJson = SerializeModel(model);
 
-			// If no out folder is specified, default to a "netAmermaid" folder next to the input assembly.
-			var outputFolder = OutputFolder ?? Path.Combine(Path.GetDirectoryName(assemblyPath) ?? string.Empty, "netAmermaid");
+			// If no out folder is specified, default to a "<Input.Assembly.Name> diagrammer" folder next to the input assembly.
+			var outputFolder = OutputFolder
+				?? Path.Combine(
+					Path.GetDirectoryName(assemblyPath) ?? string.Empty,
+					Path.GetFileNameWithoutExtension(assemblyPath) + " diagrammer");
 
 			if (!Directory.Exists(outputFolder))
 				Directory.CreateDirectory(outputFolder);
