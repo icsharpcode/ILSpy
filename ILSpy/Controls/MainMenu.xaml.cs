@@ -22,33 +22,43 @@ using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 
 using ICSharpCode.ILSpy.Commands;
+
 using ICSharpCode.ILSpy.Docking;
-using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpy.ViewModels;
 
 using TomsToolbox.Composition;
 using TomsToolbox.ObservableCollections;
+using TomsToolbox.Wpf;
 using TomsToolbox.Wpf.Converters;
 
-namespace ICSharpCode.ILSpy.Util
+namespace ICSharpCode.ILSpy.Controls
 {
+	/// <summary>
+	/// Interaction logic for MainMenu.xaml
+	/// </summary>
 	[Export]
-	[Shared]
-	public class MenuService(IExportProvider exportProvider, DockWorkspace dockWorkspace)
+	[NonShared]
+	public partial class MainMenu
 	{
-		public void Init(Menu mainMenu, ToolBar toolBar, InputBindingCollection inputBindings)
+		public MainMenu(SettingsService settingsService, IExportProvider exportProvider, DockWorkspace dockWorkspace)
 		{
-			InitMainMenu(mainMenu);
-			InitWindowMenu(mainMenu, inputBindings);
-			InitToolbar(toolBar);
+			SessionSettings = settingsService.SessionSettings;
+
+			InitializeComponent();
+
+			this.BeginInvoke(() => {
+				InitMainMenu(Menu, exportProvider);
+				InitWindowMenu(WindowMenuItem, Window.GetWindow(this)!.InputBindings, dockWorkspace);
+			});
 		}
 
-		void InitMainMenu(Menu mainMenu)
+		public SessionSettings SessionSettings { get; }
+
+		static void InitMainMenu(Menu mainMenu, IExportProvider exportProvider)
 		{
 			var mainMenuCommands = exportProvider.GetExports<ICommand, IMainMenuCommandMetadata>("MainMenuCommand");
 			// Start by constructing the individual flat menus
@@ -106,12 +116,9 @@ namespace ICSharpCode.ILSpy.Util
 				}
 			}
 
-			foreach (var item in parentMenuItems.Values)
+			foreach (var item in parentMenuItems.Values.Where(item => item.Parent == null))
 			{
-				if (item.Parent == null)
-				{
-					mainMenu.Items.Add(item);
-				}
+				mainMenu.Items.Add(item);
 			}
 
 			MenuItem GetOrAddParentMenuItem(string menuId, string resourceKey)
@@ -137,59 +144,21 @@ namespace ICSharpCode.ILSpy.Util
 			}
 		}
 
-		void InitWindowMenu(Menu mainMenu, InputBindingCollection inputBindings)
+		static void InitWindowMenu(MenuItem windowMenuItem, InputBindingCollection inputBindings, DockWorkspace dockWorkspace)
 		{
-			var windowMenuItem = mainMenu.Items.OfType<MenuItem>().First(m => (string)m.Tag == nameof(Properties.Resources._Window));
-
 			var defaultItems = windowMenuItem.Items.Cast<Control>().ToArray();
 
 			windowMenuItem.Items.Clear();
 
-			var toolItems = dockWorkspace.ToolPanes.Select(toolPane => CreateMenuItem(toolPane, inputBindings)).ToArray();
-			var tabItems = dockWorkspace.TabPages.ObservableSelect(tabPage => CreateMenuItem(tabPage));
+			var toolItems = dockWorkspace.ToolPanes.Select(toolPane => CreateMenuItem(toolPane, inputBindings, dockWorkspace)).ToArray();
+			var tabItems = dockWorkspace.TabPages.ObservableSelect(tabPage => CreateMenuItem(tabPage, dockWorkspace));
 
 			var allItems = new ObservableCompositeCollection<Control>(defaultItems, [new Separator()], toolItems, [new Separator()], tabItems);
 
 			windowMenuItem.ItemsSource = allItems;
 		}
 
-		void InitToolbar(ToolBar toolBar)
-		{
-			int navigationPos = 0;
-			int openPos = 1;
-			var toolbarCommandsByCategory = exportProvider.GetExports<ICommand, IToolbarCommandMetadata>("ToolbarCommand")
-				.OrderBy(c => c.Metadata?.ToolbarOrder)
-				.GroupBy(c => c.Metadata?.ToolbarCategory);
-
-			foreach (var commandCategory in toolbarCommandsByCategory)
-			{
-				if (commandCategory.Key == nameof(Properties.Resources.Navigation))
-				{
-					foreach (var command in commandCategory)
-					{
-						toolBar.Items.Insert(navigationPos++, CreateToolbarItem(command));
-						openPos++;
-					}
-				}
-				else if (commandCategory.Key == nameof(Properties.Resources.Open))
-				{
-					foreach (var command in commandCategory)
-					{
-						toolBar.Items.Insert(openPos++, CreateToolbarItem(command));
-					}
-				}
-				else
-				{
-					toolBar.Items.Add(new Separator());
-					foreach (var command in commandCategory)
-					{
-						toolBar.Items.Add(CreateToolbarItem(command));
-					}
-				}
-			}
-		}
-
-		Control CreateMenuItem(TabPageModel pane)
+		static Control CreateMenuItem(TabPageModel pane, DockWorkspace dockWorkspace)
 		{
 			var header = new TextBlock {
 				MaxWidth = 200,
@@ -200,7 +169,7 @@ namespace ICSharpCode.ILSpy.Util
 				Source = pane
 			});
 
-			MenuItem menuItem = new() {
+			var menuItem = new MenuItem {
 				Command = new TabPageCommand(pane, dockWorkspace),
 				Header = header,
 				IsCheckable = true
@@ -216,16 +185,16 @@ namespace ICSharpCode.ILSpy.Util
 			return menuItem;
 		}
 
-		Control CreateMenuItem(ToolPaneModel pane, InputBindingCollection inputBindings)
+		static Control CreateMenuItem(ToolPaneModel pane, InputBindingCollection inputBindings, DockWorkspace dockWorkspace)
 		{
-			MenuItem menuItem = new() {
+			var menuItem = new MenuItem {
 				Command = pane.AssociatedCommand ?? new ToolPaneCommand(pane.ContentId, dockWorkspace),
 				Header = pane.Title
 			};
 			var shortcutKey = pane.ShortcutKey;
 			if (shortcutKey != null)
 			{
-				inputBindings.Add(new(menuItem.Command, shortcutKey));
+				inputBindings.Add(new InputBinding(menuItem.Command, shortcutKey));
 				menuItem.InputGestureText = shortcutKey.GetDisplayStringForCulture(CultureInfo.CurrentUICulture);
 			}
 			if (!string.IsNullOrEmpty(pane.Icon))
@@ -238,30 +207,6 @@ namespace ICSharpCode.ILSpy.Util
 			}
 
 			return menuItem;
-		}
-
-		static Button CreateToolbarItem(IExport<ICommand, IToolbarCommandMetadata> commandExport)
-		{
-			var command = commandExport.Value;
-
-			Button toolbarItem = new() {
-				Style = ThemeManager.Current.CreateToolBarButtonStyle(),
-				Command = CommandWrapper.Unwrap(command),
-				ToolTip = Properties.Resources.ResourceManager.GetString(commandExport.Metadata?.ToolTip ?? string.Empty),
-				Tag = commandExport.Metadata?.Tag,
-				Content = new Image {
-					Width = 16,
-					Height = 16,
-					Source = Images.Load(command, commandExport.Metadata?.ToolbarIcon)
-				}
-			};
-
-			if (command is IProvideParameterBinding parameterBinding)
-			{
-				BindingOperations.SetBinding(toolbarItem, ButtonBase.CommandParameterProperty, parameterBinding.ParameterBinding);
-			}
-
-			return toolbarItem;
 		}
 	}
 }

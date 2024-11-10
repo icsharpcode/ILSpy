@@ -1,0 +1,87 @@
+﻿<UserControl x:Class="ICSharpCode.ILSpy.Controls.MainToolBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:toms="urn:TomsToolbox"
+             xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
+             xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
+             xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
+             xmlns:composition="urn:TomsToolbox.Composition"
+             xmlns:ilSpy="clr-namespace:ICSharpCode.ILSpy"
+             mc:Ignorable="d" d:DesignWidth="800">
+	<ToolBar Name="ToolBar"
+	         DockPanel.Dock="Top" ToolBarTray.IsLocked="True" KeyboardNavigation.TabNavigation="None">
+		<ToolBar.Resources>
+			<!-- Make images transparent if menu command is disabled -->
+			<Style TargetType="{x:Type Image}">
+				<Style.Triggers>
+					<DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type ButtonBase}, AncestorLevel=1}, Path=IsEnabled}" Value="False">
+						<Setter Property="Opacity" Value="0.30" />
+					</DataTrigger>
+				</Style.Triggers>
+			</Style>
+			<Style TargetType="{x:Type Image}" x:Key="DarkModeAwareImageStyle">
+				<Setter Property="Effect" Value="{DynamicResource {x:Static themes:ResourceKeys.ThemeAwareButtonEffect}}" />
+				<Style.Triggers>
+					<DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type ButtonBase}, AncestorLevel=1}, Path=IsEnabled}" Value="False">
+						<Setter Property="Opacity" Value="0.30" />
+					</DataTrigger>
+				</Style.Triggers>
+			</Style>
+		</ToolBar.Resources>
+		<!-- 'Navigation' toolbar category is inserted here -->
+		<Separator />
+		<!-- 'Open' toolbar category is inserted here -->
+		<Separator />
+		<Grid Margin="2,0">
+			<ItemsControl ItemsSource="{Binding AssemblyListManager.AssemblyLists}" Height="0" Margin="15,0" />
+			<ComboBox Name="assemblyListComboBox" MaxDropDownHeight="Auto"
+			          ItemsSource="{Binding AssemblyListManager.AssemblyLists}"
+			          ToolTip="{x:Static properties:Resources.SelectAssemblyListDropdownTooltip}"
+			          SelectedItem="{Binding SessionSettings.ActiveAssemblyList}" />
+		</Grid>
+		<Button Command="{composition:Import ilSpy:ManageAssemblyListsCommand}"
+		        CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}"
+		        ToolTip="{x:Static properties:Resources.ManageAssemblyLists}">
+			<Image Width="16" Height="16" Source="{controls:XamlResource Images/AssemblyList}"
+			       Style="{StaticResource DarkModeAwareImageStyle}" />
+		</Button>
+		<Separator />
+		<CheckBox IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisPublicOnly}"
+		          ToolTip="{x:Static properties:Resources.ShowPublicOnlyTypesMembers}">
+			<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowPublicOnly}"
+			       Style="{StaticResource DarkModeAwareImageStyle}" />
+		</CheckBox>
+		<CheckBox IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisPublicAndInternal}"
+		          ToolTip="{x:Static properties:Resources.ShowInternalTypesMembers}">
+			<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowPrivateInternal}"
+			       Style="{StaticResource DarkModeAwareImageStyle}" />
+		</CheckBox>
+		<CheckBox IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisAll}"
+		          ToolTip="{x:Static properties:Resources.ShowAllTypesAndMembers}">
+			<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowAll}"
+			       Style="{StaticResource DarkModeAwareImageStyle}" />
+		</CheckBox>
+		<Separator />
+		<Grid Margin="2,0">
+			<ItemsControl ItemsSource="{Binding LanguageService.AllLanguages}" DisplayMemberPath="Name" Height="0" Margin="15,0" />
+			<ComboBox Name="languageComboBox" DisplayMemberPath="Name" MaxDropDownHeight="Auto"
+			          IsEnabled="{Binding Workspace.ActiveTabPage.SupportsLanguageSwitching}"
+			          ItemsSource="{Binding LanguageService.AllLanguages}"
+			          ToolTip="{x:Static properties:Resources.SelectLanguageDropdownTooltip}"
+			          SelectedItem="{Binding LanguageService.Language}" />
+		</Grid>
+		<Grid Margin="2,0">
+			<ItemsControl
+				ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}"
+				DisplayMemberPath="DisplayName" Height="0" Margin="15,0" />
+			<ComboBox Name="languageVersionComboBox" DisplayMemberPath="DisplayName" MaxDropDownHeight="Auto"
+			          ToolTip="{x:Static properties:Resources.SelectVersionDropdownTooltip}"
+			          Visibility="{Binding SelectedItem.HasLanguageVersions, ElementName=languageComboBox, Converter={toms:BooleanToVisibilityConverter}}"
+			          IsEnabled="{Binding Workspace.ActiveTabPage.SupportsLanguageSwitching}"
+			          ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}"
+			          SelectedItem="{Binding LanguageService.LanguageVersion, UpdateSourceTrigger=PropertyChanged}" />
+		</Grid>
+	</ToolBar>
+</UserControl>
