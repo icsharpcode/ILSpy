@@ -925,4 +925,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		public override event EventHandler E;
 	}
+
+	public class T40_EventVsField
+	{
+		public object KeyDownEvent;
+		private event EventHandler KeyDown;
+
+		public void UseObject()
+		{
+			Console.WriteLine(KeyDownEvent);
+		}
+	}
 }
