@@ -75,6 +75,7 @@
     <None Remove="MermaidDiagrammer\html\package-lock.json" />
     <None Remove="MermaidDiagrammer\html\package.json" />
     <None Remove="MermaidDiagrammer\html\styles.less" />
+    <EmbeddedResource Include="..\ILSpy\Images\ILSpy.ico" Link="MermaidDiagrammer\html\ILSpy.ico" />
     <EmbeddedResource Include="MermaidDiagrammer\html\script.js" />
     <EmbeddedResource Include="MermaidDiagrammer\html\styles.css" />
     <EmbeddedResource Include="MermaidDiagrammer\html\template.html" />

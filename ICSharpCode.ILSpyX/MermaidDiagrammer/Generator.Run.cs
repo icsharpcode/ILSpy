@@ -117,7 +117,7 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 				File.WriteAllText(Path.Combine(outputFolder, "class-diagrammer.html"), html);
 
 				// copy required resources to output folder while flattening paths if required
-				foreach (var resource in new[] { "styles.css", "netAmermaid.ico", "script.js" })
+				foreach (var resource in new[] { "styles.css", "ILSpy.ico", "script.js" })
 					EmbeddedResource.CopyTo(outputFolder, resource);
 
 				Console.WriteLine("Successfully generated HTML diagrammer.");
