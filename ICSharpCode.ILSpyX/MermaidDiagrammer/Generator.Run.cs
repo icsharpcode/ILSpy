@@ -117,7 +117,7 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 					.Replace("{{RepoUrl}}", RepoUrl)
 					.Replace("{{Model}}", modelJson);
 
-				File.WriteAllText(Path.Combine(outputFolder, "class-diagrammer.html"), html);
+				File.WriteAllText(Path.Combine(outputFolder, "index.html"), html);
 
 				// copy required resources to output folder while flattening paths if required
 				foreach (var resource in new[] { "styles.css", "ILSpy.ico", "script.js" })
