@@ -1,0 +1,57 @@
+﻿<UserControl x:Class="ICSharpCode.ILSpy.Controls.MainMenu"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:ICSharpCode.ILSpy.Controls"
+             xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
+             xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
+             xmlns:composition="urn:TomsToolbox.Composition"
+             xmlns:toms="urn:TomsToolbox"
+             xmlns:commands="clr-namespace:ICSharpCode.ILSpy.Commands"
+             mc:Ignorable="d" d:DesignWidth="800" DataContext="{Binding RelativeSource={RelativeSource Self}}">
+	<Menu DockPanel.Dock="Top" Name="Menu" Height="23" KeyboardNavigation.TabNavigation="None">
+		<MenuItem Header="{x:Static properties:Resources._File}" Tag="_File">
+			<!-- content of file menu is added using MEF -->
+		</MenuItem>
+		<MenuItem Header="{x:Static properties:Resources._View}" Tag="_View">
+			<MenuItem Header="{x:Static properties:Resources.Show_publiconlyTypesMembers}" IsCheckable="True"
+			          IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisPublicOnly}" />
+			<MenuItem Header="{x:Static properties:Resources.Show_internalTypesMembers}" IsCheckable="True"
+			          IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisPublicAndInternal}" />
+			<MenuItem Header="{x:Static properties:Resources.Show_allTypesAndMembers}" IsCheckable="True"
+			          IsChecked="{Binding SessionSettings.LanguageSettings.ApiVisAll}" />
+			<Separator />
+			<MenuItem Header="{x:Static properties:Resources.Theme}" ItemsSource="{x:Static themes:ThemeManager.AllThemes}">
+				<MenuItem.ItemContainerStyle>
+					<Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Type MenuItem}}">
+						<Setter Property="Command" Value="{composition:Import commands:SetThemeCommand}" />
+						<Setter Property="CommandParameter" Value="{Binding}" />
+						<Setter Property="IsCheckable" Value="True" />
+						<!-- Required by AvalonDock's MenuItem style to show the checkmark -->
+						<Setter Property="IsChecked">
+							<Setter.Value>
+								<MultiBinding Converter="{x:Static toms:BinaryOperationConverter.Equality}" Mode="OneWay">
+									<Binding />
+									<Binding Path="SessionSettings.Theme"
+									         RelativeSource="{RelativeSource FindAncestor, AncestorType=UserControl}" />
+								</MultiBinding>
+							</Setter.Value>
+						</Setter>
+					</Style>
+				</MenuItem.ItemContainerStyle>
+			</MenuItem>
+			<MenuItem Header="{x:Static properties:Resources.UILanguage}">
+				<MenuItem Header="{x:Static properties:Resources.UILanguage_System}" IsCheckable="True"
+				          IsChecked="{Binding SessionSettings.CurrentCulture, Converter={local:CultureSelectionConverter}, ConverterParameter={x:Null}}" />
+				<MenuItem Header="English" IsCheckable="True"
+				          IsChecked="{Binding SessionSettings.CurrentCulture, Converter={local:CultureSelectionConverter}, ConverterParameter=en-US}" />
+				<MenuItem Header="中文" IsCheckable="True"
+				          IsChecked="{Binding SessionSettings.CurrentCulture, Converter={local:CultureSelectionConverter}, ConverterParameter=zh-Hans}" />
+			</MenuItem>
+		</MenuItem>
+		<MenuItem x:Name="WindowMenuItem" Header="{x:Static properties:Resources._Window}" Tag="_Window">
+			<!-- content of window menu is added using MEF -->
+		</MenuItem>
+	</Menu>
+</UserControl>

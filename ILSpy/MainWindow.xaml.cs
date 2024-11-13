@@ -22,7 +22,6 @@ using System.Composition;
 using System.Drawing;
 using System.Linq;
 using System.Windows;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 
@@ -40,7 +39,7 @@ namespace ICSharpCode.ILSpy
 	{
 		private readonly SettingsService settingsService;
 
-		public MainWindow(MainWindowViewModel mainWindowViewModel, MenuService menuService, SettingsService settingsService)
+		public MainWindow(MainWindowViewModel mainWindowViewModel, SettingsService settingsService)
 		{
 			this.settingsService = settingsService;
 
@@ -53,7 +52,6 @@ namespace ICSharpCode.ILSpy
 
 			Dispatcher.BeginInvoke(DispatcherPriority.Background, () => {
 				mainWindowViewModel.Workspace.InitializeLayout();
-				menuService.Init(mainMenu, toolBar, InputBindings);
 				MessageBus.Send(this, new MainWindowLoadedEventArgs());
 			});
 		}
@@ -83,29 +81,6 @@ namespace ICSharpCode.ILSpy
 			SetWindowBounds(areBoundsValid ? sessionSettings.WindowBounds : SessionSettings.DefaultWindowBounds);
 
 			this.WindowState = sessionSettings.WindowState;
-		}
-
-		protected override void OnKeyDown(KeyEventArgs e)
-		{
-			base.OnKeyDown(e);
-			if (!e.Handled && e.KeyboardDevice.Modifiers == ModifierKeys.Alt && e.Key == Key.System)
-			{
-				switch (e.SystemKey)
-				{
-					case Key.A:
-						assemblyListComboBox.Focus();
-						e.Handled = true;
-						break;
-					case Key.L:
-						languageComboBox.Focus();
-						e.Handled = true;
-						break;
-					case Key.E: // Alt+V was already taken by _View menu
-						languageVersionComboBox.Focus();
-						e.Handled = true;
-						break;
-				}
-			}
 		}
 
 		protected override void OnStateChanged(EventArgs e)

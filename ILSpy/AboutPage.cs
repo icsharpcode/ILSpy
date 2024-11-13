@@ -26,6 +26,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Navigation;
 
 using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.Decompiler;
@@ -53,7 +54,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void Execute(object parameter)
 		{
-			MessageBus.Send(this, new NavigateToEventArgs(new(new("resource://aboutpage"), null), inNewTabPage: true));
+			MessageBus.Send(this, new NavigateToEventArgs(new RequestNavigateEventArgs(new Uri("resource://aboutpage"), null), inNewTabPage: true));
 		}
 
 		private void ShowAboutPage(TabPageModel tabPage)
@@ -74,7 +75,7 @@ namespace ICSharpCode.ILSpy
 
 			output.AddUIElement(
 			delegate {
-				StackPanel stackPanel = new() {
+				var stackPanel = new StackPanel {
 					HorizontalAlignment = HorizontalAlignment.Center,
 					Orientation = Orientation.Horizontal
 				};
@@ -87,7 +88,7 @@ namespace ICSharpCode.ILSpy
 					// we already retrieved the latest version sometime earlier
 					ShowAvailableVersion(UpdateService.LatestAvailableVersion, stackPanel);
 				}
-				CheckBox checkBox = new() {
+				var checkBox = new CheckBox {
 					Margin = new Thickness(4),
 					Content = Resources.AutomaticallyCheckUpdatesEveryWeek
 				};

@@ -1,0 +1,5 @@
+<Project>
+  <PropertyGroup>
+    <WarningsAsErrors>IDE2000</WarningsAsErrors>
+  </PropertyGroup>
+</Project>
