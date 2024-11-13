@@ -59,8 +59,8 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 			IEnumerable<ITypeDefinition> allTypes = mainModule.TypeDefinitions;
 
 			selectedTypes = FilterTypes(allTypes,
-				include == null ? null : new(include, RegexOptions.Compiled),
-				exclude == null ? null : new(exclude, RegexOptions.Compiled)).ToArray();
+				include == null ? null : new Regex(include, RegexOptions.Compiled),
+				exclude == null ? null : new Regex(exclude, RegexOptions.Compiled)).ToArray();
 
 			// generate dictionary to read names from later
 			uniqueIds = GenerateUniqueIds(selectedTypes);
