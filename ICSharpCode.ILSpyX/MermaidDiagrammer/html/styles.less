@@ -1,0 +1,586 @@
+﻿@darkBlue: #117;
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+.clickable() {
+    cursor: pointer;
+}
+
+.useBrightText() {
+    color: whitesmoke;
+}
+
+.colorLabelWithDocs() {
+    color: darkgoldenrod;
+}
+
+.darkenBg(@times: 1) {
+    background-color: rgba(0,0,0, calc(3/16 * @times));
+}
+
+.brightenBg(@times: 1) {
+    background-color: rgba(255,255,255, calc(1/16 * @times));
+}
+
+body {
+    font-family: system-ui, sans-serif;
+    background: #4e54c8;
+    background-image: linear-gradient(to left, #8f94fb, #4e54c8);
+}
+
+input[type=text] {
+    border-radius: 3px;
+}
+
+button {
+    border-radius: 3px;
+    background-color: #aad;
+    border: none;
+    color: @darkBlue;
+    .clickable;
+
+    &.icon {
+        font-size: 1em;
+        background-color: transparent;
+    }
+
+    &:disabled {
+        opacity: .5;
+    }
+}
+
+[type=checkbox], [type=radio] {
+    .clickable;
+
+    & ~ label {
+        .clickable;
+    }
+}
+
+fieldset {
+    border-radius: 5px;
+}
+
+select {
+    border: none;
+    border-radius: 3px;
+    .darkenBg;
+    .useBrightText;
+
+    option:checked {
+        .darkenBg;
+        color: darkorange;
+    }
+}
+
+.flx:not([hidden]) {
+    display: flex;
+
+    &.col {
+        flex-direction: column;
+    }
+
+    &.spaced {
+        justify-content: space-between;
+    }
+
+    &.gap {
+        gap: .5em;
+    }
+
+    &.aligned {
+        align-items: center;
+    }
+
+    .grow {
+        flex-grow: 1;
+    }
+}
+
+.collapse {
+    &.vertical {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height ease-in-out .5s;
+
+        &.open {
+            max-height: 100vh;
+        }
+    }
+
+    &.horizontal {
+        max-width: 0;
+        padding: 0;
+        margin: 0;
+        transition: all ease-in-out .5s;
+        overflow: hidden;
+
+        &.open {
+            padding: revert;
+            max-width: 100vw;
+        }
+    }
+}
+
+.toggle, [data-toggles] {
+    .clickable;
+}
+
+.container {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+}
+
+.scndry {
+    font-size: smaller;
+}
+
+.mano-a-borsa {
+    transform: rotate(95deg);
+    .clickable;
+
+    &:after {
+        content: '🤏';
+    }
+}
+
+.trawl-net {
+    transform: rotate(180deg) translateY(-2px);
+    display: inline-block;
+
+    &:after {
+        content: '🥅';
+    }
+}
+
+.torch {
+    display: inline-block;
+
+    &:after {
+        content: '🔦';
+    }
+}
+
+.pulsing {
+    animation: whiteBoxShadowPulse 2s 3;
+}
+
+@keyframes whiteBoxShadowPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    }
+
+    5% {
+        box-shadow: 0 0 0 15px rgba(255, 255, 255, 0.5);
+    }
+
+    50% {
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+    }
+
+    90% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    }
+}
+
+#content {
+    height: 100%;
+    position: relative;
+}
+
+#filter {
+    max-width: 0;
+    transition: max-width ease-in-out .5s;
+    overflow: hidden;
+    .darkenBg;
+    .useBrightText;
+
+    &.open {
+        max-width: 15em;
+        overflow: auto;
+    }
+
+    &.resizing {
+        transition: none;
+    }
+
+    > * {
+        margin: .3em .3em 0;
+
+        &:last-child {
+            margin-bottom: .3em;
+        }
+    }
+
+    #pre-filter-types {
+        min-width: 3em;
+    }
+
+    [data-toggles="#info"] {
+        .torch {
+            transform: rotate(-90deg);
+            transition: transform .5s;
+        }
+
+        &[aria-expanded=true] {
+            .torch {
+                transform: rotate(-255deg);
+            }
+        }
+    }
+
+    #info {
+        overflow: auto;
+        .brightenBg(2);
+
+        a.toggle {
+            .useBrightText;
+
+            img {
+                height: 1em;
+            }
+        }
+    }
+
+    #type-select {
+        overflow: auto;
+    }
+
+    #inheritance {
+        padding: .1em .75em .2em;
+    }
+
+    #direction {
+        [type=radio] {
+            display: none;
+
+            &:checked + label {
+                .brightenBg(4);
+            }
+        }
+
+        label {
+            flex-grow: 1;
+            text-align: center;
+            margin: -1em 0 -.7em;
+            padding-top: .2em;
+
+            &:first-of-type {
+                margin-left: -.8em;
+                border-top-left-radius: 5px;
+                border-bottom-left-radius: 5px;
+            }
+
+            &:last-of-type {
+                margin-right: -.8em;
+                border-top-right-radius: 5px;
+                border-bottom-right-radius: 5px;
+            }
+        }
+    }
+
+    #actions {
+        margin-top: 1em;
+        justify-content: space-between;
+
+        #render {
+            font-weight: bold;
+        }
+    }
+
+    #exportOptions {
+        overflow: auto;
+        .brightenBg(2);
+
+        #save {
+            margin-right: .5em;
+        }
+
+        #dimensions fieldset {
+            padding: .5em;
+
+            .scale-size {
+                margin-left: .5em;
+
+                #scale-size {
+                    width: 2.5em;
+                    margin: 0 .2em;
+                }
+            }
+        }
+    }
+}
+
+#filter-toggle {
+    padding: 0;
+    border-radius: 0;
+    background-color: @darkBlue;
+    .useBrightText;
+}
+
+#output {
+    overflow: auto;
+
+    > svg {
+        cursor: grab;
+
+        &:active {
+            cursor: grabbing;
+        }
+    }
+
+    .edgeLabels {
+        .edgeTerminals .edgeLabel {
+            .useBrightText;
+        }
+
+        .edgeLabel {
+            border-radius: 3px;
+
+            .edgeLabel[title] {
+                .colorLabelWithDocs;
+            }
+        }
+    }
+
+    path.relation {
+        stroke: whitesmoke;
+    }
+
+    g.nodes {
+        > g {
+            .clickable;
+
+            > rect {
+                rx: 5px;
+                ry: 5px;
+            }
+        }
+
+        g.label .nodeLabel[title] {
+            .colorLabelWithDocs;
+        }
+    }
+}
+
+#about {
+    position: absolute;
+    bottom: 2em;
+    right: 2em;
+    align-items: end;
+    @logoWidth: 2.3em;
+
+    #toaster {
+        margin-right: @logoWidth + .5em;
+
+        span {
+            animation: .5s ease-in fadeIn;
+            border-radius: .5em;
+            padding: .5em;
+            .darkenBg(2);
+            .useBrightText;
+
+            &.leaving {
+                animation: 1s ease-in-out fadeOut;
+            }
+        }
+    }
+
+    .build-info {
+        align-items: end;
+        height: @logoWidth;
+        border-radius: 7px;
+        .darkenBg(3);
+        .useBrightText;
+
+        > * {
+            height: 100%;
+        }
+
+        #build-info {
+            text-align: right;
+
+            > * {
+                padding: 0 .5em;
+            }
+
+            a {
+                .useBrightText;
+
+                &:not(.project) {
+                    text-decoration: none;
+                }
+
+                span {
+                    display: inline-block;
+                }
+            }
+        }
+    }
+}
+
+#pressed-keys {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 3em;
+    bottom: 1em;
+    opacity: 1;
+    border-radius: .5em;
+    padding: .5em;
+    .darkenBg(2);
+    .useBrightText;
+
+    &.hidden {
+        transition: opacity 0.5s ease-in-out;
+        opacity: 0;
+    }
+}
+
+#mouse {
+    position: fixed;
+    transform: translateX(-50%) translateY(-50%);
+    height: 2em;
+    width: 2em;
+    pointer-events: none;
+    z-index: 9999;
+    border-radius: 1em;
+    border: solid .1em yellow;
+
+    &.down {
+        background-color: #ff08;
+    }
+}
+
+/* hide stuff in print view */
+@media print {
+    #filter, #filter-toggle, #about, img, .bubbles {
+        display: none;
+    }
+}
+
+/* ANIMATED BACKGROUND, from https://codepen.io/alvarotrigo/pen/GRvYNax
+    found in https://alvarotrigo.com/blog/animated-backgrounds-css/ */
+
+@keyframes rotateUp {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+        border-radius: 100%;
+    }
+
+    100% {
+        transform: translateY(-150vh) rotate(720deg);
+        opacity: 0;
+        border-radius: 0;
+    }
+}
+
+.bubbles {
+    overflow: hidden;
+
+    li {
+        position: absolute;
+        display: block;
+        list-style: none;
+        width: 20px;
+        height: 20px;
+        background: rgba(255, 255, 255, .2);
+        animation: rotateUp 25s linear infinite;
+        bottom: -150px;
+
+        &:nth-child(1) {
+            left: 25%;
+            width: 80px;
+            height: 80px;
+            animation-delay: 0s;
+        }
+
+        &:nth-child(2) {
+            left: 10%;
+            width: 20px;
+            height: 20px;
+            animation-delay: 2s;
+            animation-duration: 12s;
+        }
+
+        &:nth-child(3) {
+            left: 70%;
+            width: 20px;
+            height: 20px;
+            animation-delay: 4s;
+        }
+
+        &:nth-child(4) {
+            left: 40%;
+            width: 60px;
+            height: 60px;
+            animation-delay: 0s;
+            animation-duration: 18s;
+        }
+
+        &:nth-child(5) {
+            left: 65%;
+            width: 20px;
+            height: 20px;
+            animation-delay: 0s;
+        }
+
+        &:nth-child(6) {
+            left: 75%;
+            width: 110px;
+            height: 110px;
+            animation-delay: 3s;
+        }
+
+        &:nth-child(7) {
+            left: 35%;
+            width: 150px;
+            height: 150px;
+            animation-delay: 7s;
+        }
+
+        &:nth-child(8) {
+            left: 50%;
+            width: 25px;
+            height: 25px;
+            animation-delay: 15s;
+            animation-duration: 45s;
+        }
+
+        &:nth-child(9) {
+            left: 20%;
+            width: 15px;
+            height: 15px;
+            animation-delay: 2s;
+            animation-duration: 35s;
+        }
+
+        &:nth-child(10) {
+            left: 85%;
+            width: 150px;
+            height: 150px;
+            animation-delay: 0s;
+            animation-duration: 11s;
+        }
+    }
+}

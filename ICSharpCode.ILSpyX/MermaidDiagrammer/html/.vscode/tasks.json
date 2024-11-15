@@ -1,0 +1,54 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Generate model.json",
+            "detail": "for editing the template, script or styles in inner dev loop of the HTML diagrammer",
+            "group": "build",
+            "type": "shell",
+            "command": [
+                "$folder = '../../../ICSharpCode.ILSpyCmd/bin/Debug/net8.0/';", // to avoid repetition
+                "$exePath = $folder + 'ilspycmd.exe';",
+                "$assemblyPath = $folder + 'ICSharpCode.Decompiler.dll';", // comes with XML docs for testing the integration
+                "if (Test-Path $exePath) {",
+                "    & $exePath $assemblyPath --generate-diagrammer --generate-diagrammer-json-only --outputdir .",
+                "} else {",
+                "    Write-Host 'ilspycmd.exe Debug build not found. Please build it first.';",
+                "    exit 1",
+                "}"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Transpile .less",
+            "detail": "into .css files",
+            "group": "build",
+            "type": "gulp",
+            "task": "transpileLess",
+            "problemMatcher": [
+                "$lessc"
+            ]
+        },
+        {
+            "label": "Generate HTML diagrammer",
+            "detail": "from the template.html and a model.json",
+            "group": "build",
+            "type": "gulp",
+            "task": "generateHtmlDiagrammer",
+            "problemMatcher": [
+                "$gulp-tsc"
+            ]
+        },
+        {
+            "label": "Auto-rebuild on change",
+            "detail": "run build tasks automatically when source files change",
+            "type": "gulp",
+            "task": "autoRebuildOnChange",
+            "problemMatcher": [
+                "$gulp-tsc"
+            ]
+        }
+    ]
+}

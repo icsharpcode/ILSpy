@@ -1,0 +1,453 @@
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+body {
+  font-family: system-ui, sans-serif;
+  background: #4e54c8;
+  background-image: linear-gradient(to left, #8f94fb, #4e54c8);
+}
+input[type=text] {
+  border-radius: 3px;
+}
+button {
+  border-radius: 3px;
+  background-color: #aad;
+  border: none;
+  color: #117;
+  cursor: pointer;
+}
+button.icon {
+  font-size: 1em;
+  background-color: transparent;
+}
+button:disabled {
+  opacity: 0.5;
+}
+[type=checkbox],
+[type=radio] {
+  cursor: pointer;
+}
+[type=checkbox] ~ label,
+[type=radio] ~ label {
+  cursor: pointer;
+}
+fieldset {
+  border-radius: 5px;
+}
+select {
+  border: none;
+  border-radius: 3px;
+  background-color: rgba(0, 0, 0, calc(3/16 * 1));
+  color: whitesmoke;
+}
+select option:checked {
+  background-color: rgba(0, 0, 0, calc(3/16 * 1));
+  color: darkorange;
+}
+.flx:not([hidden]) {
+  display: flex;
+}
+.flx:not([hidden]).col {
+  flex-direction: column;
+}
+.flx:not([hidden]).spaced {
+  justify-content: space-between;
+}
+.flx:not([hidden]).gap {
+  gap: 0.5em;
+}
+.flx:not([hidden]).aligned {
+  align-items: center;
+}
+.flx:not([hidden]) .grow {
+  flex-grow: 1;
+}
+.collapse.vertical {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height ease-in-out 0.5s;
+}
+.collapse.vertical.open {
+  max-height: 100vh;
+}
+.collapse.horizontal {
+  max-width: 0;
+  padding: 0;
+  margin: 0;
+  transition: all ease-in-out 0.5s;
+  overflow: hidden;
+}
+.collapse.horizontal.open {
+  padding: revert;
+  max-width: 100vw;
+}
+.toggle,
+[data-toggles] {
+  cursor: pointer;
+}
+.container {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+}
+.scndry {
+  font-size: smaller;
+}
+.mano-a-borsa {
+  transform: rotate(95deg);
+  cursor: pointer;
+}
+.mano-a-borsa:after {
+  content: '🤏';
+}
+.trawl-net {
+  transform: rotate(180deg) translateY(-2px);
+  display: inline-block;
+}
+.trawl-net:after {
+  content: '🥅';
+}
+.torch {
+  display: inline-block;
+}
+.torch:after {
+  content: '🔦';
+}
+.pulsing {
+  animation: whiteBoxShadowPulse 2s 3;
+}
+@keyframes whiteBoxShadowPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+  5% {
+    box-shadow: 0 0 0 15px rgba(255, 255, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+  }
+  90% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+#content {
+  height: 100%;
+  position: relative;
+}
+#filter {
+  max-width: 0;
+  transition: max-width ease-in-out 0.5s;
+  overflow: hidden;
+  background-color: rgba(0, 0, 0, calc(3/16 * 1));
+  color: whitesmoke;
+}
+#filter.open {
+  max-width: 15em;
+  overflow: auto;
+}
+#filter.resizing {
+  transition: none;
+}
+#filter > * {
+  margin: 0.3em 0.3em 0;
+}
+#filter > *:last-child {
+  margin-bottom: 0.3em;
+}
+#filter #pre-filter-types {
+  min-width: 3em;
+}
+#filter [data-toggles="#info"] .torch {
+  transform: rotate(-90deg);
+  transition: transform 0.5s;
+}
+#filter [data-toggles="#info"][aria-expanded=true] .torch {
+  transform: rotate(-255deg);
+}
+#filter #info {
+  overflow: auto;
+  background-color: rgba(255, 255, 255, calc(1/16 * 2));
+}
+#filter #info a.toggle {
+  color: whitesmoke;
+}
+#filter #info a.toggle img {
+  height: 1em;
+}
+#filter #type-select {
+  overflow: auto;
+}
+#filter #inheritance {
+  padding: 0.1em 0.75em 0.2em;
+}
+#filter #direction [type=radio] {
+  display: none;
+}
+#filter #direction [type=radio]:checked + label {
+  background-color: rgba(255, 255, 255, calc(1/16 * 4));
+}
+#filter #direction label {
+  flex-grow: 1;
+  text-align: center;
+  margin: -1em 0 -0.7em;
+  padding-top: 0.2em;
+}
+#filter #direction label:first-of-type {
+  margin-left: -0.8em;
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+}
+#filter #direction label:last-of-type {
+  margin-right: -0.8em;
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+}
+#filter #actions {
+  margin-top: 1em;
+  justify-content: space-between;
+}
+#filter #actions #render {
+  font-weight: bold;
+}
+#filter #exportOptions {
+  overflow: auto;
+  background-color: rgba(255, 255, 255, calc(1/16 * 2));
+}
+#filter #exportOptions #save {
+  margin-right: 0.5em;
+}
+#filter #exportOptions #dimensions fieldset {
+  padding: 0.5em;
+}
+#filter #exportOptions #dimensions fieldset .scale-size {
+  margin-left: 0.5em;
+}
+#filter #exportOptions #dimensions fieldset .scale-size #scale-size {
+  width: 2.5em;
+  margin: 0 0.2em;
+}
+#filter-toggle {
+  padding: 0;
+  border-radius: 0;
+  background-color: #117;
+  color: whitesmoke;
+}
+#output {
+  overflow: auto;
+}
+#output > svg {
+  cursor: grab;
+}
+#output > svg:active {
+  cursor: grabbing;
+}
+#output .edgeLabels .edgeTerminals .edgeLabel {
+  color: whitesmoke;
+}
+#output .edgeLabels .edgeLabel {
+  border-radius: 3px;
+}
+#output .edgeLabels .edgeLabel .edgeLabel[title] {
+  color: darkgoldenrod;
+}
+#output path.relation {
+  stroke: whitesmoke;
+}
+#output g.nodes > g {
+  cursor: pointer;
+}
+#output g.nodes > g > rect {
+  rx: 5px;
+  ry: 5px;
+}
+#output g.nodes g.label .nodeLabel[title] {
+  color: darkgoldenrod;
+}
+#about {
+  position: absolute;
+  bottom: 2em;
+  right: 2em;
+  align-items: end;
+}
+#about #toaster {
+  margin-right: 2.8em;
+}
+#about #toaster span {
+  animation: 0.5s ease-in fadeIn;
+  border-radius: 0.5em;
+  padding: 0.5em;
+  background-color: rgba(0, 0, 0, calc(3/16 * 2));
+  color: whitesmoke;
+}
+#about #toaster span.leaving {
+  animation: 1s ease-in-out fadeOut;
+}
+#about .build-info {
+  align-items: end;
+  height: 2.3em;
+  border-radius: 7px;
+  background-color: rgba(0, 0, 0, calc(3/16 * 3));
+  color: whitesmoke;
+}
+#about .build-info > * {
+  height: 100%;
+}
+#about .build-info #build-info {
+  text-align: right;
+}
+#about .build-info #build-info > * {
+  padding: 0 0.5em;
+}
+#about .build-info #build-info a {
+  color: whitesmoke;
+}
+#about .build-info #build-info a:not(.project) {
+  text-decoration: none;
+}
+#about .build-info #build-info a span {
+  display: inline-block;
+}
+#pressed-keys {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 3em;
+  bottom: 1em;
+  opacity: 1;
+  border-radius: 0.5em;
+  padding: 0.5em;
+  background-color: rgba(0, 0, 0, calc(3/16 * 2));
+  color: whitesmoke;
+}
+#pressed-keys.hidden {
+  transition: opacity 0.5s ease-in-out;
+  opacity: 0;
+}
+#mouse {
+  position: fixed;
+  transform: translateX(-50%) translateY(-50%);
+  height: 2em;
+  width: 2em;
+  pointer-events: none;
+  z-index: 9999;
+  border-radius: 1em;
+  border: solid 0.1em yellow;
+}
+#mouse.down {
+  background-color: #ff08;
+}
+/* hide stuff in print view */
+@media print {
+  #filter,
+  #filter-toggle,
+  #about,
+  img,
+  .bubbles {
+    display: none;
+  }
+}
+/* ANIMATED BACKGROUND, from https://codepen.io/alvarotrigo/pen/GRvYNax
+    found in https://alvarotrigo.com/blog/animated-backgrounds-css/ */
+@keyframes rotateUp {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+    border-radius: 100%;
+  }
+  100% {
+    transform: translateY(-150vh) rotate(720deg);
+    opacity: 0;
+    border-radius: 0;
+  }
+}
+.bubbles {
+  overflow: hidden;
+}
+.bubbles li {
+  position: absolute;
+  display: block;
+  list-style: none;
+  width: 20px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  animation: rotateUp 25s linear infinite;
+  bottom: -150px;
+}
+.bubbles li:nth-child(1) {
+  left: 25%;
+  width: 80px;
+  height: 80px;
+  animation-delay: 0s;
+}
+.bubbles li:nth-child(2) {
+  left: 10%;
+  width: 20px;
+  height: 20px;
+  animation-delay: 2s;
+  animation-duration: 12s;
+}
+.bubbles li:nth-child(3) {
+  left: 70%;
+  width: 20px;
+  height: 20px;
+  animation-delay: 4s;
+}
+.bubbles li:nth-child(4) {
+  left: 40%;
+  width: 60px;
+  height: 60px;
+  animation-delay: 0s;
+  animation-duration: 18s;
+}
+.bubbles li:nth-child(5) {
+  left: 65%;
+  width: 20px;
+  height: 20px;
+  animation-delay: 0s;
+}
+.bubbles li:nth-child(6) {
+  left: 75%;
+  width: 110px;
+  height: 110px;
+  animation-delay: 3s;
+}
+.bubbles li:nth-child(7) {
+  left: 35%;
+  width: 150px;
+  height: 150px;
+  animation-delay: 7s;
+}
+.bubbles li:nth-child(8) {
+  left: 50%;
+  width: 25px;
+  height: 25px;
+  animation-delay: 15s;
+  animation-duration: 45s;
+}
+.bubbles li:nth-child(9) {
+  left: 20%;
+  width: 15px;
+  height: 15px;
+  animation-delay: 2s;
+  animation-duration: 35s;
+}
+.bubbles li:nth-child(10) {
+  left: 85%;
+  width: 150px;
+  height: 150px;
+  animation-delay: 0s;
+  animation-duration: 11s;
+}

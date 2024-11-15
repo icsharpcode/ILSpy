@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>{{SourceAssemblyName}} class diagrammer - ILSpy</title>
+    <link rel="icon" type="image/x-icon" href="ILSpy.ico" />
+    <link rel="stylesheet" href="styles.css" type="text/css" />
+    <style id="filter-width"></style>
+</head>
+<body class="container">
+
+    <!-- for animated background -->
+    <ul class="bubbles container">
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+    </ul>
+
+    <div id="content" class="flx">
+        <form id="filter" class="flx col open">
+            <div class="flx gap">
+                <input id="pre-filter-types" placeholder="pre-filter" class="grow"
+                       title="🐋 I sift through the types for you.&#10;Feed me vanilla 🦐 plain text or ES/JS flavored 🍤 RegEx.&#10;🔭 Focus me with [Ctrl + K]. " />
+                <label for="type-select" class="grow">types</label>
+                <button type="button" class="icon" data-toggles="#info" title="🕯️ Shed light on the type selection"><span class="torch"></span></button>
+            </div>
+
+            <div id="info" class="scndry vertical collapse">
+                <p>
+                    The <big>type picker</big> is ✜ focused when you open the app.
+                    You can just <b>⌨️ key in the first letter/s</b> of the type
+                    you want to start your diagram with and <b>hit [Enter] to render</b> it.
+                </p>
+                <p>
+                    After rendering you can 👆 <b>tap types</b> on the diagram
+                    to update your selection and redraw.
+                    This allows you to <b>explore the domain</b> along relations.
+                </p>
+                <p>
+                    Don't forget that you can hold [Shift] to <b>↕ range-select</b>
+                    and [Ctrl] to <b>± add to or subtract from</b> your selection.
+                </p>
+                <p>
+                    Note that the diagram has a 🟈 <b>layout direction</b> -
+                    i.e. it depends on how you <b>⇅ sort selected types</b> using [Alt + Arrow Up|Down].
+                </p>
+                <p>
+                    Changing the type selection or rendering options
+                    updates the URL in the location bar. That means you can
+                    <ul>
+                        <li><b>🔖 bookmark or 📣 share the URL</b> to your diagram with whoever has access to this diagrammer,</li>
+                        <li><b>access 🕔 earlier diagrams</b> recorded in your 🧾 browser history and</li>
+                        <li><b>⇥ restore your type selection</b> to the picker from the URL using ⟳ Refresh [F5] if you lose it.</li>
+                    </ul>
+                </p>
+                <h3>Looking for help with something else?</h3>
+                <p>
+                    <b>Stop and spot the tooltips.</b> 🌷 They'll give you more info where necessary.
+                    Get a hint for elements with helping tooltips using [Alt + i].
+                </p>
+                <p>Alternatively, find helpful links to the docs and discussions in the
+                    <a href="#build-info" class="toggle">build info <img src="ILSpy.ico" /> ➪</a></p>
+                <p>If you find this helpful and want to share your 📺 screen and 🎓 wisdom on how it works
+                    with a 🦗 newcomer, try toggling <b>presentation mode</b> using [Ctrl + i].</p>
+            </div>
+
+            <select multiple id="type-select" class="grow" title="🥢 pick types to include in your diagram"></select>
+
+            <fieldset id="inheritance" class="scndry flx" title="You may find these options useful to reason about type inheritance - probably less so when looking at entity relations.">
+                <legend>show inherited</legend>
+
+                <span class="scndry flx" title="Render direct base types.">
+                    <input type="checkbox" id="show-base-types" checked />
+                    <label for="show-base-types">types</label>
+                </span>
+                <span class="scndry flx" title="Render direct interfaces.">
+                    <input type="checkbox" id="show-interfaces" checked />
+                    <label for="show-interfaces">interfaces</label>
+                </span>
+                <span class="scndry flx" title="Render members inherited from ancestor types - unless those are also selected and rendered in detail.">
+                    <input type="checkbox" id="show-inherited-members" checked />
+                    <label for="show-inherited-members">members</label>
+                </span>
+            </fieldset>
+
+            <fieldset id="direction" class="scndry flx" title="[Ctrl + arrow keys] You may want to change this depending on your screen or printer and the size of the diagram.">
+                <legend>layout direction</legend>
+                <input type="radio" name="direction" value="RL" id="dir-rl" />
+                <label for="dir-rl">⮘</label>
+                <input type="radio" name="direction" value="TB" id="dir-tb" />
+                <label for="dir-tb">⮛</label>
+                <input type="radio" name="direction" value="BT" id="dir-bt" />
+                <label for="dir-bt">⮙</label>
+                <input type="radio" name="direction" value="LR" id="dir-lr" checked />
+                <label for="dir-lr">⮚</label>
+            </fieldset>
+
+            <div id="actions" class="flx spaced">
+                <button title="Render the selected types. [Enter] with the side bar in focus will do."
+                        type="submit" id="render" disabled><span class="trawl-net"></span> Cast the diagram</button>
+                <button type="button" class="icon" data-toggles="#exportOptions" id="exportOptions-toggle" hidden title="toggle 🥡 export options">🎣</button>
+            </div>
+
+            <div id="exportOptions" class="scndry vertical collapse aligned spaced flx gap col">
+
+                <div class="flx gap" title="Note that you can also use your browser's Print function [Ctrl + P] to export to PDF or paper or split up the diagram into multiple pages.">
+                    <button type="button" id="save" data-assembly="{{SourceAssemblyName}}" title="[Ctrl + S] Saves the diagram in the selected format using a generated name.">💾 Save</button>
+                    <label>or</label>
+                    <button type="button" id="copy" title="[Ctrl + C] Copies the diagram in the selected format to your clipboard for you to paste directly into a messenger, word- or image processor.">📋 Copy to clipboard</button>
+                </div>
+
+                <div class="flx">
+                    <label>as</label>
+                    <span class="flx" title="Exports the diagram as SVG to render in an HTML document or SVG-enabled word processor.">
+                        <input type="radio" name="saveAs" value="svg" id="saveAs-svg" />
+                        <label for="saveAs-svg">svg</label>
+                    </span>
+                    <span class="flx" title="Exports the diagram as a base-64 encoded PNG.">
+                        <input type="radio" name="saveAs" value="png" id="saveAs-png" checked />
+                        <label for="saveAs-png">png</label>
+                    </span>
+                    <span class="flx" title="Exports the mermaid syntax for the diagram.">
+                        <input type="radio" name="saveAs" value="mmd" id="saveAs-mmd" />
+                        <label for="saveAs-mmd">mmd</label>
+                    </span>
+                </div>
+
+                <div id="dimensions" class="vertical open collapse">
+                    <fieldset title="Applied when saving and in (unscalable) image format. Note these settings indirectly determine the resolution.">
+                        <legend>png dimensions</legend>
+
+                        <div class="flx">
+                            <input type="radio" name="dimension" value="auto" id="dimension-current" checked />
+                            <label for="dimension-current">current</label>
+                            <input type="radio" name="dimension" value="scale" id="dimension-scale" />
+                            <label for="dimension-scale">scale to fixed</label>
+                        </div>
+
+                        <div id="scale-controls" class="flx aligned">
+                            <input type="radio" name="scale" value="width" id="scale-width" checked disabled />
+                            <label for="scale-width">width</label>
+                            <input type="radio" name="scale" value="height" id="scale-height" disabled />
+                            <label for="scale-height">height</label>
+                            <div class="scale-size flx aligned">
+                                <label for="scale-size">of</label>
+                                <input type="text" id="scale-size" value="1080" disabled />
+                                <label for="scale-size">px</label>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+        </form>
+
+        <button type="button" class="icon" id="filter-toggle" title="🧜‍♂️ Let me lay it out for you.&#10👆 Tap me to toggle the side bar [Ctrl + B].&#10;👌 Grab and drag me if you need ⇢ more space for the type selection.">⥂</button>
+
+        <div id="output" class="grow" data-title="🧜‍♀️ I'm not your basic diagram.&#10;👆 Tap my types to toggle them.&#10;&#10;🔍 Zoom me with [Ctrl + mouse wheel].&#10;👌 Grab and drag me around to pan after.&#10;🧽 Reset zoom and pan with [Ctrl + 0]."></div>
+    </div>
+
+    <div id="about" class="flx col gap" title="🐙 build info and project links">
+        <div id="toaster" class="flx col gap"></div>
+        <div class="build-info flx">
+            <div id="build-info" class="scndry horizontal collapse flx col">
+                <span>built from {{SourceAssemblyName}} v{{SourceAssemblyVersion}} and mermaid.js from CDN
+                    <a target="_blank" href="https://cdn.jsdelivr.net/npm/mermaid@11.4.0/dist/mermaid.min.js" download="mermaid.min.js"
+                        title="For off-line use, download a copy and save it in the diagrammer folder. At the bottom of the index.html you'll find a script with a reference to the mermaid CDN. Replace its 'src' with the file name of your local copy, e.g. 'mermaid.min.js'.">📥</a>
+                </span>
+                <span>
+                    using <a class="project" target="_blank" href="{{RepoUrl}}#readme" title="🤿 get learned and find out about or 🔱 fork the project">ICSharpCode.ILSpyX</a> v{{BuilderVersion}}
+                    <a target="_blank" href="{{RepoUrl}}/wiki/Diagramming" title="the manual">📜</a>
+                    <a target="_blank" href="{{RepoUrl}}/discussions" title="🤔 ask questions, share and discuss 💡 ideas">💬</a>
+                    <a target="_blank" href="{{RepoUrl}}/issues" title="🦟 feed bugs to the fishes and request 🌱 new features"><span class="mano-a-borsa"></span></a>
+                    <a target="_blank" href="{{RepoUrl}}/releases/latest" title="☄️ download the latest bits to 🌊 generate better diagrammers">🌩️</a>
+                </span>
+            </div>
+            <img data-toggles="#build-info" src="ILSpy.ico" />
+        </div>
+    </div>
+
+    <div id="pressed-keys" class="hidden"></div>
+    <div id="mouse" hidden></div>
+
+    <script id="model" type="application/json">{{Model}}</script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.0/dist/mermaid.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

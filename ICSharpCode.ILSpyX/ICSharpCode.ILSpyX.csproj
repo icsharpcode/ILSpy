@@ -66,6 +66,22 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="MermaidDiagrammer\html\node_modules\**" />
+    <None Remove="MermaidDiagrammer\html\.eslintrc.js" />
+    <None Remove="MermaidDiagrammer\html\.gitignore" />
+    <None Remove="MermaidDiagrammer\html\class-diagrammer.html" />
+    <None Remove="MermaidDiagrammer\html\gulpfile.js" />
+    <None Remove="MermaidDiagrammer\html\model.json" />
+    <None Remove="MermaidDiagrammer\html\package-lock.json" />
+    <None Remove="MermaidDiagrammer\html\package.json" />
+    <None Remove="MermaidDiagrammer\html\styles.less" />
+    <EmbeddedResource Include="..\ILSpy\Images\ILSpy.ico" Link="MermaidDiagrammer\html\ILSpy.ico" />
+    <EmbeddedResource Include="MermaidDiagrammer\html\script.js" />
+    <EmbeddedResource Include="MermaidDiagrammer\html\styles.css" />
+    <EmbeddedResource Include="MermaidDiagrammer\html\template.html" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="System.Composition.AttributedModel" />
     <PackageReference Include="System.Reflection.Metadata" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" />
