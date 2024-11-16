@@ -52,8 +52,9 @@ function gitVersion() {
         return 0;
     }
     try {
-        return [Int32]::Parse((git rev-list --count "$baseCommit..HEAD")) + $baseCommitRev;
+        return [Int32]::Parse((git rev-list --count "$baseCommit..HEAD" 2>&1 | Tee-Object -Variable cmdOutput)) + $baseCommitRev;
     } catch {
+        Write-Host $cmdOutput
         return 0;
     }
 }
@@ -63,8 +64,9 @@ function gitCommitHash() {
         return "0000000000000000000000000000000000000000";
     }
     try {
-        return (git rev-list --max-count 1 HEAD);
+        return (git rev-list --max-count 1 HEAD 2>&1 | Tee-Object -Variable cmdOutput);
     } catch {
+        Write-Host $cmdOutput
         return "0000000000000000000000000000000000000000";
     }
 }
@@ -74,8 +76,9 @@ function gitShortCommitHash() {
         return "00000000";
     }
     try {
-        return (git rev-parse --short=8 (git rev-list --max-count 1 HEAD));
+        return (git rev-parse --short=8 (git rev-list --max-count 1 HEAD 2>&1 | Tee-Object -Variable cmdOutput) 2>&1 | Tee-Object -Variable cmdOutput);
     } catch {
+        Write-Host $cmdOutput
         return "00000000";
     }	
 }
