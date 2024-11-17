@@ -115,6 +115,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Create _Diagram....
+        /// </summary>
+        public static string _CreateDiagram {
+            get {
+                return ResourceManager.GetString("_CreateDiagram", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to _File.
         /// </summary>
         public static string _File {
@@ -564,6 +573,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string Create {
             get {
                 return ResourceManager.GetString("Create", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Creating diagram....
+        /// </summary>
+        public static string CreatingDiagram {
+            get {
+                return ResourceManager.GetString("CreatingDiagram", resourceCulture);
             }
         }
         
