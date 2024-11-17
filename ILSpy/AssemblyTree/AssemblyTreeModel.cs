@@ -640,6 +640,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		private void JumpToReference(object? sender, NavigateToReferenceEventArgs e)
 		{
 			JumpToReferenceAsync(e.Reference, e.InNewTabPage).HandleExceptions();
+			IsActive = true;
 		}
 
 		/// <summary>

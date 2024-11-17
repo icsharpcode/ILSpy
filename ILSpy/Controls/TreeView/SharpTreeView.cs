@@ -30,6 +30,8 @@ using System.Windows.Threading;
 
 using ICSharpCode.ILSpyX.TreeView;
 
+using TomsToolbox.Wpf;
+
 namespace ICSharpCode.ILSpy.Controls.TreeView
 {
 	public class SharpTreeView : ListView
@@ -396,9 +398,10 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 		/// </summary>
 		public void FocusNode(SharpTreeNode node)
 		{
-			if (node == null)
-				throw new ArgumentNullException("node");
+			ArgumentNullException.ThrowIfNull(node);
+
 			ScrollIntoView(node);
+
 			// WPF's ScrollIntoView() uses the same if/dispatcher construct, so we call OnFocusItem() after the item was brought into view.
 			if (this.ItemContainerGenerator.Status == GeneratorStatus.ContainersGenerated)
 			{
@@ -406,7 +409,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			}
 			else
 			{
-				this.Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new DispatcherOperationCallback(this.OnFocusItem), node);
+				this.BeginInvoke(DispatcherPriority.Loaded, () => OnFocusItem(node));
 			}
 		}
 
