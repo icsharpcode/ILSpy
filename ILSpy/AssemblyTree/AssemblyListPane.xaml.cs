@@ -23,6 +23,7 @@ using System.Windows.Threading;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX.TreeView;
 
+using TomsToolbox.Wpf;
 using TomsToolbox.Wpf.Composition.AttributedModel;
 
 namespace ICSharpCode.ILSpy.AssemblyTree
@@ -56,7 +57,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				var selected = model.SelectedItem;
 				if (selected != null)
 				{
-					this.Dispatcher.BeginInvoke(DispatcherPriority.Background, () => {
+					this.BeginInvoke(DispatcherPriority.Background, () => {
 						ScrollIntoView(selected);
 						this.SelectedItem = selected;
 					});
@@ -69,7 +70,8 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 				if (SelectedItem is SharpTreeNode selectedItem)
 				{
-					FocusNode(selectedItem);
+					// defer focusing, so it does not interfere with selection via mouse click
+					this.BeginInvoke(() => FocusNode(selectedItem));
 				}
 				else
 				{
