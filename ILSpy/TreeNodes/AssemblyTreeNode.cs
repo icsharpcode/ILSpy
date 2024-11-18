@@ -217,10 +217,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					switch (loadResult.MetadataFile.Kind)
 					{
 						case MetadataFile.MetadataFileKind.PortableExecutable:
-							LoadChildrenForPEFile(loadResult.MetadataFile);
-							break;
 						case MetadataFile.MetadataFileKind.WebCIL:
-							LoadChildrenForWebCilFile((WebCilFile)loadResult.MetadataFile);
+							LoadChildrenForExecutableFile(loadResult.MetadataFile);
 							break;
 						default:
 							var metadata = loadResult.MetadataFile;
@@ -244,73 +242,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		void LoadChildrenForPEFile(MetadataFile module)
-		{
-			typeSystem = LoadedAssembly.GetTypeSystemOrNull();
-			var assembly = (MetadataModule)typeSystem.MainModule;
-			this.Children.Add(new MetadataTreeNode(module, Resources.Metadata));
-			Decompiler.DebugInfo.IDebugInfoProvider debugInfo = LoadedAssembly.GetDebugInfoOrNull();
-			if (debugInfo is PortableDebugInfoProvider ppdb
-				&& ppdb.GetMetadataReader() is System.Reflection.Metadata.MetadataReader reader)
-			{
-				this.Children.Add(new MetadataTreeNode(ppdb.ToMetadataFile(), $"Debug Metadata ({(ppdb.IsEmbedded ? "Embedded" : "From portable PDB")})"));
-			}
-			this.Children.Add(new ReferenceFolderTreeNode(module, this));
-			if (module.Resources.Any())
-				this.Children.Add(new ResourceListTreeNode(module));
-			foreach (NamespaceTreeNode ns in namespaces.Values)
-			{
-				ns.Children.Clear();
-			}
-			namespaces.Clear();
-			bool useNestedStructure = SettingsService.DisplaySettings.UseNestedNamespaceNodes;
-			foreach (var type in assembly.TopLevelTypeDefinitions.OrderBy(t => t.ReflectionName, NaturalStringComparer.Instance))
-			{
-				var ns = GetOrCreateNamespaceTreeNode(type.Namespace);
-				TypeTreeNode node = new TypeTreeNode(type, this);
-				typeDict[(TypeDefinitionHandle)type.MetadataToken] = node;
-				ns.Children.Add(node);
-			}
-			foreach (NamespaceTreeNode ns in namespaces.Values
-				.Where(ns => ns.Children.Count > 0 && ns.Parent == null)
-				.OrderBy(n => n.Name, NaturalStringComparer.Instance))
-			{
-				this.Children.Add(ns);
-				SetPublicAPI(ns);
-			}
-
-			NamespaceTreeNode GetOrCreateNamespaceTreeNode(string @namespace)
-			{
-				if (!namespaces.TryGetValue(@namespace, out NamespaceTreeNode ns))
-				{
-					if (useNestedStructure)
-					{
-						int decimalIndex = @namespace.LastIndexOf('.');
-						if (decimalIndex < 0)
-						{
-							var escapedNamespace = Language.EscapeName(@namespace);
-							ns = new NamespaceTreeNode(escapedNamespace);
-						}
-						else
-						{
-							var parentNamespaceTreeNode = GetOrCreateNamespaceTreeNode(@namespace.Substring(0, decimalIndex));
-							var escapedInnerNamespace = Language.EscapeName(@namespace.Substring(decimalIndex + 1));
-							ns = new NamespaceTreeNode(escapedInnerNamespace);
-							parentNamespaceTreeNode.Children.Add(ns);
-						}
-					}
-					else
-					{
-						var escapedNamespace = Language.EscapeName(@namespace);
-						ns = new NamespaceTreeNode(escapedNamespace);
-					}
-					namespaces.Add(@namespace, ns);
-				}
-				return ns;
-			}
-		}
-
-		void LoadChildrenForWebCilFile(WebCilFile module)
+		void LoadChildrenForExecutableFile(MetadataFile module)
 		{
 			typeSystem = LoadedAssembly.GetTypeSystemOrNull();
 			var assembly = (MetadataModule)typeSystem.MainModule;
