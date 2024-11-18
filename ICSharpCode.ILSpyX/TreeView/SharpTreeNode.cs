@@ -181,7 +181,10 @@ namespace ICSharpCode.ILSpyX.TreeView
 
 		#endregion
 
-		#region OnChildrenChanged
+		#region OnParentChanged / OnChildrenChanged
+		public virtual void OnParentChanged()
+		{ }
+
 		public virtual void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
 		{
 			if (e.OldItems != null)
@@ -190,6 +193,7 @@ namespace ICSharpCode.ILSpyX.TreeView
 				{
 					Debug.Assert(node.modelParent == this);
 					node.modelParent = null;
+					node.OnParentChanged();
 					Debug.WriteLine("Removing {0} from {1}", node, this);
 					SharpTreeNode removeEnd = node;
 					while (removeEnd.modelChildren != null && removeEnd.modelChildren.Count > 0)
@@ -227,6 +231,7 @@ namespace ICSharpCode.ILSpyX.TreeView
 				{
 					Debug.Assert(node.modelParent == null);
 					node.modelParent = this;
+					node.OnParentChanged();
 					node.UpdateIsVisible(isVisible && isExpanded, false);
 					//Debug.WriteLine("Inserting {0} after {1}", node, insertionPos);
 
