@@ -29,8 +29,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpyX.Abstractions;
-using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 using ICSharpCode.ILSpyX.TreeView;
+using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -130,9 +130,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					child.IsHidden = false;
 					break;
 				case FilterResult.Recurse:
-					child.EnsureChildrenFiltered();
-					child.IsHidden = child.Children.All(c => c.IsHidden);
-					break;
 				case FilterResult.MatchAndRecurse:
 					child.EnsureChildrenFiltered();
 					child.IsHidden = child.Children.All(c => c.IsHidden);
@@ -161,16 +158,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-
 		internal void EnsureChildrenFiltered()
 		{
 			EnsureLazyChildren();
-			if (childrenNeedFiltering)
-			{
-				childrenNeedFiltering = false;
-				foreach (ILSpyTreeNode node in this.Children.OfType<ILSpyTreeNode>())
-					ApplyFilterToChild(node);
-			}
+			childrenNeedFiltering = false;
+			foreach (ILSpyTreeNode node in this.Children.OfType<ILSpyTreeNode>())
+				ApplyFilterToChild(node);
 		}
 
 		protected string GetSuffixString(IMember member) => GetSuffixString(member.MetadataToken);
