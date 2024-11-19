@@ -39,8 +39,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public abstract class ILSpyTreeNode : SharpTreeNode, ITreeNode
 	{
-		bool childrenNeedFiltering;
-
 		protected ILSpyTreeNode()
 		{
 			MessageBus<SettingsChangedEventArgs>.Subscribers += (sender, e) => Settings_Changed(sender, e);
@@ -110,10 +108,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					foreach (ILSpyTreeNode node in e.NewItems)
 						ApplyFilterToChild(node);
 				}
-				else
-				{
-					childrenNeedFiltering = true;
-				}
 			}
 		}
 
@@ -152,16 +146,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				foreach (ILSpyTreeNode node in this.Children.OfType<ILSpyTreeNode>())
 					ApplyFilterToChild(node);
 			}
-			else
-			{
-				childrenNeedFiltering = true;
-			}
 		}
 
 		internal void EnsureChildrenFiltered()
 		{
 			EnsureLazyChildren();
-			childrenNeedFiltering = false;
 			foreach (ILSpyTreeNode node in this.Children.OfType<ILSpyTreeNode>())
 				ApplyFilterToChild(node);
 		}
