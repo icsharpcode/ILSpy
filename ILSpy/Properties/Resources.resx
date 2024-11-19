@@ -210,6 +210,9 @@ Are you sure you want to continue?</value>
   <data name="Create" xml:space="preserve">
     <value>Create</value>
   </data>
+  <data name="CreatingDiagram" xml:space="preserve">
+    <value>Creating diagram...</value>
+  </data>
   <data name="CultureLabel" xml:space="preserve">
     <value>Culture</value>
   </data>
@@ -1035,6 +1038,9 @@ Do you want to continue?</value>
   </data>
   <data name="_CollapseTreeNodes" xml:space="preserve">
     <value>_Collapse all tree nodes</value>
+  </data>
+  <data name="_CreateDiagram" xml:space="preserve">
+    <value>Create _Diagram...</value>
   </data>
   <data name="_File" xml:space="preserve">
     <value>_File</value>
