@@ -5,7 +5,7 @@
 
 set -eu
 
-DOTNET_FORMAT_VERSION=8.0.453106
+DOTNET_FORMAT_VERSION=8.3.546805
 DOTNET_PATH="$LOCALAPPDATA/ICSharpCode/ILSpy/dotnet-format-$DOTNET_FORMAT_VERSION"
 if [ ! -d "$DOTNET_PATH" ]; then
  echo "Downloading dotnet-format $DOTNET_FORMAT_VERSION..."
