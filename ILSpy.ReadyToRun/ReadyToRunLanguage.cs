@@ -30,6 +30,7 @@ using System.Runtime.CompilerServices;
 
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -94,6 +95,10 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		}
 
 		public void WriteReference(IMember member, string text, bool isDefinition = false)
+		{
+		}
+
+		public void WriteReference(MetadataFile metadata, Handle handle, string text, string protocol = "decompile", bool isDefinition = false)
 		{
 		}
 	}
