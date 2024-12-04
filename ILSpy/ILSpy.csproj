@@ -93,6 +93,11 @@
     <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" />
     <PackageReference Include="Microsoft.DiaSymReader" />
     <PackageReference Include="Microsoft.DiaSymReader.Native" />
+
+    <!-- 4.3.0 of all those have security vulnerabilities, and although only a debug build, we'll override the versions for good measure -->
+    <PackageReference Include="System.Net.Http" />
+    <PackageReference Include="System.Private.Uri" />
+    <PackageReference Include="System.Text.RegularExpressions" />
   </ItemGroup>
 
   <PropertyGroup>
