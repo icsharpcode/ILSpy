@@ -10,7 +10,7 @@
     <PackageVersion Include="DiffLib" Version="2017.7.26.1241" />
     <PackageVersion Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.1" />
     <PackageVersion Include="FluentAssertions" Version="6.12.2" />
-    <PackageVersion Include="ILCompiler.Reflection.ReadyToRun.Experimental" Version="8.0.0-rc.2.23471.30" />
+    <PackageVersion Include="ILCompiler.Reflection.ReadyToRun.Experimental" Version="9.0.1-rtm.24557.9" />
     <PackageVersion Include="Iced" Version="1.21.0" />
     <PackageVersion Include="JunitXml.TestLogger" Version="4.1.0" />
     <PackageVersion Include="K4os.Compression.LZ4" Version="1.3.8" />
