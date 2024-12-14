@@ -123,11 +123,9 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public ReadOnlyObservableCollection<TabPageModel> TabPages { get; }
 
-		public ReadOnlyCollection<ToolPaneModel> ToolPanes => exportProvider
-			.GetExportedValues<ToolPaneModel>("ToolPane")
-			.OrderBy(item => item.Title)
-			.ToArray()
-			.AsReadOnly();
+		private ToolPaneModel[] toolPanes = [];
+
+		public ReadOnlyCollection<ToolPaneModel> ToolPanes => toolPanes.AsReadOnly();
 
 		public bool ShowToolPane(string contentId)
 		{
@@ -182,6 +180,12 @@ namespace ICSharpCode.ILSpy.Docking
 				// Make sure there is at least one tab open
 				AddTabPage();
 			}
+
+			toolPanes = exportProvider
+				.GetExportedValues<ToolPaneModel>("ToolPane")
+				.OrderBy(item => item.Title)
+				.ToArray();
+			OnPropertyChanged(nameof(ToolPanes));
 
 			DockingManager.LayoutUpdateStrategy = this;
 			XmlLayoutSerializer serializer = new XmlLayoutSerializer(DockingManager);
