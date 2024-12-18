@@ -25,6 +25,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Data;
 using System.Windows.Threading;
 
 using AvalonDock;
@@ -50,6 +51,7 @@ namespace ICSharpCode.ILSpy.Docking
 		private readonly IExportProvider exportProvider;
 
 		private readonly ObservableCollection<TabPageModel> tabPages = [];
+		private ReadOnlyCollection<ToolPaneModel> toolPanes;
 
 		readonly SessionSettings sessionSettings;
 
@@ -123,9 +125,11 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public ReadOnlyObservableCollection<TabPageModel> TabPages { get; }
 
-		private ToolPaneModel[] toolPanes = [];
-
-		public ReadOnlyCollection<ToolPaneModel> ToolPanes => toolPanes.AsReadOnly();
+		public ReadOnlyCollection<ToolPaneModel> ToolPanes => toolPanes ??= exportProvider
+			.GetExportedValues<ToolPaneModel>("ToolPane")
+			.OrderBy(item => item.Title)
+			.ToArray()
+			.AsReadOnly();
 
 		public bool ShowToolPane(string contentId)
 		{
@@ -181,12 +185,6 @@ namespace ICSharpCode.ILSpy.Docking
 				AddTabPage();
 			}
 
-			toolPanes = exportProvider
-				.GetExportedValues<ToolPaneModel>("ToolPane")
-				.OrderBy(item => item.Title)
-				.ToArray();
-			OnPropertyChanged(nameof(ToolPanes));
-
 			DockingManager.LayoutUpdateStrategy = this;
 			XmlLayoutSerializer serializer = new XmlLayoutSerializer(DockingManager);
 			serializer.LayoutSerializationCallback += LayoutSerializationCallback;
@@ -198,6 +196,9 @@ namespace ICSharpCode.ILSpy.Docking
 			{
 				serializer.LayoutSerializationCallback -= LayoutSerializationCallback;
 			}
+
+			DockingManager.SetBinding(DockingManager.AnchorablesSourceProperty, new Binding(nameof(ToolPanes)));
+			DockingManager.SetBinding(DockingManager.DocumentsSourceProperty, new Binding(nameof(TabPages)));
 		}
 
 		void LayoutSerializationCallback(object sender, LayoutSerializationCallbackEventArgs e)
