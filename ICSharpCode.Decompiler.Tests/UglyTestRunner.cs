@@ -146,7 +146,7 @@ namespace ICSharpCode.Decompiler.Tests
 			if (!File.Exists(ilFile))
 			{
 				// re-create .il file if necessary
-				CompilerResults output = null;
+				Helpers.CompilerResults output = null;
 				try
 				{
 					output = await Tester.CompileCSharp(csFile, cscOptions).ConfigureAwait(false);
