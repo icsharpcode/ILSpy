@@ -5,7 +5,7 @@
     <DisplayName>ILSpy</DisplayName>
     <Description xml:space="preserve">Integrates the ILSpy decompiler into Visual Studio.</Description>
     <MoreInfo>https://ilspy.net</MoreInfo>
-    <License>license.txt</License>
+    <License>LICENSE</License>
     <Icon>ILSpy-Large.ico</Icon>
   </Metadata>
   <Installation>
