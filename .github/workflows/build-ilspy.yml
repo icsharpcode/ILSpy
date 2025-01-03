@@ -6,8 +6,13 @@ on:
   pull_request:
     branches: [ master, release/** ]
 
+permissions:
+  contents: read
+
 jobs:
   Build:
+    permissions:
+      packages: write  # for dotnet nuget push
     runs-on: windows-2022
     strategy:
       fail-fast: false
