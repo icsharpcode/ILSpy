@@ -58,7 +58,7 @@
     <EmbeddedResource Include="..\doc\ILSpyAboutPage.txt" />
     <EmbeddedResource Include="..\doc\ILSpyAboutPage_zh_Hans.txt" />
     <EmbeddedResource Include="..\doc\third-party-notices.txt" />
-    <EmbeddedResource Include="..\doc\license.txt">
+    <EmbeddedResource Include="..\LICENSE">
       <Link>license.txt</Link>
     </EmbeddedResource>
     <Resource Include="Images\NuGet.png" />
