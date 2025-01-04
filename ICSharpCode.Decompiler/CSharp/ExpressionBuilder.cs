@@ -3900,17 +3900,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		protected internal override TranslatedExpression VisitSwitchInstruction(SwitchInstruction inst, TranslationContext context)
+		internal (TranslatedExpression, IType) TranslateSwitchValue(SwitchInstruction inst, bool allowImplicitConversion)
 		{
 			TranslatedExpression value;
 			IType type;
 			if (inst.Value is StringToInt strToInt)
 			{
+				// switch-expression does not support implicit conversions at all,
+				// switch-statement does support implicit conversions in general, however, the rules are
+				// not very intuitive and in order to prevent bugs, we emit an explicit cast.
 				value = Translate(strToInt.Argument)
 					.ConvertTo(
 						strToInt.ExpectedType,
 						this,
-						allowImplicitConversion: false // switch-expression does not support implicit conversions
+						allowImplicitConversion: false
 					);
 				type = compilation.FindType(KnownTypeCode.String);
 			}
@@ -3918,12 +3921,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				strToInt = null;
 				value = Translate(inst.Value);
+				type = value.Type;
 				if (inst.Type != null)
 				{
-					value = value.ConvertTo(inst.Type, this, allowImplicitConversion: true);
+					value = value.ConvertTo(inst.Type, this, allowImplicitConversion: allowImplicitConversion);
+					type = inst.Type;
 				}
-				type = value.Type;
 			}
+			return (value, type);
+		}
+
+		protected internal override TranslatedExpression VisitSwitchInstruction(SwitchInstruction inst, TranslationContext context)
+		{
+			// switch-expression does not support implicit conversions
+			var (value, type) = TranslateSwitchValue(inst, allowImplicitConversion: false);
 
 			IL.SwitchSection defaultSection = inst.GetDefaultSection();
 			SwitchExpression switchExpr = new SwitchExpression();

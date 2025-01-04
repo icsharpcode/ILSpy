@@ -67,6 +67,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public class ImplicitInt
+		{
+			private readonly int s;
+
+			public ImplicitInt(int s)
+			{
+				this.s = s;
+			}
+
+			public static implicit operator int(ImplicitInt v)
+			{
+				return v.s;
+			}
+		}
+
+		public class ExplicitInt
+		{
+			private readonly int s;
+
+			public ExplicitInt(int s)
+			{
+				this.s = s;
+			}
+
+			public static explicit operator int(ExplicitInt v)
+			{
+				return v.s;
+			}
+		}
+
 		public enum State
 		{
 			False,
@@ -283,6 +313,62 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 		public static void SwitchOverInt(int i)
+		{
+			switch (i)
+			{
+				case 0:
+					Console.WriteLine("zero");
+					break;
+				case 5:
+					Console.WriteLine("five");
+					break;
+				case 10:
+					Console.WriteLine("ten");
+					break;
+				case 15:
+					Console.WriteLine("fifteen");
+					break;
+				case 20:
+					Console.WriteLine("twenty");
+					break;
+				case 25:
+					Console.WriteLine("twenty-five");
+					break;
+				case 30:
+					Console.WriteLine("thirty");
+					break;
+			}
+		}
+
+		public static void SwitchOverExplicitInt(ExplicitInt i)
+		{
+			switch ((int)i)
+			{
+				case 0:
+					Console.WriteLine("zero");
+					break;
+				case 5:
+					Console.WriteLine("five");
+					break;
+				case 10:
+					Console.WriteLine("ten");
+					break;
+				case 15:
+					Console.WriteLine("fifteen");
+					break;
+				case 20:
+					Console.WriteLine("twenty");
+					break;
+				case 25:
+					Console.WriteLine("twenty-five");
+					break;
+				case 30:
+					Console.WriteLine("thirty");
+					break;
+			}
+		}
+
+		public static void SwitchOverImplicitInt(ImplicitInt i)
 		{
 			switch (i)
 			{
