@@ -210,7 +210,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var oldCaseLabelMapping = caseLabelMapping;
 			caseLabelMapping = new Dictionary<Block, ConstantResolveResult>();
 
-			var (value, type, strToInt) = exprBuilder.TranslateSwitchValue(inst, allowImplicitConversion: true);
+			var (value, type, strToInt) = exprBuilder.TranslateSwitchValue(inst, false);
 
 			IL.SwitchSection defaultSection = inst.GetDefaultSection();
 
