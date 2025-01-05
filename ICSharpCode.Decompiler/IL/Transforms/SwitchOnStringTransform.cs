@@ -1070,10 +1070,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				stringValues.Add((null, nullValueCaseBlock));
 			}
 			// In newer Roslyn versions (>=3.7) the null check appears in the default case, not prior to the switch.
-			if (!stringValues.Any(pair => pair.Value == null) && IsNullCheckInDefaultBlock(ref exitOrDefaultBlock, switchValueLoad.Variable, out nullValueCaseBlock))
+			ILInstruction exitOrDefault = exitOrDefaultBlock;
+			if (!stringValues.Any(pair => pair.Value == null) && IsNullCheckInDefaultBlock(ref exitOrDefault, switchValueLoad.Variable, out nullValueCaseBlock))
 			{
 				stringValues.Add((null, nullValueCaseBlock));
 			}
+			exitOrDefaultBlock = (Block)exitOrDefault;
 
 			context.Step(nameof(MatchRoslynSwitchOnString), switchValueLoad);
 			if (exitOrDefaultBlock != null)
@@ -1176,7 +1178,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (!instructions[i + 1].MatchBranch(out var nextBlock))
 					return false;
-				if (!exitBlockJump.MatchBranch(out nullCase))
+				if (!exitBlockJump.MatchBranch(out nullCase) && !exitBlockJump.MatchLeave(out _))
 					return false;
 				// if (comp(ldloc switchValueVar == ldnull)) br ...
 				// br switchOnLengthBlock
@@ -1202,7 +1204,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				switchValueVar = null; // will be extracted in MatchSwitchOnLengthBlock
 				switchOnLengthBlockStartOffset = i;
 			}
-			Block defaultCase = null;
+			ILInstruction defaultCase = null;
 			if (!MatchSwitchOnLengthBlock(ref switchValueVar, switchOnLengthBlock, switchOnLengthBlockStartOffset, out var blocksByLength))
 				return false;
 			List<(string, ILInstruction)> stringValues = new();
@@ -1216,41 +1218,51 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				else
 				{
 					int length = (int)b.Length.Intervals[0].Start;
-					if (MatchSwitchOnCharBlock(b.TargetBlock, length, switchValueVar, out var mapping))
+					switch (b.TargetBlock)
 					{
-						foreach (var item in mapping)
-						{
-							if (!stringValues.Any(x => x.Item1 == item.StringValue))
+						case Leave leave:
+							break;
+						case Block targetBlock:
+							if (MatchSwitchOnCharBlock(targetBlock, length, switchValueVar, out var mapping))
 							{
-								stringValues.Add(item);
+								foreach (var item in mapping)
+								{
+									if (!stringValues.Any(x => x.Item1 == item.StringValue))
+									{
+										stringValues.Add(item);
+									}
+									else
+									{
+										return false;
+									}
+								}
+							}
+							else if (MatchRoslynCaseBlockHead(targetBlock, switchValueVar, out var bodyOrLeave, out var exit, out string stringValue, out _))
+							{
+								if (exit != defaultCase)
+									return false;
+								if (!stringValues.Any(x => x.Item1 == stringValue))
+								{
+									stringValues.Add((stringValue, bodyOrLeave));
+								}
+								else
+								{
+									return false;
+								}
+							}
+							else if (length == 0)
+							{
+								stringValues.Add(("", b.TargetBlock));
 							}
 							else
 							{
 								return false;
 							}
-						}
-					}
-					else if (MatchRoslynCaseBlockHead(b.TargetBlock, switchValueVar, out var bodyOrLeave, out var exit, out string stringValue, out _))
-					{
-						if (exit != defaultCase)
+							break;
+						default:
 							return false;
-						if (!stringValues.Any(x => x.Item1 == stringValue))
-						{
-							stringValues.Add((stringValue, bodyOrLeave));
-						}
-						else
-						{
-							return false;
-						}
 					}
-					else if (length == 0)
-					{
-						stringValues.Add(("", b.TargetBlock));
-					}
-					else
-					{
-						return false;
-					}
+
 				}
 			}
 
@@ -1278,7 +1290,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			var newSwitch = new SwitchInstruction(new StringToInt(new LdLoc(switchValueVar), values, switchValueVar.Type));
 			newSwitch.Sections.AddRange(sections);
-			newSwitch.Sections.Add(new SwitchSection { Labels = defaultLabel, Body = new Branch(defaultCase) });
+			newSwitch.Sections.Add(new SwitchSection { Labels = defaultLabel, Body = defaultCase is Block b2 ? new Branch(b2) : defaultCase });
 			newSwitch.AddILRange(instructions[i]);
 			if (nullCase != null)
 			{
@@ -1399,7 +1411,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return results?.Count > 0;
 			}
 
-			bool MatchSwitchOnLengthBlock(ref ILVariable switchValueVar, Block switchOnLengthBlock, int startOffset, out List<(LongSet Length, Block TargetBlock)> blocks)
+			bool MatchSwitchOnLengthBlock(ref ILVariable switchValueVar, Block switchOnLengthBlock, int startOffset, out List<(LongSet Length, ILInstruction TargetBlock)> blocks)
 			{
 				blocks = null;
 				SwitchInstruction @switch;
@@ -1482,17 +1494,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					if (section.HasNullLabel)
 						return false;
-					if (!section.Body.MatchBranch(out var target))
+					if (!section.Body.MatchBranch(out var target) && !section.Body.MatchLeave(out _))
 						return false;
+					ILInstruction targetInst = target ?? section.Body;
 					if (section.Labels.Count() != 1)
 					{
-						defaultCase ??= target;
-						if (defaultCase != target)
+						defaultCase ??= targetInst;
+						if (defaultCase != targetInst)
 							return false;
 					}
 					else
 					{
-						blocks.Add((section.Labels, target));
+						blocks.Add((section.Labels, targetInst));
 					}
 				}
 				return true;
@@ -1506,10 +1519,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///	    br newDefaultBlock
 		/// }
 		/// </summary>
-		private bool IsNullCheckInDefaultBlock(ref Block exitOrDefaultBlock, ILVariable switchVar, out Block nullValueCaseBlock)
+		private bool IsNullCheckInDefaultBlock(ref ILInstruction exitOrDefault, ILVariable switchVar, out Block nullValueCaseBlock)
 		{
 			nullValueCaseBlock = null;
-			if (exitOrDefaultBlock == null)
+			if (exitOrDefault is not Block exitOrDefaultBlock)
 				return false;
 			if (!exitOrDefaultBlock.Instructions[0].MatchIfInstruction(out var condition, out var thenBranch))
 				return false;
@@ -1523,7 +1536,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (elseBlock.Parent != exitOrDefaultBlock.Parent)
 				return false;
-			exitOrDefaultBlock = elseBlock;
+			exitOrDefault = elseBlock;
 			return true;
 		}
 
