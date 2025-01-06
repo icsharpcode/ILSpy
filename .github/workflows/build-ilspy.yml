@@ -158,7 +158,20 @@ jobs:
       if: github.ref == 'refs/heads/master' && matrix.configuration == 'release'
       run: |
         dotnet nuget push "ICSharpCode.ILSpyX\bin\Release\ICSharpCode.ILSpyX*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source https://nuget.pkg.github.com/${{ github.repository_owner }}
-      
+
+    - name: Upload BamlDecompiler NuGet release build artifacts
+      if: matrix.configuration == 'release'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ICSharpCode.BamlDecompiler NuGet Package (${{ matrix.configuration }})
+        path: ICSharpCode.BamlDecompiler\bin\Release\ICSharpCode.BamlDecompiler*.nupkg
+        if-no-files-found: error
+
+    - name: Publish DecomBamlDecompilerpiler NuGet
+      if: github.ref == 'refs/heads/master' && matrix.configuration == 'release'
+      run: |
+        dotnet nuget push "ICSharpCode.BamlDecompiler\bin\Release\ICSharpCode.BamlDecompiler*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source https://nuget.pkg.github.com/${{ github.repository_owner }}
+
     - name: Upload zip binaries build artifacts
       uses: actions/upload-artifact@v4
       with:
