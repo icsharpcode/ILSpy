@@ -1,14 +1,15 @@
 name: Scorecard supply-chain security
 on:
   # For Branch-Protection check. Only the default branch is supported. See
-  # https://github.com/ossf/scorecard/blob/main/docs/checks.md#branch-protection
-  branch_protection_rule:
-  # To guarantee Maintained check is occasionally updated. See
-  # https://github.com/ossf/scorecard/blob/main/docs/checks.md#maintained
-  schedule:
-    - cron: '25 1 * * 2'
-  push:
-    branches: [ "master" ]
+  # https://github.com/ossf/scorecard/blob/main/docs/checks.md#branch-protection (disabled)
+  # branch_protection_rule:
+  workflow_dispatch:
+
+  # schedule ("Maintained") and push are disabled atm
+  # schedule:
+    # - cron: '25 1 * * 2'
+  # push:
+    # branches: [ "master" ]
 
 permissions: read-all
 
