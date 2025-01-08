@@ -316,5 +316,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return a?.b.c(1)?.d[10];
 		}
+
+		private static string Issue3181()
+		{
+#if EXPECTED_OUTPUT
+			return ((int?)null)?.ToString();
+#else
+			int? x = null;
+			return x?.ToString();
+#endif
+		}
 	}
 }

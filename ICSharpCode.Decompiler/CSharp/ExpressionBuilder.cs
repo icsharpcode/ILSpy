@@ -626,19 +626,29 @@ namespace ICSharpCode.Decompiler.CSharp
 			Expression expr;
 			IType constantType;
 			object constantValue;
-			if (type.IsReferenceType == true || type.IsKnownType(KnownTypeCode.NullableOfT))
+			if (type.IsReferenceType == true)
 			{
 				expr = new NullReferenceExpression();
 				constantType = SpecialType.NullType;
 				constantValue = null;
+				return expr.WithRR(new ConstantResolveResult(constantType, constantValue));
+			}
+			else if (type.IsKnownType(KnownTypeCode.NullableOfT))
+			{
+				expr = new NullReferenceExpression();
+				constantType = SpecialType.NullType;
+				constantValue = null;
+				var crr = new ConstantResolveResult(constantType, constantValue);
+				return new CastExpression(ConvertType(type), expr.WithRR(crr))
+					.WithRR(new ConversionResolveResult(type, crr, Conversion.NullLiteralConversion));
 			}
 			else
 			{
 				expr = new DefaultValueExpression(ConvertType(type));
 				constantType = type;
 				constantValue = CSharpResolver.GetDefaultValue(type);
+				return expr.WithRR(new ConstantResolveResult(constantType, constantValue));
 			}
-			return expr.WithRR(new ConstantResolveResult(constantType, constantValue));
 		}
 
 		protected internal override TranslatedExpression VisitSizeOf(SizeOf inst, TranslationContext context)
