@@ -210,30 +210,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var oldCaseLabelMapping = caseLabelMapping;
 			caseLabelMapping = new Dictionary<Block, ConstantResolveResult>();
 
-			TranslatedExpression value;
-			IType type;
-			if (inst.Value is StringToInt strToInt)
-			{
-				value = exprBuilder.Translate(strToInt.Argument)
-					.ConvertTo(
-						strToInt.ExpectedType,
-						exprBuilder,
-						// switch statement does support implicit conversions in general, however, the rules are
-						// not very intuitive and in order to prevent bugs, we emit an explicit cast.
-						allowImplicitConversion: false
-					);
-				type = exprBuilder.compilation.FindType(KnownTypeCode.String);
-			}
-			else
-			{
-				strToInt = null;
-				value = exprBuilder.Translate(inst.Value);
-				if (inst.Type != null)
-				{
-					value = value.ConvertTo(inst.Type, exprBuilder, allowImplicitConversion: true);
-				}
-				type = value.Type;
-			}
+			var (value, type, strToInt) = exprBuilder.TranslateSwitchValue(inst, false);
 
 			IL.SwitchSection defaultSection = inst.GetDefaultSection();
 

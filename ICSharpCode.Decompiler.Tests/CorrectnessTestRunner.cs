@@ -409,7 +409,7 @@ namespace ICSharpCode.Decompiler.Tests
 				options |= CompilerOptions.UseTestRunner;
 			string testFileName = testName + ".cs";
 			string testOutputFileName = TestsAssemblyOutput.GetFilePath(TestCasePath, testName, Tester.GetSuffix(options) + ".exe");
-			CompilerResults outputFile = null, decompiledOutputFile = null;
+			Helpers.CompilerResults outputFile = null, decompiledOutputFile = null;
 
 			try
 			{
@@ -453,7 +453,7 @@ namespace ICSharpCode.Decompiler.Tests
 				options |= CompilerOptions.UseTestRunner;
 			string testFileName = testName + ".vb";
 			string testOutputFileName = TestsAssemblyOutput.GetFilePath(TestCasePath, testName, Tester.GetSuffix(options) + ".exe");
-			CompilerResults outputFile = null, decompiledOutputFile = null;
+			Helpers.CompilerResults outputFile = null, decompiledOutputFile = null;
 
 			try
 			{
@@ -477,7 +477,7 @@ namespace ICSharpCode.Decompiler.Tests
 		async Task RunIL(string testFileName, CompilerOptions options = CompilerOptions.UseDebug, AssemblerOptions asmOptions = AssemblerOptions.None)
 		{
 			string outputFile = null;
-			CompilerResults decompiledOutputFile = null;
+			Helpers.CompilerResults decompiledOutputFile = null;
 
 			bool optionsForce32Bit = options.HasFlag(CompilerOptions.Force32Bit);
 			bool asmOptionsForce32Bit = asmOptions.HasFlag(AssemblerOptions.Force32Bit);

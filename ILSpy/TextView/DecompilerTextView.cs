@@ -595,14 +595,14 @@ namespace ICSharpCode.ILSpy.TextView
 		/// the task.
 		/// If another task is started before the previous task finishes running, the previous task is cancelled.
 		/// </summary>
-		public Task<T> RunWithCancellation<T>(Func<CancellationToken, Task<T>> taskCreation)
+		public Task<T> RunWithCancellation<T>(Func<CancellationToken, Task<T>> taskCreation, string? progressTitle = null)
 		{
 			if (waitAdorner.Visibility != Visibility.Visible)
 			{
 				waitAdorner.Visibility = Visibility.Visible;
 				// Work around a WPF bug by setting IsIndeterminate only while the progress bar is visible.
 				// https://github.com/icsharpcode/ILSpy/issues/593
-				progressTitle.Text = Properties.Resources.Decompiling;
+				this.progressTitle.Text = progressTitle == null ? Properties.Resources.Decompiling : progressTitle;
 				progressBar.IsIndeterminate = true;
 				progressText.Text = null;
 				progressText.Visibility = Visibility.Collapsed;

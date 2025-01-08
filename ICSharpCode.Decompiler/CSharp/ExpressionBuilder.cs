@@ -3900,30 +3900,93 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		protected internal override TranslatedExpression VisitSwitchInstruction(SwitchInstruction inst, TranslationContext context)
+		internal (TranslatedExpression, IType, StringToInt) TranslateSwitchValue(SwitchInstruction inst, bool isExpressionContext)
 		{
 			TranslatedExpression value;
 			IType type;
+			// prepare expression and expected type
 			if (inst.Value is StringToInt strToInt)
 			{
-				value = Translate(strToInt.Argument)
-					.ConvertTo(
-						strToInt.ExpectedType,
-						this,
-						allowImplicitConversion: false // switch-expression does not support implicit conversions
-					);
-				type = compilation.FindType(KnownTypeCode.String);
+				value = Translate(strToInt.Argument);
+				type = strToInt.ExpectedType ?? compilation.FindType(KnownTypeCode.String);
 			}
 			else
 			{
 				strToInt = null;
 				value = Translate(inst.Value);
-				if (inst.Type != null)
-				{
-					value = value.ConvertTo(inst.Type, this, allowImplicitConversion: true);
-				}
-				type = value.Type;
+				type = inst.Type ?? value.Type;
 			}
+
+			// find and unwrap the input type
+			IType inputType = value.Type;
+			if (value.Expression is CastExpression && value.ResolveResult is ConversionResolveResult crr)
+			{
+				inputType = crr.Input.Type;
+			}
+			inputType = NullableType.GetUnderlyingType(inputType).GetEnumUnderlyingType();
+
+			// check input/underlying type for compatibility
+			bool allowImplicitConversion;
+			if (IsCompatibleWithSwitch(inputType) || (strToInt != null && inputType.Equals(type)))
+			{
+				allowImplicitConversion = !isExpressionContext;
+			}
+			else
+			{
+				var applicableImplicitConversionOperators = inputType.GetMethods(IsCompatibleImplicitConversionOperator).ToArray();
+				switch (applicableImplicitConversionOperators.Length)
+				{
+					case 0:
+						allowImplicitConversion = !isExpressionContext;
+						break;
+					case 1:
+						allowImplicitConversion = !isExpressionContext;
+						// TODO validate
+						break;
+					default:
+						allowImplicitConversion = false;
+						break;
+				}
+			}
+
+			value = value.ConvertTo(type, this, allowImplicitConversion: allowImplicitConversion);
+
+			var caseType = strToInt != null
+				? compilation.FindType(KnownTypeCode.String)
+				: type;
+
+			return (value, caseType, strToInt);
+
+			static bool IsCompatibleWithSwitch(IType type)
+			{
+				return type.IsKnownType(KnownTypeCode.SByte)
+					|| type.IsKnownType(KnownTypeCode.Byte)
+					|| type.IsKnownType(KnownTypeCode.Int16)
+					|| type.IsKnownType(KnownTypeCode.UInt16)
+					|| type.IsKnownType(KnownTypeCode.Int32)
+					|| type.IsKnownType(KnownTypeCode.UInt32)
+					|| type.IsKnownType(KnownTypeCode.Int64)
+					|| type.IsKnownType(KnownTypeCode.UInt64)
+					|| type.IsKnownType(KnownTypeCode.Char)
+					|| type.IsKnownType(KnownTypeCode.String);
+			}
+
+			bool IsCompatibleImplicitConversionOperator(IMethod operatorMethod)
+			{
+				if (!operatorMethod.IsOperator)
+					return false;
+				if (operatorMethod.Name != "op_Implicit")
+					return false;
+				if (operatorMethod.Parameters.Count != 1)
+					return false;
+				return IsCompatibleWithSwitch(operatorMethod.ReturnType);
+			}
+		}
+
+		protected internal override TranslatedExpression VisitSwitchInstruction(SwitchInstruction inst, TranslationContext context)
+		{
+			// switch-expression does not support implicit conversions
+			var (value, type, strToInt) = TranslateSwitchValue(inst, true);
 
 			IL.SwitchSection defaultSection = inst.GetDefaultSection();
 			SwitchExpression switchExpr = new SwitchExpression();

@@ -25,6 +25,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Data;
 using System.Windows.Threading;
 
 using AvalonDock;
@@ -50,6 +51,7 @@ namespace ICSharpCode.ILSpy.Docking
 		private readonly IExportProvider exportProvider;
 
 		private readonly ObservableCollection<TabPageModel> tabPages = [];
+		private ReadOnlyCollection<ToolPaneModel> toolPanes;
 
 		readonly SessionSettings sessionSettings;
 
@@ -123,7 +125,7 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public ReadOnlyObservableCollection<TabPageModel> TabPages { get; }
 
-		public ReadOnlyCollection<ToolPaneModel> ToolPanes => exportProvider
+		public ReadOnlyCollection<ToolPaneModel> ToolPanes => toolPanes ??= exportProvider
 			.GetExportedValues<ToolPaneModel>("ToolPane")
 			.OrderBy(item => item.Title)
 			.ToArray()
@@ -194,6 +196,9 @@ namespace ICSharpCode.ILSpy.Docking
 			{
 				serializer.LayoutSerializationCallback -= LayoutSerializationCallback;
 			}
+
+			DockingManager.SetBinding(DockingManager.AnchorablesSourceProperty, new Binding(nameof(ToolPanes)));
+			DockingManager.SetBinding(DockingManager.DocumentsSourceProperty, new Binding(nameof(TabPages)));
 		}
 
 		void LayoutSerializationCallback(object sender, LayoutSerializationCallbackEventArgs e)
@@ -224,6 +229,11 @@ namespace ICSharpCode.ILSpy.Docking
 		public Task<T> RunWithCancellation<T>(Func<CancellationToken, Task<T>> taskCreation)
 		{
 			return ActiveTabPage.ShowTextViewAsync(textView => textView.RunWithCancellation(taskCreation));
+		}
+
+		public Task<T> RunWithCancellation<T>(Func<CancellationToken, Task<T>> taskCreation, string progressTitle)
+		{
+			return ActiveTabPage.ShowTextViewAsync(textView => textView.RunWithCancellation(taskCreation, progressTitle));
 		}
 
 		internal void ShowNodes(AvalonEditTextOutput output, TreeNodes.ILSpyTreeNode[] nodes, IHighlightingDefinition highlighting)

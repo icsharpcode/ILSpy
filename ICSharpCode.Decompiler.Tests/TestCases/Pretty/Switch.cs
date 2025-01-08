@@ -67,6 +67,76 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public class ImplicitInt
+		{
+			private readonly int s;
+
+			public ImplicitInt(int s)
+			{
+				this.s = s;
+			}
+
+			public static implicit operator int(ImplicitInt v)
+			{
+				return v.s;
+			}
+		}
+
+		public class ImplicitConversionConflictWithLong
+		{
+			private readonly int s;
+
+			public ImplicitConversionConflictWithLong(int s)
+			{
+				this.s = s;
+			}
+
+			public static implicit operator int(ImplicitConversionConflictWithLong v)
+			{
+				return v.s;
+			}
+
+			public static implicit operator long(ImplicitConversionConflictWithLong v)
+			{
+				return v.s;
+			}
+		}
+
+		public class ImplicitConversionConflictWithString
+		{
+			private readonly int s;
+
+			public ImplicitConversionConflictWithString(int s)
+			{
+				this.s = s;
+			}
+
+			public static implicit operator int(ImplicitConversionConflictWithString v)
+			{
+				return v.s;
+			}
+
+			public static implicit operator string(ImplicitConversionConflictWithString v)
+			{
+				return string.Empty;
+			}
+		}
+
+		public class ExplicitInt
+		{
+			private readonly int s;
+
+			public ExplicitInt(int s)
+			{
+				this.s = s;
+			}
+
+			public static explicit operator int(ExplicitInt v)
+			{
+				return v.s;
+			}
+		}
+
 		public enum State
 		{
 			False,
@@ -310,6 +380,118 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public static void SwitchOverExplicitInt(ExplicitInt i)
+		{
+			switch ((int)i)
+			{
+				case 0:
+					Console.WriteLine("zero");
+					break;
+				case 5:
+					Console.WriteLine("five");
+					break;
+				case 10:
+					Console.WriteLine("ten");
+					break;
+				case 15:
+					Console.WriteLine("fifteen");
+					break;
+				case 20:
+					Console.WriteLine("twenty");
+					break;
+				case 25:
+					Console.WriteLine("twenty-five");
+					break;
+				case 30:
+					Console.WriteLine("thirty");
+					break;
+			}
+		}
+
+		public static void SwitchOverImplicitInt(ImplicitInt i)
+		{
+			switch (i)
+			{
+				case 0:
+					Console.WriteLine("zero");
+					break;
+				case 5:
+					Console.WriteLine("five");
+					break;
+				case 10:
+					Console.WriteLine("ten");
+					break;
+				case 15:
+					Console.WriteLine("fifteen");
+					break;
+				case 20:
+					Console.WriteLine("twenty");
+					break;
+				case 25:
+					Console.WriteLine("twenty-five");
+					break;
+				case 30:
+					Console.WriteLine("thirty");
+					break;
+			}
+		}
+
+		public static void SwitchOverImplicitIntConflictLong(ImplicitConversionConflictWithLong i)
+		{
+			switch ((int)i)
+			{
+				case 0:
+					Console.WriteLine("zero");
+					break;
+				case 5:
+					Console.WriteLine("five");
+					break;
+				case 10:
+					Console.WriteLine("ten");
+					break;
+				case 15:
+					Console.WriteLine("fifteen");
+					break;
+				case 20:
+					Console.WriteLine("twenty");
+					break;
+				case 25:
+					Console.WriteLine("twenty-five");
+					break;
+				case 30:
+					Console.WriteLine("thirty");
+					break;
+			}
+		}
+
+		public static void SwitchOverImplicitIntConflictString(ImplicitConversionConflictWithString i)
+		{
+			switch ((string)i)
+			{
+				case "0":
+					Console.WriteLine("zero");
+					break;
+				case "5":
+					Console.WriteLine("five");
+					break;
+				case "10":
+					Console.WriteLine("ten");
+					break;
+				case "15":
+					Console.WriteLine("fifteen");
+					break;
+				case "20":
+					Console.WriteLine("twenty");
+					break;
+				case "25":
+					Console.WriteLine("twenty-five");
+					break;
+				case "30":
+					Console.WriteLine("thirty");
+					break;
+			}
+		}
+
 		// SwitchDetection.UseCSharpSwitch requires more complex heuristic to identify this when compiled with Roslyn
 		public static void CompactSwitchOverInt(int i)
 		{
@@ -421,9 +603,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static string SwitchOverImplicitString(ImplicitString s)
 		{
-			// we emit an explicit cast, because the rules used by the C# compiler are counter-intuitive:
-			// The C# compiler does *not* take the type of the switch labels into account at all.
-			switch ((string)s)
+			switch (s)
 			{
 				case "First case":
 					return "Text1";

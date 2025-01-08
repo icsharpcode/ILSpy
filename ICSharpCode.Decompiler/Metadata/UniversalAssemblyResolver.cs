@@ -189,15 +189,16 @@ namespace ICSharpCode.Decompiler.Metadata
 				switch (pair[0].Trim().ToUpperInvariant())
 				{
 					case "VERSION":
-						var versionString = pair[1].TrimStart('v', ' ', '\t');
-						if (identifier == TargetFrameworkIdentifier.NETCoreApp ||
-							identifier == TargetFrameworkIdentifier.NETStandard)
-						{
-							if (versionString.Length == 3)
-								versionString += ".0";
-						}
+						var versionString = pair[1].TrimStart('v', 'V', ' ', '\t');
+
 						if (!Version.TryParse(versionString, out version))
+						{
 							version = null;
+						}
+						else
+						{
+							version = new Version(version.Major, version.Minor, version.Build < 0 ? 0 : version.Build);
+						}
 						// .NET 5 or greater still use ".NETCOREAPP" as TargetFrameworkAttribute value...
 						if (version?.Major >= 5 && identifier == TargetFrameworkIdentifier.NETCoreApp)
 							identifier = TargetFrameworkIdentifier.NET;

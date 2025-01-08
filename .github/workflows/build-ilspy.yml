@@ -6,8 +6,13 @@ on:
   pull_request:
     branches: [ master, release/** ]
 
+permissions:
+  contents: read
+
 jobs:
   Build:
+    permissions:
+      packages: write  # for dotnet nuget push
     runs-on: windows-2022
     strategy:
       fail-fast: false
@@ -30,12 +35,15 @@ jobs:
       with:
         dotnet-version: '8.0.x'
         dotnet-quality: 'ga'
-    
+      env:
+        DOTNET_INSTALL_DIR: ${{ runner.temp }}/.dotnet
+        DOTNET_ROOT: ${{ runner.temp }}/.dotnet
+
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v2
 
     - name: Install dotnet-format
-      run: dotnet tool install -g dotnet-format --version "8.0.453106" --add-source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet8/nuget/v3/index.json
+      run: dotnet tool install -g dotnet-format --version "8.3.546805" --add-source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet8/nuget/v3/index.json
 
     - name: Get Version
       id: version
@@ -150,7 +158,20 @@ jobs:
       if: github.ref == 'refs/heads/master' && matrix.configuration == 'release'
       run: |
         dotnet nuget push "ICSharpCode.ILSpyX\bin\Release\ICSharpCode.ILSpyX*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source https://nuget.pkg.github.com/${{ github.repository_owner }}
-      
+
+    - name: Upload BamlDecompiler NuGet release build artifacts
+      if: matrix.configuration == 'release'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ICSharpCode.BamlDecompiler NuGet Package (${{ matrix.configuration }})
+        path: ICSharpCode.BamlDecompiler\bin\Release\ICSharpCode.BamlDecompiler*.nupkg
+        if-no-files-found: error
+
+    - name: Publish DecomBamlDecompilerpiler NuGet
+      if: github.ref == 'refs/heads/master' && matrix.configuration == 'release'
+      run: |
+        dotnet nuget push "ICSharpCode.BamlDecompiler\bin\Release\ICSharpCode.BamlDecompiler*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source https://nuget.pkg.github.com/${{ github.repository_owner }}
+
     - name: Upload zip binaries build artifacts
       uses: actions/upload-artifact@v4
       with:

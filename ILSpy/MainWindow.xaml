@@ -67,8 +67,6 @@
 
 		<avalondock:DockingManager x:Name="DockManager"
 								   DataContext="{Binding Workspace}"
-								   AnchorablesSource="{Binding ToolPanes}"
-								   DocumentsSource="{Binding TabPages}"
 								   ActiveContent="{Binding ActiveTabPage, Mode=TwoWay, Converter={docking:TabPageGuardConverter}}"
 								   AllowMixedOrientation="True">
 
