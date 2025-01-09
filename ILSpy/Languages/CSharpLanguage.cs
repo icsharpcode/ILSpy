@@ -222,6 +222,11 @@ namespace ICSharpCode.ILSpy
 								removedSymbols.Add(pd.GetSymbol());
 							}
 							break;
+						case CustomEventDeclaration ced:
+						case IndexerDeclaration id:
+							node.Remove();
+							removedSymbols.Add(node.GetSymbol());
+							break;
 					}
 				}
 				if (ctorDecl?.Initializer.ConstructorInitializerType == ConstructorInitializerType.This)
@@ -291,7 +296,7 @@ namespace ICSharpCode.ILSpy
 			}
 			foreach (var p in type.Properties)
 			{
-				if (!p.MetadataToken.IsNil && p.IsStatic == isStatic)
+				if (!p.MetadataToken.IsNil && p.IsStatic == isStatic && !p.IsIndexer)
 					members.Add(p.MetadataToken);
 			}
 			foreach (var ctor in type.Methods)
