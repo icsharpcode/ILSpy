@@ -28,7 +28,7 @@
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageVersion Include="Microsoft.NETCore.ILAsm" Version="9.0.0" />
     <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="9.0.0" />
-	<PackageVersion Include="Microsoft.Sbom.Targets" Version="3.0.0" />
+	<PackageVersion Include="Microsoft.Sbom.Targets" Version="3.0.1" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
     <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
