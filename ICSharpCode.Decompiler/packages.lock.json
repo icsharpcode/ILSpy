@@ -2,6 +2,12 @@
   "version": 1,
   "dependencies": {
     ".NETStandard,Version=v2.0": {
+      "Microsoft.Sbom.Targets": {
+        "type": "Direct",
+        "requested": "[3.0.1, )",
+        "resolved": "3.0.1",
+        "contentHash": "/5cyDjX6sDJpgWvMUVwUK7XXa4PIzQWcbUCdsLpAUCqlXRymF0mIMzLVTcAmA55qmTS9cpnjh+28xZD4qKBxQA=="
+      },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",
         "requested": "[8.0.0, )",

@@ -8,6 +8,12 @@
         "resolved": "1.3.8",
         "contentHash": "LhwlPa7c1zs1OV2XadMtAWdImjLIsqFJPoRcIWAadSRn0Ri1DepK65UbWLPmt4riLqx2d40xjXRk0ogpqNtK7g=="
       },
+      "Microsoft.Sbom.Targets": {
+        "type": "Direct",
+        "requested": "[3.0.1, )",
+        "resolved": "3.0.1",
+        "contentHash": "/5cyDjX6sDJpgWvMUVwUK7XXa4PIzQWcbUCdsLpAUCqlXRymF0mIMzLVTcAmA55qmTS9cpnjh+28xZD4qKBxQA=="
+      },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",
         "requested": "[8.0.0, )",

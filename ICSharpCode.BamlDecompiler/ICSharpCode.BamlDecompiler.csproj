@@ -29,8 +29,8 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Copyright>Copyright 2024-$([System.DateTime]::Now.Year) AlphaSierraPapa</Copyright>
     <PackageTags>C# Decompiler ILSpy</PackageTags>
+    <GenerateSBOM>true</GenerateSBOM>
 	
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <DebugType>embedded</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -67,6 +67,13 @@
       $(GetPackageVersionDependsOn)
     </GetPackageVersionDependsOn>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Sbom.Targets">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
@@ -75,6 +82,7 @@
   <Target Name="ILSpyUpdateAssemblyInfo" AfterTargets="ResolveProjectReferences">
     <ReadLinesFromFile ContinueOnError="true" File="..\VERSION">
       <Output TaskParameter="Lines" PropertyName="PackageVersion" />
+      <Output TaskParameter="Lines" PropertyName="SbomGenerationPackageVersion" />
     </ReadLinesFromFile>
   </Target>
 

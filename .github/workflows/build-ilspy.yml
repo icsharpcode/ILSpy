@@ -103,6 +103,13 @@ jobs:
       if: matrix.configuration == 'release'    
       run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries_arm64.zip .\ILSpy\bin\Release\net8.0-windows\win-arm64\publish\fwdependent\*
 
+    - name: Pack NuGets
+      if: matrix.configuration == 'release'
+      run: |
+        dotnet pack ICSharpCode.Decompiler --no-restore
+        dotnet pack ICSharpCode.BamlDecompiler --no-restore
+        dotnet pack ICSharpCode.ILSpyX --no-restore
+
     - name: Build Installer (x64 and arm64, framework-dependent)
       if: matrix.configuration == 'release'  
       run: |
