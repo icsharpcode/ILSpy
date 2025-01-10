@@ -2,6 +2,12 @@
   "version": 2,
   "dependencies": {
     "net8.0": {
+      "Microsoft.Sbom.Targets": {
+        "type": "Direct",
+        "requested": "[3.0.0, )",
+        "resolved": "3.0.0",
+        "contentHash": "YRf+19P0HJoKbCj7lw+KrAk7TE6tTppq1phgWfEx4634N/xTNUM+roV97APGZOqbus5mtwzXdDSvj6KCQsJttA=="
+      },
       "TomsToolbox.Composition.Analyzer": {
         "type": "Direct",
         "requested": "[2.21.0, )",
