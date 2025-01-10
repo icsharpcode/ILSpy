@@ -34,7 +34,6 @@
     <PackageTags>C# Decompiler ILSpy</PackageTags>
     <GenerateSBOM>true</GenerateSBOM>
 
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <DebugType>embedded</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
