@@ -712,7 +712,7 @@
     <UpdateAssemblyInfoStamp Include="obj\update-assemblyinfo-last-commit-hash.txt" />
   </ItemGroup>
 
-  <Target Name="ILSpyUpdateAssemblyInfo" BeforeTargets="BeforeBuild,GenerateSbomTarget">
+  <Target Name="ILSpyUpdateAssemblyInfo" BeforeTargets="BeforeBuild">
     <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
       <UpdateAssemblyInfo>powershell -NoProfile -ExecutionPolicy Bypass -File BuildTools/update-assemblyinfo.ps1 $(Configuration)</UpdateAssemblyInfo>
       <GitRevParse>git rev-parse HEAD^^{commit}</GitRevParse>
