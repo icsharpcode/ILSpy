@@ -39,6 +39,7 @@
     <PackageVersion Include="NUnit3TestAdapter" Version="4.6.0" />
     <PackageVersion Include="NuGet.Protocol" Version="6.12.1" />
     <PackageVersion Include="PowerShellStandard.Library" Version="5.1.1" />
+	<PackageVersion Include="SonarAnalyzer.CSharp" Version="10.4.0.108396" />
     <PackageVersion Include="System.Composition.AttributedModel" Version="9.0.0" />
     <PackageVersion Include="System.Collections.Immutable" Version="9.0.0" />
     <PackageVersion Include="System.Memory" Version="4.6.0" />
