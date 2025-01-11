@@ -30,6 +30,7 @@ jobs:
       with:
         submodules: true
         fetch-depth: 0
+        persist-credentials: false
 
     - uses: actions/setup-dotnet@v4
       with:
