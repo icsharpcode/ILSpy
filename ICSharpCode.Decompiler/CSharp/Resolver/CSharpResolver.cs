@@ -805,7 +805,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					}
 					if (op == BinaryOperatorType.Equality || op == BinaryOperatorType.InEquality)
 					{
-						if (lhsType.IsReferenceType == true && rhsType.IsReferenceType == true)
+						if (lhsType.IsReferenceType == true && rhsType.IsReferenceType == true
+							&& (conversions.IdentityConversion(lhsType, rhsType)
+								|| conversions.ExplicitConversion(lhsType, rhsType).IsReferenceConversion
+								|| conversions.ExplicitConversion(rhsType, lhsType).IsReferenceConversion))
 						{
 							// If it's a reference comparison
 							if (op == BinaryOperatorType.Equality)
