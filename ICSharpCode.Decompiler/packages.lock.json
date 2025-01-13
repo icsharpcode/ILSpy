@@ -27,6 +27,12 @@
           "Microsoft.NETCore.Platforms": "1.1.0"
         }
       },
+      "SonarAnalyzer.CSharp": {
+        "type": "Direct",
+        "requested": "[10.4.0.108396, )",
+        "resolved": "10.4.0.108396",
+        "contentHash": "xGcLZ+dvkVuBbd3sjPur9X+1owSL/iDoxVFJLhMx3/vq1fmoKM2fwvrZ8ReAas6l715GJ/dWU2ckwlrRVopmbg=="
+      },
       "System.Collections.Immutable": {
         "type": "Direct",
         "requested": "[6.0.0, )",
