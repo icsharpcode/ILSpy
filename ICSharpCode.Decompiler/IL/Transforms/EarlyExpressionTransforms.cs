@@ -213,7 +213,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				int lo, mid, hi, isNegative, scale;
 				if (args[0].MatchLdcI4(out lo) && args[1].MatchLdcI4(out mid) &&
 					args[2].MatchLdcI4(out hi) && args[3].MatchLdcI4(out isNegative) &&
-					args[4].MatchLdcI4(out scale))
+					args[4].MatchLdcI4(out scale) && scale <= 28)
 				{
 					result = new LdcDecimal(new decimal(lo, mid, hi, isNegative != 0, (byte)scale));
 					return true;

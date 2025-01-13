@@ -260,6 +260,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return (byte)(x & 0x10);
 		}
 
+		public decimal Issue3367()
+		{
+#if CS70
+			return new decimal(0, 0, 0, isNegative: false, 29);
+#else
+			return new decimal(0, 0, 0, false, 29);
+#endif
+		}
+
 		private void ExpectUInt64(ulong _)
 		{
 
