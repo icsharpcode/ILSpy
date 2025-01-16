@@ -353,7 +353,7 @@ namespace ICSharpCode.ILSpyX
 				}
 			}
 
-			if (result?.IsSuccess != true)
+			if (result?.IsSuccess != true || result.Package?.Kind == LoadedPackage.PackageKind.Zip) // workaround to check this before zip
 			{
 				stream.Position = 0;
 				try
@@ -367,7 +367,8 @@ namespace ICSharpCode.ILSpyX
 				}
 				catch (Exception ex)
 				{
-					result = new LoadResult { FileLoadException = ex };
+					if (result == null)
+						result = new LoadResult { FileLoadException = ex };
 				}
 			}
 
