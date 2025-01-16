@@ -358,12 +358,7 @@ namespace ICSharpCode.ILSpyX
 				stream.Position = 0;
 				try
 				{
-					MetadataReaderOptions options = applyWinRTProjections
-						? MetadataReaderOptions.ApplyWindowsRuntimeProjections
-						: MetadataReaderOptions.None;
-
-					PEFile module = new PEFile(fileName, stream, PEStreamOptions.PrefetchEntireImage, metadataOptions: options);
-					result = new LoadResult { MetadataFile = module };
+					result = await PEFileLoader.LoadPEFile(fileName, stream, settings).ConfigureAwait(false);
 				}
 				catch (Exception ex)
 				{

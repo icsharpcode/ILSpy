@@ -16,35 +16,35 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
+using System.IO;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
+using System.Threading.Tasks;
+
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpyX.FileLoaders
 {
-	public sealed class FileLoaderRegistry
+	public sealed class PEFileLoader : IFileLoader
 	{
-		readonly List<IFileLoader> registeredLoaders = new List<IFileLoader>();
-
-		public IReadOnlyList<IFileLoader> RegisteredLoaders => registeredLoaders;
-
-		public void Register(IFileLoader loader)
+		public async Task<LoadResult?> Load(string fileName, Stream stream, FileLoadContext context)
 		{
-			if (loader is null)
+			if (stream.Length < 2 || stream.ReadByte() != 'M' || stream.ReadByte() != 'Z')
 			{
-				throw new ArgumentNullException(nameof(loader));
+				return null;
 			}
 
-			registeredLoaders.Add(loader);
+			return await LoadPEFile(fileName, stream, context).ConfigureAwait(false);
 		}
 
-		public FileLoaderRegistry()
+		public static Task<LoadResult> LoadPEFile(string fileName, Stream stream, FileLoadContext context)
 		{
-			Register(new XamarinCompressedFileLoader());
-			Register(new WebCilFileLoader());
-			Register(new MetadataFileLoader());
-			Register(new BundleFileLoader()); // bundles are PE files with a special signature, prefer over normal PE files
-			Register(new PEFileLoader()); // prefer PE format over archives, because ZIP has no fixed header
-			Register(new ArchiveFileLoader());
+			MetadataReaderOptions options = context.ApplyWinRTProjections
+				? MetadataReaderOptions.ApplyWindowsRuntimeProjections
+				: MetadataReaderOptions.None;
+			stream.Position = 0;
+			PEFile module = new PEFile(fileName, stream, PEStreamOptions.PrefetchEntireImage | PEStreamOptions.LeaveOpen, metadataOptions: options);
+			return Task.FromResult(new LoadResult { MetadataFile = module });
 		}
 	}
 }
