@@ -39,7 +39,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="NUnit" />
     <PackageReference Include="NUnit3TestAdapter" />
-    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Shouldly" />
     <PackageReference Include="JunitXml.TestLogger" />
     <PackageReference Include="coverlet.collector">
       <PrivateAssets>all</PrivateAssets>
