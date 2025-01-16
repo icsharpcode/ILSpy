@@ -9,7 +9,6 @@
     <PackageVersion Include="DataGridExtensions" Version="2.6.0" />
     <PackageVersion Include="DiffLib" Version="2025.0.0" />
     <PackageVersion Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.1" />
-    <PackageVersion Include="FluentAssertions" Version="7.0.0" /><!-- License change from 7 to 8, we need to stay on 7 -->
     <PackageVersion Include="ILCompiler.Reflection.ReadyToRun.Experimental" Version="9.0.1-rtm.24557.9" />
     <PackageVersion Include="Iced" Version="1.21.0" />
     <PackageVersion Include="JunitXml.TestLogger" Version="5.0.0" />
@@ -39,6 +38,7 @@
     <PackageVersion Include="NUnit3TestAdapter" Version="4.6.0" />
     <PackageVersion Include="NuGet.Protocol" Version="6.12.1" />
     <PackageVersion Include="PowerShellStandard.Library" Version="5.1.1" />
+    <PackageVersion Include="Shouldly" Version="4.2.1" />
     <PackageVersion Include="System.Composition.AttributedModel" Version="9.0.1" />
     <PackageVersion Include="System.Collections.Immutable" Version="9.0.1" />
     <PackageVersion Include="System.Memory" Version="4.6.0" />
