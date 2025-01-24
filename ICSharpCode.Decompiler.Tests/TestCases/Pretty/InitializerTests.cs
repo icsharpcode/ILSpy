@@ -805,6 +805,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			array[0] = 1;
 			Console.WriteLine(array.Length);
 		}
+
+#if !NET40 && CS70
+		public static ReadOnlySpan<byte> ReadOnlySpanInitializer_ByteArray()
+		{
+			return new byte[3] { 1, 2, 3 };
+		}
+
+		public static ReadOnlySpan<int> ReadOnlySpanInitializer_Int32Array()
+		{
+			return new int[3] { 1, 2, 3 };
+		}
+#endif
+
 		#endregion
 
 		#region Object initializers

@@ -143,6 +143,40 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
+		internal static bool TransformRuntimeHelpersCreateSpanInitialization(Call inst, StatementTransformContext context, out ILInstruction replacement)
+		{
+			replacement = null;
+			if (!context.Settings.ArrayInitializers)
+				return false;
+			if (MatchRuntimeHelpersCreateSpan(inst, context, out var elementType, out var field))
+			{
+				if (field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
+				{
+					var valuesList = new List<ILInstruction>();
+					var initialValue = field.GetInitialValue(context.PEFile, context.TypeSystem);
+					var elementTypeSize = elementType.GetSize();
+					if (elementTypeSize <= 0 || initialValue.Length % elementTypeSize != 0)
+						return false;
+
+					var size = initialValue.Length / elementTypeSize;
+					if (context.Settings.Utf8StringLiterals &&
+						elementType.IsKnownType(KnownTypeCode.Byte) &&
+						DecodeUTF8String(initialValue, size, out string text))
+					{
+						replacement = new LdStrUtf8(text);
+						return true;
+					}
+					if (DecodeArrayInitializer(elementType, initialValue, new[] { size }, valuesList))
+					{
+						var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, new ArrayType(context.TypeSystem, elementType));
+						replacement = BlockFromInitializer(tempStore, elementType, new[] { size }, valuesList.ToArray());
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+
 		private static unsafe bool DecodeUTF8String(BlobReader blob, int size, out string text)
 		{
 			if (size > blob.RemainingBytes)
@@ -182,6 +216,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (member.MetadataToken.IsNil)
 				return false;
 			if (!newObj.Arguments[1].MatchLdcI4(out size))
+				return false;
+			field = context.PEFile.Metadata.GetFieldDefinition((FieldDefinitionHandle)member.MetadataToken);
+			return true;
+		}
+
+		static bool MatchRuntimeHelpersCreateSpan(Call inst, StatementTransformContext context, out IType elementType, out FieldDefinition field)
+		{
+			field = default;
+			elementType = null;
+			IType type = inst.Method.DeclaringType;
+			if (type.Namespace != "System.Runtime.CompilerServices" || type.Name != "RuntimeHelpers" || type.TypeParameterCount != 0)
+				return false;
+			if (inst.Arguments.Count != 1)
+				return false;
+			IMethod method = inst.Method;
+			if (method.Name != "CreateSpan" || method.TypeArguments.Count != 1)
+				return false;
+			elementType = method.TypeArguments[0];
+			if (!inst.Arguments[0].UnwrapConv(ConversionKind.StopGCTracking).MatchLdMemberToken(out var member))
+				return false;
+			if (member.MetadataToken.IsNil)
 				return false;
 			field = context.PEFile.Metadata.GetFieldDefinition((FieldDefinitionHandle)member.MetadataToken);
 			return true;
