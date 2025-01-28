@@ -361,6 +361,17 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 						}
 					}
 					break;
+				case Key.System:
+					// https://github.com/icsharpcode/ILSpy/issues/3378:
+					// Behavior got broken when upgrading to .NET 8.0 for unknown reasons and without
+					// any more specific known cause. We fix it by not handling Alt+Left or Right
+					// in SharpTreeView so it is handled by the window.
+					if (e.SystemKey is Key.Left or Key.Right)
+					{
+						// yes, we do NOT call base.OnKeyDown(e); in this case.
+						return;
+					}
+					break;
 			}
 			if (!e.Handled)
 				base.OnKeyDown(e);
