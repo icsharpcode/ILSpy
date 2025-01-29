@@ -71,7 +71,10 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				if (SelectedItem is SharpTreeNode selectedItem)
 				{
 					// defer focusing, so it does not interfere with selection via mouse click
-					this.BeginInvoke(() => FocusNode(selectedItem));
+					this.BeginInvoke(() => {
+						if (this.SelectedItem == selectedItem)
+							FocusNode(selectedItem);
+					});
 				}
 				else
 				{
