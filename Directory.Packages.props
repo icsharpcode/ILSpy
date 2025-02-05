@@ -27,7 +27,7 @@
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageVersion Include="Microsoft.NETCore.ILAsm" Version="9.0.0" />
     <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="9.0.0" />
-	<PackageVersion Include="Microsoft.Sbom.Targets" Version="3.0.1" />
+    <PackageVersion Include="Microsoft.Sbom.Targets" Version="3.0.1" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
     <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
@@ -35,10 +35,10 @@
     <PackageVersion Include="NSubstitute" Version="5.3.0" />
     <PackageVersion Include="NSubstitute.Analyzers.CSharp" Version="1.0.17" />
     <PackageVersion Include="NUnit" Version="4.3.2" />
-    <PackageVersion Include="NUnit3TestAdapter" Version="5.0.0-beta.6" />
+    <PackageVersion Include="NUnit3TestAdapter" Version="5.0.0-beta.7" />
     <PackageVersion Include="NuGet.Protocol" Version="6.12.1" />
     <PackageVersion Include="PowerShellStandard.Library" Version="5.1.1" />
-    <PackageVersion Include="Shouldly" Version="4.2.1" />
+    <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="System.Composition.AttributedModel" Version="9.0.1" />
     <PackageVersion Include="System.Collections.Immutable" Version="9.0.1" />
     <PackageVersion Include="System.Memory" Version="4.6.0" />
@@ -49,7 +49,7 @@
     <PackageVersion Include="TomsToolbox.Wpf.Composition" Version="2.20.0" />
     <PackageVersion Include="TomsToolbox.Wpf.Composition.AttributedModel" Version="2.21.0" />
     <PackageVersion Include="TomsToolbox.Wpf.Styles" Version="2.21.0" />
-    <PackageVersion Include="coverlet.collector" Version="6.0.3" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="System.Net.Http" Version="4.3.4" />
     <PackageVersion Include="System.Private.Uri" Version="4.3.2" />
     <PackageVersion Include="System.Text.RegularExpressions" Version="4.3.1" />
