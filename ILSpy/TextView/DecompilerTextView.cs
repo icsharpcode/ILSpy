@@ -1447,17 +1447,20 @@ namespace ICSharpCode.ILSpy.TextView
 
 			if (resourceStream != null)
 			{
+				IHighlightingDefinition highlightingDefinition;
+
+				using (resourceStream)
+				using (XmlTextReader reader = new XmlTextReader(resourceStream))
+				{
+					highlightingDefinition = HighlightingLoader.Load(reader, manager);
+				}
+
 				manager.RegisterHighlighting(
-					name, extensions,
-					delegate {
-						using (resourceStream)
-						using (XmlTextReader reader = new XmlTextReader(resourceStream))
-						{
-							var highlightingDefinition = HighlightingLoader.Load(reader, manager);
-							ThemeManager.Current.ApplyHighlightingColors(highlightingDefinition);
-							return highlightingDefinition;
-						}
-					});
+				name, extensions,
+				delegate {
+					ThemeManager.Current.ApplyHighlightingColors(highlightingDefinition);
+					return highlightingDefinition;
+				});
 			}
 		}
 	}
