@@ -5,7 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="AvalonEdit" Version="6.3.0.90" />
-    <PackageVersion Include="CliWrap" Version="3.7.0" />
+    <PackageVersion Include="CliWrap" Version="3.7.1" />
     <PackageVersion Include="DataGridExtensions" Version="2.6.0" />
     <PackageVersion Include="DiffLib" Version="2025.0.0" />
     <PackageVersion Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.1" />
@@ -27,7 +27,7 @@
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageVersion Include="Microsoft.NETCore.ILAsm" Version="9.0.0" />
     <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="9.0.0" />
-    <PackageVersion Include="Microsoft.Sbom.Targets" Version="3.0.1" />
+    <PackageVersion Include="Microsoft.Sbom.Targets" Version="3.1.0" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
     <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
@@ -35,7 +35,7 @@
     <PackageVersion Include="NSubstitute" Version="5.3.0" />
     <PackageVersion Include="NSubstitute.Analyzers.CSharp" Version="1.0.17" />
     <PackageVersion Include="NUnit" Version="4.3.2" />
-    <PackageVersion Include="NUnit3TestAdapter" Version="5.0.0-beta.7" />
+    <PackageVersion Include="NUnit3TestAdapter" Version="5.0.0" />
     <PackageVersion Include="NuGet.Protocol" Version="6.12.1" />
     <PackageVersion Include="PowerShellStandard.Library" Version="5.1.1" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
