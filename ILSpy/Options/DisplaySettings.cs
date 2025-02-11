@@ -148,6 +148,12 @@ namespace ICSharpCode.ILSpy.Options
 			set => SetProperty(ref showRawOffsetsAndBytesBeforeInstruction, value);
 		}
 
+		private bool enableSmoothScrolling;
+		public bool EnableSmoothScrolling {
+			get => enableSmoothScrolling;
+			set => SetProperty(ref enableSmoothScrolling, value);
+		}
+
 		public XName SectionName => "DisplaySettings";
 
 		public void LoadFromXml(XElement section)
@@ -172,6 +178,7 @@ namespace ICSharpCode.ILSpy.Options
 			UseNestedNamespaceNodes = (bool?)section.Attribute("UseNestedNamespaceNodes") ?? false;
 			ShowRawOffsetsAndBytesBeforeInstruction = (bool?)section.Attribute("ShowRawOffsetsAndBytesBeforeInstruction") ?? false;
 			StyleWindowTitleBar = (bool?)section.Attribute("StyleWindowTitleBar") ?? false;
+			EnableSmoothScrolling = (bool?)section.Attribute("EnableSmoothScrolling") ?? true;
 		}
 
 		public XElement SaveToXml()
@@ -198,6 +205,7 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("UseNestedNamespaceNodes", UseNestedNamespaceNodes);
 			section.SetAttributeValue("ShowRawOffsetsAndBytesBeforeInstruction", ShowRawOffsetsAndBytesBeforeInstruction);
 			section.SetAttributeValue("StyleWindowTitleBar", StyleWindowTitleBar);
+			section.SetAttributeValue("EnableSmoothScrolling", EnableSmoothScrolling);
 
 			return section;
 		}

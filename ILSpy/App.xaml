@@ -3,7 +3,8 @@
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:styles="urn:TomsToolbox.Wpf.Styles"
 			 xmlns:toms="urn:TomsToolbox"
-			 xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes">
+			 xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
+			 xmlns:ilSpy="clr-namespace:ICSharpCode.ILSpy">
 	<Application.Resources>
 		<Style x:Key="DialogWindow" TargetType="{x:Type Window}">
 			<Setter Property="ShowInTaskbar" Value="False" />
@@ -25,6 +26,12 @@
 
 		<Style TargetType="ScrollViewer">
 			<Setter Property="toms:AdvancedScrollWheelBehavior.Attach" Value="WithAnimation" />
+			<Style.Triggers>
+				<!-- Allow for disabling smooth scrolling -->
+				<DataTrigger Binding="{Binding Path=DisplaySettings.EnableSmoothScrolling, Source={x:Static ilSpy:App.SettingsService}}" Value="False">
+					<Setter Property="toms:AdvancedScrollWheelBehavior.Attach" Value="None"/>
+				</DataTrigger>
+			</Style.Triggers>
 		</Style>
 
 	</Application.Resources>

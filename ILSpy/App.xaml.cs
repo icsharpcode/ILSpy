@@ -59,6 +59,10 @@ namespace ICSharpCode.ILSpy
 
 		public static IExportProvider ExportProvider { get; private set; }
 
+		private readonly SettingsService settingsService;
+		
+		public static SettingsService SettingsService => Current.settingsService;
+
 		internal record ExceptionData(Exception Exception)
 		{
 			public string PluginName { get; init; }
@@ -69,7 +73,7 @@ namespace ICSharpCode.ILSpy
 			var cmdArgs = Environment.GetCommandLineArgs().Skip(1);
 			CommandLineArguments = CommandLineArguments.Create(cmdArgs);
 
-			var settingsService = new SettingsService();
+			settingsService = new SettingsService();
 
 			bool forceSingleInstance = (CommandLineArguments.SingleInstance ?? true)
 									   && !settingsService.MiscSettings.AllowMultipleInstances;

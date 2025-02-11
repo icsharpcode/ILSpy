@@ -1,7 +1,8 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:Controls="clr-namespace:ICSharpCode.ILSpy.Controls"
-	xmlns:toms="urn:TomsToolbox">
+	xmlns:toms="urn:TomsToolbox"
+	xmlns:ilSpy="clr-namespace:ICSharpCode.ILSpy">
 	
 	<Style TargetType="{x:Type Controls:ZoomScrollViewer}">
 		<Setter Property="toms:AdvancedScrollWheelBehavior.Attach" Value="WithAnimation" />
@@ -33,6 +34,12 @@
 				</ControlTemplate>
 			</Setter.Value>
 		</Setter>
+		<Style.Triggers>
+			<!-- Allow for disabling smooth scrolling -->
+			<DataTrigger Binding="{Binding Path=DisplaySettings.EnableSmoothScrolling, Source={x:Static ilSpy:App.SettingsService}}" Value="False">
+				<Setter Property="toms:AdvancedScrollWheelBehavior.Attach" Value="WithoutAnimation" />
+			</DataTrigger>
+		</Style.Triggers>
 	</Style>
 
 	<!-- Template for CollapsiblePanel -->
