@@ -151,7 +151,7 @@
     <None Include="TestCases\Pretty\CovariantReturns.cs" />
     <Compile Include="TestCases\VBPretty\VBPropertiesTest.cs" />
     <None Include="TestCases\ILPretty\Issue2260SwitchString.cs" />
-    <None Include="TestCases\Pretty\Records.cs" />
+    <Compile Include="TestCases\Pretty\Records.cs" />
     <Compile Include="TestCases\VBPretty\Issue2192.cs" />
     <Compile Include="Util\FileUtilityTests.cs" />
     <Compile Include="TestCases\Pretty\FunctionPointers.cs" />

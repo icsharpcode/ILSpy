@@ -1530,8 +1530,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteToken(Roles.RBracket);
 			switch (attributeSection.Parent)
 			{
-				case ParameterDeclaration _:
-					if (attributeSection.NextSibling is AttributeSection)
+				case ParameterDeclaration pd:
+					if (pd.Attributes.Last() != attributeSection)
 						Space(policy.SpaceBetweenParameterAttributeSections);
 					else
 						Space();
