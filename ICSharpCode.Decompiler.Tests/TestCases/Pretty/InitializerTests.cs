@@ -235,6 +235,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		{
 			int Property { get; set; }
 		}
+
+#if CS90
+		public class Issue3392Type
+		{
+			public bool Flag { get; init; }
+			public List<int> List { get; } = new List<int>();
+
+			public Issue3392Type(object x)
+			{
+
+			}
+		}
+#endif
 		#endregion
 
 		private S s1;
@@ -1010,6 +1023,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			otherItem.Data2.Nullable = 3m;
 			return otherItem;
 		}
+
+#if CS90
+		public Issue3392Type Issue3392(Issue3392Type x)
+		{
+			x = new Issue3392Type(null) {
+				Flag = false
+			};
+			x.List.AddRange(Enumerable.Range(0, 10));
+			return x;
+		}
+#endif
 #if CS60
 		public OtherItem2 Issue1345c()
 		{
