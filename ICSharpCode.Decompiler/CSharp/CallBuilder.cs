@@ -1043,7 +1043,10 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		bool IsOptionalArgument(IParameter parameter, TranslatedExpression arg)
 		{
-			if (!parameter.IsOptional || !arg.ResolveResult.IsCompileTimeConstant)
+			if (!parameter.IsOptional)
+				return false;
+
+			if (!arg.ResolveResult.IsCompileTimeConstant && arg.ResolveResult is not ConversionResolveResult { Conversion.IsNullLiteralConversion: true })
 				return false;
 			if (parameter.GetAttributes().Any(a => a.AttributeType.IsKnownType(KnownAttribute.CallerMemberName)
 				|| a.AttributeType.IsKnownType(KnownAttribute.CallerFilePath)
