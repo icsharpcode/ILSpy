@@ -20,6 +20,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Composition;
 using System.Diagnostics;
 using System.IO;
@@ -27,6 +28,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler;
@@ -240,14 +242,15 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 					result = new ReadyToRunReaderCacheEntry();
 					try
 					{
-						if (file is not PEFile module)
+						if ((file is not PEFile module) || (module.Reader == null))
 						{
 							result.readyToRunReader = null;
 							result.failureReason = "File is not a valid PE file.";
 						}
 						else
 						{
-							result.readyToRunReader = new ReadyToRunReader(new ReadyToRunAssemblyResolver(assembly), new StandaloneAssemblyMetadata(module.Reader), module.Reader, module.FileName);
+							ReadOnlyMemory<byte> content = module.Reader.GetEntireImage().GetContent().AsMemory();
+							result.readyToRunReader = new ReadyToRunReader(new ReadyToRunAssemblyResolver(assembly), new StandaloneAssemblyMetadata(module.Reader), module.Reader, module.FileName, content);
 							if (result.readyToRunReader.Machine != Machine.Amd64 && result.readyToRunReader.Machine != Machine.I386)
 							{
 								result.failureReason = $"Architecture {result.readyToRunReader.Machine} is not currently supported.";
@@ -255,8 +258,19 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 							}
 							else if (result.readyToRunReader.OwnerCompositeExecutable != null)
 							{
-								string compositePath = Path.Combine(Path.GetDirectoryName(module.FileName), result.readyToRunReader.OwnerCompositeExecutable);
-								result.compositeReadyToRunReader = new ReadyToRunReader(new ReadyToRunAssemblyResolver(assembly), compositePath);
+								string compositeModuleName = Path.GetFileNameWithoutExtension(result.readyToRunReader.OwnerCompositeExecutable);
+								PEFile compositeFile = assembly.GetAssemblyResolver().ResolveModule(assembly.GetMetadataFileOrNull(), compositeModuleName) as PEFile;
+								if (compositeFile == null)
+								{
+									result.readyToRunReader = null;
+									result.failureReason = "Composite File is not a valid PE file.";
+								}
+								else
+								{
+									ReadOnlyMemory<byte> compositeContent = compositeFile.Reader.GetEntireImage().GetContent().AsMemory();
+									result.compositeReadyToRunReader = new ReadyToRunReader(new ReadyToRunAssemblyResolver(assembly), compositeModuleName, compositeContent);
+								}
+
 							}
 						}
 					}
@@ -288,7 +302,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 			public IAssemblyMetadata FindAssembly(string simpleName, string parentFile)
 			{
-				return GetAssemblyMetadata(assemblyResolver.ResolveModule(loadedAssembly.GetMetadataFileOrNull(), simpleName + ".dll"));
+				return GetAssemblyMetadata(assemblyResolver.ResolveModule(loadedAssembly.GetMetadataFileOrNull(), simpleName));
 			}
 
 			private IAssemblyMetadata GetAssemblyMetadata(MetadataFile module)
