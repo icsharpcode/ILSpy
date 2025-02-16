@@ -247,6 +247,51 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 			}
 		}
+
+		private class StructInitPropertiesTest
+		{
+			private class TypeA
+			{
+				public int A { get; set; }
+				public int B { get; set; }
+			}
+
+			private struct TypeB
+			{
+				public int A { get; set; }
+				public int B { get; set; }
+			}
+
+			private struct TypeC
+			{
+				public int A { get; init; }
+				public int B { get; init; }
+			}
+
+			private static TypeA TestA()
+			{
+				return new TypeA {
+					A = 1,
+					B = 2
+				};
+			}
+
+			private static TypeB TestB()
+			{
+				return new TypeB {
+					A = 1,
+					B = 2
+				};
+			}
+
+			private static TypeC TestC()
+			{
+				return new TypeC {
+					A = 1,
+					B = 2
+				};
+			}
+		}
 #endif
 		#endregion
 
@@ -928,14 +973,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			});
 		}
 
-		public static void NotAStructInitializer_DefaultConstructor()
-		{
-			StructData structData = default(StructData);
-			structData.Field = 1;
-			structData.Property = 2;
-			X(Y(), structData);
-		}
-
 		public static void StructInitializer_DefaultConstructor()
 		{
 			X(Y(), new StructData {
@@ -954,14 +991,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				A = 42,
 				B = 24
 			};
-		}
-
-		public static void NotAStructInitializer_ExplicitConstructor()
-		{
-			StructData structData = new StructData(0);
-			structData.Field = 1;
-			structData.Property = 2;
-			X(Y(), structData);
 		}
 
 		public static void StructInitializer_ExplicitConstructor()
