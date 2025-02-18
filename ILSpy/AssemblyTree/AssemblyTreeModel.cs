@@ -767,6 +767,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				}
 				else
 				{
+					ContextMenuProvider.ContextMenuClosed -= ContextMenuClosed;
 					ContextMenuProvider.ContextMenuClosed += ContextMenuClosed;
 				}
 			}
