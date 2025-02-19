@@ -45,10 +45,10 @@
     <PackageVersion Include="System.Reflection.Metadata" Version="9.0.1" />
     <PackageVersion Include="System.Resources.Extensions" Version="9.0.1" />
     <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.0" />
-    <PackageVersion Include="TomsToolbox.Composition.MicrosoftExtensions" Version="2.21.0" />
+    <PackageVersion Include="TomsToolbox.Composition.MicrosoftExtensions" Version="2.22.0" />
     <PackageVersion Include="TomsToolbox.Wpf.Composition" Version="2.20.0" />
-    <PackageVersion Include="TomsToolbox.Wpf.Composition.AttributedModel" Version="2.21.0" />
-    <PackageVersion Include="TomsToolbox.Wpf.Styles" Version="2.21.0" />
+    <PackageVersion Include="TomsToolbox.Wpf.Composition.AttributedModel" Version="2.22.0" />
+    <PackageVersion Include="TomsToolbox.Wpf.Styles" Version="2.22.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.3" />
     <PackageVersion Include="System.Net.Http" Version="4.3.4" />
     <PackageVersion Include="System.Private.Uri" Version="4.3.2" />
