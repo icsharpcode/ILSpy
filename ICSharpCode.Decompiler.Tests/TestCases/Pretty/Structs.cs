@@ -60,19 +60,3 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	}
 #endif
 }
-
-namespace System.Runtime.CompilerServices
-{
-	[AttributeUsage(AttributeTargets.All, AllowMultiple = true, Inherited = false)]
-	internal sealed class CompilerFeatureRequiredAttribute : Attribute
-	{
-		public CompilerFeatureRequiredAttribute(string featureName)
-		{
-		}
-	}
-
-	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
-	internal sealed class RequiredMemberAttribute : Attribute
-	{
-	}
-}

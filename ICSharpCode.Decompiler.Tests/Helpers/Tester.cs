@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection.PortableExecutable;
@@ -330,6 +329,45 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return tempFile;
 		}
 
+		const string nonEmbeddedAttributesSnippet = @"
+using System;
+
+#if !NET60
+namespace System.Runtime.CompilerServices
+{
+	[AttributeUsage(AttributeTargets.All, AllowMultiple = true, Inherited = false)]
+	internal sealed class CompilerFeatureRequiredAttribute : Attribute
+	{
+		public CompilerFeatureRequiredAttribute(string featureName)
+		{
+		}
+	}
+
+	internal class IsExternalInit
+	{
+	}
+#endif
+#if !NET70
+	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
+	internal sealed class RequiredMemberAttribute : Attribute
+	{
+	}
+#endif
+#if !NET60
+}
+#endif
+";
+
+		static readonly Lazy<string> nonEmbeddedAttributesSnippetFile = new Lazy<string>(GetNonEmbeddedAttributesSnippetFile);
+
+		static string GetNonEmbeddedAttributesSnippetFile()
+		{
+			// Note: this leaks a temporary file, we're not attempting to delete it, because it is only one.
+			var tempFile = Path.GetTempFileName();
+			File.WriteAllText(tempFile, nonEmbeddedAttributesSnippet);
+			return tempFile;
+		}
+
 		public static List<string> GetPreprocessorSymbols(CompilerOptions flags)
 		{
 			var preprocessorSymbols = new List<string>();
@@ -417,6 +455,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			if (useRoslyn && !targetNet40)
 			{
 				sourceFileNames.Add(targetFrameworkAttributeSnippetFile.Value);
+			}
+
+			if (targetNet40)
+			{
+				sourceFileNames.Add(nonEmbeddedAttributesSnippetFile.Value);
 			}
 
 			var preprocessorSymbols = GetPreprocessorSymbols(flags);
