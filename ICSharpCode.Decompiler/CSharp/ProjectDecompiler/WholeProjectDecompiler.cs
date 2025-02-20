@@ -692,10 +692,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					if (separateAtDots)
 						currentSegmentLength = 0;
 				}
-				else if (treatAsFileName && (c == '/' || c == '\\') && currentSegmentLength > 1)
+				else if (treatAsFileName && (c is '/' or '\\') && currentSegmentLength > 1)
 				{
 					// if we treat this as a file name, we've started a new segment
-					b.Append(c);
+					b.Append(Path.DirectorySeparatorChar);
 					currentSegmentLength = 0;
 				}
 				else
