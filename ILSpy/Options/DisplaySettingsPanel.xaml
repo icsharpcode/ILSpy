@@ -78,6 +78,7 @@
 				<StackPanel Margin="3">
 					<CheckBox IsChecked="{Binding Settings.SortResults}" Content="{x:Static properties:Resources.SortResultsFitness}"></CheckBox>
 					<CheckBox IsChecked="{Binding Settings.StyleWindowTitleBar}" Content="{x:Static properties:Resources.StyleTheWindowTitleBar}"></CheckBox>
+					<CheckBox IsChecked="{Binding Settings.EnableSmoothScrolling}" Content="{x:Static properties:Resources.EnableSmoothScrolling}"></CheckBox>
 				</StackPanel>
 			</GroupBox>
 		</StackPanel>

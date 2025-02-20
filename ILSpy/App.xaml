@@ -3,7 +3,9 @@
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:styles="urn:TomsToolbox.Wpf.Styles"
 			 xmlns:toms="urn:TomsToolbox"
-			 xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes">
+			 xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
+			 xmlns:composition="urn:TomsToolbox.Composition"
+			 xmlns:util="clr-namespace:ICSharpCode.ILSpy.Util">
 	<Application.Resources>
 		<Style x:Key="DialogWindow" TargetType="{x:Type Window}">
 			<Setter Property="ShowInTaskbar" Value="False" />
@@ -24,7 +26,13 @@
 		</Style>
 
 		<Style TargetType="ScrollViewer">
-			<Setter Property="toms:AdvancedScrollWheelBehavior.Attach" Value="WithAnimation" />
+			<Setter Property="toms:StyleBindings.Behaviors">
+				<Setter.Value>
+					<toms:BehaviorCollection>
+						<toms:AdvancedScrollWheelBehavior UseScrollingAnimation="{Binding Path=(util:SettingsService.DisplaySettings).EnableSmoothScrolling, Source={composition:Import util:SettingsService}}"/>
+					</toms:BehaviorCollection>
+				</Setter.Value>
+			</Setter>
 		</Style>
 
 	</Application.Resources>

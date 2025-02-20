@@ -1,10 +1,18 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:Controls="clr-namespace:ICSharpCode.ILSpy.Controls"
-	xmlns:toms="urn:TomsToolbox">
+	xmlns:toms="urn:TomsToolbox"
+	xmlns:composition="urn:TomsToolbox.Composition"
+	xmlns:util="clr-namespace:ICSharpCode.ILSpy.Util">
 	
 	<Style TargetType="{x:Type Controls:ZoomScrollViewer}">
-		<Setter Property="toms:AdvancedScrollWheelBehavior.Attach" Value="WithAnimation" />
+		<Setter Property="toms:StyleBindings.Behaviors">
+			<Setter.Value>
+				<toms:BehaviorCollection>
+					<toms:AdvancedScrollWheelBehavior UseScrollingAnimation="{Binding Path=(util:SettingsService.DisplaySettings).EnableSmoothScrolling, Source={composition:Import util:SettingsService}}"/>
+				</toms:BehaviorCollection>
+			</Setter.Value>
+		</Setter>
 		<Setter Property="Template">
 			<Setter.Value>
 				<ControlTemplate TargetType="{x:Type Controls:ZoomScrollViewer}">

@@ -591,6 +591,9 @@ Are you sure you want to continue?</value>
   <data name="EnableFoldingBlocksBraces" xml:space="preserve">
     <value>Enable folding on all blocks in braces</value>
   </data>
+  <data name="EnableSmoothScrolling" xml:space="preserve">
+	  <value>Enable smooth scrolling</value>
+  </data>
   <data name="EnableWordWrap" xml:space="preserve">
     <value>Enable word wrap</value>
   </data>
