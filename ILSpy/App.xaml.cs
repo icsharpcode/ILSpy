@@ -69,6 +69,8 @@ namespace ICSharpCode.ILSpy
 			var cmdArgs = Environment.GetCommandLineArgs().Skip(1);
 			CommandLineArguments = CommandLineArguments.Create(cmdArgs);
 
+			// This is only a temporary, read only handle to the settings service to access the AllowMultipleInstances setting before DI is initialized.
+			// At runtime, you must use the service via DI!
 			var settingsService = new SettingsService();
 
 			bool forceSingleInstance = (CommandLineArguments.SingleInstance ?? true)
