@@ -2148,6 +2148,24 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool sortCustomAttributes = false;
+
+		/// <summary>
+		/// Sort custom attributes.
+		/// </summary>
+		[Category("DecompilerSettings.Other")]
+		[Description("DecompilerSettings.SortCustomAttributes")]
+		public bool SortCustomAttributes {
+			get { return sortCustomAttributes; }
+			set {
+				if (sortCustomAttributes != value)
+				{
+					sortCustomAttributes = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		CSharpFormattingOptions csharpFormattingOptions;
 
 		[Browsable(false)]

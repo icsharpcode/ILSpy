@@ -435,6 +435,9 @@
   <data name="DecompilerSettings.ShowInfoFromDebugSymbolsIfAvailable" xml:space="preserve">
     <value>显示调试符号中的信息(如果可用)</value>
   </data>
+  <data name="DecompilerSettings.SortCustomAttributes" xml:space="preserve">
+    <value />
+  </data>
   <data name="DecompilerSettings.SparseIntegerSwitch" xml:space="preserve">
     <value>检测整型 switch 即使 IL 代码不使用跳转表</value>
   </data>

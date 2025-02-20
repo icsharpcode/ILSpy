@@ -148,6 +148,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public bool ShowAttributes { get; set; }
 
 		/// <summary>
+		/// Controls whether to sort attributes, if set to <see langword="false" /> attributes are shown in metadata order.
+		/// The default value is <see langword="false" />.
+		/// </summary>
+		public bool SortAttributes { get; set; }
+
+		/// <summary>
 		/// Controls whether to use fully-qualified type names or short type names.
 		/// The default value is <see langword="false" />.
 		/// </summary>
@@ -793,16 +799,72 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return attr;
 		}
 
-		private IEnumerable<AttributeSection> ConvertAttributes(IEnumerable<IAttribute> attributes)
+		private IEnumerable<AttributeSection> ConvertAttributes(IEnumerable<IAttribute> attributes, string target = null)
 		{
-			return attributes.Select(a => new AttributeSection(ConvertAttribute(a)));
-		}
-
-		private IEnumerable<AttributeSection> ConvertAttributes(IEnumerable<IAttribute> attributes, string target)
-		{
-			return attributes.Select(a => new AttributeSection(ConvertAttribute(a)) {
-				AttributeTarget = target
+			if (SortAttributes)
+				attributes = attributes.OrderBy(a => a, new DelegateComparer<IAttribute>(CompareAttribute));
+			return attributes.Select(a => {
+				var section = new AttributeSection(ConvertAttribute(a));
+				if (target != null)
+					section.AttributeTarget = target;
+				return section;
 			});
+
+			static int CompareAttribute(IAttribute a, IAttribute b)
+			{
+				int result = CompareType(a.AttributeType, b.AttributeType);
+				if (result != 0)
+					return result;
+				if (a.HasDecodeErrors && b.HasDecodeErrors)
+					return 0;
+				if (a.HasDecodeErrors)
+					return -1;
+				if (b.HasDecodeErrors)
+					return 1;
+				result = a.FixedArguments.Length - b.FixedArguments.Length;
+				if (result != 0)
+					return result;
+				for (int i = 0; i < a.FixedArguments.Length; i++)
+				{
+					var argA = a.FixedArguments[i];
+					var argB = b.FixedArguments[i];
+					result = CompareType(argA.Type, argB.Type);
+					if (result != 0)
+						return result;
+					if (argA.Value is IComparable compA && argB.Value is IComparable compB)
+						result = compA.CompareTo(compB);
+					else
+						result = 0;
+					if (result != 0)
+						return result;
+				}
+				result = a.NamedArguments.Length - b.NamedArguments.Length;
+				if (result != 0)
+					return result;
+				for (int i = 0; i < a.FixedArguments.Length; i++)
+				{
+					var argA = a.NamedArguments[i];
+					var argB = b.NamedArguments[i];
+					result = argA.Name.CompareTo(argB.Name);
+					if (result != 0)
+						return result;
+					result = CompareType(argA.Type, argB.Type);
+					if (result != 0)
+						return result;
+					if (argA.Value is IComparable compA && argB.Value is IComparable compB)
+						result = compA.CompareTo(compB);
+					else
+						result = 0;
+					if (result != 0)
+						return result;
+				}
+				return 0;
+			}
+
+			static int CompareType(IType a, IType b)
+			{
+				return a.FullName.CompareTo(b.FullName);
+			}
 		}
 		#endregion
 

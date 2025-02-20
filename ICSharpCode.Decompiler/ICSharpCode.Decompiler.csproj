@@ -154,6 +154,7 @@
     <Compile Include="Properties\DecompilerVersionInfo.cs" />
     <Compile Include="TypeSystem\ITypeDefinitionOrUnknown.cs" />
     <Compile Include="Util\BitOperations.cs" />
+    <Compile Include="Util\DelegateComparer.cs" />
     <Compile Include="Util\Index.cs" />
     <Compile Include="Metadata\WebCilFile.cs" />
     <None Include="Properties\DecompilerVersionInfo.template.cs" />
