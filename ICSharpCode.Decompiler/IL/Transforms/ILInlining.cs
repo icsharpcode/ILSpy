@@ -448,7 +448,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return inst != ldloca && inst.Parent is LdObj;
 		}
 
-		static bool IsPassedToInParameter(LdLoca ldloca)
+		internal static bool IsPassedToInParameter(LdLoca ldloca)
 		{
 			if (ldloca.Parent is not CallInstruction call)
 			{

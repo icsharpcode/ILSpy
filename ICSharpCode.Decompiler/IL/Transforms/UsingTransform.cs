@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (storeInst.Variable.LoadInstructions.Any(ld => !ld.IsDescendantOf(tryFinally)))
 				return false;
-			if (storeInst.Variable.AddressInstructions.Any(la => !la.IsDescendantOf(tryFinally) || (la.IsDescendantOf(tryFinally.TryBlock) && !ILInlining.IsUsedAsThisPointerInCall(la))))
+			if (!storeInst.Variable.AddressInstructions.All(ValidateAddressUse))
 				return false;
 			if (storeInst.Variable.StoreInstructions.Count > 1)
 				return false;
@@ -104,6 +104,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				IsRefStruct = context.Settings.IntroduceRefModifiersOnStructs && storeInst.Variable.Type.Kind == TypeKind.Struct && storeInst.Variable.Type.IsByRefLike
 			}.WithILRange(storeInst);
 			return true;
+
+			bool ValidateAddressUse(LdLoca la)
+			{
+				if (!la.IsDescendantOf(tryFinally))
+					return false;
+				if (la.IsDescendantOf(tryFinally.TryBlock))
+				{
+					if (!(ILInlining.IsUsedAsThisPointerInCall(la) || ILInlining.IsPassedToInParameter(la)))
+						return false;
+				}
+				return true;
+			}
 		}
 
 		/// <summary>
