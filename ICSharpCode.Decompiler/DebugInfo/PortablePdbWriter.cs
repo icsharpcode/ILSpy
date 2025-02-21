@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 				string ns = settings.UseNestedDirectoriesForNamespaces
 					? WholeProjectDecompiler.CleanUpPath(typeName.Namespace)
 					: WholeProjectDecompiler.CleanUpDirectoryName(typeName.Namespace);
-				return Path.Combine(ns, WholeProjectDecompiler.CleanUpFileName(typeName.Name) + ".cs");
+				return Path.Combine(ns, WholeProjectDecompiler.CleanUpFileName(typeName.Name, ".cs"));
 			}
 
 			var sourceFiles = reader.GetTopLevelTypeDefinitions().Where(t => IncludeTypeWhenGeneratingPdb(file, t, settings)).GroupBy(BuildFileNameFromTypeName).ToList();

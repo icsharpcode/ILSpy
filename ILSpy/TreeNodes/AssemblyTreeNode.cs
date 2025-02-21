@@ -475,7 +475,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (string.IsNullOrEmpty(language.ProjectFileExtension))
 				return false;
 			SaveFileDialog dlg = new SaveFileDialog();
-			dlg.FileName = WholeProjectDecompiler.CleanUpFileName(LoadedAssembly.ShortName) + language.ProjectFileExtension;
+			dlg.FileName = WholeProjectDecompiler.CleanUpFileName(LoadedAssembly.ShortName, language.ProjectFileExtension);
 			dlg.Filter = language.Name + " project|*" + language.ProjectFileExtension + "|" + language.Name + " single file|*" + language.FileExtension + "|All files|*.*";
 			if (dlg.ShowDialog() == true)
 			{

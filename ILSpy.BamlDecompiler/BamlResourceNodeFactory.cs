@@ -62,7 +62,7 @@ namespace ILSpy.BamlDecompiler
 			var typeDefinition = result.TypeName.HasValue ? typeSystem.MainModule.GetTypeDefinition(result.TypeName.Value.TopLevelTypeName) : null;
 			if (typeDefinition != null)
 			{
-				fileName = WholeProjectDecompiler.CleanUpPath(typeDefinition.ReflectionName) + ".xaml";
+				fileName = WholeProjectDecompiler.CleanUpPath(typeDefinition.ReflectionName + ".xaml");
 				var partialTypeInfo = new PartialTypeInfo(typeDefinition);
 				foreach (var member in result.GeneratedMembers)
 				{
