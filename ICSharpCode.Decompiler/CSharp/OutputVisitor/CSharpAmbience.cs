@@ -279,9 +279,20 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				ConvertType(member.DeclaringType, writer, formattingPolicy);
 				writer.WriteToken(Roles.Dot, ".");
 			}
+			IType explicitInterfaceType = GetExplicitInterfaceType(member);
+			string name = member.Name;
+			if (explicitInterfaceType != null)
+			{
+				name = name.Substring(name.LastIndexOf('.') + 1);
+			}
 			switch (member.SymbolKind)
 			{
 				case SymbolKind.Indexer:
+					if (explicitInterfaceType != null)
+					{
+						ConvertType(explicitInterfaceType, writer, formattingPolicy);
+						writer.WriteToken(Roles.Dot, ".");
+					}
 					writer.WriteKeyword(Roles.Identifier, "this");
 					break;
 				case SymbolKind.Constructor:
@@ -292,11 +303,16 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					WriteQualifiedName(member.DeclaringType.Name, writer, formattingPolicy);
 					break;
 				case SymbolKind.Operator:
-					switch (member.Name)
+					switch (name)
 					{
 						case "op_Implicit":
 							writer.WriteKeyword(OperatorDeclaration.ImplicitRole, "implicit");
 							writer.Space();
+							if (explicitInterfaceType != null)
+							{
+								ConvertType(explicitInterfaceType, writer, formattingPolicy);
+								writer.WriteToken(Roles.Dot, ".");
+							}
 							writer.WriteKeyword(OperatorDeclaration.OperatorKeywordRole, "operator");
 							writer.Space();
 							ConvertType(member.ReturnType, writer, formattingPolicy);
@@ -305,9 +321,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 						case "op_CheckedExplicit":
 							writer.WriteKeyword(OperatorDeclaration.ExplicitRole, "explicit");
 							writer.Space();
+							if (explicitInterfaceType != null)
+							{
+								ConvertType(explicitInterfaceType, writer, formattingPolicy);
+								writer.WriteToken(Roles.Dot, ".");
+							}
 							writer.WriteKeyword(OperatorDeclaration.OperatorKeywordRole, "operator");
 							writer.Space();
-							if (member.Name == "op_CheckedExplicit")
+							if (name == "op_CheckedExplicit")
 							{
 								writer.WriteToken(OperatorDeclaration.CheckedKeywordRole, "checked");
 								writer.Space();
@@ -315,9 +336,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 							ConvertType(member.ReturnType, writer, formattingPolicy);
 							break;
 						default:
+							if (explicitInterfaceType != null)
+							{
+								ConvertType(explicitInterfaceType, writer, formattingPolicy);
+								writer.WriteToken(Roles.Dot, ".");
+							}
 							writer.WriteKeyword(OperatorDeclaration.OperatorKeywordRole, "operator");
 							writer.Space();
-							var operatorType = OperatorDeclaration.GetOperatorType(member.Name);
+							var operatorType = OperatorDeclaration.GetOperatorType(name);
 							if (operatorType.HasValue && !((ConversionFlags & ConversionFlags.SupportOperatorChecked) == 0 && OperatorDeclaration.IsChecked(operatorType.Value)))
 							{
 								if (OperatorDeclaration.IsChecked(operatorType.Value))
@@ -335,7 +361,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					}
 					break;
 				default:
-					writer.WriteIdentifier(Identifier.Create(member.Name));
+					if (explicitInterfaceType != null)
+					{
+						ConvertType(explicitInterfaceType, writer, formattingPolicy);
+						writer.WriteToken(Roles.Dot, ".");
+					}
+					writer.WriteIdentifier(Identifier.Create(name));
 					break;
 			}
 			WriteTypeParameters(node, writer, formattingPolicy);
@@ -405,6 +436,17 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			astBuilder.AlwaysUseShortTypeNames = (ConversionFlags & ConversionFlags.UseFullyQualifiedEntityNames) != ConversionFlags.UseFullyQualifiedEntityNames;
 			AstType astType = astBuilder.ConvertType(type);
 			astType.AcceptVisitor(new CSharpOutputVisitor(writer, formattingPolicy));
+		}
+
+		IType GetExplicitInterfaceType(IMember member)
+		{
+			if (member.IsExplicitInterfaceImplementation)
+			{
+				var baseMember = member.ExplicitlyImplementedInterfaceMembers.FirstOrDefault();
+				if (baseMember != null)
+					return baseMember.DeclaringType;
+			}
+			return null;
 		}
 
 		public string ConvertConstantValue(object constantValue)

@@ -1784,10 +1784,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				case SymbolKind.Event:
 					return ConvertEvent((IEvent)entity);
 				case SymbolKind.Method:
-					if (entity.Name.Contains(".op_"))
-					{
-						goto case SymbolKind.Operator;
-					}
 					return ConvertMethod((IMethod)entity);
 				case SymbolKind.Operator:
 					return ConvertOperator((IMethod)entity);

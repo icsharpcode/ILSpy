@@ -283,7 +283,17 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[TestCase(ILSpyMainTreeViewMemberFlags, "this[int] : int")]
 		public void Indexer(ConversionFlags flags, string expectedOutput)
 		{
-			var prop = compilation.FindType(typeof(CSharpAmbienceTests.Program)).GetProperties(p => p.IsIndexer).Single();
+			var prop = compilation.FindType(typeof(CSharpAmbienceTests.Program)).GetProperties(p => p.IsIndexer && !p.IsExplicitInterfaceImplementation).Single();
+			ambience.ConversionFlags = flags;
+
+			Assert.That(ambience.ConvertSymbol(prop), Is.EqualTo(expectedOutput));
+		}
+
+		[TestCase(StandardConversionFlags, "int Interface.this[int index] { get; }")]
+		[TestCase(ILSpyMainTreeViewMemberFlags, "Interface.this[int] : int")]
+		public void ExplicitIndexer(ConversionFlags flags, string expectedOutput)
+		{
+			var prop = compilation.FindType(typeof(CSharpAmbienceTests.Program)).GetProperties(p => p.IsIndexer && p.IsExplicitInterfaceImplementation).Single();
 			ambience.ConversionFlags = flags;
 
 			Assert.That(ambience.ConvertSymbol(prop), Is.EqualTo(expectedOutput));
@@ -323,7 +333,12 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		readonly struct ReadonlyStruct { }
 		readonly ref struct ReadonlyRefStruct { }
 
-		class Program
+		interface Interface
+		{
+			int this[int x] { get; }
+		}
+
+		class Program : Interface
 		{
 			int test;
 			const int TEST2 = 2;
@@ -331,6 +346,12 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			public int Test { get; set; }
 
 			public int this[int index] {
+				get {
+					return index;
+				}
+			}
+
+			int Interface.this[int index] {
 				get {
 					return index;
 				}

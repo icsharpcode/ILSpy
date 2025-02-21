@@ -96,6 +96,23 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					this.symbolKind = SymbolKind.Destructor;
 				}
 			}
+			else if ((attributes & MethodAttributes.Static) != 0 && typeParameters.Length == 0)
+			{
+				// Operators that are explicit interface implementations are not marked
+				// with MethodAttributes.SpecialName or MethodAttributes.RTSpecialName
+				string name = this.Name;
+				int index = name.LastIndexOf('.');
+				if (index > 0)
+				{
+					name = name.Substring(index + 1);
+
+					if (name.StartsWith("op_", StringComparison.Ordinal)
+						&& CSharp.Syntax.OperatorDeclaration.GetOperatorType(name) != null)
+					{
+						this.symbolKind = SymbolKind.Operator;
+					}
+				}
+			}
 			this.IsExtensionMethod = (attributes & MethodAttributes.Static) == MethodAttributes.Static
 				&& (module.TypeSystemOptions & TypeSystemOptions.ExtensionMethods) == TypeSystemOptions.ExtensionMethods
 				&& def.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.Extension);
