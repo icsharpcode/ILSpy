@@ -841,7 +841,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				result = a.NamedArguments.Length - b.NamedArguments.Length;
 				if (result != 0)
 					return result;
-				for (int i = 0; i < a.FixedArguments.Length; i++)
+				for (int i = 0; i < a.NamedArguments.Length; i++)
 				{
 					var argA = a.NamedArguments[i];
 					var argB = b.NamedArguments[i];
