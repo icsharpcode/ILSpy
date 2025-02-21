@@ -636,13 +636,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </summary>
 		static string CleanUpName(string text, bool separateAtDots, bool treatAsFileName, bool treatAsPath)
 		{
-			// Remove anything that could be confused with a rooted path.
-			int pos = text.IndexOf(':');
-			if (pos > 0)
-				text = text.Substring(0, pos);
-			text = text.Trim();
 			string extension = null;
 			int currentSegmentLength = 0;
+			// Extract extension from the end of the name, if valid
 			if (treatAsFileName)
 			{
 				// Check if input is a file name, i.e., has a valid extension
@@ -668,6 +664,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					}
 				}
 			}
+			// Remove anything that could be confused with a rooted path.
+			int pos = text.IndexOf(':');
+			if (pos > 0)
+				text = text.Substring(0, pos);
+			text = text.Trim();
 			// Remove generics
 			pos = text.IndexOf('`');
 			if (pos > 0)
