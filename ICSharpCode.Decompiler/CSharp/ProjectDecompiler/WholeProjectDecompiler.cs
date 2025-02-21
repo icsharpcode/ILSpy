@@ -238,7 +238,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			string GetFileFileNameForHandle(TypeDefinitionHandle h)
 			{
 				var type = metadata.GetTypeDefinition(h);
-				string file = SanitizeFileName(metadata.GetString(type.Name) + ".cs");
+				string file = CleanUpFileName(metadata.GetString(type.Name) + ".cs");
 				string ns = metadata.GetString(type.Namespace);
 				if (string.IsNullOrEmpty(ns))
 				{
