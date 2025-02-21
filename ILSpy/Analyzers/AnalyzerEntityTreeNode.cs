@@ -46,10 +46,14 @@ namespace ICSharpCode.ILSpy.Analyzers
 			MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(this.Member.ParentModule?.MetadataFile, this.Member.MetadataToken)));
 		}
 
-		public override object ToolTip => Member.ParentModule?.MetadataFile?.FileName;
+		public override object ToolTip => Member?.ParentModule?.MetadataFile?.FileName;
 
 		public override bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies)
 		{
+			if (Member == null)
+			{
+				return true;
+			}
 			foreach (LoadedAssembly asm in removedAssemblies)
 			{
 				if (this.Member.ParentModule.MetadataFile == asm.GetMetadataFileOrNull())

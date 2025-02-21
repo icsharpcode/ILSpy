@@ -17,9 +17,12 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Windows;
 
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.TreeView;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
@@ -37,6 +40,8 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 		public override object Icon => Images.Assembly;
 
 		public override object Text => analyzedModule.AssemblyName;
+
+		public override object ToolTip => analyzedModule.MetadataFile?.FileName;
 
 		protected override void LoadChildren()
 		{
@@ -62,5 +67,24 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 		}
 
 		public override IEntity Member => null;
+
+		public override bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies)
+		{
+			if (analyzedModule == null)
+			{
+				return true;
+			}
+			foreach (LoadedAssembly asm in removedAssemblies)
+			{
+				if (this.analyzedModule.MetadataFile == asm.GetMetadataFileOrNull())
+					return false; // remove this node
+			}
+			this.Children.RemoveAll(
+				delegate (SharpTreeNode n) {
+					AnalyzerTreeNode an = n as AnalyzerTreeNode;
+					return an == null || !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
+				});
+			return true;
+		}
 	}
 }
