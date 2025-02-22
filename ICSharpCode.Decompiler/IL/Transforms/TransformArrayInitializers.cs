@@ -137,6 +137,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
 				return false;
+			if (IsSubPatternOfCpblkInitializer(inst))
+				return false;
 			var initialValue = field.GetInitialValue(context.PEFile, context.TypeSystem);
 			var elementTypeSize = elementType.GetSize();
 			if (elementTypeSize <= 0 || initialValue.Length % elementTypeSize != 0)
@@ -144,6 +146,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var size = initialValue.Length / elementTypeSize;
 			replacement = DecodeArrayInitializerOrUTF8StringLiteral(context, elementType, initialValue, size);
 			return replacement != null;
+		}
+
+		private static bool IsSubPatternOfCpblkInitializer(Call inst)
+		{
+			if (inst.Parent is not AddressOf { Parent: Call { Parent: Cpblk cpblk } get_Item })
+				return false;
+			return MatchGetStaticFieldAddress(get_Item, out _);
 		}
 
 		private static ILInstruction DecodeArrayInitializerOrUTF8StringLiteral(StatementTransformContext context, IType elementType, BlobReader initialValue, int size)
@@ -373,7 +382,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchGetStaticFieldAddress(ILInstruction input, out IField field)
+		static bool MatchGetStaticFieldAddress(ILInstruction input, out IField field)
 		{
 			if (input.MatchLdsFlda(out field))
 				return true;
