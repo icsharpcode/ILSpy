@@ -447,6 +447,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 #endif
 #if CS110 && !NET40
 		public static ReadOnlySpan<byte> UTF8Literal => "Hello, world!"u8;
+		public static ReadOnlySpan<byte> UTF8LiteralWithNullTerminator => "Hello, world!\0"u8;
 #endif
 		#endregion
 

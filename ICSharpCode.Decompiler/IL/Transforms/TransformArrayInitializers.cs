@@ -182,9 +182,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			for (int i = 0; i < size; i++)
 			{
 				byte val = blob.CurrentPointer[i];
-				// If the string has control characters, it's probably binary data and not a string.
-				if (val < 0x20 && val is not ((byte)'\r' or (byte)'\n' or (byte)'\t'))
+				if (val == 0 && i == size - 1 && size > 1)
 				{
+					// Allow explicit null-termination character.
+				}
+				else if (val < 0x20 && val is not ((byte)'\r' or (byte)'\n' or (byte)'\t'))
+				{
+					// If the string has control characters, it's probably binary data and not a string.
 					text = null;
 					return false;
 				}
