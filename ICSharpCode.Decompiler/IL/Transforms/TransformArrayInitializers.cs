@@ -119,28 +119,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			replacement = null;
 			if (!context.Settings.ArrayInitializers)
 				return false;
-			if (MatchSpanTCtorWithPointerAndSize(inst, context, out var elementType, out var field, out var size))
-			{
-				if (field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
-				{
-					var valuesList = new List<ILInstruction>();
-					var initialValue = field.GetInitialValue(context.PEFile, context.TypeSystem);
-					if (context.Settings.Utf8StringLiterals &&
-						elementType.IsKnownType(KnownTypeCode.Byte) &&
-						DecodeUTF8String(initialValue, size, out string text))
-					{
-						replacement = new LdStrUtf8(text);
-						return true;
-					}
-					if (DecodeArrayInitializer(elementType, initialValue, new[] { size }, valuesList))
-					{
-						var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, new ArrayType(context.TypeSystem, elementType));
-						replacement = BlockFromInitializer(tempStore, elementType, new[] { size }, valuesList.ToArray());
-						return true;
-					}
-				}
-			}
-			return false;
+			if (!MatchSpanTCtorWithPointerAndSize(inst, context, out var elementType, out var field, out var size))
+				return false;
+			if (!field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
+				return false;
+			var initialValue = field.GetInitialValue(context.PEFile, context.TypeSystem);
+			replacement = DecodeArrayInitializerOrUTF8StringLiteral(context, elementType, initialValue, size);
+			return replacement != null;
 		}
 
 		internal static bool TransformRuntimeHelpersCreateSpanInitialization(Call inst, StatementTransformContext context, out ILInstruction replacement)
@@ -148,33 +133,34 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			replacement = null;
 			if (!context.Settings.ArrayInitializers)
 				return false;
-			if (MatchRuntimeHelpersCreateSpan(inst, context, out var elementType, out var field))
-			{
-				if (field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
-				{
-					var valuesList = new List<ILInstruction>();
-					var initialValue = field.GetInitialValue(context.PEFile, context.TypeSystem);
-					var elementTypeSize = elementType.GetSize();
-					if (elementTypeSize <= 0 || initialValue.Length % elementTypeSize != 0)
-						return false;
+			if (!MatchRuntimeHelpersCreateSpan(inst, context, out var elementType, out var field))
+				return false;
+			if (!field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
+				return false;
+			var initialValue = field.GetInitialValue(context.PEFile, context.TypeSystem);
+			var elementTypeSize = elementType.GetSize();
+			if (elementTypeSize <= 0 || initialValue.Length % elementTypeSize != 0)
+				return false;
+			var size = initialValue.Length / elementTypeSize;
+			replacement = DecodeArrayInitializerOrUTF8StringLiteral(context, elementType, initialValue, size);
+			return replacement != null;
+		}
 
-					var size = initialValue.Length / elementTypeSize;
-					if (context.Settings.Utf8StringLiterals &&
-						elementType.IsKnownType(KnownTypeCode.Byte) &&
-						DecodeUTF8String(initialValue, size, out string text))
-					{
-						replacement = new LdStrUtf8(text);
-						return true;
-					}
-					if (DecodeArrayInitializer(elementType, initialValue, new[] { size }, valuesList))
-					{
-						var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, new ArrayType(context.TypeSystem, elementType));
-						replacement = BlockFromInitializer(tempStore, elementType, new[] { size }, valuesList.ToArray());
-						return true;
-					}
-				}
+		private static ILInstruction DecodeArrayInitializerOrUTF8StringLiteral(StatementTransformContext context, IType elementType, BlobReader initialValue, int size)
+		{
+			if (context.Settings.Utf8StringLiterals && elementType.IsKnownType(KnownTypeCode.Byte)
+				&& DecodeUTF8String(initialValue, size, out string text))
+			{
+				return new LdStrUtf8(text);
 			}
-			return false;
+			var valuesList = new List<ILInstruction>();
+			if (DecodeArrayInitializer(elementType, initialValue, new[] { size }, valuesList))
+			{
+				var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, new ArrayType(context.TypeSystem, elementType));
+				return BlockFromInitializer(tempStore, elementType, new[] { size }, valuesList.ToArray());
+			}
+
+			return null;
 		}
 
 		private static unsafe bool DecodeUTF8String(BlobReader blob, int size, out string text)
@@ -225,15 +211,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			field = default;
 			elementType = null;
-			IType type = inst.Method.DeclaringType;
-			if (type.Namespace != "System.Runtime.CompilerServices" || type.Name != "RuntimeHelpers" || type.TypeParameterCount != 0)
+			if (!IsRuntimeHelpers(inst.Method.DeclaringType))
 				return false;
 			if (inst.Arguments.Count != 1)
 				return false;
-			IMethod method = inst.Method;
-			if (method.Name != "CreateSpan" || method.TypeArguments.Count != 1)
+			if (inst.Method is not { Name: "CreateSpan", TypeArguments: [var type] })
 				return false;
-			elementType = method.TypeArguments[0];
+			elementType = type;
 			if (!inst.Arguments[0].UnwrapConv(ConversionKind.StopGCTracking).MatchLdMemberToken(out var member))
 				return false;
 			if (member.MetadataToken.IsNil)
@@ -412,7 +396,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return field != null;
 		}
 
-		static bool IsRuntimeHelpers(IType type) => type is { Name: "RuntimeHelpers", Namespace: "System.Runtime.CompilerServices" };
+		static bool IsRuntimeHelpers(IType type) => type is { Name: "RuntimeHelpers", Namespace: "System.Runtime.CompilerServices", TypeParameterCount: 0 };
 
 		unsafe bool HandleSequentialLocAllocInitializer(Block block, int pos, ILVariable store, ILInstruction locAllocInstruction, out IType elementType, out StObj[] values, out int instructionsToRemove)
 		{
