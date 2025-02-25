@@ -44,6 +44,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return ((int*)ptr)[2];
 		}
 
+		public unsafe static uint AccessGuidPointerToUIntPointer(Guid* ptr)
+		{
+			return ((uint*)ptr)[2];
+		}
+
 		public unsafe static void AssignmentIntPointer(int* ptr)
 		{
 			ptr[2] = 1;
