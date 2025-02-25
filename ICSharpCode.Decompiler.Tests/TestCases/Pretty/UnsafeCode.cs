@@ -212,7 +212,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			int result = 0;
 			*(float*)(&result) = 0.5f;
-			((byte*)(&result))[3] = 3;
+			((sbyte*)(&result))[3] = 3;
+			((sbyte*)(&result))[3] = -1;
 			return result;
 		}
 
