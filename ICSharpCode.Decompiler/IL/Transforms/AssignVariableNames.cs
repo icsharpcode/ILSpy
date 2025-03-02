@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -25,6 +26,7 @@ using System.Reflection.Metadata;
 
 using Humanizer.Inflections;
 
+using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -32,7 +34,7 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
-	public class AssignVariableNames : IILTransform
+	public class AssignVariableNames : ILVisitor<AssignVariableNames.VariableScope, Unit>, IILTransform
 	{
 		static readonly Dictionary<string, string> typeNameToVariableNameDict = new Dictionary<string, string> {
 			{ "System.Boolean", "flag" },
@@ -53,52 +55,83 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		};
 
 		ILTransformContext context;
-		List<string> currentLowerCaseTypeOrMemberNames;
-		Dictionary<string, int> reservedVariableNames;
-		HashSet<ILVariable> loopCounters;
 		const char maxLoopVariableName = 'n';
-		int numDisplayClassLocals;
 
-		public void Run(ILFunction function, ILTransformContext context)
+		public class VariableScope
 		{
-			this.context = context;
+			readonly ILTransformContext context;
+			readonly VariableScope parentScope;
+			readonly ILFunction function;
+			readonly Dictionary<MethodDefinitionHandle, string> localFunctions = new();
+			readonly Dictionary<ILVariable, string> variableMapping = new(ILVariableEqualityComparer.Instance);
+			readonly string[] assignedLocalSignatureIndices;
 
-			reservedVariableNames = new Dictionary<string, int>();
-			currentLowerCaseTypeOrMemberNames = new List<string>();
-			var currentLowerCaseMemberNames = CollectAllLowerCaseMemberNames(function.Method.DeclaringTypeDefinition);
-			foreach (var name in currentLowerCaseMemberNames)
-				currentLowerCaseTypeOrMemberNames.Add(name);
-			var currentLowerCaseTypeNames = CollectAllLowerCaseTypeNames(function.Method.DeclaringTypeDefinition);
-			foreach (var name in currentLowerCaseTypeNames)
+			IImmutableSet<string> currentLowerCaseTypeOrMemberNames;
+			Dictionary<string, int> reservedVariableNames;
+			HashSet<ILVariable> loopCounters;
+			int numDisplayClassLocals;
+
+			public VariableScope(ILFunction function, ILTransformContext context, VariableScope parentScope = null)
 			{
-				currentLowerCaseTypeOrMemberNames.Add(name);
-				AddExistingName(reservedVariableNames, name);
-			}
-			loopCounters = CollectLoopCounters(function);
-			foreach (var f in function.Descendants.OfType<ILFunction>())
-			{
-				if (f.Method != null)
+				this.function = function;
+				this.context = context;
+				this.parentScope = parentScope;
+
+				numDisplayClassLocals = 0;
+				assignedLocalSignatureIndices = new string[function.LocalVariableSignatureLength];
+				reservedVariableNames = new Dictionary<string, int>();
+
+				// find all loop counters in the current function
+				loopCounters = new HashSet<ILVariable>();
+				foreach (var inst in TreeTraversal.PreOrder((ILInstruction)function, i => i.Children))
 				{
-					if (IsSetOrEventAccessor(f.Method) && f.Method.Parameters.Count > 0)
+					if (inst is ILFunction && inst != function)
+						break;
+					if (inst is BlockContainer { Kind: ContainerKind.For, Blocks: [.., var incrementBlock] })
 					{
-						for (int i = 0; i < f.Method.Parameters.Count - 1; i++)
+						foreach (var i in incrementBlock.Instructions)
 						{
-							AddExistingName(reservedVariableNames, f.Method.Parameters[i].Name);
+							if (HighLevelLoopTransform.MatchIncrement(i, out var variable))
+								loopCounters.Add(variable);
 						}
-						var lastParameter = f.Method.Parameters.Last();
-						switch (f.Method.AccessorOwner)
+					}
+				}
+
+				// if this is the root scope, we also collect all lower-case type and member names
+				// and fixed parameter names to avoid conflicts when naming local variables.
+				if (parentScope == null)
+				{
+					var currentLowerCaseTypeOrMemberNames = new HashSet<string>(StringComparer.Ordinal);
+					foreach (var name in CollectAllLowerCaseMemberNames(function.Method.DeclaringTypeDefinition))
+						currentLowerCaseTypeOrMemberNames.Add(name);
+					foreach (var name in CollectAllLowerCaseTypeNames(function.Method.DeclaringTypeDefinition))
+					{
+						currentLowerCaseTypeOrMemberNames.Add(name);
+						AddExistingName(reservedVariableNames, name);
+					}
+					this.currentLowerCaseTypeOrMemberNames = currentLowerCaseTypeOrMemberNames.ToImmutableHashSet();
+
+					// handle implicit parameters of set or event accessors
+					if (function.Method != null && IsSetOrEventAccessor(function.Method) && function.Parameters.Count > 0)
+					{
+						for (int i = 0; i < function.Method.Parameters.Count - 1; i++)
+						{
+							AddExistingName(reservedVariableNames, function.Method.Parameters[i].Name);
+						}
+						var lastParameter = function.Method.Parameters.Last();
+						switch (function.Method.AccessorOwner)
 						{
 							case IProperty prop:
-								if (f.Method.AccessorKind == MethodSemanticsAttributes.Setter)
+								if (function.Method.AccessorKind == MethodSemanticsAttributes.Setter)
 								{
 									if (prop.Parameters.Any(p => p.Name == "value"))
 									{
-										f.Warnings.Add("Parameter named \"value\" already present in property signature!");
+										function.Warnings.Add("Parameter named \"value\" already present in property signature!");
 										break;
 									}
-									var variableForLastParameter = f.Variables.FirstOrDefault(v => v.Function == f
+									var variableForLastParameter = function.Variables.FirstOrDefault(v => v.Function == function
 										&& v.Kind == VariableKind.Parameter
-										&& v.Index == f.Method.Parameters.Count - 1);
+										&& v.Index == function.Method.Parameters.Count - 1);
 									if (variableForLastParameter == null)
 									{
 										AddExistingName(reservedVariableNames, lastParameter.Name);
@@ -114,11 +147,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 								}
 								break;
 							case IEvent ev:
-								if (f.Method.AccessorKind != MethodSemanticsAttributes.Raiser)
+								if (function.Method.AccessorKind != MethodSemanticsAttributes.Raiser)
 								{
-									var variableForLastParameter = f.Variables.FirstOrDefault(v => v.Function == f
+									var variableForLastParameter = function.Variables.FirstOrDefault(v => v.Function == function
 										&& v.Kind == VariableKind.Parameter
-										&& v.Index == f.Method.Parameters.Count - 1);
+										&& v.Index == function.Method.Parameters.Count - 1);
 									if (variableForLastParameter == null)
 									{
 										AddExistingName(reservedVariableNames, lastParameter.Name);
@@ -140,18 +173,373 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					else
 					{
-						foreach (var p in f.Method.Parameters)
-							AddExistingName(reservedVariableNames, p.Name);
+						var variables = function.Variables.Where(v => v.Kind == VariableKind.Parameter && v.Index >= 0).ToDictionary(v => v.Index);
+						foreach (var (i, p) in function.Parameters.WithIndex())
+						{
+							string name = p.Name;
+							if (string.IsNullOrWhiteSpace(name) && p.Type != SpecialType.ArgList)
+							{
+								// needs to be consistent with logic in ILReader.CreateILVarable
+								name = "P_" + i;
+							}
+							if (variables.TryGetValue(i, out var v))
+								variableMapping[v] = name;
+							AddExistingName(reservedVariableNames, name);
+						}
+					}
+
+					static bool IsSetOrEventAccessor(IMethod method)
+					{
+						switch (method.AccessorKind)
+						{
+							case MethodSemanticsAttributes.Setter:
+							case MethodSemanticsAttributes.Adder:
+							case MethodSemanticsAttributes.Remover:
+								return true;
+							default:
+								return false;
+						}
 					}
 				}
 				else
 				{
-					foreach (var p in f.Variables.Where(v => v.Kind == VariableKind.Parameter))
-						AddExistingName(reservedVariableNames, p.Name);
+					this.currentLowerCaseTypeOrMemberNames = parentScope.currentLowerCaseTypeOrMemberNames;
+					var variables = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
+
+					foreach (var (i, p) in function.Parameters.WithIndex())
+					{
+						if (function.Kind is ILFunctionKind.Delegate or ILFunctionKind.ExpressionTree
+							&& CSharpDecompiler.IsTransparentIdentifier(p.Name))
+						{
+							AddExistingName(reservedVariableNames, p.Name);
+							if (variables.TryGetValue(i, out var v))
+								variableMapping[v] = p.Name;
+						}
+						if (!parentScope.IsReservedVariableName(p.Name, out _))
+						{
+							AddExistingName(reservedVariableNames, p.Name);
+							if (variables.TryGetValue(i, out var v))
+								variableMapping[v] = p.Name;
+						}
+					}
 				}
 			}
-			numDisplayClassLocals = 0;
-			PerformAssignment(function);
+
+			public void Add(MethodDefinitionHandle localFunction, string name)
+			{
+				this.localFunctions[localFunction] = name;
+			}
+
+			public string TryGetExistingName(MethodDefinitionHandle localFunction)
+			{
+				if (localFunctions.TryGetValue(localFunction, out var name))
+					return name;
+				return parentScope?.TryGetExistingName(localFunction);
+			}
+
+			public string TryGetExistingName(ILVariable v)
+			{
+				if (variableMapping.TryGetValue(v, out var name))
+					return name;
+				return parentScope?.TryGetExistingName(v);
+			}
+
+			public string TryGetExistingName(ILFunction function, int index)
+			{
+				if (this.function == function)
+				{
+					return this.assignedLocalSignatureIndices[index];
+				}
+				else
+				{
+					return parentScope?.TryGetExistingName(function, index);
+				}
+			}
+
+			public void AssignNameToLocalSignatureIndex(ILFunction function, int index, string name)
+			{
+				var scope = this;
+				while (scope != null && scope.function != function)
+					scope = scope.parentScope;
+				Debug.Assert(scope != null);
+				scope.assignedLocalSignatureIndices[index] = name;
+			}
+
+			public bool IsReservedVariableName(string name, out int index)
+			{
+				if (reservedVariableNames.TryGetValue(name, out index))
+					return true;
+				return parentScope?.IsReservedVariableName(name, out index) ?? false;
+			}
+
+			public void ReserveVariableName(string name, int index = 1)
+			{
+				reservedVariableNames[name] = index;
+			}
+
+			public string NextDisplayClassLocal()
+			{
+				return parentScope?.NextDisplayClassLocal() ?? "CS$<>8__locals" + (numDisplayClassLocals++);
+			}
+
+			public bool IsLoopCounter(ILVariable v)
+			{
+				return loopCounters.Contains(v) || (parentScope?.IsLoopCounter(v) == true);
+			}
+
+			public string AssignName(ILVariable v)
+			{
+				// variable has no valid name
+				string newName = v.Name;
+				if (v.HasGeneratedName || !IsValidName(newName))
+				{
+					// don't use the name from the debug symbols if it looks like a generated name
+					// generate a new one based on how the variable is used
+					newName = GenerateNameForVariable(v);
+				}
+				// use the existing name and update index appended to future conflicts
+				string nameWithoutNumber = SplitName(newName, out int newIndex);
+				if (IsReservedVariableName(nameWithoutNumber, out int lastUsedIndex))
+				{
+					if (v.Type.IsKnownType(KnownTypeCode.Int32) && IsLoopCounter(v))
+					{
+						// special case for loop counters,
+						// we don't want them to be named i, i2, ..., but i, j, ...
+						newName = GenerateNameForVariable(v);
+						nameWithoutNumber = newName;
+						newIndex = 1;
+					}
+				}
+				if (IsReservedVariableName(nameWithoutNumber, out lastUsedIndex))
+				{
+					// name without number was already used
+					if (newIndex > lastUsedIndex)
+					{
+						// new index is larger than last, so we can use it
+					}
+					else
+					{
+						// new index is smaller or equal, so we use the next value
+						newIndex = lastUsedIndex + 1;
+					}
+					// resolve conflicts by appending the index to the new name:
+					newName = nameWithoutNumber + newIndex.ToString();
+				}
+				// update the last used index
+				ReserveVariableName(nameWithoutNumber, newIndex);
+				variableMapping.Add(v, newName);
+				return newName;
+			}
+
+			string GenerateNameForVariable(ILVariable variable)
+			{
+				string proposedName = null;
+				if (variable.Type.IsKnownType(KnownTypeCode.Int32))
+				{
+					// test whether the variable might be a loop counter
+					if (loopCounters.Contains(variable))
+					{
+						// For loop variables, use i,j,k,l,m,n
+						for (char c = 'i'; c <= maxLoopVariableName; c++)
+						{
+							if (!IsReservedVariableName(c.ToString(), out _))
+							{
+								proposedName = c.ToString();
+								break;
+							}
+						}
+					}
+				}
+				// The ComponentResourceManager inside InitializeComponent must be named "resources",
+				// otherwise the WinForms designer won't load the Form.
+				if (CSharp.CSharpDecompiler.IsWindowsFormsInitializeComponentMethod(context.Function.Method) && variable.Type.FullName == "System.ComponentModel.ComponentResourceManager")
+				{
+					proposedName = "resources";
+				}
+				if (string.IsNullOrEmpty(proposedName))
+				{
+					var proposedNameForAddress = variable.AddressInstructions.OfType<LdLoca>()
+						.Select(arg => arg.Parent is CallInstruction c ? c.GetParameter(arg.ChildIndex)?.Name : null)
+						.Where(arg => !string.IsNullOrWhiteSpace(arg))
+						.Except(currentLowerCaseTypeOrMemberNames).ToList();
+					if (proposedNameForAddress.Count > 0)
+					{
+						proposedName = proposedNameForAddress[0];
+					}
+				}
+				if (string.IsNullOrEmpty(proposedName))
+				{
+					var proposedNameForStores = new HashSet<string>();
+					foreach (var store in variable.StoreInstructions)
+					{
+						if (store is StLoc stloc)
+						{
+							var name = GetNameFromInstruction(stloc.Value);
+							if (!currentLowerCaseTypeOrMemberNames.Contains(name))
+								proposedNameForStores.Add(name);
+						}
+						else if (store is MatchInstruction match && match.SlotInfo == MatchInstruction.SubPatternsSlot)
+						{
+							var name = GetNameFromInstruction(match.TestedOperand);
+							if (!currentLowerCaseTypeOrMemberNames.Contains(name))
+								proposedNameForStores.Add(name);
+						}
+						else if (store is PinnedRegion pinnedRegion)
+						{
+							var name = GetNameFromInstruction(pinnedRegion.Init);
+							if (!currentLowerCaseTypeOrMemberNames.Contains(name))
+								proposedNameForStores.Add(name);
+						}
+					}
+					if (proposedNameForStores.Count == 1)
+					{
+						proposedName = proposedNameForStores.Single();
+					}
+				}
+				if (string.IsNullOrEmpty(proposedName))
+				{
+					var proposedNameForLoads = variable.LoadInstructions
+						.Select(arg => GetNameForArgument(arg.Parent, arg.ChildIndex))
+						.Except(currentLowerCaseTypeOrMemberNames).ToList();
+					if (proposedNameForLoads.Count == 1)
+					{
+						proposedName = proposedNameForLoads[0];
+					}
+				}
+				if (string.IsNullOrEmpty(proposedName) && variable.Kind == VariableKind.StackSlot)
+				{
+					var proposedNameForStoresFromNewObj = variable.StoreInstructions.OfType<StLoc>()
+						.Select(expr => GetNameByType(GuessType(variable.Type, expr.Value, context)))
+						.Except(currentLowerCaseTypeOrMemberNames).ToList();
+					if (proposedNameForStoresFromNewObj.Count == 1)
+					{
+						proposedName = proposedNameForStoresFromNewObj[0];
+					}
+				}
+				if (string.IsNullOrEmpty(proposedName))
+				{
+					proposedName = GetNameByType(variable.Type);
+				}
+
+				// for generated names remove number-suffixes
+				return SplitName(proposedName, out _);
+			}
+		}
+
+		public void Run(ILFunction function, ILTransformContext context)
+		{
+			this.context = context;
+			function.AcceptVisitor(this, null);
+		}
+
+		protected override Unit Default(ILInstruction inst, VariableScope context)
+		{
+			foreach (var child in inst.Children)
+			{
+				child.AcceptVisitor(this, context);
+			}
+
+			if (inst is not IInstructionWithVariableOperand { Variable: var v })
+				return default;
+
+			// if there is already a valid name for the variable slot, just use it
+			string name = context.TryGetExistingName(v);
+			if (!string.IsNullOrEmpty(name))
+			{
+				v.Name = name;
+				return default;
+			}
+
+			switch (v.Kind)
+			{
+				case VariableKind.Parameter when !v.HasGeneratedName && v.Function.Kind == ILFunctionKind.TopLevelFunction:
+					// Parameter names of top-level functions are handled in ILReader.CreateILVariable
+					// and CSharpDecompiler.FixParameterNames
+					break;
+				case VariableKind.InitializerTarget: // keep generated names
+				case VariableKind.NamedArgument:
+					context.ReserveVariableName(v.Name);
+					break;
+				case VariableKind.DisplayClassLocal:
+					v.Name = context.NextDisplayClassLocal();
+					break;
+				case VariableKind.Local when v.Index != null:
+					name = context.TryGetExistingName(v.Function, v.Index.Value);
+					if (name != null)
+					{
+						// make sure all local ILVariables that refer to the same slot in the locals signature
+						// are assigned the same name.
+						v.Name = name;
+					}
+					else
+					{
+						v.Name = context.AssignName(v);
+						context.AssignNameToLocalSignatureIndex(v.Function, v.Index.Value, v.Name);
+					}
+					break;
+				default:
+					v.Name = context.AssignName(v);
+					break;
+			}
+
+			return default;
+		}
+
+		protected internal override Unit VisitILFunction(ILFunction function, VariableScope context)
+		{
+			if (function.Kind == ILFunctionKind.LocalFunction)
+			{
+				// assign names to local functions
+				if (!LocalFunctionDecompiler.ParseLocalFunctionName(function.Name, out _, out var newName) || !IsValidName(newName))
+					newName = null;
+				if (newName == null)
+				{
+					string nameWithoutNumber = "f";
+					if (!context.IsReservedVariableName(nameWithoutNumber, out int currentIndex))
+					{
+						currentIndex = 1;
+					}
+					int count = Math.Max(1, currentIndex) + 1;
+					context.ReserveVariableName(nameWithoutNumber, count);
+					if (count > 1)
+					{
+						newName = nameWithoutNumber + count.ToString();
+					}
+					else
+					{
+						newName = nameWithoutNumber;
+					}
+				}
+				function.Name = newName;
+				function.ReducedMethod.Name = newName;
+				context.Add((MethodDefinitionHandle)function.ReducedMethod.MetadataToken, newName);
+			}
+
+			return base.VisitILFunction(function, new VariableScope(function, this.context, context));
+		}
+
+		protected internal override Unit VisitCall(Call inst, VariableScope context)
+		{
+			if (inst.Method is LocalFunctionMethod m)
+			{
+				string name = context.TryGetExistingName((MethodDefinitionHandle)m.MetadataToken);
+				if (!string.IsNullOrEmpty(name))
+					m.Name = name;
+			}
+
+			return base.VisitCall(inst, context);
+		}
+
+		protected internal override Unit VisitLdFtn(LdFtn inst, VariableScope context)
+		{
+			if (inst.Method is LocalFunctionMethod m)
+			{
+				string name = context.TryGetExistingName((MethodDefinitionHandle)m.MetadataToken);
+				if (!string.IsNullOrEmpty(name))
+					m.Name = name;
+			}
+
+			return base.VisitLdFtn(inst, context);
 		}
 
 		static IEnumerable<string> CollectAllLowerCaseMemberNames(ITypeDefinition type)
@@ -173,150 +561,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		static bool IsLowerCase(string name)
 		{
 			return name.Length > 0 && char.ToLower(name[0]) == name[0];
-		}
-
-		bool IsSetOrEventAccessor(IMethod method)
-		{
-			switch (method.AccessorKind)
-			{
-				case MethodSemanticsAttributes.Setter:
-				case MethodSemanticsAttributes.Adder:
-				case MethodSemanticsAttributes.Remover:
-					return true;
-				default:
-					return false;
-			}
-		}
-
-		void PerformAssignment(ILFunction function)
-		{
-			var localFunctionMapping = new Dictionary<MethodDefinitionHandle, string>();
-			var variableMapping = new Dictionary<ILVariable, string>(ILVariableEqualityComparer.Instance);
-			var assignedLocalSignatureIndices = new Dictionary<(ILFunction, int), string>();
-
-			foreach (var inst in function.Descendants)
-			{
-				if (inst is ILFunction { Kind: ILFunctionKind.LocalFunction } localFunction)
-				{
-					// assign names to local functions
-					if (!LocalFunctionDecompiler.ParseLocalFunctionName(localFunction.Name, out _, out var newName) || !IsValidName(newName))
-						newName = null;
-					if (newName == null)
-					{
-						string nameWithoutNumber = "f";
-						if (!reservedVariableNames.TryGetValue(nameWithoutNumber, out int currentIndex))
-						{
-							currentIndex = 1;
-						}
-						int count = Math.Max(1, currentIndex) + 1;
-						reservedVariableNames[nameWithoutNumber] = count;
-						if (count > 1)
-						{
-							newName = nameWithoutNumber + count.ToString();
-						}
-						else
-						{
-							newName = nameWithoutNumber;
-						}
-					}
-					localFunction.Name = newName;
-					localFunction.ReducedMethod.Name = newName;
-					localFunctionMapping[(MethodDefinitionHandle)localFunction.ReducedMethod.MetadataToken] = newName;
-				}
-				else if (inst is IInstructionWithVariableOperand i)
-				{
-					var v = i.Variable;
-					// if there is already a valid name for the variable slot, just use it
-					if (variableMapping.TryGetValue(v, out string name))
-					{
-						v.Name = name;
-						continue;
-					}
-					switch (v.Kind)
-					{
-						case VariableKind.Parameter:
-							// Parameter names are handled in ILReader.CreateILVariable
-							// and CSharpDecompiler.FixParameterNames
-							break;
-						case VariableKind.InitializerTarget: // keep generated names
-							AddExistingName(reservedVariableNames, v.Name);
-							break;
-						case VariableKind.DisplayClassLocal:
-							v.Name = "CS$<>8__locals" + (numDisplayClassLocals++);
-							break;
-						case VariableKind.Local when v.Index != null:
-							if (assignedLocalSignatureIndices.TryGetValue((v.Function, v.Index.Value), out name))
-							{
-								// make sure all local ILVariables that refer to the same slot in the locals signature
-								// are assigned the same name.
-								v.Name = name;
-							}
-							else
-							{
-								v.Name = AssignName(v, variableMapping);
-								// Remember the newly assigned name:
-								assignedLocalSignatureIndices.Add((v.Function, v.Index.Value), v.Name);
-							}
-							break;
-						default:
-							v.Name = AssignName(v, variableMapping);
-							break;
-					}
-				}
-				else if (inst is (Call or LdFtn) and IInstructionWithMethodOperand m)
-				{
-					// update references to local functions
-					if (m.Method is LocalFunctionMethod lf
-						&& localFunctionMapping.TryGetValue((MethodDefinitionHandle)lf.MetadataToken, out var name))
-					{
-						lf.Name = name;
-					}
-				}
-			}
-		}
-
-		string AssignName(ILVariable v, Dictionary<ILVariable, string> variableMapping)
-		{
-			// variable has no valid name
-			string newName = v.Name;
-			if (v.HasGeneratedName || !IsValidName(newName))
-			{
-				// don't use the name from the debug symbols if it looks like a generated name
-				// generate a new one based on how the variable is used
-				newName = GenerateNameForVariable(v);
-			}
-			// use the existing name and update index appended to future conflicts
-			string nameWithoutNumber = SplitName(newName, out int newIndex);
-			if (reservedVariableNames.TryGetValue(nameWithoutNumber, out int lastUsedIndex))
-			{
-				if (v.Type.IsKnownType(KnownTypeCode.Int32) && loopCounters.Contains(v))
-				{
-					// special case for loop counters,
-					// we don't want them to be named i, i2, ..., but i, j, ...
-					newName = GenerateNameForVariable(v);
-					nameWithoutNumber = newName;
-					newIndex = 1;
-				}
-			}
-			if (reservedVariableNames.TryGetValue(nameWithoutNumber, out lastUsedIndex))
-			{
-				// name without number was already used
-				if (newIndex > lastUsedIndex)
-				{
-					// new index is larger than last, so we can use it
-				}
-				else
-				{
-					// new index is smaller or equal, so we use the next value
-					newIndex = lastUsedIndex + 1;
-				}
-				// resolve conflicts by appending the index to the new name:
-				newName = nameWithoutNumber + newIndex.ToString();
-			}
-			// update the last used index
-			reservedVariableNames[nameWithoutNumber] = newIndex;
-			variableMapping.Add(v, newName);
-			return newName;
 		}
 
 		/// <remarks>
@@ -349,118 +593,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 			}
 			return true;
-		}
-
-		HashSet<ILVariable> CollectLoopCounters(ILFunction function)
-		{
-			var loopCounters = new HashSet<ILVariable>();
-
-			foreach (BlockContainer possibleLoop in function.Descendants.OfType<BlockContainer>())
-			{
-				if (possibleLoop.Kind != ContainerKind.For)
-					continue;
-				foreach (var inst in possibleLoop.Blocks.Last().Instructions)
-				{
-					if (HighLevelLoopTransform.MatchIncrement(inst, out var variable))
-						loopCounters.Add(variable);
-				}
-			}
-
-			return loopCounters;
-		}
-
-		string GenerateNameForVariable(ILVariable variable)
-		{
-			string proposedName = null;
-			if (variable.Type.IsKnownType(KnownTypeCode.Int32))
-			{
-				// test whether the variable might be a loop counter
-				if (loopCounters.Contains(variable))
-				{
-					// For loop variables, use i,j,k,l,m,n
-					for (char c = 'i'; c <= maxLoopVariableName; c++)
-					{
-						if (!reservedVariableNames.ContainsKey(c.ToString()))
-						{
-							proposedName = c.ToString();
-							break;
-						}
-					}
-				}
-			}
-			// The ComponentResourceManager inside InitializeComponent must be named "resources",
-			// otherwise the WinForms designer won't load the Form.
-			if (CSharp.CSharpDecompiler.IsWindowsFormsInitializeComponentMethod(context.Function.Method) && variable.Type.FullName == "System.ComponentModel.ComponentResourceManager")
-			{
-				proposedName = "resources";
-			}
-			if (string.IsNullOrEmpty(proposedName))
-			{
-				var proposedNameForAddress = variable.AddressInstructions.OfType<LdLoca>()
-					.Select(arg => arg.Parent is CallInstruction c ? c.GetParameter(arg.ChildIndex)?.Name : null)
-					.Where(arg => !string.IsNullOrWhiteSpace(arg))
-					.Except(currentLowerCaseTypeOrMemberNames).ToList();
-				if (proposedNameForAddress.Count > 0)
-				{
-					proposedName = proposedNameForAddress[0];
-				}
-			}
-			if (string.IsNullOrEmpty(proposedName))
-			{
-				var proposedNameForStores = new HashSet<string>();
-				foreach (var store in variable.StoreInstructions)
-				{
-					if (store is StLoc stloc)
-					{
-						var name = GetNameFromInstruction(stloc.Value);
-						if (!currentLowerCaseTypeOrMemberNames.Contains(name))
-							proposedNameForStores.Add(name);
-					}
-					else if (store is MatchInstruction match && match.SlotInfo == MatchInstruction.SubPatternsSlot)
-					{
-						var name = GetNameFromInstruction(match.TestedOperand);
-						if (!currentLowerCaseTypeOrMemberNames.Contains(name))
-							proposedNameForStores.Add(name);
-					}
-					else if (store is PinnedRegion pinnedRegion)
-					{
-						var name = GetNameFromInstruction(pinnedRegion.Init);
-						if (!currentLowerCaseTypeOrMemberNames.Contains(name))
-							proposedNameForStores.Add(name);
-					}
-				}
-				if (proposedNameForStores.Count == 1)
-				{
-					proposedName = proposedNameForStores.Single();
-				}
-			}
-			if (string.IsNullOrEmpty(proposedName))
-			{
-				var proposedNameForLoads = variable.LoadInstructions
-					.Select(arg => GetNameForArgument(arg.Parent, arg.ChildIndex))
-					.Except(currentLowerCaseTypeOrMemberNames).ToList();
-				if (proposedNameForLoads.Count == 1)
-				{
-					proposedName = proposedNameForLoads[0];
-				}
-			}
-			if (string.IsNullOrEmpty(proposedName) && variable.Kind == VariableKind.StackSlot)
-			{
-				var proposedNameForStoresFromNewObj = variable.StoreInstructions.OfType<StLoc>()
-					.Select(expr => GetNameByType(GuessType(variable.Type, expr.Value, context)))
-					.Except(currentLowerCaseTypeOrMemberNames).ToList();
-				if (proposedNameForStoresFromNewObj.Count == 1)
-				{
-					proposedName = proposedNameForStoresFromNewObj[0];
-				}
-			}
-			if (string.IsNullOrEmpty(proposedName))
-			{
-				proposedName = GetNameByType(variable.Type);
-			}
-
-			// for generated names remove number-suffixes
-			return SplitName(proposedName, out _);
 		}
 
 		static string GetNameFromInstruction(ILInstruction inst)
@@ -663,7 +795,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return lowerCaseName;
 		}
 
-		internal static IType GuessType(IType variableType, ILInstruction inst, ILTransformContext context)
+		static IType GuessType(IType variableType, ILInstruction inst, ILTransformContext context)
 		{
 			if (!variableType.IsKnownType(KnownTypeCode.Object))
 				return variableType;
