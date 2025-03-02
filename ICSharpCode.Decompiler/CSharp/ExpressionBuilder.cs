@@ -2554,7 +2554,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				if (string.IsNullOrEmpty(pd.Name) && !pd.Type.IsArgList())
 				{
-					// needs to be consistent with logic in ILReader.CreateILVarable(ParameterDefinition)
+					// needs to be consistent with logic in ILReader.CreateILVariable
 					pd.Name = "P_" + i;
 				}
 				if (settings.AnonymousTypes && parameter.Type.ContainsAnonymousType())
