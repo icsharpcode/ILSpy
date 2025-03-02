@@ -215,7 +215,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							if (variables.TryGetValue(i, out var v))
 								variableMapping[v] = p.Name;
 						}
-						if (!parentScope.IsReservedVariableName(p.Name, out _))
+						string nameWithoutNumber = SplitName(p.Name, out int newIndex);
+						if (!parentScope.IsReservedVariableName(nameWithoutNumber, out _))
 						{
 							AddExistingName(reservedVariableNames, p.Name);
 							if (variables.TryGetValue(i, out var v))
