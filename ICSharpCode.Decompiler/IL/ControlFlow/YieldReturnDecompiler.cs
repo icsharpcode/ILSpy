@@ -656,6 +656,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			function.MoveNextMethod = moveNextFunction.Method;
 			function.SequencePointCandidates = moveNextFunction.SequencePointCandidates;
 			function.CodeSize = moveNextFunction.CodeSize;
+			function.LocalVariableSignatureLength = moveNextFunction.LocalVariableSignatureLength;
 
 			// Copy-propagate temporaries holding a copy of 'this'.
 			// This is necessary because the old (pre-Roslyn) C# compiler likes to store 'this' in temporary variables.

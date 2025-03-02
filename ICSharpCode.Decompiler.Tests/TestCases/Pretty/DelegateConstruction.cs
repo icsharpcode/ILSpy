@@ -377,10 +377,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 		public static void NameConflict2(int j)
 		{
 			List<Action<int>> list = new List<Action<int>>();
-			for (int k = 0; k < 10; k++)
+			for (int i = 0; i < 10; i++)
 			{
-				list.Add(delegate (int i) {
-					Console.WriteLine(i);
+				list.Add(delegate (int k) {
+					Console.WriteLine(k);
 				});
 			}
 		}
