@@ -729,22 +729,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				type = NullableType.GetUnderlyingType(((TypeWithElementType)type).ElementType);
 			}
 
-			string name = type.Kind switch {
-				TypeKind.Array => "array",
-				TypeKind.Pointer => "ptr",
-				TypeKind.TypeParameter => "val",
-				TypeKind.Unknown => "val",
-				TypeKind.Dynamic => "val",
-				TypeKind.ByReference => "reference",
-				TypeKind.Tuple => "tuple",
-				TypeKind.NInt => "num",
-				TypeKind.NUInt => "num",
-				_ => null
-			};
-			if (name != null)
-			{
-				return name;
-			}
+			string name;
 			if (type.IsAnonymousType())
 			{
 				name = "anon";
@@ -753,13 +738,28 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				name = "ex";
 			}
+			else if (type.Name.EndsWith("EventArgs", StringComparison.Ordinal))
+			{
+				name = "e";
+			}
 			else if (type.IsCSharpNativeIntegerType())
 			{
 				name = "num";
 			}
 			else if (!typeNameToVariableNameDict.TryGetValue(type.FullName, out name))
 			{
-				name = type.Name;
+				name = type.Kind switch {
+					TypeKind.Array => "array",
+					TypeKind.Pointer => "ptr",
+					TypeKind.TypeParameter => "val",
+					TypeKind.Unknown => "val",
+					TypeKind.Dynamic => "val",
+					TypeKind.ByReference => "reference",
+					TypeKind.Tuple => "tuple",
+					TypeKind.NInt => "num",
+					TypeKind.NUInt => "num",
+					_ => type.Name
+				};
 				// remove the 'I' for interfaces
 				if (name.Length >= 3 && name[0] == 'I' && char.IsUpper(name[1]) && char.IsLower(name[2]))
 					name = name.Substring(1);
