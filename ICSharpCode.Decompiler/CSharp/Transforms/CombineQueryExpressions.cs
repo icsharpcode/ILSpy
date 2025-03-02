@@ -16,12 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
@@ -54,12 +54,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				next = child.NextSibling;
 				CombineQueries(child, fromOrLetIdentifiers);
 			}
-			QueryExpression query = node as QueryExpression;
-			if (query != null)
+			if (node is QueryExpression query)
 			{
 				QueryFromClause fromClause = (QueryFromClause)query.Clauses.First();
-				QueryExpression innerQuery = fromClause.Expression as QueryExpression;
-				if (innerQuery != null)
+				if (fromClause.Expression is QueryExpression innerQuery)
 				{
 					if (TryRemoveTransparentIdentifier(query, fromClause, innerQuery, fromOrLetIdentifiers))
 					{
@@ -165,21 +163,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				RemoveTransparentIdentifierReferences(child, fromOrLetIdentifiers);
 			}
-			MemberReferenceExpression mre = node as MemberReferenceExpression;
-			if (mre != null)
+			if (node is MemberReferenceExpression mre && mre.Target is IdentifierExpression ident
+				&& CSharpDecompiler.IsTransparentIdentifier(ident.Identifier))
 			{
-				IdentifierExpression ident = mre.Target as IdentifierExpression;
-				if (ident != null && CSharpDecompiler.IsTransparentIdentifier(ident.Identifier))
-				{
-					IdentifierExpression newIdent = new IdentifierExpression(mre.MemberName);
-					mre.TypeArguments.MoveTo(newIdent.TypeArguments);
-					newIdent.CopyAnnotationsFrom(mre);
-					newIdent.RemoveAnnotations<Semantics.MemberResolveResult>(); // remove the reference to the property of the anonymous type
-					if (fromOrLetIdentifiers.TryGetValue(mre.MemberName, out var annotation))
-						newIdent.AddAnnotation(annotation);
-					mre.ReplaceWith(newIdent);
-					return;
-				}
+				IdentifierExpression newIdent = new IdentifierExpression(mre.MemberName);
+				mre.TypeArguments.MoveTo(newIdent.TypeArguments);
+				newIdent.CopyAnnotationsFrom(mre);
+				newIdent.RemoveAnnotations<Semantics.MemberResolveResult>(); // remove the reference to the property of the anonymous type
+				if (fromOrLetIdentifiers.TryGetValue(mre.MemberName, out var annotation))
+					newIdent.AddAnnotation(annotation);
+				mre.ReplaceWith(newIdent);
+				return;
 			}
 		}
 	}
