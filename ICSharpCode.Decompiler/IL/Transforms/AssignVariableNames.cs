@@ -179,7 +179,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							string name = p.Name;
 							if (string.IsNullOrWhiteSpace(name) && p.Type != SpecialType.ArgList)
 							{
-								// needs to be consistent with logic in ILReader.CreateILVarable
+								// needs to be consistent with logic in ILReader.CreateILVariable
 								name = "P_" + i;
 							}
 							if (variables.TryGetValue(i, out var v))
@@ -220,6 +220,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							AddExistingName(reservedVariableNames, p.Name);
 							if (variables.TryGetValue(i, out var v))
 								variableMapping[v] = p.Name;
+						}
+						else if (variables.TryGetValue(i, out var v))
+						{
+							v.HasGeneratedName = true;
 						}
 					}
 				}
@@ -285,6 +289,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			public bool IsLoopCounter(ILVariable v)
 			{
 				return loopCounters.Contains(v) || (parentScope?.IsLoopCounter(v) == true);
+			}
+
+			public string AssignNameIfUnassigned(ILVariable v)
+			{
+				if (variableMapping.TryGetValue(v, out var name))
+					return name;
+				return AssignName(v);
 			}
 
 			public string AssignName(ILVariable v)
@@ -432,57 +443,65 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			function.AcceptVisitor(this, null);
 		}
 
-		protected override Unit Default(ILInstruction inst, VariableScope context)
+		Unit VisitChildren(ILInstruction inst, VariableScope context)
 		{
 			foreach (var child in inst.Children)
 			{
 				child.AcceptVisitor(this, context);
 			}
 
-			if (inst is not IInstructionWithVariableOperand { Variable: var v })
-				return default;
-
-			// if there is already a valid name for the variable slot, just use it
-			string name = context.TryGetExistingName(v);
-			if (!string.IsNullOrEmpty(name))
-			{
-				v.Name = name;
-				return default;
-			}
-
-			switch (v.Kind)
-			{
-				case VariableKind.Parameter when !v.HasGeneratedName && v.Function.Kind == ILFunctionKind.TopLevelFunction:
-					// Parameter names of top-level functions are handled in ILReader.CreateILVariable
-					// and CSharpDecompiler.FixParameterNames
-					break;
-				case VariableKind.InitializerTarget: // keep generated names
-				case VariableKind.NamedArgument:
-					context.ReserveVariableName(v.Name);
-					break;
-				case VariableKind.DisplayClassLocal:
-					v.Name = context.NextDisplayClassLocal();
-					break;
-				case VariableKind.Local when v.Index != null:
-					name = context.TryGetExistingName(v.Function, v.Index.Value);
-					if (name != null)
-					{
-						// make sure all local ILVariables that refer to the same slot in the locals signature
-						// are assigned the same name.
-						v.Name = name;
-					}
-					else
-					{
-						v.Name = context.AssignName(v);
-						context.AssignNameToLocalSignatureIndex(v.Function, v.Index.Value, v.Name);
-					}
-					break;
-				default:
-					v.Name = context.AssignName(v);
-					break;
-			}
-
 			return default;
+		}
+
+		protected override Unit Default(ILInstruction inst, VariableScope context)
+		{
+			if (inst is IInstructionWithVariableOperand { Variable: var v })
+			{
+				// if there is already a valid name for the variable slot, just use it
+				string name = context.TryGetExistingName(v);
+				if (!string.IsNullOrEmpty(name))
+				{
+					v.Name = name;
+					return VisitChildren(inst, context);
+				}
+
+				switch (v.Kind)
+				{
+					case VariableKind.Parameter when !v.HasGeneratedName && v.Function.Kind == ILFunctionKind.TopLevelFunction:
+						// Parameter names of top-level functions are handled in ILReader.CreateILVariable
+						// and CSharpDecompiler.FixParameterNames
+						break;
+					case VariableKind.InitializerTarget: // keep generated names
+					case VariableKind.NamedArgument:
+						context.ReserveVariableName(v.Name);
+						break;
+					case VariableKind.UsingLocal when v.AddressCount == 0 && v.LoadCount == 0:
+						// using variables that are not read, will not be declared in source source
+						break;
+					case VariableKind.DisplayClassLocal:
+						v.Name = context.NextDisplayClassLocal();
+						break;
+					case VariableKind.Local when v.Index != null:
+						name = context.TryGetExistingName(v.Function, v.Index.Value);
+						if (name != null)
+						{
+							// make sure all local ILVariables that refer to the same slot in the locals signature
+							// are assigned the same name.
+							v.Name = name;
+						}
+						else
+						{
+							v.Name = context.AssignName(v);
+							context.AssignNameToLocalSignatureIndex(v.Function, v.Index.Value, v.Name);
+						}
+						break;
+					default:
+						v.Name = context.AssignName(v);
+						break;
+				}
+			}
+
+			return VisitChildren(inst, context);
 		}
 
 		protected internal override Unit VisitILFunction(ILFunction function, VariableScope context)
@@ -515,7 +534,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.Add((MethodDefinitionHandle)function.ReducedMethod.MetadataToken, newName);
 			}
 
-			return base.VisitILFunction(function, new VariableScope(function, this.context, context));
+			var nestedContext = new VariableScope(function, this.context, context);
+			base.VisitILFunction(function, nestedContext);
+
+			if (function.Kind != ILFunctionKind.TopLevelFunction)
+			{
+				foreach (var p in function.Variables.Where(v => v.Kind == VariableKind.Parameter && v.Index >= 0))
+				{
+					p.Name = nestedContext.AssignNameIfUnassigned(p);
+				}
+			}
+
+			return default;
 		}
 
 		protected internal override Unit VisitCall(Call inst, VariableScope context)

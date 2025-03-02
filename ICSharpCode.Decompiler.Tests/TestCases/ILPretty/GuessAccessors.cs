@@ -15,8 +15,8 @@ namespace ClassLibrary1
 			//IL_0007: Expected O, but got Unknown
 			UnknownClass val = new UnknownClass();
 			int? unknownProperty = val.UnknownProperty;
-			int? num2 = (val.UnknownProperty = unknownProperty.GetValueOrDefault());
-			int? num3 = num2;
+			int? num = (val.UnknownProperty = unknownProperty.GetValueOrDefault());
+			int? num3 = num;
 			List<object> list = new List<object> {
 			val[unknownProperty.Value] ?? "",
 			val.NotProperty,
