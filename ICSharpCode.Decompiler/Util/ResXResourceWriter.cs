@@ -312,6 +312,9 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void Generate()
 		{
+			if (writer == null)
+				InitWriter();
+
 			if (written)
 				throw new InvalidOperationException("The resource is already generated.");
 
