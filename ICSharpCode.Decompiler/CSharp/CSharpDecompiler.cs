@@ -106,6 +106,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new SwitchDetection(),
 				new SwitchOnStringTransform(),
 				new SwitchOnNullableTransform(),
+				new SwitchExpressionDefaultCaseTransform(),
 				new SplitVariables(), // split variables once again, because SwitchOnNullableTransform eliminates ldloca 
 				new IntroduceRefReadOnlyModifierOnLocals(),
 				new BlockILTransform { // per-block transforms

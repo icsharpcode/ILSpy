@@ -4031,10 +4031,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				switchExpr.SwitchSections.Add(ses);
 			}
 
-			var defaultSES = new SwitchExpressionSection();
-			defaultSES.Pattern = new IdentifierExpression("_");
-			defaultSES.Body = TranslateSectionBody(defaultSection);
-			switchExpr.SwitchSections.Add(defaultSES);
+			if (!defaultSection.IsCompilerGeneratedDefaultSection)
+			{
+				var defaultSES = new SwitchExpressionSection();
+				defaultSES.Pattern = new IdentifierExpression("_");
+				defaultSES.Body = TranslateSectionBody(defaultSection);
+				switchExpr.SwitchSections.Add(defaultSES);
+			}
 
 			return switchExpr.WithILInstruction(inst).WithRR(new ResolveResult(resultType));
 
