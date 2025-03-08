@@ -1282,7 +1282,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				if (string.IsNullOrWhiteSpace(parameter.Name) && !parameter.Type.IsArgList())
 				{
-					// needs to be consistent with logic in ILReader.CreateILVarable
+					// needs to be consistent with logic in ILReader.CreateILVariable
 					parameter.Name = "P_" + i;
 				}
 				i++;

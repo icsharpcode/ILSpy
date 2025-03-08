@@ -15,8 +15,8 @@ namespace ClassLibrary1
 			//IL_0007: Expected O, but got Unknown
 			UnknownClass val = new UnknownClass();
 			int? unknownProperty = val.UnknownProperty;
-			int? num2 = (val.UnknownProperty = unknownProperty.GetValueOrDefault());
-			int? num3 = num2;
+			int? num = (val.UnknownProperty = unknownProperty.GetValueOrDefault());
+			int? num3 = num;
 			List<object> list = new List<object> {
 			val[unknownProperty.Value] ?? "",
 			val.NotProperty,
@@ -50,9 +50,9 @@ namespace ClassLibrary1
 			//IL_00e1: Expected O, but got Unknown
 			//IL_00e1: Expected O, but got Unknown
 			UnknownGenericClass<UnknownEventArgs> val = new UnknownGenericClass<UnknownEventArgs>();
-			UnknownEventArgs val2 = (val.UnknownProperty = val.UnknownProperty);
+			UnknownEventArgs e = (val.UnknownProperty = val.UnknownProperty);
 			List<object> list = new List<object> {
-				val[((object)val2).GetHashCode()] ?? "",
+				val[((object)e).GetHashCode()] ?? "",
 				val.NotProperty,
 				val.get_NotPropertyWithGeneric<string>(42),
 				val[42],
@@ -61,10 +61,10 @@ namespace ClassLibrary1
 			};
 			val.OnEvent += Instance_OnEvent;
 			val.OnEvent -= Instance_OnEvent;
-			UnknownEventArgs val3 = val[(UnknownEventArgs)null];
-			val[new UnknownEventArgs()] = val3;
-			UnknownEventArgs val4 = val[new UnknownEventArgs(), new UnknownEventArgs()];
-			val[new UnknownEventArgs(), new UnknownEventArgs()] = val4;
+			UnknownEventArgs e2 = val[(UnknownEventArgs)null];
+			val[new UnknownEventArgs()] = e2;
+			UnknownEventArgs e3 = val[new UnknownEventArgs(), new UnknownEventArgs()];
+			val[new UnknownEventArgs(), new UnknownEventArgs()] = e3;
 		}
 
 		public void MethodUnknownStatic()
