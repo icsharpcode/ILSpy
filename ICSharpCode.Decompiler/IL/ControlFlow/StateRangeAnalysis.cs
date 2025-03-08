@@ -21,11 +21,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -219,6 +216,32 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						// Mono resets the state field during MoveNext();
 						// don't consider this user code.
 						return stateRange;
+					}
+					else
+					{
+						goto default;
+					}
+				}
+				case StObj stobj when mode == StateRangeAnalysisMode.IteratorDispose:
+				{
+					if (stobj.MatchStFld(out var target, out var field, out var value) && target.MatchLdThis())
+					{
+						if (field.MemberDefinition == stateField && value.MatchLdcI4(-2))
+						{
+							// Roslyn 4.13 sets the state field in Dispose() to mark the iterator as disposed,
+							// don't consider this user code.
+							return stateRange;
+						}
+						else if (value.MatchDefaultOrNullOrZero())
+						{
+							// Roslyn 4.13 clears any local hoisted local variables in Dispose(),
+							// don't consider this user code.
+							return stateRange;
+						}
+						else
+						{
+							goto default;
+						}
 					}
 					else
 					{
