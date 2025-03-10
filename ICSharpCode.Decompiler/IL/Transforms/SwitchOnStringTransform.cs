@@ -668,7 +668,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!FixCasesWithoutValue(sections, stringValues))
 				return false;
 			// switch contains case null:
-			if (nullValueCaseBlock != defaultBlock)
+			if (nullValueCaseBlock != null && nullValueCaseBlock != defaultBlock)
 			{
 				if (!AddNullSection(sections, stringValues, nullValueCaseBlock))
 				{
