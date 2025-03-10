@@ -149,7 +149,7 @@ Examples:
 		[Option(generateDiagrammerCmd + "-report-excluded", "Outputs a report of types excluded from the generated diagrammer" +
 			$" - whether by default because compiler-generated, explicitly by '{exclude}' or implicitly by '{include}'." +
 			" You may find this useful to develop and debug your regular expressions.", CommandOptionType.NoValue)]
-		public bool ReportExludedTypes { get; set; }
+		public bool ReportExcludedTypes { get; set; }
 
 		[Option(generateDiagrammerCmd + "-docs", "The path or file:// URI of the XML file containing the target assembly's documentation comments." +
 			" You only need to set this if a) you want your diagrams annotated with them and b) the file name differs from that of the assmbly." +
@@ -221,7 +221,7 @@ Examples:
 							OutputFolder = OutputDirectory,
 							Include = Include,
 							Exclude = Exclude,
-							ReportExludedTypes = ReportExludedTypes,
+							ReportExcludedTypes = ReportExcludedTypes,
 							JsonOnly = JsonOnly,
 							XmlDocs = XmlDocs,
 							StrippedNamespaces = StrippedNamespaces

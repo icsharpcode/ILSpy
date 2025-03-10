@@ -127,7 +127,7 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 				Debug.WriteLine("Successfully generated HTML diagrammer.");
 			}
 
-			if (ReportExludedTypes)
+			if (ReportExcludedTypes)
 			{
 				string excludedTypes = model.Excluded.Join(Environment.NewLine);
 				File.WriteAllText(Path.Combine(outputFolder, "excluded types.txt"), excludedTypes);
