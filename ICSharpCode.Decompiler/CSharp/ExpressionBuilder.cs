@@ -1258,7 +1258,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				var typeHint = (PointerType)context.TypeHint;
 				int elementTypeSize = pointerType.ElementType.GetSize();
-				if (elementTypeSize == 0 || typeHint.ElementType.GetSize() != elementTypeSize)
+				if ((elementTypeSize == 0 || typeHint.ElementType.GetSize() != elementTypeSize)
+					&& GetPointerArithmeticOffset(byteOffsetInst, byteOffsetExpr, typeHint.ElementType, inst.CheckForOverflow) != null)
 				{
 					pointerType = typeHint;
 				}
