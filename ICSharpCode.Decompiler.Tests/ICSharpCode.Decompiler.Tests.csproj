@@ -104,6 +104,7 @@
     <None Include="TestCases\ILPretty\Issue1922.il" />
     <None Include="TestCases\ILPretty\Issue1918.il" />
     <None Include="TestCases\ILPretty\Issue2104.il" />
+    <None Include="TestCases\ILPretty\Issue3421.il" />
     <None Include="TestCases\ILPretty\WeirdEnums.il" />
     <None Include="TestCases\ILPretty\ConstantBlobs.il" />
     <None Include="TestCases\ILPretty\CS1xSwitch_Debug.il" />
@@ -129,6 +130,7 @@
     <Compile Include="Output\InsertParenthesesVisitorTests.cs" />
     <Compile Include="ProjectDecompiler\TargetFrameworkTests.cs" />
     <Compile Include="TestAssemblyResolver.cs" />
+    <Compile Include="TestCases\ILPretty\Issue3421.cs" />
     <Compile Include="TestCases\ILPretty\MonoFixed.cs" />
     <Compile Include="TestCases\Pretty\Comparisons.cs" />
     <None Include="TestCases\VBPretty\VBAutomaticEvents.vb" />

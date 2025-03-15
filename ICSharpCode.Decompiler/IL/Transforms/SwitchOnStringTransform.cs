@@ -668,9 +668,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!FixCasesWithoutValue(sections, stringValues))
 				return false;
 			// switch contains case null:
-			if (nullValueCaseBlock != defaultBlock)
+			if (nullValueCaseBlock != null && nullValueCaseBlock != defaultBlock)
 			{
 				if (!AddNullSection(sections, stringValues, nullValueCaseBlock))
+				{
+					return false;
+				}
+			}
+			else if (leaveContainer != null && !defaultBlockJump.MatchLeave(leaveContainer))
+			{
+				if (!AddNullSection(sections, stringValues, (Leave)exitBlockJump))
 				{
 					return false;
 				}
@@ -742,6 +749,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool AddNullSection(List<SwitchSection> sections, List<(string Value, int Index)> stringValues, Block nullValueCaseBlock)
 		{
+			return AddNullSection(sections, stringValues, new Branch(nullValueCaseBlock));
+		}
+
+		bool AddNullSection(List<SwitchSection> sections, List<(string Value, int Index)> stringValues, ILInstruction body)
+		{
 			var label = new LongSet(stringValues.Max(item => item.Index) + 1);
 			var possibleConflicts = sections.Where(sec => sec.Labels.Overlaps(label)).ToArray();
 			if (possibleConflicts.Length > 1)
@@ -753,7 +765,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				possibleConflicts[0].Labels = possibleConflicts[0].Labels.ExceptWith(label);
 			}
 			stringValues.Add((null, (int)label.Values.First()));
-			sections.Add(new SwitchSection() { Labels = label, Body = new Branch(nullValueCaseBlock) });
+			sections.Add(new SwitchSection() { Labels = label, Body = body });
 			return true;
 		}
 
