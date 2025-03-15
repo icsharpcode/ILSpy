@@ -49,6 +49,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return ((uint*)ptr)[2];
 		}
 
+		public unsafe static void AssignmentGuidPointerToDateTimePointer(Guid* ptr)
+		{
+			((DateTime*)ptr)[2] = DateTime.Now;
+		}
+
+		public unsafe static void AssignmentGuidPointerToDateTimePointerDefault(Guid* ptr)
+		{
+			((DateTime*)ptr)[2] = default(DateTime);
+		}
+
+		public unsafe static void AssignmentGuidPointerToDateTimePointer_2(Guid* ptr)
+		{
+			*(DateTime*)(ptr + 2) = DateTime.Now;
+		}
+
+		public unsafe static void AssignmentGuidPointerToDateTimePointerDefault_2(Guid* ptr)
+		{
+			*(DateTime*)(ptr + 2) = default(DateTime);
+		}
+
+		public unsafe static DateTime AccessGuidPointerToDateTimePointer(Guid* ptr)
+		{
+			return ((DateTime*)ptr)[2];
+		}
+
+		public unsafe static DateTime AccessGuidPointerToDateTimePointer_2(Guid* ptr)
+		{
+			return *(DateTime*)(ptr + 2);
+		}
+
 		public unsafe static void AssignmentIntPointer(int* ptr)
 		{
 			ptr[2] = 1;
