@@ -114,6 +114,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			((Guid*)ptr)[2] = Guid.NewGuid();
 		}
 
+		public unsafe static void AssignmentIntPointerToGuidPointer_2(int* ptr)
+		{
+			*(Guid*)(ptr + 2) = Guid.NewGuid();
+		}
+
 		public unsafe static Guid AccessIntPointerToGuidPointer(int* ptr)
 		{
 			return ((Guid*)ptr)[2];
