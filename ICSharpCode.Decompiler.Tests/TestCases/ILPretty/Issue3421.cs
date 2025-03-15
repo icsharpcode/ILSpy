@@ -5,10 +5,6 @@ internal class Issue3421
 
 	public virtual void SetValue(object value)
 	{
-		if (name == null)
-		{
-			return;
-		}
 		switch (name)
 		{
 			case "##Name##":
@@ -18,6 +14,8 @@ internal class Issue3421
 				return;
 			case "##InnerText##":
 				this.value = value.ToString();
+				return;
+			case null:
 				return;
 		}
 		if (this.value == null)
