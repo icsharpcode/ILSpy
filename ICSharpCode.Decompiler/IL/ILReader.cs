@@ -1766,15 +1766,36 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				int firstArgument = (opCode != OpCode.NewObj && !method.IsStatic) ? 1 : 0;
 				var arguments = new ILInstruction[firstArgument + method.Parameters.Count];
+				IType typeOfThis = constrainedPrefix ?? method.DeclaringType;
+				StackType expectedStackType = CallInstruction.ExpectedTypeForThisPointer(method.DeclaringType, constrainedPrefix);
+				bool requiresLdObjIfRef = firstArgument == 1
+					&& !firstArgumentIsStObjTarget
+					&& expectedStackType == StackType.Ref && typeOfThis.IsReferenceType != false;
 				for (int i = method.Parameters.Count - 1; i >= 0; i--)
 				{
+					if (requiresLdObjIfRef)
+					{
+						FlushExpressionStack();
+					}
+
 					arguments[firstArgument + i] = Pop(method.Parameters[i].Type.GetStackType());
 				}
 				if (firstArgument == 1)
 				{
-					arguments[0] = firstArgumentIsStObjTarget
-						? PopStObjTarget()
-						: Pop(CallInstruction.ExpectedTypeForThisPointer(constrainedPrefix ?? method.DeclaringType));
+					ILInstruction firstArgumentInstruction;
+					if (firstArgumentIsStObjTarget)
+					{
+						firstArgumentInstruction = PopStObjTarget();
+					}
+					else
+					{
+						firstArgumentInstruction = Pop(expectedStackType);
+						if (requiresLdObjIfRef)
+						{
+							firstArgumentInstruction = new LdObjIfRef(firstArgumentInstruction, typeOfThis);
+						}
+					}
+					arguments[0] = firstArgumentInstruction;
 				}
 				// arguments is in reverse order of the Pop calls, thus
 				// arguments is now in the correct evaluation order.

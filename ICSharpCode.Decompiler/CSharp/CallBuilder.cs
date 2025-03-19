@@ -360,7 +360,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					callArguments.FirstOrDefault(),
 					nonVirtualInvocation: callOpCode == OpCode.Call || method.IsConstructor,
 					memberStatic: method.IsStatic,
-					memberDeclaringType: constrainedTo ?? method.DeclaringType);
+					memberDeclaringType: method.DeclaringType,
+					constrainedTo: constrainedTo);
 				if (constrainedTo == null
 					&& target.Expression is CastExpression cast
 					&& target.ResolveResult is ConversionResolveResult conversion
