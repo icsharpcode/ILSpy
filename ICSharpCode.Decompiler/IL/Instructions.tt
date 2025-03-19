@@ -255,6 +255,9 @@
 		new OpCode("ldobj", "Indirect load (ref/pointer dereference).",
 			CustomClassName("LdObj"), CustomArguments(("target", new[] { "Ref", "I" })), HasTypeOperand, MemoryAccess, CustomWriteToButKeepOriginal,
 			SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, ResultType("type.GetStackType()")),
+		new OpCode("ldobj.if.ref", "If argument is a ref to a reference type, loads the object reference, stores it in a temporary, and evaluates to the address of that temporary (address.of(ldobj(arg))). Otherwise, returns the argument ref as-is.<para>This instruction represents the memory-load semantics of callvirt with a generic type as receiver (where the IL always takes a ref, but only methods on value types expect one, for method on reference types there's an implicit ldobj, which this instruction makes explicit in order to preserve the order-of-evaluation).</para>",
+			CustomClassName("LdObjIfRef"), CustomArguments(("target", new[] { "Ref", "I" })), HasTypeOperand, MemoryAccess,
+			MayThrow, ResultType("Ref")),
 		new OpCode("stobj", "Indirect store (store to ref/pointer)." + Environment.NewLine
 				+ "Evaluates to the value that was stored (when using type byte/short: evaluates to the truncated value, sign/zero extended back to I4 based on type.GetSign())",
 			CustomClassName("StObj"), CustomArguments(("target", new[] { "Ref", "I" }), ("value", new[] { "type.GetStackType()" })), HasTypeOperand, MemoryAccess, CustomWriteToButKeepOriginal,
@@ -916,7 +919,8 @@ namespace ICSharpCode.Decompiler.IL
 			b = new StringBuilder();
 			b.AppendLine("protected sealed override ILInstruction GetChild(int index)");
 			b.AppendLine("{");
-			b.AppendLine("\tswitch (index) {");
+			b.AppendLine("\tswitch (index)");
+			b.AppendLine("\t{");
 			for (int i = 0; i < childCount; i++) {
 				b.AppendLine("\t\tcase " + i + ":");
 				b.AppendLine("\t\t\treturn this." + children[i].Name + ";");
@@ -933,7 +937,8 @@ namespace ICSharpCode.Decompiler.IL
 			b = new StringBuilder();
 			b.AppendLine("protected sealed override void SetChild(int index, ILInstruction value)");
 			b.AppendLine("{");
-			b.AppendLine("\tswitch (index) {");
+			b.AppendLine("\tswitch (index)");
+			b.AppendLine("\t{");
 			for (int i = 0; i < childCount; i++) {
 				b.AppendLine("\t\tcase " + i + ":");
 				b.AppendLine("\t\t\tthis." + children[i].PropertyName + " = value;");
@@ -953,7 +958,8 @@ namespace ICSharpCode.Decompiler.IL
 			b = new StringBuilder();
 			b.AppendLine("protected sealed override SlotInfo GetChildSlot(int index)");
 			b.AppendLine("{");
-			b.AppendLine("\tswitch (index) {");
+			b.AppendLine("\tswitch (index)");
+			b.AppendLine("\t{");
 			for (int i = 0; i < childCount; i++) {
 				b.AppendLine("\t\tcase " + i + ":");
 				b.AppendLine("\t\t\treturn " + children[i].SlotName + ";");
@@ -1113,7 +1119,8 @@ protected override void Disconnected()
 			opCode.Members.Add("/// <summary>Returns the method operand.</summary>" + Environment.NewLine
 							+ $"public IMethod{n} Method => method;");
 			opCode.GenerateWriteTo = true;
-			opCode.WriteOperand.Add("if (method != null) {");
+			opCode.WriteOperand.Add("if (method != null)");
+			opCode.WriteOperand.Add("{");
 			opCode.WriteOperand.Add("\toutput.Write(' ');");
 			opCode.WriteOperand.Add("\tmethod.WriteTo(output);");
 			opCode.WriteOperand.Add("}");

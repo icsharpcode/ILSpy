@@ -164,6 +164,8 @@ namespace ICSharpCode.Decompiler.IL
 		IsInst,
 		/// <summary>Indirect load (ref/pointer dereference).</summary>
 		LdObj,
+		/// <summary>If argument is a ref to a reference type, loads the object reference, stores it in a temporary, and evaluates to the address of that temporary (address.of(ldobj(arg))). Otherwise, returns the argument ref as-is.<para>This instruction represents the memory-load semantics of callvirt with a generic type as receiver (where the IL always takes a ref, but only methods on value types expect one, for method on reference types there's an implicit ldobj, which this instruction makes explicit in order to preserve the order-of-evaluation).</para></summary>
+		LdObjIfRef,
 		/// <summary>Indirect store (store to ref/pointer).
 		/// Evaluates to the value that was stored (when using type byte/short: evaluates to the truncated value, sign/zero extended back to I4 based on type.GetSign())</summary>
 		StObj,
@@ -4086,6 +4088,116 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
+	/// <summary>If argument is a ref to a reference type, loads the object reference, stores it in a temporary, and evaluates to the address of that temporary (address.of(ldobj(arg))). Otherwise, returns the argument ref as-is.<para>This instruction represents the memory-load semantics of callvirt with a generic type as receiver (where the IL always takes a ref, but only methods on value types expect one, for method on reference types there's an implicit ldobj, which this instruction makes explicit in order to preserve the order-of-evaluation).</para></summary>
+	public sealed partial class LdObjIfRef : ILInstruction
+	{
+		public LdObjIfRef(ILInstruction target, IType type) : base(OpCode.LdObjIfRef)
+		{
+			this.Target = target;
+			this.type = type;
+		}
+		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
+		ILInstruction target = null!;
+		public ILInstruction Target {
+			get { return this.target; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.target, value, 0);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 1;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index)
+			{
+				case 0:
+					return this.target;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index)
+			{
+				case 0:
+					this.Target = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index)
+			{
+				case 0:
+					return TargetSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (LdObjIfRef)ShallowClone();
+			clone.Target = this.target.Clone();
+			return clone;
+		}
+		IType type;
+		/// <summary>Returns the type operand.</summary>
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
+		public override StackType ResultType { get { return StackType.Ref; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return target.Flags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+			}
+		}
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			output.Write(' ');
+			type.WriteTo(output);
+			output.Write('(');
+			this.target.WriteTo(output, options);
+			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdObjIfRef(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitLdObjIfRef(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdObjIfRef(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
+		{
+			var o = other as LdObjIfRef;
+			return o != null && this.target.PerformMatch(o.target, ref match) && type.Equals(o.type);
+		}
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			DebugAssert(target.ResultType == StackType.Ref || target.ResultType == StackType.I);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Indirect store (store to ref/pointer).
 	/// Evaluates to the value that was stored (when using type byte/short: evaluates to the truncated value, sign/zero extended back to I4 based on type.GetSign())</summary>
 	public sealed partial class StObj : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
@@ -7071,6 +7183,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitLdObjIfRef(LdObjIfRef inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitStObj(StObj inst)
 		{
 			Default(inst);
@@ -7470,6 +7586,10 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitLdObj(LdObj inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitLdObjIfRef(LdObjIfRef inst)
 		{
 			return Default(inst);
 		}
@@ -7875,6 +7995,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitLdObjIfRef(LdObjIfRef inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitStObj(StObj inst, C context)
 		{
 			return Default(inst, context);
@@ -8086,6 +8210,7 @@ namespace ICSharpCode.Decompiler.IL
 			"castclass",
 			"isinst",
 			"ldobj",
+			"ldobj.if.ref",
 			"stobj",
 			"box",
 			"unbox",
@@ -8581,6 +8706,19 @@ namespace ICSharpCode.Decompiler.IL
 		public bool MatchLdObj([NotNullWhen(true)] out ILInstruction? target, [NotNullWhen(true)] out IType? type)
 		{
 			var inst = this as LdObj;
+			if (inst != null)
+			{
+				target = inst.Target;
+				type = inst.Type;
+				return true;
+			}
+			target = default(ILInstruction);
+			type = default(IType);
+			return false;
+		}
+		public bool MatchLdObjIfRef([NotNullWhen(true)] out ILInstruction? target, [NotNullWhen(true)] out IType? type)
+		{
+			var inst = this as LdObjIfRef;
 			if (inst != null)
 			{
 				target = inst.Target;
