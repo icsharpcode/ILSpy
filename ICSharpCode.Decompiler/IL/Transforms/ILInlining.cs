@@ -394,6 +394,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (ldloca.Variable.Type.IsReferenceType ?? false)
 				return false;
 			ILInstruction inst = ldloca;
+			if (inst.Parent is LdObjIfRef)
+			{
+				inst = inst.Parent;
+			}
 			while (inst.Parent is LdFlda ldflda)
 			{
 				inst = ldflda;

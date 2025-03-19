@@ -107,6 +107,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case LdObj _:
 				case StObj stobj when stobj.Target == addressLoadingInstruction:
 					return AddressUse.Immediate;
+				case LdObjIfRef:
+					// This is either an immediate use, or we need to check how the parent uses the address.
+					return DetermineAddressUse(addressLoadingInstruction.Parent, targetVar);
 				case LdFlda ldflda:
 					return DetermineAddressUse(ldflda, targetVar);
 				case Await await:

@@ -475,6 +475,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
+		protected internal override void VisitLdObjIfRef(LdObjIfRef inst)
+		{
+			base.VisitLdObjIfRef(inst);
+			if (inst.Target is AddressOf)
+			{
+				context.Step("ldobj.if.ref(addressof(...)) -> addressof(...)", inst);
+				// there already is a temporary, so the ldobj.if.ref is a no-op in both cases
+				inst.ReplaceWith(inst.Target);
+				return;
+			}
+		}
+
 		protected internal override void VisitStObj(StObj inst)
 		{
 			base.VisitStObj(inst);

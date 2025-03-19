@@ -296,5 +296,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return default(T).ToString();
 		}
+
+		public static void ConstrainedCall<T>(T x, ref T y) where T : IDisposable
+		{
+			x.Dispose();
+			y.Dispose();
+		}
 	}
 }

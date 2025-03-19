@@ -2614,7 +2614,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		internal TranslatedExpression TranslateTarget(ILInstruction target, bool nonVirtualInvocation,
-			bool memberStatic, IType memberDeclaringType)
+			bool memberStatic, IType memberDeclaringType, IType constrainedTo = null)
 		{
 			// If references are missing member.IsStatic might not be set correctly.
 			// Additionally check target for null, in order to avoid a crash.
@@ -2630,8 +2630,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				else
 				{
-					IType targetTypeHint = memberDeclaringType;
-					if (CallInstruction.ExpectedTypeForThisPointer(memberDeclaringType) == StackType.Ref)
+					IType targetTypeHint = constrainedTo ?? memberDeclaringType;
+					if (CallInstruction.ExpectedTypeForThisPointer(memberDeclaringType, constrainedTo) == StackType.Ref)
 					{
 						if (target.ResultType == StackType.Ref)
 						{
@@ -2643,13 +2643,13 @@ namespace ICSharpCode.Decompiler.CSharp
 						}
 					}
 					var translatedTarget = Translate(target, targetTypeHint);
-					if (CallInstruction.ExpectedTypeForThisPointer(memberDeclaringType) == StackType.Ref)
+					if (CallInstruction.ExpectedTypeForThisPointer(memberDeclaringType, constrainedTo) == StackType.Ref)
 					{
 						// When accessing members on value types, ensure we use a reference of the correct type,
 						// and not a pointer or a reference to a different type (issue #1333)
-						if (!(translatedTarget.Type is ByReferenceType brt && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(brt.ElementType, memberDeclaringType)))
+						if (!(translatedTarget.Type is ByReferenceType brt && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(brt.ElementType, constrainedTo ?? memberDeclaringType)))
 						{
-							translatedTarget = translatedTarget.ConvertTo(new ByReferenceType(memberDeclaringType), this);
+							translatedTarget = translatedTarget.ConvertTo(new ByReferenceType(constrainedTo ?? memberDeclaringType), this);
 						}
 					}
 					if (translatedTarget.Expression is DirectionExpression)
@@ -2675,9 +2675,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			else
 			{
-				return new TypeReferenceExpression(ConvertType(memberDeclaringType))
+				return new TypeReferenceExpression(ConvertType(constrainedTo ?? memberDeclaringType))
 					.WithoutILInstruction()
-					.WithRR(new TypeResolveResult(memberDeclaringType));
+					.WithRR(new TypeResolveResult(constrainedTo ?? memberDeclaringType));
 			}
 
 			bool ShouldUseBaseReference()
@@ -2686,7 +2686,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return false;
 				if (!MatchLdThis(target))
 					return false;
-				if (memberDeclaringType.GetDefinition() == resolver.CurrentTypeDefinition)
+				if ((constrainedTo ?? memberDeclaringType).GetDefinition() == resolver.CurrentTypeDefinition)
 					return false;
 				return true;
 			}

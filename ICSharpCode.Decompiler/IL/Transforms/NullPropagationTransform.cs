@@ -283,6 +283,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						inst = arg;
 					}
+					else if (inst is LdObjIfRef ldObjIfRef)
+					{
+						inst = ldObjIfRef.Target;
+					}
 					// ensure the access chain does not contain any 'nullable.unwrap' that aren't directly part of the chain
 					if (ArgumentsAfterFirstMayUnwrapNull(call.Arguments))
 						return false;
@@ -362,7 +366,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							&& arg.MatchLdLoc(testedVar);
 					case Mode.UnconstrainedType:
 						// unconstrained generic type (expect: ldloc(testedVar))
-						return inst.MatchLdLoc(testedVar);
+						return inst.MatchLdLoc(testedVar) || (inst.MatchLdObjIfRef(out var testedVarLoad, out _) && testedVarLoad.MatchLdLoc(testedVar));
 					default:
 						throw new ArgumentOutOfRangeException(nameof(mode));
 				}

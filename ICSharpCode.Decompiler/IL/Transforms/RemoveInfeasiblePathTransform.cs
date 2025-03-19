@@ -54,8 +54,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 		}
-
-
 		private bool DoTransform(Block block, ILTransformContext context)
 		{
 			if (!MatchBlock1(block, out var s, out int value, out var br))

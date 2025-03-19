@@ -316,7 +316,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// the null check of reference types might have been transformed into "objVar?.Dispose();"
 					if (!(rewrap.Argument is CallVirt cv))
 						return false;
-					if (!(cv.Arguments.FirstOrDefault() is NullableUnwrap unwrap))
+					target = cv.Arguments.FirstOrDefault();
+					if (target is LdObjIfRef ldObjIfRef)
+						target = ldObjIfRef.Target;
+					if (!(target is NullableUnwrap unwrap))
 						return false;
 					numObjVarLoadsInCheck = 1;
 					disposeCall = cv;
@@ -342,6 +345,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					target = cv.Arguments.FirstOrDefault();
 					if (target == null)
 						return false;
+					if (target is LdObjIfRef ldObjIfRef)
+						target = ldObjIfRef.Target;
 					if (target.MatchBox(out var newTarget, out var type) && type.Equals(objVar.Type))
 						target = newTarget;
 					else if (isInlinedIsInst && target.MatchIsInst(out newTarget, out type) && type.IsKnownType(disposeTypeCode))
