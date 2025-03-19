@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.Solution
 	/// </summary>
 	public static class SolutionCreator
 	{
-		private static readonly XNamespace ProjectFileNamespace = XNamespace.Get("http://schemas.microsoft.com/developer/msbuild/2003");
+		static readonly XNamespace ProjectFileNamespace = XNamespace.Get("http://schemas.microsoft.com/developer/msbuild/2003");
 
 		/// <summary>
 		/// Writes a solution file to the specified <paramref name="targetFile"/>.
@@ -52,20 +52,22 @@ namespace ICSharpCode.Decompiler.Solution
 				throw new ArgumentNullException(nameof(projects));
 			}
 
-			if (!projects.Any())
+			var projectList = projects.ToList();
+
+			if (!projectList.Any())
 			{
 				throw new InvalidOperationException("At least one project is expected.");
 			}
 
 			using (var writer = new StreamWriter(targetFile))
 			{
-				WriteSolutionFile(writer, projects, targetFile);
+				WriteSolutionFile(writer, projectList, targetFile);
 			}
 
-			FixProjectReferences(projects);
+			FixProjectReferences(projectList);
 		}
 
-		private static void WriteSolutionFile(TextWriter writer, IEnumerable<ProjectItem> projects, string solutionFilePath)
+		static void WriteSolutionFile(TextWriter writer, List<ProjectItem> projects, string solutionFilePath)
 		{
 			WriteHeader(writer);
 			WriteProjects(writer, projects, solutionFilePath);
@@ -90,7 +92,7 @@ namespace ICSharpCode.Decompiler.Solution
 			writer.WriteLine("MinimumVisualStudioVersion = 10.0.40219.1");
 		}
 
-		private static void WriteProjects(TextWriter writer, IEnumerable<ProjectItem> projects, string solutionFilePath)
+		static void WriteProjects(TextWriter writer, List<ProjectItem> projects, string solutionFilePath)
 		{
 			foreach (var project in projects)
 			{
@@ -103,7 +105,7 @@ namespace ICSharpCode.Decompiler.Solution
 			}
 		}
 
-		private static IEnumerable<string> WriteSolutionConfigurations(TextWriter writer, IEnumerable<ProjectItem> projects)
+		static List<string> WriteSolutionConfigurations(TextWriter writer, List<ProjectItem> projects)
 		{
 			var platforms = projects.GroupBy(p => p.PlatformName).Select(g => g.Key).ToList();
 
@@ -125,10 +127,10 @@ namespace ICSharpCode.Decompiler.Solution
 			return platforms;
 		}
 
-		private static void WriteProjectConfigurations(
+		static void WriteProjectConfigurations(
 			TextWriter writer,
-			IEnumerable<ProjectItem> projects,
-			IEnumerable<string> solutionPlatforms)
+			List<ProjectItem> projects,
+			List<string> solutionPlatforms)
 		{
 			writer.WriteLine("\tGlobalSection(ProjectConfigurationPlatforms) = postSolution");
 
@@ -152,9 +154,11 @@ namespace ICSharpCode.Decompiler.Solution
 			writer.WriteLine("\tEndGlobalSection");
 		}
 
-		private static void FixProjectReferences(IEnumerable<ProjectItem> projects)
+		static void FixProjectReferences(List<ProjectItem> projects)
 		{
-			var projectsMap = projects.ToDictionary(p => p.ProjectName, p => p);
+			var projectsMap = projects.ToDictionary(
+				p => p.ProjectName,
+				p => p);
 
 			foreach (var project in projects)
 			{
@@ -192,7 +196,7 @@ namespace ICSharpCode.Decompiler.Solution
 			}
 		}
 
-		private static string GetRelativePath(string fromFilePath, string toFilePath)
+		static string GetRelativePath(string fromFilePath, string toFilePath)
 		{
 			Uri fromUri = new Uri(fromFilePath);
 			Uri toUri = new Uri(toFilePath);
