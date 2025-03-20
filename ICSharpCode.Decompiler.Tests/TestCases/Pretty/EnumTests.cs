@@ -28,6 +28,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Item2
 		}
 
+		public enum NoZero
+		{
+			Item1 = 1,
+			Item2
+		}
+
 		public enum OutOfOrderMembers
 		{
 			Item1 = 1,
@@ -134,6 +140,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public object PreservingTypeWhenBoxedTwoEnum()
 		{
 			return AttributeTargets.Class | AttributeTargets.Delegate;
+		}
+
+		public void EnumInNotZeroCheck(SimpleEnum value, NoZero value2)
+		{
+			if (value != SimpleEnum.Item1)
+			{
+				Console.WriteLine();
+			}
+
+			if (value2 != 0)
+			{
+				Console.WriteLine();
+			}
 		}
 	}
 }
