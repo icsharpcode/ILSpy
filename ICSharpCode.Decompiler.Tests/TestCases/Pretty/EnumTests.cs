@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine();
 			}
 
-			if (value2 != (NoZero)0)
+			if (value2 != 0)
 			{
 				Console.WriteLine();
 			}

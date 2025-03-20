@@ -731,10 +731,22 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(new OperatorResolveResult(boolType, System.Linq.Expressions.ExpressionType.NotEqual,
 													  this.ResolveResult, nullRef.ResolveResult));
 			}
-			else
+			else if (Type.Kind == TypeKind.Enum && Type.GetDefinition() is { } typeDef &&
+					 typeDef.Fields.Any(f => f.GetConstantValue() is { } val && (ulong)CSharpPrimitiveCast.Cast(TypeCode.UInt64, val, false) == 0L))
 			{
 				var zero = expressionBuilder
 					.ConvertConstantValue(new ConstantResolveResult(Type, 0), allowImplicitConversion: true);
+				var op = negate ? BinaryOperatorType.Equality : BinaryOperatorType.InEquality;
+				return new BinaryOperatorExpression(Expression, op, zero.Expression)
+					.WithoutILInstruction()
+					.WithRR(new OperatorResolveResult(boolType, System.Linq.Expressions.ExpressionType.NotEqual,
+						this.ResolveResult, zero.ResolveResult));
+			}
+			else
+			{
+				var zero = new PrimitiveExpression(0)
+					.WithoutILInstruction()
+					.WithRR(new ConstantResolveResult(expressionBuilder.compilation.FindType(KnownTypeCode.Int32), 0));
 				var op = negate ? BinaryOperatorType.Equality : BinaryOperatorType.InEquality;
 				return new BinaryOperatorExpression(Expression, op, zero.Expression)
 					.WithoutILInstruction()
