@@ -142,9 +142,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						DetermineCaptureAndDeclarationScope(info, useSite);
 
-						if (context.Function.Method.IsConstructor && localFunction.DeclarationScope == null)
+						if (context.Function.Method.IsConstructor)
 						{
-							localFunction.DeclarationScope = BlockContainer.FindClosestContainer(useSite);
+							if (localFunction.DeclarationScope == null)
+							{
+								localFunction.DeclarationScope = BlockContainer.FindClosestContainer(useSite);
+							}
+							else
+							{
+								localFunction.DeclarationScope = FindCommonAncestorInstruction<BlockContainer>(useSite, localFunction.DeclarationScope);
+								if (localFunction.DeclarationScope == null)
+								{
+									localFunction.DeclarationScope = (BlockContainer)context.Function.Body;
+								}
+							}
 						}
 					}
 
