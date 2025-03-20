@@ -68,7 +68,8 @@
     'Get-DecompiledSource',
     'Get-DecompiledTypes',
     'Get-Decompiler',
-    'Get-DecompilerVersion'
+    'Get-DecompilerVersion',
+    'Get-TargetFramework'
   )
 
   # Variables to export from this module
