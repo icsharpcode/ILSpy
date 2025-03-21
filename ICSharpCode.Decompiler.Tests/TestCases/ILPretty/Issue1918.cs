@@ -11,7 +11,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 			fixed (Guid* ptr = A_0)
 			{
 				void* ptr2 = ptr;
-				UIntPtr* ptr3 = (UIntPtr*)((byte*)ptr2 - sizeof(UIntPtr));
+				UIntPtr* ptr3 = (UIntPtr*)ptr2 - 1;
 				UIntPtr uIntPtr = *ptr3;
 				try
 				{
