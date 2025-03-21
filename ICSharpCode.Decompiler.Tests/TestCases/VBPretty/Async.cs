@@ -40,9 +40,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.VBPretty
 		public async void AwaitDefaultYieldAwaitable()
 		{
 #if LEGACY_VBC || (OPTIMIZE && !ROSLYN4)
-			YieldAwaitable yieldAwaitable = default(YieldAwaitable);
-			YieldAwaitable yieldAwaitable2 = yieldAwaitable;
-			await yieldAwaitable2;
+			YieldAwaitable yieldAwaitable2 = default(YieldAwaitable);
+			YieldAwaitable yieldAwaitable = yieldAwaitable2;
+			await yieldAwaitable;
 #else
 			await default(YieldAwaitable);
 #endif
@@ -51,9 +51,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.VBPretty
 		public async void AwaitDefaultHopToThreadPool()
 		{
 #if LEGACY_VBC || (OPTIMIZE && !ROSLYN4)
-			HopToThreadPoolAwaitable hopToThreadPoolAwaitable = default(HopToThreadPoolAwaitable);
-			HopToThreadPoolAwaitable hopToThreadPoolAwaitable2 = hopToThreadPoolAwaitable;
-			await hopToThreadPoolAwaitable2;
+			HopToThreadPoolAwaitable hopToThreadPoolAwaitable2 = default(HopToThreadPoolAwaitable);
+			HopToThreadPoolAwaitable hopToThreadPoolAwaitable = hopToThreadPoolAwaitable2;
+			await hopToThreadPoolAwaitable;
 #else
 			await default(HopToThreadPoolAwaitable);
 #endif

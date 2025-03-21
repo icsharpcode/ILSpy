@@ -19,15 +19,33 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 #if CS100
 using System.Threading.Tasks;
+
 #endif
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 {
 	public static class DelegateConstruction
 	{
+		internal class Dummy
+		{
+			public int baz;
+
+			public List<Dummy> more;
+		}
+
+		[CompilerGenerated]
+		internal class Helper
+		{
+			internal bool HelpMe(Dummy dum)
+			{
+				return true;
+			}
+		}
+
 		private class InstanceTests
 		{
 			public struct SomeData
@@ -377,10 +395,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 		public static void NameConflict2(int j)
 		{
 			List<Action<int>> list = new List<Action<int>>();
-			for (int k = 0; k < 10; k++)
+			for (int i = 0; i < 10; i++)
 			{
-				list.Add(delegate (int i) {
-					Console.WriteLine(i);
+				list.Add(delegate (int k) {
+					Console.WriteLine(k);
 				});
 			}
 		}
@@ -642,6 +660,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 		private void Run(ParameterizedThreadStart del, object x)
 		{
 			del(x);
+		}
+
+		public void Issue1572(DelegateConstruction.Dummy dum)
+		{
+#if EXPECTED_OUTPUT
+			DelegateConstruction.Helper CS_0024_003C_003E8__locals0 = new DelegateConstruction.Helper();
+			DelegateConstruction.Dummy dummy = dum.more.Where((DelegateConstruction.Dummy dummy2) => true).Where((DelegateConstruction.Dummy dummy2) => true).FirstOrDefault();
+			Console.WriteLine();
+			dummy.baz++;
+#else
+			DelegateConstruction.Helper h = new DelegateConstruction.Helper();
+			DelegateConstruction.Dummy localDummy = dum.more.Where(h.HelpMe).Where(h.HelpMe).FirstOrDefault();
+			Console.WriteLine();
+			localDummy.baz++;
+#endif
 		}
 	}
 

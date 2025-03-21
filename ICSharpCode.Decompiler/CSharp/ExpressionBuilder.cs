@@ -2547,15 +2547,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			foreach (var parameter in parameters)
 			{
 				var pd = astBuilder.ConvertParameter(parameter);
+				if (variables.TryGetValue(i, out var v))
+				{
+					pd.AddAnnotation(new ILVariableResolveResult(v, parameters[i].Type));
+					pd.Name = v.Name;
+				}
 				if (string.IsNullOrEmpty(pd.Name) && !pd.Type.IsArgList())
 				{
-					// needs to be consistent with logic in ILReader.CreateILVarable(ParameterDefinition)
+					// needs to be consistent with logic in ILReader.CreateILVariable
 					pd.Name = "P_" + i;
 				}
 				if (settings.AnonymousTypes && parameter.Type.ContainsAnonymousType())
 					pd.Type = null;
-				if (variables.TryGetValue(i, out var v))
-					pd.AddAnnotation(new ILVariableResolveResult(v, parameters[i].Type));
 				yield return pd;
 				i++;
 			}
