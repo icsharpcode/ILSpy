@@ -1134,7 +1134,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					expr = new PrimitiveExpression(constantValue, format);
 					if (AddResolveResultAnnotations && literalType != null)
 						expr.AddAnnotation(new ConstantResolveResult(literalType, constantValue));
-					if (integerTypeMismatch && !type.Equals(expectedType))
+					if (integerTypeMismatch && !type.Equals(expectedType) || underlyingType.Kind == TypeKind.Unknown)
 					{
 						expr = new CastExpression(ConvertType(type), expr);
 					}
