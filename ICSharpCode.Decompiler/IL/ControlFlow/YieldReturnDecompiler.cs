@@ -1014,7 +1014,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 				// We can't use MatchStLoc like above since the doFinallyBodies variable is split by SplitVariables.
 				// This occurs for the Legacy VBC compiler.
-				if (oldBlock.Instructions[pos].MatchStLoc(out var var, out value) && var.Kind == VariableKind.Local && var.Index == doFinallyBodies.Index)
+				if (oldBlock.Instructions[pos].MatchStLoc(out var var, out value) && var.Kind == VariableKind.Local && var.Index == doFinallyBodies?.Index)
 				{
 					if (!value.MatchLdcI4(0))
 					{
