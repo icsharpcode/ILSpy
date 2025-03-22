@@ -595,7 +595,7 @@ Are you sure you want to continue?</value>
     <value>Enable folding on all blocks in braces</value>
   </data>
   <data name="EnableSmoothScrolling" xml:space="preserve">
-	  <value>Enable smooth scrolling</value>
+    <value>Enable smooth scrolling</value>
   </data>
   <data name="EnableWordWrap" xml:space="preserve">
     <value>Enable word wrap</value>
@@ -1107,5 +1107,8 @@ Do you want to continue?</value>
   </data>
   <data name="_Window" xml:space="preserve">
     <value>_Window</value>
+  </data>
+  <data name="DecompilerSettings.IntroducePrivateProtectedAccessibility" xml:space="preserve">
+    <value>Introduce 'private protected' accessibility</value>
   </data>
 </root>

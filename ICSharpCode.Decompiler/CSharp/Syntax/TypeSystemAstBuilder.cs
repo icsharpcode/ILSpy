@@ -70,6 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.UseKeywordsForBuiltinTypes = true;
 			this.UseNullableSpecifierForValueTypes = true;
 			this.ShowAccessibility = true;
+			this.UsePrivateProtectedAccessibility = true;
 			this.ShowModifiers = true;
 			this.ShowBaseTypes = true;
 			this.ShowTypeParameters = true;
@@ -93,13 +94,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public bool AddResolveResultAnnotations { get; set; }
 
 		/// <summary>
-		/// Controls the accessibility modifiers are shown.
+		/// Controls whether accessibility modifiers are shown.
 		/// The default value is <see langword="true" />.
 		/// </summary>
 		public bool ShowAccessibility { get; set; }
 
 		/// <summary>
-		/// Controls the non-accessibility modifiers are shown.
+		/// Controls whether "private protected" accessibility modifiers are shown.
+		/// The default value is <see langword="true" />.
+		/// </summary>
+		public bool UsePrivateProtectedAccessibility { get; set; }
+
+		/// <summary>
+		/// Controls whether non-accessibility modifiers are shown.
 		/// The default value is <see langword="true" />.
 		/// </summary>
 		public bool ShowModifiers { get; set; }
@@ -1805,7 +1812,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Modifiers modifiers = Modifiers.None;
 			if (this.ShowAccessibility)
 			{
-				modifiers |= ModifierFromAccessibility(typeDefinition.Accessibility);
+				modifiers |= ModifierFromAccessibility(typeDefinition.Accessibility, UsePrivateProtectedAccessibility);
 			}
 			if (this.ShowModifiers)
 			{
@@ -2073,7 +2080,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 			}
 			if (this.ShowAccessibility && accessor.Accessibility != ownerAccessibility)
-				decl.Modifiers = ModifierFromAccessibility(accessor.Accessibility);
+				decl.Modifiers = ModifierFromAccessibility(accessor.Accessibility, UsePrivateProtectedAccessibility);
 			if (this.ShowModifiers && accessor.HasReadonlyModifier())
 				decl.Modifiers |= Modifiers.Readonly;
 			TokenRole keywordRole = kind switch {
@@ -2342,7 +2349,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		#endregion
 
 		#region Convert Modifiers
-		public static Modifiers ModifierFromAccessibility(Accessibility accessibility)
+		public static Modifiers ModifierFromAccessibility(Accessibility accessibility, bool usePrivateProtected)
 		{
 			switch (accessibility)
 			{
@@ -2357,7 +2364,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				case Accessibility.ProtectedOrInternal:
 					return Modifiers.Protected | Modifiers.Internal;
 				case Accessibility.ProtectedAndInternal:
-					return Modifiers.Private | Modifiers.Protected;
+					return usePrivateProtected ? Modifiers.Private | Modifiers.Protected : Modifiers.Protected;
 				default:
 					return Modifiers.None;
 			}
@@ -2388,7 +2395,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Modifiers m = Modifiers.None;
 			if (this.ShowAccessibility && NeedsAccessibility(member))
 			{
-				m |= ModifierFromAccessibility(member.Accessibility);
+				m |= ModifierFromAccessibility(member.Accessibility, UsePrivateProtectedAccessibility);
 			}
 			if (this.ShowModifiers)
 			{

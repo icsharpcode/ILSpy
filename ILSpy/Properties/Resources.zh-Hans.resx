@@ -369,6 +369,9 @@
   <data name="DecompilerSettings.IntroduceLocalFunctions" xml:space="preserve">
     <value>引入局部函数(local functions)</value>
   </data>
+  <data name="DecompilerSettings.IntroducePrivateProtectedAccessibility" xml:space="preserve">
+    <value />
+  </data>
   <data name="DecompilerSettings.IntroduceStaticLocalFunctions" xml:space="preserve">
     <value>引入静态局部函数(static local functions)</value>
   </data>

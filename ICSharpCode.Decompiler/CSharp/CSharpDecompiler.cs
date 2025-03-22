@@ -528,6 +528,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var typeSystemAstBuilder = new TypeSystemAstBuilder();
 			typeSystemAstBuilder.ShowAttributes = true;
+			typeSystemAstBuilder.UsePrivateProtectedAccessibility = settings.IntroducePrivateProtectedAccessibility;
 			typeSystemAstBuilder.SortAttributes = settings.SortCustomAttributes;
 			typeSystemAstBuilder.AlwaysUseShortTypeNames = true;
 			typeSystemAstBuilder.AddResolveResultAnnotations = true;

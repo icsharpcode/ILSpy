@@ -1081,6 +1081,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Introduce &apos;private protected&apos; accessibility.
+        /// </summary>
+        public static string DecompilerSettings_IntroducePrivateProtectedAccessibility {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.IntroducePrivateProtectedAccessibility", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Introduce static local functions.
         /// </summary>
         public static string DecompilerSettings_IntroduceStaticLocalFunctions {
@@ -1115,6 +1124,16 @@ namespace ICSharpCode.ILSpy.Properties {
             get {
                 return ResourceManager.GetString("DecompilerSettings.IsUnmanagedAttributeOnTypeParametersShouldBeReplacedWithUnmana" +
                         "gedConstraints", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Object.
+        /// </summary>
+        public static object DecompilerSettings_LifetimeAnnotations {
+            get {
+                object obj = ResourceManager.GetObject("DecompilerSettings.LifetimeAnnotations", resourceCulture);
+                return ((object)(obj));
             }
         }
         
