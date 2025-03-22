@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -25,6 +25,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public enum SimpleEnum
 		{
 			Item1,
+			Item2
+		}
+
+		public enum NoZero
+		{
+			Item1 = 1,
 			Item2
 		}
 
@@ -134,6 +140,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public object PreservingTypeWhenBoxedTwoEnum()
 		{
 			return AttributeTargets.Class | AttributeTargets.Delegate;
+		}
+
+		public void EnumInNotZeroCheck(SimpleEnum value, NoZero value2)
+		{
+			if (value != SimpleEnum.Item1)
+			{
+				Console.WriteLine();
+			}
+
+			if (value2 != 0)
+			{
+				Console.WriteLine();
+			}
 		}
 	}
 }
