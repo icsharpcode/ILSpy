@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		private IMethod GetMethodDefinition()
 		{
 			return ((MetadataModule)MethodDefinition.ParentModule?.MetadataFile
-				?.GetTypeSystemWithCurrentOptionsOrNull(SettingsService)
+				?.GetTypeSystemWithCurrentOptionsOrNull(SettingsService, AssemblyTreeModel.CurrentLanguageVersion)
 				?.MainModule)?.GetDefinition((MethodDefinitionHandle)MethodDefinition.MetadataToken) ?? MethodDefinition;
 		}
 

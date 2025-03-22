@@ -266,6 +266,7 @@ namespace ICSharpCode.ILSpy.Search
 					searchTerm,
 					(SearchMode)searchModeComboBox.SelectedIndex,
 					assemblyTreeModel.CurrentLanguage,
+					assemblyTreeModel.CurrentLanguageVersion,
 					treeNodeFactory,
 					settingsService);
 				currentSearch = startedSearch;
@@ -295,6 +296,7 @@ namespace ICSharpCode.ILSpy.Search
 			readonly SearchRequest searchRequest;
 			readonly SearchMode searchMode;
 			readonly Language language;
+			readonly LanguageVersion languageVersion;
 			readonly ApiVisibility apiVisibility;
 			readonly ITreeNodeFactory treeNodeFactory;
 			readonly SettingsService settingsService;
@@ -302,7 +304,7 @@ namespace ICSharpCode.ILSpy.Search
 			public IProducerConsumerCollection<SearchResult> ResultQueue { get; } = new ConcurrentQueue<SearchResult>();
 
 			public RunningSearch(IList<LoadedAssembly> assemblies, string searchTerm, SearchMode searchMode,
-				Language language, ITreeNodeFactory treeNodeFactory, SettingsService settingsService)
+				Language language, LanguageVersion languageVersion, ITreeNodeFactory treeNodeFactory, SettingsService settingsService)
 			{
 				this.assemblies = assemblies;
 				this.language = language;
@@ -471,7 +473,11 @@ namespace ICSharpCode.ILSpy.Search
 				request.RegEx = regex;
 				request.SearchResultFactory = new SearchResultFactory(language);
 				request.TreeNodeFactory = this.treeNodeFactory;
-				request.DecompilerSettings = settingsService.DecompilerSettings;
+				var decompilerSettings = settingsService.DecompilerSettings.Clone();
+				if (!Enum.TryParse(this.languageVersion?.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
+					languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
+				decompilerSettings.SetLanguageVersion(languageVersion);
+				request.DecompilerSettings = settingsService.DecompilerSettings.Clone();
 
 				return request;
 			}

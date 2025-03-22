@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		private IField GetFieldDefinition()
 		{
 			return ((MetadataModule)FieldDefinition.ParentModule?.MetadataFile
-				?.GetTypeSystemWithCurrentOptionsOrNull(SettingsService)
+				?.GetTypeSystemWithCurrentOptionsOrNull(SettingsService, AssemblyTreeModel.CurrentLanguageVersion)
 				?.MainModule)?.GetDefinition((FieldDefinitionHandle)FieldDefinition.MetadataToken) ?? FieldDefinition;
 		}
 

@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			return ((MetadataModule)ParentAssemblyNode.LoadedAssembly
 				.GetMetadataFileOrNull()
-				?.GetTypeSystemWithCurrentOptionsOrNull(SettingsService)
+				?.GetTypeSystemWithCurrentOptionsOrNull(SettingsService, AssemblyTreeModel.CurrentLanguageVersion)
 				?.MainModule)?.GetDefinition((SRM.TypeDefinitionHandle)TypeDefinition.MetadataToken);
 		}
 

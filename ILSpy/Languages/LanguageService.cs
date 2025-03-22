@@ -35,10 +35,12 @@ namespace ICSharpCode.ILSpy
 	[Shared]
 	public class LanguageService : ObservableObjectBase
 	{
+		private readonly SettingsService settingsService;
 		private readonly LanguageSettings languageSettings;
 
 		public LanguageService(IEnumerable<Language> languages, SettingsService settingsService, DockWorkspace dockWorkspace)
 		{
+			this.settingsService = settingsService;
 			languageSettings = settingsService.SessionSettings.LanguageSettings;
 
 			var sortedLanguages = languages.ToList();

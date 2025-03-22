@@ -89,7 +89,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			var referencedModule = resolver.Resolve(r);
 			if (referencedModule != null)
 			{
-				var module = (MetadataModule)referencedModule.GetTypeSystemWithCurrentOptionsOrNull(SettingsService)?.MainModule;
+				var module = (MetadataModule)referencedModule.GetTypeSystemWithCurrentOptionsOrNull(SettingsService, AssemblyTreeModel.CurrentLanguageVersion)?.MainModule;
 				foreach (var childRef in referencedModule.AssemblyReferences)
 					this.Children.Add(new AssemblyReferenceTreeNode(module, childRef, parentAssembly));
 			}

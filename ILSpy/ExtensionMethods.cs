@@ -76,11 +76,15 @@ namespace ICSharpCode.ILSpy
 			return result;
 		}
 
-		public static ICompilation? GetTypeSystemWithCurrentOptionsOrNull(this MetadataFile file, SettingsService settingsService)
+		public static ICompilation? GetTypeSystemWithCurrentOptionsOrNull(this MetadataFile file, SettingsService settingsService, LanguageVersion languageVersion)
 		{
+			var decompilerSettings = settingsService.DecompilerSettings.Clone();
+			if (!Enum.TryParse(languageVersion.Version, out Decompiler.CSharp.LanguageVersion csharpLanguageVersion))
+				csharpLanguageVersion = Decompiler.CSharp.LanguageVersion.Latest;
+			decompilerSettings.SetLanguageVersion(csharpLanguageVersion);
 			return file
 				.GetLoadedAssembly()
-				.GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(settingsService.DecompilerSettings));
+				.GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(decompilerSettings));
 		}
 
 		#region DPI independence

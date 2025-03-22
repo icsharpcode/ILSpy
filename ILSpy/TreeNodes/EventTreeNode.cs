@@ -52,7 +52,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		private IEvent GetEventDefinition()
 		{
 			return ((MetadataModule)EventDefinition.ParentModule?.MetadataFile
-				?.GetTypeSystemWithCurrentOptionsOrNull(SettingsService)
+				?.GetTypeSystemWithCurrentOptionsOrNull(SettingsService, AssemblyTreeModel.CurrentLanguageVersion)
 				?.MainModule)?.GetDefinition((EventDefinitionHandle)EventDefinition.MetadataToken) ?? EventDefinition;
 		}
 
