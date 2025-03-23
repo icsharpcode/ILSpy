@@ -71,7 +71,7 @@
     </PackageReference>
     <PackageReference Include="NUnit" />
     <PackageReference Include="Shouldly" />
-    <PackageReference Include="JunitXml.TestLogger" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="System.Memory" />
     <PackageReference Include="Mono.Cecil" />

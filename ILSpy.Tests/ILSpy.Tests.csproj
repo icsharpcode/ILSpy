@@ -78,7 +78,7 @@
     </PackageReference>
     <PackageReference Include="NUnit" />
     <PackageReference Include="Shouldly" />
-    <PackageReference Include="JunitXml.TestLogger" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
   </ItemGroup>
 
   <ItemGroup>

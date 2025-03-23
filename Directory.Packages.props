@@ -11,7 +11,6 @@
     <PackageVersion Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.1" />
     <PackageVersion Include="ILCompiler.Reflection.ReadyToRun.Experimental" Version="9.0.1-rtm.24557.9" />
     <PackageVersion Include="Iced" Version="1.21.0" />
-    <PackageVersion Include="JunitXml.TestLogger" Version="5.0.0" />
     <PackageVersion Include="K4os.Compression.LZ4" Version="1.3.8" />
     <PackageVersion Include="McMaster.Extensions.CommandLineUtils" Version="4.1.1" />
     <PackageVersion Include="McMaster.Extensions.Hosting.CommandLine" Version="4.1.1" />
@@ -29,6 +28,7 @@
     <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="9.0.0" />
     <PackageVersion Include="Microsoft.Sbom.Targets" Version="3.1.0" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="1.6.3" />
     <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
     <PackageVersion Include="NaturalSort.Extension" Version="4.3.0" />
