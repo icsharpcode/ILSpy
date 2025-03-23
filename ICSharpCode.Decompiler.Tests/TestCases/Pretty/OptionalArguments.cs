@@ -32,6 +32,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			B
 		}
 
+		internal class OptionalArgumentTest
+		{
+			private static void Test()
+			{
+				Test2();
+				Test3();
+				Test4();
+			}
+
+			private static void Test2(int a = 0)
+			{
+			}
+
+			private static void Test3(int a = 0, int? b = null)
+			{
+			}
+
+			private static void Test4(int? b = null, int a = 0)
+			{
+			}
+		}
+
 		public OptionalArguments(string name, int a = 5)
 		{
 

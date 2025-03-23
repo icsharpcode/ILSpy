@@ -70,6 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.UseKeywordsForBuiltinTypes = true;
 			this.UseNullableSpecifierForValueTypes = true;
 			this.ShowAccessibility = true;
+			this.UsePrivateProtectedAccessibility = true;
 			this.ShowModifiers = true;
 			this.ShowBaseTypes = true;
 			this.ShowTypeParameters = true;
@@ -93,13 +94,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public bool AddResolveResultAnnotations { get; set; }
 
 		/// <summary>
-		/// Controls the accessibility modifiers are shown.
+		/// Controls whether accessibility modifiers are shown.
 		/// The default value is <see langword="true" />.
 		/// </summary>
 		public bool ShowAccessibility { get; set; }
 
 		/// <summary>
-		/// Controls the non-accessibility modifiers are shown.
+		/// Controls whether "private protected" accessibility modifiers are shown.
+		/// The default value is <see langword="true" />.
+		/// </summary>
+		public bool UsePrivateProtectedAccessibility { get; set; }
+
+		/// <summary>
+		/// Controls whether non-accessibility modifiers are shown.
 		/// The default value is <see langword="true" />.
 		/// </summary>
 		public bool ShowModifiers { get; set; }
@@ -146,6 +153,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// The default value is <see langword="false" />.
 		/// </summary>
 		public bool ShowAttributes { get; set; }
+
+		/// <summary>
+		/// Controls whether to sort attributes, if set to <see langword="false" /> attributes are shown in metadata order.
+		/// The default value is <see langword="false" />.
+		/// </summary>
+		public bool SortAttributes { get; set; }
 
 		/// <summary>
 		/// Controls whether to use fully-qualified type names or short type names.
@@ -793,16 +806,72 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return attr;
 		}
 
-		private IEnumerable<AttributeSection> ConvertAttributes(IEnumerable<IAttribute> attributes)
+		private IEnumerable<AttributeSection> ConvertAttributes(IEnumerable<IAttribute> attributes, string target = null)
 		{
-			return attributes.Select(a => new AttributeSection(ConvertAttribute(a)));
-		}
-
-		private IEnumerable<AttributeSection> ConvertAttributes(IEnumerable<IAttribute> attributes, string target)
-		{
-			return attributes.Select(a => new AttributeSection(ConvertAttribute(a)) {
-				AttributeTarget = target
+			if (SortAttributes)
+				attributes = attributes.OrderBy(a => a, new DelegateComparer<IAttribute>(CompareAttribute));
+			return attributes.Select(a => {
+				var section = new AttributeSection(ConvertAttribute(a));
+				if (target != null)
+					section.AttributeTarget = target;
+				return section;
 			});
+
+			static int CompareAttribute(IAttribute a, IAttribute b)
+			{
+				int result = CompareType(a.AttributeType, b.AttributeType);
+				if (result != 0)
+					return result;
+				if (a.HasDecodeErrors && b.HasDecodeErrors)
+					return 0;
+				if (a.HasDecodeErrors)
+					return -1;
+				if (b.HasDecodeErrors)
+					return 1;
+				result = a.FixedArguments.Length - b.FixedArguments.Length;
+				if (result != 0)
+					return result;
+				for (int i = 0; i < a.FixedArguments.Length; i++)
+				{
+					var argA = a.FixedArguments[i];
+					var argB = b.FixedArguments[i];
+					result = CompareType(argA.Type, argB.Type);
+					if (result != 0)
+						return result;
+					if (argA.Value is IComparable compA && argB.Value is IComparable compB)
+						result = compA.CompareTo(compB);
+					else
+						result = 0;
+					if (result != 0)
+						return result;
+				}
+				result = a.NamedArguments.Length - b.NamedArguments.Length;
+				if (result != 0)
+					return result;
+				for (int i = 0; i < a.NamedArguments.Length; i++)
+				{
+					var argA = a.NamedArguments[i];
+					var argB = b.NamedArguments[i];
+					result = argA.Name.CompareTo(argB.Name);
+					if (result != 0)
+						return result;
+					result = CompareType(argA.Type, argB.Type);
+					if (result != 0)
+						return result;
+					if (argA.Value is IComparable compA && argB.Value is IComparable compB)
+						result = compA.CompareTo(compB);
+					else
+						result = 0;
+					if (result != 0)
+						return result;
+				}
+				return 0;
+			}
+
+			static int CompareType(IType a, IType b)
+			{
+				return a.FullName.CompareTo(b.FullName);
+			}
 		}
 		#endregion
 
@@ -1072,7 +1141,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					expr = new PrimitiveExpression(constantValue, format);
 					if (AddResolveResultAnnotations && literalType != null)
 						expr.AddAnnotation(new ConstantResolveResult(literalType, constantValue));
-					if (integerTypeMismatch && !type.Equals(expectedType))
+					if (integerTypeMismatch && !type.Equals(expectedType) || underlyingType.Kind == TypeKind.Unknown)
 					{
 						expr = new CastExpression(ConvertType(type), expr);
 					}
@@ -1722,10 +1791,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				case SymbolKind.Event:
 					return ConvertEvent((IEvent)entity);
 				case SymbolKind.Method:
-					if (entity.Name.Contains(".op_"))
-					{
-						goto case SymbolKind.Operator;
-					}
 					return ConvertMethod((IMethod)entity);
 				case SymbolKind.Operator:
 					return ConvertOperator((IMethod)entity);
@@ -1747,7 +1812,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Modifiers modifiers = Modifiers.None;
 			if (this.ShowAccessibility)
 			{
-				modifiers |= ModifierFromAccessibility(typeDefinition.Accessibility);
+				modifiers |= ModifierFromAccessibility(typeDefinition.Accessibility, UsePrivateProtectedAccessibility);
 			}
 			if (this.ShowModifiers)
 			{
@@ -2015,7 +2080,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 			}
 			if (this.ShowAccessibility && accessor.Accessibility != ownerAccessibility)
-				decl.Modifiers = ModifierFromAccessibility(accessor.Accessibility);
+				decl.Modifiers = ModifierFromAccessibility(accessor.Accessibility, UsePrivateProtectedAccessibility);
 			if (this.ShowModifiers && accessor.HasReadonlyModifier())
 				decl.Modifiers |= Modifiers.Readonly;
 			TokenRole keywordRole = kind switch {
@@ -2284,7 +2349,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		#endregion
 
 		#region Convert Modifiers
-		public static Modifiers ModifierFromAccessibility(Accessibility accessibility)
+		public static Modifiers ModifierFromAccessibility(Accessibility accessibility, bool usePrivateProtected)
 		{
 			switch (accessibility)
 			{
@@ -2299,7 +2364,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				case Accessibility.ProtectedOrInternal:
 					return Modifiers.Protected | Modifiers.Internal;
 				case Accessibility.ProtectedAndInternal:
-					return Modifiers.Private | Modifiers.Protected;
+					return usePrivateProtected ? Modifiers.Private | Modifiers.Protected : Modifiers.Protected;
 				default:
 					return Modifiers.None;
 			}
@@ -2330,7 +2395,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Modifiers m = Modifiers.None;
 			if (this.ShowAccessibility && NeedsAccessibility(member))
 			{
-				m |= ModifierFromAccessibility(member.Accessibility);
+				m |= ModifierFromAccessibility(member.Accessibility, UsePrivateProtectedAccessibility);
 			}
 			if (this.ShowModifiers)
 			{

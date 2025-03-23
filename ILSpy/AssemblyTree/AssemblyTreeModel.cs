@@ -767,6 +767,8 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				}
 				else
 				{
+					// ensure that we are only connected once to the event, else we might get multiple notifications
+					ContextMenuProvider.ContextMenuClosed -= ContextMenuClosed;
 					ContextMenuProvider.ContextMenuClosed += ContextMenuClosed;
 				}
 			}

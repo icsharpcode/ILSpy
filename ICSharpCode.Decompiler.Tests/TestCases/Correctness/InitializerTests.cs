@@ -318,28 +318,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			};
 		}
 
-		public static void NotAStructInitializer_DefaultConstructor()
-		{
-			InitializerTests.StructData data = new InitializerTests.StructData();
-			data.Field = 1;
-			data.Property = 2;
-			InitializerTests.X(InitializerTests.Y(), data);
-		}
-
 		public static void StructInitializer_DefaultConstructor()
 		{
 			InitializerTests.X(InitializerTests.Y(), new InitializerTests.StructData {
 				Field = 1,
 				Property = 2
 			});
-		}
-
-		public static void NotAStructInitializer_ExplicitConstructor()
-		{
-			InitializerTests.StructData data = new InitializerTests.StructData(0);
-			data.Field = 1;
-			data.Property = 2;
-			InitializerTests.X(InitializerTests.Y(), data);
 		}
 
 		public static void StructInitializer_ExplicitConstructor()

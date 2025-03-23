@@ -289,6 +289,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				replacement.AcceptVisitor(this);
 				return;
 			}
+			if (TransformArrayInitializers.TransformRuntimeHelpersCreateSpanInitialization(inst, context, out var replacement2))
+			{
+				context.Step("TransformRuntimeHelpersCreateSpanInitialization: single-dim", inst);
+				inst.ReplaceWith(replacement2);
+				return;
+			}
 			base.VisitCall(inst);
 			TransformAssignment.HandleCompoundAssign(inst, context);
 		}

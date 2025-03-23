@@ -369,6 +369,9 @@
   <data name="DecompilerSettings.IntroduceLocalFunctions" xml:space="preserve">
     <value>引入局部函数(local functions)</value>
   </data>
+  <data name="DecompilerSettings.IntroducePrivateProtectedAccessibility" xml:space="preserve">
+    <value />
+  </data>
   <data name="DecompilerSettings.IntroduceStaticLocalFunctions" xml:space="preserve">
     <value>引入静态局部函数(static local functions)</value>
   </data>
@@ -434,6 +437,9 @@
   </data>
   <data name="DecompilerSettings.ShowInfoFromDebugSymbolsIfAvailable" xml:space="preserve">
     <value>显示调试符号中的信息(如果可用)</value>
+  </data>
+  <data name="DecompilerSettings.SortCustomAttributes" xml:space="preserve">
+    <value />
   </data>
   <data name="DecompilerSettings.SparseIntegerSwitch" xml:space="preserve">
     <value>检测整型 switch 即使 IL 代码不使用跳转表</value>

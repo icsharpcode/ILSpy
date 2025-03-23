@@ -39,6 +39,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		private struct TypeA_Issue3385 : IDisposable
+		{
+			private int dummy;
+
+			public void Dispose()
+			{
+			}
+
+#if !ROSLYN3
+			public static implicit operator TypeB_Issue3385(TypeA_Issue3385 a)
+			{
+				return default(TypeB_Issue3385);
+			}
+#else
+			public static implicit operator TypeB_Issue3385(in TypeA_Issue3385 a)
+			{
+				return default(TypeB_Issue3385);
+			}
+#endif
+		}
+
+		private struct TypeB_Issue3385
+		{
+			private int dummy;
+		}
+
 #if CS80
 		[StructLayout(LayoutKind.Sequential, Size = 1)]
 		public ref struct UsingRefStruct
@@ -161,5 +187,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 #endif
+
+		public static void Issue3385()
+		{
+#if ROSLYN3
+			using (TypeA_Issue3385 a = default(TypeA_Issue3385))
+#else
+			using (TypeA_Issue3385 typeA_Issue = default(TypeA_Issue3385))
+#endif
+			{
+#if ROSLYN3
+				Empty(a);
+#else
+				Empty(typeA_Issue);
+#endif
+			}
+		}
+
+		private static void Empty(TypeB_Issue3385 b)
+		{
+		}
 	}
 }

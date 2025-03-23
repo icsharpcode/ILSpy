@@ -528,6 +528,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var typeSystemAstBuilder = new TypeSystemAstBuilder();
 			typeSystemAstBuilder.ShowAttributes = true;
+			typeSystemAstBuilder.UsePrivateProtectedAccessibility = settings.IntroducePrivateProtectedAccessibility;
+			typeSystemAstBuilder.SortAttributes = settings.SortCustomAttributes;
 			typeSystemAstBuilder.AlwaysUseShortTypeNames = true;
 			typeSystemAstBuilder.AddResolveResultAnnotations = true;
 			typeSystemAstBuilder.UseNullableSpecifierForValueTypes = settings.LiftNullables;
@@ -1281,7 +1283,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				if (string.IsNullOrWhiteSpace(parameter.Name) && !parameter.Type.IsArgList())
 				{
-					// needs to be consistent with logic in ILReader.CreateILVarable
+					// needs to be consistent with logic in ILReader.CreateILVariable
 					parameter.Name = "P_" + i;
 				}
 				i++;

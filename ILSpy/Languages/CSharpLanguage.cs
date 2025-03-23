@@ -578,9 +578,17 @@ namespace ICSharpCode.ILSpy
 			CSharpAmbience ambience = new CSharpAmbience();
 			// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewTypeFlags, if this ever changes.
 			ambience.ConversionFlags = ConversionFlags.ShowTypeParameterList | ConversionFlags.PlaceReturnTypeAfterParameterList;
-			if (SettingsService.DecompilerSettings.LiftNullables)
+			var decompilerSettings = SettingsService.DecompilerSettings.Clone();
+			if (!Enum.TryParse(AssemblyTreeModel.CurrentLanguageVersion?.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
+				languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
+			decompilerSettings.SetLanguageVersion(languageVersion);
+			if (decompilerSettings.LiftNullables)
 			{
 				ambience.ConversionFlags |= ConversionFlags.UseNullableSpecifierForValueTypes;
+			}
+			if (decompilerSettings.IntroducePrivateProtectedAccessibility)
+			{
+				ambience.ConversionFlags |= ConversionFlags.UsePrivateProtectedAccessibility;
 			}
 			return ambience;
 		}
@@ -781,7 +789,11 @@ namespace ICSharpCode.ILSpy
 		public override bool ShowMember(IEntity member)
 		{
 			MetadataFile assembly = member.ParentModule.MetadataFile;
-			return showAllMembers || !CSharpDecompiler.MemberIsHidden(assembly, member.MetadataToken, SettingsService.DecompilerSettings);
+			var decompilerSettings = SettingsService.DecompilerSettings.Clone();
+			if (!Enum.TryParse(AssemblyTreeModel.CurrentLanguageVersion?.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
+				languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
+			decompilerSettings.SetLanguageVersion(languageVersion);
+			return showAllMembers || !CSharpDecompiler.MemberIsHidden(assembly, member.MetadataToken, decompilerSettings);
 		}
 
 		public override RichText GetRichTextTooltip(IEntity entity)
@@ -790,7 +802,10 @@ namespace ICSharpCode.ILSpy
 			var output = new StringWriter();
 			var decoratedWriter = new TextWriterTokenWriter(output);
 			var writer = new CSharpHighlightingTokenWriter(TokenWriter.InsertRequiredSpaces(decoratedWriter), locatable: decoratedWriter);
-			var settings = SettingsService.DecompilerSettings;
+			var settings = SettingsService.DecompilerSettings.Clone();
+			if (!Enum.TryParse(AssemblyTreeModel.CurrentLanguageVersion?.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
+				languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
+			settings.SetLanguageVersion(languageVersion);
 			if (!settings.LiftNullables)
 			{
 				flags &= ~ConversionFlags.UseNullableSpecifierForValueTypes;
@@ -814,6 +829,10 @@ namespace ICSharpCode.ILSpy
 			if (settings.InitAccessors)
 			{
 				flags |= ConversionFlags.SupportInitAccessors;
+			}
+			if (settings.IntroducePrivateProtectedAccessibility)
+			{
+				flags |= ConversionFlags.UsePrivateProtectedAccessibility;
 			}
 			if (entity is IMethod m && m.IsLocalFunction)
 			{

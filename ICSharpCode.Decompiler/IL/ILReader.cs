@@ -342,7 +342,10 @@ namespace ICSharpCode.Decompiler.IL
 			if (index < 0)
 				ilVar.Name = "this";
 			else if (string.IsNullOrWhiteSpace(name))
+			{
 				ilVar.Name = "P_" + index;
+				ilVar.HasGeneratedName = true;
+			}
 			else
 				ilVar.Name = name;
 			return ilVar;
@@ -706,6 +709,7 @@ namespace ICSharpCode.Decompiler.IL
 			var function = new ILFunction(this.method, body.GetCodeSize(), this.genericContext, mainContainer, kind);
 			function.Variables.AddRange(parameterVariables);
 			function.Variables.AddRange(localVariables);
+			function.LocalVariableSignatureLength = localVariables.Length;
 			Debug.Assert(stackVariables != null);
 			function.Variables.AddRange(stackVariables);
 			function.Variables.AddRange(variableByExceptionHandler.Values);

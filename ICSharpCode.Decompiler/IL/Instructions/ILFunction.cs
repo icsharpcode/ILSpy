@@ -68,6 +68,11 @@ namespace ICSharpCode.Decompiler.IL
 		public readonly ILVariableCollection Variables;
 
 		/// <summary>
+		/// Gets 
+		/// </summary>
+		public int LocalVariableSignatureLength;
+
+		/// <summary>
 		/// Gets the scope in which the local function is declared.
 		/// Returns null, if this is not a local function.
 		/// </summary>

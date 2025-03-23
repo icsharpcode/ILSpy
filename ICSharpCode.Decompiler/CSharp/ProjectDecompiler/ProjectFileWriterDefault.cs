@@ -81,13 +81,14 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				w.WriteEndElement(); // </Platform>
 
 				string outputType;
+				PEHeaders headers = (module as PEFile)?.Reader.PEHeaders;
 
-				switch ((module as PEFile)?.Reader.PEHeaders.PEHeader.Subsystem)
+				switch (headers?.PEHeader.Subsystem)
 				{
-					case Subsystem.WindowsGui:
+					case Subsystem.WindowsGui when !headers.IsDll:
 						outputType = "WinExe";
 						break;
-					case Subsystem.WindowsCui:
+					case Subsystem.WindowsCui when !headers.IsDll:
 						outputType = "Exe";
 						break;
 					default:

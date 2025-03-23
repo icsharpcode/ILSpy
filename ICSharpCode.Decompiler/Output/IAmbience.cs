@@ -117,9 +117,14 @@ namespace ICSharpCode.Decompiler.Output
 		/// Support C# 11 <c>operator checked</c>.
 		/// </summary>
 		SupportOperatorChecked = 0x100000,
+		/// <summary>
+		/// Support C# 7.2 <c>private protected</c>.
+		/// </summary>
+		UsePrivateProtectedAccessibility = 0x200000,
 
 		StandardConversionFlags = ShowParameterNames |
 			ShowAccessibility |
+			UsePrivateProtectedAccessibility |
 			ShowParameterList |
 			ShowParameterModifiers |
 			ShowParameterDefaultValues |

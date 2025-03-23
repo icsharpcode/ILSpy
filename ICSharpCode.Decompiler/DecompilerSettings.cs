@@ -112,6 +112,7 @@ namespace ICSharpCode.Decompiler
 				introduceRefModifiersOnStructs = false;
 				nonTrailingNamedArguments = false;
 				refExtensionMethods = false;
+				introducePrivateProtectedAccessibilty = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_3)
 			{
@@ -185,7 +186,7 @@ namespace ICSharpCode.Decompiler
 				|| patternBasedFixedStatement)
 				return CSharp.LanguageVersion.CSharp7_3;
 			if (introduceRefModifiersOnStructs || introduceReadonlyAndInModifiers
-				|| nonTrailingNamedArguments || refExtensionMethods)
+				|| nonTrailingNamedArguments || refExtensionMethods || introducePrivateProtectedAccessibilty)
 				return CSharp.LanguageVersion.CSharp7_2;
 			// C# 7.1 missing
 			if (outVariables || throwExpressions || tupleTypes || tupleConversions
@@ -1418,6 +1419,24 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool introducePrivateProtectedAccessibilty = true;
+
+		/// <summary>
+		/// Gets/Sets whether "private protected" should be used.
+		/// </summary>
+		[Category("C# 7.2 / VS 2017.4")]
+		[Description("DecompilerSettings.IntroducePrivateProtectedAccessibility")]
+		public bool IntroducePrivateProtectedAccessibility {
+			get { return introducePrivateProtectedAccessibilty; }
+			set {
+				if (introducePrivateProtectedAccessibilty != value)
+				{
+					introducePrivateProtectedAccessibilty = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool readOnlyMethods = true;
 
 		[Category("C# 8.0 / VS 2019")]
@@ -2143,6 +2162,24 @@ namespace ICSharpCode.Decompiler
 				if (alwaysUseGlobal != value)
 				{
 					alwaysUseGlobal = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool sortCustomAttributes = false;
+
+		/// <summary>
+		/// Sort custom attributes.
+		/// </summary>
+		[Category("DecompilerSettings.Other")]
+		[Description("DecompilerSettings.SortCustomAttributes")]
+		public bool SortCustomAttributes {
+			get { return sortCustomAttributes; }
+			set {
+				if (sortCustomAttributes != value)
+				{
+					sortCustomAttributes = value;
 					OnPropertyChanged();
 				}
 			}

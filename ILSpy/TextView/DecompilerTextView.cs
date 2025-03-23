@@ -1091,7 +1091,7 @@ namespace ICSharpCode.ILSpy.TextView
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.DefaultExt = language.FileExtension;
 			dlg.Filter = language.Name + "|*" + language.FileExtension + Properties.Resources.AllFiles;
-			dlg.FileName = WholeProjectDecompiler.CleanUpFileName(treeNodes.First().ToString()) + language.FileExtension;
+			dlg.FileName = WholeProjectDecompiler.CleanUpFileName(treeNodes.First().ToString(), language.FileExtension);
 			if (dlg.ShowDialog() == true)
 			{
 				SaveToDisk(new DecompilationContext(language, treeNodes.ToArray(), options), dlg.FileName);
@@ -1447,17 +1447,20 @@ namespace ICSharpCode.ILSpy.TextView
 
 			if (resourceStream != null)
 			{
+				IHighlightingDefinition highlightingDefinition;
+
+				using (resourceStream)
+				using (XmlTextReader reader = new XmlTextReader(resourceStream))
+				{
+					highlightingDefinition = HighlightingLoader.Load(reader, manager);
+				}
+
 				manager.RegisterHighlighting(
-					name, extensions,
-					delegate {
-						using (resourceStream)
-						using (XmlTextReader reader = new XmlTextReader(resourceStream))
-						{
-							var highlightingDefinition = HighlightingLoader.Load(reader, manager);
-							ThemeManager.Current.ApplyHighlightingColors(highlightingDefinition);
-							return highlightingDefinition;
-						}
-					});
+				name, extensions,
+				delegate {
+					ThemeManager.Current.ApplyHighlightingColors(highlightingDefinition);
+					return highlightingDefinition;
+				});
 			}
 		}
 	}

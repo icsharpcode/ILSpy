@@ -233,22 +233,21 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task ExceptionHandling([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
-				NullPropagation = false,
+			await RunForLibrary(cscOptions: cscOptions, configureDecompiler: settings => {
+				settings.NullPropagation = false;
 				// legacy csc generates a dead store in debug builds
-				RemoveDeadStores = (cscOptions == CompilerOptions.None),
-				FileScopedNamespaces = false,
+				settings.RemoveDeadStores = (cscOptions == CompilerOptions.None);
+				settings.FileScopedNamespaces = false;
 			});
 		}
 
 		[Test]
 		public async Task Switch([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+			await RunForLibrary(cscOptions: cscOptions, configureDecompiler: settings => {
 				// legacy csc generates a dead store in debug builds
-				RemoveDeadStores = (cscOptions == CompilerOptions.None),
-				SwitchExpressions = false,
-				FileScopedNamespaces = false,
+				settings.RemoveDeadStores = (cscOptions == CompilerOptions.None);
+				settings.SwitchExpressions = false;
 			});
 		}
 
@@ -267,7 +266,10 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task DelegateConstruction([ValueSource(nameof(defaultOptionsWithMcs))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions);
+			await RunForLibrary(cscOptions: cscOptions, configureDecompiler: settings => {
+				settings.QueryExpressions = false;
+				settings.NullableReferenceTypes = false;
+			});
 		}
 
 		[Test]
@@ -293,9 +295,9 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			await RunForLibrary(
 				cscOptions: cscOptions,
-				decompilerSettings: new DecompilerSettings {
-					UseEnhancedUsing = false,
-					FileScopedNamespaces = false,
+				configureDecompiler: settings => {
+					settings.UseEnhancedUsing = false;
+					settings.FileScopedNamespaces = false;
 				}
 			);
 		}
@@ -327,11 +329,11 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task Loops([ValueSource(nameof(defaultOptionsWithMcs))] CompilerOptions cscOptions)
 		{
-			DecompilerSettings settings = Tester.GetSettings(cscOptions);
-			// legacy csc generates a dead store in debug builds
-			settings.RemoveDeadStores = (cscOptions == CompilerOptions.None);
-			settings.UseExpressionBodyForCalculatedGetterOnlyProperties = false;
-			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: settings);
+			await RunForLibrary(cscOptions: cscOptions, configureDecompiler: settings => {
+				// legacy csc generates a dead store in debug builds
+				settings.RemoveDeadStores = (cscOptions == CompilerOptions.None);
+				settings.UseExpressionBodyForCalculatedGetterOnlyProperties = false;
+			});
 		}
 
 		[Test]
@@ -440,9 +442,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task VariableNamingWithoutSymbols([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
-			var settings = Tester.GetSettings(cscOptions);
-			settings.UseDebugSymbols = false;
-			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: settings);
+			await RunForLibrary(cscOptions: cscOptions, configureDecompiler: settings => settings.UseDebugSymbols = false);
 		}
 
 		[Test]
@@ -474,7 +474,7 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			await RunForLibrary(
 				cscOptions: cscOptions,
-				decompilerSettings: new DecompilerSettings { UseEnhancedUsing = false, FileScopedNamespaces = false }
+				configureDecompiler: settings => { settings.UseEnhancedUsing = false; }
 			);
 		}
 
@@ -499,7 +499,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task FileScopedNamespaces([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings());
+			await RunForLibrary(cscOptions: cscOptions, configureDecompiler: settings => settings.FileScopedNamespaces = true);
 		}
 
 		[Test]
@@ -587,6 +587,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task Comparisons([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public async Task ConstantsTests([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions);
@@ -595,7 +601,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task Issue1080([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp6));
+			await RunForLibrary(cscOptions: cscOptions, configureDecompiler: settings => settings.SetLanguageVersion(CSharp.LanguageVersion.CSharp6));
 		}
 
 		[Test]
@@ -706,12 +712,12 @@ namespace ICSharpCode.Decompiler.Tests
 			await RunForLibrary(cscOptions: cscOptions);
 		}
 
-		async Task RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
+		async Task RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, Action<DecompilerSettings> configureDecompiler = null)
 		{
-			await Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CompilerOptions.Library, decompilerSettings);
+			await Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CompilerOptions.Library, configureDecompiler);
 		}
 
-		async Task Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
+		async Task Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, Action<DecompilerSettings> configureDecompiler = null)
 		{
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
 			var exeFile = TestsAssemblyOutput.GetFilePath(TestCasePath, testName, Tester.GetSuffix(cscOptions) + ".exe");
@@ -733,7 +739,9 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 
 			// 2. Decompile
-			var decompiled = await Tester.DecompileCSharp(exeFile, decompilerSettings ?? Tester.GetSettings(cscOptions)).ConfigureAwait(false);
+			var settings = Tester.GetSettings(cscOptions);
+			configureDecompiler?.Invoke(settings);
+			var decompiled = await Tester.DecompileCSharp(exeFile, settings).ConfigureAwait(false);
 
 			// 3. Compile
 			CodeAssert.FilesAreEqual(csFile, decompiled, Tester.GetPreprocessorSymbols(cscOptions).Append("EXPECTED_OUTPUT").ToArray());

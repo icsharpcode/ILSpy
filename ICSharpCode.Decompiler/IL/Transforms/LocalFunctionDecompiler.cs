@@ -142,9 +142,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						DetermineCaptureAndDeclarationScope(info, useSite);
 
-						if (context.Function.Method.IsConstructor && localFunction.DeclarationScope == null)
+						if (context.Function.Method.IsConstructor)
 						{
-							localFunction.DeclarationScope = BlockContainer.FindClosestContainer(useSite);
+							if (localFunction.DeclarationScope == null)
+							{
+								localFunction.DeclarationScope = BlockContainer.FindClosestContainer(useSite);
+							}
+							else
+							{
+								localFunction.DeclarationScope = FindCommonAncestorInstruction<BlockContainer>(useSite, localFunction.DeclarationScope);
+								if (localFunction.DeclarationScope == null)
+								{
+									localFunction.DeclarationScope = (BlockContainer)context.Function.Body;
+								}
+							}
 						}
 					}
 
@@ -658,6 +669,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			switch (useSite)
 			{
 				case CallInstruction call:
+					if (DelegateConstruction.MatchDelegateConstruction(useSite, out _, out _, out _))
+					{
+						// if this is a delegate construction, skip the use-site, because the capture scope
+						// was already determined when analyzing "this".
+						break;
+					}
 					int firstArgumentIndex = info.Definition.Method.IsStatic ? 0 : 1;
 					for (int i = call.Arguments.Count - 1; i >= firstArgumentIndex; i--)
 					{

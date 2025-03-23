@@ -54,6 +54,12 @@ namespace ICSharpCode.ILSpy.Search
 				SearchTerm = e.SearchTerm;
 				Show();
 			};
+			MessageBus<ApplySessionSettingsEventArgs>.Subscribers += ApplySessionSettings;
+		}
+
+		private void ApplySessionSettings(object sender, ApplySessionSettingsEventArgs e)
+		{
+			e.SessionSettings.SelectedSearchMode = SessionSettings.SelectedSearchMode;
 		}
 
 		public SearchModeModel[] SearchModes { get; } = [

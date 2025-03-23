@@ -462,6 +462,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.ShowInfoFromDebugSymbolsIfAvailable" xml:space="preserve">
     <value>Show info from debug symbols, if available</value>
   </data>
+  <data name="DecompilerSettings.SortCustomAttributes" xml:space="preserve">
+    <value>Sort custom attributes</value>
+  </data>
   <data name="DecompilerSettings.SparseIntegerSwitch" xml:space="preserve">
     <value>Detect switch on integer even if IL code does not use a jump table</value>
   </data>
@@ -590,6 +593,9 @@ Are you sure you want to continue?</value>
   </data>
   <data name="EnableFoldingBlocksBraces" xml:space="preserve">
     <value>Enable folding on all blocks in braces</value>
+  </data>
+  <data name="EnableSmoothScrolling" xml:space="preserve">
+    <value>Enable smooth scrolling</value>
   </data>
   <data name="EnableWordWrap" xml:space="preserve">
     <value>Enable word wrap</value>
@@ -1101,5 +1107,8 @@ Do you want to continue?</value>
   </data>
   <data name="_Window" xml:space="preserve">
     <value>_Window</value>
+  </data>
+  <data name="DecompilerSettings.IntroducePrivateProtectedAccessibility" xml:space="preserve">
+    <value>Introduce 'private protected' accessibility</value>
   </data>
 </root>

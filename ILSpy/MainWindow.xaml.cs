@@ -102,6 +102,9 @@ namespace ICSharpCode.ILSpy
 			MessageBus.Send(this, new ApplySessionSettingsEventArgs(sessionSettings));
 
 			sessionSettings.WindowBounds = this.RestoreBounds;
+			// store window state in settings only if it's not minimized
+			if (this.WindowState != WindowState.Minimized)
+				sessionSettings.WindowState = this.WindowState;
 			sessionSettings.DockLayout.Serialize(new(DockManager));
 
 			snapshot.Save();

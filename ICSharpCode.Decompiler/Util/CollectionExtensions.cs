@@ -225,7 +225,7 @@ namespace ICSharpCode.Decompiler.Util
 				yield return func(index++, element);
 		}
 
-		public static IEnumerable<(int, T)> WithIndex<T>(this ICollection<T> source)
+		public static IEnumerable<(int, T)> WithIndex<T>(this IEnumerable<T> source)
 		{
 			int index = 0;
 			foreach (var item in source)

@@ -28,7 +28,6 @@ using System.Threading.Tasks;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
@@ -99,12 +98,41 @@ namespace ICSharpCode.ILSpy
 		{
 			var result = new AvalonEditTextOutput();
 
-			var duplicates = new HashSet<string>();
-			if (assemblies.Any(asm => !duplicates.Add(asm.ShortName)))
+			var assembliesByShortName = assemblies.ToLookup(_ => _.ShortName);
+			bool first = true;
+			bool abort = false;
+
+			foreach (var item in assembliesByShortName)
 			{
-				result.WriteLine("Duplicate assembly names selected, cannot generate a solution.");
-				return result;
+				var enumerator = item.GetEnumerator();
+				if (!enumerator.MoveNext())
+					continue;
+				var firstAssembly = enumerator.Current;
+				if (!enumerator.MoveNext())
+					continue;
+				if (first)
+				{
+					result.WriteLine("Duplicate assembly names selected, cannot generate a solution:");
+					abort = true;
+				}
+
+				result.Write("- " + firstAssembly.Text + " conflicts with ");
+
+				first = true;
+				do
+				{
+					var asm = enumerator.Current;
+					if (!first)
+						result.Write(", ");
+					result.Write(asm.Text);
+					first = false;
+				} while (enumerator.MoveNext());
+				result.WriteLine();
+				first = false;
 			}
+
+			if (abort)
+				return result;
 
 			Stopwatch stopwatch = Stopwatch.StartNew();
 

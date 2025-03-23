@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2021 Siegfried Pammer
+﻿#nullable enable
+// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,47 +17,23 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Runtime.InteropServices;
+using System;
+using System.Collections.Generic;
 
-namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
+namespace ICSharpCode.Decompiler.Util
 {
-	[StructLayout(LayoutKind.Sequential, Size = 1)]
-	public struct EmptyStruct
+	public class DelegateComparer<T> : IComparer<T>
 	{
-	}
+		private readonly Func<T?, T?, int> func;
 
-	public class Structs
-	{
-#if CS100
-		public StructWithDefaultCtor M()
+		public DelegateComparer(Func<T?, T?, int> func)
 		{
-			return default(StructWithDefaultCtor);
+			this.func = func ?? throw new ArgumentNullException(nameof(func));
 		}
 
-		public StructWithDefaultCtor M2()
+		public int Compare(T? x, T? y)
 		{
-			return new StructWithDefaultCtor();
-		}
-#endif
-	}
-
-#if CS100
-	public struct StructWithDefaultCtor
-	{
-		public int X;
-
-		public StructWithDefaultCtor()
-		{
-			X = 42;
+			return func(x, y);
 		}
 	}
-#endif
-
-#if CS110
-	public struct StructWithRequiredMembers
-	{
-		public required string FirstName;
-		public required string LastName { get; set; }
-	}
-#endif
 }
