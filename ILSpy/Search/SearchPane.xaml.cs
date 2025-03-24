@@ -308,6 +308,7 @@ namespace ICSharpCode.ILSpy.Search
 			{
 				this.assemblies = assemblies;
 				this.language = language;
+				this.languageVersion = languageVersion;
 				this.searchMode = searchMode;
 				this.apiVisibility = settingsService.SessionSettings.LanguageSettings.ShowApiLevel;
 				this.treeNodeFactory = treeNodeFactory;
