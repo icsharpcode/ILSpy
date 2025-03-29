@@ -341,7 +341,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void TextEditorMouseMove(object sender, MouseEventArgs e)
 		{
-			if (popupToolTip != null)
+			if (popupToolTip != null && PresentationSource.FromVisual(popupToolTip.Child) != null)
 			{
 				double distanceToPopup = GetDistanceToPopup(e);
 				if (distanceToPopup > distanceToPopupLimit)
