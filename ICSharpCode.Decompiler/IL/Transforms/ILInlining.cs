@@ -861,6 +861,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		static bool IsSafeForInlineOver(ILInstruction expr, ILInstruction expressionBeingMoved)
 		{
+			if (expr is LdObjIfRef { ImplicitDeference: true })
+			{
+				return true;
+			}
 			return SemanticHelper.MayReorder(expressionBeingMoved, expr);
 		}
 
