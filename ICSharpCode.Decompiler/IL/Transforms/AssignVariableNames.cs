@@ -512,23 +512,37 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// assign names to local functions
 				if (!LocalFunctionDecompiler.ParseLocalFunctionName(function.Name, out _, out var newName) || !IsValidName(newName))
 					newName = null;
-				if (newName == null)
+				string nameWithoutNumber;
+				int number;
+				if (!string.IsNullOrEmpty(newName))
 				{
-					string nameWithoutNumber = "f";
-					if (!context.IsReservedVariableName(nameWithoutNumber, out int currentIndex))
-					{
-						currentIndex = 1;
-					}
-					int count = Math.Max(1, currentIndex) + 1;
-					context.ReserveVariableName(nameWithoutNumber, count);
-					if (count > 1)
-					{
-						newName = nameWithoutNumber + count.ToString();
-					}
+					nameWithoutNumber = SplitName(newName, out number);
+				}
+				else
+				{
+					nameWithoutNumber = "f";
+					number = 1;
+				}
+				int count;
+				if (!context.IsReservedVariableName(nameWithoutNumber, out int currentIndex))
+				{
+					count = 1;
+				}
+				else
+				{
+					if (currentIndex < number)
+						count = number;
 					else
-					{
-						newName = nameWithoutNumber;
-					}
+						count = Math.Max(number, currentIndex) + 1;
+				}
+				context.ReserveVariableName(nameWithoutNumber, count);
+				if (count > 1)
+				{
+					newName = nameWithoutNumber + count.ToString();
+				}
+				else
+				{
+					newName = nameWithoutNumber;
 				}
 				function.Name = newName;
 				function.ReducedMethod.Name = newName;

@@ -381,6 +381,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.IntroduceLocalFunctions" xml:space="preserve">
     <value>Introduce local functions</value>
   </data>
+  <data name="DecompilerSettings.IntroducePrivateProtectedAccessibility" xml:space="preserve">
+    <value>Introduce 'private protected' accessibility</value>
+  </data>
   <data name="DecompilerSettings.IntroduceStaticLocalFunctions" xml:space="preserve">
     <value>Introduce static local functions</value>
   </data>
@@ -1107,8 +1110,5 @@ Do you want to continue?</value>
   </data>
   <data name="_Window" xml:space="preserve">
     <value>_Window</value>
-  </data>
-  <data name="DecompilerSettings.IntroducePrivateProtectedAccessibility" xml:space="preserve">
-    <value>Introduce 'private protected' accessibility</value>
   </data>
 </root>

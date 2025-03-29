@@ -183,7 +183,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 
 		public interface IM3
 		{
-			void M3();
+			void M();
 		}
 
 		public class BaseClass : IM3
@@ -194,7 +194,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 			protected virtual void M2()
 			{
 			}
-			public virtual void M3()
+			public virtual void M()
 			{
 			}
 
@@ -209,7 +209,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 			protected override void M2()
 			{
 			}
-			public new void M3()
+			public new void M()
 			{
 			}
 
@@ -219,30 +219,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 				Noop("M1", M1);
 				Noop("M2.base", base.M2);
 				Noop("M2", M2);
-				Noop("M3.base", base.M3);
-				Noop("M3.base_virt", ((BaseClass)this).M3);
-				Noop("M3.base_interface", ((IM3)this).M3);
+				Noop("M.base", base.M);
+				Noop("M.base_virt", ((BaseClass)this).M);
+				Noop("M.base_interface", ((IM3)this).M);
 #if CS70
-				Noop("M3", this.M3);
-				Noop("M3", M3);
+				Noop("M", this.M);
+				Noop("M", M);
 
 #if CS80
-				static void M3()
+				static void M()
 #else
-				void M3()
+				void M()
 #endif
 				{
 
 				}
 #else
-				Noop("M3", M3);
+				Noop("M", M);
 #endif
 			}
 
 			public void Test2()
 			{
-				Noop("M3.new", new BaseClass().M3);
-				Noop("M3.new", new SubClass().M3);
+				Noop("M.new", new BaseClass().M);
+				Noop("M.new", new SubClass().M);
 			}
 
 			private void Noop(string name, Action _)
@@ -525,7 +525,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 		public static void LocalFunctionDelegateReference()
 		{
 			Use(LocalFunction);
-			Use2<int>(LocalFunction1<int>);
+			Use2<int>(LocalFunction2<int>);
 #if CS80
 			static void LocalFunction()
 #else
@@ -534,9 +534,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 			{
 			}
 #if CS80
-			static void LocalFunction1<T>()
+			static void LocalFunction2<T>()
 #else
-			void LocalFunction1<T>()
+			void LocalFunction2<T>()
 #endif
 			{
 			}
