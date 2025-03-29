@@ -19,7 +19,6 @@
 #nullable enable
 
 using System;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
@@ -4152,6 +4151,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
+		public bool ImplicitDeference;
 		public override StackType ResultType { get { return StackType.Ref; } }
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -4165,6 +4165,8 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
+			if (ImplicitDeference)
+				output.Write("implicitdeference.");
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -4187,7 +4189,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
 			var o = other as LdObjIfRef;
-			return o != null && this.target.PerformMatch(o.target, ref match) && type.Equals(o.type);
+			return o != null && this.target.PerformMatch(o.target, ref match) && type.Equals(o.type) && this.ImplicitDeference == o.ImplicitDeference;
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{

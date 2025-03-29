@@ -23,19 +23,6 @@ using System.Linq;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
-	/// <summary>
-	/// Block IL_0018 (incoming: *) {
-	///     stloc s(ldc.i4 1)
-	///     br IL_0019
-	/// }
-	/// 
-	/// Block IL_0019 (incoming: > 1) {
-	///     if (logic.not(ldloc s)) br IL_0027
-	///     br IL_001d
-	/// }
-	/// 
-	/// replace br IL_0019 with br IL_0027
-	/// </summary>
 	class RemoveInfeasiblePathTransform : IILTransform
 	{
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
@@ -45,7 +32,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				bool changed = false;
 				foreach (var block in container.Blocks)
 				{
-					changed |= DoTransform(block, context);
+					changed |= RemoveInfeasiblePath(block, context);
+					changed |= RemoveUnconstrainedGenericReferenceTypeCheck(block, context);
 				}
 
 				if (changed)
@@ -55,8 +43,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-
-		private bool DoTransform(Block block, ILTransformContext context)
+		/// <summary>
+		/// Block IL_0018 (incoming: *) {
+		///     stloc s(ldc.i4 1)
+		///     br IL_0019
+		/// }
+		/// 
+		/// Block IL_0019 (incoming: > 1) {
+		///     if (logic.not(ldloc s)) br IL_0027
+		///     br IL_001d
+		/// }
+		/// 
+		/// replace br IL_0019 with br IL_0027
+		/// </summary>
+		private bool RemoveInfeasiblePath(Block block, ILTransformContext context)
 		{
 			if (!MatchBlock1(block, out var s, out int value, out var br))
 				return false;
@@ -111,6 +111,128 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			exitInst = constantValue != 0 ? trueInst : falseInst;
 			return exitInst is Branch or Leave { Value: Nop };
+		}
+
+		/// <summary>
+		/// Block entryPoint (incoming: _) {
+		///     [...]
+		/// 	stloc S_0(...)
+		/// 	stobj ``0(ldloca V_0, default.value ``0)
+		/// 	if (comp.o(box ``0(ldloc V_0) != ldnull)) br invocationBlock
+		/// 	br dereferenceBlock
+		/// }
+		/// 
+		/// Block dereferenceBlock (incoming: 1) {
+		/// 	stloc V_0(ldobj ``0(ldloc S_0))
+		/// 	stloc S_0(ldloca V_0)
+		/// 	br invocationBlock
+		/// }
+		/// 
+		/// Block invocationBlock (incoming: 2) {
+		///		[...]
+		/// 	... (constrained[``0].callvirt Method(ldobj.if.ref ``0(ldloc S_0), ...))
+		/// }
+		/// </summary>
+		private bool RemoveUnconstrainedGenericReferenceTypeCheck(Block entryPoint, ILTransformContext context)
+		{
+			// if (comp.o(box ``0(ldloc temporary) != ldnull)) br invocationBlock
+			// br dereferenceBlock
+			if (!entryPoint.MatchIfAtEndOfBlock(out var condition, out var invocationBlockBranch, out var dereferenceBlockBranch))
+			{
+				return false;
+			}
+			if (!condition.MatchCompNotEqualsNull(out var arg))
+			{
+				return false;
+			}
+			if (!arg.MatchBox(out arg, out var type))
+			{
+				return false;
+			}
+			if (!arg.MatchLdLoc(out var temp) || temp.StoreCount != 2 || temp.AddressCount != 2)
+			{
+				return false;
+			}
+			// stobj ``0(ldloca V_0, default.value ``0)
+			var store = entryPoint.Instructions.ElementAtOrDefault(entryPoint.Instructions.Count - 3);
+			if (store == null || !store.MatchStObj(out var target, out var value, out var storeType))
+			{
+				return false;
+			}
+			if (!target.MatchLdLoca(temp) || !value.MatchDefaultValue(out var defaultValueType))
+			{
+				return false;
+			}
+			if (!defaultValueType.Equals(storeType) || !storeType.Equals(type))
+			{
+				return false;
+			}
+			// stloc S_0(...)
+			store = entryPoint.Instructions.ElementAtOrDefault(entryPoint.Instructions.Count - 4);
+			if (store == null || !store.MatchStLoc(out var stackSlot, out var thisValue))
+			{
+				return false;
+			}
+			// check dereferenceBlock
+			if (!dereferenceBlockBranch.MatchBranch(out var dereferenceBlock) || !invocationBlockBranch.MatchBranch(out var invocationBlock))
+			{
+				return false;
+			}
+			if (invocationBlock.IncomingEdgeCount != 2)
+			{
+				return false;
+			}
+			if (dereferenceBlock.IncomingEdgeCount != 1)
+			{
+				return false;
+			}
+
+			// stloc V_0(ldobj ``0(ldloc S_0))
+			// stloc S_0(ldloca V_0)
+			// br invocationBlock
+			if (dereferenceBlock.Instructions is not [StLoc deref, StLoc addressLoad, Branch br])
+			{
+				return false;
+			}
+			if (deref.Variable != temp || addressLoad.Variable != stackSlot)
+			{
+				return false;
+			}
+			if (!deref.Value.MatchLdObj(out var stackSlotTarget, out var loadType))
+			{
+				return false;
+			}
+			if (!stackSlotTarget.MatchLdLoc(stackSlot) || !loadType.Equals(type))
+			{
+				return false;
+			}
+			if (!addressLoad.Value.MatchLdLoca(temp))
+			{
+				return false;
+			}
+			if (br?.TargetBlock != invocationBlock)
+			{
+				return false;
+			}
+			// ... (constrained[``0].callvirt Method(ldobj.if.ref ``0(ldloc S_0), ...))
+			if (stackSlot.StoreCount != 2 || stackSlot.LoadCount != 2 || stackSlot.AddressCount != 0)
+			{
+				return false;
+			}
+			var callTarget = stackSlot.LoadInstructions.SingleOrDefault(l => stackSlotTarget != l);
+			if (callTarget?.Parent is not LdObjIfRef { Parent: CallVirt call } ldobjIfRef)
+			{
+				return false;
+			}
+			if (call.Arguments.Count == 0 || call.Arguments[0] != ldobjIfRef || !storeType.Equals(call.ConstrainedTo))
+			{
+				return false;
+			}
+			context.Step("RemoveUnconstrainedGenericReferenceTypeCheck", store);
+			ldobjIfRef.ImplicitDeference = true;
+			entryPoint.Instructions.RemoveRange(entryPoint.Instructions.Count - 3, 3);
+			entryPoint.Instructions.Add(invocationBlockBranch);
+			return true;
 		}
 	}
 }
