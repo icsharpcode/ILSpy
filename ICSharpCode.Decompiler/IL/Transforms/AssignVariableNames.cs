@@ -55,6 +55,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		};
 
 		ILTransformContext context;
+		Queue<(ILFunction function, VariableScope parentScope)> workList;
 		const char maxLoopVariableName = 'n';
 
 		public class VariableScope
@@ -441,7 +442,70 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			this.context = context;
-			function.AcceptVisitor(this, null);
+			this.workList ??= new Queue<(ILFunction function, VariableScope parentScope)>();
+			this.workList.Clear();
+			this.workList.Enqueue((function, null));
+
+			while (this.workList.Count > 0)
+			{
+				var (currentFunction, parentContext) = this.workList.Dequeue();
+
+				if (currentFunction.Kind == ILFunctionKind.LocalFunction)
+				{
+					// assign names to local functions
+					if (!LocalFunctionDecompiler.ParseLocalFunctionName(currentFunction.Name, out _, out var newName) || !IsValidName(newName))
+						newName = null;
+					string nameWithoutNumber;
+					int number;
+					if (!string.IsNullOrEmpty(newName))
+					{
+						nameWithoutNumber = SplitName(newName, out number);
+					}
+					else
+					{
+						nameWithoutNumber = "f";
+						number = 1;
+					}
+					int count;
+					if (!parentContext.IsReservedVariableName(nameWithoutNumber, out int currentIndex))
+					{
+						count = 1;
+					}
+					else
+					{
+						if (currentIndex < number)
+							count = number;
+						else
+							count = Math.Max(number, currentIndex) + 1;
+					}
+					parentContext.ReserveVariableName(nameWithoutNumber, count);
+					if (count > 1)
+					{
+						newName = nameWithoutNumber + count.ToString();
+					}
+					else
+					{
+						newName = nameWithoutNumber;
+					}
+					currentFunction.Name = newName;
+					currentFunction.ReducedMethod.Name = newName;
+					parentContext.Add((MethodDefinitionHandle)currentFunction.ReducedMethod.MetadataToken, newName);
+				}
+
+				var nestedContext = new VariableScope(currentFunction, this.context, parentContext);
+				currentFunction.Body.AcceptVisitor(this, nestedContext);
+
+				foreach (var localFunction in currentFunction.LocalFunctions)
+					workList.Enqueue((localFunction, nestedContext));
+
+				if (currentFunction.Kind != ILFunctionKind.TopLevelFunction)
+				{
+					foreach (var p in currentFunction.Variables.Where(v => v.Kind == VariableKind.Parameter && v.Index >= 0))
+					{
+						p.Name = nestedContext.AssignNameIfUnassigned(p);
+					}
+				}
+			}
 		}
 
 		Unit VisitChildren(ILInstruction inst, VariableScope context)
@@ -507,59 +571,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		protected internal override Unit VisitILFunction(ILFunction function, VariableScope context)
 		{
-			if (function.Kind == ILFunctionKind.LocalFunction)
-			{
-				// assign names to local functions
-				if (!LocalFunctionDecompiler.ParseLocalFunctionName(function.Name, out _, out var newName) || !IsValidName(newName))
-					newName = null;
-				string nameWithoutNumber;
-				int number;
-				if (!string.IsNullOrEmpty(newName))
-				{
-					nameWithoutNumber = SplitName(newName, out number);
-				}
-				else
-				{
-					nameWithoutNumber = "f";
-					number = 1;
-				}
-				int count;
-				if (!context.IsReservedVariableName(nameWithoutNumber, out int currentIndex))
-				{
-					count = 1;
-				}
-				else
-				{
-					if (currentIndex < number)
-						count = number;
-					else
-						count = Math.Max(number, currentIndex) + 1;
-				}
-				context.ReserveVariableName(nameWithoutNumber, count);
-				if (count > 1)
-				{
-					newName = nameWithoutNumber + count.ToString();
-				}
-				else
-				{
-					newName = nameWithoutNumber;
-				}
-				function.Name = newName;
-				function.ReducedMethod.Name = newName;
-				context.Add((MethodDefinitionHandle)function.ReducedMethod.MetadataToken, newName);
-			}
-
-			var nestedContext = new VariableScope(function, this.context, context);
-			base.VisitILFunction(function, nestedContext);
-
-			if (function.Kind != ILFunctionKind.TopLevelFunction)
-			{
-				foreach (var p in function.Variables.Where(v => v.Kind == VariableKind.Parameter && v.Index >= 0))
-				{
-					p.Name = nestedContext.AssignNameIfUnassigned(p);
-				}
-			}
-
+			workList.Enqueue((function, context));
 			return default;
 		}
 

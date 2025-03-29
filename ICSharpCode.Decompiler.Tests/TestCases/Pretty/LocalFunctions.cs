@@ -53,15 +53,15 @@ namespace LocalFunctions
 					{
 						t2 = default(T2);
 						int l = 0;
-						return NonStaticMethod2<T1>() + NonStaticMethod2<T2>() + z.GetHashCode();
-						int NonStaticMethod2<T4>()
+						return NonStaticMethod3<T1>() + NonStaticMethod3<T2>() + z.GetHashCode();
+						int NonStaticMethod3<T4>()
 						{
 							return i2 + l + NonStaticMethod<T4>(0) + StaticMethod<decimal>();
 						}
 					}
 				}
-				return MixedLocalFunction<T1>() + MixedLocalFunction<T2>() + StaticMethod<decimal>() + StaticMethod<int>() + NonStaticMethod3() + StaticMethod4<object>(null) + StaticMethod5<T1>();
-				int NonStaticMethod3()
+				return MixedLocalFunction<T1>() + MixedLocalFunction<T2>() + StaticMethod<decimal>() + StaticMethod<int>() + NonStaticMethod2() + StaticMethod4<object>(null) + StaticMethod5<T1>();
+				int NonStaticMethod2()
 				{
 					return GetHashCode();
 				}
@@ -127,16 +127,16 @@ namespace LocalFunctions
 					{
 						t2 = default(T2);
 						int l = 0;
-						return StaticInvokeAsFunc(NonStaticMethod2<T1>) + StaticInvokeAsFunc(NonStaticMethod2<T2>) + z.GetHashCode();
-						int NonStaticMethod2<T4>()
+						return StaticInvokeAsFunc(NonStaticMethod3<T1>) + StaticInvokeAsFunc(NonStaticMethod3<T2>) + z.GetHashCode();
+						int NonStaticMethod3<T4>()
 						{
 							return i2 + l + StaticInvokeAsFunc(NonStaticMethod<T4>) + StaticInvokeAsFunc(StaticMethod<decimal>);
 						}
 					}
 				}
 				Console.WriteLine(t2);
-				return StaticInvokeAsFunc(MixedLocalFunction2Delegate<T1>) + StaticInvokeAsFunc(MixedLocalFunction2Delegate<T2>) + StaticInvokeAsFunc(StaticMethod<decimal>) + StaticInvokeAsFunc(StaticMethod<int>) + StaticInvokeAsFunc(NonStaticMethod3) + StaticInvokeAsFunc(StaticMethod4<T1>) + new Func<object, int>(StaticMethod5<object>)(null) + StaticInvokeAsFunc2<object>(StaticMethod5<object>) + new Func<Func<object, int>, int>(StaticInvokeAsFunc2<object>)(StaticMethod5<object>);
-				int NonStaticMethod3()
+				return StaticInvokeAsFunc(MixedLocalFunction2Delegate<T1>) + StaticInvokeAsFunc(MixedLocalFunction2Delegate<T2>) + StaticInvokeAsFunc(StaticMethod<decimal>) + StaticInvokeAsFunc(StaticMethod<int>) + StaticInvokeAsFunc(NonStaticMethod2) + StaticInvokeAsFunc(StaticMethod4<T1>) + new Func<object, int>(StaticMethod5<object>)(null) + StaticInvokeAsFunc2<object>(StaticMethod5<object>) + new Func<Func<object, int>, int>(StaticInvokeAsFunc2<object>)(StaticMethod5<object>);
+				int NonStaticMethod2()
 				{
 					return GetHashCode();
 				}
@@ -732,15 +732,15 @@ namespace LocalFunctions
 				{
 					t0 = 0;
 					int t2 = t0;
-					return new Func<int>(ZZZ2)();
-					int ZZZ2()
+					return new Func<int>(ZZZ3)();
+					int ZZZ3()
 					{
 						t0 = 0;
 						t2 = 0;
-						return ZZZ3();
+						return ZZZ2();
 					}
 				}
-				int ZZZ3()
+				int ZZZ2()
 				{
 					t0 = 0;
 					int t3 = t0;
