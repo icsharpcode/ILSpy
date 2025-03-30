@@ -93,6 +93,7 @@
     <None Include="TestCases\ILPretty\GuessAccessors.cs" />
     <None Include="TestCases\ILPretty\GuessAccessors.il" />
     <None Include="TestCases\ILPretty\Issue2260SwitchString.il" />
+    <None Include="TestCases\ILPretty\Issue3442.il" />
     <None Include="TestCases\ILPretty\MonoFixed.il" />
     <None Include="TestCases\ILPretty\UnknownTypes.cs" />
     <None Include="TestCases\ILPretty\UnknownTypes.il" />
@@ -131,9 +132,11 @@
     <Compile Include="ProjectDecompiler\TargetFrameworkTests.cs" />
     <Compile Include="TestAssemblyResolver.cs" />
     <Compile Include="TestCases\ILPretty\Issue3421.cs" />
+    <Compile Include="TestCases\ILPretty\Issue3442.cs" />
     <Compile Include="TestCases\ILPretty\MonoFixed.cs" />
     <Compile Include="TestCases\Pretty\Comparisons.cs" />
     <Compile Include="TestCases\Pretty\Issue3439.cs" />
+    <Compile Include="TestCases\Pretty\Issue3442.cs" />
     <None Include="TestCases\VBPretty\VBAutomaticEvents.vb" />
     <Compile Include="TestCases\VBPretty\VBAutomaticEvents.cs" />
     <Compile Include="TestCases\VBPretty\VBNonGenericForEach.cs" />

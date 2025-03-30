@@ -1167,8 +1167,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				methodDecl.TypeParameters.AddRange(memberDecl.GetChildrenByRole(Roles.TypeParameter)
 												   .Select(n => (TypeParameterDeclaration)n.Clone()));
 				methodDecl.Parameters.AddRange(memberDecl.GetChildrenByRole(Roles.Parameter).Select(n => n.Clone()));
-				methodDecl.Constraints.AddRange(memberDecl.GetChildrenByRole(Roles.Constraint)
-												.Select(n => (Constraint)n.Clone()));
+				// Constraints are not copied because explicit interface implementations cannot have constraints. CS0460
 
 				methodDecl.Body = new BlockStatement();
 				methodDecl.Body.AddChild(new Comment(
