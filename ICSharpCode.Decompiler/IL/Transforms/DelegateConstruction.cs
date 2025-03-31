@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(method.HasGeneratedName()
 				|| method.Name.Contains("$")
-				|| method.IsCompilerGeneratedOrIsInCompilerGeneratedClass()
+				|| method.IsCompilerGenerated()
 				|| TransformDisplayClassUsage.IsPotentialClosure(
 					decompiledTypeDefinition, method.DeclaringTypeDefinition)
 				|| ContainsAnonymousType(method)))

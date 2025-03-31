@@ -40,6 +40,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 		[CompilerGenerated]
 		internal class Helper
 		{
+			[CompilerGenerated]
 			internal bool HelpMe(Dummy dum)
 			{
 				return true;
