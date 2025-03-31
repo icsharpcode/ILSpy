@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			if (analyzedMethod.ParentModule?.MetadataFile == null)
 				yield break;
 
-			if (analyzedMethod.DeclaringTypeDefinition?.MetadataToken.IsNil != true)
+			if (analyzedMethod.DeclaringTypeDefinition?.MetadataToken.IsNil != false)
 				yield break;
 
 			var mapping = context.Language
