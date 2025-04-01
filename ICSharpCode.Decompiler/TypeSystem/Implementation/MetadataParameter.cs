@@ -125,6 +125,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 				var metadata = module.metadata;
 				var parameterDef = metadata.GetParameter(handle);
+				if ((module.TypeSystemOptions & TypeSystemOptions.ParamsCollections) != 0
+					&& parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.ParamCollection))
+				{
+					// params collections are implicitly scoped
+					return default;
+				}
 				if (parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.ScopedRef))
 				{
 					return new LifetimeAnnotation { ScopedRef = true };
@@ -135,11 +141,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public bool IsParams {
 			get {
-				if (Type.Kind != TypeKind.Array)
-					return false;
 				var metadata = module.metadata;
 				var parameterDef = metadata.GetParameter(handle);
-				return parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.ParamArray);
+				if (Type.Kind == TypeKind.Array)
+				{
+					return parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.ParamArray);
+				}
+				if (module.TypeSystemOptions.HasFlag(TypeSystemOptions.ParamsCollections))
+				{
+					return parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.ParamCollection);
+				}
+				return false;
 			}
 		}
 
