@@ -258,6 +258,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						case "RequiresLocationAttribute":
 							return (options & TypeSystemOptions.RefReadOnlyParameters) != 0
 								&& (target == SymbolKind.Parameter);
+						case "ParamCollectionAttribute":
+							return (options & TypeSystemOptions.ParamsCollections) != 0
+								&& (target == SymbolKind.Parameter);
 						default:
 							return false;
 					}

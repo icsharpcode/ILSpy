@@ -8,6 +8,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
+    <LangVersion>13</LangVersion>
     <RuntimeIdentifier Condition="$(IsWindowsX64) == true">win-x64</RuntimeIdentifier>
     <RuntimeIdentifier Condition="$(IsWindowsARM64) == true">win-arm64</RuntimeIdentifier>
 
@@ -17,7 +18,7 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 
     <NoWarn>1701;1702;1705,67,169,1058,728,1720,649,168,251,660,661,675;1998;162;8632;626;8618;8714;8602;8981</NoWarn>
-    <DefineConstants>ROSLYN;ROSLYN2;ROSLYN3;ROSLYN4;NET60;CS60;CS70;CS71;CS72;CS73;CS80;CS90;CS100;CS110;CS120</DefineConstants>
+    <DefineConstants>ROSLYN;ROSLYN2;ROSLYN3;ROSLYN4;NET60;CS60;CS70;CS71;CS72;CS73;CS80;CS90;CS100;CS110;CS120;CS130</DefineConstants>
 
     <GenerateAssemblyVersionAttribute>False</GenerateAssemblyVersionAttribute>
     <GenerateAssemblyFileVersionAttribute>False</GenerateAssemblyFileVersionAttribute>
@@ -146,6 +147,7 @@
     <Compile Include="TestCases\Pretty\Issue3442.cs" />
     <Compile Include="TestCases\Pretty\Issue3483.cs" />
     <Compile Include="TestCases\Pretty\PointerArithmetic.cs" />
+    <Compile Include="TestCases\Pretty\ParamsCollections.cs" />
     <None Include="TestCases\VBPretty\VBAutomaticEvents.vb" />
     <Compile Include="TestCases\VBPretty\VBAutomaticEvents.cs" />
     <Compile Include="TestCases\VBPretty\VBNonGenericForEach.cs" />
