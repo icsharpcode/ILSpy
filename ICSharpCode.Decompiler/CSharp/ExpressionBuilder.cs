@@ -4818,7 +4818,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected override TranslatedExpression Default(ILInstruction inst, TranslationContext context)
 		{
-			return ErrorExpression("OpCode not supported: " + inst.OpCode);
+			return ErrorExpression("OpCode not supported: " + inst);
 		}
 
 		static TranslatedExpression ErrorExpression(string message)
