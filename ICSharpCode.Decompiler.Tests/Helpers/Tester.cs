@@ -459,6 +459,7 @@ namespace System.Runtime.CompilerServices
 					preprocessorSymbols.Add("CS100");
 					preprocessorSymbols.Add("CS110");
 					preprocessorSymbols.Add("CS120");
+					preprocessorSymbols.Add("CS130");
 				}
 			}
 			else if ((flags & CompilerOptions.UseMcsMask) != 0)
@@ -705,7 +706,7 @@ namespace System.Runtime.CompilerServices
 					CompilerOptions.UseRoslyn1_3_2 => CSharp.LanguageVersion.CSharp6,
 					CompilerOptions.UseRoslyn2_10_0 => CSharp.LanguageVersion.CSharp7_3,
 					CompilerOptions.UseRoslyn3_11_0 => CSharp.LanguageVersion.CSharp9_0,
-					_ => cscOptions.HasFlag(CompilerOptions.Preview) ? CSharp.LanguageVersion.Latest : CSharp.LanguageVersion.CSharp12_0,
+					_ => cscOptions.HasFlag(CompilerOptions.Preview) ? CSharp.LanguageVersion.Latest : CSharp.LanguageVersion.CSharp13_0,
 				};
 				DecompilerSettings settings = new(langVersion) {
 					// Never use file-scoped namespaces

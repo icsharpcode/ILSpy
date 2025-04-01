@@ -919,6 +919,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Decompile params collections.
+        /// </summary>
+        public static string DecompilerSettings_DecompileParamsCollections {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.DecompileParamsCollections", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Decompile use of the &apos;dynamic&apos; type.
         /// </summary>
         public static string DecompilerSettings_DecompileUseOfTheDynamicType {
