@@ -743,7 +743,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		public static string CleanUpPath(string text)
 		{
-			return CleanUpName(text, separateAtDots: true, treatAsFileName: true, treatAsPath: true);
+			return CleanUpName(text, separateAtDots: true, treatAsFileName: false, treatAsPath: true)
+				.Replace('.', Path.DirectorySeparatorChar);
 		}
 
 		static bool IsReservedFileSystemName(string name)
