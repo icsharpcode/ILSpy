@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		public void DecompileProject(MetadataFile file, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			string projectFileName = Path.Combine(targetDirectory, CleanUpFileName(file.Name, ".csproj"));
-			using (var writer = new StreamWriter(projectFileName))
+			using (var writer = CreateFile(projectFileName))
 			{
 				DecompileProject(file, targetDirectory, writer, cancellationToken);
 			}
@@ -186,6 +186,24 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			return true;
 		}
 
+		protected virtual TextWriter CreateFile(string path)
+		{
+			return new StreamWriter(path);
+		}
+
+		protected virtual void CreateDirectory(string path)
+		{
+			try
+			{
+				Directory.CreateDirectory(path);
+			}
+			catch (IOException)
+			{
+				File.Delete(path);
+				Directory.CreateDirectory(path);
+			}
+		}
+
 		CSharpDecompiler CreateDecompiler(DecompilerTypeSystem ts)
 		{
 			var decompiler = new CSharpDecompiler(ts, Settings);
@@ -204,9 +222,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 			const string prop = "Properties";
 			if (directories.Add(prop))
-				Directory.CreateDirectory(Path.Combine(TargetDirectory, prop));
+				CreateDirectory(Path.Combine(TargetDirectory, prop));
 			string assemblyInfo = Path.Combine(prop, "AssemblyInfo.cs");
-			using (StreamWriter w = new StreamWriter(Path.Combine(TargetDirectory, assemblyInfo)))
+			using (var w = CreateFile(Path.Combine(TargetDirectory, assemblyInfo)))
 			{
 				syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, Settings.CSharpFormattingOptions));
 			}
@@ -251,15 +269,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					if (directories.Add(dir))
 					{
 						var path = Path.Combine(TargetDirectory, dir);
-						try
-						{
-							Directory.CreateDirectory(path);
-						}
-						catch (IOException)
-						{
-							File.Delete(path);
-							Directory.CreateDirectory(path);
-						}
+						CreateDirectory(path);
 					}
 					return Path.Combine(dir, file);
 				}
@@ -277,7 +287,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					delegate (IGrouping<string, TypeDefinitionHandle> file) {
 						try
 						{
-							using StreamWriter w = new StreamWriter(Path.Combine(TargetDirectory, file.Key));
+							using var w = CreateFile(Path.Combine(TargetDirectory, file.Key));
 							CSharpDecompiler decompiler = CreateDecompiler(ts);
 
 							foreach (var partialType in partialTypes)
@@ -344,7 +354,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 								string dirName = Path.GetDirectoryName(fileName);
 								if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName))
 								{
-									Directory.CreateDirectory(Path.Combine(TargetDirectory, dirName));
+									CreateDirectory(Path.Combine(TargetDirectory, dirName));
 								}
 								Stream entryStream = (Stream)value;
 								entryStream.Position = 0;
