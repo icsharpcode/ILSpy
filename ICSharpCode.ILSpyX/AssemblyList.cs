@@ -405,7 +405,6 @@ namespace ICSharpCode.ILSpyX
 			VerifyAccess();
 			lock (lockObj)
 			{
-				dirty = true;
 				assemblies.Clear();
 				byFilename.Clear();
 			}
