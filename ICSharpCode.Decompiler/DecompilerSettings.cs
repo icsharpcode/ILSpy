@@ -92,7 +92,6 @@ namespace ICSharpCode.Decompiler
 				stringInterpolation = false;
 				dictionaryInitializers = false;
 				extensionMethodsInCollectionInitializers = false;
-				useRefLocalsForAccurateOrderOfEvaluation = false;
 				getterOnlyAutomaticProperties = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7)
@@ -105,6 +104,7 @@ namespace ICSharpCode.Decompiler
 				localFunctions = false;
 				deconstruction = false;
 				patternMatching = false;
+				useRefLocalsForAccurateOrderOfEvaluation = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_2)
 			{
@@ -190,11 +190,11 @@ namespace ICSharpCode.Decompiler
 				return CSharp.LanguageVersion.CSharp7_2;
 			// C# 7.1 missing
 			if (outVariables || throwExpressions || tupleTypes || tupleConversions
-				|| discards || localFunctions || deconstruction || patternMatching)
+				|| discards || localFunctions || deconstruction || patternMatching || useRefLocalsForAccurateOrderOfEvaluation)
 				return CSharp.LanguageVersion.CSharp7;
 			if (awaitInCatchFinally || useExpressionBodyForCalculatedGetterOnlyProperties || nullPropagation
 				|| stringInterpolation || dictionaryInitializers || extensionMethodsInCollectionInitializers
-				|| useRefLocalsForAccurateOrderOfEvaluation || getterOnlyAutomaticProperties)
+				|| getterOnlyAutomaticProperties)
 				return CSharp.LanguageVersion.CSharp6;
 			if (asyncAwait)
 				return CSharp.LanguageVersion.CSharp5;
@@ -1126,7 +1126,7 @@ namespace ICSharpCode.Decompiler
 		/// order of evaluation.
 		/// See https://github.com/icsharpcode/ILSpy/issues/2050
 		/// </summary>
-		[Category("C# 6.0 / VS 2015")]
+		[Category("C# 7.0 / VS 2017")]
 		[Description("DecompilerSettings.UseRefLocalsForAccurateOrderOfEvaluation")]
 		public bool UseRefLocalsForAccurateOrderOfEvaluation {
 			get { return useRefLocalsForAccurateOrderOfEvaluation; }

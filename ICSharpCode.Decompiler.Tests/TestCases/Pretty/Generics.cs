@@ -84,6 +84,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			void Method1<T>() where T : class;
 			void Method2<T>() where T : class;
+
+			void Method3(int a, string b, Type c);
+#if CS72
+			void Method4(in int a);
+#endif
 		}
 
 		public abstract class Base : IInterface
@@ -95,6 +100,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			void IInterface.Method2<T>()
 			{
 			}
+
+			void IInterface.Method3(int a, string b, Type c)
+			{
+			}
+
+#if CS72
+			void IInterface.Method4(in int a)
+			{
+			}
+#endif
 		}
 
 		public class Derived : Base
@@ -302,5 +317,38 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			x.Dispose();
 			y.Dispose();
 		}
+
+		// prior to C# 7.0 UseRefLocalsForAccurateOrderOfEvaluation is disabled, so we will inline.
+		// Roslyn 4 generates the explicit ldobj.if.ref pattern, so we can also inline.
+		// The versions in between, we don't inline, so the code doesn't look pretty.
+#if ROSLYN4 || !CS70
+		public static int[] Issue3438<T>(T[] array)
+		{
+			List<int> list = new List<int>();
+			for (int i = 0; i < array.Length; i++)
+			{
+				if (!array[i].Equals(default(T)))
+				{
+					list.Add(i);
+				}
+			}
+			return list.ToArray();
+		}
+		public void Issue3438b<T>(T[] item1, T item2, int item3) where T : IInterface
+		{
+			item1[CastToInt(item2)].Method3(CastToInt(item2), CastToString(item2), TestTypeOf()[1]);
+		}
+		public void Issue3438c<T>(T item, T item2, int item3) where T : IInterface
+		{
+			CastFromInt<T>(item3).Method3(CastToInt(item2), CastToString(item2), TestTypeOf()[1]);
+		}
+		//#if CS72
+		// Disabled because ILInlining does not support inlining ldloca currently.
+		//		public void Issue3438d<T>(T[] item1, T item2, int item3) where T : IInterface
+		//		{
+		//			item1[CastToInt(item2)].Method4(CastToInt(item2));
+		//		}
+		//#endif
+#endif
 	}
 }

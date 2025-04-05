@@ -485,6 +485,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				inst.ReplaceWith(inst.Target);
 				return;
 			}
+			if (inst.Target.MatchLdLoc(out var s) && s.IsSingleDefinition && s.LoadCount == 1
+				&& s.StoreInstructions.SingleOrDefault() is StLoc {
+					Value: LdLoca { Variable: { AddressCount: 1, StoreCount: 1 } }
+				})
+			{
+				context.Step("Single use of ldobj.if.ref(ldloc v) -> ldloc v", inst);
+				// there already is a temporary, so the ldobj.if.ref is a no-op in both cases
+				inst.ReplaceWith(inst.Target);
+				return;
+			}
 		}
 
 		protected internal override void VisitStObj(StObj inst)

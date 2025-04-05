@@ -122,6 +122,7 @@ namespace ICSharpCode.Decompiler.IL
 		readonly MetadataReader metadata;
 
 		public bool UseDebugSymbols { get; set; }
+		public bool UseRefLocalsForAccurateOrderOfEvaluation { get; set; }
 		public DebugInfo.IDebugInfoProvider? DebugInfo { get; set; }
 		public List<string> Warnings { get; } = new List<string>();
 
@@ -1770,6 +1771,7 @@ namespace ICSharpCode.Decompiler.IL
 				StackType expectedStackType = CallInstruction.ExpectedTypeForThisPointer(method.DeclaringType, constrainedPrefix);
 				bool requiresLdObjIfRef = firstArgument == 1
 					&& !firstArgumentIsStObjTarget
+					&& UseRefLocalsForAccurateOrderOfEvaluation
 					&& expectedStackType == StackType.Ref && typeOfThis.IsReferenceType != false;
 				for (int i = method.Parameters.Count - 1; i >= 0; i--)
 				{

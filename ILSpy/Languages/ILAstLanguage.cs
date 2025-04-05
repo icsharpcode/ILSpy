@@ -109,6 +109,7 @@ namespace ICSharpCode.ILSpy
 				var typeSystem = new DecompilerTypeSystem(module, assemblyResolver);
 				var reader = new ILReader(typeSystem.MainModule);
 				reader.UseDebugSymbols = options.DecompilerSettings.UseDebugSymbols;
+				reader.UseRefLocalsForAccurateOrderOfEvaluation = options.DecompilerSettings.UseRefLocalsForAccurateOrderOfEvaluation;
 				var methodBody = module.GetMethodBody(methodDef.RelativeVirtualAddress);
 				ILFunction il = reader.ReadIL((SRM.MethodDefinitionHandle)method.MetadataToken, methodBody, kind: ILFunctionKind.TopLevelFunction, cancellationToken: options.CancellationToken);
 				var decompiler = new CSharpDecompiler(typeSystem, options.DecompilerSettings) { CancellationToken = options.CancellationToken };

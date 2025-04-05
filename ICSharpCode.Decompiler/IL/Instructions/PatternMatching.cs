@@ -581,5 +581,17 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return this;
 		}
+
+		public bool MatchLdObj([NotNullWhen(true)] out ILInstruction? target, IType type)
+		{
+			var inst = this as LdObj;
+			if (inst != null && inst.Type.Equals(type))
+			{
+				target = inst.Target;
+				return true;
+			}
+			target = default(ILInstruction);
+			return false;
+		}
 	}
 }
