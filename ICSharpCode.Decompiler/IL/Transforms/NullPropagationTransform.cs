@@ -264,6 +264,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						inst = target;
 					}
 				}
+				else if (inst.MatchLdObjIfRef(out target, out _))
+				{
+					inst = target;
+				}
 				else if (inst is CallInstruction call && call.OpCode != OpCode.NewObj)
 				{
 					if (call.Arguments.Count == 0)
@@ -362,7 +366,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							&& arg.MatchLdLoc(testedVar);
 					case Mode.UnconstrainedType:
 						// unconstrained generic type (expect: ldloc(testedVar))
-						return inst.MatchLdLoc(testedVar);
+						return inst.MatchLdLoc(testedVar) || (inst.MatchLdObjIfRef(out var testedVarLoad, out _) && testedVarLoad.MatchLdLoc(testedVar));
 					default:
 						throw new ArgumentOutOfRangeException(nameof(mode));
 				}

@@ -398,6 +398,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				return target.MatchLdLocRef(objVar)
 					|| (boxedValue && target.MatchLdLoc(objVar))
+					|| (target.MatchLdObjIfRef(out var objVarLoada, out _) && objVarLoada.MatchLdLoca(objVar))
 					|| (usingNull && disposeCall.Arguments[0].MatchLdNull())
 					|| (isReference && checkInst is NullableRewrap
 						&& target.MatchIsInst(out var arg, out var type2)
