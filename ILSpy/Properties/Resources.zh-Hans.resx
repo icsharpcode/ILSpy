@@ -495,6 +495,9 @@
   <data name="DecompilerSettings.UsePrimaryConstructorSyntax" xml:space="preserve">
     <value>使用带有记录的主构造器语法</value>
   </data>
+  <data name="DecompilerSettings.UsePrimaryConstructorSyntaxForNonRecordTypes" xml:space="preserve">
+    <value />
+  </data>
   <data name="DecompilerSettings.UseRefLocalsForAccurateOrderOfEvaluation" xml:space="preserve">
     <value>使用 ref 局部变量以准确表达求值顺序</value>
   </data>
