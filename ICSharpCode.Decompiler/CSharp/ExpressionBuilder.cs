@@ -1249,6 +1249,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				return null;
 			}
+			TranslatedExpression? offsetExpressionFromTypeHint = null;
 			if (context.TypeHint.Kind == TypeKind.Pointer)
 			{
 				// We use the type hint if one of the following is true:
@@ -1258,13 +1259,17 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				var typeHint = (PointerType)context.TypeHint;
 				int elementTypeSize = pointerType.ElementType.GetSize();
-				if ((elementTypeSize == 0 || typeHint.ElementType.GetSize() != elementTypeSize)
-					&& GetPointerArithmeticOffset(byteOffsetInst, byteOffsetExpr, typeHint.ElementType, inst.CheckForOverflow) != null)
+				if (elementTypeSize == 0 || typeHint.ElementType.GetSize() != elementTypeSize)
 				{
-					pointerType = typeHint;
+					offsetExpressionFromTypeHint = GetPointerArithmeticOffset(byteOffsetInst, byteOffsetExpr, typeHint.ElementType, inst.CheckForOverflow);
+					if (offsetExpressionFromTypeHint != null)
+					{
+						pointerType = typeHint;
+					}
 				}
 			}
-			TranslatedExpression offsetExpr = GetPointerArithmeticOffset(byteOffsetInst, byteOffsetExpr, pointerType.ElementType, inst.CheckForOverflow)
+			TranslatedExpression offsetExpr = offsetExpressionFromTypeHint
+				?? GetPointerArithmeticOffset(byteOffsetInst, byteOffsetExpr, pointerType.ElementType, inst.CheckForOverflow)
 				?? FallBackToBytePointer();
 
 			if (left.Type.Kind == TypeKind.Pointer)
