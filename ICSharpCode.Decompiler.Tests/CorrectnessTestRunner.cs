@@ -16,8 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.CodeDom.Compiler;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -311,6 +309,12 @@ namespace ICSharpCode.Decompiler.Tests
 		public async Task Jmp()
 		{
 			await RunIL("Jmp.il");
+		}
+
+		[Test]
+		public async Task NonGenericConstrainedCallVirt()
+		{
+			await RunIL("NonGenericConstrainedCallVirt.il", CompilerOptions.UseRoslynLatest);
 		}
 
 		[Test]

@@ -149,6 +149,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							new IndexRangeTransform(),
 							new DeconstructionTransform(),
 							new NamedArgumentTransform(),
+							new RemoveUnconstrainedGenericReferenceTypeCheck(),
 							new UserDefinedLogicTransform(),
 							new InterpolatedStringTransform()
 						),
@@ -1717,6 +1718,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				var ilReader = new ILReader(typeSystem.MainModule) {
 					UseDebugSymbols = settings.UseDebugSymbols,
+					UseRefLocalsForAccurateOrderOfEvaluation = settings.UseRefLocalsForAccurateOrderOfEvaluation,
 					DebugInfo = DebugInfoProvider
 				};
 				var methodDef = metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);

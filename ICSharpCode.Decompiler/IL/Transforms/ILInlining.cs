@@ -170,20 +170,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public static bool InlineOneIfPossible(Block block, int pos, InliningOptions options, ILTransformContext context)
 		{
 			context.CancellationToken.ThrowIfCancellationRequested();
-			StLoc stloc = block.Instructions[pos] as StLoc;
-			if (stloc == null || stloc.Variable.Kind == VariableKind.PinnedLocal)
+			if (block.Instructions[pos] is not StLoc stloc)
 				return false;
-			ILVariable v = stloc.Variable;
-			// ensure the variable is accessed only a single time
-			if (v.StoreCount != 1)
-				return false;
-			if (v.LoadCount > 1 || v.LoadCount + v.AddressCount != 1)
+			if (!VariableCanBeUsedForInlining(stloc.Variable))
 				return false;
 			// TODO: inlining of small integer types might be semantically incorrect,
 			// but we can't avoid it this easily without breaking lots of tests.
 			//if (v.Type.IsSmallIntegerType())
 			//	return false; // stloc might perform implicit truncation
 			return InlineOne(stloc, options, context);
+		}
+
+		public static bool VariableCanBeUsedForInlining(ILVariable v)
+		{
+			if (v.Kind == VariableKind.PinnedLocal)
+				return false;
+			// ensure the variable is accessed only a single time
+			if (v.StoreCount != 1)
+				return false;
+			if (v.LoadCount + v.AddressCount != 1)
+				return false;
+			return true;
 		}
 
 		/// <summary>
@@ -394,6 +401,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (ldloca.Variable.Type.IsReferenceType ?? false)
 				return false;
 			ILInstruction inst = ldloca;
+			if (inst.Parent is LdObjIfRef)
+			{
+				inst = inst.Parent;
+			}
 			while (inst.Parent is LdFlda ldflda)
 			{
 				inst = ldflda;
@@ -898,6 +909,30 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					ILInstruction predecessor = inst.Parent.Children[i];
 					if (!IsSafeForInlineOver(predecessor, expressionBeingMoved))
+						return false;
+				}
+			}
+			return true;
+		}
+
+		/// <summary>
+		/// Gets whether 'expressionBeingMoved' can be moved from somewhere before 'stmt' to become the replacement of 'targetLoad'.
+		/// </summary>
+		public static bool CanMoveIntoCallVirt(ILInstruction expressionBeingMoved, ILInstruction stmt, CallVirt nestedCallVirt, ILInstruction targetLoad)
+		{
+			Debug.Assert(targetLoad.IsDescendantOf(stmt) && nestedCallVirt.IsDescendantOf(stmt));
+			ILInstruction thisArg = nestedCallVirt.Arguments[0];
+			Debug.Assert(thisArg is LdObjIfRef);
+			for (ILInstruction inst = targetLoad; inst != stmt; inst = inst.Parent)
+			{
+				if (!inst.Parent.CanInlineIntoSlot(inst.ChildIndex, expressionBeingMoved))
+					return false;
+				// Check whether re-ordering with predecessors is valid:
+				int childIndex = inst.ChildIndex;
+				for (int i = 0; i < childIndex; ++i)
+				{
+					ILInstruction predecessor = inst.Parent.Children[i];
+					if (predecessor != thisArg && !IsSafeForInlineOver(predecessor, expressionBeingMoved))
 						return false;
 				}
 			}

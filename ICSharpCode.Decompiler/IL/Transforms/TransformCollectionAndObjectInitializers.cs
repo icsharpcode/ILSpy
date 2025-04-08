@@ -318,6 +318,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (resolveContext != null && !IsMethodApplicable(method, call.Arguments, rootType, resolveContext, settings))
 							goto default;
 						inst = call.Arguments[0];
+						if (inst is LdObjIfRef ldObjIfRef)
+						{
+							inst = ldObjIfRef.Target;
+						}
 						if (method.IsAccessor)
 						{
 							if (method.AccessorOwner is IProperty property &&
@@ -367,6 +371,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						{
 							path.Insert(0, new AccessPathElement(ldobj.OpCode, ldflda.Field));
 							inst = ldflda.Target;
+							break;
+						}
+						goto default;
+					}
+					case LdObjIfRef ldobj:
+					{
+						if (ldobj.Target is LdFlda ldflda && (kind != AccessPathKind.Setter || !ldflda.Field.IsReadOnly))
+						{
+							path.Insert(0, new AccessPathElement(ldobj.OpCode, ldflda.Field));
+							inst = ldflda.Target;
+							break;
+						}
+						if (ldobj.Target is LdLoca ldloca)
+						{
+							target = ldloca.Variable;
+							inst = null;
 							break;
 						}
 						goto default;

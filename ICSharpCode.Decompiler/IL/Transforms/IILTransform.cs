@@ -79,6 +79,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			return new ILReader(TypeSystem.MainModule) {
 				UseDebugSymbols = Settings.UseDebugSymbols,
+				UseRefLocalsForAccurateOrderOfEvaluation = Settings.UseRefLocalsForAccurateOrderOfEvaluation,
 				DebugInfo = DebugInfo
 			};
 		}

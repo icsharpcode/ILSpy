@@ -60,7 +60,7 @@ jobs:
       run: msbuild ILSpy.sln /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform /m
 
     - name: Execute unit tests
-      run: dotnet test --logger "junit;LogFileName=${{ matrix.configuration }}.xml" --results-directory test-results $env:Tests1 $env:Tests2 $env:Tests3
+      run: dotnet test --logger "trx;LogFileName=${{ matrix.configuration }}.trx" --results-directory test-results $env:Tests1 $env:Tests2 $env:Tests3
       env:
         Tests1: ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net8.0-windows\win-x64\ICSharpCode.Decompiler.Tests.dll
         Tests2: ILSpy.Tests\bin\${{ matrix.configuration }}\net8.0-windows\ILSpy.Tests.dll
@@ -71,13 +71,14 @@ jobs:
       if: success() || failure()
       with:
         name: test-results-${{ matrix.configuration }}
-        path: 'test-results/${{ matrix.configuration }}.xml'
+        path: 'test-results/${{ matrix.configuration }}.trx'
 
     - name: Create Test Report
-      uses: test-summary/action@v2
+      uses: icsharpcode/test-summary-action@dist
       if: always()
       with:
-        paths: "test-results/${{ matrix.configuration }}.xml"
+        paths: "test-results/${{ matrix.configuration }}.trx"
+        folded: true
 
     - name: Format check
       run: dotnet-format whitespace --verify-no-changes --verbosity detailed ILSpy.sln

@@ -643,7 +643,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		ILInstruction PrepareCallTarget(IType expectedType, ILInstruction target, IType targetType)
 		{
 			ILInstruction result;
-			switch (CallInstruction.ExpectedTypeForThisPointer(expectedType))
+			switch (CallInstruction.ExpectedTypeForThisPointer(expectedType, null))
 			{
 				case StackType.Ref:
 					if (target.ResultType == StackType.Ref)
