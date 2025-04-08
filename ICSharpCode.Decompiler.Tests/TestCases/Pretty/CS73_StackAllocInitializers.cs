@@ -222,16 +222,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if OPT
 			byte* num = stackalloc byte[12];
 			*(int*)num = 1;
-			*(int*)(num - 4) = 2;
-			*(int*)(num - 8) = 3;
+			*((int*)num - 1) = 2;
+			*((int*)num - 2) = 3;
 			int* ptr = (int*)num;
 			Console.WriteLine(*ptr);
 			return UsePointer((byte*)ptr);
 #else
 			byte* ptr = stackalloc byte[12];
 			*(int*)ptr = 1;
-			*(int*)(ptr - 4) = 2;
-			*(int*)(ptr - 8) = 3;
+			*((int*)ptr - 1) = 2;
+			*((int*)ptr - 2) = 3;
 			int* ptr2 = (int*)ptr;
 			Console.WriteLine(*ptr2);
 			return UsePointer((byte*)ptr2);

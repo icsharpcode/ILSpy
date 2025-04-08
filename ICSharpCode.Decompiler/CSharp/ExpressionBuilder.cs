@@ -1220,7 +1220,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// Returns null if 'inst' is not performing pointer arithmetic.
 		/// 'ptr - ptr' is not handled here, but in HandlePointerSubtraction()!
 		/// </summary>
-		TranslatedExpression? HandlePointerArithmetic(BinaryNumericInstruction inst, TranslatedExpression left, TranslatedExpression right)
+		TranslatedExpression? HandlePointerArithmetic(BinaryNumericInstruction inst, TranslatedExpression left, TranslatedExpression right, TranslationContext context)
 		{
 			if (!(inst.Operator == BinaryNumericOperator.Add || inst.Operator == BinaryNumericOperator.Sub))
 				return null;
@@ -1249,7 +1249,27 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				return null;
 			}
-			TranslatedExpression offsetExpr = GetPointerArithmeticOffset(byteOffsetInst, byteOffsetExpr, pointerType.ElementType, inst.CheckForOverflow)
+			TranslatedExpression? offsetExpressionFromTypeHint = null;
+			if (context.TypeHint.Kind == TypeKind.Pointer)
+			{
+				// We use the type hint if one of the following is true:
+				// * The current element type is a non-primitive struct.
+				// * The current element type has a different size than the type hint element type.
+				// This prevents the type hint from overriding in undesirable situations (eg changing char* to short*).
+
+				var typeHint = (PointerType)context.TypeHint;
+				int elementTypeSize = pointerType.ElementType.GetSize();
+				if (elementTypeSize == 0 || typeHint.ElementType.GetSize() != elementTypeSize)
+				{
+					offsetExpressionFromTypeHint = GetPointerArithmeticOffset(byteOffsetInst, byteOffsetExpr, typeHint.ElementType, inst.CheckForOverflow);
+					if (offsetExpressionFromTypeHint != null)
+					{
+						pointerType = typeHint;
+					}
+				}
+			}
+			TranslatedExpression offsetExpr = offsetExpressionFromTypeHint
+				?? GetPointerArithmeticOffset(byteOffsetInst, byteOffsetExpr, pointerType.ElementType, inst.CheckForOverflow)
 				?? FallBackToBytePointer();
 
 			if (left.Type.Kind == TypeKind.Pointer)
@@ -1534,7 +1554,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			if (left.Type.Kind == TypeKind.Pointer || right.Type.Kind == TypeKind.Pointer)
 			{
-				var ptrResult = HandlePointerArithmetic(inst, left, right);
+				var ptrResult = HandlePointerArithmetic(inst, left, right, context);
 				if (ptrResult != null)
 					return ptrResult.Value;
 			}
