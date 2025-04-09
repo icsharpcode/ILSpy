@@ -46,6 +46,9 @@ jobs:
     - name: Install dotnet-format
       run: dotnet tool install -g dotnet-format --version "8.3.546805" --add-source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet8/nuget/v3/index.json
 
+    - name: Install wix (locked version)
+      run: dotnet tool install --global wix --version 6.0.0
+
     - name: Get Version
       id: version
       shell: pwsh
