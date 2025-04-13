@@ -40,12 +40,34 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 				&& !properties.Any(p => f.ReturnType.Equals(p.ReturnType)
 					&& Regex.IsMatch(f.Name, "_?" + p.Name, RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.NonBacktracking))).ToArray();
 
-		private static IEnumerable<IMethod> GetMethods(ITypeDefinition type) => type.GetMethods(m =>
-			!m.IsOperator && !m.IsCompilerGenerated()
-			&& (m.DeclaringType == type // include methods if self-declared
-				/* but exclude methods declared by object and their overrides, if inherited */
-				|| (!m.DeclaringType.IsObject()
-					&& (!m.IsOverride || !InheritanceHelper.GetBaseMember(m).DeclaringType.IsObject()))));
+		private static IEnumerable<IMethod> GetMethods(ITypeDefinition type)
+		{
+			return type.GetMethods(IsDeclaredMethod);
+
+			bool IsDeclaredMethod(IMethod m)
+			{
+				if (m.IsOperator || m.IsCompilerGenerated())
+					return false;
+				if (m.DeclaringTypeDefinition == type)
+				{
+					// include methods if self-declared
+					return true;
+				}
+				else
+				{
+					//  but exclude methods declared by object and their overrides, if inherited
+					if (m.DeclaringType.IsObject())
+						return false;
+					IMember? baseMember;
+					if (m.IsOverride && (baseMember = InheritanceHelper.GetBaseMember(m)) != null)
+					{
+						if (baseMember.DeclaringType.IsObject())
+							return false;
+					}
+				}
+				return true;
+			}
+		}
 
 		private string FormatMethod(IMethod method)
 		{
