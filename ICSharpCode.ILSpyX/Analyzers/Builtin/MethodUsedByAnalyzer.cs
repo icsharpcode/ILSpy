@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			Debug.Assert(analyzedSymbol is IMethod);
 
 			var analyzedMethod = (IMethod)analyzedSymbol;
-			var analyzedBaseMethod = (IMethod)InheritanceHelper.GetBaseMember(analyzedMethod);
+			var analyzedBaseMethod = (IMethod?)InheritanceHelper.GetBaseMember(analyzedMethod);
 			if (analyzedMethod.ParentModule?.MetadataFile == null)
 				yield break;
 			var mapping = context.Language
@@ -109,12 +109,12 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			}
 		}
 
-		bool IsUsedInMethod(IMethod analyzedEntity, IMethod analyzedBaseMethod, IMethod method, AnalyzerContext context)
+		bool IsUsedInMethod(IMethod analyzedEntity, IMethod? analyzedBaseMethod, IMethod method, AnalyzerContext context)
 		{
 			return ScanMethodBody(analyzedEntity, method, analyzedBaseMethod, context.GetMethodBody(method));
 		}
 
-		static bool ScanMethodBody(IMethod analyzedMethod, IMethod method, IMethod analyzedBaseMethod, MethodBodyBlock? methodBody)
+		static bool ScanMethodBody(IMethod analyzedMethod, IMethod method, IMethod? analyzedBaseMethod, MethodBodyBlock? methodBody)
 		{
 			if (methodBody == null || method.ParentModule?.MetadataFile == null)
 				return false;
