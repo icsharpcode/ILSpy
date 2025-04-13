@@ -31,7 +31,7 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 	{
 		public void Run()
 		{
-			var assemblyPath = GetPath(Assembly);
+			var assemblyPath = Assembly;
 			XmlDocumentationFormatter? xmlDocs = CreateXmlDocsFormatter(assemblyPath);
 			ClassDiagrammer model = BuildModel(assemblyPath, xmlDocs);
 			GenerateOutput(assemblyPath, model);
@@ -39,7 +39,7 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 
 		protected virtual XmlDocumentationFormatter? CreateXmlDocsFormatter(string assemblyPath)
 		{
-			var xmlDocsPath = XmlDocs == null ? Path.ChangeExtension(assemblyPath, ".xml") : GetPath(XmlDocs);
+			var xmlDocsPath = XmlDocs == null ? Path.ChangeExtension(assemblyPath, ".xml") : XmlDocs;
 			XmlDocumentationFormatter? xmlDocs = null;
 
 			if (File.Exists(xmlDocsPath))
@@ -131,16 +131,6 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 				string excludedTypes = model.Excluded.Join(Environment.NewLine);
 				File.WriteAllText(Path.Combine(outputFolder, "excluded types.txt"), excludedTypes);
 			}
-		}
-
-		private protected virtual string GetPath(string pathOrUri)
-		{
-			// convert file:// style argument, see https://stackoverflow.com/a/38245329
-			if (!Uri.TryCreate(pathOrUri, UriKind.RelativeOrAbsolute, out Uri? uri))
-				throw new ArgumentException("'{0}' is not a valid URI", pathOrUri);
-
-			// support absolute paths as well as file:// URIs and interpret relative path as relative to the current directory
-			return uri.IsAbsoluteUri ? uri.AbsolutePath : pathOrUri;
 		}
 	}
 }
