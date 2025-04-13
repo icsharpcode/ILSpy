@@ -257,7 +257,7 @@ namespace ICSharpCode.ILSpyX.Search
 		/// <returns>An <see cref="Token"/> object.</returns>
 		public Literal Peek()
 		{
-			//			Console.WriteLine("Call to Peek");
+			// Debug.WriteLine("Call to Peek");
 			if (peekToken.next == null)
 			{
 				peekToken.next = Next();
@@ -275,7 +275,7 @@ namespace ICSharpCode.ILSpyX.Search
 			if (curToken == null)
 			{
 				curToken = Next();
-				//Console.WriteLine(ICSharpCode.NRefactory.Parser.CSharp.Tokens.GetTokenString(curToken.kind) + " -- " + curToken.val + "(" + curToken.kind + ")");
+				// Debug.WriteLine(ICSharpCode.NRefactory.Parser.CSharp.Tokens.GetTokenString(curToken.kind) + " -- " + curToken.val + "(" + curToken.kind + ")");
 				return curToken;
 			}
 
@@ -287,7 +287,7 @@ namespace ICSharpCode.ILSpyX.Search
 			}
 
 			curToken = curToken.next;
-			//Console.WriteLine(ICSharpCode.NRefactory.Parser.CSharp.Tokens.GetTokenString(curToken.kind) + " -- " + curToken.val + "(" + curToken.kind + ")");
+			// Debug.WriteLine(ICSharpCode.NRefactory.Parser.CSharp.Tokens.GetTokenString(curToken.kind) + " -- " + curToken.val + "(" + curToken.kind + ")");
 			return curToken;
 		}
 

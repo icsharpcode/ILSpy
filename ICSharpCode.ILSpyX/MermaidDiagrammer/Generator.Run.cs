@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -45,7 +46,7 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 			if (File.Exists(xmlDocsPath))
 				xmlDocs = new XmlDocumentationFormatter(new XmlDocumentationProvider(xmlDocsPath), StrippedNamespaces?.ToArray());
 			else
-				Console.WriteLine("No XML documentation file found. Continuing without.");
+				Debug.WriteLine("No XML documentation file found. Continuing without.");
 
 			return xmlDocs;
 		}
@@ -104,7 +105,7 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 			if (JsonOnly)
 			{
 				File.WriteAllText(Path.Combine(outputFolder, "model.json"), modelJson);
-				Console.WriteLine("Successfully generated model.json for HTML diagrammer.");
+				Debug.WriteLine("Successfully generated model.json for HTML diagrammer.");
 			}
 			else
 			{
@@ -123,7 +124,7 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 				foreach (var resource in new[] { "styles.css", "ILSpy.ico", "script.js" })
 					EmbeddedResource.CopyTo(outputFolder, resource);
 
-				Console.WriteLine("Successfully generated HTML diagrammer.");
+				Debug.WriteLine("Successfully generated HTML diagrammer.");
 			}
 
 			if (ReportExludedTypes)
