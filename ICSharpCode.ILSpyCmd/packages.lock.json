@@ -369,7 +369,7 @@
           "K4os.Compression.LZ4": "[1.3.8, )",
           "Mono.Cecil": "[0.11.6, )",
           "System.Composition.AttributedModel": "[9.0.4, )",
-          "System.Reflection.Metadata": "[9.0.4, )",
+          "System.Reflection.Metadata": "[10.0.0-preview.3.25171.5, )",
           "System.Runtime.CompilerServices.Unsafe": "[6.1.2, )"
         }
       },
@@ -424,7 +424,7 @@
       },
       "System.Collections.Immutable": {
         "type": "CentralTransitive",
-        "requested": "[9.0.4, )",
+        "requested": "[10.0.0-preview.3.25171.5, )",
         "resolved": "8.0.0",
         "contentHash": "AurL6Y5BA1WotzlEvVaIDpqzpIPvYnnldxru8oXJU2yFxFUy3+pNXjXd1ymO+RA0rq0+590Q8gaz2l3Sr7fmqg=="
       },
@@ -436,9 +436,9 @@
       },
       "System.Reflection.Metadata": {
         "type": "CentralTransitive",
-        "requested": "[9.0.4, )",
-        "resolved": "9.0.4",
-        "contentHash": "qeJNsMmZPc/Lieg0Md+D4F6LoLcxV3b9QsUNmBRXc2ZVOkMbAcwuO9l2jbQFv3n+fLiHJilN8v6i5aJNivjrCQ=="
+        "requested": "[10.0.0-preview.3.25171.5, )",
+        "resolved": "10.0.0-preview.3.25171.5",
+        "contentHash": "+vmMtMSXPQTYqaHoLgWcd39Pwb7yGD4sCewmvVrdNzziRCBxjf6/DK8XCWzELxNsLhOmViZ4LIIr+uPa6K5pRw=="
       },
       "System.Runtime.CompilerServices.Unsafe": {
         "type": "CentralTransitive",
