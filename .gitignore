@@ -19,5 +19,5 @@ multitargeting.props
 ILSpy.Installer/wix/
 /VERSION
 /ICSharpCode.Decompiler/Properties/DecompilerVersionInfo.cs
-*/.vscode/
+**/.vscode/
 DecompilerTests.config.json
