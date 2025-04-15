@@ -70,8 +70,8 @@
       "icsharpcode.decompiler": {
         "type": "Project",
         "dependencies": {
-          "System.Collections.Immutable": "[10.0.0-preview.3.25171.5, )",
-          "System.Reflection.Metadata": "[10.0.0-preview.3.25171.5, )"
+          "System.Collections.Immutable": "[6.0.0, )",
+          "System.Reflection.Metadata": "[6.0.0, )"
         }
       },
       "System.Collections.Immutable": {
