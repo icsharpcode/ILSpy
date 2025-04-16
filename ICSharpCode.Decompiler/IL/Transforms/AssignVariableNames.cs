@@ -209,19 +209,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 					foreach (var (i, p) in function.Parameters.WithIndex())
 					{
+						string name = string.IsNullOrWhiteSpace(p.Name) ? variables[i].Name : p.Name;
+
 						if (function.Kind is ILFunctionKind.Delegate or ILFunctionKind.ExpressionTree
-							&& CSharpDecompiler.IsTransparentIdentifier(p.Name))
+							&& CSharpDecompiler.IsTransparentIdentifier(name))
 						{
-							AddExistingName(reservedVariableNames, p.Name);
+							AddExistingName(reservedVariableNames, name);
 							if (variables.TryGetValue(i, out var v))
-								variableMapping[v] = p.Name;
+								variableMapping[v] = name;
 						}
-						string nameWithoutNumber = SplitName(p.Name, out int newIndex);
+						string nameWithoutNumber = SplitName(name, out int newIndex);
 						if (!parentScope.IsReservedVariableName(nameWithoutNumber, out _))
 						{
-							AddExistingName(reservedVariableNames, p.Name);
+							AddExistingName(reservedVariableNames, name);
 							if (variables.TryGetValue(i, out var v))
-								variableMapping[v] = p.Name;
+								variableMapping[v] = name;
 						}
 						else if (variables.TryGetValue(i, out var v))
 						{
@@ -340,7 +342,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				// update the last used index
 				ReserveVariableName(nameWithoutNumber, newIndex);
-				variableMapping.Add(v, newName);
+				variableMapping[v] = newName;
 				return newName;
 			}
 
