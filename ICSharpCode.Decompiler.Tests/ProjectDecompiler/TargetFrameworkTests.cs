@@ -23,7 +23,7 @@ using ICSharpCode.Decompiler.Metadata;
 
 using NUnit.Framework;
 
-namespace ICSharpCode.Decompiler.Tests
+namespace ICSharpCode.Decompiler.Tests.ProjectDecompiler
 {
 	[TestFixture]
 	public sealed class TargetFrameworkTests
