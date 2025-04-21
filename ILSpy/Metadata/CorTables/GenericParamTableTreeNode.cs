@@ -83,8 +83,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			public GenericParameterAttributes Attributes => genericParam.Attributes;
 
 			public object AttributesTooltip => new FlagsTooltip {
-				FlagGroup.CreateSingleChoiceGroup(typeof(GenericParameterAttributes), "Code type: ", (int)GenericParameterAttributes.VarianceMask, (int)(genericParam.Attributes & GenericParameterAttributes.VarianceMask), new Flag("None (0000)", 0, false), includeAny: false),
-				FlagGroup.CreateSingleChoiceGroup(typeof(GenericParameterAttributes), "Managed type: ", (int)GenericParameterAttributes.SpecialConstraintMask, (int)(genericParam.Attributes & GenericParameterAttributes.SpecialConstraintMask), new Flag("None (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateSingleChoiceGroup(typeof(GenericParameterAttributes), "Variance: ", (int)GenericParameterAttributes.VarianceMask, (int)(genericParam.Attributes & GenericParameterAttributes.VarianceMask), new Flag("None (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateMultipleChoiceGroup(typeof(GenericParameterAttributes), "Special Constraint: ", (int)GenericParameterAttributes.SpecialConstraintMask, (int)(genericParam.Attributes & GenericParameterAttributes.SpecialConstraintMask), includeAll: false),
 			};
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
