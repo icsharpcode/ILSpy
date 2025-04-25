@@ -9,7 +9,7 @@
             "group": "build",
             "type": "shell",
             "command": [
-                "$folder = '../../../ICSharpCode.ILSpyCmd/bin/Debug/net8.0/';", // to avoid repetition
+                "$folder = '../../../ICSharpCode.ILSpyCmd/bin/Debug/net10.0/';", // to avoid repetition
                 "$exePath = $folder + 'ilspycmd.exe';",
                 "$assemblyPath = $folder + 'ICSharpCode.Decompiler.dll';", // comes with XML docs for testing the integration
                 "if (Test-Path $exePath) {",
