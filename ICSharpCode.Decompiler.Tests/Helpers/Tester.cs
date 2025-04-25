@@ -105,9 +105,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			TesterPath = Path.GetDirectoryName(typeof(Tester).Assembly.Location);
 			TestCasePath = Path.Combine(TesterPath, "../../../../TestCases");
 #if DEBUG
-			testRunnerBasePath = Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/bin/Debug/net8.0");
+			testRunnerBasePath = Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/bin/Debug/net10.0");
 #else
-			testRunnerBasePath = Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/bin/Release/net8.0");
+			testRunnerBasePath = Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/bin/Release/net10.0");
 #endif
 			// To parse: <Project><ItemGroup><PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0-3.final" />
 			packagesPropsFile = Path.Combine(TesterPath, "../../../../../Directory.Packages.props");
@@ -277,8 +277,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		}
 
 		static readonly string coreRefAsmPath = new DotNetCorePathFinder(TargetFrameworkIdentifier.NET,
-			new Version(8, 0), "Microsoft.NETCore.App")
-				.GetReferenceAssemblyPath(".NETCoreApp,Version=v8.0");
+			new Version(10, 0), "Microsoft.NETCore.App")
+				.GetReferenceAssemblyPath(".NETCoreApp,Version=v10.0");
 
 		public static readonly string RefAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
 			@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2");
@@ -316,7 +316,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		const string targetFrameworkAttributeSnippet = @"
 
-[assembly: System.Runtime.Versioning.TargetFramework("".NETCoreApp,Version=v8.0"", FrameworkDisplayName = """")]
+[assembly: System.Runtime.Versioning.TargetFramework("".NETCoreApp,Version=v10.0"", FrameworkDisplayName = """")]
 
 ";
 

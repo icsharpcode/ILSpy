@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
@@ -14,7 +14,7 @@
 
   <PropertyGroup>
     <PackageId>ICSharpCode.BamlDecompiler</PackageId>
-    <PackageVersion>8.0.0.0-noversion</PackageVersion>
+    <PackageVersion>10.0.0.0-noversion</PackageVersion>
     <Title>ILSpy BAML Decompiler</Title>
     <Authors>ILSpy Contributors</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -44,7 +44,7 @@
   <!-- https://devblogs.microsoft.com/nuget/enable-repeatable-package-restores-using-a-lock-file/ -->
   <PropertyGroup>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-	<RestoreLockedMode Condition="'$(GITHUB_ACTIONS)' == 'true'">true</RestoreLockedMode>
+	<RestoreLockedMode>true</RestoreLockedMode>
   </PropertyGroup>
 
   <ItemGroup>
