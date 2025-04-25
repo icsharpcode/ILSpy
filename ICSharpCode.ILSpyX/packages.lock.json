@@ -40,10 +40,7 @@
         "type": "Direct",
         "requested": "[9.0.4, )",
         "resolved": "9.0.4",
-        "contentHash": "qeJNsMmZPc/Lieg0Md+D4F6LoLcxV3b9QsUNmBRXc2ZVOkMbAcwuO9l2jbQFv3n+fLiHJilN8v6i5aJNivjrCQ==",
-        "dependencies": {
-          "System.Collections.Immutable": "9.0.4"
-        }
+        "contentHash": "qeJNsMmZPc/Lieg0Md+D4F6LoLcxV3b9QsUNmBRXc2ZVOkMbAcwuO9l2jbQFv3n+fLiHJilN8v6i5aJNivjrCQ=="
       },
       "System.Runtime.CompilerServices.Unsafe": {
         "type": "Direct",
@@ -68,17 +65,7 @@
         "contentHash": "dk9JPxTCIevS75HyEQ0E4OVAFhB2N+V9ShCXf8Q6FkUQZDkgLI12y679Nym1YqsiSysuQskT7Z+6nUf3yab6Vw=="
       },
       "icsharpcode.decompiler": {
-        "type": "Project",
-        "dependencies": {
-          "System.Collections.Immutable": "[6.0.0, )",
-          "System.Reflection.Metadata": "[6.0.0, )"
-        }
-      },
-      "System.Collections.Immutable": {
-        "type": "CentralTransitive",
-        "requested": "[9.0.4, )",
-        "resolved": "9.0.4",
-        "contentHash": "wfm2NgK22MmBe5qJjp52qzpkeDZKb4l9LbdubhZSehY1z4LS+lld6R+B+UQNb2AZRHu/QJlHxEUcRst5hIEejg=="
+        "type": "Project"
       }
     }
   }
