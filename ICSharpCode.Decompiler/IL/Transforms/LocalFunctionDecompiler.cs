@@ -575,17 +575,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				&& TransformDisplayClassUsage.IsPotentialClosure(context.CurrentTypeDefinition, type);
 		}
 
-		internal static ILInstruction GetStatement(ILInstruction inst)
-		{
-			while (inst.Parent != null)
-			{
-				if (inst.Parent is Block b && b.Kind == BlockKind.ControlFlow)
-					return inst;
-				inst = inst.Parent;
-			}
-			return inst;
-		}
-
 		LocalFunctionMethod ReduceToLocalFunction(IMethod method, int typeParametersToRemove)
 		{
 			int parametersToRemove = 0;
@@ -747,7 +736,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (variable.Kind == VariableKind.Parameter)
 					return null;
 				if (type.Kind == TypeKind.Struct)
-					return GetStatement(variable.AddressInstructions.OrderBy(i => i.StartILOffset).First());
+					return Block.GetContainingStatement(variable.AddressInstructions.OrderBy(i => i.StartILOffset).First());
 				else
 					return (StLoc)variable.StoreInstructions[0];
 			}
