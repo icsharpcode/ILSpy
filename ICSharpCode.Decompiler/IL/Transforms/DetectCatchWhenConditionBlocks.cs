@@ -16,9 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -107,7 +104,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 				// We are only interested in store "statements" copying the exception variable
 				// without modifying it.
-				var statement = LocalFunctionDecompiler.GetStatement(load);
+				var statement = Block.GetContainingStatement(load);
 				if (!(statement is StLoc stloc))
 				{
 					i++;
