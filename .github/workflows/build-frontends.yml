@@ -25,7 +25,7 @@ jobs:
         dotnet-quality: 'preview'
 
     - name: Install dependencies
-      run: dotnet restore ILSpy.XPlat.slnf
+      run: dotnet restore ILSpy.XPlat.slnf -p:RestoreEnablePackagePruning=false
 
     - name: Build Debug
       run: dotnet msbuild ILSpy.XPlat.slnf -p:Configuration=Debug -bl:Debug.binlog

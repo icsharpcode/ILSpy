@@ -41,7 +41,7 @@ jobs:
         dotnet-quality: 'preview'
 
     - name: Build
-      run: dotnet build ILSpy.XPlat.slnf --configuration Release
+      run: dotnet build ILSpy.XPlat.slnf --configuration Release -p:RestoreEnablePackagePruning=false
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
