@@ -312,25 +312,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		protected internal override void VisitNewObj(NewObj inst)
 		{
-			Block block;
 			if (TransformSpanTCtorContainingStackAlloc(inst, out ILInstruction locallocSpan))
 			{
 				context.Step("new Span<T>(stackalloc) -> stackalloc Span<T>", inst);
 				inst.ReplaceWith(locallocSpan);
-				block = null;
-				ILInstruction stmt = locallocSpan;
-				while (stmt.Parent != null)
-				{
-					if (stmt.Parent is Block b)
-					{
-						block = b;
-						break;
-					}
-					stmt = stmt.Parent;
-				}
+				ILInstruction stmt = Block.GetContainingStatement(locallocSpan);
 				// Special case to eliminate extra store
 				if (stmt.GetNextSibling() is StLoc storeStmt && storeStmt.Value is LdLoc)
-					ILInlining.InlineIfPossible(block, stmt.ChildIndex, context);
+					ILInlining.InlineIfPossible((Block)stmt.Parent, stmt.ChildIndex, context);
 				return;
 			}
 			if (TransformArrayInitializers.TransformSpanTArrayInitialization(inst, context, out var replacement))
