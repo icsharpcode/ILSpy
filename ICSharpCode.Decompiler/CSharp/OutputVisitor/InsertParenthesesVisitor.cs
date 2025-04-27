@@ -389,6 +389,26 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			base.VisitAsExpression(asExpression);
 		}
 
+		public override void VisitInterpolation(Interpolation interpolation)
+		{
+			// If an interpolation contains global::, we need to parenthesize the expression.
+			if (IsThisOrChildMemberTypeWithDoubleColon(interpolation))
+				Parenthesize(interpolation.Expression);
+			base.VisitInterpolation(interpolation);
+
+			static bool IsThisOrChildMemberTypeWithDoubleColon(AstNode node)
+			{
+				if (node is MemberType { IsDoubleColon: true })
+					return true;
+				foreach (var child in node.Children)
+				{
+					if (IsThisOrChildMemberTypeWithDoubleColon(child))
+						return true;
+				}
+				return false;
+			}
+		}
+
 		// Conditional operator
 		public override void VisitConditionalExpression(ConditionalExpression conditionalExpression)
 		{
