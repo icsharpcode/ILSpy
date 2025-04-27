@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
 
@@ -392,21 +393,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public override void VisitInterpolation(Interpolation interpolation)
 		{
 			// If an interpolation contains global::, we need to parenthesize the expression.
-			if (IsThisOrChildMemberTypeWithDoubleColon(interpolation))
+			if (interpolation.Descendants.Any(n => n is MemberType { IsDoubleColon: true }))
 				Parenthesize(interpolation.Expression);
 			base.VisitInterpolation(interpolation);
-
-			static bool IsThisOrChildMemberTypeWithDoubleColon(AstNode node)
-			{
-				if (node is MemberType { IsDoubleColon: true })
-					return true;
-				foreach (var child in node.Children)
-				{
-					if (IsThisOrChildMemberTypeWithDoubleColon(child))
-						return true;
-				}
-				return false;
-			}
 		}
 
 		// Conditional operator
