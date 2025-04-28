@@ -3319,22 +3319,28 @@ namespace ICSharpCode.Decompiler.CSharp
 			for (int i = 1; i < block.Instructions.Count; i++)
 			{
 				var call = (Call)block.Instructions[i];
+
+				Interpolation BuildInterpolation(int alignment = 0, string suffix = null)
+				{
+					return new Interpolation(Translate(call.Arguments[1]).ConvertTo(call.GetParameter(1).Type, this, allowImplicitConversion: true), alignment, suffix);
+				}
+
 				switch (call.Method.Name)
 				{
 					case "AppendLiteral":
 						content.Add(new InterpolatedStringText(((LdStr)call.Arguments[1]).Value.Replace("{", "{{").Replace("}", "}}")));
 						break;
 					case "AppendFormatted" when call.Arguments.Count == 2:
-						content.Add(new Interpolation(Translate(call.Arguments[1])));
+						content.Add(BuildInterpolation());
 						break;
 					case "AppendFormatted" when call.Arguments.Count == 3 && call.Arguments[2] is LdStr ldstr:
-						content.Add(new Interpolation(Translate(call.Arguments[1]), suffix: ldstr.Value));
+						content.Add(BuildInterpolation(suffix: ldstr.Value));
 						break;
 					case "AppendFormatted" when call.Arguments.Count == 3 && call.Arguments[2] is LdcI4 ldci4:
-						content.Add(new Interpolation(Translate(call.Arguments[1]), alignment: ldci4.Value));
+						content.Add(BuildInterpolation(alignment: ldci4.Value));
 						break;
 					case "AppendFormatted" when call.Arguments.Count == 4 && call.Arguments[2] is LdcI4 ldci4 && call.Arguments[3] is LdStr ldstr:
-						content.Add(new Interpolation(Translate(call.Arguments[1]), ldci4.Value, ldstr.Value));
+						content.Add(BuildInterpolation(ldci4.Value, ldstr.Value));
 						break;
 					default:
 						throw new NotSupportedException();

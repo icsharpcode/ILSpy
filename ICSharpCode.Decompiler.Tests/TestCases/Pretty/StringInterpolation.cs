@@ -24,6 +24,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine($"{args.Length,5}");
 		}
 
+		public static void Types()
+		{
+			Console.WriteLine($"{(int)Get<long>()}");
+		}
+
 		public static void ArrayExpansionSpecialCases(object[] args)
 		{
 			Console.WriteLine($"args: {args}");
@@ -141,6 +146,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public string ConcatStringCharCSSC(string s, char c)
 		{
 			return c + s + s + c;
+		}
+
+		public static TReturn Get<TReturn>()
+		{
+			return default(TReturn);
 		}
 	}
 }
