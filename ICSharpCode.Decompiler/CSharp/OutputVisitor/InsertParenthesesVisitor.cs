@@ -392,28 +392,30 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public override void VisitInterpolation(Interpolation interpolation)
 		{
-			// If an interpolation contains global::, we need to parenthesize the expression.
-			if (InterpolationNeedsParenthesized(interpolation))
-				Parenthesize(interpolation.Expression);
+			// Need to do this first, in case the descendents parenthesize themselves.
 			base.VisitInterpolation(interpolation);
 
-			static bool InterpolationNeedsParenthesized(AstNode node)
+			// If an interpolation contains global::, we need to parenthesize the expression.
+			if (InterpolationNeedsParenthesis(interpolation))
+				Parenthesize(interpolation.Expression);
+
+			static bool InterpolationNeedsParenthesis(AstNode node)
 			{
 				if (node is MemberType { IsDoubleColon: true })
 					return true;
 
-				if (node is ConditionalExpression)
-					return false; // Conditional expressions are parenthesized in their own visit method.
-				if (node is AnonymousMethodExpression or LambdaExpression)
+				if (node is ParenthesizedExpression)
+					return false;
+				if (node is AnonymousMethodExpression or LambdaExpression { Body: BlockStatement })
 					return false;
 				if (node is InvocationExpression invocation)
-					return InterpolationNeedsParenthesized(invocation.Target);
+					return InterpolationNeedsParenthesis(invocation.Target);
 				if (node is CastExpression cast)
-					return InterpolationNeedsParenthesized(cast.Expression);
+					return InterpolationNeedsParenthesis(cast.Expression);
 
 				foreach (var child in node.Children)
 				{
-					if (InterpolationNeedsParenthesized(child))
+					if (InterpolationNeedsParenthesis(child))
 						return true;
 				}
 				return false;

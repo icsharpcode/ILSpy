@@ -4,7 +4,11 @@
 	{
 		public static string Root => $"Prefix {(global::System.DateTime.Now)} suffix";
 		public static string Cast => $"Prefix {((int)global::System.DateTime.Now.Ticks)} suffix";
+#if CS100 && !NET40
+		public static string Lambda1 => $"Prefix {(() => global::System.DateTime.Now)} suffix";
+#else
 		public static string Lambda1 => $"Prefix {(global::System.Func<global::System.DateTime>)(() => global::System.DateTime.Now)} suffix";
+#endif
 		public static string Lambda2 => $"Prefix {((global::System.Func<global::System.DateTime>)(() => global::System.DateTime.Now))()} suffix";
 		public static string Method1 => $"Prefix {M(global::System.DateTime.Now)} suffix";
 		public static string Method2 => $"Prefix {(global::System.DateTime.Now.Ticks)} suffix";
