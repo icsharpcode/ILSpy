@@ -290,6 +290,9 @@
 			CustomClassName("LdElema"), HasTypeOperand, CustomChildren(new [] { new ArgumentInfo("array"), new ArgumentInfo("indices") { IsCollection = true } }, true),
 			BoolFlag("WithSystemIndex"),
 			MayThrowIfNotDelayed, ResultType("Ref"), SupportsReadonlyPrefix),
+		new OpCode("ldelema.inlinearray", "Load address of inline array element.",
+			CustomClassName("LdElemaInlineArray"), HasTypeOperand, CustomChildren(new [] { new ArgumentInfo("array"), new ArgumentInfo("indices") { IsCollection = true } }, true),
+			MayThrow, ResultType("Ref"), SupportsReadonlyPrefix),
 		new OpCode("get.pinnable.reference", "Retrieves a pinnable reference for the input object." + Environment.NewLine
 				+ "The input must be an object reference (O)." + Environment.NewLine
 				+ "If the input is an array/string, evaluates to a reference to the first element/character, or to a null reference if the array is null or empty." + Environment.NewLine
