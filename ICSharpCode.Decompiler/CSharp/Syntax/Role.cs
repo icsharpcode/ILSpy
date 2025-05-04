@@ -88,15 +88,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return node is T;
 		}
 
-		[Obsolete("Use the other overload explicitly specifying the nullObject.")]
-		public Role(string name)
-		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-			this.name = name;
-			this.nullObject = null!;
-		}
-
 		public Role(string name, T nullObject)
 		{
 			this.name = name ?? throw new ArgumentNullException(nameof(name));

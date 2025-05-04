@@ -34,18 +34,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
 	public partial class ArrayInitializerExpression : Expression
 	{
-		/// <summary>
-		/// For ease of use purposes in the resolver the ast representation
-		/// of { a, b, c }  is { {a}, {b}, {c} }.
-		/// If IsSingleElement is true then this array initializer expression is a generated one.
-		/// That has no meaning in the source code (and contains no brace tokens).
-		/// </summary>
-		public virtual bool IsSingleElement {
-			get {
-				return false;
-			}
-		}
-
 		public ArrayInitializerExpression()
 		{
 		}
@@ -76,23 +64,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			ArrayInitializerExpression o = other as ArrayInitializerExpression;
 			return o != null && this.Elements.DoMatch(o.Elements, match);
-		}
-
-		public static ArrayInitializerExpression CreateSingleElementInitializer()
-		{
-			return new SingleArrayInitializerExpression();
-		}
-		/// <summary>
-		/// Single elements in array initializers are represented with this special class.
-		/// </summary>
-		class SingleArrayInitializerExpression : ArrayInitializerExpression
-		{
-			public override bool IsSingleElement {
-				get {
-					return true;
-				}
-			}
-
 		}
 	}
 }
