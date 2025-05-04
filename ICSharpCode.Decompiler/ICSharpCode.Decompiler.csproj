@@ -28,7 +28,7 @@
     <GenerateAssemblyInformationalVersionAttribute>False</GenerateAssemblyInformationalVersionAttribute>
 
     <EnableDefaultItems>false</EnableDefaultItems>
-    <LangVersion>11</LangVersion>
+    <LangVersion>preview</LangVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
@@ -100,6 +100,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ICSharpCode.Decompiler.Generators\ICSharpCode.Decompiler.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\ICSharpCode.Decompiler.Generators.Attributes\ICSharpCode.Decompiler.Generators.Attributes.csproj" OutputItemType="Analyzer" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="CSharp\Annotations.cs" />
     <Compile Include="CSharp\CallBuilder.cs" />
     <Compile Include="CSharp\CSharpLanguageVersion.cs" />
@@ -109,6 +114,11 @@
     <Compile Include="Disassembler\SortByNameProcessor.cs" />
     <Compile Include="IL\Transforms\InlineArrayTransform.cs" />
     <Compile Include="IL\Transforms\RemoveUnconstrainedGenericReferenceTypeCheck.cs" />
+    <Compile Include="IL\Instructions.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Instructions.tt</DependentUpon>
+    </Compile>
     <Compile Include="Metadata\MetadataFile.cs" />
     <Compile Include="Metadata\ModuleReferenceMetadata.cs" />
     <Compile Include="Metadata\PropertyAndEventBackingFieldLookup.cs" />
@@ -229,7 +239,7 @@
     <Compile Include="CSharp\Syntax\GeneralScope\UsingDeclaration.cs" />
     <Compile Include="CSharp\Syntax\IAstVisitor.cs" />
     <Compile Include="CSharp\Syntax\Identifier.cs" />
-    <Compile Include="CSharp\Syntax\IdentifierExpressionBackreference.cs" />
+    <Compile Include="CSharp\Syntax\PatternMatching\IdentifierExpressionBackreference.cs" />
     <Compile Include="CSharp\Syntax\MemberType.cs" />
     <Compile Include="CSharp\Syntax\Modifiers.cs" />
     <Compile Include="CSharp\Syntax\NodeType.cs" />
@@ -507,11 +517,6 @@
     <Compile Include="IL\ControlFlow\LoopDetection.cs" />
     <Compile Include="IL\ControlFlow\SwitchAnalysis.cs" />
     <Compile Include="IL\ControlFlow\SwitchDetection.cs" />
-    <Compile Include="IL\Instructions.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Instructions.tt</DependentUpon>
-    </Compile>
     <Compile Include="IL\Instructions\Comp.cs" />
     <Compile Include="IL\Instructions\BinaryNumericInstruction.cs" />
     <Compile Include="IL\Instructions\Block.cs" />
