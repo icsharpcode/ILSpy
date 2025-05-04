@@ -2082,22 +2082,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				decl.Modifiers = ModifierFromAccessibility(accessor.Accessibility, UsePrivateProtectedAccessibility);
 			if (this.ShowModifiers && accessor.HasReadonlyModifier())
 				decl.Modifiers |= Modifiers.Readonly;
-			TokenRole keywordRole = kind switch {
-				MethodSemanticsAttributes.Getter => PropertyDeclaration.GetKeywordRole,
-				MethodSemanticsAttributes.Setter => PropertyDeclaration.SetKeywordRole,
-				MethodSemanticsAttributes.Adder => CustomEventDeclaration.AddKeywordRole,
-				MethodSemanticsAttributes.Remover => CustomEventDeclaration.RemoveKeywordRole,
-				_ => null
+			AccessorKind accessorKind = kind switch {
+				MethodSemanticsAttributes.Getter => AccessorKind.Getter,
+				MethodSemanticsAttributes.Setter => AccessorKind.Setter,
+				MethodSemanticsAttributes.Adder => AccessorKind.Adder,
+				MethodSemanticsAttributes.Remover => AccessorKind.Remover,
+				_ => AccessorKind.Any
 			};
 			if (kind == MethodSemanticsAttributes.Setter && SupportInitAccessors && accessor.IsInitOnly)
 			{
-				keywordRole = PropertyDeclaration.InitKeywordRole;
+				accessorKind = AccessorKind.Init;
 			}
-			if (keywordRole != null)
+			decl.Kind = accessorKind;
+			if (accessorKind != AccessorKind.Any)
 			{
-				decl.AddChild(new CSharpTokenNode(TextLocation.Empty, keywordRole), keywordRole);
+				var tokenKind = Accessor.GetAccessorKeywordRole(accessorKind);
+				decl.AddChild(new CSharpTokenNode(TextLocation.Empty, tokenKind), tokenKind);
 			}
-			if (accessor.IsInitOnly && keywordRole != PropertyDeclaration.InitKeywordRole)
+			if (accessor.IsInitOnly && accessorKind != AccessorKind.Init)
 			{
 				decl.AddChild(new Comment("init", CommentType.MultiLine), Roles.Comment);
 			}

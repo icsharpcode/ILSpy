@@ -24,10 +24,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
+	public enum AccessorKind
+	{
+		Any,
+		Getter,
+		Setter,
+		Init,
+		Adder,
+		Remover
+	}
+
 	/// <summary>
 	/// get/set/init/add/remove
 	/// </summary>
@@ -42,21 +54,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Method; }
 		}
 
+		public AccessorKind Kind { get; set; }
+
 		/// <summary>
 		/// Gets the 'get'/'set'/'init'/'add'/'remove' keyword
 		/// </summary>
 		public CSharpTokenNode Keyword {
 			get {
-				for (AstNode child = this.FirstChild; child != null; child = child.NextSibling)
-				{
-					if (child.Role == PropertyDeclaration.GetKeywordRole || child.Role == PropertyDeclaration.SetKeywordRole
-						|| child.Role == PropertyDeclaration.InitKeywordRole
-						|| child.Role == CustomEventDeclaration.AddKeywordRole || child.Role == CustomEventDeclaration.RemoveKeywordRole)
-					{
-						return (CSharpTokenNode)child;
-					}
-				}
-				return CSharpTokenNode.Null;
+				var role = GetAccessorKeywordRole(Kind);
+				return role == null ? CSharpTokenNode.Null : GetChildByRole(role);
 			}
 		}
 
@@ -65,10 +71,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.Body, value); }
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		public static TokenRole? GetAccessorKeywordRole(AccessorKind kind)
 		{
-			Accessor o = other as Accessor;
-			return o != null && !o.IsNull && this.MatchAttributesAndModifiers(o, match) && this.Body.DoMatch(o.Body, match);
+			return kind switch {
+				AccessorKind.Getter => PropertyDeclaration.GetKeywordRole,
+				AccessorKind.Setter => PropertyDeclaration.SetKeywordRole,
+				AccessorKind.Init => PropertyDeclaration.InitKeywordRole,
+				AccessorKind.Adder => CustomEventDeclaration.AddKeywordRole,
+				AccessorKind.Remover => CustomEventDeclaration.RemoveKeywordRole,
+				_ => null,
+			};
 		}
 	}
 }
