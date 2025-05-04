@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// This isn't the same as 'assign' even though it has the same syntax.
 	/// This expression is used in object initializers and for named attribute arguments [Attr(FieldName = value)].
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class NamedExpression : Expression
 	{
 		public NamedExpression()

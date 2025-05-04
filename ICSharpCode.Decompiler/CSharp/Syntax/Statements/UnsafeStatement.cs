@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// unsafe { Body }
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class UnsafeStatement : Statement
 	{
 		public static readonly TokenRole UnsafeKeywordRole = new TokenRole("unsafe");

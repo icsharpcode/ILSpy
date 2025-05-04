@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// get/set/init/add/remove
 	/// </summary>
-	[DecompilerAstNode(true)]
+	[DecompilerAstNode(hasNullNode: true)]
 	public partial class Accessor : EntityDeclaration
 	{
 		public override NodeType NodeType {

@@ -30,7 +30,7 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class SyntaxTree : AstNode
 	{
 		public static readonly Role<AstNode> MemberRole = new Role<AstNode>("Member", AstNode.Null);

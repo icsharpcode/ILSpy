@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Target->MemberName
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class PointerReferenceExpression : Expression
 	{
 		public readonly static TokenRole ArrowRole = new TokenRole("->");

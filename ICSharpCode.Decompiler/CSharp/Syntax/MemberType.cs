@@ -32,7 +32,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class MemberType : AstType
 	{
 		public static readonly Role<AstType> TargetRole = new Role<AstType>("Target", AstType.Null);

@@ -25,7 +25,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class TupleAstType : AstType
 	{
 		public static readonly Role<TupleTypeElement> ElementRole = new Role<TupleTypeElement>("Element", TupleTypeElement.Null);
@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	[DecompilerAstNode(true)]
+	[DecompilerAstNode(hasNullNode: true)]
 	public partial class TupleTypeElement : AstNode
 	{
 		public AstType Type {

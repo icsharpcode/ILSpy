@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// Represents a named argument passed to a method or attribute.
 	/// name: expression
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class NamedArgumentExpression : Expression
 	{
 		public NamedArgumentExpression()

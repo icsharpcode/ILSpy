@@ -28,7 +28,7 @@ using System;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	[DecompilerAstNode(true)]
+	[DecompilerAstNode(hasNullNode: true)]
 	public partial class Identifier : AstNode
 	{
 		public override NodeType NodeType {

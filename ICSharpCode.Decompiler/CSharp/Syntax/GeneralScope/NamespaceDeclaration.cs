@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// namespace Name { Members }
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class NamespaceDeclaration : AstNode
 	{
 		public static readonly Role<AstNode> MemberRole = SyntaxTree.MemberRole;

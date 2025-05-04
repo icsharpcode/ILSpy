@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// yield return Expression;
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class YieldReturnStatement : Statement
 	{
 		public static readonly TokenRole YieldKeywordRole = new TokenRole("yield");

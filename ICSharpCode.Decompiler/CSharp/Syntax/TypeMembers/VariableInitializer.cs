@@ -27,7 +27,7 @@
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	[DecompilerAstNode(true)]
+	[DecompilerAstNode(hasNullNode: true)]
 	public partial class VariableInitializer : AstNode
 	{
 		#region PatternPlaceholder

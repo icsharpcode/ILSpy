@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// fixed (Type Variables) EmbeddedStatement
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class FixedStatement : Statement
 	{
 		public static readonly TokenRole FixedKeywordRole = new TokenRole("fixed");

@@ -27,7 +27,7 @@
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class VariableDeclarationStatement : Statement
 	{
 		public static readonly Role<CSharpModifierToken> ModifierRole = EntityDeclaration.ModifierRole;

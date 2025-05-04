@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// using Import;
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class UsingDeclaration : AstNode
 	{
 		public static readonly TokenRole UsingKeywordRole = new TokenRole("using");

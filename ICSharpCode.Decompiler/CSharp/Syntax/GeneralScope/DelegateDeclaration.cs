@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// delegate ReturnType Name&lt;TypeParameters&gt;(Parameters) where Constraints;
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class DelegateDeclaration : EntityDeclaration
 	{
 		public override NodeType NodeType {

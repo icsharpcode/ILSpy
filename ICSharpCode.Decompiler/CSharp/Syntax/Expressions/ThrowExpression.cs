@@ -21,7 +21,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// throw Expression
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ThrowExpression : Expression
 	{
 		public static readonly TokenRole ThrowKeywordRole = ThrowStatement.ThrowKeywordRole;

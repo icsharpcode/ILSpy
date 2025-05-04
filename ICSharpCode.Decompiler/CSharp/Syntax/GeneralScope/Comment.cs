@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		MultiLineDocumentation
 	}
 
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class Comment : AstNode
 	{
 		public override NodeType NodeType {

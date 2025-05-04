@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Condition ? TrueExpression : FalseExpression
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ConditionalExpression : Expression
 	{
 		public readonly static Role<Expression> ConditionRole = Roles.Condition;

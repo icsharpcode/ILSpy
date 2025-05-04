@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// Represents an AstType as an expression.
 	/// This is used when calling a method on a primitive type: "int.Parse()"
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class TypeReferenceExpression : Expression
 	{
 		public AstType Type {

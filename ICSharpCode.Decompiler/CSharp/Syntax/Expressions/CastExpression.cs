@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// (CastTo)Expression
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class CastExpression : Expression
 	{
 		public CSharpTokenNode LParToken {

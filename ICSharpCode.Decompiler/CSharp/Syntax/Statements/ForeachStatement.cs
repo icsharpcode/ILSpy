@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// foreach (Type VariableName in InExpression) EmbeddedStatement
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ForeachStatement : Statement
 	{
 		public static readonly TokenRole AwaitRole = UnaryOperatorExpression.AwaitRole;

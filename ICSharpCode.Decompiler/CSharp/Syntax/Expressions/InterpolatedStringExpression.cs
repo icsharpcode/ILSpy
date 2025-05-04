@@ -4,7 +4,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class InterpolatedStringExpression : Expression
 	{
 		public static readonly TokenRole OpenQuote = new TokenRole("$\"");
@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	[DecompilerAstNode(true)]
+	[DecompilerAstNode(hasNullNode: true)]
 	public abstract partial class InterpolatedStringContent : AstNode
 	{
 		public new static readonly Role<InterpolatedStringContent> Role = new Role<InterpolatedStringContent>("InterpolatedStringContent", Syntax.InterpolatedStringContent.Null);
@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// { Expression , Alignment : Suffix }
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class Interpolation : InterpolatedStringContent
 	{
 		public static readonly TokenRole LBrace = new TokenRole("{");
@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class InterpolatedStringText : InterpolatedStringContent
 	{
 		public string Text { get; set; }

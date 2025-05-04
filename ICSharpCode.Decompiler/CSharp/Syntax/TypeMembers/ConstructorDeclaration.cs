@@ -28,7 +28,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ConstructorDeclaration : EntityDeclaration
 	{
 		public static readonly Role<ConstructorInitializer> InitializerRole = new Role<ConstructorInitializer>("Initializer", ConstructorInitializer.Null);
@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		This
 	}
 
-	[DecompilerAstNode(true)]
+	[DecompilerAstNode(hasNullNode: true)]
 	public partial class ConstructorInitializer : AstNode
 	{
 		public static readonly TokenRole BaseKeywordRole = new TokenRole("base");

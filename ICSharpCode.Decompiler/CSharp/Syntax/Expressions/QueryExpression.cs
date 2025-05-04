@@ -18,7 +18,7 @@
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	[DecompilerAstNode(true)]
+	[DecompilerAstNode(hasNullNode: true)]
 	public partial class QueryExpression : Expression
 	{
 		public static readonly Role<QueryClause> ClauseRole = new Role<QueryClause>("Clause", null);
@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// 	new QuerySelectClause(e)
 	/// }
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryContinuationClause : QueryClause
 	{
 		public static readonly Role<QueryExpression> PrecedingQueryRole = new Role<QueryExpression>("PrecedingQuery", QueryExpression.Null);
@@ -124,7 +124,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryFromClause : QueryClause
 	{
 		public static readonly TokenRole FromKeywordRole = new TokenRole("from");
@@ -184,7 +184,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryLetClause : QueryClause
 	{
 		public readonly static TokenRole LetKeywordRole = new TokenRole("let");
@@ -238,7 +238,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryWhereClause : QueryClause
 	{
 		public readonly static TokenRole WhereKeywordRole = new TokenRole("where");
@@ -277,7 +277,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Represents a join or group join clause.
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryJoinClause : QueryClause
 	{
 		public static readonly TokenRole JoinKeywordRole = new TokenRole("join");
@@ -388,7 +388,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryOrderClause : QueryClause
 	{
 		public static readonly TokenRole OrderbyKeywordRole = new TokenRole("orderby");
@@ -424,7 +424,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryOrdering : AstNode
 	{
 		public readonly static TokenRole AscendingKeywordRole = new TokenRole("ascending");
@@ -477,7 +477,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		Descending
 	}
 
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QuerySelectClause : QueryClause
 	{
 		public readonly static TokenRole SelectKeywordRole = new TokenRole("select");
@@ -513,7 +513,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryGroupClause : QueryClause
 	{
 		public static readonly TokenRole GroupKeywordRole = new TokenRole("group");

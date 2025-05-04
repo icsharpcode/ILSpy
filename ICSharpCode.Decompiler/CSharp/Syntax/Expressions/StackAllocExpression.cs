@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// stackalloc Type[Count]
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class StackAllocExpression : Expression
 	{
 		public readonly static TokenRole StackallocKeywordRole = new TokenRole("stackalloc");

@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// ref Expression
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class DirectionExpression : Expression
 	{
 		public readonly static TokenRole RefKeywordRole = new TokenRole("ref");

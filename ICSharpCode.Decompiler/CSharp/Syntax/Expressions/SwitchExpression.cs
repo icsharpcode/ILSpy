@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Expression switch { SwitchSections }
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class SwitchExpression : Expression
 	{
 		public static readonly TokenRole SwitchKeywordRole = new TokenRole("switch");
@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Pattern => Expression
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class SwitchExpressionSection : AstNode
 	{
 		public static readonly Role<Expression> PatternRole = new Role<Expression>("Pattern", Expression.Null);

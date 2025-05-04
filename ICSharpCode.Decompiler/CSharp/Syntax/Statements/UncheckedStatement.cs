@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// unchecked BodyBlock
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class UncheckedStatement : Statement
 	{
 		public static readonly TokenRole UncheckedKeywordRole = new TokenRole("unchecked");

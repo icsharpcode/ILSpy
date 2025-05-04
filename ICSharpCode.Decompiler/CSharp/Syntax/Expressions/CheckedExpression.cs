@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// checked(Expression)
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class CheckedExpression : Expression
 	{
 		public readonly static TokenRole CheckedKeywordRole = new TokenRole("checked");

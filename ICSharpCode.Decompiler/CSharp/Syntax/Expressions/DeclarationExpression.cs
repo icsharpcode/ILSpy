@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// TypeName VariableDesignation
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class DeclarationExpression : Expression
 	{
 		public AstType Type {

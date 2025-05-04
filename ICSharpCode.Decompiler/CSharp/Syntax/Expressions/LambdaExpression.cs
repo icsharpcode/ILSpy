@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// [async] Parameters => Body
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class LambdaExpression : Expression
 	{
 		public static readonly Role<AttributeSection> AttributeRole = new Role<AttributeSection>("Attribute", null);

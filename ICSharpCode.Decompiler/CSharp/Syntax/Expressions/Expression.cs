@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// This class is useful even though it doesn't provide any additional functionality:
 	/// It can be used to communicate more information in APIs, e.g. "this subnode will always be an expression"
 	/// </remarks>
-	[DecompilerAstNode(true)]
+	[DecompilerAstNode(hasNullNode: true)]
 	public abstract partial class Expression : AstNode
 	{
 		#region PatternPlaceholder

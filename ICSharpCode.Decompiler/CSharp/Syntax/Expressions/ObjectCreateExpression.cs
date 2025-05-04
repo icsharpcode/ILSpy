@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// new Type(Arguments) { Initializer }
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ObjectCreateExpression : Expression
 	{
 		public readonly static TokenRole NewKeywordRole = new TokenRole("new");

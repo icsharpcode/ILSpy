@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Expression with Initializer
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class WithInitializerExpression : Expression
 	{
 		public readonly static TokenRole WithKeywordRole = new TokenRole("with");

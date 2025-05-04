@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// BaseType "(" Argument { "," Argument } ")"
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class InvocationAstType : AstType
 	{
 		public AstNodeCollection<Expression> Arguments {

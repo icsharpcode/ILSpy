@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// continue;
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ContinueStatement : Statement
 	{
 		public static readonly TokenRole ContinueKeywordRole = new TokenRole("continue");

@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// "while (Condition) EmbeddedStatement"
 	/// </summary>
-	[DecompilerAstNode(false)]
+	[DecompilerAstNode(hasNullNode: false)]
 	public partial class WhileStatement : Statement
 	{
 		public static readonly TokenRole WhileKeywordRole = new TokenRole("while");
