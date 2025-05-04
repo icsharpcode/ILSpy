@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -53,14 +52,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public ArrayInitializerExpression Initializer {
 			get { return GetChildByRole(InitializerRole); }
 			set { SetChildByRole(InitializerRole, value); }
-		}
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			ArrayCreateExpression o = other as ArrayCreateExpression;
-			return o != null && this.Type.DoMatch(o.Type, match)
-				&& this.Arguments.DoMatch(o.Arguments, match)
-				&& this.AdditionalArraySpecifiers.DoMatch(o.AdditionalArraySpecifiers, match)
-				&& this.Initializer.DoMatch(o.Initializer, match);
 		}
 	}
 }

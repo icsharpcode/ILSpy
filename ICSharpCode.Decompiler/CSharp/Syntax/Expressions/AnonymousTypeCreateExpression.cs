@@ -66,12 +66,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public AnonymousTypeCreateExpression(params Expression[] initializer) : this((IEnumerable<Expression>)initializer)
 		{
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			var o = other as AnonymousTypeCreateExpression;
-			return o != null && this.Initializers.DoMatch(o.Initializers, match);
-		}
 	}
 }
 

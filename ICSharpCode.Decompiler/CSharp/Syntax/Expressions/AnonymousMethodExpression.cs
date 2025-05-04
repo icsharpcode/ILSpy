@@ -94,12 +94,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public AnonymousMethodExpression(BlockStatement body, params ParameterDeclaration[] parameters) : this(body, (IEnumerable<ParameterDeclaration>)parameters)
 		{
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			AnonymousMethodExpression o = other as AnonymousMethodExpression;
-			return o != null && this.IsAsync == o.IsAsync && this.HasParameterList == o.HasParameterList
-				&& this.Parameters.DoMatch(o.Parameters, match) && this.Body.DoMatch(o.Body, match);
-		}
 	}
 }

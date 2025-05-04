@@ -24,7 +24,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -47,12 +46,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				return new TextLocation(Location.Line, Location.Column + "base".Length);
 			}
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			BaseReferenceExpression o = other as BaseReferenceExpression;
-			return o != null;
 		}
 	}
 }

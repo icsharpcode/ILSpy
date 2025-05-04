@@ -25,7 +25,6 @@
 // THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Linq.Expressions;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -87,13 +86,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public Expression Right {
 			get { return GetChildByRole(RightRole); }
 			set { SetChildByRole(RightRole, value); }
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			AssignmentExpression o = other as AssignmentExpression;
-			return o != null && (this.Operator == AssignmentOperatorType.Any || this.Operator == o.Operator)
-				&& this.Left.DoMatch(o.Left, match) && this.Right.DoMatch(o.Right, match);
 		}
 
 		public static TokenRole GetOperatorRole(AssignmentOperatorType op)

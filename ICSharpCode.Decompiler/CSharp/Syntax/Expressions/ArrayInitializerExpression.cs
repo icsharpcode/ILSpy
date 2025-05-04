@@ -59,12 +59,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public CSharpTokenNode RBraceToken {
 			get { return GetChildByRole(Roles.RBrace); }
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			ArrayInitializerExpression o = other as ArrayInitializerExpression;
-			return o != null && this.Elements.DoMatch(o.Elements, match);
-		}
 	}
 }
 
