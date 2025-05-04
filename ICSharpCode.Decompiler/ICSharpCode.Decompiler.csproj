@@ -237,7 +237,6 @@
     <Compile Include="CSharp\Syntax\GeneralScope\TypeParameterDeclaration.cs" />
     <Compile Include="CSharp\Syntax\GeneralScope\UsingAliasDeclaration.cs" />
     <Compile Include="CSharp\Syntax\GeneralScope\UsingDeclaration.cs" />
-    <Compile Include="CSharp\Syntax\IAstVisitor.cs" />
     <Compile Include="CSharp\Syntax\Identifier.cs" />
     <Compile Include="CSharp\Syntax\PatternMatching\IdentifierExpressionBackreference.cs" />
     <Compile Include="CSharp\Syntax\MemberType.cs" />
