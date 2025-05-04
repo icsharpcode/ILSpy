@@ -86,21 +86,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitPrimitiveType(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitPrimitiveType(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitPrimitiveType(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			PrimitiveType o = other as PrimitiveType;

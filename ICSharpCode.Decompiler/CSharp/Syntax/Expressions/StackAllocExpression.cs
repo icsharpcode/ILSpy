@@ -63,21 +63,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(InitializerRole, value); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitStackAllocExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitStackAllocExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitStackAllocExpression(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			StackAllocExpression o = other as StackAllocExpression;

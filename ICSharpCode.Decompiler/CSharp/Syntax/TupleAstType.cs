@@ -34,21 +34,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildrenByRole(ElementRole); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitTupleType(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitTupleType(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitTupleType(this, data);
-		}
-
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)
 		{
 			return new TupleTypeReference(
@@ -82,21 +67,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public override NodeType NodeType => NodeType.Unknown;
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitTupleTypeElement(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitTupleTypeElement(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitTupleTypeElement(this, data);
-		}
 
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{

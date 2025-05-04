@@ -61,21 +61,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(FinallyBlockRole, value); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitTryCatchStatement(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitTryCatchStatement(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitTryCatchStatement(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			TryCatchStatement o = other as TryCatchStatement;
@@ -203,21 +188,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public BlockStatement Body {
 			get { return GetChildByRole(Roles.Body); }
 			set { SetChildByRole(Roles.Body, value); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitCatchClause(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitCatchClause(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitCatchClause(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

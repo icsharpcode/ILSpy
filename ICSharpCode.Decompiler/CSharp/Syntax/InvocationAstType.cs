@@ -39,21 +39,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.Type, value); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitInvocationType(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitInvocationType(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitInvocationType(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
 			return other is InvocationAstType o

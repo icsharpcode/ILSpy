@@ -66,21 +66,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildrenByRole(Roles.TypeArgument); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitPointerReferenceExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitPointerReferenceExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitPointerReferenceExpression(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			PointerReferenceExpression o = other as PointerReferenceExpression;

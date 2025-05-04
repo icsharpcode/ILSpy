@@ -98,21 +98,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitMemberType(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitMemberType(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitMemberType(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			MemberType o = other as MemberType;

@@ -134,20 +134,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			return this.Parameters.DoMatch(o.Parameters, match);
 		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitDocumentationReference(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitDocumentationReference(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitDocumentationReference(this, data);
-		}
 	}
 }

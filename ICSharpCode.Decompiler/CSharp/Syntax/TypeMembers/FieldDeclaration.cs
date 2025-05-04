@@ -56,21 +56,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { throw new NotSupportedException(); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitFieldDeclaration(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitFieldDeclaration(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitFieldDeclaration(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			FieldDeclaration o = other as FieldDeclaration;

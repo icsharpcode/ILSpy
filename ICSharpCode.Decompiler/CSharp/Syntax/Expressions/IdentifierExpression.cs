@@ -65,21 +65,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildrenByRole(Roles.TypeArgument); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitIdentifierExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitIdentifierExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitIdentifierExpression(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			IdentifierExpression o = other as IdentifierExpression;

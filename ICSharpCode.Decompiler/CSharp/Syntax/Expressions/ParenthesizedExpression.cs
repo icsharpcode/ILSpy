@@ -55,21 +55,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Expression = expr;
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitParenthesizedExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitParenthesizedExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitParenthesizedExpression(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			ParenthesizedExpression o = other as ParenthesizedExpression;

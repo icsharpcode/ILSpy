@@ -35,21 +35,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			AddChild(methodDeclaration, MethodDeclarationRole);
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitLocalFunctionDeclarationStatement(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitLocalFunctionDeclarationStatement(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitLocalFunctionDeclarationStatement(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
 			return other is LocalFunctionDeclarationStatement o && Declaration.DoMatch(o.Declaration, match);

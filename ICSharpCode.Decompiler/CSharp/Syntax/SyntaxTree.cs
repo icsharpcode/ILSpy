@@ -122,20 +122,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			SyntaxTree o = other as SyntaxTree;
 			return o != null && this.Members.DoMatch(o.Members, match);
 		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitSyntaxTree(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitSyntaxTree(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitSyntaxTree(this, data);
-		}
 	}
 }

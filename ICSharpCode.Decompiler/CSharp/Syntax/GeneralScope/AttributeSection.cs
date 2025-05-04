@@ -115,21 +115,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.RBracket); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitAttributeSection(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitAttributeSection(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitAttributeSection(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			AttributeSection o = other as AttributeSection;

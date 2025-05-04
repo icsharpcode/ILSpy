@@ -36,21 +36,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.VariableDesignationRole, value); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitDeclarationExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitDeclarationExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitDeclarationExpression(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
 			return other is DeclarationExpression o

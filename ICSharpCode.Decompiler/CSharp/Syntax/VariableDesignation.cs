@@ -42,21 +42,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.Identifier, value); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitSingleVariableDesignation(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitSingleVariableDesignation(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitSingleVariableDesignation(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
 			return other is SingleVariableDesignation o && MatchString(this.Identifier, o.Identifier);
@@ -80,21 +65,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitParenthesizedVariableDesignation(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitParenthesizedVariableDesignation(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitParenthesizedVariableDesignation(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, Match match)

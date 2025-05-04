@@ -65,21 +65,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.RBrace); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitSwitchStatement(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitSwitchStatement(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitSwitchStatement(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			SwitchStatement o = other as SwitchStatement;
@@ -152,21 +137,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildrenByRole(Roles.EmbeddedStatement); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitSwitchSection(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitSwitchSection(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitSwitchSection(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			SwitchSection o = other as SwitchSection;
@@ -205,21 +175,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public CaseLabel(Expression expression)
 		{
 			this.Expression = expression;
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitCaseLabel(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitCaseLabel(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitCaseLabel(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

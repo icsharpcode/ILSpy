@@ -50,21 +50,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.Variable = new VariableInitializer(name);
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitOutVarDeclarationExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitOutVarDeclarationExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitOutVarDeclarationExpression(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			var o = other as OutVarDeclarationExpression;

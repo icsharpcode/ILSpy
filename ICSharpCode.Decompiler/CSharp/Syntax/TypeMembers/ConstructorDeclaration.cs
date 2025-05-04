@@ -116,21 +116,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.RPar); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitConstructorInitializer(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitConstructorInitializer(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitConstructorInitializer(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			ConstructorInitializer o = other as ConstructorInitializer;

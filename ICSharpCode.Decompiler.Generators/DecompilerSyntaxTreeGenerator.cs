@@ -144,17 +144,17 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		{
 			builder.Append($@"	public override void AcceptVisitor(IAstVisitor visitor)
 	{{
-		visitor.Visit{source.NodeName}(this);
+		visitor.Visit{source.VisitMethodName}(this);
 	}}
 
 	public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 	{{
-		return visitor.Visit{source.NodeName}(this);
+		return visitor.Visit{source.VisitMethodName}(this);
 	}}
 
 	public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 	{{
-		return visitor.Visit{source.NodeName}(this, data);
+		return visitor.Visit{source.VisitMethodName}(this, data);
 	}}
 ");
 		}

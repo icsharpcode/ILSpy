@@ -24,21 +24,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Content.AddRange(content);
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitInterpolatedStringExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitInterpolatedStringExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitInterpolatedStringExpression(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
 			InterpolatedStringExpression o = other as InterpolatedStringExpression;
@@ -92,21 +77,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Suffix = suffix;
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitInterpolation(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitInterpolation(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitInterpolation(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
 			Interpolation o = other as Interpolation;
@@ -127,21 +97,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public InterpolatedStringText(string text)
 		{
 			Text = text;
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitInterpolatedStringText(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitInterpolatedStringText(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitInterpolatedStringText(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, Match match)

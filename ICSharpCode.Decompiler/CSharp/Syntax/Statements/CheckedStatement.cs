@@ -53,21 +53,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			AddChild(body, Roles.Body);
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitCheckedStatement(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitCheckedStatement(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitCheckedStatement(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			CheckedStatement o = other as CheckedStatement;

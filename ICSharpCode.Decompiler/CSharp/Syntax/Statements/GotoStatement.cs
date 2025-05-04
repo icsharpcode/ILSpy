@@ -64,21 +64,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.Semicolon); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitGotoStatement(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitGotoStatement(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitGotoStatement(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			GotoStatement o = other as GotoStatement;
@@ -115,21 +100,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.Semicolon); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitGotoCaseStatement(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitGotoCaseStatement(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitGotoCaseStatement(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			GotoCaseStatement o = other as GotoCaseStatement;
@@ -156,21 +126,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CSharpTokenNode SemicolonToken {
 			get { return GetChildByRole(Roles.Semicolon); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitGotoDefaultStatement(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitGotoDefaultStatement(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitGotoDefaultStatement(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

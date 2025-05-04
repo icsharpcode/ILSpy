@@ -101,21 +101,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			AddChild(import, ImportRole);
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitUsingDeclaration(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitUsingDeclaration(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitUsingDeclaration(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			UsingDeclaration o = other as UsingDeclaration;

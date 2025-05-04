@@ -43,21 +43,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(InitializerRole, value); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitWithInitializerExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitWithInitializerExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitWithInitializerExpression(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
 			return other is WithInitializerExpression o

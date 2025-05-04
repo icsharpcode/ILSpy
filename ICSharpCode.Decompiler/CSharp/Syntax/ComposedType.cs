@@ -130,21 +130,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildrenByRole(PointerRole); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitComposedType(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitComposedType(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitComposedType(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			ComposedType o = other as ComposedType;
@@ -272,21 +257,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CSharpTokenNode RBracketToken {
 			get { return GetChildByRole(Roles.RBracket); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitArraySpecifier(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitArraySpecifier(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitArraySpecifier(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

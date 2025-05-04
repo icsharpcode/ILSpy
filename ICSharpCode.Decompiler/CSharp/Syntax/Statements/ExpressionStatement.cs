@@ -42,21 +42,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.Semicolon); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitExpressionStatement(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitExpressionStatement(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitExpressionStatement(this, data);
-		}
-
 		public ExpressionStatement()
 		{
 		}

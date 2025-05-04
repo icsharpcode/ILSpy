@@ -49,21 +49,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.RBrace); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitSwitchExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitSwitchExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitSwitchExpression(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			SwitchExpression o = other as SwitchExpression;
@@ -95,21 +80,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public override NodeType NodeType => NodeType.Unknown;
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitSwitchExpressionSection(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitSwitchExpressionSection(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitSwitchExpressionSection(this, data);
-		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
