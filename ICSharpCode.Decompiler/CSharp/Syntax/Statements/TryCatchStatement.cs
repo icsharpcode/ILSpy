@@ -95,39 +95,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole CondLPar = new TokenRole("(");
 		public static readonly TokenRole CondRPar = new TokenRole(")");
 
-		#region Null
-		public new static readonly CatchClause Null = new NullCatchClause();
-
-		sealed class NullCatchClause : CatchClause
-		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
-
-			public override void AcceptVisitor(IAstVisitor visitor)
-			{
-				visitor.VisitNullNode(this);
-			}
-
-			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-			{
-				return visitor.VisitNullNode(this);
-			}
-
-			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-			{
-				return visitor.VisitNullNode(this, data);
-			}
-
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-			{
-				return other == null || other.IsNull;
-			}
-		}
-		#endregion
-
 		#region PatternPlaceholder
 		public static implicit operator CatchClause(PatternMatching.Pattern pattern)
 		{

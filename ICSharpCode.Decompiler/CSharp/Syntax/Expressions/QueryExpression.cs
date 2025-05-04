@@ -23,39 +23,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly Role<QueryClause> ClauseRole = new Role<QueryClause>("Clause", null);
 
-		#region Null
-		public new static readonly QueryExpression Null = new NullQueryExpression();
-
-		sealed class NullQueryExpression : QueryExpression
-		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
-
-			public override void AcceptVisitor(IAstVisitor visitor)
-			{
-				visitor.VisitNullNode(this);
-			}
-
-			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-			{
-				return visitor.VisitNullNode(this);
-			}
-
-			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-			{
-				return visitor.VisitNullNode(this, data);
-			}
-
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-			{
-				return other == null || other.IsNull;
-			}
-		}
-		#endregion
-
 		public AstNodeCollection<QueryClause> Clauses {
 			get { return GetChildrenByRole(ClauseRole); }
 		}

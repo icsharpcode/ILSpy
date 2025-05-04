@@ -60,39 +60,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.Elements.AddRange(elements);
 		}
 
-		#region Null
-		public new static readonly ArrayInitializerExpression Null = new NullArrayInitializerExpression();
-
-		sealed class NullArrayInitializerExpression : ArrayInitializerExpression
-		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
-
-			public override void AcceptVisitor(IAstVisitor visitor)
-			{
-				visitor.VisitNullNode(this);
-			}
-
-			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-			{
-				return visitor.VisitNullNode(this);
-			}
-
-			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-			{
-				return visitor.VisitNullNode(this, data);
-			}
-
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-			{
-				return other == null || other.IsNull;
-			}
-		}
-		#endregion
-
 		public CSharpTokenNode LBraceToken {
 			get { return GetChildByRole(Roles.LBrace); }
 		}
