@@ -277,6 +277,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		protected internal override void VisitCall(Call inst)
 		{
+			if (context.Settings.InlineArrays && InlineArrayTransform.RunOnExpression(inst, context))
+			{
+				return;
+			}
+
 			if (NullableLiftingTransform.MatchGetValueOrDefault(inst, out var nullableValue, out var fallback)
 				&& SemanticHelper.IsPure(fallback.Flags))
 			{

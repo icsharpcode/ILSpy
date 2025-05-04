@@ -142,7 +142,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (c != Conversion.None)
 					return c;
 			}
-			if (resolveResult is InterpolatedStringResolveResult isrr)
+			if (resolveResult is InterpolatedStringResolveResult)
 			{
 				if (toType.IsKnownType(KnownTypeCode.IFormattable) || toType.IsKnownType(KnownTypeCode.FormattableString))
 					return Conversion.ImplicitInterpolatedStringConversion;

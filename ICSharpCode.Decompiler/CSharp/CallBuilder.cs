@@ -463,6 +463,23 @@ namespace ICSharpCode.Decompiler.CSharp
 				return HandleImplicitConversion(method, argumentList.Arguments[0]);
 			}
 
+			if (settings.InlineArrays
+				&& method is { DeclaringType.FullName: "<PrivateImplementationDetails>", Name: "InlineArrayAsSpan" or "InlineArrayAsReadOnlySpan" }
+				&& argumentList.Length == 2)
+			{
+				argumentList.CheckNoNamedOrOptionalArguments();
+				var argument = argumentList.Arguments[0];
+				var targetType = method.ReturnType;
+				if (argument.Expression is DirectionExpression { FieldDirection: FieldDirection.In or FieldDirection.Ref, Expression: var lvalueExpr })
+				{
+					// `(TargetType)(in arg)` is invalid syntax.
+					// Also, `f(in arg)` is invalid when there's an implicit conversion involved.
+					argument = argument.UnwrapChild(lvalueExpr);
+				}
+				return new CastExpression(expressionBuilder.ConvertType(targetType), argument.Expression)
+					.WithRR(new ConversionResolveResult(targetType, argument.ResolveResult, Conversion.InlineArrayConversion));
+			}
+
 			if (settings.LiftNullables && method.Name == "GetValueOrDefault"
 				&& method.DeclaringType.IsKnownType(KnownTypeCode.NullableOfT)
 				&& method.DeclaringType.TypeArguments[0].IsKnownType(KnownTypeCode.Boolean)

@@ -107,6 +107,7 @@
     <Compile Include="DecompilationProgress.cs" />
     <Compile Include="Disassembler\IEntityProcessor.cs" />
     <Compile Include="Disassembler\SortByNameProcessor.cs" />
+    <Compile Include="IL\Transforms\InlineArrayTransform.cs" />
     <Compile Include="IL\Transforms\RemoveUnconstrainedGenericReferenceTypeCheck.cs" />
     <Compile Include="Metadata\MetadataFile.cs" />
     <Compile Include="Metadata\ModuleReferenceMetadata.cs" />
