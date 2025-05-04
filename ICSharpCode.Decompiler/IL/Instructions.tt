@@ -862,7 +862,8 @@ namespace ICSharpCode.Decompiler.IL
 					opCode.PerformMatchConditions.Add("Patterns.ListMatch.DoMatch(this." + argProp + ", o." + argProp + ", ref match)");
 					if (i == 0)
 						opCode.WriteArguments.Add("bool first = true;");
-					opCode.WriteArguments.Add("foreach (var " + arg + " in " + argProp + ") {");
+					opCode.WriteArguments.Add("foreach (var " + arg + " in " + argProp + ")");
+					opCode.WriteArguments.Add("{");
 					if (i > 0)
 						opCode.WriteArguments.Add("\toutput.Write(\", \");");
 					else
@@ -1087,7 +1088,7 @@ protected override void Disconnected()
 		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "IField", Name = "field", FieldName = "Field" });
 		opCode.PerformMatchConditions.Add("field.Equals(o.field)");
 		opCode.Members.Add("/// <summary>Returns the field operand.</summary>" + Environment.NewLine
-						+ "public IField Field { get { return field; } }");
+						+ "public IField Field { get { return this.field; } }");
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOperand.Add("output.Write(' ');");
 		opCode.WriteOperand.Add("field.WriteTo(output);");

@@ -3790,7 +3790,7 @@ namespace ICSharpCode.Decompiler.IL
 		public bool DelayExceptions; // NullReferenceException/IndexOutOfBoundsException only occurs when the reference is dereferenced
 		readonly IField field;
 		/// <summary>Returns the field operand.</summary>
-		public IField Field { get { return field; } }
+		public IField Field { get { return this.field; } }
 		public override StackType ResultType { get { return target.ResultType.IsIntegerType() ? StackType.I : StackType.Ref; } }
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -3844,7 +3844,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.Ref; } }
 		readonly IField field;
 		/// <summary>Returns the field operand.</summary>
-		public IField Field { get { return field; } }
+		public IField Field { get { return this.field; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
