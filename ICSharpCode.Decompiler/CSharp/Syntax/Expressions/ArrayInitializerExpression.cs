@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// { Elements }
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: true)]
+	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
 	public partial class ArrayInitializerExpression : Expression
 	{
 		/// <summary>
