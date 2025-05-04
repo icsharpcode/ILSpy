@@ -14,7 +14,7 @@ namespace ICSharpCode.Decompiler.Generators;
 [Generator]
 internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 {
-	record AstNodeAdditions(string NodeName, bool NeedsAcceptImpls, bool NeedsVisitor, bool NeedsNullNode, int NullNodeBaseCtorParamCount, bool IsTypeNode, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny)>? MembersToMatch);
+	record AstNodeAdditions(string NodeName, bool NeedsAcceptImpls, bool NeedsVisitor, bool NeedsNullNode, bool NeedsPatternPlaceholder, int NullNodeBaseCtorParamCount, bool IsTypeNode, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny)>? MembersToMatch);
 
 	AstNodeAdditions GetAstNodeAdditions(GeneratorAttributeSyntaxContext context, CancellationToken ct)
 	{
@@ -63,6 +63,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		return new(targetSymbol.Name, !targetSymbol.MemberNames.Contains("AcceptVisitor"),
 			NeedsVisitor: !targetSymbol.IsAbstract && targetSymbol.BaseType!.IsAbstract,
 			NeedsNullNode: (bool)attribute.ConstructorArguments[0].Value!,
+			NeedsPatternPlaceholder: (bool)attribute.ConstructorArguments[1].Value!,
 			NullNodeBaseCtorParamCount: targetSymbol.InstanceConstructors.Min(m => m.Parameters.Length),
 			IsTypeNode: targetSymbol.Name == "AstType" || targetSymbol.BaseType?.Name == "AstType",
 			visitMethodName, paramTypeName, membersToMatch?.ToEquatableArray());
@@ -73,6 +74,13 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		var builder = new StringBuilder();
 
 		builder.AppendLine("namespace ICSharpCode.Decompiler.CSharp.Syntax;");
+		builder.AppendLine();
+
+		if (source.NeedsPatternPlaceholder)
+		{
+			builder.AppendLine("using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;");
+		}
+
 		builder.AppendLine();
 
 		builder.AppendLine("#nullable enable");
@@ -140,6 +148,63 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 
 		}
 
+		if (source.NeedsPatternPlaceholder)
+		{
+			const string toTypeReferenceCode = @"
+
+		public override Decompiler.TypeSystem.ITypeReference ToTypeReference(Resolver.NameLookupMode lookupMode, Decompiler.TypeSystem.InterningProvider? interningProvider = null)
+		{
+			throw new System.NotSupportedException();
+		}";
+
+			builder.Append(
+		$@"		public static implicit operator {source.NodeName}?(PatternMatching.Pattern? pattern)
+	{{
+		return pattern != null ? new PatternPlaceholder(pattern) : null;
+	}}
+
+	sealed class PatternPlaceholder : {source.NodeName}, INode
+	{{
+		readonly PatternMatching.Pattern child;
+
+		public PatternPlaceholder(PatternMatching.Pattern child)
+		{{
+			this.child = child;
+		}}
+
+		public override NodeType NodeType {{
+			get {{ return NodeType.Pattern; }}
+		}}
+
+		public override void AcceptVisitor(IAstVisitor visitor)
+		{{
+			visitor.VisitPatternPlaceholder(this, child);
+		}}
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+		{{
+			return visitor.VisitPatternPlaceholder(this, child);
+		}}
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+		{{
+			return visitor.VisitPatternPlaceholder(this, child, data);
+		}}
+
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
+		{{
+			return child.DoMatch(other, match);
+		}}
+
+		bool PatternMatching.INode.DoMatchCollection(Role? role, PatternMatching.INode? pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
+		{{
+			return child.DoMatchCollection(role, pos, match, backtrackingInfo);
+		}}{(source.NodeName == "AstType" ? toTypeReferenceCode : "")}
+	}}
+"
+			);
+		}
+
 		if (source.NeedsAcceptImpls && source.NeedsVisitor)
 		{
 			builder.Append($@"	public override void AcceptVisitor(IAstVisitor visitor)
@@ -202,7 +267,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		builder.AppendLine("namespace ICSharpCode.Decompiler.CSharp.Syntax;");
 
 		source = source
-			.Concat([new("NullNode", false, true, false, 0, false, "NullNode", "AstNode", null), new("PatternPlaceholder", false, true, false, 0, false, "PatternPlaceholder", "AstNode", null)])
+			.Concat([new("NullNode", false, true, false, false, 0, false, "NullNode", "AstNode", null), new("PatternPlaceholder", false, true, false, false, 0, false, "PatternPlaceholder", "AstNode", null)])
 			.ToImmutableArray();
 
 		WriteInterface("IAstVisitor", "void", "");

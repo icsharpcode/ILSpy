@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// catch (Type VariableName) { Body }
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: true)]
+	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
 	public partial class CatchClause : AstNode
 	{
 		public static readonly TokenRole CatchKeywordRole = new TokenRole("catch");
@@ -79,52 +79,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly Role<Expression> ConditionRole = Roles.Condition;
 		public static readonly TokenRole CondLPar = new TokenRole("(");
 		public static readonly TokenRole CondRPar = new TokenRole(")");
-
-		#region PatternPlaceholder
-		public static implicit operator CatchClause(PatternMatching.Pattern pattern)
-		{
-			return pattern != null ? new PatternPlaceholder(pattern) : null;
-		}
-
-		sealed class PatternPlaceholder : CatchClause, PatternMatching.INode
-		{
-			readonly PatternMatching.Pattern child;
-
-			public PatternPlaceholder(PatternMatching.Pattern child)
-			{
-				this.child = child;
-			}
-
-			public override NodeType NodeType {
-				get { return NodeType.Pattern; }
-			}
-
-			public override void AcceptVisitor(IAstVisitor visitor)
-			{
-				visitor.VisitPatternPlaceholder(this, child);
-			}
-
-			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-			{
-				return visitor.VisitPatternPlaceholder(this, child);
-			}
-
-			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-			{
-				return visitor.VisitPatternPlaceholder(this, child, data);
-			}
-
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-			{
-				return child.DoMatch(other, match);
-			}
-
-			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
-			{
-				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
-			}
-		}
-		#endregion
 
 		public override NodeType NodeType {
 			get {
