@@ -31,7 +31,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// { Elements }
 	/// </summary>
-	public class ArrayInitializerExpression : Expression
+	[DecompilerAstNode(true)]
+	public partial class ArrayInitializerExpression : Expression
 	{
 		/// <summary>
 		/// For ease of use purposes in the resolver the ast representation

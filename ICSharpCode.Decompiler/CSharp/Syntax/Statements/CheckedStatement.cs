@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// checked BodyBlock
 	/// </summary>
-	public class CheckedStatement : Statement
+	[DecompilerAstNode(false)]
+	public partial class CheckedStatement : Statement
 	{
 		public static readonly TokenRole CheckedKeywordRole = new TokenRole("checked");
 

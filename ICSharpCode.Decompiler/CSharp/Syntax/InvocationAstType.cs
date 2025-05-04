@@ -17,8 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
@@ -29,7 +27,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// BaseType "(" Argument { "," Argument } ")"
 	/// </summary>
-	public class InvocationAstType : AstType
+	[DecompilerAstNode(false)]
+	public partial class InvocationAstType : AstType
 	{
 		public AstNodeCollection<Expression> Arguments {
 			get { return GetChildrenByRole(Roles.Expression); }

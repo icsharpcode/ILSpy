@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// extern alias IDENTIFIER;
 	/// </summary>
-	public class ExternAliasDeclaration : AstNode
+	[DecompilerAstNode(false)]
+	public partial class ExternAliasDeclaration : AstNode
 	{
 		public override NodeType NodeType {
 			get {

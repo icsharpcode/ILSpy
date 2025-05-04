@@ -21,7 +21,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// out type expression
 	/// </summary>
-	public class OutVarDeclarationExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class OutVarDeclarationExpression : Expression
 	{
 		public readonly static TokenRole OutKeywordRole = DirectionExpression.OutKeywordRole;
 

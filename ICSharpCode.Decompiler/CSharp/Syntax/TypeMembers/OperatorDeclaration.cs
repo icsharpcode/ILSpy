@@ -76,7 +76,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		CheckedExplicit
 	}
 
-	public class OperatorDeclaration : EntityDeclaration
+	[DecompilerAstNode(false)]
+	public partial class OperatorDeclaration : EntityDeclaration
 	{
 		public static readonly TokenRole OperatorKeywordRole = new TokenRole("operator");
 		public static readonly TokenRole CheckedKeywordRole = new TokenRole("checked");

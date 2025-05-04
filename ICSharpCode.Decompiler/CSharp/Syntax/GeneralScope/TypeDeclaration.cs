@@ -47,7 +47,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// class Name&lt;TypeParameters&gt; : BaseTypes where Constraints;
 	/// </summary>
-	public class TypeDeclaration : EntityDeclaration
+	[DecompilerAstNode(false)]
+	public partial class TypeDeclaration : EntityDeclaration
 	{
 		public override NodeType NodeType {
 			get { return NodeType.TypeDeclaration; }

@@ -23,14 +23,13 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System.Collections.Generic;
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
 	/// Condition ? TrueExpression : FalseExpression
 	/// </summary>
-	public class ConditionalExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class ConditionalExpression : Expression
 	{
 		public readonly static Role<Expression> ConditionRole = Roles.Condition;
 		public readonly static TokenRole QuestionMarkRole = new TokenRole("?");

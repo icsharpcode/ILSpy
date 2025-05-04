@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Label:
 	/// </summary>
-	public class LabelStatement : Statement
+	[DecompilerAstNode(false)]
+	public partial class LabelStatement : Statement
 	{
 		public string Label {
 			get {

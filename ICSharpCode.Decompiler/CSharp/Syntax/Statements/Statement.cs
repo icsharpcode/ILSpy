@@ -27,7 +27,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// This class is useful even though it doesn't provide any additional functionality:
 	/// It can be used to communicate more information in APIs, e.g. "this subnode will always be a statement"
 	/// </remarks>
-	public abstract class Statement : AstNode
+	[DecompilerAstNode(true)]
+	public abstract partial class Statement : AstNode
 	{
 		#region Null
 		public new static readonly Statement Null = new NullStatement();

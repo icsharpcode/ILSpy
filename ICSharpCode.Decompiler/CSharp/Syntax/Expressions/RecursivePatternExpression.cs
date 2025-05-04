@@ -20,7 +20,8 @@ using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class RecursivePatternExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class RecursivePatternExpression : Expression
 	{
 		public static readonly Role<Expression> SubPatternRole = new Role<Expression>("SubPattern", Syntax.Expression.Null);
 

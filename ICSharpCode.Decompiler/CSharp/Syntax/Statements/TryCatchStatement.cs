@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// try TryBlock CatchClauses finally FinallyBlock
 	/// </summary>
-	public class TryCatchStatement : Statement
+	[DecompilerAstNode(false)]
+	public partial class TryCatchStatement : Statement
 	{
 		public static readonly TokenRole TryKeywordRole = new TokenRole("try");
 		public static readonly Role<BlockStatement> TryBlockRole = new Role<BlockStatement>("TryBlock", BlockStatement.Null);
@@ -85,7 +86,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// catch (Type VariableName) { Body }
 	/// </summary>
-	public class CatchClause : AstNode
+	[DecompilerAstNode(true)]
+	public partial class CatchClause : AstNode
 	{
 		public static readonly TokenRole CatchKeywordRole = new TokenRole("catch");
 		public static readonly TokenRole WhenKeywordRole = new TokenRole("when");

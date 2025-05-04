@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Expression as TypeReference
 	/// </summary>
-	public class AsExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class AsExpression : Expression
 	{
 		public readonly static TokenRole AsKeywordRole = new TokenRole("as");
 

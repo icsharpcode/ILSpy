@@ -31,7 +31,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// new Type(Arguments) { Initializer }
 	/// </summary>
-	public class ObjectCreateExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class ObjectCreateExpression : Expression
 	{
 		public readonly static TokenRole NewKeywordRole = new TokenRole("new");
 		public readonly static Role<ArrayInitializerExpression> InitializerRole = ArrayCreateExpression.InitializerRole;

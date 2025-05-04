@@ -31,7 +31,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// get/set/init/add/remove
 	/// </summary>
-	public class Accessor : EntityDeclaration
+	[DecompilerAstNode(true)]
+	public partial class Accessor : EntityDeclaration
 	{
 		public static readonly new Accessor Null = new NullAccessor();
 		sealed class NullAccessor : Accessor

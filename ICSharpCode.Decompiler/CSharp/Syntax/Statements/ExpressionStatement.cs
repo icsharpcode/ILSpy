@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Expression;
 	/// </summary>
-	public class ExpressionStatement : Statement
+	[DecompilerAstNode(false)]
+	public partial class ExpressionStatement : Statement
 	{
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }

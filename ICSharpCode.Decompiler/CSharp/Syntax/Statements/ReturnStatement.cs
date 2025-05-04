@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// return Expression;
 	/// </summary>
-	public class ReturnStatement : Statement
+	[DecompilerAstNode(false)]
+	public partial class ReturnStatement : Statement
 	{
 		public static readonly TokenRole ReturnKeywordRole = new TokenRole("return");
 

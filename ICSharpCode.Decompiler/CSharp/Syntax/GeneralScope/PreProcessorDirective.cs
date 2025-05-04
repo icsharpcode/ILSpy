@@ -46,7 +46,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		Line = 12
 	}
 
-	public class LinePreprocessorDirective : PreProcessorDirective
+	[DecompilerAstNode(false)]
+	public partial class LinePreprocessorDirective : PreProcessorDirective
 	{
 		public int LineNumber {
 			get;
@@ -67,7 +68,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	public class PragmaWarningPreprocessorDirective : PreProcessorDirective
+	[DecompilerAstNode(false)]
+	public partial class PragmaWarningPreprocessorDirective : PreProcessorDirective
 	{
 		public static readonly Role<PrimitiveExpression> WarningRole = new Role<PrimitiveExpression>("Warning", null);
 
@@ -125,7 +127,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	public class PreProcessorDirective : AstNode
+	[DecompilerAstNode(false)]
+	public partial class PreProcessorDirective : AstNode
 	{
 		public override NodeType NodeType {
 			get {

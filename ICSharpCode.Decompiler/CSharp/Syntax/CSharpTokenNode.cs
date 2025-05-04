@@ -34,7 +34,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <remarks>
 	/// In all non null c# token nodes the Role of a CSharpToken must be a TokenRole.
 	/// </remarks>
-	public class CSharpTokenNode : AstNode
+	[DecompilerAstNode(true)]
+	public partial class CSharpTokenNode : AstNode
 	{
 		public static new readonly CSharpTokenNode Null = new NullCSharpTokenNode();
 		class NullCSharpTokenNode : CSharpTokenNode

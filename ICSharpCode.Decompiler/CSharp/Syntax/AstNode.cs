@@ -37,7 +37,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public abstract class AstNode : AbstractAnnotatable, IFreezable, INode, ICloneable
+	[DecompilerAstNode(true)]
+	public abstract partial class AstNode : AbstractAnnotatable, IFreezable, INode, ICloneable
 	{
 		// the Root role must be available when creating the null nodes, so we can't put it in the Roles class
 		internal static readonly Role<AstNode?> RootRole = new Role<AstNode?>("Root", null);

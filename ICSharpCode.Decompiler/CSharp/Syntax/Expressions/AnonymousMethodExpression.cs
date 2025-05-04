@@ -32,7 +32,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// [async] delegate(Parameters) {Body}
 	/// </summary>
-	public class AnonymousMethodExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class AnonymousMethodExpression : Expression
 	{
 		public readonly static TokenRole DelegateKeywordRole = new TokenRole("delegate");
 		public readonly static TokenRole AsyncModifierRole = LambdaExpression.AsyncModifierRole;

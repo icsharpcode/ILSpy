@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// ;
 	/// </summary>
-	public class EmptyStatement : Statement
+	[DecompilerAstNode(false)]
+	public partial class EmptyStatement : Statement
 	{
 		public TextLocation Location {
 			get;

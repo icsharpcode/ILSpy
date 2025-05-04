@@ -29,7 +29,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// [async] Parameters => Body
 	/// </summary>
-	public class LambdaExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class LambdaExpression : Expression
 	{
 		public static readonly Role<AttributeSection> AttributeRole = new Role<AttributeSection>("Attribute", null);
 		public readonly static TokenRole AsyncModifierRole = new TokenRole("async");

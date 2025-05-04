@@ -32,7 +32,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Operator Expression
 	/// </summary>
-	public class UnaryOperatorExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class UnaryOperatorExpression : Expression
 	{
 		public readonly static TokenRole NotRole = new TokenRole("!");
 		public readonly static TokenRole BitNotRole = new TokenRole("~");

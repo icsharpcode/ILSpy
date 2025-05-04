@@ -31,7 +31,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// typeof(Type)
 	/// </summary>
-	public class TypeOfExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class TypeOfExpression : Expression
 	{
 		public readonly static TokenRole TypeofKeywordRole = new TokenRole("typeof");
 

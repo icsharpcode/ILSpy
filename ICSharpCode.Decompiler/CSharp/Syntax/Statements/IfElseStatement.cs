@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// if (Condition) TrueStatement else FalseStatement
 	/// </summary>
-	public class IfElseStatement : Statement
+	[DecompilerAstNode(false)]
+	public partial class IfElseStatement : Statement
 	{
 		public readonly static TokenRole IfKeywordRole = new TokenRole("if");
 		public readonly static Role<Expression> ConditionRole = Roles.Condition;

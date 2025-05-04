@@ -39,7 +39,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Represents undocumented expressions.
 	/// </summary>
-	public class UndocumentedExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class UndocumentedExpression : Expression
 	{
 		public readonly static TokenRole ArglistKeywordRole = new TokenRole("__arglist");
 		public readonly static TokenRole RefvalueKeywordRole = new TokenRole("__refvalue");

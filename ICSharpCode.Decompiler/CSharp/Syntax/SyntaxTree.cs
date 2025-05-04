@@ -26,12 +26,12 @@
 
 using System.Collections.Generic;
 
-using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class SyntaxTree : AstNode
+	[DecompilerAstNode(false)]
+	public partial class SyntaxTree : AstNode
 	{
 		public static readonly Role<AstNode> MemberRole = new Role<AstNode>("Member", AstNode.Null);
 

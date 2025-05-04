@@ -27,7 +27,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// Note: mirroring the C# syntax, constraints are not part of the type parameter declaration, but belong
 	/// to the parent type or method.
 	/// </summary>
-	public class TypeParameterDeclaration : AstNode
+	[DecompilerAstNode(false)]
+	public partial class TypeParameterDeclaration : AstNode
 	{
 		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
 		public static readonly TokenRole OutVarianceKeywordRole = new TokenRole("out");

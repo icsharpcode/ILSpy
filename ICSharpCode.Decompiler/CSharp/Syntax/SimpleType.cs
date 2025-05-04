@@ -32,7 +32,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class SimpleType : AstType
+	[DecompilerAstNode(true)]
+	public partial class SimpleType : AstType
 	{
 		#region Null
 		public new static readonly SimpleType Null = new NullSimpleType();

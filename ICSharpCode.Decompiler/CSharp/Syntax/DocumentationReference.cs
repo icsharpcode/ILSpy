@@ -23,7 +23,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Represents a 'cref' reference in XML documentation.
 	/// </summary>
-	public class DocumentationReference : AstNode
+	[DecompilerAstNode(false)]
+	public partial class DocumentationReference : AstNode
 	{
 		public static readonly Role<AstType> DeclaringTypeRole = new Role<AstType>("DeclaringType", AstType.Null);
 		public static readonly Role<AstType> ConversionOperatorReturnTypeRole = new Role<AstType>("ConversionOperatorReturnType", AstType.Null);

@@ -23,7 +23,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// TypeName VariableDesignation
 	/// </summary>
-	public class DeclarationExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class DeclarationExpression : Expression
 	{
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }

@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// unchecked(Expression)
 	/// </summary>
-	public class UncheckedExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class UncheckedExpression : Expression
 	{
 		public readonly static TokenRole UncheckedKeywordRole = new TokenRole("unchecked");
 

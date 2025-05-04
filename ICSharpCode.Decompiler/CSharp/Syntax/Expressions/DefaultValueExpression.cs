@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// default(Type)
 	/// </summary>
-	public class DefaultValueExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class DefaultValueExpression : Expression
 	{
 		public readonly static TokenRole DefaultKeywordRole = new TokenRole("default");
 

@@ -23,7 +23,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Expression with Initializer
 	/// </summary>
-	public class WithInitializerExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class WithInitializerExpression : Expression
 	{
 		public readonly static TokenRole WithKeywordRole = new TokenRole("with");
 		public readonly static Role<ArrayInitializerExpression> InitializerRole = ArrayCreateExpression.InitializerRole;

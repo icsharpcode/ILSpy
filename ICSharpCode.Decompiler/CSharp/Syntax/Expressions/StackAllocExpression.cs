@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// stackalloc Type[Count]
 	/// </summary>
-	public class StackAllocExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class StackAllocExpression : Expression
 	{
 		public readonly static TokenRole StackallocKeywordRole = new TokenRole("stackalloc");
 		public readonly static Role<ArrayInitializerExpression> InitializerRole = new Role<ArrayInitializerExpression>("Initializer", ArrayInitializerExpression.Null);

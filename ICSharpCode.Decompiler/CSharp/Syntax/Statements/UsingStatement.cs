@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// [ await ] using (ResourceAcquisition) EmbeddedStatement
 	/// </summary>
-	public class UsingStatement : Statement
+	[DecompilerAstNode(false)]
+	public partial class UsingStatement : Statement
 	{
 		public static readonly TokenRole UsingKeywordRole = new TokenRole("using");
 		public static readonly TokenRole AwaitRole = UnaryOperatorExpression.AwaitRole;

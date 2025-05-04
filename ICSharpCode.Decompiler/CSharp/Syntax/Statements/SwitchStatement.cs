@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// switch (Expression) { SwitchSections }
 	/// </summary>
-	public class SwitchStatement : Statement
+	[DecompilerAstNode(false)]
+	public partial class SwitchStatement : Statement
 	{
 		public static readonly TokenRole SwitchKeywordRole = new TokenRole("switch");
 		public static readonly Role<SwitchSection> SwitchSectionRole = new Role<SwitchSection>("SwitchSection", null);
@@ -86,7 +87,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	public class SwitchSection : AstNode
+	[DecompilerAstNode(false)]
+	public partial class SwitchSection : AstNode
 	{
 		#region PatternPlaceholder
 		public static implicit operator SwitchSection(PatternMatching.Pattern pattern)
@@ -172,7 +174,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	public class CaseLabel : AstNode
+	[DecompilerAstNode(false)]
+	public partial class CaseLabel : AstNode
 	{
 		public static readonly TokenRole CaseKeywordRole = new TokenRole("case");
 		public static readonly TokenRole DefaultKeywordRole = new TokenRole("default");

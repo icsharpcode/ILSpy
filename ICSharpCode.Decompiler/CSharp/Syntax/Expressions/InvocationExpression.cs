@@ -31,7 +31,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Target(Arguments)
 	/// </summary>
-	public class InvocationExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class InvocationExpression : Expression
 	{
 		public Expression Target {
 			get { return GetChildByRole(Roles.TargetExpression); }

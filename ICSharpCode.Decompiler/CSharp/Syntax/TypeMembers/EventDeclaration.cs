@@ -31,7 +31,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class EventDeclaration : EntityDeclaration
+	[DecompilerAstNode(false)]
+	public partial class EventDeclaration : EntityDeclaration
 	{
 		public static readonly TokenRole EventKeywordRole = new TokenRole("event");
 
@@ -84,7 +85,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	public class CustomEventDeclaration : EntityDeclaration
+	[DecompilerAstNode(false)]
+	public partial class CustomEventDeclaration : EntityDeclaration
 	{
 		public static readonly TokenRole EventKeywordRole = new TokenRole("event");
 		public static readonly TokenRole AddKeywordRole = new TokenRole("add");

@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// throw Expression;
 	/// </summary>
-	public class ThrowStatement : Statement
+	[DecompilerAstNode(false)]
+	public partial class ThrowStatement : Statement
 	{
 		public static readonly TokenRole ThrowKeywordRole = new TokenRole("throw");
 

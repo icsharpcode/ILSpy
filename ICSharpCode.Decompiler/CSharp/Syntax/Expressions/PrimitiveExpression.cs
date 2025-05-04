@@ -24,8 +24,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System;
-
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -48,7 +46,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Represents a literal value.
 	/// </summary>
-	public class PrimitiveExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class PrimitiveExpression : Expression
 	{
 		public static readonly object AnyValue = new object();
 

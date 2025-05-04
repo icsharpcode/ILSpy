@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// null
 	/// </summary>
-	public class NullReferenceExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class NullReferenceExpression : Expression
 	{
 		TextLocation location;
 		public override TextLocation StartLocation {

@@ -31,7 +31,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class FunctionPointerAstType : AstType
+	[DecompilerAstNode(false)]
+	public partial class FunctionPointerAstType : AstType
 	{
 		public static readonly TokenRole PointerRole = new TokenRole("*");
 		public static readonly Role<AstType> CallingConventionRole = new Role<AstType>("CallConv", AstType.Null);

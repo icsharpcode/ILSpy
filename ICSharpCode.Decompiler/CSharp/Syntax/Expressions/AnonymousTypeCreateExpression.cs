@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// new { [ExpressionList] }
 	/// </summary>
-	public class AnonymousTypeCreateExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class AnonymousTypeCreateExpression : Expression
 	{
 		public readonly static TokenRole NewKeywordRole = new TokenRole("new");
 

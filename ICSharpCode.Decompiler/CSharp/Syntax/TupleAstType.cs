@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Immutable;
 using System.Linq;
 
@@ -26,7 +25,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class TupleAstType : AstType
+	[DecompilerAstNode(false)]
+	public partial class TupleAstType : AstType
 	{
 		public static readonly Role<TupleTypeElement> ElementRole = new Role<TupleTypeElement>("Element", TupleTypeElement.Null);
 
@@ -63,7 +63,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	public class TupleTypeElement : AstNode
+	[DecompilerAstNode(true)]
+	public partial class TupleTypeElement : AstNode
 	{
 		#region Null
 		public new static readonly TupleTypeElement Null = new TupleTypeElement();

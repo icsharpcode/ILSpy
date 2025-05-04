@@ -23,11 +23,10 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System;
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class ErrorExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class ErrorExpression : Expression
 	{
 		public TextLocation Location { get; set; }
 

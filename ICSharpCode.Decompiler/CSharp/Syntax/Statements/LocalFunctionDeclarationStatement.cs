@@ -20,7 +20,8 @@ using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class LocalFunctionDeclarationStatement : Statement
+	[DecompilerAstNode(false)]
+	public partial class LocalFunctionDeclarationStatement : Statement
 	{
 		public static readonly Role<MethodDeclaration> MethodDeclarationRole = new Role<MethodDeclaration>("Method", null);
 

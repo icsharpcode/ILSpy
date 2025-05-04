@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// sizeof(Type)
 	/// </summary>
-	public class SizeOfExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class SizeOfExpression : Expression
 	{
 		public readonly static TokenRole SizeofKeywordRole = new TokenRole("sizeof");
 

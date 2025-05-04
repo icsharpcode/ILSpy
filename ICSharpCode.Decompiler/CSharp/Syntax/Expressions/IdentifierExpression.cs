@@ -26,7 +26,8 @@
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class IdentifierExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class IdentifierExpression : Expression
 	{
 		public IdentifierExpression()
 		{

@@ -28,7 +28,8 @@ using System;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class Identifier : AstNode
+	[DecompilerAstNode(true)]
+	public partial class Identifier : AstNode
 	{
 		public new static readonly Identifier Null = new NullIdentifier();
 		sealed class NullIdentifier : Identifier

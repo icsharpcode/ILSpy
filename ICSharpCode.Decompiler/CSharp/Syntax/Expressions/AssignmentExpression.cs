@@ -33,7 +33,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Left Operator= Right
 	/// </summary>
-	public class AssignmentExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class AssignmentExpression : Expression
 	{
 		// reuse roles from BinaryOperatorExpression
 		public readonly static Role<Expression> LeftRole = BinaryOperatorExpression.LeftRole;

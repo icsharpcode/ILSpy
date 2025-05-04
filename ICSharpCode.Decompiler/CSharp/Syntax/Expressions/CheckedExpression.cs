@@ -24,13 +24,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
 	/// checked(Expression)
 	/// </summary>
-	public class CheckedExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class CheckedExpression : Expression
 	{
 		public readonly static TokenRole CheckedKeywordRole = new TokenRole("checked");
 

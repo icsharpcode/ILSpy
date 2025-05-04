@@ -31,7 +31,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Target.MemberName
 	/// </summary>
-	public class MemberReferenceExpression : Expression
+	[DecompilerAstNode(false)]
+	public partial class MemberReferenceExpression : Expression
 	{
 		public Expression Target {
 			get {

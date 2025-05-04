@@ -33,7 +33,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <remarks>
 	/// new(), struct and class constraints are represented using a PrimitiveType "new", "struct" or "class"
 	/// </remarks>
-	public class Constraint : AstNode
+	[DecompilerAstNode(true)]
+	public partial class Constraint : AstNode
 	{
 		public override NodeType NodeType {
 			get { return NodeType.Unknown; }
