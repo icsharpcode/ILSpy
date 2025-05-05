@@ -1735,7 +1735,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				decl.Name = parameter.Name;
 			}
-			if (parameter.GetDefaultValueAssignmentAllowed() && this.ShowConstantValues)
+			if (parameter.IsDefaultValueAssignmentAllowed() && this.ShowConstantValues)
 			{
 				try
 				{

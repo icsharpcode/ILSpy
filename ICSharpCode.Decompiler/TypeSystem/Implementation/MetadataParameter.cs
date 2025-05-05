@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var metadata = module.metadata;
 			var parameter = metadata.GetParameter(handle);
 
-			bool defaultValueAssignmentAllowed = this.GetDefaultValueAssignmentAllowed();
+			bool defaultValueAssignmentAllowed = this.IsDefaultValueAssignmentAllowed();
 
 			if (IsOptional && !defaultValueAssignmentAllowed)
 			{

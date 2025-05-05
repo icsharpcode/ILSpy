@@ -108,7 +108,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 	internal static class IParameterExtensions
 	{
-		public static bool GetDefaultValueAssignmentAllowed(this IParameter parameter)
+		/// <summary>
+		/// Checks if the parameter is allowed to be assigned a default value.
+		/// </summary>
+		/// <remarks>
+		/// This checks <see cref="IParameter.IsOptional"/>, <see cref="IParameter.HasConstantValueInSignature"/>, <see cref="IParameter.ReferenceKind"/>,
+		/// and <see cref="IParameter.IsParams"/> on this parameter and all subsequent parameters.
+		/// If the parameter has no <see cref="IParameter.Owner"/>, it does not check subsequent parameters.
+		/// </remarks>
+		/// <param name="parameter">The parameter</param>
+		/// <returns>True if the <paramref name="parameter"/> has a default value and is allowed to be assigned a default value.</returns>
+		public static bool IsDefaultValueAssignmentAllowed(this IParameter parameter)
 		{
 			if (!DefaultValueAssignmentAllowedIndividual(parameter))
 				return false;
