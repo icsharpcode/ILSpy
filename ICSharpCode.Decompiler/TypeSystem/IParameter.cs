@@ -105,44 +105,4 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		IParameterizedMember? Owner { get; }
 	}
-
-	internal static class IParameterExtensions
-	{
-		/// <summary>
-		/// Checks if the parameter is allowed to be assigned a default value.
-		/// </summary>
-		/// <remarks>
-		/// This checks <see cref="IParameter.IsOptional"/>, <see cref="IParameter.HasConstantValueInSignature"/>, <see cref="IParameter.ReferenceKind"/>,
-		/// and <see cref="IParameter.IsParams"/> on this parameter and all subsequent parameters.
-		/// If the parameter has no <see cref="IParameter.Owner"/>, it does not check subsequent parameters.
-		/// </remarks>
-		/// <param name="parameter">The parameter</param>
-		/// <returns>True if the <paramref name="parameter"/> has a default value and is allowed to be assigned a default value.</returns>
-		public static bool IsDefaultValueAssignmentAllowed(this IParameter parameter)
-		{
-			if (!DefaultValueAssignmentAllowedIndividual(parameter))
-				return false;
-
-			if (parameter.Owner == null)
-				return true;
-
-			for (int i = parameter.Owner.Parameters.Count - 1; i >= 0; i--)
-			{
-				IParameter otherParameter = parameter.Owner.Parameters[i];
-				if (otherParameter == parameter)
-					break;
-
-				if (DefaultValueAssignmentAllowedIndividual(otherParameter) || otherParameter.IsParams)
-					continue;
-
-				return false;
-			}
-			return true;
-
-			static bool DefaultValueAssignmentAllowedIndividual(IParameter parameter)
-			{
-				return parameter.IsOptional && parameter.HasConstantValueInSignature && parameter.ReferenceKind is ReferenceKind.None or ReferenceKind.In or ReferenceKind.RefReadOnly;
-			}
-		}
-	}
 }
