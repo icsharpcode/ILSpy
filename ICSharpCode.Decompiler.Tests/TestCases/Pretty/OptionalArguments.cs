@@ -308,11 +308,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 #endif
-		public static void Issue3469([Optional][DefaultParameterValue(0)] int i, [Optional] DateTime d)
+		public static void Issue3469a([Optional][DefaultParameterValue(0)] int i, [Optional] DateTime d)
 		{
 		}
-
 #if CS120
+		public static Action<int, DateTime> Issue3469b()
+		{
+			return ([Optional][DefaultParameterValue(0)] int i, [Optional] DateTime d) => {
+			};
+		}
 		public static D LambdaWithOptionalParameter()
 		{
 			return (int x = 10) => x;

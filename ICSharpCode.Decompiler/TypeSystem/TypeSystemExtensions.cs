@@ -629,7 +629,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return false;
 
 			if (parameter.Owner == null)
-				return true;
+				return true; // Shouldn't happen, but we need to check for it.
 
 			for (int i = parameter.Owner.Parameters.Count - 1; i >= 0; i--)
 			{
