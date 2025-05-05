@@ -105,4 +105,34 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		IParameterizedMember? Owner { get; }
 	}
+
+	internal static class IParameterExtensions
+	{
+		public static bool GetDefaultValueAssignmentAllowed(this IParameter parameter)
+		{
+			if (!DefaultValueAssignmentAllowedIndividual(parameter))
+				return false;
+
+			if (parameter.Owner == null)
+				return true;
+
+			for (int i = parameter.Owner.Parameters.Count - 1; i >= 0; i--)
+			{
+				IParameter otherParameter = parameter.Owner.Parameters[i];
+				if (otherParameter == parameter)
+					break;
+
+				if (DefaultValueAssignmentAllowedIndividual(otherParameter) || otherParameter.IsParams)
+					continue;
+
+				return false;
+			}
+			return true;
+
+			static bool DefaultValueAssignmentAllowedIndividual(IParameter parameter)
+			{
+				return parameter.IsOptional && parameter.HasConstantValueInSignature && parameter.ReferenceKind is ReferenceKind.None or ReferenceKind.In or ReferenceKind.RefReadOnly;
+			}
+		}
+	}
 }
