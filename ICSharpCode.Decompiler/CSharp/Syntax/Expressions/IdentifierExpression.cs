@@ -64,11 +64,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public AstNodeCollection<AstType> TypeArguments {
 			get { return GetChildrenByRole(Roles.TypeArgument); }
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			IdentifierExpression o = other as IdentifierExpression;
-			return o != null && MatchString(this.Identifier, o.Identifier) && this.TypeArguments.DoMatch(o.TypeArguments, match);
-		}
 	}
 }

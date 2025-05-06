@@ -244,6 +244,10 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				{
 					builder.Append($"\r\n\t\t\t&& (this.{member} == {typeName}.Any || this.{member} == o.{member})");
 				}
+				else if (typeName == "String")
+				{
+					builder.Append($"\r\n\t\t\t&& MatchString(this.{member}, o.{member})");
+				}
 				else
 				{
 					builder.Append($"\r\n\t\t\t&& this.{member} == o.{member}");

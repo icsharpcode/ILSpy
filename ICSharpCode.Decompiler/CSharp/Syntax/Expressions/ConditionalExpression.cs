@@ -70,11 +70,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			AddChild(trueExpression, TrueRole);
 			AddChild(falseExpression, FalseRole);
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			ConditionalExpression o = other as ConditionalExpression;
-			return o != null && this.Condition.DoMatch(o.Condition, match) && this.TrueExpression.DoMatch(o.TrueExpression, match) && this.FalseExpression.DoMatch(o.FalseExpression, match);
-		}
 	}
 }

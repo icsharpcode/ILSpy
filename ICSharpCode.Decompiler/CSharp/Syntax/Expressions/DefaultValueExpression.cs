@@ -60,12 +60,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			AddChild(type, Roles.Type);
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			DefaultValueExpression o = other as DefaultValueExpression;
-			return o != null && this.Type.DoMatch(o.Type, match);
-		}
 	}
 }
 

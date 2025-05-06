@@ -42,11 +42,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public string Error {
-			get;
-			private set;
-		}
-
 		public ErrorExpression()
 		{
 		}
@@ -54,12 +49,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public ErrorExpression(string error)
 		{
 			AddChild(new Comment(error, CommentType.MultiLine), Roles.Comment);
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			var o = other as ErrorExpression;
-			return o != null;
 		}
 	}
 }

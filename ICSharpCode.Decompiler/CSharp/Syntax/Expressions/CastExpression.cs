@@ -58,12 +58,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			AddChild(castToType, Roles.Type);
 			AddChild(expression, Roles.Expression);
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			CastExpression o = other as CastExpression;
-			return o != null && this.Type.DoMatch(o.Type, match) && this.Expression.DoMatch(o.Expression, match);
-		}
 	}
 }
 

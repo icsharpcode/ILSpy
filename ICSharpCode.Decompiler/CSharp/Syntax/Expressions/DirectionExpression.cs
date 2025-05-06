@@ -78,11 +78,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.FieldDirection = direction;
 			AddChild(expression, Roles.Expression);
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			DirectionExpression o = other as DirectionExpression;
-			return o != null && this.FieldDirection == o.FieldDirection && this.Expression.DoMatch(o.Expression, match);
-		}
 	}
 }
