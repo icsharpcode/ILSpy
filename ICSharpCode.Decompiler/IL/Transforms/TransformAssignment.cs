@@ -54,7 +54,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (context.Settings.IntroduceIncrementAndDecrement)
 			{
 				if (TransformPostIncDecOperatorWithInlineStore(block, pos)
-					|| TransformPostIncDecOperator(block, pos))
+					|| TransformPostIncDecOperator(block, pos)
+					|| TransformPreIncDecOperatorWithInlineStore(block, pos))
 				{
 					// again, new top-level stloc might need inlining:
 					context.RequestRerun();
@@ -842,6 +843,83 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				return previousInstruction is StLoc addressStore && addressStore.Value.Match(loadTarget).Success;
 			}
+		}
+
+		/// <code>
+		/// stloc l(stloc target(binary.add(ldloc target, ldc.i4 1)))
+		/// </code>
+		bool TransformPreIncDecOperatorWithInlineStore(Block block, int pos)
+		{
+			var store = block.Instructions[pos];
+			if (!IsCompoundStore(store, out var targetType1, out var value1, context.TypeSystem))
+			{
+				return false;
+			}
+			if (!IsCompoundStore(value1, out var targetType2, out var value2, context.TypeSystem))
+			{
+				return false;
+			}
+			if (targetType1 != targetType2)
+				return false;
+			var targetType = targetType1;
+			var stloc_outer = store as StLoc;
+			var stloc_inner = value1 as StLoc;
+			LdLoc ldloc;
+			var binary = UnwrapSmallIntegerConv(value2, out var conv) as BinaryNumericInstruction;
+			if (binary != null && (binary.Right.MatchLdcI(1) || binary.Right.MatchLdcF4(1) || binary.Right.MatchLdcF8(1)))
+			{
+				if (!(binary.Operator == BinaryNumericOperator.Add || binary.Operator == BinaryNumericOperator.Sub))
+					return false;
+
+				if (conv is not null)
+				{
+					var primitiveType = targetType.ToPrimitiveType();
+					if (primitiveType.GetSize() == conv.TargetType.GetSize() && primitiveType.GetSign() != conv.TargetType.GetSign())
+						targetType = SwapSign(targetType, context.TypeSystem);
+				}
+
+				if (!ValidateCompoundAssign(binary, conv, targetType, context.Settings))
+					return false;
+				ldloc = binary.Left as LdLoc;
+			}
+			else if (value2 is Call operatorCall && operatorCall.Method.IsOperator && operatorCall.Arguments.Count == 1)
+			{
+				if (!(operatorCall.Method.Name == "op_Increment" || operatorCall.Method.Name == "op_Decrement"))
+					return false;
+				if (operatorCall.IsLifted)
+					return false; // TODO: add tests and think about whether nullables need special considerations
+				ldloc = operatorCall.Arguments[0] as LdLoc;
+			}
+			else
+			{
+				return false;
+			}
+			if (stloc_outer == null)
+				return false;
+			if (stloc_inner == null)
+				return false;
+			if (ldloc == null)
+				return false;
+			if (!(stloc_outer.Variable.Kind == VariableKind.Local || stloc_outer.Variable.Kind == VariableKind.StackSlot))
+				return false;
+			if (!IsMatchingCompoundLoad(ldloc, stloc_inner, out var target, out var targetKind, out var finalizeMatch))
+				return false;
+			if (IsImplicitTruncation(stloc_outer.Value, stloc_outer.Variable.Type, context.TypeSystem))
+				return false;
+			context.Step(nameof(TransformPreIncDecOperatorWithInlineStore), store);
+			finalizeMatch?.Invoke(context);
+			if (binary != null)
+			{
+				block.Instructions[pos] = new StLoc(stloc_outer.Variable, new NumericCompoundAssign(
+					binary, target, targetKind, binary.Right, targetType, CompoundEvalMode.EvaluatesToNewValue));
+			}
+			else
+			{
+				Call operatorCall = (Call)value2;
+				block.Instructions[pos] = new StLoc(stloc_outer.Variable, new UserDefinedCompoundAssign(
+					operatorCall.Method, CompoundEvalMode.EvaluatesToNewValue, target, targetKind, new LdcI4(1)));
+			}
+			return true;
 		}
 
 		/// <code>
