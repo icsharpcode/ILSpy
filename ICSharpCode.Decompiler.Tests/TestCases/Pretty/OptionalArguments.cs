@@ -314,8 +314,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if CS120
 		public static Action<int, DateTime> Issue3469b()
 		{
+#pragma warning disable CS9099 // Parameter 1 has default value 'default(int)' in lambda but '<missing>' in the target delegate type
 			return ([Optional][DefaultParameterValue(0)] int i, [Optional] DateTime d) => {
 			};
+#pragma warning restore CS9099
 		}
 		public static D LambdaWithOptionalParameter()
 		{
