@@ -29,7 +29,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Expression is Type
 	/// </summary>
-	public class IsExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class IsExpression : Expression
 	{
 		public readonly static TokenRole IsKeywordRole = new TokenRole("is");
 

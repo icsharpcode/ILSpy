@@ -20,7 +20,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class ExtensionDeclaration : EntityDeclaration
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class ExtensionDeclaration : EntityDeclaration
 	{
 		public readonly static TokenRole ExtensionKeywordRole = new TokenRole("extension");
 

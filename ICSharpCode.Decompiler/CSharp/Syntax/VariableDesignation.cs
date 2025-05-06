@@ -20,7 +20,8 @@ using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public abstract class VariableDesignation : AstNode
+	[DecompilerAstNode(hasNullNode: true)]
+	public abstract partial class VariableDesignation : AstNode
 	{
 		public override NodeType NodeType => NodeType.Unknown;
 
@@ -62,7 +63,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Identifier
 	/// </summary>
-	public class SingleVariableDesignation : VariableDesignation
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class SingleVariableDesignation : VariableDesignation
 	{
 
 		public string Identifier {
@@ -99,7 +101,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// ( VariableDesignation (, VariableDesignation)* )
 	/// </summary>
-	public class ParenthesizedVariableDesignation : VariableDesignation
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class ParenthesizedVariableDesignation : VariableDesignation
 	{
 
 		public CSharpTokenNode LParToken {

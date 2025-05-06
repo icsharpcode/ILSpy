@@ -29,7 +29,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// [AttributeTarget: Attributes]
 	/// </summary>
-	public class AttributeSection : AstNode
+	[DecompilerAstNode(hasNullNode: false, hasPatternPlaceholder: true)]
+	public partial class AttributeSection : AstNode
 	{
 		#region PatternPlaceholder
 		public static implicit operator AttributeSection(PatternMatching.Pattern pattern)

@@ -29,7 +29,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Name [ CountExpression ]
 	/// </summary>
-	public class FixedVariableInitializer : AstNode
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class FixedVariableInitializer : AstNode
 	{
 		public override NodeType NodeType {
 			get {

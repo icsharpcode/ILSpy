@@ -29,7 +29,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// "do EmbeddedStatement while(Condition);"
 	/// </summary>
-	public class DoWhileStatement : Statement
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class DoWhileStatement : Statement
 	{
 		public static readonly TokenRole DoKeywordRole = new TokenRole("do");
 		public static readonly TokenRole WhileKeywordRole = new TokenRole("while");

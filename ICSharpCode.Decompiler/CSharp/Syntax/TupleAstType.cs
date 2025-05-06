@@ -20,7 +20,8 @@ using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class TupleAstType : AstType
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class TupleAstType : AstType
 	{
 		public static readonly Role<TupleTypeElement> ElementRole = new Role<TupleTypeElement>("Element", TupleTypeElement.Null);
 
@@ -49,7 +50,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	public class TupleTypeElement : AstNode
+	[DecompilerAstNode(hasNullNode: true)]
+	public partial class TupleTypeElement : AstNode
 	{
 		#region Null
 		public new static readonly TupleTypeElement Null = new TupleTypeElement();

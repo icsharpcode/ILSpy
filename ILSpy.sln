@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doc", "doc", "{F45DB999-7E7
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.Decompiler", "ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj", "{984CC812-9470-4A13-AFF9-CC44068D666C}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.Decompiler.Generators", "ICSharpCode.Decompiler.Generators\ICSharpCode.Decompiler.Generators.csproj", "{0792B524-622B-4B9D-8027-3531ED6A42EB}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.Decompiler.Tests", "ICSharpCode.Decompiler.Tests\ICSharpCode.Decompiler.Tests.csproj", "{FEC0DA52-C4A6-4710-BE36-B484A20C5E22}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.ILSpyCmd", "ICSharpCode.ILSpyCmd\ICSharpCode.ILSpyCmd.csproj", "{743B439A-E7AD-4A0A-BAB6-222E1EA83C6D}"
@@ -65,6 +67,18 @@ Global
 		{984CC812-9470-4A13-AFF9-CC44068D666C}.Release|x64.Build.0 = Release|Any CPU
 		{984CC812-9470-4A13-AFF9-CC44068D666C}.Release|x86.ActiveCfg = Release|Any CPU
 		{984CC812-9470-4A13-AFF9-CC44068D666C}.Release|x86.Build.0 = Release|Any CPU
+		{0792B524-622B-4B9D-8027-3531ED6A42EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0792B524-622B-4B9D-8027-3531ED6A42EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0792B524-622B-4B9D-8027-3531ED6A42EB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0792B524-622B-4B9D-8027-3531ED6A42EB}.Debug|x64.Build.0 = Debug|Any CPU
+		{0792B524-622B-4B9D-8027-3531ED6A42EB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0792B524-622B-4B9D-8027-3531ED6A42EB}.Debug|x86.Build.0 = Debug|Any CPU
+		{0792B524-622B-4B9D-8027-3531ED6A42EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0792B524-622B-4B9D-8027-3531ED6A42EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0792B524-622B-4B9D-8027-3531ED6A42EB}.Release|x64.ActiveCfg = Release|Any CPU
+		{0792B524-622B-4B9D-8027-3531ED6A42EB}.Release|x64.Build.0 = Release|Any CPU
+		{0792B524-622B-4B9D-8027-3531ED6A42EB}.Release|x86.ActiveCfg = Release|Any CPU
+		{0792B524-622B-4B9D-8027-3531ED6A42EB}.Release|x86.Build.0 = Release|Any CPU
 		{FEC0DA52-C4A6-4710-BE36-B484A20C5E22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{FEC0DA52-C4A6-4710-BE36-B484A20C5E22}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FEC0DA52-C4A6-4710-BE36-B484A20C5E22}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -200,8 +214,5 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {C764218F-7633-4412-923D-558CE7EE0560}
 	EndGlobalSection
 EndGlobal

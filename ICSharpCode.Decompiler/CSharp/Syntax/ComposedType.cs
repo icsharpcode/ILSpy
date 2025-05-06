@@ -32,7 +32,8 @@ using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class ComposedType : AstType
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class ComposedType : AstType
 	{
 		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
 		public static readonly TokenRole RefRole = new TokenRole("ref");
@@ -203,7 +204,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// [,,,]
 	/// </summary>
-	public class ArraySpecifier : AstNode
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class ArraySpecifier : AstNode
 	{
 		public override NodeType NodeType {
 			get {

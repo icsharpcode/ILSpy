@@ -28,7 +28,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class PropertyDeclaration : EntityDeclaration
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class PropertyDeclaration : EntityDeclaration
 	{
 		public static readonly TokenRole GetKeywordRole = new TokenRole("get");
 		public static readonly TokenRole SetKeywordRole = new TokenRole("set");

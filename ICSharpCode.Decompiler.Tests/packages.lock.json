@@ -214,14 +214,6 @@
         "resolved": "5.6.0-2.26172.2",
         "contentHash": "xRPIwva1u2UuX46lfccAl8+86YnjzXjoCD83KanidOq/qHXHt4UdhWj4oPGtAcVnYWiiQPnYwi16wD6SSuLZUw=="
       },
-      "Microsoft.CodeAnalysis.Common": {
-        "type": "Transitive",
-        "resolved": "5.8.0-1.26302.115",
-        "contentHash": "GVNztynnvtpOh19LGlhwQTNOBKoSsaJ+Q+fA80AMKJNDXw25mCTJLM4TEJfyTolJj6DesIK78Xlu3iG7y8sIMg==",
-        "dependencies": {
-          "Microsoft.CodeAnalysis.Analyzers": "5.6.0-2.26172.2"
-        }
-      },
       "Microsoft.DiaSymReader.PortablePdb": {
         "type": "Transitive",
         "resolved": "1.7.0-beta-21525-03",
@@ -1253,6 +1245,15 @@
         "requested": "[1.3.8, )",
         "resolved": "1.3.8",
         "contentHash": "LhwlPa7c1zs1OV2XadMtAWdImjLIsqFJPoRcIWAadSRn0Ri1DepK65UbWLPmt4riLqx2d40xjXRk0ogpqNtK7g=="
+      },
+      "Microsoft.CodeAnalysis.Common": {
+        "type": "CentralTransitive",
+        "requested": "[5.8.0-1.26302.115, )",
+        "resolved": "5.8.0-1.26302.115",
+        "contentHash": "GVNztynnvtpOh19LGlhwQTNOBKoSsaJ+Q+fA80AMKJNDXw25mCTJLM4TEJfyTolJj6DesIK78Xlu3iG7y8sIMg==",
+        "dependencies": {
+          "Microsoft.CodeAnalysis.Analyzers": "5.6.0-2.26172.2"
+        }
       },
       "Microsoft.Extensions.DependencyInjection.Abstractions": {
         "type": "CentralTransitive",

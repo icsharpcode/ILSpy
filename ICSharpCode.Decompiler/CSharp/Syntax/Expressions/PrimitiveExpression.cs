@@ -46,7 +46,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Represents a literal value.
 	/// </summary>
-	public class PrimitiveExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class PrimitiveExpression : Expression
 	{
 		public static readonly object AnyValue = new object();
 

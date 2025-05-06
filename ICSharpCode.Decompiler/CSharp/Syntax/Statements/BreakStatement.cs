@@ -29,7 +29,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// break;
 	/// </summary>
-	public class BreakStatement : Statement
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class BreakStatement : Statement
 	{
 		public static readonly TokenRole BreakKeywordRole = new TokenRole("break");
 

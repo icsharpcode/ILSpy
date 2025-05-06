@@ -27,7 +27,8 @@ using System;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class ErrorExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class ErrorExpression : Expression
 	{
 		public TextLocation Location { get; set; }
 

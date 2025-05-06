@@ -30,7 +30,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class ParameterDeclaration : AstNode
+	[DecompilerAstNode(hasNullNode: false, hasPatternPlaceholder: true)]
+	public partial class ParameterDeclaration : AstNode
 	{
 		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
 		public static readonly TokenRole ThisModifierRole = new TokenRole("this");

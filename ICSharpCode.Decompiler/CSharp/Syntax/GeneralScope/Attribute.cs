@@ -31,7 +31,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Attribute(Arguments)
 	/// </summary>
-	public class Attribute : AstNode
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class Attribute : AstNode
 	{
 		public override NodeType NodeType {
 			get {
