@@ -1886,7 +1886,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				}
 			}
 			if ((val & ~tested) != 0)
-				output.Write("flag({0:x4}) ", val & ~tested);
+				output.Write("flags({0:x4}) ", val & ~tested);
 		}
 
 		void WriteEnum<T>(T enumValue, EnumNameCollection<T> enumNames) where T : struct
@@ -1906,8 +1906,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 			if (val != 0)
 			{
-				output.Write("flag({0:x4})", val);
-				output.Write(' ');
+				output.Write("flags({0:x4}) ", val);
 			}
 
 		}
