@@ -29,7 +29,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// base
 	/// </summary>
-	public class BaseReferenceExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class BaseReferenceExpression : Expression
 	{
 		public TextLocation Location {
 			get;

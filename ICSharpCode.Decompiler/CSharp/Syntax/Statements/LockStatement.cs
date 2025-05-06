@@ -29,7 +29,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// lock (Expression) EmbeddedStatement;
 	/// </summary>
-	public class LockStatement : Statement
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class LockStatement : Statement
 	{
 		public static readonly TokenRole LockKeywordRole = new TokenRole("lock");
 

@@ -28,7 +28,8 @@ using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class SimpleType : AstType
+	[DecompilerAstNode(hasNullNode: true)]
+	public partial class SimpleType : AstType
 	{
 		#region Null
 		public new static readonly SimpleType Null = new NullSimpleType();

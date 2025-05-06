@@ -37,6 +37,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
+	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
 	public abstract partial class AstNode : AbstractAnnotatable, INode, ICloneable
 	{
 		// the Root role must be available when creating the null nodes, so we can't put it in the Roles class

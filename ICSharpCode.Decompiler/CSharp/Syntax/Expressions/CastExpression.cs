@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// (CastTo)Expression
 	/// </summary>
-	public class CastExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class CastExpression : Expression
 	{
 		public CSharpTokenNode LParToken {
 			get { return GetChildByRole(Roles.LPar); }

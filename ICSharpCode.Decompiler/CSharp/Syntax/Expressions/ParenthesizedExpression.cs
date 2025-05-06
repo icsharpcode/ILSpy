@@ -29,7 +29,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// ( Expression )
 	/// </summary>
-	public class ParenthesizedExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class ParenthesizedExpression : Expression
 	{
 		public CSharpTokenNode LParToken {
 			get { return GetChildByRole(Roles.LPar); }

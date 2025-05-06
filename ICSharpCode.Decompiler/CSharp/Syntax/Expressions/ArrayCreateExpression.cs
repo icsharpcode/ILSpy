@@ -21,7 +21,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// new Type[Dimensions]
 	/// </summary>
-	public class ArrayCreateExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class ArrayCreateExpression : Expression
 	{
 		public readonly static TokenRole NewKeywordRole = new TokenRole("new");
 		public readonly static Role<ArraySpecifier> AdditionalArraySpecifierRole = new Role<ArraySpecifier>("AdditionalArraySpecifier", null);

@@ -29,7 +29,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// foreach (Type VariableName in InExpression) EmbeddedStatement
 	/// </summary>
-	public class ForeachStatement : Statement
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class ForeachStatement : Statement
 	{
 		public static readonly TokenRole AwaitRole = UnaryOperatorExpression.AwaitRole;
 		public static readonly TokenRole ForeachKeywordRole = new TokenRole("foreach");

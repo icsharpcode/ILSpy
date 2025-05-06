@@ -31,7 +31,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class PrimitiveType : AstType
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class PrimitiveType : AstType
 	{
 		TextLocation location;
 		string keyword = string.Empty;

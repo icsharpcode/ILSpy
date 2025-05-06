@@ -26,7 +26,8 @@
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class VariableInitializer : AstNode
+	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
+	public partial class VariableInitializer : AstNode
 	{
 		#region Null
 		public new static readonly VariableInitializer Null = new NullVariableInitializer();

@@ -28,7 +28,8 @@ using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class MemberType : AstType
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class MemberType : AstType
 	{
 		public static readonly Role<AstType> TargetRole = new Role<AstType>("Target", AstType.Null);
 

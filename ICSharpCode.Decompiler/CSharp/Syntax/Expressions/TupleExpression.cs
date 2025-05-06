@@ -22,7 +22,8 @@ using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class TupleExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class TupleExpression : Expression
 	{
 		public AstNodeCollection<Expression> Elements {
 			get { return GetChildrenByRole(Roles.Expression); }
