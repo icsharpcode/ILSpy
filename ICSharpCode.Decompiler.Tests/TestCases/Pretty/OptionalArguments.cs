@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -307,8 +308,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 #endif
-
+		public static void Issue3469a([Optional][DefaultParameterValue(0)] int i, [Optional] DateTime d)
+		{
+		}
 #if CS120
+		public static Action<int, DateTime> Issue3469b()
+		{
+#pragma warning disable CS9099 // Parameter 1 has default value 'default(int)' in lambda but '<missing>' in the target delegate type
+			return ([Optional][DefaultParameterValue(0)] int i, [Optional] DateTime d) => {
+			};
+#pragma warning restore CS9099
+		}
 		public static D LambdaWithOptionalParameter()
 		{
 			return (int x = 10) => x;

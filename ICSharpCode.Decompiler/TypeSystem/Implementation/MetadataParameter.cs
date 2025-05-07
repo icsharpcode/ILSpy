@@ -63,14 +63,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var metadata = module.metadata;
 			var parameter = metadata.GetParameter(handle);
 
-			bool defaultValueAssignmentAllowed = ReferenceKind is ReferenceKind.None or ReferenceKind.In or ReferenceKind.RefReadOnly;
+			bool defaultValueAssignmentAllowed = this.IsDefaultValueAssignmentAllowed();
 
-			if (IsOptional && (!defaultValueAssignmentAllowed || !HasConstantValueInSignature))
+			if (IsOptional && !defaultValueAssignmentAllowed)
 			{
 				b.Add(KnownAttribute.Optional);
 			}
 
-			if (!(IsDecimalConstant || !HasConstantValueInSignature) && (!defaultValueAssignmentAllowed || !IsOptional))
+			if (!IsDecimalConstant && HasConstantValueInSignature && !defaultValueAssignmentAllowed)
 			{
 				b.Add(KnownAttribute.DefaultParameterValue, KnownTypeCode.Object, GetConstantValue(throwOnInvalidMetadata: false));
 			}

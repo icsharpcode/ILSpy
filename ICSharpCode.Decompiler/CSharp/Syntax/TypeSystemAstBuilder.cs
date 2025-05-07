@@ -1735,8 +1735,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				decl.Name = parameter.Name;
 			}
-			if (parameter.IsOptional && decl.ParameterModifier is ReferenceKind.None or ReferenceKind.In or ReferenceKind.RefReadOnly
-				&& parameter.HasConstantValueInSignature && this.ShowConstantValues)
+			if (parameter.IsDefaultValueAssignmentAllowed() && this.ShowConstantValues)
 			{
 				try
 				{
