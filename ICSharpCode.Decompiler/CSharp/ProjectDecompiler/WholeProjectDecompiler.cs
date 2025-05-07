@@ -337,6 +337,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			foreach (var r in module.Resources.Where(r => r.ResourceType == ResourceType.Embedded))
 			{
 				Stream stream = r.TryOpenStream();
+				if (stream == null)
+					continue;
+
 				stream.Position = 0;
 
 				if (r.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
