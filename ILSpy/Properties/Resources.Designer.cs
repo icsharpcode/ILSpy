@@ -910,6 +910,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Decompile params collections.
+        /// </summary>
+        public static string DecompilerSettings_DecompileParamsCollections {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.DecompileParamsCollections", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Decompile use of the &apos;dynamic&apos; type.
         /// </summary>
         public static string DecompilerSettings_DecompileUseOfTheDynamicType {
@@ -1124,16 +1133,6 @@ namespace ICSharpCode.ILSpy.Properties {
             get {
                 return ResourceManager.GetString("DecompilerSettings.IsUnmanagedAttributeOnTypeParametersShouldBeReplacedWithUnmana" +
                         "gedConstraints", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Object.
-        /// </summary>
-        public static object DecompilerSettings_LifetimeAnnotations {
-            get {
-                object obj = ResourceManager.GetObject("DecompilerSettings.LifetimeAnnotations", resourceCulture);
-                return ((object)(obj));
             }
         }
         
