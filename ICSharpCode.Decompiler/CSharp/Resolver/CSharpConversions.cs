@@ -307,6 +307,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return UserDefinedExplicitConversion(null, fromType, toType);
 		}
 
+		Conversion ExplicitConversionNotUserDefined(IType fromType, IType toType)
+		{
+			Conversion c = ImplicitConversion(fromType, toType, allowUserDefined: false, allowTuple: false);
+			if (c != Conversion.None)
+				return c;
+			return ExplicitConversionImpl(fromType, toType);
+		}
+
 		Conversion ExplicitConversionImpl(IType fromType, IType toType)
 		{
 			// This method is called after we already checked for implicit conversions,
@@ -971,16 +979,31 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return Conversion.None;
 
 			if (selected.Count == 1)
-				return Conversion.UserDefinedConversion(selected[0].Method, isLifted: selected[0].IsLifted, isImplicit: isImplicit, conversionBeforeUserDefinedOperator: ExplicitConversion(source, mostSpecificSource), conversionAfterUserDefinedOperator: ExplicitConversion(mostSpecificTarget, target));
+			{
+				return Conversion.UserDefinedConversion(selected[0].Method,
+					isLifted: selected[0].IsLifted,
+					isImplicit: isImplicit,
+					conversionBeforeUserDefinedOperator: ExplicitConversionNotUserDefined(source, mostSpecificSource),
+					conversionAfterUserDefinedOperator: ExplicitConversionNotUserDefined(mostSpecificTarget, target));
+			}
 
 			int nNonLifted = selected.Count(s => !s.IsLifted);
 			if (nNonLifted == 1)
 			{
 				var op = selected.First(s => !s.IsLifted);
-				return Conversion.UserDefinedConversion(op.Method, isLifted: op.IsLifted, isImplicit: isImplicit, conversionBeforeUserDefinedOperator: ExplicitConversion(source, mostSpecificSource), conversionAfterUserDefinedOperator: ExplicitConversion(mostSpecificTarget, target));
+				return Conversion.UserDefinedConversion(op.Method,
+					isLifted: op.IsLifted,
+					isImplicit: isImplicit,
+					conversionBeforeUserDefinedOperator: ExplicitConversionNotUserDefined(source, mostSpecificSource),
+					conversionAfterUserDefinedOperator: ExplicitConversionNotUserDefined(mostSpecificTarget, target));
 			}
 
-			return Conversion.UserDefinedConversion(selected[0].Method, isLifted: selected[0].IsLifted, isImplicit: isImplicit, isAmbiguous: true, conversionBeforeUserDefinedOperator: ExplicitConversion(source, mostSpecificSource), conversionAfterUserDefinedOperator: ExplicitConversion(mostSpecificTarget, target));
+			return Conversion.UserDefinedConversion(selected[0].Method,
+				isLifted: selected[0].IsLifted,
+				isImplicit: isImplicit,
+				isAmbiguous: true,
+				conversionBeforeUserDefinedOperator: ExplicitConversionNotUserDefined(source, mostSpecificSource),
+				conversionAfterUserDefinedOperator: ExplicitConversionNotUserDefined(mostSpecificTarget, target));
 		}
 
 		Conversion UserDefinedImplicitConversion(ResolveResult fromResult, IType fromType, IType toType)
