@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017 Daniel Grunwald
+// Copyright (c) 2017 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -52,29 +52,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return;
 			}
-			if (inst.Right.MatchLdNull())
+			if (inst.Left.ResultType == StackType.O && inst.Right.ResultType == StackType.O)
 			{
-				if (inst.Kind == ComparisonKind.GreaterThan)
+				if (inst.Kind == ComparisonKind.GreaterThan || inst.Kind == ComparisonKind.LessThan)
 				{
-					context.Step("comp(left > ldnull)  => comp(left != ldnull)", inst);
+					context.Step($"comp(left {inst.Kind.GetToken()} right) => comp(left != right)", inst);
 					inst.Kind = ComparisonKind.Inequality;
 				}
-				else if (inst.Kind == ComparisonKind.LessThanOrEqual)
+				else if (inst.Kind == ComparisonKind.GreaterThanOrEqual || inst.Kind == ComparisonKind.LessThanOrEqual)
 				{
-					context.Step("comp(left <= ldnull) => comp(left == ldnull)", inst);
-					inst.Kind = ComparisonKind.Equality;
-				}
-			}
-			else if (inst.Left.MatchLdNull())
-			{
-				if (inst.Kind == ComparisonKind.LessThan)
-				{
-					context.Step("comp(ldnull < right)  => comp(ldnull != right)", inst);
-					inst.Kind = ComparisonKind.Inequality;
-				}
-				else if (inst.Kind == ComparisonKind.GreaterThanOrEqual)
-				{
-					context.Step("comp(ldnull >= right) => comp(ldnull == right)", inst);
+					context.Step($"comp(left {inst.Kind.GetToken()} right) => comp(left == right)", inst);
 					inst.Kind = ComparisonKind.Equality;
 				}
 			}
