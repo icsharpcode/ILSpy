@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -97,12 +99,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 
 		/// May return null if extraction is not possible.
 		/// </summary>
-		public static ILVariable Extract(ILInstruction instToExtract, ILTransformContext context)
+		public static ILVariable? Extract(ILInstruction instToExtract, ILTransformContext context)
 		{
 			var function = instToExtract.Ancestors.OfType<ILFunction>().First();
 			ExtractionContext ctx = new ExtractionContext(function, context);
 			ctx.FlagsBeingMoved = instToExtract.Flags;
-			ILInstruction inst = instToExtract;
+			ILInstruction? inst = instToExtract;
 			while (inst != null)
 			{
 				if (inst.Parent is IfInstruction ifInst && inst.SlotInfo != IfInstruction.ConditionSlot)
@@ -174,7 +176,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					return v;
 				}
-				if (!inst.Parent.PrepareExtract(inst.ChildIndex, ctx))
+				if (inst.Parent != null && !inst.Parent.PrepareExtract(inst.ChildIndex, ctx))
 					return null;
 				inst = inst.Parent;
 			}

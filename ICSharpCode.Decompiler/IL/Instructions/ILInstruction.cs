@@ -911,7 +911,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// If extraction is not possible, the ILAst is left unmodified and the function returns null.
 		/// May return null if extraction is not possible.
 		/// </summary>
-		public ILVariable Extract(ILTransformContext context)
+		public ILVariable? Extract(ILTransformContext context)
 		{
 			return Transforms.ExtractionContext.Extract(this, context);
 		}
