@@ -138,12 +138,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		RefReadOnlyParameters = 0x10000,
 		/// <summary>
+		/// If this option is active, [ParamCollectionAttribute] on parameters is removed
+		/// and parameters are marked as params.
+		/// Otherwise, the attribute is preserved but the parameters are not marked
+		/// as if it was a normal parameter without any attributes.
+		/// </summary>
+		ParamsCollections = 0x20000,
+		/// <summary>
 		/// Default settings: typical options for the decompiler, with all C# languages features enabled.
 		/// </summary>
 		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants | ReadOnlyStructsAndParameters
 			| RefStructs | UnmanagedConstraints | NullabilityAnnotations | ReadOnlyMethods
 			| NativeIntegers | FunctionPointers | ScopedRef | NativeIntegersWithoutAttribute
-			| RefReadOnlyParameters
+			| RefReadOnlyParameters | ParamsCollections
 	}
 
 	/// <summary>
@@ -185,6 +192,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				typeSystemOptions |= TypeSystemOptions.NativeIntegersWithoutAttribute;
 			if (settings.RefReadOnlyParameters)
 				typeSystemOptions |= TypeSystemOptions.RefReadOnlyParameters;
+			if (settings.ParamsCollections)
+				typeSystemOptions |= TypeSystemOptions.ParamsCollections;
 			return typeSystemOptions;
 		}
 

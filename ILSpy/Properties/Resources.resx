@@ -324,6 +324,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.DecompileForEachWithGetEnumeratorExtension" xml:space="preserve">
     <value>Decompile foreach statements with GetEnumerator extension methods</value>
   </data>
+  <data name="DecompilerSettings.DecompileParamsCollections" xml:space="preserve">
+    <value>Decompile params collections</value>
+  </data>
   <data name="DecompilerSettings.DecompileUseOfTheDynamicType" xml:space="preserve">
     <value>Decompile use of the 'dynamic' type</value>
   </data>
