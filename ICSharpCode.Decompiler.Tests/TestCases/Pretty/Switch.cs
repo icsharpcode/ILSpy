@@ -1624,7 +1624,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static bool DoNotRemoveAssignmentBeforeSwitch(string x, out ConsoleKey key)
 		{
-#if NET40 || !ROSLYN
+#if NET40 || !ROSLYN4
 			key = (ConsoleKey)0;
 #else
 			key = ConsoleKey.None;
@@ -1641,7 +1641,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					key = ConsoleKey.C;
 					break;
 			}
-#if NET40 || !ROSLYN
+#if NET40 || !ROSLYN4
 			return key != (ConsoleKey)0;
 #else
 			return key != ConsoleKey.None;

@@ -18,18 +18,21 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-using ICSharpCode.Decompiler.Util;
+using ICSharpCode.Decompiler.Metadata;
 
 using NuGet.Common;
 using NuGet.Packaging;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
+
+using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests.Helpers
 {
@@ -50,29 +53,45 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		protected async Task FetchPackage(string packageName, string version, string sourcePath, string outputPath)
 		{
+			if (!Directory.Exists(Path.Combine(Roundtrip.RoundtripAssembly.TestDir, "nuget")))
+				Assert.Fail("No nuget cache found!");
+
 			ILogger logger = NullLogger.Instance;
 			CancellationToken cancellationToken = CancellationToken.None;
-			using MemoryStream packageStream = new MemoryStream();
+			string pathToPackage = Path.Combine(Roundtrip.RoundtripAssembly.TestDir, "nuget", $"{packageName}-{version}.nupkg");
+			Stream packageStream;
+			if (File.Exists(pathToPackage))
+			{
+				packageStream = File.OpenRead(pathToPackage);
+			}
+			else
+			{
+				packageStream = new MemoryStream();
 
-			await resource.CopyNupkgToStreamAsync(
-				packageName,
-				NuGetVersion.Parse(version),
-				packageStream,
-				cache,
-				logger,
-				cancellationToken).ConfigureAwait(false);
+				await resource.CopyNupkgToStreamAsync(
+					packageName,
+					NuGetVersion.Parse(version),
+					packageStream,
+					cache,
+					logger,
+					cancellationToken).ConfigureAwait(false);
 
-			using PackageArchiveReader packageReader = new PackageArchiveReader(packageStream);
-			NuspecReader nuspecReader = await packageReader.GetNuspecReaderAsync(cancellationToken).ConfigureAwait(false);
+				packageStream.Position = 0;
+			}
+			using (packageStream)
+			{
+				using PackageArchiveReader packageReader = new PackageArchiveReader(packageStream);
+				NuspecReader nuspecReader = await packageReader.GetNuspecReaderAsync(cancellationToken).ConfigureAwait(false);
 
-			var files = (await packageReader.GetFilesAsync(cancellationToken).ConfigureAwait(false)).ToArray();
-			files = files.Where(f => f.StartsWith(sourcePath, StringComparison.OrdinalIgnoreCase)).ToArray();
-			await packageReader.CopyFilesAsync(outputPath, files,
-				(sourceFile, targetPath, fileStream) => {
-					fileStream.CopyToFile(targetPath);
-					return targetPath;
-				},
-				logger, cancellationToken).ConfigureAwait(false);
+				var files = (await packageReader.GetFilesAsync(cancellationToken).ConfigureAwait(false)).ToArray();
+				files = files.Where(f => f.StartsWith(sourcePath, StringComparison.OrdinalIgnoreCase)).ToArray();
+				await packageReader.CopyFilesAsync(outputPath, files,
+					(sourceFile, targetPath, fileStream) => {
+						fileStream.CopyToFile(targetPath);
+						return targetPath;
+					},
+					logger, cancellationToken).ConfigureAwait(false);
+			}
 		}
 	}
 
@@ -144,5 +163,45 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		}
 
 		public string GetVsWhere() => vswherePath;
+	}
+
+	class RefAssembliesToolset : AbstractToolset
+	{
+		readonly Dictionary<string, string> installedFrameworks = new Dictionary<string, string> {
+			{ "legacy", Path.Combine(Roundtrip.RoundtripAssembly.TestDir, "dotnet", "legacy") },
+			{ "2.2.0", Path.Combine(Roundtrip.RoundtripAssembly.TestDir, "dotnet", "netcore-2.2") },
+		};
+
+		public RefAssembliesToolset()
+			: base(Path.Combine(AppContext.BaseDirectory, "netfx"))
+		{
+		}
+
+		public async Task Fetch(string version, string packageName = "Microsoft.NETCore.App.Ref", string sourcePath = "ref/net5.0")
+		{
+			string path = Path.Combine(baseDir, version, sourcePath);
+			if (!Directory.Exists(path))
+			{
+				await FetchPackage(packageName, version, sourcePath, Path.Combine(baseDir, version)).ConfigureAwait(false);
+			}
+
+			installedFrameworks.Add(RoslynToolset.SanitizeVersion(version), path);
+		}
+
+		internal string GetPath(string targetFramework)
+		{
+			var (id, version) = UniversalAssemblyResolver.ParseTargetFramework(targetFramework);
+			string path;
+			if (id == TargetFrameworkIdentifier.NETFramework)
+			{
+				path = installedFrameworks["legacy"];
+			}
+			else
+			{
+				path = installedFrameworks[version.ToString(3)];
+			}
+			Debug.Assert(Path.Exists(path));
+			return path;
+		}
 	}
 }
