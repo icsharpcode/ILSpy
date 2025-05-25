@@ -9,7 +9,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public extern void A();
-#if NETCORE
+#if !NET40 && ROSLYN3
 			[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 			public extern void B();
 #endif
@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public extern void J();
 			[MethodImpl(MethodImplOptions.AggressiveInlining, MethodCodeType = MethodCodeType.Native)]
 			public extern void A1();
-#if NETCORE
+#if !NET40 && ROSLYN3
 			[MethodImpl(MethodImplOptions.AggressiveOptimization, MethodCodeType = MethodCodeType.Native)]
 			public extern void B1();
 #endif
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public extern void J1();
 			[MethodImpl(MethodImplOptions.AggressiveInlining, MethodCodeType = MethodCodeType.OPTIL)]
 			public extern void A2();
-#if NETCORE
+#if !NET40 && ROSLYN3
 			[MethodImpl(MethodImplOptions.AggressiveOptimization, MethodCodeType = MethodCodeType.OPTIL)]
 			public extern void B2();
 #endif
@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public extern void J2();
 			[MethodImpl(MethodImplOptions.AggressiveInlining, MethodCodeType = MethodCodeType.OPTIL)]
 			public extern void A3();
-#if NETCORE
+#if !NET40 && ROSLYN3
 			[MethodImpl(MethodImplOptions.AggressiveOptimization, MethodCodeType = MethodCodeType.Runtime)]
 			public extern void B3();
 #endif
