@@ -316,6 +316,8 @@ namespace ICSharpCode.Decompiler.CSharp
 							return true;
 						if (settings.FixedBuffers && name.StartsWith("<", StringComparison.Ordinal) && name.Contains("__FixedBuffer"))
 							return true;
+						if (settings.InlineArrays && name.StartsWith("<>y__InlineArray", StringComparison.Ordinal) && name.EndsWith("`1"))
+							return true;
 					}
 					else if (type.IsCompilerGenerated(metadata))
 					{
