@@ -141,10 +141,10 @@
     <Compile Include="TestCases\Pretty\Comparisons.cs" />
     <Compile Include="TestCases\Pretty\GloballyQualifiedTypeInStringInterpolation.cs" />
     <Compile Include="TestCases\Pretty\Issue3406.cs" />
-    <Compile Include="TestCases\Pretty\Issue3483.cs" />
-    <Compile Include="TestCases\Pretty\PointerArithmetic.cs" />
     <Compile Include="TestCases\Pretty\Issue3439.cs" />
     <Compile Include="TestCases\Pretty\Issue3442.cs" />
+    <Compile Include="TestCases\Pretty\Issue3483.cs" />
+    <Compile Include="TestCases\Pretty\PointerArithmetic.cs" />
     <None Include="TestCases\VBPretty\VBAutomaticEvents.vb" />
     <Compile Include="TestCases\VBPretty\VBAutomaticEvents.cs" />
     <Compile Include="TestCases\VBPretty\VBNonGenericForEach.cs" />

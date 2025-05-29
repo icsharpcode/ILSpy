@@ -40,6 +40,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		LanguageVersion LanguageVersion { get; }
 
 		/// <summary>
+		/// Check for overflow and underflow in operators.
+		/// </summary>
+		bool CheckForOverflowUnderflow { get; }
+
+		/// <summary>
 		/// Gets the unique ID of the project.
 		/// </summary>
 		Guid ProjectGuid { get; }

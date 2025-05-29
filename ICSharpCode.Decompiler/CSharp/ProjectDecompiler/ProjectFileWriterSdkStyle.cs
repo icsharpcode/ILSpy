@@ -192,6 +192,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			xml.WriteElementString("LangVersion", project.LanguageVersion.ToString().Replace("CSharp", "").Replace('_', '.'));
 			xml.WriteElementString("AllowUnsafeBlocks", TrueString);
+			xml.WriteElementString("CheckForOverflowUnderflow", project.CheckForOverflowUnderflow ? TrueString : FalseString);
 
 			if (project.StrongNameKeyFile != null)
 			{
