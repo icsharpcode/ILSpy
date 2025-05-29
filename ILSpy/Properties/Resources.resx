@@ -288,6 +288,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.AutoLoadAssemblyReferences" xml:space="preserve">
     <value>Automatically load assembly references</value>
   </data>
+  <data name="DecompilerSettings.CheckForOverflowUnderflow" xml:space="preserve">
+    <value>Check for overflow and underflow in operators</value>
+  </data>
   <data name="DecompilerSettings.CheckedOperators" xml:space="preserve">
     <value>User-defined checked operators</value>
   </data>

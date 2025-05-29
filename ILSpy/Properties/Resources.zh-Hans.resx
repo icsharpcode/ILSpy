@@ -279,6 +279,9 @@
   <data name="DecompilerSettings.AsyncEnumerator" xml:space="preserve">
     <value>反编译异步 IAsyncEnumerator 方法</value>
   </data>
+  <data name="DecompilerSettings.CheckForOverflowUnderflow" xml:space="preserve">
+    <value />
+  </data>
   <data name="DecompilerSettings.DecompileAnonymousMethodsLambdas" xml:space="preserve">
     <value>反编译匿名方法或 lambda</value>
   </data>

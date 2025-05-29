@@ -252,8 +252,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			else
 			{
 				Result r = GetResultFromBlock(block);
-				if (r.NodesToInsertInUncheckedContext != null)
-					r.NodesToInsertInUncheckedContext.Insert();
+				if (context.DecompileRun.Settings.CheckForOverflowUnderflow)
+				{
+					r.NodesToInsertInCheckedContext?.Insert();
+				}
+				else
+				{
+					r.NodesToInsertInUncheckedContext?.Insert();
+				}
 			}
 		}
 

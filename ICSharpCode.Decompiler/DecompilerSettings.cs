@@ -2185,6 +2185,24 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool checkForOverflowUnderflow = false;
+
+		/// <summary>
+		/// Check for overflow and underflow in operators.
+		/// </summary>
+		[Category("DecompilerSettings.Other")]
+		[Description("DecompilerSettings.CheckForOverflowUnderflow")]
+		public bool CheckForOverflowUnderflow {
+			get { return checkForOverflowUnderflow; }
+			set {
+				if (checkForOverflowUnderflow != value)
+				{
+					checkForOverflowUnderflow = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		CSharpFormattingOptions csharpFormattingOptions;
 
 		[Browsable(false)]

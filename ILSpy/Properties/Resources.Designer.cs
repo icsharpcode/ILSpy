@@ -811,6 +811,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Check for overflow and underflow in operators.
+        /// </summary>
+        public static string DecompilerSettings_CheckForOverflowUnderflow {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.CheckForOverflowUnderflow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Decompile anonymous methods/lambdas.
         /// </summary>
         public static string DecompilerSettings_DecompileAnonymousMethodsLambdas {
@@ -1124,16 +1133,6 @@ namespace ICSharpCode.ILSpy.Properties {
             get {
                 return ResourceManager.GetString("DecompilerSettings.IsUnmanagedAttributeOnTypeParametersShouldBeReplacedWithUnmana" +
                         "gedConstraints", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Object.
-        /// </summary>
-        public static object DecompilerSettings_LifetimeAnnotations {
-            get {
-                object obj = ResourceManager.GetObject("DecompilerSettings.LifetimeAnnotations", resourceCulture);
-                return ((object)(obj));
             }
         }
         
