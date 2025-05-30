@@ -4,7 +4,7 @@ using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 namespace ICSharpCode.ILSpy.Controls.TreeView
 {
-	public class WpfWindowsDataObject : IPlatformDataObject
+	public sealed class WpfWindowsDataObject : IPlatformDataObject
 	{
 		private readonly IDataObject _dataObject;
 
@@ -27,5 +27,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 		{
 			_dataObject.SetData(format, data);
 		}
+
+		object IPlatformDataObject.UnderlyingDataObject => _dataObject;
 	}
 }

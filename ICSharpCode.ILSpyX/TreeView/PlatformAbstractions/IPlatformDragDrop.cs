@@ -2,6 +2,6 @@
 {
 	public interface IPlatformDragDrop
 	{
-		XPlatDragDropEffects DoDragDrop(object dragSource, object data, XPlatDragDropEffects allowedEffects);
+		XPlatDragDropEffects DoDragDrop(object dragSource, IPlatformDataObject data, XPlatDragDropEffects allowedEffects);
 	}
 }

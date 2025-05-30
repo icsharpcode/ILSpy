@@ -4,7 +4,7 @@
 	{
 		bool GetDataPresent(string format);
 		object GetData(string format);
-
 		void SetData(string format, object data);
+		object UnderlyingDataObject { get; }
 	}
 }
