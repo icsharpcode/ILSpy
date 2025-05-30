@@ -91,9 +91,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Byte16 buffer2 = GetByte16();
 			Receiver((ReadOnlySpan<byte>)buffer2);
 			Byte16 buffer3 = GetByte16();
-			ReceiverSpan((Span<byte>)buffer3);
+			ReceiverSpan(buffer3);
 			Byte16 buffer4 = GetByte16();
-			ReceiverReadOnlySpan((ReadOnlySpan<byte>)buffer4);
+			ReceiverReadOnlySpan(buffer4);
 		}
 
 		public Byte16 GetByte16()

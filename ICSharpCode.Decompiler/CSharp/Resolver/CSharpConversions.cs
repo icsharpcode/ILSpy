@@ -230,12 +230,20 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (c != Conversion.None)
 					return c;
 			}
+			if ((toType.IsKnownType(KnownTypeCode.SpanOfT) || toType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
+				&& fromType.IsInlineArrayType())
+			{
+				var @field = fromType.GetFields(f => !f.IsStatic, GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
+				var spanElementType = toType.TypeArguments[0];
+				if (field != null && IdentityConversion(field.ReturnType, spanElementType))
+					return Conversion.InlineArrayConversion;
+			}
 			return Conversion.None;
 		}
 
 		/// <summary>
 		/// Gets whether the type 'fromType' is convertible to 'toType'
-		/// using one of the conversions allowed when satisying constraints (§4.4.4)
+		/// using one of the conversions allowed when satisfying constraints (§4.4.4)
 		/// </summary>
 		public bool IsConstraintConvertible(IType fromType, IType toType)
 		{
