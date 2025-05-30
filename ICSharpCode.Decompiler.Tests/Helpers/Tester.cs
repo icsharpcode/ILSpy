@@ -69,6 +69,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		UseTestRunner = 0x4000,
 		NullableEnable = 0x8000,
 		ReferenceUnsafe = 0x10000,
+		CheckForOverflowUnderflow = 0x20000,
 		UseMcsMask = UseMcs2_6_4 | UseMcs5_23,
 		UseRoslynMask = UseRoslyn1_3_2 | UseRoslyn2_10_0 | UseRoslyn3_11_0 | UseRoslynLatest
 	}
@@ -543,6 +544,16 @@ namespace System.Runtime.CompilerServices
 				{
 					otherOptions += "-platform:anycpu ";
 				}
+
+				if (flags.HasFlag(CompilerOptions.CheckForOverflowUnderflow))
+				{
+					otherOptions += "-checked+ ";
+				}
+				else
+				{
+					otherOptions += "-checked- ";
+				}
+
 				if (preprocessorSymbols.Count > 0)
 				{
 					otherOptions += " \"-d:" + string.Join(";", preprocessorSymbols) + "\" ";

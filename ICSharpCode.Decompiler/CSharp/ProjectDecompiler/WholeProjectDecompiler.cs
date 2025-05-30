@@ -68,6 +68,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
+		bool IProjectInfoProvider.CheckForOverflowUnderflow => Settings.CheckForOverflowUnderflow;
+
 		public IAssemblyResolver AssemblyResolver { get; }
 
 		public AssemblyReferenceClassifier AssemblyReferenceClassifier { get; }
