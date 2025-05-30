@@ -306,6 +306,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
+		public static bool IsInlineArrayType(this IType type)
+		{
+			if (type.Kind != TypeKind.Struct)
+				return false;
+			var td = type.GetDefinition();
+			if (td == null)
+				return false;
+			return td.HasAttribute(KnownAttribute.InlineArray);
+		}
+
 		/// <summary>
 		/// Gets whether the type is the specified known type.
 		/// For generic known types, this returns true for any parameterization of the type (and also for the definition itself).
