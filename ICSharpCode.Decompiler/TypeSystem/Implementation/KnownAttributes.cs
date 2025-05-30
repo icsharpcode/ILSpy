@@ -112,11 +112,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		// C# 11 attributes:
 		RequiredAttribute,
+
+		// C# 12 attributes:
+		InlineArray,
 	}
 
 	public static class KnownAttributes
 	{
-		internal const int Count = (int)KnownAttribute.RequiredAttribute + 1;
+		internal const int Count = (int)KnownAttribute.InlineArray + 1;
 
 		static readonly TopLevelTypeName[] typeNames = new TopLevelTypeName[Count]{
 			default,
@@ -186,6 +189,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System.Runtime.CompilerServices", "PreserveBaseOverridesAttribute"),
 			// C# 11 attributes:
 			new TopLevelTypeName("System.Runtime.CompilerServices", "RequiredMemberAttribute"),
+			// C# 12 attributes:
+			new TopLevelTypeName("System.Runtime.CompilerServices", "InlineArrayAttribute"),
 		};
 
 		public static ref readonly TopLevelTypeName GetTypeName(this KnownAttribute attr)
