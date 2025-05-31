@@ -140,6 +140,7 @@
     <Compile Include="TestCases\ILPretty\MonoFixed.cs" />
     <Compile Include="TestCases\Pretty\Comparisons.cs" />
     <Compile Include="TestCases\Pretty\GloballyQualifiedTypeInStringInterpolation.cs" />
+    <Compile Include="TestCases\Pretty\InlineArrayTests.cs" />
     <Compile Include="TestCases\Pretty\Issue3406.cs" />
     <Compile Include="TestCases\Pretty\Issue3439.cs" />
     <Compile Include="TestCases\Pretty\Issue3442.cs" />
