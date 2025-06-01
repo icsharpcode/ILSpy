@@ -2238,11 +2238,9 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		protected virtual DecompilerSettings ShallowClone() => this with { };
-
 		public DecompilerSettings DeepClone()
 		{
-			DecompilerSettings settings = ShallowClone();
+			DecompilerSettings settings = this with { };
 			if (csharpFormattingOptions != null)
 				settings.csharpFormattingOptions = csharpFormattingOptions.Clone();
 			settings.PropertyChanged = null;
