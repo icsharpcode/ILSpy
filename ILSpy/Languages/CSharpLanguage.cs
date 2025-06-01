@@ -578,7 +578,7 @@ namespace ICSharpCode.ILSpy
 			CSharpAmbience ambience = new CSharpAmbience();
 			// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewTypeFlags, if this ever changes.
 			ambience.ConversionFlags = ConversionFlags.ShowTypeParameterList | ConversionFlags.PlaceReturnTypeAfterParameterList;
-			var decompilerSettings = SettingsService.DecompilerSettings.Clone();
+			var decompilerSettings = SettingsService.DecompilerSettings.DeepClone();
 			if (!Enum.TryParse(AssemblyTreeModel.CurrentLanguageVersion?.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
 				languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
 			decompilerSettings.SetLanguageVersion(languageVersion);
@@ -789,7 +789,7 @@ namespace ICSharpCode.ILSpy
 		public override bool ShowMember(IEntity member)
 		{
 			MetadataFile assembly = member.ParentModule.MetadataFile;
-			var decompilerSettings = SettingsService.DecompilerSettings.Clone();
+			var decompilerSettings = SettingsService.DecompilerSettings.DeepClone();
 			if (!Enum.TryParse(AssemblyTreeModel.CurrentLanguageVersion?.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
 				languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
 			decompilerSettings.SetLanguageVersion(languageVersion);
@@ -802,7 +802,7 @@ namespace ICSharpCode.ILSpy
 			var output = new StringWriter();
 			var decoratedWriter = new TextWriterTokenWriter(output);
 			var writer = new CSharpHighlightingTokenWriter(TokenWriter.InsertRequiredSpaces(decoratedWriter), locatable: decoratedWriter);
-			var settings = SettingsService.DecompilerSettings.Clone();
+			var settings = SettingsService.DecompilerSettings.DeepClone();
 			if (!Enum.TryParse(AssemblyTreeModel.CurrentLanguageVersion?.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
 				languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
 			settings.SetLanguageVersion(languageVersion);

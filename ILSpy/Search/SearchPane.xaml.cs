@@ -474,11 +474,11 @@ namespace ICSharpCode.ILSpy.Search
 				request.RegEx = regex;
 				request.SearchResultFactory = new SearchResultFactory(language);
 				request.TreeNodeFactory = this.treeNodeFactory;
-				var decompilerSettings = settingsService.DecompilerSettings.Clone();
+				var decompilerSettings = settingsService.DecompilerSettings.DeepClone();
 				if (!Enum.TryParse(this.languageVersion?.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
 					languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
 				decompilerSettings.SetLanguageVersion(languageVersion);
-				request.DecompilerSettings = settingsService.DecompilerSettings.Clone();
+				request.DecompilerSettings = settingsService.DecompilerSettings.DeepClone();
 
 				return request;
 			}

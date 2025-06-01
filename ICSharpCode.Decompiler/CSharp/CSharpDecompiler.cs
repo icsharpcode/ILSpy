@@ -1742,7 +1742,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				AddAnnotationsToDeclaration(method, entityDecl, function);
 
-				var localSettings = settings.Clone();
+				var localSettings = settings.DeepClone();
 				if (IsWindowsFormsInitializeComponentMethod(method))
 				{
 					localSettings.UseImplicitMethodGroupConversion = false;

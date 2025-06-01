@@ -27,7 +27,7 @@ using System.Xml.Linq;
 
 namespace ICSharpCode.ILSpy.Options
 {
-	public class DecompilerSettings : Decompiler.DecompilerSettings, ISettingsSection
+	public record class DecompilerSettings : Decompiler.DecompilerSettings, ISettingsSection
 	{
 		static readonly PropertyInfo[] properties = typeof(Decompiler.DecompilerSettings).GetProperties()
 				.Where(p => p.GetCustomAttribute<BrowsableAttribute>()?.Browsable != false)
@@ -57,14 +57,9 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
-		public new DecompilerSettings Clone()
+		public new DecompilerSettings DeepClone()
 		{
-			var section = SaveToXml();
-
-			var newSettings = new DecompilerSettings();
-			newSettings.LoadFromXml(section);
-
-			return newSettings;
+			return (DecompilerSettings)base.DeepClone();
 		}
 	}
 }

@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler
 	/// <summary>
 	/// Settings for the decompiler.
 	/// </summary>
-	public class DecompilerSettings : INotifyPropertyChanged
+	public record class DecompilerSettings : INotifyPropertyChanged
 	{
 		/// <summary>
 		/// Equivalent to <c>new DecompilerSettings(LanguageVersion.Latest)</c>
@@ -2238,9 +2238,11 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		public DecompilerSettings Clone()
+		protected virtual DecompilerSettings ShallowClone() => this with { };
+
+		public DecompilerSettings DeepClone()
 		{
-			DecompilerSettings settings = (DecompilerSettings)MemberwiseClone();
+			DecompilerSettings settings = ShallowClone();
 			if (csharpFormattingOptions != null)
 				settings.csharpFormattingOptions = csharpFormattingOptions.Clone();
 			settings.PropertyChanged = null;

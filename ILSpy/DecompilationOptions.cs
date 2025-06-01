@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpy
 			if (!Enum.TryParse(version?.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
 				languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
 
-			var newSettings = this.DecompilerSettings = settings.Clone();
+			var newSettings = this.DecompilerSettings = settings.DeepClone();
 
 			newSettings.SetLanguageVersion(languageVersion);
 			newSettings.ExpandMemberDefinitions = displaySettings.ExpandMemberDefinitions;

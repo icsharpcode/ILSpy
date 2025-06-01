@@ -78,7 +78,7 @@ namespace ICSharpCode.ILSpy
 
 		public static ICompilation? GetTypeSystemWithCurrentOptionsOrNull(this MetadataFile file, SettingsService settingsService, LanguageVersion languageVersion)
 		{
-			var decompilerSettings = settingsService.DecompilerSettings.Clone();
+			var decompilerSettings = settingsService.DecompilerSettings.DeepClone();
 			if (!Enum.TryParse(languageVersion?.Version, out Decompiler.CSharp.LanguageVersion csharpLanguageVersion))
 				csharpLanguageVersion = Decompiler.CSharp.LanguageVersion.Latest;
 			decompilerSettings.SetLanguageVersion(csharpLanguageVersion);
