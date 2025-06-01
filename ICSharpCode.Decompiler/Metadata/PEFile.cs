@@ -35,18 +35,18 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		public PEReader Reader { get; }
 
-		public PEFile(string fileName, PEStreamOptions streamOptions = PEStreamOptions.Default, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
-			: this(fileName, new PEReader(new FileStream(fileName, FileMode.Open, FileAccess.Read), streamOptions), metadataOptions)
+		public PEFile(string fileName, PEStreamOptions streamOptions = PEStreamOptions.Default, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default, MetadataStringDecoder? utf8Decoder = null)
+			: this(fileName, new PEReader(new FileStream(fileName, FileMode.Open, FileAccess.Read), streamOptions), metadataOptions, utf8Decoder)
 		{
 		}
 
-		public PEFile(string fileName, Stream stream, PEStreamOptions streamOptions = PEStreamOptions.Default, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
-			: this(fileName, new PEReader(stream, streamOptions), metadataOptions)
+		public PEFile(string fileName, Stream stream, PEStreamOptions streamOptions = PEStreamOptions.Default, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default, MetadataStringDecoder? utf8Decoder = null)
+			: this(fileName, new PEReader(stream, streamOptions), metadataOptions, utf8Decoder)
 		{
 		}
 
-		public PEFile(string fileName, PEReader reader, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
-			: base(MetadataFileKind.PortableExecutable, fileName, reader, metadataOptions)
+		public PEFile(string fileName, PEReader reader, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default, MetadataStringDecoder? utf8Decoder = null)
+			: base(MetadataFileKind.PortableExecutable, fileName, reader, metadataOptions, utf8Decoder)
 		{
 			this.Reader = reader;
 		}

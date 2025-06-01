@@ -239,23 +239,32 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public MetadataFile(MetadataFileKind kind, string fileName, MetadataReaderProvider metadata, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default, int metadataOffset = 0, bool isEmbedded = false)
+		public MetadataFile(MetadataFileKind kind, string fileName, MetadataReaderProvider metadata, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default, int metadataOffset = 0, bool isEmbedded = false, MetadataStringDecoder? utf8Decoder = null)
 		{
 			this.Kind = kind;
 			this.FileName = fileName;
-			this.Metadata = metadata.GetMetadataReader(metadataOptions);
+			this.Metadata = metadata.GetMetadataReader(metadataOptions, utf8Decoder);
 			this.MetadataOffset = metadataOffset;
 			this.IsEmbedded = isEmbedded;
 		}
 
-		private protected MetadataFile(MetadataFileKind kind, string fileName, PEReader reader, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
+		public MetadataFile(MetadataFileKind kind, string fileName, MetadataReader metadataReader, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default, int metadataOffset = 0, bool isEmbedded = false)
+		{
+			this.Kind = kind;
+			this.FileName = fileName;
+			this.Metadata = metadataReader;
+			this.MetadataOffset = metadataOffset;
+			this.IsEmbedded = isEmbedded;
+		}
+
+		private protected MetadataFile(MetadataFileKind kind, string fileName, PEReader reader, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default, MetadataStringDecoder? utf8Decoder = null)
 		{
 			this.Kind = kind;
 			this.FileName = fileName ?? throw new ArgumentNullException(nameof(fileName));
 			_ = reader ?? throw new ArgumentNullException(nameof(reader));
 			if (!reader.HasMetadata)
 				throw new MetadataFileNotSupportedException("PE file does not contain any managed metadata.");
-			this.Metadata = reader.GetMetadataReader(metadataOptions);
+			this.Metadata = reader.GetMetadataReader(metadataOptions, utf8Decoder);
 		}
 
 		public virtual MethodBodyBlock GetMethodBody(int rva)
