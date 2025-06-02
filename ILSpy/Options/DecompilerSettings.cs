@@ -56,15 +56,5 @@ namespace ICSharpCode.ILSpy.Options
 					p.SetValue(this, value.Value);
 			}
 		}
-
-		public new DecompilerSettings Clone()
-		{
-			var section = SaveToXml();
-
-			var newSettings = new DecompilerSettings();
-			newSettings.LoadFromXml(section);
-
-			return newSettings;
-		}
 	}
 }

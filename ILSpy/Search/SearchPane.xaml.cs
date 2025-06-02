@@ -478,7 +478,7 @@ namespace ICSharpCode.ILSpy.Search
 				if (!Enum.TryParse(this.languageVersion?.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
 					languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
 				decompilerSettings.SetLanguageVersion(languageVersion);
-				request.DecompilerSettings = settingsService.DecompilerSettings.Clone();
+				request.DecompilerSettings = decompilerSettings;
 
 				return request;
 			}
