@@ -2238,7 +2238,7 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		public DecompilerSettings Clone()
+		public virtual DecompilerSettings Clone()
 		{
 			DecompilerSettings settings = (DecompilerSettings)MemberwiseClone();
 			if (csharpFormattingOptions != null)

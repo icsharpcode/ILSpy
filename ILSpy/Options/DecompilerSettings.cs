@@ -17,8 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.ComponentModel;
-
-using ICSharpCode.ILSpyX.Settings;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
@@ -55,6 +53,11 @@ namespace ICSharpCode.ILSpy.Options
 				if (value.HasValue)
 					p.SetValue(this, value.Value);
 			}
+		}
+
+		public override DecompilerSettings Clone()
+		{
+			return (DecompilerSettings)base.Clone();
 		}
 	}
 }
