@@ -233,9 +233,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if ((toType.IsKnownType(KnownTypeCode.SpanOfT) || toType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
 				&& fromType.IsInlineArrayType())
 			{
-				var @field = fromType.GetFields(f => !f.IsStatic, GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
+				var elementType = fromType.GetInlineArrayElementType();
 				var spanElementType = toType.TypeArguments[0];
-				if (field != null && IdentityConversion(field.ReturnType, spanElementType))
+				if (IdentityConversion(elementType, spanElementType))
 					return Conversion.InlineArrayConversion;
 			}
 			return Conversion.None;
