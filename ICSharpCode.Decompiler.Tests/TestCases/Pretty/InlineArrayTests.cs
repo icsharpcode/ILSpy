@@ -77,6 +77,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return array[GetIndex()] = value;
 		}
 
+		public void Slice(Byte16 array)
+		{
+			Receiver(array[..8]);
+			Receiver((ReadOnlySpan<byte>)array[..8]);
+			ReceiverSpan(array[..8]);
+			ReceiverReadOnlySpan(array[..8]);
+		}
+
+		// TODO
+		//public void Slice(Byte16 array, int end)
+		//{
+		//	Receiver(array[..end]);
+		//	Receiver((ReadOnlySpan<byte>)array[..end]);
+		//	ReceiverSpan(array[..end]);
+		//	ReceiverReadOnlySpan(array[..end]);
+		//}
+
 		public byte VariableSplitting(Byte16 array, byte value)
 		{
 			return array[GetIndex()] = (array[GetIndex() + 1] = value);
