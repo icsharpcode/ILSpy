@@ -293,9 +293,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				context.Step("TransformRuntimeHelpersCreateSpanInitialization: single-dim", inst);
 				inst.ReplaceWith(replacement2);
+				replacement2.AcceptVisitor(this);
 				return;
 			}
 			base.VisitCall(inst);
+			if (context.Settings.InlineArrays && InlineArrayTransform.RunOnExpression(inst, context))
+			{
+				return;
+			}
 			TransformAssignment.HandleCompoundAssign(inst, context);
 		}
 
