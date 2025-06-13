@@ -639,7 +639,7 @@ namespace ICSharpCode.Decompiler
 			var sectionData = pefile.GetSectionData(rva);
 			if (sectionData.Length == 0 && size != 0)
 				throw new BadImageFormatException($"Field data (rva=0x{rva:x}) could not be found"
-					+ "in any section!");
+					+ " in any section!");
 			if (size < 0 || size > sectionData.Length)
 				throw new BadImageFormatException($"Invalid size {size} for field data!");
 			return sectionData.GetReader(0, size);
