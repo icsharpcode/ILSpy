@@ -227,6 +227,18 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
+		PropertyAndEventBackingFieldLookup? propertyAndEventBackingFieldLookup;
+
+		internal PropertyAndEventBackingFieldLookup PropertyAndEventBackingFieldLookup {
+			get {
+				var r = LazyInit.VolatileRead(ref propertyAndEventBackingFieldLookup);
+				if (r != null)
+					return r;
+				else
+					return LazyInit.GetOrSet(ref propertyAndEventBackingFieldLookup, new PropertyAndEventBackingFieldLookup(Metadata));
+			}
+		}
+
 		public MetadataFile(MetadataFileKind kind, string fileName, MetadataReaderProvider metadata, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default, int metadataOffset = 0, bool isEmbedded = false)
 		{
 			this.Kind = kind;

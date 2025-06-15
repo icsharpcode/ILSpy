@@ -23,7 +23,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
-using System.Text.RegularExpressions;
 using System.Threading;
 
 using ICSharpCode.Decompiler;
@@ -340,24 +339,13 @@ namespace ICSharpCode.Decompiler.CSharp
 							return true;
 						if (settings.UsePrimaryConstructorSyntaxForNonRecordTypes && IsPrimaryConstructorParameterBackingField(field, metadata))
 							return true;
-						if (settings.AutomaticProperties && IsAutomaticPropertyBackingField(field, metadata, out var propertyName))
+						if (settings.AutomaticProperties && module.PropertyAndEventBackingFieldLookup.IsPropertyBackingField(fieldHandle, out var propertyHandle))
 						{
-							if (!settings.GetterOnlyAutomaticProperties && IsGetterOnlyProperty(propertyName))
-								return false;
-
-							bool IsGetterOnlyProperty(string propertyName)
+							if (!settings.GetterOnlyAutomaticProperties)
 							{
-								var properties = metadata.GetTypeDefinition(field.GetDeclaringType()).GetProperties();
-								foreach (var p in properties)
-								{
-									var pd = metadata.GetPropertyDefinition(p);
-									string name = metadata.GetString(pd.Name);
-									if (!metadata.StringComparer.Equals(pd.Name, propertyName))
-										continue;
-									PropertyAccessors accessors = pd.GetAccessors();
-									return !accessors.Getter.IsNil && accessors.Setter.IsNil;
-								}
-								return false;
+								PropertyAccessors accessors = metadata.GetPropertyDefinition(propertyHandle).GetAccessors();
+								if (!accessors.Getter.IsNil && accessors.Setter.IsNil)
+									return false;
 							}
 
 							return true;
@@ -367,15 +355,9 @@ namespace ICSharpCode.Decompiler.CSharp
 							return true;
 					}
 					// event-fields are not [CompilerGenerated]
-					if (settings.AutomaticEvents)
+					if (settings.AutomaticEvents && module.PropertyAndEventBackingFieldLookup.IsEventBackingField(fieldHandle, out _))
 					{
-						foreach (var ev in metadata.GetTypeDefinition(field.GetDeclaringType()).GetEvents())
-						{
-							var eventName = metadata.GetString(metadata.GetEventDefinition(ev).Name);
-							var fieldName = metadata.GetString(field.Name);
-							if (IsEventBackingFieldName(fieldName, eventName, out _))
-								return true;
-						}
+						return true;
 					}
 					if (settings.ArrayInitializers && metadata.GetString(metadata.GetTypeDefinition(field.GetDeclaringType()).Name).StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
 					{
@@ -402,27 +384,6 @@ namespace ICSharpCode.Decompiler.CSharp
 		static bool IsSwitchOnStringCache(SRM.FieldDefinition field, MetadataReader metadata)
 		{
 			return metadata.GetString(field.Name).StartsWith("<>f__switch", StringComparison.Ordinal);
-		}
-
-		static readonly Regex automaticPropertyBackingFieldRegex = new Regex(@"^<(.*)>k__BackingField$",
-			RegexOptions.Compiled | RegexOptions.CultureInvariant);
-
-		static bool IsAutomaticPropertyBackingField(FieldDefinition field, MetadataReader metadata, out string propertyName)
-		{
-			propertyName = null;
-			var name = metadata.GetString(field.Name);
-			var m = automaticPropertyBackingFieldRegex.Match(name);
-			if (m.Success)
-			{
-				propertyName = m.Groups[1].Value;
-				return true;
-			}
-			if (name.StartsWith("_", StringComparison.Ordinal))
-			{
-				propertyName = name.Substring(1);
-				return field.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.CompilerGenerated);
-			}
-			return false;
 		}
 
 		internal static bool IsEventBackingFieldName(string fieldName, string eventName, out int suffixLength)
