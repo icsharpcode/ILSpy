@@ -93,7 +93,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!MatchInlineArrayHelper(targetInst.Method, "InlineArrayAsReadOnlySpan", out var inlineArrayType))
 					return false;
 
-				if (targetInst.Arguments is not [var addrInst, LdcI4])
+				if (targetInst.Arguments is not [var addrInst, LdcI4 { Value: var length }])
+					return false;
+
+				if (length < 0 || length > inlineArrayType.GetInlineArrayLength())
 					return false;
 
 				type = inlineArrayType;
@@ -110,7 +113,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!MatchInlineArrayHelper(targetInst.Method, "InlineArrayAsSpan", out var inlineArrayType))
 					return false;
 
-				if (targetInst.Arguments is not [var addrInst, LdcI4])
+				if (targetInst.Arguments is not [var addrInst, LdcI4 { Value: var length }])
+					return false;
+
+				if (length < 0 || length > inlineArrayType.GetInlineArrayLength())
 					return false;
 
 				type = inlineArrayType;
@@ -135,28 +141,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			index = null;
 			isReadOnly = false;
 
-			if (inst.Arguments is not [var addrInst, var indexInst])
+			if (inst.Arguments is not [var addrInst, LdcI4 { Value: var indexValue } indexInst])
 				return false;
+
+			addr = addrInst;
+			index = indexInst;
 
 			if (MatchInlineArrayHelper(inst.Method, "InlineArrayElementRef", out var inlineArrayType))
 			{
 				isReadOnly = false;
 				type = inlineArrayType;
-				addr = addrInst;
-				index = indexInst;
-				return true;
 			}
-
-			if (MatchInlineArrayHelper(inst.Method, "InlineArrayElementRefReadOnly", out inlineArrayType))
+			else if (MatchInlineArrayHelper(inst.Method, "InlineArrayElementRefReadOnly", out inlineArrayType))
 			{
 				isReadOnly = true;
 				type = inlineArrayType;
-				addr = addrInst;
-				index = indexInst;
-				return true;
+			}
+			else
+			{
+				return false;
 			}
 
-			return false;
+			if (indexValue < 0 || indexValue >= inlineArrayType.GetInlineArrayLength())
+			{
+				return false;
+			}
+
+			return true;
 		}
 
 		private static bool MatchInlineArrayFirstElementRef(Call inst, [NotNullWhen(true)] out IType? type, [NotNullWhen(true)] out ILInstruction? addr, out bool isReadOnly)
