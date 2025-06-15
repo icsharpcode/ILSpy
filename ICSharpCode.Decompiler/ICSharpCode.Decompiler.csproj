@@ -103,6 +103,7 @@
     <Compile Include="CSharp\Annotations.cs" />
     <Compile Include="CSharp\CallBuilder.cs" />
     <Compile Include="CSharp\CSharpLanguageVersion.cs" />
+    <Compile Include="IL\Transforms\SwitchExpressionDefaultCaseTransform.cs" />
     <Compile Include="CSharp\Syntax\Expressions\RecursivePatternExpression.cs" />
     <Compile Include="DecompilationProgress.cs" />
     <Compile Include="Disassembler\IEntityProcessor.cs" />
