@@ -206,7 +206,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		CSharpDecompiler CreateDecompiler(DecompilerTypeSystem ts)
+		protected virtual CSharpDecompiler CreateDecompiler(DecompilerTypeSystem ts)
 		{
 			var decompiler = new CSharpDecompiler(ts, Settings);
 			decompiler.DebugInfoProvider = DebugInfoProvider;
