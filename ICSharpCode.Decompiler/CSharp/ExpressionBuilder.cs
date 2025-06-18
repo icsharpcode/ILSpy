@@ -3130,6 +3130,23 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.ResolveResult, ReferenceKind.Ref));
 		}
 
+		protected internal override TranslatedExpression VisitLdElemaInlineArray(LdElemaInlineArray inst, TranslationContext context)
+		{
+			TranslatedExpression arrayExpr = TranslateTarget(
+				inst.Array,
+				nonVirtualInvocation: true,
+				memberStatic: false,
+				memberDeclaringType: inst.Type
+			);
+			var inlineArrayElementType = inst.Type.GetInlineArrayElementType();
+			IndexerExpression indexerExpr = new IndexerExpression(
+					arrayExpr, inst.Indices.Select(i => TranslateArrayIndex(i).Expression)
+			);
+			TranslatedExpression expr = indexerExpr.WithILInstruction(inst).WithRR(new ResolveResult(inlineArrayElementType));
+			return new DirectionExpression(FieldDirection.Ref, expr)
+				.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.ResolveResult, ReferenceKind.Ref));
+		}
+
 		TranslatedExpression TranslateArrayIndex(ILInstruction i)
 		{
 			var input = Translate(i);

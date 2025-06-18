@@ -463,6 +463,42 @@ namespace ICSharpCode.Decompiler.CSharp
 				return HandleImplicitConversion(method, argumentList.Arguments[0]);
 			}
 
+			if (settings.InlineArrays
+				&& method is { DeclaringType.FullName: "<PrivateImplementationDetails>", Name: "InlineArrayAsSpan" or "InlineArrayAsReadOnlySpan" }
+				&& argumentList.Length == 2)
+			{
+				argumentList.CheckNoNamedOrOptionalArguments();
+				var arrayType = method.TypeArguments[0];
+				var arrayLength = arrayType.GetInlineArrayLength();
+				var arrayElementType = arrayType.GetInlineArrayElementType();
+				var argument = argumentList.Arguments[0];
+				var spanLengthExpr = argumentList.Arguments[1];
+				var targetType = method.ReturnType;
+				var spanType = typeSystem.FindType(KnownTypeCode.SpanOfT);
+				if (argument.Expression is DirectionExpression { FieldDirection: FieldDirection.In or FieldDirection.Ref, Expression: var lvalueExpr })
+				{
+					// `(TargetType)(in arg)` is invalid syntax.
+					// Also, `f(in arg)` is invalid when there's an implicit conversion involved.
+					argument = argument.UnwrapChild(lvalueExpr);
+				}
+				if (spanLengthExpr.ResolveResult.ConstantValue is int spanLength && spanLength <= arrayLength)
+				{
+					if (spanLength < arrayLength)
+					{
+						argument = new IndexerExpression(argument.Expression, new BinaryOperatorExpression {
+							Operator = BinaryOperatorType.Range,
+							Right = spanLengthExpr.Expression
+						}).WithRR(new ResolveResult(new ParameterizedType(spanType, arrayElementType))).WithoutILInstruction();
+						if (targetType.IsKnownType(KnownTypeCode.SpanOfT))
+						{
+							return argument;
+						}
+					}
+					return new CastExpression(expressionBuilder.ConvertType(targetType), argument.Expression)
+					.WithRR(new ConversionResolveResult(targetType, argument.ResolveResult, Conversion.InlineArrayConversion));
+				}
+			}
+
 			if (settings.LiftNullables && method.Name == "GetValueOrDefault"
 				&& method.DeclaringType.IsKnownType(KnownTypeCode.NullableOfT)
 				&& method.DeclaringType.TypeArguments[0].IsKnownType(KnownTypeCode.Boolean)

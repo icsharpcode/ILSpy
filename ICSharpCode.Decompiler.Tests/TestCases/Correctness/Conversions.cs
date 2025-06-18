@@ -19,6 +19,7 @@
 // #include "../../../ICSharpCode.Decompiler/Util/CSharpPrimitiveCast.cs"
 
 using System;
+using System.Runtime.CompilerServices;
 
 using ICSharpCode.Decompiler.Util;
 
@@ -111,6 +112,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			Console.WriteLine(ReadZeroTerminatedString("Hello World!".Length));
 			C1.Test();
+#if ROSLYN2 && !NET40
+			C3.Run();
+#endif
 		}
 
 		static void RunTest(bool checkForOverflow)
@@ -199,4 +203,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			return new C1();
 		}
 	}
+
+#if ROSLYN2 && !NET40
+	class C3
+	{
+		[InlineArray(4)] struct MyArray { private int elem; }
+
+		static void Foo(object o)
+		{
+			Console.WriteLine("Foo(object) called");
+		}
+
+		static void Foo(ReadOnlySpan<int> o)
+		{
+			Console.WriteLine("Foo(ReadOnlySpan<int>) called");
+		}
+
+		static void Test(MyArray arr)
+		{
+			Foo((object)arr);
+		}
+
+		public static void Run()
+		{
+			Console.WriteLine("C3.Run() called");
+			Test(default);
+		}
+	}
+#endif
 }

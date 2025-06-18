@@ -333,6 +333,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						throw new InvalidOperationException("invalid expression classification");
 				}
 			}
+			else if (loadInst.Parent is LdElemaInlineArray)
+			{
+				return true;
+			}
 			else if (IsPassedToReadOnlySpanOfCharCtor(loadInst))
 			{
 				// Always inlining is possible here, because it's an 'in' or 'ref readonly' parameter
@@ -343,6 +347,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// concatenating a string to a char and our following transforms assume the char is
 				// already inlined.
 				return true;
+			}
+			if (IsPassedToInlineArrayAsSpan(loadInst))
+			{
+				// Inlining is not allowed
+				return false;
 			}
 			else if (IsPassedToInParameter(loadInst))
 			{
@@ -375,6 +384,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
+		}
+
+		private static bool IsPassedToInlineArrayAsSpan(LdLoca loadInst)
+		{
+			if (loadInst.Parent is not Call call)
+				return false;
+			var method = call.Method;
+			var declaringType = method.DeclaringType;
+			return declaringType.ReflectionName == "<PrivateImplementationDetails>"
+				&& method.Name is "InlineArrayAsReadOnlySpan" or "InlineArrayAsSpan"
+				&& method.Parameters is [var arg, var length]
+				&& (method.ReturnType.IsKnownType(KnownTypeCode.SpanOfT) || method.ReturnType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
+				&& arg.Type is ByReferenceType
+				&& length.Type.IsKnownType(KnownTypeCode.Int32);
 		}
 
 		internal static bool MethodRequiresCopyForReadonlyLValue(IMethod method, IType constrainedTo = null)

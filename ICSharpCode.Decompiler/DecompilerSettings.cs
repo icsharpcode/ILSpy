@@ -164,12 +164,13 @@ namespace ICSharpCode.Decompiler
 			{
 				refReadOnlyParameters = false;
 				usePrimaryConstructorSyntaxForNonRecordTypes = false;
+				inlineArrays = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (refReadOnlyParameters || usePrimaryConstructorSyntaxForNonRecordTypes)
+			if (refReadOnlyParameters || usePrimaryConstructorSyntaxForNonRecordTypes || inlineArrays)
 				return CSharp.LanguageVersion.CSharp12_0;
 			if (scopedRef || requiredMembers || numericIntPtr || utf8StringLiterals || unsignedRightShift || checkedOperators)
 				return CSharp.LanguageVersion.CSharp11_0;
@@ -2048,6 +2049,24 @@ namespace ICSharpCode.Decompiler
 				if (usePrimaryConstructorSyntaxForNonRecordTypes != value)
 				{
 					usePrimaryConstructorSyntaxForNonRecordTypes = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool inlineArrays = true;
+
+		/// <summary>
+		/// Gets/Sets whether C# 12.0 inline array uses should be transformed.
+		/// </summary>
+		[Category("C# 12.0 / VS 2022.8")]
+		[Description("DecompilerSettings.InlineArrays")]
+		public bool InlineArrays {
+			get { return inlineArrays; }
+			set {
+				if (inlineArrays != value)
+				{
+					inlineArrays = value;
 					OnPropertyChanged();
 				}
 			}
