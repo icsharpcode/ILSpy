@@ -9,7 +9,7 @@
     <PackageVersion Include="DataGridExtensions" Version="2.6.0" />
     <PackageVersion Include="DiffLib" Version="2025.0.0" />
     <PackageVersion Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.1" />
-    <PackageVersion Include="ILCompiler.Reflection.ReadyToRun.Experimental" Version="9.0.1-rtm.24557.9" />
+    <PackageVersion Include="ILCompiler.Reflection.ReadyToRun.Experimental" Version="10.0.0-preview.4.25213.101" />
     <PackageVersion Include="Iced" Version="1.21.0" />
     <PackageVersion Include="JunitXml.TestLogger" Version="6.1.0" />
     <PackageVersion Include="K4os.Compression.LZ4" Version="1.3.8" />
@@ -40,9 +40,9 @@
     <PackageVersion Include="PowerShellStandard.Library" Version="5.1.1" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="System.Composition.AttributedModel" Version="9.0.4" />
-    <PackageVersion Include="System.Collections.Immutable" Version="9.0.4" />
+    <PackageVersion Include="System.Collections.Immutable" Version="10.0.0-preview.3.25171.5" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
-    <PackageVersion Include="System.Reflection.Metadata" Version="9.0.4" />
+    <PackageVersion Include="System.Reflection.Metadata" Version="10.0.0-preview.3.25171.5" />
     <PackageVersion Include="System.Resources.Extensions" Version="9.0.4" />
     <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
     <PackageVersion Include="TomsToolbox.Composition.MicrosoftExtensions" Version="2.22.0" />
