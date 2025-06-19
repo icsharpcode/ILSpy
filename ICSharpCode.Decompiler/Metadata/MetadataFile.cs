@@ -248,7 +248,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			this.IsEmbedded = isEmbedded;
 		}
 
-		public MetadataFile(MetadataFileKind kind, string fileName, MetadataReader metadataReader, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default, int metadataOffset = 0, bool isEmbedded = false)
+		public MetadataFile(MetadataFileKind kind, string fileName, MetadataReader metadataReader, int metadataOffset = 0, bool isEmbedded = false)
 		{
 			this.Kind = kind;
 			this.FileName = fileName;
