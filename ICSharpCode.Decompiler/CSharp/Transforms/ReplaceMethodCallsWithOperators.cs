@@ -138,7 +138,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				break;
 				*/
 				case "System.Activator.CreateInstance":
-					if (arguments.Length == 0 && method.TypeArguments.Count == 1 && IsInstantiableTypeParameter(method.TypeArguments[0]))
+					if (context.Settings.GenericTypeInstantiation &&
+						arguments.Length == 0 &&
+						method.TypeArguments.Count == 1 &&
+						IsInstantiableTypeParameter(method.TypeArguments[0]))
 					{
 						invocationExpression.ReplaceWith(new ObjectCreateExpression(context.TypeSystemAstBuilder.ConvertType(method.TypeArguments.First())));
 					}
