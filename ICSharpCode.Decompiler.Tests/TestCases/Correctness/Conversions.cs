@@ -112,7 +112,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			Console.WriteLine(ReadZeroTerminatedString("Hello World!".Length));
 			C1.Test();
-#if ROSLYN2 && !NET40
+#if CS120 && !NET40
 			C3.Run();
 #endif
 		}
@@ -204,7 +204,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		}
 	}
 
-#if ROSLYN2 && !NET40
+#if CS120 && !NET40
 	class C3
 	{
 		[InlineArray(4)] struct MyArray { private int elem; }
