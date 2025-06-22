@@ -337,20 +337,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return true;
 			}
-			else if (IsPassedToReadOnlySpanOfCharCtor(loadInst))
+			else if (IsPassedToReadOnlySpanCtor(loadInst))
 			{
 				// Always inlining is possible here, because it's an 'in' or 'ref readonly' parameter
 				// and the C# compiler allows calling it with an rvalue, even though that might produce
 				// a warning. Note that we don't need to check the expression classification, because
 				// expressionBuilder.VisitAddressOf will handle creating the copy for us.
 				// This is necessary, because there are compiler-generated uses of this ctor when
-				// concatenating a string to a char and our following transforms assume the char is
-				// already inlined.
+				// passing a single-element array to a params ROS<T> parameter and our following transforms
+				// assume the value is already inlined.
 				return true;
 			}
-			if (IsPassedToInlineArrayAsSpan(loadInst))
+			else if (IsPassedToInlineArrayAsSpan(loadInst))
 			{
-				// Inlining is not allowed
+				// Inlining is not allowed:
+				// <PrivateImplementationDetails>.InlineArrayAsReadOnlySpan(GetInlineArray()) is invalid C# code
 				return false;
 			}
 			else if (IsPassedToInParameter(loadInst))
@@ -491,13 +492,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return call.GetParameter(ldloca.ChildIndex)?.ReferenceKind is ReferenceKind.In;
 		}
 
-		static bool IsPassedToReadOnlySpanOfCharCtor(LdLoca ldloca)
+		static bool IsPassedToReadOnlySpanCtor(LdLoca ldloca)
 		{
 			if (ldloca.Parent is not NewObj call)
 			{
 				return false;
 			}
-			return IsReadOnlySpanCharCtor(call.Method);
+			var method = call.Method;
+			return method.IsConstructor
+				&& method.Parameters.Count == 1
+				&& method.DeclaringType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT);
 		}
 
 		internal static bool IsReadOnlySpanCharCtor(IMethod method)
