@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			public readonly bool IsExpandedForm;
 
 			/// <summary>
-			/// Gets the parameter types. In the first step, these are the types without any substition.
+			/// Gets the parameter types. In the first step, these are the types without any substitution.
 			/// After type inference, substitutions will be performed.
 			/// </summary>
 			public readonly IType[] ParameterTypes;
@@ -76,6 +76,24 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			/// </summary>
 			public Conversion[] ArgumentConversions;
 
+			/// <summary>
+			/// Gets the type of the collection that is used for the 'params' parameter (before any substitution!).
+			/// Otherwise returns SpecialType.UnknownType.
+			/// </summary>
+			public IType ParamsCollectionType {
+				get {
+					if (IsExpandedForm && Parameters.Count > 0)
+					{
+						IParameter lastParameter = Parameters[Parameters.Count - 1];
+						if (lastParameter.IsParams)
+						{
+							return lastParameter.Type;
+						}
+					}
+					return SpecialType.UnknownType;
+				}
+			}
+
 			public bool IsGenericMethod {
 				get {
 					IMethod method = Member as IMethod;
@@ -83,7 +101,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 			}
 
-			public int ArgumentsPassedToParamsArray {
+			public int ArgumentsPassedToParams {
 				get {
 					int count = 0;
 					if (IsExpandedForm)
@@ -104,7 +122,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				this.Member = member;
 				this.IsExpandedForm = isExpanded;
 				IParameterizedMember memberDefinition = (IParameterizedMember)member.MemberDefinition;
-				// For specificialized methods, go back to the original parameters:
+				// For specialized methods, go back to the original parameters:
 				// (without any type parameter substitution, not even class type parameters)
 				// We'll re-substitute them as part of RunTypeInference().
 				this.Parameters = memberDefinition.Parameters;
@@ -286,9 +304,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 				if (candidate.IsExpandedForm && i == candidate.Parameters.Count - 1)
 				{
-					ArrayType arrayType = type as ArrayType;
-					if (arrayType != null && arrayType.Dimensions == 1)
+					if (type is ArrayType arrayType && arrayType.Dimensions == 1)
 						type = arrayType.ElementType;
+					else if (type.IsKnownType(KnownTypeCode.ReadOnlySpanOfT) || type.IsKnownType(KnownTypeCode.SpanOfT))
+						type = type.TypeArguments[0];
+					else if (type.IsArrayInterfaceType())
+						type = type.TypeArguments[0];
 					else
 						return false; // error: cannot unpack params-array. abort considering the expanded form for this candidate
 				}
@@ -772,8 +793,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				else if (c1.IsExpandedForm && !c2.IsExpandedForm)
 					return 2;
 
-				// prefer the member with less arguments mapped to the params-array
-				int r = c1.ArgumentsPassedToParamsArray.CompareTo(c2.ArgumentsPassedToParamsArray);
+				// prefer the member with less arguments mapped to the params-collection
+				int r = c1.ArgumentsPassedToParams.CompareTo(c2.ArgumentsPassedToParams);
 				if (r < 0)
 					return 1;
 				else if (r > 0)
@@ -797,13 +818,105 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return 1;
 				if (lift1 != null && lift2 == null)
 					return 2;
+
+				// prefer by-value parameters over in-parameters
+				r = BetterParameterPassingChoice(c1, c2);
+				if (r != 0)
+					return r;
+
+				if (c1.IsExpandedForm)
+				{
+					Debug.Assert(c2.IsExpandedForm);
+					r = BetterParamsCollectionType(c1.ParamsCollectionType, c2.ParamsCollectionType);
+					if (r != 0)
+						return r;
+				}
 			}
+			return 0;
+		}
+
+		int BetterParamsCollectionType(IType paramsCollectionType1, IType paramsCollectionType2)
+		{
+			// see https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-13.0/params-collections#better-function-member
+			bool isSpan1 = paramsCollectionType1.IsKnownType(KnownTypeCode.SpanOfT) || paramsCollectionType1.IsKnownType(KnownTypeCode.ReadOnlySpanOfT);
+			bool isSpan2 = paramsCollectionType2.IsKnownType(KnownTypeCode.SpanOfT) || paramsCollectionType2.IsKnownType(KnownTypeCode.ReadOnlySpanOfT);
+			if (!isSpan1 && !isSpan2)
+			{
+				bool implicitConversion1to2 = conversions.ImplicitConversion(paramsCollectionType1, paramsCollectionType2).IsValid;
+				bool implicitConversion2to1 = conversions.ImplicitConversion(paramsCollectionType2, paramsCollectionType1).IsValid;
+				if (implicitConversion1to2 && !implicitConversion2to1)
+					return 1;
+				if (!implicitConversion1to2 && implicitConversion2to1)
+					return 2;
+			}
+			else if (paramsCollectionType1.IsKnownType(KnownTypeCode.ReadOnlySpanOfT) && paramsCollectionType2.IsKnownType(KnownTypeCode.SpanOfT))
+			{
+				if (conversions.IdentityConversion(paramsCollectionType1.TypeArguments[0], paramsCollectionType2.TypeArguments[0]))
+					return 1; // ReadOnlySpan<T> is better than Span<T> if there exists an identity conversion between the element types
+			}
+			else if (paramsCollectionType2.IsKnownType(KnownTypeCode.ReadOnlySpanOfT) && paramsCollectionType1.IsKnownType(KnownTypeCode.SpanOfT))
+			{
+				if (conversions.IdentityConversion(paramsCollectionType2.TypeArguments[0], paramsCollectionType1.TypeArguments[0]))
+					return 2; // ReadOnlySpan<T> is better than Span<T> if there exists an identity conversion between the element types
+			}
+			else if (isSpan1 && IsArrayOrArrayInterfaceType(paramsCollectionType2, out var elementType2))
+			{
+				if (conversions.IdentityConversion(paramsCollectionType1.TypeArguments[0], elementType2))
+					return 1; // Span<T> is better than an array type if there exists an identity conversion between the element types
+			}
+			else if (isSpan2 && IsArrayOrArrayInterfaceType(paramsCollectionType1, out var elementType1))
+			{
+				if (conversions.IdentityConversion(paramsCollectionType2.TypeArguments[0], elementType1))
+					return 2; // Span<T> is better than an array type if there exists an identity conversion between the element types
+			}
+			return 0;
+		}
+
+		bool IsArrayOrArrayInterfaceType(IType type, out IType elementType)
+		{
+			elementType = null;
+			if (type is ArrayType arrayType)
+			{
+				elementType = arrayType.ElementType;
+				return true;
+			}
+			if (type.IsArrayInterfaceType())
+			{
+				elementType = type.TypeArguments[0];
+				return true;
+			}
+			return false;
+		}
+
+		int BetterParameterPassingChoice(Candidate c1, Candidate c2)
+		{
+			Debug.Assert(c1.Parameters.Count == c2.Parameters.Count, "c1 and c2 must have the same number of parameters");
+
+			bool c1IsBetter = false;
+			bool c2IsBetter = false;
+
+			for (int i = 0; i < c1.Parameters.Count; i++)
+			{
+				ReferenceKind refKind1 = c1.Parameters[i].ReferenceKind;
+				ReferenceKind refKind2 = c2.Parameters[i].ReferenceKind;
+
+				if (refKind1 == ReferenceKind.None && refKind2 == ReferenceKind.In)
+					c1IsBetter = true; // by-value is better than in
+				if (refKind1 == ReferenceKind.In && refKind2 == ReferenceKind.None)
+					c2IsBetter = true;
+			}
+
+			if (c1IsBetter && !c2IsBetter)
+				return 1;
+			if (!c1IsBetter && c2IsBetter)
+				return 2;
+
 			return 0;
 		}
 
 		int MoreSpecificFormalParameters(Candidate c1, Candidate c2)
 		{
-			// prefer the member with more formal parmeters (in case both have different number of optional parameters)
+			// prefer the member with more formal parameters (in case both have different number of optional parameters)
 			int r = c1.Parameters.Count.CompareTo(c2.Parameters.Count);
 			if (r > 0)
 				return 1;
