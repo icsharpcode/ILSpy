@@ -759,7 +759,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				MakeLowerBoundInference(arrU.ElementType, arrV.ElementType);
 				return;
 			}
-			else if (arrU != null && IsGenericInterfaceImplementedByArray(pV) && arrU.Dimensions == 1)
+			else if (arrU != null && pV.IsArrayInterfaceType() && arrU.Dimensions == 1)
 			{
 				MakeLowerBoundInference(arrU.ElementType, pV.GetTypeArgument(0));
 				return;
@@ -829,23 +829,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return;
 			}
 		}
-
-		static bool IsGenericInterfaceImplementedByArray(ParameterizedType rt)
-		{
-			if (rt == null || rt.TypeParameterCount != 1)
-				return false;
-			switch (rt.GetDefinition()?.KnownTypeCode)
-			{
-				case KnownTypeCode.IEnumerableOfT:
-				case KnownTypeCode.ICollectionOfT:
-				case KnownTypeCode.IListOfT:
-				case KnownTypeCode.IReadOnlyCollectionOfT:
-				case KnownTypeCode.IReadOnlyListOfT:
-					return true;
-				default:
-					return false;
-			}
-		}
 		#endregion
 
 		#region MakeUpperBoundInference (§7.5.2.10)
@@ -880,7 +863,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				MakeUpperBoundInference(arrU.ElementType, arrV.ElementType);
 				return;
 			}
-			else if (arrV != null && IsGenericInterfaceImplementedByArray(pU) && arrV.Dimensions == 1)
+			else if (arrV != null && pU.IsArrayInterfaceType() && arrV.Dimensions == 1)
 			{
 				MakeUpperBoundInference(pU.GetTypeArgument(0), arrV.ElementType);
 				return;

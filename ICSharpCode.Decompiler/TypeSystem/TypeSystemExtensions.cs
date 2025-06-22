@@ -306,6 +306,23 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
+		public static bool IsArrayInterfaceType(this IType type)
+		{
+			if (type == null || type.TypeParameterCount != 1)
+				return false;
+			switch (type.GetDefinition()?.KnownTypeCode)
+			{
+				case KnownTypeCode.IEnumerableOfT:
+				case KnownTypeCode.ICollectionOfT:
+				case KnownTypeCode.IListOfT:
+				case KnownTypeCode.IReadOnlyCollectionOfT:
+				case KnownTypeCode.IReadOnlyListOfT:
+					return true;
+				default:
+					return false;
+			}
+		}
+
 		public static bool IsInlineArrayType(this IType type)
 		{
 			if (type.Kind != TypeKind.Struct)
