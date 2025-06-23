@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 	/// <summary>
 	/// Helper services for determining the target framework and platform of a module.
 	/// </summary>
-	static class TargetServices
+	public static class TargetServices
 	{
 		const string VersionToken = "Version=";
 		const string ProfileToken = "Profile=";
