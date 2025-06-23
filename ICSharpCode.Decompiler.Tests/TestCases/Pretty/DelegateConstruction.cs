@@ -631,21 +631,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 					Action action = delegate {
 						list.Select((int x) => x * 2);
 					};
-#if OPT && ROSLYN
-					Action obj = delegate {
-#else
 					Action action2 = delegate {
-#endif
 						list.Select((int x) => x * 2);
 					};
 					Console.WriteLine();
 					action();
 					Console.WriteLine();
-#if OPT && ROSLYN
-					obj();
-#else
 					action2();
-#endif
 				}
 				catch (Exception)
 				{
