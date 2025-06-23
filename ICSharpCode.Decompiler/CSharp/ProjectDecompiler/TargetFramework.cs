@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 	/// <summary>
 	/// A class describing the target framework of a module.
 	/// </summary>
-	sealed class TargetFramework
+	public class TargetFramework
 	{
 		const string DotNetPortableIdentifier = ".NETPortable";
 
