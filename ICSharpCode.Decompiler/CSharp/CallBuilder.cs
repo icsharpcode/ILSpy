@@ -1062,9 +1062,15 @@ namespace ICSharpCode.Decompiler.CSharp
 							parameters = new();
 							return true;
 						}
+						// match System.ReadOnlySpan<T>..ctor(ref readonly T)
 						if (paramsArgument.Expression is ObjectCreateExpression oce
-							&& method is { IsConstructor: true, DeclaringType: { TypeArguments: [var type2] } declaringType }
-							&& declaringType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
+							&& method is {
+								IsConstructor: true,
+								Parameters: [{ ReferenceKind: ReferenceKind.RefReadOnly, Type: ByReferenceType { ElementType: var paramType } }],
+								DeclaringType: { TypeArguments: [var type2] } declaringType
+							}
+							&& declaringType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT)
+							&& paramType.Equals(type2))
 						{
 							elementType = type2;
 							arguments = new() { new TranslatedExpression(oce.Arguments.Single()) };
