@@ -604,7 +604,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (context.Settings.LocalFunctions && closureType?.Kind == TypeKind.Struct
 				&& variable.UsesInitialValue && IsPotentialClosure(context, closureType))
 			{
-				initializer = LocalFunctionDecompiler.GetStatement(variable.AddressInstructions.OrderBy(i => i.StartILOffset).First());
+				initializer = Block.GetContainingStatement(variable.AddressInstructions.OrderBy(i => i.StartILOffset).First());
 				return true;
 			}
 			return false;

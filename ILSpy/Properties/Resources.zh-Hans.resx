@@ -315,6 +315,9 @@
   <data name="DecompilerSettings.DecompileForEachWithGetEnumeratorExtension" xml:space="preserve">
     <value>反编译使用 GetEnumerator 扩展方法的 foreach 语句</value>
   </data>
+  <data name="DecompilerSettings.DecompileParamsCollections" xml:space="preserve">
+    <value />
+  </data>
   <data name="DecompilerSettings.DecompileUseOfTheDynamicType" xml:space="preserve">
     <value>反编译 dynamic 类型</value>
   </data>
