@@ -38,9 +38,9 @@
       },
       "System.Reflection.Metadata": {
         "type": "Direct",
-        "requested": "[9.0.4, )",
-        "resolved": "9.0.4",
-        "contentHash": "qeJNsMmZPc/Lieg0Md+D4F6LoLcxV3b9QsUNmBRXc2ZVOkMbAcwuO9l2jbQFv3n+fLiHJilN8v6i5aJNivjrCQ=="
+        "requested": "[10.0.0-preview.3.25171.5, )",
+        "resolved": "10.0.0-preview.3.25171.5",
+        "contentHash": "+vmMtMSXPQTYqaHoLgWcd39Pwb7yGD4sCewmvVrdNzziRCBxjf6/DK8XCWzELxNsLhOmViZ4LIIr+uPa6K5pRw=="
       },
       "System.Runtime.CompilerServices.Unsafe": {
         "type": "Direct",
@@ -73,7 +73,7 @@
       },
       "System.Collections.Immutable": {
         "type": "CentralTransitive",
-        "requested": "[9.0.4, )",
+        "requested": "[10.0.0-preview.3.25171.5, )",
         "resolved": "6.0.0",
         "contentHash": "l4zZJ1WU2hqpQQHXz1rvC3etVZN+2DLmQMO79FhOTZHMn8tDRr+WU287sbomD0BETlmKDn0ygUgVy9k5xkkJdA==",
         "dependencies": {
