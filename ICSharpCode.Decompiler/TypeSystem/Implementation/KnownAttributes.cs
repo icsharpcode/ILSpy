@@ -87,6 +87,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		// Parameter attributes:
 		ParamArray,
+		ParamCollection,
 		In,
 		Out,
 		Optional,
@@ -169,6 +170,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(IndexerNameAttribute)),
 			// Parameter attributes:
 			new TopLevelTypeName("System", nameof(ParamArrayAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", "ParamCollectionAttribute"),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(InAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(OutAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(OptionalAttribute)),

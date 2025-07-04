@@ -37,11 +37,11 @@ jobs:
 
     - uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x'
-        dotnet-quality: 'ga'
+        dotnet-version: '10.0.x'
+        dotnet-quality: 'preview'
 
     - name: Build
-      run: dotnet build ILSpy.XPlat.slnf --configuration Release
+      run: dotnet build ILSpy.XPlat.slnf --configuration Release -p:RestoreEnablePackagePruning=false
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3

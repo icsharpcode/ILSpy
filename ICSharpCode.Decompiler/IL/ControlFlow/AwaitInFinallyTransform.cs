@@ -16,12 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -109,7 +107,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (objectVariable.LoadCount != 1 || objectVariable.StoreCount > 2)
 					continue;
 
-				var beforeExceptionCaptureBlock = (Block)LocalFunctionDecompiler.GetStatement(objectVariable.LoadInstructions[0])?.Parent;
+				var beforeExceptionCaptureBlock = Block.FindClosestBlock(objectVariable.LoadInstructions[0]);
 				if (beforeExceptionCaptureBlock == null)
 					continue;
 

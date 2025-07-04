@@ -16,12 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 using System;
-using System.CodeDom.Compiler;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -49,27 +46,30 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				CompilerResults results = new CompilerResults();
 				results.PathToAssembly = outputFileName;
 
-				var (roslynVersion, languageVersion) = (flags & CompilerOptions.UseRoslynMask) switch {
-					0 => ("legacy", "11"),
-					CompilerOptions.UseRoslyn1_3_2 => ("1.3.2", "14"),
-					CompilerOptions.UseRoslyn2_10_0 => ("2.10.0", "latest"),
-					CompilerOptions.UseRoslyn3_11_0 => ("3.11.0", "latest"),
-					_ => (roslynLatestVersion, flags.HasFlag(CompilerOptions.Preview) ? "preview" : "latest")
+				bool targetNet40 = (flags & CompilerOptions.TargetNet40) != 0;
+
+				var (roslynVersion, languageVersion, targetFramework) = (flags & CompilerOptions.UseRoslynMask) switch {
+					0 => ("legacy", "11", null),
+					CompilerOptions.UseRoslyn1_3_2 => ("1.3.2", "14", null),
+					CompilerOptions.UseRoslyn2_10_0 => ("2.10.0", "latest", targetNet40 ? null : ".NETCoreApp,Version=v2.2"),
+					CompilerOptions.UseRoslyn3_11_0 => ("3.11.0", "latest", targetNet40 ? null : ".NETCoreApp,Version=v5.0"),
+					_ => (roslynLatestVersion, flags.HasFlag(CompilerOptions.Preview) ? "preview" : "latest", targetNet40 ? null : ".NETCoreApp,Version=v10.0")
 				};
 
 				var vbcPath = roslynToolset.GetVBCompiler(roslynVersion);
 
 				IEnumerable<string> references;
 				string libPath;
-				if ((flags & CompilerOptions.UseRoslynMask) != 0 && (flags & CompilerOptions.TargetNet40) == 0)
+				if ((flags & CompilerOptions.UseRoslynMask) != 0 && targetFramework != null)
 				{
+					var coreRefAsmPath = RefAssembliesToolset.GetPath(targetFramework);
 					references = coreDefaultReferences.Select(r => "-r:\"" + r + "\"");
 					libPath = coreRefAsmPath;
 				}
 				else
 				{
 					references = defaultReferences.Select(r => "-r:\"" + r + "\"");
-					libPath = RefAsmPath;
+					libPath = RefAssembliesToolset.GetPath("legacy");
 				}
 				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic))
 				{
@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				var command = Cli.Wrap(vbcPath)
 					.WithArguments($"{otherOptions}-libpath:\"{libPath}\" {string.Join(" ", references)} -out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}")
 					.WithValidation(CommandResultValidation.None);
-				Console.WriteLine($"\"{command.TargetFilePath}\" {command.Arguments}");
+				//Console.WriteLine($"\"{command.TargetFilePath}\" {command.Arguments}");
 
 				var result = await command.ExecuteBufferedAsync().ConfigureAwait(false);
 

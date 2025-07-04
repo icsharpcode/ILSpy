@@ -47,12 +47,12 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 
 		static readonly Lazy<PEFile> mscorlib = new Lazy<PEFile>(
 			delegate {
-				return LoadAssembly(Path.Combine(Helpers.Tester.RefAsmPath, "mscorlib.dll"));
+				return LoadAssembly(Path.Combine(Helpers.Tester.RefAssembliesToolset.GetPath("legacy"), "mscorlib.dll"));
 			});
 
 		static readonly Lazy<PEFile> systemCore = new Lazy<PEFile>(
 			delegate {
-				return LoadAssembly(Path.Combine(Helpers.Tester.RefAsmPath, "System.Core.dll"));
+				return LoadAssembly(Path.Combine(Helpers.Tester.RefAssembliesToolset.GetPath("legacy"), "System.Core.dll"));
 			});
 
 		static readonly Lazy<PEFile> testAssembly = new Lazy<PEFile>(

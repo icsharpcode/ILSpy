@@ -383,6 +383,22 @@ namespace ICSharpCode.Decompiler.IL
 			return null;
 		}
 
+		/// <summary>
+		/// Gets the closest ancestor that is child of a control-flow (top-level) Block.
+		/// Returns null, if the instruction is not a descendant of a Block.
+		/// </summary>
+		public static ILInstruction? GetContainingStatement(ILInstruction inst)
+		{
+			var curr = inst;
+			while (curr != null)
+			{
+				if (curr.Parent is Block { Kind: BlockKind.ControlFlow })
+					return curr;
+				curr = curr.Parent;
+			}
+			return null;
+		}
+
 		public bool MatchInlineAssignBlock([NotNullWhen(true)] out CallInstruction? call, [NotNullWhen(true)] out ILInstruction? value)
 		{
 			call = null;

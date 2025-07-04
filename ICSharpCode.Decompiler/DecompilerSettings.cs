@@ -166,10 +166,16 @@ namespace ICSharpCode.Decompiler
 				usePrimaryConstructorSyntaxForNonRecordTypes = false;
 				inlineArrays = false;
 			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp13_0)
+			{
+				paramsCollections = false;
+			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
+			if (paramsCollections)
+				return CSharp.LanguageVersion.CSharp13_0;
 			if (refReadOnlyParameters || usePrimaryConstructorSyntaxForNonRecordTypes || inlineArrays)
 				return CSharp.LanguageVersion.CSharp12_0;
 			if (scopedRef || requiredMembers || numericIntPtr || utf8StringLiterals || unsignedRightShift || checkedOperators)
@@ -844,6 +850,24 @@ namespace ICSharpCode.Decompiler
 				if (forEachWithGetEnumeratorExtension != value)
 				{
 					forEachWithGetEnumeratorExtension = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool paramsCollections = true;
+
+		/// <summary>
+		/// Support params collections.
+		/// </summary>
+		[Category("C# 13.0 / VS 2022.12")]
+		[Description("DecompilerSettings.DecompileParamsCollections")]
+		public bool ParamsCollections {
+			get { return paramsCollections; }
+			set {
+				if (paramsCollections != value)
+				{
+					paramsCollections = value;
 					OnPropertyChanged();
 				}
 			}

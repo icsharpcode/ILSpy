@@ -34,8 +34,8 @@ jobs:
 
     - uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x'
-        dotnet-quality: 'ga'
+        dotnet-version: '10.0.x'
+        dotnet-quality: 'preview'
       env:
         DOTNET_INSTALL_DIR: ${{ runner.temp }}/.dotnet
         DOTNET_ROOT: ${{ runner.temp }}/.dotnet
@@ -44,7 +44,7 @@ jobs:
       uses: microsoft/setup-msbuild@v2
 
     - name: Install dotnet-format
-      run: dotnet tool install -g dotnet-format --version "8.3.546805" --add-source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet8/nuget/v3/index.json
+      run: dotnet tool install -g dotnet-format --version "9.0.520307" --add-source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet9/nuget/v3/index.json
 
     - name: Install wix (locked version)
       run: dotnet tool install --global wix --version 6.0.0
@@ -57,7 +57,7 @@ jobs:
         Get-ChildItem Env: | Where-Object {$_.Name -Match "^ILSPY_"} | %{ echo "$($_.Name)=$($_.Value)" } | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
 
     - name: Restore the application
-      run: msbuild ILSpy.sln /t:Restore /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform
+      run: msbuild ILSpy.sln /t:Restore /p:RestoreEnablePackagePruning=false /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform
 
     - name: Build
       run: msbuild ILSpy.sln /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform /m
@@ -65,9 +65,9 @@ jobs:
     - name: Execute unit tests
       run: dotnet test --logger "trx;LogFileName=${{ matrix.configuration }}.trx" --results-directory test-results $env:Tests1 $env:Tests2 $env:Tests3
       env:
-        Tests1: ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net8.0-windows\win-x64\ICSharpCode.Decompiler.Tests.dll
-        Tests2: ILSpy.Tests\bin\${{ matrix.configuration }}\net8.0-windows\ILSpy.Tests.dll
-        Tests3: ILSpy.BamlDecompiler.Tests\bin\${{ matrix.configuration }}\net8.0-windows\win-x64\ILSpy.BamlDecompiler.Tests.dll
+        Tests1: ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net10.0-windows\win-x64\ICSharpCode.Decompiler.Tests.dll
+        Tests2: ILSpy.Tests\bin\${{ matrix.configuration }}\net10.0-windows\ILSpy.Tests.dll
+        Tests3: ILSpy.BamlDecompiler.Tests\bin\${{ matrix.configuration }}\net10.0-windows\win-x64\ILSpy.BamlDecompiler.Tests.dll
 
     - name: Upload Test Logs
       uses: actions/upload-artifact@v4
@@ -94,7 +94,7 @@ jobs:
         git diff --exit-code
     
     - name: Zip ILSpy (framework-dependent)
-      run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip .\ILSpy\bin\${{ matrix.configuration }}\net8.0-windows\*.dll .\ILSpy\bin\${{ matrix.configuration }}\net8.0-windows\*.exe .\ILSpy\bin\${{ matrix.configuration }}\net8.0-windows\*.config .\ILSpy\bin\${{ matrix.configuration }}\net8.0-windows\*.json .\ILSpy\bin\${{ matrix.configuration }}\net8.0-windows\*\ILSpy.resources.dll .\ILSpy\bin\${{ matrix.configuration }}\net8.0-windows\*\ILSpy.ReadyToRun.Plugin.resources.dll
+      run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip .\ILSpy\bin\${{ matrix.configuration }}\net10.0-windows\*.dll .\ILSpy\bin\${{ matrix.configuration }}\net10.0-windows\*.exe .\ILSpy\bin\${{ matrix.configuration }}\net10.0-windows\*.config .\ILSpy\bin\${{ matrix.configuration }}\net10.0-windows\*.json .\ILSpy\bin\${{ matrix.configuration }}\net10.0-windows\*\ILSpy.resources.dll .\ILSpy\bin\${{ matrix.configuration }}\net10.0-windows\*\ILSpy.ReadyToRun.Plugin.resources.dll
 
     - name: Publish x64/arm64 framework-dependent/self-contained
       shell: pwsh
@@ -102,11 +102,11 @@ jobs:
 
     - name: Zip ILSpy Release (x64 self-contained)
       if: matrix.configuration == 'release'    
-      run: 7z a -tzip $env:StagingDirectory\ILSpy_selfcontained_x64.zip .\ILSpy\bin\Release\net8.0-windows\win-x64\publish\selfcontained\*  
+      run: 7z a -tzip $env:StagingDirectory\ILSpy_selfcontained_x64.zip .\ILSpy\bin\Release\net10.0-windows\win-x64\publish\selfcontained\*
 
     - name: Zip ILSpy Release (arm64 framework-dependent)
       if: matrix.configuration == 'release'    
-      run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries_arm64.zip .\ILSpy\bin\Release\net8.0-windows\win-arm64\publish\fwdependent\*
+      run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries_arm64.zip .\ILSpy\bin\Release\net10.0-windows\win-arm64\publish\fwdependent\*
 
     - name: Pack NuGets
       if: matrix.configuration == 'release'

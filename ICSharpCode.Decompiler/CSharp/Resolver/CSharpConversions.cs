@@ -779,7 +779,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			// C# 4.0 spec: §6.1.7
 			fromType = NullableType.GetUnderlyingType(fromType);
-			if (fromType.IsReferenceType == false && toType.IsReferenceType == true)
+			if (fromType.IsReferenceType == false && !fromType.IsByRefLike && toType.IsReferenceType == true)
 				return IsSubtypeOf(fromType, toType, 0);
 			else
 				return false;
