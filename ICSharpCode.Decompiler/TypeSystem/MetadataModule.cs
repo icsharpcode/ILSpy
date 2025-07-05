@@ -535,6 +535,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					{
 						if (m.TypeParameters.Count != signature.GenericParameterCount)
 							continue;
+						if (signature.Header.IsInstance != !m.IsStatic)
+							continue;
 						if (CompareSignatures(m.Parameters, parameterTypes) && CompareTypes(m.ReturnType, signature.ReturnType))
 						{
 							method = m;
