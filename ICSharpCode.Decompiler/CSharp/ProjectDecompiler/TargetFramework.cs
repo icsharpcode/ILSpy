@@ -89,6 +89,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					return "net" + GetVersionString(version, withDots: false);
 
 				case ".NETCoreApp":
+					if (version >= 500)
+						return "net" + GetVersionString(version, withDots: true);
 					return "netcoreapp" + GetVersionString(version, withDots: true);
 
 				case ".NETStandard":
