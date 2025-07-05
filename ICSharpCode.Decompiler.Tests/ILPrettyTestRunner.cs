@@ -226,6 +226,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task Issue3504()
+		{
+			await Run();
+		}
+
+		[Test]
 		public async Task Issue2260SwitchString()
 		{
 			await Run();
