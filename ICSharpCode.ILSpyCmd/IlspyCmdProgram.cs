@@ -113,6 +113,9 @@ Examples:
 		[Option("--no-dead-stores", "Remove dead stores.", CommandOptionType.NoValue)]
 		public bool RemoveDeadStores { get; }
 
+		[Option("--sort-attributes", "Sort custom attributes.", CommandOptionType.NoValue)]
+		public bool SortCustomAttributes { get; }
+
 		[Option("-d|--dump-package", "Dump package assemblies into a folder. This requires the output directory option.", CommandOptionType.NoValue)]
 		public bool DumpPackageFlag { get; }
 
@@ -331,6 +334,7 @@ Examples:
 				RemoveDeadStores = RemoveDeadStores,
 				UseSdkStyleProjectFormat = WholeProjectDecompiler.CanUseSdkStyleProjectFormat(module),
 				UseNestedDirectoriesForNamespaces = NestedDirectories,
+				SortCustomAttributes = SortCustomAttributes
 			};
 		}
 
