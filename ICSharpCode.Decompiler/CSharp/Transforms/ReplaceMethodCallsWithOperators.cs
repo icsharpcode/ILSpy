@@ -57,8 +57,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var arguments = invocationExpression.Arguments.ToArray();
 
 			// Reduce "String.Concat(a, b)" to "a + b"
-			if (IsStringConcat(method) && context.Settings.StringConcat && CheckArgumentsForStringConcat(arguments))
+			if (IsStringConcat(method) && context.Settings.StringConcat)
 			{
+				if (arguments is [ArrayCreateExpression ace] && method.Parameters is [{ Type: ArrayType }])
+				{
+					arguments = ace.Initializer.Elements.ToArray();
+				}
+
+				if (!CheckArgumentsForStringConcat(arguments))
+				{
+					return;
+				}
+
 				bool isInExpressionTree = invocationExpression.Ancestors.OfType<LambdaExpression>().Any(
 					lambda => lambda.Annotation<IL.ILFunction>()?.Kind == IL.ILFunctionKind.ExpressionTree);
 				Expression arg0 = arguments[0].Detach();

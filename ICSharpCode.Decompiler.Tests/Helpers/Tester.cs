@@ -99,15 +99,16 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		static readonly string roslynLatestVersion;
 		static readonly RoslynToolset roslynToolset;
 		static readonly VsWhereToolset vswhereToolset;
+		internal static readonly RefAssembliesToolset RefAssembliesToolset;
 
 		static Tester()
 		{
 			TesterPath = Path.GetDirectoryName(typeof(Tester).Assembly.Location);
 			TestCasePath = Path.Combine(TesterPath, "../../../../TestCases");
 #if DEBUG
-			testRunnerBasePath = Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/bin/Debug/net8.0");
+			testRunnerBasePath = Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/bin/Debug/net10.0");
 #else
-			testRunnerBasePath = Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/bin/Release/net8.0");
+			testRunnerBasePath = Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/bin/Release/net10.0");
 #endif
 			// To parse: <Project><ItemGroup><PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0-3.final" />
 			packagesPropsFile = Path.Combine(TesterPath, "../../../../../Directory.Packages.props");
@@ -120,6 +121,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			roslynToolset = new RoslynToolset();
 			vswhereToolset = new VsWhereToolset();
+			RefAssembliesToolset = new RefAssembliesToolset();
 		}
 
 		internal static async Task Initialize()
@@ -130,6 +132,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			await roslynToolset.Fetch(roslynLatestVersion).ConfigureAwait(false);
 
 			await vswhereToolset.Fetch().ConfigureAwait(false);
+			await RefAssembliesToolset.Fetch("5.0.0", sourcePath: "ref/net5.0").ConfigureAwait(false);
+			await RefAssembliesToolset.Fetch("10.0.0-preview.4.25258.110", sourcePath: "ref/net10.0").ConfigureAwait(false);
+
 
 #if DEBUG
 			await BuildTestRunner("win-x86", "Debug").ConfigureAwait(false);
@@ -276,19 +281,40 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return Regex.Replace(il, @"'<PrivateImplementationDetails>\{[0-9A-F-]+\}'", "'<PrivateImplementationDetails>'");
 		}
 
-		static readonly string coreRefAsmPath = new DotNetCorePathFinder(TargetFrameworkIdentifier.NET,
-			new Version(8, 0), "Microsoft.NETCore.App")
-				.GetReferenceAssemblyPath(".NETCoreApp,Version=v8.0");
-
-		public static readonly string RefAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
-			@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2");
-
 		static readonly string[] defaultReferences = new[] {
 			"System.dll",
 			"System.Core.dll",
+			"System.Runtime.dll",
 			"System.Xml.dll",
 			"Microsoft.CSharp.dll"
 		};
+
+		static readonly string[] core220DefaultReferences = new[]
+			{
+				"netstandard.dll",
+				"mscorlib.dll",
+				"System.dll",
+				"System.Collections.dll",
+				"System.Console.dll",
+				"System.Core.dll",
+				"System.Linq.dll",
+				"System.Linq.Expressions.dll",
+				"System.Linq.Queryable.dll",
+				"System.IO.FileSystem.Watcher.dll",
+				"System.Memory.dll",
+				"System.Private.CoreLib.dll",
+				"System.Private.Xml.dll",
+				"System.Threading.dll",
+				"System.Threading.Thread.dll",
+				"System.Runtime.dll",
+				"System.Runtime.Extensions.dll",
+				"System.Runtime.InteropServices.dll",
+				"System.Xml.dll",
+				"System.Xml.ReaderWriter.dll",
+				"System.ValueTuple.dll",
+				"Microsoft.CSharp.dll",
+				"Microsoft.VisualBasic.dll",
+			};
 
 		static readonly string[] coreDefaultReferences = new[]
 			{
@@ -314,19 +340,21 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				"Microsoft.VisualBasic.dll",
 			};
 
-		const string targetFrameworkAttributeSnippet = @"
+		static readonly Dictionary<string, Lazy<string>> targetFrameworkAttributeSnippetFiles = new() {
+			{ ".NETCoreApp,Version=v10.0", new Lazy<string>(() => GetTargetFrameworkAttributeSnippetFile(".NETCoreApp,Version=v10.0")) },
+			{ ".NETCoreApp,Version=v5.0", new Lazy<string>(() => GetTargetFrameworkAttributeSnippetFile(".NETCoreApp,Version=v5.0")) },
+			{ ".NETCoreApp,Version=v2.2", new Lazy<string>(() => GetTargetFrameworkAttributeSnippetFile(".NETCoreApp,Version=v2.2")) },
+		};
 
-[assembly: System.Runtime.Versioning.TargetFramework("".NETCoreApp,Version=v8.0"", FrameworkDisplayName = """")]
-
-";
-
-		static readonly Lazy<string> targetFrameworkAttributeSnippetFile = new Lazy<string>(GetTargetFrameworkAttributeSnippetFile);
-
-		static string GetTargetFrameworkAttributeSnippetFile()
+		static string GetTargetFrameworkAttributeSnippetFile(string targetFrameworkMoniker)
 		{
 			// Note: this leaks a temporary file, we're not attempting to delete it, because it is only one.
 			var tempFile = Path.GetTempFileName();
-			File.WriteAllText(tempFile, targetFrameworkAttributeSnippet);
+			File.WriteAllText(tempFile, $@"
+
+[assembly: System.Runtime.Versioning.TargetFramework(""{targetFrameworkMoniker}"")]
+
+");
 			return tempFile;
 		}
 
@@ -389,9 +417,6 @@ namespace System.Runtime.CompilerServices
 				if (!flags.HasFlag(CompilerOptions.TargetNet40))
 				{
 					preprocessorSymbols.Add("NETCORE");
-					preprocessorSymbols.Add("NET60");
-					preprocessorSymbols.Add("NET70");
-					preprocessorSymbols.Add("NET80");
 				}
 				preprocessorSymbols.Add("ROSLYN");
 				preprocessorSymbols.Add("CS60");
@@ -411,6 +436,10 @@ namespace System.Runtime.CompilerServices
 				if (flags.HasFlag(CompilerOptions.UseRoslyn3_11_0)
 					|| flags.HasFlag(CompilerOptions.UseRoslynLatest))
 				{
+					if (!flags.HasFlag(CompilerOptions.TargetNet40))
+					{
+						preprocessorSymbols.Add("NET50");
+					}
 					preprocessorSymbols.Add("ROSLYN3");
 					preprocessorSymbols.Add("CS80");
 					preprocessorSymbols.Add("CS90");
@@ -418,10 +447,19 @@ namespace System.Runtime.CompilerServices
 				}
 				if (flags.HasFlag(CompilerOptions.UseRoslynLatest))
 				{
+					if (!flags.HasFlag(CompilerOptions.TargetNet40))
+					{
+						preprocessorSymbols.Add("NET60");
+						preprocessorSymbols.Add("NET70");
+						preprocessorSymbols.Add("NET80");
+						preprocessorSymbols.Add("NET90");
+						preprocessorSymbols.Add("NET100");
+					}
 					preprocessorSymbols.Add("ROSLYN4");
 					preprocessorSymbols.Add("CS100");
 					preprocessorSymbols.Add("CS110");
 					preprocessorSymbols.Add("CS120");
+					preprocessorSymbols.Add("CS130");
 				}
 			}
 			else if ((flags & CompilerOptions.UseMcsMask) != 0)
@@ -453,10 +491,6 @@ namespace System.Runtime.CompilerServices
 			}
 			bool targetNet40 = (flags & CompilerOptions.TargetNet40) != 0;
 			bool useRoslyn = (flags & CompilerOptions.UseRoslynMask) != 0;
-			if (useRoslyn && !targetNet40)
-			{
-				sourceFileNames.Add(targetFrameworkAttributeSnippetFile.Value);
-			}
 
 			if (targetNet40)
 			{
@@ -470,36 +504,58 @@ namespace System.Runtime.CompilerServices
 				CompilerResults results = new CompilerResults();
 				results.PathToAssembly = outputFileName;
 
-				var (roslynVersion, languageVersion) = (flags & CompilerOptions.UseRoslynMask) switch {
-					0 => ("legacy", "5"),
-					CompilerOptions.UseRoslyn1_3_2 => ("1.3.2", "6"),
-					CompilerOptions.UseRoslyn2_10_0 => ("2.10.0", "latest"),
-					CompilerOptions.UseRoslyn3_11_0 => ("3.11.0", "latest"),
-					_ => (roslynLatestVersion, flags.HasFlag(CompilerOptions.Preview) ? "preview" : "latest")
+				var (roslynVersion, languageVersion, targetFramework) = (flags & CompilerOptions.UseRoslynMask) switch {
+					0 => ("legacy", "5", null),
+					CompilerOptions.UseRoslyn1_3_2 => ("1.3.2", "6", null),
+					CompilerOptions.UseRoslyn2_10_0 => ("2.10.0", "latest", targetNet40 ? null : ".NETCoreApp,Version=v2.2"),
+					CompilerOptions.UseRoslyn3_11_0 => ("3.11.0", "latest", targetNet40 ? null : ".NETCoreApp,Version=v5.0"),
+					_ => (roslynLatestVersion, flags.HasFlag(CompilerOptions.Preview) ? "preview" : "latest", targetNet40 ? null : ".NETCoreApp,Version=v10.0")
 				};
 
 				var cscPath = roslynToolset.GetCSharpCompiler(roslynVersion);
 
-				string libPath;
+				string libPath, refAsmPath;
 				IEnumerable<string> references;
-				if (useRoslyn && !targetNet40)
+				if (useRoslyn && targetFramework != null)
 				{
-					libPath = "\"" + coreRefAsmPath + "\"";
-					references = coreDefaultReferences.Select(r => "-r:\"" + Path.Combine(coreRefAsmPath, r) + "\"");
+					refAsmPath = RefAssembliesToolset.GetPath(targetFramework);
+					if (targetFramework == ".NETCoreApp,Version=v2.2")
+					{
+						references = core220DefaultReferences;
+						if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic))
+						{
+							references = references.Append("Microsoft.VisualBasic.dll");
+						}
+					}
+					else
+					{
+						references = coreDefaultReferences;
+						if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic))
+						{
+							references = references.Append("Microsoft.VisualBasic.dll");
+							references = references.Append("Microsoft.VisualBasic.Core.dll");
+						}
+					}
+					libPath = "\"" + refAsmPath + "\"";
+					sourceFileNames.Add(targetFrameworkAttributeSnippetFiles[targetFramework].Value);
 				}
 				else
 				{
-					libPath = "\"" + RefAsmPath + "\",\"" + Path.Combine(RefAsmPath, "Facades") + "\"";
-					references = defaultReferences.Select(r => "-r:\"" + Path.Combine(RefAsmPath, r) + "\"");
-				}
-				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic))
-				{
-					references = references.Concat(new[] { "-r:\"Microsoft.VisualBasic.dll\"" });
+					refAsmPath = RefAssembliesToolset.GetPath("legacy");
+					libPath = "\"" + refAsmPath + "\"";
+					references = defaultReferences;
+					if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic))
+					{
+						references = references.Append("Microsoft.VisualBasic.dll");
+					}
 				}
 				if (useRoslyn && !targetNet40 && flags.HasFlag(CompilerOptions.ReferenceUnsafe))
 				{
-					references = references.Concat(new[] { "-r:\"System.Runtime.CompilerServices.Unsafe.dll\"" });
+					references = references.Append("System.Runtime.CompilerServices.Unsafe.dll");
 				}
+
+				references = references.Select(r => "-r:\"" + Path.Combine(refAsmPath, r) + "\"");
+
 				string otherOptions = $"-nologo -noconfig " +
 					$"-langversion:{languageVersion} " +
 					$"-unsafe -o{(flags.HasFlag(CompilerOptions.Optimize) ? "+ " : "- ")}";
@@ -650,7 +706,7 @@ namespace System.Runtime.CompilerServices
 					CompilerOptions.UseRoslyn1_3_2 => CSharp.LanguageVersion.CSharp6,
 					CompilerOptions.UseRoslyn2_10_0 => CSharp.LanguageVersion.CSharp7_3,
 					CompilerOptions.UseRoslyn3_11_0 => CSharp.LanguageVersion.CSharp9_0,
-					_ => cscOptions.HasFlag(CompilerOptions.Preview) ? CSharp.LanguageVersion.Latest : CSharp.LanguageVersion.CSharp12_0,
+					_ => cscOptions.HasFlag(CompilerOptions.Preview) ? CSharp.LanguageVersion.Latest : CSharp.LanguageVersion.CSharp13_0,
 				};
 				DecompilerSettings settings = new(langVersion) {
 					// Never use file-scoped namespaces
@@ -685,7 +741,7 @@ namespace System.Runtime.CompilerServices
 			}
 
 			var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(assemblyName),
-				syntaxTrees, coreDefaultReferences.Select(r => MetadataReference.CreateFromFile(Path.Combine(coreRefAsmPath, r))),
+				syntaxTrees, coreDefaultReferences.Select(r => MetadataReference.CreateFromFile(Path.Combine(RefAssembliesToolset.GetPath(".NETCoreApp,Version=v10.0"), r))),
 				new CSharpCompilationOptions(
 					OutputKind.DynamicallyLinkedLibrary,
 					platform: Platform.AnyCpu,
@@ -767,7 +823,7 @@ namespace System.Runtime.CompilerServices
 				string targetFramework = module.Metadata.DetectTargetFrameworkId();
 				var resolver = new UniversalAssemblyResolver(assemblyFileName, false,
 					targetFramework, null, PEStreamOptions.PrefetchMetadata);
-				resolver.AddSearchDirectory(targetFramework.Contains(".NETFramework") ? RefAsmPath : coreRefAsmPath);
+				resolver.AddSearchDirectory(RefAssembliesToolset.GetPath(targetFramework));
 				var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
 				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings);
 				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAttributes());

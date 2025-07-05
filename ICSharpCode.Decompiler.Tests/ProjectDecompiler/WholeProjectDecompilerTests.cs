@@ -85,13 +85,19 @@ public sealed class WholeProjectDecompilerTests
 		protected override TextWriter CreateFile(string path)
 		{
 			StringWriter writer = new();
-			Files[path] = writer;
+			lock (Files)
+			{
+				Files[path] = writer;
+			}
 			return writer;
 		}
 
 		protected override void CreateDirectory(string path)
 		{
-			Directories.Add(path);
+			lock (Directories)
+			{
+				Directories.Add(path);
+			}
 		}
 
 		protected override IEnumerable<ProjectItemInfo> WriteMiscellaneousFilesInProject(PEFile module) => [];

@@ -87,6 +87,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		// Parameter attributes:
 		ParamArray,
+		ParamCollection,
 		In,
 		Out,
 		Optional,
@@ -112,11 +113,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		// C# 11 attributes:
 		RequiredAttribute,
+
+		// C# 12 attributes:
+		InlineArray,
 	}
 
 	public static class KnownAttributes
 	{
-		internal const int Count = (int)KnownAttribute.RequiredAttribute + 1;
+		internal const int Count = (int)KnownAttribute.InlineArray + 1;
 
 		static readonly TopLevelTypeName[] typeNames = new TopLevelTypeName[Count]{
 			default,
@@ -166,6 +170,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(IndexerNameAttribute)),
 			// Parameter attributes:
 			new TopLevelTypeName("System", nameof(ParamArrayAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", "ParamCollectionAttribute"),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(InAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(OutAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(OptionalAttribute)),
@@ -186,6 +191,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System.Runtime.CompilerServices", "PreserveBaseOverridesAttribute"),
 			// C# 11 attributes:
 			new TopLevelTypeName("System.Runtime.CompilerServices", "RequiredMemberAttribute"),
+			// C# 12 attributes:
+			new TopLevelTypeName("System.Runtime.CompilerServices", "InlineArrayAttribute"),
 		};
 
 		public static ref readonly TopLevelTypeName GetTypeName(this KnownAttribute attr)

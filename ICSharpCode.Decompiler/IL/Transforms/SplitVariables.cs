@@ -151,11 +151,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			IType returnType = (call is NewObj) ? call.Method.DeclaringType : call.Method.ReturnType;
 			if (returnType.IsByRefLike)
 			{
-				// If the address is returned from the method, it check whether it's consumed immediately.
-				// This can still be fine, as long as we also check the consumer's other arguments for 'stloc targetVar'.
-				if (DetermineAddressUse(call, targetVar) != AddressUse.Immediate)
-					return AddressUse.Unknown;
+				// We exclude Span<T>.Item[int index] and ReadOnlySpan<T>.Item[int index], because it is known that this
+				// or members of this cannot be returned by the method.
+				if (!IsSpanOfTIndexerAccessor(call.Method))
+				{
+					// If the address is returned from the method, it check whether it's consumed immediately.
+					// This can still be fine, as long as we also check the consumer's other arguments for 'stloc targetVar'.
+					if (DetermineAddressUse(call, targetVar) != AddressUse.Immediate)
+						return AddressUse.Unknown;
+				}
 			}
+
 			foreach (var p in call.Method.Parameters)
 			{
 				// catch "out Span<int>" and similar
@@ -172,6 +178,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			return AddressUse.Immediate;
+		}
+
+		static bool IsSpanOfTIndexerAccessor(IMethod method)
+		{
+			var declaringType = method.DeclaringType;
+			if (!declaringType.IsKnownType(KnownTypeCode.SpanOfT)
+				&& !declaringType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
+				return false;
+			return method.AccessorOwner is IProperty { IsIndexer: true, Name: "Item", Parameters: [var param], ReturnType: ByReferenceType { ElementType: var rt } }
+				&& param.Type.IsKnownType(KnownTypeCode.Int32) && rt.Equals(declaringType.TypeArguments[0]);
 		}
 
 		/// <summary>

@@ -142,7 +142,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (c != Conversion.None)
 					return c;
 			}
-			if (resolveResult is InterpolatedStringResolveResult isrr)
+			if (resolveResult is InterpolatedStringResolveResult)
 			{
 				if (toType.IsKnownType(KnownTypeCode.IFormattable) || toType.IsKnownType(KnownTypeCode.FormattableString))
 					return Conversion.ImplicitInterpolatedStringConversion;
@@ -230,12 +230,20 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (c != Conversion.None)
 					return c;
 			}
+			if ((toType.IsKnownType(KnownTypeCode.SpanOfT) || toType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
+				&& fromType.IsInlineArrayType())
+			{
+				var elementType = fromType.GetInlineArrayElementType();
+				var spanElementType = toType.TypeArguments[0];
+				if (IdentityConversion(elementType, spanElementType))
+					return Conversion.InlineArrayConversion;
+			}
 			return Conversion.None;
 		}
 
 		/// <summary>
 		/// Gets whether the type 'fromType' is convertible to 'toType'
-		/// using one of the conversions allowed when satisying constraints (§4.4.4)
+		/// using one of the conversions allowed when satisfying constraints (§4.4.4)
 		/// </summary>
 		public bool IsConstraintConvertible(IType fromType, IType toType)
 		{
@@ -771,7 +779,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			// C# 4.0 spec: §6.1.7
 			fromType = NullableType.GetUnderlyingType(fromType);
-			if (fromType.IsReferenceType == false && toType.IsReferenceType == true)
+			if (fromType.IsReferenceType == false && !fromType.IsByRefLike && toType.IsReferenceType == true)
 				return IsSubtypeOf(fromType, toType, 0);
 			else
 				return false;

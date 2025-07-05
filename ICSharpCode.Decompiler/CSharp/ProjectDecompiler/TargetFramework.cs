@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 	/// <summary>
 	/// A class describing the target framework of a module.
 	/// </summary>
-	sealed class TargetFramework
+	public class TargetFramework
 	{
 		const string DotNetPortableIdentifier = ".NETPortable";
 
@@ -89,6 +89,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					return "net" + GetVersionString(version, withDots: false);
 
 				case ".NETCoreApp":
+					if (version >= 500)
+						return "net" + GetVersionString(version, withDots: true);
 					return "netcoreapp" + GetVersionString(version, withDots: true);
 
 				case ".NETStandard":

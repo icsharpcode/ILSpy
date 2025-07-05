@@ -463,6 +463,42 @@ namespace ICSharpCode.Decompiler.CSharp
 				return HandleImplicitConversion(method, argumentList.Arguments[0]);
 			}
 
+			if (settings.InlineArrays
+				&& method is { DeclaringType.FullName: "<PrivateImplementationDetails>", Name: "InlineArrayAsSpan" or "InlineArrayAsReadOnlySpan" }
+				&& argumentList.Length == 2)
+			{
+				argumentList.CheckNoNamedOrOptionalArguments();
+				var arrayType = method.TypeArguments[0];
+				var arrayLength = arrayType.GetInlineArrayLength();
+				var arrayElementType = arrayType.GetInlineArrayElementType();
+				var argument = argumentList.Arguments[0];
+				var spanLengthExpr = argumentList.Arguments[1];
+				var targetType = method.ReturnType;
+				var spanType = typeSystem.FindType(KnownTypeCode.SpanOfT);
+				if (argument.Expression is DirectionExpression { FieldDirection: FieldDirection.In or FieldDirection.Ref, Expression: var lvalueExpr })
+				{
+					// `(TargetType)(in arg)` is invalid syntax.
+					// Also, `f(in arg)` is invalid when there's an implicit conversion involved.
+					argument = argument.UnwrapChild(lvalueExpr);
+				}
+				if (spanLengthExpr.ResolveResult.ConstantValue is int spanLength && spanLength <= arrayLength)
+				{
+					if (spanLength < arrayLength)
+					{
+						argument = new IndexerExpression(argument.Expression, new BinaryOperatorExpression {
+							Operator = BinaryOperatorType.Range,
+							Right = spanLengthExpr.Expression
+						}).WithRR(new ResolveResult(new ParameterizedType(spanType, arrayElementType))).WithoutILInstruction();
+						if (targetType.IsKnownType(KnownTypeCode.SpanOfT))
+						{
+							return argument;
+						}
+					}
+					return new CastExpression(expressionBuilder.ConvertType(targetType), argument.Expression)
+					.WithRR(new ConversionResolveResult(targetType, argument.ResolveResult, Conversion.InlineArrayConversion));
+				}
+			}
+
 			if (settings.LiftNullables && method.Name == "GetValueOrDefault"
 				&& method.DeclaringType.IsKnownType(KnownTypeCode.NullableOfT)
 				&& method.DeclaringType.TypeArguments[0].IsKnownType(KnownTypeCode.Boolean)
@@ -990,25 +1026,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		private bool TransformParamsArgument(ExpectedTargetDetails expectedTargetDetails, ResolveResult targetResolveResult,
-			IMethod method, IParameter parameter, TranslatedExpression arg, ref List<IParameter> expectedParameters,
+			IMethod method, IParameter parameter, TranslatedExpression paramsArgument, ref List<IParameter> expectedParameters,
 			ref List<TranslatedExpression> arguments)
 		{
-			if (CheckArgument(out int length, out IType elementType))
+			var expressionBuilder = this.expressionBuilder;
+			if (ExtractArguments(out IType elementType, out var expandedParameters, out var expandedArguments))
 			{
-				var expandedParameters = new List<IParameter>(expectedParameters);
-				var expandedArguments = new List<TranslatedExpression>(arguments);
-				if (length > 0)
-				{
-					var arrayElements = ((ArrayCreateExpression)arg.Expression).Initializer.Elements.ToArray();
-					for (int j = 0; j < length; j++)
-					{
-						expandedParameters.Add(new DefaultParameter(elementType, parameter.Name + j));
-						if (j < arrayElements.Length)
-							expandedArguments.Add(new TranslatedExpression(arrayElements[j]));
-						else
-							expandedArguments.Add(expressionBuilder.GetDefaultValueExpression(elementType).WithoutILInstruction());
-					}
-				}
+				expandedParameters.InsertRange(0, expectedParameters);
+				expandedArguments.InsertRange(0, arguments);
 				if (IsUnambiguousCall(expectedTargetDetails, method, targetResolveResult, Empty<IType>.Array,
 					expandedArguments.SelectArray(a => a.ResolveResult), argumentNames: null,
 					firstOptionalArgumentIndex: -1, out _,
@@ -1021,30 +1046,52 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return false;
 
-			bool CheckArgument(out int len, out IType t)
+			bool ExtractArguments(out IType elementType, out List<IParameter> parameters, out List<TranslatedExpression> arguments)
 			{
-				len = 0;
-				t = null;
-				if (arg.ResolveResult is CSharpInvocationResolveResult csirr &&
-					csirr.Arguments.Count == 0 && csirr.Member is IMethod emptyMethod &&
-					emptyMethod.IsStatic &&
-					"System.Array.Empty" == emptyMethod.FullName &&
-					emptyMethod.TypeArguments.Count == 1)
+				elementType = null;
+				parameters = null;
+				arguments = null;
+				switch (paramsArgument.ResolveResult)
 				{
-					t = emptyMethod.TypeArguments[0];
-					return true;
+					case CSharpInvocationResolveResult { Member: IMethod method, Arguments: var args }:
+						// match System.Array.Empty<T>()
+						if (args is [] && method is { IsStatic: true, FullName: "System.Array.Empty", TypeArguments: [var type] })
+						{
+							elementType = type;
+							arguments = new();
+							parameters = new();
+							return true;
+						}
+						// match System.ReadOnlySpan<T>..ctor(ref readonly T)
+						if (paramsArgument.Expression is ObjectCreateExpression oce
+							&& method is {
+								IsConstructor: true,
+								Parameters: [{ ReferenceKind: ReferenceKind.RefReadOnly, Type: ByReferenceType { ElementType: var paramType } }],
+								DeclaringType: { TypeArguments: [var type2] } declaringType
+							}
+							&& declaringType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT)
+							&& paramType.Equals(type2))
+						{
+							elementType = type2;
+							arguments = new() { new TranslatedExpression(oce.Arguments.Single()) };
+							parameters = new() { new DefaultParameter(type2, string.Empty) };
+							return true;
+						}
+						return false;
+					case ArrayCreateResolveResult { Type: ArrayType { ElementType: var type3 }, SizeArguments: [{ ConstantValue: int arrayLength }] }:
+						elementType = type3;
+						arguments = new(((ArrayCreateExpression)paramsArgument.Expression).Initializer.Elements.Select(e => new TranslatedExpression(e)));
+						parameters = new List<IParameter>(arrayLength);
+						for (int i = 0; i < arrayLength; i++)
+						{
+							parameters.Add(new DefaultParameter(type3, string.Empty));
+							if (arguments.Count <= i)
+								arguments.Add(new TranslatedExpression(expressionBuilder.GetDefaultValueExpression(type3).WithoutILInstruction()));
+						}
+						return true;
+					default:
+						return false;
 				}
-
-				if (arg.ResolveResult is ArrayCreateResolveResult acrr &&
-					acrr.SizeArguments.Count == 1 &&
-					acrr.SizeArguments[0].IsCompileTimeConstant &&
-					acrr.SizeArguments[0].ConstantValue is int l)
-				{
-					len = l;
-					t = ((ArrayType)acrr.Type).ElementType;
-					return true;
-				}
-				return false;
 			}
 		}
 

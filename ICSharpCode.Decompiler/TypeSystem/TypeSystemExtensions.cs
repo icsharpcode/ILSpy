@@ -306,6 +306,49 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
+		public static bool IsArrayInterfaceType(this IType type)
+		{
+			if (type == null || type.TypeParameterCount != 1)
+				return false;
+			switch (type.GetDefinition()?.KnownTypeCode)
+			{
+				case KnownTypeCode.IEnumerableOfT:
+				case KnownTypeCode.ICollectionOfT:
+				case KnownTypeCode.IListOfT:
+				case KnownTypeCode.IReadOnlyCollectionOfT:
+				case KnownTypeCode.IReadOnlyListOfT:
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		public static bool IsInlineArrayType(this IType type)
+		{
+			if (type.Kind != TypeKind.Struct)
+				return false;
+			var td = type.GetDefinition();
+			if (td == null)
+				return false;
+			return td.HasAttribute(KnownAttribute.InlineArray);
+		}
+
+		public static int? GetInlineArrayLength(this IType type)
+		{
+			if (type.Kind != TypeKind.Struct)
+				return null;
+			var td = type.GetDefinition();
+			if (td == null)
+				return null;
+			var attr = td.GetAttribute(KnownAttribute.InlineArray);
+			return attr?.FixedArguments.FirstOrDefault().Value as int?;
+		}
+
+		public static IType GetInlineArrayElementType(this IType arrayType)
+		{
+			return arrayType?.GetFields(f => !f.IsStatic).SingleOrDefault()?.Type ?? SpecialType.UnknownType;
+		}
+
 		/// <summary>
 		/// Gets whether the type is the specified known type.
 		/// For generic known types, this returns true for any parameterization of the type (and also for the definition itself).
