@@ -132,6 +132,12 @@ namespace ICSharpCode.Decompiler.Tests
 			});
 		}
 
+		[Test]
+		public async Task NoGenericTypeInstantiation([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1));
+		}
+
 		async Task RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
 			await Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CompilerOptions.Library, decompilerSettings);

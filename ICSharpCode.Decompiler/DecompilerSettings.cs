@@ -63,6 +63,7 @@ namespace ICSharpCode.Decompiler
 				liftNullables = false;
 				yieldReturn = false;
 				useImplicitMethodGroupConversion = false;
+				genericTypeInstantiation = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp3)
 			{
@@ -210,7 +211,7 @@ namespace ICSharpCode.Decompiler
 			if (anonymousTypes || objectCollectionInitializers || automaticProperties
 				|| queryExpressions || expressionTrees)
 				return CSharp.LanguageVersion.CSharp3;
-			if (anonymousMethods || liftNullables || yieldReturn || useImplicitMethodGroupConversion)
+			if (anonymousMethods || liftNullables || yieldReturn || useImplicitMethodGroupConversion || genericTypeInstantiation)
 				return CSharp.LanguageVersion.CSharp2;
 			return CSharp.LanguageVersion.CSharp1;
 		}
@@ -981,6 +982,26 @@ namespace ICSharpCode.Decompiler
 				if (useImplicitMethodGroupConversion != value)
 				{
 					useImplicitMethodGroupConversion = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool genericTypeInstantiation = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use generic type instantiation for generic types with <c>new()</c> constraint.
+		/// true: <c>T t = new T();</c>
+		/// false: <c>T t = Activator.CreateInstance&lt;T&gt;()</c>
+		/// </summary>
+		[Category("C# 2.0 / VS 2005")]
+		[Description("DecompilerSettings.GenericTypeInstantiation")]
+		public bool GenericTypeInstantiation {
+			get { return genericTypeInstantiation; }
+			set {
+				if (genericTypeInstantiation != value)
+				{
+					genericTypeInstantiation = value;
 					OnPropertyChanged();
 				}
 			}
