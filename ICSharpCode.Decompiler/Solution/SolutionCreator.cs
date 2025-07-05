@@ -29,10 +29,11 @@ namespace ICSharpCode.Decompiler.Solution
 	/// </summary>
 	public static class SolutionCreator
 	{
-		private static readonly XNamespace ProjectFileNamespace = XNamespace.Get("http://schemas.microsoft.com/developer/msbuild/2003");
+		static readonly XNamespace ProjectFileNamespace = XNamespace.Get("http://schemas.microsoft.com/developer/msbuild/2003");
 
 		/// <summary>
 		/// Writes a solution file to the specified <paramref name="targetFile"/>.
+		/// Also fixes intra-solution project references in the project files.
 		/// </summary>
 		/// <param name="targetFile">The full path of the file to write.</param>
 		/// <param name="projects">The projects contained in this solution.</param>
@@ -52,20 +53,22 @@ namespace ICSharpCode.Decompiler.Solution
 				throw new ArgumentNullException(nameof(projects));
 			}
 
-			if (!projects.Any())
+			var projectList = projects.ToList();
+
+			if (!projectList.Any())
 			{
 				throw new InvalidOperationException("At least one project is expected.");
 			}
 
 			using (var writer = new StreamWriter(targetFile))
 			{
-				WriteSolutionFile(writer, projects, targetFile);
+				WriteSolutionFile(writer, projectList, targetFile);
 			}
 
-			FixProjectReferences(projects);
+			FixProjectReferences(projectList);
 		}
 
-		private static void WriteSolutionFile(TextWriter writer, IEnumerable<ProjectItem> projects, string solutionFilePath)
+		static void WriteSolutionFile(TextWriter writer, List<ProjectItem> projects, string solutionFilePath)
 		{
 			WriteHeader(writer);
 			WriteProjects(writer, projects, solutionFilePath);
@@ -90,7 +93,7 @@ namespace ICSharpCode.Decompiler.Solution
 			writer.WriteLine("MinimumVisualStudioVersion = 10.0.40219.1");
 		}
 
-		private static void WriteProjects(TextWriter writer, IEnumerable<ProjectItem> projects, string solutionFilePath)
+		static void WriteProjects(TextWriter writer, List<ProjectItem> projects, string solutionFilePath)
 		{
 			foreach (var project in projects)
 			{
@@ -103,7 +106,7 @@ namespace ICSharpCode.Decompiler.Solution
 			}
 		}
 
-		private static IEnumerable<string> WriteSolutionConfigurations(TextWriter writer, IEnumerable<ProjectItem> projects)
+		static List<string> WriteSolutionConfigurations(TextWriter writer, List<ProjectItem> projects)
 		{
 			var platforms = projects.GroupBy(p => p.PlatformName).Select(g => g.Key).ToList();
 
@@ -125,10 +128,10 @@ namespace ICSharpCode.Decompiler.Solution
 			return platforms;
 		}
 
-		private static void WriteProjectConfigurations(
+		static void WriteProjectConfigurations(
 			TextWriter writer,
-			IEnumerable<ProjectItem> projects,
-			IEnumerable<string> solutionPlatforms)
+			List<ProjectItem> projects,
+			List<string> solutionPlatforms)
 		{
 			writer.WriteLine("\tGlobalSection(ProjectConfigurationPlatforms) = postSolution");
 
@@ -152,30 +155,47 @@ namespace ICSharpCode.Decompiler.Solution
 			writer.WriteLine("\tEndGlobalSection");
 		}
 
-		private static void FixProjectReferences(IEnumerable<ProjectItem> projects)
+		static void FixProjectReferences(List<ProjectItem> projects)
 		{
-			var projectsMap = projects.ToDictionary(p => p.ProjectName, p => p);
+			var projectsMap = projects.ToDictionary(
+				p => p.ProjectName,
+				p => p);
 
 			foreach (var project in projects)
 			{
 				XDocument projectDoc = XDocument.Load(project.FilePath);
 
+				if (projectDoc.Root?.Name.LocalName != "Project")
+				{
+					throw new InvalidOperationException(
+						$"The file {project.FilePath} is not a valid project file, " +
+						$"no <Project> at the root; could not fix project references.");
+				}
+
+				var sdkStyle = projectDoc.Root.Attribute("Sdk") != null;
+				var itemGroupTagName = sdkStyle ? "ItemGroup" : ProjectFileNamespace + "ItemGroup";
+				var referenceTagName = sdkStyle ? "Reference" : ProjectFileNamespace + "Reference";
+
 				var referencesItemGroups = projectDoc.Root
-					.Elements(ProjectFileNamespace + "ItemGroup")
-					.Where(e => e.Elements(ProjectFileNamespace + "Reference").Any());
+					.Elements(itemGroupTagName)
+					.Where(e => e.Elements(referenceTagName).Any())
+					.ToList();
 
 				foreach (var itemGroup in referencesItemGroups)
 				{
-					FixProjectReferences(project.FilePath, itemGroup, projectsMap);
+					FixProjectReferences(project.FilePath, itemGroup, projectsMap, sdkStyle);
 				}
 
 				projectDoc.Save(project.FilePath);
 			}
 		}
 
-		private static void FixProjectReferences(string projectFilePath, XElement itemGroup, IDictionary<string, ProjectItem> projects)
+		static void FixProjectReferences(string projectFilePath, XElement itemGroup,
+			Dictionary<string, ProjectItem> projects, bool sdkStyle)
 		{
-			foreach (var item in itemGroup.Elements(ProjectFileNamespace + "Reference").ToList())
+			var referenceTagName = sdkStyle ? "Reference" : ProjectFileNamespace + "Reference";
+
+			foreach (var item in itemGroup.Elements(referenceTagName).ToList())
 			{
 				var assemblyName = item.Attribute("Include")?.Value;
 				if (assemblyName != null && projects.TryGetValue(assemblyName, out var referencedProject))
@@ -183,7 +203,7 @@ namespace ICSharpCode.Decompiler.Solution
 					item.Remove();
 
 					var projectReference = new XElement(ProjectFileNamespace + "ProjectReference",
-						new XElement(ProjectFileNamespace + "Project", referencedProject.Guid.ToString("B").ToUpperInvariant()),
+						new XElement(ProjectFileNamespace + "Project", referencedProject.Guid.ToString("B").ToLowerInvariant()),
 						new XElement(ProjectFileNamespace + "Name", referencedProject.ProjectName));
 					projectReference.SetAttributeValue("Include", GetRelativePath(projectFilePath, referencedProject.FilePath));
 
@@ -192,7 +212,7 @@ namespace ICSharpCode.Decompiler.Solution
 			}
 		}
 
-		private static string GetRelativePath(string fromFilePath, string toFilePath)
+		static string GetRelativePath(string fromFilePath, string toFilePath)
 		{
 			Uri fromUri = new Uri(fromFilePath);
 			Uri toUri = new Uri(toFilePath);
