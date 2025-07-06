@@ -18,8 +18,7 @@
 
 using System;
 using System.Collections.Generic;
-
-using NaturalSort.Extension;
+using System.Globalization;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -28,6 +27,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class NaturalStringComparer
 	{
-		public static readonly IComparer<string> Instance = StringComparison.CurrentCultureIgnoreCase.WithNaturalSort();
+		public static readonly IComparer<string> Instance = StringComparer.Create(CultureInfo.CurrentCulture, CompareOptions.NumericOrdering);
 	}
 }

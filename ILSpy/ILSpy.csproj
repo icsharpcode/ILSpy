@@ -49,7 +49,6 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="DataGridExtensions" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" />
-    <PackageReference Include="NaturalSort.Extension" />
     <PackageReference Include="TomsToolbox.Composition.MicrosoftExtensions" />
     <PackageReference Include="TomsToolbox.Wpf.Composition.AttributedModel" />
     <PackageReference Include="TomsToolbox.Wpf.Styles" />
