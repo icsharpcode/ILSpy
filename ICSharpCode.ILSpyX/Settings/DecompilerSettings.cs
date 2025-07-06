@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2024 Tom Englert for the SharpDevelop Team
+﻿// Copyright (c) 2024 Tom Englert
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -17,13 +17,12 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
 
-#nullable enable
-
-namespace ICSharpCode.ILSpy.Options
+namespace ICSharpCode.ILSpyX.Settings
 {
 	public class DecompilerSettings : Decompiler.DecompilerSettings, ISettingsSection
 	{
@@ -58,6 +57,20 @@ namespace ICSharpCode.ILSpy.Options
 		public override DecompilerSettings Clone()
 		{
 			return (DecompilerSettings)base.Clone();
+		}
+
+		public static bool IsKnownOption(string name, [NotNullWhen(true)] out PropertyInfo? property)
+		{
+			property = null;
+			foreach (var item in properties)
+			{
+				if (item.Name != name)
+					continue;
+				property = item;
+				return true;
+			}
+
+			return false;
 		}
 	}
 }

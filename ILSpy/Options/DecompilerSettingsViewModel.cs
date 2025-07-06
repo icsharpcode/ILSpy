@@ -24,6 +24,7 @@ using System.Reflection;
 
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpyX.Settings;
 
 using TomsToolbox.Wpf;
 

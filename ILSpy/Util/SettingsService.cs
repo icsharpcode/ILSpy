@@ -16,71 +16,18 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Concurrent;
 using System.ComponentModel;
-using System.Xml.Linq;
 
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Settings;
 
-using DecompilerSettings = ICSharpCode.ILSpy.Options.DecompilerSettings;
+using DecompilerSettings = ICSharpCode.ILSpyX.Settings.DecompilerSettings;
 
 #nullable enable
 
 namespace ICSharpCode.ILSpy.Util
 {
-	public interface IChildSettings
-	{
-		ISettingsSection Parent { get; }
-	}
-
-	public interface ISettingsSection : INotifyPropertyChanged
-	{
-		XName SectionName { get; }
-
-		void LoadFromXml(XElement section);
-
-		XElement SaveToXml();
-	}
-
-	public abstract class SettingsServiceBase(ISettingsProvider spySettings)
-	{
-		protected readonly ConcurrentDictionary<Type, ISettingsSection> sections = new();
-
-		protected ISettingsProvider SpySettings { get; set; } = spySettings;
-
-		public T GetSettings<T>() where T : ISettingsSection, new()
-		{
-			return (T)sections.GetOrAdd(typeof(T), _ => {
-				T section = new T();
-
-				var sectionElement = SpySettings[section.SectionName];
-
-				section.LoadFromXml(sectionElement);
-				section.PropertyChanged += Section_PropertyChanged;
-
-				return section;
-			});
-		}
-
-		protected static void SaveSection(ISettingsSection section, XElement root)
-		{
-			var element = section.SaveToXml();
-
-			var existingElement = root.Element(section.SectionName);
-			if (existingElement != null)
-				existingElement.ReplaceWith(element);
-			else
-				root.Add(element);
-		}
-
-		protected virtual void Section_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-		{
-		}
-	}
-
 	public class SettingsSnapshot(SettingsService parent, ISettingsProvider spySettings) : SettingsServiceBase(spySettings)
 	{
 		public void Save()
@@ -173,7 +120,7 @@ namespace ICSharpCode.ILSpy.Util
 					SpySettings.Update(root => {
 						SaveSection(section, root);
 					});
-				};
+				}
 			}
 
 			if (sender is DecompilerSettings decompilerSettings && assemblyListManager != null)

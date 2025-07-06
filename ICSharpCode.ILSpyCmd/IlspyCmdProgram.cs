@@ -91,7 +91,7 @@ Examples:
 		public (bool IsSet, string Value) InputPDBFile { get; }
 
 		[Option("-l|--list <entity-type(s)>", "Lists all entities of the specified type(s). Valid types: c(lass), i(nterface), s(truct), d(elegate), e(num)", CommandOptionType.MultipleValue)]
-		public string[] EntityTypes { get; } = new string[0];
+		public string[] EntityTypes { get; } = Array.Empty<string>();
 
 		public string DecompilerVersion => "ilspycmd: " + typeof(ILSpyCmdProgram).Assembly.GetName().Version.ToString() +
 				Environment.NewLine
@@ -100,8 +100,15 @@ Examples:
 
 		[Option("-lv|--languageversion <version>", "C# Language version: CSharp1, CSharp2, CSharp3, " +
 			"CSharp4, CSharp5, CSharp6, CSharp7, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, " +
-			"CSharp10_0, Preview or Latest", CommandOptionType.SingleValue)]
+			"CSharp10_0, CSharp11_0, CSharp12_0, CSharp13_0, Preview or Latest", CommandOptionType.SingleValue)]
 		public LanguageVersion LanguageVersion { get; } = LanguageVersion.Latest;
+
+		[FileExists]
+		[Option("--ilspy-settingsfile <path>", "Path to an ILSpy settings file.", CommandOptionType.SingleValue)]
+		public string ILSpySettingsFile { get; }
+
+		[Option("-ds|--decompiler-setting <name>=<value>", "Set a decompiler setting. Use multiple times to set multiple settings.", CommandOptionType.MultipleValue)]
+		public string[] DecompilerSettingOverrides { get; set; } = Array.Empty<string>();
 
 		[DirectoryExists]
 		[Option("-r|--referencepath <path>", "Path to a directory containing dependencies of the assembly that is being decompiled.", CommandOptionType.MultipleValue)]
@@ -325,13 +332,76 @@ Examples:
 
 		DecompilerSettings GetSettings(PEFile module)
 		{
-			return new DecompilerSettings(LanguageVersion) {
-				ThrowOnAssemblyResolveErrors = false,
-				RemoveDeadCode = RemoveDeadCode,
-				RemoveDeadStores = RemoveDeadStores,
-				UseSdkStyleProjectFormat = WholeProjectDecompiler.CanUseSdkStyleProjectFormat(module),
-				UseNestedDirectoriesForNamespaces = NestedDirectories,
-			};
+			DecompilerSettings decompilerSettings = null;
+
+			if (ILSpySettingsFile != null)
+			{
+				try
+				{
+					ILSpyX.Settings.ILSpySettings.SettingsFilePathProvider = new ILSpyX.Settings.DefaultSettingsFilePathProvider(ILSpySettingsFile);
+					var settingsService = new ILSpyX.Settings.SettingsServiceBase(ILSpyX.Settings.ILSpySettings.Load());
+					decompilerSettings = settingsService.GetSettings<ILSpyX.Settings.DecompilerSettings>();
+				}
+				catch (Exception ex)
+				{
+					Console.Error.WriteLine($"Error loading ILSpy settings file '{ILSpySettingsFile}': {ex.Message}");
+				}
+			}
+
+			if (decompilerSettings == null)
+			{
+				decompilerSettings = new DecompilerSettings(LanguageVersion) {
+					ThrowOnAssemblyResolveErrors = false,
+					RemoveDeadCode = RemoveDeadCode,
+					RemoveDeadStores = RemoveDeadStores,
+					UseSdkStyleProjectFormat = WholeProjectDecompiler.CanUseSdkStyleProjectFormat(module),
+					UseNestedDirectoriesForNamespaces = NestedDirectories,
+				};
+			}
+
+			if (DecompilerSettingOverrides is { Length: > 0 })
+			{
+				foreach (var entry in DecompilerSettingOverrides)
+				{
+					int equals = entry.IndexOf('=');
+					if (equals <= 0)
+					{
+						Console.Error.WriteLine($"Decompiler setting '{entry}' is invalid; use '<Name>=<Value>'");
+						continue;
+					}
+
+					string name = entry[..equals].Trim();
+					string value = entry[(equals + 1)..].Trim();
+
+					if (!ILSpyX.Settings.DecompilerSettings.IsKnownOption(name, out var property))
+					{
+						Console.Error.WriteLine($"Decompiler setting '{name}' is unknown.");
+						continue;
+					}
+
+					object typedValue;
+
+					try
+					{
+						typedValue = Convert.ChangeType(value, property.PropertyType);
+					}
+					catch (Exception)
+					{
+						Console.Error.WriteLine($"Decompiler setting '{name}': Value '{value}' could not be converted to '{property.PropertyType.FullName}'.");
+						continue;
+					}
+
+					if (typedValue == null && property.PropertyType.IsValueType)
+					{
+						Console.Error.WriteLine($"Decompiler setting '{name}': Value '{value}' could not be converted to '{property.PropertyType.FullName}'.");
+						continue;
+					}
+
+					property.SetValue(decompilerSettings, typedValue);
+				}
+			}
+
+			return decompilerSettings;
 		}
 
 		CSharpDecompiler GetDecompiler(string assemblyFileName)
