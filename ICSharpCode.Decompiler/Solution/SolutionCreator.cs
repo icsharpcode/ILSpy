@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.Solution
 		/// <exception cref="ArgumentException">Thrown when <paramref name="targetFile"/> is null or empty.</exception>
 		/// <exception cref="ArgumentNullException">Thrown when <paramref name="projects"/> is null.</exception>
 		/// <exception cref="InvalidOperationException">Thrown when <paramref name="projects"/> contains no items.</exception>
-		public static void WriteSolutionFile(string targetFile, IEnumerable<ProjectItem> projects)
+		public static void WriteSolutionFile(string targetFile, List<ProjectItem> projects)
 		{
 			if (string.IsNullOrWhiteSpace(targetFile))
 			{
@@ -53,19 +53,17 @@ namespace ICSharpCode.Decompiler.Solution
 				throw new ArgumentNullException(nameof(projects));
 			}
 
-			var projectList = projects.ToList();
-
-			if (!projectList.Any())
+			if (!projects.Any())
 			{
 				throw new InvalidOperationException("At least one project is expected.");
 			}
 
 			using (var writer = new StreamWriter(targetFile))
 			{
-				WriteSolutionFile(writer, projectList, targetFile);
+				WriteSolutionFile(writer, projects, targetFile);
 			}
 
-			FixProjectReferences(projectList);
+			FixProjectReferences(projects);
 		}
 
 		static void WriteSolutionFile(TextWriter writer, List<ProjectItem> projects, string solutionFilePath)

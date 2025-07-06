@@ -153,8 +153,8 @@ namespace ICSharpCode.ILSpy
 				}
 				else
 				{
-					await Task.Run(() => SolutionCreator.WriteSolutionFile(solutionFilePath, projects))
-						.ConfigureAwait(false);
+					await Task.Run(() => SolutionCreator.WriteSolutionFile(solutionFilePath, projects.ToList()))
+							.ConfigureAwait(false);
 				}
 			}
 			catch (AggregateException ae)
