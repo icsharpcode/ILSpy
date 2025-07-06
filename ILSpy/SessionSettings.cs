@@ -30,6 +30,7 @@ using System.Xml.Linq;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpyX.Search;
+using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy
 {

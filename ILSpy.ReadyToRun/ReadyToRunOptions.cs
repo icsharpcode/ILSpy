@@ -18,7 +18,7 @@
 
 using System.Xml.Linq;
 
-using ICSharpCode.ILSpy.Util;
+using ICSharpCode.ILSpyX.Settings;
 
 using TomsToolbox.Wpf;
 

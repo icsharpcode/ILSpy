@@ -6,6 +6,7 @@ using System.Xml.Linq;
 
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.Util;
+using ICSharpCode.ILSpyX.Settings;
 
 using TomsToolbox.Wpf;
 using TomsToolbox.Wpf.Composition.AttributedModel;

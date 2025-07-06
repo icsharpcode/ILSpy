@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Xml.Linq;
 
 using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.Settings;
 
 using TomsToolbox.Wpf;
 

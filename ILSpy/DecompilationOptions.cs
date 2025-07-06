@@ -23,7 +23,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpyX;
 
-using DecompilerSettings = ICSharpCode.ILSpy.Options.DecompilerSettings;
+using DecompilerSettings = ICSharpCode.ILSpyX.Settings.DecompilerSettings;
 
 namespace ICSharpCode.ILSpy
 {
