@@ -193,7 +193,12 @@ namespace ICSharpCode.Decompiler.Solution
 		static void FixProjectReferences(string projectFilePath, XElement itemGroup,
 			Dictionary<string, ProjectItem> projects, bool sdkStyle)
 		{
-			var referenceTagName = sdkStyle ? "Reference" : ProjectFileNamespace + "Reference";
+			XName GetElementName(string localName) => sdkStyle ? localName : ProjectFileNamespace + localName;
+
+			var referenceTagName = GetElementName("Reference");
+			var projectReferenceTagName = GetElementName("ProjectReference");
+			var projectTagName = GetElementName("Project");
+			var nameTagName = GetElementName("Name");
 
 			foreach (var item in itemGroup.Elements(referenceTagName).ToList())
 			{
@@ -202,9 +207,9 @@ namespace ICSharpCode.Decompiler.Solution
 				{
 					item.Remove();
 
-					var projectReference = new XElement(ProjectFileNamespace + "ProjectReference",
-						new XElement(ProjectFileNamespace + "Project", referencedProject.Guid.ToString("B").ToLowerInvariant()),
-						new XElement(ProjectFileNamespace + "Name", referencedProject.ProjectName));
+					var projectReference = new XElement(projectReferenceTagName,
+						new XElement(projectTagName, referencedProject.Guid.ToString("B").ToLowerInvariant()),
+						new XElement(nameTagName, referencedProject.ProjectName));
 					projectReference.SetAttributeValue("Include", GetRelativePath(projectFilePath, referencedProject.FilePath));
 
 					itemGroup.Add(projectReference);
