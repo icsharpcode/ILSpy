@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
@@ -56,6 +57,20 @@ namespace ICSharpCode.ILSpyX.Settings
 		public override DecompilerSettings Clone()
 		{
 			return (DecompilerSettings)base.Clone();
+		}
+
+		public static bool IsKnownOption(string name, [NotNullWhen(true)] out PropertyInfo? property)
+		{
+			property = null;
+			foreach (var item in properties)
+			{
+				if (item.Name != name)
+					continue;
+				property = item;
+				return true;
+			}
+
+			return false;
 		}
 	}
 }
