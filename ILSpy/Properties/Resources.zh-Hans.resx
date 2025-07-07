@@ -582,6 +582,9 @@
   <data name="ExpandUsingDeclarationsAfterDecompilation" xml:space="preserve">
     <value>反编译后展开引用和声明</value>
   </data>
+  <data name="ExtractAllPackageEntries" xml:space="preserve">
+    <value>提取所有包条目</value>
+  </data>
   <data name="ExtractPackageEntry" xml:space="preserve">
     <value>提取包条目</value>
   </data>

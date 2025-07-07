@@ -624,6 +624,9 @@ Are you sure you want to continue?</value>
   <data name="ExpandUsingDeclarationsAfterDecompilation" xml:space="preserve">
     <value>Expand using declarations after decompilation</value>
   </data>
+  <data name="ExtractAllPackageEntries" xml:space="preserve">
+    <value>Extract all package entries</value>
+  </data>
   <data name="ExtractPackageEntry" xml:space="preserve">
     <value>Extract package entry</value>
   </data>

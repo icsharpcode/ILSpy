@@ -1820,11 +1820,20 @@ namespace ICSharpCode.ILSpy.Properties {
                 return ResourceManager.GetString("ExpandUsingDeclarationsAfterDecompilation", resourceCulture);
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Extract package entry.
-        /// </summary>
-        public static string ExtractPackageEntry {
+
+		/// <summary>
+		///   Looks up a localized string similar to Extract all package entries.
+		/// </summary>
+		public static string ExtractAllPackageEntries {
+			get {
+				return ResourceManager.GetString("ExtractAllPackageEntries", resourceCulture);
+			}
+		}
+
+		/// <summary>
+		///   Looks up a localized string similar to Extract package entry.
+		/// </summary>
+		public static string ExtractPackageEntry {
             get {
                 return ResourceManager.GetString("ExtractPackageEntry", resourceCulture);
             }
