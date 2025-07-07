@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Composition;
 using System.Diagnostics;
 using System.IO;
@@ -45,7 +46,7 @@ namespace ICSharpCode.ILSpy
 	{
 		public void Execute(TextViewContext context)
 		{
-			var selectedNodes = Array.FindAll(context.SelectedTreeNodes, x => x is AssemblyTreeNode { PackageEntry: { } } or PackageFolderTreeNode);
+			var selectedNodes = Array.FindAll(context.SelectedTreeNodes, IsBundleItem);
 			// Get root assembly to infer the initial directory for the save dialog.
 			var bundleNode = selectedNodes.FirstOrDefault()?.Ancestors().OfType<AssemblyTreeNode>()
 				.FirstOrDefault(asm => asm.PackageEntry == null);
@@ -57,21 +58,17 @@ namespace ICSharpCode.ILSpy
 				dlg.FileName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(assembly.Name));
 				dlg.Filter = ".NET assemblies|*.dll;*.exe;*.winmd" + Resources.AllFiles;
 				dlg.InitialDirectory = Path.GetDirectoryName(bundleNode.LoadedAssembly.FileName);
-				if (dlg.ShowDialog() != true)
-					return;
-
-				string fileName = dlg.FileName;
-				dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
-					AvalonEditTextOutput output = new AvalonEditTextOutput();
-					Stopwatch stopwatch = Stopwatch.StartNew();
-					SaveEntry(output, assembly, fileName);
-					stopwatch.Stop();
-					output.WriteLine(Resources.GenerationCompleteInSeconds, stopwatch.Elapsed.TotalSeconds.ToString("F1"));
-					output.WriteLine();
-					output.AddButton(null, Resources.OpenExplorer, delegate { Process.Start("explorer", "/select,\"" + fileName + "\""); });
-					output.WriteLine();
-					return output;
-				}, ct)).Then(dockWorkspace.ShowText).HandleExceptions();
+				if (dlg.ShowDialog() == true)
+					Save(dockWorkspace, selectedNodes, dlg.FileName, true);
+			}
+			else if (selectedNodes is [ResourceTreeNode { Resource: { } resource }])
+			{
+				SaveFileDialog dlg = new SaveFileDialog();
+				dlg.FileName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(resource.Name));
+				dlg.Filter = Resources.AllFiles[1..];
+				dlg.InitialDirectory = Path.GetDirectoryName(bundleNode.LoadedAssembly.FileName);
+				if (dlg.ShowDialog() == true)
+					Save(dockWorkspace, selectedNodes, dlg.FileName, true);
 			}
 			else
 			{
@@ -91,40 +88,7 @@ namespace ICSharpCode.ILSpy
 						return;
 				}
 
-				dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
-					AvalonEditTextOutput output = new AvalonEditTextOutput();
-					Stopwatch stopwatch = Stopwatch.StartNew();
-					foreach (var selectedNode in selectedNodes)
-					{
-						if (selectedNode is AssemblyTreeNode { PackageEntry: { } assembly })
-						{
-							string fileName = Path.Combine(folderName, GetFullPath(selectedNode.Parent) + WholeProjectDecompiler.SanitizeFileName(assembly.Name));
-							SaveEntry(output, assembly, fileName);
-						}
-						else if (selectedNode is PackageFolderTreeNode)
-						{
-							selectedNode.EnsureLazyChildren();
-							foreach (var node in selectedNode.DescendantsAndSelf())
-							{
-								if (node is AssemblyTreeNode { PackageEntry: { } asm })
-								{
-									string fileName = Path.Combine(folderName, GetFullPath(node.Parent) + WholeProjectDecompiler.SanitizeFileName(asm.Name));
-									SaveEntry(output, asm, fileName);
-								}
-								else if (node is PackageFolderTreeNode)
-								{
-									Directory.CreateDirectory(Path.Combine(folderName, GetFullPath(node)));
-								}
-							}
-						}
-					}
-					stopwatch.Stop();
-					output.WriteLine(Resources.GenerationCompleteInSeconds, stopwatch.Elapsed.TotalSeconds.ToString("F1"));
-					output.WriteLine();
-					output.AddButton(null, Resources.OpenExplorer, delegate { Process.Start("explorer", "\"" + folderName + "\""); });
-					output.WriteLine();
-					return output;
-				}, ct)).Then(dockWorkspace.ShowText).HandleExceptions();
+				Save(dockWorkspace, selectedNodes, folderName, false);
 			}
 		}
 
@@ -140,7 +104,55 @@ namespace ICSharpCode.ILSpy
 			return null;
 		}
 
-		void SaveEntry(ITextOutput output, PackageEntry entry, string targetFileName)
+		internal static void Save(DockWorkspace dockWorkspace, IEnumerable<SharpTreeNode> nodes, string path, bool isFile)
+		{
+			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
+				AvalonEditTextOutput output = new AvalonEditTextOutput();
+				Stopwatch stopwatch = Stopwatch.StartNew();
+				foreach (var node in nodes)
+				{
+					if (node is AssemblyTreeNode { PackageEntry: { } assembly })
+					{
+						string fileName = isFile ? path : Path.Combine(path, GetFullPath(node.Parent) + WholeProjectDecompiler.SanitizeFileName(assembly.Name));
+						SaveEntry(output, assembly, fileName);
+					}
+					else if (node is ResourceTreeNode { Resource: PackageEntry { } resource })
+					{
+						string fileName = isFile ? path : Path.Combine(path, GetFullPath(node.Parent) + WholeProjectDecompiler.SanitizeFileName(resource.Name));
+						SaveEntry(output, resource, fileName);
+					}
+					else if (node is PackageFolderTreeNode)
+					{
+						node.EnsureLazyChildren();
+						foreach (var item in node.DescendantsAndSelf())
+						{
+							if (item is AssemblyTreeNode { PackageEntry: { } asm })
+							{
+								string fileName = Path.Combine(path, GetFullPath(item.Parent) + WholeProjectDecompiler.SanitizeFileName(asm.Name));
+								SaveEntry(output, asm, fileName);
+							}
+							else if (item is ResourceTreeNode { Resource: PackageEntry { } entry })
+							{
+								string fileName = Path.Combine(path, GetFullPath(item.Parent) + WholeProjectDecompiler.SanitizeFileName(entry.Name));
+								SaveEntry(output, entry, fileName);
+							}
+							else if (item is PackageFolderTreeNode)
+							{
+								Directory.CreateDirectory(Path.Combine(path, GetFullPath(item)));
+							}
+						}
+					}
+				}
+				stopwatch.Stop();
+				output.WriteLine(Resources.GenerationCompleteInSeconds, stopwatch.Elapsed.TotalSeconds.ToString("F1"));
+				output.WriteLine();
+				output.AddButton(null, Resources.OpenExplorer, delegate { Process.Start("explorer", isFile ? $"/select,\"{path}\"" : $"\"{path}\""); });
+				output.WriteLine();
+				return output;
+			}, ct)).Then(dockWorkspace.ShowText).HandleExceptions();
+		}
+
+		static void SaveEntry(ITextOutput output, PackageEntry entry, string targetFileName)
 		{
 			output.Write(entry.Name + ": ");
 			using Stream stream = entry.TryOpenStream();
@@ -158,8 +170,16 @@ namespace ICSharpCode.ILSpy
 
 		public bool IsEnabled(TextViewContext context) => true;
 
-		public bool IsVisible(TextViewContext context) =>
-			context.SelectedTreeNodes?.Any(x => x is AssemblyTreeNode { PackageEntry: { } } or PackageFolderTreeNode) == true;
+		public bool IsVisible(TextViewContext context) => context.SelectedTreeNodes?.Any(IsBundleItem) == true;
+
+		static bool IsBundleItem(SharpTreeNode node)
+		{
+			if (node is AssemblyTreeNode { PackageEntry: { } } or PackageFolderTreeNode)
+				return true;
+			if (node is ResourceTreeNode { Resource: PackageEntry { } resource } && resource.FullName.StartsWith("bundle://"))
+				return true;
+			return false;
+		}
 	}
 
 	[ExportContextMenuEntry(Header = nameof(Resources.ExtractAllPackageEntries), Category = nameof(Resources.Save), Icon = "Images/Save")]
@@ -186,57 +206,8 @@ namespace ICSharpCode.ILSpy
 					return;
 			}
 
-			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
-				AvalonEditTextOutput output = new AvalonEditTextOutput();
-				Stopwatch stopwatch = Stopwatch.StartNew();
-				asm.EnsureLazyChildren();
-				foreach (var node in asm.Descendants())
-				{
-					if (node is AssemblyTreeNode { PackageEntry: { } assembly })
-					{
-						string fileName = Path.Combine(folderName, GetFullPath(node.Parent) + WholeProjectDecompiler.SanitizeFileName(assembly.Name));
-						SaveEntry(output, assembly, fileName);
-					}
-					else if (node is PackageFolderTreeNode)
-					{
-						Directory.CreateDirectory(Path.Combine(folderName, GetFullPath(node)));
-					}
-				}
-				stopwatch.Stop();
-				output.WriteLine(Resources.GenerationCompleteInSeconds, stopwatch.Elapsed.TotalSeconds.ToString("F1"));
-				output.WriteLine();
-				output.AddButton(null, Resources.OpenExplorer, delegate { Process.Start("explorer", "\"" + folderName + "\""); });
-				output.WriteLine();
-				return output;
-			}, ct)).Then(dockWorkspace.ShowText).HandleExceptions();
-		}
-
-		static string GetFullPath(SharpTreeNode node)
-		{
-			if (node is PackageFolderTreeNode)
-			{
-				string name = node.Text + "\\";
-				if (GetFullPath(node.Parent) is string parent)
-					return parent + "\\" + name;
-				return name;
-			}
-			return null;
-		}
-
-		void SaveEntry(ITextOutput output, PackageEntry entry, string targetFileName)
-		{
-			output.Write(entry.Name + ": ");
-			using Stream stream = entry.TryOpenStream();
-			if (stream == null)
-			{
-				output.WriteLine("Could not open stream!");
-				return;
-			}
-
-			stream.Position = 0;
-			using FileStream fileStream = new FileStream(targetFileName, FileMode.OpenOrCreate);
-			stream.CopyTo(fileStream);
-			output.WriteLine("Written to " + targetFileName);
+			asm.EnsureLazyChildren();
+			ExtractPackageEntryContextMenuEntry.Save(dockWorkspace, asm.Descendants(), folderName, false);
 		}
 
 		public bool IsEnabled(TextViewContext context) => true;
