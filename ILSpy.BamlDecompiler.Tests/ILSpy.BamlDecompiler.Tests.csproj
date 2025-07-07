@@ -12,9 +12,6 @@
     <RuntimeIdentifier Condition="$(IsWindowsARM64) == true">win-arm64</RuntimeIdentifier>
 
     <IsPackable>false</IsPackable>
-    
-    <EnableNUnitRunner>true</EnableNUnitRunner>
-    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <OutputType>Exe</OutputType>
 
     <EnableDefaultItems>false</EnableDefaultItems>

@@ -16,8 +16,6 @@
     
     <GenerateTestingPlatformEntryPoint>true</GenerateTestingPlatformEntryPoint>
     <StartupObject>ICSharpCode.Decompiler.Tests.MicrosoftTestingPlatformEntryPoint</StartupObject>
-    <EnableNUnitRunner>true</EnableNUnitRunner>
-    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <OutputType>Exe</OutputType>
 
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
