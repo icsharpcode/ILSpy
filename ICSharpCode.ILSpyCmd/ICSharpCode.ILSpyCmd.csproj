@@ -29,6 +29,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="AsContainer\**" />
+    <EmbeddedResource Remove="AsContainer\**" />
+    <None Remove="AsContainer\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
   
