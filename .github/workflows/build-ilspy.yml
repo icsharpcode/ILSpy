@@ -63,26 +63,20 @@ jobs:
       run: msbuild ILSpy.sln /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform /m
 
     - name: Execute unit tests
-      run: dotnet test --solution ilspy.sln --configuration ${{ matrix.configuration }} --no-build --report-trx --report-trx-filename test-results.trx
+      run: dotnet test --solution ilspy.sln --configuration ${{ matrix.configuration }} --no-build --report-trx --results-directory test-results/${{ matrix.configuration }}
 
     - name: Upload Test Logs
       uses: actions/upload-artifact@v4
       if: success() || failure()
       with:
         name: test-results-${{ matrix.configuration }}
-        path: |
-          ICSharpCode.Decompiler.Tests/bin/${{ matrix.configuration }}/net10.0-windows/win-x64/TestResults/*.trx
-          ILSpy.Tests/bin/${{ matrix.configuration }}/net10.0-windows/win-x64/TestResults/*.trx
-          ILSpy.BamlDecompiler.Tests/bin/${{ matrix.configuration }}/net10.0-windows/win-x64/TestResults/*.trx
+        path: 'test-results/${{ matrix.configuration }}/*.trx'
 
     - name: Create Test Report
       uses: icsharpcode/test-summary-action@dist
       if: always()
       with:
-        paths: |
-          ICSharpCode.Decompiler.Tests/bin/${{ matrix.configuration }}/net10.0-windows/win-x64/TestResults/*.trx
-          ILSpy.Tests/bin/${{ matrix.configuration }}/net10.0-windows/win-x64/TestResults/*.trx
-          ILSpy.BamlDecompiler.Tests/bin/${{ matrix.configuration }}/net10.0-windows/win-x64/TestResults/*.trx
+        paths: "test-results/${{ matrix.configuration }}/*.trx"
         folded: true
 
     - name: Format check

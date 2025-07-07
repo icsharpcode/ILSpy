@@ -21,3 +21,4 @@ ILSpy.Installer/wix/
 /ICSharpCode.Decompiler/Properties/DecompilerVersionInfo.cs
 */.vscode/
 DecompilerTests.config.json
+*.trx
