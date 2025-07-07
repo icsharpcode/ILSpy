@@ -2,9 +2,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <IsWindowsX64 Condition="$([MSBuild]::IsOsPlatform('Windows')) And $([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) == X64">true</IsWindowsX64>
+    <IsWindowsARM64 Condition="$([MSBuild]::IsOsPlatform('Windows')) And $([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) == ARM64">true</IsWindowsARM64>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
     <IsPackable>false</IsPackable>
-    
+    <RuntimeIdentifier Condition="$(IsWindowsX64) == true">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="$(IsWindowsARM64) == true">win-arm64</RuntimeIdentifier>
+
     <EnableNUnitRunner>true</EnableNUnitRunner>
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <OutputType>Exe</OutputType>

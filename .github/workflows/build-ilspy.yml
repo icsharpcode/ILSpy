@@ -72,7 +72,7 @@ jobs:
         name: test-results-${{ matrix.configuration }}
         path: |
           ICSharpCode.Decompiler.Tests/bin/${{ matrix.configuration }}/net10.0-windows/win-x64/TestResults/*.trx
-          ILSpy.Tests/bin/${{ matrix.configuration }}/net10.0-windows/TestResults/*.trx
+          ILSpy.Tests/bin/${{ matrix.configuration }}/net10.0-windows/win-x64/TestResults/*.trx
           ILSpy.BamlDecompiler.Tests/bin/${{ matrix.configuration }}/net10.0-windows/win-x64/TestResults/*.trx
 
     - name: Create Test Report
@@ -81,7 +81,7 @@ jobs:
       with:
         paths: |
           ICSharpCode.Decompiler.Tests/bin/${{ matrix.configuration }}/net10.0-windows/win-x64/TestResults/*.trx
-          ILSpy.Tests/bin/${{ matrix.configuration }}/net10.0-windows/TestResults/*.trx
+          ILSpy.Tests/bin/${{ matrix.configuration }}/net10.0-windows/win-x64/TestResults/*.trx
           ILSpy.BamlDecompiler.Tests/bin/${{ matrix.configuration }}/net10.0-windows/win-x64/TestResults/*.trx
         folded: true
 
