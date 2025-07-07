@@ -63,7 +63,7 @@ jobs:
       run: msbuild ILSpy.sln /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform /m
 
     - name: Execute unit tests
-      run: dotnet test --solution ilspy.sln --configuration Debug --no-build --report-trx --report-trx-filename test-results.trx
+      run: dotnet test --solution ilspy.sln --configuration ${{ matrix.configuration }} --no-build --report-trx --report-trx-filename test-results.trx
 
     - name: Upload Test Logs
       uses: actions/upload-artifact@v4
