@@ -843,12 +843,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool HandleRuntimeHelpersInitializeArray(Block body, int pos, ILVariable array, IType arrayType, int[] arrayLength, out ILInstruction[] values, out int foundPos)
 		{
+			values = null;
+			foundPos = -1;
 			if (MatchInitializeArrayCall(body.Instructions[pos], out var arrayInst, out var field) && arrayInst.MatchLdLoc(array))
 			{
 				if (field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
 				{
 					var valuesList = new List<ILInstruction>();
-					var initialValue = field.GetInitialValue(context.PEFile, context.TypeSystem);
+					BlobReader initialValue;
+					try
+					{
+						initialValue = field.GetInitialValue(context.PEFile, context.TypeSystem);
+					}
+					catch (BadImageFormatException ex)
+					{
+						array.Function.Warnings.Add($"IL_{body.Instructions[pos].ILRanges.FirstOrDefault().Start:x4}: {ex.Message}");
+						return false;
+					}
 					if (DecodeArrayInitializer(arrayType, initialValue, arrayLength, valuesList))
 					{
 						values = valuesList.ToArray();
@@ -857,8 +868,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 				}
 			}
-			values = null;
-			foundPos = -1;
 			return false;
 		}
 
