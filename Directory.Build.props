@@ -2,4 +2,8 @@
   <PropertyGroup>
     <WarningsAsErrors>IDE2000</WarningsAsErrors>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <EnableNUnitRunner>true</EnableNUnitRunner>
+  </PropertyGroup>
 </Project>
