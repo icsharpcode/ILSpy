@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy
 		/// <exception cref="ArgumentNullException">Thrown when <paramref name="textView"/>> or
 		/// <paramref name="assemblies"/> is null.</exception>
 		public static void CreateSolution(TabPageModel tabPage, DecompilerTextView textView, string solutionFilePath,
-			Language language, IEnumerable<LoadedAssembly> assemblies)
+			Language language, List<LoadedAssembly> assemblies)
 		{
 			if (textView == null)
 			{
@@ -77,7 +77,7 @@ namespace ICSharpCode.ILSpy
 
 			textView
 				.RunWithCancellation(ct => writer.CreateSolution(tabPage, assemblies, language, ct))
-				.Then(output => textView.ShowText(output))
+				.Then(textView.ShowText)
 				.HandleExceptions();
 		}
 
@@ -94,41 +94,29 @@ namespace ICSharpCode.ILSpy
 			projects = new ConcurrentBag<ProjectItem>();
 		}
 
-		async Task<AvalonEditTextOutput> CreateSolution(TabPageModel tabPage, IEnumerable<LoadedAssembly> assemblies, Language language, CancellationToken ct)
+		async Task<AvalonEditTextOutput> CreateSolution(TabPageModel tabPage, List<LoadedAssembly> allAssemblies, Language language, CancellationToken ct)
 		{
 			var result = new AvalonEditTextOutput();
 
-			var assembliesByShortName = assemblies.ToLookup(_ => _.ShortName);
+			var assembliesByShortName = allAssemblies.GroupBy(_ => _.ShortName).ToDictionary(_ => _.Key, _ => _.ToList());
 			bool first = true;
 			bool abort = false;
 
-			foreach (var item in assembliesByShortName)
+			foreach (var (shortName, assemblies) in assembliesByShortName)
 			{
-				var enumerator = item.GetEnumerator();
-				if (!enumerator.MoveNext())
+				if (assemblies.Count == 1)
+				{
 					continue;
-				var firstAssembly = enumerator.Current;
-				if (!enumerator.MoveNext())
-					continue;
+				}
+
 				if (first)
 				{
 					result.WriteLine("Duplicate assembly names selected, cannot generate a solution:");
 					abort = true;
+					first = false;
 				}
 
-				result.Write("- " + firstAssembly.Text + " conflicts with ");
-
-				first = true;
-				do
-				{
-					var asm = enumerator.Current;
-					if (!first)
-						result.Write(", ");
-					result.Write(asm.Text);
-					first = false;
-				} while (enumerator.MoveNext());
-				result.WriteLine();
-				first = false;
+				result.WriteLine("- " + assemblies[0].Text + " conflicts with " + string.Join(", ", assemblies.Skip(1)));
 			}
 
 			if (abort)
@@ -141,7 +129,7 @@ namespace ICSharpCode.ILSpy
 				// Explicitly create an enumerable partitioner here to avoid Parallel.ForEach's special cases for lists,
 				// as those seem to use static partitioning which is inefficient if assemblies take differently
 				// long to decompile.
-				await Task.Run(() => Parallel.ForEach(Partitioner.Create(assemblies),
+				await Task.Run(() => Parallel.ForEach(Partitioner.Create(allAssemblies),
 					new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct },
 					item => WriteProject(tabPage, item, language, solutionDirectory, ct)))
 					.ConfigureAwait(false);
@@ -153,8 +141,8 @@ namespace ICSharpCode.ILSpy
 				}
 				else
 				{
-					await Task.Run(() => SolutionCreator.WriteSolutionFile(solutionFilePath, projects))
-						.ConfigureAwait(false);
+					await Task.Run(() => SolutionCreator.WriteSolutionFile(solutionFilePath, projects.ToList()), ct)
+							.ConfigureAwait(false);
 				}
 			}
 			catch (AggregateException ae)
@@ -184,14 +172,14 @@ namespace ICSharpCode.ILSpy
 			if (statusOutput.Count == 0)
 			{
 				result.WriteLine("Successfully decompiled the following assemblies into Visual Studio projects:");
-				foreach (var item in assemblies.Select(n => n.Text.ToString()))
+				foreach (var n in allAssemblies)
 				{
-					result.WriteLine(item);
+					result.WriteLine(n.Text.ToString());
 				}
 
 				result.WriteLine();
 
-				if (assemblies.Count() == projects.Count)
+				if (allAssemblies.Count == projects.Count)
 				{
 					result.WriteLine("Created the Visual Studio Solution file.");
 				}

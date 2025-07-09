@@ -76,11 +76,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				targetFrameworkIdentifier = frameworkParts.FirstOrDefault(a => !a.StartsWith(VersionToken, StringComparison.OrdinalIgnoreCase) && !a.StartsWith(ProfileToken, StringComparison.OrdinalIgnoreCase));
 				string frameworkVersion = frameworkParts.FirstOrDefault(a => a.StartsWith(VersionToken, StringComparison.OrdinalIgnoreCase));
 
-				if (frameworkVersion != null)
+				if (frameworkVersion != null && Version.TryParse(frameworkVersion.Substring(VersionToken.Length).Replace("v", ""), out var version))
 				{
-					versionNumber = int.Parse(frameworkVersion.Substring(VersionToken.Length).Replace("v", "").Replace(".", ""));
-					if (versionNumber < 100)
-						versionNumber *= 10;
+					versionNumber = version.Major * 100 + version.Minor * 10;
+					if (version.Build > 0)
+						versionNumber += version.Build;
 				}
 
 				string frameworkProfile = frameworkParts.FirstOrDefault(a => a.StartsWith(ProfileToken, StringComparison.OrdinalIgnoreCase));
