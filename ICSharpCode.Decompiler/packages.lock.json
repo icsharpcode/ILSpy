@@ -4,9 +4,9 @@
     ".NETStandard,Version=v2.0": {
       "Microsoft.Sbom.Targets": {
         "type": "Direct",
-        "requested": "[3.1.0, )",
-        "resolved": "3.1.0",
-        "contentHash": "DIQsbVmWlIls255FP+20Lm5dhXiMXM/i4dWh+7Gnt0qnrTBNjR1nh1Ulm7JJVB2tTOI7DjIiDFBF2xn6FR9MJQ=="
+        "requested": "[4.0.3, )",
+        "resolved": "4.0.3",
+        "contentHash": "xwHbbj9gLj1HZzLVEM2UpQM7ZY7FkiEs/nRkt6G1H7mR/14aNhjsskRoI7K7CezHJA4cASsGxTvqorbUXTI1TQ=="
       },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",
