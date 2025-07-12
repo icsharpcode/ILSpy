@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.CodeDom.Compiler;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -130,6 +129,12 @@ namespace ICSharpCode.Decompiler.Tests
 			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp3) {
 				AggressiveScalarReplacementOfAggregates = true
 			});
+		}
+
+		[Test]
+		public async Task NoNewOfT([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1));
 		}
 
 		async Task RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)

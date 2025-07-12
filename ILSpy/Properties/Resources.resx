@@ -525,6 +525,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.UseNonTrailingNamedArguments" xml:space="preserve">
     <value>Use non-trailing named arguments</value>
   </data>
+  <data name="DecompilerSettings.UseObjectCreationOfGenericTypeParameter" xml:space="preserve">
+    <value>Use new T() instead of Activator.CreateInstance&lt;T&gt;</value>
+  </data>
   <data name="DecompilerSettings.UseOutVariableDeclarations" xml:space="preserve">
     <value>Use out variable declarations</value>
   </data>

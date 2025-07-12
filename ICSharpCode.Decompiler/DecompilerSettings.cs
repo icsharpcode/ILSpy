@@ -63,6 +63,7 @@ namespace ICSharpCode.Decompiler
 				liftNullables = false;
 				yieldReturn = false;
 				useImplicitMethodGroupConversion = false;
+				useObjectCreationOfGenericTypeParameter = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp3)
 			{
@@ -210,7 +211,7 @@ namespace ICSharpCode.Decompiler
 			if (anonymousTypes || objectCollectionInitializers || automaticProperties
 				|| queryExpressions || expressionTrees)
 				return CSharp.LanguageVersion.CSharp3;
-			if (anonymousMethods || liftNullables || yieldReturn || useImplicitMethodGroupConversion)
+			if (anonymousMethods || liftNullables || yieldReturn || useImplicitMethodGroupConversion || useObjectCreationOfGenericTypeParameter)
 				return CSharp.LanguageVersion.CSharp2;
 			return CSharp.LanguageVersion.CSharp1;
 		}
@@ -981,6 +982,26 @@ namespace ICSharpCode.Decompiler
 				if (useImplicitMethodGroupConversion != value)
 				{
 					useImplicitMethodGroupConversion = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool useObjectCreationOfGenericTypeParameter = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use object creation expressions for generic types with <c>new()</c> constraint.
+		/// true: <c>T t = new T();</c>
+		/// false: <c>T t = Activator.CreateInstance&lt;T&gt;()</c>
+		/// </summary>
+		[Category("C# 2.0 / VS 2005")]
+		[Description("DecompilerSettings.UseObjectCreationOfGenericTypeParameter")]
+		public bool UseObjectCreationOfGenericTypeParameter {
+			get { return useObjectCreationOfGenericTypeParameter; }
+			set {
+				if (useObjectCreationOfGenericTypeParameter != value)
+				{
+					useObjectCreationOfGenericTypeParameter = value;
 					OnPropertyChanged();
 				}
 			}

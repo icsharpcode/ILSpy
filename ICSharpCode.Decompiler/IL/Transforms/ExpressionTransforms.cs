@@ -532,7 +532,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			inst.Condition.AcceptVisitor(this);
 
 			if (new NullableLiftingTransform(context).Run(inst))
+			{
+				context.Step("NullableLiftingTransform", inst);
 				return;
+			}
 
 			if (TransformDynamicAddAssignOrRemoveAssign(inst))
 				return;

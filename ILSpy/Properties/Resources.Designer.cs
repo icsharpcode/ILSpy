@@ -1515,6 +1515,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use new T() instead of Activator.CreateInstance&lt;T&gt;.
+        /// </summary>
+        public static string DecompilerSettings_UseObjectCreationOfGenericTypeParameter {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.UseObjectCreationOfGenericTypeParameter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use out variable declarations.
         /// </summary>
         public static string DecompilerSettings_UseOutVariableDeclarations {

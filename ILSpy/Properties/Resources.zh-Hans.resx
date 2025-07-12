@@ -492,6 +492,9 @@
   <data name="DecompilerSettings.UseNonTrailingNamedArguments" xml:space="preserve">
     <value>使用非尾随命名参数</value>
   </data>
+  <data name="DecompilerSettings.UseObjectCreationOfGenericTypeParameter" xml:space="preserve">
+    <value />
+  </data>
   <data name="DecompilerSettings.UseOutVariableDeclarations" xml:space="preserve">
     <value>使用 out 变量声明</value>
   </data>
