@@ -138,7 +138,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				break;
 				*/
 				case "System.Activator.CreateInstance":
-					if (context.Settings.GenericTypeInstantiation &&
+					if (context.Settings.UseObjectCreationOfGenericTypeParameter &&
 						arguments.Length == 0 &&
 						method.TypeArguments.Count == 1 &&
 						IsInstantiableTypeParameter(method.TypeArguments[0]))

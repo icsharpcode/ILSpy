@@ -76,6 +76,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					instType = defaultVal.Type;
 					break;
 				case Call c when c.Method.FullNameIs("System.Activator", "CreateInstance") && c.Method.TypeArguments.Count == 1:
+					if (!context.Settings.UseObjectCreationOfGenericTypeParameter)
+					{
+						return;
+					}
 					instType = c.Method.TypeArguments[0];
 					blockKind = BlockKind.ObjectInitializer;
 					break;
