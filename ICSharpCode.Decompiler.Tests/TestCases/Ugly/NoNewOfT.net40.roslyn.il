@@ -9,7 +9,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly tmphku2gd
+.assembly tmpyccvci
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -23,8 +23,8 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module tmphku2gd.tmp
-// MVID: {1307db53-f6c4-45d3-a995-8cb116ea8821}
+.module tmpyccvci.tmp
+// MVID: {ff6a33b6-7f19-447b-b168-f5c528dc4b6f}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .custom instance void System.Runtime.CompilerServices.RefSafetyRulesAttribute::.ctor(int32) = ( 01 00 0B 00 00 00 00 00 ) 
 .imagebase 0x10000000
@@ -134,7 +134,7 @@
 
 } // end of class System.Runtime.CompilerServices.RequiredMemberAttribute
 
-.class private auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Ugly.NoGenericTypeInstantiation`1<.ctor TOnType>
+.class private auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Ugly.NoNewOfT`1<.ctor TOnType>
        extends [mscorlib]System.Object
 {
   .method public hidebysig static !TOnType 
@@ -150,14 +150,13 @@
 
     IL_0009:  ldloc.0
     IL_000a:  ret
-  } // end of method NoGenericTypeInstantiation`1::CreateTOnType
+  } // end of method NoNewOfT`1::CreateTOnType
 
-  .method public hidebysig static !!TOnMethod 
-          CreateTOnMethod<.ctor TOnMethod>() cil managed
+  .method public hidebysig static !!T  CreateUnconstrainedT<.ctor T>() cil managed
   {
     // Code size       11 (0xb)
     .maxstack  1
-    .locals init (!!TOnMethod V_0)
+    .locals init (!!T V_0)
     IL_0000:  nop
     IL_0001:  call       !!0 [mscorlib]System.Activator::CreateInstance<!!0>()
     IL_0006:  stloc.0
@@ -165,7 +164,63 @@
 
     IL_0009:  ldloc.0
     IL_000a:  ret
-  } // end of method NoGenericTypeInstantiation`1::CreateTOnMethod
+  } // end of method NoNewOfT`1::CreateUnconstrainedT
+
+  .method public hidebysig static !!T  CreateClassT<class .ctor T>() cil managed
+  {
+    // Code size       11 (0xb)
+    .maxstack  1
+    .locals init (!!T V_0)
+    IL_0000:  nop
+    IL_0001:  call       !!0 [mscorlib]System.Activator::CreateInstance<!!0>()
+    IL_0006:  stloc.0
+    IL_0007:  br.s       IL_0009
+
+    IL_0009:  ldloc.0
+    IL_000a:  ret
+  } // end of method NoNewOfT`1::CreateClassT
+
+  .method public hidebysig static !!T  CollectionInitializer<.ctor (class [mscorlib]System.Collections.Generic.IList`1<int32>) T>() cil managed
+  {
+    // Code size       88 (0x58)
+    .maxstack  2
+    .locals init (!!T V_0,
+             !!T V_1)
+    IL_0000:  nop
+    IL_0001:  call       !!0 [mscorlib]System.Activator::CreateInstance<!!0>()
+    IL_0006:  stloc.0
+    IL_0007:  ldloca.s   V_0
+    IL_0009:  ldc.i4.1
+    IL_000a:  constrained. !!T
+    IL_0010:  callvirt   instance void class [mscorlib]System.Collections.Generic.ICollection`1<int32>::Add(!0)
+    IL_0015:  nop
+    IL_0016:  ldloca.s   V_0
+    IL_0018:  ldc.i4.2
+    IL_0019:  constrained. !!T
+    IL_001f:  callvirt   instance void class [mscorlib]System.Collections.Generic.ICollection`1<int32>::Add(!0)
+    IL_0024:  nop
+    IL_0025:  ldloca.s   V_0
+    IL_0027:  ldc.i4.3
+    IL_0028:  constrained. !!T
+    IL_002e:  callvirt   instance void class [mscorlib]System.Collections.Generic.ICollection`1<int32>::Add(!0)
+    IL_0033:  nop
+    IL_0034:  ldloca.s   V_0
+    IL_0036:  ldc.i4.4
+    IL_0037:  constrained. !!T
+    IL_003d:  callvirt   instance void class [mscorlib]System.Collections.Generic.ICollection`1<int32>::Add(!0)
+    IL_0042:  nop
+    IL_0043:  ldloca.s   V_0
+    IL_0045:  ldc.i4.5
+    IL_0046:  constrained. !!T
+    IL_004c:  callvirt   instance void class [mscorlib]System.Collections.Generic.ICollection`1<int32>::Add(!0)
+    IL_0051:  nop
+    IL_0052:  ldloc.0
+    IL_0053:  stloc.1
+    IL_0054:  br.s       IL_0056
+
+    IL_0056:  ldloc.1
+    IL_0057:  ret
+  } // end of method NoNewOfT`1::CollectionInitializer
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
@@ -176,9 +231,9 @@
     IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
     IL_0006:  nop
     IL_0007:  ret
-  } // end of method NoGenericTypeInstantiation`1::.ctor
+  } // end of method NoNewOfT`1::.ctor
 
-} // end of class ICSharpCode.Decompiler.Tests.TestCases.Ugly.NoGenericTypeInstantiation`1
+} // end of class ICSharpCode.Decompiler.Tests.TestCases.Ugly.NoNewOfT`1
 
 
 // =============================================================
