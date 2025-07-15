@@ -19,13 +19,13 @@
     <PackageVersion Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta2-22171-02" />
     <PackageVersion Include="Microsoft.DiaSymReader" Version="1.4.0" />
     <PackageVersion Include="Microsoft.DiaSymReader.Native" Version="17.0.0-beta1.21524.1" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.0-preview.5.25277.114" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0-preview.5.25277.114" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0-preview.5.25277.114" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.0-preview.5.25277.114" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.0-preview.6.25358.103" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0-preview.6.25358.103" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0-preview.6.25358.103" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.0-preview.6.25358.103" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-    <PackageVersion Include="Microsoft.NETCore.ILAsm" Version="10.0.0-preview.5.25277.114" />
-    <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="10.0.0-preview.5.25277.114" />
+    <PackageVersion Include="Microsoft.NETCore.ILAsm" Version="10.0.0-preview.6.25358.103" />
+    <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="10.0.0-preview.6.25358.103" />
     <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.0.3" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="1.7.3" />
@@ -38,11 +38,11 @@
     <PackageVersion Include="NuGet.Protocol" Version="6.14.0" />
     <PackageVersion Include="PowerShellStandard.Library" Version="5.1.1" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
-    <PackageVersion Include="System.Composition.AttributedModel" Version="10.0.0-preview.5.25277.114" />
-    <PackageVersion Include="System.Collections.Immutable" Version="10.0.0-preview.5.25277.114" />
+    <PackageVersion Include="System.Composition.AttributedModel" Version="10.0.0-preview.6.25358.103" />
+    <PackageVersion Include="System.Collections.Immutable" Version="10.0.0-preview.6.25358.103" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
-    <PackageVersion Include="System.Reflection.Metadata" Version="10.0.0-preview.5.25277.114" />
-    <PackageVersion Include="System.Resources.Extensions" Version="10.0.0-preview.5.25277.114" />
+    <PackageVersion Include="System.Reflection.Metadata" Version="10.0.0-preview.6.25358.103" />
+    <PackageVersion Include="System.Resources.Extensions" Version="10.0.0-preview.6.25358.103" />
     <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
     <PackageVersion Include="TomsToolbox.Composition.MicrosoftExtensions" Version="2.22.1" />
     <PackageVersion Include="TomsToolbox.Wpf.Composition" Version="2.22.0" />
