@@ -32,15 +32,15 @@
       },
       "System.Composition.AttributedModel": {
         "type": "Direct",
-        "requested": "[10.0.0-preview.5.25277.114, )",
-        "resolved": "10.0.0-preview.5.25277.114",
-        "contentHash": "2yMMBL85rczxt8FZLJEWdzpXMtWOAc1C3GoxQski51I3EU6uCGOGvt24PjLVFYx6wD/IGbAiiyT0mKkVCJuq4g=="
+        "requested": "[10.0.0-preview.6.25358.103, )",
+        "resolved": "10.0.0-preview.6.25358.103",
+        "contentHash": "PR03G/Tm4JC4lzzngX8gsfbdpQ4DrZiI38W5Q2HbKsyiKED998lYqiBZUcRriyMVenBw8TNSiGnNadai6+GHpA=="
       },
       "System.Reflection.Metadata": {
         "type": "Direct",
-        "requested": "[10.0.0-preview.5.25277.114, )",
-        "resolved": "10.0.0-preview.5.25277.114",
-        "contentHash": "DT2U4YTYhyTRsLrIR8ZISiD97g2xIihbRnPGQceiuWrHruf7sjKrwttIoCF3DlO1bMMCW60vJDMeDE5reil05g=="
+        "requested": "[10.0.0-preview.6.25358.103, )",
+        "resolved": "10.0.0-preview.6.25358.103",
+        "contentHash": "/87qwC+yDFe0/xG/7rmq/jmlmRCoV+wwC6s3ek8zDU5iEiKo0wliHnvCFzlMbyQtFiTGBvabvyPiGFiO/6ZXEg=="
       },
       "System.Runtime.CompilerServices.Unsafe": {
         "type": "Direct",
@@ -73,7 +73,7 @@
       },
       "System.Collections.Immutable": {
         "type": "CentralTransitive",
-        "requested": "[10.0.0-preview.5.25277.114, )",
+        "requested": "[10.0.0-preview.6.25358.103, )",
         "resolved": "6.0.0",
         "contentHash": "l4zZJ1WU2hqpQQHXz1rvC3etVZN+2DLmQMO79FhOTZHMn8tDRr+WU287sbomD0BETlmKDn0ygUgVy9k5xkkJdA==",
         "dependencies": {
