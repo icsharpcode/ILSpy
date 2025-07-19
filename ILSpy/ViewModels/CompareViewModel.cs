@@ -68,6 +68,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			this.root = new ComparisonEntryTreeNode(MergeTrees(leftTree.Item2, rightTree.Item2), this);
 
 			this.SwapAssembliesCommand = new DelegateCommand(OnSwapAssemblies);
+			this.ExpandAllCommand = new DelegateCommand(OnExpandAll);
 
 			this.PropertyChanged += CompareViewModel_PropertyChanged;
 		}
@@ -150,6 +151,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 		}
 
 		public ICommand SwapAssembliesCommand { get; set; }
+		public ICommand ExpandAllCommand { get; set; }
 
 		void OnSwapAssemblies()
 		{
@@ -158,6 +160,14 @@ namespace ICSharpCode.ILSpy.ViewModels
 			this.rightAssembly = left;
 			OnPropertyChanged(nameof(LeftAssembly));
 			OnPropertyChanged(nameof(RightAssembly));
+		}
+
+		public void OnExpandAll()
+		{
+			foreach (var node in RootEntry.DescendantsAndSelf())
+			{
+				node.IsExpanded = true;
+			}
 		}
 
 		Entry MergeTrees(Entry a, Entry b)

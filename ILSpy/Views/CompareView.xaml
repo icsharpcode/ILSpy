@@ -13,12 +13,9 @@
 			<RowDefinition Height="*" />
 		</Grid.RowDefinitions>
 		<ToolBar>
-			<Label Content="Left:" />
-			<TextBlock VerticalAlignment="Center" Text="{Binding LeftAssembly.Text}" />
-			<Label Content="Right:" />
-			<TextBlock VerticalAlignment="Center" Text="{Binding RightAssembly.Text}" />
 			<Button Content="Swap" Command="{Binding SwapAssembliesCommand}" />
 			<ToggleButton Content="Show identical" IsChecked="{Binding ShowIdentical}" />
+			<Button Content="Expand all" Command="{Binding ExpandAllCommand}" />
 		</ToolBar>
 		<stv:SharpTreeView Grid.Row="1" Root="{Binding RootEntry}" ShowRoot="True">
 			<stv:SharpTreeView.ItemContainerStyle>
