@@ -42,6 +42,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 	using ICSharpCode.ILSpy.Commands;
 	using ICSharpCode.ILSpy.TreeNodes;
 	using ICSharpCode.ILSpy.Views;
+	using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 	class CompareViewModel : ObservableObject
 	{
@@ -609,6 +610,12 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
+		}
+
+		public override void ActivateItem(IPlatformRoutedEventArgs e)
+		{
+			var node = AssemblyTreeModel.FindTreeNode(entry.Entity);
+			AssemblyTreeModel.SelectNode(node);
 		}
 
 		public override FilterResult Filter(LanguageSettings settings)
