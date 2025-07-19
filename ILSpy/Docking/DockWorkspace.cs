@@ -118,9 +118,11 @@ namespace ICSharpCode.ILSpy.Docking
 			}
 		}
 
-		public void AddTabPage(TabPageModel tabPage = null)
+		public TabPageModel AddTabPage(TabPageModel tabPage = null)
 		{
-			tabPages.Add(tabPage ?? exportProvider.GetExportedValue<TabPageModel>());
+			TabPageModel item = tabPage ?? exportProvider.GetExportedValue<TabPageModel>();
+			tabPages.Add(item);
+			return item;
 		}
 
 		public ReadOnlyObservableCollection<TabPageModel> TabPages { get; }

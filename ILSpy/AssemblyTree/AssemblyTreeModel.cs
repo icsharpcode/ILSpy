@@ -794,6 +794,11 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		{
 			var activeTabPage = DockWorkspace.ActiveTabPage;
 
+			if (activeTabPage.FrozenContent)
+			{
+				activeTabPage = DockWorkspace.AddTabPage();
+			}
+
 			activeTabPage.SupportsLanguageSwitching = true;
 
 			if (SelectedItems.Length == 1)

@@ -51,6 +51,13 @@ namespace ICSharpCode.ILSpy.ViewModels
 			set => SetProperty(ref supportsLanguageSwitching, value);
 		}
 
+		private bool frozenContent;
+
+		public bool FrozenContent {
+			get => frozenContent;
+			set => SetProperty(ref frozenContent, value);
+		}
+
 		private object? content;
 
 		public object? Content {
