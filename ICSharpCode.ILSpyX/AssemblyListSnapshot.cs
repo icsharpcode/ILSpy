@@ -186,7 +186,7 @@ namespace ICSharpCode.ILSpyX
 
 				foreach (var entry in folder.Entries)
 				{
-					if (!entry.Name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+					if (!entry.Name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) && !entry.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
 						continue;
 					var asm = folder.ResolveFileName(entry.Name);
 					if (asm == null)

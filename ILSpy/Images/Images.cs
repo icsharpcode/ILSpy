@@ -25,6 +25,8 @@ using System.Windows.Media.Imaging;
 
 namespace ICSharpCode.ILSpy
 {
+	using ICSharpCode.Decompiler.TypeSystem;
+
 	static class Images
 	{
 		private static readonly Rect iconRect = new Rect(0, 0, 16, 16);
@@ -210,6 +212,27 @@ namespace ICSharpCode.ILSpy
 		{
 			lock (memberIconCache)
 				return memberIconCache.GetIcon(icon, overlay, isStatic);
+		}
+
+		public static AccessOverlayIcon GetOverlayIcon(Accessibility accessibility)
+		{
+			switch (accessibility)
+			{
+				case Accessibility.Public:
+					return AccessOverlayIcon.Public;
+				case Accessibility.Internal:
+					return AccessOverlayIcon.Internal;
+				case Accessibility.ProtectedAndInternal:
+					return AccessOverlayIcon.PrivateProtected;
+				case Accessibility.Protected:
+					return AccessOverlayIcon.Protected;
+				case Accessibility.ProtectedOrInternal:
+					return AccessOverlayIcon.ProtectedInternal;
+				case Accessibility.Private:
+					return AccessOverlayIcon.Private;
+				default:
+					return AccessOverlayIcon.CompilerControlled;
+			}
 		}
 
 		private static ImageSource GetIcon(string baseImage, string overlay = null, bool isStatic = false)
