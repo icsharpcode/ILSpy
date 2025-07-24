@@ -5,17 +5,50 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:ICSharpCode.ILSpy.Views"
 			 xmlns:stv="clr-namespace:ICSharpCode.ILSpy.Controls.TreeView"
+			 xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
+             xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
+	<UserControl.Resources>
+		<!-- Make images transparent if menu command is disabled -->
+		<Style TargetType="{x:Type Image}">
+			<Style.Triggers>
+				<DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type ButtonBase}, AncestorLevel=1}, Path=IsEnabled}" Value="False">
+					<Setter Property="Opacity" Value="0.30" />
+				</DataTrigger>
+			</Style.Triggers>
+		</Style>
+		<Style TargetType="{x:Type Image}" x:Key="DarkModeAwareImageStyle">
+			<Setter Property="Effect" Value="{DynamicResource {x:Static themes:ResourceKeys.ThemeAwareButtonEffect}}" />
+			<Style.Triggers>
+				<DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type ButtonBase}, AncestorLevel=1}, Path=IsEnabled}" Value="False">
+					<Setter Property="Opacity" Value="0.30" />
+				</DataTrigger>
+			</Style.Triggers>
+		</Style>
+	</UserControl.Resources>
+	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
 			<RowDefinition Height="*" />
 		</Grid.RowDefinitions>
 		<ToolBar>
-			<Button Content="Swap" Command="{Binding SwapAssembliesCommand}" />
-			<ToggleButton Content="Show identical" IsChecked="{Binding ShowIdentical}" />
-			<Button Content="Expand all" Command="{Binding ExpandAllCommand}" />
+			<Button Command="{Binding SwapAssembliesCommand}" ToolTip="Swap left and right">
+				<Image Width="16" Height="16" Source="{controls:XamlResource Images/SwitchSourceOrTarget}"
+			       Style="{StaticResource DarkModeAwareImageStyle}" />
+			</Button>
+			<ToggleButton IsChecked="{Binding ShowIdentical}" ToolTip="Show identical entries">
+				<Image Width="16" Height="16" Source="{controls:XamlResource Images/DictionaryContain}"
+			       Style="{StaticResource DarkModeAwareImageStyle}" />
+			</ToggleButton>
+			<Button Command="{Binding ExpandAllCommand}" ToolTip="Expand all">
+				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ExpandAll}"
+			       Style="{StaticResource DarkModeAwareImageStyle}" />
+			</Button>
+			<Button Command="{Binding CopyToClipboardAsJSONCommand}" ToolTip="Copy to clipboard as JSON">
+				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ResultToJSON}"
+			       Style="{StaticResource DarkModeAwareImageStyle}" />
+			</Button>
 		</ToolBar>
 		<stv:SharpTreeView Grid.Row="1" Root="{Binding RootEntry}" ShowRoot="True">
 			<stv:SharpTreeView.ItemContainerStyle>

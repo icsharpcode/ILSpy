@@ -20,29 +20,30 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Reflection.Metadata;
+using System.Text.Json;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Media;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Views;
 using ICSharpCode.ILSpyX;
-
-using TomsToolbox.Wpf;
+using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 #nullable enable
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
-	using System.Linq;
-	using System.Threading.Tasks;
-	using System.Windows.Input;
-	using System.Windows.Media;
-
-	using ICSharpCode.Decompiler;
 	using ICSharpCode.Decompiler.TypeSystem;
-	using ICSharpCode.ILSpy.Commands;
-	using ICSharpCode.ILSpy.TreeNodes;
-	using ICSharpCode.ILSpy.Views;
-	using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
+
+	using TomsToolbox.Wpf;
 
 	class CompareViewModel : ObservableObject
 	{
@@ -70,6 +71,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 			this.SwapAssembliesCommand = new DelegateCommand(OnSwapAssemblies);
 			this.ExpandAllCommand = new DelegateCommand(OnExpandAll);
+			this.CopyToClipboardAsJSONCommand = new DelegateCommand(OnCopyToClipboardAsJSON);
 
 			this.PropertyChanged += CompareViewModel_PropertyChanged;
 		}
@@ -153,6 +155,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		public ICommand SwapAssembliesCommand { get; set; }
 		public ICommand ExpandAllCommand { get; set; }
+		public ICommand CopyToClipboardAsJSONCommand { get; set; }
 
 		void OnSwapAssemblies()
 		{
@@ -163,11 +166,82 @@ namespace ICSharpCode.ILSpy.ViewModels
 			OnPropertyChanged(nameof(RightAssembly));
 		}
 
-		public void OnExpandAll()
+		void OnExpandAll()
 		{
 			foreach (var node in RootEntry.DescendantsAndSelf())
 			{
 				node.IsExpanded = true;
+			}
+		}
+
+		void OnCopyToClipboardAsJSON()
+		{
+			var options = new JsonSerializerOptions {
+				WriteIndented = true
+			};
+
+			var jsonEntry = ConvertToJson(this.root.Entry);
+			var json = JsonSerializer.Serialize(jsonEntry, options);
+			Clipboard.SetText(json);
+		}
+
+		private object ConvertToJson(Entry entry)
+		{
+			List<Entry> changedTypes = new();
+			List<Entry> addedTypes = new();
+			List<Entry> removedTypes = new();
+
+			foreach (var item in TreeTraversal.PreOrder(entry, entry => entry.Children))
+			{
+				if (item.Entity is ITypeDefinition)
+				{
+					switch (item.RecursiveKind)
+					{
+						case DiffKind.Add:
+							addedTypes.Add(item);
+							break;
+						case DiffKind.Remove:
+							removedTypes.Add(item);
+							break;
+						case DiffKind.Update:
+							changedTypes.Add(item);
+							break;
+					}
+				}
+			}
+			var result = new {
+				left = LeftAssembly.FileName.Replace('\\', '/'),
+				right = RightAssembly.FileName.Replace('\\', '/'),
+				changedTypes = changedTypes.SelectArray(t => new { typeName = ((ITypeDefinition)t.Entity).FullName, changes = GetChanges(t.Children) }),
+				addedTypes = addedTypes.SelectArray(t => new { typeName = ((ITypeDefinition)t.Entity).FullName, changes = GetChanges(t.Children) }),
+				removedTypes = removedTypes.SelectArray(t => new { typeName = ((ITypeDefinition)t.Entity).FullName, changes = GetChanges(t.Children) })
+			};
+			return result;
+
+			string? GetEntityText(ISymbol? symbol) => symbol switch {
+				ITypeDefinition t => this.assemblyTreeModel.CurrentLanguage.TypeToString(t, includeNamespace: true),
+				IMethod m => this.assemblyTreeModel.CurrentLanguage.MethodToString(m, false, false, false),
+				IField f => this.assemblyTreeModel.CurrentLanguage.FieldToString(f, false, false, false),
+				IProperty p => this.assemblyTreeModel.CurrentLanguage.PropertyToString(p, false, false, false),
+				IEvent e => this.assemblyTreeModel.CurrentLanguage.EventToString(e, false, false, false),
+				INamespace n => n.FullName,
+				IModule m => m.FullAssemblyName,
+				_ => null,
+			};
+
+			IEnumerable<object> GetChanges(List<Entry>? entries)
+			{
+				if (entries == null)
+					yield break;
+				foreach (var item in entries)
+				{
+					if (item.Kind is not (DiffKind.Add or DiffKind.Remove or DiffKind.Update))
+						continue;
+					yield return new {
+						name = GetEntityText(item.Entity),
+						operation = item.Kind switch { DiffKind.Add => "added", DiffKind.Remove => "removed", DiffKind.Update => "changed" }
+					};
+				}
 			}
 		}
 
@@ -545,6 +619,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 	{
 		private readonly Entry entry;
 		private readonly CompareViewModel compareViewModel;
+
+		internal Entry Entry => entry;
 
 		public ComparisonEntryTreeNode(Entry entry, CompareViewModel compareViewModel)
 		{

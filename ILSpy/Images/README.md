@@ -15,9 +15,11 @@ Icons used in ILSpy:
 | Copy                      |  x  |  x   | VS 2017 Icon Pack (Copy)                                                        |         |
 | Delegate                  |  x  |  x   | VS 2017 Icon Pack (Delegate)                                                    |         |
 | Delete                    |  x  |  x   | VS 2017 Icon Pack (Remove_color)                                                |         |
+| DictionaryContain         |  x  |  x   | VS 2017 Icon Pack (DictionaryContain)                                           |         |
 | Enum                      |  x  |  x   | VS 2017 Icon Pack (Enumerator)                                                  |         |
 | EnumValue                 |  x  |  x   | VS 2017 Icon Pack (EnumItem)                                                    |         |
 | Event                     |  x  |  x   | VS 2017 Icon Pack (Event)                                                       |         |
+| ExpandAll                 |  x  |  x   | VS 2017 Icon Pack (ExpandAll)                                                   |         |
 | ExportOverlay             |  x  |  x   | slightly modified VS 2017 Icon Pack (Export)                                    |         |
 | ExtensionMethod           |  x  |  x   | VS 2017 Icon Pack (ExtensionMethod)                                             |         |
 | Field                     |  x  |  x   | VS 2017 Icon Pack (Field)                                                       |         |
@@ -62,6 +64,7 @@ Icons used in ILSpy:
 | ResourceXml               |  x  |  x   | VS 2017 Icon Pack (XMLFile)                                                     |         |
 | ResourceXsd               |  x  |  x   | combined VS 2017 Icon Pack (XMLSchema) with the file symbol in ResourceXslt     |         |
 | ResourceXsl               |  x  |  x   | VS 2017 Icon Pack (XMLTransformation)                                           |         |
+| ResultToJSON              |  x  |  x   | VS 2017 Icon Pack (ResultToJSON)                                                |         |
 | ResourceXslt              |  x  |  x   | VS 2017 Icon Pack (XSLTTemplate)                                                |         |
 | Save                      |  x  |  x   | VS 2017 Icon Pack (Save)                                                        |         |
 | Search                    |  x  |  x   | VS 2017 Icon Pack (Search)                                                      |         |
@@ -73,6 +76,7 @@ Icons used in ILSpy:
 | Struct                    |  x  |  x   | VS 2017 Icon Pack (Structure)                                                   |         |
 | SubTypes                  |  x  |  x   | based on VS 2017 Icon Pack (BaseType) rotated +90°                              |         |
 | SuperTypes                |  x  |  x   | based on VS 2017 Icon Pack (BaseType) rotated -90°                              |         |
+| SwitchSourceOrTarget      |  x  |  x   | VS 2017 Icon Pack (SwitchSourceOrTarget)                                        |         |
 | ViewCode                  |  x  |  x   | VS 2017 Icon Pack (GoToSourceCode)                                              |         |
 | VirtualMethod             |  x  |  x   | combined VS 2017 Icon Pack (Method) two times                                   |         |
 | Warning                   |  x  |  x   | VS 2017 Icon Pack (StatusWarning)                                               |         |
