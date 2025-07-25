@@ -8,18 +8,9 @@
     <LangVersion>12</LangVersion>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <RoslynVersion>4.8.0</RoslynVersion>
-  </PropertyGroup>
-
   <ItemGroup>
-    <ProjectReference Include="..\ICSharpCode.Decompiler.Generators.Attributes\ICSharpCode.Decompiler.Generators.Attributes.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.Common" VersionOverride="$(RoslynVersion)" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" VersionOverride="$(RoslynVersion)" />
-    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" VersionOverride="$(RoslynVersion)" />
+    <PackageReference Include="Microsoft.CodeAnalysis" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
   </ItemGroup>
 
 </Project>

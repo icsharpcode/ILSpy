@@ -28,7 +28,7 @@
     <GenerateAssemblyInformationalVersionAttribute>False</GenerateAssemblyInformationalVersionAttribute>
 
     <EnableDefaultItems>false</EnableDefaultItems>
-    <LangVersion>preview</LangVersion>
+    <LangVersion>13</LangVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
@@ -101,7 +101,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ICSharpCode.Decompiler.Generators\ICSharpCode.Decompiler.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\ICSharpCode.Decompiler.Generators.Attributes\ICSharpCode.Decompiler.Generators.Attributes.csproj" OutputItemType="Analyzer" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

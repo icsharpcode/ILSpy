@@ -2,8 +2,6 @@
 using System.Collections.Immutable;
 using System.Text;
 
-using ICSharpCode.Decompiler.CSharp.Syntax;
-
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -41,7 +39,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			{
 				if (m is not IPropertySymbol property || property.IsIndexer || property.IsOverride)
 					continue;
-				if (property.GetAttributes().Any(a => a.AttributeClass?.Name == nameof(ExcludeFromMatchAttribute)))
+				if (property.GetAttributes().Any(a => a.AttributeClass?.Name == "ExcludeFromMatchAttribute"))
 					continue;
 				if (property.Type.MetadataName is "CSharpTokenNode" or "TextLocation")
 					continue;
@@ -264,7 +262,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		context.AddSource(source.NodeName + ".g.cs", SourceText.From(builder.ToString(), Encoding.UTF8));
 	}
 
-	private void WriteVisitors(SourceProductionContext context, ImmutableArray<AstNodeAdditions> source)
+	void WriteVisitors(SourceProductionContext context, ImmutableArray<AstNodeAdditions> source)
 	{
 		var builder = new StringBuilder();
 
@@ -317,6 +315,34 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			GetAstNodeAdditions);
 
 		var visitorMembers = astNodeAdditions.Collect();
+
+		context
+			.RegisterPostInitializationOutput(i => i.AddSource("DecompilerSyntaxTreeGeneratorAttributes.g.cs", @"
+
+using System;
+
+namespace Microsoft.CodeAnalysis
+{
+    internal sealed partial class EmbeddedAttribute : global::System.Attribute
+    {
+    }
+}
+
+namespace ICSharpCode.Decompiler.CSharp.Syntax
+{
+	[global::Microsoft.CodeAnalysis.EmbeddedAttribute]
+	sealed class DecompilerAstNodeAttribute : global::System.Attribute
+	{
+		public DecompilerAstNodeAttribute(bool hasNullNode = false, bool hasPatternPlaceholder = false) { }
+	}
+
+	[global::Microsoft.CodeAnalysis.EmbeddedAttribute]
+	sealed class ExcludeFromMatchAttribute : global::System.Attribute
+	{
+	}
+}
+
+"));
 
 		context.RegisterSourceOutput(astNodeAdditions, WriteGeneratedMembers);
 		context.RegisterSourceOutput(visitorMembers, WriteVisitors);

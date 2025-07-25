@@ -46,8 +46,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.Decompiler.Generators", "ICSharpCode.Decompiler.Generators\ICSharpCode.Decompiler.Generators.csproj", "{0792B524-622B-4B9D-8027-3531ED6A42EB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ICSharpCode.Decompiler.Generators.Attributes", "ICSharpCode.Decompiler.Generators.Attributes\ICSharpCode.Decompiler.Generators.Attributes.csproj", "{02FE14EC-EEA7-4902-BCBF-0F95FB90C9B3}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -110,10 +108,6 @@ Global
 		{0792B524-622B-4B9D-8027-3531ED6A42EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0792B524-622B-4B9D-8027-3531ED6A42EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0792B524-622B-4B9D-8027-3531ED6A42EB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{02FE14EC-EEA7-4902-BCBF-0F95FB90C9B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{02FE14EC-EEA7-4902-BCBF-0F95FB90C9B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{02FE14EC-EEA7-4902-BCBF-0F95FB90C9B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{02FE14EC-EEA7-4902-BCBF-0F95FB90C9B3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
