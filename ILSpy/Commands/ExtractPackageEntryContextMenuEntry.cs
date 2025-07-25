@@ -92,16 +92,15 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		static string GetFullPath(SharpTreeNode node)
+		static string GetPackageFolderPath(SharpTreeNode node)
 		{
-			if (node is PackageFolderTreeNode)
+			string name = "";
+			while (node is PackageFolderTreeNode)
 			{
-				string name = node.Text + "\\";
-				if (GetFullPath(node.Parent) is string parent)
-					return parent + "\\" + name;
-				return name;
+				name = Path.Combine(node.Text.ToString(), name);
+				node = node.Parent;
 			}
-			return null;
+			return name;
 		}
 
 		internal static void Save(DockWorkspace dockWorkspace, IEnumerable<SharpTreeNode> nodes, string path, bool isFile)
@@ -113,12 +112,12 @@ namespace ICSharpCode.ILSpy
 				{
 					if (node is AssemblyTreeNode { PackageEntry: { } assembly })
 					{
-						string fileName = isFile ? path : Path.Combine(path, GetFullPath(node.Parent) + WholeProjectDecompiler.SanitizeFileName(assembly.Name));
+						string fileName = isFile ? path : Path.Combine(path, GetPackageFolderPath(node.Parent), assembly.Name);
 						SaveEntry(output, assembly, fileName);
 					}
 					else if (node is ResourceTreeNode { Resource: PackageEntry { } resource })
 					{
-						string fileName = isFile ? path : Path.Combine(path, GetFullPath(node.Parent) + WholeProjectDecompiler.SanitizeFileName(resource.Name));
+						string fileName = isFile ? path : Path.Combine(path, GetPackageFolderPath(node.Parent), resource.Name);
 						SaveEntry(output, resource, fileName);
 					}
 					else if (node is PackageFolderTreeNode)
@@ -128,17 +127,17 @@ namespace ICSharpCode.ILSpy
 						{
 							if (item is AssemblyTreeNode { PackageEntry: { } asm })
 							{
-								string fileName = Path.Combine(path, GetFullPath(item.Parent) + WholeProjectDecompiler.SanitizeFileName(asm.Name));
+								string fileName = Path.Combine(path, GetPackageFolderPath(item.Parent), asm.Name);
 								SaveEntry(output, asm, fileName);
 							}
 							else if (item is ResourceTreeNode { Resource: PackageEntry { } entry })
 							{
-								string fileName = Path.Combine(path, GetFullPath(item.Parent) + WholeProjectDecompiler.SanitizeFileName(entry.Name));
+								string fileName = Path.Combine(path, GetPackageFolderPath(item.Parent), entry.Name);
 								SaveEntry(output, entry, fileName);
 							}
 							else if (item is PackageFolderTreeNode)
 							{
-								Directory.CreateDirectory(Path.Combine(path, GetFullPath(item)));
+								Directory.CreateDirectory(Path.Combine(path, GetPackageFolderPath(item)));
 							}
 						}
 					}
@@ -155,6 +154,7 @@ namespace ICSharpCode.ILSpy
 		static void SaveEntry(ITextOutput output, PackageEntry entry, string targetFileName)
 		{
 			output.Write(entry.Name + ": ");
+			targetFileName = WholeProjectDecompiler.SanitizeFileName(targetFileName);
 			using Stream stream = entry.TryOpenStream();
 			if (stream == null)
 			{
@@ -214,16 +214,12 @@ namespace ICSharpCode.ILSpy
 
 		public bool IsVisible(TextViewContext context)
 		{
-			if (context.SelectedTreeNodes is [AssemblyTreeNode { PackageEntry: null } asm])
+			if (context.SelectedTreeNodes is [AssemblyTreeNode { LoadedAssembly.IsLoaded: true, LoadedAssembly.HasLoadError: false, PackageEntry: null } asm])
 			{
-				try
-				{
-					if (asm.LoadedAssembly.GetLoadResultAsync().GetAwaiter().GetResult().Package is { Kind: PackageKind.Bundle })
-						return true;
-				}
-				catch
-				{
-				}
+				// Using .GetAwaiter().GetResult() is no problem here, since we already checked IsLoaded and HasLoadError.
+				var loadResult = asm.LoadedAssembly.GetLoadResultAsync().GetAwaiter().GetResult();
+				if (loadResult.Package is { Kind: PackageKind.Bundle })
+					return true;
 			}
 			return false;
 		}
