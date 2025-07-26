@@ -31,7 +31,8 @@ using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class CSharpModifierToken : CSharpTokenNode
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class CSharpModifierToken : CSharpTokenNode
 	{
 		Modifiers modifier;
 

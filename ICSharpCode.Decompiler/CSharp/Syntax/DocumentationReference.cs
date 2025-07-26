@@ -23,7 +23,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Represents a 'cref' reference in XML documentation.
 	/// </summary>
-	public class DocumentationReference : AstNode
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class DocumentationReference : AstNode
 	{
 		public static readonly Role<AstType> DeclaringTypeRole = new Role<AstType>("DeclaringType", AstType.Null);
 		public static readonly Role<AstType> ConversionOperatorReturnTypeRole = new Role<AstType>("ConversionOperatorReturnType", AstType.Null);
@@ -132,21 +133,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return false;
 			}
 			return this.Parameters.DoMatch(o.Parameters, match);
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitDocumentationReference(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitDocumentationReference(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitDocumentationReference(this, data);
 		}
 	}
 }

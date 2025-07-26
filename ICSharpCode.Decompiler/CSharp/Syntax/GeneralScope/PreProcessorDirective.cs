@@ -46,7 +46,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		Line = 12
 	}
 
-	public class LinePreprocessorDirective : PreProcessorDirective
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class LinePreprocessorDirective : PreProcessorDirective
 	{
 		public int LineNumber {
 			get;
@@ -67,7 +68,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	public class PragmaWarningPreprocessorDirective : PreProcessorDirective
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class PragmaWarningPreprocessorDirective : PreProcessorDirective
 	{
 		public static readonly Role<PrimitiveExpression> WarningRole = new Role<PrimitiveExpression>("Warning", null);
 
@@ -125,7 +127,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	public class PreProcessorDirective : AstNode
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class PreProcessorDirective : AstNode
 	{
 		public override NodeType NodeType {
 			get {
@@ -176,21 +179,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			this.Type = type;
 			this.Argument = argument;
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitPreProcessorDirective(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitPreProcessorDirective(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitPreProcessorDirective(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

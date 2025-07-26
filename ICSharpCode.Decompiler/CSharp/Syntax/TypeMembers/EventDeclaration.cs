@@ -31,7 +31,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class EventDeclaration : EntityDeclaration
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class EventDeclaration : EntityDeclaration
 	{
 		public static readonly TokenRole EventKeywordRole = new TokenRole("event");
 
@@ -61,21 +62,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { throw new NotSupportedException(); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitEventDeclaration(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitEventDeclaration(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitEventDeclaration(this, data);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			EventDeclaration o = other as EventDeclaration;
@@ -84,7 +70,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	public class CustomEventDeclaration : EntityDeclaration
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class CustomEventDeclaration : EntityDeclaration
 	{
 		public static readonly TokenRole EventKeywordRole = new TokenRole("event");
 		public static readonly TokenRole AddKeywordRole = new TokenRole("add");
@@ -122,21 +109,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CSharpTokenNode RBraceToken {
 			get { return GetChildByRole(Roles.RBrace); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitCustomEventDeclaration(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitCustomEventDeclaration(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitCustomEventDeclaration(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

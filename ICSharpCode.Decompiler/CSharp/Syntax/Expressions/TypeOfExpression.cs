@@ -31,7 +31,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// typeof(Type)
 	/// </summary>
-	public class TypeOfExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class TypeOfExpression : Expression
 	{
 		public readonly static TokenRole TypeofKeywordRole = new TokenRole("typeof");
 
@@ -59,21 +60,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public TypeOfExpression(AstType type)
 		{
 			AddChild(type, Roles.Type);
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitTypeOfExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitTypeOfExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitTypeOfExpression(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

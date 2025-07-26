@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2019 Siegfried Pammer
+﻿// Copyright (c) 2017 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,28 +16,15 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+
+
+
+
+
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	[DecompilerAstNode(hasNullNode: false)]
-	public partial class LocalFunctionDeclarationStatement : Statement
+	class DecompilerAstNodeAttribute : System.Attribute
 	{
-		public static readonly Role<MethodDeclaration> MethodDeclarationRole = new Role<MethodDeclaration>("Method", null);
-
-		public MethodDeclaration Declaration {
-			get { return GetChildByRole(MethodDeclarationRole); }
-			set { SetChildByRole(MethodDeclarationRole, value); }
-		}
-
-		public LocalFunctionDeclarationStatement(MethodDeclaration methodDeclaration)
-		{
-			AddChild(methodDeclaration, MethodDeclarationRole);
-		}
-
-		protected internal override bool DoMatch(AstNode other, Match match)
-		{
-			return other is LocalFunctionDeclarationStatement o && Declaration.DoMatch(o.Declaration, match);
-		}
 	}
 }

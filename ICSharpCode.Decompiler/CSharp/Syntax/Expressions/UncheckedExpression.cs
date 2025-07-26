@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// unchecked(Expression)
 	/// </summary>
-	public class UncheckedExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class UncheckedExpression : Expression
 	{
 		public readonly static TokenRole UncheckedKeywordRole = new TokenRole("unchecked");
 
@@ -58,21 +59,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public UncheckedExpression(Expression expression)
 		{
 			AddChild(expression, Roles.Expression);
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitUncheckedExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitUncheckedExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitUncheckedExpression(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

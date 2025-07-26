@@ -31,7 +31,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class FieldDeclaration : EntityDeclaration
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class FieldDeclaration : EntityDeclaration
 	{
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Field; }
@@ -53,21 +54,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public override Identifier NameToken {
 			get { return Identifier.Null; }
 			set { throw new NotSupportedException(); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitFieldDeclaration(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitFieldDeclaration(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitFieldDeclaration(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

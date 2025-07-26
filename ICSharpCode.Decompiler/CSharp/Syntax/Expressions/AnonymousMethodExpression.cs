@@ -32,7 +32,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// [async] delegate(Parameters) {Body}
 	/// </summary>
-	public class AnonymousMethodExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class AnonymousMethodExpression : Expression
 	{
 		public readonly static TokenRole DelegateKeywordRole = new TokenRole("delegate");
 		public readonly static TokenRole AsyncModifierRole = LambdaExpression.AsyncModifierRole;
@@ -92,28 +93,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AnonymousMethodExpression(BlockStatement body, params ParameterDeclaration[] parameters) : this(body, (IEnumerable<ParameterDeclaration>)parameters)
 		{
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitAnonymousMethodExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitAnonymousMethodExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitAnonymousMethodExpression(this, data);
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			AnonymousMethodExpression o = other as AnonymousMethodExpression;
-			return o != null && this.IsAsync == o.IsAsync && this.HasParameterList == o.HasParameterList
-				&& this.Parameters.DoMatch(o.Parameters, match) && this.Body.DoMatch(o.Body, match);
 		}
 	}
 }

@@ -17,8 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
@@ -29,7 +27,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// BaseType "(" Argument { "," Argument } ")"
 	/// </summary>
-	public class InvocationAstType : AstType
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class InvocationAstType : AstType
 	{
 		public AstNodeCollection<Expression> Arguments {
 			get { return GetChildrenByRole(Roles.Expression); }
@@ -38,21 +37,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public AstType BaseType {
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitInvocationType(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitInvocationType(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitInvocationType(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, Match match)

@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// default(Type)
 	/// </summary>
-	public class DefaultValueExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class DefaultValueExpression : Expression
 	{
 		public readonly static TokenRole DefaultKeywordRole = new TokenRole("default");
 
@@ -58,27 +59,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public DefaultValueExpression(AstType type)
 		{
 			AddChild(type, Roles.Type);
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitDefaultValueExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitDefaultValueExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitDefaultValueExpression(this, data);
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			DefaultValueExpression o = other as DefaultValueExpression;
-			return o != null && this.Type.DoMatch(o.Type, match);
 		}
 	}
 }

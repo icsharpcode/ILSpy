@@ -23,14 +23,13 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System.Collections.Generic;
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
 	/// Expression as TypeReference
 	/// </summary>
-	public class AsExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class AsExpression : Expression
 	{
 		public readonly static TokenRole AsKeywordRole = new TokenRole("as");
 
@@ -56,27 +55,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			AddChild(expression, Roles.Expression);
 			AddChild(type, Roles.Type);
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitAsExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitAsExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitAsExpression(this, data);
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			AsExpression o = other as AsExpression;
-			return o != null && this.Expression.DoMatch(o.Expression, match) && this.Type.DoMatch(o.Type, match);
 		}
 	}
 }

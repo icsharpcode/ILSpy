@@ -31,7 +31,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Target.MemberName
 	/// </summary>
-	public class MemberReferenceExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class MemberReferenceExpression : Expression
 	{
 		public Expression Target {
 			get {
@@ -95,21 +96,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public MemberReferenceExpression(Expression target, string memberName, params AstType[] arguments) : this(target, memberName, (IEnumerable<AstType>)arguments)
 		{
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitMemberReferenceExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitMemberReferenceExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitMemberReferenceExpression(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// using Alias = Import;
 	/// </summary>
-	public class UsingAliasDeclaration : AstNode
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class UsingAliasDeclaration : AstNode
 	{
 		public static readonly TokenRole UsingKeywordRole = new TokenRole("using");
 		public static readonly Role<Identifier> AliasRole = new Role<Identifier>("Alias", Identifier.Null);
@@ -82,21 +83,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			AddChild(Identifier.Create(alias), AliasRole);
 			AddChild(import, ImportRole);
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitUsingAliasDeclaration(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitUsingAliasDeclaration(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitUsingAliasDeclaration(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

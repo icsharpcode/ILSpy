@@ -29,7 +29,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// [async] Parameters => Body
 	/// </summary>
-	public class LambdaExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class LambdaExpression : Expression
 	{
 		public static readonly Role<AttributeSection> AttributeRole = new Role<AttributeSection>("Attribute", null);
 		public readonly static TokenRole AsyncModifierRole = new TokenRole("async");
@@ -65,21 +66,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public AstNode Body {
 			get { return GetChildByRole(BodyRole); }
 			set { SetChildByRole(BodyRole, value); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitLambdaExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitLambdaExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitLambdaExpression(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

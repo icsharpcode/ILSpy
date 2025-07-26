@@ -31,7 +31,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Target(Arguments)
 	/// </summary>
-	public class InvocationExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class InvocationExpression : Expression
 	{
 		public Expression Target {
 			get { return GetChildByRole(Roles.TargetExpression); }
@@ -48,21 +49,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitInvocationExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitInvocationExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitInvocationExpression(this, data);
 		}
 
 		public InvocationExpression()

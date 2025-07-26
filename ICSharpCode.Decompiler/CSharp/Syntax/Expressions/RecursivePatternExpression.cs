@@ -20,7 +20,8 @@ using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class RecursivePatternExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class RecursivePatternExpression : Expression
 	{
 		public static readonly Role<Expression> SubPatternRole = new Role<Expression>("SubPattern", Syntax.Expression.Null);
 
@@ -39,21 +40,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public bool IsPositional { get; set; }
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitRecursivePatternExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitRecursivePatternExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitRecursivePatternExpression(this, data);
-		}
 
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{

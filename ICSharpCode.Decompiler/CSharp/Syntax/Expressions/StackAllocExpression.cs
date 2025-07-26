@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// stackalloc Type[Count]
 	/// </summary>
-	public class StackAllocExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class StackAllocExpression : Expression
 	{
 		public readonly static TokenRole StackallocKeywordRole = new TokenRole("stackalloc");
 		public readonly static Role<ArrayInitializerExpression> InitializerRole = new Role<ArrayInitializerExpression>("Initializer", ArrayInitializerExpression.Null);
@@ -60,21 +61,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public ArrayInitializerExpression Initializer {
 			get { return GetChildByRole(InitializerRole); }
 			set { SetChildByRole(InitializerRole, value); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitStackAllocExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitStackAllocExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitStackAllocExpression(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

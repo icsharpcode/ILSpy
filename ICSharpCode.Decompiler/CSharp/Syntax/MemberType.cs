@@ -32,7 +32,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class MemberType : AstType
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class MemberType : AstType
 	{
 		public static readonly Role<AstType> TargetRole = new Role<AstType>("Target", AstType.Null);
 
@@ -95,21 +96,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public MemberType(AstType target, string memberName, params AstType[] typeArguments) : this(target, memberName, (IEnumerable<AstType>)typeArguments)
 		{
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitMemberType(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitMemberType(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitMemberType(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

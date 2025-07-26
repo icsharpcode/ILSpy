@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// [ await ] using (ResourceAcquisition) EmbeddedStatement
 	/// </summary>
-	public class UsingStatement : Statement
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class UsingStatement : Statement
 	{
 		public static readonly TokenRole UsingKeywordRole = new TokenRole("using");
 		public static readonly TokenRole AwaitRole = UnaryOperatorExpression.AwaitRole;
@@ -70,21 +71,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public Statement EmbeddedStatement {
 			get { return GetChildByRole(Roles.EmbeddedStatement); }
 			set { SetChildByRole(Roles.EmbeddedStatement, value); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitUsingStatement(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitUsingStatement(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitUsingStatement(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

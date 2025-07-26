@@ -31,7 +31,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// new Type(Arguments) { Initializer }
 	/// </summary>
-	public class ObjectCreateExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class ObjectCreateExpression : Expression
 	{
 		public readonly static TokenRole NewKeywordRole = new TokenRole("new");
 		public readonly static Role<ArrayInitializerExpression> InitializerRole = ArrayCreateExpression.InitializerRole;
@@ -80,21 +81,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public ObjectCreateExpression(AstType type, params Expression[] arguments) : this(type, (IEnumerable<Expression>)arguments)
 		{
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitObjectCreateExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitObjectCreateExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitObjectCreateExpression(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

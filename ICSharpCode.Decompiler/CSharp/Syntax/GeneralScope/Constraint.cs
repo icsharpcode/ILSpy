@@ -33,7 +33,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <remarks>
 	/// new(), struct and class constraints are represented using a PrimitiveType "new", "struct" or "class"
 	/// </remarks>
-	public class Constraint : AstNode
+	[DecompilerAstNode(hasNullNode: true)]
+	public partial class Constraint : AstNode
 	{
 		public override NodeType NodeType {
 			get { return NodeType.Unknown; }
@@ -56,21 +57,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				return GetChildrenByRole(Roles.BaseType);
 			}
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitConstraint(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitConstraint(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitConstraint(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

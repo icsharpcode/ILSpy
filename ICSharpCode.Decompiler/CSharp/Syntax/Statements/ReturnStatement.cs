@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// return Expression;
 	/// </summary>
-	public class ReturnStatement : Statement
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class ReturnStatement : Statement
 	{
 		public static readonly TokenRole ReturnKeywordRole = new TokenRole("return");
 
@@ -54,21 +55,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public ReturnStatement(Expression returnExpression)
 		{
 			AddChild(returnExpression, Roles.Expression);
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitReturnStatement(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitReturnStatement(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitReturnStatement(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

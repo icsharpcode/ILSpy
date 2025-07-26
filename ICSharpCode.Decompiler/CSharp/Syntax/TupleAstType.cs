@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Immutable;
 using System.Linq;
 
@@ -26,27 +25,13 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class TupleAstType : AstType
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class TupleAstType : AstType
 	{
 		public static readonly Role<TupleTypeElement> ElementRole = new Role<TupleTypeElement>("Element", TupleTypeElement.Null);
 
 		public AstNodeCollection<TupleTypeElement> Elements {
 			get { return GetChildrenByRole(ElementRole); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitTupleType(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitTupleType(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitTupleType(this, data);
 		}
 
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)
@@ -63,41 +48,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	public class TupleTypeElement : AstNode
+	[DecompilerAstNode(hasNullNode: true)]
+	public partial class TupleTypeElement : AstNode
 	{
-		#region Null
-		public new static readonly TupleTypeElement Null = new TupleTypeElement();
-
-		sealed class NullTupleTypeElement : TupleTypeElement
-		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
-
-			public override void AcceptVisitor(IAstVisitor visitor)
-			{
-				visitor.VisitNullNode(this);
-			}
-
-			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-			{
-				return visitor.VisitNullNode(this);
-			}
-
-			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-			{
-				return visitor.VisitNullNode(this, data);
-			}
-
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-			{
-				return other == null || other.IsNull;
-			}
-		}
-		#endregion
-
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
@@ -114,21 +67,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public override NodeType NodeType => NodeType.Unknown;
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitTupleTypeElement(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitTupleTypeElement(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitTupleTypeElement(this, data);
-		}
 
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{

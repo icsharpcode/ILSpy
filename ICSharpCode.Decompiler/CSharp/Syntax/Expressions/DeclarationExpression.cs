@@ -16,14 +16,13 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
 	/// TypeName VariableDesignation
 	/// </summary>
-	public class DeclarationExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class DeclarationExpression : Expression
 	{
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
@@ -33,28 +32,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public VariableDesignation Designation {
 			get { return GetChildByRole(Roles.VariableDesignationRole); }
 			set { SetChildByRole(Roles.VariableDesignationRole, value); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitDeclarationExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitDeclarationExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitDeclarationExpression(this, data);
-		}
-
-		protected internal override bool DoMatch(AstNode other, Match match)
-		{
-			return other is DeclarationExpression o
-				&& Type.DoMatch(o.Type, match)
-				&& Designation.DoMatch(o.Designation, match);
 		}
 	}
 }

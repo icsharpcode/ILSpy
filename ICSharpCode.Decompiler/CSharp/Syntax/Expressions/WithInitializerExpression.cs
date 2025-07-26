@@ -23,7 +23,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Expression with Initializer
 	/// </summary>
-	public class WithInitializerExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class WithInitializerExpression : Expression
 	{
 		public readonly static TokenRole WithKeywordRole = new TokenRole("with");
 		public readonly static Role<ArrayInitializerExpression> InitializerRole = ArrayCreateExpression.InitializerRole;
@@ -40,21 +41,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public ArrayInitializerExpression Initializer {
 			get { return GetChildByRole(InitializerRole); }
 			set { SetChildByRole(InitializerRole, value); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitWithInitializerExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitWithInitializerExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitWithInitializerExpression(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, Match match)

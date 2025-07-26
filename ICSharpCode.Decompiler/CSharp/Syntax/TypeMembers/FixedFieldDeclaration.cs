@@ -27,7 +27,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class FixedFieldDeclaration : EntityDeclaration
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class FixedFieldDeclaration : EntityDeclaration
 	{
 		public static readonly TokenRole FixedKeywordRole = new TokenRole("fixed");
 		public static readonly Role<FixedVariableInitializer> VariableRole = new Role<FixedVariableInitializer>("FixedVariable", null);
@@ -42,21 +43,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AstNodeCollection<FixedVariableInitializer> Variables {
 			get { return GetChildrenByRole(VariableRole); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitFixedFieldDeclaration(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitFixedFieldDeclaration(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitFixedFieldDeclaration(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

@@ -25,7 +25,6 @@
 // THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Linq.Expressions;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -33,7 +32,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Left Operator= Right
 	/// </summary>
-	public class AssignmentExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class AssignmentExpression : Expression
 	{
 		// reuse roles from BinaryOperatorExpression
 		public readonly static Role<Expression> LeftRole = BinaryOperatorExpression.LeftRole;
@@ -86,28 +86,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public Expression Right {
 			get { return GetChildByRole(RightRole); }
 			set { SetChildByRole(RightRole, value); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitAssignmentExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitAssignmentExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitAssignmentExpression(this, data);
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			AssignmentExpression o = other as AssignmentExpression;
-			return o != null && (this.Operator == AssignmentOperatorType.Any || this.Operator == o.Operator)
-				&& this.Left.DoMatch(o.Left, match) && this.Right.DoMatch(o.Right, match);
 		}
 
 		public static TokenRole GetOperatorRole(AssignmentOperatorType op)

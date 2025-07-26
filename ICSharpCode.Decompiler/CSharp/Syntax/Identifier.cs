@@ -28,38 +28,9 @@ using System;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class Identifier : AstNode
+	[DecompilerAstNode(hasNullNode: true)]
+	public partial class Identifier : AstNode
 	{
-		public new static readonly Identifier Null = new NullIdentifier();
-		sealed class NullIdentifier : Identifier
-		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
-
-			public override void AcceptVisitor(IAstVisitor visitor)
-			{
-				visitor.VisitNullNode(this);
-			}
-
-			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-			{
-				return visitor.VisitNullNode(this);
-			}
-
-			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-			{
-				return visitor.VisitNullNode(this, data);
-			}
-
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-			{
-				return other == null || other.IsNull;
-			}
-		}
-
 		public override NodeType NodeType {
 			get {
 				return NodeType.Token;
@@ -147,21 +118,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (isVerbatim)
 				return new Identifier(name, location) { IsVerbatim = true };
 			return new Identifier(name, location);
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitIdentifier(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitIdentifier(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitIdentifier(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

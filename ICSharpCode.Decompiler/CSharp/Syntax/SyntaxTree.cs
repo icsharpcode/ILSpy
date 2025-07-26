@@ -26,12 +26,12 @@
 
 using System.Collections.Generic;
 
-using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class SyntaxTree : AstNode
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class SyntaxTree : AstNode
 	{
 		public static readonly Role<AstNode> MemberRole = new Role<AstNode>("Member", AstNode.Null);
 
@@ -121,21 +121,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			SyntaxTree o = other as SyntaxTree;
 			return o != null && this.Members.DoMatch(o.Members, match);
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitSyntaxTree(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitSyntaxTree(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitSyntaxTree(this, data);
 		}
 	}
 }

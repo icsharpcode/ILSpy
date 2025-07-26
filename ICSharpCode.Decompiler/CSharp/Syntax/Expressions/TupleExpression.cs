@@ -16,31 +16,15 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class TupleExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class TupleExpression : Expression
 	{
 		public AstNodeCollection<Expression> Elements {
 			get { return GetChildrenByRole(Roles.Expression); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitTupleExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitTupleExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitTupleExpression(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, Match match)

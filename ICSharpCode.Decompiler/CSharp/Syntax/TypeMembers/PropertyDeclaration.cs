@@ -28,7 +28,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class PropertyDeclaration : EntityDeclaration
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class PropertyDeclaration : EntityDeclaration
 	{
 		public static readonly TokenRole GetKeywordRole = new TokenRole("get");
 		public static readonly TokenRole SetKeywordRole = new TokenRole("set");
@@ -80,21 +81,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public Expression ExpressionBody {
 			get { return GetChildByRole(ExpressionBodyRole); }
 			set { SetChildByRole(ExpressionBodyRole, value); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitPropertyDeclaration(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitPropertyDeclaration(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitPropertyDeclaration(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

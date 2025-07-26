@@ -27,7 +27,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// Note: mirroring the C# syntax, constraints are not part of the type parameter declaration, but belong
 	/// to the parent type or method.
 	/// </summary>
-	public class TypeParameterDeclaration : AstNode
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class TypeParameterDeclaration : AstNode
 	{
 		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
 		public static readonly TokenRole OutVarianceKeywordRole = new TokenRole("out");
@@ -87,21 +88,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public TypeParameterDeclaration(string name)
 		{
 			Name = name;
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitTypeParameterDeclaration(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitTypeParameterDeclaration(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitTypeParameterDeclaration(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

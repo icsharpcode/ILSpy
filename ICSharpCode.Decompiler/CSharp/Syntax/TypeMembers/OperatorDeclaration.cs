@@ -76,7 +76,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		CheckedExplicit
 	}
 
-	public class OperatorDeclaration : EntityDeclaration
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class OperatorDeclaration : EntityDeclaration
 	{
 		public static readonly TokenRole OperatorKeywordRole = new TokenRole("operator");
 		public static readonly TokenRole CheckedKeywordRole = new TokenRole("checked");
@@ -325,21 +326,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static string GetToken(OperatorType type)
 		{
 			return names[(int)type][0];
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitOperatorDeclaration(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitOperatorDeclaration(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitOperatorDeclaration(this, data);
 		}
 
 		public override string Name {

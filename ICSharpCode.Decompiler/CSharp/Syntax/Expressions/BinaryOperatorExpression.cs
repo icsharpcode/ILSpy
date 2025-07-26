@@ -32,7 +32,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Left Operator Right
 	/// </summary>
-	public class BinaryOperatorExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class BinaryOperatorExpression : Expression
 	{
 		public readonly static TokenRole BitwiseAndRole = new TokenRole("&");
 		public readonly static TokenRole BitwiseOrRole = new TokenRole("|");
@@ -88,28 +89,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public Expression Right {
 			get { return GetChildByRole(RightRole); }
 			set { SetChildByRole(RightRole, value); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitBinaryOperatorExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitBinaryOperatorExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitBinaryOperatorExpression(this, data);
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			BinaryOperatorExpression o = other as BinaryOperatorExpression;
-			return o != null && (this.Operator == BinaryOperatorType.Any || this.Operator == o.Operator)
-				&& this.Left.DoMatch(o.Left, match) && this.Right.DoMatch(o.Right, match);
 		}
 
 		public static TokenRole GetOperatorRole(BinaryOperatorType op)

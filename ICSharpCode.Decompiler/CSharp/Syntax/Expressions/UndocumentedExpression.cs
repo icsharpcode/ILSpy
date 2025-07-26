@@ -39,7 +39,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Represents undocumented expressions.
 	/// </summary>
-	public class UndocumentedExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class UndocumentedExpression : Expression
 	{
 		public readonly static TokenRole ArglistKeywordRole = new TokenRole("__arglist");
 		public readonly static TokenRole RefvalueKeywordRole = new TokenRole("__refvalue");
@@ -78,21 +79,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitUndocumentedExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitUndocumentedExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitUndocumentedExpression(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

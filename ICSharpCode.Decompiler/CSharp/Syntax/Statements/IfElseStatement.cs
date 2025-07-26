@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// if (Condition) TrueStatement else FalseStatement
 	/// </summary>
-	public class IfElseStatement : Statement
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class IfElseStatement : Statement
 	{
 		public readonly static TokenRole IfKeywordRole = new TokenRole("if");
 		public readonly static Role<Expression> ConditionRole = Roles.Condition;
@@ -67,21 +68,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public Statement FalseStatement {
 			get { return GetChildByRole(FalseRole); }
 			set { SetChildByRole(FalseRole, value); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitIfElseStatement(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitIfElseStatement(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitIfElseStatement(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

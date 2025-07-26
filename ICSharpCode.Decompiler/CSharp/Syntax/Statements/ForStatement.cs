@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// for (Initializers; Condition; Iterators) EmbeddedStatement
 	/// </summary>
-	public class ForStatement : Statement
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class ForStatement : Statement
 	{
 		public static readonly TokenRole ForKeywordRole = new TokenRole("for");
 		public readonly static Role<Statement> InitializerRole = new Role<Statement>("Initializer", Statement.Null);
@@ -69,21 +70,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public Statement EmbeddedStatement {
 			get { return GetChildByRole(Roles.EmbeddedStatement); }
 			set { SetChildByRole(Roles.EmbeddedStatement, value); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitForStatement(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitForStatement(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitForStatement(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

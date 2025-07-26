@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			private readonly IField field;
 			private ILVariable declaredVariable;
 
-			public string Name => field.Name;
+			public string Name => @field.Name;
 
 			public bool CanPropagate { get; private set; }
 			public bool UsesInitialValue { get; set; }

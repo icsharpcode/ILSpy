@@ -24,8 +24,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System;
-
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -48,7 +46,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Represents a literal value.
 	/// </summary>
-	public class PrimitiveExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class PrimitiveExpression : Expression
 	{
 		public static readonly object AnyValue = new object();
 
@@ -93,21 +92,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			this.Value = value;
 			this.format = format;
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitPrimitiveExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitPrimitiveExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitPrimitiveExpression(this, data);
 		}
 
 		unsafe static TextLocation AdvanceLocation(TextLocation startLocation, string str)

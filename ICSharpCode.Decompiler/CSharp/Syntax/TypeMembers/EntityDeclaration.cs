@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -33,6 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return NodeType.Member; }
 		}
 
+		[Obsolete]
 		public abstract SymbolKind SymbolKind { get; }
 
 		public AstNodeCollection<AttributeSection> Attributes {

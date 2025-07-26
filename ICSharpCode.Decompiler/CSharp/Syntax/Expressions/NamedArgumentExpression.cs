@@ -23,7 +23,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// Represents a named argument passed to a method or attribute.
 	/// name: expression
 	/// </summary>
-	public class NamedArgumentExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class NamedArgumentExpression : Expression
 	{
 		public NamedArgumentExpression()
 		{
@@ -60,21 +61,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
 			set { SetChildByRole(Roles.Expression, value); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitNamedArgumentExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitNamedArgumentExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitNamedArgumentExpression(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

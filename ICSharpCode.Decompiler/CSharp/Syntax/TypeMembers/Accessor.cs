@@ -24,45 +24,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
+	public enum AccessorKind
+	{
+		Any,
+		Getter,
+		Setter,
+		Init,
+		Adder,
+		Remover
+	}
+
 	/// <summary>
 	/// get/set/init/add/remove
 	/// </summary>
-	public class Accessor : EntityDeclaration
+	[DecompilerAstNode(hasNullNode: true)]
+	public partial class Accessor : EntityDeclaration
 	{
-		public static readonly new Accessor Null = new NullAccessor();
-		sealed class NullAccessor : Accessor
-		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
-
-			public override void AcceptVisitor(IAstVisitor visitor)
-			{
-				visitor.VisitNullNode(this);
-			}
-
-			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-			{
-				return visitor.VisitNullNode(this);
-			}
-
-			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-			{
-				return visitor.VisitNullNode(this, data);
-			}
-
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-			{
-				return other == null || other.IsNull;
-			}
-		}
-
 		public override NodeType NodeType {
 			get { return NodeType.Unknown; }
 		}
@@ -71,21 +54,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Method; }
 		}
 
+		public AccessorKind Kind { get; set; }
+
 		/// <summary>
 		/// Gets the 'get'/'set'/'init'/'add'/'remove' keyword
 		/// </summary>
 		public CSharpTokenNode Keyword {
 			get {
-				for (AstNode child = this.FirstChild; child != null; child = child.NextSibling)
-				{
-					if (child.Role == PropertyDeclaration.GetKeywordRole || child.Role == PropertyDeclaration.SetKeywordRole
-						|| child.Role == PropertyDeclaration.InitKeywordRole
-						|| child.Role == CustomEventDeclaration.AddKeywordRole || child.Role == CustomEventDeclaration.RemoveKeywordRole)
-					{
-						return (CSharpTokenNode)child;
-					}
-				}
-				return CSharpTokenNode.Null;
+				var role = GetAccessorKeywordRole(Kind);
+				return role == null ? CSharpTokenNode.Null : GetChildByRole(role);
 			}
 		}
 
@@ -94,25 +71,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.Body, value); }
 		}
 
-		public override void AcceptVisitor(IAstVisitor visitor)
+		public static TokenRole? GetAccessorKeywordRole(AccessorKind kind)
 		{
-			visitor.VisitAccessor(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitAccessor(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitAccessor(this, data);
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			Accessor o = other as Accessor;
-			return o != null && !o.IsNull && this.MatchAttributesAndModifiers(o, match) && this.Body.DoMatch(o.Body, match);
+			return kind switch {
+				AccessorKind.Getter => PropertyDeclaration.GetKeywordRole,
+				AccessorKind.Setter => PropertyDeclaration.SetKeywordRole,
+				AccessorKind.Init => PropertyDeclaration.InitKeywordRole,
+				AccessorKind.Adder => CustomEventDeclaration.AddKeywordRole,
+				AccessorKind.Remover => CustomEventDeclaration.RemoveKeywordRole,
+				_ => null,
+			};
 		}
 	}
 }

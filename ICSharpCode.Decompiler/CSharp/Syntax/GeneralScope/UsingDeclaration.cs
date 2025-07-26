@@ -32,7 +32,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// using Import;
 	/// </summary>
-	public class UsingDeclaration : AstNode
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class UsingDeclaration : AstNode
 	{
 		public static readonly TokenRole UsingKeywordRole = new TokenRole("using");
 		public static readonly Role<AstType> ImportRole = new Role<AstType>("Import", AstType.Null);
@@ -98,21 +99,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public UsingDeclaration(AstType import)
 		{
 			AddChild(import, ImportRole);
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitUsingDeclaration(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitUsingDeclaration(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitUsingDeclaration(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

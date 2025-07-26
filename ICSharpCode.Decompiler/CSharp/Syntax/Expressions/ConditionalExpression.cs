@@ -23,14 +23,13 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System.Collections.Generic;
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
 	/// Condition ? TrueExpression : FalseExpression
 	/// </summary>
-	public class ConditionalExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class ConditionalExpression : Expression
 	{
 		public readonly static Role<Expression> ConditionRole = Roles.Condition;
 		public readonly static TokenRole QuestionMarkRole = new TokenRole("?");
@@ -70,27 +69,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			AddChild(condition, ConditionRole);
 			AddChild(trueExpression, TrueRole);
 			AddChild(falseExpression, FalseRole);
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitConditionalExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitConditionalExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitConditionalExpression(this, data);
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			ConditionalExpression o = other as ConditionalExpression;
-			return o != null && this.Condition.DoMatch(o.Condition, match) && this.TrueExpression.DoMatch(o.TrueExpression, match) && this.FalseExpression.DoMatch(o.FalseExpression, match);
 		}
 	}
 }

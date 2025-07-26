@@ -33,7 +33,8 @@ using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class PrimitiveType : AstType
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class PrimitiveType : AstType
 	{
 		TextLocation location;
 		string keyword = string.Empty;
@@ -83,21 +84,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				return new TextLocation(location.Line, location.Column + keyword.Length);
 			}
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitPrimitiveType(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitPrimitiveType(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitPrimitiveType(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

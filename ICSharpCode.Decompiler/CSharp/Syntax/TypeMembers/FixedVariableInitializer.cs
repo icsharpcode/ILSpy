@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Name [ CountExpression ]
 	/// </summary>
-	public class FixedVariableInitializer : AstNode
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class FixedVariableInitializer : AstNode
 	{
 		public override NodeType NodeType {
 			get {
@@ -77,21 +78,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CSharpTokenNode RBracketToken {
 			get { return GetChildByRole(Roles.RBracket); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitFixedVariableInitializer(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitFixedVariableInitializer(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitFixedVariableInitializer(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

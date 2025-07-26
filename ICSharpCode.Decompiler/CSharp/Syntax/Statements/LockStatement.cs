@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// lock (Expression) EmbeddedStatement;
 	/// </summary>
-	public class LockStatement : Statement
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class LockStatement : Statement
 	{
 		public static readonly TokenRole LockKeywordRole = new TokenRole("lock");
 
@@ -54,21 +55,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public Statement EmbeddedStatement {
 			get { return GetChildByRole(Roles.EmbeddedStatement); }
 			set { SetChildByRole(Roles.EmbeddedStatement, value); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitLockStatement(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitLockStatement(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitLockStatement(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

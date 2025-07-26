@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// "do EmbeddedStatement while(Condition);"
 	/// </summary>
-	public class DoWhileStatement : Statement
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class DoWhileStatement : Statement
 	{
 		public static readonly TokenRole DoKeywordRole = new TokenRole("do");
 		public static readonly TokenRole WhileKeywordRole = new TokenRole("while");
@@ -63,21 +64,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CSharpTokenNode SemicolonToken {
 			get { return GetChildByRole(Roles.Semicolon); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitDoWhileStatement(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitDoWhileStatement(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitDoWhileStatement(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

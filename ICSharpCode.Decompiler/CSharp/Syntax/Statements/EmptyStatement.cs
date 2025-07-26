@@ -30,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// ;
 	/// </summary>
-	public class EmptyStatement : Statement
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class EmptyStatement : Statement
 	{
 		public TextLocation Location {
 			get;
@@ -47,21 +48,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				return new TextLocation(Location.Line, Location.Column + 1);
 			}
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitEmptyStatement(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitEmptyStatement(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitEmptyStatement(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

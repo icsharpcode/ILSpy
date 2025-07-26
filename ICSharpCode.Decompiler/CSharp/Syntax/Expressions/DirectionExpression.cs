@@ -38,7 +38,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// ref Expression
 	/// </summary>
-	public class DirectionExpression : Expression
+	[DecompilerAstNode(hasNullNode: false)]
+	public partial class DirectionExpression : Expression
 	{
 		public readonly static TokenRole RefKeywordRole = new TokenRole("ref");
 		public readonly static TokenRole OutKeywordRole = new TokenRole("out");
@@ -76,27 +77,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			this.FieldDirection = direction;
 			AddChild(expression, Roles.Expression);
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitDirectionExpression(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitDirectionExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitDirectionExpression(this, data);
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			DirectionExpression o = other as DirectionExpression;
-			return o != null && this.FieldDirection == o.FieldDirection && this.Expression.DoMatch(o.Expression, match);
 		}
 	}
 }
