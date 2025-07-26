@@ -103,6 +103,22 @@ namespace ICSharpCode.ILSpy
 			return name;
 		}
 
+		static string GetFileName(string path, bool isFile, SharpTreeNode containingNode, PackageEntry entry)
+		{
+			string fileName;
+			if (isFile)
+			{
+				fileName = path;
+			}
+			else
+			{
+				string relativePackagePath = WholeProjectDecompiler.SanitizeFileName(Path.Combine(GetPackageFolderPath(containingNode), entry.Name));
+				fileName = Path.Combine(path, relativePackagePath);
+			}
+
+			return fileName;
+		}
+
 		internal static void Save(DockWorkspace dockWorkspace, IEnumerable<SharpTreeNode> nodes, string path, bool isFile)
 		{
 			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
@@ -112,12 +128,12 @@ namespace ICSharpCode.ILSpy
 				{
 					if (node is AssemblyTreeNode { PackageEntry: { } assembly })
 					{
-						string fileName = isFile ? path : Path.Combine(path, GetPackageFolderPath(node.Parent), assembly.Name);
+						string fileName = GetFileName(path, isFile, node.Parent, assembly);
 						SaveEntry(output, assembly, fileName);
 					}
 					else if (node is ResourceTreeNode { Resource: PackageEntry { } resource })
 					{
-						string fileName = isFile ? path : Path.Combine(path, GetPackageFolderPath(node.Parent), resource.Name);
+						string fileName = GetFileName(path, isFile, node.Parent, resource);
 						SaveEntry(output, resource, fileName);
 					}
 					else if (node is PackageFolderTreeNode)
@@ -127,17 +143,17 @@ namespace ICSharpCode.ILSpy
 						{
 							if (item is AssemblyTreeNode { PackageEntry: { } asm })
 							{
-								string fileName = Path.Combine(path, GetPackageFolderPath(item.Parent), asm.Name);
+								string fileName = GetFileName(path, isFile, item.Parent, asm);
 								SaveEntry(output, asm, fileName);
 							}
 							else if (item is ResourceTreeNode { Resource: PackageEntry { } entry })
 							{
-								string fileName = Path.Combine(path, GetPackageFolderPath(item.Parent), entry.Name);
+								string fileName = GetFileName(path, isFile, item.Parent, entry);
 								SaveEntry(output, entry, fileName);
 							}
 							else if (item is PackageFolderTreeNode)
 							{
-								Directory.CreateDirectory(Path.Combine(path, GetPackageFolderPath(item)));
+								Directory.CreateDirectory(Path.Combine(path, WholeProjectDecompiler.SanitizeFileName(GetPackageFolderPath(item))));
 							}
 						}
 					}
@@ -154,7 +170,6 @@ namespace ICSharpCode.ILSpy
 		static void SaveEntry(ITextOutput output, PackageEntry entry, string targetFileName)
 		{
 			output.Write(entry.Name + ": ");
-			targetFileName = WholeProjectDecompiler.SanitizeFileName(targetFileName);
 			using Stream stream = entry.TryOpenStream();
 			if (stream == null)
 			{
