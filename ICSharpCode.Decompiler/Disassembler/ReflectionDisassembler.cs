@@ -1733,6 +1733,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 					{
 						output.Write("valuetype ");
 					}
+					const GenericParameterAttributes allowByRefLike = (GenericParameterAttributes)0x0020;
+					if ((gp.Attributes & allowByRefLike) == allowByRefLike)
+					{
+						output.Write("byreflike ");
+					}
 					if ((gp.Attributes & GenericParameterAttributes.DefaultConstructorConstraint) == GenericParameterAttributes.DefaultConstructorConstraint)
 					{
 						output.Write(".ctor ");
