@@ -278,6 +278,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			public override bool HasReferenceTypeConstraint => baseTp.HasReferenceTypeConstraint;
 			public override bool HasDefaultConstructorConstraint => baseTp.HasDefaultConstructorConstraint;
 			public override bool HasUnmanagedConstraint => baseTp.HasUnmanagedConstraint;
+			public override bool AllowsRefLikeType => baseTp.AllowsRefLikeType;
 
 			public override Nullability NullabilityConstraint => baseTp.NullabilityConstraint;
 

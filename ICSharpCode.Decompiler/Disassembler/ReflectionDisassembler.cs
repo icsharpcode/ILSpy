@@ -28,6 +28,7 @@ using System.Threading;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
@@ -1733,8 +1734,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					{
 						output.Write("valuetype ");
 					}
-					const GenericParameterAttributes allowByRefLike = (GenericParameterAttributes)0x0020;
-					if ((gp.Attributes & allowByRefLike) == allowByRefLike)
+					if ((gp.Attributes & TypeUtils.AllowByRefLike) == TypeUtils.AllowByRefLike)
 					{
 						output.Write("byreflike ");
 					}

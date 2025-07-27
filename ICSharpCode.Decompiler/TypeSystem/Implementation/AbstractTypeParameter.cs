@@ -175,6 +175,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public abstract bool HasReferenceTypeConstraint { get; }
 		public abstract bool HasValueTypeConstraint { get; }
 		public abstract bool HasUnmanagedConstraint { get; }
+		public abstract bool AllowsRefLikeType { get; }
 		public abstract Nullability NullabilityConstraint { get; }
 
 		public TypeKind Kind {
