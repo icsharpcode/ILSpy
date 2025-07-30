@@ -32,7 +32,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
-    <NoWarn>1701;1702;1591;1573</NoWarn>
+    <NoWarn>$(NoWarn);1701;1702;1591;1573</NoWarn>
     <WarningsAsErrors>nullable</WarningsAsErrors>
 
     <DebugType>embedded</DebugType>

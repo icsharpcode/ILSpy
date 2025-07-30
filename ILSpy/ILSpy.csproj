@@ -110,11 +110,11 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <NoWarn>1701;1702;CA1001;CA2213</NoWarn>
+    <NoWarn>$(NoWarn);1701;1702;CA1001;CA2213</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <NoWarn>1701;1702;CA1001;CA2213</NoWarn>
+    <NoWarn>$(NoWarn);1701;1702;CA1001;CA2213</NoWarn>
   </PropertyGroup>
 
   <Import Project="$(VCToolsVersionPropsFile)" Condition="Exists('$(VCToolsVersionPropsFile)')" />
