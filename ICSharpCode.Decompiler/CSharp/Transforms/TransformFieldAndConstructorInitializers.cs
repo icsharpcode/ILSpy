@@ -382,7 +382,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 								}
 							}
 						}
-						else if (fieldOrPropertyDecl is PropertyDeclaration pd)
+						else if (fieldOrPropertyDecl is PropertyDeclaration { IsAutomaticProperty: true } pd)
 						{
 							pd.Initializer = assignment.Right.Detach();
 						}
