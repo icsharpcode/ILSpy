@@ -452,53 +452,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				var (currentFunction, parentContext) = this.workList.Dequeue();
 
-				if (currentFunction.Kind == ILFunctionKind.LocalFunction)
-				{
-					// assign names to local functions
-					if (!LocalFunctionDecompiler.ParseLocalFunctionName(currentFunction.Name, out _, out var newName) || !IsValidName(newName))
-						newName = null;
-					string nameWithoutNumber;
-					int number;
-					if (!string.IsNullOrEmpty(newName))
-					{
-						nameWithoutNumber = SplitName(newName, out number);
-					}
-					else
-					{
-						nameWithoutNumber = "f";
-						number = 1;
-					}
-					int count;
-					if (!parentContext.IsReservedVariableName(nameWithoutNumber, out int currentIndex))
-					{
-						count = 1;
-					}
-					else
-					{
-						if (currentIndex < number)
-							count = number;
-						else
-							count = Math.Max(number, currentIndex) + 1;
-					}
-					parentContext.ReserveVariableName(nameWithoutNumber, count);
-					if (count > 1)
-					{
-						newName = nameWithoutNumber + count.ToString();
-					}
-					else
-					{
-						newName = nameWithoutNumber;
-					}
-					currentFunction.Name = newName;
-					currentFunction.ReducedMethod.Name = newName;
-					parentContext.Add((MethodDefinitionHandle)currentFunction.ReducedMethod.MetadataToken, newName);
-				}
-
 				var nestedContext = new VariableScope(currentFunction, this.context, parentContext);
-				currentFunction.Body.AcceptVisitor(this, nestedContext);
 
 				foreach (var localFunction in currentFunction.LocalFunctions)
+				{
+					AssignNameToLocalFunction(localFunction, nestedContext);
 					workList.Enqueue((localFunction, nestedContext));
+				}
+
+				currentFunction.Body.AcceptVisitor(this, nestedContext);
 
 				if (currentFunction.Kind != ILFunctionKind.TopLevelFunction)
 				{
@@ -508,6 +470,47 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 				}
 			}
+		}
+
+		private static void AssignNameToLocalFunction(ILFunction function, VariableScope parentContext)
+		{
+			if (!LocalFunctionDecompiler.ParseLocalFunctionName(function.Name, out _, out var newName) || !IsValidName(newName))
+				newName = null;
+			string nameWithoutNumber;
+			int number;
+			if (!string.IsNullOrEmpty(newName))
+			{
+				nameWithoutNumber = SplitName(newName, out number);
+			}
+			else
+			{
+				nameWithoutNumber = "f";
+				number = 1;
+			}
+			int count;
+			if (!parentContext.IsReservedVariableName(nameWithoutNumber, out int currentIndex))
+			{
+				count = 1;
+			}
+			else
+			{
+				if (currentIndex < number)
+					count = number;
+				else
+					count = Math.Max(number, currentIndex) + 1;
+			}
+			parentContext.ReserveVariableName(nameWithoutNumber, count);
+			if (count > 1)
+			{
+				newName = nameWithoutNumber + count.ToString();
+			}
+			else
+			{
+				newName = nameWithoutNumber;
+			}
+			function.Name = newName;
+			function.ReducedMethod.Name = newName;
+			parentContext.Add((MethodDefinitionHandle)function.ReducedMethod.MetadataToken, newName);
 		}
 
 		Unit VisitChildren(ILInstruction inst, VariableScope context)
