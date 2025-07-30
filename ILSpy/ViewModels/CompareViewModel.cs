@@ -51,8 +51,6 @@ namespace ICSharpCode.ILSpy.ViewModels
 		private readonly AssemblyTreeModel assemblyTreeModel;
 		private LoadedAssembly leftAssembly;
 		private LoadedAssembly rightAssembly;
-		[AllowNull]
-		private LoadedAssembly[] assemblies;
 		private ComparisonEntryTreeNode root;
 		private bool updating = false;
 		private bool showIdentical;
@@ -239,7 +237,12 @@ namespace ICSharpCode.ILSpy.ViewModels
 						continue;
 					yield return new {
 						name = GetEntityText(item.Entity),
-						operation = item.Kind switch { DiffKind.Add => "added", DiffKind.Remove => "removed", DiffKind.Update => "changed" }
+						operation = item.Kind switch {
+							DiffKind.Add => "added",
+							DiffKind.Remove => "removed",
+							DiffKind.Update => "changed",
+							_ => throw new InvalidOperationException($"Unexpected DiffKind: {item.Kind}"),
+						}
 					};
 				}
 			}
@@ -352,7 +355,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				{
 					if (!namespaceEntries.TryGetValue(typeDef.Namespace, out var nsEntry))
 					{
-						namespaceEntries[typeDef.Namespace] = nsEntry = new Entry { Parent = root, Signature = typeDef.Namespace, Entity = ResolveNamespace(typeDef.Namespace, typeDef.ParentModule)! };
+						namespaceEntries[typeDef.Namespace] = nsEntry = new Entry { Parent = root, Signature = typeDef.Namespace, Entity = ResolveNamespace(typeDef.Namespace, typeDef.ParentModule!)! };
 						root.Children ??= new();
 						root.Children.Add(nsEntry);
 					}
