@@ -67,18 +67,15 @@
       "icsharpcode.decompiler": {
         "type": "Project",
         "dependencies": {
-          "System.Collections.Immutable": "[6.0.0, )",
-          "System.Reflection.Metadata": "[6.0.0, )"
+          "System.Collections.Immutable": "[9.0.0, )",
+          "System.Reflection.Metadata": "[9.0.0, )"
         }
       },
       "System.Collections.Immutable": {
         "type": "CentralTransitive",
         "requested": "[10.0.0-preview.6.25358.103, )",
-        "resolved": "6.0.0",
-        "contentHash": "l4zZJ1WU2hqpQQHXz1rvC3etVZN+2DLmQMO79FhOTZHMn8tDRr+WU287sbomD0BETlmKDn0ygUgVy9k5xkkJdA==",
-        "dependencies": {
-          "System.Runtime.CompilerServices.Unsafe": "6.0.0"
-        }
+        "resolved": "9.0.0",
+        "contentHash": "QhkXUl2gNrQtvPmtBTQHb0YsUrDiDQ2QS09YbtTTiSjGcf7NBqtYbrG/BE06zcBPCKEwQGzIv13IVdXNOSub2w=="
       }
     }
   }

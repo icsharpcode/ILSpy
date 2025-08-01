@@ -44,6 +44,7 @@
     <PackageVersion Include="System.Reflection.Metadata" Version="10.0.0-preview.6.25358.103" />
     <PackageVersion Include="System.Resources.Extensions" Version="10.0.0-preview.6.25358.103" />
     <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.7" />
     <PackageVersion Include="TomsToolbox.Composition.MicrosoftExtensions" Version="2.22.1" />
     <PackageVersion Include="TomsToolbox.Wpf.Composition" Version="2.22.0" />
     <PackageVersion Include="TomsToolbox.Wpf.Composition.AttributedModel" Version="2.22.1" />

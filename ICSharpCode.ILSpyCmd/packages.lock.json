@@ -52,6 +52,12 @@
           "NuGet.Packaging": "6.14.0"
         }
       },
+      "System.Security.Cryptography.Pkcs": {
+        "type": "Direct",
+        "requested": "[9.0.7, )",
+        "resolved": "9.0.7",
+        "contentHash": "6LROjtkO4UCv0MVnnR8Z6FwnRryT+Sz5dz8ZefZG6/yz1kQGaVUd6gAdXZtqNPORQwuXFrNGTWvi7f8hWRkiyg=="
+      },
       "TomsToolbox.Composition.Analyzer": {
         "type": "Direct",
         "requested": "[2.22.1, )",
@@ -336,19 +342,6 @@
         "resolved": "10.0.0-preview.6.25358.103",
         "contentHash": "JNwN+0tuqtHnELPl7P2T/OjWlgCdqB9fNuwAOh46W7t/2Z5HU+1ROqkiJCupwSVrXjSfV46lcas6HqhUC8BpYQ=="
       },
-      "System.Formats.Asn1": {
-        "type": "Transitive",
-        "resolved": "6.0.0",
-        "contentHash": "T6fD00dQ3NTbPDy31m4eQUwKW84s03z0N2C8HpOklyeaDgaJPa/TexP4/SkORMSOwc7WhKifnA6Ya33AkzmafA=="
-      },
-      "System.Security.Cryptography.Pkcs": {
-        "type": "Transitive",
-        "resolved": "6.0.4",
-        "contentHash": "LGbXi1oUJ9QgCNGXRO9ndzBL/GZgANcsURpMhNR8uO+rca47SZmciS3RSQUvlQRwK3QHZSHNOXzoMUASKA+Anw==",
-        "dependencies": {
-          "System.Formats.Asn1": "6.0.0"
-        }
-      },
       "System.Security.Cryptography.ProtectedData": {
         "type": "Transitive",
         "resolved": "4.4.0",
@@ -357,8 +350,8 @@
       "icsharpcode.decompiler": {
         "type": "Project",
         "dependencies": {
-          "System.Collections.Immutable": "[6.0.0, )",
-          "System.Reflection.Metadata": "[6.0.0, )"
+          "System.Collections.Immutable": "[9.0.0, )",
+          "System.Reflection.Metadata": "[9.0.0, )"
         }
       },
       "icsharpcode.ilspyx": {
@@ -424,8 +417,8 @@
       "System.Collections.Immutable": {
         "type": "CentralTransitive",
         "requested": "[10.0.0-preview.6.25358.103, )",
-        "resolved": "8.0.0",
-        "contentHash": "AurL6Y5BA1WotzlEvVaIDpqzpIPvYnnldxru8oXJU2yFxFUy3+pNXjXd1ymO+RA0rq0+590Q8gaz2l3Sr7fmqg=="
+        "resolved": "9.0.0",
+        "contentHash": "QhkXUl2gNrQtvPmtBTQHb0YsUrDiDQ2QS09YbtTTiSjGcf7NBqtYbrG/BE06zcBPCKEwQGzIv13IVdXNOSub2w=="
       },
       "System.Composition.AttributedModel": {
         "type": "CentralTransitive",

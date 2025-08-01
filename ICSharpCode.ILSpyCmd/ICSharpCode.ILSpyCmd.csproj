@@ -62,6 +62,7 @@
     <PackageReference Include="McMaster.Extensions.Hosting.CommandLine" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="NuGet.Protocol" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
 
   <Target Name="ILSpyUpdateAssemblyInfo" AfterTargets="ResolveProjectReferences">
