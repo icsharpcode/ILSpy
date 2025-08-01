@@ -108,6 +108,22 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return c;
 				if (ImplicitConstantExpressionConversion(resolveResult, toType))
 					return Conversion.ImplicitConstantExpressionConversion;
+			}
+			if (resolveResult is InterpolatedStringResolveResult)
+			{
+				if (toType.IsKnownType(KnownTypeCode.IFormattable) || toType.IsKnownType(KnownTypeCode.FormattableString))
+					return Conversion.ImplicitInterpolatedStringConversion;
+			}
+			if (resolveResult.Type.Kind == TypeKind.Dynamic)
+				return Conversion.ImplicitDynamicConversion;
+			c = AnonymousFunctionConversion(resolveResult, toType);
+			if (c != Conversion.None)
+				return c;
+			c = MethodGroupConversion(resolveResult, toType);
+			if (c != Conversion.None)
+				return c;
+			if (resolveResult.IsCompileTimeConstant)
+			{
 				c = StandardImplicitConversion(resolveResult.Type, toType, allowTuple);
 				if (c != Conversion.None)
 					return c;
@@ -139,20 +155,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				{
 					c = ImplicitConversion(resolveResult.Type, toType, allowUserDefined, allowTuple);
 				}
-				if (c != Conversion.None)
-					return c;
 			}
-			if (resolveResult is InterpolatedStringResolveResult)
-			{
-				if (toType.IsKnownType(KnownTypeCode.IFormattable) || toType.IsKnownType(KnownTypeCode.FormattableString))
-					return Conversion.ImplicitInterpolatedStringConversion;
-			}
-			if (resolveResult.Type.Kind == TypeKind.Dynamic)
-				return Conversion.ImplicitDynamicConversion;
-			c = AnonymousFunctionConversion(resolveResult, toType);
-			if (c != Conversion.None)
-				return c;
-			c = MethodGroupConversion(resolveResult, toType);
 			return c;
 		}
 
