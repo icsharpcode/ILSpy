@@ -176,6 +176,16 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		}
 
 		[Test]
+		public void NullableEnumerationConversion()
+		{
+			ResolveResult zero = new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), 0);
+			ResolveResult one = new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), 1);
+			C implicitEnumerationConversion = C.EnumerationConversion(true, true);
+			Assert.That(conversions.ImplicitConversion(zero, compilation.FindType(typeof(StringComparison?))), Is.EqualTo(implicitEnumerationConversion));
+			Assert.That(conversions.ImplicitConversion(one, compilation.FindType(typeof(StringComparison?))), Is.EqualTo(C.None));
+		}
+
+		[Test]
 		public void NullLiteralConversions()
 		{
 			Assert.That(ImplicitConversion(typeof(Null), typeof(int?)), Is.EqualTo(C.NullLiteralConversion));
