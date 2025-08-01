@@ -622,13 +622,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				{
 					// 'T v; SomeCall(out v);' can be combined to 'SomeCall(out T v);'
 					AstType type;
+					bool isOutVar = false;
 					if (context.Settings.AnonymousTypes && v.Type.ContainsAnonymousType())
 					{
 						type = new SimpleType("var");
+						isOutVar = true;
 					}
 					else if (dirExpr.Annotation<UseImplicitlyTypedOutAnnotation>() != null)
 					{
 						type = new SimpleType("var");
+						isOutVar = true;
 					}
 					else
 					{
@@ -652,6 +655,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					var ovd = new OutVarDeclarationExpression(type, name);
 					ovd.Variable.AddAnnotation(new ILVariableResolveResult(ilVariable));
 					ovd.CopyAnnotationsFrom(dirExpr);
+					if (isOutVar)
+					{
+						ovd.RemoveAnnotations<ResolveResult>();
+						ovd.AddAnnotation(new OutVarResolveResult(v.Type));
+					}
 					replacements.Add((dirExpr, ovd));
 				}
 				else
