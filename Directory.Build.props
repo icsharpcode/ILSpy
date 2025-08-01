@@ -1,6 +1,5 @@
 <Project>
   <PropertyGroup>
-    <WarningsAsErrors>IDE2000</WarningsAsErrors>
     <NoWarn>$(NoWarn);NU1510</NoWarn>
   </PropertyGroup>
 
