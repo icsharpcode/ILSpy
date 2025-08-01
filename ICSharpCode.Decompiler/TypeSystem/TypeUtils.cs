@@ -27,8 +27,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		public const int NativeIntSize = 6; // between 4 (Int32) and 8 (Int64)
 
-		public const GenericParameterAttributes AllowByRefLike = (GenericParameterAttributes)0x0020;
-
 		/// <summary>
 		/// Gets the size (in bytes) of the input type.
 		/// Returns <c>NativeIntSize</c> for pointer-sized types.

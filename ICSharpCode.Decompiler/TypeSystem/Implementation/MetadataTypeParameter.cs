@@ -119,7 +119,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override bool HasDefaultConstructorConstraint => (attr & GenericParameterAttributes.DefaultConstructorConstraint) != 0;
 		public override bool HasReferenceTypeConstraint => (attr & GenericParameterAttributes.ReferenceTypeConstraint) != 0;
 		public override bool HasValueTypeConstraint => (attr & GenericParameterAttributes.NotNullableValueTypeConstraint) != 0;
-		public override bool AllowsRefLikeType => (attr & TypeUtils.AllowByRefLike) != 0;
+		public override bool AllowsRefLikeType => (attr & SRMExtensions.AllowByRefLike) != 0;
 
 		public override bool HasUnmanagedConstraint {
 			get {

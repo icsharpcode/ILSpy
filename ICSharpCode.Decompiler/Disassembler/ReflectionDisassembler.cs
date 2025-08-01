@@ -1734,7 +1734,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					{
 						output.Write("valuetype ");
 					}
-					if ((gp.Attributes & TypeUtils.AllowByRefLike) == TypeUtils.AllowByRefLike)
+					if ((gp.Attributes & SRMExtensions.AllowByRefLike) == SRMExtensions.AllowByRefLike)
 					{
 						output.Write("byreflike ");
 					}
