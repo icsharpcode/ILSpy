@@ -28,6 +28,7 @@ using System.Threading;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
@@ -1732,6 +1733,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 					else if ((gp.Attributes & GenericParameterAttributes.NotNullableValueTypeConstraint) == GenericParameterAttributes.NotNullableValueTypeConstraint)
 					{
 						output.Write("valuetype ");
+					}
+					if ((gp.Attributes & TypeUtils.AllowByRefLike) == TypeUtils.AllowByRefLike)
+					{
+						output.Write("byreflike ");
 					}
 					if ((gp.Attributes & GenericParameterAttributes.DefaultConstructorConstraint) == GenericParameterAttributes.DefaultConstructorConstraint)
 					{

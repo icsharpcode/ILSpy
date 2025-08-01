@@ -98,6 +98,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		bool HasUnmanagedConstraint { get; }
 
 		/// <summary>
+		/// <see langword="true"/> if the <c>allows ref struct</c> constraint is specified for the type parameter.
+		/// </summary>
+		bool AllowsRefLikeType { get; }
+
+		/// <summary>
 		/// Nullability of the reference type constraint. (e.g. "where T : class?").
 		/// 
 		/// Note that the nullability of a use of the type parameter may differ from this.

@@ -2465,7 +2465,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		internal Constraint ConvertTypeParameterConstraint(ITypeParameter tp)
 		{
-			if (!tp.HasDefaultConstructorConstraint && !tp.HasReferenceTypeConstraint && !tp.HasValueTypeConstraint && tp.NullabilityConstraint != Nullability.NotNullable && tp.DirectBaseTypes.All(IsObjectOrValueType))
+			if (!tp.HasDefaultConstructorConstraint && !tp.HasReferenceTypeConstraint && !tp.HasValueTypeConstraint && !tp.AllowsRefLikeType && tp.NullabilityConstraint != Nullability.NotNullable && tp.DirectBaseTypes.All(IsObjectOrValueType))
 			{
 				return null;
 			}
@@ -2517,6 +2517,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (tp.HasDefaultConstructorConstraint && !tp.HasValueTypeConstraint)
 			{
 				c.BaseTypes.Add(new PrimitiveType("new"));
+			}
+			if (tp.AllowsRefLikeType)
+			{
+				c.BaseTypes.Add(new PrimitiveType("allows ref struct"));
 			}
 			return c;
 		}

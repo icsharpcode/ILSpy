@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Reflection;
+
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
@@ -24,6 +26,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public static class TypeUtils
 	{
 		public const int NativeIntSize = 6; // between 4 (Int32) and 8 (Int64)
+
+		public const GenericParameterAttributes AllowByRefLike = (GenericParameterAttributes)0x0020;
 
 		/// <summary>
 		/// Gets the size (in bytes) of the input type.
