@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 
@@ -42,8 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var requiredImports = new FindRequiredImports(context);
 			rootNode.AcceptVisitor(requiredImports);
 
-			var usingScope = new UsingScope();
-			rootNode.AddAnnotation(usingScope);
+			List<INamespace> resolvedNamespaces = new List<INamespace>();
 
 			if (context.Settings.UsingDeclarations)
 			{
@@ -64,11 +64,21 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						nsType = new MemberType { Target = nsType, MemberName = parts[i] };
 					}
-					if (nsType.ToTypeReference(NameLookupMode.TypeInUsingDeclaration) is TypeOrNamespaceReference reference)
-						usingScope.Usings.Add(reference);
+					var resolvedNamespace = context.TypeSystem.GetNamespaceByFullName(ns);
+					if (resolvedNamespace != null)
+					{
+						resolvedNamespaces.Add(resolvedNamespace);
+					}
 					rootNode.InsertChildAfter(insertionPoint, new UsingDeclaration { Import = nsType }, SyntaxTree.MemberRole);
 				}
 			}
+
+			var usingScope = new ResolvedUsingScope(
+				new CSharpTypeResolveContext(context.TypeSystem.MainModule),
+				context.TypeSystem.RootNamespace,
+				resolvedNamespaces.ToImmutableArray()
+			);
+			rootNode.AddAnnotation(usingScope);
 
 			// verify that the SimpleTypes refer to the correct type (no ambiguities)
 			rootNode.AcceptVisitor(new FullyQualifyAmbiguousTypeNamesVisitor(context, usingScope));
@@ -173,41 +183,35 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		sealed class FullyQualifyAmbiguousTypeNamesVisitor : DepthFirstAstVisitor
 		{
-			readonly Stack<CSharpTypeResolveContext> context;
 			readonly bool ignoreUsingScope;
 			readonly DecompilerSettings settings;
 
+			CSharpResolver resolver;
 			TypeSystemAstBuilder astBuilder;
 
-			public FullyQualifyAmbiguousTypeNamesVisitor(TransformContext context, UsingScope usingScope)
+			public FullyQualifyAmbiguousTypeNamesVisitor(TransformContext context, ResolvedUsingScope usingScope)
 			{
 				this.ignoreUsingScope = !context.Settings.UsingDeclarations;
 				this.settings = context.Settings;
+				this.resolver = new CSharpResolver(new CSharpTypeResolveContext(context.TypeSystem.MainModule));
 
-				CSharpTypeResolveContext currentContext;
-				if (ignoreUsingScope)
+				if (!ignoreUsingScope)
 				{
-					currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule);
-				}
-				else
-				{
-					this.context = new Stack<CSharpTypeResolveContext>();
 					if (!string.IsNullOrEmpty(context.CurrentTypeDefinition?.Namespace))
 					{
 						foreach (string ns in context.CurrentTypeDefinition.Namespace.Split('.'))
 						{
-							usingScope = new UsingScope(usingScope, ns);
+							usingScope = usingScope.WithNestedNamespace(ns);
 						}
 					}
-					currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule, usingScope.Resolve(context.TypeSystem), context.CurrentTypeDefinition);
-					this.context.Push(currentContext);
+					this.resolver = this.resolver.WithCurrentUsingScope(usingScope)
+						.WithCurrentTypeDefinition(context.CurrentTypeDefinition);
 				}
-				this.astBuilder = CreateAstBuilder(currentContext);
+				this.astBuilder = CreateAstBuilder(resolver);
 			}
 
-			TypeSystemAstBuilder CreateAstBuilder(CSharpTypeResolveContext context, IL.ILFunction function = null)
+			TypeSystemAstBuilder CreateAstBuilder(CSharpResolver resolver, IL.ILFunction function = null)
 			{
-				CSharpResolver resolver = new CSharpResolver(context);
 				if (function != null)
 				{
 					var variables = new Dictionary<string, IVariable>();
@@ -234,23 +238,23 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					base.VisitNamespaceDeclaration(namespaceDeclaration);
 					return;
 				}
-				var previousContext = context.Peek();
-				var usingScope = previousContext.CurrentUsingScope.UnresolvedUsingScope;
+				var previousResolver = resolver;
+				var previousAstBuilder = astBuilder;
+				var usingScope = resolver.CurrentUsingScope;
 				foreach (string ident in namespaceDeclaration.Identifiers)
 				{
-					usingScope = new UsingScope(usingScope, ident);
+					usingScope = usingScope.WithNestedNamespace(ident);
 				}
-				var currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule, usingScope.Resolve(previousContext.Compilation));
-				context.Push(currentContext);
+				resolver = resolver.WithCurrentUsingScope(usingScope);
 				try
 				{
-					astBuilder = CreateAstBuilder(currentContext);
+					astBuilder = CreateAstBuilder(resolver);
 					base.VisitNamespaceDeclaration(namespaceDeclaration);
 				}
 				finally
 				{
-					astBuilder = CreateAstBuilder(previousContext);
-					context.Pop();
+					astBuilder = previousAstBuilder;
+					resolver = previousResolver;
 				}
 			}
 
@@ -261,18 +265,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					base.VisitTypeDeclaration(typeDeclaration);
 					return;
 				}
-				var previousContext = context.Peek();
-				var currentContext = previousContext.WithCurrentTypeDefinition(typeDeclaration.GetSymbol() as ITypeDefinition);
-				context.Push(currentContext);
+				var previousResolver = resolver;
+				var previousAstBuilder = astBuilder;
+				resolver = resolver.WithCurrentTypeDefinition(typeDeclaration.GetSymbol() as ITypeDefinition);
 				try
 				{
-					astBuilder = CreateAstBuilder(currentContext);
+					astBuilder = CreateAstBuilder(resolver);
 					base.VisitTypeDeclaration(typeDeclaration);
 				}
 				finally
 				{
-					astBuilder = CreateAstBuilder(previousContext);
-					context.Pop();
+					astBuilder = previousAstBuilder;
+					resolver = previousResolver;
 				}
 			}
 
@@ -310,27 +314,27 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 				if (entityDeclaration.GetSymbol() is IMethod method)
 				{
-					var previousContext = context.Peek();
-					CSharpTypeResolveContext currentContext;
+					var previousResolver = resolver;
+					var previousAstBuilder = astBuilder;
 					if (CSharpDecompiler.IsWindowsFormsInitializeComponentMethod(method))
 					{
-						currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule);
+						var currentContext = new CSharpTypeResolveContext(previousResolver.Compilation.MainModule);
+						resolver = new CSharpResolver(currentContext);
 					}
 					else
 					{
-						currentContext = previousContext.WithCurrentMember(method);
+						resolver = resolver.WithCurrentMember(method);
 					}
-					context.Push(currentContext);
 					try
 					{
 						var function = entityDeclaration.Annotation<IL.ILFunction>();
-						astBuilder = CreateAstBuilder(currentContext, function);
+						astBuilder = CreateAstBuilder(resolver, function);
 						baseCall(entityDeclaration);
 					}
 					finally
 					{
-						astBuilder = CreateAstBuilder(previousContext);
-						context.Pop();
+						resolver = previousResolver;
+						astBuilder = previousAstBuilder;
 					}
 				}
 				else

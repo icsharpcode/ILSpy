@@ -2051,7 +2051,6 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			if (isExtensionMethodReference)
 			{
-				var resolver = this.resolver.WithCurrentUsingScope(this.expressionBuilder.statementBuilder.decompileRun.UsingScope.Resolve(this.resolver.Compilation));
 				result = resolver.ResolveMemberAccess(target, method.Name, typeArguments, NameLookupMode.InvocationTarget) as MethodGroupResolveResult;
 				if (result == null)
 					return false;

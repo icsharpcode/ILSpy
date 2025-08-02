@@ -341,7 +341,6 @@
     <Compile Include="CSharp\TypeSystem\ResolvedUsingScope.cs" />
     <Compile Include="CSharp\TypeSystem\SimpleTypeOrNamespaceReference.cs" />
     <Compile Include="CSharp\TypeSystem\TypeOrNamespaceReference.cs" />
-    <Compile Include="CSharp\TypeSystem\UsingScope.cs" />
     <Compile Include="DebugInfo\AsyncDebugInfo.cs" />
     <Compile Include="DebugInfo\ImportScopeInfo.cs" />
     <Compile Include="DebugInfo\DebugInfoGenerator.cs" />

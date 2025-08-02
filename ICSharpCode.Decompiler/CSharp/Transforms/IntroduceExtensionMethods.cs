@@ -42,63 +42,53 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			this.context = context;
 			this.conversions = CSharpConversions.Get(context.TypeSystem);
-			InitializeContext(rootNode.Annotation<UsingScope>());
+			InitializeContext(rootNode.Annotation<ResolvedUsingScope>());
 			rootNode.AcceptVisitor(this);
 		}
 
-		Stack<CSharpTypeResolveContext> resolveContextStack = new Stack<CSharpTypeResolveContext>();
-
-		void InitializeContext(UsingScope usingScope)
+		void InitializeContext(ResolvedUsingScope usingScope)
 		{
-			this.resolveContextStack = new Stack<CSharpTypeResolveContext>();
 			if (!string.IsNullOrEmpty(context.CurrentTypeDefinition?.Namespace))
 			{
 				foreach (string ns in context.CurrentTypeDefinition.Namespace.Split('.'))
 				{
-					usingScope = new UsingScope(usingScope, ns);
+					usingScope = usingScope.WithNestedNamespace(ns);
 				}
 			}
-			var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule, usingScope.Resolve(context.TypeSystem), context.CurrentTypeDefinition);
-			this.resolveContextStack.Push(currentContext);
+			var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule, usingScope, context.CurrentTypeDefinition);
 			this.resolver = new CSharpResolver(currentContext);
 		}
 
 		public override void VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration)
 		{
-			var previousContext = resolveContextStack.Peek();
-			var usingScope = previousContext.CurrentUsingScope.UnresolvedUsingScope;
+			var usingScope = resolver.CurrentUsingScope;
 			foreach (string ident in namespaceDeclaration.Identifiers)
 			{
-				usingScope = new UsingScope(usingScope, ident);
+				usingScope = usingScope.WithNestedNamespace(ident);
 			}
-			var currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule, usingScope.Resolve(previousContext.Compilation));
-			resolveContextStack.Push(currentContext);
+			var previousResolver = this.resolver;
 			try
 			{
-				this.resolver = new CSharpResolver(currentContext);
+				this.resolver = this.resolver.WithCurrentUsingScope(usingScope);
 				base.VisitNamespaceDeclaration(namespaceDeclaration);
 			}
 			finally
 			{
-				this.resolver = new CSharpResolver(previousContext);
-				resolveContextStack.Pop();
+				this.resolver = previousResolver;
 			}
 		}
 
 		public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
 		{
-			var previousContext = resolveContextStack.Peek();
-			var currentContext = previousContext.WithCurrentTypeDefinition(typeDeclaration.GetSymbol() as ITypeDefinition);
-			resolveContextStack.Push(currentContext);
+			var previousResolver = this.resolver;
+			this.resolver = resolver.WithCurrentTypeDefinition(typeDeclaration.GetSymbol() as ITypeDefinition);
 			try
 			{
-				this.resolver = new CSharpResolver(currentContext);
 				base.VisitTypeDeclaration(typeDeclaration);
 			}
 			finally
 			{
-				this.resolver = new CSharpResolver(previousContext);
-				resolveContextStack.Pop();
+				this.resolver = previousResolver;
 			}
 		}
 

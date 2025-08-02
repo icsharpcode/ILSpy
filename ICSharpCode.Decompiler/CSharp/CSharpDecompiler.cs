@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -30,6 +31,7 @@ using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
+using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Documentation;
@@ -518,11 +520,28 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		DecompileRun CreateDecompileRun()
+		DecompileRun CreateDecompileRun(HashSet<string> namespaces)
 		{
-			return new DecompileRun(settings) {
+			List<INamespace> resolvedNamespaces = new List<INamespace>();
+			foreach (var ns in namespaces)
+			{
+				var resolvedNamespace = typeSystem.GetNamespaceByFullName(ns);
+				if (resolvedNamespace != null)
+				{
+					resolvedNamespaces.Add(resolvedNamespace);
+				}
+			}
+
+			ResolvedUsingScope usingScope = new ResolvedUsingScope(
+				new CSharpTypeResolveContext(typeSystem.MainModule),
+				typeSystem.RootNamespace,
+				resolvedNamespaces.ToImmutableArray()
+			);
+
+			return new DecompileRun(settings, usingScope) {
 				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
-				CancellationToken = CancellationToken
+				CancellationToken = CancellationToken,
+				Namespaces = namespaces
 			};
 		}
 
@@ -554,9 +573,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		public SyntaxTree DecompileModuleAndAssemblyAttributes()
 		{
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainModule);
-			DecompileRun decompileRun = CreateDecompileRun();
+			var namespaces = new HashSet<string>();
 			syntaxTree = new SyntaxTree();
-			RequiredNamespaceCollector.CollectAttributeNamespaces(module, decompileRun.Namespaces);
+			RequiredNamespaceCollector.CollectAttributeNamespaces(module, namespaces);
+			DecompileRun decompileRun = CreateDecompileRun(namespaces);
 			DoDecompileModuleAndAssemblyAttributes(decompileRun, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompileRun, decompilationContext);
 			return syntaxTree;
@@ -640,9 +660,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		public SyntaxTree DecompileWholeModuleAsSingleFile(bool sortTypes)
 		{
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainModule);
-			var decompileRun = CreateDecompileRun();
 			syntaxTree = new SyntaxTree();
-			RequiredNamespaceCollector.CollectNamespaces(module, decompileRun.Namespaces);
+			var namespaces = new HashSet<string>();
+			RequiredNamespaceCollector.CollectNamespaces(module, namespaces);
+			var decompileRun = CreateDecompileRun(namespaces);
 			DoDecompileModuleAndAssemblyAttributes(decompileRun, decompilationContext, syntaxTree);
 			var typeDefs = metadata.GetTopLevelTypeDefinitions();
 			if (sortTypes)
@@ -662,8 +683,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public ILTransformContext CreateILTransformContext(ILFunction function)
 		{
-			var decompileRun = CreateDecompileRun();
-			RequiredNamespaceCollector.CollectNamespaces(function.Method, module, decompileRun.Namespaces);
+			var namespaces = new HashSet<string>();
+			RequiredNamespaceCollector.CollectNamespaces(function.Method, module, namespaces);
+			var decompileRun = CreateDecompileRun(namespaces);
 			return new ILTransformContext(function, typeSystem, DebugInfoProvider, settings) {
 				CancellationToken = CancellationToken,
 				DecompileRun = decompileRun
@@ -907,17 +929,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (types == null)
 				throw new ArgumentNullException(nameof(types));
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainModule);
-			var decompileRun = CreateDecompileRun();
 			syntaxTree = new SyntaxTree();
-
+			var namespaces = new HashSet<string>();
 			foreach (var type in types)
 			{
 				CancellationToken.ThrowIfCancellationRequested();
 				if (type.IsNil)
 					throw new ArgumentException("types contains null element");
-				RequiredNamespaceCollector.CollectNamespaces(type, module, decompileRun.Namespaces);
+				RequiredNamespaceCollector.CollectNamespaces(type, module, namespaces);
 			}
 
+			var decompileRun = CreateDecompileRun(namespaces);
 			DoDecompileTypes(types, decompileRun, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompileRun, decompilationContext);
 			return syntaxTree;
@@ -949,9 +971,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (type.ParentModule != typeSystem.MainModule)
 				throw new NotSupportedException($"Type {fullTypeName} was not found in the module being decompiled, but only in {type.ParentModule.Name}");
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainModule);
-			var decompileRun = CreateDecompileRun();
+			var namespaces = new HashSet<string>();
 			syntaxTree = new SyntaxTree();
-			RequiredNamespaceCollector.CollectNamespaces(type.MetadataToken, module, decompileRun.Namespaces);
+			RequiredNamespaceCollector.CollectNamespaces(type.MetadataToken, module, namespaces);
+			var decompileRun = CreateDecompileRun(namespaces);
 			DoDecompileTypes(new[] { (TypeDefinitionHandle)type.MetadataToken }, decompileRun, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompileRun, decompilationContext);
 			return syntaxTree;
@@ -984,13 +1007,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (definitions == null)
 				throw new ArgumentNullException(nameof(definitions));
 			syntaxTree = new SyntaxTree();
-			var decompileRun = CreateDecompileRun();
+			var namespaces = new HashSet<string>();
 			foreach (var entity in definitions)
 			{
 				if (entity.IsNil)
 					throw new ArgumentException("definitions contains null element");
-				RequiredNamespaceCollector.CollectNamespaces(entity, module, decompileRun.Namespaces);
+				RequiredNamespaceCollector.CollectNamespaces(entity, module, namespaces);
 			}
+			var decompileRun = CreateDecompileRun(namespaces);
 
 			bool first = true;
 			ITypeDefinition parentTypeDef = null;

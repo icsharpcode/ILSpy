@@ -831,7 +831,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		public static INamespace GetNamespaceByFullName(this ICompilation compilation, string name)
+#nullable enable
+		public static INamespace? GetNamespaceByFullName(this ICompilation compilation, string? name)
 		{
 			if (string.IsNullOrEmpty(name))
 				return compilation.RootNamespace;

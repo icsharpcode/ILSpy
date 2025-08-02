@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.compilation = decompilationContext.Compilation;
 			this.resolver = new CSharpResolver(new CSharpTypeResolveContext(
 				compilation.MainModule,
-				decompileRun.UsingScope.Resolve(compilation),
+				decompileRun.UsingScope,
 				decompilationContext.CurrentTypeDefinition,
 				decompilationContext.CurrentMember
 				));
