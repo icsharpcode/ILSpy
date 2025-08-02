@@ -260,12 +260,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// it will look in all other assemblies of the compilation.
 		/// </remarks>
 		/// <seealso cref="FullTypeName(string)"/>
-		public static ITypeReference ParseReflectionName(string reflectionTypeName)
+		public static IType ParseReflectionName(string reflectionTypeName, ITypeResolveContext resolveContext)
 		{
 			if (reflectionTypeName == null)
 				throw new ArgumentNullException(nameof(reflectionTypeName));
 			int pos = 0;
-			ITypeReference r = ParseReflectionName(reflectionTypeName, ref pos);
+			IType r = ParseReflectionName(reflectionTypeName, ref pos).Resolve(resolveContext);
 			if (pos < reflectionTypeName.Length)
 				throw new ReflectionNameParseException(pos, "Expected end of type name");
 			return r;

@@ -1952,8 +1952,8 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		{
 			var compilationWithSystemCore = new SimpleCompilation(SystemCore, Mscorlib);
 
-			var typeRef = ReflectionHelper.ParseReflectionName("System.Func`2, System.Core");
-			ITypeDefinition c = typeRef.Resolve(new SimpleTypeResolveContext(compilationWithSystemCore)).GetDefinition();
+			var type = ReflectionHelper.ParseReflectionName("System.Func`2, System.Core", new SimpleTypeResolveContext(compilationWithSystemCore));
+			ITypeDefinition c = type.GetDefinition();
 			Assert.That(c, Is.Not.Null, "System.Func<,> not found");
 			Assert.That(c.ParentModule.AssemblyName, Is.EqualTo("mscorlib"));
 		}

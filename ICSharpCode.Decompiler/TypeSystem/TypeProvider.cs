@@ -168,8 +168,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			try
 			{
-				return ReflectionHelper.ParseReflectionName(name)
-					.Resolve(module != null ? new SimpleTypeResolveContext(module) : new SimpleTypeResolveContext(compilation));
+				return ReflectionHelper.ParseReflectionName(name, module != null ? new SimpleTypeResolveContext(module) : new SimpleTypeResolveContext(compilation));
 			}
 			catch (ReflectionNameParseException ex)
 			{

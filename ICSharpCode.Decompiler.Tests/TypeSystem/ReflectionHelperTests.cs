@@ -159,138 +159,157 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		public void ParseReflectionName()
 		{
 			var context = new SimpleTypeResolveContext(compilation.MainModule);
-			Assert.That(ReflectionHelper.ParseReflectionName("System.Int32").Resolve(context).ReflectionName, Is.EqualTo("System.Int32"));
-			Assert.That(ReflectionHelper.ParseReflectionName("System.Int32&").Resolve(context).ReflectionName, Is.EqualTo("System.Int32&"));
-			Assert.That(ReflectionHelper.ParseReflectionName("System.Int32*&").Resolve(context).ReflectionName, Is.EqualTo("System.Int32*&"));
-			Assert.That(ReflectionHelper.ParseReflectionName(typeof(int).AssemblyQualifiedName).Resolve(context).ReflectionName, Is.EqualTo("System.Int32"));
-			Assert.That(ReflectionHelper.ParseReflectionName("System.Action`1[[System.String]]").Resolve(context).ReflectionName, Is.EqualTo("System.Action`1[[System.String]]"));
-			Assert.That(ReflectionHelper.ParseReflectionName("System.Action`1[[System.String, mscorlib]]").Resolve(context).ReflectionName, Is.EqualTo("System.Action`1[[System.String]]"));
-			Assert.That(ReflectionHelper.ParseReflectionName(typeof(int[,][,,]).AssemblyQualifiedName).Resolve(context).ReflectionName, Is.EqualTo("System.Int32[,,][,]"));
-			Assert.That(ReflectionHelper.ParseReflectionName("System.Environment+SpecialFolder").Resolve(context).ReflectionName, Is.EqualTo("System.Environment+SpecialFolder"));
+			Assert.That(ReflectionHelper.ParseReflectionName("System.Int32", context).ReflectionName, Is.EqualTo("System.Int32"));
+			Assert.That(ReflectionHelper.ParseReflectionName("System.Int32&", context).ReflectionName, Is.EqualTo("System.Int32&"));
+			Assert.That(ReflectionHelper.ParseReflectionName("System.Int32*&", context).ReflectionName, Is.EqualTo("System.Int32*&"));
+			Assert.That(ReflectionHelper.ParseReflectionName(typeof(int).AssemblyQualifiedName, context).ReflectionName, Is.EqualTo("System.Int32"));
+			Assert.That(ReflectionHelper.ParseReflectionName("System.Action`1[[System.String]]", context).ReflectionName, Is.EqualTo("System.Action`1[[System.String]]"));
+			Assert.That(ReflectionHelper.ParseReflectionName("System.Action`1[[System.String, mscorlib]]", context).ReflectionName, Is.EqualTo("System.Action`1[[System.String]]"));
+			Assert.That(ReflectionHelper.ParseReflectionName(typeof(int[,][,,]).AssemblyQualifiedName, context).ReflectionName, Is.EqualTo("System.Int32[,,][,]"));
+			Assert.That(ReflectionHelper.ParseReflectionName("System.Environment+SpecialFolder", context).ReflectionName, Is.EqualTo("System.Environment+SpecialFolder"));
 		}
 
 		[Test]
 		public void ParseOpenGenericReflectionName()
 		{
-			ITypeReference typeRef = ReflectionHelper.ParseReflectionName("System.Converter`2[[`0],[``0]]");
-			Assert.That(typeRef.Resolve(new SimpleTypeResolveContext(compilation.MainModule)).ReflectionName, Is.EqualTo("System.Converter`2[[`0],[``0]]"));
+			IType converter = ReflectionHelper.ParseReflectionName("System.Converter`2[[`0],[``0]]", new SimpleTypeResolveContext(compilation.MainModule));
+			Assert.That(converter.ReflectionName, Is.EqualTo("System.Converter`2[[`0],[``0]]"));
 			IMethod convertAll = compilation.FindType(typeof(List<>)).GetMethods(m => m.Name == "ConvertAll").Single();
-			Assert.That(typeRef.Resolve(new SimpleTypeResolveContext(convertAll)).ReflectionName, Is.EqualTo("System.Converter`2[[`0],[``0]]"));
+			IType converter2 = ReflectionHelper.ParseReflectionName("System.Converter`2[[`0],[``0]]", new SimpleTypeResolveContext(convertAll));
+			Assert.That(converter2.ReflectionName, Is.EqualTo("System.Converter`2[[`0],[``0]]"));
 		}
 
 		[Test]
 		public void ArrayOfTypeParameter()
 		{
 			var context = new SimpleTypeResolveContext(compilation.MainModule);
-			Assert.That(ReflectionHelper.ParseReflectionName("`0[,]").Resolve(context).ReflectionName, Is.EqualTo("`0[,]"));
+			Assert.That(ReflectionHelper.ParseReflectionName("`0[,]", context).ReflectionName, Is.EqualTo("`0[,]"));
 		}
 
 		[Test]
 		public void ParseNullReflectionName()
 		{
-			Assert.Throws<ArgumentNullException>(() => ReflectionHelper.ParseReflectionName(null));
+			var context = new SimpleTypeResolveContext(compilation.MainModule);
+			Assert.Throws<ArgumentNullException>(() => ReflectionHelper.ParseReflectionName(null, context));
 		}
 
 		[Test]
 		public void ParseInvalidReflectionName1()
 		{
-			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName(string.Empty));
+			var context = new SimpleTypeResolveContext(compilation.MainModule);
+			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName(string.Empty, context));
 		}
 
 		[Test]
 		public void ParseInvalidReflectionName2()
 		{
-			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("`"));
+			var context = new SimpleTypeResolveContext(compilation.MainModule);
+			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("`", context));
 		}
 
 		[Test]
 		public void ParseInvalidReflectionName3()
 		{
-			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("``"));
+			var context = new SimpleTypeResolveContext(compilation.MainModule);
+			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("``", context));
 		}
 
 		[Test]
 		public void ParseInvalidReflectionName4()
 		{
-			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Action`A"));
+			var context = new SimpleTypeResolveContext(compilation.MainModule);
+			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Action`A", context));
 		}
 
 		[Test]
 		public void ParseInvalidReflectionName5()
 		{
-			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Environment+"));
+			var context = new SimpleTypeResolveContext(compilation.MainModule);
+			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Environment+", context));
 		}
 
 		[Test]
 		public void ParseInvalidReflectionName5b()
 		{
-			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Environment+`"));
+			var context = new SimpleTypeResolveContext(compilation.MainModule);
+			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Environment+`", context));
 		}
 
 		[Test]
 		public void ParseInvalidReflectionName6()
 		{
-			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Int32["));
+			var context = new SimpleTypeResolveContext(compilation.MainModule);
+			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Int32[", context));
 		}
 
 		[Test]
 		public void ParseInvalidReflectionName7()
 		{
-			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Int32[`]"));
+			var context = new SimpleTypeResolveContext(compilation.MainModule);
+			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Int32[`]", context));
 		}
 
 		[Test]
 		public void ParseInvalidReflectionName8()
 		{
-			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Int32[,"));
+			var context = new SimpleTypeResolveContext(compilation.MainModule);
+			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Int32[,", context));
 		}
 
 		[Test]
 		public void ParseInvalidReflectionName9()
 		{
-			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Int32]"));
+			var context = new SimpleTypeResolveContext(compilation.MainModule);
+			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Int32]", context));
 		}
 
 		[Test]
 		public void ParseInvalidReflectionName10()
 		{
-			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Int32*a"));
+			var context = new SimpleTypeResolveContext(compilation.MainModule);
+			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Int32*a", context));
 		}
 
 		[Test]
 		public void ParseInvalidReflectionName11()
 		{
-			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Action`1[[]]"));
+			var context = new SimpleTypeResolveContext(compilation.MainModule);
+			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Action`1[[]]", context));
 		}
 
 		[Test]
 		public void ParseInvalidReflectionName12()
 		{
-			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Action`1[[System.Int32]a]"));
+			var context = new SimpleTypeResolveContext(compilation.MainModule);
+			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Action`1[[System.Int32]a]", context));
 		}
 
 		[Test]
 		public void ParseInvalidReflectionName13()
 		{
-			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Action`1[[System.Int32],]"));
+			var context = new SimpleTypeResolveContext(compilation.MainModule);
+			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Action`1[[System.Int32],]", context));
 		}
 
 		[Test]
 		public void ParseInvalidReflectionName14()
 		{
-			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Action`1[[System.Int32]"));
+			var context = new SimpleTypeResolveContext(compilation.MainModule);
+			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Action`1[[System.Int32]", context));
 		}
 
 		[Test]
 		public void ParseInvalidReflectionName15()
 		{
-			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Action`1[[System.Int32"));
+			var context = new SimpleTypeResolveContext(compilation.MainModule);
+			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Action`1[[System.Int32", context));
 		}
 
 		[Test]
 		public void ParseInvalidReflectionName16()
 		{
-			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Action`1[[System.Int32],[System.String"));
+			var context = new SimpleTypeResolveContext(compilation.MainModule);
+			Assert.Throws<ReflectionNameParseException>(() => ReflectionHelper.ParseReflectionName("System.Action`1[[System.Int32],[System.String", context));
 		}
 	}
 }

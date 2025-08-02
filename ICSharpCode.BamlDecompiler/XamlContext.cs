@@ -27,10 +27,9 @@ using System.Reflection.Metadata;
 using System.Threading;
 using System.Xml.Linq;
 
-using ICSharpCode.Decompiler.TypeSystem;
-
 using ICSharpCode.BamlDecompiler.Baml;
 using ICSharpCode.BamlDecompiler.Xaml;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.BamlDecompiler
 {
@@ -123,7 +122,7 @@ namespace ICSharpCode.BamlDecompiler
 			{
 				var typeRec = Baml.TypeIdMap[id];
 				(fullAssemblyName, assembly) = Baml.ResolveAssembly(typeRec.AssemblyId);
-				type = ReflectionHelper.ParseReflectionName(typeRec.TypeFullName).Resolve(new SimpleTypeResolveContext(TypeSystem));
+				type = ReflectionHelper.ParseReflectionName(typeRec.TypeFullName, new SimpleTypeResolveContext(TypeSystem));
 			}
 
 			var clrNs = type.Namespace;

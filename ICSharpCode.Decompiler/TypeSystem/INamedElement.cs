@@ -46,8 +46,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the full reflection name of the element.
 		/// </summary>
 		/// <remarks>
-		/// For types, the reflection name can be parsed back into a ITypeReference by using
-		/// <see cref="ReflectionHelper.ParseReflectionName(string)"/>.
+		/// For types, the reflection name can be parsed back into a IType by using
+		/// <see cref="ReflectionHelper.ParseReflectionName(string, ITypeResolveContext)"/>.
 		/// </remarks>
 		/// <returns>
 		/// "System.Int32[]" for int[]<br/>
