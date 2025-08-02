@@ -18,6 +18,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -29,31 +31,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public static class ReflectionHelper
 	{
-		/// <summary>
-		/// A reflection class used to represent <c>null</c>.
-		/// </summary>
-		public sealed class Null { }
-
-		/// <summary>
-		/// A reflection class used to represent <c>dynamic</c>.
-		/// </summary>
-		public sealed class Dynamic { }
-
-		/// <summary>
-		/// A reflection class used to represent <c>nint</c>.
-		/// </summary>
-		public sealed class NInt { }
-
-		/// <summary>
-		/// A reflection class used to represent <c>nuint</c>.
-		/// </summary>
-		public sealed class NUInt { }
-
-		/// <summary>
-		/// A reflection class used to represent an unbound type argument.
-		/// </summary>
-		public sealed class UnboundTypeArgument { }
-
 		#region ICompilation.FindType
 		/// <summary>
 		/// Retrieves the specified type in this compilation.
@@ -65,7 +42,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </remarks>
 		public static IType FindType(this ICompilation compilation, Type type)
 		{
-			return type.ToTypeReference().Resolve(new SimpleTypeResolveContext(compilation));
+			return ParseReflectionName(type.AssemblyQualifiedName, new SimpleTypeResolveContext(compilation));
 		}
 
 		public static IType FindType(this ICompilation compilation, StackType stackType, Sign sign = Sign.None)
@@ -78,88 +55,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return new ByReferenceType(SpecialType.UnknownType);
 				default:
 					return compilation.FindType(stackType.ToKnownTypeCode(sign));
-			}
-		}
-		#endregion
-
-		#region Type.ToTypeReference()
-		/// <summary>
-		/// Creates a reference to the specified type.
-		/// </summary>
-		/// <param name="type">The type to be converted.</param>
-		/// <returns>Returns the type reference.</returns>
-		/// <remarks>
-		/// If the type is open (contains type parameters '`0' or '``0'),
-		/// an <see cref="ITypeResolveContext"/> with the appropriate CurrentTypeDefinition/CurrentMember is required
-		/// to resolve the type reference.
-		/// For closed types, the root type resolve context for the compilation is sufficient.
-		/// </remarks>
-		public static ITypeReference ToTypeReference(this Type type)
-		{
-			if (type == null)
-				return SpecialType.UnknownType;
-			if (type.IsGenericType && !type.IsGenericTypeDefinition)
-			{
-				ITypeReference def = ToTypeReference(type.GetGenericTypeDefinition());
-				Type[] arguments = type.GetGenericArguments();
-				ITypeReference[] args = new ITypeReference[arguments.Length];
-				bool allUnbound = true;
-				for (int i = 0; i < arguments.Length; i++)
-				{
-					args[i] = ToTypeReference(arguments[i]);
-					allUnbound &= args[i].Equals(SpecialType.UnboundTypeArgument);
-				}
-				if (allUnbound)
-					return def;
-				else
-					return new ParameterizedTypeReference(def, args);
-			}
-			else if (type.IsArray)
-			{
-				return new ArrayTypeReference(ToTypeReference(type.GetElementType()), type.GetArrayRank());
-			}
-			else if (type.IsPointer)
-			{
-				return new PointerTypeReference(ToTypeReference(type.GetElementType()));
-			}
-			else if (type.IsByRef)
-			{
-				return new ByReferenceTypeReference(ToTypeReference(type.GetElementType()));
-			}
-			else if (type.IsGenericParameter)
-			{
-				if (type.DeclaringMethod != null)
-				{
-					return TypeParameterReference.Create(SymbolKind.Method, type.GenericParameterPosition);
-				}
-				else
-				{
-					return TypeParameterReference.Create(SymbolKind.TypeDefinition, type.GenericParameterPosition);
-				}
-			}
-			else if (type.DeclaringType != null)
-			{
-				if (type == typeof(Dynamic))
-					return SpecialType.Dynamic;
-				else if (type == typeof(NInt))
-					return SpecialType.NInt;
-				else if (type == typeof(NUInt))
-					return SpecialType.NUInt;
-				else if (type == typeof(Null))
-					return SpecialType.NullType;
-				else if (type == typeof(UnboundTypeArgument))
-					return SpecialType.UnboundTypeArgument;
-				ITypeReference baseTypeRef = ToTypeReference(type.DeclaringType);
-				int typeParameterCount;
-				string name = SplitTypeParameterCountFromReflectionName(type.Name, out typeParameterCount);
-				return new NestedTypeReference(baseTypeRef, name, typeParameterCount);
-			}
-			else
-			{
-				IModuleReference assemblyReference = new DefaultAssemblyReference(type.Assembly.FullName);
-				int typeParameterCount;
-				string name = SplitTypeParameterCountFromReflectionName(type.Name, out typeParameterCount);
-				return new GetClassTypeReference(assemblyReference, type.Namespace, name, typeParameterCount);
 			}
 		}
 		#endregion
@@ -215,16 +110,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		/// <summary>
-		/// Creates a reference to the specified type.
-		/// </summary>
-		/// <param name="typeCode">The type to be converted.</param>
-		/// <returns>Returns the type reference.</returns>
-		public static ITypeReference ToTypeReference(this TypeCode typeCode)
-		{
-			return KnownTypeReference.Get((KnownTypeCode)typeCode);
-		}
-
-		/// <summary>
 		/// Gets the type code for the specified type, or TypeCode.Empty if none of the other type codes match.
 		/// </summary>
 		public static TypeCode GetTypeCode(this IType type)
@@ -264,11 +149,112 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (reflectionTypeName == null)
 				throw new ArgumentNullException(nameof(reflectionTypeName));
-			int pos = 0;
-			IType r = ParseReflectionName(reflectionTypeName, ref pos).Resolve(resolveContext);
-			if (pos < reflectionTypeName.Length)
-				throw new ReflectionNameParseException(pos, "Expected end of type name");
-			return r;
+			if (!TypeName.TryParse(reflectionTypeName.AsSpan(), out var result))
+			{
+				throw new ReflectionNameParseException(0, "Invalid type name: " + reflectionTypeName);
+			}
+			return ResolveTypeName(result, resolveContext);
+		}
+
+		private static IType ResolveTypeName(TypeName result, ITypeResolveContext resolveContext)
+		{
+			if (result.IsArray)
+			{
+				return new ArrayType(
+					resolveContext.Compilation,
+					ResolveTypeName(result.GetElementType(), resolveContext),
+					result.GetArrayRank()
+				);
+			}
+			else if (result.IsByRef)
+			{
+				return new ByReferenceType(
+					ResolveTypeName(result.GetElementType(), resolveContext)
+				);
+			}
+			else if (result.IsConstructedGenericType)
+			{
+				IType genericType = ResolveTypeName(result.GetGenericTypeDefinition(), resolveContext);
+				var genericArgs = result.GetGenericArguments();
+				if (genericType.TypeParameterCount == 0)
+				{
+					return genericType;
+				}
+
+				IType[] resolvedTypes = new IType[genericType.TypeParameterCount];
+				for (int i = 0; i < genericArgs.Length; i++)
+				{
+					if (i < genericArgs.Length)
+						resolvedTypes[i] = ResolveTypeName(genericArgs[i], resolveContext);
+					else
+						resolvedTypes[i] = SpecialType.UnknownType;
+				}
+				return new ParameterizedType(genericType, resolvedTypes);
+			}
+			else if (result.IsNested)
+			{
+				var declaringType = ResolveTypeName(result.DeclaringType, resolveContext).GetDefinition();
+				var plainName = SplitTypeParameterCountFromReflectionName(result.Name, out int tpc);
+				if (declaringType != null)
+				{
+					foreach (var type in declaringType.NestedTypes)
+					{
+						if (type.Name == plainName && type.TypeParameterCount == tpc + declaringType.TypeParameterCount)
+							return type;
+					}
+				}
+				return new UnknownType(new FullTypeName(result.FullName));
+			}
+			else if (result.IsPointer)
+			{
+				return new PointerType(
+					ResolveTypeName(result.GetElementType(), resolveContext)
+				);
+			}
+			else
+			{
+				Debug.Assert(result.IsSimple);
+				if (result.FullName.Length > 1 && result.FullName[0] == '`')
+				{
+					if (result.FullName.Length > 2 && result.FullName[1] == '`')
+					{
+						if (int.TryParse(result.FullName.Substring(2), out int index))
+						{
+							if (resolveContext.CurrentMember is IMethod m && index < m.TypeParameters.Count)
+							{
+								return m.TypeParameters[index];
+							}
+							return DummyTypeParameter.GetMethodTypeParameter(index);
+						}
+					}
+					else if (int.TryParse(result.FullName.Substring(1), out int index))
+					{
+						if (resolveContext.CurrentTypeDefinition != null && index < resolveContext.CurrentTypeDefinition.TypeParameterCount)
+						{
+							return resolveContext.CurrentTypeDefinition.TypeParameters[index];
+						}
+						return DummyTypeParameter.GetClassTypeParameter(index);
+					}
+				}
+				var topLevelTypeName = new TopLevelTypeName(result.FullName);
+				if (result.AssemblyName != null)
+				{
+					var module = resolveContext.Compilation.FindModuleByAssemblyNameInfo(result.AssemblyName);
+					if (module != null)
+					{
+						return (IType)module.GetTypeDefinition(topLevelTypeName) ?? new UnknownType(topLevelTypeName);
+					}
+				}
+
+				foreach (var module in resolveContext.Compilation.Modules)
+				{
+					var type = module.GetTypeDefinition(topLevelTypeName);
+					if (type != null)
+						return type;
+				}
+
+				return new UnknownType(topLevelTypeName);
+			}
 		}
 
 		static bool IsReflectionNameSpecialCharacter(char c)

@@ -27,9 +27,7 @@
 using System;
 
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
-using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -109,21 +107,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public override string ToString(CSharpFormattingOptions formattingOptions)
 		{
 			return Keyword;
-		}
-
-		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)
-		{
-			KnownTypeCode typeCode = GetTypeCodeForPrimitiveType(this.Keyword);
-			if (typeCode == KnownTypeCode.None)
-			{
-				if (this.Keyword == "__arglist")
-					return SpecialType.ArgList;
-				return new UnknownType(null, this.Keyword);
-			}
-			else
-			{
-				return KnownTypeReference.Get(typeCode);
-			}
 		}
 
 		public static KnownTypeCode GetTypeCodeForPrimitiveType(string keyword)

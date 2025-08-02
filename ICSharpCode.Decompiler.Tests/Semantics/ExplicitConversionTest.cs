@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.Semantics;
@@ -31,7 +30,7 @@ using NUnit.Framework;
 namespace ICSharpCode.Decompiler.Tests.Semantics
 {
 	using C = Conversion;
-	using dynamic = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.Dynamic;
+	using dynamic = ConversionTest.Dynamic;
 
 	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class ExplicitConversionsTest
@@ -50,8 +49,8 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 
 		Conversion ExplicitConversion(Type from, Type to)
 		{
-			IType from2 = compilation.FindType(from);
-			IType to2 = compilation.FindType(to);
+			IType from2 = compilation.FindType(from).AcceptVisitor(new ConversionTest.ReplaceSpecialTypesVisitor());
+			IType to2 = compilation.FindType(to).AcceptVisitor(new ConversionTest.ReplaceSpecialTypesVisitor());
 			return conversions.ExplicitConversion(from2, to2);
 		}
 

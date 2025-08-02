@@ -26,10 +26,6 @@
 
 using System.Collections.Generic;
 
-using ICSharpCode.Decompiler.CSharp.Resolver;
-using ICSharpCode.Decompiler.CSharp.TypeSystem;
-using ICSharpCode.Decompiler.TypeSystem;
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class MemberType : AstType
@@ -118,39 +114,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return o != null && this.IsDoubleColon == o.IsDoubleColon
 				&& MatchString(this.MemberName, o.MemberName) && this.Target.DoMatch(o.Target, match)
 				&& this.TypeArguments.DoMatch(o.TypeArguments, match);
-		}
-
-		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)
-		{
-			if (interningProvider == null)
-				interningProvider = InterningProvider.Dummy;
-
-			TypeOrNamespaceReference t;
-			if (this.IsDoubleColon)
-			{
-				SimpleType st = this.Target as SimpleType;
-				if (st != null)
-				{
-					t = interningProvider.Intern(new AliasNamespaceReference(interningProvider.Intern(st.Identifier)));
-				}
-				else
-				{
-					t = null;
-				}
-			}
-			else
-			{
-				t = this.Target.ToTypeReference(lookupMode, interningProvider) as TypeOrNamespaceReference;
-			}
-			if (t == null)
-				return SpecialType.UnknownType;
-			var typeArguments = new List<ITypeReference>();
-			foreach (var ta in this.TypeArguments)
-			{
-				typeArguments.Add(ta.ToTypeReference(lookupMode, interningProvider));
-			}
-			string memberName = interningProvider.Intern(this.MemberName);
-			return interningProvider.Intern(new MemberTypeOrNamespaceReference(t, memberName, interningProvider.InternList(typeArguments), lookupMode));
 		}
 	}
 }

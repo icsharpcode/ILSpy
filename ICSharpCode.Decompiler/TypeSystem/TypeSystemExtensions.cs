@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Semantics;
@@ -796,6 +797,25 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		public static IModule FindModuleByReference(this ICompilation compilation, IAssemblyReference assemblyName)
+		{
+			foreach (var module in compilation.Modules)
+			{
+				if (string.Equals(module.FullAssemblyName, assemblyName.FullName, StringComparison.OrdinalIgnoreCase))
+				{
+					return module;
+				}
+			}
+			foreach (var module in compilation.Modules)
+			{
+				if (string.Equals(module.Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase))
+				{
+					return module;
+				}
+			}
+			return null;
+		}
+
+		public static IModule FindModuleByAssemblyNameInfo(this ICompilation compilation, AssemblyNameInfo assemblyName)
 		{
 			foreach (var module in compilation.Modules)
 			{

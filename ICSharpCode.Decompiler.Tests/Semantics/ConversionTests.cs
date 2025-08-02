@@ -33,14 +33,33 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 {
 	// assign short names to the fake reflection types
 	using C = Conversion;
-	using dynamic = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.Dynamic;
-	using nint = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.NInt;
-	using nuint = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.NUInt;
-	using Null = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.Null;
+	using dynamic = ConversionTest.Dynamic;
+	using nint = ConversionTest.NInt;
+	using nuint = ConversionTest.NUInt;
 
 	[TestFixture, Parallelizable(ParallelScope.All)]
 	public unsafe class ConversionTest
 	{
+		/// <summary>
+		/// A reflection class used to represent <c>null</c>.
+		/// </summary>
+		public sealed class Null { }
+
+		/// <summary>
+		/// A reflection class used to represent <c>dynamic</c>.
+		/// </summary>
+		public sealed class Dynamic { }
+
+		/// <summary>
+		/// A reflection class used to represent <c>nint</c>.
+		/// </summary>
+		public sealed class NInt { }
+
+		/// <summary>
+		/// A reflection class used to represent <c>nuint</c>.
+		/// </summary>
+		public sealed class NUInt { }
+
 		CSharpConversions conversions;
 		ICompilation compilation;
 
@@ -53,17 +72,37 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			conversions = new CSharpConversions(compilation);
 		}
 
+		public class ReplaceSpecialTypesVisitor : TypeVisitor
+		{
+			public override IType VisitTypeDefinition(ITypeDefinition type)
+			{
+				switch (type.FullName)
+				{
+					case "ICSharpCode.Decompiler.Tests.Semantics.ConversionTest.Dynamic":
+						return SpecialType.Dynamic;
+					case "ICSharpCode.Decompiler.Tests.Semantics.ConversionTest.Null":
+						return SpecialType.NullType;
+					case "ICSharpCode.Decompiler.Tests.Semantics.ConversionTest.NInt":
+						return SpecialType.NInt;
+					case "ICSharpCode.Decompiler.Tests.Semantics.ConversionTest.NUInt":
+						return SpecialType.NUInt;
+					default:
+						return base.VisitTypeDefinition(type);
+				}
+			}
+		}
+
 		Conversion ImplicitConversion(Type from, Type to)
 		{
-			IType from2 = compilation.FindType(from);
-			IType to2 = compilation.FindType(to);
+			IType from2 = compilation.FindType(from).AcceptVisitor(new ReplaceSpecialTypesVisitor());
+			IType to2 = compilation.FindType(to).AcceptVisitor(new ReplaceSpecialTypesVisitor());
 			return conversions.ImplicitConversion(from2, to2);
 		}
 
 		Conversion ExplicitConversion(Type from, Type to)
 		{
-			IType from2 = compilation.FindType(from);
-			IType to2 = compilation.FindType(to);
+			IType from2 = compilation.FindType(from).AcceptVisitor(new ReplaceSpecialTypesVisitor());
+			IType to2 = compilation.FindType(to).AcceptVisitor(new ReplaceSpecialTypesVisitor());
 			return conversions.ExplicitConversion(from2, to2);
 		}
 
@@ -509,9 +548,9 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 
 		bool IntegerLiteralConversion(object value, Type to)
 		{
-			IType fromType = compilation.FindType(value.GetType());
+			IType fromType = compilation.FindType(value.GetType()).AcceptVisitor(new ReplaceSpecialTypesVisitor());
 			ConstantResolveResult crr = new ConstantResolveResult(fromType, value);
-			IType to2 = compilation.FindType(to);
+			IType to2 = compilation.FindType(to).AcceptVisitor(new ReplaceSpecialTypesVisitor());
 			return conversions.ImplicitConversion(crr, to2).IsValid;
 		}
 
@@ -587,18 +626,18 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 
 		int BetterConversion(Type s, Type t1, Type t2)
 		{
-			IType sType = compilation.FindType(s);
-			IType t1Type = compilation.FindType(t1);
-			IType t2Type = compilation.FindType(t2);
+			IType sType = compilation.FindType(s).AcceptVisitor(new ReplaceSpecialTypesVisitor());
+			IType t1Type = compilation.FindType(t1).AcceptVisitor(new ReplaceSpecialTypesVisitor());
+			IType t2Type = compilation.FindType(t2).AcceptVisitor(new ReplaceSpecialTypesVisitor());
 			return conversions.BetterConversion(sType, t1Type, t2Type);
 		}
 
 		int BetterConversion(object value, Type t1, Type t2)
 		{
-			IType fromType = compilation.FindType(value.GetType());
+			IType fromType = compilation.FindType(value.GetType()).AcceptVisitor(new ReplaceSpecialTypesVisitor());
 			ConstantResolveResult crr = new ConstantResolveResult(fromType, value);
-			IType t1Type = compilation.FindType(t1);
-			IType t2Type = compilation.FindType(t2);
+			IType t1Type = compilation.FindType(t1).AcceptVisitor(new ReplaceSpecialTypesVisitor());
+			IType t2Type = compilation.FindType(t2).AcceptVisitor(new ReplaceSpecialTypesVisitor());
 			return conversions.BetterConversion(crr, t1Type, t2Type);
 		}
 

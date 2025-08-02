@@ -26,10 +26,6 @@
 
 using System.Collections.Generic;
 
-using ICSharpCode.Decompiler.CSharp.Resolver;
-using ICSharpCode.Decompiler.CSharp.TypeSystem;
-using ICSharpCode.Decompiler.TypeSystem;
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class SimpleType : AstType
@@ -63,11 +59,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 			{
 				return other == null || other.IsNull;
-			}
-
-			public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider)
-			{
-				return SpecialType.UnknownType;
 			}
 		}
 		#endregion
@@ -145,25 +136,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			SimpleType o = other as SimpleType;
 			return o != null && MatchString(this.Identifier, o.Identifier) && this.TypeArguments.DoMatch(o.TypeArguments, match);
-		}
-
-		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)
-		{
-			if (interningProvider == null)
-				interningProvider = InterningProvider.Dummy;
-			var typeArguments = new List<ITypeReference>();
-			foreach (var ta in this.TypeArguments)
-			{
-				typeArguments.Add(ta.ToTypeReference(lookupMode, interningProvider));
-			}
-			string identifier = interningProvider.Intern(this.Identifier);
-			if (typeArguments.Count == 0 && string.IsNullOrEmpty(identifier))
-			{
-				// empty SimpleType is used for typeof(List<>).
-				return SpecialType.UnboundTypeArgument;
-			}
-			var t = new SimpleTypeOrNamespaceReference(identifier, interningProvider.InternList(typeArguments), lookupMode);
-			return interningProvider.Intern(t);
 		}
 	}
 }
