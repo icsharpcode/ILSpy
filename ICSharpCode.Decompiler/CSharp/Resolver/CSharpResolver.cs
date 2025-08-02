@@ -162,14 +162,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <summary>
 		/// Gets the current using scope that is used to look up identifiers as class names.
 		/// </summary>
-		public ResolvedUsingScope CurrentUsingScope {
+		public UsingScope CurrentUsingScope {
 			get { return context.CurrentUsingScope; }
 		}
 
 		/// <summary>
 		/// Sets the current using scope that is used to look up identifiers as class names.
 		/// </summary>
-		public CSharpResolver WithCurrentUsingScope(ResolvedUsingScope usingScope)
+		public CSharpResolver WithCurrentUsingScope(UsingScope usingScope)
 		{
 			return WithContext(context.WithUsingScope(usingScope));
 		}
@@ -1656,8 +1656,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		ResolveResult LookInCurrentUsingScope(string identifier, IReadOnlyList<IType> typeArguments, bool isInUsingDeclaration, bool parameterizeResultType)
 		{
 			// look in current namespace definitions
-			ResolvedUsingScope currentUsingScope = this.CurrentUsingScope;
-			for (ResolvedUsingScope u = currentUsingScope; u != null; u = u.Parent)
+			UsingScope currentUsingScope = this.CurrentUsingScope;
+			for (UsingScope u = currentUsingScope; u != null; u = u.Parent)
 			{
 				var resultInNamespace = LookInUsingScopeNamespace(u, u.Namespace, identifier, typeArguments, parameterizeResultType);
 				if (resultInNamespace != null)
@@ -1714,7 +1714,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return null;
 		}
 
-		ResolveResult LookInUsingScopeNamespace(ResolvedUsingScope usingScope, INamespace n, string identifier, IReadOnlyList<IType> typeArguments, bool parameterizeResultType)
+		ResolveResult LookInUsingScopeNamespace(UsingScope usingScope, INamespace n, string identifier, IReadOnlyList<IType> typeArguments, bool parameterizeResultType)
 		{
 			if (n == null)
 				return null;
@@ -1764,7 +1764,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (identifier == "global")
 				return new NamespaceResolveResult(compilation.RootNamespace);
 
-			for (ResolvedUsingScope n = this.CurrentUsingScope; n != null; n = n.Parent)
+			for (UsingScope n = this.CurrentUsingScope; n != null; n = n.Parent)
 			{
 				if (n.ExternAliases.Contains(identifier))
 				{
@@ -2190,7 +2190,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			extensionMethodGroups = new List<List<IMethod>>();
 			List<IMethod> m;
-			for (ResolvedUsingScope scope = currentUsingScope; scope != null; scope = scope.Parent)
+			for (UsingScope scope = currentUsingScope; scope != null; scope = scope.Parent)
 			{
 				INamespace ns = scope.Namespace;
 				if (ns != null)

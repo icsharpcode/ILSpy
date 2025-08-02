@@ -42,11 +42,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			this.context = context;
 			this.conversions = CSharpConversions.Get(context.TypeSystem);
-			InitializeContext(rootNode.Annotation<ResolvedUsingScope>());
+			InitializeContext(rootNode.Annotation<UsingScope>());
 			rootNode.AcceptVisitor(this);
 		}
 
-		void InitializeContext(ResolvedUsingScope usingScope)
+		void InitializeContext(UsingScope usingScope)
 		{
 			if (!string.IsNullOrEmpty(context.CurrentTypeDefinition?.Namespace))
 			{

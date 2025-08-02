@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 			}
 
-			var usingScope = new ResolvedUsingScope(
+			var usingScope = new UsingScope(
 				new CSharpTypeResolveContext(context.TypeSystem.MainModule),
 				context.TypeSystem.RootNamespace,
 				resolvedNamespaces.ToImmutableArray()
@@ -189,7 +189,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			CSharpResolver resolver;
 			TypeSystemAstBuilder astBuilder;
 
-			public FullyQualifyAmbiguousTypeNamesVisitor(TransformContext context, ResolvedUsingScope usingScope)
+			public FullyQualifyAmbiguousTypeNamesVisitor(TransformContext context, UsingScope usingScope)
 			{
 				this.ignoreUsingScope = !context.Settings.UsingDeclarations;
 				this.settings = context.Settings;

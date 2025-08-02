@@ -34,14 +34,14 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 	/// Represents a scope that contains "using" statements.
 	/// This is either the mo itself, or a namespace declaration.
 	/// </summary>
-	public class ResolvedUsingScope
+	public class UsingScope
 	{
 		readonly CSharpTypeResolveContext parentContext;
 
 		internal readonly ConcurrentDictionary<string, ResolveResult> ResolveCache = new ConcurrentDictionary<string, ResolveResult>();
 		internal List<List<IMethod>>? AllExtensionMethods;
 
-		public ResolvedUsingScope(CSharpTypeResolveContext context, INamespace @namespace, ImmutableArray<INamespace> usings)
+		public UsingScope(CSharpTypeResolveContext context, INamespace @namespace, ImmutableArray<INamespace> usings)
 		{
 			this.parentContext = context ?? throw new ArgumentNullException(nameof(context));
 			this.Usings = usings;
@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 
 		public INamespace Namespace { get; }
 
-		public ResolvedUsingScope Parent {
+		public UsingScope Parent {
 			get { return parentContext.CurrentUsingScope; }
 		}
 
@@ -66,10 +66,10 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		/// </summary>
 		public bool HasAlias(string identifier) => false;
 
-		internal ResolvedUsingScope WithNestedNamespace(string simpleName)
+		internal UsingScope WithNestedNamespace(string simpleName)
 		{
 			var ns = Namespace.GetChildNamespace(simpleName) ?? new DummyNamespace(Namespace, simpleName);
-			return new ResolvedUsingScope(
+			return new UsingScope(
 				parentContext.WithUsingScope(this),
 				ns,
 				[]);

@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public Metadata.MetadataFile PEFile => TypeSystem.MainModule.MetadataFile;
 
 		internal DecompileRun? DecompileRun { get; set; }
-		internal ResolvedUsingScope? UsingScope => DecompileRun?.UsingScope;
+		internal UsingScope? UsingScope => DecompileRun?.UsingScope;
 
 		CSharpResolver? csharpResolver;
 

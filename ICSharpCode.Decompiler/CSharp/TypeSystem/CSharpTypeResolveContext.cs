@@ -25,12 +25,12 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 	public sealed class CSharpTypeResolveContext : ITypeResolveContext
 	{
 		readonly IModule module;
-		readonly ResolvedUsingScope currentUsingScope;
+		readonly UsingScope currentUsingScope;
 		readonly ITypeDefinition currentTypeDefinition;
 		readonly IMember currentMember;
 		readonly string[] methodTypeParameterNames;
 
-		public CSharpTypeResolveContext(IModule module, ResolvedUsingScope usingScope = null, ITypeDefinition typeDefinition = null, IMember member = null)
+		public CSharpTypeResolveContext(IModule module, UsingScope usingScope = null, ITypeDefinition typeDefinition = null, IMember member = null)
 		{
 			if (module == null)
 				throw new ArgumentNullException(nameof(module));
@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			this.currentMember = member;
 		}
 
-		private CSharpTypeResolveContext(IModule module, ResolvedUsingScope usingScope, ITypeDefinition typeDefinition, IMember member, string[] methodTypeParameterNames)
+		private CSharpTypeResolveContext(IModule module, UsingScope usingScope, ITypeDefinition typeDefinition, IMember member, string[] methodTypeParameterNames)
 		{
 			this.module = module;
 			this.currentUsingScope = usingScope;
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			this.methodTypeParameterNames = methodTypeParameterNames;
 		}
 
-		public ResolvedUsingScope CurrentUsingScope {
+		public UsingScope CurrentUsingScope {
 			get { return currentUsingScope; }
 		}
 
@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			return WithCurrentMember(member);
 		}
 
-		public CSharpTypeResolveContext WithUsingScope(ResolvedUsingScope usingScope)
+		public CSharpTypeResolveContext WithUsingScope(UsingScope usingScope)
 		{
 			return new CSharpTypeResolveContext(module, usingScope, currentTypeDefinition, currentMember, methodTypeParameterNames);
 		}

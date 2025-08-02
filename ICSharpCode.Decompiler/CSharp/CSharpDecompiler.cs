@@ -532,7 +532,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 
-			ResolvedUsingScope usingScope = new ResolvedUsingScope(
+			UsingScope usingScope = new UsingScope(
 				new CSharpTypeResolveContext(typeSystem.MainModule),
 				typeSystem.RootNamespace,
 				resolvedNamespaces.ToImmutableArray()

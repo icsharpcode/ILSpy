@@ -495,7 +495,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				// Look if there's an alias to the target type
 				if (UseAliases)
 				{
-					for (ResolvedUsingScope usingScope = resolver.CurrentUsingScope; usingScope != null; usingScope = usingScope.Parent)
+					for (UsingScope usingScope = resolver.CurrentUsingScope; usingScope != null; usingScope = usingScope.Parent)
 					{
 						foreach (var pair in usingScope.UsingAliases)
 						{
@@ -643,7 +643,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				// Look if there's an alias to the target namespace
 				if (UseAliases)
 				{
-					for (ResolvedUsingScope usingScope = resolver.CurrentUsingScope; usingScope != null; usingScope = usingScope.Parent)
+					for (UsingScope usingScope = resolver.CurrentUsingScope; usingScope != null; usingScope = usingScope.Parent)
 					{
 						foreach (var pair in usingScope.UsingAliases)
 						{
