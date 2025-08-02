@@ -23,7 +23,6 @@ using System.Collections.Generic;
 using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
-using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -211,8 +210,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				possibleIndexVariables.Add(stloc.Variable, (stloc.ChildIndex, stloc.Value));
 				return true;
 			}
-			var resolveContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule, context.UsingScope);
-			(var kind, var newPath, var values, var targetVariable) = AccessPathElement.GetAccessPath(instructions[pos], rootType, context.Settings, resolveContext, possibleIndexVariables);
+			(var kind, var newPath, var values, var targetVariable) = AccessPathElement.GetAccessPath(instructions[pos], rootType, context.Settings, context.CSharpResolver, possibleIndexVariables);
 			if (kind == AccessPathKind.Invalid || target != targetVariable)
 				return false;
 			// Treat last element separately:
@@ -302,7 +300,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public static (AccessPathKind Kind, List<AccessPathElement> Path, List<ILInstruction>? Values, ILVariable? Target) GetAccessPath(
 			ILInstruction instruction, IType rootType, DecompilerSettings? settings = null,
-			CSharpTypeResolveContext? resolveContext = null,
+			CSharpResolver? resolver = null,
 			Dictionary<ILVariable, (int Index, ILInstruction Value)>? possibleIndexVariables = null)
 		{
 			List<AccessPathElement> path = new List<AccessPathElement>();
@@ -319,7 +317,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (!(call is CallVirt || call is Call))
 							goto default;
 						method = call.Method;
-						if (resolveContext != null && !IsMethodApplicable(method, call.Arguments, rootType, resolveContext, settings))
+						if (resolver != null && !IsMethodApplicable(method, call.Arguments, rootType, resolver, settings))
 							goto default;
 						inst = call.Arguments[0];
 						if (inst is LdObjIfRef ldObjIfRef)
@@ -329,7 +327,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (method.IsAccessor)
 						{
 							if (method.AccessorOwner is IProperty property &&
-								!CanBeUsedInInitializer(property, resolveContext, kind))
+								!CanBeUsedInInitializer(property, resolver, kind))
 							{
 								goto default;
 							}
@@ -433,14 +431,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return (kind, path, values, target);
 		}
 
-		private static bool CanBeUsedInInitializer(IProperty property, CSharpTypeResolveContext? resolveContext, AccessPathKind kind)
+		private static bool CanBeUsedInInitializer(IProperty property, ITypeResolveContext? resolveContext, AccessPathKind kind)
 		{
 			if (property.CanSet && (property.Accessibility == property.Setter.Accessibility || IsAccessorAccessible(property.Setter, resolveContext)))
 				return true;
 			return kind != AccessPathKind.Setter;
 		}
 
-		private static bool IsAccessorAccessible(IMethod setter, CSharpTypeResolveContext? resolveContext)
+		private static bool IsAccessorAccessible(IMethod setter, ITypeResolveContext? resolveContext)
 		{
 			if (resolveContext == null)
 				return true;
@@ -448,7 +446,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return lookup.IsAccessible(setter, allowProtectedAccess: setter.DeclaringTypeDefinition == resolveContext.CurrentTypeDefinition);
 		}
 
-		static bool IsMethodApplicable(IMethod method, IReadOnlyList<ILInstruction> arguments, IType rootType, CSharpTypeResolveContext resolveContext, DecompilerSettings? settings)
+		static bool IsMethodApplicable(IMethod method, IReadOnlyList<ILInstruction> arguments, IType rootType, CSharpResolver resolver, DecompilerSettings? settings)
 		{
 			if (method.IsStatic && !method.IsExtensionMethod)
 				return false;
@@ -460,7 +458,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (settings?.ExtensionMethodsInCollectionInitializers == false)
 					return false;
-				if (!CSharp.Transforms.IntroduceExtensionMethods.CanTransformToExtensionMethodCall(method, resolveContext, ignoreTypeArguments: true))
+				if (!resolver.CanTransformToExtensionMethodCall(method, ignoreTypeArguments: true))
 					return false;
 			}
 			var targetType = GetReturnTypeFromInstruction(arguments[0]) ?? rootType;
@@ -476,7 +474,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true;
 				// always use unspecialized member, otherwise type inference fails
 				method = (IMethod)method.MemberDefinition;
-				new TypeInference(resolveContext.Compilation)
+				new TypeInference(resolver.Compilation)
 					.InferTypeArguments(
 						method.TypeParameters,
 						// TODO : this is not entirely correct... we need argument type information to resolve Add methods properly

@@ -22,9 +22,11 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 
+using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -51,6 +53,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		internal DecompileRun? DecompileRun { get; set; }
 		internal ResolvedUsingScope? UsingScope => DecompileRun?.UsingScope.Resolve(TypeSystem);
+
+		CSharpResolver? csharpResolver;
+
+		internal CSharpResolver CSharpResolver {
+			get {
+				var resolver = LazyInit.VolatileRead(ref csharpResolver);
+				if (resolver != null)
+					return resolver;
+				return LazyInit.GetOrSet(ref csharpResolver, new CSharpResolver(new CSharpTypeResolveContext(TypeSystem.MainModule, UsingScope)));
+			}
+		}
 
 		public ILTransformContext(ILFunction function, IDecompilerTypeSystem typeSystem, IDebugInfoProvider? debugInfo, DecompilerSettings? settings = null)
 		{

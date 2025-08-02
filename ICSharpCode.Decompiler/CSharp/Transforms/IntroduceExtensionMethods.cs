@@ -205,41 +205,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 				pos++;
 			}
-			return CanTransformToExtensionMethodCall(resolver, method, typeArguments, target, args, argNames);
-		}
-
-		public static bool CanTransformToExtensionMethodCall(CSharpTypeResolveContext resolveContext,
-			InvocationExpression invocationExpression)
-		{
-			return CanTransformToExtensionMethodCall(new CSharpResolver(resolveContext),
-				invocationExpression, out _, out _, out _);
-		}
-
-		public static bool CanTransformToExtensionMethodCall(CSharpResolver resolver, IMethod method,
-			IReadOnlyList<IType> typeArguments, ResolveResult target, ResolveResult[] arguments, string[] argumentNames)
-		{
-			if (target is LambdaResolveResult)
-				return false;
-			var rr = resolver.ResolveMemberAccess(target, method.Name, typeArguments, NameLookupMode.InvocationTarget) as MethodGroupResolveResult;
-			if (rr == null)
-				return false;
-			var or = rr.PerformOverloadResolution(resolver.CurrentTypeResolveContext.Compilation, arguments, argumentNames, allowExtensionMethods: true);
-			if (or == null || or.IsAmbiguous)
-				return false;
-			return method.Equals(or.GetBestCandidateWithSubstitutedTypeArguments())
-				&& CSharpResolver.IsEligibleExtensionMethod(target.Type, method, useTypeInference: false, out _);
-		}
-
-		public static bool CanTransformToExtensionMethodCall(IMethod method, CSharpTypeResolveContext resolveContext, bool ignoreTypeArguments = false, bool ignoreArgumentNames = true)
-		{
-			if (method.Parameters.Count == 0)
-				return false;
-			var targetType = method.Parameters.Select(p => new ResolveResult(p.Type)).First();
-			var paramTypes = method.Parameters.Skip(1).Select(p => new ResolveResult(p.Type)).ToArray();
-			var paramNames = ignoreArgumentNames ? null : method.Parameters.SelectReadOnlyArray(p => p.Name);
-			var typeArgs = ignoreTypeArguments ? Empty<IType>.Array : method.TypeArguments.ToArray();
-			var resolver = new CSharpResolver(resolveContext);
-			return CanTransformToExtensionMethodCall(resolver, method, typeArgs, targetType, paramTypes, argumentNames: paramNames);
+			return resolver.CanTransformToExtensionMethodCall(method, typeArguments, target, args, argNames);
 		}
 	}
 }

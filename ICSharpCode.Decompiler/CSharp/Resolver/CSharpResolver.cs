@@ -2954,5 +2954,33 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 											 new[] { lhs, opResult.Operands[1] });
 		}
 		#endregion
+
+		#region CanTransformToExtensionMethodCall
+		public bool CanTransformToExtensionMethodCall(IMethod method,
+	IReadOnlyList<IType> typeArguments, ResolveResult target, ResolveResult[] arguments, string[] argumentNames)
+		{
+			if (target is LambdaResolveResult)
+				return false;
+			var rr = ResolveMemberAccess(target, method.Name, typeArguments, NameLookupMode.InvocationTarget) as MethodGroupResolveResult;
+			if (rr == null)
+				return false;
+			var or = rr.PerformOverloadResolution(CurrentTypeResolveContext.Compilation, arguments, argumentNames, allowExtensionMethods: true);
+			if (or == null || or.IsAmbiguous)
+				return false;
+			return method.Equals(or.GetBestCandidateWithSubstitutedTypeArguments())
+				&& CSharpResolver.IsEligibleExtensionMethod(target.Type, method, useTypeInference: false, out _);
+		}
+
+		public bool CanTransformToExtensionMethodCall(IMethod method, bool ignoreTypeArguments = false, bool ignoreArgumentNames = true)
+		{
+			if (method.Parameters.Count == 0)
+				return false;
+			var targetType = method.Parameters.Select(p => new ResolveResult(p.Type)).First();
+			var paramTypes = method.Parameters.Skip(1).Select(p => new ResolveResult(p.Type)).ToArray();
+			var paramNames = ignoreArgumentNames ? null : method.Parameters.SelectReadOnlyArray(p => p.Name);
+			var typeArgs = ignoreTypeArguments ? Empty<IType>.Array : method.TypeArguments.ToArray();
+			return CanTransformToExtensionMethodCall(method, typeArgs, targetType, paramTypes, argumentNames: paramNames);
+		}
+		#endregion
 	}
 }

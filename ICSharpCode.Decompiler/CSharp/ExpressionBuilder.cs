@@ -83,7 +83,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal readonly DecompilerSettings settings;
 		readonly CancellationToken cancellationToken;
 
-		public ExpressionBuilder(StatementBuilder statementBuilder, IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, ILFunction currentFunction, DecompilerSettings settings, CancellationToken cancellationToken)
+		public ExpressionBuilder(StatementBuilder statementBuilder, IDecompilerTypeSystem typeSystem,
+			ITypeResolveContext decompilationContext, ILFunction currentFunction, DecompilerSettings settings,
+			DecompileRun decompileRun, CancellationToken cancellationToken)
 		{
 			Debug.Assert(decompilationContext != null);
 			this.statementBuilder = statementBuilder;
@@ -93,7 +95,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.settings = settings;
 			this.cancellationToken = cancellationToken;
 			this.compilation = decompilationContext.Compilation;
-			this.resolver = new CSharpResolver(new CSharpTypeResolveContext(compilation.MainModule, null, decompilationContext.CurrentTypeDefinition, decompilationContext.CurrentMember));
+			this.resolver = new CSharpResolver(new CSharpTypeResolveContext(
+				compilation.MainModule,
+				decompileRun.UsingScope.Resolve(compilation),
+				decompilationContext.CurrentTypeDefinition,
+				decompilationContext.CurrentMember
+				));
 			this.astBuilder = new TypeSystemAstBuilder(resolver);
 			this.astBuilder.AlwaysUseShortTypeNames = true;
 			this.astBuilder.AddResolveResultAnnotations = true;
