@@ -7,6 +7,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		extension<T>(ICollection<T> collection)
 		{
 			public bool IsEmpty => collection.Count == 0;
+
+		public void AddIfNotNull(T item) { }
+
+		public static void StaticExtension() { }
 	}
 }
 }
