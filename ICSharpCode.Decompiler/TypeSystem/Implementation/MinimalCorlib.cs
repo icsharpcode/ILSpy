@@ -174,6 +174,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			IType IEntity.DeclaringType => null;
 
 			bool ITypeDefinition.HasExtensions => false;
+			ExtensionInfo ITypeDefinition.ExtensionInfo => null;
 			bool ITypeDefinition.IsReadOnly => false;
 
 			TypeKind IType.Kind => typeKind;

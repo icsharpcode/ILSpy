@@ -28,6 +28,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public interface ITypeDefinition : ITypeDefinitionOrUnknown, IType, IEntity
 	{
+		ExtensionInfo? ExtensionInfo { get; }
 		IReadOnlyList<ITypeDefinition> NestedTypes { get; }
 		IReadOnlyList<IMember> Members { get; }
 
