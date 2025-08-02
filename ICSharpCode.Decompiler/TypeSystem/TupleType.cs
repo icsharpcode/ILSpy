@@ -375,44 +375,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 	}
 
-	public class TupleTypeReference : ITypeReference
-	{
-		/// <summary>
-		/// Gets the types of the tuple elements.
-		/// </summary>
-		public ImmutableArray<ITypeReference> ElementTypes { get; }
-
-		/// <summary>
-		/// Gets the names of the tuple elements.
-		/// </summary>
-		public ImmutableArray<string> ElementNames { get; }
-
-		public IModuleReference ValueTupleAssembly { get; }
-
-		public TupleTypeReference(ImmutableArray<ITypeReference> elementTypes)
-		{
-			this.ElementTypes = elementTypes;
-		}
-
-		public TupleTypeReference(ImmutableArray<ITypeReference> elementTypes,
-			ImmutableArray<string> elementNames = default(ImmutableArray<string>),
-			IModuleReference valueTupleAssembly = null)
-		{
-			this.ValueTupleAssembly = valueTupleAssembly;
-			this.ElementTypes = elementTypes;
-			this.ElementNames = elementNames;
-		}
-
-		public IType Resolve(ITypeResolveContext context)
-		{
-			return new TupleType(context.Compilation,
-				ElementTypes.Select(t => t.Resolve(context)).ToImmutableArray(),
-				ElementNames,
-				ValueTupleAssembly?.Resolve(context)
-			);
-		}
-	}
-
 	public static class TupleTypeExtensions
 	{
 		public static IType TupleUnderlyingTypeOrSelf(this IType type)

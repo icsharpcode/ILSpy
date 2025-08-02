@@ -335,12 +335,8 @@
     <Compile Include="CSharp\Transforms\PrettifyAssignments.cs" />
     <Compile Include="CSharp\Transforms\RemoveCLSCompliantAttribute.cs" />
     <Compile Include="CSharp\TranslationContext.cs" />
-    <Compile Include="CSharp\TypeSystem\AliasNamespaceReference.cs" />
     <Compile Include="CSharp\TypeSystem\CSharpTypeResolveContext.cs" />
-    <Compile Include="CSharp\TypeSystem\MemberTypeOrNamespaceReference.cs" />
     <Compile Include="CSharp\TypeSystem\UsingScope.cs" />
-    <Compile Include="CSharp\TypeSystem\SimpleTypeOrNamespaceReference.cs" />
-    <Compile Include="CSharp\TypeSystem\TypeOrNamespaceReference.cs" />
     <Compile Include="DebugInfo\AsyncDebugInfo.cs" />
     <Compile Include="DebugInfo\ImportScopeInfo.cs" />
     <Compile Include="DebugInfo\DebugInfoGenerator.cs" />
@@ -620,7 +616,6 @@
     <Compile Include="TypeSystem\Implementation\DefaultParameter.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultVariable.cs" />
     <Compile Include="TypeSystem\Implementation\DummyTypeParameter.cs" />
-    <Compile Include="TypeSystem\Implementation\GetClassTypeReference.cs" />
     <Compile Include="TypeSystem\Implementation\GetMembersHelper.cs" />
     <Compile Include="TypeSystem\Implementation\KnownTypeCache.cs" />
     <Compile Include="TypeSystem\Implementation\MergedNamespace.cs" />

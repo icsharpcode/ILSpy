@@ -148,14 +148,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			IModule resolvedModule = module?.GetDeclaringModule(handle);
 			var fullTypeName = handle.GetFullTypeName(reader);
-			IType type;
+			IType type = null;
 			if (resolvedModule != null)
 			{
 				type = resolvedModule.GetTypeDefinition(fullTypeName);
 			}
 			else
 			{
-				type = GetClassTypeReference.ResolveInAllAssemblies(compilation, in fullTypeName);
+				foreach (var asm in compilation.Modules)
+				{
+					type = asm.GetTypeDefinition(fullTypeName);
+					if (type != null)
+						return type;
+				}
 			}
 			return type ?? new UnknownType(fullTypeName, IsReferenceType(reader, handle, rawTypeKind));
 		}
