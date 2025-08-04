@@ -318,7 +318,9 @@ namespace ICSharpCode.Decompiler.CSharp
 							return true;
 						if (settings.FixedBuffers && name.StartsWith("<", StringComparison.Ordinal) && name.Contains("__FixedBuffer"))
 							return true;
-						if (settings.InlineArrays && name.StartsWith("<>y__InlineArray", StringComparison.Ordinal) && name.EndsWith("`1"))
+						if (settings.InlineArrays && name.StartsWith("<>y__InlineArray", StringComparison.Ordinal) && name.EndsWith("`1", StringComparison.Ordinal))
+							return true;
+						if (settings.ExtensionMembers && name.StartsWith("<>E__", StringComparison.Ordinal))
 							return true;
 					}
 					else if (type.IsCompilerGenerated(metadata))
@@ -1037,7 +1039,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						break;
 					case HandleKind.MethodDefinition:
 						IMethod method = module.GetDefinition((MethodDefinitionHandle)entity);
-						syntaxTree.Members.Add(DoDecompile(method, decompileRun, new SimpleTypeResolveContext(method)));
+						syntaxTree.Members.Add(DoDecompile(method, decompileRun, new SimpleTypeResolveContext(method), null));
 						if (first)
 						{
 							parentTypeDef = method.DeclaringTypeDefinition;
@@ -1054,7 +1056,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						break;
 					case HandleKind.PropertyDefinition:
 						IProperty property = module.GetDefinition((PropertyDefinitionHandle)entity);
-						syntaxTree.Members.Add(DoDecompile(property, decompileRun, new SimpleTypeResolveContext(property)));
+						syntaxTree.Members.Add(DoDecompile(property, decompileRun, new SimpleTypeResolveContext(property), null));
 						if (first)
 						{
 							parentTypeDef = property.DeclaringTypeDefinition;
@@ -1361,6 +1363,36 @@ namespace ICSharpCode.Decompiler.CSharp
 					partialTypeInfo = null;
 				}
 
+				if (settings.ExtensionMembers)
+				{
+					foreach (var group in typeDef.ExtensionInfo?.GetGroups() ?? [])
+					{
+						var ext = new ExtensionDeclaration();
+						ext.TypeParameters.AddRange(group.Key.DeclaringTypeDefinition.TypeParameters.Select(tp => typeSystemAstBuilder.ConvertTypeParameter(tp)));
+						ext.ReceiverParameters.Add(typeSystemAstBuilder.ConvertParameter(group.Key.Parameters.Single()));
+						ext.Constraints.AddRange(group.Key.DeclaringTypeDefinition.TypeParameters.Select(c => typeSystemAstBuilder.ConvertTypeParameterConstraint(c)));
+
+						foreach (var member in group)
+						{
+							IMember extMember = member.ExtensionMember;
+							if (member.ExtensionMember.IsAccessor)
+							{
+								extMember = member.ExtensionMember.AccessorOwner;
+							}
+							if (entityMap.Contains(extMember) || extMember.MetadataToken.IsNil)
+							{
+								// Member is already decompiled.
+								continue;
+							}
+							EntityDeclaration extMemberDecl = DoDecompileExtensionMember(extMember, typeDef.ExtensionInfo, decompileRun, decompilationContext);
+							ext.Members.Add(extMemberDecl);
+							entityMap.Add(extMember, extMemberDecl);
+						}
+
+						typeDecl.Members.Add(ext);
+					}
+				}
+
 				// Decompile members that are not compiler-generated.
 				foreach (var entity in allOrderedEntities)
 				{
@@ -1368,7 +1400,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						continue;
 					}
-					DoDecompileMember(entity, recordDecompiler, partialTypeInfo);
+					DoDecompileMember(entity, recordDecompiler, partialTypeInfo, typeDef.ExtensionInfo);
 				}
 
 				// Decompile compiler-generated members that are still needed.
@@ -1380,7 +1412,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						// Member is already decompiled.
 						continue;
 					}
-					DoDecompileMember(entity, recordDecompiler, partialTypeInfo);
+					DoDecompileMember(entity, recordDecompiler, partialTypeInfo, typeDef.ExtensionInfo);
 				}
 
 				// Add all decompiled members to syntax tree in the correct order.
@@ -1470,9 +1502,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				Instrumentation.DecompilerEventSource.Log.DoDecompileTypeDefinition(typeDef.FullName, watch.ElapsedMilliseconds);
 			}
 
-			void DoDecompileMember(IEntity entity, RecordDecompiler recordDecompiler, PartialTypeInfo partialType)
+			void DoDecompileMember(IEntity entity, RecordDecompiler recordDecompiler, PartialTypeInfo partialType, ExtensionInfo extensionInfo)
 			{
 				if (partialType != null && partialType.IsDeclaredMember(entity.MetadataToken))
+				{
+					return;
+				}
+
+				if (settings.ExtensionMembers && extensionInfo != null && entity is IMethod m && extensionInfo.InfoOfImplementationMember(m).HasValue)
 				{
 					return;
 				}
@@ -1497,7 +1534,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						{
 							return;
 						}
-						entityDecl = DoDecompile(property, decompileRun, decompilationContext.WithCurrentMember(property));
+						entityDecl = DoDecompile(property, decompileRun, decompilationContext.WithCurrentMember(property), null);
 						entityMap.Add(property, entityDecl);
 						break;
 					case IMethod method:
@@ -1505,7 +1542,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						{
 							return;
 						}
-						entityDecl = DoDecompile(method, decompileRun, decompilationContext.WithCurrentMember(method));
+						entityDecl = DoDecompile(method, decompileRun, decompilationContext.WithCurrentMember(method), null);
 						entityMap.Add(method, entityDecl);
 						foreach (var helper in AddInterfaceImplHelpers(entityDecl, method, typeSystemAstBuilder))
 						{
@@ -1541,6 +1578,19 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				}
 			}
+		}
+
+		private EntityDeclaration DoDecompileExtensionMember(IMember extMember, ExtensionInfo info, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
+		{
+			switch (extMember)
+			{
+				case IProperty p:
+					return DoDecompile(p, decompileRun, decompilationContext.WithCurrentMember(p), info);
+				case IMethod m:
+					return DoDecompile(m, decompileRun, decompilationContext.WithCurrentMember(m), info);
+			}
+
+			throw new NotSupportedException($"Extension member {extMember} is not supported for decompilation.");
 		}
 
 		EnumValueDisplayMode DetectBestEnumValueDisplayMode(ITypeDefinition typeDef, MetadataFile module)
@@ -1604,7 +1654,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return firstValue == 0 ? EnumValueDisplayMode.None : EnumValueDisplayMode.FirstOnly;
 		}
 
-		EntityDeclaration DoDecompile(IMethod method, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
+		EntityDeclaration DoDecompile(IMethod method, DecompileRun decompileRun, ITypeResolveContext decompilationContext, ExtensionInfo extensionInfo)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == method);
 			var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -1630,7 +1680,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				if (methodDefinition.HasBody())
 				{
-					DecompileBody(method, methodDecl, decompileRun, decompilationContext);
+					DecompileBody(method, methodDecl, decompileRun, decompilationContext, extensionInfo);
 				}
 				else if (!method.IsAbstract && method.DeclaringType.Kind != TypeKind.Interface)
 				{
@@ -1699,7 +1749,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return method.ReturnType.Kind == TypeKind.Void && method.Name == "InitializeComponent" && method.DeclaringTypeDefinition.GetNonInterfaceBaseTypes().Any(t => t.FullName == "System.Windows.Forms.Control");
 		}
 
-		void DecompileBody(IMethod method, EntityDeclaration entityDecl, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
+		void DecompileBody(IMethod method, EntityDeclaration entityDecl, DecompileRun decompileRun, ITypeResolveContext decompilationContext, ExtensionInfo extensionInfo)
 		{
 			try
 			{
@@ -1708,6 +1758,14 @@ namespace ICSharpCode.Decompiler.CSharp
 					UseRefLocalsForAccurateOrderOfEvaluation = settings.UseRefLocalsForAccurateOrderOfEvaluation,
 					DebugInfo = DebugInfoProvider
 				};
+				int parameterOffset = 0;
+				if (extensionInfo != null)
+				{
+					if (!method.IsStatic)
+						parameterOffset = 1; // implementation method has an additional receiver parameter
+					method = extensionInfo.InfoOfExtensionMember(method).Value.ImplementationMethod;
+				}
+
 				var methodDef = metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
 				var body = BlockStatement.Null;
 				MethodBodyBlock methodBody;
@@ -1727,7 +1785,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var function = ilReader.ReadIL((MethodDefinitionHandle)method.MetadataToken, methodBody, cancellationToken: CancellationToken);
 				function.CheckInvariant(ILPhase.Normal);
 
-				AddAnnotationsToDeclaration(method, entityDecl, function);
+				AddAnnotationsToDeclaration(method, entityDecl, function, parameterOffset);
 
 				var localSettings = settings.Clone();
 				if (IsWindowsFormsInitializeComponentMethod(method))
@@ -1786,9 +1844,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		internal static void AddAnnotationsToDeclaration(IMethod method, EntityDeclaration entityDecl, ILFunction function)
+		internal static void AddAnnotationsToDeclaration(IMethod method, EntityDeclaration entityDecl, ILFunction function, int parameterOffset = 0)
 		{
-			int i = 0;
+			int i = parameterOffset;
 			var parameters = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
 			foreach (var parameter in entityDecl.GetChildrenByRole(Roles.Parameter))
 			{
@@ -2023,7 +2081,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return false;
 		}
 
-		EntityDeclaration DoDecompile(IProperty property, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
+		EntityDeclaration DoDecompile(IProperty property, DecompileRun decompileRun, ITypeResolveContext decompilationContext, ExtensionInfo extensionInfo)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == property);
 			var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -2053,11 +2111,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				bool setterHasBody = property.CanSet && property.Setter.HasBody;
 				if (getterHasBody)
 				{
-					DecompileBody(property.Getter, getter, decompileRun, decompilationContext);
+					DecompileBody(property.Getter, getter, decompileRun, decompilationContext, extensionInfo);
 				}
 				if (setterHasBody)
 				{
-					DecompileBody(property.Setter, setter, decompileRun, decompilationContext);
+					DecompileBody(property.Setter, setter, decompileRun, decompilationContext, extensionInfo);
 				}
 				if (!getterHasBody && !setterHasBody && !property.IsAbstract && property.DeclaringType.Kind != TypeKind.Interface)
 				{
@@ -2113,11 +2171,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				if (adderHasBody)
 				{
-					DecompileBody(ev.AddAccessor, ((CustomEventDeclaration)eventDecl).AddAccessor, decompileRun, decompilationContext);
+					DecompileBody(ev.AddAccessor, ((CustomEventDeclaration)eventDecl).AddAccessor, decompileRun, decompilationContext, null);
 				}
 				if (removerHasBody)
 				{
-					DecompileBody(ev.RemoveAccessor, ((CustomEventDeclaration)eventDecl).RemoveAccessor, decompileRun, decompilationContext);
+					DecompileBody(ev.RemoveAccessor, ((CustomEventDeclaration)eventDecl).RemoveAccessor, decompileRun, decompilationContext, null);
 				}
 				if (!adderHasBody && !removerHasBody && !ev.IsAbstract && ev.DeclaringType.Kind != TypeKind.Interface)
 				{
