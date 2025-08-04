@@ -171,10 +171,16 @@ namespace ICSharpCode.Decompiler
 			{
 				paramsCollections = false;
 			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp14_0)
+			{
+				extensionMembers = false;
+			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
+			if (extensionMembers)
+				return CSharp.LanguageVersion.CSharp14_0;
 			if (paramsCollections)
 				return CSharp.LanguageVersion.CSharp13_0;
 			if (refReadOnlyParameters || usePrimaryConstructorSyntaxForNonRecordTypes || inlineArrays)
@@ -2112,6 +2118,24 @@ namespace ICSharpCode.Decompiler
 				if (inlineArrays != value)
 				{
 					inlineArrays = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool extensionMembers = true;
+
+		/// <summary>
+		/// Gets/Sets whether C# 14.0 extension members should be transformed.
+		/// </summary>
+		[Category("C# 14.0 / VS 202x.yy")]
+		[Description("DecompilerSettings.ExtensionMembers")]
+		public bool ExtensionMembers {
+			get { return extensionMembers; }
+			set {
+				if (extensionMembers != value)
+				{
+					extensionMembers = value;
 					OnPropertyChanged();
 				}
 			}
