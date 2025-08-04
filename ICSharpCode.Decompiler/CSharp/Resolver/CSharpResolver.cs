@@ -2215,7 +2215,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// TODO: maybe make this a property on INamespace?
 			return
 				from c in ns.Types
-				where c.IsStatic && c.HasExtensionMethods && c.TypeParameters.Count == 0 && lookup.IsAccessible(c, false)
+				where c.IsStatic && c.HasExtensions && c.TypeParameters.Count == 0 && lookup.IsAccessible(c, false)
 				from m in c.Methods
 				where m.IsExtensionMethod
 				select m;

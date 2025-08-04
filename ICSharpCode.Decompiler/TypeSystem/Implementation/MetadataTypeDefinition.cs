@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IReadOnlyList<ITypeParameter> TypeParameters { get; }
 		public KnownTypeCode KnownTypeCode { get; }
 		public IType EnumUnderlyingType { get; }
-		public bool HasExtensionMethods { get; }
+		public bool HasExtensions { get; }
 		public Nullability NullableContext { get; }
 
 		// lazy-loaded:
@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			else
 			{
 				this.Kind = TypeKind.Class;
-				this.HasExtensionMethods = this.IsStatic
+				this.HasExtensions = this.IsStatic
 					&& (module.TypeSystemOptions & TypeSystemOptions.ExtensionMethods) == TypeSystemOptions.ExtensionMethods
 					&& td.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.Extension);
 			}

@@ -1496,7 +1496,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.That(method.IsExtensionMethod);
 			Assert.That(method.ReducedFrom, Is.Null);
 
-			Assert.That(type.HasExtensionMethods);
+			Assert.That(type.HasExtensions);
 		}
 
 		[Test]

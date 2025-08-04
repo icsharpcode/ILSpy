@@ -71,10 +71,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		new IType? DeclaringType { get; } // solves ambiguity between IType.DeclaringType and IEntity.DeclaringType
 
 		/// <summary>
-		/// Gets whether this type contains extension methods.
+		/// Gets whether this type contains extension methods or C# 14 extensions.
 		/// </summary>
-		/// <remarks>This property is used to speed up the search for extension methods.</remarks>
-		bool HasExtensionMethods { get; }
+		/// <remarks>This property is used to speed up the search for extension members.</remarks>
+		bool HasExtensions { get; }
 
 		/// <summary>
 		/// The nullability specified in the [NullableContext] attribute on the type.

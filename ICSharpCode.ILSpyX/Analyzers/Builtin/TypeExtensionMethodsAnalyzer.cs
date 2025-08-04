@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 
 		IEnumerable<IEntity> ScanType(ITypeDefinition analyzedType, ITypeDefinition type, AnalyzerContext context)
 		{
-			if (!type.HasExtensionMethods)
+			if (!type.HasExtensions)
 				yield break;
 
 			if (analyzedType.ParentModule?.MetadataFile == null)
