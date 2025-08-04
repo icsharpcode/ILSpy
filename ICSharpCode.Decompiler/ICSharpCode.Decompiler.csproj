@@ -104,6 +104,7 @@
     <Compile Include="CSharp\CallBuilder.cs" />
     <Compile Include="CSharp\CSharpLanguageVersion.cs" />
     <Compile Include="CSharp\Syntax\Expressions\RecursivePatternExpression.cs" />
+    <Compile Include="CSharp\Syntax\TypeMembers\ExtensionDeclaration.cs" />
     <Compile Include="DecompilationProgress.cs" />
     <Compile Include="Disassembler\IEntityProcessor.cs" />
     <Compile Include="Disassembler\SortByNameProcessor.cs" />
@@ -155,6 +156,7 @@
     <Compile Include="Metadata\MetadataGenericContext.cs" />
     <Compile Include="Metadata\ReferenceLoadInfo.cs" />
     <Compile Include="Properties\DecompilerVersionInfo.cs" />
+    <Compile Include="TypeSystem\ExtensionInfo.cs" />
     <Compile Include="TypeSystem\ITypeDefinitionOrUnknown.cs" />
     <Compile Include="Util\BitOperations.cs" />
     <Compile Include="Util\DelegateComparer.cs" />

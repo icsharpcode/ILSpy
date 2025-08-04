@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -136,6 +135,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		void VisitVariableInitializer(VariableInitializer variableInitializer);
 		void VisitFixedFieldDeclaration(FixedFieldDeclaration fixedFieldDeclaration);
 		void VisitFixedVariableInitializer(FixedVariableInitializer fixedVariableInitializer);
+		void VisitExtensionDeclaration(ExtensionDeclaration extensionDeclaration);
 
 		void VisitSyntaxTree(SyntaxTree syntaxTree);
 		void VisitSimpleType(SimpleType simpleType);
@@ -285,6 +285,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		S VisitVariableInitializer(VariableInitializer variableInitializer);
 		S VisitFixedFieldDeclaration(FixedFieldDeclaration fixedFieldDeclaration);
 		S VisitFixedVariableInitializer(FixedVariableInitializer fixedVariableInitializer);
+		S VisitExtensionDeclaration(ExtensionDeclaration extensionDeclaration);
 
 		S VisitSyntaxTree(SyntaxTree syntaxTree);
 		S VisitSimpleType(SimpleType simpleType);
@@ -434,6 +435,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		S VisitVariableInitializer(VariableInitializer variableInitializer, T data);
 		S VisitFixedFieldDeclaration(FixedFieldDeclaration fixedFieldDeclaration, T data);
 		S VisitFixedVariableInitializer(FixedVariableInitializer fixedVariableInitializer, T data);
+		S VisitExtensionDeclaration(ExtensionDeclaration extensionDeclaration, T data);
 
 		S VisitSyntaxTree(SyntaxTree syntaxTree, T data);
 		S VisitSimpleType(SimpleType simpleType, T data);

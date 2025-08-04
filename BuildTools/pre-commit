@@ -5,11 +5,12 @@
 
 set -eu
 
-DOTNET_FORMAT_VERSION=9.0.520307
+DOTNET_FORMAT_VERSION=10.0.100-preview.6.25358.103
+DOTNET_FORMAT_SOURCE="https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet10-transport/nuget/v3/index.json"
 DOTNET_PATH="$LOCALAPPDATA/ICSharpCode/ILSpy/dotnet-format-$DOTNET_FORMAT_VERSION"
 if [ ! -d "$DOTNET_PATH" ]; then
  echo "Downloading dotnet-format $DOTNET_FORMAT_VERSION..."
- dotnet tool install --tool-path "$DOTNET_PATH" dotnet-format --version "$DOTNET_FORMAT_VERSION" --add-source "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet9/nuget/v3/index.json"
+ dotnet tool install --tool-path "$DOTNET_PATH" dotnet-format --version "$DOTNET_FORMAT_VERSION" --add-source "$DOTNET_FORMAT_SOURCE"
 fi
 
 "$DOTNET_PATH/dotnet-format.exe" --version

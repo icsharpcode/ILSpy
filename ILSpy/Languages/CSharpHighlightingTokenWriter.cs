@@ -242,6 +242,7 @@ namespace ICSharpCode.ILSpy
 				case "class":
 				case "interface":
 				case "delegate":
+				case "extension":
 					color = referenceTypeKeywordsColor;
 					break;
 				case "record":

@@ -157,6 +157,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			VisitChildren(enumMemberDeclaration);
 		}
 
+		public virtual void VisitExtensionDeclaration(ExtensionDeclaration extensionDeclaration)
+		{
+			VisitChildren(extensionDeclaration);
+		}
+
 		public virtual void VisitUsingDeclaration(UsingDeclaration usingDeclaration)
 		{
 			VisitChildren(usingDeclaration);
@@ -840,6 +845,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return VisitChildren(enumMemberDeclaration);
 		}
 
+		public virtual T VisitExtensionDeclaration(ExtensionDeclaration extensionDeclaration)
+		{
+			return VisitChildren(extensionDeclaration);
+		}
+
 		public virtual T VisitUsingDeclaration(UsingDeclaration usingDeclaration)
 		{
 			return VisitChildren(usingDeclaration);
@@ -1521,6 +1531,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public virtual S VisitEnumMemberDeclaration(EnumMemberDeclaration enumMemberDeclaration, T data)
 		{
 			return VisitChildren(enumMemberDeclaration, data);
+		}
+
+		public virtual S VisitExtensionDeclaration(ExtensionDeclaration extensionDeclaration, T data)
+		{
+			return VisitChildren(extensionDeclaration, data);
 		}
 
 		public virtual S VisitUsingDeclaration(UsingDeclaration usingDeclaration, T data)
