@@ -967,7 +967,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				else
 				{
-					firstOptionalArgumentIndex = -2;
+					if (firstOptionalArgumentIndex != -1)
+						firstOptionalArgumentIndex = -2;
 				}
 				if (parameter.IsParams && i + 1 == callArguments.Count && argumentToParameterMap == null)
 				{

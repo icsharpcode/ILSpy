@@ -251,6 +251,7 @@
     <Compile Include="TestCases\Pretty\ConstantsTests.cs" />
     <Compile Include="TestCases\Pretty\CS73_StackAllocInitializers.cs" />
     <Compile Include="TestCases\Pretty\OptionalArguments.cs" />
+    <Compile Include="TestCases\Pretty\OptionalArgumentsDisabled.cs" />
     <Compile Include="TestCases\Pretty\CustomShortCircuitOperators.cs" />
     <Compile Include="TestCases\Pretty\ReduceNesting.cs" />
     <Compile Include="TestCases\Pretty\InterfaceTests.cs" />
