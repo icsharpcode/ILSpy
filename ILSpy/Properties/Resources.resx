@@ -360,6 +360,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.DoWhileStatement" xml:space="preserve">
     <value>Transform to do-while, if possible</value>
   </data>
+  <data name="DecompilerSettings.ExpandParamsArguments" xml:space="preserve">
+	  <value>Expand params arguments by removing explicit array creation</value>
+  </data>
   <data name="DecompilerSettings.FSpecificOptions" xml:space="preserve">
     <value>F#-specific options</value>
   </data>
