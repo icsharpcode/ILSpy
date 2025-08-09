@@ -600,6 +600,17 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task OptionalArgumentsDisabled([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(
+				cscOptions: cscOptions,
+				configureDecompiler: settings => {
+					settings.OptionalArguments = false;
+				}
+			);
+		}
+
+		[Test]
 		public async Task Comparisons([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions);
