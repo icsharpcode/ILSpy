@@ -51,7 +51,7 @@ namespace ICSharpCode.ILSpy.Controls
 
 			using (Graphics g = this.CreateGraphics())
 			{
-				SizeF size = TextRenderer.MeasureText(message, label.Font, default, TextFormatFlags.NoPrefix);
+				Size size = TextRenderer.MeasureText(message, label.Font, new((int)(Screen.FromControl(this).WorkingArea.Width * 0.9), int.MaxValue), TextFormatFlags.NoPrefix | TextFormatFlags.WordBreak);
 				Size clientSize = new Size((int)Math.Ceiling(size.Width * 96 / g.DpiX) + DockPadding.Left + DockPadding.Right, (int)Math.Ceiling(size.Height * 96 / g.DpiY) + DockPadding.Top + DockPadding.Bottom);
 				Button[] buttons = new Button[buttonLabels.Length];
 				int[] positions = new int[buttonLabels.Length];
@@ -64,7 +64,7 @@ namespace ICSharpCode.ILSpy.Controls
 					string buttonLabel = buttonLabels[i];
 					newButton.Text = buttonLabel;
 					newButton.Click += new EventHandler(ButtonClick);
-					SizeF buttonSize = TextRenderer.MeasureText(buttonLabel, newButton.Font);
+					Size buttonSize = TextRenderer.MeasureText(buttonLabel, newButton.Font);
 					newButton.Width = Math.Max(newButton.Width, ((int)Math.Ceiling(buttonSize.Width * 96 / g.DpiX / 8.0) + 1) * 8);
 					positions[i] = pos;
 					buttons[i] = newButton;
