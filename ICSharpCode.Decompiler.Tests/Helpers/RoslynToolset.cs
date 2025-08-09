@@ -41,6 +41,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		readonly SourceCacheContext cache;
 		readonly SourceRepository repository;
 		readonly FindPackageByIdResource resource;
+		readonly SourceRepository repository5;
+		readonly FindPackageByIdResource resource5;
+
 		protected readonly string baseDir;
 
 		public AbstractToolset(string baseDir)
@@ -48,6 +51,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			this.cache = new SourceCacheContext();
 			this.repository = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
 			this.resource = repository.GetResource<FindPackageByIdResource>();
+			this.repository5 = Repository.Factory.GetCoreV3("https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-tools/nuget/v3/index.json");
+			this.resource5 = repository5.GetResource<FindPackageByIdResource>();
 			this.baseDir = baseDir;
 		}
 
@@ -68,13 +73,26 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			{
 				packageStream = new MemoryStream();
 
-				await resource.CopyNupkgToStreamAsync(
-					packageName,
-					NuGetVersion.Parse(version),
-					packageStream,
-					cache,
-					logger,
-					cancellationToken).ConfigureAwait(false);
+				if (version.StartsWith("5"))
+				{
+					await resource5.CopyNupkgToStreamAsync(
+						packageName,
+						NuGetVersion.Parse(version),
+						packageStream,
+						cache,
+						logger,
+						cancellationToken).ConfigureAwait(false);
+				}
+				else
+				{
+					await resource.CopyNupkgToStreamAsync(
+						packageName,
+						NuGetVersion.Parse(version),
+						packageStream,
+						cache,
+						logger,
+						cancellationToken).ConfigureAwait(false);
+				}
 
 				packageStream.Position = 0;
 			}
