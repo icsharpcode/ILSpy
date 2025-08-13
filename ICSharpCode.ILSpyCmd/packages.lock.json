@@ -54,9 +54,9 @@
       },
       "System.Security.Cryptography.Pkcs": {
         "type": "Direct",
-        "requested": "[9.0.7, )",
-        "resolved": "9.0.7",
-        "contentHash": "6LROjtkO4UCv0MVnnR8Z6FwnRryT+Sz5dz8ZefZG6/yz1kQGaVUd6gAdXZtqNPORQwuXFrNGTWvi7f8hWRkiyg=="
+        "requested": "[9.0.8, )",
+        "resolved": "9.0.8",
+        "contentHash": "+mtc8dZnrP9N1HZICncBzLUrX4YBP+WvAWb817auAA5mKOJzHZShuGpCtQiekgV/7N0uS/x0LkdBAezBcSBwVA=="
       },
       "TomsToolbox.Composition.Analyzer": {
         "type": "Direct",
