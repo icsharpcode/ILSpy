@@ -74,7 +74,7 @@
     <PackageReference Include="NUnit" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+	<PackageReference Include="Microsoft.Testing.Extensions.VSTestBridge" />
     <PackageReference Include="System.Memory" />
     <PackageReference Include="Mono.Cecil" />
     <PackageReference Include="Microsoft.NETCore.ILAsm" />
