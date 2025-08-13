@@ -74,7 +74,7 @@
     <PackageReference Include="NUnit" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+	<PackageReference Include="Microsoft.Testing.Extensions.VSTestBridge" />
     <PackageReference Include="System.Memory" />
     <PackageReference Include="Mono.Cecil" />
     <PackageReference Include="Microsoft.NETCore.ILAsm" />
@@ -146,6 +146,7 @@
     <Compile Include="TestCases\ILPretty\Issue3442.cs" />
     <Compile Include="TestCases\ILPretty\Issue3466.cs" />
     <Compile Include="TestCases\ILPretty\Issue3524.cs" />
+    <Compile Include="TestCases\Pretty\ExpandParamsArgumentsDisabled.cs" />
     <Compile Include="TestCases\Pretty\ExtensionProperties.cs" />
     <None Include="TestCases\ILPretty\Issue3504.cs" />
     <Compile Include="TestCases\ILPretty\MonoFixed.cs" />
@@ -251,6 +252,7 @@
     <Compile Include="TestCases\Pretty\ConstantsTests.cs" />
     <Compile Include="TestCases\Pretty\CS73_StackAllocInitializers.cs" />
     <Compile Include="TestCases\Pretty\OptionalArguments.cs" />
+    <Compile Include="TestCases\Pretty\OptionalArgumentsDisabled.cs" />
     <Compile Include="TestCases\Pretty\CustomShortCircuitOperators.cs" />
     <Compile Include="TestCases\Pretty\ReduceNesting.cs" />
     <Compile Include="TestCases\Pretty\InterfaceTests.cs" />

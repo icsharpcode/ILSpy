@@ -967,9 +967,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				else
 				{
-					firstOptionalArgumentIndex = -2;
+					if (firstOptionalArgumentIndex != -1)
+						firstOptionalArgumentIndex = -2;
 				}
-				if (parameter.IsParams && i + 1 == callArguments.Count && argumentToParameterMap == null)
+				if (expressionBuilder.settings.ExpandParamsArguments && parameter.IsParams && i + 1 == callArguments.Count && argumentToParameterMap == null)
 				{
 					// Parameter is marked params
 					// If the argument is an array creation, inline all elements into the call and add missing default values.

@@ -80,7 +80,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Sbom.Targets" Version="4.0.3">
+    <PackageReference Include="Microsoft.Sbom.Targets" Version="4.1.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -108,6 +108,7 @@
     <Compile Include="DecompilationProgress.cs" />
     <Compile Include="Disassembler\IEntityProcessor.cs" />
     <Compile Include="Disassembler\SortByNameProcessor.cs" />
+    <Compile Include="Humanizer\StringHumanizeExtensions.cs" />
     <Compile Include="IL\Transforms\InlineArrayTransform.cs" />
     <Compile Include="IL\Transforms\RemoveUnconstrainedGenericReferenceTypeCheck.cs" />
     <Compile Include="Metadata\MetadataFile.cs" />

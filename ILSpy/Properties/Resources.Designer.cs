@@ -1018,6 +1018,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Expand params arguments by removing explicit array creation.
+        /// </summary>
+        public static string DecompilerSettings_ExpandParamsArguments {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.ExpandParamsArguments", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use file-scoped namespace declarations.
         /// </summary>
         public static string DecompilerSettings_FileScopedNamespaces {

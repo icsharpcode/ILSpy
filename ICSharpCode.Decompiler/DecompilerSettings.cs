@@ -1703,6 +1703,25 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool expandParamsArguments = true;
+
+		/// <summary>
+		/// Gets/Sets whether to expand <c>params</c> arguments by replacing explicit array creation
+		/// with individual values in method calls.
+		/// </summary>
+		[Category("C# 1.0 / VS .NET")]
+		[Description("DecompilerSettings.ExpandParamsArguments")]
+		public bool ExpandParamsArguments {
+			get { return expandParamsArguments; }
+			set {
+				if (expandParamsArguments != value)
+				{
+					expandParamsArguments = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool localFunctions = true;
 
 		/// <summary>
