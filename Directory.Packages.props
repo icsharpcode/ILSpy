@@ -46,10 +46,10 @@
     <PackageVersion Include="System.Resources.Extensions" Version="10.0.0-preview.7.25380.108" />
     <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.8" />
-    <PackageVersion Include="TomsToolbox.Composition.MicrosoftExtensions" Version="2.22.1" />
-    <PackageVersion Include="TomsToolbox.Wpf.Composition" Version="2.22.0" />
-    <PackageVersion Include="TomsToolbox.Wpf.Composition.AttributedModel" Version="2.22.1" />
-    <PackageVersion Include="TomsToolbox.Wpf.Styles" Version="2.22.1" />
+    <PackageVersion Include="TomsToolbox.Composition.MicrosoftExtensions" Version="2.22.2" />
+    <PackageVersion Include="TomsToolbox.Wpf.Composition" Version="2.22.2" />
+    <PackageVersion Include="TomsToolbox.Wpf.Composition.AttributedModel" Version="2.22.2" />
+    <PackageVersion Include="TomsToolbox.Wpf.Styles" Version="2.22.2" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="System.Net.Http" Version="4.3.4" />
     <PackageVersion Include="System.Private.Uri" Version="4.3.2" />
