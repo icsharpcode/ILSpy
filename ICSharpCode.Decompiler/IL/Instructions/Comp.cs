@@ -229,5 +229,13 @@ namespace ICSharpCode.Decompiler.IL
 			var liftingKind = isLifted ? ComparisonLiftingKind.ThreeValuedLogic : ComparisonLiftingKind.None;
 			return new Comp(ComparisonKind.Equality, liftingKind, StackType.I4, Sign.None, arg, new LdcI4(0));
 		}
+
+		internal override bool CanInlineIntoSlot(int childIndex, ILInstruction expressionBeingMoved)
+		{
+			// ExpressionBuilder translates comp.o(a op b) for op not in (==, !=) into
+			// Unsafe.As(ref a) op Unsafe.As(ref b), which requires that a and b are variables
+			// and not expressions. Returning false in those cases prevents inlining.
+			return kind.IsEqualityOrInequality() || this.InputType != StackType.O;
+		}
 	}
 }
