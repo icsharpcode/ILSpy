@@ -17,6 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+#if !ROSLYN4
+using System.Runtime.CompilerServices;
+#endif
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -157,6 +160,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				"bar" => "bar",
 				"quux" => "quux",
 				_ => "default",
+			};
+		}
+		public static int Issue3382(StringComparison c)
+		{
+			return c switch {
+				StringComparison.Ordinal => 0,
+				StringComparison.OrdinalIgnoreCase => 1,
+#if !ROSLYN4
+				_ => throw new SwitchExpressionException(c),
+#endif
 			};
 		}
 	}
