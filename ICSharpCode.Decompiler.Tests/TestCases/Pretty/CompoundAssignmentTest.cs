@@ -4946,5 +4946,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			CustomStruct2 customStruct = GetStruct();
 			customStruct.IntProp += value;
 		}
+
+#if ROSLYN2
+		public static string PreIncrementWithMethodCall(int value)
+		{
+			return (++value).ToString();
+		}
+#endif
+
+#if CS72
+		public static string PreIncrementWithInParameter(int value)
+		{
+			PreIncrementWithInParameter_Helper(++value);
+			return value.ToString();
+		}
+		public static void PreIncrementWithInParameter_Helper(in int value)
+		{
+		}
+#endif
 	}
 }
