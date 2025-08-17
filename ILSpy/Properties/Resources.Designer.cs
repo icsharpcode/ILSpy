@@ -730,6 +730,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Always move field initializers from constructors to declarations.
+        /// </summary>
+        public static string DecompilerSettings_AlwaysMoveInitializer {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.AlwaysMoveInitializer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Always qualify member references.
         /// </summary>
         public static string DecompilerSettings_AlwaysQualifyMemberReferences {
@@ -1838,20 +1847,20 @@ namespace ICSharpCode.ILSpy.Properties {
                 return ResourceManager.GetString("ExpandUsingDeclarationsAfterDecompilation", resourceCulture);
             }
         }
-
-		/// <summary>
-		///   Looks up a localized string similar to Extract all package entries.
-		/// </summary>
-		public static string ExtractAllPackageEntries {
-			get {
-				return ResourceManager.GetString("ExtractAllPackageEntries", resourceCulture);
-			}
-		}
-
-		/// <summary>
-		///   Looks up a localized string similar to Extract package entry.
-		/// </summary>
-		public static string ExtractPackageEntry {
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Extract all package entries.
+        /// </summary>
+        public static string ExtractAllPackageEntries {
+            get {
+                return ResourceManager.GetString("ExtractAllPackageEntries", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Extract package entry.
+        /// </summary>
+        public static string ExtractPackageEntry {
             get {
                 return ResourceManager.GetString("ExtractPackageEntry", resourceCulture);
             }

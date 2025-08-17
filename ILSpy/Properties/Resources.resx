@@ -264,6 +264,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.AlwaysCastTargetsOfExplicitInterfaceImplementationCalls" xml:space="preserve">
     <value>Always cast targets of explicit interface implementation calls</value>
   </data>
+  <data name="DecompilerSettings.AlwaysMoveInitializer" xml:space="preserve">
+    <value>Always move field initializers from constructors to declarations</value>
+  </data>
   <data name="DecompilerSettings.AlwaysQualifyMemberReferences" xml:space="preserve">
     <value>Always qualify member references</value>
   </data>
@@ -361,7 +364,7 @@ Are you sure you want to continue?</value>
     <value>Transform to do-while, if possible</value>
   </data>
   <data name="DecompilerSettings.ExpandParamsArguments" xml:space="preserve">
-	  <value>Expand params arguments by removing explicit array creation</value>
+    <value>Expand params arguments by removing explicit array creation</value>
   </data>
   <data name="DecompilerSettings.FSpecificOptions" xml:space="preserve">
     <value>F#-specific options</value>
