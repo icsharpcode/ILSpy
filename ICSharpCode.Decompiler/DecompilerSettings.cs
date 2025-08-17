@@ -2274,6 +2274,27 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool alwaysMoveInitializer = false;
+
+		/// <summary>
+		/// If set to false (the default), the decompiler will move field initializers at the start of constructors
+		/// to their respective field declrations (TransformFieldAndConstructorInitializers) only when the declaring
+		/// type has BeforeFieldInit or the member IsConst.
+		/// If set true, the decompiler will always move them regardless of the flags.
+		/// </summary>
+		[Category("DecompilerSettings.Other")]
+		[Description("DecompilerSettings.AlwaysMoveInitializer")]
+		public bool AlwaysMoveInitializer {
+			get { return alwaysMoveInitializer; }
+			set {
+				if (alwaysMoveInitializer != value)
+				{
+					alwaysMoveInitializer = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool sortCustomAttributes = false;
 
 		/// <summary>

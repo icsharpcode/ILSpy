@@ -258,6 +258,9 @@
   <data name="DecompilerSettings.AlwaysCastTargetsOfExplicitInterfaceImplementationCalls" xml:space="preserve">
     <value>始终强制转换显式接口实现调用的目标</value>
   </data>
+  <data name="DecompilerSettings.AlwaysMoveInitializer" xml:space="preserve">
+    <value />
+  </data>
   <data name="DecompilerSettings.AlwaysQualifyMemberReferences" xml:space="preserve">
     <value>始终限定成员引用</value>
   </data>
