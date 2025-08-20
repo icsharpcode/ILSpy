@@ -116,6 +116,8 @@ namespace ICSharpCode.ILSpy.Docking
 			{
 				item.IsCloseable = canClose;
 			}
+
+			MessageBus.Send(this, new TabPagesCollectionChangedEventArgs(e));
 		}
 
 		public TabPageModel AddTabPage(TabPageModel tabPage = null)

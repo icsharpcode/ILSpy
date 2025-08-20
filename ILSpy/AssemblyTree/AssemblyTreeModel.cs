@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Composition;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
@@ -65,7 +66,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		private readonly DispatcherThrottle refreshThrottle;
 
 		private readonly NavigationHistory<NavigationState> history = new();
-		private bool isNavigatingHistory;
+		private NavigationState? navigatingToState;
 		private readonly SettingsService settingsService;
 		private readonly LanguageService languageService;
 		private readonly IExportProvider exportProvider;
@@ -85,6 +86,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			MessageBus<SettingsChangedEventArgs>.Subscribers += (sender, e) => Settings_PropertyChanged(sender, e);
 			MessageBus<ApplySessionSettingsEventArgs>.Subscribers += ApplySessionSettings;
 			MessageBus<ActiveTabPageChangedEventArgs>.Subscribers += ActiveTabPageChanged;
+			MessageBus<TabPagesCollectionChangedEventArgs>.Subscribers += (_, e) => history.RemoveAll(s => !DockWorkspace.TabPages.Contains(s.TabPage));
 			MessageBus<ResetLayoutEventArgs>.Subscribers += ResetLayout;
 			MessageBus<NavigateToEventArgs>.Subscribers += (_, e) => NavigateTo(e.Request, e.InNewTabPage);
 			MessageBus<MainWindowLoadedEventArgs>.Subscribers += (_, _) => {
@@ -153,9 +155,10 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				if (selectedItems.SequenceEqual(value))
 					return;
 
+				var oldSelection = selectedItems;
 				selectedItems = value;
 				OnPropertyChanged();
-				TreeView_SelectionChanged();
+				TreeView_SelectionChanged(oldSelection, selectedItems);
 			}
 		}
 
@@ -733,36 +736,45 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		#region Decompile (TreeView_SelectionChanged)
 
-		private void TreeView_SelectionChanged()
+		private void TreeView_SelectionChanged(SharpTreeNode[] oldSelection, SharpTreeNode[] newSelection)
 		{
-			if (SelectedItems.Length <= 0)
+			var activeTabPage = DockWorkspace.ActiveTabPage;
+			ViewState? oldState = activeTabPage.GetState();
+			ViewState? newState;
+
+			if (navigatingToState == null)
 			{
-				// To cancel any pending decompilation requests and show an empty tab
-				DecompileSelectedNodes();
+				if (oldState != null)
+				{
+					history.UpdateCurrent(new NavigationState(activeTabPage, oldState));
+				}
+
+				newState = new ViewState { DecompiledNodes = [.. newSelection.Cast<ILSpyTreeNode>()] };
 			}
 			else
 			{
-				var activeTabPage = DockWorkspace.ActiveTabPage;
+				newState = navigatingToState.ViewState;
+			}
 
-				if (!isNavigatingHistory)
-				{
-					history.Record(new NavigationState(activeTabPage, SelectedItems));
-				}
-
+			if (newSelection.Length == 0)
+			{
+				// To cancel any pending decompilation requests and show an empty tab
+				DecompileSelectedNodes(newState);
+			}
+			else
+			{
 				var delayDecompilationRequestDueToContextMenu = Mouse.RightButton == MouseButtonState.Pressed;
 
 				if (!delayDecompilationRequestDueToContextMenu)
 				{
-					var decompiledNodes = activeTabPage
-						.GetState()
-						?.DecompiledNodes
+					var previousNodes = oldState?.DecompiledNodes
 						?.Select(n => FindNodeByPath(GetPathForNode(n), true))
 						.ExceptNullItems()
 						.ToArray() ?? [];
 
-					if (!decompiledNodes.SequenceEqual(SelectedItems))
+					if (!previousNodes.SequenceEqual(SelectedItems))
 					{
-						DecompileSelectedNodes();
+						DecompileSelectedNodes(newState);
 					}
 				}
 				else
@@ -790,7 +802,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 		}
 
-		public void DecompileSelectedNodes(DecompilerTextViewState? newState = null)
+		public void DecompileSelectedNodes(ViewState? newState = null)
 		{
 			var activeTabPage = DockWorkspace.ActiveTabPage;
 
@@ -800,6 +812,11 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 
 			activeTabPage.SupportsLanguageSwitching = true;
+
+			if (newState != null && navigatingToState == null)
+			{
+				history.Record(new NavigationState(activeTabPage, newState));
+			}
 
 			if (SelectedItems.Length == 1)
 			{
@@ -813,7 +830,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 
 			var options = activeTabPage.CreateDecompilationOptions();
-			options.TextViewState = newState;
+			options.TextViewState = newState as DecompilerTextViewState;
 			activeTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, options));
 		}
 
@@ -834,26 +851,30 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		{
 			try
 			{
-				isNavigatingHistory = true;
-
 				TabPageModel tabPage = DockWorkspace.ActiveTabPage;
 				var state = tabPage.GetState();
 				if (state != null)
 					history.UpdateCurrent(new NavigationState(tabPage, state));
 				var newState = forward ? history.GoForward() : history.GoBack();
+				navigatingToState = newState;
 
 				TabPageModel activeTabPage = newState.TabPage;
 
-				if (!DockWorkspace.TabPages.Contains(activeTabPage))
-					DockWorkspace.AddTabPage(activeTabPage);
-				else
-					DockWorkspace.ActiveTabPage = activeTabPage;
+				Debug.Assert(DockWorkspace.TabPages.Contains(activeTabPage));
+				DockWorkspace.ActiveTabPage = activeTabPage;
 
-				SelectNodes(newState.TreeNodes);
+				if (newState.TreeNodes.Any())
+				{
+					SelectNodes(newState.TreeNodes);
+				}
+				else if (newState.ViewState.ViewedUri != null)
+				{
+					NavigateTo(new(newState.ViewState.ViewedUri, null));
+				}
 			}
 			finally
 			{
-				isNavigatingHistory = false;
+				navigatingToState = null;
 			}
 		}
 
@@ -863,21 +884,46 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		private void NavigateTo(RequestNavigateEventArgs e, bool inNewTabPage = false)
 		{
-			if (e.Uri.Scheme == "resource")
+			if (e.Uri.Scheme != "resource")
 			{
+				return;
+			}
+
+			TabPageModel tabPage = DockWorkspace.ActiveTabPage;
+			ViewState? oldState = tabPage.GetState();
+			ViewState? newState;
+
+			if (navigatingToState == null)
+			{
+				if (oldState != null)
+				{
+					history.UpdateCurrent(new NavigationState(tabPage, oldState));
+				}
+
+				newState = new ViewState { ViewedUri = e.Uri };
+
 				if (inNewTabPage)
 				{
-					DockWorkspace.AddTabPage();
+					tabPage = DockWorkspace.AddTabPage();
 				}
+			}
+			else
+			{
+				newState = navigatingToState.ViewState;
+				tabPage = DockWorkspace.ActiveTabPage = navigatingToState.TabPage;
+			}
 
-				if (e.Uri.Host == "aboutpage")
-				{
-					RecordHistory();
-					MessageBus.Send(this, new ShowAboutPageEventArgs(DockWorkspace.ActiveTabPage));
-					e.Handled = true;
-					return;
-				}
+			bool needsNewNavigationEntry = !inNewTabPage && selectedItems?.Length == 0;
 
+			UnselectAll();
+
+			if (e.Uri.Host == "aboutpage")
+			{
+				MessageBus.Send(this, new ShowAboutPageEventArgs(DockWorkspace.ActiveTabPage));
+				e.Handled = true;
+			}
+			else
+			{
 				AvalonEditTextOutput output = new AvalonEditTextOutput {
 					Address = e.Uri,
 					Title = e.Uri.AbsolutePath,
@@ -896,23 +942,22 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 						}
 					}
 				}
-				RecordHistory();
 				DockWorkspace.ShowText(output);
 				e.Handled = true;
 			}
 
-			void RecordHistory()
+			if (navigatingToState == null)
 			{
-				if (isNavigatingHistory)
-					return;
-				TabPageModel tabPage = DockWorkspace.ActiveTabPage;
-				var currentState = tabPage.GetState();
-				if (currentState != null)
-					history.UpdateCurrent(new NavigationState(tabPage, currentState));
-
-				UnselectAll();
-
-				history.Record(new NavigationState(tabPage, new ViewState { ViewedUri = e.Uri }));
+				// the call to UnselectAll() above already creates a new navigation entry,
+				// we just need to make sure it contains something useful.
+				if (!needsNewNavigationEntry)
+				{
+					history.UpdateCurrent(new NavigationState(tabPage, tabPage.GetState()));
+				}
+				else
+				{
+					history.Record(new NavigationState(tabPage, tabPage.GetState()));
+				}
 			}
 		}
 
@@ -1039,8 +1084,8 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			{
 				NavigateTo(new(state.ViewedUri, null));
 			}
-
 		}
+
 		private void ResetLayout(object? sender, ResetLayoutEventArgs e)
 		{
 			RefreshDecompiledView();
