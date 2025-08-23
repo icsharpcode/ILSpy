@@ -25,10 +25,10 @@ namespace ICSharpCode.Decompiler.IL;
 
 partial class IsInst
 {
-	internal override bool SatisfiesSlotRestrictionForInlining(int childIndex, ILInstruction newChild)
+	internal override bool CanInlineIntoSlot(int childIndex, ILInstruction newChild)
 	{
 		Debug.Assert(childIndex == 0);
-		Debug.Assert(base.SatisfiesSlotRestrictionForInlining(childIndex, newChild));
+		Debug.Assert(base.CanInlineIntoSlot(childIndex, newChild));
 		if (this.Type.IsReferenceType == true)
 		{
 			return true;  // reference-type isinst is always supported
@@ -37,12 +37,16 @@ partial class IsInst
 		{
 			return true; // emulated via "expr is T ? (T)expr : null"
 		}
-		else if (newChild is Box box && SemanticHelper.IsPure(box.Argument.Flags))
+		else if (newChild is Box box && SemanticHelper.IsPure(box.Argument.Flags) && this.Argument.Children.Count == 0)
 		{
 			// Also emulated via "expr is T ? (T)expr : null".
 			// This duplicates the boxing side-effect, but that's harmless as one of the boxes is only
 			// used in the `expr is T` type test where the object identity can never be observed.
 			// This appears as part of C# pattern matching, inlining early makes those code patterns easier to detect.
+
+			// We can only do this if the Box appears directly top-level in the IsInst, we cannot inline Box instructions
+			// deeper into our Argument subtree. So restricts to the case were the previous argument has no children
+			// (which means inlining can only replace the argument, not insert within it).
 			return true;
 		}
 		if (this.Parent is UnboxAny unboxAny && ExpressionBuilder.IsUnboxAnyWithIsInst(unboxAny, this.Type))
