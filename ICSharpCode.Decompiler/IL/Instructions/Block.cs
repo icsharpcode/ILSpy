@@ -217,6 +217,22 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
+		internal override bool CanInlineIntoSlot(int childIndex, ILInstruction expressionBeingMoved)
+		{
+			switch (Kind)
+			{
+				case BlockKind.ControlFlow when Parent is BlockContainer:
+				case BlockKind.ArrayInitializer:
+				case BlockKind.CollectionInitializer:
+				case BlockKind.ObjectInitializer:
+				case BlockKind.CallInlineAssign:
+					// Allow inlining into the first instruction of the block
+					return childIndex == 0;
+				default:
+					return false;
+			}
+		}
+
 		/// <summary>
 		/// Gets the name of this block.
 		/// </summary>

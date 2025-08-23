@@ -136,7 +136,6 @@
     <Compile Include="Humanizer\Vocabulary.cs" />
     <Compile Include="IL\ControlFlow\RemoveRedundantReturn.cs" />
     <Compile Include="IL\Transforms\DeconstructionTransform.cs" />
-    <Compile Include="IL\Transforms\FixLoneIsInst.cs" />
     <Compile Include="IL\Instructions\DeconstructInstruction.cs" />
     <Compile Include="IL\Instructions\DeconstructResultInstruction.cs" />
     <Compile Include="IL\Instructions\MatchInstruction.cs" />
@@ -413,6 +412,7 @@
     <Compile Include="IL\Instructions\LdFlda.cs" />
     <Compile Include="IL\Instructions\NullableInstructions.cs" />
     <Compile Include="IL\Instructions\StLoc.cs" />
+    <Compile Include="IL\Instructions\IsInst.cs" />
     <Compile Include="DebugInfo\SequencePoint.cs" />
     <Compile Include="IL\Instructions\CallIndirect.cs" />
     <Compile Include="IL\Instructions\DefaultValue.cs" />

@@ -48,28 +48,35 @@ namespace ICSharpCode.Decompiler.IL
 
 	public sealed partial class StObj
 	{
-		/// <summary>
-		/// For a store to a field or array element, C# will only throw NullReferenceException/IndexOfBoundsException
-		/// after the value-to-be-stored has been computed.
-		/// This means a LdFlda/LdElema used as target for StObj must have DelayExceptions==true to allow a translation to C#
-		/// without changing the program semantics. See https://github.com/icsharpcode/ILSpy/issues/2050
-		/// </summary>
-		public bool CanInlineIntoTargetSlot(ILInstruction inst)
+		internal override bool SatisfiesSlotRestrictionForInlining(int childIndex, ILInstruction newChild)
 		{
-			switch (inst.OpCode)
+			if (childIndex == 0) // target slot
 			{
-				case OpCode.LdElema:
-				case OpCode.LdFlda:
-					Debug.Assert(inst.HasDirectFlag(InstructionFlags.MayThrow));
-					// If the ldelema/ldflda may throw a non-delayed exception, inlining will cause it
-					// to turn into a delayed exception after the translation to C#.
-					// This is only valid if the value computation doesn't involve any side effects.
-					return SemanticHelper.IsPure(this.Value.Flags);
-				// Note that after inlining such a ldelema/ldflda, the normal inlining rules will
-				// prevent us from inlining an effectful instruction into the value slot.
-				default:
-					return true;
+				Debug.Assert(GetChildSlot(childIndex) == TargetSlot);
+				// For a store to a field or array element, C# will only throw NullReferenceException/IndexOfBoundsException
+				// after the value-to-be-stored has been computed.
+				// This means a LdFlda/LdElema used as target for StObj must have DelayExceptions==true to allow a translation to C#
+				// without changing the program semantics. See https://github.com/icsharpcode/ILSpy/issues/2050
+				switch (newChild.OpCode)
+				{
+					case OpCode.LdElema:
+					case OpCode.LdFlda:
+					{
+						Debug.Assert(newChild.HasDirectFlag(InstructionFlags.MayThrow));
+						// If the ldelema/ldflda may throw a non-delayed exception, inlining will cause it
+						// to turn into a delayed exception after the translation to C#.
+						// This is only valid if the value computation doesn't involve any side effects.
+						if (!SemanticHelper.IsPure(this.Value.Flags))
+						{
+							return false;
+						}
+						// Note that after inlining such a ldelema/ldflda, the normal inlining rules will
+						// prevent us from inlining an effectful instruction into the value slot.
+						break;
+					}
+				}
 			}
+			return base.SatisfiesSlotRestrictionForInlining(childIndex, newChild);
 		}
 
 		/// <summary>

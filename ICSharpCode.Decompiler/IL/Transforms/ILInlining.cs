@@ -821,46 +821,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return FindResult.Stop;
 			if (expr.MatchLdLoc(v) || expr.MatchLdLoca(v))
 			{
-				// Match found, we can inline
-				if (expr.SlotInfo == StObj.TargetSlot && !((StObj)expr.Parent).CanInlineIntoTargetSlot(expressionBeingMoved))
+				// Match found, we can inline unless there are slot restrictions.
+				if (expr.Parent.SatisfiesSlotRestrictionForInlining(expr.ChildIndex, expressionBeingMoved))
 				{
-					if ((options & InliningOptions.AllowChangingOrderOfEvaluationForExceptions) != 0)
-					{
-						// Intentionally change code semantics so that we can avoid a ref local
-						if (expressionBeingMoved is LdFlda ldflda)
-							ldflda.DelayExceptions = true;
-						else if (expressionBeingMoved is LdElema ldelema)
-							ldelema.DelayExceptions = true;
-					}
-					else
-					{
-						// special case: the StObj.TargetSlot does not accept some kinds of expressions
-						return FindResult.Stop;
-					}
+					return FindResult.Found(expr);
 				}
-				return FindResult.Found(expr);
+				// We cannot inline because the targets slot restrictions are not satisfied
+				if ((options & InliningOptions.AllowChangingOrderOfEvaluationForExceptions) != 0 && expr.SlotInfo == StObj.TargetSlot)
+				{
+					// Special case: inlining will change code semantics,
+					// but we accept that so that we can avoid a ref local.
+					if (expressionBeingMoved is LdFlda ldflda)
+						ldflda.DelayExceptions = true;
+					else if (expressionBeingMoved is LdElema ldelema)
+						ldelema.DelayExceptions = true;
+					return FindResult.Found(expr);
+				}
+				return FindResult.Stop;
 			}
-			else if (expr is Block block)
+			else if (expr is Block { Kind: BlockKind.CallWithNamedArgs } block)
 			{
-				// Inlining into inline-blocks?
-				switch (block.Kind)
-				{
-					case BlockKind.ControlFlow when block.Parent is BlockContainer:
-					case BlockKind.ArrayInitializer:
-					case BlockKind.CollectionInitializer:
-					case BlockKind.ObjectInitializer:
-					case BlockKind.CallInlineAssign:
-						// Allow inlining into the first instruction of the block
-						if (block.Instructions.Count == 0)
-							return FindResult.Stop;
-						return NoContinue(FindLoadInNext(block.Instructions[0], v, expressionBeingMoved, options));
-					// If FindLoadInNext() returns null, we still can't continue searching
-					// because we can't inline over the remainder of the block.
-					case BlockKind.CallWithNamedArgs:
-						return NamedArgumentTransform.CanExtendNamedArgument(block, v, expressionBeingMoved);
-					default:
-						return FindResult.Stop;
-				}
+				return NamedArgumentTransform.CanExtendNamedArgument(block, v, expressionBeingMoved);
 			}
 			else if (options.HasFlag(InliningOptions.FindDeconstruction) && expr is DeconstructInstruction di)
 			{
@@ -884,14 +865,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return FindResult.Continue; // continue searching
 			else
 				return FindResult.Stop; // abort, inlining not possible
-		}
-
-		private static FindResult NoContinue(FindResult findResult)
-		{
-			if (findResult.Type == FindResultType.Continue)
-				return FindResult.Stop;
-			else
-				return findResult;
 		}
 
 		/// <summary>

@@ -1138,7 +1138,14 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Initobj:
 					return InitObj(PopStObjTarget(), ReadAndDecodeTypeReference());
 				case ILOpCode.Isinst:
-					return Push(new IsInst(Pop(StackType.O), ReadAndDecodeTypeReference()));
+				{
+					var type = ReadAndDecodeTypeReference();
+					if (type.IsReferenceType != true)
+					{
+						FlushExpressionStack(); // value-type isinst has inlining restrictions
+					}
+					return Push(new IsInst(Pop(StackType.O), type));
+				}
 				case ILOpCode.Ldelem:
 					return LdElem(ReadAndDecodeTypeReference());
 				case ILOpCode.Ldelem_i1:
