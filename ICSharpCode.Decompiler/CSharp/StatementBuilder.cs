@@ -1542,5 +1542,32 @@ namespace ICSharpCode.Decompiler.CSharp
 			stmt.InsertChildAfter(null, new Comment(" IL cpblk instruction"), Roles.Comment);
 			return stmt.WithILInstruction(inst);
 		}
+
+		protected internal override TranslatedStatement VisitCkfinite(Ckfinite inst)
+		{
+			var isFiniteCall = new InvocationExpression {
+				Target = new MemberReferenceExpression {
+					Target = new TypeReferenceExpression(new Syntax.PrimitiveType("float")),
+					MemberName = "IsFinite"
+				},
+				Arguments = {
+					exprBuilder.Translate(inst.Argument)
+				}
+			};
+			var arithmeticException = typeSystem.FindType(typeof(ArithmeticException));
+			var arithmeticExceptionSyntax = new SimpleType("ArithmeticException");
+			arithmeticExceptionSyntax.AddAnnotation(new TypeResolveResult(arithmeticException));
+			return new IfElseStatement {
+				Condition = new UnaryOperatorExpression {
+					Operator = UnaryOperatorType.Not,
+					Expression = isFiniteCall
+				},
+				TrueStatement = new ThrowStatement(
+					new ObjectCreateExpression {
+						Type = arithmeticExceptionSyntax
+					}
+				),
+			}.WithILInstruction(inst);
+		}
 	}
 }
