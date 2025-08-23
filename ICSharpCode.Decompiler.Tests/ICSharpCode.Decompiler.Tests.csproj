@@ -101,6 +101,7 @@
     <None Include="TestCases\ILPretty\Issue2260SwitchString.il" />
     <None Include="TestCases\ILPretty\Issue3442.il" />
     <None Include="TestCases\ILPretty\Issue3344CkFinite.il" />
+    <None Include="testcases\ilpretty\Issue3465.il" />
     <None Include="TestCases\ILPretty\Issue3466.il" />
     <None Include="testcases\ilpretty\Issue3504.il" />
     <None Include="testcases\ilpretty\Issue3524.il" />
@@ -145,6 +146,7 @@
     <Compile Include="TestAssemblyResolver.cs" />
     <Compile Include="TestCases\ILPretty\Issue3344CkFinite.cs" />
     <Compile Include="TestCases\ILPretty\Issue3421.cs" />
+    <Compile Include="TestCases\ILPretty\Issue3465.cs" />
     <Compile Include="TestCases\ILPretty\Issue3442.cs" />
     <Compile Include="TestCases\ILPretty\Issue3466.cs" />
     <Compile Include="TestCases\ILPretty\Issue3524.cs" />

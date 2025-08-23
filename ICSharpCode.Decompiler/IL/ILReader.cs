@@ -1852,6 +1852,11 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILInstruction Comparison(ComparisonKind kind, bool un = false)
 		{
+			if (!kind.IsEqualityOrInequality() && PeekStackType() == StackType.O)
+			{
+				FlushExpressionStack();
+			}
+
 			var right = Pop();
 			var left = Pop();
 			// left will run before right, thus preserving the evaluation order
