@@ -165,6 +165,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					clone.Children[j].ReplaceWith(new LdLoc(uninlinedArgs[j]));
 				}
+				// We are copying an expression from far away, reusing the ILRange would result in incorrect sequence points.
+				clone.SetILRange(new Interval());
 				expr.ReplaceWith(clone);
 			}
 			block.Instructions.RemoveAt(i);
