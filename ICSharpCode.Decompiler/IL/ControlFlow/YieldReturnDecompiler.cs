@@ -885,6 +885,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							else
 							{
 								newBlock.Instructions.Add(new InvalidExpression("Assigned non-constant to iterator.state field").WithILRange(oldInst));
+								ReportError(newBlock.Instructions.Last());
 								continue; // don't copy over this instruction, but continue with the basic block
 							}
 						}
@@ -993,6 +994,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				else
 				{
 					newBlock.Instructions.Add(new InvalidBranch("Unable to find new state assignment for yield return"));
+					ReportError(newBlock.Instructions.Last());
 					return;
 				}
 				// Mono may have 'br setSkipFinallyBodies' here, so follow the branch
@@ -1009,6 +1011,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							ExpectedResultType = StackType.Void,
 							Message = "Unexpected assignment to skipFinallyBodies"
 						});
+						ReportError(newBlock.Instructions.Last());
 					}
 					pos++;
 				}
@@ -1022,6 +1025,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							ExpectedResultType = StackType.Void,
 							Message = "Unexpected assignment to doFinallyBodies"
 						});
+						ReportError(newBlock.Instructions.Last());
 					}
 					pos++;
 				}
@@ -1038,6 +1042,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				else
 				{
 					newBlock.Instructions.Add(new InvalidBranch("Unable to find 'return true' for yield return"));
+					ReportError(newBlock.Instructions.Last());
 					return;
 				}
 				newBlock.Instructions.Add(MakeGoTo(newState));
@@ -1068,7 +1073,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 				else
 				{
-					return new InvalidBranch("Could not find block for state " + v);
+					var err = new InvalidBranch("Could not find block for state " + v);
+					ReportError(err);
+					return err;
 				}
 			}
 
@@ -1100,6 +1107,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							}
 							else
 							{
+								// don't treat this as an error, it might just be unreachable code that will be removed soon
+								// (occurs with mcs yield return)
 								leave.ReplaceWith(new InvalidBranch("Unexpected return in MoveNext()").WithILRange(leave));
 							}
 						}
@@ -1116,6 +1125,21 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				{
 					UpdateBranchTargets(child);
 				}
+			}
+
+			void ReportError(ILInstruction inst)
+			{
+				// ConvertBody is still called within the try-catch, so we can throw SymbolicAnalysisFailedException
+				// to suppress conversion of the state machine altogether.
+				// We still initially create an instruction before converting a to an exception,
+				// so that the body of this function can be commented out for testing purposes.
+				// (this allows seeing where exactly the error occurs in the converted body output)
+				string message = "ConvertBody error";
+				if (inst is InvalidBranch invalidBranch)
+					message = invalidBranch.Message;
+				else if (inst is InvalidExpression invalidExpr)
+					message = invalidExpr.Message;
+				throw new SymbolicAnalysisFailedException(message);
 			}
 		}
 		#endregion
