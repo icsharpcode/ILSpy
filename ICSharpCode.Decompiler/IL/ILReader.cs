@@ -1248,11 +1248,14 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		StackType PeekStackType(int i = 0)
+		StackType PeekStackType()
 		{
-			if (expressionStack.Count > i)
-				return expressionStack[^(i + 1)].ResultType;
-			return currentStack.Skip(i).FirstOrDefault()?.StackType ?? StackType.Unknown;
+			if (expressionStack.Count > 0)
+				return expressionStack.Last().ResultType;
+			if (currentStack.IsEmpty)
+				return StackType.Unknown;
+			else
+				return currentStack.Peek().StackType;
 		}
 
 		sealed class CollectStackVariablesVisitor : ILVisitor<ILInstruction>
@@ -1842,8 +1845,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILInstruction Comparison(ComparisonKind kind, bool un = false)
 		{
-			var stackType = PeekStackType();
-			if (!kind.IsEqualityOrInequality() && stackType == StackType.O && stackType == PeekStackType(1))
+			if (!kind.IsEqualityOrInequality() && PeekStackType() == StackType.O)
 			{
 				FlushExpressionStack();
 			}

@@ -1112,7 +1112,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				// Unsafe.As<object, UIntPtr>(ref left) op Unsafe.As<object, UIntPtr>(ref right)
 				// TTo Unsafe.As<TFrom, TTo>(ref TFrom source)
-				var uintptr = compilation.FindType(KnownTypeCode.UIntPtr);
+				var integerType = compilation.FindType(inst.Sign == Sign.Signed ? KnownTypeCode.IntPtr : KnownTypeCode.UIntPtr);
 				left = WrapInUnsafeAs(left, inst.Left);
 				right = WrapInUnsafeAs(right, inst.Right);
 
@@ -1120,7 +1120,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					var type = expr.Type;
 					expr = WrapInRef(expr, new ByReferenceType(type));
-					return CallUnsafeIntrinsic("As", [expr], uintptr, typeArguments: [type, uintptr]);
+					return CallUnsafeIntrinsic("As", [expr], integerType, typeArguments: [type, integerType]);
 				}
 			}
 			return new BinaryOperatorExpression(left.Expression, op, right.Expression)

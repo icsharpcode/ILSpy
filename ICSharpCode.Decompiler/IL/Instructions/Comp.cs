@@ -235,7 +235,23 @@ namespace ICSharpCode.Decompiler.IL
 			// ExpressionBuilder translates comp.o(a op b) for op not in (==, !=) into
 			// Unsafe.As(ref a) op Unsafe.As(ref b), which requires that a and b are variables
 			// and not expressions. Returning false in those cases prevents inlining.
-			return kind.IsEqualityOrInequality() || this.InputType != StackType.O;
+			// However if one of the arguments is LdNull, then we don't need the Unsafe.As trickery, and can always inline.
+			if (kind.IsEqualityOrInequality() || this.InputType != StackType.O)
+			{
+				// OK, won't need Unsafe.As.
+				return true;
+			}
+			if (expressionBeingMoved is LdLoc || expressionBeingMoved.MatchLdsFld(out _))
+			{
+				// OK, can use variable/field name with Unsafe.As(ref x)
+				return true;
+			}
+			if (Sign != Sign.Signed && (expressionBeingMoved is LdNull || Left is LdNull || Right is LdNull))
+			{
+				// OK, this is the "compare with null" special case that doesn't need Unsafe.As()
+				return true;
+			}
+			return false;
 		}
 	}
 }
