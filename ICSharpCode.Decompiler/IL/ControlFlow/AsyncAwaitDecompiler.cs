@@ -162,8 +162,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			if (!isVisualBasicStateMachine)
 			{
+				context.StepStartGroup("AwaitInCatchTransform");
 				AwaitInCatchTransform.Run(function, context);
+				context.StepEndGroup();
+				context.StepStartGroup("AwaitInFinallyTransform");
 				AwaitInFinallyTransform.Run(function, context);
+				context.StepEndGroup();
 			}
 
 			awaitDebugInfos.SortBy(row => row.YieldOffset);
