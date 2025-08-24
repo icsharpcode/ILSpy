@@ -118,7 +118,9 @@ namespace ICSharpCode.Decompiler
 			}
 			if (symbol != null && node.Role == Roles.Type && node.Parent is ObjectCreateExpression)
 			{
-				symbol = node.Parent.GetSymbol();
+				var ctorSymbol = node.Parent.GetSymbol();
+				if (ctorSymbol != null)
+					symbol = ctorSymbol;
 			}
 
 			if (node is IdentifierExpression && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression && symbol is IMember member)
