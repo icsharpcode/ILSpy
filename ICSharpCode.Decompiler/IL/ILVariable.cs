@@ -574,6 +574,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		/// <summary>
 		/// Gets whether this variable occurs within the specified instruction.
+		/// Only detects direct usages, may incorrectly return false for variables that have aliases via ref-locals/pointers.
 		/// </summary>
 		internal bool IsUsedWithin(ILInstruction inst)
 		{
@@ -584,6 +585,24 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var child in inst.Children)
 			{
 				if (IsUsedWithin(child))
+					return true;
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Gets whether this variable is used for a store within the specified instruction.
+		/// Only detects direct stores, may incorrect return false for variables that have their addresses taken.
+		/// </summary>
+		internal bool IsWrittenWithin(ILInstruction inst)
+		{
+			if (inst is IStoreInstruction iwvo && iwvo.Variable == this)
+			{
+				return true;
+			}
+			foreach (var child in inst.Children)
+			{
+				if (IsWrittenWithin(child))
 					return true;
 			}
 			return false;

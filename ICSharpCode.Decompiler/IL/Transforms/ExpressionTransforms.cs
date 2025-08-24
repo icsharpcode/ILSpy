@@ -856,6 +856,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
+		protected internal override void VisitNullCoalescingInstruction(NullCoalescingInstruction inst)
+		{
+			base.VisitNullCoalescingInstruction(inst);
+			NullCoalescingAssignTransform.RunForExpression(inst, context);
+		}
+
 		protected internal override void VisitTryCatchHandler(TryCatchHandler inst)
 		{
 			base.VisitTryCatchHandler(inst);

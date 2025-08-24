@@ -678,7 +678,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 
 		/// Every IsCompoundStore() call should be followed by an IsMatchingCompoundLoad() call.
 		/// </remarks>
-		static bool IsCompoundStore(ILInstruction inst, out IType storeType,
+		internal static bool IsCompoundStore(ILInstruction inst, out IType storeType,
 			out ILInstruction value, ICompilation compilation)
 		{
 			value = null;
@@ -766,7 +766,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <param name="previousInstruction">
 		/// Instruction preceding the load.
 		/// </param>
-		static bool IsMatchingCompoundLoad(ILInstruction load, ILInstruction store,
+		internal static bool IsMatchingCompoundLoad(ILInstruction load, ILInstruction store,
 			out ILInstruction target, out CompoundTargetKind targetKind,
 			out Action<ILTransformContext> finalizeMatch,
 			ILVariable forbiddenVariable = null,

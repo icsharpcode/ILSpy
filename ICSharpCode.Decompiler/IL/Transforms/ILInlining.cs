@@ -678,7 +678,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return true; // inline into dynamic compound assignments
 					break;
 				case OpCode.DynamicCompoundAssign:
+				case OpCode.NullCoalescingCompoundAssign:
 					return true;
+				case OpCode.LdFlda:
+					if (parent.Parent.OpCode == OpCode.NullCoalescingCompoundAssign)
+						return true;
+					break;
 				case OpCode.GetPinnableReference:
 				case OpCode.LocAllocSpan:
 					return true; // inline size-expressions into localloc.span

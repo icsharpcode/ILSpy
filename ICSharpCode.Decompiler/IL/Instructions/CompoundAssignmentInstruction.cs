@@ -20,6 +20,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq.Expressions;
+using System.Security.Claims;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -113,6 +114,9 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 				case CompoundTargetKind.Property:
 					output.Write(".property");
+					break;
+				case CompoundTargetKind.Dynamic:
+					output.Write(".dynamic");
 					break;
 			}
 			switch (EvalMode)
@@ -376,7 +380,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			WriteILRange(output, options);
 			output.Write(OpCode);
-			output.Write("." + Operation.ToString().ToLower());
+			output.Write("." + Operation.ToString().ToLowerInvariant());
 			DynamicInstruction.WriteBinderFlags(BinderFlags, output, options);
 			base.WriteSuffix(output);
 			output.Write(' ');
@@ -416,6 +420,57 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 	}
+
+
+	public partial class NullCoalescingCompoundAssign : CompoundAssignmentInstruction
+	{
+		public readonly NullCoalescingKind CoalescingKind;
+
+		public NullCoalescingCompoundAssign(ILInstruction target,
+			CompoundTargetKind targetKind, NullCoalescingKind coalescingKind, ILInstruction value, IType type)
+			: base(OpCode.NullCoalescingCompoundAssign, CompoundEvalMode.EvaluatesToNewValue, target, targetKind, value)
+		{
+			this.CoalescingKind = coalescingKind;
+			this.type = type;
+		}
+
+		internal override bool CanInlineIntoSlot(int childIndex, ILInstruction expressionBeingMoved)
+		{
+			// Can inline into target slot, but not into the conditionally-executed value slot.
+			Debug.Assert(GetChildSlot(0) == TargetSlot);
+			if (childIndex == 0)
+				return base.CanInlineIntoSlot(childIndex, expressionBeingMoved);
+			else
+				return false;
+		}
+
+		public override StackType ResultType => Value.ResultType;
+
+		protected override InstructionFlags ComputeFlags()
+		{
+			// targetInst is always executed; valueInst (and the implicit store) only sometimes
+			return InstructionFlags.ControlFlow | Target.Flags
+				| SemanticHelper.CombineBranches(InstructionFlags.None, InstructionFlags.SideEffect | Value.Flags);
+		}
+
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.SideEffect | InstructionFlags.ControlFlow;
+			}
+		}
+
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			WriteILRange(output, options);
+			output.Write("if.notnull.");
+			output.Write(CoalescingKind.ToString().ToLowerInvariant());
+			output.Write(".compound");
+			base.WriteSuffix(output);
+			output.Write('(');
+			Target.WriteTo(output, options);
+			output.Write(", ");
+			Value.WriteTo(output, options);
+			output.Write(')');
+		}
+	}
 }
-
-

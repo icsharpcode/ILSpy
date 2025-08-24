@@ -1,5 +1,4 @@
 {
-    "dotnet-test-explorer.testProjectPath": "*.Tests/*Tests.csproj",
     "files.exclude": {
         "ILSpy-tests/**": true
     },

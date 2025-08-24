@@ -142,6 +142,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							new DynamicIsEventAssignmentTransform(),
 							new TransformAssignment(), // inline and compound assignments
 							new NullCoalescingTransform(),
+							new NullCoalescingAssignTransform(),
 							new NullableLiftingStatementTransform(),
 							new NullPropagationStatementTransform(),
 							new TransformArrayInitializers(),

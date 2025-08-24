@@ -754,6 +754,11 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			HandleBinaryWithOptionalEvaluation(inst, inst.ValueInst, inst.FallbackInst);
 		}
 
+		protected internal override void VisitNullCoalescingCompoundAssign(NullCoalescingCompoundAssign inst)
+		{
+			HandleBinaryWithOptionalEvaluation(inst, inst.Target, inst.Value);
+		}
+
 		protected internal override void VisitDynamicLogicOperatorInstruction(DynamicLogicOperatorInstruction inst)
 		{
 			HandleBinaryWithOptionalEvaluation(inst, inst.Left, inst.Right);

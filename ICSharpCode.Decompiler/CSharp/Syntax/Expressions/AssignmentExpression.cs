@@ -51,6 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static TokenRole BitwiseAndRole = new TokenRole("&=");
 		public readonly static TokenRole BitwiseOrRole = new TokenRole("|=");
 		public readonly static TokenRole ExclusiveOrRole = new TokenRole("^=");
+		public readonly static TokenRole NullCoalescingRole = new TokenRole("??=");
 
 		public AssignmentExpression()
 		{
@@ -138,6 +139,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return BitwiseOrRole;
 				case AssignmentOperatorType.ExclusiveOr:
 					return ExclusiveOrRole;
+				case AssignmentOperatorType.NullCoalescing:
+					return NullCoalescingRole;
 				default:
 					throw new NotSupportedException("Invalid value for AssignmentOperatorType");
 			}
@@ -175,6 +178,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return BinaryOperatorType.BitwiseOr;
 				case AssignmentOperatorType.ExclusiveOr:
 					return BinaryOperatorType.ExclusiveOr;
+				case AssignmentOperatorType.NullCoalescing:
+					return BinaryOperatorType.NullCoalescing;
 				default:
 					throw new NotSupportedException("Invalid value for AssignmentOperatorType");
 			}
@@ -275,6 +280,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		BitwiseOr,
 		/// <summary>left ^= right</summary>
 		ExclusiveOr,
+		/// <summary>left ??= right</summary>
+		NullCoalescing,
 
 		/// <summary>Any operator (for pattern matching)</summary>
 		Any

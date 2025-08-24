@@ -3877,6 +3877,29 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(rr);
 		}
 
+		protected internal override TranslatedExpression VisitNullCoalescingCompoundAssign(NullCoalescingCompoundAssign inst, TranslationContext context)
+		{
+			ExpressionWithResolveResult target;
+			if (inst.TargetKind == CompoundTargetKind.Address)
+			{
+				target = LdObj(inst.Target, inst.Type);
+			}
+			else
+			{
+				target = Translate(inst.Target, inst.Type);
+			}
+			var fallback = Translate(inst.Value);
+			fallback = AdjustConstantExpressionToType(fallback, inst.Type);
+			var resultType = target.Type;
+			if (inst.CoalescingKind == NullCoalescingKind.NullableWithValueFallback)
+			{
+				resultType = NullableType.GetUnderlyingType(resultType);
+			}
+			return new AssignmentExpression(target, AssignmentOperatorType.NullCoalescing, fallback)
+				.WithILInstruction(inst)
+				.WithRR(new ResolveResult(resultType));
+		}
+
 		protected internal override TranslatedExpression VisitIfInstruction(IfInstruction inst, TranslationContext context)
 		{
 			var condition = TranslateCondition(inst.Condition);

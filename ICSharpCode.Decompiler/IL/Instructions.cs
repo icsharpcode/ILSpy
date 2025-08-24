@@ -54,6 +54,8 @@ namespace ICSharpCode.Decompiler.IL
 		UserDefinedCompoundAssign,
 		/// <summary>Common instruction for dynamic compound assignments.</summary>
 		DynamicCompoundAssign,
+		/// <summary>Null coalescing compound assignment (??= in C#).</summary>
+		NullCoalescingCompoundAssign,
 		/// <summary>Bitwise NOT</summary>
 		BitNot,
 		/// <summary>Retrieves the RuntimeArgumentHandle.</summary>
@@ -64,7 +66,7 @@ namespace ICSharpCode.Decompiler.IL
 		Leave,
 		/// <summary>If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c></summary>
 		IfInstruction,
-		/// <summary>Null coalescing operator expression. <c>if.notnull(valueInst, fallbackInst)</c></summary>
+		/// <summary>Null coalescing operator expression (?? in C#). <c>if.notnull(valueInst, fallbackInst)</c></summary>
 		NullCoalescingInstruction,
 		/// <summary>Switch statement</summary>
 		SwitchInstruction,
@@ -1173,6 +1175,36 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
+	/// <summary>Null coalescing compound assignment (??= in C#).</summary>
+	public sealed partial class NullCoalescingCompoundAssign : CompoundAssignmentInstruction
+	{
+		IType type;
+		/// <summary>Returns the type operand.</summary>
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitNullCoalescingCompoundAssign(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitNullCoalescingCompoundAssign(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitNullCoalescingCompoundAssign(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
+		{
+			var o = other as NullCoalescingCompoundAssign;
+			return o != null && type.Equals(o.type) && CoalescingKind == o.CoalescingKind && this.EvalMode == o.EvalMode && this.TargetKind == o.TargetKind && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Bitwise NOT</summary>
 	public sealed partial class BitNot : UnaryInstruction
 	{
@@ -1443,7 +1475,7 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
-	/// <summary>Null coalescing operator expression. <c>if.notnull(valueInst, fallbackInst)</c></summary>
+	/// <summary>Null coalescing operator expression (?? in C#). <c>if.notnull(valueInst, fallbackInst)</c></summary>
 	public sealed partial class NullCoalescingInstruction : ILInstruction
 	{
 		public static readonly SlotInfo ValueInstSlot = new SlotInfo("ValueInst", canInlineInto: true);
@@ -7102,6 +7134,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitNullCoalescingCompoundAssign(NullCoalescingCompoundAssign inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitBitNot(BitNot inst)
 		{
 			Default(inst);
@@ -7509,6 +7545,10 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitDynamicCompoundAssign(DynamicCompoundAssign inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitNullCoalescingCompoundAssign(NullCoalescingCompoundAssign inst)
 		{
 			return Default(inst);
 		}
@@ -7922,6 +7962,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitNullCoalescingCompoundAssign(NullCoalescingCompoundAssign inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitBitNot(BitNot inst, C context)
 		{
 			return Default(inst, context);
@@ -8294,6 +8338,7 @@ namespace ICSharpCode.Decompiler.IL
 			"numeric.compound",
 			"user.compound",
 			"dynamic.compound",
+			"if.notnull.compound",
 			"bit.not",
 			"arglist",
 			"br",
