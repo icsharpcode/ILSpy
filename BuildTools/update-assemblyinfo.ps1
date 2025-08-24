@@ -1,4 +1,4 @@
-﻿if (-not ($PSVersionTable.PSCompatibleVersions -contains "5.0")) {
+if (-not ($PSVersionTable.PSCompatibleVersions -contains "5.0")) {
     Write-Error "This script requires at least powershell version 5.0!";
     return 255;
 }
@@ -175,7 +175,8 @@ try {
         $out = $out.Replace('$INSERTBUILDCONFIG$', $buildConfig);
 
         if ((-not (Test-File $file.Output)) -or (((Get-Content $file.Output) -Join [System.Environment]::NewLine) -ne $out)) {
-            $out | Out-File -Encoding utf8 $file.Output;
+			$utf8NoBom = New-Object System.Text.UTF8Encoding($false);
+			[System.IO.File]::WriteAllText($file.Output, $out, $utf8NoBom);
         }
     }
 	
