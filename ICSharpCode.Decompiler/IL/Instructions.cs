@@ -3732,10 +3732,10 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Load address of instance field</summary>
 	public sealed partial class LdFlda : ILInstruction, IInstructionWithFieldOperand
 	{
-		public LdFlda(ILInstruction target, IField field) : base(OpCode.LdFlda)
+		public LdFlda(ILInstruction target, IField @field) : base(OpCode.LdFlda)
 		{
 			this.Target = target;
-			this.field = field;
+			this.@field = @field;
 		}
 		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
 		ILInstruction target = null!;
@@ -3788,9 +3788,9 @@ namespace ICSharpCode.Decompiler.IL
 			return clone;
 		}
 		public bool DelayExceptions; // NullReferenceException/IndexOutOfBoundsException only occurs when the reference is dereferenced
-		readonly IField field;
+		readonly IField @field;
 		/// <summary>Returns the field operand.</summary>
-		public IField Field { get { return field; } }
+		public IField Field { get { return @field; } }
 		public override StackType ResultType { get { return target.ResultType.IsIntegerType() ? StackType.I : StackType.Ref; } }
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -3808,7 +3808,7 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write("delayex.");
 			output.Write(OpCode);
 			output.Write(' ');
-			field.WriteTo(output);
+			@field.WriteTo(output);
 			output.Write('(');
 			this.target.WriteTo(output, options);
 			output.Write(')');
@@ -3828,7 +3828,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
 			var o = other as LdFlda;
-			return o != null && this.target.PerformMatch(o.target, ref match) && DelayExceptions == o.DelayExceptions && field.Equals(o.field);
+			return o != null && this.target.PerformMatch(o.target, ref match) && DelayExceptions == o.DelayExceptions && @field.Equals(o.@field);
 		}
 	}
 }
@@ -3837,20 +3837,20 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Load static field address</summary>
 	public sealed partial class LdsFlda : SimpleInstruction, IInstructionWithFieldOperand
 	{
-		public LdsFlda(IField field) : base(OpCode.LdsFlda)
+		public LdsFlda(IField @field) : base(OpCode.LdsFlda)
 		{
-			this.field = field;
+			this.@field = @field;
 		}
 		public override StackType ResultType { get { return StackType.Ref; } }
-		readonly IField field;
+		readonly IField @field;
 		/// <summary>Returns the field operand.</summary>
-		public IField Field { get { return field; } }
+		public IField Field { get { return @field; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
-			field.WriteTo(output);
+			@field.WriteTo(output);
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -3867,7 +3867,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
 			var o = other as LdsFlda;
-			return o != null && field.Equals(o.field);
+			return o != null && @field.Equals(o.@field);
 		}
 	}
 }
@@ -8789,28 +8789,28 @@ namespace ICSharpCode.Decompiler.IL
 			size = default(ILInstruction);
 			return false;
 		}
-		public bool MatchLdFlda([NotNullWhen(true)] out ILInstruction? target, [NotNullWhen(true)] out IField? field)
+		public bool MatchLdFlda([NotNullWhen(true)] out ILInstruction? target, [NotNullWhen(true)] out IField? @field)
 		{
 			var inst = this as LdFlda;
 			if (inst != null)
 			{
 				target = inst.Target;
-				field = inst.Field;
+				@field = inst.Field;
 				return true;
 			}
 			target = default(ILInstruction);
-			field = default(IField);
+			@field = default(IField);
 			return false;
 		}
-		public bool MatchLdsFlda([NotNullWhen(true)] out IField? field)
+		public bool MatchLdsFlda([NotNullWhen(true)] out IField? @field)
 		{
 			var inst = this as LdsFlda;
 			if (inst != null)
 			{
-				field = inst.Field;
+				@field = inst.Field;
 				return true;
 			}
-			field = default(IField);
+			@field = default(IField);
 			return false;
 		}
 		public bool MatchCastClass([NotNullWhen(true)] out ILInstruction? argument, [NotNullWhen(true)] out IType? type)

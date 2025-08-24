@@ -139,6 +139,7 @@ namespace ICSharpCode.Decompiler.Tests.Pretty
 			}
 		}
 
+#pragma warning disable CS8981
 		private class i
 		{
 			public static void Test()
@@ -312,7 +313,30 @@ namespace ICSharpCode.Decompiler.Tests.Pretty
 				QualifierTests.i.Test();
 			}
 		}
+#if CS70
+		private void LocalConflictsWithLocalFunction()
+		{
+			int num = 0;
+			LocalFunction();
 
+			void LocalFunction()
+			{
+				QualifierTests qualifierTests2 = qualifierTests();
+				i.Test();
+				Z(qualifierTests2);
+			}
+
+			QualifierTests qualifierTests()
+			{
+				num.ToString();
+				return new QualifierTests(new string[0]);
+			}
+		}
+
+		private void Z(QualifierTests qualifierTests)
+		{
+		}
+#endif
 		public QualifierTests(string[] Array)
 		{
 			System.Array.Sort(Array);

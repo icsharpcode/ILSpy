@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Constructs a FullTypeName by parsing the given reflection name.
 		/// Note that FullTypeName can only represent type definition names. If the reflection name
 		/// might refer to a parameterized type or array etc., use
-		/// <see cref="ReflectionHelper.ParseReflectionName(string)"/> instead.
+		/// <see cref="ReflectionHelper.ParseReflectionName(string, ITypeResolveContext)"/> instead.
 		/// </summary>
 		/// <remarks>
 		/// Expected syntax: <c>NamespaceName '.' TopLevelTypeName ['`'#] { '+' NestedTypeName ['`'#] }</c>

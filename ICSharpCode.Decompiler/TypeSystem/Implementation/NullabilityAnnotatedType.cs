@@ -115,6 +115,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool ITypeParameter.HasReferenceTypeConstraint => baseType.HasReferenceTypeConstraint;
 		bool ITypeParameter.HasValueTypeConstraint => baseType.HasValueTypeConstraint;
 		bool ITypeParameter.HasUnmanagedConstraint => baseType.HasUnmanagedConstraint;
+		bool ITypeParameter.AllowsRefLikeType => baseType.AllowsRefLikeType;
 		Nullability ITypeParameter.NullabilityConstraint => baseType.NullabilityConstraint;
 		IReadOnlyList<TypeConstraint> ITypeParameter.TypeConstraints => baseType.TypeConstraints;
 		SymbolKind ISymbol.SymbolKind => SymbolKind.TypeParameter;

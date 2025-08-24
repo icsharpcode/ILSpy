@@ -131,17 +131,17 @@ namespace ICSharpCode.Decompiler.Documentation
 			string localizedXmlDocFile = GetLocalizedName(xmlFileName, currentCulture.Name);
 			string localizedXmlDocFallbackFile = GetLocalizedName(xmlFileName, currentCulture.TwoLetterISOLanguageName);
 
-			Debug.WriteLine("Try find XMLDoc @" + localizedXmlDocFile);
+			//Debug.WriteLine("Try find XMLDoc @" + localizedXmlDocFile);
 			if (File.Exists(localizedXmlDocFile))
 			{
 				return localizedXmlDocFile;
 			}
-			Debug.WriteLine("Try find XMLDoc @" + localizedXmlDocFallbackFile);
+			//Debug.WriteLine("Try find XMLDoc @" + localizedXmlDocFallbackFile);
 			if (File.Exists(localizedXmlDocFallbackFile))
 			{
 				return localizedXmlDocFallbackFile;
 			}
-			Debug.WriteLine("Try find XMLDoc @" + xmlFileName);
+			//Debug.WriteLine("Try find XMLDoc @" + xmlFileName);
 			if (File.Exists(xmlFileName))
 			{
 				return xmlFileName;
@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			if (currentCulture.TwoLetterISOLanguageName != "en")
 			{
 				string englishXmlDocFile = GetLocalizedName(xmlFileName, "en");
-				Debug.WriteLine("Try find XMLDoc @" + englishXmlDocFile);
+				//Debug.WriteLine("Try find XMLDoc @" + englishXmlDocFile);
 				if (File.Exists(englishXmlDocFile))
 				{
 					return englishXmlDocFile;

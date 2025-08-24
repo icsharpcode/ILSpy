@@ -24,8 +24,6 @@ using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
-using ICSharpCode.Decompiler.CSharp.Transforms;
-using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Semantics;
@@ -60,6 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				decompilationContext,
 				currentFunction,
 				settings,
+				decompileRun,
 				cancellationToken
 			);
 			this.currentFunction = currentFunction;
@@ -617,12 +616,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (!m.Success)
 						return null;
 					// Validate that the invocation is an extension method invocation.
-					var context = new CSharpTypeResolveContext(
-						typeSystem.MainModule,
-						decompileRun.UsingScope.Resolve(typeSystem)
-					);
-					if (!IntroduceExtensionMethods.CanTransformToExtensionMethodCall(context,
-						(InvocationExpression)resource))
+					if (!(resource.GetSymbol() is IMethod method
+						&& exprBuilder.resolver.CanTransformToExtensionMethodCall(method, true)))
 					{
 						return null;
 					}
@@ -1546,6 +1541,33 @@ namespace ICSharpCode.Decompiler.CSharp
 			);
 			stmt.InsertChildAfter(null, new Comment(" IL cpblk instruction"), Roles.Comment);
 			return stmt.WithILInstruction(inst);
+		}
+
+		protected internal override TranslatedStatement VisitCkfinite(Ckfinite inst)
+		{
+			var isFiniteCall = new InvocationExpression {
+				Target = new MemberReferenceExpression {
+					Target = new TypeReferenceExpression(new Syntax.PrimitiveType("float")),
+					MemberName = "IsFinite"
+				},
+				Arguments = {
+					exprBuilder.Translate(inst.Argument)
+				}
+			};
+			var arithmeticException = typeSystem.FindType(typeof(ArithmeticException));
+			var arithmeticExceptionSyntax = new SimpleType("ArithmeticException");
+			arithmeticExceptionSyntax.AddAnnotation(new TypeResolveResult(arithmeticException));
+			return new IfElseStatement {
+				Condition = new UnaryOperatorExpression {
+					Operator = UnaryOperatorType.Not,
+					Expression = isFiniteCall
+				},
+				TrueStatement = new ThrowStatement(
+					new ObjectCreateExpression {
+						Type = arithmeticExceptionSyntax
+					}
+				),
+			}.WithILInstruction(inst);
 		}
 	}
 }

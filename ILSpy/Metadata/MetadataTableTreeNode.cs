@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
+using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Windows.Controls;
@@ -26,6 +26,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
@@ -51,10 +52,18 @@ namespace ICSharpCode.ILSpy.Metadata
 			this.scrollTarget = metadataFile.Metadata.GetRowNumber((EntityHandle)handle);
 		}
 
-		protected void ScrollItemIntoView(DataGrid view, object item)
+		protected void ScrollRowIntoView(DataGrid view, int row)
 		{
-			view.Loaded += View_Loaded;
-			view.Dispatcher.BeginInvoke((Action)(() => view.SelectItem(item)), DispatcherPriority.Background);
+			if (!view.IsLoaded)
+			{
+				view.Loaded += View_Loaded;
+			}
+			else
+			{
+				View_Loaded(view, new System.Windows.RoutedEventArgs());
+			}
+			if (view.Items.Count > row && row >= 0)
+				view.Dispatcher.BeginInvoke(() => view.SelectItem(view.Items[row]), DispatcherPriority.Background);
 		}
 
 		private void View_Loaded(object sender, System.Windows.RoutedEventArgs e)
@@ -138,7 +147,39 @@ namespace ICSharpCode.ILSpy.Metadata
 		}
 	}
 
-	internal abstract class DebugMetadataTableTreeNode : MetadataTableTreeNode
+	internal abstract class MetadataTableTreeNode<TEntry> : MetadataTableTreeNode
+		where TEntry : struct
+	{
+		public MetadataTableTreeNode(TableIndex kind, MetadataFile metadataFile)
+			: base(kind, metadataFile)
+		{
+		}
+
+		protected abstract IReadOnlyList<TEntry> LoadTable();
+
+		protected virtual void ConfigureDataGrid(DataGrid view)
+		{
+		}
+
+		public override bool View(TabPageModel tabPage)
+		{
+			tabPage.Title = Text.ToString();
+			tabPage.SupportsLanguageSwitching = false;
+
+			var view = Helpers.PrepareDataGrid(tabPage, this);
+			ConfigureDataGrid(view);
+
+			view.ItemsSource = LoadTable();
+			tabPage.Content = view;
+
+			ScrollRowIntoView(view, scrollTarget);
+
+			return true;
+		}
+	}
+
+	internal abstract class DebugMetadataTableTreeNode<TEntry> : MetadataTableTreeNode<TEntry>
+		where TEntry : struct
 	{
 		public DebugMetadataTableTreeNode(TableIndex kind, MetadataFile metadataFile)
 			: base(kind, metadataFile)

@@ -24,47 +24,24 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class FileTableTreeNode : MetadataTableTreeNode
+	class FileTableTreeNode : MetadataTableTreeNode<FileTableTreeNode.FileEntry>
 	{
 		public FileTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.File, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<FileEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = metadataFile.Metadata;
-
 			var list = new List<FileEntry>();
-			FileEntry scrollTargetEntry = default;
-
-			foreach (var row in metadata.AssemblyFiles)
+			foreach (var row in metadataFile.Metadata.AssemblyFiles)
 			{
-				FileEntry entry = new FileEntry(metadataFile, row);
-				if (entry.RID == this.scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new FileEntry(metadataFile, row));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		struct FileEntry
+		internal struct FileEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly AssemblyFileHandle handle;
@@ -106,6 +83,5 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.assemblyFile = metadataFile.Metadata.GetAssemblyFile(handle);
 			}
 		}
-
 	}
 }

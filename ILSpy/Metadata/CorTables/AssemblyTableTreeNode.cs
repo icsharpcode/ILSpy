@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -25,33 +26,26 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class AssemblyTableTreeNode : MetadataTableTreeNode
+	internal class AssemblyTableTreeNode : MetadataTableTreeNode<AssemblyTableTreeNode.AssemblyEntry>
 	{
 		public AssemblyTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.Assembly, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<AssemblyEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
 			if (metadataFile.Metadata.IsAssembly)
 			{
-				view.ItemsSource = new[] { new AssemblyEntry(metadataFile.Metadata, metadataFile.MetadataOffset) };
+				return [new AssemblyEntry(metadataFile.Metadata, metadataFile.MetadataOffset)];
 			}
 			else
 			{
-				view.ItemsSource = Array.Empty<AssemblyEntry>();
+				return [];
 			}
-
-			tabPage.Content = view;
-			return true;
 		}
 
-		readonly struct AssemblyEntry
+		internal readonly struct AssemblyEntry
 		{
 			readonly int metadataOffset;
 			readonly MetadataReader metadata;

@@ -941,12 +941,31 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		/// <summary>
-		/// Gets whether the specified instruction may be inlined into the specified slot.
-		/// Note: this does not check whether reordering with the previous slots is valid; only wheter the target slot supports inlining at all!
+		/// Gets whether the expressionBeingMoved, which previously executes prior to `this`,
+		/// may be moved into a descendant of the specified slot.
+		/// (i.e. this controls whether FindLoadInNext may descent into the specified slot)
+		/// 
+		/// Note: this does not check whether reordering with the previous slots is valid; only whether the target slot supports inlining at all!
 		/// </summary>
 		internal virtual bool CanInlineIntoSlot(int childIndex, ILInstruction expressionBeingMoved)
 		{
 			return GetChildSlot(childIndex).CanInlineInto;
+		}
+
+		/// <summary>
+		/// Some slots in the ILAst have restrictions on which instructions can appear in them.
+		/// Used to suppress inlining if the new child does not satisfy the restrictions.
+		/// Unlike `CanInlineIntoSlot`, this is not about descendants of the slot, only about
+		/// whether SetChild(childIndex, newChild) is valid.
+		/// (i.e. this controls whether FindLoadInNext may return the specified slot as a final result)
+		/// 
+		/// Warning: after newChild is inlined, other nodes may be inlined into newChild's sub-instructions
+		/// without asking this function again. This means this function is not suitable for protecting
+		/// a slot from having side effects, use `CanInlineIntoSlot` for that.
+		/// </summary>
+		internal virtual bool SatisfiesSlotRestrictionForInlining(int childIndex, ILInstruction newChild)
+		{
+			return true;
 		}
 	}
 

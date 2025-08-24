@@ -374,11 +374,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			bool CanTransformToExtensionMethodCall(CallInstruction call, ILTransformContext context)
 			{
-				return CSharp.Transforms.IntroduceExtensionMethods.CanTransformToExtensionMethodCall(
-					call.Method, new CSharp.TypeSystem.CSharpTypeResolveContext(
-						context.TypeSystem.MainModule, context.UsingScope
-					)
-				);
+				return context.CSharpResolver.CanTransformToExtensionMethodCall(call.Method);
 			}
 		}
 

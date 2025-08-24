@@ -46,59 +46,49 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			rootNode.AcceptVisitor(this);
 		}
 
-		Stack<CSharpTypeResolveContext> resolveContextStack = new Stack<CSharpTypeResolveContext>();
-
 		void InitializeContext(UsingScope usingScope)
 		{
-			this.resolveContextStack = new Stack<CSharpTypeResolveContext>();
 			if (!string.IsNullOrEmpty(context.CurrentTypeDefinition?.Namespace))
 			{
 				foreach (string ns in context.CurrentTypeDefinition.Namespace.Split('.'))
 				{
-					usingScope = new UsingScope(usingScope, ns);
+					usingScope = usingScope.WithNestedNamespace(ns);
 				}
 			}
-			var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule, usingScope.Resolve(context.TypeSystem), context.CurrentTypeDefinition);
-			this.resolveContextStack.Push(currentContext);
+			var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule, usingScope, context.CurrentTypeDefinition);
 			this.resolver = new CSharpResolver(currentContext);
 		}
 
 		public override void VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration)
 		{
-			var previousContext = resolveContextStack.Peek();
-			var usingScope = previousContext.CurrentUsingScope.UnresolvedUsingScope;
+			var usingScope = resolver.CurrentUsingScope;
 			foreach (string ident in namespaceDeclaration.Identifiers)
 			{
-				usingScope = new UsingScope(usingScope, ident);
+				usingScope = usingScope.WithNestedNamespace(ident);
 			}
-			var currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule, usingScope.Resolve(previousContext.Compilation));
-			resolveContextStack.Push(currentContext);
+			var previousResolver = this.resolver;
 			try
 			{
-				this.resolver = new CSharpResolver(currentContext);
+				this.resolver = this.resolver.WithCurrentUsingScope(usingScope);
 				base.VisitNamespaceDeclaration(namespaceDeclaration);
 			}
 			finally
 			{
-				this.resolver = new CSharpResolver(previousContext);
-				resolveContextStack.Pop();
+				this.resolver = previousResolver;
 			}
 		}
 
 		public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
 		{
-			var previousContext = resolveContextStack.Peek();
-			var currentContext = previousContext.WithCurrentTypeDefinition(typeDeclaration.GetSymbol() as ITypeDefinition);
-			resolveContextStack.Push(currentContext);
+			var previousResolver = this.resolver;
+			this.resolver = resolver.WithCurrentTypeDefinition(typeDeclaration.GetSymbol() as ITypeDefinition);
 			try
 			{
-				this.resolver = new CSharpResolver(currentContext);
 				base.VisitTypeDeclaration(typeDeclaration);
 			}
 			finally
 			{
-				this.resolver = new CSharpResolver(previousContext);
-				resolveContextStack.Pop();
+				this.resolver = previousResolver;
 			}
 		}
 
@@ -205,41 +195,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 				pos++;
 			}
-			return CanTransformToExtensionMethodCall(resolver, method, typeArguments, target, args, argNames);
-		}
-
-		public static bool CanTransformToExtensionMethodCall(CSharpTypeResolveContext resolveContext,
-			InvocationExpression invocationExpression)
-		{
-			return CanTransformToExtensionMethodCall(new CSharpResolver(resolveContext),
-				invocationExpression, out _, out _, out _);
-		}
-
-		public static bool CanTransformToExtensionMethodCall(CSharpResolver resolver, IMethod method,
-			IReadOnlyList<IType> typeArguments, ResolveResult target, ResolveResult[] arguments, string[] argumentNames)
-		{
-			if (target is LambdaResolveResult)
-				return false;
-			var rr = resolver.ResolveMemberAccess(target, method.Name, typeArguments, NameLookupMode.InvocationTarget) as MethodGroupResolveResult;
-			if (rr == null)
-				return false;
-			var or = rr.PerformOverloadResolution(resolver.CurrentTypeResolveContext.Compilation, arguments, argumentNames, allowExtensionMethods: true);
-			if (or == null || or.IsAmbiguous)
-				return false;
-			return method.Equals(or.GetBestCandidateWithSubstitutedTypeArguments())
-				&& CSharpResolver.IsEligibleExtensionMethod(target.Type, method, useTypeInference: false, out _);
-		}
-
-		public static bool CanTransformToExtensionMethodCall(IMethod method, CSharpTypeResolveContext resolveContext, bool ignoreTypeArguments = false, bool ignoreArgumentNames = true)
-		{
-			if (method.Parameters.Count == 0)
-				return false;
-			var targetType = method.Parameters.Select(p => new ResolveResult(p.Type)).First();
-			var paramTypes = method.Parameters.Skip(1).Select(p => new ResolveResult(p.Type)).ToArray();
-			var paramNames = ignoreArgumentNames ? null : method.Parameters.SelectReadOnlyArray(p => p.Name);
-			var typeArgs = ignoreTypeArguments ? Empty<IType>.Array : method.TypeArguments.ToArray();
-			var resolver = new CSharpResolver(resolveContext);
-			return CanTransformToExtensionMethodCall(resolver, method, typeArgs, targetType, paramTypes, argumentNames: paramNames);
+			return resolver.CanTransformToExtensionMethodCall(method, typeArguments, target, args, argNames);
 		}
 	}
 }

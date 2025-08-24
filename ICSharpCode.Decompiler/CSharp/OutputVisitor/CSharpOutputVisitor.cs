@@ -2417,6 +2417,36 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			EndNode(enumMemberDeclaration);
 		}
 
+		public virtual void VisitExtensionDeclaration(ExtensionDeclaration extensionDeclaration)
+		{
+			StartNode(extensionDeclaration);
+			WriteAttributes(extensionDeclaration.Attributes);
+			WriteModifiers(extensionDeclaration.ModifierTokens);
+			WriteKeyword(ExtensionDeclaration.ExtensionKeywordRole);
+			WriteTypeParameters(extensionDeclaration.TypeParameters);
+			Space(policy.SpaceBeforeMethodDeclarationParentheses);
+			WriteCommaSeparatedListInParenthesis(extensionDeclaration.ReceiverParameters, policy.SpaceWithinMethodDeclarationParentheses);
+			foreach (Constraint constraint in extensionDeclaration.Constraints)
+			{
+				constraint.AcceptVisitor(this);
+			}
+			OpenBrace(policy.ClassBraceStyle);
+			bool first = true;
+			foreach (var member in extensionDeclaration.Members)
+			{
+				if (!first)
+				{
+					for (int i = 0; i < policy.MinimumBlankLinesBetweenMembers; i++)
+						NewLine();
+				}
+				first = false;
+				member.AcceptVisitor(this);
+			}
+			CloseBrace(policy.ClassBraceStyle);
+			NewLine();
+			EndNode(extensionDeclaration);
+		}
+
 		public virtual void VisitEventDeclaration(EventDeclaration eventDeclaration)
 		{
 			StartNode(eventDeclaration);

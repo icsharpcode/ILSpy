@@ -293,6 +293,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 
+#if NET90
+		public static void AllowsRefStruct<T>() where T : allows ref struct
+		{
+		}
+#endif
+
 		public static void Issue1959(int a, int b, int? c)
 		{
 			// This line requires parentheses around `a < b` to avoid a grammar ambiguity.

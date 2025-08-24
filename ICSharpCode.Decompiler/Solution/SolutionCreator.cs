@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.Solution
 	/// </summary>
 	public static class SolutionCreator
 	{
-		static readonly XNamespace ProjectFileNamespace = XNamespace.Get("http://schemas.microsoft.com/developer/msbuild/2003");
+		static readonly XNamespace NonSDKProjectFileNamespace = XNamespace.Get("http://schemas.microsoft.com/developer/msbuild/2003");
 
 		/// <summary>
 		/// Writes a solution file to the specified <paramref name="targetFile"/>.
@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.Solution
 				WriteSolutionFile(writer, projects, targetFile);
 			}
 
-			FixProjectReferences(projects);
+			FixAllProjectReferences(projects);
 		}
 
 		static void WriteSolutionFile(TextWriter writer, List<ProjectItem> projects, string solutionFilePath)
@@ -153,7 +153,7 @@ namespace ICSharpCode.Decompiler.Solution
 			writer.WriteLine("\tEndGlobalSection");
 		}
 
-		static void FixProjectReferences(List<ProjectItem> projects)
+		static void FixAllProjectReferences(List<ProjectItem> projects)
 		{
 			var projectsMap = projects.ToDictionary(
 				p => p.ProjectName,
@@ -170,9 +170,11 @@ namespace ICSharpCode.Decompiler.Solution
 						$"no <Project> at the root; could not fix project references.");
 				}
 
+				// sdk style projects don't use a namespace for the elements,
+				// but we still need to use the namespace for non-sdk style projects.
 				var sdkStyle = projectDoc.Root.Attribute("Sdk") != null;
-				var itemGroupTagName = sdkStyle ? "ItemGroup" : ProjectFileNamespace + "ItemGroup";
-				var referenceTagName = sdkStyle ? "Reference" : ProjectFileNamespace + "Reference";
+				var itemGroupTagName = sdkStyle ? "ItemGroup" : NonSDKProjectFileNamespace + "ItemGroup";
+				var referenceTagName = sdkStyle ? "Reference" : NonSDKProjectFileNamespace + "Reference";
 
 				var referencesItemGroups = projectDoc.Root
 					.Elements(itemGroupTagName)
@@ -191,12 +193,11 @@ namespace ICSharpCode.Decompiler.Solution
 		static void FixProjectReferences(string projectFilePath, XElement itemGroup,
 			Dictionary<string, ProjectItem> projects, bool sdkStyle)
 		{
-			XName GetElementName(string localName) => sdkStyle ? localName : ProjectFileNamespace + localName;
+
+			XName GetElementName(string name) => sdkStyle ? name : NonSDKProjectFileNamespace + name;
 
 			var referenceTagName = GetElementName("Reference");
 			var projectReferenceTagName = GetElementName("ProjectReference");
-			var projectTagName = GetElementName("Project");
-			var nameTagName = GetElementName("Name");
 
 			foreach (var item in itemGroup.Elements(referenceTagName).ToList())
 			{
@@ -205,10 +206,20 @@ namespace ICSharpCode.Decompiler.Solution
 				{
 					item.Remove();
 
-					var projectReference = new XElement(projectReferenceTagName,
-						new XElement(projectTagName, referencedProject.Guid.ToString("B").ToLowerInvariant()),
-						new XElement(nameTagName, referencedProject.ProjectName));
-					projectReference.SetAttributeValue("Include", GetRelativePath(projectFilePath, referencedProject.FilePath));
+					var projectReference = new XElement(
+						projectReferenceTagName,
+						new XAttribute("Include", GetRelativePath(projectFilePath, referencedProject.FilePath)));
+
+					// SDK-style projects do not use the <Project> and <Name> elements for project references.
+					// (Instead, those get read from the .csproj file in "Include".)
+					if (!sdkStyle)
+					{
+						projectReference.Add(
+							// no ToUpper() for uuids, most Microsoft tools seem to emit them in lowercase
+							// (no .ToLower() as .ToString("B") already outputs lowercase)
+							new XElement(NonSDKProjectFileNamespace + "Project", referencedProject.Guid.ToString("B")),
+							new XElement(NonSDKProjectFileNamespace + "Name", referencedProject.ProjectName));
+					}
 
 					itemGroup.Add(projectReference);
 				}

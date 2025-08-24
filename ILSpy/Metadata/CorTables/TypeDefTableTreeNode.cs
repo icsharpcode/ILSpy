@@ -30,47 +30,24 @@ using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class TypeDefTableTreeNode : MetadataTableTreeNode
+	internal class TypeDefTableTreeNode : MetadataTableTreeNode<TypeDefTableTreeNode.TypeDefEntry>
 	{
 		public TypeDefTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.TypeDef, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<TypeDefEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = metadataFile.Metadata;
-
 			var list = new List<TypeDefEntry>();
-			TypeDefEntry scrollTargetEntry = default;
-
-			foreach (var row in metadata.TypeDefinitions)
+			foreach (var row in metadataFile.Metadata.TypeDefinitions)
 			{
-				TypeDefEntry entry = new TypeDefEntry(metadataFile, row);
-				if (entry.RID == this.scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new TypeDefEntry(metadataFile, row));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		struct TypeDefEntry : IMemberTreeNode
+		internal struct TypeDefEntry : IMemberTreeNode
 		{
 			readonly MetadataFile metadataFile;
 			readonly TypeDefinitionHandle handle;

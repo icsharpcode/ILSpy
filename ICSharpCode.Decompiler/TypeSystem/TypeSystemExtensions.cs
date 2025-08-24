@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Semantics;
@@ -814,6 +815,25 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return null;
 		}
 
+		public static IModule FindModuleByAssemblyNameInfo(this ICompilation compilation, AssemblyNameInfo assemblyName)
+		{
+			foreach (var module in compilation.Modules)
+			{
+				if (string.Equals(module.FullAssemblyName, assemblyName.FullName, StringComparison.OrdinalIgnoreCase))
+				{
+					return module;
+				}
+			}
+			foreach (var module in compilation.Modules)
+			{
+				if (string.Equals(module.Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase))
+				{
+					return module;
+				}
+			}
+			return null;
+		}
+
 		/// <summary>
 		/// When given a generic type definition, returns the self-parameterized type
 		/// (i.e. the type of "this" within the type definition).
@@ -831,7 +851,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		public static INamespace GetNamespaceByFullName(this ICompilation compilation, string name)
+#nullable enable
+		public static INamespace? GetNamespaceByFullName(this ICompilation compilation, string? name)
 		{
 			if (string.IsNullOrEmpty(name))
 				return compilation.RootNamespace;

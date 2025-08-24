@@ -24,48 +24,28 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class StateMachineMethodTableTreeNode : DebugMetadataTableTreeNode
+	internal class StateMachineMethodTableTreeNode : DebugMetadataTableTreeNode<StateMachineMethodTableTreeNode.StateMachineMethodEntry>
 	{
 		public StateMachineMethodTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.StateMachineMethod, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<StateMachineMethodEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
 			var list = new List<StateMachineMethodEntry>();
-			StateMachineMethodEntry scrollTargetEntry = default;
 			var length = metadataFile.Metadata.GetTableRowCount(TableIndex.StateMachineMethod);
 			var reader = metadataFile.Metadata.AsBlobReader();
 			reader.Offset = metadataFile.Metadata.GetTableMetadataOffset(TableIndex.StateMachineMethod);
 
 			for (int rid = 1; rid <= length; rid++)
 			{
-				StateMachineMethodEntry entry = new StateMachineMethodEntry(metadataFile, ref reader, rid);
-				if (scrollTarget == rid)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new StateMachineMethodEntry(metadataFile, ref reader, rid));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		struct StateMachineMethodEntry
+		internal struct StateMachineMethodEntry
 		{
 			readonly int? offset;
 			readonly MetadataFile metadataFile;
@@ -114,7 +94,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.kickoffMethodTooltip = null;
 				this.moveNextMethodTooltip = null;
 			}
-
 		}
 	}
 }

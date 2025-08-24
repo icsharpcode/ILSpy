@@ -24,47 +24,24 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class MemberRefTableTreeNode : MetadataTableTreeNode
+	internal class MemberRefTableTreeNode : MetadataTableTreeNode<MemberRefTableTreeNode.MemberRefEntry>
 	{
 		public MemberRefTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.MemberRef, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<MemberRefEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = metadataFile.Metadata;
-
 			var list = new List<MemberRefEntry>();
-			MemberRefEntry scrollTargetEntry = default;
-
-			foreach (var row in metadata.MemberReferences)
+			foreach (var row in metadataFile.Metadata.MemberReferences)
 			{
-				MemberRefEntry entry = new MemberRefEntry(metadataFile, row);
-				if (entry.RID == this.scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new MemberRefEntry(metadataFile, row));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		struct MemberRefEntry
+		internal struct MemberRefEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly MemberReferenceHandle handle;

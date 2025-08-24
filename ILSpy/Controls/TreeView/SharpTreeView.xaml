@@ -246,7 +246,7 @@
                                           VerticalAlignment="Center" />
                             </Border>
                             <StackPanel Orientation="Horizontal"
-                                        Background="Transparent"
+                                        Background="{Binding Background}"
                                         ToolTip="{Binding ToolTip}">
 								<ContentPresenter Name="icon"
                                                   Content="{Binding Icon}"

@@ -21,50 +21,27 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class ConstantTableTreeNode : MetadataTableTreeNode
+	internal class ConstantTableTreeNode : MetadataTableTreeNode<ConstantTableTreeNode.ConstantEntry>
 	{
 		public ConstantTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.Constant, metadataFile)
 		{
 		}
 
-		public override bool View(TabPageModel tabPage)
+		protected override IReadOnlyList<ConstantEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = metadataFile.Metadata;
-
 			var list = new List<ConstantEntry>();
-			ConstantEntry scrollTargetEntry = default;
-
-			for (int row = 1; row <= metadata.GetTableRowCount(TableIndex.Constant); row++)
+			for (int row = 1; row <= metadataFile.Metadata.GetTableRowCount(TableIndex.Constant); row++)
 			{
-				ConstantEntry entry = new ConstantEntry(metadataFile, MetadataTokens.ConstantHandle(row));
-				if (scrollTarget == row)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new ConstantEntry(metadataFile, MetadataTokens.ConstantHandle(row)));
 			}
-
-			view.ItemsSource = list;
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		struct ConstantEntry
+		internal struct ConstantEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly EntityHandle handle;

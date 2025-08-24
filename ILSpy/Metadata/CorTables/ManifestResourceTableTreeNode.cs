@@ -25,47 +25,25 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class ManifestResourceTableTreeNode : MetadataTableTreeNode
+	class ManifestResourceTableTreeNode : MetadataTableTreeNode<ManifestResourceTableTreeNode.ManifestResourceEntry>
 	{
 		public ManifestResourceTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.ManifestResource, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<ManifestResourceEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = metadataFile.Metadata;
-
 			var list = new List<ManifestResourceEntry>();
-			ManifestResourceEntry scrollTargetEntry = default;
-
+			var metadata = metadataFile.Metadata;
 			foreach (var row in metadata.ManifestResources)
 			{
-				ManifestResourceEntry entry = new ManifestResourceEntry(metadataFile, row);
-				if (entry.RID == this.scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new ManifestResourceEntry(metadataFile, row));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		struct ManifestResourceEntry
+		internal struct ManifestResourceEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly ManifestResourceHandle handle;

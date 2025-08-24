@@ -730,6 +730,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Always move field initializers from constructors to declarations.
+        /// </summary>
+        public static string DecompilerSettings_AlwaysMoveInitializer {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.AlwaysMoveInitializer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Always qualify member references.
         /// </summary>
         public static string DecompilerSettings_AlwaysQualifyMemberReferences {
@@ -1014,6 +1023,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string DecompilerSettings_DoWhileStatement {
             get {
                 return ResourceManager.GetString("DecompilerSettings.DoWhileStatement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Expand params arguments by removing explicit array creation.
+        /// </summary>
+        public static string DecompilerSettings_ExpandParamsArguments {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.ExpandParamsArguments", resourceCulture);
             }
         }
         
@@ -1515,6 +1533,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use new T() instead of Activator.CreateInstance&lt;T&gt;.
+        /// </summary>
+        public static string DecompilerSettings_UseObjectCreationOfGenericTypeParameter {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.UseObjectCreationOfGenericTypeParameter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use out variable declarations.
         /// </summary>
         public static string DecompilerSettings_UseOutVariableDeclarations {
@@ -1818,6 +1845,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string ExpandUsingDeclarationsAfterDecompilation {
             get {
                 return ResourceManager.GetString("ExpandUsingDeclarationsAfterDecompilation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Extract all package entries.
+        /// </summary>
+        public static string ExtractAllPackageEntries {
+            get {
+                return ResourceManager.GetString("ExtractAllPackageEntries", resourceCulture);
             }
         }
         

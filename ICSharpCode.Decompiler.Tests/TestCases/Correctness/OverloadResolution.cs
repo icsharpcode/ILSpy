@@ -42,6 +42,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 #endif
 			Issue2444.M2();
 			Issue2741.B.Test(new Issue2741.C());
+			ExtensionMethodDemo.Issue2165.Test();
 		}
 
 		#region ConstructorTest
@@ -547,6 +548,49 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			set {
 				Console.WriteLine("IndexerTests.set_Item(int key, object value)");
 			}
+		}
+	}
+}
+
+namespace ExtensionMethodDemo
+{
+	// First extension class with an out int parameter
+	public static class StringExtensions
+	{
+		public static bool TryParseCustom(this string input, out int result)
+		{
+			return int.TryParse(input, out result);
+		}
+	}
+
+	// Second extension class with an out double parameter
+	public static class StringDoubleExtensions
+	{
+		public static bool TryParseCustom(this string input, out double result)
+		{
+			return double.TryParse(input, out result);
+		}
+	}
+
+	class Issue2165
+	{
+		public static void Test()
+		{
+			string value1 = "123";
+			string value2 = "123.45";
+#if CS70
+			// Use the int version with extension method syntax
+			if (value1.TryParseCustom(out int intResult))
+			{
+				Console.WriteLine("Parsed int: " + intResult);
+			}
+
+			// Use the double version with extension method syntax
+			if (value2.TryParseCustom(out double doubleResult))
+			{
+				Console.WriteLine("Parsed double: " + doubleResult);
+			}
+#endif
 		}
 	}
 }

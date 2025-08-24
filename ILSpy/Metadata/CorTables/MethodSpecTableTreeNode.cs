@@ -26,47 +26,24 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class MethodSpecTableTreeNode : MetadataTableTreeNode
+	internal class MethodSpecTableTreeNode : MetadataTableTreeNode<MethodSpecTableTreeNode.MethodSpecEntry>
 	{
 		public MethodSpecTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.MethodSpec, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<MethodSpecEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = metadataFile.Metadata;
-
 			var list = new List<MethodSpecEntry>();
-			MethodSpecEntry scrollTargetEntry = default;
-
-			foreach (var row in metadata.GetMethodSpecifications())
+			foreach (var row in metadataFile.Metadata.GetMethodSpecifications())
 			{
-				MethodSpecEntry entry = new MethodSpecEntry(metadataFile, row);
-				if (entry.RID == this.scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new MethodSpecEntry(metadataFile, row));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		struct MethodSpecEntry
+		internal struct MethodSpecEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly MethodSpecificationHandle handle;

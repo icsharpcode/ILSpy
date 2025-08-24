@@ -53,6 +53,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task GenericConstraints()
+		{
+			await Run();
+		}
+
+		[Test]
 		public async Task SecurityDeclarations()
 		{
 			await Run();

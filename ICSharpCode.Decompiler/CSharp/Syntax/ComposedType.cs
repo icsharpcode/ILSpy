@@ -29,8 +29,6 @@ using System.Linq;
 using System.Text;
 
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
-using ICSharpCode.Decompiler.CSharp.Resolver;
-using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -199,31 +197,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			this.HasRefSpecifier = true;
 			return this;
-		}
-
-		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)
-		{
-			if (interningProvider == null)
-				interningProvider = InterningProvider.Dummy;
-			ITypeReference t = this.BaseType.ToTypeReference(lookupMode, interningProvider);
-			if (this.HasNullableSpecifier)
-			{
-				t = interningProvider.Intern(NullableType.Create(t));
-			}
-			int pointerRank = this.PointerRank;
-			for (int i = 0; i < pointerRank; i++)
-			{
-				t = interningProvider.Intern(new PointerTypeReference(t));
-			}
-			foreach (var a in this.ArraySpecifiers.Reverse())
-			{
-				t = interningProvider.Intern(new ArrayTypeReference(t, a.Dimensions));
-			}
-			if (this.HasRefSpecifier)
-			{
-				t = interningProvider.Intern(new ByReferenceTypeReference(t));
-			}
-			return t;
 		}
 	}
 

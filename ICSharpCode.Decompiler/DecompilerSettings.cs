@@ -63,6 +63,7 @@ namespace ICSharpCode.Decompiler
 				liftNullables = false;
 				yieldReturn = false;
 				useImplicitMethodGroupConversion = false;
+				useObjectCreationOfGenericTypeParameter = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp3)
 			{
@@ -170,10 +171,16 @@ namespace ICSharpCode.Decompiler
 			{
 				paramsCollections = false;
 			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp14_0)
+			{
+				extensionMembers = false;
+			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
+			if (extensionMembers)
+				return CSharp.LanguageVersion.CSharp14_0;
 			if (paramsCollections)
 				return CSharp.LanguageVersion.CSharp13_0;
 			if (refReadOnlyParameters || usePrimaryConstructorSyntaxForNonRecordTypes || inlineArrays)
@@ -210,7 +217,7 @@ namespace ICSharpCode.Decompiler
 			if (anonymousTypes || objectCollectionInitializers || automaticProperties
 				|| queryExpressions || expressionTrees)
 				return CSharp.LanguageVersion.CSharp3;
-			if (anonymousMethods || liftNullables || yieldReturn || useImplicitMethodGroupConversion)
+			if (anonymousMethods || liftNullables || yieldReturn || useImplicitMethodGroupConversion || useObjectCreationOfGenericTypeParameter)
 				return CSharp.LanguageVersion.CSharp2;
 			return CSharp.LanguageVersion.CSharp1;
 		}
@@ -986,6 +993,26 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool useObjectCreationOfGenericTypeParameter = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use object creation expressions for generic types with <c>new()</c> constraint.
+		/// true: <c>T t = new T();</c>
+		/// false: <c>T t = Activator.CreateInstance&lt;T&gt;()</c>
+		/// </summary>
+		[Category("C# 2.0 / VS 2005")]
+		[Description("DecompilerSettings.UseObjectCreationOfGenericTypeParameter")]
+		public bool UseObjectCreationOfGenericTypeParameter {
+			get { return useObjectCreationOfGenericTypeParameter; }
+			set {
+				if (useObjectCreationOfGenericTypeParameter != value)
+				{
+					useObjectCreationOfGenericTypeParameter = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool alwaysCastTargetsOfExplicitInterfaceImplementationCalls = false;
 
 		/// <summary>
@@ -1676,6 +1703,25 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool expandParamsArguments = true;
+
+		/// <summary>
+		/// Gets/Sets whether to expand <c>params</c> arguments by replacing explicit array creation
+		/// with individual values in method calls.
+		/// </summary>
+		[Category("C# 1.0 / VS .NET")]
+		[Description("DecompilerSettings.ExpandParamsArguments")]
+		public bool ExpandParamsArguments {
+			get { return expandParamsArguments; }
+			set {
+				if (expandParamsArguments != value)
+				{
+					expandParamsArguments = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool localFunctions = true;
 
 		/// <summary>
@@ -2096,6 +2142,24 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool extensionMembers = true;
+
+		/// <summary>
+		/// Gets/Sets whether C# 14.0 extension members should be transformed.
+		/// </summary>
+		[Category("C# 14.0 / VS 202x.yy")]
+		[Description("DecompilerSettings.ExtensionMembers")]
+		public bool ExtensionMembers {
+			get { return extensionMembers; }
+			set {
+				if (extensionMembers != value)
+				{
+					extensionMembers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool separateLocalVariableDeclarations = false;
 
 		/// <summary>
@@ -2205,6 +2269,27 @@ namespace ICSharpCode.Decompiler
 				if (alwaysUseGlobal != value)
 				{
 					alwaysUseGlobal = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool alwaysMoveInitializer = false;
+
+		/// <summary>
+		/// If set to false (the default), the decompiler will move field initializers at the start of constructors
+		/// to their respective field declrations (TransformFieldAndConstructorInitializers) only when the declaring
+		/// type has BeforeFieldInit or the member IsConst.
+		/// If set true, the decompiler will always move them regardless of the flags.
+		/// </summary>
+		[Category("DecompilerSettings.Other")]
+		[Description("DecompilerSettings.AlwaysMoveInitializer")]
+		public bool AlwaysMoveInitializer {
+			get { return alwaysMoveInitializer; }
+			set {
+				if (alwaysMoveInitializer != value)
+				{
+					alwaysMoveInitializer = value;
 					OnPropertyChanged();
 				}
 			}

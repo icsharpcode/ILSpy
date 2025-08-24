@@ -24,47 +24,24 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class CustomAttributeTableTreeNode : MetadataTableTreeNode
+	class CustomAttributeTableTreeNode : MetadataTableTreeNode<CustomAttributeTableTreeNode.CustomAttributeEntry>
 	{
 		public CustomAttributeTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.CustomAttribute, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<CustomAttributeEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = metadataFile.Metadata;
-
 			var list = new List<CustomAttributeEntry>();
-			CustomAttributeEntry scrollTargetEntry = default;
-
-			foreach (var row in metadata.CustomAttributes)
+			foreach (var row in metadataFile.Metadata.CustomAttributes)
 			{
-				CustomAttributeEntry entry = new CustomAttributeEntry(metadataFile, row);
-				if (scrollTarget == MetadataTokens.GetRowNumber(row))
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new CustomAttributeEntry(metadataFile, row));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		struct CustomAttributeEntry
+		internal struct CustomAttributeEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly CustomAttributeHandle handle;

@@ -24,46 +24,24 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class MethodImplTableTreeNode : MetadataTableTreeNode
+	internal class MethodImplTableTreeNode : MetadataTableTreeNode<MethodImplTableTreeNode.MethodImplEntry>
 	{
 		public MethodImplTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.MethodImpl, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<MethodImplEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-
 			var list = new List<MethodImplEntry>();
-			MethodImplEntry scrollTargetEntry = default;
-
 			for (int row = 1; row <= metadataFile.Metadata.GetTableRowCount(TableIndex.MethodImpl); row++)
 			{
-				MethodImplEntry entry = new MethodImplEntry(metadataFile, MetadataTokens.MethodImplementationHandle(row));
-				if (entry.RID == this.scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new MethodImplEntry(metadataFile, MetadataTokens.MethodImplementationHandle(row)));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		struct MethodImplEntry
+		internal struct MethodImplEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly MethodImplementationHandle handle;

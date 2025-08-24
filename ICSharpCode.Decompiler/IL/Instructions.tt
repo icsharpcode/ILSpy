@@ -1081,16 +1081,16 @@ protected override void Disconnected()
 	}
 	
 	static Action<OpCode> HasFieldOperand = opCode => {
-		opCode.ConstructorParameters.Add("IField field");
-		opCode.Members.Add("readonly IField field;");
-		opCode.ConstructorBody.Add("this.field = field;");
-		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "IField", Name = "field", FieldName = "Field" });
-		opCode.PerformMatchConditions.Add("field.Equals(o.field)");
+		opCode.ConstructorParameters.Add("IField @field");
+		opCode.Members.Add("readonly IField @field;");
+		opCode.ConstructorBody.Add("this.@field = @field;");
+		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "IField", Name = "@field", FieldName = "Field" });
+		opCode.PerformMatchConditions.Add("@field.Equals(o.@field)");
 		opCode.Members.Add("/// <summary>Returns the field operand.</summary>" + Environment.NewLine
-						+ "public IField Field { get { return field; } }");
+						+ "public IField Field { get { return @field; } }");
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOperand.Add("output.Write(' ');");
-		opCode.WriteOperand.Add("field.WriteTo(output);");
+		opCode.WriteOperand.Add("@field.WriteTo(output);");
 		opCode.Interfaces.Add("IInstructionWithFieldOperand");
 	};
 

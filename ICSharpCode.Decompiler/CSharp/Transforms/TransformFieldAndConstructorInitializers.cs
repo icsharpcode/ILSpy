@@ -350,7 +350,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						if (!(fieldOrProperty is IField || fieldOrProperty is IProperty) || !fieldOrProperty.IsStatic)
 							break;
 						// Only move fields that are constants, if the declaring type is not marked beforefieldinit.
-						if (!declaringTypeIsBeforeFieldInit && fieldOrProperty is not IField { IsConst: true })
+						if (!context.Settings.AlwaysMoveInitializer && !declaringTypeIsBeforeFieldInit && fieldOrProperty is not IField { IsConst: true })
 						{
 							pos++;
 							continue;
@@ -382,7 +382,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 								}
 							}
 						}
-						else if (fieldOrPropertyDecl is PropertyDeclaration pd)
+						else if (fieldOrPropertyDecl is PropertyDeclaration { IsAutomaticProperty: true } pd)
 						{
 							pd.Initializer = assignment.Right.Detach();
 						}

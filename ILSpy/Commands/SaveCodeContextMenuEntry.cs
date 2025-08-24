@@ -78,7 +78,7 @@ namespace ICSharpCode.ILSpy.TextView
 					{
 						var assemblies = selectedNodes.OfType<AssemblyTreeNode>()
 							.Select(n => n.LoadedAssembly)
-							.Where(a => a.IsLoadedAsValidAssembly).ToArray();
+							.Where(a => a.IsLoadedAsValidAssembly).ToList();
 						SolutionWriter.CreateSolution(tabPage, textView, selectedPath, currentLanguage, assemblies);
 					}
 					return;

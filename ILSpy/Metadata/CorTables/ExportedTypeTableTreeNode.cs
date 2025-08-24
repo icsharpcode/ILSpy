@@ -25,46 +25,25 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class ExportedTypeTableTreeNode : MetadataTableTreeNode
+	internal class ExportedTypeTableTreeNode : MetadataTableTreeNode<ExportedTypeTableTreeNode.ExportedTypeEntry>
 	{
 		public ExportedTypeTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.ExportedType, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<ExportedTypeEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = metadataFile.Metadata;
 			var list = new List<ExportedTypeEntry>();
-			ExportedTypeEntry scrollTargetEntry = default;
-
+			var metadata = metadataFile.Metadata;
 			foreach (var row in metadata.ExportedTypes)
 			{
-				ExportedTypeEntry entry = new ExportedTypeEntry(metadataFile, row, metadataFile.Metadata.GetExportedType(row));
-				if (entry.RID == this.scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new ExportedTypeEntry(metadataFile, row, metadata.GetExportedType(row)));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		struct ExportedTypeEntry
+		internal struct ExportedTypeEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly ExportedTypeHandle handle;

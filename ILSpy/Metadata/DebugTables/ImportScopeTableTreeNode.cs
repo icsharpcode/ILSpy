@@ -24,45 +24,24 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class ImportScopeTableTreeNode : DebugMetadataTableTreeNode
+	internal class ImportScopeTableTreeNode : DebugMetadataTableTreeNode<ImportScopeTableTreeNode.ImportScopeEntry>
 	{
 		public ImportScopeTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.ImportScope, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<ImportScopeEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
 			var list = new List<ImportScopeEntry>();
-			ImportScopeEntry scrollTargetEntry = default;
-
 			foreach (var row in metadataFile.Metadata.ImportScopes)
 			{
-				ImportScopeEntry entry = new ImportScopeEntry(metadataFile, row);
-				if (entry.RID == scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new ImportScopeEntry(metadataFile, row));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		readonly struct ImportScopeEntry
+		internal readonly struct ImportScopeEntry
 		{
 			readonly int? offset;
 			readonly MetadataFile metadataFile;

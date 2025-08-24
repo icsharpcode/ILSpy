@@ -20,14 +20,12 @@ using System;
 using System.Collections.Generic;
 using System.Composition;
 using System.Linq;
-using System.Windows.Threading;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.ILSpy.ViewModels;
 
 using TomsToolbox.Essentials;
 
@@ -49,11 +47,7 @@ namespace ICSharpCode.ILSpy.Commands
 
 		public void Execute(TextViewContext context)
 		{
-			var activePane = dockWorkspace.ActivePane;
-
 			DecompileNodes(GetNodes(context).ToArray());
-
-			dockWorkspace.ActivePane = activePane;
 		}
 
 		IEnumerable<ILSpyTreeNode> GetNodes(TextViewContext context)
@@ -91,7 +85,7 @@ namespace ICSharpCode.ILSpy.Commands
 			if (nodes.Length == 0)
 				return;
 
-			dockWorkspace.AddTabPage();
+			dockWorkspace.ActiveTabPage = dockWorkspace.AddTabPage();
 
 			if (assemblyTreeModel.SelectedItems.SequenceEqual(nodes))
 				assemblyTreeModel.DecompileSelectedNodes();

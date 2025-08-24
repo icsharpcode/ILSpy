@@ -17,151 +17,118 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
+
+#nullable enable
 
 namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 {
 	/// <summary>
 	/// Represents a scope that contains "using" statements.
-	/// This is either the file itself, or a namespace declaration.
+	/// This is either the mo itself, or a namespace declaration.
 	/// </summary>
-	[Serializable]
-	public class UsingScope : AbstractFreezable
+	public class UsingScope
 	{
-		readonly UsingScope parent;
-		string shortName = "";
-		IList<TypeOrNamespaceReference> usings;
-		IList<KeyValuePair<string, TypeOrNamespaceReference>> usingAliases;
-		IList<string> externAliases;
+		readonly CSharpTypeResolveContext parentContext;
 
-		protected override void FreezeInternal()
+		internal readonly ConcurrentDictionary<string, ResolveResult> ResolveCache = new ConcurrentDictionary<string, ResolveResult>();
+		internal List<List<IMethod>>? AllExtensionMethods;
+
+		public UsingScope(CSharpTypeResolveContext context, INamespace @namespace, ImmutableArray<INamespace> usings)
 		{
-			usings = FreezableHelper.FreezeList(usings);
-			usingAliases = FreezableHelper.FreezeList(usingAliases);
-			externAliases = FreezableHelper.FreezeList(externAliases);
-
-			// In current model (no child scopes), it makes sense to freeze the parent as well
-			// to ensure the whole lookup chain is immutable.
-			if (parent != null)
-				parent.Freeze();
-
-			base.FreezeInternal();
+			this.parentContext = context ?? throw new ArgumentNullException(nameof(context));
+			this.Usings = usings;
+			this.Namespace = @namespace ?? throw new ArgumentNullException(nameof(@namespace));
 		}
 
-		/// <summary>
-		/// Creates a new root using scope.
-		/// </summary>
-		public UsingScope()
-		{
-		}
-
-		/// <summary>
-		/// Creates a new nested using scope.
-		/// </summary>
-		/// <param name="parent">The parent using scope.</param>
-		/// <param name="shortName">The short namespace name.</param>
-		public UsingScope(UsingScope parent, string shortName)
-		{
-			if (parent == null)
-				throw new ArgumentNullException(nameof(parent));
-			if (shortName == null)
-				throw new ArgumentNullException(nameof(shortName));
-			this.parent = parent;
-			this.shortName = shortName;
-		}
+		public INamespace Namespace { get; }
 
 		public UsingScope Parent {
-			get { return parent; }
+			get { return parentContext.CurrentUsingScope; }
 		}
 
-		public string ShortNamespaceName {
-			get {
-				return shortName;
-			}
-		}
+		public ImmutableArray<INamespace> Usings { get; }
 
-		public string NamespaceName {
-			get {
-				if (parent != null)
-					return NamespaceDeclaration.BuildQualifiedName(parent.NamespaceName, shortName);
-				else
-					return shortName;
-			}
-			//			set {
-			//				if (value == null)
-			//					throw new ArgumentNullException("NamespaceName");
-			//				FreezableHelper.ThrowIfFrozen(this);
-			//				namespaceName = value;
-			//			}
-		}
+		public IReadOnlyList<KeyValuePair<string, ResolveResult>> UsingAliases => [];
 
-		public IList<TypeOrNamespaceReference> Usings {
-			get {
-				if (usings == null)
-					usings = new List<TypeOrNamespaceReference>();
-				return usings;
-			}
-		}
-
-		public IList<KeyValuePair<string, TypeOrNamespaceReference>> UsingAliases {
-			get {
-				if (usingAliases == null)
-					usingAliases = new List<KeyValuePair<string, TypeOrNamespaceReference>>();
-				return usingAliases;
-			}
-		}
-
-		public IList<string> ExternAliases {
-			get {
-				if (externAliases == null)
-					externAliases = new List<string>();
-				return externAliases;
-			}
-		}
-
-		//		public IList<UsingScope> ChildScopes {
-		//			get {
-		//				if (childScopes == null)
-		//					childScopes = new List<UsingScope>();
-		//				return childScopes;
-		//			}
-		//		}
+		public IReadOnlyList<string> ExternAliases => [];
 
 		/// <summary>
 		/// Gets whether this using scope has an alias (either using or extern)
 		/// with the specified name.
 		/// </summary>
-		public bool HasAlias(string identifier)
+		public bool HasAlias(string identifier) => false;
+
+		internal UsingScope WithNestedNamespace(string simpleName)
 		{
-			if (usingAliases != null)
-			{
-				foreach (var pair in usingAliases)
-				{
-					if (pair.Key == identifier)
-						return true;
-				}
-			}
-			return externAliases != null && externAliases.Contains(identifier);
+			var ns = Namespace.GetChildNamespace(simpleName) ?? new DummyNamespace(Namespace, simpleName);
+			return new UsingScope(
+				parentContext.WithUsingScope(this),
+				ns,
+				[]);
 		}
 
-		/// <summary>
-		/// Resolves the namespace represented by this using scope.
-		/// </summary>
-		public ResolvedUsingScope Resolve(ICompilation compilation)
+		sealed class DummyNamespace : INamespace
 		{
-			CacheManager cache = compilation.CacheManager;
-			ResolvedUsingScope resolved = cache.GetShared(this) as ResolvedUsingScope;
-			if (resolved == null)
+			readonly INamespace parentNamespace;
+			readonly string name;
+
+			public DummyNamespace(INamespace parentNamespace, string name)
 			{
-				var csContext = new CSharpTypeResolveContext(compilation.MainModule, parent != null ? parent.Resolve(compilation) : null);
-				resolved = (ResolvedUsingScope)cache.GetOrAddShared(this, new ResolvedUsingScope(csContext, this));
+				this.parentNamespace = parentNamespace;
+				this.name = name;
 			}
-			return resolved;
+
+			string INamespace.ExternAlias => "";
+
+			string INamespace.FullName {
+				get { return NamespaceDeclaration.BuildQualifiedName(parentNamespace.FullName, name); }
+			}
+
+			public string Name {
+				get { return name; }
+			}
+
+			SymbolKind ISymbol.SymbolKind {
+				get { return SymbolKind.Namespace; }
+			}
+
+			INamespace INamespace.ParentNamespace {
+				get { return parentNamespace; }
+			}
+
+			IEnumerable<INamespace> INamespace.ChildNamespaces {
+				get { return EmptyList<INamespace>.Instance; }
+			}
+
+			IEnumerable<ITypeDefinition> INamespace.Types {
+				get { return EmptyList<ITypeDefinition>.Instance; }
+			}
+
+			IEnumerable<IModule> INamespace.ContributingModules {
+				get { return EmptyList<IModule>.Instance; }
+			}
+
+			ICompilation ICompilationProvider.Compilation {
+				get { return parentNamespace.Compilation; }
+			}
+
+			INamespace? INamespace.GetChildNamespace(string name)
+			{
+				return null;
+			}
+
+			ITypeDefinition? INamespace.GetTypeDefinition(string name, int typeParameterCount)
+			{
+				return null;
+			}
 		}
 	}
 }

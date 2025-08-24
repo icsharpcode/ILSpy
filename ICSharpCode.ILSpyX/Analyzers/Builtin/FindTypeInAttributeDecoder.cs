@@ -112,8 +112,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			}
 			try
 			{
-				IType type = ReflectionHelper.ParseReflectionName(name)
-					.Resolve(new SimpleTypeResolveContext(currentModule));
+				IType type = ReflectionHelper.ParseReflectionName(name, new SimpleTypeResolveContext(currentModule));
 				return GetResultFromResolvedType(type);
 			}
 			catch (ReflectionNameParseException)

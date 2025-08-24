@@ -16,12 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
-using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -60,11 +58,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				return other == null || other.IsNull;
 			}
-
-			public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider)
-			{
-				return SpecialType.UnknownType;
-			}
 		}
 		#endregion
 
@@ -102,11 +95,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitPatternPlaceholder(this, child, data);
 			}
 
-			public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider)
-			{
-				throw new NotSupportedException();
-			}
-
 			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 			{
 				return child.DoMatch(other, match);
@@ -136,34 +124,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			SimpleType st = this as SimpleType;
 			return st != null && st.Identifier == "var" && st.TypeArguments.Count == 0;
 		}
-
-		/// <summary>
-		/// Create an ITypeReference for this AstType.
-		/// Uses the context (ancestors of this node) to determine the correct <see cref="NameLookupMode"/>.
-		/// </summary>
-		/// <remarks>
-		/// The resulting type reference will read the context information from the
-		/// <see cref="ITypeResolveContext"/>:
-		/// For resolving type parameters, the CurrentTypeDefinition/CurrentMember is used.
-		/// For resolving simple names, the current namespace and usings from the CurrentUsingScope
-		/// (on CSharpTypeResolveContext only) is used.
-		/// </remarks>
-		public ITypeReference ToTypeReference(InterningProvider interningProvider = null)
-		{
-			return ToTypeReference(GetNameLookupMode(), interningProvider);
-		}
-
-		/// <summary>
-		/// Create an ITypeReference for this AstType.
-		/// </summary>
-		/// <remarks>
-		/// The resulting type reference will read the context information from the
-		/// <see cref="ITypeResolveContext"/>:
-		/// For resolving type parameters, the CurrentTypeDefinition/CurrentMember is used.
-		/// For resolving simple names, the current namespace and usings from the CurrentUsingScope
-		/// (on CSharpTypeResolveContext only) is used.
-		/// </remarks>
-		public abstract ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null);
 
 		/// <summary>
 		/// Gets the name lookup mode from the context (looking at the ancestors of this <see cref="AstType"/>).

@@ -41,6 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		// eagerly loaded:
 		readonly FullTypeName fullTypeName;
 		readonly TypeAttributes attributes;
+
 		public TypeKind Kind { get; }
 		public bool IsByRefLike { get; }
 		public bool IsReadOnly { get; }
@@ -48,7 +49,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IReadOnlyList<ITypeParameter> TypeParameters { get; }
 		public KnownTypeCode KnownTypeCode { get; }
 		public IType EnumUnderlyingType { get; }
-		public bool HasExtensionMethods { get; }
+		public bool HasExtensions { get; }
 		public Nullability NullableContext { get; }
 
 		// lazy-loaded:
@@ -132,7 +133,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			else
 			{
 				this.Kind = TypeKind.Class;
-				this.HasExtensionMethods = this.IsStatic
+				this.HasExtensions = this.IsStatic
 					&& (module.TypeSystemOptions & TypeSystemOptions.ExtensionMethods) == TypeSystemOptions.ExtensionMethods
 					&& td.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.Extension);
 			}
@@ -141,6 +142,22 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override string ToString()
 		{
 			return $"{MetadataTokens.GetToken(handle):X8} {fullTypeName}";
+		}
+
+		private ExtensionInfo extensionInfo;
+
+		public ExtensionInfo ExtensionInfo {
+			get {
+				if (!HasExtensions)
+					return null;
+				var extensionInfo = LazyInit.VolatileRead(ref this.extensionInfo);
+				if (extensionInfo != null)
+					return extensionInfo;
+				extensionInfo = new ExtensionInfo(module, this);
+				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
+					return extensionInfo;
+				return LazyInit.GetOrSet(ref this.extensionInfo, extensionInfo);
+			}
 		}
 
 		ITypeDefinition[] nestedTypes;

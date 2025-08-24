@@ -179,6 +179,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool ITypeParameter.HasReferenceTypeConstraint => false;
 		bool ITypeParameter.HasValueTypeConstraint => false;
 		bool ITypeParameter.HasUnmanagedConstraint => false;
+		bool ITypeParameter.AllowsRefLikeType => false;
 		Nullability ITypeParameter.NullabilityConstraint => Nullability.Oblivious;
 
 		IReadOnlyList<TypeConstraint> ITypeParameter.TypeConstraints => EmptyList<TypeConstraint>.Instance;

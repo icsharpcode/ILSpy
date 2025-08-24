@@ -24,38 +24,19 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class ModuleTableTreeNode : MetadataTableTreeNode
+	internal class ModuleTableTreeNode : MetadataTableTreeNode<ModuleTableTreeNode.ModuleEntry>
 	{
 		public ModuleTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.Module, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<ModuleEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-
-			var list = new List<ModuleEntry>();
-			ModuleEntry scrollTargetEntry = default;
-
-			list.Add(new ModuleEntry(metadataFile, EntityHandle.ModuleDefinition));
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return [new ModuleEntry(metadataFile, EntityHandle.ModuleDefinition)];
 		}
 
-		struct ModuleEntry
+		internal struct ModuleEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly ModuleDefinitionHandle handle;

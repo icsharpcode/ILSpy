@@ -25,47 +25,23 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class InterfaceImplTableTreeNode : MetadataTableTreeNode
+	internal class InterfaceImplTableTreeNode : MetadataTableTreeNode<InterfaceImplTableTreeNode.InterfaceImplEntry>
 	{
 		public InterfaceImplTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.InterfaceImpl, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<InterfaceImplEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = metadataFile.Metadata;
-
 			var list = new List<InterfaceImplEntry>();
-			InterfaceImplEntry scrollTargetEntry = default;
-
-			var length = metadata.GetTableRowCount(TableIndex.InterfaceImpl);
-			ReadOnlySpan<byte> ptr = metadata.AsReadOnlySpan();
-			int metadataOffset = metadataFile.MetadataOffset;
+			var length = metadataFile.Metadata.GetTableRowCount(TableIndex.InterfaceImpl);
+			ReadOnlySpan<byte> ptr = metadataFile.Metadata.AsReadOnlySpan();
 			for (int rid = 1; rid <= length; rid++)
 			{
-				InterfaceImplEntry entry = new InterfaceImplEntry(metadataFile, ptr, rid);
-				if (entry.RID == this.scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new InterfaceImplEntry(metadataFile, ptr, rid));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
 		readonly struct InterfaceImpl
@@ -80,7 +56,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		struct InterfaceImplEntry
+		internal struct InterfaceImplEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly InterfaceImpl interfaceImpl;

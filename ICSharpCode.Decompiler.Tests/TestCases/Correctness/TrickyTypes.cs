@@ -30,6 +30,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			StringConcat();
 			LinqNullableMin();
 			LinqNullableMin(1, 2, 3);
+			UnboxingToWrongType();
 		}
 
 		static void Print<T>(T val)
@@ -109,6 +110,50 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Print(string.Format("LinqNullableMin {0}:", arr.Length));
 			Print(arr.Min(v => (int?)v));
+		}
+
+		static void UnboxingToWrongType()
+		{
+			Console.WriteLine("UnboxingToWrongType:");
+			object o = 3.50;
+			try
+			{
+				Print((long)o);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex.GetType().Name + ": " + ex.Message);
+			}
+			try
+			{
+				Print(o as long?);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex.GetType().Name + ": " + ex.Message);
+			}
+			try
+			{
+				Print((long)(o as long?));
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex.GetType().Name + ": " + ex.Message);
+			}
+			try
+			{
+				Print((long)(o is long ? o : null));
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex.GetType().Name + ": " + ex.Message);
+			}
+#if CS90
+			if (o is not 0L)
+			{
+				Console.WriteLine("Not 0L");
+			}
+#endif
 		}
 	}
 }

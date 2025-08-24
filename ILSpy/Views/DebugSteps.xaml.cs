@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Composition;
 using System.Windows;
 using System.Windows.Controls;
@@ -134,6 +133,12 @@ namespace ICSharpCode.ILSpy
 		void DecompileAsync(int step, bool isDebug = false)
 		{
 			lastSelectedStep = step;
+
+			if (dockWorkspace.ActiveTabPage.FrozenContent)
+			{
+				dockWorkspace.ActiveTabPage = dockWorkspace.AddTabPage();
+			}
+
 			var state = dockWorkspace.ActiveTabPage.GetState();
 			dockWorkspace.ActiveTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(assemblyTreeModel.CurrentLanguage, assemblyTreeModel.SelectedNodes,
 				new DecompilationOptions(assemblyTreeModel.CurrentLanguageVersion, settingsService.DecompilerSettings, settingsService.DisplaySettings) {

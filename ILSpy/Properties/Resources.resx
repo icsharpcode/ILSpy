@@ -264,6 +264,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.AlwaysCastTargetsOfExplicitInterfaceImplementationCalls" xml:space="preserve">
     <value>Always cast targets of explicit interface implementation calls</value>
   </data>
+  <data name="DecompilerSettings.AlwaysMoveInitializer" xml:space="preserve">
+    <value>Always move field initializers from constructors to declarations</value>
+  </data>
   <data name="DecompilerSettings.AlwaysQualifyMemberReferences" xml:space="preserve">
     <value>Always qualify member references</value>
   </data>
@@ -359,6 +362,9 @@ Are you sure you want to continue?</value>
   </data>
   <data name="DecompilerSettings.DoWhileStatement" xml:space="preserve">
     <value>Transform to do-while, if possible</value>
+  </data>
+  <data name="DecompilerSettings.ExpandParamsArguments" xml:space="preserve">
+    <value>Expand params arguments by removing explicit array creation</value>
   </data>
   <data name="DecompilerSettings.FSpecificOptions" xml:space="preserve">
     <value>F#-specific options</value>
@@ -525,6 +531,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.UseNonTrailingNamedArguments" xml:space="preserve">
     <value>Use non-trailing named arguments</value>
   </data>
+  <data name="DecompilerSettings.UseObjectCreationOfGenericTypeParameter" xml:space="preserve">
+    <value>Use new T() instead of Activator.CreateInstance&lt;T&gt;</value>
+  </data>
   <data name="DecompilerSettings.UseOutVariableDeclarations" xml:space="preserve">
     <value>Use out variable declarations</value>
   </data>
@@ -623,6 +632,9 @@ Are you sure you want to continue?</value>
   </data>
   <data name="ExpandUsingDeclarationsAfterDecompilation" xml:space="preserve">
     <value>Expand using declarations after decompilation</value>
+  </data>
+  <data name="ExtractAllPackageEntries" xml:space="preserve">
+    <value>Extract all package entries</value>
   </data>
   <data name="ExtractPackageEntry" xml:space="preserve">
     <value>Extract package entry</value>

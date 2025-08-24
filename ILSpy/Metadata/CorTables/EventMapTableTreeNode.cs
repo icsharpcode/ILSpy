@@ -25,46 +25,27 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class EventMapTableTreeNode : MetadataTableTreeNode
+	class EventMapTableTreeNode : MetadataTableTreeNode<EventMapTableTreeNode.EventMapEntry>
 	{
 		public EventMapTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.EventMap, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<EventMapEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = metadataFile.Metadata;
-
 			var list = new List<EventMapEntry>();
-			EventMapEntry scrollTargetEntry = default;
 
+			var metadata = metadataFile.Metadata;
 			var length = metadata.GetTableRowCount(TableIndex.EventMap);
 			ReadOnlySpan<byte> ptr = metadata.AsReadOnlySpan();
+			int typeDefSize = metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
+			int eventDefSize = metadata.GetTableRowCount(TableIndex.Event) < ushort.MaxValue ? 2 : 4;
 			for (int rid = 1; rid <= length; rid++)
 			{
-				EventMapEntry entry = new EventMapEntry(metadataFile, ptr, rid);
-				if (entry.RID == this.scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new EventMapEntry(metadataFile, ptr, rid, typeDefSize, eventDefSize));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
 		readonly struct EventMap
@@ -79,15 +60,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		struct EventMapEntry
+		internal struct EventMapEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly EventMap eventMap;
 
 			public int RID { get; }
-
 			public int Token => 0x12000000 | RID;
-
 			public int Offset { get; }
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
@@ -112,15 +91,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			string eventListTooltip;
 			public string EventListTooltip => GenerateTooltip(ref eventListTooltip, metadataFile, eventMap.EventList);
 
-			public EventMapEntry(MetadataFile metadataFile, ReadOnlySpan<byte> ptr, int row)
+			public EventMapEntry(MetadataFile metadataFile, ReadOnlySpan<byte> ptr, int row, int typeDefSize, int eventDefSize)
 			{
 				this.metadataFile = metadataFile;
 				this.RID = row;
 				var rowOffset = metadataFile.Metadata.GetTableMetadataOffset(TableIndex.EventMap)
 					+ metadataFile.Metadata.GetTableRowSize(TableIndex.EventMap) * (row - 1);
 				this.Offset = metadataFile.MetadataOffset + rowOffset;
-				int typeDefSize = metadataFile.Metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
-				int eventDefSize = metadataFile.Metadata.GetTableRowCount(TableIndex.Event) < ushort.MaxValue ? 2 : 4;
 				this.eventMap = new EventMap(ptr.Slice(rowOffset), typeDefSize, eventDefSize);
 				this.parentTooltip = null;
 				this.eventListTooltip = null;

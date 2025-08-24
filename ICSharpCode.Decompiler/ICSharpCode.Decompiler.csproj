@@ -28,11 +28,11 @@
     <GenerateAssemblyInformationalVersionAttribute>False</GenerateAssemblyInformationalVersionAttribute>
 
     <EnableDefaultItems>false</EnableDefaultItems>
-    <LangVersion>11</LangVersion>
+    <LangVersion>13</LangVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
-    <NoWarn>1701;1702;1591;1573</NoWarn>
+    <NoWarn>$(NoWarn);1701;1702;1591;1573</NoWarn>
     <WarningsAsErrors>nullable</WarningsAsErrors>
 
     <DebugType>embedded</DebugType>
@@ -80,12 +80,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Sbom.Targets" Version="3.1.0">
+    <PackageReference Include="Microsoft.Sbom.Targets" Version="4.1.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
-    <PackageReference Include="System.Reflection.Metadata" Version="6.0.0" />
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
+    <PackageReference Include="System.Reflection.Metadata" Version="9.0.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -104,9 +104,11 @@
     <Compile Include="CSharp\CallBuilder.cs" />
     <Compile Include="CSharp\CSharpLanguageVersion.cs" />
     <Compile Include="CSharp\Syntax\Expressions\RecursivePatternExpression.cs" />
+    <Compile Include="CSharp\Syntax\TypeMembers\ExtensionDeclaration.cs" />
     <Compile Include="DecompilationProgress.cs" />
     <Compile Include="Disassembler\IEntityProcessor.cs" />
     <Compile Include="Disassembler\SortByNameProcessor.cs" />
+    <Compile Include="Humanizer\StringHumanizeExtensions.cs" />
     <Compile Include="IL\Transforms\InlineArrayTransform.cs" />
     <Compile Include="IL\Transforms\RemoveUnconstrainedGenericReferenceTypeCheck.cs" />
     <Compile Include="Metadata\MetadataFile.cs" />
@@ -134,7 +136,6 @@
     <Compile Include="Humanizer\Vocabulary.cs" />
     <Compile Include="IL\ControlFlow\RemoveRedundantReturn.cs" />
     <Compile Include="IL\Transforms\DeconstructionTransform.cs" />
-    <Compile Include="IL\Transforms\FixLoneIsInst.cs" />
     <Compile Include="IL\Instructions\DeconstructInstruction.cs" />
     <Compile Include="IL\Instructions\DeconstructResultInstruction.cs" />
     <Compile Include="IL\Instructions\MatchInstruction.cs" />
@@ -155,6 +156,7 @@
     <Compile Include="Metadata\MetadataGenericContext.cs" />
     <Compile Include="Metadata\ReferenceLoadInfo.cs" />
     <Compile Include="Properties\DecompilerVersionInfo.cs" />
+    <Compile Include="TypeSystem\ExtensionInfo.cs" />
     <Compile Include="TypeSystem\ITypeDefinitionOrUnknown.cs" />
     <Compile Include="Util\BitOperations.cs" />
     <Compile Include="Util\DelegateComparer.cs" />
@@ -335,12 +337,7 @@
     <Compile Include="CSharp\Transforms\PrettifyAssignments.cs" />
     <Compile Include="CSharp\Transforms\RemoveCLSCompliantAttribute.cs" />
     <Compile Include="CSharp\TranslationContext.cs" />
-    <Compile Include="CSharp\TypeSystem\AliasNamespaceReference.cs" />
     <Compile Include="CSharp\TypeSystem\CSharpTypeResolveContext.cs" />
-    <Compile Include="CSharp\TypeSystem\MemberTypeOrNamespaceReference.cs" />
-    <Compile Include="CSharp\TypeSystem\ResolvedUsingScope.cs" />
-    <Compile Include="CSharp\TypeSystem\SimpleTypeOrNamespaceReference.cs" />
-    <Compile Include="CSharp\TypeSystem\TypeOrNamespaceReference.cs" />
     <Compile Include="CSharp\TypeSystem\UsingScope.cs" />
     <Compile Include="DebugInfo\AsyncDebugInfo.cs" />
     <Compile Include="DebugInfo\ImportScopeInfo.cs" />
@@ -415,6 +412,7 @@
     <Compile Include="IL\Instructions\LdFlda.cs" />
     <Compile Include="IL\Instructions\NullableInstructions.cs" />
     <Compile Include="IL\Instructions\StLoc.cs" />
+    <Compile Include="IL\Instructions\IsInst.cs" />
     <Compile Include="DebugInfo\SequencePoint.cs" />
     <Compile Include="IL\Instructions\CallIndirect.cs" />
     <Compile Include="IL\Instructions\DefaultValue.cs" />
@@ -621,7 +619,6 @@
     <Compile Include="TypeSystem\Implementation\DefaultParameter.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultVariable.cs" />
     <Compile Include="TypeSystem\Implementation\DummyTypeParameter.cs" />
-    <Compile Include="TypeSystem\Implementation\GetClassTypeReference.cs" />
     <Compile Include="TypeSystem\Implementation\GetMembersHelper.cs" />
     <Compile Include="TypeSystem\Implementation\KnownTypeCache.cs" />
     <Compile Include="TypeSystem\Implementation\MergedNamespace.cs" />

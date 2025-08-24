@@ -208,6 +208,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task Issue3344CkFinite()
+		{
+			await Run();
+		}
+
+		[Test]
 		public async Task Issue3421()
 		{
 			await Run();
@@ -220,6 +226,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task Issue3465()
+		{
+			await Run();
+		}
+
+		[Test]
 		public async Task Issue3466()
 		{
 			await Run();
@@ -227,6 +239,12 @@ namespace ICSharpCode.Decompiler.Tests
 
 		[Test]
 		public async Task Issue3504()
+		{
+			await Run();
+		}
+
+		[Test]
+		public async Task Issue3524()
 		{
 			await Run();
 		}
@@ -313,7 +331,7 @@ namespace ICSharpCode.Decompiler.Tests
 			var executable = await Tester.AssembleIL(ilFile, assemblerOptions).ConfigureAwait(false);
 			var decompiled = await Tester.DecompileCSharp(executable, settings).ConfigureAwait(false);
 
-			CodeAssert.FilesAreEqual(csFile, decompiled);
+			CodeAssert.FilesAreEqual(csFile, decompiled, ["EXPECTED_OUTPUT"]);
 			Tester.RepeatOnIOError(() => File.Delete(decompiled));
 		}
 

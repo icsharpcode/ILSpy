@@ -1343,7 +1343,7 @@ namespace ICSharpCode.ILSpy.TextView
 		#endregion
 	}
 
-	[DebuggerDisplay("Nodes = {DecompiledNodes}, ViewedUri = {ViewedUri}")]
+	[DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
 	public class ViewState : IEquatable<ViewState>
 	{
 		public HashSet<ILSpyTreeNode>? DecompiledNodes;
@@ -1363,6 +1363,11 @@ namespace ICSharpCode.ILSpy.TextView
 					return false;
 				return a.SetEquals(b);
 			}
+		}
+
+		protected virtual string GetDebuggerDisplay()
+		{
+			return $"Nodes = {DecompiledNodes?.Count.ToString() ?? "<null>"}, ViewedUri = {ViewedUri?.ToString() ?? "<null>"}";
 		}
 	}
 
@@ -1431,6 +1436,11 @@ namespace ICSharpCode.ILSpy.TextView
 					&& HorizontalOffset == vs.HorizontalOffset;
 			}
 			return false;
+		}
+
+		protected override string GetDebuggerDisplay()
+		{
+			return $"{base.GetDebuggerDisplay()}, ExpandMemberDefinitions = {ExpandMemberDefinitions}, VerticalOffset = {VerticalOffset}, HorizontalOffset = {HorizontalOffset}, FoldingsChecksum = {FoldingsChecksum}";
 		}
 	}
 

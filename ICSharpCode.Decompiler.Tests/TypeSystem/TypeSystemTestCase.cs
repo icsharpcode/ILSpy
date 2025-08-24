@@ -753,4 +753,24 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		[DispId(11)]
 		void StopRouter();
 	}
+
+	public static class ExtensionEverything
+	{
+		extension(int input)
+		{
+			public void Method() { }
+			public void Method(char c) { }
+			public string AsString => input.ToString();
+			public string Test {
+				get => "Test";
+				set { }
+			}
+			public static void StaticMethod() { }
+			public static void StaticMethod(double x) { }
+			public static string StaticProperty => "StaticProperty";
+			public static void GenericMethod<T>(T value)
+			{
+			}
+		}
+	}
 }
