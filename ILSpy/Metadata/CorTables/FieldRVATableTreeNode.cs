@@ -26,7 +26,7 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class FieldRVATableTreeNode : MetadataTableTreeNode
+	internal class FieldRVATableTreeNode : MetadataTableTreeNode<FieldRVATableTreeNode.FieldRVAEntry>
 	{
 		public FieldRVATableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.FieldRva, metadataFile)
@@ -35,40 +35,20 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Text => $"1D FieldRVA ({metadataFile.Metadata.GetTableRowCount(TableIndex.FieldRva)})";
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<FieldRVAEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = metadataFile.Metadata;
-
 			var list = new List<FieldRVAEntry>();
-			FieldRVAEntry scrollTargetEntry = default;
 
+			var metadata = metadataFile.Metadata;
 			var length = metadata.GetTableRowCount(TableIndex.FieldRva);
 			ReadOnlySpan<byte> ptr = metadata.AsReadOnlySpan();
 			int metadataOffset = metadataFile.MetadataOffset;
+			int fieldDefSize = metadata.GetTableRowCount(TableIndex.Field) < ushort.MaxValue ? 2 : 4;
 			for (int rid = 1; rid <= length; rid++)
 			{
-				FieldRVAEntry entry = new FieldRVAEntry(metadataFile, metadataOffset, ptr, rid);
-				if (entry.RID == this.scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new FieldRVAEntry(metadataFile, metadataOffset, ptr, rid, fieldDefSize));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
 		readonly struct FieldRVA
@@ -83,15 +63,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		struct FieldRVAEntry
+		internal struct FieldRVAEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly FieldRVA fieldRVA;
 
 			public int RID { get; }
-
 			public int Token => 0x1D000000 | RID;
-
 			public int Offset { get; }
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
@@ -108,14 +86,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public int FieldOffset => fieldRVA.Offset;
 
-			public FieldRVAEntry(MetadataFile metadataFile, int metadataOffset, ReadOnlySpan<byte> ptr, int row)
+			public FieldRVAEntry(MetadataFile metadataFile, int metadataOffset, ReadOnlySpan<byte> ptr, int row, int fieldDefSize)
 			{
 				this.metadataFile = metadataFile;
 				this.RID = row;
 				var rowOffset = metadataFile.Metadata.GetTableMetadataOffset(TableIndex.FieldRva)
 					+ metadataFile.Metadata.GetTableRowSize(TableIndex.FieldRva) * (row - 1);
 				this.Offset = metadataOffset + rowOffset;
-				int fieldDefSize = metadataFile.Metadata.GetTableRowCount(TableIndex.Field) < ushort.MaxValue ? 2 : 4;
 				this.fieldRVA = new FieldRVA(ptr.Slice(rowOffset), fieldDefSize);
 				this.fieldTooltip = null;
 			}

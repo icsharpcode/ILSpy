@@ -25,7 +25,7 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class PtrTableTreeNode : MetadataTableTreeNode
+	class PtrTableTreeNode : MetadataTableTreeNode<PtrTableTreeNode.PtrEntry>
 	{
 		readonly TableIndex referencedTableKind;
 
@@ -47,17 +47,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			};
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<PtrEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = metadataFile.Metadata;
-
 			var list = new List<PtrEntry>();
-			PtrEntry scrollTargetEntry = default;
 
+			var metadata = metadataFile.Metadata;
 			var length = metadata.GetTableRowCount(Kind);
 			ReadOnlySpan<byte> ptr = metadata.AsReadOnlySpan();
 
@@ -65,24 +59,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			for (int rid = 1; rid <= length; rid++)
 			{
-				var entry = new PtrEntry(metadataFile, Kind, referencedTableKind, handleDefSize, ptr, rid);
-				if (entry.RID == this.scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new PtrEntry(metadataFile, Kind, referencedTableKind, handleDefSize, ptr, rid));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
 		readonly struct HandlePtr
@@ -95,7 +74,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		struct PtrEntry
+		internal struct PtrEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly HandlePtr handlePtr;

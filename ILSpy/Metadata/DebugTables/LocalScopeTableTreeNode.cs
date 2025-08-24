@@ -25,45 +25,26 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class LocalScopeTableTreeNode : DebugMetadataTableTreeNode
+	internal class LocalScopeTableTreeNode : DebugMetadataTableTreeNode<LocalScopeTableTreeNode.LocalScopeEntry>
 	{
 		public LocalScopeTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.LocalScope, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<LocalScopeEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
 			var list = new List<LocalScopeEntry>();
-			LocalScopeEntry scrollTargetEntry = default;
 
 			foreach (var row in metadataFile.Metadata.LocalScopes)
 			{
-				LocalScopeEntry entry = new LocalScopeEntry(metadataFile, row);
-				if (entry.RID == scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new LocalScopeEntry(metadataFile, row));
 			}
 
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		struct LocalScopeEntry
+		internal struct LocalScopeEntry
 		{
 			readonly int? offset;
 			readonly MetadataFile metadataFile;

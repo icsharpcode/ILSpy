@@ -25,47 +25,24 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class DeclSecurityTableTreeNode : MetadataTableTreeNode
+	class DeclSecurityTableTreeNode : MetadataTableTreeNode<DeclSecurityTableTreeNode.DeclSecurityEntry>
 	{
 		public DeclSecurityTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.DeclSecurity, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<DeclSecurityEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = metadataFile.Metadata;
-
 			var list = new List<DeclSecurityEntry>();
-			DeclSecurityEntry scrollTargetEntry = default;
-
-			foreach (var row in metadata.DeclarativeSecurityAttributes)
+			foreach (var row in metadataFile.Metadata.DeclarativeSecurityAttributes)
 			{
-				var entry = new DeclSecurityEntry(metadataFile, row);
-				if (scrollTarget == MetadataTokens.GetRowNumber(row))
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new DeclSecurityEntry(metadataFile, row));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		struct DeclSecurityEntry
+		internal struct DeclSecurityEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly DeclarativeSecurityAttributeHandle handle;

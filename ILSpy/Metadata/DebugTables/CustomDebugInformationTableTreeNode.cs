@@ -29,46 +29,27 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class CustomDebugInformationTableTreeNode : DebugMetadataTableTreeNode
+	internal class CustomDebugInformationTableTreeNode : DebugMetadataTableTreeNode<CustomDebugInformationTableTreeNode.CustomDebugInformationEntry>
 	{
 		public CustomDebugInformationTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.CustomDebugInformation, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<CustomDebugInformationEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-
-			view.RowDetailsVisibilityMode = DataGridRowDetailsVisibilityMode.VisibleWhenSelected;
-			view.RowDetailsTemplateSelector = new CustomDebugInformationDetailsTemplateSelector();
-
 			var list = new List<CustomDebugInformationEntry>();
-			CustomDebugInformationEntry scrollTargetEntry = default;
-
 			foreach (var row in metadataFile.Metadata.CustomDebugInformation)
 			{
-				CustomDebugInformationEntry entry = new CustomDebugInformationEntry(metadataFile, row);
-				if (entry.RID == scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new CustomDebugInformationEntry(metadataFile, row));
 			}
+			return list;
+		}
 
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry?.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+		protected override void ConfigureDataGrid(DataGrid view)
+		{
+			view.RowDetailsVisibilityMode = DataGridRowDetailsVisibilityMode.VisibleWhenSelected;
+			view.RowDetailsTemplateSelector = new CustomDebugInformationDetailsTemplateSelector();
 		}
 
 		class CustomDebugInformationDetailsTemplateSelector : DataTemplateSelector
@@ -89,7 +70,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		class CustomDebugInformationEntry
+		internal struct CustomDebugInformationEntry
 		{
 			readonly int? offset;
 			readonly MetadataFile metadataFile;

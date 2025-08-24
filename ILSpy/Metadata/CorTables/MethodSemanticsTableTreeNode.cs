@@ -25,46 +25,24 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class MethodSemanticsTableTreeNode : MetadataTableTreeNode
+	internal class MethodSemanticsTableTreeNode : MetadataTableTreeNode<MethodSemanticsTableTreeNode.MethodSemanticsEntry>
 	{
 		public MethodSemanticsTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.MethodSemantics, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<MethodSemanticsEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-
 			var list = new List<MethodSemanticsEntry>();
-			MethodSemanticsEntry scrollTargetEntry = default;
-
 			foreach (var row in metadataFile.Metadata.GetMethodSemantics())
 			{
-				MethodSemanticsEntry entry = new MethodSemanticsEntry(metadataFile, row.Handle, row.Semantics, row.Method, row.Association);
-				if (entry.RID == this.scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new MethodSemanticsEntry(metadataFile, row.Handle, row.Semantics, row.Method, row.Association));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		struct MethodSemanticsEntry
+		internal struct MethodSemanticsEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly Handle handle;

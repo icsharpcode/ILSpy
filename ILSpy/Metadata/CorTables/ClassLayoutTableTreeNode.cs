@@ -26,45 +26,26 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class ClassLayoutTableTreeNode : MetadataTableTreeNode
+	internal class ClassLayoutTableTreeNode : MetadataTableTreeNode<ClassLayoutTableTreeNode.ClassLayoutEntry>
 	{
 		public ClassLayoutTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.ClassLayout, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<ClassLayoutEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-
 			var list = new List<ClassLayoutEntry>();
 
 			var length = metadataFile.Metadata.GetTableRowCount(TableIndex.ClassLayout);
 			ReadOnlySpan<byte> ptr = metadataFile.Metadata.AsReadOnlySpan();
-			ClassLayoutEntry scrollTargetEntry = default;
 
 			for (int rid = 1; rid <= length; rid++)
 			{
-				ClassLayoutEntry entry = new ClassLayoutEntry(metadataFile, ptr, rid);
-				if (scrollTarget == rid)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new ClassLayoutEntry(metadataFile, ptr, rid));
 			}
 
-			view.ItemsSource = list;
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
 		readonly struct ClassLayout
@@ -81,7 +62,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		struct ClassLayoutEntry
+		internal struct ClassLayoutEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly ClassLayout classLayout;

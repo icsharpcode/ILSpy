@@ -27,45 +27,25 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class MethodDebugInformationTableTreeNode : DebugMetadataTableTreeNode
+	internal class MethodDebugInformationTableTreeNode : DebugMetadataTableTreeNode<MethodDebugInformationTableTreeNode.MethodDebugInformationEntry>
 	{
 		public MethodDebugInformationTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.MethodDebugInformation, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<MethodDebugInformationEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
 			var list = new List<MethodDebugInformationEntry>();
-			MethodDebugInformationEntry scrollTargetEntry = default;
 
 			foreach (var row in metadataFile.Metadata.MethodDebugInformation)
 			{
-				MethodDebugInformationEntry entry = new MethodDebugInformationEntry(metadataFile, row);
-				if (entry.RID == scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new MethodDebugInformationEntry(metadataFile, row));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		struct MethodDebugInformationEntry
+		internal struct MethodDebugInformationEntry
 		{
 			readonly int? offset;
 			readonly MetadataFile metadataFile;

@@ -25,46 +25,26 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class PropertyMapTableTreeNode : MetadataTableTreeNode
+	class PropertyMapTableTreeNode : MetadataTableTreeNode<PropertyMapTableTreeNode.PropertyMapEntry>
 	{
 		public PropertyMapTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.PropertyMap, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<PropertyMapEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = metadataFile.Metadata;
-
 			var list = new List<PropertyMapEntry>();
-			PropertyMapEntry scrollTargetEntry = default;
-
+			var metadata = metadataFile.Metadata;
 			var length = metadata.GetTableRowCount(TableIndex.PropertyMap);
 			ReadOnlySpan<byte> ptr = metadata.AsReadOnlySpan();
+			int typeDefSize = metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
+			int propertyDefSize = metadata.GetTableRowCount(TableIndex.Property) < ushort.MaxValue ? 2 : 4;
 			for (int rid = 1; rid <= length; rid++)
 			{
-				PropertyMapEntry entry = new PropertyMapEntry(metadataFile, ptr, rid);
-				if (entry.RID == this.scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new PropertyMapEntry(metadataFile, ptr, rid, typeDefSize, propertyDefSize));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
 		readonly struct PropertyMap
@@ -79,15 +59,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		struct PropertyMapEntry
+		internal struct PropertyMapEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly PropertyMap propertyMap;
 
 			public int RID { get; }
-
 			public int Token => 0x15000000 | RID;
-
 			public int Offset { get; }
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
@@ -112,15 +90,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			string propertyListTooltip;
 			public string PropertyListTooltip => GenerateTooltip(ref propertyListTooltip, metadataFile, propertyMap.PropertyList);
 
-			public PropertyMapEntry(MetadataFile metadataFile, ReadOnlySpan<byte> ptr, int row)
+			public PropertyMapEntry(MetadataFile metadataFile, ReadOnlySpan<byte> ptr, int row, int typeDefSize, int propertyDefSize)
 			{
 				this.metadataFile = metadataFile;
 				this.RID = row;
 				var rowOffset = metadataFile.Metadata.GetTableMetadataOffset(TableIndex.PropertyMap)
 					+ metadataFile.Metadata.GetTableRowSize(TableIndex.PropertyMap) * (row - 1);
 				this.Offset = metadataFile.MetadataOffset + rowOffset;
-				int typeDefSize = metadataFile.Metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
-				int propertyDefSize = metadataFile.Metadata.GetTableRowCount(TableIndex.Property) < ushort.MaxValue ? 2 : 4;
 				this.propertyMap = new PropertyMap(ptr.Slice(rowOffset), typeDefSize, propertyDefSize);
 				this.propertyListTooltip = null;
 				this.parentTooltip = null;

@@ -25,45 +25,24 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class GenericParamTableTreeNode : MetadataTableTreeNode
+	internal class GenericParamTableTreeNode : MetadataTableTreeNode<GenericParamTableTreeNode.GenericParamEntry>
 	{
 		public GenericParamTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.GenericParam, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<GenericParamEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-
 			var list = new List<GenericParamEntry>();
-			GenericParamEntry scrollTargetEntry = default;
-
 			for (int row = 1; row <= metadataFile.Metadata.GetTableRowCount(TableIndex.GenericParam); row++)
 			{
-				GenericParamEntry entry = new GenericParamEntry(metadataFile, MetadataTokens.GenericParameterHandle(row));
-				if (entry.RID == this.scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new GenericParamEntry(metadataFile, MetadataTokens.GenericParameterHandle(row)));
 			}
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		struct GenericParamEntry
+		internal struct GenericParamEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly GenericParameterHandle handle;

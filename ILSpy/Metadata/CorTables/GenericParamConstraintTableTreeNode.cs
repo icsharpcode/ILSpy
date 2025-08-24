@@ -26,46 +26,25 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class GenericParamConstraintTableTreeNode : MetadataTableTreeNode
+	internal class GenericParamConstraintTableTreeNode : MetadataTableTreeNode<GenericParamConstraintTableTreeNode.GenericParamConstraintEntry>
 	{
 		public GenericParamConstraintTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.GenericParamConstraint, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<GenericParamConstraintEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = metadataFile.Metadata;
-
 			var list = new List<GenericParamConstraintEntry>();
-			GenericParamConstraintEntry scrollTargetEntry = default;
-
+			var metadata = metadataFile.Metadata;
 			for (int row = 1; row <= metadata.GetTableRowCount(TableIndex.GenericParamConstraint); row++)
 			{
-				GenericParamConstraintEntry entry = new GenericParamConstraintEntry(metadataFile, MetadataTokens.GenericParameterConstraintHandle(row));
-				if (entry.RID == this.scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new GenericParamConstraintEntry(metadataFile, MetadataTokens.GenericParameterConstraintHandle(row)));
 			}
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		struct GenericParamConstraintEntry
+		internal struct GenericParamConstraintEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly GenericParameterConstraintHandle handle;

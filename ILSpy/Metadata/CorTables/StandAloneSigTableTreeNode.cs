@@ -24,46 +24,25 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class StandAloneSigTableTreeNode : MetadataTableTreeNode
+	class StandAloneSigTableTreeNode : MetadataTableTreeNode<StandAloneSigTableTreeNode.StandAloneSigEntry>
 	{
 		public StandAloneSigTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.StandAloneSig, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<StandAloneSigEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-
 			var list = new List<StandAloneSigEntry>();
-			StandAloneSigEntry scrollTargetEntry = default;
-
 			for (int row = 1; row <= metadataFile.Metadata.GetTableRowCount(TableIndex.StandAloneSig); row++)
 			{
-				StandAloneSigEntry entry = new StandAloneSigEntry(metadataFile, MetadataTokens.StandaloneSignatureHandle(row));
-				if (entry.RID == this.scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new StandAloneSigEntry(metadataFile, MetadataTokens.StandaloneSignatureHandle(row)));
 			}
 
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		struct StandAloneSigEntry
+		internal struct StandAloneSigEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly StandaloneSignatureHandle handle;

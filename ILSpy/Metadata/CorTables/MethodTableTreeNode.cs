@@ -28,46 +28,24 @@ using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class MethodTableTreeNode : MetadataTableTreeNode
+	internal class MethodTableTreeNode : MetadataTableTreeNode<MethodTableTreeNode.MethodDefEntry>
 	{
 		public MethodTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.MethodDef, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<MethodDefEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = metadataFile.Metadata;
 			var list = new List<MethodDefEntry>();
-			MethodDefEntry scrollTargetEntry = default;
-
-			foreach (var row in metadata.MethodDefinitions)
+			foreach (var row in metadataFile.Metadata.MethodDefinitions)
 			{
-				MethodDefEntry entry = new MethodDefEntry(metadataFile, row);
-				if (entry.RID == scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new MethodDefEntry(metadataFile, row));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		struct MethodDefEntry : IMemberTreeNode
+		internal struct MethodDefEntry : IMemberTreeNode
 		{
 			readonly MetadataFile metadataFile;
 			readonly MethodDefinitionHandle handle;

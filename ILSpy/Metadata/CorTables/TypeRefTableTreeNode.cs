@@ -24,47 +24,24 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class TypeRefTableTreeNode : MetadataTableTreeNode
+	internal class TypeRefTableTreeNode : MetadataTableTreeNode<TypeRefTableTreeNode.TypeRefEntry>
 	{
 		public TypeRefTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.TypeRef, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<TypeRefEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = metadataFile.Metadata;
-
 			var list = new List<TypeRefEntry>();
-			TypeRefEntry scrollTargetEntry = default;
-
-			foreach (var row in metadata.TypeReferences)
+			foreach (var row in metadataFile.Metadata.TypeReferences)
 			{
-				TypeRefEntry entry = new TypeRefEntry(metadataFile, row);
-				if (entry.RID == this.scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new TypeRefEntry(metadataFile, row));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		struct TypeRefEntry
+		internal struct TypeRefEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly TypeReferenceHandle handle;

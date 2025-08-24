@@ -26,46 +26,26 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class FieldLayoutTableTreeNode : MetadataTableTreeNode
+	internal class FieldLayoutTableTreeNode : MetadataTableTreeNode<FieldLayoutTableTreeNode.FieldLayoutEntry>
 	{
 		public FieldLayoutTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.FieldLayout, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<FieldLayoutEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = metadataFile.Metadata;
-
 			var list = new List<FieldLayoutEntry>();
-			FieldLayoutEntry scrollTargetEntry = default;
 
+			var metadata = metadataFile.Metadata;
 			var length = metadata.GetTableRowCount(TableIndex.FieldLayout);
 			ReadOnlySpan<byte> ptr = metadata.AsReadOnlySpan();
+			int fieldDefSize = metadata.GetTableRowCount(TableIndex.Field) < ushort.MaxValue ? 2 : 4;
 			for (int rid = 1; rid <= length; rid++)
 			{
-				FieldLayoutEntry entry = new FieldLayoutEntry(metadataFile, ptr, rid);
-				if (entry.RID == this.scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new FieldLayoutEntry(metadataFile, ptr, rid, fieldDefSize));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
 		readonly struct FieldLayout
@@ -80,15 +60,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		struct FieldLayoutEntry
+		internal struct FieldLayoutEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly FieldLayout fieldLayout;
 
 			public int RID { get; }
-
 			public int Token => 0x10000000 | RID;
-
 			public int Offset { get; }
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
@@ -105,14 +83,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.Other)]
 			public int FieldOffset => fieldLayout.Offset;
 
-			public FieldLayoutEntry(MetadataFile metadataFile, ReadOnlySpan<byte> ptr, int row)
+			public FieldLayoutEntry(MetadataFile metadataFile, ReadOnlySpan<byte> ptr, int row, int fieldDefSize)
 			{
 				this.metadataFile = metadataFile;
 				this.RID = row;
 				var rowOffset = metadataFile.Metadata.GetTableMetadataOffset(TableIndex.FieldLayout)
 					+ metadataFile.Metadata.GetTableRowSize(TableIndex.FieldLayout) * (row - 1);
 				this.Offset = metadataFile.MetadataOffset + rowOffset;
-				int fieldDefSize = metadataFile.Metadata.GetTableRowCount(TableIndex.Field) < ushort.MaxValue ? 2 : 4;
 				this.fieldLayout = new FieldLayout(ptr.Slice(rowOffset), fieldDefSize);
 				this.fieldTooltip = null;
 			}

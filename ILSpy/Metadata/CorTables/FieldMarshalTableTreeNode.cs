@@ -25,46 +25,27 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class FieldMarshalTableTreeNode : MetadataTableTreeNode
+	internal class FieldMarshalTableTreeNode : MetadataTableTreeNode<FieldMarshalTableTreeNode.FieldMarshalEntry>
 	{
 		public FieldMarshalTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.FieldMarshal, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<FieldMarshalEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = metadataFile.Metadata;
-
 			var list = new List<FieldMarshalEntry>();
-			FieldMarshalEntry scrollTargetEntry = default;
 
+			var metadata = metadataFile.Metadata;
 			var length = metadata.GetTableRowCount(TableIndex.FieldMarshal);
 			ReadOnlySpan<byte> ptr = metadata.AsReadOnlySpan();
+			int hasFieldMarshalRefSize = metadata.ComputeCodedTokenSize(32768, TableMask.Field | TableMask.Param);
+			int blobHeapSize = metadata.GetHeapSize(HeapIndex.Blob) < ushort.MaxValue ? 2 : 4;
 			for (int rid = 1; rid <= length; rid++)
 			{
-				FieldMarshalEntry entry = new FieldMarshalEntry(metadataFile, ptr, rid);
-				if (entry.RID == this.scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new FieldMarshalEntry(metadataFile, ptr, rid, blobHeapSize, hasFieldMarshalRefSize));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
 		readonly struct FieldMarshal
@@ -79,15 +60,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		struct FieldMarshalEntry
+		internal struct FieldMarshalEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly FieldMarshal fieldMarshal;
 
 			public int RID { get; }
-
 			public int Token => 0x0D000000 | RID;
-
 			public int Offset { get; }
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
@@ -104,15 +83,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int NativeType => MetadataTokens.GetHeapOffset(fieldMarshal.NativeType);
 
-			public FieldMarshalEntry(MetadataFile metadataFile, ReadOnlySpan<byte> ptr, int row)
+			public FieldMarshalEntry(MetadataFile metadataFile, ReadOnlySpan<byte> ptr, int row, int blobHeapSize, int hasFieldMarshalRefSize)
 			{
 				this.metadataFile = metadataFile;
 				this.RID = row;
 				var rowOffset = metadataFile.Metadata.GetTableMetadataOffset(TableIndex.FieldMarshal)
 					+ metadataFile.Metadata.GetTableRowSize(TableIndex.FieldMarshal) * (row - 1);
 				this.Offset = metadataFile.MetadataOffset + rowOffset;
-				int hasFieldMarshalRefSize = metadataFile.Metadata.ComputeCodedTokenSize(32768, TableMask.Field | TableMask.Param);
-				int blobHeapSize = metadataFile.Metadata.GetHeapSize(HeapIndex.Blob) < ushort.MaxValue ? 2 : 4;
 				this.fieldMarshal = new FieldMarshal(ptr.Slice(rowOffset), blobHeapSize, hasFieldMarshalRefSize);
 				this.parentTooltip = null;
 			}

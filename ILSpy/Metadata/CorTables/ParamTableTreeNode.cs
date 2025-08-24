@@ -25,46 +25,24 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class ParamTableTreeNode : MetadataTableTreeNode
+	internal class ParamTableTreeNode : MetadataTableTreeNode<ParamTableTreeNode.ParamEntry>
 	{
 		public ParamTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.Param, metadataFile)
 		{
 		}
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		protected override IReadOnlyList<ParamEntry> LoadTable()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-
 			var list = new List<ParamEntry>();
-			ParamEntry scrollTargetEntry = default;
-
 			for (int row = 1; row <= metadataFile.Metadata.GetTableRowCount(TableIndex.Param); row++)
 			{
-				ParamEntry entry = new ParamEntry(metadataFile, MetadataTokens.ParameterHandle(row));
-				if (entry.RID == this.scrollTarget)
-				{
-					scrollTargetEntry = entry;
-				}
-				list.Add(entry);
+				list.Add(new ParamEntry(metadataFile, MetadataTokens.ParameterHandle(row)));
 			}
-
-			view.ItemsSource = list;
-
-			tabPage.Content = view;
-
-			if (scrollTargetEntry.RID > 0)
-			{
-				ScrollItemIntoView(view, scrollTargetEntry);
-			}
-
-			return true;
+			return list;
 		}
 
-		struct ParamEntry
+		internal struct ParamEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly ParameterHandle handle;
