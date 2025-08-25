@@ -1,4 +1,4 @@
-﻿using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Commands

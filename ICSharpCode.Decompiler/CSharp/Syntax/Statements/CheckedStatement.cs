@@ -1,4 +1,4 @@
-﻿// 
+// 
 // CheckedStatement.cs
 //
 // Author:

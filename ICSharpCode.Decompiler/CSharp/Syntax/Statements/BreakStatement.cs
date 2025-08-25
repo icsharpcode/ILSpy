@@ -1,4 +1,4 @@
-﻿// 
+// 
 // BreakStatement.cs
 //
 // Author:

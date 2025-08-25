@@ -1,4 +1,4 @@
-﻿#region Using directives
+#region Using directives
 
 using System.Windows;
 

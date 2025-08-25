@@ -1,4 +1,4 @@
-﻿namespace ICSharpCode.Decompiler.Tests.TestCases.CovariantReturns
+namespace ICSharpCode.Decompiler.Tests.TestCases.CovariantReturns
 {
 	public abstract class Base
 	{

@@ -1,4 +1,4 @@
-﻿// 
+// 
 // ConstructorDeclaration.cs
 //
 // Author:

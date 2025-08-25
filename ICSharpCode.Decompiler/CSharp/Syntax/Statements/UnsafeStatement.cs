@@ -1,4 +1,4 @@
-﻿// 
+// 
 // UnsafeStatement.cs
 //
 // Author:

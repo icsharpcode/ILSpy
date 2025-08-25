@@ -1,4 +1,4 @@
-﻿// 
+// 
 // DefaultValueExpression.cs
 //  
 // Author:

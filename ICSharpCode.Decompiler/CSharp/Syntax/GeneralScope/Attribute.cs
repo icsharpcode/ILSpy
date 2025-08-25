@@ -1,4 +1,4 @@
-﻿// 
+// 
 // Attribute.cs
 //
 // Author:

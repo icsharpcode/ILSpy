@@ -1,4 +1,4 @@
-﻿<?xml version="1.0"?>
+<?xml version="1.0"?>
 <SyntaxDefinition name="C#" extensions=".cs" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
 	<!-- This is a variant of the AvalonEdit C# highlighting that has several constructs disabled.
 	     The disabled constructs (e.g. contextual keywords) are highlighted using the CSharpLanguage.HighlightingTokenWriter instead.

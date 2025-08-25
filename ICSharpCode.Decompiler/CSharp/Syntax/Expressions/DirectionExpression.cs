@@ -1,4 +1,4 @@
-﻿// 
+// 
 // DirectionExpression.cs
 //  
 // Author:

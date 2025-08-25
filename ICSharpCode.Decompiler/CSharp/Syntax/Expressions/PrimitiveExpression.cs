@@ -1,4 +1,4 @@
-﻿// 
+// 
 // PrimitiveExpression.cs
 //
 // Author:

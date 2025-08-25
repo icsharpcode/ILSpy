@@ -1,4 +1,4 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ad="clr-namespace:AvalonDock">
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ad="clr-namespace:AvalonDock">
 	<SolidColorBrush x:Key="ManagedContentTabControlNormalBorderBrush" Color="#919B9C" />
 	<SolidColorBrush x:Key="{ComponentResourceKey ResourceId={x:Static ad:AvalonDockBrushes.DefaultBackgroundBrush}, TypeInTargetAssembly={x:Type ad:DockingManager}}" Color="#FFF4F2E8" />
 	<LinearGradientBrush x:Key="ManagedContentTabItemNormalBackground" StartPoint="0,0" EndPoint="0,1">

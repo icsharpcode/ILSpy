@@ -1,4 +1,4 @@
-﻿<SyntaxDefinition name="ILAsm" extensions=".il" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+<SyntaxDefinition name="ILAsm" extensions=".il" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
 	<Color name="Comment" foreground="Green" exampleText="// comment" />
 	<Color name="String" foreground="Magenta" exampleText="&quot;Hello, World!&quot;" />
 	<Color name="Instructions" foreground="Blue" exampleText="nop;" />
