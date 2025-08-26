@@ -32,7 +32,7 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 		public string? Include { get; set; }
 		public string? Exclude { get; set; }
 		public bool JsonOnly { get; set; }
-		public bool ReportExludedTypes { get; set; }
+		public bool ReportExcludedTypes { get; set; }
 		public string? XmlDocs { get; set; }
 
 		/// <summary>Namespaces to strip from <see cref="XmlDocs"/>.
