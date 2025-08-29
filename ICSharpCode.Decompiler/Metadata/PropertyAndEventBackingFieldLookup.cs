@@ -19,6 +19,8 @@
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 
+using ICSharpCode.Decompiler.Util;
+
 namespace ICSharpCode.Decompiler.Metadata
 {
 	class PropertyAndEventBackingFieldLookup
@@ -33,7 +35,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 			this.metadata = metadata;
 
-			var nameToFieldMap = new Dictionary<string, FieldDefinitionHandle>();
+			var nameToFieldMap = new MultiDictionary<string, FieldDefinitionHandle>();
 
 			foreach (var tdh in metadata.TypeDefinitions)
 			{
@@ -51,14 +53,22 @@ namespace ICSharpCode.Decompiler.Metadata
 					var property = metadata.GetPropertyDefinition(pdh);
 					var name = metadata.GetString(property.Name);
 					// default C# property backing field name is "<PropertyName>k__BackingField"
-					if (nameToFieldMap.TryGetValue($"<{name}>k__BackingField", out var fieldHandle))
+					if (nameToFieldMap.TryGetValues($"<{name}>k__BackingField", out var fieldHandles))
 					{
-						propertyLookup[fieldHandle] = pdh;
+						foreach (var fieldHandle in fieldHandles)
+						{
+							propertyLookup[fieldHandle] = pdh;
+						}
 					}
-					else if (nameToFieldMap.TryGetValue($"_{name}", out fieldHandle)
-						&& fieldHandle.IsCompilerGenerated(metadata))
+					else if (nameToFieldMap.TryGetValues($"_{name}", out fieldHandles))
 					{
-						propertyLookup[fieldHandle] = pdh;
+						foreach (var fieldHandle in fieldHandles)
+						{
+							if (fieldHandle.IsCompilerGenerated(metadata))
+							{
+								propertyLookup[fieldHandle] = pdh;
+							}
+						}
 					}
 				}
 
@@ -66,13 +76,19 @@ namespace ICSharpCode.Decompiler.Metadata
 				{
 					var ev = metadata.GetEventDefinition(edh);
 					var name = metadata.GetString(ev.Name);
-					if (nameToFieldMap.TryGetValue(name, out var fieldHandle))
+					if (nameToFieldMap.TryGetValues(name, out var fieldHandles))
 					{
-						eventLookup[fieldHandle] = edh;
+						foreach (var fieldHandle in fieldHandles)
+						{
+							eventLookup[fieldHandle] = edh;
+						}
 					}
-					else if (nameToFieldMap.TryGetValue($"{name}Event", out fieldHandle))
+					else if (nameToFieldMap.TryGetValues($"{name}Event", out fieldHandles))
 					{
-						eventLookup[fieldHandle] = edh;
+						foreach (var fieldHandle in fieldHandles)
+						{
+							eventLookup[fieldHandle] = edh;
+						}
 					}
 				}
 

@@ -86,6 +86,17 @@ namespace ICSharpCode.Decompiler.Util
 			}
 		}
 
+		public bool TryGetValues(TKey key, out IReadOnlyList<TValue> values)
+		{
+			values = EmptyList<TValue>.Instance;
+			if (dict.TryGetValue(key, out var list))
+			{
+				values = list;
+				return true;
+			}
+			return false;
+		}
+
 		/// <summary>
 		/// Returns the number of different keys.
 		/// </summary>
