@@ -53,6 +53,7 @@ namespace ICSharpCode.ILSpy
 
 		public static readonly ImageSource Assembly = Load("Assembly");
 		public static readonly ImageSource AssemblyWarning = Load("AssemblyWarning");
+		public static readonly ImageSource AssemblyLoading = Load(nameof(AssemblyLoading));
 		public static readonly ImageSource FindAssembly = Load("FindAssembly");
 
 		public static readonly ImageSource Library = Load("Library");
