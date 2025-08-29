@@ -1,7 +1,7 @@
 $basePath = $PSScriptRoot
 if ([string]::IsNullOrEmpty($basePath))
 {
-    $basePath = Split-Path -parent $psISE.CurrentFile.Fullpath
+	$basePath = Split-Path -parent $psISE.CurrentFile.Fullpath
 }
 
 $modulePath = $basePath + '\bin\Debug\netstandard2.0\ICSharpCode.Decompiler.Powershell.dll'
@@ -21,7 +21,7 @@ $classes.Count
 
 foreach ($c in $classes)
 {
-    Write-Output $c.FullName
+	Write-Output $c.FullName
 }
 
 
