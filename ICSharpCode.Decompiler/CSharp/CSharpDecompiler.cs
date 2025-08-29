@@ -2126,7 +2126,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					SetNewModifier(propertyDecl);
 				}
-				if (getterHasBody && IsCovariantReturnOverride(property.Getter))
+				if (IsCovariantReturnOverride(property.Getter))
 				{
 					RemoveAttribute(getter, KnownAttribute.PreserveBaseOverrides);
 					propertyDecl.Modifiers &= ~(Modifiers.New | Modifiers.Virtual);

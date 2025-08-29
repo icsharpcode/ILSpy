@@ -1,5 +1,16 @@
 ﻿namespace ICSharpCode.Decompiler.Tests.TestCases.CovariantReturns
 {
+	public abstract class AbstractDerived : Base
+	{
+		public abstract override AbstractDerived Instance { get; }
+
+		public abstract override AbstractDerived this[int index] { get; }
+
+		public abstract override AbstractDerived Build();
+
+		protected abstract override AbstractDerived SetParent(object parent);
+	}
+
 	public abstract class Base
 	{
 		public abstract Base Instance { get; }
