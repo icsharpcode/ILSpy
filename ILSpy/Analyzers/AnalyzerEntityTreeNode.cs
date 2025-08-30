@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Windows;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -24,6 +25,8 @@ using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
+
+#nullable enable
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
@@ -34,6 +37,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 	{
 		public abstract IEntity Member { get; }
 
+		public IEntity? SourceMember { get; protected set; }
+
 		public override void ActivateItem(IPlatformRoutedEventArgs e)
 		{
 			e.Handled = true;
@@ -43,10 +48,14 @@ namespace ICSharpCode.ILSpy.Analyzers
 				return;
 			}
 
-			MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(this.Member.ParentModule?.MetadataFile, this.Member.MetadataToken)));
+			var module = this.Member.ParentModule?.MetadataFile;
+
+			Debug.Assert(module != null);
+
+			MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(module, this.Member.MetadataToken), this.SourceMember));
 		}
 
-		public override object ToolTip => Member?.ParentModule?.MetadataFile?.FileName;
+		public override object? ToolTip => Member?.ParentModule?.MetadataFile?.FileName;
 
 		public override bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies)
 		{

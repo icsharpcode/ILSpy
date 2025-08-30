@@ -312,6 +312,13 @@ namespace ICSharpCode.ILSpy.TextView
 			references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = reference, IsLocal = true, IsDefinition = isDefinition });
 		}
 
+		internal object InitialHighlightReference = null;
+
+		public void SetInitialHighlight(object reference)
+		{
+			this.InitialHighlightReference = reference;
+		}
+
 		public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false, bool isDefinition = false)
 		{
 			WriteIndent();

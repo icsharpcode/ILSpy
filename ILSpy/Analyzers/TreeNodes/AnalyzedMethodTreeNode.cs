@@ -21,6 +21,8 @@ using System;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
 
+#nullable enable
+
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
 	internal class AnalyzedMethodTreeNode : AnalyzerEntityTreeNode
@@ -28,9 +30,10 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 		readonly IMethod analyzedMethod;
 		readonly string prefix;
 
-		public AnalyzedMethodTreeNode(IMethod analyzedMethod, string prefix = "")
+		public AnalyzedMethodTreeNode(IMethod analyzedMethod, IEntity? source, string prefix = "")
 		{
 			this.analyzedMethod = analyzedMethod ?? throw new ArgumentNullException(nameof(analyzedMethod));
+			this.SourceMember = source;
 			this.prefix = prefix;
 			this.LazyLoading = true;
 		}
