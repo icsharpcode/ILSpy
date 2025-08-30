@@ -1,4 +1,4 @@
-﻿// 
+// 
 // PropertyDeclaration.cs
 //
 // Author:

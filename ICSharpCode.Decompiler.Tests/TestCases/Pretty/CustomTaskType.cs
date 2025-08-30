@@ -1,4 +1,4 @@
-﻿#pragma warning disable 1998
+#pragma warning disable 1998
 
 using System;
 using System.Collections.Generic;

@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL

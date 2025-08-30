@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace ICSharpCode.ILSpyX.TreeView.PlatformAbstractions
 {

@@ -1,4 +1,4 @@
-﻿#if !NETCORE
+#if !NETCORE
 
 #nullable enable
 

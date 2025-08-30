@@ -1,4 +1,4 @@
-﻿// 
+// 
 // ConditionalExpression.cs
 //
 // Author:

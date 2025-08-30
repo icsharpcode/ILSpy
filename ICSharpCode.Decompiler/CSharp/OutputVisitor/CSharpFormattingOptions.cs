@@ -1,4 +1,4 @@
-﻿// 
+// 
 // CSharpFormattingOptions.cs
 //  
 // Author:

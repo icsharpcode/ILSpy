@@ -1,4 +1,4 @@
-﻿//
+//
 // AliasTypeResolveResult.cs
 //
 // Author:

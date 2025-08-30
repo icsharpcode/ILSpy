@@ -1,4 +1,4 @@
-﻿namespace Humanizer.Inflections;
+namespace Humanizer.Inflections;
 
 using CharSpan = System.ReadOnlySpan<System.Char>;
 

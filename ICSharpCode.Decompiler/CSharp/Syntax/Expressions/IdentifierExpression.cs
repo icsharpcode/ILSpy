@@ -1,4 +1,4 @@
-﻿// 
+// 
 // IdentifierExpression.cs
 //  
 // Author:

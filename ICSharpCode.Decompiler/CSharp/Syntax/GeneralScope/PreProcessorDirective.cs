@@ -1,4 +1,4 @@
-﻿// 
+// 
 // PreProcessorDirective.cs
 //  
 // Author:

@@ -1,4 +1,4 @@
-﻿// Source: https://github.com/medo64/Medo/blob/main/src/Medo/Application/SingleInstance.cs
+// Source: https://github.com/medo64/Medo/blob/main/src/Medo/Application/SingleInstance.cs
 
 /* Josip Medved <jmedved@jmedved.com> * www.medo64.com * MIT License */
 

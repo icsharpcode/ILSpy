@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using CustomAttributeConflicts.NS1;
 using CustomAttributeConflicts.NS2;

@@ -1,4 +1,4 @@
-﻿// 
+// 
 // FixedFieldDeclaration.cs
 //
 // Author:

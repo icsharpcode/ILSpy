@@ -1,4 +1,4 @@
-﻿using ICSharpCode.ILSpyX.Settings;
+using ICSharpCode.ILSpyX.Settings;
 using System.Windows.Media;
 using System.Xml.Linq;
 using System;

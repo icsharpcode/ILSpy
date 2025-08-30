@@ -1,4 +1,4 @@
-﻿public class C
+public class C
 {
 	public static int X {
 		get {

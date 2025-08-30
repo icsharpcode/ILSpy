@@ -1,4 +1,4 @@
-﻿namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue3442
+namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue3442
 {
 	public class Class : Interface
 	{

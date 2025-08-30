@@ -1,4 +1,4 @@
-﻿open System
+open System
 
 let disposable() = { new IDisposable with member x.Dispose() = () }
 

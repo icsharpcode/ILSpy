@@ -1,4 +1,4 @@
-﻿public enum Enum0
+public enum Enum0
 {
 	// error: enumerator has no value
 	const_0,

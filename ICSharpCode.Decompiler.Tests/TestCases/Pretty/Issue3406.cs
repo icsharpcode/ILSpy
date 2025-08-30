@@ -1,4 +1,4 @@
-﻿internal class Issue3406
+internal class Issue3406
 {
 	private record struct S1(int Value);
 

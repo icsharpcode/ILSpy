@@ -1,4 +1,4 @@
-﻿// 
+// 
 // NullReferenceExpression.cs
 //
 // Author:

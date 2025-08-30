@@ -1,4 +1,4 @@
-﻿// 
+// 
 // YieldBreakStatement.cs
 //
 // Author:

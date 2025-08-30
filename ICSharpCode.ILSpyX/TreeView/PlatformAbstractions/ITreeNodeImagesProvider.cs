@@ -1,4 +1,4 @@
-﻿namespace ICSharpCode.ILSpyX.TreeView.PlatformAbstractions
+namespace ICSharpCode.ILSpyX.TreeView.PlatformAbstractions
 {
 	public interface ITreeNodeImagesProvider
 	{

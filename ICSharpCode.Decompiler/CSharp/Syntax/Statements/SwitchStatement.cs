@@ -1,4 +1,4 @@
-﻿// 
+// 
 // SwitchStatement.cs
 //
 // Author:

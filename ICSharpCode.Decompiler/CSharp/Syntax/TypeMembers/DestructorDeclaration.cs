@@ -1,4 +1,4 @@
-﻿// 
+// 
 // DestructorDeclaration.cs
 //
 // Author:

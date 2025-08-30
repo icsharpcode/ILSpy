@@ -1,4 +1,4 @@
-﻿// 
+// 
 // YieldStatement.cs
 //
 // Author:

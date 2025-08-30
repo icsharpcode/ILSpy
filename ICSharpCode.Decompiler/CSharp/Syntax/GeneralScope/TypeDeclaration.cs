@@ -1,4 +1,4 @@
-﻿// 
+// 
 // TypeDeclaration.cs
 //
 // Author:

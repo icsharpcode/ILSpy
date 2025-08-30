@@ -1,4 +1,4 @@
-﻿#if !(CS110 && NET70)
+#if !(CS110 && NET70)
 using System;
 #endif
 using System.Threading.Tasks;

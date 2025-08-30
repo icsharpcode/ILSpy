@@ -1,4 +1,4 @@
-﻿// 
+// 
 // BinaryOperatorExpression.cs
 //
 // Author:

@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 // Copyright (c) 2018 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this

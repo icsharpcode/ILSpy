@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 #if CS120
 using System.Collections.Generic;
 #endif

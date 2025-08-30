@@ -1,4 +1,4 @@
-﻿// 
+// 
 // IndexerExpression.cs
 //  
 // Author:

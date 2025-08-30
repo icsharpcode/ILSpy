@@ -1,4 +1,4 @@
-﻿// 
+// 
 // OperatorDeclaration.cs
 //
 // Author:

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <WixLocalization  Culture="en-US" xmlns="http://wixtoolset.org/schemas/v4/wxl">
 	<String Id="VerifyReadyDlgInstallText" Overridable="yes" Value="Click Install to begin the installation. Click Cancel to exit the wizard.&#xD;&#xA;&#x9;&#xD;&#xA;&#x9;ILSpy will be installed for current user into following directory:&#xD;&#xA;&#x9;&#xD;&#xA;&#x9;[INSTALLDIR]"></String>
 </WixLocalization>

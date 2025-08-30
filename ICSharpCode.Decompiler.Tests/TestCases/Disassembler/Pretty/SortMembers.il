@@ -1,4 +1,4 @@
-﻿.assembly extern mscorlib
+.assembly extern mscorlib
 {
 	.publickeytoken = (
 		b7 7a 5c 56 19 34 e0 89

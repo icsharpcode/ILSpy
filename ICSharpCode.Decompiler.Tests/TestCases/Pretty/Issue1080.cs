@@ -1,4 +1,4 @@
-﻿using ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceA;
+using ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceA;
 using ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceA.SpaceB;
 using ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceC;
 

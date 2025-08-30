@@ -1,4 +1,4 @@
-﻿// Dummy types so that we can use compile some ICS.Decompiler classes in the AddIn context
+// Dummy types so that we can use compile some ICS.Decompiler classes in the AddIn context
 // without depending on SRM etc.
 
 using System;

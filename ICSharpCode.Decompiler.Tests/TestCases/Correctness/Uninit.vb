@@ -1,4 +1,4 @@
-﻿Imports System
+Imports System
 
 Module UninitTest
     Sub Main()

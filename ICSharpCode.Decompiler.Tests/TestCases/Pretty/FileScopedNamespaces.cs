@@ -1,4 +1,4 @@
-﻿namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty;
+namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty;
 
 internal delegate void DelegateInFileScopedNamespace();
 

@@ -1,4 +1,4 @@
-﻿<SyntaxDefinition name="Asm" extensions=".s;.asm" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+<SyntaxDefinition name="Asm" extensions=".s;.asm" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
 	<Color name="Comment" foreground="Green" exampleText="; comment" />
 	<Color name="NumberLiteral" foreground="Orange" exampleText="0987654321" />
 	<Color name="String" foreground="Magenta" exampleText="&quot;Hello, World!&quot;" />

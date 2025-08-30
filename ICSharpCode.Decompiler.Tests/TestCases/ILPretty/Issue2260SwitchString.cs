@@ -1,4 +1,4 @@
-﻿using System.Windows.Forms;
+using System.Windows.Forms;
 namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 {
 	internal class Issue2260

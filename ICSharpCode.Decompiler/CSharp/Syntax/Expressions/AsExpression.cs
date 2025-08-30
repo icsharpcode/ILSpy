@@ -1,4 +1,4 @@
-﻿// 
+// 
 // AsExpression.cs
 //  
 // Author:

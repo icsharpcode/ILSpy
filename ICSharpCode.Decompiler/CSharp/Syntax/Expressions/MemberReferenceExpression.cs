@@ -1,4 +1,4 @@
-﻿// 
+// 
 // MemberReferenceExpression.cs
 //
 // Author:

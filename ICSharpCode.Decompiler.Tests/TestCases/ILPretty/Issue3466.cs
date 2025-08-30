@@ -1,4 +1,4 @@
-﻿namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
+namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 {
 	public class Issue3466<T>
 	{

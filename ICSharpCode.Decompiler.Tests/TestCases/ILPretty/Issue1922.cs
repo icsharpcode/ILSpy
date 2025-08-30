@@ -1,4 +1,4 @@
-﻿namespace Issue1922
+namespace Issue1922
 {
 	public class Program
 	{

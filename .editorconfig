@@ -2,11 +2,17 @@
 root = true
 
 [*]
+charset = utf-8 # standardize on no BOM (except resx, see below)
 indent_style = tab
 indent_size = 4
 guidelines = 110
 tab_width = 4
 end_of_line = crlf
+
+# .net tooling writes the BOM to resx files on running dotnet build ILSpy.sln regardless,
+# so we should direct text editors to NOT change the file
+[*.resx]
+charset = utf-8-bom
 
 [*.il]
 indent_style = space

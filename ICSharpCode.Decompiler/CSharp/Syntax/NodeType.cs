@@ -1,4 +1,4 @@
-﻿// 
+// 
 // NodeType.cs
 //  
 // Author:

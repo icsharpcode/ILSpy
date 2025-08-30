@@ -1,4 +1,4 @@
-﻿.class private auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.ILPretty.Issue1256
+.class private auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.ILPretty.Issue1256
 	extends [mscorlib]System.Object
 {
 	// Methods

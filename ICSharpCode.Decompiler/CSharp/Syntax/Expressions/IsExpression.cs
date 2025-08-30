@@ -1,4 +1,4 @@
-﻿// 
+// 
 // TypeOfIsExpression.cs
 //
 // Author:

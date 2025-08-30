@@ -1,4 +1,4 @@
-﻿## About
+## About
 
 ICSharpCode.Decompiler is the decompiler engine used in [ILSpy](https://github.com/icsharpcode/ILSpy/).
 

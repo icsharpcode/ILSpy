@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation

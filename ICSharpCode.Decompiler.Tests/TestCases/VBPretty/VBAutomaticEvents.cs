@@ -1,4 +1,4 @@
-﻿public class VBAutomaticEvents
+public class VBAutomaticEvents
 {
 	public delegate void EventWithParameterEventHandler(int EventNumber);
 	public delegate void EventWithoutParameterEventHandler();

@@ -1,4 +1,4 @@
-﻿// 
+// 
 // UndocumentedExpression.cs
 //  
 // Author:

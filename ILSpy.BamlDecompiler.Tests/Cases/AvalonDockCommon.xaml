@@ -1,4 +1,4 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ad="clr-namespace:AvalonDock">
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ad="clr-namespace:AvalonDock">
 	<ResourceDictionary.MergedDictionaries>
 		<ResourceDictionary Source="/AvalonDock;component/Resources/Brushes.xaml" />
 	</ResourceDictionary.MergedDictionaries>

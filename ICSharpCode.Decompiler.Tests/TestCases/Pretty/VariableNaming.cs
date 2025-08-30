@@ -1,4 +1,4 @@
-﻿#if !OPT
+#if !OPT
 using System;
 #endif
 

@@ -1,4 +1,4 @@
-﻿Imports System
+Imports System
 Public Class VBPropertiesTest
 	Private _fullProperty As Integer
 

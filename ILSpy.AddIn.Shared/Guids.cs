@@ -1,4 +1,4 @@
-﻿// Guids.cs
+// Guids.cs
 // MUST match guids.h
 using System;
 
