@@ -802,6 +802,7 @@ namespace ICSharpCode.ILSpy.TextView
 			currentAddress = textOutput.Address;
 			currentTitle = textOutput.Title;
 			expandMemberDefinitions = settingsService.DisplaySettings.ExpandMemberDefinitions;
+			SetLocalReferenceMarks(textOutput.InitialHighlightReference);
 		}
 		#endregion
 
@@ -817,7 +818,7 @@ namespace ICSharpCode.ILSpy.TextView
 		[Obsolete("Use DecompileAsync() instead")]
 		public void Decompile(ILSpy.Language language, IEnumerable<ILSpyTreeNode> treeNodes, DecompilationOptions options)
 		{
-			DecompileAsync(language, treeNodes, options).HandleExceptions();
+			DecompileAsync(language, treeNodes, null, options).HandleExceptions();
 		}
 
 		/// <summary>
@@ -826,7 +827,7 @@ namespace ICSharpCode.ILSpy.TextView
 		/// If any errors occur, the error message is displayed in the text view, and the task returned by this method completes successfully.
 		/// If the operation is cancelled (by starting another decompilation action); the returned task is marked as cancelled.
 		/// </summary>
-		public Task DecompileAsync(ILSpy.Language language, IEnumerable<ILSpyTreeNode> treeNodes, DecompilationOptions options)
+		public Task DecompileAsync(ILSpy.Language language, IEnumerable<ILSpyTreeNode> treeNodes, object? source, DecompilationOptions options)
 		{
 			// Some actions like loading an assembly list cause several selection changes in the tree view,
 			// and each of those will start a decompilation action.
@@ -834,7 +835,7 @@ namespace ICSharpCode.ILSpy.TextView
 			bool isDecompilationScheduled = this.nextDecompilationRun != null;
 			if (this.nextDecompilationRun != null)
 				this.nextDecompilationRun.TaskCompletionSource.TrySetCanceled();
-			this.nextDecompilationRun = new DecompilationContext(language, treeNodes.ToArray(), options);
+			this.nextDecompilationRun = new DecompilationContext(language, treeNodes.ToArray(), options, source);
 			var task = this.nextDecompilationRun.TaskCompletionSource.Task;
 			if (!isDecompilationScheduled)
 			{
@@ -857,12 +858,14 @@ namespace ICSharpCode.ILSpy.TextView
 			public readonly ILSpyTreeNode[] TreeNodes;
 			public readonly DecompilationOptions Options;
 			public readonly TaskCompletionSource<object?> TaskCompletionSource = new TaskCompletionSource<object?>();
+			public readonly object? Source;
 
-			public DecompilationContext(ILSpy.Language language, ILSpyTreeNode[] treeNodes, DecompilationOptions options)
+			public DecompilationContext(ILSpy.Language language, ILSpyTreeNode[] treeNodes, DecompilationOptions options, object? source = null)
 			{
 				this.Language = language;
 				this.TreeNodes = treeNodes;
 				this.Options = options;
+				this.Source = source;
 			}
 		}
 
@@ -914,6 +917,7 @@ namespace ICSharpCode.ILSpy.TextView
 					{
 						AvalonEditTextOutput textOutput = new AvalonEditTextOutput();
 						textOutput.LengthLimit = outputLengthLimit;
+						textOutput.SetInitialHighlight(context.Source);
 						DecompileNodes(context, textOutput);
 						textOutput.PrepareDocument();
 						tcs.SetResult(textOutput);
@@ -994,19 +998,7 @@ namespace ICSharpCode.ILSpy.TextView
 			if (referenceSegment.IsLocal)
 			{
 				ClearLocalReferenceMarks();
-				if (references != null)
-				{
-					foreach (var r in references)
-					{
-						if (reference.Equals(r.Reference))
-						{
-
-							var mark = textMarkerService.Create(r.StartOffset, r.Length);
-							mark.BackgroundColor = (Color)(r.IsDefinition ? FindResource(ResourceKeys.TextMarkerDefinitionBackgroundColor) : FindResource(ResourceKeys.TextMarkerBackgroundColor));
-							localReferenceMarks.Add(mark);
-						}
-					}
-				}
+				SetLocalReferenceMarks(reference);
 				return;
 			}
 			if (definitionLookup != null)
@@ -1025,6 +1017,23 @@ namespace ICSharpCode.ILSpy.TextView
 				}
 			}
 			MessageBus.Send(this, new NavigateToReferenceEventArgs(reference, openInNewTab));
+		}
+
+		private void SetLocalReferenceMarks(object reference)
+		{
+			if (references == null || reference == null)
+			{
+				return;
+			}
+			foreach (var r in references)
+			{
+				if (reference.Equals(r.Reference))
+				{
+					var mark = textMarkerService.Create(r.StartOffset, r.Length);
+					mark.BackgroundColor = (Color)(r.IsDefinition ? FindResource(ResourceKeys.TextMarkerDefinitionBackgroundColor) : FindResource(ResourceKeys.TextMarkerBackgroundColor));
+					localReferenceMarks.Add(mark);
+				}
+			}
 		}
 
 		Point? mouseDownPos;

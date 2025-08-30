@@ -25,15 +25,18 @@ using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
+#nullable enable
+
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
 	internal class AnalyzedModuleTreeNode : AnalyzerEntityTreeNode
 	{
 		readonly IModule analyzedModule;
 
-		public AnalyzedModuleTreeNode(IModule analyzedModule)
+		public AnalyzedModuleTreeNode(IModule analyzedModule, IEntity? source)
 		{
 			this.analyzedModule = analyzedModule ?? throw new ArgumentNullException(nameof(analyzedModule));
+			this.SourceMember = source;
 			this.LazyLoading = true;
 		}
 

@@ -67,6 +67,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		private readonly NavigationHistory<NavigationState> history = new();
 		private NavigationState? navigatingToState;
+		private object? sourceOfReference;
 		private readonly SettingsService settingsService;
 		private readonly LanguageService languageService;
 		private readonly IExportProvider exportProvider;
@@ -262,7 +263,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 						found = true;
 						if (SelectedItem == initialSelection)
 						{
-							await JumpToReferenceAsync(mr);
+							await JumpToReferenceAsync(mr, null);
 						}
 					}
 				}
@@ -642,7 +643,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		private void JumpToReference(object? sender, NavigateToReferenceEventArgs e)
 		{
-			JumpToReferenceAsync(e.Reference, e.InNewTabPage).HandleExceptions();
+			JumpToReferenceAsync(e.Reference, e.Source, e.InNewTabPage).HandleExceptions();
 			IsActive = true;
 		}
 
@@ -653,8 +654,9 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		/// Returns a task that will signal completion when the decompilation of the jump target has finished.
 		/// The task will be marked as canceled if the decompilation is canceled.
 		/// </returns>
-		private Task JumpToReferenceAsync(object? reference, bool inNewTabPage = false)
+		private Task JumpToReferenceAsync(object? reference, object? source, bool inNewTabPage = false)
 		{
+			this.sourceOfReference = source;
 			var decompilationTask = Task.CompletedTask;
 
 			switch (reference)
@@ -804,6 +806,8 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		public void DecompileSelectedNodes(ViewState? newState = null)
 		{
+			object? source = this.sourceOfReference;
+			this.sourceOfReference = null;
 			var activeTabPage = DockWorkspace.ActiveTabPage;
 
 			if (activeTabPage.FrozenContent)
@@ -831,7 +835,9 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 			var options = activeTabPage.CreateDecompilationOptions();
 			options.TextViewState = newState as DecompilerTextViewState;
-			activeTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, options));
+			activeTabPage.ShowTextViewAsync(textView => {
+				return textView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, source, options);
+			});
 		}
 
 		public void RefreshDecompiledView()

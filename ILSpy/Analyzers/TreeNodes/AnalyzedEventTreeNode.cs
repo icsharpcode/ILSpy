@@ -21,6 +21,8 @@ using System;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
 
+#nullable enable
+
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
 	internal sealed class AnalyzedEventTreeNode : AnalyzerEntityTreeNode
@@ -28,11 +30,12 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 		readonly IEvent analyzedEvent;
 		readonly string prefix;
 
-		public AnalyzedEventTreeNode(IEvent analyzedEvent, string prefix = "")
+		public AnalyzedEventTreeNode(IEvent analyzedEvent, IEntity? source, string prefix = "")
 		{
 			this.analyzedEvent = analyzedEvent ?? throw new ArgumentNullException(nameof(analyzedEvent));
 			this.prefix = prefix;
 			this.LazyLoading = true;
+			this.SourceMember = source;
 		}
 
 		public override IEntity Member => analyzedEvent;
@@ -45,11 +48,11 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 		protected override void LoadChildren()
 		{
 			if (analyzedEvent.CanAdd)
-				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedEvent.AddAccessor, "add"));
+				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedEvent.AddAccessor, this.SourceMember, "add"));
 			if (analyzedEvent.CanRemove)
-				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedEvent.RemoveAccessor, "remove"));
+				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedEvent.RemoveAccessor, this.SourceMember, "remove"));
 			if (TryFindBackingField(analyzedEvent, out var backingField))
-				this.Children.Add(new AnalyzedFieldTreeNode(backingField));
+				this.Children.Add(new AnalyzedFieldTreeNode(backingField, this.SourceMember));
 
 			foreach (var lazy in Analyzers)
 			{

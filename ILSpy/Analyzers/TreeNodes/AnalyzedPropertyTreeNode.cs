@@ -21,6 +21,8 @@ using System;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
 
+#nullable enable
+
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
 	sealed class AnalyzedPropertyTreeNode : AnalyzerEntityTreeNode
@@ -28,11 +30,12 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 		readonly IProperty analyzedProperty;
 		readonly string prefix;
 
-		public AnalyzedPropertyTreeNode(IProperty analyzedProperty, string prefix = "")
+		public AnalyzedPropertyTreeNode(IProperty analyzedProperty, IEntity? source, string prefix = "")
 		{
 			this.analyzedProperty = analyzedProperty ?? throw new ArgumentNullException(nameof(analyzedProperty));
 			this.prefix = prefix;
 			this.LazyLoading = true;
+			this.SourceMember = source;
 		}
 
 		public override object Icon => PropertyTreeNode.GetIcon(analyzedProperty);
@@ -43,9 +46,9 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 		protected override void LoadChildren()
 		{
 			if (analyzedProperty.CanGet)
-				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedProperty.Getter, "get"));
+				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedProperty.Getter, this.SourceMember, "get"));
 			if (analyzedProperty.CanSet)
-				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedProperty.Setter, "set"));
+				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedProperty.Setter, this.SourceMember, "set"));
 
 			foreach (var lazy in Analyzers)
 			{

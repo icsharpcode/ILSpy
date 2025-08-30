@@ -21,15 +21,18 @@ using System;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
 
+#nullable enable
+
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
 	internal class AnalyzedTypeTreeNode : AnalyzerEntityTreeNode
 	{
 		readonly ITypeDefinition analyzedType;
 
-		public AnalyzedTypeTreeNode(ITypeDefinition analyzedType)
+		public AnalyzedTypeTreeNode(ITypeDefinition analyzedType, IEntity? source)
 		{
 			this.analyzedType = analyzedType ?? throw new ArgumentNullException(nameof(analyzedType));
+			this.SourceMember = source;
 			this.LazyLoading = true;
 		}
 

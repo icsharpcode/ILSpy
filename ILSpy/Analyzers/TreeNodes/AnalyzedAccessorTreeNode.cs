@@ -24,8 +24,8 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 	{
 		readonly string name;
 
-		public AnalyzedAccessorTreeNode(IMethod analyzedMethod, string name)
-			: base(analyzedMethod)
+		public AnalyzedAccessorTreeNode(IMethod analyzedMethod, IEntity source, string name)
+			: base(analyzedMethod, source)
 		{
 			if (string.IsNullOrWhiteSpace(name))
 			{
