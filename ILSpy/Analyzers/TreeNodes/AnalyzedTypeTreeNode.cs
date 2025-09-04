@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Diagnostics;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -45,9 +46,10 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 			foreach (var lazy in Analyzers)
 			{
 				var analyzer = lazy.Value;
+				Debug.Assert(analyzer != null);
 				if (analyzer.Show(analyzedType))
 				{
-					this.Children.Add(new AnalyzerSearchTreeNode(analyzedType, analyzer, lazy.Metadata.Header));
+					this.Children.Add(new AnalyzerSearchTreeNode(analyzedType, analyzer, lazy.Metadata!.Header));
 				}
 			}
 		}

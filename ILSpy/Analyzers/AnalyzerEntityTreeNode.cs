@@ -35,7 +35,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 	/// </summary>
 	public abstract class AnalyzerEntityTreeNode : AnalyzerTreeNode, IMemberTreeNode
 	{
-		public abstract IEntity Member { get; }
+		public abstract IEntity? Member { get; }
 
 		public IEntity? SourceMember { get; protected set; }
 
@@ -65,13 +65,12 @@ namespace ICSharpCode.ILSpy.Analyzers
 			}
 			foreach (LoadedAssembly asm in removedAssemblies)
 			{
-				if (this.Member.ParentModule.MetadataFile == asm.GetMetadataFileOrNull())
+				if (this.Member.ParentModule!.MetadataFile == asm.GetMetadataFileOrNull())
 					return false; // remove this node
 			}
 			this.Children.RemoveAll(
 				delegate (SharpTreeNode n) {
-					AnalyzerTreeNode an = n as AnalyzerTreeNode;
-					return an == null || !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
+					return n is not AnalyzerTreeNode an || !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
 				});
 			return true;
 		}
