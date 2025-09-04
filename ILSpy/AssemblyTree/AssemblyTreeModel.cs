@@ -602,7 +602,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			List<string> path = new List<string>();
 			while (node.Parent != null)
 			{
-				path.Add(node.ToString());
+				path.Add(node.ToString()!);
 				node = node.Parent;
 			}
 			path.Reverse();

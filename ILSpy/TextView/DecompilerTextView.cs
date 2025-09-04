@@ -1100,7 +1100,11 @@ namespace ICSharpCode.ILSpy.TextView
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.DefaultExt = language.FileExtension;
 			dlg.Filter = language.Name + "|*" + language.FileExtension + Properties.Resources.AllFiles;
-			dlg.FileName = WholeProjectDecompiler.CleanUpFileName(treeNodes.First().Text.ToString(), language.FileExtension);
+			string? nodeText = treeNodes.First().Text?.ToString();
+			if (!string.IsNullOrWhiteSpace(nodeText))
+			{
+				dlg.FileName = WholeProjectDecompiler.CleanUpFileName(nodeText, language.FileExtension);
+			}
 			if (dlg.ShowDialog() == true)
 			{
 				SaveToDisk(new DecompilationContext(language, treeNodes.ToArray(), options), dlg.FileName);

@@ -17,6 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -57,6 +59,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 			foreach (var lazy in Analyzers)
 			{
 				var analyzer = lazy.Value;
+				Debug.Assert(analyzer != null);
 				if (analyzer.Show(analyzedEvent))
 				{
 					this.Children.Add(new AnalyzerSearchTreeNode(analyzedEvent, analyzer, lazy.Metadata?.Header));
@@ -64,10 +67,10 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 			}
 		}
 
-		bool TryFindBackingField(IEvent analyzedEvent, out IField backingField)
+		bool TryFindBackingField(IEvent analyzedEvent, [NotNullWhen(true)] out IField? backingField)
 		{
 			backingField = null;
-			foreach (var field in analyzedEvent.DeclaringTypeDefinition.GetFields(options: GetMemberOptions.IgnoreInheritedMembers))
+			foreach (var field in analyzedEvent.DeclaringTypeDefinition?.GetFields(options: GetMemberOptions.IgnoreInheritedMembers) ?? [])
 			{
 				if (field.Name == analyzedEvent.Name && field.Accessibility == Decompiler.TypeSystem.Accessibility.Private)
 				{

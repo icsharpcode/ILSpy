@@ -21,9 +21,8 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-
-#nullable disable
 
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
@@ -31,11 +30,12 @@ namespace ICSharpCode.ILSpyX.TreeView
 {
 	public partial class SharpTreeNode : INotifyPropertyChanged
 	{
+		[AllowNull]
 		protected static ITreeNodeImagesProvider ImagesProvider { get; private set; }
 		public static void SetImagesProvider(ITreeNodeImagesProvider provider) => ImagesProvider = provider;
 
-		SharpTreeNodeCollection modelChildren;
-		internal SharpTreeNode modelParent;
+		SharpTreeNodeCollection? modelChildren;
+		internal SharpTreeNode? modelParent;
 		bool isVisible = true;
 
 		void UpdateIsVisible(bool parentIsVisible, bool updateFlattener)
@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpyX.TreeView
 					node = node.listParent;
 				}
 				// Remember the removed nodes:
-				List<SharpTreeNode> removedNodes = null;
+				List<SharpTreeNode>? removedNodes = null;
 				if (updateFlattener && !newIsVisible)
 				{
 					removedNodes = VisibleDescendantsAndSelf().ToList();
@@ -118,19 +118,19 @@ namespace ICSharpCode.ILSpyX.TreeView
 			}
 		}
 
-		public SharpTreeNode Parent {
+		public SharpTreeNode? Parent {
 			get { return modelParent; }
 		}
 
-		public virtual object Text {
+		public virtual object? Text {
 			get { return null; }
 		}
 
-		public virtual object Icon {
+		public virtual object? Icon {
 			get { return null; }
 		}
 
-		public virtual object ToolTip {
+		public virtual object? ToolTip {
 			get { return null; }
 		}
 
@@ -199,7 +199,7 @@ namespace ICSharpCode.ILSpyX.TreeView
 					while (removeEnd.modelChildren != null && removeEnd.modelChildren.Count > 0)
 						removeEnd = removeEnd.modelChildren.Last();
 
-					List<SharpTreeNode> removedNodes = null;
+					List<SharpTreeNode>? removedNodes = null;
 					int visibleIndexOfRemoval = 0;
 					if (node.isVisible)
 					{
@@ -221,11 +221,11 @@ namespace ICSharpCode.ILSpyX.TreeView
 			}
 			if (e.NewItems != null)
 			{
-				SharpTreeNode insertionPos;
+				SharpTreeNode? insertionPos;
 				if (e.NewStartingIndex == 0)
 					insertionPos = null;
 				else
-					insertionPos = modelChildren[e.NewStartingIndex - 1];
+					insertionPos = modelChildren?[e.NewStartingIndex - 1];
 
 				foreach (SharpTreeNode node in e.NewItems)
 				{
@@ -260,7 +260,7 @@ namespace ICSharpCode.ILSpyX.TreeView
 
 		#region Expanding / LazyLoading
 
-		public virtual object ExpandedIcon {
+		public virtual object? ExpandedIcon {
 			get { return Icon; }
 		}
 
@@ -371,13 +371,13 @@ namespace ICSharpCode.ILSpyX.TreeView
 
 		public IEnumerable<SharpTreeNode> Ancestors()
 		{
-			for (SharpTreeNode n = this.Parent; n != null; n = n.Parent)
+			for (SharpTreeNode? n = this.Parent; n != null; n = n.Parent)
 				yield return n;
 		}
 
 		public IEnumerable<SharpTreeNode> AncestorsAndSelf()
 		{
-			for (SharpTreeNode n = this; n != null; n = n.Parent)
+			for (SharpTreeNode? n = this; n != null; n = n.Parent)
 				yield return n;
 		}
 
@@ -402,7 +402,7 @@ namespace ICSharpCode.ILSpyX.TreeView
 			}
 		}
 
-		public virtual string LoadEditText()
+		public virtual string? LoadEditText()
 		{
 			return null;
 		}
@@ -699,7 +699,7 @@ namespace ICSharpCode.ILSpyX.TreeView
 
 		#region INotifyPropertyChanged Members
 
-		public event PropertyChangedEventHandler PropertyChanged;
+		public event PropertyChangedEventHandler? PropertyChanged;
 
 		public void RaisePropertyChanged(string name)
 		{
@@ -725,10 +725,10 @@ namespace ICSharpCode.ILSpyX.TreeView
 		{
 		}
 
-		public override string ToString()
+		public override string? ToString()
 		{
 			// used for keyboard navigation
-			object text = this.Text;
+			object? text = this.Text;
 			return text != null ? text.ToString() : string.Empty;
 		}
 	}
