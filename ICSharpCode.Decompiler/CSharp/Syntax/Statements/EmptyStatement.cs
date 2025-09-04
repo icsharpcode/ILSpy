@@ -1,4 +1,4 @@
-﻿// 
+// 
 // EmptyStatement.cs
 //  
 // Author:

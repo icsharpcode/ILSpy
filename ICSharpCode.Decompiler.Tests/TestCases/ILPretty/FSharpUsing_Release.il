@@ -1,4 +1,4 @@
-﻿.class public auto ansi abstract sealed FSharpUsingPatterns
+.class public auto ansi abstract sealed FSharpUsingPatterns
 	extends [mscorlib]System.Object
 {
 	// Methods

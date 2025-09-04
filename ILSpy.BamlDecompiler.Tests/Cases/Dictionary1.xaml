@@ -1,4 +1,4 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 	<Color x:Key="VeryDark" A="255" R="70" G="70" B="70" />
 	<Color x:Key="Dark" A="255" R="102" G="102" B="102" />
 	<Color x:Key="Medium" A="255" R="140" G="140" B="140" />

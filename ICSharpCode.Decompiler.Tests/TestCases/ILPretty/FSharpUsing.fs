@@ -1,4 +1,4 @@
-﻿module FSharpUsingPatterns
+module FSharpUsingPatterns
 
 open System
 open System.IO

@@ -1,4 +1,4 @@
-﻿// 
+// 
 // UncheckedExpression.cs
 //  
 // Author:

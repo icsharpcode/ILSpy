@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 #if EXPECTED_OUTPUT
 using System.Runtime.CompilerServices;
 #endif

@@ -1,4 +1,4 @@
-﻿// 
+// 
 // ThrowStatement.cs
 //  
 // Author:

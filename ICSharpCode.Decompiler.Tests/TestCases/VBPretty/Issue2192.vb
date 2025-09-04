@@ -1,4 +1,4 @@
-﻿Imports System
+Imports System
 Imports System.Linq
 Public Class Issue2192
 	Public Shared Sub M()

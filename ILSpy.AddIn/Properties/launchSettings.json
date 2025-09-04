@@ -1,4 +1,4 @@
-﻿{
+{
 	"profiles": {
 		"Visual Studio Extension": {
 			"executablePath": "$(DevEnvDir)devenv.exe",

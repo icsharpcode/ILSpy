@@ -1,4 +1,4 @@
-﻿ILSpy uses MEF (Managed Extensibility Framework) for plugins.
+ILSpy uses MEF (Managed Extensibility Framework) for plugins.
 Plugins must be placed in the same directory as ILSpy.exe, and must be called "*.Plugin.dll".
 
 To write a plugin, you need to add a reference to ILSpy.exe and to System.Composition.AttributedModel.

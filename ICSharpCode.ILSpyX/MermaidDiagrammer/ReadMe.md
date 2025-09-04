@@ -1,4 +1,4 @@
-﻿# How does it work?
+# How does it work?
 
 To **extract the type info from the source assembly**, ILSpy side-loads it including all its dependencies.
 

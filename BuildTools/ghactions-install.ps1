@@ -17,9 +17,9 @@ $build = $versionParts.Build;
 $versionName = $versionParts.VersionName;
 
 if ($versionName -ne "null") {
-    $versionName = "-$versionName";
+	$versionName = "-$versionName";
 } else {
-    $versionName = "";
+	$versionName = "";
 }
 
 Write-Host "GITHUB_REF: '$env:GITHUB_REF'";

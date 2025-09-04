@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.StaticAbstractInterfaceMembers
 {

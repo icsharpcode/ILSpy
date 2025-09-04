@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="BamlTest.UserControl1" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:bamltest="clr-namespace:BamlTest">
+<UserControl x:Class="BamlTest.UserControl1" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:bamltest="clr-namespace:BamlTest">
 	<FrameworkElement.Resources>
 		<ResourceDictionary>
 			<Style x:Key="baseStyle" TargetType="{x:Type Control}" />

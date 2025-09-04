@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 #if CS100
 using System.Runtime.InteropServices;
 #endif

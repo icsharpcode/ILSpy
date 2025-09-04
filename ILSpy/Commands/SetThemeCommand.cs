@@ -1,4 +1,4 @@
-﻿
+
 using System.Composition;
 
 namespace ICSharpCode.ILSpy.Commands

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Composition;
 using System.Windows;
 using System.Windows.Controls;

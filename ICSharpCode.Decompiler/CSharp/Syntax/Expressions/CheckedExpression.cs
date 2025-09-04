@@ -1,4 +1,4 @@
-﻿// 
+// 
 // CheckedExpression.cs
 //  
 // Author:

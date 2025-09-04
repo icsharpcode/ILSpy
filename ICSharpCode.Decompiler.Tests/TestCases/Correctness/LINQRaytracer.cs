@@ -1,4 +1,4 @@
-﻿// This test case is taken from https://blogs.msdn.microsoft.com/lukeh/2007/10/01/taking-linq-to-objects-to-extremes-a-fully-linqified-raytracer/
+// This test case is taken from https://blogs.msdn.microsoft.com/lukeh/2007/10/01/taking-linq-to-objects-to-extremes-a-fully-linqified-raytracer/
 
 using System;
 using System.Collections.Generic;

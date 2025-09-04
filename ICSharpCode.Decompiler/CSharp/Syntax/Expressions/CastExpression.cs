@@ -1,4 +1,4 @@
-﻿// 
+// 
 // CastExpression.cs
 //  
 // Author:

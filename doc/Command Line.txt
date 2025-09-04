@@ -1,4 +1,4 @@
-﻿ILSpy Command Line Arguments
+ILSpy Command Line Arguments
 
 Usage:  <Assemblies> [options]
         @ResponseFile.rsp

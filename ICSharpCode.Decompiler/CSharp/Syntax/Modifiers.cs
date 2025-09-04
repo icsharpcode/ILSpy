@@ -1,4 +1,4 @@
-﻿//
+//
 // Modifiers.cs
 //
 // Author:

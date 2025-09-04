@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty

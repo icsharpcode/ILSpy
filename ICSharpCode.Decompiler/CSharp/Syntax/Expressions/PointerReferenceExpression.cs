@@ -1,4 +1,4 @@
-﻿// 
+// 
 // PointerReferenceExpression.cs
 //  
 // Author:

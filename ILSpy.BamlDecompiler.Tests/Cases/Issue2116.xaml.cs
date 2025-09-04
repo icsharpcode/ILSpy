@@ -1,4 +1,4 @@
-﻿namespace ILSpy.BamlDecompiler.Tests.Cases
+namespace ILSpy.BamlDecompiler.Tests.Cases
 {
 	using System.Windows;
 	using System.Windows.Controls;

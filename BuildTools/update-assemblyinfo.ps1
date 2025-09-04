@@ -1,6 +1,6 @@
-﻿if (-not ($PSVersionTable.PSCompatibleVersions -contains "5.0")) {
-    Write-Error "This script requires at least powershell version 5.0!";
-    return 255;
+if (-not ($PSVersionTable.PSCompatibleVersions -contains "5.0")) {
+	Write-Error "This script requires at least powershell version 5.0!";
+	return 255;
 }
 
 $ErrorActionPreference = "Stop"
@@ -14,11 +14,11 @@ $masterBranches = '^(master|release/.+)$';
 $decompilerVersionInfoTemplateFile = "ICSharpCode.Decompiler/Properties/DecompilerVersionInfo.template.cs";
 
 function Test-File([string]$filename) {
-    return [System.IO.File]::Exists((Join-Path (Get-Location) $filename));
+	return [System.IO.File]::Exists((Join-Path (Get-Location) $filename));
 }
 
 function Test-Dir([string]$name) {
-    return [System.IO.Directory]::Exists((Join-Path (Get-Location) $name));
+	return [System.IO.Directory]::Exists((Join-Path (Get-Location) $name));
 }
 
 function Find-Git() {
@@ -44,63 +44,63 @@ function Find-Git() {
 }
 
 function No-Git() {
-    return -not (((Test-Dir ".git") -or (Test-File ".git")) -and (Find-Git));
+	return -not (((Test-Dir ".git") -or (Test-File ".git")) -and (Find-Git));
 }
 
 function gitVersion() {
-    if (No-Git) {
-        return 0;
-    }
-    try {
-        return [Int32]::Parse((git rev-list --count "$baseCommit..HEAD" 2>&1 | Tee-Object -Variable cmdOutput)) + $baseCommitRev;
-    } catch {
-        Write-Host $cmdOutput
-        return 0;
-    }
+	if (No-Git) {
+		return 0;
+	}
+	try {
+		return [Int32]::Parse((git rev-list --count "$baseCommit..HEAD" 2>&1 | Tee-Object -Variable cmdOutput)) + $baseCommitRev;
+	} catch {
+		Write-Host $cmdOutput
+		return 0;
+	}
 }
 
 function gitCommitHash() {
-    if (No-Git) {
-        return "0000000000000000000000000000000000000000";
-    }
-    try {
-        return (git rev-list --max-count 1 HEAD 2>&1 | Tee-Object -Variable cmdOutput);
-    } catch {
-        Write-Host $cmdOutput
-        return "0000000000000000000000000000000000000000";
-    }
+	if (No-Git) {
+		return "0000000000000000000000000000000000000000";
+	}
+	try {
+		return (git rev-list --max-count 1 HEAD 2>&1 | Tee-Object -Variable cmdOutput);
+	} catch {
+		Write-Host $cmdOutput
+		return "0000000000000000000000000000000000000000";
+	}
 }
 
 function gitShortCommitHash() {
-    if (No-Git) {
-        return "00000000";
-    }
-    try {
-        return (git rev-parse --short=8 (git rev-list --max-count 1 HEAD 2>&1 | Tee-Object -Variable cmdOutput) 2>&1 | Tee-Object -Variable cmdOutput);
-    } catch {
-        Write-Host $cmdOutput
-        return "00000000";
-    }	
+	if (No-Git) {
+		return "00000000";
+	}
+	try {
+		return (git rev-parse --short=8 (git rev-list --max-count 1 HEAD 2>&1 | Tee-Object -Variable cmdOutput) 2>&1 | Tee-Object -Variable cmdOutput);
+	} catch {
+		Write-Host $cmdOutput
+		return "00000000";
+	}	
 }
 
 function gitBranch() {
-    if (No-Git) {
-        return "no-branch";
-    }
+	if (No-Git) {
+		return "no-branch";
+	}
 
 	if ($env:APPVEYOR_REPO_BRANCH -ne $null) {
-        return $env:APPVEYOR_REPO_BRANCH;
-    } elseif ($env:BUILD_SOURCEBRANCHNAME -ne $null) {
-        return $env:BUILD_SOURCEBRANCHNAME;
-    } else {
-        return ((git branch --no-color).Split([System.Environment]::NewLine) | where { $_ -match "^\* " } | select -First 1).Substring(2);
-    }
+		return $env:APPVEYOR_REPO_BRANCH;
+	} elseif ($env:BUILD_SOURCEBRANCHNAME -ne $null) {
+		return $env:BUILD_SOURCEBRANCHNAME;
+	} else {
+		return ((git branch --no-color).Split([System.Environment]::NewLine) | where { $_ -match "^\* " } | select -First 1).Substring(2);
+	}
 }
 
 $templateFiles = (
-    @{Input=$decompilerVersionInfoTemplateFile; Output="ICSharpCode.Decompiler/Properties/DecompilerVersionInfo.cs"},
-    @{Input="ILSpy.AddIn/source.extension.vsixmanifest.template"; Output = "ILSpy.AddIn/source.extension.vsixmanifest"},
-    @{Input="ILSpy.AddIn.VS2022/source.extension.vsixmanifest.template"; Output = "ILSpy.AddIn.VS2022/source.extension.vsixmanifest"}
+	@{Input=$decompilerVersionInfoTemplateFile; Output="ICSharpCode.Decompiler/Properties/DecompilerVersionInfo.cs"},
+	@{Input="ILSpy.AddIn/source.extension.vsixmanifest.template"; Output = "ILSpy.AddIn/source.extension.vsixmanifest"},
+	@{Input="ILSpy.AddIn.VS2022/source.extension.vsixmanifest.template"; Output = "ILSpy.AddIn.VS2022/source.extension.vsixmanifest"}
 );
 
 [string]$mutexId = "ILSpyUpdateAssemblyInfo" + (Get-Location).ToString().GetHashCode();
@@ -108,43 +108,43 @@ Write-Host $mutexId;
 [bool]$createdNew = $false;
 $mutex = New-Object System.Threading.Mutex($true, $mutexId, [ref]$createdNew);
 try {
-    if (-not $createdNew) {
-        try {
-		    $mutex.WaitOne(10000);
-	    } catch [System.Threading.AbandonedMutexException] {
-	    }
-        return 0;
-    }
-
-    if (-not (Test-File "ILSpy.sln")) {
-        Write-Error "Working directory must be the ILSpy repo root!";
-        return 2;
-    }
-
-    $versionParts = @{};
-    Get-Content $decompilerVersionInfoTemplateFile | where { $_ -match 'string (\w+) = "?(\w+)"?;' } | foreach { $versionParts.Add($Matches[1], $Matches[2]) }
-
-    $major = $versionParts.Major;
-    $minor = $versionParts.Minor;
-    $build = $versionParts.Build;
-    $versionName = $versionParts.VersionName;
-    $revision = gitVersion;
-    $branchName = gitBranch;
-    $gitCommitHash = gitCommitHash;
-	$gitShortCommitHash = gitShortCommitHash;
-
-    if ($branchName -match $masterBranches) {
-        $postfixBranchName = "";
-    } else {
-        $postfixBranchName = "-$branchName";
+	if (-not $createdNew) {
+		try {
+			$mutex.WaitOne(10000);
+		} catch [System.Threading.AbandonedMutexException] {
+		}
+		return 0;
 	}
 
-    if ($versionName -eq "null") {
-        $versionName = "";
-        $postfixVersionName = "";
-    } else {
-        $postfixVersionName = "-$versionName";
-    }
+	if (-not (Test-File "ILSpy.sln")) {
+		Write-Error "Working directory must be the ILSpy repo root!";
+		return 2;
+	}
+
+	$versionParts = @{};
+	Get-Content $decompilerVersionInfoTemplateFile | where { $_ -match 'string (\w+) = "?(\w+)"?;' } | foreach { $versionParts.Add($Matches[1], $Matches[2]) }
+
+	$major = $versionParts.Major;
+	$minor = $versionParts.Minor;
+	$build = $versionParts.Build;
+	$versionName = $versionParts.VersionName;
+	$revision = gitVersion;
+	$branchName = gitBranch;
+	$gitCommitHash = gitCommitHash;
+	$gitShortCommitHash = gitShortCommitHash;
+
+	if ($branchName -match $masterBranches) {
+		$postfixBranchName = "";
+	} else {
+		$postfixBranchName = "-$branchName";
+	}
+
+	if ($versionName -eq "null") {
+		$versionName = "";
+		$postfixVersionName = "";
+	} else {
+		$postfixVersionName = "-$versionName";
+	}
 	
 	$buildConfig = $args[0].ToString().ToLower();
 	if ($buildConfig -eq "release") {
@@ -153,13 +153,13 @@ try {
 		$buildConfig = "-" + $buildConfig;
 	}
 
-    $fullVersionNumber = "$major.$minor.$build.$revision";
-    if ((-not (Test-File "VERSION")) -or (((Get-Content "VERSION") -Join [System.Environment]::NewLine) -ne "$fullVersionNumber$postfixVersionName")) {
-        "$fullVersionNumber$postfixVersionName" | Out-File -Encoding utf8 -NoNewLine "VERSION";
-    }
+	$fullVersionNumber = "$major.$minor.$build.$revision";
+	if ((-not (Test-File "VERSION")) -or (((Get-Content "VERSION") -Join [System.Environment]::NewLine) -ne "$fullVersionNumber$postfixVersionName")) {
+		"$fullVersionNumber$postfixVersionName" | Out-File -Encoding utf8 -NoNewLine "VERSION";
+	}
     
-    foreach ($file in $templateFiles) {
-        [string]$in = (Get-Content $file.Input) -Join [System.Environment]::NewLine;
+	foreach ($file in $templateFiles) {
+		[string]$in = (Get-Content $file.Input) -Join [System.Environment]::NewLine;
 
 		$out = $in.Replace('$INSERTVERSION$', $fullVersionNumber);
 		$out = $out.Replace('$INSERTMAJORVERSION$', $major);
@@ -169,17 +169,18 @@ try {
 		$out = $out.Replace('$INSERTDATE$', [System.DateTime]::Now.ToString("MM/dd/yyyy"));
 		$out = $out.Replace('$INSERTYEAR$', [System.DateTime]::Now.Year.ToString());
 		$out = $out.Replace('$INSERTBRANCHNAME$', $branchName);
-        $out = $out.Replace('$INSERTBRANCHPOSTFIX$', $postfixBranchName);
+		$out = $out.Replace('$INSERTBRANCHPOSTFIX$', $postfixBranchName);
 		$out = $out.Replace('$INSERTVERSIONNAME$', $versionName);
-        $out = $out.Replace('$INSERTVERSIONNAMEPOSTFIX$', $postfixVersionName);
-        $out = $out.Replace('$INSERTBUILDCONFIG$', $buildConfig);
+		$out = $out.Replace('$INSERTVERSIONNAMEPOSTFIX$', $postfixVersionName);
+		$out = $out.Replace('$INSERTBUILDCONFIG$', $buildConfig);
 
-        if ((-not (Test-File $file.Output)) -or (((Get-Content $file.Output) -Join [System.Environment]::NewLine) -ne $out)) {
-            $out | Out-File -Encoding utf8 $file.Output;
-        }
-    }
+		if ((-not (Test-File $file.Output)) -or (((Get-Content $file.Output) -Join [System.Environment]::NewLine) -ne $out)) {
+			$utf8NoBom = New-Object System.Text.UTF8Encoding($false);
+			[System.IO.File]::WriteAllText($file.Output, $out, $utf8NoBom);
+		}
+	}
 	
 } finally {
-    $mutex.ReleaseMutex();
-    $mutex.Close();
+	$mutex.ReleaseMutex();
+	$mutex.Close();
 }

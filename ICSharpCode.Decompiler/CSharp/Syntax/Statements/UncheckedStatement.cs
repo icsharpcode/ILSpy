@@ -1,4 +1,4 @@
-﻿// 
+// 
 // UncheckedStatement.cs
 //  
 // Author:

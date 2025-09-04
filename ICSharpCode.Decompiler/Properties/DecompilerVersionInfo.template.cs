@@ -1,4 +1,4 @@
-﻿public static class DecompilerVersionInfo
+public static class DecompilerVersionInfo
 {
 	public const string Major = "10";
 	public const string Minor = "0";

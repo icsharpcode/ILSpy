@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualBasic;
+using Microsoft.VisualBasic;
 using Microsoft.VisualBasic.CompilerServices;
 
 [StandardModule]

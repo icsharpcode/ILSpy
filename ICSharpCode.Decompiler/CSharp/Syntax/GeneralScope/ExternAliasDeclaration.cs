@@ -1,4 +1,4 @@
-﻿// 
+// 
 // ExternAliasDeclaration.cs
 //  
 // Author:

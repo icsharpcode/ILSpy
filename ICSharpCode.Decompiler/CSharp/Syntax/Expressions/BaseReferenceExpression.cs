@@ -1,4 +1,4 @@
-﻿// 
+// 
 // BaseReferenceExpression.cs
 //  
 // Author:
