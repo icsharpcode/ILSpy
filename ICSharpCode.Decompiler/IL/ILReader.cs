@@ -212,7 +212,14 @@ namespace ICSharpCode.Decompiler.IL
 				// Row-IDs < 1 are always invalid.
 				throw new BadImageFormatException("Invalid metadata token");
 			}
-			return MetadataTokens.EntityHandle(token);
+			var handle = MetadataTokens.EntityHandle(token);
+			if (handle.IsNil)
+			{
+				// The runtime will crash with a BadImageFormatException when it encounters a row-ID of 0.
+				// We assume the code following this instruction to be unreachable.
+				throw new BadImageFormatException("Invalid metadata token");
+			}
+			return handle;
 		}
 
 		IType ReadAndDecodeTypeReference()
