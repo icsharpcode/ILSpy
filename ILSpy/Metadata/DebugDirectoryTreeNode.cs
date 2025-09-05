@@ -116,7 +116,9 @@ namespace ICSharpCode.ILSpy.Metadata
 			public ushort MinorVersion { get; set; }
 			public string Type { get; set; }
 			public int SizeOfRawData { get; set; }
+			[ColumnInfo("X8")]
 			public int AddressOfRawData { get; set; }
+			[ColumnInfo("X8")]
 			public int PointerToRawData { get; set; }
 			public string RawData { get; set; }
 
