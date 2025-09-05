@@ -484,5 +484,32 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			Assert.That(InsertRequired(expr), Is.EqualTo("new int[1] { 42 } [0]"));
 			Assert.That(InsertReadable(expr), Is.EqualTo("(new int[1] { 42 }) [0]"));
 		}
+
+		[Test]
+		public void AssignmentInObjectOrCollectionInitializer()
+		{
+			Expression expr = new ObjectCreateExpression {
+				Type = AstType.Create("List<int>"),
+				Initializer = new ArrayInitializerExpression {
+					Elements = { new AssignmentExpression(new IdentifierExpression("x"), new PrimitiveExpression(42)) }
+				}
+			};
+			Expression expr2 = new ObjectCreateExpression {
+				Type = AstType.Create("Data"),
+				Initializer = new ArrayInitializerExpression {
+					Elements = { new NamedExpression("X", new PrimitiveExpression(42)) }
+				}
+			};
+			Expression expr3 = new ObjectCreateExpression {
+				Type = AstType.Create("Dictionary<int, string>"),
+				Initializer = new ArrayInitializerExpression {
+					Elements = { new AssignmentExpression(new IndexerExpression(null, new PrimitiveExpression(0)), new PrimitiveExpression("42")) }
+				}
+			};
+
+			Assert.That(InsertRequired(expr), Is.EqualTo("new List<int> { (x = 42) }"));
+			Assert.That(InsertRequired(expr2), Is.EqualTo("new Data { X = 42 }"));
+			Assert.That(InsertRequired(expr3), Is.EqualTo("new Dictionary<int, string> { [0] = \"42\" }"));
+		}
 	}
 }

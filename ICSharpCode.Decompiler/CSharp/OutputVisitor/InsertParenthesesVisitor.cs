@@ -458,6 +458,15 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public override void VisitAssignmentExpression(AssignmentExpression assignmentExpression)
 		{
+			// Assignments in initializers need additional parentheses to disambiguate assignments
+			// to variables and assignments to members of the initialized object.
+			// This works without access to semantic information, because the ExpressionBuilder
+			// uses NamedExpression for `Member = value` instead of AssignmentExpression.
+			if (assignmentExpression.Parent is ArrayInitializerExpression
+				&& assignmentExpression.Left is not IndexerExpression)
+			{
+				Parenthesize(assignmentExpression);
+			}
 			// assignment is right-associative
 			ParenthesizeIfRequired(assignmentExpression.Left, PrecedenceLevel.Assignment + 1);
 			HandleAssignmentRHS(assignmentExpression.Right);
