@@ -18,6 +18,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 using System.Reflection.PortableExecutable;
 
@@ -68,30 +69,37 @@ namespace ICSharpCode.ILSpy.Metadata
 		{
 			foreach (var entry in module.Reader.ReadDebugDirectory())
 			{
-				switch (entry.Type)
+				try
 				{
-					case DebugDirectoryEntryType.CodeView:
-						var codeViewData = module.Reader.ReadCodeViewDebugDirectoryData(entry);
-						this.Children.Add(new CodeViewTreeNode(codeViewData));
-						break;
+					switch (entry.Type)
+					{
+						case DebugDirectoryEntryType.CodeView:
+							var codeViewData = module.Reader.ReadCodeViewDebugDirectoryData(entry);
+							this.Children.Add(new CodeViewTreeNode(codeViewData));
+							break;
 
-					case DebugDirectoryEntryType.EmbeddedPortablePdb:
-						var embeddedPortablePdbProvider = module.Reader.ReadEmbeddedPortablePdbDebugDirectoryData(entry);
-						var embeddedPortablePdbMetadataFile = new MetadataFile(MetadataFile.MetadataFileKind.ProgramDebugDatabase, module.FileName, embeddedPortablePdbProvider, isEmbedded: true);
-						this.Children.Add(new MetadataTreeNode(embeddedPortablePdbMetadataFile, "Debug Metadata (Embedded)"));
-						break;
+						case DebugDirectoryEntryType.EmbeddedPortablePdb:
+							var embeddedPortablePdbProvider = module.Reader.ReadEmbeddedPortablePdbDebugDirectoryData(entry);
+							var embeddedPortablePdbMetadataFile = new MetadataFile(MetadataFile.MetadataFileKind.ProgramDebugDatabase, module.FileName, embeddedPortablePdbProvider, isEmbedded: true);
+							this.Children.Add(new MetadataTreeNode(embeddedPortablePdbMetadataFile, "Debug Metadata (Embedded)"));
+							break;
 
-					case DebugDirectoryEntryType.PdbChecksum:
-						var pdbChecksumData = module.Reader.ReadPdbChecksumDebugDirectoryData(entry);
-						this.Children.Add(new PdbChecksumTreeNode(pdbChecksumData));
-						break;
+						case DebugDirectoryEntryType.PdbChecksum:
+							var pdbChecksumData = module.Reader.ReadPdbChecksumDebugDirectoryData(entry);
+							this.Children.Add(new PdbChecksumTreeNode(pdbChecksumData));
+							break;
 
-					case DebugDirectoryEntryType.Unknown:
-					case DebugDirectoryEntryType.Coff:
-					case DebugDirectoryEntryType.Reproducible:
-					default:
-						this.Children.Add(new DebugDirectoryEntryTreeNode(module, entry));
-						break;
+						case DebugDirectoryEntryType.Unknown:
+						case DebugDirectoryEntryType.Coff:
+						case DebugDirectoryEntryType.Reproducible:
+						default:
+							this.Children.Add(new DebugDirectoryEntryTreeNode(module, entry));
+							break;
+					}
+				}
+				catch (BadImageFormatException ex)
+				{
+					this.Children.Add(new ErrorTreeNode(ex));
 				}
 			}
 		}
