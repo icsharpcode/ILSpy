@@ -131,7 +131,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.Type = entry.Type.ToString();
 				this.SizeOfRawData = entry.DataSize;
 				this.AddressOfRawData = entry.DataRelativeVirtualAddress;
-				this.AddressOfRawData = entry.DataPointer;
+				this.PointerToRawData = entry.DataPointer;
 			}
 		}
 	}
