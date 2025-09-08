@@ -98,9 +98,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 			}
 			// Copy-propagate stack slot holding an 'ldloca' of the variable
-			if (pos < block.Instructions.Count && block.Instructions[pos + 1] is StLoc { Variable: { Kind: VariableKind.StackSlot, IsSingleDefinition: true }, Value: LdLoca ldLoca } && ldLoca.Variable == v)
+			if (pos < block.Instructions.Count && block.Instructions[pos + 1] is StLoc { Variable: { Kind: VariableKind.StackSlot, IsSingleDefinition: true }, Value: LdLoca ldLoca } stLocStack && ldLoca.Variable == v)
 			{
-				CopyPropagation.Propagate((StLoc)block.Instructions[pos + 1], context);
+				CopyPropagation.Propagate(stLocStack, context);
 			}
 			int initializerItemsCount = 0;
 			bool initializerContainsInitOnlyItems = false;
