@@ -112,7 +112,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		PreserveBaseOverrides,
 
 		// C# 11 attributes:
-		RequiredAttribute,
+		Required,
 
 		// C# 12 attributes:
 		InlineArray,
