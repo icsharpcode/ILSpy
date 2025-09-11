@@ -154,6 +154,7 @@
     <Compile Include="TestCases\ILPretty\Issue3552.cs" />
     <Compile Include="TestCases\Pretty\ExpandParamsArgumentsDisabled.cs" />
     <Compile Include="TestCases\Pretty\ExtensionProperties.cs" />
+    <Compile Include="TestCases\Pretty\Issue3541.cs" />
     <None Include="TestCases\ILPretty\Issue3504.cs" />
     <Compile Include="TestCases\ILPretty\MonoFixed.cs" />
     <Compile Include="TestCases\Pretty\Comparisons.cs" />
