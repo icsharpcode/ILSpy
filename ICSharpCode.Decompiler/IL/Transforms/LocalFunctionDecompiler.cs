@@ -567,12 +567,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		internal static bool IsClosureParameter(IParameter parameter, ITypeResolveContext context)
 		{
+			return IsClosureParameter(parameter, context.CurrentTypeDefinition);
+		}
+
+		internal static bool IsClosureParameter(IParameter parameter, ITypeDefinition currentTypeDefinition)
+		{
 			if (parameter.Type is not ByReferenceType brt)
 				return false;
 			var type = brt.ElementType.GetDefinition();
 			return type != null
 				&& type.Kind == TypeKind.Struct
-				&& TransformDisplayClassUsage.IsPotentialClosure(context.CurrentTypeDefinition, type);
+				&& TransformDisplayClassUsage.IsPotentialClosure(currentTypeDefinition, type);
 		}
 
 		LocalFunctionMethod ReduceToLocalFunction(IMethod method, int typeParametersToRemove)

@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
 
+using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -680,6 +681,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				IParameter otherParameter = parameter.Owner.Parameters[i];
 				if (otherParameter == parameter)
 					break;
+
+				if (LocalFunctionDecompiler.IsClosureParameter(otherParameter, otherParameter.Owner.DeclaringTypeDefinition))
+					continue;
 
 				if (DefaultValueAssignmentAllowedIndividual(otherParameter) || otherParameter.IsParams)
 					continue;
