@@ -17,9 +17,12 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Diagnostics;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
+
+#nullable enable
 
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
@@ -28,9 +31,10 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 		readonly IMethod analyzedMethod;
 		readonly string prefix;
 
-		public AnalyzedMethodTreeNode(IMethod analyzedMethod, string prefix = "")
+		public AnalyzedMethodTreeNode(IMethod analyzedMethod, IEntity? source, string prefix = "")
 		{
 			this.analyzedMethod = analyzedMethod ?? throw new ArgumentNullException(nameof(analyzedMethod));
+			this.SourceMember = source;
 			this.prefix = prefix;
 			this.LazyLoading = true;
 		}
@@ -44,9 +48,10 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 			foreach (var lazy in Analyzers)
 			{
 				var analyzer = lazy.Value;
+				Debug.Assert(analyzer != null);
 				if (analyzer.Show(analyzedMethod))
 				{
-					this.Children.Add(new AnalyzerSearchTreeNode(analyzedMethod, analyzer, lazy.Metadata.Header));
+					this.Children.Add(new AnalyzerSearchTreeNode(analyzedMethod, analyzer, lazy.Metadata!.Header));
 				}
 			}
 		}

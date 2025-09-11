@@ -140,7 +140,7 @@ namespace ICSharpCode.ILSpy
 			}
 
 			var state = dockWorkspace.ActiveTabPage.GetState();
-			dockWorkspace.ActiveTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(assemblyTreeModel.CurrentLanguage, assemblyTreeModel.SelectedNodes,
+			dockWorkspace.ActiveTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(assemblyTreeModel.CurrentLanguage, assemblyTreeModel.SelectedNodes, null,
 				new DecompilationOptions(assemblyTreeModel.CurrentLanguageVersion, settingsService.DecompilerSettings, settingsService.DisplaySettings) {
 					StepLimit = step,
 					IsDebug = isDebug,

@@ -41,6 +41,8 @@ namespace ICSharpCode.Decompiler
 
 		void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false, bool isDefinition = false);
 		void MarkFoldEnd();
+
+		void SetInitialHighlight(object reference);
 	}
 
 	public static class TextOutputExtensions

@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Windows;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -25,6 +26,8 @@ using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
+#nullable enable
+
 namespace ICSharpCode.ILSpy.Analyzers
 {
 	/// <summary>
@@ -32,7 +35,9 @@ namespace ICSharpCode.ILSpy.Analyzers
 	/// </summary>
 	public abstract class AnalyzerEntityTreeNode : AnalyzerTreeNode, IMemberTreeNode
 	{
-		public abstract IEntity Member { get; }
+		public abstract IEntity? Member { get; }
+
+		public IEntity? SourceMember { get; protected set; }
 
 		public override void ActivateItem(IPlatformRoutedEventArgs e)
 		{
@@ -43,10 +48,14 @@ namespace ICSharpCode.ILSpy.Analyzers
 				return;
 			}
 
-			MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(this.Member.ParentModule?.MetadataFile, this.Member.MetadataToken)));
+			var module = this.Member.ParentModule?.MetadataFile;
+
+			Debug.Assert(module != null);
+
+			MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(module, this.Member.MetadataToken), this.SourceMember));
 		}
 
-		public override object ToolTip => Member?.ParentModule?.MetadataFile?.FileName;
+		public override object? ToolTip => Member?.ParentModule?.MetadataFile?.FileName;
 
 		public override bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies)
 		{
@@ -56,13 +65,12 @@ namespace ICSharpCode.ILSpy.Analyzers
 			}
 			foreach (LoadedAssembly asm in removedAssemblies)
 			{
-				if (this.Member.ParentModule.MetadataFile == asm.GetMetadataFileOrNull())
+				if (this.Member.ParentModule!.MetadataFile == asm.GetMetadataFileOrNull())
 					return false; // remove this node
 			}
 			this.Children.RemoveAll(
 				delegate (SharpTreeNode n) {
-					AnalyzerTreeNode an = n as AnalyzerTreeNode;
-					return an == null || !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
+					return n is not AnalyzerTreeNode an || !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
 				});
 			return true;
 		}
