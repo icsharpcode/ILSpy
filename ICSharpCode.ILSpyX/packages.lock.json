@@ -10,9 +10,9 @@
       },
       "Microsoft.Sbom.Targets": {
         "type": "Direct",
-        "requested": "[4.1.0, )",
-        "resolved": "4.1.0",
-        "contentHash": "GidfeSVHFtNwZSbD2wmwWiUiGkVdND8QR1z21WpFa+/47Mi3YiDkAzsWF02wXrMx2Xd8j3QSfKOUY1JtnF+7uw=="
+        "requested": "[4.1.2, )",
+        "resolved": "4.1.2",
+        "contentHash": "AmGCBhWtWu1d1PCit6WTdmpq48nPmmnJz9zZFBsxoCjYZjjZ0Gjm+wuAzHzVMF8VmTo/NeDGi2C73969QXiryw=="
       },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",
@@ -32,15 +32,15 @@
       },
       "System.Composition.AttributedModel": {
         "type": "Direct",
-        "requested": "[10.0.0-preview.7.25380.108, )",
-        "resolved": "10.0.0-preview.7.25380.108",
-        "contentHash": "BgKfmK5BAjJPj3DvCh7Qv2v/91FQfY2HwYchSurW1JajkVNhpSCCciZgk5tNOr815yUUpcAG8gY/CUUdYYdXcw=="
+        "requested": "[10.0.0-rc.1.25451.107, )",
+        "resolved": "10.0.0-rc.1.25451.107",
+        "contentHash": "0zroRtuBzQdbwuCRklmRY9NXin4DYNVcZOkZ8zqgZFuKNb66GrxeWw3kfnymfyZ0Ib9J8J3kXlYfxKRXIzb+2g=="
       },
       "System.Reflection.Metadata": {
         "type": "Direct",
-        "requested": "[10.0.0-preview.7.25380.108, )",
-        "resolved": "10.0.0-preview.7.25380.108",
-        "contentHash": "8oQpCMmBOI24XT+xwG1dec/gOv+1uUqAasXYu2vq0NWpXsg/TYw563jD9wMSbQ/lIjnKJmPRvjLFyG8xaX9uww=="
+        "requested": "[10.0.0-rc.1.25451.107, )",
+        "resolved": "10.0.0-rc.1.25451.107",
+        "contentHash": "ixP5rSQVGhwbYomPUL7XDRQpoh6YVXXomjfJGn0WasADk+ykq9C4pPN3as8F2KktDQ434vGz55NWU+vfZSt2EQ=="
       },
       "System.Runtime.CompilerServices.Unsafe": {
         "type": "Direct",
@@ -50,9 +50,9 @@
       },
       "TomsToolbox.Composition.Analyzer": {
         "type": "Direct",
-        "requested": "[2.22.1, )",
-        "resolved": "2.22.1",
-        "contentHash": "bKcte9zaz+xH1k6C1YIYpheQ9mPNRSmd0dHQIEIq31KxAKMTLfiAo80aROKDJMYJ7ZomlUjjSMo/QCIikMMWTg=="
+        "requested": "[2.22.2, )",
+        "resolved": "2.22.2",
+        "contentHash": "7gYo8ZR2eq3XkrilvUpLbTypeZy6IlD5FB8jah0YPhMOmDGhya4jJ3kfDMTTRt5m258Ou78P69mHMkG6DKZXsg=="
       },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
@@ -73,7 +73,7 @@
       },
       "System.Collections.Immutable": {
         "type": "CentralTransitive",
-        "requested": "[10.0.0-preview.7.25380.108, )",
+        "requested": "[10.0.0-rc.1.25451.107, )",
         "resolved": "9.0.0",
         "contentHash": "QhkXUl2gNrQtvPmtBTQHb0YsUrDiDQ2QS09YbtTTiSjGcf7NBqtYbrG/BE06zcBPCKEwQGzIv13IVdXNOSub2w=="
       }
