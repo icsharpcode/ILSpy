@@ -125,10 +125,10 @@ namespace ICSharpCode.ILSpy.Metadata
 			string fieldListTooltip;
 			public string FieldListTooltip {
 				get {
-					var field = typeDef.GetFields().FirstOrDefault();
-					if (field.IsNil)
+					var @field = typeDef.GetFields().FirstOrDefault();
+					if (@field.IsNil)
 						return null;
-					return GenerateTooltip(ref fieldListTooltip, metadataFile, field);
+					return GenerateTooltip(ref fieldListTooltip, metadataFile, @field);
 				}
 			}
 

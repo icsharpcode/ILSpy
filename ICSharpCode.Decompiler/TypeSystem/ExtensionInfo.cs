@@ -18,6 +18,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -38,10 +39,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			foreach (var extGroup in extensionContainer.NestedTypes)
 			{
+				if (TryEncodingV1(extGroup))
+				{
+					continue;
+				}
+
+				TryEncodingV2(extGroup);
+			}
+
+			bool TryEncodingV1(ITypeDefinition extGroup)
+			{
 				if (!(extGroup is { Kind: TypeKind.Class, IsSealed: true }
 					&& extGroup.Name.StartsWith("<>E__", System.StringComparison.Ordinal)))
 				{
-					continue;
+					return false;
 				}
 
 				TypeDefinition td = metadata.GetTypeDefinition((TypeDefinitionHandle)extGroup.MetadataToken);
@@ -69,8 +80,53 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 
 				if (marker == null || hasMultipleMarkers)
-					continue;
+					return false;
 
+				CollectImplementationMethods(extGroup, marker, extensionMethods);
+				return true;
+			}
+
+			bool TryEncodingV2(ITypeDefinition extGroup)
+			{
+				if (!(extGroup is { Kind: TypeKind.Class, IsSealed: true }
+					&& extGroup.Name.StartsWith("<G>$", StringComparison.Ordinal)))
+				{
+					return false;
+				}
+
+				var markerType = extGroup.NestedTypes.SingleOrDefault(t => t.Name.StartsWith("<M>$", StringComparison.Ordinal) && t.IsStatic);
+				var marker = markerType?.Methods.SingleOrDefault(m => m.Name == "<Extension>$" && m.IsStatic && m.Parameters.Count == 1);
+
+				if (markerType == null || marker == null)
+					return false;
+
+				TypeDefinition td = metadata.GetTypeDefinition((TypeDefinitionHandle)extGroup.MetadataToken);
+				List<IMethod> extensionMethods = [];
+
+				// For easier access to accessors we use SRM
+				foreach (var h in td.GetMethods())
+				{
+					var method = module.GetDefinition(h);
+
+					if (method.SymbolKind is SymbolKind.Constructor)
+						continue;
+
+					var attribute = method.GetAttribute(KnownAttribute.ExtensionMarker);
+					if (attribute == null)
+						continue;
+
+					if (attribute.FixedArguments[0].Value?.ToString() != markerType.Name)
+						continue;
+
+					extensionMethods.Add(method);
+				}
+
+				CollectImplementationMethods(extGroup, marker, extensionMethods);
+				return true;
+			}
+
+			void CollectImplementationMethods(ITypeDefinition extGroup, IMethod marker, List<IMethod> extensionMethods)
+			{
 				foreach (var extension in extensionMethods)
 				{
 					int expectedTypeParameterCount = extension.TypeParameters.Count + extGroup.TypeParameterCount;
@@ -119,7 +175,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					}
 				}
 			}
-
 		}
 
 		public ExtensionMemberInfo? InfoOfExtensionMember(IMethod method)
