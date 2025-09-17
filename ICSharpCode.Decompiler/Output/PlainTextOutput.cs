@@ -150,6 +150,11 @@ namespace ICSharpCode.Decompiler
 		void ITextOutput.MarkFoldEnd()
 		{
 		}
+
+		void ITextOutput.SetInitialHighlight(object reference)
+		{
+			throw new NotImplementedException();
+		}
 	}
 
 	internal class TextOutputWithRollback : ITextOutput
@@ -238,6 +243,11 @@ namespace ICSharpCode.Decompiler
 		public void WriteReference(IMember member, string text, bool isDefinition = false)
 		{
 			actions.Add(target => target.WriteReference(member, text, isDefinition));
+		}
+
+		public void SetInitialHighlight(object reference)
+		{
+			actions.Add(target => target.SetInitialHighlight(reference));
 		}
 	}
 }

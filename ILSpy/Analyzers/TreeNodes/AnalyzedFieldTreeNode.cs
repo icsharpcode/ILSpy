@@ -17,9 +17,12 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Diagnostics;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
+
+#nullable enable
 
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
@@ -27,9 +30,10 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 	{
 		readonly IField analyzedField;
 
-		public AnalyzedFieldTreeNode(IField analyzedField)
+		public AnalyzedFieldTreeNode(IField analyzedField, IEntity? source)
 		{
 			this.analyzedField = analyzedField ?? throw new ArgumentNullException(nameof(analyzedField));
+			this.SourceMember = source;
 			this.LazyLoading = true;
 		}
 
@@ -42,6 +46,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 			foreach (var lazy in Analyzers)
 			{
 				var analyzer = lazy.Value;
+				Debug.Assert(analyzer != null);
 				if (analyzer.Show(analyzedField))
 				{
 					this.Children.Add(new AnalyzerSearchTreeNode(analyzedField, analyzer, lazy.Metadata?.Header));

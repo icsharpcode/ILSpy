@@ -109,20 +109,20 @@ namespace ICSharpCode.ILSpy.Analyzers
 			switch (entity)
 			{
 				case ITypeDefinition td:
-					AddOrSelect(new AnalyzedTypeTreeNode(td));
+					AddOrSelect(new AnalyzedTypeTreeNode(td, null));
 					break;
 				case IField fd:
 					if (!fd.IsConst)
-						AddOrSelect(new AnalyzedFieldTreeNode(fd));
+						AddOrSelect(new AnalyzedFieldTreeNode(fd, null));
 					break;
 				case IMethod md:
-					AddOrSelect(new AnalyzedMethodTreeNode(md));
+					AddOrSelect(new AnalyzedMethodTreeNode(md, null));
 					break;
 				case IProperty pd:
-					AddOrSelect(new AnalyzedPropertyTreeNode(pd));
+					AddOrSelect(new AnalyzedPropertyTreeNode(pd, null));
 					break;
 				case IEvent ed:
-					AddOrSelect(new AnalyzedEventTreeNode(ed));
+					AddOrSelect(new AnalyzedEventTreeNode(ed, null));
 					break;
 				default:
 					throw new ArgumentOutOfRangeException(nameof(entity), $@"Entity {entity.GetType().FullName} is not supported.");
