@@ -156,6 +156,12 @@ namespace ICSharpCode.ILSpy.Options
 			set => SetProperty(ref enableSmoothScrolling, value);
 		}
 
+		private bool decodeCustomAttributeBlobs;
+		public bool DecodeCustomAttributeBlobs {
+			get => decodeCustomAttributeBlobs;
+			set => SetProperty(ref decodeCustomAttributeBlobs, value);
+		}
+
 		public XName SectionName => "DisplaySettings";
 
 		public void LoadFromXml(XElement section)
@@ -181,6 +187,7 @@ namespace ICSharpCode.ILSpy.Options
 			ShowRawOffsetsAndBytesBeforeInstruction = (bool?)section.Attribute("ShowRawOffsetsAndBytesBeforeInstruction") ?? false;
 			StyleWindowTitleBar = (bool?)section.Attribute("StyleWindowTitleBar") ?? false;
 			EnableSmoothScrolling = (bool?)section.Attribute("EnableSmoothScrolling") ?? true;
+			DecodeCustomAttributeBlobs = (bool?)section.Attribute("DecodeCustomAttributeBlobs") ?? false;
 		}
 
 		public XElement SaveToXml()
@@ -208,6 +215,7 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("ShowRawOffsetsAndBytesBeforeInstruction", ShowRawOffsetsAndBytesBeforeInstruction);
 			section.SetAttributeValue("StyleWindowTitleBar", StyleWindowTitleBar);
 			section.SetAttributeValue("EnableSmoothScrolling", EnableSmoothScrolling);
+			section.SetAttributeValue("DecodeCustomAttributeBlobs", DecodeCustomAttributeBlobs);
 
 			return section;
 		}
