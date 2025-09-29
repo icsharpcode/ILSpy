@@ -551,7 +551,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var.Kind = VariableKind.Local;
 				var disposeVariable = currentFunction.RegisterVariable(
 					VariableKind.Local, disposeType,
-					AssignVariableNames.GenerateVariableName(currentFunction, disposeType)
+					AssignVariableNames.GenerateVariableName(currentFunction, disposeType, decompileRun.UsingScope)
 				);
 				Expression disposeInvocation = new InvocationExpression(new MemberReferenceExpression(exprBuilder.ConvertVariable(disposeVariable).Expression, disposeTypeMethodName));
 				if (inst.IsAsync)
@@ -712,12 +712,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (foreachVariable.Type.Kind != TypeKind.Dynamic)
 						foreachVariable.Type = type;
 					foreachVariable.Kind = VariableKind.ForeachLocal;
-					foreachVariable.Name = AssignVariableNames.GenerateForeachVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), foreachVariable);
+					foreachVariable.Name = AssignVariableNames.GenerateForeachVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), decompileRun.UsingScope, foreachVariable);
 					break;
 				case RequiredGetCurrentTransformation.IntroduceNewVariable:
 					foreachVariable = currentFunction.RegisterVariable(
 						VariableKind.ForeachLocal, type,
-						AssignVariableNames.GenerateForeachVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>())
+						AssignVariableNames.GenerateForeachVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), decompileRun.UsingScope)
 					);
 					instToReplace.ReplaceWith(new LdLoc(foreachVariable));
 					body.Instructions.Insert(0, new StLoc(foreachVariable, instToReplace));
@@ -725,11 +725,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				case RequiredGetCurrentTransformation.IntroduceNewVariableAndLocalCopy:
 					foreachVariable = currentFunction.RegisterVariable(
 						VariableKind.ForeachLocal, type,
-						AssignVariableNames.GenerateForeachVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>())
+						AssignVariableNames.GenerateForeachVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), decompileRun.UsingScope)
 					);
 					var localCopyVariable = currentFunction.RegisterVariable(
 						VariableKind.Local, type,
-						AssignVariableNames.GenerateVariableName(currentFunction, type)
+						AssignVariableNames.GenerateVariableName(currentFunction, type, decompileRun.UsingScope)
 					);
 					instToReplace.Parent.ReplaceWith(new LdLoca(localCopyVariable));
 					body.Instructions.Insert(0, new StLoc(localCopyVariable, new LdLoc(foreachVariable)));

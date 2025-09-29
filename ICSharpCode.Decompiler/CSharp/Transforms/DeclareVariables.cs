@@ -227,7 +227,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						var v = function.RegisterVariable(
 							VariableKind.StackSlot,
 							type,
-							AssignVariableNames.GenerateVariableName(function, type,
+							AssignVariableNames.GenerateVariableName(function, type, context.DecompileRun.UsingScope,
 								stmt.Expression.Annotations.OfType<ILInstruction>()
 									.Where(AssignVariableNames.IsSupportedInstruction).FirstOrDefault(),
 								mustResolveConflicts: true)
