@@ -638,7 +638,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static IEnumerable<string> CollectAllLowerCaseTypeNames(UsingScope usingScope)
 		{
-			return usingScope.Usings.SelectMany(n => n.Types).Select(t => t.Name).Where(IsLowerCase);
+			return usingScope?.Usings.SelectMany(n => n.Types).Select(t => t.Name).Where(IsLowerCase) ?? [];
 		}
 
 		static bool IsLowerCase(string name)
