@@ -58,30 +58,30 @@
 					<controls:SortableGridViewColumn Header="{x:Static properties:Resources.Name}" SortBy="Name">
 						<controls:SortableGridViewColumn.CellTemplate>
 							<DataTemplate DataType="{x:Type spyX:SearchResult}">
-								<StackPanel Orientation="Horizontal">
+								<DockPanel>
 									<Image Height="16" Margin="0,0,4,0" Width="16" Source="{Binding Image}" />
 									<TextBlock Text="{Binding Name}" ToolTip="{Binding ToolTip}" TextTrimming="CharacterEllipsis" />
-								</StackPanel>
+								</DockPanel>
 							</DataTemplate>
 						</controls:SortableGridViewColumn.CellTemplate>
 					</controls:SortableGridViewColumn>
 					<controls:SortableGridViewColumn Header="{x:Static properties:Resources.Location}" SortBy="Location">
 						<controls:SortableGridViewColumn.CellTemplate>
 							<DataTemplate DataType="{x:Type spyX:SearchResult}">
-								<StackPanel Orientation="Horizontal">
+								<DockPanel>
 									<Image Height="16" Margin="4,0,4,0" Width="16" Source="{Binding LocationImage}" />
 									<TextBlock Text="{Binding Location}" ToolTip="{Binding Location}" TextTrimming="CharacterEllipsis" />
-								</StackPanel>
+								</DockPanel>
 							</DataTemplate>
 						</controls:SortableGridViewColumn.CellTemplate>
 					</controls:SortableGridViewColumn>
 					<controls:SortableGridViewColumn Header="{x:Static properties:Resources.Assembly}" SortBy="Assembly">
 						<controls:SortableGridViewColumn.CellTemplate>
 							<DataTemplate DataType="{x:Type spyX:SearchResult}">
-								<StackPanel Orientation="Horizontal">
+								<DockPanel>
 									<Image Height="16" Margin="4,0,4,0" Width="16" Source="{Binding AssemblyImage}" />
 									<TextBlock Text="{Binding Assembly}" ToolTip="{Binding Assembly}" TextTrimming="CharacterEllipsis" />
-								</StackPanel>
+								</DockPanel>
 							</DataTemplate>
 						</controls:SortableGridViewColumn.CellTemplate>
 					</controls:SortableGridViewColumn>
