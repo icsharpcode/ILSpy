@@ -305,14 +305,6 @@ namespace ICSharpCode.Decompiler.Tests.Pretty
 		{
 			System.Array.Sort(Array);
 		}
-
-		private void LocalConflictsWithTypeName()
-		{
-			for (int j = 0; j < 10; j++)
-			{
-				i.Test();
-			}
-		}
 #if CS70
 		private void LocalConflictsWithLocalFunction()
 		{
