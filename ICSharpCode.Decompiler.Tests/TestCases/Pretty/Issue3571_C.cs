@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+
 using ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue3571_Helper;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty

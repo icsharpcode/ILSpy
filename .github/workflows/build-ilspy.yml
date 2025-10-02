@@ -65,6 +65,9 @@ jobs:
     - name: Build
       run: msbuild ILSpy.sln /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform /m
 
+    - name: Format check
+      run: dotnet-format whitespace --verify-no-changes --verbosity detailed ILSpy.sln
+
     - name: Execute unit tests
       run: dotnet test --solution ilspy.sln --configuration ${{ matrix.configuration }} --no-build --report-trx --results-directory test-results/${{ matrix.configuration }}
 
@@ -81,9 +84,6 @@ jobs:
       with:
         paths: "test-results/${{ matrix.configuration }}/*.trx"
         folded: true
-
-    - name: Format check
-      run: dotnet-format whitespace --verify-no-changes --verbosity detailed ILSpy.sln
       
     - name: Verify package contents
       if: matrix.configuration == 'debug'
