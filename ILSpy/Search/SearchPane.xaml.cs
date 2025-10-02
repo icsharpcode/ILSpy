@@ -167,12 +167,35 @@ namespace ICSharpCode.ILSpy.Search
 			e.Handled = true;
 		}
 
+		private void ListBox_MouseDown(object sender, MouseButtonEventArgs e)
+		{
+			var item = listBox.InputHitTest(e.GetPosition(listBox)) as DependencyObject;
+			while (item != null && item != listBox)
+			{
+				if (item is ListBoxItem)
+				{
+					listBox.SelectedItem = ((ListBoxItem)item).DataContext;
+					break;
+				}
+				item = VisualTreeHelper.GetParent(item);
+			}
+		}
+
+		private void ListBox_MouseUp(object sender, MouseButtonEventArgs e)
+		{
+			if (e.ChangedButton == MouseButton.Middle)
+			{
+				JumpToSelectedItem(inNewTabPage: true);
+				e.Handled = true;
+			}
+		}
+
 		void ListBox_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.Key == Key.Return)
 			{
 				e.Handled = true;
-				JumpToSelectedItem();
+				JumpToSelectedItem(e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control));
 			}
 			else if (e.Key == Key.Up && listBox.SelectedIndex == 0)
 			{
@@ -281,11 +304,11 @@ namespace ICSharpCode.ILSpy.Search
 			}
 		}
 
-		void JumpToSelectedItem()
+		void JumpToSelectedItem(bool inNewTabPage = false)
 		{
 			if (listBox.SelectedItem is SearchResult result)
 			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(result.Reference));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(result.Reference, inNewTabPage));
 			}
 		}
 

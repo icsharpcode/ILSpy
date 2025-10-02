@@ -48,7 +48,7 @@
 			</Grid>
 		</Border>
 		<ProgressBar x:Name="searchProgressBar" Grid.Row="1" BorderThickness="0" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
-		<ListView Grid.Row="2" BorderThickness="0,1,0,0" HorizontalContentAlignment="Stretch" KeyDown="ListBox_KeyDown"
+		<ListView Grid.Row="2" BorderThickness="0,1,0,0" HorizontalContentAlignment="Stretch" KeyDown="ListBox_KeyDown" MouseDown="ListBox_MouseDown" MouseUp="ListBox_MouseUp"
 				MouseDoubleClick="ListBox_MouseDoubleClick" Name="listBox" SelectionMode="Single" controls:SortableGridViewColumn.SortMode="Automatic"
 				controls:GridViewColumnAutoSize.AutoWidth="40%;40%;20%" BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
 				ItemsSource="{Binding Results, ElementName=self}"
