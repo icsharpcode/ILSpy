@@ -37,6 +37,8 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			var nameToFieldMap = new MultiDictionary<string, FieldDefinitionHandle>();
 
+			HashSet<string> eventNames = new();
+
 			foreach (var tdh in metadata.TypeDefinitions)
 			{
 				var type = metadata.GetTypeDefinition(tdh);
@@ -72,6 +74,16 @@ namespace ICSharpCode.Decompiler.Metadata
 					}
 				}
 
+				// first get all names of events defined, so that we can make sure we don't accidentally
+				// associate the wrong backing field with the event, in case there is an event called "Something"
+				// without a backing field (i.e., custom event) as well as an auto/field event called "SomethingEvent"
+				// declared in the same type.
+				foreach (var edh in type.GetEvents())
+				{
+					var ev = metadata.GetEventDefinition(edh);
+					eventNames.Add(metadata.GetString(ev.Name));
+				}
+
 				foreach (var edh in type.GetEvents())
 				{
 					var ev = metadata.GetEventDefinition(edh);
@@ -83,15 +95,20 @@ namespace ICSharpCode.Decompiler.Metadata
 							eventLookup[fieldHandle] = edh;
 						}
 					}
-					else if (nameToFieldMap.TryGetValues($"{name}Event", out fieldHandles))
+					else
 					{
-						foreach (var fieldHandle in fieldHandles)
+						var nameWithSuffix = $"{name}Event";
+						if (!eventNames.Contains(nameWithSuffix) && nameToFieldMap.TryGetValues(nameWithSuffix, out fieldHandles))
 						{
-							eventLookup[fieldHandle] = edh;
+							foreach (var fieldHandle in fieldHandles)
+							{
+								eventLookup[fieldHandle] = edh;
+							}
 						}
 					}
 				}
 
+				eventNames.Clear();
 				nameToFieldMap.Clear();
 			}
 		}
