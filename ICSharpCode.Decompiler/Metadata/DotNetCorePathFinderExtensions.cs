@@ -96,6 +96,7 @@ namespace ICSharpCode.Decompiler.Metadata
 							version = r.Version.ToString(2);
 							return $".NETStandard,Version=v{version}";
 						case "System.Runtime":
+						case "System.Private.CoreLib":
 							// System.Runtime.dll uses the following scheme:
 							// 4.1.0 => .NET Core 1.0 / 1.1
 							// 4.2.0 => .NET Core 2.0
