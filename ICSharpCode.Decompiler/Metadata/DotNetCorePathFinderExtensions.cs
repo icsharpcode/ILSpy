@@ -98,30 +98,47 @@ namespace ICSharpCode.Decompiler.Metadata
 						case "netstandard":
 							version = r.Version.ToString(2);
 							return $".NETStandard,Version=v{version}";
-						case "System.Runtime":
-						case "System.Private.CoreLib":
-							// System.Runtime.dll uses the following scheme:
-							// 4.1.0 => .NET Core 1.0 / 1.1
-							// 4.2.0 => .NET Core 2.0
-							// 4.2.1 => .NET Core 2.1 / 3.0
-							// 4.2.2 => .NET Core 3.1
-							// 5.0.0+ => .NET 5+
-							version = (r.Version.Major, r.Version.Minor, r.Version.Build) switch {
-								(4, 1, 0) => "1.1",
-								(4, 2, 0) => "2.0",
-								(4, 2, 1) => "3.0",
-								(4, 2, 2) => "3.1",
-								( >= 5, _, _) => r.Version.ToString(2),
-								_ => null
-							};
-							if (version != null)
-							{
-								return $".NETCoreApp,Version=v{version}";
-							}
-							else
-							{
-								continue;
-							}
+					}
+				}
+				catch (BadImageFormatException)
+				{
+					// ignore malformed references
+				}
+			}
+
+			// We check for System.Runtime separately because .NET Standard assemblies can reference it transitively,
+			// and we want to avoid detecting .NET Core for .NET Standard assemblies.
+			foreach (var h in metadata.AssemblyReferences)
+			{
+				try
+				{
+					var r = metadata.GetAssemblyReference(h);
+					if (r.PublicKeyOrToken.IsNil)
+						continue;
+					if (metadata.GetString(r.Name) is "System.Runtime" or "System.Private.CoreLib")
+					{
+						// System.Runtime.dll uses the following scheme:
+						// 4.1.0 => .NET Core 1.0 / 1.1
+						// 4.2.0 => .NET Core 2.0
+						// 4.2.1 => .NET Core 2.1 / 3.0
+						// 4.2.2 => .NET Core 3.1
+						// 5.0.0+ => .NET 5+
+						string version = (r.Version.Major, r.Version.Minor, r.Version.Build) switch {
+							(4, 1, 0) => "1.1",
+							(4, 2, 0) => "2.0",
+							(4, 2, 1) => "3.0",
+							(4, 2, 2) => "3.1",
+							( >= 5, _, _) => r.Version.ToString(2),
+							_ => null
+						};
+						if (version != null)
+						{
+							return $".NETCoreApp,Version=v{version}";
+						}
+						else
+						{
+							continue;
+						}
 					}
 				}
 				catch (BadImageFormatException)
