@@ -103,14 +103,13 @@ namespace ICSharpCode.Decompiler.Metadata
 							// 4.2.1 => .NET Core 2.1 / 3.0
 							// 4.2.2 => .NET Core 3.1
 							// 5.0.0+ => .NET 5+
-							version = (r.Version.Major, r.Version.Minor, r.Version.Build) switch
-							{
+							version = (r.Version.Major, r.Version.Minor, r.Version.Build) switch {
 								(4, 1, 0) => "1.0",
 								(4, 1, 1) => "1.1",
 								(4, 2, 0) => "2.0",
 								(4, 2, 1) => "3.0",
 								(4, 2, 2) => "3.1",
-								(>= 5, _, _) => r.Version.ToString(2),
+								( >= 5, _, _) => r.Version.ToString(2),
 								_ => null
 							};
 							if (version != null)
