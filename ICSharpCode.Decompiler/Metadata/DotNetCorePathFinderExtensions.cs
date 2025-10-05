@@ -100,16 +100,25 @@ namespace ICSharpCode.Decompiler.Metadata
 							// 4.2.0 => .NET Core 2.0
 							// 4.2.1 => .NET Core 2.1 / 3.0
 							// 4.2.2 => .NET Core 3.1
+							// 5.0.0+ => .NET 5+
 							if (r.Version >= new Version(4, 2, 0))
 							{
-								version = "2.0";
-								if (r.Version >= new Version(4, 2, 1))
+								if (r.Version.Major >= 5)
 								{
-									version = "3.0";
+									version = r.Version.ToString(2);
 								}
-								if (r.Version >= new Version(4, 2, 2))
+								else if (r.Version.Major == 4 && r.Version.Minor == 2)
 								{
-									version = "3.1";
+									version = r.Version.Build switch
+									{
+										<= 0 => "2.0",
+										1 => "3.0",
+										_ => "3.1"
+									};
+								}
+								else
+								{
+									version = "2.0";
 								}
 								return $".NETCoreApp,Version=v{version}";
 							}
