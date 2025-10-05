@@ -92,6 +92,9 @@ namespace ICSharpCode.Decompiler.Metadata
 					string version;
 					switch (metadata.GetString(r.Name))
 					{
+						case "mscorlib":
+							version = r.Version.ToString(2);
+							return $".NETFramework,Version=v{version}";
 						case "netstandard":
 							version = r.Version.ToString(2);
 							return $".NETStandard,Version=v{version}";
@@ -119,9 +122,6 @@ namespace ICSharpCode.Decompiler.Metadata
 							{
 								continue;
 							}
-						case "mscorlib":
-							version = r.Version.ToString(2);
-							return $".NETFramework,Version=v{version}";
 					}
 				}
 				catch (BadImageFormatException)
