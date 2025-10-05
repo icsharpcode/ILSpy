@@ -69,6 +69,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// anon = new { A = 5 } { 3,4,5 } is invalid syntax.
 					if (newObjInst.Method.DeclaringType.ContainsAnonymousType())
 						return;
+					// Tuples cannot have initializers
+					if (TupleTransform.MatchTupleConstruction(newObjInst, out _))
+						return;
 					instType = newObjInst.Method.DeclaringType;
 					break;
 				case DefaultValue defaultVal:
