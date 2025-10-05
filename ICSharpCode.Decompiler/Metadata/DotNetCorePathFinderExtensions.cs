@@ -81,16 +81,16 @@ namespace ICSharpCode.Decompiler.Metadata
 						return $".NETStandard,Version=v{assemblyDefinition.Version.ToString(2)}";
 					case "System.Runtime":
 					case "System.Private.CoreLib":
+					{
+						string version = GetDotNetCoreVersion(assemblyDefinition.Version);
+						if (version != null)
 						{
-							string version = GetDotNetCoreVersion(assemblyDefinition.Version);
-							if (version != null)
-							{
-								return $".NETCoreApp,Version=v{version}";
-							}
-							else
-							{
-								break;
-							}
+							return $".NETCoreApp,Version=v{version}";
+						}
+						else
+						{
+							break;
+						}
 					}
 				}
 			}
