@@ -109,8 +109,7 @@ namespace ICSharpCode.Decompiler.Metadata
 								}
 								else if (r.Version.Major == 4 && r.Version.Minor == 2)
 								{
-									version = r.Version.Build switch
-									{
+									version = r.Version.Build switch {
 										<= 0 => "2.0",
 										1 => "3.0",
 										_ => "3.1"
