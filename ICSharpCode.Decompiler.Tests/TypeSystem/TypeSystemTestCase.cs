@@ -559,6 +559,19 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		}
 	}
 
+	public struct GenericStructWithIDisposableConstraintAndImplicitConversion<T> where T : IDisposable
+	{
+		public static implicit operator GenericStructWithIDisposableConstraintAndImplicitConversion<T>(T s)
+		{
+			return default(GenericStructWithIDisposableConstraintAndImplicitConversion<T>);
+		}
+	}
+
+	public class ClassImplementingIDisposable : IDisposable
+	{
+		public void Dispose() { }
+	}
+
 	public class ClassWithAttributeOnTypeParameter<[Double(2)] T> { }
 
 	[Guid("790C6E0B-9194-4cc9-9426-A48A63185696"), InterfaceType(ComInterfaceType.InterfaceIsDual)]

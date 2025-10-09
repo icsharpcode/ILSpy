@@ -955,13 +955,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		bool IsEncompassedBy(IType a, IType b)
 		{
-			return a.Kind != TypeKind.Interface && b.Kind != TypeKind.Interface && StandardImplicitConversion(a, b).IsValid;
+			return StandardImplicitConversion(a, b).IsValid;
 		}
 
 		bool IsEncompassingOrEncompassedBy(IType a, IType b)
 		{
-			return a.Kind != TypeKind.Interface && b.Kind != TypeKind.Interface
-				&& (StandardImplicitConversion(a, b).IsValid || StandardImplicitConversion(b, a).IsValid);
+			return (StandardImplicitConversion(a, b).IsValid || StandardImplicitConversion(b, a).IsValid);
 		}
 
 		IType FindMostEncompassedType(IEnumerable<IType> candidates)
@@ -1027,6 +1026,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		Conversion UserDefinedImplicitConversion(ResolveResult fromResult, IType fromType, IType toType)
 		{
 			// C# 4.0 spec §6.4.4 User-defined implicit conversions
+
+			// user-defined conversions are not supported with interfaces
+			if (fromType.Kind == TypeKind.Interface || toType.Kind == TypeKind.Interface)
+			{
+				return Conversion.None;
+			}
+
 			var operators = GetApplicableConversionOperators(fromResult, fromType, toType, false);
 
 			if (operators.Count > 0)
@@ -1069,6 +1075,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		Conversion UserDefinedExplicitConversion(ResolveResult fromResult, IType fromType, IType toType)
 		{
 			// C# 4.0 spec §6.4.5 User-defined explicit conversions
+
+			// user-defined conversions are not supported with interfaces
+			if (fromType.Kind == TypeKind.Interface || toType.Kind == TypeKind.Interface)
+			{
+				return Conversion.None;
+			}
+
 			var operators = GetApplicableConversionOperators(fromResult, fromType, toType, true);
 			if (operators.Count > 0)
 			{
