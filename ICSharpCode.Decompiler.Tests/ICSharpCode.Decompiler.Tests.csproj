@@ -163,6 +163,7 @@
     <Compile Include="TestCases\Pretty\Issue3571_B.cs" />
     <Compile Include="TestCases\Pretty\Issue3571_A.cs" />
     <Compile Include="TestCases\Pretty\Issue3576.cs" />
+    <Compile Include="TestCases\Pretty\Issue3584.cs" />
     <Compile Include="TestCases\Pretty\PlaystationPreferPrimary.cs" />
     <Compile Include="TestCases\Pretty\Playstation.cs" />
     <None Include="TestCases\Ugly\NoLocalFunctions.Expected.cs" />

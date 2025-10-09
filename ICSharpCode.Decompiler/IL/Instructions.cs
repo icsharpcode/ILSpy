@@ -318,6 +318,7 @@ namespace ICSharpCode.Decompiler.IL
 			set {
 				ValidateChild(value);
 				SetChildInstruction(ref this.argument, value, 0);
+				InvalidateFlags();
 			}
 		}
 		protected sealed override int GetChildCount()
@@ -4357,10 +4358,19 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+			var baseFlags = base.ComputeFlags();
+			if (baseFlags == InstructionFlags.None && Type.Equals(Argument.InferType(null)))
+			{
+				return InstructionFlags.None;
+			}
+			return baseFlags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		}
 		public override InstructionFlags DirectFlags {
 			get {
+				if (Flags == InstructionFlags.None)
+				{
+					return InstructionFlags.None;
+				}
 				return base.DirectFlags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 			}
 		}
