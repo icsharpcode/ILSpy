@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Windows;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -25,15 +26,18 @@ using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
+#nullable enable
+
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
 	internal class AnalyzedModuleTreeNode : AnalyzerEntityTreeNode
 	{
 		readonly IModule analyzedModule;
 
-		public AnalyzedModuleTreeNode(IModule analyzedModule)
+		public AnalyzedModuleTreeNode(IModule analyzedModule, IEntity? source)
 		{
 			this.analyzedModule = analyzedModule ?? throw new ArgumentNullException(nameof(analyzedModule));
+			this.SourceMember = source;
 			this.LazyLoading = true;
 		}
 
@@ -41,16 +45,17 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 
 		public override object Text => analyzedModule.AssemblyName;
 
-		public override object ToolTip => analyzedModule.MetadataFile?.FileName;
+		public override object? ToolTip => analyzedModule.MetadataFile?.FileName;
 
 		protected override void LoadChildren()
 		{
 			foreach (var lazy in Analyzers)
 			{
 				var analyzer = lazy.Value;
+				Debug.Assert(analyzer != null);
 				if (analyzer.Show(analyzedModule))
 				{
-					this.Children.Add(new AnalyzerSearchTreeNode(analyzedModule, analyzer, lazy.Metadata.Header));
+					this.Children.Add(new AnalyzerSearchTreeNode(analyzedModule, analyzer, lazy.Metadata!.Header));
 				}
 			}
 		}
@@ -66,7 +71,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 			MessageBus.Send(this, new NavigateToReferenceEventArgs(analyzedModule.MetadataFile));
 		}
 
-		public override IEntity Member => null;
+		public override IEntity? Member => null;
 
 		public override bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies)
 		{
@@ -81,8 +86,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 			}
 			this.Children.RemoveAll(
 				delegate (SharpTreeNode n) {
-					AnalyzerTreeNode an = n as AnalyzerTreeNode;
-					return an == null || !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
+					return n is not AnalyzerTreeNode an || !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
 				});
 			return true;
 		}
