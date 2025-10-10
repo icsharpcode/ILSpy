@@ -469,9 +469,9 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 #endif
 			else
 #if DEBUG
-				mainWindow.Title = $"ILSpy {DecompilerVersionInfo.FullVersion} - " + assemblyList.ListName;
+				mainWindow.Title = string.Format(settingsService.MiscSettings.AllowMultipleInstances ? "{1} - {0}" : "{0} - {1}", $"ILSpy {DecompilerVersionInfo.FullVersion}", assemblyList.ListName);
 #else
-				mainWindow.Title = "ILSpy - " + assemblyList.ListName;
+				mainWindow.Title = string.Format(settingsService.MiscSettings.AllowMultipleInstances ? "{1} - {0}" : "{0} - {1}", "ILSpy", assemblyList.ListName);
 #endif
 		}
 
