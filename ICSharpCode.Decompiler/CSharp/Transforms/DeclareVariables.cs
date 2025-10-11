@@ -776,11 +776,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 				switch (node)
 				{
-					case IfElseStatement _:  // variable declared in if condition appears in parent scope
-					case ExpressionStatement _:
+					case IfElseStatement:  // variable declared in if condition appears in parent scope
+					case ExpressionStatement:
 						return node == v.InsertionPoint.nextNode;
-					case Statement _:
+					case Statement:
 						return false; // other statements (e.g. while) don't allow variables to be promoted to parent scope
+					case LambdaExpression lambda:
+						return lambda.Body == v.InsertionPoint.nextNode;
 				}
 			}
 			return false;
