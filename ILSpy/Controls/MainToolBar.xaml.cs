@@ -23,9 +23,11 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 
 using ICSharpCode.ILSpy.Themes;
+using ICSharpCode.ILSpyX.TreeView;
 
 using TomsToolbox.Composition;
 
@@ -85,7 +87,8 @@ namespace ICSharpCode.ILSpy.Controls
 			}
 		}
 
-		static Button CreateToolbarItem(IExport<ICommand, IToolbarCommandMetadata> commandExport)
+
+		static UIElement CreateToolbarItem(IExport<ICommand, IToolbarCommandMetadata> commandExport)
 		{
 			var command = commandExport.Value;
 
@@ -108,7 +111,91 @@ namespace ICSharpCode.ILSpy.Controls
 					parameterBinding.ParameterBinding);
 			}
 
+			if (command is IProvideParameterList parameterList)
+			{
+				toolbarItem.Margin = new Thickness(2, 0, 0, 0);
+
+				var dropDownPanel = new StackPanel { Orientation = Orientation.Horizontal };
+
+				var contextMenu = new ContextMenu { 
+					PlacementTarget = dropDownPanel,
+					Tag = command
+				};
+
+				ContextMenuService.SetPlacement(toolbarItem, PlacementMode.Bottom);
+				toolbarItem.ContextMenu = contextMenu;
+				toolbarItem.ContextMenuOpening += (_, _) =>
+					PrepareParameterList(contextMenu);
+
+				var dropDownToggle = new ToggleButton {
+					Style = ThemeManager.Current.CreateToolBarToggleButtonStyle(),
+					Content = "▾",
+					Padding = new Thickness(0),
+					MinWidth = 0,
+					Margin = new Thickness(0, 0, 2, 0)
+				};
+
+				dropDownToggle.Checked += (_, _) => {
+					PrepareParameterList(contextMenu);
+					contextMenu.Placement = PlacementMode.Bottom;
+					contextMenu.SetCurrentValue(ContextMenu.IsOpenProperty, true);
+				};
+
+				BindingOperations.SetBinding(dropDownToggle, ToggleButton.IsCheckedProperty,
+					new Binding(nameof(contextMenu.IsOpen)) { Source = contextMenu });
+
+				BindingOperations.SetBinding(dropDownToggle, IsEnabledProperty, 
+					new Binding(nameof(IsEnabled)) { Source = toolbarItem });
+
+				dropDownPanel.Children.Add(toolbarItem);
+				dropDownPanel.Children.Add(dropDownToggle);
+				return dropDownPanel;
+			}
+
 			return toolbarItem;
+		}
+
+		static void PrepareParameterList(ContextMenu menu)
+		{
+			const int maximumParameterListCount = 20;
+
+			var command = (ICommand)menu.Tag;
+			var parameterList = (IProvideParameterList)command;
+
+			menu.Items.Clear();
+			foreach (var parameter in parameterList.ParameterList)
+			{
+				MenuItem parameterItem = new MenuItem();
+				parameterItem.Command = CommandWrapper.Unwrap(command);
+				parameterItem.CommandParameter = parameter;
+				parameterItem.CommandTarget = menu.PlacementTarget;
+				parameterItem.InputGestureText = " ";
+
+				var headerPresenter = new ContentPresenter { RecognizesAccessKey = false };
+				parameterItem.Header = headerPresenter;
+
+				var header = parameterList.GetParamaterText(parameter);
+				switch (header)
+				{
+					case SharpTreeNode node:
+						headerPresenter.Content = node.NavigationText;
+						if (node.Icon is ImageSource icon)
+							parameterItem.Icon = new Image {
+								Width = 16,
+								Height = 16,
+								Source = icon
+							};
+						break;
+
+					default:
+						headerPresenter.Content = header;
+						break;
+				}
+
+				menu.Items.Add(parameterItem);
+				if (menu.Items.Count >= maximumParameterListCount)
+					break;
+			}
 		}
 
 		void MainWindow_KeyDown(object sender, KeyEventArgs e)

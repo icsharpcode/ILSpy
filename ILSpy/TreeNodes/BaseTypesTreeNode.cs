@@ -46,6 +46,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Text => Properties.Resources.BaseTypes;
 
+		public override object NavigationText => this.Language.TypeToString(type, includeNamespace: true) + " " + Text;
+
 		public override object Icon => Images.SuperTypes;
 
 		protected override void LoadChildren()
