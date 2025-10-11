@@ -40,6 +40,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Text => "Debug Directory";
 
+		public override object NavigationText => $"{Text} ({module.Name})";
+
 		public override object Icon => Images.ListFolder;
 		public override object ExpandedIcon => Images.ListFolderOpen;
 
