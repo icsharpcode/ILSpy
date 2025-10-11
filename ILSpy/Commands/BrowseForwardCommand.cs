@@ -18,6 +18,7 @@
 
 using System.Collections;
 using System.Composition;
+using System.Linq;
 using System.Windows.Input;
 
 using ICSharpCode.ILSpy.AssemblyTree;
@@ -54,7 +55,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public IEnumerable ParameterList => assemblyTreeModel.GetNavigateHistory(true);
+		public IEnumerable ParameterList => assemblyTreeModel.GetNavigateHistory(true).Reverse();
 
 		public object GetParamaterText(object parameter)
 		{
