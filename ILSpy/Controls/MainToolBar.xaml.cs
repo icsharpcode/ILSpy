@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.ComponentModel;
 using System.Composition;
 using System.Linq;
 using System.Windows;
@@ -117,6 +119,14 @@ namespace ICSharpCode.ILSpy.Controls
 
 				var dropDownPanel = new StackPanel { Orientation = Orientation.Horizontal };
 
+				var dropDownToggle = new ToggleButton {
+					Style = ThemeManager.Current.CreateToolBarToggleButtonStyle(),
+					Content = "▾",
+					Padding = new Thickness(0),
+					MinWidth = 0,
+					Margin = new Thickness(0, 0, 2, 0)
+				};
+
 				var contextMenu = new ContextMenu {
 					PlacementTarget = dropDownPanel,
 					Tag = command
@@ -126,15 +136,6 @@ namespace ICSharpCode.ILSpy.Controls
 				toolbarItem.ContextMenu = contextMenu;
 				toolbarItem.ContextMenuOpening += (_, _) =>
 					PrepareParameterList(contextMenu);
-
-				var dropDownToggle = new ToggleButton {
-					Style = ThemeManager.Current.CreateToolBarToggleButtonStyle(),
-					Content = "▾",
-					Padding = new Thickness(0),
-					MinWidth = 0,
-					Margin = new Thickness(0, 0, 2, 0)
-				};
-
 				dropDownToggle.Checked += (_, _) => {
 					PrepareParameterList(contextMenu);
 					contextMenu.Placement = PlacementMode.Bottom;
@@ -146,6 +147,20 @@ namespace ICSharpCode.ILSpy.Controls
 
 				BindingOperations.SetBinding(dropDownToggle, IsEnabledProperty,
 					new Binding(nameof(IsEnabled)) { Source = toolbarItem });
+
+				// When the toggle button is checked, clicking it to uncheck will dimiss the menu first
+				// which unchecks the toggle button via binding above and the click is used to open it again.
+				// This is a workaround to ignore the click to uncheck the already unchecked toggle button.
+				// We have to ensure the dismissing click is on the toggle button, otherwise the flag
+				// will not get cleared and menu will not open next time.
+				Mouse.AddPreviewMouseDownOutsideCapturedElementHandler(contextMenu, (_, e) => {
+					var point = e.GetPosition(dropDownToggle);
+					dropDownToggle.Tag = dropDownToggle.InputHitTest(point);
+				});
+				dropDownToggle.PreviewMouseLeftButtonDown += (_, e) => {
+					e.Handled = dropDownToggle.Tag != null;
+					dropDownToggle.Tag = null;
+				};
 
 				dropDownPanel.Children.Add(toolbarItem);
 				dropDownPanel.Children.Add(dropDownToggle);
