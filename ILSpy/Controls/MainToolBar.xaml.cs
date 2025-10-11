@@ -117,7 +117,7 @@ namespace ICSharpCode.ILSpy.Controls
 
 				var dropDownPanel = new StackPanel { Orientation = Orientation.Horizontal };
 
-				var contextMenu = new ContextMenu { 
+				var contextMenu = new ContextMenu {
 					PlacementTarget = dropDownPanel,
 					Tag = command
 				};
@@ -144,7 +144,7 @@ namespace ICSharpCode.ILSpy.Controls
 				BindingOperations.SetBinding(dropDownToggle, ToggleButton.IsCheckedProperty,
 					new Binding(nameof(contextMenu.IsOpen)) { Source = contextMenu });
 
-				BindingOperations.SetBinding(dropDownToggle, IsEnabledProperty, 
+				BindingOperations.SetBinding(dropDownToggle, IsEnabledProperty,
 					new Binding(nameof(IsEnabled)) { Source = toolbarItem });
 
 				dropDownPanel.Children.Add(toolbarItem);

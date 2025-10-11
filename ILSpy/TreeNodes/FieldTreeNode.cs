@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Text => GetText(GetFieldDefinition(), Language) + GetSuffixString(FieldDefinition);
 
-				public override object NavigationText => GetText(GetFieldDefinition(), Language, includeDeclaringTypeName: true);
+		public override object NavigationText => GetText(GetFieldDefinition(), Language, includeDeclaringTypeName: true);
 
 		private IField GetFieldDefinition()
 		{

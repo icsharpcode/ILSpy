@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override object Text => Resources.References;
 
 		public override object NavigationText => module.Name + " " + Text;
-	
+
 		public override object Icon => Images.ReferenceFolder;
 
 		protected override void LoadChildren()

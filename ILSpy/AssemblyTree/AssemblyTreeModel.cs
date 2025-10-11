@@ -857,10 +857,10 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		{
 			try
 			{
-			    TabPageModel tabPage = DockWorkspace.ActiveTabPage;
-			    var currentState = tabPage.GetState();
-			    if (currentState != null)
-				    history.UpdateCurrent(new NavigationState(tabPage, currentState));
+				TabPageModel tabPage = DockWorkspace.ActiveTabPage;
+				var currentState = tabPage.GetState();
+				if (currentState != null)
+					history.UpdateCurrent(new NavigationState(tabPage, currentState));
 
 				NavigationState newState;
 				do
@@ -868,8 +868,8 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 					newState = forward ? history.GoForward() : history.GoBack();
 				} while (newState != null && toState != null && toState != newState);
 
-                if (newState == null)
-                    return;
+				if (newState == null)
+					return;
 
 				navigatingToState = newState;
 
@@ -893,7 +893,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 		}
 
-        public NavigationState[] GetNavigateHistory(bool forward) => forward ? history.ForwardList : history.BackList;
+		public NavigationState[] GetNavigateHistory(bool forward) => forward ? history.ForwardList : history.BackList;
 
 		public bool CanNavigateBack => history.CanNavigateBack;
 

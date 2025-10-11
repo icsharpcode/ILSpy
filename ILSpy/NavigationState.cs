@@ -64,10 +64,8 @@ namespace ICSharpCode.ILSpy
 			return this.ViewState.Equals(other.ViewState);
 		}
 
-		public object NavigationText
-		{
-			get
-			{
+		public object NavigationText {
+			get {
 				if (this.treeNodes.Count == 1)
 					return this.treeNodes.First();
 

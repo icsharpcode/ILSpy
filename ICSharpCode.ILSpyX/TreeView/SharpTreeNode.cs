@@ -126,8 +126,7 @@ namespace ICSharpCode.ILSpyX.TreeView
 			get { return null; }
 		}
 
-		public virtual object? NavigationText
-		{
+		public virtual object? NavigationText {
 			get { return Text; }
 		}
 
