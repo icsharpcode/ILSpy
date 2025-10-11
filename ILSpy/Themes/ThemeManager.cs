@@ -24,6 +24,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 
 using ICSharpCode.AvalonEdit.Highlighting;
@@ -79,6 +80,11 @@ namespace ICSharpCode.ILSpy.Themes
 		public Style CreateToolBarButtonStyle()
 		{
 			return new Style(typeof(Button), (Style)Application.Current.FindResource(ToolBar.ButtonStyleKey));
+		}
+
+		public Style CreateToolBarToggleButtonStyle()
+		{
+			return new Style(typeof(ToggleButton), (Style)Application.Current.FindResource(ToolBar.ToggleButtonStyleKey));
 		}
 
 		public void ApplyHighlightingColors(IHighlightingDefinition highlightingDefinition)

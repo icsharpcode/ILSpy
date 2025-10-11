@@ -39,6 +39,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Text => "Tables";
 
+		public override object NavigationText => $"{Text} ({metadataFile.Name})";
+
 		public override object Icon => Images.MetadataTableGroup;
 
 		protected override void LoadChildren()
