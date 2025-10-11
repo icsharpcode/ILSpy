@@ -290,6 +290,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// track loops and function bodies as scopes, for comparison with CaptureScope.
 				scopeTracking.Add((new InsertionPoint { level = nodeLevel, nextNode = node }, scope));
 			}
+			else if (node is LambdaExpression { Body: Expression expr })
+			{
+				// expression-bodied lambdas don't have a BlockStatement linking to the BlockContainer
+				scope = node.Annotation<ILFunction>()?.Body as BlockContainer;
+				if (scope != null)
+				{
+					scopeTracking.Add((new InsertionPoint { level = nodeLevel + 1, nextNode = expr }, scope));
+				}
+			}
 			else
 			{
 				scope = null; // don't remove a scope if we didn't add one
@@ -455,7 +464,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// We can only insert variable declarations in blocks, but FindInsertionPoints() didn't
 				// guarantee that it finds only blocks.
 				// Fix that up now.
-				while (!(v.InsertionPoint.nextNode.Parent is BlockStatement))
+				while (!(v.InsertionPoint.nextNode.Parent is BlockStatement or LambdaExpression))
 				{
 					if (v.InsertionPoint.nextNode.Parent is ForStatement f && v.InsertionPoint.nextNode == f.Initializers.FirstOrDefault() && IsMatchingAssignment(v, out _))
 					{
@@ -673,6 +682,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 					var vds = new VariableDeclarationStatement(type, v.Name, initializer);
 					vds.Variables.Single().AddAnnotation(new ILVariableResolveResult(ilVariable));
+					if (v.InsertionPoint.nextNode.Parent is LambdaExpression lambda)
+					{
+						Debug.Assert(lambda.Body is not BlockStatement);
+						lambda.Body = new BlockStatement() {
+							new ReturnStatement((Expression)lambda.Body.Detach())
+						};
+					}
+					if (v.InsertionPoint.nextNode.Parent is ReturnStatement)
+					{
+						v.InsertionPoint = v.InsertionPoint.Up();
+					}
 					Debug.Assert(v.InsertionPoint.nextNode.Role == BlockStatement.StatementRole);
 					if (v.DefaultInitialization == VariableInitKind.NeedsSkipInit)
 					{
