@@ -266,7 +266,7 @@
 			CustomInvariant("CheckTargetSlot();")),
 
 		new OpCode("box", "Boxes a value.",
-			Unary, HasTypeOperand, MemoryAccess, MayThrow, ResultType("O")),
+			Unary, HasTypeOperand, ResultType("O")),
 		new OpCode("unbox", "Compute address inside box.",
 			Unary, HasTypeOperand, MayThrow, ResultType("Ref")),
 		new OpCode("unbox.any", "Unbox a value.",
