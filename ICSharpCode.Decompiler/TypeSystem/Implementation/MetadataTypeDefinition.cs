@@ -816,6 +816,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var metadata = module.metadata;
 			var typeDef = metadata.GetTypeDefinition(handle);
 
+			bool isRecord = false;
+
 			bool getEqualityContract = isStruct;
 			bool toString = false;
 			bool printMembers = false;
@@ -824,25 +826,46 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			bool opEquality = false;
 			bool opInequality = false;
 			bool clone = isStruct;
-			foreach (var methodHandle in typeDef.GetMethods())
+
+			// Consider inherited properties as well: check for an EqualityContract property.
+			foreach (var prop in this.GetProperties())
 			{
-				var method = metadata.GetMethodDefinition(methodHandle);
-				if (metadata.StringComparer.Equals(method.Name, "Clone"))
+				if (prop.Name == "EqualityContract" && prop.Getter != null)
 				{
-					// error CS8859: Members named 'Clone' are disallowed in records.
+					getEqualityContract = true;
+					break;
+				}
+			}
+
+			// Consider inherited members as well: use GetMethods() which includes inherited methods
+			// via the GetMembersHelper. This ensures methods like ToString/PrintMembers from
+			// base types satisfy the record shape requirements.
+			foreach (var m in this.GetMethods())
+			{
+				string name = m.Name;
+				// error CS8859: Members named 'Clone' are disallowed in records.
+				if (name == "Clone")
+				{
 					return false;
 				}
 
-				getEqualityContract |= metadata.StringComparer.Equals(method.Name, "get_EqualityContract");
-				toString |= metadata.StringComparer.Equals(method.Name, "ToString");
-				printMembers |= metadata.StringComparer.Equals(method.Name, "PrintMembers");
-				getHashCode |= metadata.StringComparer.Equals(method.Name, "GetHashCode");
-				equals |= metadata.StringComparer.Equals(method.Name, "Equals");
-				opEquality |= metadata.StringComparer.Equals(method.Name, "op_Equality");
-				opInequality |= metadata.StringComparer.Equals(method.Name, "op_Inequality");
-				clone |= metadata.StringComparer.Equals(method.Name, "<Clone>$");
+				// Also accept a getter method named get_EqualityContract
+				getEqualityContract |= (name == "get_EqualityContract");
+				toString |= (name == "ToString");
+				printMembers |= (name == "PrintMembers");
+				getHashCode |= (name == "GetHashCode");
+				equals |= (name == "Equals");
+				opEquality |= (name == "op_Equality");
+				opInequality |= (name == "op_Inequality");
+				clone |= (name == "<Clone>$");
+
+				isRecord = getEqualityContract & toString & printMembers & getHashCode & equals & opEquality & opInequality & clone;
+				if (isRecord)
+				{
+					break;
+				}
 			}
-			return getEqualityContract & toString & printMembers & getHashCode & equals & opEquality & opInequality & clone;
+			return isRecord;
 		}
 		#endregion
 	}
