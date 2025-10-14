@@ -1436,7 +1436,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				if (settings.RequiredMembers)
 				{
-					RemoveAttribute(typeDecl, KnownAttribute.RequiredAttribute);
+					RemoveAttribute(typeDecl, KnownAttribute.Required);
 				}
 				if (typeDecl.ClassType == ClassType.Enum)
 				{
@@ -2016,7 +2016,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				typeSystemAstBuilder.UseSpecialConstants = !(field.DeclaringType.Equals(field.ReturnType) || isMathPIOrE);
 				var fieldDecl = typeSystemAstBuilder.ConvertEntity(field);
 				SetNewModifier(fieldDecl);
-				if (settings.RequiredMembers && RemoveAttribute(fieldDecl, KnownAttribute.RequiredAttribute))
+				if (settings.RequiredMembers && RemoveAttribute(fieldDecl, KnownAttribute.Required))
 				{
 					fieldDecl.Modifiers |= Modifiers.Required;
 				}
@@ -2132,7 +2132,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					propertyDecl.Modifiers &= ~(Modifiers.New | Modifiers.Virtual);
 					propertyDecl.Modifiers |= Modifiers.Override;
 				}
-				if (settings.RequiredMembers && RemoveAttribute(propertyDecl, KnownAttribute.RequiredAttribute))
+				if (settings.RequiredMembers && RemoveAttribute(propertyDecl, KnownAttribute.Required))
 				{
 					propertyDecl.Modifiers |= Modifiers.Required;
 				}

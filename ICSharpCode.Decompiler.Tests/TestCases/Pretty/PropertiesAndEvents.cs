@@ -192,6 +192,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public event EventHandler Issue3575_AutoEvent;
+		public event EventHandler Issue3575_NonAuto;
+
+		public event EventHandler Issue3575_Auto {
+			add {
+			}
+			remove {
+			}
+		}
+
+		public event EventHandler Issue3575_NonAutoEvent {
+			add {
+			}
+			remove {
+			}
+		}
+
 		public int Getter(StringBuilder b)
 		{
 			return b.Length;

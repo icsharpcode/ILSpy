@@ -51,12 +51,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 
 		private static void SimpleCaptureWithRef()
 		{
-			_003C_003Ec__DisplayClass2_0 _003C_003Ec__DisplayClass2_ = new _003C_003Ec__DisplayClass2_0();
-			_003C_003Ec__DisplayClass2_.x = 1;
 #if OPT
-			new Handle(new Func<int>(_003C_003Ec__DisplayClass2_._003CSimpleCaptureWithRef_003Eg__F_007C0));
+			_003C_003Ec__DisplayClass2_0 obj = new _003C_003Ec__DisplayClass2_0();
+			obj.x = 1;
+			new Handle(new Func<int>(obj._003CSimpleCaptureWithRef_003Eg__F_007C0));
 #else
-			Handle handle = new Handle(new Func<int>(_003C_003Ec__DisplayClass2_._003CSimpleCaptureWithRef_003Eg__F_007C0));
+			_003C_003Ec__DisplayClass2_0 _003C_003Ec__DisplayClass2_1 = new _003C_003Ec__DisplayClass2_0();
+			_003C_003Ec__DisplayClass2_1.x = 1;
+			Handle handle = new Handle(new Func<int>(_003C_003Ec__DisplayClass2_1._003CSimpleCaptureWithRef_003Eg__F_007C0));
 #endif
 		}
 

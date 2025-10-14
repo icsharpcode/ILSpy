@@ -105,6 +105,7 @@
     <None Include="TestCases\ILPretty\Issue3466.il" />
     <None Include="testcases\ilpretty\Issue3504.il" />
     <None Include="testcases\ilpretty\Issue3524.il" />
+    <None Include="testcases\ilpretty\Issue3552.il" />
     <None Include="TestCases\ILPretty\MonoFixed.il" />
     <None Include="TestCases\Correctness\NonGenericConstrainedCallVirt.il" />
     <None Include="TestCases\ILPretty\UnknownTypes.cs" />
@@ -150,8 +151,15 @@
     <Compile Include="TestCases\ILPretty\Issue3442.cs" />
     <Compile Include="TestCases\ILPretty\Issue3466.cs" />
     <Compile Include="TestCases\ILPretty\Issue3524.cs" />
+    <Compile Include="TestCases\ILPretty\Issue3552.cs" />
     <Compile Include="TestCases\Pretty\ExpandParamsArgumentsDisabled.cs" />
     <Compile Include="TestCases\Pretty\ExtensionProperties.cs" />
+    <Compile Include="TestCases\Pretty\Issue3541.cs" />
+    <Compile Include="TestCases\Pretty\Issue3571_C.cs" />
+    <Compile Include="TestCases\Pretty\Issue3571_B.cs" />
+    <Compile Include="TestCases\Pretty\Issue3571_A.cs" />
+    <Compile Include="TestCases\Pretty\Issue3576.cs" />
+    <None Include="TestCases\Ugly\NoLocalFunctions.Expected.cs" />
     <None Include="TestCases\ILPretty\Issue3504.cs" />
     <Compile Include="TestCases\ILPretty\MonoFixed.cs" />
     <Compile Include="TestCases\Pretty\Comparisons.cs" />

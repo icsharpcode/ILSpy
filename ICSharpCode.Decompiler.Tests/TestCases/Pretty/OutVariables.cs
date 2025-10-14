@@ -72,5 +72,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			GetObject(out dynamic obj);
 			obj.Method();
 		}
+
+		public void M5()
+		{
+			Func<bool> func = () => TryGet<object>(out var result) && result != null;
+			Func<bool> func2 = () => TryGet<object>(out var result) && result != null;
+
+			func();
+			func2();
+		}
 	}
 }

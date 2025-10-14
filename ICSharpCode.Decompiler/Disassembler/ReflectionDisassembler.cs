@@ -74,6 +74,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public bool ExpandMemberDefinitions { get; set; }
 
+		/// <summary>
+		/// Gets or sets whether custom attribute blobs should be decoded or dumped as raw bytes. Default is <see langword="false"/>.
+		/// Setting this value to <see langword="true"/> (roughly) corresponds to the <c>/CAVERBAL</c> switch of <c>ildasm</c>.
+		/// </summary>
+		public bool DecodeCustomAttributeBlobs { get; set; }
+
 		public IAssemblyResolver AssemblyResolver { get; set; }
 
 		public IEntityProcessor EntityProcessor { get; set; }
@@ -476,7 +482,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		class SecurityDeclarationDecoder : ICustomAttributeTypeProvider<(PrimitiveTypeCode, string)>
+		class SecurityDeclarationDecoder : ICustomAttributeTypeProvider<(PrimitiveTypeCode Code, string Name)>
 		{
 			readonly ITextOutput output;
 			readonly IAssemblyResolver resolver;
@@ -506,12 +512,54 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			public (PrimitiveTypeCode, string) GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
 			{
-				throw new NotImplementedException();
+				string fullTypeName = handle.GetFullTypeName(reader).FullName;
+				if (handle.IsEnum(reader, out var typeCode))
+					return (typeCode, "enum " + fullTypeName);
+				return (0, fullTypeName);
 			}
 
 			public (PrimitiveTypeCode, string) GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
 			{
-				throw new NotImplementedException();
+				string fullTypeName = handle.GetFullTypeName(reader).FullName;
+				var containingModule = GetDeclaringModule(handle);
+
+				string assemblyQualifiedTypeName = containingModule != null
+					? fullTypeName + ", " + containingModule
+					: fullTypeName;
+
+				PrimitiveTypeCode typeCode = 0;
+				var (targetModule, resolvedType) = ResolveType(assemblyQualifiedTypeName, module);
+				if (targetModule != null)
+				{
+					if (!resolvedType.IsEnum(targetModule.Metadata, out typeCode))
+					{
+						typeCode = 0;
+					}
+					else
+					{
+						assemblyQualifiedTypeName = "enum " + assemblyQualifiedTypeName;
+					}
+				}
+
+				return (typeCode, assemblyQualifiedTypeName);
+
+				string GetDeclaringModule(TypeReferenceHandle handle)
+				{
+					var tr = reader.GetTypeReference(handle);
+					switch (tr.ResolutionScope.Kind)
+					{
+						case HandleKind.TypeReference:
+							return GetDeclaringModule((TypeReferenceHandle)tr.ResolutionScope);
+						case HandleKind.AssemblyReference:
+							var asmRef = reader.GetAssemblyReference((AssemblyReferenceHandle)tr.ResolutionScope);
+							return asmRef.TryGetFullAssemblyName(reader, out var assemblyName) ? assemblyName : null;
+						case HandleKind.ModuleReference:
+							var modRef = reader.GetModuleReference((ModuleReferenceHandle)tr.ResolutionScope);
+							return reader.GetString(modRef.Name);
+						default:
+							return null;
+					}
+				}
 			}
 
 			public (PrimitiveTypeCode, string) GetTypeFromSerializedName(string name)
@@ -608,17 +656,6 @@ namespace ICSharpCode.Decompiler.Disassembler
 				}
 			}
 
-			PrimitiveTypeCode ResolveEnumUnderlyingType(string typeName, PEFile module)
-			{
-				if (typeName.StartsWith("enum ", StringComparison.Ordinal))
-					typeName = typeName.Substring(5);
-				var (containingModule, typeDefHandle) = ResolveType(typeName, module);
-
-				if (typeDefHandle.IsNil || !typeDefHandle.IsEnum(containingModule.Metadata, out var typeCode))
-					throw new EnumUnderlyingTypeResolveException();
-				return typeCode;
-			}
-
 			MetadataFile mscorlib;
 
 			bool TryResolveMscorlib(out MetadataFile mscorlib)
@@ -704,7 +741,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					}
 
 					output.Write(argument.Type.Name ?? PrimitiveTypeCodeToString(argument.Type.Code));
-					output.Write(" " + argument.Name + " = ");
+					output.Write(" " + DisassemblerHelpers.Escape(argument.Name) + " = ");
 
 					WriteValue(output, argument.Type, argument.Value);
 					output.WriteLine();
@@ -1824,10 +1861,60 @@ namespace ICSharpCode.Decompiler.Disassembler
 				if (!attr.Value.IsNil)
 				{
 					output.Write(" = ");
-					WriteBlob(attr.Value, metadata);
+					if (DecodeCustomAttributeBlobs)
+						WriteDecodedCustomAttributeBlob(attr, module);
+					else
+						WriteBlob(attr.Value, metadata);
 				}
 				output.WriteLine();
 			}
+		}
+
+		void WriteDecodedCustomAttributeBlob(CustomAttribute attr, MetadataFile module)
+		{
+			CustomAttributeValue<(PrimitiveTypeCode Code, string Name)> value;
+			try
+			{
+				var provider = new SecurityDeclarationDecoder(output, AssemblyResolver, module);
+				value = attr.DecodeValue(provider);
+			}
+			catch (BadImageFormatException)
+			{
+				output.Write("/* Could not decode attribute value */ ");
+				WriteBlob(attr.Value, module.Metadata);
+				return;
+			}
+
+			output.Write("{");
+			output.Indent();
+
+			foreach (var arg in value.FixedArguments)
+			{
+				output.WriteLine();
+				WriteValue(output, arg.Type, arg.Value);
+			}
+
+			foreach (var arg in value.NamedArguments)
+			{
+				output.WriteLine();
+				switch (arg.Kind)
+				{
+					case CustomAttributeNamedArgumentKind.Field:
+						output.Write("field ");
+						break;
+					case CustomAttributeNamedArgumentKind.Property:
+						output.Write("property ");
+						break;
+				}
+
+				output.Write(arg.Type.Name ?? PrimitiveTypeCodeToString(arg.Type.Code));
+				output.Write(" " + DisassemblerHelpers.Escape(arg.Name) + " = ");
+				WriteValue(output, arg.Type, arg.Value);
+			}
+
+			output.WriteLine();
+			output.Unindent();
+			output.Write("}");
 		}
 
 		void WriteBlob(BlobHandle blob, MetadataReader metadata)
@@ -1839,23 +1926,26 @@ namespace ICSharpCode.Decompiler.Disassembler
 		void WriteBlob(BlobReader reader)
 		{
 			output.Write("(");
-			output.Indent();
-
-			for (int i = 0; i < reader.Length; i++)
+			if (reader.Length > 0)
 			{
-				if (i % 16 == 0 && i < reader.Length - 1)
-				{
-					output.WriteLine();
-				}
-				else
-				{
-					output.Write(' ');
-				}
-				output.Write(reader.ReadByte().ToString("x2"));
-			}
+				output.Indent();
 
-			output.WriteLine();
-			output.Unindent();
+				for (int i = 0; i < reader.Length; i++)
+				{
+					if (i % 16 == 0 && i < reader.Length - 1)
+					{
+						output.WriteLine();
+					}
+					else
+					{
+						output.Write(' ');
+					}
+					output.Write(reader.ReadByte().ToString("x2"));
+				}
+
+				output.WriteLine();
+				output.Unindent();
+			}
 			output.Write(")");
 		}
 

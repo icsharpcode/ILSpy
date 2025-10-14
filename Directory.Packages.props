@@ -6,10 +6,10 @@
   <ItemGroup>
     <PackageVersion Include="AvalonEdit" Version="6.3.1.120" />
     <PackageVersion Include="CliWrap" Version="3.9.0" />
-    <PackageVersion Include="DataGridExtensions" Version="2.6.0" />
+    <PackageVersion Include="DataGridExtensions" Version="2.7.0" />
     <PackageVersion Include="DiffLib" Version="2025.0.0" />
     <PackageVersion Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.1" />
-    <PackageVersion Include="ILCompiler.Reflection.ReadyToRun.Experimental" Version="10.0.0-preview.7.25380.108" />
+    <PackageVersion Include="ILCompiler.Reflection.ReadyToRun.Experimental" Version="10.0.0-rc.1.25451.107" />
     <PackageVersion Include="Iced" Version="1.21.0" />
     <PackageVersion Include="K4os.Compression.LZ4" Version="1.3.8" />
     <PackageVersion Include="McMaster.Extensions.CommandLineUtils" Version="4.1.1" />
@@ -19,17 +19,17 @@
     <PackageVersion Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta2-22171-02" />
     <PackageVersion Include="Microsoft.DiaSymReader" Version="1.4.0" />
     <PackageVersion Include="Microsoft.DiaSymReader.Native" Version="17.0.0-beta1.21524.1" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.0-preview.7.25380.108" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0-preview.7.25380.108" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0-preview.7.25380.108" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.0-preview.7.25380.108" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.0-rc.1.25451.107" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0-rc.1.25451.107" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0-rc.1.25451.107" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.0-rc.1.25451.107" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-    <PackageVersion Include="Microsoft.NETCore.ILAsm" Version="10.0.0-preview.7.25380.108" />
-    <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="10.0.0-preview.7.25380.108" />
-    <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.0" />
+    <PackageVersion Include="Microsoft.NETCore.ILAsm" Version="10.0.0-rc.1.25451.107" />
+    <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="10.0.0-rc.1.25451.107" />
+    <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.2" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="1.8.2" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="1.8.2" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="1.8.4" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="1.8.4" />
     <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
     <PackageVersion Include="NSubstitute" Version="5.3.0" />
@@ -39,13 +39,13 @@
     <PackageVersion Include="NuGet.Protocol" Version="6.14.0" />
     <PackageVersion Include="PowerShellStandard.Library" Version="5.1.1" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
-    <PackageVersion Include="System.Composition.AttributedModel" Version="10.0.0-preview.7.25380.108" />
-    <PackageVersion Include="System.Collections.Immutable" Version="10.0.0-preview.7.25380.108" />
+    <PackageVersion Include="System.Composition.AttributedModel" Version="10.0.0-rc.1.25451.107" />
+    <PackageVersion Include="System.Collections.Immutable" Version="10.0.0-rc.1.25451.107" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
-    <PackageVersion Include="System.Reflection.Metadata" Version="10.0.0-preview.7.25380.108" />
-    <PackageVersion Include="System.Resources.Extensions" Version="10.0.0-preview.7.25380.108" />
+    <PackageVersion Include="System.Reflection.Metadata" Version="10.0.0-rc.1.25451.107" />
+    <PackageVersion Include="System.Resources.Extensions" Version="10.0.0-rc.1.25451.107" />
     <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.8" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.9" />
     <PackageVersion Include="TomsToolbox.Composition.MicrosoftExtensions" Version="2.22.2" />
     <PackageVersion Include="TomsToolbox.Wpf.Composition" Version="2.22.2" />
     <PackageVersion Include="TomsToolbox.Wpf.Composition.AttributedModel" Version="2.22.2" />
@@ -56,6 +56,6 @@
     <PackageVersion Include="System.Text.RegularExpressions" Version="4.3.1" />
   </ItemGroup>
   <ItemGroup>
-    <GlobalPackageReference Include="TomsToolbox.Composition.Analyzer" Version="2.22.1" />
+    <GlobalPackageReference Include="TomsToolbox.Composition.Analyzer" Version="2.22.2" />
   </ItemGroup>
 </Project>

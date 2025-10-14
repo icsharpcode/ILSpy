@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -15,6 +16,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 		public static void ParamsSpan(params Span<int> values)
+		{
+			// note: implicitly "scoped", "params scoped Span<int> values" is allowed
+			// but "scoped" is always redundant for params.
+		}
+		public static void ParamUnscopedSpan([UnscopedRef] params Span<int> values)
 		{
 		}
 	}

@@ -31,11 +31,11 @@ jobs:
         persist-credentials: false
     
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
+      uses: github/codeql-action/init@v4
       with:
         languages: ${{ matrix.language }}
 
-    - uses: actions/setup-dotnet@v4
+    - uses: actions/setup-dotnet@v5
       with:
         dotnet-version: '10.0.x'
         dotnet-quality: 'preview'
@@ -44,4 +44,4 @@ jobs:
       run: dotnet build ILSpy.XPlat.slnf --configuration Release -p:RestoreEnablePackagePruning=false
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
+      uses: github/codeql-action/analyze@v4

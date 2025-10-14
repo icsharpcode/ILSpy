@@ -22,12 +22,11 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Xml.Linq;
 
+using ICSharpCode.BamlDecompiler.Xaml;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Util;
-
-using ICSharpCode.BamlDecompiler.Xaml;
 
 namespace ICSharpCode.BamlDecompiler.Rewrite
 {
@@ -66,6 +65,11 @@ namespace ICSharpCode.BamlDecompiler.Rewrite
 					if (element.Attribute("Name") is null && element.Attribute(xName) is null)
 					{
 						element.Add(new XAttribute(xName, fieldAssignment.Field.Name));
+					}
+					// x:FieldModifier can only be "public" or "internal" (in C#), where "internal" is the default and thus omitted
+					if (fieldAssignment.Field.Accessibility is Accessibility.Public)
+					{
+						element.Add(new XAttribute(ctx.GetKnownNamespace("FieldModifier", XamlContext.KnownNamespace_Xaml, element), "public"));
 					}
 					ctx.GeneratedMembers.Add(fieldAssignment.Field.MetadataToken);
 					found = true;

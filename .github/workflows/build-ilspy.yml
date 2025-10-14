@@ -32,7 +32,7 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
 
-    - uses: actions/setup-dotnet@v4
+    - uses: actions/setup-dotnet@v5
       with:
         dotnet-version: '10.0.x'
         dotnet-quality: 'preview'
@@ -45,7 +45,7 @@ jobs:
 
     - name: Install dotnet-format
       env:
-        DOTNET_FORMAT_VERSION: 10.0.100-preview.7.25380.108
+        DOTNET_FORMAT_VERSION: 10.0.100-rc.1.25451.107
         DOTNET_FORMAT_SOURCE: https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet10-transport/nuget/v3/index.json
       run: dotnet tool install -g dotnet-format --version "${{env.DOTNET_FORMAT_VERSION}}" --add-source "${{env.DOTNET_FORMAT_SOURCE}}"
 
@@ -65,6 +65,9 @@ jobs:
     - name: Build
       run: msbuild ILSpy.sln /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform /m
 
+    - name: Format check
+      run: dotnet-format whitespace --verify-no-changes --verbosity detailed ILSpy.sln
+
     - name: Execute unit tests
       run: dotnet test --solution ilspy.sln --configuration ${{ matrix.configuration }} --no-build --report-trx --results-directory test-results/${{ matrix.configuration }}
 
@@ -81,9 +84,6 @@ jobs:
       with:
         paths: "test-results/${{ matrix.configuration }}/*.trx"
         folded: true
-
-    - name: Format check
-      run: dotnet-format whitespace --verify-no-changes --verbosity detailed ILSpy.sln
       
     - name: Verify package contents
       if: matrix.configuration == 'debug'

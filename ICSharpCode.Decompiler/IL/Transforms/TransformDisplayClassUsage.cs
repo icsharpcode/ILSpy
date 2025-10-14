@@ -716,13 +716,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 			}
 
-			while (potentialDisplayClass != decompiledTypeDefinition)
+			// Make sure that potentialDisplayCLass and decompiledTypeDefinition are part of the same type tree
+			// Either decompiledTypeDefinition is an ancestor type of potentialDisplayClass or both have
+			// at least one common ancestor.
+			var potentialDisplayClassAncestors = new HashSet<ITypeDefinition>();
+			var potentialDisplayClassParent = potentialDisplayClass.DeclaringTypeDefinition;
+			while (potentialDisplayClassParent != null)
 			{
-				potentialDisplayClass = potentialDisplayClass.DeclaringTypeDefinition;
-				if (potentialDisplayClass == null)
-					return false;
+				potentialDisplayClassAncestors.Add(potentialDisplayClassParent);
+				potentialDisplayClassParent = potentialDisplayClassParent.DeclaringTypeDefinition;
 			}
-			return true;
+
+			var decompiledTypeDefinitionOrAncestor = decompiledTypeDefinition;
+
+			while (decompiledTypeDefinitionOrAncestor != null)
+			{
+				if (potentialDisplayClassAncestors.Contains(decompiledTypeDefinitionOrAncestor))
+					return true;
+				decompiledTypeDefinitionOrAncestor = decompiledTypeDefinitionOrAncestor.DeclaringTypeDefinition;
+			}
+			return false;
 		}
 
 		readonly Stack<ILFunction> currentFunctions = new Stack<ILFunction>();

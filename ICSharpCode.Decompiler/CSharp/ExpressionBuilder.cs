@@ -3513,11 +3513,11 @@ namespace ICSharpCode.Decompiler.CSharp
 						);
 						break;
 					case IL.Transforms.AccessPathKind.Setter:
-						Debug.Assert(lastElement.Member is IProperty || lastElement.Member is IField);
-						if (lastElement.Indices?.Length > 0)
+						Debug.Assert(lastElement.Member is IProperty or IField);
+						if (lastElement.Indices?.Length is var indices and > 0)
 						{
 							var property = (IProperty)lastElement.Member;
-							Debug.Assert(property.IsIndexer);
+							Debug.Assert(property.Parameters.Count == indices);
 							Debug.Assert(property.Setter != null, $"Indexer property {property} has no setter");
 							elementsStack.Peek().Add(
 								new CallBuilder(this, typeSystem, settings)

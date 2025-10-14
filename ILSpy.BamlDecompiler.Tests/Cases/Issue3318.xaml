@@ -1,0 +1,3 @@
+<UserControl x:Class="ILSpy.BamlDecompiler.Tests.Cases.Issue3318" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:cases="clr-namespace:ILSpy.BamlDecompiler.Tests.Cases;assembly=ILSpy.BamlDecompiler.Tests">
+	<Grid Name="Root" x:FieldModifier="public" />
+</UserControl>

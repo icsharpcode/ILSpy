@@ -210,25 +210,6 @@ namespace ICSharpCode.Decompiler.Metadata
 			return Disassembler.DisassemblerHelpers.Escape(name);
 		}
 
-		[Obsolete("Use MetadataModule.GetDeclaringModule() instead")]
-		public static IModuleReference GetDeclaringModule(this TypeReferenceHandle handle, MetadataReader reader)
-		{
-			var tr = reader.GetTypeReference(handle);
-			switch (tr.ResolutionScope.Kind)
-			{
-				case HandleKind.TypeReference:
-					return ((TypeReferenceHandle)tr.ResolutionScope).GetDeclaringModule(reader);
-				case HandleKind.AssemblyReference:
-					var asmRef = reader.GetAssemblyReference((AssemblyReferenceHandle)tr.ResolutionScope);
-					return new DefaultAssemblyReference(reader.GetString(asmRef.Name));
-				case HandleKind.ModuleReference:
-					var modRef = reader.GetModuleReference((ModuleReferenceHandle)tr.ResolutionScope);
-					return new DefaultAssemblyReference(reader.GetString(modRef.Name));
-				default:
-					return DefaultAssemblyReference.CurrentAssembly;
-			}
-		}
-
 		internal static readonly TypeProvider minimalCorlibTypeProvider =
 			new TypeProvider(new SimpleCompilation(MinimalCorlib.Instance));
 

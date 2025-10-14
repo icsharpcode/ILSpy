@@ -17,10 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Xml.Linq;
 
 using ICSharpCode.BamlDecompiler;
@@ -153,6 +151,12 @@ namespace ILSpy.BamlDecompiler.Tests
 		public void Issue2116()
 		{
 			RunTest("cases/issue2116");
+		}
+
+		[Test]
+		public void Issue3318()
+		{
+			RunTest("cases/issue3318");
 		}
 
 		[Test]

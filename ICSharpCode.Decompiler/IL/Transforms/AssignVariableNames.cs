@@ -28,6 +28,7 @@ using Humanizer.Inflections;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
+using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
@@ -106,6 +107,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					foreach (var name in CollectAllLowerCaseMemberNames(function.Method.DeclaringTypeDefinition))
 						currentLowerCaseTypeOrMemberNames.Add(name);
 					foreach (var name in CollectAllLowerCaseTypeNames(function.Method.DeclaringTypeDefinition))
+					{
+						currentLowerCaseTypeOrMemberNames.Add(name);
+						AddExistingName(reservedVariableNames, name);
+					}
+					foreach (var name in CollectAllLowerCaseTypeNames(context.UsingScope))
 					{
 						currentLowerCaseTypeOrMemberNames.Add(name);
 						AddExistingName(reservedVariableNames, name);
@@ -618,6 +624,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (IsLowerCase(item.Name))
 					yield return item.Name;
 			}
+			var current = type;
+			while (current != null)
+			{
+				foreach (var nested in current.NestedTypes)
+				{
+					if (IsLowerCase(nested.Name))
+						yield return nested.Name;
+				}
+				current = current.DeclaringTypeDefinition;
+			}
+		}
+
+		static IEnumerable<string> CollectAllLowerCaseTypeNames(UsingScope usingScope)
+		{
+			return usingScope?.Usings.SelectMany(n => n.Types).Select(t => t.Name).Where(IsLowerCase) ?? [];
 		}
 
 		static bool IsLowerCase(string name)
@@ -870,7 +891,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		static Dictionary<string, int> CollectReservedVariableNames(ILFunction function,
-			ILVariable existingVariable, bool mustResolveConflicts)
+			ILVariable existingVariable, bool mustResolveConflicts, UsingScope usingScope)
 		{
 			var reservedVariableNames = new Dictionary<string, int>();
 			var rootFunction = function.Ancestors.OfType<ILFunction>().Single(f => f.Parent == null);
@@ -889,14 +910,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (mustResolveConflicts)
 			{
 				var memberNames = CollectAllLowerCaseMemberNames(function.Method.DeclaringTypeDefinition)
-					.Concat(CollectAllLowerCaseTypeNames(function.Method.DeclaringTypeDefinition));
+					.Concat(CollectAllLowerCaseTypeNames(function.Method.DeclaringTypeDefinition))
+					.Concat(CollectAllLowerCaseTypeNames(usingScope));
 				foreach (var name in memberNames)
 					AddExistingName(reservedVariableNames, name);
 			}
 			return reservedVariableNames;
 		}
 
-		internal static string GenerateForeachVariableName(ILFunction function, ILInstruction valueContext,
+		internal static string GenerateForeachVariableName(ILFunction function, ILInstruction valueContext, UsingScope usingScope,
 			ILVariable existingVariable = null, bool mustResolveConflicts = false)
 		{
 			if (function == null)
@@ -905,7 +927,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return existingVariable.Name;
 			}
-			var reservedVariableNames = CollectReservedVariableNames(function, existingVariable, mustResolveConflicts);
+			var reservedVariableNames = CollectReservedVariableNames(function, existingVariable, mustResolveConflicts, usingScope);
 
 			string baseName = GetNameFromInstruction(valueContext);
 			if (string.IsNullOrEmpty(baseName))
@@ -955,13 +977,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		internal static string GenerateVariableName(ILFunction function, IType type,
+		internal static string GenerateVariableName(ILFunction function, IType type, UsingScope usingScope,
 			ILInstruction valueContext = null, ILVariable existingVariable = null,
 			bool mustResolveConflicts = false)
 		{
 			if (function == null)
 				throw new ArgumentNullException(nameof(function));
-			var reservedVariableNames = CollectReservedVariableNames(function, existingVariable, mustResolveConflicts);
+			var reservedVariableNames = CollectReservedVariableNames(function, existingVariable, mustResolveConflicts, usingScope);
 
 			string baseName = valueContext != null ? GetNameFromInstruction(valueContext) ?? GetNameByType(type) : GetNameByType(type);
 			string proposedName = "obj";

@@ -234,6 +234,9 @@ Are you sure you want to continue?</value>
   <data name="DebugThisStep" xml:space="preserve">
     <value>Debug this step</value>
   </data>
+  <data name="DecodeCustomAttributeBlobs" xml:space="preserve">
+    <value>Decode custom attribute blobs</value>
+  </data>
   <data name="DecompilationCompleteInF1Seconds" xml:space="preserve">
     <value>Decompilation complete in {0:F1} seconds.</value>
   </data>

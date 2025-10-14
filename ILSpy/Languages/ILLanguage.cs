@@ -67,7 +67,8 @@ namespace ICSharpCode.ILSpy
 				ShowMetadataTokens = displaySettings.ShowMetadataTokens,
 				ShowMetadataTokensInBase10 = displaySettings.ShowMetadataTokensInBase10,
 				ShowRawRVAOffsetAndBytes = displaySettings.ShowRawOffsetsAndBytesBeforeInstruction,
-				ExpandMemberDefinitions = options.DecompilerSettings.ExpandMemberDefinitions
+				ExpandMemberDefinitions = options.DecompilerSettings.ExpandMemberDefinitions,
+				DecodeCustomAttributeBlobs = displaySettings.DecodeCustomAttributeBlobs
 			};
 		}
 

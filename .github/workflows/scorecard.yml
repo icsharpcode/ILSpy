@@ -29,7 +29,7 @@ jobs:
           persist-credentials: false
 
       - name: "Run analysis"
-        uses: ossf/scorecard-action@v2.4.2 # https://github.com/marketplace/actions/ossf-scorecard-action
+        uses: ossf/scorecard-action@v2.4.3 # https://github.com/marketplace/actions/ossf-scorecard-action
         with:
           results_file: results.sarif
           results_format: sarif
@@ -43,6 +43,6 @@ jobs:
           retention-days: 5
 
       - name: "Upload to code-scanning"
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: results.sarif

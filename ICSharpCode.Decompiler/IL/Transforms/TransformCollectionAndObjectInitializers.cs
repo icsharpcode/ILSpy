@@ -69,6 +69,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// anon = new { A = 5 } { 3,4,5 } is invalid syntax.
 					if (newObjInst.Method.DeclaringType.ContainsAnonymousType())
 						return;
+					// Tuples cannot have initializers
+					if (TupleTransform.MatchTupleConstruction(newObjInst, out _))
+						return;
 					instType = newObjInst.Method.DeclaringType;
 					break;
 				case DefaultValue defaultVal:
@@ -96,6 +99,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						break;
 					}
 					return;
+			}
+			// Copy-propagate stack slot holding an 'ldloca' of the variable
+			if (pos < block.Instructions.Count && block.Instructions[pos + 1] is StLoc { Variable: { Kind: VariableKind.StackSlot, IsSingleDefinition: true }, Value: LdLoca ldLoca } stLocStack && ldLoca.Variable == v)
+			{
+				CopyPropagation.Propagate(stLocStack, context);
 			}
 			int initializerItemsCount = 0;
 			bool initializerContainsInitOnlyItems = false;

@@ -79,10 +79,10 @@ namespace ICSharpCode.ILSpy.Util
 
 	public class SettingsChangedEventArgs(PropertyChangedEventArgs e) : WrappedEventArgs<PropertyChangedEventArgs>(e);
 
-	public class NavigateToReferenceEventArgs(object reference, bool inNewTabPage = false) : EventArgs
+	public class NavigateToReferenceEventArgs(object reference, object? source = null, bool inNewTabPage = false) : EventArgs
 	{
 		public object Reference { get; } = reference;
-
+		public object? Source { get; } = source;
 		public bool InNewTabPage { get; } = inNewTabPage;
 	}
 

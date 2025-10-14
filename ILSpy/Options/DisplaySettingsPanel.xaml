@@ -64,6 +64,7 @@
 					<CheckBox IsChecked="{Binding Settings.ExpandUsingDeclarations}" Content="{x:Static properties:Resources.ExpandUsingDeclarationsAfterDecompilation}"></CheckBox>
 					<CheckBox IsChecked="{Binding Settings.ShowDebugInfo}" Content="{x:Static properties:Resources.ShowInfoFromDebugSymbolsAvailable}"></CheckBox>
 					<CheckBox IsChecked="{Binding Settings.ShowRawOffsetsAndBytesBeforeInstruction}" Content="{x:Static properties:Resources.ShowRawOffsetsAndBytesBeforeInstruction}"></CheckBox>
+					<CheckBox IsChecked="{Binding Settings.DecodeCustomAttributeBlobs}" Content="{x:Static properties:Resources.DecodeCustomAttributeBlobs}"></CheckBox>
 				</StackPanel>
 			</GroupBox>
 			<GroupBox Header="{x:Static properties:Resources.TreeViewOptions}">

@@ -76,29 +76,29 @@ namespace ICSharpCode.ILSpy.Analyzers
 			}
 		}
 
-		AnalyzerTreeNode SymbolTreeNodeFactory(ISymbol symbol)
+		AnalyzerTreeNode SymbolTreeNodeFactory(ISymbol resultSymbol)
 		{
-			if (symbol == null)
+			if (resultSymbol == null)
 			{
-				throw new ArgumentNullException(nameof(symbol));
+				throw new ArgumentNullException(nameof(resultSymbol));
 			}
 
-			switch (symbol)
+			switch (resultSymbol)
 			{
 				case IModule module:
-					return new AnalyzedModuleTreeNode(module) { };
+					return new AnalyzedModuleTreeNode(module, (IEntity)this.symbol);
 				case ITypeDefinition td:
-					return new AnalyzedTypeTreeNode(td) { };
+					return new AnalyzedTypeTreeNode(td, (IEntity)this.symbol);
 				case IField fd:
-					return new AnalyzedFieldTreeNode(fd) { };
+					return new AnalyzedFieldTreeNode(fd, (IEntity)this.symbol);
 				case IMethod md:
-					return new AnalyzedMethodTreeNode(md) { };
+					return new AnalyzedMethodTreeNode(md, (IEntity)this.symbol);
 				case IProperty pd:
-					return new AnalyzedPropertyTreeNode(pd) { };
+					return new AnalyzedPropertyTreeNode(pd, (IEntity)this.symbol);
 				case IEvent ed:
-					return new AnalyzedEventTreeNode(ed) { };
+					return new AnalyzedEventTreeNode(ed, (IEntity)this.symbol);
 				default:
-					throw new ArgumentOutOfRangeException(nameof(symbol), $"Symbol {symbol.GetType().FullName} is not supported.");
+					throw new ArgumentOutOfRangeException(nameof(resultSymbol), $"Symbol {resultSymbol.GetType().FullName} is not supported.");
 			}
 		}
 

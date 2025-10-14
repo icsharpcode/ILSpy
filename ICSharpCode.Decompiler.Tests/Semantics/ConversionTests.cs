@@ -529,6 +529,17 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			Assert.That(c.Method.FullName, Is.EqualTo("System.DateTimeOffset.op_Implicit"));
 
 			Assert.That(ImplicitConversion(typeof(DateTimeOffset), typeof(DateTime)), Is.EqualTo(C.None));
+
+			ITypeDefinition classImplementingIDisposable = compilation.FindType(typeof(ClassImplementingIDisposable)).GetDefinition();
+			ITypeDefinition genericStructWithIDisposableConstraintAndImplicitConversion = compilation.FindType(typeof(GenericStructWithIDisposableConstraintAndImplicitConversion<>)).GetDefinition();
+			IType genericStructIDisposableInstance = new ParameterizedType(genericStructWithIDisposableConstraintAndImplicitConversion, ImmutableArray.Create(compilation.FindType(typeof(IDisposable))));
+
+			// C => S<I>
+			Conversion c2 = conversions.ImplicitConversion(classImplementingIDisposable, genericStructIDisposableInstance);
+			Assert.That(c2.IsImplicit && c2.IsUserDefined);
+			Assert.That(c2.Method.FullName, Is.EqualTo("ICSharpCode.Decompiler.Tests.TypeSystem.GenericStructWithIDisposableConstraintAndImplicitConversion.op_Implicit"));
+
+			Assert.That(conversions.ImplicitConversion(genericStructIDisposableInstance, classImplementingIDisposable), Is.EqualTo(C.None));
 		}
 
 		[Test]

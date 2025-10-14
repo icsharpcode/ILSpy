@@ -133,6 +133,14 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
 
+		static readonly CompilerOptions[] roslyn4OrNewerWithNet40Options =
+		{
+			CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
+			CompilerOptions.UseRoslynLatest,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
+		};
+
 		static readonly CompilerOptions[] roslyn4OrNewerOptions =
 		{
 			CompilerOptions.UseRoslynLatest,
@@ -662,6 +670,36 @@ namespace ICSharpCode.Decompiler.Tests
 		public async Task Issue3483([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.CheckForOverflowUnderflow, configureDecompiler: settings => settings.CheckForOverflowUnderflow = true);
+		}
+
+		[Test]
+		public async Task Issue3541([ValueSource(nameof(roslyn4OrNewerWithNet40Options))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public async Task Issue3571_A([ValueSource(nameof(roslyn2OrNewerWithNet40Options))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public async Task Issue3571_B([ValueSource(nameof(roslyn2OrNewerWithNet40Options))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public async Task Issue3571_C([ValueSource(nameof(roslyn2OrNewerWithNet40Options))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public async Task Issue3576([ValueSource(nameof(roslyn2OrNewerWithNet40Options))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
