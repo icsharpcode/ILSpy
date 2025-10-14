@@ -1746,5 +1746,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 #endif
+
+#if ROSLYN
+		public static int Issue3577(int what)
+		{
+			int result = 0;
+			switch ((long)what)
+			{
+				case 1L:
+					result = 1;
+					break;
+				case 2L:
+					result = 2;
+					break;
+			}
+			return result;
+		}
+#endif
 	}
 }

@@ -3983,63 +3983,108 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal (TranslatedExpression, IType, StringToInt) TranslateSwitchValue(SwitchInstruction inst, bool isExpressionContext)
 		{
 			TranslatedExpression value;
-			IType type;
+			IType governingType;
 			// prepare expression and expected type
+			// first try to guess a governing type
 			if (inst.Value is StringToInt strToInt)
 			{
 				value = Translate(strToInt.Argument);
-				type = strToInt.ExpectedType ?? compilation.FindType(KnownTypeCode.String);
+				governingType = strToInt.ExpectedType ?? compilation.FindType(KnownTypeCode.String);
 			}
 			else
 			{
 				strToInt = null;
 				value = Translate(inst.Value);
-				type = inst.Type ?? value.Type;
-			}
+				governingType = inst.Type ?? value.Type;
 
-			// find and unwrap the input type
-			IType inputType = value.Type;
-			if (value.Expression is CastExpression && value.ResolveResult is ConversionResolveResult crr)
-			{
-				inputType = crr.Input.Type;
-			}
-			inputType = NullableType.GetUnderlyingType(inputType).GetEnumUnderlyingType();
-
-			// check input/underlying type for compatibility
-			bool allowImplicitConversion;
-			if (IsCompatibleWithSwitch(inputType) || (strToInt != null && inputType.Equals(type)))
-			{
-				allowImplicitConversion = !isExpressionContext;
-			}
-			else
-			{
-				var applicableImplicitConversionOperators = inputType.GetMethods(IsCompatibleImplicitConversionOperator).ToArray();
-				switch (applicableImplicitConversionOperators.Length)
+				// validate the governing type
+				if (inst.Value.ResultType == StackType.I8)
 				{
-					case 0:
-						allowImplicitConversion = !isExpressionContext;
-						break;
-					case 1:
-						allowImplicitConversion = !isExpressionContext;
-						// TODO validate
-						break;
-					default:
-						allowImplicitConversion = false;
-						break;
+					if (governingType.GetStackType() != StackType.I8)
+						governingType = FindType(StackType.I8, governingType.GetSign());
+				}
+				else if (inst.Value.ResultType == StackType.I4)
+				{
+					if (governingType.GetStackType() != StackType.I4)
+						governingType = FindType(StackType.I4, governingType.GetSign());
+					if (governingType.IsSmallIntegerType())
+					{
+						var defaultSection = inst.GetDefaultSection();
+						int bits = 8 * governingType.GetSize();
+						int minValue = governingType.GetSign() == Sign.Unsigned ? 0 : -(1 << (bits - 1));
+						int maxValue = governingType.GetSign() == Sign.Unsigned ? (1 << bits) - 1 : (1 << (bits - 1)) - 1;
+						foreach (var section in inst.Sections)
+						{
+							if (section == defaultSection)
+								continue;
+							LongInterval interval = section.Labels.ContainingInterval();
+							if (interval.Start < minValue || interval.InclusiveEnd > maxValue)
+							{
+								// governing type is too small to hold all case values
+								governingType = FindType(StackType.I4, Sign.Signed);
+								break;
+							}
+						}
+					}
+				}
+				else
+				{
+					Debug.Assert(inst.Value.ResultType == StackType.O);
+					Debug.Assert(inst.IsLifted);
+					Debug.Assert(inst.Type == governingType);
 				}
 			}
 
-			value = value.ConvertTo(type, this, allowImplicitConversion: allowImplicitConversion);
+			if (isExpressionContext)
+			{
+				value = value.ConvertTo(governingType, this, allowImplicitConversion: false);
+			}
+			else
+			{
+				value = value.ConvertTo(governingType, this, allowImplicitConversion: true);
+
+				var csharpGoverningType = GetCSharpSwitchGoverningType(value.Type);
+				if (!csharpGoverningType.Equals(governingType))
+				{
+					value = value.ConvertTo(governingType, this, allowImplicitConversion: false);
+				}
+			}
 
 			var caseType = strToInt != null
 				? compilation.FindType(KnownTypeCode.String)
-				: type;
+				: governingType;
 
 			return (value, caseType, strToInt);
+		}
+
+		static IType GetCSharpSwitchGoverningType(IType type)
+		{
+			if (IsCompatibleWithSwitch(type))
+				return type;
+
+			var applicableImplicitConversionOperators = type.GetMethods(IsImplicitConversionOperator)
+				.Where(m => IsCompatibleWithSwitch(m.ReturnType))
+				.ToArray();
+			if (applicableImplicitConversionOperators.Length != 1)
+				return type;
+			return applicableImplicitConversionOperators[0].ReturnType;
+
+			static bool IsImplicitConversionOperator(IMethod operatorMethod)
+			{
+				if (!operatorMethod.IsOperator)
+					return false;
+				if (operatorMethod.Name != "op_Implicit")
+					return false;
+				if (operatorMethod.Parameters.Count != 1)
+					return false;
+				return true;
+			}
 
 			static bool IsCompatibleWithSwitch(IType type)
 			{
-				return type.IsKnownType(KnownTypeCode.SByte)
+				type = NullableType.GetUnderlyingType(type);
+				return type.IsKnownType(KnownTypeCode.Boolean)
+					|| type.IsKnownType(KnownTypeCode.SByte)
 					|| type.IsKnownType(KnownTypeCode.Byte)
 					|| type.IsKnownType(KnownTypeCode.Int16)
 					|| type.IsKnownType(KnownTypeCode.UInt16)
@@ -4049,17 +4094,6 @@ namespace ICSharpCode.Decompiler.CSharp
 					|| type.IsKnownType(KnownTypeCode.UInt64)
 					|| type.IsKnownType(KnownTypeCode.Char)
 					|| type.IsKnownType(KnownTypeCode.String);
-			}
-
-			bool IsCompatibleImplicitConversionOperator(IMethod operatorMethod)
-			{
-				if (!operatorMethod.IsOperator)
-					return false;
-				if (operatorMethod.Name != "op_Implicit")
-					return false;
-				if (operatorMethod.Parameters.Count != 1)
-					return false;
-				return IsCompatibleWithSwitch(operatorMethod.ReturnType);
 			}
 		}
 

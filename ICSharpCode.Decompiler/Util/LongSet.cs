@@ -345,6 +345,13 @@ namespace ICSharpCode.Decompiler.Util
 			get { return Intervals.SelectMany(i => i.Range()); }
 		}
 
+		public LongInterval ContainingInterval()
+		{
+			if (IsEmpty)
+				return default;
+			return new LongInterval(Intervals[0].Start, Intervals[Intervals.Length - 1].End);
+		}
+
 		public override string ToString()
 		{
 			return string.Join(",", Intervals);

@@ -16,13 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
 using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -117,14 +115,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(switchBlock.Instructions[0] is SwitchInstruction switchInst))
 				return false;
-			newSwitch = BuildLiftedSwitch(nullCaseBlock, switchInst, new LdLoc(switchValueVar));
+			var nullableType = ((Call)getHasValue).Method.DeclaringType;
+			newSwitch = BuildLiftedSwitch(nullCaseBlock, switchInst, new LdLoc(switchValueVar), nullableType);
 			return true;
 		}
 
-		static SwitchInstruction BuildLiftedSwitch(Block nullCaseBlock, SwitchInstruction switchInst, ILInstruction switchValue)
+		static SwitchInstruction BuildLiftedSwitch(Block nullCaseBlock, SwitchInstruction switchInst, ILInstruction switchValue, IType nullableType)
 		{
 			SwitchInstruction newSwitch = new SwitchInstruction(switchValue);
 			newSwitch.IsLifted = true;
+			newSwitch.Type = nullableType;
 			newSwitch.Sections.AddRange(switchInst.Sections);
 			newSwitch.Sections.Add(new SwitchSection { Body = new Branch(nullCaseBlock), HasNullLabel = true });
 			return newSwitch;
@@ -192,7 +192,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				switchValue = new LdLoc(v).WithILRange(target);
 			else
 				switchValue = new LdObj(target, ((CallInstruction)getHasValue).Method.DeclaringType);
-			newSwitch = BuildLiftedSwitch(nullCaseBlock, switchInst, switchValue);
+			var nullableType = ((Call)getHasValue).Method.DeclaringType;
+			newSwitch = BuildLiftedSwitch(nullCaseBlock, switchInst, switchValue, nullableType);
 			return true;
 		}
 	}
