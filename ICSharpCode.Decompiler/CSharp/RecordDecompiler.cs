@@ -198,24 +198,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (method.Parameters.Count == 0)
 					return false;
 
-				var addonInst = isStruct ? 1 : 2;
-				if (body.Instructions.Count < method.Parameters.Count + addonInst)
-					return false;
-
 				for (int i = 0; i < method.Parameters.Count; i++)
 				{
 					if (!body.Instructions[i].MatchStFld(out var target, out var field, out var valueInst))
-						return false;
+						break;
 					if (!target.MatchLdThis())
-						return false;
-					if (method.Parameters[i].ReferenceKind is ReferenceKind.In or ReferenceKind.RefReadOnly)
-					{
-						if (!valueInst.MatchLdObj(out valueInst, out _))
-							return false;
-					}
-					if (!valueInst.MatchLdLoc(out var value))
-						return false;
-					if (!(value.Kind == VariableKind.Parameter && value.Index == i))
 						return false;
 					IMember backingMember;
 					if (backingFieldToAutoProperty.TryGetValue(field, out var property))
@@ -379,7 +366,10 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal (IProperty prop, IField field) GetPropertyInfoByPrimaryConstructorParameter(IParameter parameter)
 		{
-			var member = primaryCtorParameterToAutoPropertyOrBackingField[parameter];
+			if (!primaryCtorParameterToAutoPropertyOrBackingField.TryGetValue(parameter, out var member))
+			{
+				return (null, null);
+			}
 			if (member is IField field)
 				return (null, field);
 			return ((IProperty)member, autoPropertyToBackingField[(IProperty)member]);
