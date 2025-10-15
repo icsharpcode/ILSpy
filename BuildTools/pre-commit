@@ -5,7 +5,7 @@
 
 set -eu
 
-DOTNET_FORMAT_VERSION=10.0.100-rc.1.25451.107
+DOTNET_FORMAT_VERSION=10.0.100-rc.2.25502.106
 DOTNET_FORMAT_SOURCE="https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet10-transport/nuget/v3/index.json"
 DOTNET_PATH="$LOCALAPPDATA/ICSharpCode/ILSpy/dotnet-format-$DOTNET_FORMAT_VERSION"
 if [ ! -d "$DOTNET_PATH" ]; then
