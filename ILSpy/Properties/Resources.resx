@@ -809,6 +809,9 @@ If this does not solve the problem and your system supports long paths, you can 
   <data name="ReferenceName" xml:space="preserve">
     <value>Reference Name</value>
   </data>
+  <data name="ReferencedTypes" xml:space="preserve">
+    <value>Referenced Types</value>
+  </data>
   <data name="References" xml:space="preserve">
     <value>References</value>
   </data>

@@ -33,6 +33,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public HandleKind Kind { get; }
 
+		public override object NavigationText => $"{Text} ({metadataFile.Name})";
+
 		public override object Icon => Images.Heap;
 
 		public MetadataHeapTreeNode(HandleKind kind, MetadataFile metadataFile)

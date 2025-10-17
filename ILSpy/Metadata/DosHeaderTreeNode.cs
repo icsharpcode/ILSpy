@@ -36,6 +36,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Text => "DOS Header";
 
+		public override object NavigationText => $"{Text} ({module.Name})";
+
 		public override object Icon => Images.Header;
 
 		public override bool View(TabPageModel tabPage)

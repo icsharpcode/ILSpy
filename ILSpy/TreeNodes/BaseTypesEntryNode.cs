@@ -36,6 +36,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Text => this.Language.TypeToString(type, includeNamespace: true);
 
+		public override object NavigationText => $"{Text} ({Properties.Resources.BaseTypes})";
+
 		public override object Icon => type.Kind == TypeKind.Interface ? Images.Interface : Images.Class;
 
 		public override void ActivateItem(IPlatformRoutedEventArgs e)

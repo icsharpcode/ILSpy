@@ -34,6 +34,9 @@ namespace ICSharpCode.ILSpy
 		List<T> back = new List<T>();
 		List<T> forward = new List<T>();
 
+		public T[] BackList => back.ToArray();
+		public T[] ForwardList => forward.ToArray();
+
 		public bool CanNavigateBack {
 			get { return back.Count > 0; }
 		}
