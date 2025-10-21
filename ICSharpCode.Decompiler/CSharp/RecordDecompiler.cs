@@ -188,6 +188,11 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			return null;
 
+			//判定主构造函数的唯一准则是：
+			//构造函数中前面部分都是类成员属性/字段赋值语句，
+			//之后是调用基类构造函数的语句即"base..ctor();"，
+			//再之后就是返回语句了，即"base..ctor();"之后不存在任何其他初始化语句。
+			//且主构造函数的参数和类成员之间无任何对应关系！
 			bool IsPrimaryConstructor(IMethod method, IMethod unspecializedMethod)
 			{
 				Debug.Assert(method.IsConstructor);
@@ -198,9 +203,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (method.Parameters.Count == 0)
 					return false;
 
-				for (int i = 0; i < method.Parameters.Count; i++)
+				List<IMember> backingMembers = new List<IMember>();
+				foreach (var instruction in body.Instructions)
 				{
-					if (!body.Instructions[i].MatchStFld(out var target, out var field, out var valueInst))
+					if (!instruction.MatchStFld(out var target, out var field, out var valueInst))
 						break;
 					if (!target.MatchLdThis())
 						return false;
@@ -208,25 +214,37 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (backingFieldToAutoProperty.TryGetValue(field, out var property))
 					{
 						backingMember = property;
+						backingMembers.Add(backingMember);
 					}
 					else if (!recordTypeDef.IsRecord)
 					{
 						backingMember = field;
+						backingMembers.Add(backingMember);
 					}
 					else
 					{
 						return false;
 					}
-
-					primaryCtorParameterToAutoPropertyOrBackingField.Add(unspecializedMethod.Parameters[i], backingMember);
-					autoPropertyOrBackingFieldToPrimaryCtorParameter.Add(backingMember, unspecializedMethod.Parameters[i]);
 				}
 
 				if (!isStruct)
 				{
-					var baseCtorCall = body.Instructions.SecondToLastOrDefault() as CallInstruction;
+					Call baseCtorCall;
+					IsBaseCtorCall(body.Instructions.SecondToLastOrDefault(), out baseCtorCall);
 					if (baseCtorCall == null)
 						return false;
+				}
+
+				for (int i = 0; i < method.Parameters.Count; i++)
+				{
+					var param = unspecializedMethod.Parameters[i];
+					//var backingMember = backingMembers.Find(x => x.Name == param.Name);
+					var backingMember = backingMembers.Count > i ? backingMembers[i] : null;
+					if (backingMember != null)
+					{
+						primaryCtorParameterToAutoPropertyOrBackingField.Add(param, backingMember);
+						autoPropertyOrBackingFieldToPrimaryCtorParameter.Add(backingMember, param);
+					}
 				}
 
 				var returnInst = body.Instructions.LastOrDefault();
@@ -403,6 +421,23 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		bool IsBaseCtorCall(ILInstruction instruction, out Call _baseCtorCall)
+		{
+			_baseCtorCall = null;
+
+			if (!(instruction is Call { Method: { IsConstructor: true } } baseCtorCall))
+				return false;
+			if (!object.Equals(baseCtorCall.Method.DeclaringType, baseClass))
+				return false;
+			if (baseCtorCall.Arguments.Count != (isInheritedRecord ? 2 : 1))
+				return false;
+			if (!baseCtorCall.Arguments[0].MatchLdThis())
+				return false;
+
+			_baseCtorCall = baseCtorCall;
+			return true;
+		}
+
 		private bool IsGeneratedCopyConstructor(IMethod method)
 		{
 			/* 
@@ -425,14 +460,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(IsRecordType(other.Type));
 			int pos = 0;
 			// First instruction is the base constructor call
-			if (!(body.Instructions[pos] is Call { Method: { IsConstructor: true } } baseCtorCall))
+			Call baseCtorCall;
+			if (!IsBaseCtorCall(body.Instructions[pos], out baseCtorCall))
+			{
 				return false;
-			if (!object.Equals(baseCtorCall.Method.DeclaringType, baseClass))
-				return false;
-			if (baseCtorCall.Arguments.Count != (isInheritedRecord ? 2 : 1))
-				return false;
-			if (!baseCtorCall.Arguments[0].MatchLdThis())
-				return false;
+			}
 			if (isInheritedRecord)
 			{
 				if (!baseCtorCall.Arguments[1].MatchLdLoc(other))
