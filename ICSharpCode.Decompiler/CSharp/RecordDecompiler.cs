@@ -53,8 +53,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.settings = settings;
 			this.cancellationToken = cancellationToken;
 			this.baseClass = recordTypeDef.DirectBaseTypes.FirstOrDefault(b => b.Kind == TypeKind.Class);
-			this.isStruct = baseClass?.IsKnownType(KnownTypeCode.ValueType) ?? false;
-			this.isInheritedRecord = !isStruct && !(baseClass?.IsKnownType(KnownTypeCode.Object) ?? false);
+			this.isStruct = recordTypeDef.Kind == TypeKind.Struct;
+			var baseClassTypeDef = baseClass as ITypeDefinition;
+			this.isInheritedRecord = !isStruct && (baseClassTypeDef?.IsRecord ?? false);
 			this.isSealed = recordTypeDef.IsSealed;
 			DetectAutomaticProperties();
 			this.orderedMembers = DetectMemberOrder(recordTypeDef, backingFieldToAutoProperty);
