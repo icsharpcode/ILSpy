@@ -190,13 +190,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			return null;
 
 			//判定主构造函数的唯一准则是：
-			//构造函数中前面部分都是类成员属性/字段赋值语句，
-			//之后是调用基类构造函数的语句即"base..ctor();"，
-			//再之后就是返回语句了，即"base..ctor();"之后不存在任何其他初始化语句。
+			//首先它不能是拷贝构造函数，
+			//然后这个构造函数中前面部分都是类成员属性/字段赋值语句，
+			//之后是调用基类构造函数的语句即"base..ctor(...);"，
+			//再之后就是返回语句了，即"base..ctor(...);"之后不存在任何其他初始化语句。
 			//且主构造函数的参数和类成员之间无任何对应关系！
 			bool IsPrimaryConstructor(IMethod method, IMethod unspecializedMethod)
 			{
 				Debug.Assert(method.IsConstructor);
+
+				if (IsCopyConstructor(method))
+					return false;
+
 				var body = DecompileBody(method);
 				if (body == null)
 					return false;
