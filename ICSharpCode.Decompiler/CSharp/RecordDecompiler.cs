@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Metadata;
 using System.Threading;
 
@@ -159,6 +160,50 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		public static bool IsPrimaryConstructorFast(IMethod constructor, bool isStruct, bool recordPrimaryConstructor)
+		{
+			if (constructor.Parameters.Count == 0 && (isStruct || !recordPrimaryConstructor))
+			{
+				return false;
+			}
+
+			//下面注释的这一段就暂时不翻译了，因为目前在ILSpy中无法进行翻译，
+			//因为在ILSpy中RecordDecompiler.DetectPrimaryConstructor会先于TransformFieldAndConstructorInitializers执行，
+			//而在dotPeek中是先执行ExtractInstanceCtorInitializerTransformation再执行DetectPrimaryConstructorTransformation的
+			/*
+			IConstructorInitializer constructorInitializer = constructor.ConstructorInitializer;
+			if (constructorInitializer != null && constructorInitializer.Target is IThisReferenceExpression)
+			{
+				return false;
+			}
+			*/
+			if (!constructor.IsAbstract && constructor.DeclaringType.Kind != TypeKind.Interface && !constructor.HasBody)//IsExtern
+			{
+				return false;
+			}
+			if (constructor.DeclaringType.GetDefinition()?.IsAbstract ?? false)
+			{
+				var module = constructor.ParentModule as MetadataModule;
+				var handle = (MethodDefinitionHandle)constructor.MetadataToken;
+				var metadata = module.metadata;
+				var def = metadata.GetMethodDefinition(handle);
+				var attributes = def.Attributes;
+				if (!attributes.HasFlag(MethodAttributes.Family))//IsFamily
+				{
+					return false;
+				}
+			}
+			else if (!(constructor.Accessibility == Accessibility.Public))//IsPublic
+			{
+				return false;
+			}
+			if (constructor is VarArgInstanceMethod)
+			{
+				return false;
+			}
+			return true;
+		}
+
 		IMethod DetectPrimaryConstructor()
 		{
 			if (recordTypeDef.IsRecord)
@@ -190,16 +235,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			return null;
 
 			//判定主构造函数的唯一准则是：
-			//首先它不能是拷贝构造函数，
+			//首先它不能是拷贝构造函数，且能通过IsPrimaryConstructorFast的判定逻辑，
 			//然后这个构造函数中前面部分都是类成员属性/字段赋值语句，
 			//之后是调用基类构造函数的语句即"base..ctor(...);"，
 			//再之后就是返回语句了，即"base..ctor(...);"之后不存在任何其他初始化语句。
-			//且主构造函数的参数和类成员之间无任何对应关系！
+			//注意：不存在捕获参数的情况下，主构造函数的参数和类成员之间无任何对应关系！
+			//注意：目前即使一个函数的原始代码形式是常规构造函数，但是如果它符合本IsPrimaryConstructor函数的判定规则也会将它翻译成主构造函数形式
 			bool IsPrimaryConstructor(IMethod method, IMethod unspecializedMethod)
 			{
 				Debug.Assert(method.IsConstructor);
 
 				if (IsCopyConstructor(method))
+					return false;
+
+				if (!IsPrimaryConstructorFast(method, isStruct, false))
 					return false;
 
 				var body = DecompileBody(method);
@@ -435,7 +484,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			if (!object.Equals(baseCtorCall.Method.DeclaringType, baseClass))
 				return false;
-			if (baseCtorCall.Arguments.Count != (isInheritedRecord ? 2 : 1))
+			if (baseCtorCall.Arguments.Count <= 0)
 				return false;
 			if (!baseCtorCall.Arguments[0].MatchLdThis())
 				return false;
@@ -471,6 +520,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				return false;
 			}
+			if (baseCtorCall.Arguments.Count != (isInheritedRecord ? 2 : 1))
+				return false;
 			if (isInheritedRecord)
 			{
 				if (!baseCtorCall.Arguments[1].MatchLdLoc(other))
