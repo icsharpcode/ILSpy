@@ -16,7 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections;
 using System.Composition;
+using System.Linq;
 using System.Windows.Input;
 
 using ICSharpCode.ILSpy.AssemblyTree;
@@ -26,7 +28,7 @@ namespace ICSharpCode.ILSpy
 {
 	[ExportToolbarCommand(ToolTip = nameof(Resources.Back), ToolbarIcon = "Images/Back", ToolbarCategory = nameof(Resources.Navigation), ToolbarOrder = 0)]
 	[Shared]
-	sealed class BrowseBackCommand : CommandWrapper
+	sealed class BrowseBackCommand : CommandWrapper, IProvideParameterList
 	{
 		readonly AssemblyTreeModel assemblyTreeModel;
 
@@ -49,8 +51,15 @@ namespace ICSharpCode.ILSpy
 			if (assemblyTreeModel.CanNavigateBack)
 			{
 				e.Handled = true;
-				assemblyTreeModel.NavigateHistory(false);
+				assemblyTreeModel.NavigateHistory(false, e.Parameter as NavigationState);
 			}
+		}
+
+		public IEnumerable ParameterList => assemblyTreeModel.GetNavigateHistory(false).Reverse();
+
+		public object GetParamaterText(object parameter)
+		{
+			return (parameter as NavigationState)?.NavigationText;
 		}
 	}
 }
