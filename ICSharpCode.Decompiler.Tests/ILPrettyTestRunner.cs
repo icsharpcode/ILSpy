@@ -323,6 +323,22 @@ namespace ICSharpCode.Decompiler.Tests
 			await Run();
 		}
 
+		[Test]
+		public async Task ExtensionEncodingV1()
+		{
+			// uses Microsoft.Net.Compilers.Toolset 5.0.0-2.25380.108
+			// see ExtensionEncodingV1.il for details
+			await Run();
+		}
+
+		[Test]
+		public async Task ExtensionEncodingV2()
+		{
+			// uses Microsoft.Net.Compilers.Toolset 5.0.0-2.25451.107
+			// see ExtensionEncodingV2.il for details
+			await Run();
+		}
+
 		async Task Run([CallerMemberName] string testName = null, DecompilerSettings settings = null,
 			AssemblerOptions assemblerOptions = AssemblerOptions.Library)
 		{
