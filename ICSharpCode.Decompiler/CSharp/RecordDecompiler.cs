@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Metadata;
 using System.Threading;
 
@@ -53,8 +54,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.settings = settings;
 			this.cancellationToken = cancellationToken;
 			this.baseClass = recordTypeDef.DirectBaseTypes.FirstOrDefault(b => b.Kind == TypeKind.Class);
-			this.isStruct = baseClass?.IsKnownType(KnownTypeCode.ValueType) ?? false;
-			this.isInheritedRecord = !isStruct && !(baseClass?.IsKnownType(KnownTypeCode.Object) ?? false);
+			this.isStruct = recordTypeDef.Kind == TypeKind.Struct;
+			var baseClassTypeDef = baseClass as ITypeDefinition;
+			this.isInheritedRecord = !isStruct && (baseClassTypeDef?.IsRecord ?? false);
 			this.isSealed = recordTypeDef.IsSealed;
 			DetectAutomaticProperties();
 			this.orderedMembers = DetectMemberOrder(recordTypeDef, backingFieldToAutoProperty);
@@ -158,6 +160,50 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		public static bool IsPrimaryConstructorFast(IMethod constructor, bool isStruct, bool recordPrimaryConstructor)
+		{
+			if (constructor.Parameters.Count == 0 && (isStruct || !recordPrimaryConstructor))
+			{
+				return false;
+			}
+
+			//下面注释的这一段就暂时不翻译了，因为目前在ILSpy中无法进行翻译，
+			//因为在ILSpy中RecordDecompiler.DetectPrimaryConstructor会先于TransformFieldAndConstructorInitializers执行，
+			//而在dotPeek中是先执行ExtractInstanceCtorInitializerTransformation再执行DetectPrimaryConstructorTransformation的
+			/*
+			IConstructorInitializer constructorInitializer = constructor.ConstructorInitializer;
+			if (constructorInitializer != null && constructorInitializer.Target is IThisReferenceExpression)
+			{
+				return false;
+			}
+			*/
+			if (!constructor.IsAbstract && constructor.DeclaringType.Kind != TypeKind.Interface && !constructor.HasBody)//IsExtern
+			{
+				return false;
+			}
+			if (constructor.DeclaringType.GetDefinition()?.IsAbstract ?? false)
+			{
+				var module = constructor.ParentModule as MetadataModule;
+				var handle = (MethodDefinitionHandle)constructor.MetadataToken;
+				var metadata = module.metadata;
+				var def = metadata.GetMethodDefinition(handle);
+				var attributes = def.Attributes;
+				if (!attributes.HasFlag(MethodAttributes.Family))//IsFamily
+				{
+					return false;
+				}
+			}
+			else if (!(constructor.Accessibility == Accessibility.Public))//IsPublic
+			{
+				return false;
+			}
+			if (constructor is VarArgInstanceMethod)
+			{
+				return false;
+			}
+			return true;
+		}
+
 		IMethod DetectPrimaryConstructor()
 		{
 			if (recordTypeDef.IsRecord)
@@ -188,9 +234,23 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			return null;
 
+			//判定主构造函数的唯一准则是：
+			//首先它不能是拷贝构造函数，且能通过IsPrimaryConstructorFast的判定逻辑，
+			//然后这个构造函数中前面部分都是类成员属性/字段赋值语句，
+			//之后是调用基类构造函数的语句即"base..ctor(...);"，
+			//再之后就是返回语句了，即"base..ctor(...);"之后不存在任何其他初始化语句。
+			//注意：不存在捕获参数的情况下，主构造函数的参数和类成员之间无任何对应关系！
+			//注意：目前即使一个函数的原始代码形式是常规构造函数，但是如果它符合本IsPrimaryConstructor函数的判定规则也会将它翻译成主构造函数形式
 			bool IsPrimaryConstructor(IMethod method, IMethod unspecializedMethod)
 			{
 				Debug.Assert(method.IsConstructor);
+
+				if (IsCopyConstructor(method))
+					return false;
+
+				if (!IsPrimaryConstructorFast(method, isStruct, false))
+					return false;
+
 				var body = DecompileBody(method);
 				if (body == null)
 					return false;
@@ -198,48 +258,48 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (method.Parameters.Count == 0)
 					return false;
 
-				var addonInst = isStruct ? 1 : 2;
-				if (body.Instructions.Count < method.Parameters.Count + addonInst)
-					return false;
-
-				for (int i = 0; i < method.Parameters.Count; i++)
+				List<IMember> backingMembers = new List<IMember>();
+				foreach (var instruction in body.Instructions)
 				{
-					if (!body.Instructions[i].MatchStFld(out var target, out var field, out var valueInst))
-						return false;
+					if (!instruction.MatchStFld(out var target, out var field, out var valueInst))
+						break;
 					if (!target.MatchLdThis())
-						return false;
-					if (method.Parameters[i].ReferenceKind is ReferenceKind.In or ReferenceKind.RefReadOnly)
-					{
-						if (!valueInst.MatchLdObj(out valueInst, out _))
-							return false;
-					}
-					if (!valueInst.MatchLdLoc(out var value))
-						return false;
-					if (!(value.Kind == VariableKind.Parameter && value.Index == i))
 						return false;
 					IMember backingMember;
 					if (backingFieldToAutoProperty.TryGetValue(field, out var property))
 					{
 						backingMember = property;
+						backingMembers.Add(backingMember);
 					}
 					else if (!recordTypeDef.IsRecord)
 					{
 						backingMember = field;
+						backingMembers.Add(backingMember);
 					}
 					else
 					{
 						return false;
 					}
-
-					primaryCtorParameterToAutoPropertyOrBackingField.Add(unspecializedMethod.Parameters[i], backingMember);
-					autoPropertyOrBackingFieldToPrimaryCtorParameter.Add(backingMember, unspecializedMethod.Parameters[i]);
 				}
 
 				if (!isStruct)
 				{
-					var baseCtorCall = body.Instructions.SecondToLastOrDefault() as CallInstruction;
+					Call baseCtorCall;
+					IsBaseCtorCall(body.Instructions.SecondToLastOrDefault(), out baseCtorCall);
 					if (baseCtorCall == null)
 						return false;
+				}
+
+				for (int i = 0; i < method.Parameters.Count; i++)
+				{
+					var param = unspecializedMethod.Parameters[i];
+					//var backingMember = backingMembers.Find(x => x.Name == param.Name);
+					var backingMember = backingMembers.Count > i ? backingMembers[i] : null;
+					if (backingMember != null)
+					{
+						primaryCtorParameterToAutoPropertyOrBackingField.Add(param, backingMember);
+						autoPropertyOrBackingFieldToPrimaryCtorParameter.Add(backingMember, param);
+					}
 				}
 
 				var returnInst = body.Instructions.LastOrDefault();
@@ -379,7 +439,10 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal (IProperty prop, IField field) GetPropertyInfoByPrimaryConstructorParameter(IParameter parameter)
 		{
-			var member = primaryCtorParameterToAutoPropertyOrBackingField[parameter];
+			if (!primaryCtorParameterToAutoPropertyOrBackingField.TryGetValue(parameter, out var member))
+			{
+				return (null, null);
+			}
 			if (member is IField field)
 				return (null, field);
 			return ((IProperty)member, autoPropertyToBackingField[(IProperty)member]);
@@ -413,6 +476,23 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		bool IsBaseCtorCall(ILInstruction instruction, out Call _baseCtorCall)
+		{
+			_baseCtorCall = null;
+
+			if (!(instruction is Call { Method: { IsConstructor: true } } baseCtorCall))
+				return false;
+			if (!object.Equals(baseCtorCall.Method.DeclaringType, baseClass))
+				return false;
+			if (baseCtorCall.Arguments.Count <= 0)
+				return false;
+			if (!baseCtorCall.Arguments[0].MatchLdThis())
+				return false;
+
+			_baseCtorCall = baseCtorCall;
+			return true;
+		}
+
 		private bool IsGeneratedCopyConstructor(IMethod method)
 		{
 			/* 
@@ -435,13 +515,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(IsRecordType(other.Type));
 			int pos = 0;
 			// First instruction is the base constructor call
-			if (!(body.Instructions[pos] is Call { Method: { IsConstructor: true } } baseCtorCall))
+			Call baseCtorCall;
+			if (!IsBaseCtorCall(body.Instructions[pos], out baseCtorCall))
+			{
 				return false;
-			if (!object.Equals(baseCtorCall.Method.DeclaringType, baseClass))
-				return false;
+			}
 			if (baseCtorCall.Arguments.Count != (isInheritedRecord ? 2 : 1))
-				return false;
-			if (!baseCtorCall.Arguments[0].MatchLdThis())
 				return false;
 			if (isInheritedRecord)
 			{

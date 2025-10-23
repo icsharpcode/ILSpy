@@ -125,15 +125,21 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (context.DecompileRun.RecordDecompilers.TryGetValue(currentCtor.DeclaringTypeDefinition, out var record)
 				&& currentCtor.Equals(record.PrimaryConstructor))
 			{
-				if (record.IsInheritedRecord &&
-					ci?.ConstructorInitializerType == ConstructorInitializerType.Base &&
+				if (ci?.ConstructorInitializerType == ConstructorInitializerType.Base &&
 					constructorDeclaration.Parent is TypeDeclaration { BaseTypes: { Count: >= 1 } } typeDecl)
 				{
-					var baseType = typeDecl.BaseTypes.First();
-					var newBaseType = new InvocationAstType();
-					baseType.ReplaceWith(newBaseType);
-					newBaseType.BaseType = baseType;
-					ci.Arguments.MoveTo(newBaseType.Arguments);
+					// Only perform this transformation if the declaring type actually has a non-object class base.
+					// This prevents converting implemented interfaces into an invocation type (which caused the
+					// spurious trailing '()' in the decompiled output).
+					var baseClassType = currentCtor.DeclaringTypeDefinition.DirectBaseTypes.FirstOrDefault(b => b.Kind == TypeKind.Class);
+					if (baseClassType != null && !baseClassType.IsKnownType(KnownTypeCode.Object))
+					{
+						var baseType = typeDecl.BaseTypes.First();
+						var newBaseType = new InvocationAstType();
+						baseType.ReplaceWith(newBaseType);
+						newBaseType.BaseType = baseType;
+						ci.Arguments.MoveTo(newBaseType.Arguments);
+					}
 				}
 				if (constructorDeclaration.Parent is TypeDeclaration { PrimaryConstructorParameters: var parameters })
 				{
