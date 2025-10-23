@@ -85,6 +85,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					instType = c.Method.TypeArguments[0];
 					blockKind = BlockKind.ObjectInitializer;
 					break;
+				case CastClass cc when context.Settings.WithExpressions && cc.Argument is CallInstruction innerCall && IsRecordCloneMethodCall(innerCall):
+					instType = innerCall.Method.DeclaringType;
+					blockKind = BlockKind.WithInitializer;
+					initInst = innerCall.Arguments.Single();
+					break;
 				case CallInstruction ci when context.Settings.WithExpressions && IsRecordCloneMethodCall(ci):
 					instType = ci.Method.DeclaringType;
 					blockKind = BlockKind.WithInitializer;
