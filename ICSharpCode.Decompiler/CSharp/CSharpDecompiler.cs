@@ -1367,13 +1367,16 @@ namespace ICSharpCode.Decompiler.CSharp
 					foreach (var group in typeDef.ExtensionInfo?.GetGroups() ?? [])
 					{
 						var ext = new ExtensionDeclaration();
-						ext.TypeParameters.AddRange(group.Key.DeclaringTypeDefinition.TypeParameters.Select(tp => typeSystemAstBuilder.ConvertTypeParameter(tp)));
-						ext.ReceiverParameters.Add(typeSystemAstBuilder.ConvertParameter(group.Key.Parameters.Single()));
-						ext.Constraints.AddRange(group.Key.DeclaringTypeDefinition.TypeParameters.Select(c => typeSystemAstBuilder.ConvertTypeParameterConstraint(c)));
+						ITypeParameter[] typeParameters = group.Key.TypeParameters;
+						var subst = new TypeParameterSubstitution(typeParameters, null);
+						ext.TypeParameters.AddRange(typeParameters.Select(tp => typeSystemAstBuilder.ConvertTypeParameter(tp)));
+						var marker = group.Key.Marker.Specialize(subst);
+						ext.ReceiverParameters.Add(typeSystemAstBuilder.ConvertParameter(marker.Parameters.Single()));
+						ext.Constraints.AddRange(typeParameters.Select(c => typeSystemAstBuilder.ConvertTypeParameterConstraint(c)));
 
 						foreach (var member in group)
 						{
-							IMember extMember = member.ExtensionMember;
+							IMember extMember = member.ExtensionMember.Specialize(subst);
 							if (member.ExtensionMember.IsAccessor)
 							{
 								extMember = member.ExtensionMember.AccessorOwner;
@@ -1508,9 +1511,15 @@ namespace ICSharpCode.Decompiler.CSharp
 					return;
 				}
 
-				if (settings.ExtensionMembers && extensionInfo != null && entity is IMethod m && extensionInfo.InfoOfImplementationMember(m).HasValue)
+				if (settings.ExtensionMembers && extensionInfo != null)
 				{
-					return;
+					switch (entity)
+					{
+						case ITypeDefinition td when extensionInfo.IsExtensionGroupingType(td):
+							return;
+						case IMethod m when extensionInfo.InfoOfImplementationMember(m).HasValue:
+							return;
+					}
 				}
 
 				EntityDeclaration entityDecl;
@@ -1584,9 +1593,21 @@ namespace ICSharpCode.Decompiler.CSharp
 			switch (extMember)
 			{
 				case IProperty p:
-					return DoDecompile(p, decompileRun, decompilationContext.WithCurrentMember(p), info);
+					var prop = DoDecompile(p, decompileRun, decompilationContext.WithCurrentMember(p), info);
+					RemoveAttribute(prop, KnownAttribute.ExtensionMarker);
+					if (p.Getter != null)
+					{
+						RemoveAttribute(prop.GetChildByRole(PropertyDeclaration.GetterRole), KnownAttribute.ExtensionMarker);
+					}
+					if (p.Setter != null)
+					{
+						RemoveAttribute(prop.GetChildByRole(PropertyDeclaration.SetterRole), KnownAttribute.ExtensionMarker);
+					}
+					return prop;
 				case IMethod m:
-					return DoDecompile(m, decompileRun, decompilationContext.WithCurrentMember(m), info);
+					var meth = DoDecompile(m, decompileRun, decompilationContext.WithCurrentMember(m), info);
+					RemoveAttribute(meth, KnownAttribute.ExtensionMarker);
+					return meth;
 			}
 
 			throw new NotSupportedException($"Extension member {extMember} is not supported for decompilation.");
@@ -1762,7 +1783,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					if (!method.IsStatic)
 						parameterOffset = 1; // implementation method has an additional receiver parameter
-					method = extensionInfo.InfoOfExtensionMember(method).Value.ImplementationMethod;
+					method = extensionInfo.InfoOfExtensionMember((IMethod)method.MemberDefinition).Value.ImplementationMethod;
 				}
 
 				var methodDef = metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
