@@ -166,7 +166,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		static readonly AstNode thisCallPattern = new ExpressionStatement(new InvocationExpression(new MemberReferenceExpression(new ThisReferenceExpression(), ".ctor"), new Repeat(new AnyNode())));
+		static readonly AstNode thisCallPattern = new ExpressionStatement {
+			Expression = new Choice {
+				new InvocationExpression(new MemberReferenceExpression(new ThisReferenceExpression(), ".ctor"), new Repeat(new AnyNode())),
+				new AssignmentExpression(new ThisReferenceExpression(), AssignmentOperatorType.Assign, new ObjectCreateExpression(new AnyNode(), new Repeat(new AnyNode())))
+			}
+		};
 
 		public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
 		{
@@ -191,7 +196,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				var ctorMethodDef = instanceCtorsNotChainingWithThis[0].GetSymbol() as IMethod;
 				ITypeDefinition declaringTypeDefinition = ctorMethodDef?.DeclaringTypeDefinition;
-				if (ctorMethodDef != null && declaringTypeDefinition?.IsReferenceType == false && !declaringTypeDefinition.IsRecord)
+				if (ctorMethodDef != null && declaringTypeDefinition?.IsReferenceType == false && !declaringTypeDefinition.IsRecord && declaringTypeDefinition.Kind != TypeKind.Struct)
 					return;
 
 				bool ctorIsUnsafe = instanceCtorsNotChainingWithThis.All(c => c.HasModifier(Modifiers.Unsafe));
