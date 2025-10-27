@@ -235,8 +235,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			//判定主构造函数的唯一准则是：
 			//首先它不能是拷贝构造函数，且能通过IsPrimaryConstructorFast的判定逻辑，
 			//然后这个构造函数中前面部分都是类成员属性/字段赋值语句，
-			//之后是调用基类构造函数的语句即"base..ctor(...);"，
-			//再之后就是返回语句了，即"base..ctor(...);"之后不存在任何其他初始化语句。
+			//如果不是结构体的话，之后紧跟着是调用基类构造函数的语句即"base..ctor(...);"，
+			//再之后紧跟着就是返回语句了，即"base..ctor(...);"之后不存在任何其他初始化语句。
 			//注意：不存在捕获参数的情况下，主构造函数的参数和类成员之间无任何对应关系！
 			//注意：目前即使一个函数的原始代码形式是常规构造函数，但是如果它符合本IsPrimaryConstructor函数的判定规则也会将它翻译成主构造函数形式
 			bool IsPrimaryConstructor(IMethod method, IMethod unspecializedMethod)
@@ -256,9 +256,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (method.Parameters.Count == 0)
 					return false;
 
+				var minInstCount = isStruct ? 1 : 2;
+				if (body.Instructions.Count < minInstCount)
+					return false;
+
+				int cur_instruction_index = -1;
 				List<IMember> backingMembers = new List<IMember>();
 				foreach (var instruction in body.Instructions)
 				{
+					cur_instruction_index++;
 					if (!instruction.MatchStFld(out var target, out var field, out var valueInst))
 						break;
 					if (!target.MatchLdThis())
@@ -282,10 +288,22 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				if (!isStruct)
 				{
+					if (cur_instruction_index != body.Instructions.Count - 2)
+					{
+						return false;
+					}
+
 					Call baseCtorCall;
 					IsBaseCtorCall(body.Instructions.SecondToLastOrDefault(), out baseCtorCall);
 					if (baseCtorCall == null)
 						return false;
+				}
+				else
+				{
+					if (cur_instruction_index != body.Instructions.Count - 1)
+					{
+						return false;
+					}
 				}
 
 				for (int i = 0; i < method.Parameters.Count; i++)
