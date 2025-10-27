@@ -227,10 +227,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					var v = initializer.Annotation<ILVariableResolveResult>()?.Variable;
 					if (v?.Kind == IL.VariableKind.Parameter)
 					{
-						// remove record ctor parameter assignments
-						if (!IsPropertyDeclaredByPrimaryCtor(fieldOrPropertyOrEvent, record))
-							break;
-						isStructPrimaryCtor = true;
+						isStructPrimaryCtor = record?.PrimaryConstructor != null;
 						if (fieldOrPropertyOrEvent is IField f)
 							fieldToVariableMap.Add(f, v);
 					}
@@ -279,23 +276,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						}
 					}
 				} while (allSame);
-			}
-		}
-
-		bool IsPropertyDeclaredByPrimaryCtor(IMember m, RecordDecompiler record)
-		{
-			if (record == null)
-				return false;
-			switch (m)
-			{
-				case IProperty p:
-					return record.IsPropertyDeclaredByPrimaryConstructor(p);
-				case IField f:
-					return record.PrimaryConstructor != null;
-				case IEvent e:
-					return record.PrimaryConstructor != null;
-				default:
-					return false;
 			}
 		}
 

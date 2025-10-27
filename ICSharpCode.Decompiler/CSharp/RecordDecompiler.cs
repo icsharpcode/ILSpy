@@ -293,8 +293,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				for (int i = 0; i < method.Parameters.Count; i++)
 				{
 					var param = unspecializedMethod.Parameters[i];
-					//var backingMember = backingMembers.Find(x => x.Name == param.Name);
-					var backingMember = backingMembers.Count > i ? backingMembers[i] : null;
+					var backingMember = backingMembers.Find(x => x.Name == param.Name);
+					//var backingMember = backingMembers.Count > i ? backingMembers[i] : null;
 					if (backingMember != null)
 					{
 						primaryCtorParameterToAutoPropertyOrBackingField.Add(param, backingMember);
