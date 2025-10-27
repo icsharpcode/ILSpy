@@ -210,6 +210,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				if (!settings.UsePrimaryConstructorSyntax)
 					return null;
+				if (isStruct)
+					return null;
 			}
 			else
 			{
