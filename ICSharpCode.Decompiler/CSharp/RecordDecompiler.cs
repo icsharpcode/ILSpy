@@ -218,38 +218,98 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			var subst = recordTypeDef.AsParameterizedType().GetSubstitution();
+			var instanceCtors = new List<IMethod>();
 			foreach (var method in recordTypeDef.Methods)
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 				if (method.IsStatic || !method.IsConstructor)
 					continue;
-				var m = method.Specialize(subst);
-				if (IsPrimaryConstructor(m, method))
-					return method;
-				primaryCtorParameterToAutoPropertyOrBackingField.Clear();
-				autoPropertyOrBackingFieldToPrimaryCtorParameter.Clear();
+				if (IsCopyConstructor(method))
+					continue;
+				instanceCtors.Add(method);
 			}
 
-			return null;
+			IMethod primaryConstructor = null;
+			bool CheckForInitPrimaryConstructor(IMethod method, IMethod unspecializedMethod, Block body)
+			{
+				if (primaryConstructor == null)
+				{
+					if (!IsPrimaryConstructor(method, unspecializedMethod, body))
+					{
+						return false;
+					}
+					primaryConstructor = unspecializedMethod;
+					return true;
+				}
+				return false;
+			}
+			bool mustFindChainingWithThis_Or_IsPrimaryConstructor = instanceCtors.Count > 1;
+			for (int i = instanceCtors.Count - 1; i >= 0; i--)
+			{
+				var unspecializedMethod = instanceCtors[i];
+				var method = unspecializedMethod.Specialize(subst);
+				Block body = null;
+
+				if (mustFindChainingWithThis_Or_IsPrimaryConstructor)
+				{
+					body = DecompileBody(method);
+					if (body != null)
+					{
+						var first = body.Instructions.FirstOrDefault();
+						if (first is Call call && call.Method.IsConstructor)
+						{
+							if (call.Arguments.Count > 1 && call.Arguments[0].MatchLdThis())
+							{
+								// is constructor chaining with this
+								continue;
+							}
+						}
+						// Also handle value-type chaining syntax compiled as a stobj with a newobj value:
+						// e.g. `stobj T(ldloc this, newobj T::.ctor(...))` corresponds to `this = new T(...)` in source.
+						else if (first is StObj stobj)
+						{
+							// Check target is 'this'
+							if (stobj.Target.MatchLdThis())
+							{
+								// Check value is a newobj (constructor call)
+								if (stobj.Value is NewObj newObj && newObj.Method.IsConstructor && newObj.Method.DeclaringType == recordTypeDef)
+								{
+									// is constructor chaining with this for value-types
+									continue;
+								}
+							}
+						}
+					}
+				}
+
+				if (!CheckForInitPrimaryConstructor(method, unspecializedMethod, body))
+				{
+					primaryConstructor = null;
+					primaryCtorParameterToAutoPropertyOrBackingField.Clear();
+					autoPropertyOrBackingFieldToPrimaryCtorParameter.Clear();
+					break;
+				}
+
+			}
+
+			return primaryConstructor;
 
 			//判定主构造函数的唯一准则是：
-			//首先它不能是拷贝构造函数，且能通过IsPrimaryConstructorFast的判定逻辑，
+			//首先它不能是拷贝构造函数(已在外部排除)，且能通过IsPrimaryConstructorFast的判定逻辑，
 			//然后这个构造函数中前面部分都是类成员属性/字段赋值语句，
 			//如果不是结构体的话，之后紧跟着是调用基类构造函数的语句即"base..ctor(...);"，
 			//再之后紧跟着就是返回语句了，即"base..ctor(...);"之后不存在任何其他初始化语句。
 			//注意：不存在捕获参数的情况下，主构造函数的参数和类成员之间无任何对应关系！
 			//注意：目前即使一个函数的原始代码形式是常规构造函数，但是如果它符合本IsPrimaryConstructor函数的判定规则也会将它翻译成主构造函数形式
-			bool IsPrimaryConstructor(IMethod method, IMethod unspecializedMethod)
+			bool IsPrimaryConstructor(IMethod method, IMethod unspecializedMethod, Block body)
 			{
 				Debug.Assert(method.IsConstructor);
-
-				if (IsCopyConstructor(method))
-					return false;
 
 				if (!IsPrimaryConstructorFast(method, isStruct, false))
 					return false;
 
-				var body = DecompileBody(method);
+				if (body == null)
+					body = DecompileBody(method);
 				if (body == null)
 					return false;
 
