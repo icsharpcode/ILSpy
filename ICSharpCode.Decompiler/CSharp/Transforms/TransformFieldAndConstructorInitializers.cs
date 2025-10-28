@@ -233,6 +233,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (v?.Kind == IL.VariableKind.Parameter)
 					{
 						isStructPrimaryCtor = record?.PrimaryConstructor != null;
+						if (!isStructPrimaryCtor)
+						{
+							// When there is no primary constructor, assignments from constructor parameters to fields or properties cannot be transferred.
+							break;
+						}
 						if (fieldOrPropertyOrEvent is IField f)
 							fieldToVariableMap.Add(f, v);
 					}
