@@ -280,6 +280,10 @@ namespace ICSharpCode.Decompiler.CSharp
 							}
 						}
 					}
+					else
+					{
+						continue;
+					}
 				}
 
 				if (!CheckForInitPrimaryConstructor(method, unspecializedMethod, body))
@@ -339,10 +343,6 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						backingMember = field;
 						backingMembers.Add(backingMember);
-					}
-					else
-					{
-						return false;
 					}
 				}
 
