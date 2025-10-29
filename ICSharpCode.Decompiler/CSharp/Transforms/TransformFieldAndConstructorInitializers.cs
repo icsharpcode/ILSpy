@@ -229,17 +229,55 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					// 'this'/'base' cannot be used in initializers
 					if (initializer.DescendantsAndSelf.Any(n => n is ThisReferenceExpression || n is BaseReferenceExpression))
 						break;
+
+					bool assignFromParameters = false;
+
 					var v = initializer.Annotation<ILVariableResolveResult>()?.Variable;
 					if (v == null)
 					{
 						v = (initializer.Annotation<ByReferenceResolveResult>()?.ElementResult as ILVariableResolveResult)?.Variable;
 					}
-					if (v?.Kind == IL.VariableKind.Parameter)
+					if (v != null)
+					{
+						assignFromParameters = v.Kind == IL.VariableKind.Parameter;
+					}
+					else
+					{
+						v = default(IL.ILVariable); // Used as a placeholder to represent that it comes from the result of a complex expression.
+
+						// If we didn't get an ILVariableResolveResult for the whole initializer expression,
+						// walk its descendants and try to find any reference that corresponds to a
+						// constructor parameter. We consider both ILVariable annotations (including
+						// by-reference wrappers) and high-level parameter symbols.
+						foreach (var node in initializer.DescendantsAndSelf)
+						{
+							var localVar = node.Annotation<ILVariableResolveResult>()?.Variable
+								?? (node.Annotation<ByReferenceResolveResult>()?.ElementResult as ILVariableResolveResult)?.Variable;
+							if (localVar != null)
+							{
+								if (localVar.Kind == IL.VariableKind.Parameter)
+								{
+									assignFromParameters = true;
+									break;
+								}
+							}
+
+							// Also check for high-level parameter symbols in case no IL annotation is present
+							var sym = node.GetSymbol();
+							if (sym is IParameter)
+							{
+								assignFromParameters = true;
+								break;
+							}
+
+						}
+					}
+					if (assignFromParameters)
 					{
 						isStructPrimaryCtor = record?.PrimaryConstructor != null;
 						if (!isStructPrimaryCtor)
 						{
-							// When there is no primary constructor, assignments from constructor parameters to fields or properties cannot be transferred.
+							// When there is no primary constructor, assignments from constructor parameters to class members cannot be transferred.
 							break;
 						}
 						if (fieldOrPropertyOrEvent is IField f)
