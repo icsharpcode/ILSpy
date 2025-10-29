@@ -196,7 +196,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				var ctorMethodDef = instanceCtorsNotChainingWithThis[0].GetSymbol() as IMethod;
 				ITypeDefinition declaringTypeDefinition = ctorMethodDef?.DeclaringTypeDefinition;
-				if (ctorMethodDef != null && declaringTypeDefinition?.IsReferenceType == false && !declaringTypeDefinition.IsRecord && declaringTypeDefinition.Kind != TypeKind.Struct)
+				var isStruct = declaringTypeDefinition?.Kind == TypeKind.Struct;
+				if (ctorMethodDef != null && declaringTypeDefinition?.IsReferenceType == false && !declaringTypeDefinition.IsRecord && !isStruct)
 					return;
 
 				bool ctorIsUnsafe = instanceCtorsNotChainingWithThis.All(c => c.HasModifier(Modifiers.Unsafe));
@@ -211,7 +212,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// Recognize field or property initializers:
 				// Translate first statement in all ctors (if all ctors have the same statement) into an initializer.
 				bool allSame;
-				bool isStructPrimaryCtor = false;
+				bool hasPrimaryCtor = record?.PrimaryConstructor != null;
 				do
 				{
 					Match m = fieldInitializerPattern.Match(instanceCtorsNotChainingWithThis[0].Body.FirstOrDefault());
@@ -274,8 +275,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 					if (assignFromParameters)
 					{
-						isStructPrimaryCtor = record?.PrimaryConstructor != null;
-						if (!isStructPrimaryCtor)
+						if (!hasPrimaryCtor)
 						{
 							// When there is no primary constructor, assignments from constructor parameters to class members cannot be transferred.
 							break;
@@ -288,8 +288,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						// cannot transform if member is not found
 						if (fieldOrPropertyOrEventDecl == null)
 							break;
-						// or if this is a struct record, but not the primary ctor
-						if (declaringTypeDefinition.IsRecord && declaringTypeDefinition.IsReferenceType == false && !isStructPrimaryCtor)
+						// or if this is a struct, but not the primary ctor
+						if (isStruct && !hasPrimaryCtor)
 							break;
 					}
 
