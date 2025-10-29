@@ -230,6 +230,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (initializer.DescendantsAndSelf.Any(n => n is ThisReferenceExpression || n is BaseReferenceExpression))
 						break;
 					var v = initializer.Annotation<ILVariableResolveResult>()?.Variable;
+					if (v == null)
+					{
+						v = (initializer.Annotation<ByReferenceResolveResult>()?.ElementResult as ILVariableResolveResult)?.Variable;
+					}
 					if (v?.Kind == IL.VariableKind.Parameter)
 					{
 						isStructPrimaryCtor = record?.PrimaryConstructor != null;
