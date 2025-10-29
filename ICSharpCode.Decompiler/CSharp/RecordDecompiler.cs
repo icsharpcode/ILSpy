@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.cancellationToken = cancellationToken;
 			this.baseClass = recordTypeDef.DirectBaseTypes.FirstOrDefault(b => b.Kind == TypeKind.Class);
 			this.isStruct = recordTypeDef.Kind == TypeKind.Struct;
-			var baseClassTypeDef = baseClass as ITypeDefinition;
+			var baseClassTypeDef = (baseClass is ITypeDefinition def) ? def : (baseClass is ParameterizedType paramT) ? paramT.GenericType as ITypeDefinition : null;
 			this.isInheritedRecord = !isStruct && (baseClassTypeDef?.IsRecord ?? false);
 			this.isSealed = recordTypeDef.IsSealed;
 			DetectAutomaticProperties();
