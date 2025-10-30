@@ -231,7 +231,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (initializer.DescendantsAndSelf.Any(n => n is ThisReferenceExpression || n is BaseReferenceExpression))
 						break;
 
-					bool assignFromParameters = false;
+					bool assignFromCurrentCtorParameters = false;
 
 					var v = initializer.Annotation<ILVariableResolveResult>()?.Variable;
 					if (v == null)
@@ -240,12 +240,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 					if (v != null)
 					{
-						assignFromParameters = v.Kind == IL.VariableKind.Parameter;
+						assignFromCurrentCtorParameters = v.Kind == IL.VariableKind.Parameter;
 					}
 					else
 					{
-						v = default(IL.ILVariable); // Used as a placeholder to represent that it comes from the result of a complex expression.
-
 						// If we didn't get an ILVariableResolveResult for the whole initializer expression,
 						// walk its descendants and try to find any reference that corresponds to a
 						// constructor parameter. We consider both ILVariable annotations (including
@@ -258,29 +256,23 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							{
 								if (localVar.Kind == IL.VariableKind.Parameter)
 								{
-									assignFromParameters = true;
-									break;
+									if (localVar.Function.Method == ctorMethodDef)
+									{
+										assignFromCurrentCtorParameters = true;
+										break;
+									}
 								}
 							}
-
-							// Also check for high-level parameter symbols in case no IL annotation is present
-							var sym = node.GetSymbol();
-							if (sym is IParameter)
-							{
-								assignFromParameters = true;
-								break;
-							}
-
 						}
 					}
-					if (assignFromParameters)
+					if (assignFromCurrentCtorParameters)
 					{
 						if (!hasPrimaryCtor)
 						{
 							// When there is no primary constructor, assignments from constructor parameters to class members cannot be transferred.
 							break;
 						}
-						if (fieldOrPropertyOrEvent is IField f)
+						if (fieldOrPropertyOrEvent is IField f && v != null)
 							fieldToVariableMap.Add(f, v);
 					}
 					else
