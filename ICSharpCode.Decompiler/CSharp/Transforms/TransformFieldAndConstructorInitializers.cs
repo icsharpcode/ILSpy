@@ -231,27 +231,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (initializer.DescendantsAndSelf.Any(n => n is ThisReferenceExpression || n is BaseReferenceExpression))
 						break;
 
-					bool assignFromCurrentCtorParameters = false;
-
 					var v = initializer.Annotation<ILVariableResolveResult>()?.Variable;
-					if (v == null)
-					{
-						v = (initializer.Annotation<ByReferenceResolveResult>()?.ElementResult as ILVariableResolveResult)?.Variable;
-					}
-					if (v != null)
-					{
-						assignFromCurrentCtorParameters = v.Kind == IL.VariableKind.Parameter;
-					}
-					else
+					bool assignFromCurrentCtorParameters = v?.Kind == IL.VariableKind.Parameter;
+					if (!assignFromCurrentCtorParameters)
 					{
 						// If we didn't get an ILVariableResolveResult for the whole initializer expression,
 						// walk its descendants and try to find any reference that corresponds to a
 						// constructor parameter. We consider both ILVariable annotations (including
 						// by-reference wrappers) and high-level parameter symbols.
-						foreach (var node in initializer.DescendantsAndSelf)
+						foreach (var node in initializer.Descendants)
 						{
-							var localVar = node.Annotation<ILVariableResolveResult>()?.Variable
-								?? (node.Annotation<ByReferenceResolveResult>()?.ElementResult as ILVariableResolveResult)?.Variable;
+							var localVar = node.Annotation<ILVariableResolveResult>()?.Variable;
 							if (localVar != null)
 							{
 								if (localVar.Kind == IL.VariableKind.Parameter)
