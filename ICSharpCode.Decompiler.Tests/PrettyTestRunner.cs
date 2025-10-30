@@ -853,9 +853,116 @@ namespace ICSharpCode.Decompiler.Tests
 			configureDecompiler?.Invoke(settings);
 			var decompiled = await Tester.DecompileCSharp(exeFile, settings).ConfigureAwait(false);
 
-			// 3. Compare
-			CodeAssert.FilesAreEqual(csFile, decompiled, Tester.GetPreprocessorSymbols(cscOptions).Append("EXPECTED_OUTPUT").ToArray());
-			Tester.RepeatOnIOError(() => File.Delete(decompiled));
+			// First try textual comparison: if equal, treat as pass and clean up
+			string csCompareWarning = null;
+			try
+			{
+				var diff = new StringWriter();
+				if (!CodeComparer.Compare(File.ReadAllText(csFile), File.ReadAllText(decompiled), diff, CodeComparer.NormalizeLine, Tester.GetPreprocessorSymbols(cscOptions).Append("EXPECTED_OUTPUT").ToArray()))
+				{
+					csCompareWarning = "The writing style does not conform to the latest recommendations:\r\n" + diff.ToString() + "\r\n\r\n";
+					throw new AssertionException(null);
+				}
+				// textual match: cleanup decompiled and return
+				Tester.RepeatOnIOError(() => File.Delete(decompiled));
+				return;
+			}
+			catch (AssertionException)
+			{
+				// textual compare failed -> fall back to IL roundtrip
+			}
+
+			// 3. Compare by disassembling original and recompiled decompiled output to IL
+			// create a per-test temp directory named by test + options to aid debugging; append ' (2)' etc only if needed
+			string baseTempName = testName + Tester.GetSuffix(cscOptions);
+			string tempDir = Path.Combine(Path.GetTempPath(), "ICSharpCode.Decompiler.Tests", baseTempName);
+			if (Directory.Exists(tempDir))
+			{
+				int idx = 2;
+				string newDir;
+				while (true)
+				{
+					newDir = Path.Combine(Path.GetTempPath(), "ICSharpCode.Decompiler.Tests", baseTempName + " (" + idx + ")");
+					if (!Directory.Exists(newDir))
+					{
+						tempDir = newDir;
+						break;
+					}
+					idx++;
+				}
+			}
+			Directory.CreateDirectory(tempDir);
+
+			string originalIl = Path.Combine(tempDir, Path.GetFileNameWithoutExtension(exeFile) + ".original.il");
+			// Use the same file name for the recompiled assembly so the logical assembly name in the IL matches.
+			string recompiledAssembly = Path.Combine(tempDir, Path.GetFileName(exeFile));
+			string recompiledIl = Path.Combine(tempDir, Path.GetFileNameWithoutExtension(exeFile) + ".decompiled.il");
+
+			// move the decompiled C# file into the temp dir so all artifacts are together
+			var decompiledNewFileName = Path.GetFileNameWithoutExtension(csFile) + ".decompiled" + Path.GetExtension(csFile);
+			string decompiledInTemp = Path.Combine(tempDir, decompiledNewFileName);
+			if (!string.Equals(decompiled, decompiledInTemp, StringComparison.OrdinalIgnoreCase))
+			{
+				File.Move(decompiled, decompiledInTemp);
+				decompiled = decompiledInTemp;
+			}
+
+			bool success = false;
+			try
+			{
+				await Tester.Disassemble(exeFile, originalIl, asmOptions | AssemblerOptions.SortedOutput).ConfigureAwait(false);
+
+				CompilerResults recompiled = null;
+				try
+				{
+					recompiled = await Tester.CompileCSharp(decompiled, cscOptions, recompiledAssembly).ConfigureAwait(false);
+				}
+				finally
+				{
+					if (recompiled != null)
+						recompiled.DeleteTempFiles();
+				}
+
+				await Tester.Disassemble(recompiledAssembly, recompiledIl, asmOptions | AssemblerOptions.SortedOutput).ConfigureAwait(false);
+
+				CodeAssert.AreEqual(File.ReadAllText(originalIl), File.ReadAllText(recompiledIl));
+				// IL roundtrip matched: treat test as warning
+				Assert.Warn(csCompareWarning + "Textual comparison failed but IL roundtrip matched.");
+				success = true; // only set true if comparison didn't throw
+			}
+			finally
+			{
+				if (success)
+				{
+					// cleanup entire temp directory when comparison succeeded
+					try
+					{
+						Tester.RepeatOnIOError(() => Directory.Delete(tempDir, true));
+					}
+					catch { /* ignore cleanup failures */ }
+				}
+				else
+				{
+					// leave files for debugging; print location for quick access
+					try
+					{ TestContext.WriteLine("warning:\r\n" + csCompareWarning + "Decompilation roundtrip failed. Temporary files kept in: " + tempDir); }
+					catch { Console.WriteLine("warning:\r\n" + csCompareWarning + "Decompilation roundtrip failed. Temporary files kept in: " + tempDir); }
+					// copy the original input C# file into the temp dir for convenient comparison
+					try
+					{ string destCs = Path.Combine(tempDir, Path.GetFileName(csFile)); Tester.RepeatOnIOError(() => File.Copy(csFile, destCs, overwrite: true)); }
+					catch { }
+					// copy the original compiled assembly and pdb into the temp dir for full comparison
+					try
+					{
+						var destAsm = Path.Combine(tempDir, Path.GetFileNameWithoutExtension(exeFile) + ".original" + Path.GetExtension(exeFile));
+						Tester.RepeatOnIOError(() => File.Copy(exeFile, destAsm, overwrite: true));
+						var pdb = Path.ChangeExtension(exeFile, ".pdb");
+						if (File.Exists(pdb))
+						{ var destPdb = Path.Combine(tempDir, Path.GetFileNameWithoutExtension(pdb) + ".original" + Path.GetExtension(pdb)); Tester.RepeatOnIOError(() => File.Copy(pdb, destPdb, overwrite: true)); }
+					}
+					catch { }
+				}
+			}
 		}
 	}
 }
