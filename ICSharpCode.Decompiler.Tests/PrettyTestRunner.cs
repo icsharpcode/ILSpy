@@ -854,13 +854,13 @@ namespace ICSharpCode.Decompiler.Tests
 			var decompiled = await Tester.DecompileCSharp(exeFile, settings).ConfigureAwait(false);
 
 			// First try textual comparison: if equal, treat as pass and clean up
-			string csCompareWarning = null;
+			string csCompareDiff = null;
 			try
 			{
 				var diff = new StringWriter();
 				if (!CodeComparer.Compare(File.ReadAllText(csFile), File.ReadAllText(decompiled), diff, CodeComparer.NormalizeLine, Tester.GetPreprocessorSymbols(cscOptions).Append("EXPECTED_OUTPUT").ToArray()))
 				{
-					csCompareWarning = "The writing style does not conform to the latest recommendations:\r\n" + diff.ToString() + "\r\n\r\n";
+					csCompareDiff = diff.ToString();
 					throw new AssertionException(null);
 				}
 				// textual match: cleanup decompiled and return
@@ -927,6 +927,7 @@ namespace ICSharpCode.Decompiler.Tests
 
 				CodeAssert.AreEqual(File.ReadAllText(originalIl), File.ReadAllText(recompiledIl));
 				// IL roundtrip matched: treat test as warning
+				var csCompareWarning = "The writing style does not conform to the latest recommendations:\r\n" + csCompareDiff + "\r\n\r\n";
 				Assert.Warn(csCompareWarning + "Textual comparison failed but IL roundtrip matched.");
 				success = true; // only set true if comparison didn't throw
 			}
@@ -944,9 +945,10 @@ namespace ICSharpCode.Decompiler.Tests
 				else
 				{
 					// leave files for debugging; print location for quick access
+					var csCompareResult = "Differences between the decompiled C# source code and the original:\r\n" + csCompareDiff + "\r\n\r\n";
 					try
-					{ TestContext.WriteLine("warning:\r\n" + csCompareWarning + "Decompilation roundtrip failed. Temporary files kept in: " + tempDir); }
-					catch { Console.WriteLine("warning:\r\n" + csCompareWarning + "Decompilation roundtrip failed. Temporary files kept in: " + tempDir); }
+					{ TestContext.WriteLine(csCompareResult + "Decompilation roundtrip failed. Temporary files kept in: " + tempDir); }
+					catch { Console.WriteLine(csCompareResult + "Decompilation roundtrip failed. Temporary files kept in: " + tempDir); }
 					// copy the original input C# file into the temp dir for convenient comparison
 					try
 					{ string destCs = Path.Combine(tempDir, Path.GetFileName(csFile)); Tester.RepeatOnIOError(() => File.Copy(csFile, destCs, overwrite: true)); }
