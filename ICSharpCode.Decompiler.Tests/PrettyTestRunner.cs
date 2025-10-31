@@ -878,17 +878,36 @@ namespace ICSharpCode.Decompiler.Tests
 			string tempDir = Path.Combine(Path.GetTempPath(), "ICSharpCode.Decompiler.Tests", baseTempName);
 			if (Directory.Exists(tempDir))
 			{
-				int idx = 2;
-				string newDir;
-				while (true)
+				void PrepareNewDirName()
 				{
-					newDir = Path.Combine(Path.GetTempPath(), "ICSharpCode.Decompiler.Tests", baseTempName + " (" + idx + ")");
-					if (!Directory.Exists(newDir))
+					int idx = 2;
+					string newDir;
+					while (true)
 					{
-						tempDir = newDir;
-						break;
+						newDir = Path.Combine(Path.GetTempPath(), "ICSharpCode.Decompiler.Tests", baseTempName + " (" + idx + ")");
+						if (!Directory.Exists(newDir))
+						{
+							tempDir = newDir;
+							break;
+						}
+						idx++;
 					}
-					idx++;
+				}
+				const bool preferOverwrite = true;
+				if (preferOverwrite)
+				{
+					try
+					{
+						Tester.RepeatOnIOError(() => Directory.Delete(tempDir, true));
+					}
+					catch
+					{
+						PrepareNewDirName();
+					}
+				}
+				else
+				{
+					PrepareNewDirName();
 				}
 			}
 			Directory.CreateDirectory(tempDir);
