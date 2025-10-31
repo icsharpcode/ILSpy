@@ -249,11 +249,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				var unspecializedMethod = instanceCtors[i];
 				var method = unspecializedMethod.Specialize(subst);
 				Block body = null;
-				bool? bodyHasLeadingNop = false;
+				bool? bodyHasLeadingOrTrailingNop = false;
 
 				if (mustFindChainingWithThis_Or_IsPrimaryConstructor)
 				{
-					body = DecompileBody(method, ref bodyHasLeadingNop);
+					body = DecompileBody(method, ref bodyHasLeadingOrTrailingNop);
 					if (body != null)
 					{
 						var first = body.Instructions.FirstOrDefault();
@@ -287,7 +287,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				}
 
-				if (bodyHasLeadingNop == true || !CheckForInitPrimaryConstructor(method, unspecializedMethod, body))
+				if (bodyHasLeadingOrTrailingNop == true || !CheckForInitPrimaryConstructor(method, unspecializedMethod, body))
 				{
 					primaryConstructor = null;
 					primaryCtorParameterToAutoPropertyOrBackingField.Clear();
@@ -315,9 +315,9 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				if (body == null)
 				{
-					bool? bodyHasLeadingNop = false;
-					body = DecompileBody(method, ref bodyHasLeadingNop);
-					if (bodyHasLeadingNop == true)
+					bool? bodyHasLeadingOrTrailingNop = false;
+					body = DecompileBody(method, ref bodyHasLeadingOrTrailingNop);
+					if (bodyHasLeadingOrTrailingNop == true)
 						return false;
 				}
 				if (body == null)
@@ -1297,10 +1297,10 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		Block DecompileBody(IMethod method)
 		{
-			bool? bodyHasLeadingNop = null;
-			return DecompileBody(method, ref bodyHasLeadingNop);
+			bool? bodyHasLeadingOrTrailingNop = null;
+			return DecompileBody(method, ref bodyHasLeadingOrTrailingNop);
 		}
-		Block DecompileBody(IMethod method, ref bool? bodyHasLeadingNop)
+		Block DecompileBody(IMethod method, ref bool? bodyHasLeadingOrTrailingNop)
 		{
 			if (method == null || method.MetadataToken.IsNil)
 				return null;
@@ -1317,10 +1317,32 @@ namespace ICSharpCode.Decompiler.CSharp
 			var body = typeSystem.MainModule.MetadataFile.GetMethodBody(methodDef.RelativeVirtualAddress);
 			var ilReader = new ILReader(typeSystem.MainModule);
 			var il = ilReader.ReadIL(methodDefHandle, body, genericContext, ILFunctionKind.TopLevelFunction, cancellationToken);
-			if (bodyHasLeadingNop != null)
+			if (bodyHasLeadingOrTrailingNop != null)
 			{
+				bodyHasLeadingOrTrailingNop = false;
 				var preBody = il.Body is BlockContainer bc ? bc.EntryPoint ?? il.Body as Block : null;
-				bodyHasLeadingNop = preBody != null ? preBody.Instructions.FirstOrDefault() is Nop : false;
+				if (preBody != null)
+				{
+					var instructions = preBody.Instructions;
+					var count = instructions.Count;
+					if (count > 1)
+					{
+						if (count >= 3)
+						{
+							if (instructions[count - 1] is Leave && instructions[count - 2] is Nop && instructions[count - 3] is Nop)
+							{
+								bodyHasLeadingOrTrailingNop = true;
+							}
+						}
+						if (bodyHasLeadingOrTrailingNop == false)
+						{
+							if (instructions[0] is Nop)
+							{
+								bodyHasLeadingOrTrailingNop = true;
+							}
+						}
+					}
+				}
 			}
 			var settings = new DecompilerSettings(LanguageVersion.CSharp1);
 			var transforms = CSharpDecompiler.GetILTransforms();
