@@ -249,10 +249,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				var unspecializedMethod = instanceCtors[i];
 				var method = unspecializedMethod.Specialize(subst);
 				Block body = null;
+				bool? bodyHasLeadingNop = false;
 
 				if (mustFindChainingWithThis_Or_IsPrimaryConstructor)
 				{
-					body = DecompileBody(method);
+					body = DecompileBody(method, ref bodyHasLeadingNop);
 					if (body != null)
 					{
 						var first = body.Instructions.FirstOrDefault();
@@ -286,7 +287,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				}
 
-				if (!CheckForInitPrimaryConstructor(method, unspecializedMethod, body))
+				if (bodyHasLeadingNop == true || !CheckForInitPrimaryConstructor(method, unspecializedMethod, body))
 				{
 					primaryConstructor = null;
 					primaryCtorParameterToAutoPropertyOrBackingField.Clear();
@@ -313,7 +314,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					return false;
 
 				if (body == null)
-					body = DecompileBody(method);
+				{
+					bool? bodyHasLeadingNop = false;
+					body = DecompileBody(method, ref bodyHasLeadingNop);
+					if (bodyHasLeadingNop == true)
+						return false;
+				}
 				if (body == null)
 					return false;
 
@@ -1291,6 +1297,11 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		Block DecompileBody(IMethod method)
 		{
+			bool? bodyHasLeadingNop = null;
+			return DecompileBody(method, ref bodyHasLeadingNop);
+		}
+		Block DecompileBody(IMethod method, ref bool? bodyHasLeadingNop)
+		{
 			if (method == null || method.MetadataToken.IsNil)
 				return null;
 			var metadata = typeSystem.MainModule.metadata;
@@ -1306,6 +1317,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			var body = typeSystem.MainModule.MetadataFile.GetMethodBody(methodDef.RelativeVirtualAddress);
 			var ilReader = new ILReader(typeSystem.MainModule);
 			var il = ilReader.ReadIL(methodDefHandle, body, genericContext, ILFunctionKind.TopLevelFunction, cancellationToken);
+			if (bodyHasLeadingNop != null)
+			{
+				var preBody = il.Body is BlockContainer bc ? bc.EntryPoint ?? il.Body as Block : null;
+				bodyHasLeadingNop = preBody != null ? preBody.Instructions.FirstOrDefault() is Nop : false;
+			}
 			var settings = new DecompilerSettings(LanguageVersion.CSharp1);
 			var transforms = CSharpDecompiler.GetILTransforms();
 			// Remove the last couple transforms -- we don't need variable names etc. here
