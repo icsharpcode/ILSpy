@@ -305,7 +305,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			//然后这个构造函数中前面部分都是类成员属性/字段赋值语句，
 			//如果不是结构体的话，之后紧跟着是调用基类构造函数的语句即`base..ctor(...);`，
 			//再之后紧跟着就是返回语句了，即`base..ctor(...);`之后不存在任何其他初始化语句。
-			//特殊情况：`record struct`类型时，必须至少存在一条从构造函数参数到`BackingFieldOfAutomaticProperty`的赋值语句。
+			//特殊情况：`record`类型时，必须存在完整的从构造函数参数到`BackingFieldOfAutomaticProperty`的赋值语句序列。
 			//注意：不存在捕获参数的情况下，主构造函数的参数和类成员之间无任何对应关系！
 			//注意：目前即使一个函数的原始代码形式是常规构造函数，但是如果它符合本`IsPrimaryConstructor`函数的判定规则也会将它翻译成主构造函数形式
 			bool IsPrimaryConstructor(IMethod method, IMethod unspecializedMethod, Block body)
@@ -333,7 +333,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return false;
 
 				int cur_instruction_index = -1;
-				bool foundAssignmentStatementFromConstructorParameterOfRecordStructToBackingFieldOfAutomaticProperty = false;
+				int foundAssignmentStatementFromConstructorParameterOfRecordToBackingFieldOfAutomaticProperty = 0;
 				List<IMember> backingMembers = new List<IMember>();
 				foreach (var instruction in body.Instructions)
 				{
@@ -342,13 +342,14 @@ namespace ICSharpCode.Decompiler.CSharp
 						break;
 					if (!target.MatchLdThis())
 						return false;
-					if (isStruct && recordTypeDef.IsRecord)
+					if (recordTypeDef.IsRecord)
 					{
-						if (!foundAssignmentStatementFromConstructorParameterOfRecordStructToBackingFieldOfAutomaticProperty)
+						if (foundAssignmentStatementFromConstructorParameterOfRecordToBackingFieldOfAutomaticProperty < method.Parameters.Count)
 						{
-							if (PatternStatementTransform.IsBackingFieldOfAutomaticProperty(field, out var _))
+							if (PatternStatementTransform.IsBackingFieldOfAutomaticProperty(field, out var param_property) &&
+								param_property.Name == unspecializedMethod.Parameters[foundAssignmentStatementFromConstructorParameterOfRecordToBackingFieldOfAutomaticProperty].Name)
 							{
-								foundAssignmentStatementFromConstructorParameterOfRecordStructToBackingFieldOfAutomaticProperty = true;
+								foundAssignmentStatementFromConstructorParameterOfRecordToBackingFieldOfAutomaticProperty++;
 							}
 						}
 					}
@@ -365,9 +366,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				}
 
-				if (isStruct && recordTypeDef.IsRecord)
+				if (recordTypeDef.IsRecord)
 				{
-					if (!foundAssignmentStatementFromConstructorParameterOfRecordStructToBackingFieldOfAutomaticProperty)
+					if (foundAssignmentStatementFromConstructorParameterOfRecordToBackingFieldOfAutomaticProperty < method.Parameters.Count)
 					{
 						return false;
 					}
