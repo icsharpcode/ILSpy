@@ -262,7 +262,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							// When there is no primary constructor, assignments from constructor parameters to class members cannot be transferred.
 							break;
 						}
-						if (fieldOrPropertyOrEvent is IField f && v != null)
+						if (fieldOrPropertyOrEvent is IField f && v != null && !isStruct)
 							fieldToVariableMap.Add(f, v);
 					}
 					else
