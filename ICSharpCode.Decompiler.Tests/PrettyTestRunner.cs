@@ -944,7 +944,7 @@ namespace ICSharpCode.Decompiler.Tests
 
 				await Tester.Disassemble(recompiledAssembly, recompiledIl, asmOptions | AssemblerOptions.SortedOutput).ConfigureAwait(false);
 
-				CodeAssert.AreEqual(File.ReadAllText(originalIl), File.ReadAllText(recompiledIl));
+				CodeAssert.AreEqualIL(File.ReadAllText(originalIl), File.ReadAllText(recompiledIl));
 				// IL roundtrip matched: treat test as warning
 				var csCompareWarning = "The writing style does not conform to the latest recommendations:\r\n" + csCompareDiff + "\r\n\r\n";
 				Assert.Warn(csCompareWarning + "Textual comparison failed but IL roundtrip matched.");

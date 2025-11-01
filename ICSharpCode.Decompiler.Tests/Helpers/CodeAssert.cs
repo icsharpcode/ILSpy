@@ -20,10 +20,20 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			AreEqual(File.ReadAllText(fileName1), File.ReadAllText(fileName2), definedSymbols);
 		}
 
+		public static void AreEqualIL(string input1, string input2, string[] definedSymbols = null)
+		{
+			AreEqual(input1, input2, false, definedSymbols);
+		}
+
 		public static void AreEqual(string input1, string input2, string[] definedSymbols = null)
 		{
+			AreEqual(input1, input2, true, definedSymbols);
+		}
+
+		public static void AreEqual(string input1, string input2, bool isCsCode, string[] definedSymbols = null)
+		{
 			var diff = new StringWriter();
-			if (!CodeComparer.Compare(input1, input2, diff, CodeComparer.NormalizeLine, definedSymbols))
+			if (!CodeComparer.Compare(input1, input2, isCsCode, diff, CodeComparer.NormalizeLine, definedSymbols))
 			{
 				Assert.Fail(diff.ToString());
 			}
@@ -34,8 +44,13 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 	{
 		public static bool Compare(string input1, string input2, StringWriter diff, Func<string, string> normalizeLine, string[] definedSymbols = null)
 		{
-			var collection1 = NormalizeAndSplitCode(input1, definedSymbols ?? new string[0]);
-			var collection2 = NormalizeAndSplitCode(input2, definedSymbols ?? new string[0]);
+			return Compare(input1, input2, true, diff, normalizeLine, definedSymbols);
+		}
+
+		public static bool Compare(string input1, string input2, bool isCsCode, StringWriter diff, Func<string, string> normalizeLine, string[] definedSymbols = null)
+		{
+			var collection1 = NormalizeAndSplitCode(input1, isCsCode, definedSymbols ?? new string[0]);
+			var collection2 = NormalizeAndSplitCode(input2, isCsCode, definedSymbols ?? new string[0]);
 			var diffSections = DiffLib.Diff.CalculateSections(
 				collection1, collection2, new CodeLineEqualityComparer(normalizeLine)
 			);
@@ -187,11 +202,14 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 		}
 
-		private static IList<string> NormalizeAndSplitCode(string input, IEnumerable<string> definedSymbols)
+		private static IList<string> NormalizeAndSplitCode(string input, bool isCsCode, IEnumerable<string> definedSymbols)
 		{
-			var syntaxTree = CSharpSyntaxTree.ParseText(input, new CSharpParseOptions(preprocessorSymbols: definedSymbols));
-			var result = new DeleteDisabledTextRewriter().Visit(syntaxTree.GetRoot());
-			input = result.ToFullString();
+			if (isCsCode)
+			{
+				var syntaxTree = CSharpSyntaxTree.ParseText(input, new CSharpParseOptions(preprocessorSymbols: definedSymbols));
+				var result = new DeleteDisabledTextRewriter().Visit(syntaxTree.GetRoot());
+				input = result.ToFullString();
+			}
 			return input.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries);
 		}
 	}
