@@ -134,6 +134,14 @@ namespace ICSharpCode.ILSpyX.TreeView
 			get { return null; }
 		}
 
+		public virtual object? Background {
+			get { return null; }
+		}
+
+		public virtual object? Foreground {
+			get { return null; }
+		}
+
 		public int Level {
 			get { return Parent != null ? Parent.Level + 1 : 0; }
 		}

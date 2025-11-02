@@ -702,7 +702,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			return compareViewModel.ShowIdentical || entry.RecursiveKind != DiffKind.None ? FilterResult.Match : FilterResult.Hidden;
 		}
 
-		public Brush Background {
+		public override object? Background {
 			get {
 				switch (entry.RecursiveKind)
 				{
