@@ -377,11 +377,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		internal void LogCandidateAddingResult(string text, IParameterizedMember method, OverloadResolutionErrors errors)
 		{
 #if DEBUG
-			Log.WriteLine(string.Format("{0} {1} = {2}{3}",
+			Log.WriteLine(string.Format("{0} {1} from {4} = {2}{3}",
 										text, method,
 										errors == OverloadResolutionErrors.None ? "Success" : errors.ToString(),
 										this.BestCandidate == method ? " (best candidate so far)" :
-										this.BestCandidateAmbiguousWith == method ? " (ambiguous)" : ""
+										this.BestCandidateAmbiguousWith == method ? " (ambiguous)" : "",
+										method.ParentModule.AssemblyName
 									   ));
 #endif
 		}
@@ -711,7 +712,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (IsExtensionMethodInvocation && parameterIndex == 0)
 				{
 					// First parameter to extension method must be an identity, reference or boxing conversion
-					if (!(c == Conversion.IdentityConversion || c == Conversion.ImplicitReferenceConversion || c == Conversion.BoxingConversion))
+					if (!(c == Conversion.IdentityConversion || c == Conversion.ImplicitReferenceConversion || c == Conversion.BoxingConversion || (c.IsUserDefined && conversions.IsImplicitSpanConversion(arguments[i].Type, parameterType))))
 						candidate.AddError(OverloadResolutionErrors.ArgumentTypeMismatch);
 				}
 				else

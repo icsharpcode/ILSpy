@@ -103,6 +103,32 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			if (entity == null)
 				throw new ArgumentNullException(nameof(entity));
+
+			var entityModule = entity.ParentModule.MetadataFile;
+			var sourceModule = currentModule.MetadataFile;
+
+			if (entityModule != sourceModule)
+			{
+
+				bool found = false;
+
+				foreach (var item in sourceModule.AssemblyReferences)
+				{
+					if (item.Name == entityModule.Name)
+					{
+						found = true;
+						break;
+					}
+				}
+
+				if (!found)
+				{
+					// The entity is defined in an assembly that is not referenced by the current assembly.
+					// Therefore, it is not accessible.
+					return false;
+				}
+			}
+
 			// C# 4.0 spec, §3.5.2 Accessiblity domains
 			switch (entity.Accessibility)
 			{
