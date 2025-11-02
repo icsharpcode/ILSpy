@@ -842,7 +842,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				opInequality |= metadata.StringComparer.Equals(method.Name, "op_Inequality");
 				clone |= metadata.StringComparer.Equals(method.Name, "<Clone>$");
 			}
-			return getEqualityContract & toString & printMembers & getHashCode & equals & opEquality & opInequality & clone;
+			// relaxed check for toString:
+			// record classes may have their ToString implementation only in the base class,
+			// so we cannot check for it here, as the type hierarchy is not yet known.
+			// usually, the existence of a "<Clone>$" and "get_EqualityContract" method should
+			// be a good enough indicator.
+			// in record structs we require a ToString implementation, because the PrintMembers
+			// method needs to be called.
+			if (isStruct && !toString)
+			{
+				return false;
+			}
+			return getEqualityContract & printMembers & getHashCode & equals & opEquality & opInequality & clone;
 		}
 		#endregion
 	}
