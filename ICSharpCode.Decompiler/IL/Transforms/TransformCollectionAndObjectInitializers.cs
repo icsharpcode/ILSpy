@@ -47,6 +47,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var insertionPos = initInst.ChildIndex;
 			var siblings = initInst.Parent!.Children;
 			IMethod currentMethod = context.Function.Method!;
+			// we allow a castclass instruction to wrap the init instruction:
+			// this is needed, for example, for inherited record types used on .NET runtimes (e.g., .NET 4.x),
+			// where covariant return types are not supported.
+			if (initInst.MatchCastClass(out var arg, out var targetType))
+			{
+				initInst = arg;
+			}
 			switch (initInst)
 			{
 				case NewObj newObjInst:
@@ -99,6 +106,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						break;
 					}
 					return;
+			}
+			if (targetType != null)
+			{
+				instType = targetType;
 			}
 			// Copy-propagate stack slot holding an 'ldloca' of the variable
 			if (pos < block.Instructions.Count && block.Instructions[pos + 1] is StLoc { Variable: { Kind: VariableKind.StackSlot, IsSingleDefinition: true }, Value: LdLoca ldLoca } stLocStack && ldLoca.Variable == v)

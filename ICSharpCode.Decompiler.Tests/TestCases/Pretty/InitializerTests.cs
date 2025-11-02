@@ -229,6 +229,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			public string S = "abc";
 			public Item I;
 		}
+
+		public record DerivedFields : Fields
+		{
+			public ConsoleKey E;
+		}
 #endif
 
 		public interface IData
@@ -1141,6 +1146,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				I = new Item {
 					Value7 = input with {
 						A = 43
+					}
+				}
+			};
+		}
+
+		public DerivedFields DerivedRecordTest(DerivedFields input)
+		{
+			return input with {
+				A = 42,
+				D = 43,
+				I = new Item {
+					Value7 = input with {
+						A = 44,
+						D = 45
 					}
 				}
 			};
