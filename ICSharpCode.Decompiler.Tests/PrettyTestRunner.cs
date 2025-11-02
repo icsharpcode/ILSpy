@@ -562,7 +562,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task ExtensionProperties([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview);
+			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview | CompilerOptions.NullableEnable);
 		}
 
 		[Test]
