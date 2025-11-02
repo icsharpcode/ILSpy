@@ -86,7 +86,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		IEnumerable<ILSpyTreeNode> FetchChildren(CancellationToken ct)
 		{
 			// FetchChildren() runs on the main thread; but the enumerator will be consumed on a background thread
-			return DerivedTypesTreeNode.FindDerivedTypes(list, type, ct);
+			return DerivedTypesTreeNode.FindDerivedTypes(list, Language, type, ct);
 		}
 
 		public override void ActivateItem(IPlatformRoutedEventArgs e)
