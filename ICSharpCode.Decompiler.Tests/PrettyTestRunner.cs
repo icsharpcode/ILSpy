@@ -536,6 +536,22 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task Playstation([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			// see https://github.com/icsharpcode/ILSpy/pull/3598#issuecomment-3465151525
+			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.NullableEnable);
+		}
+
+		[Test]
+		public async Task PlaystationPreferPrimary([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			// see https://github.com/icsharpcode/ILSpy/pull/3598#issuecomment-3465151525
+			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.NullableEnable, configureDecompiler: settings => {
+				settings.PreferPrimaryConstructorIfPossible = true;
+			});
+		}
+
+		[Test]
 		public async Task ExtensionProperties([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview);

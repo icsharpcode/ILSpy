@@ -23,6 +23,7 @@ using System.Reflection;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -49,8 +50,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				// If we're viewing some set of members (fields are direct children of SyntaxTree),
 				// we also need to handle those:
-				HandleInstanceFieldInitializers(node.Children);
-				HandleStaticFieldInitializers(node.Children);
+				HandleInstanceFieldInitializers(node.Children, context.CurrentTypeDefinition);
+				HandleStaticFieldInitializers(node.Children, context.CurrentTypeDefinition);
 
 				node.AcceptVisitor(this);
 
@@ -127,7 +128,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				if (record.IsInheritedRecord &&
 					ci?.ConstructorInitializerType == ConstructorInitializerType.Base &&
-					constructorDeclaration.Parent is TypeDeclaration { BaseTypes: { Count: >= 1 } } typeDecl)
+					constructorDeclaration.Parent is TypeDeclaration { BaseTypes: { Count: >= 1 }, HasPrimaryConstructor: true } typeDecl)
 				{
 					var baseType = typeDecl.BaseTypes.First();
 					var newBaseType = new InvocationAstType();
@@ -160,33 +161,59 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		static readonly AstNode thisCallPattern = new ExpressionStatement(new InvocationExpression(new MemberReferenceExpression(new ThisReferenceExpression(), ".ctor"), new Repeat(new AnyNode())));
+		static readonly AstNode thisCallPattern = new ExpressionStatement(
+			new Choice {
+				new InvocationExpression(new MemberReferenceExpression(new ThisReferenceExpression(), ".ctor"), new Repeat(new AnyNode())),
+				new AssignmentExpression(new ThisReferenceExpression(), new ObjectCreateExpression(new AnyNode("structType"), new Repeat(new AnyNode())))
+			}
+		);
 
 		public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
 		{
+			var currentTypeDefinition = (ITypeDefinition)typeDeclaration.GetSymbol();
+
 			// Handle initializers on instance fields
-			HandleInstanceFieldInitializers(typeDeclaration.Members);
+			HandleInstanceFieldInitializers(typeDeclaration.Members, currentTypeDefinition);
 
 			// Now convert base constructor calls to initializers:
 			base.VisitTypeDeclaration(typeDeclaration);
 
 			// Remove single empty constructor:
-			RemoveSingleEmptyConstructor(typeDeclaration.Members, (ITypeDefinition)typeDeclaration.GetSymbol());
+			RemoveSingleEmptyConstructor(typeDeclaration.Members, currentTypeDefinition);
 
 			// Handle initializers on static fields:
-			HandleStaticFieldInitializers(typeDeclaration.Members);
+			HandleStaticFieldInitializers(typeDeclaration.Members, currentTypeDefinition);
 		}
 
-		void HandleInstanceFieldInitializers(IEnumerable<AstNode> members)
+		static bool ChainsWithThis(ConstructorDeclaration ctor)
 		{
+			var ctorMethod = ctor.GetSymbol() as IMethod;
+			var firstStmt = ctor.Body.Statements.FirstOrDefault();
+			var m = thisCallPattern.Match(firstStmt);
+			if (!m.Success || ctorMethod == null)
+				return false;
+			if (m.Has("structType"))
+			{
+				var type = m.Get<AstType>("structType").Single().GetSymbol();
+				return type.Equals(ctorMethod.DeclaringType);
+			}
+			return true;
+		}
+
+		void HandleInstanceFieldInitializers(IEnumerable<AstNode> members, ITypeDefinition currentTypeDefinition)
+		{
+			if (currentTypeDefinition is { Kind: TypeKind.Struct, IsRecord: false }
+				&& !context.Settings.StructDefaultConstructorsAndFieldInitializers)
+			{
+				return;
+			}
+
 			var instanceCtors = members.OfType<ConstructorDeclaration>().Where(c => (c.Modifiers & Modifiers.Static) == 0).ToArray();
-			var instanceCtorsNotChainingWithThis = instanceCtors.Where(ctor => !thisCallPattern.IsMatch(ctor.Body.Statements.FirstOrDefault())).ToArray();
+			var instanceCtorsNotChainingWithThis = instanceCtors.Where(ctor => !ChainsWithThis(ctor)).ToArray();
 			if (instanceCtorsNotChainingWithThis.Length > 0)
 			{
 				var ctorMethodDef = instanceCtorsNotChainingWithThis[0].GetSymbol() as IMethod;
 				ITypeDefinition declaringTypeDefinition = ctorMethodDef?.DeclaringTypeDefinition;
-				if (ctorMethodDef != null && declaringTypeDefinition?.IsReferenceType == false && !declaringTypeDefinition.IsRecord)
-					return;
 
 				bool ctorIsUnsafe = instanceCtorsNotChainingWithThis.All(c => c.HasModifier(Modifiers.Unsafe));
 
@@ -219,11 +246,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (initializer.DescendantsAndSelf.Any(n => n is ThisReferenceExpression || n is BaseReferenceExpression))
 						break;
 					var v = initializer.Annotation<ILVariableResolveResult>()?.Variable;
-					if (v?.Kind == IL.VariableKind.Parameter)
+					if (v?.Kind == IL.VariableKind.Parameter && IsPropertyDeclaredByPrimaryCtor(fieldOrPropertyOrEvent, record))
 					{
 						// remove record ctor parameter assignments
-						if (!IsPropertyDeclaredByPrimaryCtor(fieldOrPropertyOrEvent, record))
-							break;
 						isStructPrimaryCtor = true;
 						if (fieldOrPropertyOrEvent is IField f)
 							fieldToVariableMap.Add(f, v);
@@ -236,6 +261,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						// or if this is a struct record, but not the primary ctor
 						if (declaringTypeDefinition.IsRecord && declaringTypeDefinition.IsReferenceType == false && !isStructPrimaryCtor)
 							break;
+						// or if this is not a primary constructor and the initializer contains any parameter reference, we have to abort
+						if (!ctorMethodDef.Equals(record?.PrimaryConstructor))
+						{
+							bool referencesParameter = initializer.Annotation<ILInstruction>()?.Descendants
+								.OfType<IInstructionWithVariableOperand>()
+								.Any(inst => inst.Variable.Kind == VariableKind.Parameter) ?? false;
+							if (referencesParameter)
+								break;
+						}
 					}
 
 					allSame = true;
@@ -298,6 +332,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// if we're outside of a type definition skip this altogether
 			if (contextTypeDefinition == null)
 				return;
+			if (contextTypeDefinition.Kind == TypeKind.Struct)
+				return;
 			// first get non-static constructor declarations from the AST
 			var instanceCtors = members.OfType<ConstructorDeclaration>().Where(c => (c.Modifiers & Modifiers.Static) == 0).ToArray();
 			// if there's exactly one ctor and it's part of a type declaration or there's more than one member in the current selection
@@ -323,7 +359,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		void HandleStaticFieldInitializers(IEnumerable<AstNode> members)
+		void HandleStaticFieldInitializers(IEnumerable<AstNode> members, ITypeDefinition currentTypeDefinition)
 		{
 			// Translate static constructor into field initializers if the class is BeforeFieldInit
 			var staticCtor = members.OfType<ConstructorDeclaration>().FirstOrDefault(c => (c.Modifiers & Modifiers.Static) == Modifiers.Static);

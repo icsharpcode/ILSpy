@@ -112,6 +112,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildrenByRole(Roles.BaseType); }
 		}
 
+		public bool HasPrimaryConstructor { get; set; }
+
 		public AstNodeCollection<ParameterDeclaration> PrimaryConstructorParameters {
 			get { return GetChildrenByRole(Roles.Parameter); }
 		}
@@ -153,6 +155,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return o != null && this.ClassType == o.ClassType && MatchString(this.Name, o.Name)
 				&& this.MatchAttributesAndModifiers(o, match) && this.TypeParameters.DoMatch(o.TypeParameters, match)
 				&& this.BaseTypes.DoMatch(o.BaseTypes, match) && this.Constraints.DoMatch(o.Constraints, match)
+				&& this.HasPrimaryConstructor == o.HasPrimaryConstructor
 				&& this.PrimaryConstructorParameters.DoMatch(o.PrimaryConstructorParameters, match)
 				&& this.Members.DoMatch(o.Members, match);
 		}

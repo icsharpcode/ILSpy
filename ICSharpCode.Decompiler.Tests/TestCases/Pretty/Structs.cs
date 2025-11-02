@@ -43,11 +43,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if CS100
 	public struct StructWithDefaultCtor
 	{
-		public int X;
+		public int X = 42;
 
 		public StructWithDefaultCtor()
 		{
-			X = 42;
 		}
 	}
 #endif

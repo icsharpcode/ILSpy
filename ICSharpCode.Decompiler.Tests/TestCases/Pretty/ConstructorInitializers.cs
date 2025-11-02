@@ -127,6 +127,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+
+
+		public class ClassWithPrimaryCtorUsingGlobalParameterInExpressionAssignedToProperty(int a)
+		{
+			public int A { get; set; } = (int)Math.Abs(Math.PI * (double)a);
+
+			public void Print()
+			{
+				Console.WriteLine(A);
+			}
+		}
+
 		public class ClassWithPrimaryCtorUsingGlobalParameterAssignedToEvent(EventHandler a)
 		{
 			public event EventHandler A = a;

@@ -26,6 +26,7 @@ using System.Threading;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -169,81 +170,147 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				if (!settings.UsePrimaryConstructorSyntaxForNonRecordTypes)
 					return null;
-				if (isStruct)
-					return null;
 			}
 
 			var subst = recordTypeDef.AsParameterizedType().GetSubstitution();
+			IMethod primaryCtor = null;
+
+			Dictionary<IMethod, IMethod> ctorCallChain = new Dictionary<IMethod, IMethod>();
+
 			foreach (var method in recordTypeDef.Methods)
 			{
 				cancellationToken.ThrowIfCancellationRequested();
+				// Only consider public instance constructors.
+				// This by definition excludes the copy constructor.
 				if (method.IsStatic || !method.IsConstructor)
 					continue;
 				var m = method.Specialize(subst);
-				if (IsPrimaryConstructor(m, method))
-					return method;
-				primaryCtorParameterToAutoPropertyOrBackingField.Clear();
-				autoPropertyOrBackingFieldToPrimaryCtorParameter.Clear();
-			}
-
-			return null;
-
-			bool IsPrimaryConstructor(IMethod method, IMethod unspecializedMethod)
-			{
-				Debug.Assert(method.IsConstructor);
 				var body = DecompileBody(method);
 				if (body == null)
-					return false;
-
-				if (method.Parameters.Count == 0)
-					return false;
-
-				var addonInst = isStruct ? 1 : 2;
-				if (body.Instructions.Count < method.Parameters.Count + addonInst)
-					return false;
-
-				for (int i = 0; i < method.Parameters.Count; i++)
+					continue;
+				if (primaryCtor == null && method.Accessibility == Accessibility.Public && IsPrimaryConstructorBody(m, method, body))
 				{
-					if (!body.Instructions[i].MatchStFld(out var target, out var field, out var valueInst))
-						return false;
+					primaryCtor = method;
+				}
+				else if (!IsCopyConstructor(method))
+				{
+					IMethod calledCtor = FindChainedConstructor(body);
+					// if no chained constructor found, continue,
+					// if a chained to a constructor of a different type, give up
+					if (calledCtor != null && calledCtor.DeclaringTypeDefinition?.Equals(method.DeclaringTypeDefinition) != true)
+						return null;
+					ctorCallChain[method] = calledCtor;
+				}
+				if (primaryCtor == null)
+				{
+					primaryCtorParameterToAutoPropertyOrBackingField.Clear();
+					autoPropertyOrBackingFieldToPrimaryCtorParameter.Clear();
+				}
+			}
+
+			if (primaryCtor == null)
+				return null;
+
+			foreach (var (source, target) in ctorCallChain)
+			{
+				var next = target;
+				while (next != null && !primaryCtor.Equals(next))
+				{
+					if (!ctorCallChain.TryGetValue(target, out next))
+						return null;
+				}
+				if (next == null)
+					return null;
+			}
+
+			return primaryCtor;
+
+			bool IsPrimaryConstructorBody(IMethod method, IMethod unspecializedMethod, Block body)
+			{
+				Debug.Assert(method.IsConstructor);
+
+				if (method.Parameters.Count == 0 && !settings.PreferPrimaryConstructorIfPossible)
+					return false;
+
+				bool referencesMembersDeclaredByPrimaryConstructor = false;
+
+				int offset = 0;
+				while (offset < body.Instructions.Count)
+				{
+					if (!body.Instructions[offset].MatchStFld(out var target, out var field, out var valueInst))
+						break;
 					if (!target.MatchLdThis())
 						return false;
-					if (method.Parameters[i].ReferenceKind is ReferenceKind.In or ReferenceKind.RefReadOnly)
+					bool valueReferencesParameter;
+					if (recordTypeDef.IsRecord && offset < method.Parameters.Count)
 					{
-						if (!valueInst.MatchLdObj(out valueInst, out _))
+						if (method.Parameters[offset].ReferenceKind is ReferenceKind.In or ReferenceKind.RefReadOnly)
+						{
+							if (!valueInst.MatchLdObj(out valueInst, out _))
+								return false;
+						}
+						if (!valueInst.MatchLdLoc(out var value))
 							return false;
+						if (!(value.Kind == VariableKind.Parameter && value.Index == offset))
+							return false;
+						valueReferencesParameter = true;
 					}
-					if (!valueInst.MatchLdLoc(out var value))
-						return false;
-					if (!(value.Kind == VariableKind.Parameter && value.Index == i))
-						return false;
+					else
+					{
+						valueReferencesParameter = valueInst.Descendants.Any(x => x.MatchLdLoc(out var v) && v.Kind == VariableKind.Parameter && v.Index == offset);
+					}
 					IMember backingMember;
 					if (backingFieldToAutoProperty.TryGetValue(field, out var property))
 					{
 						backingMember = property;
-					}
-					else if (!recordTypeDef.IsRecord)
-					{
-						backingMember = field;
+						referencesMembersDeclaredByPrimaryConstructor |= valueReferencesParameter && (recordTypeDef.IsRecord || recordTypeDef.IsReferenceType == true);
 					}
 					else
 					{
-						return false;
+						backingMember = field;
+						referencesMembersDeclaredByPrimaryConstructor |= valueReferencesParameter && recordTypeDef.IsReferenceType == true;
 					}
-
-					primaryCtorParameterToAutoPropertyOrBackingField.Add(unspecializedMethod.Parameters[i], backingMember);
-					autoPropertyOrBackingFieldToPrimaryCtorParameter.Add(backingMember, unspecializedMethod.Parameters[i]);
+					if (offset < method.Parameters.Count)
+					{
+						primaryCtorParameterToAutoPropertyOrBackingField.Add(unspecializedMethod.Parameters[offset], backingMember);
+						autoPropertyOrBackingFieldToPrimaryCtorParameter.Add(backingMember, unspecializedMethod.Parameters[offset]);
+					}
+					offset++;
 				}
 
 				if (!isStruct)
 				{
-					var baseCtorCall = body.Instructions.SecondToLastOrDefault() as CallInstruction;
-					if (baseCtorCall == null)
+					if (body.Instructions.ElementAtOrDefault(offset) is not Call { Method: var baseCtor } call)
 						return false;
+					if (!baseCtor.IsConstructor)
+						return false;
+					referencesMembersDeclaredByPrimaryConstructor |= call.Descendants.Any(i => i.MatchLdLoc(out var p) && p.Kind == VariableKind.Parameter && p.Index > 0);
+					offset++;
 				}
 
-				var returnInst = body.Instructions.LastOrDefault();
-				return returnInst != null && returnInst.MatchReturn(out var retVal) && retVal.MatchNop();
+				if (!settings.PreferPrimaryConstructorIfPossible && !referencesMembersDeclaredByPrimaryConstructor)
+				{
+					return false;
+				}
+
+				return offset + 1 == body.Instructions.Count
+					&& body.Instructions[^1].MatchReturn(out var retVal)
+					&& retVal.MatchNop();
+			}
+
+			IMethod FindChainedConstructor(Block body)
+			{
+				foreach (var inst in body.Instructions)
+				{
+					switch (inst)
+					{
+						case Call { Method.IsConstructor: true } call:
+							return call.Method;
+						case StObj { Target: var target, Value: NewObj { Method.IsConstructor: true } value } stObj when target.MatchLdLoc(out var v) && v.IsThis():
+							return value.Method;
+					}
+				}
+				return null;
 			}
 		}
 
@@ -379,7 +446,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal (IProperty prop, IField field) GetPropertyInfoByPrimaryConstructorParameter(IParameter parameter)
 		{
-			var member = primaryCtorParameterToAutoPropertyOrBackingField[parameter];
+			if (!primaryCtorParameterToAutoPropertyOrBackingField.TryGetValue(parameter, out IMember member))
+				return (null, null);
 			if (member is IField field)
 				return (null, field);
 			return ((IProperty)member, autoPropertyToBackingField[(IProperty)member]);
@@ -660,6 +728,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (member.IsStatic)
 				{
 					return false; // static fields/properties are not printed
+				}
+				if (member.Accessibility != Accessibility.Public)
+				{
+					return false; // non-public fields/properties are not printed
 				}
 				if (!isStruct && member.Name == "EqualityContract")
 				{
@@ -1095,7 +1167,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (!call.Method.IsAccessor)
 					return false;
 				var autoProperty = (IProperty)call.Method.AccessorOwner;
-				if (!autoPropertyToBackingField.ContainsKey(autoProperty))
+				if (!IsInheritedRecord && !autoPropertyToBackingField.ContainsKey(autoProperty))
 					return false;
 			}
 

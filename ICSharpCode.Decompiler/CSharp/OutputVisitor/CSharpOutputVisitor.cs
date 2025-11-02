@@ -1635,7 +1635,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			WriteIdentifier(typeDeclaration.NameToken);
 			WriteTypeParameters(typeDeclaration.TypeParameters);
-			if (typeDeclaration.PrimaryConstructorParameters.Count > 0)
+			if (typeDeclaration.HasPrimaryConstructor)
 			{
 				Space(policy.SpaceBeforeMethodDeclarationParentheses);
 				WriteCommaSeparatedListInParenthesis(typeDeclaration.PrimaryConstructorParameters, policy.SpaceWithinMethodDeclarationParentheses);

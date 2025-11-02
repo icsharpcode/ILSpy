@@ -151,6 +151,7 @@ namespace ICSharpCode.Decompiler
 			{
 				fileScopedNamespaces = false;
 				recordStructs = false;
+				structDefaultConstructorsAndFieldInitializers = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp11_0)
 			{
@@ -187,7 +188,7 @@ namespace ICSharpCode.Decompiler
 				return CSharp.LanguageVersion.CSharp12_0;
 			if (scopedRef || requiredMembers || numericIntPtr || utf8StringLiterals || unsignedRightShift || checkedOperators)
 				return CSharp.LanguageVersion.CSharp11_0;
-			if (fileScopedNamespaces || recordStructs)
+			if (fileScopedNamespaces || recordStructs || structDefaultConstructorsAndFieldInitializers)
 				return CSharp.LanguageVersion.CSharp10_0;
 			if (nativeIntegers || initAccessors || functionPointers || forEachWithGetEnumeratorExtension
 				|| recordClasses || withExpressions || usePrimaryConstructorSyntax || covariantReturns
@@ -325,6 +326,24 @@ namespace ICSharpCode.Decompiler
 				if (recordStructs != value)
 				{
 					recordStructs = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool structDefaultConstructorsAndFieldInitializers = true;
+
+		/// <summary>
+		/// Use field initializers in structs.
+		/// </summary>
+		[Category("C# 10.0 / VS 2022")]
+		[Description("DecompilerSettings.StructDefaultConstructorsAndFieldInitializers")]
+		public bool StructDefaultConstructorsAndFieldInitializers {
+			get { return structDefaultConstructorsAndFieldInitializers; }
+			set {
+				if (structDefaultConstructorsAndFieldInitializers != value)
+				{
+					structDefaultConstructorsAndFieldInitializers = value;
 					OnPropertyChanged();
 				}
 			}
@@ -2119,6 +2138,24 @@ namespace ICSharpCode.Decompiler
 				if (usePrimaryConstructorSyntaxForNonRecordTypes != value)
 				{
 					usePrimaryConstructorSyntaxForNonRecordTypes = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool preferPrimaryConstructorIfPossible = false;
+
+		/// <summary>
+		/// Prefer primary constructor syntax with classes and structs whenever possible.
+		/// </summary>
+		[Category("DecompilerSettings.Other")]
+		[Description("DecompilerSettings.PreferPrimaryConstructorIfPossible")]
+		public bool PreferPrimaryConstructorIfPossible {
+			get { return preferPrimaryConstructorIfPossible; }
+			set {
+				if (preferPrimaryConstructorIfPossible != value)
+				{
+					preferPrimaryConstructorIfPossible = value;
 					OnPropertyChanged();
 				}
 			}

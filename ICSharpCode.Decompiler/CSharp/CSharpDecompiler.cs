@@ -1311,6 +1311,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				if (recordDecompiler?.PrimaryConstructor != null)
 				{
+					typeDecl.HasPrimaryConstructor = recordDecompiler.PrimaryConstructor.Parameters.Any() || typeDef.Kind is TypeKind.Struct;
+
 					foreach (var p in recordDecompiler.PrimaryConstructor.Parameters)
 					{
 						ParameterDeclaration pd = typeSystemAstBuilder.ConvertParameter(p);
