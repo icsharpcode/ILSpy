@@ -136,6 +136,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						switch (trr.Type.FullName)
 						{
 							case "System.Security.UnverifiableCodeAttribute":
+							case "System.Runtime.CompilerServices.RefSafetyRulesAttribute":
 								attribute.Remove();
 								break;
 						}
