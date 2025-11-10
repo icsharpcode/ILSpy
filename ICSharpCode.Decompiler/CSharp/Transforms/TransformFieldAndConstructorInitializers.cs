@@ -188,6 +188,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			HandleStaticFieldInitializers(typeDeclaration.Members);
 		}
 
+		class IsMustRetainedSingleEmptyConstructor
+		{
+
+		}
+
 		void HandleInstanceFieldInitializers(IEnumerable<AstNode> members)
 		{
 			var instanceCtors = members.OfType<ConstructorDeclaration>().Where(c => (c.Modifiers & Modifiers.Static) == 0).ToArray();
@@ -215,12 +220,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				bool hasPrimaryCtor = record?.PrimaryConstructor != null;
 				do
 				{
-					Match m = fieldInitializerPattern.Match(instanceCtorsNotChainingWithThis[0].Body.FirstOrDefault());
+					var bodyFirstOrDefault = instanceCtorsNotChainingWithThis[0].Body.FirstOrDefault();
+					Match m = fieldInitializerPattern.Match(bodyFirstOrDefault);
 					if (!m.Success)
 						break;
 					IMember fieldOrPropertyOrEvent = (m.Get<AstNode>("fieldAccess").Single().GetSymbol() as IMember)?.MemberDefinition;
-					if (!(fieldOrPropertyOrEvent is IField) && !(fieldOrPropertyOrEvent is IProperty) && !(fieldOrPropertyOrEvent is IEvent))
+					IProperty property = fieldOrPropertyOrEvent as IProperty;
+					if (!(fieldOrPropertyOrEvent is IField) && property == null && !(fieldOrPropertyOrEvent is IEvent))
 						break;
+					if (isStruct && property != null && bodyFirstOrDefault.Annotations.FirstOrDefault() is not IL.StObj)
+					{
+						break;
+					}
 					var fieldOrPropertyOrEventDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrPropertyOrEvent) as EntityDeclaration;
 					// Cannot transform if it is a custom event.
 					if (fieldOrPropertyOrEventDecl is CustomEventDeclaration)
@@ -270,9 +281,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						// cannot transform if member is not found
 						if (fieldOrPropertyOrEventDecl == null)
 							break;
-						// or if this is a struct, but not the primary ctor
-						if (isStruct && !hasPrimaryCtor)
-							break;
 					}
 
 					allSame = true;
@@ -293,7 +301,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (allSame)
 					{
 						foreach (var ctor in instanceCtorsNotChainingWithThis)
+						{
 							ctor.Body.First().Remove();
+							if (isStruct && !hasPrimaryCtor)
+							{
+								if (!ctor.Body.HasChildren)
+								{
+									ctor.AddAnnotation(new IsMustRetainedSingleEmptyConstructor());
+								}
+							}
+						}
 						if (fieldOrPropertyOrEventDecl == null)
 							continue;
 						if (ctorIsUnsafe && IntroduceUnsafeModifier.IsUnsafe(initializer))
@@ -334,11 +351,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 				if (emptyCtorPattern.IsMatch(ctor))
 				{
-					bool retainBecauseOfDocumentation = ctor.GetSymbol() is IMethod ctorMethod
-						&& context.Settings.ShowXmlDocumentation
-						&& context.DecompileRun.DocumentationProvider?.GetDocumentation(ctorMethod) != null;
-					if (!retainBecauseOfDocumentation)
-						ctor.Remove();
+					var isMustRetainedSingleEmptyConstructor = ctor.Annotation<IsMustRetainedSingleEmptyConstructor>();
+					if (isMustRetainedSingleEmptyConstructor != null)
+					{
+						ctor.RemoveAnnotations<IsMustRetainedSingleEmptyConstructor>();
+					}
+					else
+					{
+						bool retainBecauseOfDocumentation = ctor.GetSymbol() is IMethod ctorMethod
+							&& context.Settings.ShowXmlDocumentation
+							&& context.DecompileRun.DocumentationProvider?.GetDocumentation(ctorMethod) != null;
+						if (!retainBecauseOfDocumentation)
+							ctor.Remove();
+					}
 				}
 			}
 		}
