@@ -45,7 +45,7 @@ jobs:
 
     - name: Install dotnet-format
       env:
-        DOTNET_FORMAT_VERSION: 10.0.100-rc.2.25502.106
+        DOTNET_FORMAT_VERSION: 10.0.100-rtm.25531.102
         DOTNET_FORMAT_SOURCE: https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet10-transport/nuget/v3/index.json
       run: dotnet tool install -g dotnet-format --version "${{env.DOTNET_FORMAT_VERSION}}" --add-source "${{env.DOTNET_FORMAT_SOURCE}}"
 

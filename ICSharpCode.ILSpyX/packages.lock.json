@@ -10,9 +10,9 @@
       },
       "Microsoft.Sbom.Targets": {
         "type": "Direct",
-        "requested": "[4.1.2, )",
-        "resolved": "4.1.2",
-        "contentHash": "AmGCBhWtWu1d1PCit6WTdmpq48nPmmnJz9zZFBsxoCjYZjjZ0Gjm+wuAzHzVMF8VmTo/NeDGi2C73969QXiryw=="
+        "requested": "[4.1.3, )",
+        "resolved": "4.1.3",
+        "contentHash": "ItQp7LZ5irnDYoyYkxOxuik9mULFviFQOgGJ1j5A7a2EAJK9bidT1aT65xg48Opcjao/BKJWOtJUnik2g3grLg=="
       },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",
@@ -32,15 +32,15 @@
       },
       "System.Composition.AttributedModel": {
         "type": "Direct",
-        "requested": "[10.0.0-rc.2.25502.107, )",
-        "resolved": "10.0.0-rc.2.25502.107",
-        "contentHash": "Q03EIsPgC9P9Fo23ONEbrITxHYnDU2AkDKnU7KTuWKMBJcICi7h3dxJGUbJWwx1ntx8HKLynMqMLDjqZh78+ew=="
+        "requested": "[10.0.0, )",
+        "resolved": "10.0.0",
+        "contentHash": "XtrMhpq4okRAt+wRhzgZrcZ+SNuQFnOkxb8T/fJiIVymnAou5EnxHMQ5zSMIvreujdPtnFXbQbcKUowWB6tZqw=="
       },
       "System.Reflection.Metadata": {
         "type": "Direct",
-        "requested": "[10.0.0-rc.2.25502.107, )",
-        "resolved": "10.0.0-rc.2.25502.107",
-        "contentHash": "vKEXy1q3+Y6NvUNRaMAqhRrUY6tCatLu4Ukza5hdVYzolQlxgJQTFyC1QD8kjNBjAP7esHJekhEkUI/DOfvT4A=="
+        "requested": "[10.0.0, )",
+        "resolved": "10.0.0",
+        "contentHash": "sMORylY+HmERA41BDGyi5fq1FjUFwwOTgCjcWhkkdb7c9jVLgFQP6xBWdbF2vRpjs0Igy5kvMAkvN9ml3QPS1g=="
       },
       "System.Runtime.CompilerServices.Unsafe": {
         "type": "Direct",
@@ -73,7 +73,7 @@
       },
       "System.Collections.Immutable": {
         "type": "CentralTransitive",
-        "requested": "[10.0.0-rc.2.25502.107, )",
+        "requested": "[10.0.0, )",
         "resolved": "9.0.0",
         "contentHash": "QhkXUl2gNrQtvPmtBTQHb0YsUrDiDQ2QS09YbtTTiSjGcf7NBqtYbrG/BE06zcBPCKEwQGzIv13IVdXNOSub2w=="
       }
