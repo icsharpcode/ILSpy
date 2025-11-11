@@ -150,6 +150,7 @@ namespace ICSharpCode.Decompiler
 			if (languageVersion < CSharp.LanguageVersion.CSharp10_0)
 			{
 				fileScopedNamespaces = false;
+				structFieldInitializers = false;
 				recordStructs = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp11_0)
@@ -187,7 +188,7 @@ namespace ICSharpCode.Decompiler
 				return CSharp.LanguageVersion.CSharp12_0;
 			if (scopedRef || requiredMembers || numericIntPtr || utf8StringLiterals || unsignedRightShift || checkedOperators)
 				return CSharp.LanguageVersion.CSharp11_0;
-			if (fileScopedNamespaces || recordStructs)
+			if (fileScopedNamespaces || structFieldInitializers || recordStructs)
 				return CSharp.LanguageVersion.CSharp10_0;
 			if (nativeIntegers || initAccessors || functionPointers || forEachWithGetEnumeratorExtension
 				|| recordClasses || withExpressions || usePrimaryConstructorSyntax || covariantReturns
@@ -459,6 +460,24 @@ namespace ICSharpCode.Decompiler
 				if (fileScopedNamespaces != value)
 				{
 					fileScopedNamespaces = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool structFieldInitializers = true;
+
+		/// <summary>
+		/// Gets/Sets whether C# 10 struct field initializers should be used.
+		/// </summary>
+		[Category("C# 10.0 / VS 2022")]
+		[Description("DecompilerSettings.UseStructFieldInitializerSyntax")]
+		public bool StructFieldInitializers {
+			get { return structFieldInitializers; }
+			set {
+				if (structFieldInitializers != value)
+				{
+					structFieldInitializers = value;
 					OnPropertyChanged();
 				}
 			}

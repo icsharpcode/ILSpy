@@ -522,6 +522,9 @@
   <data name="DecompilerSettings.UseStringInterpolation" xml:space="preserve">
     <value>使用字符串内插</value>
   </data>
+  <data name="DecompilerSettings.UseStructFieldInitializerSyntax" xml:space="preserve">
+    <value>使用结构字段初始化器语法</value>
+  </data>
   <data name="DecompilerSettings.UseThrowExpressions" xml:space="preserve">
     <value>使用 throw 表达式</value>
   </data>

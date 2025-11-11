@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.Roundtrip
 		[Test]
 		public async Task NRefactory_CSharp()
 		{
-			await RunWithTest("NRefactory", "ICSharpCode.NRefactory.CSharp.dll", "ICSharpCode.NRefactory.Tests.dll", LanguageVersion.CSharp10_0);
+			await RunWithTest("NRefactory", "ICSharpCode.NRefactory.CSharp.dll", "ICSharpCode.NRefactory.Tests.dll");
 		}
 
 		[Test]

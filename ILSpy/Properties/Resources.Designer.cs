@@ -1633,6 +1633,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use struct field initializer syntax.
+        /// </summary>
+        public static string DecompilerSettings_UseStructFieldInitializerSyntax {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.UseStructFieldInitializerSyntax", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use throw expressions.
         /// </summary>
         public static string DecompilerSettings_UseThrowExpressions {

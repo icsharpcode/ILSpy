@@ -205,6 +205,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (ctorMethodDef != null && declaringTypeDefinition?.IsReferenceType == false && !declaringTypeDefinition.IsRecord && !isStruct)
 					return;
 
+				if (isStruct && !context.Settings.StructFieldInitializers)
+				{
+					return;
+				}
+
 				bool ctorIsUnsafe = instanceCtorsNotChainingWithThis.All(c => c.HasModifier(Modifiers.Unsafe));
 
 				if (!context.DecompileRun.RecordDecompilers.TryGetValue(declaringTypeDefinition, out var record))
