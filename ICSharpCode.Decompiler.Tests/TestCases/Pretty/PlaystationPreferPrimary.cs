@@ -4,6 +4,8 @@ using System.Threading;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.PlaystationPreferPrimary
 {
+#pragma warning disable CS0414, CS9113, CS9124
+
 	public record struct CopilotContextId
 	{
 		public Guid Id { get; }
@@ -157,6 +159,48 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.PlaystationPreferPrimary
 		public int Leet = (int)Math.Min(dummy1, dummy2);
 	}
 
+	internal class Issue3452
+	{
+		private struct Data
+		{
+			public object Obj;
+		}
+
+		private class C1(object obj)
+		{
+			internal Data d = new Data {
+				Obj = obj
+			};
+		}
+
+		private class C2(object obj)
+		{
+			public object Obj => obj;
+		}
+
+		private class C3(StringComparison comparison)
+		{
+			private StringComparison _comparison = comparison;
+
+			internal StringComparison Test()
+			{
+				return comparison;
+			}
+		}
+
+		private struct S1(object obj)
+		{
+			internal Data d = new Data {
+				Obj = obj
+			};
+		}
+
+		private struct S2(object obj)
+		{
+			public object Obj => obj;
+		}
+	}
+
 	public record NamedParameter(string name, object? value, bool encode = true) : Parameter(Ensure.NotEmptyString(name, "name"), value, encode);
 
 	[DebuggerDisplay("{DebuggerDisplay()}")]
@@ -238,14 +282,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.PlaystationPreferPrimary
 		}
 	}
 
-	public class PersonRegular2
+	public class PersonRegular2(string name, int age)
 	{
 		private readonly string _name = "name" + Environment.GetEnvironmentVariable("Path");
 		private readonly int _age = Environment.GetEnvironmentVariable("Path")?.Length ?? (-1);
-
-		public PersonRegular2(string name, int age)
-		{
-		}
 	}
 
 	public record QueryParameter(string name, object? value, bool encode = true) : NamedParameter(name, value, encode);

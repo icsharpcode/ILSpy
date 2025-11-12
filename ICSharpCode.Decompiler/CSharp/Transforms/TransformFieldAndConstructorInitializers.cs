@@ -227,14 +227,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// Recognize field or property initializers:
 				// Translate first statement in all ctors (if all ctors have the same statement) into an initializer.
 				bool allSame;
-				bool isStructPrimaryCtor = false;
 				do
 				{
 					Match m = fieldInitializerPattern.Match(instanceCtorsNotChainingWithThis[0].Body.FirstOrDefault());
 					if (!m.Success)
 						break;
 					IMember fieldOrPropertyOrEvent = (m.Get<AstNode>("fieldAccess").Single().GetSymbol() as IMember)?.MemberDefinition;
-					if (!(fieldOrPropertyOrEvent is IField) && !(fieldOrPropertyOrEvent is IProperty) && !(fieldOrPropertyOrEvent is IEvent))
+					if (fieldOrPropertyOrEvent is not (IField or IProperty or IEvent))
 						break;
 					var fieldOrPropertyOrEventDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrPropertyOrEvent) as EntityDeclaration;
 					// Cannot transform if it is a custom event.
@@ -245,12 +244,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					// 'this'/'base' cannot be used in initializers
 					if (initializer.DescendantsAndSelf.Any(n => n is ThisReferenceExpression || n is BaseReferenceExpression))
 						break;
-					var v = initializer.Annotation<ILVariableResolveResult>()?.Variable;
-					if (v?.Kind == IL.VariableKind.Parameter && IsPropertyDeclaredByPrimaryCtor(fieldOrPropertyOrEvent, record))
+
+					if (record != null && ctorMethodDef.Equals(record.PrimaryConstructor))
 					{
 						// remove record ctor parameter assignments
-						isStructPrimaryCtor = true;
-						if (fieldOrPropertyOrEvent is IField f)
+						if (fieldOrPropertyOrEvent is IField f && initializer.Annotation<ILVariableResolveResult>()?.Variable is ILVariable v)
 							fieldToVariableMap.Add(f, v);
 					}
 					else
@@ -259,14 +257,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						if (fieldOrPropertyOrEventDecl == null)
 							break;
 						// or if this is a struct record, but not the primary ctor
-						if (declaringTypeDefinition.IsRecord && declaringTypeDefinition.IsReferenceType == false && !isStructPrimaryCtor)
+						if (declaringTypeDefinition.IsRecord && declaringTypeDefinition.IsReferenceType == false)
 							break;
 						// or if this is not a primary constructor and the initializer contains any parameter reference, we have to abort
 						if (!ctorMethodDef.Equals(record?.PrimaryConstructor))
 						{
-							bool referencesParameter = initializer.Annotation<ILInstruction>()?.Descendants
+							bool referencesParameter = initializer.Annotations.OfType<ILInstruction>().Any(inst => inst.Descendants
 								.OfType<IInstructionWithVariableOperand>()
-								.Any(inst => inst.Variable.Kind == VariableKind.Parameter) ?? false;
+								.Any(inst => inst.Variable.Kind == VariableKind.Parameter));
 							if (referencesParameter)
 								break;
 						}

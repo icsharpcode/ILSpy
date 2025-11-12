@@ -4,6 +4,8 @@ using System.Threading;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.Playstation
 {
+#pragma warning disable CS0414, CS9113, CS9124
+
 	public record struct CopilotContextId
 	{
 		public Guid Id { get; }
@@ -176,6 +178,54 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.Playstation
 			Leet = (int)Math.Min(dummy1, dummy2);
 		}
 	}
+
+	internal class Issue3452
+	{
+		private struct Data
+		{
+			public object Obj;
+		}
+
+		private class C1(object obj)
+		{
+			internal Data d = new Data {
+				Obj = obj
+			};
+		}
+
+		private class C2(object obj)
+		{
+			public object Obj => obj;
+		}
+
+		private class C3(StringComparison comparison)
+		{
+			private StringComparison _comparison = comparison;
+
+			internal StringComparison Test()
+			{
+				return comparison;
+			}
+		}
+
+		private struct S1
+		{
+			internal Data d;
+
+			public S1(object obj)
+			{
+				d = new Data {
+					Obj = obj
+				};
+			}
+		}
+
+		private struct S2(object obj)
+		{
+			public object Obj => obj;
+		}
+	}
+
 	public record NamedParameter(string name, object? value, bool encode = true) : Parameter(Ensure.NotEmptyString(name, "name"), value, encode);
 
 	[DebuggerDisplay("{DebuggerDisplay()}")]

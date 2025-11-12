@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (method.IsStatic || !method.IsConstructor)
 					continue;
 				var m = method.Specialize(subst);
-				var body = DecompileBody(method);
+				var body = DecompileBody(method, allTransforms: method.Accessibility == Accessibility.Public && !recordTypeDef.IsRecord);
 				if (body == null)
 					continue;
 				if (primaryCtor == null && method.Accessibility == Accessibility.Public && IsPrimaryConstructorBody(m, method, body))
@@ -268,7 +268,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					else
 					{
 						backingMember = field;
-						referencesMembersDeclaredByPrimaryConstructor |= valueReferencesParameter && recordTypeDef.IsReferenceType == true;
+						referencesMembersDeclaredByPrimaryConstructor |= valueReferencesParameter && (FieldIsGenerated(field) || recordTypeDef.IsReferenceType == true);
 					}
 					if (offset < method.Parameters.Count)
 					{
@@ -1206,7 +1206,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		Block DecompileBody(IMethod method)
+		Block DecompileBody(IMethod method, bool allTransforms = false)
 		{
 			if (method == null || method.MetadataToken.IsNil)
 				return null;
@@ -1223,7 +1223,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var body = typeSystem.MainModule.MetadataFile.GetMethodBody(methodDef.RelativeVirtualAddress);
 			var ilReader = new ILReader(typeSystem.MainModule);
 			var il = ilReader.ReadIL(methodDefHandle, body, genericContext, ILFunctionKind.TopLevelFunction, cancellationToken);
-			var settings = new DecompilerSettings(LanguageVersion.CSharp1);
+			var settings = allTransforms ? this.settings : new DecompilerSettings(LanguageVersion.CSharp1);
 			var transforms = CSharpDecompiler.GetILTransforms();
 			// Remove the last couple transforms -- we don't need variable names etc. here
 			int lastBlockTransform = transforms.FindLastIndex(t => t is BlockILTransform);
