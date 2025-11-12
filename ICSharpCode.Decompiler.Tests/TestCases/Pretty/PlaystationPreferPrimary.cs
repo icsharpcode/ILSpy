@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 
@@ -201,6 +202,79 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.PlaystationPreferPrimary
 		}
 	}
 
+
+	internal class Issue3610
+	{
+		private struct CtorDoubleAssignmentTest
+		{
+#if EXPECTED_OUTPUT
+			public bool Value = false;
+
+			public CtorDoubleAssignmentTest(string arg1, int arg2)
+			{
+				Value = true;
+			}
+#else
+			public bool Value;
+
+			public CtorDoubleAssignmentTest(string arg1, int arg2)
+			{
+				Value = false;
+				Value = true;
+			}
+#endif
+		}
+
+		private struct CtorDoubleAssignmentTest2
+		{
+			public bool Value = true;
+
+			public CtorDoubleAssignmentTest2(string arg1, int arg2)
+			{
+				Value = false;
+			}
+		}
+
+		private class FieldInitTest
+		{
+			public bool Flag = true;
+			public Func<int, int> Action = (int a) => a;
+			public string Value;
+
+			public FieldInitTest(string value)
+			{
+				Value = value;
+			}
+		}
+
+		private abstract class PCFieldInitTest(StringComparison value)
+		{
+			private StringComparison _value = value;
+
+			public bool Func()
+			{
+				return value == StringComparison.Ordinal;
+			}
+		}
+
+		private class RecordTest<T>
+		{
+			private interface IInterface
+			{
+				T[] Objects { get; }
+			}
+
+			protected record Record(T[] Objects) : IInterface
+			{
+				public Record(List<T> objects)
+					: this(objects.ToArray())
+				{
+				}
+			}
+		}
+
+		private abstract record RecordTest2(Guid[] Guids);
+	}
 	public record NamedParameter(string name, object? value, bool encode = true) : Parameter(Ensure.NotEmptyString(name, "name"), value, encode);
 
 	[DebuggerDisplay("{DebuggerDisplay()}")]

@@ -264,7 +264,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						{
 							bool referencesParameter = initializer.Annotations.OfType<ILInstruction>().Any(inst => inst.Descendants
 								.OfType<IInstructionWithVariableOperand>()
-								.Any(inst => inst.Variable.Kind == VariableKind.Parameter));
+								.Any(inst => inst.Variable.Kind == VariableKind.Parameter && ctorMethodDef.Equals(inst.Variable.Function.Method)));
 							if (referencesParameter)
 								break;
 						}
@@ -287,41 +287,30 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 					if (allSame)
 					{
-						foreach (var ctor in instanceCtorsNotChainingWithThis)
-							ctor.Body.First().Remove();
-						if (fieldOrPropertyOrEventDecl == null)
-							continue;
-						if (ctorIsUnsafe && IntroduceUnsafeModifier.IsUnsafe(initializer))
-						{
-							fieldOrPropertyOrEventDecl.Modifiers |= Modifiers.Unsafe;
-						}
-						if (fieldOrPropertyOrEventDecl is PropertyDeclaration pd)
+						if (fieldOrPropertyOrEventDecl is PropertyDeclaration { Initializer.IsNull: true } pd)
 						{
 							pd.Initializer = initializer.Detach();
 						}
-						else
+						else if (fieldOrPropertyOrEventDecl is FieldDeclaration or EventDeclaration)
 						{
-							fieldOrPropertyOrEventDecl.GetChildrenByRole(Roles.Variable).Single().Initializer = initializer.Detach();
+							var vdecl = fieldOrPropertyOrEventDecl.GetChildrenByRole(Roles.Variable).Single();
+							if (vdecl.Initializer.IsNull)
+							{
+								vdecl.Initializer = initializer.Detach();
+							}
+							else
+							{
+								break;
+							}
 						}
+						if (ctorIsUnsafe && fieldOrPropertyOrEventDecl != null && IntroduceUnsafeModifier.IsUnsafe(initializer))
+						{
+							fieldOrPropertyOrEventDecl.Modifiers |= Modifiers.Unsafe;
+						}
+						foreach (var ctor in instanceCtorsNotChainingWithThis)
+							ctor.Body.First().Remove();
 					}
 				} while (allSame);
-			}
-		}
-
-		bool IsPropertyDeclaredByPrimaryCtor(IMember m, RecordDecompiler record)
-		{
-			if (record == null)
-				return false;
-			switch (m)
-			{
-				case IProperty p:
-					return record.IsPropertyDeclaredByPrimaryConstructor(p);
-				case IField f:
-					return record.PrimaryConstructor != null;
-				case IEvent e:
-					return record.PrimaryConstructor != null;
-				default:
-					return false;
 			}
 		}
 
@@ -390,9 +379,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							continue;
 						}
 						var fieldOrPropertyDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrProperty) as EntityDeclaration;
-						if (fieldOrPropertyDecl == null)
-							break;
-						if (ctorIsUnsafe && IntroduceUnsafeModifier.IsUnsafe(assignment.Right))
+						if (ctorIsUnsafe && fieldOrPropertyDecl != null && IntroduceUnsafeModifier.IsUnsafe(assignment.Right))
 						{
 							fieldOrPropertyDecl.Modifiers |= Modifiers.Unsafe;
 						}
@@ -416,7 +403,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 								}
 							}
 						}
-						else if (fieldOrPropertyDecl is PropertyDeclaration { IsAutomaticProperty: true } pd)
+						else if (fieldOrPropertyDecl is PropertyDeclaration { IsAutomaticProperty: true, Initializer.IsNull: true } pd)
 						{
 							pd.Initializer = assignment.Right.Detach();
 						}

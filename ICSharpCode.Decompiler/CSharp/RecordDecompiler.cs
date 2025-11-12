@@ -177,6 +177,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			Dictionary<IMethod, IMethod> ctorCallChain = new Dictionary<IMethod, IMethod>();
 
+			Accessibility minAccessibility = recordTypeDef.IsAbstract ? Accessibility.Protected : Accessibility.Public;
+
 			foreach (var method in recordTypeDef.Methods)
 			{
 				cancellationToken.ThrowIfCancellationRequested();
@@ -185,10 +187,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (method.IsStatic || !method.IsConstructor)
 					continue;
 				var m = method.Specialize(subst);
-				var body = DecompileBody(method, allTransforms: method.Accessibility == Accessibility.Public && !recordTypeDef.IsRecord);
+				var body = DecompileBody(method, allTransforms: method.Accessibility >= minAccessibility && !recordTypeDef.IsRecord);
 				if (body == null)
 					continue;
-				if (primaryCtor == null && method.Accessibility == Accessibility.Public && IsPrimaryConstructorBody(m, method, body))
+				if (primaryCtor == null && method.Accessibility >= minAccessibility && IsPrimaryConstructorBody(m, method, body))
 				{
 					primaryCtor = method;
 				}
@@ -199,7 +201,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					// if a chained to a constructor of a different type, give up
 					if (calledCtor != null && calledCtor.DeclaringTypeDefinition?.Equals(method.DeclaringTypeDefinition) != true)
 						return null;
-					ctorCallChain[method] = calledCtor;
+					ctorCallChain[method] = (IMethod)calledCtor?.MemberDefinition;
 				}
 				if (primaryCtor == null)
 				{
@@ -272,6 +274,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					if (offset < method.Parameters.Count)
 					{
+						if (primaryCtorParameterToAutoPropertyOrBackingField.ContainsKey(unspecializedMethod.Parameters[offset]))
+							return false;
+						if (autoPropertyOrBackingFieldToPrimaryCtorParameter.ContainsKey(backingMember))
+							return false;
 						primaryCtorParameterToAutoPropertyOrBackingField.Add(unspecializedMethod.Parameters[offset], backingMember);
 						autoPropertyOrBackingFieldToPrimaryCtorParameter.Add(backingMember, unspecializedMethod.Parameters[offset]);
 					}
