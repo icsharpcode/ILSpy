@@ -40,6 +40,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		override public object Text => entry.Type.ToString();
 
+		public override object NavigationText => $"{Text} ({module.Name})";
+
 		public override object Icon => Images.MetadataTable;
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
