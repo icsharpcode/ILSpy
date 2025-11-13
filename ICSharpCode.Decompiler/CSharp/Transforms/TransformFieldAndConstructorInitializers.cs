@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				// If we're viewing some set of members (fields are direct children of SyntaxTree),
 				// we also need to handle those:
-				HandleInstanceFieldInitializers(node.Children, context.CurrentTypeDefinition);
+				HandleInstanceFieldInitializers(node.Children, null, context.CurrentTypeDefinition);
 				HandleStaticFieldInitializers(node.Children, context.CurrentTypeDefinition);
 
 				node.AcceptVisitor(this);
@@ -173,7 +173,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var currentTypeDefinition = (ITypeDefinition)typeDeclaration.GetSymbol();
 
 			// Handle initializers on instance fields
-			HandleInstanceFieldInitializers(typeDeclaration.Members, currentTypeDefinition);
+			HandleInstanceFieldInitializers(typeDeclaration.Members, typeDeclaration, currentTypeDefinition);
 
 			// Now convert base constructor calls to initializers:
 			base.VisitTypeDeclaration(typeDeclaration);
@@ -200,10 +200,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		void HandleInstanceFieldInitializers(IEnumerable<AstNode> members, ITypeDefinition currentTypeDefinition)
+		void HandleInstanceFieldInitializers(IEnumerable<AstNode> members, EntityDeclaration entityDeclaration, ITypeDefinition currentTypeDefinition)
 		{
-			if (currentTypeDefinition is { Kind: TypeKind.Struct, IsRecord: false }
-				&& !context.Settings.StructDefaultConstructorsAndFieldInitializers)
+			if (!context.Settings.StructDefaultConstructorsAndFieldInitializers
+				&& currentTypeDefinition is { Kind: TypeKind.Struct, IsRecord: false }
+				&& entityDeclaration is TypeDeclaration { HasPrimaryConstructor: false })
 			{
 				return;
 			}
