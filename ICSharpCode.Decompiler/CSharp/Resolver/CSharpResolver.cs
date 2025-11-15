@@ -2171,7 +2171,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				thisParameterType = thisParameterType.AcceptVisitor(substitution);
 			}
 			Conversion c = conversions.ImplicitConversion(targetType, thisParameterType);
-			return c.IsValid && (c.IsIdentityConversion || c.IsReferenceConversion || c.IsBoxingConversion);
+			return (c.IsValid && (c.IsIdentityConversion || c.IsReferenceConversion || c.IsBoxingConversion))
+				|| conversions.IsImplicitSpanConversion(targetType, thisParameterType);
 		}
 
 		/// <summary>

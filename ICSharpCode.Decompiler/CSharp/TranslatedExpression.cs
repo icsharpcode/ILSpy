@@ -650,6 +650,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				return newTargetType.IsKnownType(KnownTypeCode.FormattableString)
 					|| newTargetType.IsKnownType(KnownTypeCode.IFormattable);
 			}
+			if (conversion.IsUserDefined)
+			{
+				return conversions.IsImplicitSpanConversion(inputType, newTargetType);
+			}
 			return conversions.IdentityConversion(oldTargetType, newTargetType);
 		}
 

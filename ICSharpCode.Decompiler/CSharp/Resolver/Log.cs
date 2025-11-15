@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// </summary>
 	static class Log
 	{
-		const bool logEnabled = false;
+		const bool logEnabled = true;
 #if __MonoCS__
 		[Conditional("MCS_DEBUG")]
 #else
