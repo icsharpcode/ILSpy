@@ -4355,15 +4355,6 @@ namespace ICSharpCode.Decompiler.IL
 			set { type = value; InvalidateFlags(); }
 		}
 		public override StackType ResultType { get { return StackType.O; } }
-		protected override InstructionFlags ComputeFlags()
-		{
-			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
-		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
-			}
-		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
