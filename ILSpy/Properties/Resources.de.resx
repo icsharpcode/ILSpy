@@ -1,0 +1,980 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="About" xml:space="preserve">
+    <value>Über</value>
+  </data>
+  <data name="AddPreconfiguredList" xml:space="preserve">
+    <value>Vorkonfigurierte Liste hinzufügen...</value>
+  </data>
+  <data name="AddShellIntegration" xml:space="preserve">
+    <value>Explorer-Integration hinzufügen</value>
+  </data>
+  <data name="AddShellIntegrationMessage" xml:space="preserve">
+    <value>Dies fügt "{0}" zu den Registrierungszweigen "HKCU\Software\Classes\dllfile\shell\Open with ILSpy\command" und "HKCU\Software\Classes\exefile\shell\Open with ILSpy\command" hinzu. Dadurch können .dll- und .exe-Dateien im Explorer-Kontextmenü mit ILSpy geöffnet werden.
+
+Möchten Sie fortfahren?</value>
+  </data>
+  <data name="AllFiles" xml:space="preserve">
+    <value>|Alle Dateien|*.*</value>
+  </data>
+  <data name="AllowMultipleInstances" xml:space="preserve">
+    <value>Mehrere Instanzen zulassen</value>
+  </data>
+  <data name="AlwaysBraces" xml:space="preserve">
+    <value>Immer geschweifte Klammern verwenden</value>
+  </data>
+  <data name="Analyze" xml:space="preserve">
+    <value>Analysieren</value>
+  </data>
+  <data name="Assemblies" xml:space="preserve">
+    <value>Assemblys</value>
+  </data>
+  <data name="Assembly" xml:space="preserve">
+    <value>Assembly</value>
+  </data>
+  <data name="AssemblySaveCodeDirectoryNotEmpty" xml:space="preserve">
+    <value>Verzeichnis ist nicht leer. Dateien werden überschrieben.
+Möchten Sie fortfahren?</value>
+  </data>
+  <data name="AssemblySaveCodeDirectoryNotEmptyTitle" xml:space="preserve">
+    <value>Verzeichnis nicht leer</value>
+  </data>
+  <data name="AutomaticallyCheckUpdatesEveryWeek" xml:space="preserve">
+    <value>Automatisch wöchentlich auf Updates prüfen</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Zurück</value>
+  </data>
+  <data name="BaseTypes" xml:space="preserve">
+    <value>Basistypen</value>
+  </data>
+  <data name="C_lone" xml:space="preserve">
+    <value>K_lonen</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Abbrechen</value>
+  </data>
+  <data name="CannotAnalyzeMissingRef" xml:space="preserve">
+    <value>Analyse nicht möglich: Fehlende Referenz.</value>
+  </data>
+  <data name="CannotCreatePDBFile" xml:space="preserve">
+    <value>PDB-Datei konnte nicht erstellt werden.</value>
+  </data>
+  <data name="CheckAgain" xml:space="preserve">
+    <value>Erneut prüfen</value>
+  </data>
+  <data name="CheckUpdates" xml:space="preserve">
+    <value>Nach Updates suchen</value>
+  </data>
+  <data name="Checking" xml:space="preserve">
+    <value>Überprüfe...</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Schließen</value>
+  </data>
+  <data name="CollapseTreeNodes" xml:space="preserve">
+    <value>Alle Knoten reduzieren</value>
+  </data>
+  <data name="Copy" xml:space="preserve">
+    <value>Kopieren</value>
+  </data>
+  <data name="CopyErrorMessage" xml:space="preserve">
+    <value>Fehler beim Kopieren</value>
+  </data>
+  <data name="CopyName" xml:space="preserve">
+    <value>Namen kopieren</value>
+  </data>
+  <data name="CouldNotUseSdkStyleProjectFormat" xml:space="preserve">
+    <value>Konnte das SDK-Projektformat nicht verwenden.</value>
+  </data>
+  <data name="Create" xml:space="preserve">
+    <value>Erstellen</value>
+  </data>
+  <data name="CultureLabel" xml:space="preserve">
+    <value>Kultur</value>
+  </data>
+  <data name="DEBUGDecompile" xml:space="preserve">
+    <value>DEBUG: Dekompilieren</value>
+  </data>
+  <data name="DEBUGDecompile100x" xml:space="preserve">
+    <value>DEBUG: 100x dekompilieren</value>
+  </data>
+  <data name="DEBUGDisassemble" xml:space="preserve">
+    <value>DEBUG: Disassemblieren</value>
+  </data>
+  <data name="DEBUGDumpPDBAsXML" xml:space="preserve">
+    <value>DEBUG: PDB als XML exportieren</value>
+  </data>
+  <data name="DebugSteps" xml:space="preserve">
+    <value>Debug-Schritte</value>
+  </data>
+  <data name="DebugThisStep" xml:space="preserve">
+    <value>Diesen Schritt debuggen</value>
+  </data>
+  <data name="DecompilationCompleteInF1Seconds" xml:space="preserve">
+    <value>Dekompilierung in {0} Sekunden abgeschlossen</value>
+  </data>
+  <data name="DecompilationViewOptions" xml:space="preserve">
+    <value>Dekompilierungsansicht-Optionen</value>
+  </data>
+  <data name="DecompilationWasCancelled" xml:space="preserve">
+    <value>Dekompilierung wurde abgebrochen</value>
+  </data>
+  <data name="Decompile" xml:space="preserve">
+    <value>Dekompilieren</value>
+  </data>
+  <data name="DecompileToNewPanel" xml:space="preserve">
+    <value>In neuem Panel dekompilieren</value>
+  </data>
+  <data name="Decompiler" xml:space="preserve">
+    <value>Decompiler</value>
+  </data>
+  <data name="DecompilerSettings.AggressiveInlining" xml:space="preserve">
+    <value>Aggressives Inlining</value>
+  </data>
+  <data name="DecompilerSettings.AllowExtensionAddMethodsInCollectionInitializerExpressions" xml:space="preserve">
+    <value>Extension-Add-Methoden in Collection-Initialisierern zulassen</value>
+  </data>
+  <data name="DecompilerSettings.AllowExtensionMethodSyntaxOnRef" xml:space="preserve">
+    <value>Extension-Methoden-Syntax für ref zulassen</value>
+  </data>
+  <data name="DecompilerSettings.AlwaysCastTargetsOfExplicitInterfaceImplementationCalls" xml:space="preserve">
+    <value>Ziele expliziter Schnittstellenimplementierungen immer casten</value>
+  </data>
+  <data name="DecompilerSettings.AlwaysMoveInitializer" xml:space="preserve">
+    <value>Initialisierer immer verschieben</value>
+  </data>
+  <data name="DecompilerSettings.AlwaysQualifyMemberReferences" xml:space="preserve">
+    <value>Mitgliedsreferenzen immer qualifizieren</value>
+  </data>
+  <data name="DecompilerSettings.AlwaysShowEnumMemberValues" xml:space="preserve">
+    <value>Enum-Mitgliedswerte immer anzeigen</value>
+  </data>
+  <data name="DecompilerSettings.AlwaysUseBraces" xml:space="preserve">
+    <value>Immer geschweifte Klammern verwenden</value>
+  </data>
+  <data name="DecompilerSettings.AlwaysUseGlobal" xml:space="preserve">
+    <value>Immer global verwenden</value>
+  </data>
+  <data name="DecompilerSettings.ApplyWindowsRuntimeProjectionsOnLoadedAssemblies" xml:space="preserve">
+    <value>Windows-Runtime-Projektionen auf geladene Assemblys anwenden</value>
+  </data>
+  <data name="DecompilerSettings.ArrayInitializerExpressions" xml:space="preserve">
+    <value>Array-Initialisierer-Ausdrücke</value>
+  </data>
+  <data name="DecompilerSettings.AsyncEnumerator" xml:space="preserve">
+    <value>Asynchrone Enumerator</value>
+  </data>
+  <data name="DecompilerSettings.CheckForOverflowUnderflow" xml:space="preserve">
+    <value>Auf Überlauf/Unterlauf prüfen</value>
+  </data>
+  <data name="DecompilerSettings.DecompileAnonymousMethodsLambdas" xml:space="preserve">
+    <value>Anonyme Methoden/Lambdas dekompilieren</value>
+  </data>
+  <data name="DecompilerSettings.DecompileAnonymousTypes" xml:space="preserve">
+    <value>Anonyme Typen dekompilieren</value>
+  </data>
+  <data name="DecompilerSettings.DecompileAsyncMethods" xml:space="preserve">
+    <value>Asynchrone Methoden dekompilieren</value>
+  </data>
+  <data name="DecompilerSettings.DecompileAutomaticEvents" xml:space="preserve">
+    <value>Automatische Events dekompilieren</value>
+  </data>
+  <data name="DecompilerSettings.DecompileAutomaticProperties" xml:space="preserve">
+    <value>Automatische Eigenschaften dekompilieren</value>
+  </data>
+  <data name="DecompilerSettings.DecompileAwaitInCatchFinallyBlocks" xml:space="preserve">
+    <value>await in catch/finally-Blöcken dekompilieren</value>
+  </data>
+  <data name="DecompilerSettings.DecompileC10PublicUnsafeFixedIntArr10Members" xml:space="preserve">
+    <value>C# 10: Öffentliche unsichere feste int[]-Mitglieder dekompilieren</value>
+  </data>
+  <data name="DecompilerSettings.DecompileDecimalConstantAsSimpleLiteralValues" xml:space="preserve">
+    <value>Dezimal-Konstanten als einfache Literale dekompilieren</value>
+  </data>
+  <data name="DecompilerSettings.DecompileEnumeratorsYieldReturn" xml:space="preserve">
+    <value>Enumeratoren (yield return) dekompilieren</value>
+  </data>
+  <data name="DecompilerSettings.DecompileExpressionTrees" xml:space="preserve">
+    <value>Ausdrucksbäume dekompilieren</value>
+  </data>
+  <data name="DecompilerSettings.DecompileForEachWithGetEnumeratorExtension" xml:space="preserve">
+    <value>foreach mit GetEnumerator-Extension dekompilieren</value>
+  </data>
+  <data name="DecompilerSettings.DecompileParamsCollections" xml:space="preserve">
+    <value>params-Collections dekompilieren</value>
+  </data>
+  <data name="DecompilerSettings.DecompileUseOfTheDynamicType" xml:space="preserve">
+    <value>Verwendung des dynamic-Typs dekompilieren</value>
+  </data>
+  <data name="DecompilerSettings.Deconstruction" xml:space="preserve">
+    <value>Dekonstruktion</value>
+  </data>
+  <data name="DecompilerSettings.DetectAsyncUsingAndForeachStatements" xml:space="preserve">
+    <value>Asynchrone using- und foreach-Anweisungen erkennen</value>
+  </data>
+  <data name="DecompilerSettings.DetectForeachStatements" xml:space="preserve">
+    <value>foreach-Anweisungen erkennen</value>
+  </data>
+  <data name="DecompilerSettings.DetectLockStatements" xml:space="preserve">
+    <value>lock-Anweisungen erkennen</value>
+  </data>
+  <data name="DecompilerSettings.DetectSwitchOnString" xml:space="preserve">
+    <value>switch-Anweisungen auf string erkennen</value>
+  </data>
+  <data name="DecompilerSettings.DetectTupleComparisons" xml:space="preserve">
+    <value>Tupelvergleiche erkennen</value>
+  </data>
+  <data name="DecompilerSettings.DetectUsingStatements" xml:space="preserve">
+    <value>using-Anweisungen erkennen</value>
+  </data>
+  <data name="DecompilerSettings.DictionaryInitializerExpressions" xml:space="preserve">
+    <value>Dictionary-Initialisierer-Ausdrücke</value>
+  </data>
+  <data name="DecompilerSettings.DoWhileStatement" xml:space="preserve">
+    <value>do-while-Anweisung</value>
+  </data>
+  <data name="DecompilerSettings.FSpecificOptions" xml:space="preserve">
+    <value>F#-spezifische Optionen</value>
+  </data>
+  <data name="DecompilerSettings.FileScopedNamespaces" xml:space="preserve">
+    <value>Datei-scoped Namespaces</value>
+  </data>
+  <data name="DecompilerSettings.ForStatement" xml:space="preserve">
+    <value>for-Anweisung</value>
+  </data>
+  <data name="DecompilerSettings.FunctionPointers" xml:space="preserve">
+    <value>Funktionszeiger</value>
+  </data>
+  <data name="DecompilerSettings.GetterOnlyAutomaticProperties" xml:space="preserve">
+    <value>Nur-Getter automatische Eigenschaften</value>
+  </data>
+  <data name="DecompilerSettings.IncludeXMLDocumentationCommentsInTheDecompiledCode" xml:space="preserve">
+    <value>XML-Dokumentationskommentare im dekompilierten Code einfügen</value>
+  </data>
+  <data name="DecompilerSettings.InitAccessors" xml:space="preserve">
+    <value>Init-Accessoren</value>
+  </data>
+  <data name="DecompilerSettings.InsertUsingDeclarations" xml:space="preserve">
+    <value>using-Deklarationen einfügen</value>
+  </data>
+  <data name="DecompilerSettings.IntroduceLocalFunctions" xml:space="preserve">
+    <value>Lokale Funktionen einführen</value>
+  </data>
+  <data name="DecompilerSettings.IntroducePrivateProtectedAccessibility" xml:space="preserve">
+    <value>private protected-Zugriff einführen</value>
+  </data>
+  <data name="DecompilerSettings.IntroduceStaticLocalFunctions" xml:space="preserve">
+    <value>Statische lokale Funktionen einführen</value>
+  </data>
+  <data name="DecompilerSettings.IsByRefLikeAttributeShouldBeReplacedWithRefModifiersOnStructs" xml:space="preserve">
+    <value>IsByRefLike-Attribut durch ref-Modifier bei Structs ersetzen</value>
+  </data>
+  <data name="DecompilerSettings.IsReadOnlyAttributeShouldBeReplacedWithReadonlyInModifiersOnStructsParameters" xml:space="preserve">
+    <value>IsReadOnly-Attribut durch readonly-Modifier bei Structs/Parametern ersetzen</value>
+  </data>
+  <data name="DecompilerSettings.IsUnmanagedAttributeOnTypeParametersShouldBeReplacedWithUnmanagedConstraints" xml:space="preserve">
+    <value>IsUnmanaged-Attribut durch unmanaged-Einschränkung ersetzen</value>
+  </data>
+  <data name="DecompilerSettings.LifetimeAnnotations" xml:space="preserve">
+    <value>Lebensdauern-Annotationen</value>
+  </data>
+  <data name="DecompilerSettings.NativeIntegers" xml:space="preserve">
+    <value>Native Integer</value>
+  </data>
+  <data name="DecompilerSettings.NullPropagation" xml:space="preserve">
+    <value>Null-Propagation</value>
+  </data>
+  <data name="DecompilerSettings.NullableReferenceTypes" xml:space="preserve">
+    <value>Nullable Reference Types</value>
+  </data>
+  <data name="DecompilerSettings.ObjectCollectionInitializerExpressions" xml:space="preserve">
+    <value>Objekt-/Collection-Initialisierer-Ausdrücke</value>
+  </data>
+  <data name="DecompilerSettings.Other" xml:space="preserve">
+    <value>Weitere Optionen</value>
+  </data>
+  <data name="DecompilerSettings.PatternMatching" xml:space="preserve">
+    <value>Pattern Matching</value>
+  </data>
+  <data name="DecompilerSettings.ProjectExport" xml:space="preserve">
+    <value>Projekt-Export</value>
+  </data>
+  <data name="DecompilerSettings.Ranges" xml:space="preserve">
+    <value>Ranges</value>
+  </data>
+  <data name="DecompilerSettings.ReadOnlyMethods" xml:space="preserve">
+    <value>Readonly-Methoden</value>
+  </data>
+  <data name="DecompilerSettings.RecordClasses" xml:space="preserve">
+    <value>Record-Klassen</value>
+  </data>
+  <data name="DecompilerSettings.RecordStructs" xml:space="preserve">
+    <value>Record-Structs</value>
+  </data>
+  <data name="DecompilerSettings.RemoveDeadAndSideEffectFreeCodeUseWithCaution" xml:space="preserve">
+    <value>Toten und nebenwirkungsfreien Code entfernen (mit Vorsicht verwenden)</value>
+  </data>
+  <data name="DecompilerSettings.RemoveDeadStores" xml:space="preserve">
+    <value>Tote Stores entfernen</value>
+  </data>
+  <data name="DecompilerSettings.RemoveOptionalArgumentsIfPossible" xml:space="preserve">
+    <value>Optionale Argumente wenn möglich entfernen</value>
+  </data>
+  <data name="DecompilerSettings.RequiredMembers" xml:space="preserve">
+    <value>Erforderliche Mitglieder</value>
+  </data>
+  <data name="DecompilerSettings.SeparateLocalVariableDeclarations" xml:space="preserve">
+    <value>Lokale Variablendeklarationen trennen</value>
+  </data>
+  <data name="DecompilerSettings.ShowInfoFromDebugSymbolsIfAvailable" xml:space="preserve">
+    <value>Informationen aus Debug-Symbolen anzeigen (falls verfügbar)</value>
+  </data>
+  <data name="DecompilerSettings.SortCustomAttributes" xml:space="preserve">
+    <value>Benutzerdefinierte Attribute sortieren</value>
+  </data>
+  <data name="DecompilerSettings.SparseIntegerSwitch" xml:space="preserve">
+    <value>Sparse Integer Switch</value>
+  </data>
+  <data name="DecompilerSettings.StringConcat" xml:space="preserve">
+    <value>String-Verkettung</value>
+  </data>
+  <data name="DecompilerSettings.SwitchExpressions" xml:space="preserve">
+    <value>Switch-Ausdrücke</value>
+  </data>
+  <data name="DecompilerSettings.UseDiscards" xml:space="preserve">
+    <value>Discards verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UseEnhancedUsing" xml:space="preserve">
+    <value>Erweitertes using verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UseExpressionBodiedMemberSyntaxForGetOnlyProperties" xml:space="preserve">
+    <value>Expression-bodied Syntax für Nur-Getter-Eigenschaften verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UseExtensionMethodSyntax" xml:space="preserve">
+    <value>Extension-Methoden-Syntax verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UseImplicitConversionsBetweenTupleTypes" xml:space="preserve">
+    <value>Implizite Konvertierungen zwischen Tupeltypen verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UseImplicitMethodGroupConversions" xml:space="preserve">
+    <value>Implizite Methodengruppenkonvertierungen verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UseLINQExpressionSyntax" xml:space="preserve">
+    <value>LINQ-Ausdruckssyntax verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UseLambdaSyntaxIfPossible" xml:space="preserve">
+    <value>Lambda-Syntax wenn möglich verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UseLiftedOperatorsForNullables" xml:space="preserve">
+    <value>Lifted-Operatoren für Nullables verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UseNamedArguments" xml:space="preserve">
+    <value>Benannte Argumente verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UseNestedDirectoriesForNamespaces" xml:space="preserve">
+    <value>Verschachtelte Verzeichnisse für Namespaces verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UseNonTrailingNamedArguments" xml:space="preserve">
+    <value>Nicht-nachgestellte benannte Argumente verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UseObjectCreationOfGenericTypeParameter" xml:space="preserve">
+    <value>Objekterstellung von generischen Typparametern verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UseOutVariableDeclarations" xml:space="preserve">
+    <value>out-Variablendeklarationen verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UsePatternBasedFixedStatement" xml:space="preserve">
+    <value>Musterbasierte fixed-Anweisung verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UsePrimaryConstructorSyntax" xml:space="preserve">
+    <value>Primärkonstruktor-Syntax verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UsePrimaryConstructorSyntaxForNonRecordTypes" xml:space="preserve">
+    <value>Primärkonstruktor-Syntax für Nicht-Record-Typen verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UseRefLocalsForAccurateOrderOfEvaluation" xml:space="preserve">
+    <value>ref-locals für genaue Auswertungsreihenfolge verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UseSdkStyleProjectFormat" xml:space="preserve">
+    <value>SDK-Projektformat verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UseStackallocInitializerSyntax" xml:space="preserve">
+    <value>stackalloc-Initialisierer-Syntax verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UseStringInterpolation" xml:space="preserve">
+    <value>String-Interpolation verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UseThrowExpressions" xml:space="preserve">
+    <value>throw-Ausdrücke verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UseTupleTypeSyntax" xml:space="preserve">
+    <value>Tupeltyp-Syntax verwenden</value>
+  </data>
+  <data name="DecompilerSettings.UseVariableNamesFromDebugSymbolsIfAvailable" xml:space="preserve">
+    <value>Variablennamen aus Debug-Symbolen verwenden (falls verfügbar)</value>
+  </data>
+  <data name="DecompilerSettings.VBSpecificOptions" xml:space="preserve">
+    <value>VB-spezifische Optionen</value>
+  </data>
+  <data name="DecompilerSettings.WithExpressions" xml:space="preserve">
+    <value>with-Ausdrücke</value>
+  </data>
+  <data name="DecompilerSettingsPanelLongText" xml:space="preserve">
+    <value>Weitere Decompiler-Optionen</value>
+  </data>
+  <data name="Decompiling" xml:space="preserve">
+    <value>Dekompiliere...</value>
+  </data>
+  <data name="Dependencies" xml:space="preserve">
+    <value>Abhängigkeiten</value>
+  </data>
+  <data name="DerivedTypes" xml:space="preserve">
+    <value>Abgeleitete Typen</value>
+  </data>
+  <data name="Display" xml:space="preserve">
+    <value>Anzeigen</value>
+  </data>
+  <data name="DisplayCode" xml:space="preserve">
+    <value>Code anzeigen</value>
+  </data>
+  <data name="DisplaySettingsPanel_Font" xml:space="preserve">
+    <value>Schriftart</value>
+  </data>
+  <data name="DisplaySettingsPanel_Theme" xml:space="preserve">
+    <value>Thema</value>
+  </data>
+  <data name="Download" xml:space="preserve">
+    <value>Herunterladen</value>
+  </data>
+  <data name="E_xit" xml:space="preserve">
+    <value>B_eenden</value>
+  </data>
+  <data name="Editor" xml:space="preserve">
+    <value>Editor</value>
+  </data>
+  <data name="EnableFoldingBlocksBraces" xml:space="preserve">
+    <value>Faltblöcke/Klammern aktivieren</value>
+  </data>
+  <data name="EnableWordWrap" xml:space="preserve">
+    <value>Zeilenumbruch aktivieren</value>
+  </data>
+  <data name="EnterListName" xml:space="preserve">
+    <value>Listenname eingeben</value>
+  </data>
+  <data name="Exit" xml:space="preserve">
+    <value>Beenden</value>
+  </data>
+  <data name="ExpandMemberDefinitionsAfterDecompilation" xml:space="preserve">
+    <value>Mitgliedsdefinitionen nach Dekompilierung erweitern</value>
+  </data>
+  <data name="ExpandUsingDeclarationsAfterDecompilation" xml:space="preserve">
+    <value>using-Deklarationen nach Dekompilierung erweitern</value>
+  </data>
+  <data name="ExtractAllPackageEntries" xml:space="preserve">
+    <value>Alle Paketeinträge extrahieren</value>
+  </data>
+  <data name="ExtractPackageEntry" xml:space="preserve">
+    <value>Paket-Eintrag extrahieren</value>
+  </data>
+  <data name="Folding" xml:space="preserve">
+    <value>Faltung</value>
+  </data>
+  <data name="Font" xml:space="preserve">
+    <value>Schriftart</value>
+  </data>
+  <data name="Forward" xml:space="preserve">
+    <value>Vorwärts</value>
+  </data>
+  <data name="GeneratePortable" xml:space="preserve">
+    <value>Portable generieren</value>
+  </data>
+  <data name="GenerationCompleteInSeconds" xml:space="preserve">
+    <value>Generierung in Sekunden abgeschlossen</value>
+  </data>
+  <data name="GenerationWasCancelled" xml:space="preserve">
+    <value>Generierung wurde abgebrochen</value>
+  </data>
+  <data name="GoToToken" xml:space="preserve">
+    <value>Zu Token springen</value>
+  </data>
+  <data name="HideEmptyMetadataTables" xml:space="preserve">
+    <value>Leere Metadaten-Tabellen ausblenden</value>
+  </data>
+  <data name="HighlightCurrentLine" xml:space="preserve">
+    <value>Aktuelle Zeile hervorheben</value>
+  </data>
+  <data name="HighlightMatchingBraces" xml:space="preserve">
+    <value>Übereinstimmende Klammern hervorheben</value>
+  </data>
+  <data name="ILSpyAboutPageTxt" xml:space="preserve">
+    <value>ILSpy Über-Seite</value>
+  </data>
+  <data name="ILSpyVersion" xml:space="preserve">
+    <value>ILSpy-Version</value>
+  </data>
+  <data name="ILSpyVersionAvailable" xml:space="preserve">
+    <value>ILSpy-Version verfügbar</value>
+  </data>
+  <data name="IndentSize" xml:space="preserve">
+    <value>Einrückungsgröße</value>
+  </data>
+  <data name="Indentation" xml:space="preserve">
+    <value>Einrückung</value>
+  </data>
+  <data name="InsertUsingDeclarations" xml:space="preserve">
+    <value>using-Deklarationen einfügen</value>
+  </data>
+  <data name="ListDeleteConfirmation" xml:space="preserve">
+    <value>Liste wirklich löschen?</value>
+  </data>
+  <data name="ListExistsAlready" xml:space="preserve">
+    <value>Liste existiert bereits</value>
+  </data>
+  <data name="ListsResetConfirmation" xml:space="preserve">
+    <value>Listen wirklich zurücksetzen?</value>
+  </data>
+  <data name="LoadAssembliesThatWereLoadedInTheLastInstance" xml:space="preserve">
+    <value>Assemblys aus letzter Sitzung laden</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Lädt...</value>
+  </data>
+  <data name="Location" xml:space="preserve">
+    <value>Speicherort</value>
+  </data>
+  <data name="ManageAssemblyLists" xml:space="preserve">
+    <value>Assembly-Listen verwalten</value>
+  </data>
+  <data name="ManageAssembly_Lists" xml:space="preserve">
+    <value>Assembly-Listen verwalten</value>
+  </data>
+  <data name="Misc" xml:space="preserve">
+    <value>Verschiedenes</value>
+  </data>
+  <data name="NETFrameworkVersion" xml:space="preserve">
+    <value>.NET Framework-Version</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Navigation" xml:space="preserve">
+    <value>Navigation</value>
+  </data>
+  <data name="NavigationFailed" xml:space="preserve">
+    <value>Navigation fehlgeschlagen, da das Ziel eine ausgeblendete oder vom Compiler generierte Klasse ist.
+Bitte deaktivieren Sie alle Filter, die diese ausblenden könnten (z.B. "Ansicht > Interne Typen und Mitglieder anzeigen") und versuchen Sie es erneut.</value>
+  </data>
+  <data name="NewList" xml:space="preserve">
+    <value>Neue Liste</value>
+  </data>
+  <data name="NewTab" xml:space="preserve">
+    <value>Neuer Tab</value>
+  </data>
+  <data name="NugetPackageBrowser" xml:space="preserve">
+    <value>NuGet-Paketbrowser</value>
+  </data>
+  <data name="OK" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Open" xml:space="preserve">
+    <value>Öffnen</value>
+  </data>
+  <data name="OpenExplorer" xml:space="preserve">
+    <value>Explorer öffnen</value>
+  </data>
+  <data name="OpenFrom" xml:space="preserve">
+    <value>Öffnen von</value>
+  </data>
+  <data name="OpenFrom_GAC" xml:space="preserve">
+    <value>Aus GAC öffnen</value>
+  </data>
+  <data name="OpenListDialog__Delete" xml:space="preserve">
+    <value>Liste löschen</value>
+  </data>
+  <data name="OpenListDialog__Open" xml:space="preserve">
+    <value>Liste öffnen</value>
+  </data>
+  <data name="OperationWasCancelled" xml:space="preserve">
+    <value>Vorgang wurde abgebrochen</value>
+  </data>
+  <data name="Options" xml:space="preserve">
+    <value>Optionen</value>
+  </data>
+  <data name="Other" xml:space="preserve">
+    <value>Andere</value>
+  </data>
+  <data name="OtherOptions" xml:space="preserve">
+    <value>Weitere Optionen</value>
+  </data>
+  <data name="OtherResources" xml:space="preserve">
+    <value>Weitere Ressourcen</value>
+  </data>
+  <data name="PortablePDBPdbAllFiles" xml:space="preserve">
+    <value>Alle Portable PDB/PDB-Dateien</value>
+  </data>
+  <data name="ProjectExportFormatChangeSettingHint" xml:space="preserve">
+    <value>Hinweis: Exportformat kann in den Einstellungen geändert werden.</value>
+  </data>
+  <data name="ProjectExportFormatNonSDKHint" xml:space="preserve">
+    <value>Hinweis: Nicht-SDK-Format wird verwendet.</value>
+  </data>
+  <data name="ProjectExportFormatSDKHint" xml:space="preserve">
+    <value>Hinweis: SDK-Format wird verwendet.</value>
+  </data>
+  <data name="ProjectExportPathTooLong" xml:space="preserve">
+    <value>Dekompilierung der Assembly {0} fehlgeschlagen, da der Namespace-Name zu lang oder die Dateiverschachtelung zu tief ist.
+Wenn Sie Windows 10.0.14393 (Windows 10 Version 1607) oder neuer verwenden, können Sie die Unterstützung für lange Pfade aktivieren, indem Sie in der Registrierung unter "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem" den Wert "LongPathsEnabled" auf 0x1 setzen.
+Wenn Ihr System bereits lange Pfade unterstützt, das Problem aber weiterhin besteht, versuchen Sie, verschachtelte Verzeichnisse zu aktivieren. Dies können Sie in den Optionen unter Decompiler > Projekte exportieren > Verschachtelte Verzeichnisse für Namespaces verwenden aktivieren. Dies sollte das Problem beheben, da auch auf Plattformen mit Unterstützung für lange Pfade die maximale Länge eines einzelnen Ordnernamens (z.B. 255 Zeichen unter Windows/NTFS) begrenzt ist.</value>
+  </data>
+  <data name="PropertyManuallyMissingReferencesListLoadedAssemblies" xml:space="preserve">
+    <value>Liste der geladenen Assemblys mit fehlenden Referenzen</value>
+  </data>
+  <data name="PublicToken" xml:space="preserve">
+    <value>Öffentlicher Token</value>
+  </data>
+  <data name="R_ename" xml:space="preserve">
+    <value>U_mbenennen</value>
+  </data>
+  <data name="ReferenceName" xml:space="preserve">
+    <value>Referenzname</value>
+  </data>
+  <data name="References" xml:space="preserve">
+    <value>Referenzen</value>
+  </data>
+  <data name="RefreshCommand_ReloadAssemblies" xml:space="preserve">
+    <value>Assemblys neu laden</value>
+  </data>
+  <data name="ReloadAssemblies" xml:space="preserve">
+    <value>Assemblys neu laden</value>
+  </data>
+  <data name="Remove" xml:space="preserve">
+    <value>Entfernen</value>
+  </data>
+  <data name="RemoveDeadSideEffectFreeCode" xml:space="preserve">
+    <value>Nebenwirkungsfreien Code entfernen</value>
+  </data>
+  <data name="RemoveShellIntegration" xml:space="preserve">
+    <value>Explorer-Integration entfernen</value>
+  </data>
+  <data name="RemoveShellIntegrationMessage" xml:space="preserve">
+    <value>Möchten Sie fortfahren?</value>
+  </data>
+  <data name="RenameList" xml:space="preserve">
+    <value>Liste umbenennen</value>
+  </data>
+  <data name="ResetToDefaults" xml:space="preserve">
+    <value>Auf Standard zurücksetzen</value>
+  </data>
+  <data name="ResetToDefaultsConfirmationMessage" xml:space="preserve">
+    <value>Wirklich auf Standardwerte zurücksetzen?</value>
+  </data>
+  <data name="ResourcesFileFilter" xml:space="preserve">
+    <value>Ressourcendateien</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Speichern</value>
+  </data>
+  <data name="SaveCode" xml:space="preserve">
+    <value>Code speichern</value>
+  </data>
+  <data name="ScopeSearchToThisAssembly" xml:space="preserve">
+    <value>Suche auf diese Assembly beschränken</value>
+  </data>
+  <data name="ScopeSearchToThisNamespace" xml:space="preserve">
+    <value>Suche auf diesen Namespace beschränken</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Suchen</value>
+  </data>
+  <data name="SearchAbortedMoreThan1000ResultsFound" xml:space="preserve">
+    <value>Suche abgebrochen: Mehr als 1000 Ergebnisse gefunden</value>
+  </data>
+  <data name="SearchCtrlShiftFOrCtrlE" xml:space="preserve">
+    <value>Strg+Shift+F oder Strg+E zum Suchen</value>
+  </data>
+  <data name="SearchMSDN" xml:space="preserve">
+    <value>MSDN durchsuchen</value>
+  </data>
+  <data name="SearchPane_Search" xml:space="preserve">
+    <value>Suchbereich</value>
+  </data>
+  <data name="Searching" xml:space="preserve">
+    <value>Suche läuft...</value>
+  </data>
+  <data name="Select" xml:space="preserve">
+    <value>Auswählen</value>
+  </data>
+  <data name="SelectAssembliesOpen" xml:space="preserve">
+    <value>Zu öffnende Assemblys auswählen</value>
+  </data>
+  <data name="SelectAssemblyListDropdownTooltip" xml:space="preserve">
+    <value>Assembly-Liste auswählen</value>
+  </data>
+  <data name="SelectLanguageDropdownTooltip" xml:space="preserve">
+    <value>Sprache auswählen</value>
+  </data>
+  <data name="SelectList" xml:space="preserve">
+    <value>Liste auswählen</value>
+  </data>
+  <data name="SelectPDB" xml:space="preserve">
+    <value>PDB auswählen</value>
+  </data>
+  <data name="SelectVersionDropdownTooltip" xml:space="preserve">
+    <value>Version auswählen</value>
+  </data>
+  <data name="SettingsChangeRestartRequired" xml:space="preserve">
+    <value>Neustart erforderlich nach Änderung der Einstellungen</value>
+  </data>
+  <data name="Shell" xml:space="preserve">
+    <value>Shell</value>
+  </data>
+  <data name="ShowAllTypesAndMembers" xml:space="preserve">
+    <value>Alle Typen und Mitglieder anzeigen</value>
+  </data>
+  <data name="ShowAssemblyLoad" xml:space="preserve">
+    <value>Assembly-Ladevorgang anzeigen</value>
+  </data>
+  <data name="ShowChildIndexInBlock" xml:space="preserve">
+    <value>Kinderindex im Block anzeigen</value>
+  </data>
+  <data name="ShowDocumentationDecompiledCode" xml:space="preserve">
+    <value>Dokumentation im dekompilierten Code anzeigen</value>
+  </data>
+  <data name="ShowILRanges" xml:space="preserve">
+    <value>IL-Bereiche anzeigen</value>
+  </data>
+  <data name="ShowInfoFromDebugSymbolsAvailable" xml:space="preserve">
+    <value>Informationen aus Debug-Symbolen verfügbar</value>
+  </data>
+  <data name="ShowInternalTypesMembers" xml:space="preserve">
+    <value>Interne Typen/Mitglieder anzeigen</value>
+  </data>
+  <data name="ShowLineNumbers" xml:space="preserve">
+    <value>Zeilennummern anzeigen</value>
+  </data>
+  <data name="ShowMetadataTokens" xml:space="preserve">
+    <value>Metadaten-Tokens anzeigen</value>
+  </data>
+  <data name="ShowMetadataTokensInBase10" xml:space="preserve">
+    <value>Metadaten-Tokens in Basis 10 anzeigen</value>
+  </data>
+  <data name="ShowPublicOnlyTypesMembers" xml:space="preserve">
+    <value>Nur öffentliche Typen/Mitglieder anzeigen</value>
+  </data>
+  <data name="ShowRawOffsetsAndBytesBeforeInstruction" xml:space="preserve">
+    <value>Roh-Offsets und Bytes vor Anweisung anzeigen</value>
+  </data>
+  <data name="ShowStateAfterThisStep" xml:space="preserve">
+    <value>Status nach diesem Schritt anzeigen</value>
+  </data>
+  <data name="ShowStateBeforeThisStep" xml:space="preserve">
+    <value>Status vor diesem Schritt anzeigen</value>
+  </data>
+  <data name="Show_allTypesAndMembers" xml:space="preserve">
+    <value>Alle Typen und Mitglieder anzeigen</value>
+  </data>
+  <data name="Show_internalTypesMembers" xml:space="preserve">
+    <value>Interne Typen/Mitglieder anzeigen</value>
+  </data>
+  <data name="Show_publiconlyTypesMembers" xml:space="preserve">
+    <value>Nur öffentliche Typen/Mitglieder anzeigen</value>
+  </data>
+  <data name="Size" xml:space="preserve">
+    <value>Größe</value>
+  </data>
+  <data name="SortAssemblyListName" xml:space="preserve">
+    <value>Assembly-Liste nach Name sortieren</value>
+  </data>
+  <data name="SortAssembly_listName" xml:space="preserve">
+    <value>Assembly-Liste nach Name sortieren</value>
+  </data>
+  <data name="SortResultsFitness" xml:space="preserve">
+    <value>Ergebnisse nach Relevanz sortieren</value>
+  </data>
+  <data name="StandBy" xml:space="preserve">
+    <value>Bereit</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="StringTable" xml:space="preserve">
+    <value>Zeichentabelle</value>
+  </data>
+  <data name="StyleTheWindowTitleBar" xml:space="preserve">
+    <value>Fenstertitelleiste gestalten</value>
+  </data>
+  <data name="TabSize" xml:space="preserve">
+    <value>Tabulatorgröße</value>
+  </data>
+  <data name="Theme" xml:space="preserve">
+    <value>Thema</value>
+  </data>
+  <data name="ToggleFolding" xml:space="preserve">
+    <value>Faltung umschalten</value>
+  </data>
+  <data name="TreeViewOptions" xml:space="preserve">
+    <value>Baumansicht-Optionen</value>
+  </data>
+  <data name="Type" xml:space="preserve">
+    <value>Typ</value>
+  </data>
+  <data name="UILanguage" xml:space="preserve">
+    <value>UI-Sprache</value>
+  </data>
+  <data name="UILanguage_System" xml:space="preserve">
+    <value>Systemsprache</value>
+  </data>
+  <data name="UpdateILSpyFound" xml:space="preserve">
+    <value>Update für ILSpy gefunden</value>
+  </data>
+  <data name="UseFieldSugar" xml:space="preserve">
+    <value>Feld-Syntax verwenden</value>
+  </data>
+  <data name="UseLogicOperationSugar" xml:space="preserve">
+    <value>Logik-Operationen-Syntax verwenden</value>
+  </data>
+  <data name="UseNestedNamespaceNodes" xml:space="preserve">
+    <value>Verschachtelte Namespace-Knoten verwenden</value>
+  </data>
+  <data name="UseTabsInsteadOfSpaces" xml:space="preserve">
+    <value>Tabs statt Leerzeichen verwenden</value>
+  </data>
+  <data name="UsingLatestRelease" xml:space="preserve">
+    <value>Neueste Version wird verwendet</value>
+  </data>
+  <data name="UsingNightlyBuildNewerThanLatestRelease" xml:space="preserve">
+    <value>Nightly Build ist neuer als die letzte Release-Version</value>
+  </data>
+  <data name="Value" xml:space="preserve">
+    <value>Wert</value>
+  </data>
+  <data name="ValueString" xml:space="preserve">
+    <value>Wert (Zeichenfolge)</value>
+  </data>
+  <data name="VariableNamesFromDebugSymbolsAvailable" xml:space="preserve">
+    <value>Variablennamen aus Debug-Symbolen verfügbar</value>
+  </data>
+  <data name="Version" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="VersionAvailable" xml:space="preserve">
+    <value>Version verfügbar</value>
+  </data>
+  <data name="View" xml:space="preserve">
+    <value>Ansicht</value>
+  </data>
+  <data name="VisualStudioSolutionFileSlnAllFiles" xml:space="preserve">
+    <value>Alle Visual Studio Solution-Dateien (*.sln)</value>
+  </data>
+  <data name="WarningAsmMarkedRef" xml:space="preserve">
+    <value>Warnung: Assembly als Referenz markiert</value>
+  </data>
+  <data name="WarningSomeAssemblyReference" xml:space="preserve">
+    <value>Warnung: Einige Assembly-Referenzen fehlen</value>
+  </data>
+  <data name="WatermarkText" xml:space="preserve">
+    <value>Wasserzeichen-Text</value>
+  </data>
+  <data name="Window_CloseAllDocuments" xml:space="preserve">
+    <value>Alle Dokumente schließen</value>
+  </data>
+  <data name="Window_ResetLayout" xml:space="preserve">
+    <value>Layout zurücksetzen</value>
+  </data>
+  <data name="_About" xml:space="preserve">
+    <value>Ü_ber</value>
+  </data>
+  <data name="_AddMainList" xml:space="preserve">
+    <value>Hauptliste hinzufügen</value>
+  </data>
+  <data name="_Analyzer" xml:space="preserve">
+    <value>Analysator</value>
+  </data>
+  <data name="_Assemblies" xml:space="preserve">
+    <value>Assemblys</value>
+  </data>
+  <data name="_CheckUpdates" xml:space="preserve">
+    <value>Nach Updates suchen</value>
+  </data>
+  <data name="_CollapseTreeNodes" xml:space="preserve">
+    <value>Knoten reduzieren</value>
+  </data>
+  <data name="_File" xml:space="preserve">
+    <value>Datei</value>
+  </data>
+  <data name="_Help" xml:space="preserve">
+    <value>Hilfe</value>
+  </data>
+  <data name="_LoadDependencies" xml:space="preserve">
+    <value>Abhängigkeiten laden</value>
+  </data>
+  <data name="_New" xml:space="preserve">
+    <value>Neu</value>
+  </data>
+  <data name="_Open" xml:space="preserve">
+    <value>Öffnen</value>
+  </data>
+  <data name="_OpenCommandLineHere" xml:space="preserve">
+    <value>Kommandozeile hier öffnen</value>
+  </data>
+  <data name="_OpenContainingFolder" xml:space="preserve">
+    <value>Enthaltenden Ordner öffnen</value>
+  </data>
+  <data name="_Options" xml:space="preserve">
+    <value>Optionen</value>
+  </data>
+  <data name="_Reload" xml:space="preserve">
+    <value>Neu laden</value>
+  </data>
+  <data name="_Remove" xml:space="preserve">
+    <value>Entfernen</value>
+  </data>
+  <data name="_RemoveAssembliesWithLoadErrors" xml:space="preserve">
+    <value>Assemblys mit Ladefehlern entfernen</value>
+  </data>
+  <data name="_Reset" xml:space="preserve">
+    <value>Zurücksetzen</value>
+  </data>
+  <data name="_Resources" xml:space="preserve">
+    <value>Ressourcen</value>
+  </data>
+  <data name="_SaveCode" xml:space="preserve">
+    <value>Code speichern</value>
+  </data>
+  <data name="_Search" xml:space="preserve">
+    <value>Suchen</value>
+  </data>
+  <data name="_SearchFor" xml:space="preserve">
+    <value>Suchen nach</value>
+  </data>
+  <data name="_ShowDebugSteps" xml:space="preserve">
+    <value>Debug-Schritte anzeigen</value>
+  </data>
+  <data name="_ToggleFolding" xml:space="preserve">
+    <value>Faltung umschalten</value>
+  </data>
+  <data name="_View" xml:space="preserve">
+    <value>Ansicht</value>
+  </data>
+  <data name="_Window" xml:space="preserve">
+    <value>Fenster</value>
+  </data>
+</root>
