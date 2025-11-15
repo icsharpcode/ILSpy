@@ -93,6 +93,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			public int A;
 			public int B;
 
+			public int M()
+			{
+				return 42;
+			}
+
 			public S(int a)
 			{
 				A = a;

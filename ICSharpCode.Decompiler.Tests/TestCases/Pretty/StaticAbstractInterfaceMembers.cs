@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.StaticAbstractInterfaceM
 
 	internal interface IAmStatic<T> where T : IAmStatic<T>
 	{
-		static int f;
+		static int f = 42;
 		static T P { get; set; }
 		static event Action E;
 		static void M(object x)
@@ -82,10 +82,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.StaticAbstractInterfaceM
 		static IAmStatic<T> operator +(IAmStatic<T> l, IAmStatic<T> r)
 		{
 			throw new NotImplementedException();
-		}
-		static IAmStatic()
-		{
-			f = 42;
 		}
 	}
 

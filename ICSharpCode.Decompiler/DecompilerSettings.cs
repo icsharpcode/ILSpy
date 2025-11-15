@@ -2143,24 +2143,6 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		bool preferPrimaryConstructorIfPossible = false;
-
-		/// <summary>
-		/// Prefer primary constructor syntax with classes and structs whenever possible.
-		/// </summary>
-		[Category("DecompilerSettings.Other")]
-		[Description("DecompilerSettings.PreferPrimaryConstructorIfPossible")]
-		public bool PreferPrimaryConstructorIfPossible {
-			get { return preferPrimaryConstructorIfPossible; }
-			set {
-				if (preferPrimaryConstructorIfPossible != value)
-				{
-					preferPrimaryConstructorIfPossible = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
 		bool inlineArrays = true;
 
 		/// <summary>
@@ -2315,7 +2297,7 @@ namespace ICSharpCode.Decompiler
 
 		/// <summary>
 		/// If set to false (the default), the decompiler will move field initializers at the start of constructors
-		/// to their respective field declrations (TransformFieldAndConstructorInitializers) only when the declaring
+		/// to their respective field declarations (TransformFieldAndConstructorInitializers) only when the declaring
 		/// type has BeforeFieldInit or the member IsConst.
 		/// If set true, the decompiler will always move them regardless of the flags.
 		/// </summary>

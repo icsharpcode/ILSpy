@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 
@@ -150,154 +149,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.Playstation
 		}
 	}
 
-	public struct FromBinaryOperator
+	// always use primary constructor because it is indistinguishable
+	public struct FromBinaryOperator(int dummy1, int dummy2)
 	{
-		public int Leet;
-
-		public FromBinaryOperator(int dummy1, int dummy2)
-		{
-			Leet = dummy1 + dummy2;
-		}
+		public int Leet = dummy1 + dummy2;
 	}
 
-	public struct FromCall
+	public struct FromCall(int dummy1, int dummy2)
 	{
-		public int Leet;
-
-		public FromCall(int dummy1, int dummy2)
-		{
-			Leet = Math.Max(dummy1, dummy2);
-		}
+		public int Leet = Math.Max(dummy1, dummy2);
 	}
 
-	public struct FromConvert
+	public struct FromConvert(double dummy1, double dummy2)
 	{
-		public int Leet;
-
-		public FromConvert(double dummy1, double dummy2)
-		{
-			Leet = (int)Math.Min(dummy1, dummy2);
-		}
-	}
-
-	internal class Issue3452
-	{
-		private struct Data
-		{
-			public object Obj;
-		}
-
-		private class C1(object obj)
-		{
-			internal Data d = new Data {
-				Obj = obj
-			};
-		}
-
-		private class C2(object obj)
-		{
-			public object Obj => obj;
-		}
-
-		private class C3(StringComparison comparison)
-		{
-			private StringComparison _comparison = comparison;
-
-			internal StringComparison Test()
-			{
-				return comparison;
-			}
-		}
-
-		private struct S1
-		{
-			internal Data d;
-
-			public S1(object obj)
-			{
-				d = new Data {
-					Obj = obj
-				};
-			}
-		}
-
-		private struct S2(object obj)
-		{
-			public object Obj => obj;
-		}
-	}
-
-	internal class Issue3610
-	{
-		private struct CtorDoubleAssignmentTest
-		{
-#if EXPECTED_OUTPUT
-			public bool Value = false;
-
-			public CtorDoubleAssignmentTest(string arg1, int arg2)
-			{
-				Value = true;
-			}
-#else
-			public bool Value;
-
-			public CtorDoubleAssignmentTest(string arg1, int arg2)
-			{
-				Value = false;
-				Value = true;
-			}
-#endif
-		}
-
-		private struct CtorDoubleAssignmentTest2
-		{
-			public bool Value = true;
-
-			public CtorDoubleAssignmentTest2(string arg1, int arg2)
-			{
-				Value = false;
-			}
-		}
-
-		private class FieldInitTest
-		{
-			public bool Flag = true;
-			public Func<int, int> Action = (int a) => a;
-			public string Value;
-
-			public FieldInitTest(string value)
-			{
-				Value = value;
-			}
-		}
-
-		private abstract class PCFieldInitTest(StringComparison value)
-		{
-			private StringComparison _value = value;
-
-			public bool Func()
-			{
-				return value == StringComparison.Ordinal;
-			}
-		}
-
-		private class RecordTest<T>
-		{
-			private interface IInterface
-			{
-				T[] Objects { get; }
-			}
-
-			protected record Record(T[] Objects) : IInterface
-			{
-				public Record(List<T> objects)
-					: this(objects.ToArray())
-				{
-				}
-			}
-		}
-
-		private abstract record RecordTest2(Guid[] Guids);
+		public int Leet = (int)Math.Min(dummy1, dummy2);
 	}
 
 	public record NamedParameter(string name, object? value, bool encode = true) : Parameter(Ensure.NotEmptyString(name, "name"), value, encode);
@@ -386,6 +251,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.Playstation
 		private readonly string _name = "name" + Environment.GetEnvironmentVariable("Path");
 		private readonly int _age = Environment.GetEnvironmentVariable("Path")?.Length ?? (-1);
 
+		private void Method()
+		{
+			Console.WriteLine("Hello");
+		}
+
 		public PersonRegular2(string name, int age)
 		{
 		}
@@ -393,14 +263,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.Playstation
 
 	public record QueryParameter(string name, object? value, bool encode = true) : NamedParameter(name, value, encode);
 
-	internal ref struct RefFields
+	internal ref struct RefFields(ref int v)
 	{
-		public ref int Field0;
-
-		public RefFields(ref int v)
-		{
-			Field0 = ref v;
-		}
+		public ref int Field0 = ref v;
 	}
 
 	internal struct StructWithDefaultCtor
@@ -412,14 +277,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.Playstation
 		}
 	}
 
-	internal struct ValueFields
+	internal struct ValueFields(int v)
 	{
-		public int Field0;
-
-		public ValueFields(int v)
-		{
-			Field0 = v;
-		}
+		public int Field0 = v;
 	}
 
 	internal class WebPair1(string name)

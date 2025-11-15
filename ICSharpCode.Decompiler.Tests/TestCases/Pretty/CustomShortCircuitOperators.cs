@@ -128,6 +128,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomShortCircuitOperat
 	{
 		private readonly bool val;
 
+		public bool Val {
+			get {
+				return val;
+			}
+			set {
+			}
+		}
+
 		public S(bool val)
 		{
 			this.val = val;

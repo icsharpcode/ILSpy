@@ -1300,56 +1300,17 @@ namespace ICSharpCode.Decompiler.CSharp
 					// e.g. DelegateDeclaration
 					return entityDecl;
 				}
-				bool isRecordLike = typeDef.Kind switch {
-					TypeKind.Class => (settings.RecordClasses && typeDef.IsRecord) || settings.UsePrimaryConstructorSyntaxForNonRecordTypes,
-					TypeKind.Struct => (settings.RecordStructs && typeDef.IsRecord) || settings.UsePrimaryConstructorSyntaxForNonRecordTypes,
+				bool isRecord = typeDef.Kind switch {
+					TypeKind.Class => settings.RecordClasses && typeDef.IsRecord,
+					TypeKind.Struct => settings.RecordStructs && typeDef.IsRecord,
 					_ => false,
 				};
-				RecordDecompiler recordDecompiler = isRecordLike ? new RecordDecompiler(typeSystem, typeDef, settings, CancellationToken) : null;
+				RecordDecompiler recordDecompiler = isRecord ? new RecordDecompiler(typeSystem, typeDef, settings, CancellationToken) : null;
 				if (recordDecompiler != null)
 					decompileRun.RecordDecompilers.Add(typeDef, recordDecompiler);
 
-				if (recordDecompiler?.PrimaryConstructor != null)
-				{
-					typeDecl.HasPrimaryConstructor = recordDecompiler.PrimaryConstructor.Parameters.Any() || typeDef.Kind is TypeKind.Struct;
-
-					foreach (var p in recordDecompiler.PrimaryConstructor.Parameters)
-					{
-						ParameterDeclaration pd = typeSystemAstBuilder.ConvertParameter(p);
-						(IProperty prop, IField field) = recordDecompiler.GetPropertyInfoByPrimaryConstructorParameter(p);
-
-						if (prop != null)
-						{
-							var attributes = prop?.GetAttributes().Select(attr => typeSystemAstBuilder.ConvertAttribute(attr)).ToArray();
-							if (attributes?.Length > 0)
-							{
-								var section = new AttributeSection {
-									AttributeTarget = "property"
-								};
-								section.Attributes.AddRange(attributes);
-								pd.Attributes.Add(section);
-							}
-						}
-						if (field != null && (recordDecompiler.FieldIsGenerated(field) || typeDef.IsRecord))
-						{
-							var attributes = field.GetAttributes()
-								.Where(a => !PatternStatementTransform.attributeTypesToRemoveFromAutoProperties.Contains(a.AttributeType.FullName))
-								.Select(attr => typeSystemAstBuilder.ConvertAttribute(attr)).ToArray();
-							if (attributes.Length > 0)
-							{
-								var section = new AttributeSection {
-									AttributeTarget = "field"
-								};
-								section.Attributes.AddRange(attributes);
-								pd.Attributes.Add(section);
-							}
-						}
-						typeDecl.PrimaryConstructorParameters.Add(pd);
-					}
-				}
-
 				// With C# 9 records, the relative order of fields and properties matters:
-				IEnumerable<IMember> fieldsAndProperties = isRecordLike && typeDef.IsRecord
+				IEnumerable<IMember> fieldsAndProperties = typeDef.IsRecord
 					? recordDecompiler.FieldsAndProperties
 					: typeDef.Fields.Concat<IMember>(typeDef.Properties);
 
@@ -1532,7 +1493,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						{
 							return;
 						}
-						if (recordDecompiler?.FieldIsGenerated(field) == true)
+						if (TransformFieldAndConstructorInitializers.IsGeneratedPrimaryConstructorBackingField(field))
 						{
 							return;
 						}

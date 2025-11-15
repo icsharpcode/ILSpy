@@ -396,7 +396,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task ConstructorInitializers([ValueSource(nameof(defaultOptionsWithMcs))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions);
+			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.ProcessXmlDoc);
 		}
 
 		[Test]
@@ -532,23 +532,31 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task Records([ValueSource(nameof(roslyn3OrNewerOptions))] CompilerOptions cscOptions)
 		{
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public async Task Issue3610([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public async Task Issue3611([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public async Task Issue3452([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
+		{
 			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.NullableEnable);
 		}
 
 		[Test]
-		public async Task Playstation([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
+		public async Task Issue3598([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
 		{
-			// see https://github.com/icsharpcode/ILSpy/pull/3598#issuecomment-3465151525
 			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.NullableEnable);
-		}
-
-		[Test]
-		public async Task PlaystationPreferPrimary([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
-		{
-			// see https://github.com/icsharpcode/ILSpy/pull/3598#issuecomment-3465151525
-			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.NullableEnable, configureDecompiler: settings => {
-				settings.PreferPrimaryConstructorIfPossible = true;
-			});
 		}
 
 		[Test]

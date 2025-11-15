@@ -1407,6 +1407,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use struct field initializers and default constructors.
+        /// </summary>
+        public static string DecompilerSettings_StructDefaultConstructorsAndFieldInitializers {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.StructDefaultConstructorsAndFieldInitializers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Switch expressions.
         /// </summary>
         public static string DecompilerSettings_SwitchExpressions {
@@ -1579,7 +1588,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Use primary constructor  syntax with records.
+        ///   Looks up a localized string similar to Use primary constructor syntax with records.
         /// </summary>
         public static string DecompilerSettings_UsePrimaryConstructorSyntax {
             get {

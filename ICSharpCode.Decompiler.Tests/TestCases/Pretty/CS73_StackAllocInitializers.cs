@@ -24,6 +24,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	internal class CS73_StackAllocInitializers
 	{
+#if CS120
+		[StructLayout(LayoutKind.Sequential, Size = 5)]
+		private struct StructWithSize5(byte a, byte b, byte c, byte d, byte e)
+		{
+			public byte a = a;
+			public byte b = b;
+			public byte c = c;
+			public byte d = d;
+			public byte e = e;
+		}
+#else
 		[StructLayout(LayoutKind.Sequential, Size = 5)]
 		private struct StructWithSize5
 		{
@@ -42,6 +53,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				this.e = e;
 			}
 		}
+#endif
 
 #if CS80
 		private class NestedContext1

@@ -489,6 +489,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.StringConcat" xml:space="preserve">
     <value>Decompile 'string.Concat(a, b)' calls into 'a + b'</value>
   </data>
+  <data name="DecompilerSettings.StructDefaultConstructorsAndFieldInitializers" xml:space="preserve">
+    <value>Use struct field initializers and default constructors</value>
+  </data>
   <data name="DecompilerSettings.SwitchExpressions" xml:space="preserve">
     <value>Switch expressions</value>
   </data>
@@ -547,7 +550,7 @@ Are you sure you want to continue?</value>
     <value>Use primary constructor syntax for non-record types</value>
   </data>
   <data name="DecompilerSettings.UsePrimaryConstructorSyntax" xml:space="preserve">
-    <value>Use primary constructor  syntax with records</value>
+    <value>Use primary constructor syntax with records</value>
   </data>
   <data name="DecompilerSettings.UsePrimaryConstructorSyntaxForNonRecordTypes" xml:space="preserve">
     <value>Use primary constructor syntax for non-record types</value>

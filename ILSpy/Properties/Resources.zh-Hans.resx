@@ -117,6 +117,7 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="About" xml:space="preserve">
     <value>关于</value>
   </data>
@@ -455,6 +456,9 @@
   </data>
   <data name="DecompilerSettings.StringConcat" xml:space="preserve">
     <value>反编译 'string.Concat(a, b)' 调用为 'a + b'</value>
+  </data>
+  <data name="DecompilerSettings.StructDefaultConstructorsAndFieldInitializers" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
   </data>
   <data name="DecompilerSettings.SwitchExpressions" xml:space="preserve">
     <value>switch 表达式</value>

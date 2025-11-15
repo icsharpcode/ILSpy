@@ -128,6 +128,95 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public abstract string AbstractProp { get; }
 		}
 
+
+		public abstract record BaseRecord
+		{
+			public string Name { get; }
+			public object Value { get; }
+			public bool Encode { get; }
+
+			protected BaseRecord(string name, object value, bool encode)
+			{
+				Name = name;
+				Value = value;
+				Encode = encode;
+			}
+		}
+
+		public record DerivedRecord(string name, object value, bool encode = true) : BaseRecord(string.IsNullOrEmpty(name) ? "name" : name, value, encode);
+
+		public record DefaultValuesRecord() : DerivedRecord("default", 42, encode: false);
+
+		public record RecordWithProtectedMember(int Value)
+		{
+			protected int Double => Value * 2;
+		}
+
+		public record InheritedRecordWithAdditionalMember(int Value) : RecordWithProtectedMember(Value)
+		{
+			public int MoreData { get; set; }
+		}
+
+		public record InheritedRecordWithAdditionalParameter(int Value, int Value2) : RecordWithProtectedMember(Value);
+
+		public record BaseWithString(string S);
+
+		public record DerivedWithAdditionalInt(int I) : BaseWithString(I.ToString());
+
+		public record DerivedWithNoAdditionalProperty(string S) : BaseWithString(S);
+
+		public record DerivedWithAdditionalProperty(string S2) : BaseWithString(S2);
+
+		public record DerivedWithAdditionalPropertyDifferentAccessor(string S) : BaseWithString(S)
+		{
+			public string S2 { get; set; } = S;
+		}
+
+		public record MultipleCtorsChainedNoPrimaryCtor
+		{
+			public int A { get; init; }
+			public string B { get; init; }
+
+			public double C { get; init; }
+
+			public MultipleCtorsChainedNoPrimaryCtor(double c)
+			{
+				A = 0;
+				B = null;
+				C = c;
+			}
+
+			public MultipleCtorsChainedNoPrimaryCtor(int a)
+				: this(3.14)
+			{
+				A = a;
+			}
+
+			public MultipleCtorsChainedNoPrimaryCtor(string b)
+				: this(4.13)
+			{
+				B = b;
+			}
+		}
+
+		public record UnexpectedCodeInCtor
+		{
+			public int A { get; init; }
+			public string B { get; init; }
+
+			public UnexpectedCodeInCtor(int A, string B)
+			{
+				this.A = A;
+				this.B = B;
+				Console.WriteLine();
+			}
+
+			public UnexpectedCodeInCtor(int A)
+				: this(A, null)
+			{
+				this.A = A;
+			}
+		}
 	}
 
 #if CS100
@@ -169,6 +258,49 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public record struct PairWithPrimaryCtor<A, B>(A First, B Second);
 
 		public record struct PrimaryCtor(int A, string B);
+
+		public record struct MultipleCtorsNoPrimaryCtor
+		{
+			public Guid Id { get; }
+
+			public MultipleCtorsNoPrimaryCtor()
+			{
+				Id = Guid.NewGuid();
+			}
+
+			public MultipleCtorsNoPrimaryCtor(Guid id)
+			{
+				Id = id;
+			}
+		}
+
+		public record struct MultipleCtorsChainedNoPrimaryCtor
+		{
+			public int A { get; init; }
+			public string B { get; init; }
+
+			public double C { get; init; }
+
+			public MultipleCtorsChainedNoPrimaryCtor(double c)
+			{
+				A = 0;
+				B = null;
+				C = c;
+			}
+
+			public MultipleCtorsChainedNoPrimaryCtor(int a)
+				: this(3.14)
+			{
+				A = a;
+			}
+
+			public MultipleCtorsChainedNoPrimaryCtor(string b)
+				: this(4.13)
+			{
+				B = b;
+			}
+		}
+
 		public record struct PrimaryCtorWithAttribute([RecordTest("param")][property: RecordTest("property")][field: RecordTest("field")] int a);
 		public record struct PrimaryCtorWithField(int A, string B)
 		{
@@ -201,6 +333,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public record struct PropertiesWithInitializers()
+		{
+			public int A { get; set; } = 41;
+			public int B { get; } = 42;
+			public int C => 43;
+			public object O { get; set; } = null;
+			public string S { get; set; } = "Hello";
+			public dynamic D { get; set; } = null;
+		}
+
 		[AttributeUsage(AttributeTargets.All)]
 		public class RecordTestAttribute : Attribute
 		{
@@ -230,15 +372,34 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				};
 			}
 		}
-	}
-#endif
 #if CS110
-	public record struct WithRequiredMembers
-	{
-		public int A { get; set; }
-		public required double B { get; set; }
-		public object C;
-		public required dynamic D;
+		public record struct WithRequiredMembers
+		{
+			public int A { get; set; }
+			public required double B { get; set; }
+			public object C;
+			public required dynamic D;
+		}
+#endif
+		public record struct RecordWithMultipleCtors
+		{
+			public int A { get; set; }
+
+			public RecordWithMultipleCtors()
+			{
+				A = 42;
+			}
+
+			public RecordWithMultipleCtors(int A)
+			{
+				this.A = A;
+			}
+
+			public RecordWithMultipleCtors(string A)
+			{
+				this.A = int.Parse(A);
+			}
+		}
 	}
 #endif
 }

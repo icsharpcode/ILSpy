@@ -50,7 +50,7 @@ public static class Program
 	[Serializable]
 	[SpecialName]
 	[CompilationMapping(SourceConstructFlags.Closure)]
-	internal sealed class getSeq_00405(int pc, int current) : GeneratedSequenceBase<int>()
+	internal sealed class getSeq_00405(int pc, int current) : GeneratedSequenceBase<int>
 	{
 		[DebuggerNonUserCode]
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
