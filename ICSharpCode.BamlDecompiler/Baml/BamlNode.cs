@@ -140,7 +140,7 @@ namespace ICSharpCode.BamlDecompiler.Baml
 
 					while (!IsMatch(current.Header, document[i]))
 					{
-						// End record can be omited (sometimes).
+						// End record can be omitted (sometimes).
 						if (stack.Count > 0)
 							current = stack.Pop();
 					}
