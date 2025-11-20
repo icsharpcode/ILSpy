@@ -9,10 +9,10 @@ Decompiler Frontends
 
 Aside from the WPF UI ILSpy (downloadable via Releases, see also [plugins](https://github.com/icsharpcode/ILSpy/wiki/Plugins)), the following other frontends are available:
 
-* Visual Studio 2022 ships with decompilation support for F12 enabled by default (using our engine v8.2).
-* Our Visual Studio 2022 extension [marketplace](https://marketplace.visualstudio.com/items?itemName=SharpDevelopTeam.ILSpy2022)
-* Our Visual Studio Code Extension [repository](https://github.com/icsharpcode/ilspy-vscode) | [marketplace](https://marketplace.visualstudio.com/items?itemName=icsharpcode.ilspy-vscode)
-* Our dotnet tool for Linux/Mac/Windows - check out [ILSpyCmd](ICSharpCode.ILSpyCmd) in this repository
+* Visual Studio 2022/2026 ship with decompilation support for F12 enabled by default (using our engines v8.2 and v9.1 respectively).
+* Our Visual Studio 2022 extension [marketplace](https://marketplace.visualstudio.com/items?itemName=SharpDevelopTeam.ILSpy2022) (works with VS 2026 as well)
+* Our Visual Studio Code Extension [repository](https://github.com/icsharpcode/ilspy-vscode) | [marketplace](https://marketplace.visualstudio.com/items?itemName=icsharpcode.ilspy-vscode) | [open-vsx](https://open-vsx.org/extension/icsharpcode/ilspy-vscode)
+* Our dotnet tool for Linux/Mac/Windows - check out [ILSpyCmd](ICSharpCode.ILSpyCmd) in this repository | [dotnet tool install](https://www.nuget.org/packages/ilspycmd/)
 * [C# for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csharp) ships with decompilation support as well. To enable, activate the setting "Enable Decompilation Support".
 * In Visual Studio 2019, you have to manually enable F12 support. Go to Tools / Options / Text Editor / C# / Advanced and check "Enable navigation to decompiled source"
 * Our Visual Studio 2017/2019 extension [marketplace](https://marketplace.visualstudio.com/items?itemName=SharpDevelopTeam.ILSpy)
@@ -47,7 +47,7 @@ How to build
 - Make sure Windows PowerShell (at least version) 5.0 or [PowerShell](https://github.com/PowerShell/PowerShell) 7+ is installed.
 - Clone the ILSpy repository using git.
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
-- Install Visual Studio (documented version: 17.8). You can install the necessary components in one of 3 ways:
+- Install Visual Studio (documented version: 18.0). You can install the necessary components in one of 3 ways:
   - Follow Microsoft's instructions for [importing a configuration](https://docs.microsoft.com/en-us/visualstudio/install/import-export-installation-configurations?view=vs-2022#import-a-configuration), and import the .vsconfig file located at the root of the solution.
   - Alternatively, you can open the ILSpy solution (ILSpy.sln) and Visual Studio will [prompt you to install the missing components](https://docs.microsoft.com/en-us/visualstudio/install/import-export-installation-configurations?view=vs-2022#automatically-install-missing-components).
   - Finally, you can manually install the necessary components via the Visual Studio Installer. The workloads/components are as follows:
