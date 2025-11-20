@@ -546,7 +546,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				// Handle nested types
 				result.Target = ConvertTypeHelper(genericType.DeclaringType, typeArguments);
-				AddTypeAnnotation(result.Target, genericType.DeclaringType);
+				// Use correct number of type arguments on the declaring type
+				var declaringType = genericType.DeclaringType;
+				if (outerTypeParameterCount > 0)
+				{
+					declaringType = new ParameterizedType(genericType.DeclaringType, typeArguments.Take(outerTypeParameterCount));
+				}
+				AddTypeAnnotation(result.Target, declaringType);
 			}
 			else
 			{

@@ -189,6 +189,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			CSharpResolver resolver;
 			TypeSystemAstBuilder astBuilder;
 
+			bool inPrimaryConstructor;
+
 			public FullyQualifyAmbiguousTypeNamesVisitor(TransformContext context, UsingScope usingScope)
 			{
 				this.ignoreUsingScope = !context.Settings.UsingDeclarations;
@@ -265,9 +267,26 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					base.VisitTypeDeclaration(typeDeclaration);
 					return;
 				}
+
+				if (typeDeclaration.HasPrimaryConstructor)
+				{
+					inPrimaryConstructor = true;
+
+					try
+					{
+						typeDeclaration.PrimaryConstructorParameters.AcceptVisitor(this);
+					}
+					finally
+					{
+						inPrimaryConstructor = false;
+					}
+				}
+
 				var previousResolver = resolver;
 				var previousAstBuilder = astBuilder;
+
 				resolver = resolver.WithCurrentTypeDefinition(typeDeclaration.GetSymbol() as ITypeDefinition);
+
 				try
 				{
 					astBuilder = CreateAstBuilder(resolver);
@@ -278,6 +297,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					astBuilder = previousAstBuilder;
 					resolver = previousResolver;
 				}
+			}
+
+			public override void VisitParameterDeclaration(ParameterDeclaration parameterDeclaration)
+			{
+				// Parameters of primary constructors are visited separately from the rest of the
+				// type declaration since their types are at the same scope as the type declaration
+				// and so need to use the outer resolver. This check ensures that the visitor only
+				// runs once per parameter since their AstNodes will get revisited by the call to
+				// `base.VisitTypeDeclaration(typeDeclaration)` in `VisitTypeDeclaration` above.
+				if (inPrimaryConstructor || parameterDeclaration.Parent is not TypeDeclaration)
+					base.VisitParameterDeclaration(parameterDeclaration);
 			}
 
 			public override void VisitMethodDeclaration(MethodDeclaration methodDeclaration)
