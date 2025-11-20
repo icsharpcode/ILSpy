@@ -271,8 +271,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (typeDeclaration.HasPrimaryConstructor)
 				{
 					inPrimaryConstructor = true;
-					typeDeclaration.PrimaryConstructorParameters.AcceptVisitor(this);
-					inPrimaryConstructor = false;
+
+					try
+					{
+						typeDeclaration.PrimaryConstructorParameters.AcceptVisitor(this);
+					}
+					finally
+					{
+						inPrimaryConstructor = false;
+					}
 				}
 
 				var previousResolver = resolver;
@@ -294,6 +301,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			public override void VisitParameterDeclaration(ParameterDeclaration parameterDeclaration)
 			{
+				// Parameters of primary constructors are visited separately from the rest of the
+				// type declaration since their types are at the same scope as the type declaration
+				// and so need to use the outer resolver. This check ensures that the visitor only
+				// runs once per parameter since their AstNodes will get revisited by the call to
+				// `base.VisitTypeDeclaration(typeDeclaration)` in `VisitTypeDeclaration` above.
 				if (inPrimaryConstructor || parameterDeclaration.Parent is not TypeDeclaration)
 					base.VisitParameterDeclaration(parameterDeclaration);
 			}
