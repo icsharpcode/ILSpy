@@ -12,19 +12,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public string Value { get; } = value;
 		}
 
-		//private class C5(C5.ValueArray array)
-		//{
-		//	public struct ValueArray
-		//	{
-		//		private bool b;
-		//		public bool[] ToArray()
-		//		{
-		//			return null;
-		//		}
-		//	}
+		private class C5(C5.ValueArray array)
+		{
+			public struct ValueArray
+			{
+				private bool b;
+				public bool[] ToArray()
+				{
+					return null;
+				}
+			}
 
-		//	public bool[] Values = array.ToArray();
-		//}
+			public bool[] Values = array.ToArray();
+		}
 
 		private class BaseClass
 		{
@@ -33,14 +33,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		//private class C6(C6.Data2 data) : BaseClass(data.Value)
-		//{
-		//	public struct Data2 { 
-		//		public int Value { get; set; }
-		//	}
+		private class C6(C6.Data2 data) : BaseClass(data.Value)
+		{
+			public struct Data2
+			{
+				public int Value { get; set; }
+			}
 
-		//	public Data2 Data => data;
-		//}
+			public Data2 Data => data;
+		}
 
 		private struct S3<T>(T v)
 		{

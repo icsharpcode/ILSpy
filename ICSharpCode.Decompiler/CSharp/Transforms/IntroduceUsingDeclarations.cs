@@ -189,6 +189,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			CSharpResolver resolver;
 			TypeSystemAstBuilder astBuilder;
 
+			bool inPrimaryConstructor;
+
 			public FullyQualifyAmbiguousTypeNamesVisitor(TransformContext context, UsingScope usingScope)
 			{
 				this.ignoreUsingScope = !context.Settings.UsingDeclarations;
@@ -265,9 +267,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					base.VisitTypeDeclaration(typeDeclaration);
 					return;
 				}
+
+				if (typeDeclaration.HasPrimaryConstructor)
+				{
+					inPrimaryConstructor = true;
+					typeDeclaration.PrimaryConstructorParameters.AcceptVisitor(this);
+					inPrimaryConstructor = false;
+				}
+
 				var previousResolver = resolver;
 				var previousAstBuilder = astBuilder;
+
 				resolver = resolver.WithCurrentTypeDefinition(typeDeclaration.GetSymbol() as ITypeDefinition);
+
 				try
 				{
 					astBuilder = CreateAstBuilder(resolver);
@@ -278,6 +290,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					astBuilder = previousAstBuilder;
 					resolver = previousResolver;
 				}
+			}
+
+			public override void VisitParameterDeclaration(ParameterDeclaration parameterDeclaration)
+			{
+				if (inPrimaryConstructor || parameterDeclaration.Parent is not TypeDeclaration)
+					base.VisitParameterDeclaration(parameterDeclaration);
 			}
 
 			public override void VisitMethodDeclaration(MethodDeclaration methodDeclaration)
