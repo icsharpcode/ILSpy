@@ -657,8 +657,14 @@ Are you sure you want to continue?</value>
   <data name="GeneratePortable" xml:space="preserve">
     <value>Generate portable PDB</value>
   </data>
+  <data name="GeneratedPDBFile" xml:space="preserve">
+    <value>Generated PDB: {0}</value>
+  </data>
   <data name="GenerationCompleteInSeconds" xml:space="preserve">
     <value>Generation complete in {0} seconds.</value>
+  </data>
+  <data name="GenerationFailedForAssembly" xml:space="preserve">
+    <value>Failed to generate PDB for {0}: {1}</value>
   </data>
   <data name="GenerationWasCancelled" xml:space="preserve">
     <value>Generation was cancelled.</value>
@@ -894,6 +900,9 @@ Do you want to continue?</value>
   </data>
   <data name="SelectPDB" xml:space="preserve">
     <value>Select PDB...</value>
+  </data>
+  <data name="SelectPDBOutputFolder" xml:space="preserve">
+    <value>Select target folder</value>
   </data>
   <data name="SelectVersionDropdownTooltip" xml:space="preserve">
     <value>Select version of language to output (Alt+E)</value>

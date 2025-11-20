@@ -610,8 +610,14 @@
   <data name="GeneratePortable" xml:space="preserve">
     <value>生成 Portable PDB</value>
   </data>
+  <data name="GeneratedPDBFile" xml:space="preserve">
+    <value>生成的 PDB: {0}</value>
+  </data>
   <data name="GenerationCompleteInSeconds" xml:space="preserve">
     <value>生成完成，耗时 {0} 秒。</value>
+  </data>
+  <data name="GenerationFailedForAssembly" xml:space="preserve">
+    <value>为 {0} 生成 PDB 失败: {1}</value>
   </data>
   <data name="GenerationWasCancelled" xml:space="preserve">
     <value>已取消生成。</value>
@@ -842,6 +848,9 @@
   </data>
   <data name="SelectPDB" xml:space="preserve">
     <value>选择 PDB...</value>
+  </data>
+  <data name="SelectPDBOutputFolder" xml:space="preserve">
+    <value>选择目标文件夹</value>
   </data>
   <data name="SelectVersionDropdownTooltip" xml:space="preserve">
     <value>选择输出语言的版本</value>

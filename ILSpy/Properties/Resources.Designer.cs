@@ -1921,6 +1921,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Generated PDB: {0}.
+        /// </summary>
+        public static string GeneratedPDBFile {
+            get {
+                return ResourceManager.GetString("GeneratedPDBFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Generation complete in {0} seconds..
         /// </summary>
         public static string GenerationCompleteInSeconds {
@@ -1935,6 +1944,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string GenerationWasCancelled {
             get {
                 return ResourceManager.GetString("GenerationWasCancelled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to generate PDB for {0}: {1}.
+        /// </summary>
+        public static string GenerationFailedForAssembly {
+            get {
+                return ResourceManager.GetString("GenerationFailedForAssembly", resourceCulture);
             }
         }
         
@@ -2617,6 +2635,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string SelectPDB {
             get {
                 return ResourceManager.GetString("SelectPDB", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select target folder.
+        /// </summary>
+        public static string SelectPDBOutputFolder {
+            get {
+                return ResourceManager.GetString("SelectPDBOutputFolder", resourceCulture);
             }
         }
         
