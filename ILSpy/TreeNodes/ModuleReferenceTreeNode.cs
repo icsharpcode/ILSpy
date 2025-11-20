@@ -68,6 +68,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			get { return moduleName + GetSuffixString(handle); }
 		}
 
+		public override object NavigationText => $"{Text} ({Properties.Resources.References})";
+
 		public override object Icon => Images.Library;
 
 		public override void ActivateItem(IPlatformRoutedEventArgs e)
