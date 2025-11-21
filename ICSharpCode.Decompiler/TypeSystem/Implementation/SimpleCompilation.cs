@@ -157,6 +157,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return StringComparer.Ordinal; }
 		}
 
+		public virtual TypeSystemOptions TypeSystemOptions => TypeSystemOptions.Default;
+
 		public override string ToString()
 		{
 			return "[" + GetType().Name + " " + mainModule.AssemblyName + "]";

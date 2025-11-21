@@ -247,6 +247,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (IdentityConversion(elementType, spanElementType))
 					return Conversion.InlineArrayConversion;
 			}
+			if (IsImplicitSpanConversion(fromType, toType))
+			{
+				return Conversion.ImplicitSpanConversion;
+			}
 			return Conversion.None;
 		}
 
@@ -1229,6 +1233,49 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 		#endregion
 
+		#region Implicit Span Conversion
+
+		bool IsImplicitSpanConversion(IType fromType, IType toType)
+		{
+			if (!compilation.TypeSystemOptions.HasFlag(TypeSystemOptions.FirstClassSpanTypes))
+			{
+				return false;
+			}
+
+			// An implicit span conversion permits array_types, System.Span<T>, System.ReadOnlySpan<T>,
+			// and string to be converted between each other 
+			// see https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-14.0/first-class-span-types#span-conversions
+
+			switch (fromType)
+			{
+				case ArrayType { Dimensions: 1, ElementType: var elementType }:
+					if (toType.IsKnownType(KnownTypeCode.SpanOfT))
+					{
+						return IdentityConversion(elementType, toType.TypeArguments[0]);
+					}
+					if (toType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
+					{
+						return IdentityConversion(elementType, toType.TypeArguments[0])
+							|| IsImplicitReferenceConversion(elementType, toType.TypeArguments[0]);
+					}
+					break;
+				case ParameterizedType pt when pt.IsKnownType(KnownTypeCode.SpanOfT) || pt.IsKnownType(KnownTypeCode.ReadOnlySpanOfT):
+					if (toType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
+					{
+						return IdentityConversion(pt.TypeArguments[0], toType.TypeArguments[0])
+							|| IsImplicitReferenceConversion(pt.TypeArguments[0], toType.TypeArguments[0]);
+					}
+					break;
+				case var s when s.IsKnownType(KnownTypeCode.String):
+					return toType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT)
+						&& toType.TypeArguments[0].IsKnownType(KnownTypeCode.Char);
+			}
+
+			return false;
+		}
+
+		#endregion
+
 		#region AnonymousFunctionConversion
 		Conversion AnonymousFunctionConversion(ResolveResult resolveResult, IType toType)
 		{
@@ -1487,11 +1534,32 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		#region BetterConversion
 		/// <summary>
-		/// Gets the better conversion (C# 4.0 spec, §7.5.3.3)
+		/// Gets the better conversion (from expression) (C# 8.0 spec, §12.6.4.5)
 		/// </summary>
 		/// <returns>0 = neither is better; 1 = t1 is better; 2 = t2 is better</returns>
 		public int BetterConversion(ResolveResult resolveResult, IType t1, IType t2)
 		{
+			bool t1Exact = IsExactlyMatching(resolveResult, t1);
+			bool t2Exact = IsExactlyMatching(resolveResult, t2);
+			if (t1Exact && !t2Exact)
+				return 1;
+			if (t2Exact && !t1Exact)
+				return 2;
+			if (!t1Exact && !t2Exact)
+			{
+				bool c1ImplicitSpanConversion = IsImplicitSpanConversion(resolveResult.Type, t1);
+				bool c2ImplicitSpanConversion = IsImplicitSpanConversion(resolveResult.Type, t2);
+				if (c1ImplicitSpanConversion && !c2ImplicitSpanConversion)
+					return 1;
+				if (c2ImplicitSpanConversion && !c1ImplicitSpanConversion)
+					return 2;
+			}
+			if (t1Exact == t2Exact)
+			{
+				int r = BetterConversionTarget(t1, t2);
+				if (r != 0)
+					return r;
+			}
 			LambdaResolveResult lambda = resolveResult as LambdaResolveResult;
 			if (lambda != null)
 			{
@@ -1542,20 +1610,56 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 
 		/// <summary>
-		/// Unpacks the generic Task[T]. Returns null if the input is not Task[T].
+		/// Gets whether an expression E exactly matches a type T (C# 8.0 spec, §12.6.4.6)
 		/// </summary>
-		static IType UnpackTask(IType type)
+		bool IsExactlyMatching(ResolveResult e, IType t)
 		{
-			ParameterizedType pt = type as ParameterizedType;
-			if (pt != null && pt.TypeParameterCount == 1 && pt.Name == "Task" && pt.Namespace == "System.Threading.Tasks")
+			var s = e.Type;
+			if (IdentityConversion(s, t))
+				return true;
+			if (e is LambdaResolveResult lambda)
 			{
-				return pt.GetTypeArgument(0);
+				if (!lambda.IsAnonymousMethod)
+				{
+					t = UnpackExpressionTreeType(t);
+				}
+				IMethod m = t.GetDelegateInvokeMethod();
+				if (m == null)
+					return false;
+				IType[] parameterTypes = new IType[m.Parameters.Count];
+				for (int i = 0; i < parameterTypes.Length; i++)
+					parameterTypes[i] = m.Parameters[i].Type;
+				var x = lambda.GetInferredReturnType(parameterTypes);
+				var y = m.ReturnType;
+				if (IdentityConversion(x, y))
+					return true;
+				if (lambda.IsAsync)
+				{
+					x = UnpackTask(x);
+					y = UnpackTask(y);
+				}
+				if (x != null && y != null)
+					return IsExactlyMatching(new ResolveResult(x), y);
+				return false;
 			}
-			return null;
+			else
+			{
+				return false;
+			}
 		}
 
 		/// <summary>
-		/// Gets the better conversion (C# 4.0 spec, §7.5.3.4)
+		/// Unpacks the generic TaskType[T]. Returns null if the input is not TaskType[T].
+		/// </summary>
+		static IType UnpackTask(IType type)
+		{
+			return (TaskType.IsTask(type) || TaskType.IsCustomTask(type, out _)) && type.TypeParameterCount == 1
+				? type.TypeArguments[0]
+				: null;
+		}
+
+		/// <summary>
+		/// Gets the better conversion (from type) (C# 4.0 spec, §7.5.3.4)
 		/// </summary>
 		/// <returns>0 = neither is better; 1 = t1 is better; 2 = t2 is better</returns>
 		public int BetterConversion(IType s, IType t1, IType t2)
@@ -1570,17 +1674,57 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 
 		/// <summary>
-		/// Gets the better conversion target (C# 4.0 spec, §7.5.3.5)
+		/// Gets the better conversion target (C# 9.0 spec, §12.6.4.7)
 		/// </summary>
 		/// <returns>0 = neither is better; 1 = t1 is better; 2 = t2 is better</returns>
 		int BetterConversionTarget(IType t1, IType t2)
 		{
-			bool t1To2 = ImplicitConversion(t1, t2).IsValid;
-			bool t2To1 = ImplicitConversion(t2, t1).IsValid;
-			if (t1To2 && !t2To1)
-				return 1;
-			if (t2To1 && !t1To2)
-				return 2;
+			if (t1.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
+			{
+				if (t2.IsKnownType(KnownTypeCode.SpanOfT))
+				{
+					if (IdentityConversion(t1.TypeArguments[0], t2.TypeArguments[0]))
+						return 1;
+				}
+				if (t2.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
+				{
+					bool t1To2 = ImplicitConversion(t1.TypeArguments[0], t2.TypeArguments[0]).IsValid;
+					bool t2To1 = ImplicitConversion(t2.TypeArguments[0], t1.TypeArguments[0]).IsValid;
+					if (t1To2 && !t2To1)
+						return 1;
+				}
+			}
+
+			if (t2.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
+			{
+				if (t1.IsKnownType(KnownTypeCode.SpanOfT))
+				{
+					if (IdentityConversion(t2.TypeArguments[0], t1.TypeArguments[0]))
+						return 2;
+				}
+				if (t1.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
+				{
+					bool t1To2 = ImplicitConversion(t1.TypeArguments[0], t2.TypeArguments[0]).IsValid;
+					bool t2To1 = ImplicitConversion(t2.TypeArguments[0], t1.TypeArguments[0]).IsValid;
+					if (t2To1 && !t1To2)
+						return 2;
+				}
+			}
+
+			{
+				bool t1To2 = ImplicitConversion(t1, t2).IsValid;
+				bool t2To1 = ImplicitConversion(t2, t1).IsValid;
+				if (t1To2 && !t2To1)
+					return 1;
+				if (t2To1 && !t1To2)
+					return 2;
+			}
+
+			var s1 = UnpackTask(t1);
+			var s2 = UnpackTask(t2);
+			if (s1 != null && s2 != null)
+				return BetterConversionTarget(s1, s2);
+
 			TypeCode t1Code = ReflectionHelper.GetTypeCode(t1);
 			TypeCode t2Code = ReflectionHelper.GetTypeCode(t2);
 			if (IsBetterIntegralType(t1Code, t2Code))
