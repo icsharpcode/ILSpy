@@ -1204,7 +1204,7 @@ namespace ICSharpCode.ILSpy.TextView
 							}
 						}
 						output.WriteLine();
-						output.AddButton(null, Properties.Resources.OpenExplorer, delegate { Process.Start("explorer", "/select,\"" + fileName + "\""); });
+						output.AddButton(null, Properties.Resources.OpenExplorer, delegate { ShellHelper.OpenFolderAndSelectItem(fileName); });
 						output.WriteLine();
 						tcs.SetResult(output);
 					}

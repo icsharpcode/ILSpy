@@ -161,7 +161,7 @@ namespace ICSharpCode.ILSpy
 				stopwatch.Stop();
 				output.WriteLine(Resources.GenerationCompleteInSeconds, stopwatch.Elapsed.TotalSeconds.ToString("F1"));
 				output.WriteLine();
-				output.AddButton(null, Resources.OpenExplorer, delegate { Process.Start("explorer", isFile ? $"/select,\"{path}\"" : $"\"{path}\""); });
+				output.AddButton(null, Resources.OpenExplorer, delegate { if (isFile) ShellHelper.OpenFolderAndSelectItem(path); else ShellHelper.OpenFolder(path); });
 				output.WriteLine();
 				return output;
 			}, ct)).Then(dockWorkspace.ShowText).HandleExceptions();

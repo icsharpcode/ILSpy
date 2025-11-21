@@ -696,7 +696,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				var path = node.LoadedAssembly.FileName;
 				if (File.Exists(path))
 				{
-					GlobalUtils.ExecuteCommand("explorer.exe", $"/select,\"{path}\"");
+					ShellHelper.OpenFolderAndSelectItem(path);
 				}
 			}
 		}

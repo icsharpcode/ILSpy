@@ -75,7 +75,7 @@ namespace ICSharpCode.ILSpy.TextView
 				output.WriteLine();
 
 				var diagramHtml = Path.Combine(selectedPath, "index.html");
-				output.AddButton(null, Resources.OpenExplorer, delegate { Process.Start("explorer", "/select,\"" + diagramHtml + "\""); });
+				output.AddButton(null, Resources.OpenExplorer, delegate { ShellHelper.OpenFolderAndSelectItem(diagramHtml); });
 				output.WriteLine();
 				return output;
 			}, ct), Properties.Resources.CreatingDiagram).Then(dockWorkspace.ShowText).HandleExceptions();

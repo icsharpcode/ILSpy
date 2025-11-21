@@ -187,7 +187,7 @@ namespace ICSharpCode.ILSpy
 				result.WriteLine();
 				result.WriteLine("Elapsed time: " + stopwatch.Elapsed.TotalSeconds.ToString("F1") + " seconds.");
 				result.WriteLine();
-				result.AddButton(null, "Open Explorer", delegate { Process.Start("explorer", "/select,\"" + solutionFilePath + "\""); });
+				result.AddButton(null, "Open Explorer", delegate { ShellHelper.OpenFolderAndSelectItem(solutionFilePath); });
 			}
 
 			return result;

@@ -112,7 +112,7 @@ namespace ICSharpCode.ILSpy
 				stopwatch.Stop();
 				output.WriteLine(Resources.GenerationCompleteInSeconds, stopwatch.Elapsed.TotalSeconds.ToString("F1"));
 				output.WriteLine();
-				output.AddButton(null, Resources.OpenExplorer, delegate { Process.Start("explorer", "/select,\"" + fileName + "\""); });
+				output.AddButton(null, Resources.OpenExplorer, delegate { ShellHelper.OpenFolderAndSelectItem(fileName); });
 				output.WriteLine();
 				return output;
 			}, ct)).Then(dockWorkspace.ShowText).HandleExceptions();
@@ -214,7 +214,19 @@ namespace ICSharpCode.ILSpy
 					output.WriteLine();
 					output.WriteLine(Resources.GenerationCompleteInSeconds, totalWatch.Elapsed.TotalSeconds.ToString("F1"));
 					output.WriteLine();
-					output.AddButton(null, Resources.OpenExplorer, delegate { Process.Start("explorer", "/select,\"" + targetFolder + "\""); });
+					// Select all generated pdb files in explorer
+					var generatedFiles = assemblyArray
+						.Select(a => Path.Combine(targetFolder, WholeProjectDecompiler.CleanUpFileName(a.ShortName, ".pdb")))
+						.Where(File.Exists)
+						.ToList();
+					if (generatedFiles.Any())
+					{
+						output.AddButton(null, Resources.OpenExplorer, delegate { ShellHelper.OpenFolderAndSelectItems(generatedFiles); });
+					}
+					else
+					{
+						output.AddButton(null, Resources.OpenExplorer, delegate { ShellHelper.OpenFolder(targetFolder); });
+					}
 					output.WriteLine();
 					return output;
 				}, ct)).Then(dockWorkspace.ShowText).HandleExceptions();
