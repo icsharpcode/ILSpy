@@ -145,12 +145,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		ParamsCollections = 0x20000,
 		/// <summary>
-		/// Default settings: typical options for the decompiler, with all C# languages features enabled.
+		/// If this option is active, span types (Span&lt;T&gt; and ReadOnlySpan&lt;T&gt;) are treated like
+		/// built-in types and language rules of C# 14 and later are applied.
+		/// </summary>
+		FirstClassSpanTypes = 0x40000,
+		/// <summary>
+		/// Default settings: typical options for the decompiler, with all C# language features enabled.
 		/// </summary>
 		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants | ReadOnlyStructsAndParameters
 			| RefStructs | UnmanagedConstraints | NullabilityAnnotations | ReadOnlyMethods
 			| NativeIntegers | FunctionPointers | ScopedRef | NativeIntegersWithoutAttribute
-			| RefReadOnlyParameters | ParamsCollections
+			| RefReadOnlyParameters | ParamsCollections | FirstClassSpanTypes
 	}
 
 	/// <summary>
@@ -194,6 +199,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				typeSystemOptions |= TypeSystemOptions.RefReadOnlyParameters;
 			if (settings.ParamsCollections)
 				typeSystemOptions |= TypeSystemOptions.ParamsCollections;
+			if (settings.FirstClassSpanTypes)
+				typeSystemOptions |= TypeSystemOptions.FirstClassSpanTypes;
 			return typeSystemOptions;
 		}
 
@@ -213,16 +220,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new ArgumentNullException(nameof(mainModule));
 			if (assemblyResolver == null)
 				throw new ArgumentNullException(nameof(assemblyResolver));
-			var ts = new DecompilerTypeSystem();
-			await ts.InitializeAsync(mainModule, assemblyResolver, typeSystemOptions)
+			var ts = new DecompilerTypeSystem(typeSystemOptions);
+			await ts.InitializeAsync(mainModule, assemblyResolver)
 				.ConfigureAwait(false);
 			return ts;
 		}
 
 		private MetadataModule mainModule;
+		private TypeSystemOptions typeSystemOptions;
 
-		private DecompilerTypeSystem()
+		private DecompilerTypeSystem(TypeSystemOptions typeSystemOptions)
 		{
+			this.typeSystemOptions = typeSystemOptions;
 		}
 
 		public DecompilerTypeSystem(MetadataFile mainModule, IAssemblyResolver assemblyResolver)
@@ -236,12 +245,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		public DecompilerTypeSystem(MetadataFile mainModule, IAssemblyResolver assemblyResolver, TypeSystemOptions typeSystemOptions)
+			: this(typeSystemOptions)
 		{
 			if (mainModule == null)
 				throw new ArgumentNullException(nameof(mainModule));
 			if (assemblyResolver == null)
 				throw new ArgumentNullException(nameof(assemblyResolver));
-			InitializeAsync(mainModule, assemblyResolver, typeSystemOptions).GetAwaiter().GetResult();
+			InitializeAsync(mainModule, assemblyResolver).GetAwaiter().GetResult();
 		}
 
 		static readonly string[] implicitReferences = new[] {
@@ -249,7 +259,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			"System.Runtime.CompilerServices.Unsafe"
 		};
 
-		private async Task InitializeAsync(MetadataFile mainModule, IAssemblyResolver assemblyResolver, TypeSystemOptions typeSystemOptions)
+		private async Task InitializeAsync(MetadataFile mainModule, IAssemblyResolver assemblyResolver)
 		{
 			// Load referenced assemblies and type-forwarder references.
 			// This is necessary to make .NET Core/PCL binaries work better.
@@ -410,5 +420,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		public new MetadataModule MainModule => mainModule;
+
+		public override TypeSystemOptions TypeSystemOptions => typeSystemOptions;
 	}
 }
