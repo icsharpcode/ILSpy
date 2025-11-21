@@ -93,7 +93,7 @@ namespace ICSharpCode.ILSpy
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				options.CancellationToken = ct;
-				using (FileStream stream = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.Write))
+				using (FileStream stream = new FileStream(fileName, FileMode.Create, FileAccess.Write))
 				{
 					try
 					{
@@ -180,7 +180,7 @@ namespace ICSharpCode.ILSpy
 
 						try
 						{
-							using (FileStream stream = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.Write))
+							using (FileStream stream = new FileStream(fileName, FileMode.Create, FileAccess.Write))
 							{
 								var decompiler = new CSharpDecompiler(file, assembly.GetAssemblyResolver(options.DecompilerSettings.AutoLoadAssemblyReferences), options.DecompilerSettings);
 								decompiler.CancellationToken = ct;
