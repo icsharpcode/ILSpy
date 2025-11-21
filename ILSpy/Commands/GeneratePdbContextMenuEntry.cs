@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Composition;
 using System.Diagnostics;
 using System.IO;
@@ -117,9 +118,9 @@ namespace ICSharpCode.ILSpy
 			}, ct)).Then(dockWorkspace.ShowText).HandleExceptions();
 		}
 
-		internal static void GeneratePdbForAssemblies(System.Collections.Generic.IEnumerable<LoadedAssembly> assemblies, LanguageService languageService, DockWorkspace dockWorkspace)
+		internal static void GeneratePdbForAssemblies(IEnumerable<LoadedAssembly> assemblies, LanguageService languageService, DockWorkspace dockWorkspace)
 		{
-			var assemblyArray = assemblies?.Where(a => a != null).ToArray();
+			var assemblyArray = assemblies?.Where(a => a != null).ToArray() ?? [];
 			if (assemblyArray == null || assemblyArray.Length == 0)
 				return;
 
