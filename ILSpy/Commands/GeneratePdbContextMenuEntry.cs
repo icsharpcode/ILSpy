@@ -153,66 +153,27 @@ namespace ICSharpCode.ILSpy
 			}
 
 			// Ask for target folder
-			using (var dlg = new System.Windows.Forms.FolderBrowserDialog())
-			{
-				dlg.Description = Resources.SelectPDBOutputFolder;
-				dlg.RootFolder = Environment.SpecialFolder.MyComputer;
-				dlg.ShowNewFolderButton = true;
-				// Show dialog on UI thread
-				System.Windows.Forms.DialogResult result = dlg.ShowDialog();
-				if (result != System.Windows.Forms.DialogResult.OK || string.IsNullOrWhiteSpace(dlg.SelectedPath))
-					return;
+			var dlg = new OpenFolderDialog();
+			dlg.Title = Resources.SelectPDBOutputFolder;
+			if (dlg.ShowDialog() != true || string.IsNullOrWhiteSpace(dlg.FolderName))
+				return;
 
-				string targetFolder = dlg.SelectedPath;
-				DecompilationOptions options = dockWorkspace.ActiveTabPage.CreateDecompilationOptions();
+			string targetFolder = dlg.FolderName;
+			DecompilationOptions options = dockWorkspace.ActiveTabPage.CreateDecompilationOptions();
 
-				dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
-					AvalonEditTextOutput output = new AvalonEditTextOutput();
-					Stopwatch totalWatch = Stopwatch.StartNew();
-					options.CancellationToken = ct;
+			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
+				AvalonEditTextOutput output = new AvalonEditTextOutput();
+				Stopwatch totalWatch = Stopwatch.StartNew();
+				options.CancellationToken = ct;
 
-					int total = assemblyArray.Length;
-					int processed = 0;
-					foreach (var assembly in assemblyArray)
+				int total = assemblyArray.Length;
+				int processed = 0;
+				foreach (var assembly in assemblyArray)
+				{
+					// only process supported assemblies
+					if (!supported.TryGetValue(assembly, out var file))
 					{
-						// only process supported assemblies
-						if (!supported.TryGetValue(assembly, out var file))
-						{
-							output.WriteLine(string.Format(Resources.CannotCreatePDBFile, Path.GetFileName(assembly.FileName)));
-							processed++;
-							if (options.Progress != null)
-							{
-								options.Progress.Report(new DecompilationProgress {
-									Title = Resources.GeneratingPortablePDB,
-									TotalUnits = total,
-									UnitsCompleted = processed
-								});
-							}
-							continue;
-						}
-
-						string fileName = Path.Combine(targetFolder, WholeProjectDecompiler.CleanUpFileName(assembly.ShortName, ".pdb"));
-
-						try
-						{
-							using (FileStream stream = new FileStream(fileName, FileMode.Create, FileAccess.Write))
-							{
-								var decompiler = new CSharpDecompiler(file, assembly.GetAssemblyResolver(options.DecompilerSettings.AutoLoadAssemblyReferences), options.DecompilerSettings);
-								decompiler.CancellationToken = ct;
-								PortablePdbWriter.WritePdb(file, decompiler, options.DecompilerSettings, stream, progress: options.Progress, currentProgressTitle: Resources.GeneratingPortablePDB);
-							}
-							output.WriteLine(string.Format(Resources.GeneratedPDBFile, fileName));
-						}
-						catch (OperationCanceledException)
-						{
-							output.WriteLine();
-							output.WriteLine(Resources.GenerationWasCancelled);
-							throw;
-						}
-						catch (Exception ex)
-						{
-							output.WriteLine(string.Format(Resources.GenerationFailedForAssembly, assembly.FileName, ex.Message));
-						}
+						output.WriteLine(string.Format(Resources.CannotCreatePDBFile, Path.GetFileName(assembly.FileName)));
 						processed++;
 						if (options.Progress != null)
 						{
@@ -222,29 +183,62 @@ namespace ICSharpCode.ILSpy
 								UnitsCompleted = processed
 							});
 						}
+						continue;
 					}
 
-					totalWatch.Stop();
-					output.WriteLine();
-					output.WriteLine(Resources.GenerationCompleteInSeconds, totalWatch.Elapsed.TotalSeconds.ToString("F1"));
-					output.WriteLine();
-					// Select all generated pdb files in explorer
-					var generatedFiles = assemblyArray
-						.Select(a => Path.Combine(targetFolder, WholeProjectDecompiler.CleanUpFileName(a.ShortName, ".pdb")))
-						.Where(File.Exists)
-						.ToList();
-					if (generatedFiles.Any())
+					string fileName = Path.Combine(targetFolder, WholeProjectDecompiler.CleanUpFileName(assembly.ShortName, ".pdb"));
+
+					try
 					{
-						output.AddButton(null, Resources.OpenExplorer, delegate { ShellHelper.OpenFolderAndSelectItems(generatedFiles); });
+						using (FileStream stream = new FileStream(fileName, FileMode.Create, FileAccess.Write))
+						{
+							var decompiler = new CSharpDecompiler(file, assembly.GetAssemblyResolver(options.DecompilerSettings.AutoLoadAssemblyReferences), options.DecompilerSettings);
+							decompiler.CancellationToken = ct;
+							PortablePdbWriter.WritePdb(file, decompiler, options.DecompilerSettings, stream, progress: options.Progress, currentProgressTitle: Resources.GeneratingPortablePDB);
+						}
+						output.WriteLine(string.Format(Resources.GeneratedPDBFile, fileName));
 					}
-					else
+					catch (OperationCanceledException)
 					{
-						output.AddButton(null, Resources.OpenExplorer, delegate { ShellHelper.OpenFolder(targetFolder); });
+						output.WriteLine();
+						output.WriteLine(Resources.GenerationWasCancelled);
+						throw;
 					}
-					output.WriteLine();
-					return output;
-				}, ct)).Then(dockWorkspace.ShowText).HandleExceptions();
-			}
+					catch (Exception ex)
+					{
+						output.WriteLine(string.Format(Resources.GenerationFailedForAssembly, assembly.FileName, ex.Message));
+					}
+					processed++;
+					if (options.Progress != null)
+					{
+						options.Progress.Report(new DecompilationProgress {
+							Title = Resources.GeneratingPortablePDB,
+							TotalUnits = total,
+							UnitsCompleted = processed
+						});
+					}
+				}
+
+				totalWatch.Stop();
+				output.WriteLine();
+				output.WriteLine(Resources.GenerationCompleteInSeconds, totalWatch.Elapsed.TotalSeconds.ToString("F1"));
+				output.WriteLine();
+				// Select all generated pdb files in explorer
+				var generatedFiles = assemblyArray
+					.Select(a => Path.Combine(targetFolder, WholeProjectDecompiler.CleanUpFileName(a.ShortName, ".pdb")))
+					.Where(File.Exists)
+					.ToList();
+				if (generatedFiles.Any())
+				{
+					output.AddButton(null, Resources.OpenExplorer, delegate { ShellHelper.OpenFolderAndSelectItems(generatedFiles); });
+				}
+				else
+				{
+					output.AddButton(null, Resources.OpenExplorer, delegate { ShellHelper.OpenFolder(targetFolder); });
+				}
+				output.WriteLine();
+				return output;
+			}, ct)).Then(dockWorkspace.ShowText).HandleExceptions();
 		}
 	}
 
