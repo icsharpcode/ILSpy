@@ -28,6 +28,7 @@ using System.Threading.Tasks;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.Util;
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
@@ -187,7 +188,7 @@ namespace ICSharpCode.ILSpy
 				result.WriteLine();
 				result.WriteLine("Elapsed time: " + stopwatch.Elapsed.TotalSeconds.ToString("F1") + " seconds.");
 				result.WriteLine();
-				result.AddButton(null, "Open Explorer", delegate { ShellHelper.OpenFolderAndSelectItem(solutionFilePath); });
+				result.AddButton(null, Resources.OpenExplorer, delegate { ShellHelper.OpenFolderAndSelectItem(solutionFilePath); });
 			}
 
 			return result;
