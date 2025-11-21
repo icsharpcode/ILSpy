@@ -176,7 +176,7 @@
     <value>无法解析实体。可能是由于缺少程序集引用。请添加缺少的程序集并重试。</value>
   </data>
   <data name="CannotCreatePDBFile" xml:space="preserve">
-    <value>无法创建为{0}创建PDB文件,因为它不包含PE调试目录类型 'CodeView'.</value>
+    <value>不能为 {0} 创建PDB文件，因为缺少PE调试目录类型 'CodeView'。</value>
   </data>
   <data name="CheckAgain" xml:space="preserve">
     <value>再次检查</value>

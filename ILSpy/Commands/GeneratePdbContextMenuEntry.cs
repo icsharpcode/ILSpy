@@ -125,9 +125,30 @@ namespace ICSharpCode.ILSpy
 				return;
 
 			// Ensure at least one assembly supports PDB generation
-			if (!assemblyArray.Any(a => PortablePdbWriter.HasCodeViewDebugDirectoryEntry(a.GetMetadataFileOrNull() as PEFile)))
+			var supported = new Dictionary<LoadedAssembly, PEFile>();
+			var unsupported = new List<LoadedAssembly>();
+			foreach (var a in assemblyArray)
 			{
-				MessageBox.Show(Resources.CannotCreatePDBFile);
+				try
+				{
+					var file = a.GetMetadataFileOrNull() as PEFile;
+					if (PortablePdbWriter.HasCodeViewDebugDirectoryEntry(file))
+						supported.Add(a, file);
+					else
+						unsupported.Add(a);
+				}
+				catch
+				{
+					unsupported.Add(a);
+				}
+			}
+			if (supported.Count == 0)
+			{
+				// none can be generated
+				string msg = string.Format(Resources.CannotCreatePDBFile, ":" + Environment.NewLine +
+					string.Join(Environment.NewLine, unsupported.Select(u => Path.GetFileName(u.FileName)))
+					+ Environment.NewLine);
+				MessageBox.Show(msg);
 				return;
 			}
 
@@ -154,15 +175,8 @@ namespace ICSharpCode.ILSpy
 					int processed = 0;
 					foreach (var assembly in assemblyArray)
 					{
-						if (ct.IsCancellationRequested)
-						{
-							output.WriteLine();
-							output.WriteLine(Resources.GenerationWasCancelled);
-							throw new OperationCanceledException(ct);
-						}
-
-						var file = assembly.GetMetadataFileOrNull() as PEFile;
-						if (file == null || !PortablePdbWriter.HasCodeViewDebugDirectoryEntry(file))
+						// only process supported assemblies
+						if (!supported.TryGetValue(assembly, out var file))
 						{
 							output.WriteLine(string.Format(Resources.CannotCreatePDBFile, Path.GetFileName(assembly.FileName)));
 							processed++;

@@ -175,7 +175,7 @@ Are you sure you want to continue?</value>
     <value>Entity could not be resolved. Cannot analyze entities from missing assembly references. Add the missing reference and try again.</value>
   </data>
   <data name="CannotCreatePDBFile" xml:space="preserve">
-    <value>Cannot create PDB file for {0}, because it does not contain a PE Debug Directory Entry of type 'CodeView'.</value>
+    <value>Cannot create PDB file for {0} because the PE debug directory type 'CodeView' is missing.</value>
   </data>
   <data name="CheckAgain" xml:space="preserve">
     <value>Check again</value>
