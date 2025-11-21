@@ -124,17 +124,22 @@ namespace ICSharpCode.ILSpy
 			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
 				Stopwatch stopwatch = Stopwatch.StartNew();
+				var writtenFiles = new List<string>();
 				foreach (var node in nodes)
 				{
 					if (node is AssemblyTreeNode { PackageEntry: { } assembly })
 					{
 						string fileName = GetFileName(path, isFile, node.Parent, assembly);
 						SaveEntry(output, assembly, fileName);
+						if (File.Exists(fileName))
+							writtenFiles.Add(fileName);
 					}
 					else if (node is ResourceTreeNode { Resource: PackageEntry { } resource })
 					{
 						string fileName = GetFileName(path, isFile, node.Parent, resource);
 						SaveEntry(output, resource, fileName);
+						if (File.Exists(fileName))
+							writtenFiles.Add(fileName);
 					}
 					else if (node is PackageFolderTreeNode)
 					{
@@ -145,11 +150,15 @@ namespace ICSharpCode.ILSpy
 							{
 								string fileName = GetFileName(path, isFile, item.Parent, asm);
 								SaveEntry(output, asm, fileName);
+								if (File.Exists(fileName))
+									writtenFiles.Add(fileName);
 							}
 							else if (item is ResourceTreeNode { Resource: PackageEntry { } entry })
 							{
 								string fileName = GetFileName(path, isFile, item.Parent, entry);
 								SaveEntry(output, entry, fileName);
+								if (File.Exists(fileName))
+									writtenFiles.Add(fileName);
 							}
 							else if (item is PackageFolderTreeNode)
 							{
@@ -161,7 +170,18 @@ namespace ICSharpCode.ILSpy
 				stopwatch.Stop();
 				output.WriteLine(Resources.GenerationCompleteInSeconds, stopwatch.Elapsed.TotalSeconds.ToString("F1"));
 				output.WriteLine();
-				output.AddButton(null, Resources.OpenExplorer, delegate { if (isFile) ShellHelper.OpenFolderAndSelectItem(path); else ShellHelper.OpenFolder(path); });
+				// If we have written files, open explorer and select them grouped by folder; otherwise fall back to opening containing folder.
+				if (writtenFiles.Count > 0)
+				{
+					output.AddButton(null, Resources.OpenExplorer, delegate { ShellHelper.OpenFolderAndSelectItems(writtenFiles); });
+				}
+				else
+				{
+					if (isFile && File.Exists(path))
+						output.AddButton(null, Resources.OpenExplorer, delegate { ShellHelper.OpenFolderAndSelectItems(new[] { path }); });
+					else
+						output.AddButton(null, Resources.OpenExplorer, delegate { ShellHelper.OpenFolder(path); });
+				}
 				output.WriteLine();
 				return output;
 			}, ct)).Then(dockWorkspace.ShowText).HandleExceptions();

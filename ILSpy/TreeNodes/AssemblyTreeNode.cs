@@ -690,15 +690,18 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (context.SelectedTreeNodes == null)
 				return;
+			var paths = new List<string>();
 			foreach (var n in context.SelectedTreeNodes)
 			{
 				var node = GetAssemblyTreeNode(n);
 				var path = node.LoadedAssembly.FileName;
 				if (File.Exists(path))
 				{
-					ShellHelper.OpenFolderAndSelectItem(path);
+					paths.Add(path);
 				}
 			}
+			if (paths.Count > 0)
+				ShellHelper.OpenFolderAndSelectItems(paths);
 		}
 	}
 
