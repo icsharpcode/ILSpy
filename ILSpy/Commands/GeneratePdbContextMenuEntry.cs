@@ -99,7 +99,7 @@ namespace ICSharpCode.ILSpy
 					{
 						var decompiler = new CSharpDecompiler(file, assembly.GetAssemblyResolver(options.DecompilerSettings.AutoLoadAssemblyReferences), options.DecompilerSettings);
 						decompiler.CancellationToken = ct;
-						PortablePdbWriter.WritePdb(file, decompiler, options.DecompilerSettings, stream, progress: options.Progress);
+						PortablePdbWriter.WritePdb(file, decompiler, options.DecompilerSettings, stream, progress: options.Progress, currentProgressTitle: Resources.GeneratingPortablePDB);
 					}
 					catch (OperationCanceledException)
 					{
@@ -168,7 +168,7 @@ namespace ICSharpCode.ILSpy
 							if (options.Progress != null)
 							{
 								options.Progress.Report(new DecompilationProgress {
-									Title = "Generating portable PDB...",
+									Title = Resources.GeneratingPortablePDB,
 									TotalUnits = total,
 									UnitsCompleted = processed
 								});
@@ -184,7 +184,7 @@ namespace ICSharpCode.ILSpy
 							{
 								var decompiler = new CSharpDecompiler(file, assembly.GetAssemblyResolver(options.DecompilerSettings.AutoLoadAssemblyReferences), options.DecompilerSettings);
 								decompiler.CancellationToken = ct;
-								PortablePdbWriter.WritePdb(file, decompiler, options.DecompilerSettings, stream, progress: options.Progress);
+								PortablePdbWriter.WritePdb(file, decompiler, options.DecompilerSettings, stream, progress: options.Progress, currentProgressTitle: Resources.GeneratingPortablePDB);
 							}
 							output.WriteLine(string.Format(Resources.GeneratedPDBFile, fileName));
 						}
@@ -202,7 +202,7 @@ namespace ICSharpCode.ILSpy
 						if (options.Progress != null)
 						{
 							options.Progress.Report(new DecompilationProgress {
-								Title = "Generating portable PDB...",
+								Title = Resources.GeneratingPortablePDB,
 								TotalUnits = total,
 								UnitsCompleted = processed
 							});

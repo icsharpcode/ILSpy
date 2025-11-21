@@ -1912,6 +1912,14 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Generated PDB: {0}.
+        /// </summary>
+        public static string GeneratedPDBFile {
+            get {
+                return ResourceManager.GetString("GeneratedPDBFile", resourceCulture);
+            }
+        }
+        /// <summary>
         ///   Looks up a localized string similar to Generate portable PDB.
         /// </summary>
         public static string GeneratePortable {
@@ -1921,11 +1929,11 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Generated PDB: {0}.
+        ///   Looks up a localized string similar to Generating portable PDB....
         /// </summary>
-        public static string GeneratedPDBFile {
+        public static string GeneratingPortablePDB {
             get {
-                return ResourceManager.GetString("GeneratedPDBFile", resourceCulture);
+                return ResourceManager.GetString("GeneratingPortablePDB", resourceCulture);
             }
         }
         
@@ -1939,20 +1947,20 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Generation was cancelled..
-        /// </summary>
-        public static string GenerationWasCancelled {
-            get {
-                return ResourceManager.GetString("GenerationWasCancelled", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Failed to generate PDB for {0}: {1}.
         /// </summary>
         public static string GenerationFailedForAssembly {
             get {
                 return ResourceManager.GetString("GenerationFailedForAssembly", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Generation was cancelled..
+        /// </summary>
+        public static string GenerationWasCancelled {
+            get {
+                return ResourceManager.GetString("GenerationWasCancelled", resourceCulture);
             }
         }
         

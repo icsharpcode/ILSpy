@@ -660,6 +660,9 @@ Are you sure you want to continue?</value>
   <data name="GeneratedPDBFile" xml:space="preserve">
     <value>Generated PDB: {0}</value>
   </data>
+  <data name="GeneratingPortablePDB" xml:space="preserve">
+    <value>Generating portable PDB...</value>
+  </data>
   <data name="GenerationCompleteInSeconds" xml:space="preserve">
     <value>Generation complete in {0} seconds.</value>
   </data>
