@@ -741,7 +741,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				var path = Path.GetDirectoryName(node.LoadedAssembly.FileName);
 				if (Directory.Exists(path))
 				{
-					GlobalUtils.ExecuteCommand("cmd.exe", $"/k \"cd {path}\"");
+					GlobalUtils.ExecuteCommand("cmd.exe", $"/k \"cd /d {path}\"");
 				}
 			}
 		}
