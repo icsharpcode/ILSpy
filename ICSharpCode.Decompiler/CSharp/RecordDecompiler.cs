@@ -167,6 +167,14 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			var subst = recordTypeDef.AsParameterizedType().GetSubstitution();
 
+			Dictionary<string, IMember> nameToMemberMap = new Dictionary<string, IMember>(StringComparer.Ordinal);
+			Dictionary<IMethod, IMethod> ctorChainMap = new Dictionary<IMethod, IMethod>();
+
+			foreach (IMember m in recordTypeDef.GetMembers(m => m.SymbolKind is SymbolKind.Property or SymbolKind.Field, GetMemberOptions.ReturnMemberDefinitions))
+			{
+				nameToMemberMap[m.Name] = m;
+			}
+
 			IMethod guessedPrimaryCtor = null;
 
 			foreach (var method in recordTypeDef.Methods)
@@ -178,8 +186,21 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					continue;
 				}
+				var body = DecompileBody(method);
+				if (body == null)
+				{
+					continue;
+				}
+				IMethod chainedCtor = (IMethod)FindChainedCtor(body)?.MemberDefinition;
+				ctorChainMap[method] = chainedCtor;
+
+				if (chainedCtor != null && chainedCtor.DeclaringTypeDefinition.Equals(recordTypeDef))
+				{
+					continue;
+				}
+
 				var m = method.Specialize(subst);
-				if (IsPrimaryConstructor(m, method))
+				if (IsPrimaryConstructor(body, m, method))
 				{
 					if (guessedPrimaryCtor == null)
 					{
@@ -188,6 +209,26 @@ namespace ICSharpCode.Decompiler.CSharp
 					else
 					{
 						// Multiple primary constructor candidates found - give up
+						guessedPrimaryCtor = null;
+						break;
+					}
+				}
+			}
+
+			if (guessedPrimaryCtor != null)
+			{
+				foreach (var (source, target) in ctorChainMap)
+				{
+					if (guessedPrimaryCtor.Equals(source))
+						continue;
+					// in a record with a primary ctor every other ctor must call the primary ctor
+					// at the end of the ctor chain.
+					// if the target is null or a ctor of another type, we found a ctor that does not
+					// follow this rule.
+					// we don't have to check the full chain, because the C# compiler enforces that
+					// there are no loops in the ctor call graph.
+					if (target == null || !target.DeclaringTypeDefinition!.Equals(recordTypeDef))
+					{
 						guessedPrimaryCtor = null;
 						break;
 					}
@@ -213,12 +254,22 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			return guessedPrimaryCtor;
 
-			bool IsPrimaryConstructor(IMethod method, IMethod unspecializedMethod)
+			bool IsPrimaryConstructor(Block body, IMethod method, IMethod unspecializedMethod)
 			{
-				Debug.Assert(method.IsConstructor);
-				var body = DecompileBody(method);
-				if (body == null)
-					return false;
+				foreach (IParameter p in unspecializedMethod.Parameters)
+				{
+					// ref and out are not valid modifiers in this context
+					if (p.ReferenceKind is ReferenceKind.Ref or ReferenceKind.Out)
+						return false;
+
+					// for each positional parameter there must be a field or property of the same name and type
+					if (!nameToMemberMap.TryGetValue(p.Name, out var member))
+						return false;
+
+					var paramType = p.ReferenceKind != ReferenceKind.None ? p.Type.UnwrapByRef() : p.Type;
+					if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(paramType, member.ReturnType))
+						return false;
+				}
 
 				if (!isStruct)
 				{
@@ -236,49 +287,72 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (body.Instructions.Count < addonInst)
 					return false;
 
+				int parameterIndex = 0;
+
 				for (int i = 0; i < body.Instructions.Count - addonInst; i++)
 				{
 					if (!body.Instructions[i].MatchStFld(out var target, out var field, out var valueInst))
 						return false;
 					if (!target.MatchLdThis())
 						return false;
-					if (i < method.Parameters.Count)
+					// allow assignments to fields that are not backing fields of auto-properties
+					if (!backingFieldToAutoProperty.TryGetValue(field, out var property))
+						continue;
+					if (valueInst.MatchLdLoc(out var v))
 					{
-						if (method.Parameters[i].ReferenceKind is ReferenceKind.In or ReferenceKind.RefReadOnly)
-						{
-							if (!valueInst.MatchLdObj(out valueInst, out _))
-								return false;
-						}
-						if (!valueInst.MatchLdLoc(out var value))
+						if (v.Kind != VariableKind.Parameter || v.Index < parameterIndex)
 							return false;
-						if (!(value.Kind == VariableKind.Parameter && value.Index >= 0 && value.Index < method.Parameters.Count))
-							return false;
-
-						if (!backingFieldToAutoProperty.TryGetValue(field, out var property))
-						{
-							return false;
-						}
-
-						IParameter parameter = unspecializedMethod.Parameters[i];
-						if (primaryCtorParameterToAutoProperty.ContainsKey(parameter))
-						{
-							return false;
-						}
-
-						if (recordTypeDef.Kind != TypeKind.Struct)
-						{
-							if (!(property.CanSet && property.Setter.IsInitOnly))
-							{
-								continue;
-							}
-						}
-
-						primaryCtorParameterToAutoProperty.Add(parameter, property);
+						parameterIndex = v.Index.Value;
 					}
+					else if (valueInst.MatchLdObj(out valueInst, out _) && valueInst.MatchLdLoc(out v))
+					{
+						if (v.Kind != VariableKind.Parameter || v.Index < parameterIndex)
+							return false;
+						parameterIndex = v.Index.Value;
+						if (method.Parameters[parameterIndex].ReferenceKind is ReferenceKind.None)
+						{
+							return false;
+						}
+					}
+					else
+					{
+						continue;
+					}
+					IParameter parameter = unspecializedMethod.Parameters[parameterIndex];
+					if (primaryCtorParameterToAutoProperty.ContainsKey(parameter))
+					{
+						continue;
+					}
+
+					if (recordTypeDef.Kind != TypeKind.Struct)
+					{
+						if (!(property.CanSet && property.Setter.IsInitOnly))
+						{
+							continue;
+						}
+					}
+					primaryCtorParameterToAutoProperty.Add(parameter, property);
 				}
 
 				var returnInst = body.Instructions.LastOrDefault();
 				return returnInst != null && returnInst.MatchReturn(out var retVal) && retVal.MatchNop();
+			}
+
+			IMethod FindChainedCtor(Block body)
+			{
+				// look for a call instruction or assignment to a chained constructor
+				foreach (var inst in body.Instructions)
+				{
+					switch (inst)
+					{
+						case Call { Method: { IsConstructor: true } ctor }:
+							return ctor;
+						case StObj { Value: NewObj { Method: var ctor } } stObj when stObj.Target.MatchLdThis():
+							return ctor;
+					}
+				}
+
+				return null;
 			}
 		}
 

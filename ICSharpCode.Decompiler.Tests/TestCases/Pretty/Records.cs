@@ -18,6 +18,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public record Derived(int B) : Base(B.ToString());
 
+		public record BaseRecordWithObject(object Id);
+
+		public record DerivedRecordWithString : BaseRecordWithObject
+		{
+			public DerivedRecordWithString(string Id)
+				: base(Id)
+			{
+			}
+		}
+
 		public record Empty;
 
 		public record Fields
@@ -398,6 +408,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public RecordWithMultipleCtors(string A)
 			{
 				this.A = int.Parse(A);
+			}
+		}
+
+		public record struct RecordCtorChain(int A, string B)
+		{
+#if EXPECTED_OUTPUT
+			public double C = 0.0;
+#else
+			public double C;
+#endif
+			public RecordCtorChain(int A)
+				: this(A, "default")
+			{
+				C = 3.14;
+			}
+			public RecordCtorChain(string B)
+				: this(42, B)
+			{
+				C = 1.41;
 			}
 		}
 	}
