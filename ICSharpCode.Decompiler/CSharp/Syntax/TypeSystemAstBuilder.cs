@@ -368,7 +368,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				foreach (var customCallConv in fpt.CustomCallingConventions)
 				{
 					AstType callConvSyntax;
-					if (customCallConv.Name.StartsWith("CallConv", StringComparison.Ordinal) && customCallConv.Name.Length > 8)
+					if (customCallConv.Namespace == "System.Runtime.CompilerServices" && customCallConv.Name.StartsWith("CallConv", StringComparison.Ordinal) && customCallConv.Name.Length > 8)
 					{
 						callConvSyntax = new PrimitiveType(customCallConv.Name.Substring(8));
 						if (AddResolveResultAnnotations)

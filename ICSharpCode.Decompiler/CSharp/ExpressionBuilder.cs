@@ -4598,10 +4598,50 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithILInstruction(inst);
 			}
 			// C# 9 function pointer
+			SignatureCallingConvention callingConvention = SignatureCallingConvention.Default;
+			ImmutableArray<IType> customCallingConventions;
+			var unmanagedCallersOnlyAttribute = inst.Method.GetAttributes().FirstOrDefault(m => m.AttributeType.IsKnownType(KnownAttribute.UnmanagedCallersOnly));
+			if (unmanagedCallersOnlyAttribute != null)
+			{
+				callingConvention = SignatureCallingConvention.Unmanaged;
+
+				var callingConventionsArgument = unmanagedCallersOnlyAttribute.NamedArguments.FirstOrDefault(a => a.Name == "CallConvs");
+				if (callingConventionsArgument.Value is ImmutableArray<CustomAttributeTypedArgument<IType>> array)
+				{
+					var builder = ImmutableArray.CreateBuilder<IType>(array.Length);
+					foreach (var type in array.Select(a => a.Value).OfType<IType>())
+					{
+						SignatureCallingConvention? foundCallingConvention = type.Namespace is not "System.Runtime.CompilerServices" ? null : type.Name switch {
+							"CallConvCdecl" => SignatureCallingConvention.CDecl,
+							"CallConvFastcall" => SignatureCallingConvention.FastCall,
+							"CallConvStdcall" => SignatureCallingConvention.StdCall,
+							"CallConvThiscall" => SignatureCallingConvention.ThisCall,
+							_ => null,
+						};
+						if (foundCallingConvention is not null)
+						{
+							callingConvention = foundCallingConvention.Value;
+						}
+						else
+						{
+							builder.Add(type);
+						}
+					}
+					customCallingConventions = builder.ToImmutable();
+				}
+				else
+				{
+					customCallingConventions = [];
+				}
+			}
+			else
+			{
+				callingConvention = SignatureCallingConvention.Default;
+				customCallingConventions = [];
+			}
 			var ftp = new FunctionPointerType(
 				typeSystem.MainModule,
-				// TODO: calling convention
-				SignatureCallingConvention.Default, ImmutableArray.Create<IType>(),
+				callingConvention, customCallingConventions,
 				inst.Method.ReturnType, inst.Method.ReturnTypeIsRefReadOnly,
 				inst.Method.Parameters.SelectImmutableArray(p => p.Type),
 				inst.Method.Parameters.SelectImmutableArray(p => p.ReferenceKind)
