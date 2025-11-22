@@ -1,6 +1,6 @@
-#if !(CS110 && NET70)
 using System;
-#endif
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
@@ -46,15 +46,142 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return (delegate*<object, string>)(&VarianceTest);
 		}
 
-		public unsafe delegate*<void> AddressOfLocalFunction()
+		public unsafe delegate*<void> AddressOfLocalFunction_Managed()
 		{
 			return &LocalFunction;
 
 			static void LocalFunction()
 			{
-
 			}
 		}
+
+		public unsafe delegate* unmanaged<void> AddressOfLocalFunction_Unmanaged()
+		{
+			return &LocalFunction;
+
+			[UnmanagedCallersOnly]
+			static void LocalFunction()
+			{
+			}
+		}
+
+		public unsafe delegate* unmanaged[Cdecl]<void> AddressOfLocalFunction_CDecl()
+		{
+			return &LocalFunction;
+
+			[UnmanagedCallersOnly(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+			static void LocalFunction()
+			{
+			}
+		}
+
+		public unsafe delegate* unmanaged[Fastcall]<void> AddressOfLocalFunction_Fastcall()
+		{
+			return &LocalFunction;
+
+			[UnmanagedCallersOnly(CallConvs = new Type[] { typeof(CallConvFastcall) })]
+			static void LocalFunction()
+			{
+			}
+		}
+
+#if NET60
+		public unsafe delegate* unmanaged[MemberFunction]<void> AddressOfLocalFunction_MemberFunction()
+		{
+			return &LocalFunction;
+
+			[UnmanagedCallersOnly(CallConvs = new Type[] { typeof(CallConvMemberFunction) })]
+			static void LocalFunction()
+			{
+			}
+		}
+#endif
+
+		public unsafe delegate* unmanaged[Stdcall]<void> AddressOfLocalFunction_Stdcall()
+		{
+			return &LocalFunction;
+
+			[UnmanagedCallersOnly(CallConvs = new Type[] { typeof(CallConvStdcall) })]
+			static void LocalFunction()
+			{
+			}
+		}
+
+#if NET60
+		public unsafe delegate* unmanaged[SuppressGCTransition]<void> AddressOfLocalFunction_SuppressGCTransition()
+		{
+			return &LocalFunction;
+
+			[UnmanagedCallersOnly(CallConvs = new Type[] { typeof(CallConvSuppressGCTransition) })]
+			static void LocalFunction()
+			{
+			}
+		}
+#endif
+
+		public unsafe delegate* unmanaged[Thiscall]<void> AddressOfLocalFunction_Thiscall()
+		{
+			return &LocalFunction;
+
+			[UnmanagedCallersOnly(CallConvs = new Type[] { typeof(CallConvThiscall) })]
+			static void LocalFunction()
+			{
+			}
+		}
+
+#if NET60
+		public unsafe delegate* unmanaged[Cdecl, SuppressGCTransition]<void> AddressOfLocalFunction_CDeclAndSuppressGCTransition()
+		{
+			return &LocalFunction;
+
+			[UnmanagedCallersOnly(CallConvs = new Type[] {
+				typeof(CallConvCdecl),
+				typeof(CallConvSuppressGCTransition)
+			})]
+			static void LocalFunction()
+			{
+			}
+		}
+
+		public unsafe delegate* unmanaged[Fastcall, SuppressGCTransition]<void> AddressOfLocalFunction_FastcallAndSuppressGCTransition()
+		{
+			return &LocalFunction;
+
+			[UnmanagedCallersOnly(CallConvs = new Type[] {
+				typeof(CallConvFastcall),
+				typeof(CallConvSuppressGCTransition)
+			})]
+			static void LocalFunction()
+			{
+			}
+		}
+
+		public unsafe delegate* unmanaged[Stdcall, SuppressGCTransition]<void> AddressOfLocalFunction_StdcallAndSuppressGCTransition()
+		{
+			return &LocalFunction;
+
+			[UnmanagedCallersOnly(CallConvs = new Type[] {
+				typeof(CallConvStdcall),
+				typeof(CallConvSuppressGCTransition)
+			})]
+			static void LocalFunction()
+			{
+			}
+		}
+
+		public unsafe delegate* unmanaged[Thiscall, SuppressGCTransition]<void> AddressOfLocalFunction_ThiscallAndSuppressGCTransition()
+		{
+			return &LocalFunction;
+
+			[UnmanagedCallersOnly(CallConvs = new Type[] {
+				typeof(CallConvThiscall),
+				typeof(CallConvSuppressGCTransition)
+			})]
+			static void LocalFunction()
+			{
+			}
+		}
+#endif
 	}
 
 	internal class FunctionPointersWithCallingConvention
