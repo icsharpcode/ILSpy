@@ -4611,7 +4611,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					var builder = ImmutableArray.CreateBuilder<IType>(array.Length);
 					foreach (var type in array.Select(a => a.Value).OfType<IType>())
 					{
-						SignatureCallingConvention? foundCallingConvention = type.Namespace is not "System.Runtime.CompilerServices" ? null : type.Name switch {
+						SignatureCallingConvention? foundCallingConvention = type.Namespace is not "System.Runtime.CompilerServices" || callingConvention != SignatureCallingConvention.Unmanaged ? null : type.Name switch {
 							"CallConvCdecl" => SignatureCallingConvention.CDecl,
 							"CallConvFastcall" => SignatureCallingConvention.FastCall,
 							"CallConvStdcall" => SignatureCallingConvention.StdCall,
