@@ -110,6 +110,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		// C# 9 attributes:
 		NativeInteger,
 		PreserveBaseOverrides,
+		UnmanagedCallersOnly,
 
 		// C# 11 attributes:
 		Required,
@@ -192,6 +193,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			// C# 9 attributes:
 			new TopLevelTypeName("System.Runtime.CompilerServices", "NativeIntegerAttribute"),
 			new TopLevelTypeName("System.Runtime.CompilerServices", "PreserveBaseOverridesAttribute"),
+			new TopLevelTypeName("System.Runtime.InteropServices", "UnmanagedCallersOnlyAttribute"),
 			// C# 11 attributes:
 			new TopLevelTypeName("System.Runtime.CompilerServices", "RequiredMemberAttribute"),
 			// C# 12 attributes:
