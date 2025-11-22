@@ -129,6 +129,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public unsafe delegate* unmanaged[Cdecl, Fastcall]<void> AddressOfLocalFunction_CDeclAndFastcall()
+		{
+			return &LocalFunction;
+
+			[UnmanagedCallersOnly(CallConvs = new Type[] {
+				typeof(CallConvCdecl),
+				typeof(CallConvFastcall)
+			})]
+			static void LocalFunction()
+			{
+			}
+		}
+
+		public unsafe delegate* unmanaged[Fastcall, Cdecl]<void> AddressOfLocalFunction_FastcallAndCDecl()
+		{
+			return &LocalFunction;
+
+			[UnmanagedCallersOnly(CallConvs = new Type[] {
+				typeof(CallConvFastcall),
+				typeof(CallConvCdecl)
+			})]
+			static void LocalFunction()
+			{
+			}
+		}
+
 #if NET60
 		public unsafe delegate* unmanaged[Cdecl, SuppressGCTransition]<void> AddressOfLocalFunction_CDeclAndSuppressGCTransition()
 		{

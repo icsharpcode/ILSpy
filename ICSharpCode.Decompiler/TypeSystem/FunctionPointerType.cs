@@ -46,23 +46,30 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					&& modReturn.Modifier.Namespace == "System.Runtime.CompilerServices")
 				{
 					returnType = modReturn.ElementType;
-					switch (modReturn.Modifier.Name)
+					if (callingConvention == SignatureCallingConvention.Unmanaged)
 					{
-						case "CallConvCdecl":
-							callingConvention = SignatureCallingConvention.CDecl;
-							break;
-						case "CallConvFastcall":
-							callingConvention = SignatureCallingConvention.FastCall;
-							break;
-						case "CallConvStdcall":
-							callingConvention = SignatureCallingConvention.StdCall;
-							break;
-						case "CallConvThiscall":
-							callingConvention = SignatureCallingConvention.ThisCall;
-							break;
-						default:
-							customCallConvs.Add(modReturn.Modifier);
-							break;
+						switch (modReturn.Modifier.Name)
+						{
+							case "CallConvCdecl":
+								callingConvention = SignatureCallingConvention.CDecl;
+								break;
+							case "CallConvFastcall":
+								callingConvention = SignatureCallingConvention.FastCall;
+								break;
+							case "CallConvStdcall":
+								callingConvention = SignatureCallingConvention.StdCall;
+								break;
+							case "CallConvThiscall":
+								callingConvention = SignatureCallingConvention.ThisCall;
+								break;
+							default:
+								customCallConvs.Add(modReturn.Modifier);
+								break;
+						}
+					}
+					else
+					{
+						customCallConvs.Add(modReturn.Modifier);
 					}
 				}
 				else
