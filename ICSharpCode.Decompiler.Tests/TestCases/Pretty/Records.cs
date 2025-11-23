@@ -30,6 +30,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public record Empty;
 
+		public record EmptyWithStaticField
+		{
+			public static readonly Empty X = new Empty();
+		}
+
 		public record Fields
 		{
 			public int A;

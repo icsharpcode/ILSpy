@@ -550,7 +550,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			// Then all the fields are copied over
 			foreach (var member in orderedMembers)
 			{
-				if (!(member is IField field))
+				if (member.IsStatic)
+					continue;
+				if (member is not IField field)
 				{
 					if (!autoPropertyToBackingField.TryGetValue((IProperty)member, out field!))
 						continue;
