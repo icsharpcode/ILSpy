@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="WixSharp_wix4" Version="2.7.3" />
+    <PackageReference Include="WixSharp_wix4" Version="2.12.0" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
