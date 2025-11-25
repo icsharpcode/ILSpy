@@ -99,7 +99,7 @@ namespace ICSharpCode.ILSpy.Util
 				if (paths == null)
 					return;
 				// Group by containing folder
-				var files = paths.Where(p => !string.IsNullOrEmpty(p) && File.Exists(p)).ToList();
+				var files = paths.Distinct(StringComparer.OrdinalIgnoreCase).Where(p => !string.IsNullOrEmpty(p) && File.Exists(p)).ToList();
 				if (files.Count == 0)
 					return;
 
