@@ -100,7 +100,7 @@ namespace ICSharpCode.ILSpy
 					{
 						var decompiler = new CSharpDecompiler(file, assembly.GetAssemblyResolver(options.DecompilerSettings.AutoLoadAssemblyReferences), options.DecompilerSettings);
 						decompiler.CancellationToken = ct;
-						PortablePdbWriter.WritePdb(file, decompiler, options.DecompilerSettings, stream, progress: options.Progress, currentProgressTitle: Resources.GeneratingPortablePDB);
+						PortablePdbWriter.WritePdb(file, decompiler, options.DecompilerSettings, stream, progress: options.Progress, currentProgressTitle: string.Format(Resources.GeneratingPortablePDB, Path.GetFileName(assembly.FileName)));
 					}
 					catch (OperationCanceledException)
 					{
@@ -178,7 +178,7 @@ namespace ICSharpCode.ILSpy
 						if (options.Progress != null)
 						{
 							options.Progress.Report(new DecompilationProgress {
-								Title = Resources.GeneratingPortablePDB,
+								Title = string.Format(Resources.GeneratingPortablePDB, Path.GetFileName(assembly.FileName)),
 								TotalUnits = total,
 								UnitsCompleted = processed
 							});
@@ -194,7 +194,7 @@ namespace ICSharpCode.ILSpy
 						{
 							var decompiler = new CSharpDecompiler(file, assembly.GetAssemblyResolver(options.DecompilerSettings.AutoLoadAssemblyReferences), options.DecompilerSettings);
 							decompiler.CancellationToken = ct;
-							PortablePdbWriter.WritePdb(file, decompiler, options.DecompilerSettings, stream, progress: options.Progress, currentProgressTitle: Resources.GeneratingPortablePDB);
+							PortablePdbWriter.WritePdb(file, decompiler, options.DecompilerSettings, stream, progress: options.Progress, currentProgressTitle: string.Format(Resources.GeneratingPortablePDB, Path.GetFileName(assembly.FileName)));
 						}
 						output.WriteLine(string.Format(Resources.GeneratedPDBFile, fileName));
 					}
@@ -212,7 +212,7 @@ namespace ICSharpCode.ILSpy
 					if (options.Progress != null)
 					{
 						options.Progress.Report(new DecompilationProgress {
-							Title = Resources.GeneratingPortablePDB,
+							Title = string.Format(Resources.GeneratingPortablePDB, Path.GetFileName(assembly.FileName)),
 							TotalUnits = total,
 							UnitsCompleted = processed
 						});

@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -1485,6 +1486,27 @@ namespace ICSharpCode.ILSpy.TextView
 					return highlightingDefinition;
 				});
 			}
+		}
+	}
+
+	// Converter to multiply a double by a factor provided as ConverterParameter
+	public class MultiplyConverter : IValueConverter
+	{
+		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+		{
+			if (value is double d && parameter != null)
+			{
+				if (double.TryParse(parameter.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out double factor))
+				{
+					return d * factor;
+				}
+			}
+			return Binding.DoNothing;
+		}
+
+		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+		{
+			throw new NotSupportedException();
 		}
 	}
 }

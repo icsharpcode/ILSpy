@@ -25,6 +25,8 @@
 				</Setter.Value>
 			</Setter>
 		</Style>
+		<!-- Converter to compute a fraction of the control width for MaxWidth bindings -->
+		<local:MultiplyConverter x:Key="MultiplyConverter" />
 	</UserControl.Resources>
 	<Grid>
 		<Border BorderThickness="1,1,0,1" BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
@@ -96,12 +98,13 @@
 					<Grid>
 						<Grid.ColumnDefinitions>
 							<ColumnDefinition Width="*" />
-							<ColumnDefinition Width="2*" />
+							<!-- make center column auto-sized to content so it expands with the title -->
+							<ColumnDefinition Width="Auto" />
 							<ColumnDefinition Width="*" />
 						</Grid.ColumnDefinitions>
-						<StackPanel Grid.Column="1" VerticalAlignment="Center">
-							<TextBlock Name="progressTitle" FontSize="14pt" Text="{x:Static properties:Resources.Decompiling}" Margin="3" />
-							<ProgressBar Name="progressBar" Height="16" />
+						<StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="{Binding ActualWidth, ElementName=self, Converter={StaticResource MultiplyConverter}, ConverterParameter=0.75}">
+							<TextBlock Name="progressTitle" FontSize="14pt" Text="{x:Static properties:Resources.Decompiling}" Margin="3" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" />
+							<ProgressBar Name="progressBar" Height="16" Width="{Binding ActualWidth, ElementName=self, Converter={StaticResource MultiplyConverter}, ConverterParameter=0.75}" />
 							<TextBlock Name="progressText" Visibility="Collapsed" Margin="3" />
 							<Button Click="CancelButton_Click" HorizontalAlignment="Center" Margin="3" Content="{x:Static properties:Resources.Cancel}" />
 						</StackPanel>

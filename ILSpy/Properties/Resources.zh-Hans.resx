@@ -614,7 +614,7 @@
     <value>生成的 PDB: {0}</value>
   </data>
   <data name="GeneratingPortablePDB" xml:space="preserve">
-    <value>正在生成 Portable PDB...</value>
+    <value>正在为 {0} 生成 Portable PDB...</value>
   </data>
   <data name="GenerationCompleteInSeconds" xml:space="preserve">
     <value>生成完成，耗时 {0} 秒。</value>
