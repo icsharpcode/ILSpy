@@ -484,7 +484,7 @@ Examples:
 				return ProgramExitCodes.EX_DATAERR;
 			}
 
-			using (FileStream stream = new FileStream(pdbFileName, FileMode.OpenOrCreate, FileAccess.Write))
+			using (FileStream stream = new FileStream(pdbFileName, FileMode.Create, FileAccess.Write))
 			{
 				var decompiler = GetDecompiler(assemblyFileName);
 				PortablePdbWriter.WritePdb(module, decompiler, GetSettings(module), stream);

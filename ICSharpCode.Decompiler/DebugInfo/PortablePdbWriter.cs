@@ -72,7 +72,8 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			Stream targetStream,
 			bool noLogo = false,
 			BlobContentId? pdbId = null,
-			IProgress<DecompilationProgress> progress = null)
+			IProgress<DecompilationProgress> progress = null,
+			string currentProgressTitle = "Generating portable PDB...")
 		{
 			MetadataBuilder metadata = new MetadataBuilder();
 			MetadataReader reader = file.Metadata;
@@ -99,7 +100,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			DecompilationProgress currentProgress = new() {
 				TotalUnits = sourceFiles.Count,
 				UnitsCompleted = 0,
-				Title = "Generating portable PDB..."
+				Title = currentProgressTitle
 			};
 
 			foreach (var sourceFile in sourceFiles)

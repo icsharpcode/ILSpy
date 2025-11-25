@@ -175,7 +175,7 @@ Are you sure you want to continue?</value>
     <value>Entity could not be resolved. Cannot analyze entities from missing assembly references. Add the missing reference and try again.</value>
   </data>
   <data name="CannotCreatePDBFile" xml:space="preserve">
-    <value>Cannot create PDB file for {0}, because it does not contain a PE Debug Directory Entry of type 'CodeView'.</value>
+    <value>Cannot create PDB file for {0} because the PE debug directory type 'CodeView' is missing.</value>
   </data>
   <data name="CheckAgain" xml:space="preserve">
     <value>Check again</value>
@@ -657,8 +657,17 @@ Are you sure you want to continue?</value>
   <data name="GeneratePortable" xml:space="preserve">
     <value>Generate portable PDB</value>
   </data>
+  <data name="GeneratedPDBFile" xml:space="preserve">
+    <value>Generated PDB: {0}</value>
+  </data>
+  <data name="GeneratingPortablePDB" xml:space="preserve">
+    <value>Generating portable PDB for {0}...</value>
+  </data>
   <data name="GenerationCompleteInSeconds" xml:space="preserve">
     <value>Generation complete in {0} seconds.</value>
+  </data>
+  <data name="GenerationFailedForAssembly" xml:space="preserve">
+    <value>Failed to generate PDB for {0}: {1}</value>
   </data>
   <data name="GenerationWasCancelled" xml:space="preserve">
     <value>Generation was cancelled.</value>
@@ -894,6 +903,9 @@ Do you want to continue?</value>
   </data>
   <data name="SelectPDB" xml:space="preserve">
     <value>Select PDB...</value>
+  </data>
+  <data name="SelectPDBOutputFolder" xml:space="preserve">
+    <value>Select target folder</value>
   </data>
   <data name="SelectVersionDropdownTooltip" xml:space="preserve">
     <value>Select version of language to output (Alt+E)</value>
