@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.Tests
 			using (FileStream pdbStream = File.Open(Path.Combine(TestCasePath, nameof(CustomPdbId) + ".pdb"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
 			{
 				pdbStream.SetLength(0);
-				PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream, noLogo: true, pdbId: expectedPdbId);
+				PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream, pdbId: expectedPdbId);
 
 				pdbStream.Position = 0;
 				var metadataReader = MetadataReaderProvider.FromPortablePdbStream(pdbStream).GetMetadataReader();
@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.Tests
 			using (FileStream pdbStream = File.Open(Path.Combine(TestCasePath, nameof(ProgressReporting) + ".pdb"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
 			{
 				pdbStream.SetLength(0);
-				PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream, noLogo: true, progress: new TestProgressReporter(reportFunc));
+				PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream, progress: new TestProgressReporter(reportFunc));
 
 				pdbStream.Position = 0;
 				var metadataReader = MetadataReaderProvider.FromPortablePdbStream(pdbStream).GetMetadataReader();
@@ -142,7 +142,7 @@ namespace ICSharpCode.Decompiler.Tests
 			using (FileStream pdbStream = File.Open(Path.Combine(TestCasePath, testName + ".pdb"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
 			{
 				pdbStream.SetLength(0);
-				PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream, noLogo: true);
+				PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream);
 				pdbStream.Position = 0;
 				using (Stream peStream = File.OpenRead(peFileName))
 				using (Stream expectedPdbStream = File.OpenRead(pdbFileName))
