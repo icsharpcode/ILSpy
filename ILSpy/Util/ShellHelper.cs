@@ -23,6 +23,8 @@ using System.Runtime.InteropServices;
 using System.Linq;
 using System.Collections.Generic;
 
+#pragma warning disable CA1060 // Move pinvokes to native methods class
+
 namespace ICSharpCode.ILSpy.Util
 {
 	static class ShellHelper
