@@ -178,7 +178,7 @@ namespace ICSharpCode.ILSpy
 				else
 				{
 					if (isFile && File.Exists(path))
-						output.AddButton(null, Resources.OpenExplorer, delegate { ShellHelper.OpenFolderAndSelectItems(new[] { path }); });
+						output.AddButton(null, Resources.OpenExplorer, delegate { ShellHelper.OpenFolderAndSelectItem(path); });
 					else
 						output.AddButton(null, Resources.OpenExplorer, delegate { ShellHelper.OpenFolder(path); });
 				}

@@ -17,11 +17,12 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Linq;
-using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 #pragma warning disable CA1060 // Move pinvokes to native methods class
 
@@ -43,6 +44,7 @@ namespace ICSharpCode.ILSpy.Util
 
 		public static void OpenFolder(string folderPath)
 		{
+			nint folderPidl = IntPtr.Zero;
 			try
 			{
 				if (string.IsNullOrEmpty(folderPath))
@@ -50,122 +52,122 @@ namespace ICSharpCode.ILSpy.Util
 				if (!Directory.Exists(folderPath))
 					return;
 
-				IntPtr folderPidl = IntPtr.Zero;
-				uint attrs;
-				int hr = SHParseDisplayName(folderPath, IntPtr.Zero, out folderPidl, 0, out attrs);
-				if (hr == 0 && folderPidl != IntPtr.Zero)
-				{
-					SHOpenFolderAndSelectItems(folderPidl, 0, null, 0);
-					CoTaskMemFree(folderPidl);
-				}
-				else
-				{
-					// fallback
-					Process.Start(new ProcessStartInfo { FileName = folderPath, UseShellExecute = true });
-				}
+				int hr = SHParseDisplayName(folderPath, IntPtr.Zero, out folderPidl, 0, out var attrs);
+				Marshal.ThrowExceptionForHR(hr);
+
+				hr = SHOpenFolderAndSelectItems(folderPidl, 0, null, 0);
+				Marshal.ThrowExceptionForHR(hr);
 			}
-			catch
+			catch (Exception ex) when (ex is COMException or Win32Exception)
 			{
-				// ignore
+				// fall back to Process.Start
+				OpenFolderFallback(folderPath);
+			}
+			finally
+			{
+				if (folderPidl != IntPtr.Zero)
+					CoTaskMemFree(folderPidl);
+			}
+		}
+
+		static void OpenFolderFallback(string path)
+		{
+			try
+			{
+				Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
+			}
+			catch (Exception)
+			{
+				// Process.Start can throw several errors (not all of them documented),
+				// just ignore all of them.
 			}
 		}
 
 		public static void OpenFolderAndSelectItem(string path)
 		{
 			// Reuse the multi-item implementation for single item selection to avoid duplication.
-			try
+			if (string.IsNullOrEmpty(path))
+				return;
+			if (Directory.Exists(path))
 			{
-				if (string.IsNullOrEmpty(path))
-					return;
-				if (Directory.Exists(path))
-				{
-					OpenFolder(path);
-					return;
-				}
-
-				if (!File.Exists(path))
-					return;
-
-				OpenFolderAndSelectItems(new[] { path });
+				OpenFolder(path);
+				return;
 			}
-			catch
-			{
-				// ignore
-			}
+
+			if (!File.Exists(path))
+				return;
+
+			OpenFolderAndSelectItems(path);
 		}
 
-		public static void OpenFolderAndSelectItems(IEnumerable<string> paths)
+		public static void OpenFolderAndSelectItems(params IEnumerable<string> paths)
 		{
-			try
+			if (paths == null)
+				return;
+			// Group by containing folder
+			var files = paths.Distinct(StringComparer.OrdinalIgnoreCase).Where(p => !string.IsNullOrEmpty(p) && File.Exists(p)).ToList();
+			if (files.Count == 0)
+				return;
+
+			var itemPidlAllocs = new List<IntPtr>();
+			var relativePidls = new List<IntPtr>();
+
+			foreach (var group in files.GroupBy(Path.GetDirectoryName))
 			{
-				if (paths == null)
-					return;
-				// Group by containing folder
-				var files = paths.Distinct(StringComparer.OrdinalIgnoreCase).Where(p => !string.IsNullOrEmpty(p) && File.Exists(p)).ToList();
-				if (files.Count == 0)
-					return;
+				string folder = group.Key;
+				if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
+					continue;
 
-				var groups = files.GroupBy(p => Path.GetDirectoryName(p));
-				foreach (var group in groups)
+				IntPtr folderPidl = IntPtr.Zero;
+
+				try
 				{
-					string folder = group.Key;
-					if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
-						continue;
+					int hrFolder = SHParseDisplayName(folder, IntPtr.Zero, out folderPidl, 0, out uint attrs);
+					Marshal.ThrowExceptionForHR(hrFolder);
 
-					IntPtr folderPidl = IntPtr.Zero;
-					uint attrs;
-					int hrFolder = SHParseDisplayName(folder, IntPtr.Zero, out folderPidl, 0, out attrs);
-					if (hrFolder != 0 || folderPidl == IntPtr.Zero)
+					foreach (var file in group)
 					{
-						// fallback: open folder normally
-						OpenFolder(folder);
-						continue;
-					}
-
-					var itemPidlAllocs = new List<IntPtr>();
-					var relativePidls = new List<IntPtr>();
-					try
-					{
-						foreach (var file in group)
+						int hrItem = SHParseDisplayName(file, IntPtr.Zero, out var itemPidl, 0, out attrs);
+						if (hrItem == 0 && itemPidl != IntPtr.Zero)
 						{
-							IntPtr itemPidl = IntPtr.Zero;
-							int hrItem = SHParseDisplayName(file, IntPtr.Zero, out itemPidl, 0, out attrs);
-							if (hrItem == 0 && itemPidl != IntPtr.Zero)
+							IntPtr relative = ILFindLastID(itemPidl);
+							if (relative != IntPtr.Zero)
 							{
-								IntPtr relative = ILFindLastID(itemPidl);
-								if (relative != IntPtr.Zero)
-								{
-									relativePidls.Add(relative);
-									itemPidlAllocs.Add(itemPidl);
-									continue;
-								}
+								relativePidls.Add(relative);
+								itemPidlAllocs.Add(itemPidl);
+								continue;
 							}
-							if (itemPidl != IntPtr.Zero)
-								CoTaskMemFree(itemPidl);
 						}
-
-						if (relativePidls.Count > 0)
-						{
-							SHOpenFolderAndSelectItems(folderPidl, (uint)relativePidls.Count, relativePidls.ToArray(), 0);
-						}
-						else
-						{
-							// nothing to select - open folder
-							OpenFolder(folder);
-						}
+						if (itemPidl != IntPtr.Zero)
+							CoTaskMemFree(itemPidl);
 					}
-					finally
+
+					if (relativePidls.Count > 0)
 					{
-						foreach (var p in itemPidlAllocs)
-							CoTaskMemFree(p);
-						if (folderPidl != IntPtr.Zero)
-							CoTaskMemFree(folderPidl);
+						int hr = SHOpenFolderAndSelectItems(folderPidl, (uint)relativePidls.Count, relativePidls.ToArray(), 0);
+						Marshal.ThrowExceptionForHR(hr);
+					}
+					else
+					{
+						// nothing to select - open folder
+						OpenFolder(folder);
 					}
 				}
-			}
-			catch
-			{
-				// ignore
+				catch (Exception ex) when (ex is COMException or Win32Exception)
+				{
+					// fall back to Process.Start
+					OpenFolderFallback(folder);
+				}
+				finally
+				{
+					foreach (var p in itemPidlAllocs)
+						CoTaskMemFree(p);
+					if (folderPidl != IntPtr.Zero)
+						CoTaskMemFree(folderPidl);
+
+					itemPidlAllocs.Clear();
+					relativePidls.Clear();
+				}
 			}
 		}
 	}
