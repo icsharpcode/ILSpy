@@ -232,6 +232,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				this.A = A;
 			}
 		}
+
+		private record RecordWithMultipleInitializerAssignmentsInPrimaryCtor(string name, string? value, in object encode)
+		{
+			public string? Value { get; } = name;
+
+			public string Name { get; } = value;
+
+			private string? WebValue { get; } = (name != null) ? "111" : value;
+
+			private string? WebValue2;
+		}
 	}
 
 #if CS100

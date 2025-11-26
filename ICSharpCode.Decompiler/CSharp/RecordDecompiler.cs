@@ -303,13 +303,13 @@ namespace ICSharpCode.Decompiler.CSharp
 						continue;
 					if (valueInst.MatchLdLoc(out var v))
 					{
-						if (v.Kind != VariableKind.Parameter || v.Index < parameterIndex)
+						if (!ValidateParameter(v, parameterIndex))
 							return false;
 						parameterIndex = v.Index!.Value;
 					}
 					else if (valueInst.MatchLdObj(out valueInst, out _) && valueInst.MatchLdLoc(out v))
 					{
-						if (v.Kind != VariableKind.Parameter || v.Index < parameterIndex)
+						if (!ValidateParameter(v, parameterIndex))
 							return false;
 						parameterIndex = v.Index!.Value;
 						if (method.Parameters[parameterIndex].ReferenceKind is ReferenceKind.None)
@@ -339,6 +339,19 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				var returnInst = body.Instructions.LastOrDefault();
 				return returnInst != null && returnInst.MatchReturn(out var retVal) && retVal.MatchNop();
+
+				bool ValidateParameter(ILVariable v, int expectedMinimumIndex)
+				{
+					if (v.Kind != VariableKind.Parameter)
+						return false;
+					Debug.Assert(v.Index.HasValue);
+					if (v.Index < 0 || v.Index >= unspecializedMethod.Parameters.Count)
+						return false;
+					var parameter = unspecializedMethod.Parameters[v.Index.Value];
+					if (primaryCtorParameterToAutoProperty.ContainsKey(parameter))
+						return true;
+					return v.Index >= expectedMinimumIndex;
+				}
 			}
 
 			IMethod? FindChainedCtor(Block body)
