@@ -51,6 +51,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Text => GetText(GetPropertyDefinition(), Language) + GetSuffixString(PropertyDefinition);
 
+		public override object NavigationText => GetText(GetPropertyDefinition(), Language, includeDeclaringTypeName: true);
+
 		private IProperty GetPropertyDefinition()
 		{
 			return ((MetadataModule)PropertyDefinition.ParentModule?.MetadataFile
@@ -58,9 +60,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				?.MainModule)?.GetDefinition((PropertyDefinitionHandle)PropertyDefinition.MetadataToken) ?? PropertyDefinition;
 		}
 
-		public static object GetText(IProperty property, Language language)
+		public static object GetText(IProperty property, Language language, bool includeDeclaringTypeName = false)
 		{
-			return language.PropertyToString(property, false, false, false);
+			return language.PropertyToString(property, includeDeclaringTypeName, false, false);
 		}
 
 		public override object Icon => GetIcon(GetPropertyDefinition());

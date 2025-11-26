@@ -53,6 +53,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			get { return Language.EscapeName(r.Name) + GetSuffixString(r.Handle); }
 		}
 
+		public override object NavigationText => $"{Text} ({Properties.Resources.References})";
+
 		public override object Icon => ImagesProvider.Assembly;
 
 		public override bool ShowExpander {
