@@ -33,6 +33,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			IType returnType = signature.ReturnType;
 			bool returnIsRefReadOnly = false;
+			SignatureCallingConvention callingConvention = signature.Header.CallingConvention;
 			var customCallConvs = ImmutableArray.CreateBuilder<IType>();
 			while (returnType is ModifiedType modReturn)
 			{
@@ -45,7 +46,31 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					&& modReturn.Modifier.Namespace == "System.Runtime.CompilerServices")
 				{
 					returnType = modReturn.ElementType;
-					customCallConvs.Add(modReturn.Modifier);
+					if (callingConvention == SignatureCallingConvention.Unmanaged)
+					{
+						switch (modReturn.Modifier.Name)
+						{
+							case "CallConvCdecl":
+								callingConvention = SignatureCallingConvention.CDecl;
+								break;
+							case "CallConvFastcall":
+								callingConvention = SignatureCallingConvention.FastCall;
+								break;
+							case "CallConvStdcall":
+								callingConvention = SignatureCallingConvention.StdCall;
+								break;
+							case "CallConvThiscall":
+								callingConvention = SignatureCallingConvention.ThisCall;
+								break;
+							default:
+								customCallConvs.Add(modReturn.Modifier);
+								break;
+						}
+					}
+					else
+					{
+						customCallConvs.Add(modReturn.Modifier);
+					}
 				}
 				else
 				{
@@ -89,7 +114,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				parameterReferenceKinds.Add(kind);
 			}
 			return new FunctionPointerType(
-				module, signature.Header.CallingConvention, customCallConvs.ToImmutable(),
+				module, callingConvention, customCallConvs.ToImmutable(),
 				returnType, returnIsRefReadOnly,
 				parameterTypes.MoveToImmutable(), parameterReferenceKinds.MoveToImmutable());
 		}
