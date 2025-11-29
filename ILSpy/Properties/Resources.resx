@@ -375,6 +375,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.FileScopedNamespaces" xml:space="preserve">
     <value>Use file-scoped namespace declarations</value>
   </data>
+  <data name="DecompilerSettings.FirstClassSpanTypes" xml:space="preserve">
+    <value>Treat Span&lt;T&gt; and ReadOnlySpan&lt;T&gt; as built-in types</value>
+  </data>
   <data name="DecompilerSettings.ForStatement" xml:space="preserve">
     <value>Transform to for, if possible</value>
   </data>

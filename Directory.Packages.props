@@ -14,8 +14,8 @@
     <PackageVersion Include="K4os.Compression.LZ4" Version="1.3.8" />
     <PackageVersion Include="McMaster.Extensions.CommandLineUtils" Version="4.1.1" />
     <PackageVersion Include="McMaster.Extensions.Hosting.CommandLine" Version="4.1.1" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.VisualBasic" Version="4.14.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.VisualBasic" Version="5.0.0" />
     <PackageVersion Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta2-22171-02" />
     <PackageVersion Include="Microsoft.DiaSymReader" Version="1.4.0" />
     <PackageVersion Include="Microsoft.DiaSymReader.Native" Version="17.0.0-beta1.21524.1" />
