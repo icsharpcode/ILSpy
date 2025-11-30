@@ -175,12 +175,13 @@ namespace ICSharpCode.Decompiler
 			if (languageVersion < CSharp.LanguageVersion.CSharp14_0)
 			{
 				extensionMembers = false;
+				semiAutoProperties = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (extensionMembers)
+			if (extensionMembers || semiAutoProperties)
 				return CSharp.LanguageVersion.CSharp14_0;
 			if (paramsCollections)
 				return CSharp.LanguageVersion.CSharp13_0;
@@ -2174,6 +2175,24 @@ namespace ICSharpCode.Decompiler
 				if (extensionMembers != value)
 				{
 					extensionMembers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool semiAutoProperties = true;
+
+		/// <summary>
+		/// Gets/Sets whether C# 14.0 semi-auto properties using the <c>field</c> keyword should be used.
+		/// </summary>
+		[Category("C# 14.0 / VS 202x.yy")]
+		[Description("DecompilerSettings.SemiAutoProperties")]
+		public bool SemiAutoProperties {
+			get { return semiAutoProperties; }
+			set {
+				if (semiAutoProperties != value)
+				{
+					semiAutoProperties = value;
 					OnPropertyChanged();
 				}
 			}

@@ -474,6 +474,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.ScopedRef" xml:space="preserve">
     <value>'scoped' lifetime annotation</value>
   </data>
+  <data name="DecompilerSettings.SemiAutoProperties" xml:space="preserve">
+    <value>Use 'field' keyword in semi-auto properties</value>
+  </data>
   <data name="DecompilerSettings.SeparateLocalVariableDeclarations" xml:space="preserve">
     <value>Separate local variable declarations and initializers (int x = 5; -&gt; int x; x = 5;), if possible</value>
   </data>
