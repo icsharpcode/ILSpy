@@ -64,6 +64,30 @@ namespace ICSharpCode.Decompiler.CSharp
 				return FirstOptionalArgumentIndex;
 			}
 
+			public string[] GetArgumentNames(int skipCount = 0)
+			{
+				string[] argumentNames = ArgumentNames;
+				if (AddNamesToPrimitiveValues && IsPrimitiveValue.Any() && !IsExpandedForm
+						&& !ParameterNames.Any(string.IsNullOrEmpty))
+				{
+					Debug.Assert(skipCount == 0);
+					if (argumentNames == null)
+					{
+						argumentNames = new string[Arguments.Length];
+					}
+
+					for (int i = 0; i < Arguments.Length; i++)
+					{
+						if (IsPrimitiveValue[i] && argumentNames[i] == null)
+						{
+							argumentNames[i] = ParameterNames[i];
+						}
+					}
+				}
+
+				return argumentNames;
+			}
+
 			public IList<ResolveResult> GetArgumentResolveResults(int skipCount = 0)
 			{
 				var expectedParameters = ExpectedParameters;
@@ -95,33 +119,17 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			public IEnumerable<Expression> GetArgumentExpressions(int skipCount = 0)
 			{
-				if (AddNamesToPrimitiveValues && IsPrimitiveValue.Any() && !IsExpandedForm
-					&& !ParameterNames.Any(p => string.IsNullOrEmpty(p)))
-				{
-					Debug.Assert(skipCount == 0);
-					if (ArgumentNames == null)
-					{
-						ArgumentNames = new string[Arguments.Length];
-					}
-
-					for (int i = 0; i < Arguments.Length; i++)
-					{
-						if (IsPrimitiveValue[i] && ArgumentNames[i] == null)
-						{
-							ArgumentNames[i] = ParameterNames[i];
-						}
-					}
-				}
+				var argumentNames = GetArgumentNames(skipCount);
 				int argumentCount = GetActualArgumentCount();
 				var useImplicitlyTypedOut = UseImplicitlyTypedOut;
-				if (ArgumentNames == null)
+				if (argumentNames == null)
 				{
 					return Arguments.Skip(skipCount).Take(argumentCount).Select(arg => AddAnnotations(arg.Expression));
 				}
 				else
 				{
 					Debug.Assert(skipCount == 0);
-					return Arguments.Take(argumentCount).Zip(ArgumentNames.Take(argumentCount),
+					return Arguments.Take(argumentCount).Zip(argumentNames.Take(argumentCount),
 						(arg, name) => {
 							if (name == null)
 								return AddAnnotations(arg.Expression);
@@ -531,6 +539,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			Expression targetExpr;
 			string methodName = method.Name;
 			AstNodeCollection<AstType> typeArgumentList;
+			if ((transform & CallTransformation.NoNamedArgsForPrettiness) != 0)
+			{
+				argumentList.AddNamesToPrimitiveValues = false;
+			}
 			if ((transform & CallTransformation.NoOptionalArgumentAllowed) != 0)
 			{
 				argumentList.FirstOptionalArgumentIndex = -1;
@@ -674,7 +686,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			argumentList.UseImplicitlyTypedOut = false;
 			var transform = GetRequiredTransformationsForCall(expectedTargetDetails, method, ref unused,
 				ref argumentList, CallTransformation.None, out _);
-			Debug.Assert(transform == CallTransformation.None || transform == CallTransformation.NoOptionalArgumentAllowed);
+			Debug.Assert((transform & ~(CallTransformation.NoOptionalArgumentAllowed | CallTransformation.NoNamedArgsForPrettiness)) == 0);
 
 			// Calls with only one argument do not need an array initializer expression to wrap them.
 			// Any special cases are handled by the caller (i.e., ExpressionBuilder.TranslateObjectAndCollectionInitializer)
@@ -1121,7 +1133,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			/// Add calls to AsRefReadOnly for in parameters that did not have an explicit DirectionExpression yet.
 			/// </summary>
 			EnforceExplicitIn = 8,
-			All = 0xf,
+			NoNamedArgsForPrettiness = 0x10,
+			All = 0x1f,
 		}
 
 		private CallTransformation GetRequiredTransformationsForCall(ExpectedTargetDetails expectedTargetDetails, IMethod method,
@@ -1198,7 +1211,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool skipTargetCast = method.Accessibility <= Accessibility.Protected && expressionBuilder.IsBaseTypeOfCurrentType(method.DeclaringTypeDefinition);
 			OverloadResolutionErrors errors;
 			while ((errors = IsUnambiguousCall(expectedTargetDetails, method, targetResolveResult, typeArguments,
-				argumentList.GetArgumentResolveResults().ToArray(), argumentList.ArgumentNames, argumentList.FirstOptionalArgumentIndex, out foundMethod,
+				argumentList.GetArgumentResolveResults().ToArray(), argumentList.GetArgumentNames(), argumentList.FirstOptionalArgumentIndex, out foundMethod,
 				out var bestCandidateIsExpandedForm)) != OverloadResolutionErrors.None || bestCandidateIsExpandedForm != argumentList.IsExpandedForm)
 			{
 				switch (errors)
@@ -1228,7 +1241,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					default:
 						// TODO : implement some more intelligent algorithm that decides which of these fixes (cast args, add target, cast target, add type args)
 						// is best in this case. Additionally we should not cast all arguments at once, but step-by-step try to add only a minimal number of casts.
-						if (argumentList.FirstOptionalArgumentIndex >= 0)
+						if (argumentList.AddNamesToPrimitiveValues)
+						{
+							argumentList.AddNamesToPrimitiveValues = false;
+						}
+						else if (argumentList.FirstOptionalArgumentIndex >= 0)
 						{
 							argumentList.FirstOptionalArgumentIndex = -1;
 						}
@@ -1293,6 +1310,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				transform |= CallTransformation.RequireTypeArguments;
 			if (argumentList.FirstOptionalArgumentIndex < 0)
 				transform |= CallTransformation.NoOptionalArgumentAllowed;
+			if (!argumentList.AddNamesToPrimitiveValues)
+				transform |= CallTransformation.NoNamedArgsForPrettiness;
 			return transform;
 		}
 
@@ -1766,9 +1785,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				while (IsUnambiguousCall(expectedTargetDetails, method, null, Empty<IType>.Array,
 					argumentList.GetArgumentResolveResults().ToArray(),
-					argumentList.ArgumentNames, argumentList.FirstOptionalArgumentIndex, out _,
+					argumentList.GetArgumentNames(), argumentList.FirstOptionalArgumentIndex, out _,
 					out var bestCandidateIsExpandedForm) != OverloadResolutionErrors.None || bestCandidateIsExpandedForm != argumentList.IsExpandedForm)
 				{
+					if (argumentList.AddNamesToPrimitiveValues)
+					{
+						argumentList.AddNamesToPrimitiveValues = false;
+						continue;
+					}
 					if (argumentList.FirstOptionalArgumentIndex >= 0)
 					{
 						argumentList.FirstOptionalArgumentIndex = -1;

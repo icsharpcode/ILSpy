@@ -32,6 +32,34 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		private class MustNotUseNamedArgsInCtor
+		{
+			public MustNotUseNamedArgsInCtor(string start = "", bool enable = false)
+			{
+			}
+
+			public MustNotUseNamedArgsInCtor(bool enable, string start = "")
+			{
+			}
+
+			public static MustNotUseNamedArgsInCtor Use()
+			{
+				// second overload
+				MustNotUseNamedArgsInCall(true);
+				// first overload
+				MustNotUseNamedArgsInCall();
+				return new MustNotUseNamedArgsInCtor(true);
+			}
+
+			public static void MustNotUseNamedArgsInCall(string start = "", bool enable = false)
+			{
+			}
+
+			public static void MustNotUseNamedArgsInCall(bool enable, string start = "")
+			{
+			}
+		}
+
 		public void Use(int a, int b, int c)
 		{
 		}
