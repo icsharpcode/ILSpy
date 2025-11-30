@@ -111,7 +111,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (result != null)
 					return result;
 			}
-			return base.VisitPropertyDeclaration(propertyDeclaration);
+			// First visit children (accessor bodies) before potentially transforming to semi-auto property
+			var visitedNode = base.VisitPropertyDeclaration(propertyDeclaration);
+			// After visiting children, check if we should transform to semi-auto property
+			if (context.Settings.SemiAutoProperties && context.Settings.AutomaticProperties)
+			{
+				TransformSemiAutoProperty(propertyDeclaration);
+			}
+			return visitedNode;
 		}
 
 		public override AstNode VisitCustomEventDeclaration(CustomEventDeclaration eventDeclaration)
@@ -660,6 +667,50 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return null;
 		}
 
+		/// <summary>
+		/// Transforms a property that uses the backing field into a semi-auto property
+		/// by removing the backing field declaration. The field keyword replacements
+		/// are already done in ReplaceBackingFieldUsage during child visiting.
+		/// </summary>
+		void TransformSemiAutoProperty(PropertyDeclaration propertyDeclaration)
+		{
+			IProperty property = propertyDeclaration.GetSymbol() as IProperty;
+			if (property == null)
+				return;
+			// Check if any accessor body contains the 'field' keyword (which was transformed from backing field)
+			bool usesFieldKeyword = false;
+			foreach (var accessor in new[] { propertyDeclaration.Getter, propertyDeclaration.Setter })
+			{
+				if (accessor.IsNull || accessor.Body.IsNull)
+					continue;
+				usesFieldKeyword |= accessor.Body.Descendants.OfType<Identifier>()
+					.Any(id => id.Name == "field");
+			}
+			if (!usesFieldKeyword)
+				return;
+			// Find and remove the backing field declaration
+			string backingFieldName = "<" + property.Name + ">k__BackingField";
+			var fieldDecl = propertyDeclaration.Parent?.Children.OfType<FieldDeclaration>()
+				.FirstOrDefault(fd => {
+					var field = fd.GetSymbol() as IField;
+					return field != null && field.Name == backingFieldName
+						&& field.IsCompilerGenerated()
+						&& field.DeclaringTypeDefinition == property.DeclaringTypeDefinition;
+				});
+			if (fieldDecl != null)
+			{
+				fieldDecl.Remove();
+				// Move field attributes to the property with [field: ...] target
+				CSharpDecompiler.RemoveAttribute(fieldDecl, KnownAttribute.CompilerGenerated);
+				CSharpDecompiler.RemoveAttribute(fieldDecl, KnownAttribute.DebuggerBrowsable);
+				foreach (var section in fieldDecl.Attributes)
+				{
+					section.AttributeTarget = "field";
+					propertyDeclaration.Attributes.Add(section.Detach());
+				}
+			}
+		}
+
 		void RemoveCompilerGeneratedAttribute(AstNodeCollection<AttributeSection> attributeSections)
 		{
 			RemoveCompilerGeneratedAttribute(attributeSections, "System.Runtime.CompilerServices.CompilerGeneratedAttribute");
@@ -743,15 +794,26 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				var parent = identifier.Parent;
 				var mrr = parent.Annotation<MemberResolveResult>();
 				var field = mrr?.Member as IField;
-				if (field != null && IsBackingFieldOfAutomaticProperty(field, out var property)
-					&& CanTransformToAutomaticProperty(property, !(field.IsCompilerGenerated() && field.Name == "_" + property.Name))
-					&& currentMethod.AccessorOwner != property)
+				if (field != null && IsBackingFieldOfAutomaticProperty(field, out var property))
 				{
-					if (!property.CanSet && !context.Settings.GetterOnlyAutomaticProperties)
+					if (currentMethod?.AccessorOwner == property)
+					{
+						// We're inside this property's accessor - use the field keyword if enabled
+						if (context.Settings.SemiAutoProperties)
+						{
+							return Identifier.Create("field");
+						}
 						return null;
-					parent.RemoveAnnotations<MemberResolveResult>();
-					parent.AddAnnotation(new MemberResolveResult(mrr.TargetResult, property));
-					return Identifier.Create(property.Name);
+					}
+					// Outside of property accessor - check if we can replace with property name
+					if (CanTransformToAutomaticProperty(property, !(field.IsCompilerGenerated() && field.Name == "_" + property.Name)))
+					{
+						if (!property.CanSet && !context.Settings.GetterOnlyAutomaticProperties)
+							return null;
+						parent.RemoveAnnotations<MemberResolveResult>();
+						parent.AddAnnotation(new MemberResolveResult(mrr.TargetResult, property));
+						return Identifier.Create(property.Name);
+					}
 				}
 			}
 			return null;

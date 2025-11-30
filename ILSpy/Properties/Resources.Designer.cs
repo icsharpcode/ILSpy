@@ -1362,6 +1362,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use &apos;field&apos; keyword in semi-auto properties.
+        /// </summary>
+        public static string DecompilerSettings_SemiAutoProperties {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.SemiAutoProperties", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Separate local variable declarations and initializers (int x = 5; -&gt; int x; x = 5;), if possible.
         /// </summary>
         public static string DecompilerSettings_SeparateLocalVariableDeclarations {
