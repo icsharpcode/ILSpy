@@ -671,6 +671,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// Transforms a property that uses the backing field into a semi-auto property
 		/// by removing the backing field declaration. The field keyword replacements
 		/// are already done in ReplaceBackingFieldUsage during child visiting.
+		/// Also simplifies simple accessors like `get { return field; }` to `get;`
+		/// and `set { field = value; }` to `set;`.
 		/// </summary>
 		void TransformSemiAutoProperty(PropertyDeclaration propertyDeclaration)
 		{
@@ -711,6 +713,74 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 				fieldDecl.Remove();
 			}
+			// Now simplify simple accessors: get { return field; } -> get; and set { field = value; } -> set;
+			SimplifySemiAutoPropertyAccessors(propertyDeclaration);
+		}
+
+		/// <summary>
+		/// Checks if a getter body is simply `{ return field; }` and if so, removes the body.
+		/// Checks if a setter body is simply `{ field = value; }` and if so, removes the body.
+		/// </summary>
+		void SimplifySemiAutoPropertyAccessors(PropertyDeclaration propertyDeclaration)
+		{
+			// Simplify getter: get { return field; } -> get;
+			if (!propertyDeclaration.Getter.IsNull && !propertyDeclaration.Getter.Body.IsNull)
+			{
+				if (IsSimpleFieldGetter(propertyDeclaration.Getter.Body))
+				{
+					RemoveCompilerGeneratedAttribute(propertyDeclaration.Getter.Attributes);
+					propertyDeclaration.Getter.Body = null;
+				}
+			}
+			// Simplify setter: set { field = value; } -> set;
+			if (!propertyDeclaration.Setter.IsNull && !propertyDeclaration.Setter.Body.IsNull)
+			{
+				if (IsSimpleFieldSetter(propertyDeclaration.Setter.Body))
+				{
+					RemoveCompilerGeneratedAttribute(propertyDeclaration.Setter.Attributes);
+					propertyDeclaration.Setter.Body = null;
+				}
+			}
+		}
+
+		/// <summary>
+		/// Checks if the block is simply `{ return field; }` where field has the SemiAutoPropertyFieldKeywordAnnotation.
+		/// </summary>
+		bool IsSimpleFieldGetter(BlockStatement body)
+		{
+			if (body.Statements.Count != 1)
+				return false;
+			if (body.Statements.Single() is not ReturnStatement returnStmt)
+				return false;
+			if (returnStmt.Expression is not IdentifierExpression identExpr)
+				return false;
+			return identExpr.IdentifierToken.Annotation<SemiAutoPropertyFieldKeywordAnnotation>() != null
+				&& identExpr.Identifier == "field";
+		}
+
+		/// <summary>
+		/// Checks if the block is simply `{ field = value; }` where field has the SemiAutoPropertyFieldKeywordAnnotation.
+		/// </summary>
+		bool IsSimpleFieldSetter(BlockStatement body)
+		{
+			if (body.Statements.Count != 1)
+				return false;
+			if (body.Statements.Single() is not ExpressionStatement exprStmt)
+				return false;
+			if (exprStmt.Expression is not AssignmentExpression assignExpr)
+				return false;
+			if (assignExpr.Operator != AssignmentOperatorType.Assign)
+				return false;
+			// Check left side is "field" with annotation
+			if (assignExpr.Left is not IdentifierExpression leftIdent)
+				return false;
+			if (leftIdent.IdentifierToken.Annotation<SemiAutoPropertyFieldKeywordAnnotation>() == null
+				|| leftIdent.Identifier != "field")
+				return false;
+			// Check right side is "value"
+			if (assignExpr.Right is not IdentifierExpression rightIdent)
+				return false;
+			return rightIdent.Identifier == "value";
 		}
 
 		void RemoveCompilerGeneratedAttribute(AstNodeCollection<AttributeSection> attributeSections)

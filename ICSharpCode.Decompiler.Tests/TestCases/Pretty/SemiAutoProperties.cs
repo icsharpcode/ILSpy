@@ -23,9 +23,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	internal class SemiAutoProperties
 	{
 		public int ValidatedProperty {
-			get {
-				return field;
-			}
+			get;
 			set {
 				if (value < 0)
 				{
@@ -43,15 +41,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 				return field;
 			}
-			set {
-				field = value;
-			}
+			set;
 		}
 
 		public int NotifyProperty {
-			get {
-				return field;
-			}
+			get;
 			set {
 				if (field != value)
 				{
