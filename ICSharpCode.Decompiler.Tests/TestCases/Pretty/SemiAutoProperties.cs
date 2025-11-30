@@ -22,9 +22,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	internal class SemiAutoProperties
 	{
-		// Semi-auto property with validation in setter
 		public int ValidatedProperty {
-			get => field;
+			get {
+				return field;
+			}
 			set {
 				if (value < 0)
 				{
@@ -34,7 +35,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		// Semi-auto property with lazy initialization
 		public string LazyProperty {
 			get {
 				if (field == null)
@@ -43,12 +43,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 				return field;
 			}
-			set => field = value;
+			set {
+				field = value;
+			}
 		}
 
-		// Semi-auto property with notification
 		public int NotifyProperty {
-			get => field;
+			get {
+				return field;
+			}
 			set {
 				if (field != value)
 				{
@@ -58,7 +61,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		// Getter-only semi-auto property with initialization
 		public int ReadOnlyWithInit {
 			get {
 				if (field == 0)
