@@ -76,6 +76,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		StringComparer NameComparer { get; }
 
 		CacheManager CacheManager { get; }
+
+		TypeSystemOptions TypeSystemOptions { get; }
 	}
 
 	public interface ICompilationProvider
