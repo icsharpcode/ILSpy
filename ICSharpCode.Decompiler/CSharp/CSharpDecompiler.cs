@@ -1310,7 +1310,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					decompileRun.RecordDecompilers.Add(typeDef, recordDecompiler);
 
 				// With C# 9 records, the relative order of fields and properties matters:
-				IEnumerable<IMember> fieldsAndProperties = typeDef.IsRecord
+				IEnumerable<IMember> fieldsAndProperties = isRecord
 					? recordDecompiler.FieldsAndProperties
 					: typeDef.Fields.Concat<IMember>(typeDef.Properties);
 

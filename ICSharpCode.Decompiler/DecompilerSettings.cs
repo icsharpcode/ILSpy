@@ -175,13 +175,14 @@ namespace ICSharpCode.Decompiler
 			if (languageVersion < CSharp.LanguageVersion.CSharp14_0)
 			{
 				extensionMembers = false;
+				firstClassSpanTypes = false;
 				semiAutoProperties = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (extensionMembers || semiAutoProperties)
+			if (extensionMembers || firstClassSpanTypes || semiAutoProperties)
 				return CSharp.LanguageVersion.CSharp14_0;
 			if (paramsCollections)
 				return CSharp.LanguageVersion.CSharp13_0;
@@ -2175,6 +2176,24 @@ namespace ICSharpCode.Decompiler
 				if (extensionMembers != value)
 				{
 					extensionMembers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool firstClassSpanTypes = true;
+
+		/// <summary>
+		/// Gets/Sets whether (ReadOnly)Span&lt;T&gt; should be treated like built-in types.
+		/// </summary>
+		[Category("C# 14.0 / VS 202x.yy")]
+		[Description("DecompilerSettings.FirstClassSpanTypes")]
+		public bool FirstClassSpanTypes {
+			get { return firstClassSpanTypes; }
+			set {
+				if (firstClassSpanTypes != value)
+				{
+					firstClassSpanTypes = value;
 					OnPropertyChanged();
 				}
 			}

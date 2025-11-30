@@ -710,8 +710,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				candidate.ArgumentConversions[i] = c;
 				if (IsExtensionMethodInvocation && parameterIndex == 0)
 				{
-					// First parameter to extension method must be an identity, reference or boxing conversion
-					if (!(c == Conversion.IdentityConversion || c == Conversion.ImplicitReferenceConversion || c == Conversion.BoxingConversion))
+					// First parameter to extension method must be an identity, reference, boxing or span conversion
+					if (!(c == Conversion.IdentityConversion || c == Conversion.ImplicitReferenceConversion || c == Conversion.BoxingConversion || c == Conversion.ImplicitSpanConversion))
 						candidate.AddError(OverloadResolutionErrors.ArgumentTypeMismatch);
 				}
 				else
