@@ -677,14 +677,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			IProperty property = propertyDeclaration.GetSymbol() as IProperty;
 			if (property == null)
 				return;
-			// Check if any accessor body contains the 'field' keyword (which was transformed from backing field)
+			// Check if any accessor body contains an identifier with the SemiAutoPropertyFieldKeywordAnnotation
+			// (which indicates it was transformed from a backing field reference)
 			bool usesFieldKeyword = false;
 			foreach (var accessor in new[] { propertyDeclaration.Getter, propertyDeclaration.Setter })
 			{
 				if (accessor.IsNull || accessor.Body.IsNull)
 					continue;
 				usesFieldKeyword |= accessor.Body.Descendants.OfType<Identifier>()
-					.Any(id => id.Name == "field");
+					.Any(id => id.Annotation<SemiAutoPropertyFieldKeywordAnnotation>() != null);
 			}
 			if (!usesFieldKeyword)
 				return;
@@ -699,15 +700,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				});
 			if (fieldDecl != null)
 			{
-				fieldDecl.Remove();
-				// Move field attributes to the property with [field: ...] target
+				// Remove compiler-generated attributes before detaching the node
 				CSharpDecompiler.RemoveAttribute(fieldDecl, KnownAttribute.CompilerGenerated);
 				CSharpDecompiler.RemoveAttribute(fieldDecl, KnownAttribute.DebuggerBrowsable);
+				// Move remaining field attributes to the property with [field: ...] target
 				foreach (var section in fieldDecl.Attributes)
 				{
 					section.AttributeTarget = "field";
 					propertyDeclaration.Attributes.Add(section.Detach());
 				}
+				fieldDecl.Remove();
 			}
 		}
 
@@ -801,7 +803,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						// We're inside this property's accessor - use the field keyword if enabled
 						if (context.Settings.SemiAutoProperties)
 						{
-							return Identifier.Create("field");
+							var newIdentifier = Identifier.Create("field");
+							newIdentifier.AddAnnotation(SemiAutoPropertyFieldKeywordAnnotation.Instance);
+							return newIdentifier;
 						}
 						return null;
 					}

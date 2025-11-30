@@ -335,4 +335,12 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 		public static readonly UseImplicitlyTypedOutAnnotation Instance = new UseImplicitlyTypedOutAnnotation();
 	}
+
+	/// <summary>
+	/// Annotates an Identifier when it was transformed from a backing field reference to the C# 14 'field' keyword.
+	/// </summary>
+	public class SemiAutoPropertyFieldKeywordAnnotation
+	{
+		public static readonly SemiAutoPropertyFieldKeywordAnnotation Instance = new SemiAutoPropertyFieldKeywordAnnotation();
+	}
 }
