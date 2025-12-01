@@ -235,8 +235,9 @@ namespace ICSharpCode.Decompiler.DebugInfo
 
 			if (pdbId == null)
 			{
-				var debugDir = file.Reader.ReadDebugDirectory().FirstOrDefault(dir => dir.Type == DebugDirectoryEntryType.CodeView);
+				var debugDir = file.Reader.ReadDebugDirectory().LastOrDefault(dir => dir.Type == DebugDirectoryEntryType.CodeView);
 				var portable = file.Reader.ReadCodeViewDebugDirectoryData(debugDir);
+				Debug.Assert(!portable.Path.EndsWith(".ni.pdb"));
 				pdbId = new BlobContentId(portable.Guid, debugDir.Stamp);
 			}
 
