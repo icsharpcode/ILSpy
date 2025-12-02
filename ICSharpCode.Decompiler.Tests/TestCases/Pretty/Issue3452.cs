@@ -1,3 +1,5 @@
+#pragma warning disable CS9124
+
 using System;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty

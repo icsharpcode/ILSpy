@@ -1,3 +1,5 @@
+#pragma warning disable CS9124
+
 using System;
 using System.Collections.Generic;
 
