@@ -608,6 +608,7 @@ namespace System.Runtime.CompilerServices
 				if (flags.HasFlag(CompilerOptions.ProcessXmlDoc))
 				{
 					otherOptions += $"-doc:\"{Path.ChangeExtension(results.PathToAssembly, ".xml")}\" ";
+					noWarn.Add("CS1591"); // Missing XML comment for publicly visible type or member 'Type_or_Member'
 				}
 
 				if (flags.HasFlag(CompilerOptions.CheckForOverflowUnderflow))
@@ -622,7 +623,6 @@ namespace System.Runtime.CompilerServices
 				if (preprocessorSymbols.Count > 0)
 				{
 					otherOptions += " \"-d:" + string.Join(";", preprocessorSymbols) + "\" ";
-					noWarn.Add("CS1591");
 				}
 
 				if (noWarn.Count > 0)
