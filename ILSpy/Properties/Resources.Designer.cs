@@ -2402,6 +2402,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Referenced Types.
+        /// </summary>
+        public static string ReferencedTypes {
+            get {
+                return ResourceManager.GetString("ReferencedTypes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Reference Name.
         /// </summary>
         public static string ReferenceName {
