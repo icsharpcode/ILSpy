@@ -47,22 +47,19 @@ How to build
 - Make sure Windows PowerShell (at least version) 5.0 or [PowerShell](https://github.com/PowerShell/PowerShell) 7+ is installed.
 - Clone the ILSpy repository using git.
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
-- Install Visual Studio (documented version: 18.0). You can install the necessary components in one of 3 ways:
-  - Follow Microsoft's instructions for [importing a configuration](https://docs.microsoft.com/en-us/visualstudio/install/import-export-installation-configurations?view=vs-2022#import-a-configuration), and import the .vsconfig file located at the root of the solution.
-  - Alternatively, you can open the ILSpy solution (ILSpy.sln) and Visual Studio will [prompt you to install the missing components](https://docs.microsoft.com/en-us/visualstudio/install/import-export-installation-configurations?view=vs-2022#automatically-install-missing-components).
-  - Finally, you can manually install the necessary components via the Visual Studio Installer. The workloads/components are as follows:
-    - Workload ".NET Desktop Development". This workload includes the .NET Framework 4.8 SDK and the .NET Framework 4.7.2 targeting pack, as well as the [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (ILSpy.csproj targets .NET 10.0, but we have net472 projects too). _Note: The optional components of this workload are not required for ILSpy_
-    - Workload "Visual Studio extension development" (ILSpy.sln contains a VS extension project) _Note: The optional components of this workload are not required for ILSpy_
-    - Individual Component "MSVC v143 - VS 2022 C++ x64/x86 build tools" (or similar)
-      - _The VC++ toolset is optional_; if present it is used for `editbin.exe` to modify the stack size used by ILSpy.exe from 1MB to 16MB, because the decompiler makes heavy use of recursion, where small stack sizes lead to problems in very complex methods.
-  - Open ILSpy.sln in Visual Studio.
-    - NuGet package restore will automatically download further dependencies
-    - Run project "ILSpy" for the ILSpy UI
-    - Use the Visual Studio "Test Explorer" to see/run the tests
-    - If you are only interested in a specific subset of ILSpy, you can also use
-      - ILSpy.Wpf.slnf: for the ILSpy WPF frontend
-      - ILSpy.XPlat.slnf: for the cross-platform CLI or PowerShell cmdlets
-      - ILSpy.AddIn.slnf: for the Visual Studio plugin
+- Install Visual Studio (documented version: 18.0/2026). You need the following workload components:
+  - Workload ".NET Desktop Development". This workload includes the .NET Framework 4.8 SDK and the .NET Framework 4.7.2 targeting pack, as well as the [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (ILSpy.csproj targets .NET 10.0, but we have net472 projects too).
+  - Workload "Visual Studio extension development" (Note: ILSpy.VSExtensions.sln is separate from ILSpy.sln and thus this workload is optional)
+  - Individual Component "MSVC v143 - VS 2022 C++ x64/x86 build tools" (or similar)
+    - _The VC++ toolset is optional_; if present it is used for `editbin.exe` to modify the stack size used by ILSpy.exe from 1MB to 16MB, because the decompiler makes heavy use of recursion, where small stack sizes lead to problems in very complex methods.
+- Open ILSpy.sln in Visual Studio.
+  - NuGet package restore will automatically download further dependencies
+  - Run project "ILSpy" for the ILSpy UI
+  - Use the Visual Studio "Test Explorer" to see/run the tests
+  - If you are only interested in a specific subset of ILSpy, you can also use
+    - ILSpy.Wpf.slnf: for the ILSpy WPF frontend
+    - ILSpy.XPlat.slnf: for the cross-platform CLI or PowerShell cmdlets
+    - ILSpy.AddIn.slnf: for the Visual Studio plugin
 
 **Note:** Visual Studio includes a version of the .NET SDK that is managed by the Visual Studio installer - once you update, it may get upgraded too.
 Please note that ILSpy is only compatible with the .NET 10.0 SDK and Visual Studio will refuse to load some projects in the solution (and unit tests will fail). 
