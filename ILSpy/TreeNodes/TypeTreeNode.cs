@@ -26,6 +26,7 @@ using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
+	using ICSharpCode.Decompiler.Output;
 	using ICSharpCode.Decompiler.TypeSystem;
 	using ICSharpCode.ILSpyX;
 
@@ -42,10 +43,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public AssemblyTreeNode ParentAssemblyNode { get; }
 
-		public override object Text => this.Language.TypeToString(GetTypeDefinition(), includeNamespace: false)
+		public override object Text => this.Language.TypeToString(GetTypeDefinition(), ConversionFlags.None)
 			+ GetSuffixString(TypeDefinition.MetadataToken);
 
-		public override object NavigationText => this.Language.TypeToString(GetTypeDefinition(), includeNamespace: true)
+		public override object NavigationText => this.Language.TypeToString(GetTypeDefinition())
 			+ GetSuffixString(TypeDefinition.MetadataToken);
 
 		private ITypeDefinition GetTypeDefinition()

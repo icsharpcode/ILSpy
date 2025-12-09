@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Text => Properties.Resources.BaseTypes;
 
-		public override object NavigationText => $"{Text} ({this.Language.TypeToString(type, includeNamespace: true)})";
+		public override object NavigationText => $"{Text} ({this.Language.TypeToString(type)})";
 
 		public override object Icon => Images.SuperTypes;
 

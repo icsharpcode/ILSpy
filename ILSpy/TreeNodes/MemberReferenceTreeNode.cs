@@ -23,6 +23,7 @@ using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -57,7 +58,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			_ => throw new NotSupportedException(),
 		};
 
-		public string Signature => resolvedMember is IMethod m ? Language.MethodToString(m, false, false, false) : Language.FieldToString((IField)resolvedMember, false, false, false);
+		public string Signature => Language.EntityToString(resolvedMember, ConversionFlags.None);
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{

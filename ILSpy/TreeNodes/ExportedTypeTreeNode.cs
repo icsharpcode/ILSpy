@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 
 		public override object Text
-			=> Language.TypeToString(resolvedType, includeNamespace: true) + GetSuffixString(r.Handle);
+			=> Language.TypeToString(resolvedType) + GetSuffixString(r.Handle);
 
 		public override object Icon => Images.ExportedType;
 
@@ -57,7 +57,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, $"{Language.TypeToString(resolvedType, includeNamespace: true)} (Exported, IsForwarder: {r.IsForwarder}, Attributes: {(int)r.Attributes:X8})");
+			language.WriteCommentLine(output, $"{Language.TypeToString(resolvedType)} (Exported, IsForwarder: {r.IsForwarder}, Attributes: {(int)r.Attributes:X8})");
 		}
 	}
 }

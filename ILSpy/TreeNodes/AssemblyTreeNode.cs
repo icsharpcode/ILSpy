@@ -28,6 +28,7 @@ using System.Windows.Documents;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AssemblyTree;
@@ -286,20 +287,20 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						int decimalIndex = @namespace.LastIndexOf('.');
 						if (decimalIndex < 0)
 						{
-							var escapedNamespace = Language.EscapeName(@namespace);
+							var escapedNamespace = ILAmbience.EscapeName(@namespace);
 							ns = new NamespaceTreeNode(escapedNamespace);
 						}
 						else
 						{
 							var parentNamespaceTreeNode = GetOrCreateNamespaceTreeNode(@namespace.Substring(0, decimalIndex));
-							var escapedInnerNamespace = Language.EscapeName(@namespace.Substring(decimalIndex + 1));
+							var escapedInnerNamespace = ILAmbience.EscapeName(@namespace.Substring(decimalIndex + 1));
 							ns = new NamespaceTreeNode(escapedInnerNamespace);
 							parentNamespaceTreeNode.Children.Add(ns);
 						}
 					}
 					else
 					{
-						var escapedNamespace = Language.EscapeName(@namespace);
+						var escapedNamespace = ILAmbience.EscapeName(@namespace);
 						ns = new NamespaceTreeNode(escapedNamespace);
 					}
 					namespaces.Add(@namespace, ns);

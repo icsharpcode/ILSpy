@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 
+using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
 
@@ -42,7 +43,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 		public override object Icon => PropertyTreeNode.GetIcon(analyzedProperty);
 
 		// TODO: This way of formatting is not suitable for properties which explicitly implement interfaces.
-		public override object Text => prefix + Language.PropertyToString(analyzedProperty, includeNamespace: false, includeDeclaringTypeName: true, includeNamespaceOfDeclaringTypeName: true);
+		public override object Text => prefix + Language.EntityToString(analyzedProperty, ConversionFlags.ShowDeclaringType | ConversionFlags.UseFullyQualifiedEntityNames);
 
 		protected override void LoadChildren()
 		{

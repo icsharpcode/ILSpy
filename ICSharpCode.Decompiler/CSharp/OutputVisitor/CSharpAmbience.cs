@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -58,8 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
 			AstNode node = astBuilder.ConvertSymbol(symbol);
 			writer.StartNode(node);
-			EntityDeclaration entityDecl = node as EntityDeclaration;
-			if (entityDecl != null)
+			if (node is EntityDeclaration entityDecl)
 				PrintModifiers(entityDecl.Modifiers, writer);
 
 			if ((ConversionFlags & ConversionFlags.ShowDefinitionKeyword) == ConversionFlags.ShowDefinitionKeyword)
@@ -280,7 +281,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				ConvertType(member.DeclaringType, writer, formattingPolicy);
 				writer.WriteToken(Roles.Dot, ".");
 			}
-			IType explicitInterfaceType = GetExplicitInterfaceType(member);
+			IType? explicitInterfaceType = GetExplicitInterfaceType(member);
 			string name = member.Name;
 			if (explicitInterfaceType != null)
 			{
@@ -297,11 +298,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					writer.WriteKeyword(Roles.Identifier, "this");
 					break;
 				case SymbolKind.Constructor:
-					WriteQualifiedName(member.DeclaringType.Name, writer, formattingPolicy);
+					WriteQualifiedName(member.DeclaringType!.Name, writer, formattingPolicy);
 					break;
 				case SymbolKind.Destructor:
 					writer.WriteToken(DestructorDeclaration.TildeRole, "~");
-					WriteQualifiedName(member.DeclaringType.Name, writer, formattingPolicy);
+					WriteQualifiedName(member.DeclaringType!.Name, writer, formattingPolicy);
 					break;
 				case SymbolKind.Operator:
 					switch (name)
@@ -431,7 +432,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			return astType.ToString();
 		}
 
-		public void ConvertType(IType type, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
+		void ConvertType(IType type, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
 		{
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
 			astBuilder.AlwaysUseShortTypeNames = (ConversionFlags & ConversionFlags.UseFullyQualifiedEntityNames) != ConversionFlags.UseFullyQualifiedEntityNames;
@@ -439,7 +440,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			astType.AcceptVisitor(new CSharpOutputVisitor(writer, formattingPolicy));
 		}
 
-		IType GetExplicitInterfaceType(IMember member)
+		IType? GetExplicitInterfaceType(IMember member)
 		{
 			if (member.IsExplicitInterfaceImplementation)
 			{

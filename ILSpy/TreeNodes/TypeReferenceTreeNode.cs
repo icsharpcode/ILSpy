@@ -20,6 +20,7 @@ using System;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -43,7 +44,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 
 		public override object Text
-			=> Language.TypeToString(resolvedType, includeNamespace: false) + GetSuffixString(r.Handle);
+			=> Language.TypeToString(resolvedType, ConversionFlags.None) + GetSuffixString(r.Handle);
 
 		public override object NavigationText => $"{Text} ({Properties.Resources.ReferencedTypes})";
 
@@ -62,7 +63,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, Language.TypeToString(resolvedType, includeNamespace: true));
+			language.WriteCommentLine(output, Language.TypeToString(resolvedType));
 			EnsureLazyChildren();
 			foreach (ILSpyTreeNode child in Children)
 			{

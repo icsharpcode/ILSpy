@@ -16,11 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 using System;
-using System.Collections.Generic;
 using System.Composition;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpyX.Abstractions;
@@ -65,15 +65,15 @@ namespace ICSharpCode.ILSpy.Search
 			switch (member)
 			{
 				case ITypeDefinition t:
-					return language.TypeToString(t, false);
+					return language.TypeToString(t, ConversionFlags.None);
 				case IField f:
-					return language.FieldToString(f, true, false, false);
+					return language.EntityToString(f, ConversionFlags.ShowDeclaringType);
 				case IProperty p:
-					return language.PropertyToString(p, true, false, false);
+					return language.EntityToString(p, ConversionFlags.ShowDeclaringType);
 				case IMethod m:
-					return language.MethodToString(m, true, false, false);
+					return language.EntityToString(m, ConversionFlags.ShowDeclaringType);
 				case IEvent e:
-					return language.EventToString(e, true, false, false);
+					return language.EntityToString(e, ConversionFlags.ShowDeclaringType);
 				default:
 					throw new NotSupportedException(member?.GetType() + " not supported!");
 			}
@@ -105,7 +105,7 @@ namespace ICSharpCode.ILSpy.Search
 				Member = entity,
 				Fitness = CalculateFitness(entity),
 				Name = GetLanguageSpecificName(entity),
-				Location = declaringType != null ? language.TypeToString(declaringType, includeNamespace: true) : entity.Namespace,
+				Location = declaringType != null ? language.TypeToString(declaringType, ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.UseFullyQualifiedTypeNames) : entity.Namespace,
 				Assembly = entity.ParentModule.FullAssemblyName,
 				ToolTip = entity.ParentModule.MetadataFile?.FileName,
 				Image = GetIcon(entity),

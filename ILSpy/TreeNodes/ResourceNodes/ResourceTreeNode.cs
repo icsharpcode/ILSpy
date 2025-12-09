@@ -25,6 +25,7 @@ using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Utils;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
@@ -51,7 +52,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public Resource Resource { get; }
 
-		public override object Text => Language.EscapeName(Resource.Name);
+		public override object Text => ILAmbience.EscapeName(Resource.Name);
 
 		public override object Icon => Images.Resource;
 

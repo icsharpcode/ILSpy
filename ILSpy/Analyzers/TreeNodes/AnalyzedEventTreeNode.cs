@@ -20,6 +20,7 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
+using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
 
@@ -45,7 +46,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 		public override object Icon => EventTreeNode.GetIcon(analyzedEvent);
 
 		// TODO: This way of formatting is not suitable for events which explicitly implement interfaces.
-		public override object Text => prefix + Language.EventToString(analyzedEvent, includeDeclaringTypeName: true, includeNamespace: false, includeNamespaceOfDeclaringTypeName: true);
+		public override object Text => prefix + Language.EntityToString(analyzedEvent, ConversionFlags.ShowDeclaringType | ConversionFlags.UseFullyQualifiedEntityNames);
 
 		protected override void LoadChildren()
 		{
