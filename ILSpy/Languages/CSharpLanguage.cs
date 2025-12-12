@@ -117,7 +117,7 @@ namespace ICSharpCode.ILSpy
 						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp11_0.ToString(), "C# 11.0 / VS 2022.4"),
 						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp12_0.ToString(), "C# 12.0 / VS 2022.8"),
 						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp13_0.ToString(), "C# 13.0 / VS 2022.12"),
-						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp14_0.ToString(), "C# 14.0 / VS 202x.yy"),
+						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp14_0.ToString(), "C# 14.0 / VS 2026"),
 					};
 				}
 				return versions;
