@@ -28,6 +28,7 @@ using Humanizer.Inflections;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
+using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -106,6 +107,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					var currentLowerCaseTypeOrMemberNames = new HashSet<string>(StringComparer.Ordinal);
 					foreach (var name in CollectAllLowerCaseMemberNames(function.Method.DeclaringTypeDefinition))
 						currentLowerCaseTypeOrMemberNames.Add(name);
+					foreach (IField item in function.Method.DeclaringTypeDefinition.Fields)
+					{
+						if (TransformFieldAndConstructorInitializers.IsGeneratedPrimaryConstructorBackingField(item))
+						{
+							string name = item.Name.Substring(1, item.Name.Length - 3);
+							currentLowerCaseTypeOrMemberNames.Add(name);
+							AddExistingName(reservedVariableNames, name);
+						}
+					}
 					foreach (var name in CollectAllLowerCaseTypeNames(function.Method.DeclaringTypeDefinition))
 					{
 						currentLowerCaseTypeOrMemberNames.Add(name);

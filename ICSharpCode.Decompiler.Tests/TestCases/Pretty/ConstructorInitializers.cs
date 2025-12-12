@@ -264,6 +264,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 #endif
+#if OPT && EXPECTED_OUTPUT
+		public class C8(object obj)
+		{
+			public int Test()
+			{
+				object obj2 = obj;
+				if (obj2 is int)
+				{
+					return (int)obj2;
+				}
+				return 0;
+			}
+		}
+#else
+		public class C8(object obj)
+		{
+			public int Test()
+			{
+				if (obj is int result)
+				{
+					return result;
+				}
+				return 0;
+			}
+		}
+#endif
 #endif
 	}
 }
