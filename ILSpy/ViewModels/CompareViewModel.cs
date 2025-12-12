@@ -299,7 +299,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			var module = (MetadataModule)typeSystem.MainModule!;
 			var metadata = module.MetadataFile.Metadata;
 			var ambience = new CSharpAmbience();
-			ambience.ConversionFlags = ICSharpCode.Decompiler.Output.ConversionFlags.All & ~ICSharpCode.Decompiler.Output.ConversionFlags.ShowDeclaringType;
+			ambience.ConversionFlags = ConversionFlags.All & ~ConversionFlags.ShowDeclaringType;
 
 			List<Entry> results = new();
 			Dictionary<TypeDefinitionHandle, Entry> typeEntries = new();
@@ -650,7 +650,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 				string? GetEntityText(ISymbol? symbol) => symbol switch {
 					ITypeDefinition t => this.Language.TypeToString(t, ConversionFlags.None) + GetSuffixString(t.MetadataToken),
-					IEntity e => this.Language.EntityToString(e, ConversionFlags.None) + GetSuffixString(e.MetadataToken),
+					IEntity e => this.Language.EntityToString(e, ConversionFlags.All & ~(ConversionFlags.ShowDeclaringType | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.UseFullyQualifiedTypeNames)) + GetSuffixString(e.MetadataToken),
 					INamespace n => n.FullName,
 					IModule m => m.FullAssemblyName,
 					_ => null,
