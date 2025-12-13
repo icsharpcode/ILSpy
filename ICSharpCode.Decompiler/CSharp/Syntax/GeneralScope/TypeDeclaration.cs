@@ -100,22 +100,28 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.RChevron); }
 		}
 
-
-
 		public CSharpTokenNode ColonToken {
 			get {
 				return GetChildByRole(Roles.Colon);
 			}
 		}
 
-		public AstNodeCollection<AstType> BaseTypes {
-			get { return GetChildrenByRole(Roles.BaseType); }
-		}
-
 		public bool HasPrimaryConstructor { get; set; }
+
+		public CSharpTokenNode LParToken {
+			get { return GetChildByRole(Roles.LPar); }
+		}
 
 		public AstNodeCollection<ParameterDeclaration> PrimaryConstructorParameters {
 			get { return GetChildrenByRole(Roles.Parameter); }
+		}
+
+		public CSharpTokenNode RParToken {
+			get { return GetChildByRole(Roles.RPar); }
+		}
+
+		public AstNodeCollection<AstType> BaseTypes {
+			get { return GetChildrenByRole(Roles.BaseType); }
 		}
 
 		public AstNodeCollection<Constraint> Constraints {

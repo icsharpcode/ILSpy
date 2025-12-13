@@ -598,7 +598,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						|| !PrimaryConstructorDecl.Initializer.IsNull
 						|| TypeDefinition.Kind == TypeKind.Struct;
 
-					PrimaryConstructorDecl.Parameters.MoveTo(this.TypeDeclaration.PrimaryConstructorParameters);
+					// HACK: because our current AST model doesn't allow specifying an explicit order of roles,
+					// we have to explicitly insert the primary constructor parameters,
+					// MoveTo would just append the parameters to the list of children
+					if (PrimaryConstructorDecl.Parameters.Count > 0)
+					{
+						var insertionPoint = (AstNode?)this.TypeDeclaration.TypeParameters.LastOrDefault() ?? this.TypeDeclaration.NameToken;
+						foreach (var param in PrimaryConstructorDecl.Parameters)
+						{
+							param.Remove();
+							this.TypeDeclaration.InsertChildAfter(insertionPoint, param, Roles.Parameter);
+							insertionPoint = param;
+						}
+					}
 
 					Debug.Assert(PrimaryConstructorParameterToBackingStoreMap != null);
 
