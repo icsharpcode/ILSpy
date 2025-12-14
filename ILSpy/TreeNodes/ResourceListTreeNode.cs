@@ -41,6 +41,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Text => Resources._Resources;
 
+		public override object NavigationText => $"{Text} ({module.Name})";
+
 		public override object Icon => Images.FolderClosed;
 
 		public override object ExpandedIcon => Images.FolderOpen;

@@ -45,6 +45,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override object Text => this.Language.TypeToString(GetTypeDefinition(), includeNamespace: false)
 			+ GetSuffixString(TypeDefinition.MetadataToken);
 
+		public override object NavigationText => this.Language.TypeToString(GetTypeDefinition(), includeNamespace: true)
+			+ GetSuffixString(TypeDefinition.MetadataToken);
+
 		private ITypeDefinition GetTypeDefinition()
 		{
 			return ((MetadataModule)ParentAssemblyNode.LoadedAssembly

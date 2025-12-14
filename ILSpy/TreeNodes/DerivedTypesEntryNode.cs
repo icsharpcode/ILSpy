@@ -47,6 +47,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			get { return Language.TypeToString(type, includeNamespace: true) + GetSuffixString(type.MetadataToken); }
 		}
 
+		public override object NavigationText => $"{Text} ({Properties.Resources.DerivedTypes})";
+
 		public override object Icon => TypeTreeNode.GetIcon(type);
 
 		public override FilterResult Filter(LanguageSettings settings)

@@ -41,6 +41,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Text => GetText(GetFieldDefinition(), Language) + GetSuffixString(FieldDefinition);
 
+		public override object NavigationText => GetText(GetFieldDefinition(), Language, includeDeclaringTypeName: true);
+
 		private IField GetFieldDefinition()
 		{
 			return ((MetadataModule)FieldDefinition.ParentModule?.MetadataFile
@@ -48,9 +50,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				?.MainModule)?.GetDefinition((FieldDefinitionHandle)FieldDefinition.MetadataToken) ?? FieldDefinition;
 		}
 
-		public static object GetText(IField field, Language language)
+		public static object GetText(IField field, Language language, bool includeDeclaringTypeName = false)
 		{
-			return language.FieldToString(field, includeDeclaringTypeName: false, includeNamespace: false, includeNamespaceOfDeclaringTypeName: false);
+			return language.FieldToString(field, includeDeclaringTypeName, includeNamespace: false, includeNamespaceOfDeclaringTypeName: false);
 		}
 
 		public override object Icon => GetIcon(GetFieldDefinition());

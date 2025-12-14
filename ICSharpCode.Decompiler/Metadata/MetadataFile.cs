@@ -73,9 +73,12 @@ namespace ICSharpCode.Decompiler.Metadata
 				if (value == null)
 				{
 					var metadata = Metadata;
-					value = metadata.IsAssembly
-						? metadata.GetString(metadata.GetAssemblyDefinition().Name)
-						: metadata.GetString(metadata.GetModuleDefinition().Name);
+					if (metadata.IsAssembly)
+						value = metadata.GetString(metadata.GetAssemblyDefinition().Name);
+					else if (metadata.DebugMetadataHeader == null) // standalone debug metadata does not contain module table
+						value = metadata.GetString(metadata.GetModuleDefinition().Name);
+					else
+						value = "debug metadata";
 					value = LazyInit.GetOrSet(ref name, value);
 				}
 				return value;

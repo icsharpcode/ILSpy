@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.LazyLoading = true;
 		}
 
-		public override object Text => $"Referenced Types ({r.TypeReferences.Length + r.ExportedTypes.Length})";
+		public override object Text => $"{Properties.Resources.ReferencedTypes} ({r.TypeReferences.Length + r.ExportedTypes.Length})";
 		public override object Icon => Images.MetadataTable;
 
 		protected override void LoadChildren()
