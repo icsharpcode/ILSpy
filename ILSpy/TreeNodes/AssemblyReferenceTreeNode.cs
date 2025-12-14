@@ -1,14 +1,14 @@
 // Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -35,9 +35,19 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class AssemblyReferenceTreeNode : ILSpyTreeNode
 	{
+		private enum LoadState
+		{
+			Unloaded,
+			Loading,
+			Loadded,
+			Failed
+		}
+
 		readonly MetadataModule module;
 		readonly AssemblyReference r;
 		readonly AssemblyTreeNode parentAssembly;
+		MetadataFile referencedModule;
+		LoadState state;
 
 		public AssemblyReferenceTreeNode(MetadataModule module, AssemblyReference r, AssemblyTreeNode parentAssembly)
 		{
@@ -55,7 +65,27 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object NavigationText => $"{Text} ({Properties.Resources.References})";
 
-		public override object Icon => ImagesProvider.Assembly;
+		public override object Icon {
+			get {
+				if (state == LoadState.Unloaded)
+				{
+					state = LoadState.Loading;
+					Dispatcher.CurrentDispatcher.BeginInvoke(() => {
+						var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver(SettingsService.DecompilerSettings.AutoLoadAssemblyReferences);
+						referencedModule = resolver.Resolve(r);
+						state = referencedModule is null
+							? LoadState.Failed
+							: LoadState.Loadded;
+						RaisePropertyChanged(nameof(Icon));
+					}, DispatcherPriority.Background);
+				}
+				return state switch {
+					LoadState.Loadded => Images.Assembly,
+					LoadState.Failed => Images.AssemblyWarning,
+					_ => Images.AssemblyLoading,
+				};
+			}
+		}
 
 		public override bool ShowExpander {
 			get {
@@ -67,7 +97,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					// while the list of references is updated causes problems with WPF's ListView rendering.
 					// Moving the assembly resolving out of the "add assembly reference"-loop by using the
 					// dispatcher fixes the issue.
-					Dispatcher.CurrentDispatcher.BeginInvoke((Action)EnsureLazyChildren, DispatcherPriority.Normal);
+					Dispatcher.CurrentDispatcher.BeginInvoke(EnsureLazyChildren, DispatcherPriority.Normal);
 				}
 				return base.ShowExpander;
 			}
@@ -87,8 +117,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			this.Children.Add(new AssemblyReferenceReferencedTypesTreeNode(module, r));
 
-			var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver(SettingsService.DecompilerSettings.AutoLoadAssemblyReferences);
-			var referencedModule = resolver.Resolve(r);
 			if (referencedModule != null)
 			{
 				var module = (MetadataModule)referencedModule.GetTypeSystemWithCurrentOptionsOrNull(SettingsService, AssemblyTreeModel.CurrentLanguageVersion)?.MainModule;
@@ -115,6 +143,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				if (info.HasErrors)
 				{
 					output.WriteLine("There were some problems during assembly reference load, see below for more information!");
+					state = LoadState.Failed;
 				}
 				PrintAssemblyLoadLogMessages(output, info);
 				output.Unindent();
