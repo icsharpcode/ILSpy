@@ -57,7 +57,7 @@ namespace ICSharpCode.ILSpy
 
 		public IEnumerable ParameterList => assemblyTreeModel.GetNavigateHistory(false).Reverse();
 
-		public object GetParamaterText(object parameter)
+		public object GetParameterText(object parameter)
 		{
 			return (parameter as NavigationState)?.NavigationText;
 		}

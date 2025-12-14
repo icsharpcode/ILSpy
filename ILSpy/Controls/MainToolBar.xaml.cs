@@ -148,7 +148,7 @@ namespace ICSharpCode.ILSpy.Controls
 				BindingOperations.SetBinding(dropDownToggle, IsEnabledProperty,
 					new Binding(nameof(IsEnabled)) { Source = toolbarItem });
 
-				// When the toggle button is checked, clicking it to uncheck will dimiss the menu first
+				// When the toggle button is checked, clicking it to uncheck will dismiss the menu first
 				// which unchecks the toggle button via binding above and the click is used to open it again.
 				// This is a workaround to ignore the click to uncheck the already unchecked toggle button.
 				// We have to ensure the dismissing click is on the toggle button, otherwise the flag
@@ -189,7 +189,7 @@ namespace ICSharpCode.ILSpy.Controls
 				var headerPresenter = new ContentPresenter { RecognizesAccessKey = false };
 				parameterItem.Header = headerPresenter;
 
-				var header = parameterList.GetParamaterText(parameter);
+				var header = parameterList.GetParameterText(parameter);
 				switch (header)
 				{
 					case SharpTreeNode node:

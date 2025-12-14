@@ -46,6 +46,6 @@ namespace ICSharpCode.ILSpy
 	public interface IProvideParameterList
 	{
 		IEnumerable ParameterList { get; }
-		object GetParamaterText(object parameter);
+		object GetParameterText(object parameter);
 	}
 }
