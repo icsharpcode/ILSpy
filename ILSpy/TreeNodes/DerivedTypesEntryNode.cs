@@ -98,7 +98,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, language.TypeToString(type, includeNamespace: true));
+			language.DecompileType(type, output, options);
 		}
 
 		IEntity IMemberTreeNode.Member => type;
