@@ -1,5 +1,3 @@
-#pragma warning disable CS9124
-
 using System;
 using System.Collections.Generic;
 
@@ -47,7 +45,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public bool Func()
 			{
-				return value == StringComparison.Ordinal;
+				return _value == StringComparison.Ordinal;
 			}
 		}
 

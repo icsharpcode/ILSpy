@@ -1,5 +1,3 @@
-#pragma warning disable CS9124
-
 using System;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
@@ -29,7 +27,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			internal StringComparison Test()
 			{
-				return comparison;
+				return _comparison;
 			}
 		}
 
