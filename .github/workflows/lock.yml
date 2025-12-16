@@ -13,7 +13,7 @@ jobs:
       issues: write  # for dessant/lock-threads to lock issues
     runs-on: ubuntu-latest
     steps:
-      - uses: dessant/lock-threads@v5.0.1
+      - uses: dessant/lock-threads@v6.0.0
         with:
           github-token: ${{ github.token }}
           issue-inactive-days: '90'
