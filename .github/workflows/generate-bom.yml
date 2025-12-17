@@ -26,7 +26,7 @@ jobs:
       run: dotnet-CycloneDX ILSpy/ILSpy.csproj --output sbom --recursive --exclude-dev --exclude-test-projects
 
     - name: Upload BOM
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: ILSpyBOM.xml
         path: sbom/bom.xml
