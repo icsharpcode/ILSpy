@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Composition;
-using System.Windows;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {

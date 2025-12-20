@@ -193,7 +193,6 @@ namespace ICSharpCode.ILSpy.Options
 		public XElement SaveToXml()
 		{
 			var section = new XElement(SectionName);
-
 			section.SetAttributeValue("Font", SelectedFont.Source);
 			section.SetAttributeValue("FontSize", SelectedFontSize);
 			section.SetAttributeValue("ShowLineNumbers", ShowLineNumbers);

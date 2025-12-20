@@ -1,4 +1,4 @@
-// Copyright (c) 2019 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -18,26 +18,21 @@
 
 using System.Windows.Input;
 
-namespace ICSharpCode.ILSpy.ViewModels
+using ICSharpCode.AvalonEdit.Rendering;
+
+namespace ICSharpCode.ILSpy.TextView
 {
-#if CROSS_PLATFORM
-	public abstract class ToolPaneModel : Dock.Model.TomsToolbox.Controls.Tool
+	/// <summary>
+	/// VisualLineElement that represents a piece of text and is a clickable link.
+	/// </summary>
+	partial class VisualLineReferenceText
 	{
-		protected static DockWorkspace DockWorkspace => App.ExportProvider.GetExportedValue<DockWorkspace>();
-#else
-	public abstract class ToolPaneModel : ToolPaneModel
-	{
-#endif
-		public virtual void Show()
+		/// <inheritdoc/>
+		protected override void OnQueryCursor(QueryCursorEventArgs e)
 		{
-			this.IsActive = true;
-			this.IsVisible = true;
+			// IMPORTANT: not ported to AvaloniaEdit
+			e.Handled = true;
+			e.Cursor = referenceSegment.IsLocal ? Cursors.Arrow : Cursors.Hand;
 		}
-
-		public KeyGesture ShortcutKey { get; protected set; }
-
-		public string Icon { get; protected set; }
-
-		public ICommand AssociatedCommand { get; set; }
 	}
 }

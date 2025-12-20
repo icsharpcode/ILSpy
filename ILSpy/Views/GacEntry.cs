@@ -17,29 +17,71 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Windows;
+using System.Text;
 
-using ICSharpCode.AvalonEdit.Highlighting;
-using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy
 {
-	/// <summary>
-	/// Adds additional WPF-specific output features to <see cref="ITextOutput"/>.
-	/// </summary>
-	public interface ISmartTextOutput : ITextOutput
+	public partial class OpenFromGacDialog
 	{
-		/// <summary>
-		/// Inserts an interactive UI element at the current position in the text output.
-		/// </summary>
-		void AddUIElement(Func<UIElement> element);
+		sealed class GacEntry
+		{
+			readonly AssemblyNameReference r;
+			readonly string fileName;
+			string formattedVersion;
 
-		void BeginSpan(HighlightingColor highlightingColor);
-		void EndSpan();
+			public GacEntry(AssemblyNameReference r, string fileName)
+			{
+				this.r = r;
+				this.fileName = fileName;
+			}
 
-		/// <summary>
-		/// Gets/sets the title displayed in the document tab's header.
-		/// </summary>
-		string Title { get; set; }
+			public string FullName {
+				get { return r.FullName; }
+			}
+
+			public string ShortName {
+				get { return r.Name; }
+			}
+
+			public string FileName {
+				get { return fileName; }
+			}
+
+			public Version Version {
+				get { return r.Version; }
+			}
+
+			public string FormattedVersion {
+				get {
+					if (formattedVersion == null)
+						formattedVersion = Version.ToString();
+					return formattedVersion;
+				}
+			}
+
+			public string Culture {
+				get {
+					if (string.IsNullOrEmpty(r.Culture))
+						return "neutral";
+					return r.Culture;
+				}
+			}
+
+			public string PublicKeyToken {
+				get {
+					StringBuilder s = new StringBuilder();
+					foreach (byte b in r.PublicKeyToken)
+						s.Append(b.ToString("x2"));
+					return s.ToString();
+				}
+			}
+
+			public override string ToString()
+			{
+				return r.FullName;
+			}
+		}
 	}
 }

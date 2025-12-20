@@ -1,4 +1,4 @@
-// Copyright (c) 2019 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2014 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,28 +16,17 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Windows.Input;
+using ICSharpCode.AvalonEdit.Document;
 
-namespace ICSharpCode.ILSpy.ViewModels
+namespace ICSharpCode.ILSpy.TextView
 {
-#if CROSS_PLATFORM
-	public abstract class ToolPaneModel : Dock.Model.TomsToolbox.Controls.Tool
+	public class DefaultBracketSearcher : IBracketSearcher
 	{
-		protected static DockWorkspace DockWorkspace => App.ExportProvider.GetExportedValue<DockWorkspace>();
-#else
-	public abstract class ToolPaneModel : ToolPaneModel
-	{
-#endif
-		public virtual void Show()
+		public static readonly DefaultBracketSearcher DefaultInstance = new DefaultBracketSearcher();
+
+		public BracketSearchResult SearchBracket(IDocument document, int offset)
 		{
-			this.IsActive = true;
-			this.IsVisible = true;
+			return null;
 		}
-
-		public KeyGesture ShortcutKey { get; protected set; }
-
-		public string Icon { get; protected set; }
-
-		public ICommand AssociatedCommand { get; set; }
 	}
 }

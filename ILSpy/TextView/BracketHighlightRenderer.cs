@@ -24,50 +24,6 @@ using ICSharpCode.AvalonEdit.Rendering;
 
 namespace ICSharpCode.ILSpy.TextView
 {
-	/// <summary>
-	/// Allows language specific search for matching brackets.
-	/// </summary>
-	public interface IBracketSearcher
-	{
-		/// <summary>
-		/// Searches for a matching bracket from the given offset to the start of the document.
-		/// </summary>
-		/// <returns>A BracketSearchResult that contains the positions and lengths of the brackets. Return null if there is nothing to highlight.</returns>
-		BracketSearchResult SearchBracket(IDocument document, int offset);
-	}
-
-	public class DefaultBracketSearcher : IBracketSearcher
-	{
-		public static readonly DefaultBracketSearcher DefaultInstance = new DefaultBracketSearcher();
-
-		public BracketSearchResult SearchBracket(IDocument document, int offset)
-		{
-			return null;
-		}
-	}
-
-	/// <summary>
-	/// Describes a pair of matching brackets found by <see cref="IBracketSearcher"/>.
-	/// </summary>
-	public class BracketSearchResult
-	{
-		public int OpeningBracketOffset { get; private set; }
-
-		public int OpeningBracketLength { get; private set; }
-
-		public int ClosingBracketOffset { get; private set; }
-
-		public int ClosingBracketLength { get; private set; }
-
-		public BracketSearchResult(int openingBracketOffset, int openingBracketLength,
-								   int closingBracketOffset, int closingBracketLength)
-		{
-			this.OpeningBracketOffset = openingBracketOffset;
-			this.OpeningBracketLength = openingBracketLength;
-			this.ClosingBracketOffset = closingBracketOffset;
-			this.ClosingBracketLength = closingBracketLength;
-		}
-	}
 
 	public class BracketHighlightRenderer : IBackgroundRenderer
 	{
@@ -92,8 +48,14 @@ namespace ICSharpCode.ILSpy.TextView
 			if (textView == null)
 				throw new ArgumentNullException("textView");
 
-			this.borderPen = (Pen)textView.FindResource(Themes.ResourceKeys.BracketHighlightBorderPen);
-			this.backgroundBrush = (SolidColorBrush)textView.FindResource(Themes.ResourceKeys.BracketHighlightBackgroundBrush);
+			// resource loading safe guard
+			var borderPenResource = textView.FindResource(Themes.ResourceKeys.BracketHighlightBorderPen);
+			if (borderPenResource is Pen p)
+				this.borderPen = p;
+
+			var backgroundBrushResource = textView.FindResource(Themes.ResourceKeys.BracketHighlightBackgroundBrush);
+			if (backgroundBrushResource is SolidColorBrush b)
+				this.backgroundBrush = b;
 
 			this.textView = textView;
 
