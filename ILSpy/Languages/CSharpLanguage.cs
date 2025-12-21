@@ -34,6 +34,7 @@ using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.Solution;
@@ -157,7 +158,7 @@ namespace ICSharpCode.ILSpy
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
 			WriteCommentLine(output, assembly.FullName);
-			WriteCommentLine(output, TypeToString(method.DeclaringType, includeNamespace: true));
+			WriteCommentLine(output, TypeToString(method.DeclaringType));
 			var methodDefinition = decompiler.TypeSystem.MainModule.ResolveEntity(method.MetadataToken) as IMethod;
 			if (methodDefinition.IsConstructor && methodDefinition.DeclaringType.IsReferenceType != false)
 			{
@@ -258,7 +259,7 @@ namespace ICSharpCode.ILSpy
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
 			WriteCommentLine(output, assembly.FullName);
-			WriteCommentLine(output, TypeToString(property.DeclaringType, includeNamespace: true));
+			WriteCommentLine(output, TypeToString(property.DeclaringType));
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(property.MetadataToken), decompiler.TypeSystem);
 		}
 
@@ -269,7 +270,7 @@ namespace ICSharpCode.ILSpy
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
 			WriteCommentLine(output, assembly.FullName);
-			WriteCommentLine(output, TypeToString(field.DeclaringType, includeNamespace: true));
+			WriteCommentLine(output, TypeToString(field.DeclaringType));
 			if (field.IsConst)
 			{
 				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(field.MetadataToken), decompiler.TypeSystem);
@@ -348,7 +349,7 @@ namespace ICSharpCode.ILSpy
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
 			WriteCommentLine(output, assembly.FullName);
-			WriteCommentLine(output, TypeToString(@event.DeclaringType, includeNamespace: true));
+			WriteCommentLine(output, TypeToString(@event.DeclaringType));
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(@event.MetadataToken), decompiler.TypeSystem);
 		}
 
@@ -359,7 +360,7 @@ namespace ICSharpCode.ILSpy
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
 			WriteCommentLine(output, assembly.FullName);
-			WriteCommentLine(output, TypeToString(type, includeNamespace: true));
+			WriteCommentLine(output, TypeToString(type, ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames));
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(type.MetadataToken), decompiler.TypeSystem);
 		}
 
@@ -456,7 +457,7 @@ namespace ICSharpCode.ILSpy
 				if (globalType != null)
 				{
 					output.Write("// Global type: ");
-					output.WriteReference(globalType, EscapeName(globalType.FullName));
+					output.WriteReference(globalType, ILAmbience.EscapeName(globalType.FullName));
 					output.WriteLine();
 				}
 				var metadata = module.Metadata;
@@ -470,7 +471,7 @@ namespace ICSharpCode.ILSpy
 						if (entrypoint != null)
 						{
 							output.Write("// Entry point: ");
-							output.WriteReference(entrypoint, EscapeName(entrypoint.DeclaringType.FullName + "." + entrypoint.Name));
+							output.WriteReference(entrypoint, ILAmbience.EscapeName(entrypoint.DeclaringType.FullName + "." + entrypoint.Name));
 							output.WriteLine();
 						}
 					}
@@ -595,73 +596,32 @@ namespace ICSharpCode.ILSpy
 			return ambience;
 		}
 
-		string EntityToString(IEntity entity, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
+		public override string EntityToString(IEntity entity, ConversionFlags conversionFlags)
 		{
 			// Do not forget to update CSharpAmbienceTests, if this ever changes.
 			var ambience = CreateAmbience();
-			ambience.ConversionFlags |= ConversionFlags.ShowReturnType | ConversionFlags.ShowParameterList | ConversionFlags.ShowParameterModifiers;
-			if (includeDeclaringTypeName)
-				ambience.ConversionFlags |= ConversionFlags.ShowDeclaringType;
-			if (includeNamespace)
-				ambience.ConversionFlags |= ConversionFlags.UseFullyQualifiedTypeNames;
-			if (includeNamespaceOfDeclaringTypeName)
-				ambience.ConversionFlags |= ConversionFlags.UseFullyQualifiedEntityNames;
+			ambience.ConversionFlags |= conversionFlags
+				| ConversionFlags.ShowReturnType
+				| ConversionFlags.ShowParameterList
+				| ConversionFlags.ShowParameterModifiers;
 			return ambience.ConvertSymbol(entity);
 		}
 
-		public override string TypeToString(IType type, bool includeNamespace)
+		public override string TypeToString(IType type, ConversionFlags conversionFlags = ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.UseFullyQualifiedTypeNames)
 		{
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
 			var ambience = CreateAmbience();
 			// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewFlags, if this ever changes.
-			if (includeNamespace)
-			{
-				ambience.ConversionFlags |= ConversionFlags.UseFullyQualifiedTypeNames;
-				ambience.ConversionFlags |= ConversionFlags.UseFullyQualifiedEntityNames;
-			}
+			ambience.ConversionFlags |= conversionFlags;
 			if (type is ITypeDefinition definition)
 			{
 				return ambience.ConvertSymbol(definition);
-				// HACK : UnknownType is not supported by CSharpAmbience.
-			}
-			else if (type.Kind == TypeKind.Unknown)
-			{
-				return (includeNamespace ? type.FullName : type.Name)
-					+ (type.TypeParameterCount > 0 ? "<" + string.Join(", ", type.TypeArguments.Select(t => t.Name)) + ">" : "");
 			}
 			else
 			{
 				return ambience.ConvertType(type);
 			}
-		}
-
-		public override string FieldToString(IField field, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
-		{
-			if (field == null)
-				throw new ArgumentNullException(nameof(field));
-			return EntityToString(field, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
-		}
-
-		public override string PropertyToString(IProperty property, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
-		{
-			if (property == null)
-				throw new ArgumentNullException(nameof(property));
-			return EntityToString(property, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
-		}
-
-		public override string MethodToString(IMethod method, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
-		{
-			if (method == null)
-				throw new ArgumentNullException(nameof(method));
-			return EntityToString(method, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
-		}
-
-		public override string EventToString(IEvent @event, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
-		{
-			if (@event == null)
-				throw new ArgumentNullException(nameof(@event));
-			return EntityToString(@event, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 
 		static string ToCSharpString(MetadataReader metadata, TypeDefinitionHandle handle, bool fullName, bool omitGenerics)

@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		}
 
 		#region Disassemble Method
-		EnumNameCollection<MethodAttributes> methodAttributeFlags = new EnumNameCollection<MethodAttributes>() {
+		internal static readonly EnumNameCollection<MethodAttributes> methodAttributeFlags = new EnumNameCollection<MethodAttributes>() {
 			{ MethodAttributes.Final, "final" },
 			{ MethodAttributes.HideBySig, "hidebysig" },
 			{ MethodAttributes.SpecialName, "specialname" },
@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ MethodAttributes.HasSecurity, null },	// ?? also invisible in ILDasm
 		};
 
-		EnumNameCollection<MethodAttributes> methodVisibility = new EnumNameCollection<MethodAttributes>() {
+		internal static readonly EnumNameCollection<MethodAttributes> methodVisibility = new EnumNameCollection<MethodAttributes>() {
 			{ MethodAttributes.Private, "private" },
 			{ MethodAttributes.FamANDAssem, "famandassem" },
 			{ MethodAttributes.Assembly, "assembly" },
@@ -124,7 +124,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ MethodAttributes.Public, "public" },
 		};
 
-		EnumNameCollection<SignatureCallingConvention> callingConvention = new EnumNameCollection<SignatureCallingConvention>() {
+		internal static readonly EnumNameCollection<SignatureCallingConvention> callingConvention = new EnumNameCollection<SignatureCallingConvention>() {
 			{ SignatureCallingConvention.CDecl, "unmanaged cdecl" },
 			{ SignatureCallingConvention.StdCall, "unmanaged stdcall" },
 			{ SignatureCallingConvention.ThisCall, "unmanaged thiscall" },
@@ -133,14 +133,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ SignatureCallingConvention.Default, null },
 		};
 
-		EnumNameCollection<MethodImplAttributes> methodCodeType = new EnumNameCollection<MethodImplAttributes>() {
+		internal static readonly EnumNameCollection<MethodImplAttributes> methodCodeType = new EnumNameCollection<MethodImplAttributes>() {
 			{ MethodImplAttributes.IL, "cil" },
 			{ MethodImplAttributes.Native, "native" },
 			{ MethodImplAttributes.OPTIL, "optil" },
 			{ MethodImplAttributes.Runtime, "runtime" },
 		};
 
-		EnumNameCollection<MethodImplAttributes> methodImpl = new EnumNameCollection<MethodImplAttributes>() {
+		internal static readonly EnumNameCollection<MethodImplAttributes> methodImpl = new EnumNameCollection<MethodImplAttributes>() {
 			{ MethodImplAttributes.Synchronized, "synchronized" },
 			{ MethodImplAttributes.NoInlining, "noinlining" },
 			{ MethodImplAttributes.NoOptimization, "nooptimization" },
@@ -180,8 +180,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			//               instance default class [mscorlib]System.IO.TextWriter get_BaseWriter ()  cil managed
 			//
 			//emit flags
-			WriteEnum(methodDefinition.Attributes & MethodAttributes.MemberAccessMask, methodVisibility);
-			WriteFlags(methodDefinition.Attributes & ~MethodAttributes.MemberAccessMask, methodAttributeFlags);
+			WriteEnum(methodDefinition.Attributes & MethodAttributes.MemberAccessMask, methodVisibility, output);
+			WriteFlags(methodDefinition.Attributes & ~MethodAttributes.MemberAccessMask, methodAttributeFlags, output);
 			bool isCompilerControlled = (methodDefinition.Attributes & MethodAttributes.MemberAccessMask) == MethodAttributes.PrivateScope;
 			if (isCompilerControlled)
 				output.Write("privatescope ");
@@ -259,7 +259,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				}
 
 				//call convention
-				WriteEnum(signature.Value.Header.CallingConvention, callingConvention);
+				WriteEnum(signature.Value.Header.CallingConvention, callingConvention, output);
 
 				//return type
 				signature.Value.ReturnType(ILNameSyntax.Signature);
@@ -307,12 +307,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 			output.Write(") ");
 			//cil managed
-			WriteEnum(methodDefinition.ImplAttributes & MethodImplAttributes.CodeTypeMask, methodCodeType);
+			WriteEnum(methodDefinition.ImplAttributes & MethodImplAttributes.CodeTypeMask, methodCodeType, output);
 			if ((methodDefinition.ImplAttributes & MethodImplAttributes.ManagedMask) == MethodImplAttributes.Managed)
 				output.Write("managed ");
 			else
 				output.Write("unmanaged ");
-			WriteFlags(methodDefinition.ImplAttributes & ~(MethodImplAttributes.CodeTypeMask | MethodImplAttributes.ManagedMask), methodImpl);
+			WriteFlags(methodDefinition.ImplAttributes & ~(MethodImplAttributes.CodeTypeMask | MethodImplAttributes.ManagedMask), methodImpl, output);
 
 			output.Unindent();
 		}
@@ -1267,7 +1267,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		#endregion
 
 		#region Disassemble Field
-		EnumNameCollection<FieldAttributes> fieldVisibility = new EnumNameCollection<FieldAttributes>() {
+		internal static readonly EnumNameCollection<FieldAttributes> fieldVisibility = new EnumNameCollection<FieldAttributes>() {
 			{ FieldAttributes.Private, "private" },
 			{ FieldAttributes.FamANDAssem, "famandassem" },
 			{ FieldAttributes.Assembly, "assembly" },
@@ -1276,7 +1276,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ FieldAttributes.Public, "public" },
 		};
 
-		EnumNameCollection<FieldAttributes> fieldAttributes = new EnumNameCollection<FieldAttributes>() {
+		internal static readonly EnumNameCollection<FieldAttributes> fieldAttributes = new EnumNameCollection<FieldAttributes>() {
 			{ FieldAttributes.Static, "static" },
 			{ FieldAttributes.Literal, "literal" },
 			{ FieldAttributes.InitOnly, "initonly" },
@@ -1360,9 +1360,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{
 				output.Write("[" + offset + "] ");
 			}
-			WriteEnum(fieldDefinition.Attributes & FieldAttributes.FieldAccessMask, fieldVisibility);
+			WriteEnum(fieldDefinition.Attributes & FieldAttributes.FieldAccessMask, fieldVisibility, output);
 			const FieldAttributes hasXAttributes = FieldAttributes.HasDefault | FieldAttributes.HasFieldMarshal | FieldAttributes.HasFieldRVA;
-			WriteFlags(fieldDefinition.Attributes & ~(FieldAttributes.FieldAccessMask | hasXAttributes), fieldAttributes);
+			WriteFlags(fieldDefinition.Attributes & ~(FieldAttributes.FieldAccessMask | hasXAttributes), fieldAttributes, output);
 
 			var signature = fieldDefinition.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), new MetadataGenericContext(fieldDefinition.GetDeclaringType(), module));
 
@@ -1415,7 +1415,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		#endregion
 
 		#region Disassemble Property
-		EnumNameCollection<PropertyAttributes> propertyAttributes = new EnumNameCollection<PropertyAttributes>() {
+		internal static readonly EnumNameCollection<PropertyAttributes> propertyAttributes = new EnumNameCollection<PropertyAttributes>() {
 			{ PropertyAttributes.SpecialName, "specialname" },
 			{ PropertyAttributes.RTSpecialName, "rtspecialname" },
 			{ PropertyAttributes.HasDefault, "hasdefault" },
@@ -1450,7 +1450,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteReference(module, handle, ".property", isDefinition: true);
 			WriteMetadataToken(output, module, handle, MetadataTokens.GetToken(handle),
 				spaceAfter: true, spaceBefore: true, ShowMetadataTokens, ShowMetadataTokensInBase10);
-			WriteFlags(propertyDefinition.Attributes, propertyAttributes);
+			WriteFlags(propertyDefinition.Attributes, propertyAttributes, output);
 			var accessors = propertyDefinition.GetAccessors();
 			var declaringType = metadata.GetMethodDefinition(accessors.GetAny()).GetDeclaringType();
 			var signature = propertyDefinition.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), new MetadataGenericContext(declaringType, module));
@@ -1489,7 +1489,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		#endregion
 
 		#region Disassemble Event
-		EnumNameCollection<EventAttributes> eventAttributes = new EnumNameCollection<EventAttributes>() {
+		internal static readonly EnumNameCollection<EventAttributes> eventAttributes = new EnumNameCollection<EventAttributes>() {
 			{ EventAttributes.SpecialName, "specialname" },
 			{ EventAttributes.RTSpecialName, "rtspecialname" },
 		};
@@ -1536,7 +1536,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteReference(module, handle, ".event", isDefinition: true);
 			WriteMetadataToken(output, module, handle, MetadataTokens.GetToken(handle),
 				spaceAfter: true, spaceBefore: true, ShowMetadataTokens, ShowMetadataTokensInBase10);
-			WriteFlags(eventDefinition.Attributes, eventAttributes);
+			WriteFlags(eventDefinition.Attributes, eventAttributes, output);
 			var provider = new DisassemblerSignatureTypeProvider(module, output);
 			Action<ILNameSyntax> signature;
 			switch (eventDefinition.Type.Kind)
@@ -1561,7 +1561,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		#endregion
 
 		#region Disassemble Type
-		EnumNameCollection<TypeAttributes> typeVisibility = new EnumNameCollection<TypeAttributes>() {
+		internal static readonly EnumNameCollection<TypeAttributes> typeVisibility = new EnumNameCollection<TypeAttributes>() {
 			{ TypeAttributes.Public, "public" },
 			{ TypeAttributes.NotPublic, "private" },
 			{ TypeAttributes.NestedPublic, "nested public" },
@@ -1584,7 +1584,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ TypeAttributes.UnicodeClass, "unicode" },
 		};
 
-		EnumNameCollection<TypeAttributes> typeAttributes = new EnumNameCollection<TypeAttributes>() {
+		internal static readonly EnumNameCollection<TypeAttributes> typeAttributes = new EnumNameCollection<TypeAttributes>() {
 			{ TypeAttributes.Abstract, "abstract" },
 			{ TypeAttributes.Sealed, "sealed" },
 			{ TypeAttributes.SpecialName, "specialname" },
@@ -1730,11 +1730,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 				spaceAfter: true, spaceBefore: true, ShowMetadataTokens, ShowMetadataTokensInBase10);
 			if ((typeDefinition.Attributes & TypeAttributes.ClassSemanticsMask) == TypeAttributes.Interface)
 				output.Write("interface ");
-			WriteEnum(typeDefinition.Attributes & TypeAttributes.VisibilityMask, typeVisibility);
-			WriteEnum(typeDefinition.Attributes & TypeAttributes.LayoutMask, typeLayout);
-			WriteEnum(typeDefinition.Attributes & TypeAttributes.StringFormatMask, typeStringFormat);
+			WriteEnum(typeDefinition.Attributes & TypeAttributes.VisibilityMask, typeVisibility, output);
+			WriteEnum(typeDefinition.Attributes & TypeAttributes.LayoutMask, typeLayout, output);
+			WriteEnum(typeDefinition.Attributes & TypeAttributes.StringFormatMask, typeStringFormat, output);
 			const TypeAttributes masks = TypeAttributes.ClassSemanticsMask | TypeAttributes.VisibilityMask | TypeAttributes.LayoutMask | TypeAttributes.StringFormatMask;
-			WriteFlags(typeDefinition.Attributes & ~masks, typeAttributes);
+			WriteFlags(typeDefinition.Attributes & ~masks, typeAttributes, output);
 
 			output.Write(typeDefinition.GetDeclaringType().IsNil ? typeDefinition.GetFullTypeName(module.Metadata).ToILNameString() : DisassemblerHelpers.Escape(module.Metadata.GetString(typeDefinition.Name)));
 			WriteTypeParameters(output, module, genericContext, typeDefinition.GetGenericParameters());
@@ -1967,7 +1967,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteLine();
 		}
 
-		void WriteFlags<T>(T flags, EnumNameCollection<T> flagNames) where T : struct
+		internal static void WriteFlags<T>(T flags, EnumNameCollection<T> flagNames, ITextOutput output) where T : struct
 		{
 			long val = Convert.ToInt64(flags);
 			long tested = 0;
@@ -1984,7 +1984,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.Write("flags({0:x4}) ", val & ~tested);
 		}
 
-		void WriteEnum<T>(T enumValue, EnumNameCollection<T> enumNames) where T : struct
+		internal static void WriteEnum<T>(T enumValue, EnumNameCollection<T> enumNames, ITextOutput output) where T : struct
 		{
 			long val = Convert.ToInt64(enumValue);
 			foreach (var pair in enumNames)
@@ -2006,9 +2006,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		}
 
-		sealed class EnumNameCollection<T> : IEnumerable<KeyValuePair<long, string>> where T : struct
+		internal struct EnumNameCollection<T> : IEnumerable<KeyValuePair<long, string>> where T : struct
 		{
 			List<KeyValuePair<long, string>> names = new List<KeyValuePair<long, string>>();
+
+			public EnumNameCollection()
+			{
+			}
 
 			public void Add(T flag, string name)
 			{

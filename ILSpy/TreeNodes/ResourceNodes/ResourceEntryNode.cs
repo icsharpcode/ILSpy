@@ -21,6 +21,7 @@ using System.IO;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 using Microsoft.Win32;
@@ -35,7 +36,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		private readonly string key;
 		private readonly Func<Stream> openStream;
 
-		public override object Text => Language.EscapeName(key);
+		public override object Text => ILAmbience.EscapeName(key);
 
 		public override object Icon => Images.Resource;
 

@@ -39,7 +39,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 
 		public override object Icon => TypeTreeNode.GetIcon(analyzedType);
 
-		public override object Text => Language.TypeToString(analyzedType, includeNamespace: true);
+		public override object Text => Language.TypeToString(analyzedType);
 
 		protected override void LoadChildren()
 		{

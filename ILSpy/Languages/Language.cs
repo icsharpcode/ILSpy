@@ -21,14 +21,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
-using System.Text;
 
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpyX;
@@ -87,27 +87,27 @@ namespace ICSharpCode.ILSpy
 
 		public virtual void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
-			WriteCommentLine(output, TypeToString(method.DeclaringTypeDefinition, includeNamespace: true) + "." + method.Name);
+			WriteCommentLine(output, TypeToString(method.DeclaringTypeDefinition) + "." + method.Name);
 		}
 
 		public virtual void DecompileProperty(IProperty property, ITextOutput output, DecompilationOptions options)
 		{
-			WriteCommentLine(output, TypeToString(property.DeclaringTypeDefinition, includeNamespace: true) + "." + property.Name);
+			WriteCommentLine(output, TypeToString(property.DeclaringTypeDefinition) + "." + property.Name);
 		}
 
 		public virtual void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
 		{
-			WriteCommentLine(output, TypeToString(field.DeclaringTypeDefinition, includeNamespace: true) + "." + field.Name);
+			WriteCommentLine(output, TypeToString(field.DeclaringTypeDefinition) + "." + field.Name);
 		}
 
 		public virtual void DecompileEvent(IEvent @event, ITextOutput output, DecompilationOptions options)
 		{
-			WriteCommentLine(output, TypeToString(@event.DeclaringTypeDefinition, includeNamespace: true) + "." + @event.Name);
+			WriteCommentLine(output, TypeToString(@event.DeclaringTypeDefinition) + "." + @event.Name);
 		}
 
 		public virtual void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
-			WriteCommentLine(output, TypeToString(type, includeNamespace: true));
+			WriteCommentLine(output, TypeToString(type));
 		}
 
 		public virtual void DecompileNamespace(string nameSpace, IEnumerable<ITypeDefinition> types, ITextOutput output, DecompilationOptions options)
@@ -158,204 +158,9 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Converts a type definition, reference or specification into a string. This method is used by tree nodes and search results.
 		/// </summary>
-		public virtual string TypeToString(IType type, bool includeNamespace)
+		public virtual string TypeToString(IType type, ConversionFlags conversionFlags = ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames)
 		{
-			var visitor = new TypeToStringVisitor(includeNamespace);
-			type.AcceptVisitor(visitor);
-			return visitor.ToString();
-		}
-
-		class TypeToStringVisitor : TypeVisitor
-		{
-			readonly bool includeNamespace;
-			readonly StringBuilder builder;
-
-			public override string ToString()
-			{
-				return builder.ToString();
-			}
-
-			public TypeToStringVisitor(bool includeNamespace)
-			{
-				this.includeNamespace = includeNamespace;
-				this.builder = new StringBuilder();
-			}
-
-			public override IType VisitArrayType(ArrayType type)
-			{
-				base.VisitArrayType(type);
-				builder.Append('[');
-				builder.Append(',', type.Dimensions - 1);
-				builder.Append(']');
-				return type;
-			}
-
-			public override IType VisitByReferenceType(ByReferenceType type)
-			{
-				base.VisitByReferenceType(type);
-				builder.Append('&');
-				return type;
-			}
-
-			public override IType VisitModOpt(ModifiedType type)
-			{
-				type.ElementType.AcceptVisitor(this);
-				builder.Append(" modopt(");
-				type.Modifier.AcceptVisitor(this);
-				builder.Append(")");
-				return type;
-			}
-
-			public override IType VisitModReq(ModifiedType type)
-			{
-				type.ElementType.AcceptVisitor(this);
-				builder.Append(" modreq(");
-				type.Modifier.AcceptVisitor(this);
-				builder.Append(")");
-				return type;
-			}
-
-			public override IType VisitPointerType(PointerType type)
-			{
-				base.VisitPointerType(type);
-				builder.Append('*');
-				return type;
-			}
-
-			public override IType VisitTypeParameter(ITypeParameter type)
-			{
-				base.VisitTypeParameter(type);
-				EscapeName(builder, type.Name);
-				return type;
-			}
-
-			public override IType VisitParameterizedType(ParameterizedType type)
-			{
-				type.GenericType.AcceptVisitor(this);
-				builder.Append('<');
-				for (int i = 0; i < type.TypeArguments.Count; i++)
-				{
-					if (i > 0)
-						builder.Append(',');
-					type.TypeArguments[i].AcceptVisitor(this);
-				}
-				builder.Append('>');
-				return type;
-			}
-
-			public override IType VisitTupleType(TupleType type)
-			{
-				type.UnderlyingType.AcceptVisitor(this);
-				return type;
-			}
-
-			public override IType VisitFunctionPointerType(FunctionPointerType type)
-			{
-				builder.Append("method ");
-				if (type.CallingConvention != SignatureCallingConvention.Default)
-				{
-					builder.Append(type.CallingConvention.ToILSyntax());
-					builder.Append(' ');
-				}
-				type.ReturnType.AcceptVisitor(this);
-				builder.Append(" *(");
-				bool first = true;
-				foreach (var p in type.ParameterTypes)
-				{
-					if (first)
-						first = false;
-					else
-						builder.Append(", ");
-
-					p.AcceptVisitor(this);
-				}
-				builder.Append(')');
-				return type;
-			}
-
-			public override IType VisitOtherType(IType type)
-			{
-				WriteType(type);
-				return type;
-			}
-
-			private void WriteType(IType type)
-			{
-				if (includeNamespace)
-					EscapeName(builder, type.FullName);
-				else
-					EscapeName(builder, type.Name);
-				if (type.TypeParameterCount > 0)
-				{
-					builder.Append('`');
-					builder.Append(type.TypeParameterCount);
-				}
-			}
-
-			public override IType VisitTypeDefinition(ITypeDefinition type)
-			{
-				switch (type.KnownTypeCode)
-				{
-					case KnownTypeCode.Object:
-						builder.Append("object");
-						break;
-					case KnownTypeCode.Boolean:
-						builder.Append("bool");
-						break;
-					case KnownTypeCode.Char:
-						builder.Append("char");
-						break;
-					case KnownTypeCode.SByte:
-						builder.Append("int8");
-						break;
-					case KnownTypeCode.Byte:
-						builder.Append("uint8");
-						break;
-					case KnownTypeCode.Int16:
-						builder.Append("int16");
-						break;
-					case KnownTypeCode.UInt16:
-						builder.Append("uint16");
-						break;
-					case KnownTypeCode.Int32:
-						builder.Append("int32");
-						break;
-					case KnownTypeCode.UInt32:
-						builder.Append("uint32");
-						break;
-					case KnownTypeCode.Int64:
-						builder.Append("int64");
-						break;
-					case KnownTypeCode.UInt64:
-						builder.Append("uint64");
-						break;
-					case KnownTypeCode.Single:
-						builder.Append("float32");
-						break;
-					case KnownTypeCode.Double:
-						builder.Append("float64");
-						break;
-					case KnownTypeCode.String:
-						builder.Append("string");
-						break;
-					case KnownTypeCode.Void:
-						builder.Append("void");
-						break;
-					case KnownTypeCode.IntPtr:
-						builder.Append("native int");
-						break;
-					case KnownTypeCode.UIntPtr:
-						builder.Append("native uint");
-						break;
-					case KnownTypeCode.TypedReference:
-						builder.Append("typedref");
-						break;
-					default:
-						WriteType(type);
-						break;
-				}
-				return type;
-			}
+			return new ILAmbience() { ConversionFlags = conversionFlags }.ConvertType(type);
 		}
 		#endregion
 
@@ -377,72 +182,92 @@ namespace ICSharpCode.ILSpy
 			return GetTooltip(entity);
 		}
 
+		[Obsolete("Use EntityToString instead")]
 		public virtual string FieldToString(IField field, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			if (field == null)
 				throw new ArgumentNullException(nameof(field));
-			return GetDisplayName(field, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName) + " : " + TypeToString(field.ReturnType, includeNamespace);
+			var flags = ConversionFlags.ShowTypeParameterList
+				| ConversionFlags.PlaceReturnTypeAfterParameterList
+				| ConversionFlags.ShowReturnType
+				| ConversionFlags.ShowParameterList
+				| ConversionFlags.ShowParameterModifiers;
+			if (includeDeclaringTypeName)
+				flags |= ConversionFlags.ShowDeclaringType;
+			if (includeNamespace)
+				flags |= ConversionFlags.UseFullyQualifiedTypeNames;
+			if (includeNamespaceOfDeclaringTypeName)
+				flags |= ConversionFlags.UseFullyQualifiedEntityNames;
+			return EntityToString(field, flags);
 		}
 
+		[Obsolete("Use EntityToString instead")]
 		public virtual string PropertyToString(IProperty property, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			if (property == null)
 				throw new ArgumentNullException(nameof(property));
-			return GetDisplayName(property, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName) + " : " + TypeToString(property.ReturnType, includeNamespace);
+			var flags = ConversionFlags.ShowTypeParameterList
+				| ConversionFlags.PlaceReturnTypeAfterParameterList
+				| ConversionFlags.ShowReturnType
+				| ConversionFlags.ShowParameterList
+				| ConversionFlags.ShowParameterModifiers;
+			if (includeDeclaringTypeName)
+				flags |= ConversionFlags.ShowDeclaringType;
+			if (includeNamespace)
+				flags |= ConversionFlags.UseFullyQualifiedTypeNames;
+			if (includeNamespaceOfDeclaringTypeName)
+				flags |= ConversionFlags.UseFullyQualifiedEntityNames;
+			return EntityToString(property, flags);
 		}
 
+		[Obsolete("Use EntityToString instead")]
 		public virtual string MethodToString(IMethod method, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			if (method == null)
 				throw new ArgumentNullException(nameof(method));
-
-			int i = 0;
-			var buffer = new StringBuilder();
-			buffer.Append(GetDisplayName(method, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName));
-			var typeParameters = method.TypeParameters;
-			if (typeParameters.Count > 0)
-			{
-				buffer.Append("``");
-				buffer.Append(typeParameters.Count);
-				buffer.Append('<');
-				foreach (var tp in typeParameters)
-				{
-					if (i > 0)
-						buffer.Append(", ");
-					buffer.Append(tp.Name);
-					i++;
-				}
-				buffer.Append('>');
-			}
-			buffer.Append('(');
-
-			i = 0;
-			var parameters = method.Parameters;
-			foreach (var param in parameters)
-			{
-				if (i > 0)
-					buffer.Append(", ");
-				buffer.Append(TypeToString(param.Type, includeNamespace));
-				i++;
-			}
-			buffer.Append(')');
-			if (!method.IsConstructor)
-			{
-				buffer.Append(" : ");
-				buffer.Append(TypeToString(method.ReturnType, includeNamespace));
-			}
-			return buffer.ToString();
+			var flags = ConversionFlags.ShowTypeParameterList
+				| ConversionFlags.PlaceReturnTypeAfterParameterList
+				| ConversionFlags.ShowReturnType
+				| ConversionFlags.ShowParameterList
+				| ConversionFlags.ShowParameterModifiers;
+			if (includeDeclaringTypeName)
+				flags |= ConversionFlags.ShowDeclaringType;
+			if (includeNamespace)
+				flags |= ConversionFlags.UseFullyQualifiedTypeNames;
+			if (includeNamespaceOfDeclaringTypeName)
+				flags |= ConversionFlags.UseFullyQualifiedEntityNames;
+			return EntityToString(method, flags);
 		}
 
+		[Obsolete("Use EntityToString instead")]
 		public virtual string EventToString(IEvent @event, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			if (@event == null)
 				throw new ArgumentNullException(nameof(@event));
-			var buffer = new StringBuilder();
-			buffer.Append(GetDisplayName(@event, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName));
-			buffer.Append(" : ");
-			buffer.Append(TypeToString(@event.ReturnType, includeNamespace));
-			return buffer.ToString();
+			var flags = ConversionFlags.ShowTypeParameterList
+				| ConversionFlags.PlaceReturnTypeAfterParameterList
+				| ConversionFlags.ShowReturnType
+				| ConversionFlags.ShowParameterList
+				| ConversionFlags.ShowParameterModifiers;
+			if (includeDeclaringTypeName)
+				flags |= ConversionFlags.ShowDeclaringType;
+			if (includeNamespace)
+				flags |= ConversionFlags.UseFullyQualifiedTypeNames;
+			if (includeNamespaceOfDeclaringTypeName)
+				flags |= ConversionFlags.UseFullyQualifiedEntityNames;
+			return EntityToString(@event, flags);
+		}
+
+		public virtual string EntityToString(IEntity entity, ConversionFlags conversionFlags)
+		{
+			var ambience = new ILAmbience();
+			ambience.ConversionFlags = ConversionFlags.ShowTypeParameterList
+				| ConversionFlags.PlaceReturnTypeAfterParameterList
+				| ConversionFlags.ShowReturnType
+				| ConversionFlags.ShowParameterList
+				| ConversionFlags.ShowParameterModifiers
+				| conversionFlags;
+			return ambience.ConvertSymbol(entity);
 		}
 
 		protected string GetDisplayName(IEntity entity, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
@@ -452,17 +277,17 @@ namespace ICSharpCode.ILSpy
 			{
 				MetadataReader metadata = t.ParentModule.MetadataFile.Metadata;
 				var typeDef = metadata.GetTypeDefinition((TypeDefinitionHandle)t.MetadataToken);
-				entityName = EscapeName(metadata.GetString(typeDef.Name));
+				entityName = ILAmbience.EscapeName(metadata.GetString(typeDef.Name));
 			}
 			else
 			{
-				entityName = EscapeName(entity.Name);
+				entityName = ILAmbience.EscapeName(entity.Name);
 			}
 			if (includeNamespace || includeDeclaringTypeName)
 			{
 				if (entity.DeclaringTypeDefinition != null)
-					return TypeToString(entity.DeclaringTypeDefinition, includeNamespaceOfDeclaringTypeName) + "." + entityName;
-				return EscapeName(entity.Namespace) + "." + entityName;
+					return TypeToString(entity.DeclaringTypeDefinition, ConversionFlags.ShowDeclaringType | ConversionFlags.UseFullyQualifiedEntityNames) + "." + entityName;
+				return ILAmbience.EscapeName(entity.Namespace) + "." + entityName;
 			}
 			else
 			{
@@ -493,14 +318,14 @@ namespace ICSharpCode.ILSpy
 			{
 				case HandleKind.TypeDefinition:
 					if (fullName)
-						return EscapeName(((TypeDefinitionHandle)handle).GetFullTypeName(metadata).ToILNameString(omitGenerics));
+						return ILAmbience.EscapeName(((TypeDefinitionHandle)handle).GetFullTypeName(metadata).ToILNameString(omitGenerics));
 					var td = metadata.GetTypeDefinition((TypeDefinitionHandle)handle);
-					return EscapeName(metadata.GetString(td.Name));
+					return ILAmbience.EscapeName(metadata.GetString(td.Name));
 				case HandleKind.FieldDefinition:
 					var fd = metadata.GetFieldDefinition((FieldDefinitionHandle)handle);
 					if (fullName)
-						return EscapeName(fd.GetDeclaringType().GetFullTypeName(metadata).ToILNameString(omitGenerics) + "." + metadata.GetString(fd.Name));
-					return EscapeName(metadata.GetString(fd.Name));
+						return ILAmbience.EscapeName(fd.GetDeclaringType().GetFullTypeName(metadata).ToILNameString(omitGenerics) + "." + metadata.GetString(fd.Name));
+					return ILAmbience.EscapeName(metadata.GetString(fd.Name));
 				case HandleKind.MethodDefinition:
 					var md = metadata.GetMethodDefinition((MethodDefinitionHandle)handle);
 					string methodName = metadata.GetString(md.Name);
@@ -511,20 +336,20 @@ namespace ICSharpCode.ILSpy
 							methodName += "``" + genericParamCount;
 					}
 					if (fullName)
-						return EscapeName(md.GetDeclaringType().GetFullTypeName(metadata).ToILNameString(omitGenerics) + "." + methodName);
-					return EscapeName(methodName);
+						return ILAmbience.EscapeName(md.GetDeclaringType().GetFullTypeName(metadata).ToILNameString(omitGenerics) + "." + methodName);
+					return ILAmbience.EscapeName(methodName);
 				case HandleKind.EventDefinition:
 					var ed = metadata.GetEventDefinition((EventDefinitionHandle)handle);
 					var declaringType = metadata.GetMethodDefinition(ed.GetAccessors().GetAny()).GetDeclaringType();
 					if (fullName)
-						return EscapeName(declaringType.GetFullTypeName(metadata).ToILNameString(omitGenerics) + "." + metadata.GetString(ed.Name));
-					return EscapeName(metadata.GetString(ed.Name));
+						return ILAmbience.EscapeName(declaringType.GetFullTypeName(metadata).ToILNameString(omitGenerics) + "." + metadata.GetString(ed.Name));
+					return ILAmbience.EscapeName(metadata.GetString(ed.Name));
 				case HandleKind.PropertyDefinition:
 					var pd = metadata.GetPropertyDefinition((PropertyDefinitionHandle)handle);
 					declaringType = metadata.GetMethodDefinition(pd.GetAccessors().GetAny()).GetDeclaringType();
 					if (fullName)
-						return EscapeName(declaringType.GetFullTypeName(metadata).ToILNameString(omitGenerics) + "." + metadata.GetString(pd.Name));
-					return EscapeName(metadata.GetString(pd.Name));
+						return ILAmbience.EscapeName(declaringType.GetFullTypeName(metadata).ToILNameString(omitGenerics) + "." + metadata.GetString(pd.Name));
+					return ILAmbience.EscapeName(metadata.GetString(pd.Name));
 				default:
 					return null;
 			}
@@ -572,29 +397,6 @@ namespace ICSharpCode.ILSpy
 		public static string GetRuntimeDisplayName(MetadataFile module)
 		{
 			return module.Metadata.MetadataVersion;
-		}
-
-		/// <summary>
-		/// Escape characters that cannot be displayed in the UI.
-		/// </summary>
-		public static StringBuilder EscapeName(StringBuilder sb, string name)
-		{
-			foreach (char ch in name)
-			{
-				if (char.IsWhiteSpace(ch) || char.IsControl(ch) || char.IsSurrogate(ch))
-					sb.AppendFormat("\\u{0:x4}", (int)ch);
-				else
-					sb.Append(ch);
-			}
-			return sb;
-		}
-
-		/// <summary>
-		/// Escape characters that cannot be displayed in the UI.
-		/// </summary>
-		public static string EscapeName(string name)
-		{
-			return EscapeName(new StringBuilder(name.Length), name).ToString();
 		}
 	}
 }

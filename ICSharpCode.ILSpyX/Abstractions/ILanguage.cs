@@ -19,6 +19,7 @@
 using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpyX.Abstractions
@@ -30,10 +31,7 @@ namespace ICSharpCode.ILSpyX.Abstractions
 		string GetEntityName(MetadataFile module, System.Reflection.Metadata.EntityHandle handle, bool fullName, bool omitGenerics);
 		string GetTooltip(IEntity entity);
 
-		string TypeToString(IType type, bool includeNamespace);
-		string MethodToString(IMethod method, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName);
-		string FieldToString(IField field, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName);
-		string PropertyToString(IProperty property, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName);
-		string EventToString(IEvent @event, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName);
+		string TypeToString(IType type, ConversionFlags conversionFlags = ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.UseFullyQualifiedTypeNames);
+		string EntityToString(IEntity entity, ConversionFlags conversionFlags);
 	}
 }

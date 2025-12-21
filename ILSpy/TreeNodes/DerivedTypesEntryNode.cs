@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override bool ShowExpander => !type.IsSealed && base.ShowExpander;
 
 		public override object Text {
-			get { return Language.TypeToString(type, includeNamespace: true) + GetSuffixString(type.MetadataToken); }
+			get { return Language.TypeToString(type) + GetSuffixString(type.MetadataToken); }
 		}
 
 		public override object NavigationText => $"{Text} ({Properties.Resources.DerivedTypes})";
@@ -98,7 +98,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, language.TypeToString(type, includeNamespace: true));
+			language.WriteCommentLine(output, language.TypeToString(type));
 		}
 
 		IEntity IMemberTreeNode.Member => type;

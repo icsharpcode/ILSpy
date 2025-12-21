@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.type = type;
 		}
 
-		public override object Text => this.Language.TypeToString(type, includeNamespace: true);
+		public override object Text => this.Language.TypeToString(type);
 
 		public override object NavigationText => $"{Text} ({Properties.Resources.BaseTypes})";
 
@@ -61,7 +61,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, language.TypeToString(type, includeNamespace: true));
+			language.WriteCommentLine(output, language.TypeToString(type));
 		}
 
 		IEntity IMemberTreeNode.Member => type;

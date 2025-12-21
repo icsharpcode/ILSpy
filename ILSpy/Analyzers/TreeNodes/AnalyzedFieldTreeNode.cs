@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 
+using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
 
@@ -39,7 +40,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 
 		public override object Icon => FieldTreeNode.GetIcon(analyzedField);
 
-		public override object Text => Language.FieldToString(analyzedField, true, false, true);
+		public override object Text => Language.EntityToString(analyzedField, ConversionFlags.ShowDeclaringType | ConversionFlags.UseFullyQualifiedEntityNames);
 
 		protected override void LoadChildren()
 		{

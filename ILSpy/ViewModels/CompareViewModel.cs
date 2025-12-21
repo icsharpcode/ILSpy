@@ -41,6 +41,7 @@ using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
+	using ICSharpCode.Decompiler.Output;
 	using ICSharpCode.Decompiler.TypeSystem;
 
 	using TomsToolbox.Wpf;
@@ -217,11 +218,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 			return result;
 
 			string? GetEntityText(ISymbol? symbol) => symbol switch {
-				ITypeDefinition t => this.assemblyTreeModel.CurrentLanguage.TypeToString(t, includeNamespace: true),
-				IMethod m => this.assemblyTreeModel.CurrentLanguage.MethodToString(m, false, false, false),
-				IField f => this.assemblyTreeModel.CurrentLanguage.FieldToString(f, false, false, false),
-				IProperty p => this.assemblyTreeModel.CurrentLanguage.PropertyToString(p, false, false, false),
-				IEvent e => this.assemblyTreeModel.CurrentLanguage.EventToString(e, false, false, false),
+				ITypeDefinition t => this.assemblyTreeModel.CurrentLanguage.TypeToString(t),
+				IEntity m => this.assemblyTreeModel.CurrentLanguage.EntityToString(m, ConversionFlags.None),
 				INamespace n => n.FullName,
 				IModule m => m.FullAssemblyName,
 				_ => null,
@@ -301,7 +299,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			var module = (MetadataModule)typeSystem.MainModule!;
 			var metadata = module.MetadataFile.Metadata;
 			var ambience = new CSharpAmbience();
-			ambience.ConversionFlags = ICSharpCode.Decompiler.Output.ConversionFlags.All & ~ICSharpCode.Decompiler.Output.ConversionFlags.ShowDeclaringType;
+			ambience.ConversionFlags = ConversionFlags.All & ~ConversionFlags.ShowDeclaringType;
 
 			List<Entry> results = new();
 			Dictionary<TypeDefinitionHandle, Entry> typeEntries = new();
@@ -651,11 +649,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 				return entityText + (otherText != null && entityText != otherText ? " -> " + otherText : "");
 
 				string? GetEntityText(ISymbol? symbol) => symbol switch {
-					ITypeDefinition t => this.Language.TypeToString(t, includeNamespace: false) + GetSuffixString(t.MetadataToken),
-					IMethod m => this.Language.MethodToString(m, false, false, false) + GetSuffixString(m.MetadataToken),
-					IField f => this.Language.FieldToString(f, false, false, false) + GetSuffixString(f.MetadataToken),
-					IProperty p => this.Language.PropertyToString(p, false, false, false) + GetSuffixString(p.MetadataToken),
-					IEvent e => this.Language.EventToString(e, false, false, false) + GetSuffixString(e.MetadataToken),
+					ITypeDefinition t => this.Language.TypeToString(t, ConversionFlags.None) + GetSuffixString(t.MetadataToken),
+					IEntity e => this.Language.EntityToString(e, ConversionFlags.All & ~(ConversionFlags.ShowDeclaringType | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.UseFullyQualifiedTypeNames)) + GetSuffixString(e.MetadataToken),
 					INamespace n => n.FullName,
 					IModule m => m.FullAssemblyName,
 					_ => null,

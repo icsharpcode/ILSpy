@@ -24,6 +24,7 @@ using ICSharpCode.Decompiler;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
+	using ICSharpCode.Decompiler.Output;
 	using ICSharpCode.Decompiler.TypeSystem;
 	using ICSharpCode.ILSpyX;
 
@@ -52,7 +53,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static object GetText(IField field, Language language, bool includeDeclaringTypeName = false)
 		{
-			return language.FieldToString(field, includeDeclaringTypeName, includeNamespace: false, includeNamespaceOfDeclaringTypeName: false);
+			return language.EntityToString(field, includeDeclaringTypeName ? ConversionFlags.ShowDeclaringType : ConversionFlags.None);
 		}
 
 		public override object Icon => GetIcon(GetFieldDefinition());

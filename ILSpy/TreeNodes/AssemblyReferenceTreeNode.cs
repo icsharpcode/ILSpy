@@ -23,6 +23,7 @@ using System.Windows.Threading;
 
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Themes;
@@ -60,7 +61,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public AssemblyReference AssemblyReference => r;
 
 		public override object Text {
-			get { return Language.EscapeName(r.Name) + GetSuffixString(r.Handle); }
+			get { return ILAmbience.EscapeName(r.Name) + GetSuffixString(r.Handle); }
 		}
 
 		public override object NavigationText => $"{Text} ({Properties.Resources.References})";

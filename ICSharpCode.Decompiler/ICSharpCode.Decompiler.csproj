@@ -109,6 +109,7 @@
     <Compile Include="Disassembler\IEntityProcessor.cs" />
     <Compile Include="Disassembler\SortByNameProcessor.cs" />
     <Compile Include="Humanizer\StringHumanizeExtensions.cs" />
+    <Compile Include="IL\ILAmbience.cs" />
     <Compile Include="IL\Transforms\InlineArrayTransform.cs" />
     <Compile Include="IL\Transforms\RemoveUnconstrainedGenericReferenceTypeCheck.cs" />
     <Compile Include="Metadata\MetadataFile.cs" />
