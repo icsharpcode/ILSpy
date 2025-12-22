@@ -117,7 +117,7 @@ namespace ICSharpCode.ILSpy
 					first = false;
 				}
 
-				result.WriteLine("- " + assemblies[0].Text + " conflicts with " + string.Join(", ", assemblies.Skip(1)));
+				result.WriteLine("- " + assemblies[0].Text + " conflicts with " + string.Join(", ", assemblies.Skip(1).Select(a => a.Text)));
 			}
 
 			if (abort)
