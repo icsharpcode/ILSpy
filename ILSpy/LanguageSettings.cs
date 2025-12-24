@@ -31,7 +31,7 @@ namespace ICSharpCode.ILSpy
 	/// <summary>
 	/// Represents the filters applied to the tree view.
 	/// </summary>
-	public class LanguageSettings : ObservableObject, IChildSettings
+	public class LanguageSettings : ObservableObjectBase, IChildSettings
 	{
 		/// <summary>
 		/// This dictionary is necessary to remember language versions across language changes. For example, 

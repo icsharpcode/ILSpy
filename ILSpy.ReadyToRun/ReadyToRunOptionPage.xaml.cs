@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 	[ExportOptionPage(Order = 40)]
 	[NonShared]
-	class ReadyToRunOptionsViewModel : ObservableObject, IOptionPage
+	class ReadyToRunOptionsViewModel : ObservableObjectBase, IOptionPage
 	{
 		private ReadyToRunOptions options;
 

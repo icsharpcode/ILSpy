@@ -34,7 +34,7 @@ using DelegateCommand = ICSharpCode.ILSpy.Commands.DelegateCommand;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
-	public class ManageAssemblyListsViewModel : ObservableObject
+	public class ManageAssemblyListsViewModel : ObservableObjectBase
 	{
 		private readonly AssemblyListManager manager;
 		private readonly Window parent;

@@ -24,7 +24,7 @@ using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpy.ReadyToRun
 {
-	internal partial class ReadyToRunOptions : ObservableObject, ISettingsSection
+	internal partial class ReadyToRunOptions : ObservableObjectBase, ISettingsSection
 	{
 		private static readonly XNamespace ns = "http://www.ilspy.net/ready-to-run";
 
