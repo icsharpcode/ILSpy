@@ -14,7 +14,7 @@ namespace ICSharpCode.ILSpy.Options
 {
 	[ExportOptionPage(Order = 20)]
 	[NonShared]
-	public class DisplaySettingsViewModel : ObservableObject, IOptionPage
+	public class DisplaySettingsViewModel : ObservableObjectBase, IOptionPage
 	{
 		private DisplaySettings settings = new();
 		private FontFamily[] fontFamilies;

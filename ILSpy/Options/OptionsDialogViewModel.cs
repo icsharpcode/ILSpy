@@ -27,14 +27,14 @@ using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpy.Options
 {
-	public class OptionsItemViewModel(IOptionPage content) : ObservableObject
+	public class OptionsItemViewModel(IOptionPage content) : ObservableObjectBase
 	{
 		public string Title { get; } = content.Title;
 
 		public IOptionPage Content { get; } = content;
 	}
 
-	public class OptionsDialogViewModel : ObservableObject
+	public class OptionsDialogViewModel : ObservableObjectBase
 	{
 		private IOptionPage? selectedPage;
 

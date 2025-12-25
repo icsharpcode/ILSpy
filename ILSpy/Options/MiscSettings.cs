@@ -23,7 +23,7 @@ using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpyX.Settings
 {
-	public class MiscSettings : ObservableObject, ISettingsSection
+	public class MiscSettings : ObservableObjectBase, ISettingsSection
 	{
 		private bool allowMultipleInstances;
 		private bool loadPreviousAssemblies = true;

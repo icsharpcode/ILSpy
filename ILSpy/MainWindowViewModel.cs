@@ -27,7 +27,7 @@ namespace ICSharpCode.ILSpy
 {
 	[Export]
 	[Shared]
-	public class MainWindowViewModel(SettingsService settingsService, LanguageService languageService, DockWorkspace dockWorkspace) : ObservableObject
+	public class MainWindowViewModel(SettingsService settingsService, LanguageService languageService, DockWorkspace dockWorkspace) : ObservableObjectBase
 	{
 		public DockWorkspace Workspace { get; } = dockWorkspace;
 

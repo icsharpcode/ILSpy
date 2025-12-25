@@ -28,7 +28,7 @@ namespace ICSharpCode.ILSpy.Options
 	/// <summary>
 	/// Description of DisplaySettings.
 	/// </summary>
-	public class DisplaySettings : ObservableObject, ISettingsSection
+	public class DisplaySettings : ObservableObjectBase, ISettingsSection
 	{
 		FontFamily selectedFont;
 		public FontFamily SelectedFont {

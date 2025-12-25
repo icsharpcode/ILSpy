@@ -27,7 +27,7 @@ using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
-	public abstract class PaneModel : ObservableObject
+	public abstract class PaneModel : ObservableObjectBase
 	{
 		private readonly Throttle titleChangeThrottle;
 

@@ -25,7 +25,7 @@ namespace TestPlugin
 
 	[ExportOptionPage(Order = 0)]
 	[NonShared]
-	class CustomOptionsViewModel : ObservableObject, IOptionPage
+	class CustomOptionsViewModel : ObservableObjectBase, IOptionPage
 	{
 		private Options options;
 
@@ -47,7 +47,7 @@ namespace TestPlugin
 		}
 	}
 
-	class Options : ObservableObject, ISettingsSection
+	class Options : ObservableObjectBase, ISettingsSection
 	{
 		static readonly XNamespace ns = "http://www.ilspy.net/testplugin";
 

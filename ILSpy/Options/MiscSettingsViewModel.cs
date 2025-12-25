@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.Options
 {
 	[ExportOptionPage(Order = 30)]
 	[NonShared]
-	public class MiscSettingsViewModel : ObservableObject, IOptionPage
+	public class MiscSettingsViewModel : ObservableObjectBase, IOptionPage
 	{
 		private MiscSettings settings;
 		public MiscSettings Settings {

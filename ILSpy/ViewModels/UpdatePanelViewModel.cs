@@ -28,7 +28,7 @@ namespace ICSharpCode.ILSpy.ViewModels;
 
 [Export]
 [NonShared]
-public class UpdatePanelViewModel : ObservableObject
+public class UpdatePanelViewModel : ObservableObjectBase
 {
 	bool isPanelVisible;
 	string updateAvailableDownloadUrl;
