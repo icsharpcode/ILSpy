@@ -692,7 +692,7 @@
     <value>导航</value>
   </data>
   <data name="NavigationFailed" xml:space="preserve">
-    <value>导航失败，因为目标是隐藏的或编译器生成的类。\n
+    <value>导航失败，因为目标是隐藏的或编译器生成的类。
 请禁用所有的、可能隐藏它们的筛选器(例如，启用“视图 &gt; 显示内部类型和成员”)，并重试。</value>
   </data>
   <data name="NewList" xml:space="preserve">

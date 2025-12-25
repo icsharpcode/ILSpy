@@ -469,7 +469,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot create PDB file for {0}, because it does not contain a PE Debug Directory Entry of type &apos;CodeView&apos;..
+        ///   Looks up a localized string similar to Cannot create PDB file for {0} because the PE debug directory type &apos;CodeView&apos; is missing..
         /// </summary>
         public static string CannotCreatePDBFile {
             get {
@@ -1928,6 +1928,7 @@ namespace ICSharpCode.ILSpy.Properties {
                 return ResourceManager.GetString("GeneratedPDBFile", resourceCulture);
             }
         }
+        
         /// <summary>
         ///   Looks up a localized string similar to Generate portable PDB.
         /// </summary>
@@ -1938,7 +1939,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Generating portable PDB....
+        ///   Looks up a localized string similar to Generating portable PDB for {0}....
         /// </summary>
         public static string GeneratingPortablePDB {
             get {
@@ -2172,7 +2173,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Navigation failed because the target is hidden or a compiler-generated class.\n
+        ///   Looks up a localized string similar to Navigation failed because the target is hidden or a compiler-generated class.
         ///Please disable all filters that might hide the item (i.e. activate &quot;View &gt; Show internal types and members&quot;) and try again..
         /// </summary>
         public static string NavigationFailed {

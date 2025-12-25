@@ -745,7 +745,7 @@ Are you sure you want to continue?</value>
     <value>Navigation</value>
   </data>
   <data name="NavigationFailed" xml:space="preserve">
-    <value>Navigation failed because the target is hidden or a compiler-generated class.\n
+    <value>Navigation failed because the target is hidden or a compiler-generated class.
 Please disable all filters that might hide the item (i.e. activate "View &gt; Show internal types and members") and try again.</value>
   </data>
   <data name="NewList" xml:space="preserve">
