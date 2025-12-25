@@ -40,14 +40,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			var metadata = module.MetadataFile.Metadata;
 
-			foreach (var extGroup in extensionContainer.NestedTypes)
+			foreach (var nestedType in extensionContainer.NestedTypes)
 			{
-				if (TryEncodingV1(extGroup))
+				if (TryEncodingV1(nestedType))
 				{
 					continue;
 				}
 
-				TryEncodingV2(extGroup);
+				TryEncodingV2(nestedType);
 			}
 
 			bool TryEncodingV1(ITypeDefinition extGroup)
@@ -90,43 +90,52 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return true;
 			}
 
-			bool TryEncodingV2(ITypeDefinition extGroup)
+			bool TryEncodingV2(ITypeDefinition extensionGroupsContainer)
 			{
-				if (!(extGroup is { Kind: TypeKind.Class, IsSealed: true }
-					&& extGroup.Name.StartsWith("<G>$", StringComparison.Ordinal)))
+				// there exists one nested type per extension target type
+				if (!(extensionGroupsContainer is { Kind: TypeKind.Class, IsSealed: true }
+					&& extensionGroupsContainer.Name.StartsWith("<G>$", StringComparison.Ordinal)))
 				{
 					return false;
 				}
 
-				var markerType = extGroup.NestedTypes.SingleOrDefault(t => t.Name.StartsWith("<M>$", StringComparison.Ordinal) && t.IsStatic);
-				var marker = markerType?.Methods.SingleOrDefault(m => m.Name == "<Extension>$" && m.IsStatic && m.Parameters.Count == 1);
-
-				if (markerType == null || marker == null)
-					return false;
-
-				TypeDefinition td = metadata.GetTypeDefinition((TypeDefinitionHandle)extGroup.MetadataToken);
-				List<IMethod> extensionMethods = [];
-				ITypeParameter[] extensionGroupTypeParameters = new ITypeParameter[extGroup.TypeParameterCount];
-
-				// For easier access to accessors we use SRM
-				foreach (var h in td.GetMethods())
+				// if there are multiple extension-blocks with the same target type,
+				// but different names for the extension parameter,
+				// there is a separate markerType, so there are multiple marker types per
+				// target type
+				foreach (var markerType in extensionGroupsContainer.NestedTypes)
 				{
-					var method = module.GetDefinition(h);
-
-					if (method.SymbolKind is SymbolKind.Constructor)
+					if (!(markerType.Name.StartsWith("<M>$", StringComparison.Ordinal) && markerType.IsStatic))
+						continue;
+					var marker = markerType.Methods.SingleOrDefault(m => m.Name == "<Extension>$" && m.IsStatic && m.Parameters.Count == 1);
+					if (marker == null)
 						continue;
 
-					var attribute = method.GetAttribute(KnownAttribute.ExtensionMarker);
-					if (attribute == null)
-						continue;
+					TypeDefinition td = metadata.GetTypeDefinition((TypeDefinitionHandle)extensionGroupsContainer.MetadataToken);
+					List<IMethod> extensionMethods = [];
+					ITypeParameter[] extensionGroupTypeParameters = new ITypeParameter[extensionGroupsContainer.TypeParameterCount];
 
-					if (attribute.FixedArguments[0].Value?.ToString() != markerType.Name)
-						continue;
+					// For easier access to accessors we use SRM
+					foreach (var h in td.GetMethods())
+					{
+						var method = module.GetDefinition(h);
 
-					extensionMethods.Add(method);
+						if (method.SymbolKind is SymbolKind.Constructor)
+							continue;
+
+						var attribute = method.GetAttribute(KnownAttribute.ExtensionMarker);
+						if (attribute == null)
+							continue;
+
+						if (attribute.FixedArguments[0].Value?.ToString() != markerType.Name)
+							continue;
+
+						extensionMethods.Add(method);
+					}
+
+					CollectImplementationMethods(extensionGroupsContainer, marker, extensionMethods, extensionGroupTypeParameters);
 				}
 
-				CollectImplementationMethods(extGroup, marker, extensionMethods, extensionGroupTypeParameters);
 				return true;
 			}
 

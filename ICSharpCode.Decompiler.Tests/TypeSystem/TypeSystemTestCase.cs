@@ -785,5 +785,51 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			{
 			}
 		}
+
+		extension(int number)
+		{
+			public int Squared => number * number;
+		}
+
+		extension(string input)
+		{
+			public void Method() { }
+			public void Method(char c) { }
+			public string AsString => input.ToString();
+			public string Test {
+				get => "Test";
+				set { }
+			}
+			public static void StaticMethodOnString() { }
+			public static void StaticMethodOnString(double x) { }
+			public static string StaticPropertyOnString => "StaticProperty";
+			public static void GenericMethodOnString<T>(T value)
+			{
+			}
+		}
+
+		extension<T>(T input)
+		{
+			public void Method() { }
+			public void Method(char c) { }
+			public string AsString => input.ToString();
+			public string Test {
+				get => "Test";
+				set { }
+			}
+			public static void StaticMethodOnGeneric() { }
+			public static void StaticMethodOnGeneric(double x) { }
+			public static string StaticPropertyOnGeneric => "StaticProperty";
+			public static void GenericMethodOnGeneric<U>(U value)
+			{
+			}
+		}
+
+		extension<T, T2>(T input)
+		{
+			public void StaticMethodOnGenericTwoParams(T2 x)
+			{
+			}
+		}
 	}
 }
