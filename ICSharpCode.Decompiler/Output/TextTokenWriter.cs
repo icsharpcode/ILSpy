@@ -255,7 +255,7 @@ namespace ICSharpCode.Decompiler
 					}
 					if (braceLevelWithinType >= 0 || nodeStack.Peek() is TypeDeclaration)
 						braceLevelWithinType++;
-					if (nodeStack.PeekOrDefault() is TypeDeclaration or BlockStatement { Parent: EntityDeclaration or LocalFunctionDeclarationStatement or AnonymousMethodExpression or LambdaExpression } || settings.FoldBraces)
+					if (nodeStack.PeekOrDefault() is TypeDeclaration or ExtensionDeclaration or BlockStatement { Parent: EntityDeclaration or LocalFunctionDeclarationStatement or AnonymousMethodExpression or LambdaExpression } || settings.FoldBraces)
 					{
 						output.MarkFoldStart(defaultCollapsed: !settings.ExpandMemberDefinitions && braceLevelWithinType == 1, isDefinition: braceLevelWithinType == 1);
 					}
@@ -265,7 +265,7 @@ namespace ICSharpCode.Decompiler
 					output.Write('}');
 					if (role != Roles.RBrace)
 						break;
-					if (nodeStack.PeekOrDefault() is TypeDeclaration or BlockStatement { Parent: EntityDeclaration or LocalFunctionDeclarationStatement or AnonymousMethodExpression or LambdaExpression } || settings.FoldBraces)
+					if (nodeStack.PeekOrDefault() is TypeDeclaration or ExtensionDeclaration or BlockStatement { Parent: EntityDeclaration or LocalFunctionDeclarationStatement or AnonymousMethodExpression or LambdaExpression } || settings.FoldBraces)
 						output.MarkFoldEnd();
 					if (braceLevelWithinType >= 0)
 						braceLevelWithinType--;
