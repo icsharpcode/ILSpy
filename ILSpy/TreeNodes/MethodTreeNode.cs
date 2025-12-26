@@ -109,7 +109,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override string ToString()
 		{
-			return LanguageService.ILLanguage.EntityToString(MethodDefinition, ConversionFlags.None);
+			return "Method " + LanguageService.ILLanguage.EntityToString(MethodDefinition, ConversionFlags.None);
 		}
 	}
 }

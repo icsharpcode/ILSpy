@@ -104,7 +104,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override string ToString()
 		{
-			return EventDefinition.Name;
+			return "Event " + EventDefinition.Name;
 		}
 	}
 }

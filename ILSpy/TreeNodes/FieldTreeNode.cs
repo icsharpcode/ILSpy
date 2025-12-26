@@ -105,7 +105,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override string ToString()
 		{
-			return FieldDefinition.Name;
+			return "Field " + FieldDefinition.Name;
 		}
 	}
 }
