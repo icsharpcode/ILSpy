@@ -18,6 +18,15 @@
           "Microsoft.SourceLink.Common": "8.0.0"
         }
       },
+      "NetEscapades.EnumGenerators.Interceptors": {
+        "type": "Direct",
+        "requested": "[1.0.0-beta16, )",
+        "resolved": "1.0.0-beta16",
+        "contentHash": "pGcgfiVbv8+Yvs4de5hZW8t7Z1UmK7aPY4aZKzJxVFutUwNyAoV3USqRNde/MPE+USlKzGbx8qeq9Pfrec15xg==",
+        "dependencies": {
+          "NetEscapades.EnumGenerators": "1.0.0-beta16"
+        }
+      },
       "NETStandard.Library": {
         "type": "Direct",
         "requested": "[2.0.3, )",
@@ -67,6 +76,11 @@
         "type": "Transitive",
         "resolved": "8.0.0",
         "contentHash": "dk9JPxTCIevS75HyEQ0E4OVAFhB2N+V9ShCXf8Q6FkUQZDkgLI12y679Nym1YqsiSysuQskT7Z+6nUf3yab6Vw=="
+      },
+      "NetEscapades.EnumGenerators": {
+        "type": "Transitive",
+        "resolved": "1.0.0-beta16",
+        "contentHash": "QKRivsr5EFhkDQbM//DLrdRCkX3X8BtXwsgnp1saswTlXaqzIBgiGFxNFlgEv/WHdKRU9mfRGW2l1dhVFsonyg=="
       },
       "System.Buffers": {
         "type": "Transitive",

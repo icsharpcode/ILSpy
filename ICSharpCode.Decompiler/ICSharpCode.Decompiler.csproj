@@ -47,11 +47,11 @@
     <None Include="PackageReadme.md" Pack="true" PackagePath="\" />
     <None Include="DecompilerNuGetPackageIcon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
-  
+
   <!-- https://devblogs.microsoft.com/nuget/enable-repeatable-package-restores-using-a-lock-file/ -->
   <PropertyGroup>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-	<RestoreLockedMode>true</RestoreLockedMode>
+    <RestoreLockedMode>true</RestoreLockedMode>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -84,6 +84,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="NetEscapades.EnumGenerators.Interceptors" Version="1.0.0-beta16" PrivateAssets="all" ExcludeAssets="runtime" />
     <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
     <PackageReference Include="System.Reflection.Metadata" Version="9.0.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">

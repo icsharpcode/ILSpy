@@ -18,9 +18,12 @@
 
 using System;
 
+using NetEscapades.EnumGenerators;
+
 namespace ICSharpCode.Decompiler.CSharp.Resolver
 {
 	[Flags]
+	[EnumExtensions]
 	public enum OverloadResolutionErrors
 	{
 		None = 0,
