@@ -295,7 +295,7 @@
     <value>自動載入程式集的參考</value>
   </data>
   <data name="DecompilerSettings.CheckForOverflowUnderflow" xml:space="preserve">
-    <value>&#x8;檢查運算子的溢位和下溢</value>
+    <value>檢查運算子的溢位和下溢</value>
   </data>
   <data name="DecompilerSettings.CheckedOperators" xml:space="preserve">
     <value>使用者定義的 checked 運算子</value>
@@ -413,6 +413,9 @@
   </data>
   <data name="DecompilerSettings.IsUnmanagedAttributeOnTypeParametersShouldBeReplacedWithUnmanagedConstraints" xml:space="preserve">
     <value>將類型參數上的 IsUnmanagedAttribute 替換成 'unmanaged' 約束</value>
+  </data>
+  <data name="DecompilerSettings.LifetimeAnnotations" xml:space="preserve">
+    <value>'scoped' 生命週期關鍵字</value>
   </data>
   <data name="DecompilerSettings.NativeIntegers" xml:space="preserve">
     <value>使用 nint/nuint 類型</value>
@@ -1156,8 +1159,5 @@
   </data>
   <data name="_Window" xml:space="preserve">
     <value>視窗(_W)</value>
-  </data>
-  <data name="DecompilerSettings.LifetimeAnnotations" xml:space="preserve">
-    <value>'scoped' 生命週期關鍵字</value>
   </data>
 </root>
