@@ -694,7 +694,7 @@
     <value>ILSpyAboutPage_zh_Hant.txt</value>
   </data>
   <data name="ILSpyVersion" xml:space="preserve">
-    <value>ILSpy 版本</value>
+    <value>ILSpy 版本 </value>
   </data>
   <data name="ILSpyVersionAvailable" xml:space="preserve">
     <value>已有更新的 ILSpy 版本。</value>
@@ -739,7 +739,7 @@
     <value>雜項</value>
   </data>
   <data name="NETFrameworkVersion" xml:space="preserve">
-    <value>.NET 版本</value>
+    <value>.NET 版本 </value>
   </data>
   <data name="Name" xml:space="preserve">
     <value>名稱</value>
