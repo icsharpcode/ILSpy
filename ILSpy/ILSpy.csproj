@@ -57,6 +57,7 @@
   <ItemGroup>
     <EmbeddedResource Include="..\doc\ILSpyAboutPage.txt" />
     <EmbeddedResource Include="..\doc\ILSpyAboutPage_zh_Hans.txt" />
+    <EmbeddedResource Include="..\doc\ILSpyAboutPage_zh_Hant.txt" />
     <EmbeddedResource Include="..\doc\third-party-notices.txt" />
     <EmbeddedResource Include="..\LICENSE">
       <Link>license.txt</Link>
