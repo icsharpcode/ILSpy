@@ -51,5 +51,10 @@
       <LogicalName>VSPackage.zh-Hans.resources</LogicalName>
       <MergeWithCTO>true</MergeWithCTO>
     </EmbeddedResource>
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)VSPackage.zh-Hant.resx">
+      <DependentUpon>VSPackage.resx</DependentUpon>
+      <LogicalName>VSPackage.zh-Hant.resources</LogicalName>
+      <MergeWithCTO>true</MergeWithCTO>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>
