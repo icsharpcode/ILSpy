@@ -57,9 +57,5 @@
   </ItemGroup>
   <ItemGroup>
     <GlobalPackageReference Include="TomsToolbox.Composition.Analyzer" Version="2.22.2" />
-    <GlobalPackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.100">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </GlobalPackageReference>
   </ItemGroup>
 </Project>

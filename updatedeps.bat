@@ -1,0 +1,1 @@
+dotnet restore ILSpy.sln --force-evaluate -p:RestoreEnablePackagePruning=false
