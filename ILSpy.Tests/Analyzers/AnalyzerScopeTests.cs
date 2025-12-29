@@ -37,7 +37,6 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 
 		}
 
-
 		[Test]
 		public void WhenPublicNestedClass_ThenNotInfiniteLoop()
 		{

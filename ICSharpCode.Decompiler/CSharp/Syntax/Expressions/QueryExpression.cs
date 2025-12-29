@@ -266,7 +266,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-
 	public class QueryWhereClause : QueryClause
 	{
 		public readonly static TokenRole WhereKeywordRole = new TokenRole("where");

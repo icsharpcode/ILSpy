@@ -33,7 +33,6 @@ using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpyX.FileLoaders;
 using ICSharpCode.ILSpyX.PdbProvider;
 
-
 #nullable enable
 
 namespace ICSharpCode.ILSpyX

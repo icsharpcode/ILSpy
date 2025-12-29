@@ -1011,7 +1011,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-
 		OperatorMethod[]? bitwiseAndOperators;
 
 		public OperatorMethod[] BitwiseAndOperators {
@@ -1033,7 +1032,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 			}
 		}
-
 
 		OperatorMethod[]? logicalOrOperators;
 

@@ -1074,7 +1074,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return initializerBlock;
 			}
 
-
 			return (BuildBlock, ctor.DeclaringType);
 		}
 

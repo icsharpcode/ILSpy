@@ -162,8 +162,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			set;
 		}
 
-
-
 		public PropertyFormatting AutoPropertyFormatting { get; set; }
 
 		public PropertyFormatting SimplePropertyFormatting { // tested
@@ -847,7 +845,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		}
 
 		#endregion
-
 
 		#region Keep formatting
 		public bool KeepCommentsAtFirstColumn {

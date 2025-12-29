@@ -89,7 +89,6 @@ namespace ICSharpCode.ILSpy.Controls
 			}
 		}
 
-
 		static UIElement CreateToolbarItem(IExport<ICommand, IToolbarCommandMetadata> commandExport)
 		{
 			var command = commandExport.Value;

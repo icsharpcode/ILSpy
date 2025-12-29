@@ -61,8 +61,6 @@ namespace ICSharpCode.Decompiler.Metadata
 			this.namespaceName = type.Namespace;
 		}
 
-
-
 		public bool GetArrayType(bool elementType, ArrayShape shape) => elementType;
 		public bool GetByReferenceType(bool elementType) => elementType;
 		public bool GetFunctionPointerType(MethodSignature<bool> signature)

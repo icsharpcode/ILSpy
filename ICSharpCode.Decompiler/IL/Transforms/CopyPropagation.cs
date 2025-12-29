@@ -176,4 +176,3 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	}
 }
 
-

@@ -143,7 +143,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public abstract string AbstractProp { get; }
 		}
 
-
 		public abstract record BaseRecord
 		{
 			public string Name { get; }

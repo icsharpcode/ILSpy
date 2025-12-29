@@ -79,7 +79,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 
-
 			// Try to infer IType of stack slots that are of StackType.Ref:
 			foreach (var v in function.Variables)
 			{

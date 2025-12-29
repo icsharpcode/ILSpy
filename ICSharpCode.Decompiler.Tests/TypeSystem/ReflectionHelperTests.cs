@@ -89,7 +89,6 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.That(compilation.FindType(typeof(Action<int, short>)).ReflectionName, Is.EqualTo("System.Action`2[[System.Int32],[System.Int16]]"));
 		}
 
-
 		[Test]
 		public void TestFindTypeReflectionNameNullableType()
 		{

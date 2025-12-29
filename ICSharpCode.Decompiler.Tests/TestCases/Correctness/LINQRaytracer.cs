@@ -175,7 +175,6 @@ namespace RayTracer
 				Roughness = 150
 			};
 
-
 		public static readonly Surface Shiny =
 			new Surface() {
 				Diffuse = pos => Color.Make(1, 1, 1),

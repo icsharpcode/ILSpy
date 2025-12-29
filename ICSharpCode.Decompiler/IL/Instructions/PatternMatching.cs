@@ -569,7 +569,6 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-
 		/// <summary>
 		/// If this instruction is a conversion of the specified kind, return its argument.
 		/// Otherwise, return the instruction itself.

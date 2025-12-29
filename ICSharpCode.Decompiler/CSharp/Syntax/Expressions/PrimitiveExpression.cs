@@ -24,8 +24,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System;
-
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -74,7 +72,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				this.value = value;
 			}
 		}
-
 
 		public LiteralFormat Format {
 			get { return format; }

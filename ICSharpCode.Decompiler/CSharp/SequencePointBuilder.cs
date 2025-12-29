@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 
@@ -545,7 +544,6 @@ namespace ICSharpCode.Decompiler.CSharp
 					hidden.SetHidden();
 					newList.Add(hidden);
 				}
-
 
 				List<int> sequencePointCandidates = function.SequencePointCandidates;
 				int currSPCandidateIndex = 0;

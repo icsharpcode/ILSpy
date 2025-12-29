@@ -274,7 +274,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				rangesForLeave.Add(target, stateRange);
 		}
 
-
 		/// <summary>
 		/// Gets a mapping from states to blocks.
 		/// 

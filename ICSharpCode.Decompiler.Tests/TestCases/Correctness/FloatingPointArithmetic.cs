@@ -72,7 +72,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			return (float)val;
 		}
 
-
 		static double CastSignedToDouble(long val)
 		{
 			return (double)val;

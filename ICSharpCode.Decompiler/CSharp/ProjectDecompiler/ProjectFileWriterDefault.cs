@@ -144,7 +144,6 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				w.WriteElementString("Optimize", "true");
 				w.WriteEndElement(); // </PropertyGroup> (Release)
 
-
 				w.WriteStartElement("ItemGroup"); // References
 				foreach (var r in module.AssemblyReferences)
 				{

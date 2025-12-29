@@ -45,7 +45,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-
 		public delegate ref T RefFunc<T>();
 		public delegate ref readonly T ReadOnlyRefFunc<T>();
 		public delegate ref TReturn RefFunc<T1, TReturn>(T1 param1);

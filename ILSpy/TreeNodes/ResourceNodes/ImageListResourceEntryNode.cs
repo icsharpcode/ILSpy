@@ -77,7 +77,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			EnsureLazyChildren();

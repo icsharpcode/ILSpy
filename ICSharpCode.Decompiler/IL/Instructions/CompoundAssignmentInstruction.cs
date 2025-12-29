@@ -418,4 +418,3 @@ namespace ICSharpCode.Decompiler.IL
 	}
 }
 
-

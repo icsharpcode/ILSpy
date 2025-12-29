@@ -113,7 +113,6 @@ namespace ICSharpCode.Decompiler.IL
 			return null;
 		}
 
-
 		/// <summary>
 		/// Returns true if <c>inst</c> computes the address of a fixed variable; false if it computes the address of a moveable variable.
 		/// (see "Fixed and moveable variables" in the C# specification)

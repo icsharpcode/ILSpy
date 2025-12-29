@@ -165,7 +165,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool IEntity.HasAttribute(KnownAttribute attribute) => baseMember.HasAttribute(attribute);
 		IAttribute IEntity.GetAttribute(KnownAttribute attribute) => baseMember.GetAttribute(attribute);
 
-
 		public IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers {
 			get {
 				// Note: if the interface is generic, then the interface members should already be specialized,

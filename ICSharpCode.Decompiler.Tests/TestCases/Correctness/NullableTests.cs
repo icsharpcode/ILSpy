@@ -91,7 +91,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				throw new InvalidOperationException();
 		}
 
-
 		static T GetValue<T>()
 		{
 			Console.WriteLine("GetValue");

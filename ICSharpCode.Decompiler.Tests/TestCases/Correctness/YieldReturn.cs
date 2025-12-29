@@ -251,7 +251,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 		}
 
-
 		public static IEnumerable<char> ExceptionHandling()
 		{
 			yield return 'a';
@@ -410,7 +409,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				Console.WriteLine("Outer Finally");
 			}
 		}
-
 
 		public static IEnumerable<int> TryFinallyWithTwoExitPoints(bool b)
 		{

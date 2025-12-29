@@ -106,7 +106,6 @@ namespace ICSharpCode.Decompiler.Tests.Util
 			Assert.That(!FileUtility.IsBaseDirectory(@"C:\", @"D:\a\b\hello"));
 		}
 
-
 		[Test]
 		public void TestIsBaseDirectoryRelative()
 		{

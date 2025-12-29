@@ -37,7 +37,6 @@ namespace ICSharpCode.Decompiler.Util
 		/// </summary>
 		LF = 0x0A,
 
-
 		CRLF = 0x0D0A,
 
 		/// <summary>
@@ -70,7 +69,6 @@ namespace ICSharpCode.Decompiler.Util
 		/// </summary>
 		PS = 0x2029
 	}
-
 
 	/// <summary>
 	/// Defines unicode new lines according to  Unicode Technical Report #13
@@ -152,7 +150,6 @@ namespace ICSharpCode.Decompiler.Util
 				return 1;
 			return 0;
 		}
-
 
 		/// <summary>
 		/// Determines if a char is a new line delimiter.

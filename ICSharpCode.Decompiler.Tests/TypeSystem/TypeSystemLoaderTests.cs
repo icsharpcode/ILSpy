@@ -1561,7 +1561,6 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			AssertConstantField<decimal>(type, "CNewm", new decimal());
 		}
 
-
 		[Test]
 		public void ConstantFieldsSizeOf()
 		{
@@ -1653,7 +1652,6 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			ITypeDefinition c = compilation.FindType(typeof(IMarshalAsTests)).GetDefinition();
 			Assert.That(c.GetMethods(m => m.Name == "GetCollectionByQuery2").Count(), Is.EqualTo(1));
 		}
-
 
 		[Test]
 		public void AttributesUsingNestedMembers()

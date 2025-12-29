@@ -4723,7 +4723,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				conversionMapping.Add(inputVariable, outputVariable);
 			}
 
-
 			var lhs = ConstructTuple(inst.Pattern);
 			return new AssignmentExpression(lhs, rhs)
 				.WithILInstruction(inst)

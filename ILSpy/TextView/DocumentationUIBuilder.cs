@@ -137,7 +137,6 @@ namespace ICSharpCode.ILSpy.TextView
 			AddDocumentationElement(new XmlDocumentationElement(xml, declaringEntity, resolver));
 		}
 
-
 		/// <summary>
 		/// Gets/Sets the name of the parameter that should be shown.
 		/// </summary>
@@ -320,7 +319,6 @@ namespace ICSharpCode.ILSpy.TextView
 			span.Inlines.Add(": ");
 			AddSection(span, children);
 		}
-
 
 		void AddPermission(IEntity referencedEntity, IList<XmlDocumentationElement> children)
 		{

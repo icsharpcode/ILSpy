@@ -45,7 +45,6 @@ namespace ICSharpCode.ILSpy.Metadata
 		public override object Icon => Images.ListFolder;
 		public override object ExpandedIcon => Images.ListFolderOpen;
 
-
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
 			tabPage.Title = Text.ToString();

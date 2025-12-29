@@ -64,7 +64,6 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public EnvDTE80.DTE2 DTE => (EnvDTE80.DTE2)GetGlobalService(typeof(EnvDTE.DTE));
 
-
 		/////////////////////////////////////////////////////////////////////////////
 		// Overridden Package Implementation
 		#region Package Members

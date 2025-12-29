@@ -2057,7 +2057,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-
 		TranslatedExpression HandleDelegateConstruction(IType delegateType, IMethod method, ExpectedTargetDetails expectedTargetDetails, ILInstruction thisArg, ILInstruction inst)
 		{
 			var invokeMethod = delegateType.GetDelegateInvokeMethod();

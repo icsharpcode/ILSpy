@@ -520,7 +520,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (isKeyword1 != isKeyword2)
 				return isKeyword1 ? -1 : 1;
 
-
 			if (isKeyword1)
 			{
 				//for keywords

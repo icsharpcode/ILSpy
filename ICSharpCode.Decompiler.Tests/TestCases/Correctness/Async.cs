@@ -180,7 +180,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 		}
 
-
 		public async Task AwaitMultipleCatchBlocks2(Task<int> task)
 		{
 			try

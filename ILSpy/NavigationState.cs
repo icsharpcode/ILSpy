@@ -49,7 +49,6 @@ namespace ICSharpCode.ILSpy
 			this.treeNodes = new HashSet<SharpTreeNode>(treeNodes);
 		}
 
-
 		public bool Equals(NavigationState other)
 		{
 			if (!this.treeNodes.SetEquals(other.treeNodes))

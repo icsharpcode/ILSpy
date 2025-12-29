@@ -165,7 +165,3 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		#endregion
 	}
 }
-
-
-
-

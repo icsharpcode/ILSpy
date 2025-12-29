@@ -43,7 +43,6 @@ public static class SingleInstance
 	private static Thread? _thread;
 	private static readonly object _syncRoot = new();
 
-
 	/// <summary>
 	/// Returns true if this application is not already started.
 	/// Another instance is contacted via named pipe.
@@ -194,7 +193,6 @@ public static class SingleInstance
 	/// </summary>
 	public static event EventHandler<NewInstanceEventArgs>? NewInstanceDetected;
 
-
 	/// <summary>
 	/// Thread function.
 	/// </summary>
@@ -229,7 +227,6 @@ public static class SingleInstance
 		}
 	}
 
-
 	[Serializable]
 	private sealed record SingleInstanceArguments
 	{  // just a storage
@@ -241,7 +238,6 @@ public static class SingleInstance
 	}
 
 }
-
 
 /// <summary>
 /// Arguments for newly detected application instance.

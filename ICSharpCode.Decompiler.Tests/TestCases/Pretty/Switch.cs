@@ -1698,7 +1698,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-
 #if CS110 && NET70
 		public static string SwitchOverReadOnlySpanChar1(ReadOnlySpan<char> text)
 		{

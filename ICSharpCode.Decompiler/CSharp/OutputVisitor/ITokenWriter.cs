@@ -175,5 +175,3 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		}
 	}
 }
-
-

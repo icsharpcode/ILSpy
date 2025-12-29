@@ -1143,7 +1143,6 @@ namespace ICSharpCode.BamlDecompiler.Baml
 			resources[59] = ("SystemColors", "WindowFrameColorKey", "WindowFrameColor");
 			resources[60] = ("SystemColors", "WindowTextColorKey", "WindowTextColor");
 
-
 			resources[63] = ("SystemFonts", "CaptionFontSizeKey", "CaptionFontSize");
 			resources[64] = ("SystemFonts", "CaptionFontFamilyKey", "CaptionFontFamily");
 			resources[65] = ("SystemFonts", "CaptionFontStyleKey", "CaptionFontStyle");
@@ -1174,7 +1173,6 @@ namespace ICSharpCode.BamlDecompiler.Baml
 			resources[90] = ("SystemFonts", "IconFontStyleKey", "IconFontStyle");
 			resources[91] = ("SystemFonts", "IconFontWeightKey", "IconFontWeight");
 			resources[92] = ("SystemFonts", "IconFontTextDecorationsKey", "IconFontTextDecorations");
-
 
 			resources[95] = ("SystemParameters", "ThinHorizontalBorderHeightKey", "ThinHorizontalBorderHeight");
 			resources[96] = ("SystemParameters", "ThinVerticalBorderWidthKey", "ThinVerticalBorderWidth");
@@ -1313,7 +1311,6 @@ namespace ICSharpCode.BamlDecompiler.Baml
 			resources[229] = ("ToolBar", "ComboBoxStyleKey", "ToolBarComboBoxStyle");
 			resources[230] = ("ToolBar", "TextBoxStyleKey", "ToolBarTextBoxStyle");
 			resources[231] = ("ToolBar", "MenuStyleKey", "ToolBarMenuStyle");
-
 
 			resources[234] = ("SystemColors", "InactiveSelectionHighlightBrushKey", "InactiveSelectionHighlightBrush");
 			resources[235] = ("SystemColors", "InactiveSelectionHighlightTextBrushKey", "InactiveSelectionHighlightTextBrush");

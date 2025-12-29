@@ -550,7 +550,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return CheckImplicitTruncation(value, type, compilation, allowNullableValue) != ImplicitTruncationResult.ValuePreserved;
 		}
 
-
 		internal enum ImplicitTruncationResult : byte
 		{
 			/// <summary>

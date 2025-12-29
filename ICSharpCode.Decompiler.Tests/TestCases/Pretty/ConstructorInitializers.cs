@@ -158,7 +158,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public unsafe int SizeOf = sizeof(SimpleStruct);
 		}
 
-
 #if CS120
 		public class ClassWithPrimaryCtorUsingGlobalParameter(int a)
 		{
@@ -202,8 +201,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-
-
 		public class ClassWithPrimaryCtorUsingGlobalParameterInExpressionAssignedToProperty(int a)
 		{
 			public int A { get; set; } = (int)Math.Abs(Math.PI * (double)a);
@@ -234,7 +231,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				this.parent = parent;
 			}
 		}
-
 
 #if CS100
 		public class PrimaryCtorClassThisChain(Guid id)

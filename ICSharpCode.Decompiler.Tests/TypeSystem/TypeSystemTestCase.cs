@@ -495,7 +495,6 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		public const int SObl = sizeof(bool);
 		public const int SOe = sizeof(MyEnum);
 
-
 		public const byte CNewb = new byte();
 		public const sbyte CNewsb = new sbyte();
 		public const char CNewc = new char();

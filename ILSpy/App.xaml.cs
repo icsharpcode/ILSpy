@@ -159,7 +159,6 @@ namespace ICSharpCode.ILSpy
 			{
 				var services = new ServiceCollection();
 
-
 				var pluginDir = Path.GetDirectoryName(typeof(App).Module.FullyQualifiedName);
 				if (pluginDir != null)
 				{

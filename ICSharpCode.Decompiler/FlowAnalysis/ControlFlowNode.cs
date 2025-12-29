@@ -113,7 +113,6 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			}
 		}
 
-
 		/// <summary>
 		/// Gets whether <c>this</c> dominates <paramref name="node"/>.
 		/// </summary>

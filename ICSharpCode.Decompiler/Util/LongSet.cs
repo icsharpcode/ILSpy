@@ -123,7 +123,6 @@ namespace ICSharpCode.Decompiler.Util
 			}
 		}
 
-
 		IEnumerable<LongInterval> DoIntersectWith(LongSet other)
 		{
 			var enumA = this.Intervals.GetEnumerator();

@@ -1,5 +1,3 @@
-
-
 using System;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty

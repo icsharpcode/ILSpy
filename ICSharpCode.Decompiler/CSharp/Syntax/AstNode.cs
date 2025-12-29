@@ -309,7 +309,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return GetDescendantsImpl(true, descendIntoChildren);
 		}
 
-
 		IEnumerable<AstNode> GetDescendantsImpl(bool includeSelf, Func<AstNode, bool>? descendIntoChildren = null)
 		{
 			if (includeSelf)
@@ -922,7 +921,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return result;
 		}
 		#endregion
-
 
 		/// <summary>
 		/// Gets the node that fully contains the range from startLocation to endLocation.

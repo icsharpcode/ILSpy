@@ -420,7 +420,6 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			Assert.That(ExplicitConversion(typeof(nuint), typeof(UIntPtr)), Is.EqualTo(C.IdentityConversion));
 		}
 
-
 		[Test]
 		public void NIntEnumConversion()
 		{
@@ -439,7 +438,6 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			Assert.That(!IntegerLiteralConversion(uint.MaxValue, typeof(nint)));
 			Assert.That(!IntegerLiteralConversion(long.MaxValue, typeof(nint)));
 		}
-
 
 		[Test]
 		public void IntegerLiteralToNUIntConversions()
@@ -1208,7 +1206,6 @@ class Test {
 			Assert.That(c.IsValid);
 			Assert.That(c.IsUserDefined);
 		}
-
 
 		[Test]
 		public void UserDefined_CanUseLiftedEvenIfReturnTypeAlreadyNullable()
