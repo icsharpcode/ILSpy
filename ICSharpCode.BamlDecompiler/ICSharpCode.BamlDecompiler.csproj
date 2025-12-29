@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -46,10 +46,6 @@
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
 	<RestoreLockedMode>true</RestoreLockedMode>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="Properties\AssemblyInfo.template.cs" />
-  </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="Baml\KnownThings.gen.cs" />

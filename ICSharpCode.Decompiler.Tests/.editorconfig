@@ -1,0 +1,11 @@
+# We disable some of the rules that don't make sense in our test
+[*.cs]
+dotnet_diagnostic.CA1060.severity = none
+dotnet_diagnostic.CA1063.severity = none
+dotnet_diagnostic.CA1065.severity = none
+dotnet_diagnostic.CA1401.severity = none
+dotnet_diagnostic.CA1821.severity = none
+dotnet_diagnostic.CA2002.severity = none
+dotnet_diagnostic.CA2101.severity = none
+dotnet_diagnostic.CA2241.severity = none
+dotnet_diagnostic.CA2263.severity = none # disable because it's choking on our test code in UndocumentedExpressions.cs

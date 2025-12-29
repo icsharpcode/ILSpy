@@ -580,7 +580,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public int GetHashCode(ILInstruction obj)
 		{
-			throw new NotSupportedException();
+			return obj.GetHashCode();
 		}
 	}
 }

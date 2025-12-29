@@ -29,7 +29,7 @@ $Dotfiles = @(
 $AllowedExts = @(
 	'.bat','.config','.cs','.csproj','.css','.filelist','.fs','.html','.il',
 	'.ipynb','.js','.json','.less','.manifest','.md','.projitems','.props',
-	'.ps1','.psd1','.ruleset','.shproj','.sln','.slnf','.svg','.template',
+	'.ps1','.psd1','.shproj','.sln','.slnf','.svg','.template',
 	'.tt', '.txt','.vb','.vsct','.vsixlangpack','.wxl','.xaml','.xml','.xshd','.yml'
 )
 

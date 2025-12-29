@@ -36,6 +36,8 @@ using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests.Helpers
 {
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable",
+		Justification = "Derived types are intended to be used as static singletons, each living until the process terminates.")]
 	abstract class AbstractToolset
 	{
 		readonly SourceCacheContext cache;

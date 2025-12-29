@@ -147,6 +147,7 @@
     <Compile Include="Output\InsertParenthesesVisitorTests.cs" />
     <Compile Include="ProjectDecompiler\TargetFrameworkTests.cs" />
     <Compile Include="ProjectDecompiler\WholeProjectDecompilerTests.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestAssemblyResolver.cs" />
     <Compile Include="TestCases\ILPretty\ExtensionEncodingV2.cs" />
     <Compile Include="TestCases\ILPretty\ExtensionEncodingV1.cs" />
