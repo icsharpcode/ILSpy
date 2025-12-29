@@ -52,13 +52,7 @@ ILSpy\TomsToolbox.Essentials.dll
 ILSpy\TomsToolbox.ObservableCollections.dll
 ILSpy\TomsToolbox.Wpf.dll
 ILSpy\TomsToolbox.Wpf.Styles.dll
-ILSpy\zh-Hans\ILSpy.ReadyToRun.Plugin.resources.dll
-ILSpy\zh-Hans\ILSpy.resources.dll
 ILSpy-Large.ico
 license.txt
 manifest.json
 Mono.Cecil.dll
-zh-Hans\extension.vsixlangpack
-zh-Hans\ILSpy.AddIn.VS2022.resources.dll
-zh-Hans\ILSpy.ReadyToRun.Plugin.resources.dll
-zh-Hans\ILSpy.resources.dll
