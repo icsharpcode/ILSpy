@@ -81,14 +81,8 @@
 
   <Target Name="IncludeILSpyDistributionInVSIXSubFolder" AfterTargets="ResolveProjectReferences">
     <ItemGroup>
-      <VSIXSourceItem Include="$(ILSpyBuildPathX64)zh-Hans\ILSpy.resources.dll;$(ILSpyBuildPathX64)zh-Hans\ILSpy.ReadyToRun.Plugin.resources.dll;">
-        <VSIXSubPath>\x64\ILSpy\zh-Hans\</VSIXSubPath>
-      </VSIXSourceItem>
       <VSIXSourceItem Include="$(ILSpyBuildPathX64)*.dll;$(ILSpyBuildPathX64)ILSpy.exe;$(ILSpyBuildPathX64)*.json">
         <VSIXSubPath>\x64\ILSpy</VSIXSubPath>
-      </VSIXSourceItem>
-      <VSIXSourceItem Include="$(ILSpyBuildPathArm64)zh-Hans\ILSpy.resources.dll;$(ILSpyBuildPathArm64)zh-Hans\ILSpy.ReadyToRun.Plugin.resources.dll;">
-        <VSIXSubPath>\arm64\ILSpy\zh-Hans\</VSIXSubPath>
       </VSIXSourceItem>
       <VSIXSourceItem Include="$(ILSpyBuildPathArm64)*.dll;$(ILSpyBuildPathArm64)ILSpy.exe;$(ILSpyBuildPathArm64)*.json">
         <VSIXSubPath>\arm64\ILSpy</VSIXSubPath>
@@ -116,25 +110,13 @@
     <None Include="ILSpyAddIn.vsct">
       <SubType>Designer</SubType>
     </None>
-    <None Include="ILSpyAddIn.zh-Hans.vsct">
-      <SubType>Designer</SubType>
-    </None>
     <None Include="source.extension.vsixmanifest.template" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="zh-Hans\extension.vsixlangpack">
-      <IncludeInVSIX>true</IncludeInVSIX>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <VSCTCompile Include="ILSpyAddIn.en-US.vsct">
-      <ResourceName>Menus.ctmenu</ResourceName>
-      <SubType>Designer</SubType>
-      <DependentUpon>ILSpyAddIn.vsct</DependentUpon>
-    </VSCTCompile>
-    <VSCTCompile Include="ILSpyAddIn.zh-Hans.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
       <SubType>Designer</SubType>
       <DependentUpon>ILSpyAddIn.vsct</DependentUpon>
