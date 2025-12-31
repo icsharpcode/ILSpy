@@ -16,31 +16,29 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Windows.Input;
+using System.Linq;
+using System.Windows;
+
+using TomsToolbox.Wpf;
+
+#nullable enable
+
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
-#if CROSS_PLATFORM
-	public abstract class ToolPaneModel : Dock.Model.TomsToolbox.Controls.Tool
+	public static partial class TabPageModelExtensions
 	{
-		protected static DockWorkspace DockWorkspace => App.ExportProvider.GetExportedValue<DockWorkspace>();
-#else
-	public abstract class ToolPaneModel : PaneModel
-	{
-#endif
-		public virtual void Show()
+		public static void Focus(this TabPageModel tabPage)
 		{
-			this.IsActive = true;
-			this.IsVisible = true;
-#if CROSS_PLATFORM
-			DockWorkspace.ActivateToolPane(ContentId);
-#endif
+			if (tabPage.Content is not FrameworkElement content)
+				return;
+
+			var focusable = content
+				.VisualDescendantsAndSelf()
+				.OfType<FrameworkElement>()
+				.FirstOrDefault(item => item.Focusable);
+
+			focusable?.Focus();
 		}
-
-		public KeyGesture ShortcutKey { get; protected set; }
-
-		public string Icon { get; protected set; }
-
-		public ICommand AssociatedCommand { get; set; }
 	}
 }

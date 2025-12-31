@@ -16,13 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Composition;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.TextView;
 
 using TomsToolbox.Composition;
@@ -34,8 +31,14 @@ namespace ICSharpCode.ILSpy.ViewModels
 {
 	[Export]
 	[NonShared]
+#if CROSS_PLATFORM
+	public class TabPageModel : Dock.Model.TomsToolbox.Controls.Document
+	{
+		protected static DockWorkspace DockWorkspace => App.ExportProvider.GetExportedValue<DockWorkspace>();
+#else
 	public class TabPageModel : PaneModel
 	{
+#endif
 		public IExportProvider ExportProvider { get; }
 
 		public TabPageModel(IExportProvider exportProvider)
@@ -68,80 +71,6 @@ namespace ICSharpCode.ILSpy.ViewModels
 		public ViewState? GetState()
 		{
 			return (Content as IHaveState)?.GetState();
-		}
-	}
-
-	public static class TabPageModelExtensions
-	{
-		public static Task<T> ShowTextViewAsync<T>(this TabPageModel tabPage, Func<DecompilerTextView, Task<T>> action)
-		{
-			if (tabPage.Content is not DecompilerTextView textView)
-			{
-				textView = new DecompilerTextView(tabPage.ExportProvider);
-				tabPage.Content = textView;
-			}
-			tabPage.Title = Properties.Resources.Decompiling;
-			return action(textView);
-		}
-
-		public static Task ShowTextViewAsync(this TabPageModel tabPage, Func<DecompilerTextView, Task> action)
-		{
-			if (tabPage.Content is not DecompilerTextView textView)
-			{
-				textView = new DecompilerTextView(tabPage.ExportProvider);
-				tabPage.Content = textView;
-			}
-			string oldTitle = tabPage.Title;
-			tabPage.Title = Properties.Resources.Decompiling;
-			try
-			{
-				return action(textView);
-			}
-			finally
-			{
-				if (tabPage.Title == Properties.Resources.Decompiling)
-				{
-					tabPage.Title = oldTitle;
-				}
-			}
-		}
-
-		public static void ShowTextView(this TabPageModel tabPage, Action<DecompilerTextView> action)
-		{
-			if (tabPage.Content is not DecompilerTextView textView)
-			{
-				textView = new DecompilerTextView(tabPage.ExportProvider);
-				tabPage.Content = textView;
-			}
-			string oldTitle = tabPage.Title;
-			tabPage.Title = Properties.Resources.Decompiling;
-			action(textView);
-			if (tabPage.Title == Properties.Resources.Decompiling)
-			{
-				tabPage.Title = oldTitle;
-			}
-		}
-
-		public static void Focus(this TabPageModel tabPage)
-		{
-			if (tabPage.Content is not FrameworkElement content)
-				return;
-
-			var focusable = content
-				.VisualDescendantsAndSelf()
-				.OfType<FrameworkElement>()
-				.FirstOrDefault(item => item.Focusable);
-
-			focusable?.Focus();
-		}
-
-		public static DecompilationOptions CreateDecompilationOptions(this TabPageModel tabPage)
-		{
-			var exportProvider = tabPage.ExportProvider;
-			var languageService = exportProvider.GetExportedValue<LanguageService>();
-			var settingsService = exportProvider.GetExportedValue<SettingsService>();
-
-			return new(languageService.LanguageVersion, settingsService.DecompilerSettings, settingsService.DisplaySettings) { Progress = tabPage.Content as IProgress<DecompilationProgress> };
 		}
 	}
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,31 +16,46 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 
-namespace ICSharpCode.ILSpy.ViewModels
+using ICSharpCode.ILSpy.Themes;
+
+namespace ICSharpCode.ILSpy
 {
-#if CROSS_PLATFORM
-	public abstract class ToolPaneModel : Dock.Model.TomsToolbox.Controls.Tool
+	public static class SmartTextOutputExtensions
 	{
-		protected static DockWorkspace DockWorkspace => App.ExportProvider.GetExportedValue<DockWorkspace>();
-#else
-	public abstract class ToolPaneModel : PaneModel
-	{
-#endif
-		public virtual void Show()
+		/// <summary>
+		/// Creates a button.
+		/// </summary>
+		public static void AddButton(this ISmartTextOutput output, ImageSource icon, string text, RoutedEventHandler click)
 		{
-			this.IsActive = true;
-			this.IsVisible = true;
-#if CROSS_PLATFORM
-			DockWorkspace.ActivateToolPane(ContentId);
-#endif
+			output.AddUIElement(
+				delegate {
+					Button button = ThemeManager.Current.CreateButton();
+					button.Cursor = Cursors.Arrow;
+					button.Margin = new Thickness(2);
+					button.Padding = new Thickness(9, 1, 9, 1);
+					button.MinWidth = 73;
+					if (icon != null)
+					{
+						button.Content = new StackPanel {
+							Orientation = Orientation.Horizontal,
+							Children = {
+								new Image { Width = 16, Height = 16, Source = icon, Margin = new Thickness(0, 0, 4, 0) },
+								new TextBlock { Text = text }
+							}
+						};
+					}
+					else
+					{
+						button.Content = text;
+					}
+					button.Click += click;
+					return button;
+				});
 		}
-
-		public KeyGesture ShortcutKey { get; protected set; }
-
-		public string Icon { get; protected set; }
-
-		public ICommand AssociatedCommand { get; set; }
 	}
 }

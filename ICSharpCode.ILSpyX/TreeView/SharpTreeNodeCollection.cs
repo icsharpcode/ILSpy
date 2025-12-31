@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
@@ -29,7 +30,7 @@ namespace ICSharpCode.ILSpyX.TreeView
 	/// <summary>
 	/// Collection that validates that inserted nodes do not have another parent.
 	/// </summary>
-	public sealed class SharpTreeNodeCollection : IList<SharpTreeNode>, INotifyCollectionChanged
+	public sealed class SharpTreeNodeCollection : IList<SharpTreeNode>, IList, INotifyCollectionChanged
 	{
 		readonly SharpTreeNode parent;
 		List<SharpTreeNode> list = new List<SharpTreeNode>();
@@ -93,6 +94,20 @@ namespace ICSharpCode.ILSpyX.TreeView
 		bool ICollection<SharpTreeNode>.IsReadOnly {
 			get { return false; }
 		}
+
+		#region IList Members
+
+		public bool IsFixedSize => ((IList)list).IsFixedSize;
+
+		public bool IsReadOnly => ((IList)list).IsReadOnly;
+
+		public bool IsSynchronized => ((ICollection)list).IsSynchronized;
+
+		public object SyncRoot => ((ICollection)list).SyncRoot;
+
+		object IList.this[int index] { get => ((IList)list)[index]; set => ((IList)list)[index] = value; }
+
+		#endregion
 
 		public int IndexOf(SharpTreeNode node)
 		{
@@ -235,6 +250,36 @@ namespace ICSharpCode.ILSpyX.TreeView
 			{
 				RemoveRange(firstToRemove, list.Count - firstToRemove);
 			}
+		}
+
+		public int Add(object value)
+		{
+			return ((IList)list).Add(value);
+		}
+
+		public bool Contains(object value)
+		{
+			return ((IList)list).Contains(value);
+		}
+
+		public int IndexOf(object value)
+		{
+			return ((IList)list).IndexOf(value);
+		}
+
+		public void Insert(int index, object value)
+		{
+			((IList)list).Insert(index, value);
+		}
+
+		public void Remove(object value)
+		{
+			((IList)list).Remove(value);
+		}
+
+		public void CopyTo(Array array, int index)
+		{
+			((ICollection)list).CopyTo(array, index);
 		}
 	}
 }

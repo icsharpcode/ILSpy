@@ -34,7 +34,6 @@ using System.Windows.Threading;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AssemblyTree;
-using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Abstractions;
@@ -577,29 +576,6 @@ namespace ICSharpCode.ILSpy.Search
 
 				return null;
 			}
-		}
-	}
-
-	[ExportToolbarCommand(ToolTip = nameof(Properties.Resources.SearchCtrlShiftFOrCtrlE), ToolbarIcon = "Images/Search", ToolbarCategory = nameof(Properties.Resources.View), ToolbarOrder = 100)]
-	[Shared]
-	sealed class ShowSearchCommand : CommandWrapper
-	{
-		private readonly DockWorkspace dockWorkspace;
-
-		public ShowSearchCommand(DockWorkspace dockWorkspace)
-			: base(NavigationCommands.Search)
-		{
-			this.dockWorkspace = dockWorkspace;
-			var gestures = NavigationCommands.Search.InputGestures;
-
-			gestures.Clear();
-			gestures.Add(new KeyGesture(Key.F, ModifierKeys.Control | ModifierKeys.Shift));
-			gestures.Add(new KeyGesture(Key.E, ModifierKeys.Control));
-		}
-
-		protected override void OnExecute(object sender, ExecutedRoutedEventArgs e)
-		{
-			dockWorkspace.ShowToolPane(SearchPaneModel.PaneContentId);
 		}
 	}
 }

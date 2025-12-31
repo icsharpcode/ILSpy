@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -60,28 +59,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				return;
 
 			textBox.Text = (newValue as ContentFilter)?.Value ?? string.Empty;
-		}
-
-		class ContentFilter : IContentFilter
-		{
-			readonly string filter;
-
-			public ContentFilter(string filter)
-			{
-				this.filter = filter;
-			}
-
-			public bool IsMatch(object value)
-			{
-				if (string.IsNullOrWhiteSpace(filter))
-					return true;
-				if (value == null)
-					return false;
-
-				return string.Format("{0:x8}", value).IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0;
-			}
-
-			public string Value => filter;
 		}
 	}
 }

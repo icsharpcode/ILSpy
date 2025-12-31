@@ -192,7 +192,11 @@ namespace ICSharpCode.ILSpy
 				stackPanel.Children.Add(
 					new Image {
 						Width = 16, Height = 16,
+#if CROSS_PLATFORM
+						Source = Images.LoadImage(Images.OK),
+#else
 						Source = Images.OK,
+#endif
 						Margin = new Thickness(4, 0, 4, 0)
 					});
 				stackPanel.Children.Add(

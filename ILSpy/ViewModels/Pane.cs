@@ -16,31 +16,34 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Windows.Input;
+using System.Windows;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
-#if CROSS_PLATFORM
-	public abstract class ToolPaneModel : Dock.Model.TomsToolbox.Controls.Tool
+	public static class Pane
 	{
-		protected static DockWorkspace DockWorkspace => App.ExportProvider.GetExportedValue<DockWorkspace>();
-#else
-	public abstract class ToolPaneModel : PaneModel
-	{
-#endif
-		public virtual void Show()
+		// Helper properties to enable binding state properties from the model to the view.
+
+		public static readonly DependencyProperty IsActiveProperty = DependencyProperty.RegisterAttached(
+			"IsActive", typeof(bool), typeof(Pane), new FrameworkPropertyMetadata(default(bool)));
+		public static void SetIsActive(DependencyObject element, bool value)
 		{
-			this.IsActive = true;
-			this.IsVisible = true;
-#if CROSS_PLATFORM
-			DockWorkspace.ActivateToolPane(ContentId);
-#endif
+			element.SetValue(IsActiveProperty, value);
+		}
+		public static bool GetIsActive(DependencyObject element)
+		{
+			return (bool)element.GetValue(IsActiveProperty);
 		}
 
-		public KeyGesture ShortcutKey { get; protected set; }
-
-		public string Icon { get; protected set; }
-
-		public ICommand AssociatedCommand { get; set; }
+		public static readonly DependencyProperty IsVisibleProperty = DependencyProperty.RegisterAttached(
+			"IsVisible", typeof(bool), typeof(Pane), new FrameworkPropertyMetadata(default(bool)));
+		public static void SetIsVisible(DependencyObject element, bool value)
+		{
+			element.SetValue(IsVisibleProperty, value);
+		}
+		public static bool GetIsVisible(DependencyObject element)
+		{
+			return (bool)element.GetValue(IsVisibleProperty);
+		}
 	}
 }
