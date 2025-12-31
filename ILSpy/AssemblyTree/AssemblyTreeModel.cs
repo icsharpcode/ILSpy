@@ -130,9 +130,9 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				var oldSelection = selectedItems;
 				selectedItems = value;
 				OnPropertyChanged();
-				#if CROSS_PLATFORM
+#if CROSS_PLATFORM
 				OnPropertyChanged(nameof(SelectedItem));
-				#endif
+#endif
 				TreeView_SelectionChanged(oldSelection, selectedItems);
 			}
 		}
@@ -496,16 +496,16 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 			else
 			{
-				#if CROSS_PLATFORM
+#if CROSS_PLATFORM
 				ExpandAncestors(node);
-				#endif
+#endif
 				activeView?.ScrollIntoView(node);
 				SelectedItem = node;
 
 				UIThreadDispatcher.BeginInvoke(DispatcherPriority.Background, () => {
-					#if CROSS_PLATFORM
+#if CROSS_PLATFORM
 					SelectedItem = node;
-					#endif
+#endif
 					activeView?.ScrollIntoView(node);
 				});
 			}

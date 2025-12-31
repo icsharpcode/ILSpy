@@ -4,7 +4,7 @@ using DataGridExtensions;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-    public partial class HexFilterControl
+	public partial class HexFilterControl
 	{
 		class ContentFilter : IContentFilter
 		{

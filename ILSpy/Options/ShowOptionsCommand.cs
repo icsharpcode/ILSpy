@@ -32,7 +32,7 @@ namespace ICSharpCode.ILSpy.Options
 		{
 			OptionsDialog dlg = new(settingsService);
 
-	#if CROSS_PLATFORM
+#if CROSS_PLATFORM
 			// On cross-platform schedule showing the dialog on the UI dispatcher
 			// and await its result asynchronously. Do not block the calling thread.
 			System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(async () => {
@@ -42,7 +42,7 @@ namespace ICSharpCode.ILSpy.Options
 					System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(() => assemblyTreeModel.Refresh());
 				}
 			});
-	#else
+#else
 			// WPF path: set owner and show dialog synchronously as before.
 			dlg.Owner = mainWindow;
 			bool? result = dlg.ShowDialog();
@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.Options
 			{
 				assemblyTreeModel.Refresh();
 			}
-	#endif
+#endif
 		}
 	}
 }

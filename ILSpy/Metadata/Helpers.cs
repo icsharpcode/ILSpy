@@ -71,9 +71,9 @@ namespace ICSharpCode.ILSpy.Metadata
 				ContextMenuProvider.Add(view);
 				DataGridFilter.SetIsAutoFilterEnabled(view, true);
 				DataGridFilter.SetContentFilterFactory(view, new RegexContentFilterFactory());
-				#if !CROSS_PLATFORM
+#if !CROSS_PLATFORM
 				AdvancedScrollWheelBehavior.SetAttach(view, AdvancedScrollWheelMode.WithoutAnimation);
-				#endif
+#endif
 			}
 			DataGridFilter.GetFilter(view).Clear();
 			view.RowDetailsTemplateSelector = null;
@@ -112,23 +112,23 @@ namespace ICSharpCode.ILSpy.Metadata
 				case "RVA":
 				case "StartOffset":
 				case "Length":
-				    #if CROSS_PLATFORM
+#if CROSS_PLATFORM
 					binding.Converter = HexFormatConverter.Instance;
-					#else
+#else
 					binding.StringFormat = "X8";
-					#endif
+#endif
 					e.Column.SetTemplate((ControlTemplate)MetadataTableViews.Instance["HexFilter"]);
 					break;
 				case "RowDetails":
 					e.Cancel = true;
 					break;
 				case "Value" when e.PropertyDescriptor is PropertyDescriptor dp && dp.ComponentType == typeof(Entry):
-					#if CROSS_PLATFORM
+#if CROSS_PLATFORM
 					binding.Path = ".";
 					e.Column.SetTemplate((ControlTemplate)MetadataTableViews.Instance["DefaultFilter"]);
-					#else
+#else
 					binding.Path = new PropertyPath(".");
-					#endif
+#endif
 					binding.Converter = ByteWidthConverter.Instance;
 					break;
 				default:

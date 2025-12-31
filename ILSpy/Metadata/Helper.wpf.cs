@@ -8,8 +8,8 @@ using System.Windows.Documents;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-    static partial class Helpers
-    {
+	static partial class Helpers
+	{
 		private static DataTemplate GetOrCreateLinkCellTemplate(string name, PropertyDescriptor descriptor, Binding binding)
 		{
 			if (linkCellTemplates.TryGetValue(name, out var template))
@@ -39,5 +39,5 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 		}
-    }
+	}
 }

@@ -3,8 +3,8 @@ using System.Windows.Threading;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-    partial class MetadataTableTreeNode
-    {
+	partial class MetadataTableTreeNode
+	{
 
 		protected void ScrollRowIntoView(DataGrid view, int row)
 		{
@@ -28,5 +28,5 @@ namespace ICSharpCode.ILSpy.Metadata
 			view.Loaded -= View_Loaded;
 			this.scrollTarget = default;
 		}
-    }
+	}
 }
