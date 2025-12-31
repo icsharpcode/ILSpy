@@ -1357,34 +1357,6 @@ namespace ICSharpCode.ILSpy.TextView
 		#endregion
 	}
 
-	[DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
-	public class ViewState : IEquatable<ViewState>
-	{
-		public HashSet<ILSpyTreeNode>? DecompiledNodes;
-		public Uri? ViewedUri;
-
-		public virtual bool Equals(ViewState? other)
-		{
-			return other != null
-				&& ViewedUri == other.ViewedUri
-				&& NullSafeSetEquals(DecompiledNodes, other.DecompiledNodes);
-
-			static bool NullSafeSetEquals(HashSet<ILSpyTreeNode>? a, HashSet<ILSpyTreeNode>? b)
-			{
-				if (a == b)
-					return true;
-				if (a == null || b == null)
-					return false;
-				return a.SetEquals(b);
-			}
-		}
-
-		protected virtual string GetDebuggerDisplay()
-		{
-			return $"Nodes = {DecompiledNodes?.Count.ToString() ?? "<null>"}, ViewedUri = {ViewedUri?.ToString() ?? "<null>"}";
-		}
-	}
-
 	public class DecompilerTextViewState : ViewState
 	{
 		private List<(int StartOffset, int EndOffset)>? ExpandedFoldings;

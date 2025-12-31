@@ -18,21 +18,34 @@
 
 using System;
 using System.Composition;
+using System.Windows.Input;
 
-using ICSharpCode.ILSpy.AssemblyTree;
-using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.Docking;
 
-namespace ICSharpCode.ILSpy.Options
+namespace ICSharpCode.ILSpy.Search
 {
-	/// <summary>
-	/// Interaction logic for OptionsDialog.xaml
-	/// </summary>
-	public sealed partial class OptionsDialog
+	[ExportToolbarCommand(ToolTip = nameof(Properties.Resources.SearchCtrlShiftFOrCtrlE), ToolbarIcon = "Images/Search", ToolbarCategory = nameof(Properties.Resources.View), ToolbarOrder = 100)]
+	[Shared]
+	sealed class ShowSearchCommand : CommandWrapper
 	{
-		public OptionsDialog(SettingsService settingsService)
+		private readonly DockWorkspace dockWorkspace;
+
+		public ShowSearchCommand(DockWorkspace dockWorkspace)
+			: base(NavigationCommands.Search)
 		{
-			DataContext = new OptionsDialogViewModel(settingsService);
-			InitializeComponent();
+			this.dockWorkspace = dockWorkspace;
+			var gestures = NavigationCommands.Search.InputGestures;
+
+			gestures.Clear();
+			gestures.Add(new KeyGesture(Key.F, ModifierKeys.Control | ModifierKeys.Shift));
+			gestures.Add(new KeyGesture(Key.E, ModifierKeys.Control));
+		}
+
+		protected override void OnExecute(object sender, ExecutedRoutedEventArgs e)
+		{
+			Console.WriteLine($"ShowSearchCommand: Executing ShowToolPane for SearchPaneModel.PaneContentId using dockWorkspace type: {dockWorkspace?.GetType().FullName}");
+			var result = dockWorkspace.ShowToolPane(SearchPaneModel.PaneContentId);
+			Console.WriteLine($"ShowSearchCommand: ShowToolPane returned: {result}");
 		}
 	}
 }

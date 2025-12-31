@@ -41,10 +41,12 @@ namespace ICSharpCode.ILSpy.Metadata
 		public override object Text => "Debug Directory";
 
 		public override object NavigationText => $"{Text} ({module.Name})";
-
+#if CROSS_PLATFORM
+		public override object Icon => Images.DirectoryTable;
+#else
 		public override object Icon => Images.ListFolder;
 		public override object ExpandedIcon => Images.ListFolderOpen;
-
+#endif
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
 			tabPage.Title = Text.ToString();

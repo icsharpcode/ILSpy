@@ -29,7 +29,6 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Navigation;
 using System.Windows.Threading;
@@ -57,7 +56,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 {
 	[ExportToolPane]
 	[Shared]
-	public class AssemblyTreeModel : ToolPaneModel
+	public partial class AssemblyTreeModel : ToolPaneModel
 	{
 		public const string PaneContentId = "assemblyListPane";
 
@@ -73,36 +72,6 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		private readonly IExportProvider exportProvider;
 
 		private static Dispatcher UIThreadDispatcher => Application.Current.Dispatcher;
-
-		public AssemblyTreeModel(SettingsService settingsService, LanguageService languageService, IExportProvider exportProvider)
-		{
-			this.settingsService = settingsService;
-			this.languageService = languageService;
-			this.exportProvider = exportProvider;
-
-			Title = Resources.Assemblies;
-			ContentId = PaneContentId;
-			IsCloseable = false;
-			ShortcutKey = new KeyGesture(Key.F6);
-
-			MessageBus<NavigateToReferenceEventArgs>.Subscribers += JumpToReference;
-			MessageBus<SettingsChangedEventArgs>.Subscribers += (sender, e) => Settings_PropertyChanged(sender, e);
-			MessageBus<ApplySessionSettingsEventArgs>.Subscribers += ApplySessionSettings;
-			MessageBus<ActiveTabPageChangedEventArgs>.Subscribers += ActiveTabPageChanged;
-			MessageBus<TabPagesCollectionChangedEventArgs>.Subscribers += (_, e) => history.RemoveAll(s => !DockWorkspace.TabPages.Contains(s.TabPage));
-			MessageBus<ResetLayoutEventArgs>.Subscribers += ResetLayout;
-			MessageBus<NavigateToEventArgs>.Subscribers += (_, e) => NavigateTo(e.Request, e.InNewTabPage);
-			MessageBus<MainWindowLoadedEventArgs>.Subscribers += (_, _) => {
-				Initialize();
-				Show();
-			};
-
-			EventManager.RegisterClassHandler(typeof(Window), Hyperlink.RequestNavigateEvent, new RequestNavigateEventHandler((_, e) => NavigateTo(e)));
-
-			refreshThrottle = new(DispatcherPriority.Background, RefreshInternal);
-
-			AssemblyList = settingsService.CreateEmptyAssemblyList();
-		}
 
 		private void Settings_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
@@ -161,6 +130,9 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				var oldSelection = selectedItems;
 				selectedItems = value;
 				OnPropertyChanged();
+				#if CROSS_PLATFORM
+				OnPropertyChanged(nameof(SelectedItem));
+				#endif
 				TreeView_SelectionChanged(oldSelection, selectedItems);
 			}
 		}
@@ -494,24 +466,6 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			MessageBus.Send(this, new CurrentAssemblyListChangedEventArgs(e));
 		}
 
-		private static void LoadInitialAssemblies(AssemblyList assemblyList)
-		{
-			// Called when loading an empty assembly list; so that
-			// the user can see something initially.
-			System.Reflection.Assembly[] initialAssemblies = {
-				typeof(object).Assembly,
-				typeof(Uri).Assembly,
-				typeof(System.Linq.Enumerable).Assembly,
-				typeof(System.Xml.XmlDocument).Assembly,
-				typeof(System.Windows.Markup.MarkupExtension).Assembly,
-				typeof(System.Windows.Rect).Assembly,
-				typeof(System.Windows.UIElement).Assembly,
-				typeof(System.Windows.FrameworkElement).Assembly
-			};
-			foreach (System.Reflection.Assembly asm in initialAssemblies)
-				assemblyList.OpenAssembly(asm.Location);
-		}
-
 		public AssemblyTreeNode? FindAssemblyNode(LoadedAssembly asm)
 		{
 			return assemblyListTreeNode?.FindAssemblyNode(asm);
@@ -542,10 +496,16 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 			else
 			{
+				#if CROSS_PLATFORM
+				ExpandAncestors(node);
+				#endif
 				activeView?.ScrollIntoView(node);
 				SelectedItem = node;
 
 				UIThreadDispatcher.BeginInvoke(DispatcherPriority.Background, () => {
+					#if CROSS_PLATFORM
+					SelectedItem = node;
+					#endif
 					activeView?.ScrollIntoView(node);
 				});
 			}
@@ -1009,6 +969,15 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			var selectionHash = new HashSet<SharpTreeNode>(selection);
 
 			return selection.Where(item => item.Ancestors().All(a => !selectionHash.Contains(a)));
+		}
+
+		void ExpandAncestors(SharpTreeNode node)
+		{
+			foreach (var ancestor in node.Ancestors().Reverse())
+			{
+				ancestor.EnsureLazyChildren();
+				ancestor.IsExpanded = true;
+			}
 		}
 
 		public void SetActiveView(AssemblyListPane activeView)

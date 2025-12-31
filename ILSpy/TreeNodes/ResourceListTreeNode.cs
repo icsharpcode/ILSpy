@@ -42,11 +42,25 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override object Text => Resources._Resources;
 
 		public override object NavigationText => $"{Text} ({module.Name})";
+#if CROSS_PLATFORM
+		public override object Icon => IsExpanded ? Images.FolderOpen : Images.FolderClosed;
 
+		protected override void OnExpanding()
+		{
+			base.OnExpanding();
+			RaisePropertyChanged(nameof(Icon));
+		}
+
+		protected override void OnCollapsing()
+		{
+			base.OnCollapsing();
+			RaisePropertyChanged(nameof(Icon));
+		}
+#else
 		public override object Icon => Images.FolderClosed;
 
 		public override object ExpandedIcon => Images.FolderOpen;
-
+#endif
 		protected override void LoadChildren()
 		{
 			foreach (Resource r in module.Resources.OrderBy(m => m.Name, NaturalStringComparer.Instance))

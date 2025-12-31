@@ -1,4 +1,4 @@
-// Copyright (c) 2019 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,31 +16,15 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Windows.Input;
+using System;
+using System.Composition;
 
-namespace ICSharpCode.ILSpy.ViewModels
+namespace ICSharpCode.ILSpy.Options
 {
-#if CROSS_PLATFORM
-	public abstract class ToolPaneModel : Dock.Model.TomsToolbox.Controls.Tool
+	[MetadataAttribute]
+	[AttributeUsage(AttributeTargets.Class)]
+	public sealed class ExportOptionPageAttribute() : ExportAttribute("OptionPages", typeof(IOptionPage)), IOptionsMetadata
 	{
-		protected static DockWorkspace DockWorkspace => App.ExportProvider.GetExportedValue<DockWorkspace>();
-#else
-	public abstract class ToolPaneModel : PaneModel
-	{
-#endif
-		public virtual void Show()
-		{
-			this.IsActive = true;
-			this.IsVisible = true;
-#if CROSS_PLATFORM
-			DockWorkspace.ActivateToolPane(ContentId);
-#endif
-		}
-
-		public KeyGesture ShortcutKey { get; protected set; }
-
-		public string Icon { get; protected set; }
-
-		public ICommand AssociatedCommand { get; set; }
+		public int Order { get; set; }
 	}
 }

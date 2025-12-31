@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -62,64 +61,6 @@ namespace ICSharpCode.ILSpy
 		}
 
 		#region Fetch Gac Contents
-		sealed class GacEntry
-		{
-			readonly AssemblyNameReference r;
-			readonly string fileName;
-			string formattedVersion;
-
-			public GacEntry(AssemblyNameReference r, string fileName)
-			{
-				this.r = r;
-				this.fileName = fileName;
-			}
-
-			public string FullName {
-				get { return r.FullName; }
-			}
-
-			public string ShortName {
-				get { return r.Name; }
-			}
-
-			public string FileName {
-				get { return fileName; }
-			}
-
-			public Version Version {
-				get { return r.Version; }
-			}
-
-			public string FormattedVersion {
-				get {
-					if (formattedVersion == null)
-						formattedVersion = Version.ToString();
-					return formattedVersion;
-				}
-			}
-
-			public string Culture {
-				get {
-					if (string.IsNullOrEmpty(r.Culture))
-						return "neutral";
-					return r.Culture;
-				}
-			}
-
-			public string PublicKeyToken {
-				get {
-					StringBuilder s = new StringBuilder();
-					foreach (byte b in r.PublicKeyToken)
-						s.Append(b.ToString("x2"));
-					return s.ToString();
-				}
-			}
-
-			public override string ToString()
-			{
-				return r.FullName;
-			}
-		}
 
 		void FetchGacContents()
 		{

@@ -72,37 +72,4 @@ namespace ICSharpCode.ILSpy.TextView
 			return null;
 		}
 	}
-
-	/// <summary>
-	/// VisualLineElement that represents a piece of text and is a clickable link.
-	/// </summary>
-	sealed class VisualLineReferenceText : VisualLineText
-	{
-		readonly ReferenceElementGenerator parent;
-		readonly ReferenceSegment referenceSegment;
-
-		/// <summary>
-		/// Creates a visual line text element with the specified length.
-		/// It uses the <see cref="ITextRunConstructionContext.VisualLine"/> and its
-		/// <see cref="VisualLineElement.RelativeTextOffset"/> to find the actual text string.
-		/// </summary>
-		public VisualLineReferenceText(VisualLine parentVisualLine, int length, ReferenceElementGenerator parent, ReferenceSegment referenceSegment) : base(parentVisualLine, length)
-		{
-			this.parent = parent;
-			this.referenceSegment = referenceSegment;
-		}
-
-		/// <inheritdoc/>
-		protected override void OnQueryCursor(QueryCursorEventArgs e)
-		{
-			e.Handled = true;
-			e.Cursor = referenceSegment.IsLocal ? Cursors.Arrow : Cursors.Hand;
-		}
-
-		/// <inheritdoc/>
-		protected override VisualLineText CreateInstance(int length)
-		{
-			return new VisualLineReferenceText(ParentVisualLine, length, parent, referenceSegment);
-		}
-	}
 }
