@@ -24,9 +24,12 @@ using System.Reflection;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
+using NetEscapades.EnumGenerators;
+
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	[Flags]
+	[EnumExtensions]
 	public enum InliningOptions
 	{
 		None = 0,

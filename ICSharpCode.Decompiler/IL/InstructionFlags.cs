@@ -19,9 +19,12 @@
 
 using System;
 
+using NetEscapades.EnumGenerators;
+
 namespace ICSharpCode.Decompiler.IL
 {
 	[Flags]
+	[EnumExtensions]
 	public enum InstructionFlags
 	{
 		None = 0,
