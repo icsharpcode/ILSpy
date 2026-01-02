@@ -61,19 +61,19 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public static ImageSource GetIcon(IMethod method)
 		{
 			if (method.IsOperator)
-				return Images.GetIcon(MemberIcon.Operator, Images.GetOverlayIcon(method.Accessibility), false);
+				return Images.GetIcon(MemberIcon.Operator, Images.GetOverlayIcon(method.Accessibility), false, method.IsExtensionMethod);
 
 			if (method.IsExtensionMethod)
-				return Images.GetIcon(MemberIcon.ExtensionMethod, Images.GetOverlayIcon(method.Accessibility), false);
+				return Images.GetIcon(MemberIcon.Method, Images.GetOverlayIcon(method.Accessibility), false, true);
 
 			if (method.IsConstructor)
-				return Images.GetIcon(MemberIcon.Constructor, Images.GetOverlayIcon(method.Accessibility), method.IsStatic);
+				return Images.GetIcon(MemberIcon.Constructor, Images.GetOverlayIcon(method.Accessibility), method.IsStatic, false);
 
 			if (!method.HasBody && method.HasAttribute(KnownAttribute.DllImport))
-				return Images.GetIcon(MemberIcon.PInvokeMethod, Images.GetOverlayIcon(method.Accessibility), true);
+				return Images.GetIcon(MemberIcon.PInvokeMethod, Images.GetOverlayIcon(method.Accessibility), true, false);
 
 			return Images.GetIcon(method.IsVirtual ? MemberIcon.VirtualMethod : MemberIcon.Method,
-				Images.GetOverlayIcon(method.Accessibility), method.IsStatic);
+				Images.GetOverlayIcon(method.Accessibility), method.IsStatic, false);
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
