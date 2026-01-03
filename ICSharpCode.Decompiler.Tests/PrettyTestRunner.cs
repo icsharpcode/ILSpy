@@ -141,6 +141,20 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		});
 
+		static readonly CompilerOptions[] roslyn3OrNewerWithNet40Roslyn4Options = Tester.SupportedOnCurrentPlatform(new[]
+		{
+			CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.TargetNet40,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.TargetNet40,
+			CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
+			CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.UseRoslyn4_14_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0,
+			CompilerOptions.UseRoslynLatest,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
+		});
+
 		static readonly CompilerOptions[] roslyn3OrNewerOptions = Tester.SupportedOnCurrentPlatform(new[]
 		{
 			CompilerOptions.UseRoslyn3_11_0,
@@ -291,8 +305,14 @@ namespace ICSharpCode.Decompiler.Tests
 			});
 		}
 
+		// Runs on Roslyn 3.x and Roslyn 4.x or newer, with TargetNet40 variants only for
+		// Roslyn 4.x or newer: targeting net40 makes the compiler emit the
+		// ThrowInvalidOperationException throw helper (SwitchExpressionException does not
+		// exist there), but Roslyn 3.x emits a plain inline
+		// "throw new InvalidOperationException()" instead, which is indistinguishable from
+		// user code and therefore intentionally not transformed.
 		[Test]
-		public async Task SwitchExpressions([ValueSource(nameof(roslyn3OrNewerOptions))] CompilerOptions cscOptions)
+		public async Task SwitchExpressions([ValueSource(nameof(roslyn3OrNewerWithNet40Roslyn4Options))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions);
 		}

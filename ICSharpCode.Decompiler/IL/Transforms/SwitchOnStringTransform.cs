@@ -88,6 +88,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!changed)
 					continue;
 				SwitchDetection.SimplifySwitchInstruction(block, context);
+				SwitchDetection.InlineSwitchExpressionDefaultCaseThrowHelper(block, context);
 				if (block.Parent is BlockContainer container)
 					changedContainers.Add(container);
 			}
@@ -330,9 +331,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				currentCaseBlock = nextCaseBlock as Block;
 			} while (currentCaseBlock != null);
 
-			// We didn't find enough cases, exit
-			if (values.Count < 3)
+			// Short if-chains are more plausibly hand-written than a switch, so we require
+			// at least 3 cases - unless the chain ends in a compiler-generated throw helper,
+			// which proves that the source was a switch expression with an implicit default case.
+			if (values.Count < 3
+				&& !(currentCaseBlock != null && SwitchDetection.IsSwitchExpressionThrowHelperBlock(currentCaseBlock)))
+			{
 				return false;
+			}
 			context.Step(nameof(SimplifyCascadingIfStatements), instructions[i]);
 			// if the switchValueVar is used in other places as well, do not eliminate the store.
 			if (switchValueVar.LoadCount > numberOfUniqueMatchesWithCurrentVariable || !ValidateUsesOfSwitchValueVariable(switchValueVar, caseBlocks))
@@ -1169,7 +1175,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				var newSwitch = new SwitchInstruction(new StringToInt(switchValueInst, values, switchValueLoad.Variable.Type));
 				newSwitch.Sections.AddRange(sections);
-				newSwitch.Sections.Add(new SwitchSection { Labels = defaultLabel, Body = defaultSection.Body });
+				newSwitch.Sections.Add(new SwitchSection {
+					Labels = defaultLabel,
+					Body = defaultSection.Body,
+					IsCompilerGeneratedDefaultSection = defaultSection.IsCompilerGeneratedDefaultSection
+				});
 				instructions[offset].ReplaceWith(newSwitch);
 				return newSwitch;
 			}
@@ -1217,6 +1227,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				switchOnLengthBlockStartOffset = i;
 			}
 			ILInstruction defaultCase = null;
+			bool defaultIsCompilerGenerated = false;
 			if (!MatchSwitchOnLengthBlock(ref switchValueVar, switchOnLengthBlock, switchOnLengthBlockStartOffset, out var blocksByLength))
 				return false;
 			List<(string, ILInstruction)> stringValues = new();
@@ -1302,7 +1313,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			var newSwitch = new SwitchInstruction(new StringToInt(new LdLoc(switchValueVar), values, switchValueVar.Type));
 			newSwitch.Sections.AddRange(sections);
-			newSwitch.Sections.Add(new SwitchSection { Labels = defaultLabel, Body = defaultCase is Block b2 ? new Branch(b2) : defaultCase });
+			newSwitch.Sections.Add(new SwitchSection {
+				Labels = defaultLabel,
+				Body = defaultCase is Block b2 ? new Branch(b2) : defaultCase,
+				IsCompilerGeneratedDefaultSection = defaultIsCompilerGenerated
+			});
 			newSwitch.AddILRange(instructions[i]);
 			if (nullCase != null)
 			{
@@ -1311,6 +1326,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			instructions[i] = newSwitch;
 			instructions.RemoveRange(i + 1, instructions.Count - (i + 1));
 			return true;
+
+			void InheritCompilerGeneratedDefaultMarker(SwitchInstruction inner)
+			{
+				// The char switches and the switch on the string length share the throw-helper
+				// block of the implicit default case; whichever of them was processed first by
+				// SwitchDetection carries the compiler-generated marker for it.
+				defaultIsCompilerGenerated |= inner.Sections.Any(s => s.IsCompilerGeneratedDefaultSection
+					&& s.Body.MatchBranch(out var target) && target == defaultCase);
+			}
 
 			bool MatchGetChars(ILInstruction instruction, ILVariable switchValueVar, out int index)
 			{
@@ -1350,6 +1374,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return false;
 						if (!MatchGetChars(@switch.Value, switchValueVar, out index))
 							return false;
+						InheritCompilerGeneratedDefaultMarker(@switch);
 						sections = @switch.Sections.SelectList(s => new KeyValuePair<LongSet, ILInstruction>(s.Labels, s.Body));
 						break;
 					case 2:
@@ -1364,6 +1389,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return false;
 						if (!@switch.Value.MatchLdLoc(charTempVar))
 							return false;
+						InheritCompilerGeneratedDefaultMarker(@switch);
 						sections = @switch.Sections.SelectList(s => new KeyValuePair<LongSet, ILInstruction>(s.Labels, s.Body));
 						break;
 					default:
@@ -1514,6 +1540,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						defaultCase ??= targetInst;
 						if (defaultCase != targetInst)
 							return false;
+						// The default section of the switch on the string length carries the
+						// compiler-generated marker if an implicit-default throw helper was
+						// already inlined there; transfer it to the rebuilt switch.
+						defaultIsCompilerGenerated |= section.IsCompilerGeneratedDefaultSection;
 					}
 					else
 					{

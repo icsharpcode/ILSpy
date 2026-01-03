@@ -159,5 +159,175 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				_ => "default",
 			};
 		}
+#pragma warning disable CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
+		public static int Issue3382(StringComparison c)
+		{
+			return c switch {
+				StringComparison.Ordinal => 0,
+				StringComparison.OrdinalIgnoreCase => 1,
+			};
+		}
+
+		public static void Issue3382b(ref StringComparison? c)
+		{
+#if NET40
+			c = c switch {
+				null => StringComparison.Ordinal,
+				StringComparison.Ordinal => StringComparison.OrdinalIgnoreCase,
+				StringComparison.OrdinalIgnoreCase => StringComparison.InvariantCulture,
+			};
+#else
+			StringComparison? stringComparison = c;
+			c = stringComparison switch {
+				null => StringComparison.Ordinal,
+				StringComparison.Ordinal => StringComparison.OrdinalIgnoreCase,
+				StringComparison.OrdinalIgnoreCase => StringComparison.InvariantCulture,
+			};
+#endif
+		}
+
+		public static void Issue3382c(StringComparison? c)
+		{
+			c = c switch {
+				null => StringComparison.Ordinal,
+				StringComparison.Ordinal => StringComparison.OrdinalIgnoreCase,
+				StringComparison.OrdinalIgnoreCase => StringComparison.InvariantCulture,
+			};
+		}
+
+		public static void Issue3382d(ref StringComparison c)
+		{
+#if NET40
+			c = c switch {
+				StringComparison.Ordinal => StringComparison.OrdinalIgnoreCase,
+				StringComparison.OrdinalIgnoreCase => StringComparison.InvariantCulture,
+			};
+#else
+			StringComparison stringComparison = c;
+			c = stringComparison switch {
+				StringComparison.Ordinal => StringComparison.OrdinalIgnoreCase,
+				StringComparison.OrdinalIgnoreCase => StringComparison.InvariantCulture,
+			};
+#endif
+		}
+
+		public static int SwitchOnStringImplicitDefault(string s)
+		{
+			return s switch {
+				"Hello" => 42,
+				"World" => 4711,
+				"!" => 7,
+				"Foo" => 13,
+				"Bar" => 21,
+				"Baz" => 84,
+				"Qux" => 168,
+				"Quux" => 336,
+				"Corge" => 672,
+				"Grault" => 1344,
+				"Garply" => 2688,
+			};
+		}
+		public static int SwitchOnStringImplicitDefaultFewCases(string s)
+		{
+			return s switch {
+				"red" => 1,
+				"green" => 2,
+				"blue" => 3,
+			};
+		}
+
+		public static int SwitchOnStringImplicitDefaultUniqueLengths(string s)
+		{
+			return s switch {
+				"a" => 1,
+				"bb" => 2,
+				"ccc" => 3,
+				"dddd" => 4,
+				"eeeee" => 5,
+				"ffffff" => 6,
+				"ggggggg" => 7,
+				"hhhhhhhh" => 8,
+				"iiiiiiiii" => 9,
+			};
+		}
+
+		public static int SwitchOnStringImplicitDefaultSameLength(string s)
+		{
+			return s switch {
+				"aabb" => 1,
+				"abab" => 2,
+				"abba" => 3,
+				"baab" => 4,
+				"baba" => 5,
+				"bbaa" => 6,
+				"bbbb" => 7,
+				"aaab" => 8,
+				"aaba" => 9,
+			};
+		}
+
+		public static int SwitchOnStringImplicitDefaultWithNullCase(string s)
+		{
+			return s switch {
+				"a" => 1,
+				"bb" => 2,
+				"ccc" => 3,
+				"dddd" => 4,
+				"eeeee" => 5,
+				"ffffff" => 6,
+				"ggggggg" => 7,
+				"hhhhhhhh" => 8,
+				"iiiiiiiii" => 9,
+				null => -1,
+			};
+		}
+
+		public static int SwitchOnStringImplicitDefaultTwoCases(string s)
+		{
+			return s switch {
+				"red" => 1,
+				"green" => 2,
+			};
+		}
+
+		public static string SwitchOnCharImplicitDefault(char c)
+		{
+			return c switch {
+				'a' => "first",
+				'b' => "second",
+				'c' => "third",
+			};
+		}
+
+		public static string SwitchOnLongImplicitDefault(long l)
+		{
+			return l switch {
+				1L => "one",
+				100L => "hundred",
+				10000L => "ten thousand",
+				long.MaxValue => "max",
+			};
+		}
+
+		public static void SwitchExpressionAsArgumentImplicitDefault(int i)
+		{
+			Console.WriteLine(i switch {
+				0 => "zero",
+				5 => "five",
+				10 => "ten",
+			});
+		}
+
+		public static int SwitchExpressionNestedImplicitDefault(StringComparison c, int i)
+		{
+			return c switch {
+				StringComparison.Ordinal => i switch {
+					0 => 1,
+					1 => 2,
+				},
+				StringComparison.OrdinalIgnoreCase => 3,
+			};
+		}
+#pragma warning restore CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
 	}
 }
