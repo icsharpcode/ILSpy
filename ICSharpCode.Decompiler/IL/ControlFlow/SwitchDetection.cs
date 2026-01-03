@@ -16,8 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using ICSharpCode.Decompiler.FlowAnalysis;
@@ -216,12 +218,150 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// (1st pass was in ControlFlowSimplification)
 				SimplifySwitchInstruction(block, context);
 			}
+
+			InlineSwitchExpressionDefaultCaseThrowHelper(block, context);
 		}
+
+		// call ThrowInvalidOperationException(...)
+		// leave IL_0000 (ldloc temp)
+		//
+		// -or-
+		//
+		// call ThrowSwitchExpressionException(...)
+		// leave IL_0000 (ldloc temp)
+		// 
+		// -to-
+		//
+		// throw(newobj SwitchExpressionException(...))
+		internal static void InlineSwitchExpressionDefaultCaseThrowHelper(Block block, ILTransformContext context)
+		{
+#nullable enable
+			// due to our use of basic blocks at this point,
+			// switch instructions can only appear as last instruction
+			var sw = block.Instructions.LastOrDefault() as SwitchInstruction;
+			if (sw == null)
+				return;
+
+			IMethod?[] exceptionCtorTable = new IMethod?[2];
+
+			exceptionCtorTable[0] = FindConstructor("System.InvalidOperationException");
+			exceptionCtorTable[1] = FindConstructor("System.Runtime.CompilerServices.SwitchExpressionException", typeof(object));
+
+			if (exceptionCtorTable[0] == null && exceptionCtorTable[1] == null)
+				return;
+
+			if (sw.GetDefaultSection() is not { Body: Branch { TargetBlock: Block defaultBlock } } defaultSection)
+				return;
+			if (defaultBlock is { Instructions: [var call, Branch or Leave] })
+			{
+				if (!MatchThrowHelperCall(call, out IMethod? exceptionCtor, out ILInstruction? value))
+					return;
+				context.Step("SwitchExpressionDefaultCaseTransform", block.Instructions[0]);
+				var newObj = new NewObj(exceptionCtor);
+				if (value != null)
+					newObj.Arguments.Add(value);
+				defaultBlock.Instructions[0] = new Throw(newObj).WithILRange(defaultBlock.Instructions[0]).WithILRange(defaultBlock.Instructions[1]);
+				defaultBlock.Instructions.RemoveAt(1);
+				defaultSection.IsCompilerGeneratedDefaultSection = true;
+			}
+			else if (defaultBlock is { Instructions: [Throw { Argument: NewObj { Method: var ctor, Arguments: [_] } }] }
+				&& ctor.Equals(exceptionCtorTable[1]))
+			{
+				defaultSection.IsCompilerGeneratedDefaultSection = true;
+			}
+			else
+			{
+				return;
+			}
+
+			bool MatchThrowHelperCall(ILInstruction inst, [NotNullWhen(true)] out IMethod? exceptionCtor, out ILInstruction? value)
+			{
+				exceptionCtor = null;
+				if (!MatchSwitchExpressionThrowHelperCall(inst, out value))
+					return false;
+				exceptionCtor = value == null ? exceptionCtorTable[0] : exceptionCtorTable[1];
+				return exceptionCtor != null;
+			}
+
+			IMethod? FindConstructor(string fullTypeName, params Type[] argumentTypes)
+			{
+				IType exceptionType = context.TypeSystem.FindType(new FullTypeName(fullTypeName));
+				var types = argumentTypes.SelectArray(context.TypeSystem.FindType);
+
+				foreach (var ctor in exceptionType.GetConstructors(m => !m.IsStatic && m.Parameters.Count == argumentTypes.Length))
+				{
+					bool found = true;
+					foreach (var pair in ctor.Parameters.Select(p => p.Type).Zip(types))
+					{
+						if (!NormalizeTypeVisitor.IgnoreNullability.EquivalentTypes(pair.Item1, pair.Item2))
+						{
+							found = false;
+							break;
+						}
+					}
+					if (found)
+						return ctor;
+				}
+
+				return null;
+			}
+#nullable restore
+		}
+
+#nullable enable
+		/// <summary>
+		/// Matches a call to one of the compiler-generated throw helpers in
+		/// &lt;PrivateImplementationDetails&gt; that implement the implicit default case of a
+		/// switch expression. <paramref name="value"/> is the switch value passed to
+		/// ThrowSwitchExpressionException, or null for the parameterless
+		/// ThrowInvalidOperationException helper (emitted when SwitchExpressionException
+		/// is not available on the target framework).
+		/// </summary>
+		static bool MatchSwitchExpressionThrowHelperCall(ILInstruction inst, out ILInstruction? value)
+		{
+			value = null;
+			if (inst is not Call call)
+				return false;
+			if (call.Method.DeclaringType.FullName != "<PrivateImplementationDetails>")
+				return false;
+			switch (call.Arguments.Count)
+			{
+				case 0:
+					return call.Method.Name == "ThrowInvalidOperationException";
+				case 1:
+					if (call.Method.Name != "ThrowSwitchExpressionException")
+						return false;
+					value = call.Arguments[0];
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Returns true if the block consists solely of the compiler-generated default case
+		/// of a switch expression: either a throw-helper call followed by the unreachable
+		/// branch/leave to the end of the expression, or a directly inlined
+		/// "throw new SwitchExpressionException(...)" (emitted by older Roslyn versions).
+		/// </summary>
+		internal static bool IsSwitchExpressionThrowHelperBlock(Block block)
+		{
+			switch (block.Instructions)
+			{
+				case [var call, Branch or Leave]:
+					return MatchSwitchExpressionThrowHelperCall(call, out _);
+				case [Throw { Argument: NewObj { Method.DeclaringType: var exceptionType } }]:
+					return exceptionType.FullName == "System.Runtime.CompilerServices.SwitchExpressionException";
+				default:
+					return false;
+			}
+		}
+#nullable restore
 
 		internal static void SimplifySwitchInstruction(Block block, ILTransformContext context)
 		{
-			// due to our of of basic blocks at this point,
-			// switch instructions can only appear as last insturction
+			// due to our use of basic blocks at this point,
+			// switch instructions can only appear as last instruction
 			var sw = block.Instructions.LastOrDefault() as SwitchInstruction;
 			if (sw == null)
 				return;
@@ -452,7 +592,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				!nullableBlock.Instructions.SecondToLastOrDefault().MatchIfInstruction(out var cond, out var trueInst) ||
 				!cond.MatchLogicNot(out var getHasValue) ||
 				!NullableLiftingTransform.MatchHasValueCall(getHasValue, out ILInstruction nullableInst))
+			{
 				return;
+			}
 
 			// could check that nullableInst is ldloc or ldloca and that the switch variable matches a GetValueOrDefault
 			// but the effect of adding an incorrect block to the flowBlock list would only be disasterous if it branched directly
