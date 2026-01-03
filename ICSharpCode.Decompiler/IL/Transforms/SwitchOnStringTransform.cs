@@ -1169,7 +1169,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				var newSwitch = new SwitchInstruction(new StringToInt(switchValueInst, values, switchValueLoad.Variable.Type));
 				newSwitch.Sections.AddRange(sections);
-				newSwitch.Sections.Add(new SwitchSection { Labels = defaultLabel, Body = defaultSection.Body });
+				newSwitch.Sections.Add(new SwitchSection {
+					Labels = defaultLabel,
+					Body = defaultSection.Body,
+					IsCompilerGeneratedDefaultSection = defaultSection.IsCompilerGeneratedDefaultSection
+				});
 				instructions[offset].ReplaceWith(newSwitch);
 				return newSwitch;
 			}
@@ -1310,6 +1314,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			instructions[i] = newSwitch;
 			instructions.RemoveRange(i + 1, instructions.Count - (i + 1));
+			SwitchDetection.InlineSwitchExpressionDefaultCaseThrowHelper(block, context);
 			return true;
 
 			bool MatchGetChars(ILInstruction instruction, ILVariable switchValueVar, out int index)
