@@ -33,12 +33,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class PropertyTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		readonly bool isIndexer;
-
 		public PropertyTreeNode(IProperty property)
 		{
 			this.PropertyDefinition = property ?? throw new ArgumentNullException(nameof(property));
-			this.isIndexer = property.IsIndexer;
 
 			if (property.CanGet)
 				this.Children.Add(new MethodTreeNode(property.Getter));
@@ -56,9 +53,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		private IProperty GetPropertyDefinition()
 		{
-			return ((MetadataModule)PropertyDefinition.ParentModule?.MetadataFile
+			var pd = ((MetadataModule)PropertyDefinition.ParentModule?.MetadataFile
 				?.GetTypeSystemWithCurrentOptionsOrNull(SettingsService, AssemblyTreeModel.CurrentLanguageVersion)
-				?.MainModule)?.GetDefinition((PropertyDefinitionHandle)PropertyDefinition.MetadataToken) ?? PropertyDefinition;
+				?.MainModule)?.GetDefinition((PropertyDefinitionHandle)PropertyDefinition.MetadataToken);
+			return (IProperty)pd?.Specialize(PropertyDefinition.Substitution) ?? PropertyDefinition;
 		}
 
 		public static object GetText(IProperty property, Language language, bool includeDeclaringTypeName = false)
@@ -70,8 +68,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static ImageSource GetIcon(IProperty property)
 		{
+			IMethod accessor = property.Getter ?? property.Setter;
+			bool isExtension = property.ResolveExtensionInfo()?.InfoOfExtensionMember((IMethod)accessor.MemberDefinition) != null;
 			return Images.GetIcon(property.IsIndexer ? MemberIcon.Indexer : MemberIcon.Property,
-				Images.GetOverlayIcon(property.Accessibility), property.IsStatic, false);
+				Images.GetOverlayIcon(property.Accessibility), property.IsStatic, isExtension);
 		}
 
 		public override FilterResult Filter(LanguageSettings settings)
@@ -86,7 +86,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.DecompileProperty(PropertyDefinition, output, options);
+			if (Parent is ExtensionTreeNode && language is CSharpLanguage cs)
+				cs.DecompileExtension(PropertyDefinition, output, options);
+			else
+				language.DecompileProperty(PropertyDefinition, output, options);
 		}
 
 		public override bool IsPublicAPI {

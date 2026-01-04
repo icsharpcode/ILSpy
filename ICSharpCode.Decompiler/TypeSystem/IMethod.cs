@@ -66,6 +66,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		IReadOnlyList<IType> TypeArguments { get; }
 
+		/// <summary>
+		/// Returns true for classic extension methods, where extension method == implementation method, otherwise returns false.
+		/// </summary>
 		bool IsExtensionMethod { get; }
 		bool IsLocalFunction { get; }
 		bool IsConstructor { get; }

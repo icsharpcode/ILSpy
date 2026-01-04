@@ -121,6 +121,10 @@ namespace ICSharpCode.Decompiler.Output
 		/// Support C# 7.2 <c>private protected</c>.
 		/// </summary>
 		UsePrivateProtectedAccessibility = 0x200000,
+		/// <summary>
+		/// Support C# 14 <c>extension</c> declarations.
+		/// </summary>
+		SupportExtensionDeclarations = 0x400000,
 
 		StandardConversionFlags = ShowParameterNames |
 			ShowAccessibility |

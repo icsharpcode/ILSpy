@@ -65,6 +65,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			switch (entity)
 			{
 				case ITypeDefinition td:
+					var extensionInfo = td.DeclaringTypeDefinition?.ExtensionInfo ?? td.DeclaringTypeDefinition?.DeclaringTypeDefinition?.ExtensionInfo;
+					if (extensionInfo?.IsExtensionMarkerType(td, out _) == true || extensionInfo?.IsExtensionGroupType(td) == true)
+					{
+						td = extensionInfo.Container;
+					}
+
 					namespaces.Add(td.Namespace);
 					HandleAttributes(td.GetAttributes());
 					HandleTypeParameters(td.TypeParameters);
@@ -76,6 +82,9 @@ namespace ICSharpCode.Decompiler.CSharp
 
 					foreach (var nestedType in td.NestedTypes)
 					{
+						bool isGroupOrMarker = extensionInfo?.IsExtensionGroupType(nestedType) == true || extensionInfo?.IsExtensionMarkerType(nestedType, out _) == true;
+						if (isGroupOrMarker)
+							continue;
 						CollectNamespaces(nestedType, module, mappingInfo);
 					}
 

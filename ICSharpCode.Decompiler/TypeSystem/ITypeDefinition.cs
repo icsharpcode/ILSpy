@@ -28,7 +28,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public interface ITypeDefinition : ITypeDefinitionOrUnknown, IType, IEntity
 	{
-		ExtensionInfo? ExtensionInfo { get; }
 		IReadOnlyList<ITypeDefinition> NestedTypes { get; }
 		IReadOnlyList<IMember> Members { get; }
 
@@ -76,6 +75,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		/// <remarks>This property is used to speed up the search for extension members.</remarks>
 		bool HasExtensions { get; }
+
+		/// <summary>
+		/// For types containing extension blocks, returns a non-null value.
+		/// For extension blocks, returns the extension info of the parent.
+		/// For all other types returns null.
+		/// </summary>
+		ExtensionInfo? ExtensionInfo { get; }
 
 		/// <summary>
 		/// The nullability specified in the [NullableContext] attribute on the type.
