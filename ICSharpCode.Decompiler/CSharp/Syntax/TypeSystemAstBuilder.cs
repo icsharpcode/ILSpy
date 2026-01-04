@@ -252,6 +252,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Controls whether all fully qualified type names should be prefixed with "global::".
 		/// </summary>
 		public bool AlwaysUseGlobal { get; set; }
+
+		/// <summary>
+		/// Controls whether C# 14 "extension" declarations are supported.
+		/// </summary>
+		public bool SupportExtensionDeclarations { get; set; }
 		#endregion
 
 		#region Convert Type
@@ -1812,8 +1817,26 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		EntityDeclaration ConvertExtensionGroup(ITypeDefinition group)
+		{
+			var ext = new ExtensionDeclaration();
+			var info = group.DeclaringTypeDefinition.ExtensionInfo.GetGroup(group);
+			var typeParameters = info.TypeParameters;
+			var subst = new TypeParameterSubstitution(typeParameters, null);
+			ext.TypeParameters.AddRange(typeParameters.Select(ConvertTypeParameter));
+			var marker = info.Marker.Specialize(subst);
+			ext.ReceiverParameters.Add(ConvertParameter(marker.Parameters.Single()));
+			ext.Constraints.AddRange(typeParameters.Select(ConvertTypeParameterConstraint));
+			return ext;
+		}
+
 		EntityDeclaration ConvertTypeDefinition(ITypeDefinition typeDefinition)
 		{
+			if (typeDefinition.Kind == TypeKind.ExtensionGroup && SupportExtensionDeclarations)
+			{
+				return ConvertExtensionGroup(typeDefinition);
+			}
+
 			Modifiers modifiers = Modifiers.None;
 			if (this.ShowAccessibility)
 			{

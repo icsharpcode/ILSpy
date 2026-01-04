@@ -238,7 +238,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					this.extensionMemberMap[extension] = info;
 					this.implementationMemberMap[implementation] = info;
 				}
-
 			}
 		}
 
@@ -260,6 +259,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public bool IsExtensionGroupingType(ITypeDefinition type)
 		{
 			return this.extensionMemberMap.Values.Any(x => x.ExtensionGroupingType.Equals(type));
+		}
+
+		public (IMethod Marker, ITypeParameter[] TypeParameters) GetGroup(ITypeDefinition type)
+		{
+			var group = this.extensionMemberMap.Values.FirstOrDefault(x => x.ExtensionGroupingType.Equals(type));
+			if (group.ExtensionGroupingType == null)
+				return default;
+			return (group.ExtensionMarkerMethod, group.ExtensionGroupingTypeParameters);
 		}
 	}
 

@@ -150,6 +150,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		FirstClassSpanTypes = 0x40000,
 		/// <summary>
+		/// If this option is active, extension member groups are detected, otherwise the compiler-generated nested classes are left as-is.
+		/// </summary>
+		ExtensionMembers = 0x80000,
+		/// <summary>
 		/// Default settings: typical options for the decompiler, with all C# language features enabled.
 		/// </summary>
 		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants | ReadOnlyStructsAndParameters
@@ -201,6 +205,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				typeSystemOptions |= TypeSystemOptions.ParamsCollections;
 			if (settings.FirstClassSpanTypes)
 				typeSystemOptions |= TypeSystemOptions.FirstClassSpanTypes;
+			if (settings.ExtensionMembers)
+				typeSystemOptions |= TypeSystemOptions.ExtensionMembers;
 			return typeSystemOptions;
 		}
 

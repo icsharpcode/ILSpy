@@ -140,7 +140,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static ImageSource GetIcon(ITypeDefinition type)
 		{
-			return Images.GetIcon(GetTypeIcon(type, out bool isStatic), GetOverlayIcon(type), isStatic);
+			return Images.GetIcon(GetTypeIcon(type, out bool isStatic), GetOverlayIcon(type), isStatic, type.Kind == TypeKind.ExtensionGroup);
 		}
 
 		internal static TypeIcon GetTypeIcon(IType type, out bool isStatic)
