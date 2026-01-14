@@ -33,6 +33,10 @@ namespace ICSharpCode.ILSpy.ViewModels
 		{
 			ContentId = PaneContentId;
 			Title = Properties.Resources.DebugSteps;
+#if CROSS_PLATFORM
+			// Declare this tool belongs to the LeftDock group (same as AssemblyTreeModel and AnalyzerTreeViewModel)
+			DockGroup = "LeftDock";
+#endif
 		}
 	}
 }
