@@ -43,9 +43,7 @@ namespace ICSharpCode.ILSpy.Search
 
 		protected override void OnExecute(object sender, ExecutedRoutedEventArgs e)
 		{
-			Console.WriteLine($"ShowSearchCommand: Executing ShowToolPane for SearchPaneModel.PaneContentId using dockWorkspace type: {dockWorkspace?.GetType().FullName}");
-			var result = dockWorkspace.ShowToolPane(SearchPaneModel.PaneContentId);
-			Console.WriteLine($"ShowSearchCommand: ShowToolPane returned: {result}");
+			dockWorkspace.ShowToolPane(SearchPaneModel.PaneContentId);
 		}
 	}
 }
