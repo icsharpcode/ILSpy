@@ -105,7 +105,7 @@ namespace ICSharpCode.ILSpyX.TreeView
 
 		public object SyncRoot => ((ICollection)list).SyncRoot;
 
-		object IList.this[int index] { get => ((IList)list)[index]; set => ((IList)list)[index] = value; }
+		object IList.this[int index] { get => this[index]; set => this[index] = (SharpTreeNode)value; }
 
 		#endregion
 
@@ -254,32 +254,49 @@ namespace ICSharpCode.ILSpyX.TreeView
 
 		public int Add(object value)
 		{
-			return ((IList)list).Add(value);
+			if (value == null)
+				throw new ArgumentNullException(nameof(value));
+			if (!(value is SharpTreeNode node))
+				throw new ArgumentException("Value must be a SharpTreeNode", nameof(value));
+			Add(node);
+			return list.IndexOf(node);
 		}
 
 		public bool Contains(object value)
 		{
-			return ((IList)list).Contains(value);
+			return value is SharpTreeNode node && Contains(node);
 		}
 
 		public int IndexOf(object value)
 		{
-			return ((IList)list).IndexOf(value);
+			return value is SharpTreeNode node ? IndexOf(node) : -1;
 		}
 
 		public void Insert(int index, object value)
 		{
-			((IList)list).Insert(index, value);
+			if (value == null)
+				throw new ArgumentNullException(nameof(value));
+			if (!(value is SharpTreeNode node))
+				throw new ArgumentException("Value must be a SharpTreeNode", nameof(value));
+			Insert(index, node);
 		}
 
 		public void Remove(object value)
 		{
-			((IList)list).Remove(value);
+			if (value is SharpTreeNode node)
+				Remove(node);
 		}
 
 		public void CopyTo(Array array, int index)
 		{
-			((ICollection)list).CopyTo(array, index);
+			if (array is SharpTreeNode[] nodes)
+			{
+				CopyTo(nodes, index);
+			}
+			else
+			{
+				((ICollection)list).CopyTo(array, index);
+			}
 		}
 	}
 }
