@@ -38,7 +38,7 @@ using TomsToolbox.Wpf;
 
 namespace ICSharpCode.ILSpy.Docking
 {
-	[Export(typeof(DockWorkspace))]
+	[Export]
 	[Shared]
 	public partial class DockWorkspace : ObservableObjectBase, ILayoutUpdateStrategy
 	{
