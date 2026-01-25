@@ -25,6 +25,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
@@ -32,11 +33,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		readonly Dictionary<IMember, ExtensionMemberInfo> extensionMemberMap;
 		readonly Dictionary<IMember, ExtensionMemberInfo> implementationMemberMap;
+		readonly List<(IMethod Marker, IReadOnlyList<ITypeParameter> TypeParameters)> extensionGroups;
 
 		public ExtensionInfo(MetadataModule module, ITypeDefinition extensionContainer)
 		{
 			this.extensionMemberMap = new();
 			this.implementationMemberMap = new();
+			this.extensionGroups = [];
 
 			var metadata = module.MetadataFile.Metadata;
 
@@ -86,7 +89,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (marker == null || hasMultipleMarkers)
 					return false;
 
-				CollectImplementationMethods(extGroup, marker, extensionMethods, extensionGroupTypeParameters);
+				extensionGroups.Add((marker, extensionGroupTypeParameters));
+
+				CollectImplementationMethods(marker, extensionGroupTypeParameters, extensionMethods);
 				return true;
 			}
 
@@ -111,9 +116,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					if (marker == null)
 						continue;
 
+					ITypeParameter[] extensionGroupTypeParameters = new ITypeParameter[markerType.TypeParameterCount];
+					var markerTypeTypeParameters = metadata.GetTypeDefinition((TypeDefinitionHandle)markerType.MetadataToken).GetGenericParameters();
+
+					foreach (var h in markerTypeTypeParameters.WithIndex())
+					{
+						var tp = metadata.GetGenericParameter(h.Item2);
+						extensionGroupTypeParameters[h.Item1] = MetadataTypeParameter.Create(module, markerType, h.Item1, h.Item2);
+					}
+
+					extensionGroups.Add((marker, extensionGroupTypeParameters));
+
 					TypeDefinition td = metadata.GetTypeDefinition((TypeDefinitionHandle)extensionGroupsContainer.MetadataToken);
 					List<IMethod> extensionMethods = [];
-					ITypeParameter[] extensionGroupTypeParameters = new ITypeParameter[extensionGroupsContainer.TypeParameterCount];
 
 					// For easier access to accessors we use SRM
 					foreach (var h in td.GetMethods())
@@ -133,25 +148,24 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						extensionMethods.Add(method);
 					}
 
-					CollectImplementationMethods(extensionGroupsContainer, marker, extensionMethods, extensionGroupTypeParameters);
+					CollectImplementationMethods(marker, extensionGroupTypeParameters, extensionMethods);
 				}
 
 				return true;
 			}
 
-			void CollectImplementationMethods(ITypeDefinition extGroup, IMethod marker, List<IMethod> extensionMethods, ITypeParameter[] extensionGroupTypeParameters)
+			void CollectImplementationMethods(IMethod marker, IReadOnlyList<ITypeParameter> typeParameters, List<IMethod> extensionMethods)
 			{
+				ITypeDefinition markerType = marker.DeclaringTypeDefinition!;
 				List<(IMethod extension, IMethod implementation)> implementations = [];
-
-				string[] typeParameterNames = new string[extGroup.TypeParameterCount];
 
 				foreach (var extension in extensionMethods)
 				{
-					int expectedTypeParameterCount = extension.TypeParameters.Count + extGroup.TypeParameterCount;
+					int expectedTypeParameterCount = extension.TypeParameters.Count + markerType.TypeParameterCount;
 					bool hasInstance = !extension.IsStatic;
 					int parameterOffset = hasInstance ? 1 : 0;
 					int expectedParameterCount = extension.Parameters.Count + parameterOffset;
-					TypeParameterSubstitution subst = new TypeParameterSubstitution([], [.. extGroup.TypeArguments, .. extension.TypeArguments]);
+					TypeParameterSubstitution subst = new TypeParameterSubstitution([], [.. markerType.TypeArguments, .. extension.TypeArguments]);
 
 					bool IsMatchingImplementation(IMethod impl)
 					{
@@ -200,41 +214,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 				foreach (var (extension, implementation) in implementations)
 				{
-					for (int i = 0; i < extensionGroupTypeParameters.Length; i++)
-					{
-						if (typeParameterNames[i] == null)
-						{
-							typeParameterNames[i] = implementation.TypeParameters[i].Name;
-						}
-						else if (typeParameterNames[i] != implementation.TypeParameters[i].Name)
-						{
-							// TODO: Handle name conflicts properly
-							typeParameterNames[i] = $"T{i + 1}";
-						}
-					}
-				}
-
-				for (int i = 0; i < extensionGroupTypeParameters.Length; i++)
-				{
-					var originalTypeParameter = extGroup.TypeParameters[i];
-					if (extensionGroupTypeParameters[i] == null)
-					{
-						extensionGroupTypeParameters[i] = new DefaultTypeParameter(
-							extGroup, i, typeParameterNames[i],
-							VarianceModifier.Invariant,
-							attributes: originalTypeParameter.GetAttributes().ToArray(),
-							originalTypeParameter.HasValueTypeConstraint,
-							originalTypeParameter.HasReferenceTypeConstraint,
-							originalTypeParameter.HasDefaultConstructorConstraint,
-							originalTypeParameter.TypeConstraints.Select(c => c.Type).ToArray(),
-							originalTypeParameter.NullabilityConstraint
-						);
-					}
-				}
-
-				foreach (var (extension, implementation) in implementations)
-				{
-					var info = new ExtensionMemberInfo(marker, extension, implementation, extensionGroupTypeParameters);
+					var info = new ExtensionMemberInfo(marker, typeParameters, extension, implementation);
 					this.extensionMemberMap[extension] = info;
 					this.implementationMemberMap[implementation] = info;
 				}
@@ -251,26 +231,43 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return this.implementationMemberMap.TryGetValue(method, out var value) ? value : null;
 		}
 
-		public IEnumerable<IGrouping<(IMethod Marker, ITypeParameter[] TypeParameters), ExtensionMemberInfo>> GetGroups()
+		public bool IsExtensionGroupType(ITypeDefinition td)
 		{
-			return this.extensionMemberMap.Values.GroupBy(x => (x.ExtensionMarkerMethod, x.ExtensionGroupingTypeParameters));
+			return this.extensionGroups.Any(m => m.Marker.DeclaringTypeDefinition?.DeclaringTypeDefinition?.Equals(td) == true);
 		}
 
-		public bool IsExtensionGroupingType(ITypeDefinition type)
+		public bool IsExtensionMarkerType(ITypeDefinition td, out (IMethod Marker, IReadOnlyList<ITypeParameter> TypeParameters) extensionGroup)
 		{
-			return this.extensionMemberMap.Values.Any(x => x.ExtensionGroupingType.Equals(type));
+			extensionGroup = default;
+			foreach (var group in this.extensionGroups)
+			{
+				if (group.Marker.DeclaringTypeDefinition?.Equals(td) == true)
+				{
+					extensionGroup = group;
+					return true;
+				}
+			}
+			return false;
 		}
 
-		public (IMethod Marker, ITypeParameter[] TypeParameters) GetGroup(ITypeDefinition type)
+		public IEnumerable<IMember> GetMembersOfGroup(IMethod marker)
 		{
-			var group = this.extensionMemberMap.Values.FirstOrDefault(x => x.ExtensionGroupingType.Equals(type));
-			if (group.ExtensionGroupingType == null)
-				return default;
-			return (group.ExtensionMarkerMethod, group.ExtensionGroupingTypeParameters);
+			foreach (var info in extensionMemberMap.Values)
+			{
+				if (info.ExtensionMarkerMethod != marker)
+					continue;
+				var subst = new TypeParameterSubstitution(info.ExtensionGroupingTypeParameters, null);
+				if (info.ExtensionMember.IsAccessor)
+					yield return info.ExtensionMember.AccessorOwner.Specialize(subst);
+				else
+					yield return info.ExtensionMember.Specialize(subst);
+			}
 		}
+
+		public IReadOnlyList<(IMethod Marker, IReadOnlyList<ITypeParameter> TypeParameters)> ExtensionGroups => this.extensionGroups;
 	}
 
-	public readonly struct ExtensionMemberInfo(IMethod marker, IMethod extension, IMethod implementation, ITypeParameter[] extensionGroupingTypeParameters)
+	public readonly struct ExtensionMemberInfo(IMethod marker, IReadOnlyList<ITypeParameter> typeParameters, IMethod extension, IMethod implementation)
 	{
 		/// <summary>
 		/// Metadata-only method called '&lt;Extension&gt;$'. Has the C# signature for the extension declaration.
@@ -290,6 +287,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public readonly IMethod ImplementationMethod = implementation;
 
 		/// <summary>
+		/// This is the array of type parameters for the extension declaration.
+		/// </summary>
+		public readonly IReadOnlyList<ITypeParameter> ExtensionGroupingTypeParameters = typeParameters;
+
+		/// <summary>
 		/// This is the enclosing static class.
 		/// </summary>
 		public ITypeDefinition ExtensionContainer => ImplementationMethod.DeclaringTypeDefinition!;
@@ -299,11 +301,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// from the extension declaration with minimal constraints.
 		/// </summary>
 		public ITypeDefinition ExtensionGroupingType => ExtensionMember.DeclaringTypeDefinition!;
-
-		/// <summary>
-		/// This is the array of type parameters for the extension declaration.
-		/// </summary>
-		public ITypeParameter[] ExtensionGroupingTypeParameters => extensionGroupingTypeParameters;
 
 		/// <summary>
 		/// This class holds the type parameters for the extension declaration with full fidelity of C# constraints.

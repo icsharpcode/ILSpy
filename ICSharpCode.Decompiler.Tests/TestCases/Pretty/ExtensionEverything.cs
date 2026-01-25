@@ -4,6 +4,45 @@ using System.Linq;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
+	internal static class EmptyGroups
+	{
+		extension(int)
+		{
+		}
+
+		extension(int x)
+		{
+		}
+
+		extension(int y)
+		{
+		}
+
+		extension<T>(IEnumerable<T>)
+		{
+		}
+
+		extension<T>(IEnumerable<T> x)
+		{
+		}
+
+		extension<T>(IEnumerable<T> y)
+		{
+		}
+
+		extension<TKey, TValue>(Dictionary<TKey, TValue>)
+		{
+		}
+
+		extension<TKey, TValue>(Dictionary<TKey, TValue> x)
+		{
+		}
+
+		extension<TKey, TValue>(Dictionary<TKey, TValue> y)
+		{
+		}
+	}
+
 	internal static class ExtensionEverything
 	{
 		extension<T>(ICollection<T> collection) where T : notnull

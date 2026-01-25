@@ -258,10 +258,12 @@ namespace ICSharpCode.ILSpy
 			{
 				var extensionGroup = new DrawingGroup();
 				extensionGroup.Children.Add(baseDrawingGroup);
-				baseDrawingGroup.Transform = new ScaleTransform(0.8, 8.0);
+				baseDrawingGroup.Transform = new ScaleTransform(0.8, 0.8);
 				extensionGroup.Children.Add(new ImageDrawing(Images.OverlayExtension, iconRect));
 				baseDrawingGroup = extensionGroup;
 			}
+
+			group.Children.Add(baseDrawingGroup);
 
 			if (isStatic)
 			{
@@ -273,8 +275,6 @@ namespace ICSharpCode.ILSpy
 				baseDrawingGroup.Transform = new ScaleTransform(0.8, 0.8);
 				group.Children.Add(new ImageDrawing(overlay, iconRect));
 			}
-
-			group.Children.Add(baseDrawingGroup);
 
 			var image = new DrawingImage(group);
 			if (image.CanFreeze)

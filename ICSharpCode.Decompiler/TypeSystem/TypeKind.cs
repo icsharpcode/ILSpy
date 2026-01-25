@@ -107,9 +107,5 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// C# 9 <c>delegate*</c>
 		/// </summary>
 		FunctionPointer,
-		/// <summary>
-		/// C# 14 <c>extension</c>
-		/// </summary>
-		ExtensionGroup,
 	}
 }

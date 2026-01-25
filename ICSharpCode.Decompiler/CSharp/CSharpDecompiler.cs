@@ -274,7 +274,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		/// <param name="module">The module containing the member.</param>
 		/// <param name="member">The metadata token/handle of the member. Can be a TypeDef, MethodDef or FieldDef.</param>
-		/// <param name="settings">THe settings used to determine whether code should be hidden. E.g. if async methods are not transformed, async state machines are included in the decompiled code.</param>
+		/// <param name="settings">The settings used to determine whether code should be hidden. E.g. if async methods are not transformed, async state machines are included in the decompiled code.</param>
 		public static bool MemberIsHidden(MetadataFile module, EntityHandle member, DecompilerSettings settings)
 		{
 			if (module == null || member.IsNil)
@@ -295,7 +295,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (settings.LocalFunctions && LocalFunctionDecompiler.IsLocalFunctionMethod(module, methodHandle))
 						return true;
 					if (settings.AnonymousMethods && methodHandle.HasGeneratedName(metadata) && methodHandle.IsCompilerGenerated(metadata))
-						return true;
+						return name != "<Extension>$";
 					if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedMainMethod(module, methodHandle))
 						return true;
 					return false;
@@ -319,7 +319,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							return true;
 						if (settings.InlineArrays && name.StartsWith("<>y__InlineArray", StringComparison.Ordinal) && name.EndsWith("`1", StringComparison.Ordinal))
 							return true;
-						if (settings.ExtensionMembers && name.StartsWith("<>E__", StringComparison.Ordinal))
+						if (settings.ExtensionMembers && (name.StartsWith("<>E__", StringComparison.Ordinal) || name.StartsWith("<G>$", StringComparison.Ordinal)))
 							return true;
 					}
 					else if (type.IsCompilerGenerated(metadata))
@@ -506,6 +506,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			typeSystemAstBuilder.SupportUnsignedRightShift = settings.UnsignedRightShift;
 			typeSystemAstBuilder.SupportOperatorChecked = settings.CheckedOperators;
 			typeSystemAstBuilder.AlwaysUseGlobal = settings.AlwaysUseGlobal;
+			typeSystemAstBuilder.SupportExtensionDeclarations = settings.ExtensionMembers;
 			return typeSystemAstBuilder;
 		}
 
@@ -726,6 +727,11 @@ namespace ICSharpCode.Decompiler.CSharp
 						continue;
 					try
 					{
+						if (TryGetExtensionImplementation(module.Metadata, part, out var impl))
+						{
+							connectedMethods.Enqueue(impl);
+						}
+
 						ReadCodeMappingInfo(module, info, parent, part, connectedMethods, processedNestedTypes);
 					}
 					catch (BadImageFormatException)
@@ -911,6 +917,51 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		private static bool TryGetExtensionImplementation(MetadataReader metadata, MethodDefinitionHandle definitionPart, out MethodDefinitionHandle implementationPart)
+		{
+			implementationPart = default;
+
+			var def = metadata.GetMethodDefinition(definitionPart);
+			var declTypeHandle = def.GetDeclaringType();
+			var declType = metadata.GetTypeDefinition(declTypeHandle);
+			var name = metadata.GetString(def.Name);
+			var containerHandle = declType.GetDeclaringType();
+
+			if (containerHandle.IsNil)
+				return false;
+
+			if (metadata.StringComparer.StartsWith(declType.Name, "<>E__") || metadata.StringComparer.StartsWith(declType.Name, "<G>$"))
+			{
+				implementationPart = FindImplementations(metadata.GetTypeDefinition(containerHandle).GetMethods());
+			}
+			else if (metadata.StringComparer.StartsWith(declType.Name, "<M>$"))
+			{
+				var container = metadata.GetTypeDefinition(containerHandle);
+				var groupHandle = container.GetDeclaringType();
+				if (groupHandle.IsNil)
+					return false;
+
+				implementationPart = FindImplementations(metadata.GetTypeDefinition(groupHandle).GetMethods());
+			}
+			else
+			{
+				return false;
+			}
+
+			return !implementationPart.IsNil;
+
+			MethodDefinitionHandle FindImplementations(MethodDefinitionHandleCollection methods)
+			{
+				foreach (var h in methods)
+				{
+					var m = metadata.GetMethodDefinition(h);
+					if (metadata.StringComparer.Equals(m.Name, name))
+						return h;
+				}
+				return default;
+			}
+		}
+
 		/// <summary>
 		/// Decompiles the whole module into a single string.
 		/// </summary>
@@ -1086,6 +1137,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			return syntaxTree;
 		}
 
+		public SyntaxTree DecompileExtension(TypeDefinitionHandle handle)
+		{
+			if (handle.IsNil)
+				throw new ArgumentNullException(nameof(handle));
+			syntaxTree = new SyntaxTree();
+			var namespaces = new HashSet<string>();
+			RequiredNamespaceCollector.CollectNamespaces(handle, module, namespaces);
+			var decompileRun = CreateDecompileRun(namespaces);
+			ITypeDefinition typeDef = module.GetDefinition(handle);
+			syntaxTree.Members.Add(DoDecompile(typeDef, decompileRun, new SimpleTypeResolveContext(typeDef), asExtension: true));
+			RunTransforms(syntaxTree, decompileRun, new SimpleTypeResolveContext(typeDef));
+			return syntaxTree;
+		}
+
 		ITypeDefinition FindCommonDeclaringTypeDefinition(ITypeDefinition a, ITypeDefinition b)
 		{
 			if (a == null || b == null)
@@ -1202,6 +1267,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <param name="member">The node of the member which new modifier state should be determined.</param>
 		void SetNewModifier(EntityDeclaration member)
 		{
+			if (member is ExtensionDeclaration)
+				return;
+
 			var entity = (IEntity)member.GetSymbol();
 			var lookup = new MemberLookup(entity.DeclaringTypeDefinition, entity.ParentModule);
 
@@ -1278,7 +1346,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		EntityDeclaration DoDecompile(ITypeDefinition typeDef, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
+		EntityDeclaration DoDecompile(ITypeDefinition typeDef, DecompileRun decompileRun, ITypeResolveContext decompilationContext, bool asExtension = false)
 		{
 			Debug.Assert(decompilationContext.CurrentTypeDefinition == typeDef);
 			var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -1288,15 +1356,33 @@ namespace ICSharpCode.Decompiler.CSharp
 			try
 			{
 				typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
-				var entityDecl = typeSystemAstBuilder.ConvertEntity(typeDef);
+				EntityDeclaration entityDecl;
+				if (asExtension)
+				{
+					var extensionInfo = typeDef.DeclaringTypeDefinition?.ExtensionInfo ?? typeDef.DeclaringTypeDefinition?.DeclaringTypeDefinition?.ExtensionInfo;
+					Debug.Assert(extensionInfo != null);
+					extensionInfo.IsExtensionMarkerType(typeDef, out var extensionGroup);
+					entityDecl = typeSystemAstBuilder.ConvertExtension(extensionGroup);
+				}
+				else
+				{
+					entityDecl = typeSystemAstBuilder.ConvertEntity(typeDef);
+				}
+
 				if (entityDecl is DelegateDeclaration delegateDeclaration)
 				{
 					// Fix empty parameter names in delegate declarations
 					FixParameterNames(delegateDeclaration);
 				}
-				var typeDecl = entityDecl as TypeDeclaration;
-				if (typeDecl == null)
+
+				if (entityDecl is not TypeDeclaration typeDecl)
 				{
+					if (entityDecl is ExtensionDeclaration ext && settings.ExtensionMembers)
+					{
+						var extensionInfo = typeDef.DeclaringTypeDefinition.ExtensionInfo ?? typeDef.DeclaringTypeDefinition.DeclaringTypeDefinition.ExtensionInfo;
+						extensionInfo.IsExtensionMarkerType(typeDef, out var group);
+						DoDecompileExtensionMembers(ext, group.Marker, extensionInfo);
+					}
 					// e.g. DelegateDeclaration
 					return entityDecl;
 				}
@@ -1327,32 +1413,10 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				if (settings.ExtensionMembers)
 				{
-					foreach (var group in typeDef.ExtensionInfo?.GetGroups() ?? [])
+					foreach (var group in typeDef.ExtensionInfo?.ExtensionGroups ?? [])
 					{
-						var ext = new ExtensionDeclaration();
-						ITypeParameter[] typeParameters = group.Key.TypeParameters;
-						var subst = new TypeParameterSubstitution(typeParameters, null);
-						ext.TypeParameters.AddRange(typeParameters.Select(tp => typeSystemAstBuilder.ConvertTypeParameter(tp)));
-						var marker = group.Key.Marker.Specialize(subst);
-						ext.ReceiverParameters.Add(typeSystemAstBuilder.ConvertParameter(marker.Parameters.Single()));
-						ext.Constraints.AddRange(typeParameters.Select(c => typeSystemAstBuilder.ConvertTypeParameterConstraint(c)));
-
-						foreach (var member in group)
-						{
-							IMember extMember = member.ExtensionMember.Specialize(subst);
-							if (member.ExtensionMember.IsAccessor)
-							{
-								extMember = member.ExtensionMember.AccessorOwner;
-							}
-							if (entityMap.Contains(extMember) || extMember.MetadataToken.IsNil)
-							{
-								// Member is already decompiled.
-								continue;
-							}
-							EntityDeclaration extMemberDecl = DoDecompileExtensionMember(extMember, typeDef.ExtensionInfo, decompileRun, decompilationContext);
-							ext.Members.Add(extMemberDecl);
-							entityMap.Add(extMember, extMemberDecl);
-						}
+						var ext = (ExtensionDeclaration)typeSystemAstBuilder.ConvertExtension(group);
+						DoDecompileExtensionMembers(ext, group.Marker, typeDef.ExtensionInfo);
 
 						typeDecl.Members.Add(ext);
 					}
@@ -1478,7 +1542,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					switch (entity)
 					{
-						case ITypeDefinition td when extensionInfo.IsExtensionGroupingType(td):
+						case ITypeDefinition td when extensionInfo.IsExtensionGroupType(td) || extensionInfo.IsExtensionMarkerType(td, out _):
 							return;
 						case IMethod m when extensionInfo.InfoOfImplementationMember(m).HasValue:
 							return;
@@ -1549,31 +1613,45 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				}
 			}
-		}
 
-		private EntityDeclaration DoDecompileExtensionMember(IMember extMember, ExtensionInfo info, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
-		{
-			switch (extMember)
+			void DoDecompileExtensionMembers(ExtensionDeclaration ext, IMethod marker, ExtensionInfo extensionInfo)
 			{
-				case IProperty p:
-					var prop = DoDecompile(p, decompileRun, decompilationContext.WithCurrentMember(p), info);
-					RemoveAttribute(prop, KnownAttribute.ExtensionMarker);
-					if (p.Getter != null)
+				foreach (var member in extensionInfo.GetMembersOfGroup(marker))
+				{
+					var extMember = member;
+					if (entityMap.Contains(extMember) || extMember.MetadataToken.IsNil)
 					{
-						RemoveAttribute(prop.GetChildByRole(PropertyDeclaration.GetterRole), KnownAttribute.ExtensionMarker);
+						// Member is already decompiled.
+						continue;
 					}
-					if (p.Setter != null)
+					EntityDeclaration extMemberDecl;
+					switch (extMember)
 					{
-						RemoveAttribute(prop.GetChildByRole(PropertyDeclaration.SetterRole), KnownAttribute.ExtensionMarker);
+						case IProperty p:
+							var prop = DoDecompile(p, decompileRun, decompilationContext.WithCurrentMember(p), extensionInfo);
+							RemoveAttribute(prop, KnownAttribute.ExtensionMarker);
+							if (p.Getter != null)
+							{
+								RemoveAttribute(prop.GetChildByRole(PropertyDeclaration.GetterRole), KnownAttribute.ExtensionMarker);
+							}
+							if (p.Setter != null)
+							{
+								RemoveAttribute(prop.GetChildByRole(PropertyDeclaration.SetterRole), KnownAttribute.ExtensionMarker);
+							}
+							extMemberDecl = prop;
+							break;
+						case IMethod m:
+							var meth = DoDecompile(m, decompileRun, decompilationContext.WithCurrentMember(m), extensionInfo);
+							RemoveAttribute(meth, KnownAttribute.ExtensionMarker);
+							extMemberDecl = meth;
+							break;
+						default:
+							throw new NotSupportedException($"Extension member {extMember} is not supported for decompilation.");
 					}
-					return prop;
-				case IMethod m:
-					var meth = DoDecompile(m, decompileRun, decompilationContext.WithCurrentMember(m), info);
-					RemoveAttribute(meth, KnownAttribute.ExtensionMarker);
-					return meth;
+					ext.Members.Add(extMemberDecl);
+					entityMap.Add(extMember, extMemberDecl);
+				}
 			}
-
-			throw new NotSupportedException($"Extension member {extMember} is not supported for decompilation.");
 		}
 
 		EnumValueDisplayMode DetectBestEnumValueDisplayMode(ITypeDefinition typeDef, MetadataFile module)

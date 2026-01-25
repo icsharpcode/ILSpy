@@ -1817,26 +1817,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		EntityDeclaration ConvertExtensionGroup(ITypeDefinition group)
+		public EntityDeclaration ConvertExtension((IMethod MarkerMethod, IReadOnlyList<ITypeParameter> TypeParameters) group)
 		{
 			var ext = new ExtensionDeclaration();
-			var info = group.DeclaringTypeDefinition.ExtensionInfo.GetGroup(group);
-			var typeParameters = info.TypeParameters;
-			var subst = new TypeParameterSubstitution(typeParameters, null);
-			ext.TypeParameters.AddRange(typeParameters.Select(ConvertTypeParameter));
-			var marker = info.Marker.Specialize(subst);
-			ext.ReceiverParameters.Add(ConvertParameter(marker.Parameters.Single()));
-			ext.Constraints.AddRange(typeParameters.Select(ConvertTypeParameterConstraint));
+			var subst = new TypeParameterSubstitution(group.TypeParameters, []);
+			ext.TypeParameters.AddRange(group.TypeParameters.Select(ConvertTypeParameter));
+			ext.ReceiverParameters.Add(ConvertParameter(group.MarkerMethod.Specialize(subst).Parameters.Single()));
+			ext.Constraints.AddRange(group.TypeParameters.Select(ConvertTypeParameterConstraint));
 			return ext;
 		}
 
 		EntityDeclaration ConvertTypeDefinition(ITypeDefinition typeDefinition)
 		{
-			if (typeDefinition.Kind == TypeKind.ExtensionGroup && SupportExtensionDeclarations)
-			{
-				return ConvertExtensionGroup(typeDefinition);
-			}
-
 			Modifiers modifiers = Modifiers.None;
 			if (this.ShowAccessibility)
 			{
