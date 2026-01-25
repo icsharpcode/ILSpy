@@ -387,7 +387,7 @@ namespace ICSharpCode.ILSpy
 
 			if (!Enum.IsDefined(architecture))
 			{
-				foreach ((var osEnum, var osText) in osMachineLookup)
+				foreach (var (osEnum, osText) in osMachineLookup)
 				{
 					var candidate = architecture ^ osEnum;
 					if (Enum.IsDefined(candidate))
