@@ -367,28 +367,54 @@ namespace ICSharpCode.ILSpy
 			return new CodeMappingInfo(module, declaringType);
 		}
 
+		static readonly IReadOnlyDictionary<Machine, string> osMachineLookup = new Dictionary<Machine, string>
+		{
+			{ (Machine)0x4644, "MacOS" },
+			{ (Machine)0x7b79, "Linux" },
+			{ (Machine)0xadc4, "FreeBSD" },
+			{ (Machine)0x1993, "NetBSD" },
+			{ (Machine)0x1992, "Sun" },
+		};
+
 		public static string GetPlatformDisplayName(PEFile module)
 		{
 			var headers = module.Reader.PEHeaders;
 			var architecture = headers.CoffHeader.Machine;
 			var characteristics = headers.CoffHeader.Characteristics;
 			var corflags = headers.CorHeader.Flags;
+
+			var modifier = string.Empty;
+
+			if (!Enum.IsDefined(architecture))
+			{
+				foreach (var (osEnum, osText) in osMachineLookup)
+				{
+					var candidate = architecture ^ osEnum;
+					if (Enum.IsDefined(candidate))
+					{
+						modifier = osText + " ";
+						architecture = candidate;
+						break;
+					}
+				}
+			}
+
 			switch (architecture)
 			{
 				case Machine.I386:
 					if ((corflags & CorFlags.Prefers32Bit) != 0)
-						return "AnyCPU (32-bit preferred)";
+						return modifier + "AnyCPU (32-bit preferred)";
 					if ((corflags & CorFlags.Requires32Bit) != 0)
-						return "x86";
+						return modifier + "x86";
 					// According to ECMA-335, II.25.3.3.1 CorFlags.Requires32Bit and Characteristics.Bit32Machine must be in sync
 					// for assemblies containing managed code. However, this is not true for C++/CLI assemblies.
 					if ((corflags & CorFlags.ILOnly) == 0 && (characteristics & Characteristics.Bit32Machine) != 0)
-						return "x86";
-					return "AnyCPU (64-bit preferred)";
+						return modifier + "x86";
+					return modifier + "AnyCPU (64-bit preferred)";
 				case Machine.Amd64:
-					return "x64";
+					return modifier + "x64";
 				case Machine.IA64:
-					return "Itanium";
+					return modifier + "Itanium";
 				default:
 					return architecture.ToString();
 			}
