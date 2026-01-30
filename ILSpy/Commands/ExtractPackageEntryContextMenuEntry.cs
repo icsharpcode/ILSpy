@@ -27,6 +27,7 @@ using System.Windows;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
@@ -92,99 +93,79 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		static string GetPackageFolderPath(SharpTreeNode node)
-		{
-			string name = "";
-			while (node is PackageFolderTreeNode)
-			{
-				name = Path.Combine(node.Text.ToString(), name);
-				node = node.Parent;
-			}
-			return name;
-		}
-
-		static string GetFileName(string path, bool isFile, SharpTreeNode containingNode, PackageEntry entry)
-		{
-			string fileName;
-			if (isFile)
-			{
-				fileName = path;
-			}
-			else
-			{
-				string relativePackagePath = WholeProjectDecompiler.SanitizeFileName(Path.Combine(GetPackageFolderPath(containingNode), entry.Name));
-				fileName = Path.Combine(path, relativePackagePath);
-			}
-
-			return fileName;
-		}
-
-		internal static void Save(DockWorkspace dockWorkspace, IEnumerable<SharpTreeNode> nodes, string path, bool isFile)
+		internal static void Save(DockWorkspace dockWorkspace, ICollection<SharpTreeNode> nodes, string path, bool isFile)
 		{
 			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
 				Stopwatch stopwatch = Stopwatch.StartNew();
-				var writtenFiles = new List<string>();
-				foreach (var node in nodes)
+				Dictionary<string, int> fileNameCounts = new Dictionary<string, int>(Platform.FileNameComparer);
+				foreach (var (entry, fileName) in CollectAllFiles(nodes))
 				{
-					if (node is AssemblyTreeNode { PackageEntry: { } assembly })
+					string actualFileName = WholeProjectDecompiler.SanitizeFileName(fileName);
+					while (fileNameCounts.TryGetValue(actualFileName, out int index))
 					{
-						string fileName = GetFileName(path, isFile, node.Parent, assembly);
-						SaveEntry(output, assembly, fileName);
-						if (File.Exists(fileName))
-							writtenFiles.Add(fileName);
+						index++;
+						fileNameCounts[actualFileName] = index;
+						actualFileName = Path.ChangeExtension(actualFileName, index + Path.GetExtension(actualFileName));
 					}
-					else if (node is ResourceTreeNode { Resource: PackageEntry { } resource })
+					if (!fileNameCounts.ContainsKey(actualFileName))
 					{
-						string fileName = GetFileName(path, isFile, node.Parent, resource);
-						SaveEntry(output, resource, fileName);
-						if (File.Exists(fileName))
-							writtenFiles.Add(fileName);
+						fileNameCounts[actualFileName] = 1;
 					}
-					else if (node is PackageFolderTreeNode)
-					{
-						node.EnsureLazyChildren();
-						foreach (var item in node.DescendantsAndSelf())
-						{
-							if (item is AssemblyTreeNode { PackageEntry: { } asm })
-							{
-								string fileName = GetFileName(path, isFile, item.Parent, asm);
-								SaveEntry(output, asm, fileName);
-								if (File.Exists(fileName))
-									writtenFiles.Add(fileName);
-							}
-							else if (item is ResourceTreeNode { Resource: PackageEntry { } entry })
-							{
-								string fileName = GetFileName(path, isFile, item.Parent, entry);
-								SaveEntry(output, entry, fileName);
-								if (File.Exists(fileName))
-									writtenFiles.Add(fileName);
-							}
-							else if (item is PackageFolderTreeNode)
-							{
-								Directory.CreateDirectory(Path.Combine(path, WholeProjectDecompiler.SanitizeFileName(GetPackageFolderPath(item))));
-							}
-						}
-					}
+					SaveEntry(output, entry, Path.Combine(path, actualFileName));
 				}
 				stopwatch.Stop();
 				output.WriteLine(Resources.GenerationCompleteInSeconds, stopwatch.Elapsed.TotalSeconds.ToString("F1"));
 				output.WriteLine();
 				// If we have written files, open explorer and select them grouped by folder; otherwise fall back to opening containing folder.
-				if (writtenFiles.Count > 0)
-				{
-					output.AddButton(null, Resources.OpenExplorer, delegate { ShellHelper.OpenFolderAndSelectItems(writtenFiles); });
-				}
+				if (isFile && File.Exists(path))
+					output.AddButton(null, Resources.OpenExplorer, delegate { ShellHelper.OpenFolderAndSelectItem(path); });
 				else
-				{
-					if (isFile && File.Exists(path))
-						output.AddButton(null, Resources.OpenExplorer, delegate { ShellHelper.OpenFolderAndSelectItem(path); });
-					else
-						output.AddButton(null, Resources.OpenExplorer, delegate { ShellHelper.OpenFolder(path); });
-				}
+					output.AddButton(null, Resources.OpenExplorer, delegate { ShellHelper.OpenFolder(path); });
 				output.WriteLine();
 				return output;
 			}, ct)).Then(dockWorkspace.ShowText).HandleExceptions();
+
+			static IEnumerable<(PackageEntry Entry, string TargetFileName)> CollectAllFiles(ICollection<SharpTreeNode> nodes)
+			{
+				foreach (var node in nodes)
+				{
+					if (node is AssemblyTreeNode { PackageEntry: { } assembly })
+					{
+						yield return (assembly, Path.GetFileName(assembly.FullName));
+					}
+					else if (node is ResourceTreeNode { Resource: PackageEntry { } resource })
+					{
+						yield return (resource, Path.GetFileName(resource.FullName));
+					}
+					else if (node is AssemblyTreeNode { PackageKind: not null } asm)
+					{
+						var package = asm.LoadedAssembly.GetLoadResultAsync().GetAwaiter().GetResult().Package;
+						foreach (var entry in package.Entries)
+						{
+							yield return (entry, entry.FullName);
+						}
+					}
+					else if (node is PackageFolderTreeNode folder)
+					{
+						int prefixLength = 0;
+						PackageFolder current = folder.Folder;
+						if (nodes.Count > 1)
+							current = current.Parent;
+						while (current != null)
+						{
+							prefixLength += current.Name.Length + 1;
+							current = current.Parent;
+						}
+						if (prefixLength > 0)
+							prefixLength--;
+						foreach (var item in TreeTraversal.PreOrder(folder.Folder, f => f.Folders).SelectMany(f => f.Entries))
+						{
+							yield return (item, item.FullName.Substring(prefixLength));
+						}
+					}
+				}
+			}
 		}
 
 		static void SaveEntry(ITextOutput output, PackageEntry entry, string targetFileName)
@@ -196,6 +177,8 @@ namespace ICSharpCode.ILSpy
 				output.WriteLine("Could not open stream!");
 				return;
 			}
+
+			Directory.CreateDirectory(Path.GetDirectoryName(targetFileName));
 
 			stream.Position = 0;
 			using FileStream fileStream = new FileStream(targetFileName, FileMode.OpenOrCreate);
@@ -211,7 +194,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (node is AssemblyTreeNode { PackageEntry: { } } or PackageFolderTreeNode)
 				return true;
-			if (node is ResourceTreeNode { Resource: PackageEntry { } resource } && resource.FullName.StartsWith("bundle://"))
+			if (node is ResourceTreeNode { Resource: PackageEntry { } resource } && resource.PackageQualifiedFileName.StartsWith("bundle://"))
 				return true;
 			return false;
 		}
@@ -241,22 +224,14 @@ namespace ICSharpCode.ILSpy
 					return;
 			}
 
-			asm.EnsureLazyChildren();
-			ExtractPackageEntryContextMenuEntry.Save(dockWorkspace, asm.Descendants(), folderName, false);
+			ExtractPackageEntryContextMenuEntry.Save(dockWorkspace, [asm], folderName, false);
 		}
 
 		public bool IsEnabled(TextViewContext context) => true;
 
 		public bool IsVisible(TextViewContext context)
 		{
-			if (context.SelectedTreeNodes is [AssemblyTreeNode { LoadedAssembly.IsLoaded: true, LoadedAssembly.HasLoadError: false, PackageEntry: null } asm])
-			{
-				// Using .GetAwaiter().GetResult() is no problem here, since we already checked IsLoaded and HasLoadError.
-				var loadResult = asm.LoadedAssembly.GetLoadResultAsync().GetAwaiter().GetResult();
-				if (loadResult.Package is { Kind: PackageKind.Bundle })
-					return true;
-			}
-			return false;
+			return context.SelectedTreeNodes is [AssemblyTreeNode { PackageEntry: null, PackageKind: PackageKind.Bundle }];
 		}
 	}
 }

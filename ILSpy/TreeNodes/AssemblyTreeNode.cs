@@ -83,6 +83,20 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public PackageEntry PackageEntry { get; }
 
+		/// <summary>
+		/// If this assembly is a bundle or package, returns the <see cref="LoadedAssembly.PackageKind"/>,
+		/// otherwise returns <see langword="null"/>.
+		/// Returns <see langword="null"/> if this assembly was not yet loaded or an error occurred.
+		/// </summary>
+		public LoadedPackage.PackageKind? PackageKind {
+			get {
+				if (LoadedAssembly.HasLoadError || !LoadedAssembly.IsLoaded)
+					return null;
+				var loadResult = LoadedAssembly.GetLoadResultAsync().GetAwaiter().GetResult();
+				return loadResult.Package?.Kind;
+			}
+		}
+
 		public override bool IsAutoLoaded {
 			get {
 				return LoadedAssembly.IsAutoLoaded;

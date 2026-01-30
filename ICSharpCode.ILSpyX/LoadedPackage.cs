@@ -143,6 +143,7 @@ namespace ICSharpCode.ILSpyX
 		{
 			readonly PackageEntry originalEntry;
 			public override string Name { get; }
+			public override string FullName => originalEntry.Name;
 
 			public FolderEntry(string name, PackageEntry originalEntry)
 			{
@@ -151,7 +152,7 @@ namespace ICSharpCode.ILSpyX
 			}
 
 			public override ManifestResourceAttributes Attributes => originalEntry.Attributes;
-			public override string FullName => originalEntry.FullName;
+			public override string PackageQualifiedFileName => originalEntry.PackageQualifiedFileName;
 			public override ResourceType ResourceType => originalEntry.ResourceType;
 			public override Stream? TryOpenStream() => originalEntry.TryOpenStream();
 			public override long? TryGetLength() => originalEntry.TryGetLength();
@@ -161,7 +162,9 @@ namespace ICSharpCode.ILSpyX
 		{
 			readonly string zipFile;
 			public override string Name { get; }
-			public override string FullName => $"zip://{zipFile};{Name}";
+			public override string PackageQualifiedFileName => $"zip://{zipFile};{Name}";
+
+			public override string FullName => Name;
 
 			public ZipFileEntry(string zipFile, ZipArchiveEntry entry)
 			{
@@ -210,7 +213,8 @@ namespace ICSharpCode.ILSpyX
 			}
 
 			public override string Name => entry.RelativePath;
-			public override string FullName => $"bundle://{bundleFile};{Name}";
+			public override string FullName => Name;
+			public override string PackageQualifiedFileName => $"bundle://{bundleFile};{Name}";
 
 			public override Stream TryOpenStream()
 			{
@@ -251,7 +255,12 @@ namespace ICSharpCode.ILSpyX
 		public abstract override string Name { get; }
 
 		/// <summary>
-		/// Gets the full file name for the entry.
+		/// Gets the full file name including the full file name of the package (prefixed with e.g., bundle:// or zip://).
+		/// </summary>
+		public abstract string PackageQualifiedFileName { get; }
+
+		/// <summary>
+		/// Gets the full name of the file name relative to the package root.
 		/// </summary>
 		public abstract string FullName { get; }
 	}
@@ -273,6 +282,7 @@ namespace ICSharpCode.ILSpyX
 			this.Name = name;
 		}
 
+		public PackageFolder? Parent => parent;
 		public List<PackageFolder> Folders { get; } = new List<PackageFolder>();
 		public List<PackageEntry> Entries { get; } = new List<PackageEntry>();
 

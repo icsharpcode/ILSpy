@@ -31,11 +31,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	sealed class PackageFolderTreeNode : ILSpyTreeNode
 	{
-		readonly PackageFolder folder;
+		public PackageFolder Folder { get; }
 
 		public PackageFolderTreeNode(PackageFolder folder, string text = null)
 		{
-			this.folder = folder;
+			this.Folder = folder;
 			this.Text = text ?? folder.Name;
 			this.LazyLoading = true;
 		}
@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			this.Children.AddRange(LoadChildrenForFolder(folder));
+			this.Children.AddRange(LoadChildrenForFolder(Folder));
 		}
 
 		internal static IEnumerable<SharpTreeNode> LoadChildrenForFolder(PackageFolder root)

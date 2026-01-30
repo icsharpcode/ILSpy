@@ -44,37 +44,9 @@ namespace ICSharpCode.ILSpy.Util
 
 		public static void OpenFolder(string folderPath)
 		{
-			nint folderPidl = IntPtr.Zero;
 			try
 			{
-				if (string.IsNullOrEmpty(folderPath))
-					return;
-				if (!Directory.Exists(folderPath))
-					return;
-
-				int hr = SHParseDisplayName(folderPath, IntPtr.Zero, out folderPidl, 0, out var attrs);
-				Marshal.ThrowExceptionForHR(hr);
-
-				hr = SHOpenFolderAndSelectItems(folderPidl, 0, null, 0);
-				Marshal.ThrowExceptionForHR(hr);
-			}
-			catch (Exception ex) when (ex is COMException or Win32Exception)
-			{
-				// fall back to Process.Start
-				OpenFolderFallback(folderPath);
-			}
-			finally
-			{
-				if (folderPidl != IntPtr.Zero)
-					CoTaskMemFree(folderPidl);
-			}
-		}
-
-		static void OpenFolderFallback(string path)
-		{
-			try
-			{
-				Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
+				Process.Start(new ProcessStartInfo { FileName = folderPath, UseShellExecute = true });
 			}
 			catch (Exception)
 			{
@@ -156,7 +128,7 @@ namespace ICSharpCode.ILSpy.Util
 				catch (Exception ex) when (ex is COMException or Win32Exception)
 				{
 					// fall back to Process.Start
-					OpenFolderFallback(folder);
+					OpenFolder(folder);
 				}
 				finally
 				{
