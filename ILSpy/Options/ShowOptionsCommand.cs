@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
+
 using System.Composition;
 
 using ICSharpCode.ILSpy.AssemblyTree;
@@ -24,15 +24,33 @@ using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy.Options
 {
-	/// <summary>
-	/// Interaction logic for OptionsDialog.xaml
-	/// </summary>
-	public sealed partial class OptionsDialog
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources._Options), MenuCategory = nameof(Resources.Options), MenuOrder = 999)]
+	[Shared]
+	sealed class ShowOptionsCommand(AssemblyTreeModel assemblyTreeModel, SettingsService settingsService, MainWindow mainWindow) : SimpleCommand
 	{
-		public OptionsDialog(SettingsService settingsService)
+		public override void Execute(object parameter)
 		{
-			DataContext = new OptionsDialogViewModel(settingsService);
-			InitializeComponent();
+			OptionsDialog dlg = new(settingsService);
+
+#if CROSS_PLATFORM
+			// On cross-platform schedule showing the dialog on the UI dispatcher
+			// and await its result asynchronously. Do not block the calling thread.
+			System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(async () => {
+				bool? asyncResult = await dlg.ShowDialogAsync(mainWindow);
+				if (asyncResult == true)
+				{
+					System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(() => assemblyTreeModel.Refresh());
+				}
+			});
+#else
+			// WPF path: set owner and show dialog synchronously as before.
+			dlg.Owner = mainWindow;
+			bool? result = dlg.ShowDialog();
+			if (result == true)
+			{
+				assemblyTreeModel.Refresh();
+			}
+#endif
 		}
 	}
 }

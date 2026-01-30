@@ -154,30 +154,50 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					var metadata = module?.Metadata;
 					if (metadata?.IsAssembly == true && metadata.TryGetFullAssemblyName(out var assemblyName))
 					{
+#if CROSS_PLATFORM
+						tooltip.Inlines.Add(new Bold().Add(new Run("Name: ")));
+#else
 						tooltip.Inlines.Add(new Bold(new Run("Name: ")));
+#endif
 						tooltip.Inlines.Add(new Run(assemblyName));
 						tooltip.Inlines.Add(new LineBreak());
 					}
+#if CROSS_PLATFORM
+					tooltip.Inlines.Add(new Bold().Add(new Run("Location: ")));
+#else
 					tooltip.Inlines.Add(new Bold(new Run("Location: ")));
+#endif
 					tooltip.Inlines.Add(new Run(LoadedAssembly.FileName));
 					if (module != null)
 					{
 						if (module is PEFile peFile)
 						{
 							tooltip.Inlines.Add(new LineBreak());
+#if CROSS_PLATFORM
+							tooltip.Inlines.Add(new Bold().Add(new Run("Architecture: ")));
+#else
 							tooltip.Inlines.Add(new Bold(new Run("Architecture: ")));
+#endif
 							tooltip.Inlines.Add(new Run(Language.GetPlatformDisplayName(peFile)));
 						}
 						string runtimeName = Language.GetRuntimeDisplayName(module);
 						if (runtimeName != null)
 						{
 							tooltip.Inlines.Add(new LineBreak());
+#if CROSS_PLATFORM
+							tooltip.Inlines.Add(new Bold().Add(new Run("Runtime: ")));
+#else
 							tooltip.Inlines.Add(new Bold(new Run("Runtime: ")));
+#endif
 							tooltip.Inlines.Add(new Run(runtimeName));
 						}
 						var debugInfo = LoadedAssembly.GetDebugInfoOrNull();
 						tooltip.Inlines.Add(new LineBreak());
+#if CROSS_PLATFORM
+							tooltip.Inlines.Add(new Bold().Add(new Run("Debug info: ")));
+#else
 						tooltip.Inlines.Add(new Bold(new Run("Debug info: ")));
+#endif
 						tooltip.Inlines.Add(new Run(debugInfo?.Description ?? "none"));
 					}
 				}
@@ -756,7 +776,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				var path = Path.GetDirectoryName(node.LoadedAssembly.FileName);
 				if (Directory.Exists(path))
 				{
-					GlobalUtils.ExecuteCommand("cmd.exe", $"/k \"cd /d {path}\"");
+					GlobalUtils.OpenTerminalAt(path);
 				}
 			}
 		}

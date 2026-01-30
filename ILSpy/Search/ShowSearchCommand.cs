@@ -1,4 +1,4 @@
-// Copyright (c) 2019 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,27 +16,34 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Composition;
-using System.Windows;
+using System.Windows.Input;
 
-namespace ICSharpCode.ILSpy.ViewModels
+using ICSharpCode.ILSpy.Docking;
+
+namespace ICSharpCode.ILSpy.Search
 {
-#if DEBUG
-	[ExportToolPane]
+	[ExportToolbarCommand(ToolTip = nameof(Properties.Resources.SearchCtrlShiftFOrCtrlE), ToolbarIcon = "Images/Search", ToolbarCategory = nameof(Properties.Resources.View), ToolbarOrder = 100)]
 	[Shared]
-#endif
-	public class DebugStepsPaneModel : ToolPaneModel
+	sealed class ShowSearchCommand : CommandWrapper
 	{
-		public const string PaneContentId = "debugStepsPane";
+		private readonly DockWorkspace dockWorkspace;
 
-		public DebugStepsPaneModel()
+		public ShowSearchCommand(DockWorkspace dockWorkspace)
+			: base(NavigationCommands.Search)
 		{
-			ContentId = PaneContentId;
-			Title = Properties.Resources.DebugSteps;
-#if CROSS_PLATFORM
-			// Declare this tool belongs to the LeftDock group (same as AssemblyTreeModel and AnalyzerTreeViewModel)
-			DockGroup = "LeftDock";
-#endif
+			this.dockWorkspace = dockWorkspace;
+			var gestures = NavigationCommands.Search.InputGestures;
+
+			gestures.Clear();
+			gestures.Add(new KeyGesture(Key.F, ModifierKeys.Control | ModifierKeys.Shift));
+			gestures.Add(new KeyGesture(Key.E, ModifierKeys.Control));
+		}
+
+		protected override void OnExecute(object sender, ExecutedRoutedEventArgs e)
+		{
+			dockWorkspace.ShowToolPane(SearchPaneModel.PaneContentId);
 		}
 	}
 }

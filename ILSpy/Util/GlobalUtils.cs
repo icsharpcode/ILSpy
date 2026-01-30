@@ -21,7 +21,7 @@ using System.Diagnostics;
 
 namespace ICSharpCode.ILSpy.Util
 {
-	static class GlobalUtils
+	static partial class GlobalUtils
 	{
 		public static void OpenLink(string link)
 		{

@@ -3,8 +3,6 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
-using DataGridExtensions;
-
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -102,24 +100,6 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 
 			Filter = new FlagsContentFilter(mask);
-		}
-	}
-
-	public class FlagsContentFilter : IContentFilter
-	{
-		public int Mask { get; }
-
-		public FlagsContentFilter(int mask)
-		{
-			this.Mask = mask;
-		}
-
-		public bool IsMatch(object value)
-		{
-			if (value == null)
-				return true;
-
-			return Mask == -1 || (Mask & (int)value) != 0;
 		}
 	}
 }

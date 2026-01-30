@@ -323,7 +323,24 @@ namespace ICSharpCode.ILSpyX.TreeView
 				}
 				RaisePropertyChanged(nameof(LazyLoading));
 				RaisePropertyChanged(nameof(ShowExpander));
+				RaisePropertyChanged(nameof(ViewChildren));
 			}
+		}
+
+		/// <summary>
+		/// Workaround for cross platform treeview bindings.
+		/// </summary>
+		public System.Collections.IEnumerable ViewChildren {
+			get {
+				if (LazyLoading && Children.Count == 0)
+					return new[] { new LoadingTreeNode() };
+				return Children;
+			}
+		}
+
+		class LoadingTreeNode : SharpTreeNode
+		{
+			public override object Text => "Loading...";
 		}
 
 		bool canExpandRecursively = true;

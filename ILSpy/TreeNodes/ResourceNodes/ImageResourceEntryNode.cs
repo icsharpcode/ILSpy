@@ -20,7 +20,6 @@ using System;
 using System.Composition;
 using System.IO;
 using System.Windows.Controls;
-using System.Windows.Media.Imaging;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Properties;
@@ -48,7 +47,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 	}
 
-	sealed class ImageResourceEntryNode : ResourceEntryNode
+	sealed partial class ImageResourceEntryNode : ResourceEntryNode
 	{
 		public ImageResourceEntryNode(string key, Func<Stream> openStream)
 			: base(key, openStream)
@@ -56,29 +55,5 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 
 		public override object Icon => Images.ResourceImage;
-
-		public override bool View(TabPageModel tabPage)
-		{
-			try
-			{
-				AvalonEditTextOutput output = new AvalonEditTextOutput();
-				BitmapImage image = new BitmapImage();
-				image.BeginInit();
-				image.StreamSource = OpenStream();
-				image.EndInit();
-				output.AddUIElement(() => new Image { Source = image });
-				output.WriteLine();
-				output.AddButton(Images.Save, Resources.Save, delegate {
-					Save(null);
-				});
-				tabPage.ShowTextView(textView => textView.ShowNode(output, this));
-				tabPage.SupportsLanguageSwitching = false;
-				return true;
-			}
-			catch (Exception)
-			{
-				return false;
-			}
-		}
 	}
 }

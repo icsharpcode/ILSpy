@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.Search
 
 	[ExportToolPane]
 	[Shared]
-	public class SearchPaneModel : ToolPaneModel
+	public partial class SearchPaneModel : ToolPaneModel
 	{
 		public const string PaneContentId = "searchPane";
 
