@@ -25,6 +25,8 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
+using NetEscapades.EnumGenerators;
+
 using static ICSharpCode.Decompiler.Metadata.MetadataExtensions;
 
 using SRM = System.Reflection.Metadata;
@@ -35,6 +37,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// Options that control how metadata is represented in the type system.
 	/// </summary>
 	[Flags]
+	[EnumExtensions]
 	public enum TypeSystemOptions
 	{
 		/// <summary>

@@ -26,9 +26,12 @@ using ICSharpCode.Decompiler.IL.Patterns;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
+using NetEscapades.EnumGenerators;
+
 namespace ICSharpCode.Decompiler.IL
 {
 	[Flags]
+	[EnumExtensions]
 	public enum CSharpArgumentInfoFlags
 	{
 		None = 0,
@@ -41,6 +44,7 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	[Flags]
+	[EnumExtensions]
 	public enum CSharpBinderFlags
 	{
 		None = 0,

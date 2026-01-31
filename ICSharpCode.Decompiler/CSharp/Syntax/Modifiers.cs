@@ -28,9 +28,12 @@
 
 using System;
 
+using NetEscapades.EnumGenerators;
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	[Flags]
+	[EnumExtensions]
 	public enum Modifiers
 	{
 		None = 0,

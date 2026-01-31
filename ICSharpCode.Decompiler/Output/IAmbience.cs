@@ -20,9 +20,12 @@ using System;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
+using NetEscapades.EnumGenerators;
+
 namespace ICSharpCode.Decompiler.Output
 {
 	[Flags]
+	[EnumExtensions]
 	public enum ConversionFlags
 	{
 		/// <summary>
