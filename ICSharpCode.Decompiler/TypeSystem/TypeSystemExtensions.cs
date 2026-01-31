@@ -871,5 +871,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			return ns;
 		}
+
+		public static ExtensionInfo? ResolveExtensionInfo(this IMember member)
+		{
+			if (member is null)
+			{
+				throw new ArgumentNullException(nameof(member));
+			}
+			var td = member.DeclaringTypeDefinition!;
+			return td.DeclaringTypeDefinition?.ExtensionInfo ?? td.DeclaringTypeDefinition?.DeclaringTypeDefinition?.ExtensionInfo;
+		}
 	}
 }

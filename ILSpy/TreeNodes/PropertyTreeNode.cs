@@ -33,17 +33,17 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class PropertyTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		readonly bool isIndexer;
+		readonly ExtensionInfo extensionInfo;
 
 		public PropertyTreeNode(IProperty property)
 		{
 			this.PropertyDefinition = property ?? throw new ArgumentNullException(nameof(property));
-			this.isIndexer = property.IsIndexer;
+			this.extensionInfo = property.ResolveExtensionInfo();
 
 			if (property.CanGet)
-				this.Children.Add(new MethodTreeNode(property.Getter));
+				this.Children.Add(new MethodTreeNode(extensionInfo?.InfoOfExtensionMember(property.Getter)?.ImplementationMethod ?? property.Getter));
 			if (property.CanSet)
-				this.Children.Add(new MethodTreeNode(property.Setter));
+				this.Children.Add(new MethodTreeNode(extensionInfo?.InfoOfExtensionMember(property.Setter)?.ImplementationMethod ?? property.Setter));
 			/*foreach (var m in property.OtherMethods)
 				this.Children.Add(new MethodTreeNode(m));*/
 		}
@@ -70,8 +70,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static ImageSource GetIcon(IProperty property)
 		{
+			IMethod accessor = property.Getter ?? property.Setter;
+			bool isExtension = property.ResolveExtensionInfo()?.InfoOfExtensionMember(accessor) != null;
 			return Images.GetIcon(property.IsIndexer ? MemberIcon.Indexer : MemberIcon.Property,
-				Images.GetOverlayIcon(property.Accessibility), property.IsStatic, false);
+				Images.GetOverlayIcon(property.Accessibility), property.IsStatic, isExtension);
 		}
 
 		public override FilterResult Filter(LanguageSettings settings)

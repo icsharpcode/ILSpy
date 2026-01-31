@@ -40,6 +40,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.extensionMemberMap = new();
 			this.implementationMemberMap = new();
 			this.extensionGroups = [];
+			this.Container = extensionContainer;
 
 			var metadata = module.MetadataFile.Metadata;
 
@@ -221,6 +222,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
+		public ITypeDefinition Container { get; }
+
 		public ExtensionMemberInfo? InfoOfExtensionMember(IMethod method)
 		{
 			return this.extensionMemberMap.TryGetValue(method, out var value) ? value : null;
@@ -252,15 +255,21 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IEnumerable<IMember> GetMembersOfGroup(IMethod marker)
 		{
-			foreach (var info in extensionMemberMap.Values)
+			return GetMembers().Distinct();
+
+			IEnumerable<IMember> GetMembers()
 			{
-				if (info.ExtensionMarkerMethod != marker)
-					continue;
-				var subst = new TypeParameterSubstitution(info.ExtensionGroupingTypeParameters, null);
-				if (info.ExtensionMember.IsAccessor)
-					yield return info.ExtensionMember.AccessorOwner.Specialize(subst);
-				else
-					yield return info.ExtensionMember.Specialize(subst);
+				var markerType = marker.DeclaringTypeDefinition;
+				foreach (var info in extensionMemberMap.Values)
+				{
+					if (!markerType!.Equals(info.ExtensionMarkerType))
+						continue;
+					var subst = new TypeParameterSubstitution(info.ExtensionGroupingTypeParameters, null);
+					if (info.ExtensionMember.IsAccessor)
+						yield return info.ExtensionMember.AccessorOwner.Specialize(subst);
+					else
+						yield return info.ExtensionMember.Specialize(subst);
+				}
 			}
 		}
 

@@ -50,12 +50,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public AssemblyTreeNode ParentAssemblyNode { get; }
 
-		public override object Icon {
-			get {
-				var type = GetTypeDefinition();
-				return Images.GetIcon(TypeTreeNode.GetTypeIcon(type, out bool isStatic), TypeTreeNode.GetOverlayIcon(type), isStatic, true);
-			}
-		}
+		public override object Icon => Images.GetIcon(TypeIcon.Class, AccessOverlayIcon.Public, false, true);
 
 		public override object Text => this.Language.TypeToString(GetTypeDefinition(), ConversionFlags.SupportExtensionDeclarations);
 
@@ -73,23 +68,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			var extensionInfo = ContainerTypeDefinition.ExtensionInfo;
 
-			foreach (var field in extensionInfo.GetMembersOfGroup(MarkerMethod).OfType<IField>().OrderBy(f => f.Name, NaturalStringComparer.Instance))
-			{
-				this.Children.Add(new FieldTreeNode(field));
-			}
 			foreach (var property in extensionInfo.GetMembersOfGroup(MarkerMethod).OfType<IProperty>().OrderBy(p => p.Name, NaturalStringComparer.Instance))
 			{
 				this.Children.Add(new PropertyTreeNode(property));
-			}
-			foreach (var ev in extensionInfo.GetMembersOfGroup(MarkerMethod).OfType<IEvent>().OrderBy(e => e.Name, NaturalStringComparer.Instance))
-			{
-				this.Children.Add(new EventTreeNode(ev));
 			}
 			foreach (var method in extensionInfo.GetMembersOfGroup(MarkerMethod).OfType<IMethod>().OrderBy(m => m.Name, NaturalStringComparer.Instance))
 			{
 				if (method.MetadataToken.IsNil)
 					continue;
-				this.Children.Add(new MethodTreeNode(method));
+				var memberInfo = extensionInfo.InfoOfExtensionMember((IMethod)method.MemberDefinition);
+				this.Children.Add(new MethodTreeNode(memberInfo.Value.ImplementationMethod));
 			}
 		}
 

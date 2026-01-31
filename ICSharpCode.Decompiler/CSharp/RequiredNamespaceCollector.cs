@@ -66,13 +66,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				case ITypeDefinition td:
 					var extensionInfo = td.DeclaringTypeDefinition?.ExtensionInfo ?? td.DeclaringTypeDefinition?.DeclaringTypeDefinition?.ExtensionInfo;
-					if (extensionInfo?.IsExtensionMarkerType(td, out _) == true)
+					if (extensionInfo?.IsExtensionMarkerType(td, out _) == true || extensionInfo?.IsExtensionGroupType(td) == true)
 					{
-						td = td.DeclaringTypeDefinition.DeclaringTypeDefinition;
-					}
-					else if (extensionInfo?.IsExtensionGroupType(td) == true)
-					{
-						td = td.DeclaringTypeDefinition;
+						td = extensionInfo.Container;
 					}
 
 					namespaces.Add(td.Namespace);

@@ -159,7 +159,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants | ReadOnlyStructsAndParameters
 			| RefStructs | UnmanagedConstraints | NullabilityAnnotations | ReadOnlyMethods
 			| NativeIntegers | FunctionPointers | ScopedRef | NativeIntegersWithoutAttribute
-			| RefReadOnlyParameters | ParamsCollections | FirstClassSpanTypes
+			| RefReadOnlyParameters | ParamsCollections | FirstClassSpanTypes | ExtensionMembers
 	}
 
 	/// <summary>

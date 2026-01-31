@@ -133,6 +133,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			{
 				if (method.MetadataToken.IsNil)
 					continue;
+				if (extensionInfo?.InfoOfImplementationMember(method).HasValue == true)
+					continue;
 				this.Children.Add(new MethodTreeNode(method));
 			}
 		}
