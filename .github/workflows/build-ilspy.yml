@@ -52,8 +52,8 @@ jobs:
     - name: Install wix (locked version)
       run: dotnet tool install --global wix --version 6.0.2
       
-    - name: Install wix (locked version)
-      run: wix.exe extension add -g WixToolset.UI.wixext
+    - name: Install wix extesnion (locked version)
+      run: wix.exe extension add -g WixToolset.UI.wixext/6.0.2
 
     - name: Get Version
       id: version
