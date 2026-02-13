@@ -50,7 +50,10 @@ jobs:
       run: dotnet tool install -g dotnet-format --version "${{env.DOTNET_FORMAT_VERSION}}" --add-source "${{env.DOTNET_FORMAT_SOURCE}}"
 
     - name: Install wix (locked version)
-      run: dotnet tool install --global wix --version 7.0.0-rc.1
+      run: dotnet tool install --global wix --version 6.0.2
+      
+    - name: Install wix (locked version)
+      run: wix.exe extension add -g WixToolset.UI.wixext
 
     - name: Get Version
       id: version
