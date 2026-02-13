@@ -4,9 +4,9 @@
     "net10.0": {
       "Microsoft.Sbom.Targets": {
         "type": "Direct",
-        "requested": "[4.1.4, )",
-        "resolved": "4.1.4",
-        "contentHash": "ZC3r/TTZ9BELNFYstmL8GRzHK+KuMxaCzF5Rd3wsvKFGNgiPoOdhzPCw5Vt9YKgNbcdqYT6eid96NxMUJfVteg=="
+        "requested": "[4.1.5, )",
+        "resolved": "4.1.5",
+        "contentHash": "i5z+cNu/cOcdO0AgFB8aXk8w6In2H+haaDfSgd9ImvQIK+rSHavHZIogVoAZLL8jLwYx4bAcs5b7EyuMMG4mQQ=="
       },
       "TomsToolbox.Composition.Analyzer": {
         "type": "Direct",
@@ -23,13 +23,13 @@
       },
       "System.Collections.Immutable": {
         "type": "CentralTransitive",
-        "requested": "[10.0.1, )",
+        "requested": "[10.0.3, )",
         "resolved": "9.0.0",
         "contentHash": "QhkXUl2gNrQtvPmtBTQHb0YsUrDiDQ2QS09YbtTTiSjGcf7NBqtYbrG/BE06zcBPCKEwQGzIv13IVdXNOSub2w=="
       },
       "System.Reflection.Metadata": {
         "type": "CentralTransitive",
-        "requested": "[10.0.1, )",
+        "requested": "[10.0.3, )",
         "resolved": "9.0.0",
         "contentHash": "ANiqLu3DxW9kol/hMmTWbt3414t9ftdIuiIU7j80okq2YzAueo120M442xk1kDJWtmZTqWQn7wHDvMRipVOEOQ=="
       }
