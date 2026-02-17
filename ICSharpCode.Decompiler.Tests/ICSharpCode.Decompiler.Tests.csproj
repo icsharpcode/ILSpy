@@ -79,7 +79,6 @@
     <PackageReference Include="Mono.Cecil" />
     <PackageReference Include="Microsoft.NETCore.ILAsm" />
     <PackageReference Include="Microsoft.NETCore.ILDAsm" />
-    <PackageReference Include="System.Resources.Extensions" />
   </ItemGroup>
 
   <ItemGroup>

@@ -30,6 +30,12 @@
         "resolved": "0.11.6",
         "contentHash": "f33RkDtZO8VlGXCtmQIviOtxgnUdym9xx/b1p9h91CRGOsJFxCFOFK1FDbVt1OCf1aWwYejUFa2MOQyFWTFjbA=="
       },
+      "ReferenceTrimmer": {
+        "type": "Direct",
+        "requested": "[3.4.5, )",
+        "resolved": "3.4.5",
+        "contentHash": "I3vQerUFZ3BSrPfdpAUZX+OIEj9rf/BZ0p/Dc+KlygFHsGa3zekygNhqoPOP6/p06ql1lAcGmrqJGpsLOb6Yfw=="
+      },
       "System.Composition.AttributedModel": {
         "type": "Direct",
         "requested": "[10.0.3, )",
@@ -65,17 +71,7 @@
         "contentHash": "cMtGW5/r0ck72Jg2QwZcNTX59z+iB/B1kW84VMa/eX8L19DhHIuIcQjfK0pgLLBxd60Jl0Bj9GUolcM0MnJnZA=="
       },
       "icsharpcode.decompiler": {
-        "type": "Project",
-        "dependencies": {
-          "System.Collections.Immutable": "[9.0.0, )",
-          "System.Reflection.Metadata": "[9.0.0, )"
-        }
-      },
-      "System.Collections.Immutable": {
-        "type": "CentralTransitive",
-        "requested": "[10.0.3, )",
-        "resolved": "9.0.0",
-        "contentHash": "QhkXUl2gNrQtvPmtBTQHb0YsUrDiDQ2QS09YbtTTiSjGcf7NBqtYbrG/BE06zcBPCKEwQGzIv13IVdXNOSub2w=="
+        "type": "Project"
       }
     }
   }

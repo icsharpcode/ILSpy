@@ -52,6 +52,12 @@
           "NuGet.Packaging": "7.3.0"
         }
       },
+      "ReferenceTrimmer": {
+        "type": "Direct",
+        "requested": "[3.4.5, )",
+        "resolved": "3.4.5",
+        "contentHash": "I3vQerUFZ3BSrPfdpAUZX+OIEj9rf/BZ0p/Dc+KlygFHsGa3zekygNhqoPOP6/p06ql1lAcGmrqJGpsLOb6Yfw=="
+      },
       "System.Security.Cryptography.Pkcs": {
         "type": "Direct",
         "requested": "[10.0.3, )",
@@ -343,11 +349,7 @@
         "contentHash": "+TUFINV2q2ifyXauQXRwy4CiBhqvDEDZeVJU7qfxya4aRYOKzVBpN+4acx25VcPB9ywUN6C0n8drWl110PhZEg=="
       },
       "icsharpcode.decompiler": {
-        "type": "Project",
-        "dependencies": {
-          "System.Collections.Immutable": "[9.0.0, )",
-          "System.Reflection.Metadata": "[9.0.0, )"
-        }
+        "type": "Project"
       },
       "icsharpcode.ilspyx": {
         "type": "Project",
@@ -355,9 +357,7 @@
           "ICSharpCode.Decompiler": "[8.0.0-noversion, )",
           "K4os.Compression.LZ4": "[1.3.8, )",
           "Mono.Cecil": "[0.11.6, )",
-          "System.Composition.AttributedModel": "[10.0.3, )",
-          "System.Reflection.Metadata": "[10.0.3, )",
-          "System.Runtime.CompilerServices.Unsafe": "[6.1.2, )"
+          "System.Composition.AttributedModel": "[10.0.3, )"
         }
       },
       "K4os.Compression.LZ4": {
@@ -406,29 +406,11 @@
         "resolved": "0.11.6",
         "contentHash": "f33RkDtZO8VlGXCtmQIviOtxgnUdym9xx/b1p9h91CRGOsJFxCFOFK1FDbVt1OCf1aWwYejUFa2MOQyFWTFjbA=="
       },
-      "System.Collections.Immutable": {
-        "type": "CentralTransitive",
-        "requested": "[10.0.3, )",
-        "resolved": "9.0.0",
-        "contentHash": "QhkXUl2gNrQtvPmtBTQHb0YsUrDiDQ2QS09YbtTTiSjGcf7NBqtYbrG/BE06zcBPCKEwQGzIv13IVdXNOSub2w=="
-      },
       "System.Composition.AttributedModel": {
         "type": "CentralTransitive",
         "requested": "[10.0.3, )",
         "resolved": "10.0.3",
         "contentHash": "Pj+8+lQhO6XOm8HD4xQLf5Mxiq4z64sq5rXSwesCDUFAC4AtSmAScGuxDCyoEmr4O8p7ygxnh9FOvd9vfi3ApQ=="
-      },
-      "System.Reflection.Metadata": {
-        "type": "CentralTransitive",
-        "requested": "[10.0.3, )",
-        "resolved": "10.0.3",
-        "contentHash": "xtgymSlbWSeg/7JEwDbyX0YWJlyBhKqZwRk0edFZ0axqZYWtGgcP09rwfzQgqYiFnpQekZ/ur9Dr9YFCKkJK0A=="
-      },
-      "System.Runtime.CompilerServices.Unsafe": {
-        "type": "CentralTransitive",
-        "requested": "[6.1.2, )",
-        "resolved": "6.1.2",
-        "contentHash": "2hBr6zdbIBTDE3EhK7NSVNdX58uTK6iHW/P/Axmm9sl1xoGSLqDvMtpecn226TNwHByFokYwJmt/aQQNlO5CRw=="
       }
     }
   }
