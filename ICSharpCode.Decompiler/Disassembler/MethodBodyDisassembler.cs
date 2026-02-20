@@ -351,7 +351,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 			ILOpCode opCode = ILParser.DecodeOpCode(ref blob);
 			OperandType opType = opCode.GetOperandType();
-			if (opCode.IsDefined() && opType.OperandSize() <= blob.RemainingBytes)
+			if (opCode.IsDefined() && opType.OperandSize <= blob.RemainingBytes)
 			{
 				WriteRVA(blob, offset + methodRva, opCode);
 				output.WriteLocalReference(DisassemblerHelpers.OffsetToString(offset), offset, isDefinition: true);

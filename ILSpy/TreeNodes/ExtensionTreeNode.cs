@@ -67,6 +67,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		protected override void LoadChildren()
 		{
 			var extensionInfo = ContainerTypeDefinition.ExtensionInfo;
+			var subst = new TypeParameterSubstitution(TypeParameters, null);
 
 			foreach (var property in extensionInfo.GetMembersOfGroup(MarkerMethod).OfType<IProperty>().OrderBy(p => p.Name, NaturalStringComparer.Instance))
 			{
@@ -76,9 +77,24 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			{
 				if (method.MetadataToken.IsNil)
 					continue;
-				var memberInfo = extensionInfo.InfoOfExtensionMember((IMethod)method.MemberDefinition);
-				this.Children.Add(new MethodTreeNode(memberInfo.Value.ImplementationMethod));
+				this.Children.Add(new MethodTreeNode(method));
 			}
+		}
+
+		public override FilterResult Filter(LanguageSettings settings)
+		{
+			if (LanguageService.Language is not CSharpLanguage)
+				return FilterResult.Hidden;
+
+			var decompilerSettings = SettingsService.DecompilerSettings.Clone();
+			if (!Enum.TryParse(AssemblyTreeModel.CurrentLanguageVersion?.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
+				languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
+			decompilerSettings.SetLanguageVersion(languageVersion);
+
+			if (!decompilerSettings.ExtensionMembers)
+				return FilterResult.Hidden;
+
+			return base.Filter(settings);
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)

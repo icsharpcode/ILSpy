@@ -40,37 +40,41 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		internal static int OperandSize(this OperandType opType)
+		extension(OperandType opType)
 		{
-			switch (opType)
-			{
-				// 64-bit
-				case OperandType.I8:
-				case OperandType.R:
-					return 8;
-				// 32-bit
-				case OperandType.BrTarget:
-				case OperandType.Field:
-				case OperandType.Method:
-				case OperandType.I:
-				case OperandType.Sig:
-				case OperandType.String:
-				case OperandType.Tok:
-				case OperandType.Type:
-				case OperandType.ShortR:
-					return 4;
-				// (n + 1) * 32-bit
-				case OperandType.Switch:
-					return 4; // minimum 4, usually more
-				case OperandType.Variable: // 16-bit
-					return 2;
-				// 8-bit
-				case OperandType.ShortVariable:
-				case OperandType.ShortBrTarget:
-				case OperandType.ShortI:
-					return 1;
-				default:
-					return 0;
+			internal int OperandSize {
+				get {
+					switch (opType)
+					{
+						// 64-bit
+						case OperandType.I8:
+						case OperandType.R:
+							return 8;
+						// 32-bit
+						case OperandType.BrTarget:
+						case OperandType.Field:
+						case OperandType.Method:
+						case OperandType.I:
+						case OperandType.Sig:
+						case OperandType.String:
+						case OperandType.Tok:
+						case OperandType.Type:
+						case OperandType.ShortR:
+							return 4;
+						// (n + 1) * 32-bit
+						case OperandType.Switch:
+							return 4; // minimum 4, usually more
+						case OperandType.Variable: // 16-bit
+							return 2;
+						// 8-bit
+						case OperandType.ShortVariable:
+						case OperandType.ShortBrTarget:
+						case OperandType.ShortI:
+							return 1;
+						default:
+							return 0;
+					}
+				}
 			}
 		}
 
@@ -92,7 +96,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 			else
 			{
-				operandSize = opType.OperandSize();
+				operandSize = opType.OperandSize;
 			}
 			if (operandSize <= blob.RemainingBytes)
 			{

@@ -1140,7 +1140,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return syntaxTree;
 		}
 
-		public SyntaxTree DecompileExtension(TypeDefinitionHandle handle)
+		public SyntaxTree DecompileExtension(EntityHandle handle)
 		{
 			if (handle.IsNil)
 				throw new ArgumentNullException(nameof(handle));
@@ -1148,9 +1148,50 @@ namespace ICSharpCode.Decompiler.CSharp
 			var namespaces = new HashSet<string>();
 			RequiredNamespaceCollector.CollectNamespaces(handle, module, namespaces);
 			var decompileRun = CreateDecompileRun(namespaces);
-			ITypeDefinition typeDef = module.GetDefinition(handle);
-			syntaxTree.Members.Add(DoDecompile(typeDef, decompileRun, new SimpleTypeResolveContext(typeDef), asExtension: true));
-			RunTransforms(syntaxTree, decompileRun, new SimpleTypeResolveContext(typeDef));
+
+			switch (handle.Kind)
+			{
+				case HandleKind.TypeDefinition:
+					ITypeDefinition typeDef = module.GetDefinition((TypeDefinitionHandle)handle);
+					syntaxTree.Members.Add(DoDecompile(typeDef, decompileRun, new SimpleTypeResolveContext(typeDef), asExtension: true));
+					RunTransforms(syntaxTree, decompileRun, new SimpleTypeResolveContext(typeDef));
+					break;
+				case HandleKind.MethodDefinition:
+					IMethod methodDef = module.GetDefinition((MethodDefinitionHandle)handle);
+					var extensionInfo = methodDef.ResolveExtensionInfo();
+					Debug.Assert(extensionInfo != null);
+					var memberInfo = extensionInfo.InfoOfExtensionMember((IMethod)methodDef.MemberDefinition).GetValueOrDefault();
+					var subst = new TypeParameterSubstitution(memberInfo.ExtensionGroupingTypeParameters, null);
+					methodDef = methodDef.Specialize(subst);
+					EntityDeclaration entity = DoDecompile(methodDef, decompileRun, new SimpleTypeResolveContext(methodDef), extensionInfo);
+					syntaxTree.Members.Add(entity);
+					RemoveAttribute(entity, KnownAttribute.ExtensionMarker);
+					RunTransforms(syntaxTree, decompileRun, new SimpleTypeResolveContext(methodDef.DeclaringTypeDefinition));
+					break;
+				case HandleKind.PropertyDefinition:
+					IProperty propDef = module.GetDefinition((PropertyDefinitionHandle)handle);
+					extensionInfo = propDef.ResolveExtensionInfo();
+					Debug.Assert(extensionInfo != null);
+					var accessor = propDef.Getter ?? propDef.Setter;
+					memberInfo = extensionInfo.InfoOfExtensionMember((IMethod)accessor.MemberDefinition).GetValueOrDefault();
+					subst = new TypeParameterSubstitution(memberInfo.ExtensionGroupingTypeParameters, null);
+					propDef = (IProperty)propDef.Specialize(subst);
+					EntityDeclaration prop = DoDecompile(propDef, decompileRun, new SimpleTypeResolveContext(propDef), extensionInfo);
+					syntaxTree.Members.Add(prop);
+					RemoveAttribute(prop, KnownAttribute.ExtensionMarker);
+					if (propDef.Getter != null)
+					{
+						RemoveAttribute(prop.GetChildByRole(PropertyDeclaration.GetterRole), KnownAttribute.ExtensionMarker);
+					}
+					if (propDef.Setter != null)
+					{
+						RemoveAttribute(prop.GetChildByRole(PropertyDeclaration.SetterRole), KnownAttribute.ExtensionMarker);
+					}
+					RunTransforms(syntaxTree, decompileRun, new SimpleTypeResolveContext(propDef.DeclaringTypeDefinition));
+					break;
+				default:
+					throw new NotSupportedException($"HandleKind {handle.Kind} is not supported!");
+			}
 			return syntaxTree;
 		}
 

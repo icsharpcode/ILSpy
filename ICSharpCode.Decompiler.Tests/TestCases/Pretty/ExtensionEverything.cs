@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -78,6 +79,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		extension(ExtensionEverythingTestUseSites.Point point)
 		{
 			public double Magnitude => Math.Sqrt(point.X * point.X + point.Y * point.Y);
+		}
+
+		extension(ref ExtensionEverythingTestUseSites.Point point)
+		{
+			public double MagnitudeRef => Math.Sqrt(point.X * point.X + point.Y * point.Y);
+		}
+
+		extension<T>(IEnumerable<T> @this)
+		{
+			public bool IsEmpty => !@this.Any();
+		}
+
+		extension(string @this)
+		{
+			public int WordCount => Regex.Matches(@this, @"\w+").Count;
 		}
 	}
 

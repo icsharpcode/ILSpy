@@ -372,7 +372,29 @@ namespace ICSharpCode.ILSpy
 			AddReferenceWarningMessage(assembly, output);
 			WriteCommentLine(output, assembly.FullName);
 			WriteCommentLine(output, TypeToString(extension, ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.SupportExtensionDeclarations));
-			WriteCode(output, options.DecompilerSettings, decompiler.DecompileExtension((TypeDefinitionHandle)extension.MetadataToken), decompiler.TypeSystem);
+			WriteCode(output, options.DecompilerSettings, decompiler.DecompileExtension(extension.MetadataToken), decompiler.TypeSystem);
+		}
+
+		public void DecompileExtension(IMethod extension, ITextOutput output, DecompilationOptions options)
+		{
+			MetadataFile assembly = extension.ParentModule.MetadataFile;
+			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
+			AddReferenceAssemblyWarningMessage(assembly, output);
+			AddReferenceWarningMessage(assembly, output);
+			WriteCommentLine(output, assembly.FullName);
+			WriteCommentLine(output, TypeToString(extension.DeclaringType, ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.SupportExtensionDeclarations));
+			WriteCode(output, options.DecompilerSettings, decompiler.DecompileExtension(extension.MetadataToken), decompiler.TypeSystem);
+		}
+
+		public void DecompileExtension(IProperty extension, ITextOutput output, DecompilationOptions options)
+		{
+			MetadataFile assembly = extension.ParentModule.MetadataFile;
+			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
+			AddReferenceAssemblyWarningMessage(assembly, output);
+			AddReferenceWarningMessage(assembly, output);
+			WriteCommentLine(output, assembly.FullName);
+			WriteCommentLine(output, TypeToString(extension.DeclaringType, ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.SupportExtensionDeclarations));
+			WriteCode(output, options.DecompilerSettings, decompiler.DecompileExtension(extension.MetadataToken), decompiler.TypeSystem);
 		}
 
 		void AddReferenceWarningMessage(MetadataFile module, ITextOutput output)
