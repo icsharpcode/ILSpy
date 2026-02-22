@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 {
 	public class PortablePdbWriter
 	{
-		static readonly FileVersionInfo decompilerVersion = FileVersionInfo.GetVersionInfo(typeof(CSharpDecompiler).Assembly.Location);
+		static readonly Version decompilerVersion = typeof(CSharpDecompiler).Assembly.GetName().Version ?? throw new ArgumentNullException();
 
 		public static bool HasCodeViewDebugDirectoryEntry(PEFile file)
 		{
