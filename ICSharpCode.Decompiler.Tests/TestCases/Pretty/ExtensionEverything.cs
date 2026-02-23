@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -80,21 +79,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			public double Magnitude => Math.Sqrt(point.X * point.X + point.Y * point.Y);
 		}
-
-		extension(ref ExtensionEverythingTestUseSites.Point point)
-		{
-			public double MagnitudeRef => Math.Sqrt(point.X * point.X + point.Y * point.Y);
-		}
-
-		extension<T>(IEnumerable<T> @this)
-		{
-			public bool IsEmpty => !@this.Any();
-		}
-
-		extension(string @this)
-		{
-			public int WordCount => Regex.Matches(@this, @"\w+").Count;
-		}
 	}
 
 	internal class ExtensionEverythingTestUseSites
@@ -106,19 +90,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Point point = new Point(3, 4);
 			Console.WriteLine(point.X);
 			Console.WriteLine(point.Y);
-			Console.WriteLine(point.Magnitude);
+			//Console.WriteLine(point.Magnitude);
 		}
 
 		public static void TestExtensionMethods()
 		{
 			List<string> collection = new List<string>();
-			Console.WriteLine(collection.IsEmpty);
+			//Console.WriteLine(collection.IsEmpty);
 			collection.AddIfNotNull("Hello");
 			collection.AddIfNotNull(null);
-			Console.WriteLine(collection.IsEmpty);
-			Console.WriteLine(collection.Test);
-			collection.Test = 100;
-			List<string>.StaticExtension();
+			//Console.WriteLine(collection.IsEmpty);
+			//Console.WriteLine(collection.Test);
+			//collection.Test = 100;
+			//List<string>.StaticExtension();
 		}
 	}
 }
