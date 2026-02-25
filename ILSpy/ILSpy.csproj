@@ -125,8 +125,8 @@
     <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
       <SortResX>powershell -NoProfile -ExecutionPolicy Bypass -File BuildTools/sort-resx.ps1</SortResX>
     </PropertyGroup>
-    <Exec WorkingDirectory=".." Command="$(SortResX)" Timeout="60000" />
-    <Touch Files="@(SortResXStamp)" AlwaysCreate="true" />
+    <Exec WorkingDirectory=".." Command="$(SortResX)" Timeout="60000" Condition="'$(SortResX)' != ''" />
+    <Touch Files="@(SortResXStamp)" AlwaysCreate="true" Condition="'$(SortResX)' != ''" />
   </Target>
 
   <Target Name="ApplyStackExtension" AfterTargets="PostBuildEvent" Condition="'$(VCToolsVersion)'!=''">

@@ -16,27 +16,29 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
+using System.Linq;
 using System.Windows;
+
+using TomsToolbox.Wpf;
+
+#nullable enable
+
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
-#if DEBUG
-	[ExportToolPane]
-	[Shared]
-#endif
-	public class DebugStepsPaneModel : ToolPaneModel
+	public static partial class TabPageModelExtensions
 	{
-		public const string PaneContentId = "debugStepsPane";
-
-		public DebugStepsPaneModel()
+		public static void Focus(this TabPageModel tabPage)
 		{
-			ContentId = PaneContentId;
-			Title = Properties.Resources.DebugSteps;
-#if CROSS_PLATFORM
-			// Declare this tool belongs to the LeftDock group (same as AssemblyTreeModel and AnalyzerTreeViewModel)
-			DockGroup = "LeftDock";
-#endif
+			if (tabPage.Content is not FrameworkElement content)
+				return;
+
+			var focusable = content
+				.VisualDescendantsAndSelf()
+				.OfType<FrameworkElement>()
+				.FirstOrDefault(item => item.Focusable);
+
+			focusable?.Focus();
 		}
 	}
 }

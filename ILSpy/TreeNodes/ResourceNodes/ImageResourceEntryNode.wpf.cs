@@ -1,4 +1,4 @@
-// Copyright (c) 2019 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,27 +16,40 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
-using System.Windows;
+using System;
+using System.Windows.Controls;
+using System.Windows.Media.Imaging;
 
-namespace ICSharpCode.ILSpy.ViewModels
+using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.ViewModels;
+
+namespace ICSharpCode.ILSpy.TreeNodes
 {
-#if DEBUG
-	[ExportToolPane]
-	[Shared]
-#endif
-	public class DebugStepsPaneModel : ToolPaneModel
+	partial class ImageResourceEntryNode
 	{
-		public const string PaneContentId = "debugStepsPane";
-
-		public DebugStepsPaneModel()
+		public override bool View(TabPageModel tabPage)
 		{
-			ContentId = PaneContentId;
-			Title = Properties.Resources.DebugSteps;
-#if CROSS_PLATFORM
-			// Declare this tool belongs to the LeftDock group (same as AssemblyTreeModel and AnalyzerTreeViewModel)
-			DockGroup = "LeftDock";
-#endif
+			try
+			{
+				AvalonEditTextOutput output = new AvalonEditTextOutput();
+				BitmapImage image = new BitmapImage();
+				image.BeginInit();
+				image.StreamSource = OpenStream();
+				image.EndInit();
+				output.AddUIElement(() => new Image { Source = image });
+				output.WriteLine();
+				output.AddButton(Images.Save, Resources.Save, delegate {
+					Save(null);
+				});
+				tabPage.ShowTextView(textView => textView.ShowNode(output, this));
+				tabPage.SupportsLanguageSwitching = false;
+				return true;
+			}
+			catch (Exception)
+			{
+				return false;
+			}
 		}
 	}
 }

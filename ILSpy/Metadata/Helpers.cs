@@ -46,7 +46,7 @@ using TomsToolbox.Wpf.Interactivity;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	static class Helpers
+	static partial class Helpers
 	{
 		public static DataGrid PrepareDataGrid(TabPageModel tabPage, ILSpyTreeNode selectedNode)
 		{
@@ -71,7 +71,9 @@ namespace ICSharpCode.ILSpy.Metadata
 				ContextMenuProvider.Add(view);
 				DataGridFilter.SetIsAutoFilterEnabled(view, true);
 				DataGridFilter.SetContentFilterFactory(view, new RegexContentFilterFactory());
+#if !CROSS_PLATFORM
 				AdvancedScrollWheelBehavior.SetAttach(view, AdvancedScrollWheelMode.WithoutAnimation);
+#endif
 			}
 			DataGridFilter.GetFilter(view).Clear();
 			view.RowDetailsTemplateSelector = null;
@@ -110,14 +112,23 @@ namespace ICSharpCode.ILSpy.Metadata
 				case "RVA":
 				case "StartOffset":
 				case "Length":
+#if CROSS_PLATFORM
+					binding.Converter = HexFormatConverter.Instance;
+#else
 					binding.StringFormat = "X8";
+#endif
 					e.Column.SetTemplate((ControlTemplate)MetadataTableViews.Instance["HexFilter"]);
 					break;
 				case "RowDetails":
 					e.Cancel = true;
 					break;
 				case "Value" when e.PropertyDescriptor is PropertyDescriptor dp && dp.ComponentType == typeof(Entry):
+#if CROSS_PLATFORM
+					binding.Path = ".";
+					e.Column.SetTemplate((ControlTemplate)MetadataTableViews.Instance["DefaultFilter"]);
+#else
 					binding.Path = new PropertyPath(".");
+#endif
 					binding.Converter = ByteWidthConverter.Instance;
 					break;
 				default:
@@ -164,36 +175,6 @@ namespace ICSharpCode.ILSpy.Metadata
 		}
 
 		static readonly Dictionary<string, DataTemplate> linkCellTemplates = new Dictionary<string, DataTemplate>();
-
-		private static DataTemplate GetOrCreateLinkCellTemplate(string name, PropertyDescriptor descriptor, Binding binding)
-		{
-			if (linkCellTemplates.TryGetValue(name, out var template))
-			{
-				return template;
-			}
-
-			var tb = new FrameworkElementFactory(typeof(TextBlock));
-			var hyper = new FrameworkElementFactory(typeof(Hyperlink));
-			tb.AppendChild(hyper);
-			hyper.AddHandler(Hyperlink.ClickEvent, new RoutedEventHandler(Hyperlink_Click));
-			var run = new FrameworkElementFactory(typeof(Run));
-			hyper.AppendChild(run);
-			run.SetBinding(Run.TextProperty, binding);
-
-			DataTemplate dataTemplate = new DataTemplate() { VisualTree = tb };
-			linkCellTemplates.Add(name, dataTemplate);
-			return dataTemplate;
-
-			void Hyperlink_Click(object sender, RoutedEventArgs e)
-			{
-				var hyperlink = (Hyperlink)sender;
-				var onClickMethod = descriptor.ComponentType.GetMethod("On" + name + "Click", BindingFlags.Instance | BindingFlags.Public);
-				if (onClickMethod != null)
-				{
-					onClickMethod.Invoke(hyperlink.DataContext, Array.Empty<object>());
-				}
-			}
-		}
 
 		static void ApplyAttributes(PropertyDescriptor descriptor, Binding binding, DataGridColumn column)
 		{

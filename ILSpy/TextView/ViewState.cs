@@ -1,4 +1,4 @@
-// Copyright (c) 2019 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,27 +16,41 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
-using System.Windows;
+#nullable enable
 
-namespace ICSharpCode.ILSpy.ViewModels
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+
+using ICSharpCode.ILSpy.TreeNodes;
+
+namespace ICSharpCode.ILSpy.TextView
 {
-#if DEBUG
-	[ExportToolPane]
-	[Shared]
-#endif
-	public class DebugStepsPaneModel : ToolPaneModel
+	[DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
+	public class ViewState : IEquatable<ViewState>
 	{
-		public const string PaneContentId = "debugStepsPane";
+		public HashSet<ILSpyTreeNode>? DecompiledNodes;
+		public Uri? ViewedUri;
 
-		public DebugStepsPaneModel()
+		public virtual bool Equals(ViewState? other)
 		{
-			ContentId = PaneContentId;
-			Title = Properties.Resources.DebugSteps;
-#if CROSS_PLATFORM
-			// Declare this tool belongs to the LeftDock group (same as AssemblyTreeModel and AnalyzerTreeViewModel)
-			DockGroup = "LeftDock";
-#endif
+			return other != null
+				&& ViewedUri == other.ViewedUri
+				&& NullSafeSetEquals(DecompiledNodes, other.DecompiledNodes);
+
+			static bool NullSafeSetEquals(HashSet<ILSpyTreeNode>? a, HashSet<ILSpyTreeNode>? b)
+			{
+				if (a == b)
+					return true;
+				if (a == null || b == null)
+					return false;
+				return a.SetEquals(b);
+			}
+		}
+
+		protected virtual string GetDebuggerDisplay()
+		{
+			return $"Nodes = {DecompiledNodes?.Count.ToString() ?? "<null>"}, ViewedUri = {ViewedUri?.ToString() ?? "<null>"}";
 		}
 	}
 }
