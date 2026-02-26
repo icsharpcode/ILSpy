@@ -21,6 +21,8 @@
 using System;
 using System.Collections.Generic;
 
+using NetEscapades.EnumGenerators;
+
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
@@ -335,6 +337,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	}
 
 	[Flags]
+	[EnumExtensions]
 	public enum GetMemberOptions
 	{
 		/// <summary>
