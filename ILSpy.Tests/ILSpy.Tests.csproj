@@ -64,7 +64,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DiffLib" />
     <PackageReference Include="NSubstitute" />
     <PackageReference Include="NSubstitute.Analyzers.CSharp">
       <PrivateAssets>all</PrivateAssets>

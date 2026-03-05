@@ -1,6 +1,7 @@
 <Project>
   <PropertyGroup>
-    <NoWarn>$(NoWarn);NU1510</NoWarn>
+    <NoWarn>$(NoWarn);NU1510;CS1591</NoWarn>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup>
