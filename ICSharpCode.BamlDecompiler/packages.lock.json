@@ -8,6 +8,12 @@
         "resolved": "4.1.5",
         "contentHash": "i5z+cNu/cOcdO0AgFB8aXk8w6In2H+haaDfSgd9ImvQIK+rSHavHZIogVoAZLL8jLwYx4bAcs5b7EyuMMG4mQQ=="
       },
+      "ReferenceTrimmer": {
+        "type": "Direct",
+        "requested": "[3.4.5, )",
+        "resolved": "3.4.5",
+        "contentHash": "I3vQerUFZ3BSrPfdpAUZX+OIEj9rf/BZ0p/Dc+KlygFHsGa3zekygNhqoPOP6/p06ql1lAcGmrqJGpsLOb6Yfw=="
+      },
       "TomsToolbox.Composition.Analyzer": {
         "type": "Direct",
         "requested": "[2.22.2, )",

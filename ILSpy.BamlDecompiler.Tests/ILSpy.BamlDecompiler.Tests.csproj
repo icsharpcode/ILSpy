@@ -48,9 +48,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ICSharpCode.BamlDecompiler\ICSharpCode.BamlDecompiler.csproj" />
     <ProjectReference Include="..\ICSharpCode.Decompiler.Tests\ICSharpCode.Decompiler.Tests.csproj" />
-    <ProjectReference Include="..\ILSpy.BamlDecompiler\ILSpy.BamlDecompiler.csproj" />
-    <ProjectReference Include="..\ILSpy\ILSpy.csproj" />
   </ItemGroup>
 
   <ItemGroup>

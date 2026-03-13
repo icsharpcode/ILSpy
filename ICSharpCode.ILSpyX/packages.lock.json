@@ -31,6 +31,12 @@
         "resolved": "0.11.6",
         "contentHash": "f33RkDtZO8VlGXCtmQIviOtxgnUdym9xx/b1p9h91CRGOsJFxCFOFK1FDbVt1OCf1aWwYejUFa2MOQyFWTFjbA=="
       },
+      "ReferenceTrimmer": {
+        "type": "Direct",
+        "requested": "[3.4.5, )",
+        "resolved": "3.4.5",
+        "contentHash": "I3vQerUFZ3BSrPfdpAUZX+OIEj9rf/BZ0p/Dc+KlygFHsGa3zekygNhqoPOP6/p06ql1lAcGmrqJGpsLOb6Yfw=="
+      },
       "System.Composition.AttributedModel": {
         "type": "Direct",
         "requested": "[10.0.4, )",
