@@ -41,10 +41,7 @@
     <PackageReference Include="Shouldly" />
     <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
 	<PackageReference Include="Microsoft.Testing.Extensions.VSTestBridge" />
-    <PackageReference Include="coverlet.collector">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="coverlet.MTP" />
   </ItemGroup>
 
   <ItemGroup>
