@@ -58,6 +58,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				case NewObj newObjInst:
 					if (newObjInst.ILStackWasEmpty && v.Kind == VariableKind.Local
+						&& !newObjInst.Method.DeclaringType.ContainsInitOnlyProperties()
 						&& !currentMethod.IsConstructor
 						&& !currentMethod.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 					{
