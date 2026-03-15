@@ -73,6 +73,18 @@ namespace ICSharpCode.Decompiler
 			return visitor.ContainsAnonType;
 		}
 
+		public static bool ContainsInitOnlyProperties(this IType type)
+		{
+			foreach (var property in type.GetDefinition()?.Properties ?? [])
+			{
+				if (property.Setter?.IsInitOnly ?? false)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
 		class ContainsAnonTypeVisitor : TypeVisitor
 		{
 			public bool ContainsAnonType;
