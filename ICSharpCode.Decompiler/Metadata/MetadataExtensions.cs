@@ -41,7 +41,12 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 			// Calculate public key token:
 			// 1. hash the public key (always use SHA1).
-			byte[] publicKeyTokenBytes = SHA1.Create().ComputeHash(reader.GetBlobBytes(blob));
+			byte[] publicKeyTokenBytes;
+			using (var hasher = SHA1.Create())
+			{
+				publicKeyTokenBytes = hasher.ComputeHash(reader.GetBlobBytes(blob));
+			}
+
 			// 2. take the last 8 bytes
 			// 3. according to Cecil we need to reverse them, other sources did not mention this.
 			return publicKeyTokenBytes.TakeLast(8).Reverse().ToHexString(8);

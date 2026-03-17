@@ -213,8 +213,6 @@ namespace ICSharpCode.Decompiler.Metadata
 #if !VSADDIN
 	public class AssemblyReference : IAssemblyReference
 	{
-		static readonly SHA1 sha1 = SHA1.Create();
-
 		readonly System.Reflection.Metadata.AssemblyReference entry;
 
 		public MetadataReader Metadata { get; }
@@ -263,15 +261,24 @@ namespace ICSharpCode.Decompiler.Metadata
 		public Version? Version => entry.Version;
 		public string Culture => Metadata.GetString(entry.Culture);
 		byte[]? IAssemblyReference.PublicKeyToken => GetPublicKeyToken();
+		Lazy<byte[]?> publicKeyToken;
 
 		public byte[]? GetPublicKeyToken()
+		{
+			return publicKeyToken.Value;
+		}
+
+		private byte[]? ComputePublicKeyToken()
 		{
 			if (entry.PublicKeyOrToken.IsNil)
 				return null;
 			var bytes = Metadata.GetBlobBytes(entry.PublicKeyOrToken);
 			if ((entry.Flags & AssemblyFlags.PublicKey) != 0)
 			{
-				return sha1.ComputeHash(bytes).Skip(12).ToArray();
+				using (var hasher = SHA1.Create())
+				{
+					return hasher.ComputeHash(bytes).Skip(12).ToArray();
+				}
 			}
 			return bytes;
 		}
@@ -321,6 +328,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			Metadata = metadata;
 			Handle = handle;
 			entry = metadata.GetAssemblyReference(handle);
+			publicKeyToken = new(ComputePublicKeyToken);
 		}
 
 		public AssemblyReference(MetadataFile module, AssemblyReferenceHandle handle)
@@ -332,6 +340,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			Metadata = module.Metadata;
 			Handle = handle;
 			entry = Metadata.GetAssemblyReference(handle);
+			publicKeyToken = new(ComputePublicKeyToken);
 		}
 
 		public override string ToString()
