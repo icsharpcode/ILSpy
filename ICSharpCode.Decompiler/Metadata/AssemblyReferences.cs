@@ -28,6 +28,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
+using ICSharpCode.Decompiler.Util;
+
 namespace ICSharpCode.Decompiler.Metadata
 {
 	public sealed class ResolutionException : Exception
