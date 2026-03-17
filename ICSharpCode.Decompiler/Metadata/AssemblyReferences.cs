@@ -261,11 +261,19 @@ namespace ICSharpCode.Decompiler.Metadata
 		public Version? Version => entry.Version;
 		public string Culture => Metadata.GetString(entry.Culture);
 		byte[]? IAssemblyReference.PublicKeyToken => GetPublicKeyToken();
-		Lazy<byte[]?> publicKeyToken;
+		byte[]? publicKeyToken;
 
 		public byte[]? GetPublicKeyToken()
 		{
-			return publicKeyToken.Value;
+			if (entry.PublicKeyOrToken.IsNil)
+				return null;
+
+			var value = LazyInit.VolatileRead(ref publicKeyToken);
+			if (value == null)
+			{
+				value = LazyInit.GetOrSet(ref publicKeyToken, ComputePublicKeyToken());
+			}
+			return value;
 		}
 
 		private byte[]? ComputePublicKeyToken()
@@ -328,7 +336,6 @@ namespace ICSharpCode.Decompiler.Metadata
 			Metadata = metadata;
 			Handle = handle;
 			entry = metadata.GetAssemblyReference(handle);
-			publicKeyToken = new(ComputePublicKeyToken);
 		}
 
 		public AssemblyReference(MetadataFile module, AssemblyReferenceHandle handle)
@@ -340,7 +347,6 @@ namespace ICSharpCode.Decompiler.Metadata
 			Metadata = module.Metadata;
 			Handle = handle;
 			entry = Metadata.GetAssemblyReference(handle);
-			publicKeyToken = new(ComputePublicKeyToken);
 		}
 
 		public override string ToString()
