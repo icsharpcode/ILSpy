@@ -77,9 +77,9 @@
     <PackageReference Include="NUnit3TestAdapter" />
     <PackageReference Include="coverlet.MTP" />
     <PackageReference Include="NUnit" />
-    <PackageReference Include="Shouldly" />
+    <PackageReference Include="AwesomeAssertions" />
     <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
-	<PackageReference Include="Microsoft.Testing.Extensions.VSTestBridge" />
+    <PackageReference Include="Microsoft.Testing.Extensions.VSTestBridge" />
   </ItemGroup>
 
   <ItemGroup>

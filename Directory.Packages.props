@@ -5,6 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="AvalonEdit" Version="6.3.1.120" />
+    <PackageVersion Include="AwesomeAssertions" Version="9.4.0" />
     <PackageVersion Include="CliWrap" Version="3.10.0" />
     <PackageVersion Include="DataGridExtensions" Version="2.9.1" />
     <PackageVersion Include="DiffLib" Version="2025.0.0" />
@@ -38,7 +39,6 @@
     <PackageVersion Include="NUnit3TestAdapter" Version="6.1.0" />
     <PackageVersion Include="NuGet.Protocol" Version="7.3.0" />
     <PackageVersion Include="PowerShellStandard.Library" Version="5.1.1" />
-    <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="System.Composition.AttributedModel" Version="10.0.5" />
     <PackageVersion Include="System.Collections.Immutable" Version="10.0.5" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />

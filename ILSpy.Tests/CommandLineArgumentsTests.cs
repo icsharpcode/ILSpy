@@ -1,6 +1,6 @@
 using System;
 
-using Shouldly;
+using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.AppEnv;
 
@@ -16,28 +16,28 @@ namespace ICSharpCode.ILSpy.Tests
 		{
 			var cmdLineArgs = CommandLineArguments.Create(new string[] { });
 
-			cmdLineArgs.AssembliesToLoad.ShouldBeEmpty();
-			cmdLineArgs.SingleInstance.ShouldBeNull();
-			cmdLineArgs.NavigateTo.ShouldBeNull();
-			cmdLineArgs.Search.ShouldBeNull();
-			cmdLineArgs.Language.ShouldBeNull();
-			cmdLineArgs.NoActivate.ShouldBeFalse();
-			cmdLineArgs.ConfigFile.ShouldBeNull();
+			cmdLineArgs.AssembliesToLoad.Should().BeEmpty();
+			cmdLineArgs.SingleInstance.Should().BeNull();
+			cmdLineArgs.NavigateTo.Should().BeNull();
+			cmdLineArgs.Search.Should().BeNull();
+			cmdLineArgs.Language.Should().BeNull();
+			cmdLineArgs.NoActivate.Should().BeFalse();
+			cmdLineArgs.ConfigFile.Should().BeNull();
 		}
 
 		[Test]
 		public void VerifyHelpOption()
 		{
 			var cmdLineArgs = CommandLineArguments.Create(new string[] { "--help" });
-			cmdLineArgs.ArgumentsParser.IsShowingInformation.ShouldBeTrue();
+			cmdLineArgs.ArgumentsParser.IsShowingInformation.Should().BeTrue();
 		}
 
 		[Test]
 		public void VerifyForceNewInstanceOption()
 		{
 			var cmdLineArgs = CommandLineArguments.Create(new string[] { "--newinstance" });
-			cmdLineArgs.SingleInstance.ShouldNotBeNull();
-			cmdLineArgs.SingleInstance.Value.ShouldBeFalse();
+			cmdLineArgs.SingleInstance.Should().NotBeNull();
+			cmdLineArgs.SingleInstance.Value.Should().BeFalse();
 		}
 
 		[Test]
@@ -45,14 +45,14 @@ namespace ICSharpCode.ILSpy.Tests
 		{
 			const string navigateTo = "MyNamespace.MyClass";
 			var cmdLineArgs = CommandLineArguments.Create(new string[] { "--navigateto", navigateTo });
-			cmdLineArgs.NavigateTo.ShouldBe(navigateTo);
+			cmdLineArgs.NavigateTo.Should().Be(navigateTo);
 		}
 
 		[Test]
 		public void VerifyNavigateToOption_NoneTest_Matching_VSAddin()
 		{
 			var cmdLineArgs = CommandLineArguments.Create(new string[] { "--navigateto:none" });
-			cmdLineArgs.NavigateTo.ShouldBe("none");
+			cmdLineArgs.NavigateTo.Should().Be("none");
 		}
 
 		[Test]
@@ -60,7 +60,7 @@ namespace ICSharpCode.ILSpy.Tests
 		{
 			var cmdLineArgs = CommandLineArguments.Create(new string[] { "--navigateTo:none" });
 
-			cmdLineArgs.ArgumentsParser.RemainingArguments.Count.ShouldBe(1);
+			cmdLineArgs.ArgumentsParser.RemainingArguments.Count.Should().Be(1);
 		}
 
 		[Test]
@@ -68,7 +68,7 @@ namespace ICSharpCode.ILSpy.Tests
 		{
 			const string searchWord = "TestContainers";
 			var cmdLineArgs = CommandLineArguments.Create(new string[] { "--search", searchWord });
-			cmdLineArgs.Search.ShouldBe(searchWord);
+			cmdLineArgs.Search.Should().Be(searchWord);
 		}
 
 		[Test]
@@ -76,7 +76,7 @@ namespace ICSharpCode.ILSpy.Tests
 		{
 			const string language = "csharp";
 			var cmdLineArgs = CommandLineArguments.Create(new string[] { "--language", language });
-			cmdLineArgs.Language.ShouldBe(language);
+			cmdLineArgs.Language.Should().Be(language);
 		}
 
 		[Test]
@@ -84,21 +84,21 @@ namespace ICSharpCode.ILSpy.Tests
 		{
 			const string configFile = "myilspyoptions.xml";
 			var cmdLineArgs = CommandLineArguments.Create(new string[] { "--config", configFile });
-			cmdLineArgs.ConfigFile.ShouldBe(configFile);
+			cmdLineArgs.ConfigFile.Should().Be(configFile);
 		}
 
 		[Test]
 		public void VerifyNoActivateOption()
 		{
 			var cmdLineArgs = CommandLineArguments.Create(new string[] { "--noactivate" });
-			cmdLineArgs.NoActivate.ShouldBeTrue();
+			cmdLineArgs.NoActivate.Should().BeTrue();
 		}
 
 		[Test]
 		public void MultipleAssembliesAsArguments()
 		{
 			var cmdLineArgs = CommandLineArguments.Create(new string[] { "assembly1", "assembly2", "assembly3" });
-			cmdLineArgs.AssembliesToLoad.Count.ShouldBe(3);
+			cmdLineArgs.AssembliesToLoad.Count.Should().Be(3);
 		}
 
 		[Test]
@@ -118,10 +118,10 @@ namespace ICSharpCode.ILSpy.Tests
 			{
 			}
 
-			cmdLineArgs.SingleInstance.ShouldNotBeNull();
-			cmdLineArgs.SingleInstance.Value.ShouldBeFalse();
-			cmdLineArgs.NoActivate.ShouldBeTrue();
-			cmdLineArgs.AssembliesToLoad.Count.ShouldBe(3);
+			cmdLineArgs.SingleInstance.Should().NotBeNull();
+			cmdLineArgs.SingleInstance.Value.Should().BeFalse();
+			cmdLineArgs.NoActivate.Should().BeTrue();
+			cmdLineArgs.AssembliesToLoad.Count.Should().Be(3);
 		}
 	}
 }
