@@ -58,6 +58,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				case NewObj newObjInst:
 					if (newObjInst.ILStackWasEmpty && v.Kind == VariableKind.Local
+						&& !TypeContainsInitOnlyProperties(newObjInst.Method.DeclaringTypeDefinition)
 						&& !currentMethod.IsConstructor
 						&& !currentMethod.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 					{
@@ -185,6 +186,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			block.Instructions.RemoveRange(pos + 1, initializerItemsCount);
 			siblings[insertionPos] = initializerBlock;
 			ILInlining.InlineIfPossible(block, pos, context);
+		}
+
+		private static bool TypeContainsInitOnlyProperties(ITypeDefinition? typeDefinition)
+		{
+			foreach (var property in typeDefinition?.Properties ?? [])
+			{
+				if (property.Setter?.IsInitOnly ?? false)
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 
 		internal static bool IsRecordCloneMethodCall(CallInstruction ci)
