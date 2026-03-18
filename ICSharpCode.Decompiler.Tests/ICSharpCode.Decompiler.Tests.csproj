@@ -67,10 +67,7 @@
     <PackageReference Include="Microsoft.DiaSymReader" />
     <PackageReference Include="Microsoft.DiaSymReader.Native" />
     <PackageReference Include="NUnit3TestAdapter" />
-    <PackageReference Include="coverlet.collector">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="coverlet.MTP" />
     <PackageReference Include="NUnit" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />

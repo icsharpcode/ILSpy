@@ -75,10 +75,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" />
     <PackageReference Include="NUnit3TestAdapter" />
-    <PackageReference Include="coverlet.collector">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="coverlet.MTP" />
     <PackageReference Include="NUnit" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
