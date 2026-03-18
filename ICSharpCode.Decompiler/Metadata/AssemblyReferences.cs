@@ -270,27 +270,21 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (entry.PublicKeyOrToken.IsNil)
 				return null;
 
-			var value = LazyInit.VolatileRead(ref publicKeyToken);
-			if (value == null)
+			if (publicKeyToken == null)
 			{
-				value = LazyInit.GetOrSet(ref publicKeyToken, ComputePublicKeyToken());
-			}
-			return value;
-		}
-
-		private byte[]? ComputePublicKeyToken()
-		{
-			if (entry.PublicKeyOrToken.IsNil)
-				return null;
-			var bytes = Metadata.GetBlobBytes(entry.PublicKeyOrToken);
-			if ((entry.Flags & AssemblyFlags.PublicKey) != 0)
-			{
-				using (var hasher = SHA1.Create())
+				var bytes = Metadata.GetBlobBytes(entry.PublicKeyOrToken);
+				if ((entry.Flags & AssemblyFlags.PublicKey) != 0)
 				{
-					return hasher.ComputeHash(bytes).Skip(12).ToArray();
+					using (var hasher = SHA1.Create())
+					{
+						bytes = hasher.ComputeHash(bytes).Skip(12).ToArray();
+					}
 				}
+
+				publicKeyToken = bytes;
 			}
-			return bytes;
+
+			return publicKeyToken;
 		}
 
 		ImmutableArray<TypeReferenceMetadata> typeReferences;
