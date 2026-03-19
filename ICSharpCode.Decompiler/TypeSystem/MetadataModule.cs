@@ -274,7 +274,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new MetadataProperty(this, handle);
 			int row = MetadataTokens.GetRowNumber(handle);
 			Debug.Assert(row != 0);
-			if (row >= methodDefs.Length)
+			if (row >= propertyDefs.Length)
 				HandleOutOfRange(handle);
 			var property = LazyInit.VolatileRead(ref propertyDefs[row]);
 			if (property != null)
@@ -291,7 +291,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new MetadataEvent(this, handle);
 			int row = MetadataTokens.GetRowNumber(handle);
 			Debug.Assert(row != 0);
-			if (row >= methodDefs.Length)
+			if (row >= eventDefs.Length)
 				HandleOutOfRange(handle);
 			var ev = LazyInit.VolatileRead(ref eventDefs[row]);
 			if (ev != null)
