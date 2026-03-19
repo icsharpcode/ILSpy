@@ -213,8 +213,6 @@ namespace ICSharpCode.Decompiler.Metadata
 #if !VSADDIN
 	public class AssemblyReference : IAssemblyReference
 	{
-		static readonly SHA1 sha1 = SHA1.Create();
-
 		readonly System.Reflection.Metadata.AssemblyReference entry;
 
 		public MetadataReader Metadata { get; }
@@ -263,17 +261,28 @@ namespace ICSharpCode.Decompiler.Metadata
 		public Version? Version => entry.Version;
 		public string Culture => Metadata.GetString(entry.Culture);
 		byte[]? IAssemblyReference.PublicKeyToken => GetPublicKeyToken();
+		byte[]? publicKeyToken;
 
 		public byte[]? GetPublicKeyToken()
 		{
 			if (entry.PublicKeyOrToken.IsNil)
 				return null;
-			var bytes = Metadata.GetBlobBytes(entry.PublicKeyOrToken);
-			if ((entry.Flags & AssemblyFlags.PublicKey) != 0)
+
+			if (publicKeyToken == null)
 			{
-				return sha1.ComputeHash(bytes).Skip(12).ToArray();
+				var bytes = Metadata.GetBlobBytes(entry.PublicKeyOrToken);
+				if ((entry.Flags & AssemblyFlags.PublicKey) != 0)
+				{
+					using (var hasher = SHA1.Create())
+					{
+						bytes = hasher.ComputeHash(bytes).Skip(12).ToArray();
+					}
+				}
+
+				publicKeyToken = bytes;
 			}
-			return bytes;
+
+			return publicKeyToken;
 		}
 
 		ImmutableArray<TypeReferenceMetadata> typeReferences;
