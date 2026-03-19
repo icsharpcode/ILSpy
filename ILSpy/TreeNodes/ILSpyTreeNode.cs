@@ -138,7 +138,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		protected virtual void Settings_Changed(object sender, PropertyChangedEventArgs e)
+		protected virtual void Settings_Changed(object? sender, PropertyChangedEventArgs e)
 		{
 			if (sender is not ILSpy.LanguageSettings)
 				return;
