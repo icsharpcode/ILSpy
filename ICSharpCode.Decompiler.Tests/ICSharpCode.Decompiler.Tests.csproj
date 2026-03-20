@@ -167,6 +167,7 @@
     <Compile Include="TestCases\Pretty\Issue3610.cs" />
     <Compile Include="TestCases\Pretty\Issue3611.cs" />
     <Compile Include="TestCases\Pretty\Issue3598.cs" />
+    <Compile Include="Metadata\SignatureBlobComparerTests.cs" />
     <None Include="TestCases\Pretty\Issue3684.dep.cs" />
     <None Include="TestCases\Pretty\Issue3684.cs" />
     <None Include="TestCases\Ugly\NoLocalFunctions.Expected.cs" />
