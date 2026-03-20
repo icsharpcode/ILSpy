@@ -320,6 +320,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(ElementAtOrDefault(-5));
 		}
 
+		public void CallWithTemplatedInParameterOnSelf()
+		{
+			M2<RefLocalsAndReturns>(this);
+		}
+
 #if CS120
 		public ref readonly int M(in int x)
 		{
