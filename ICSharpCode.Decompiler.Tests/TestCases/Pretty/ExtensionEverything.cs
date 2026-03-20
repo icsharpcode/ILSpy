@@ -90,12 +90,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Point point = new Point(3, 4);
 			Console.WriteLine(point.X);
 			Console.WriteLine(point.Y);
+			// TODO implement use-site transformation
 			//Console.WriteLine(point.Magnitude);
 		}
 
 		public static void TestExtensionMethods()
 		{
 			List<string> collection = new List<string>();
+			// TODO implement use-site transformation
 			//Console.WriteLine(collection.IsEmpty);
 			collection.AddIfNotNull("Hello");
 			collection.AddIfNotNull(null);

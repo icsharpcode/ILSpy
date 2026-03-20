@@ -955,8 +955,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				foreach (var h in methods)
 				{
 					var m = metadata.GetMethodDefinition(h);
-					if (metadata.StringComparer.Equals(m.Name, name))
-						return h;
+					if (!metadata.StringComparer.Equals(m.Name, name))
+						continue;
+
+					// TODO : use SignatureBlobComparer to ensure that the correct method is resolved
+
+					return h;
 				}
 				return default;
 			}

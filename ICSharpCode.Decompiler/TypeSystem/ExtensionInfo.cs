@@ -260,9 +260,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			IEnumerable<IMember> GetMembers()
 			{
 				var markerType = marker.DeclaringTypeDefinition;
+				Debug.Assert(markerType != null, "Marker should always be contained in a type");
+
 				foreach (var info in extensionMemberMap.Values)
 				{
-					if (!markerType!.Equals(info.ExtensionMarkerType))
+					if (!markerType.Equals(info.ExtensionMarkerType))
 						continue;
 					var subst = new TypeParameterSubstitution(info.ExtensionGroupingTypeParameters, null);
 					if (info.ExtensionMember.IsAccessor)

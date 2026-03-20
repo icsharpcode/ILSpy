@@ -97,7 +97,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			var extensionInfo = TypeDefinition.ExtensionInfo;
 			if (extensionInfo != null)
 			{
-				foreach (var extensionGroup in TypeDefinition.ExtensionInfo?.ExtensionGroups ?? [])
+				foreach (var extensionGroup in extensionInfo.ExtensionGroups)
 				{
 					this.Children.Add(new ExtensionTreeNode(TypeDefinition, extensionGroup, ParentAssemblyNode));
 				}

@@ -61,19 +61,20 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return ((MetadataModule)ParentAssemblyNode.LoadedAssembly
 				.GetMetadataFileOrNull()
 				?.GetTypeSystemWithCurrentOptionsOrNull(SettingsService, AssemblyTreeModel.CurrentLanguageVersion)
-				?.MainModule)?.GetDefinition((SRM.TypeDefinitionHandle)MarkerMethod.DeclaringTypeDefinition.MetadataToken);
+				?.MainModule)?.GetDefinition((SRM.TypeDefinitionHandle)MarkerMethod.DeclaringTypeDefinition.MetadataToken)
+				?? MarkerMethod.DeclaringTypeDefinition;
 		}
 
 		protected override void LoadChildren()
 		{
 			var extensionInfo = ContainerTypeDefinition.ExtensionInfo;
-			var subst = new TypeParameterSubstitution(TypeParameters, null);
+			var members = extensionInfo.GetMembersOfGroup(MarkerMethod).ToList();
 
-			foreach (var property in extensionInfo.GetMembersOfGroup(MarkerMethod).OfType<IProperty>().OrderBy(p => p.Name, NaturalStringComparer.Instance))
+			foreach (var property in members.OfType<IProperty>().OrderBy(p => p.Name, NaturalStringComparer.Instance))
 			{
 				this.Children.Add(new PropertyTreeNode(property));
 			}
-			foreach (var method in extensionInfo.GetMembersOfGroup(MarkerMethod).OfType<IMethod>().OrderBy(m => m.Name, NaturalStringComparer.Instance))
+			foreach (var method in members.OfType<IMethod>().OrderBy(m => m.Name, NaturalStringComparer.Instance))
 			{
 				if (method.MetadataToken.IsNil)
 					continue;

@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Diagnostics;
 using System.Reflection.Metadata;
 using System.Windows.Media;
 
@@ -69,6 +70,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public static ImageSource GetIcon(IProperty property)
 		{
 			IMethod accessor = property.Getter ?? property.Setter;
+			Debug.Assert(accessor != null, "Property must have at least one accessor");
 			bool isExtension = property.ResolveExtensionInfo()?.InfoOfExtensionMember((IMethod)accessor.MemberDefinition) != null;
 			return Images.GetIcon(property.IsIndexer ? MemberIcon.Indexer : MemberIcon.Property,
 				Images.GetOverlayIcon(property.Accessibility), property.IsStatic, isExtension);
