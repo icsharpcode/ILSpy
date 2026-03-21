@@ -489,6 +489,17 @@ namespace System.Runtime.CompilerServices
 			{
 				sourceFileNames.Add(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFileName), match.Groups[1].Value)));
 			}
+
+			List<string> dependencyAssemblies = new List<string>();
+			string sourceText = File.ReadAllText(sourceFileName);
+			foreach (Match match in Regex.Matches(sourceText, @"//\s*#dependency\s+([\w\d./\\]+)"))
+			{
+				string depSourcePath = Path.GetFullPath(Path.Combine(
+					Path.GetDirectoryName(sourceFileName), match.Groups[1].Value));
+				var depResults = await CompileCSharp(depSourcePath, flags | CompilerOptions.Library).ConfigureAwait(false);
+				dependencyAssemblies.Add(Path.GetFullPath(depResults.PathToAssembly));
+			}
+
 			bool targetNet40 = (flags & CompilerOptions.TargetNet40) != 0;
 			bool useRoslyn = (flags & CompilerOptions.UseRoslynMask) != 0;
 
@@ -555,6 +566,11 @@ namespace System.Runtime.CompilerServices
 				}
 
 				references = references.Select(r => "-r:\"" + Path.Combine(refAsmPath, r) + "\"");
+
+				foreach (var dependency in dependencyAssemblies)
+				{
+					references = references.Append($"-r:\"{dependency}\"");
+				}
 
 				string otherOptions = $"-nologo -noconfig " +
 					$"-langversion:{languageVersion} " +
