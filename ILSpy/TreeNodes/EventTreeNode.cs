@@ -68,7 +68,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static ImageSource GetIcon(IEvent @event)
 		{
-			return Images.GetIcon(MemberIcon.Event, Images.GetOverlayIcon(@event.Accessibility), @event.IsStatic);
+			return Images.GetIcon(MemberIcon.Event, Images.GetOverlayIcon(@event.Accessibility), @event.IsStatic, false);
 		}
 
 		public override FilterResult Filter(LanguageSettings settings)

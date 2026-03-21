@@ -94,6 +94,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				this.Children.Add(new BaseTypesTreeNode(ParentAssemblyNode.LoadedAssembly.GetMetadataFileOrNull(), TypeDefinition));
 			if (!TypeDefinition.IsSealed)
 				this.Children.Add(new DerivedTypesTreeNode(ParentAssemblyNode.AssemblyList, TypeDefinition));
+			var extensionInfo = TypeDefinition.ExtensionInfo;
+			if (extensionInfo != null)
+			{
+				foreach (var extensionGroup in extensionInfo.ExtensionGroups)
+				{
+					this.Children.Add(new ExtensionTreeNode(TypeDefinition, extensionGroup, ParentAssemblyNode));
+				}
+			}
 			foreach (var nestedType in TypeDefinition.NestedTypes.OrderBy(t => t.Name, NaturalStringComparer.Instance))
 			{
 				this.Children.Add(new TypeTreeNode(nestedType, ParentAssemblyNode));
@@ -140,7 +148,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static ImageSource GetIcon(ITypeDefinition type)
 		{
-			return Images.GetIcon(GetTypeIcon(type, out bool isStatic), GetOverlayIcon(type), isStatic);
+			return Images.GetIcon(GetTypeIcon(type, out bool isStatic), GetOverlayIcon(type), isStatic, false);
 		}
 
 		internal static TypeIcon GetTypeIcon(IType type, out bool isStatic)
@@ -163,7 +171,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		static AccessOverlayIcon GetOverlayIcon(ITypeDefinition type)
+		internal static AccessOverlayIcon GetOverlayIcon(ITypeDefinition type)
 		{
 			switch (type.Accessibility)
 			{

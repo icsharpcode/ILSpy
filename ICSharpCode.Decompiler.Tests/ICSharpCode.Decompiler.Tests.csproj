@@ -156,7 +156,7 @@
     <Compile Include="TestCases\ILPretty\Issue3524.cs" />
     <Compile Include="TestCases\ILPretty\Issue3552.cs" />
     <Compile Include="TestCases\Pretty\ExpandParamsArgumentsDisabled.cs" />
-    <Compile Include="TestCases\Pretty\ExtensionProperties.cs" />
+    <Compile Include="TestCases\Pretty\ExtensionEverything.cs" />
     <Compile Include="TestCases\Pretty\Issue3452.cs" />
     <Compile Include="TestCases\Pretty\Issue3541.cs" />
     <Compile Include="TestCases\Pretty\Issue3571_C.cs" />

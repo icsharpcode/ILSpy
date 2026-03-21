@@ -150,6 +150,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get {
 				if (!HasExtensions)
 					return null;
+				if ((module.TypeSystemOptions & TypeSystemOptions.ExtensionMembers) == 0)
+					return null;
 				var extensionInfo = LazyInit.VolatileRead(ref this.extensionInfo);
 				if (extensionInfo != null)
 					return extensionInfo;
@@ -203,8 +205,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var fieldList = new List<IField>(fieldCollection.Count);
 				foreach (FieldDefinitionHandle h in fieldCollection)
 				{
-					var field = metadata.GetFieldDefinition(h);
-					var attr = field.Attributes;
+					var @field = metadata.GetFieldDefinition(h);
+					var attr = @field.Attributes;
 					if (module.IsVisible(attr))
 					{
 						fieldList.Add(module.GetDefinition(h));

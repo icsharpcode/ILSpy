@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -25,6 +27,7 @@ using System.Reflection.Metadata.Ecma335;
 using System.Windows.Threading;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Docking;
@@ -47,6 +50,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		LanguageSettings LanguageSettings => SettingsService.SessionSettings.LanguageSettings;
 
 		public Language Language => LanguageService.Language;
+
+		protected static ICompilation? GetTypeSystemWithCurrentOptionsOrNull(MetadataFile metadataFile) => metadataFile.GetTypeSystemWithCurrentOptionsOrNull(SettingsService, AssemblyTreeModel.CurrentLanguageVersion);
 
 		protected static AssemblyTreeModel AssemblyTreeModel { get; } = App.ExportProvider.GetExportedValue<AssemblyTreeModel>();
 
@@ -133,7 +138,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		protected virtual void Settings_Changed(object sender, PropertyChangedEventArgs e)
+		protected virtual void Settings_Changed(object? sender, PropertyChangedEventArgs e)
 		{
 			if (sender is not ILSpy.LanguageSettings)
 				return;

@@ -30,7 +30,6 @@ namespace ICSharpCode.ILSpy
 		Constructor,
 		VirtualMethod,
 		Operator,
-		ExtensionMethod,
 		PInvokeMethod,
 		Event
 	}

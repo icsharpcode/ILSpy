@@ -61,15 +61,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public static ImageSource GetIcon(IField field)
 		{
 			if (field.DeclaringType.Kind == TypeKind.Enum && field.ReturnType.Kind == TypeKind.Enum)
-				return Images.GetIcon(MemberIcon.EnumValue, Images.GetOverlayIcon(field.Accessibility), false);
+				return Images.GetIcon(MemberIcon.EnumValue, Images.GetOverlayIcon(field.Accessibility), false, false);
 
 			if (field.IsConst)
-				return Images.GetIcon(MemberIcon.Literal, Images.GetOverlayIcon(field.Accessibility), false);
+				return Images.GetIcon(MemberIcon.Literal, Images.GetOverlayIcon(field.Accessibility), false, false);
 
 			if (field.IsReadOnly)
-				return Images.GetIcon(MemberIcon.FieldReadOnly, Images.GetOverlayIcon(field.Accessibility), field.IsStatic);
+				return Images.GetIcon(MemberIcon.FieldReadOnly, Images.GetOverlayIcon(field.Accessibility), field.IsStatic, false);
 
-			return Images.GetIcon(MemberIcon.Field, Images.GetOverlayIcon(field.Accessibility), field.IsStatic);
+			return Images.GetIcon(MemberIcon.Field, Images.GetOverlayIcon(field.Accessibility), field.IsStatic, false);
 		}
 
 		public override FilterResult Filter(LanguageSettings settings)

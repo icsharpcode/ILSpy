@@ -71,7 +71,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			IEntity IMemberTreeNode.Member {
 				get {
-					return ((MetadataModule)metadataFile.GetTypeSystemWithCurrentOptionsOrNull(SettingsService, AssemblyTreeModel.CurrentLanguageVersion)?.MainModule)?.GetDefinition(handle);
+					return ((MetadataModule)GetTypeSystemWithCurrentOptionsOrNull(metadataFile)?.MainModule)?.GetDefinition(handle);
 				}
 			}
 

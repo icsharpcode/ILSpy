@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
 
@@ -870,6 +871,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				ns = child;
 			}
 			return ns;
+		}
+
+		public static ExtensionInfo? ResolveExtensionInfo(this IMember member)
+		{
+			if (member is null)
+			{
+				throw new ArgumentNullException(nameof(member));
+			}
+			var td = member.DeclaringTypeDefinition;
+			Debug.Assert(td != null, "IMember.DeclaringTypeDefinition should never be null");
+			return td.DeclaringTypeDefinition?.ExtensionInfo ?? td.DeclaringTypeDefinition?.DeclaringTypeDefinition?.ExtensionInfo;
 		}
 	}
 }

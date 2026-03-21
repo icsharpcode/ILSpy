@@ -252,6 +252,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Controls whether all fully qualified type names should be prefixed with "global::".
 		/// </summary>
 		public bool AlwaysUseGlobal { get; set; }
+
+		/// <summary>
+		/// Controls whether C# 14 "extension" declarations are supported.
+		/// </summary>
+		public bool SupportExtensionDeclarations { get; set; }
 		#endregion
 
 		#region Convert Type
@@ -1810,6 +1815,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				default:
 					throw new ArgumentException("Invalid value for SymbolKind: " + entity.SymbolKind);
 			}
+		}
+
+		public EntityDeclaration ConvertExtension((IMethod MarkerMethod, IReadOnlyList<ITypeParameter> TypeParameters) group)
+		{
+			var ext = new ExtensionDeclaration();
+			var subst = new TypeParameterSubstitution(group.TypeParameters, []);
+			ext.TypeParameters.AddRange(group.TypeParameters.Select(ConvertTypeParameter));
+			ext.ReceiverParameters.Add(ConvertParameter(group.MarkerMethod.Specialize(subst).Parameters.Single()));
+			ext.Constraints.AddRange(group.TypeParameters.Select(ConvertTypeParameterConstraint));
+			return ext;
 		}
 
 		EntityDeclaration ConvertTypeDefinition(ITypeDefinition typeDefinition)

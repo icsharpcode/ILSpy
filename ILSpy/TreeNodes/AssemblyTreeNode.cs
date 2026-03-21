@@ -259,7 +259,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		void LoadChildrenForExecutableFile(MetadataFile module)
 		{
-			typeSystem = LoadedAssembly.GetTypeSystemOrNull();
+			typeSystem = module.GetTypeSystemWithCurrentOptionsOrNull(SettingsService, AssemblyTreeModel.CurrentLanguageVersion);
 			var assembly = (MetadataModule)typeSystem.MainModule;
 			this.Children.Add(new MetadataTreeNode(module, Resources.Metadata));
 			Decompiler.DebugInfo.IDebugInfoProvider debugInfo = LoadedAssembly.GetDebugInfoOrNull();

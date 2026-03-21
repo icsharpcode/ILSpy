@@ -119,6 +119,7 @@ namespace ICSharpCode.ILSpy
 		private static readonly ImageSource OverlayReference = Load("ReferenceOverlay");
 
 		private static readonly ImageSource OverlayStatic = Load("OverlayStatic");
+		private static readonly ImageSource OverlayExtension = Load("OverlayExtension");
 
 		public static readonly ImageSource TypeReference = GetIcon("ShowPublicOnly", "ReferenceOverlay");
 		public static readonly ImageSource MethodReference = GetIcon("Method", "ReferenceOverlay");
@@ -203,16 +204,16 @@ namespace ICSharpCode.ILSpy
 		private static readonly TypeIconCache typeIconCache = new TypeIconCache();
 		private static readonly MemberIconCache memberIconCache = new MemberIconCache();
 
-		public static ImageSource GetIcon(TypeIcon icon, AccessOverlayIcon overlay, bool isStatic = false)
+		public static ImageSource GetIcon(TypeIcon icon, AccessOverlayIcon overlay, bool isStatic = false, bool isExtension = false)
 		{
 			lock (typeIconCache)
-				return typeIconCache.GetIcon(icon, overlay, isStatic);
+				return typeIconCache.GetIcon(icon, overlay, isStatic, isExtension);
 		}
 
-		public static ImageSource GetIcon(MemberIcon icon, AccessOverlayIcon overlay, bool isStatic)
+		public static ImageSource GetIcon(MemberIcon icon, AccessOverlayIcon overlay, bool isStatic, bool isExtension)
 		{
 			lock (memberIconCache)
-				return memberIconCache.GetIcon(icon, overlay, isStatic);
+				return memberIconCache.GetIcon(icon, overlay, isStatic, isExtension);
 		}
 
 		public static AccessOverlayIcon GetOverlayIcon(Accessibility accessibility)
@@ -236,35 +237,43 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		private static ImageSource GetIcon(string baseImage, string overlay = null, bool isStatic = false)
+		private static ImageSource GetIcon(string baseImage, string overlay = null, bool isStatic = false, bool isExtension = false)
 		{
 			ImageSource baseImageSource = Load(baseImage);
 			ImageSource overlayImageSource = overlay != null ? Load(overlay) : null;
 
-			return CreateOverlayImage(baseImageSource, overlayImageSource, isStatic);
+			return CreateOverlayImage(baseImageSource, overlayImageSource, isStatic, isExtension);
 		}
 
-		private static ImageSource CreateOverlayImage(ImageSource baseImage, ImageSource overlay, bool isStatic)
+		private static ImageSource CreateOverlayImage(ImageSource baseImage, ImageSource overlay, bool isStatic, bool isExtension)
 		{
 			var group = new DrawingGroup();
+			var baseDrawingGroup = new DrawingGroup();
 
 			Drawing baseDrawing = new ImageDrawing(baseImage, iconRect);
 
-			if (overlay != null)
+			baseDrawingGroup.Children.Add(baseDrawing);
+
+			if (isExtension)
 			{
-				var nestedGroup = new DrawingGroup { Transform = new ScaleTransform(0.8, 0.8) };
-				nestedGroup.Children.Add(baseDrawing);
-				group.Children.Add(nestedGroup);
-				group.Children.Add(new ImageDrawing(overlay, iconRect));
+				var extensionGroup = new DrawingGroup();
+				extensionGroup.Children.Add(baseDrawingGroup);
+				baseDrawingGroup.Transform = new ScaleTransform(0.8, 0.8);
+				extensionGroup.Children.Add(new ImageDrawing(Images.OverlayExtension, iconRect));
+				baseDrawingGroup = extensionGroup;
 			}
-			else
-			{
-				group.Children.Add(baseDrawing);
-			}
+
+			group.Children.Add(baseDrawingGroup);
 
 			if (isStatic)
 			{
 				group.Children.Add(new ImageDrawing(Images.OverlayStatic, iconRect));
+			}
+
+			if (overlay != null)
+			{
+				baseDrawingGroup.Transform = new ScaleTransform(0.8, 0.8);
+				group.Children.Add(new ImageDrawing(overlay, iconRect));
 			}
 
 			var image = new DrawingImage(group);
@@ -330,7 +339,6 @@ namespace ICSharpCode.ILSpy
 				PreloadPublicIconToCache(MemberIcon.Constructor, Images.Constructor);
 				PreloadPublicIconToCache(MemberIcon.VirtualMethod, Images.VirtualMethod);
 				PreloadPublicIconToCache(MemberIcon.Operator, Images.Operator);
-				PreloadPublicIconToCache(MemberIcon.ExtensionMethod, Images.ExtensionMethod);
 				PreloadPublicIconToCache(MemberIcon.PInvokeMethod, Images.PInvokeMethod);
 				PreloadPublicIconToCache(MemberIcon.Event, Images.Event);
 			}
@@ -370,9 +378,6 @@ namespace ICSharpCode.ILSpy
 					case MemberIcon.Operator:
 						baseImage = Images.Operator;
 						break;
-					case MemberIcon.ExtensionMethod:
-						baseImage = Images.ExtensionMethod;
-						break;
 					case MemberIcon.PInvokeMethod:
 						baseImage = Images.PInvokeMethod;
 						break;
@@ -389,35 +394,35 @@ namespace ICSharpCode.ILSpy
 
 		private abstract class IconCache<T>
 		{
-			private readonly Dictionary<(T, AccessOverlayIcon, bool), ImageSource> cache = new Dictionary<(T, AccessOverlayIcon, bool), ImageSource>();
+			private readonly Dictionary<(T, AccessOverlayIcon, bool, bool), ImageSource> cache = new Dictionary<(T, AccessOverlayIcon, bool, bool), ImageSource>();
 
 			protected void PreloadPublicIconToCache(T icon, ImageSource image)
 			{
-				var iconKey = (icon, AccessOverlayIcon.Public, false);
+				var iconKey = (icon, AccessOverlayIcon.Public, false, false);
 				cache.Add(iconKey, image);
 			}
 
-			public ImageSource GetIcon(T icon, AccessOverlayIcon overlay, bool isStatic)
+			public ImageSource GetIcon(T icon, AccessOverlayIcon overlay, bool isStatic, bool isExtension)
 			{
-				var iconKey = (icon, overlay, isStatic);
+				var iconKey = (icon, overlay, isStatic, isExtension);
 				if (cache.ContainsKey(iconKey))
 				{
 					return cache[iconKey];
 				}
 				else
 				{
-					ImageSource result = BuildMemberIcon(icon, overlay, isStatic);
+					ImageSource result = BuildMemberIcon(icon, overlay, isStatic, isExtension);
 					cache.Add(iconKey, result);
 					return result;
 				}
 			}
 
-			private ImageSource BuildMemberIcon(T icon, AccessOverlayIcon overlay, bool isStatic)
+			private ImageSource BuildMemberIcon(T icon, AccessOverlayIcon overlay, bool isStatic, bool isExtension)
 			{
 				ImageSource baseImage = GetBaseImage(icon);
 				ImageSource overlayImage = GetOverlayImage(overlay);
 
-				return CreateOverlayImage(baseImage, overlayImage, isStatic);
+				return CreateOverlayImage(baseImage, overlayImage, isStatic, isExtension);
 			}
 
 			protected abstract ImageSource GetBaseImage(T icon);

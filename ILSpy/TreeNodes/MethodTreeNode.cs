@@ -46,9 +46,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		private IMethod GetMethodDefinition()
 		{
-			return ((MetadataModule)MethodDefinition.ParentModule?.MetadataFile
+			var m = ((MetadataModule)MethodDefinition.ParentModule?.MetadataFile
 				?.GetTypeSystemWithCurrentOptionsOrNull(SettingsService, AssemblyTreeModel.CurrentLanguageVersion)
-				?.MainModule)?.GetDefinition((MethodDefinitionHandle)MethodDefinition.MetadataToken) ?? MethodDefinition;
+				?.MainModule)?.GetDefinition((MethodDefinitionHandle)MethodDefinition.MetadataToken);
+			return m?.Specialize(MethodDefinition.Substitution) ?? MethodDefinition;
 		}
 
 		public static object GetText(IMethod method, Language language, bool includeDeclaringTypeName = false)
@@ -60,31 +61,47 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static ImageSource GetIcon(IMethod method)
 		{
-			if (method.IsOperator)
-				return Images.GetIcon(MemberIcon.Operator, Images.GetOverlayIcon(method.Accessibility), false);
+			bool isExtensionMethod = method.ResolveExtensionInfo()?.InfoOfExtensionMember((IMethod)method.MemberDefinition).HasValue == true
+				|| method.IsExtensionMethod;
 
-			if (method.IsExtensionMethod)
-				return Images.GetIcon(MemberIcon.ExtensionMethod, Images.GetOverlayIcon(method.Accessibility), false);
+			if (method.IsOperator)
+				return Images.GetIcon(MemberIcon.Operator, Images.GetOverlayIcon(method.Accessibility), false, isExtensionMethod);
+
+			if (isExtensionMethod)
+				return Images.GetIcon(MemberIcon.Method, Images.GetOverlayIcon(method.Accessibility), false, true);
 
 			if (method.IsConstructor)
-				return Images.GetIcon(MemberIcon.Constructor, Images.GetOverlayIcon(method.Accessibility), method.IsStatic);
+				return Images.GetIcon(MemberIcon.Constructor, Images.GetOverlayIcon(method.Accessibility), method.IsStatic, false);
 
 			if (!method.HasBody && method.HasAttribute(KnownAttribute.DllImport))
-				return Images.GetIcon(MemberIcon.PInvokeMethod, Images.GetOverlayIcon(method.Accessibility), true);
+				return Images.GetIcon(MemberIcon.PInvokeMethod, Images.GetOverlayIcon(method.Accessibility), true, false);
 
 			return Images.GetIcon(method.IsVirtual ? MemberIcon.VirtualMethod : MemberIcon.Method,
-				Images.GetOverlayIcon(method.Accessibility), method.IsStatic);
+				Images.GetOverlayIcon(method.Accessibility), method.IsStatic, false);
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.DecompileMethod(MethodDefinition, output, options);
+			if (Parent is ExtensionTreeNode && language is CSharpLanguage cs)
+				cs.DecompileExtension(MethodDefinition, output, options);
+			else
+				language.DecompileMethod(MethodDefinition, output, options);
 		}
 
 		public override FilterResult Filter(LanguageSettings settings)
 		{
 			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
 				return FilterResult.Hidden;
+			// hide implementation methods of extension blocks in the tree view
+			if (Language is CSharpLanguage && MethodDefinition.DeclaringTypeDefinition?.ExtensionInfo is { } extInfo)
+			{
+				var decompilerSettings = SettingsService.DecompilerSettings.Clone();
+				if (!Enum.TryParse(LanguageService.LanguageVersion?.Version, out Decompiler.CSharp.LanguageVersion csharpLanguageVersion))
+					csharpLanguageVersion = Decompiler.CSharp.LanguageVersion.Latest;
+				decompilerSettings.SetLanguageVersion(csharpLanguageVersion);
+				if (decompilerSettings.ExtensionMembers && extInfo.InfoOfImplementationMember((IMethod)MethodDefinition.MemberDefinition).HasValue)
+					return FilterResult.Hidden;
+			}
 			if (settings.SearchTermMatches(MethodDefinition.Name) && (settings.ShowApiLevel == ApiVisibility.All || LanguageService.Language.ShowMember(MethodDefinition)))
 				return FilterResult.Match;
 			else
