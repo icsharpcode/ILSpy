@@ -341,13 +341,13 @@ namespace ICSharpCode.ILSpy
 				case HandleKind.EventDefinition:
 					var ed = metadata.GetEventDefinition((EventDefinitionHandle)handle);
 					var declaringType = metadata.GetMethodDefinition(ed.GetAccessors().GetAny()).GetDeclaringType();
-					if (fullName)
+					if (fullName && !declaringType.IsNil)
 						return ILAmbience.EscapeName(declaringType.GetFullTypeName(metadata).ToILNameString(omitGenerics) + "." + metadata.GetString(ed.Name));
 					return ILAmbience.EscapeName(metadata.GetString(ed.Name));
 				case HandleKind.PropertyDefinition:
 					var pd = metadata.GetPropertyDefinition((PropertyDefinitionHandle)handle);
 					declaringType = metadata.GetMethodDefinition(pd.GetAccessors().GetAny()).GetDeclaringType();
-					if (fullName)
+					if (fullName && !declaringType.IsNil)
 						return ILAmbience.EscapeName(declaringType.GetFullTypeName(metadata).ToILNameString(omitGenerics) + "." + metadata.GetString(pd.Name));
 					return ILAmbience.EscapeName(metadata.GetString(pd.Name));
 				default:
