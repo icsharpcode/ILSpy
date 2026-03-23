@@ -76,7 +76,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				foreach (var baseType in td.DirectBaseTypes)
 				{
 					cancellationToken.ThrowIfCancellationRequested();
-					if (baseType.FullName == type.FullName)
+					if (baseType.FullName == type.FullName && baseType.TypeParameterCount == type.TypeParameterCount)
 					{
 						yield return new DerivedTypesEntryNode(list, td);
 						break;
