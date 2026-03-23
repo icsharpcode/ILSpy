@@ -185,7 +185,25 @@ namespace ICSharpCode.Decompiler.IL
 					}
 					for (int i = 1; i < Instructions.Count; i++)
 					{
-						Debug.Assert(Instructions[i] is StLoc || AccessPathElement.GetAccessPath(Instructions[i], type2).Kind != AccessPathKind.Invalid);
+						if (Instructions[i] is StLoc { Variable: var v })
+						{
+							foreach (var inst in v.LoadInstructions)
+							{
+								Debug.Assert(inst.IsDescendantOf(this));
+							}
+							foreach (var inst in v.AddressInstructions)
+							{
+								Debug.Assert(inst.IsDescendantOf(this));
+							}
+							foreach (ILInstruction inst in v.StoreInstructions)
+							{
+								Debug.Assert(inst.IsDescendantOf(this));
+							}
+						}
+						else
+						{
+							Debug.Assert(AccessPathElement.GetAccessPath(Instructions[i], type2).Kind != AccessPathKind.Invalid);
+						}
 					}
 					break;
 				case BlockKind.DeconstructionConversions:

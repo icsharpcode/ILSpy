@@ -242,7 +242,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				possibleIndexVariables.Add(stloc.Variable, (stloc.ChildIndex, stloc.Value));
 				return true;
 			}
-			(var kind, var newPath, var values, var targetVariable) = AccessPathElement.GetAccessPath(instructions[pos], rootType, context.Settings, context.CSharpResolver, possibleIndexVariables);
+			(var kind, var newPath, var values, var targetVariable, var usedIndices) = AccessPathElement.GetAccessPath(instructions[pos], rootType, context.Settings, context.CSharpResolver);
 			if (kind == AccessPathKind.Invalid || target != targetVariable)
 				return false;
 			// Treat last element separately:
@@ -274,6 +274,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					isCollection = true;
 					if (pathStack.Peek().Count != 0)
 						return false;
+					MarkUsedIndices();
 					return true;
 				case AccessPathKind.Setter:
 					if (isCollection || !pathStack.Peek().Add(lastElement))
@@ -283,9 +284,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (blockKind != BlockKind.ObjectInitializer && blockKind != BlockKind.WithInitializer)
 						blockKind = BlockKind.ObjectInitializer;
 					initializerContainsInitOnlyItems |= lastElement.Member is IProperty { Setter.IsInitOnly: true };
+					MarkUsedIndices();
 					return true;
 				default:
 					return false;
+			}
+
+			void MarkUsedIndices()
+			{
+				foreach (var index in usedIndices)
+				{
+					if (possibleIndexVariables.TryGetValue(index, out var item))
+					{
+						possibleIndexVariables[index] = (-1, item.Value);
+					}
+				}
 			}
 		}
 
@@ -330,10 +343,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public override string ToString() => $"[{Member}, {Indices}]";
 
-		public static (AccessPathKind Kind, List<AccessPathElement> Path, List<ILInstruction>? Values, ILVariable? Target) GetAccessPath(
+		public static (AccessPathKind Kind, List<AccessPathElement> Path, List<ILInstruction>? Values, ILVariable? Target, List<ILVariable> UsedIndexVariables) GetAccessPath(
 			ILInstruction instruction, IType rootType, DecompilerSettings? settings = null,
-			CSharpResolver? resolver = null,
-			Dictionary<ILVariable, (int Index, ILInstruction Value)>? possibleIndexVariables = null)
+			CSharpResolver? resolver = null)
 		{
 			List<AccessPathElement> path = new List<AccessPathElement>();
 			ILVariable? target = null;
@@ -341,6 +353,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			List<ILInstruction>? values = null;
 			IMethod method;
 			ILInstruction? inst = instruction;
+			List<ILVariable> usedIndexVariables = new();
 			while (inst != null)
 			{
 				switch (inst)
@@ -368,14 +381,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							var indices = call.Arguments.Skip(1).Take(call.Arguments.Count - (isGetter ? 1 : 2)).ToArray();
 							if (indices.Length > 0 && settings?.DictionaryInitializers == false)
 								goto default;
-							if (possibleIndexVariables != null)
+							// Mark all index variables as used
+							foreach (var index in indices.OfType<IInstructionWithVariableOperand>())
 							{
-								// Mark all index variables as used
-								foreach (var index in indices.OfType<IInstructionWithVariableOperand>())
-								{
-									if (possibleIndexVariables.TryGetValue(index.Variable, out var info))
-										possibleIndexVariables[index.Variable] = (-1, info.Value);
-								}
+								usedIndexVariables.Add(index.Variable);
 							}
 							path.Insert(0, new AccessPathElement(call.OpCode, method.AccessorOwner, indices));
 						}
@@ -460,7 +469,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (kind != AccessPathKind.Invalid && values != null && values.SelectMany(v => v.Descendants).OfType<IInstructionWithVariableOperand>().Any(ld => ld.Variable == target && (ld is LdLoc || ld is LdLoca)))
 				kind = AccessPathKind.Invalid;
-			return (kind, path, values, target);
+			return (kind, path, values, target, usedIndexVariables);
 		}
 
 		private static bool CanBeUsedInInitializer(IProperty property, ITypeResolveContext? resolveContext, AccessPathKind kind)
