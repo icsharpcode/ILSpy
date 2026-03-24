@@ -16,27 +16,34 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
 using System.Windows;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
-#if DEBUG
-	[ExportToolPane]
-	[Shared]
-#endif
-	public class DebugStepsPaneModel : ToolPaneModel
+	public static class Pane
 	{
-		public const string PaneContentId = "debugStepsPane";
+		// Helper properties to enable binding state properties from the model to the view.
 
-		public DebugStepsPaneModel()
+		public static readonly DependencyProperty IsActiveProperty = DependencyProperty.RegisterAttached(
+			"IsActive", typeof(bool), typeof(Pane), new FrameworkPropertyMetadata(default(bool)));
+		public static void SetIsActive(DependencyObject element, bool value)
 		{
-			ContentId = PaneContentId;
-			Title = Properties.Resources.DebugSteps;
-#if CROSS_PLATFORM
-			// Declare this tool belongs to the LeftDock group (same as AssemblyTreeModel and AnalyzerTreeViewModel)
-			DockGroup = "LeftDock";
-#endif
+			element.SetValue(IsActiveProperty, value);
+		}
+		public static bool GetIsActive(DependencyObject element)
+		{
+			return (bool)element.GetValue(IsActiveProperty);
+		}
+
+		public static readonly DependencyProperty IsVisibleProperty = DependencyProperty.RegisterAttached(
+			"IsVisible", typeof(bool), typeof(Pane), new FrameworkPropertyMetadata(default(bool)));
+		public static void SetIsVisible(DependencyObject element, bool value)
+		{
+			element.SetValue(IsVisibleProperty, value);
+		}
+		public static bool GetIsVisible(DependencyObject element)
+		{
+			return (bool)element.GetValue(IsVisibleProperty);
 		}
 	}
 }

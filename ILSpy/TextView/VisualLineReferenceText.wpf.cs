@@ -1,4 +1,4 @@
-// Copyright (c) 2019 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,27 +16,22 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
-using System.Windows;
+using System.Windows.Input;
 
-namespace ICSharpCode.ILSpy.ViewModels
+using ICSharpCode.AvalonEdit.Rendering;
+
+namespace ICSharpCode.ILSpy.TextView
 {
-#if DEBUG
-	[ExportToolPane]
-	[Shared]
-#endif
-	public class DebugStepsPaneModel : ToolPaneModel
+	/// <summary>
+	/// VisualLineElement that represents a piece of text and is a clickable link.
+	/// </summary>
+	partial class VisualLineReferenceText
 	{
-		public const string PaneContentId = "debugStepsPane";
-
-		public DebugStepsPaneModel()
+		/// <inheritdoc/>
+		protected override void OnQueryCursor(QueryCursorEventArgs e)
 		{
-			ContentId = PaneContentId;
-			Title = Properties.Resources.DebugSteps;
-#if CROSS_PLATFORM
-			// Declare this tool belongs to the LeftDock group (same as AssemblyTreeModel and AnalyzerTreeViewModel)
-			DockGroup = "LeftDock";
-#endif
+			e.Handled = true;
+			e.Cursor = referenceSegment.IsLocal ? Cursors.Arrow : Cursors.Hand;
 		}
 	}
 }

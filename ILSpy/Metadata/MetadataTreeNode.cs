@@ -153,6 +153,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
+			if (object.ReferenceEquals(value, null))
+				return string.Empty;
+
 			return string.Format("{0:X" + 2 * ((Entry)value).Size + "}", ((Entry)value).Value);
 		}
 

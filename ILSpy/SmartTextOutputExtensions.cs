@@ -1,4 +1,4 @@
-// Copyright (c) 2019 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,27 +16,46 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
 
-namespace ICSharpCode.ILSpy.ViewModels
+using ICSharpCode.ILSpy.Themes;
+
+namespace ICSharpCode.ILSpy
 {
-#if DEBUG
-	[ExportToolPane]
-	[Shared]
-#endif
-	public class DebugStepsPaneModel : ToolPaneModel
+	public static class SmartTextOutputExtensions
 	{
-		public const string PaneContentId = "debugStepsPane";
-
-		public DebugStepsPaneModel()
+		/// <summary>
+		/// Creates a button.
+		/// </summary>
+		public static void AddButton(this ISmartTextOutput output, ImageSource icon, string text, RoutedEventHandler click)
 		{
-			ContentId = PaneContentId;
-			Title = Properties.Resources.DebugSteps;
-#if CROSS_PLATFORM
-			// Declare this tool belongs to the LeftDock group (same as AssemblyTreeModel and AnalyzerTreeViewModel)
-			DockGroup = "LeftDock";
-#endif
+			output.AddUIElement(
+				delegate {
+					Button button = ThemeManager.Current.CreateButton();
+					button.Cursor = Cursors.Arrow;
+					button.Margin = new Thickness(2);
+					button.Padding = new Thickness(9, 1, 9, 1);
+					button.MinWidth = 73;
+					if (icon != null)
+					{
+						button.Content = new StackPanel {
+							Orientation = Orientation.Horizontal,
+							Children = {
+								new Image { Width = 16, Height = 16, Source = icon, Margin = new Thickness(0, 0, 4, 0) },
+								new TextBlock { Text = text }
+							}
+						};
+					}
+					else
+					{
+						button.Content = text;
+					}
+					button.Click += click;
+					return button;
+				});
 		}
 	}
 }
