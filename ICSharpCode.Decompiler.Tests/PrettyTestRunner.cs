@@ -852,6 +852,12 @@ namespace ICSharpCode.Decompiler.Tests
 			await RunForLibrary(cscOptions: cscOptions);
 		}
 
+		[Test]
+		public async Task Issue3684([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
 		async Task RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, Action<DecompilerSettings> configureDecompiler = null)
 		{
 			await Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CompilerOptions.Library, configureDecompiler);
