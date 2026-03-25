@@ -6,7 +6,7 @@
   <ItemGroup>
     <PackageVersion Include="AvalonEdit" Version="6.3.1.120" />
     <PackageVersion Include="AwesomeAssertions" Version="9.4.0" />
-    <PackageVersion Include="CliWrap" Version="3.10.0" />
+    <PackageVersion Include="CliWrap" Version="3.10.1" />
     <PackageVersion Include="DataGridExtensions" Version="2.9.1" />
     <PackageVersion Include="DiffLib" Version="2025.0.0" />
     <PackageVersion Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.1" />
@@ -29,7 +29,7 @@
     <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="10.0.5" />
     <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.201" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.0.2" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.1.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.1.0" />
     <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.142" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />

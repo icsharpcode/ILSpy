@@ -154,56 +154,47 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					var metadata = module?.Metadata;
 					if (metadata?.IsAssembly == true && metadata.TryGetFullAssemblyName(out var assemblyName))
 					{
-#if CROSS_PLATFORM
-						tooltip.Inlines.Add(new Bold().Add(new Run("Name: ")));
-#else
-						tooltip.Inlines.Add(new Bold(new Run("Name: ")));
-#endif
+						tooltip.Inlines.Add(CreateBoldRun("Name: "));
 						tooltip.Inlines.Add(new Run(assemblyName));
 						tooltip.Inlines.Add(new LineBreak());
 					}
-#if CROSS_PLATFORM
-					tooltip.Inlines.Add(new Bold().Add(new Run("Location: ")));
-#else
-					tooltip.Inlines.Add(new Bold(new Run("Location: ")));
-#endif
+
+					tooltip.Inlines.Add(CreateBoldRun("Location: "));
 					tooltip.Inlines.Add(new Run(LoadedAssembly.FileName));
+
 					if (module != null)
 					{
 						if (module is PEFile peFile)
 						{
 							tooltip.Inlines.Add(new LineBreak());
-#if CROSS_PLATFORM
-							tooltip.Inlines.Add(new Bold().Add(new Run("Architecture: ")));
-#else
-							tooltip.Inlines.Add(new Bold(new Run("Architecture: ")));
-#endif
+							tooltip.Inlines.Add(CreateBoldRun("Architecture: "));
 							tooltip.Inlines.Add(new Run(Language.GetPlatformDisplayName(peFile)));
 						}
 						string runtimeName = Language.GetRuntimeDisplayName(module);
 						if (runtimeName != null)
 						{
 							tooltip.Inlines.Add(new LineBreak());
-#if CROSS_PLATFORM
-							tooltip.Inlines.Add(new Bold().Add(new Run("Runtime: ")));
-#else
-							tooltip.Inlines.Add(new Bold(new Run("Runtime: ")));
-#endif
+							tooltip.Inlines.Add(CreateBoldRun("Runtime: "));
 							tooltip.Inlines.Add(new Run(runtimeName));
 						}
 						var debugInfo = LoadedAssembly.GetDebugInfoOrNull();
 						tooltip.Inlines.Add(new LineBreak());
-#if CROSS_PLATFORM
-							tooltip.Inlines.Add(new Bold().Add(new Run("Debug info: ")));
-#else
-						tooltip.Inlines.Add(new Bold(new Run("Debug info: ")));
-#endif
+						tooltip.Inlines.Add(CreateBoldRun("Debug info: "));
 						tooltip.Inlines.Add(new Run(debugInfo?.Description ?? "none"));
 					}
 				}
 
 				return tooltip;
 			}
+		}
+
+		private static Bold CreateBoldRun(string text)
+		{
+#if CROSS_PLATFORM
+			return new Bold().Add(new Run(text)));
+#else
+			return new Bold(new Run(text));
+#endif
 		}
 
 		public void UpdateToolTip()
