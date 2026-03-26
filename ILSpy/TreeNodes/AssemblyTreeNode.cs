@@ -191,7 +191,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		private static Bold CreateBoldRun(string text)
 		{
 #if CROSS_PLATFORM
-			return new Bold().Add(new Run(text)));
+			return new Bold().Add(new Run(text));
 #else
 			return new Bold(new Run(text));
 #endif
