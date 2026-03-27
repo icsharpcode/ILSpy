@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 #if DEBUG
 			testRunnerBasePath = Path.Combine(TesterPath, $"../../../../../ICSharpCode.Decompiler.TestRunner/bin/Debug/net{CurrentNetCoreVersion}");
 #else
-			testRunnerBasePath = Path.Combine(TesterPath, $"../../../../../ICSharpCode.Decompiler.TestRunner/bin/Release/net{CurrentNetCoreVersion});
+			testRunnerBasePath = Path.Combine(TesterPath, $"../../../../../ICSharpCode.Decompiler.TestRunner/bin/Release/net{CurrentNetCoreVersion}");
 #endif
 			// To parse: <Project><ItemGroup><PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0-3.final" />
 			packagesPropsFile = Path.Combine(TesterPath, "../../../../../Directory.Packages.props");
