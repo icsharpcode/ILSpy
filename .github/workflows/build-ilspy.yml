@@ -20,7 +20,8 @@ jobs:
         Configuration: [ Debug, Release ]
     env:
       BuildPlatform: Any CPU
-      StagingDirectory: buildartifacts 
+      StagingDirectory: buildartifacts
+      BuildAndPublishVsix: false  # temp disable due to usage of transport feed for net11
 
     steps:
     - run: mkdir -p $env:StagingDirectory
@@ -122,14 +123,14 @@ jobs:
         dotnet msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU" /p:PlatformForInstaller="ARM64"
 
     - name: Build VS Extensions (for 2017-2019 and 2022)
-      if: matrix.configuration == 'release'  
+      if: matrix.configuration == 'release' && env.BuildAndPublishVsix == 'true'
       run: |
         dotnet msbuild ILSpy.VSExtensions.sln /t:Restore /p:Configuration="Release" /p:Platform="Any CPU"
         dotnet msbuild ILSpy.VSExtensions.sln /p:Configuration="Release" /p:Platform="Any CPU"
 
     # https://github.com/actions/upload-artifact
     - name: Upload VSIX (VS 2019) release build artifacts
-      if: matrix.configuration == 'release'
+      if: matrix.configuration == 'release' && env.BuildAndPublishVsix == 'true'
       uses: actions/upload-artifact@v7
       with:
         name: ILSpy VS Addin for VS 2017-2019 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
@@ -137,7 +138,7 @@ jobs:
         if-no-files-found: error
 
     - name: Upload VSIX (VS 2022) release build artifacts
-      if: matrix.configuration == 'release'
+      if: matrix.configuration == 'release' && env.BuildAndPublishVsix == 'true'
       uses: actions/upload-artifact@v7
       with:
         name: ILSpy VS Addin for VS 2022 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
