@@ -13,7 +13,7 @@ jobs:
   Build:
     permissions:
       packages: write  # for dotnet nuget push
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     strategy:
       fail-fast: false
       matrix:
@@ -40,6 +40,9 @@ jobs:
       env:
         DOTNET_INSTALL_DIR: ${{ runner.temp }}/.dotnet
         DOTNET_ROOT: ${{ runner.temp }}/.dotnet
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v3
 
     - name: Install dotnet-format
       env:
