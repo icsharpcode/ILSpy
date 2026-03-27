@@ -108,9 +108,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			TesterPath = Path.GetDirectoryName(typeof(Tester).Assembly.Location);
 			TestCasePath = Path.Combine(TesterPath, "../../../../TestCases");
 #if DEBUG
-			testRunnerBasePath = Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/bin/Debug/net10.0");
+			testRunnerBasePath = Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/bin/Debug/net11.0");
 #else
-			testRunnerBasePath = Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/bin/Release/net10.0");
+			testRunnerBasePath = Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/bin/Release/net11.0");
 #endif
 			// To parse: <Project><ItemGroup><PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0-3.final" />
 			packagesPropsFile = Path.Combine(TesterPath, "../../../../../Directory.Packages.props");
@@ -135,7 +135,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			await vswhereToolset.Fetch().ConfigureAwait(false);
 			await RefAssembliesToolset.Fetch("5.0.0", sourcePath: "ref/net5.0").ConfigureAwait(false);
-			await RefAssembliesToolset.Fetch("10.0.0-rc.2.25502.107", sourcePath: "ref/net10.0").ConfigureAwait(false);
+			await RefAssembliesToolset.Fetch("11.0.0-preview.2.26159.112", sourcePath: "ref/net11.0").ConfigureAwait(false);
 
 #if DEBUG
 			await BuildTestRunner("win-x86", "Debug").ConfigureAwait(false);
@@ -341,7 +341,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			};
 
 		static readonly Dictionary<string, Lazy<string>> targetFrameworkAttributeSnippetFiles = new() {
-			{ ".NETCoreApp,Version=v10.0", new Lazy<string>(() => GetTargetFrameworkAttributeSnippetFile(".NETCoreApp,Version=v10.0")) },
+			{ ".NETCoreApp,Version=v11.0", new Lazy<string>(() => GetTargetFrameworkAttributeSnippetFile(".NETCoreApp,Version=v11.0")) },
 			{ ".NETCoreApp,Version=v5.0", new Lazy<string>(() => GetTargetFrameworkAttributeSnippetFile(".NETCoreApp,Version=v5.0")) },
 			{ ".NETCoreApp,Version=v2.2", new Lazy<string>(() => GetTargetFrameworkAttributeSnippetFile(".NETCoreApp,Version=v2.2")) },
 		};
@@ -454,12 +454,15 @@ namespace System.Runtime.CompilerServices
 						preprocessorSymbols.Add("NET80");
 						preprocessorSymbols.Add("NET90");
 						preprocessorSymbols.Add("NET100");
+						preprocessorSymbols.Add("NET110");
 					}
 					preprocessorSymbols.Add("ROSLYN4");
 					preprocessorSymbols.Add("CS100");
 					preprocessorSymbols.Add("CS110");
 					preprocessorSymbols.Add("CS120");
 					preprocessorSymbols.Add("CS130");
+					preprocessorSymbols.Add("CS140");
+					preprocessorSymbols.Add("CS150");
 				}
 			}
 			else if ((flags & CompilerOptions.UseMcsMask) != 0)
@@ -520,7 +523,7 @@ namespace System.Runtime.CompilerServices
 					CompilerOptions.UseRoslyn1_3_2 => ("1.3.2", "6", null),
 					CompilerOptions.UseRoslyn2_10_0 => ("2.10.0", "latest", targetNet40 ? null : ".NETCoreApp,Version=v2.2"),
 					CompilerOptions.UseRoslyn3_11_0 => ("3.11.0", "latest", targetNet40 ? null : ".NETCoreApp,Version=v5.0"),
-					_ => (roslynLatestVersion, flags.HasFlag(CompilerOptions.Preview) ? "preview" : "latest", targetNet40 ? null : ".NETCoreApp,Version=v10.0")
+					_ => (roslynLatestVersion, flags.HasFlag(CompilerOptions.Preview) ? "preview" : "latest", targetNet40 ? null : ".NETCoreApp,Version=v11.0")
 				};
 
 				var cscPath = roslynToolset.GetCSharpCompiler(roslynVersion);
@@ -770,7 +773,7 @@ namespace System.Runtime.CompilerServices
 			}
 
 			var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(assemblyName),
-				syntaxTrees, coreDefaultReferences.Select(r => MetadataReference.CreateFromFile(Path.Combine(RefAssembliesToolset.GetPath(".NETCoreApp,Version=v10.0"), r))),
+				syntaxTrees, coreDefaultReferences.Select(r => MetadataReference.CreateFromFile(Path.Combine(RefAssembliesToolset.GetPath(".NETCoreApp,Version=v11.0"), r))),
 				new CSharpCompilationOptions(
 					OutputKind.DynamicallyLinkedLibrary,
 					platform: Platform.AnyCpu,
