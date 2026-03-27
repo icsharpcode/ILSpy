@@ -135,6 +135,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			await vswhereToolset.Fetch().ConfigureAwait(false);
 			await RefAssembliesToolset.Fetch("5.0.0", sourcePath: "ref/net5.0").ConfigureAwait(false);
+			await RefAssembliesToolset.Fetch("10.0.0", sourcePath: "ref/net10.0").ConfigureAwait(false);
 			await RefAssembliesToolset.Fetch("11.0.0-preview.2.26159.112", sourcePath: "ref/net11.0").ConfigureAwait(false);
 
 #if DEBUG
