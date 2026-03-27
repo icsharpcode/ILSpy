@@ -40,9 +40,6 @@ jobs:
         DOTNET_INSTALL_DIR: ${{ runner.temp }}/.dotnet
         DOTNET_ROOT: ${{ runner.temp }}/.dotnet
 
-    - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v3
-
     - name: Install dotnet-format
       env:
         DOTNET_FORMAT_VERSION: 10.0.100-rtm.25531.102
@@ -63,10 +60,10 @@ jobs:
         Get-ChildItem Env: | Where-Object {$_.Name -Match "^ILSPY_"} | %{ echo "$($_.Name)=$($_.Value)" } | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
 
     - name: Restore the application
-      run: msbuild ILSpy.sln /t:Restore /p:RestoreEnablePackagePruning=false /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform
+      run: dotnet restore ILSpy.sln /p:RestoreEnablePackagePruning=false /p:Configuration=${{ matrix.configuration }} /p:Platform="$env:BuildPlatform"
 
     - name: Build
-      run: msbuild ILSpy.sln /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform /m
+      run: dotnet build ILSpy.sln --no-restore -c ${{ matrix.configuration }} /p:Platform="$env:BuildPlatform" /m
 
     - name: Format check
       run: dotnet-format whitespace --verify-no-changes --verbosity detailed ILSpy.sln
@@ -120,15 +117,15 @@ jobs:
     - name: Build Installer (x64 and arm64, framework-dependent)
       if: matrix.configuration == 'release'  
       run: |
-        msbuild ILSpy.Installer.sln /t:Restore /p:Configuration="Release" /p:Platform="Any CPU"
-        msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU"
-        msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU" /p:PlatformForInstaller="ARM64"
+        dotnet msbuild ILSpy.Installer.sln /t:Restore /p:Configuration="Release" /p:Platform="Any CPU"
+        dotnet msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU"
+        dotnet msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU" /p:PlatformForInstaller="ARM64"
 
     - name: Build VS Extensions (for 2017-2019 and 2022)
       if: matrix.configuration == 'release'  
       run: |
-        msbuild ILSpy.VSExtensions.sln /t:Restore /p:Configuration="Release" /p:Platform="Any CPU"
-        msbuild ILSpy.VSExtensions.sln /p:Configuration="Release" /p:Platform="Any CPU"
+        dotnet msbuild ILSpy.VSExtensions.sln /t:Restore /p:Configuration="Release" /p:Platform="Any CPU"
+        dotnet msbuild ILSpy.VSExtensions.sln /p:Configuration="Release" /p:Platform="Any CPU"
 
     # https://github.com/actions/upload-artifact
     - name: Upload VSIX (VS 2019) release build artifacts
