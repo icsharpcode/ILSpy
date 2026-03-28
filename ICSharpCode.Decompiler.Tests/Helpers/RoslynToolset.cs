@@ -41,8 +41,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 	abstract class AbstractToolset
 	{
 		readonly SourceCacheContext cache;
-		readonly SourceRepository repository, transportFeedRepository;
-		readonly FindPackageByIdResource resource, transportFeedResource;
+		readonly SourceRepository repository, dotnetToolsFeed;
+		readonly FindPackageByIdResource resource, dotnetToolsResource;
 		protected readonly string baseDir;
 
 		public AbstractToolset(string baseDir)
@@ -50,8 +50,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			this.cache = new SourceCacheContext();
 			this.repository = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
 			this.resource = repository.GetResource<FindPackageByIdResource>();
-			this.transportFeedRepository = Repository.Factory.GetCoreV3("https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-tools/nuget/v3/index.json");
-			this.transportFeedResource = transportFeedRepository.GetResource<FindPackageByIdResource>();
+			this.dotnetToolsFeed = Repository.Factory.GetCoreV3("https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-tools/nuget/v3/index.json");
+			this.dotnetToolsResource = dotnetToolsFeed.GetResource<FindPackageByIdResource>();
 			this.baseDir = baseDir;
 		}
 
@@ -95,7 +95,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				NuGetVersion parsedVersion = NuGetVersion.Parse(version);
 				PackageVersionKind versionKind = ClassifyVersion(parsedVersion);
 				FindPackageByIdResource selectedResource = versionKind == PackageVersionKind.TransportFeed
-					? transportFeedResource
+					? dotnetToolsResource
 					: resource;
 
 				await selectedResource.CopyNupkgToStreamAsync(
