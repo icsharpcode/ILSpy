@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Xml.Linq;
 
 using ICSharpCode.BamlDecompiler.Xaml;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.BamlDecompiler.Rewrite
 {
@@ -59,20 +60,25 @@ namespace ICSharpCode.BamlDecompiler.Rewrite
 
 		bool RewriteElement(XamlContext ctx, XElement parent, XElement elem)
 		{
-			var property = elem.Annotation<XamlProperty>();
-			if (property == null && elem.Name != key)
-				return false;
-
 			if (elem.HasAttributes || elem.HasElements)
 				return false;
 
-			ctx.CancellationToken.ThrowIfCancellationRequested();
-
-			var value = elem.Value;
 			var attrName = elem.Name;
 			if (attrName != key)
+			{
+				var property = elem.Annotation<XamlProperty>();
+				if (property is null)
+					return false;
+
+				if (property.ResolvedMember is IProperty propertyDef && !propertyDef.CanSet)
+					return false;
+
 				attrName = property.ToXName(ctx, parent, property.IsAttachedTo(parent.Annotation<XamlType>()));
-			var attr = new XAttribute(attrName, value);
+			}
+
+			ctx.CancellationToken.ThrowIfCancellationRequested();
+
+			var attr = new XAttribute(attrName, elem.Value);
 			var list = new List<XAttribute>(parent.Attributes());
 			if (attrName == key)
 				list.Insert(0, attr);
