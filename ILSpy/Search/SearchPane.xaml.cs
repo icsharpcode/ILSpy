@@ -307,7 +307,7 @@ namespace ICSharpCode.ILSpy.Search
 		{
 			if (listBox.SelectedItem is SearchResult result)
 			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(result.Reference, inNewTabPage));
+				MessageBus.Send(this, new NavigateToReferenceEventArgs(result.Reference, inNewTabPage: inNewTabPage));
 			}
 		}
 
