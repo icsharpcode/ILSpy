@@ -564,7 +564,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				if (constrainedTo != null && targetExpr is MemberReferenceExpression { Target: CastExpression cast })
 				{
-					cast.AddChild(new Comment("cast due to .constrained prefix", CommentType.MultiLine), Roles.Comment);
+					cast.AddChild(new Comment("cast due to constrained. prefix", CommentType.MultiLine), Roles.Comment);
 				}
 			}
 			else
