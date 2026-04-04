@@ -19,6 +19,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -27,7 +28,7 @@ namespace ICSharpCode.ILSpy.Updates
 {
 	internal static class UpdateService
 	{
-		static readonly Uri UpdateUrl = new Uri("https://ilspy.net/updates.xml");
+		static readonly Uri UpdateUrl = new Uri("https://icsharpcode.github.io/ILSpy/updates.xml");
 		const string band = "stable";
 
 		public static AvailableVersionInfo LatestAvailableVersion { get; private set; }
@@ -36,12 +37,12 @@ namespace ICSharpCode.ILSpy.Updates
 		{
 			var client = new HttpClient(new HttpClientHandler() {
 				UseProxy = true,
-				UseDefaultCredentials = true,
+				UseDefaultCredentials = true
 			});
-			string data = await client.GetStringAsync(UpdateUrl).ConfigureAwait(false);
+			string data = await GetWithRedirectsAsync(client, UpdateUrl).ConfigureAwait(false);
 
 			XDocument doc = XDocument.Load(new StringReader(data));
-			var bands = doc.Root.Elements("band");
+			var bands = doc.Root.Elements("band").ToList();
 			var currentBand = bands.FirstOrDefault(b => (string)b.Attribute("id") == band) ?? bands.First();
 			Version version = new Version((string)currentBand.Element("latestVersion"));
 			string url = (string)currentBand.Element("downloadUrl");
@@ -50,6 +51,29 @@ namespace ICSharpCode.ILSpy.Updates
 
 			LatestAvailableVersion = new AvailableVersionInfo { Version = version, DownloadUrl = url };
 			return LatestAvailableVersion;
+		}
+
+		static async Task<string> GetWithRedirectsAsync(HttpClient client, Uri uri, int maxRedirects = 5)
+		{
+			for (int i = 0; i <= maxRedirects; i++)
+			{
+				using var response = await client.GetAsync(uri).ConfigureAwait(false);
+
+				if (response.StatusCode is HttpStatusCode.MovedPermanently
+					or HttpStatusCode.Found
+					or HttpStatusCode.TemporaryRedirect
+					or HttpStatusCode.PermanentRedirect)
+				{
+					var location = response.Headers.Location;
+					uri = location?.IsAbsoluteUri == true ? location : new Uri(uri, location);
+					continue;
+				}
+
+				response.EnsureSuccessStatusCode();
+				return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+			}
+
+			throw new HttpRequestException($"Exceeded maximum redirect limit ({maxRedirects}).");
 		}
 
 		/// <summary>
