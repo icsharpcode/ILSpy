@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			public MethodCallInCtorInit(ConsoleKey key)
 #if MCS5
-				: this(((int)key/*cast due to .constrained prefix*/).ToString())
+				: this(((int)key/*cast due to constrained. prefix*/).ToString())
 #else
 				: this(((int)key).ToString())
 #endif
@@ -286,6 +286,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 #endif
+
+		public struct My
+		{
+			private ClassWithConstantAndStaticCtor test;
+
+			internal My(ClassWithConstantAndStaticCtor a)
+			{
+				test = a;
+			}
+		}
 #endif
 	}
 }

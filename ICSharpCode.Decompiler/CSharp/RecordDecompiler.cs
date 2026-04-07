@@ -179,11 +179,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			IMethod? guessedPrimaryCtor = null;
+			Accessibility expectedCtorAccessibility = recordTypeDef.IsAbstract ? Accessibility.Protected : Accessibility.Public;
 
 			foreach (var method in recordTypeDef.Methods)
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 				if (method.IsStatic || !method.IsConstructor)
+					continue;
+				if (method.Accessibility != expectedCtorAccessibility)
 					continue;
 				if (IsCopyConstructor(method))
 				{

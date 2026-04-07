@@ -340,6 +340,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 				}
 
+				Accessibility expectedCtorAccessibility = TypeDefinition.IsAbstract ? Accessibility.Protected : Accessibility.Public;
+
 				if (context.Settings.UsePrimaryConstructorSyntaxForNonRecordTypes
 					&& RecordDecompiler == null && constructorsNotChainedWithThis.Count == 1)
 				{
@@ -351,7 +353,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 					var initializer = InitializerSequence.Analyze(this, ctor, ctorMethod);
 
-					if (initializer is { CoversFullBody: true, HasDuplicateAssignments: false, Statements.Count: > 0 })
+					if (initializer is { CoversFullBody: true, HasDuplicateAssignments: false, Statements.Count: > 0 }
+						&& ctorMethod.Accessibility == expectedCtorAccessibility)
 					{
 						bool transformToPrimaryConstructor = MetadataTokens.GetRowNumber(ctorMethod.MetadataToken) == firstMethodRowNumber;
 
