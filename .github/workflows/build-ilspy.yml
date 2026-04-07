@@ -21,7 +21,7 @@ jobs:
     env:
       BuildPlatform: Any CPU
       StagingDirectory: buildartifacts
-      BuildAndPublishVsix: true  # temp disable due to usage of transport feed for net11
+      BuildAndPublishVsix: true
 
     steps:
     - run: mkdir -p $env:StagingDirectory
