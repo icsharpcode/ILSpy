@@ -60,6 +60,7 @@ namespace ICSharpCode.ILSpy.Updates
 			if (releaseTag != null)
 			{
 				url = ReleaseTagBaseUrl + releaseTag;
+
 				// Prevent path traversal: normalize the URI and verify it still starts with the expected base
 				if (!new Uri(url).AbsoluteUri.StartsWith(ReleaseTagBaseUrl, StringComparison.Ordinal))
 					url = null;
@@ -68,8 +69,10 @@ namespace ICSharpCode.ILSpy.Updates
 			{
 				// Issue #3707: Remove else branch fallback logic once releaseTag version has shipped + 6 months
 				url = (string)currentBand.Element("downloadUrl");
-				if (!(url.StartsWith("http://", StringComparison.Ordinal) || url.StartsWith("https://", StringComparison.Ordinal)))
-					url = null; // don't accept non-urls
+
+				// Prevent arbitrary URLs: verify it starts with the expected base
+				if (!new Uri(url).AbsoluteUri.StartsWith(ReleaseTagBaseUrl, StringComparison.Ordinal))
+					url = null;
 			}
 
 			LatestAvailableVersion = new AvailableVersionInfo { Version = version, DownloadUrl = url };

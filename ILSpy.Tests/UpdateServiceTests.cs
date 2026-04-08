@@ -64,6 +64,26 @@ public class UpdateServiceTests
 		<root>
 		  <band id="stable">
 		    <latestVersion>10.0.0.0</latestVersion>
+		    <downloadUrl>https://github.com/icsharpcode/ILSpy/releases/tag/v10.0</downloadUrl>
+		  </band>
+		</root>
+		""";
+
+		using var client = new HttpClient(new StubHttpMessageHandler(xml));
+
+		var result = await UpdateService.GetLatestVersionAsync(client, new Uri("https://example.com/updates.xml"));
+
+		result.Version.Should().Be(new Version(10, 0, 0, 0));
+		result.DownloadUrl.Should().Be("https://github.com/icsharpcode/ILSpy/releases/tag/v10.0");
+	}
+
+	[Test]
+	public async Task GetLatestVersionAsync_UsesDownloadUrl_ButFailsBecauseBaseUrlDoesntMatch()
+	{
+		const string xml = """
+		<root>
+		  <band id="stable">
+		    <latestVersion>10.0.0.0</latestVersion>
 		    <downloadUrl>https://example.com/ilspy.zip</downloadUrl>
 		  </band>
 		</root>
@@ -74,7 +94,7 @@ public class UpdateServiceTests
 		var result = await UpdateService.GetLatestVersionAsync(client, new Uri("https://example.com/updates.xml"));
 
 		result.Version.Should().Be(new Version(10, 0, 0, 0));
-		result.DownloadUrl.Should().Be("https://example.com/ilspy.zip");
+		result.DownloadUrl.Should().BeNull();
 	}
 
 	sealed class StubHttpMessageHandler(string responseContent) : HttpMessageHandler
