@@ -19,13 +19,13 @@ public class UpdateServiceTests
 	public async Task GetLatestVersionAsync_UsesReleaseTag_WhenReleaseTagIsPresent()
 	{
 		const string xml = """
-		<root>
+		<updateInfo>
 		  <band id="stable">
 		    <latestVersion>10.0.0.0</latestVersion>
 		    <releaseTag>v10.0</releaseTag>
 		    <downloadUrl>https://example.com/ignored.zip</downloadUrl>
 		  </band>
-		</root>
+		</updateInfo>
 		""";
 
 		using var client = new HttpClient(new StubHttpMessageHandler(xml));
@@ -40,13 +40,13 @@ public class UpdateServiceTests
 	public async Task GetLatestVersionAsync_ReturnsNullDownloadUrl_WhenReleaseTagContainsPathTraversalAttempt()
 	{
 		const string xml = """
-		<root>
+		<updateInfo>
 		  <band id="stable">
 		    <latestVersion>10.0.0.0</latestVersion>
 		    <releaseTag>../malicious</releaseTag>
 		    <downloadUrl>https://example.com/ignored.zip</downloadUrl>
 		  </band>
-		</root>
+		</updateInfo>
 		""";
 
 		using var client = new HttpClient(new StubHttpMessageHandler(xml));
@@ -61,12 +61,12 @@ public class UpdateServiceTests
 	public async Task GetLatestVersionAsync_UsesDownloadUrl_WhenReleaseTagIsMissing()
 	{
 		const string xml = """
-		<root>
+		<updateInfo>
 		  <band id="stable">
 		    <latestVersion>10.0.0.0</latestVersion>
 		    <downloadUrl>https://github.com/icsharpcode/ILSpy/releases/tag/v10.0</downloadUrl>
 		  </band>
-		</root>
+		</updateInfo>
 		""";
 
 		using var client = new HttpClient(new StubHttpMessageHandler(xml));
@@ -81,12 +81,12 @@ public class UpdateServiceTests
 	public async Task GetLatestVersionAsync_UsesDownloadUrl_ButFailsBecauseBaseUrlDoesntMatch()
 	{
 		const string xml = """
-		<root>
+		<updateInfo>
 		  <band id="stable">
 		    <latestVersion>10.0.0.0</latestVersion>
 		    <downloadUrl>https://example.com/ilspy.zip</downloadUrl>
 		  </band>
-		</root>
+		</updateInfo>
 		""";
 
 		using var client = new HttpClient(new StubHttpMessageHandler(xml));
