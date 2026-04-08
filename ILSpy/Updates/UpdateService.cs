@@ -36,13 +36,18 @@ namespace ICSharpCode.ILSpy.Updates
 
 		public static async Task<AvailableVersionInfo> GetLatestVersionAsync()
 		{
-			var client = new HttpClient(new HttpClientHandler() {
+			using var client = new HttpClient(new HttpClientHandler() {
 				UseProxy = true,
 				UseDefaultCredentials = true
 			});
 
+			return await GetLatestVersionAsync(client, UpdateUrl).ConfigureAwait(false);
+		}
+
+		internal static async Task<AvailableVersionInfo> GetLatestVersionAsync(HttpClient client, Uri updateUrl)
+		{
 			// Issue #3707: Remove 301 redirect logic once ilspy.net CNAME gone
-			string data = await GetWithRedirectsAsync(client, UpdateUrl).ConfigureAwait(false);
+			string data = await GetWithRedirectsAsync(client, updateUrl).ConfigureAwait(false);
 
 			XDocument doc = XDocument.Load(new StringReader(data));
 			var bands = doc.Root.Elements("band").ToList();
