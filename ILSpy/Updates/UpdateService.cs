@@ -28,6 +28,7 @@ namespace ICSharpCode.ILSpy.Updates
 {
 	internal static class UpdateService
 	{
+		const string ReleaseTagBaseUrl = "https://github.com/icsharpcode/ILSpy/releases/tag/";
 		static readonly Uri UpdateUrl = new Uri("https://icsharpcode.github.io/ILSpy/updates.xml");
 		const string band = "stable";
 
@@ -39,15 +40,32 @@ namespace ICSharpCode.ILSpy.Updates
 				UseProxy = true,
 				UseDefaultCredentials = true
 			});
+
+			// Issue #3707: Remove 301 redirect logic once ilspy.net CNAME gone
 			string data = await GetWithRedirectsAsync(client, UpdateUrl).ConfigureAwait(false);
 
 			XDocument doc = XDocument.Load(new StringReader(data));
 			var bands = doc.Root.Elements("band").ToList();
 			var currentBand = bands.FirstOrDefault(b => (string)b.Attribute("id") == band) ?? bands.First();
 			Version version = new Version((string)currentBand.Element("latestVersion"));
-			string url = (string)currentBand.Element("downloadUrl");
-			if (!(url.StartsWith("http://", StringComparison.Ordinal) || url.StartsWith("https://", StringComparison.Ordinal)))
-				url = null; // don't accept non-urls
+
+			string url = null;
+			string releaseTag = (string)currentBand.Element("releaseTag");
+
+			if (releaseTag != null)
+			{
+				url = ReleaseTagBaseUrl + releaseTag;
+				// Prevent path traversal: normalize the URI and verify it still starts with the expected base
+				if (!new Uri(url).AbsoluteUri.StartsWith(ReleaseTagBaseUrl, StringComparison.Ordinal))
+					url = null;
+			}
+			else
+			{
+				// Issue #3707: Remove else branch fallback logic once releaseTag version has shipped + 6 months
+				url = (string)currentBand.Element("downloadUrl");
+				if (!(url.StartsWith("http://", StringComparison.Ordinal) || url.StartsWith("https://", StringComparison.Ordinal)))
+					url = null; // don't accept non-urls
+			}
 
 			LatestAvailableVersion = new AvailableVersionInfo { Version = version, DownloadUrl = url };
 			return LatestAvailableVersion;
