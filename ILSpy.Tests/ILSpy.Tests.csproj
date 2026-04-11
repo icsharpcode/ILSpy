@@ -49,6 +49,7 @@
     <Compile Include="Analyzers\TypeUsedByAnalyzerTests.cs" />
     <Compile Include="CommandLineArgumentsTests.cs" />
     <Compile Include="ResourceReaderWriterTests.cs" />
+    <Compile Include="UpdateServiceTests.cs" />
   </ItemGroup>
 
   <ItemGroup>
