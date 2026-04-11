@@ -41,8 +41,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 	abstract class AbstractToolset
 	{
 		readonly SourceCacheContext cache;
-		readonly SourceRepository repository;
-		readonly FindPackageByIdResource resource;
+		readonly SourceRepository repository, dotnetToolsFeed;
+		readonly FindPackageByIdResource resource, dotnetToolsResource;
 		protected readonly string baseDir;
 
 		public AbstractToolset(string baseDir)
@@ -50,7 +50,29 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			this.cache = new SourceCacheContext();
 			this.repository = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
 			this.resource = repository.GetResource<FindPackageByIdResource>();
+			this.dotnetToolsFeed = Repository.Factory.GetCoreV3("https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-tools/nuget/v3/index.json");
+			this.dotnetToolsResource = dotnetToolsFeed.GetResource<FindPackageByIdResource>();
 			this.baseDir = baseDir;
+		}
+
+		enum PackageVersionKind
+		{
+			Rtm,
+			Preview,
+			TransportFeed,
+		}
+
+		// RTM versions look like 5.3.0, and preview ones like 4.12.0-3.final. Transport feed ones eg 5.6.0-2.26177.1
+		static PackageVersionKind ClassifyVersion(NuGetVersion version)
+		{
+			if (!version.IsPrerelease)
+				return PackageVersionKind.Rtm;
+
+			var labels = version.ReleaseLabels.ToList();
+			bool looksLikeTransportFeed = labels.Count >= 3
+				&& labels.All(static label => int.TryParse(label, out _));
+
+			return looksLikeTransportFeed ? PackageVersionKind.TransportFeed : PackageVersionKind.Preview;
 		}
 
 		protected async Task FetchPackage(string packageName, string version, string sourcePath, string outputPath)
@@ -70,9 +92,15 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			{
 				packageStream = new MemoryStream();
 
-				await resource.CopyNupkgToStreamAsync(
+				NuGetVersion parsedVersion = NuGetVersion.Parse(version);
+				PackageVersionKind versionKind = ClassifyVersion(parsedVersion);
+				FindPackageByIdResource selectedResource = versionKind == PackageVersionKind.TransportFeed
+					? dotnetToolsResource
+					: resource;
+
+				await selectedResource.CopyNupkgToStreamAsync(
 					packageName,
-					NuGetVersion.Parse(version),
+					parsedVersion,
 					packageStream,
 					cache,
 					logger,
