@@ -166,9 +166,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		internal static string SanitizeVersion(string version)
 		{
-			int index = version.IndexOf("-");
+			int index = version.IndexOf('-');
 			if (index > 0)
-				return version.Remove(index);
+				return version[..index];
 			return version;
 		}
 	}

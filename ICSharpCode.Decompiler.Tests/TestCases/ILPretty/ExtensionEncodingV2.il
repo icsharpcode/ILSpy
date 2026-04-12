@@ -16,7 +16,7 @@
         int32(263)
     }
     .custom instance void [System.Runtime]System.Runtime.Versioning.TargetFrameworkAttribute::.ctor(string) = {
-        string('.NETCoreApp,Version=10.0')
+        string('.NETCoreApp,Version=11.0')
     }
     .permissionset reqmin = {
         [System.Runtime]System.Security.Permissions.SecurityPermissionAttribute = {

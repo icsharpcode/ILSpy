@@ -318,12 +318,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.VBPretty
 		public static IEnumerable<int> NestedTryFinallyStartingOnSamePosition()
 		{
 			// The first user IL instruction is already in 2 nested try blocks.
-#if ((ROSLYN2 && !ROSLYN4) && OPT)
+#if ROSLYN2 && !ROSLYN4 && OPT
 			int num = -1;
 #endif
 			try
 			{
-#if ((ROSLYN2 && !ROSLYN4) && OPT)
+#if ROSLYN2 && !ROSLYN4 && OPT
 				_ = num - 1;
 #endif
 				try

@@ -59,8 +59,12 @@ namespace ICSharpCode.Decompiler.Tests
 
 		static readonly CompilerOptions[] roslynOnlyOptions =
 		{
+			CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.TargetNet40,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
+			CompilerOptions.UseRoslyn4_14_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
@@ -137,35 +141,29 @@ namespace ICSharpCode.Decompiler.Tests
 			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1));
 		}
 
-		async Task RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
+		async Task RunForLibrary([CallerMemberName] string testName = null, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
-			await Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CompilerOptions.Library, decompilerSettings);
+			await Run(testName, cscOptions | CompilerOptions.Library, decompilerSettings);
 		}
 
-		async Task Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
+		async Task Run([CallerMemberName] string testName = null, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
-			var ilFile = Path.Combine(TestCasePath, testName) + Tester.GetSuffix(cscOptions) + ".il";
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
 			var expectedFile = Path.Combine(TestCasePath, testName + ".Expected.cs");
+			var exeFile = TestsAssemblyOutput.GetFilePath(TestCasePath, testName, Tester.GetSuffix(cscOptions) + ".exe");
 
-			if (!File.Exists(ilFile))
+			CompilerResults output = null;
+			try
 			{
-				// re-create .il file if necessary
-				Helpers.CompilerResults output = null;
-				try
-				{
-					output = await Tester.CompileCSharp(csFile, cscOptions).ConfigureAwait(false);
-					await Tester.Disassemble(output.PathToAssembly, ilFile, asmOptions).ConfigureAwait(false);
-				}
-				finally
-				{
-					if (output != null)
-						output.DeleteTempFiles();
-				}
+				output = await Tester.CompileCSharp(csFile, cscOptions, exeFile).ConfigureAwait(false);
+			}
+			finally
+			{
+				if (output != null)
+					output.DeleteTempFiles();
 			}
 
-			var executable = await Tester.AssembleIL(ilFile, asmOptions).ConfigureAwait(false);
-			var decompiled = await Tester.DecompileCSharp(executable, decompilerSettings).ConfigureAwait(false);
+			var decompiled = await Tester.DecompileCSharp(exeFile, decompilerSettings).ConfigureAwait(false);
 
 			CodeAssert.FilesAreEqual(expectedFile, decompiled, Tester.GetPreprocessorSymbols(cscOptions).ToArray());
 			Tester.RepeatOnIOError(() => File.Delete(decompiled));
