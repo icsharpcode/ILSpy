@@ -10,9 +10,9 @@
       },
       "TomsToolbox.Composition.Analyzer": {
         "type": "Direct",
-        "requested": "[2.22.2, )",
-        "resolved": "2.22.2",
-        "contentHash": "7gYo8ZR2eq3XkrilvUpLbTypeZy6IlD5FB8jah0YPhMOmDGhya4jJ3kfDMTTRt5m258Ou78P69mHMkG6DKZXsg=="
+        "requested": "[2.23.0, )",
+        "resolved": "2.23.0",
+        "contentHash": "WHvTkPV5AI9FQY7MB7PUWgIkm69NEiCmuG0A7cVXFF/wNQ0xI5YjS60a20vM1Z1Sg+mDDkZ4452hwFGaky0Txg=="
       },
       "icsharpcode.decompiler": {
         "type": "Project",

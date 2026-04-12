@@ -3,6 +3,11 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
+  <PropertyGroup>
+    <RoslynVersion>5.6.0-2.26177.1</RoslynVersion>
+    <NetPackageVersion>10.0.5</NetPackageVersion>
+    <TomsToolboxVersion>2.23.0</TomsToolboxVersion>
+  </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="AvalonEdit" Version="6.3.1.120" />
     <PackageVersion Include="AwesomeAssertions" Version="9.4.0" />
@@ -13,20 +18,20 @@
     <PackageVersion Include="ILCompiler.Reflection.ReadyToRun.Experimental" Version="10.0.0-rtm.25531.102" />
     <PackageVersion Include="Iced" Version="1.21.0" />
     <PackageVersion Include="K4os.Compression.LZ4" Version="1.3.8" />
-    <PackageVersion Include="McMaster.Extensions.CommandLineUtils" Version="5.0.1" />
-    <PackageVersion Include="McMaster.Extensions.Hosting.CommandLine" Version="5.0.1" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.6.0-2.26177.1" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.VisualBasic" Version="5.6.0-2.26177.1" />
+    <PackageVersion Include="McMaster.Extensions.CommandLineUtils" Version="5.1.0" />
+    <PackageVersion Include="McMaster.Extensions.Hosting.CommandLine" Version="5.1.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="$(RoslynVersion)" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.VisualBasic" Version="$(RoslynVersion)" />
     <PackageVersion Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta2-22171-02" />
     <PackageVersion Include="Microsoft.DiaSymReader" Version="1.4.0" />
     <PackageVersion Include="Microsoft.DiaSymReader.Native" Version="17.0.0-beta1.21524.1" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.5" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.5" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.5" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="$(NetPackageVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="$(NetPackageVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(NetPackageVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-    <PackageVersion Include="Microsoft.NETCore.ILAsm" Version="10.0.5" />
-    <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.NETCore.ILAsm" Version="$(NetPackageVersion)" />
+    <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.201" />
     <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.1.0" />
@@ -39,23 +44,23 @@
     <PackageVersion Include="NUnit3TestAdapter" Version="6.2.0" />
     <PackageVersion Include="NuGet.Protocol" Version="7.3.0" />
     <PackageVersion Include="PowerShellStandard.Library" Version="5.1.1" />
-    <PackageVersion Include="System.Composition.AttributedModel" Version="10.0.5" />
-    <PackageVersion Include="System.Collections.Immutable" Version="10.0.5" />
+    <PackageVersion Include="System.Composition.AttributedModel" Version="$(NetPackageVersion)" />
+    <PackageVersion Include="System.Collections.Immutable" Version="$(NetPackageVersion)" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
-    <PackageVersion Include="System.Reflection.Metadata" Version="10.0.5" />
-    <PackageVersion Include="System.Resources.Extensions" Version="10.0.5" />
+    <PackageVersion Include="System.Reflection.Metadata" Version="$(NetPackageVersion)" />
+    <PackageVersion Include="System.Resources.Extensions" Version="$(NetPackageVersion)" />
     <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.5" />
-    <PackageVersion Include="TomsToolbox.Composition.MicrosoftExtensions" Version="2.22.2" />
-    <PackageVersion Include="TomsToolbox.Wpf.Composition" Version="2.22.2" />
-    <PackageVersion Include="TomsToolbox.Wpf.Composition.AttributedModel" Version="2.22.2" />
-    <PackageVersion Include="TomsToolbox.Wpf.Styles" Version="2.22.2" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="$(NetPackageVersion)" />
+    <PackageVersion Include="TomsToolbox.Composition.MicrosoftExtensions" Version="$(TomsToolboxVersion)" />
+    <PackageVersion Include="TomsToolbox.Wpf.Composition" Version="$(TomsToolboxVersion)" />
+    <PackageVersion Include="TomsToolbox.Wpf.Composition.AttributedModel" Version="$(TomsToolboxVersion)" />
+    <PackageVersion Include="TomsToolbox.Wpf.Styles" Version="$(TomsToolboxVersion)" />
     <PackageVersion Include="coverlet.MTP" Version="8.0.1" />
     <PackageVersion Include="System.Net.Http" Version="4.3.4" />
     <PackageVersion Include="System.Private.Uri" Version="4.3.2" />
     <PackageVersion Include="System.Text.RegularExpressions" Version="4.3.1" />
   </ItemGroup>
   <ItemGroup>
-    <GlobalPackageReference Include="TomsToolbox.Composition.Analyzer" Version="2.22.2" />
+    <GlobalPackageReference Include="TomsToolbox.Composition.Analyzer" Version="$(TomsToolboxVersion)" />
   </ItemGroup>
 </Project>

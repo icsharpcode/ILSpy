@@ -4,13 +4,13 @@
     "net10.0": {
       "McMaster.Extensions.Hosting.CommandLine": {
         "type": "Direct",
-        "requested": "[5.0.1, )",
-        "resolved": "5.0.1",
-        "contentHash": "5BwLoyjHJESg0Fns+4rokcPP+kBfeZ+1NrZ03MUJsv9kf26s1mOLNgc2M9ju8lMCmJty+pQ2qyFQypVA+kbYhA==",
+        "requested": "[5.1.0, )",
+        "resolved": "5.1.0",
+        "contentHash": "XN6s/86/bP0PSsP5p2eX49ZKmWrURSNg7nvrG5vws3abm7Py1A4bv3x3Pdvg7FqR8mLgEE0gNTI1qDtlYQIQnw==",
         "dependencies": {
-          "McMaster.Extensions.CommandLineUtils": "5.0.1",
-          "Microsoft.Extensions.Hosting.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.1"
+          "McMaster.Extensions.CommandLineUtils": "5.1.0",
+          "Microsoft.Extensions.Hosting.Abstractions": "10.0.5",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.5"
         }
       },
       "Microsoft.Extensions.Hosting": {
@@ -60,9 +60,9 @@
       },
       "TomsToolbox.Composition.Analyzer": {
         "type": "Direct",
-        "requested": "[2.22.2, )",
-        "resolved": "2.22.2",
-        "contentHash": "7gYo8ZR2eq3XkrilvUpLbTypeZy6IlD5FB8jah0YPhMOmDGhya4jJ3kfDMTTRt5m258Ou78P69mHMkG6DKZXsg=="
+        "requested": "[2.23.0, )",
+        "resolved": "2.23.0",
+        "contentHash": "WHvTkPV5AI9FQY7MB7PUWgIkm69NEiCmuG0A7cVXFF/wNQ0xI5YjS60a20vM1Z1Sg+mDDkZ4452hwFGaky0Txg=="
       },
       "Microsoft.Extensions.Configuration.Abstractions": {
         "type": "Transitive",
@@ -368,9 +368,9 @@
       },
       "McMaster.Extensions.CommandLineUtils": {
         "type": "CentralTransitive",
-        "requested": "[5.0.1, )",
-        "resolved": "5.0.1",
-        "contentHash": "dXerCHdnTrlpoQjdpxBISv9OIqqziJph1bKOTK95nPG0m7yDyMyVmQDcE1Z10ZZlQeaod1C8zewOW+MQOgPWhw=="
+        "requested": "[5.1.0, )",
+        "resolved": "5.1.0",
+        "contentHash": "YceiKmxdsBrlkAJpmJ2N8XkLyAH01xLsm4VLfjNp5MvtAom2wflZtEBz3CLMQret6Z7jSh3oBO1ULF1Is0tNxA=="
       },
       "Microsoft.Extensions.Configuration": {
         "type": "CentralTransitive",
