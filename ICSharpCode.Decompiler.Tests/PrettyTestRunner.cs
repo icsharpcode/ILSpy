@@ -63,6 +63,8 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslyn3_11_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0 | CompilerOptions.TargetNet40,
+			CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.TargetNet40,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslyn1_3_2,
@@ -71,6 +73,8 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0,
 			CompilerOptions.UseRoslyn3_11_0,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.UseRoslyn4_14_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
@@ -83,6 +87,8 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0,
 			CompilerOptions.UseRoslyn3_11_0,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.UseRoslyn4_14_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
@@ -93,12 +99,16 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslyn3_11_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0 | CompilerOptions.TargetNet40,
+			CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.TargetNet40,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslyn2_10_0,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0,
 			CompilerOptions.UseRoslyn3_11_0,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.UseRoslyn4_14_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
@@ -109,6 +119,8 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0,
 			CompilerOptions.UseRoslyn3_11_0,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.UseRoslyn4_14_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
@@ -117,10 +129,14 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			CompilerOptions.UseRoslyn3_11_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0 | CompilerOptions.TargetNet40,
+			CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.TargetNet40,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslyn3_11_0,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.UseRoslyn4_14_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
@@ -129,19 +145,33 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			CompilerOptions.UseRoslyn3_11_0,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.UseRoslyn4_14_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
 
 		static readonly CompilerOptions[] roslyn4OrNewerWithNet40Options =
 		{
+			CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.TargetNet40,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
+			CompilerOptions.UseRoslyn4_14_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
 
 		static readonly CompilerOptions[] roslyn4OrNewerOptions =
+		{
+			CompilerOptions.UseRoslyn4_14_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0,
+			CompilerOptions.UseRoslynLatest,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
+		};
+
+		static readonly CompilerOptions[] roslyn5OrNewerOptions =
 		{
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
@@ -155,6 +185,8 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslyn3_11_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0 | CompilerOptions.TargetNet40,
+			CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.TargetNet40,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslyn1_3_2,
@@ -163,6 +195,8 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0,
 			CompilerOptions.UseRoslyn3_11_0,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.UseRoslyn4_14_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
@@ -175,6 +209,8 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslyn3_11_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0 | CompilerOptions.TargetNet40,
+			CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.TargetNet40,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslyn1_3_2,
@@ -183,6 +219,8 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0,
 			CompilerOptions.UseRoslyn3_11_0,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.UseRoslyn4_14_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 			CompilerOptions.UseMcs2_6_4,
@@ -201,7 +239,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task IndexRangeTest([ValueSource(nameof(roslyn3OrNewerOptions))] CompilerOptions cscOptions)
 		{
-			if (cscOptions.HasFlag(CompilerOptions.UseRoslynLatest))
+			if (cscOptions.HasFlag(CompilerOptions.UseRoslyn4_14_0) || cscOptions.HasFlag(CompilerOptions.UseRoslynLatest))
 			{
 				Assert.Ignore("See https://github.com/icsharpcode/ILSpy/issues/2540");
 			}
@@ -560,7 +598,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public async Task ExtensionEverything([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
+		public async Task ExtensionEverything([ValueSource(nameof(roslyn5OrNewerOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview | CompilerOptions.NullableEnable);
 		}
