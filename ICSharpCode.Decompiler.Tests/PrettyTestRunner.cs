@@ -538,6 +538,46 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task RuntimeAsync([ValueSource(nameof(roslyn5OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary("Async", cscOptions: cscOptions | CompilerOptions.EnableRuntimeAsync | CompilerOptions.Preview);
+		}
+
+		[Test]
+		public async Task RuntimeAsyncForeach([ValueSource(nameof(roslyn5OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary("AsyncForeach", cscOptions: cscOptions | CompilerOptions.EnableRuntimeAsync | CompilerOptions.Preview | CompilerOptions.GeneratePdb);
+		}
+
+		[Test]
+		public async Task RuntimeAsyncMain([ValueSource(nameof(roslyn5OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			await Run("AsyncMain", cscOptions: cscOptions | CompilerOptions.EnableRuntimeAsync | CompilerOptions.Preview);
+		}
+
+		[Test]
+		public async Task RuntimeAsyncStreams([ValueSource(nameof(roslyn5OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary("AsyncStreams", cscOptions: cscOptions | CompilerOptions.EnableRuntimeAsync | CompilerOptions.Preview);
+		}
+
+		[Test]
+		public async Task RuntimeAsyncUsing([ValueSource(nameof(roslyn5OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(
+				"AsyncUsing",
+				cscOptions: cscOptions | CompilerOptions.EnableRuntimeAsync | CompilerOptions.Preview,
+				configureDecompiler: settings => { settings.UseEnhancedUsing = false; }
+			);
+		}
+
+		[Test]
+		public async Task RuntimeAsyncCustomTaskType([ValueSource(nameof(roslyn5OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary("CustomTaskType", cscOptions: cscOptions | CompilerOptions.EnableRuntimeAsync | CompilerOptions.Preview);
+		}
+
+		[Test]
 		public async Task NullableRefTypes([ValueSource(nameof(roslyn3OrNewerOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.NullableEnable);
