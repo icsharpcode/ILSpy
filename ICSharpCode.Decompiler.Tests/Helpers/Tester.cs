@@ -120,8 +120,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			packagesPropsFile = Path.Combine(TesterPath, "../../../../../Directory.Packages.props");
 			roslynLatestVersion = ((IEnumerable<object>)(XDocument
 				.Load(packagesPropsFile)
-				.XPathEvaluate("//Project//ItemGroup//PackageVersion[@Include='Microsoft.CodeAnalysis.CSharp']/@Version")))
-				.OfType<XAttribute>()
+				.XPathEvaluate("//Project//PropertyGroup//RoslynVersion")))
+				.OfType<XElement>()
 				.Single()
 				.Value;
 
