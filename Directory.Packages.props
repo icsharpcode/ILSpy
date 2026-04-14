@@ -4,7 +4,7 @@
     <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <PropertyGroup>
-    <RoslynVersion>5.6.0-2.26177.1</RoslynVersion>
+    <RoslynVersion>5.7.0-1.26207.106</RoslynVersion>
     <NetPackageVersion>10.0.5</NetPackageVersion>
     <TomsToolboxVersion>2.23.0</TomsToolboxVersion>
   </PropertyGroup>
