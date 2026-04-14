@@ -4,8 +4,8 @@
     <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <PropertyGroup>
-    <RoslynVersion>5.6.0-2.26177.1</RoslynVersion>
-    <NetPackageVersion>10.0.5</NetPackageVersion>
+    <RoslynVersion>5.7.0-1.26207.106</RoslynVersion>
+    <NetPackageVersion>10.0.6</NetPackageVersion>
     <TomsToolboxVersion>2.23.0</TomsToolboxVersion>
   </PropertyGroup>
   <ItemGroup>
@@ -33,7 +33,7 @@
     <PackageVersion Include="Microsoft.NETCore.ILAsm" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.201" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.202" />
     <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.1.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.1.0" />
     <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.142" />
