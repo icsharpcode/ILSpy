@@ -16,35 +16,27 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.IO;
+using Avalonia.Headless.NUnit;
 
-using ICSharpCode.ILSpyX.Settings;
+using AwesomeAssertions;
 
 using ILSpy.AppEnv;
 
-using ProductionApp = global::ILSpy.App;
+using NUnit.Framework;
 
-namespace ICSharpCode.ILSpy.Tests;
+namespace ICSharpCode.ILSpy.Tests.AppEnv;
 
-// Subclasses the production App and lets base.Initialize() populate this instance
-// from ILSpy/App.axaml (the XAML compiler's rewrite of Load(this) inside App.Initialize
-// targets App.axaml's compiled populate, so TestApp picks up the production Resources,
-// Styles, and DataTemplates without duplicating the XAML).
-public class TestApp : ProductionApp
+// AppComposition.Initialize() builds the MEF host out of ILSpyX + ILSpy + any *.Plugin.dll
+// siblings. TestApp.OnFrameworkInitializationCompleted invokes it during harness startup; if
+// composition fails (missing export, duplicate Shared, broken import), AppComposition.Current
+// throws InvalidOperationException, and every downstream test that does GetExport<T> hits a
+// confusing failure further down the stack. This test catches the regression at the source.
+[TestFixture]
+public class AppCompositionTests
 {
-	public override void Initialize()
+	[AvaloniaTest]
+	public void AppComposition_Current_is_non_null_after_harness_init()
 	{
-		base.Initialize();
-	}
-
-	public override void OnFrameworkInitializationCompleted()
-	{
-		var dir = Path.Combine(Path.GetTempPath(), "ILSpy.Tests", Guid.NewGuid().ToString("N"));
-		Directory.CreateDirectory(dir);
-		var configPath = Path.Combine(dir, "ILSpy.xml");
-		ILSpySettings.SettingsFilePathProvider = () => configPath;
-
-		var composition = AppComposition.Initialize();
+		AppComposition.Current.Should().NotBeNull();
 	}
 }

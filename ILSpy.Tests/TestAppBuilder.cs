@@ -26,6 +26,7 @@ using ICSharpCode.ILSpy.Tests;
 
 [assembly: AvaloniaTestApplication(typeof(TestAppBuilder))]
 [assembly: AvaloniaTestIsolation(AvaloniaTestIsolationLevel.PerAssembly)]
+[assembly: ResetAppState]
 
 namespace ICSharpCode.ILSpy.Tests;
 

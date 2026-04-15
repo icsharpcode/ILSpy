@@ -17,34 +17,31 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.IO;
+using System.Collections.Generic;
+using System.Text;
 
-using ICSharpCode.ILSpyX.Settings;
-
-using ILSpy.AppEnv;
-
-using ProductionApp = global::ILSpy.App;
-
-namespace ICSharpCode.ILSpy.Tests;
-
-// Subclasses the production App and lets base.Initialize() populate this instance
-// from ILSpy/App.axaml (the XAML compiler's rewrite of Load(this) inside App.Initialize
-// targets App.axaml's compiled populate, so TestApp picks up the production Resources,
-// Styles, and DataTemplates without duplicating the XAML).
-public class TestApp : ProductionApp
+namespace ILSpy.AppEnv
 {
-	public override void Initialize()
+	public sealed record ExceptionData(Exception Exception)
 	{
-		base.Initialize();
+		public string? PluginName { get; init; }
 	}
 
-	public override void OnFrameworkInitializationCompleted()
+	public static class StartupExceptions
 	{
-		var dir = Path.Combine(Path.GetTempPath(), "ILSpy.Tests", Guid.NewGuid().ToString("N"));
-		Directory.CreateDirectory(dir);
-		var configPath = Path.Combine(dir, "ILSpy.xml");
-		ILSpySettings.SettingsFilePathProvider = () => configPath;
+		public static IList<ExceptionData> Items { get; } = new List<ExceptionData>();
 
-		var composition = AppComposition.Initialize();
+		public static string Format()
+		{
+			var sb = new StringBuilder();
+			foreach (var item in Items)
+			{
+				if (!string.IsNullOrEmpty(item.PluginName))
+					sb.AppendLine($"[Plugin: {item.PluginName}]");
+				sb.AppendLine(item.Exception.ToString());
+				sb.AppendLine();
+			}
+			return sb.ToString();
+		}
 	}
 }

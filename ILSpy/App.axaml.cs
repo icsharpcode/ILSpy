@@ -16,10 +16,14 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.Composition.Hosting;
+
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 
+using ILSpy.AppEnv;
 using ILSpy.ViewModels;
 using ILSpy.Views;
 
@@ -27,6 +31,9 @@ namespace ILSpy
 {
 	public partial class App : Application
 	{
+		public static CommandLineArguments? CommandLineArguments { get; private set; }
+		public static CompositionHost? Composition { get; private set; }
+
 		public override void Initialize()
 		{
 			AvaloniaXamlLoader.Load(this);
@@ -34,11 +41,25 @@ namespace ILSpy
 
 		public override void OnFrameworkInitializationCompleted()
 		{
+			GlobalExceptionHandler.Install();
+
+			CommandLineArguments = CommandLineArguments.Create(Environment.GetCommandLineArgs()[1..]);
+
+			try
+			{
+				Composition = AppComposition.Initialize();
+			}
+			catch (Exception ex)
+			{
+				StartupExceptions.Items.Add(new ExceptionData(ex));
+			}
+
 			if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
 			{
 				desktop.MainWindow = new MainWindow {
 					DataContext = new MainWindowViewModel(),
 				};
+				desktop.Exit += (_, _) => Composition?.Dispose();
 			}
 
 			base.OnFrameworkInitializationCompleted();

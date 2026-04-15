@@ -41,6 +41,8 @@
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="System.Composition.AttributedModel" />
+    <PackageReference Include="System.Composition.Hosting" />
+    <PackageReference Include="System.Composition.TypedParts" />
 
     <!-- CLI parsing -->
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" />

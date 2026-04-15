@@ -64,6 +64,8 @@
     <PackageVersion Include="NuGet.Protocol" Version="7.6.0" />
     <PackageVersion Include="PowerShellStandard.Library" Version="5.1.1" />
     <PackageVersion Include="System.Composition.AttributedModel" Version="$(NetPackageVersion)" />
+    <PackageVersion Include="System.Composition.Hosting" Version="$(NetPackageVersion)" />
+    <PackageVersion Include="System.Composition.TypedParts" Version="$(NetPackageVersion)" />
     <PackageVersion Include="System.Collections.Immutable" Version="$(NetPackageVersion)" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
     <PackageVersion Include="System.Reflection.Metadata" Version="$(NetPackageVersion)" />
