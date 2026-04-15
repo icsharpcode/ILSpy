@@ -474,6 +474,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.RequiredMembers" xml:space="preserve">
     <value>Required members</value>
   </data>
+  <data name="DecompilerSettings.RuntimeAsync" xml:space="preserve">
+    <value>Decompile runtime-async (System.Runtime.CompilerServices.AsyncHelpers) methods</value>
+  </data>
   <data name="DecompilerSettings.ScopedRef" xml:space="preserve">
     <value>'scoped' lifetime annotation</value>
   </data>

@@ -350,6 +350,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var metadata = module.metadata;
 			var def = metadata.GetMethodDefinition(handle);
 			MethodImplAttributes implAttributes = def.ImplAttributes & ~MethodImplAttributes.CodeTypeMask;
+			if ((module.TypeSystemOptions & TypeSystemOptions.RuntimeAsync) != 0)
+			{
+				implAttributes &= ~SRMExtensions.MethodImplAsync;
+			}
 			int methodCodeType = (int)(def.ImplAttributes & MethodImplAttributes.CodeTypeMask);
 
 			#region DllImportAttribute

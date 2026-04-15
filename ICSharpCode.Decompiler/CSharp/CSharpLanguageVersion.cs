@@ -37,7 +37,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		CSharp12_0 = 1200,
 		CSharp13_0 = 1300,
 		CSharp14_0 = 1400,
-		Preview = 1400,
+		CSharp15_0 = 1500,
+		Preview = 1500,
 		Latest = 0x7FFFFFFF
 	}
 }

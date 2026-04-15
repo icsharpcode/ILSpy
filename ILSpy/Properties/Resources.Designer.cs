@@ -1360,7 +1360,16 @@ namespace ICSharpCode.ILSpy.Properties {
                 return ResourceManager.GetString("DecompilerSettings.RequiredMembers", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Decompile runtime-async (System.Runtime.CompilerServices.AsyncHelpers) methods.
+        /// </summary>
+        public static string DecompilerSettings_RuntimeAsync {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.RuntimeAsync", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;scoped&apos; lifetime annotation.
         /// </summary>

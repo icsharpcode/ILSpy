@@ -848,6 +848,8 @@ namespace System.Runtime.CompilerServices
 				suffix += ".mcs2";
 			if ((cscOptions & CompilerOptions.UseMcs5_23) != 0)
 				suffix += ".mcs5";
+			if ((cscOptions & CompilerOptions.EnableRuntimeAsync) != 0)
+				suffix += ".runtimeasync";
 			return suffix;
 		}
 
