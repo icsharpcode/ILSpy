@@ -25,7 +25,6 @@ using System.Windows.Input;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Analyzers.TreeNodes;
 using ICSharpCode.ILSpy.AssemblyTree;
-using ICSharpCode.ILSpy.Controls.TreeView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX.TreeView;
