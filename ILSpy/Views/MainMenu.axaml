@@ -2,11 +2,17 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="23"
              x:Class="ILSpy.MainMenu">
-  <Menu DockPanel.Dock="Top" Name="Menu" Height="23" KeyboardNavigation.TabNavigation="None">
-	  <MenuItem Header="_File" Tag="_File">
-		  <!-- content of file menu is added using MEF -->
-		  </MenuItem>
-  </Menu>
+	<Menu DockPanel.Dock="Top" Name="Menu" Height="23">
+		<MenuItem Header="_File" Tag="_File">
+			<!-- MEF-populated content (task #10) -->
+		</MenuItem>
+		<MenuItem Header="_View" Tag="_View">
+			<!-- API visibility toggles, theme selection, etc. wired in task #10 / #3 -->
+		</MenuItem>
+		<MenuItem Header="_Window" Name="WindowMenuItem" Tag="_Window">
+			<!-- Tool-pane / tab-page entries wired in task #10 -->
+		</MenuItem>
+	</Menu>
 </UserControl>

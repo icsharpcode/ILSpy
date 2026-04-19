@@ -56,9 +56,8 @@ namespace ILSpy
 
 			if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
 			{
-				desktop.MainWindow = new MainWindow {
-					DataContext = new MainWindowViewModel(),
-				};
+				desktop.MainWindow = Composition?.GetExport<MainWindow>()
+					?? new MainWindow();
 				desktop.Exit += (_, _) => Composition?.Dispose();
 			}
 

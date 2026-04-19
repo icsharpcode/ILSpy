@@ -16,27 +16,34 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
+using System.Linq;
 
 using Avalonia.Controls;
+using Avalonia.Headless.NUnit;
 
-using ILSpy.ViewModels;
+using AwesomeAssertions;
 
-namespace ILSpy.Views
+using ILSpy;
+
+using NUnit.Framework;
+
+namespace ICSharpCode.ILSpy.Tests;
+
+// MainMenu's top-level structure (File / View / Window with mnemonic underscores) is the
+// scaffolding every later commit hangs items onto via MEF. If a future commit accidentally
+// drops one of these top-levels or shuffles the order, the [ExportMainMenuCommand] entries
+// that target them by header would silently land in the wrong menu.
+[TestFixture]
+public class MainMenuTests
 {
-	[Export]
-	[Shared]
-	public partial class MainWindow : Window
+	[AvaloniaTest]
+	public void MainMenu_top_level_items_are_File_View_Window_in_order()
 	{
-		public MainWindow()
-		{
-			InitializeComponent();
-		}
+		var mainMenu = new MainMenu();
+		var menu = mainMenu.FindControl<Menu>("Menu");
+		menu.Should().NotBeNull();
 
-		[ImportingConstructor]
-		public MainWindow(MainWindowViewModel viewModel) : this()
-		{
-			DataContext = viewModel;
-		}
+		var headers = menu!.Items.OfType<MenuItem>().Select(m => m.Header as string).ToList();
+		headers.Should().Equal("_File", "_View", "_Window");
 	}
 }

@@ -16,10 +16,18 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Composition;
+
 namespace ILSpy.ViewModels
 {
+	[Export]
+	[Shared]
 	public partial class MainWindowViewModel : ViewModelBase
 	{
-		public string Greeting { get; } = "Welcome to Avalonia!";
+		public MainWindowViewModel()
+		{
+		}
+
+		public string Title => "ILSpy";
 	}
 }
