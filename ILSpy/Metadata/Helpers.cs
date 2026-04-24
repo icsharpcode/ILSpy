@@ -75,6 +75,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				AdvancedScrollWheelBehavior.SetAttach(view, AdvancedScrollWheelMode.WithoutAnimation);
 #endif
 			}
+			view.ItemsSource = null;
 			DataGridFilter.GetFilter(view).Clear();
 			view.RowDetailsTemplateSelector = null;
 			view.RowDetailsVisibilityMode = DataGridRowDetailsVisibilityMode.Collapsed;
