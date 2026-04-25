@@ -1,3 +1,4 @@
+
 // Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -21,19 +22,18 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
+using Avalonia.Controls;
+using Avalonia.Controls.Documents;
+using Avalonia.Media;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX;
-
-using ILSpy.Images;
 
 namespace ILSpy.TreeNodes
 {
 	sealed class AssemblyTreeNode : ILSpyTreeNode
 	{
-		enum LoadState { Loading, Loaded, Failed }
-
 		readonly LoadedAssembly assembly;
-		LoadState loadState = LoadState.Loading;
 		string? loadError;
 		MetadataFile? cachedModule;
 
@@ -44,42 +44,24 @@ namespace ILSpy.TreeNodes
 			ArgumentNullException.ThrowIfNull(assembly);
 			this.assembly = assembly;
 			LazyLoading = true;
-			_ = StartLoadingAsync();
+			_ = InitAsync();
 		}
 
-		public override object Text => assembly.ShortName;
-
-		public override object Icon => loadState switch {
-			LoadState.Failed => Images.Images.AssemblyWarning,
-			LoadState.Loading => Images.Images.AssemblyLoading,
-			_ => Images.Images.Assembly,
-		};
-
-		public override object? ToolTip => loadState == LoadState.Failed ? loadError : assembly.FileName;
-
-		// Hide the chevron once a load has failed -- LoadChildren has nothing to show.
-		public override bool ShowExpander => loadState != LoadState.Failed && base.ShowExpander;
-
-		async Task StartLoadingAsync()
+		async Task InitAsync()
 		{
 			try
 			{
-				cachedModule = await assembly.GetMetadataFileOrNullAsync();
-				if (cachedModule == null)
+				var loadResult = await assembly.GetLoadResultAsync();
+				cachedModule = loadResult.MetadataFile;
+				if (cachedModule == null && loadResult.Package == null)
 				{
-					loadState = LoadState.Failed;
 					loadError = File.Exists(assembly.FileName)
 						? $"Failed to load '{assembly.FileName}'."
 						: $"File not found:\n{assembly.FileName}";
 				}
-				else
-				{
-					loadState = LoadState.Loaded;
-				}
 			}
 			catch (Exception ex)
 			{
-				loadState = LoadState.Failed;
 				loadError = $"Failed to load '{assembly.FileName}':\n{ex.GetBaseException().Message}";
 			}
 			RaisePropertyChanged(nameof(Icon));
@@ -87,25 +69,99 @@ namespace ILSpy.TreeNodes
 			RaisePropertyChanged(nameof(ShowExpander));
 		}
 
+		public override object Text => assembly.ShortName;
+
+		public override object Icon {
+			get {
+				if (assembly.HasLoadError || loadError != null)
+					return Images.Images.AssemblyWarning;
+				if (!assembly.IsLoaded)
+					return Images.Images.AssemblyLoading;
+
+				var loadResult = assembly.GetLoadResultAsync().GetAwaiter().GetResult();
+				if (loadResult.Package != null)
+				{
+					return loadResult.Package.Kind switch {
+						LoadedPackage.PackageKind.Zip => Images.Images.NuGet,
+						_ => Images.Images.Library,
+					};
+				}
+				if (loadResult.MetadataFile != null)
+				{
+					return loadResult.MetadataFile.Kind switch {
+						MetadataFile.MetadataFileKind.PortableExecutable => Images.Images.Assembly,
+						MetadataFile.MetadataFileKind.ProgramDebugDatabase => Images.Images.ProgramDebugDatabase,
+						MetadataFile.MetadataFileKind.WebCIL => Images.Images.WebAssemblyFile,
+						_ => Images.Images.MetadataFile,
+					};
+				}
+				return Images.Images.Assembly;
+			}
+		}
+
+		public override object? ToolTip {
+			get {
+				if (assembly.HasLoadError || loadError != null)
+					return loadError ?? "Assembly could not be loaded.";
+				if (!assembly.IsLoaded || cachedModule == null)
+					return assembly.FileName;
+
+				var tb = new TextBlock { TextWrapping = TextWrapping.Wrap };
+
+				var metadata = cachedModule.Metadata;
+				if (metadata?.IsAssembly == true && metadata.TryGetFullAssemblyName(out var assemblyName))
+				{
+					tb.Inlines!.Add(BoldRun("Name: "));
+					tb.Inlines.Add(new Run(assemblyName));
+					tb.Inlines.Add(new LineBreak());
+				}
+
+				tb.Inlines!.Add(BoldRun("Location: "));
+				tb.Inlines.Add(new Run(assembly.FileName));
+
+				if (cachedModule is PEFile peFile)
+				{
+					tb.Inlines.Add(new LineBreak());
+					tb.Inlines.Add(BoldRun("Architecture: "));
+					tb.Inlines.Add(new Run(GetPlatformDisplayName(peFile)));
+				}
+
+				string? runtime = GetRuntimeDisplayName(cachedModule);
+				if (runtime != null)
+				{
+					tb.Inlines.Add(new LineBreak());
+					tb.Inlines.Add(BoldRun("Runtime: "));
+					tb.Inlines.Add(new Run(runtime));
+				}
+
+				return tb;
+			}
+		}
+
+		public override bool ShowExpander => !assembly.HasLoadError && loadError == null && base.ShowExpander;
+
 		protected override void LoadChildren()
 		{
-			// If the user expands before the background load finishes, fall back to a sync wait.
-			// Once StartLoadingAsync runs, cachedModule / loadState are authoritative.
-			MetadataFile? module = cachedModule;
-			if (module == null && loadState == LoadState.Loading)
+			var module = cachedModule;
+			if (module == null)
 			{
 				try
 				{
-					module = assembly.GetMetadataFileOrNullAsync().Result;
+					module = assembly.GetLoadResultAsync().GetAwaiter().GetResult().MetadataFile;
 				}
 				catch
 				{
-					module = null;
+					return;
 				}
 			}
-
 			if (module == null)
 				return;
+
+			if (module.Kind != MetadataFile.MetadataFileKind.PortableExecutable
+				&& module.Kind != MetadataFile.MetadataFileKind.WebCIL)
+			{
+				return;
+			}
 
 			var metadata = module.Metadata;
 			var namespaces = metadata.TypeDefinitions
@@ -113,7 +169,7 @@ namespace ILSpy.TreeNodes
 				.Select(t => metadata.GetString(metadata.GetTypeDefinition(t).Namespace))
 				.Where(ns => !string.IsNullOrEmpty(ns))
 				.Distinct()
-				.OrderBy(ns => ns);
+				.OrderBy(ns => ns, NaturalStringComparer.Instance);
 
 			foreach (var ns in namespaces)
 				Children.Add(new NamespaceTreeNode(ns, module));
@@ -127,6 +183,30 @@ namespace ILSpy.TreeNodes
 
 			foreach (var t in globalTypes)
 				Children.Add(new TypeTreeNode(t, module));
+		}
+
+		static Run BoldRun(string text) => new(text) { FontWeight = FontWeight.Bold };
+
+		static string GetPlatformDisplayName(PEFile file)
+		{
+			return file.Reader.PEHeaders.CoffHeader.Machine switch {
+				System.Reflection.PortableExecutable.Machine.I386 => "x86",
+				System.Reflection.PortableExecutable.Machine.Amd64 => "x64",
+				System.Reflection.PortableExecutable.Machine.IA64 => "Itanium",
+				System.Reflection.PortableExecutable.Machine.Arm => "ARM",
+				System.Reflection.PortableExecutable.Machine.Arm64 => "ARM64",
+				_ => file.Reader.PEHeaders.CoffHeader.Machine.ToString(),
+			};
+		}
+
+		static string? GetRuntimeDisplayName(MetadataFile module)
+		{
+			return module.Metadata.MetadataKind switch {
+				System.Reflection.Metadata.MetadataKind.Ecma335 => module.Metadata.MetadataVersion,
+				System.Reflection.Metadata.MetadataKind.WindowsMetadata => "WinRT",
+				System.Reflection.Metadata.MetadataKind.ManagedWindowsMetadata => "Managed WinRT",
+				_ => null,
+			};
 		}
 	}
 }

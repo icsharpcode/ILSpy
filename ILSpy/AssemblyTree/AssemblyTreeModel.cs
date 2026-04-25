@@ -102,9 +102,7 @@ namespace ILSpy.AssemblyTree
 			if (AssemblyList.GetAssemblies().Length == 0 && value == AssemblyListManager.DefaultListName)
 				LoadInitialAssemblies(AssemblyList);
 
-			var rootNode = new AssemblyListTreeNode(AssemblyList);
-			rootNode.IsExpanded = true;
-			Root = rootNode;
+			Root = new AssemblyListTreeNode(AssemblyList);
 
 			settingsService.SessionSettings.ActiveAssemblyList = value;
 		}

@@ -16,13 +16,13 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Linq;
-using System.Reflection;
 using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.Metadata;
-
-using ILSpy.Images;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX;
 
 namespace ILSpy.TreeNodes
 {
@@ -37,7 +37,7 @@ namespace ILSpy.TreeNodes
 		public TypeTreeNode(TypeDefinitionHandle handle, MetadataFile module)
 		{
 			this.handle = handle;
-			this.module = module;
+			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			LazyLoading = true;
 		}
 
@@ -50,51 +50,57 @@ namespace ILSpy.TreeNodes
 
 		public override object Icon {
 			get {
-				var td = module.Metadata.GetTypeDefinition(handle);
-				var attrs = td.Attributes;
-				if ((attrs & TypeAttributes.ClassSemanticsMask) == TypeAttributes.Interface)
-					return Images.Images.Interface;
-				// crude detection: real distinction needs base-type lookups (System.Enum, ValueType,
-				// MulticastDelegate). Refining will land with the broader tree-node port.
-				return Images.Images.Class;
+				var typeDef = ResolveTypeDefinition();
+				return typeDef?.Kind switch {
+					TypeKind.Interface => Images.Images.Interface,
+					TypeKind.Struct or TypeKind.Void => Images.Images.Struct,
+					TypeKind.Delegate => Images.Images.Delegate,
+					TypeKind.Enum => Images.Images.Enum,
+					_ => Images.Images.Class,
+				};
 			}
+		}
+
+		public override bool CanExpandRecursively => true;
+
+		ITypeDefinition? ResolveTypeDefinition()
+		{
+			var typeSystem = module.GetTypeSystemOrNull();
+			if (typeSystem == null)
+				return null;
+			return ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
 		}
 
 		protected override void LoadChildren()
 		{
-			var td = module.Metadata.GetTypeDefinition(handle);
+			var typeDef = ResolveTypeDefinition();
+			if (typeDef == null)
+				return;
 
-			foreach (var nestedType in td.GetNestedTypes())
-				Children.Add(new TypeTreeNode(nestedType, module));
-
-			foreach (var method in td.GetMethods())
+			foreach (var nestedType in typeDef.NestedTypes
+				.OrderBy(t => t.Name, NaturalStringComparer.Instance))
 			{
-				var md = module.Metadata.GetMethodDefinition(method);
-				var name = module.Metadata.GetString(md.Name);
-				var icon = name == ".ctor" || name == ".cctor"
-					? Images.Images.Constructor
-					: ((md.Attributes & MethodAttributes.SpecialName) != 0 && name.StartsWith("op_"))
-						? Images.Images.Operator
-						: Images.Images.Method;
-				Children.Add(new MemberTreeNode(name, icon));
+				Children.Add(new TypeTreeNode((TypeDefinitionHandle)nestedType.MetadataToken, module));
 			}
 
-			foreach (var field in td.GetFields())
-			{
-				var fd = module.Metadata.GetFieldDefinition(field);
-				Children.Add(new MemberTreeNode(module.Metadata.GetString(fd.Name), Images.Images.Field));
-			}
+			// Enums look more useful in declaration order than alphabetical.
+			var fields = typeDef.Kind == TypeKind.Enum
+				? typeDef.Fields
+				: typeDef.Fields.OrderBy(f => f.Name, NaturalStringComparer.Instance);
+			foreach (var field in fields)
+				Children.Add(new FieldTreeNode(field));
 
-			foreach (var prop in td.GetProperties())
-			{
-				var pd = module.Metadata.GetPropertyDefinition(prop);
-				Children.Add(new MemberTreeNode(module.Metadata.GetString(pd.Name), Images.Images.Property));
-			}
+			foreach (var prop in typeDef.Properties.OrderBy(p => p.Name, NaturalStringComparer.Instance))
+				Children.Add(new PropertyTreeNode(prop));
 
-			foreach (var evt in td.GetEvents())
+			foreach (var ev in typeDef.Events.OrderBy(e => e.Name, NaturalStringComparer.Instance))
+				Children.Add(new EventTreeNode(ev));
+
+			foreach (var method in typeDef.Methods.OrderBy(m => m.Name, NaturalStringComparer.Instance))
 			{
-				var ed = module.Metadata.GetEventDefinition(evt);
-				Children.Add(new MemberTreeNode(module.Metadata.GetString(ed.Name), Images.Images.Event));
+				if (method.MetadataToken.IsNil || method.IsAccessor)
+					continue;
+				Children.Add(new MethodTreeNode(method));
 			}
 		}
 	}

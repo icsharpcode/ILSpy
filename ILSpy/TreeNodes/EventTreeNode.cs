@@ -16,23 +16,23 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using Avalonia.Media;
+using System;
+
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ILSpy.TreeNodes
 {
-	sealed class MemberTreeNode : ILSpyTreeNode
+	sealed class EventTreeNode : ILSpyTreeNode
 	{
-		readonly string name;
-		readonly IImage icon;
+		public IEvent EventDefinition { get; }
 
-		public MemberTreeNode(string name, IImage icon)
+		public EventTreeNode(IEvent ev)
 		{
-			this.name = name;
-			this.icon = icon;
+			EventDefinition = ev ?? throw new ArgumentNullException(nameof(ev));
 		}
 
-		public override object Text => name;
-		public override object Icon => icon;
+		public override object Text => EventDefinition.Name;
+		public override object Icon => Images.Images.Event;
 		public override bool ShowExpander => false;
 	}
 }

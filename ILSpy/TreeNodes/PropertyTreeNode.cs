@@ -17,43 +17,22 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Linq;
 
-using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ILSpy.TreeNodes
 {
-	sealed class NamespaceTreeNode : ILSpyTreeNode
+	sealed class PropertyTreeNode : ILSpyTreeNode
 	{
-		readonly string name;
-		readonly MetadataFile module;
+		public IProperty PropertyDefinition { get; }
 
-		public string Name => name;
-
-		public NamespaceTreeNode(string name, MetadataFile module)
+		public PropertyTreeNode(IProperty property)
 		{
-			this.name = name ?? throw new ArgumentNullException(nameof(name));
-			this.module = module ?? throw new ArgumentNullException(nameof(module));
-			LazyLoading = true;
+			PropertyDefinition = property ?? throw new ArgumentNullException(nameof(property));
 		}
 
-		public override object Text => name.Length == 0 ? "-" : name;
-
-		public override object Icon => Images.Images.Namespace;
-
-		protected override void LoadChildren()
-		{
-			var metadata = module.Metadata;
-			var types = metadata.TypeDefinitions
-				.Where(t => {
-					var td = metadata.GetTypeDefinition(t);
-					return td.GetDeclaringType().IsNil
-						&& metadata.GetString(td.Namespace) == name;
-				})
-				.OrderBy(t => metadata.GetString(metadata.GetTypeDefinition(t).Name), NaturalStringComparer.Instance);
-
-			foreach (var t in types)
-				Children.Add(new TypeTreeNode(t, module));
-		}
+		public override object Text => PropertyDefinition.Name;
+		public override object Icon => Images.Images.Property;
+		public override bool ShowExpander => false;
 	}
 }

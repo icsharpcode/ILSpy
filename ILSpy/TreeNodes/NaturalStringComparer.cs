@@ -1,4 +1,4 @@
-// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2015 Siegfried Pammer
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,44 +16,17 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Linq;
-
-using ICSharpCode.Decompiler.Metadata;
+using System.Collections.Generic;
+using System.Globalization;
 
 namespace ILSpy.TreeNodes
 {
-	sealed class NamespaceTreeNode : ILSpyTreeNode
+	/// <summary>
+	/// .NET natural string comparison.
+	/// </summary>
+	internal static class NaturalStringComparer
 	{
-		readonly string name;
-		readonly MetadataFile module;
-
-		public string Name => name;
-
-		public NamespaceTreeNode(string name, MetadataFile module)
-		{
-			this.name = name ?? throw new ArgumentNullException(nameof(name));
-			this.module = module ?? throw new ArgumentNullException(nameof(module));
-			LazyLoading = true;
-		}
-
-		public override object Text => name.Length == 0 ? "-" : name;
-
-		public override object Icon => Images.Images.Namespace;
-
-		protected override void LoadChildren()
-		{
-			var metadata = module.Metadata;
-			var types = metadata.TypeDefinitions
-				.Where(t => {
-					var td = metadata.GetTypeDefinition(t);
-					return td.GetDeclaringType().IsNil
-						&& metadata.GetString(td.Namespace) == name;
-				})
-				.OrderBy(t => metadata.GetString(metadata.GetTypeDefinition(t).Name), NaturalStringComparer.Instance);
-
-			foreach (var t in types)
-				Children.Add(new TypeTreeNode(t, module));
-		}
+		public static readonly IComparer<string> Instance =
+			System.StringComparer.Create(CultureInfo.CurrentCulture, CompareOptions.NumericOrdering);
 	}
 }

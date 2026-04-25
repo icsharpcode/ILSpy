@@ -8,6 +8,8 @@
              x:DataType="tree:AssemblyTreeModel">
 
 	<DataGrid Name="TreeGrid"
+	          Classes="hierarchical"
+	          AutoGenerateColumns="False"
 	          HeadersVisibility="None"
 	          HierarchicalRowsEnabled="True"
 	          GridLinesVisibility="None"
@@ -15,16 +17,18 @@
 	          CanUserResizeColumns="False"
 	          SelectionMode="Single">
 		<DataGrid.Columns>
-			<DataGridHierarchicalColumn Header="Name" Width="*">
+			<DataGridHierarchicalColumn Header="Name" Width="*"
+			                            x:CompileBindings="False"
+			                            Binding="{Binding Item}">
 				<DataGridHierarchicalColumn.CellTemplate>
 					<DataTemplate>
 						<StackPanel Orientation="Horizontal" Spacing="4"
 						            VerticalAlignment="Center" Margin="4,0"
-						            ToolTip.Tip="{ReflectionBinding Item.ToolTip}">
-							<Image Source="{ReflectionBinding Item.Icon}"
+						            ToolTip.Tip="{Binding ToolTip}">
+							<Image Source="{Binding Icon}"
 							       Width="16" Height="16"
 							       VerticalAlignment="Center" />
-							<TextBlock Text="{ReflectionBinding Item.Text}"
+							<TextBlock Text="{Binding Text}"
 							           VerticalAlignment="Center" />
 						</StackPanel>
 					</DataTemplate>

@@ -16,34 +16,61 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using Avalonia.Svg.Skia;
 
 namespace ILSpy.Images
 {
 	public static class Images
 	{
-		static IImage Load(string name)
+		const string AssetBase = "avares://ILSpy/Assets/Icons/";
+
+		static IImage LoadSvg(string name)
 		{
 			return new SvgImage {
-				Source = SvgSource.Load($"avares://ILSpy/Assets/Icons/{name}.svg", null)
+				Source = SvgSource.Load(AssetBase + name + ".svg", null)
 			};
 		}
 
-		public static readonly IImage Assembly = Load(nameof(Assembly));
-		public static readonly IImage AssemblyLoading = Load(nameof(AssemblyLoading));
-		public static readonly IImage AssemblyWarning = Load(nameof(AssemblyWarning));
-		public static readonly IImage Namespace = Load(nameof(Namespace));
-		public static readonly IImage Class = Load(nameof(Class));
-		public static readonly IImage Interface = Load(nameof(Interface));
-		public static readonly IImage Struct = Load(nameof(Struct));
-		public static readonly IImage Enum = Load(nameof(Enum));
-		public static readonly IImage Delegate = Load(nameof(Delegate));
-		public static readonly IImage Method = Load(nameof(Method));
-		public static readonly IImage Constructor = Load(nameof(Constructor));
-		public static readonly IImage Operator = Load(nameof(Operator));
-		public static readonly IImage Field = Load(nameof(Field));
-		public static readonly IImage Property = Load(nameof(Property));
-		public static readonly IImage Event = Load(nameof(Event));
+		static IImage LoadPng(string name)
+		{
+			using var stream = AssetLoader.Open(new Uri(AssetBase + name + ".png"));
+			return new Bitmap(stream);
+		}
+
+		// Assemblies / packages
+		public static readonly IImage Assembly = LoadSvg(nameof(Assembly));
+		public static readonly IImage AssemblyLoading = LoadSvg(nameof(AssemblyLoading));
+		public static readonly IImage AssemblyWarning = LoadSvg(nameof(AssemblyWarning));
+		public static readonly IImage FindAssembly = LoadSvg(nameof(FindAssembly));
+		public static readonly IImage Library = LoadSvg(nameof(Library));
+		public static readonly IImage NuGet = LoadPng(nameof(NuGet));
+		public static readonly IImage MetadataFile = LoadSvg(nameof(MetadataFile));
+		public static readonly IImage WebAssemblyFile = LoadSvg("WebAssembly");
+		public static readonly IImage ProgramDebugDatabase = LoadSvg(nameof(ProgramDebugDatabase));
+
+		// Containers
+		public static readonly IImage Namespace = LoadSvg(nameof(Namespace));
+
+		// Types
+		public static readonly IImage Class = LoadSvg(nameof(Class));
+		public static readonly IImage Interface = LoadSvg(nameof(Interface));
+		public static readonly IImage Struct = LoadSvg(nameof(Struct));
+		public static readonly IImage Enum = LoadSvg(nameof(Enum));
+		public static readonly IImage Delegate = LoadSvg(nameof(Delegate));
+
+		// Methods
+		public static readonly IImage Method = LoadSvg(nameof(Method));
+		public static readonly IImage Constructor = LoadSvg(nameof(Constructor));
+		public static readonly IImage Operator = LoadSvg(nameof(Operator));
+
+		// Fields / properties / events
+		public static readonly IImage Field = LoadSvg(nameof(Field));
+		public static readonly IImage Property = LoadSvg(nameof(Property));
+		public static readonly IImage Event = LoadSvg(nameof(Event));
 	}
 }
