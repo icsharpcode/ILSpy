@@ -16,28 +16,18 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
-
-using Avalonia.Controls;
-
-using ILSpy.ViewModels;
-
-namespace ILSpy.Views
+namespace ILSpy.TreeNodes
 {
-	[Export]
-	[Shared]
-	public partial class MainWindow : Window
+	sealed class MemberTreeNode : ILSpyTreeNode
 	{
-		public MainWindow()
+		readonly string name;
+
+		public MemberTreeNode(string name)
 		{
-			InitializeComponent();
+			this.name = name;
 		}
 
-		[ImportingConstructor]
-		public MainWindow(MainWindowViewModel viewModel) : this()
-		{
-			DataContext = viewModel;
-			Opened += (_, _) => viewModel.AssemblyTreeModel.Initialize();
-		}
+		public override object Text => name;
+		public override bool ShowExpander => false;
 	}
 }

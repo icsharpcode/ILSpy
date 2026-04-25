@@ -18,13 +18,16 @@
 
 using System;
 using System.Composition.Hosting;
+using System.Diagnostics;
+using System.IO;
 
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 
+using ICSharpCode.ILSpyX.Settings;
+
 using ILSpy.AppEnv;
-using ILSpy.ViewModels;
 using ILSpy.Views;
 
 namespace ILSpy
@@ -44,6 +47,23 @@ namespace ILSpy
 			GlobalExceptionHandler.Install();
 
 			CommandLineArguments = CommandLineArguments.Create(Environment.GetCommandLineArgs()[1..]);
+
+			ILSpySettings.SettingsFilePathProvider = () => {
+				if (App.CommandLineArguments.ConfigFile != null)
+					return App.CommandLineArguments.ConfigFile;
+
+				var assemblyLocation = typeof(MainWindow).Assembly.Location;
+				if (!String.IsNullOrWhiteSpace(assemblyLocation))
+				{
+					var assemblyDirectory = Path.GetDirectoryName(assemblyLocation);
+					Debug.Assert(assemblyDirectory != null);
+					string localPath = Path.Combine(assemblyDirectory, "ILSpy.xml");
+					if (File.Exists(localPath))
+						return localPath;
+				}
+
+				return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ICSharpCode", "ILSpy.xml");
+			};
 
 			try
 			{

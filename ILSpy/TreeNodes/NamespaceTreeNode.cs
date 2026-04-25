@@ -16,28 +16,42 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
+using System.Linq;
+using System.Reflection.Metadata;
 
-using Avalonia.Controls;
+using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.ViewModels;
-
-namespace ILSpy.Views
+namespace ILSpy.TreeNodes
 {
-	[Export]
-	[Shared]
-	public partial class MainWindow : Window
+	sealed class NamespaceTreeNode : ILSpyTreeNode
 	{
-		public MainWindow()
+		readonly string name;
+		readonly MetadataFile module;
+
+		public string Name => name;
+
+		public NamespaceTreeNode(string name, MetadataFile module)
 		{
-			InitializeComponent();
+			this.name = name;
+			this.module = module;
+			LazyLoading = true;
 		}
 
-		[ImportingConstructor]
-		public MainWindow(MainWindowViewModel viewModel) : this()
+		public override object Text => name;
+
+		protected override void LoadChildren()
 		{
-			DataContext = viewModel;
-			Opened += (_, _) => viewModel.AssemblyTreeModel.Initialize();
+			var metadata = module.Metadata;
+			var types = metadata.TypeDefinitions
+				.Where(t => {
+					var td = metadata.GetTypeDefinition(t);
+					return td.GetDeclaringType().IsNil
+						&& metadata.GetString(td.Namespace) == name;
+				})
+				.OrderBy(t => metadata.GetString(metadata.GetTypeDefinition(t).Name));
+
+			foreach (var t in types)
+				Children.Add(new TypeTreeNode(t, module));
 		}
 	}
 }

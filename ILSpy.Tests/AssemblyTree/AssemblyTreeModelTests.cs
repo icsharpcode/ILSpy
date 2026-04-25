@@ -16,28 +16,34 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
+using Avalonia.Headless.NUnit;
 
-using Avalonia.Controls;
+using AwesomeAssertions;
 
-using ILSpy.ViewModels;
+using ILSpy.AppEnv;
+using ILSpy.AssemblyTree;
 
-namespace ILSpy.Views
+using NUnit.Framework;
+
+namespace ICSharpCode.ILSpy.Tests.AssemblyTree;
+
+// AssemblyTreeModel is the MEF-shared root of the assembly tree. Initialize() loads
+// (or creates) the default assembly list from settings, optionally bootstraps it with
+// the three .NET runtime assemblies, and wires Root to an AssemblyListTreeNode. If
+// either AssemblyList or Root stays null, the entire pane below is blank — which is
+// hard to debug from a UI snapshot, so we catch it at the model layer here.
+[TestFixture]
+public class AssemblyTreeModelTests
 {
-	[Export]
-	[Shared]
-	public partial class MainWindow : Window
+	[AvaloniaTest]
+	public void Initialize_populates_AssemblyList_and_Root()
 	{
-		public MainWindow()
-		{
-			InitializeComponent();
-		}
+		var model = AppComposition.Current.GetExport<AssemblyTreeModel>();
+		model.Should().NotBeNull("AssemblyTreeModel is [Export][Shared] in ILSpy.AssemblyTree.");
 
-		[ImportingConstructor]
-		public MainWindow(MainWindowViewModel viewModel) : this()
-		{
-			DataContext = viewModel;
-			Opened += (_, _) => viewModel.AssemblyTreeModel.Initialize();
-		}
+		model.Initialize();
+
+		model.AssemblyList.Should().NotBeNull("Initialize loads or creates the default AssemblyList.");
+		model.Root.Should().NotBeNull("Initialize wires Root to an AssemblyListTreeNode of the loaded list.");
 	}
 }

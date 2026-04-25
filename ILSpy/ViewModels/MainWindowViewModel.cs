@@ -18,16 +18,22 @@
 
 using System.Composition;
 
+using ILSpy.AssemblyTree;
+
 namespace ILSpy.ViewModels
 {
 	[Export]
 	[Shared]
 	public partial class MainWindowViewModel : ViewModelBase
 	{
-		public MainWindowViewModel()
-		{
-		}
+		public AssemblyTreeModel AssemblyTreeModel { get; }
 
 		public string Title => "ILSpy";
+
+		[ImportingConstructor]
+		public MainWindowViewModel(AssemblyTreeModel assemblyTreeModel)
+		{
+			AssemblyTreeModel = assemblyTreeModel;
+		}
 	}
 }

@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:tree="using:ILSpy.AssemblyTree"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="450"
+             x:Class="ILSpy.AssemblyTree.AssemblyListPane"
+             x:DataType="tree:AssemblyTreeModel">
+
+	<DataGrid Name="TreeGrid"
+	          HeadersVisibility="None"
+	          HierarchicalRowsEnabled="True"
+	          GridLinesVisibility="None"
+	          IsReadOnly="True"
+	          CanUserResizeColumns="False"
+	          SelectionMode="Single">
+		<DataGrid.Columns>
+			<DataGridTemplateColumn Header="Name" Width="*">
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock Text="{ReflectionBinding Item.Text}"
+						           VerticalAlignment="Center" Margin="4,0" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
+		</DataGrid.Columns>
+	</DataGrid>
+</UserControl>

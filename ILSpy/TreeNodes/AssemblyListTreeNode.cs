@@ -16,28 +16,44 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
+using System;
+using System.Collections.Specialized;
+using System.Linq;
 
-using Avalonia.Controls;
+using ICSharpCode.ILSpyX;
 
-using ILSpy.ViewModels;
-
-namespace ILSpy.Views
+namespace ILSpy.TreeNodes
 {
-	[Export]
-	[Shared]
-	public partial class MainWindow : Window
+	sealed class AssemblyListTreeNode : ILSpyTreeNode
 	{
-		public MainWindow()
+		readonly AssemblyList assemblyList;
+
+		public AssemblyList AssemblyList => assemblyList;
+
+		public AssemblyListTreeNode(AssemblyList assemblyList)
 		{
-			InitializeComponent();
+			ArgumentNullException.ThrowIfNull(assemblyList);
+			this.assemblyList = assemblyList;
+
+			Children.AddRange(assemblyList.GetAssemblies().Select(a => new AssemblyTreeNode(a)));
+
+			assemblyList.CollectionChanged += (_, e) => {
+				switch (e.Action)
+				{
+					case NotifyCollectionChangedAction.Add:
+						Children.InsertRange(e.NewStartingIndex, e.NewItems!.Cast<LoadedAssembly>().Select(a => new AssemblyTreeNode(a)));
+						break;
+					case NotifyCollectionChangedAction.Remove:
+						Children.RemoveRange(e.OldStartingIndex, e.OldItems!.Count);
+						break;
+					case NotifyCollectionChangedAction.Reset:
+						Children.Clear();
+						Children.AddRange(assemblyList.GetAssemblies().Select(a => new AssemblyTreeNode(a)));
+						break;
+				}
+			};
 		}
 
-		[ImportingConstructor]
-		public MainWindow(MainWindowViewModel viewModel) : this()
-		{
-			DataContext = viewModel;
-			Opened += (_, _) => viewModel.AssemblyTreeModel.Initialize();
-		}
+		public override object Text => assemblyList.ListName;
 	}
 }
