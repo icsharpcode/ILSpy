@@ -16,8 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.ComponentModel;
 using System.Composition;
 
+using Avalonia;
 using Avalonia.Controls;
 
 using ILSpy.ViewModels;
@@ -28,16 +30,45 @@ namespace ILSpy.Views
 	[Shared]
 	public partial class MainWindow : Window
 	{
+		readonly SettingsService? settingsService;
+
 		public MainWindow()
 		{
 			InitializeComponent();
 		}
 
 		[ImportingConstructor]
-		public MainWindow(MainWindowViewModel viewModel) : this()
+		public MainWindow(MainWindowViewModel viewModel, SettingsService settingsService) : this()
 		{
+			this.settingsService = settingsService;
 			DataContext = viewModel;
+			ApplySessionSettings(settingsService.SessionSettings);
 			Opened += (_, _) => viewModel.AssemblyTreeModel.Initialize();
+		}
+
+		void ApplySessionSettings(SessionSettings session)
+		{
+			Position = session.WindowPosition;
+			Width = session.WindowSize.Width;
+			Height = session.WindowSize.Height;
+			WindowState = session.WindowState;
+		}
+
+		protected override void OnClosing(WindowClosingEventArgs e)
+		{
+			if (settingsService != null)
+			{
+				var session = settingsService.SessionSettings;
+				session.WindowState = WindowState;
+				// Only update bounds when the window is in Normal state. Otherwise Position/Width/
+				// Height reflect the maximized rect, which would clobber the last "restore" bounds.
+				if (WindowState == WindowState.Normal)
+				{
+					session.WindowPosition = Position;
+					session.WindowSize = new Size(Width, Height);
+				}
+			}
+			base.OnClosing(e);
 		}
 	}
 }

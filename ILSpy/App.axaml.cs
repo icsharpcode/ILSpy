@@ -78,7 +78,12 @@ namespace ILSpy
 			{
 				desktop.MainWindow = Composition?.GetExport<MainWindow>()
 					?? new MainWindow();
-				desktop.Exit += (_, _) => Composition?.Dispose();
+				desktop.Exit += (_, _) => {
+					try
+					{ Composition?.GetExport<SettingsService>().Save(); }
+					catch { /* persistence must never block shutdown */ }
+					Composition?.Dispose();
+				};
 			}
 
 			base.OnFrameworkInitializationCompleted();

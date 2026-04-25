@@ -38,6 +38,7 @@ namespace ILSpy.AssemblyTree
 	{
 		public const string PaneContentId = "AssemblyTree";
 
+		readonly SettingsService settingsService;
 		AssemblyListManager? listManager;
 
 		[ObservableProperty]
@@ -58,8 +59,10 @@ namespace ILSpy.AssemblyTree
 		[IgnoreDataMember]
 		public ObservableCollection<string> AssemblyLists { get; } = [];
 
-		public AssemblyTreeModel()
+		[ImportingConstructor]
+		public AssemblyTreeModel(SettingsService settingsService)
 		{
+			this.settingsService = settingsService;
 			Id = PaneContentId;
 			Title = "Assemblies";
 			CanClose = false;
@@ -74,7 +77,10 @@ namespace ILSpy.AssemblyTree
 			SyncListNames();
 			listManager.AssemblyLists.CollectionChanged += (_, _) => SyncListNames();
 
-			ActiveListName = AssemblyListManager.DefaultListName;
+			var saved = settingsService.SessionSettings.ActiveAssemblyList;
+			ActiveListName = !string.IsNullOrEmpty(saved) && AssemblyLists.Contains(saved)
+				? saved
+				: AssemblyListManager.DefaultListName;
 		}
 
 		void SyncListNames()
@@ -99,6 +105,8 @@ namespace ILSpy.AssemblyTree
 			var rootNode = new AssemblyListTreeNode(AssemblyList);
 			rootNode.IsExpanded = true;
 			Root = rootNode;
+
+			settingsService.SessionSettings.ActiveAssemblyList = value;
 		}
 
 		static void LoadInitialAssemblies(AssemblyList assemblyList)
