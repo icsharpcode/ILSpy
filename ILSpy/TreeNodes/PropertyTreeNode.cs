@@ -18,6 +18,7 @@
 
 using System;
 
+using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ILSpy.TreeNodes
@@ -31,7 +32,7 @@ namespace ILSpy.TreeNodes
 			PropertyDefinition = property ?? throw new ArgumentNullException(nameof(property));
 		}
 
-		public override object Text => PropertyDefinition.Name;
+		public override object Text => Language.EntityToString(PropertyDefinition, ConversionFlags.None);
 		public override object Icon => Images.Images.Property;
 		public override bool ShowExpander => false;
 	}

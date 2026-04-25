@@ -16,41 +16,43 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Generic;
 using System.Composition;
+using System.Linq;
 
-using Dock.Model.Controls;
-using Dock.Model.Core;
+using CommunityToolkit.Mvvm.ComponentModel;
 
-using ILSpy.AssemblyTree;
-using ILSpy.Docking;
-using ILSpy.Languages;
-
-namespace ILSpy.ViewModels
+namespace ILSpy.Languages
 {
+	/// <summary>
+	/// MEF-aggregated registry of <see cref="Language"/> exports plus the active selection.
+	/// </summary>
 	[Export]
 	[Shared]
-	public partial class MainWindowViewModel : ViewModelBase
+	public sealed partial class LanguageService : ObservableObject
 	{
-		public AssemblyTreeModel AssemblyTreeModel { get; }
+		readonly SettingsService settingsService;
 
-		public LanguageService LanguageService { get; }
+		public IReadOnlyList<Language> Languages { get; }
 
-		public DockWorkspace DockWorkspace { get; }
-
-		public IFactory DockFactory => DockWorkspace.Factory;
-
-		public IRootDock DockLayout => DockWorkspace.Layout;
-
-		public System.Collections.Generic.IReadOnlyList<ToolPaneMenuItem> ToolPaneMenuItems => DockWorkspace.ToolPaneMenuItems;
-
-		public string Title => "ILSpy";
+		[ObservableProperty]
+		private Language currentLanguage;
 
 		[ImportingConstructor]
-		public MainWindowViewModel(AssemblyTreeModel assemblyTreeModel, LanguageService languageService, DockWorkspace dockWorkspace)
+		public LanguageService([ImportMany] IEnumerable<Language> languages, SettingsService settingsService)
 		{
-			AssemblyTreeModel = assemblyTreeModel;
-			LanguageService = languageService;
-			DockWorkspace = dockWorkspace;
+			this.settingsService = settingsService;
+			Languages = languages.OrderBy(l => l.Name).ToList();
+			var saved = settingsService.SessionSettings.ActiveLanguageName;
+			currentLanguage = Languages.FirstOrDefault(l => l.Name == saved)
+				?? Languages.FirstOrDefault(l => l.Name == "C#")
+				?? Languages.First();
+		}
+
+		partial void OnCurrentLanguageChanged(Language value)
+		{
+			if (value != null)
+				settingsService.SessionSettings.ActiveLanguageName = value.Name;
 		}
 	}
 }

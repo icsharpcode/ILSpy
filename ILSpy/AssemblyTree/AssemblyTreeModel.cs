@@ -27,6 +27,7 @@ using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Settings;
 using ICSharpCode.ILSpyX.TreeView;
 
+using ILSpy.Languages;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 
@@ -39,6 +40,7 @@ namespace ILSpy.AssemblyTree
 		public const string PaneContentId = "AssemblyTree";
 
 		readonly SettingsService settingsService;
+		readonly LanguageService languageService;
 		AssemblyListManager? listManager;
 
 		[ObservableProperty]
@@ -60,12 +62,30 @@ namespace ILSpy.AssemblyTree
 		public ObservableCollection<string> AssemblyLists { get; } = [];
 
 		[ImportingConstructor]
-		public AssemblyTreeModel(SettingsService settingsService)
+		public AssemblyTreeModel(SettingsService settingsService, LanguageService languageService)
 		{
 			this.settingsService = settingsService;
+			this.languageService = languageService;
+			languageService.PropertyChanged += (_, e) => {
+				if (e.PropertyName == nameof(LanguageService.CurrentLanguage) && Root != null)
+					NotifyTextChanged(Root);
+			};
 			Id = PaneContentId;
 			Title = "Assemblies";
 			CanClose = false;
+		}
+
+		// Walks already-materialized children and re-raises Text PropertyChanged so the cell
+		// templates pick up the new language's formatting -- without collapsing the user's
+		// expanded state. Lazy-loaded subtrees that haven't been opened yet are skipped (they'll
+		// format with the active language the next time they get expanded).
+		static void NotifyTextChanged(SharpTreeNode node)
+		{
+			node.RaisePropertyChanged(nameof(SharpTreeNode.Text));
+			if (node.LazyLoading)
+				return;
+			foreach (var child in node.Children)
+				NotifyTextChanged(child);
 		}
 
 		public void Initialize()

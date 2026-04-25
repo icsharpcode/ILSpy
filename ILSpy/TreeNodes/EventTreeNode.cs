@@ -18,6 +18,7 @@
 
 using System;
 
+using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ILSpy.TreeNodes
@@ -31,7 +32,7 @@ namespace ILSpy.TreeNodes
 			EventDefinition = ev ?? throw new ArgumentNullException(nameof(ev));
 		}
 
-		public override object Text => EventDefinition.Name;
+		public override object Text => Language.EntityToString(EventDefinition, ConversionFlags.None);
 		public override object Icon => Images.Images.Event;
 		public override bool ShowExpander => false;
 	}

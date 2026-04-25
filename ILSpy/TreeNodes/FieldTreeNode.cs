@@ -18,6 +18,7 @@
 
 using System;
 
+using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ILSpy.TreeNodes
@@ -31,7 +32,7 @@ namespace ILSpy.TreeNodes
 			FieldDefinition = field ?? throw new ArgumentNullException(nameof(field));
 		}
 
-		public override object Text => FieldDefinition.Name;
+		public override object Text => Language.EntityToString(FieldDefinition, ConversionFlags.None);
 		public override object Icon => Images.Images.Field;
 		public override bool ShowExpander => false;
 	}

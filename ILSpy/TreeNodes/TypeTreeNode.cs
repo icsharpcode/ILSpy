@@ -20,7 +20,9 @@ using System;
 using System.Linq;
 using System.Reflection.Metadata;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
@@ -43,8 +45,10 @@ namespace ILSpy.TreeNodes
 
 		public override object Text {
 			get {
-				var td = module.Metadata.GetTypeDefinition(handle);
-				return module.Metadata.GetString(td.Name);
+				var typeDef = ResolveTypeDefinition();
+				if (typeDef != null)
+					return Language.TypeToString(typeDef, ConversionFlags.None);
+				return module.Metadata.GetString(module.Metadata.GetTypeDefinition(handle).Name);
 			}
 		}
 

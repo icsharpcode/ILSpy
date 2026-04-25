@@ -16,24 +16,35 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.ILSpyX.TreeView;
+using System.Linq;
+
+using Avalonia.Headless.NUnit;
+
+using AwesomeAssertions;
 
 using ILSpy.AppEnv;
 using ILSpy.Languages;
 
-namespace ILSpy.TreeNodes
+using NUnit.Framework;
+
+namespace ICSharpCode.ILSpy.Tests.Languages;
+
+// LanguageService is a [Shared] aggregator of [Export(typeof(Language))] members. If MEF
+// can't discover any Language exports — bad assembly scan, missing [Export(typeof(Language))]
+// attribute, etc. — Languages stays empty, CurrentLanguage's "first language" fallback throws,
+// and tree-node labels render as raw metadata names (the user-facing symptom). The MEF-level
+// assertion here catches the regression before that surface symptom.
+[TestFixture]
+public class LanguageServiceTests
 {
-	public abstract class ILSpyTreeNode : SharpTreeNode
+	[AvaloniaTest]
+	public void LanguageService_exposes_CSharp_and_IL_with_CSharp_as_default()
 	{
-		static LanguageService? cachedLanguageService;
+		var svc = AppComposition.Current.GetExport<LanguageService>();
 
-		/// <summary>
-		/// Resolves the LanguageService from the MEF composition. Tree nodes use this to access
-		/// the active <see cref="Language"/> for formatting their <see cref="SharpTreeNode.Text"/>.
-		/// </summary>
-		protected static LanguageService LanguageService
-			=> cachedLanguageService ??= AppComposition.Current.GetExport<LanguageService>();
-
-		public Language Language => LanguageService.CurrentLanguage;
+		svc.Languages.Select(l => l.Name).Should().Contain(["C#", "IL"],
+			"CSharpLanguage and ILLanguage are [Export(typeof(Language))] in ILSpy.Languages.");
+		svc.CurrentLanguage.Name.Should().Be("C#",
+			"LanguageService picks 'C#' over the alphabetical-first language when no SessionSettings preference exists.");
 	}
 }

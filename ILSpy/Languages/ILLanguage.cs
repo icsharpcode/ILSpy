@@ -18,39 +18,17 @@
 
 using System.Composition;
 
-using Dock.Model.Controls;
-using Dock.Model.Core;
-
-using ILSpy.AssemblyTree;
-using ILSpy.Docking;
-using ILSpy.Languages;
-
-namespace ILSpy.ViewModels
+namespace ILSpy.Languages
 {
-	[Export]
+	/// <summary>
+	/// IL output. Uses the default ILAmbience-based formatting from <see cref="Language"/>.
+	/// </summary>
+	[Export(typeof(Language))]
 	[Shared]
-	public partial class MainWindowViewModel : ViewModelBase
+	public sealed class ILLanguage : Language
 	{
-		public AssemblyTreeModel AssemblyTreeModel { get; }
+		public override string Name => "IL";
 
-		public LanguageService LanguageService { get; }
-
-		public DockWorkspace DockWorkspace { get; }
-
-		public IFactory DockFactory => DockWorkspace.Factory;
-
-		public IRootDock DockLayout => DockWorkspace.Layout;
-
-		public System.Collections.Generic.IReadOnlyList<ToolPaneMenuItem> ToolPaneMenuItems => DockWorkspace.ToolPaneMenuItems;
-
-		public string Title => "ILSpy";
-
-		[ImportingConstructor]
-		public MainWindowViewModel(AssemblyTreeModel assemblyTreeModel, LanguageService languageService, DockWorkspace dockWorkspace)
-		{
-			AssemblyTreeModel = assemblyTreeModel;
-			LanguageService = languageService;
-			DockWorkspace = dockWorkspace;
-		}
+		public override string FileExtension => ".il";
 	}
 }

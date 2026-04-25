@@ -18,6 +18,7 @@
 
 using System;
 
+using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ILSpy.TreeNodes
@@ -31,7 +32,7 @@ namespace ILSpy.TreeNodes
 			MethodDefinition = method ?? throw new ArgumentNullException(nameof(method));
 		}
 
-		public override object Text => MethodDefinition.Name;
+		public override object Text => Language.EntityToString(MethodDefinition, ConversionFlags.None);
 
 		public override object Icon =>
 			MethodDefinition.IsConstructor ? Images.Images.Constructor :

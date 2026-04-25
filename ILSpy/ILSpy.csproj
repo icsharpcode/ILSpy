@@ -7,6 +7,14 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <RootNamespace>ICSharpCode.ILSpy</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- ILSpy is committed to System.Composition with attribute-driven discovery
+         (matching the WPF host); MEF002 nudges toward code-based DI which doesn't apply.
+         CA1001/CA2213 are suppressed in the WPF csproj for the same reason — tab page
+         models hold a CancellationTokenSource that lives as long as the document dock.
+         MEF004 wants an explicit Shared/NonShared marker; System.Composition has no
+         [NonShared] attribute (the absence of [Shared] *is* the non-shared semantic), so
+         the warning is a false positive on every Options panel viewmodel. -->
+    <NoWarn>$(NoWarn);MEF002;MEF004;CA1001;CA2213</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

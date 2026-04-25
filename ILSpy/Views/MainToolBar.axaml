@@ -16,8 +16,9 @@
 		          ItemsSource="{Binding AssemblyTreeModel.AssemblyLists}"
 		          SelectedItem="{Binding AssemblyTreeModel.ActiveListName, Mode=TwoWay}" />
 		<Separator />
-		<!-- Language selector (task #8) -->
-		<ComboBox Name="LanguageComboBox" Margin="2,0"
-		          ToolTip.Tip="Select output language" />
+		<ComboBox Name="LanguageComboBox" Margin="2,0" MinWidth="100"
+		          ToolTip.Tip="Select output language"
+		          ItemsSource="{Binding LanguageService.Languages}"
+		          SelectedItem="{Binding LanguageService.CurrentLanguage, Mode=TwoWay}" />
 	</StackPanel>
 </UserControl>

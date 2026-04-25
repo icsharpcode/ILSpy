@@ -43,6 +43,9 @@ namespace ILSpy
 		[ObservableProperty]
 		private string? activeAssemblyList;
 
+		[ObservableProperty]
+		private string? activeLanguageName;
+
 		public WindowState WindowState { get; set; } = WindowState.Normal;
 
 		public PixelPoint WindowPosition { get; set; } = DefaultWindowPosition;
@@ -52,6 +55,7 @@ namespace ILSpy
 		public void LoadFromXml(XElement section)
 		{
 			ActiveAssemblyList = (string?)section.Element("ActiveAssemblyList");
+			ActiveLanguageName = (string?)section.Element("ActiveLanguageName");
 			WindowState = ParseEnum(section.Element("WindowState")?.Value, WindowState.Normal);
 
 			var bounds = section.Element("WindowBounds");
@@ -71,6 +75,8 @@ namespace ILSpy
 			var section = new XElement(SectionName);
 			if (!string.IsNullOrEmpty(ActiveAssemblyList))
 				section.Add(new XElement("ActiveAssemblyList", ActiveAssemblyList));
+			if (!string.IsNullOrEmpty(ActiveLanguageName))
+				section.Add(new XElement("ActiveLanguageName", ActiveLanguageName));
 			section.Add(new XElement("WindowState", WindowState.ToString()));
 			section.Add(new XElement("WindowBounds",
 				new XAttribute("Left", WindowPosition.X.ToString(CultureInfo.InvariantCulture)),
