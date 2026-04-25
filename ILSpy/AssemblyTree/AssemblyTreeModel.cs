@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.ObjectModel;
 using System.Composition;
 using System.Runtime.Serialization;
 
@@ -37,6 +38,8 @@ namespace ILSpy.AssemblyTree
 	{
 		public const string PaneContentId = "AssemblyTree";
 
+		AssemblyListManager? listManager;
+
 		[ObservableProperty]
 		[property: IgnoreDataMember]
 		private SharpTreeNode? root;
@@ -45,8 +48,15 @@ namespace ILSpy.AssemblyTree
 		[property: IgnoreDataMember]
 		private SharpTreeNode? selectedItem;
 
+		[ObservableProperty]
+		[property: IgnoreDataMember]
+		private string? activeListName;
+
 		[IgnoreDataMember]
 		public AssemblyList? AssemblyList { get; private set; }
+
+		[IgnoreDataMember]
+		public ObservableCollection<string> AssemblyLists { get; } = [];
 
 		public AssemblyTreeModel()
 		{
@@ -58,12 +68,32 @@ namespace ILSpy.AssemblyTree
 		public void Initialize()
 		{
 			var settings = ILSpySettings.Load();
-			var listManager = new AssemblyListManager(settings);
+			listManager = new AssemblyListManager(settings);
 			listManager.CreateDefaultAssemblyLists();
 
-			AssemblyList = listManager.LoadList(AssemblyListManager.DefaultListName);
+			SyncListNames();
+			listManager.AssemblyLists.CollectionChanged += (_, _) => SyncListNames();
 
-			if (AssemblyList.GetAssemblies().Length == 0)
+			ActiveListName = AssemblyListManager.DefaultListName;
+		}
+
+		void SyncListNames()
+		{
+			if (listManager == null)
+				return;
+			AssemblyLists.Clear();
+			foreach (var name in listManager.AssemblyLists)
+				AssemblyLists.Add(name);
+		}
+
+		partial void OnActiveListNameChanged(string? value)
+		{
+			if (listManager == null || string.IsNullOrEmpty(value))
+				return;
+
+			AssemblyList = listManager.LoadList(value);
+
+			if (AssemblyList.GetAssemblies().Length == 0 && value == AssemblyListManager.DefaultListName)
 				LoadInitialAssemblies(AssemblyList);
 
 			var rootNode = new AssemblyListTreeNode(AssemblyList);

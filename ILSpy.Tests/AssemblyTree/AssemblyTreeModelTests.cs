@@ -20,6 +20,8 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
+using ICSharpCode.ILSpyX;
+
 using ILSpy.AppEnv;
 using ILSpy.AssemblyTree;
 
@@ -45,5 +47,17 @@ public class AssemblyTreeModelTests
 
 		model.AssemblyList.Should().NotBeNull("Initialize loads or creates the default AssemblyList.");
 		model.Root.Should().NotBeNull("Initialize wires Root to an AssemblyListTreeNode of the loaded list.");
+	}
+
+	[AvaloniaTest]
+	public void Initialize_populates_AssemblyLists_and_selects_the_default()
+	{
+		var model = AppComposition.Current.GetExport<AssemblyTreeModel>();
+		model.Initialize();
+
+		model.AssemblyLists.Should().NotBeEmpty(
+			"Initialize mirrors AssemblyListManager.AssemblyLists into the toolbar combo's source.");
+		model.ActiveListName.Should().Be(AssemblyListManager.DefaultListName,
+			"Initialize selects the (Default) list so the tree has something to render at startup.");
 	}
 }
