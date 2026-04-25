@@ -16,37 +16,33 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
+using Avalonia.Headless.NUnit;
 
-using Dock.Model.Controls;
-using Dock.Model.Core;
+using AwesomeAssertions;
 
-using ILSpy.AssemblyTree;
+using ILSpy.AppEnv;
 using ILSpy.Docking;
 
-namespace ILSpy.ViewModels
+using NUnit.Framework;
+
+namespace ICSharpCode.ILSpy.Tests.Docking;
+
+// DockWorkspace is the MEF-shared wrapper that holds the Dock.Avalonia factory + the root
+// layout. If MEF can't construct it (e.g., missing AssemblyTreeModel / SearchPaneModel /
+// AnalyzerTreeViewModel imports), the entire dock surface never materializes. Asserting
+// at the export layer catches that before we wire it into the DockControl.
+[TestFixture]
+public class DockWorkspaceTests
 {
-	[Export]
-	[Shared]
-	public partial class MainWindowViewModel : ViewModelBase
+	[AvaloniaTest]
+	public void DockWorkspace_resolves_and_exposes_root_layout_with_three_tool_panes()
 	{
-		public AssemblyTreeModel AssemblyTreeModel { get; }
+		var workspace = AppComposition.Current.GetExport<DockWorkspace>();
+		workspace.Should().NotBeNull("DockWorkspace is [Export][Shared] in ILSpy.Docking.");
 
-		public DockWorkspace DockWorkspace { get; }
-
-		public IFactory DockFactory => DockWorkspace.Factory;
-
-		public IRootDock DockLayout => DockWorkspace.Layout;
-
-		public System.Collections.Generic.IReadOnlyList<ToolPaneMenuItem> ToolPaneMenuItems => DockWorkspace.ToolPaneMenuItems;
-
-		public string Title => "ILSpy";
-
-		[ImportingConstructor]
-		public MainWindowViewModel(AssemblyTreeModel assemblyTreeModel, DockWorkspace dockWorkspace)
-		{
-			AssemblyTreeModel = assemblyTreeModel;
-			DockWorkspace = dockWorkspace;
-		}
+		workspace.Layout.Should().NotBeNull("ILSpyDockFactory.CreateLayout() wires the root dock in the ctor.");
+		workspace.Factory.Should().NotBeNull();
+		workspace.ToolPaneMenuItems.Should().HaveCount(3,
+			"AssemblyTree, Search, and Analyzers are the three tool panes wired at this point.");
 	}
 }

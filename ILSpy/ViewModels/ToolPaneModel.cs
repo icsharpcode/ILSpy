@@ -16,37 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
-
-using Dock.Model.Controls;
-using Dock.Model.Core;
-
-using ILSpy.AssemblyTree;
-using ILSpy.Docking;
+using Dock.Model.Mvvm.Controls;
 
 namespace ILSpy.ViewModels
 {
-	[Export]
-	[Shared]
-	public partial class MainWindowViewModel : ViewModelBase
+	public abstract class ToolPaneModel : Tool
 	{
-		public AssemblyTreeModel AssemblyTreeModel { get; }
-
-		public DockWorkspace DockWorkspace { get; }
-
-		public IFactory DockFactory => DockWorkspace.Factory;
-
-		public IRootDock DockLayout => DockWorkspace.Layout;
-
-		public System.Collections.Generic.IReadOnlyList<ToolPaneMenuItem> ToolPaneMenuItems => DockWorkspace.ToolPaneMenuItems;
-
-		public string Title => "ILSpy";
-
-		[ImportingConstructor]
-		public MainWindowViewModel(AssemblyTreeModel assemblyTreeModel, DockWorkspace dockWorkspace)
-		{
-			AssemblyTreeModel = assemblyTreeModel;
-			DockWorkspace = dockWorkspace;
-		}
 	}
 }

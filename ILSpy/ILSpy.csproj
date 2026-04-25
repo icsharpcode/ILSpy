@@ -34,7 +34,9 @@
     <PackageReference Include="AvaloniaEdit.TextMate" />
     <PackageReference Include="Avalonia.Xaml.Behaviors" />
     <PackageReference Include="Dock.Avalonia" />
+    <PackageReference Include="Dock.Avalonia.Themes.Fluent" />
     <PackageReference Include="Dock.Model.Mvvm" />
+    <PackageReference Include="Dock.Serializer.SystemTextJson" />
     <PackageReference Include="ProDataGrid" />
 
     <!-- MVVM, DI, MEF -->

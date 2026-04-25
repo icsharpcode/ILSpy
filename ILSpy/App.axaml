@@ -2,14 +2,29 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="ILSpy.App"
              xmlns:local="using:ILSpy"
+             xmlns:tree="using:ILSpy.AssemblyTree"
+             xmlns:search="using:ILSpy.Search"
+             xmlns:analyzers="using:ILSpy.Analyzers"
+             xmlns:dockTheme="using:Dock.Avalonia.Themes.Fluent"
              RequestedThemeVariant="Default">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.DataTemplates>
+        <DataTemplate DataType="tree:AssemblyTreeModel">
+            <tree:AssemblyListPane />
+        </DataTemplate>
+        <DataTemplate DataType="search:SearchPaneModel">
+            <search:SearchPane />
+        </DataTemplate>
+        <DataTemplate DataType="analyzers:AnalyzerTreeViewModel">
+            <analyzers:AnalyzerTreeView />
+        </DataTemplate>
         <local:ViewLocator/>
     </Application.DataTemplates>
-  
+
     <Application.Styles>
         <FluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.v2.xaml" />
+        <dockTheme:DockFluentTheme />
     </Application.Styles>
 </Application>

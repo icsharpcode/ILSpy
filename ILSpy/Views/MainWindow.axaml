@@ -2,6 +2,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:ILSpy.ViewModels"
         xmlns:local="using:ILSpy"
+        xmlns:tree="using:ILSpy.AssemblyTree"
+        xmlns:dock="using:Dock.Avalonia.Controls"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="500"
@@ -29,11 +31,9 @@
 			           Margin="8,0" Name="statusLabel" Text="Stand by..." />
 		</Border>
 
-		<!-- Placeholder for DockingManager (task #4: replace with Dock.Avalonia) -->
-		<ContentControl Name="DockHost">
-			<TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
-			           Foreground="Gray" FontStyle="Italic"
-			           Text="Docking workspace will appear here." />
-		</ContentControl>
+		<dock:DockControl Layout="{Binding DockLayout}"
+		                  Factory="{Binding DockFactory}"
+		                  InitializeFactory="True"
+		                  InitializeLayout="True" />
 	</DockPanel>
 </Window>

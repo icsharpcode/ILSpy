@@ -18,6 +18,7 @@
 
 using System;
 using System.Composition;
+using System.Runtime.Serialization;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -26,20 +27,33 @@ using ICSharpCode.ILSpyX.Settings;
 using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy.TreeNodes;
+using ILSpy.ViewModels;
 
 namespace ILSpy.AssemblyTree
 {
 	[Export]
 	[Shared]
-	public partial class AssemblyTreeModel : ObservableObject
+	public partial class AssemblyTreeModel : ToolPaneModel
 	{
+		public const string PaneContentId = "AssemblyTree";
+
 		[ObservableProperty]
+		[property: IgnoreDataMember]
 		private SharpTreeNode? root;
 
 		[ObservableProperty]
+		[property: IgnoreDataMember]
 		private SharpTreeNode? selectedItem;
 
+		[IgnoreDataMember]
 		public AssemblyList? AssemblyList { get; private set; }
+
+		public AssemblyTreeModel()
+		{
+			Id = PaneContentId;
+			Title = "Assemblies";
+			CanClose = false;
+		}
 
 		public void Initialize()
 		{

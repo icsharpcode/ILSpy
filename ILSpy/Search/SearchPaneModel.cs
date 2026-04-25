@@ -18,35 +18,20 @@
 
 using System.Composition;
 
-using Dock.Model.Controls;
-using Dock.Model.Core;
+using ILSpy.ViewModels;
 
-using ILSpy.AssemblyTree;
-using ILSpy.Docking;
-
-namespace ILSpy.ViewModels
+namespace ILSpy.Search
 {
 	[Export]
 	[Shared]
-	public partial class MainWindowViewModel : ViewModelBase
+	public class SearchPaneModel : ToolPaneModel
 	{
-		public AssemblyTreeModel AssemblyTreeModel { get; }
+		public const string PaneContentId = "Search";
 
-		public DockWorkspace DockWorkspace { get; }
-
-		public IFactory DockFactory => DockWorkspace.Factory;
-
-		public IRootDock DockLayout => DockWorkspace.Layout;
-
-		public System.Collections.Generic.IReadOnlyList<ToolPaneMenuItem> ToolPaneMenuItems => DockWorkspace.ToolPaneMenuItems;
-
-		public string Title => "ILSpy";
-
-		[ImportingConstructor]
-		public MainWindowViewModel(AssemblyTreeModel assemblyTreeModel, DockWorkspace dockWorkspace)
+		public SearchPaneModel()
 		{
-			AssemblyTreeModel = assemblyTreeModel;
-			DockWorkspace = dockWorkspace;
+			Id = PaneContentId;
+			Title = "Search";
 		}
 	}
 }

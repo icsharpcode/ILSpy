@@ -16,37 +16,44 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 using Dock.Model.Controls;
 using Dock.Model.Core;
 
-using ILSpy.AssemblyTree;
-using ILSpy.Docking;
-
 namespace ILSpy.ViewModels
 {
-	[Export]
-	[Shared]
-	public partial class MainWindowViewModel : ViewModelBase
+	public class ToolPaneMenuItem : ObservableObject
 	{
-		public AssemblyTreeModel AssemblyTreeModel { get; }
+		readonly ToolPaneModel pane;
+		readonly IFactory factory;
 
-		public DockWorkspace DockWorkspace { get; }
-
-		public IFactory DockFactory => DockWorkspace.Factory;
-
-		public IRootDock DockLayout => DockWorkspace.Layout;
-
-		public System.Collections.Generic.IReadOnlyList<ToolPaneMenuItem> ToolPaneMenuItems => DockWorkspace.ToolPaneMenuItems;
-
-		public string Title => "ILSpy";
-
-		[ImportingConstructor]
-		public MainWindowViewModel(AssemblyTreeModel assemblyTreeModel, DockWorkspace dockWorkspace)
+		public ToolPaneMenuItem(ToolPaneModel pane, IFactory factory)
 		{
-			AssemblyTreeModel = assemblyTreeModel;
-			DockWorkspace = dockWorkspace;
+			this.pane = pane;
+			this.factory = factory;
+			factory.DockableHidden += OnFactoryVisibilityChanged;
+			factory.DockableRestored += OnFactoryVisibilityChanged;
+		}
+
+		public string? Title => pane.Title;
+
+		public bool IsPaneVisible {
+			get => pane.Owner is not IRootDock;
+			set {
+				if (value == IsPaneVisible)
+					return;
+				if (value)
+					factory.RestoreDockable(pane);
+				else
+					factory.HideDockable(pane);
+				OnPropertyChanged();
+			}
+		}
+
+		void OnFactoryVisibilityChanged(object? sender, System.EventArgs e)
+		{
+			OnPropertyChanged(nameof(IsPaneVisible));
 		}
 	}
 }

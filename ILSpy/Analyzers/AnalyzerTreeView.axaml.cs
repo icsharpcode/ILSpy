@@ -16,37 +16,15 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
+using Avalonia.Controls;
 
-using Dock.Model.Controls;
-using Dock.Model.Core;
-
-using ILSpy.AssemblyTree;
-using ILSpy.Docking;
-
-namespace ILSpy.ViewModels
+namespace ILSpy.Analyzers
 {
-	[Export]
-	[Shared]
-	public partial class MainWindowViewModel : ViewModelBase
+	public partial class AnalyzerTreeView : UserControl
 	{
-		public AssemblyTreeModel AssemblyTreeModel { get; }
-
-		public DockWorkspace DockWorkspace { get; }
-
-		public IFactory DockFactory => DockWorkspace.Factory;
-
-		public IRootDock DockLayout => DockWorkspace.Layout;
-
-		public System.Collections.Generic.IReadOnlyList<ToolPaneMenuItem> ToolPaneMenuItems => DockWorkspace.ToolPaneMenuItems;
-
-		public string Title => "ILSpy";
-
-		[ImportingConstructor]
-		public MainWindowViewModel(AssemblyTreeModel assemblyTreeModel, DockWorkspace dockWorkspace)
+		public AnalyzerTreeView()
 		{
-			AssemblyTreeModel = assemblyTreeModel;
-			DockWorkspace = dockWorkspace;
+			InitializeComponent();
 		}
 	}
 }
