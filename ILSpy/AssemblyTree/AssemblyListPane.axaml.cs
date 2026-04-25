@@ -19,8 +19,11 @@
 using System.Collections;
 using System.ComponentModel;
 
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.DataGridHierarchical;
+using Avalonia.Input;
+using Avalonia.VisualTree;
 
 using ICSharpCode.ILSpyX.TreeView;
 
@@ -31,6 +34,21 @@ namespace ILSpy.AssemblyTree
 		public AssemblyListPane()
 		{
 			InitializeComponent();
+			TreeGrid.DoubleTapped += OnTreeGridDoubleTapped;
+		}
+
+		void OnTreeGridDoubleTapped(object? sender, TappedEventArgs e)
+		{
+			if (TreeGrid.HierarchicalModel is not IHierarchicalModel model)
+				return;
+			var visual = e.Source as Visual;
+			while (visual != null && visual.DataContext is not HierarchicalNode)
+				visual = visual.GetVisualParent();
+			if (visual?.DataContext is HierarchicalNode node && !node.IsLeaf)
+			{
+				model.Toggle(node);
+				e.Handled = true;
+			}
 		}
 
 		protected override void OnDataContextChanged(System.EventArgs e)
