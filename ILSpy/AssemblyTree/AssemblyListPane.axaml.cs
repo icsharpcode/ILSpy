@@ -54,7 +54,15 @@ namespace ILSpy.AssemblyTree
 		void BindTree(SharpTreeNode root)
 		{
 			var options = new HierarchicalOptions<SharpTreeNode> {
-				ChildrenSelector = node => node.Children,
+				// Force lazy children to load BEFORE returning the collection. ProDataGrid
+				// queries ChildrenSelector while expanding, before propagating IsExpanded to
+				// the source via IsExpandedSetter, so SharpTreeNode.LazyLoading wouldn't have
+				// triggered yet otherwise -- and an empty Children collection causes the grid
+				// to revert the expansion immediately.
+				ChildrenSelector = node => {
+					node.EnsureLazyChildren();
+					return node.Children;
+				},
 				IsLeafSelector = node => !node.ShowExpander,
 				IsExpandedSelector = node => node.IsExpanded,
 				IsExpandedSetter = (node, val) => node.IsExpanded = val,

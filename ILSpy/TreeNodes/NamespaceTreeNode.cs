@@ -21,6 +21,8 @@ using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.Metadata;
 
+using ILSpy.Images;
+
 namespace ILSpy.TreeNodes
 {
 	sealed class NamespaceTreeNode : ILSpyTreeNode
@@ -38,6 +40,8 @@ namespace ILSpy.TreeNodes
 		}
 
 		public override object Text => name;
+
+		public override object Icon => Images.Images.Namespace;
 
 		protected override void LoadChildren()
 		{

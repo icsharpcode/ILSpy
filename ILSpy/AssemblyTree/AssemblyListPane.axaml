@@ -15,14 +15,21 @@
 	          CanUserResizeColumns="False"
 	          SelectionMode="Single">
 		<DataGrid.Columns>
-			<DataGridTemplateColumn Header="Name" Width="*">
-				<DataGridTemplateColumn.CellTemplate>
+			<DataGridHierarchicalColumn Header="Name" Width="*">
+				<DataGridHierarchicalColumn.CellTemplate>
 					<DataTemplate>
-						<TextBlock Text="{ReflectionBinding Item.Text}"
-						           VerticalAlignment="Center" Margin="4,0" />
+						<StackPanel Orientation="Horizontal" Spacing="4"
+						            VerticalAlignment="Center" Margin="4,0"
+						            ToolTip.Tip="{ReflectionBinding Item.ToolTip}">
+							<Image Source="{ReflectionBinding Item.Icon}"
+							       Width="16" Height="16"
+							       VerticalAlignment="Center" />
+							<TextBlock Text="{ReflectionBinding Item.Text}"
+							           VerticalAlignment="Center" />
+						</StackPanel>
 					</DataTemplate>
-				</DataGridTemplateColumn.CellTemplate>
-			</DataGridTemplateColumn>
+				</DataGridHierarchicalColumn.CellTemplate>
+			</DataGridHierarchicalColumn>
 		</DataGrid.Columns>
 	</DataGrid>
 </UserControl>

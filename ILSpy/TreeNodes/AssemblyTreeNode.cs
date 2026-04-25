@@ -17,16 +17,21 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.IO;
 using System.Linq;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX;
+
+using ILSpy.Images;
 
 namespace ILSpy.TreeNodes
 {
 	sealed class AssemblyTreeNode : ILSpyTreeNode
 	{
 		readonly LoadedAssembly assembly;
+		bool loadFailed;
+		string? loadError;
 
 		public LoadedAssembly LoadedAssembly => assembly;
 
@@ -39,11 +44,41 @@ namespace ILSpy.TreeNodes
 
 		public override object Text => assembly.ShortName;
 
+		public override object Icon => loadFailed ? Images.Images.AssemblyWarning : Images.Images.Assembly;
+
+		public override object? ToolTip => loadFailed ? loadError : assembly.FileName;
+
+		// When a load fails we still want the user to see the entry, but with the warning glyph
+		// and no expander chevron (LoadChildren produced nothing, ShowExpander becomes false).
+		public override bool ShowExpander => !loadFailed && base.ShowExpander;
+
 		protected override void LoadChildren()
 		{
-			var result = assembly.GetMetadataFileOrNullAsync().Result;
-			if (result is not MetadataFile module)
+			MetadataFile? module;
+			try
+			{
+				module = assembly.GetMetadataFileOrNullAsync().Result;
+			}
+			catch (Exception ex)
+			{
+				module = null;
+				loadError = $"Failed to load '{assembly.FileName}':\n{ex.GetBaseException().Message}";
+			}
+
+			if (module == null)
+			{
+				loadFailed = true;
+				if (loadError == null)
+				{
+					loadError = File.Exists(assembly.FileName)
+						? $"Failed to load '{assembly.FileName}'."
+						: $"File not found:\n{assembly.FileName}";
+				}
+				RaisePropertyChanged(nameof(Icon));
+				RaisePropertyChanged(nameof(ShowExpander));
+				RaisePropertyChanged(nameof(ToolTip));
 				return;
+			}
 
 			var metadata = module.Metadata;
 			var namespaces = metadata.TypeDefinitions

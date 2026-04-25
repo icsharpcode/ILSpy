@@ -17,22 +17,32 @@
 // DEALINGS IN THE SOFTWARE.
 
 using Avalonia.Media;
+using Avalonia.Svg.Skia;
 
-namespace ILSpy.TreeNodes
+namespace ILSpy.Images
 {
-	sealed class MemberTreeNode : ILSpyTreeNode
+	public static class Images
 	{
-		readonly string name;
-		readonly IImage icon;
-
-		public MemberTreeNode(string name, IImage icon)
+		static IImage Load(string name)
 		{
-			this.name = name;
-			this.icon = icon;
+			return new SvgImage {
+				Source = SvgSource.Load($"avares://ILSpy/Assets/Icons/{name}.svg", null)
+			};
 		}
 
-		public override object Text => name;
-		public override object Icon => icon;
-		public override bool ShowExpander => false;
+		public static readonly IImage Assembly = Load(nameof(Assembly));
+		public static readonly IImage AssemblyWarning = Load(nameof(AssemblyWarning));
+		public static readonly IImage Namespace = Load(nameof(Namespace));
+		public static readonly IImage Class = Load(nameof(Class));
+		public static readonly IImage Interface = Load(nameof(Interface));
+		public static readonly IImage Struct = Load(nameof(Struct));
+		public static readonly IImage Enum = Load(nameof(Enum));
+		public static readonly IImage Delegate = Load(nameof(Delegate));
+		public static readonly IImage Method = Load(nameof(Method));
+		public static readonly IImage Constructor = Load(nameof(Constructor));
+		public static readonly IImage Operator = Load(nameof(Operator));
+		public static readonly IImage Field = Load(nameof(Field));
+		public static readonly IImage Property = Load(nameof(Property));
+		public static readonly IImage Event = Load(nameof(Event));
 	}
 }

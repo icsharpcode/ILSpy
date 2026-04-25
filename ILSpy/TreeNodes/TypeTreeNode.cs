@@ -17,9 +17,12 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.Metadata;
+
+using ILSpy.Images;
 
 namespace ILSpy.TreeNodes
 {
@@ -45,6 +48,18 @@ namespace ILSpy.TreeNodes
 			}
 		}
 
+		public override object Icon {
+			get {
+				var td = module.Metadata.GetTypeDefinition(handle);
+				var attrs = td.Attributes;
+				if ((attrs & TypeAttributes.ClassSemanticsMask) == TypeAttributes.Interface)
+					return Images.Images.Interface;
+				// crude detection: real distinction needs base-type lookups (System.Enum, ValueType,
+				// MulticastDelegate). Refining will land with the broader tree-node port.
+				return Images.Images.Class;
+			}
+		}
+
 		protected override void LoadChildren()
 		{
 			var td = module.Metadata.GetTypeDefinition(handle);
@@ -55,25 +70,31 @@ namespace ILSpy.TreeNodes
 			foreach (var method in td.GetMethods())
 			{
 				var md = module.Metadata.GetMethodDefinition(method);
-				Children.Add(new MemberTreeNode(module.Metadata.GetString(md.Name)));
+				var name = module.Metadata.GetString(md.Name);
+				var icon = name == ".ctor" || name == ".cctor"
+					? Images.Images.Constructor
+					: ((md.Attributes & MethodAttributes.SpecialName) != 0 && name.StartsWith("op_"))
+						? Images.Images.Operator
+						: Images.Images.Method;
+				Children.Add(new MemberTreeNode(name, icon));
 			}
 
 			foreach (var field in td.GetFields())
 			{
 				var fd = module.Metadata.GetFieldDefinition(field);
-				Children.Add(new MemberTreeNode(module.Metadata.GetString(fd.Name)));
+				Children.Add(new MemberTreeNode(module.Metadata.GetString(fd.Name), Images.Images.Field));
 			}
 
 			foreach (var prop in td.GetProperties())
 			{
 				var pd = module.Metadata.GetPropertyDefinition(prop);
-				Children.Add(new MemberTreeNode(module.Metadata.GetString(pd.Name)));
+				Children.Add(new MemberTreeNode(module.Metadata.GetString(pd.Name), Images.Images.Property));
 			}
 
 			foreach (var evt in td.GetEvents())
 			{
 				var ed = module.Metadata.GetEventDefinition(evt);
-				Children.Add(new MemberTreeNode(module.Metadata.GetString(ed.Name)));
+				Children.Add(new MemberTreeNode(module.Metadata.GetString(ed.Name), Images.Images.Event));
 			}
 		}
 	}

@@ -20,6 +20,7 @@
     <PackageVersion Include="Avalonia.Fonts.Inter" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.Diagnostics" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.Headless.NUnit" Version="$(AvaloniaVersion)" />
+    <PackageVersion Include="Svg.Controls.Skia.Avalonia" Version="12.0.0.5" />
     <PackageVersion Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
     <PackageVersion Include="AvaloniaEdit.TextMate" Version="12.0.0" />
     <PackageVersion Include="Avalonia.Xaml.Behaviors" Version="11.3.0.6" />
