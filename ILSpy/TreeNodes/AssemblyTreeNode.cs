@@ -19,6 +19,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX;
@@ -29,9 +30,12 @@ namespace ILSpy.TreeNodes
 {
 	sealed class AssemblyTreeNode : ILSpyTreeNode
 	{
+		enum LoadState { Loading, Loaded, Failed }
+
 		readonly LoadedAssembly assembly;
-		bool loadFailed;
+		LoadState loadState = LoadState.Loading;
 		string? loadError;
+		MetadataFile? cachedModule;
 
 		public LoadedAssembly LoadedAssembly => assembly;
 
@@ -40,45 +44,68 @@ namespace ILSpy.TreeNodes
 			ArgumentNullException.ThrowIfNull(assembly);
 			this.assembly = assembly;
 			LazyLoading = true;
+			_ = StartLoadingAsync();
 		}
 
 		public override object Text => assembly.ShortName;
 
-		public override object Icon => loadFailed ? Images.Images.AssemblyWarning : Images.Images.Assembly;
+		public override object Icon => loadState switch {
+			LoadState.Failed => Images.Images.AssemblyWarning,
+			LoadState.Loading => Images.Images.AssemblyLoading,
+			_ => Images.Images.Assembly,
+		};
 
-		public override object? ToolTip => loadFailed ? loadError : assembly.FileName;
+		public override object? ToolTip => loadState == LoadState.Failed ? loadError : assembly.FileName;
 
-		// When a load fails we still want the user to see the entry, but with the warning glyph
-		// and no expander chevron (LoadChildren produced nothing, ShowExpander becomes false).
-		public override bool ShowExpander => !loadFailed && base.ShowExpander;
+		// Hide the chevron once a load has failed -- LoadChildren has nothing to show.
+		public override bool ShowExpander => loadState != LoadState.Failed && base.ShowExpander;
 
-		protected override void LoadChildren()
+		async Task StartLoadingAsync()
 		{
-			MetadataFile? module;
 			try
 			{
-				module = assembly.GetMetadataFileOrNullAsync().Result;
-			}
-			catch (Exception ex)
-			{
-				module = null;
-				loadError = $"Failed to load '{assembly.FileName}':\n{ex.GetBaseException().Message}";
-			}
-
-			if (module == null)
-			{
-				loadFailed = true;
-				if (loadError == null)
+				cachedModule = await assembly.GetMetadataFileOrNullAsync();
+				if (cachedModule == null)
 				{
+					loadState = LoadState.Failed;
 					loadError = File.Exists(assembly.FileName)
 						? $"Failed to load '{assembly.FileName}'."
 						: $"File not found:\n{assembly.FileName}";
 				}
-				RaisePropertyChanged(nameof(Icon));
-				RaisePropertyChanged(nameof(ShowExpander));
-				RaisePropertyChanged(nameof(ToolTip));
-				return;
+				else
+				{
+					loadState = LoadState.Loaded;
+				}
 			}
+			catch (Exception ex)
+			{
+				loadState = LoadState.Failed;
+				loadError = $"Failed to load '{assembly.FileName}':\n{ex.GetBaseException().Message}";
+			}
+			RaisePropertyChanged(nameof(Icon));
+			RaisePropertyChanged(nameof(ToolTip));
+			RaisePropertyChanged(nameof(ShowExpander));
+		}
+
+		protected override void LoadChildren()
+		{
+			// If the user expands before the background load finishes, fall back to a sync wait.
+			// Once StartLoadingAsync runs, cachedModule / loadState are authoritative.
+			MetadataFile? module = cachedModule;
+			if (module == null && loadState == LoadState.Loading)
+			{
+				try
+				{
+					module = assembly.GetMetadataFileOrNullAsync().Result;
+				}
+				catch
+				{
+					module = null;
+				}
+			}
+
+			if (module == null)
+				return;
 
 			var metadata = module.Metadata;
 			var namespaces = metadata.TypeDefinitions

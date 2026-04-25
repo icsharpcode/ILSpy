@@ -31,6 +31,7 @@ namespace ILSpy.Images
 		}
 
 		public static readonly IImage Assembly = Load(nameof(Assembly));
+		public static readonly IImage AssemblyLoading = Load(nameof(AssemblyLoading));
 		public static readonly IImage AssemblyWarning = Load(nameof(AssemblyWarning));
 		public static readonly IImage Namespace = Load(nameof(Namespace));
 		public static readonly IImage Class = Load(nameof(Class));
