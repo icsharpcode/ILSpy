@@ -18,8 +18,11 @@
 
 using System;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
+
+using ILSpy.Languages;
 
 namespace ILSpy.TreeNodes
 {
@@ -47,6 +50,9 @@ namespace ILSpy.TreeNodes
 		}
 
 		public override bool ShowExpander => false;
+
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+			=> language.DecompileMethod(MethodDefinition, output, options);
 
 		// Stable identity for SessionSettings.ActiveTreeViewPath; matches the WPF host's format.
 		public override string ToString()

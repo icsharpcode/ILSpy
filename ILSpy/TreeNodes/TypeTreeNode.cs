@@ -26,6 +26,8 @@ using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
+using ILSpy.Languages;
+
 namespace ILSpy.TreeNodes
 {
 	sealed class TypeTreeNode : ILSpyTreeNode
@@ -70,6 +72,15 @@ namespace ILSpy.TreeNodes
 		}
 
 		public override bool CanExpandRecursively => true;
+
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		{
+			var typeDef = ResolveTypeDefinition();
+			if (typeDef != null)
+				language.DecompileType(typeDef, output, options);
+			else
+				language.WriteCommentLine(output, "(could not resolve type)");
+		}
 
 		// Stable identity for SessionSettings.ActiveTreeViewPath. ReflectionName is
 		// language-independent.

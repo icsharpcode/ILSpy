@@ -5,6 +5,7 @@
              xmlns:tree="using:ILSpy.AssemblyTree"
              xmlns:search="using:ILSpy.Search"
              xmlns:analyzers="using:ILSpy.Analyzers"
+             xmlns:textView="using:ILSpy.TextView"
              xmlns:dockTheme="using:Dock.Avalonia.Themes.Simple"
              xmlns:controls="using:ILSpy.Controls"
              RequestedThemeVariant="Default">
@@ -35,12 +36,16 @@
         <DataTemplate DataType="analyzers:AnalyzerTreeViewModel">
             <analyzers:AnalyzerTreeView />
         </DataTemplate>
+        <DataTemplate DataType="textView:DecompilerTabPageModel">
+            <textView:DecompilerTextView />
+        </DataTemplate>
         <local:ViewLocator/>
     </Application.DataTemplates>
 
     <Application.Styles>
         <SimpleTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Simple.v2.xaml" />
+        <StyleInclude Source="avares://AvaloniaEdit/Themes/Simple/AvaloniaEdit.xaml" />
         <dockTheme:DockSimpleTheme />
 
         <!-- Classic SharpTreeView-style +/- expander, ported from ILSpy WPF

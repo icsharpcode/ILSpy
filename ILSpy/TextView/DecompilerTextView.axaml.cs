@@ -16,33 +16,44 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
+using System.ComponentModel;
 
-using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Output;
-using ICSharpCode.Decompiler.TypeSystem;
+using Avalonia.Controls;
 
-using ILSpy.Languages;
-
-namespace ILSpy.TreeNodes
+namespace ILSpy.TextView
 {
-	sealed class FieldTreeNode : ILSpyTreeNode
+	public partial class DecompilerTextView : UserControl
 	{
-		public IField FieldDefinition { get; }
-
-		public FieldTreeNode(IField field)
+		public DecompilerTextView()
 		{
-			FieldDefinition = field ?? throw new ArgumentNullException(nameof(field));
+			InitializeComponent();
 		}
 
-		public override object Text => Language.EntityToString(FieldDefinition, ConversionFlags.None);
-		public override object Icon => Images.Images.GetIcon(Images.Images.Field,
-			Images.Images.GetOverlay(FieldDefinition.Accessibility), FieldDefinition.IsStatic);
-		public override bool ShowExpander => false;
+		protected override void OnDataContextChanged(System.EventArgs e)
+		{
+			base.OnDataContextChanged(e);
+			if (DataContext is DecompilerTabPageModel model)
+			{
+				model.PropertyChanged += OnModelPropertyChanged;
+				ApplyDocument(model);
+			}
+		}
 
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-			=> language.DecompileField(FieldDefinition, output, options);
+		void OnModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (sender is DecompilerTabPageModel model
+				&& (e.PropertyName == nameof(DecompilerTabPageModel.Text)
+					|| e.PropertyName == nameof(DecompilerTabPageModel.SyntaxExtension)))
+			{
+				ApplyDocument(model);
+			}
+		}
 
-		public override string ToString() => "Field " + FieldDefinition.Name;
+		void ApplyDocument(DecompilerTabPageModel model)
+		{
+			Editor.SyntaxHighlighting = HighlightingService.GetByExtension(model.SyntaxExtension);
+			Editor.Document.Text = model.Text;
+			Editor.ScrollToHome();
+		}
 	}
 }

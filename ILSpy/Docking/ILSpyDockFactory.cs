@@ -24,6 +24,7 @@ using Dock.Model.Mvvm.Controls;
 using ILSpy.Analyzers;
 using ILSpy.AssemblyTree;
 using ILSpy.Search;
+using ILSpy.TextView;
 
 namespace ILSpy.Docking
 {
@@ -34,6 +35,8 @@ namespace ILSpy.Docking
 		readonly AnalyzerTreeViewModel analyzerTreeViewModel;
 
 		public IDocumentDock? Documents { get; private set; }
+
+		public DecompilerTabPageModel? InitialDecompilerTab { get; private set; }
 
 		public ILSpyDockFactory(
 			AssemblyTreeModel assemblyTreeModel,
@@ -70,6 +73,9 @@ namespace ILSpy.Docking
 				Proportion = 0.6,
 			};
 			Documents = documents;
+
+			// Initial decompiler tab is added lazily on first selection (DockWorkspace.ShowSelectedNode).
+			InitialDecompilerTab = new DecompilerTabPageModel { Title = "(no selection)" };
 
 			var bottomToolDock = new ToolDock {
 				Id = "BottomTools",

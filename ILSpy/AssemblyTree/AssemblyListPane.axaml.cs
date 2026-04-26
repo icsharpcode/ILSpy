@@ -27,6 +27,8 @@ using Avalonia.VisualTree;
 
 using ICSharpCode.ILSpyX.TreeView;
 
+using ILSpy.TreeNodes;
+
 namespace ILSpy.AssemblyTree
 {
 	public partial class AssemblyListPane : UserControl
@@ -96,6 +98,7 @@ namespace ILSpy.AssemblyTree
 			syncingSelection = false;
 			TreeGrid.ScrollIntoView(target, TreeGrid.Columns[0]);
 		}
+
 
 		void OnTreeGridDoubleTapped(object? sender, TappedEventArgs e)
 		{

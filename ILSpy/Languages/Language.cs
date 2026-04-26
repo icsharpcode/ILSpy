@@ -17,6 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.IL;
@@ -26,7 +28,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 namespace ILSpy.Languages
 {
 	/// <summary>
-	/// Output language for tree-node labels and (eventually) decompiled views.
+	/// Output language for tree-node labels and decompiled views.
 	/// Subclasses override formatting for their target syntax. Implementations must be
 	/// thread-safe.
 	/// </summary>
@@ -61,6 +63,52 @@ namespace ILSpy.Languages
 					| conversionFlags
 			};
 			return ambience.ConvertSymbol(entity);
+		}
+
+		/// <summary>
+		/// Writes <paramref name="comment"/> as a single-line comment in this language's syntax.
+		/// </summary>
+		public virtual void WriteCommentLine(ITextOutput output, string comment)
+		{
+			output.WriteLine("// " + comment);
+		}
+
+		// Default Decompile* implementations write a stub comment so we always produce *something*
+		// for symbols whose language doesn't have a meaningful decompilation. Real languages
+		// (CSharpLanguage, eventually ILLanguage) override these.
+
+		public virtual void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
+		{
+			WriteCommentLine(output, TypeToString(type));
+		}
+
+		public virtual void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
+		{
+			Debug.Assert(method.DeclaringTypeDefinition != null);
+			WriteCommentLine(output, TypeToString(method.DeclaringTypeDefinition) + "." + method.Name);
+		}
+
+		public virtual void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
+		{
+			Debug.Assert(field.DeclaringTypeDefinition != null);
+			WriteCommentLine(output, TypeToString(field.DeclaringTypeDefinition) + "." + field.Name);
+		}
+
+		public virtual void DecompileProperty(IProperty property, ITextOutput output, DecompilationOptions options)
+		{
+			Debug.Assert(property.DeclaringTypeDefinition != null);
+			WriteCommentLine(output, TypeToString(property.DeclaringTypeDefinition) + "." + property.Name);
+		}
+
+		public virtual void DecompileEvent(IEvent ev, ITextOutput output, DecompilationOptions options)
+		{
+			Debug.Assert(ev.DeclaringTypeDefinition != null);
+			WriteCommentLine(output, TypeToString(ev.DeclaringTypeDefinition) + "." + ev.Name);
+		}
+
+		public virtual void DecompileNamespace(string nameSpace, IEnumerable<ITypeDefinition> types, ITextOutput output, DecompilationOptions options)
+		{
+			WriteCommentLine(output, nameSpace);
 		}
 
 		public override string ToString() => Name;

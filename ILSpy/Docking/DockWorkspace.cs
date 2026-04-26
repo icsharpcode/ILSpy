@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Composition;
 
 using Dock.Model.Controls;
@@ -26,7 +27,10 @@ using Dock.Model.Core.Events;
 
 using ILSpy.Analyzers;
 using ILSpy.AssemblyTree;
+using ILSpy.Languages;
 using ILSpy.Search;
+using ILSpy.TextView;
+using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 
 namespace ILSpy.Docking
@@ -36,6 +40,8 @@ namespace ILSpy.Docking
 	public class DockWorkspace
 	{
 		readonly ILSpyDockFactory factory;
+		readonly AssemblyTreeModel assemblyTreeModel;
+		readonly LanguageService languageService;
 
 		public IFactory Factory => factory;
 
@@ -47,10 +53,18 @@ namespace ILSpy.Docking
 		public DockWorkspace(
 			AssemblyTreeModel assemblyTreeModel,
 			SearchPaneModel searchPaneModel,
-			AnalyzerTreeViewModel analyzerTreeViewModel)
+			AnalyzerTreeViewModel analyzerTreeViewModel,
+			LanguageService languageService)
 		{
+			this.assemblyTreeModel = assemblyTreeModel;
+			this.languageService = languageService;
 			factory = new ILSpyDockFactory(assemblyTreeModel, searchPaneModel, analyzerTreeViewModel);
 			Layout = factory.CreateLayout();
+			if (factory.InitialDecompilerTab is { } initialTab)
+				initialTab.Language = languageService.CurrentLanguage;
+
+			assemblyTreeModel.PropertyChanged += OnAssemblyTreePropertyChanged;
+			languageService.PropertyChanged += OnLanguagePropertyChanged;
 			// Layout/factory initialization (locators, parent/factory wiring) is done by
 			// the DockControl in MainWindow.axaml via InitializeFactory/InitializeLayout.
 
@@ -99,6 +113,58 @@ namespace ILSpy.Docking
 			{
 				d.CanClose = canClose;
 			}
+		}
+
+		void OnAssemblyTreePropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(AssemblyTreeModel.SelectedItem))
+				ShowSelectedNode();
+		}
+
+		void OnLanguagePropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(LanguageService.CurrentLanguage))
+			{
+				if (GetActiveDecompilerTab() is { } tab)
+				{
+					tab.Language = languageService.CurrentLanguage;
+					// Re-decompile by re-assigning the same node so the tab refreshes for the new language.
+					var node = tab.CurrentNode;
+					tab.CurrentNode = null;
+					tab.CurrentNode = node;
+				}
+			}
+		}
+
+		void ShowSelectedNode()
+		{
+			if (assemblyTreeModel.SelectedItem is not ILSpyTreeNode node)
+				return;
+			var tab = GetActiveDecompilerTab();
+			if (tab == null)
+			{
+				tab = factory.InitialDecompilerTab;
+				if (tab == null || factory.Documents == null)
+					return;
+				factory.AddDockable(factory.Documents, tab);
+				factory.SetActiveDockable(tab);
+				factory.SetFocusedDockable(factory.Documents, tab);
+			}
+			tab.Language = languageService.CurrentLanguage;
+			tab.CurrentNode = node;
+		}
+
+		DecompilerTabPageModel? GetActiveDecompilerTab()
+		{
+			if (factory.Documents?.ActiveDockable is DecompilerTabPageModel active)
+				return active;
+			if (factory.Documents?.VisibleDockables != null)
+			{
+				foreach (var d in factory.Documents.VisibleDockables)
+					if (d is DecompilerTabPageModel m)
+						return m;
+			}
+			return null;
 		}
 
 		public TabPageModel OpenNewTab(TabPageModel tab)

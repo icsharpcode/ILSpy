@@ -19,7 +19,12 @@
 using System;
 using System.Linq;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX;
+
+using ILSpy.Languages;
 
 namespace ILSpy.TreeNodes
 {
@@ -54,6 +59,19 @@ namespace ILSpy.TreeNodes
 
 			foreach (var t in types)
 				Children.Add(new TypeTreeNode(t, module));
+		}
+
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		{
+			var typeSystem = module.GetTypeSystemOrNull();
+			if (typeSystem == null)
+			{
+				language.WriteCommentLine(output, "(type system unavailable)");
+				return;
+			}
+			var types = typeSystem.MainModule.TypeDefinitions
+				.Where(t => t.Namespace == name && t.DeclaringTypeDefinition == null);
+			language.DecompileNamespace(name, types, output, options);
 		}
 	}
 }

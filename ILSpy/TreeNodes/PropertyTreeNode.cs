@@ -18,8 +18,11 @@
 
 using System;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
+
+using ILSpy.Languages;
 
 namespace ILSpy.TreeNodes
 {
@@ -36,6 +39,9 @@ namespace ILSpy.TreeNodes
 		public override object Icon => Images.Images.GetIcon(Images.Images.Property,
 			Images.Images.GetOverlay(PropertyDefinition.Accessibility), PropertyDefinition.IsStatic);
 		public override bool ShowExpander => false;
+
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+			=> language.DecompileProperty(PropertyDefinition, output, options);
 
 		public override string ToString()
 			=> "Property " + new ICSharpCode.Decompiler.IL.ILAmbience {

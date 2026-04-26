@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy.AppEnv;
@@ -35,5 +36,15 @@ namespace ILSpy.TreeNodes
 			=> cachedLanguageService ??= AppComposition.Current.GetExport<LanguageService>();
 
 		public Language Language => LanguageService.CurrentLanguage;
+
+		/// <summary>
+		/// Renders this node's decompiled representation to <paramref name="output"/> using
+		/// <paramref name="language"/>. Default writes a stub comment so any node we forgot to
+		/// override still produces *something*.
+		/// </summary>
+		public virtual void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		{
+			language.WriteCommentLine(output, Text?.ToString() ?? GetType().Name);
+		}
 	}
 }

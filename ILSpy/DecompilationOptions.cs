@@ -16,33 +16,27 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
+using System.Threading;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Output;
-using ICSharpCode.Decompiler.TypeSystem;
 
-using ILSpy.Languages;
-
-namespace ILSpy.TreeNodes
+namespace ILSpy
 {
-	sealed class FieldTreeNode : ILSpyTreeNode
+	/// <summary>
+	/// Options passed to <see cref="Languages.Language"/>'s Decompile* methods.
+	/// Stripped-down compared to the WPF host: no project export, no display-settings plumbing,
+	/// no view-state restoration — just enough to drive a single decompilation into a text view.
+	/// </summary>
+	public sealed class DecompilationOptions
 	{
-		public IField FieldDefinition { get; }
+		public DecompilerSettings DecompilerSettings { get; }
+		public CancellationToken CancellationToken { get; set; }
 
-		public FieldTreeNode(IField field)
+		public DecompilationOptions(DecompilerSettings settings)
 		{
-			FieldDefinition = field ?? throw new ArgumentNullException(nameof(field));
+			DecompilerSettings = settings;
 		}
 
-		public override object Text => Language.EntityToString(FieldDefinition, ConversionFlags.None);
-		public override object Icon => Images.Images.GetIcon(Images.Images.Field,
-			Images.Images.GetOverlay(FieldDefinition.Accessibility), FieldDefinition.IsStatic);
-		public override bool ShowExpander => false;
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-			=> language.DecompileField(FieldDefinition, output, options);
-
-		public override string ToString() => "Field " + FieldDefinition.Name;
+		public DecompilationOptions() : this(new DecompilerSettings()) { }
 	}
 }

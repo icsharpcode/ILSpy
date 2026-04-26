@@ -17,12 +17,21 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Composition;
+using System.Diagnostics;
+using System.Linq;
+using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.CSharp.Transforms;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX;
 
 using ConversionFlags = ICSharpCode.Decompiler.Output.ConversionFlags;
 
@@ -59,6 +68,78 @@ namespace ILSpy.Languages
 				| ConversionFlags.ShowParameterList
 				| ConversionFlags.ShowParameterModifiers;
 			return ambience.ConvertSymbol(entity);
+		}
+
+		public override void WriteCommentLine(ITextOutput output, string comment) => output.WriteLine("// " + comment);
+
+		public override void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
+		{
+			Debug.Assert(type.ParentModule?.MetadataFile != null);
+			DecompileEntities(type.ParentModule.MetadataFile, new[] { type.MetadataToken }, output, options);
+		}
+
+		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
+		{
+			Debug.Assert(method.ParentModule?.MetadataFile != null);
+			DecompileEntities(method.ParentModule.MetadataFile, new[] { method.MetadataToken }, output, options);
+		}
+
+		public override void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
+		{
+			Debug.Assert(field.ParentModule?.MetadataFile != null);
+			DecompileEntities(field.ParentModule.MetadataFile, new[] { field.MetadataToken }, output, options);
+		}
+
+		public override void DecompileProperty(IProperty property, ITextOutput output, DecompilationOptions options)
+		{
+			Debug.Assert(property.ParentModule?.MetadataFile != null);
+			DecompileEntities(property.ParentModule.MetadataFile, new[] { property.MetadataToken }, output, options);
+		}
+
+		public override void DecompileEvent(IEvent ev, ITextOutput output, DecompilationOptions options)
+		{
+			Debug.Assert(ev.ParentModule?.MetadataFile != null);
+			DecompileEntities(ev.ParentModule.MetadataFile, new[] { ev.MetadataToken }, output, options);
+		}
+
+		public override void DecompileNamespace(string nameSpace, IEnumerable<ITypeDefinition> types, ITextOutput output, DecompilationOptions options)
+		{
+			var typesByModule = types.GroupBy(t => {
+				Debug.Assert(t.ParentModule?.MetadataFile != null);
+				return t.ParentModule.MetadataFile;
+			});
+			bool first = true;
+			foreach (var group in typesByModule)
+			{
+				if (!first)
+					output.WriteLine();
+				first = false;
+				DecompileEntities(group.Key, group.Select(t => t.MetadataToken), output, options);
+			}
+		}
+
+		void DecompileEntities(MetadataFile module, IEnumerable<EntityHandle> handles, ITextOutput output, DecompilationOptions options)
+		{
+			if (module == null)
+			{
+				WriteCommentLine(output, "(metadata file unavailable)");
+				return;
+			}
+			var resolver = module.GetAssemblyResolver(options.DecompilerSettings.AutoLoadAssemblyReferences);
+			var decompiler = new CSharpDecompiler(module, resolver, options.DecompilerSettings) {
+				CancellationToken = options.CancellationToken,
+				DebugInfoProvider = module.GetDebugInfoOrNull(),
+			};
+			SyntaxTree syntaxTree = decompiler.Decompile(handles);
+			WriteCode(output, options.DecompilerSettings, syntaxTree, decompiler.TypeSystem);
+		}
+
+		static void WriteCode(ITextOutput output, DecompilerSettings settings, SyntaxTree syntaxTree, IDecompilerTypeSystem typeSystem)
+		{
+			syntaxTree.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
+			output.IndentationString = settings.CSharpFormattingOptions.IndentationString;
+			TokenWriter tokenWriter = new TextTokenWriter(output, settings, typeSystem);
+			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(tokenWriter, settings.CSharpFormattingOptions));
 		}
 	}
 }
