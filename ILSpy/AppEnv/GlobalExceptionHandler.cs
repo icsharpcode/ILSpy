@@ -21,7 +21,17 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Threading.Tasks;
 
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input;
+using Avalonia.Input.Platform;
+using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
+
+using CommunityToolkit.Mvvm.Input;
 
 namespace ILSpy.AppEnv
 {
@@ -76,13 +86,117 @@ namespace ILSpy.AppEnv
 			showingError = true;
 			try
 			{
-				// TODO: surface via CustomDialog once ported.
-				Debug.WriteLine("[Unhandled] " + exception);
+				ShowDialog(exception);
 			}
 			finally
 			{
 				showingError = false;
 			}
+		}
+
+		static void ShowDialog(Exception exception)
+		{
+			// Marshal to the UI thread; nested calls during shutdown may not have a dispatcher,
+			// in which case Debug.WriteLine above is the only signal we can offer.
+			if (!Dispatcher.UIThread.CheckAccess())
+			{
+				try
+				{
+					Dispatcher.UIThread.Post(() => ShowDialog(exception));
+				}
+				catch
+				{
+					// Dispatcher already torn down — nothing to do.
+				}
+				return;
+			}
+
+			var window = new Window {
+				Title = "ILSpy — unhandled exception",
+				Width = 720,
+				Height = 480,
+				WindowStartupLocation = WindowStartupLocation.CenterOwner,
+			};
+			var clipboardText = FormatForClipboard(exception);
+			var (root, details) = BuildContent(exception, window, clipboardText);
+			window.Content = root;
+			// Match the Win32 MessageBox keyboard contract: Ctrl+C copies the whole report,
+			// Esc dismisses the dialog. Skip the whole-text copy when the user has a selection
+			// inside the details TextBox so the standard text-selection copy wins.
+			window.KeyBindings.Add(new KeyBinding {
+				Gesture = new KeyGesture(Key.C, KeyModifiers.Control),
+				Command = new RelayCommand(
+					() => CopyToClipboard(window, clipboardText),
+					() => string.IsNullOrEmpty(details.SelectedText)),
+			});
+			window.KeyBindings.Add(new KeyBinding {
+				Gesture = new KeyGesture(Key.Escape),
+				Command = new RelayCommand(window.Close),
+			});
+
+			Window? owner = null;
+			if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+				owner = desktop.MainWindow;
+
+			if (owner != null && owner.IsVisible)
+				window.ShowDialog(owner);
+			else
+				window.Show();
+		}
+
+		static (Control root, TextBox details) BuildContent(Exception exception, Window window, string clipboardText)
+		{
+			var details = new TextBox {
+				IsReadOnly = true,
+				AcceptsReturn = true,
+				TextWrapping = TextWrapping.NoWrap,
+				FontFamily = new FontFamily("Consolas, Menlo, Monospace"),
+				FontSize = 12,
+				Text = exception.ToString(),
+			};
+
+			var summary = new TextBlock {
+				Margin = new Thickness(0, 0, 0, 8),
+				FontWeight = FontWeight.Bold,
+				TextWrapping = TextWrapping.Wrap,
+				Text = exception.GetType().FullName + ": " + exception.Message,
+			};
+
+			var copy = new Button { Content = "Copy" };
+			copy.Click += (_, _) => CopyToClipboard(window, clipboardText);
+
+			var dismiss = new Button { Content = "Close", IsDefault = true };
+			dismiss.Click += (_, _) => window.Close();
+
+			var buttons = new StackPanel {
+				Orientation = Orientation.Horizontal,
+				HorizontalAlignment = HorizontalAlignment.Right,
+				Margin = new Thickness(0, 8, 0, 0),
+				Spacing = 8,
+				Children = { copy, dismiss },
+			};
+
+			var grid = new Grid {
+				Margin = new Thickness(12),
+				RowDefinitions = new RowDefinitions("Auto,*,Auto"),
+			};
+			Grid.SetRow(summary, 0);
+			Grid.SetRow(details, 1);
+			Grid.SetRow(buttons, 2);
+			grid.Children.Add(summary);
+			grid.Children.Add(details);
+			grid.Children.Add(buttons);
+			return (grid, details);
+		}
+
+		static string FormatForClipboard(Exception exception)
+			=> exception.GetType().FullName + ": " + exception.Message + Environment.NewLine + exception;
+
+		static void CopyToClipboard(Window window, string text)
+		{
+			var clipboard = TopLevel.GetTopLevel(window)?.Clipboard;
+			if (clipboard != null)
+				_ = clipboard.SetTextAsync(text);
 		}
 	}
 }
