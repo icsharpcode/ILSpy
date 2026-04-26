@@ -30,8 +30,7 @@
     <!-- Avalonia core -->
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Avalonia.Desktop" />
-    <PackageReference Include="Avalonia.Themes.Fluent" />
-    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Include="Avalonia.Themes.Simple" />
     <PackageReference Include="Svg.Controls.Skia.Avalonia" />
     <PackageReference Include="AvaloniaUI.DiagnosticsSupport">
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
@@ -43,7 +42,7 @@
     <PackageReference Include="AvaloniaEdit.TextMate" />
     <PackageReference Include="Avalonia.Xaml.Behaviors" />
     <PackageReference Include="Dock.Avalonia" />
-    <PackageReference Include="Dock.Avalonia.Themes.Fluent" />
+    <PackageReference Include="Dock.Avalonia.Themes.Simple" />
     <PackageReference Include="Dock.Model.Mvvm" />
     <PackageReference Include="Dock.Serializer.SystemTextJson" />
     <PackageReference Include="ProDataGrid" />

@@ -5,7 +5,7 @@
              xmlns:tree="using:ILSpy.AssemblyTree"
              xmlns:search="using:ILSpy.Search"
              xmlns:analyzers="using:ILSpy.Analyzers"
-             xmlns:dockTheme="using:Dock.Avalonia.Themes.Fluent"
+             xmlns:dockTheme="using:Dock.Avalonia.Themes.Simple"
              RequestedThemeVariant="Default">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
@@ -23,8 +23,8 @@
     </Application.DataTemplates>
 
     <Application.Styles>
-        <FluentTheme />
-        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.v2.xaml" />
-        <dockTheme:DockFluentTheme />
+        <SimpleTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Simple.v2.xaml" />
+        <dockTheme:DockSimpleTheme />
     </Application.Styles>
 </Application>
