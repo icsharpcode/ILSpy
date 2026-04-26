@@ -22,15 +22,15 @@
 			                            Binding="{Binding Item}">
 				<DataGridHierarchicalColumn.CellTemplate>
 					<DataTemplate>
-						<StackPanel Orientation="Horizontal" Spacing="7"
-						            VerticalAlignment="Center" Margin="4,0"
-						            ToolTip.Tip="{Binding ToolTip}">
-							<Image Source="{Binding Icon}"
+						<Grid ColumnDefinitions="Auto,7,*"
+						      VerticalAlignment="Center" Margin="4,0"
+						      ToolTip.Tip="{Binding ToolTip}">
+							<Image Grid.Column="0" Source="{Binding Icon}"
 							       Width="16" Height="16"
 							       VerticalAlignment="Center" />
-							<TextBlock Text="{Binding Text}"
+							<TextBlock Grid.Column="2" Text="{Binding Text}"
 							           VerticalAlignment="Center" />
-						</StackPanel>
+						</Grid>
 					</DataTemplate>
 				</DataGridHierarchicalColumn.CellTemplate>
 			</DataGridHierarchicalColumn>
