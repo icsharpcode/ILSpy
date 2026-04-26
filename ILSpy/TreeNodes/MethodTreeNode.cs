@@ -34,10 +34,17 @@ namespace ILSpy.TreeNodes
 
 		public override object Text => Language.EntityToString(MethodDefinition, ConversionFlags.None);
 
-		public override object Icon =>
-			MethodDefinition.IsConstructor ? Images.Images.Constructor :
-			MethodDefinition.IsOperator ? Images.Images.Operator :
-			Images.Images.Method;
+		public override object Icon {
+			get {
+				var baseImage = MethodDefinition.IsConstructor ? Images.Images.Constructor :
+					MethodDefinition.IsOperator ? Images.Images.Operator :
+					Images.Images.Method;
+				return Images.Images.GetIcon(baseImage,
+					Images.Images.GetOverlay(MethodDefinition.Accessibility),
+					MethodDefinition.IsStatic,
+					MethodDefinition.IsExtensionMethod);
+			}
+		}
 
 		public override bool ShowExpander => false;
 	}

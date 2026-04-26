@@ -17,14 +17,29 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 
+using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Svg.Skia;
 
+using ICSharpCode.Decompiler.TypeSystem;
+
 namespace ILSpy.Images
 {
+	public enum AccessOverlayIcon
+	{
+		Public,
+		Protected,
+		Internal,
+		ProtectedInternal,
+		Private,
+		PrivateProtected,
+		CompilerControlled,
+	}
+
 	public static class Images
 	{
 		const string AssetBase = "avares://ILSpy/Assets/Icons/";
@@ -72,5 +87,95 @@ namespace ILSpy.Images
 		public static readonly IImage Field = LoadSvg(nameof(Field));
 		public static readonly IImage Property = LoadSvg(nameof(Property));
 		public static readonly IImage Event = LoadSvg(nameof(Event));
+
+		// Overlays
+		internal static readonly IImage OverlayProtected = LoadSvg(nameof(OverlayProtected));
+		internal static readonly IImage OverlayInternal = LoadSvg(nameof(OverlayInternal));
+		internal static readonly IImage OverlayProtectedInternal = LoadSvg(nameof(OverlayProtectedInternal));
+		internal static readonly IImage OverlayPrivate = LoadSvg(nameof(OverlayPrivate));
+		internal static readonly IImage OverlayPrivateProtected = LoadSvg(nameof(OverlayPrivateProtected));
+		internal static readonly IImage OverlayCompilerControlled = LoadSvg(nameof(OverlayCompilerControlled));
+		internal static readonly IImage OverlayStatic = LoadSvg(nameof(OverlayStatic));
+		internal static readonly IImage OverlayExtension = LoadSvg(nameof(OverlayExtension));
+
+		static readonly Dictionary<(IImage Base, AccessOverlayIcon Overlay, bool Static, bool Extension), IImage> iconCache = new();
+
+		/// <summary>
+		/// Returns a composed icon — base symbol + accessibility overlay + optional static / extension overlays.
+		/// Caches results so each unique combination is only built once.
+		/// </summary>
+		public static IImage GetIcon(IImage baseImage, AccessOverlayIcon overlay, bool isStatic = false, bool isExtension = false)
+		{
+			var key = (baseImage, overlay, isStatic, isExtension);
+			if (iconCache.TryGetValue(key, out var cached))
+				return cached;
+			var built = new OverlayImage(baseImage, overlay, isStatic, isExtension);
+			iconCache[key] = built;
+			return built;
+		}
+
+		public static AccessOverlayIcon GetOverlay(Accessibility accessibility) => accessibility switch {
+			Accessibility.Public => AccessOverlayIcon.Public,
+			Accessibility.Internal => AccessOverlayIcon.Internal,
+			Accessibility.ProtectedAndInternal => AccessOverlayIcon.PrivateProtected,
+			Accessibility.Protected => AccessOverlayIcon.Protected,
+			Accessibility.ProtectedOrInternal => AccessOverlayIcon.ProtectedInternal,
+			Accessibility.Private => AccessOverlayIcon.Private,
+			_ => AccessOverlayIcon.CompilerControlled,
+		};
+
+		internal static IImage? OverlayFor(AccessOverlayIcon overlay) => overlay switch {
+			AccessOverlayIcon.Protected => OverlayProtected,
+			AccessOverlayIcon.Internal => OverlayInternal,
+			AccessOverlayIcon.ProtectedInternal => OverlayProtectedInternal,
+			AccessOverlayIcon.Private => OverlayPrivate,
+			AccessOverlayIcon.PrivateProtected => OverlayPrivateProtected,
+			AccessOverlayIcon.CompilerControlled => OverlayCompilerControlled,
+			_ => null, // Public — no overlay
+		};
+	}
+
+	/// <summary>
+	/// Composed tree-node icon: a base symbol with optional accessibility overlay, static badge, or extension badge.
+	/// Mirrors the layered drawing scheme from <see cref="ICSharpCode.ILSpy.Images"/> in the WPF host.
+	/// </summary>
+	sealed class OverlayImage : IImage
+	{
+		static readonly Size IconSize = new(16, 16);
+
+		readonly IImage baseImage;
+		readonly IImage? overlayImage;
+		readonly bool isStatic;
+		readonly bool isExtension;
+		readonly bool scaleBase;
+
+		public OverlayImage(IImage baseImage, AccessOverlayIcon overlay, bool isStatic, bool isExtension)
+		{
+			this.baseImage = baseImage;
+			this.overlayImage = Images.OverlayFor(overlay);
+			this.isStatic = isStatic;
+			this.isExtension = isExtension;
+			// When any overlay shrinks the base out of the way, base draws at 80% in the top-left.
+			this.scaleBase = overlayImage != null || isExtension;
+		}
+
+		public Size Size => IconSize;
+
+		public void Draw(DrawingContext context, Rect sourceRect, Rect destRect)
+		{
+			var baseDest = scaleBase
+				? new Rect(destRect.X, destRect.Y, destRect.Width * 0.8, destRect.Height * 0.8)
+				: destRect;
+			baseImage.Draw(context, new Rect(baseImage.Size), baseDest);
+
+			if (isExtension)
+				Images.OverlayExtension.Draw(context, new Rect(Images.OverlayExtension.Size), destRect);
+
+			if (isStatic)
+				Images.OverlayStatic.Draw(context, new Rect(Images.OverlayStatic.Size), destRect);
+
+			if (overlayImage != null)
+				overlayImage.Draw(context, new Rect(overlayImage.Size), destRect);
+		}
 	}
 }

@@ -55,13 +55,17 @@ namespace ILSpy.TreeNodes
 		public override object Icon {
 			get {
 				var typeDef = ResolveTypeDefinition();
-				return typeDef?.Kind switch {
+				if (typeDef == null)
+					return Images.Images.Class;
+				var baseImage = typeDef.Kind switch {
 					TypeKind.Interface => Images.Images.Interface,
 					TypeKind.Struct or TypeKind.Void => Images.Images.Struct,
 					TypeKind.Delegate => Images.Images.Delegate,
 					TypeKind.Enum => Images.Images.Enum,
 					_ => Images.Images.Class,
 				};
+				return Images.Images.GetIcon(baseImage,
+					Images.Images.GetOverlay(typeDef.Accessibility), typeDef.IsStatic);
 			}
 		}
 

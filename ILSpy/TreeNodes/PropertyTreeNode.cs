@@ -33,7 +33,8 @@ namespace ILSpy.TreeNodes
 		}
 
 		public override object Text => Language.EntityToString(PropertyDefinition, ConversionFlags.None);
-		public override object Icon => Images.Images.Property;
+		public override object Icon => Images.Images.GetIcon(Images.Images.Property,
+			Images.Images.GetOverlay(PropertyDefinition.Accessibility), PropertyDefinition.IsStatic);
 		public override bool ShowExpander => false;
 	}
 }
