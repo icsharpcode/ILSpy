@@ -11,6 +11,7 @@
 	<ae:TextEditor Name="Editor"
 	               IsReadOnly="True"
 	               ShowLineNumbers="True"
+	               Background="#FFFFE1"
 	               FontFamily="Consolas, Menlo, Monospace"
 	               FontSize="13" />
 </UserControl>
