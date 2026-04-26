@@ -6,8 +6,24 @@
              xmlns:search="using:ILSpy.Search"
              xmlns:analyzers="using:ILSpy.Analyzers"
              xmlns:dockTheme="using:Dock.Avalonia.Themes.Simple"
+             xmlns:controls="using:ILSpy.Controls"
              RequestedThemeVariant="Default">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.Resources>
+        <!-- Override ProDataGrid's hierarchical expander to a classic Windows-Explorer-sized 9x9 box,
+             plus 4px of left padding (so the ToggleButton itself is 13x9). -->
+        <x:Double x:Key="DataGridHierarchicalExpanderSize">13</x:Double>
+        <x:Double x:Key="DataGridHierarchicalExpanderGlyphSize">5</x:Double>
+
+        <!-- Suppress the cell focus rectangle — selected rows already get the highlight background. -->
+        <SolidColorBrush x:Key="DataGridCellFocusVisualPrimaryBrush" Color="Transparent" />
+        <SolidColorBrush x:Key="DataGridCellFocusVisualSecondaryBrush" Color="Transparent" />
+
+        <!-- Suppress the gray pointer-over highlight on rows and cells. -->
+        <SolidColorBrush x:Key="DataGridRowHoveredBackgroundBrush" Color="Transparent" />
+        <SolidColorBrush x:Key="DataGridCellHoveredBackgroundBrush" Color="Transparent" />
+    </Application.Resources>
 
     <Application.DataTemplates>
         <DataTemplate DataType="tree:AssemblyTreeModel">
@@ -26,5 +42,80 @@
         <SimpleTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Simple.v2.xaml" />
         <dockTheme:DockSimpleTheme />
+
+        <!-- Classic SharpTreeView-style +/- expander, ported from ILSpy WPF
+             (ILSpy/Controls/TreeView/SharpTreeView.xaml). Colors are hardcoded
+             because the presenter's :checked style forces Background/BorderBrush
+             to Transparent through TemplateBinding. The Margin offsets the
+             visible glyph from the presenter cell's left edge — the presenter
+             itself overwrites its Padding from Level * Indent in code. -->
+        <Style Selector="DataGridHierarchicalPresenter /template/ ToggleButton#PART_Expander">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Template">
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border Width="9" Height="9"
+                            Margin="4,0,0,0"
+                            BorderThickness="1"
+                            BorderBrush="#828790"
+                            CornerRadius="1"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                <GradientStop Color="White" Offset="0.2" />
+                                <GradientStop Color="#FFC0B7A6" Offset="1" />
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Path Name="ExpandPath"
+                              Margin="1"
+                              Fill="Black"
+                              Data="M 0 2 L 0 3 L 2 3 L 2 5 L 3 5 L 3 3 L 5 3 L 5 2 L 3 2 L 3 0 L 2 0 L 2 2 Z" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="DataGridHierarchicalPresenter /template/ ToggleButton#PART_Expander:checked /template/ Path#ExpandPath">
+            <Setter Property="Data" Value="M 0 2 L 0 3 L 5 3 L 5 2 Z" />
+        </Style>
+        <!-- Hide the +/- on leaves but keep the column width so siblings stay aligned. -->
+        <Style Selector="DataGridHierarchicalPresenter /template/ ToggleButton#PART_Expander:disabled">
+            <Setter Property="Opacity" Value="0" />
+        </Style>
+
+        <!-- Selected row text in white so it reads against the accent-color highlight. -->
+        <Style Selector="DataGridRow:selected">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!-- Override the presenter template so we can layer classic Windows-Explorer tree
+             lines behind the indent / expander / content. -->
+        <Style Selector="DataGridHierarchicalPresenter">
+            <Setter Property="Template">
+                <ControlTemplate TargetType="DataGridHierarchicalPresenter">
+                    <Panel>
+                        <controls:TreeLines Node="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}"
+                                            Level="{Binding Level, RelativeSource={RelativeSource TemplatedParent}}" />
+                        <Border Padding="{TemplateBinding Padding}">
+                            <Grid ColumnDefinitions="Auto,*">
+                                <ToggleButton x:Name="PART_Expander"
+                                              Width="{DynamicResource DataGridHierarchicalExpanderSize}"
+                                              Height="{DynamicResource DataGridHierarchicalExpanderSize}"
+                                              Theme="{DynamicResource DataGridHierarchicalExpanderTheme}"
+                                              IsEnabled="{TemplateBinding IsExpandable}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}" />
+                                <ContentPresenter Grid.Column="1"
+                                                  Margin="{DynamicResource DataGridHierarchicalPresenterContentMargin}"
+                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                  Content="{TemplateBinding Content}" />
+                            </Grid>
+                        </Border>
+                    </Panel>
+                </ControlTemplate>
+            </Setter>
+        </Style>
     </Application.Styles>
 </Application>

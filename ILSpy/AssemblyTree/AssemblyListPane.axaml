@@ -22,7 +22,7 @@
 			                            Binding="{Binding Item}">
 				<DataGridHierarchicalColumn.CellTemplate>
 					<DataTemplate>
-						<StackPanel Orientation="Horizontal" Spacing="4"
+						<StackPanel Orientation="Horizontal" Spacing="7"
 						            VerticalAlignment="Center" Margin="4,0"
 						            ToolTip.Tip="{Binding ToolTip}">
 							<Image Source="{Binding Icon}"
