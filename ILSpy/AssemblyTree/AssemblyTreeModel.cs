@@ -947,11 +947,30 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		private void RefreshInternal()
 		{
+			_ = RefreshInternalAsync();
+		}
+
+		private async Task RefreshInternalAsync()
+		{
 			using (Keyboard.FocusedElement.PreserveFocus())
 			{
 				var path = GetPathForNode(SelectedItem);
 
 				ShowAssemblyList(settingsService.AssemblyListManager.LoadList(AssemblyList.ListName));
+
+				// Ensure assembly loaded before FindNodeByPath to allow lazy-loaded resource nodes to be found
+				if (path?.Length > 0)
+				{
+					foreach (var asm in AssemblyList.GetAssemblies())
+					{
+						if (asm.FileName == path[0])
+						{
+							await asm.GetMetadataFileAsync().Catch<Exception>(_ => { });
+							break;
+						}
+					}
+				}
+
 				SelectNode(FindNodeByPath(path, true), inNewTabPage: false);
 
 				RefreshDecompiledView();
