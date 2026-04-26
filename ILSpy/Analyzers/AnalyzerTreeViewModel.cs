@@ -27,6 +27,7 @@ using ICSharpCode.ILSpy.Analyzers.TreeNodes;
 using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpyX.TreeView;
 
 using TomsToolbox.Wpf;
 
@@ -51,9 +52,9 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public ICommand AnalyzeCommand => new DelegateCommand(AnalyzeSelected);
 
-		private AnalyzerTreeNode[] selectedItems = [];
+		private SharpTreeNode[] selectedItems = [];
 
-		public AnalyzerTreeNode[] SelectedItems {
+		public SharpTreeNode[] SelectedItems {
 			get => selectedItems ?? [];
 			set {
 				if (SelectedItems.SequenceEqual(value))
