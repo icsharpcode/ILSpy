@@ -18,6 +18,7 @@
 
 using System;
 using System.Globalization;
+using System.Linq;
 using System.Xml.Linq;
 
 using Avalonia;
@@ -46,6 +47,12 @@ namespace ILSpy
 		[ObservableProperty]
 		private string? activeLanguageName;
 
+		/// <summary>
+		/// Path to the previously-selected tree node (one ToString() per ancestor, root-first).
+		/// Used to restore the selection on the next launch.
+		/// </summary>
+		public string[]? ActiveTreeViewPath { get; set; }
+
 		public WindowState WindowState { get; set; } = WindowState.Normal;
 
 		public PixelPoint WindowPosition { get; set; } = DefaultWindowPosition;
@@ -56,6 +63,7 @@ namespace ILSpy
 		{
 			ActiveAssemblyList = (string?)section.Element("ActiveAssemblyList");
 			ActiveLanguageName = (string?)section.Element("ActiveLanguageName");
+			ActiveTreeViewPath = section.Element("ActiveTreeViewPath")?.Elements().Select(e => (string)e).ToArray();
 			WindowState = ParseEnum(section.Element("WindowState")?.Value, WindowState.Normal);
 
 			var bounds = section.Element("WindowBounds");
@@ -77,6 +85,8 @@ namespace ILSpy
 				section.Add(new XElement("ActiveAssemblyList", ActiveAssemblyList));
 			if (!string.IsNullOrEmpty(ActiveLanguageName))
 				section.Add(new XElement("ActiveLanguageName", ActiveLanguageName));
+			if (ActiveTreeViewPath is { Length: > 0 } path)
+				section.Add(new XElement("ActiveTreeViewPath", path.Select(p => new XElement("Node", p))));
 			section.Add(new XElement("WindowState", WindowState.ToString()));
 			section.Add(new XElement("WindowBounds",
 				new XAttribute("Left", WindowPosition.X.ToString(CultureInfo.InvariantCulture)),

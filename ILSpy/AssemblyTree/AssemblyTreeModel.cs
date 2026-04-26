@@ -17,8 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Composition;
+using System.Linq;
 using System.Runtime.Serialization;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -125,6 +127,59 @@ namespace ILSpy.AssemblyTree
 			Root = new AssemblyListTreeNode(AssemblyList);
 
 			settingsService.SessionSettings.ActiveAssemblyList = value;
+
+			// Restore the previously-selected tree node, if any. Walks the tree by ToString()
+			// matching, materialising lazy children as it goes.
+			var savedPath = settingsService.SessionSettings.ActiveTreeViewPath;
+			if (savedPath is { Length: > 0 })
+			{
+				var restored = FindNodeByPath(savedPath, returnBestMatch: true);
+				if (restored != null && restored != Root)
+					SelectedItem = restored;
+			}
+		}
+
+		partial void OnSelectedItemChanged(SharpTreeNode? value)
+		{
+			settingsService.SessionSettings.ActiveTreeViewPath = GetPathForNode(value);
+		}
+
+		/// <summary>
+		/// Walks down from <see cref="Root"/> matching each path segment against
+		/// <see cref="object.ToString"/>, expanding lazy children along the way.
+		/// </summary>
+		public SharpTreeNode? FindNodeByPath(string[]? path, bool returnBestMatch)
+		{
+			if (path == null || Root == null)
+				return null;
+			SharpTreeNode? node = Root;
+			SharpTreeNode? bestMatch = node;
+			foreach (var element in path)
+			{
+				if (node == null)
+					break;
+				bestMatch = node;
+				node.EnsureLazyChildren();
+				node = node.Children.FirstOrDefault(c => c.ToString() == element);
+			}
+			return returnBestMatch ? node ?? bestMatch : node;
+		}
+
+		/// <summary>
+		/// The path of <paramref name="node"/>'s ancestors (root excluded), in root-first order.
+		/// </summary>
+		public static string[]? GetPathForNode(SharpTreeNode? node)
+		{
+			if (node == null)
+				return null;
+			var path = new List<string>();
+			while (node.Parent != null)
+			{
+				path.Add(node.ToString()!);
+				node = node.Parent;
+			}
+			path.Reverse();
+			return path.ToArray();
 		}
 
 		static void LoadInitialAssemblies(AssemblyList assemblyList)

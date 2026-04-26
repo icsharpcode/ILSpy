@@ -36,5 +36,7 @@ namespace ILSpy.TreeNodes
 		public override object Icon => Images.Images.GetIcon(Images.Images.Field,
 			Images.Images.GetOverlay(FieldDefinition.Accessibility), FieldDefinition.IsStatic);
 		public override bool ShowExpander => false;
+
+		public override string ToString() => "Field " + FieldDefinition.Name;
 	}
 }

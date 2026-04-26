@@ -36,5 +36,14 @@ namespace ILSpy.TreeNodes
 		public override object Icon => Images.Images.GetIcon(Images.Images.Property,
 			Images.Images.GetOverlay(PropertyDefinition.Accessibility), PropertyDefinition.IsStatic);
 		public override bool ShowExpander => false;
+
+		public override string ToString()
+			=> "Property " + new ICSharpCode.Decompiler.IL.ILAmbience {
+				ConversionFlags = ConversionFlags.ShowTypeParameterList
+					| ConversionFlags.PlaceReturnTypeAfterParameterList
+					| ConversionFlags.ShowReturnType
+					| ConversionFlags.ShowParameterList
+					| ConversionFlags.ShowParameterModifiers,
+			}.ConvertSymbol(PropertyDefinition);
 	}
 }

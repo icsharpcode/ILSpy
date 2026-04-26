@@ -31,10 +31,70 @@ namespace ILSpy.AssemblyTree
 {
 	public partial class AssemblyListPane : UserControl
 	{
+		// Set while propagating model.SelectedItem → DataGrid.SelectedItem so the resulting
+		// SelectionChanged event doesn't bounce right back into the model.
+		bool syncingSelection;
+
 		public AssemblyListPane()
 		{
 			InitializeComponent();
 			TreeGrid.DoubleTapped += OnTreeGridDoubleTapped;
+		}
+
+		void OnTreeGridSelectionChanged(object? sender, SelectionChangedEventArgs e)
+		{
+			if (syncingSelection || DataContext is not AssemblyTreeModel model)
+				return;
+			SharpTreeNode? selected = null;
+			if (TreeGrid.SelectedItem is HierarchicalNode node && node.Item is SharpTreeNode tree)
+				selected = tree;
+			else if (TreeGrid.SelectedItem is SharpTreeNode direct)
+				selected = direct;
+			if (model.SelectedItem == selected)
+				return;
+			model.SelectedItem = selected;
+		}
+
+		void SyncSelectionFromModel(SharpTreeNode? target)
+		{
+			if (target == null)
+			{
+				if (TreeGrid.SelectedItem != null)
+				{
+					syncingSelection = true;
+					TreeGrid.SelectedItem = null!;
+					syncingSelection = false;
+				}
+				return;
+			}
+			if (TreeGrid.HierarchicalModel is not IHierarchicalModel hm)
+				return;
+
+			// Build the SharpTreeNode path from a root (a child of the hidden AssemblyListTreeNode)
+			// down to the target.
+			var path = new System.Collections.Generic.List<SharpTreeNode>();
+			for (var n = target; n.Parent != null; n = n.Parent)
+				path.Add(n);
+			path.Reverse();
+
+			// Walk top-down: ProDataGrid only materialises children of expanded nodes, so each
+			// ancestor must be expanded before FindNode can locate the next level's wrapper.
+			HierarchicalNode? hNode = null;
+			for (int i = 0; i < path.Count; i++)
+			{
+				hNode = hm.FindNode(path[i]);
+				if (hNode == null)
+					return;
+				if (i < path.Count - 1 && !hNode.IsExpanded)
+					hm.Expand(hNode);
+			}
+
+			if (ReferenceEquals(TreeGrid.SelectedItem, target))
+				return;
+			syncingSelection = true;
+			TreeGrid.SelectedItem = target;
+			syncingSelection = false;
+			TreeGrid.ScrollIntoView(target, TreeGrid.Columns[0]);
 		}
 
 		void OnTreeGridDoubleTapped(object? sender, TappedEventArgs e)
@@ -59,14 +119,29 @@ namespace ILSpy.AssemblyTree
 			{
 				model.PropertyChanged += Model_PropertyChanged;
 				if (model.Root != null)
+				{
 					BindTree(model.Root);
+					// Push any already-set selection (e.g. one restored from SessionSettings
+					// before the pane subscribed to PropertyChanged) into the DataGrid.
+					if (model.SelectedItem != null)
+						SyncSelectionFromModel(model.SelectedItem);
+				}
 			}
 		}
 
 		void Model_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(AssemblyTreeModel.Root) && sender is AssemblyTreeModel model && model.Root != null)
+			if (sender is not AssemblyTreeModel model)
+				return;
+			if (e.PropertyName == nameof(AssemblyTreeModel.Root) && model.Root != null)
+			{
 				BindTree(model.Root);
+				SyncSelectionFromModel(model.SelectedItem);
+			}
+			else if (e.PropertyName == nameof(AssemblyTreeModel.SelectedItem))
+			{
+				SyncSelectionFromModel(model.SelectedItem);
+			}
 		}
 
 		void BindTree(SharpTreeNode root)

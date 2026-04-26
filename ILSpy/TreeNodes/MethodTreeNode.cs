@@ -47,5 +47,15 @@ namespace ILSpy.TreeNodes
 		}
 
 		public override bool ShowExpander => false;
+
+		// Stable identity for SessionSettings.ActiveTreeViewPath; matches the WPF host's format.
+		public override string ToString()
+			=> "Method " + new ICSharpCode.Decompiler.IL.ILAmbience {
+				ConversionFlags = ConversionFlags.ShowTypeParameterList
+					| ConversionFlags.PlaceReturnTypeAfterParameterList
+					| ConversionFlags.ShowReturnType
+					| ConversionFlags.ShowParameterList
+					| ConversionFlags.ShowParameterModifiers,
+			}.ConvertSymbol(MethodDefinition);
 	}
 }

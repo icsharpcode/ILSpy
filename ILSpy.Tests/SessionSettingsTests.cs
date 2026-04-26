@@ -54,4 +54,19 @@ public class SessionSettingsTests
 		loaded.WindowPosition.Should().Be(new PixelPoint(200, 300));
 		loaded.WindowSize.Should().Be(new Size(1024, 768));
 	}
+
+	[Test]
+	public void Save_then_Load_round_trips_ActiveTreeViewPath()
+	{
+		var original = new SessionSettings {
+			ActiveTreeViewPath = ["My.Assembly.dll", "MyNamespace.MyType", "M:MyMethod"],
+		};
+
+		var xml = original.SaveToXml();
+
+		var loaded = new SessionSettings();
+		loaded.LoadFromXml(xml);
+
+		loaded.ActiveTreeViewPath.Should().Equal("My.Assembly.dll", "MyNamespace.MyType", "M:MyMethod");
+	}
 }

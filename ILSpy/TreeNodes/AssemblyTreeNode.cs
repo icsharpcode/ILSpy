@@ -71,6 +71,10 @@ namespace ILSpy.TreeNodes
 
 		public override object Text => assembly.ShortName;
 
+		// ToString is the stable identity used by SessionSettings.ActiveTreeViewPath — must not
+		// depend on the active language. The full file path uniquely identifies the assembly.
+		public override string ToString() => assembly.FileName;
+
 		public override object Icon {
 			get {
 				if (assembly.HasLoadError || loadError != null)

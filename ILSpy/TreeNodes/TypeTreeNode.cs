@@ -71,6 +71,14 @@ namespace ILSpy.TreeNodes
 
 		public override bool CanExpandRecursively => true;
 
+		// Stable identity for SessionSettings.ActiveTreeViewPath. ReflectionName is
+		// language-independent.
+		public override string ToString()
+		{
+			var typeDef = ResolveTypeDefinition();
+			return typeDef?.ReflectionName ?? module.Metadata.GetString(module.Metadata.GetTypeDefinition(handle).Name);
+		}
+
 		ITypeDefinition? ResolveTypeDefinition()
 		{
 			var typeSystem = module.GetTypeSystemOrNull();
