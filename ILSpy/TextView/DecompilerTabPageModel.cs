@@ -152,12 +152,25 @@ namespace ILSpy.TextView
 					HighlightingModel = model;
 					Foldings = collectedFoldings;
 					Text = rendered;
-					IsDecompiling = false;
 				});
 			}
 			catch (OperationCanceledException)
 			{
 				// stale request — drop silently
+			}
+			finally
+			{
+				// Hide the wait adorner whether we finished, were cancelled, or aborted: a stale
+				// "Decompiling…" overlay is far worse than leaving the previous output visible.
+				// Skip the reset if a newer request has already taken over (activeCts is rotated
+				// at the top of DecompileAsync).
+				if (ReferenceEquals(activeCts, cts))
+				{
+					if (Dispatcher.UIThread.CheckAccess())
+						IsDecompiling = false;
+					else
+						await Dispatcher.UIThread.InvokeAsync(() => IsDecompiling = false);
+				}
 			}
 		}
 	}
