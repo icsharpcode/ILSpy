@@ -371,7 +371,7 @@ Examples:
 			{
 				try
 				{
-					ILSpyX.Settings.ILSpySettings.SettingsFilePathProvider = new ILSpyX.Settings.DefaultSettingsFilePathProvider(ILSpySettingsFile);
+					ILSpyX.Settings.ILSpySettings.SettingsFilePathProvider = () => ILSpySettingsFile;
 					var settingsService = new ILSpyX.Settings.SettingsServiceBase(ILSpyX.Settings.ILSpySettings.Load());
 					decompilerSettings = settingsService.GetSettings<ILSpyX.Settings.DecompilerSettings>();
 				}

@@ -25,14 +25,14 @@ using System.Xml.Linq;
 namespace ICSharpCode.ILSpyX.Settings
 {
 	/// <summary>
-	/// Manages IL Spy settings.
+	/// Manages ILSpy settings.
 	/// </summary>
 	public class ILSpySettings : ISettingsProvider
 	{
 		/// <summary>
 		/// This settings file path provider determines where to load settings file from, includes filename
 		/// </summary>
-		public static ISettingsFilePathProvider? SettingsFilePathProvider { get; set; }
+		public static Func<string>? SettingsFilePathProvider { get; set; }
 
 		XElement root;
 
@@ -125,11 +125,7 @@ namespace ICSharpCode.ILSpyX.Settings
 
 		static string GetConfigFile()
 		{
-			if (null != SettingsFilePathProvider)
-				return SettingsFilePathProvider.GetSettingsFilePath();
-
-			throw new ArgumentNullException(nameof(SettingsFilePathProvider));
-			// return "ILSpy.xml";
+			return SettingsFilePathProvider?.Invoke() ?? throw new ArgumentNullException(nameof(SettingsFilePathProvider));
 		}
 
 		const string ConfigFileMutex = "01A91708-49D1-410D-B8EB-4DE2662B3971";
