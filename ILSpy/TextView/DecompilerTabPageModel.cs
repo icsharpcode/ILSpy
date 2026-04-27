@@ -17,11 +17,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Avalonia.Threading;
 
+using AvaloniaEdit.Folding;
 using AvaloniaEdit.Highlighting;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -58,6 +60,13 @@ namespace ILSpy.TextView
 		/// </summary>
 		[ObservableProperty]
 		private RichTextModel? highlightingModel;
+
+		/// <summary>
+		/// Multi-line fold ranges collected by the decompiler (member bodies, attribute blocks,
+		/// hidden compiler-generated regions, …). Fed to a <c>FoldingManager</c> on the editor.
+		/// </summary>
+		[ObservableProperty]
+		private IReadOnlyList<NewFolding>? foldings;
 
 		ILSpyTreeNode? currentNode;
 
@@ -122,8 +131,10 @@ namespace ILSpy.TextView
 
 				var rendered = output.GetText();
 				var model = output.HighlightingModel;
+				var collectedFoldings = output.Foldings;
 				await Dispatcher.UIThread.InvokeAsync(() => {
 					HighlightingModel = model;
+					Foldings = collectedFoldings;
 					Text = rendered;
 				});
 			}

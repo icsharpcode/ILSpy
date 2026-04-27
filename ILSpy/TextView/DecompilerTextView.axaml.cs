@@ -17,9 +17,11 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.ComponentModel;
+using System.Linq;
 
 using Avalonia.Controls;
 
+using AvaloniaEdit.Folding;
 using AvaloniaEdit.Highlighting;
 
 namespace ILSpy.TextView
@@ -27,6 +29,7 @@ namespace ILSpy.TextView
 	public partial class DecompilerTextView : UserControl
 	{
 		RichTextColorizer? activeColorizer;
+		FoldingManager? activeFoldingManager;
 
 		public DecompilerTextView()
 		{
@@ -45,10 +48,13 @@ namespace ILSpy.TextView
 
 		void OnModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
+			// Only rebuild when Text changes — DecompileAsync sets HighlightingModel and Foldings
+			// just before Text, so reading them at this point gets the matching state. Reacting
+			// to each property fires several intermediate ApplyDocuments where the text and the
+			// folding offsets disagree.
 			if (sender is DecompilerTabPageModel model
 				&& (e.PropertyName == nameof(DecompilerTabPageModel.Text)
-					|| e.PropertyName == nameof(DecompilerTabPageModel.SyntaxExtension)
-					|| e.PropertyName == nameof(DecompilerTabPageModel.HighlightingModel)))
+					|| e.PropertyName == nameof(DecompilerTabPageModel.SyntaxExtension)))
 			{
 				ApplyDocument(model);
 			}
@@ -71,6 +77,19 @@ namespace ILSpy.TextView
 			{
 				activeColorizer = new RichTextColorizer(richModel);
 				transformers.Add(activeColorizer);
+			}
+
+			// Folding markers in the gutter: install lazily so editors with no foldings stay
+			// chrome-free. UpdateFoldings expects offsets sorted ascending.
+			if (activeFoldingManager != null)
+			{
+				FoldingManager.Uninstall(activeFoldingManager);
+				activeFoldingManager = null;
+			}
+			if (model.Foldings is { Count: > 0 } foldings)
+			{
+				activeFoldingManager = FoldingManager.Install(Editor.TextArea);
+				activeFoldingManager.UpdateFoldings(foldings.OrderBy(f => f.StartOffset), -1);
 			}
 
 			Editor.ScrollToHome();

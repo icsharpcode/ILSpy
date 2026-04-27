@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Text;
 
+using AvaloniaEdit.Folding;
 using AvaloniaEdit.Highlighting;
 
 using ICSharpCode.Decompiler;
@@ -40,10 +41,16 @@ namespace ILSpy.TextView
 	{
 		readonly StringBuilder builder = new();
 		readonly Stack<(int Offset, HighlightingColor Color)> openSpans = new();
+		readonly Stack<(NewFolding Folding, int StartLine)> openFoldings = new();
+		readonly List<NewFolding> foldings = new();
 		int indent;
 		bool needsIndent;
+		int lineNumber = 1;
 
 		public RichTextModel HighlightingModel { get; } = new RichTextModel();
+
+		/// <summary>Foldings collected during writing — only ones spanning more than one line.</summary>
+		public IReadOnlyList<NewFolding> Foldings => foldings;
 
 		public string Title { get; set; } = string.Empty;
 
@@ -85,6 +92,7 @@ namespace ILSpy.TextView
 		public void WriteLine()
 		{
 			builder.Append('\n');
+			lineNumber++;
 			needsIndent = true;
 		}
 
@@ -104,12 +112,26 @@ namespace ILSpy.TextView
 
 		public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false, bool isDefinition = false)
 		{
-			// Folding support arrives in a later phase.
+			WriteIndentIfNeeded();
+			openFoldings.Push((
+				new NewFolding {
+					StartOffset = builder.Length,
+					Name = collapsedText,
+					DefaultClosed = defaultCollapsed,
+					IsDefinition = isDefinition,
+				},
+				lineNumber));
 		}
 
 		public void MarkFoldEnd()
 		{
-			// Folding support arrives in a later phase.
+			if (openFoldings.Count == 0)
+				return;
+			var (folding, startLine) = openFoldings.Pop();
+			folding.EndOffset = builder.Length;
+			// Skip single-line foldings — they only add visual noise.
+			if (startLine != lineNumber)
+				foldings.Add(folding);
 		}
 
 		public void BeginSpan(HighlightingColor highlightingColor)
