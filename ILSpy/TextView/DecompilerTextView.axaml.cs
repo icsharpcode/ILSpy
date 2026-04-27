@@ -16,11 +16,13 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Threading;
 
 using AvaloniaEdit.Folding;
@@ -30,7 +32,14 @@ namespace ILSpy.TextView
 {
 	public partial class DecompilerTextView : UserControl
 	{
+		// Local-reference highlight colours, mirroring ILSpy/Themes/generic.xaml. Use the same
+		// light-yellow "GreenYellow" for matches and a softer green for the actual definition.
+		static readonly Color LocalMatchBackground = Colors.GreenYellow;
+		static readonly Color LocalDefinitionBackground = Color.FromArgb(0x80, 0xA0, 0xFF, 0xA0);
+
 		readonly ReferenceElementGenerator referenceElementGenerator;
+		readonly TextMarkerService textMarkerService;
+		readonly List<TextMarker> localReferenceMarks = new();
 		RichTextColorizer? activeColorizer;
 		FoldingManager? activeFoldingManager;
 
@@ -44,6 +53,11 @@ namespace ILSpy.TextView
 			referenceElementGenerator = new ReferenceElementGenerator(static segment => segment.Reference != null);
 			referenceElementGenerator.ReferenceClicked += OnReferenceClicked;
 			Editor.TextArea.TextView.ElementGenerators.Add(referenceElementGenerator);
+
+			// Background renderer that paints local-reference highlights. Lives once for the
+			// lifetime of the view; the marks themselves are cleared and rebuilt per click.
+			textMarkerService = new TextMarkerService(Editor.TextArea.TextView);
+			Editor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
 		}
 
 		protected override void OnDataContextChanged(System.EventArgs e)
@@ -72,6 +86,7 @@ namespace ILSpy.TextView
 
 		void ApplyDocument(DecompilerTabPageModel model)
 		{
+			ClearLocalReferenceMarks();
 			Editor.SyntaxHighlighting = HighlightingService.GetByExtension(model.SyntaxExtension);
 			Editor.Document.Text = model.Text;
 
@@ -113,6 +128,16 @@ namespace ILSpy.TextView
 			if (DataContext is not DecompilerTabPageModel model || segment.Reference == null)
 				return;
 
+			// Local references stay inside this document — paint every match and let the user
+			// scrub through them. Cross-document references clear any existing marks since the
+			// view is about to refresh anyway.
+			if (segment.IsLocal)
+			{
+				HighlightLocalReferences(model, segment.Reference);
+				return;
+			}
+			ClearLocalReferenceMarks();
+
 			// In-document jumps win when the definition is in this same view.
 			if (model.DefinitionLookup is { } lookup)
 			{
@@ -128,6 +153,28 @@ namespace ILSpy.TextView
 
 			// Otherwise let the host route the reference (assembly-tree navigation, new tab, ...).
 			model.RaiseNavigateRequested(segment);
+		}
+
+		void HighlightLocalReferences(DecompilerTabPageModel model, object reference)
+		{
+			ClearLocalReferenceMarks();
+			if (model.References == null)
+				return;
+			foreach (var r in model.References)
+			{
+				if (!ReferenceEquals(reference, r.Reference) && !reference.Equals(r.Reference))
+					continue;
+				var mark = textMarkerService.Create(r.StartOffset, r.Length);
+				mark.BackgroundColor = r.IsDefinition ? LocalDefinitionBackground : LocalMatchBackground;
+				localReferenceMarks.Add(mark);
+			}
+		}
+
+		void ClearLocalReferenceMarks()
+		{
+			foreach (var mark in localReferenceMarks)
+				textMarkerService.Remove(mark);
+			localReferenceMarks.Clear();
 		}
 	}
 }
