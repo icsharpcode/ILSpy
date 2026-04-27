@@ -115,8 +115,7 @@ namespace ILSpy.TextView
 			}
 
 			var nodeTitle = node.Text?.ToString() ?? "(unnamed)";
-			Title = nodeTitle;
-			SyntaxExtension = language.FileExtension;
+			var newSyntaxExtension = language.FileExtension;
 			IsDecompiling = true;
 
 			try
@@ -149,6 +148,8 @@ namespace ILSpy.TextView
 				var model = output.HighlightingModel;
 				var collectedFoldings = output.Foldings;
 				await Dispatcher.UIThread.InvokeAsync(() => {
+					Title = nodeTitle;
+					SyntaxExtension = newSyntaxExtension;
 					HighlightingModel = model;
 					Foldings = collectedFoldings;
 					Text = rendered;
