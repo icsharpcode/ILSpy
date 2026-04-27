@@ -139,6 +139,11 @@ namespace ILSpy.Languages
 			syntaxTree.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
 			output.IndentationString = settings.CSharpFormattingOptions.IndentationString;
 			TokenWriter tokenWriter = new TextTokenWriter(output, settings, typeSystem);
+			// Wrap with semantic highlighting when the output supports it. The writer emits
+			// BeginSpan/EndSpan around tokens, which AvaloniaEditTextOutput records into a
+			// RichTextModel that the view's RichTextColorizer paints.
+			if (output is TextView.ISmartTextOutput smartOutput)
+				tokenWriter = new CSharpHighlightingTokenWriter(tokenWriter, smartOutput);
 			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(tokenWriter, settings.CSharpFormattingOptions));
 		}
 	}

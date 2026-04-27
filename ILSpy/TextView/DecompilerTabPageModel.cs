@@ -22,6 +22,8 @@ using System.Threading.Tasks;
 
 using Avalonia.Threading;
 
+using AvaloniaEdit.Highlighting;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using ICSharpCode.Decompiler;
@@ -49,6 +51,13 @@ namespace ILSpy.TextView
 		/// </summary>
 		[ObservableProperty]
 		private string syntaxExtension = ".cs";
+
+		/// <summary>
+		/// Semantic-highlighting spans collected during decompilation; the view feeds this into
+		/// AvaloniaEdit's <c>RichTextColorizer</c>.
+		/// </summary>
+		[ObservableProperty]
+		private RichTextModel? highlightingModel;
 
 		ILSpyTreeNode? currentNode;
 
@@ -112,7 +121,9 @@ namespace ILSpy.TextView
 					return;
 
 				var rendered = output.GetText();
+				var model = output.HighlightingModel;
 				await Dispatcher.UIThread.InvokeAsync(() => {
+					HighlightingModel = model;
 					Text = rendered;
 				});
 			}

@@ -16,8 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Text;
+
+using AvaloniaEdit.Highlighting;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
@@ -27,16 +30,22 @@ using ICSharpCode.Decompiler.TypeSystem;
 namespace ILSpy.TextView
 {
 	/// <summary>
-	/// Phase-1 <see cref="ITextOutput"/> for the Avalonia text view: just accumulates text into a
-	/// <see cref="StringBuilder"/> with the indentation contract the decompiler expects. Reference
-	/// markers, fold ranges, and inline UI elements are intentionally dropped — those will land
-	/// when we add hyperlinks and folding support.
+	/// Avalonia-side <see cref="ITextOutput"/> + <see cref="ISmartTextOutput"/>: accumulates text
+	/// into a <see cref="StringBuilder"/> and tracks <c>BeginSpan</c>/<c>EndSpan</c> pairs into a
+	/// <see cref="RichTextModel"/> that the text view renders via <c>RichTextColorizer</c>.
+	/// Reference markers, fold ranges, and inline UI elements are intentionally dropped here —
+	/// those land when we add hyperlinks and folding support.
 	/// </summary>
-	sealed class AvaloniaEditTextOutput : ITextOutput
+	sealed class AvaloniaEditTextOutput : ISmartTextOutput
 	{
 		readonly StringBuilder builder = new();
+		readonly Stack<(int Offset, HighlightingColor Color)> openSpans = new();
 		int indent;
 		bool needsIndent;
+
+		public RichTextModel HighlightingModel { get; } = new RichTextModel();
+
+		public string Title { get; set; } = string.Empty;
 
 		public string IndentationString { get; set; } = "\t";
 
@@ -101,6 +110,21 @@ namespace ILSpy.TextView
 		public void MarkFoldEnd()
 		{
 			// Folding support arrives in a later phase.
+		}
+
+		public void BeginSpan(HighlightingColor highlightingColor)
+		{
+			openSpans.Push((builder.Length, highlightingColor));
+		}
+
+		public void EndSpan()
+		{
+			if (openSpans.Count == 0)
+				return;
+			var (start, color) = openSpans.Pop();
+			var length = builder.Length - start;
+			if (length > 0)
+				HighlightingModel.SetHighlighting(start, length, color);
 		}
 	}
 }

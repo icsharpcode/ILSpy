@@ -20,10 +20,14 @@ using System.ComponentModel;
 
 using Avalonia.Controls;
 
+using AvaloniaEdit.Highlighting;
+
 namespace ILSpy.TextView
 {
 	public partial class DecompilerTextView : UserControl
 	{
+		RichTextColorizer? activeColorizer;
+
 		public DecompilerTextView()
 		{
 			InitializeComponent();
@@ -43,7 +47,8 @@ namespace ILSpy.TextView
 		{
 			if (sender is DecompilerTabPageModel model
 				&& (e.PropertyName == nameof(DecompilerTabPageModel.Text)
-					|| e.PropertyName == nameof(DecompilerTabPageModel.SyntaxExtension)))
+					|| e.PropertyName == nameof(DecompilerTabPageModel.SyntaxExtension)
+					|| e.PropertyName == nameof(DecompilerTabPageModel.HighlightingModel)))
 			{
 				ApplyDocument(model);
 			}
@@ -53,6 +58,21 @@ namespace ILSpy.TextView
 		{
 			Editor.SyntaxHighlighting = HighlightingService.GetByExtension(model.SyntaxExtension);
 			Editor.Document.Text = model.Text;
+
+			// Swap the semantic-highlighting colorizer. AvaloniaEdit only exposes Add/Remove on
+			// LineTransformers, so we keep a reference to the previous one.
+			var transformers = Editor.TextArea.TextView.LineTransformers;
+			if (activeColorizer != null)
+			{
+				transformers.Remove(activeColorizer);
+				activeColorizer = null;
+			}
+			if (model.HighlightingModel is { } richModel)
+			{
+				activeColorizer = new RichTextColorizer(richModel);
+				transformers.Add(activeColorizer);
+			}
+
 			Editor.ScrollToHome();
 		}
 	}
