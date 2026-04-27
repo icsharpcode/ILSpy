@@ -5,13 +5,43 @@
              xmlns:ae="using:AvaloniaEdit"
              xmlns:textView="using:ILSpy.TextView"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
+             Name="self"
              x:Class="ILSpy.TextView.DecompilerTextView"
              x:DataType="textView:DecompilerTabPageModel">
 
-	<ae:TextEditor Name="Editor"
-	               IsReadOnly="True"
-	               ShowLineNumbers="True"
-	               Background="#FFFFE1"
-	               FontFamily="Consolas, Menlo, Monospace"
-	               FontSize="13" />
+	<!-- Wait-adorner pattern ported from ILSpy/TextView/DecompilerTextView.xaml: a translucent
+	     overlay above the editor with a centred title + progress bar + cancel button while a
+	     decompilation is in flight. -->
+	<Grid>
+		<ae:TextEditor Name="Editor"
+		               IsReadOnly="True"
+		               ShowLineNumbers="True"
+		               Background="#FFFFE1"
+		               FontFamily="Consolas, Menlo, Monospace"
+		               FontSize="13" />
+		<Border Name="WaitAdorner"
+		        Background="#80FFFFFF"
+		        IsVisible="{Binding IsDecompiling}">
+			<Grid ColumnDefinitions="*,Auto,*">
+				<StackPanel Grid.Column="1"
+				            VerticalAlignment="Center"
+				            HorizontalAlignment="Center">
+					<TextBlock Name="ProgressTitle"
+					           FontSize="18"
+					           Margin="3"
+					           TextWrapping="Wrap"
+					           HorizontalAlignment="Center"
+					           TextAlignment="Center"
+					           Text="Decompiling…" />
+					<ProgressBar Name="ProgressBar"
+					             IsIndeterminate="True"
+					             Height="16" />
+					<Button HorizontalAlignment="Center"
+					        Margin="3"
+					        Content="Cancel"
+					        Command="{Binding CancelDecompilationCommand}" />
+				</StackPanel>
+			</Grid>
+		</Border>
+	</Grid>
 </UserControl>

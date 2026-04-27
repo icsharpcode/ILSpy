@@ -27,6 +27,7 @@ using AvaloniaEdit.Folding;
 using AvaloniaEdit.Highlighting;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 using ICSharpCode.Decompiler;
 
@@ -68,7 +69,20 @@ namespace ILSpy.TextView
 		[ObservableProperty]
 		private IReadOnlyList<NewFolding>? foldings;
 
+		/// <summary>
+		/// True while a decompilation is in flight. The view shows an indeterminate progress bar
+		/// in the header while this is set.
+		/// </summary>
+		[ObservableProperty]
+		private bool isDecompiling;
+
 		ILSpyTreeNode? currentNode;
+
+		[RelayCommand]
+		void CancelDecompilation()
+		{
+			activeCts?.Cancel();
+		}
 
 		public ILSpyTreeNode? CurrentNode {
 			get => currentNode;
@@ -96,12 +110,14 @@ namespace ILSpy.TextView
 			if (node == null || language == null)
 			{
 				Text = string.Empty;
+				IsDecompiling = false;
 				return;
 			}
 
-			Title = node.Text?.ToString() ?? "(unnamed)";
-			Text = "Decompiling…";
+			var nodeTitle = node.Text?.ToString() ?? "(unnamed)";
+			Title = nodeTitle;
 			SyntaxExtension = language.FileExtension;
+			IsDecompiling = true;
 
 			try
 			{
@@ -136,6 +152,7 @@ namespace ILSpy.TextView
 					HighlightingModel = model;
 					Foldings = collectedFoldings;
 					Text = rendered;
+					IsDecompiling = false;
 				});
 			}
 			catch (OperationCanceledException)
