@@ -20,6 +20,8 @@ using System.ComponentModel;
 using System.Linq;
 
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Threading;
 
 using AvaloniaEdit.Folding;
 using AvaloniaEdit.Highlighting;
@@ -28,12 +30,20 @@ namespace ILSpy.TextView
 {
 	public partial class DecompilerTextView : UserControl
 	{
+		readonly ReferenceElementGenerator referenceElementGenerator;
 		RichTextColorizer? activeColorizer;
 		FoldingManager? activeFoldingManager;
 
 		public DecompilerTextView()
 		{
 			InitializeComponent();
+
+			// One generator lives for the lifetime of the view; we only swap its References
+			// collection per document. The predicate filters out anything that should not be
+			// clickable — references with a null target slip through unconditionally otherwise.
+			referenceElementGenerator = new ReferenceElementGenerator(static segment => segment.Reference != null);
+			referenceElementGenerator.ReferenceClicked += OnReferenceClicked;
+			Editor.TextArea.TextView.ElementGenerators.Add(referenceElementGenerator);
 		}
 
 		protected override void OnDataContextChanged(System.EventArgs e)
@@ -92,7 +102,32 @@ namespace ILSpy.TextView
 				activeFoldingManager.UpdateFoldings(foldings.OrderBy(f => f.StartOffset), -1);
 			}
 
+			referenceElementGenerator.References = model.References;
+			Editor.TextArea.TextView.Redraw();
+
 			Editor.ScrollToHome();
+		}
+
+		void OnReferenceClicked(ReferenceSegment segment)
+		{
+			if (DataContext is not DecompilerTabPageModel model || segment.Reference == null)
+				return;
+
+			// In-document jumps win when the definition is in this same view.
+			if (model.DefinitionLookup is { } lookup)
+			{
+				var definitionPos = lookup.GetDefinitionPosition(segment.Reference);
+				if (definitionPos >= 0)
+				{
+					Editor.TextArea.Caret.Offset = definitionPos;
+					Editor.TextArea.Caret.BringCaretToView();
+					Dispatcher.UIThread.Post(() => Editor.TextArea.Focus());
+					return;
+				}
+			}
+
+			// Otherwise let the host route the reference (assembly-tree navigation, new tab, ...).
+			model.RaiseNavigateRequested(segment);
 		}
 	}
 }

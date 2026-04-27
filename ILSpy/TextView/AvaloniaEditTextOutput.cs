@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Text;
 
+using AvaloniaEdit.Document;
 using AvaloniaEdit.Folding;
 using AvaloniaEdit.Highlighting;
 
@@ -51,6 +52,15 @@ namespace ILSpy.TextView
 
 		/// <summary>Foldings collected during writing — only ones spanning more than one line.</summary>
 		public IReadOnlyList<NewFolding> Foldings => foldings;
+
+		/// <summary>
+		/// Hyperlink ranges and their reference targets. Sorted by start offset; safe to query
+		/// with <see cref="TextSegmentCollection{T}.FindSegmentsContaining"/> after construction.
+		/// </summary>
+		public TextSegmentCollection<ReferenceSegment> References { get; } = new();
+
+		/// <summary>Maps reference targets to their definition offsets in the rendered text.</summary>
+		public DefinitionLookup DefinitionLookup { get; } = new();
 
 		public string Title { get; set; } = string.Empty;
 
@@ -98,17 +108,45 @@ namespace ILSpy.TextView
 
 		public void WriteReference(OpCodeInfo opCode, bool omitSuffix = false)
 		{
-			Write(omitSuffix ? opCode.Name.TrimEnd('.') : opCode.Name);
+			WriteIndentIfNeeded();
+			int start = builder.Length;
+			var name = omitSuffix ? opCode.Name.TrimEnd('.') : opCode.Name;
+			builder.Append(name);
+			References.Add(new ReferenceSegment {
+				StartOffset = start,
+				EndOffset = builder.Length,
+				Reference = opCode,
+			});
 		}
 
 		public void WriteReference(MetadataFile metadata, Handle handle, string text, string protocol = "decompile", bool isDefinition = false)
-			=> Write(text);
+			=> AddReference(text, new EntityReference(metadata, handle, protocol), local: false, isDefinition);
 
-		public void WriteReference(IType type, string text, bool isDefinition = false) => Write(text);
+		public void WriteReference(IType type, string text, bool isDefinition = false)
+			=> AddReference(text, type, local: false, isDefinition);
 
-		public void WriteReference(IMember member, string text, bool isDefinition = false) => Write(text);
+		public void WriteReference(IMember member, string text, bool isDefinition = false)
+			=> AddReference(text, member, local: false, isDefinition);
 
-		public void WriteLocalReference(string text, object reference, bool isDefinition = false) => Write(text);
+		public void WriteLocalReference(string text, object reference, bool isDefinition = false)
+			=> AddReference(text, reference, local: true, isDefinition);
+
+		void AddReference(string text, object reference, bool local, bool isDefinition)
+		{
+			WriteIndentIfNeeded();
+			int start = builder.Length;
+			builder.Append(text);
+			int end = builder.Length;
+			if (isDefinition)
+				DefinitionLookup.AddDefinition(reference, end);
+			References.Add(new ReferenceSegment {
+				StartOffset = start,
+				EndOffset = end,
+				Reference = reference,
+				IsLocal = local,
+				IsDefinition = isDefinition,
+			});
+		}
 
 		public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false, bool isDefinition = false)
 		{

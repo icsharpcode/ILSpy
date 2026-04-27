@@ -61,7 +61,10 @@ namespace ILSpy.Docking
 			factory = new ILSpyDockFactory(assemblyTreeModel, searchPaneModel, analyzerTreeViewModel);
 			Layout = factory.CreateLayout();
 			if (factory.InitialDecompilerTab is { } initialTab)
+			{
 				initialTab.Language = languageService.CurrentLanguage;
+				initialTab.NavigateRequested += OnNavigateRequested;
+			}
 
 			assemblyTreeModel.PropertyChanged += OnAssemblyTreePropertyChanged;
 			languageService.PropertyChanged += OnLanguagePropertyChanged;
@@ -134,6 +137,18 @@ namespace ILSpy.Docking
 					tab.CurrentNode = node;
 				}
 			}
+		}
+
+		void OnNavigateRequested(ReferenceSegment segment)
+		{
+			// Hyperlink click in the decompiler view: resolve the segment's reference to a tree
+			// node and select it. Falls through silently when we don't know how to model the
+			// reference (only types/members/EntityReferences are supported today).
+			if (segment.Reference == null)
+				return;
+			var node = assemblyTreeModel.FindTreeNode(segment.Reference);
+			if (node != null)
+				assemblyTreeModel.SelectedItem = node;
 		}
 
 		void ShowSelectedNode()

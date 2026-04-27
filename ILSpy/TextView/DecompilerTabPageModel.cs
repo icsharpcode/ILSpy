@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 
 using Avalonia.Threading;
 
+using AvaloniaEdit.Document;
 using AvaloniaEdit.Folding;
 using AvaloniaEdit.Highlighting;
 
@@ -75,6 +76,28 @@ namespace ILSpy.TextView
 		/// </summary>
 		[ObservableProperty]
 		private bool isDecompiling;
+
+		/// <summary>
+		/// Hyperlink targets emitted alongside the decompiled text. Cleared between decompiles.
+		/// </summary>
+		[ObservableProperty]
+		private TextSegmentCollection<ReferenceSegment>? references;
+
+		/// <summary>
+		/// Maps reference targets to their definition offsets in <see cref="Text"/>; used to
+		/// jump within the same document.
+		/// </summary>
+		[ObservableProperty]
+		private DefinitionLookup? definitionLookup;
+
+		/// <summary>
+		/// Fired when the user clicks a cross-document reference. The host (DockWorkspace)
+		/// resolves the target on the assembly tree side.
+		/// </summary>
+		public event System.Action<ReferenceSegment>? NavigateRequested;
+
+		internal void RaiseNavigateRequested(ReferenceSegment segment)
+			=> NavigateRequested?.Invoke(segment);
 
 		ILSpyTreeNode? currentNode;
 
@@ -147,11 +170,15 @@ namespace ILSpy.TextView
 				var rendered = output.GetText();
 				var model = output.HighlightingModel;
 				var collectedFoldings = output.Foldings;
+				var collectedReferences = output.References;
+				var collectedLookup = output.DefinitionLookup;
 				await Dispatcher.UIThread.InvokeAsync(() => {
 					Title = nodeTitle;
 					SyntaxExtension = newSyntaxExtension;
 					HighlightingModel = model;
 					Foldings = collectedFoldings;
+					References = collectedReferences;
+					DefinitionLookup = collectedLookup;
 					Text = rendered;
 				});
 			}

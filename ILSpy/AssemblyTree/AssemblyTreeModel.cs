@@ -21,14 +21,19 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Composition;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Runtime.Serialization;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Settings;
 using ICSharpCode.ILSpyX.TreeView;
 
+using ILSpy;
 using ILSpy.Languages;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
@@ -180,6 +185,90 @@ namespace ILSpy.AssemblyTree
 			}
 			path.Reverse();
 			return path.ToArray();
+		}
+
+		/// <summary>
+		/// Finds the tree node corresponding to <paramref name="reference"/> — used by
+		/// hyperlink clicks in the decompiler view to route to the right entity.
+		/// Mirrors <c>ICSharpCode.ILSpy.AssemblyTree.AssemblyTreeModel.FindTreeNode</c> but only
+		/// covers the references the Avalonia tree currently knows how to model.
+		/// </summary>
+		public ILSpyTreeNode? FindTreeNode(object? reference)
+		{
+			if (Root is not AssemblyListTreeNode root)
+				return null;
+
+			switch (reference)
+			{
+				case EntityReference unresolved:
+					var module = unresolved.ResolveAssembly(AssemblyList!);
+					if (module == null)
+						return null;
+					var token = MetadataTokenHelpers.TryAsEntityHandle(MetadataTokens.GetToken(unresolved.Handle));
+					if (token == null)
+						return null;
+					var typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver(), TypeSystemOptions.Default | TypeSystemOptions.Uncached);
+					return FindTreeNode(typeSystem.MainModule.ResolveEntity(token.Value));
+
+				case ITypeDefinition type:
+					return FindTypeNode(root, type);
+
+				case IMember member:
+					return FindMemberNode(root, member);
+
+				default:
+					return null;
+			}
+		}
+
+		static TypeTreeNode? FindTypeNode(AssemblyListTreeNode root, ITypeDefinition type)
+		{
+			var module = type.ParentModule?.MetadataFile;
+			if (module == null)
+				return null;
+			var assembly = root.Children.OfType<AssemblyTreeNode>()
+				.FirstOrDefault(a => a.LoadedAssembly.GetMetadataFileOrNull() == module);
+			if (assembly == null)
+				return null;
+			assembly.EnsureLazyChildren();
+
+			// Walk up the nesting chain so we can drill down through declaring types.
+			var nesting = new System.Collections.Generic.Stack<ITypeDefinition>();
+			for (var current = type; current != null; current = current.DeclaringTypeDefinition)
+				nesting.Push(current);
+
+			// Top-level: find namespace, then the outermost type.
+			var top = nesting.Pop();
+			var ns = assembly.Children.OfType<NamespaceTreeNode>()
+				.FirstOrDefault(n => n.Name == (top.Namespace ?? string.Empty));
+			if (ns == null)
+				return null;
+			ns.EnsureLazyChildren();
+			var typeNode = ns.Children.OfType<TypeTreeNode>()
+				.FirstOrDefault(t => t.Handle == top.MetadataToken);
+			while (typeNode != null && nesting.Count > 0)
+			{
+				typeNode.EnsureLazyChildren();
+				var nested = nesting.Pop();
+				typeNode = typeNode.Children.OfType<TypeTreeNode>()
+					.FirstOrDefault(t => t.Handle == nested.MetadataToken);
+			}
+			return typeNode;
+		}
+
+		static ILSpyTreeNode? FindMemberNode(AssemblyListTreeNode root, IMember member)
+		{
+			var typeNode = member.DeclaringTypeDefinition is { } declaring ? FindTypeNode(root, declaring) : null;
+			if (typeNode == null)
+				return null;
+			typeNode.EnsureLazyChildren();
+			return member switch {
+				IField f => typeNode.Children.OfType<FieldTreeNode>().FirstOrDefault(n => n.FieldDefinition.MetadataToken == f.MetadataToken),
+				IMethod m => typeNode.Children.OfType<MethodTreeNode>().FirstOrDefault(n => n.MethodDefinition.MetadataToken == m.MetadataToken),
+				IProperty p => typeNode.Children.OfType<PropertyTreeNode>().FirstOrDefault(n => n.PropertyDefinition.MetadataToken == p.MetadataToken),
+				IEvent e => typeNode.Children.OfType<EventTreeNode>().FirstOrDefault(n => n.EventDefinition.MetadataToken == e.MetadataToken),
+				_ => null,
+			};
 		}
 
 		static void LoadInitialAssemblies(AssemblyList assemblyList)

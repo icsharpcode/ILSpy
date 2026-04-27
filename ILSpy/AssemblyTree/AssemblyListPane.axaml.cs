@@ -63,9 +63,9 @@ namespace ILSpy.AssemblyTree
 			{
 				if (TreeGrid.SelectedItem != null)
 				{
-					syncingSelection = true;
+					BeginSync();
 					TreeGrid.SelectedItem = null!;
-					syncingSelection = false;
+					EndSync();
 				}
 				return;
 			}
@@ -81,23 +81,38 @@ namespace ILSpy.AssemblyTree
 
 			// Walk top-down: ProDataGrid only materialises children of expanded nodes, so each
 			// ancestor must be expanded before FindNode can locate the next level's wrapper.
+			BeginSync();
 			HierarchicalNode? hNode = null;
 			for (int i = 0; i < path.Count; i++)
 			{
 				hNode = hm.FindNode(path[i]);
 				if (hNode == null)
+				{
+					EndSync();
 					return;
+				}
 				if (i < path.Count - 1 && !hNode.IsExpanded)
 					hm.Expand(hNode);
 			}
 
 			if (ReferenceEquals(TreeGrid.SelectedItem, target))
+			{
+				EndSync();
 				return;
-			syncingSelection = true;
+			}
 			TreeGrid.SelectedItem = target;
-			syncingSelection = false;
 			TreeGrid.ScrollIntoView(target, TreeGrid.Columns[0]);
+			EndSync();
 		}
+
+		void BeginSync() => syncingSelection = true;
+
+		// Hold the guard across one dispatch tick so any deferred SelectionChanged emits the
+		// DataGrid raises in response to our programmatic Expand / SelectedItem / ScrollIntoView
+		// calls don't bounce back into model.SelectedItem and cancel the navigation.
+		void EndSync() => global::Avalonia.Threading.Dispatcher.UIThread.Post(
+			() => syncingSelection = false,
+			global::Avalonia.Threading.DispatcherPriority.Background);
 
 
 		void OnTreeGridDoubleTapped(object? sender, TappedEventArgs e)
