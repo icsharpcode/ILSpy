@@ -20,6 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
+using AvaloniaEdit.Highlighting;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Output;
@@ -72,6 +74,24 @@ namespace ILSpy.Languages
 		{
 			output.WriteLine("// " + comment);
 		}
+
+		/// <summary>
+		/// Builds the hover-tooltip text for a metadata entity. Mirrors
+		/// <c>ICSharpCode.ILSpy.Languages.Language.GetTooltip</c>: a fully-qualified signature
+		/// without a body, suitable for a single line of help text.
+		/// </summary>
+		public virtual string GetTooltip(IEntity entity)
+		{
+			ArgumentNullException.ThrowIfNull(entity);
+			return EntityToString(entity, ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.ShowDeclaringType);
+		}
+
+		/// <summary>
+		/// Rich-text variant of <see cref="GetTooltip(IEntity)"/> — returns the same signature
+		/// with semantic highlighting attached. Languages that don't have a syntax-coloured
+		/// representation fall back to plain text.
+		/// </summary>
+		public virtual RichText GetRichTextTooltip(IEntity entity) => new(GetTooltip(entity));
 
 		// Default Decompile* implementations write a stub comment so we always produce *something*
 		// for symbols whose language doesn't have a meaningful decompilation. Real languages

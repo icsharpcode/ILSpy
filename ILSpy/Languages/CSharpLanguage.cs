@@ -20,8 +20,11 @@ using System;
 using System.Collections.Generic;
 using System.Composition;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
+
+using AvaloniaEdit.Highlighting;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
@@ -71,6 +74,23 @@ namespace ILSpy.Languages
 		}
 
 		public override void WriteCommentLine(ITextOutput output, string comment) => output.WriteLine("// " + comment);
+
+		public override RichText GetRichTextTooltip(IEntity entity)
+		{
+			// Mirrors ICSharpCode.ILSpy.Languages.CSharpLanguage.GetRichTextTooltip: hand the
+			// entity to a CSharpAmbience whose token sink is wrapped in CSharpHighlightingTokenWriter
+			// so we get semantic colours alongside the text. Body and trailing-return-type bits
+			// are stripped — the tooltip is a one-line signature.
+			ArgumentNullException.ThrowIfNull(entity);
+			var flags = ConversionFlags.All & ~(ConversionFlags.ShowBody | ConversionFlags.PlaceReturnTypeAfterParameterList);
+			var output = new StringWriter();
+			var decoratedWriter = new TextWriterTokenWriter(output);
+			var writer = new CSharpHighlightingTokenWriter(TokenWriter.InsertRequiredSpaces(decoratedWriter), locatable: decoratedWriter);
+			if (entity is IMethod m && m.IsLocalFunction)
+				writer.WriteIdentifier(Identifier.Create("(local)"));
+			new CSharpAmbience { ConversionFlags = flags }.ConvertSymbol(entity, writer, FormattingOptionsFactory.CreateAllman());
+			return new RichText(output.ToString(), writer.HighlightingModel);
+		}
 
 		public override void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{

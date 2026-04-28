@@ -19,14 +19,28 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 
 using AvaloniaEdit.Folding;
 using AvaloniaEdit.Highlighting;
+
+using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX;
+
+using ILSpy.Languages;
 
 namespace ILSpy.TextView
 {
@@ -58,6 +72,23 @@ namespace ILSpy.TextView
 			// lifetime of the view; the marks themselves are cleared and rebuilt per click.
 			textMarkerService = new TextMarkerService(Editor.TextArea.TextView);
 			Editor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
+
+			// Hover tooltip — driven by Avalonia's built-in ToolTip system (delay, dismissal,
+			// positioning all handled for us). We just dynamically update ToolTip.Tip on the
+			// inner TextView based on what's under the pointer. AvaloniaEdit's PointerHover is
+			// routed; AddHandler with handledEventsToo=true ensures we still see events that
+			// earlier handlers marked handled.
+			ToolTip.SetPlacement(Editor.TextArea.TextView, PlacementMode.Pointer);
+			Editor.TextArea.TextView.AddHandler(
+				AvaloniaEdit.Rendering.TextView.PointerHoverEvent,
+				OnTextViewPointerHover,
+				RoutingStrategies.Bubble,
+				handledEventsToo: true);
+			Editor.TextArea.TextView.AddHandler(
+				AvaloniaEdit.Rendering.TextView.PointerHoverStoppedEvent,
+				OnTextViewPointerHoverStopped,
+				RoutingStrategies.Bubble,
+				handledEventsToo: true);
 		}
 
 		protected override void OnDataContextChanged(System.EventArgs e)
@@ -175,6 +206,109 @@ namespace ILSpy.TextView
 			foreach (var mark in localReferenceMarks)
 				textMarkerService.Remove(mark);
 			localReferenceMarks.Clear();
+		}
+
+		void OnTextViewPointerHover(object? sender, PointerEventArgs e)
+		{
+			if (DataContext is not DecompilerTabPageModel model || model.References == null)
+				return;
+			var pos = Editor.TextArea.TextView.GetPosition(e.GetPosition(Editor.TextArea.TextView));
+			if (pos == null)
+				return;
+			var offset = Editor.Document.GetOffset(pos.Value.Line, pos.Value.Column);
+			var segment = model.References.FindSegmentsContaining(offset).FirstOrDefault();
+			if (segment?.Reference == null)
+				return;
+
+			var content = BuildHoverContent(model, segment);
+			if (content == null)
+				return;
+			ToolTip.SetTip(Editor.TextArea.TextView, content);
+			ToolTip.SetIsOpen(Editor.TextArea.TextView, true);
+		}
+
+		void OnTextViewPointerHoverStopped(object? sender, PointerEventArgs e)
+		{
+			ToolTip.SetIsOpen(Editor.TextArea.TextView, false);
+			ToolTip.SetTip(Editor.TextArea.TextView, null);
+		}
+
+		Control? BuildHoverContent(DecompilerTabPageModel model, ReferenceSegment segment)
+		{
+			var language = model.Language;
+			var resolved = ResolveEntity(model, segment.Reference);
+			var block = new SelectableTextBlock {
+				FontFamily = new FontFamily("Consolas, Menlo, Monospace"),
+				FontSize = 12,
+				MaxWidth = 600,
+				TextWrapping = TextWrapping.Wrap,
+				Inlines = new InlineCollection(),
+			};
+			switch (resolved)
+			{
+				case IEntity entity when language != null:
+					var rich = language.GetRichTextTooltip(entity);
+					if (rich == null || string.IsNullOrEmpty(rich.Text))
+						return null;
+					AppendRichText(block.Inlines, rich);
+					break;
+				case OpCodeInfo op:
+					block.Inlines.Add(new Run($"{op.Name} (0x{op.Code:x})"));
+					break;
+				default:
+					return null;
+			}
+			return block;
+		}
+
+		// Render a RichText (text + per-section HighlightingColor) into an Avalonia Inlines
+		// collection — one Run per uniformly-coloured span. Mirrors the WPF RichText.ToTextBlock
+		// path but uses Avalonia inlines instead of WPF Runs.
+		static void AppendRichText(InlineCollection inlines, RichText rich)
+		{
+			foreach (var section in rich.GetHighlightedSections(0, rich.Length))
+			{
+				var run = new Run(rich.Text.Substring(section.Offset, section.Length));
+				if (section.Color is { } color)
+				{
+					if (color.Foreground?.GetBrush(null) is { } fg)
+						run.Foreground = fg;
+					if (color.Background?.GetBrush(null) is { } bg)
+						run.Background = bg;
+					if (color.FontWeight is { } weight)
+						run.FontWeight = weight;
+					if (color.FontStyle is { } style)
+						run.FontStyle = style;
+				}
+				inlines.Add(run);
+			}
+		}
+
+		object? ResolveEntity(DecompilerTabPageModel model, object? reference)
+		{
+			switch (reference)
+			{
+				case IEntity entity:
+					return entity;
+				case OpCodeInfo op:
+					return op;
+				case EntityReference unresolved:
+					if (DataContext is not DecompilerTabPageModel m || m.CurrentNode is not { } node)
+						return null;
+					var list = node.AncestorsAndSelf().OfType<TreeNodes.AssemblyListTreeNode>().FirstOrDefault()?.AssemblyList;
+					if (list == null)
+						return null;
+					var resolvedModule = unresolved.ResolveAssembly(list);
+					if (resolvedModule == null)
+						return null;
+					var token = MetadataTokenHelpers.TryAsEntityHandle(MetadataTokens.GetToken(unresolved.Handle));
+					if (token == null)
+						return null;
+					var typeSystem = new DecompilerTypeSystem(resolvedModule, resolvedModule.GetAssemblyResolver(), TypeSystemOptions.Default | TypeSystemOptions.Uncached);
+					return typeSystem.MainModule.ResolveEntity(token.Value);
+				default:
+					return null;
+			}
 		}
 	}
 }
