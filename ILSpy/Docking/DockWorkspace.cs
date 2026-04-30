@@ -21,13 +21,18 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Composition;
 
+using CommunityToolkit.Mvvm.Input;
+
 using Dock.Model.Controls;
 using Dock.Model.Core;
 using Dock.Model.Core.Events;
 
+using ICSharpCode.ILSpyX.TreeView;
+
 using ILSpy.Analyzers;
 using ILSpy.AssemblyTree;
 using ILSpy.Languages;
+using ILSpy.Navigation;
 using ILSpy.Search;
 using ILSpy.TextView;
 using ILSpy.TreeNodes;
@@ -42,8 +47,16 @@ namespace ILSpy.Docking
 		readonly ILSpyDockFactory factory;
 		readonly AssemblyTreeModel assemblyTreeModel;
 		readonly LanguageService languageService;
+		readonly NavigationHistory<SharpTreeNode> history = new();
+		// Set true while a Back/Forward navigation is rewriting AssemblyTreeModel.SelectedItem,
+		// so the SelectedItem change notification doesn't push a fresh entry onto the stack and
+		// undo the navigation we just did.
+		bool suppressHistoryRecording;
 
 		public IFactory Factory => factory;
+
+		public IRelayCommand NavigateBackCommand { get; }
+		public IRelayCommand NavigateForwardCommand { get; }
 
 		public IRootDock Layout { get; }
 
@@ -58,6 +71,8 @@ namespace ILSpy.Docking
 		{
 			this.assemblyTreeModel = assemblyTreeModel;
 			this.languageService = languageService;
+			NavigateBackCommand = new RelayCommand(NavigateBack, () => history.CanNavigateBack);
+			NavigateForwardCommand = new RelayCommand(NavigateForward, () => history.CanNavigateForward);
 			factory = new ILSpyDockFactory(assemblyTreeModel, searchPaneModel, analyzerTreeViewModel);
 			Layout = factory.CreateLayout();
 			if (factory.InitialDecompilerTab is { } initialTab)
@@ -121,7 +136,40 @@ namespace ILSpy.Docking
 		void OnAssemblyTreePropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(AssemblyTreeModel.SelectedItem))
+			{
+				RecordHistory(assemblyTreeModel.SelectedItem);
 				ShowSelectedNode();
+			}
+		}
+
+		void RecordHistory(SharpTreeNode? node)
+		{
+			if (suppressHistoryRecording || node == null)
+				return;
+			history.Record(node);
+			NavigateBackCommand.NotifyCanExecuteChanged();
+			NavigateForwardCommand.NotifyCanExecuteChanged();
+		}
+
+		void NavigateBack() => NavigateHistory(forward: false);
+		void NavigateForward() => NavigateHistory(forward: true);
+
+		void NavigateHistory(bool forward)
+		{
+			if (forward ? !history.CanNavigateForward : !history.CanNavigateBack)
+				return;
+			var target = forward ? history.GoForward() : history.GoBack();
+			suppressHistoryRecording = true;
+			try
+			{
+				assemblyTreeModel.SelectedItem = target;
+			}
+			finally
+			{
+				suppressHistoryRecording = false;
+			}
+			NavigateBackCommand.NotifyCanExecuteChanged();
+			NavigateForwardCommand.NotifyCanExecuteChanged();
 		}
 
 		void OnLanguagePropertyChanged(object? sender, PropertyChangedEventArgs e)

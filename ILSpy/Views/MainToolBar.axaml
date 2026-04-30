@@ -3,11 +3,22 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ILSpy.ViewModels"
+             xmlns:images="using:ILSpy.Images"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="30"
              x:Class="ILSpy.MainToolBar"
              x:DataType="vm:MainWindowViewModel">
 	<StackPanel Orientation="Horizontal" Height="30">
-		<!-- Navigation category (Back/Forward) inserted by MEF (task #10) -->
+		<!-- Navigation: Back / Forward, mirroring WPF ILSpy's toolbar buttons. -->
+		<Button Margin="2,0" Padding="6,0"
+		        ToolTip.Tip="Back (Alt+Left)"
+		        Command="{Binding DockWorkspace.NavigateBackCommand}">
+			<Image Source="{x:Static images:Images.Back}" Width="16" Height="16" />
+		</Button>
+		<Button Margin="0" Padding="6,0"
+		        ToolTip.Tip="Forward (Alt+Right)"
+		        Command="{Binding DockWorkspace.NavigateForwardCommand}">
+			<Image Source="{x:Static images:Images.Forward}" Width="16" Height="16" />
+		</Button>
 		<Separator />
 		<!-- Open category inserted by MEF (task #10) -->
 		<Separator />

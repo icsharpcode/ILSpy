@@ -18,6 +18,13 @@
 		<vm:MainWindowViewModel />
 	</Design.DataContext>
 
+	<Window.KeyBindings>
+		<!-- Browser-style navigation. XButton1/2 (mouse Back/Forward) aren't first-class in
+		     Avalonia 12 yet, so we wire keyboard only for now. -->
+		<KeyBinding Gesture="Alt+Left" Command="{Binding DockWorkspace.NavigateBackCommand}" />
+		<KeyBinding Gesture="Alt+Right" Command="{Binding DockWorkspace.NavigateForwardCommand}" />
+	</Window.KeyBindings>
+
 	<DockPanel>
 		<!-- Main menu -->
 		<local:MainMenu DockPanel.Dock="Top" />
