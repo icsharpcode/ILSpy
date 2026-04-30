@@ -44,6 +44,7 @@ namespace ILSpy
 
 		public override void OnFrameworkInitializationCompleted()
 		{
+			ILSpyTraceListener.Install();
 			GlobalExceptionHandler.Install();
 
 			CommandLineArguments = CommandLineArguments.Create(Environment.GetCommandLineArgs()[1..]);

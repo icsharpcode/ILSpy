@@ -50,6 +50,13 @@ namespace ILSpy.AppEnv
 			Dispatcher.UIThread.UnhandledException += OnDispatcherUnhandled;
 		}
 
+		/// <summary>
+		/// Surfaces <paramref name="exception"/> through the same UI as an unhandled exception.
+		/// Used by <see cref="AssertSuppressor"/> to route <c>Debug.Assert</c> failures to the
+		/// regular exception dialog instead of letting them fail-fast the process.
+		/// </summary>
+		public static void Show(Exception exception) => Report(exception);
+
 		static void OnAppDomainUnhandled(object sender, UnhandledExceptionEventArgs e)
 		{
 			if (e.ExceptionObject is Exception ex)
