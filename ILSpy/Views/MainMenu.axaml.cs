@@ -141,12 +141,15 @@ public partial class MainMenu : UserControl
 							IsEnabled = entry.Metadata?.IsEnabled ?? true,
 						};
 
-						// Wire up the keyboard accelerator if the export declared one. Setting
-						// MenuItem.HotKey both shows the gesture text in the menu and registers
-						// a window-scoped shortcut, which mirrors the WPF host's behaviour where
-						// the binding came from ApplicationCommands.Open etc.
+						// Wire up the keyboard accelerator if the export declared one. HotKey
+						// registers the window-scoped shortcut; InputGesture is what actually
+						// renders the gesture text on the right side of the menu item — both are
+						// needed to mirror the WPF host's "Ctrl+O" appearance + key handling.
 						if (TryParseGesture(entry.Metadata?.InputGestureText, out var gesture))
+						{
 							menuItem.HotKey = gesture;
+							menuItem.InputGesture = gesture;
+						}
 
 						if (command is IProvideParameterBinding parameterBinding)
 							menuItem.Bind(MenuItem.CommandParameterProperty, parameterBinding.ParameterBinding);

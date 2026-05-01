@@ -20,7 +20,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
+using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
+using Avalonia.Input;
+using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
@@ -345,6 +348,27 @@ public class MainWindowTests
 		var manualLoaded = assemblies.Where(a => !a.IsAutoLoaded).ToList();
 		foreach (var asm in manualLoaded)
 			savedFiles.Should().Contain(asm.FileName, "manually loaded assembly {0} must be persisted", asm.FileName);
+	}
+
+	[AvaloniaTest]
+	public async Task Main_Menu_Items_Display_Input_Gestures()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+
+		var menu = window.GetVisualDescendants().OfType<Menu>().First();
+		await Waiters.WaitForAsync(() =>
+			menu.Items.OfType<MenuItem>().Any(m => (string?)m.Tag == nameof(Resources._File))
+				&& menu.Items.OfType<MenuItem>().Single(m => (string?)m.Tag == nameof(Resources._File))
+					.Items.OfType<MenuItem>().Any());
+
+		var fileMenu = menu.Items.OfType<MenuItem>().Single(m => (string?)m.Tag == nameof(Resources._File));
+		var openItem = fileMenu.Items.OfType<MenuItem>()
+			.Single(m => string.Equals(m.Header as string, Resources._Open, System.StringComparison.Ordinal));
+
+		openItem.InputGesture.Should().NotBeNull();
+		openItem.InputGesture!.Should().Be(KeyGesture.Parse("Ctrl+O"));
+		openItem.HotKey.Should().Be(KeyGesture.Parse("Ctrl+O"));
 	}
 
 	[AvaloniaTest]
