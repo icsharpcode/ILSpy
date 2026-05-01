@@ -49,6 +49,7 @@ namespace ILSpy.AssemblyTree
 		readonly SettingsService settingsService;
 		readonly LanguageService languageService;
 		AssemblyListManager? listManager;
+		AssemblyListTreeNode? assemblyListTreeNode;
 
 		[ObservableProperty]
 		[property: IgnoreDataMember]
@@ -124,14 +125,8 @@ namespace ILSpy.AssemblyTree
 			if (listManager == null || string.IsNullOrEmpty(value))
 				return;
 
-			AssemblyList = listManager.LoadList(value);
-
-			if (AssemblyList.GetAssemblies().Length == 0 && value == AssemblyListManager.DefaultListName)
-				LoadInitialAssemblies(AssemblyList);
-
-			Root = new AssemblyListTreeNode(AssemblyList);
-
 			settingsService.SessionSettings.ActiveAssemblyList = value;
+			ShowAssemblyList(value);
 
 			// Restore the previously-selected tree node, if any. Walks the tree by ToString()
 			// matching, materialising lazy children as it goes.
@@ -144,9 +139,31 @@ namespace ILSpy.AssemblyTree
 			}
 		}
 
-		partial void OnSelectedItemChanged(SharpTreeNode? value)
+		partial void OnSelectedItemChanged(SharpTreeNode? oldValue, SharpTreeNode? newValue)
 		{
-			settingsService.SessionSettings.ActiveTreeViewPath = GetPathForNode(value);
+			if (oldValue != null)
+				oldValue.IsSelected = false;
+			if (newValue != null)
+				newValue.IsSelected = true;
+			settingsService.SessionSettings.ActiveTreeViewPath = GetPathForNode(newValue);
+		}
+
+		void ShowAssemblyList(string name)
+		{
+			if (listManager == null)
+				return;
+			var list = listManager.LoadList(name);
+			if (AssemblyList == null || list.ListName != AssemblyList.ListName)
+				ShowAssemblyList(list);
+		}
+
+		void ShowAssemblyList(AssemblyList list)
+		{
+			AssemblyList = list;
+			if (list.GetAssemblies().Length == 0 && list.ListName == AssemblyListManager.DefaultListName)
+				LoadInitialAssemblies(list);
+			assemblyListTreeNode = new AssemblyListTreeNode(list);
+			Root = assemblyListTreeNode;
 		}
 
 		/// <summary>
@@ -187,6 +204,9 @@ namespace ILSpy.AssemblyTree
 			return path.ToArray();
 		}
 
+		internal AssemblyTreeNode? FindAssemblyNode(LoadedAssembly asm)
+			=> assemblyListTreeNode?.FindAssemblyNode(asm);
+
 		/// <summary>
 		/// Finds the tree node corresponding to <paramref name="reference"/> — used by
 		/// hyperlink clicks in the decompiler view to route to the right entity.
@@ -195,7 +215,7 @@ namespace ILSpy.AssemblyTree
 		/// </summary>
 		public ILSpyTreeNode? FindTreeNode(object? reference)
 		{
-			if (Root is not AssemblyListTreeNode root)
+			if (assemblyListTreeNode == null)
 				return null;
 
 			switch (reference)
@@ -211,10 +231,10 @@ namespace ILSpy.AssemblyTree
 					return FindTreeNode(typeSystem.MainModule.ResolveEntity(token.Value));
 
 				case ITypeDefinition type:
-					return FindTypeNode(root, type);
+					return FindTypeNode(assemblyListTreeNode, type);
 
 				case IMember member:
-					return FindMemberNode(root, member);
+					return FindMemberNode(assemblyListTreeNode, member);
 
 				default:
 					return null;
@@ -232,12 +252,10 @@ namespace ILSpy.AssemblyTree
 				return null;
 			assembly.EnsureLazyChildren();
 
-			// Walk up the nesting chain so we can drill down through declaring types.
-			var nesting = new System.Collections.Generic.Stack<ITypeDefinition>();
+			var nesting = new Stack<ITypeDefinition>();
 			for (var current = type; current != null; current = current.DeclaringTypeDefinition)
 				nesting.Push(current);
 
-			// Top-level: find namespace, then the outermost type.
 			var top = nesting.Pop();
 			var ns = assembly.Children.OfType<NamespaceTreeNode>()
 				.FirstOrDefault(n => n.Name == (top.Namespace ?? string.Empty));
@@ -285,9 +303,76 @@ namespace ILSpy.AssemblyTree
 			}
 		}
 
-		public void OpenAssembly(string path)
+		public void SelectNode(SharpTreeNode? node)
 		{
-			AssemblyList?.Open(path);
+			if (node == null)
+				return;
+			SelectedItem = node;
+		}
+
+		public void OpenFiles(string[] fileNames, bool focusNode = true)
+		{
+			ArgumentNullException.ThrowIfNull(fileNames);
+			LoadAssemblies(fileNames, focusNode: focusNode);
+		}
+
+		void LoadAssemblies(IEnumerable<string> fileNames, List<LoadedAssembly>? loadedAssemblies = null, bool focusNode = true)
+		{
+			if (AssemblyList == null)
+				return;
+
+			AssemblyTreeNode? lastNode = null;
+			foreach (var file in fileNames)
+			{
+				var assembly = AssemblyList.OpenAssembly(file);
+				if (loadedAssemblies != null)
+				{
+					loadedAssemblies.Add(assembly);
+					continue;
+				}
+				var node = assemblyListTreeNode?.FindAssemblyNode(assembly);
+				if (node != null && focusNode)
+					lastNode = node;
+			}
+
+			if (focusNode && lastNode != null)
+				SelectNode(lastNode);
+		}
+
+		public void SortAssemblyList()
+			=> AssemblyList?.Sort(AssemblyComparer.Instance);
+
+		sealed class AssemblyComparer : IComparer<LoadedAssembly>
+		{
+			public static readonly AssemblyComparer Instance = new();
+			public int Compare(LoadedAssembly? x, LoadedAssembly? y)
+				=> string.Compare(x?.ShortName, y?.ShortName, StringComparison.CurrentCulture);
+		}
+
+		public void CollapseAll() => CollapseChildren(Root);
+
+		static void CollapseChildren(SharpTreeNode? node)
+		{
+			if (node is null)
+				return;
+			foreach (var child in node.Children)
+			{
+				if (!child.IsExpanded)
+					continue;
+				CollapseChildren(child);
+				child.IsExpanded = false;
+			}
+		}
+
+		public void Refresh() => RefreshInternal();
+
+		void RefreshInternal()
+		{
+			if (AssemblyList == null || listManager == null)
+				return;
+			var path = GetPathForNode(SelectedItem);
+			ShowAssemblyList(listManager.LoadList(AssemblyList.ListName));
+			SelectNode(FindNodeByPath(path, returnBestMatch: true));
 		}
 	}
 }

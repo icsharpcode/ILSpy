@@ -55,5 +55,8 @@ namespace ILSpy.TreeNodes
 		}
 
 		public override object Text => assemblyList.ListName;
+
+		public AssemblyTreeNode? FindAssemblyNode(LoadedAssembly asm)
+			=> Children.OfType<AssemblyTreeNode>().FirstOrDefault(n => n.LoadedAssembly == asm);
 	}
 }

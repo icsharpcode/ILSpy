@@ -16,12 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
 using System.Composition;
 
 using ICSharpCode.ILSpy.Properties;
-using ICSharpCode.ILSpyX;
 
 using ILSpy.AssemblyTree;
 
@@ -32,22 +29,15 @@ namespace ILSpy.Commands
 	[method: ImportingConstructor]
 	sealed class SortAssemblyListCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
 	{
-		public override void Execute(object? parameter)
-			=> assemblyTreeModel.AssemblyList?.Sort(AssemblyNameComparer.Instance);
-
-		sealed class AssemblyNameComparer : IComparer<LoadedAssembly>
-		{
-			public static readonly AssemblyNameComparer Instance = new();
-			public int Compare(LoadedAssembly? x, LoadedAssembly? y)
-				=> string.Compare(x?.ShortName, y?.ShortName, StringComparison.CurrentCulture);
-		}
+		public override void Execute(object? parameter) => assemblyTreeModel.SortAssemblyList();
 	}
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources._CollapseTreeNodes), MenuIcon = "Images/CollapseAll", MenuCategory = nameof(Resources.View))]
 	[Shared]
-	sealed class CollapseAllCommand : SimpleCommand
+	[method: ImportingConstructor]
+	sealed class CollapseAllCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
 	{
-		public override void Execute(object? parameter) => NotImplementedDialog.Show(Resources._CollapseTreeNodes);
+		public override void Execute(object? parameter) => assemblyTreeModel.CollapseAll();
 	}
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources._Options), MenuCategory = nameof(Resources.Options), MenuOrder = 999)]

@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Generic;
 using System.Composition;
 using System.Linq;
 using System.Threading.Tasks;
@@ -38,6 +39,18 @@ namespace ILSpy.Commands
 	{
 		public override async void Execute(object? parameter)
 		{
+			// Tests / scripted callers can pass paths directly and bypass the file picker.
+			if (parameter is string singlePath)
+			{
+				assemblyTreeModel.OpenFiles(new[] { singlePath });
+				return;
+			}
+			if (parameter is IEnumerable<string> paths)
+			{
+				assemblyTreeModel.OpenFiles(paths.ToArray());
+				return;
+			}
+
 			var owner = (global::Avalonia.Application.Current?.ApplicationLifetime
 				as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
 			if (owner == null)
@@ -56,11 +69,12 @@ namespace ILSpy.Commands
 				},
 			});
 
-			foreach (var f in files)
-			{
-				if (f.TryGetLocalPath() is { } path)
-					assemblyTreeModel.OpenAssembly(path);
-			}
+			var picked = files
+				.Select(f => f.TryGetLocalPath())
+				.Where(p => !string.IsNullOrEmpty(p))
+				.ToArray()!;
+			if (picked.Length > 0)
+				assemblyTreeModel.OpenFiles(picked!);
 		}
 	}
 
@@ -80,9 +94,10 @@ namespace ILSpy.Commands
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources._Reload), MenuIcon = "Images/Refresh", MenuCategory = nameof(Resources.Open), MenuOrder = 2, InputGestureText = "F5")]
 	[Shared]
-	sealed class RefreshCommand : SimpleCommand
+	[method: ImportingConstructor]
+	sealed class RefreshCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
 	{
-		public override void Execute(object? parameter) => NotImplementedDialog.Show(Resources._Reload);
+		public override void Execute(object? parameter) => assemblyTreeModel.Refresh();
 	}
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile), MenuCategory = nameof(Resources.Open), MenuOrder = 2.5)]
