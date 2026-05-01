@@ -52,7 +52,10 @@ namespace ILSpy.TextView
 					? StandardCursorType.Arrow
 					: StandardCursorType.Hand);
 			}
-			e.Handled = true;
+			// Do NOT set e.Handled = true — AvaloniaEdit's TextView.OnPointerMoved invokes
+			// OnQueryCursor with the live PointerEventArgs, and marking it handled there
+			// suppresses PointerHoverLogic's tracking of pointer position over reference
+			// segments. Without this, hover events fire with stale args from outside the segment.
 		}
 
 		protected override void OnPointerPressed(PointerPressedEventArgs e)
