@@ -18,6 +18,7 @@
 
 using System.Linq;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 using Avalonia.Headless.NUnit;
 
@@ -25,6 +26,7 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.Properties;
 
+using ILSpy;
 using ILSpy.AppEnv;
 using ILSpy.Commands;
 using ILSpy.TreeNodes;
@@ -183,6 +185,62 @@ public class MainWindowTests
 			var node = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(auto.ShortName);
 			node.IsAutoLoaded.Should().BeTrue();
 		}
+	}
+
+	[AvaloniaTest]
+	public async Task Auto_Loaded_Assemblies_Are_Not_Persisted()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var newAsmPath = typeof(System.Net.Http.HttpClient).Assembly.Location;
+		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
+		var openCommand = registry.Commands
+			.Single(c => c.Metadata.Header == nameof(Resources._Open))
+			.CreateExport().Value;
+		openCommand.Execute(newAsmPath);
+
+		await Waiters.WaitForAsync(() =>
+			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a =>
+				string.Equals(a.FileName, newAsmPath, System.StringComparison.OrdinalIgnoreCase)));
+
+		var loaded = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
+			.First(a => string.Equals(a.FileName, newAsmPath, System.StringComparison.OrdinalIgnoreCase));
+		await loaded.GetLoadResultAsync();
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			loaded.ShortName, "System.Net.Http", "System.Net.Http.HttpClient");
+		typeNode.EnsureLazyChildren();
+		var methodNode = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "CancelPendingRequests");
+
+		vm.AssemblyTreeModel.SelectedItem = methodNode;
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		await Waiters.WaitForAsync(() =>
+			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a => a.IsAutoLoaded));
+
+		var settingsService = AppComposition.Current.GetExport<SettingsService>();
+		var manager = settingsService.AssemblyListManager;
+		manager.SaveList(vm.AssemblyTreeModel.AssemblyList!);
+
+		var settingsPath = ICSharpCode.ILSpyX.Settings.ILSpySettings.SettingsFilePathProvider!();
+		var doc = XDocument.Load(settingsPath);
+		var savedFiles = doc.Descendants("Assembly")
+			.Select(e => e.Value)
+			.ToHashSet(System.StringComparer.OrdinalIgnoreCase);
+
+		var assemblies = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies();
+		var autoLoaded = assemblies.Where(a => a.IsAutoLoaded).ToList();
+		autoLoaded.Should().NotBeEmpty();
+		foreach (var asm in autoLoaded)
+			savedFiles.Should().NotContain(asm.FileName, "auto-loaded assembly {0} must not be persisted", asm.FileName);
+
+		var manualLoaded = assemblies.Where(a => !a.IsAutoLoaded).ToList();
+		foreach (var asm in manualLoaded)
+			savedFiles.Should().Contain(asm.FileName, "manually loaded assembly {0} must be persisted", asm.FileName);
 	}
 
 	[AvaloniaTest]
