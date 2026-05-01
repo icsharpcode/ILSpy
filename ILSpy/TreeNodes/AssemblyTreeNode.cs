@@ -67,12 +67,13 @@ namespace ILSpy.TreeNodes
 			{
 				loadError = $"Failed to load '{assembly.FileName}':\n{ex.GetBaseException().Message}";
 			}
+			RaisePropertyChanged(nameof(Text));
 			RaisePropertyChanged(nameof(Icon));
 			RaisePropertyChanged(nameof(ToolTip));
 			RaisePropertyChanged(nameof(ShowExpander));
 		}
 
-		public override object Text => assembly.ShortName;
+		public override object Text => assembly.Text;
 
 		// ToString is the stable identity used by SessionSettings.ActiveTreeViewPath — must not
 		// depend on the active language. The full file path uniquely identifies the assembly.
