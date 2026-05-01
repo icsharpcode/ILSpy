@@ -66,6 +66,30 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
+	public async Task Dot_Resources_File_Resolves_To_ResourcesFileTreeNode()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
+		assemblyNode.EnsureLazyChildren();
+		var resources = assemblyNode.Children.OfType<ResourceListTreeNode>().Single();
+		resources.EnsureLazyChildren();
+
+		var resourceFileNode = resources.Children.OfType<ResourcesFileTreeNode>().FirstOrDefault();
+		((object?)resourceFileNode).Should().NotBeNull(
+			"CoreLib must ship at least one embedded .resources file");
+		resourceFileNode!.Resource.Name.Should().EndWith(".resources");
+
+		resourceFileNode.EnsureLazyChildren();
+		(resourceFileNode.Children.Count > 0 || resourceFileNode.StringTableEntries.Count > 0)
+			.Should().BeTrue("a .resources file must surface either inner ResourceEntryNode children or string-table entries");
+	}
+
+	[AvaloniaTest]
 	public async Task Assembly_Node_Has_References_Folder_Child()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();

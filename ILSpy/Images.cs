@@ -80,6 +80,7 @@ namespace ILSpy.Images
 		public static readonly IImage FolderClosed = LoadSvg(nameof(FolderClosed));
 		public static readonly IImage FolderOpen = LoadSvg(nameof(FolderOpen));
 		public static readonly IImage Resource = LoadSvg(nameof(Resource));
+		public static readonly IImage ResourceResourcesFile = LoadSvg(nameof(ResourceResourcesFile));
 
 		// Types
 		public static readonly IImage Class = LoadSvg(nameof(Class));

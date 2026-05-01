@@ -17,46 +17,43 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.IO;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.IL;
-using ICSharpCode.Decompiler.Metadata;
 
 using ILSpy.Languages;
 
 namespace ILSpy.TreeNodes
 {
 	/// <summary>
-	/// Default resource entry node — used when no specialised handler (image, XAML, .resources
-	/// file, …) is registered for a given resource. The Avalonia port currently always falls
-	/// back to this plain node since the typed handlers are not yet ported.
+	/// One entry inside a <see cref="ResourcesFileTreeNode"/>'s <c>.resources</c> file —
+	/// a key plus an opener for the underlying byte payload.
 	/// </summary>
-	public class ResourceTreeNode : ILSpyTreeNode
+	public class ResourceEntryNode : ILSpyTreeNode
 	{
-		public ResourceTreeNode(Resource r)
+		readonly string key;
+		readonly Func<Stream> openStream;
+
+		public ResourceEntryNode(string key, Func<Stream> openStream)
 		{
-			Resource = r ?? throw new ArgumentNullException(nameof(r));
+			this.key = key ?? throw new ArgumentNullException(nameof(key));
+			this.openStream = openStream ?? throw new ArgumentNullException(nameof(openStream));
 		}
 
-		public Resource Resource { get; }
-
-		public override object Text => ILAmbience.EscapeName(Resource.Name);
+		public override object Text => ILAmbience.EscapeName(key);
 
 		public override object Icon => Images.Images.Resource;
 
+		protected Stream OpenStream() => openStream();
+
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			var sizeInBytes = Resource.TryGetLength();
-			var sizeInBytesText = sizeInBytes == null ? "" : ", " + sizeInBytes + " bytes";
-			language.WriteCommentLine(output, $"{Resource.Name} ({Resource.ResourceType}, {Resource.Attributes}{sizeInBytesText})");
+			using var data = OpenStream();
+			language.WriteCommentLine(output, $"{key} = {data.Length} bytes");
 		}
 
-		public static ILSpyTreeNode Create(Resource resource)
-		{
-			ArgumentNullException.ThrowIfNull(resource);
-			if (resource.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
-				return new ResourcesFileTreeNode(resource);
-			return new ResourceTreeNode(resource);
-		}
+		public static ILSpyTreeNode Create(string name, byte[] data)
+			=> new ResourceEntryNode(name, () => new MemoryStream(data));
 	}
 }
