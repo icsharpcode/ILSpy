@@ -119,6 +119,25 @@ public class MainWindowTests
 	}
 
 	[AvaloniaTest]
+	public async Task Assembly_Node_Has_References_Folder_Child()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
+		assemblyNode.EnsureLazyChildren();
+
+		var refFolder = assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single();
+		refFolder.Text.Should().Be(Resources.References);
+
+		refFolder.EnsureLazyChildren();
+		refFolder.Children.Should().NotBeEmpty();
+		refFolder.Children.Should().AllBeAssignableTo<AssemblyReferenceTreeNode>();
+	}
+
+	[AvaloniaTest]
 	public async Task Selecting_Type_Node_Decompiles_Type_Definition()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();

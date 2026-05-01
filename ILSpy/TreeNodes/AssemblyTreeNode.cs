@@ -173,6 +173,8 @@ namespace ILSpy.TreeNodes
 				return;
 			}
 
+			Children.Add(new ReferenceFolderTreeNode(module, this));
+
 			var metadata = module.Metadata;
 			var namespaces = metadata.TypeDefinitions
 				.Where(t => metadata.GetTypeDefinition(t).GetDeclaringType().IsNil)
