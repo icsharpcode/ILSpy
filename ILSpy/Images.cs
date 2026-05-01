@@ -61,6 +61,7 @@ namespace ILSpy.Images
 		public static readonly IImage Assembly = LoadSvg(nameof(Assembly));
 		public static readonly IImage AssemblyLoading = LoadSvg(nameof(AssemblyLoading));
 		public static readonly IImage AssemblyWarning = LoadSvg(nameof(AssemblyWarning));
+		public static readonly IImage Warning = LoadSvg(nameof(Warning));
 		public static readonly IImage FindAssembly = LoadSvg(nameof(FindAssembly));
 		public static readonly IImage Library = LoadSvg(nameof(Library));
 		public static readonly IImage NuGet = LoadPng(nameof(NuGet));

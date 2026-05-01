@@ -32,6 +32,16 @@ namespace ILSpy
 		public DecompilerSettings DecompilerSettings { get; }
 		public CancellationToken CancellationToken { get; set; }
 
+		/// <summary>Mirrors WPF: full module decompilation rather than just the selected member.</summary>
+		public bool FullDecompilation { get; set; }
+
+		/// <summary>Mirrors WPF: target directory for project export. Always null in the
+		/// Avalonia host today (no save dialog wired up); kept for signature parity.</summary>
+		public string? SaveAsProjectDirectory { get; set; }
+
+		/// <summary>Mirrors WPF: escape invalid C# identifiers so the output compiles.</summary>
+		public bool EscapeInvalidIdentifiers { get; set; }
+
 		public DecompilationOptions(DecompilerSettings settings)
 		{
 			DecompilerSettings = settings;

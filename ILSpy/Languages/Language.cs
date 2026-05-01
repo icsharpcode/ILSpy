@@ -19,13 +19,17 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection.PortableExecutable;
 
 using AvaloniaEdit.Highlighting;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Output;
+using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX;
 
 namespace ILSpy.Languages
 {
@@ -40,9 +44,6 @@ namespace ILSpy.Languages
 
 		public abstract string FileExtension { get; }
 
-		/// <summary>
-		/// Pretty-prints a type for tree nodes / search results.
-		/// </summary>
 		public virtual string TypeToString(IType type, ConversionFlags conversionFlags = ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames)
 		{
 			ArgumentNullException.ThrowIfNull(type);
@@ -50,9 +51,6 @@ namespace ILSpy.Languages
 			return ambience.ConvertType(type);
 		}
 
-		/// <summary>
-		/// Pretty-prints an entity (method/field/property/event signature) for tree nodes.
-		/// </summary>
 		public virtual string EntityToString(IEntity entity, ConversionFlags conversionFlags)
 		{
 			ArgumentNullException.ThrowIfNull(entity);
@@ -67,35 +65,18 @@ namespace ILSpy.Languages
 			return ambience.ConvertSymbol(entity);
 		}
 
-		/// <summary>
-		/// Writes <paramref name="comment"/> as a single-line comment in this language's syntax.
-		/// </summary>
 		public virtual void WriteCommentLine(ITextOutput output, string comment)
 		{
 			output.WriteLine("// " + comment);
 		}
 
-		/// <summary>
-		/// Builds the hover-tooltip text for a metadata entity. Mirrors
-		/// <c>ICSharpCode.ILSpy.Languages.Language.GetTooltip</c>: a fully-qualified signature
-		/// without a body, suitable for a single line of help text.
-		/// </summary>
 		public virtual string GetTooltip(IEntity entity)
 		{
 			ArgumentNullException.ThrowIfNull(entity);
 			return EntityToString(entity, ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.ShowDeclaringType);
 		}
 
-		/// <summary>
-		/// Rich-text variant of <see cref="GetTooltip(IEntity)"/> — returns the same signature
-		/// with semantic highlighting attached. Languages that don't have a syntax-coloured
-		/// representation fall back to plain text.
-		/// </summary>
 		public virtual RichText GetRichTextTooltip(IEntity entity) => new(GetTooltip(entity));
-
-		// Default Decompile* implementations write a stub comment so we always produce *something*
-		// for symbols whose language doesn't have a meaningful decompilation. Real languages
-		// (CSharpLanguage, eventually ILLanguage) override these.
 
 		public virtual void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
@@ -131,6 +112,96 @@ namespace ILSpy.Languages
 			WriteCommentLine(output, nameSpace);
 		}
 
+		public virtual ProjectId? DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
+		{
+			WriteCommentLine(output, assembly.FileName);
+			var asm = assembly.GetMetadataFileOrNull();
+			if (asm == null)
+				return null;
+			if (options.FullDecompilation && options.SaveAsProjectDirectory != null)
+			{
+				throw new NotSupportedException($"Language '{Name}' does not support exporting assemblies as projects!");
+			}
+			var metadata = asm.Metadata;
+			if (metadata.IsAssembly)
+			{
+				var name = metadata.GetAssemblyDefinition();
+				if ((name.Flags & System.Reflection.AssemblyFlags.WindowsRuntime) != 0)
+				{
+					WriteCommentLine(output, metadata.GetString(name.Name) + " [WinRT]");
+				}
+				else if (metadata.TryGetFullAssemblyName(out string? assemblyName))
+				{
+					WriteCommentLine(output, assemblyName);
+				}
+				else
+				{
+					WriteCommentLine(output, "ERR: Could not read assembly name");
+				}
+			}
+			else
+			{
+				WriteCommentLine(output, metadata.GetString(metadata.GetModuleDefinition().Name));
+			}
+			return null;
+		}
+
 		public override string ToString() => Name;
+
+		static readonly IReadOnlyDictionary<Machine, string> osMachineLookup = new Dictionary<Machine, string>
+		{
+			{ (Machine)0x4644, "MacOS" },
+			{ (Machine)0x7b79, "Linux" },
+			{ (Machine)0xadc4, "FreeBSD" },
+			{ (Machine)0x1993, "NetBSD" },
+			{ (Machine)0x1992, "Sun" },
+		};
+
+		public static string GetPlatformDisplayName(PEFile module)
+		{
+			var headers = module.Reader.PEHeaders;
+			var architecture = headers.CoffHeader.Machine;
+			var characteristics = headers.CoffHeader.Characteristics;
+			var corflags = headers.CorHeader!.Flags;
+
+			var modifier = string.Empty;
+
+			if (!Enum.IsDefined(architecture))
+			{
+				foreach (var (osEnum, osText) in osMachineLookup)
+				{
+					var candidate = architecture ^ osEnum;
+					if (Enum.IsDefined(candidate))
+					{
+						modifier = osText + " ";
+						architecture = candidate;
+						break;
+					}
+				}
+			}
+
+			switch (architecture)
+			{
+				case Machine.I386:
+					if ((corflags & CorFlags.Prefers32Bit) != 0)
+						return modifier + "AnyCPU (32-bit preferred)";
+					if ((corflags & CorFlags.Requires32Bit) != 0)
+						return modifier + "x86";
+					if ((corflags & CorFlags.ILOnly) == 0 && (characteristics & Characteristics.Bit32Machine) != 0)
+						return modifier + "x86";
+					return modifier + "AnyCPU (64-bit preferred)";
+				case Machine.Amd64:
+					return modifier + "x64";
+				case Machine.IA64:
+					return modifier + "Itanium";
+				default:
+					return architecture.ToString();
+			}
+		}
+
+		public static string GetRuntimeDisplayName(MetadataFile module)
+		{
+			return module.Metadata.MetadataVersion;
+		}
 	}
 }
