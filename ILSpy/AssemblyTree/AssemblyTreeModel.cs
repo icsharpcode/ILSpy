@@ -30,7 +30,6 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
-using ICSharpCode.ILSpyX.Settings;
 using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy;
@@ -98,8 +97,7 @@ namespace ILSpy.AssemblyTree
 
 		public void Initialize()
 		{
-			var settings = ILSpySettings.Load();
-			listManager = new AssemblyListManager(settings);
+			listManager = settingsService.AssemblyListManager;
 			listManager.CreateDefaultAssemblyLists();
 
 			SyncListNames();

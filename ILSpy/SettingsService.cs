@@ -18,6 +18,7 @@
 
 using System.Composition;
 
+using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Settings;
 
 namespace ILSpy
@@ -31,6 +32,9 @@ namespace ILSpy
 		}
 
 		public SessionSettings SessionSettings => GetSettings<SessionSettings>();
+
+		AssemblyListManager? assemblyListManager;
+		public AssemblyListManager AssemblyListManager => assemblyListManager ??= new(SpySettings);
 
 		public void Save()
 		{
