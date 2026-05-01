@@ -138,6 +138,28 @@ public class MainWindowTests
 	}
 
 	[AvaloniaTest]
+	public async Task Selecting_References_Folder_Decompiles_References_Listing()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
+		assemblyNode.EnsureLazyChildren();
+		var refFolder = assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single();
+
+		vm.AssemblyTreeModel.SelectedItem = refFolder;
+		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		tab.Text.Should().Contain("Detected TargetFramework-Id:");
+		tab.Text.Should().Contain("Detected RuntimePack:");
+		tab.Text.Should().Contain("Referenced assemblies (in metadata order):");
+		tab.Text.Should().Contain("System.Runtime");
+		tab.Text.Should().Contain("Assembly load log including transitive references:");
+	}
+
+	[AvaloniaTest]
 	public async Task Selecting_Type_Node_Decompiles_Type_Definition()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();

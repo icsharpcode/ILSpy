@@ -18,8 +18,14 @@
 
 using System;
 
+using AvaloniaEdit.Highlighting;
+
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
+
+using ILSpy.Languages;
+using ILSpy.TextView;
 
 namespace ILSpy.TreeNodes
 {
@@ -44,5 +50,60 @@ namespace ILSpy.TreeNodes
 		public override object Text => ILAmbience.EscapeName(reference.Name);
 
 		public override object Icon => Images.Images.Assembly;
+
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		{
+			var loaded = parentAssembly.LoadedAssembly.LoadedAssemblyReferencesInfo.TryGetInfo(reference.FullName, out var info);
+			if (reference.IsWindowsRuntime)
+				output.WriteLine(reference.FullName + " [WinRT]" + (!loaded ? " (unresolved)" : ""));
+			else
+				output.WriteLine(reference.FullName + (!loaded ? " (unresolved)" : ""));
+			if (loaded)
+			{
+				output.Indent();
+				output.WriteLine("Assembly reference loading information:");
+				if (info!.HasErrors)
+					output.WriteLine("There were some problems during assembly reference load, see below for more information!");
+				PrintAssemblyLoadLogMessages(output, info);
+				output.Unindent();
+				output.WriteLine();
+			}
+		}
+
+		internal static void PrintAssemblyLoadLogMessages(ITextOutput output, UnresolvedAssemblyNameReference asm)
+		{
+			var smartOutput = output as ISmartTextOutput;
+
+			foreach (var item in asm.Messages)
+			{
+				switch (item.Item1)
+				{
+					case MessageKind.Error:
+						smartOutput?.BeginSpan(ErrorColor);
+						output.Write("Error: ");
+						smartOutput?.EndSpan();
+						break;
+					case MessageKind.Warning:
+						smartOutput?.BeginSpan(WarningColor);
+						output.Write("Warning: ");
+						smartOutput?.EndSpan();
+						break;
+					default:
+						output.Write(item.Item1 + ": ");
+						break;
+				}
+				output.WriteLine(item.Item2);
+			}
+		}
+
+		static readonly HighlightingColor ErrorColor = new() {
+			Foreground = new SimpleHighlightingBrush(global::Avalonia.Media.Colors.Red),
+			FontWeight = global::Avalonia.Media.FontWeight.Bold,
+		};
+
+		static readonly HighlightingColor WarningColor = new() {
+			Foreground = new SimpleHighlightingBrush(global::Avalonia.Media.Colors.Goldenrod),
+			FontWeight = global::Avalonia.Media.FontWeight.Bold,
+		};
 	}
 }

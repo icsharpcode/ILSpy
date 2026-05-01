@@ -18,8 +18,13 @@
 
 using System.Linq;
 
+using Avalonia.Threading;
+
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Properties;
+
+using ILSpy.Languages;
 
 namespace ILSpy.TreeNodes
 {
@@ -47,6 +52,34 @@ namespace ILSpy.TreeNodes
 		{
 			foreach (var r in module.AssemblyReferences.OrderBy(r => r.Name))
 				Children.Add(new AssemblyReferenceTreeNode(r, parentAssembly));
+		}
+
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		{
+			var targetFramework = parentAssembly.LoadedAssembly.GetTargetFrameworkIdAsync().GetAwaiter().GetResult();
+			var runtimePack = parentAssembly.LoadedAssembly.GetRuntimePackAsync().GetAwaiter().GetResult();
+			output.WriteLine($"Detected TargetFramework-Id: {targetFramework}");
+			output.WriteLine($"Detected RuntimePack: {runtimePack}");
+
+			// Children realise lazily on the UI thread; we may run from a background decompile.
+			Dispatcher.UIThread.Invoke(EnsureLazyChildren);
+			output.WriteLine();
+			output.WriteLine("Referenced assemblies (in metadata order):");
+			foreach (var node in Children.OfType<ILSpyTreeNode>())
+				node.Decompile(language, output, options);
+
+			output.WriteLine();
+			output.WriteLine();
+			output.WriteLine("Assembly load log including transitive references:");
+			var info = parentAssembly.LoadedAssembly.LoadedAssemblyReferencesInfo;
+			foreach (var asm in info.Entries)
+			{
+				output.WriteLine(asm.FullName);
+				output.Indent();
+				AssemblyReferenceTreeNode.PrintAssemblyLoadLogMessages(output, asm);
+				output.Unindent();
+				output.WriteLine();
+			}
 		}
 	}
 }
