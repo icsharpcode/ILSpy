@@ -26,8 +26,11 @@ using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Media;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX;
+
+using ILSpy.Languages;
 
 namespace ILSpy.TreeNodes
 {
@@ -187,6 +190,81 @@ namespace ILSpy.TreeNodes
 
 			foreach (var t in globalTypes)
 				Children.Add(new TypeTreeNode(t, module));
+		}
+
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		{
+			void HandleException(Exception ex, string message)
+			{
+				language.WriteCommentLine(output, message);
+				output.WriteLine();
+				output.MarkFoldStart("Exception details", true);
+				output.Write(ex.ToString());
+				output.MarkFoldEnd();
+			}
+
+			try
+			{
+				var loadResult = assembly.GetLoadResultAsync().GetAwaiter().GetResult();
+				if (loadResult.MetadataFile != null)
+				{
+					switch (loadResult.MetadataFile.Kind)
+					{
+						case MetadataFile.MetadataFileKind.ProgramDebugDatabase:
+						case MetadataFile.MetadataFileKind.Metadata:
+							output.WriteLine("// " + assembly.FileName);
+							break;
+						default:
+							language.DecompileAssembly(assembly, output, options);
+							break;
+					}
+				}
+				else if (loadResult.Package != null)
+				{
+					output.WriteLine("// " + assembly.FileName);
+					DecompilePackage(loadResult.Package, output);
+				}
+				else if (loadResult.FileLoadException != null)
+				{
+					HandleException(loadResult.FileLoadException, loadResult.FileLoadException.Message);
+				}
+			}
+			catch (BadImageFormatException badImage)
+			{
+				HandleException(badImage, "This file does not contain a managed assembly.");
+			}
+			catch (FileNotFoundException fileNotFound) when (options.SaveAsProjectDirectory == null)
+			{
+				HandleException(fileNotFound, "The file was not found.");
+			}
+			catch (DirectoryNotFoundException dirNotFound) when (options.SaveAsProjectDirectory == null)
+			{
+				HandleException(dirNotFound, "The directory was not found.");
+			}
+			catch (MetadataFileNotSupportedException notSupported)
+			{
+				HandleException(notSupported, notSupported.Message);
+			}
+		}
+
+		static void DecompilePackage(LoadedPackage package, ITextOutput output)
+		{
+			switch (package.Kind)
+			{
+				case LoadedPackage.PackageKind.Zip:
+					output.WriteLine("// File format: .zip file");
+					break;
+				case LoadedPackage.PackageKind.Bundle:
+					var header = package.BundleHeader;
+					output.WriteLine($"// File format: .NET bundle {header.MajorVersion}.{header.MinorVersion}");
+					break;
+			}
+			output.WriteLine();
+			output.WriteLine("Entries:");
+			foreach (var entry in package.Entries)
+			{
+				output.WriteLine($" {entry.Name} ({entry.TryGetLength()} bytes)");
+			}
 		}
 
 		static Run BoldRun(string text) => new(text) { FontWeight = FontWeight.Bold };
