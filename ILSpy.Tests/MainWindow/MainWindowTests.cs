@@ -16,11 +16,16 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Linq;
+using System.Threading.Tasks;
+
 using Avalonia.Headless.NUnit;
+using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
 using ILSpy.AppEnv;
+using ILSpy.AssemblyTree;
 using ILSpy.ViewModels;
 using ILSpy.Views;
 
@@ -40,5 +45,19 @@ public class MainWindowTests
 		window.IsVisible.Should().BeTrue();
 		window.Title.Should().Be("ILSpy");
 		window.DataContext.Should().BeOfType<MainWindowViewModel>();
+	}
+
+	[AvaloniaTest]
+	public async Task Assembly_Tree_Pane_Is_Visible_In_Layout()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+
+		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<AssemblyListPane>().Any());
+		var pane = window.GetVisualDescendants().OfType<AssemblyListPane>().Single();
+
+		pane.IsVisible.Should().BeTrue();
+		pane.Bounds.Width.Should().BeGreaterThan(0);
+		pane.Bounds.Height.Should().BeGreaterThan(0);
 	}
 }
