@@ -18,32 +18,48 @@
 
 using System;
 
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.Media;
 
-using AvaloniaEdit.Highlighting;
+using ILSpy.TextView;
 
-using ICSharpCode.Decompiler;
-
-namespace ILSpy.TextView
+namespace ILSpy
 {
-	/// <summary>
-	/// Adds Avalonia-specific output features to <see cref="ITextOutput"/>: span-based
-	/// highlighting + inline UI elements rendered by <see cref="UIElementGenerator"/>.
-	/// </summary>
-	public interface ISmartTextOutput : ITextOutput
+	public static class SmartTextOutputExtensions
 	{
-		/// <summary>
-		/// Inserts an interactive UI element at the current position. The factory runs lazily
-		/// on the UI thread when the element generator first realises the row.
-		/// </summary>
-		void AddUIElement(Func<Control> element);
+		public static void AddButton(this ISmartTextOutput output, IImage? icon, string text, EventHandler<RoutedEventArgs> click)
+		{
+			ArgumentNullException.ThrowIfNull(output);
+			ArgumentNullException.ThrowIfNull(click);
 
-		void BeginSpan(HighlightingColor highlightingColor);
-		void EndSpan();
-
-		/// <summary>
-		/// Title displayed in the document tab's header.
-		/// </summary>
-		string Title { get; set; }
+			output.AddUIElement(() => {
+				var button = new Button {
+					Cursor = new Cursor(StandardCursorType.Arrow),
+					Margin = new Thickness(2),
+					Padding = new Thickness(9, 1, 9, 1),
+					MinWidth = 73,
+				};
+				if (icon != null)
+				{
+					button.Content = new StackPanel {
+						Orientation = Orientation.Horizontal,
+						Children = {
+							new Image { Width = 16, Height = 16, Source = icon, Margin = new Thickness(0, 0, 4, 0) },
+							new TextBlock { Text = text },
+						},
+					};
+				}
+				else
+				{
+					button.Content = text;
+				}
+				button.Click += click;
+				return button;
+			});
+		}
 	}
 }

@@ -16,9 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Text;
+
+using Avalonia.Controls;
 
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Folding;
@@ -61,6 +64,12 @@ namespace ILSpy.TextView
 
 		/// <summary>Maps reference targets to their definition offsets in the rendered text.</summary>
 		public DefinitionLookup DefinitionLookup { get; } = new();
+
+		readonly List<KeyValuePair<int, Lazy<Control>>> uiElements = new();
+
+		/// <summary>Inline UI elements collected during writing, in offset order. Fed to
+		/// <see cref="UIElementGenerator"/> by the text view.</summary>
+		public IReadOnlyList<KeyValuePair<int, Lazy<Control>>> UIElements => uiElements;
 
 		public string Title { get; set; } = string.Empty;
 
@@ -170,6 +179,15 @@ namespace ILSpy.TextView
 			// Skip single-line foldings — they only add visual noise.
 			if (startLine != lineNumber)
 				foldings.Add(folding);
+		}
+
+		public void AddUIElement(Func<Control> element)
+		{
+			if (element == null)
+				return;
+			if (uiElements.Count > 0 && uiElements[uiElements.Count - 1].Key == builder.Length)
+				throw new InvalidOperationException("Only one UIElement is allowed for each position in the document.");
+			uiElements.Add(new KeyValuePair<int, Lazy<Control>>(builder.Length, new Lazy<Control>(element)));
 		}
 
 		public void BeginSpan(HighlightingColor highlightingColor)

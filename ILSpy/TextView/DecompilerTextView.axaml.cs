@@ -62,6 +62,7 @@ namespace ILSpy.TextView
 		const double MaxMovementAwayFromPopup = 5;
 
 		readonly ReferenceElementGenerator referenceElementGenerator;
+		readonly UIElementGenerator uiElementGenerator;
 		readonly TextMarkerService textMarkerService;
 		readonly List<TextMarker> localReferenceMarks = new();
 		RichTextColorizer? activeColorizer;
@@ -80,6 +81,9 @@ namespace ILSpy.TextView
 			referenceElementGenerator = new ReferenceElementGenerator(static segment => segment.Reference != null);
 			referenceElementGenerator.ReferenceClicked += OnReferenceClicked;
 			Editor.TextArea.TextView.ElementGenerators.Add(referenceElementGenerator);
+
+			uiElementGenerator = new UIElementGenerator();
+			Editor.TextArea.TextView.ElementGenerators.Add(uiElementGenerator);
 
 			// Background renderer that paints local-reference highlights. Lives once for the
 			// lifetime of the view; the marks themselves are cleared and rebuilt per click.
@@ -180,6 +184,7 @@ namespace ILSpy.TextView
 			}
 
 			referenceElementGenerator.References = model.References;
+			uiElementGenerator.UIElements = model.UIElements;
 			Editor.TextArea.TextView.Redraw();
 
 			Editor.ScrollToHome();

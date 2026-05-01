@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Avalonia.Controls;
 using Avalonia.Threading;
 
 using AvaloniaEdit.Document;
@@ -89,6 +90,13 @@ namespace ILSpy.TextView
 		/// </summary>
 		[ObservableProperty]
 		private DefinitionLookup? definitionLookup;
+
+		/// <summary>
+		/// Inline UI elements (<see cref="ISmartTextOutput.AddUIElement"/>), in offset order.
+		/// Fed to <see cref="UIElementGenerator"/> by the text view.
+		/// </summary>
+		[ObservableProperty]
+		private IReadOnlyList<KeyValuePair<int, Lazy<Control>>>? uIElements;
 
 		/// <summary>
 		/// Fired when the user clicks a cross-document reference. The host (DockWorkspace)
@@ -172,6 +180,7 @@ namespace ILSpy.TextView
 				var collectedFoldings = output.Foldings;
 				var collectedReferences = output.References;
 				var collectedLookup = output.DefinitionLookup;
+				var collectedUIElements = output.UIElements;
 				await Dispatcher.UIThread.InvokeAsync(() => {
 					Title = nodeTitle;
 					SyntaxExtension = newSyntaxExtension;
@@ -179,6 +188,7 @@ namespace ILSpy.TextView
 					Foldings = collectedFoldings;
 					References = collectedReferences;
 					DefinitionLookup = collectedLookup;
+					UIElements = collectedUIElements;
 					Text = rendered;
 				});
 			}
