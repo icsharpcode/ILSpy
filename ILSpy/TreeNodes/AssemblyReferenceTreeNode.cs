@@ -23,7 +23,10 @@ using AvaloniaEdit.Highlighting;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
+using ILSpy.AppEnv;
+using ILSpy.AssemblyTree;
 using ILSpy.Languages;
 using ILSpy.TextView;
 
@@ -50,6 +53,21 @@ namespace ILSpy.TreeNodes
 		public override object Text => ILAmbience.EscapeName(reference.Name);
 
 		public override object Icon => Images.Images.Assembly;
+
+		public override void ActivateItem(IPlatformRoutedEventArgs e)
+		{
+			if (parentAssembly.Parent is not AssemblyListTreeNode listNode)
+				return;
+			var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver();
+			var resolved = resolver.Resolve(reference);
+			if (resolved == null)
+				return;
+			var loaded = listNode.FindAssemblyNode(resolved);
+			if (loaded == null)
+				return;
+			AppComposition.Current.GetExport<AssemblyTreeModel>().SelectedItem = loaded;
+			e.Handled = true;
+		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{

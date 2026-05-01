@@ -20,6 +20,7 @@ using System;
 using System.Collections.Specialized;
 using System.Linq;
 
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX;
 
 namespace ILSpy.TreeNodes
@@ -58,5 +59,8 @@ namespace ILSpy.TreeNodes
 
 		public AssemblyTreeNode? FindAssemblyNode(LoadedAssembly asm)
 			=> Children.OfType<AssemblyTreeNode>().FirstOrDefault(n => n.LoadedAssembly == asm);
+
+		public AssemblyTreeNode? FindAssemblyNode(MetadataFile? module)
+			=> module == null ? null : FindAssemblyNode(module.GetLoadedAssembly());
 	}
 }

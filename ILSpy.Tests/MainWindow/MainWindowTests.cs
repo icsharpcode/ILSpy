@@ -138,6 +138,36 @@ public class MainWindowTests
 	}
 
 	[AvaloniaTest]
+	public async Task Activating_Assembly_Reference_Selects_Resolved_Assembly_Node()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
+		assemblyNode.EnsureLazyChildren();
+		var refFolder = assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single();
+		refFolder.EnsureLazyChildren();
+
+		var refNode = refFolder.Children.OfType<AssemblyReferenceTreeNode>()
+			.Single(n => n.AssemblyReference.Name == "System.Runtime");
+
+		var args = new StubRoutedEventArgs();
+		refNode.ActivateItem(args);
+
+		args.Handled.Should().BeTrue();
+		await Waiters.WaitForAsync(() =>
+			vm.AssemblyTreeModel.SelectedItem is AssemblyTreeNode selected
+				&& selected.LoadedAssembly.ShortName == "System.Runtime");
+	}
+
+	sealed class StubRoutedEventArgs : ICSharpCode.ILSpyX.TreeView.PlatformAbstractions.IPlatformRoutedEventArgs
+	{
+		public bool Handled { get; set; }
+	}
+
+	[AvaloniaTest]
 	public async Task Selecting_References_Folder_Decompiles_References_Listing()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();
