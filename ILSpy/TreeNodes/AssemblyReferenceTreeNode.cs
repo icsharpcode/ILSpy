@@ -25,6 +25,8 @@ using AvaloniaEdit.Highlighting;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 using ILSpy.AppEnv;
@@ -80,10 +82,18 @@ namespace ILSpy.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			// Resolve once and surface the referenced assembly's own AssemblyRefs as transitive
-			// children so the user can drill into the dependency graph from any reference.
-			// Façade assemblies (e.g. System.Runtime forwarders) resolve to a module with no
-			// further AssemblyRefs — those nodes simply expand to nothing, matching WPF.
+			// Always emit the "Referenced Types (N)" subnode keyed on the *parent* module's
+			// metadata — this lists what the parent uses, regardless of whether the referenced
+			// assembly itself resolves. Then, if the reference resolves, surface its own
+			// AssemblyRefs as transitive children.
+			var parentModule = parentAssembly.LoadedAssembly.GetMetadataFileOrNull();
+			if (parentModule != null)
+			{
+				var parentTypeSystem = (MetadataModule?)parentModule.GetTypeSystemOrNull()?.MainModule;
+				if (parentTypeSystem != null)
+					Children.Add(new AssemblyReferenceReferencedTypesTreeNode(parentTypeSystem, reference));
+			}
+
 			var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver();
 			var resolved = resolver.Resolve(reference);
 			if (resolved == null)

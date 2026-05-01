@@ -86,6 +86,30 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
+	public async Task Assembly_Reference_Has_Referenced_Types_Subnode()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
+		assemblyNode.EnsureLazyChildren();
+		var refFolder = assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single();
+		refFolder.EnsureLazyChildren();
+
+		var refNode = refFolder.Children.OfType<AssemblyReferenceTreeNode>()
+			.First(n => n.AssemblyReference.Name == "System.Runtime");
+		refNode.EnsureLazyChildren();
+
+		var typesNode = refNode.Children.OfType<AssemblyReferenceReferencedTypesTreeNode>().Single();
+		typesNode.Text.ToString().Should().Contain(Resources.ReferencedTypes);
+		typesNode.EnsureLazyChildren();
+		typesNode.Children.Should().NotBeEmpty();
+		typesNode.Children.Should().Contain(c => c is TypeReferenceTreeNode);
+	}
+
+	[AvaloniaTest]
 	public async Task Expanding_Assembly_Reference_Reveals_Transitive_References()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();

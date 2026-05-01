@@ -76,6 +76,7 @@ namespace ILSpy.Images
 		// Containers
 		public static readonly IImage Namespace = LoadSvg(nameof(Namespace));
 		public static readonly IImage ReferenceFolder = LoadSvg(nameof(ReferenceFolder));
+		public static readonly IImage MetadataTable = LoadSvg(nameof(MetadataTable));
 
 		// Types
 		public static readonly IImage Class = LoadSvg(nameof(Class));
