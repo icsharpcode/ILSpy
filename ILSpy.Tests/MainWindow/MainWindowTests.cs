@@ -130,6 +130,58 @@ public class MainWindowTests
 	}
 
 	[AvaloniaTest]
+	public async Task Selecting_Method_Auto_Loads_Referenced_Assemblies()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var newAsmPath = typeof(System.Net.Http.HttpClient).Assembly.Location;
+		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
+		var openCommand = registry.Commands
+			.Single(c => c.Metadata.Header == nameof(Resources._Open))
+			.CreateExport().Value;
+		openCommand.Execute(newAsmPath);
+
+		await Waiters.WaitForAsync(() =>
+			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a =>
+				string.Equals(a.FileName, newAsmPath, System.StringComparison.OrdinalIgnoreCase)));
+
+		var loaded = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
+			.First(a => string.Equals(a.FileName, newAsmPath, System.StringComparison.OrdinalIgnoreCase));
+		await loaded.GetLoadResultAsync();
+
+		var initialFiles = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
+			.Select(a => a.FileName)
+			.ToHashSet(System.StringComparer.OrdinalIgnoreCase);
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			loaded.ShortName, "System.Net.Http", "System.Net.Http.HttpClient");
+		typeNode.EnsureLazyChildren();
+		var methodNode = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "CancelPendingRequests");
+
+		vm.AssemblyTreeModel.SelectedItem = methodNode;
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		await Waiters.WaitForAsync(() =>
+			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a => !initialFiles.Contains(a.FileName)));
+
+		var addedAssemblies = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
+			.Where(a => !initialFiles.Contains(a.FileName))
+			.ToList();
+		addedAssemblies.Should().NotBeEmpty();
+		addedAssemblies.Should().OnlyContain(a => a.IsAutoLoaded);
+
+		foreach (var auto in addedAssemblies)
+		{
+			var node = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(auto.ShortName);
+			node.IsAutoLoaded.Should().BeTrue();
+		}
+	}
+
+	[AvaloniaTest]
 	public async Task Opening_Assembly_Adds_It_To_The_Tree()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();

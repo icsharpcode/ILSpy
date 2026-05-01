@@ -6,6 +6,11 @@
              mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="450"
              x:Class="ILSpy.AssemblyTree.AssemblyListPane"
              x:DataType="tree:AssemblyTreeModel">
+	<UserControl.Styles>
+		<Style Selector="TextBlock.autoloaded">
+			<Setter Property="Foreground" Value="SteelBlue" />
+		</Style>
+	</UserControl.Styles>
 
 	<DataGrid Name="TreeGrid"
 	          Classes="hierarchical"
@@ -30,6 +35,7 @@
 							       Width="16" Height="16"
 							       VerticalAlignment="Center" />
 							<TextBlock Grid.Column="2" Text="{Binding Text}"
+							           Classes.autoloaded="{Binding IsAutoLoaded}"
 							           VerticalAlignment="Center" />
 						</Grid>
 					</DataTemplate>

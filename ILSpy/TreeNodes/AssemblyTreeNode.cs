@@ -147,6 +147,8 @@ namespace ILSpy.TreeNodes
 
 		public override bool ShowExpander => !assembly.HasLoadError && loadError == null && base.ShowExpander;
 
+		public override bool IsAutoLoaded => assembly.IsAutoLoaded;
+
 		protected override void LoadChildren()
 		{
 			var module = cachedModule;

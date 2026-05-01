@@ -38,6 +38,14 @@ namespace ILSpy.TreeNodes
 		public Language Language => LanguageService.CurrentLanguage;
 
 		/// <summary>
+		/// True for nodes that represent assemblies the user did not open explicitly — the
+		/// decompiler resolved them as part of another assembly's references and added them to
+		/// the tree as a side effect. The list pane renders these in a distinct foreground so
+		/// the user can tell auto-loaded entries from manually opened ones.
+		/// </summary>
+		public virtual bool IsAutoLoaded => false;
+
+		/// <summary>
 		/// Renders this node's decompiled representation to <paramref name="output"/> using
 		/// <paramref name="language"/>. Default writes a stub comment so any node we forgot to
 		/// override still produces *something*.
