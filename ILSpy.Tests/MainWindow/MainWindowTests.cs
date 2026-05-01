@@ -116,6 +116,110 @@ public class MainWindowTests
 	}
 
 	[AvaloniaTest]
+	public async Task Selecting_Type_Node_Decompiles_Type_Definition()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var coreLib = typeof(object).Assembly.GetName().Name!;
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			coreLib, "System", "System.Version");
+
+		vm.AssemblyTreeModel.SelectedItem = typeNode;
+		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		tab.Text.Should().Contain("class Version");
+		tab.Text.Should().Contain("Major");
+		tab.Text.Should().Contain("Minor");
+	}
+
+	[AvaloniaTest]
+	public async Task Selecting_Property_Node_Decompiles_Property()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var coreLib = typeof(object).Assembly.GetName().Name!;
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			coreLib, "System", "System.Version");
+		typeNode.EnsureLazyChildren();
+		var propertyNode = typeNode.Children.OfType<PropertyTreeNode>()
+			.Single(p => p.PropertyDefinition.Name == "Major");
+
+		vm.AssemblyTreeModel.SelectedItem = propertyNode;
+		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		tab.Text.Should().Contain("public int Major");
+	}
+
+	[AvaloniaTest]
+	public async Task Selecting_Field_Node_Decompiles_Field()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var coreLib = typeof(object).Assembly.GetName().Name!;
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			coreLib, "System", "System.Math");
+		typeNode.EnsureLazyChildren();
+		var fieldNode = typeNode.Children.OfType<FieldTreeNode>()
+			.Single(f => f.FieldDefinition.Name == "PI");
+
+		vm.AssemblyTreeModel.SelectedItem = fieldNode;
+		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		tab.Text.Should().Contain("public const double PI");
+		tab.Text.Should().Contain("3.14159");
+	}
+
+	[AvaloniaTest]
+	public async Task Selecting_Event_Node_Decompiles_Event()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var coreLib = typeof(object).Assembly.GetName().Name!;
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			coreLib, "System", "System.AppDomain");
+		typeNode.EnsureLazyChildren();
+		var eventNode = typeNode.Children.OfType<EventTreeNode>()
+			.Single(e => e.EventDefinition.Name == "ProcessExit");
+
+		vm.AssemblyTreeModel.SelectedItem = eventNode;
+		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		tab.Text.Should().Contain("event EventHandler");
+		tab.Text.Should().Contain("ProcessExit");
+	}
+
+	[AvaloniaTest]
+	public async Task Selecting_Namespace_Node_Decompiles_Namespace()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var coreLib = typeof(object).Assembly.GetName().Name!;
+		var namespaceNode = vm.AssemblyTreeModel.FindNode<NamespaceTreeNode>(
+			coreLib, "System.Runtime.Versioning");
+
+		vm.AssemblyTreeModel.SelectedItem = namespaceNode;
+		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		tab.Text.Should().Contain("TargetFrameworkAttribute");
+		tab.Text.Should().Contain("SupportedOSPlatformAttribute");
+	}
+
+	[AvaloniaTest]
 	public async Task Selecting_Assembly_Node_Emits_Header_And_Assembly_Attributes()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();
