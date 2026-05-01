@@ -99,10 +99,10 @@ namespace ILSpy.Images
 		internal static readonly IImage ReferenceOverlay = LoadSvg(nameof(ReferenceOverlay));
 		internal static readonly IImage ExportOverlay = LoadSvg(nameof(ExportOverlay));
 
-		public static readonly IImage TypeReference = new PairOverlayImage(Class, ReferenceOverlay);
-		public static readonly IImage MethodReference = new PairOverlayImage(Method, ReferenceOverlay);
-		public static readonly IImage FieldReference = new PairOverlayImage(Field, ReferenceOverlay);
-		public static readonly IImage ExportedType = new PairOverlayImage(Class, ExportOverlay);
+		public static readonly IImage TypeReference = new LayeredImage(Class, ReferenceOverlay);
+		public static readonly IImage MethodReference = new LayeredImage(Method, ReferenceOverlay);
+		public static readonly IImage FieldReference = new LayeredImage(Field, ReferenceOverlay);
+		public static readonly IImage ExportedType = new LayeredImage(Class, ExportOverlay);
 
 		// Overlays
 		internal static readonly IImage OverlayProtected = LoadSvg(nameof(OverlayProtected));
@@ -125,7 +125,19 @@ namespace ILSpy.Images
 			var key = (baseImage, overlay, isStatic, isExtension);
 			if (iconCache.TryGetValue(key, out var cached))
 				return cached;
-			var built = new OverlayImage(baseImage, overlay, isStatic, isExtension);
+			// Order matches the WPF host: extension behind static behind accessibility, on top
+			// of an 80%-scaled base when any overlay shrinks it out of the way.
+			var overlays = new List<IImage>(3);
+			if (isExtension)
+				overlays.Add(OverlayExtension);
+			if (isStatic)
+				overlays.Add(OverlayStatic);
+			if (OverlayFor(overlay) is { } accessibilityOverlay)
+				overlays.Add(accessibilityOverlay);
+			bool scaleBase = overlays.Count > 0 || isExtension;
+			var built = scaleBase
+				? new LayeredImage(baseImage, baseScale: 0.8, overlays.ToArray())
+				: new LayeredImage(baseImage, overlays.ToArray());
 			iconCache[key] = built;
 			return built;
 		}
@@ -152,72 +164,39 @@ namespace ILSpy.Images
 	}
 
 	/// <summary>
-	/// Two-layer icon: a base image with a single overlay drawn on top at full size. Used by
-	/// TypeRef / MemberRef / ExportedType nodes to differentiate them from their plain
-	/// Class / Method / Field counterparts.
+	/// Composed tree-node icon: a base symbol with N overlays drawn on top in order. The base
+	/// can optionally be scaled to a fraction of the cell (mirrors the WPF host's "shrink to
+	/// 80% top-left" trick when an accessibility overlay sits in the bottom-right corner).
 	/// </summary>
-	sealed class PairOverlayImage : IImage
+	sealed class LayeredImage : IImage
 	{
 		static readonly Size IconSize = new(16, 16);
 		readonly IImage baseImage;
-		readonly IImage overlay;
+		readonly double baseScale;
+		readonly IImage[] overlays;
 
-		public PairOverlayImage(IImage baseImage, IImage overlay)
+		public LayeredImage(IImage baseImage, params IImage[] overlays)
+			: this(baseImage, 1.0, overlays)
+		{
+		}
+
+		public LayeredImage(IImage baseImage, double baseScale, params IImage[] overlays)
 		{
 			this.baseImage = baseImage;
-			this.overlay = overlay;
+			this.baseScale = baseScale;
+			this.overlays = overlays;
 		}
 
 		public Size Size => IconSize;
 
 		public void Draw(DrawingContext context, Rect sourceRect, Rect destRect)
 		{
-			baseImage.Draw(context, new Rect(baseImage.Size), destRect);
-			overlay.Draw(context, new Rect(overlay.Size), destRect);
-		}
-	}
-
-	/// <summary>
-	/// Composed tree-node icon: a base symbol with optional accessibility overlay, static badge, or extension badge.
-	/// Mirrors the layered drawing scheme from <see cref="ICSharpCode.ILSpy.Images"/> in the WPF host.
-	/// </summary>
-	sealed class OverlayImage : IImage
-	{
-		static readonly Size IconSize = new(16, 16);
-
-		readonly IImage baseImage;
-		readonly IImage? overlayImage;
-		readonly bool isStatic;
-		readonly bool isExtension;
-		readonly bool scaleBase;
-
-		public OverlayImage(IImage baseImage, AccessOverlayIcon overlay, bool isStatic, bool isExtension)
-		{
-			this.baseImage = baseImage;
-			this.overlayImage = Images.OverlayFor(overlay);
-			this.isStatic = isStatic;
-			this.isExtension = isExtension;
-			// When any overlay shrinks the base out of the way, base draws at 80% in the top-left.
-			this.scaleBase = overlayImage != null || isExtension;
-		}
-
-		public Size Size => IconSize;
-
-		public void Draw(DrawingContext context, Rect sourceRect, Rect destRect)
-		{
-			var baseDest = scaleBase
-				? new Rect(destRect.X, destRect.Y, destRect.Width * 0.8, destRect.Height * 0.8)
+			var baseDest = baseScale < 1.0
+				? new Rect(destRect.X, destRect.Y, destRect.Width * baseScale, destRect.Height * baseScale)
 				: destRect;
 			baseImage.Draw(context, new Rect(baseImage.Size), baseDest);
-
-			if (isExtension)
-				Images.OverlayExtension.Draw(context, new Rect(Images.OverlayExtension.Size), destRect);
-
-			if (isStatic)
-				Images.OverlayStatic.Draw(context, new Rect(Images.OverlayStatic.Size), destRect);
-
-			if (overlayImage != null)
-				overlayImage.Draw(context, new Rect(overlayImage.Size), destRect);
+			foreach (var overlay in overlays)
+				overlay.Draw(context, new Rect(overlay.Size), destRect);
 		}
 	}
 }
