@@ -17,13 +17,19 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Linq;
+using System.Threading.Tasks;
 
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
+using Avalonia.Input;
+using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
-using ILSpy;
+using ICSharpCode.ILSpy.Properties;
+
+using ILSpy.AppEnv;
+using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -39,11 +45,32 @@ public class MainMenuTests
 	[AvaloniaTest]
 	public void MainMenu_top_level_items_are_File_View_Window_in_order()
 	{
-		var mainMenu = new MainMenu();
+		var mainMenu = new global::ILSpy.MainMenu();
 		var menu = mainMenu.FindControl<Menu>("MainMenuRoot");
 		menu.Should().NotBeNull();
 
 		var headers = menu!.Items.OfType<MenuItem>().Select(m => m.Header as string).ToList();
 		headers.Should().Equal("_File", "_View", "_Window");
+	}
+
+	[AvaloniaTest]
+	public async Task Main_Menu_Items_Display_Input_Gestures()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+
+		var menu = window.GetVisualDescendants().OfType<Menu>().First();
+		await Waiters.WaitForAsync(() =>
+			menu.Items.OfType<MenuItem>().Any(m => (string?)m.Tag == nameof(Resources._File))
+				&& menu.Items.OfType<MenuItem>().Single(m => (string?)m.Tag == nameof(Resources._File))
+					.Items.OfType<MenuItem>().Any());
+
+		var fileMenu = menu.Items.OfType<MenuItem>().Single(m => (string?)m.Tag == nameof(Resources._File));
+		var openItem = fileMenu.Items.OfType<MenuItem>()
+			.Single(m => string.Equals(m.Header as string, Resources._Open, System.StringComparison.Ordinal));
+
+		openItem.InputGesture.Should().NotBeNull();
+		openItem.InputGesture!.Should().Be(KeyGesture.Parse("Ctrl+O"));
+		openItem.HotKey.Should().Be(KeyGesture.Parse("Ctrl+O"));
 	}
 }
