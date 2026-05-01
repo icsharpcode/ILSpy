@@ -110,6 +110,103 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
+	public async Task Member_Reference_Node_Uses_Method_Or_Field_Overlay_Icon()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
+		assemblyNode.EnsureLazyChildren();
+		var refFolder = assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single();
+		refFolder.EnsureLazyChildren();
+
+		// Walk every reference's ReferencedTypes subtree until we find a TypeRef that
+		// has at least one MemberReference. System.Linq imports plenty (e.g. delegates,
+		// Func ctors) so this should always succeed.
+		MemberReferenceTreeNode? memberRefNode = null;
+		foreach (var refNode in refFolder.Children.OfType<AssemblyReferenceTreeNode>())
+		{
+			refNode.EnsureLazyChildren();
+			var typesNode = refNode.Children.OfType<AssemblyReferenceReferencedTypesTreeNode>().FirstOrDefault();
+			if (typesNode == null)
+				continue;
+			typesNode.EnsureLazyChildren();
+			foreach (var typeRef in typesNode.Children.OfType<TypeReferenceTreeNode>())
+			{
+				typeRef.EnsureLazyChildren();
+				memberRefNode = typeRef.Children.OfType<MemberReferenceTreeNode>().FirstOrDefault();
+				if (memberRefNode != null)
+					break;
+			}
+			if (memberRefNode != null)
+				break;
+		}
+
+		((object?)memberRefNode).Should().NotBeNull(
+			"at least one TypeRef under System.Linq's references must have member references");
+		memberRefNode!.Icon.Should().BeOneOf(global::ILSpy.Images.Images.MethodReference,
+			global::ILSpy.Images.Images.FieldReference);
+		memberRefNode.Text.ToString().Should().NotBeNullOrWhiteSpace();
+	}
+
+	[AvaloniaTest]
+	public async Task Exported_Type_Node_Uses_Export_Overlay_Icon()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		// `mscorlib` is the canonical type-forwarder facade: it reports ExportedTypes that
+		// resolve to System.Private.CoreLib. Open it explicitly so the test fixture has a
+		// loaded forwarder regardless of what the default startup list includes.
+		var coreLibDir = System.IO.Path.GetDirectoryName(typeof(object).Assembly.Location)!;
+		var mscorlibPath = System.IO.Path.Combine(coreLibDir, "mscorlib.dll");
+		if (!System.IO.File.Exists(mscorlibPath))
+		{
+			Assert.Inconclusive($"mscorlib.dll not present next to System.Private.CoreLib at {coreLibDir} — runtime layout differs.");
+			return;
+		}
+		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
+		var openCommand = registry.Commands
+			.Single(c => c.Metadata.Header == nameof(Resources._Open))
+			.CreateExport().Value;
+		openCommand.Execute(mscorlibPath);
+
+		await Waiters.WaitForAsync(() =>
+			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a =>
+				string.Equals(a.FileName, mscorlibPath, System.StringComparison.OrdinalIgnoreCase)));
+		var loaded = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
+			.First(a => string.Equals(a.FileName, mscorlibPath, System.StringComparison.OrdinalIgnoreCase));
+		await loaded.GetLoadResultAsync();
+
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(loaded.ShortName);
+		assemblyNode.EnsureLazyChildren();
+		var refFolder = assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single();
+		refFolder.EnsureLazyChildren();
+
+		ExportedTypeTreeNode? exportedNode = null;
+		foreach (var refNode in refFolder.Children.OfType<AssemblyReferenceTreeNode>())
+		{
+			refNode.EnsureLazyChildren();
+			var typesNode = refNode.Children.OfType<AssemblyReferenceReferencedTypesTreeNode>().FirstOrDefault();
+			if (typesNode == null)
+				continue;
+			typesNode.EnsureLazyChildren();
+			exportedNode = typesNode.Children.OfType<ExportedTypeTreeNode>().FirstOrDefault();
+			if (exportedNode != null)
+				break;
+		}
+
+		((object?)exportedNode).Should().NotBeNull(
+			"mscorlib must forward types to System.Private.CoreLib via ExportedType rows");
+		exportedNode!.Icon.Should().BeSameAs(global::ILSpy.Images.Images.ExportedType);
+		exportedNode.Text.ToString().Should().NotBeNullOrWhiteSpace();
+	}
+
+	[AvaloniaTest]
 	public async Task Expanding_Assembly_Reference_Reveals_Transitive_References()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();
