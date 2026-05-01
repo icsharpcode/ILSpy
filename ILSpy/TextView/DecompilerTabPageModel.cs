@@ -142,6 +142,19 @@ namespace ILSpy.TextView
 			Title = IsDecompiling ? ComposeSpinnerTitle(0, text) : text;
 		}
 
+		// Resolved lazily so unit tests / design-time previews that bypass the composition host
+		// still construct cleanly.
+		TaskbarProgressService? taskbarProgress;
+		TaskbarProgressService? TaskbarProgress
+			=> taskbarProgress ??= TryGetExport<TaskbarProgressService>();
+
+		static T? TryGetExport<T>() where T : class
+		{
+			try
+			{ return AppEnv.AppComposition.Current.GetExport<T>(); }
+			catch { return null; }
+		}
+
 		public DecompilerTabPageModel()
 		{
 			Title = "Empty";
@@ -168,6 +181,7 @@ namespace ILSpy.TextView
 			// Spinner appears as a glyph prefix on the tab title while the decompile runs;
 			// editor state is left untouched so cancellation falls back cleanly.
 			Title = ComposeSpinnerTitle(0, currentNode?.Text?.ToString() ?? "(unnamed)");
+			TaskbarProgress?.SetState(TaskbarProgressState.Indeterminate);
 			_ = RunSpinnerAsync(cts.Token);
 
 			try
@@ -235,6 +249,7 @@ namespace ILSpy.TextView
 						// from the title — the editor still shows the previous decompile.
 						if (currentNode != null)
 							Title = currentNode.Text?.ToString() ?? "(unnamed)";
+						TaskbarProgress?.SetState(TaskbarProgressState.None);
 					}
 					if (Dispatcher.UIThread.CheckAccess())
 						StopSpinner();

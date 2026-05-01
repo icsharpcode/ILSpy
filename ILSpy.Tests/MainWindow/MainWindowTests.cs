@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -24,8 +25,10 @@ using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
+using ILSpy;
 using ILSpy.AppEnv;
 using ILSpy.AssemblyTree;
+using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 using ILSpy.Views;
 
@@ -59,5 +62,30 @@ public class MainWindowTests
 		pane.IsVisible.Should().BeTrue();
 		pane.Bounds.Width.Should().BeGreaterThan(0);
 		pane.Bounds.Height.Should().BeGreaterThan(0);
+	}
+
+	[AvaloniaTest]
+	public async Task Taskbar_Progress_Goes_Indeterminate_While_Decompiling_Then_Clears()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var service = AppComposition.Current.GetExport<TaskbarProgressService>();
+		var states = new List<TaskbarProgressState>();
+		void Observe(TaskbarProgressState s) => states.Add(s);
+		service.StateChanged += Observe;
+
+		var node = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
+		vm.AssemblyTreeModel.SelectedItem = node;
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		service.StateChanged -= Observe;
+
+		states.Should().Contain(TaskbarProgressState.Indeterminate,
+			"taskbar must show indeterminate progress while a decompile is in flight");
+		states.Last().Should().Be(TaskbarProgressState.None,
+			"taskbar progress must clear after decompile completes");
 	}
 }
