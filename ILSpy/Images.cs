@@ -171,9 +171,10 @@ namespace ILSpy.Images
 	sealed class LayeredImage : IImage
 	{
 		static readonly Size IconSize = new(16, 16);
-		readonly IImage baseImage;
-		readonly double baseScale;
-		readonly IImage[] overlays;
+
+		public IImage BaseImage { get; }
+		public double BaseScale { get; }
+		public IImage[] Overlays { get; }
 
 		public LayeredImage(IImage baseImage, params IImage[] overlays)
 			: this(baseImage, 1.0, overlays)
@@ -182,20 +183,20 @@ namespace ILSpy.Images
 
 		public LayeredImage(IImage baseImage, double baseScale, params IImage[] overlays)
 		{
-			this.baseImage = baseImage;
-			this.baseScale = baseScale;
-			this.overlays = overlays;
+			BaseImage = baseImage;
+			BaseScale = baseScale;
+			Overlays = overlays;
 		}
 
 		public Size Size => IconSize;
 
 		public void Draw(DrawingContext context, Rect sourceRect, Rect destRect)
 		{
-			var baseDest = baseScale < 1.0
-				? new Rect(destRect.X, destRect.Y, destRect.Width * baseScale, destRect.Height * baseScale)
+			var baseDest = BaseScale < 1.0
+				? new Rect(destRect.X, destRect.Y, destRect.Width * BaseScale, destRect.Height * BaseScale)
 				: destRect;
-			baseImage.Draw(context, new Rect(baseImage.Size), baseDest);
-			foreach (var overlay in overlays)
+			BaseImage.Draw(context, new Rect(BaseImage.Size), baseDest);
+			foreach (var overlay in Overlays)
 				overlay.Draw(context, new Rect(overlay.Size), destRect);
 		}
 	}
