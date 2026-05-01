@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Composition;
+using System.Linq;
 
 using CommunityToolkit.Mvvm.Input;
 
@@ -82,6 +83,7 @@ namespace ILSpy.Docking
 			}
 
 			assemblyTreeModel.PropertyChanged += OnAssemblyTreePropertyChanged;
+			assemblyTreeModel.SelectedItems.CollectionChanged += (_, _) => ShowSelectedNode();
 			languageService.PropertyChanged += OnLanguagePropertyChanged;
 			// Layout/factory initialization (locators, parent/factory wiring) is done by
 			// the DockControl in MainWindow.axaml via InitializeFactory/InitializeLayout.
@@ -201,7 +203,8 @@ namespace ILSpy.Docking
 
 		void ShowSelectedNode()
 		{
-			if (assemblyTreeModel.SelectedItem is not ILSpyTreeNode node)
+			var nodes = assemblyTreeModel.SelectedItems.OfType<ILSpyTreeNode>().ToArray();
+			if (nodes.Length == 0)
 				return;
 			var tab = GetActiveDecompilerTab();
 			if (tab == null)
@@ -214,7 +217,7 @@ namespace ILSpy.Docking
 				factory.SetFocusedDockable(factory.Documents, tab);
 			}
 			tab.Language = languageService.CurrentLanguage;
-			tab.CurrentNode = node;
+			tab.CurrentNodes = nodes;
 		}
 
 		DecompilerTabPageModel? GetActiveDecompilerTab()

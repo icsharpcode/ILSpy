@@ -21,7 +21,9 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
+using Avalonia;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 using global::ILSpy.AssemblyTree;
 using global::ILSpy.Docking;
@@ -64,6 +66,24 @@ public static class Waiters
 			$"AssemblyList to contain >= {minimumCount} assemblies");
 		var assemblies = atm.AssemblyList!.GetAssemblies();
 		await Task.WhenAll(assemblies.Select(a => a.GetLoadResultAsync()));
+	}
+
+	/// <summary>
+	/// Waits until exactly one descendant of <typeparamref name="T"/> exists in the
+	/// <paramref name="root"/>'s visual tree, then returns it. Replaces the brittle
+	/// <c>root.GetVisualDescendants().OfType&lt;T&gt;().Single()</c> pattern that races against
+	/// the layout/composition cycle - Avalonia.Headless tests routinely query the visual tree
+	/// before lazily-templated panes (DataGrid, dock panes, etc.) have materialised.
+	/// </summary>
+	public static async Task<T> WaitForComponent<T>(this Visual root, TimeSpan? timeout = null)
+		where T : Visual
+	{
+		ArgumentNullException.ThrowIfNull(root);
+		await WaitForAsync(
+			() => root.GetVisualDescendants().OfType<T>().Any(),
+			timeout,
+			$"a {typeof(T).Name} descendant to materialise in the visual tree");
+		return root.GetVisualDescendants().OfType<T>().First();
 	}
 
 	public static async Task<DecompilerTabPageModel> WaitForDecompiledTextAsync(

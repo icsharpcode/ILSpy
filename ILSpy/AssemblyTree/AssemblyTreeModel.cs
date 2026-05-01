@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Composition;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
@@ -54,9 +55,34 @@ namespace ILSpy.AssemblyTree
 		[property: IgnoreDataMember]
 		private SharpTreeNode? root;
 
-		[ObservableProperty]
-		[property: IgnoreDataMember]
-		private SharpTreeNode? selectedItem;
+		/// <summary>
+		/// Multi-selection set. Each entry is kept in sync with its
+		/// <see cref="SharpTreeNode.IsSelected"/>. <see cref="SelectedItem"/> is a convenience
+		/// wrapper around the *primary* (last-added) entry — drives decompilation, navigation
+		/// history, and tree-view-path persistence — but the underlying state is single-sourced
+		/// here, mirroring the WPF host's MultiSelectorExtensions.SelectionBinding pattern.
+		/// </summary>
+		[IgnoreDataMember]
+		public ObservableCollection<SharpTreeNode> SelectedItems { get; } = [];
+
+		/// <summary>
+		/// Primary (last) selection. Get returns the most recently selected entry of
+		/// <see cref="SelectedItems"/>, or <c>null</c>; set replaces the entire selection
+		/// with the supplied node (clears the collection then adds it). All
+		/// <c>PropertyChanged(SelectedItem)</c> notifications are fired by
+		/// <see cref="SelectedItems.CollectionChanged"/>.
+		/// </summary>
+		[IgnoreDataMember]
+		public SharpTreeNode? SelectedItem {
+			get => SelectedItems.Count > 0 ? SelectedItems[^1] : null;
+			set {
+				if (SelectedItem == value)
+					return;
+				SelectedItems.Clear();
+				if (value != null)
+					SelectedItems.Add(value);
+			}
+		}
 
 		[ObservableProperty]
 		[property: IgnoreDataMember]
@@ -77,9 +103,25 @@ namespace ILSpy.AssemblyTree
 				if (e.PropertyName == nameof(LanguageService.CurrentLanguage) && Root != null)
 					NotifyTextChanged(Root);
 			};
+			SelectedItems.CollectionChanged += OnSelectedItemsChanged;
 			Id = PaneContentId;
 			Title = "Assemblies";
 			CanClose = false;
+		}
+
+		void OnSelectedItemsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+		{
+			if (e.NewItems != null)
+				foreach (SharpTreeNode n in e.NewItems)
+					n.IsSelected = true;
+			if (e.OldItems != null)
+				foreach (SharpTreeNode n in e.OldItems)
+					n.IsSelected = false;
+
+			// SelectedItem is a wrapper over this collection — anyone bound to it must be
+			// notified, and the saved path must follow the new primary.
+			OnPropertyChanged(nameof(SelectedItem));
+			settingsService.SessionSettings.ActiveTreeViewPath = GetPathForNode(SelectedItem);
 		}
 
 		// Walks already-materialized children and re-raises Text PropertyChanged so the cell
@@ -135,15 +177,6 @@ namespace ILSpy.AssemblyTree
 				if (restored != null && restored != Root)
 					SelectedItem = restored;
 			}
-		}
-
-		partial void OnSelectedItemChanged(SharpTreeNode? oldValue, SharpTreeNode? newValue)
-		{
-			if (oldValue != null)
-				oldValue.IsSelected = false;
-			if (newValue != null)
-				newValue.IsSelected = true;
-			settingsService.SessionSettings.ActiveTreeViewPath = GetPathForNode(newValue);
 		}
 
 		void ShowAssemblyList(string name)

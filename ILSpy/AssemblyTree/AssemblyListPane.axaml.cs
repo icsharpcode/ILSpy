@@ -50,14 +50,34 @@ namespace ILSpy.AssemblyTree
 		{
 			if (syncingSelection || DataContext is not AssemblyTreeModel model)
 				return;
-			SharpTreeNode? selected = null;
-			if (TreeGrid.SelectedItem is HierarchicalNode node && node.Item is SharpTreeNode tree)
-				selected = tree;
-			else if (TreeGrid.SelectedItem is SharpTreeNode direct)
-				selected = direct;
-			if (model.SelectedItem == selected)
-				return;
-			model.SelectedItem = selected;
+			// SelectedItem is a wrapper over SelectedItems on the model — touching it would
+			// Clear+Add and clobber Ctrl-click multi-selection. Only mutate the collection.
+			BeginSync();
+			try
+			{
+				var current = new System.Collections.Generic.HashSet<SharpTreeNode>();
+				foreach (var item in TreeGrid.SelectedItems)
+				{
+					var node = item is HierarchicalNode hn && hn.Item is SharpTreeNode t ? t
+						: item as SharpTreeNode;
+					if (node != null)
+						current.Add(node);
+				}
+				for (int i = model.SelectedItems.Count - 1; i >= 0; i--)
+				{
+					if (!current.Contains(model.SelectedItems[i]))
+						model.SelectedItems.RemoveAt(i);
+				}
+				foreach (var node in current)
+				{
+					if (!model.SelectedItems.Contains(node))
+						model.SelectedItems.Add(node);
+				}
+			}
+			finally
+			{
+				EndSync();
+			}
 		}
 
 		void SyncSelectionFromModel(SharpTreeNode? target)

@@ -31,8 +31,12 @@ using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
+using Avalonia.Controls;
+using Avalonia.VisualTree;
+
 using ILSpy;
 using ILSpy.AppEnv;
+using ILSpy.AssemblyTree;
 using ILSpy.Commands;
 using ILSpy.Images;
 using ILSpy.TreeNodes;
@@ -65,6 +69,49 @@ public class AssemblyTreeTests
 		resources.EnsureLazyChildren();
 		resources.Children.Should().NotBeEmpty();
 		resources.Children.Should().AllBeAssignableTo<ResourceTreeNode>();
+	}
+
+	[AvaloniaTest]
+	public async Task DataGrid_Has_Extended_Selection_Mode()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var treeGrid = await pane.WaitForComponent<DataGrid>();
+		treeGrid.SelectionMode.Should().Be(DataGridSelectionMode.Extended,
+			"the assembly tree must let users Ctrl-click multiple rows");
+	}
+
+	[AvaloniaTest]
+	public async Task Multi_Selection_Tracks_Multiple_Nodes_And_Marks_Them_IsSelected()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		typeNode.EnsureLazyChildren();
+		var first = typeNode.Children.OfType<MethodTreeNode>()
+			.Single(m => m.MethodDefinition.Name == "AsEnumerable");
+		var second = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "Empty");
+
+		vm.AssemblyTreeModel.SelectedItems.Add(first);
+		vm.AssemblyTreeModel.SelectedItems.Add(second);
+
+		vm.AssemblyTreeModel.SelectedItems.Should().Contain(first);
+		vm.AssemblyTreeModel.SelectedItems.Should().Contain(second);
+		first.IsSelected.Should().BeTrue();
+		second.IsSelected.Should().BeTrue();
+
+		vm.AssemblyTreeModel.SelectedItems.Remove(first);
+		first.IsSelected.Should().BeFalse();
+		second.IsSelected.Should().BeTrue();
 	}
 
 	[AvaloniaTest]

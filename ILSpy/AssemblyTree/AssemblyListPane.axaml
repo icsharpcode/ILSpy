@@ -20,7 +20,7 @@
 	          GridLinesVisibility="None"
 	          IsReadOnly="True"
 	          CanUserResizeColumns="False"
-	          SelectionMode="Single"
+	          SelectionMode="Extended"
 	          SelectionChanged="OnTreeGridSelectionChanged">
 		<DataGrid.Columns>
 			<DataGridHierarchicalColumn Header="Name" Width="*"

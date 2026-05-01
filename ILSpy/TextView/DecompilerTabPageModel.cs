@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -108,7 +109,7 @@ namespace ILSpy.TextView
 		internal void RaiseNavigateRequested(ReferenceSegment segment)
 			=> NavigateRequested?.Invoke(segment);
 
-		ILSpyTreeNode? currentNode;
+		IReadOnlyList<ILSpyTreeNode> currentNodes = System.Array.Empty<ILSpyTreeNode>();
 
 		[RelayCommand]
 		void CancelDecompilation()
@@ -116,16 +117,33 @@ namespace ILSpy.TextView
 			activeCts?.Cancel();
 		}
 
+		/// <summary>
+		/// Single-selection convenience wrapper over <see cref="CurrentNodes"/> — get returns
+		/// the first node (or null), set replaces the list with the single node.
+		/// </summary>
 		public ILSpyTreeNode? CurrentNode {
-			get => currentNode;
+			get => currentNodes.Count > 0 ? currentNodes[0] : null;
+			set => CurrentNodes = value == null
+				? System.Array.Empty<ILSpyTreeNode>()
+				: new[] { value };
+		}
+
+		/// <summary>
+		/// All tree nodes whose decompiled output appears in this tab. Setting fires a fresh
+		/// <see cref="DecompileAsync"/> that iterates each node and writes its output, blank
+		/// line in between. The first node drives the tab title.
+		/// </summary>
+		public IReadOnlyList<ILSpyTreeNode> CurrentNodes {
+			get => currentNodes;
 			set {
-				if (currentNode == value)
+				ArgumentNullException.ThrowIfNull(value);
+				if (currentNodes.SequenceEqual(value))
 					return;
-				if (currentNode != null)
-					currentNode.PropertyChanged -= OnCurrentNodePropertyChanged;
-				currentNode = value;
-				if (currentNode != null)
-					currentNode.PropertyChanged += OnCurrentNodePropertyChanged;
+				foreach (var n in currentNodes)
+					n.PropertyChanged -= OnCurrentNodePropertyChanged;
+				currentNodes = value.ToArray();
+				foreach (var n in currentNodes)
+					n.PropertyChanged += OnCurrentNodePropertyChanged;
 				_ = DecompileAsync();
 			}
 		}
@@ -136,10 +154,17 @@ namespace ILSpy.TextView
 			// from ShortName to "ShortName (version, tfm)" once the assembly finishes loading).
 			// While a decompile is running the spinner prefixes the title — keep the prefix and
 			// just refresh the suffix; otherwise replace the title outright.
-			if (e.PropertyName != nameof(ILSpyTreeNode.Text) || sender is not ILSpyTreeNode node)
+			if (e.PropertyName != nameof(ILSpyTreeNode.Text))
 				return;
-			var text = node.Text?.ToString() ?? "(unnamed)";
-			Title = IsDecompiling ? ComposeSpinnerTitle(0, text) : text;
+			var baseTitle = ComposeBaseTitle();
+			Title = IsDecompiling ? ComposeSpinnerTitle(0, baseTitle) : baseTitle;
+		}
+
+		string ComposeBaseTitle()
+		{
+			if (currentNodes.Count == 0)
+				return "(unnamed)";
+			return string.Join(", ", currentNodes.Select(n => n.Text?.ToString() ?? "(unnamed)"));
 		}
 
 		// Resolved lazily so unit tests / design-time previews that bypass the composition host
@@ -166,9 +191,9 @@ namespace ILSpy.TextView
 		{
 			activeCts?.Cancel();
 			var cts = activeCts = new CancellationTokenSource();
-			var node = currentNode;
+			var nodes = currentNodes;
 			var language = Language;
-			if (node == null || language == null)
+			if (nodes.Count == 0 || language == null)
 			{
 				Text = string.Empty;
 				IsDecompiling = false;
@@ -180,7 +205,7 @@ namespace ILSpy.TextView
 
 			// Spinner appears as a glyph prefix on the tab title while the decompile runs;
 			// editor state is left untouched so cancellation falls back cleanly.
-			Title = ComposeSpinnerTitle(0, currentNode?.Text?.ToString() ?? "(unnamed)");
+			Title = ComposeSpinnerTitle(0, ComposeBaseTitle());
 			TaskbarProgress?.SetState(TaskbarProgressState.Indeterminate);
 			_ = RunSpinnerAsync(cts.Token);
 
@@ -191,7 +216,14 @@ namespace ILSpy.TextView
 					var options = new DecompilationOptions { CancellationToken = cts.Token };
 					try
 					{
-						node.Decompile(language, output, options);
+						for (int i = 0; i < nodes.Count; i++)
+						{
+							if (cts.Token.IsCancellationRequested)
+								break;
+							if (i > 0)
+								output.WriteLine();
+							nodes[i].Decompile(language, output, options);
+						}
 					}
 					catch (OperationCanceledException)
 					{
@@ -220,7 +252,7 @@ namespace ILSpy.TextView
 					// Re-read Text now (instead of capturing it before decompile started) — for
 					// freshly-opened assemblies, Text only has the rich "(version, tfm)" form
 					// after the load completes during decompile.
-					Title = currentNode?.Text?.ToString() ?? "(unnamed)";
+					Title = ComposeBaseTitle();
 					SyntaxExtension = newSyntaxExtension;
 					HighlightingModel = model;
 					Foldings = collectedFoldings;
@@ -247,8 +279,8 @@ namespace ILSpy.TextView
 						IsDecompiling = false;
 						// If we cancelled before producing fresh output, drop the spinner glyph
 						// from the title — the editor still shows the previous decompile.
-						if (currentNode != null)
-							Title = currentNode.Text?.ToString() ?? "(unnamed)";
+						if (currentNodes.Count > 0)
+							Title = ComposeBaseTitle();
 						TaskbarProgress?.SetState(TaskbarProgressState.None);
 					}
 					if (Dispatcher.UIThread.CheckAccess())
@@ -282,7 +314,7 @@ namespace ILSpy.TextView
 				}
 				if (token.IsCancellationRequested || !IsDecompiling)
 					return;
-				Title = ComposeSpinnerTitle(frame++, currentNode?.Text?.ToString() ?? "(unnamed)");
+				Title = ComposeSpinnerTitle(frame++, ComposeBaseTitle());
 			}
 		}
 	}

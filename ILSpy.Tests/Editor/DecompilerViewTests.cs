@@ -264,6 +264,57 @@ public class DecompilerViewTests
 	}
 
 	[AvaloniaTest]
+	public async Task Multi_Selection_Tab_Title_Joins_All_Selected_Names_With_Comma()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		typeNode.EnsureLazyChildren();
+		var asEnumerable = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "AsEnumerable");
+		var empty = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "Empty");
+
+		vm.AssemblyTreeModel.SelectedItems.Clear();
+		vm.AssemblyTreeModel.SelectedItems.Add(asEnumerable);
+		vm.AssemblyTreeModel.SelectedItems.Add(empty);
+
+		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		tab.Title.Should().Be($"{asEnumerable.Text}, {empty.Text}");
+	}
+
+	[AvaloniaTest]
+	public async Task Multi_Selecting_Methods_Decompiles_All_Of_Them_Into_One_View()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		typeNode.EnsureLazyChildren();
+		var asEnumerable = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "AsEnumerable");
+		var empty = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "Empty");
+
+		vm.AssemblyTreeModel.SelectedItems.Clear();
+		vm.AssemblyTreeModel.SelectedItems.Add(asEnumerable);
+		vm.AssemblyTreeModel.SelectedItems.Add(empty);
+
+		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		tab.Text.Should().Contain("AsEnumerable");
+		tab.Text.Should().Contain("Empty");
+		// Body fragment from AsEnumerable to confirm both bodies actually rendered.
+		tab.Text.Should().Contain("return source");
+	}
+
+	[AvaloniaTest]
 	public async Task Selecting_Assembly_Node_Emits_Header_And_Assembly_Attributes()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();
