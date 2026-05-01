@@ -23,7 +23,7 @@ using ICSharpCode.ILSpyX.Settings;
 
 using ILSpy.AppEnv;
 
-using ProductionApp = global::ILSpy.App;
+using ProductionApp = ILSpy.App;
 
 namespace ICSharpCode.ILSpy.Tests;
 
