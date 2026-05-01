@@ -95,6 +95,15 @@ namespace ILSpy.Images
 		public static readonly IImage Property = LoadSvg(nameof(Property));
 		public static readonly IImage Event = LoadSvg(nameof(Event));
 
+		// Reference overlays (small badge layered onto a base icon for TypeRef/MemberRef nodes).
+		internal static readonly IImage ReferenceOverlay = LoadSvg(nameof(ReferenceOverlay));
+		internal static readonly IImage ExportOverlay = LoadSvg(nameof(ExportOverlay));
+
+		public static readonly IImage TypeReference = new PairOverlayImage(Class, ReferenceOverlay);
+		public static readonly IImage MethodReference = new PairOverlayImage(Method, ReferenceOverlay);
+		public static readonly IImage FieldReference = new PairOverlayImage(Field, ReferenceOverlay);
+		public static readonly IImage ExportedType = new PairOverlayImage(Class, ExportOverlay);
+
 		// Overlays
 		internal static readonly IImage OverlayProtected = LoadSvg(nameof(OverlayProtected));
 		internal static readonly IImage OverlayInternal = LoadSvg(nameof(OverlayInternal));
@@ -140,6 +149,32 @@ namespace ILSpy.Images
 			AccessOverlayIcon.CompilerControlled => OverlayCompilerControlled,
 			_ => null, // Public — no overlay
 		};
+	}
+
+	/// <summary>
+	/// Two-layer icon: a base image with a single overlay drawn on top at full size. Used by
+	/// TypeRef / MemberRef / ExportedType nodes to differentiate them from their plain
+	/// Class / Method / Field counterparts.
+	/// </summary>
+	sealed class PairOverlayImage : IImage
+	{
+		static readonly Size IconSize = new(16, 16);
+		readonly IImage baseImage;
+		readonly IImage overlay;
+
+		public PairOverlayImage(IImage baseImage, IImage overlay)
+		{
+			this.baseImage = baseImage;
+			this.overlay = overlay;
+		}
+
+		public Size Size => IconSize;
+
+		public void Draw(DrawingContext context, Rect sourceRect, Rect destRect)
+		{
+			baseImage.Draw(context, new Rect(baseImage.Size), destRect);
+			overlay.Draw(context, new Rect(overlay.Size), destRect);
+		}
 	}
 
 	/// <summary>

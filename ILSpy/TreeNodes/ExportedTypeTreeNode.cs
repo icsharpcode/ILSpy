@@ -46,7 +46,7 @@ namespace ILSpy.TreeNodes
 
 		public override object Text => Language.TypeToString(resolvedType);
 
-		public override object Icon => Images.Images.Class;
+		public override object Icon => Images.Images.ExportedType;
 
 		protected override void LoadChildren()
 		{

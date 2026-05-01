@@ -53,9 +53,9 @@ namespace ILSpy.TreeNodes
 		public override object Text => Signature;
 
 		public override object Icon => r.MemberReferenceKind switch {
-			MemberReferenceKind.Method => Images.Images.Method,
-			MemberReferenceKind.Field => Images.Images.Field,
-			_ => Images.Images.Class,
+			MemberReferenceKind.Method => Images.Images.MethodReference,
+			MemberReferenceKind.Field => Images.Images.FieldReference,
+			_ => Images.Images.TypeReference,
 		};
 
 		public string Signature => Language.EntityToString(resolvedMember, ConversionFlags.None);
