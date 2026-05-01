@@ -134,9 +134,12 @@ namespace ILSpy.TextView
 		{
 			// Tree-node Text can change after we capture the title (e.g. AssemblyTreeNode swaps
 			// from ShortName to "ShortName (version, tfm)" once the assembly finishes loading).
-			// Re-read it whenever the node fires Text so the tab header stays in sync.
-			if (e.PropertyName == nameof(ILSpyTreeNode.Text) && sender is ILSpyTreeNode node)
-				Title = node.Text?.ToString() ?? "(unnamed)";
+			// While a decompile is running the spinner prefixes the title — keep the prefix and
+			// just refresh the suffix; otherwise replace the title outright.
+			if (e.PropertyName != nameof(ILSpyTreeNode.Text) || sender is not ILSpyTreeNode node)
+				return;
+			var text = node.Text?.ToString() ?? "(unnamed)";
+			Title = IsDecompiling ? ComposeSpinnerTitle(0, text) : text;
 		}
 
 		public DecompilerTabPageModel()
@@ -161,6 +164,11 @@ namespace ILSpy.TextView
 
 			var newSyntaxExtension = language.FileExtension;
 			IsDecompiling = true;
+
+			// Spinner appears as a glyph prefix on the tab title while the decompile runs;
+			// editor state is left untouched so cancellation falls back cleanly.
+			Title = ComposeSpinnerTitle(0, currentNode?.Text?.ToString() ?? "(unnamed)");
+			_ = RunSpinnerAsync(cts.Token);
 
 			try
 			{
@@ -220,11 +228,46 @@ namespace ILSpy.TextView
 				// at the top of DecompileAsync).
 				if (ReferenceEquals(activeCts, cts))
 				{
-					if (Dispatcher.UIThread.CheckAccess())
+					void StopSpinner()
+					{
 						IsDecompiling = false;
+						// If we cancelled before producing fresh output, drop the spinner glyph
+						// from the title — the editor still shows the previous decompile.
+						if (currentNode != null)
+							Title = currentNode.Text?.ToString() ?? "(unnamed)";
+					}
+					if (Dispatcher.UIThread.CheckAccess())
+						StopSpinner();
 					else
-						await Dispatcher.UIThread.InvokeAsync(() => IsDecompiling = false);
+						await Dispatcher.UIThread.InvokeAsync(StopSpinner);
 				}
+			}
+		}
+
+		// Braille round-spinner: the dot pattern walks around the cell so each frame reads as
+		// a different orientation of a small spinning circle.
+		static readonly char[] SpinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+		static readonly TimeSpan SpinnerInterval = TimeSpan.FromMilliseconds(80);
+
+		static string ComposeSpinnerTitle(int frame, string baseTitle)
+			=> $"{SpinnerFrames[frame % SpinnerFrames.Length]} {baseTitle}";
+
+		async Task RunSpinnerAsync(CancellationToken token)
+		{
+			int frame = 1;
+			while (!token.IsCancellationRequested)
+			{
+				try
+				{
+					await Task.Delay(SpinnerInterval, token).ConfigureAwait(true);
+				}
+				catch (OperationCanceledException)
+				{
+					return;
+				}
+				if (token.IsCancellationRequested || !IsDecompiling)
+					return;
+				Title = ComposeSpinnerTitle(frame++, currentNode?.Text?.ToString() ?? "(unnamed)");
 			}
 		}
 	}

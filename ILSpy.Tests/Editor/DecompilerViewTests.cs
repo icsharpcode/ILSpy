@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -27,6 +29,7 @@ using ICSharpCode.ILSpy.Properties;
 
 using ILSpy.AppEnv;
 using ILSpy.Commands;
+using ILSpy.TextView;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 using ILSpy.Views;
@@ -218,6 +221,46 @@ public class DecompilerViewTests
 		node.Text!.ToString().Should().NotBe(node.LoadedAssembly.ShortName,
 			"the rich form (with version + tfm) must be available, otherwise the test isn't exercising the late-update path");
 		tab.Title.Should().Be(node.Text!.ToString());
+	}
+
+	[AvaloniaTest]
+	public async Task Decompile_Tab_Title_Cycles_Round_Spinner_While_Decompiling()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var firstNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
+		vm.AssemblyTreeModel.SelectedItem = firstNode;
+		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		var titles = new List<string>();
+		var editorTexts = new List<string>();
+		tab.PropertyChanged += OnTabPropertyChanged;
+
+		var coreLib = typeof(object).Assembly.GetName().Name!;
+		var second = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLib, "System", "System.Version");
+		vm.AssemblyTreeModel.SelectedItem = second;
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		tab.PropertyChanged -= OnTabPropertyChanged;
+
+		var glyphs = new[] { '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏' };
+		titles.Should().Contain(t => glyphs.Any(t.Contains),
+			"the tab title must show one of the Braille spinner frames while decompilation is in flight");
+		editorTexts.Should().NotContain(t => glyphs.Any(t.Contains),
+			"the editor's Text must not be overwritten with the spinner — title prefix only");
+		tab.Title.Should().NotContainAny("⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏",
+			"the spinner glyph must clear once decompilation finishes");
+
+		void OnTabPropertyChanged(object? s, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(DecompilerTabPageModel.Title))
+				titles.Add(tab.Title ?? string.Empty);
+			else if (e.PropertyName == nameof(DecompilerTabPageModel.Text))
+				editorTexts.Add(tab.Text ?? string.Empty);
+		}
 	}
 
 	[AvaloniaTest]
