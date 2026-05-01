@@ -30,6 +30,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.FileLoaders;
 
 using ILSpy.Languages;
 
@@ -43,10 +44,22 @@ namespace ILSpy.TreeNodes
 
 		public LoadedAssembly LoadedAssembly => assembly;
 
-		public AssemblyTreeNode(LoadedAssembly assembly)
+		/// <summary>
+		/// When this node represents a .dll/.exe entry inside a <see cref="LoadedPackage"/>
+		/// (zip or .NET bundle), this is the package entry it was created from. Null for
+		/// stand-alone assemblies.
+		/// </summary>
+		public PackageEntry? PackageEntry { get; }
+
+		public AssemblyTreeNode(LoadedAssembly assembly) : this(assembly, null)
+		{
+		}
+
+		internal AssemblyTreeNode(LoadedAssembly assembly, PackageEntry? packageEntry)
 		{
 			ArgumentNullException.ThrowIfNull(assembly);
 			this.assembly = assembly;
+			this.PackageEntry = packageEntry;
 			LazyLoading = true;
 			_ = InitAsync();
 		}
@@ -182,18 +195,26 @@ namespace ILSpy.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			var module = cachedModule;
-			if (module == null)
+			LoadResult loadResult;
+			try
 			{
-				try
-				{
-					module = assembly.GetLoadResultAsync().GetAwaiter().GetResult().MetadataFile;
-				}
-				catch
-				{
-					return;
-				}
+				loadResult = assembly.GetLoadResultAsync().GetAwaiter().GetResult();
 			}
+			catch
+			{
+				return;
+			}
+
+			// Zip / .NET-bundle packages: surface their folder structure instead of trying to
+			// decompile the package itself.
+			if (loadResult.Package != null)
+			{
+				foreach (var child in PackageFolderTreeNode.LoadChildrenForFolder(loadResult.Package.RootFolder))
+					Children.Add(child);
+				return;
+			}
+
+			var module = loadResult.MetadataFile ?? cachedModule;
 			if (module == null)
 				return;
 

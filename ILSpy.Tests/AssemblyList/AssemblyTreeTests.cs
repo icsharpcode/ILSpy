@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -63,6 +65,55 @@ public class AssemblyTreeTests
 		resources.EnsureLazyChildren();
 		resources.Children.Should().NotBeEmpty();
 		resources.Children.Should().AllBeAssignableTo<ResourceTreeNode>();
+	}
+
+	[AvaloniaTest]
+	public async Task Loading_Zip_Package_Surfaces_Folders_And_Entries()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var tempDir = Path.Combine(Path.GetTempPath(), "ILSpy.Tests", System.Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempDir);
+		var zipPath = Path.Combine(tempDir, "fixture.zip");
+		using (var zip = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+		{
+			using (var w = new StreamWriter(zip.CreateEntry("readme.txt").Open()))
+				w.Write("hello");
+			using (var w = new StreamWriter(zip.CreateEntry("lib/inner.txt").Open()))
+				w.Write("inner");
+			using (var w = new StreamWriter(zip.CreateEntry("docs/help.html").Open()))
+				w.Write("<html />");
+		}
+
+		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
+		var openCommand = registry.Commands
+			.Single(c => c.Metadata.Header == nameof(Resources._Open))
+			.CreateExport().Value;
+		openCommand.Execute(zipPath);
+
+		await Waiters.WaitForAsync(() =>
+			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a =>
+				string.Equals(a.FileName, zipPath, System.StringComparison.OrdinalIgnoreCase)));
+		var loaded = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
+			.First(a => string.Equals(a.FileName, zipPath, System.StringComparison.OrdinalIgnoreCase));
+		await loaded.GetLoadResultAsync();
+
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(loaded.ShortName);
+		assemblyNode.EnsureLazyChildren();
+
+		var folderNames = assemblyNode.Children.OfType<PackageFolderTreeNode>()
+			.Select(f => (string)f.Text)
+			.ToList();
+		folderNames.Should().Contain("lib");
+		folderNames.Should().Contain("docs");
+
+		var entryNames = assemblyNode.Children.OfType<ResourceTreeNode>()
+			.Select(r => r.Resource.Name)
+			.ToList();
+		entryNames.Should().Contain("readme.txt");
 	}
 
 	[AvaloniaTest]
