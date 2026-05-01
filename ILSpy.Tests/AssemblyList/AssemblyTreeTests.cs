@@ -29,6 +29,7 @@ using ICSharpCode.ILSpy.Properties;
 using ILSpy;
 using ILSpy.AppEnv;
 using ILSpy.Commands;
+using ILSpy.Images;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 using ILSpy.Views;
@@ -57,6 +58,31 @@ public class AssemblyTreeTests
 		refFolder.EnsureLazyChildren();
 		refFolder.Children.Should().NotBeEmpty();
 		refFolder.Children.Should().AllBeAssignableTo<AssemblyReferenceTreeNode>();
+	}
+
+	[AvaloniaTest]
+	public async Task Assembly_Reference_Icon_Settles_To_Assembly_Once_Resolved()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
+		assemblyNode.EnsureLazyChildren();
+		var refFolder = assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single();
+		refFolder.EnsureLazyChildren();
+
+		var refNode = refFolder.Children.OfType<AssemblyReferenceTreeNode>()
+			.First(n => n.AssemblyReference.Name == "System.Runtime");
+
+		// First access is "loading" — the resolver runs on the background dispatcher.
+		var initialIcon = refNode.Icon;
+		initialIcon.Should().BeSameAs(global::ILSpy.Images.Images.AssemblyLoading);
+
+		await Waiters.WaitForAsync(() =>
+			!ReferenceEquals(refNode.Icon, global::ILSpy.Images.Images.AssemblyLoading));
+		refNode.Icon.Should().BeSameAs(global::ILSpy.Images.Images.Assembly);
 	}
 
 	[AvaloniaTest]

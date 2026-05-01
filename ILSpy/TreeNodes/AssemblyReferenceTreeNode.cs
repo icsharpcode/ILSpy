@@ -18,6 +18,8 @@
 
 using System;
 
+using Avalonia.Threading;
+
 using AvaloniaEdit.Highlighting;
 
 using ICSharpCode.Decompiler;
@@ -39,8 +41,11 @@ namespace ILSpy.TreeNodes
 	/// </summary>
 	sealed class AssemblyReferenceTreeNode : ILSpyTreeNode
 	{
+		enum LoadState { Unloaded, Loading, Loaded, Failed }
+
 		readonly AssemblyReference reference;
 		readonly AssemblyTreeNode parentAssembly;
+		LoadState state;
 
 		public AssemblyReferenceTreeNode(AssemblyReference reference, AssemblyTreeNode parentAssembly)
 		{
@@ -53,7 +58,25 @@ namespace ILSpy.TreeNodes
 
 		public override object Text => ILAmbience.EscapeName(reference.Name);
 
-		public override object Icon => Images.Images.Assembly;
+		public override object Icon {
+			get {
+				if (state == LoadState.Unloaded)
+				{
+					state = LoadState.Loading;
+					Dispatcher.UIThread.Post(() => {
+						var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver();
+						var resolved = resolver.Resolve(reference);
+						state = resolved == null ? LoadState.Failed : LoadState.Loaded;
+						RaisePropertyChanged(nameof(Icon));
+					}, DispatcherPriority.Background);
+				}
+				return state switch {
+					LoadState.Loaded => Images.Images.Assembly,
+					LoadState.Failed => Images.Images.AssemblyWarning,
+					_ => Images.Images.AssemblyLoading,
+				};
+			}
+		}
 
 		protected override void LoadChildren()
 		{
