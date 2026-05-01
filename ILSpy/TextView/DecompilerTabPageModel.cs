@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -120,9 +121,22 @@ namespace ILSpy.TextView
 			set {
 				if (currentNode == value)
 					return;
+				if (currentNode != null)
+					currentNode.PropertyChanged -= OnCurrentNodePropertyChanged;
 				currentNode = value;
+				if (currentNode != null)
+					currentNode.PropertyChanged += OnCurrentNodePropertyChanged;
 				_ = DecompileAsync();
 			}
+		}
+
+		void OnCurrentNodePropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			// Tree-node Text can change after we capture the title (e.g. AssemblyTreeNode swaps
+			// from ShortName to "ShortName (version, tfm)" once the assembly finishes loading).
+			// Re-read it whenever the node fires Text so the tab header stays in sync.
+			if (e.PropertyName == nameof(ILSpyTreeNode.Text) && sender is ILSpyTreeNode node)
+				Title = node.Text?.ToString() ?? "(unnamed)";
 		}
 
 		public DecompilerTabPageModel()
@@ -145,7 +159,6 @@ namespace ILSpy.TextView
 				return;
 			}
 
-			var nodeTitle = node.Text?.ToString() ?? "(unnamed)";
 			var newSyntaxExtension = language.FileExtension;
 			IsDecompiling = true;
 
@@ -182,7 +195,10 @@ namespace ILSpy.TextView
 				var collectedLookup = output.DefinitionLookup;
 				var collectedUIElements = output.UIElements;
 				await Dispatcher.UIThread.InvokeAsync(() => {
-					Title = nodeTitle;
+					// Re-read Text now (instead of capturing it before decompile started) — for
+					// freshly-opened assemblies, Text only has the rich "(version, tfm)" form
+					// after the load completes during decompile.
+					Title = currentNode?.Text?.ToString() ?? "(unnamed)";
 					SyntaxExtension = newSyntaxExtension;
 					HighlightingModel = model;
 					Foldings = collectedFoldings;

@@ -23,7 +23,10 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
+using ICSharpCode.ILSpy.Properties;
+
 using ILSpy.AppEnv;
+using ILSpy.Commands;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 using ILSpy.Views;
@@ -183,6 +186,38 @@ public class DecompilerViewTests
 
 		tab.Text.Should().Contain("TargetFrameworkAttribute");
 		tab.Text.Should().Contain("SupportedOSPlatformAttribute");
+	}
+
+	[AvaloniaTest]
+	public async Task Decompiler_Tab_Title_Tracks_Tree_Node_Text_When_Node_Loads_Late()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		// Open a fresh assembly via the command and immediately let the OpenCommand select it,
+		// before LoadedAssembly.Text has the rich "(version, tfm)" suffix wired up. This is the
+		// timing window where the tab title used to lock in the bare ShortName.
+		var newAsmPath = typeof(System.Net.Http.HttpClient).Assembly.Location;
+		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
+		var openCommand = registry.Commands
+			.Single(c => c.Metadata.Header == nameof(Resources._Open))
+			.CreateExport().Value;
+		openCommand.Execute(newAsmPath);
+
+		await Waiters.WaitForAsync(() =>
+			vm.AssemblyTreeModel.SelectedItem is AssemblyTreeNode n
+				&& string.Equals(n.LoadedAssembly.FileName, newAsmPath, System.StringComparison.OrdinalIgnoreCase));
+
+		var node = (AssemblyTreeNode)vm.AssemblyTreeModel.SelectedItem!;
+		await node.LoadedAssembly.GetLoadResultAsync();
+		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		await Waiters.WaitForAsync(() => string.Equals(tab.Title, node.Text?.ToString(), System.StringComparison.Ordinal));
+		node.Text!.ToString().Should().NotBe(node.LoadedAssembly.ShortName,
+			"the rich form (with version + tfm) must be available, otherwise the test isn't exercising the late-update path");
+		tab.Title.Should().Be(node.Text!.ToString());
 	}
 
 	[AvaloniaTest]
