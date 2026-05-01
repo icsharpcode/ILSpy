@@ -28,6 +28,7 @@ using Avalonia.Markup.Xaml;
 using ICSharpCode.ILSpyX.Settings;
 
 using ILSpy.AppEnv;
+using ILSpy.Themes;
 using ILSpy.Views;
 
 namespace ILSpy
@@ -75,6 +76,12 @@ namespace ILSpy
 				StartupExceptions.Items.Add(new ExceptionData(ex));
 			}
 
+			if (Composition?.GetExport<SettingsService>() is { } settingsService)
+			{
+				ThemeManager.Current.Attach(settingsService.SessionSettings);
+				ApplyCulture(settingsService.SessionSettings.CurrentCulture);
+			}
+
 			if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
 			{
 				desktop.MainWindow = Composition?.GetExport<MainWindow>()
@@ -88,6 +95,24 @@ namespace ILSpy
 			}
 
 			base.OnFrameworkInitializationCompleted();
+		}
+
+		// Effective UI culture is process-wide. Setting it on startup means a changed CurrentCulture
+		// only takes effect after restart, matching the WPF behaviour.
+		static void ApplyCulture(string? culture)
+		{
+			if (string.IsNullOrEmpty(culture))
+				return;
+			try
+			{
+				var info = System.Globalization.CultureInfo.GetCultureInfo(culture);
+				System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = info;
+				System.Threading.Thread.CurrentThread.CurrentUICulture = info;
+				ICSharpCode.ILSpy.Properties.Resources.Culture = info;
+			}
+			catch (System.Globalization.CultureNotFoundException)
+			{
+			}
 		}
 	}
 }

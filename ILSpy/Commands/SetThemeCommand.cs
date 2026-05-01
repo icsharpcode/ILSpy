@@ -16,34 +16,19 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Linq;
+using System.Composition;
 
-using Avalonia.Controls;
-using Avalonia.Headless.NUnit;
-
-using AwesomeAssertions;
-
-using ILSpy;
-
-using NUnit.Framework;
-
-namespace ICSharpCode.ILSpy.Tests;
-
-// MainMenu's top-level structure (File / View / Window with mnemonic underscores) is the
-// scaffolding every later commit hangs items onto via MEF. If a future commit accidentally
-// drops one of these top-levels or shuffles the order, the [ExportMainMenuCommand] entries
-// that target them by header would silently land in the wrong menu.
-[TestFixture]
-public class MainMenuTests
+namespace ILSpy.Commands
 {
-	[AvaloniaTest]
-	public void MainMenu_top_level_items_are_File_View_Window_in_order()
+	[Export]
+	[Shared]
+	[method: ImportingConstructor]
+	public class SetThemeCommand(SettingsService settingsService) : SimpleCommand
 	{
-		var mainMenu = new MainMenu();
-		var menu = mainMenu.FindControl<Menu>("MainMenuRoot");
-		menu.Should().NotBeNull();
-
-		var headers = menu!.Items.OfType<MenuItem>().Select(m => m.Header as string).ToList();
-		headers.Should().Equal("_File", "_View", "_Window");
+		public override void Execute(object? parameter)
+		{
+			if (parameter is string theme)
+				settingsService.SessionSettings.Theme = theme;
+		}
 	}
 }

@@ -16,34 +16,27 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Linq;
+using System.Composition;
 
-using Avalonia.Controls;
-using Avalonia.Headless.NUnit;
+using ICSharpCode.ILSpy.Properties;
 
-using AwesomeAssertions;
+using ILSpy.Docking;
 
-using ILSpy;
-
-using NUnit.Framework;
-
-namespace ICSharpCode.ILSpy.Tests;
-
-// MainMenu's top-level structure (File / View / Window with mnemonic underscores) is the
-// scaffolding every later commit hangs items onto via MEF. If a future commit accidentally
-// drops one of these top-levels or shuffles the order, the [ExportMainMenuCommand] entries
-// that target them by header would silently land in the wrong menu.
-[TestFixture]
-public class MainMenuTests
+namespace ILSpy.Commands
 {
-	[AvaloniaTest]
-	public void MainMenu_top_level_items_are_File_View_Window_in_order()
+	[ExportMainMenuCommand(Header = nameof(Resources.Window_CloseAllDocuments), ParentMenuID = nameof(Resources._Window))]
+	[Shared]
+	[method: ImportingConstructor]
+	sealed class CloseAllDocumentsCommand(DockWorkspace dockWorkspace) : SimpleCommand
 	{
-		var mainMenu = new MainMenu();
-		var menu = mainMenu.FindControl<Menu>("MainMenuRoot");
-		menu.Should().NotBeNull();
+		public override void Execute(object? parameter) => dockWorkspace.CloseAllTabs();
+	}
 
-		var headers = menu!.Items.OfType<MenuItem>().Select(m => m.Header as string).ToList();
-		headers.Should().Equal("_File", "_View", "_Window");
+	[ExportMainMenuCommand(Header = nameof(Resources.Window_ResetLayout), ParentMenuID = nameof(Resources._Window))]
+	[Shared]
+	[method: ImportingConstructor]
+	sealed class ResetLayoutCommand(DockWorkspace dockWorkspace) : SimpleCommand
+	{
+		public override void Execute(object? parameter) => dockWorkspace.ResetLayout();
 	}
 }

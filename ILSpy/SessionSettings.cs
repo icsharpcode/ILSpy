@@ -41,11 +41,19 @@ namespace ILSpy
 
 		public XName SectionName => "SessionSettings";
 
+		public LanguageSettings LanguageSettings { get; private set; } = null!;
+
 		[ObservableProperty]
 		private string? activeAssemblyList;
 
 		[ObservableProperty]
 		private string? activeLanguageName;
+
+		[ObservableProperty]
+		private string? theme;
+
+		[ObservableProperty]
+		private string? currentCulture;
 
 		/// <summary>
 		/// Path to the previously-selected tree node (one ToString() per ancestor, root-first).
@@ -61,10 +69,17 @@ namespace ILSpy
 
 		public void LoadFromXml(XElement section)
 		{
+			XElement filterSettings = section.Element("FilterSettings") ?? new XElement("FilterSettings");
+			LanguageSettings = new LanguageSettings(filterSettings, this);
+			LanguageSettings.PropertyChanged += (s, e) => OnPropertyChanged(nameof(LanguageSettings));
+
 			ActiveAssemblyList = (string?)section.Element("ActiveAssemblyList");
 			ActiveLanguageName = (string?)section.Element("ActiveLanguageName");
 			ActiveTreeViewPath = section.Element("ActiveTreeViewPath")?.Elements().Select(e => (string)e).ToArray();
 			WindowState = ParseEnum(section.Element("WindowState")?.Value, WindowState.Normal);
+			Theme = (string?)section.Element(nameof(Theme));
+			var culture = (string?)section.Element(nameof(CurrentCulture));
+			CurrentCulture = string.IsNullOrEmpty(culture) ? null : culture;
 
 			var bounds = section.Element("WindowBounds");
 			if (bounds != null)
@@ -81,6 +96,8 @@ namespace ILSpy
 		public XElement SaveToXml()
 		{
 			var section = new XElement(SectionName);
+			if (LanguageSettings != null)
+				section.Add(LanguageSettings.SaveAsXml());
 			if (!string.IsNullOrEmpty(ActiveAssemblyList))
 				section.Add(new XElement("ActiveAssemblyList", ActiveAssemblyList));
 			if (!string.IsNullOrEmpty(ActiveLanguageName))
@@ -93,6 +110,10 @@ namespace ILSpy
 				new XAttribute("Top", WindowPosition.Y.ToString(CultureInfo.InvariantCulture)),
 				new XAttribute("Width", WindowSize.Width.ToString(CultureInfo.InvariantCulture)),
 				new XAttribute("Height", WindowSize.Height.ToString(CultureInfo.InvariantCulture))));
+			if (!string.IsNullOrEmpty(Theme))
+				section.Add(new XElement(nameof(Theme), Theme));
+			if (!string.IsNullOrEmpty(CurrentCulture))
+				section.Add(new XElement(nameof(CurrentCulture), CurrentCulture));
 			return section;
 		}
 

@@ -240,5 +240,36 @@ namespace ILSpy.Docking
 			}
 			return tab;
 		}
+
+		public void CloseAllTabs()
+		{
+			var docs = factory.Documents?.VisibleDockables;
+			if (docs == null)
+				return;
+			// Snapshot first — CloseDockable mutates VisibleDockables.
+			foreach (var doc in System.Linq.Enumerable.ToArray(docs))
+				factory.CloseDockable(doc);
+		}
+
+		public void ResetLayout()
+		{
+			// Rebuild from the factory's default layout. The active tree node, if any, will be
+			// re-projected onto the freshly-created decompiler tab through the existing
+			// SelectedItem -> ShowSelectedNode plumbing.
+			var newLayout = factory.CreateLayout();
+			factory.InitLayout(newLayout);
+			if (newLayout is IRootDock root && Layout is IRootDock currentRoot)
+			{
+				currentRoot.VisibleDockables = root.VisibleDockables;
+				currentRoot.ActiveDockable = root.ActiveDockable;
+				currentRoot.FocusedDockable = root.FocusedDockable;
+			}
+			if (factory.InitialDecompilerTab is { } initialTab)
+			{
+				initialTab.Language = languageService.CurrentLanguage;
+				initialTab.NavigateRequested += OnNavigateRequested;
+			}
+			ShowSelectedNode();
+		}
 	}
 }

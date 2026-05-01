@@ -1,0 +1,59 @@
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
+using System.Collections.Generic;
+using System.Composition;
+
+using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpyX;
+
+using ILSpy.AssemblyTree;
+
+namespace ILSpy.Commands
+{
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources.SortAssembly_listName), MenuIcon = "Images/Sort", MenuCategory = nameof(Resources.View))]
+	[Shared]
+	[method: ImportingConstructor]
+	sealed class SortAssemblyListCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
+	{
+		public override void Execute(object? parameter)
+			=> assemblyTreeModel.AssemblyList?.Sort(AssemblyNameComparer.Instance);
+
+		sealed class AssemblyNameComparer : IComparer<LoadedAssembly>
+		{
+			public static readonly AssemblyNameComparer Instance = new();
+			public int Compare(LoadedAssembly? x, LoadedAssembly? y)
+				=> string.Compare(x?.ShortName, y?.ShortName, StringComparison.CurrentCulture);
+		}
+	}
+
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources._CollapseTreeNodes), MenuIcon = "Images/CollapseAll", MenuCategory = nameof(Resources.View))]
+	[Shared]
+	sealed class CollapseAllCommand : SimpleCommand
+	{
+		public override void Execute(object? parameter) => NotImplementedDialog.Show(Resources._CollapseTreeNodes);
+	}
+
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources._Options), MenuCategory = nameof(Resources.Options), MenuOrder = 999)]
+	[Shared]
+	sealed class ShowOptionsCommand : SimpleCommand
+	{
+		public override void Execute(object? parameter) => NotImplementedDialog.Show(Resources._Options);
+	}
+}

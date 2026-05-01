@@ -3,25 +3,30 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ILSpy.ViewModels"
+             xmlns:p="clr-namespace:ICSharpCode.ILSpy.Properties;assembly=ILSpy"
+             xmlns:local="using:ILSpy"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="23"
              x:Class="ILSpy.MainMenu"
-             x:DataType="vm:MainWindowViewModel">
-	<Menu DockPanel.Dock="Top" Name="Menu" Height="23">
-		<MenuItem Header="_File" Tag="_File">
-			<!-- MEF-populated content (task #10) -->
+             x:DataType="local:SessionSettings">
+	<Menu DockPanel.Dock="Top" Name="MainMenuRoot" Height="23">
+		<MenuItem Header="{x:Static p:Resources._File}" Tag="_File">
+			<!-- File menu populated from MEF (see MainMenu.axaml.cs InitMainMenu) -->
 		</MenuItem>
-		<MenuItem Header="_View" Tag="_View">
-			<!-- API visibility toggles, theme selection, etc. wired in task #10 / #3 -->
+		<MenuItem Header="{x:Static p:Resources._View}" Tag="_View">
+			<MenuItem Header="{x:Static p:Resources.Show_publiconlyTypesMembers}"
+			          ToggleType="Radio" GroupName="ApiVisibility"
+			          IsChecked="{Binding LanguageSettings.ApiVisPublicOnly, Mode=TwoWay}" />
+			<MenuItem Header="{x:Static p:Resources.Show_internalTypesMembers}"
+			          ToggleType="Radio" GroupName="ApiVisibility"
+			          IsChecked="{Binding LanguageSettings.ApiVisPublicAndInternal, Mode=TwoWay}" />
+			<MenuItem Header="{x:Static p:Resources.Show_allTypesAndMembers}"
+			          ToggleType="Radio" GroupName="ApiVisibility"
+			          IsChecked="{Binding LanguageSettings.ApiVisAll, Mode=TwoWay}" />
+			<Separator />
+			<MenuItem Header="{x:Static p:Resources.Theme}" Name="ThemeMenuItem" />
 		</MenuItem>
-		<MenuItem Header="_Window" Name="WindowMenuItem" Tag="_Window"
-		          ItemsSource="{Binding ToolPaneMenuItems}">
-			<MenuItem.DataTemplates>
-				<DataTemplate DataType="vm:ToolPaneMenuItem">
-					<MenuItem Header="{Binding Title}"
-					          ToggleType="CheckBox"
-					          IsChecked="{Binding IsPaneVisible, Mode=TwoWay}" />
-				</DataTemplate>
-			</MenuItem.DataTemplates>
+		<MenuItem Header="{x:Static p:Resources._Window}" Tag="_Window" Name="WindowMenuItem">
+			<!-- Window menu populated from MEF + tool panes (see MainMenu.axaml.cs InitWindowMenu) -->
 		</MenuItem>
 	</Menu>
 </UserControl>

@@ -16,34 +16,20 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Linq;
+using ICSharpCode.ILSpy.Properties;
 
-using Avalonia.Controls;
-using Avalonia.Headless.NUnit;
-
-using AwesomeAssertions;
-
-using ILSpy;
-
-using NUnit.Framework;
-
-namespace ICSharpCode.ILSpy.Tests;
-
-// MainMenu's top-level structure (File / View / Window with mnemonic underscores) is the
-// scaffolding every later commit hangs items onto via MEF. If a future commit accidentally
-// drops one of these top-levels or shuffles the order, the [ExportMainMenuCommand] entries
-// that target them by header would silently land in the wrong menu.
-[TestFixture]
-public class MainMenuTests
+namespace ILSpy.AppEnv
 {
-	[AvaloniaTest]
-	public void MainMenu_top_level_items_are_File_View_Window_in_order()
+	internal static class ResourceHelper
 	{
-		var mainMenu = new MainMenu();
-		var menu = mainMenu.FindControl<Menu>("MainMenuRoot");
-		menu.Should().NotBeNull();
+		internal static string GetString(string? key)
+		{
+			if (string.IsNullOrEmpty(key))
+				return string.Empty;
 
-		var headers = menu!.Items.OfType<MenuItem>().Select(m => m.Header as string).ToList();
-		headers.Should().Equal("_File", "_View", "_Window");
+			string? value = Resources.ResourceManager.GetString(key);
+
+			return !string.IsNullOrEmpty(value) ? value : key;
+		}
 	}
 }

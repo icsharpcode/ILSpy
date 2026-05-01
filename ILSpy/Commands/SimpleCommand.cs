@@ -16,34 +16,40 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Linq;
+using System;
+using System.Windows.Input;
 
-using Avalonia.Controls;
-using Avalonia.Headless.NUnit;
+using global::Avalonia.Data;
 
-using AwesomeAssertions;
-
-using ILSpy;
-
-using NUnit.Framework;
-
-namespace ICSharpCode.ILSpy.Tests;
-
-// MainMenu's top-level structure (File / View / Window with mnemonic underscores) is the
-// scaffolding every later commit hangs items onto via MEF. If a future commit accidentally
-// drops one of these top-levels or shuffles the order, the [ExportMainMenuCommand] entries
-// that target them by header would silently land in the wrong menu.
-[TestFixture]
-public class MainMenuTests
+namespace ILSpy.Commands
 {
-	[AvaloniaTest]
-	public void MainMenu_top_level_items_are_File_View_Window_in_order()
+	/// <summary>
+	/// Minimal ICommand base. Avalonia has no global RequerySuggested signal like WPF's
+	/// CommandManager, so derived commands fire CanExecuteChanged themselves when they care.
+	/// MenuItems also re-query CanExecute when the parent menu opens, which covers most cases.
+	/// </summary>
+	public abstract class SimpleCommand : ICommand
 	{
-		var mainMenu = new MainMenu();
-		var menu = mainMenu.FindControl<Menu>("MainMenuRoot");
-		menu.Should().NotBeNull();
+		public event EventHandler? CanExecuteChanged;
 
-		var headers = menu!.Items.OfType<MenuItem>().Select(m => m.Header as string).ToList();
-		headers.Should().Equal("_File", "_View", "_Window");
+		public abstract void Execute(object? parameter);
+
+		public virtual bool CanExecute(object? parameter) => true;
+
+		protected void RaiseCanExecuteChanged()
+		{
+			CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+		}
+	}
+
+	/// <summary>
+	/// Allows a command to declare an Avalonia <see cref="BindingBase"/> that the menu/toolbar
+	/// builder should attach to the host item's CommandParameter property — used when the
+	/// parameter must come from the visual tree (e.g. the owning Window) rather than be a
+	/// fixed value.
+	/// </summary>
+	public interface IProvideParameterBinding
+	{
+		BindingBase ParameterBinding { get; }
 	}
 }
