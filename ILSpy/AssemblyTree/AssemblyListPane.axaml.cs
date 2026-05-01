@@ -25,6 +25,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.DataGridHierarchical;
 using Avalonia.Input;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 
 using ICSharpCode.ILSpyX.TreeView;
@@ -104,9 +105,9 @@ namespace ILSpy.AssemblyTree
 			// the underlying SharpTreeNodes), and defer past Expand's pending child-realization
 			// notifications — synchronously the wrapper isn't in the visible list yet.
 			var scrollTarget = hNode!;
-			global::Avalonia.Threading.Dispatcher.UIThread.Post(
+			Dispatcher.UIThread.Post(
 				() => CenterRowInView(scrollTarget),
-				global::Avalonia.Threading.DispatcherPriority.Background);
+				DispatcherPriority.Background);
 			EndSync();
 		}
 
@@ -115,6 +116,10 @@ namespace ILSpy.AssemblyTree
 		void CenterRowInView(HierarchicalNode node)
 		{
 			TreeGrid.ScrollIntoView(node, TreeGrid.Columns[0]);
+			// ScrollIntoView only changes ScrollViewer.Offset; the row becomes a realised
+			// DataGridRow during the next layout pass. Force it now so we can read the row's
+			// bounds for centring.
+			TreeGrid.UpdateLayout();
 
 			var row = TreeGrid.GetVisualDescendants().OfType<DataGridRow>()
 				.FirstOrDefault(r => ReferenceEquals(r.DataContext, node));
@@ -140,9 +145,9 @@ namespace ILSpy.AssemblyTree
 
 		// Released on a Background dispatch tick so any DataGrid SelectionChanged the Expand /
 		// SelectedItem / ScrollIntoView calls trigger doesn't bounce back into the model.
-		void EndSync() => global::Avalonia.Threading.Dispatcher.UIThread.Post(
+		void EndSync() => Dispatcher.UIThread.Post(
 			() => syncingSelection = false,
-			global::Avalonia.Threading.DispatcherPriority.Background);
+			DispatcherPriority.Background);
 
 
 		void OnTreeGridDoubleTapped(object? sender, TappedEventArgs e)
