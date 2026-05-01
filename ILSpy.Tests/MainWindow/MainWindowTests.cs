@@ -93,6 +93,10 @@ public class MainWindowTests
 		var firstTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		firstTab.Text.Should().Contain("AsEnumerable");
 
+		// NavigationHistory collapses selections that happen within 0.5s into one entry. Wait
+		// past that window so the second selection records a real back-history entry.
+		await Task.Delay(600);
+
 		vm.AssemblyTreeModel.SelectedItem = secondMethod;
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, secondMethod));
 		var secondTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
