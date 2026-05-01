@@ -28,6 +28,7 @@ using Avalonia.Media;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
 using ILSpy.Languages;
@@ -149,6 +150,35 @@ namespace ILSpy.TreeNodes
 		public override bool ShowExpander => !assembly.HasLoadError && loadError == null && base.ShowExpander;
 
 		public override bool IsAutoLoaded => assembly.IsAutoLoaded;
+
+		/// <summary>
+		/// Finds the <see cref="NamespaceTreeNode"/> for the given namespace string, or
+		/// <c>null</c> if no children are loaded yet or the namespace has no top-level types
+		/// in this assembly. Mirrors <c>ICSharpCode.ILSpy.TreeNodes.AssemblyTreeNode.FindNamespaceNode</c>.
+		/// </summary>
+		public NamespaceTreeNode? FindNamespaceNode(string namespaceName)
+		{
+			ArgumentNullException.ThrowIfNull(namespaceName);
+			EnsureLazyChildren();
+			return Children.OfType<NamespaceTreeNode>().FirstOrDefault(ns => ns.Name == namespaceName);
+		}
+
+		/// <summary>
+		/// Finds the <see cref="TypeTreeNode"/> for the given top-level type definition.
+		/// Walks the assembly's namespaces (loading them as needed) and matches by
+		/// <see cref="TypeTreeNode.Handle"/>. Mirrors WPF's <c>FindTypeNode</c> but without
+		/// the eager <c>typeDict</c> cache.
+		/// </summary>
+		public TypeTreeNode? FindTypeNode(ITypeDefinition type)
+		{
+			ArgumentNullException.ThrowIfNull(type);
+			var ns = FindNamespaceNode(type.Namespace);
+			if (ns == null)
+				return null;
+			ns.EnsureLazyChildren();
+			var handle = (System.Reflection.Metadata.TypeDefinitionHandle)type.MetadataToken;
+			return ns.Children.OfType<TypeTreeNode>().FirstOrDefault(n => n.Handle == handle);
+		}
 
 		protected override void LoadChildren()
 		{

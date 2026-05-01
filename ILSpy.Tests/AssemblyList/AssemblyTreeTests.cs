@@ -26,6 +26,9 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.Properties;
 
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX;
+
 using ILSpy;
 using ILSpy.AppEnv;
 using ILSpy.Commands;
@@ -107,6 +110,44 @@ public class AssemblyTreeTests
 		typesNode.EnsureLazyChildren();
 		typesNode.Children.Should().NotBeEmpty();
 		typesNode.Children.Should().Contain(c => c is TypeReferenceTreeNode);
+	}
+
+	[AvaloniaTest]
+	public async Task FindNamespaceNode_Returns_The_Tree_Node_For_A_Loaded_Namespace()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
+		assemblyNode.EnsureLazyChildren();
+
+		var ns = assemblyNode.FindNamespaceNode("System.Linq");
+		((object?)ns).Should().NotBeNull();
+		ns!.Name.Should().Be("System.Linq");
+		assemblyNode.Children.OfType<NamespaceTreeNode>().Should().Contain(ns);
+	}
+
+	[AvaloniaTest]
+	public async Task FindTypeNode_Returns_The_Tree_Node_For_A_Loaded_Type()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
+		assemblyNode.EnsureLazyChildren();
+
+		var module = assemblyNode.LoadedAssembly.GetMetadataFileOrNull()!;
+		var typeSystem = (MetadataModule)module.GetTypeSystemOrNull()!.MainModule;
+		var enumerable = typeSystem.TopLevelTypeDefinitions
+			.First(t => t.ReflectionName == "System.Linq.Enumerable");
+
+		var node = assemblyNode.FindTypeNode(enumerable);
+		((object?)node).Should().NotBeNull();
+		node!.Handle.Should().Be((System.Reflection.Metadata.TypeDefinitionHandle)enumerable.MetadataToken);
 	}
 
 	[AvaloniaTest]
