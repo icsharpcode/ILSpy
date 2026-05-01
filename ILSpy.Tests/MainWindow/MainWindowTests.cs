@@ -110,6 +110,26 @@ public class MainWindowTests
 	}
 
 	[AvaloniaTest]
+	public async Task Selecting_Assembly_Node_Emits_Header_And_Assembly_Attributes()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
+		vm.AssemblyTreeModel.SelectedItem = assemblyNode;
+
+		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		tab.Text.Should().Contain("// " + assemblyNode.LoadedAssembly.FileName);
+		tab.Text.Should().Contain("// System.Linq, Version=");
+		tab.Text.Should().Contain("// Global type: <Module>");
+		tab.Text.Should().Contain("// Architecture: ");
+		tab.Text.Should().Contain("// Runtime: ");
+		tab.Text.Should().Contain("[assembly: AssemblyVersion(");
+	}
+
+	[AvaloniaTest]
 	public async Task Opening_Assembly_Adds_It_To_The_Tree()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();
