@@ -46,6 +46,7 @@ namespace ILSpy.TreeNodes
 		{
 			this.reference = reference ?? throw new ArgumentNullException(nameof(reference));
 			this.parentAssembly = parentAssembly ?? throw new ArgumentNullException(nameof(parentAssembly));
+			LazyLoading = true;
 		}
 
 		public AssemblyReference AssemblyReference => reference;
@@ -53,6 +54,20 @@ namespace ILSpy.TreeNodes
 		public override object Text => ILAmbience.EscapeName(reference.Name);
 
 		public override object Icon => Images.Images.Assembly;
+
+		protected override void LoadChildren()
+		{
+			// Resolve once and surface the referenced assembly's own AssemblyRefs as transitive
+			// children so the user can drill into the dependency graph from any reference.
+			// Façade assemblies (e.g. System.Runtime forwarders) resolve to a module with no
+			// further AssemblyRefs — those nodes simply expand to nothing, matching WPF.
+			var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver();
+			var resolved = resolver.Resolve(reference);
+			if (resolved == null)
+				return;
+			foreach (var childRef in resolved.AssemblyReferences)
+				Children.Add(new AssemblyReferenceTreeNode(childRef, parentAssembly));
+		}
 
 		public override void ActivateItem(IPlatformRoutedEventArgs e)
 		{

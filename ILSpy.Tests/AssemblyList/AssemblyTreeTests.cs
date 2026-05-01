@@ -60,6 +60,34 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
+	public async Task Expanding_Assembly_Reference_Reveals_Transitive_References()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
+		assemblyNode.EnsureLazyChildren();
+		var refFolder = assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single();
+		refFolder.EnsureLazyChildren();
+
+		// Many BCL refs resolve to facade assemblies with zero transitive references; iterate
+		// until we find one that has its own AssemblyRefs to verify the transitive walk works.
+		bool foundTransitive = false;
+		foreach (var refNode in refFolder.Children.OfType<AssemblyReferenceTreeNode>())
+		{
+			refNode.EnsureLazyChildren();
+			if (refNode.Children.OfType<AssemblyReferenceTreeNode>().Any())
+			{
+				foundTransitive = true;
+				break;
+			}
+		}
+		foundTransitive.Should().BeTrue("at least one reference must expose its own AssemblyRefs as child nodes");
+	}
+
+	[AvaloniaTest]
 	public async Task Activating_Assembly_Reference_Selects_Resolved_Assembly_Node()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();
