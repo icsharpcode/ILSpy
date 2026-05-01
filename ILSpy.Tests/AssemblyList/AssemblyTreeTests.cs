@@ -45,6 +45,27 @@ namespace ICSharpCode.ILSpy.Tests;
 public class AssemblyTreeTests
 {
 	[AvaloniaTest]
+	public async Task Assembly_Node_Has_Resources_Folder_When_Module_Has_Resources()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		// Pick a loaded assembly that ships embedded resources. CoreLib always has at least
+		// the localised error-message tables.
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
+		assemblyNode.EnsureLazyChildren();
+
+		var resources = assemblyNode.Children.OfType<ResourceListTreeNode>().Single();
+		resources.Text.Should().Be(Resources._Resources);
+		resources.EnsureLazyChildren();
+		resources.Children.Should().NotBeEmpty();
+		resources.Children.Should().AllBeAssignableTo<ResourceTreeNode>();
+	}
+
+	[AvaloniaTest]
 	public async Task Assembly_Node_Has_References_Folder_Child()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();

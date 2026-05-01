@@ -205,6 +205,9 @@ namespace ILSpy.TreeNodes
 
 			Children.Add(new ReferenceFolderTreeNode(module, this));
 
+			if (module.Resources.Any())
+				Children.Add(new ResourceListTreeNode(module));
+
 			var metadata = module.Metadata;
 			var namespaces = metadata.TypeDefinitions
 				.Where(t => metadata.GetTypeDefinition(t).GetDeclaringType().IsNil)
