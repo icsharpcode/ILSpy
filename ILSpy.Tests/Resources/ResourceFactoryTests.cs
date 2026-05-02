@@ -110,6 +110,41 @@ public class ResourceFactoryTests
 		realised.Should().ContainItemsAssignableTo<Control>();
 	}
 
+	[AvaloniaTest]
+	public void Resources_File_WriteResX_Round_Trips_String_And_Object_Entries()
+	{
+		EnsureComposition();
+		var node = (ResourcesFileTreeNode)ResourceEntryNode.Create(
+			new ByteArrayResource("strings.resources", BuildResources(
+				new (string, object)[] {
+					("greeting", "hello"),
+					("answer", 42),
+				})));
+		node.EnsureLazyChildren();
+
+		var ms = new MemoryStream();
+		node.WriteResX(ms);
+		var resx = Encoding.UTF8.GetString(ms.ToArray());
+
+		// ResX is XML; spot-check both entries land with name + value markup.
+		resx.Should().Contain("<data name=\"greeting\"");
+		resx.Should().Contain("<value>hello</value>");
+		resx.Should().Contain("<data name=\"answer\"");
+		resx.Should().Contain("<value>42</value>");
+	}
+
+	[Test]
+	public void FilePickers_ParseFilter_Splits_Pipe_Separated_Display_And_Patterns()
+	{
+		var types = global::ILSpy.Commands.FilePickers.ParseFilter(
+			"Resources file (*.resources)|*.resources|Resource XML (*.resx)|*.resx");
+		types.Should().HaveCount(2);
+		types[0].Name.Should().Be("Resources file (*.resources)");
+		types[0].Patterns.Should().BeEquivalentTo(new[] { "*.resources" });
+		types[1].Name.Should().Be("Resource XML (*.resx)");
+		types[1].Patterns.Should().BeEquivalentTo(new[] { "*.resx" });
+	}
+
 	static byte[] BuildResources((string Key, object Value)[] entries)
 	{
 		var ms = new MemoryStream();

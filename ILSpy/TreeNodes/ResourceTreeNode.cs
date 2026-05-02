@@ -57,7 +57,9 @@ namespace ILSpy.TreeNodes
 			if (output is ISmartTextOutput smart)
 			{
 				smart.WriteLine();
-				smart.AddButton(Images.Images.Save, "Save", async (_, _) => await SaveAsync().ConfigureAwait(false));
+				// Dispatch through the virtual Save() so subclasses (ResourcesFileTreeNode)
+				// can present their own format-specific dialog instead of the generic one.
+				smart.AddButton(Images.Images.Save, "Save", (_, _) => Save());
 				smart.WriteLine();
 			}
 		}

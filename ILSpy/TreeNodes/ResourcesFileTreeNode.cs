@@ -23,10 +23,12 @@ using System.IO;
 using System.Linq;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpyX.Abstractions;
 
+using ILSpy.Commands;
 using ILSpy.Controls;
 using ILSpy.Languages;
 using ILSpy.TextView;
@@ -107,6 +109,57 @@ namespace ILSpy.TreeNodes
 						entry.Value.ToString() ?? string.Empty));
 					break;
 			}
+		}
+
+		public override bool Save()
+		{
+			_ = SaveDialogAsync();
+			return true;
+		}
+
+		async System.Threading.Tasks.Task SaveDialogAsync()
+		{
+			var defaultName = System.IO.Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(Resource.Name));
+			var path = await FilePickers.SaveAsync(
+				"Resources file (*.resources)|*.resources|Resource XML (*.resx)|*.resx",
+				defaultName).ConfigureAwait(false);
+			if (path == null)
+				return;
+			if (path.EndsWith(".resx", System.StringComparison.OrdinalIgnoreCase))
+			{
+				using var dst = File.Create(path);
+				WriteResX(dst);
+			}
+			else
+			{
+				using var src = Resource.TryOpenStream();
+				if (src == null)
+					return;
+				src.Position = 0;
+				using var dst = File.Create(path);
+				src.CopyTo(dst);
+			}
+		}
+
+		/// <summary>
+		/// Re-emits the underlying <c>.resources</c> stream as a ResX (XML) document into
+		/// <paramref name="target"/>. Skips entries that fail to deserialize so the export still
+		/// produces a usable file when one entry is malformed.
+		/// </summary>
+		public void WriteResX(Stream target)
+		{
+			using var src = Resource.TryOpenStream();
+			if (src == null)
+				return;
+			src.Position = 0;
+			using var writer = new ICSharpCode.Decompiler.Util.ResXResourceWriter(target);
+			try
+			{
+				foreach (var entry in new ResourcesFile(src))
+					writer.AddResource(entry.Key, entry.Value);
+			}
+			catch (BadImageFormatException) { /* malformed — what we got is what we got */ }
+			catch (EndOfStreamException) { /* truncated — same */ }
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)

@@ -64,7 +64,7 @@ namespace ILSpy.Commands
 		}
 
 		/// <summary>"PNG (*.png)|*.png|All files|*.*" → two file types.</summary>
-		static IReadOnlyList<FilePickerFileType> ParseFilter(string filter)
+		internal static IReadOnlyList<FilePickerFileType> ParseFilter(string filter)
 		{
 			var result = new List<FilePickerFileType>();
 			var parts = filter.Split('|');
