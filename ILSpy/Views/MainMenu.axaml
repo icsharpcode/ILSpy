@@ -5,10 +5,19 @@
              xmlns:vm="using:ILSpy.ViewModels"
              xmlns:p="clr-namespace:ICSharpCode.ILSpy.Properties;assembly=ILSpy"
              xmlns:local="using:ILSpy"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="23"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="25"
              x:Class="ILSpy.MainMenu"
              x:DataType="local:SessionSettings">
-	<Menu DockPanel.Dock="Top" Name="MainMenuRoot" Height="23">
+	<UserControl.Styles>
+		<!-- Top-level menu items (File / View / Window): drop the default hover border so
+		     hover only changes the background. -->
+		<Style Selector="Menu#MainMenuRoot > MenuItem /template/ Border">
+			<Setter Property="BorderThickness" Value="0" />
+		</Style>
+	</UserControl.Styles>
+	<Menu DockPanel.Dock="Top" Name="MainMenuRoot"
+	      Height="25" Padding="0,0,0,3"
+	      Background="#FFF0F0F0">
 		<MenuItem Header="{x:Static p:Resources._File}" Tag="_File">
 			<!-- File menu populated from MEF (see MainMenu.axaml.cs InitMainMenu) -->
 		</MenuItem>
