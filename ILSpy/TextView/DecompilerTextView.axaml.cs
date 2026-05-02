@@ -47,11 +47,11 @@ namespace ILSpy.TextView
 	public partial class DecompilerTextView : UserControl
 	{
 		// Two-track output of BuildHoverContent: rich content opens the sticky Popup with the
-		// WPF distance corridor; plain content uses Avalonia's ToolTip attached property.
+		// pointer-distance corridor; plain content uses Avalonia's ToolTip attached property.
 		readonly record struct HoverContent(Control Control, bool IsRich);
 
-		// Local-reference highlight colours, mirroring ILSpy/Themes/generic.xaml. Use the same
-		// light-yellow "GreenYellow" for matches and a softer green for the actual definition.
+		// Local-reference highlight colours: light-yellow "GreenYellow" for matches and a
+		// softer green for the actual definition.
 		static readonly Color LocalMatchBackground = Colors.GreenYellow;
 		static readonly Color LocalDefinitionBackground = Color.FromArgb(0x80, 0xA0, 0xFF, 0xA0);
 
@@ -90,10 +90,10 @@ namespace ILSpy.TextView
 			textMarkerService = new TextMarkerService(Editor.TextArea.TextView);
 			Editor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
 
-			// Hover detection mirrors WPF ILSpy: subscribe to AvaloniaEdit's built-in
-			// PointerHover routed event (fires after the cursor settles inside a small box for
-			// ~400 ms) and resolve the segment fresh at hover-time using the live pointer
-			// position. PointerMoved still drives the rich popup's distance corridor.
+			// Subscribe to AvaloniaEdit's built-in PointerHover routed event (fires after the
+			// cursor settles inside a small box for ~400 ms) and resolve the segment fresh at
+			// hover-time using the live pointer position. PointerMoved still drives the rich
+			// popup's distance corridor.
 			ToolTip.SetPlacement(Editor.TextArea.TextView, PlacementMode.Pointer);
 			ToolTip.SetBetweenShowDelay(Editor.TextArea.TextView, 0);
 			Editor.TextArea.TextView.AddHandler(
@@ -244,10 +244,9 @@ namespace ILSpy.TextView
 			localReferenceMarks.Clear();
 		}
 
-		// Mirror WPF DecompilerTextView.GetPositionFromMousePosition: live cursor + full
-		// ScrollOffset, queried at hover-event time. Returns null if the pointer is past the
-		// end of the line (so we don't snap back to the last visual column when the user is
-		// hovering empty trailing space — matches WPF's behaviour exactly).
+		// Live cursor + full ScrollOffset, queried at hover-event time. Returns null if the
+		// pointer is past the end of the line so we don't snap back to the last visual
+		// column when the user is hovering empty trailing space.
 		AvaloniaEdit.TextViewPosition? GetPositionFromPointer(PointerEventArgs e)
 		{
 			var textView = Editor.TextArea.TextView;
@@ -262,9 +261,9 @@ namespace ILSpy.TextView
 
 		void OnTextViewPointerHover(object? sender, PointerEventArgs e)
 		{
-			// Mirrors WPF DecompilerTextView.TextViewMouseHover: the existing popup gets a veto
-			// (it can refuse to be replaced if it's "interacting" with the user — keyboard focus
-			// in WPF), then we resolve a fresh segment under the live pointer.
+			// The existing popup gets a veto (it can refuse to be replaced if it's
+			// interacting with the user), then we resolve a fresh segment under the live
+			// pointer.
 			if (!TryCloseExistingPopup(mouseClick: false))
 				return;
 			if (DataContext is not DecompilerTabPageModel model || model.References == null)
@@ -287,18 +286,17 @@ namespace ILSpy.TextView
 				OpenPlainTooltip(content.Value.Control);
 		}
 
-		// Mirrors WPF DecompilerTextView.TryCloseExistingPopup. Closes any open tooltip / rich
-		// popup before a new hover takes over. Returns false when a rich popup wants to stay
-		// open — at which point the caller should bail rather than steal it. <paramref name="mouseClick"/>
-		// forces the close even if the popup is interacting with the user (used on click, on
-		// document change, etc.).
+		// Closes any open tooltip / rich popup before a new hover takes over. Returns false
+		// when a rich popup wants to stay open — at which point the caller should bail
+		// rather than steal it. <paramref name="mouseClick"/> forces the close even if the
+		// popup is interacting with the user (used on click, on document change, etc.).
 		bool TryCloseExistingPopup(bool mouseClick)
 		{
 			if (richPopup.IsOpen)
 			{
-				// TODO: WPF refuses to close here when the FlowDocumentTooltip has keyboard
-				// focus (the user is reading / clicking links inside it). We don't track
-				// keyboard focus on the popup yet, so the popup is always replaceable.
+				// TODO: refuse to close while the popup has keyboard focus (the user is
+				// reading / clicking links inside it). Not tracked yet — for now the popup
+				// is always replaceable.
 				_ = mouseClick;
 				CloseRichPopup();
 				return true;
@@ -309,8 +307,8 @@ namespace ILSpy.TextView
 
 		void OnTextViewPointerHoverStopped(object? sender, PointerEventArgs e)
 		{
-			// Plain tooltips close on hover stop. The rich popup's lifetime is governed by the
-			// distance corridor on PointerMoved, mirroring WPF's TextEditorMouseMove.
+			// Plain tooltips close on hover stop. The rich popup's lifetime is governed by
+			// the distance corridor on PointerMoved.
 			if (!richPopup.IsOpen)
 				CloseTooltip();
 		}

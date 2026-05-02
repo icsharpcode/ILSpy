@@ -31,10 +31,10 @@ namespace ILSpy.TextView
 {
 	/// <summary>
 	/// Manages background-coloured text marks over the editor — used for local-reference
-	/// highlighting today, and a useful primitive for future features (errors, search hits, ...).
-	/// Slimmed down from the WPF host's <c>TextMarkerService</c>: only the colored background
-	/// path is implemented; underline marker types (squiggly / dotted / solid) and per-marker
-	/// foreground / typeface tweaks are deliberately omitted until something actually needs them.
+	/// highlighting today, and a useful primitive for future features (errors, search hits,
+	/// …). Currently only the coloured-background path is implemented; underline marker
+	/// types (squiggly / dotted / solid) and per-marker foreground / typeface tweaks are
+	/// deliberately omitted until something actually needs them.
 	/// </summary>
 	sealed class TextMarkerService : IBackgroundRenderer
 	{

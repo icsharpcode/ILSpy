@@ -27,7 +27,6 @@ namespace ILSpy
 	/// <summary>
 	/// Unresolved metadata reference — a (module, handle) pair plus a protocol that says how
 	/// to interpret the target (e.g. "decompile" jumps to the declaration in C# view).
-	/// Mirrors <c>ICSharpCode.ILSpy.EntityReference</c> from the WPF host.
 	/// </summary>
 	[DebuggerDisplay("EntityReference Module={Module}, Handle={Handle}, Protocol={Protocol}")]
 	public sealed class EntityReference

@@ -54,7 +54,8 @@ namespace ILSpy.TreeNodes
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 			=> language.DecompileMethod(MethodDefinition, output, options);
 
-		// Stable identity for SessionSettings.ActiveTreeViewPath; matches the WPF host's format.
+		// Stable identity for SessionSettings.ActiveTreeViewPath; format must round-trip
+		// across launches so the saved path can be restored.
 		public override string ToString()
 			=> "Method " + new ICSharpCode.Decompiler.IL.ILAmbience {
 				ConversionFlags = ConversionFlags.ShowTypeParameterList

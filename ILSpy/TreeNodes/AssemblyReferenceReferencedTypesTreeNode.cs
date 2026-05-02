@@ -30,7 +30,7 @@ namespace ILSpy.TreeNodes
 	/// <summary>
 	/// "Referenced Types (N)" subnode under <see cref="AssemblyReferenceTreeNode"/>.
 	/// Lists every <c>TypeRef</c> + <c>ExportedType</c> that the parent assembly imports
-	/// from the referenced one, mirroring the WPF host.
+	/// from the referenced one.
 	/// </summary>
 	public sealed class AssemblyReferenceReferencedTypesTreeNode : ILSpyTreeNode
 	{

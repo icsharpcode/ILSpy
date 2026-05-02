@@ -167,7 +167,7 @@ namespace ILSpy.TreeNodes
 		/// <summary>
 		/// Finds the <see cref="NamespaceTreeNode"/> for the given namespace string, or
 		/// <c>null</c> if no children are loaded yet or the namespace has no top-level types
-		/// in this assembly. Mirrors <c>ICSharpCode.ILSpy.TreeNodes.AssemblyTreeNode.FindNamespaceNode</c>.
+		/// in this assembly.
 		/// </summary>
 		public NamespaceTreeNode? FindNamespaceNode(string namespaceName)
 		{
@@ -179,8 +179,7 @@ namespace ILSpy.TreeNodes
 		/// <summary>
 		/// Finds the <see cref="TypeTreeNode"/> for the given top-level type definition.
 		/// Walks the assembly's namespaces (loading them as needed) and matches by
-		/// <see cref="TypeTreeNode.Handle"/>. Mirrors WPF's <c>FindTypeNode</c> but without
-		/// the eager <c>typeDict</c> cache.
+		/// <see cref="TypeTreeNode.Handle"/>.
 		/// </summary>
 		public TypeTreeNode? FindTypeNode(ITypeDefinition type)
 		{

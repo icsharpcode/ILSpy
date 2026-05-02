@@ -24,8 +24,8 @@ using ICSharpCode.ILSpyX.TreeView;
 
 namespace ILSpy.Controls
 {
-	// Classic Windows-Explorer tree-lines, ported from ILSpy WPF SharpTreeView's LinesRenderer.
-	// Drawn as a layer behind the DataGridHierarchicalPresenter content so it can reach across
+	// Classic Windows-Explorer tree-lines: drawn as a layer behind the
+	// DataGridHierarchicalPresenter content so it can reach across
 	// the indent area for ancestor verticals. X positions assume:
 	//   - presenter Indent step  = 16 px (DataGridHierarchicalPresenterIndent)
 	//   - expander column width  = 13 px (DataGridHierarchicalExpanderSize override)

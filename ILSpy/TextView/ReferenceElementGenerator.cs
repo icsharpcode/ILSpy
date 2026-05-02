@@ -26,7 +26,6 @@ namespace ILSpy.TextView
 	/// <summary>
 	/// Creates clickable hyperlink elements in the text view from a
 	/// <see cref="TextSegmentCollection{ReferenceSegment}"/> emitted by the decompiler.
-	/// Mirrors <c>ICSharpCode.ILSpy.TextView.ReferenceElementGenerator</c>.
 	/// </summary>
 	sealed class ReferenceElementGenerator : VisualLineElementGenerator
 	{

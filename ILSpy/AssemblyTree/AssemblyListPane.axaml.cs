@@ -132,7 +132,7 @@ namespace ILSpy.AssemblyTree
 		}
 
 		// DataGrid.ScrollIntoView only brings the row to the nearest viewport edge; we want
-		// it centred (matching the WPF host).
+		// the row centred so the user's eye lands on it.
 		void CenterRowInView(HierarchicalNode node)
 		{
 			TreeGrid.ScrollIntoView(node, TreeGrid.Columns[0]);

@@ -143,8 +143,8 @@ public partial class MainMenu : UserControl
 
 						// Wire up the keyboard accelerator if the export declared one. HotKey
 						// registers the window-scoped shortcut; InputGesture is what actually
-						// renders the gesture text on the right side of the menu item — both are
-						// needed to mirror the WPF host's "Ctrl+O" appearance + key handling.
+						// renders the gesture text on the right side of the menu item — both
+						// are needed for "Ctrl+O" to appear AND fire from the keyboard.
 						if (TryParseGesture(entry.Metadata?.InputGestureText, out var gesture))
 						{
 							menuItem.HotKey = gesture;
@@ -191,8 +191,8 @@ public partial class MainMenu : UserControl
 	{
 		// At this point InitMainMenu has already appended any MEF-driven Window-menu commands
 		// (CloseAllDocuments / ResetLayout). Append tool-pane toggles after a separator so
-		// they sit at the bottom, matching the WPF host's Window menu order.
-		// (Tab pages are not yet exposed observably on Avalonia DockWorkspace; revisit later.)
+		// they sit at the bottom of the Window menu.
+		// (Tab pages aren't yet exposed observably on DockWorkspace; revisit later.)
 		if (dockWorkspace.ToolPaneMenuItems.Count == 0)
 			return;
 		if (windowMenuItem.Items.Count > 0)

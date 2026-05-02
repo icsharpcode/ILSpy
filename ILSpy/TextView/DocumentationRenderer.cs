@@ -40,10 +40,8 @@ namespace ILSpy.TextView
 {
 	/// <summary>
 	/// Renders an entity signature plus its XML documentation into an Avalonia control tree
-	/// suitable for hosting inside a hover popup. Direct port of WPF
-	/// <c>ILSpy/TextView/DocumentationUIBuilder.cs</c> — the parsing logic and section/list
-	/// structure mirror the WPF builder, but blocks are emitted as <see cref="SelectableTextBlock"/>
-	/// /<see cref="StackPanel"/> children instead of <c>FlowDocument</c> blocks.
+	/// suitable for hosting inside a hover popup. Output is a tree of
+	/// <see cref="SelectableTextBlock"/> + <see cref="StackPanel"/> children.
 	/// </summary>
 	public sealed class DocumentationRenderer
 	{
@@ -100,8 +98,8 @@ namespace ILSpy.TextView
 		public string? ParameterName { get; set; }
 
 		/// <summary>
-		/// Wraps the accumulated content in a chrome border + scroll viewer (mirrors WPF
-		/// <c>FlowDocumentTooltip</c>) and returns the final control tree for use in a popup.
+		/// Wraps the accumulated content in a chrome border + scroll viewer and returns the
+		/// final control tree for use in a popup.
 		/// </summary>
 		public Control CreateView(double maxWidth = 600, double maxHeight = 400)
 		{
@@ -562,8 +560,8 @@ namespace ILSpy.TextView
 			ignoreWhitespace = true;
 		}
 
-		// Walks RichText highlighted sections and emits one Run per uniformly-coloured span.
-		// Mirrors WPF AvalonEdit's RichText.CreateRuns, but uses Avalonia inlines.
+		// Walks RichText highlighted sections and emits one Avalonia Run per
+		// uniformly-coloured span.
 		internal static void AppendRichText(InlineCollection inlines, RichText rich)
 		{
 			foreach (var section in rich.GetHighlightedSections(0, rich.Length))

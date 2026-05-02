@@ -35,10 +35,10 @@ namespace ILSpy
 	}
 
 	/// <summary>
-	/// Window-level taskbar progress indicator. Mirrors WPF's
-	/// <c>System.Windows.Shell.TaskbarItemInfo</c> just enough for the decompile spinner —
-	/// only the <see cref="TaskbarProgressState.Indeterminate"/> / <c>None</c> cycle is wired
-	/// up so far. On non-Windows hosts the state is still tracked but the OS hook is a no-op.
+	/// Window-level taskbar progress indicator — currently only the
+	/// <see cref="TaskbarProgressState.Indeterminate"/> / <c>None</c> cycle is wired up,
+	/// driven by the decompile spinner. On non-Windows hosts the state is tracked but the
+	/// OS hook is a no-op.
 	/// </summary>
 	[Export]
 	[Shared]

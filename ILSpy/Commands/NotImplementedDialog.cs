@@ -26,9 +26,9 @@ namespace ILSpy.Commands
 {
 	/// <summary>
 	/// Lightweight modal "Not yet implemented" dialog. Used by menu commands whose underlying
-	/// feature (Options dialog, About page, GAC browser, save dialogs, &hellip;) hasn't been ported
-	/// from WPF to Avalonia yet — the menu still surfaces the entry so the structure mirrors
-	/// the WPF host, but invocation tells the user clearly that the feature is unavailable.
+	/// feature (Options dialog, About page, GAC browser, save dialogs, &hellip;) isn't yet
+	/// available — the menu still surfaces the entry so the structure stays consistent, but
+	/// invocation tells the user clearly that the feature is unavailable.
 	/// </summary>
 	internal static class NotImplementedDialog
 	{

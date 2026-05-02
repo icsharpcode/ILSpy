@@ -60,7 +60,7 @@ namespace ILSpy.AssemblyTree
 		/// <see cref="SharpTreeNode.IsSelected"/>. <see cref="SelectedItem"/> is a convenience
 		/// wrapper around the *primary* (last-added) entry — drives decompilation, navigation
 		/// history, and tree-view-path persistence — but the underlying state is single-sourced
-		/// here, mirroring the WPF host's MultiSelectorExtensions.SelectionBinding pattern.
+		/// here.
 		/// </summary>
 		[IgnoreDataMember]
 		public ObservableCollection<SharpTreeNode> SelectedItems { get; } = [];
@@ -240,9 +240,8 @@ namespace ILSpy.AssemblyTree
 
 		/// <summary>
 		/// Finds the tree node corresponding to <paramref name="reference"/> — used by
-		/// hyperlink clicks in the decompiler view to route to the right entity.
-		/// Mirrors <c>ICSharpCode.ILSpy.AssemblyTree.AssemblyTreeModel.FindTreeNode</c> but only
-		/// covers the references the Avalonia tree currently knows how to model.
+		/// hyperlink clicks in the decompiler view to route to the right entity. Currently
+		/// only covers the reference kinds the tree knows how to model.
 		/// </summary>
 		public ILSpyTreeNode? FindTreeNode(object? reference)
 		{

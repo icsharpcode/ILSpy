@@ -42,9 +42,9 @@ namespace ILSpy.Commands
 	}
 
 	/// <summary>
-	/// Marks a command for inclusion in the main menu. Mirrors the WPF attribute so
-	/// the metadata-driven menu construction code from the WPF host can be ported with
-	/// minimal changes.
+	/// Marks a command for inclusion in the main menu. The metadata drives where in the
+	/// menu hierarchy the entry appears, what icon / accelerator it carries, and which
+	/// command instance is invoked.
 	/// </summary>
 	[MetadataAttribute]
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]

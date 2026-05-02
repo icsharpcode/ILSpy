@@ -130,8 +130,8 @@ namespace ILSpy.Images
 			var key = (baseImage, overlay, isStatic, isExtension);
 			if (iconCache.TryGetValue(key, out var cached))
 				return cached;
-			// Order matches the WPF host: extension behind static behind accessibility, on top
-			// of an 80%-scaled base when any overlay shrinks it out of the way.
+			// Layer order: extension behind static behind accessibility, on top of an
+			// 80%-scaled base when any overlay shrinks it out of the way.
 			var overlays = new List<IImage>(3);
 			if (isExtension)
 				overlays.Add(OverlayExtension);
@@ -169,9 +169,9 @@ namespace ILSpy.Images
 	}
 
 	/// <summary>
-	/// Composed tree-node icon: a base symbol with N overlays drawn on top in order. The base
-	/// can optionally be scaled to a fraction of the cell (mirrors the WPF host's "shrink to
-	/// 80% top-left" trick when an accessibility overlay sits in the bottom-right corner).
+	/// Composed tree-node icon: a base symbol with N overlays drawn on top in order. The
+	/// base can optionally be scaled to a fraction of the cell — used to shrink the base
+	/// to 80% top-left when an accessibility overlay sits in the bottom-right corner.
 	/// </summary>
 	sealed class LayeredImage : IImage
 	{

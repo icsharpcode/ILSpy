@@ -41,9 +41,9 @@ namespace ILSpy.Languages
 
 		public override string FileExtension => ".il";
 
-		// WPF wires DisplaySettings here (ShowMetadataTokens / ShowRawRVAOffsetAndBytes /
-		// DecodeCustomAttributeBlobs / ShowMetadataTokensInBase10). Avalonia hasn't ported
-		// DisplaySettings yet, so we mirror the WPF defaults (all false).
+		// DisplaySettings (ShowMetadataTokens / ShowRawRVAOffsetAndBytes /
+		// DecodeCustomAttributeBlobs / ShowMetadataTokensInBase10) aren't wired yet — once
+		// they are, plumb them in here. All four default to false.
 		protected virtual ReflectionDisassembler CreateDisassembler(ITextOutput output, DecompilationOptions options)
 		{
 			output.IndentationString = options.DecompilerSettings.CSharpFormattingOptions.IndentationString;

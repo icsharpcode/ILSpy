@@ -48,12 +48,11 @@
         <StyleInclude Source="avares://AvaloniaEdit/Themes/Simple/AvaloniaEdit.xaml" />
         <dockTheme:DockSimpleTheme />
 
-        <!-- Classic SharpTreeView-style +/- expander, ported from ILSpy WPF
-             (ILSpy/Controls/TreeView/SharpTreeView.xaml). Colors are hardcoded
-             because the presenter's :checked style forces Background/BorderBrush
-             to Transparent through TemplateBinding. The Margin offsets the
-             visible glyph from the presenter cell's left edge — the presenter
-             itself overwrites its Padding from Level * Indent in code. -->
+        <!-- Classic Windows-Explorer +/- expander. Colors are hardcoded because the
+             presenter's :checked style forces Background/BorderBrush to Transparent
+             through TemplateBinding. The Margin offsets the visible glyph from the
+             presenter cell's left edge — the presenter itself overwrites its Padding
+             from Level * Indent in code. -->
         <Style Selector="DataGridHierarchicalPresenter /template/ ToggleButton#PART_Expander">
             <Setter Property="Padding" Value="0" />
             <Setter Property="Template">

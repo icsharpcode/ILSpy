@@ -23,23 +23,23 @@ using ICSharpCode.Decompiler;
 namespace ILSpy
 {
 	/// <summary>
-	/// Options passed to <see cref="Languages.Language"/>'s Decompile* methods.
-	/// Stripped-down compared to the WPF host: no project export, no display-settings plumbing,
-	/// no view-state restoration — just enough to drive a single decompilation into a text view.
+	/// Options passed to <see cref="Languages.Language"/>'s Decompile* methods. Just enough
+	/// to drive a single decompilation into a text view — project-export and view-state
+	/// restoration aren't wired up yet.
 	/// </summary>
 	public sealed class DecompilationOptions
 	{
 		public DecompilerSettings DecompilerSettings { get; }
 		public CancellationToken CancellationToken { get; set; }
 
-		/// <summary>Mirrors WPF: full module decompilation rather than just the selected member.</summary>
+		/// <summary>Decompile the whole module rather than just the selected member.</summary>
 		public bool FullDecompilation { get; set; }
 
-		/// <summary>Mirrors WPF: target directory for project export. Always null in the
-		/// Avalonia host today (no save dialog wired up); kept for signature parity.</summary>
+		/// <summary>Target directory for project export. Always null today since no save
+		/// dialog is wired up; kept on the signature for future use.</summary>
 		public string? SaveAsProjectDirectory { get; set; }
 
-		/// <summary>Mirrors WPF: escape invalid C# identifiers so the output compiles.</summary>
+		/// <summary>Escape invalid C# identifiers so the output compiles.</summary>
 		public bool EscapeInvalidIdentifiers { get; set; }
 
 		public DecompilationOptions(DecompilerSettings settings)

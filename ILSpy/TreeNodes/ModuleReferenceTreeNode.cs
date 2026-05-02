@@ -33,8 +33,8 @@ namespace ILSpy.TreeNodes
 	/// <summary>
 	/// Module reference inside <see cref="ReferenceFolderTreeNode"/>. Modern .NET assemblies
 	/// almost never have module references (multi-file assemblies were a .NET Framework
-	/// feature) — the node is here for parity with the WPF host so non-PE / multi-module
-	/// edge cases still render correctly.
+	/// feature) — the node is here so non-PE / multi-module edge cases still render
+	/// correctly.
 	/// </summary>
 	sealed class ModuleReferenceTreeNode : ILSpyTreeNode
 	{

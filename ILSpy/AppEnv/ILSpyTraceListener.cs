@@ -24,10 +24,10 @@ using System.Linq;
 namespace ILSpy.AppEnv
 {
 	/// <summary>
-	/// Trace listener that downgrades <c>Debug.Assert</c> failures from process-killing fail-fasts
-	/// to a regular surfaced exception. The decompiler ships a number of asserts that fire on
-	/// real-world (but unusual) IL — without this, hovering or decompiling such a method would
-	/// terminate the process. WPF ILSpy ships <c>ILSpyTraceListener</c> for the same reason.
+	/// Trace listener that downgrades <c>Debug.Assert</c> failures from process-killing
+	/// fail-fasts to a regular surfaced exception. The decompiler ships a number of asserts
+	/// that fire on real-world (but unusual) IL — without this, hovering or decompiling such
+	/// a method would terminate the process.
 	///
 	/// We route through <see cref="GlobalExceptionHandler.Show"/> so asserts land in the same
 	/// dialog as any other unhandled exception.
@@ -47,7 +47,7 @@ namespace ILSpy.AppEnv
 		}
 
 		// Dedup repeated asserts by call site so a decompile that hits the same assert in 200
-		// methods only opens one dialog. Mirrors WPF ILSpyTraceListener's "ignoredStacks".
+		// methods only opens one dialog.
 		readonly HashSet<string> seenTopFrames = new();
 
 		public override void Fail(string? message)
@@ -60,7 +60,7 @@ namespace ILSpy.AppEnv
 				Debug.WriteLine("  " + detailMessage);
 
 			// Strip the ILSpyTraceListener + Debug.* frames so the dialog shows the assert's
-			// actual call site at the top, like the WPF ILSpyTraceListener does.
+			// actual call site at the top.
 			var frames = new StackTrace(fNeedFileInfo: true).ToString()
 				.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
 				.SkipWhile(f => f.Contains("ILSpyTraceListener") || f.Contains("System.Diagnostics"))

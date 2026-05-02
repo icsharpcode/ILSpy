@@ -9,9 +9,8 @@
              x:Class="ILSpy.TextView.DecompilerTextView"
              x:DataType="textView:DecompilerTabPageModel">
 
-	<!-- Wait-adorner pattern ported from ILSpy/TextView/DecompilerTextView.xaml: a translucent
-	     overlay above the editor with a centred title + progress bar + cancel button while a
-	     decompilation is in flight. -->
+	<!-- Wait-adorner: a translucent overlay above the editor with a centred title +
+	     progress bar + cancel button while a decompilation is in flight. -->
 	<Grid>
 		<ae:TextEditor Name="Editor"
 		               IsReadOnly="True"

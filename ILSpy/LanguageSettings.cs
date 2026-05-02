@@ -26,9 +26,9 @@ using ICSharpCode.ILSpyX.Settings;
 namespace ILSpy
 {
 	/// <summary>
-	/// Mirrors the WPF LanguageSettings: holds the API visibility filter and the active
-	/// output language id. The View menu binds checkmarks straight to the three Api*
-	/// boolean projections of <see cref="ShowApiLevel"/>.
+	/// Holds the API visibility filter and the active output language id. The View menu
+	/// binds checkmarks straight to the three Api* boolean projections of
+	/// <see cref="ShowApiLevel"/>.
 	/// </summary>
 	public sealed partial class LanguageSettings : ObservableObject, IChildSettings
 	{

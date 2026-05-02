@@ -22,12 +22,10 @@ using System.Collections.Generic;
 namespace ILSpy.Navigation
 {
 	/// <summary>
-	/// Two-stack browser-style history. Mirrors the WPF
-	/// <c>ICSharpCode.ILSpy.NavigationHistory&lt;T&gt;</c> behaviour: rapid successive
-	/// <see cref="Record"/> calls (within 0.5 s) replace the current entry instead of pushing,
-	/// so a tree refresh that re-selects the same node doesn't pollute the back stack with
-	/// duplicates. Equality is reference-based — fine for tree nodes which are reused for the
-	/// lifetime of an assembly load.
+	/// Two-stack browser-style history. Rapid successive <see cref="Record"/> calls (within
+	/// 0.5 s) replace the current entry instead of pushing, so a tree refresh that re-selects
+	/// the same node doesn't pollute the back stack with duplicates. Equality is reference-
+	/// based — fine for tree nodes which are reused for the lifetime of an assembly load.
 	/// </summary>
 	internal sealed class NavigationHistory<T> where T : class
 	{

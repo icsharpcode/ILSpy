@@ -29,9 +29,8 @@ namespace ILSpy.TextView
 
 	/// <summary>
 	/// Embeds inline UI elements produced by <see cref="ISmartTextOutput.AddUIElement"/> in
-	/// the rendered text. Mirrors the WPF host's UIElementGenerator: the element factory is
-	/// stored as a <see cref="Lazy{Control}"/> so the actual control is constructed on the
-	/// UI thread when the row is first realised.
+	/// the rendered text. The element factory is stored as a <see cref="Lazy{Control}"/> so
+	/// the actual control is constructed on the UI thread when the row is first realised.
 	/// </summary>
 	sealed class UIElementGenerator : VisualLineElementGenerator, IComparer<Pair>
 	{
