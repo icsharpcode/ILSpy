@@ -19,7 +19,9 @@
 using System.Linq;
 using System.Threading.Tasks;
 
+using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
+using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
@@ -73,5 +75,58 @@ public class NavigationTests
 		restoredTab.Text.Should().Contain("return source");
 
 		firstMethod.Should().Be().CenteredInView();
+	}
+
+	[AvaloniaTest]
+	public async Task Back_SplitButton_Dropdown_Lists_History_And_Jumps_To_Selected_Entry()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		typeNode.EnsureLazyChildren();
+		var methodA = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "AsEnumerable");
+		var methodB = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "Empty");
+		var methodC = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "Range");
+
+		// Three distinct selections with >0.6s gaps so each lands as its own entry on the back stack
+		// (NavigationHistory collapses sub-0.5s rapid succession into one entry).
+		vm.AssemblyTreeModel.SelectedItem = methodA;
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await Task.Delay(600);
+		vm.AssemblyTreeModel.SelectedItem = methodB;
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await Task.Delay(600);
+		vm.AssemblyTreeModel.SelectedItem = methodC;
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		// Open the Back SplitButton's flyout — the Opening handler populates the menu from the
+		// current back history.
+		var backSplit = window.GetVisualDescendants().OfType<SplitButton>()
+			.Single(sb => sb.Name == "BackSplitButton");
+		var flyout = (MenuFlyout)backSplit.Flyout!;
+		flyout.ShowAt(backSplit);
+		await Waiters.WaitForAsync(() => flyout.Items.OfType<MenuItem>().Count() >= 2);
+
+		// Newest-first: index 0 is the immediate previous selection (methodB),
+		// index 1 is the one before that (methodA).
+		var items = flyout.Items.OfType<MenuItem>().ToList();
+		((string)items[0].Header!).Should().Be((string)methodB.Text);
+		((string)items[1].Header!).Should().Be((string)methodA.Text);
+		items[1].CommandParameter.Should().BeSameAs(methodA);
+
+		// Multi-step jump: clicking methodA pops two entries off the back stack in one go.
+		items[1].Command!.Execute(items[1].CommandParameter);
+		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, methodA));
+
+		// The two displaced entries (methodC, methodB) are now on the forward stack, so Forward
+		// becomes available.
+		vm.DockWorkspace.NavigateForwardCommand.CanExecute(null).Should().BeTrue();
 	}
 }

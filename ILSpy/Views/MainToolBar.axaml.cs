@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Linq;
 using System.Reflection;
 
@@ -24,17 +25,63 @@ using Avalonia.Media;
 
 using ILSpy.AppEnv;
 using ILSpy.Commands;
+using ILSpy.ViewModels;
 
 namespace ILSpy;
 
 public partial class MainToolBar : UserControl
 {
+	const int MaxHistoryDropdownEntries = 20;
+
 	bool initialized;
 
 	public MainToolBar()
 	{
 		InitializeComponent();
-		Loaded += (_, _) => InitializeButtons();
+		Loaded += (_, _) => {
+			InitializeButtons();
+			WireHistoryUpdates();
+		};
+	}
+
+	void WireHistoryUpdates()
+	{
+		if (DataContext is not MainWindowViewModel vm)
+			return;
+		// Repopulate the menus eagerly on every history change. Doing this in the Flyout's
+		// Opened event would arrive too late — MenuFlyout's presenter has already been laid
+		// out by then and won't re-measure for items added afterward, so the popup would
+		// appear empty. NavigateBack/ForwardCommand.CanExecuteChanged fires on every push,
+		// pop, and Record (see DockWorkspace.RecordHistory / ApplyNavigationTarget), so it's
+		// the right signal.
+		void OnHistoryChanged(object? _, EventArgs __)
+		{
+			RebuildHistoryMenu(BackSplitButton, vm, forward: false);
+			RebuildHistoryMenu(ForwardSplitButton, vm, forward: true);
+		}
+		vm.DockWorkspace.NavigateBackCommand.CanExecuteChanged += OnHistoryChanged;
+		vm.DockWorkspace.NavigateForwardCommand.CanExecuteChanged += OnHistoryChanged;
+		OnHistoryChanged(null, EventArgs.Empty);
+	}
+
+	void RebuildHistoryMenu(SplitButton splitButton, MainWindowViewModel vm, bool forward)
+	{
+		var menu = (MenuFlyout)splitButton.Flyout!;
+		menu.Items.Clear();
+		var entries = forward ? vm.DockWorkspace.ForwardHistory : vm.DockWorkspace.BackHistory;
+		// Stacks are oldest-first; reverse so the most recent appears at the top of the menu.
+		// WPF caps the dropdown at 20 entries; mirror that.
+		foreach (var node in entries.Reverse().Take(MaxHistoryDropdownEntries))
+		{
+			var item = new MenuItem {
+				Header = node.Text?.ToString() ?? string.Empty,
+				Command = vm.DockWorkspace.NavigateToHistoryCommand,
+				CommandParameter = node,
+			};
+			if (node.Icon is IImage icon)
+				item.Icon = new Image { Width = 16, Height = 16, Source = icon };
+			menu.Items.Add(item);
+		}
 	}
 
 	void InitializeButtons()

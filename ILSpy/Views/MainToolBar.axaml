@@ -49,6 +49,35 @@
 		<Style Selector="StackPanel#ToolbarRoot > Button:disabled Image">
 			<Setter Property="Opacity" Value="0.35" />
 		</Style>
+		<!-- SplitButton's primary half lives in a nested template-internal Button, so the
+		     descendant selector above doesn't reach the Image. Match it explicitly. -->
+		<Style Selector="StackPanel#ToolbarRoot > SplitButton:disabled Image">
+			<Setter Property="Opacity" Value="0.35" />
+		</Style>
+		<!-- Default chevron is ~12 px and reads as oversized next to a 16 px toolbar icon;
+		     shrink it so the split button feels balanced — matches WPF's compact "▾" glyph. -->
+		<Style Selector="StackPanel#ToolbarRoot > SplitButton /template/ PathIcon">
+			<Setter Property="Width" Value="6" />
+			<Setter Property="Height" Value="6" />
+		</Style>
+		<!-- Default Fluent SplitButton paints both halves with an opaque dark fill on press
+		     (looks black against our white toolbar). Replace with the toolbar accent palette
+		     for both hover and pressed, on both primary and secondary halves. -->
+		<Style Selector="StackPanel#ToolbarRoot > SplitButton /template/ Button:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#330078D7" />
+			<Setter Property="BorderBrush" Value="#FF0078D7" />
+		</Style>
+		<Style Selector="StackPanel#ToolbarRoot > SplitButton /template/ Button:pressed /template/ ContentPresenter">
+			<Setter Property="Background" Value="#660078D7" />
+			<Setter Property="BorderBrush" Value="#FF005A9E" />
+		</Style>
+		<!-- While the flyout is open, the default Fluent style holds the secondary button in a
+		     dark "active" fill. Match the pressed-accent palette so it reads as a continuation
+		     of the click rather than a black box. -->
+		<Style Selector="StackPanel#ToolbarRoot > SplitButton:flyout-open /template/ Button /template/ ContentPresenter">
+			<Setter Property="Background" Value="#660078D7" />
+			<Setter Property="BorderBrush" Value="#FF005A9E" />
+		</Style>
 
 		<!-- Vertical hairline between button groups. Avalonia's default Separator inside a
 		     horizontal StackPanel renders as a thin horizontal line; force a vertical rule. -->
@@ -69,21 +98,59 @@
 			<Setter Property="VerticalContentAlignment" Value="Center" />
 			<Setter Property="BorderBrush" Value="#FFCCCEDB" />
 		</Style>
+		<!-- The Simple theme's ComboBox template (this project uses Avalonia.Themes.Simple,
+		     not Fluent) places a separate ToggleButton named "toggle" in the chevron column
+		     for the dropdown affordance. Its default :pressed / :checked background is dark,
+		     which is the "dark dropdown button" we kept seeing — neither the ComboBox.Background
+		     setter nor a Border#Background override reaches it because it's its own button.
+		     Style its inner Border directly (the ToggleButton's template uses ContentPresenter
+		     for backgrounds, hence /template/ ContentPresenter). -->
+		<Style Selector="StackPanel#ToolbarRoot ComboBox:pointerover">
+			<Setter Property="Background" Value="#330078D7" />
+			<Setter Property="BorderBrush" Value="#FF0078D7" />
+		</Style>
+		<Style Selector="StackPanel#ToolbarRoot ComboBox:pressed">
+			<Setter Property="Background" Value="#660078D7" />
+			<Setter Property="BorderBrush" Value="#FF005A9E" />
+		</Style>
+		<Style Selector="StackPanel#ToolbarRoot ComboBox:dropdownopen">
+			<Setter Property="Background" Value="#660078D7" />
+			<Setter Property="BorderBrush" Value="#FF005A9E" />
+		</Style>
+		<Style Selector="StackPanel#ToolbarRoot ComboBox /template/ ToggleButton#toggle:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#330078D7" />
+		</Style>
+		<Style Selector="StackPanel#ToolbarRoot ComboBox /template/ ToggleButton#toggle:pressed /template/ ContentPresenter">
+			<Setter Property="Background" Value="#660078D7" />
+		</Style>
+		<Style Selector="StackPanel#ToolbarRoot ComboBox /template/ ToggleButton#toggle:checked /template/ ContentPresenter">
+			<Setter Property="Background" Value="#660078D7" />
+		</Style>
 	</UserControl.Styles>
 
 	<Border BorderThickness="0,0,0,1" BorderBrush="#FFA9B0B7"
 	        MinHeight="29" Padding="3"
 	        Background="White">
 		<StackPanel Name="ToolbarRoot" Orientation="Horizontal">
-			<!-- Navigation: Back / Forward. -->
-			<Button ToolTip.Tip="Back (Alt+Left)"
-			        Command="{Binding DockWorkspace.NavigateBackCommand}">
+			<!-- Navigation: Back / Forward as web-browser-style split buttons. The primary half
+			     navigates one step; the chevron drops a menu of recent history entries built on
+			     demand by MainToolBar.axaml.cs. -->
+			<SplitButton Name="BackSplitButton"
+			             ToolTip.Tip="Back (Alt+Left)"
+			             Command="{Binding DockWorkspace.NavigateBackCommand}">
 				<Image Source="{x:Static images:Images.Back}" Width="16" Height="16" />
-			</Button>
-			<Button ToolTip.Tip="Forward (Alt+Right)"
-			        Command="{Binding DockWorkspace.NavigateForwardCommand}">
+				<SplitButton.Flyout>
+					<MenuFlyout Placement="BottomEdgeAlignedLeft" />
+				</SplitButton.Flyout>
+			</SplitButton>
+			<SplitButton Name="ForwardSplitButton"
+			             ToolTip.Tip="Forward (Alt+Right)"
+			             Command="{Binding DockWorkspace.NavigateForwardCommand}">
 				<Image Source="{x:Static images:Images.Forward}" Width="16" Height="16" />
-			</Button>
+				<SplitButton.Flyout>
+					<MenuFlyout Placement="BottomEdgeAlignedLeft" />
+				</SplitButton.Flyout>
+			</SplitButton>
 			<Separator />
 			<!-- MEF-driven toolbar buttons (Open etc.) get inserted by MainToolBar.axaml.cs.
 			     Anything between these two separators is replaced on Loaded. -->

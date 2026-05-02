@@ -58,6 +58,12 @@ namespace ILSpy.Docking
 
 		public IRelayCommand NavigateBackCommand { get; }
 		public IRelayCommand NavigateForwardCommand { get; }
+		public IRelayCommand<SharpTreeNode> NavigateToHistoryCommand { get; }
+
+		// Read-only history snapshots for the Back/Forward split-button dropdowns; oldest-first.
+		// The UI reverses these for newest-first display.
+		public IReadOnlyList<SharpTreeNode> BackHistory => history.BackEntries;
+		public IReadOnlyList<SharpTreeNode> ForwardHistory => history.ForwardEntries;
 
 		public IRootDock Layout { get; }
 
@@ -74,6 +80,8 @@ namespace ILSpy.Docking
 			this.languageService = languageService;
 			NavigateBackCommand = new RelayCommand(NavigateBack, () => history.CanNavigateBack);
 			NavigateForwardCommand = new RelayCommand(NavigateForward, () => history.CanNavigateForward);
+			NavigateToHistoryCommand = new RelayCommand<SharpTreeNode>(NavigateToHistory,
+				node => node != null && (history.BackEntries.Contains(node) || history.ForwardEntries.Contains(node)));
 			factory = new ILSpyDockFactory(assemblyTreeModel, searchPaneModel, analyzerTreeViewModel);
 			Layout = factory.CreateLayout();
 			if (factory.InitialDecompilerTab is { } initialTab)
@@ -161,6 +169,23 @@ namespace ILSpy.Docking
 			if (forward ? !history.CanNavigateForward : !history.CanNavigateBack)
 				return;
 			var target = forward ? history.GoForward() : history.GoBack();
+			ApplyNavigationTarget(target);
+		}
+
+		void NavigateToHistory(SharpTreeNode? node)
+		{
+			if (node == null)
+				return;
+			bool forward = history.ForwardEntries.Contains(node);
+			if (!forward && !history.BackEntries.Contains(node))
+				return;
+			var target = history.GoTo(node, forward);
+			if (target != null)
+				ApplyNavigationTarget(target);
+		}
+
+		void ApplyNavigationTarget(SharpTreeNode target)
+		{
 			suppressHistoryRecording = true;
 			try
 			{

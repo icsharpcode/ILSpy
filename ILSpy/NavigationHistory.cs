@@ -39,6 +39,12 @@ namespace ILSpy.Navigation
 		public bool CanNavigateBack => back.Count > 0;
 		public bool CanNavigateForward => forward.Count > 0;
 
+		// Read-only views over the history stacks for the toolbar's split-button dropdowns.
+		// Both lists are oldest-first (matches push/append order); the UI reverses for "newest
+		// first" display.
+		public IReadOnlyList<T> BackEntries => back;
+		public IReadOnlyList<T> ForwardEntries => forward;
+
 		public T GoBack()
 		{
 			if (current != null)
@@ -55,6 +61,26 @@ namespace ILSpy.Navigation
 			current = forward[^1];
 			forward.RemoveAt(forward.Count - 1);
 			return current;
+		}
+
+		/// <summary>
+		/// Pops entries off the matching stack until <paramref name="target"/> becomes the current
+		/// entry. Lets the dropdown jump multiple steps at once (web-browser style). Returns the
+		/// new current entry, or null if <paramref name="target"/> isn't on the requested stack.
+		/// </summary>
+		public T? GoTo(T target, bool forward)
+		{
+			var stack = forward ? this.forward : back;
+			if (!stack.Contains(target))
+				return null;
+			while (!ReferenceEquals(stack[^1], target))
+			{
+				if (forward)
+					GoForward();
+				else
+					GoBack();
+			}
+			return forward ? GoForward() : GoBack();
 		}
 
 		public void Clear()
