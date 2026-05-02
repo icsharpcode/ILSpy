@@ -22,6 +22,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using Avalonia.Headless.NUnit;
+using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
@@ -332,5 +333,43 @@ public class DecompilerViewTests
 		tab.Text.Should().Contain("// Architecture: ");
 		tab.Text.Should().Contain("// Runtime: ");
 		tab.Text.Should().Contain("[assembly: AssemblyVersion(");
+	}
+
+	[AvaloniaTest]
+	public async Task Xml_Resource_Installs_FoldingManager_With_Folds()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		// Seed the decompiler tab.
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
+		vm.AssemblyTreeModel.SelectedItem = assemblyNode;
+		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		// Drop in a synthetic XML resource. XmlResourceEntryNode → SyntaxExtension=".xml" →
+		// DecompilerTextView.ApplyDocument runs XmlFoldingStrategy.
+		var xml = "<root>\n  <child attr=\"v\">\n    text\n  </child>\n  <other>\n  </other>\n</root>";
+		var bytes = System.Text.Encoding.UTF8.GetBytes(xml);
+		tab.CurrentNode = new XmlResourceEntryNode("test.xml", () => new System.IO.MemoryStream(bytes));
+		await Waiters.WaitForAsync(() => tab.SyntaxExtension == ".xml" && tab.Text.Contains("<root>"));
+
+		var view = window.GetVisualDescendants().OfType<DecompilerTextView>().Single();
+		// Drain the layout so ApplyDocument's PropertyChanged handler has executed.
+		for (int i = 0; i < 5; i++)
+		{
+			global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+			await Task.Delay(20);
+		}
+
+		// FoldingManager is held in a private field — reflection is the lightest probe; a
+		// public accessor purely for tests would leak detail.
+		var fmField = typeof(DecompilerTextView).GetField("activeFoldingManager",
+			System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+		fmField.Should().NotBeNull();
+		var fm = fmField!.GetValue(view) as global::AvaloniaEdit.Folding.FoldingManager;
+		fm.Should().NotBeNull("XML SyntaxExtension should install AvaloniaEdit's XmlFoldingStrategy");
+		fm!.AllFoldings.Should().NotBeEmpty("multi-line XML elements should produce fold ranges");
 	}
 }

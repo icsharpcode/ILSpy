@@ -182,6 +182,14 @@ namespace ILSpy.TextView
 				activeFoldingManager = FoldingManager.Install(Editor.TextArea);
 				activeFoldingManager.UpdateFoldings(foldings.OrderBy(f => f.StartOffset), -1);
 			}
+			else if (model.SyntaxExtension == ".xml" && !string.IsNullOrEmpty(model.Text))
+			{
+				// XML resources don't go through the C# decompiler, so the model has no
+				// pre-collected foldings. AvaloniaEdit ships XmlFoldingStrategy that walks the
+				// document once and emits one fold per element body.
+				activeFoldingManager = FoldingManager.Install(Editor.TextArea);
+				new XmlFoldingStrategy().UpdateFoldings(activeFoldingManager, Editor.Document);
+			}
 
 			referenceElementGenerator.References = model.References;
 			uiElementGenerator.UIElements = model.UIElements;
