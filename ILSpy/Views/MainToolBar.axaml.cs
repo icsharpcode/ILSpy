@@ -16,14 +16,106 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Linq;
+using System.Reflection;
+
 using Avalonia.Controls;
+using Avalonia.Media;
+
+using ILSpy.AppEnv;
+using ILSpy.Commands;
 
 namespace ILSpy;
 
 public partial class MainToolBar : UserControl
 {
+	bool initialized;
+
 	public MainToolBar()
 	{
 		InitializeComponent();
+		Loaded += (_, _) => InitializeButtons();
+	}
+
+	void InitializeButtons()
+	{
+		if (initialized)
+			return;
+		initialized = true;
+
+		ToolbarCommandRegistry registry;
+		try
+		{
+			registry = AppComposition.Current.GetExport<ToolbarCommandRegistry>();
+		}
+		catch
+		{
+			// Design-time / test contexts that bypass composition just keep the static layout.
+			return;
+		}
+
+		int insertAt = ToolbarRoot.Children.IndexOf(ToolbarMefAnchor);
+		if (insertAt < 0)
+			return;
+
+		// Insert one Button per [ExportToolbarCommand], grouped by Category, separated by
+		// a thin Separator between categories. Order within a category honours ToolbarOrder.
+		var groups = registry.Commands
+			.GroupBy(c => c.Metadata.ToolbarCategory ?? string.Empty)
+			.OrderBy(g => g.Key);
+		bool firstGroup = true;
+		foreach (var group in groups)
+		{
+			if (!firstGroup)
+				ToolbarRoot.Children.Insert(insertAt++, new Separator());
+			firstGroup = false;
+			foreach (var entry in group.OrderBy(c => c.Metadata.ToolbarOrder))
+			{
+				var button = BuildButton(entry);
+				if (button != null)
+					ToolbarRoot.Children.Insert(insertAt++, button);
+			}
+		}
+	}
+
+	static Button? BuildButton(System.Composition.ExportFactory<System.Windows.Input.ICommand, ToolbarCommandMetadata> entry)
+	{
+		var command = entry.CreateExport().Value;
+		var button = new Button {
+			Margin = new global::Avalonia.Thickness(2, 0),
+			Padding = new global::Avalonia.Thickness(6, 0),
+			Tag = entry.Metadata.ToolTip,
+			Command = command,
+		};
+		var icon = ResolveIcon(entry.Metadata.ToolbarIcon);
+		if (icon != null)
+		{
+			button.Content = new Image {
+				Width = 16,
+				Height = 16,
+				Source = icon,
+			};
+		}
+		else if (entry.Metadata.ToolTip is { } label)
+		{
+			button.Content = ResourceHelper.GetString(label);
+		}
+		var tooltip = ResourceHelper.GetString(entry.Metadata.ToolTip);
+		if (!string.IsNullOrEmpty(tooltip))
+			ToolTip.SetTip(button, tooltip);
+		return button;
+	}
+
+	// "Images/Open" → looks up "Open" on Images.Images via reflection so the metadata can
+	// stay declarative.
+	static IImage? ResolveIcon(string? iconPath)
+	{
+		if (string.IsNullOrEmpty(iconPath))
+			return null;
+		var name = iconPath.StartsWith("Images/", System.StringComparison.Ordinal)
+			? iconPath["Images/".Length..]
+			: iconPath;
+		var prop = typeof(Images.Images).GetField(name, BindingFlags.Public | BindingFlags.Static);
+		return prop?.GetValue(null) as IImage;
 	}
 }

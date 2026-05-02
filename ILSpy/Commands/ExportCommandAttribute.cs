@@ -64,4 +64,35 @@ namespace ILSpy.Commands
 		public bool IsEnabled { get; set; } = true;
 		public double MenuOrder { get; set; }
 	}
+
+	/// <summary>
+	/// Metadata view for toolbar commands.
+	/// </summary>
+	public class ToolbarCommandMetadata
+	{
+		public string? ToolbarIcon { get; set; }
+		public string? ToolTip { get; set; }
+		public string? ToolbarCategory { get; set; }
+		public double ToolbarOrder { get; set; }
+	}
+
+	/// <summary>
+	/// Marks a command for inclusion in the main toolbar. A single command class can carry
+	/// both this attribute and <see cref="ExportMainMenuCommandAttribute"/>, surfacing the
+	/// same handler in the menu and the toolbar.
+	/// </summary>
+	[MetadataAttribute]
+	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+	public class ExportToolbarCommandAttribute : ExportAttribute
+	{
+		public ExportToolbarCommandAttribute()
+			: base("ToolbarCommand", typeof(ICommand))
+		{
+		}
+
+		public string? ToolbarIcon { get; set; }
+		public string? ToolTip { get; set; }
+		public string? ToolbarCategory { get; set; }
+		public double ToolbarOrder { get; set; }
+	}
 }

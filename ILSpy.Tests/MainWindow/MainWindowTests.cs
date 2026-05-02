@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
 using Avalonia.VisualTree;
 
@@ -62,6 +63,24 @@ public class MainWindowTests
 		pane.IsVisible.Should().BeTrue();
 		pane.Bounds.Width.Should().BeGreaterThan(0);
 		pane.Bounds.Height.Should().BeGreaterThan(0);
+	}
+
+	[AvaloniaTest]
+	public async Task Toolbar_Has_Open_Button_Wired_To_Open_Command()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+
+		await Waiters.WaitForAsync(() => window.GetVisualDescendants()
+			.OfType<Button>()
+			.Any(b => (string?)b.Tag == nameof(ICSharpCode.ILSpy.Properties.Resources.Open)));
+
+		var openButton = window.GetVisualDescendants()
+			.OfType<Button>()
+			.Single(b => (string?)b.Tag == nameof(ICSharpCode.ILSpy.Properties.Resources.Open));
+
+		openButton.Command.Should().NotBeNull();
+		openButton.Command!.CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaTest]

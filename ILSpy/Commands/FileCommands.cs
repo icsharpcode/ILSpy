@@ -33,6 +33,7 @@ using ILSpy.Views;
 namespace ILSpy.Commands
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources._Open), MenuIcon = "Images/Open", MenuCategory = nameof(Resources.Open), MenuOrder = 0, InputGestureText = "Ctrl+O")]
+	[ExportToolbarCommand(ToolTip = nameof(Resources.Open), ToolbarIcon = "Images/Open", ToolbarCategory = nameof(Resources.Open), ToolbarOrder = 0)]
 	[Shared]
 	[method: ImportingConstructor]
 	sealed class OpenCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
