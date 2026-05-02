@@ -22,7 +22,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.DataGridHierarchical;
 using Avalonia.Headless.NUnit;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
@@ -30,9 +35,7 @@ using ICSharpCode.ILSpy.Properties;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
-
-using Avalonia.Controls;
-using Avalonia.VisualTree;
+using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy;
 using ILSpy.AppEnv;
@@ -588,5 +591,76 @@ public class AssemblyTreeTests
 		var node = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(loaded.ShortName);
 		node.LoadedAssembly.Should().BeSameAs(loaded);
 		node.IsSelected.Should().BeTrue();
+	}
+
+	[AvaloniaTest]
+	public async Task User_Click_On_Visible_Row_Does_Not_Recentre_Viewport()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var enumerable = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		enumerable.EnsureLazyChildren();
+		var ns = (NamespaceTreeNode)enumerable.Parent!;
+		ns.EnsureLazyChildren();
+		foreach (var child in ns.Children.OfType<TypeTreeNode>())
+			child.EnsureLazyChildren();
+
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<DataGrid>();
+
+		// Park the viewport mid-list so the next-clicked row sits at a non-zero offset. The
+		// regression would re-centre on click and snap the offset back; we want offset to
+		// stay put.
+		vm.AssemblyTreeModel.SelectedItem = enumerable;
+		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, enumerable));
+		for (int i = 0; i < 8; i++)
+		{
+			Dispatcher.UIThread.RunJobs();
+			await Task.Delay(25);
+		}
+		grid.UpdateLayout();
+
+		var scrollViewer = grid.GetVisualDescendants().OfType<ScrollViewer>().Single();
+		(scrollViewer.Extent.Height - scrollViewer.Viewport.Height).Should().BeGreaterThan(50,
+			"the grid must have something to scroll for this test to be meaningful");
+		scrollViewer.Offset = new Vector(scrollViewer.Offset.X, 50);
+		grid.UpdateLayout();
+		Dispatcher.UIThread.RunJobs();
+		scrollViewer.Offset.Y.Should().BeGreaterThan(5,
+			"the test scenario requires the viewport be parked mid-list");
+
+		// Pick a different visible row to click on; clicking an already-visible row must NOT
+		// move the viewport. Use the *bottom-most* visible row for a strict check — if the bug
+		// regressed, CenterRowInView would scroll it up to the middle and offset would change.
+		var candidateRow = grid.GetVisualDescendants().OfType<DataGridRow>()
+			.Where(r => !r.IsSelected
+				&& r.TranslatePoint(new Point(0, 0), scrollViewer) is { } p
+				&& p.Y >= 0 && p.Y + r.Bounds.Height <= scrollViewer.Viewport.Height)
+			.OrderByDescending(r => r.TranslatePoint(new Point(0, 0), scrollViewer)!.Value.Y)
+			.FirstOrDefault();
+		candidateRow.Should().NotBeNull("the test needs a visible non-selected row to click");
+
+		var offsetBefore = scrollViewer.Offset.Y;
+
+		// Real pointer click — setting SelectedItem programmatically would fire DataGrid's
+		// internal ScrollIntoView too, which a real user click does not.
+		var rowCentre = candidateRow!.TranslatePoint(
+			new Point(candidateRow.Bounds.Width / 2, candidateRow.Bounds.Height / 2),
+			window)!.Value;
+		global::Avalonia.Headless.HeadlessWindowExtensions.MouseDown(window, rowCentre, global::Avalonia.Input.MouseButton.Left);
+		global::Avalonia.Headless.HeadlessWindowExtensions.MouseUp(window, rowCentre, global::Avalonia.Input.MouseButton.Left);
+
+		for (int i = 0; i < 8; i++)
+		{
+			Dispatcher.UIThread.RunJobs();
+			await Task.Delay(25);
+		}
+
+		scrollViewer.Offset.Y.Should().BeApproximately(offsetBefore, 1.0,
+			"clicking an already-visible row must not move the viewport");
 	}
 }

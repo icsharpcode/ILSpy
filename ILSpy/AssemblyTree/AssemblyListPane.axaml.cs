@@ -132,9 +132,26 @@ namespace ILSpy.AssemblyTree
 		}
 
 		// DataGrid.ScrollIntoView only brings the row to the nearest viewport edge; we want
-		// the row centred so the user's eye lands on it.
+		// the row centred so the user's eye lands on it. Skip the move when the row is already
+		// fully in view — re-centring an in-view row would yank the viewport on every selection
+		// (e.g. user clicks a visible row, or Ctrl+O selects a freshly-loaded top-level entry).
 		void CenterRowInView(HierarchicalNode node)
 		{
+			var scrollViewer = TreeGrid.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+			if (scrollViewer is null)
+				return;
+
+			// Cheap pre-check: if the row's already realised AND fully visible, leave the
+			// viewport alone. ScrollIntoView (next call) would otherwise drag it to the edge,
+			// and our centring step would then drag it again.
+			var existingRow = TreeGrid.GetVisualDescendants().OfType<DataGridRow>()
+				.FirstOrDefault(r => ReferenceEquals(r.DataContext, node));
+			if (existingRow is { IsVisible: true }
+				&& existingRow.TranslatePoint(new Point(0, 0), scrollViewer) is { } existingTop
+				&& existingTop.Y >= 0
+				&& existingTop.Y + existingRow.Bounds.Height <= scrollViewer.Viewport.Height)
+				return;
+
 			TreeGrid.ScrollIntoView(node, TreeGrid.Columns[0]);
 			// ScrollIntoView only changes ScrollViewer.Offset; the row becomes a realised
 			// DataGridRow during the next layout pass. Force it now so we can read the row's
@@ -144,10 +161,6 @@ namespace ILSpy.AssemblyTree
 			var row = TreeGrid.GetVisualDescendants().OfType<DataGridRow>()
 				.FirstOrDefault(r => ReferenceEquals(r.DataContext, node));
 			if (row is null)
-				return;
-
-			var scrollViewer = TreeGrid.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
-			if (scrollViewer is null)
 				return;
 
 			var rowTopInViewer = row.TranslatePoint(new Point(0, 0), scrollViewer);
