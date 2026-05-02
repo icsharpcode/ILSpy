@@ -82,8 +82,6 @@ public partial class MainToolBar : UserControl
 	{
 		var command = entry.CreateExport().Value;
 		var button = new Button {
-			Margin = new global::Avalonia.Thickness(2, 0),
-			Padding = new global::Avalonia.Thickness(6, 0),
 			Tag = entry.Metadata.ToolTip,
 			Command = command,
 		};

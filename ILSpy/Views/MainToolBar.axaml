@@ -4,33 +4,111 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ILSpy.ViewModels"
              xmlns:images="using:ILSpy.Images"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="30"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="26"
              x:Class="ILSpy.MainToolBar"
              x:DataType="vm:MainWindowViewModel">
-	<StackPanel Name="ToolbarRoot" Orientation="Horizontal" Height="30">
-		<!-- Navigation: Back / Forward. -->
-		<Button Margin="2,0" Padding="6,0"
-		        ToolTip.Tip="Back (Alt+Left)"
-		        Command="{Binding DockWorkspace.NavigateBackCommand}">
-			<Image Source="{x:Static images:Images.Back}" Width="16" Height="16" />
-		</Button>
-		<Button Margin="0" Padding="6,0"
-		        ToolTip.Tip="Forward (Alt+Right)"
-		        Command="{Binding DockWorkspace.NavigateForwardCommand}">
-			<Image Source="{x:Static images:Images.Forward}" Width="16" Height="16" />
-		</Button>
-		<Separator />
-		<!-- MEF-driven toolbar buttons (Open etc.) get inserted by MainToolBar.axaml.cs.
-		     Anything between these two separators is replaced on Loaded. -->
-		<Separator Name="ToolbarMefAnchor" />
-		<ComboBox Name="AssemblyListComboBox" Margin="2,0" MinWidth="160"
-		          ToolTip.Tip="Select an assembly list"
-		          ItemsSource="{Binding AssemblyTreeModel.AssemblyLists}"
-		          SelectedItem="{Binding AssemblyTreeModel.ActiveListName, Mode=TwoWay}" />
-		<Separator />
-		<ComboBox Name="LanguageComboBox" Margin="2,0" MinWidth="100"
-		          ToolTip.Tip="Select output language"
-		          ItemsSource="{Binding LanguageService.Languages}"
-		          SelectedItem="{Binding LanguageService.CurrentLanguage, Mode=TwoWay}" />
-	</StackPanel>
+	<UserControl.Styles>
+		<!-- Flat toolbar buttons: transparent until hover, then translucent accent fill +
+		     thin accent border. Pressed deepens the fill. -->
+		<Style Selector="StackPanel#ToolbarRoot > Button">
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="Padding" Value="4,2" />
+			<Setter Property="MinHeight" Value="22" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+		<!-- Reserve the 1 px border + corner radius on every state so hovering doesn't grow
+		     the button (which would shove neighbours sideways). Brushes are transparent in
+		     the resting state and gain colour on hover / pressed / disabled. -->
+		<Style Selector="StackPanel#ToolbarRoot > Button /template/ ContentPresenter">
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="BorderBrush" Value="Transparent" />
+			<Setter Property="CornerRadius" Value="2" />
+		</Style>
+		<!-- :not(:disabled) so disabled buttons don't get the accent fill on hover. -->
+		<Style Selector="StackPanel#ToolbarRoot > Button:not(:disabled):pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#330078D7" />
+			<Setter Property="BorderBrush" Value="#FF0078D7" />
+		</Style>
+		<Style Selector="StackPanel#ToolbarRoot > Button:not(:disabled):pressed /template/ ContentPresenter">
+			<Setter Property="Background" Value="#660078D7" />
+			<Setter Property="BorderBrush" Value="#FF005A9E" />
+		</Style>
+
+		<!-- Disabled buttons: paint a grayed-out box behind the content (so the button reads
+		     as a "filled-but-inactive" cell rather than just a faint icon on the toolbar
+		     gradient), dim the icon, and force the arrow cursor so the user doesn't get
+		     a click hint. -->
+		<Style Selector="StackPanel#ToolbarRoot > Button:disabled">
+			<Setter Property="Cursor" Value="Arrow" />
+		</Style>
+		<Style Selector="StackPanel#ToolbarRoot > Button:disabled /template/ ContentPresenter">
+			<Setter Property="Background" Value="#22000000" />
+			<Setter Property="BorderBrush" Value="#33000000" />
+		</Style>
+		<Style Selector="StackPanel#ToolbarRoot > Button:disabled Image">
+			<Setter Property="Opacity" Value="0.35" />
+		</Style>
+
+		<!-- Vertical hairline between button groups. Avalonia's default Separator inside a
+		     horizontal StackPanel renders as a thin horizontal line; force a vertical rule. -->
+		<Style Selector="StackPanel#ToolbarRoot > Separator">
+			<Setter Property="Width" Value="1" />
+			<Setter Property="Height" Value="18" />
+			<Setter Property="Margin" Value="4,3" />
+			<Setter Property="Background" Value="#FFC8CDD3" />
+		</Style>
+
+		<!-- Keep the combos flush with the buttons; soften the default border so it sits
+		     quietly on the white toolbar bar. Descendant selector (not direct child) since
+		     each combo lives inside an auto-sizing Grid. -->
+		<Style Selector="StackPanel#ToolbarRoot ComboBox">
+			<Setter Property="Height" Value="22" />
+			<Setter Property="MinHeight" Value="22" />
+			<Setter Property="Padding" Value="6,1" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+			<Setter Property="BorderBrush" Value="#FFCCCEDB" />
+		</Style>
+	</UserControl.Styles>
+
+	<Border BorderThickness="0,0,0,1" BorderBrush="#FFA9B0B7"
+	        MinHeight="29" Padding="3"
+	        Background="White">
+		<StackPanel Name="ToolbarRoot" Orientation="Horizontal">
+			<!-- Navigation: Back / Forward. -->
+			<Button ToolTip.Tip="Back (Alt+Left)"
+			        Command="{Binding DockWorkspace.NavigateBackCommand}">
+				<Image Source="{x:Static images:Images.Back}" Width="16" Height="16" />
+			</Button>
+			<Button ToolTip.Tip="Forward (Alt+Right)"
+			        Command="{Binding DockWorkspace.NavigateForwardCommand}">
+				<Image Source="{x:Static images:Images.Forward}" Width="16" Height="16" />
+			</Button>
+			<Separator />
+			<!-- MEF-driven toolbar buttons (Open etc.) get inserted by MainToolBar.axaml.cs.
+			     Anything between these two separators is replaced on Loaded. -->
+			<Separator Name="ToolbarMefAnchor" />
+			<!-- The invisible ItemsControl ghost behind each ComboBox forces the grid cell
+			     to size to the widest item so the closed combo's width doesn't change as
+			     the user picks different entries. Margin=15,0 reserves space for the
+			     ComboBox's dropdown chevron on the right. -->
+			<Grid Margin="2,0">
+				<ItemsControl ItemsSource="{Binding AssemblyTreeModel.AssemblyLists}"
+				              Height="0" Margin="15,0" />
+				<ComboBox Name="AssemblyListComboBox" MinWidth="160"
+				          ToolTip.Tip="Select an assembly list"
+				          ItemsSource="{Binding AssemblyTreeModel.AssemblyLists}"
+				          SelectedItem="{Binding AssemblyTreeModel.ActiveListName, Mode=TwoWay}" />
+			</Grid>
+			<Separator />
+			<Grid Margin="2,0">
+				<ItemsControl ItemsSource="{Binding LanguageService.Languages}"
+				              Height="0" Margin="15,0" />
+				<ComboBox Name="LanguageComboBox" MinWidth="100"
+				          ToolTip.Tip="Select output language"
+				          ItemsSource="{Binding LanguageService.Languages}"
+				          SelectedItem="{Binding LanguageService.CurrentLanguage, Mode=TwoWay}" />
+			</Grid>
+		</StackPanel>
+	</Border>
 </UserControl>

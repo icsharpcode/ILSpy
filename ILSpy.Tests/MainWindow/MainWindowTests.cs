@@ -66,6 +66,30 @@ public class MainWindowTests
 	}
 
 	[AvaloniaTest]
+	public async Task Toolbar_Disabled_Button_Renders_Dimmed_Icon()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+
+		// At startup the Back button is disabled (no nav history yet — the bound Command's
+		// CanExecute returns false). Its icon should render visibly dimmer so the user can
+		// tell at a glance that it's not clickable.
+		await Waiters.WaitForAsync(() => window.GetVisualDescendants()
+			.OfType<Button>()
+			.Any(b => !b.IsEffectivelyEnabled
+				&& b.GetVisualDescendants().OfType<Image>().Any()));
+
+		var dimmedImages = window.GetVisualDescendants()
+			.OfType<Button>()
+			.Where(b => !b.IsEffectivelyEnabled)
+			.SelectMany(b => b.GetVisualDescendants().OfType<Image>())
+			.ToList();
+		dimmedImages.Should().NotBeEmpty();
+		dimmedImages.Should().OnlyContain(img => img.Opacity <= 0.35,
+			"disabled toolbar buttons must render their icon at < 0.4 opacity to be visually distinct");
+	}
+
+	[AvaloniaTest]
 	public async Task Toolbar_Has_Open_Button_Wired_To_Open_Command()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();
