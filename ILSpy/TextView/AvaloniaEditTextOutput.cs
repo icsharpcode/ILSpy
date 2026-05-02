@@ -73,6 +73,14 @@ namespace ILSpy.TextView
 
 		public string Title { get; set; } = string.Empty;
 
+		/// <summary>
+		/// Optional file extension override that decides syntax highlighting for the output.
+		/// Defaults to null (use the active language's extension). Resource entry nodes set this
+		/// to e.g. <c>".xml"</c> so an embedded XML resource still highlights as XML even though
+		/// the active language is C#.
+		/// </summary>
+		public string? SyntaxExtensionOverride { get; set; }
+
 		public string IndentationString { get; set; } = "\t";
 
 		public int TextLength => builder.Length;

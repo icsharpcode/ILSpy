@@ -248,12 +248,15 @@ namespace ILSpy.TextView
 				var collectedReferences = output.References;
 				var collectedLookup = output.DefinitionLookup;
 				var collectedUIElements = output.UIElements;
+				// Resource nodes (XML/XAML/…) override the highlighter so their content reads as
+				// the embedded format, not as the active language.
+				var effectiveSyntaxExtension = output.SyntaxExtensionOverride ?? newSyntaxExtension;
 				await Dispatcher.UIThread.InvokeAsync(() => {
 					// Re-read Text now (instead of capturing it before decompile started) — for
 					// freshly-opened assemblies, Text only has the rich "(version, tfm)" form
 					// after the load completes during decompile.
 					Title = ComposeBaseTitle();
-					SyntaxExtension = newSyntaxExtension;
+					SyntaxExtension = effectiveSyntaxExtension;
 					HighlightingModel = model;
 					Foldings = collectedFoldings;
 					References = collectedReferences;

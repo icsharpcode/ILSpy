@@ -68,7 +68,10 @@ public class AssemblyTreeTests
 		resources.Text.Should().Be(Resources._Resources);
 		resources.EnsureLazyChildren();
 		resources.Children.Should().NotBeEmpty();
-		resources.Children.Should().AllBeAssignableTo<ResourceTreeNode>();
+		// The factory dispatcher routes typed resources (.xml/.png/.ico/.cur/.xaml) to
+		// specialised ResourceEntryNode subclasses; everything else falls back to
+		// ResourceTreeNode. Both branches are ILSpyTreeNodes.
+		resources.Children.Should().AllBeAssignableTo<ILSpyTreeNode>();
 	}
 
 	[AvaloniaTest]

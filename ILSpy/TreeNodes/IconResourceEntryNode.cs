@@ -1,0 +1,91 @@
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
+using System.Composition;
+using System.IO;
+
+using global::Avalonia.Controls;
+using global::Avalonia.Media.Imaging;
+
+using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpyX.Abstractions;
+
+using ILSpy.Commands;
+using ILSpy.Languages;
+using ILSpy.TextView;
+
+namespace ILSpy.TreeNodes
+{
+	[Export(typeof(IResourceNodeFactory))]
+	[Shared]
+	sealed class IconResourceNodeFactory : IResourceNodeFactory
+	{
+		public ITreeNode? CreateNode(Resource resource)
+		{
+			if (resource.Name.EndsWith(".ico", StringComparison.OrdinalIgnoreCase))
+				return new IconResourceEntryNode(resource.Name, resource.TryOpenStream);
+			return null;
+		}
+	}
+
+	sealed class IconResourceEntryNode : ResourceEntryNode
+	{
+		public IconResourceEntryNode(string key, Func<Stream?> openStream)
+			: base(key, () => openStream() ?? Stream.Null)
+		{
+		}
+
+		public override object Icon => Images.Images.Resource;
+
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		{
+			if (output is not ISmartTextOutput smart)
+				return;
+			byte[] snapshot;
+			using (var src = OpenStream())
+			{
+				if (src == Stream.Null)
+				{
+					output.WriteLine("ILSpy: Failed opening resource stream.");
+					return;
+				}
+				using var ms = new MemoryStream();
+				src.CopyTo(ms);
+				snapshot = ms.ToArray();
+			}
+			// Avalonia's Bitmap decodes .ico via Skia and picks the largest frame. Per-frame
+			// rendering (with size/bpp labels) needs ICONDIR/ICONDIRENTRY parsing — TODO follow-up.
+			smart.AddUIElement(() => new Image { Source = new Bitmap(new MemoryStream(snapshot)) });
+			smart.WriteLine();
+			smart.AddButton(Images.Images.Save, "Save", async (_, _) => await SaveSnapshotAsync(snapshot).ConfigureAwait(false));
+			smart.WriteLine();
+		}
+
+		async System.Threading.Tasks.Task SaveSnapshotAsync(byte[] snapshot)
+		{
+			var defaultName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName((string)Text));
+			var path = await FilePickers.SaveAsync("All files|*.*", defaultName).ConfigureAwait(false);
+			if (path == null)
+				return;
+			await File.WriteAllBytesAsync(path, snapshot).ConfigureAwait(false);
+		}
+	}
+}
