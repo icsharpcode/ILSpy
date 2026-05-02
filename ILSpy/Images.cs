@@ -73,6 +73,7 @@ namespace ILSpy.Images
 		public static readonly IImage Back = LoadSvg(nameof(Back));
 		public static readonly IImage Forward = LoadSvg(nameof(Forward));
 		public static readonly IImage Open = LoadSvg(nameof(Open));
+		public static readonly IImage Save = LoadSvg(nameof(Save));
 
 		// Containers
 		public static readonly IImage Namespace = LoadSvg(nameof(Namespace));

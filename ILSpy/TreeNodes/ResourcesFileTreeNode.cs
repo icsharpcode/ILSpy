@@ -18,17 +18,31 @@
 
 using System;
 using System.Collections.Generic;
+using System.Composition;
 using System.IO;
 using System.Linq;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
+using ICSharpCode.ILSpyX.Abstractions;
 
 using ILSpy.Languages;
 
 namespace ILSpy.TreeNodes
 {
+	[Export(typeof(IResourceNodeFactory))]
+	[Shared]
+	sealed class ResourcesFileTreeNodeFactory : IResourceNodeFactory
+	{
+		public ITreeNode? CreateNode(Resource resource)
+		{
+			if (resource.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
+				return new ResourcesFileTreeNode(resource);
+			return null;
+		}
+	}
+
 	/// <summary>
 	/// A <c>.resources</c> file embedded in an assembly. Children are
 	/// <see cref="ResourceEntryNode"/> for byte-payload entries; string entries are

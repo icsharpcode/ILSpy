@@ -16,7 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Generic;
+using System.Linq;
+
 using ICSharpCode.Decompiler;
+using ICSharpCode.ILSpyX.Abstractions;
 using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy.AppEnv;
@@ -24,8 +28,10 @@ using ILSpy.Languages;
 
 namespace ILSpy.TreeNodes
 {
-	public abstract class ILSpyTreeNode : SharpTreeNode
+	public abstract class ILSpyTreeNode : SharpTreeNode, ITreeNode
 	{
+		IEnumerable<ITreeNode> ITreeNode.Children => Children.OfType<ILSpyTreeNode>();
+
 		static LanguageService? cachedLanguageService;
 
 		/// <summary>
@@ -34,6 +40,15 @@ namespace ILSpy.TreeNodes
 		/// </summary>
 		protected static LanguageService LanguageService
 			=> cachedLanguageService ??= AppComposition.Current.GetExport<LanguageService>();
+
+		/// <summary>
+		/// All MEF-discovered <see cref="IResourceNodeFactory"/> instances. Resource-tree nodes
+		/// walk this list to dispatch a <see cref="ICSharpCode.Decompiler.Metadata.Resource"/> to
+		/// the right specialised node (image / xml / .resources / …) before falling back to the
+		/// generic node.
+		/// </summary>
+		protected static ICollection<IResourceNodeFactory> ResourceNodeFactories { get; }
+			= AppComposition.Current.GetExports<IResourceNodeFactory>().ToArray();
 
 		public Language Language => LanguageService.CurrentLanguage;
 
@@ -54,5 +69,13 @@ namespace ILSpy.TreeNodes
 		{
 			language.WriteCommentLine(output, Text?.ToString() ?? GetType().Name);
 		}
+
+		/// <summary>
+		/// Special "Save" handling for nodes that aren't textual code. Default returns false,
+		/// meaning the host should use the regular decompile-to-file path. Override and return
+		/// true after writing the node's content to handle Save inline (e.g. raw byte copy for
+		/// embedded resources).
+		/// </summary>
+		public virtual bool Save() => false;
 	}
 }

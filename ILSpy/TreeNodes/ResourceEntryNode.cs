@@ -18,11 +18,17 @@
 
 using System;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.Metadata;
 
+using ILSpy.Commands;
 using ILSpy.Languages;
+using ILSpy.TextView;
 
 namespace ILSpy.TreeNodes
 {
@@ -51,9 +57,48 @@ namespace ILSpy.TreeNodes
 		{
 			using var data = OpenStream();
 			language.WriteCommentLine(output, $"{key} = {data.Length} bytes");
+			if (output is ISmartTextOutput smart)
+			{
+				smart.WriteLine();
+				smart.AddButton(Images.Images.Save, "Save", async (_, _) => await SaveAsync().ConfigureAwait(false));
+				smart.WriteLine();
+			}
+		}
+
+		public override bool Save()
+		{
+			_ = SaveAsync();
+			return true;
+		}
+
+		async Task SaveAsync()
+		{
+			var defaultName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(key));
+			var path = await FilePickers.SaveAsync("All files|*.*", defaultName).ConfigureAwait(false);
+			if (path == null)
+				return;
+			using var src = OpenStream();
+			using var dst = File.Create(path);
+			src.CopyTo(dst);
 		}
 
 		public static ILSpyTreeNode Create(string name, byte[] data)
 			=> new ResourceEntryNode(name, () => new MemoryStream(data));
+
+		/// <summary>
+		/// Walks <see cref="ILSpyTreeNode.ResourceNodeFactories"/> and returns the first node any
+		/// factory builds for <paramref name="resource"/>. Falls back to a plain
+		/// <see cref="ResourceTreeNode"/> when no factory claims it. The single dispatch entry
+		/// point used by both <see cref="ResourceListTreeNode"/> and packages.
+		/// </summary>
+		public static ILSpyTreeNode Create(Resource resource)
+		{
+			ArgumentNullException.ThrowIfNull(resource);
+			return ResourceNodeFactories
+				.Select(f => f.CreateNode(resource))
+				.OfType<ILSpyTreeNode>()
+				.FirstOrDefault()
+				?? new ResourceTreeNode(resource);
+		}
 	}
 }

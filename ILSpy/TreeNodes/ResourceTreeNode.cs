@@ -17,12 +17,17 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.IO;
+using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
+using ILSpy.Commands;
 using ILSpy.Languages;
+using ILSpy.TextView;
 
 namespace ILSpy.TreeNodes
 {
@@ -49,14 +54,36 @@ namespace ILSpy.TreeNodes
 			var sizeInBytes = Resource.TryGetLength();
 			var sizeInBytesText = sizeInBytes == null ? "" : ", " + sizeInBytes + " bytes";
 			language.WriteCommentLine(output, $"{Resource.Name} ({Resource.ResourceType}, {Resource.Attributes}{sizeInBytesText})");
+			if (output is ISmartTextOutput smart)
+			{
+				smart.WriteLine();
+				smart.AddButton(Images.Images.Save, "Save", async (_, _) => await SaveAsync().ConfigureAwait(false));
+				smart.WriteLine();
+			}
 		}
 
-		public static ILSpyTreeNode Create(Resource resource)
+		public override bool Save()
 		{
-			ArgumentNullException.ThrowIfNull(resource);
-			if (resource.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
-				return new ResourcesFileTreeNode(resource);
-			return new ResourceTreeNode(resource);
+			_ = SaveAsync();
+			return true;
 		}
+
+		async Task SaveAsync()
+		{
+			var defaultName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(Resource.Name));
+			var path = await FilePickers.SaveAsync("All files|*.*", defaultName).ConfigureAwait(false);
+			if (path == null)
+				return;
+			using var src = Resource.TryOpenStream();
+			if (src == null)
+				return;
+			src.Position = 0;
+			using var dst = File.Create(path);
+			src.CopyTo(dst);
+		}
+
+		// Keep the symmetric name from WPF: callers can use ResourceTreeNode.Create or
+		// ResourceEntryNode.Create interchangeably.
+		public static ILSpyTreeNode Create(Resource resource) => ResourceEntryNode.Create(resource);
 	}
 }
