@@ -16,15 +16,24 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.IO;
+using System.Linq;
+using System.Resources;
 using System.Text;
 
+using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
+using ILSpy;
 using ILSpy.AppEnv;
+using ILSpy.Languages;
+using ILSpy.TextView;
 using ILSpy.TreeNodes;
 using ILSpy.Views;
 
@@ -72,5 +81,43 @@ public class ResourceFactoryTests
 		EnsureComposition();
 		var node = ResourceEntryNode.Create(new ByteArrayResource("data.bin", new byte[] { 1, 2, 3 }));
 		node.GetType().Should().Be(typeof(ResourceTreeNode));
+	}
+
+	[AvaloniaTest]
+	public void Resources_File_Decompile_Emits_UIElements_For_String_And_Object_Tables()
+	{
+		EnsureComposition();
+		var node = (ResourcesFileTreeNode)ResourceEntryNode.Create(
+			new ByteArrayResource("strings.resources", BuildResources(
+				new (string, object)[] {
+					("stringKey", "hello"),
+					("anotherKey", "world"),
+					("intKey", 42),
+					("doubleKey", 3.14),
+				})));
+		node.EnsureLazyChildren();
+		var output = new AvaloniaEditTextOutput();
+		// Use the active language so WriteCommentLine works without reaching into MEF state.
+		var language = AppComposition.Current.GetExport<LanguageService>().CurrentLanguage;
+		node.Decompile(language, output, new DecompilationOptions());
+
+		// Two grids (string + object) on top of the inherited Save button = 3 UI elements.
+		// The previous implementation emitted comment lines and only the inherited Save button,
+		// so this drives adding two AddUIElement(...) calls in ResourcesFileTreeNode.Decompile.
+		output.UIElements.Should().HaveCount(3,
+			".resources should render a string table + object table inline alongside the Save button");
+		var realised = output.UIElements.Select(kv => kv.Value.Value).ToList();
+		realised.Should().ContainItemsAssignableTo<Control>();
+	}
+
+	static byte[] BuildResources((string Key, object Value)[] entries)
+	{
+		var ms = new MemoryStream();
+		using (var writer = new ResourceWriter(ms))
+		{
+			foreach (var (k, v) in entries)
+				writer.AddResource(k, v);
+		}
+		return ms.ToArray();
 	}
 }

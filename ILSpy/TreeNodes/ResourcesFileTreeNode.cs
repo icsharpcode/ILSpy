@@ -27,7 +27,9 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpyX.Abstractions;
 
+using ILSpy.Controls;
 using ILSpy.Languages;
+using ILSpy.TextView;
 
 namespace ILSpy.TreeNodes
 {
@@ -52,8 +54,10 @@ namespace ILSpy.TreeNodes
 	public sealed class ResourcesFileTreeNode : ResourceTreeNode
 	{
 		readonly List<KeyValuePair<string, string>> stringTableEntries = new();
+		readonly List<SerializedObjectRepresentation> otherEntries = new();
 
 		public IReadOnlyList<KeyValuePair<string, string>> StringTableEntries => stringTableEntries;
+		public IReadOnlyList<SerializedObjectRepresentation> OtherEntries => otherEntries;
 
 		public ResourcesFileTreeNode(Resource r) : base(r)
 		{
@@ -90,6 +94,18 @@ namespace ILSpy.TreeNodes
 				case MemoryStream ms:
 					Children.Add(ResourceEntryNode.Create(entry.Key, ms.ToArray()));
 					break;
+				case null:
+					otherEntries.Add(new SerializedObjectRepresentation(entry.Key, "null", string.Empty));
+					break;
+				case ResourceSerializedObject so:
+					otherEntries.Add(new SerializedObjectRepresentation(entry.Key, so.TypeName ?? string.Empty, "<serialized>"));
+					break;
+				default:
+					otherEntries.Add(new SerializedObjectRepresentation(
+						entry.Key,
+						entry.Value.GetType().FullName ?? entry.Value.GetType().Name,
+						entry.Value.ToString() ?? string.Empty));
+					break;
 			}
 		}
 
@@ -97,12 +113,20 @@ namespace ILSpy.TreeNodes
 		{
 			EnsureLazyChildren();
 			base.Decompile(language, output, options);
-			if (stringTableEntries.Count == 0)
+			if (output is not ISmartTextOutput smart)
 				return;
-			output.WriteLine();
-			language.WriteCommentLine(output, "string table:");
-			foreach (var pair in stringTableEntries)
-				language.WriteCommentLine(output, $"  {pair.Key} = {pair.Value}");
+			if (stringTableEntries.Count > 0)
+			{
+				output.WriteLine();
+				smart.AddUIElement(() => new ResourceStringTable(stringTableEntries));
+				output.WriteLine();
+			}
+			if (otherEntries.Count > 0)
+			{
+				output.WriteLine();
+				smart.AddUIElement(() => new ResourceObjectTable(otherEntries));
+				output.WriteLine();
+			}
 		}
 	}
 }
