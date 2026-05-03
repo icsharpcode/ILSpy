@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.Composition;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -25,9 +26,14 @@ using global::Avalonia.Controls;
 using global::Avalonia.Controls.ApplicationLifetimes;
 using global::Avalonia.Platform.Storage;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Properties;
 
+using ILSpy.AppEnv;
 using ILSpy.AssemblyTree;
+using ILSpy.Docking;
+using ILSpy.Languages;
+using ILSpy.TreeNodes;
 using ILSpy.Views;
 
 namespace ILSpy.Commands
@@ -163,9 +169,80 @@ namespace ILSpy.Commands
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources._SaveCode), MenuIcon = "Images/Save", MenuCategory = nameof(Resources.Save), MenuOrder = 0, InputGestureText = "Ctrl+S")]
 	[Shared]
-	sealed class SaveCommand : SimpleCommand
+	[method: ImportingConstructor]
+	internal sealed class SaveCommand(
+		AssemblyTreeModel assemblyTreeModel,
+		LanguageService languageService) : SimpleCommand
 	{
-		public override void Execute(object? parameter) => NotImplementedDialog.Show(Resources._SaveCode);
+		public override bool CanExecute(object? parameter)
+			=> assemblyTreeModel.SelectedItem is ILSpyTreeNode;
+
+		public override async void Execute(object? parameter)
+		{
+			if (assemblyTreeModel.SelectedItem is not ILSpyTreeNode node)
+				return;
+			// Resource nodes (and any future override) handle their own save format and dialog;
+			// only fall through to the generic "save code" path when the node says it didn't
+			// claim the request.
+			if (node.Save())
+				return;
+
+			var language = languageService.CurrentLanguage;
+			var defaultName = "output" + language.FileExtension;
+			var path = await FilePickers.SaveAsync(
+				$"{language.Name} (*{language.FileExtension})|*{language.FileExtension}|All files|*.*",
+				defaultName).ConfigureAwait(false);
+			if (path == null)
+				return;
+			await SaveCodeAsync(path).ConfigureAwait(false);
+		}
+
+		/// <summary>
+		/// Public for tests + scripted callers: re-decompiles the currently selected node with
+		/// <see cref="DecompilationOptions.FullDecompilation"/> on and writes the output to
+		/// <paramref name="path"/> as plain text. Drives the taskbar progress while running so
+		/// long saves give visual feedback.
+		/// </summary>
+		public async Task SaveCodeAsync(string path)
+		{
+			if (assemblyTreeModel.SelectedItem is not ILSpyTreeNode node)
+				return;
+
+			var taskbar = TryGetExport<TaskbarProgressService>();
+			var language = languageService.CurrentLanguage;
+			var options = new DecompilationOptions {
+				FullDecompilation = true,
+				EscapeInvalidIdentifiers = true,
+			};
+			taskbar?.SetState(TaskbarProgressState.Indeterminate);
+			try
+			{
+				await Task.Run(() => {
+					using var writer = new StreamWriter(path);
+					var output = new ICSharpCode.Decompiler.PlainTextOutput(writer);
+					try
+					{
+						node.Decompile(language, output, options);
+					}
+					catch (System.OperationCanceledException)
+					{
+						writer.WriteLine();
+						writer.WriteLine("// Decompilation was cancelled.");
+					}
+				}).ConfigureAwait(false);
+			}
+			finally
+			{
+				taskbar?.SetState(TaskbarProgressState.None);
+			}
+		}
+
+		static T? TryGetExport<T>() where T : class
+		{
+			try
+			{ return AppComposition.Current.GetExport<T>(); }
+			catch { return null; }
+		}
 	}
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.GeneratePortable), MenuCategory = nameof(Resources.Save))]

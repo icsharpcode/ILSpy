@@ -663,4 +663,78 @@ public class AssemblyTreeTests
 		scrollViewer.Offset.Y.Should().BeApproximately(offsetBefore, 1.0,
 			"clicking an already-visible row must not move the viewport");
 	}
+
+	[AvaloniaTest]
+	public async Task Save_Code_Command_Dispatches_Single_Selected_Node_Save_Override()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var probe = new SaveProbeNode();
+		vm.AssemblyTreeModel.SelectedItem = probe;
+
+		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
+		var saveCmd = registry.Commands
+			.Single(c => c.Metadata.Header == nameof(Resources._SaveCode))
+			.CreateExport().Value;
+		saveCmd.Execute(null);
+
+		probe.SaveCalled.Should().BeTrue(
+			"Save Code on a single ILSpyTreeNode selection must dispatch through ILSpyTreeNode.Save()");
+	}
+
+	sealed class SaveProbeNode : ILSpyTreeNode
+	{
+		public bool SaveCalled { get; private set; }
+		public override bool Save()
+		{
+			SaveCalled = true;
+			return true;
+		}
+		public override object Text => "SaveProbeNode";
+	}
+
+	[AvaloniaTest]
+	public async Task Save_Code_Command_Writes_Full_Decompilation_To_Picked_Path()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		typeNode.EnsureLazyChildren();
+		var method = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "AsEnumerable");
+		vm.AssemblyTreeModel.SelectedItem = method;
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
+		var saveCmd = (global::ILSpy.Commands.SaveCommand)registry.Commands
+			.Single(c => c.Metadata.Header == nameof(Resources._SaveCode))
+			.CreateExport().Value;
+
+		var tempFile = System.IO.Path.Combine(
+			System.IO.Path.GetTempPath(),
+			"ilspy-save-" + System.Guid.NewGuid().ToString("N") + ".cs");
+		try
+		{
+			await saveCmd.SaveCodeAsync(tempFile);
+
+			System.IO.File.Exists(tempFile).Should().BeTrue();
+			var contents = await System.IO.File.ReadAllTextAsync(tempFile);
+			contents.Should().Contain("AsEnumerable",
+				"the full decompilation should include the selected method's name");
+			contents.Should().Contain("return source",
+				"the method body should be present (FullDecompilation = true)");
+		}
+		finally
+		{
+			if (System.IO.File.Exists(tempFile))
+				System.IO.File.Delete(tempFile);
+		}
+	}
 }

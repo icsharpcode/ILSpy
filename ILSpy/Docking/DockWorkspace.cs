@@ -245,6 +245,8 @@ namespace ILSpy.Docking
 			tab.CurrentNodes = nodes;
 		}
 
+		public DecompilerTabPageModel? ActiveDecompilerTab => GetActiveDecompilerTab();
+
 		DecompilerTabPageModel? GetActiveDecompilerTab()
 		{
 			if (factory.Documents?.ActiveDockable is DecompilerTabPageModel active)
