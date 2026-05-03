@@ -256,6 +256,11 @@ namespace ILSpy.AssemblyTree
 				},
 				IsLeafSelector = node => !node.ShowExpander,
 				VirtualizeChildren = false,
+				// Two-way sync of SharpTreeNode.IsExpanded ↔ grid wrapper. ProDataGrid reads the
+				// value via reflection, writes it back on chevron-click, and observes
+				// INotifyPropertyChanged on the source so model-side mutations propagate to the
+				// grid automatically.
+				IsExpandedPropertyPath = nameof(SharpTreeNode.IsExpanded),
 			};
 
 			var hierarchicalModel = new HierarchicalModel<SharpTreeNode>(options);

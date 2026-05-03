@@ -848,4 +848,36 @@ public class AssemblyTreeTests
 				System.IO.File.Delete(brokenPath);
 		}
 	}
+
+	[AvaloniaTest]
+	public async Task Setting_SharpTreeNode_IsExpanded_Expands_Row_In_Grid()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<DataGrid>();
+
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
+		// Before: grid wrapper for assemblyNode must exist and not be expanded.
+		var hm = (global::Avalonia.Controls.DataGridHierarchical.IHierarchicalModel)grid.HierarchicalModel!;
+		var hNode = hm.FindNode(assemblyNode);
+		hNode.Should().NotBeNull();
+		hNode!.IsExpanded.Should().BeFalse("baseline: top-level assembly rows start collapsed");
+
+		// Production-shaped action: just toggle the model property. ProDataGrid's
+		// HierarchicalOptions.IsExpandedPropertyPath observes INPC and pushes to the wrapper.
+		assemblyNode.IsExpanded = true;
+
+		for (int i = 0; i < 5; i++)
+		{
+			Dispatcher.UIThread.RunJobs();
+			await Task.Delay(20);
+		}
+
+		hm.FindNode(assemblyNode)!.IsExpanded.Should().BeTrue(
+			"setting SharpTreeNode.IsExpanded must propagate to the HierarchicalModel wrapper");
+	}
 }
