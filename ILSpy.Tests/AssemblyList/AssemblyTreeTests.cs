@@ -737,4 +737,41 @@ public class AssemblyTreeTests
 				System.IO.File.Delete(tempFile);
 		}
 	}
+
+	[AvaloniaTest]
+	public async Task Delete_Key_On_Selected_Assembly_Unloads_It_From_The_List()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		// Pick the assembly we'll evict + a sibling we expect to survive.
+		var sacrificialName = typeof(System.Linq.Enumerable).Assembly.GetName().Name!;
+		var survivorName = typeof(object).Assembly.GetName().Name!;
+		var sacrificialNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(sacrificialName);
+		vm.AssemblyTreeModel.SelectedItem = sacrificialNode;
+		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, sacrificialNode));
+
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<DataGrid>();
+		grid.Focus();
+		Dispatcher.UIThread.RunJobs();
+
+		// Headless keyboard event — simulates the user pressing Del while the tree has focus.
+		global::Avalonia.Headless.HeadlessWindowExtensions.KeyPress(
+			window,
+			global::Avalonia.Input.Key.Delete,
+			global::Avalonia.Input.RawInputModifiers.None,
+			global::Avalonia.Input.PhysicalKey.Delete,
+			null);
+
+		await Waiters.WaitForAsync(() =>
+			!vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
+				.Any(a => string.Equals(a.ShortName, sacrificialName, System.StringComparison.Ordinal)));
+
+		vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
+			.Should().Contain(a => a.ShortName == survivorName,
+				"only the selected assembly should be removed");
+	}
 }

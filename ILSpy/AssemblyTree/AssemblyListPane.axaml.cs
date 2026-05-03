@@ -44,6 +44,23 @@ namespace ILSpy.AssemblyTree
 		{
 			InitializeComponent();
 			TreeGrid.DoubleTapped += OnTreeGridDoubleTapped;
+			TreeGrid.KeyDown += OnTreeGridKeyDown;
+		}
+
+		void OnTreeGridKeyDown(object? sender, KeyEventArgs e)
+		{
+			if (e.Key != Key.Delete || DataContext is not AssemblyTreeModel model || model.AssemblyList is not { } list)
+				return;
+			// Snapshot before mutation — Unload mutates the list and indirectly the model's
+			// selection.
+			var assemblies = model.SelectedItems.OfType<AssemblyTreeNode>()
+				.Select(n => n.LoadedAssembly)
+				.ToList();
+			if (assemblies.Count == 0)
+				return;
+			foreach (var asm in assemblies)
+				list.Unload(asm);
+			e.Handled = true;
 		}
 
 		void OnTreeGridSelectionChanged(object? sender, SelectionChangedEventArgs e)
