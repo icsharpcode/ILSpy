@@ -40,11 +40,36 @@ public class TestApp : ProductionApp
 
 	public override void OnFrameworkInitializationCompleted()
 	{
-		var dir = Path.Combine(Path.GetTempPath(), "ILSpy.Tests", Guid.NewGuid().ToString("N"));
+		var sessionsRoot = Path.Combine(Path.GetTempPath(), "ILSpy.Tests");
+		// Sweep any leftover session dirs from previous runs first — ProcessExit-time cleanup
+		// is best-effort and the active session's settings file is sometimes still locked when
+		// the runtime tears down, leaving one orphan per process. This catches them next run.
+		SweepLeftovers(sessionsRoot);
+
+		var dir = Path.Combine(sessionsRoot, Guid.NewGuid().ToString("N"));
 		Directory.CreateDirectory(dir);
 		var configPath = Path.Combine(dir, "ILSpy.xml");
 		ILSpySettings.SettingsFilePathProvider = () => configPath;
+		AppDomain.CurrentDomain.ProcessExit += (_, _) => TryDeleteDirectory(dir);
 
 		var composition = AppComposition.Initialize();
+	}
+
+	static void SweepLeftovers(string sessionsRoot)
+	{
+		if (!Directory.Exists(sessionsRoot))
+			return;
+		foreach (var sub in Directory.EnumerateDirectories(sessionsRoot))
+			TryDeleteDirectory(sub);
+	}
+
+	static void TryDeleteDirectory(string dir)
+	{
+		try
+		{
+			if (Directory.Exists(dir))
+				Directory.Delete(dir, recursive: true);
+		}
+		catch { /* best-effort — don't crash on shutdown if a file is briefly locked */ }
 	}
 }
