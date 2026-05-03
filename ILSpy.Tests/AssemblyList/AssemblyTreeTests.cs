@@ -774,4 +774,78 @@ public class AssemblyTreeTests
 			.Should().Contain(a => a.ShortName == survivorName,
 				"only the selected assembly should be removed");
 	}
+
+	[AvaloniaTest]
+	public async Task Clear_Assembly_List_Command_Empties_The_Active_List()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		vm.AssemblyTreeModel.AssemblyList!.Count.Should().BeGreaterThan(0);
+
+		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
+		var clearCmd = registry.Commands
+			.Single(c => c.Metadata.Header == nameof(Resources.ClearAssemblyList))
+			.CreateExport().Value;
+		clearCmd.CanExecute(null).Should().BeTrue("non-empty list must enable Clear");
+		clearCmd.Execute(null);
+
+		await Waiters.WaitForAsync(() => vm.AssemblyTreeModel.AssemblyList!.Count == 0);
+		vm.AssemblyTreeModel.AssemblyList!.Count.Should().Be(0);
+	}
+
+	[AvaloniaTest]
+	public async Task Remove_Assemblies_With_Load_Errors_Drops_Only_Broken_Entries()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		// Add a "broken" assembly: a real file that isn't a PE binary. AssemblyList records
+		// it but the load fails — that's exactly the state the command targets.
+		var brokenPath = System.IO.Path.Combine(
+			System.IO.Path.GetTempPath(),
+			"ilspy-bogus-" + System.Guid.NewGuid().ToString("N") + ".dll");
+		await System.IO.File.WriteAllTextAsync(brokenPath, "not a real PE file");
+		try
+		{
+			vm.AssemblyTreeModel.OpenFiles(new[] { brokenPath });
+			await Waiters.WaitForAsync(() =>
+				vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
+					.Any(a => string.Equals(a.FileName, brokenPath, System.StringComparison.OrdinalIgnoreCase)));
+			var broken = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
+				.First(a => string.Equals(a.FileName, brokenPath, System.StringComparison.OrdinalIgnoreCase));
+			// GetLoadResultAsync rethrows the load failure; HasLoadError is the safe probe.
+			await Waiters.WaitForAsync(() => broken.HasLoadError);
+
+			var validBefore = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
+				.Where(a => !a.HasLoadError)
+				.Select(a => a.FileName)
+				.ToList();
+			validBefore.Should().NotBeEmpty("at least one real assembly must remain to verify it's spared");
+
+			var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
+			var cmd = registry.Commands
+				.Single(c => c.Metadata.Header == nameof(Resources._RemoveAssembliesWithLoadErrors))
+				.CreateExport().Value;
+			cmd.CanExecute(null).Should().BeTrue("a broken entry must enable the command");
+			cmd.Execute(null);
+
+			await Waiters.WaitForAsync(() =>
+				!vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
+					.Any(a => string.Equals(a.FileName, brokenPath, System.StringComparison.OrdinalIgnoreCase)));
+
+			var remaining = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Select(a => a.FileName).ToList();
+			remaining.Should().NotContain(brokenPath, "the broken assembly should be removed");
+			foreach (var path in validBefore)
+				remaining.Should().Contain(path, "valid assemblies must be preserved");
+		}
+		finally
+		{
+			if (System.IO.File.Exists(brokenPath))
+				System.IO.File.Delete(brokenPath);
+		}
+	}
 }
