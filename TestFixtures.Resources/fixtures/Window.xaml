@@ -1,0 +1,20 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Demo Window"
+        Width="640"
+        Height="480">
+  <DockPanel>
+    <TextBlock DockPanel.Dock="Top"
+               Text="Hello, world"
+               FontSize="20"
+               Margin="12" />
+    <Border BorderBrush="Gray"
+            BorderThickness="1"
+            Margin="12">
+      <StackPanel>
+        <Button Content="Click me" />
+        <TextBox Text="Some text" />
+      </StackPanel>
+    </Border>
+  </DockPanel>
+</Window>
