@@ -56,6 +56,11 @@ public class MainMenuTests
 	[AvaloniaTest]
 	public async Task Main_Menu_Items_Display_Input_Gestures()
 	{
+		// File → Open carries an InputGestureText="Ctrl+O" attribute on its
+		// [ExportMainMenuCommand]; verifies both the displayed gesture (right side of the menu
+		// item) and the actual HotKey are wired up so Ctrl+O fires from the keyboard too.
+
+		// Arrange — boot MainWindow and wait for the File menu to be populated by MEF.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 
@@ -65,10 +70,12 @@ public class MainMenuTests
 				&& menu.Items.OfType<MenuItem>().Single(m => (string?)m.Tag == nameof(Resources._File))
 					.Items.OfType<MenuItem>().Any());
 
+		// Act — locate the Open MenuItem under File.
 		var fileMenu = menu.Items.OfType<MenuItem>().Single(m => (string?)m.Tag == nameof(Resources._File));
 		var openItem = fileMenu.Items.OfType<MenuItem>()
 			.Single(m => string.Equals(m.Header as string, Resources._Open, System.StringComparison.Ordinal));
 
+		// Assert — both display gesture and hot-key bind to Ctrl+O.
 		openItem.InputGesture.Should().NotBeNull();
 		openItem.InputGesture!.Should().Be(KeyGesture.Parse("Ctrl+O"));
 		openItem.HotKey.Should().Be(KeyGesture.Parse("Ctrl+O"));

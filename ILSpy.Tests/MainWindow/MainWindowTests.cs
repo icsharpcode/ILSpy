@@ -43,9 +43,14 @@ public class MainWindowTests
 	[AvaloniaTest]
 	public void MainWindow_Resolves_From_Composition_And_Shows()
 	{
+		// Smoke-test that MEF resolves MainWindow, the window shows, and its DataContext is the
+		// MainWindowViewModel — the foundation every other UI test relies on.
+
+		// Arrange + Act — resolve and show.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 
+		// Assert — visible, titled, with the correct DataContext.
 		window.IsVisible.Should().BeTrue();
 		window.Title.Should().Be("ILSpy");
 		window.DataContext.Should().BeOfType<MainWindowViewModel>();
@@ -54,12 +59,17 @@ public class MainWindowTests
 	[AvaloniaTest]
 	public async Task Assembly_Tree_Pane_Is_Visible_In_Layout()
 	{
+		// The dock layout must materialise an AssemblyListPane on first show with non-zero
+		// bounds, otherwise the user is staring at a blank window.
+
+		// Arrange + Act — boot the window and wait for the pane to be realized in the visual tree.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 
 		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<AssemblyListPane>().Any());
 		var pane = window.GetVisualDescendants().OfType<AssemblyListPane>().Single();
 
+		// Assert — visible with positive width and height.
 		pane.IsVisible.Should().BeTrue();
 		pane.Bounds.Width.Should().BeGreaterThan(0);
 		pane.Bounds.Height.Should().BeGreaterThan(0);
@@ -68,17 +78,21 @@ public class MainWindowTests
 	[AvaloniaTest]
 	public async Task Toolbar_Disabled_Button_Renders_Dimmed_Icon()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-
 		// At startup the Back button is disabled (no nav history yet — the bound Command's
 		// CanExecute returns false). Its icon should render visibly dimmer so the user can
 		// tell at a glance that it's not clickable.
+
+		// Arrange + Act — show the window, wait until at least one disabled icon-bearing button
+		// has been laid out.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+
 		await Waiters.WaitForAsync(() => window.GetVisualDescendants()
 			.OfType<Button>()
 			.Any(b => !b.IsEffectivelyEnabled
 				&& b.GetVisualDescendants().OfType<Image>().Any()));
 
+		// Assert — every disabled toolbar Image must render at <= 0.35 opacity.
 		var dimmedImages = window.GetVisualDescendants()
 			.OfType<Button>()
 			.Where(b => !b.IsEffectivelyEnabled)
@@ -92,6 +106,10 @@ public class MainWindowTests
 	[AvaloniaTest]
 	public async Task Toolbar_Has_Open_Button_Wired_To_Open_Command()
 	{
+		// The MEF-driven Open button (Tag = "Open") must be present in the toolbar with its
+		// Command resolved and enabled.
+
+		// Arrange + Act — show window, wait for the MEF-built Open button to land.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 
@@ -103,6 +121,7 @@ public class MainWindowTests
 			.OfType<Button>()
 			.Single(b => (string?)b.Tag == nameof(ICSharpCode.ILSpy.Properties.Resources.Open));
 
+		// Assert — Command is wired and CanExecute is true.
 		openButton.Command.Should().NotBeNull();
 		openButton.Command!.CanExecute(null).Should().BeTrue();
 	}
@@ -110,6 +129,10 @@ public class MainWindowTests
 	[AvaloniaTest]
 	public async Task Taskbar_Progress_Goes_Indeterminate_While_Decompiling_Then_Clears()
 	{
+		// Selecting a node kicks off a decompile; while it's running the taskbar progress must
+		// transition to Indeterminate, and once done it must drop back to None.
+
+		// Arrange — boot window, wait for assemblies, subscribe to TaskbarProgressService events.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
@@ -120,12 +143,14 @@ public class MainWindowTests
 		void Observe(TaskbarProgressState s) => states.Add(s);
 		service.StateChanged += Observe;
 
+		// Act — trigger a decompile.
 		var node = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		vm.AssemblyTreeModel.SelectedItem = node;
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
 		service.StateChanged -= Observe;
 
+		// Assert — Indeterminate appeared mid-flight and None is the final state.
 		states.Should().Contain(TaskbarProgressState.Indeterminate,
 			"taskbar must show indeterminate progress while a decompile is in flight");
 		states.Last().Should().Be(TaskbarProgressState.None,
