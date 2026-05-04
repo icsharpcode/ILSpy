@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Composition;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Properties;
@@ -34,6 +35,14 @@ namespace ILSpy.Commands
 	[Shared]
 	sealed class AboutCommand : SimpleCommand
 	{
+		// Phrases inside the About blurb that should render as clickable hyperlinks. The Uri
+		// uses the custom "resource:" scheme; the click handler reads the matching name as an
+		// embedded manifest resource on this assembly.
+		static readonly (string Text, Uri Uri)[] Links = {
+			("MIT License", new Uri("resource:license.txt")),
+			("third-party notices", new Uri("resource:third-party-notices.txt")),
+		};
+
 		readonly DockWorkspace dockWorkspace;
 		readonly IEnumerable<IAboutPageAddition> additions;
 
@@ -62,13 +71,53 @@ namespace ILSpy.Commands
 				{
 					using var reader = new StreamReader(stream);
 					while (reader.ReadLine() is { } line)
-						output.WriteLine(line);
+						WriteLineWithLinks(output, line);
 				}
 			}
 
+			OpenInNewTab(Resources.About, output, ".txt");
+		}
+
+		static void WriteLineWithLinks(AvaloniaEditTextOutput output, string line)
+		{
+			int cursor = 0;
+			while (cursor < line.Length)
+			{
+				int nearestStart = -1;
+				(string Text, Uri Uri) nearest = default;
+				foreach (var link in Links)
+				{
+					int idx = line.IndexOf(link.Text, cursor, StringComparison.Ordinal);
+					if (idx < 0)
+						continue;
+					if (nearestStart < 0 || idx < nearestStart)
+					{
+						nearestStart = idx;
+						nearest = link;
+					}
+				}
+				if (nearestStart < 0)
+				{
+					output.Write(line.Substring(cursor));
+					break;
+				}
+				if (nearestStart > cursor)
+					output.Write(line.Substring(cursor, nearestStart - cursor));
+				// nearestStart >= 0 here implies the foreach assigned `nearest = link` at least
+				// once, so neither tuple field is the default-null left behind by `nearest = default`.
+				Debug.Assert(nearest.Text != null);
+				Debug.Assert(nearest.Uri != null);
+				output.WriteReference(nearest.Text, nearest.Uri);
+				cursor = nearestStart + nearest.Text.Length;
+			}
+			output.WriteLine();
+		}
+
+		void OpenInNewTab(string title, AvaloniaEditTextOutput output, string syntaxExtension)
+		{
 			var tab = new DecompilerTabPageModel {
-				Title = Resources.About,
-				SyntaxExtension = ".txt",
+				Title = title,
+				SyntaxExtension = syntaxExtension,
 				Text = output.GetText(),
 				HighlightingModel = output.HighlightingModel,
 				References = output.References,
@@ -76,7 +125,28 @@ namespace ILSpy.Commands
 				UIElements = output.UIElements,
 				Foldings = output.Foldings,
 			};
+			tab.NavigateRequested += OnLinkClicked;
 			dockWorkspace.OpenNewTab(tab);
+		}
+
+		void OnLinkClicked(ReferenceSegment segment)
+		{
+			if (segment.Reference is not Uri uri
+				|| !string.Equals(uri.Scheme, "resource", StringComparison.OrdinalIgnoreCase))
+				return;
+			OpenEmbeddedResource(uri.AbsolutePath);
+		}
+
+		void OpenEmbeddedResource(string resourceName)
+		{
+			var assembly = typeof(AboutCommand).Assembly;
+			using var stream = assembly.GetManifestResourceStream(resourceName);
+			if (stream == null)
+				return;
+			using var reader = new StreamReader(stream);
+			var output = new AvaloniaEditTextOutput { Title = resourceName };
+			output.Write(reader.ReadToEnd());
+			OpenInNewTab(resourceName, output, ".txt");
 		}
 
 		static string GetDotnetProductVersion()

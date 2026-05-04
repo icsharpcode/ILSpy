@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -74,5 +75,48 @@ public class HelpCommandTests
 		aboutTab.Title.Should().Be(Resources.About);
 		aboutTab.Text.Should().Contain(Resources.ILSpyVersion);
 		aboutTab.Text.Should().Contain("MIT License");
+	}
+
+	[AvaloniaTest]
+	public async Task About_Page_MIT_License_Link_Opens_License_Tab_On_Click()
+	{
+		// "MIT License" inside the About blurb must be a clickable reference. Activating it
+		// (the same path DecompilerTextView's pointer click takes — RaiseNavigateRequested)
+		// must open the embedded LICENSE text in a new tab.
+
+		// Arrange — boot the window and open the About page.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
+		var aboutCmd = registry.Commands
+			.Single(c => c.Metadata.Header == nameof(Resources._About))
+			.CreateExport().Value;
+		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
+		aboutCmd.Execute(null);
+		await Waiters.WaitForAsync(
+			() => documents.ActiveDockable is DecompilerTabPageModel { Text.Length: > 0 });
+		var aboutTab = (DecompilerTabPageModel)documents.ActiveDockable!;
+		var beforeCount = documents.VisibleDockables?.Count ?? 0;
+
+		// Act — find the MIT License reference segment and fire NavigateRequested (same path
+		// the live pointer-click handler takes).
+		aboutTab.References.Should().NotBeNull();
+		var licenseSegment = aboutTab.References!
+			.Single(r => r.Reference is Uri u && u.OriginalString.Contains("license", StringComparison.OrdinalIgnoreCase));
+		var matched = aboutTab.Text.Substring(licenseSegment.StartOffset, licenseSegment.Length);
+		matched.Should().Be("MIT License");
+		aboutTab.RaiseNavigateRequested(licenseSegment);
+
+		// Assert — a new tab landed in the document dock containing the license body.
+		await Waiters.WaitForAsync(
+			() => (documents.VisibleDockables?.Count ?? 0) > beforeCount
+				&& documents.ActiveDockable is DecompilerTabPageModel licenseTab
+				&& !ReferenceEquals(licenseTab, aboutTab)
+				&& licenseTab.Text.Length > 0);
+		var licenseTab = (DecompilerTabPageModel)documents.ActiveDockable!;
+		licenseTab.Text.Should().Contain("Permission is hereby granted");
 	}
 }

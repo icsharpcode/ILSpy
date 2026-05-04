@@ -145,6 +145,9 @@ namespace ILSpy.TextView
 		public void WriteReference(IMember member, string text, bool isDefinition = false)
 			=> AddReference(text, member, local: false, isDefinition);
 
+		public void WriteReference(string text, Uri target)
+			=> AddReference(text, target, local: false, isDefinition: false);
+
 		public void WriteLocalReference(string text, object reference, bool isDefinition = false)
 			=> AddReference(text, reference, local: true, isDefinition);
 
