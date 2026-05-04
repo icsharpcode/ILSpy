@@ -80,11 +80,13 @@ public class HelpCommandTests
 	[AvaloniaTest]
 	public async Task About_Page_MIT_License_Link_Opens_License_Tab_On_Click()
 	{
-		// "MIT License" inside the About blurb must be a clickable reference. Activating it
-		// (the same path DecompilerTextView's pointer click takes — RaiseNavigateRequested)
-		// must open the embedded LICENSE text in a new tab.
+		// "MIT License" inside the About blurb must be rendered as an AvaloniaEdit hyperlink
+		// pointing at "resource:license.txt", and activating it must open the embedded LICENSE
+		// text in a new tab. Tests the full pipeline: the tab carries a custom element
+		// generator (matching the WPF host's LinkElementGenerator pattern), and the tab's
+		// OpenUriRequested handler resolves the resource: URI to a new tab.
 
-		// Arrange — boot the window and open the About page.
+		// Arrange — boot, open the About page.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
@@ -99,18 +101,20 @@ public class HelpCommandTests
 		await Waiters.WaitForAsync(
 			() => documents.ActiveDockable is DecompilerTabPageModel { Text.Length: > 0 });
 		var aboutTab = (DecompilerTabPageModel)documents.ActiveDockable!;
+
+		// Assert (mid-test) — the tab carries the custom hyperlink generators that
+		// DecompilerTextView installs alongside the document.
+		aboutTab.CustomElementGenerators.Should().NotBeNull();
+		aboutTab.CustomElementGenerators!.Should().NotBeEmpty(
+			"the About page must contribute LinkElementGenerator(s) for MIT License + third-party notices");
+
 		var beforeCount = documents.VisibleDockables?.Count ?? 0;
 
-		// Act — find the MIT License reference segment and fire NavigateRequested (same path
-		// the live pointer-click handler takes).
-		aboutTab.References.Should().NotBeNull();
-		var licenseSegment = aboutTab.References!
-			.Single(r => r.Reference is Uri u && u.OriginalString.Contains("license", StringComparison.OrdinalIgnoreCase));
-		var matched = aboutTab.Text.Substring(licenseSegment.StartOffset, licenseSegment.Length);
-		matched.Should().Be("MIT License");
-		aboutTab.RaiseNavigateRequested(licenseSegment);
+		// Act — fire the same OpenUri routed event that AvaloniaEdit would raise on click.
+		aboutTab.RaiseOpenUriRequested(new Uri("resource:license.txt"))
+			.Should().BeTrue("the About tab must claim the resource: URI as handled");
 
-		// Assert — a new tab landed in the document dock containing the license body.
+		// Assert — a new tab opens with the license body.
 		await Waiters.WaitForAsync(
 			() => (documents.VisibleDockables?.Count ?? 0) > beforeCount
 				&& documents.ActiveDockable is DecompilerTabPageModel licenseTab

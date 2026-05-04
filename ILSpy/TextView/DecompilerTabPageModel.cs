@@ -29,6 +29,7 @@ using Avalonia.Threading;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Folding;
 using AvaloniaEdit.Highlighting;
+using AvaloniaEdit.Rendering;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -101,6 +102,14 @@ namespace ILSpy.TextView
 		private IReadOnlyList<KeyValuePair<int, Lazy<Control>>>? uIElements;
 
 		/// <summary>
+		/// Custom <see cref="VisualLineElementGenerator"/>s the writer attached (e.g. a
+		/// regex-based hyperlink generator). The text view installs them alongside the
+		/// document and removes them again when the document changes.
+		/// </summary>
+		[ObservableProperty]
+		private IReadOnlyList<VisualLineElementGenerator>? customElementGenerators;
+
+		/// <summary>
 		/// Fired when the user clicks a cross-document reference. The host (DockWorkspace)
 		/// resolves the target on the assembly tree side.
 		/// </summary>
@@ -108,6 +117,27 @@ namespace ILSpy.TextView
 
 		internal void RaiseNavigateRequested(ReferenceSegment segment)
 			=> NavigateRequested?.Invoke(segment);
+
+		/// <summary>
+		/// Fired when the user activates an AvaloniaEdit hyperlink. Subscribers return
+		/// <see langword="true"/> if they handled the URI; the text view then suppresses the
+		/// default <see cref="System.Diagnostics.Process.Start(System.Diagnostics.ProcessStartInfo)"/>
+		/// fallback that AvaloniaEdit would otherwise run for the URI.
+		/// </summary>
+		public event System.Func<System.Uri, bool>? OpenUriRequested;
+
+		internal bool RaiseOpenUriRequested(System.Uri uri)
+		{
+			var handlers = OpenUriRequested;
+			if (handlers == null)
+				return false;
+			foreach (System.Func<System.Uri, bool> handler in handlers.GetInvocationList())
+			{
+				if (handler(uri))
+					return true;
+			}
+			return false;
+		}
 
 		IReadOnlyList<ILSpyTreeNode> currentNodes = System.Array.Empty<ILSpyTreeNode>();
 

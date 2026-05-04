@@ -21,6 +21,7 @@ using System;
 using Avalonia.Controls;
 
 using AvaloniaEdit.Highlighting;
+using AvaloniaEdit.Rendering;
 
 using ICSharpCode.Decompiler;
 
@@ -37,6 +38,12 @@ namespace ILSpy.TextView
 		/// on the UI thread when the element generator first realises the row.
 		/// </summary>
 		void AddUIElement(Func<Control> element);
+
+		/// <summary>
+		/// Contributes a <see cref="VisualLineElementGenerator"/> (typically a regex-based
+		/// hyperlink generator) that the text view installs alongside the document.
+		/// </summary>
+		void AddVisualLineElementGenerator(VisualLineElementGenerator generator);
 
 		void BeginSpan(HighlightingColor highlightingColor);
 		void EndSpan();

@@ -65,6 +65,7 @@ namespace ILSpy.TextView
 		readonly UIElementGenerator uiElementGenerator;
 		readonly TextMarkerService textMarkerService;
 		readonly List<TextMarker> localReferenceMarks = new();
+		readonly List<AvaloniaEdit.Rendering.VisualLineElementGenerator> activeCustomGenerators = new();
 		RichTextColorizer? activeColorizer;
 		FoldingManager? activeFoldingManager;
 		ReferenceSegment? lastTooltipSegment;
@@ -108,6 +109,15 @@ namespace ILSpy.TextView
 				handledEventsToo: true);
 			Editor.TextArea.TextView.PointerMoved += OnTextViewPointerMoved;
 			Editor.TextArea.TextView.PointerExited += OnTextViewPointerExited;
+
+			// AvaloniaEdit's hyperlinks raise OpenUriEvent (bubbling); the default class handler
+			// on Window passes the URI to Process.Start. Intercept first so internal schemes
+			// (the About page's "resource:" URIs) route through the tab model instead.
+			Editor.TextArea.TextView.AddHandler(
+				AvaloniaEdit.Rendering.VisualLineLinkText.OpenUriEvent,
+				OnHyperlinkOpenUri,
+				RoutingStrategies.Bubble,
+				handledEventsToo: false);
 
 			richPopup = new Popup {
 				PlacementTarget = Editor.TextArea.TextView,
@@ -193,9 +203,32 @@ namespace ILSpy.TextView
 
 			referenceElementGenerator.References = model.References;
 			uiElementGenerator.UIElements = model.UIElements;
+
+			// Swap any tab-contributed visual-line element generators (e.g. About-page hyperlink
+			// generators). Tracked separately from the always-on referenceElementGenerator and
+			// uiElementGenerator so the two sets don't collide on tab change.
+			var generators = Editor.TextArea.TextView.ElementGenerators;
+			foreach (var g in activeCustomGenerators)
+				generators.Remove(g);
+			activeCustomGenerators.Clear();
+			if (model.CustomElementGenerators is { Count: > 0 } modelGenerators)
+			{
+				foreach (var g in modelGenerators)
+				{
+					generators.Add(g);
+					activeCustomGenerators.Add(g);
+				}
+			}
+
 			Editor.TextArea.TextView.Redraw();
 
 			Editor.ScrollToHome();
+		}
+
+		void OnHyperlinkOpenUri(object? sender, AvaloniaEdit.Rendering.OpenUriRoutedEventArgs e)
+		{
+			if (DataContext is DecompilerTabPageModel model && model.RaiseOpenUriRequested(e.Uri))
+				e.Handled = true;
 		}
 
 		void OnReferenceClicked(ReferenceSegment segment)

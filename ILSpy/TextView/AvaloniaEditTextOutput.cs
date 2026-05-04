@@ -26,6 +26,7 @@ using Avalonia.Controls;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Folding;
 using AvaloniaEdit.Highlighting;
+using AvaloniaEdit.Rendering;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
@@ -70,6 +71,15 @@ namespace ILSpy.TextView
 		/// <summary>Inline UI elements collected during writing, in offset order. Fed to
 		/// <see cref="UIElementGenerator"/> by the text view.</summary>
 		public IReadOnlyList<KeyValuePair<int, Lazy<Control>>> UIElements => uiElements;
+
+		readonly List<VisualLineElementGenerator> elementGenerators = new();
+
+		/// <summary>
+		/// Custom <see cref="VisualLineElementGenerator"/>s contributed by the writer (e.g. a
+		/// regex-based hyperlink generator). Installed on the text view alongside the
+		/// document and torn down again when the document is replaced.
+		/// </summary>
+		public IReadOnlyList<VisualLineElementGenerator> ElementGenerators => elementGenerators;
 
 		public string Title { get; set; } = string.Empty;
 
@@ -145,9 +155,6 @@ namespace ILSpy.TextView
 		public void WriteReference(IMember member, string text, bool isDefinition = false)
 			=> AddReference(text, member, local: false, isDefinition);
 
-		public void WriteReference(string text, Uri target)
-			=> AddReference(text, target, local: false, isDefinition: false);
-
 		public void WriteLocalReference(string text, object reference, bool isDefinition = false)
 			=> AddReference(text, reference, local: true, isDefinition);
 
@@ -199,6 +206,12 @@ namespace ILSpy.TextView
 			if (uiElements.Count > 0 && uiElements[uiElements.Count - 1].Key == builder.Length)
 				throw new InvalidOperationException("Only one UIElement is allowed for each position in the document.");
 			uiElements.Add(new KeyValuePair<int, Lazy<Control>>(builder.Length, new Lazy<Control>(element)));
+		}
+
+		public void AddVisualLineElementGenerator(VisualLineElementGenerator generator)
+		{
+			ArgumentNullException.ThrowIfNull(generator);
+			elementGenerators.Add(generator);
 		}
 
 		public void BeginSpan(HighlightingColor highlightingColor)

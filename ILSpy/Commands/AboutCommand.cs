@@ -21,7 +21,9 @@ using System.Collections.Generic;
 using System.Composition;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
+using System.Text.RegularExpressions;
+
+using AvaloniaEdit.Rendering;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Properties;
@@ -38,7 +40,7 @@ namespace ILSpy.Commands
 		// Phrases inside the About blurb that should render as clickable hyperlinks. The Uri
 		// uses the custom "resource:" scheme; the click handler reads the matching name as an
 		// embedded manifest resource on this assembly.
-		static readonly (string Text, Uri Uri)[] Links = {
+		static readonly (string Phrase, Uri Uri)[] Links = {
 			("MIT License", new Uri("resource:license.txt")),
 			("third-party notices", new Uri("resource:third-party-notices.txt")),
 		};
@@ -71,46 +73,14 @@ namespace ILSpy.Commands
 				{
 					using var reader = new StreamReader(stream);
 					while (reader.ReadLine() is { } line)
-						WriteLineWithLinks(output, line);
+						output.WriteLine(line);
 				}
 			}
+
+			foreach (var (phrase, uri) in Links)
+				output.AddVisualLineElementGenerator(new ResourceLinkGenerator(phrase, uri));
 
 			OpenInNewTab(Resources.About, output, ".txt");
-		}
-
-		static void WriteLineWithLinks(AvaloniaEditTextOutput output, string line)
-		{
-			int cursor = 0;
-			while (cursor < line.Length)
-			{
-				int nearestStart = -1;
-				(string Text, Uri Uri) nearest = default;
-				foreach (var link in Links)
-				{
-					int idx = line.IndexOf(link.Text, cursor, StringComparison.Ordinal);
-					if (idx < 0)
-						continue;
-					if (nearestStart < 0 || idx < nearestStart)
-					{
-						nearestStart = idx;
-						nearest = link;
-					}
-				}
-				if (nearestStart < 0)
-				{
-					output.Write(line.Substring(cursor));
-					break;
-				}
-				if (nearestStart > cursor)
-					output.Write(line.Substring(cursor, nearestStart - cursor));
-				// nearestStart >= 0 here implies the foreach assigned `nearest = link` at least
-				// once, so neither tuple field is the default-null left behind by `nearest = default`.
-				Debug.Assert(nearest.Text != null);
-				Debug.Assert(nearest.Uri != null);
-				output.WriteReference(nearest.Text, nearest.Uri);
-				cursor = nearestStart + nearest.Text.Length;
-			}
-			output.WriteLine();
 		}
 
 		void OpenInNewTab(string title, AvaloniaEditTextOutput output, string syntaxExtension)
@@ -124,17 +94,20 @@ namespace ILSpy.Commands
 				DefinitionLookup = output.DefinitionLookup,
 				UIElements = output.UIElements,
 				Foldings = output.Foldings,
+				CustomElementGenerators = output.ElementGenerators.Count > 0
+					? new List<VisualLineElementGenerator>(output.ElementGenerators)
+					: null,
 			};
-			tab.NavigateRequested += OnLinkClicked;
+			tab.OpenUriRequested += OnOpenUri;
 			dockWorkspace.OpenNewTab(tab);
 		}
 
-		void OnLinkClicked(ReferenceSegment segment)
+		bool OnOpenUri(Uri uri)
 		{
-			if (segment.Reference is not Uri uri
-				|| !string.Equals(uri.Scheme, "resource", StringComparison.OrdinalIgnoreCase))
-				return;
+			if (!string.Equals(uri.Scheme, "resource", StringComparison.OrdinalIgnoreCase))
+				return false;
 			OpenEmbeddedResource(uri.AbsolutePath);
+			return true;
 		}
 
 		void OpenEmbeddedResource(string resourceName)
@@ -156,6 +129,23 @@ namespace ILSpy.Commands
 			if (!string.IsNullOrWhiteSpace(location))
 				return FileVersionInfo.GetVersionInfo(location).ProductVersion ?? "UNKNOWN";
 			return typeof(object).Assembly.GetName().Version?.ToString() ?? "UNKNOWN";
+		}
+
+		// Specialised LinkElementGenerator that matches a single literal phrase and produces a
+		// VisualLineLinkText pointing at a fixed Uri. Mirrors the "MyLinkElementGenerator"
+		// pattern from the legacy WPF host.
+		sealed class ResourceLinkGenerator : LinkElementGenerator
+		{
+			readonly Uri target;
+
+			public ResourceLinkGenerator(string phrase, Uri target)
+				: base(new Regex(Regex.Escape(phrase)))
+			{
+				this.target = target;
+				RequireControlModifierForClick = false;
+			}
+
+			protected override Uri GetUriFromMatch(Match match) => target;
 		}
 	}
 
