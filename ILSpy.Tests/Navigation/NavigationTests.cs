@@ -132,11 +132,14 @@ public class NavigationTests
 		await Waiters.WaitForAsync(() => flyout.Items.OfType<MenuItem>().Count() >= 2);
 
 		// Assert 1 — newest-first ordering: index 0 is the immediate previous selection
-		// (methodB), index 1 is the one before that (methodA).
+		// (methodB), index 1 is the one before that (methodA). Each menu item carries a
+		// TreeNodeEntry wrapping the original tree node.
 		var items = flyout.Items.OfType<MenuItem>().ToList();
 		((string)items[0].Header!).Should().Be((string)methodB.Text);
 		((string)items[1].Header!).Should().Be((string)methodA.Text);
-		items[1].CommandParameter.Should().BeSameAs(methodA);
+		items[1].CommandParameter.Should().BeOfType<global::ILSpy.Navigation.TreeNodeEntry>();
+		var entry = (global::ILSpy.Navigation.TreeNodeEntry)items[1].CommandParameter!;
+		ReferenceEquals(entry.Node, methodA).Should().BeTrue();
 
 		// Act 3 — multi-step jump: clicking methodA pops two entries off the back stack in one go.
 		items[1].Command!.Execute(items[1].CommandParameter);

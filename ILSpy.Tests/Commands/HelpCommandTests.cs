@@ -29,7 +29,9 @@ using ICSharpCode.ILSpy.Properties;
 using ILSpy.AppEnv;
 using ILSpy.Commands;
 using ILSpy.Docking;
+using ILSpy.Navigation;
 using ILSpy.TextView;
+using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 using ILSpy.Views;
 
@@ -122,5 +124,76 @@ public class HelpCommandTests
 				&& licenseTab.Text.Length > 0);
 		var licenseTab = (DecompilerTabPageModel)documents.ActiveDockable!;
 		licenseTab.Text.Should().Contain("Permission is hereby granted");
+	}
+
+	[AvaloniaTest]
+	public async Task About_Page_Lands_On_Back_History_And_Round_Trips_Through_Navigation()
+	{
+		// Opening the About page records a StaticPageEntry on the back stack and the About
+		// tab is marked IsStaticContent so that subsequent tree-node selections route to
+		// (or open) a real decompiler tab without overwriting the About content. Pressing
+		// Back returns to the previous tree-node selection (re-activating its decompiler tab),
+		// pressing Forward re-activates the About tab with content intact.
+
+		// Arrange — boot, select a tree node so there's a tree-node entry to compare against.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		typeNode.IsExpanded = true;
+		var method = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "AsEnumerable");
+		vm.AssemblyTreeModel.SelectedItem = method;
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		var decompilerTab = vm.DockWorkspace.ActiveDecompilerTab!;
+		var methodText = decompilerTab.Text;
+
+		// NavigationHistory collapses entries within 0.5s — wait past the window so opening
+		// About records its own entry instead of replacing the tree-node entry.
+		await Task.Delay(600);
+
+		// Act 1 — open the About page.
+		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
+		var aboutCmd = registry.Commands
+			.Single(c => c.Metadata.Header == nameof(Resources._About))
+			.CreateExport().Value;
+		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
+		aboutCmd.Execute(null);
+		await Waiters.WaitForAsync(
+			() => documents.ActiveDockable is DecompilerTabPageModel { IsStaticContent: true });
+		var aboutTab = (DecompilerTabPageModel)documents.ActiveDockable!;
+		var aboutText = aboutTab.Text;
+
+		// Assert (mid-test) — the back stack now ends with the tree-node entry; the About
+		// page is the current entry (so Back goes there).
+		vm.DockWorkspace.BackHistory.Should().NotBeEmpty();
+		vm.DockWorkspace.BackHistory.Last().Should().BeOfType<TreeNodeEntry>();
+		var lastBack = (TreeNodeEntry)vm.DockWorkspace.BackHistory.Last();
+		lastBack.Node.GetType().Should().Be(typeof(MethodTreeNode));
+
+		// Act 2 — press Back from the About page.
+		vm.DockWorkspace.NavigateBackCommand.CanExecute(null).Should().BeTrue();
+		vm.DockWorkspace.NavigateBackCommand.Execute(null);
+		await Waiters.WaitForAsync(
+			() => ReferenceEquals(documents.ActiveDockable, decompilerTab));
+
+		// Assert — the decompiler tab is active again; About tab still exists with content
+		// preserved.
+		ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, method).Should().BeTrue();
+		decompilerTab.Text.Should().Be(methodText);
+		documents.VisibleDockables!.Should().Contain(aboutTab);
+		aboutTab.Text.Should().Be(aboutText, "the About tab content must survive a Back navigation");
+
+		// Act 3 — press Forward to return to the About page.
+		vm.DockWorkspace.NavigateForwardCommand.CanExecute(null).Should().BeTrue();
+		vm.DockWorkspace.NavigateForwardCommand.Execute(null);
+		await Waiters.WaitForAsync(
+			() => ReferenceEquals(documents.ActiveDockable, aboutTab));
+
+		// Assert — About is active again, content intact.
+		aboutTab.Text.Should().Be(aboutText);
 	}
 }

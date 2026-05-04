@@ -141,6 +141,14 @@ namespace ILSpy.TextView
 
 		IReadOnlyList<ILSpyTreeNode> currentNodes = System.Array.Empty<ILSpyTreeNode>();
 
+		/// <summary>
+		/// True for tabs whose content is a static page (e.g. About) rather than the result
+		/// of decompiling a tree-node selection. Static tabs are excluded from the lookup
+		/// that resolves "the current decompile target", so subsequent tree-node clicks open
+		/// or reuse a different tab and leave the static content intact.
+		/// </summary>
+		public bool IsStaticContent { get; set; }
+
 		[RelayCommand]
 		void CancelDecompilation()
 		{

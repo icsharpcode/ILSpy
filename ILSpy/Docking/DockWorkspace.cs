@@ -48,22 +48,22 @@ namespace ILSpy.Docking
 		readonly ILSpyDockFactory factory;
 		readonly AssemblyTreeModel assemblyTreeModel;
 		readonly LanguageService languageService;
-		readonly NavigationHistory<SharpTreeNode> history = new();
-		// Set true while a Back/Forward navigation is rewriting AssemblyTreeModel.SelectedItem,
-		// so the SelectedItem change notification doesn't push a fresh entry onto the stack and
-		// undo the navigation we just did.
+		readonly NavigationHistory<NavigationEntry> history = new();
+		// Set true while a Back/Forward navigation is rewriting state (SelectedItem,
+		// active dockable) so the change notifications don't push fresh entries onto the
+		// stack and undo the navigation we just did.
 		bool suppressHistoryRecording;
 
 		public IFactory Factory => factory;
 
 		public IRelayCommand NavigateBackCommand { get; }
 		public IRelayCommand NavigateForwardCommand { get; }
-		public IRelayCommand<SharpTreeNode> NavigateToHistoryCommand { get; }
+		public IRelayCommand<NavigationEntry> NavigateToHistoryCommand { get; }
 
 		// Read-only history snapshots for the Back/Forward split-button dropdowns; oldest-first.
 		// The UI reverses these for newest-first display.
-		public IReadOnlyList<SharpTreeNode> BackHistory => history.BackEntries;
-		public IReadOnlyList<SharpTreeNode> ForwardHistory => history.ForwardEntries;
+		public IReadOnlyList<NavigationEntry> BackHistory => history.BackEntries;
+		public IReadOnlyList<NavigationEntry> ForwardHistory => history.ForwardEntries;
 
 		public IRootDock Layout { get; }
 
@@ -80,8 +80,8 @@ namespace ILSpy.Docking
 			this.languageService = languageService;
 			NavigateBackCommand = new RelayCommand(NavigateBack, () => history.CanNavigateBack);
 			NavigateForwardCommand = new RelayCommand(NavigateForward, () => history.CanNavigateForward);
-			NavigateToHistoryCommand = new RelayCommand<SharpTreeNode>(NavigateToHistory,
-				node => node != null && (history.BackEntries.Contains(node) || history.ForwardEntries.Contains(node)));
+			NavigateToHistoryCommand = new RelayCommand<NavigationEntry>(NavigateToHistory,
+				entry => entry != null && (history.BackEntries.Contains(entry) || history.ForwardEntries.Contains(entry)));
 			factory = new ILSpyDockFactory(assemblyTreeModel, searchPaneModel, analyzerTreeViewModel);
 			Layout = factory.CreateLayout();
 			if (factory.InitialDecompilerTab is { } initialTab)
@@ -147,16 +147,39 @@ namespace ILSpy.Docking
 		{
 			if (e.PropertyName == nameof(AssemblyTreeModel.SelectedItem))
 			{
-				RecordHistory(assemblyTreeModel.SelectedItem);
 				ShowSelectedNode();
+				RecordTreeNodeSelection(assemblyTreeModel.SelectedItem);
 			}
 		}
 
-		void RecordHistory(SharpTreeNode? node)
+		void RecordTreeNodeSelection(SharpTreeNode? node)
 		{
 			if (suppressHistoryRecording || node == null)
 				return;
-			history.Record(node);
+			var tab = ResolveDecompilerTab();
+			if (tab == null)
+				return;
+			RecordHistoryEntry(new TreeNodeEntry(tab, node));
+		}
+
+		/// <summary>
+		/// Records a static-page entry (e.g. About) into the navigation history. The caller
+		/// has already opened <paramref name="tab"/> via <see cref="OpenNewTab"/>. The tab
+		/// should have <see cref="DecompilerTabPageModel.IsStaticContent"/> set so that
+		/// subsequent tree-node selections route to a different tab and leave it intact.
+		/// </summary>
+		public void RecordStaticPage(TabPageModel tab, Uri uri)
+		{
+			ArgumentNullException.ThrowIfNull(tab);
+			ArgumentNullException.ThrowIfNull(uri);
+			if (suppressHistoryRecording)
+				return;
+			RecordHistoryEntry(new StaticPageEntry(tab, uri));
+		}
+
+		void RecordHistoryEntry(NavigationEntry entry)
+		{
+			history.Record(entry);
 			NavigateBackCommand.NotifyCanExecuteChanged();
 			NavigateForwardCommand.NotifyCanExecuteChanged();
 		}
@@ -172,24 +195,29 @@ namespace ILSpy.Docking
 			ApplyNavigationTarget(target);
 		}
 
-		void NavigateToHistory(SharpTreeNode? node)
+		void NavigateToHistory(NavigationEntry? entry)
 		{
-			if (node == null)
+			if (entry == null)
 				return;
-			bool forward = history.ForwardEntries.Contains(node);
-			if (!forward && !history.BackEntries.Contains(node))
+			bool forward = history.ForwardEntries.Contains(entry);
+			if (!forward && !history.BackEntries.Contains(entry))
 				return;
-			var target = history.GoTo(node, forward);
+			var target = history.GoTo(entry, forward);
 			if (target != null)
 				ApplyNavigationTarget(target);
 		}
 
-		void ApplyNavigationTarget(SharpTreeNode target)
+		void ApplyNavigationTarget(NavigationEntry target)
 		{
 			suppressHistoryRecording = true;
 			try
 			{
-				assemblyTreeModel.SelectedItem = target;
+				if (factory.Documents?.VisibleDockables is { } docs && docs.Contains(target.Tab))
+					factory.SetActiveDockable(target.Tab);
+				if (target is TreeNodeEntry treeNode)
+					assemblyTreeModel.SelectedItem = treeNode.Node;
+				// StaticPageEntry: just reactivating the tab is enough — its content was
+				// preserved because IsStaticContent kept tree-node selections from targeting it.
 			}
 			finally
 			{
@@ -203,7 +231,7 @@ namespace ILSpy.Docking
 		{
 			if (e.PropertyName == nameof(LanguageService.CurrentLanguage))
 			{
-				if (GetActiveDecompilerTab() is { } tab)
+				if (GetDecompilerContentTab() is { } tab)
 				{
 					tab.Language = languageService.CurrentLanguage;
 					// Re-decompile by re-assigning the same node so the tab refreshes for the new language.
@@ -231,30 +259,52 @@ namespace ILSpy.Docking
 			var nodes = assemblyTreeModel.SelectedItems.OfType<ILSpyTreeNode>().ToArray();
 			if (nodes.Length == 0)
 				return;
-			var tab = GetActiveDecompilerTab();
+			var tab = ResolveDecompilerTab();
 			if (tab == null)
+				return;
+			if (factory.Documents?.ActiveDockable != tab)
 			{
-				tab = factory.InitialDecompilerTab;
-				if (tab == null || factory.Documents == null)
-					return;
-				factory.AddDockable(factory.Documents, tab);
 				factory.SetActiveDockable(tab);
-				factory.SetFocusedDockable(factory.Documents, tab);
+				if (factory.Documents != null)
+					factory.SetFocusedDockable(factory.Documents, tab);
 			}
 			tab.Language = languageService.CurrentLanguage;
 			tab.CurrentNodes = nodes;
 		}
 
-		public DecompilerTabPageModel? ActiveDecompilerTab => GetActiveDecompilerTab();
+		public DecompilerTabPageModel? ActiveDecompilerTab => GetDecompilerContentTab();
 
-		DecompilerTabPageModel? GetActiveDecompilerTab()
+		/// <summary>
+		/// Returns the tab tree-node selections should be rendered into. Prefers the active
+		/// dockable when it's a non-static decompiler tab, falls back to any other non-static
+		/// decompiler tab, and otherwise lazily attaches the factory's initial decompiler tab.
+		/// Returns null if the document dock isn't realised yet.
+		/// </summary>
+		DecompilerTabPageModel? ResolveDecompilerTab()
 		{
-			if (factory.Documents?.ActiveDockable is DecompilerTabPageModel active)
+			if (factory.Documents == null)
+				return null;
+			if (GetDecompilerContentTab() is { } existing)
+				return existing;
+			var tab = factory.InitialDecompilerTab;
+			if (tab == null)
+				return null;
+			factory.AddDockable(factory.Documents, tab);
+			factory.SetActiveDockable(tab);
+			factory.SetFocusedDockable(factory.Documents, tab);
+			return tab;
+		}
+
+		// Decompiler-content tabs only — static-content tabs (About / License) are excluded so
+		// tree-node selections never overwrite them.
+		DecompilerTabPageModel? GetDecompilerContentTab()
+		{
+			if (factory.Documents?.ActiveDockable is DecompilerTabPageModel { IsStaticContent: false } active)
 				return active;
 			if (factory.Documents?.VisibleDockables != null)
 			{
 				foreach (var d in factory.Documents.VisibleDockables)
-					if (d is DecompilerTabPageModel m)
+					if (d is DecompilerTabPageModel { IsStaticContent: false } m)
 						return m;
 			}
 			return null;

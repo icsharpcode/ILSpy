@@ -24,10 +24,10 @@ namespace ILSpy.Navigation
 	/// <summary>
 	/// Two-stack browser-style history. Rapid successive <see cref="Record"/> calls (within
 	/// 0.5 s) replace the current entry instead of pushing, so a tree refresh that re-selects
-	/// the same node doesn't pollute the back stack with duplicates. Equality is reference-
-	/// based — fine for tree nodes which are reused for the lifetime of an assembly load.
+	/// the same node doesn't pollute the back stack with duplicates. Equality is delegated
+	/// to the entry's own <see cref="IEquatable{T}.Equals"/> implementation.
 	/// </summary>
-	internal sealed class NavigationHistory<T> where T : class
+	internal sealed class NavigationHistory<T> where T : class, IEquatable<T?>
 	{
 		const double NavigationSecondsBeforeNewEntry = 0.5;
 
@@ -73,7 +73,7 @@ namespace ILSpy.Navigation
 			var stack = forward ? this.forward : back;
 			if (!stack.Contains(target))
 				return null;
-			while (!ReferenceEquals(stack[^1], target))
+			while (!stack[^1].Equals(target))
 			{
 				if (forward)
 					GoForward();
@@ -91,7 +91,7 @@ namespace ILSpy.Navigation
 		}
 
 		/// <summary>Records a new history entry. Discards the forward stack.</summary>
-		public void Record(T node)
+		public void Record(T entry)
 		{
 			var navigationTime = DateTime.Now;
 			var period = navigationTime - lastNavigationTime;
@@ -100,15 +100,15 @@ namespace ILSpy.Navigation
 			{
 				// Rapid successive selections collapse into a single entry — protects against
 				// tree refreshes that re-issue SelectedItem.
-				current = node;
+				current = entry;
 			}
 			else
 			{
-				if (current != null && !ReferenceEquals(current, node))
+				if (current != null && !current.Equals(entry))
 					back.Add(current);
 				// Avoid duplicate stack entries for the same target.
-				back.RemoveAll(n => ReferenceEquals(n, node));
-				current = node;
+				back.RemoveAll(n => n.Equals(entry));
+				current = entry;
 			}
 
 			forward.Clear();

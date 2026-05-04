@@ -71,14 +71,14 @@ public partial class MainToolBar : UserControl
 		var entries = forward ? vm.DockWorkspace.ForwardHistory : vm.DockWorkspace.BackHistory;
 		// Stacks are oldest-first; reverse so the most recent appears at the top of the menu.
 		// WPF caps the dropdown at 20 entries; mirror that.
-		foreach (var node in entries.Reverse().Take(MaxHistoryDropdownEntries))
+		foreach (var entry in entries.Reverse().Take(MaxHistoryDropdownEntries))
 		{
 			var item = new MenuItem {
-				Header = node.Text?.ToString() ?? string.Empty,
+				Header = entry.DisplayText?.ToString() ?? string.Empty,
 				Command = vm.DockWorkspace.NavigateToHistoryCommand,
-				CommandParameter = node,
+				CommandParameter = entry,
 			};
-			if (node.Icon is IImage icon)
+			if (entry.DisplayIcon is { } icon)
 				item.Icon = new Image { Width = 16, Height = 16, Source = icon };
 			menu.Items.Add(item);
 		}

@@ -80,10 +80,12 @@ namespace ILSpy.Commands
 			foreach (var (phrase, uri) in Links)
 				output.AddVisualLineElementGenerator(new ResourceLinkGenerator(phrase, uri));
 
-			OpenInNewTab(Resources.About, output, ".txt");
+			var tab = OpenInNewTab(Resources.About, output, ".txt");
+			tab.IsStaticContent = true;
+			dockWorkspace.RecordStaticPage(tab, new Uri("resource:aboutpage"));
 		}
 
-		void OpenInNewTab(string title, AvaloniaEditTextOutput output, string syntaxExtension)
+		DecompilerTabPageModel OpenInNewTab(string title, AvaloniaEditTextOutput output, string syntaxExtension)
 		{
 			var tab = new DecompilerTabPageModel {
 				Title = title,
@@ -100,6 +102,7 @@ namespace ILSpy.Commands
 			};
 			tab.OpenUriRequested += OnOpenUri;
 			dockWorkspace.OpenNewTab(tab);
+			return tab;
 		}
 
 		bool OnOpenUri(Uri uri)
@@ -119,7 +122,9 @@ namespace ILSpy.Commands
 			using var reader = new StreamReader(stream);
 			var output = new AvaloniaEditTextOutput { Title = resourceName };
 			output.Write(reader.ReadToEnd());
-			OpenInNewTab(resourceName, output, ".txt");
+			var tab = OpenInNewTab(resourceName, output, ".txt");
+			tab.IsStaticContent = true;
+			dockWorkspace.RecordStaticPage(tab, new Uri("resource:" + resourceName));
 		}
 
 		static string GetDotnetProductVersion()
