@@ -28,11 +28,4 @@ namespace ILSpy.Commands
 	{
 		public override void Execute(object? parameter) => NotImplementedDialog.Show(Resources._CheckUpdates);
 	}
-
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._Help), Header = nameof(Resources._About), MenuOrder = 99999)]
-	[Shared]
-	sealed class AboutCommand : SimpleCommand
-	{
-		public override void Execute(object? parameter) => NotImplementedDialog.Show(Resources._About);
-	}
 }
