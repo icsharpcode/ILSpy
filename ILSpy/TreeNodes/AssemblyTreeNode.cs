@@ -32,6 +32,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.FileLoaders;
 
+using ILSpy;
 using ILSpy.Languages;
 
 namespace ILSpy.TreeNodes
@@ -63,6 +64,14 @@ namespace ILSpy.TreeNodes
 			LazyLoading = true;
 			_ = InitAsync();
 		}
+
+		// Assemblies nested in NuGet packages can't be unloaded individually — the parent
+		// package entry owns them.
+		public override bool CanDelete() => PackageEntry == null;
+
+		public override void Delete() => DeleteCore();
+
+		public override void DeleteCore() => assembly.AssemblyList.Unload(assembly);
 
 		async Task InitAsync()
 		{
@@ -347,6 +356,32 @@ namespace ILSpy.TreeNodes
 				System.Reflection.Metadata.MetadataKind.ManagedWindowsMetadata => "Managed WinRT",
 				_ => null,
 			};
+		}
+
+		// Right-click → "Remove" — unloads every selected assembly from the active list. Only
+		// visible when the entire selection is assembly nodes, so it doesn't pollute right-click
+		// menus opened on member / namespace / resource rows. MEF discovers this via the
+		// [ExportContextMenuEntry] attribute and surfaces it through ContextMenuEntryRegistry.
+		[ExportContextMenuEntry(Header = nameof(ICSharpCode.ILSpy.Properties.Resources._Remove))]
+		[System.Composition.Shared]
+		sealed class RemoveAssembly : IContextMenuEntry
+		{
+			public bool IsVisible(TextViewContext context)
+			{
+				var nodes = context.SelectedTreeNodes;
+				return nodes is { Length: > 0 } && nodes.All(n => n is AssemblyTreeNode);
+			}
+
+			public bool IsEnabled(TextViewContext context) => true;
+
+			public void Execute(TextViewContext context)
+			{
+				if (context.SelectedTreeNodes == null)
+					return;
+				// Snapshot before mutation — Unload reshapes the tree and the live selection.
+				foreach (var node in context.SelectedTreeNodes.OfType<AssemblyTreeNode>().ToArray())
+					node.Delete();
+			}
 		}
 	}
 }
