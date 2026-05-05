@@ -136,22 +136,6 @@ namespace ILSpy.Commands
 			return typeof(object).Assembly.GetName().Version?.ToString() ?? "UNKNOWN";
 		}
 
-		// Specialised LinkElementGenerator that matches a single literal phrase and produces a
-		// VisualLineLinkText pointing at a fixed Uri. Mirrors the "MyLinkElementGenerator"
-		// pattern from the legacy WPF host.
-		sealed class ResourceLinkGenerator : LinkElementGenerator
-		{
-			readonly Uri target;
-
-			public ResourceLinkGenerator(string phrase, Uri target)
-				: base(new Regex(Regex.Escape(phrase)))
-			{
-				this.target = target;
-				RequireControlModifierForClick = false;
-			}
-
-			protected override Uri GetUriFromMatch(Match match) => target;
-		}
 	}
 
 	/// <summary>

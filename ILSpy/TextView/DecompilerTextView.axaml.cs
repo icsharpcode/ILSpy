@@ -76,6 +76,13 @@ namespace ILSpy.TextView
 		{
 			InitializeComponent();
 
+			// AvaloniaEdit defaults to "Ctrl+Click to follow hyperlink" on its built-in
+			// LinkElementGenerator and propagates that flag onto every VisualLineLinkText it
+			// constructs (including those produced by user-added LinkElementGenerator subclasses
+			// like the About-page resource generator). Decompiler output uses hyperlinks
+			// extensively for in-app navigation — a plain click is the expected affordance.
+			Editor.Options.RequireControlModifierForHyperlinkClick = false;
+
 			// One generator lives for the lifetime of the view; we only swap its References
 			// collection per document. The predicate filters out anything that should not be
 			// clickable — references with a null target slip through unconditionally otherwise.

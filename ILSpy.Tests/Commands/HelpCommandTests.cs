@@ -21,6 +21,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using Avalonia.Headless.NUnit;
+using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
@@ -124,6 +125,36 @@ public class HelpCommandTests
 				&& licenseTab.Text.Length > 0);
 		var licenseTab = (DecompilerTabPageModel)documents.ActiveDockable!;
 		licenseTab.Text.Should().Contain("Permission is hereby granted");
+	}
+
+	[AvaloniaTest]
+	public async Task Decompiler_Editor_Activates_Hyperlinks_Without_Ctrl_Modifier()
+	{
+		// AvaloniaEdit defaults RequireControlModifierForHyperlinkClick=true on its
+		// TextEditorOptions; decompiler output uses hyperlinks for in-app navigation, so a
+		// plain click is the expected affordance. Verifies the option is flipped on the
+		// realised editor — the value AvaloniaEdit's LinkElementGenerator (and our own
+		// ResourceLinkGenerator) both consult when constructing VisualLineLinkText.
+
+		// Arrange — boot, select a node so the decompiler tab is realised + the editor inside
+		// it is actually constructed (the view is data-templated lazily on first activation).
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var node = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
+		vm.AssemblyTreeModel.SelectedItem = node;
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await Waiters.WaitForAsync(
+			() => window.GetVisualDescendants().OfType<DecompilerTextView>().Any());
+
+		// Act — locate the editor inside the realised DecompilerTextView.
+		var view = window.GetVisualDescendants().OfType<DecompilerTextView>().First();
+		var editor = view.GetVisualDescendants().OfType<AvaloniaEdit.TextEditor>().Single();
+
+		// Assert — the editor's hyperlink-click option is off.
+		editor.Options.RequireControlModifierForHyperlinkClick.Should().BeFalse(
+			"hyperlinks in the decompiler view must activate on a plain click");
 	}
 
 	[AvaloniaTest]
