@@ -71,6 +71,7 @@ public class RemoveAssemblyContextMenuTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
+		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
 		var removeEntry = registry.Entries
@@ -109,6 +110,7 @@ public class RemoveAssemblyContextMenuTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
+		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
 		var removeEntry = registry.Entries
@@ -143,12 +145,15 @@ public class RemoveAssemblyContextMenuTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
+		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		// wait for the predicate
 		await Waiters.WaitForAsync(
 			() => window.GetVisualDescendants().OfType<AssemblyListPane>().Any());
 		var pane = window.GetVisualDescendants().OfType<AssemblyListPane>().Single();
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		vm.AssemblyTreeModel.SelectedItem = assemblyNode;
+		// select assemblyNode
+		vm.AssemblyTreeModel.SelectNode(assemblyNode);
 
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
 

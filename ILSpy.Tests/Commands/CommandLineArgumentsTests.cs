@@ -46,6 +46,7 @@ public class CommandLineArgumentsTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
+		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 		var languageService = AppComposition.Current.GetExport<LanguageService>();
 		languageService.CurrentLanguage.Name.Should().NotBe("IL", "baseline must differ from the value we'll assert");
@@ -71,6 +72,7 @@ public class CommandLineArgumentsTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
+		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var args = CommandLineArguments.Create(new[] { "--navigateto", "T:System.Linq.Enumerable" });
@@ -96,7 +98,9 @@ public class CommandLineArgumentsTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
+		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		// clear selection
 		vm.AssemblyTreeModel.SelectedItems.Clear();
 
 		var args = CommandLineArguments.Create(new[] { "--navigateto", "none" });

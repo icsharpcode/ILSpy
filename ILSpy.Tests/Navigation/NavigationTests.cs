@@ -49,10 +49,12 @@ public class NavigationTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
+		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		// expand typeNode
 		typeNode.IsExpanded = true;
 		var firstMethod = typeNode.Children.OfType<MethodTreeNode>()
 			.Single(m => m.MethodDefinition.Name == "AsEnumerable");
@@ -60,7 +62,10 @@ public class NavigationTests
 			.First(m => m.MethodDefinition.Name == "Empty");
 
 		// Act 1 — select AsEnumerable, wait for it to decompile.
-		vm.AssemblyTreeModel.SelectedItem = firstMethod;
+		// select firstMethod
+		// select firstMethod
+		vm.AssemblyTreeModel.SelectNode(firstMethod);
+		// wait for decompile to finish
 		var firstTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		firstTab.Text.Should().Contain("AsEnumerable");
 
@@ -69,18 +74,25 @@ public class NavigationTests
 		await Task.Delay(600);
 
 		// Act 2 — select Empty, wait for its decompile.
-		vm.AssemblyTreeModel.SelectedItem = secondMethod;
+		// select secondMethod
+		// select secondMethod
+		vm.AssemblyTreeModel.SelectNode(secondMethod);
+		// wait for the predicate
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, secondMethod));
+		// wait for decompile to finish
 		var secondTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		secondTab.Text.Should().Contain("Empty");
 
 		// Act 3 — fire NavigateBack.
 		vm.DockWorkspace.NavigateBackCommand.CanExecute(null).Should().BeTrue();
+		// execute vm.DockWorkspace.NavigateBackCommand
 		vm.DockWorkspace.NavigateBackCommand.Execute(null);
 
 		// Assert — selection restores to AsEnumerable, the document re-decompiles to its body,
 		// and the row is centred back into view.
+		// wait for the predicate
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, firstMethod));
+		// wait for decompile to finish
 		var restoredTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		restoredTab.Text.Should().Contain("AsEnumerable");
 		restoredTab.Text.Should().Contain("return source");
@@ -100,10 +112,12 @@ public class NavigationTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
+		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		// expand typeNode
 		typeNode.IsExpanded = true;
 		var methodA = typeNode.Children.OfType<MethodTreeNode>()
 			.First(m => m.MethodDefinition.Name == "AsEnumerable");
@@ -114,13 +128,19 @@ public class NavigationTests
 
 		// Act 1 — three distinct selections with >0.6s gaps so each lands as its own entry on
 		// the back stack (NavigationHistory collapses sub-0.5s rapid succession into one entry).
-		vm.AssemblyTreeModel.SelectedItem = methodA;
+		// select methodA
+		vm.AssemblyTreeModel.SelectNode(methodA);
+		// wait for decompile to finish
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		await Task.Delay(600);
-		vm.AssemblyTreeModel.SelectedItem = methodB;
+		// select methodB
+		vm.AssemblyTreeModel.SelectNode(methodB);
+		// wait for decompile to finish
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		await Task.Delay(600);
-		vm.AssemblyTreeModel.SelectedItem = methodC;
+		// select methodC
+		vm.AssemblyTreeModel.SelectNode(methodC);
+		// wait for decompile to finish
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
 		// Act 2 — open the Back SplitButton's flyout. The Opening handler populates the menu
@@ -128,7 +148,10 @@ public class NavigationTests
 		var backSplit = window.GetVisualDescendants().OfType<SplitButton>()
 			.Single(sb => sb.Name == "BackSplitButton");
 		var flyout = (MenuFlyout)backSplit.Flyout!;
+		// open flyout on backSplit
 		flyout.ShowAt(backSplit);
+		// wait for the predicate
+		// wait for the predicate
 		await Waiters.WaitForAsync(() => flyout.Items.OfType<MenuItem>().Count() >= 2);
 
 		// Assert 1 — newest-first ordering: index 0 is the immediate previous selection
@@ -143,6 +166,8 @@ public class NavigationTests
 
 		// Act 3 — multi-step jump: clicking methodA pops two entries off the back stack in one go.
 		items[1].Command!.Execute(items[1].CommandParameter);
+		// wait for the predicate
+		// wait for the predicate
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, methodA));
 
 		// Assert 2 — the two displaced entries (methodC, methodB) are now on the forward stack,

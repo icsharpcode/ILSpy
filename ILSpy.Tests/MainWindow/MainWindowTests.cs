@@ -66,6 +66,7 @@ public class MainWindowTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 
+		// wait for the predicate
 		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<AssemblyListPane>().Any());
 		var pane = window.GetVisualDescendants().OfType<AssemblyListPane>().Single();
 
@@ -136,6 +137,7 @@ public class MainWindowTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
+		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var service = AppComposition.Current.GetExport<TaskbarProgressService>();
@@ -145,7 +147,9 @@ public class MainWindowTests
 
 		// Act — trigger a decompile.
 		var node = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		vm.AssemblyTreeModel.SelectedItem = node;
+		// select node
+		vm.AssemblyTreeModel.SelectNode(node);
+		// wait for decompile to finish
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
 		service.StateChanged -= Observe;

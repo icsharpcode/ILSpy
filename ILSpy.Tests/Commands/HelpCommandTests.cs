@@ -55,6 +55,7 @@ public class HelpCommandTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
+		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 
 		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
@@ -67,6 +68,7 @@ public class HelpCommandTests
 
 		// Act — fire the About command.
 		aboutCmd.Execute(null);
+		// execute aboutCmd
 
 		// Assert — a new DecompilerTabPageModel landed in the document dock, titled "About",
 		// containing the version line and the MIT License mention from the embedded blurb.
@@ -93,6 +95,7 @@ public class HelpCommandTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
+		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 
 		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
@@ -100,7 +103,9 @@ public class HelpCommandTests
 			.Single(c => c.Metadata.Header == nameof(Resources._About))
 			.CreateExport().Value;
 		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
+		// execute aboutCmd
 		aboutCmd.Execute(null);
+		// wait for the predicate
 		await Waiters.WaitForAsync(
 			() => documents.ActiveDockable is DecompilerTabPageModel { Text.Length: > 0 });
 		var aboutTab = (DecompilerTabPageModel)documents.ActiveDockable!;
@@ -141,10 +146,14 @@ public class HelpCommandTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
+		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 		var node = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		vm.AssemblyTreeModel.SelectedItem = node;
+		// select node
+		vm.AssemblyTreeModel.SelectNode(node);
+		// wait for decompile to finish
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		// wait for the predicate
 		await Waiters.WaitForAsync(
 			() => window.GetVisualDescendants().OfType<DecompilerTextView>().Any());
 
@@ -170,14 +179,18 @@ public class HelpCommandTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
+		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		// expand typeNode
 		typeNode.IsExpanded = true;
 		var method = typeNode.Children.OfType<MethodTreeNode>()
 			.First(m => m.MethodDefinition.Name == "AsEnumerable");
-		vm.AssemblyTreeModel.SelectedItem = method;
+		// select method
+		vm.AssemblyTreeModel.SelectNode(method);
+		// wait for decompile to finish
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		var decompilerTab = vm.DockWorkspace.ActiveDecompilerTab!;
 		var methodText = decompilerTab.Text;
@@ -192,7 +205,9 @@ public class HelpCommandTests
 			.Single(c => c.Metadata.Header == nameof(Resources._About))
 			.CreateExport().Value;
 		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
+		// execute aboutCmd
 		aboutCmd.Execute(null);
+		// wait for the predicate
 		await Waiters.WaitForAsync(
 			() => documents.ActiveDockable is DecompilerTabPageModel { IsStaticContent: true });
 		var aboutTab = (DecompilerTabPageModel)documents.ActiveDockable!;
@@ -207,7 +222,9 @@ public class HelpCommandTests
 
 		// Act 2 — press Back from the About page.
 		vm.DockWorkspace.NavigateBackCommand.CanExecute(null).Should().BeTrue();
+		// execute vm.DockWorkspace.NavigateBackCommand
 		vm.DockWorkspace.NavigateBackCommand.Execute(null);
+		// wait for the predicate
 		await Waiters.WaitForAsync(
 			() => ReferenceEquals(documents.ActiveDockable, decompilerTab));
 
@@ -220,7 +237,9 @@ public class HelpCommandTests
 
 		// Act 3 — press Forward to return to the About page.
 		vm.DockWorkspace.NavigateForwardCommand.CanExecute(null).Should().BeTrue();
+		// execute vm.DockWorkspace.NavigateForwardCommand
 		vm.DockWorkspace.NavigateForwardCommand.Execute(null);
+		// wait for the predicate
 		await Waiters.WaitForAsync(
 			() => ReferenceEquals(documents.ActiveDockable, aboutTab));
 
