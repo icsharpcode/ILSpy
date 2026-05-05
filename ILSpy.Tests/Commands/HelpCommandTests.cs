@@ -132,6 +132,20 @@ public class HelpCommandTests
 		licenseTab.Text.Should().Contain("Permission is hereby granted");
 	}
 
+	[Test]
+	public void ResourceLinkGenerator_Does_Not_Require_Ctrl_Modifier_For_Click()
+	{
+		// AvaloniaEdit's TextEditorOptions.RequireControlModifierForHyperlinkClick only
+		// propagates to the *built-in* LinkElementGenerator via IBuiltinElementGenerator.
+		// FetchOptions; user-added subclasses keep whatever the base parameterless ctor sets
+		// (default true). The About-page generator must opt out explicitly so its links
+		// activate on a plain click.
+		var gen = new ResourceLinkGenerator(
+			"MIT License",
+			new System.Uri("resource:license.txt"));
+		gen.RequireControlModifierForClick.Should().BeFalse();
+	}
+
 	[AvaloniaTest]
 	public async Task Decompiler_Editor_Activates_Hyperlinks_Without_Ctrl_Modifier()
 	{

@@ -36,6 +36,13 @@ namespace ILSpy.Commands
 			: base(new Regex(Regex.Escape(phrase)))
 		{
 			this.target = target ?? throw new ArgumentNullException(nameof(target));
+			// AvaloniaEdit's TextEditorOptions.RequireControlModifierForHyperlinkClick only
+			// propagates to its *built-in* LinkElementGenerator (via the
+			// IBuiltinElementGenerator.FetchOptions hook the editor invokes from
+			// UpdateBuiltinElementGeneratorsFromOptions). User-added subclasses inherit
+			// whatever the parameterless base constructor set (default true), so we have to
+			// opt out explicitly here.
+			RequireControlModifierForClick = false;
 		}
 
 		protected override Uri GetUriFromMatch(Match match) => target;
