@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 
@@ -45,6 +46,80 @@ namespace ILSpy.AssemblyTree
 			InitializeComponent();
 			TreeGrid.DoubleTapped += OnTreeGridDoubleTapped;
 			TreeGrid.KeyDown += OnTreeGridKeyDown;
+
+			// Context-menu host. Tests bypass this and re-attach via AttachContextMenu so they
+			// can inject stub entries — at app-runtime we resolve the registry through the
+			// composition host. Both paths route through the same Opening handler.
+			var registry = TryGetContextMenuRegistry();
+			AttachContextMenu(registry?.Entries ?? System.Array.Empty<IContextMenuEntryExport>());
+		}
+
+		static ContextMenuEntryRegistry? TryGetContextMenuRegistry()
+		{
+			try
+			{
+				return AppEnv.AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
+			}
+			catch
+			{
+				// Composition isn't available in design-time previews; the empty-entries
+				// path leaves the menu host in place but cancels Opening, matching the
+				// "no entries registered" UX.
+				return null;
+			}
+		}
+
+		IReadOnlyList<IContextMenuEntryExport> contextMenuEntries = System.Array.Empty<IContextMenuEntryExport>();
+
+		/// <summary>
+		/// Replaces the active context-menu entries. App-runtime call: once at construction
+		/// with the registry's entries. Test call: directly with stub entries to exercise the
+		/// menu without going through MEF.
+		/// </summary>
+		internal void AttachContextMenu(IReadOnlyList<IContextMenuEntryExport> entries)
+		{
+			contextMenuEntries = entries;
+			var menu = new ContextMenu();
+			menu.Opening += OnContextMenuOpening;
+			TreeGrid.ContextMenu = menu;
+		}
+
+		void OnContextMenuOpening(object? sender, global::System.ComponentModel.CancelEventArgs e)
+		{
+			if (sender is not ContextMenu menu)
+				return;
+			var built = BuildContextMenuForCurrentState(contextMenuEntries);
+			if (built == null)
+			{
+				e.Cancel = true;
+				return;
+			}
+			// Move the built menu's items into the live ContextMenu (a single Items collection
+			// can't host the same MenuItem twice — copy then drop the donor).
+			menu.Items.Clear();
+			foreach (var item in System.Linq.Enumerable.ToArray(built.Items.OfType<Control>()))
+			{
+				built.Items.Remove(item);
+				menu.Items.Add(item);
+			}
+		}
+
+		/// <summary>
+		/// Builds the context menu using the supplied entries against the pane's current
+		/// selection. Internal so tests can drive the build path without raising the live
+		/// Opening event.
+		/// </summary>
+		internal ContextMenu? BuildContextMenuForCurrentState(IReadOnlyList<IContextMenuEntryExport> entries)
+			=> ContextMenuProvider.Build(entries, CreateContextMenuContext());
+
+		TextViewContext CreateContextMenuContext()
+		{
+			var nodes = (DataContext as AssemblyTreeModel)?.SelectedItems.ToArray()
+				?? System.Array.Empty<SharpTreeNode>();
+			return new TextViewContext {
+				TreeGrid = TreeGrid,
+				SelectedTreeNodes = nodes,
+			};
 		}
 
 		void OnTreeGridKeyDown(object? sender, KeyEventArgs e)
