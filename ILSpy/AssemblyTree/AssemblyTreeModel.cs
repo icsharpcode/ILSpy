@@ -22,14 +22,18 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Composition;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.Serialization;
+using System.Threading.Tasks;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 
@@ -344,6 +348,137 @@ namespace ILSpy.AssemblyTree
 		{
 			ArgumentNullException.ThrowIfNull(fileNames);
 			LoadAssemblies(fileNames, focusNode: focusNode);
+		}
+
+		/// <summary>
+		/// Applies parsed startup arguments: switches the active language, loads any assemblies
+		/// passed positionally, then navigates to the requested entity / namespace if any. Safe
+		/// to call before assemblies finish loading — awaits each one's metadata before resolving
+		/// the navigation target. Search-string handling is deferred until the search pane lands.
+		/// </summary>
+		public async Task HandleCommandLineArgumentsAsync(AppEnv.CommandLineArguments args)
+		{
+			ArgumentNullException.ThrowIfNull(args);
+			if (args.Language is { Length: > 0 } languageName)
+				languageService.CurrentLanguage = languageService.GetLanguage(languageName);
+
+			var newlyLoaded = new List<LoadedAssembly>();
+			if (args.AssembliesToLoad is { Count: > 0 })
+				LoadAssemblies(args.AssembliesToLoad, newlyLoaded, focusNode: false);
+
+			// "all currently-loaded entries that the navigation target may live in" — newly
+			// loaded ones first (matches WPF's "command-line files take precedence") plus the
+			// existing list as fallback.
+			var relevant = newlyLoaded.Count > 0
+				? new List<LoadedAssembly>(newlyLoaded)
+				: AssemblyList?.GetAssemblies().ToList() ?? new List<LoadedAssembly>();
+
+			if (args.NavigateTo is { Length: > 0 } navigateTo)
+				await NavigateOnLaunchAsync(navigateTo, relevant);
+			else if (newlyLoaded.Count == 1 && FindAssemblyNode(newlyLoaded[0]) is { } singleNode)
+				SelectNode(singleNode);
+
+			// Search-pane wiring lands with task 6. Until then the arg parses but is a no-op
+			// rather than crashing.
+		}
+
+		async Task NavigateOnLaunchAsync(string navigateTo, IList<LoadedAssembly> relevant)
+		{
+			// "none" is a sentinel used by the WPF VS add-in to suppress initial navigation —
+			// the real target arrives later via IPC.
+			if (navigateTo == "none")
+				return;
+
+			if (navigateTo.StartsWith("N:", StringComparison.Ordinal))
+			{
+				var namespaceName = navigateTo.Substring(2);
+				foreach (var asm in relevant)
+				{
+					var assemblyNode = FindAssemblyNode(asm);
+					if (assemblyNode == null)
+						continue;
+					await asm.GetMetadataFileAsync().ConfigureAwait(true);
+					var nsNode = assemblyNode.FindNamespaceNode(namespaceName);
+					if (nsNode != null)
+					{
+						SelectNode(nsNode);
+						return;
+					}
+				}
+				return;
+			}
+
+			foreach (var asm in relevant)
+				await asm.GetMetadataFileAsync().ConfigureAwait(true);
+
+			var entity = await Task.Run(() => FindEntityInRelevantAssemblies(navigateTo, relevant));
+			if (entity != null)
+			{
+				var node = FindTreeNode(entity);
+				if (node != null)
+					SelectNode(node);
+			}
+		}
+
+		static IEntity? FindEntityInRelevantAssemblies(string navigateTo, IEnumerable<LoadedAssembly> relevantAssemblies)
+		{
+			ITypeReference typeRef;
+			IMemberReference? memberRef = null;
+			if (navigateTo.StartsWith("T:", StringComparison.Ordinal))
+			{
+				typeRef = IdStringProvider.ParseTypeName(navigateTo);
+			}
+			else
+			{
+				memberRef = IdStringProvider.ParseMemberIdString(navigateTo);
+				typeRef = memberRef.DeclaringTypeReference;
+			}
+			foreach (var asm in relevantAssemblies)
+			{
+				var module = asm.GetMetadataFileOrNull();
+				if (module != null && CanResolveTypeInPEFile(module, typeRef, out var typeHandle))
+				{
+					ICompilation compilation = typeHandle.Kind == HandleKind.ExportedType
+						? new DecompilerTypeSystem(module, module.GetAssemblyResolver())
+						: new SimpleCompilation((PEFile)module, MinimalCorlib.Instance);
+					return memberRef == null
+						? typeRef.Resolve(new SimpleTypeResolveContext(compilation)) as ITypeDefinition
+						: memberRef.Resolve(new SimpleTypeResolveContext(compilation));
+				}
+			}
+			return null;
+		}
+
+		static bool CanResolveTypeInPEFile(MetadataFile module, ITypeReference typeRef, out EntityHandle typeHandle)
+		{
+			// Reference assemblies are skipped so the loop keeps looking for an actual definition.
+			if (module.IsReferenceAssembly())
+			{
+				typeHandle = default;
+				return false;
+			}
+
+			switch (typeRef)
+			{
+				case GetPotentiallyNestedClassTypeReference topLevelType:
+					typeHandle = topLevelType.ResolveInPEFile(module);
+					return !typeHandle.IsNil;
+				case NestedTypeReference nestedType:
+					if (!CanResolveTypeInPEFile(module, nestedType.DeclaringTypeReference, out typeHandle))
+						return false;
+					if (typeHandle.Kind == HandleKind.ExportedType)
+						return true;
+					var typeDef = module.Metadata.GetTypeDefinition((TypeDefinitionHandle)typeHandle);
+					typeHandle = typeDef.GetNestedTypes().FirstOrDefault(t => {
+						var td = module.Metadata.GetTypeDefinition(t);
+						var typeName = ReflectionHelper.SplitTypeParameterCountFromReflectionName(module.Metadata.GetString(td.Name), out int typeParameterCount);
+						return nestedType.AdditionalTypeParameterCount == typeParameterCount && nestedType.Name == typeName;
+					});
+					return !typeHandle.IsNil;
+				default:
+					typeHandle = default;
+					return false;
+			}
 		}
 
 		void LoadAssemblies(IEnumerable<string> fileNames, List<LoadedAssembly>? loadedAssemblies = null, bool focusNode = true)

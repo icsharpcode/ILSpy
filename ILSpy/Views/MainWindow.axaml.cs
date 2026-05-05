@@ -43,7 +43,11 @@ namespace ILSpy.Views
 			this.settingsService = settingsService;
 			DataContext = viewModel;
 			ApplySessionSettings(settingsService.SessionSettings);
-			Opened += (_, _) => viewModel.AssemblyTreeModel.Initialize();
+			Opened += async (_, _) => {
+				viewModel.AssemblyTreeModel.Initialize();
+				if (App.CommandLineArguments is { } args)
+					await viewModel.AssemblyTreeModel.HandleCommandLineArgumentsAsync(args);
+			};
 		}
 
 		void ApplySessionSettings(SessionSettings session)

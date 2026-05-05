@@ -49,6 +49,13 @@ namespace ILSpy.Languages
 				?? Languages.First();
 		}
 
+		/// <summary>
+		/// Looks up a language by name. Falls back to the first registered language (alphabetical
+		/// order, so typically C#) when the name isn't recognised.
+		/// </summary>
+		public Language GetLanguage(string? name)
+			=> Languages.FirstOrDefault(l => l.Name == name) ?? Languages.First();
+
 		partial void OnCurrentLanguageChanged(Language value)
 		{
 			if (value != null)
