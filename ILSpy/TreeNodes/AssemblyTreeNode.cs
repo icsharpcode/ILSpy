@@ -383,5 +383,49 @@ namespace ILSpy.TreeNodes
 					node.Delete();
 			}
 		}
+
+		// Right-click → "Reload" — re-reads each selected assembly from disk so the user can
+		// pick up edits made by an external build without restarting ILSpy. Same visibility
+		// shape as Remove (assembly nodes only). The model's existing path-restoration plumbing
+		// handles re-selecting equivalent nodes after the reload churns the tree.
+		[ExportContextMenuEntry(Header = nameof(ICSharpCode.ILSpy.Properties.Resources._Reload))]
+		[System.Composition.Shared]
+		[method: System.Composition.ImportingConstructor]
+		sealed class ReloadAssembly(AssemblyTree.AssemblyTreeModel assemblyTreeModel) : IContextMenuEntry
+		{
+			public bool IsVisible(TextViewContext context)
+			{
+				var nodes = context.SelectedTreeNodes;
+				return nodes is { Length: > 0 } && nodes.All(n => n is AssemblyTreeNode);
+			}
+
+			public bool IsEnabled(TextViewContext context) => true;
+
+			public void Execute(TextViewContext context)
+			{
+				if (context.SelectedTreeNodes == null)
+					return;
+				// Snapshot before mutation — ReloadAssembly mutates the AssemblyList and the
+				// live tree selection.
+				var nodes = context.SelectedTreeNodes.OfType<AssemblyTreeNode>().ToArray();
+				var paths = nodes.Select(n => AssemblyTree.AssemblyTreeModel.GetPathForNode(n)).ToArray();
+				foreach (var node in nodes)
+				{
+					var loaded = node.LoadedAssembly;
+					loaded.AssemblyList.ReloadAssembly(loaded.FileName);
+				}
+				// Re-select using the saved paths so the user keeps their position after the
+				// LoadedAssembly instances are swapped out.
+				if (paths.Length > 0)
+				{
+					var restored = paths
+						.Select(p => assemblyTreeModel.FindNodeByPath(p, returnBestMatch: true))
+						.OfType<ICSharpCode.ILSpyX.TreeView.SharpTreeNode>()
+						.LastOrDefault();
+					if (restored != null)
+						assemblyTreeModel.SelectNode(restored);
+				}
+			}
+		}
 	}
 }
