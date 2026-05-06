@@ -38,6 +38,7 @@ using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy;
+using ILSpy.Commands;
 using ILSpy.Languages;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
@@ -45,6 +46,7 @@ using ILSpy.ViewModels;
 namespace ILSpy.AssemblyTree
 {
 	[Export]
+	[ExportToolPane(ContentId = PaneContentId, Alignment = ToolPaneAlignment.Left, Order = 0)]
 	[Shared]
 	public partial class AssemblyTreeModel : ToolPaneModel
 	{

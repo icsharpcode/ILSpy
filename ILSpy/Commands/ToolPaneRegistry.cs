@@ -16,24 +16,41 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Generic;
 using System.Composition;
+using System.Linq;
 
-using ILSpy.Commands;
 using ILSpy.ViewModels;
 
-namespace ILSpy.Analyzers
+namespace ILSpy.Commands
 {
-	[Export]
-	[ExportToolPane(ContentId = PaneContentId, Alignment = ToolPaneAlignment.Bottom, Order = 0)]
-	[Shared]
-	public class AnalyzerTreeViewModel : ToolPaneModel
-	{
-		public const string PaneContentId = "Analyzer";
+	/// <summary>
+	/// Concrete tool-pane entry returned by <see cref="ToolPaneRegistry"/>. Holds the resolved
+	/// pane instance together with the metadata that describes where in the layout it should
+	/// land. Each pane is materialised once at registry construction so consumers see the
+	/// same singleton the rest of the composition host sees (panes are <c>[Shared]</c>).
+	/// </summary>
+	public sealed record ToolPaneEntry(ToolPaneModel Pane, ToolPaneMetadata Metadata);
 
-		public AnalyzerTreeViewModel()
+	/// <summary>
+	/// MEF aggregator for <see cref="ExportToolPaneAttribute"/>-tagged tool panes. The dock
+	/// factory iterates this registry to build the default layout, so adding a new pane
+	/// reduces to <c>[ExportToolPane]</c> on the model with no central wiring change.
+	/// </summary>
+	[Export]
+	[Shared]
+	public sealed class ToolPaneRegistry
+	{
+		[ImportingConstructor]
+		public ToolPaneRegistry(
+			[ImportMany("ToolPane")] IEnumerable<ExportFactory<ToolPaneModel, ToolPaneMetadata>> panes)
 		{
-			Id = PaneContentId;
-			Title = "Analyzer";
+			Panes = panes
+				.OrderBy(p => p.Metadata.Order)
+				.Select(p => new ToolPaneEntry(p.CreateExport().Value, p.Metadata))
+				.ToArray();
 		}
+
+		public IReadOnlyList<ToolPaneEntry> Panes { get; }
 	}
 }

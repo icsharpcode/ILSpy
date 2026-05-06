@@ -30,11 +30,10 @@ using Dock.Model.Core.Events;
 
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.Analyzers;
 using ILSpy.AssemblyTree;
+using ILSpy.Commands;
 using ILSpy.Languages;
 using ILSpy.Navigation;
-using ILSpy.Search;
 using ILSpy.TextView;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
@@ -72,8 +71,7 @@ namespace ILSpy.Docking
 		[ImportingConstructor]
 		public DockWorkspace(
 			AssemblyTreeModel assemblyTreeModel,
-			SearchPaneModel searchPaneModel,
-			AnalyzerTreeViewModel analyzerTreeViewModel,
+			ToolPaneRegistry toolPaneRegistry,
 			LanguageService languageService)
 		{
 			this.assemblyTreeModel = assemblyTreeModel;
@@ -82,7 +80,7 @@ namespace ILSpy.Docking
 			NavigateForwardCommand = new RelayCommand(NavigateForward, () => history.CanNavigateForward);
 			NavigateToHistoryCommand = new RelayCommand<NavigationEntry>(NavigateToHistory,
 				entry => entry != null && (history.BackEntries.Contains(entry) || history.ForwardEntries.Contains(entry)));
-			factory = new ILSpyDockFactory(assemblyTreeModel, searchPaneModel, analyzerTreeViewModel);
+			factory = new ILSpyDockFactory(toolPaneRegistry);
 			Layout = factory.CreateLayout();
 			if (factory.InitialDecompilerTab is { } initialTab)
 			{
@@ -96,11 +94,9 @@ namespace ILSpy.Docking
 			// Layout/factory initialization (locators, parent/factory wiring) is done by
 			// the DockControl in MainWindow.axaml via InitializeFactory/InitializeLayout.
 
-			ToolPaneMenuItems = new List<ToolPaneMenuItem> {
-				new(assemblyTreeModel, factory),
-				new(searchPaneModel, factory),
-				new(analyzerTreeViewModel, factory),
-			};
+			ToolPaneMenuItems = toolPaneRegistry.Panes
+				.Select(p => new ToolPaneMenuItem(p.Pane, factory))
+				.ToList();
 
 			factory.DockableAdded += OnDocumentMembershipChanged;
 			factory.DockableRemoved += OnDocumentMembershipChanged;

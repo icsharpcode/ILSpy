@@ -18,11 +18,13 @@
 
 using System.Composition;
 
+using ILSpy.Commands;
 using ILSpy.ViewModels;
 
 namespace ILSpy.Search
 {
 	[Export]
+	[ExportToolPane(ContentId = PaneContentId, Alignment = ToolPaneAlignment.Top, Order = 0)]
 	[Shared]
 	public class SearchPaneModel : ToolPaneModel
 	{

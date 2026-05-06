@@ -16,56 +16,35 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Generic;
+using System.Linq;
+
 using Dock.Model.Controls;
 using Dock.Model.Core;
 using Dock.Model.Mvvm;
 using Dock.Model.Mvvm.Controls;
 
-using ILSpy.Analyzers;
-using ILSpy.AssemblyTree;
-using ILSpy.Search;
+using ILSpy.Commands;
 using ILSpy.TextView;
+using ILSpy.ViewModels;
 
 namespace ILSpy.Docking
 {
 	public class ILSpyDockFactory : Factory
 	{
-		readonly AssemblyTreeModel assemblyTreeModel;
-		readonly SearchPaneModel searchPaneModel;
-		readonly AnalyzerTreeViewModel analyzerTreeViewModel;
+		readonly IReadOnlyList<ToolPaneEntry> panes;
 
 		public IDocumentDock? Documents { get; private set; }
 
 		public DecompilerTabPageModel? InitialDecompilerTab { get; private set; }
 
-		public ILSpyDockFactory(
-			AssemblyTreeModel assemblyTreeModel,
-			SearchPaneModel searchPaneModel,
-			AnalyzerTreeViewModel analyzerTreeViewModel)
+		public ILSpyDockFactory(ToolPaneRegistry registry)
 		{
-			this.assemblyTreeModel = assemblyTreeModel;
-			this.searchPaneModel = searchPaneModel;
-			this.analyzerTreeViewModel = analyzerTreeViewModel;
+			this.panes = registry.Panes;
 		}
 
 		public override IRootDock CreateLayout()
 		{
-			var leftToolDock = new ToolDock {
-				Id = "LeftTools",
-				Proportion = 0.25,
-				VisibleDockables = CreateList<IDockable>(assemblyTreeModel),
-				ActiveDockable = assemblyTreeModel,
-				Alignment = Alignment.Left,
-			};
-
-			var topToolDock = new ToolDock {
-				Id = "TopTools",
-				Proportion = 0.2,
-				VisibleDockables = CreateList<IDockable>(searchPaneModel),
-				ActiveDockable = searchPaneModel,
-				Alignment = Alignment.Top,
-			};
-
 			var documents = new DocumentDock {
 				Id = "Documents",
 				Title = "Documents",
@@ -77,33 +56,52 @@ namespace ILSpy.Docking
 			// Initial decompiler tab is added lazily on first selection (DockWorkspace.ShowSelectedNode).
 			InitialDecompilerTab = new DecompilerTabPageModel { Title = "(no selection)" };
 
-			var bottomToolDock = new ToolDock {
-				Id = "BottomTools",
-				Proportion = 0.2,
-				VisibleDockables = CreateList<IDockable>(analyzerTreeViewModel),
-				ActiveDockable = analyzerTreeViewModel,
-				Alignment = Alignment.Bottom,
-			};
+			ToolDock? leftToolDock = BuildToolDock("LeftTools", ToolPaneAlignment.Left, 0.25);
+			ToolDock? topToolDock = BuildToolDock("TopTools", ToolPaneAlignment.Top, 0.2);
+			ToolDock? rightToolDock = BuildToolDock("RightTools", ToolPaneAlignment.Right, 0.25);
+			ToolDock? bottomToolDock = BuildToolDock("BottomTools", ToolPaneAlignment.Bottom, 0.2);
+
+			// Vertical column: top tool dock (if any), documents, bottom tool dock (if any),
+			// with splitters between siblings.
+			var verticalChildren = new List<IDockable>();
+			if (topToolDock != null)
+			{
+				verticalChildren.Add(topToolDock);
+				verticalChildren.Add(new ProportionalDockSplitter { Id = "TopSplitter" });
+			}
+			verticalChildren.Add(documents);
+			if (bottomToolDock != null)
+			{
+				verticalChildren.Add(new ProportionalDockSplitter { Id = "BottomSplitter" });
+				verticalChildren.Add(bottomToolDock);
+			}
 
 			var rightVertical = new ProportionalDock {
-				Id = "RightArea",
+				Id = "MiddleColumn",
 				Orientation = Orientation.Vertical,
-				Proportion = 0.75,
-				VisibleDockables = CreateList<IDockable>(
-					topToolDock,
-					new ProportionalDockSplitter { Id = "TopSplitter" },
-					documents,
-					new ProportionalDockSplitter { Id = "BottomSplitter" },
-					bottomToolDock),
+				Proportion = ComputeMiddleColumnProportion(leftToolDock, rightToolDock),
+				VisibleDockables = CreateList(verticalChildren.ToArray()),
 			};
+
+			// Horizontal row: left tool dock, middle column, right tool dock — splitters
+			// between siblings only.
+			var horizontalChildren = new List<IDockable>();
+			if (leftToolDock != null)
+			{
+				horizontalChildren.Add(leftToolDock);
+				horizontalChildren.Add(new ProportionalDockSplitter { Id = "LeftSplitter" });
+			}
+			horizontalChildren.Add(rightVertical);
+			if (rightToolDock != null)
+			{
+				horizontalChildren.Add(new ProportionalDockSplitter { Id = "RightSplitter" });
+				horizontalChildren.Add(rightToolDock);
+			}
 
 			var horizontal = new ProportionalDock {
 				Id = "MainLayout",
 				Orientation = Orientation.Horizontal,
-				VisibleDockables = CreateList<IDockable>(
-					leftToolDock,
-					new ProportionalDockSplitter { Id = "LeftSplitter" },
-					rightVertical),
+				VisibleDockables = CreateList(horizontalChildren.ToArray()),
 			};
 
 			var root = CreateRootDock();
@@ -114,6 +112,39 @@ namespace ILSpy.Docking
 			root.ActiveDockable = horizontal;
 
 			return root;
+		}
+
+		ToolDock? BuildToolDock(string id, ToolPaneAlignment alignment, double proportion)
+		{
+			var dockables = panes
+				.Where(p => p.Metadata.Alignment == alignment)
+				.OrderBy(p => p.Metadata.Order)
+				.Select(p => (IDockable)p.Pane)
+				.ToArray();
+			if (dockables.Length == 0)
+				return null;
+			return new ToolDock {
+				Id = id,
+				Proportion = proportion,
+				VisibleDockables = CreateList(dockables),
+				ActiveDockable = dockables[0],
+				Alignment = alignment switch {
+					ToolPaneAlignment.Top => Alignment.Top,
+					ToolPaneAlignment.Right => Alignment.Right,
+					ToolPaneAlignment.Bottom => Alignment.Bottom,
+					_ => Alignment.Left,
+				},
+			};
+		}
+
+		static double ComputeMiddleColumnProportion(ToolDock? left, ToolDock? right)
+		{
+			double remaining = 1.0;
+			if (left != null)
+				remaining -= left.Proportion;
+			if (right != null)
+				remaining -= right.Proportion;
+			return remaining > 0 ? remaining : 0.5;
 		}
 	}
 }
