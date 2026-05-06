@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Reflection.PortableExecutable;
 
 using AvaloniaEdit.Highlighting;
@@ -85,27 +84,29 @@ namespace ILSpy.Languages
 
 		public virtual void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
-			Debug.Assert(method.DeclaringTypeDefinition != null);
-			WriteCommentLine(output, TypeToString(method.DeclaringTypeDefinition) + "." + method.Name);
+			WriteCommentLine(output, MemberDescription(method));
 		}
 
 		public virtual void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
 		{
-			Debug.Assert(field.DeclaringTypeDefinition != null);
-			WriteCommentLine(output, TypeToString(field.DeclaringTypeDefinition) + "." + field.Name);
+			WriteCommentLine(output, MemberDescription(field));
 		}
 
 		public virtual void DecompileProperty(IProperty property, ITextOutput output, DecompilationOptions options)
 		{
-			Debug.Assert(property.DeclaringTypeDefinition != null);
-			WriteCommentLine(output, TypeToString(property.DeclaringTypeDefinition) + "." + property.Name);
+			WriteCommentLine(output, MemberDescription(property));
 		}
 
 		public virtual void DecompileEvent(IEvent ev, ITextOutput output, DecompilationOptions options)
 		{
-			Debug.Assert(ev.DeclaringTypeDefinition != null);
-			WriteCommentLine(output, TypeToString(ev.DeclaringTypeDefinition) + "." + ev.Name);
+			WriteCommentLine(output, MemberDescription(ev));
 		}
+
+		// FakeMember-derived entities (the decompiler's fallback when a member or reference
+		// can't be resolved) can carry a null DeclaringTypeDefinition; fall back to the
+		// member name on its own when that's the case.
+		string MemberDescription(IMember member)
+			=> (member.DeclaringTypeDefinition is { } t ? TypeToString(t) + "." : string.Empty) + member.Name;
 
 		public virtual void DecompileNamespace(string nameSpace, IEnumerable<ITypeDefinition> types, ITextOutput output, DecompilationOptions options)
 		{

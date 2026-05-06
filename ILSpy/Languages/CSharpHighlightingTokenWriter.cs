@@ -435,7 +435,7 @@ namespace ILSpy.Languages
 			}
 		}
 
-		void ApplyTypeColor(IType type, ref HighlightingColor? color)
+		void ApplyTypeColor(IType? type, ref HighlightingColor? color)
 		{
 			switch (type?.Kind)
 			{
