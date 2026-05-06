@@ -9,8 +9,10 @@
              x:DataType="vm:MainWindowViewModel">
 	<UserControl.Styles>
 		<!-- Flat toolbar buttons: transparent until hover, then translucent accent fill +
-		     thin accent border. Pressed deepens the fill. -->
-		<Style Selector="StackPanel#ToolbarRoot > Button">
+		     thin accent border. Pressed deepens the fill. ToggleButton derives from Button
+		     but Avalonia type selectors are exact-match, so each rule lists both types so
+		     unchecked ToggleButtons read identically to plain toolbar Buttons. -->
+		<Style Selector="StackPanel#ToolbarRoot > Button, StackPanel#ToolbarRoot > ToggleButton">
 			<Setter Property="Background" Value="Transparent" />
 			<Setter Property="BorderThickness" Value="0" />
 			<Setter Property="Padding" Value="4,2" />
@@ -20,17 +22,23 @@
 		<!-- Reserve the 1 px border + corner radius on every state so hovering doesn't grow
 		     the button (which would shove neighbours sideways). Brushes are transparent in
 		     the resting state and gain colour on hover / pressed / disabled. -->
-		<Style Selector="StackPanel#ToolbarRoot > Button /template/ ContentPresenter">
+		<Style Selector="StackPanel#ToolbarRoot > Button /template/ ContentPresenter, StackPanel#ToolbarRoot > ToggleButton /template/ ContentPresenter">
 			<Setter Property="BorderThickness" Value="1" />
 			<Setter Property="BorderBrush" Value="Transparent" />
 			<Setter Property="CornerRadius" Value="2" />
 		</Style>
 		<!-- :not(:disabled) so disabled buttons don't get the accent fill on hover. -->
-		<Style Selector="StackPanel#ToolbarRoot > Button:not(:disabled):pointerover /template/ ContentPresenter">
+		<Style Selector="StackPanel#ToolbarRoot > Button:not(:disabled):pointerover /template/ ContentPresenter, StackPanel#ToolbarRoot > ToggleButton:not(:disabled):pointerover /template/ ContentPresenter">
 			<Setter Property="Background" Value="#330078D7" />
 			<Setter Property="BorderBrush" Value="#FF0078D7" />
 		</Style>
-		<Style Selector="StackPanel#ToolbarRoot > Button:not(:disabled):pressed /template/ ContentPresenter">
+		<Style Selector="StackPanel#ToolbarRoot > Button:not(:disabled):pressed /template/ ContentPresenter, StackPanel#ToolbarRoot > ToggleButton:not(:disabled):pressed /template/ ContentPresenter">
+			<Setter Property="Background" Value="#660078D7" />
+			<Setter Property="BorderBrush" Value="#FF005A9E" />
+		</Style>
+		<!-- Active (selected) state for radio-style ToggleButtons — use the deeper pressed
+		     palette so the active option reads as "held down" against its peers. -->
+		<Style Selector="StackPanel#ToolbarRoot > ToggleButton:checked /template/ ContentPresenter">
 			<Setter Property="Background" Value="#660078D7" />
 			<Setter Property="BorderBrush" Value="#FF005A9E" />
 		</Style>
@@ -39,14 +47,14 @@
 		     as a "filled-but-inactive" cell rather than just a faint icon on the toolbar
 		     gradient), dim the icon, and force the arrow cursor so the user doesn't get
 		     a click hint. -->
-		<Style Selector="StackPanel#ToolbarRoot > Button:disabled">
+		<Style Selector="StackPanel#ToolbarRoot > Button:disabled, StackPanel#ToolbarRoot > ToggleButton:disabled">
 			<Setter Property="Cursor" Value="Arrow" />
 		</Style>
-		<Style Selector="StackPanel#ToolbarRoot > Button:disabled /template/ ContentPresenter">
+		<Style Selector="StackPanel#ToolbarRoot > Button:disabled /template/ ContentPresenter, StackPanel#ToolbarRoot > ToggleButton:disabled /template/ ContentPresenter">
 			<Setter Property="Background" Value="#22000000" />
 			<Setter Property="BorderBrush" Value="#33000000" />
 		</Style>
-		<Style Selector="StackPanel#ToolbarRoot > Button:disabled Image">
+		<Style Selector="StackPanel#ToolbarRoot > Button:disabled Image, StackPanel#ToolbarRoot > ToggleButton:disabled Image">
 			<Setter Property="Opacity" Value="0.35" />
 		</Style>
 		<!-- SplitButton's primary half lives in a nested template-internal Button, so the
