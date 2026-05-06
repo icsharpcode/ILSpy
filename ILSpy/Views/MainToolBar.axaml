@@ -7,6 +7,50 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="26"
              x:Class="ILSpy.MainToolBar"
              x:DataType="vm:MainWindowViewModel">
+	<UserControl.Resources>
+		<!-- Re-template the SplitButton entirely so the chevron is a flat 8×4 filled
+		     downward-triangle Path instead of the upstream chevron-style PathIcon. The
+		     PathIcon's Width=12 / Height=12 / Data are set as local values in the upstream
+		     Simple template, which beat plain Style setters at local-value precedence;
+		     a wholesale template replacement is the cleanest override. -->
+		<ControlTheme x:Key="ToolbarSplitButton" TargetType="SplitButton">
+			<Setter Property="MinHeight" Value="22" />
+			<Setter Property="HorizontalAlignment" Value="Left" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+			<Setter Property="Padding" Value="4,2" />
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="Template">
+				<ControlTemplate>
+					<Grid ColumnDefinitions="*,Auto">
+						<Button Name="PART_PrimaryButton" Grid.Column="0"
+						        Background="{TemplateBinding Background}"
+						        BorderThickness="{TemplateBinding BorderThickness}"
+						        Content="{TemplateBinding Content}"
+						        ContentTemplate="{TemplateBinding ContentTemplate}"
+						        Command="{TemplateBinding Command}"
+						        CommandParameter="{TemplateBinding CommandParameter}"
+						        Padding="{TemplateBinding Padding}"
+						        HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+						        VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+						        Focusable="False" />
+						<Button Name="PART_SecondaryButton" Grid.Column="1"
+						        Background="{TemplateBinding Background}"
+						        BorderThickness="{TemplateBinding BorderThickness}"
+						        Padding="4,0"
+						        HorizontalContentAlignment="Center"
+						        VerticalContentAlignment="Center"
+						        Focusable="False">
+							<Path Width="8" Height="4" Stretch="Uniform" Fill="Black"
+							      Data="M 0 0 L 8 0 L 4 4 Z" />
+						</Button>
+					</Grid>
+				</ControlTemplate>
+			</Setter>
+		</ControlTheme>
+	</UserControl.Resources>
 	<UserControl.Styles>
 		<!-- Flat toolbar buttons: transparent until hover, then translucent accent fill +
 		     thin accent border. Pressed deepens the fill. ToggleButton derives from Button
@@ -61,14 +105,6 @@
 		     descendant selector above doesn't reach the Image. Match it explicitly. -->
 		<Style Selector="StackPanel#ToolbarRoot > SplitButton:disabled Image">
 			<Setter Property="Opacity" Value="0.35" />
-		</Style>
-		<!-- Default chevron is a chevron-style ">" (~12 px) which reads as oversized + busy next
-		     to a 16 px toolbar icon. Replace it with the same simple filled triangle the
-		     Simple-theme ComboBox uses — 8×4, Uniform stretch, points down. -->
-		<Style Selector="StackPanel#ToolbarRoot > SplitButton /template/ PathIcon">
-			<Setter Property="Width" Value="8" />
-			<Setter Property="Height" Value="4" />
-			<Setter Property="Data" Value="M 0 0 L 8 0 L 4 4 Z" />
 		</Style>
 		<!-- Default Fluent SplitButton paints both halves with an opaque dark fill on press
 		     (looks black against our white toolbar). Replace with the toolbar accent palette
@@ -146,6 +182,7 @@
 			     navigates one step; the chevron drops a menu of recent history entries built on
 			     demand by MainToolBar.axaml.cs. -->
 			<SplitButton Name="BackSplitButton"
+			             Theme="{StaticResource ToolbarSplitButton}"
 			             ToolTip.Tip="Back (Alt+Left)"
 			             Command="{Binding DockWorkspace.NavigateBackCommand}">
 				<Image Source="{x:Static images:Images.Back}" Width="16" Height="16" />
@@ -154,6 +191,7 @@
 				</SplitButton.Flyout>
 			</SplitButton>
 			<SplitButton Name="ForwardSplitButton"
+			             Theme="{StaticResource ToolbarSplitButton}"
 			             ToolTip.Tip="Forward (Alt+Right)"
 			             Command="{Binding DockWorkspace.NavigateForwardCommand}">
 				<Image Source="{x:Static images:Images.Forward}" Width="16" Height="16" />
