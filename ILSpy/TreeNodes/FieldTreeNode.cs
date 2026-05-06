@@ -26,9 +26,11 @@ using ILSpy.Languages;
 
 namespace ILSpy.TreeNodes
 {
-	sealed class FieldTreeNode : ILSpyTreeNode
+	sealed class FieldTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
 		public IField FieldDefinition { get; }
+
+		public IEntity? Member => FieldDefinition;
 
 		public FieldTreeNode(IField field)
 		{

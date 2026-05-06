@@ -26,9 +26,11 @@ using ILSpy.Languages;
 
 namespace ILSpy.TreeNodes
 {
-	sealed class MethodTreeNode : ILSpyTreeNode
+	sealed class MethodTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
 		public IMethod MethodDefinition { get; }
+
+		public IEntity? Member => MethodDefinition;
 
 		public MethodTreeNode(IMethod method)
 		{

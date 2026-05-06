@@ -30,13 +30,17 @@ using ILSpy.Languages;
 
 namespace ILSpy.TreeNodes
 {
-	sealed class TypeTreeNode : ILSpyTreeNode
+	sealed class TypeTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
 		readonly TypeDefinitionHandle handle;
 		readonly MetadataFile module;
 
 		public TypeDefinitionHandle Handle => handle;
 		public MetadataFile Module => module;
+
+		// IEntity for the wrapped type. Resolution is lazy and may return null when the
+		// type system can't be built (e.g. broken assemblies); callers must handle null.
+		public IEntity? Member => ResolveTypeDefinition();
 
 		public TypeTreeNode(TypeDefinitionHandle handle, MetadataFile module)
 		{

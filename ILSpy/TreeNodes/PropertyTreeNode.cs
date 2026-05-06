@@ -26,9 +26,11 @@ using ILSpy.Languages;
 
 namespace ILSpy.TreeNodes
 {
-	sealed class PropertyTreeNode : ILSpyTreeNode
+	sealed class PropertyTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
 		public IProperty PropertyDefinition { get; }
+
+		public IEntity? Member => PropertyDefinition;
 
 		public PropertyTreeNode(IProperty property)
 		{

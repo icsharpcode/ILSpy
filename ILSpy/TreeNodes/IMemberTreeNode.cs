@@ -16,35 +16,19 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-
-using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
-
-using ILSpy.Languages;
 
 namespace ILSpy.TreeNodes
 {
-	sealed class EventTreeNode : ILSpyTreeNode, IMemberTreeNode
+	/// <summary>
+	/// Contract implemented by every tree node that wraps a TypeSystem entity (types,
+	/// methods, fields, properties, events). Lets context-menu entries and other generic
+	/// tooling that wants the underlying <see cref="IEntity"/> reach it without knowing
+	/// which concrete tree-node class it has on hand.
+	/// </summary>
+	public interface IMemberTreeNode
 	{
-		public IEvent EventDefinition { get; }
-
-		public IEntity? Member => EventDefinition;
-
-		public EventTreeNode(IEvent ev)
-		{
-			EventDefinition = ev ?? throw new ArgumentNullException(nameof(ev));
-		}
-
-		public override object Text => Language.EntityToString(EventDefinition, ConversionFlags.None);
-		public override object Icon => Images.Images.GetIcon(Images.Images.Event,
-			Images.Images.GetOverlay(EventDefinition.Accessibility), EventDefinition.IsStatic);
-		public override bool ShowExpander => false;
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-			=> language.DecompileEvent(EventDefinition, output, options);
-
-		public override string ToString() => "Event " + EventDefinition.Name;
+		/// <summary>The underlying entity, or null when it cannot be resolved.</summary>
+		IEntity? Member { get; }
 	}
 }
