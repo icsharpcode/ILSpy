@@ -21,7 +21,9 @@ using System;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX;
 
+using ILSpy;
 using ILSpy.Languages;
 
 namespace ILSpy.TreeNodes
@@ -44,6 +46,20 @@ namespace ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 			=> language.DecompileField(FieldDefinition, output, options);
+
+		public override bool IsPublicAPI => FieldDefinition.Accessibility switch {
+			Accessibility.Public or Accessibility.Protected or Accessibility.ProtectedOrInternal => true,
+			_ => false,
+		};
+
+		public override FilterResult Filter(LanguageSettings settings)
+		{
+			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
+				return FilterResult.Hidden;
+			if (settings.ShowApiLevel == ApiVisibility.All || Language.ShowMember(FieldDefinition))
+				return FilterResult.Match;
+			return FilterResult.Hidden;
+		}
 
 		public override string ToString() => "Field " + FieldDefinition.Name;
 	}

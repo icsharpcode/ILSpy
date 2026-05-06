@@ -77,5 +77,20 @@ namespace ILSpy.TreeNodes
 		/// embedded resources).
 		/// </summary>
 		public virtual bool Save() => false;
+
+		/// <summary>
+		/// True for nodes whose member is part of the assembly's public surface
+		/// (Public / Protected / ProtectedOrInternal). Consulted by <see cref="Filter"/>
+		/// to honour the <see cref="ApiVisibility.PublicOnly"/> setting.
+		/// </summary>
+		public virtual bool IsPublicAPI => true;
+
+		/// <summary>
+		/// Decides whether this node is visible under the current <paramref name="settings"/>.
+		/// Overrides on member tree nodes consult <see cref="IsPublicAPI"/> plus
+		/// <see cref="Languages.Language.ShowMember"/> (the compiler-generated cut) to drop
+		/// non-matching entries. Default treats every node as visible.
+		/// </summary>
+		public virtual FilterResult Filter(LanguageSettings settings) => FilterResult.Match;
 	}
 }

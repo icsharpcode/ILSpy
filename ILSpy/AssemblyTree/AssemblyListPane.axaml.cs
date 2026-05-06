@@ -31,6 +31,7 @@ using Avalonia.VisualTree;
 
 using ICSharpCode.ILSpyX.TreeView;
 
+using ILSpy.AppEnv;
 using ILSpy.TreeNodes;
 
 namespace ILSpy.AssemblyTree
@@ -40,6 +41,8 @@ namespace ILSpy.AssemblyTree
 		// Suppresses the SelectionChanged → model bounce while we're pushing the model's
 		// selection into the DataGrid.
 		bool syncingSelection;
+
+		LanguageSettings? languageSettings;
 
 		public AssemblyListPane()
 		{
@@ -52,6 +55,33 @@ namespace ILSpy.AssemblyTree
 			// composition host. Both paths route through the same Opening handler.
 			var registry = TryGetContextMenuRegistry();
 			AttachContextMenu(registry?.Entries ?? System.Array.Empty<IContextMenuEntryExport>());
+
+			// Subscribe to the active LanguageSettings so flipping ShowApiLevel rebuilds the
+			// tree and the new visibility takes effect without a restart. SettingsService is
+			// optional (design-time previews don't bootstrap composition).
+			languageSettings = TryGetLanguageSettings();
+			if (languageSettings != null)
+				languageSettings.PropertyChanged += OnLanguageSettingsChanged;
+		}
+
+		static LanguageSettings? TryGetLanguageSettings()
+		{
+			try
+			{
+				return AppComposition.Current.GetExport<SettingsService>().SessionSettings.LanguageSettings;
+			}
+			catch
+			{
+				return null;
+			}
+		}
+
+		void OnLanguageSettingsChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName != nameof(LanguageSettings.ShowApiLevel))
+				return;
+			if (DataContext is AssemblyTreeModel model && model.Root != null)
+				BindTree(model.Root);
 		}
 
 		static ContextMenuEntryRegistry? TryGetContextMenuRegistry()
@@ -322,12 +352,26 @@ namespace ILSpy.AssemblyTree
 			}
 		}
 
+		// Apply the active LanguageSettings filter (if any). Returns the children unfiltered when
+		// no settings are available (design-time / unit-host scenarios) so the tree still
+		// renders. Materialises into a List so each call returns a stable snapshot the grid
+		// can iterate twice without re-evaluating.
+		static IEnumerable<SharpTreeNode> FilterChildren(IEnumerable<SharpTreeNode> children, LanguageSettings? settings)
+		{
+			if (settings == null)
+				return children;
+			return children
+				.Where(c => c is not ILSpyTreeNode it || it.Filter(settings) != FilterResult.Hidden)
+				.ToList();
+		}
+
 		void BindTree(SharpTreeNode root)
 		{
+			var settings = languageSettings;
 			var options = new HierarchicalOptions<SharpTreeNode> {
 				ChildrenSelector = node => {
 					node.EnsureLazyChildren();
-					return node.Children;
+					return FilterChildren(node.Children, settings);
 				},
 				IsLeafSelector = node => !node.ShowExpander,
 				VirtualizeChildren = false,
@@ -339,7 +383,7 @@ namespace ILSpy.AssemblyTree
 			};
 
 			var hierarchicalModel = new HierarchicalModel<SharpTreeNode>(options);
-			hierarchicalModel.SetRoots((IEnumerable)root.Children);
+			hierarchicalModel.SetRoots(FilterChildren(root.Children, settings));
 
 			TreeGrid.HierarchicalModel = hierarchicalModel;
 		}

@@ -78,6 +78,17 @@ namespace ILSpy.Languages
 
 		public override void WriteCommentLine(ITextOutput output, string comment) => output.WriteLine("// " + comment);
 
+		public override bool ShowMember(IEntity member)
+		{
+			ArgumentNullException.ThrowIfNull(member);
+			if (member.MetadataToken.IsNil)
+				return true;
+			var assembly = member.ParentModule?.MetadataFile;
+			if (assembly == null)
+				return true;
+			return !CSharpDecompiler.MemberIsHidden(assembly, member.MetadataToken, new DecompilerSettings());
+		}
+
 		public override RichText GetRichTextTooltip(IEntity entity)
 		{
 			ArgumentNullException.ThrowIfNull(entity);

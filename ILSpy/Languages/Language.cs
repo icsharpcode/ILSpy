@@ -102,6 +102,15 @@ namespace ILSpy.Languages
 			WriteCommentLine(output, MemberDescription(ev));
 		}
 
+		/// <summary>
+		/// Returns false for entities the active language wants to hide (compiler-generated
+		/// closures, anonymous-type backing fields, async-state-machine fields, …) when the
+		/// caller has opted into "everything except compiler-generated" via
+		/// <see cref="ApiVisibility.PublicOnly"/> / <see cref="ApiVisibility.PublicAndInternal"/>.
+		/// The default treats every entity as visible — language subclasses tighten the rule.
+		/// </summary>
+		public virtual bool ShowMember(IEntity member) => true;
+
 		// FakeMember-derived entities (the decompiler's fallback when a member or reference
 		// can't be resolved) can carry a null DeclaringTypeDefinition; fall back to the
 		// member name on its own when that's the case.

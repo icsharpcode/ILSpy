@@ -21,7 +21,9 @@ using System;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX;
 
+using ILSpy;
 using ILSpy.Languages;
 
 namespace ILSpy.TreeNodes
@@ -55,6 +57,20 @@ namespace ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 			=> language.DecompileMethod(MethodDefinition, output, options);
+
+		public override bool IsPublicAPI => MethodDefinition.Accessibility switch {
+			Accessibility.Public or Accessibility.Protected or Accessibility.ProtectedOrInternal => true,
+			_ => false,
+		};
+
+		public override FilterResult Filter(LanguageSettings settings)
+		{
+			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
+				return FilterResult.Hidden;
+			if (settings.ShowApiLevel == ApiVisibility.All || Language.ShowMember(MethodDefinition))
+				return FilterResult.Match;
+			return FilterResult.Hidden;
+		}
 
 		// Stable identity for SessionSettings.ActiveTreeViewPath; format must round-trip
 		// across launches so the saved path can be restored.

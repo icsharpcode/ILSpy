@@ -26,6 +26,7 @@ using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
+using ILSpy;
 using ILSpy.Languages;
 
 namespace ILSpy.TreeNodes
@@ -84,6 +85,23 @@ namespace ILSpy.TreeNodes
 				language.DecompileType(typeDef, output, options);
 			else
 				language.WriteCommentLine(output, "(could not resolve type)");
+		}
+
+		public override bool IsPublicAPI => ResolveTypeDefinition()?.Accessibility switch {
+			Accessibility.Public or Accessibility.Protected or Accessibility.ProtectedOrInternal => true,
+			_ => false,
+		};
+
+		public override FilterResult Filter(LanguageSettings settings)
+		{
+			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
+				return FilterResult.Hidden;
+			var typeDef = ResolveTypeDefinition();
+			if (typeDef == null)
+				return FilterResult.Match;
+			if (settings.ShowApiLevel == ApiVisibility.All || Language.ShowMember(typeDef))
+				return FilterResult.Match;
+			return FilterResult.Hidden;
 		}
 
 		// Stable identity for SessionSettings.ActiveTreeViewPath. ReflectionName is
