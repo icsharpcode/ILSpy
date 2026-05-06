@@ -22,6 +22,7 @@ using System.Xml.Linq;
 
 using Avalonia.Controls;
 using Avalonia.Controls.DataGridHierarchical;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless.NUnit;
 using Avalonia.VisualTree;
 
@@ -192,6 +193,42 @@ public class ApiVisibilityFilterTests
 		// Assert — model reference changed, indicating BindTree ran again with new filter state.
 		grid.HierarchicalModel.Should().NotBeSameAs(modelBefore,
 			"flipping ShowApiLevel must rebind the HierarchicalModel so the grid re-evaluates child visibility");
+	}
+
+	[AvaloniaTest]
+	public async Task Toolbar_Has_Three_ApiVisibility_Toggle_Buttons_Bound_To_LanguageSettings()
+	{
+		// Mirrors the View-menu radios as toolbar ToggleButtons. Each button two-way binds to a
+		// mutually-exclusive bool projection on LanguageSettings, so checking one auto-unchecks
+		// the others.
+
+		// Arrange — boot.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var toggles = window.GetVisualDescendants().OfType<ToggleButton>()
+			.Where(t => t.Name is "ShowPublicOnlyButton" or "ShowPrivateInternalButton" or "ShowAllButton")
+			.ToDictionary(t => t.Name!);
+		var settings = AppComposition.Current.GetExport<SettingsService>().SessionSettings.LanguageSettings;
+
+		// Assert — all three toolbar buttons exist.
+		toggles.Should().HaveCount(3,
+			"toolbar should expose ShowPublicOnly, ShowPrivateInternal, and ShowAll ToggleButtons");
+
+		// Act + Assert — click ShowPublicOnly. The setting flips, the other two unckeck.
+		settings.ShowApiLevel = ApiVisibility.PublicAndInternal;
+		toggles["ShowPrivateInternalButton"].IsChecked.Should().BeTrue("baseline before click");
+
+		toggles["ShowPublicOnlyButton"].IsChecked = true;
+		settings.ShowApiLevel.Should().Be(ApiVisibility.PublicOnly);
+		toggles["ShowPrivateInternalButton"].IsChecked.Should().BeFalse(
+			"flipping ShowPublicOnly must propagate-cancel ShowPrivateInternal via OnPropertyChanged");
+		toggles["ShowAllButton"].IsChecked.Should().BeFalse();
+
+		// Act + Assert — same but flipping the All button.
+		toggles["ShowAllButton"].IsChecked = true;
+		settings.ShowApiLevel.Should().Be(ApiVisibility.All);
+		toggles["ShowPublicOnlyButton"].IsChecked.Should().BeFalse();
+		toggles["ShowPrivateInternalButton"].IsChecked.Should().BeFalse();
 	}
 
 	static int CountVisibleMethods(TypeTreeNode type, LanguageSettings settings)

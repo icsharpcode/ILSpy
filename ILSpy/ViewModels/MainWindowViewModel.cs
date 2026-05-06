@@ -37,6 +37,8 @@ namespace ILSpy.ViewModels
 
 		public DockWorkspace DockWorkspace { get; }
 
+		public LanguageSettings LanguageSettings { get; }
+
 		public IFactory DockFactory => DockWorkspace.Factory;
 
 		public IRootDock DockLayout => DockWorkspace.Layout;
@@ -46,11 +48,16 @@ namespace ILSpy.ViewModels
 		public string Title => "ILSpy";
 
 		[ImportingConstructor]
-		public MainWindowViewModel(AssemblyTreeModel assemblyTreeModel, LanguageService languageService, DockWorkspace dockWorkspace)
+		public MainWindowViewModel(
+			AssemblyTreeModel assemblyTreeModel,
+			LanguageService languageService,
+			DockWorkspace dockWorkspace,
+			SettingsService settingsService)
 		{
 			AssemblyTreeModel = assemblyTreeModel;
 			LanguageService = languageService;
 			DockWorkspace = dockWorkspace;
+			LanguageSettings = settingsService.SessionSettings.LanguageSettings;
 		}
 	}
 }

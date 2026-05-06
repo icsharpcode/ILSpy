@@ -152,6 +152,25 @@
 				</SplitButton.Flyout>
 			</SplitButton>
 			<Separator />
+			<!-- Three radio-style ToggleButtons for ShowApiLevel, mirroring the View menu radios.
+			     Each binds to a mutually-exclusive bool projection on LanguageSettings; flipping
+			     one to true clears the others through the property-change cascade. -->
+			<ToggleButton Name="ShowPublicOnlyButton"
+			              ToolTip.Tip="Show only public types and members"
+			              IsChecked="{Binding LanguageSettings.ApiVisPublicOnly, Mode=TwoWay}">
+				<Image Source="{x:Static images:Images.ShowPublicOnly}" Width="16" Height="16" />
+			</ToggleButton>
+			<ToggleButton Name="ShowPrivateInternalButton"
+			              ToolTip.Tip="Show public, private and internal"
+			              IsChecked="{Binding LanguageSettings.ApiVisPublicAndInternal, Mode=TwoWay}">
+				<Image Source="{x:Static images:Images.ShowPrivateInternal}" Width="16" Height="16" />
+			</ToggleButton>
+			<ToggleButton Name="ShowAllButton"
+			              ToolTip.Tip="Show all types and members"
+			              IsChecked="{Binding LanguageSettings.ApiVisAll, Mode=TwoWay}">
+				<Image Source="{x:Static images:Images.ShowAll}" Width="16" Height="16" />
+			</ToggleButton>
+			<Separator />
 			<!-- MEF-driven toolbar buttons (Open etc.) get inserted by MainToolBar.axaml.cs.
 			     Anything between these two separators is replaced on Loaded. -->
 			<Separator Name="ToolbarMefAnchor" />
