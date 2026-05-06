@@ -192,7 +192,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.expressionStack.Clear();
 			if (isRuntimeAsync)
 			{
-				this.methodReturnStackType = TaskType.UnpackTask(compilation, method.ReturnType).GetStackType();
+				this.methodReturnStackType = TaskType.UnpackAnyTask(compilation, method.ReturnType).GetStackType();
 			}
 			else
 			{
@@ -727,10 +727,7 @@ namespace ICSharpCode.Decompiler.IL
 			var function = new ILFunction(this.method, body.GetCodeSize(), this.genericContext, mainContainer, kind);
 			if (isRuntimeAsync)
 			{
-				if (!this.method.ReturnType.IsKnownType(KnownTypeCode.TaskOfT))
-					function.AsyncReturnType = compilation.FindType(KnownTypeCode.Void);
-				else
-					function.AsyncReturnType = TaskType.UnpackTask(compilation, this.method.ReturnType);
+				function.AsyncReturnType = TaskType.UnpackAnyTask(compilation, this.method.ReturnType);
 			}
 			function.Variables.AddRange(parameterVariables);
 			function.Variables.AddRange(localVariables);
