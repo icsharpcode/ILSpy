@@ -196,6 +196,61 @@ public class ApiVisibilityFilterTests
 	}
 
 	[AvaloniaTest]
+	public async Task NonPublic_Member_Rows_Render_With_NonPublicAPI_Class()
+	{
+		// Tree-node labels for non-public members carry a `nonPublicAPI` class so the styling
+		// pipeline can paint them gray. Public rows do not. Asserting on the class (rather
+		// than Foreground brush) avoids depending on theme brush resolution.
+
+		// Arrange — boot, ensure ShowApiLevel=All so non-public methods are visible at all.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var settings = AppComposition.Current.GetExport<SettingsService>().SessionSettings.LanguageSettings;
+		settings.ShowApiLevel = ApiVisibility.All;
+
+		// Pick a CoreLib type with mixed accessibility (String has plenty).
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var stringType = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
+		stringType.IsExpanded = true;
+		await Waiters.WaitForAsync(() => stringType.Children.OfType<MethodTreeNode>().Any());
+
+		var publicMethod = stringType.Children.OfType<MethodTreeNode>().First(m => m.IsPublicAPI);
+		var nonPublicMethod = stringType.Children.OfType<MethodTreeNode>().First(m => !m.IsPublicAPI);
+
+		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<AssemblyListPane>().Any());
+		var pane = window.GetVisualDescendants().OfType<AssemblyListPane>().Single();
+		var grid = pane.GetVisualDescendants().OfType<DataGrid>().Single();
+
+		// Selecting each node scrolls it into view; that's how the row's TextBlock realises.
+		vm.AssemblyTreeModel.SelectNode(publicMethod);
+		await Waiters.WaitForAsync(() => FindRowTextBlock(grid, (string)publicMethod.Text!) != null);
+		var publicLabel = FindRowTextBlock(grid, (string)publicMethod.Text!);
+
+		vm.AssemblyTreeModel.SelectNode(nonPublicMethod);
+		await Waiters.WaitForAsync(() => FindRowTextBlock(grid, (string)nonPublicMethod.Text!) != null);
+		var nonPublicLabel = FindRowTextBlock(grid, (string)nonPublicMethod.Text!);
+
+		// Assert — non-public row's TextBlock carries the class; public row does not.
+		publicLabel.Should().NotBeNull();
+		nonPublicLabel.Should().NotBeNull();
+		nonPublicLabel!.Classes.Should().Contain("nonPublicAPI",
+			"non-public members should carry the gray-text styling class");
+		publicLabel!.Classes.Should().NotContain("nonPublicAPI",
+			"public members should keep the default brush");
+
+		// Cleanup — restore the default visibility level so following tests aren't tainted.
+		// SettingsService is [Shared] across the composition host; the type stays expanded
+		// only at the model level which is harmless, but ShowApiLevel mutation bleeds.
+		settings.ShowApiLevel = ApiVisibility.PublicAndInternal;
+	}
+
+	static TextBlock? FindRowTextBlock(DataGrid grid, string label)
+		=> grid.GetVisualDescendants().OfType<TextBlock>()
+			.FirstOrDefault(tb => string.Equals(tb.Text, label, System.StringComparison.Ordinal));
+
+	[AvaloniaTest]
 	public async Task Toolbar_Has_Three_ApiVisibility_Toggle_Buttons_Bound_To_LanguageSettings()
 	{
 		// Mirrors the View-menu radios as toolbar ToggleButtons. Each button two-way binds to a

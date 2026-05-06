@@ -10,6 +10,12 @@
 		<Style Selector="TextBlock.autoloaded">
 			<Setter Property="Foreground" Value="SteelBlue" />
 		</Style>
+		<!-- Non-public members (private / internal / etc.) read in gray so the visible API
+		     surface stands out at a glance. The class is applied via Classes.nonPublicAPI
+		     binding on the cell-template TextBlock. -->
+		<Style Selector="TextBlock.nonPublicAPI">
+			<Setter Property="Foreground" Value="Gray" />
+		</Style>
 	</UserControl.Styles>
 
 	<DataGrid Name="TreeGrid"
@@ -36,6 +42,7 @@
 							       VerticalAlignment="Center" />
 							<TextBlock Grid.Column="2" Text="{Binding Text}"
 							           Classes.autoloaded="{Binding IsAutoLoaded}"
+							           Classes.nonPublicAPI="{Binding IsNonPublicAPI}"
 							           VerticalAlignment="Center" />
 						</Grid>
 					</DataTemplate>

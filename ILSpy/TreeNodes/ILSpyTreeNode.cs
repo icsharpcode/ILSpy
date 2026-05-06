@@ -85,6 +85,9 @@ namespace ILSpy.TreeNodes
 		/// </summary>
 		public virtual bool IsPublicAPI => true;
 
+		/// <summary>Convenience inverse of <see cref="IsPublicAPI"/> for XAML class-bindings.</summary>
+		public bool IsNonPublicAPI => !IsPublicAPI;
+
 		/// <summary>
 		/// Decides whether this node is visible under the current <paramref name="settings"/>.
 		/// Overrides on member tree nodes consult <see cref="IsPublicAPI"/> plus
