@@ -62,11 +62,13 @@
 		<Style Selector="StackPanel#ToolbarRoot > SplitButton:disabled Image">
 			<Setter Property="Opacity" Value="0.35" />
 		</Style>
-		<!-- Default chevron is ~12 px and reads as oversized next to a 16 px toolbar icon;
-		     shrink it so the split button feels balanced — matches WPF's compact "▾" glyph. -->
+		<!-- Default chevron is a chevron-style ">" (~12 px) which reads as oversized + busy next
+		     to a 16 px toolbar icon. Replace it with the same simple filled triangle the
+		     Simple-theme ComboBox uses — 8×4, Uniform stretch, points down. -->
 		<Style Selector="StackPanel#ToolbarRoot > SplitButton /template/ PathIcon">
-			<Setter Property="Width" Value="6" />
-			<Setter Property="Height" Value="6" />
+			<Setter Property="Width" Value="8" />
+			<Setter Property="Height" Value="4" />
+			<Setter Property="Data" Value="M 0 0 L 8 0 L 4 4 Z" />
 		</Style>
 		<!-- Default Fluent SplitButton paints both halves with an opaque dark fill on press
 		     (looks black against our white toolbar). Replace with the toolbar accent palette
