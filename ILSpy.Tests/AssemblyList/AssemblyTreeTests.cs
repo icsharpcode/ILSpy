@@ -975,6 +975,8 @@ public class AssemblyTreeTests
 		grid.Focus();
 		Dispatcher.UIThread.RunJobs();
 
+		int itemsBefore = (grid.ItemsSource as System.Collections.ICollection)?.Count ?? -1;
+
 		// Act — headless keyboard event simulating the user pressing Del while the tree has
 		// focus.
 		global::Avalonia.Headless.HeadlessWindowExtensions.KeyPress(
@@ -984,7 +986,11 @@ public class AssemblyTreeTests
 			global::Avalonia.Input.PhysicalKey.Delete,
 			null);
 
-		// Assert — the sacrificial assembly is gone from the list; the survivor remains.
+		// Assert — the sacrificial assembly is gone from the data list AND the grid's bound
+		// ItemsSource drops by one. Both halves matter: a passing AssemblyList assertion alone
+		// would mask regressions where the data updates but the grid stays bound to a stale
+		// snapshot (which is exactly what happened when the BindTree filter materialised the
+		// children into a List instead of forwarding the live ObservableCollection).
 		await Waiters.WaitForAsync(() =>
 			!vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
 				.Any(a => string.Equals(a.ShortName, sacrificialName, System.StringComparison.Ordinal)));
@@ -992,6 +998,10 @@ public class AssemblyTreeTests
 		vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
 			.Should().Contain(a => a.ShortName == survivorName,
 				"only the selected assembly should be removed");
+
+		await Waiters.WaitForAsync(
+			() => (grid.ItemsSource as System.Collections.ICollection)?.Count < itemsBefore,
+			description: "DataGrid item count should drop after the assembly is unloaded");
 	}
 
 	[AvaloniaTest]

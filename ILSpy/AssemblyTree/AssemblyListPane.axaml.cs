@@ -352,10 +352,10 @@ namespace ILSpy.AssemblyTree
 			}
 		}
 
-		// Apply the active LanguageSettings filter (if any). Returns the children unfiltered when
-		// no settings are available (design-time / unit-host scenarios) so the tree still
-		// renders. Materialises into a List so each call returns a stable snapshot the grid
-		// can iterate twice without re-evaluating.
+		// Apply the active LanguageSettings filter to a child collection materialised on
+		// expansion. Returns a fresh List so iteration is stable; live updates at deeper levels
+		// are not preserved (members are realised once per expansion — adds/removes mid-expand
+		// don't happen in practice).
 		static IEnumerable<SharpTreeNode> FilterChildren(IEnumerable<SharpTreeNode> children, LanguageSettings? settings)
 		{
 			if (settings == null)
@@ -383,7 +383,11 @@ namespace ILSpy.AssemblyTree
 			};
 
 			var hierarchicalModel = new HierarchicalModel<SharpTreeNode>(options);
-			hierarchicalModel.SetRoots(FilterChildren(root.Children, settings));
+			// Pass the live ObservableCollection at the root so the grid observes
+			// CollectionChanged when assemblies are unloaded / opened. Filter is not applied
+			// at this level (AssemblyTreeNode never reports Hidden); deeper levels filter
+			// on expansion via ChildrenSelector.
+			hierarchicalModel.SetRoots(root.Children);
 
 			TreeGrid.HierarchicalModel = hierarchicalModel;
 		}
