@@ -22,9 +22,16 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 using Avalonia.Data;
 using Avalonia.Data.Converters;
+using Avalonia.Layout;
+using Avalonia.Media;
+using Avalonia.VisualTree;
+
+using ILSpy.ViewModels;
 
 namespace ILSpy.Metadata
 {
@@ -61,20 +68,69 @@ namespace ILSpy.Metadata
 					continue;
 
 				var info = prop.GetCustomAttribute<ColumnInfoAttribute>();
-				var binding = new Binding(prop.Name) { Mode = BindingMode.OneWay };
-
-				if (!string.IsNullOrEmpty(info?.Format))
+				if (info?.Kind == ColumnKind.Token)
 				{
-					binding.Converter = new HexFormatConverter(info!.Format);
+					columns.Add(BuildTokenColumn(prop, info));
 				}
-				columns.Add(new DataGridTextColumn {
-					Header = prop.Name,
-					IsReadOnly = true,
-					Binding = binding,
-					SortMemberPath = prop.Name,
-				});
+				else
+				{
+					columns.Add(BuildTextColumn(prop, info));
+				}
 			}
 			return columns;
+		}
+
+		static DataGridTextColumn BuildTextColumn(PropertyInfo prop, ColumnInfoAttribute? info)
+		{
+			var binding = new Binding(prop.Name) { Mode = BindingMode.OneWay };
+			if (!string.IsNullOrEmpty(info?.Format))
+				binding.Converter = new HexFormatConverter(info.Format);
+			return new DataGridTextColumn {
+				Header = prop.Name,
+				IsReadOnly = true,
+				Binding = binding,
+				SortMemberPath = prop.Name,
+			};
+		}
+
+		static DataGridTemplateColumn BuildTokenColumn(PropertyInfo prop, ColumnInfoAttribute? info)
+		{
+			var format = info?.Format;
+			var template = new FuncDataTemplate<object>((row, _) => {
+				var btn = new Button {
+					Background = Brushes.Transparent,
+					BorderThickness = default,
+					Padding = new Thickness(2, 0),
+					HorizontalAlignment = HorizontalAlignment.Left,
+					VerticalAlignment = VerticalAlignment.Center,
+					Foreground = Brushes.Blue,
+					Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Hand),
+					Content = FormatTokenValue(row, prop, format),
+				};
+				btn.Click += (_, _) => {
+					if (btn.FindAncestorOfType<Views.MetadataTablePage>()?.DataContext is MetadataTablePageModel page)
+						page.RaiseNavigateToCell(row, prop.Name);
+				};
+				return btn;
+			}, supportsRecycling: true);
+			return new DataGridTemplateColumn {
+				Header = prop.Name,
+				IsReadOnly = true,
+				CellTemplate = template,
+				SortMemberPath = prop.Name,
+			};
+		}
+
+		static string FormatTokenValue(object row, PropertyInfo prop, string? format)
+		{
+			var value = prop.GetValue(row);
+			if (value is null)
+				return string.Empty;
+			if (value is Enum enumValue)
+				value = System.Convert.ChangeType(enumValue, enumValue.GetTypeCode(), CultureInfo.InvariantCulture);
+			if (!string.IsNullOrEmpty(format) && value is IFormattable formattable)
+				return formattable.ToString(format, CultureInfo.InvariantCulture);
+			return value.ToString() ?? string.Empty;
 		}
 	}
 

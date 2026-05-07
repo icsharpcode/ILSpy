@@ -73,4 +73,25 @@ public class MetadataColumnBuilderTests
 		first.Should().NotBeSameAs(second);
 		first[0].Should().NotBeSameAs(second[0]);
 	}
+
+	sealed class SampleEntryWithToken
+	{
+		public int RID { get; set; }
+		[ColumnInfo("X8", Kind = ColumnKind.Token)]
+		public int Method { get; set; }
+		public string Name { get; set; } = "";
+	}
+
+	[AvaloniaTest]
+	public void For_Emits_Template_Column_For_Token_Kind_Properties()
+	{
+		// Properties annotated Kind=Token render as a DataGridTemplateColumn whose cell is
+		// a hyperlink-styled button. Plain Format-only columns stay as text.
+
+		var columns = MetadataColumnBuilder.For<SampleEntryWithToken>();
+
+		columns[0].Should().BeOfType<DataGridTextColumn>("RID has no [ColumnInfo]");
+		columns[1].Should().BeOfType<DataGridTemplateColumn>("Method is Kind=Token");
+		columns[2].Should().BeOfType<DataGridTextColumn>("Name has no [ColumnInfo]");
+	}
 }

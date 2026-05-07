@@ -46,5 +46,18 @@ namespace ILSpy.ViewModels
 		/// </summary>
 		[ObservableProperty]
 		private int? scrollToRow;
+
+		/// <summary>
+		/// Raised when the user clicks a hyperlink-styled token cell. The host (the dock
+		/// workspace) resolves the (row, columnName) pair to a metadata token and navigates
+		/// to the target table row.
+		/// </summary>
+		public event Action<MetadataCellNavigationEventArgs>? NavigateToCellRequested;
+
+		internal void RaiseNavigateToCell(object row, string columnName)
+			=> NavigateToCellRequested?.Invoke(new MetadataCellNavigationEventArgs(row, columnName));
 	}
+
+	/// <summary>The (row, column) pair clicked in a token cell.</summary>
+	public sealed record MetadataCellNavigationEventArgs(object Row, string ColumnName);
 }
