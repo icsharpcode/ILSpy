@@ -77,6 +77,12 @@ namespace ILSpy.Metadata
 				TableIndex.Module => new ModuleTableTreeNode(metadataFile),
 				TableIndex.TypeRef => new TypeRefTableTreeNode(metadataFile),
 				TableIndex.TypeDef => new TypeDefTableTreeNode(metadataFile),
+				TableIndex.Field => new FieldTableTreeNode(metadataFile),
+				TableIndex.MethodDef => new MethodTableTreeNode(metadataFile),
+				TableIndex.Param => new ParamTableTreeNode(metadataFile),
+				TableIndex.MemberRef => new MemberRefTableTreeNode(metadataFile),
+				TableIndex.CustomAttribute => new CustomAttributeTableTreeNode(metadataFile),
+				TableIndex.Assembly => new AssemblyTableTreeNode(metadataFile),
 				TableIndex.AssemblyRef => new AssemblyRefTableTreeNode(metadataFile),
 				_ => new UnsupportedMetadataTableTreeNode(table, metadataFile),
 			};

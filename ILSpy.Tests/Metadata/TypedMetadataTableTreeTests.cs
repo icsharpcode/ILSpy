@@ -103,6 +103,40 @@ public class TypedMetadataTableTreeTests
 	}
 
 	[AvaloniaTest]
+	public async Task FieldAndMethodTables_Decompile_With_Their_Own_Typed_Leaves()
+	{
+		// Field / MethodDef are by far the largest tables in any real assembly. The typed
+		// leaf should report the right table kind, expose a row count, and decompile to a
+		// table whose first column header is "RID" (the per-table row identifier).
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
+		assemblyNode.EnsureLazyChildren();
+		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
+		metadataNode.EnsureLazyChildren();
+		var tablesNode = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
+		tablesNode.EnsureLazyChildren();
+
+		tablesNode.Children.OfType<FieldTableTreeNode>().Should().ContainSingle();
+		tablesNode.Children.OfType<MethodTableTreeNode>().Should().ContainSingle();
+		tablesNode.Children.OfType<ParamTableTreeNode>().Should().ContainSingle();
+		tablesNode.Children.OfType<MemberRefTableTreeNode>().Should().ContainSingle();
+		tablesNode.Children.OfType<CustomAttributeTableTreeNode>().Should().ContainSingle();
+		tablesNode.Children.OfType<AssemblyTableTreeNode>().Should().ContainSingle();
+
+		var methodNode = tablesNode.Children.OfType<MethodTableTreeNode>().Single();
+		vm.AssemblyTreeModel.SelectNode(methodNode);
+		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		tab.Text.Should().Contain("MethodDef");
+		tab.Text.Should().Contain("RID");
+	}
+
+	[AvaloniaTest]
 	public async Task ModuleTableTreeNode_Decompiles_To_A_Single_Row_Carrying_The_Module_Name()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();
