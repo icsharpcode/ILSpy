@@ -94,6 +94,9 @@ namespace ILSpy.Metadata
 				TableIndex.GenericParam => new GenericParamTableTreeNode(metadataFile),
 				TableIndex.MethodSpec => new MethodSpecTableTreeNode(metadataFile),
 				TableIndex.GenericParamConstraint => new GenericParamConstraintTableTreeNode(metadataFile),
+				TableIndex.StandAloneSig => new StandAloneSigTableTreeNode(metadataFile),
+				TableIndex.DeclSecurity => new DeclSecurityTableTreeNode(metadataFile),
+				TableIndex.File => new FileTableTreeNode(metadataFile),
 				_ => new UnsupportedMetadataTableTreeNode(table, metadataFile),
 			};
 	}
