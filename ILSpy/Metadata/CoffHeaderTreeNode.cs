@@ -18,12 +18,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.Languages;
 using ILSpy.TreeNodes;
+using ILSpy.ViewModels;
 
 namespace ILSpy.Metadata
 {
@@ -45,11 +45,11 @@ namespace ILSpy.Metadata
 		public override object Icon => Images.Images.MetadataTable;
 		public override string ToString() => "COFF Header";
 
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "COFF Header");
-			MetadataTextWriter.WriteTable(language, output, BuildEntries());
-		}
+		public override TabPageModel CreateTab() => new MetadataTablePageModel {
+			Title = "COFF Header",
+			Items = BuildEntries().Cast<object>().ToList(),
+			Columns = MetadataColumnBuilder.For<Entry>(),
+		};
 
 		IReadOnlyList<Entry> BuildEntries()
 		{

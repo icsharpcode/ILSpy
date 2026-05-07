@@ -71,12 +71,12 @@ public class PEHeaderTreeTests
 	}
 
 	[AvaloniaTest]
-	public async Task DosHeaderTreeNode_Decompiles_To_A_Table_With_All_31_DOS_Header_Fields()
+	public async Task DosHeaderTreeNode_Opens_A_DataGrid_Tab_With_Entry_Columns_And_31_Rows()
 	{
 		// DOS header is a fixed 64-byte block at offset 0; the 31 fields are well-known and
-		// stable across every PE file. Selecting the node should produce a text table that
-		// every reader can scan, with the magic-number row visible by both its raw value and
-		// its semantic meaning.
+		// stable across every PE file. Selecting the node opens a metadata-table tab — one
+		// row per field, columns reflected from the Entry shape (Member / Offset / Size /
+		// Value / Meaning).
 
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
@@ -91,19 +91,22 @@ public class PEHeaderTreeTests
 		var dosNode = metadataNode.Children.OfType<DosHeaderTreeNode>().Single();
 
 		vm.AssemblyTreeModel.SelectNode(dosNode);
-		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
 
-		tab.Text.Should().Contain("e_magic");
-		tab.Text.Should().Contain("Magic Number (MZ)");
-		tab.Text.Should().Contain("e_lfanew");
-		tab.Text.Should().Contain("File address of new exe header");
-		// All 31 DOS-header field rows should be present — count e_ prefixes on member rows.
-		var fieldCount = System.Text.RegularExpressions.Regex.Matches(tab.Text, @"\be_[a-z0-9_\[\]]+").Count;
-		fieldCount.Should().BeGreaterThanOrEqualTo(31);
+		tab.Title.Should().Be("DOS Header");
+		tab.Items.Should().HaveCount(31);
+		tab.Columns.Select(c => c.Header.ToString()).Should().Contain(["Member", "Offset", "Size", "Value", "Meaning"]);
+
+		var firstRow = (Entry)tab.Items[0];
+		firstRow.Member.Should().Be("e_magic");
+		firstRow.Meaning.Should().Be("Magic Number (MZ)");
+
+		var lastRow = (Entry)tab.Items[^1];
+		lastRow.Member.Should().Be("e_lfanew");
 	}
 
 	[AvaloniaTest]
-	public async Task CoffHeaderTreeNode_Decompiles_To_A_Table_Including_Machine_And_Characteristics()
+	public async Task CoffHeaderTreeNode_Opens_A_DataGrid_Tab_With_Machine_And_Characteristics_Rows()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
@@ -118,10 +121,10 @@ public class PEHeaderTreeTests
 		var coffNode = metadataNode.Children.OfType<CoffHeaderTreeNode>().Single();
 
 		vm.AssemblyTreeModel.SelectNode(coffNode);
-		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
 
-		tab.Text.Should().Contain("Machine");
-		tab.Text.Should().Contain("Number of Sections");
-		tab.Text.Should().Contain("Characteristics");
+		tab.Title.Should().Be("COFF Header");
+		var members = tab.Items.Cast<Entry>().Select(e => e.Member).ToList();
+		members.Should().Contain(["Machine", "Number of Sections", "Characteristics"]);
 	}
 }

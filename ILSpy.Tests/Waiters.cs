@@ -28,6 +28,7 @@ using Avalonia.VisualTree;
 using global::ILSpy.AssemblyTree;
 using global::ILSpy.Docking;
 using global::ILSpy.TextView;
+using global::ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Tests;
 
@@ -101,5 +102,21 @@ public static class Waiters
 			"active decompiler tab to finish decompiling and produce text");
 
 		return (DecompilerTabPageModel)documents.ActiveDockable!;
+	}
+
+	public static async Task<MetadataTablePageModel> WaitForMetadataTabAsync(
+		this DockWorkspace dock,
+		TimeSpan? timeout = null)
+	{
+		ArgumentNullException.ThrowIfNull(dock);
+		var documents = ((ILSpyDockFactory)dock.Factory).Documents
+			?? throw new InvalidOperationException("DockWorkspace has no document dock yet.");
+
+		await WaitForAsync(
+			() => documents.ActiveDockable is MetadataTablePageModel { Items.Count: > 0 },
+			timeout,
+			"active dockable to be a metadata table tab with populated rows");
+
+		return (MetadataTablePageModel)documents.ActiveDockable!;
 	}
 }
