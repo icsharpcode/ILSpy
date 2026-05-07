@@ -121,7 +121,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			awaitDebugInfos.Clear();
 			moveNextLeaves.Clear();
 			if (!MatchTaskCreationPattern(function) && !MatchAsyncEnumeratorCreationPattern(function))
+			{
+				if (function.IsAsync && context.Settings.RuntimeAsync)
+					RuntimeAsyncExceptionRewriteTransform.Run(function, context);
 				return;
+			}
 			try
 			{
 				AnalyzeMoveNext();
