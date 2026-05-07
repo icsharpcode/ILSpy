@@ -18,6 +18,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Reflection.Metadata;
 
 namespace ILSpy.Metadata
 {
@@ -89,5 +91,109 @@ namespace ILSpy.Metadata
 			Value = value;
 			Meaning = meaning;
 		}
+	}
+
+	/// <summary>
+	/// Bitmask covering each CLI metadata table. Used as the second argument to
+	/// <see cref="MetadataReaderHelpers.ComputeCodedTokenSize"/> when computing how many bytes
+	/// a coded-token column occupies in a given metadata blob — same encoding as the WPF
+	/// host's <c>TableMask</c>.
+	/// </summary>
+	[Flags]
+	public enum TableMask : ulong
+	{
+		Module = 0x1,
+		TypeRef = 0x2,
+		TypeDef = 0x4,
+		FieldPtr = 0x8,
+		Field = 0x10,
+		MethodPtr = 0x20,
+		MethodDef = 0x40,
+		ParamPtr = 0x80,
+		Param = 0x100,
+		InterfaceImpl = 0x200,
+		MemberRef = 0x400,
+		Constant = 0x800,
+		CustomAttribute = 0x1000,
+		FieldMarshal = 0x2000,
+		DeclSecurity = 0x4000,
+		ClassLayout = 0x8000,
+		FieldLayout = 0x10000,
+		StandAloneSig = 0x20000,
+		EventMap = 0x40000,
+		EventPtr = 0x80000,
+		Event = 0x100000,
+		PropertyMap = 0x200000,
+		PropertyPtr = 0x400000,
+		Property = 0x800000,
+		MethodSemantics = 0x1000000,
+		MethodImpl = 0x2000000,
+		ModuleRef = 0x4000000,
+		TypeSpec = 0x8000000,
+		ImplMap = 0x10000000,
+		FieldRva = 0x20000000,
+		EnCLog = 0x40000000,
+		EnCMap = 0x80000000,
+		Assembly = 0x100000000,
+		AssemblyRef = 0x800000000,
+		File = 0x4000000000,
+		ExportedType = 0x8000000000,
+		ManifestResource = 0x10000000000,
+		NestedClass = 0x20000000000,
+		GenericParam = 0x40000000000,
+		MethodSpec = 0x80000000000,
+		GenericParamConstraint = 0x100000000000,
+		Document = 0x1000000000000,
+		MethodDebugInformation = 0x2000000000000,
+		LocalScope = 0x4000000000000,
+		LocalVariable = 0x8000000000000,
+		LocalConstant = 0x10000000000000,
+		ImportScope = 0x20000000000000,
+		StateMachineMethod = 0x40000000000000,
+		CustomDebugInformation = 0x80000000000000,
+	}
+
+	/// <summary>
+	/// Reflection-backed shims onto <c>System.Reflection.Metadata</c> internals — needed to
+	/// decode coded-token columns and compute their on-disk widths. The corresponding public
+	/// APIs do not exist; the WPF host carries the same reflection infrastructure. Pre-existing
+	/// risk: if a future runtime renames <c>TypeDefOrRefTag.ConvertToHandle</c> or the
+	/// <c>TableRowCounts</c> field on <c>MetadataReader</c>, these methods will throw and
+	/// the affected metadata-table viewers will break.
+	/// </summary>
+	public static class MetadataReaderHelpers
+	{
+		static readonly FieldInfo? rowCountsField;
+		static readonly MethodInfo? computeCodedTokenSizeMethod;
+		static readonly MethodInfo? typeDefOrRefConvert;
+		static readonly MethodInfo? hasFieldMarshalConvert;
+		static readonly MethodInfo? memberForwardedConvert;
+
+		static MetadataReaderHelpers()
+		{
+			rowCountsField = typeof(MetadataReader)
+				.GetField("TableRowCounts", BindingFlags.NonPublic | BindingFlags.Instance);
+			computeCodedTokenSizeMethod = typeof(MetadataReader)
+				.GetMethod("ComputeCodedTokenSize", BindingFlags.Instance | BindingFlags.NonPublic);
+			var asm = typeof(TypeDefinitionHandle).Assembly;
+			typeDefOrRefConvert = asm.GetType("System.Reflection.Metadata.Ecma335.TypeDefOrRefTag")
+				?.GetMethod("ConvertToHandle", BindingFlags.Static | BindingFlags.NonPublic);
+			hasFieldMarshalConvert = asm.GetType("System.Reflection.Metadata.Ecma335.HasFieldMarshalTag")
+				?.GetMethod("ConvertToHandle", BindingFlags.Static | BindingFlags.NonPublic);
+			memberForwardedConvert = asm.GetType("System.Reflection.Metadata.Ecma335.MemberForwardedTag")
+				?.GetMethod("ConvertToHandle", BindingFlags.Static | BindingFlags.NonPublic);
+		}
+
+		public static EntityHandle FromTypeDefOrRefTag(uint tag)
+			=> (EntityHandle)typeDefOrRefConvert!.Invoke(null, [tag])!;
+
+		public static EntityHandle FromHasFieldMarshalTag(uint tag)
+			=> (EntityHandle)hasFieldMarshalConvert!.Invoke(null, [tag])!;
+
+		public static EntityHandle FromMemberForwardedTag(uint tag)
+			=> (EntityHandle)memberForwardedConvert!.Invoke(null, [tag])!;
+
+		public static int ComputeCodedTokenSize(this MetadataReader metadata, int largeRowSize, TableMask mask)
+			=> (int)computeCodedTokenSizeMethod!.Invoke(metadata, [largeRowSize, rowCountsField!.GetValue(metadata)!, (ulong)mask])!;
 	}
 }

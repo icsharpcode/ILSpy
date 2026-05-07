@@ -106,6 +106,19 @@ namespace ILSpy.Metadata
 				TableIndex.ImportScope => new ImportScopeTableTreeNode(metadataFile),
 				TableIndex.StateMachineMethod => new StateMachineMethodTableTreeNode(metadataFile),
 				TableIndex.CustomDebugInformation => new CustomDebugInformationTableTreeNode(metadataFile),
+				TableIndex.MethodImpl => new MethodImplTableTreeNode(metadataFile),
+				TableIndex.MethodSemantics => new MethodSemanticsTableTreeNode(metadataFile),
+				TableIndex.ClassLayout => new ClassLayoutTableTreeNode(metadataFile),
+				TableIndex.FieldLayout => new FieldLayoutTableTreeNode(metadataFile),
+				TableIndex.FieldRva => new FieldRVATableTreeNode(metadataFile),
+				TableIndex.NestedClass => new NestedClassTableTreeNode(metadataFile),
+				TableIndex.EventMap => new EventMapTableTreeNode(metadataFile),
+				TableIndex.PropertyMap => new PropertyMapTableTreeNode(metadataFile),
+				TableIndex.InterfaceImpl => new InterfaceImplTableTreeNode(metadataFile),
+				TableIndex.FieldMarshal => new FieldMarshalTableTreeNode(metadataFile),
+				TableIndex.ImplMap => new ImplMapTableTreeNode(metadataFile),
+				TableIndex.FieldPtr or TableIndex.MethodPtr or TableIndex.ParamPtr
+					or TableIndex.EventPtr or TableIndex.PropertyPtr => new PtrTableTreeNode(table, metadataFile),
 				_ => new UnsupportedMetadataTableTreeNode(table, metadataFile),
 			};
 	}
