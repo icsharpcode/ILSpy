@@ -255,6 +255,16 @@ namespace ILSpy.Docking
 			var nodes = assemblyTreeModel.SelectedItems.OfType<ILSpyTreeNode>().ToArray();
 			if (nodes.Length == 0)
 				return;
+
+			// Single-node selections that opt into a custom tab (e.g. metadata-table nodes
+			// returning a DataGrid model) get routed there directly. Multi-select keeps the
+			// decompiler tab because there's no sensible composite for two unrelated grids.
+			if (nodes.Length == 1 && nodes[0].CreateTab() is { } customTab)
+			{
+				ShowCustomTab(customTab);
+				return;
+			}
+
 			var tab = ResolveDecompilerTab();
 			if (tab == null)
 				return;
@@ -266,6 +276,15 @@ namespace ILSpy.Docking
 			}
 			tab.Language = languageService.CurrentLanguage;
 			tab.CurrentNodes = nodes;
+		}
+
+		void ShowCustomTab(TabPageModel tab)
+		{
+			if (factory.Documents == null)
+				return;
+			factory.AddDockable(factory.Documents, tab);
+			factory.SetActiveDockable(tab);
+			factory.SetFocusedDockable(factory.Documents, tab);
 		}
 
 		public DecompilerTabPageModel? ActiveDecompilerTab => GetDecompilerContentTab();

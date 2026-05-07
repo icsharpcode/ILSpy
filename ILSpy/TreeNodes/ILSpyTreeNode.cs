@@ -25,6 +25,7 @@ using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy.AppEnv;
 using ILSpy.Languages;
+using ILSpy.ViewModels;
 
 namespace ILSpy.TreeNodes
 {
@@ -95,5 +96,12 @@ namespace ILSpy.TreeNodes
 		/// non-matching entries. Default treats every node as visible.
 		/// </summary>
 		public virtual FilterResult Filter(LanguageSettings settings) => FilterResult.Match;
+
+		/// <summary>
+		/// When non-null, the docking host opens this tab for the node instead of routing it
+		/// through the decompiler-text path. Lets metadata-table nodes show their own
+		/// DataGrid view while the rest of the tree keeps decompiling.
+		/// </summary>
+		public virtual TabPageModel? CreateTab() => null;
 	}
 }

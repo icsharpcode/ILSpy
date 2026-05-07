@@ -6,6 +6,8 @@
              xmlns:search="using:ILSpy.Search"
              xmlns:analyzers="using:ILSpy.Analyzers"
              xmlns:textView="using:ILSpy.TextView"
+             xmlns:metaViews="using:ILSpy.Views"
+             xmlns:vm="using:ILSpy.ViewModels"
              xmlns:dockTheme="using:Dock.Avalonia.Themes.Simple"
              xmlns:controls="using:ILSpy.Controls"
              RequestedThemeVariant="Default">
@@ -38,6 +40,9 @@
         </DataTemplate>
         <DataTemplate DataType="textView:DecompilerTabPageModel">
             <textView:DecompilerTextView />
+        </DataTemplate>
+        <DataTemplate DataType="vm:MetadataTablePageModel">
+            <metaViews:MetadataTablePage />
         </DataTemplate>
         <local:ViewLocator/>
     </Application.DataTemplates>
