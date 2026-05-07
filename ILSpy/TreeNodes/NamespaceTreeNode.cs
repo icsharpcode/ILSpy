@@ -24,6 +24,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
+using ILSpy;
 using ILSpy.Languages;
 
 namespace ILSpy.TreeNodes
@@ -77,6 +78,29 @@ namespace ILSpy.TreeNodes
 			var types = typeSystem.MainModule.TypeDefinitions
 				.Where(t => t.Namespace == name && t.DeclaringTypeDefinition == null);
 			language.DecompileNamespace(name, types, output, options);
+		}
+
+		// A namespace counts as public-API iff at least one type it contains is public-API.
+		// Forces lazy children once so the aggregate is available before the cell template
+		// queries it for the gray-foreground binding; the result is cached because types
+		// don't change accessibility at runtime. Mirrors WPF's AssemblyTreeNode.SetPublicAPI
+		// recursive walk.
+		bool? cachedIsPublicAPI;
+		public override bool IsPublicAPI {
+			get {
+				if (cachedIsPublicAPI is { } cached)
+					return cached;
+				EnsureLazyChildren();
+				cachedIsPublicAPI = Children.OfType<ILSpyTreeNode>().Any(c => c.IsPublicAPI);
+				return cachedIsPublicAPI.Value;
+			}
+		}
+
+		public override FilterResult Filter(LanguageSettings settings)
+		{
+			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
+				return FilterResult.Hidden;
+			return FilterResult.Match;
 		}
 	}
 }

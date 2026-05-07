@@ -65,6 +65,22 @@ public class ApiVisibilityFilterTests
 		var (privateNode, privateMethod) = FindNonPublicMethodInLoadedAssemblies(vm);
 		privateNode.IsPublicAPI.Should().BeFalse(
 			$"{privateMethod.DeclaringType?.Name}.{privateMethod.Name} is non-public");
+
+		// Assembly + root nodes inherit ILSpyTreeNode's true default — no accessibility to
+		// weigh, so they never pick up the gray non-public styling. Without this assertion,
+		// flipping the base default to false silently passes everything else even though
+		// every assembly row would render gray (mutation-test hole, May 2026).
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(
+			typeof(System.Linq.Enumerable).Assembly.GetName().Name!);
+		assemblyNode.IsPublicAPI.Should().BeTrue(
+			"AssemblyTreeNode must inherit the true default");
+
+		// Namespaces aggregate from their children — System.Linq holds public types so its
+		// namespace node reports IsPublicAPI=true.
+		var publicNamespace = vm.AssemblyTreeModel.FindNode<NamespaceTreeNode>(
+			"System.Linq", "System.Linq");
+		publicNamespace.IsPublicAPI.Should().BeTrue(
+			"a namespace whose children include public types is itself public-API");
 	}
 
 	[AvaloniaTest]
