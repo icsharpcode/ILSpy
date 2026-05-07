@@ -106,6 +106,46 @@ public class PEHeaderTreeTests
 	}
 
 	[AvaloniaTest]
+	public async Task Selecting_A_Second_Metadata_Node_Reuses_The_Existing_Grid_Tab()
+	{
+		// Clicking DOS Header → COFF Header → DOS Header should leave the dock with a
+		// single metadata tab whose state has been updated each time, mirroring how the
+		// decompiler tab reuses itself across tree-node selections. Otherwise every click
+		// piles up a new dockable and the tab strip grows without bound.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
+		assemblyNode.EnsureLazyChildren();
+		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
+		metadataNode.EnsureLazyChildren();
+
+		var dosNode = metadataNode.Children.OfType<DosHeaderTreeNode>().Single();
+		var coffNode = metadataNode.Children.OfType<CoffHeaderTreeNode>().Single();
+
+		vm.AssemblyTreeModel.SelectNode(dosNode);
+		var firstTab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		firstTab.Title.Should().Be("DOS Header");
+
+		vm.AssemblyTreeModel.SelectNode(coffNode);
+		var secondTab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		secondTab.Should().BeSameAs(firstTab, "metadata clicks reuse the existing grid tab");
+		secondTab.Title.Should().Be("COFF Header");
+
+		vm.AssemblyTreeModel.SelectNode(dosNode);
+		var thirdTab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		thirdTab.Should().BeSameAs(firstTab);
+		thirdTab.Title.Should().Be("DOS Header");
+
+		var documents = ((global::ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
+		documents.VisibleDockables!.OfType<global::ILSpy.ViewModels.MetadataTablePageModel>().Should().ContainSingle();
+	}
+
+	[AvaloniaTest]
 	public async Task CoffHeaderTreeNode_Opens_A_DataGrid_Tab_With_Machine_And_Characteristics_Rows()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();

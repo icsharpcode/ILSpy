@@ -282,9 +282,47 @@ namespace ILSpy.Docking
 		{
 			if (factory.Documents == null)
 				return;
+
+			// Reuse an existing tab of the same concrete type — same model the decompiler tab
+			// uses, so DOS Header → COFF Header → DOS Header doesn't pile up three dockables.
+			// Prefer the active dockable when it's already the right type so explicit
+			// "switch tabs and pick a node" interactions land where the user expects.
+			if (FindReusableTab(tab.GetType()) is { } existing)
+			{
+				CopyTabState(tab, existing);
+				factory.SetActiveDockable(existing);
+				factory.SetFocusedDockable(factory.Documents, existing);
+				return;
+			}
+
 			factory.AddDockable(factory.Documents, tab);
 			factory.SetActiveDockable(tab);
 			factory.SetFocusedDockable(factory.Documents, tab);
+		}
+
+		TabPageModel? FindReusableTab(Type tabType)
+		{
+			if (factory.Documents == null)
+				return null;
+			if (factory.Documents.ActiveDockable is TabPageModel active && active.GetType() == tabType)
+				return active;
+			if (factory.Documents.VisibleDockables == null)
+				return null;
+			foreach (var d in factory.Documents.VisibleDockables)
+				if (d is TabPageModel m && m.GetType() == tabType)
+					return m;
+			return null;
+		}
+
+		static void CopyTabState(TabPageModel source, TabPageModel target)
+		{
+			if (source is MetadataTablePageModel newMeta && target is MetadataTablePageModel oldMeta)
+			{
+				oldMeta.Title = newMeta.Title;
+				oldMeta.Columns = newMeta.Columns;
+				oldMeta.Items = newMeta.Items;
+				oldMeta.ScrollToRow = newMeta.ScrollToRow;
+			}
 		}
 
 		public DecompilerTabPageModel? ActiveDecompilerTab => GetDecompilerContentTab();
