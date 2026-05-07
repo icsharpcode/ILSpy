@@ -109,6 +109,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 
+			// Recognize the "early return from inside a try via a flag local" pattern that runtime-async
+			// emits whenever a return statement crosses an enclosing try-finally with await.
+			foreach (var tryFinally in function.Descendants.OfType<TryFinally>().ToArray())
+			{
+				if (TryRewriteFlagBasedEarlyReturn(tryFinally, context))
+					changed = true;
+			}
+
 			if (changed)
 			{
 				foreach (var c in function.Body.Descendants.OfType<BlockContainer>())
@@ -204,8 +212,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (typedExVar != null)
 				RemapVariableReads(function, typedExVar, handler.Variable);
 
-			// The obj variable is shared between handlers in the multi-handler form; remap it later,
-			// scoped to the moved catch body, when TryRewriteTryCatch / multi-handler relocates it.
+			// Optimized builds inline `castclass T(ldloc obj)` directly into the user filter expression
+			// instead of stashing it in a typedEx local. Remap obj reads within the filter only.
+			RemapVariableReads(handler.Filter, objVar, handler.Variable);
+
+			// The obj variable is shared between handlers in the multi-handler form; the body rewriter
+			// remaps it scoped per handler.
 			filterObjByHandler[handler] = objVar;
 
 			context.StepEndGroup(keepIfEmpty: true);
@@ -920,6 +932,194 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 				}
 			}
+		}
+
+		// Recognize the runtime-async lowering of an early return that crosses a try-finally.
+		// Roslyn rewrites `return value;` inside a try-block as:
+		//     stloc capture(value)
+		//     stloc flag(K)
+		//     leave-try   (i.e. let the finally run, then exit the try-finally)
+		// followed by post-try logic of the form:
+		//     if (flag == K) leave outer (capture)
+		//
+		// Detect that pattern around a TryFinally we just produced and rewrite each capture-set-flag-and-leave
+		// site into a direct `leave outer (value)`, then drop the flag/post-flag-check machinery. The leave
+		// still passes through the TryFinally so the user's finally body runs before the function returns,
+		// which is the intended source-level semantics of `return` from inside a try-finally.
+		static bool TryRewriteFlagBasedEarlyReturn(TryFinally tryFinally, ILTransformContext context)
+		{
+			if (tryFinally.Parent is not Block parentBlock)
+				return false;
+			if (parentBlock.Parent is not BlockContainer container)
+				return false;
+
+			// The TryFinally is followed in parentBlock by either nothing (fall-through into the next block)
+			// or a single `br checkBlock` we appended ourselves. Locate the post-try check block.
+			Block checkBlock;
+			int tryFinallyIdx = tryFinally.ChildIndex;
+			if (tryFinallyIdx == parentBlock.Instructions.Count - 1)
+				return false;
+			if (parentBlock.Instructions[tryFinallyIdx + 1] is Branch br)
+				checkBlock = br.TargetBlock;
+			else
+				return false;
+			if (checkBlock?.Parent != container)
+				return false;
+
+			// Block checkBlock { if (flagVar == K) br earlyBlock; br normalBlock }
+			//             or:  { if (flagVar != K) br normalBlock; br earlyBlock }
+			if (checkBlock.Instructions.Count != 2)
+				return false;
+			if (checkBlock.Instructions[0] is not IfInstruction ifInst)
+				return false;
+			if (ifInst.TrueInst is not Branch toIfTrue)
+				return false;
+			if (!checkBlock.Instructions[1].MatchBranch(out var fallthroughBlock))
+				return false;
+
+			ILVariable flagVar;
+			int targetK;
+			Block earlyBlock, normalBlock;
+			if (ifInst.Condition.MatchCompEquals(out var lhs, out var rhs)
+				&& lhs.MatchLdLoc(out flagVar) && rhs.MatchLdcI4(out targetK))
+			{
+				earlyBlock = toIfTrue.TargetBlock;
+				normalBlock = fallthroughBlock;
+			}
+			else if (ifInst.Condition.MatchCompNotEquals(out lhs, out rhs)
+				&& lhs.MatchLdLoc(out flagVar) && rhs.MatchLdcI4(out targetK))
+			{
+				normalBlock = toIfTrue.TargetBlock;
+				earlyBlock = fallthroughBlock;
+			}
+			else
+			{
+				return false;
+			}
+			if (!flagVar.Type.IsKnownType(KnownTypeCode.Int32))
+				return false;
+			if (earlyBlock?.Parent != container || normalBlock?.Parent != container)
+				return false;
+
+			// earlyBlock chain: optional `stloc returnVar(ldloc capture); br leaveBlock` followed by
+			// `leave outer (ldloc returnVar)` (or a direct leave with the capture).
+			if (!ResolveEarlyReturnValue(earlyBlock, container, out var captureVar, out var returnVar, out var leaveBlock))
+				return false;
+
+			// Inside the try-block find the flag-setter block(s): `stloc flagVar(K); leave-tryBlock`.
+			// There may be multiple — e.g. several catches in a multi-handler try each with its own
+			// early-return — but for the simple case we only need one.
+			if (tryFinally.TryBlock is not BlockContainer tryBlockContainer)
+				return false;
+			var flagSetters = new List<Block>();
+			foreach (var b in tryBlockContainer.Blocks)
+			{
+				if (b.Instructions.Count == 2
+					&& b.Instructions[0] is StLoc setStore
+					&& setStore.Variable == flagVar
+					&& setStore.Value.MatchLdcI4(targetK)
+					&& b.Instructions[1] is Leave leaveFromTry
+					&& leaveFromTry.TargetContainer == tryBlockContainer)
+				{
+					flagSetters.Add(b);
+				}
+			}
+			if (flagSetters.Count == 0)
+				return false;
+
+			// Verify flagVar is only set in flag-setters and the pre-try init (`stloc flagVar(0)`).
+			foreach (var store in flagVar.StoreInstructions.OfType<StLoc>())
+			{
+				if (flagSetters.Any(fs => fs.Instructions.Contains(store)))
+					continue;
+				if (store.Parent == parentBlock && store.Value.MatchLdcI4(0))
+					continue;
+				return false;
+			}
+
+			// Build the leave instruction shape: leave outer (ldloc captureSource).
+			var outerContainer = (BlockContainer)leaveBlock.Parent;
+			var outerLeave = (Leave)leaveBlock.Instructions[^1];
+			if (outerLeave.TargetContainer != outerContainer)
+				return false;
+
+			context.StepStartGroup("Reduce runtime-async flag-based early return", tryFinally);
+
+			// Single pass over the try body: every Branch targeting a flag-setter is the tail of an
+			// early-return site (`...; stloc capture(value); br fs`). Replace each with a direct
+			// `leave outer (ldloc capture)`. The capture store stays and feeds the leave value via the
+			// variable read. Then drop the flag-setter blocks; they're unreachable post-rewrite.
+			var flagSetterSet = new HashSet<Block>(flagSetters);
+			foreach (var pred in tryBlockContainer.Descendants.OfType<Branch>().ToArray())
+			{
+				if (!flagSetterSet.Contains(pred.TargetBlock))
+					continue;
+				pred.ReplaceWith(new Leave(outerContainer, new LdLoc(captureVar)).WithILRange(pred));
+			}
+			foreach (var fs in flagSetters)
+				fs.Remove();
+
+			// The post-flag-check block can now be replaced with `br normalBlock`. The flag write/read,
+			// the early-return chain and (eventually) the captureVar/returnVar become unreferenced.
+			checkBlock.Instructions.Clear();
+			checkBlock.Instructions.Add(new Branch(normalBlock));
+
+			// Drop the pre-try `stloc flagVar(0)`.
+			for (int i = 0; i < tryFinallyIdx; i++)
+			{
+				if (parentBlock.Instructions[i] is StLoc s && s.Variable == flagVar && s.Value.MatchLdcI4(0))
+				{
+					parentBlock.Instructions.RemoveAt(i);
+					tryFinallyIdx--;
+					i--;
+				}
+			}
+
+			context.StepEndGroup(keepIfEmpty: true);
+			return true;
+		}
+
+		// earlyBlock should be either:
+		//   `stloc returnVar(ldloc capture); br leaveBlock` followed by leaveBlock = `leave outer (ldloc returnVar)`
+		//   or a direct `leave outer (ldloc capture)`.
+		static bool ResolveEarlyReturnValue(Block earlyBlock, BlockContainer container,
+			out ILVariable captureVar, out ILVariable returnVar, out Block leaveBlock)
+		{
+			captureVar = null;
+			returnVar = null;
+			leaveBlock = null;
+
+			// Direct shape: earlyBlock is just `leave outer (ldloc capture)`.
+			if (earlyBlock.Instructions.Count == 1
+				&& earlyBlock.Instructions[0] is Leave directLeave
+				&& directLeave.IsLeavingFunction
+				&& directLeave.Value.MatchLdLoc(out captureVar))
+			{
+				leaveBlock = earlyBlock;
+				return true;
+			}
+
+			// Indirected shape: earlyBlock copies the capture into a returnVar and branches to a
+			// one-instruction `leave outer (ldloc returnVar)` block.
+			if (earlyBlock.Instructions.Count != 2)
+				return false;
+			if (!earlyBlock.Instructions[0].MatchStLoc(out returnVar, out var rvValue))
+				return false;
+			if (!rvValue.MatchLdLoc(out captureVar))
+				return false;
+			if (!earlyBlock.Instructions[1].MatchBranch(out leaveBlock))
+				return false;
+			if (leaveBlock.Parent != container)
+				return false;
+			if (leaveBlock.Instructions.Count != 1)
+				return false;
+			if (leaveBlock.Instructions[0] is not Leave finalLeave)
+				return false;
+			if (!finalLeave.IsLeavingFunction)
+				return false;
+			if (!finalLeave.Value.MatchLdLoc(returnVar))
+				return false;
+			return true;
 		}
 
 		static void ReplaceDispatchIdiomWithRethrow(Block block, ILVariable handlerVariable, ILTransformContext context)
