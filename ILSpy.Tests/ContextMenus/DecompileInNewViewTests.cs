@@ -67,7 +67,6 @@ public class DecompileInNewViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
 		var entry = registry.Entries
@@ -96,19 +95,15 @@ public class DecompileInNewViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
-		// expand typeNode
 		typeNode.IsExpanded = true;
 		var firstMethod = typeNode.Children.OfType<MethodTreeNode>()
 			.Single(m => m.MethodDefinition.Name == "AsEnumerable");
 		var secondMethod = typeNode.Children.OfType<MethodTreeNode>()
 			.First(m => m.MethodDefinition.Name == "Empty");
-		// select firstMethod
 		vm.AssemblyTreeModel.SelectNode(firstMethod);
-		// wait for decompile to finish
 		var firstTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
@@ -128,7 +123,6 @@ public class DecompileInNewViewTests
 		// shows AsEnumerable.
 		await Waiters.WaitForAsync(
 			() => (documents.VisibleDockables?.Count ?? 0) > initialCount);
-		// wait for decompile to finish
 		var newTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		ReferenceEquals(newTab, firstTab).Should().BeFalse(
 			"a fresh decompiler tab must be created instead of reusing the existing one");

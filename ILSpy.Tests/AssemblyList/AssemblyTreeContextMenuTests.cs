@@ -52,7 +52,6 @@ public class AssemblyTreeContextMenuTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 
 		// Assert — TreeGrid carries a ContextMenu. (The menu may be empty if no entries are
@@ -75,11 +74,9 @@ public class AssemblyTreeContextMenuTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		// select assemblyNode
 		vm.AssemblyTreeModel.SelectNode(assemblyNode);
 
 		TextViewContext? executionContext = null;

@@ -64,7 +64,7 @@ public class MainMenuTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 
-		var menu = window.GetVisualDescendants().OfType<Menu>().First();
+		var menu = await window.WaitForComponent<Menu>();
 		await Waiters.WaitForAsync(() =>
 			menu.Items.OfType<MenuItem>().Any(m => (string?)m.Tag == nameof(Resources._File))
 				&& menu.Items.OfType<MenuItem>().Single(m => (string?)m.Tag == nameof(Resources._File))

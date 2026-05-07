@@ -61,7 +61,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		// Act — pick CoreLib (always ships localised error-message tables), expand it.
@@ -89,7 +88,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		// Act — locate the realised DataGrid inside the AssemblyListPane.
@@ -112,7 +110,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -153,7 +150,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var tempDir = Path.Combine(Path.GetTempPath(), "ILSpy.Tests", System.Guid.NewGuid().ToString("N"));
@@ -174,7 +170,6 @@ public class AssemblyTreeTests
 		var openCommand = registry.Commands
 			.Single(c => c.Metadata.Header == nameof(Resources._Open))
 			.CreateExport().Value;
-		// execute openCommand
 		openCommand.Execute(zipPath);
 
 		await Waiters.WaitForAsync(() =>
@@ -212,7 +207,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
@@ -247,7 +241,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
@@ -279,7 +272,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
@@ -312,7 +304,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
@@ -349,7 +340,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
@@ -375,7 +365,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
@@ -405,7 +394,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
@@ -459,7 +447,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var coreLibDir = System.IO.Path.GetDirectoryName(typeof(object).Assembly.Location)!;
@@ -473,7 +460,6 @@ public class AssemblyTreeTests
 		var openCommand = registry.Commands
 			.Single(c => c.Metadata.Header == nameof(Resources._Open))
 			.CreateExport().Value;
-		// execute openCommand
 		openCommand.Execute(mscorlibPath);
 
 		await Waiters.WaitForAsync(() =>
@@ -523,7 +509,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
@@ -561,7 +546,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
@@ -602,7 +586,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var newAsmPath = typeof(System.Net.Http.HttpClient).Assembly.Location;
@@ -610,7 +593,6 @@ public class AssemblyTreeTests
 		var openCommand = registry.Commands
 			.Single(c => c.Metadata.Header == nameof(Resources._Open))
 			.CreateExport().Value;
-		// execute openCommand
 		openCommand.Execute(newAsmPath);
 
 		await Waiters.WaitForAsync(() =>
@@ -634,7 +616,6 @@ public class AssemblyTreeTests
 		var methodNode = typeNode.Children.OfType<MethodTreeNode>()
 			.First(m => m.MethodDefinition.Name == "CancelPendingRequests");
 
-		// select methodNode
 		vm.AssemblyTreeModel.SelectNode(methodNode);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
@@ -667,7 +648,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var newAsmPath = typeof(System.Net.Http.HttpClient).Assembly.Location;
@@ -675,7 +655,6 @@ public class AssemblyTreeTests
 		var openCommand = registry.Commands
 			.Single(c => c.Metadata.Header == nameof(Resources._Open))
 			.CreateExport().Value;
-		// execute openCommand
 		openCommand.Execute(newAsmPath);
 
 		await Waiters.WaitForAsync(() =>
@@ -693,7 +672,6 @@ public class AssemblyTreeTests
 		var methodNode = typeNode.Children.OfType<MethodTreeNode>()
 			.First(m => m.MethodDefinition.Name == "CancelPendingRequests");
 
-		// select methodNode
 		vm.AssemblyTreeModel.SelectNode(methodNode);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
@@ -734,7 +712,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var newAsmPath = typeof(System.Net.Http.HttpClient).Assembly.Location;
@@ -745,7 +722,6 @@ public class AssemblyTreeTests
 		var openCommand = registry.Commands
 			.Single(c => c.Metadata.Header == nameof(Resources._Open))
 			.CreateExport().Value;
-		// execute openCommand
 		openCommand.Execute(newAsmPath);
 
 		await Waiters.WaitForAsync(() =>
@@ -777,7 +753,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var enumerable = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -787,23 +762,18 @@ public class AssemblyTreeTests
 		var ns = (NamespaceTreeNode)enumerable.Parent!;
 		ns.EnsureLazyChildren();
 		ns.IsExpanded = true;
-		// expand ns
 		var asm = (AssemblyTreeNode)ns.Parent!;
-		// expand asm
 		asm.IsExpanded = true;
 		foreach (var child in ns.Children.OfType<TypeTreeNode>())
 		{
 			child.EnsureLazyChildren();
 			child.IsExpanded = true;
-			// expand child
 		}
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<DataGrid>();
 
-		// select enumerable
 		vm.AssemblyTreeModel.SelectNode(enumerable);
-		// wait for the predicate
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, enumerable));
 		for (int i = 0; i < 8; i++)
 		{
@@ -812,7 +782,7 @@ public class AssemblyTreeTests
 		}
 		grid.UpdateLayout();
 
-		var scrollViewer = grid.GetVisualDescendants().OfType<ScrollViewer>().Single();
+		var scrollViewer = await grid.WaitForComponent<ScrollViewer>();
 		(scrollViewer.Extent.Height - scrollViewer.Viewport.Height).Should().BeGreaterThan(50,
 			"the grid must have something to scroll for this test to be meaningful");
 		scrollViewer.Offset = new Vector(scrollViewer.Offset.X, 50);
@@ -863,11 +833,9 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var probe = new SaveProbeNode();
-		// select probe
 		vm.AssemblyTreeModel.SelectNode(probe);
 
 		// Act — fire the Save Code main-menu command.
@@ -875,7 +843,6 @@ public class AssemblyTreeTests
 		var saveCmd = registry.Commands
 			.Single(c => c.Metadata.Header == nameof(Resources._SaveCode))
 			.CreateExport().Value;
-		// execute saveCmd
 		saveCmd.Execute(null);
 
 		// Assert — probe's Save() ran.
@@ -905,7 +872,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -914,7 +880,6 @@ public class AssemblyTreeTests
 		typeNode.IsExpanded = true;
 		var method = typeNode.Children.OfType<MethodTreeNode>()
 			.First(m => m.MethodDefinition.Name == "AsEnumerable");
-		// select method
 		vm.AssemblyTreeModel.SelectNode(method);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
@@ -959,15 +924,12 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var sacrificialName = typeof(System.Linq.Enumerable).Assembly.GetName().Name!;
 		var survivorName = typeof(object).Assembly.GetName().Name!;
 		var sacrificialNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(sacrificialName);
-		// select sacrificialNode
 		vm.AssemblyTreeModel.SelectNode(sacrificialNode);
-		// wait for the predicate
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, sacrificialNode));
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
@@ -1013,7 +975,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 		vm.AssemblyTreeModel.AssemblyList!.Count.Should().BeGreaterThan(0);
 
@@ -1023,11 +984,9 @@ public class AssemblyTreeTests
 			.Single(c => c.Metadata.Header == nameof(Resources.ClearAssemblyList))
 			.CreateExport().Value;
 		clearCmd.CanExecute(null).Should().BeTrue("non-empty list must enable Clear");
-		// execute clearCmd
 		clearCmd.Execute(null);
 
 		// Assert — the list goes to zero entries.
-		// wait for the predicate
 		await Waiters.WaitForAsync(() => vm.AssemblyTreeModel.AssemblyList!.Count == 0);
 		vm.AssemblyTreeModel.AssemblyList!.Count.Should().Be(0);
 	}
@@ -1044,7 +1003,6 @@ public class AssemblyTreeTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var brokenPath = System.IO.Path.Combine(
@@ -1060,7 +1018,6 @@ public class AssemblyTreeTests
 			var broken = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
 				.First(a => string.Equals(a.FileName, brokenPath, System.StringComparison.OrdinalIgnoreCase));
 			// GetLoadResultAsync rethrows the load failure; HasLoadError is the safe probe.
-			// wait for the predicate
 			await Waiters.WaitForAsync(() => broken.HasLoadError);
 
 			var validBefore = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
@@ -1075,7 +1032,6 @@ public class AssemblyTreeTests
 				.Single(c => c.Metadata.Header == nameof(Resources._RemoveAssembliesWithLoadErrors))
 				.CreateExport().Value;
 			cmd.CanExecute(null).Should().BeTrue("a broken entry must enable the command");
-			// execute cmd
 			cmd.Execute(null);
 
 			await Waiters.WaitForAsync(() =>

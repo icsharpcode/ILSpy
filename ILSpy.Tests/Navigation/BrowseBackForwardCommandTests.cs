@@ -82,12 +82,10 @@ public class BrowseBackForwardCommandTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
-		// expand typeNode
 		typeNode.IsExpanded = true;
 		var firstMethod = typeNode.Children.OfType<MethodTreeNode>()
 			.Single(m => m.MethodDefinition.Name == "AsEnumerable");
@@ -95,7 +93,7 @@ public class BrowseBackForwardCommandTests
 			.First(m => m.MethodDefinition.Name == "Empty");
 
 		// Locate the View > Back menu item.
-		var menu = window.GetVisualDescendants().OfType<Menu>().First();
+		var menu = await window.WaitForComponent<Menu>();
 		var viewMenu = menu.Items.OfType<MenuItem>()
 			.Single(m => (string?)m.Tag == nameof(Resources._View));
 		// expand the View menu so its child items are realised.
@@ -109,11 +107,9 @@ public class BrowseBackForwardCommandTests
 			"with no navigation history, BrowseBack must report CanExecute=false");
 
 		// Build history: select two methods with a delay so they record as separate entries.
-		// select firstMethod
 		vm.AssemblyTreeModel.SelectNode(firstMethod);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		await Task.Delay(600);
-		// select secondMethod
 		vm.AssemblyTreeModel.SelectNode(secondMethod);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
@@ -136,7 +132,7 @@ public class BrowseBackForwardCommandTests
 		// Arrange — boot, locate the View menu, wait for both nav items to materialise.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
-		var menu = window.GetVisualDescendants().OfType<Menu>().First();
+		var menu = await window.WaitForComponent<Menu>();
 		var viewMenu = menu.Items.OfType<MenuItem>()
 			.Single(m => (string?)m.Tag == nameof(Resources._View));
 		viewMenu.Open();

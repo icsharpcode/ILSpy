@@ -53,21 +53,17 @@ public class DecompilerViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
-		// expand typeNode
 		typeNode.IsExpanded = true;
 		var methodNode = typeNode.Children.OfType<MethodTreeNode>()
 			.Single(m => m.MethodDefinition.Name == "AsEnumerable");
 		methodNode.MethodDefinition.IsExtensionMethod.Should().BeTrue();
 
 		// Act — select the method node and wait for the decompile.
-		// select methodNode
 		vm.AssemblyTreeModel.SelectNode(methodNode);
-		// wait for decompile to finish
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
 		// Assert — signature + body fragments are present and the row centred in the tree.
@@ -89,16 +85,13 @@ public class DecompilerViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		// expand assemblyNode
 		assemblyNode.IsExpanded = true;
 		var refFolder = assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single();
 
 		// Act — select the References folder and wait for its decompile output.
-		// select refFolder
 		vm.AssemblyTreeModel.SelectNode(refFolder);
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
@@ -120,7 +113,6 @@ public class DecompilerViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var coreLib = typeof(object).Assembly.GetName().Name!;
@@ -128,7 +120,6 @@ public class DecompilerViewTests
 			coreLib, "System", "System.Version");
 
 		// Act — select the type node, wait for the decompile.
-		// select typeNode
 		vm.AssemblyTreeModel.SelectNode(typeNode);
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
@@ -148,19 +139,16 @@ public class DecompilerViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var coreLib = typeof(object).Assembly.GetName().Name!;
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			coreLib, "System", "System.Version");
-		// expand typeNode
 		typeNode.IsExpanded = true;
 		var propertyNode = typeNode.Children.OfType<PropertyTreeNode>()
 			.Single(p => p.PropertyDefinition.Name == "Major");
 
 		// Act — select the property, wait for the decompile.
-		// select propertyNode
 		vm.AssemblyTreeModel.SelectNode(propertyNode);
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
@@ -178,19 +166,16 @@ public class DecompilerViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var coreLib = typeof(object).Assembly.GetName().Name!;
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			coreLib, "System", "System.Math");
-		// expand typeNode
 		typeNode.IsExpanded = true;
 		var fieldNode = typeNode.Children.OfType<FieldTreeNode>()
 			.Single(f => f.FieldDefinition.Name == "PI");
 
 		// Act — select the field, wait for the decompile.
-		// select fieldNode
 		vm.AssemblyTreeModel.SelectNode(fieldNode);
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
@@ -208,19 +193,16 @@ public class DecompilerViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var coreLib = typeof(object).Assembly.GetName().Name!;
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			coreLib, "System", "System.AppDomain");
-		// expand typeNode
 		typeNode.IsExpanded = true;
 		var eventNode = typeNode.Children.OfType<EventTreeNode>()
 			.Single(e => e.EventDefinition.Name == "ProcessExit");
 
 		// Act — select the event, wait for the decompile.
-		// select eventNode
 		vm.AssemblyTreeModel.SelectNode(eventNode);
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
@@ -238,7 +220,6 @@ public class DecompilerViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var coreLib = typeof(object).Assembly.GetName().Name!;
@@ -246,7 +227,6 @@ public class DecompilerViewTests
 			coreLib, "System.Runtime.Versioning");
 
 		// Act — select the namespace, wait for the decompile.
-		// select namespaceNode
 		vm.AssemblyTreeModel.SelectNode(namespaceNode);
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
@@ -266,7 +246,6 @@ public class DecompilerViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		// Act 1 — fire OpenCommand on a new path. OpenCommand selects the new node before its
@@ -276,7 +255,6 @@ public class DecompilerViewTests
 		var openCommand = registry.Commands
 			.Single(c => c.Metadata.Header == nameof(Resources._Open))
 			.CreateExport().Value;
-		// execute openCommand
 		openCommand.Execute(newAsmPath);
 
 		await Waiters.WaitForAsync(() =>
@@ -290,7 +268,6 @@ public class DecompilerViewTests
 
 		// Assert — once Text is rich, the tab title catches up. Sanity-check the form is rich
 		// (otherwise the test isn't exercising the late-update path).
-		// wait for the predicate
 		await Waiters.WaitForAsync(() => string.Equals(tab.Title, node.Text?.ToString(), System.StringComparison.Ordinal));
 		node.Text!.ToString().Should().NotBe(node.LoadedAssembly.ShortName,
 			"the rich form (with version + tfm) must be available, otherwise the test isn't exercising the late-update path");
@@ -309,11 +286,9 @@ public class DecompilerViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var firstNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		// select firstNode
 		vm.AssemblyTreeModel.SelectNode(firstNode);
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
@@ -324,7 +299,6 @@ public class DecompilerViewTests
 		// Act — kick off a second decompile and observe Title/Text changes throughout.
 		var coreLib = typeof(object).Assembly.GetName().Name!;
 		var second = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLib, "System", "System.Version");
-		// select second
 		vm.AssemblyTreeModel.SelectNode(second);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
@@ -359,12 +333,10 @@ public class DecompilerViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
-		// expand typeNode
 		typeNode.IsExpanded = true;
 		var asEnumerable = typeNode.Children.OfType<MethodTreeNode>()
 			.First(m => m.MethodDefinition.Name == "AsEnumerable");
@@ -392,12 +364,10 @@ public class DecompilerViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
-		// expand typeNode
 		typeNode.IsExpanded = true;
 		var asEnumerable = typeNode.Children.OfType<MethodTreeNode>()
 			.First(m => m.MethodDefinition.Name == "AsEnumerable");
@@ -409,7 +379,6 @@ public class DecompilerViewTests
 		vm.AssemblyTreeModel.SelectedItems.Add(asEnumerable);
 		vm.AssemblyTreeModel.SelectedItems.Add(empty);
 
-		// wait for decompile to finish
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
 		// Assert — both names AND a body-fragment from one of them confirm both bodies
@@ -429,16 +398,13 @@ public class DecompilerViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 
 		// Act — select the assembly node, wait for the decompile.
-		// select assemblyNode
 		vm.AssemblyTreeModel.SelectNode(assemblyNode);
 
-		// wait for decompile to finish
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
 		// Assert — every documented header line and at least one assembly attribute land.
@@ -462,11 +428,9 @@ public class DecompilerViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// wait for assemblies to load
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		// select assemblyNode
 		vm.AssemblyTreeModel.SelectNode(assemblyNode);
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
@@ -475,10 +439,9 @@ public class DecompilerViewTests
 		var xml = "<root>\n  <child attr=\"v\">\n    text\n  </child>\n  <other>\n  </other>\n</root>";
 		var bytes = System.Text.Encoding.UTF8.GetBytes(xml);
 		tab.CurrentNode = new XmlResourceEntryNode("test.xml", () => new System.IO.MemoryStream(bytes));
-		// wait for the predicate
 		await Waiters.WaitForAsync(() => tab.SyntaxExtension == ".xml" && tab.Text.Contains("<root>"));
 
-		var view = window.GetVisualDescendants().OfType<DecompilerTextView>().Single();
+		var view = await window.WaitForComponent<DecompilerTextView>();
 		// Drain the layout so ApplyDocument's PropertyChanged handler has executed.
 		for (int i = 0; i < 5; i++)
 		{

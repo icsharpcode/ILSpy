@@ -177,8 +177,8 @@ public class ApiVisibilityFilterTests
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 		await Waiters.WaitForAsync(
 			() => window.GetVisualDescendants().OfType<AssemblyListPane>().Any());
-		var pane = window.GetVisualDescendants().OfType<AssemblyListPane>().Single();
-		var grid = pane.GetVisualDescendants().OfType<DataGrid>().Single();
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<DataGrid>();
 
 		// Force any pending DataContext propagation so the initial HierarchicalModel is set.
 		var settings = AppComposition.Current.GetExport<SettingsService>().SessionSettings.LanguageSettings;
@@ -220,8 +220,8 @@ public class ApiVisibilityFilterTests
 		var nonPublicMethod = stringType.Children.OfType<MethodTreeNode>().First(m => !m.IsPublicAPI);
 
 		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<AssemblyListPane>().Any());
-		var pane = window.GetVisualDescendants().OfType<AssemblyListPane>().Single();
-		var grid = pane.GetVisualDescendants().OfType<DataGrid>().Single();
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<DataGrid>();
 
 		// Selecting each node scrolls it into view; that's how the row's TextBlock realises.
 		vm.AssemblyTreeModel.SelectNode(publicMethod);
