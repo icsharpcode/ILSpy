@@ -123,7 +123,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!MatchTaskCreationPattern(function) && !MatchAsyncEnumeratorCreationPattern(function))
 			{
 				if (function.IsAsync && context.Settings.RuntimeAsync)
+				{
+					RuntimeAsyncManualAwaitTransform.Run(function, context);
 					RuntimeAsyncExceptionRewriteTransform.Run(function, context);
+				}
 				return;
 			}
 			try
