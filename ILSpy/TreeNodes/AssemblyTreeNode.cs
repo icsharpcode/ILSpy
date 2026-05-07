@@ -232,6 +232,8 @@ namespace ILSpy.TreeNodes
 				return;
 			}
 
+			Children.Add(new ILSpy.Metadata.MetadataTreeNode(module, ICSharpCode.ILSpy.Properties.Resources.Metadata));
+
 			Children.Add(new ReferenceFolderTreeNode(module, this));
 
 			if (module.Resources.Any())
