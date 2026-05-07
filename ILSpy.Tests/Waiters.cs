@@ -96,12 +96,12 @@ public static class Waiters
 			?? throw new InvalidOperationException("DockWorkspace has no document dock yet.");
 
 		await WaitForAsync(
-			() => documents.ActiveDockable is DecompilerTabPageModel { IsDecompiling: false } tab
+			() => documents.ActiveDockable is ContentTabPage { Content: DecompilerTabPageModel { IsDecompiling: false } tab }
 				&& !string.IsNullOrEmpty(tab.Text),
 			timeout,
 			"active decompiler tab to finish decompiling and produce text");
 
-		return (DecompilerTabPageModel)documents.ActiveDockable!;
+		return (DecompilerTabPageModel)((ContentTabPage)documents.ActiveDockable!).Content!;
 	}
 
 	public static async Task<MetadataTablePageModel> WaitForMetadataTabAsync(
@@ -113,10 +113,10 @@ public static class Waiters
 			?? throw new InvalidOperationException("DockWorkspace has no document dock yet.");
 
 		await WaitForAsync(
-			() => documents.ActiveDockable is MetadataTablePageModel { Items.Count: > 0 },
+			() => documents.ActiveDockable is ContentTabPage { Content: MetadataTablePageModel { Items.Count: > 0 } },
 			timeout,
 			"active dockable to be a metadata table tab with populated rows");
 
-		return (MetadataTablePageModel)documents.ActiveDockable!;
+		return (MetadataTablePageModel)((ContentTabPage)documents.ActiveDockable!).Content!;
 	}
 }

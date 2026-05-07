@@ -36,7 +36,12 @@ namespace ILSpy.Docking
 
 		public IDocumentDock? Documents { get; private set; }
 
-		public DecompilerTabPageModel? InitialDecompilerTab { get; private set; }
+		/// <summary>
+		/// The single persistent Document the host puts in <see cref="Documents"/>. Its
+		/// <see cref="ContentTabPage.Content"/> swaps between viewmodels (decompiler text /
+		/// metadata grid) on tree-node selection — DockWorkspace owns the population.
+		/// </summary>
+		public ContentTabPage? MainTab { get; private set; }
 
 		public ILSpyDockFactory(ToolPaneRegistry registry)
 		{
@@ -53,8 +58,9 @@ namespace ILSpy.Docking
 			};
 			Documents = documents;
 
-			// Initial decompiler tab is added lazily on first selection (DockWorkspace.ShowSelectedNode).
-			InitialDecompilerTab = new DecompilerTabPageModel { Title = "(no selection)" };
+			MainTab = new ContentTabPage { Title = "(no selection)" };
+			documents.VisibleDockables = CreateList<IDockable>(MainTab);
+			documents.ActiveDockable = MainTab;
 
 			ToolDock? leftToolDock = BuildToolDock("LeftTools", ToolPaneAlignment.Left, 0.25);
 			ToolDock? topToolDock = BuildToolDock("TopTools", ToolPaneAlignment.Top, 0.2);

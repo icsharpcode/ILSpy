@@ -30,6 +30,7 @@ using ICSharpCode.ILSpy.Properties;
 
 using ILSpy.Docking;
 using ILSpy.TextView;
+using ILSpy.ViewModels;
 
 namespace ILSpy.Commands
 {
@@ -80,14 +81,13 @@ namespace ILSpy.Commands
 			foreach (var (phrase, uri) in Links)
 				output.AddVisualLineElementGenerator(new ResourceLinkGenerator(phrase, uri));
 
-			var tab = OpenInNewTab(Resources.About, output, ".txt");
-			tab.IsStaticContent = true;
+			var (tab, _) = OpenInNewTab(Resources.About, output, ".txt");
 			dockWorkspace.RecordStaticPage(tab, new Uri("resource:aboutpage"));
 		}
 
-		DecompilerTabPageModel OpenInNewTab(string title, AvaloniaEditTextOutput output, string syntaxExtension)
+		(ContentTabPage Tab, DecompilerTabPageModel Content) OpenInNewTab(string title, AvaloniaEditTextOutput output, string syntaxExtension)
 		{
-			var tab = new DecompilerTabPageModel {
+			var content = new DecompilerTabPageModel {
 				Title = title,
 				SyntaxExtension = syntaxExtension,
 				Text = output.GetText(),
@@ -96,13 +96,13 @@ namespace ILSpy.Commands
 				DefinitionLookup = output.DefinitionLookup,
 				UIElements = output.UIElements,
 				Foldings = output.Foldings,
+				IsStaticContent = true,
 				CustomElementGenerators = output.ElementGenerators.Count > 0
 					? new List<VisualLineElementGenerator>(output.ElementGenerators)
 					: null,
 			};
-			tab.OpenUriRequested += OnOpenUri;
-			dockWorkspace.OpenNewTab(tab);
-			return tab;
+			content.OpenUriRequested += OnOpenUri;
+			return (dockWorkspace.OpenNewTab(content), content);
 		}
 
 		bool OnOpenUri(Uri uri)
@@ -122,8 +122,7 @@ namespace ILSpy.Commands
 			using var reader = new StreamReader(stream);
 			var output = new AvaloniaEditTextOutput { Title = resourceName };
 			output.Write(reader.ReadToEnd());
-			var tab = OpenInNewTab(resourceName, output, ".txt");
-			tab.IsStaticContent = true;
+			var (tab, _) = OpenInNewTab(resourceName, output, ".txt");
 			dockWorkspace.RecordStaticPage(tab, new Uri("resource:" + resourceName));
 		}
 

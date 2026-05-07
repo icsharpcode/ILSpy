@@ -62,9 +62,9 @@ namespace ILSpy.Commands
 			var nodes = SelectedNodes(context).ToArray();
 			if (nodes.Length == 0)
 				return;
-			var tab = new DecompilerTabPageModel { Language = languageService.CurrentLanguage };
-			dockWorkspace.OpenNewTab(tab);
-			tab.CurrentNodes = nodes;
+			var content = new DecompilerTabPageModel { Language = languageService.CurrentLanguage };
+			dockWorkspace.OpenNewTab(content);
+			content.CurrentNodes = nodes;
 		}
 
 		static System.Collections.Generic.IEnumerable<ILSpyTreeNode> SelectedNodes(TextViewContext context)

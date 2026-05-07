@@ -20,6 +20,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
+using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
 using Avalonia.VisualTree;
 
@@ -72,9 +73,9 @@ public class HelpCommandTests
 		// containing the version line and the MIT License mention from the embedded blurb.
 		await Waiters.WaitForAsync(
 			() => (documents.VisibleDockables?.Count ?? 0) > initialTabCount
-				&& documents.ActiveDockable is DecompilerTabPageModel { Text.Length: > 0 });
+				&& documents.ActiveDockable is ContentTabPage { Content: DecompilerTabPageModel { Text.Length: > 0 } });
 
-		var aboutTab = (DecompilerTabPageModel)documents.ActiveDockable!;
+		var aboutTab = (DecompilerTabPageModel)((ContentTabPage)documents.ActiveDockable!).Content!;
 		aboutTab.Title.Should().Be(Resources.About);
 		aboutTab.Text.Should().Contain(Resources.ILSpyVersion);
 		aboutTab.Text.Should().Contain("MIT License");
@@ -102,8 +103,8 @@ public class HelpCommandTests
 		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
 		aboutCmd.Execute(null);
 		await Waiters.WaitForAsync(
-			() => documents.ActiveDockable is DecompilerTabPageModel { Text.Length: > 0 });
-		var aboutTab = (DecompilerTabPageModel)documents.ActiveDockable!;
+			() => documents.ActiveDockable is ContentTabPage { Content: DecompilerTabPageModel { Text.Length: > 0 } });
+		var aboutTab = (DecompilerTabPageModel)((ContentTabPage)documents.ActiveDockable!).Content!;
 
 		// Assert (mid-test) — the tab carries the custom hyperlink generators that
 		// DecompilerTextView installs alongside the document.
@@ -120,10 +121,10 @@ public class HelpCommandTests
 		// Assert — a new tab opens with the license body.
 		await Waiters.WaitForAsync(
 			() => (documents.VisibleDockables?.Count ?? 0) > beforeCount
-				&& documents.ActiveDockable is DecompilerTabPageModel licenseTab
-				&& !ReferenceEquals(licenseTab, aboutTab)
-				&& licenseTab.Text.Length > 0);
-		var licenseTab = (DecompilerTabPageModel)documents.ActiveDockable!;
+				&& documents.ActiveDockable is ContentTabPage { Content: DecompilerTabPageModel licenseInner }
+				&& !ReferenceEquals(licenseInner, aboutTab)
+				&& licenseInner.Text.Length > 0);
+		var licenseTab = (DecompilerTabPageModel)((ContentTabPage)documents.ActiveDockable!).Content!;
 		licenseTab.Text.Should().Contain("Permission is hereby granted");
 	}
 
@@ -150,20 +151,24 @@ public class HelpCommandTests
 		// realised editor — the value AvaloniaEdit's LinkElementGenerator (and our own
 		// ResourceLinkGenerator) both consult when constructing VisualLineLinkText.
 
-		// Arrange — boot, select a node so the decompiler tab is realised + the editor inside
-		// it is actually constructed (the view is data-templated lazily on first activation).
+		// Arrange — boot, select a node so a decompiler viewmodel is alive on the active
+		// tab. Construct the view explicitly (the dock's deferred content presenter doesn't
+		// materialise its templated children in Avalonia.Headless mode, so walking the
+		// window's visual tree wouldn't find the editor — building one from the live
+		// viewmodel mirrors what the live app's DataTemplate produces).
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 		var node = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		vm.AssemblyTreeModel.SelectNode(node);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		await Waiters.WaitForAsync(
-			() => window.GetVisualDescendants().OfType<DecompilerTextView>().Any());
+		var content = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
-		// Act — locate the editor inside the realised DecompilerTextView.
-		var view = await window.WaitForComponent<DecompilerTextView>();
+		var view = new DecompilerTextView { DataContext = content };
+		// Force layout so the templated TextEditor child is realised — the view's
+		// DataContextChanged-driven setup runs synchronously on assignment.
+		var host = new Window { Content = view, Width = 600, Height = 400 };
+		host.Show();
 		var editor = await view.WaitForComponent<AvaloniaEdit.TextEditor>();
 
 		// Assert — the editor's hyperlink-click option is off.
@@ -206,10 +211,12 @@ public class HelpCommandTests
 			.Single(c => c.Metadata.Header == nameof(Resources._About))
 			.CreateExport().Value;
 		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
+		var mainTab = ((ILSpyDockFactory)vm.DockWorkspace.Factory).MainTab!;
 		aboutCmd.Execute(null);
 		await Waiters.WaitForAsync(
-			() => documents.ActiveDockable is DecompilerTabPageModel { IsStaticContent: true });
-		var aboutTab = (DecompilerTabPageModel)documents.ActiveDockable!;
+			() => documents.ActiveDockable is ContentTabPage { Content: DecompilerTabPageModel { IsStaticContent: true } });
+		var aboutWrapper = (ContentTabPage)documents.ActiveDockable!;
+		var aboutTab = (DecompilerTabPageModel)aboutWrapper.Content!;
 		var aboutText = aboutTab.Text;
 
 		// Assert (mid-test) — the back stack now ends with the tree-node entry; the About
@@ -221,24 +228,23 @@ public class HelpCommandTests
 
 		// Act 2 — press Back from the About page.
 		vm.DockWorkspace.NavigateBackCommand.CanExecute(null).Should().BeTrue();
-		// execute vm.DockWorkspace.NavigateBackCommand
 		vm.DockWorkspace.NavigateBackCommand.Execute(null);
 		await Waiters.WaitForAsync(
-			() => ReferenceEquals(documents.ActiveDockable, decompilerTab));
+			() => ReferenceEquals(documents.ActiveDockable, mainTab));
 
-		// Assert — the decompiler tab is active again; About tab still exists with content
-		// preserved.
+		// Assert — the main tab (with the decompiler content) is active again; the About
+		// sibling still exists with content preserved.
 		ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, method).Should().BeTrue();
 		decompilerTab.Text.Should().Be(methodText);
-		documents.VisibleDockables!.Should().Contain(aboutTab);
+		mainTab.Content.Should().BeSameAs(decompilerTab);
+		documents.VisibleDockables!.Should().Contain(aboutWrapper);
 		aboutTab.Text.Should().Be(aboutText, "the About tab content must survive a Back navigation");
 
 		// Act 3 — press Forward to return to the About page.
 		vm.DockWorkspace.NavigateForwardCommand.CanExecute(null).Should().BeTrue();
-		// execute vm.DockWorkspace.NavigateForwardCommand
 		vm.DockWorkspace.NavigateForwardCommand.Execute(null);
 		await Waiters.WaitForAsync(
-			() => ReferenceEquals(documents.ActiveDockable, aboutTab));
+			() => ReferenceEquals(documents.ActiveDockable, aboutWrapper));
 
 		// Assert — About is active again, content intact.
 		aboutTab.Text.Should().Be(aboutText);

@@ -434,6 +434,13 @@ public class DecompilerViewTests
 		vm.AssemblyTreeModel.SelectNode(assemblyNode);
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
+		// The dock's deferred content presenter doesn't materialise its templated children
+		// in Avalonia.Headless mode, so we construct the view explicitly from the live
+		// viewmodel — same shape the live app's DataTemplate produces.
+		var view = new DecompilerTextView { DataContext = tab };
+		var host = new global::Avalonia.Controls.Window { Content = view, Width = 600, Height = 400 };
+		host.Show();
+
 		// Act — drop a synthetic XML resource into the tab. XmlResourceEntryNode triggers
 		// SyntaxExtension=".xml" and the XmlFoldingStrategy install.
 		var xml = "<root>\n  <child attr=\"v\">\n    text\n  </child>\n  <other>\n  </other>\n</root>";
@@ -441,7 +448,6 @@ public class DecompilerViewTests
 		tab.CurrentNode = new XmlResourceEntryNode("test.xml", () => new System.IO.MemoryStream(bytes));
 		await Waiters.WaitForAsync(() => tab.SyntaxExtension == ".xml" && tab.Text.Contains("<root>"));
 
-		var view = await window.WaitForComponent<DecompilerTextView>();
 		// Drain the layout so ApplyDocument's PropertyChanged handler has executed.
 		for (int i = 0; i < 5; i++)
 		{

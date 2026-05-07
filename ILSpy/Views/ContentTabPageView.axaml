@@ -1,0 +1,22 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ILSpy.ViewModels"
+             xmlns:textView="using:ILSpy.TextView"
+             xmlns:metaViews="using:ILSpy.Views"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
+             x:Class="ILSpy.Views.ContentTabPageView"
+             x:DataType="vm:ContentTabPage">
+
+	<!-- Both inner views are pre-realised; only the one matching Content's runtime type
+	     is visible. Code-behind toggles IsVisible and DataContext on Content change.
+	     Avoids Dock's add+close-in-the-same-tick visual-staleness when the tab type
+	     changes (the previous view would otherwise stay rendered until the next layout
+	     pass). -->
+	<Panel>
+		<textView:DecompilerTextView Name="DecompilerView" />
+		<metaViews:MetadataTablePage Name="MetadataView" />
+	</Panel>
+
+</UserControl>

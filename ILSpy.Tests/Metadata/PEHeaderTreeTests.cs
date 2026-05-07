@@ -139,8 +139,8 @@ public class PEHeaderTreeTests
 		var decompilerTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		decompilerTab.Should().NotBeNull();
 
-		var documents = ((global::ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
-		documents.ActiveDockable.Should().BeOfType<global::ILSpy.TextView.DecompilerTabPageModel>();
+		var mainTab = ((global::ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory).MainTab!;
+		mainTab.Content.Should().BeOfType<global::ILSpy.TextView.DecompilerTabPageModel>();
 	}
 
 	[AvaloniaTest]
@@ -169,18 +169,19 @@ public class PEHeaderTreeTests
 		vm.AssemblyTreeModel.SelectNode(assemblyNode);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
-		var documents = ((global::ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
-		documents.ActiveDockable.Should().BeOfType<global::ILSpy.TextView.DecompilerTabPageModel>();
+		var mainTab = ((global::ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory).MainTab!;
+		mainTab.Content.Should().BeOfType<global::ILSpy.TextView.DecompilerTabPageModel>();
 	}
 
 	[AvaloniaTest]
-	public async Task Round_Tripping_Metadata_To_Entity_Keeps_The_Dock_Single_Tab()
+	public async Task Round_Tripping_Metadata_To_Entity_Reuses_The_Same_Document_Instance()
 	{
-		// The dock holds at most one document tab at a time: switching from metadata to an
-		// entity closes the grid and surfaces a decompiler text view, switching back
-		// closes the decompiler tab and surfaces a fresh grid. Mirrors WPF's
-		// single-tab swap-content UX so the user never sees both views compete for the
-		// document area.
+		// The document area holds a single persistent ContentTabPage for the lifetime of
+		// the app; only its inner Content swaps between decompiler / metadata viewmodels.
+		// Keeping the Document instance stable is what makes the visual swap actually
+		// happen on content-type changes — replacing the dockable in place leaves the
+		// previous inner view rendered (the user would see a "Decompiling" spinner that
+		// never goes away because the prior decompiler tab is still on screen).
 
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
@@ -194,24 +195,29 @@ public class PEHeaderTreeTests
 		metadataNode.EnsureLazyChildren();
 		var dosNode = metadataNode.Children.OfType<DosHeaderTreeNode>().Single();
 		var coffNode = metadataNode.Children.OfType<CoffHeaderTreeNode>().Single();
-		var documents = ((global::ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
+		var factoryFactory = (global::ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory;
+		var documents = factoryFactory.Documents!;
+		var mainTab = factoryFactory.MainTab!;
 
 		vm.AssemblyTreeModel.SelectNode(dosNode);
 		await vm.DockWorkspace.WaitForMetadataTabAsync();
-		documents.VisibleDockables!.Should().HaveCount(1);
+		documents.VisibleDockables!.Should().HaveCount(1).And.Contain(mainTab);
+		mainTab.Content.Should().BeOfType<global::ILSpy.ViewModels.MetadataTablePageModel>();
 
 		vm.AssemblyTreeModel.SelectNode(assemblyNode);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		documents.VisibleDockables!.Should().HaveCount(1);
+		documents.VisibleDockables!.Should().HaveCount(1).And.Contain(mainTab);
+		mainTab.Content.Should().BeOfType<global::ILSpy.TextView.DecompilerTabPageModel>();
 
 		vm.AssemblyTreeModel.SelectNode(coffNode);
 		await vm.DockWorkspace.WaitForMetadataTabAsync();
-		documents.VisibleDockables!.Should().HaveCount(1);
+		documents.VisibleDockables!.Should().HaveCount(1).And.Contain(mainTab);
+		mainTab.Content.Should().BeOfType<global::ILSpy.ViewModels.MetadataTablePageModel>();
 
 		vm.AssemblyTreeModel.SelectNode(assemblyNode);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		documents.VisibleDockables!.Should().HaveCount(1);
-		documents.ActiveDockable.Should().BeOfType<global::ILSpy.TextView.DecompilerTabPageModel>();
+		documents.VisibleDockables!.Should().HaveCount(1).And.Contain(mainTab);
+		mainTab.Content.Should().BeOfType<global::ILSpy.TextView.DecompilerTabPageModel>();
 	}
 
 	[AvaloniaTest]
@@ -250,8 +256,8 @@ public class PEHeaderTreeTests
 		thirdTab.Should().BeSameAs(firstTab);
 		thirdTab.Title.Should().Be("DOS Header");
 
-		var documents = ((global::ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
-		documents.VisibleDockables!.OfType<global::ILSpy.ViewModels.MetadataTablePageModel>().Should().ContainSingle();
+		var mainTab = ((global::ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory).MainTab!;
+		mainTab.Content.Should().BeSameAs(firstTab, "the inner metadata viewmodel is reused in place");
 	}
 
 	[AvaloniaTest]

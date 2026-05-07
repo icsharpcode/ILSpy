@@ -38,6 +38,9 @@
         <DataTemplate DataType="analyzers:AnalyzerTreeViewModel">
             <analyzers:AnalyzerTreeView />
         </DataTemplate>
+        <DataTemplate DataType="vm:ContentTabPage">
+            <metaViews:ContentTabPageView />
+        </DataTemplate>
         <DataTemplate DataType="textView:DecompilerTabPageModel">
             <textView:DecompilerTextView />
         </DataTemplate>
