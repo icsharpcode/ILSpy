@@ -7,19 +7,27 @@
              x:Class="ILSpy.Views.MetadataTablePage"
              x:DataType="vm:MetadataTablePageModel">
 
-	<!-- ItemsSource and Columns are wired imperatively in code-behind so the (clear-cols /
-	     add-cols / set-items) sequence runs as a single transaction. Binding ItemsSource
-	     declaratively crashes the DataGrid's measure pass when the view is reused across
-	     content types whose schemas have a different column count, because Avalonia's
-	     binding-system rebind happens after the imperative column rewrite. -->
-	<DataGrid Name="Grid"
-	          CanUserResizeColumns="True"
-	          CanUserSortColumns="True"
-	          CanUserReorderColumns="False"
-	          IsReadOnly="True"
-	          GridLinesVisibility="None"
-	          HeadersVisibility="Column"
-	          SelectionMode="Single"
-	          AutoGenerateColumns="False" />
+	<DockPanel LastChildFill="True">
+		<TextBox Name="FilterBox"
+		         DockPanel.Dock="Top"
+		         PlaceholderText="Filter (case-insensitive substring match across columns)"
+		         Margin="4,4,4,2"
+		         Text="{Binding FilterText, Mode=TwoWay}" />
+
+		<!-- ItemsSource and Columns are wired imperatively in code-behind so the (clear-cols /
+		     add-cols / set-items) sequence runs as a single transaction. Binding ItemsSource
+		     declaratively crashes the DataGrid's measure pass when the view is reused across
+		     content types whose schemas have a different column count, because Avalonia's
+		     binding-system rebind happens after the imperative column rewrite. -->
+		<DataGrid Name="Grid"
+		          CanUserResizeColumns="True"
+		          CanUserSortColumns="True"
+		          CanUserReorderColumns="False"
+		          IsReadOnly="True"
+		          GridLinesVisibility="None"
+		          HeadersVisibility="Column"
+		          SelectionMode="Single"
+		          AutoGenerateColumns="False" />
+	</DockPanel>
 
 </UserControl>

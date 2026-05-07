@@ -19,6 +19,7 @@
 using System;
 using System.ComponentModel;
 
+using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
@@ -35,6 +36,7 @@ namespace ILSpy.Views
 	public partial class MetadataTablePage : UserControl
 	{
 		MetadataTablePageModel? boundModel;
+		DataGridCollectionView? itemsView;
 
 		public MetadataTablePage()
 		{
@@ -60,6 +62,8 @@ namespace ILSpy.Views
 			if (e.PropertyName is nameof(MetadataTablePageModel.Columns)
 				or nameof(MetadataTablePageModel.Items))
 				ApplySchema();
+			else if (e.PropertyName == nameof(MetadataTablePageModel.FilterText))
+				itemsView?.Refresh();
 			else if (e.PropertyName == nameof(MetadataTablePageModel.ScrollToRow))
 				ApplyScrollTarget();
 		}
@@ -76,11 +80,15 @@ namespace ILSpy.Views
 			// the new schema has more columns than the old one.
 			grid.ItemsSource = Array.Empty<object>();
 			grid.Columns.Clear();
+			itemsView = null;
 			if (boundModel == null)
 				return;
 			foreach (var c in boundModel.Columns)
 				grid.Columns.Add(c);
-			grid.ItemsSource = boundModel.Items;
+			itemsView = new DataGridCollectionView(boundModel.Items) {
+				Filter = item => MetadataTablePageModel.MatchesFilter(item, boundModel?.FilterText),
+			};
+			grid.ItemsSource = itemsView;
 		}
 
 		void ApplyScrollTarget()
