@@ -152,8 +152,9 @@ namespace ILSpy.Docking
 		{
 			if (suppressHistoryRecording || node == null)
 				return;
-			var tab = ResolveDecompilerTab();
-			if (tab == null)
+			// ShowSelectedNode has already settled the active dockable for this selection —
+			// record whichever tab type ended up there (decompiler or metadata grid).
+			if (factory.Documents?.ActiveDockable is not TabPageModel tab)
 				return;
 			RecordHistoryEntry(new TreeNodeEntry(tab, node));
 		}
@@ -256,62 +257,81 @@ namespace ILSpy.Docking
 			if (nodes.Length == 0)
 				return;
 
-			// Single-node selections that opt into a custom tab (e.g. metadata-table nodes
-			// returning a DataGrid model) get routed there directly. Multi-select keeps the
-			// decompiler tab because there's no sensible composite for two unrelated grids.
-			if (nodes.Length == 1 && nodes[0].CreateTab() is { } customTab)
+			// Tree-node selections always reuse the user's active document slot — custom-tab
+			// nodes (metadata grids) and the regular decompiler path both swap state into
+			// whatever's currently active. If the active dockable is the wrong concrete type
+			// it gets replaced in place; no sibling tabs are created.
+			// Carve-outs ("Open in new tab", "Freeze tab") aren't implemented yet and would
+			// branch off this path before the active-slot lookup.
+			var customTab = nodes.Length == 1 ? nodes[0].CreateTab() : null;
+
+			if (customTab != null)
 			{
-				ShowCustomTab(customTab);
+				PutInActiveSlot(customTab);
 				return;
 			}
 
-			var tab = ResolveDecompilerTab();
-			if (tab == null)
-				return;
-			if (factory.Documents?.ActiveDockable != tab)
+			if (AcquireActiveDecompilerTab() is { } decTab)
 			{
-				factory.SetActiveDockable(tab);
-				if (factory.Documents != null)
-					factory.SetFocusedDockable(factory.Documents, tab);
+				decTab.Language = languageService.CurrentLanguage;
+				decTab.CurrentNodes = nodes;
 			}
-			tab.Language = languageService.CurrentLanguage;
-			tab.CurrentNodes = nodes;
 		}
 
-		void ShowCustomTab(TabPageModel tab)
+		// Drops <paramref name="prototype"/> into the active document slot. If the slot
+		// already holds a tab of the same concrete type, copies state into it; otherwise
+		// closes the current active and adds the prototype in its place.
+		void PutInActiveSlot(TabPageModel prototype)
 		{
 			if (factory.Documents == null)
 				return;
 
-			// Reuse an existing tab of the same concrete type — same model the decompiler tab
-			// uses, so DOS Header → COFF Header → DOS Header doesn't pile up three dockables.
-			// Prefer the active dockable when it's already the right type so explicit
-			// "switch tabs and pick a node" interactions land where the user expects.
-			if (FindReusableTab(tab.GetType()) is { } existing)
+			if (factory.Documents.ActiveDockable is TabPageModel active && active.GetType() == prototype.GetType())
 			{
-				CopyTabState(tab, existing);
-				factory.SetActiveDockable(existing);
-				factory.SetFocusedDockable(factory.Documents, existing);
+				CopyTabState(prototype, active);
 				return;
 			}
 
-			factory.AddDockable(factory.Documents, tab);
-			factory.SetActiveDockable(tab);
-			factory.SetFocusedDockable(factory.Documents, tab);
+			var oldActive = factory.Documents.ActiveDockable as IDockable;
+			factory.AddDockable(factory.Documents, prototype);
+			factory.SetActiveDockable(prototype);
+			factory.SetFocusedDockable(factory.Documents, prototype);
+			if (oldActive != null && !ReferenceEquals(oldActive, prototype))
+				factory.CloseDockable(oldActive);
 		}
 
-		TabPageModel? FindReusableTab(Type tabType)
+		// Once consumed and later replaced, the factory's InitialDecompilerTab can't be
+		// re-added to the dock — Dock treats it as a known closed dockable. Track whether
+		// it's still available so the first selection uses it and later selections build a
+		// fresh instance instead.
+		bool initialDecompilerTabConsumed;
+
+		DecompilerTabPageModel? AcquireActiveDecompilerTab()
 		{
 			if (factory.Documents == null)
 				return null;
-			if (factory.Documents.ActiveDockable is TabPageModel active && active.GetType() == tabType)
+			if (factory.Documents.ActiveDockable is DecompilerTabPageModel active)
 				return active;
-			if (factory.Documents.VisibleDockables == null)
-				return null;
-			foreach (var d in factory.Documents.VisibleDockables)
-				if (d is TabPageModel m && m.GetType() == tabType)
-					return m;
-			return null;
+
+			DecompilerTabPageModel fresh;
+			if (!initialDecompilerTabConsumed && factory.InitialDecompilerTab is { } initial)
+			{
+				fresh = initial;
+				initialDecompilerTabConsumed = true;
+			}
+			else
+			{
+				fresh = new DecompilerTabPageModel { Title = "(no selection)" };
+				fresh.NavigateRequested += OnNavigateRequested;
+			}
+
+			var oldActive = factory.Documents.ActiveDockable as IDockable;
+			factory.AddDockable(factory.Documents, fresh);
+			factory.SetActiveDockable(fresh);
+			factory.SetFocusedDockable(factory.Documents, fresh);
+			if (oldActive != null && !ReferenceEquals(oldActive, fresh))
+				factory.CloseDockable(oldActive);
+			return fresh;
 		}
 
 		static void CopyTabState(TabPageModel source, TabPageModel target)
@@ -326,27 +346,6 @@ namespace ILSpy.Docking
 		}
 
 		public DecompilerTabPageModel? ActiveDecompilerTab => GetDecompilerContentTab();
-
-		/// <summary>
-		/// Returns the tab tree-node selections should be rendered into. Prefers the active
-		/// dockable when it's a non-static decompiler tab, falls back to any other non-static
-		/// decompiler tab, and otherwise lazily attaches the factory's initial decompiler tab.
-		/// Returns null if the document dock isn't realised yet.
-		/// </summary>
-		DecompilerTabPageModel? ResolveDecompilerTab()
-		{
-			if (factory.Documents == null)
-				return null;
-			if (GetDecompilerContentTab() is { } existing)
-				return existing;
-			var tab = factory.InitialDecompilerTab;
-			if (tab == null)
-				return null;
-			factory.AddDockable(factory.Documents, tab);
-			factory.SetActiveDockable(tab);
-			factory.SetFocusedDockable(factory.Documents, tab);
-			return tab;
-		}
 
 		// Decompiler-content tabs only — static-content tabs (About / License) are excluded so
 		// tree-node selections never overwrite them.
@@ -397,6 +396,9 @@ namespace ILSpy.Docking
 				currentRoot.ActiveDockable = root.ActiveDockable;
 				currentRoot.FocusedDockable = root.FocusedDockable;
 			}
+			// Fresh layout means the factory minted a new InitialDecompilerTab; AcquireActive
+			// can use it again.
+			initialDecompilerTabConsumed = false;
 			if (factory.InitialDecompilerTab is { } initialTab)
 			{
 				initialTab.Language = languageService.CurrentLanguage;

@@ -106,6 +106,115 @@ public class PEHeaderTreeTests
 	}
 
 	[AvaloniaTest]
+	public async Task Switching_From_Metadata_Node_Back_To_Entity_Node_Reactivates_Decompiler_Tab()
+	{
+		// Regression: with a metadata tab active, clicking back on a regular entity node was
+		// leaving the metadata tab on screen because the docking host activated the
+		// decompiler tab but never restored it as the user-visible page. Both round-trip
+		// directions should swap the active dockable to the right tab type.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
+		assemblyNode.EnsureLazyChildren();
+		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
+		metadataNode.EnsureLazyChildren();
+		var dosNode = metadataNode.Children.OfType<DosHeaderTreeNode>().Single();
+
+		// Step 1 — pick a regular entity node (the assembly itself decompiles to its
+		// AssemblyDef metadata via the decompiler text path). Decompiler tab should be active.
+		vm.AssemblyTreeModel.SelectNode(assemblyNode);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		// Step 2 — pick the DOS-header metadata node. Metadata tab takes the active slot.
+		vm.AssemblyTreeModel.SelectNode(dosNode);
+		await vm.DockWorkspace.WaitForMetadataTabAsync();
+
+		// Step 3 — back to the entity node. The decompiler tab must come back into view.
+		vm.AssemblyTreeModel.SelectNode(assemblyNode);
+		var decompilerTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		decompilerTab.Should().NotBeNull();
+
+		var documents = ((global::ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
+		documents.ActiveDockable.Should().BeOfType<global::ILSpy.TextView.DecompilerTabPageModel>();
+	}
+
+	[AvaloniaTest]
+	public async Task Starting_With_Metadata_Then_Picking_An_Entity_Brings_Up_The_Decompiler_Tab()
+	{
+		// Same regression as above but entered through the metadata side first — clicking
+		// DOS Header before any entity has been selected, then back to an entity. Verifies
+		// the docking host can lazily create and activate the decompiler tab even when the
+		// document area starts out holding only the metadata grid.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
+		assemblyNode.EnsureLazyChildren();
+		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
+		metadataNode.EnsureLazyChildren();
+		var dosNode = metadataNode.Children.OfType<DosHeaderTreeNode>().Single();
+
+		vm.AssemblyTreeModel.SelectNode(dosNode);
+		await vm.DockWorkspace.WaitForMetadataTabAsync();
+
+		vm.AssemblyTreeModel.SelectNode(assemblyNode);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		var documents = ((global::ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
+		documents.ActiveDockable.Should().BeOfType<global::ILSpy.TextView.DecompilerTabPageModel>();
+	}
+
+	[AvaloniaTest]
+	public async Task Round_Tripping_Metadata_To_Entity_Keeps_The_Dock_Single_Tab()
+	{
+		// The dock holds at most one document tab at a time: switching from metadata to an
+		// entity closes the grid and surfaces a decompiler text view, switching back
+		// closes the decompiler tab and surfaces a fresh grid. Mirrors WPF's
+		// single-tab swap-content UX so the user never sees both views compete for the
+		// document area.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
+		assemblyNode.EnsureLazyChildren();
+		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
+		metadataNode.EnsureLazyChildren();
+		var dosNode = metadataNode.Children.OfType<DosHeaderTreeNode>().Single();
+		var coffNode = metadataNode.Children.OfType<CoffHeaderTreeNode>().Single();
+		var documents = ((global::ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
+
+		vm.AssemblyTreeModel.SelectNode(dosNode);
+		await vm.DockWorkspace.WaitForMetadataTabAsync();
+		documents.VisibleDockables!.Should().HaveCount(1);
+
+		vm.AssemblyTreeModel.SelectNode(assemblyNode);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		documents.VisibleDockables!.Should().HaveCount(1);
+
+		vm.AssemblyTreeModel.SelectNode(coffNode);
+		await vm.DockWorkspace.WaitForMetadataTabAsync();
+		documents.VisibleDockables!.Should().HaveCount(1);
+
+		vm.AssemblyTreeModel.SelectNode(assemblyNode);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		documents.VisibleDockables!.Should().HaveCount(1);
+		documents.ActiveDockable.Should().BeOfType<global::ILSpy.TextView.DecompilerTabPageModel>();
+	}
+
+	[AvaloniaTest]
 	public async Task Selecting_A_Second_Metadata_Node_Reuses_The_Existing_Grid_Tab()
 	{
 		// Clicking DOS Header → COFF Header → DOS Header should leave the dock with a
