@@ -25,6 +25,7 @@ using ICSharpCode.Decompiler.Metadata;
 
 using ILSpy.Languages;
 using ILSpy.Metadata.CorTables;
+using ILSpy.Metadata.DebugTables;
 using ILSpy.TreeNodes;
 
 namespace ILSpy.Metadata
@@ -97,6 +98,14 @@ namespace ILSpy.Metadata
 				TableIndex.StandAloneSig => new StandAloneSigTableTreeNode(metadataFile),
 				TableIndex.DeclSecurity => new DeclSecurityTableTreeNode(metadataFile),
 				TableIndex.File => new FileTableTreeNode(metadataFile),
+				TableIndex.Document => new DocumentTableTreeNode(metadataFile),
+				TableIndex.MethodDebugInformation => new MethodDebugInformationTableTreeNode(metadataFile),
+				TableIndex.LocalScope => new LocalScopeTableTreeNode(metadataFile),
+				TableIndex.LocalVariable => new LocalVariableTableTreeNode(metadataFile),
+				TableIndex.LocalConstant => new LocalConstantTableTreeNode(metadataFile),
+				TableIndex.ImportScope => new ImportScopeTableTreeNode(metadataFile),
+				TableIndex.StateMachineMethod => new StateMachineMethodTableTreeNode(metadataFile),
+				TableIndex.CustomDebugInformation => new CustomDebugInformationTableTreeNode(metadataFile),
 				_ => new UnsupportedMetadataTableTreeNode(table, metadataFile),
 			};
 	}
