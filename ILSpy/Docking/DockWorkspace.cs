@@ -278,26 +278,41 @@ namespace ILSpy.Docking
 			}
 		}
 
-		// Drops <paramref name="prototype"/> into the active document slot. If the slot
-		// already holds a tab of the same concrete type, copies state into it; otherwise
-		// closes the current active and adds the prototype in its place.
+		// Drops <paramref name="prototype"/> into the active document slot. Same concrete
+		// type as what's already there → copy state in place. Different type → swap in the
+		// VisibleDockables list (single mutation fires INotifyCollectionChanged.Replace,
+		// which Dock translates into a clean visual swap; close-then-add in the same tick
+		// leaves the old view rendered until the next layout pass).
 		void PutInActiveSlot(TabPageModel prototype)
 		{
-			if (factory.Documents == null)
+			if (factory.Documents is not { } docs)
 				return;
 
-			if (factory.Documents.ActiveDockable is TabPageModel active && active.GetType() == prototype.GetType())
+			if (docs.ActiveDockable is TabPageModel active && active.GetType() == prototype.GetType())
 			{
 				CopyTabState(prototype, active);
 				return;
 			}
 
-			var oldActive = factory.Documents.ActiveDockable as IDockable;
-			factory.AddDockable(factory.Documents, prototype);
+			var oldActive = docs.ActiveDockable;
+			if (oldActive != null && docs.VisibleDockables is { } list)
+			{
+				int idx = list.IndexOf(oldActive);
+				if (idx >= 0)
+				{
+					prototype.Owner = docs;
+					prototype.Factory = factory;
+					list[idx] = prototype;
+					docs.ActiveDockable = prototype;
+					factory.SetFocusedDockable(docs, prototype);
+					return;
+				}
+			}
+
+			// Fallback (no current active): just add.
+			factory.AddDockable(docs, prototype);
 			factory.SetActiveDockable(prototype);
-			factory.SetFocusedDockable(factory.Documents, prototype);
-			if (oldActive != null && !ReferenceEquals(oldActive, prototype))
-				factory.CloseDockable(oldActive);
+			factory.SetFocusedDockable(docs, prototype);
 		}
 
 		// Once consumed and later replaced, the factory's InitialDecompilerTab can't be
@@ -308,9 +323,9 @@ namespace ILSpy.Docking
 
 		DecompilerTabPageModel? AcquireActiveDecompilerTab()
 		{
-			if (factory.Documents == null)
+			if (factory.Documents is not { } docs)
 				return null;
-			if (factory.Documents.ActiveDockable is DecompilerTabPageModel active)
+			if (docs.ActiveDockable is DecompilerTabPageModel active)
 				return active;
 
 			DecompilerTabPageModel fresh;
@@ -325,12 +340,26 @@ namespace ILSpy.Docking
 				fresh.NavigateRequested += OnNavigateRequested;
 			}
 
-			var oldActive = factory.Documents.ActiveDockable as IDockable;
-			factory.AddDockable(factory.Documents, fresh);
+			// Replace the active dockable in place (see PutInActiveSlot for why an in-place
+			// list mutation beats close-then-add for the visual swap).
+			var oldActive = docs.ActiveDockable;
+			if (oldActive != null && docs.VisibleDockables is { } list)
+			{
+				int idx = list.IndexOf(oldActive);
+				if (idx >= 0)
+				{
+					fresh.Owner = docs;
+					fresh.Factory = factory;
+					list[idx] = fresh;
+					docs.ActiveDockable = fresh;
+					factory.SetFocusedDockable(docs, fresh);
+					return fresh;
+				}
+			}
+
+			factory.AddDockable(docs, fresh);
 			factory.SetActiveDockable(fresh);
-			factory.SetFocusedDockable(factory.Documents, fresh);
-			if (oldActive != null && !ReferenceEquals(oldActive, fresh))
-				factory.CloseDockable(oldActive);
+			factory.SetFocusedDockable(docs, fresh);
 			return fresh;
 		}
 
