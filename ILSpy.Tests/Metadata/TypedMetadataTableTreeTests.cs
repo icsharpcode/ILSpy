@@ -39,17 +39,16 @@ namespace ICSharpCode.ILSpy.Tests.Metadata;
 public class TypedMetadataTableTreeTests
 {
 	[AvaloniaTest]
-	public async Task AssemblyRefTableTreeNode_Decompiles_To_A_Row_Per_AssemblyReference()
+	public async Task AssemblyRefTableTreeNode_Opens_A_Grid_With_One_Row_Per_AssemblyReference()
 	{
-		// CoreLib's AssemblyRef table holds the assemblies it depends on (typically a
-		// handful: System.Runtime, System.Threading, …). Selecting the typed table node
-		// should render one row per reference with the reference's display name visible.
+		// CoreLib's AssemblyRef table is empty (CoreLib is the bottom of the dep chain), so
+		// target System.Linq instead. Selecting the typed table node opens a metadata-grid
+		// tab whose Items list mirrors the table's rows; a known reference's display name
+		// must show up on at least one row.
 
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		// CoreLib has zero AssemblyRefs (it's the bottom of the dep chain), so target
-		// System.Linq instead — same approach as the broader assembly-tree tests.
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
@@ -64,17 +63,18 @@ public class TypedMetadataTableTreeTests
 		assemblyRefNode.RowCount.Should().BeGreaterThan(0);
 
 		vm.AssemblyTreeModel.SelectNode(assemblyRefNode);
-		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
 
-		tab.Text.Should().Contain("AssemblyRef");
-		tab.Text.Should().Contain("Name");
-		tab.Text.Should().Contain("Version");
-		// CoreLib references almost always include System.Runtime or netstandard.
-		tab.Text.Should().MatchRegex(@"\b(System\.Runtime|netstandard|System\.Private\.CoreLib|System\.Threading)\b");
+		tab.Title.Should().StartWith("AssemblyRef");
+		tab.Items.Should().HaveCount(assemblyRefNode.RowCount);
+		var names = tab.Items.Cast<AssemblyRefTableTreeNode.AssemblyRefEntry>()
+			.Select(e => e.Name)
+			.ToList();
+		names.Should().IntersectWith(new[] { "System.Runtime", "netstandard", "System.Private.CoreLib", "System.Threading" });
 	}
 
 	[AvaloniaTest]
-	public async Task TypeDefTableTreeNode_Decompiles_To_A_Row_Per_Type_Definition()
+	public async Task TypeDefTableTreeNode_Opens_A_Grid_Including_System_Object()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
@@ -91,23 +91,21 @@ public class TypedMetadataTableTreeTests
 		var typeDefNode = tablesNode.Children.OfType<TypeDefTableTreeNode>().Single();
 
 		typeDefNode.Kind.Should().Be(TableIndex.TypeDef);
-		// CoreLib has thousands of type definitions.
 		typeDefNode.RowCount.Should().BeGreaterThan(1000);
 
 		vm.AssemblyTreeModel.SelectNode(typeDefNode);
-		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
 
-		tab.Text.Should().Contain("TypeDef");
-		// Object is the very first entry every CLI assembly produces (after <Module>).
-		tab.Text.Should().Contain("Object");
+		tab.Title.Should().StartWith("TypeDef");
+		tab.Items.Cast<TypeDefTableTreeNode.TypeDefEntry>()
+			.Should().Contain(e => e.Name == "Object");
 	}
 
 	[AvaloniaTest]
-	public async Task FieldAndMethodTables_Decompile_With_Their_Own_Typed_Leaves()
+	public async Task FieldAndMethodTables_Are_Available_As_Typed_Leaves()
 	{
 		// Field / MethodDef are by far the largest tables in any real assembly. The typed
-		// leaf should report the right table kind, expose a row count, and decompile to a
-		// table whose first column header is "RID" (the per-table row identifier).
+		// leaves should report the right kind and expose row data through the grid view.
 
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
@@ -131,13 +129,13 @@ public class TypedMetadataTableTreeTests
 
 		var methodNode = tablesNode.Children.OfType<MethodTableTreeNode>().Single();
 		vm.AssemblyTreeModel.SelectNode(methodNode);
-		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		tab.Text.Should().Contain("MethodDef");
-		tab.Text.Should().Contain("RID");
+		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		tab.Title.Should().StartWith("MethodDef");
+		tab.Columns.Select(c => c.Header.ToString()).Should().Contain("RID");
 	}
 
 	[AvaloniaTest]
-	public async Task ModuleTableTreeNode_Decompiles_To_A_Single_Row_Carrying_The_Module_Name()
+	public async Task ModuleTableTreeNode_Opens_A_Grid_With_The_Single_Module_Row()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
@@ -156,9 +154,11 @@ public class TypedMetadataTableTreeTests
 		moduleNode.RowCount.Should().Be(1, "Module is a one-row table by spec");
 
 		vm.AssemblyTreeModel.SelectNode(moduleNode);
-		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
 
-		tab.Text.Should().Contain("Module");
-		tab.Text.Should().Contain(".dll");
+		tab.Title.Should().StartWith("Module");
+		tab.Items.Should().HaveCount(1);
+		var row = (ModuleTableTreeNode.ModuleEntry)tab.Items[0];
+		row.Name.Should().EndWith(".dll");
 	}
 }

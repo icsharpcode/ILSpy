@@ -21,11 +21,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.Languages;
 using ILSpy.TreeNodes;
+using ILSpy.ViewModels;
 
 namespace ILSpy.Metadata
 {
@@ -53,15 +52,13 @@ namespace ILSpy.Metadata
 	}
 
 	/// <summary>
-	/// Typed companion: holds the row materialiser and the shared text-render path. Rows are
-	/// loaded lazily and cached so repeated decompiles don't re-walk the metadata. Phase 2
-	/// adds a <c>CreateTab</c> override that hands the same <c>LoadTable()</c> result to a
-	/// DataGrid view; for now <see cref="ITextOutput"/> is the only renderer.
+	/// Typed companion: holds the row materialiser and routes selection to the DataGrid
+	/// view. Rows are loaded lazily and cached so repeated activations don't re-walk the
+	/// metadata. Token-bearing columns surface the runtime hex value here; Phase 3b makes
+	/// them clickable hyperlinks via <see cref="MetadataColumnBuilder"/>.
 	/// </summary>
 	public abstract class MetadataTableTreeNode<TEntry> : MetadataTableTreeNode
 	{
-		public const int PreviewLimit = 200;
-
 		IReadOnlyList<TEntry>? cached;
 
 		protected MetadataTableTreeNode(TableIndex kind, MetadataFile metadataFile)
@@ -74,16 +71,10 @@ namespace ILSpy.Metadata
 
 		protected abstract IReadOnlyList<TEntry> LoadTable();
 
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			var rows = cached ??= LoadTable();
-			var preview = rows.Count > PreviewLimit
-				? (IReadOnlyList<TEntry>)rows.Take(PreviewLimit).ToList()
-				: rows;
-			language.WriteCommentLine(output, $"{Kind} ({rows.Count} rows)");
-			MetadataTextWriter.WriteTable(language, output, preview);
-			if (rows.Count > preview.Count)
-				language.WriteCommentLine(output, $"... ({rows.Count - preview.Count} more rows; full view ships with the metadata DataGrid in a future release)");
-		}
+		public override TabPageModel CreateTab() => new MetadataTablePageModel {
+			Title = $"{Kind} ({RowCount})",
+			Items = (cached ??= LoadTable()).Cast<object>().ToList(),
+			Columns = MetadataColumnBuilder.For<TEntry>(),
+		};
 	}
 }
