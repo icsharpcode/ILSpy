@@ -50,6 +50,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			bool changed = false;
 
+			// Pre-pass: normalize runtime-async catch filters that wrap a type-test + obj-store.
+			// `catch (T ex) when (filter)` is lowered to `catch object when ({ isinst T; obj=ex; <filter> })`,
+			// even when T is `object` (i.e. the source is `catch when (filter)`). After this pre-pass the
+			// catch handler looks structurally identical to a non-filter catch, so the body matcher in
+			// TryRewriteTryCatch can run unchanged.
+			foreach (var handler in function.Descendants.OfType<TryCatchHandler>().ToArray())
+			{
+				if (NormalizeRuntimeAsyncFilter(handler, function, context))
+					changed = true;
+			}
+
 			foreach (var tryCatch in function.Descendants.OfType<TryCatch>().ToArray())
 			{
 				if (tryCatch.Handlers.Count != 1)
@@ -67,8 +78,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (handlerBody.Blocks.Count != 1)
 					continue;
 				var handlerBlock = handlerBody.Blocks[0];
-				if (!handler.Filter.MatchLdcI4(1))
-					continue;
 
 				if (TryRewriteTryFinally(tryCatch, handler, handlerBlock, parentBlock, container, context))
 				{
@@ -87,6 +96,114 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				foreach (var c in function.Body.Descendants.OfType<BlockContainer>())
 					c.SortBlocks(deleteUnreachableBlocks: true);
+			}
+		}
+
+		// Strip the runtime-async obj-store machinery from the entry of the filter's trueBody.
+		// After this runs, the filter has the same shape as a state-machine-async catch-when filter,
+		// and DetectCatchWhenConditionBlocks (the next EarlyILTransform) handles isinst recognition,
+		// retyping handler.Variable to the user's catch type, and propagating it through trivial
+		// stloc copies inside the handler. We only need to peel off the runtime-async-specific
+		// captured-object prefix.
+		//
+		// Shape we strip from trueBody:
+		//   [stloc tmp2(ldloc tmpVar);]                  optional copy
+		//   stloc obj(ldloc tmp_or_tmp2)
+		//   [stloc typedEx(castclass T'(ldloc obj));]    optional, when source has a typed catch var
+		// where tmpVar is the isinst-result local set in the filter's entry block.
+		static bool NormalizeRuntimeAsyncFilter(TryCatchHandler handler, ILFunction function, ILTransformContext context)
+		{
+			if (!handler.Variable.Type.IsKnownType(KnownTypeCode.Object))
+				return false;
+			if (handler.Filter is not BlockContainer filterContainer)
+				return false;
+
+			// Find the isinst-result temp via the standard catch-when entry shape:
+			//   stloc tmp(isinst T(ldloc handlerVar)); if (tmp != null) br trueBody; br falseBody
+			var entry = filterContainer.EntryPoint;
+			if (entry.Instructions.Count != 3)
+				return false;
+			if (!entry.Instructions[0].MatchStLoc(out var tmpVar, out var tmpValue))
+				return false;
+			if (!tmpValue.MatchIsInst(out var isinstArg, out _))
+				return false;
+			if (!isinstArg.MatchLdLoc(handler.Variable))
+				return false;
+			if (entry.Instructions[1] is not IfInstruction ifInst)
+				return false;
+			if (!ifInst.Condition.MatchCompNotEqualsNull(out var condArg) || !condArg.MatchLdLoc(tmpVar))
+				return false;
+			if (ifInst.TrueInst is not Branch trueBranch)
+				return false;
+			var trueBody = trueBranch.TargetBlock;
+			int n = trueBody.Instructions.Count;
+			if (n < 1)
+				return false;
+
+			// Recognize the prefix.
+			int prefix = 0;
+			ILVariable tmp2Var = null;
+			ILVariable objVar;
+			if (!trueBody.Instructions[0].MatchStLoc(out var first, out var firstValue))
+				return false;
+			if (!firstValue.MatchLdLoc(tmpVar))
+				return false;
+			if (n > 1
+				&& trueBody.Instructions[1].MatchStLoc(out var second, out var secondValue)
+				&& secondValue.MatchLdLoc(first))
+			{
+				tmp2Var = first;
+				objVar = second;
+				prefix = 2;
+			}
+			else
+			{
+				objVar = first;
+				prefix = 1;
+			}
+
+			ILVariable typedExVar = null;
+			if (prefix < n
+				&& trueBody.Instructions[prefix] is StLoc castStore
+				&& castStore.Value is CastClass castClass
+				&& castClass.Argument.MatchLdLoc(objVar))
+			{
+				typedExVar = castStore.Variable;
+				prefix++;
+			}
+
+			context.StepStartGroup("Strip runtime-async catch-filter prefix", handler);
+
+			trueBody.Instructions.RemoveRange(0, prefix);
+
+			// Remap reads of the synthesized obj / tmp2 / typedEx variables to handler.Variable
+			// throughout the function (the rethrow-dispatch idiom in the post-catch flow keys on obj).
+			RemapVariableReads(function, objVar, handler.Variable);
+			if (tmp2Var != null)
+				RemapVariableReads(function, tmp2Var, handler.Variable);
+			if (typedExVar != null)
+				RemapVariableReads(function, typedExVar, handler.Variable);
+
+			context.StepEndGroup(keepIfEmpty: true);
+			return true;
+		}
+
+		static void RemapVariableReads(ILInstruction root, ILVariable from, ILVariable to)
+		{
+			foreach (var ldloc in root.Descendants.OfType<LdLoc>().ToArray())
+			{
+				if (ldloc.Variable != from)
+					continue;
+				// Drop redundant castclass to the new handler type that may now wrap the load.
+				if (ldloc.Parent is CastClass cc && cc.Type.Equals(to.Type))
+					cc.ReplaceWith(new LdLoc(to).WithILRange(cc).WithILRange(ldloc));
+				else
+					ldloc.ReplaceWith(new LdLoc(to).WithILRange(ldloc));
+			}
+			foreach (var stloc in root.Descendants.OfType<StLoc>().ToArray())
+			{
+				if (stloc.Variable == from && stloc.Parent is Block parent)
+					parent.Instructions.RemoveAt(stloc.ChildIndex);
 			}
 		}
 
