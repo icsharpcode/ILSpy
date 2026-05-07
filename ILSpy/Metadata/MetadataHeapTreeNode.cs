@@ -34,8 +34,6 @@ namespace ILSpy.Metadata
 	/// </summary>
 	public abstract class MetadataHeapTreeNode : ILSpyTreeNode
 	{
-		public const int PreviewLimit = 200;
-
 		protected readonly MetadataFile metadataFile;
 
 		public HandleKind Kind { get; }

@@ -17,13 +17,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.Languages;
+using ILSpy.ViewModels;
 
 namespace ILSpy.Metadata
 {
@@ -44,17 +44,11 @@ namespace ILSpy.Metadata
 		public override object Text => $"Guid Heap ({EnsureEntries().Count})";
 		public override string ToString() => "Guid Heap";
 
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			var all = EnsureEntries();
-			var preview = all.Count > PreviewLimit
-				? (IReadOnlyList<GuidHeapEntry>)all.GetRange(0, PreviewLimit)
-				: all;
-			language.WriteCommentLine(output, $"Guid Heap ({all.Count} entries)");
-			MetadataTextWriter.WriteTable(language, output, preview);
-			if (all.Count > preview.Count)
-				language.WriteCommentLine(output, $"... ({all.Count - preview.Count} more entries; full view ships with the metadata DataGrid in a future release)");
-		}
+		public override TabPageModel CreateTab() => new MetadataTablePageModel {
+			Title = "Guid Heap",
+			Items = EnsureEntries().Cast<object>().ToList(),
+			Columns = MetadataColumnBuilder.For<GuidHeapEntry>(),
+		};
 
 		List<GuidHeapEntry> EnsureEntries()
 		{

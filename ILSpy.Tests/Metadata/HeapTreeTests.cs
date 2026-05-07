@@ -63,12 +63,11 @@ public class HeapTreeTests
 	}
 
 	[AvaloniaTest]
-	public async Task StringHeapTreeNode_Decompiles_Header_Plus_Preview_Of_Entries()
+	public async Task StringHeapTreeNode_Opens_Grid_Tab_With_Offset_Length_Value_Columns()
 	{
-		// CoreLib's #Strings holds tens of thousands of entries; rendering all of them as
-		// text would bloat the tab and bog down the editor. Phase 1 dumps a capped preview
-		// (header + first N rows + truncation footer) so the user can scan the start of the
-		// heap; Phase 2 swaps to a virtualising DataGrid for the full set.
+		// CoreLib's #Strings holds tens of thousands of entries; the DataGrid surfaces every
+		// row through Avalonia's built-in row virtualisation, so unlike the Phase 1 text
+		// dump there's no preview cap and no truncation footer.
 
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
@@ -83,19 +82,16 @@ public class HeapTreeTests
 		var heapNode = metadataNode.Children.OfType<StringHeapTreeNode>().Single();
 
 		vm.AssemblyTreeModel.SelectNode(heapNode);
-		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
 
-		tab.Text.Should().Contain("String Heap");
-		tab.Text.Should().Contain("Offset");
-		tab.Text.Should().Contain("Length");
-		tab.Text.Should().Contain("Value");
-		tab.Text.Should().Contain("more entries", "CoreLib's #Strings is well over the preview cap");
-		// The preview includes a (count entries) header — should match e.g. "(24573 entries)".
-		tab.Text.Should().MatchRegex(@"\(\d{3,} entries\)");
+		tab.Title.Should().Be("String Heap");
+		tab.Columns.Select(c => c.Header.ToString()).Should().Equal("Offset", "Length", "Value");
+		// CoreLib's #Strings is well over a thousand entries; the grid handles them all.
+		tab.Items.Should().HaveCountGreaterThan(1000);
 	}
 
 	[AvaloniaTest]
-	public async Task GuidHeapTreeNode_Decompiles_Header_Plus_Index_Length_Value_Columns()
+	public async Task GuidHeapTreeNode_Opens_Grid_Tab_With_Index_Length_Value_Columns()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
@@ -110,17 +106,17 @@ public class HeapTreeTests
 		var heapNode = metadataNode.Children.OfType<GuidHeapTreeNode>().Single();
 
 		vm.AssemblyTreeModel.SelectNode(heapNode);
-		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
 
-		tab.Text.Should().Contain("Guid Heap");
-		tab.Text.Should().Contain("Index");
-		tab.Text.Should().Contain("Length");
-		tab.Text.Should().MatchRegex(@"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b",
-			"the GUID heap should contain at least one parsed GUID");
+		tab.Title.Should().Be("Guid Heap");
+		tab.Columns.Select(c => c.Header.ToString()).Should().Equal("Index", "Length", "Value");
+		// Each entry's Value is the parsed GUID's lowercase canonical form.
+		var first = (GuidHeapTreeNode.GuidHeapEntry)tab.Items[0];
+		first.Value.Should().MatchRegex(@"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$");
 	}
 
 	[AvaloniaTest]
-	public async Task BlobHeapTreeNode_Decompiles_Header_Plus_Preview_Of_Hex_Encoded_Entries()
+	public async Task BlobHeapTreeNode_Opens_Grid_Tab_With_Offset_Length_Value_Columns()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
@@ -135,11 +131,9 @@ public class HeapTreeTests
 		var heapNode = metadataNode.Children.OfType<BlobHeapTreeNode>().Single();
 
 		vm.AssemblyTreeModel.SelectNode(heapNode);
-		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
 
-		tab.Text.Should().Contain("Blob Heap");
-		tab.Text.Should().Contain("Offset");
-		tab.Text.Should().Contain("Length");
-		tab.Text.Should().Contain("Value");
+		tab.Title.Should().Be("Blob Heap");
+		tab.Columns.Select(c => c.Header.ToString()).Should().Equal("Offset", "Length", "Value");
 	}
 }
