@@ -102,7 +102,13 @@ namespace ILSpy.Metadata
 				Children.Add(new DebugDirectoryTreeNode(peFile));
 			}
 
-			// Heaps and metadata-tables children land in subsequent commits.
+			// MetadataTablesTreeNode container slots in here in the next commit, between PE
+			// headers and heaps to match WPF ordering.
+
+			Children.Add(new StringHeapTreeNode(metadataFile));
+			Children.Add(new UserStringHeapTreeNode(metadataFile));
+			Children.Add(new GuidHeapTreeNode(metadataFile));
+			Children.Add(new BlobHeapTreeNode(metadataFile));
 		}
 	}
 }
