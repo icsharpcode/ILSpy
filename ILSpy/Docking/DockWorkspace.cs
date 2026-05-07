@@ -21,6 +21,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Composition;
 using System.Linq;
+using System.Reflection;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 
 using CommunityToolkit.Mvvm.Input;
 
@@ -28,11 +31,13 @@ using Dock.Model.Controls;
 using Dock.Model.Core;
 using Dock.Model.Core.Events;
 
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy.AssemblyTree;
 using ILSpy.Commands;
 using ILSpy.Languages;
+using ILSpy.Metadata;
 using ILSpy.Navigation;
 using ILSpy.TextView;
 using ILSpy.TreeNodes;
@@ -276,7 +281,7 @@ namespace ILSpy.Docking
 				if (main.Content?.GetType() == customContent.GetType())
 					CopyContentState(customContent, main.Content);
 				else
-					main.Content = customContent;
+					AttachCustomContent(main, customContent);
 				return;
 			}
 
@@ -284,6 +289,86 @@ namespace ILSpy.Docking
 			main.Content = decTab;
 			decTab.Language = languageService.CurrentLanguage;
 			decTab.CurrentNodes = nodes;
+		}
+
+		void AttachCustomContent(ContentTabPage main, TabPageModel newContent)
+		{
+			// Detach navigation handlers from the outgoing content; subscribe on the
+			// incoming one so token clicks route through OnMetadataCellClicked.
+			if (main.Content is MetadataTablePageModel oldMeta)
+				oldMeta.NavigateToCellRequested -= OnMetadataCellClicked;
+			if (newContent is MetadataTablePageModel newMeta)
+				newMeta.NavigateToCellRequested += OnMetadataCellClicked;
+			main.Content = newContent;
+		}
+
+		void OnMetadataCellClicked(MetadataCellNavigationEventArgs e)
+		{
+			// (row, columnName) → metadata token + module → matching table tree node + row index.
+			// Resolved via reflection because each entry struct buries its MetadataFile in a
+			// private readonly field with the same name across all 43 typed table viewmodels.
+			var prop = e.Row.GetType().GetProperty(e.ColumnName);
+			if (prop?.GetValue(e.Row) is not int token || token == 0)
+				return;
+			var fileField = e.Row.GetType().GetField("metadataFile", BindingFlags.Instance | BindingFlags.NonPublic);
+			if (fileField?.GetValue(e.Row) is not MetadataFile metadataFile)
+				return;
+			NavigateToToken(new MetadataTokenReference(metadataFile, MetadataTokens.EntityHandle(token)));
+		}
+
+		void NavigateToToken(MetadataTokenReference reference)
+		{
+			if (reference.Handle.IsNil)
+				return;
+			// Find the MetadataTreeNode for the referenced module, drill down to its
+			// Tables container, and pick the table whose Kind matches the handle's runtime
+			// kind — HandleKind values for table-backed entities double as TableIndex.
+			var assemblies = assemblyTreeModel.AssemblyList?.GetAssemblies();
+			if (assemblies == null)
+				return;
+			AssemblyTreeNode? targetAssembly = null;
+			if (assemblyTreeModel.Root != null)
+			{
+				foreach (var child in assemblyTreeModel.Root.Children.OfType<AssemblyTreeNode>())
+				{
+					if (ReferenceEquals(child.LoadedAssembly.GetMetadataFileOrNull(), reference.MetadataFile))
+					{
+						targetAssembly = child;
+						break;
+					}
+				}
+			}
+			if (targetAssembly == null)
+				return;
+			targetAssembly.EnsureLazyChildren();
+			var metaNode = targetAssembly.Children.OfType<MetadataTreeNode>().FirstOrDefault();
+			if (metaNode == null)
+				return;
+			metaNode.EnsureLazyChildren();
+			var tablesNode = metaNode.Children.OfType<MetadataTablesTreeNode>().FirstOrDefault();
+			if (tablesNode == null)
+				return;
+			tablesNode.EnsureLazyChildren();
+			var tableIndex = (TableIndex)(int)reference.Handle.Kind;
+			var tableNode = tablesNode.Children.OfType<MetadataTableTreeNode>()
+				.FirstOrDefault(t => t.Kind == tableIndex);
+			if (tableNode == null)
+				return;
+
+			suppressHistoryRecording = true;
+			try
+			{
+				assemblyTreeModel.SelectedItem = tableNode;
+			}
+			finally
+			{
+				suppressHistoryRecording = false;
+			}
+
+			// ShowSelectedNode just settled MainTab.Content to the table's MetadataTablePageModel.
+			// Set ScrollToRow to the handle's row number (1-based → 0-based).
+			if (factory.MainTab?.Content is MetadataTablePageModel pm)
+				pm.ScrollToRow = MetadataTokens.GetRowNumber((EntityHandle)reference.Handle) - 1;
 		}
 
 		DecompilerTabPageModel CreateDecompilerContent()
