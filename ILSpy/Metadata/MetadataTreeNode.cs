@@ -93,9 +93,16 @@ namespace ILSpy.Metadata
 
 		protected override void LoadChildren()
 		{
-			// PE-header / table / heap children land in subsequent commits — Phase 1 keeps the
-			// container empty so the navigation surface is stable while we add the leaf nodes
-			// incrementally without destabilising the suite.
+			if (metadataFile is PEFile peFile)
+			{
+				Children.Add(new DosHeaderTreeNode(peFile));
+				Children.Add(new CoffHeaderTreeNode(peFile));
+				Children.Add(new OptionalHeaderTreeNode(peFile));
+				Children.Add(new DataDirectoriesTreeNode(peFile));
+				Children.Add(new DebugDirectoryTreeNode(peFile));
+			}
+
+			// Heaps and metadata-tables children land in subsequent commits.
 		}
 	}
 }
