@@ -55,16 +55,22 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// even when T is `object` (i.e. the source is `catch when (filter)`). After this pre-pass the
 			// catch handler looks structurally identical to a non-filter catch, so the body matcher in
 			// TryRewriteTryCatch can run unchanged.
+			//
+			// The captured obj local is shared across every catch handler that opts into the runtime-async
+			// rethrow protocol, so per-handler filter normalization must NOT do a function-wide remap of
+			// reads of obj — that would tag every reference (in both this handler's own dispatch idiom and
+			// every other handler's dispatch idiom) with the same handler variable. Instead, record the
+			// obj variable per handler and let TryRewriteTryCatch / the multi-handler transform remap it
+			// scoped to the moved catch body.
+			var filterObjByHandler = new Dictionary<TryCatchHandler, ILVariable>();
 			foreach (var handler in function.Descendants.OfType<TryCatchHandler>().ToArray())
 			{
-				if (NormalizeRuntimeAsyncFilter(handler, function, context))
+				if (NormalizeRuntimeAsyncFilter(handler, function, filterObjByHandler, context))
 					changed = true;
 			}
 
 			foreach (var tryCatch in function.Descendants.OfType<TryCatch>().ToArray())
 			{
-				if (tryCatch.Handlers.Count != 1)
-					continue;
 				if (tryCatch.Parent is not Block parentBlock)
 					continue;
 				if (parentBlock.Parent is not BlockContainer container)
@@ -72,23 +78,34 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (tryCatch.ChildIndex != parentBlock.Instructions.Count - 1)
 					continue;
 
-				var handler = tryCatch.Handlers[0];
-				if (handler.Body is not BlockContainer handlerBody)
-					continue;
-				if (handlerBody.Blocks.Count != 1)
-					continue;
-				var handlerBlock = handlerBody.Blocks[0];
-
-				if (TryRewriteTryFinally(tryCatch, handler, handlerBlock, parentBlock, container, context))
+				if (tryCatch.Handlers.Count == 1)
 				{
-					changed = true;
-					continue;
+					var handler = tryCatch.Handlers[0];
+					if (handler.Body is not BlockContainer handlerBody)
+						continue;
+					if (handlerBody.Blocks.Count != 1)
+						continue;
+					var handlerBlock = handlerBody.Blocks[0];
+
+					if (TryRewriteTryFinally(tryCatch, handler, handlerBlock, parentBlock, container, context))
+					{
+						changed = true;
+						continue;
+					}
+
+					if (TryRewriteTryCatch(tryCatch, handler, handlerBlock, parentBlock, container, filterObjByHandler, context))
+					{
+						changed = true;
+						continue;
+					}
 				}
-
-				if (TryRewriteTryCatch(tryCatch, handler, handlerBlock, parentBlock, container, context))
+				else if (tryCatch.Handlers.Count >= 2)
 				{
-					changed = true;
-					continue;
+					if (TryRewriteMultiHandlerTryCatch(tryCatch, parentBlock, container, filterObjByHandler, context))
+					{
+						changed = true;
+						continue;
+					}
 				}
 			}
 
@@ -110,8 +127,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		//   [stloc tmp2(ldloc tmpVar);]                  optional copy
 		//   stloc obj(ldloc tmp_or_tmp2)
 		//   [stloc typedEx(castclass T'(ldloc obj));]    optional, when source has a typed catch var
-		// where tmpVar is the isinst-result local set in the filter's entry block.
-		static bool NormalizeRuntimeAsyncFilter(TryCatchHandler handler, ILFunction function, ILTransformContext context)
+		// where tmpVar is the isinst-result local set in the filter's entry block. The captured `obj`
+		// local is shared across every catch handler in the multi-handler form, so it must NOT be
+		// remapped function-wide here; we record it per handler and let the body rewriter scope the
+		// remap to each handler's catch body.
+		static bool NormalizeRuntimeAsyncFilter(TryCatchHandler handler, ILFunction function,
+			Dictionary<TryCatchHandler, ILVariable> filterObjByHandler, ILTransformContext context)
 		{
 			if (!handler.Variable.Type.IsKnownType(KnownTypeCode.Object))
 				return false;
@@ -176,13 +197,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			trueBody.Instructions.RemoveRange(0, prefix);
 
-			// Remap reads of the synthesized obj / tmp2 / typedEx variables to handler.Variable
-			// throughout the function (the rethrow-dispatch idiom in the post-catch flow keys on obj).
-			RemapVariableReads(function, objVar, handler.Variable);
+			// Remap reads of the per-handler synthesized variables (tmp2 / typedEx) to handler.Variable.
+			// Both are unique per handler so a function-wide remap is safe.
 			if (tmp2Var != null)
 				RemapVariableReads(function, tmp2Var, handler.Variable);
 			if (typedExVar != null)
 				RemapVariableReads(function, typedExVar, handler.Variable);
+
+			// The obj variable is shared between handlers in the multi-handler form; remap it later,
+			// scoped to the moved catch body, when TryRewriteTryCatch / multi-handler relocates it.
+			filterObjByHandler[handler] = objVar;
 
 			context.StepEndGroup(keepIfEmpty: true);
 			return true;
@@ -535,7 +559,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		//     leave outer
 		// }
 		static bool TryRewriteTryCatch(TryCatch tryCatch, TryCatchHandler handler, Block handlerBlock,
-			Block parentBlock, BlockContainer container, ILTransformContext context)
+			Block parentBlock, BlockContainer container,
+			Dictionary<TryCatchHandler, ILVariable> filterObjByHandler, ILTransformContext context)
 		{
 			// Match catch body: [stloc tmp(ldloc ex);] [stloc obj(ldloc tmp);] stloc num(1); br continuation
 			if (handlerBlock.Instructions.Count < 2)
@@ -617,10 +642,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				((BlockContainer)handler.Body).Blocks.Add(b);
 
 			// Replace reads of `obj` (and `tmp`) inside the moved catch body with reads of handler.Variable.
+			// `objectVariable` here is the handler's body-level obj (only present for non-filter catches);
+			// `filterObj` is the obj recorded by NormalizeRuntimeAsyncFilter when the catch carries a filter.
 			if (objectVariable != null)
 				ReplaceVariableReadsWithHandlerVariable(handler.Body, objectVariable, handler.Variable);
 			if (temporaryVariable != null)
 				ReplaceVariableReadsWithHandlerVariable(handler.Body, temporaryVariable, handler.Variable);
+			if (filterObjByHandler.TryGetValue(handler, out var filterObj))
+				ReplaceVariableReadsWithHandlerVariable(handler.Body, filterObj, handler.Variable);
 
 			// Inside the moved blocks, locate any leftover dispatch idiom (originating from `throw;`)
 			// and replace it with `Rethrow`.
@@ -637,6 +666,190 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			parentBlock.Instructions.RemoveAt(flagInitStore.ChildIndex);
 
 			context.StepEndGroup(keepIfEmpty: true);
+			return true;
+		}
+
+		// Multi-handler runtime-async try-catch:
+		//
+		//   stloc num(0)
+		//   .try { ... ; br continuation }
+		//   catch ex_1 : T_1 when (...) { [stloc tmp1(ex_1);] [stloc obj(...);] stloc num(K_1); br continuation }
+		//   catch ex_2 : T_2 when (...) { [stloc tmp2(ex_2);] [stloc obj(...);] stloc num(K_2); br continuation }
+		//   ...
+		// Block continuation {
+		//   switch (ldloc num) { case [K_i..K_i+1): br case_K_i ... ; default: leave outer }
+		// }
+		// Block case_K_i { <user catch body for handler i> }
+		//
+		// =>
+		//   .try { ... ; br continuation }
+		//   catch ex_1 : T_1 when (...) { ...case body 1 inlined, with obj/tmp reads remapped to ex_1... }
+		//   catch ex_2 : T_2 when (...) { ...case body 2 inlined, with obj/tmp reads remapped to ex_2... }
+		//   ...
+		// Block continuation {
+		//   leave outer
+		// }
+		static bool TryRewriteMultiHandlerTryCatch(TryCatch tryCatch, Block parentBlock, BlockContainer container,
+			Dictionary<TryCatchHandler, ILVariable> filterObjByHandler, ILTransformContext context)
+		{
+			Block continuation = null;
+			ILVariable numVariable = null;
+			var seenK = new HashSet<int>();
+			var handlerInfos = new List<(TryCatchHandler handler, int k, ILVariable bodyObj, ILVariable bodyTmp)>();
+
+			foreach (var handler in tryCatch.Handlers)
+			{
+				if (handler.Body is not BlockContainer hb || hb.Blocks.Count != 1)
+					return false;
+				var hblock = hb.Blocks[0];
+				if (hblock.Instructions.Count < 2)
+					return false;
+				if (!hblock.Instructions.Last().MatchBranch(out var br))
+					return false;
+				if (continuation == null)
+					continuation = br;
+				else if (continuation != br)
+					return false;
+				if (continuation.Parent != container)
+					return false;
+
+				if (!hblock.Instructions[^2].MatchStLoc(out var nv, out var nval))
+					return false;
+				if (!nval.MatchLdcI4(out int k))
+					return false;
+				if (!nv.Type.IsKnownType(KnownTypeCode.Int32))
+					return false;
+				if (numVariable == null)
+					numVariable = nv;
+				else if (numVariable != nv)
+					return false;
+				if (!seenK.Add(k))
+					return false;
+
+				ILVariable bodyObj = null, bodyTmp = null;
+				int prefix = hblock.Instructions.Count - 2;
+				if (prefix >= 1 && hblock.Instructions[prefix - 1].MatchStLoc(out var v, out var val))
+				{
+					if (val.MatchLdLoc(handler.Variable))
+					{
+						bodyObj = v;
+						prefix--;
+					}
+					else if (val.MatchLdLoc(out var tmpV) && prefix >= 2
+						&& hblock.Instructions[prefix - 2].MatchStLoc(out var tmpV2, out var tmpVal)
+						&& tmpV == tmpV2 && tmpVal.MatchLdLoc(handler.Variable))
+					{
+						bodyTmp = tmpV;
+						bodyObj = v;
+						prefix -= 2;
+					}
+					else
+					{
+						return false;
+					}
+				}
+				if (prefix != 0)
+					return false;
+
+				handlerInfos.Add((handler, k, bodyObj, bodyTmp));
+			}
+
+			// Pre-try: stloc num(ldc.i4 0). After SplitVariables the pre-init's local may be a
+			// separate ILVariable (the in-handler stores form a disjoint use that gets split off),
+			// so match the slot and type rather than the ILVariable identity.
+			var flagInitStore = FindFlagInitStore(parentBlock, tryCatch,
+				s => s.Variable.Index == numVariable.Index
+					&& s.Variable.Kind == numVariable.Kind
+					&& s.Variable.Type.IsKnownType(KnownTypeCode.Int32)
+					&& s.Value.MatchLdcI4(0));
+			if (flagInitStore == null)
+				return false;
+			// Block continuation { switch (ldloc num) { case K: br case_K ... ; default: leave outer } }
+			if (!MatchSwitchDispatch(continuation, numVariable, out var caseBlocks, out var defaultExit))
+				return false;
+			// Every K we recorded must have a case in the switch.
+			foreach (var info in handlerInfos)
+				if (!caseBlocks.ContainsKey(info.k))
+					return false;
+
+			context.StepStartGroup("Rewrite runtime-async multi-handler try-catch", tryCatch);
+			var cfg = new ControlFlowGraph(container, context.CancellationToken);
+
+			foreach (var info in handlerInfos)
+			{
+				var caseBody = caseBlocks[info.k];
+				var handler = info.handler;
+				var handlerBody = (BlockContainer)handler.Body;
+				var handlerEntry = handlerBody.Blocks[0];
+
+				// Move case-body and dominated blocks into the handler's body container.
+				AwaitInFinallyTransform.MoveDominatedBlocksToContainer(caseBody, null, cfg, handlerBody, context);
+
+				// Replace the handler-entry block (still holds the prefix + num=K + branch) with a
+				// single `br caseBody`, since caseBody is now at index >= 1 in handlerBody.
+				handlerEntry.Instructions.Clear();
+				handlerEntry.Instructions.Add(new Branch(caseBody));
+
+				// Remap the per-handler synthesized variables to the handler.Variable inside the moved body.
+				if (info.bodyObj != null)
+					ReplaceVariableReadsWithHandlerVariable(handler.Body, info.bodyObj, handler.Variable);
+				if (info.bodyTmp != null)
+					ReplaceVariableReadsWithHandlerVariable(handler.Body, info.bodyTmp, handler.Variable);
+				if (filterObjByHandler.TryGetValue(handler, out var filterObj))
+					ReplaceVariableReadsWithHandlerVariable(handler.Body, filterObj, handler.Variable);
+
+				foreach (var b in handler.Body.Descendants.OfType<Block>().ToArray())
+					ReplaceDispatchIdiomWithRethrow(b, handler.Variable, context);
+			}
+
+			// Replace continuation with the default exit (leave outer).
+			// Clear() already detached defaultExit via the SwitchInstruction's release-ref cascade,
+			// so we can re-add it directly.
+			continuation.Instructions.Clear();
+			continuation.Instructions.Add(defaultExit);
+
+			// Remove the pre-try `stloc num(0)`.
+			parentBlock.Instructions.RemoveAt(flagInitStore.ChildIndex);
+
+			context.StepEndGroup(keepIfEmpty: true);
+			return true;
+		}
+
+		// Block continuation { switch (ldloc num) { case [K..K+1): br case_K ... ; default: <leave outer | br end> } }
+		static bool MatchSwitchDispatch(Block continuation, ILVariable numVariable,
+			out Dictionary<int, Block> caseBlocks, out ILInstruction defaultExit)
+		{
+			caseBlocks = null;
+			defaultExit = null;
+			if (continuation.Instructions.Count != 1)
+				return false;
+			if (continuation.Instructions[0] is not SwitchInstruction switchInst)
+				return false;
+			if (!switchInst.Value.MatchLdLoc(numVariable))
+				return false;
+
+			var defaultSection = switchInst.GetDefaultSection();
+			if (defaultSection == null)
+				return false;
+			if (defaultSection.Body is Leave defLeave && defLeave.IsLeavingFunction)
+				defaultExit = defLeave;
+			else if (defaultSection.Body is Branch)
+				defaultExit = defaultSection.Body;
+			else
+				return false;
+
+			caseBlocks = new Dictionary<int, Block>();
+			foreach (var section in switchInst.Sections)
+			{
+				if (section == defaultSection)
+					continue;
+				if (!section.Body.MatchBranch(out var caseBlock))
+					return false;
+				// Each non-default section's labels must cover exactly one integer value (K).
+				if (section.Labels.Count() != 1)
+					return false;
+				caseBlocks[(int)section.Labels.Intervals[0].Start] = caseBlock;
+			}
 			return true;
 		}
 
