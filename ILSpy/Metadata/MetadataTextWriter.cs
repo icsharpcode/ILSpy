@@ -108,8 +108,15 @@ namespace ILSpy.Metadata
 					return FormatHex(value, entry.Size * 2);
 			}
 
-			if (!string.IsNullOrEmpty(format) && value is IFormattable formattable)
-				return formattable.ToString(format, CultureInfo.InvariantCulture);
+			if (!string.IsNullOrEmpty(format))
+			{
+				// Enum.ToString rejects digit-bearing format strings ("X8" etc.); coerce to the
+				// underlying integer first so the column lines up with neighbouring hex cells.
+				if (value is Enum enumValue)
+					value = Convert.ChangeType(enumValue, enumValue.GetTypeCode(), CultureInfo.InvariantCulture)!;
+				if (value is IFormattable formattable)
+					return formattable.ToString(format, CultureInfo.InvariantCulture);
+			}
 
 			return value.ToString() ?? "";
 		}

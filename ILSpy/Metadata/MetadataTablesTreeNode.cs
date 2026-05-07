@@ -24,6 +24,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 using ILSpy.Languages;
+using ILSpy.Metadata.CorTables;
 using ILSpy.TreeNodes;
 
 namespace ILSpy.Metadata
@@ -69,8 +70,15 @@ namespace ILSpy.Metadata
 			}
 		}
 
-		// Phase 1e replaces this universal fallback with typed per-table subclasses.
+		// Typed leaves are added in passes (1e-i, 1e-ii, 1e-iii); any table not yet ported
+		// falls through to the universal placeholder so the navigation surface stays whole.
 		internal static MetadataTableTreeNode CreateTableTreeNode(TableIndex table, MetadataFile metadataFile)
-			=> new UnsupportedMetadataTableTreeNode(table, metadataFile);
+			=> table switch {
+				TableIndex.Module => new ModuleTableTreeNode(metadataFile),
+				TableIndex.TypeRef => new TypeRefTableTreeNode(metadataFile),
+				TableIndex.TypeDef => new TypeDefTableTreeNode(metadataFile),
+				TableIndex.AssemblyRef => new AssemblyRefTableTreeNode(metadataFile),
+				_ => new UnsupportedMetadataTableTreeNode(table, metadataFile),
+			};
 	}
 }

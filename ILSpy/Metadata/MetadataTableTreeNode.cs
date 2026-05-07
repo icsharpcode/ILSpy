@@ -17,10 +17,14 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
+using ILSpy.Languages;
 using ILSpy.TreeNodes;
 
 namespace ILSpy.Metadata
@@ -46,5 +50,40 @@ namespace ILSpy.Metadata
 		}
 
 		public override object Icon => Images.Images.MetadataTable;
+	}
+
+	/// <summary>
+	/// Typed companion: holds the row materialiser and the shared text-render path. Rows are
+	/// loaded lazily and cached so repeated decompiles don't re-walk the metadata. Phase 2
+	/// adds a <c>CreateTab</c> override that hands the same <c>LoadTable()</c> result to a
+	/// DataGrid view; for now <see cref="ITextOutput"/> is the only renderer.
+	/// </summary>
+	public abstract class MetadataTableTreeNode<TEntry> : MetadataTableTreeNode
+	{
+		public const int PreviewLimit = 200;
+
+		IReadOnlyList<TEntry>? cached;
+
+		protected MetadataTableTreeNode(TableIndex kind, MetadataFile metadataFile)
+			: base(kind, metadataFile)
+		{
+		}
+
+		public override object Text => $"{(byte)Kind:X2} {Kind} ({RowCount})";
+		public override string ToString() => Kind.ToString();
+
+		protected abstract IReadOnlyList<TEntry> LoadTable();
+
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		{
+			var rows = cached ??= LoadTable();
+			var preview = rows.Count > PreviewLimit
+				? (IReadOnlyList<TEntry>)rows.Take(PreviewLimit).ToList()
+				: rows;
+			language.WriteCommentLine(output, $"{Kind} ({rows.Count} rows)");
+			MetadataTextWriter.WriteTable(language, output, preview);
+			if (rows.Count > preview.Count)
+				language.WriteCommentLine(output, $"... ({rows.Count - preview.Count} more rows; full view ships with the metadata DataGrid in a future release)");
+		}
 	}
 }
