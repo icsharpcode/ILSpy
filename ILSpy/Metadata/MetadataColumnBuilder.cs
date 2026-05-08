@@ -129,12 +129,21 @@ namespace ILSpy.Metadata
 				Margin = new Thickness(0, 2, 0, 0),
 				FontWeight = FontWeight.Normal,
 				HorizontalAlignment = HorizontalAlignment.Stretch,
+				Text = filter.Text,
 			};
-			box.Bind(TextBox.TextProperty, new Binding(nameof(ColumnFilter.Text)) {
-				Source = filter,
-				Mode = BindingMode.TwoWay,
-				UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
-			});
+			// Wire TextBox <-> ColumnFilter imperatively. Avalonia's INPC binding plugin
+			// holds a WeakReference to the source and resolves the target lazily; for
+			// Header-hosted controls it reliably comes back null on write-back, throwing
+			// "Non-static method requires a target" out of PropertyInfo.SetValue. The plain
+			// event subscription side-steps the weak-ref machinery.
+			box.TextChanged += (_, _) => {
+				if (filter.Text != box.Text)
+					filter.Text = box.Text;
+			};
+			filter.PropertyChanged += (_, e) => {
+				if (e.PropertyName == nameof(ColumnFilter.Text) && box.Text != filter.Text)
+					box.Text = filter.Text;
+			};
 			return new StackPanel {
 				Orientation = Orientation.Vertical,
 				Children = { label, box },
