@@ -170,60 +170,74 @@ public class MetadataFilterTests
 	}
 
 	[Test]
-	public void Filter_Matches_Single_Flag_Name_When_Set_On_Flags_Enum_Column()
+	public void Default_FlagMask_Of_Minus_One_Matches_Every_Row()
 	{
-		var entry = new FlagsEntry { Attributes = SampleFlags.Public | SampleFlags.Static };
-		MetadataTablePageModel.MatchesFilters(entry, new[] {
-			new ColumnFilter("Attributes") { Text = "Public" },
-		}).Should().BeTrue();
+		// Mask = -1 ("All") is the unfiltered default — every row passes regardless of
+		// its flag value. Mirrors FlagsContentFilter's `Mask == -1 || …` short-circuit.
+		MetadataTablePageModel.MatchesFilters(
+			new FlagsEntry { Attributes = SampleFlags.Public | SampleFlags.Static },
+			new[] { new ColumnFilter("Attributes") }).Should().BeTrue();
+		MetadataTablePageModel.MatchesFilters(
+			new FlagsEntry { Attributes = SampleFlags.None },
+			new[] { new ColumnFilter("Attributes") }).Should().BeTrue();
 	}
 
 	[Test]
-	public void Filter_Matches_When_All_Comma_Separated_Flag_Names_Are_Set_Regardless_Of_Order()
+	public void FlagMask_Matches_Row_When_Any_Selected_Bit_Is_Set()
 	{
-		// Substring fallback would fail "Static, Public" against "Public, Static" since the
-		// names are out of order — the [Flags]-aware predicate matches anyway.
-		var entry = new FlagsEntry { Attributes = SampleFlags.Public | SampleFlags.Static };
-		MetadataTablePageModel.MatchesFilters(entry, new[] {
-			new ColumnFilter("Attributes") { Text = "Static, Public" },
-		}).Should().BeTrue();
+		// WPF's FlagsContentFilter passes a row when (mask & value) != 0. With Public
+		// alone selected, only rows with the Public bit set match.
+		var publicMask = (int)SampleFlags.Public;
+		MetadataTablePageModel.MatchesFilters(
+			new FlagsEntry { Attributes = SampleFlags.Public | SampleFlags.Static },
+			new[] { new ColumnFilter("Attributes") { FlagMask = publicMask } }).Should().BeTrue();
+		MetadataTablePageModel.MatchesFilters(
+			new FlagsEntry { Attributes = SampleFlags.Static },
+			new[] { new ColumnFilter("Attributes") { FlagMask = publicMask } }).Should().BeFalse();
 	}
 
 	[Test]
-	public void Filter_Misses_When_Any_Named_Flag_Is_Not_Set()
+	public void Multiple_Selected_Flags_OR_Together_In_The_Mask()
 	{
-		var entry = new FlagsEntry { Attributes = SampleFlags.Public | SampleFlags.Static };
-		MetadataTablePageModel.MatchesFilters(entry, new[] {
-			new ColumnFilter("Attributes") { Text = "Public, Sealed" },
-		}).Should().BeFalse();
+		// Picking Public + Static yields mask = Public | Static. A row matches when
+		// it has *either* flag set — that's bitwise OR semantics, not AND.
+		var orMask = (int)(SampleFlags.Public | SampleFlags.Static);
+		MetadataTablePageModel.MatchesFilters(
+			new FlagsEntry { Attributes = SampleFlags.Public },
+			new[] { new ColumnFilter("Attributes") { FlagMask = orMask } }).Should().BeTrue();
+		MetadataTablePageModel.MatchesFilters(
+			new FlagsEntry { Attributes = SampleFlags.Static },
+			new[] { new ColumnFilter("Attributes") { FlagMask = orMask } }).Should().BeTrue();
+		MetadataTablePageModel.MatchesFilters(
+			new FlagsEntry { Attributes = SampleFlags.Sealed },
+			new[] { new ColumnFilter("Attributes") { FlagMask = orMask } }).Should().BeFalse();
 	}
 
 	[Test]
-	public void Filter_With_Bang_Prefix_Requires_Flag_To_Be_Cleared()
+	public void FlagMask_Of_Zero_Hides_Every_Row()
 	{
-		// `!Name` reads as "this flag must NOT be set" — useful for narrowing to
-		// non-static methods, non-public members, etc.
-		var entry = new FlagsEntry { Attributes = SampleFlags.Public };
-		MetadataTablePageModel.MatchesFilters(entry, new[] {
-			new ColumnFilter("Attributes") { Text = "!Static" },
-		}).Should().BeTrue();
-		MetadataTablePageModel.MatchesFilters(entry, new[] {
-			new ColumnFilter("Attributes") { Text = "Public, !Static" },
-		}).Should().BeTrue();
-		MetadataTablePageModel.MatchesFilters(entry, new[] {
-			new ColumnFilter("Attributes") { Text = "!Public" },
-		}).Should().BeFalse();
+		// "<All>" unchecked drives the mask to 0. WPF's filter then rejects everything
+		// because (0 & value) is never non-zero.
+		MetadataTablePageModel.MatchesFilters(
+			new FlagsEntry { Attributes = SampleFlags.Public },
+			new[] { new ColumnFilter("Attributes") { FlagMask = 0 } }).Should().BeFalse();
+		MetadataTablePageModel.MatchesFilters(
+			new FlagsEntry { Attributes = SampleFlags.None },
+			new[] { new ColumnFilter("Attributes") { FlagMask = 0 } }).Should().BeFalse();
 	}
 
 	[Test]
-	public void Filter_Falls_Back_To_Substring_When_Token_Is_Not_A_Valid_Flag_Name()
+	public void FlagMask_And_Text_Filter_AND_Together_On_The_Same_Column()
 	{
-		// "Pub" alone isn't a flag name, so the predicate drops to substring on the
-		// formatted enum value ("Public, Static") — which contains "Pub".
-		var entry = new FlagsEntry { Attributes = SampleFlags.Public | SampleFlags.Static };
-		MetadataTablePageModel.MatchesFilters(entry, new[] {
-			new ColumnFilter("Attributes") { Text = "Pub" },
-		}).Should().BeTrue();
+		// Both inputs apply: mask narrows the rows by flag, then Text further narrows
+		// by substring on the formatted display.
+		var publicMask = (int)SampleFlags.Public;
+		MetadataTablePageModel.MatchesFilters(
+			new FlagsEntry { Attributes = SampleFlags.Public | SampleFlags.Static },
+			new[] { new ColumnFilter("Attributes") { FlagMask = publicMask, Text = "Static" } }).Should().BeTrue();
+		MetadataTablePageModel.MatchesFilters(
+			new FlagsEntry { Attributes = SampleFlags.Public },
+			new[] { new ColumnFilter("Attributes") { FlagMask = publicMask, Text = "Static" } }).Should().BeFalse();
 	}
 
 	sealed class NumericEntry

@@ -158,10 +158,11 @@ namespace ILSpy.Metadata
 
 		static Control WrapWithFlagsDropdown(TextBox box, ColumnFilter filter, Type enumType)
 		{
-			// Discoverable flag-checklist popup. The TextBox stays for free-form input (regex,
-			// numeric ops, mixed flag names with `!` negation); the dropdown rebuilds the
-			// filter from the boxes the user ticks, so the predicate's flags-aware path is
-			// reachable without typing the names from memory.
+			// Mirrors WPF's FlagsFilterControl: a dropdown with a CheckBox per defined flag
+			// value (plus an "<All>" neutral item) that drives ColumnFilter.FlagMask. The
+			// predicate matches a row when (mask & value) != 0, the same bitwise rule
+			// FlagsContentFilter uses. The TextBox stays alongside for free-form filtering
+			// (regex / numeric ops) — both paths AND together.
 			var openButton = new Button {
 				Content = "▾",
 				Padding = new Thickness(4, 0),
@@ -170,16 +171,7 @@ namespace ILSpy.Metadata
 				VerticalAlignment = VerticalAlignment.Stretch,
 			};
 			var checkPanel = new StackPanel { Orientation = Orientation.Vertical };
-			var checkBoxes = new System.Collections.Generic.Dictionary<string, CheckBox>(StringComparer.OrdinalIgnoreCase);
-			foreach (var name in Enum.GetNames(enumType))
-			{
-				if (name == "None")
-					continue;
-				var cb = new CheckBox { Content = name, Padding = new Thickness(4, 1) };
-				cb.IsCheckedChanged += (_, _) => RebuildFilterFromCheckboxes(filter, checkBoxes);
-				checkBoxes[name] = cb;
-				checkPanel.Children.Add(cb);
-			}
+			var controller = new FlagsFilterController(filter, enumType, checkPanel);
 			var popup = new Popup {
 				PlacementTarget = openButton,
 				Placement = PlacementMode.BottomEdgeAlignedLeft,
@@ -196,7 +188,7 @@ namespace ILSpy.Metadata
 				},
 			};
 			openButton.Click += (_, _) => {
-				SyncCheckboxesFromFilter(filter, checkBoxes);
+				controller.SyncFromMask();
 				popup.IsOpen = true;
 			};
 			var row = new DockPanel { LastChildFill = true, Margin = new Thickness(0, 2, 0, 0) };
@@ -204,41 +196,124 @@ namespace ILSpy.Metadata
 			row.Children.Add(openButton);
 			row.Children.Add(box);
 			box.Margin = new Thickness(0);
-			// Keep the popup in the logical tree so light-dismiss works; parking it in a
-			// zero-size container alongside the row avoids it taking layout space.
 			return new StackPanel {
 				Orientation = Orientation.Vertical,
 				Children = { row, popup },
 			};
 		}
 
-		static void SyncCheckboxesFromFilter(ColumnFilter filter, System.Collections.Generic.IDictionary<string, CheckBox> checkBoxes)
-		{
-			var positives = ParsePositiveTokens(filter.Text);
-			foreach (var (name, cb) in checkBoxes)
-				cb.IsChecked = positives.Contains(name);
-		}
+		readonly record struct FlagDescriptor(string Name, int Value, bool IsAll);
 
-		static void RebuildFilterFromCheckboxes(ColumnFilter filter, System.Collections.Generic.IDictionary<string, CheckBox> checkBoxes)
+		/// <summary>
+		/// Owns the dropdown's CheckBoxes and reconciles them with
+		/// <see cref="ColumnFilter.FlagMask"/>. A re-entry guard suppresses the
+		/// <c>IsCheckedChanged</c> handler while we cross-toggle other boxes — without it,
+		/// flipping &lt;All&gt; would cascade through every regular flag's handler and
+		/// rebuild the mask from intermediate states.
+		/// </summary>
+		sealed class FlagsFilterController
 		{
-			var checkedNames = checkBoxes
-				.Where(p => p.Value.IsChecked == true)
-				.Select(p => p.Key);
-			filter.Text = string.Join(", ", checkedNames);
-		}
+			readonly ColumnFilter filter;
+			readonly (FlagDescriptor Flag, CheckBox CheckBox)[] checkBoxes;
+			bool suppress;
 
-		static System.Collections.Generic.HashSet<string> ParsePositiveTokens(string? text)
-		{
-			var set = new System.Collections.Generic.HashSet<string>(StringComparer.OrdinalIgnoreCase);
-			if (string.IsNullOrEmpty(text))
-				return set;
-			foreach (var raw in text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+			public FlagsFilterController(ColumnFilter filter, Type enumType, StackPanel host)
 			{
-				if (raw.StartsWith('!'))
-					continue;
-				set.Add(raw);
+				this.filter = filter;
+				var flags = BuildFlagDescriptors(enumType);
+				checkBoxes = new (FlagDescriptor, CheckBox)[flags.Count];
+				for (int i = 0; i < flags.Count; i++)
+				{
+					var flag = flags[i];
+					var cb = new CheckBox {
+						Content = flag.IsAll ? "<All>" : $"{flag.Name} ({flag.Value:X4})",
+						Padding = new Thickness(4, 1),
+					};
+					cb.IsCheckedChanged += OnCheckBoxToggled;
+					checkBoxes[i] = (flag, cb);
+					host.Children.Add(cb);
+				}
 			}
-			return set;
+
+			public void SyncFromMask()
+			{
+				suppress = true;
+				try
+				{
+					int mask = filter.FlagMask;
+					foreach (var (flag, cb) in checkBoxes)
+					{
+						cb.IsChecked = mask == -1
+							? true
+							: !flag.IsAll && (mask & flag.Value) != 0;
+					}
+				}
+				finally
+				{ suppress = false; }
+			}
+
+			void OnCheckBoxToggled(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+			{
+				if (suppress)
+					return;
+				if (sender is not CheckBox toggled)
+					return;
+				var entry = checkBoxes.FirstOrDefault(p => ReferenceEquals(p.CheckBox, toggled));
+				if (entry.CheckBox is null)
+					return;
+				suppress = true;
+				try
+				{
+					if (entry.Flag.IsAll)
+					{
+						bool checkAll = toggled.IsChecked == true;
+						foreach (var (_, cb) in checkBoxes)
+							cb.IsChecked = checkAll;
+						filter.FlagMask = checkAll ? -1 : 0;
+						return;
+					}
+					int mask = 0;
+					foreach (var (flag, cb) in checkBoxes)
+					{
+						if (flag.IsAll)
+							continue;
+						if (cb.IsChecked == true)
+							mask |= flag.Value;
+					}
+					filter.FlagMask = mask;
+					// <All> is only ticked when the mask is the unconditional -1; touching
+					// a regular flag always drops the mask to a specific value, so untick
+					// the neutral item to reflect the new partial state.
+					var allEntry = checkBoxes.First(p => p.Flag.IsAll);
+					if (allEntry.CheckBox.IsChecked == true)
+						allEntry.CheckBox.IsChecked = false;
+				}
+				finally
+				{ suppress = false; }
+			}
+
+			static System.Collections.Generic.IReadOnlyList<FlagDescriptor> BuildFlagDescriptors(Type enumType)
+			{
+				// Parity with WPF's FlagGroup.GetFlags: an "<All>" neutral item with value -1
+				// plus one descriptor per public-static field whose name doesn't end in "Mask"
+				// (those are conventionally sub-mask aliases, not real flags). Duplicate
+				// values are skipped so aliases (e.g. PrivateScope == 0) don't render twice.
+				var list = new System.Collections.Generic.List<FlagDescriptor> {
+					new("<All>", -1, IsAll: true),
+				};
+				var seenValues = new System.Collections.Generic.HashSet<int>();
+				foreach (var field in enumType.GetFields(BindingFlags.Public | BindingFlags.Static))
+				{
+					if (field.Name.EndsWith("Mask", StringComparison.Ordinal))
+						continue;
+					int value = Convert.ToInt32(field.GetRawConstantValue(),
+						System.Globalization.CultureInfo.InvariantCulture);
+					if (!seenValues.Add(value))
+						continue;
+					list.Add(new FlagDescriptor(field.Name, value, IsAll: false));
+				}
+				return list;
+			}
 		}
 
 		static DataGridTextColumn BuildTextColumn(PropertyInfo prop, ColumnInfoAttribute? info)

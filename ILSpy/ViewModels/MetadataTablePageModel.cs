@@ -89,7 +89,7 @@ namespace ILSpy.ViewModels
 
 		void OnColumnFilterTextChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(ColumnFilter.Text))
+			if (e.PropertyName is nameof(ColumnFilter.Text) or nameof(ColumnFilter.FlagMask))
 				ColumnFilterChanged?.Invoke();
 		}
 
@@ -129,20 +129,22 @@ namespace ILSpy.ViewModels
 			ArgumentNullException.ThrowIfNull(filters);
 			foreach (var f in filters)
 			{
-				if (string.IsNullOrEmpty(f.Text))
+				bool textActive = !string.IsNullOrEmpty(f.Text);
+				bool maskActive = f.FlagMask != -1;
+				if (!textActive && !maskActive)
 					continue;
 				var prop = propertyLookupCache.GetOrAdd((item.GetType(), f.ColumnName),
 					static key => key.Type.GetProperty(key.Column,
 						BindingFlags.Public | BindingFlags.Instance));
 				if (prop is null)
 					return false;
-				if (!MatchesOne(item, prop, f.Text))
+				if (!MatchesOne(item, prop, f))
 					return false;
 			}
 			return true;
 		}
 
-		static bool MatchesOne(object item, PropertyInfo prop, string filter)
+		static bool MatchesOne(object item, PropertyInfo prop, ColumnFilter filter)
 		{
 			object? value;
 			try
@@ -151,23 +153,36 @@ namespace ILSpy.ViewModels
 			if (value is null)
 				return false;
 
-			if (TryGetRegex(filter) is { } rx)
+			// [Flags] column — numeric bitwise-AND match against the dropdown's mask.
+			// Mirrors WPF's FlagsContentFilter: -1 means "all rows", anything else passes
+			// rows where (mask & value) != 0.
+			if (prop.PropertyType.IsEnum && Attribute.IsDefined(prop.PropertyType, typeof(FlagsAttribute)))
+			{
+				if (filter.FlagMask != -1)
+				{
+					int actual = Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture);
+					if ((filter.FlagMask & actual) == 0)
+						return false;
+				}
+				// Fall through so a free-form substring filter on a [Flags] column still
+				// works alongside the dropdown.
+			}
+
+			if (string.IsNullOrEmpty(filter.Text))
+				return true;
+
+			if (TryGetRegex(filter.Text) is { } rx)
 				return rx.IsMatch(value.ToString() ?? string.Empty);
 
-			if (prop.PropertyType.IsEnum
-				&& Attribute.IsDefined(prop.PropertyType, typeof(FlagsAttribute))
-				&& TryMatchFlags(prop.PropertyType, value, filter, out var flagsResult))
-				return flagsResult;
-
 			if ((IsIntegerType(prop.PropertyType) || prop.PropertyType.IsEnum)
-				&& TryMatchNumeric(value, filter, out var numericResult))
+				&& TryMatchNumeric(value, filter.Text, out var numericResult))
 				return numericResult;
 
 			// Substring matches the formatted display value so a typed "06000010" hits a
 			// "06000010" cell — the predicate sees what the user sees, not the raw int.
 			var info = prop.GetCustomAttribute<ColumnInfoAttribute>();
 			var stringified = FormatForDisplay(value, info?.Format);
-			return stringified.Contains(filter, StringComparison.OrdinalIgnoreCase);
+			return stringified.Contains(filter.Text, StringComparison.OrdinalIgnoreCase);
 		}
 
 		static string FormatForDisplay(object value, string? format)
@@ -180,35 +195,6 @@ namespace ILSpy.ViewModels
 			return boxed is IFormattable f
 				? f.ToString(format, System.Globalization.CultureInfo.InvariantCulture)
 				: (value.ToString() ?? string.Empty);
-		}
-
-		static bool TryMatchFlags(Type enumType, object value, string filter, out bool result)
-		{
-			result = false;
-			var actual = Convert.ToInt64(value, System.Globalization.CultureInfo.InvariantCulture);
-			foreach (var raw in filter.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-			{
-				var token = raw;
-				bool negate = false;
-				if (token.StartsWith('!'))
-				{
-					negate = true;
-					token = token[1..].Trim();
-				}
-				if (token.Length == 0)
-					return false;
-				if (!Enum.TryParse(enumType, token, ignoreCase: true, out var parsed) || parsed is null)
-					return false;
-				var bits = Convert.ToInt64(parsed, System.Globalization.CultureInfo.InvariantCulture);
-				bool isSet = bits == 0 ? actual == 0 : (actual & bits) == bits;
-				if (negate ? isSet : !isSet)
-				{
-					result = false;
-					return true;
-				}
-			}
-			result = true;
-			return true;
 		}
 
 		static bool TryMatchNumeric(object value, string filter, out bool result)
@@ -274,7 +260,7 @@ namespace ILSpy.ViewModels
 		}
 	}
 
-	/// <summary>One column's filter entry — the column name plus its current filter text.</summary>
+	/// <summary>One column's filter entry — the column name plus its current filter state.</summary>
 	public sealed partial class ColumnFilter : ObservableObject
 	{
 		public ColumnFilter(string columnName)
@@ -289,6 +275,15 @@ namespace ILSpy.ViewModels
 		// plugin on write (the cached accessor's target reference comes back null).
 		[ObservableProperty]
 		private string? text;
+
+		/// <summary>
+		/// For <see cref="FlagsAttribute"/> enum columns: the OR-mask of flag values the
+		/// user picked in the dropdown checklist. <c>-1</c> (default) means "no flag
+		/// filter" — every row passes. Any other value is matched bitwise AND against the
+		/// row's flag value, mirroring WPF's <c>FlagsContentFilter</c>.
+		/// </summary>
+		[ObservableProperty]
+		private int flagMask = -1;
 	}
 
 	/// <summary>The (row, column) pair clicked in a token cell.</summary>
