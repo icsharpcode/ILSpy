@@ -146,6 +146,26 @@ namespace ILSpy.Views
 			};
 			menu.Items.Add(copyItem);
 
+			// "Copy Row" — TSV dump of the row that owns the hovered cell. Uses the same
+			// format-aware ReadCellText for each column, so hex columns land as hex.
+			var copyRowItem = new MenuItem {
+				Header = "Copy Row",
+				IsEnabled = hoveredCell?.DataContext is not null && grid is not null,
+			};
+			var rowSnapshot = hoveredCell?.DataContext;
+			var gridSnapshot = grid;
+			copyRowItem.Click += async (_, _) => {
+				if (rowSnapshot is null || gridSnapshot is null)
+					return;
+				var text = BuildRowText(gridSnapshot, rowSnapshot);
+				if (string.IsNullOrEmpty(text))
+					return;
+				var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+				if (clipboard is not null)
+					await clipboard.SetTextAsync(text);
+			};
+			menu.Items.Add(copyRowItem);
+
 			var built = ContextMenuProvider.Build(contextMenuEntries, context);
 			if (built != null)
 			{
@@ -164,16 +184,34 @@ namespace ILSpy.Views
 				return string.Empty;
 			var columnName = cell.OwningColumn.Tag as string
 				?? cell.OwningColumn.Header?.ToString();
+			return ReadColumnValue(cell.DataContext, columnName);
+		}
+
+		static string BuildRowText(DataGrid grid, object row)
+		{
+			var sb = new System.Text.StringBuilder();
+			for (int i = 0; i < grid.Columns.Count; i++)
+			{
+				if (i > 0)
+					sb.Append('\t');
+				var name = grid.Columns[i].Tag as string ?? grid.Columns[i].Header?.ToString();
+				sb.Append(ReadColumnValue(row, name));
+			}
+			return sb.ToString();
+		}
+
+		static string ReadColumnValue(object row, string? columnName)
+		{
 			if (string.IsNullOrEmpty(columnName))
 				return string.Empty;
-			var prop = cell.DataContext.GetType().GetProperty(columnName,
-				System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+			var prop = row.GetType().GetProperty(columnName,
+				BindingFlags.Public | BindingFlags.Instance);
 			if (prop is null)
 				return string.Empty;
 			var info = prop.GetCustomAttribute<ColumnInfoAttribute>();
 			object? value;
 			try
-			{ value = prop.GetValue(cell.DataContext); }
+			{ value = prop.GetValue(row); }
 			catch { return string.Empty; }
 			if (value is null)
 				return string.Empty;
