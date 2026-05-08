@@ -128,6 +128,39 @@ public class MetadataFilterTests
 	}
 
 	[Test]
+	public void Filter_Wrapped_In_Slashes_Is_Parsed_As_Case_Insensitive_Regex()
+	{
+		// `/pattern/` opts a filter into regex mode — same as Vim / less. Substring
+		// match (default) wouldn't accept `^System` or `Runtime$`; regex mode does.
+		var entry = new SampleEntry { Name = "System.Runtime" };
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Name") { Text = "/^System/" },
+		}).Should().BeTrue();
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Name") { Text = "/runtime$/" },
+		}).Should().BeTrue();
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Name") { Text = "/^Runtime/" },
+		}).Should().BeFalse();
+	}
+
+	[Test]
+	public void Unparseable_Regex_Falls_Back_To_Substring_Match()
+	{
+		// A malformed pattern (e.g. unclosed group) shouldn't take down the filter — the
+		// predicate must keep matching as if the user had typed plain text.
+		var entry = new SampleEntry { Name = "System(Runtime" };
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Name") { Text = "/(unclosed/" },
+		}).Should().BeFalse(
+			"the literal string '/(unclosed/' is not a substring of 'System(Runtime', so the fallback substring path rejects the row");
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Name") { Text = "(Runtime" },
+		}).Should().BeTrue(
+			"plain-text '(Runtime' (no slashes) matches as a literal substring");
+	}
+
+	[Test]
 	public void MatchesFilters_Returns_False_When_The_Filtered_Column_Does_Not_Exist_On_The_Row()
 	{
 		// A filter targeting a non-existent property never matches; surfacing this as "no

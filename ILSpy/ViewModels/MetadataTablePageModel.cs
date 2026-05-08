@@ -23,6 +23,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 using Avalonia.Controls;
 
@@ -102,11 +103,14 @@ namespace ILSpy.ViewModels
 
 		static readonly ConcurrentDictionary<(Type Type, string Column), PropertyInfo?> propertyLookupCache = new();
 
+		static readonly ConcurrentDictionary<string, Regex?> regexCache = new();
+
 		/// <summary>
 		/// Returns true when every <see cref="ColumnFilter"/> in <paramref name="filters"/>
 		/// either has an empty value or the matching property on <paramref name="item"/>
-		/// stringifies to a value that contains the filter case-insensitively. Used by the
-		/// view's <c>DataGridCollectionView.Filter</c> and by tests.
+		/// stringifies to a value that satisfies the filter. Plain text matches as a
+		/// case-insensitive substring; a filter wrapped in <c>/.../</c> is parsed as a
+		/// case-insensitive regex (silently downgrading to substring on parse failure).
 		/// </summary>
 		public static bool MatchesFilters(object item, IEnumerable<ColumnFilter> filters)
 		{
@@ -126,10 +130,30 @@ namespace ILSpy.ViewModels
 				{ value = prop.GetValue(item); }
 				catch { return false; }
 				var s = value?.ToString();
-				if (s is null || !s.Contains(f.Text, StringComparison.OrdinalIgnoreCase))
+				if (s is null)
+					return false;
+				if (TryGetRegex(f.Text) is { } rx)
+				{
+					if (!rx.IsMatch(s))
+						return false;
+				}
+				else if (!s.Contains(f.Text, StringComparison.OrdinalIgnoreCase))
 					return false;
 			}
 			return true;
+		}
+
+		static Regex? TryGetRegex(string filter)
+		{
+			// `/pattern/` opts a filter into regex mode (case-insensitive). Anything else,
+			// or an unparseable pattern, leaves the predicate on the substring path.
+			if (filter.Length < 2 || filter[0] != '/' || filter[^1] != '/')
+				return null;
+			return regexCache.GetOrAdd(filter, static text => {
+				try
+				{ return new Regex(text[1..^1], RegexOptions.IgnoreCase | RegexOptions.CultureInvariant); }
+				catch { return null; }
+			});
 		}
 	}
 
