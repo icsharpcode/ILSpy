@@ -89,7 +89,7 @@ namespace ILSpy.ViewModels
 
 		void OnColumnFilterTextChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName is nameof(ColumnFilter.Text) or nameof(ColumnFilter.FlagMask))
+			if (e.PropertyName is nameof(ColumnFilter.Text) or nameof(ColumnFilter.FlagsState))
 				ColumnFilterChanged?.Invoke();
 		}
 
@@ -130,8 +130,8 @@ namespace ILSpy.ViewModels
 			foreach (var f in filters)
 			{
 				bool textActive = !string.IsNullOrEmpty(f.Text);
-				bool maskActive = f.FlagMask != -1;
-				if (!textActive && !maskActive)
+				bool flagsActive = f.FlagsState is { IsEmpty: false };
+				if (!textActive && !flagsActive)
 					continue;
 				var prop = propertyLookupCache.GetOrAdd((item.GetType(), f.ColumnName),
 					static key => key.Type.GetProperty(key.Column,
@@ -153,15 +153,19 @@ namespace ILSpy.ViewModels
 			if (value is null)
 				return false;
 
-			// [Flags] column — numeric bitwise-AND match against the dropdown's mask.
-			// Mirrors WPF's FlagsContentFilter: -1 means "all rows", anything else passes
-			// rows where (mask & value) != 0.
+			// [Flags] column — apply the schema-driven CompiledFilter when the user has
+			// poked at the dropdown popup. The compiled filter encodes mutex sub-ranges
+			// (multi-select with bitwise AND on the masked bits) plus required / excluded
+			// independent flags, mirroring WPF's FlagsFilterControl + FlagsContentFilter.
 			if (prop.PropertyType.IsEnum && Attribute.IsDefined(prop.PropertyType, typeof(FlagsAttribute)))
 			{
-				if (filter.FlagMask != -1)
+				if (filter.FlagsState is { IsEmpty: false } flagsState)
 				{
-					int actual = Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture);
-					if ((filter.FlagMask & actual) == 0)
+					uint actual = Convert.ToUInt32(
+						Convert.ToInt64(value, System.Globalization.CultureInfo.InvariantCulture)
+							& 0xFFFFFFFFL,
+						System.Globalization.CultureInfo.InvariantCulture);
+					if (!global::ILSpy.Metadata.Filters.CompiledFilter.Compile(flagsState).Matches(actual))
 						return false;
 				}
 				// Fall through so a free-form substring filter on a [Flags] column still
@@ -277,13 +281,29 @@ namespace ILSpy.ViewModels
 		private string? text;
 
 		/// <summary>
-		/// For <see cref="FlagsAttribute"/> enum columns: the OR-mask of flag values the
-		/// user picked in the dropdown checklist. <c>-1</c> (default) means "no flag
-		/// filter" — every row passes. Any other value is matched bitwise AND against the
-		/// row's flag value, mirroring WPF's <c>FlagsContentFilter</c>.
+		/// For <see cref="FlagsAttribute"/> enum columns: schema-driven mutex / required /
+		/// excluded state set by the dropdown popup. <c>null</c> means "no flag filter";
+		/// any non-empty FilterState compiles into a CompiledFilter and runs alongside
+		/// the text predicate.
 		/// </summary>
 		[ObservableProperty]
-		private int flagMask = -1;
+		private global::ILSpy.Metadata.Filters.FilterState? flagsState;
+
+		// Forward inner FilterState mutations as our own PropertyChanged so the page's
+		// CollectionChanged-driven subscription (which only listens for ColumnFilter
+		// property changes) wakes up and refreshes the DataGridCollectionView.
+		partial void OnFlagsStateChanged(
+			global::ILSpy.Metadata.Filters.FilterState? oldValue,
+			global::ILSpy.Metadata.Filters.FilterState? newValue)
+		{
+			if (oldValue is not null)
+				oldValue.PropertyChanged -= OnFlagsStateInnerChanged;
+			if (newValue is not null)
+				newValue.PropertyChanged += OnFlagsStateInnerChanged;
+		}
+
+		void OnFlagsStateInnerChanged(object? sender, PropertyChangedEventArgs e)
+			=> OnPropertyChanged(nameof(FlagsState));
 	}
 
 	/// <summary>The (row, column) pair clicked in a token cell.</summary>

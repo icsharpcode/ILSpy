@@ -169,75 +169,74 @@ public class MetadataFilterTests
 		public SampleFlags Attributes { get; set; }
 	}
 
+	static global::ILSpy.Metadata.Filters.FilterState NewFlagsState() =>
+		new(global::ILSpy.Metadata.Filters.FlagsSchemaInferer.For(typeof(SampleFlags)));
+
 	[Test]
-	public void Default_FlagMask_Of_Minus_One_Matches_Every_Row()
+	public void Empty_FlagsState_Matches_Every_Row()
 	{
-		// Mask = -1 ("All") is the unfiltered default — every row passes regardless of
-		// its flag value. Mirrors FlagsContentFilter's `Mask == -1 || …` short-circuit.
+		// The unfiltered default — no required, no excluded, every mutex group "any".
 		MetadataTablePageModel.MatchesFilters(
 			new FlagsEntry { Attributes = SampleFlags.Public | SampleFlags.Static },
-			new[] { new ColumnFilter("Attributes") }).Should().BeTrue();
+			new[] { new ColumnFilter("Attributes") { FlagsState = NewFlagsState() } }).Should().BeTrue();
 		MetadataTablePageModel.MatchesFilters(
 			new FlagsEntry { Attributes = SampleFlags.None },
-			new[] { new ColumnFilter("Attributes") }).Should().BeTrue();
+			new[] { new ColumnFilter("Attributes") { FlagsState = NewFlagsState() } }).Should().BeTrue();
 	}
 
 	[Test]
-	public void FlagMask_Matches_Row_When_Any_Selected_Bit_Is_Set()
+	public void Required_Independent_Flag_Narrows_To_Rows_With_That_Bit_Set()
 	{
-		// WPF's FlagsContentFilter passes a row when (mask & value) != 0. With Public
-		// alone selected, only rows with the Public bit set match.
-		var publicMask = (int)SampleFlags.Public;
+		var state = NewFlagsState();
+		state.SetFlagState(nameof(SampleFlags.Public), global::ILSpy.Metadata.Filters.TriState.Required);
 		MetadataTablePageModel.MatchesFilters(
 			new FlagsEntry { Attributes = SampleFlags.Public | SampleFlags.Static },
-			new[] { new ColumnFilter("Attributes") { FlagMask = publicMask } }).Should().BeTrue();
+			new[] { new ColumnFilter("Attributes") { FlagsState = state } }).Should().BeTrue();
 		MetadataTablePageModel.MatchesFilters(
 			new FlagsEntry { Attributes = SampleFlags.Static },
-			new[] { new ColumnFilter("Attributes") { FlagMask = publicMask } }).Should().BeFalse();
+			new[] { new ColumnFilter("Attributes") { FlagsState = state } }).Should().BeFalse();
 	}
 
 	[Test]
-	public void Multiple_Selected_Flags_OR_Together_In_The_Mask()
+	public void Multiple_Required_Flags_AND_By_Default()
 	{
-		// Picking Public + Static yields mask = Public | Static. A row matches when
-		// it has *either* flag set — that's bitwise OR semantics, not AND.
-		var orMask = (int)(SampleFlags.Public | SampleFlags.Static);
-		MetadataTablePageModel.MatchesFilters(
-			new FlagsEntry { Attributes = SampleFlags.Public },
-			new[] { new ColumnFilter("Attributes") { FlagMask = orMask } }).Should().BeTrue();
-		MetadataTablePageModel.MatchesFilters(
-			new FlagsEntry { Attributes = SampleFlags.Static },
-			new[] { new ColumnFilter("Attributes") { FlagMask = orMask } }).Should().BeTrue();
-		MetadataTablePageModel.MatchesFilters(
-			new FlagsEntry { Attributes = SampleFlags.Sealed },
-			new[] { new ColumnFilter("Attributes") { FlagMask = orMask } }).Should().BeFalse();
-	}
-
-	[Test]
-	public void FlagMask_Of_Zero_Hides_Every_Row()
-	{
-		// "<All>" unchecked drives the mask to 0. WPF's filter then rejects everything
-		// because (0 & value) is never non-zero.
-		MetadataTablePageModel.MatchesFilters(
-			new FlagsEntry { Attributes = SampleFlags.Public },
-			new[] { new ColumnFilter("Attributes") { FlagMask = 0 } }).Should().BeFalse();
-		MetadataTablePageModel.MatchesFilters(
-			new FlagsEntry { Attributes = SampleFlags.None },
-			new[] { new ColumnFilter("Attributes") { FlagMask = 0 } }).Should().BeFalse();
-	}
-
-	[Test]
-	public void FlagMask_And_Text_Filter_AND_Together_On_The_Same_Column()
-	{
-		// Both inputs apply: mask narrows the rows by flag, then Text further narrows
-		// by substring on the formatted display.
-		var publicMask = (int)SampleFlags.Public;
+		// Without an explicit mode the schema starts in MatchMode.All — every required
+		// flag must be set. Public | Static row passes; Public alone doesn't.
+		var state = NewFlagsState();
+		state.SetFlagState(nameof(SampleFlags.Public), global::ILSpy.Metadata.Filters.TriState.Required);
+		state.SetFlagState(nameof(SampleFlags.Static), global::ILSpy.Metadata.Filters.TriState.Required);
 		MetadataTablePageModel.MatchesFilters(
 			new FlagsEntry { Attributes = SampleFlags.Public | SampleFlags.Static },
-			new[] { new ColumnFilter("Attributes") { FlagMask = publicMask, Text = "Static" } }).Should().BeTrue();
+			new[] { new ColumnFilter("Attributes") { FlagsState = state } }).Should().BeTrue();
 		MetadataTablePageModel.MatchesFilters(
 			new FlagsEntry { Attributes = SampleFlags.Public },
-			new[] { new ColumnFilter("Attributes") { FlagMask = publicMask, Text = "Static" } }).Should().BeFalse();
+			new[] { new ColumnFilter("Attributes") { FlagsState = state } }).Should().BeFalse();
+	}
+
+	[Test]
+	public void Excluded_Flag_Hides_Rows_With_That_Bit_Set()
+	{
+		var state = NewFlagsState();
+		state.SetFlagState(nameof(SampleFlags.Static), global::ILSpy.Metadata.Filters.TriState.Excluded);
+		MetadataTablePageModel.MatchesFilters(
+			new FlagsEntry { Attributes = SampleFlags.Public },
+			new[] { new ColumnFilter("Attributes") { FlagsState = state } }).Should().BeTrue();
+		MetadataTablePageModel.MatchesFilters(
+			new FlagsEntry { Attributes = SampleFlags.Public | SampleFlags.Static },
+			new[] { new ColumnFilter("Attributes") { FlagsState = state } }).Should().BeFalse();
+	}
+
+	[Test]
+	public void FlagsState_And_Text_Filter_AND_Together_On_The_Same_Column()
+	{
+		var state = NewFlagsState();
+		state.SetFlagState(nameof(SampleFlags.Public), global::ILSpy.Metadata.Filters.TriState.Required);
+		MetadataTablePageModel.MatchesFilters(
+			new FlagsEntry { Attributes = SampleFlags.Public | SampleFlags.Static },
+			new[] { new ColumnFilter("Attributes") { FlagsState = state, Text = "Static" } }).Should().BeTrue();
+		MetadataTablePageModel.MatchesFilters(
+			new FlagsEntry { Attributes = SampleFlags.Public },
+			new[] { new ColumnFilter("Attributes") { FlagsState = state, Text = "Static" } }).Should().BeFalse();
 	}
 
 	sealed class NumericEntry
