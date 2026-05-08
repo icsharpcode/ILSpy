@@ -25,6 +25,7 @@ using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Markup.Xaml;
 using Avalonia.VisualTree;
 
@@ -122,18 +123,63 @@ namespace ILSpy.Views
 				DataGrid = grid,
 				OriginalSource = hoveredCell,
 			};
-			var built = ContextMenuProvider.Build(contextMenuEntries, context);
-			if (built == null)
-			{
-				e.Cancel = true;
-				return;
-			}
 			menu.Items.Clear();
-			foreach (var item in built.Items.Cast<Control>().ToArray())
+
+			// Always-available Copy. Avalonia DataGrid's built-in Ctrl+C copies the active
+			// selection as TSV; mirror that here so right-click in a plain column cell still
+			// produces a usable menu (the GoToToken entry shows only on token-kind cells).
+			var copyItem = new MenuItem {
+				Header = "Copy",
+				InputGesture = new KeyGesture(Key.C, KeyModifiers.Control),
+				IsEnabled = grid?.SelectedItem != null,
+			};
+			copyItem.Click += async (_, _) => {
+				if (grid is null)
+					return;
+				var topLevel = TopLevel.GetTopLevel(grid);
+				var clipboard = topLevel?.Clipboard;
+				if (clipboard is null)
+					return;
+				var text = BuildClipboardText(grid);
+				if (!string.IsNullOrEmpty(text))
+					await clipboard.SetTextAsync(text);
+			};
+			menu.Items.Add(copyItem);
+
+			var built = ContextMenuProvider.Build(contextMenuEntries, context);
+			if (built != null)
 			{
-				built.Items.Remove(item);
-				menu.Items.Add(item);
+				menu.Items.Add(new Separator());
+				foreach (var item in built.Items.Cast<Control>().ToArray())
+				{
+					built.Items.Remove(item);
+					menu.Items.Add(item);
+				}
 			}
+		}
+
+		static string BuildClipboardText(DataGrid grid)
+		{
+			// Tab-separated row dump for the selected item — same shape DataGrid's built-in
+			// Ctrl+C produces. Walk every column so the user sees the full row state, not
+			// only the cell under the pointer.
+			if (grid.SelectedItem is not { } row)
+				return string.Empty;
+			var sb = new System.Text.StringBuilder();
+			for (int i = 0; i < grid.Columns.Count; i++)
+			{
+				if (i > 0)
+					sb.Append('\t');
+				var col = grid.Columns[i];
+				if (col is DataGridTextColumn text && text.Binding is global::Avalonia.Data.Binding b
+					&& b.Path is { } path
+					&& row.GetType().GetProperty(path) is { } prop)
+				{
+					var v = prop.GetValue(row);
+					sb.Append(v?.ToString());
+				}
+			}
+			return sb.ToString();
 		}
 
 		void InitializeComponent() => AvaloniaXamlLoader.Load(this);
