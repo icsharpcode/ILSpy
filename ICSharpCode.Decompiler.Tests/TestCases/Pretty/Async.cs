@@ -74,6 +74,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("After");
 		}
 
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		public async Task NoInliningTaskMethod()
+		{
+			await Task.Yield();
+		}
+
 		public async Task TaskMethodWithoutAwait()
 		{
 			Console.WriteLine("No Await");
@@ -113,6 +119,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			{
 				Console.WriteLine("Body");
 			}
+		}
+
+		public async Task AwaitConfigureAwaitFalse(Task<int> task)
+		{
+#if ROSLYN2
+			Console.WriteLine(await task.ConfigureAwait(continueOnCapturedContext: false));
+#else
+			Console.WriteLine(await task.ConfigureAwait(false));
+#endif
+		}
+
+		public async Task<int> AwaitConfigureAwaitMixed(Task<int> task1, Task<int> task2)
+		{
+#if ROSLYN2
+			return await task1.ConfigureAwait(continueOnCapturedContext: false) + await task2.ConfigureAwait(continueOnCapturedContext: true);
+#else
+			return await task1.ConfigureAwait(false) + await task2.ConfigureAwait(true);
+#endif
 		}
 
 #if CS60
