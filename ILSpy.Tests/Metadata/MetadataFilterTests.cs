@@ -19,7 +19,10 @@
 using System.Linq;
 using System.Threading.Tasks;
 
+using Avalonia.Collections;
+using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
+using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
@@ -136,12 +139,13 @@ public class MetadataFilterTests
 	}
 
 	[AvaloniaTest]
-	public async Task ColumnFilter_Reduces_Visible_Rows_To_Those_Whose_Column_Contains_The_Substring()
+	public async Task Typing_Into_The_Rendered_Header_TextBox_Filters_The_DataGrid_View()
 	{
-		// Integration check: navigate to the TypeDef table (guaranteed populated for any
-		// loaded module) and confirm that setting a Name-column filter shrinks the visible
-		// row set to entries whose Name contains the filter, and clearing it restores all.
-
+		// End-to-end: navigate to TypeDef, locate the rendered TextBox in the Name column's
+		// header, write into it, and confirm the DataGrid's effective row count drops. We
+		// assert on the live DataGridCollectionView's Count (what the user actually sees on
+		// screen) — not on the predicate evaluated over Items, which can pass even when the
+		// CollectionView's Filter is silently null.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
@@ -159,18 +163,47 @@ public class MetadataFilterTests
 		vm.AssemblyTreeModel.SelectNode(typeDefNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
 
-		var totalCount = tab.Items.Count;
-		totalCount.Should().BeGreaterThan(0);
+		var metadataPage = await window.WaitForComponent<MetadataTablePage>();
+		var grid = await metadataPage.WaitForComponent<DataGrid>();
+		await grid.WaitForComponent<DataGridColumnHeader>();
+
+		var headerBox = grid.GetVisualDescendants().OfType<TextBox>()
+			.FirstOrDefault(tb => tb.FindAncestorOfType<DataGridColumnHeader>() is { } owner
+				&& owner.Content is StackPanel sp
+				&& sp.Children.OfType<TextBlock>().FirstOrDefault()?.Text == "Name");
+		headerBox.Should().NotBeNull(
+			"the column-builder bakes a TextBox into the Name column's header — it must reach the rendered visual tree");
+
+		var nameColumn = tab.Columns.Single(c => (string?)c.Tag == "Name");
+		var modelHeaderBox = ((StackPanel)nameColumn.Header!).Children.OfType<TextBox>().Single();
+		ReferenceEquals(headerBox, modelHeaderBox).Should().BeTrue(
+			"DataGrid must render the StackPanel Header directly without re-templating; otherwise the property-changed handler is on a different TextBox than the user types into");
+
+		var view = grid.ItemsSource as DataGridCollectionView;
+		view.Should().NotBeNull("the metadata grid wires its ItemsSource to a DataGridCollectionView so the per-column filter can re-evaluate");
+		var totalRows = tab.Items.Count;
+		totalRows.Should().BeGreaterThan(0, "TypeDef must have rows for filtering to be observable");
+		view!.Count.Should().Be(totalRows, "every row should be visible before any filter is set");
 
 		var nameFilter = tab.ColumnFilters.Single(f => f.ColumnName == "Name");
-		nameFilter.Text = "System";
 
-		var visible = tab.Items.Where(e => MetadataTablePageModel.MatchesFilters(e, tab.ColumnFilters)).ToList();
-		visible.Should().NotBeEmpty("at least one TypeDef row should mention 'System'");
-		visible.Count.Should().BeLessThan(totalCount, "the filter must hide at least one row");
+		// Set the rendered TextBox's Text — the same code path a user keystroke takes
+		// (TextProperty AvaloniaObject change → builder's PropertyChanged handler →
+		// ColumnFilter.Text → page.ColumnFilterChanged → view.Refresh()).
+		headerBox!.Text = "System";
 
-		nameFilter.Text = "";
-		var afterClear = tab.Items.Where(e => MetadataTablePageModel.MatchesFilters(e, tab.ColumnFilters)).Count();
-		afterClear.Should().Be(totalCount);
+		nameFilter.Text.Should().Be("System",
+			"setting the rendered TextBox.Text must propagate to ColumnFilter.Text");
+		var expectedVisible = tab.Items.Count(e => MetadataTablePageModel.MatchesFilters(e, tab.ColumnFilters));
+		expectedVisible.Should().BeLessThan(totalRows,
+			"the predicate must hide at least one TypeDef row when Name contains 'System'");
+		view.Count.Should().Be(expectedVisible,
+			"the live DataGridCollectionView's count must reflect the per-column filter — typing into the header must shrink the visible-row set, not just update the model");
+
+		// Clearing through the rendered TextBox must restore every row.
+		headerBox.Text = "";
+		nameFilter.Text.Should().BeEmpty();
+		view.Count.Should().Be(totalRows,
+			"clearing the filter must restore every row in the visible grid view");
 	}
 }
