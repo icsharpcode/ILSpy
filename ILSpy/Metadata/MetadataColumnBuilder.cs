@@ -28,8 +28,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
 using Avalonia.Data.Converters;
-using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Reactive;
@@ -134,16 +132,6 @@ namespace ILSpy.Metadata
 				HorizontalAlignment = HorizontalAlignment.Stretch,
 				Text = filter.Text,
 			};
-			// Stop pointer-press / -release events from bubbling to the column header —
-			// otherwise DataGridColumnHeader.OnPointerPressed treats the click as a sort
-			// gesture and never lets the TextBox take focus, so the user sees the box but
-			// can't actually type into it.
-			box.AddHandler(InputElement.PointerPressedEvent,
-				static (_, e) => e.Handled = true,
-				RoutingStrategies.Tunnel | RoutingStrategies.Bubble);
-			box.AddHandler(InputElement.PointerReleasedEvent,
-				static (_, e) => e.Handled = true,
-				RoutingStrategies.Tunnel | RoutingStrategies.Bubble);
 			// Use the TextProperty observable rather than the TextChanged event — for
 			// header-hosted TextBoxes the latter doesn't fire reliably (the column header
 			// re-templates on layout updates), but property-change notifications do.
