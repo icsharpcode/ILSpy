@@ -25,8 +25,11 @@ using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Markup.Xaml;
 using Avalonia.VisualTree;
+
+using System.Reflection;
 
 using ILSpy.AppEnv;
 using ILSpy.Commands;
@@ -122,21 +125,63 @@ namespace ILSpy.Views
 				DataGrid = grid,
 				OriginalSource = hoveredCell,
 			};
-			var built = ContextMenuProvider.Build(contextMenuEntries, context);
-			if (built == null)
-			{
-				// No MEF entries are visible for this click. Avalonia DataGrid's default
-				// per-cell context menu still surfaces Copy, so cancel ours rather than
-				// stack a redundant duplicate on top of it.
-				e.Cancel = true;
-				return;
-			}
 			menu.Items.Clear();
-			foreach (var item in built.Items.Cast<Control>().ToArray())
+
+			// Always-available "Copy" — copies the single-cell value under the pointer.
+			// Disabled when no cell was hovered (e.g. right-click on empty space below the
+			// rows). Built before the MEF entries so it stays at the top of the menu.
+			var copyItem = new MenuItem {
+				Header = "Copy",
+				InputGesture = new KeyGesture(Key.C, KeyModifiers.Control),
+				IsEnabled = hoveredCell is not null,
+			};
+			var cellSnapshot = hoveredCell;
+			copyItem.Click += async (_, _) => {
+				var text = ReadCellText(cellSnapshot);
+				if (string.IsNullOrEmpty(text))
+					return;
+				var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+				if (clipboard is not null)
+					await clipboard.SetTextAsync(text);
+			};
+			menu.Items.Add(copyItem);
+
+			var built = ContextMenuProvider.Build(contextMenuEntries, context);
+			if (built != null)
 			{
-				built.Items.Remove(item);
-				menu.Items.Add(item);
+				menu.Items.Add(new Separator());
+				foreach (var item in built.Items.Cast<Control>().ToArray())
+				{
+					built.Items.Remove(item);
+					menu.Items.Add(item);
+				}
 			}
+		}
+
+		static string ReadCellText(DataGridCell? cell)
+		{
+			if (cell?.OwningColumn is null || cell.DataContext is null)
+				return string.Empty;
+			var columnName = cell.OwningColumn.Tag as string
+				?? cell.OwningColumn.Header?.ToString();
+			if (string.IsNullOrEmpty(columnName))
+				return string.Empty;
+			var prop = cell.DataContext.GetType().GetProperty(columnName,
+				System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+			if (prop is null)
+				return string.Empty;
+			var info = prop.GetCustomAttribute<ColumnInfoAttribute>();
+			object? value;
+			try
+			{ value = prop.GetValue(cell.DataContext); }
+			catch { return string.Empty; }
+			if (value is null)
+				return string.Empty;
+			// Mirror the formatting the column itself uses, so what's on the clipboard
+			// matches what the user sees ("0x06000001" rather than "100663297").
+			if (!string.IsNullOrEmpty(info?.Format) && value is IFormattable f)
+				return f.ToString(info.Format, System.Globalization.CultureInfo.InvariantCulture);
+			return value.ToString() ?? string.Empty;
 		}
 
 		void InitializeComponent() => AvaloniaXamlLoader.Load(this);
