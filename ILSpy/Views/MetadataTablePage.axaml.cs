@@ -17,7 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 
 using Avalonia;
 using Avalonia.Collections;
@@ -26,6 +28,7 @@ using Avalonia.Input;
 using Avalonia.Markup.Xaml;
 using Avalonia.VisualTree;
 
+using ILSpy.AppEnv;
 using ILSpy.Metadata;
 using ILSpy.ViewModels;
 
@@ -48,6 +51,54 @@ namespace ILSpy.Views
 			InitializeComponent();
 			DataContextChanged += (_, _) => RebindModel();
 			AddHandler(PointerMovedEvent, OnPointerMovedOverGrid);
+			AttachContextMenu(TryGetContextMenuEntries());
+		}
+
+		static IReadOnlyList<IContextMenuEntryExport> TryGetContextMenuEntries()
+		{
+			try
+			{ return AppComposition.Current.GetExport<ContextMenuEntryRegistry>().Entries; }
+			catch { return Array.Empty<IContextMenuEntryExport>(); }
+		}
+
+		IReadOnlyList<IContextMenuEntryExport> contextMenuEntries = Array.Empty<IContextMenuEntryExport>();
+
+		/// <summary>
+		/// Replaces the active context-menu entries. Tests may call this directly to inject
+		/// stub entries; at runtime construction registers the MEF-discovered set.
+		/// </summary>
+		internal void AttachContextMenu(IReadOnlyList<IContextMenuEntryExport> entries)
+		{
+			contextMenuEntries = entries;
+			var grid = this.FindControl<DataGrid>("Grid");
+			if (grid == null)
+				return;
+			var menu = new ContextMenu();
+			menu.Opening += OnContextMenuOpening;
+			grid.ContextMenu = menu;
+		}
+
+		void OnContextMenuOpening(object? sender, CancelEventArgs e)
+		{
+			if (sender is not ContextMenu menu)
+				return;
+			var grid = this.FindControl<DataGrid>("Grid");
+			var context = new TextViewContext {
+				DataGrid = grid,
+				OriginalSource = hoveredCell,
+			};
+			var built = ContextMenuProvider.Build(contextMenuEntries, context);
+			if (built == null)
+			{
+				e.Cancel = true;
+				return;
+			}
+			menu.Items.Clear();
+			foreach (var item in built.Items.Cast<Control>().ToArray())
+			{
+				built.Items.Remove(item);
+				menu.Items.Add(item);
+			}
 		}
 
 		void InitializeComponent() => AvaloniaXamlLoader.Load(this);
