@@ -171,10 +171,13 @@ namespace ILSpy.Views
 			foreach (var c in boundModel.Columns)
 				grid.Columns.Add(c);
 			var model = boundModel;
-			itemsView = new DataGridCollectionView(model.Items) {
-				Filter = item => MetadataTablePageModel.MatchesFilters(item, model.ColumnFilters),
-			};
+			itemsView = new DataGridCollectionView(model.Items);
 			grid.ItemsSource = itemsView;
+			// Assign Filter AFTER attaching to the grid; the DataGridCollectionView's setter
+			// short-circuits on _filter == value and an object-initializer assignment seems to
+			// land on a transient state that the grid replaces, so the filter ends up null
+			// on the live view by the time refresh requests come in.
+			itemsView.Filter = item => MetadataTablePageModel.MatchesFilters(item, model.ColumnFilters);
 		}
 
 		void ApplyScrollTarget()

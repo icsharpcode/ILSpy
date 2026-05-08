@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
+using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
 using Avalonia.Threading;
@@ -108,24 +109,32 @@ public class MetadataFilterRowVerificationTest
 		var totalRows = page.Items.Count;
 		totalRows.Should().BeGreaterThan(0, "TypeDef must have rows for filtering to be observable");
 
+		// The DataGrid's ItemsSource is the DataGridCollectionView wired up by ApplySchema.
+		// Its Count reflects what the user actually sees on screen — that's the post-filter
+		// row count we need to assert on, not the predicate evaluated on raw Items.
+		var view = grid.ItemsSource as DataGridCollectionView;
+		view.Should().NotBeNull("the metadata grid must expose a DataGridCollectionView so the per-column filter can re-evaluate");
+		view!.Count.Should().Be(totalRows, "every row should be visible before any filter is set");
+
 		// === STEP 6: Type "System" into the rendered TextBox ===
 		headerBox!.Text = "System";
 		Dispatcher.UIThread.RunJobs();
 		nameFilter.Text.Should().Be("System",
 			"setting the rendered TextBox.Text must propagate to ColumnFilter.Text");
-		var visibleByPredicate = page.Items.Count(e => MetadataTablePageModel.MatchesFilters(e, page.ColumnFilters));
-		visibleByPredicate.Should().BeLessThan(totalRows,
-			"the predicate must hide at least one TypeDef row when filtering Name on 'System'");
-		TestContext.Out.WriteLine($"[VERIFY] After typing 'System': filter='{nameFilter.Text}' visible={visibleByPredicate}/{totalRows}");
+
+		var expectedVisible = page.Items.Count(e => MetadataTablePageModel.MatchesFilters(e, page.ColumnFilters));
+		expectedVisible.Should().BeLessThan(totalRows,
+			"the predicate must hide at least one TypeDef row when Name contains 'System'");
+		view.Count.Should().Be(expectedVisible,
+			"the live grid view must reflect the filter — typing into the header must shrink the visible-row set, not just update ColumnFilter.Text");
 		window.CaptureAndShow(label: "step6_typed_System");
 
 		// === STEP 7: Clear the filter ===
 		headerBox.Text = "";
 		Dispatcher.UIThread.RunJobs();
 		nameFilter.Text.Should().BeEmpty("clearing the TextBox must clear the filter");
-		var visibleAfterClear = page.Items.Count(e => MetadataTablePageModel.MatchesFilters(e, page.ColumnFilters));
-		visibleAfterClear.Should().Be(totalRows, "an empty filter must show every row again");
-		TestContext.Out.WriteLine($"[VERIFY] After clearing: filter='{nameFilter.Text}' visible={visibleAfterClear}/{totalRows}");
+		view.Count.Should().Be(totalRows,
+			"clearing the filter must restore every row in the visible grid view");
 		window.CaptureAndShow(label: "step7_cleared");
 	}
 }
