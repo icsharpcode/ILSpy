@@ -216,9 +216,17 @@ namespace ILSpy.Views
 			if (value is null)
 				return string.Empty;
 			// Mirror the formatting the column itself uses, so what's on the clipboard
-			// matches what the user sees ("0x06000001" rather than "100663297").
-			if (!string.IsNullOrEmpty(info?.Format) && value is IFormattable f)
-				return f.ToString(info.Format, System.Globalization.CultureInfo.InvariantCulture);
+			// matches what the user sees ("0x06000001" rather than "100663297"). Enum
+			// values must be widened to their underlying integer first — Enum.ToString
+			// rejects multi-character format specs like "X8".
+			if (!string.IsNullOrEmpty(info?.Format))
+			{
+				if (value is Enum enumValue)
+					value = System.Convert.ChangeType(enumValue, enumValue.GetTypeCode(),
+						System.Globalization.CultureInfo.InvariantCulture);
+				if (value is IFormattable f)
+					return f.ToString(info.Format, System.Globalization.CultureInfo.InvariantCulture);
+			}
 			return value.ToString() ?? string.Empty;
 		}
 
