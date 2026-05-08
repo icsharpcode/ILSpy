@@ -19,10 +19,14 @@
 using System;
 using System.ComponentModel;
 
+using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Markup.Xaml;
+using Avalonia.VisualTree;
 
+using ILSpy.Metadata;
 using ILSpy.ViewModels;
 
 namespace ILSpy.Views
@@ -37,14 +41,37 @@ namespace ILSpy.Views
 	{
 		MetadataTablePageModel? boundModel;
 		DataGridCollectionView? itemsView;
+		DataGridCell? hoveredCell;
 
 		public MetadataTablePage()
 		{
 			InitializeComponent();
 			DataContextChanged += (_, _) => RebindModel();
+			AddHandler(PointerMovedEvent, OnPointerMovedOverGrid);
 		}
 
 		void InitializeComponent() => AvaloniaXamlLoader.Load(this);
+
+		void OnPointerMovedOverGrid(object? sender, PointerEventArgs e)
+		{
+			// Walk up the visual tree from the pointer's source to the cell. Cells nest
+			// arbitrary content (TextBlock for plain columns, Button for token columns), so
+			// a per-cell PointerEntered subscription would miss most events.
+			var visual = e.Source as Visual;
+			while (visual is not null and not DataGridCell)
+				visual = visual.GetVisualParent();
+			var cell = visual as DataGridCell;
+			if (cell == hoveredCell)
+				return;
+			hoveredCell = cell;
+			if (cell is null)
+				return;
+			var columnName = cell.OwningColumn?.Header?.ToString();
+			if (columnName is null)
+				return;
+			var tip = MetadataCellTooltip.Resolve(cell.DataContext!, columnName);
+			ToolTip.SetTip(cell, tip);
+		}
 
 		void RebindModel()
 		{
