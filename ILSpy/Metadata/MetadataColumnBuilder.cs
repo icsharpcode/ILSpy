@@ -25,12 +25,12 @@ using System.Reflection;
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
 using Avalonia.Data.Converters;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Reactive;
 using Avalonia.VisualTree;
 
 using ILSpy.ViewModels;
@@ -109,7 +109,7 @@ namespace ILSpy.Metadata
 			var column = d.Info?.Kind == ColumnKind.Token
 				? (DataGridColumn)BuildTokenColumn(d.Property, d.Info)
 				: BuildTextColumn(d.Property, d.Info);
-			column.Header = filter is null ? d.Name : (object)BuildHeader(d.Name, filter);
+			column.Header = filter is null ? d.Name : (object)BuildHeader(d.Name, filter, d.Property.PropertyType);
 			// Header is a Panel when filters are wired, so callers can't recover the column
 			// name via Header.ToString(). Stash the name on Tag for hover-tooltip lookup,
 			// "Go to token" context-menu resolution, and any future cell-level navigation.
@@ -117,7 +117,7 @@ namespace ILSpy.Metadata
 			return column;
 		}
 
-		static Control BuildHeader(string columnName, ColumnFilter filter)
+		static Control BuildHeader(string columnName, ColumnFilter filter, Type propertyType)
 		{
 			var label = new TextBlock {
 				Text = columnName,
@@ -132,21 +132,113 @@ namespace ILSpy.Metadata
 				HorizontalAlignment = HorizontalAlignment.Stretch,
 				Text = filter.Text,
 			};
-			// Use the TextProperty observable rather than the TextChanged event — for
-			// header-hosted TextBoxes the latter doesn't fire reliably (the column header
-			// re-templates on layout updates), but property-change notifications do.
-			box.GetObservable(TextBox.TextProperty).Subscribe(new AnonymousObserver<string?>(text => {
-				if (filter.Text != text)
-					filter.Text = text;
-			}));
+			// Subscribe to the AvaloniaProperty change notification directly. GetObservable
+			// also pushes the initial value at subscribe time, which can race with the
+			// header's visual-tree-attach pass; AvaloniaObject.PropertyChanged only fires on
+			// actual changes and reaches the same handler regardless of when the box joins
+			// or leaves the visual tree.
+			box.PropertyChanged += (_, e) => {
+				if (e.Property == TextBox.TextProperty && filter.Text != box.Text)
+					filter.Text = box.Text;
+			};
 			filter.PropertyChanged += (_, e) => {
 				if (e.PropertyName == nameof(ColumnFilter.Text) && box.Text != filter.Text)
 					box.Text = filter.Text;
 			};
+
+			Control inputRow = box;
+			if (propertyType.IsEnum && Attribute.IsDefined(propertyType, typeof(FlagsAttribute)))
+				inputRow = WrapWithFlagsDropdown(box, filter, propertyType);
+
 			return new StackPanel {
 				Orientation = Orientation.Vertical,
-				Children = { label, box },
+				Children = { label, inputRow },
 			};
+		}
+
+		static Control WrapWithFlagsDropdown(TextBox box, ColumnFilter filter, Type enumType)
+		{
+			// Discoverable flag-checklist popup. The TextBox stays for free-form input (regex,
+			// numeric ops, mixed flag names with `!` negation); the dropdown rebuilds the
+			// filter from the boxes the user ticks, so the predicate's flags-aware path is
+			// reachable without typing the names from memory.
+			var openButton = new Button {
+				Content = "▾",
+				Padding = new Thickness(4, 0),
+				Margin = new Thickness(2, 2, 0, 0),
+				MinHeight = 0,
+				VerticalAlignment = VerticalAlignment.Stretch,
+			};
+			var checkPanel = new StackPanel { Orientation = Orientation.Vertical };
+			var checkBoxes = new System.Collections.Generic.Dictionary<string, CheckBox>(StringComparer.OrdinalIgnoreCase);
+			foreach (var name in Enum.GetNames(enumType))
+			{
+				if (name == "None")
+					continue;
+				var cb = new CheckBox { Content = name, Padding = new Thickness(4, 1) };
+				cb.IsCheckedChanged += (_, _) => RebuildFilterFromCheckboxes(filter, checkBoxes);
+				checkBoxes[name] = cb;
+				checkPanel.Children.Add(cb);
+			}
+			var popup = new Popup {
+				PlacementTarget = openButton,
+				Placement = PlacementMode.BottomEdgeAlignedLeft,
+				IsLightDismissEnabled = true,
+				Child = new Border {
+					BorderBrush = Brushes.Gray,
+					BorderThickness = new Thickness(1),
+					Background = Brushes.White,
+					Padding = new Thickness(4),
+					Child = new ScrollViewer {
+						MaxHeight = 300,
+						Content = checkPanel,
+					},
+				},
+			};
+			openButton.Click += (_, _) => {
+				SyncCheckboxesFromFilter(filter, checkBoxes);
+				popup.IsOpen = true;
+			};
+			var row = new DockPanel { LastChildFill = true, Margin = new Thickness(0, 2, 0, 0) };
+			DockPanel.SetDock(openButton, global::Avalonia.Controls.Dock.Right);
+			row.Children.Add(openButton);
+			row.Children.Add(box);
+			box.Margin = new Thickness(0);
+			// Keep the popup in the logical tree so light-dismiss works; parking it in a
+			// zero-size container alongside the row avoids it taking layout space.
+			return new StackPanel {
+				Orientation = Orientation.Vertical,
+				Children = { row, popup },
+			};
+		}
+
+		static void SyncCheckboxesFromFilter(ColumnFilter filter, System.Collections.Generic.IDictionary<string, CheckBox> checkBoxes)
+		{
+			var positives = ParsePositiveTokens(filter.Text);
+			foreach (var (name, cb) in checkBoxes)
+				cb.IsChecked = positives.Contains(name);
+		}
+
+		static void RebuildFilterFromCheckboxes(ColumnFilter filter, System.Collections.Generic.IDictionary<string, CheckBox> checkBoxes)
+		{
+			var checkedNames = checkBoxes
+				.Where(p => p.Value.IsChecked == true)
+				.Select(p => p.Key);
+			filter.Text = string.Join(", ", checkedNames);
+		}
+
+		static System.Collections.Generic.HashSet<string> ParsePositiveTokens(string? text)
+		{
+			var set = new System.Collections.Generic.HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			if (string.IsNullOrEmpty(text))
+				return set;
+			foreach (var raw in text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+			{
+				if (raw.StartsWith('!'))
+					continue;
+				set.Add(raw);
+			}
+			return set;
 		}
 
 		static DataGridTextColumn BuildTextColumn(PropertyInfo prop, ColumnInfoAttribute? info)
