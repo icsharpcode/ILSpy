@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -158,6 +159,107 @@ public class MetadataFilterTests
 			new ColumnFilter("Name") { Text = "(Runtime" },
 		}).Should().BeTrue(
 			"plain-text '(Runtime' (no slashes) matches as a literal substring");
+	}
+
+	[Flags]
+	enum SampleFlags { None = 0, Public = 1, Static = 2, Sealed = 4, Private = 8 }
+
+	sealed class FlagsEntry
+	{
+		public SampleFlags Attributes { get; set; }
+	}
+
+	[Test]
+	public void Filter_Matches_Single_Flag_Name_When_Set_On_Flags_Enum_Column()
+	{
+		var entry = new FlagsEntry { Attributes = SampleFlags.Public | SampleFlags.Static };
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Attributes") { Text = "Public" },
+		}).Should().BeTrue();
+	}
+
+	[Test]
+	public void Filter_Matches_When_All_Comma_Separated_Flag_Names_Are_Set_Regardless_Of_Order()
+	{
+		// Substring fallback would fail "Static, Public" against "Public, Static" since the
+		// names are out of order — the [Flags]-aware predicate matches anyway.
+		var entry = new FlagsEntry { Attributes = SampleFlags.Public | SampleFlags.Static };
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Attributes") { Text = "Static, Public" },
+		}).Should().BeTrue();
+	}
+
+	[Test]
+	public void Filter_Misses_When_Any_Named_Flag_Is_Not_Set()
+	{
+		var entry = new FlagsEntry { Attributes = SampleFlags.Public | SampleFlags.Static };
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Attributes") { Text = "Public, Sealed" },
+		}).Should().BeFalse();
+	}
+
+	[Test]
+	public void Filter_With_Bang_Prefix_Requires_Flag_To_Be_Cleared()
+	{
+		// `!Name` reads as "this flag must NOT be set" — useful for narrowing to
+		// non-static methods, non-public members, etc.
+		var entry = new FlagsEntry { Attributes = SampleFlags.Public };
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Attributes") { Text = "!Static" },
+		}).Should().BeTrue();
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Attributes") { Text = "Public, !Static" },
+		}).Should().BeTrue();
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Attributes") { Text = "!Public" },
+		}).Should().BeFalse();
+	}
+
+	[Test]
+	public void Filter_Falls_Back_To_Substring_When_Token_Is_Not_A_Valid_Flag_Name()
+	{
+		// "Pub" alone isn't a flag name, so the predicate drops to substring on the
+		// formatted enum value ("Public, Static") — which contains "Pub".
+		var entry = new FlagsEntry { Attributes = SampleFlags.Public | SampleFlags.Static };
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Attributes") { Text = "Pub" },
+		}).Should().BeTrue();
+	}
+
+	sealed class NumericEntry
+	{
+		[ColumnInfo("X8")]
+		public int Token { get; set; }
+	}
+
+	[Test]
+	public void Filter_With_Comparison_Operator_Matches_Numerically_On_Integer_Column()
+	{
+		var entry = new NumericEntry { Token = 0x06000010 };
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Token") { Text = ">0x06000000" },
+		}).Should().BeTrue();
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Token") { Text = "<0x06000000" },
+		}).Should().BeFalse();
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Token") { Text = "=0x06000010" },
+		}).Should().BeTrue();
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Token") { Text = ">=0x06000010" },
+		}).Should().BeTrue();
+	}
+
+	[Test]
+	public void Filter_With_Plain_Hex_Or_Decimal_Falls_Back_To_Substring_On_Integer_Columns()
+	{
+		// Without an operator the user is just searching — substring on the formatted
+		// value (which is what the column displays) is the most predictable behavior.
+		// "06000010" matches the formatted "06000010" of Token=0x06000010.
+		var entry = new NumericEntry { Token = 0x06000010 };
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Token") { Text = "06000010" },
+		}).Should().BeTrue();
 	}
 
 	[Test]

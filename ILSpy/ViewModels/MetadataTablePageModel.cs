@@ -29,6 +29,8 @@ using Avalonia.Controls;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using ILSpy.Metadata;
+
 namespace ILSpy.ViewModels
 {
 	/// <summary>
@@ -108,9 +110,18 @@ namespace ILSpy.ViewModels
 		/// <summary>
 		/// Returns true when every <see cref="ColumnFilter"/> in <paramref name="filters"/>
 		/// either has an empty value or the matching property on <paramref name="item"/>
-		/// stringifies to a value that satisfies the filter. Plain text matches as a
-		/// case-insensitive substring; a filter wrapped in <c>/.../</c> is parsed as a
-		/// case-insensitive regex (silently downgrading to substring on parse failure).
+		/// satisfies the filter. The predicate is type-aware:
+		/// <list type="bullet">
+		///   <item>regex when the filter is wrapped in <c>/.../</c></item>
+		///   <item><see cref="FlagsAttribute"/> enums: comma-separated flag names with
+		///     <c>!</c> prefix for negation; all named flags must match (AND)</item>
+		///   <item>integer columns: optional comparison operator (<c>&gt;</c>, <c>&lt;</c>,
+		///     <c>&gt;=</c>, <c>&lt;=</c>, <c>=</c>) followed by a hex (<c>0x…</c>) or
+		///     decimal literal</item>
+		///   <item>otherwise: case-insensitive substring on the stringified value</item>
+		/// </list>
+		/// Type-aware modes silently fall through to the substring path on a parse failure
+		/// so a typo can't take down the filter.
 		/// </summary>
 		public static bool MatchesFilters(object item, IEnumerable<ColumnFilter> filters)
 		{
@@ -125,23 +136,129 @@ namespace ILSpy.ViewModels
 						BindingFlags.Public | BindingFlags.Instance));
 				if (prop is null)
 					return false;
-				object? value;
-				try
-				{ value = prop.GetValue(item); }
-				catch { return false; }
-				var s = value?.ToString();
-				if (s is null)
-					return false;
-				if (TryGetRegex(f.Text) is { } rx)
-				{
-					if (!rx.IsMatch(s))
-						return false;
-				}
-				else if (!s.Contains(f.Text, StringComparison.OrdinalIgnoreCase))
+				if (!MatchesOne(item, prop, f.Text))
 					return false;
 			}
 			return true;
 		}
+
+		static bool MatchesOne(object item, PropertyInfo prop, string filter)
+		{
+			object? value;
+			try
+			{ value = prop.GetValue(item); }
+			catch { return false; }
+			if (value is null)
+				return false;
+
+			if (TryGetRegex(filter) is { } rx)
+				return rx.IsMatch(value.ToString() ?? string.Empty);
+
+			if (prop.PropertyType.IsEnum
+				&& Attribute.IsDefined(prop.PropertyType, typeof(FlagsAttribute))
+				&& TryMatchFlags(prop.PropertyType, value, filter, out var flagsResult))
+				return flagsResult;
+
+			if ((IsIntegerType(prop.PropertyType) || prop.PropertyType.IsEnum)
+				&& TryMatchNumeric(value, filter, out var numericResult))
+				return numericResult;
+
+			// Substring matches the formatted display value so a typed "06000010" hits a
+			// "06000010" cell — the predicate sees what the user sees, not the raw int.
+			var info = prop.GetCustomAttribute<ColumnInfoAttribute>();
+			var stringified = FormatForDisplay(value, info?.Format);
+			return stringified.Contains(filter, StringComparison.OrdinalIgnoreCase);
+		}
+
+		static string FormatForDisplay(object value, string? format)
+		{
+			if (string.IsNullOrEmpty(format))
+				return value.ToString() ?? string.Empty;
+			object boxed = value is Enum e
+				? Convert.ChangeType(e, e.GetTypeCode(), System.Globalization.CultureInfo.InvariantCulture)
+				: value;
+			return boxed is IFormattable f
+				? f.ToString(format, System.Globalization.CultureInfo.InvariantCulture)
+				: (value.ToString() ?? string.Empty);
+		}
+
+		static bool TryMatchFlags(Type enumType, object value, string filter, out bool result)
+		{
+			result = false;
+			var actual = Convert.ToInt64(value, System.Globalization.CultureInfo.InvariantCulture);
+			foreach (var raw in filter.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+			{
+				var token = raw;
+				bool negate = false;
+				if (token.StartsWith('!'))
+				{
+					negate = true;
+					token = token[1..].Trim();
+				}
+				if (token.Length == 0)
+					return false;
+				if (!Enum.TryParse(enumType, token, ignoreCase: true, out var parsed) || parsed is null)
+					return false;
+				var bits = Convert.ToInt64(parsed, System.Globalization.CultureInfo.InvariantCulture);
+				bool isSet = bits == 0 ? actual == 0 : (actual & bits) == bits;
+				if (negate ? isSet : !isSet)
+				{
+					result = false;
+					return true;
+				}
+			}
+			result = true;
+			return true;
+		}
+
+		static bool TryMatchNumeric(object value, string filter, out bool result)
+		{
+			result = false;
+			var (op, operandText) = SplitComparison(filter);
+			if (op is null)
+				return false;
+			if (!TryParseInt64(operandText, out var operand))
+				return false;
+			long actual = value is Enum e
+				? Convert.ToInt64(e, System.Globalization.CultureInfo.InvariantCulture)
+				: Convert.ToInt64(value, System.Globalization.CultureInfo.InvariantCulture);
+			result = op switch {
+				"=" => actual == operand,
+				"<" => actual < operand,
+				">" => actual > operand,
+				"<=" => actual <= operand,
+				">=" => actual >= operand,
+				_ => false,
+			};
+			return true;
+		}
+
+		static (string? Op, string Operand) SplitComparison(string filter)
+		{
+			// Numeric mode requires an explicit comparison operator. A bare hex / decimal
+			// literal stays on the substring path so "06000010" still matches the formatted
+			// "06000010" the column displays.
+			if (filter.StartsWith(">=", StringComparison.Ordinal))
+				return (">=", filter[2..].Trim());
+			if (filter.StartsWith("<=", StringComparison.Ordinal))
+				return ("<=", filter[2..].Trim());
+			if (filter.Length > 0 && filter[0] is '>' or '<' or '=')
+				return (filter[..1], filter[1..].Trim());
+			return (null, filter);
+		}
+
+		static bool TryParseInt64(string text, out long value)
+		{
+			if (text.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+				return long.TryParse(text.AsSpan(2), System.Globalization.NumberStyles.HexNumber,
+					System.Globalization.CultureInfo.InvariantCulture, out value);
+			return long.TryParse(text, System.Globalization.NumberStyles.Integer,
+				System.Globalization.CultureInfo.InvariantCulture, out value);
+		}
+
+		static bool IsIntegerType(Type type) => Type.GetTypeCode(type) is
+			TypeCode.SByte or TypeCode.Byte or TypeCode.Int16 or TypeCode.UInt16
+			or TypeCode.Int32 or TypeCode.UInt32 or TypeCode.Int64 or TypeCode.UInt64;
 
 		static Regex? TryGetRegex(string filter)
 		{
