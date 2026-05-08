@@ -328,7 +328,7 @@ namespace ILSpy.Docking
 			NavigateToToken(new MetadataTokenReference(metadataFile, MetadataTokens.EntityHandle(token)));
 		}
 
-		void NavigateToToken(MetadataTokenReference reference)
+		public void NavigateToToken(MetadataTokenReference reference)
 		{
 			if (reference.Handle.IsNil)
 				return;

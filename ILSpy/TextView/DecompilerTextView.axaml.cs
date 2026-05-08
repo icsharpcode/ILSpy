@@ -42,6 +42,9 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
+using ILSpy;
+using ILSpy.AppEnv;
+
 namespace ILSpy.TextView
 {
 	public partial class DecompilerTextView : UserControl
@@ -69,6 +72,8 @@ namespace ILSpy.TextView
 		RichTextColorizer? activeColorizer;
 		FoldingManager? activeFoldingManager;
 		ReferenceSegment? lastTooltipSegment;
+		ReferenceSegment? lastRightClickedSegment;
+		IReadOnlyList<IContextMenuEntryExport> contextMenuEntries = Array.Empty<IContextMenuEntryExport>();
 		readonly Popup richPopup;
 		double distanceToPopupLimit;
 
@@ -117,6 +122,15 @@ namespace ILSpy.TextView
 			Editor.TextArea.TextView.PointerMoved += OnTextViewPointerMoved;
 			Editor.TextArea.TextView.PointerExited += OnTextViewPointerExited;
 
+			// Context menu — captures the segment under the pointer at right-click time so
+			// entries like "Show in metadata" can dispatch through the same Reference field
+			// the assembly-tree's right-click already populates.
+			Editor.TextArea.TextView.AddHandler(InputElement.PointerPressedEvent,
+				OnTextViewPointerPressedForContextMenu,
+				RoutingStrategies.Tunnel,
+				handledEventsToo: true);
+			AttachContextMenu(TryGetContextMenuEntries());
+
 			// AvaloniaEdit's hyperlinks raise OpenUriEvent (bubbling); the default class handler
 			// on Window passes the URI to Process.Start. Intercept first so internal schemes
 			// (the About page's "resource:" URIs) route through the tab model instead.
@@ -138,6 +152,61 @@ namespace ILSpy.TextView
 			richPopup.Closed += OnRichPopupClosed;
 			// Popup.Open uses PlacementTarget to find its TopLevel, so the popup itself doesn't
 			// need to be in any visual tree of ours.
+		}
+
+		static IReadOnlyList<IContextMenuEntryExport> TryGetContextMenuEntries()
+		{
+			try
+			{ return AppComposition.Current.GetExport<ContextMenuEntryRegistry>().Entries; }
+			catch { return Array.Empty<IContextMenuEntryExport>(); }
+		}
+
+		/// <summary>
+		/// Replaces the active context-menu entries. Tests bypass the MEF registry by
+		/// calling this directly with stub entries.
+		/// </summary>
+		internal void AttachContextMenu(IReadOnlyList<IContextMenuEntryExport> entries)
+		{
+			contextMenuEntries = entries;
+			var menu = new ContextMenu();
+			menu.Opening += OnContextMenuOpening;
+			Editor.TextArea.TextView.ContextMenu = menu;
+		}
+
+		void OnTextViewPointerPressedForContextMenu(object? sender, PointerPressedEventArgs e)
+		{
+			if (!e.GetCurrentPoint(Editor.TextArea.TextView).Properties.IsRightButtonPressed)
+				return;
+			var pos = GetPositionFromPointer(e);
+			if (pos == null || DataContext is not DecompilerTabPageModel model || model.References == null)
+			{
+				lastRightClickedSegment = null;
+				return;
+			}
+			var offset = Editor.Document.GetOffset(pos.Value.Line, pos.Value.Column);
+			lastRightClickedSegment = model.References.FindSegmentsContaining(offset).FirstOrDefault();
+		}
+
+		void OnContextMenuOpening(object? sender, CancelEventArgs e)
+		{
+			if (sender is not ContextMenu menu)
+				return;
+			var ctx = new TextViewContext {
+				TextView = this,
+				Reference = lastRightClickedSegment,
+			};
+			var built = ContextMenuProvider.Build(contextMenuEntries, ctx);
+			if (built == null)
+			{
+				e.Cancel = true;
+				return;
+			}
+			menu.Items.Clear();
+			foreach (var item in built.Items.Cast<Control>().ToArray())
+			{
+				built.Items.Remove(item);
+				menu.Items.Add(item);
+			}
 		}
 
 		protected override void OnDataContextChanged(System.EventArgs e)
