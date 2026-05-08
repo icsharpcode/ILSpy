@@ -28,8 +28,11 @@ using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
 using Avalonia.Data.Converters;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Reactive;
 using Avalonia.VisualTree;
 
 using ILSpy.ViewModels;
@@ -131,15 +134,23 @@ namespace ILSpy.Metadata
 				HorizontalAlignment = HorizontalAlignment.Stretch,
 				Text = filter.Text,
 			};
-			// Wire TextBox <-> ColumnFilter imperatively. Avalonia's INPC binding plugin
-			// holds a WeakReference to the source and resolves the target lazily; for
-			// Header-hosted controls it reliably comes back null on write-back, throwing
-			// "Non-static method requires a target" out of PropertyInfo.SetValue. The plain
-			// event subscription side-steps the weak-ref machinery.
-			box.TextChanged += (_, _) => {
-				if (filter.Text != box.Text)
-					filter.Text = box.Text;
-			};
+			// Stop pointer-press / -release events from bubbling to the column header —
+			// otherwise DataGridColumnHeader.OnPointerPressed treats the click as a sort
+			// gesture and never lets the TextBox take focus, so the user sees the box but
+			// can't actually type into it.
+			box.AddHandler(InputElement.PointerPressedEvent,
+				static (_, e) => e.Handled = true,
+				RoutingStrategies.Tunnel | RoutingStrategies.Bubble);
+			box.AddHandler(InputElement.PointerReleasedEvent,
+				static (_, e) => e.Handled = true,
+				RoutingStrategies.Tunnel | RoutingStrategies.Bubble);
+			// Use the TextProperty observable rather than the TextChanged event — for
+			// header-hosted TextBoxes the latter doesn't fire reliably (the column header
+			// re-templates on layout updates), but property-change notifications do.
+			box.GetObservable(TextBox.TextProperty).Subscribe(new AnonymousObserver<string?>(text => {
+				if (filter.Text != text)
+					filter.Text = text;
+			}));
 			filter.PropertyChanged += (_, e) => {
 				if (e.PropertyName == nameof(ColumnFilter.Text) && box.Text != filter.Text)
 					box.Text = filter.Text;
