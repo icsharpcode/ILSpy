@@ -195,17 +195,30 @@ namespace ILSpy.TextView
 				TextView = this,
 				Reference = lastRightClickedSegment,
 			};
-			var built = ContextMenuProvider.Build(contextMenuEntries, ctx);
-			if (built == null)
-			{
-				e.Cancel = true;
-				return;
-			}
 			menu.Items.Clear();
-			foreach (var item in built.Items.Cast<Control>().ToArray())
+
+			// Always-available editor commands first — Copy / Select All come "for free" on
+			// AvaloniaEdit via keyboard shortcuts but the default control template doesn't
+			// ship a context menu, so right-click in plain text would otherwise produce
+			// nothing. The MEF-discovered entries (Show in metadata, etc.) follow.
+			var copyItem = new MenuItem { Header = "Copy", InputGesture = new KeyGesture(Key.C, KeyModifiers.Control) };
+			copyItem.Click += (_, _) => Editor.Copy();
+			copyItem.IsEnabled = !string.IsNullOrEmpty(Editor.SelectedText);
+			menu.Items.Add(copyItem);
+
+			var selectAllItem = new MenuItem { Header = "Select All", InputGesture = new KeyGesture(Key.A, KeyModifiers.Control) };
+			selectAllItem.Click += (_, _) => Editor.SelectAll();
+			menu.Items.Add(selectAllItem);
+
+			var built = ContextMenuProvider.Build(contextMenuEntries, ctx);
+			if (built != null)
 			{
-				built.Items.Remove(item);
-				menu.Items.Add(item);
+				menu.Items.Add(new Separator());
+				foreach (var item in built.Items.Cast<Control>().ToArray())
+				{
+					built.Items.Remove(item);
+					menu.Items.Add(item);
+				}
 			}
 		}
 
