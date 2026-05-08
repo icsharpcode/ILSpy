@@ -23,6 +23,7 @@ using System.Reflection.Metadata.Ecma335;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
+using ILSpy.AppEnv;
 using ILSpy.Languages;
 using ILSpy.Metadata.CorTables;
 using ILSpy.Metadata.DebugTables;
@@ -64,11 +65,22 @@ namespace ILSpy.Metadata
 		protected override void LoadChildren()
 		{
 			var metadata = metadataFile.Metadata;
+			bool hideEmpty = TryGetHideEmptyMetadataTables();
 			foreach (var table in Enum.GetValues<TableIndex>())
 			{
-				if (metadata.GetTableRowCount(table) > 0)
+				if (!hideEmpty || metadata.GetTableRowCount(table) > 0)
 					Children.Add(CreateTableTreeNode(table, metadataFile));
 			}
+		}
+
+		static bool TryGetHideEmptyMetadataTables()
+		{
+			// Composition isn't always available (design-time previews, isolated tests that
+			// build the tree directly without booting the app); fall back to the same default
+			// SessionSettings exposes — keep empty tables hidden to match decade-old WPF UX.
+			try
+			{ return AppComposition.Current.GetExport<SettingsService>().SessionSettings.HideEmptyMetadataTables; }
+			catch { return true; }
 		}
 
 		// Typed leaves are added in passes (1e-i, 1e-ii, 1e-iii); any table not yet ported

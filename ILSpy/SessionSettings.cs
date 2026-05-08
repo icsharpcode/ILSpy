@@ -43,6 +43,16 @@ namespace ILSpy
 
 		public LanguageSettings LanguageSettings { get; private set; } = null!;
 
+		/// <summary>
+		/// When <see langword="true"/> (default), the Metadata Tables sub-tree only lists
+		/// tables whose row count is non-zero — keeps the tree compact for assemblies that
+		/// don't use, say, GenericParam or ImplMap. Setting it to <see langword="false"/>
+		/// surfaces every CLI table including empty ones, useful when verifying that a
+		/// table really has no rows rather than just being filtered out.
+		/// </summary>
+		[ObservableProperty]
+		private bool hideEmptyMetadataTables = true;
+
 		[ObservableProperty]
 		private string? activeAssemblyList;
 
@@ -73,6 +83,7 @@ namespace ILSpy
 			LanguageSettings = new LanguageSettings(filterSettings, this);
 			LanguageSettings.PropertyChanged += (s, e) => OnPropertyChanged(nameof(LanguageSettings));
 
+			HideEmptyMetadataTables = (bool?)section.Element(nameof(HideEmptyMetadataTables)) ?? true;
 			ActiveAssemblyList = (string?)section.Element("ActiveAssemblyList");
 			ActiveLanguageName = (string?)section.Element("ActiveLanguageName");
 			ActiveTreeViewPath = section.Element("ActiveTreeViewPath")?.Elements().Select(e => (string)e).ToArray();
@@ -98,6 +109,7 @@ namespace ILSpy
 			var section = new XElement(SectionName);
 			if (LanguageSettings != null)
 				section.Add(LanguageSettings.SaveAsXml());
+			section.Add(new XElement(nameof(HideEmptyMetadataTables), HideEmptyMetadataTables));
 			if (!string.IsNullOrEmpty(ActiveAssemblyList))
 				section.Add(new XElement("ActiveAssemblyList", ActiveAssemblyList));
 			if (!string.IsNullOrEmpty(ActiveLanguageName))
