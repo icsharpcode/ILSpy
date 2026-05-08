@@ -25,6 +25,7 @@ using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Layout;
 using Avalonia.Markup.Xaml;
 using Avalonia.VisualTree;
 
@@ -165,16 +166,76 @@ namespace ILSpy.Views
 			// the new schema has more columns than the old one.
 			grid.ItemsSource = Array.Empty<object>();
 			grid.Columns.Clear();
+			ClearFilterRow();
 			itemsView = null;
 			if (boundModel == null)
 				return;
 			foreach (var c in boundModel.Columns)
 				grid.Columns.Add(c);
+			BuildFilterRow(grid, boundModel);
 			var model = boundModel;
 			itemsView = new DataGridCollectionView(model.Items) {
 				Filter = item => MetadataTablePageModel.MatchesFilters(item, model.ColumnFilters),
 			};
 			grid.ItemsSource = itemsView;
+		}
+
+		void ClearFilterRow()
+		{
+			var grid = this.FindControl<DataGrid>("Grid");
+			if (grid != null)
+				grid.LayoutUpdated -= SyncFilterRowWidths;
+			var row = this.FindControl<StackPanel>("FilterRow");
+			row?.Children.Clear();
+		}
+
+		void BuildFilterRow(DataGrid grid, MetadataTablePageModel model)
+		{
+			var row = this.FindControl<StackPanel>("FilterRow");
+			if (row is null)
+				return;
+			for (int i = 0; i < grid.Columns.Count && i < model.ColumnFilters.Count; i++)
+			{
+				var filter = model.ColumnFilters[i];
+				var box = new TextBox {
+					MinHeight = 0,
+					Padding = new Thickness(2, 1),
+					Margin = new Thickness(0),
+					HorizontalAlignment = HorizontalAlignment.Stretch,
+					Tag = grid.Columns[i],
+					PlaceholderText = filter.ColumnName,
+					Text = filter.Text,
+				};
+				// Two-way bridge between the box and the filter via plain events. The filter's
+				// PropertyChanged handler is hooked from the page model side and re-raises a
+				// single ColumnFilterChanged the view uses to refresh the collection view.
+				box.TextChanged += (_, _) => {
+					if (filter.Text != box.Text)
+						filter.Text = box.Text;
+				};
+				filter.PropertyChanged += (_, e) => {
+					if (e.PropertyName == nameof(ColumnFilter.Text) && box.Text != filter.Text)
+						box.Text = filter.Text;
+				};
+				row.Children.Add(box);
+			}
+			// Snap each input to the corresponding column's ActualWidth on every layout
+			// pass — DataGridColumn.ActualWidth isn't a styled property, so we can't
+			// subscribe to it; piggy-backing on LayoutUpdated is cheap and reliable.
+			grid.LayoutUpdated += SyncFilterRowWidths;
+			SyncFilterRowWidths(grid, EventArgs.Empty);
+		}
+
+		void SyncFilterRowWidths(object? sender, EventArgs e)
+		{
+			var row = this.FindControl<StackPanel>("FilterRow");
+			if (row is null)
+				return;
+			foreach (var child in row.Children)
+			{
+				if (child is TextBox box && box.Tag is DataGridColumn column)
+					box.Width = column.ActualWidth;
+			}
 		}
 
 		void ApplyScrollTarget()

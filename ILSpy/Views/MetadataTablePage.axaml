@@ -7,21 +7,30 @@
              x:Class="ILSpy.Views.MetadataTablePage"
              x:DataType="vm:MetadataTablePageModel">
 
-	<!-- ItemsSource and Columns are wired imperatively in code-behind so the (clear-cols /
-	     add-cols / set-items) sequence runs as a single transaction. Binding ItemsSource
-	     declaratively crashes the DataGrid's measure pass when the view is reused across
-	     content types whose schemas have a different column count, because Avalonia's
-	     binding-system rebind happens after the imperative column rewrite. Per-column
-	     filter inputs live inside each column's Header (built by MetadataColumnBuilder),
-	     not in a separate row above the grid. -->
-	<DataGrid Name="Grid"
-	          CanUserResizeColumns="True"
-	          CanUserSortColumns="True"
-	          CanUserReorderColumns="False"
-	          IsReadOnly="True"
-	          GridLinesVisibility="None"
-	          HeadersVisibility="Column"
-	          SelectionMode="Single"
-	          AutoGenerateColumns="False" />
+	<DockPanel LastChildFill="True">
+		<!-- Per-column filter row, aligned with the DataGrid columns below it. The view's
+		     code-behind populates the StackPanel imperatively in lockstep with the grid's
+		     Columns and tracks each DataGridColumn.ActualWidth so the inputs stay snapped
+		     to the columns when the user resizes them. -->
+		<StackPanel Name="FilterRow"
+		            DockPanel.Dock="Top"
+		            Orientation="Horizontal"
+		            Background="{DynamicResource ThemeControlMidBrush}" />
+
+		<!-- ItemsSource and Columns are wired imperatively in code-behind so the (clear-cols /
+		     add-cols / set-items) sequence runs as a single transaction. Binding ItemsSource
+		     declaratively crashes the DataGrid's measure pass when the view is reused across
+		     content types whose schemas have a different column count, because Avalonia's
+		     binding-system rebind happens after the imperative column rewrite. -->
+		<DataGrid Name="Grid"
+		          CanUserResizeColumns="True"
+		          CanUserSortColumns="True"
+		          CanUserReorderColumns="False"
+		          IsReadOnly="True"
+		          GridLinesVisibility="None"
+		          HeadersVisibility="Column"
+		          SelectionMode="Single"
+		          AutoGenerateColumns="False" />
+	</DockPanel>
 
 </UserControl>
