@@ -85,7 +85,7 @@ public class HeapTreeTests
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
 
 		tab.Title.Should().Be("String Heap");
-		tab.Columns.Select(c => c.Header.ToString()).Should().Equal("Offset", "Length", "Value");
+		tab.Columns.Select(c => c.Tag).Should().Equal("Offset", "Length", "Value");
 		// CoreLib's #Strings is well over a thousand entries; the grid handles them all.
 		tab.Items.Should().HaveCountGreaterThan(1000);
 	}
@@ -109,7 +109,7 @@ public class HeapTreeTests
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
 
 		tab.Title.Should().Be("Guid Heap");
-		tab.Columns.Select(c => c.Header.ToString()).Should().Equal("Index", "Length", "Value");
+		tab.Columns.Select(c => c.Tag).Should().Equal("Index", "Length", "Value");
 		// Each entry's Value is the parsed GUID's lowercase canonical form.
 		var first = (GuidHeapTreeNode.GuidHeapEntry)tab.Items[0];
 		first.Value.Should().MatchRegex(@"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$");
@@ -134,6 +134,6 @@ public class HeapTreeTests
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
 
 		tab.Title.Should().Be("Blob Heap");
-		tab.Columns.Select(c => c.Header.ToString()).Should().Equal("Offset", "Length", "Value");
+		tab.Columns.Select(c => c.Tag).Should().Equal("Offset", "Length", "Value");
 	}
 }

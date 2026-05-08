@@ -117,7 +117,8 @@ namespace ILSpy.Views
 			hoveredCell = cell;
 			if (cell is null)
 				return;
-			var columnName = cell.OwningColumn?.Header?.ToString();
+			var columnName = cell.OwningColumn?.Tag as string
+				?? cell.OwningColumn?.Header?.ToString();
 			if (columnName is null)
 				return;
 			var tip = MetadataCellTooltip.Resolve(cell.DataContext!, columnName);
@@ -127,10 +128,16 @@ namespace ILSpy.Views
 		void RebindModel()
 		{
 			if (boundModel != null)
+			{
 				boundModel.PropertyChanged -= OnModelPropertyChanged;
+				DetachColumnFilterListeners(boundModel);
+			}
 			boundModel = DataContext as MetadataTablePageModel;
 			if (boundModel != null)
+			{
 				boundModel.PropertyChanged += OnModelPropertyChanged;
+				AttachColumnFilterListeners(boundModel);
+			}
 			ApplySchema();
 			ApplyScrollTarget();
 		}
@@ -139,11 +146,36 @@ namespace ILSpy.Views
 		{
 			if (e.PropertyName is nameof(MetadataTablePageModel.Columns)
 				or nameof(MetadataTablePageModel.Items))
+			{
+				if (sender is MetadataTablePageModel m)
+				{
+					DetachColumnFilterListeners(m);
+					AttachColumnFilterListeners(m);
+				}
 				ApplySchema();
-			else if (e.PropertyName == nameof(MetadataTablePageModel.FilterText))
-				itemsView?.Refresh();
+			}
 			else if (e.PropertyName == nameof(MetadataTablePageModel.ScrollToRow))
+			{
 				ApplyScrollTarget();
+			}
+		}
+
+		void OnColumnFilterChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(ColumnFilter.Value))
+				itemsView?.Refresh();
+		}
+
+		void AttachColumnFilterListeners(MetadataTablePageModel model)
+		{
+			foreach (var f in model.ColumnFilters)
+				f.PropertyChanged += OnColumnFilterChanged;
+		}
+
+		void DetachColumnFilterListeners(MetadataTablePageModel model)
+		{
+			foreach (var f in model.ColumnFilters)
+				f.PropertyChanged -= OnColumnFilterChanged;
 		}
 
 		void ApplySchema()
@@ -163,8 +195,9 @@ namespace ILSpy.Views
 				return;
 			foreach (var c in boundModel.Columns)
 				grid.Columns.Add(c);
-			itemsView = new DataGridCollectionView(boundModel.Items) {
-				Filter = item => MetadataTablePageModel.MatchesFilter(item, boundModel?.FilterText),
+			var model = boundModel;
+			itemsView = new DataGridCollectionView(model.Items) {
+				Filter = item => MetadataTablePageModel.MatchesFilters(item, model.ColumnFilters),
 			};
 			grid.ItemsSource = itemsView;
 		}

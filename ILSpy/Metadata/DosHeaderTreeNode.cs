@@ -44,11 +44,15 @@ namespace ILSpy.Metadata
 		public override object Icon => Images.Images.MetadataTable;
 		public override string ToString() => "DOS Header";
 
-		public override TabPageModel CreateTab() => new MetadataTablePageModel {
-			Title = "DOS Header",
-			Items = BuildEntries().Cast<object>().ToList(),
-			Columns = MetadataColumnBuilder.For<Entry>(),
-		};
+		public override TabPageModel CreateTab()
+		{
+			var page = new MetadataTablePageModel {
+				Title = "DOS Header",
+				Items = BuildEntries().Cast<object>().ToList(),
+			};
+			MetadataColumnBuilder.Populate<Entry>(page);
+			return page;
+		}
 
 		IReadOnlyList<Entry> BuildEntries()
 		{

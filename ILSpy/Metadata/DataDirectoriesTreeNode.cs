@@ -46,11 +46,15 @@ namespace ILSpy.Metadata
 		public override object Icon => Images.Images.MetadataTable;
 		public override string ToString() => "Data Directories";
 
-		public override TabPageModel CreateTab() => new MetadataTablePageModel {
-			Title = "Data Directories",
-			Items = BuildEntries().Cast<object>().ToList(),
-			Columns = MetadataColumnBuilder.For<DataDirectoryEntry>(),
-		};
+		public override TabPageModel CreateTab()
+		{
+			var page = new MetadataTablePageModel {
+				Title = "Data Directories",
+				Items = BuildEntries().Cast<object>().ToList(),
+			};
+			MetadataColumnBuilder.Populate<DataDirectoryEntry>(page);
+			return page;
+		}
 
 		IReadOnlyList<DataDirectoryEntry> BuildEntries()
 		{

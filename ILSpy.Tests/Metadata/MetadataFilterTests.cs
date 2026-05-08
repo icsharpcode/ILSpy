@@ -45,46 +45,67 @@ public class MetadataFilterTests
 	}
 
 	[Test]
-	public void MatchesFilter_Returns_True_For_Empty_Or_Null_Filter()
+	public void MatchesFilters_Returns_True_When_All_Column_Filters_Are_Empty()
 	{
-		// An empty filter must show every row — the no-filter state is the identity case.
+		// An empty filter set is the identity case — every row passes.
 		var entry = new SampleEntry { RID = 1, Name = "System.Runtime" };
-		MetadataTablePageModel.MatchesFilter(entry, null).Should().BeTrue();
-		MetadataTablePageModel.MatchesFilter(entry, "").Should().BeTrue();
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Name"),
+			new ColumnFilter("RID"),
+		}).Should().BeTrue();
 	}
 
 	[Test]
-	public void MatchesFilter_Returns_True_When_Any_Property_Contains_The_Substring_Case_Insensitively()
+	public void MatchesFilters_Returns_True_When_Each_Filter_Matches_Its_Column_Case_Insensitively()
 	{
-		// Filter is a case-insensitive Contains over every property's stringified value, so
-		// "system" matches "System.Runtime" and "neutral" matches the Culture column.
+		// Per-column filters AND together: every non-empty filter must hit its own column,
+		// not just any column. Case-insensitive substring match.
 		var entry = new SampleEntry { RID = 1, Name = "System.Runtime", Culture = "neutral" };
-		MetadataTablePageModel.MatchesFilter(entry, "system").Should().BeTrue();
-		MetadataTablePageModel.MatchesFilter(entry, "RUNTIME").Should().BeTrue();
-		MetadataTablePageModel.MatchesFilter(entry, "neutral").Should().BeTrue();
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Name") { Value = "system" },
+			new ColumnFilter("Culture") { Value = "NEUTRAL" },
+		}).Should().BeTrue();
 	}
 
 	[Test]
-	public void MatchesFilter_Returns_False_When_No_Property_Contains_The_Substring()
+	public void MatchesFilters_Returns_False_When_A_Filter_Does_Not_Match_Its_Own_Column()
 	{
-		var entry = new SampleEntry { RID = 1, Name = "System.Runtime" };
-		MetadataTablePageModel.MatchesFilter(entry, "Foo").Should().BeFalse();
+		// Anchored to a single column: "system" in Culture must not match a row whose
+		// Culture is "neutral", even though Name contains "System".
+		var entry = new SampleEntry { Name = "System.Runtime", Culture = "neutral" };
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Culture") { Value = "system" },
+		}).Should().BeFalse();
 	}
 
 	[Test]
-	public void MatchesFilter_Stringifies_Numeric_Values_So_Filter_Hits_Numeric_Columns()
+	public void MatchesFilters_Returns_False_When_Any_AndEd_Filter_Misses()
 	{
-		// Without stringifying, filtering "42" against a numeric RID would silently miss.
-		var entry = new SampleEntry { RID = 42, Name = "X" };
-		MetadataTablePageModel.MatchesFilter(entry, "42").Should().BeTrue();
+		// All filters must match — one missing column is enough to drop the row.
+		var entry = new SampleEntry { Name = "System.Runtime", Culture = "neutral" };
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("Name") { Value = "system" },
+			new ColumnFilter("Culture") { Value = "invariant" },
+		}).Should().BeFalse();
+	}
+
+	[Test]
+	public void MatchesFilters_Returns_False_When_The_Filtered_Column_Does_Not_Exist_On_The_Row()
+	{
+		// A filter targeting a non-existent property never matches; surfacing this as "no
+		// match" prevents stale filter rows from silently passing rows of a different shape.
+		var entry = new SampleEntry { Name = "X" };
+		MetadataTablePageModel.MatchesFilters(entry, new[] {
+			new ColumnFilter("DoesNotExist") { Value = "anything" },
+		}).Should().BeFalse();
 	}
 
 	[AvaloniaTest]
-	public async Task FilterText_Reduces_Visible_Rows_To_Those_Whose_Property_Contains_The_Substring()
+	public async Task ColumnFilter_Reduces_Visible_Rows_To_Those_Whose_Column_Contains_The_Substring()
 	{
 		// Integration check: navigate to the TypeDef table (guaranteed populated for any
-		// loaded module) and confirm setting FilterText='System' shrinks the visible-row
-		// set, and clearing it restores the full set.
+		// loaded module) and confirm that setting a Name-column filter shrinks the visible
+		// row set to entries whose Name contains the filter, and clearing it restores all.
 
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
@@ -106,13 +127,15 @@ public class MetadataFilterTests
 		var totalCount = tab.Items.Count;
 		totalCount.Should().BeGreaterThan(0);
 
-		tab.FilterText = "System";
-		var visible = tab.Items.Where(e => MetadataTablePageModel.MatchesFilter(e, tab.FilterText)).ToList();
+		var nameFilter = tab.ColumnFilters.Single(f => f.ColumnName == "Name");
+		nameFilter.Value = "System";
+
+		var visible = tab.Items.Where(e => MetadataTablePageModel.MatchesFilters(e, tab.ColumnFilters)).ToList();
 		visible.Should().NotBeEmpty("at least one TypeDef row should mention 'System'");
 		visible.Count.Should().BeLessThan(totalCount, "the filter must hide at least one row");
 
-		tab.FilterText = "";
-		var afterClear = tab.Items.Where(e => MetadataTablePageModel.MatchesFilter(e, tab.FilterText)).Count();
+		nameFilter.Value = "";
+		var afterClear = tab.Items.Where(e => MetadataTablePageModel.MatchesFilters(e, tab.ColumnFilters)).Count();
 		afterClear.Should().Be(totalCount);
 	}
 }

@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -36,28 +37,59 @@ using ILSpy.ViewModels;
 namespace ILSpy.Metadata
 {
 	/// <summary>
-	/// Builds DataGrid column descriptors for a metadata-row type by reflecting over its public
-	/// properties. Returns fresh <see cref="DataGridColumn"/> instances per call — Avalonia's
-	/// DataGrid tracks an OwningGrid reference on each column, so reusing the same instances
-	/// across tabs (or even across rebinds of one tab) throws InvalidOperationException
-	/// "Column already belongs to a DataGrid instance and cannot be reassigned." Reflection
-	/// cost per tab-open is negligible against the layout pass that follows.
-	/// Token / heap-offset columns render as plain hex text in Phase 2; Phase 3 swaps them for
-	/// hyperlink-styled buttons that emit a token-navigation request.
+	/// Builds DataGrid columns for a metadata-row type by reflecting over its public
+	/// properties. Reflection metadata is cached as <c>ColumnDescriptor</c>s; live
+	/// <see cref="DataGridColumn"/> instances are constructed fresh on every call so each
+	/// page can carry its own per-column filter inputs in the headers without sharing state
+	/// with sibling pages.
 	/// </summary>
 	public static class MetadataColumnBuilder
 	{
+		static readonly ConcurrentDictionary<Type, ColumnDescriptor[]> descriptorCache = new();
+
+		/// <summary>
+		/// Convenience overload for tests and simple consumers — returns columns with plain
+		/// string headers and no per-column filter wiring. Production code should call
+		/// <see cref="Populate{TEntry}(MetadataTablePageModel)"/>, which also seeds the page's
+		/// <c>ColumnFilters</c> collection and bakes filter inputs into each header.
+		/// </summary>
 		public static IReadOnlyList<DataGridColumn> For<TEntry>() => For(typeof(TEntry));
 
 		public static IReadOnlyList<DataGridColumn> For(Type entryType)
 		{
 			ArgumentNullException.ThrowIfNull(entryType);
-			return BuildColumns(entryType);
+			return descriptorCache.GetOrAdd(entryType, BuildDescriptors)
+				.Select(d => BuildColumn(d, filter: null))
+				.ToArray();
 		}
 
-		static IReadOnlyList<DataGridColumn> BuildColumns(Type entryType)
+		/// <summary>
+		/// Populates <paramref name="page"/> with both <c>Columns</c> and
+		/// <c>ColumnFilters</c> in matched order. Each column's header is a vertical pair —
+		/// the column name above a small TextBox bound two-way to the column's filter — so
+		/// the user can filter every column independently and the predicate ANDs the lot.
+		/// </summary>
+		public static void Populate<TEntry>(MetadataTablePageModel page) => Populate(page, typeof(TEntry));
+
+		public static void Populate(MetadataTablePageModel page, Type entryType)
 		{
-			var columns = new List<DataGridColumn>();
+			ArgumentNullException.ThrowIfNull(page);
+			ArgumentNullException.ThrowIfNull(entryType);
+			var descriptors = descriptorCache.GetOrAdd(entryType, BuildDescriptors);
+			page.ColumnFilters.Clear();
+			var columns = new List<DataGridColumn>(descriptors.Length);
+			foreach (var d in descriptors)
+			{
+				var filter = new ColumnFilter(d.Name);
+				page.ColumnFilters.Add(filter);
+				columns.Add(BuildColumn(d, filter));
+			}
+			page.Columns = columns;
+		}
+
+		static ColumnDescriptor[] BuildDescriptors(Type entryType)
+		{
+			var list = new List<ColumnDescriptor>();
 			foreach (var prop in entryType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
 			{
 				if (prop.GetIndexParameters().Length > 0)
@@ -66,18 +98,47 @@ namespace ILSpy.Metadata
 					continue;
 				if (prop.PropertyType == typeof(IList<BitEntry>))
 					continue;
-
-				var info = prop.GetCustomAttribute<ColumnInfoAttribute>();
-				if (info?.Kind == ColumnKind.Token)
-				{
-					columns.Add(BuildTokenColumn(prop, info));
-				}
-				else
-				{
-					columns.Add(BuildTextColumn(prop, info));
-				}
+				list.Add(new ColumnDescriptor(prop, prop.GetCustomAttribute<ColumnInfoAttribute>()));
 			}
-			return columns;
+			return list.ToArray();
+		}
+
+		static DataGridColumn BuildColumn(ColumnDescriptor d, ColumnFilter? filter)
+		{
+			var column = d.Info?.Kind == ColumnKind.Token
+				? (DataGridColumn)BuildTokenColumn(d.Property, d.Info)
+				: BuildTextColumn(d.Property, d.Info);
+			column.Header = filter is null ? d.Name : (object)BuildHeader(d.Name, filter);
+			// Header is a Panel when filters are wired, so callers can't recover the column
+			// name via Header.ToString(). Stash the name on Tag for hover-tooltip lookup,
+			// "Go to token" context-menu resolution, and any future cell-level navigation.
+			column.Tag = d.Name;
+			return column;
+		}
+
+		static Control BuildHeader(string columnName, ColumnFilter filter)
+		{
+			var label = new TextBlock {
+				Text = columnName,
+				FontWeight = FontWeight.SemiBold,
+				HorizontalAlignment = HorizontalAlignment.Stretch,
+			};
+			var box = new TextBox {
+				MinHeight = 0,
+				Padding = new Thickness(2, 1),
+				Margin = new Thickness(0, 2, 0, 0),
+				FontWeight = FontWeight.Normal,
+				HorizontalAlignment = HorizontalAlignment.Stretch,
+			};
+			box.Bind(TextBox.TextProperty, new Binding(nameof(ColumnFilter.Value)) {
+				Source = filter,
+				Mode = BindingMode.TwoWay,
+				UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
+			});
+			return new StackPanel {
+				Orientation = Orientation.Vertical,
+				Children = { label, box },
+			};
 		}
 
 		static DataGridTextColumn BuildTextColumn(PropertyInfo prop, ColumnInfoAttribute? info)
@@ -86,7 +147,6 @@ namespace ILSpy.Metadata
 			if (!string.IsNullOrEmpty(info?.Format))
 				binding.Converter = new HexFormatConverter(info.Format);
 			return new DataGridTextColumn {
-				Header = prop.Name,
 				IsReadOnly = true,
 				Binding = binding,
 				SortMemberPath = prop.Name,
@@ -114,7 +174,6 @@ namespace ILSpy.Metadata
 				return btn;
 			}, supportsRecycling: true);
 			return new DataGridTemplateColumn {
-				Header = prop.Name,
 				IsReadOnly = true,
 				CellTemplate = template,
 				SortMemberPath = prop.Name,
@@ -131,6 +190,11 @@ namespace ILSpy.Metadata
 			if (!string.IsNullOrEmpty(format) && value is IFormattable formattable)
 				return formattable.ToString(format, CultureInfo.InvariantCulture);
 			return value.ToString() ?? string.Empty;
+		}
+
+		sealed record ColumnDescriptor(PropertyInfo Property, ColumnInfoAttribute? Info)
+		{
+			public string Name => Property.Name;
 		}
 	}
 

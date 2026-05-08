@@ -60,7 +60,8 @@ namespace ILSpy.Commands
 				return null;
 			if (cell.OwningColumn is null)
 				return null;
-			var columnName = cell.OwningColumn.Header?.ToString();
+			var columnName = cell.OwningColumn.Tag as string
+				?? cell.OwningColumn.Header?.ToString();
 			if (string.IsNullOrEmpty(columnName))
 				return null;
 			var row = cell.DataContext;

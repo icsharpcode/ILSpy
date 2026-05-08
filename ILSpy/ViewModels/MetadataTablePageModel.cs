@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Reflection;
 
 using Avalonia.Controls;
@@ -50,12 +51,21 @@ namespace ILSpy.ViewModels
 		private int? scrollToRow;
 
 		/// <summary>
-		/// Free-text filter applied to the visible rows. Empty / null shows every row;
-		/// otherwise the view shows the rows where any property's stringified value contains
-		/// the filter (case-insensitive). Bound two-way to a TextBox above the grid.
+		/// One filter input per column, in the same order as <see cref="Columns"/>. The view
+		/// renders each <see cref="ColumnFilter.Value"/> as a TextBox baked into that column's
+		/// header; the filter predicate ANDs every non-empty entry, requiring each row's
+		/// matching property's stringified value to contain its filter (case-insensitive).
 		/// </summary>
-		[ObservableProperty]
-		private string? filterText;
+		public ObservableCollection<ColumnFilter> ColumnFilters { get; } = new();
+
+		/// <summary>
+		/// Raised whenever any column's filter text changes. The view subscribes to this so
+		/// it can refresh the underlying <c>DataGridCollectionView</c> without each column
+		/// having to know how to find the live view instance.
+		/// </summary>
+		public event Action? ColumnFilterChanged;
+
+		internal void RaiseColumnFilterChanged() => ColumnFilterChanged?.Invoke();
 
 		/// <summary>
 		/// Raised when the user clicks a hyperlink-styled token cell. The host (the dock
@@ -67,33 +77,51 @@ namespace ILSpy.ViewModels
 		internal void RaiseNavigateToCell(object row, string columnName)
 			=> NavigateToCellRequested?.Invoke(new MetadataCellNavigationEventArgs(row, columnName));
 
-		static readonly ConcurrentDictionary<Type, PropertyInfo[]> filterPropertyCache = new();
+		static readonly ConcurrentDictionary<(Type Type, string Column), PropertyInfo?> propertyLookupCache = new();
 
 		/// <summary>
-		/// Predicate used by both the view's <c>DataGridCollectionView.Filter</c> and tests:
-		/// returns <see langword="true"/> when <paramref name="filter"/> is empty or any
-		/// public instance property's stringified value on <paramref name="item"/> contains
-		/// the filter case-insensitively.
+		/// Returns true when every <see cref="ColumnFilter"/> in <paramref name="filters"/>
+		/// either has an empty value or the matching property on <paramref name="item"/>
+		/// stringifies to a value that contains the filter case-insensitively. Used by the
+		/// view's <c>DataGridCollectionView.Filter</c> and by tests.
 		/// </summary>
-		public static bool MatchesFilter(object item, string? filter)
+		public static bool MatchesFilters(object item, IEnumerable<ColumnFilter> filters)
 		{
 			ArgumentNullException.ThrowIfNull(item);
-			if (string.IsNullOrEmpty(filter))
-				return true;
-			var props = filterPropertyCache.GetOrAdd(item.GetType(),
-				static t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance));
-			foreach (var prop in props)
+			ArgumentNullException.ThrowIfNull(filters);
+			foreach (var f in filters)
 			{
+				if (string.IsNullOrEmpty(f.Value))
+					continue;
+				var prop = propertyLookupCache.GetOrAdd((item.GetType(), f.ColumnName),
+					static key => key.Type.GetProperty(key.Column,
+						BindingFlags.Public | BindingFlags.Instance));
+				if (prop is null)
+					return false;
 				object? value;
 				try
 				{ value = prop.GetValue(item); }
-				catch { continue; }
+				catch { return false; }
 				var s = value?.ToString();
-				if (s is not null && s.Contains(filter, StringComparison.OrdinalIgnoreCase))
-					return true;
+				if (s is null || !s.Contains(f.Value, StringComparison.OrdinalIgnoreCase))
+					return false;
 			}
-			return false;
+			return true;
 		}
+	}
+
+	/// <summary>One column's filter entry — the column name plus its current filter text.</summary>
+	public sealed partial class ColumnFilter : ObservableObject
+	{
+		public ColumnFilter(string columnName)
+		{
+			ColumnName = columnName;
+		}
+
+		public string ColumnName { get; }
+
+		[ObservableProperty]
+		private string? value;
 	}
 
 	/// <summary>The (row, column) pair clicked in a token cell.</summary>

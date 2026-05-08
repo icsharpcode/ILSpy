@@ -95,7 +95,7 @@ public class PEHeaderTreeTests
 
 		tab.Title.Should().Be("DOS Header");
 		tab.Items.Should().HaveCount(31);
-		tab.Columns.Select(c => c.Header.ToString()).Should().Contain(["Member", "Offset", "Size", "Value", "Meaning"]);
+		tab.Columns.Select(c => c.Tag).Should().Contain(["Member", "Offset", "Size", "Value", "Meaning"]);
 
 		var firstRow = (Entry)tab.Items[0];
 		firstRow.Member.Should().Be("e_magic");

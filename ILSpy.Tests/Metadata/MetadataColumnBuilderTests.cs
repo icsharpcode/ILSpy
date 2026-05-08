@@ -24,6 +24,7 @@ using Avalonia.Headless.NUnit;
 using AwesomeAssertions;
 
 using ILSpy.Metadata;
+using ILSpy.ViewModels;
 
 using NUnit.Framework;
 
@@ -51,7 +52,7 @@ public class MetadataColumnBuilderTests
 		var columns = MetadataColumnBuilder.For<SampleEntry>();
 
 		columns.Should().HaveCount(3);
-		columns.Select(c => c.Header.ToString()).Should().Equal("RID", "Token", "Name");
+		columns.Select(c => c.Tag).Should().Equal("RID", "Token", "Name");
 
 		var token = (DataGridTextColumn)columns[1];
 		token.Binding.Should().NotBeNull();
@@ -62,16 +63,30 @@ public class MetadataColumnBuilderTests
 	}
 
 	[AvaloniaTest]
-	public void For_Returns_Fresh_DataGridColumn_Instances_So_They_Can_Attach_To_Distinct_Grids()
+	public void For_Returns_Fresh_Column_Instances_So_Per_Page_Headers_Stay_Independent()
 	{
-		// Avalonia's DataGrid tracks OwningGrid on each column; reusing column instances
-		// across grids throws InvalidOperationException. Each call must therefore yield
-		// fresh DataGridColumn instances, even though the underlying reflection metadata
-		// is the same.
+		// Per-column filter inputs live inside each column's Header, so two pages built
+		// from the same row type must hold *separate* DataGridColumn instances — otherwise
+		// a filter typed on one tab would echo into the other.
 		var first = MetadataColumnBuilder.For<SampleEntry>();
 		var second = MetadataColumnBuilder.For<SampleEntry>();
 		first.Should().NotBeSameAs(second);
-		first[0].Should().NotBeSameAs(second[0]);
+		first.Zip(second, (a, b) => (a, b)).Should()
+			.AllSatisfy(p => p.a.Should().NotBeSameAs(p.b));
+	}
+
+	[AvaloniaTest]
+	public void Populate_Sets_Columns_And_ColumnFilters_In_Matched_Order()
+	{
+		// The page model uses the ColumnFilters collection to evaluate the row predicate;
+		// the view binds each column header's TextBox to the filter at the same index. The
+		// order must match Columns exactly or filters would route to the wrong column.
+		var page = new MetadataTablePageModel();
+		MetadataColumnBuilder.Populate<SampleEntry>(page);
+
+		page.Columns.Should().HaveCount(3);
+		page.ColumnFilters.Should().HaveCount(3);
+		page.ColumnFilters.Select(f => f.ColumnName).Should().Equal("RID", "Token", "Name");
 	}
 
 	sealed class SampleEntryWithToken

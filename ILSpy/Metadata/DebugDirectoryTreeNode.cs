@@ -47,11 +47,15 @@ namespace ILSpy.Metadata
 		public override object Icon => Images.Images.MetadataTable;
 		public override string ToString() => "Debug Directory";
 
-		public override TabPageModel CreateTab() => new MetadataTablePageModel {
-			Title = "Debug Directory",
-			Items = BuildEntries().Cast<object>().ToList(),
-			Columns = MetadataColumnBuilder.For<DebugDirectoryEntryView>(),
-		};
+		public override TabPageModel CreateTab()
+		{
+			var page = new MetadataTablePageModel {
+				Title = "Debug Directory",
+				Items = BuildEntries().Cast<object>().ToList(),
+			};
+			MetadataColumnBuilder.Populate<DebugDirectoryEntryView>(page);
+			return page;
+		}
 
 		IReadOnlyList<DebugDirectoryEntryView> BuildEntries()
 		{

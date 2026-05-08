@@ -45,11 +45,15 @@ namespace ILSpy.Metadata
 		public override object Text => $"Blob Heap ({EnsureEntries().Count})";
 		public override string ToString() => "Blob Heap";
 
-		public override TabPageModel CreateTab() => new MetadataTablePageModel {
-			Title = "Blob Heap",
-			Items = EnsureEntries().Cast<object>().ToList(),
-			Columns = MetadataColumnBuilder.For<BlobHeapEntry>(),
-		};
+		public override TabPageModel CreateTab()
+		{
+			var page = new MetadataTablePageModel {
+				Title = "Blob Heap",
+				Items = EnsureEntries().Cast<object>().ToList(),
+			};
+			MetadataColumnBuilder.Populate<BlobHeapEntry>(page);
+			return page;
+		}
 
 		List<BlobHeapEntry> EnsureEntries()
 		{

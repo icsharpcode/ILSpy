@@ -71,10 +71,14 @@ namespace ILSpy.Metadata
 
 		protected abstract IReadOnlyList<TEntry> LoadTable();
 
-		public override TabPageModel CreateTab() => new MetadataTablePageModel {
-			Title = $"{Kind} ({RowCount})",
-			Items = (cached ??= LoadTable()).Cast<object>().ToList(),
-			Columns = MetadataColumnBuilder.For<TEntry>(),
-		};
+		public override TabPageModel CreateTab()
+		{
+			var page = new MetadataTablePageModel {
+				Title = $"{Kind} ({RowCount})",
+				Items = (cached ??= LoadTable()).Cast<object>().ToList(),
+			};
+			MetadataColumnBuilder.Populate<TEntry>(page);
+			return page;
+		}
 	}
 }

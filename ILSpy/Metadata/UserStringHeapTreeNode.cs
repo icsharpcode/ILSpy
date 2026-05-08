@@ -44,11 +44,15 @@ namespace ILSpy.Metadata
 		public override object Text => $"UserString Heap ({EnsureEntries().Count})";
 		public override string ToString() => "UserString Heap";
 
-		public override TabPageModel CreateTab() => new MetadataTablePageModel {
-			Title = "UserString Heap",
-			Items = EnsureEntries().Cast<object>().ToList(),
-			Columns = MetadataColumnBuilder.For<UserStringHeapEntry>(),
-		};
+		public override TabPageModel CreateTab()
+		{
+			var page = new MetadataTablePageModel {
+				Title = "UserString Heap",
+				Items = EnsureEntries().Cast<object>().ToList(),
+			};
+			MetadataColumnBuilder.Populate<UserStringHeapEntry>(page);
+			return page;
+		}
 
 		List<UserStringHeapEntry> EnsureEntries()
 		{

@@ -131,7 +131,7 @@ public class TypedMetadataTableTreeTests
 		vm.AssemblyTreeModel.SelectNode(methodNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
 		tab.Title.Should().StartWith("MethodDef");
-		tab.Columns.Select(c => c.Header.ToString()).Should().Contain("RID");
+		tab.Columns.Select(c => c.Tag).Should().Contain("RID");
 	}
 
 	[AvaloniaTest]
