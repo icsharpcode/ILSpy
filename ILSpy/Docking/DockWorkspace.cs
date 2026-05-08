@@ -256,13 +256,25 @@ namespace ILSpy.Docking
 		// Created lazily on first need.
 		DecompilerTabPageModel? decompilerContent;
 
+		ILSpyTreeNode[]? lastShownNodes;
+
 		void ShowSelectedNode()
 		{
 			var nodes = assemblyTreeModel.SelectedItems.OfType<ILSpyTreeNode>().ToArray();
 			if (nodes.Length == 0)
+			{
+				lastShownNodes = null;
 				return;
+			}
 			if (factory.MainTab is not { } main)
 				return;
+			// SelectedItems.CollectionChanged and SelectedItem PropertyChanged both fan into
+			// here on a single click, so dedupe to avoid creating two TabPageModels for the
+			// same selection — the second one's columns would replace the first's, but the
+			// first's filter wiring would be left dangling on stale ColumnFilter instances.
+			if (lastShownNodes is { } prev && prev.SequenceEqual(nodes))
+				return;
+			lastShownNodes = nodes;
 
 			// Tree-node selections always reuse the single document slot. The Document
 			// instance never changes; its inner Content swaps between viewmodels. The

@@ -20,6 +20,8 @@ using System.ComponentModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using Dock.Controls.DeferredContentControl;
+
 namespace ILSpy.ViewModels
 {
 	/// <summary>
@@ -29,8 +31,13 @@ namespace ILSpy.ViewModels
 	/// toggles which is visible — Dock.Avalonia's add+close-in-the-same-tick semantics
 	/// otherwise leave the previous view rendered when the tab type changes.
 	/// </summary>
-	public sealed partial class ContentTabPage : TabPageModel
+	public sealed partial class ContentTabPage : TabPageModel, IDeferredContentPresentation
 	{
+		// Opt out of Dock's deferred presentation: there's exactly one document tab in this
+		// app, the inner views are already pre-realised by the wrapper view, and headless
+		// tests can't reach descendants of a control that's still queued for realisation.
+		bool IDeferredContentPresentation.DeferContentPresentation => false;
+
 		[ObservableProperty]
 		private object? content;
 
