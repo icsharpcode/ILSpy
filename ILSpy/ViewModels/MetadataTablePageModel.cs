@@ -52,7 +52,7 @@ namespace ILSpy.ViewModels
 
 		/// <summary>
 		/// One filter input per column, in the same order as <see cref="Columns"/>. The view
-		/// renders each <see cref="ColumnFilter.Value"/> as a TextBox baked into that column's
+		/// renders each <see cref="ColumnFilter.Text"/> as a TextBox baked into that column's
 		/// header; the filter predicate ANDs every non-empty entry, requiring each row's
 		/// matching property's stringified value to contain its filter (case-insensitive).
 		/// </summary>
@@ -91,7 +91,7 @@ namespace ILSpy.ViewModels
 			ArgumentNullException.ThrowIfNull(filters);
 			foreach (var f in filters)
 			{
-				if (string.IsNullOrEmpty(f.Value))
+				if (string.IsNullOrEmpty(f.Text))
 					continue;
 				var prop = propertyLookupCache.GetOrAdd((item.GetType(), f.ColumnName),
 					static key => key.Type.GetProperty(key.Column,
@@ -103,7 +103,7 @@ namespace ILSpy.ViewModels
 				{ value = prop.GetValue(item); }
 				catch { return false; }
 				var s = value?.ToString();
-				if (s is null || !s.Contains(f.Value, StringComparison.OrdinalIgnoreCase))
+				if (s is null || !s.Contains(f.Text, StringComparison.OrdinalIgnoreCase))
 					return false;
 			}
 			return true;
@@ -120,8 +120,11 @@ namespace ILSpy.ViewModels
 
 		public string ColumnName { get; }
 
+		// Backing field is `text` rather than `value` because the latter collides with C#'s
+		// contextual identifier for property setters and trips Avalonia's INPC binding
+		// plugin on write (the cached accessor's target reference comes back null).
 		[ObservableProperty]
-		private string? value;
+		private string? text;
 	}
 
 	/// <summary>The (row, column) pair clicked in a token cell.</summary>

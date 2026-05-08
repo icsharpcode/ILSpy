@@ -162,7 +162,7 @@ namespace ILSpy.Views
 
 		void OnColumnFilterChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(ColumnFilter.Value))
+			if (e.PropertyName == nameof(ColumnFilter.Text))
 				itemsView?.Refresh();
 		}
 

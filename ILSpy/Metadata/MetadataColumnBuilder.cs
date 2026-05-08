@@ -130,7 +130,7 @@ namespace ILSpy.Metadata
 				FontWeight = FontWeight.Normal,
 				HorizontalAlignment = HorizontalAlignment.Stretch,
 			};
-			box.Bind(TextBox.TextProperty, new Binding(nameof(ColumnFilter.Value)) {
+			box.Bind(TextBox.TextProperty, new Binding(nameof(ColumnFilter.Text)) {
 				Source = filter,
 				Mode = BindingMode.TwoWay,
 				UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,

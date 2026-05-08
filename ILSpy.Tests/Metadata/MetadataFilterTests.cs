@@ -62,8 +62,8 @@ public class MetadataFilterTests
 		// not just any column. Case-insensitive substring match.
 		var entry = new SampleEntry { RID = 1, Name = "System.Runtime", Culture = "neutral" };
 		MetadataTablePageModel.MatchesFilters(entry, new[] {
-			new ColumnFilter("Name") { Value = "system" },
-			new ColumnFilter("Culture") { Value = "NEUTRAL" },
+			new ColumnFilter("Name") { Text = "system" },
+			new ColumnFilter("Culture") { Text = "NEUTRAL" },
 		}).Should().BeTrue();
 	}
 
@@ -74,7 +74,7 @@ public class MetadataFilterTests
 		// Culture is "neutral", even though Name contains "System".
 		var entry = new SampleEntry { Name = "System.Runtime", Culture = "neutral" };
 		MetadataTablePageModel.MatchesFilters(entry, new[] {
-			new ColumnFilter("Culture") { Value = "system" },
+			new ColumnFilter("Culture") { Text = "system" },
 		}).Should().BeFalse();
 	}
 
@@ -84,8 +84,8 @@ public class MetadataFilterTests
 		// All filters must match — one missing column is enough to drop the row.
 		var entry = new SampleEntry { Name = "System.Runtime", Culture = "neutral" };
 		MetadataTablePageModel.MatchesFilters(entry, new[] {
-			new ColumnFilter("Name") { Value = "system" },
-			new ColumnFilter("Culture") { Value = "invariant" },
+			new ColumnFilter("Name") { Text = "system" },
+			new ColumnFilter("Culture") { Text = "invariant" },
 		}).Should().BeFalse();
 	}
 
@@ -96,7 +96,7 @@ public class MetadataFilterTests
 		// match" prevents stale filter rows from silently passing rows of a different shape.
 		var entry = new SampleEntry { Name = "X" };
 		MetadataTablePageModel.MatchesFilters(entry, new[] {
-			new ColumnFilter("DoesNotExist") { Value = "anything" },
+			new ColumnFilter("DoesNotExist") { Text = "anything" },
 		}).Should().BeFalse();
 	}
 
@@ -128,13 +128,13 @@ public class MetadataFilterTests
 		totalCount.Should().BeGreaterThan(0);
 
 		var nameFilter = tab.ColumnFilters.Single(f => f.ColumnName == "Name");
-		nameFilter.Value = "System";
+		nameFilter.Text = "System";
 
 		var visible = tab.Items.Where(e => MetadataTablePageModel.MatchesFilters(e, tab.ColumnFilters)).ToList();
 		visible.Should().NotBeEmpty("at least one TypeDef row should mention 'System'");
 		visible.Count.Should().BeLessThan(totalCount, "the filter must hide at least one row");
 
-		nameFilter.Value = "";
+		nameFilter.Text = "";
 		var afterClear = tab.Items.Where(e => MetadataTablePageModel.MatchesFilters(e, tab.ColumnFilters)).Count();
 		afterClear.Should().Be(totalCount);
 	}
