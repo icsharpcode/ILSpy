@@ -32,6 +32,8 @@ using Dock.Model.Core;
 using Dock.Model.Core.Events;
 
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy.AssemblyTree;
@@ -306,11 +308,18 @@ namespace ILSpy.Docking
 		void AttachCustomContent(ContentTabPage main, TabPageModel newContent)
 		{
 			// Detach navigation handlers from the outgoing content; subscribe on the
-			// incoming one so token clicks route through OnMetadataCellClicked.
+			// incoming one so token clicks route through OnMetadataCellClicked and
+			// row activation routes through OnMetadataRowActivated.
 			if (main.Content is MetadataTablePageModel oldMeta)
+			{
 				oldMeta.NavigateToCellRequested -= OnMetadataCellClicked;
+				oldMeta.RowActivated -= OnMetadataRowActivated;
+			}
 			if (newContent is MetadataTablePageModel newMeta)
+			{
 				newMeta.NavigateToCellRequested += OnMetadataCellClicked;
+				newMeta.RowActivated += OnMetadataRowActivated;
+			}
 			main.Content = newContent;
 		}
 
@@ -326,6 +335,50 @@ namespace ILSpy.Docking
 			if (fileField?.GetValue(e.Row) is not MetadataFile metadataFile)
 				return;
 			NavigateToToken(new MetadataTokenReference(metadataFile, MetadataTokens.EntityHandle(token)));
+		}
+
+		internal void OnMetadataRowActivated(object row)
+		{
+			// Row double-click: try to resolve the row's Token + metadataFile to a real
+			// IEntity via the type system, then select the matching tree node. That
+			// triggers ShowSelectedNode → CreateTab → decompiler view, the same path a
+			// click in the assembly tree takes.
+			var fileField = row.GetType().GetField("metadataFile", BindingFlags.Instance | BindingFlags.NonPublic);
+			if (fileField?.GetValue(row) is not MetadataFile metadataFile)
+				return;
+			var tokenProp = row.GetType().GetProperty("Token");
+			if (tokenProp?.GetValue(row) is not int token || token == 0)
+				return;
+			var handle = MetadataTokens.EntityHandle(token);
+			if (handle.IsNil)
+				return;
+
+			var assemblies = assemblyTreeModel.AssemblyList?.GetAssemblies();
+			if (assemblies is null)
+				return;
+			LoadedAssembly? owningAssembly = null;
+			foreach (var a in assemblies)
+			{
+				if (ReferenceEquals(a.GetMetadataFileOrNull(), metadataFile))
+				{
+					owningAssembly = a;
+					break;
+				}
+			}
+			if (owningAssembly is null)
+				return;
+			var ts = owningAssembly.GetTypeSystemOrNull();
+			if (ts?.MainModule is not MetadataModule metadataModule)
+				return;
+			IEntity? entity;
+			try
+			{ entity = metadataModule.ResolveEntity(handle); }
+			catch { return; }
+			if (entity is null)
+				return;
+			var node = assemblyTreeModel.FindTreeNode(entity);
+			if (node is not null)
+				assemblyTreeModel.SelectedItem = node;
 		}
 
 		public void NavigateToToken(MetadataTokenReference reference)

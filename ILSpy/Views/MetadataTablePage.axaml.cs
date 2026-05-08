@@ -57,6 +57,21 @@ namespace ILSpy.Views
 			AddHandler(PointerMovedEvent, OnPointerMovedOverGrid);
 			AddHandler(KeyDownEvent, OnKeyDown);
 			AttachContextMenu(TryGetContextMenuEntries());
+			var grid = this.FindControl<DataGrid>("Grid");
+			if (grid is not null)
+				grid.DoubleTapped += OnGridDoubleTapped;
+		}
+
+		void OnGridDoubleTapped(object? sender, global::Avalonia.Input.TappedEventArgs e)
+		{
+			// Dispatch row-activation through the page model. The dock workspace's
+			// subscriber resolves the row's metadataFile + Token to an IEntity and selects
+			// the matching tree node; that opens the entity in the decompiler view.
+			if (DataContext is not MetadataTablePageModel page)
+				return;
+			var grid = this.FindControl<DataGrid>("Grid");
+			if (grid?.SelectedItem is { } row)
+				page.RaiseRowActivated(row);
 		}
 
 		void OnKeyDown(object? sender, KeyEventArgs e)

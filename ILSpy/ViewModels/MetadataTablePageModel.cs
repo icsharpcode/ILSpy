@@ -103,6 +103,16 @@ namespace ILSpy.ViewModels
 		internal void RaiseNavigateToCell(object row, string columnName)
 			=> NavigateToCellRequested?.Invoke(new MetadataCellNavigationEventArgs(row, columnName));
 
+		/// <summary>
+		/// Raised when the user double-clicks (or otherwise activates) a metadata grid
+		/// row. The dock workspace resolves the row's <c>metadataFile</c> + <c>Token</c>
+		/// to an <see cref="ICSharpCode.Decompiler.TypeSystem.IEntity"/> and selects the
+		/// matching tree node, which opens the entity in the decompiler view.
+		/// </summary>
+		public event Action<object>? RowActivated;
+
+		internal void RaiseRowActivated(object row) => RowActivated?.Invoke(row);
+
 		static readonly ConcurrentDictionary<(Type Type, string Column), PropertyInfo?> propertyLookupCache = new();
 
 		static readonly ConcurrentDictionary<string, Regex?> regexCache = new();
