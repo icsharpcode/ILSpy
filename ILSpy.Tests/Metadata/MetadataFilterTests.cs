@@ -90,6 +90,41 @@ public class MetadataFilterTests
 	}
 
 	[Test]
+	public void Setting_ColumnFilter_Text_Raises_ColumnFilterChanged_On_The_Page()
+	{
+		// The view subscribes to the page's ColumnFilterChanged event to drive its
+		// DataGridCollectionView.Refresh — without this forwarding the filter row would be
+		// invisible to the grid and typing would have no effect on visible rows.
+		var page = new MetadataTablePageModel();
+		var filter = new ColumnFilter("Name");
+		page.ColumnFilters.Add(filter);
+		var fired = 0;
+		page.ColumnFilterChanged += () => fired++;
+
+		filter.Text = "System";
+
+		fired.Should().Be(1);
+	}
+
+	[Test]
+	public void Removing_A_ColumnFilter_Stops_Forwarding_Its_Text_Changes()
+	{
+		// When Populate clears the collection on a schema swap, the previously-attached
+		// filters must stop driving refreshes — otherwise stale headers from a former tab
+		// would keep firing into the new view's CollectionView.
+		var page = new MetadataTablePageModel();
+		var filter = new ColumnFilter("Name");
+		page.ColumnFilters.Add(filter);
+		page.ColumnFilters.Remove(filter);
+		var fired = 0;
+		page.ColumnFilterChanged += () => fired++;
+
+		filter.Text = "System";
+
+		fired.Should().Be(0);
+	}
+
+	[Test]
 	public void MatchesFilters_Returns_False_When_The_Filtered_Column_Does_Not_Exist_On_The_Row()
 	{
 		// A filter targeting a non-existent property never matches; surfacing this as "no

@@ -20,6 +20,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Reflection;
 
 using Avalonia.Controls;
@@ -59,13 +61,34 @@ namespace ILSpy.ViewModels
 		public ObservableCollection<ColumnFilter> ColumnFilters { get; } = new();
 
 		/// <summary>
-		/// Raised whenever any column's filter text changes. The view subscribes to this so
-		/// it can refresh the underlying <c>DataGridCollectionView</c> without each column
-		/// having to know how to find the live view instance.
+		/// Raised whenever any column's filter text changes. The view subscribes here to
+		/// refresh its <c>DataGridCollectionView</c>; tests use it as the canonical filter
+		/// signal too. The page wires this internally via <c>ColumnFilters.CollectionChanged</c>
+		/// + each filter's <see cref="INotifyPropertyChanged"/> so callers don't have to chase
+		/// individual filter instances.
 		/// </summary>
 		public event Action? ColumnFilterChanged;
 
-		internal void RaiseColumnFilterChanged() => ColumnFilterChanged?.Invoke();
+		public MetadataTablePageModel()
+		{
+			ColumnFilters.CollectionChanged += OnColumnFiltersCollectionChanged;
+		}
+
+		void OnColumnFiltersCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+		{
+			if (e.OldItems is not null)
+				foreach (ColumnFilter f in e.OldItems)
+					f.PropertyChanged -= OnColumnFilterTextChanged;
+			if (e.NewItems is not null)
+				foreach (ColumnFilter f in e.NewItems)
+					f.PropertyChanged += OnColumnFilterTextChanged;
+		}
+
+		void OnColumnFilterTextChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(ColumnFilter.Text))
+				ColumnFilterChanged?.Invoke();
+		}
 
 		/// <summary>
 		/// Raised when the user clicks a hyperlink-styled token cell. The host (the dock

@@ -130,13 +130,13 @@ namespace ILSpy.Views
 			if (boundModel != null)
 			{
 				boundModel.PropertyChanged -= OnModelPropertyChanged;
-				DetachColumnFilterListeners(boundModel);
+				boundModel.ColumnFilterChanged -= OnAnyColumnFilterChanged;
 			}
 			boundModel = DataContext as MetadataTablePageModel;
 			if (boundModel != null)
 			{
 				boundModel.PropertyChanged += OnModelPropertyChanged;
-				AttachColumnFilterListeners(boundModel);
+				boundModel.ColumnFilterChanged += OnAnyColumnFilterChanged;
 			}
 			ApplySchema();
 			ApplyScrollTarget();
@@ -146,37 +146,12 @@ namespace ILSpy.Views
 		{
 			if (e.PropertyName is nameof(MetadataTablePageModel.Columns)
 				or nameof(MetadataTablePageModel.Items))
-			{
-				if (sender is MetadataTablePageModel m)
-				{
-					DetachColumnFilterListeners(m);
-					AttachColumnFilterListeners(m);
-				}
 				ApplySchema();
-			}
 			else if (e.PropertyName == nameof(MetadataTablePageModel.ScrollToRow))
-			{
 				ApplyScrollTarget();
-			}
 		}
 
-		void OnColumnFilterChanged(object? sender, PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == nameof(ColumnFilter.Text))
-				itemsView?.Refresh();
-		}
-
-		void AttachColumnFilterListeners(MetadataTablePageModel model)
-		{
-			foreach (var f in model.ColumnFilters)
-				f.PropertyChanged += OnColumnFilterChanged;
-		}
-
-		void DetachColumnFilterListeners(MetadataTablePageModel model)
-		{
-			foreach (var f in model.ColumnFilters)
-				f.PropertyChanged -= OnColumnFilterChanged;
-		}
+		void OnAnyColumnFilterChanged() => itemsView?.Refresh();
 
 		void ApplySchema()
 		{
