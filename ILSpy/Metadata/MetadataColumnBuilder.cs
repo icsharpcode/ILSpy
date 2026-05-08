@@ -59,15 +59,15 @@ namespace ILSpy.Metadata
 		{
 			ArgumentNullException.ThrowIfNull(entryType);
 			return descriptorCache.GetOrAdd(entryType, BuildDescriptors)
-				.Select(BuildColumn)
+				.Select(d => BuildColumn(d, filter: null))
 				.ToArray();
 		}
 
 		/// <summary>
 		/// Populates <paramref name="page"/> with both <c>Columns</c> and
-		/// <c>ColumnFilters</c> in matched order. The view renders a column-aligned filter
-		/// row above the grid bound to the page's <c>ColumnFilters</c>; the predicate ANDs
-		/// every non-empty filter against its own column.
+		/// <c>ColumnFilters</c> in matched order. Each column's header is a vertical pair —
+		/// the column name above a small TextBox bound two-way to the column's filter — so
+		/// the user can filter every column independently and the predicate ANDs the lot.
 		/// </summary>
 		public static void Populate<TEntry>(MetadataTablePageModel page) => Populate(page, typeof(TEntry));
 
@@ -80,8 +80,9 @@ namespace ILSpy.Metadata
 			var columns = new List<DataGridColumn>(descriptors.Length);
 			foreach (var d in descriptors)
 			{
-				page.ColumnFilters.Add(new ColumnFilter(d.Name));
-				columns.Add(BuildColumn(d));
+				var filter = new ColumnFilter(d.Name);
+				page.ColumnFilters.Add(filter);
+				columns.Add(BuildColumn(d, filter));
 			}
 			page.Columns = columns;
 		}
@@ -102,14 +103,51 @@ namespace ILSpy.Metadata
 			return list.ToArray();
 		}
 
-		static DataGridColumn BuildColumn(ColumnDescriptor d)
+		static DataGridColumn BuildColumn(ColumnDescriptor d, ColumnFilter? filter)
 		{
 			var column = d.Info?.Kind == ColumnKind.Token
 				? (DataGridColumn)BuildTokenColumn(d.Property, d.Info)
 				: BuildTextColumn(d.Property, d.Info);
-			column.Header = d.Name;
+			column.Header = filter is null ? d.Name : (object)BuildHeader(d.Name, filter);
+			// Header is a Panel when filters are wired, so callers can't recover the column
+			// name via Header.ToString(). Stash the name on Tag for hover-tooltip lookup,
+			// "Go to token" context-menu resolution, and any future cell-level navigation.
 			column.Tag = d.Name;
 			return column;
+		}
+
+		static Control BuildHeader(string columnName, ColumnFilter filter)
+		{
+			var label = new TextBlock {
+				Text = columnName,
+				FontWeight = FontWeight.SemiBold,
+				HorizontalAlignment = HorizontalAlignment.Stretch,
+			};
+			var box = new TextBox {
+				MinHeight = 0,
+				Padding = new Thickness(2, 1),
+				Margin = new Thickness(0, 2, 0, 0),
+				FontWeight = FontWeight.Normal,
+				HorizontalAlignment = HorizontalAlignment.Stretch,
+				Text = filter.Text,
+			};
+			// Wire TextBox <-> ColumnFilter imperatively. Avalonia's INPC binding plugin
+			// holds a WeakReference to the source and resolves the target lazily; for
+			// Header-hosted controls it reliably comes back null on write-back, throwing
+			// "Non-static method requires a target" out of PropertyInfo.SetValue. The plain
+			// event subscription side-steps the weak-ref machinery.
+			box.TextChanged += (_, _) => {
+				if (filter.Text != box.Text)
+					filter.Text = box.Text;
+			};
+			filter.PropertyChanged += (_, e) => {
+				if (e.PropertyName == nameof(ColumnFilter.Text) && box.Text != filter.Text)
+					box.Text = filter.Text;
+			};
+			return new StackPanel {
+				Orientation = Orientation.Vertical,
+				Children = { label, box },
+			};
 		}
 
 		static DataGridTextColumn BuildTextColumn(PropertyInfo prop, ColumnInfoAttribute? info)
