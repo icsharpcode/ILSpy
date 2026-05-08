@@ -86,6 +86,51 @@ public class MetadataTokenNavigationTests
 		landed.Items.Should().HaveCountGreaterThan((int)(expectedRowNumber - 1),
 			"the target row index must be in range for the destination table");
 	}
+
+	[AvaloniaTest]
+	public async Task Pressing_Ctrl_G_On_A_Token_Cell_Navigates_The_Same_Way_As_Clicking_The_Hyperlink()
+	{
+		// Ctrl+G is the keyboard shortcut for "Go to token", advertised on the context-menu
+		// entry. It should fire the same NavigateToCellRequested path as the hyperlink-style
+		// click, with the focused (or last-clicked) token cell as the target.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
+		assemblyNode.EnsureLazyChildren();
+		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
+		metadataNode.EnsureLazyChildren();
+		var tablesNode = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
+		tablesNode.EnsureLazyChildren();
+		var typeDefNode = tablesNode.Children.OfType<TypeDefTableTreeNode>().Single();
+
+		vm.AssemblyTreeModel.SelectNode(typeDefNode);
+		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+
+		var rowWithBase = tab.Items.Cast<TypeDefTableTreeNode.TypeDefEntry>()
+			.First(e => e.BaseType != 0);
+		var expectedTableIndex = (System.Reflection.Metadata.Ecma335.TableIndex)
+			(int)MetadataTokens.EntityHandle(rowWithBase.BaseType).Kind;
+
+		var metadataPage = await window.WaitForComponent<MetadataTablePage>();
+
+		// Synthesize a DataGridCell for the row's BaseType (token-kind) column. The Ctrl+G
+		// handler doesn't care how the cell got its OwningColumn / DataContext — it just
+		// dispatches whatever is given.
+		var baseTypeColumn = tab.Columns.Single(c => (string?)c.Tag == "BaseType");
+		var cell = new global::Avalonia.Controls.DataGridCell { DataContext = rowWithBase };
+		cell.SetValue(global::Avalonia.Controls.DataGridCell.OwningColumnProperty, baseTypeColumn);
+
+		metadataPage.TryNavigateToTokenInCell(cell);
+
+		await Waiters.WaitForAsync(
+			() => vm.AssemblyTreeModel.SelectedItem is MetadataTableTreeNode m
+				&& m.Kind == expectedTableIndex);
+	}
 }
 
 internal static class MetadataTokenNavigationTestExtensions

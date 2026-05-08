@@ -29,6 +29,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.VisualTree;
 
 using ILSpy.AppEnv;
+using ILSpy.Commands;
 using ILSpy.Metadata;
 using ILSpy.ViewModels;
 
@@ -51,7 +52,41 @@ namespace ILSpy.Views
 			InitializeComponent();
 			DataContextChanged += (_, _) => RebindModel();
 			AddHandler(PointerMovedEvent, OnPointerMovedOverGrid);
+			AddHandler(KeyDownEvent, OnKeyDown);
 			AttachContextMenu(TryGetContextMenuEntries());
+		}
+
+		void OnKeyDown(object? sender, KeyEventArgs e)
+		{
+			// Ctrl+G mirrors the "Go to token" context-menu entry: dispatch through the
+			// focused cell (or last-hovered cell as a fallback when focus hasn't landed on
+			// the grid, e.g. after the user clicks a column header).
+			if (e.Key != Key.G || (e.KeyModifiers & KeyModifiers.Control) == 0)
+				return;
+			var focusedCell = (TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() as Visual)
+				?.FindAncestorOfType<DataGridCell>();
+			var cell = focusedCell ?? hoveredCell;
+			if (cell is not null && TryNavigateToTokenInCell(cell))
+				e.Handled = true;
+		}
+
+		/// <summary>
+		/// Dispatches the "Go to token" action on <paramref name="cell"/>. Returns
+		/// <see langword="true"/> if the cell was a token-kind column on a metadata page,
+		/// matching the context-menu entry's visibility test.
+		/// </summary>
+		internal bool TryNavigateToTokenInCell(DataGridCell cell)
+		{
+			ArgumentNullException.ThrowIfNull(cell);
+			var grid = this.FindControl<DataGrid>("Grid");
+			if (grid is null)
+				return false;
+			var ctx = new TextViewContext { DataGrid = grid, OriginalSource = cell };
+			var entry = new GoToTokenContextMenuEntry();
+			if (!entry.IsVisible(ctx))
+				return false;
+			entry.Execute(ctx);
+			return true;
 		}
 
 		static IReadOnlyList<IContextMenuEntryExport> TryGetContextMenuEntries()
