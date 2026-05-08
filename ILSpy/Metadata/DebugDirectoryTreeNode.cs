@@ -30,9 +30,11 @@ namespace ILSpy.Metadata
 {
 	/// <summary>
 	/// Lists each entry of the PE debug directory: timestamp, version, type, and the size /
-	/// addresses of the raw debug payload. Phase 1 renders the entries as text; the
-	/// per-entry sub-tree (CodeView, embedded portable PDB, PDB checksum) lands with the
-	/// rest of the metadata-tables work later in Phase 1.
+	/// addresses of the raw debug payload. Click the node to see the entries as a grid;
+	/// expand it to drill into per-entry sub-trees — currently embedded portable PDBs are
+	/// surfaced as a nested <see cref="MetadataTreeNode"/> so the user can browse the
+	/// debug-only metadata tables (Document, MethodDebugInformation, …) the same way they
+	/// browse the host module's tables.
 	/// </summary>
 	public sealed class DebugDirectoryTreeNode : ILSpyTreeNode
 	{
@@ -41,10 +43,12 @@ namespace ILSpy.Metadata
 		public DebugDirectoryTreeNode(PEFile module)
 		{
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
+			LazyLoading = true;
 		}
 
 		public override object Text => "Debug Directory";
-		public override object Icon => Images.Images.MetadataTable;
+		public override object Icon => Images.Images.FolderClosed;
+		public override object ExpandedIcon => Images.Images.FolderOpen;
 		public override string ToString() => "Debug Directory";
 
 		public override TabPageModel CreateTab()
@@ -67,6 +71,30 @@ namespace ILSpy.Metadata
 				entries.Add(new DebugDirectoryEntryView(entry, data.ToHexString(data.Length)));
 			}
 			return entries;
+		}
+
+		protected override void LoadChildren()
+		{
+			foreach (var entry in module.Reader.ReadDebugDirectory())
+			{
+				if (entry.Type != DebugDirectoryEntryType.EmbeddedPortablePdb)
+					continue;
+				try
+				{
+					var provider = module.Reader.ReadEmbeddedPortablePdbDebugDirectoryData(entry);
+					var pdbMetadata = new MetadataFile(
+						MetadataFile.MetadataFileKind.ProgramDebugDatabase,
+						module.FileName,
+						provider,
+						isEmbedded: true);
+					Children.Add(new MetadataTreeNode(pdbMetadata, "Debug Metadata (Embedded)"));
+				}
+				catch (BadImageFormatException)
+				{
+					// A corrupt embedded PDB shouldn't take the whole tree down — skip it
+					// silently; the entry is still visible in the grid view above.
+				}
+			}
 		}
 
 		public sealed class DebugDirectoryEntryView
