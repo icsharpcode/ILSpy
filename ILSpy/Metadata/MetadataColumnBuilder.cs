@@ -174,24 +174,32 @@ namespace ILSpy.Metadata
 				MinHeight = 0,
 				VerticalAlignment = VerticalAlignment.Stretch,
 			};
+			var popupRoot = new Border {
+				BorderBrush = Brushes.Gray,
+				BorderThickness = new Thickness(1),
+				Background = Brushes.White,
+				// Force the arrow cursor on the popup surface — without this, the
+				// EW-resize cursor set on the DataGrid column header's drag-grip can
+				// leak into the popup if the pointer enters from there before
+				// Avalonia recomputes the cursor for the new hit-test target.
+				Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Arrow),
+				Child = new ScrollViewer {
+					MaxHeight = 400,
+					Content = popupContent,
+				},
+			};
+			// Stop wheel events from bubbling out of the popup. Without this, scrolling
+			// inside the dropdown also scrolls the underlying DataGrid because the
+			// PointerWheelChanged event keeps bubbling up the routed-event tree once the
+			// inner ScrollViewer has consumed (or ignored) it.
+			popupRoot.AddHandler(global::Avalonia.Input.InputElement.PointerWheelChangedEvent,
+				(_, e) => e.Handled = true,
+				handledEventsToo: true);
 			var popup = new Popup {
 				PlacementTarget = openButton,
 				Placement = PlacementMode.BottomEdgeAlignedLeft,
 				IsLightDismissEnabled = true,
-				Child = new Border {
-					BorderBrush = Brushes.Gray,
-					BorderThickness = new Thickness(1),
-					Background = Brushes.White,
-					// Force the arrow cursor on the popup surface — without this, the
-					// EW-resize cursor set on the DataGrid column header's drag-grip can
-					// leak into the popup if the pointer enters from there before
-					// Avalonia recomputes the cursor for the new hit-test target.
-					Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Arrow),
-					Child = new ScrollViewer {
-						MaxHeight = 400,
-						Content = popupContent,
-					},
-				},
+				Child = popupRoot,
 			};
 			openButton.Click += (_, _) => popup.IsOpen = true;
 			var row = new DockPanel { LastChildFill = true, Margin = new Thickness(0, 2, 0, 0) };
