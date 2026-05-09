@@ -23,8 +23,11 @@ using System.Linq;
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
+using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Styling;
 
 using ILSpy.Metadata.Filters;
 
@@ -46,6 +49,8 @@ namespace ILSpy.Views.Filters
 		public FlagsFilterPopup(FilterState state)
 		{
 			this.state = state ?? throw new ArgumentNullException(nameof(state));
+
+			ApplyAccentPalette(Styles);
 
 			var stack = new StackPanel { Orientation = Orientation.Vertical, Spacing = 4 };
 			foreach (var g in state.Schema.MutexGroups)
@@ -97,6 +102,37 @@ namespace ILSpy.Views.Filters
 			foreach (var g in mutexGroups)
 				g.SyncFromState();
 			independentGroup?.SyncFromState();
+		}
+
+		/// <summary>
+		/// Mirrors <c>MainToolBar.axaml</c>'s accent palette into this popup. The Simple
+		/// theme's default <c>:checked</c> background for ToggleButton paints a saturated
+		/// dark blue that buries the chip's label, so an active chip becomes unreadable —
+		/// override the inner ContentPresenter background with the same translucent accent
+		/// the toolbar uses on hover (#330078D7) so the label stays legible while the chip
+		/// still reads as "selected". Pressed states stay slightly denser (#660078D7) to
+		/// give a click cue.
+		/// </summary>
+		static void ApplyAccentPalette(Styles target)
+		{
+			var hoverBg = new SolidColorBrush(Color.Parse("#330078D7"));
+			var hoverBorder = new SolidColorBrush(Color.Parse("#FF0078D7"));
+			var pressedBg = new SolidColorBrush(Color.Parse("#660078D7"));
+			var pressedBorder = new SolidColorBrush(Color.Parse("#FF005A9E"));
+
+			target.Add(MakeStyle(s => s.OfType<ToggleButton>().Class(":pointerover").Template().OfType<ContentPresenter>(), hoverBg, hoverBorder));
+			target.Add(MakeStyle(s => s.OfType<ToggleButton>().Class(":checked").Template().OfType<ContentPresenter>(), hoverBg, hoverBorder));
+			target.Add(MakeStyle(s => s.OfType<ToggleButton>().Class(":pressed").Template().OfType<ContentPresenter>(), pressedBg, pressedBorder));
+			target.Add(MakeStyle(s => s.OfType<Button>().Class(":pointerover").Template().OfType<ContentPresenter>(), hoverBg, hoverBorder));
+			target.Add(MakeStyle(s => s.OfType<Button>().Class(":pressed").Template().OfType<ContentPresenter>(), pressedBg, pressedBorder));
+
+			static Style MakeStyle(Func<Selector?, Selector> selector, IBrush bg, IBrush border)
+			{
+				var style = new Style(selector);
+				style.Setters.Add(new Setter(ContentPresenter.BackgroundProperty, bg));
+				style.Setters.Add(new Setter(ContentPresenter.BorderBrushProperty, border));
+				return style;
+			}
 		}
 	}
 }
