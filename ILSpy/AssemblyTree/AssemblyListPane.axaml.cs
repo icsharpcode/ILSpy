@@ -50,10 +50,12 @@ namespace ILSpy.AssemblyTree
 			InitializeComponent();
 			TreeGrid.DoubleTapped += OnTreeGridDoubleTapped;
 			TreeGrid.KeyDown += OnTreeGridKeyDown;
-			// Tunnelling subscription so the MMB is observed before the DataGrid's own
-			// pointer handling claims it.
+			// Bubble + handledEventsToo: ProDataGrid's row-level pointer handlers mark
+			// PointerPressed handled before bubble reaches our subscription, so we have to
+			// opt into "see handled events too" to react.
 			TreeGrid.AddHandler(PointerPressedEvent, OnTreeGridPointerPressed,
-				global::Avalonia.Interactivity.RoutingStrategies.Tunnel);
+				global::Avalonia.Interactivity.RoutingStrategies.Bubble,
+				handledEventsToo: true);
 
 			// Context-menu host. Tests bypass this and re-attach via AttachContextMenu so they
 			// can inject stub entries — at app-runtime we resolve the registry through the

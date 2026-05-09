@@ -61,10 +61,14 @@ namespace ILSpy.Views
 			if (grid is not null)
 			{
 				grid.DoubleTapped += OnGridDoubleTapped;
-				// Subscribe at the tunnelling phase so the middle-click is observed before
-				// the DataGrid's own selection / scroll handling can swallow it.
+				// Bubble + handledEventsToo: ProDataGrid's row-level pointer handlers mark
+				// PointerPressed handled before bubble reaches our subscription, so we have to
+				// opt into "see handled events too" to react. Tunnel was tried first but
+				// ProDataGrid's hierarchy seemingly intercepts the tunnel pass for non-primary
+				// buttons — bubble + handledEventsToo is the reliable path.
 				grid.AddHandler(PointerPressedEvent, OnGridPointerPressed,
-					global::Avalonia.Interactivity.RoutingStrategies.Tunnel);
+					global::Avalonia.Interactivity.RoutingStrategies.Bubble,
+					handledEventsToo: true);
 			}
 		}
 
