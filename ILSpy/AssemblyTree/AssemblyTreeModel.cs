@@ -318,11 +318,36 @@ namespace ILSpy.AssemblyTree
 			typeNode.EnsureLazyChildren();
 			return member switch {
 				IField f => typeNode.Children.OfType<FieldTreeNode>().FirstOrDefault(n => n.FieldDefinition.MetadataToken == f.MetadataToken),
-				IMethod m => typeNode.Children.OfType<MethodTreeNode>().FirstOrDefault(n => n.MethodDefinition.MetadataToken == m.MetadataToken),
+				IMethod m => FindMethodNode(typeNode, m),
 				IProperty p => typeNode.Children.OfType<PropertyTreeNode>().FirstOrDefault(n => n.PropertyDefinition.MetadataToken == p.MetadataToken),
 				IEvent e => typeNode.Children.OfType<EventTreeNode>().FirstOrDefault(n => n.EventDefinition.MetadataToken == e.MetadataToken),
 				_ => null,
 			};
+		}
+
+		static ILSpyTreeNode? FindMethodNode(TypeTreeNode typeNode, IMethod method)
+		{
+			// Accessor methods (get_X / set_X / add_X / remove_X / invoke_X) live as children
+			// of their owning PropertyTreeNode / EventTreeNode, not directly under the type.
+			// Route through the owner so MMB on a metadata-grid accessor row finds its node.
+			if (method.AccessorOwner is IProperty owningProperty)
+			{
+				var propNode = typeNode.Children.OfType<PropertyTreeNode>()
+					.FirstOrDefault(n => n.PropertyDefinition.MetadataToken == owningProperty.MetadataToken);
+				if (propNode != null)
+					return propNode.Children.OfType<MethodTreeNode>()
+						.FirstOrDefault(n => n.MethodDefinition.MetadataToken == method.MetadataToken);
+			}
+			if (method.AccessorOwner is IEvent owningEvent)
+			{
+				var eventNode = typeNode.Children.OfType<EventTreeNode>()
+					.FirstOrDefault(n => n.EventDefinition.MetadataToken == owningEvent.MetadataToken);
+				if (eventNode != null)
+					return eventNode.Children.OfType<MethodTreeNode>()
+						.FirstOrDefault(n => n.MethodDefinition.MetadataToken == method.MetadataToken);
+			}
+			return typeNode.Children.OfType<MethodTreeNode>()
+				.FirstOrDefault(n => n.MethodDefinition.MetadataToken == method.MetadataToken);
 		}
 
 		static void LoadInitialAssemblies(AssemblyList assemblyList)

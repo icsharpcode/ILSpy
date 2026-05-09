@@ -1304,4 +1304,32 @@ public class AssemblyTreeTests
 		((int)getter.Filter(settings)).Should().NotBe((int)global::ILSpy.TreeNodes.FilterResult.Hidden,
 			"flipping to ShowAll must let accessors through");
 	}
+
+	[AvaloniaTest]
+	public async Task FindTreeNode_Resolves_Property_Accessor_To_Its_MethodTreeNode_Child()
+	{
+		// MMB on an accessor row in the MethodDef metadata grid resolves the row's token to
+		// an IMethod whose AccessorOwner is the IProperty. Without the AccessorOwner-aware
+		// branch in FindMemberNode, the lookup falls through to "MethodTreeNode child of the
+		// type" and returns null because accessors live under the property, not the type.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var stringTypeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			coreLibName, "System", "System.String");
+		stringTypeNode.IsExpanded = true;
+		var lengthProp = stringTypeNode.Children.OfType<PropertyTreeNode>()
+			.First(p => p.PropertyDefinition.Name == "Length");
+		lengthProp.IsExpanded = true;
+		var getter = lengthProp.PropertyDefinition.Getter!;
+
+		var resolved = vm.AssemblyTreeModel.FindTreeNode(getter);
+		((object?)resolved).Should().BeOfType<MethodTreeNode>(
+			"FindTreeNode must reach into the property to surface its accessor");
+		((MethodTreeNode)resolved!).MethodDefinition.MetadataToken
+			.Should().Be(getter.MetadataToken);
+	}
 }
