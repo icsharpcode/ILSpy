@@ -141,8 +141,21 @@ namespace ILSpy.Metadata
 				Stretch = Stretch.None,
 				Fill = Brushes.Gray,
 				Data = global::Avalonia.Media.Geometry.Parse("M0,0 L10,0 L6,4 L6,9 L4,9 L4,4 Z"),
-				Margin = new Thickness(4, 0, 0, 0),
+				HorizontalAlignment = HorizontalAlignment.Center,
 				VerticalAlignment = VerticalAlignment.Center,
+				IsHitTestVisible = false,
+			};
+			// Wrap the funnel in a transparent-background Border with generous padding so the
+			// hit area is comfortably larger than the 10×9 glyph itself; clicking the icon
+			// opens the popup (flags columns) or focuses the textbox (text columns) without
+			// having to wait for the hover-show.
+			var filterIconHost = new Border {
+				Background = Brushes.Transparent,
+				Padding = new Thickness(8, 4),
+				Child = filterIcon,
+				VerticalAlignment = VerticalAlignment.Stretch,
+				HorizontalAlignment = HorizontalAlignment.Right,
+				Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Hand),
 			};
 
 			bool isFlagsColumn = propertyType.IsEnum
@@ -167,9 +180,17 @@ namespace ILSpy.Metadata
 			swap.Children.Add(inputRow);
 
 			var headerRow = new DockPanel { LastChildFill = true };
-			DockPanel.SetDock(filterIcon, global::Avalonia.Controls.Dock.Right);
-			headerRow.Children.Add(filterIcon);
+			DockPanel.SetDock(filterIconHost, global::Avalonia.Controls.Dock.Right);
+			headerRow.Children.Add(filterIconHost);
 			headerRow.Children.Add(swap);
+
+			filterIconHost.PointerPressed += (_, e) => {
+				if (popup != null)
+					popup.IsOpen = true;
+				else if (inputRow is TextBox tb)
+					tb.Focus();
+				e.Handled = true;
+			};
 
 			// The popup needs to live inside the visual tree but doesn't contribute layout.
 			// Park it in a Panel sibling so the header row's height stays driven solely by
