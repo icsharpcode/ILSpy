@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
+using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 
 using AwesomeAssertions;
@@ -311,13 +312,18 @@ public class MetadataFilterTests
 		vm.AssemblyTreeModel.SelectNode(typeDefNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
 
-		// The header layout collapses the per-column TextBox until the user hovers the
-		// header or sets a filter (the funnel icon stays visible all the time). Force the
-		// model TextBox visible up-front so the rendered visual tree realises it; the
-		// hover/auto-show wiring is exercised in its own UI-state tests.
+		// The header layout swaps in the per-column TextBox only on hover or when the
+		// filter is active (the label and the input share the same slot so the header
+		// height stays one row tall). Force the model TextBox visible up-front so the
+		// rendered visual tree realises it; the hover/auto-show wiring is exercised in
+		// its own UI-state tests.
 		var nameColumn = tab.Columns.Single(c => (string?)c.Tag == "Name");
-		var modelHeaderBox = ((StackPanel)nameColumn.Header!).Children.OfType<TextBox>().Single();
+		var modelHeader = (StackPanel)nameColumn.Header!;
+		var modelHeaderBox = modelHeader.GetLogicalDescendants().OfType<TextBox>().Single();
+		var modelHeaderLabel = modelHeader.GetLogicalDescendants().OfType<TextBlock>()
+			.Single(tb => tb.Text == "Name");
 		modelHeaderBox.IsVisible = true;
+		modelHeaderLabel.IsVisible = false;
 
 		var metadataPage = await window.WaitForComponent<MetadataTablePage>();
 		var grid = await metadataPage.WaitForComponent<DataGrid>();
@@ -326,8 +332,8 @@ public class MetadataFilterTests
 		var headerBox = grid.GetVisualDescendants().OfType<TextBox>()
 			.FirstOrDefault(tb => tb.FindAncestorOfType<DataGridColumnHeader>() is { } owner
 				&& owner.Content is StackPanel sp
-				&& sp.Children.OfType<DockPanel>().FirstOrDefault()
-					?.Children.OfType<TextBlock>().FirstOrDefault()?.Text == "Name");
+				&& sp.GetLogicalDescendants().OfType<TextBlock>()
+					.Any(t => t.Text == "Name"));
 		headerBox.Should().NotBeNull(
 			"the column-builder bakes a TextBox into the Name column's header — it must reach the rendered visual tree");
 		ReferenceEquals(headerBox, modelHeaderBox).Should().BeTrue(

@@ -119,11 +119,13 @@ namespace ILSpy.Metadata
 
 		static Control BuildHeader(string columnName, ColumnFilter filter, Type propertyType)
 		{
-			// Header layout: column name on the left, filter funnel icon on the right of
-			// the top row; below them an input row that collapses by default and becomes
-			// visible on pointer-over (or while a filter is set / a popup is open). For
-			// [Flags] columns the input row is just the dropdown trigger — the popup
-			// carries the entire filter UI, so a TextBox would be redundant.
+			// Header is a single row: the funnel icon docks right; the remaining space is
+			// shared by the column-name label and the filter input, with exactly one of
+			// them visible at a time. Replacing the label with the input on hover (or
+			// while the filter is set / a popup is open) keeps the header height constant —
+			// no two-row stack that would push the data rows down. For [Flags] columns the
+			// input is just the dropdown trigger; the popup is parked invisibly so it can
+			// remain anchored to the trigger button.
 			var label = new TextBlock {
 				Text = columnName,
 				FontWeight = FontWeight.SemiBold,
@@ -142,10 +144,6 @@ namespace ILSpy.Metadata
 				Margin = new Thickness(4, 0, 0, 0),
 				VerticalAlignment = VerticalAlignment.Center,
 			};
-			var topRow = new DockPanel { LastChildFill = true };
-			DockPanel.SetDock(filterIcon, global::Avalonia.Controls.Dock.Right);
-			topRow.Children.Add(filterIcon);
-			topRow.Children.Add(label);
 
 			bool isFlagsColumn = propertyType.IsEnum
 				&& Attribute.IsDefined(propertyType, typeof(FlagsAttribute));
@@ -161,11 +159,23 @@ namespace ILSpy.Metadata
 				inputRow = BuildFilterTextBox(filter);
 			}
 			inputRow.IsVisible = false;
-			inputRow.Margin = new Thickness(0, 2, 0, 0);
 
+			// Both occupy the same slot; only one is visible at a time. Children inside a
+			// Panel overlap by default, so this is the cheapest way to swap.
+			var swap = new Panel { HorizontalAlignment = HorizontalAlignment.Stretch };
+			swap.Children.Add(label);
+			swap.Children.Add(inputRow);
+
+			var headerRow = new DockPanel { LastChildFill = true };
+			DockPanel.SetDock(filterIcon, global::Avalonia.Controls.Dock.Right);
+			headerRow.Children.Add(filterIcon);
+			headerRow.Children.Add(swap);
+
+			// The popup needs to live inside the visual tree but doesn't contribute layout.
+			// Park it in a Panel sibling so the header row's height stays driven solely by
+			// label / input.
 			var root = new StackPanel { Orientation = Orientation.Vertical };
-			root.Children.Add(topRow);
-			root.Children.Add(inputRow);
+			root.Children.Add(headerRow);
 			if (popup != null)
 				root.Children.Add(popup);
 
@@ -175,9 +185,11 @@ namespace ILSpy.Metadata
 			{
 				bool active = !string.IsNullOrWhiteSpace(filter.Text)
 					|| (filter.FlagsState != null && !filter.FlagsState.IsEmpty);
-				inputRow.IsVisible = hovered || active || popupOpen;
+				bool showInput = hovered || active || popupOpen;
+				inputRow.IsVisible = showInput;
+				label.IsVisible = !showInput;
 				// Tint the funnel when a filter is in effect so users can see at a glance
-				// which columns are constraining the view, even with the input collapsed.
+				// which columns are constraining the view, even with the input hidden.
 				filterIcon.Fill = active ? Brushes.SteelBlue : Brushes.Gray;
 			}
 			root.PointerEntered += (_, _) => { hovered = true; Update(); };

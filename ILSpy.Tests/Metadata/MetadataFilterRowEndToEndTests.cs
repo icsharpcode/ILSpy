@@ -20,6 +20,7 @@ using System.Linq;
 
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
+using Avalonia.LogicalTree;
 
 using AwesomeAssertions;
 
@@ -53,7 +54,7 @@ public class MetadataFilterRowEndToEndTests
 
 		var nameColumn = page.Columns.Single(c => (string?)c.Tag == "Name");
 		var headerPanel = (StackPanel)nameColumn.Header!;
-		var headerBox = headerPanel.Children.OfType<TextBox>().Single();
+		var headerBox = headerPanel.GetLogicalDescendants().OfType<TextBox>().Single();
 		var nameFilter = page.ColumnFilters.Single(f => f.ColumnName == "Name");
 
 		headerBox.Text = "System";
@@ -72,7 +73,7 @@ public class MetadataFilterRowEndToEndTests
 		MetadataColumnBuilder.Populate<Row>(page);
 
 		var nameColumn = page.Columns.Single(c => (string?)c.Tag == "Name");
-		var headerBox = ((StackPanel)nameColumn.Header!).Children.OfType<TextBox>().Single();
+		var headerBox = ((StackPanel)nameColumn.Header!).GetLogicalDescendants().OfType<TextBox>().Single();
 		var nameFilter = page.ColumnFilters.Single(f => f.ColumnName == "Name");
 
 		nameFilter.Text = "System";
@@ -92,7 +93,7 @@ public class MetadataFilterRowEndToEndTests
 		var page = new MetadataTablePageModel();
 		MetadataColumnBuilder.Populate<Row>(page);
 		var nameColumn = page.Columns.Single(c => (string?)c.Tag == "Name");
-		var headerBox = ((StackPanel)nameColumn.Header!).Children.OfType<TextBox>().Single();
+		var headerBox = ((StackPanel)nameColumn.Header!).GetLogicalDescendants().OfType<TextBox>().Single();
 
 		var fired = 0;
 		page.ColumnFilterChanged += () => fired++;
