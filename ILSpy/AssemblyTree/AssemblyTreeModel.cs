@@ -248,6 +248,43 @@ namespace ILSpy.AssemblyTree
 				assemblyListTreeNode = new AssemblyListTreeNode(list);
 			Root = assemblyListTreeNode;
 			AppEnv.StartupLog.Mark("Root assigned");
+			ScheduleBackgroundLoadSweep(list);
+		}
+
+		/// <summary>
+		/// LoadedAssembly entries are now lazy — their <c>Task.Run(LoadAsync)</c> only kicks
+		/// off when something asks for the metadata. The active assembly's load is awaited
+		/// by <see cref="RestoreSelectedPathAsync"/>, so it gets a clean run. Everything else
+		/// only loads on-demand (tree expansion, hyperlink follow, …) which can stretch
+		/// quietly into "the user never sees a populated icon for assemblies they don't
+		/// touch".
+		///
+		/// To strike a middle ground, schedule a one-shot sweep a couple of seconds after
+		/// the list appears that nudges every <see cref="LoadedAssembly"/> to start loading
+		/// in the background. By that point the active assembly's metadata is usually ready
+		/// and the user has had a frame or two to interact with the tree.
+		/// </summary>
+		void ScheduleBackgroundLoadSweep(AssemblyList list)
+		{
+			_ = Task.Run(async () => {
+				try
+				{
+					await Task.Delay(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
+					AppEnv.StartupLog.Mark("Background-load sweep starting");
+					foreach (var assembly in list.GetAssemblies())
+					{
+						// Calling GetLoadResultAsync triggers the Lazy<Task> creation. We don't
+						// await — fire-and-forget so all 122/200/whatever loads run in parallel
+						// on the thread pool, just delayed past the active-assembly window.
+						_ = assembly.GetLoadResultAsync();
+					}
+					AppEnv.StartupLog.Mark("Background-load sweep dispatched");
+				}
+				catch (Exception ex)
+				{
+					System.Diagnostics.Debug.WriteLine($"[AssemblyTreeModel] background load sweep failed: {ex}");
+				}
+			});
 		}
 
 		/// <summary>

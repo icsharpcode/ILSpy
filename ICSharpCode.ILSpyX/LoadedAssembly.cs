@@ -60,7 +60,11 @@ namespace ICSharpCode.ILSpyX
 		/// </summary>
 		internal static readonly ConditionalWeakTable<MetadataFile, LoadedAssembly> loadedAssemblies = new ConditionalWeakTable<MetadataFile, LoadedAssembly>();
 
-		readonly Task<LoadResult> loadingTask;
+		readonly Lazy<Task<LoadResult>> lazyLoadingTask;
+		// Routes through Lazy so the actual Task.Run(LoadAsync) only kicks off on first
+		// demand (any caller that awaits or reads .Result). Status checks below use
+		// IsValueCreated so they don't accidentally trigger the load just by polling.
+		Task<LoadResult> loadingTask => lazyLoadingTask.Value;
 		readonly AssemblyList assemblyList;
 		readonly string fileName;
 		readonly string shortName;
@@ -86,7 +90,14 @@ namespace ICSharpCode.ILSpyX
 			this.applyWinRTProjections = applyWinRTProjections;
 			this.useDebugSymbols = useDebugSymbols;
 
-			this.loadingTask = Task.Run(() => LoadAsync(stream)); // requires that this.fileName is set
+			// Lazy: the first GetLoadResultAsync / await / .Result kicks off the work. Lets
+			// callers (e.g. AssemblyListTreeNode) construct LoadedAssembly entries en masse
+			// without flooding the thread pool with metadata-loading tasks; the active
+			// assembly's path-restore awaits first and gets a clean run.
+			var localStream = stream;
+			this.lazyLoadingTask = new Lazy<Task<LoadResult>>(
+				() => Task.Run(() => LoadAsync(localStream)),
+				LazyThreadSafetyMode.ExecutionAndPublication); // requires that this.fileName is set
 			this.shortName = Path.GetFileNameWithoutExtension(fileName);
 		}
 
@@ -290,15 +301,21 @@ namespace ICSharpCode.ILSpyX
 
 		/// <summary>
 		/// Gets whether loading finished for this file (either successfully or unsuccessfully).
+		/// Reading this property must NOT trigger the lazy load — callers poll it as a status
+		/// check (e.g. tree-icon overlays) and would deadlock if every poll started another
+		/// metadata load.
 		/// </summary>
-		public bool IsLoaded => loadingTask.IsCompleted;
+		public bool IsLoaded => lazyLoadingTask.IsValueCreated && lazyLoadingTask.Value.IsCompleted;
 
 		/// <summary>
 		/// Gets whether this file was loaded successfully as an assembly (not as a bundle).
 		/// </summary>
 		public bool IsLoadedAsValidAssembly {
 			get {
-				return loadingTask.Status == TaskStatus.RanToCompletion && loadingTask.Result.MetadataFile is { IsMetadataOnly: false };
+				if (!lazyLoadingTask.IsValueCreated)
+					return false;
+				var task = lazyLoadingTask.Value;
+				return task.Status == TaskStatus.RanToCompletion && task.Result.MetadataFile is { IsMetadataOnly: false };
 			}
 		}
 
@@ -306,7 +323,7 @@ namespace ICSharpCode.ILSpyX
 		/// Gets whether loading failed (file does not exist, unknown file format).
 		/// Returns false for valid assemblies and valid bundles.
 		/// </summary>
-		public bool HasLoadError => loadingTask.IsFaulted;
+		public bool HasLoadError => lazyLoadingTask.IsValueCreated && lazyLoadingTask.Value.IsFaulted;
 
 		public bool IsAutoLoaded { get; set; }
 
@@ -655,9 +672,12 @@ namespace ICSharpCode.ILSpyX
 
 		public void Dispose()
 		{
-			if (loadingTask.Status == TaskStatus.RanToCompletion)
+			// Only inspect the load task if it's been started. Disposing a never-loaded
+			// LoadedAssembly must not synchronously kick off the load just to dispose its
+			// (still-non-existent) MetadataFile.
+			if (lazyLoadingTask.IsValueCreated && lazyLoadingTask.Value.Status == TaskStatus.RanToCompletion)
 			{
-				loadingTask.Result.MetadataFile?.Dispose();
+				lazyLoadingTask.Value.Result.MetadataFile?.Dispose();
 			}
 			(debugInfoProvider as IDisposable)?.Dispose();
 		}

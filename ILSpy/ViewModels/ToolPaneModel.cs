@@ -16,11 +16,21 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using Dock.Controls.DeferredContentControl;
 using Dock.Model.Mvvm.Controls;
 
 namespace ILSpy.ViewModels
 {
-	public abstract class ToolPaneModel : Tool
+	/// <summary>
+	/// Base for our docked tool panes (assembly tree, search results, analyzers, …). Opts
+	/// out of Dock.Avalonia's deferred-content presentation: by default Dock waits for the
+	/// layout to settle before instantiating each tool pane's view, which on startup costs
+	/// hundreds of milliseconds between the window painting and the panes appearing. The
+	/// trees + search results are cheap to materialise (lazy loading handles deeper levels)
+	/// so eager realisation is the right tradeoff — same as <c>ContentTabPage</c>.
+	/// </summary>
+	public abstract class ToolPaneModel : Tool, IDeferredContentPresentation
 	{
+		bool IDeferredContentPresentation.DeferContentPresentation => false;
 	}
 }
