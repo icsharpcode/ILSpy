@@ -21,6 +21,7 @@ using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using Dock.Controls.DeferredContentControl;
+using Dock.Model.Core;
 
 using ICSharpCode.ILSpyX.TreeView;
 
@@ -35,6 +36,15 @@ namespace ILSpy.ViewModels
 	/// </summary>
 	public sealed partial class ContentTabPage : TabPageModel, IDeferredContentPresentation
 	{
+		public ContentTabPage()
+		{
+			// Same reason as ToolPaneModel — Dock's chrome template binds against
+			// DockCapabilityOverrides.{CanDrag, CanDrop, CanClose}, and the document tab's
+			// owner.DockCapabilityPolicy.{CanDrag, CanDrop, CanClose}. Without these
+			// pre-populated, every tab startup logs a [Binding] error per property.
+			DockCapabilityOverrides = new DockCapabilityOverrides();
+		}
+
 		// Opt out of Dock's deferred presentation: the inner views are already pre-realised
 		// by the wrapper view, and headless tests can't reach descendants of a control
 		// that's still queued for realisation.

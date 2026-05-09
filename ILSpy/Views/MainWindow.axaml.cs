@@ -35,15 +35,26 @@ namespace ILSpy.Views
 
 		public MainWindow()
 		{
+			// Parameterless ctor — design-time / preview only. The runtime path uses the
+			// ImportingConstructor below, which sets DataContext BEFORE inflating XAML so
+			// that DockControl's Layout binding (and the cascade of Layout.Id, Layout.Title,
+			// Layout.CanDrag, Layout.CanDrop, Layout.DockGroup template bindings) sees a
+			// non-null source on first evaluation. Without that ordering, every binding
+			// throws + logs at startup, which adds up to ~30 errors per launch.
+			StartupLog.Mark("MainWindow parameterless ctor entered (XAML inflation about to start)");
 			InitializeComponent();
+			StartupLog.Mark("MainWindow parameterless ctor exited (XAML inflation done)");
 		}
 
 		[ImportingConstructor]
-		public MainWindow(MainWindowViewModel viewModel, SettingsService settingsService) : this()
+		public MainWindow(MainWindowViewModel viewModel, SettingsService settingsService)
 		{
 			StartupLog.Mark("MainWindow ctor entered");
 			this.settingsService = settingsService;
 			DataContext = viewModel;
+			StartupLog.Mark("MainWindow XAML inflation about to start (DataContext set)");
+			InitializeComponent();
+			StartupLog.Mark("MainWindow XAML inflation done");
 			ApplySessionSettings(settingsService.SessionSettings);
 			Opened += async (_, _) => {
 				StartupLog.Mark("MainWindow.Opened fired");

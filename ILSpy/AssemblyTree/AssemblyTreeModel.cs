@@ -291,17 +291,22 @@ namespace ILSpy.AssemblyTree
 		/// quietly into "the user never sees a populated icon for assemblies they don't
 		/// touch".
 		///
-		/// To strike a middle ground, schedule a one-shot sweep a couple of seconds after
-		/// the list appears that nudges every <see cref="LoadedAssembly"/> to start loading
-		/// in the background. By that point the active assembly's metadata is usually ready
-		/// and the user has had a frame or two to interact with the tree.
+		/// To strike a middle ground, schedule a one-shot sweep that fires after the tree
+		/// view is on screen (<see cref="TreeReady"/>) plus a small visibility cooldown.
+		/// Gating on <see cref="TreeReady"/> rather than a wall-clock delay keeps the sweep
+		/// off slow startups (heavy layout, debugger attached) and ensures the user has
+		/// genuinely seen the tree before the thread pool fills with sibling-assembly loads.
 		/// </summary>
 		void ScheduleBackgroundLoadSweep(AssemblyList list)
 		{
 			_ = Task.Run(async () => {
 				try
 				{
-					await Task.Delay(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
+					await TreeReady.ConfigureAwait(false);
+					// Small grace period after Loaded so the first paint has time to settle
+					// — kicking off 122 metadata loads the same frame the tree appears would
+					// steal cycles from the layout pass that just brought it on screen.
+					await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(false);
 					AppEnv.StartupLog.Mark("Background-load sweep starting");
 					foreach (var assembly in list.GetAssemblies())
 					{

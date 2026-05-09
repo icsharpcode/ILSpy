@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using Dock.Controls.DeferredContentControl;
+using Dock.Model.Core;
 using Dock.Model.Mvvm.Controls;
 
 namespace ILSpy.ViewModels
@@ -28,9 +29,21 @@ namespace ILSpy.ViewModels
 	/// hundreds of milliseconds between the window painting and the panes appearing. The
 	/// trees + search results are cheap to materialise (lazy loading handles deeper levels)
 	/// so eager realisation is the right tradeoff — same as <c>ContentTabPage</c>.
+	///
+	/// The ctor also pre-populates <see cref="Tool.DockCapabilityOverrides"/> with a
+	/// default instance because the Dock theme template binds against
+	/// <c>ActiveDockable.DockCapabilityOverrides.CanPin</c> / <c>CanClose</c> (and similar)
+	/// the moment the pane chrome is realised. Without a non-null instance every pane
+	/// startup logs a <c>[Binding]</c> error per property — adds up to ~30 errors per
+	/// launch.
 	/// </summary>
 	public abstract class ToolPaneModel : Tool, IDeferredContentPresentation
 	{
+		protected ToolPaneModel()
+		{
+			DockCapabilityOverrides = new DockCapabilityOverrides();
+		}
+
 		bool IDeferredContentPresentation.DeferContentPresentation => false;
 	}
 }

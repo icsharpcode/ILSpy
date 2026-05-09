@@ -55,6 +55,11 @@ namespace ILSpy.Docking
 				Title = "Documents",
 				IsCollapsable = false,
 				Proportion = 0.6,
+				// Dock's theme template binds against DockCapabilityPolicy.{CanDrag, CanDrop,
+				// CanPin, CanClose} on every dock. Pre-populate so the binding sees a non-null
+				// source on first evaluation; otherwise every dock startup logs ~6 [Binding]
+				// errors as the chrome template is realised.
+				DockCapabilityPolicy = new DockCapabilityPolicy(),
 			};
 			Documents = documents;
 
@@ -87,6 +92,7 @@ namespace ILSpy.Docking
 				Orientation = Orientation.Vertical,
 				Proportion = ComputeMiddleColumnProportion(leftToolDock, rightToolDock),
 				VisibleDockables = CreateList(verticalChildren.ToArray()),
+				DockCapabilityPolicy = new DockCapabilityPolicy(),
 			};
 
 			// Horizontal row: left tool dock, middle column, right tool dock — splitters
@@ -108,6 +114,7 @@ namespace ILSpy.Docking
 				Id = "MainLayout",
 				Orientation = Orientation.Horizontal,
 				VisibleDockables = CreateList(horizontalChildren.ToArray()),
+				DockCapabilityPolicy = new DockCapabilityPolicy(),
 			};
 
 			var root = CreateRootDock();
@@ -116,6 +123,7 @@ namespace ILSpy.Docking
 			root.VisibleDockables = CreateList<IDockable>(horizontal);
 			root.DefaultDockable = horizontal;
 			root.ActiveDockable = horizontal;
+			root.DockCapabilityPolicy = new DockCapabilityPolicy();
 
 			return root;
 		}
@@ -140,6 +148,7 @@ namespace ILSpy.Docking
 					ToolPaneAlignment.Bottom => Alignment.Bottom,
 					_ => Alignment.Left,
 				},
+				DockCapabilityPolicy = new DockCapabilityPolicy(),
 			};
 		}
 
