@@ -48,7 +48,7 @@ namespace ILSpy.Metadata
 		{
 			var page = new MetadataTablePageModel {
 				Title = "Guid Heap",
-				Items = EnsureEntries().Cast<object>().ToList(),
+				Items = EnsureEntries(),
 			};
 			MetadataColumnBuilder.Populate<GuidHeapEntry>(page);
 			return page;

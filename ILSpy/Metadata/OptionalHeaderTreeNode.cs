@@ -50,7 +50,7 @@ namespace ILSpy.Metadata
 		{
 			var page = new MetadataTablePageModel {
 				Title = "Optional Header",
-				Items = BuildEntries().Cast<object>().ToList(),
+				Items = BuildEntries(),
 			};
 			MetadataColumnBuilder.Populate<Entry>(page);
 			return page;

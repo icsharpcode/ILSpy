@@ -58,6 +58,7 @@ namespace ILSpy.Metadata
 	/// them clickable hyperlinks via <see cref="MetadataColumnBuilder"/>.
 	/// </summary>
 	public abstract class MetadataTableTreeNode<TEntry> : MetadataTableTreeNode
+		where TEntry : class
 	{
 		IReadOnlyList<TEntry>? cached;
 
@@ -73,9 +74,16 @@ namespace ILSpy.Metadata
 
 		public override TabPageModel CreateTab()
 		{
+			// IReadOnlyList<T> is covariant on T, so a strongly-typed list passes through to
+			// MetadataTablePageModel.Items (declared as IReadOnlyList<object>) without a
+			// reflective copy. The runtime type stays IReadOnlyList<TEntry>, which lets
+			// DataGridCollectionView.GetItemType find the IEnumerable<TEntry> interface and
+			// resolve property-path sorts correctly — see DataGridSortDescription.Initialize
+			// + ReflectionHelper.GetNestedPropertyValue, which return null for every row when
+			// the source's element type is object.
 			var page = new MetadataTablePageModel {
 				Title = $"{Kind} ({RowCount})",
-				Items = (cached ??= LoadTable()).Cast<object>().ToList(),
+				Items = cached ??= LoadTable(),
 			};
 			MetadataColumnBuilder.Populate<TEntry>(page);
 			return page;

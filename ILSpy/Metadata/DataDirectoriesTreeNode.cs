@@ -50,7 +50,7 @@ namespace ILSpy.Metadata
 		{
 			var page = new MetadataTablePageModel {
 				Title = "Data Directories",
-				Items = BuildEntries().Cast<object>().ToList(),
+				Items = BuildEntries(),
 			};
 			MetadataColumnBuilder.Populate<DataDirectoryEntry>(page);
 			return page;

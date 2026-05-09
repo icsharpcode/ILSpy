@@ -48,7 +48,7 @@ namespace ILSpy.Metadata
 		{
 			var page = new MetadataTablePageModel {
 				Title = "DOS Header",
-				Items = BuildEntries().Cast<object>().ToList(),
+				Items = BuildEntries(),
 			};
 			MetadataColumnBuilder.Populate<Entry>(page);
 			return page;

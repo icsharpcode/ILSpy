@@ -55,7 +55,7 @@ namespace ILSpy.Metadata
 		{
 			var page = new MetadataTablePageModel {
 				Title = "Debug Directory",
-				Items = BuildEntries().Cast<object>().ToList(),
+				Items = BuildEntries(),
 			};
 			MetadataColumnBuilder.Populate<DebugDirectoryEntryView>(page);
 			return page;

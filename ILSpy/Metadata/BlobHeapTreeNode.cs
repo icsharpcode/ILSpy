@@ -49,7 +49,7 @@ namespace ILSpy.Metadata
 		{
 			var page = new MetadataTablePageModel {
 				Title = "Blob Heap",
-				Items = EnsureEntries().Cast<object>().ToList(),
+				Items = EnsureEntries(),
 			};
 			MetadataColumnBuilder.Populate<BlobHeapEntry>(page);
 			return page;
