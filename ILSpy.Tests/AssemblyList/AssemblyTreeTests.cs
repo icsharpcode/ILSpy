@@ -1272,4 +1272,36 @@ public class AssemblyTreeTests
 		accessors.Should().Contain(m => m.MethodDefinition.Name == "remove_AssemblyLoad",
 			"event tree node must expose its remove accessor");
 	}
+
+	[AvaloniaTest]
+	public async Task Property_Accessors_Are_Filtered_Out_Of_The_Tree_Under_Default_Settings()
+	{
+		// Accessors live in Children for navigation (FindTreeNode resolves to them) but
+		// the per-node Filter must hide them under the default ShowApiLevel — they're
+		// rendered as part of the parent property in the C# surface, so the tree should
+		// not duplicate them as standalone rows. ShowAll is the explicit opt-in.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var stringTypeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			coreLibName, "System", "System.String");
+		stringTypeNode.IsExpanded = true;
+		var lengthProp = stringTypeNode.Children.OfType<PropertyTreeNode>()
+			.First(p => p.PropertyDefinition.Name == "Length");
+		var getter = lengthProp.Children.OfType<MethodTreeNode>()
+			.Single(m => m.MethodDefinition.Name == "get_Length");
+
+		var settings = AppComposition.Current.GetExport<SettingsService>()
+			.SessionSettings.LanguageSettings;
+		settings.ShowApiLevel = global::ICSharpCode.ILSpyX.ApiVisibility.PublicOnly;
+		((int)getter.Filter(settings)).Should().Be((int)global::ILSpy.TreeNodes.FilterResult.Hidden,
+			"property accessors must be hidden by default — only ShowAll surfaces them");
+
+		settings.ShowApiLevel = global::ICSharpCode.ILSpyX.ApiVisibility.All;
+		((int)getter.Filter(settings)).Should().NotBe((int)global::ILSpy.TreeNodes.FilterResult.Hidden,
+			"flipping to ShowAll must let accessors through");
+	}
 }

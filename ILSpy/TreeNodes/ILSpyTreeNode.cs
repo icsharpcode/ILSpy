@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 
 using ICSharpCode.Decompiler;
@@ -34,6 +35,7 @@ namespace ILSpy.TreeNodes
 		IEnumerable<ITreeNode> ITreeNode.Children => Children.OfType<ILSpyTreeNode>();
 
 		static LanguageService? cachedLanguageService;
+		static SettingsService? cachedSettingsService;
 
 		/// <summary>
 		/// Resolves the LanguageService from the MEF composition. Tree nodes use this to access
@@ -41,6 +43,27 @@ namespace ILSpy.TreeNodes
 		/// </summary>
 		protected static LanguageService LanguageService
 			=> cachedLanguageService ??= AppComposition.Current.GetExport<LanguageService>();
+
+		/// <summary>
+		/// The active <see cref="LanguageSettings"/>, or <see langword="null"/> when composition
+		/// isn't available (design-time previews, minimal tests). Tree nodes that need to
+		/// consult the filter on demand (e.g. <see cref="SharpTreeNode.ShowExpander"/> overrides
+		/// that hide their chevron when every child is filtered out) use this without forcing
+		/// the rest of their state to depend on a SettingsService injection.
+		/// </summary>
+		protected static LanguageSettings? CurrentLanguageSettings {
+			get {
+				try
+				{
+					var service = cachedSettingsService ??= AppComposition.Current.GetExport<SettingsService>();
+					return service.SessionSettings.LanguageSettings;
+				}
+				catch
+				{
+					return null;
+				}
+			}
+		}
 
 		/// <summary>
 		/// All MEF-discovered <see cref="IResourceNodeFactory"/> instances. Resource-tree nodes
@@ -103,5 +126,59 @@ namespace ILSpy.TreeNodes
 		/// DataGrid view while the rest of the tree keeps decompiling.
 		/// </summary>
 		public virtual TabPageModel? CreateTab() => null;
+
+		/// <summary>
+		/// Applies <see cref="Filter"/> to every newly-added child and writes the result
+		/// into <see cref="SharpTreeNode.IsHidden"/>. Mirrors WPF's filter cascade — it's
+		/// what makes accessor children of properties / events read as hidden under the
+		/// default ShowApiLevel without overriding <see cref="SharpTreeNode.ShowExpander"/>
+		/// per node-type. Only fires while this parent is visible (matches WPF) so the
+		/// filter pass doesn't run for descendants whose parent chain isn't realised yet.
+		/// </summary>
+		public override void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
+		{
+			base.OnChildrenChanged(e);
+			if (e.NewItems == null || !IsVisible)
+				return;
+			foreach (var item in e.NewItems)
+			{
+				if (item is ILSpyTreeNode child)
+					ApplyFilterToChild(child);
+			}
+		}
+
+		void ApplyFilterToChild(ILSpyTreeNode child)
+		{
+			var settings = CurrentLanguageSettings;
+			if (settings == null)
+				return;
+			var result = child.Filter(settings);
+			switch (result)
+			{
+				case FilterResult.Hidden:
+					child.IsHidden = true;
+					break;
+				case FilterResult.Match:
+					child.IsHidden = false;
+					break;
+				case FilterResult.Recurse:
+					child.EnsureChildrenFiltered();
+					child.IsHidden = child.Children.All(c => c.IsHidden);
+					break;
+			}
+		}
+
+		/// <summary>
+		/// Forces this node's children to be materialised (when <see cref="SharpTreeNode.LazyLoading"/>
+		/// is true) and runs <see cref="ApplyFilterToChild"/> on each one. Matches WPF's
+		/// internal helper so the same filter cascade reaches Recurse / MatchAndRecurse
+		/// branches.
+		/// </summary>
+		internal void EnsureChildrenFiltered()
+		{
+			EnsureLazyChildren();
+			foreach (var child in Children.OfType<ILSpyTreeNode>())
+				ApplyFilterToChild(child);
+		}
 	}
 }
