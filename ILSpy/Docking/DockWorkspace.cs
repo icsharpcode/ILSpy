@@ -337,25 +337,48 @@ namespace ILSpy.Docking
 			NavigateToToken(new MetadataTokenReference(metadataFile, MetadataTokens.EntityHandle(token)));
 		}
 
-		internal void OnMetadataRowActivated(object row)
+		internal void OnMetadataRowActivated(MetadataRowActivationEventArgs e)
 		{
-			// Row double-click: try to resolve the row's Token + metadataFile to a real
-			// IEntity via the type system, then select the matching tree node. That
-			// triggers ShowSelectedNode → CreateTab → decompiler view, the same path a
-			// click in the assembly tree takes.
+			// Row double-click: resolve the row's Token + metadataFile to an IEntity, then
+			// either select the matching tree node (single-tab reuse) or open it in a fresh
+			// decompiler tab (new-tab gesture — Shift+double-click or context menu).
+			var node = TryResolveRowToTreeNode(e.Row);
+			if (node is null)
+				return;
+			if (e.OpenInNewTab)
+			{
+				var content = new DecompilerTabPageModel { Language = languageService.CurrentLanguage };
+				OpenNewTab(content);
+				content.CurrentNodes = new[] { node };
+			}
+			else
+			{
+				assemblyTreeModel.SelectedItem = node;
+			}
+		}
+
+		/// <summary>
+		/// Reflection-based resolution of a metadata-grid row to the matching assembly-tree
+		/// node, sharing the path between row double-click and the "Decompile to new tab"
+		/// context-menu entry. Returns <see langword="null"/> when the row's token doesn't
+		/// resolve to an <see cref="IEntity"/> the tree knows how to model (heap rows,
+		/// AssemblyRef rows pointing at unloaded assemblies, etc.).
+		/// </summary>
+		internal ILSpyTreeNode? TryResolveRowToTreeNode(object row)
+		{
 			var fileField = row.GetType().GetField("metadataFile", BindingFlags.Instance | BindingFlags.NonPublic);
 			if (fileField?.GetValue(row) is not MetadataFile metadataFile)
-				return;
+				return null;
 			var tokenProp = row.GetType().GetProperty("Token");
 			if (tokenProp?.GetValue(row) is not int token || token == 0)
-				return;
+				return null;
 			var handle = MetadataTokens.EntityHandle(token);
 			if (handle.IsNil)
-				return;
+				return null;
 
 			var assemblies = assemblyTreeModel.AssemblyList?.GetAssemblies();
 			if (assemblies is null)
-				return;
+				return null;
 			LoadedAssembly? owningAssembly = null;
 			foreach (var a in assemblies)
 			{
@@ -366,19 +389,17 @@ namespace ILSpy.Docking
 				}
 			}
 			if (owningAssembly is null)
-				return;
+				return null;
 			var ts = owningAssembly.GetTypeSystemOrNull();
 			if (ts?.MainModule is not MetadataModule metadataModule)
-				return;
+				return null;
 			IEntity? entity;
 			try
 			{ entity = metadataModule.ResolveEntity(handle); }
-			catch { return; }
+			catch { return null; }
 			if (entity is null)
-				return;
-			var node = assemblyTreeModel.FindTreeNode(entity);
-			if (node is not null)
-				assemblyTreeModel.SelectedItem = node;
+				return null;
+			return assemblyTreeModel.FindTreeNode(entity);
 		}
 
 		public void NavigateToToken(MetadataTokenReference reference)

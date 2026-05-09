@@ -64,14 +64,17 @@ namespace ILSpy.Views
 
 		void OnGridDoubleTapped(object? sender, global::Avalonia.Input.TappedEventArgs e)
 		{
-			// Dispatch row-activation through the page model. The dock workspace's
-			// subscriber resolves the row's metadataFile + Token to an IEntity and selects
-			// the matching tree node; that opens the entity in the decompiler view.
+			// Dispatch row-activation through the page model. Shift+double-click opens
+			// the entity in a new tab; a plain double-click reuses the active tab via
+			// the regular tree-selection path.
 			if (DataContext is not MetadataTablePageModel page)
 				return;
 			var grid = this.FindControl<DataGrid>("Grid");
 			if (grid?.SelectedItem is { } row)
-				page.RaiseRowActivated(row);
+			{
+				bool openInNewTab = (e.KeyModifiers & global::Avalonia.Input.KeyModifiers.Shift) != 0;
+				page.RaiseRowActivated(row, openInNewTab);
+			}
 		}
 
 		void OnKeyDown(object? sender, KeyEventArgs e)

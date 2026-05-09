@@ -23,7 +23,10 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
+using ILSpy;
 using ILSpy.AppEnv;
+using ILSpy.Commands;
+using ILSpy.Docking;
 using ILSpy.Metadata;
 using ILSpy.Metadata.CorTables;
 using ILSpy.TreeNodes;
@@ -74,12 +77,61 @@ public class MetadataRowActivationTests
 			as global::ICSharpCode.Decompiler.TypeSystem.ITypeDefinition)!
 			.FullName.Should().Be("System.Object");
 	}
+
+	[AvaloniaTest]
+	public async Task Activating_A_Row_With_OpenInNewTab_Spawns_A_Fresh_Decompiler_Tab()
+	{
+		// Shift+double-click on a metadata row should NOT replace the active tab — it should
+		// open a brand-new decompiler tab containing the row's entity. The single-tab-reuse
+		// path stays put.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
+		assemblyNode.EnsureLazyChildren();
+		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
+		metadataNode.EnsureLazyChildren();
+		var tablesNode = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
+		tablesNode.EnsureLazyChildren();
+		var typeDefNode = tablesNode.Children.OfType<TypeDefTableTreeNode>().Single();
+
+		vm.AssemblyTreeModel.SelectNode(typeDefNode);
+		var metadataTab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		var objectRow = metadataTab.Items.Cast<TypeDefTableTreeNode.TypeDefEntry>()
+			.First(e => e.Name == "Object" && e.Namespace == "System");
+
+		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
+		var initialCount = documents.VisibleDockables?.Count ?? 0;
+
+		metadataTab.RaiseRowActivated(objectRow, openInNewTab: true);
+
+		await Waiters.WaitForAsync(
+			() => (documents.VisibleDockables?.Count ?? 0) > initialCount);
+		var decompiledTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		decompiledTab.Text.Should().Contain("System.Object");
+	}
+
+	[AvaloniaTest]
+	public async Task DecompileMetadataRowInNewTab_Entry_Is_Registered()
+	{
+		// Right-click on a metadata-grid row shows a "Decompile to new tab" entry alongside
+		// Go-to-token / Show-in-metadata. Verifies the [ExportContextMenuEntry] is discovered.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
+
+		registry.Entries.Should().Contain(
+			e => e.Value is DecompileMetadataRowInNewTabCommand);
+	}
 }
 
 internal static class MetadataRowActivationTestExtensions
 {
-	public static void RaiseRowActivated(this MetadataTablePageModel page, object row) =>
+	public static void RaiseRowActivated(this MetadataTablePageModel page, object row, bool openInNewTab = false) =>
 		typeof(MetadataTablePageModel)
 			.GetMethod("RaiseRowActivated", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-			.Invoke(page, [row]);
+			.Invoke(page, [row, openInNewTab]);
 }

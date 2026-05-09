@@ -28,6 +28,7 @@ using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy;
 using ILSpy.AppEnv;
+using ILSpy.Commands;
 using ILSpy.Docking;
 using ILSpy.TextView;
 using ILSpy.TreeNodes;
@@ -70,7 +71,8 @@ public class DecompileInNewViewTests
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
 		var entry = registry.Entries
-			.Single(e => e.Metadata.Header == nameof(Resources.DecompileToNewPanel))
+			.Single(e => e.Metadata.Header == nameof(Resources.DecompileToNewPanel)
+				&& e.Value is DecompileInNewViewCommand)
 			.Value;
 
 		var asm = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
@@ -108,7 +110,8 @@ public class DecompileInNewViewTests
 
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
 		var entry = registry.Entries
-			.Single(e => e.Metadata.Header == nameof(Resources.DecompileToNewPanel))
+			.Single(e => e.Metadata.Header == nameof(Resources.DecompileToNewPanel)
+				&& e.Value is DecompileInNewViewCommand)
 			.Value;
 
 		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;

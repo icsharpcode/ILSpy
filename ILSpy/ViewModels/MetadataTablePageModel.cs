@@ -106,12 +106,15 @@ namespace ILSpy.ViewModels
 		/// <summary>
 		/// Raised when the user double-clicks (or otherwise activates) a metadata grid
 		/// row. The dock workspace resolves the row's <c>metadataFile</c> + <c>Token</c>
-		/// to an <see cref="ICSharpCode.Decompiler.TypeSystem.IEntity"/> and selects the
-		/// matching tree node, which opens the entity in the decompiler view.
+		/// to an <see cref="ICSharpCode.Decompiler.TypeSystem.IEntity"/>; when
+		/// <see cref="MetadataRowActivationEventArgs.OpenInNewTab"/> is true the entity
+		/// is decompiled into a fresh tab, otherwise it replaces the active tab via the
+		/// regular tree-selection path.
 		/// </summary>
-		public event Action<object>? RowActivated;
+		public event Action<MetadataRowActivationEventArgs>? RowActivated;
 
-		internal void RaiseRowActivated(object row) => RowActivated?.Invoke(row);
+		internal void RaiseRowActivated(object row, bool openInNewTab = false)
+			=> RowActivated?.Invoke(new MetadataRowActivationEventArgs(row, openInNewTab));
 
 		static readonly ConcurrentDictionary<(Type Type, string Column), PropertyInfo?> propertyLookupCache = new();
 
@@ -318,4 +321,8 @@ namespace ILSpy.ViewModels
 
 	/// <summary>The (row, column) pair clicked in a token cell.</summary>
 	public sealed record MetadataCellNavigationEventArgs(object Row, string ColumnName);
+
+	/// <summary>The activated row plus whether the activation was a new-tab gesture
+	/// (Shift+double-click or "Decompile to new tab" context-menu entry).</summary>
+	public sealed record MetadataRowActivationEventArgs(object Row, bool OpenInNewTab);
 }
