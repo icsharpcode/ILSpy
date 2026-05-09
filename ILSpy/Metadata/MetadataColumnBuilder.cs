@@ -119,15 +119,85 @@ namespace ILSpy.Metadata
 
 		static Control BuildHeader(string columnName, ColumnFilter filter, Type propertyType)
 		{
+			// Header layout: column name on the left, filter funnel icon on the right of
+			// the top row; below them an input row that collapses by default and becomes
+			// visible on pointer-over (or while a filter is set / a popup is open). For
+			// [Flags] columns the input row is just the dropdown trigger — the popup
+			// carries the entire filter UI, so a TextBox would be redundant.
 			var label = new TextBlock {
 				Text = columnName,
 				FontWeight = FontWeight.SemiBold,
 				HorizontalAlignment = HorizontalAlignment.Stretch,
+				VerticalAlignment = VerticalAlignment.Center,
 			};
+			var filterIcon = new global::Avalonia.Controls.Shapes.Path {
+				// Funnel: 10×9 trapezoid above a 2×5 spout. Drawn directly because the
+				// Simple theme doesn't ship a filter glyph and pulling FontAwesome for a
+				// single icon isn't worth it.
+				Width = 10,
+				Height = 9,
+				Stretch = Stretch.None,
+				Fill = Brushes.Gray,
+				Data = global::Avalonia.Media.Geometry.Parse("M0,0 L10,0 L6,4 L6,9 L4,9 L4,4 Z"),
+				Margin = new Thickness(4, 0, 0, 0),
+				VerticalAlignment = VerticalAlignment.Center,
+			};
+			var topRow = new DockPanel { LastChildFill = true };
+			DockPanel.SetDock(filterIcon, global::Avalonia.Controls.Dock.Right);
+			topRow.Children.Add(filterIcon);
+			topRow.Children.Add(label);
+
+			bool isFlagsColumn = propertyType.IsEnum
+				&& Attribute.IsDefined(propertyType, typeof(FlagsAttribute));
+
+			Popup? popup = null;
+			Control inputRow;
+			if (isFlagsColumn)
+			{
+				(inputRow, popup) = BuildFlagsDropdownTrigger(filter, propertyType);
+			}
+			else
+			{
+				inputRow = BuildFilterTextBox(filter);
+			}
+			inputRow.IsVisible = false;
+			inputRow.Margin = new Thickness(0, 2, 0, 0);
+
+			var root = new StackPanel { Orientation = Orientation.Vertical };
+			root.Children.Add(topRow);
+			root.Children.Add(inputRow);
+			if (popup != null)
+				root.Children.Add(popup);
+
+			bool hovered = false;
+			bool popupOpen = false;
+			void Update()
+			{
+				bool active = !string.IsNullOrWhiteSpace(filter.Text)
+					|| (filter.FlagsState != null && !filter.FlagsState.IsEmpty);
+				inputRow.IsVisible = hovered || active || popupOpen;
+				// Tint the funnel when a filter is in effect so users can see at a glance
+				// which columns are constraining the view, even with the input collapsed.
+				filterIcon.Fill = active ? Brushes.SteelBlue : Brushes.Gray;
+			}
+			root.PointerEntered += (_, _) => { hovered = true; Update(); };
+			root.PointerExited += (_, _) => { hovered = false; Update(); };
+			filter.PropertyChanged += (_, _) => Update();
+			if (popup != null)
+			{
+				popup.Opened += (_, _) => { popupOpen = true; Update(); };
+				popup.Closed += (_, _) => { popupOpen = false; Update(); };
+			}
+			Update();
+
+			return root;
+		}
+
+		static TextBox BuildFilterTextBox(ColumnFilter filter)
+		{
 			var box = new TextBox {
 				MinHeight = 0,
 				Padding = new Thickness(2, 1),
-				Margin = new Thickness(0, 2, 0, 0),
 				FontWeight = FontWeight.Normal,
 				HorizontalAlignment = HorizontalAlignment.Stretch,
 				Text = filter.Text,
@@ -145,24 +215,15 @@ namespace ILSpy.Metadata
 				if (e.PropertyName == nameof(ColumnFilter.Text) && box.Text != filter.Text)
 					box.Text = filter.Text;
 			};
-
-			Control inputRow = box;
-			if (propertyType.IsEnum && Attribute.IsDefined(propertyType, typeof(FlagsAttribute)))
-				inputRow = WrapWithFlagsDropdown(box, filter, propertyType);
-
-			return new StackPanel {
-				Orientation = Orientation.Vertical,
-				Children = { label, inputRow },
-			};
+			return box;
 		}
 
-		static Control WrapWithFlagsDropdown(TextBox box, ColumnFilter filter, Type enumType)
+		static (Control Trigger, Popup Popup) BuildFlagsDropdownTrigger(ColumnFilter filter, Type enumType)
 		{
-			// Schema-driven dropdown: a FlagsFilterPopup that distinguishes mutex
-			// sub-ranges (multi-select chips) from independent flags (tri-state pills),
-			// driving ColumnFilter.FlagsState. The predicate path runs the compiled
-			// CompiledFilter alongside the TextBox-driven substring / regex / numeric
-			// path; both AND together.
+			// Schema-driven dropdown: FlagsFilterPopup distinguishes mutex sub-ranges
+			// (multi-select chips) from independent flags (tri-state pills) and drives
+			// ColumnFilter.FlagsState. No accompanying TextBox — the popup is the entire
+			// filter UI for [Flags] columns.
 			var schema = ILSpy.Metadata.Filters.FlagsSchemaInferer.For(enumType);
 			filter.FlagsState ??= new ILSpy.Metadata.Filters.FilterState(schema);
 			var popupContent = new ILSpy.Views.Filters.FlagsFilterPopup(filter.FlagsState);
@@ -170,9 +231,9 @@ namespace ILSpy.Metadata
 			var openButton = new Button {
 				Content = "▾",
 				Padding = new Thickness(4, 0),
-				Margin = new Thickness(2, 2, 0, 0),
 				MinHeight = 0,
-				VerticalAlignment = VerticalAlignment.Stretch,
+				HorizontalAlignment = HorizontalAlignment.Right,
+				VerticalAlignment = VerticalAlignment.Center,
 			};
 			var popupRoot = new Border {
 				BorderBrush = Brushes.Gray,
@@ -180,8 +241,8 @@ namespace ILSpy.Metadata
 				Background = Brushes.White,
 				// Force the arrow cursor on the popup surface — without this, the
 				// EW-resize cursor set on the DataGrid column header's drag-grip can
-				// leak into the popup if the pointer enters from there before
-				// Avalonia recomputes the cursor for the new hit-test target.
+				// leak into the popup if the pointer enters from there before Avalonia
+				// recomputes the cursor for the new hit-test target.
 				Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Arrow),
 				Child = new ScrollViewer {
 					MaxHeight = 400,
@@ -202,15 +263,7 @@ namespace ILSpy.Metadata
 				Child = popupRoot,
 			};
 			openButton.Click += (_, _) => popup.IsOpen = true;
-			var row = new DockPanel { LastChildFill = true, Margin = new Thickness(0, 2, 0, 0) };
-			DockPanel.SetDock(openButton, global::Avalonia.Controls.Dock.Right);
-			row.Children.Add(openButton);
-			row.Children.Add(box);
-			box.Margin = new Thickness(0);
-			return new StackPanel {
-				Orientation = Orientation.Vertical,
-				Children = { row, popup },
-			};
+			return (openButton, popup);
 		}
 
 		static DataGridTextColumn BuildTextColumn(PropertyInfo prop, ColumnInfoAttribute? info)
