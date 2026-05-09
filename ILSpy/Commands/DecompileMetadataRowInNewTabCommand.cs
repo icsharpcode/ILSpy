@@ -23,7 +23,6 @@ using Avalonia.Controls;
 using ICSharpCode.ILSpy.Properties;
 
 using ILSpy.Docking;
-using ILSpy.Languages;
 using ILSpy.TextView;
 
 namespace ILSpy.Commands
@@ -44,13 +43,11 @@ namespace ILSpy.Commands
 	internal sealed class DecompileMetadataRowInNewTabCommand : IContextMenuEntry
 	{
 		readonly DockWorkspace dockWorkspace;
-		readonly LanguageService languageService;
 
 		[ImportingConstructor]
-		public DecompileMetadataRowInNewTabCommand(DockWorkspace dockWorkspace, LanguageService languageService)
+		public DecompileMetadataRowInNewTabCommand(DockWorkspace dockWorkspace)
 		{
 			this.dockWorkspace = dockWorkspace;
-			this.languageService = languageService;
 		}
 
 		public bool IsVisible(TextViewContext context) => ResolveRow(context) is not null;
@@ -64,9 +61,7 @@ namespace ILSpy.Commands
 			var node = dockWorkspace.TryResolveRowToTreeNode(row);
 			if (node is null)
 				return;
-			var content = new DecompilerTabPageModel { Language = languageService.CurrentLanguage };
-			dockWorkspace.OpenNewTab(content);
-			content.CurrentNodes = new[] { node };
+			dockWorkspace.OpenNodeInNewTab(node);
 		}
 
 		static object? ResolveRow(TextViewContext context)

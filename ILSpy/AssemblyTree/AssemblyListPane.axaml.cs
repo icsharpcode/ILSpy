@@ -33,8 +33,6 @@ using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy.AppEnv;
 using ILSpy.Docking;
-using ILSpy.Languages;
-using ILSpy.TextView;
 using ILSpy.TreeNodes;
 
 namespace ILSpy.AssemblyTree
@@ -345,18 +343,18 @@ namespace ILSpy.AssemblyTree
 		}
 
 		/// <summary>
-		/// Opens <paramref name="node"/> in a fresh decompiler tab without disturbing the
-		/// active one. Shared between the MMB handler above and any test that wants to
-		/// drive the new-tab path without simulating real pointer input.
+		/// Opens <paramref name="node"/> in a fresh document tab without disturbing the
+		/// active one. Delegates to <see cref="DockWorkspace.OpenNodeInNewTab"/>, which
+		/// picks decompiler-vs-custom page type based on what the node returns from
+		/// <see cref="ILSpyTreeNode.CreateTab"/>. Shared between the MMB handler above and
+		/// any test that wants to drive the new-tab path without simulating real pointer input.
 		/// </summary>
 		internal void OpenNodeInNewTab(ILSpyTreeNode node)
 		{
 			DockWorkspace? dock;
-			LanguageService? langService;
 			try
 			{
 				dock = AppComposition.Current.GetExport<DockWorkspace>();
-				langService = AppComposition.Current.GetExport<LanguageService>();
 			}
 			catch
 			{
@@ -364,9 +362,7 @@ namespace ILSpy.AssemblyTree
 				// no-op there.
 				return;
 			}
-			var content = new DecompilerTabPageModel { Language = langService.CurrentLanguage };
-			dock.OpenNewTab(content);
-			content.CurrentNodes = new[] { node };
+			dock.OpenNodeInNewTab(node);
 		}
 
 		protected override void OnDataContextChanged(System.EventArgs e)

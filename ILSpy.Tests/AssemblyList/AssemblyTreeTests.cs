@@ -39,6 +39,8 @@ using ILSpy.AppEnv;
 using ILSpy.AssemblyTree;
 using ILSpy.Commands;
 using ILSpy.Docking;
+using ILSpy.Metadata;
+using ILSpy.Metadata.CorTables;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 using ILSpy.Views;
@@ -1131,5 +1133,47 @@ public class AssemblyTreeTests
 		// Selection didn't move — pinned remains the model's selection.
 		ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, pinned).Should().BeTrue(
 			"middle-click must not move the assembly-tree selection");
+	}
+
+	[AvaloniaTest]
+	public async Task OpenNodeInNewTab_Spawns_A_Second_Metadata_Tab_When_Node_Has_Custom_Content()
+	{
+		// Tree nodes that override CreateTab (metadata tables, resource viewers, …) must be
+		// hosted as their custom page-type in the new tab — not forcibly wrapped in a
+		// DecompilerTabPageModel. Exercises the regression behind "there can't be multiple
+		// metadata views": before the OpenNodeInNewTab consolidation, the new-tab path
+		// always built a decompiler tab and the metadata page-type couldn't be carved out.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
+		assemblyNode.EnsureLazyChildren();
+		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
+		metadataNode.EnsureLazyChildren();
+		var tablesNode = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
+		tablesNode.EnsureLazyChildren();
+		var typeDefNode = tablesNode.Children.OfType<TypeDefTableTreeNode>().Single();
+
+		// First metadata view via tree-selection (active tab gets MetadataTablePageModel content).
+		vm.AssemblyTreeModel.SelectNode(typeDefNode);
+		var firstMeta = await vm.DockWorkspace.WaitForMetadataTabAsync();
+
+		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
+		var initialCount = documents.VisibleDockables?.Count ?? 0;
+
+		// Second metadata view via the new-tab carve-out — pick a different table so the
+		// content is unmistakable.
+		var methodTableNode = tablesNode.Children
+			.OfType<global::ILSpy.Metadata.CorTables.MethodTableTreeNode>().Single();
+		vm.DockWorkspace.OpenNodeInNewTab(methodTableNode);
+
+		await Waiters.WaitForAsync(
+			() => (documents.VisibleDockables?.Count ?? 0) > initialCount);
+		var secondMeta = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		ReferenceEquals(secondMeta, firstMeta).Should().BeFalse(
+			"a fresh metadata tab must be created — the previous one keeps its TypeDef state");
 	}
 }

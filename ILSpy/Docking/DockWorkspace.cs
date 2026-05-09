@@ -341,19 +341,43 @@ namespace ILSpy.Docking
 		{
 			// Row double-click: resolve the row's Token + metadataFile to an IEntity, then
 			// either select the matching tree node (single-tab reuse) or open it in a fresh
-			// decompiler tab (new-tab gesture — Shift+double-click or context menu).
+			// tab (MMB / context-menu carve-out).
 			var node = TryResolveRowToTreeNode(e.Row);
 			if (node is null)
 				return;
 			if (e.OpenInNewTab)
+				OpenNodeInNewTab(node);
+			else
+				assemblyTreeModel.SelectedItem = node;
+		}
+
+		/// <summary>
+		/// Opens <paramref name="node"/> in a fresh document tab. When the node carries
+		/// custom content (metadata tables, resource viewers, …) the new tab hosts that
+		/// custom page-type with the same nav / row-activation wiring the single-tab
+		/// reuse path applies via <see cref="AttachCustomContent"/>; otherwise a fresh
+		/// <see cref="DecompilerTabPageModel"/> is spawned and asked to decompile the
+		/// node. Shared between the assembly-tree MMB handler, the metadata-grid MMB
+		/// handler, and the "Decompile to new tab" context-menu entry.
+		/// </summary>
+		public void OpenNodeInNewTab(ILSpyTreeNode node)
+		{
+			ArgumentNullException.ThrowIfNull(node);
+			var customContent = node.CreateTab();
+			if (customContent != null)
+			{
+				if (customContent is MetadataTablePageModel newMeta)
+				{
+					newMeta.NavigateToCellRequested += OnMetadataCellClicked;
+					newMeta.RowActivated += OnMetadataRowActivated;
+				}
+				OpenNewTab(customContent);
+			}
+			else
 			{
 				var content = new DecompilerTabPageModel { Language = languageService.CurrentLanguage };
 				OpenNewTab(content);
 				content.CurrentNodes = new[] { node };
-			}
-			else
-			{
-				assemblyTreeModel.SelectedItem = node;
 			}
 		}
 
