@@ -62,22 +62,30 @@ namespace ILSpy.TreeNodes
 			this.assembly = assembly;
 			this.PackageEntry = packageEntry;
 			LazyLoading = true;
-			_ = InitAsync();
+			// Observe the load OUTCOME without triggering it — the cooldown sweep and
+			// explicit user actions (path-restore, expand) are what start the load.
+			// If we called GetLoadResultAsync here we'd flatten the lazy strategy and
+			// every assembly in the list would load the moment its tree node is built.
+			assembly.Loaded += OnAssemblyLoaded;
+			if (assembly.IsLoaded)
+				OnAssemblyLoaded(); // already finished before we subscribed — catch up
 		}
 
-		// Assemblies nested in NuGet packages can't be unloaded individually — the parent
-		// package entry owns them.
-		public override bool CanDelete() => PackageEntry == null;
+		void OnAssemblyLoaded()
+		{
+			// The Loaded event fires from a thread-pool ContinueWith. Marshal to the UI
+			// thread before mutating tree-node state and raising change notifications;
+			// SharpTreeNode's RaisePropertyChanged is not thread-safe.
+			global::Avalonia.Threading.Dispatcher.UIThread.Post(InitFromLoadResult,
+				global::Avalonia.Threading.DispatcherPriority.Background);
+		}
 
-		public override void Delete() => DeleteCore();
-
-		public override void DeleteCore() => assembly.AssemblyList.Unload(assembly);
-
-		async Task InitAsync()
+		void InitFromLoadResult()
 		{
 			try
 			{
-				var loadResult = await assembly.GetLoadResultAsync();
+				// GetLoadResultAsync is a no-op now — the load is already complete.
+				var loadResult = assembly.GetLoadResultAsync().GetAwaiter().GetResult();
 				cachedModule = loadResult.MetadataFile;
 				if (cachedModule == null && loadResult.Package == null)
 				{
@@ -95,6 +103,14 @@ namespace ILSpy.TreeNodes
 			RaisePropertyChanged(nameof(ToolTip));
 			RaisePropertyChanged(nameof(ShowExpander));
 		}
+
+		// Assemblies nested in NuGet packages can't be unloaded individually — the parent
+		// package entry owns them.
+		public override bool CanDelete() => PackageEntry == null;
+
+		public override void Delete() => DeleteCore();
+
+		public override void DeleteCore() => assembly.AssemblyList.Unload(assembly);
 
 		public override object Text => assembly.Text;
 

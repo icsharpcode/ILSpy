@@ -50,7 +50,20 @@ namespace ILSpy.AssemblyTree
 			AppEnv.StartupLog.Mark("AssemblyListPane ctor entered");
 			InitializeComponent();
 			AttachedToVisualTree += (_, _) => AppEnv.StartupLog.Mark("AssemblyListPane attached to visual tree");
-			Loaded += (_, _) => AppEnv.StartupLog.Mark("AssemblyListPane Loaded");
+			Loaded += (_, _) => {
+				AppEnv.StartupLog.Mark("AssemblyListPane Loaded");
+				if (DataContext is AssemblyTreeModel m)
+					m.MarkTreeReady();
+			};
+			// One-shot mark on the first DataGridRow being prepared — that's the
+			// observable "tree has rows on screen" moment we compare against decompiler
+			// output appearing.
+			void OnFirstRowLoaded(object? sender, DataGridRowEventArgs args)
+			{
+				AppEnv.StartupLog.Mark("Assembly tree DataGrid: first row realised");
+				TreeGrid.LoadingRow -= OnFirstRowLoaded;
+			}
+			TreeGrid.LoadingRow += OnFirstRowLoaded;
 			TreeGrid.DoubleTapped += OnTreeGridDoubleTapped;
 			TreeGrid.KeyDown += OnTreeGridKeyDown;
 			// Bubble + handledEventsToo: ProDataGrid's row-level pointer handlers mark

@@ -54,6 +54,19 @@ namespace ILSpy.TextView
 		[ObservableProperty]
 		private string text = string.Empty;
 
+		// Diagnostics: stamp the first non-empty Text assignment so we can correlate when
+		// decompiled output becomes visible against the tree-render path. The check is
+		// idempotent — only the first assignment for the lifetime of the process gets marked.
+		static int firstTextMarked;
+		partial void OnTextChanged(string? oldValue, string newValue)
+		{
+			if (!string.IsNullOrEmpty(newValue)
+				&& System.Threading.Interlocked.Exchange(ref firstTextMarked, 1) == 0)
+			{
+				ILSpy.AppEnv.StartupLog.Mark("DecompilerTabPageModel: first non-empty Text set");
+			}
+		}
+
 		/// <summary>
 		/// File extension driving syntax highlighting (e.g. ".cs"). Updated alongside <see cref="Text"/>.
 		/// </summary>

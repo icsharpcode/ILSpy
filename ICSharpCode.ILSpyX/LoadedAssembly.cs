@@ -65,6 +65,20 @@ namespace ICSharpCode.ILSpyX
 		// demand (any caller that awaits or reads .Result). Status checks below use
 		// IsValueCreated so they don't accidentally trigger the load just by polling.
 		Task<LoadResult> loadingTask => lazyLoadingTask.Value;
+
+		/// <summary>
+		/// Fires once when the lazy load task transitions to a completed state (success
+		/// or failure). Subscribers use it to refresh derived state (tree-node icons,
+		/// cached metadata pointers) without themselves calling
+		/// <see cref="GetLoadResultAsync"/>, which would trigger the load.
+		///
+		/// If the load has already finished by the time you subscribe, the event will
+		/// not fire retroactively — check <see cref="IsLoaded"/> after subscribing and
+		/// invoke your handler manually if it returns true.
+		/// </summary>
+		public event Action? Loaded;
+
+		void RaiseLoaded() => Loaded?.Invoke();
 		readonly AssemblyList assemblyList;
 		readonly string fileName;
 		readonly string shortName;
@@ -94,9 +108,18 @@ namespace ICSharpCode.ILSpyX
 			// callers (e.g. AssemblyListTreeNode) construct LoadedAssembly entries en masse
 			// without flooding the thread pool with metadata-loading tasks; the active
 			// assembly's path-restore awaits first and gets a clean run.
+			//
+			// Continuation hooks the Loaded event so subscribers can refresh their display
+			// (icon / tooltip / lazy children) without themselves triggering the load — they
+			// observe completion rather than start it.
 			var localStream = stream;
 			this.lazyLoadingTask = new Lazy<Task<LoadResult>>(
-				() => Task.Run(() => LoadAsync(localStream)),
+				() => {
+					var task = Task.Run(() => LoadAsync(localStream));
+					task.ContinueWith(static (_, state) => ((LoadedAssembly)state!).RaiseLoaded(),
+						this, TaskScheduler.Default);
+					return task;
+				},
 				LazyThreadSafetyMode.ExecutionAndPublication); // requires that this.fileName is set
 			this.shortName = Path.GetFileNameWithoutExtension(fileName);
 		}

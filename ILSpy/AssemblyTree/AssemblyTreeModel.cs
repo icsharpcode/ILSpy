@@ -145,6 +145,27 @@ namespace ILSpy.AssemblyTree
 				NotifyTextChanged(child);
 		}
 
+		readonly TaskCompletionSource<bool> treeReadyTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+		/// <summary>
+		/// Completes when the assembly-tree view (<c>AssemblyListPane</c>) has fired its
+		/// <c>Loaded</c> event for the first time. <c>RestoreSelectedPathAsync</c> awaits
+		/// this before assigning <see cref="SelectedItem"/> so the saved-selection path
+		/// (which kicks off a decompilation through the dock workspace) doesn't paint
+		/// the document area before the tree itself is on screen.
+		/// </summary>
+		public Task TreeReady => treeReadyTcs.Task;
+
+		/// <summary>
+		/// Called by <c>AssemblyListPane</c> from its <c>Loaded</c> handler to resolve
+		/// <see cref="TreeReady"/>. Idempotent — only the first call wins.
+		/// </summary>
+		internal void MarkTreeReady()
+		{
+			if (treeReadyTcs.TrySetResult(true))
+				AppEnv.StartupLog.Mark("AssemblyTreeModel.TreeReady completed");
+		}
+
 		public void Initialize()
 		{
 			using var _ = AppEnv.StartupLog.Phase("AssemblyTreeModel.Initialize body");
@@ -213,6 +234,17 @@ namespace ILSpy.AssemblyTree
 					using (AppEnv.StartupLog.Phase($"EnsureLazyChildren ({node.GetType().Name} \"{element}\")"))
 						node.EnsureLazyChildren();
 					node = node.Children.FirstOrDefault(c => c.ToString() == element);
+				}
+				// Wait for the tree view to be Loaded before assigning SelectedItem. Without
+				// this, the SelectedItem assignment runs ShowSelectedNode → CurrentNodes →
+				// async decompilation, and the user can see the decompiled output appear
+				// BEFORE the assembly tree has rendered — a confusing reverse order.
+				// The 5-second timeout is a safety net for environments where the pane
+				// never loads (headless tests, design-time previews).
+				using (AppEnv.StartupLog.Phase("await TreeReady before SelectedItem assignment"))
+				{
+					await Task.WhenAny(TreeReady, Task.Delay(TimeSpan.FromSeconds(5)))
+						.ConfigureAwait(true);
 				}
 				if (node != null && node != Root && ReferenceEquals(SelectedItem, initialSelection))
 					SelectedItem = node;
