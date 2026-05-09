@@ -54,10 +54,12 @@ namespace ILSpy.ViewModels
 			DockWorkspace dockWorkspace,
 			SettingsService settingsService)
 		{
+			AppEnv.StartupLog.Mark("MainWindowViewModel ctor entered (deps already resolved)");
 			AssemblyTreeModel = assemblyTreeModel;
 			LanguageService = languageService;
 			DockWorkspace = dockWorkspace;
 			LanguageSettings = settingsService.SessionSettings.LanguageSettings;
+			AppEnv.StartupLog.Mark("MainWindowViewModel ctor exited");
 		}
 	}
 }

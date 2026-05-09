@@ -81,14 +81,18 @@ namespace ILSpy.Docking
 			ToolPaneRegistry toolPaneRegistry,
 			LanguageService languageService)
 		{
+			ILSpy.AppEnv.StartupLog.Mark("DockWorkspace ctor entered");
 			this.assemblyTreeModel = assemblyTreeModel;
 			this.languageService = languageService;
 			NavigateBackCommand = new RelayCommand(NavigateBack, () => history.CanNavigateBack);
 			NavigateForwardCommand = new RelayCommand(NavigateForward, () => history.CanNavigateForward);
 			NavigateToHistoryCommand = new RelayCommand<NavigationEntry>(NavigateToHistory,
 				entry => entry != null && (history.BackEntries.Contains(entry) || history.ForwardEntries.Contains(entry)));
-			factory = new ILSpyDockFactory(toolPaneRegistry);
-			Layout = factory.CreateLayout();
+			using (ILSpy.AppEnv.StartupLog.Phase("ILSpyDockFactory ctor + CreateLayout"))
+			{
+				factory = new ILSpyDockFactory(toolPaneRegistry);
+				Layout = factory.CreateLayout();
+			}
 
 			assemblyTreeModel.PropertyChanged += OnAssemblyTreePropertyChanged;
 			assemblyTreeModel.SelectedItems.CollectionChanged += (_, _) => {
@@ -108,6 +112,7 @@ namespace ILSpy.Docking
 			factory.DockableClosed += OnDocumentMembershipChanged;
 			factory.DockableClosing += OnDockableClosing;
 			factory.ActiveDockableChanged += OnActiveDockableChanged;
+			ILSpy.AppEnv.StartupLog.Mark("DockWorkspace ctor exited");
 
 			// TODO: layout persistence (load on startup, save on exit). DockSerializer.SystemTextJson
 			// trips System.Text.Json's MaxDepth=64 limit on our layout because Dock's JsonConverterList<T>

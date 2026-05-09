@@ -47,7 +47,10 @@ namespace ILSpy.AssemblyTree
 
 		public AssemblyListPane()
 		{
+			AppEnv.StartupLog.Mark("AssemblyListPane ctor entered");
 			InitializeComponent();
+			AttachedToVisualTree += (_, _) => AppEnv.StartupLog.Mark("AssemblyListPane attached to visual tree");
+			Loaded += (_, _) => AppEnv.StartupLog.Mark("AssemblyListPane Loaded");
 			TreeGrid.DoubleTapped += OnTreeGridDoubleTapped;
 			TreeGrid.KeyDown += OnTreeGridKeyDown;
 			// Bubble + handledEventsToo: ProDataGrid's row-level pointer handlers mark
@@ -369,11 +372,13 @@ namespace ILSpy.AssemblyTree
 
 		protected override void OnDataContextChanged(System.EventArgs e)
 		{
+			using var _ = AppEnv.StartupLog.Phase("AssemblyListPane.OnDataContextChanged");
 			base.OnDataContextChanged(e);
 
 			if (DataContext is AssemblyTreeModel model)
 			{
 				model.PropertyChanged += Model_PropertyChanged;
+				AppEnv.StartupLog.Mark($"AssemblyListPane DataContext is AssemblyTreeModel; Root={(model.Root != null ? "set" : "null")}");
 				if (model.Root != null)
 				{
 					BindTree(model.Root);
@@ -415,6 +420,7 @@ namespace ILSpy.AssemblyTree
 
 		void BindTree(SharpTreeNode root)
 		{
+			using var _ = AppEnv.StartupLog.Phase("AssemblyListPane.BindTree");
 			var settings = languageSettings;
 			var options = new HierarchicalOptions<SharpTreeNode> {
 				ChildrenSelector = node => {

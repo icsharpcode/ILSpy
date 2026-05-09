@@ -45,6 +45,7 @@ namespace ILSpy
 
 		public override void OnFrameworkInitializationCompleted()
 		{
+			StartupLog.Mark("App.OnFrameworkInitializationCompleted entered");
 			ILSpyTraceListener.Install();
 			GlobalExceptionHandler.Install();
 
@@ -69,6 +70,7 @@ namespace ILSpy
 
 			try
 			{
+				using var _ = StartupLog.Phase("AppComposition.Initialize");
 				Composition = AppComposition.Initialize();
 			}
 			catch (Exception ex)
@@ -84,8 +86,10 @@ namespace ILSpy
 
 			if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
 			{
+				StartupLog.Mark("MainWindow about to be resolved from MEF");
 				desktop.MainWindow = Composition?.GetExport<MainWindow>()
 					?? new MainWindow();
+				StartupLog.Mark("MainWindow assigned to desktop.MainWindow");
 				desktop.Exit += (_, _) => {
 					try
 					{ Composition?.GetExport<SettingsService>().Save(); }

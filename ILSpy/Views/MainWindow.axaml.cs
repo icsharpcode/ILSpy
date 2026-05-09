@@ -22,6 +22,7 @@ using System.Composition;
 using Avalonia;
 using Avalonia.Controls;
 
+using ILSpy.AppEnv;
 using ILSpy.ViewModels;
 
 namespace ILSpy.Views
@@ -40,14 +41,19 @@ namespace ILSpy.Views
 		[ImportingConstructor]
 		public MainWindow(MainWindowViewModel viewModel, SettingsService settingsService) : this()
 		{
+			StartupLog.Mark("MainWindow ctor entered");
 			this.settingsService = settingsService;
 			DataContext = viewModel;
 			ApplySessionSettings(settingsService.SessionSettings);
 			Opened += async (_, _) => {
-				viewModel.AssemblyTreeModel.Initialize();
+				StartupLog.Mark("MainWindow.Opened fired");
+				using (StartupLog.Phase("AssemblyTreeModel.Initialize"))
+					viewModel.AssemblyTreeModel.Initialize();
+				StartupLog.Mark("MainWindow.Opened handler returning");
 				if (App.CommandLineArguments is { } args)
 					await viewModel.AssemblyTreeModel.HandleCommandLineArgumentsAsync(args);
 			};
+			StartupLog.Mark("MainWindow ctor exited");
 		}
 
 		void ApplySessionSettings(SessionSettings session)

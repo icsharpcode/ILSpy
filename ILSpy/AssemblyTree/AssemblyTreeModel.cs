@@ -103,6 +103,7 @@ namespace ILSpy.AssemblyTree
 		[ImportingConstructor]
 		public AssemblyTreeModel(SettingsService settingsService, LanguageService languageService)
 		{
+			AppEnv.StartupLog.Mark("AssemblyTreeModel ctor entered");
 			this.settingsService = settingsService;
 			this.languageService = languageService;
 			languageService.PropertyChanged += (_, e) => {
@@ -113,6 +114,7 @@ namespace ILSpy.AssemblyTree
 			Id = PaneContentId;
 			Title = "Assemblies";
 			CanClose = false;
+			AppEnv.StartupLog.Mark("AssemblyTreeModel ctor exited");
 		}
 
 		void OnSelectedItemsChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -145,8 +147,10 @@ namespace ILSpy.AssemblyTree
 
 		public void Initialize()
 		{
+			using var _ = AppEnv.StartupLog.Phase("AssemblyTreeModel.Initialize body");
 			listManager = settingsService.AssemblyListManager;
-			listManager.CreateDefaultAssemblyLists();
+			using (AppEnv.StartupLog.Phase("CreateDefaultAssemblyLists"))
+				listManager.CreateDefaultAssemblyLists();
 
 			SyncListNames();
 			listManager.AssemblyLists.CollectionChanged += (_, _) => SyncListNames();
@@ -174,14 +178,48 @@ namespace ILSpy.AssemblyTree
 			settingsService.SessionSettings.ActiveAssemblyList = value;
 			ShowAssemblyList(value);
 
-			// Restore the previously-selected tree node, if any. Walks the tree by ToString()
-			// matching, materialising lazy children as it goes.
+			// Restore the previously-selected tree node off the UI critical path. The walk
+			// crosses an AssemblyTreeNode whose EnsureLazyChildren synchronously blocks on
+			// GetLoadResultAsync — by going async here and awaiting the load, we let the
+			// initial paint happen first and the UI stays responsive while metadata loads.
 			var savedPath = settingsService.SessionSettings.ActiveTreeViewPath;
 			if (savedPath is { Length: > 0 })
+				_ = RestoreSelectedPathAsync(savedPath);
+		}
+
+		async Task RestoreSelectedPathAsync(string[] path)
+		{
+			using var _ = AppEnv.StartupLog.Phase($"RestoreSelectedPathAsync ({path.Length} segments)");
+			try
 			{
-				var restored = FindNodeByPath(savedPath, returnBestMatch: true);
-				if (restored != null && restored != Root)
-					SelectedItem = restored;
+				if (Root == null)
+					return;
+				// Snapshot — if the user selects something else before the restore completes,
+				// don't yank their selection out from under them.
+				var initialSelection = SelectedItem;
+				SharpTreeNode? node = Root;
+				foreach (var element in path)
+				{
+					if (node == null)
+						break;
+					// Awaiting GetLoadResultAsync keeps EnsureLazyChildren — which itself does
+					// GetAwaiter().GetResult() on the same task — from blocking the UI thread.
+					// Once the load completes the .GetAwaiter().GetResult() returns instantly.
+					if (node is AssemblyTreeNode asm)
+					{
+						using (AppEnv.StartupLog.Phase($"await GetLoadResultAsync ({asm.LoadedAssembly.ShortName})"))
+							await asm.LoadedAssembly.GetLoadResultAsync().ConfigureAwait(true);
+					}
+					using (AppEnv.StartupLog.Phase($"EnsureLazyChildren ({node.GetType().Name} \"{element}\")"))
+						node.EnsureLazyChildren();
+					node = node.Children.FirstOrDefault(c => c.ToString() == element);
+				}
+				if (node != null && node != Root && ReferenceEquals(SelectedItem, initialSelection))
+					SelectedItem = node;
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"[AssemblyTreeModel] saved-path restore failed: {ex}");
 			}
 		}
 
@@ -189,18 +227,27 @@ namespace ILSpy.AssemblyTree
 		{
 			if (listManager == null)
 				return;
-			var list = listManager.LoadList(name);
+			AssemblyList list;
+			using (AppEnv.StartupLog.Phase($"LoadList({name})"))
+				list = listManager.LoadList(name);
 			if (AssemblyList == null || list.ListName != AssemblyList.ListName)
 				ShowAssemblyList(list);
 		}
 
 		void ShowAssemblyList(AssemblyList list)
 		{
+			using var _ = AppEnv.StartupLog.Phase("ShowAssemblyList(list)");
 			AssemblyList = list;
 			if (list.GetAssemblies().Length == 0 && list.ListName == AssemblyListManager.DefaultListName)
-				LoadInitialAssemblies(list);
-			assemblyListTreeNode = new AssemblyListTreeNode(list);
+			{
+				using (AppEnv.StartupLog.Phase("LoadInitialAssemblies"))
+					LoadInitialAssemblies(list);
+			}
+			AppEnv.StartupLog.Mark($"AssemblyList contains {list.GetAssemblies().Length} assemblies");
+			using (AppEnv.StartupLog.Phase("new AssemblyListTreeNode"))
+				assemblyListTreeNode = new AssemblyListTreeNode(list);
 			Root = assemblyListTreeNode;
+			AppEnv.StartupLog.Mark("Root assigned");
 		}
 
 		/// <summary>
