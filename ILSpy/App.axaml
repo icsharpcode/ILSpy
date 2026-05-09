@@ -63,6 +63,15 @@
         <StyleInclude Source="avares://AvaloniaEdit/Themes/Simple/AvaloniaEdit.xaml" />
         <dockTheme:DockSimpleTheme />
 
+        <!-- Suppress the column header's hover / pressed fill while the user is interacting
+             with content INSIDE the header (e.g. typing into a per-column filter TextBox).
+             Without this, clicking the TextBox briefly flashes the header background blue —
+             visually claiming the click was on the header itself. :focus-within wins the
+             cascade vs :pointerover/:pressed once focus lands on the descendant. -->
+        <Style Selector="DataGridColumnHeader:focus-within /template/ Grid#PART_ColumnHeaderRoot">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
         <!-- Classic Windows-Explorer +/- expander. Colors are hardcoded because the
              presenter's :checked style forces Background/BorderBrush to Transparent
              through TemplateBinding. The Margin offsets the visible glyph from the

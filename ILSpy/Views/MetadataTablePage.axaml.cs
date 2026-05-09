@@ -69,6 +69,13 @@ namespace ILSpy.Views
 				grid.AddHandler(PointerPressedEvent, OnGridPointerPressed,
 					global::Avalonia.Interactivity.RoutingStrategies.Bubble,
 					handledEventsToo: true);
+				// Manually drive the DataGridCollectionView's SortDescriptions when the user
+				// clicks a column header. ProDataGrid's auto-sort path doesn't reach our
+				// view (Items is IReadOnlyList<object> wrapped in a DataGridCollectionView,
+				// and the default sorting adapter's reflection chain doesn't pick up the
+				// SortMemberPath against an object collection). Toggle ascending → descending
+				// → unsorted on repeated clicks.
+				grid.Sorting += OnGridSorting;
 			}
 		}
 
@@ -326,6 +333,40 @@ namespace ILSpy.Views
 		}
 
 		void OnAnyColumnFilterChanged() => itemsView?.Refresh();
+
+		void OnGridSorting(object? sender, DataGridColumnEventArgs e)
+		{
+			// Manually drive sort: cycle through ascending → descending → unsorted on repeated
+			// clicks for the same column. Mark the event handled so ProDataGrid's auto-sort
+			// path doesn't run after us — without this it would try to add another
+			// SortDescription against the same path and produce a stuck "double-sorted" state.
+			if (itemsView is null)
+				return;
+			string? path = (e.Column.SortMemberPath ?? e.Column.Tag as string);
+			if (string.IsNullOrEmpty(path))
+				return;
+
+			var existing = itemsView.SortDescriptions
+				.FirstOrDefault(d => d.PropertyPath == path);
+
+			itemsView.SortDescriptions.Clear();
+			foreach (var col in (sender as DataGrid)?.Columns ?? System.Linq.Enumerable.Empty<DataGridColumn>())
+				col.SortDirection = null;
+
+			if (existing is null)
+			{
+				itemsView.SortDescriptions.Add(DataGridSortDescription.FromPath(path, ListSortDirection.Ascending));
+				e.Column.SortDirection = ListSortDirection.Ascending;
+			}
+			else if (existing.Direction == ListSortDirection.Ascending)
+			{
+				itemsView.SortDescriptions.Add(DataGridSortDescription.FromPath(path, ListSortDirection.Descending));
+				e.Column.SortDirection = ListSortDirection.Descending;
+			}
+			// Third click clears: SortDescriptions stays empty, SortDirection on column is null.
+
+			e.Handled = true;
+		}
 
 		void ApplySchema()
 		{

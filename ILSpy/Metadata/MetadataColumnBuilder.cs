@@ -132,6 +132,11 @@ namespace ILSpy.Metadata
 				HorizontalAlignment = HorizontalAlignment.Stretch,
 				VerticalAlignment = VerticalAlignment.Center,
 			};
+			// Two geometries we toggle between based on filter state. Funnel = idle/inactive;
+			// X = a filter is set, clicking the icon clears it.
+			var funnelGeometry = global::Avalonia.Media.Geometry.Parse("M0,0 L10,0 L6,4 L6,9 L4,9 L4,4 Z");
+			var xGeometry = global::Avalonia.Media.Geometry.Parse("M1,1 L9,8 M9,1 L1,8");
+
 			var filterIcon = new global::Avalonia.Controls.Shapes.Path {
 				// Funnel: 10×9 trapezoid above a 2×5 spout. Drawn directly because the
 				// Simple theme doesn't ship a filter glyph and pulling FontAwesome for a
@@ -140,7 +145,7 @@ namespace ILSpy.Metadata
 				Height = 9,
 				Stretch = Stretch.None,
 				Fill = Brushes.Gray,
-				Data = global::Avalonia.Media.Geometry.Parse("M0,0 L10,0 L6,4 L6,9 L4,9 L4,4 Z"),
+				Data = funnelGeometry,
 				HorizontalAlignment = HorizontalAlignment.Center,
 				VerticalAlignment = VerticalAlignment.Center,
 				IsHitTestVisible = false,
@@ -148,7 +153,8 @@ namespace ILSpy.Metadata
 			// Wrap the funnel in a transparent-background Border with generous padding so the
 			// hit area is comfortably larger than the 10×9 glyph itself; clicking the icon
 			// opens the popup (flags columns) or focuses the textbox (text columns) without
-			// having to wait for the hover-show.
+			// having to wait for the hover-show. When a filter is active the icon turns into
+			// an X and the click clears the filter instead.
 			var filterIconHost = new Border {
 				Background = Brushes.Transparent,
 				Padding = new Thickness(8, 4),
@@ -185,10 +191,24 @@ namespace ILSpy.Metadata
 			headerRow.Children.Add(swap);
 
 			filterIconHost.PointerPressed += (_, e) => {
-				if (popup != null)
+				bool isActive = !string.IsNullOrWhiteSpace(filter.Text)
+					|| (filter.FlagsState != null && !filter.FlagsState.IsEmpty);
+				if (isActive)
+				{
+					// Icon is an X right now — click clears the filter. Both branches raise
+					// the appropriate PropertyChanged so Update() swaps the icon back to the
+					// funnel and the row is re-evaluated.
+					filter.Text = string.Empty;
+					filter.FlagsState?.Clear();
+				}
+				else if (popup != null)
+				{
 					popup.IsOpen = true;
+				}
 				else if (inputRow is TextBox tb)
+				{
 					tb.Focus();
+				}
 				e.Handled = true;
 			};
 
@@ -202,19 +222,39 @@ namespace ILSpy.Metadata
 
 			bool hovered = false;
 			bool popupOpen = false;
+			bool focusInside = false;
 			void Update()
 			{
 				bool active = !string.IsNullOrWhiteSpace(filter.Text)
 					|| (filter.FlagsState != null && !filter.FlagsState.IsEmpty);
-				bool showInput = hovered || active || popupOpen;
+				bool showInput = hovered || active || popupOpen || focusInside;
 				inputRow.IsVisible = showInput;
 				label.IsVisible = !showInput;
-				// Tint the funnel when a filter is in effect so users can see at a glance
-				// which columns are constraining the view, even with the input hidden.
-				filterIcon.Fill = active ? Brushes.SteelBlue : Brushes.Gray;
+				// Active state swaps the funnel out for an X — icon becomes the "clear filter"
+				// affordance. Funnel uses Fill (closed shape); X is two crossing strokes, so
+				// it has no Fill and instead paints with Stroke. Toggle both modes in lockstep.
+				if (active)
+				{
+					filterIcon.Data = xGeometry;
+					filterIcon.Fill = null;
+					filterIcon.Stroke = Brushes.SteelBlue;
+					filterIcon.StrokeThickness = 1.5;
+				}
+				else
+				{
+					filterIcon.Data = funnelGeometry;
+					filterIcon.Fill = Brushes.Gray;
+					filterIcon.Stroke = null;
+				}
 			}
 			root.PointerEntered += (_, _) => { hovered = true; Update(); };
 			root.PointerExited += (_, _) => { hovered = false; Update(); };
+			// Focus tracking: clicking the funnel calls inputRow.Focus(), and the user then
+			// reaches for the (now visible) TextBox. Without keeping the input visible while
+			// it has focus, the pointer leaving the header on the way to the TextBox would
+			// fire PointerExited and hide it again — making the TextBox unclickable.
+			inputRow.GotFocus += (_, _) => { focusInside = true; Update(); };
+			inputRow.LostFocus += (_, _) => { focusInside = false; Update(); };
 			filter.PropertyChanged += (_, _) => Update();
 			if (popup != null)
 			{
