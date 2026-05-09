@@ -26,6 +26,13 @@
         <!-- Suppress the gray pointer-over highlight on rows and cells. -->
         <SolidColorBrush x:Key="DataGridRowHoveredBackgroundBrush" Color="Transparent" />
         <SolidColorBrush x:Key="DataGridCellHoveredBackgroundBrush" Color="Transparent" />
+
+        <!-- Replace the Simple theme's saturated dark fill on column-header hover/press
+             with the toolbar accent palette (#330078D7 hover, #660078D7 pressed). The
+             default makes header text unreadable while sorting / resizing; the lighter
+             translucent accent matches MainToolBar.axaml's button hover treatment. -->
+        <SolidColorBrush x:Key="DataGridColumnHeaderHoveredBackgroundBrush" Color="#330078D7" />
+        <SolidColorBrush x:Key="DataGridColumnHeaderPressedBackgroundBrush" Color="#660078D7" />
     </Application.Resources>
 
     <Application.DataTemplates>

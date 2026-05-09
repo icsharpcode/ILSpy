@@ -182,6 +182,11 @@ namespace ILSpy.Metadata
 					BorderBrush = Brushes.Gray,
 					BorderThickness = new Thickness(1),
 					Background = Brushes.White,
+					// Force the arrow cursor on the popup surface — without this, the
+					// EW-resize cursor set on the DataGrid column header's drag-grip can
+					// leak into the popup if the pointer enters from there before
+					// Avalonia recomputes the cursor for the new hit-test target.
+					Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Arrow),
 					Child = new ScrollViewer {
 						MaxHeight = 400,
 						Content = popupContent,
