@@ -37,12 +37,17 @@ namespace ILSpy.TreeNodes
 		public EventTreeNode(IEvent ev)
 		{
 			EventDefinition = ev ?? throw new ArgumentNullException(nameof(ev));
+			if (ev.CanAdd)
+				Children.Add(new MethodTreeNode(ev.AddAccessor));
+			if (ev.CanRemove)
+				Children.Add(new MethodTreeNode(ev.RemoveAccessor));
+			if (ev.CanInvoke)
+				Children.Add(new MethodTreeNode(ev.InvokeAccessor));
 		}
 
 		public override object Text => Language.EntityToString(EventDefinition, ConversionFlags.None);
 		public override object Icon => Images.Images.GetIcon(Images.Images.Event,
 			Images.Images.GetOverlay(EventDefinition.Accessibility), EventDefinition.IsStatic);
-		public override bool ShowExpander => false;
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 			=> language.DecompileEvent(EventDefinition, output, options);

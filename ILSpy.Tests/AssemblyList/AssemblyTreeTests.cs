@@ -1216,4 +1216,60 @@ public class AssemblyTreeTests
 		ReferenceEquals(secondMeta, firstMeta).Should().BeFalse(
 			"a fresh metadata tab must be created — the previous one keeps its TypeDef state");
 	}
+
+	[AvaloniaTest]
+	public async Task Property_Tree_Node_Has_Getter_And_Setter_Method_Children()
+	{
+		// Properties expose their accessors as MethodTreeNode children, mirroring WPF
+		// ILSpy. Without this, tree-based navigation can't reach get_X / set_X — and
+		// MMB on a property-accessor row in the metadata grid silently no-ops because
+		// FindTreeNode can't resolve the IMethod to a tree node.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var stringTypeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			coreLibName, "System", "System.String");
+		stringTypeNode.IsExpanded = true;
+
+		// String.Length is read-only — a property with a getter but no setter.
+		var lengthProp = stringTypeNode.Children.OfType<PropertyTreeNode>()
+			.First(p => p.PropertyDefinition.Name == "Length");
+		lengthProp.IsExpanded = true;
+
+		var accessors = lengthProp.Children.OfType<MethodTreeNode>().ToList();
+		accessors.Should().NotBeEmpty(
+			"a property tree node must surface its accessors as MethodTreeNode children");
+		accessors.Should().Contain(m => m.MethodDefinition.Name == "get_Length",
+			"String.Length must expose its getter");
+	}
+
+	[AvaloniaTest]
+	public async Task Event_Tree_Node_Has_Add_And_Remove_Method_Children()
+	{
+		// Events surface add_X / remove_X (and invoke_X if present) as MethodTreeNode
+		// children, mirroring WPF ILSpy. Same regression-protection as the property
+		// case above.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		// AppDomain.AssemblyLoad is a public, well-known event in CoreLib.
+		var appDomainNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			coreLibName, "System", "System.AppDomain");
+		appDomainNode.IsExpanded = true;
+		var loadEvent = appDomainNode.Children.OfType<EventTreeNode>()
+			.First(e => e.EventDefinition.Name == "AssemblyLoad");
+		loadEvent.IsExpanded = true;
+
+		var accessors = loadEvent.Children.OfType<MethodTreeNode>().ToList();
+		accessors.Should().Contain(m => m.MethodDefinition.Name == "add_AssemblyLoad",
+			"event tree node must expose its add accessor");
+		accessors.Should().Contain(m => m.MethodDefinition.Name == "remove_AssemblyLoad",
+			"event tree node must expose its remove accessor");
+	}
 }

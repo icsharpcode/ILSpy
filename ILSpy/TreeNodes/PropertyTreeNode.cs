@@ -37,12 +37,15 @@ namespace ILSpy.TreeNodes
 		public PropertyTreeNode(IProperty property)
 		{
 			PropertyDefinition = property ?? throw new ArgumentNullException(nameof(property));
+			if (property.CanGet)
+				Children.Add(new MethodTreeNode(property.Getter));
+			if (property.CanSet)
+				Children.Add(new MethodTreeNode(property.Setter));
 		}
 
 		public override object Text => Language.EntityToString(PropertyDefinition, ConversionFlags.None);
 		public override object Icon => Images.Images.GetIcon(Images.Images.Property,
 			Images.Images.GetOverlay(PropertyDefinition.Accessibility), PropertyDefinition.IsStatic);
-		public override bool ShowExpander => false;
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 			=> language.DecompileProperty(PropertyDefinition, output, options);
