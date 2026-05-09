@@ -38,6 +38,7 @@ using ILSpy;
 using ILSpy.AppEnv;
 using ILSpy.AssemblyTree;
 using ILSpy.Commands;
+using ILSpy.Docking;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 using ILSpy.Views;
@@ -1089,5 +1090,46 @@ public class AssemblyTreeTests
 		// Assert — the grid wrapper now reports IsExpanded == true.
 		hm.FindNode(assemblyNode)!.IsExpanded.Should().BeTrue(
 			"setting SharpTreeNode.IsExpanded must propagate to the HierarchicalModel wrapper");
+	}
+
+	[AvaloniaTest]
+	public async Task Pane_OpenNodeInNewTab_Spawns_A_Fresh_Decompiler_Tab_Without_Touching_Selection()
+	{
+		// MMB on a tree row maps to AssemblyListPane.OpenNodeInNewTab — a new decompiler
+		// tab opens with the supplied node decompiled, the existing tab keeps its content,
+		// and the assembly-tree selection is unchanged (MMB doesn't alter the selection).
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		typeNode.IsExpanded = true;
+		var pinned = typeNode.Children.OfType<MethodTreeNode>()
+			.Single(m => m.MethodDefinition.Name == "AsEnumerable");
+		var newTabTarget = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "Empty");
+		vm.AssemblyTreeModel.SelectNode(pinned);
+		var firstTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<AssemblyListPane>().Any());
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+
+		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
+		var initialCount = documents.VisibleDockables?.Count ?? 0;
+
+		pane.OpenNodeInNewTab(newTabTarget);
+
+		await Waiters.WaitForAsync(
+			() => (documents.VisibleDockables?.Count ?? 0) > initialCount);
+		var newTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		ReferenceEquals(newTab, firstTab).Should().BeFalse(
+			"a fresh decompiler tab must be created instead of reusing the existing one");
+		newTab.Text.Should().Contain("Empty");
+		firstTab.Text.Should().Contain("AsEnumerable");
+		// Selection didn't move — pinned remains the model's selection.
+		ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, pinned).Should().BeTrue(
+			"middle-click must not move the assembly-tree selection");
 	}
 }

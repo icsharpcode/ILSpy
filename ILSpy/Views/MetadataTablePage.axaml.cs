@@ -59,22 +59,45 @@ namespace ILSpy.Views
 			AttachContextMenu(TryGetContextMenuEntries());
 			var grid = this.FindControl<DataGrid>("Grid");
 			if (grid is not null)
+			{
 				grid.DoubleTapped += OnGridDoubleTapped;
+				// Subscribe at the tunnelling phase so the middle-click is observed before
+				// the DataGrid's own selection / scroll handling can swallow it.
+				grid.AddHandler(PointerPressedEvent, OnGridPointerPressed,
+					global::Avalonia.Interactivity.RoutingStrategies.Tunnel);
+			}
 		}
 
 		void OnGridDoubleTapped(object? sender, global::Avalonia.Input.TappedEventArgs e)
 		{
-			// Dispatch row-activation through the page model. Shift+double-click opens
-			// the entity in a new tab; a plain double-click reuses the active tab via
-			// the regular tree-selection path.
+			// Plain double-click reuses the active tab — the dock workspace's row-activation
+			// subscriber resolves the row's metadataFile + Token to an IEntity and selects
+			// the matching tree node. The "open in new tab" gesture is middle-click, handled
+			// in OnGridPointerPressed.
 			if (DataContext is not MetadataTablePageModel page)
 				return;
 			var grid = this.FindControl<DataGrid>("Grid");
 			if (grid?.SelectedItem is { } row)
-			{
-				bool openInNewTab = (e.KeyModifiers & global::Avalonia.Input.KeyModifiers.Shift) != 0;
-				page.RaiseRowActivated(row, openInNewTab);
-			}
+				page.RaiseRowActivated(row);
+		}
+
+		void OnGridPointerPressed(object? sender, PointerPressedEventArgs e)
+		{
+			// Middle-click on a row → open in a new decompiler tab. MMB doesn't change
+			// selection, so hit-test the row from e.Source rather than relying on
+			// SelectedItem (which would point at the previously-clicked row).
+			if (DataContext is not MetadataTablePageModel page)
+				return;
+			if (e.Source is not Visual hit
+				|| !e.GetCurrentPoint(hit).Properties.IsMiddleButtonPressed)
+				return;
+			var visual = hit;
+			while (visual is not null and not DataGridRow)
+				visual = visual.GetVisualParent();
+			if (visual is not DataGridRow row || row.DataContext is null)
+				return;
+			page.RaiseRowActivated(row.DataContext, openInNewTab: true);
+			e.Handled = true;
 		}
 
 		void OnKeyDown(object? sender, KeyEventArgs e)

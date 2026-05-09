@@ -32,6 +32,9 @@ using Avalonia.VisualTree;
 using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy.AppEnv;
+using ILSpy.Docking;
+using ILSpy.Languages;
+using ILSpy.TextView;
 using ILSpy.TreeNodes;
 
 namespace ILSpy.AssemblyTree
@@ -49,6 +52,10 @@ namespace ILSpy.AssemblyTree
 			InitializeComponent();
 			TreeGrid.DoubleTapped += OnTreeGridDoubleTapped;
 			TreeGrid.KeyDown += OnTreeGridKeyDown;
+			// Tunnelling subscription so the MMB is observed before the DataGrid's own
+			// pointer handling claims it.
+			TreeGrid.AddHandler(PointerPressedEvent, OnTreeGridPointerPressed,
+				global::Avalonia.Interactivity.RoutingStrategies.Tunnel);
 
 			// Context-menu host. Tests bypass this and re-attach via AttachContextMenu so they
 			// can inject stub entries — at app-runtime we resolve the registry through the
@@ -317,6 +324,49 @@ namespace ILSpy.AssemblyTree
 				model.Toggle(node);
 				e.Handled = true;
 			}
+		}
+
+		void OnTreeGridPointerPressed(object? sender, PointerPressedEventArgs e)
+		{
+			// Middle-click on a tree row → "open in new tab", matching the WPF gesture
+			// (DecompileInNewViewCommand advertises InputGestureText = "MMB"). MMB does
+			// not move the tree's selection on its own, so hit-test the row from e.Source
+			// rather than reading SelectedItem.
+			if (e.Source is not Visual hit
+				|| !e.GetCurrentPoint(hit).Properties.IsMiddleButtonPressed)
+				return;
+			var visual = hit;
+			while (visual != null && visual.DataContext is not HierarchicalNode)
+				visual = visual.GetVisualParent();
+			if (visual?.DataContext is not HierarchicalNode hn || hn.Item is not ILSpyTreeNode node)
+				return;
+			OpenNodeInNewTab(node);
+			e.Handled = true;
+		}
+
+		/// <summary>
+		/// Opens <paramref name="node"/> in a fresh decompiler tab without disturbing the
+		/// active one. Shared between the MMB handler above and any test that wants to
+		/// drive the new-tab path without simulating real pointer input.
+		/// </summary>
+		internal void OpenNodeInNewTab(ILSpyTreeNode node)
+		{
+			DockWorkspace? dock;
+			LanguageService? langService;
+			try
+			{
+				dock = AppComposition.Current.GetExport<DockWorkspace>();
+				langService = AppComposition.Current.GetExport<LanguageService>();
+			}
+			catch
+			{
+				// Composition isn't available in design-time previews; the gesture is a
+				// no-op there.
+				return;
+			}
+			var content = new DecompilerTabPageModel { Language = langService.CurrentLanguage };
+			dock.OpenNewTab(content);
+			content.CurrentNodes = new[] { node };
 		}
 
 		protected override void OnDataContextChanged(System.EventArgs e)
