@@ -91,7 +91,10 @@ namespace ILSpy.Docking
 			Layout = factory.CreateLayout();
 
 			assemblyTreeModel.PropertyChanged += OnAssemblyTreePropertyChanged;
-			assemblyTreeModel.SelectedItems.CollectionChanged += (_, _) => ShowSelectedNode();
+			assemblyTreeModel.SelectedItems.CollectionChanged += (_, _) => {
+				if (!syncingTreeFromActiveTab)
+					ShowSelectedNode();
+			};
 			languageService.PropertyChanged += OnLanguagePropertyChanged;
 			// Layout/factory initialization (locators, parent/factory wiring) is done by
 			// the DockControl in MainWindow.axaml via InitializeFactory/InitializeLayout.
@@ -104,6 +107,7 @@ namespace ILSpy.Docking
 			factory.DockableRemoved += OnDocumentMembershipChanged;
 			factory.DockableClosed += OnDocumentMembershipChanged;
 			factory.DockableClosing += OnDockableClosing;
+			factory.ActiveDockableChanged += OnActiveDockableChanged;
 
 			// TODO: layout persistence (load on startup, save on exit). DockSerializer.SystemTextJson
 			// trips System.Text.Json's MaxDepth=64 limit on our layout because Dock's JsonConverterList<T>
@@ -141,12 +145,38 @@ namespace ILSpy.Docking
 			}
 		}
 
+		// Set true while syncing the tree's selection FROM the active tab so the
+		// SelectionChanged handler doesn't bounce back into ShowSelectedNode and overwrite
+		// MainTab.Content with the carved-out tab's node.
+		bool syncingTreeFromActiveTab;
+
 		void OnAssemblyTreePropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(AssemblyTreeModel.SelectedItem))
 			{
-				ShowSelectedNode();
+				if (!syncingTreeFromActiveTab)
+					ShowSelectedNode();
 				RecordTreeNodeSelection(assemblyTreeModel.SelectedItem);
+			}
+		}
+
+		void OnActiveDockableChanged(object? sender, ActiveDockableChangedEventArgs e)
+		{
+			// Carve-out tab → active: pull the tree's selection over to whatever entity the
+			// tab is showing. The same hook fires when the user clicks a different tab in
+			// the tab strip, keeping the tree in lockstep with the visible content.
+			if (e.Dockable is not ContentTabPage tab || tab.SourceNode is not { } node)
+				return;
+			if (ReferenceEquals(assemblyTreeModel.SelectedItem, node))
+				return;
+			syncingTreeFromActiveTab = true;
+			try
+			{
+				assemblyTreeModel.SelectedItem = node;
+			}
+			finally
+			{
+				syncingTreeFromActiveTab = false;
 			}
 		}
 
@@ -296,6 +326,7 @@ namespace ILSpy.Docking
 					CopyContentState(customContent, main.Content);
 				else
 					AttachCustomContent(main, customContent);
+				main.SourceNode = nodes[0];
 				return;
 			}
 
@@ -303,6 +334,7 @@ namespace ILSpy.Docking
 			main.Content = decTab;
 			decTab.Language = languageService.CurrentLanguage;
 			decTab.CurrentNodes = nodes;
+			main.SourceNode = nodes.Length == 1 ? nodes[0] : null;
 		}
 
 		void AttachCustomContent(ContentTabPage main, TabPageModel newContent)
@@ -371,12 +403,12 @@ namespace ILSpy.Docking
 					newMeta.NavigateToCellRequested += OnMetadataCellClicked;
 					newMeta.RowActivated += OnMetadataRowActivated;
 				}
-				OpenNewTab(customContent);
+				OpenNewTab(customContent, sourceNode: node);
 			}
 			else
 			{
 				var content = new DecompilerTabPageModel { Language = languageService.CurrentLanguage };
-				OpenNewTab(content);
+				OpenNewTab(content, sourceNode: node);
 				content.CurrentNodes = new[] { node };
 			}
 		}
@@ -508,9 +540,14 @@ namespace ILSpy.Docking
 		/// supplied viewmodel. Used by explicit "Open in new tab" gestures and by static
 		/// pages (About, License) that must not be overwritten by tree-node selections.
 		/// </summary>
-		public ContentTabPage OpenNewTab(object content)
+		/// <param name="sourceNode">
+		/// Optional assembly-tree node this tab represents. Set BEFORE the tab is activated
+		/// so <see cref="OnActiveDockableChanged"/> can pick it up and pull the tree's
+		/// selection across — setting it after-the-fact misses the activation event.
+		/// </param>
+		public ContentTabPage OpenNewTab(object content, SharpTreeNode? sourceNode = null)
 		{
-			var tab = new ContentTabPage { Content = content };
+			var tab = new ContentTabPage { Content = content, SourceNode = sourceNode };
 			if (factory.Documents != null)
 			{
 				factory.AddDockable(factory.Documents, tab);

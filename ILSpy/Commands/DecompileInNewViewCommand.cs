@@ -63,7 +63,10 @@ namespace ILSpy.Commands
 			if (nodes.Length == 0)
 				return;
 			var content = new DecompilerTabPageModel { Language = languageService.CurrentLanguage };
-			dockWorkspace.OpenNewTab(content);
+			// Single-node selection carries a SourceNode so the tab/tree stay in lockstep
+			// when the user flips tabs. Multi-node selections leave SourceNode null —
+			// no single tree row represents the union.
+			dockWorkspace.OpenNewTab(content, sourceNode: nodes.Length == 1 ? nodes[0] : null);
 			content.CurrentNodes = nodes;
 		}
 

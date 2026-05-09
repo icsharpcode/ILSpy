@@ -1095,11 +1095,12 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
-	public async Task Pane_OpenNodeInNewTab_Spawns_A_Fresh_Decompiler_Tab_Without_Touching_Selection()
+	public async Task Pane_OpenNodeInNewTab_Spawns_A_Fresh_Decompiler_Tab_And_Selection_Follows_The_New_Active_Tab()
 	{
 		// MMB on a tree row maps to AssemblyListPane.OpenNodeInNewTab — a new decompiler
 		// tab opens with the supplied node decompiled, the existing tab keeps its content,
-		// and the assembly-tree selection is unchanged (MMB doesn't alter the selection).
+		// and the assembly-tree selection is pulled across to the new tab's source node
+		// (the active tab and the tree are kept in lockstep).
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
@@ -1130,9 +1131,48 @@ public class AssemblyTreeTests
 			"a fresh decompiler tab must be created instead of reusing the existing one");
 		newTab.Text.Should().Contain("Empty");
 		firstTab.Text.Should().Contain("AsEnumerable");
-		// Selection didn't move — pinned remains the model's selection.
-		ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, pinned).Should().BeTrue(
-			"middle-click must not move the assembly-tree selection");
+		// Selection has moved to the new tab's source node — the active tab and the
+		// assembly-tree selection stay in lockstep.
+		ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, newTabTarget).Should().BeTrue(
+			"the assembly-tree selection must follow the newly-active tab");
+	}
+
+	[AvaloniaTest]
+	public async Task Switching_Tabs_Pulls_Tree_Selection_To_The_Active_Tabs_Source_Node()
+	{
+		// Activate two tabs (each carrying a different SourceNode), then flip the active
+		// dockable back to the first one and confirm the assembly-tree selection follows.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		typeNode.IsExpanded = true;
+		var first = typeNode.Children.OfType<MethodTreeNode>()
+			.Single(m => m.MethodDefinition.Name == "AsEnumerable");
+		var second = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "Empty");
+
+		// First tab: tree-selection produces the MainTab content.
+		vm.AssemblyTreeModel.SelectNode(first);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
+		var firstTab = documents.ActiveDockable;
+
+		// Second tab: MMB-style carve-out — selection follows the new active tab.
+		vm.DockWorkspace.OpenNodeInNewTab(second);
+		await Waiters.WaitForAsync(() =>
+			ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, second));
+
+		// Re-activate the first tab — selection must swing back.
+		vm.DockWorkspace.Factory.SetActiveDockable(firstTab!);
+
+		await Waiters.WaitForAsync(() =>
+			ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, first));
+		ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, first).Should().BeTrue(
+			"clicking back to the previous tab must pull the tree selection with it");
 	}
 
 	[AvaloniaTest]

@@ -22,24 +22,35 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using Dock.Controls.DeferredContentControl;
 
+using ICSharpCode.ILSpyX.TreeView;
+
 namespace ILSpy.ViewModels
 {
 	/// <summary>
-	/// The single Document the docking host puts in its document area. <see cref="Content"/>
-	/// holds the active inner viewmodel (decompiler text or metadata grid). The wrapper
-	/// view (<c>ContentTabPageView</c>) keeps both possible inner views pre-realised and
-	/// toggles which is visible — Dock.Avalonia's add+close-in-the-same-tick semantics
-	/// otherwise leave the previous view rendered when the tab type changes.
+	/// One Document hosted by the dock workspace. <see cref="Content"/> holds the active
+	/// inner viewmodel (decompiler text or metadata grid). The wrapper view
+	/// (<c>ContentTabPageView</c>) keeps both possible inner views pre-realised and toggles
+	/// which is visible — Dock.Avalonia's add+close-in-the-same-tick semantics otherwise
+	/// leave the previous view rendered when the tab type changes.
 	/// </summary>
 	public sealed partial class ContentTabPage : TabPageModel, IDeferredContentPresentation
 	{
-		// Opt out of Dock's deferred presentation: there's exactly one document tab in this
-		// app, the inner views are already pre-realised by the wrapper view, and headless
-		// tests can't reach descendants of a control that's still queued for realisation.
+		// Opt out of Dock's deferred presentation: the inner views are already pre-realised
+		// by the wrapper view, and headless tests can't reach descendants of a control
+		// that's still queued for realisation.
 		bool IDeferredContentPresentation.DeferContentPresentation => false;
 
 		[ObservableProperty]
 		private object? content;
+
+		/// <summary>
+		/// The assembly-tree node this tab represents. Used by <c>DockWorkspace</c> to
+		/// synchronise the tree's selection when this tab becomes active — switching to a
+		/// tab pulls the tree to whatever entity the tab is showing. Null on the static
+		/// "(no selection)" placeholder.
+		/// </summary>
+		[ObservableProperty]
+		private SharpTreeNode? sourceNode;
 
 		// Bubble the inner content's Title up to the Document's Title so the tab strip
 		// reflects whatever the active page chose (e.g. the decompiler tab's spinner glyph
