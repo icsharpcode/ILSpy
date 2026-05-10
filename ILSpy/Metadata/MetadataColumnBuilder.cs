@@ -197,23 +197,25 @@ namespace ILSpy.Metadata
 			headerRow.Children.Add(headerContent);
 
 			filterIconHost.PointerPressed += (_, e) => {
-				bool isActive = !string.IsNullOrWhiteSpace(filter.Text)
-					|| (filter.FlagsState != null && !filter.FlagsState.IsEmpty);
-				if (isActive)
+				if (popup != null)
 				{
-					// Icon is an X right now — click clears the filter. Both branches raise
-					// the appropriate PropertyChanged so Update() swaps the icon back to the
-					// funnel and the row is re-evaluated.
-					filter.Text = string.Empty;
-					filter.FlagsState?.Clear();
-				}
-				else if (popup != null)
-				{
+					// Flag columns: the funnel always opens the popup. Modifying the filter
+					// requires the chip UI inside the popup, and clearing is owned by the
+					// popup's own Clear button — calling FlagsState.Clear() from out here
+					// would leave the chip IsChecked state stale because we'd skip the
+					// SyncFromState() pass that FlagsFilterPopup.Clear() does.
 					popup.IsOpen = true;
 				}
-				else if (textBox != null)
+				else
 				{
-					textBox.Focus();
+					// Text columns: the icon doubles as a clear button when a filter is active
+					// (icon visually morphs into an X via Update()). Click while active wipes
+					// the TextBox; click while inactive focuses it.
+					bool isActive = !string.IsNullOrWhiteSpace(filter.Text);
+					if (isActive)
+						filter.Text = string.Empty;
+					else if (textBox != null)
+						textBox.Focus();
 				}
 				e.Handled = true;
 			};
@@ -242,10 +244,13 @@ namespace ILSpy.Metadata
 				}
 				// Flag columns leave label IsVisible alone — it stays on for sort clicks while
 				// the funnel icon owns the popup-open gesture.
-				// Active state swaps the funnel out for an X — icon becomes the "clear filter"
-				// affordance. Funnel uses Fill (closed shape); X is two crossing strokes, so
-				// it has no Fill and instead paints with Stroke. Toggle both modes in lockstep.
-				if (active)
+
+				// Icon affordance: the X form indicates "click to clear". That only matches
+				// the click behaviour on text columns (where clicking when active does clear);
+				// for flag columns the click always opens the popup, so we keep the funnel
+				// shape and just tint it SteelBlue to signal the filter is active.
+				bool useXForm = active && popup is null;
+				if (useXForm)
 				{
 					filterIcon.Data = xGeometry;
 					filterIcon.Fill = null;
@@ -255,7 +260,7 @@ namespace ILSpy.Metadata
 				else
 				{
 					filterIcon.Data = funnelGeometry;
-					filterIcon.Fill = Brushes.Gray;
+					filterIcon.Fill = active ? Brushes.SteelBlue : Brushes.Gray;
 					filterIcon.Stroke = null;
 				}
 			}

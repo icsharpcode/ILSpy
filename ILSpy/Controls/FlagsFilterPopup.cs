@@ -53,6 +53,31 @@ namespace ILSpy.Views.Filters
 			ApplyAccentPalette(Styles);
 
 			var stack = new StackPanel { Orientation = Orientation.Vertical, Spacing = 4 };
+
+			// Header row at the top: hint on the left, Clear button on the right. Same
+			// content the popup used to put at the bottom — moved to the top so the
+			// "how to use this" text and the explicit clear affordance are both visible
+			// without scrolling past the chip groups.
+			var clearButton = new Button {
+				Content = "Clear",
+				MinHeight = 0,
+				Padding = new Thickness(6, 1),
+				VerticalAlignment = VerticalAlignment.Top,
+			};
+			clearButton.Click += (_, _) => Clear();
+			var chipHint = new TextBlock {
+				Text = "Click a chip to select only that value · Shift+Click to add to / remove from the selection · Click <Any> to clear",
+				FontStyle = FontStyle.Italic,
+				Foreground = Brushes.Gray,
+				TextWrapping = TextWrapping.Wrap,
+				VerticalAlignment = VerticalAlignment.Center,
+			};
+			var headerRow = new DockPanel { LastChildFill = true, Margin = new Thickness(0, 0, 0, 4) };
+			DockPanel.SetDock(clearButton, global::Avalonia.Controls.Dock.Right);
+			headerRow.Children.Add(clearButton);
+			headerRow.Children.Add(chipHint);
+			stack.Children.Add(headerRow);
+
 			foreach (var g in state.Schema.MutexGroups)
 			{
 				var chips = new MutexChipGroup(state, g);
@@ -65,17 +90,6 @@ namespace ILSpy.Views.Filters
 				stack.Children.Add(independentGroup);
 			}
 
-			// Hint text in the same style as the live filter summary below — just a quiet
-			// italic line explaining the chip click semantics so users don't have to guess.
-			var chipHint = new TextBlock {
-				Text = "Click a chip to select only that value · Shift+Click to add to / remove from the selection · Click <Any> to clear",
-				FontStyle = FontStyle.Italic,
-				Foreground = Brushes.Gray,
-				TextWrapping = TextWrapping.Wrap,
-				Margin = new Thickness(0, 6, 0, 0),
-			};
-			stack.Children.Add(chipHint);
-
 			summary = new TextBlock {
 				FontStyle = FontStyle.Italic,
 				Foreground = Brushes.Gray,
@@ -83,14 +97,6 @@ namespace ILSpy.Views.Filters
 				Margin = new Thickness(0, 6, 0, 0),
 			};
 			stack.Children.Add(summary);
-
-			var clearButton = new Button {
-				Content = "Clear",
-				HorizontalAlignment = HorizontalAlignment.Right,
-				Margin = new Thickness(0, 4, 0, 0),
-			};
-			clearButton.Click += (_, _) => Clear();
-			stack.Children.Add(clearButton);
 
 			Content = new Border {
 				Padding = new Thickness(8),
