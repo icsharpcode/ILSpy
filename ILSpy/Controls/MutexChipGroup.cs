@@ -24,6 +24,8 @@ using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 
@@ -67,6 +69,16 @@ namespace ILSpy.Views.Filters
 				// the synthetic zero entry "(none)" so its purpose stays obvious.
 				var chip = MakeChip(v.Label);
 				chip.IsCheckedChanged += (_, _) => OnValueToggled(v.Value);
+				// Plain click → "select only this" (single-select). Shift+Click falls through
+				// to the ToggleButton's default toggle, which feeds OnValueToggled and lets
+				// the user build / trim an additive multi-select set.
+				var capturedValue = v.Value;
+				chip.AddHandler(InputElement.PointerPressedEvent, (_, e) => {
+					if ((e.KeyModifiers & KeyModifiers.Shift) != 0)
+						return; // additive: keep ToggleButton's default toggle behaviour
+					SelectOnly(capturedValue);
+					e.Handled = true;
+				}, RoutingStrategies.Tunnel);
 				valueChips[v.Value] = chip;
 				wrap.Children.Add(chip);
 			}
@@ -120,6 +132,24 @@ namespace ILSpy.Views.Filters
 			finally
 			{ suppress = false; }
 			state.SetMutexSelection(group.Name, selection);
+		}
+
+		void SelectOnly(uint value)
+		{
+			// Single-chip selection — collapse the group to {value}. We bypass the
+			// "all checked == any" / "none checked == any" collapse rules in
+			// OnValueToggled because Ctrl/Shift+click is an explicit narrow-down
+			// gesture; the user picked exactly one chip and wants exactly one.
+			suppress = true;
+			try
+			{
+				anyChip.IsChecked = false;
+				foreach (var (v, chip) in valueChips)
+					chip.IsChecked = v == value;
+			}
+			finally
+			{ suppress = false; }
+			state.SetMutexSelection(group.Name, ImmutableHashSet.Create(value));
 		}
 
 		void ResetToAny()

@@ -65,6 +65,17 @@ namespace ILSpy.Views.Filters
 				stack.Children.Add(independentGroup);
 			}
 
+			// Hint text in the same style as the live filter summary below — just a quiet
+			// italic line explaining the chip click semantics so users don't have to guess.
+			var chipHint = new TextBlock {
+				Text = "Click a chip to select only that value · Shift+Click to add to / remove from the selection · Click <Any> to clear",
+				FontStyle = FontStyle.Italic,
+				Foreground = Brushes.Gray,
+				TextWrapping = TextWrapping.Wrap,
+				Margin = new Thickness(0, 6, 0, 0),
+			};
+			stack.Children.Add(chipHint);
+
 			summary = new TextBlock {
 				FontStyle = FontStyle.Italic,
 				Foreground = Brushes.Gray,
