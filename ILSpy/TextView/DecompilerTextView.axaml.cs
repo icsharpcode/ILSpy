@@ -343,6 +343,10 @@ namespace ILSpy.TextView
 				{
 					Editor.TextArea.Caret.Offset = definitionPos;
 					Editor.TextArea.Caret.BringCaretToView();
+					// Brief animated rectangle around the new caret position so the user spots
+					// where the jump landed — particularly useful for long methods where the
+					// scroll jump alone isn't enough to anchor attention.
+					CaretHighlightAdorner.DisplayCaretHighlightAnimation(Editor.TextArea);
 					Dispatcher.UIThread.Post(() => Editor.TextArea.Focus());
 					return;
 				}
