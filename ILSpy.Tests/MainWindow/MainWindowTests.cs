@@ -32,6 +32,7 @@ using ILSpy.AssemblyTree;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 using ILSpy.Views;
+using ILSpy.Views.Controls;
 
 using NUnit.Framework;
 
@@ -76,11 +77,12 @@ public class MainWindowTests
 	}
 
 	[AvaloniaTest]
-	public async Task Toolbar_Disabled_Button_Renders_Dimmed_Icon()
+	public async Task Toolbar_Disabled_Button_Icon_Is_GrayscaleAware()
 	{
 		// At startup the Back button is disabled (no nav history yet — the bound Command's
-		// CanExecute returns false). Its icon should render visibly dimmer so the user can
-		// tell at a glance that it's not clickable.
+		// CanExecute returns false). Its icon must be a GrayscaleAwareImage so it desaturates
+		// instead of just dimming. We trust IsEffectivelyEnabled to drive the swap inside the
+		// control; the visual result is verified manually via CaptureAndShow when needed.
 
 		// Arrange + Act — show the window, wait until at least one disabled icon-bearing button
 		// has been laid out.
@@ -92,15 +94,15 @@ public class MainWindowTests
 			.Any(b => !b.IsEffectivelyEnabled
 				&& b.GetVisualDescendants().OfType<Image>().Any()));
 
-		// Assert — every disabled toolbar Image must render at <= 0.35 opacity.
-		var dimmedImages = window.GetVisualDescendants()
+		// Assert — every disabled toolbar icon is the grayscale-aware variant, not a plain Image.
+		var disabledIcons = window.GetVisualDescendants()
 			.OfType<Button>()
 			.Where(b => !b.IsEffectivelyEnabled)
 			.SelectMany(b => b.GetVisualDescendants().OfType<Image>())
 			.ToList();
-		dimmedImages.Should().NotBeEmpty();
-		dimmedImages.Should().OnlyContain(img => img.Opacity <= 0.35,
-			"disabled toolbar buttons must render their icon at < 0.4 opacity to be visually distinct");
+		disabledIcons.Should().NotBeEmpty();
+		disabledIcons.Should().OnlyContain(img => img is GrayscaleAwareImage,
+			"disabled toolbar buttons must use GrayscaleAwareImage so their icons desaturate");
 	}
 
 	[AvaloniaTest]

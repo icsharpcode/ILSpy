@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ILSpy.ViewModels"
              xmlns:images="using:ILSpy.Images"
+             xmlns:controls="using:ILSpy.Views.Controls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="26"
              x:Class="ILSpy.MainToolBar"
              x:DataType="vm:MainWindowViewModel">
@@ -89,22 +90,15 @@
 
 		<!-- Disabled buttons: paint a grayed-out box behind the content (so the button reads
 		     as a "filled-but-inactive" cell rather than just a faint icon on the toolbar
-		     gradient), dim the icon, and force the arrow cursor so the user doesn't get
-		     a click hint. -->
+		     gradient) and force the arrow cursor so the user doesn't get a click hint. The
+		     icon itself desaturates via GrayscaleAwareImage observing IsEffectivelyEnabled,
+		     so no Opacity setter is needed here. -->
 		<Style Selector="StackPanel#ToolbarRoot > Button:disabled, StackPanel#ToolbarRoot > ToggleButton:disabled">
 			<Setter Property="Cursor" Value="Arrow" />
 		</Style>
 		<Style Selector="StackPanel#ToolbarRoot > Button:disabled /template/ ContentPresenter, StackPanel#ToolbarRoot > ToggleButton:disabled /template/ ContentPresenter">
 			<Setter Property="Background" Value="#22000000" />
 			<Setter Property="BorderBrush" Value="#33000000" />
-		</Style>
-		<Style Selector="StackPanel#ToolbarRoot > Button:disabled Image, StackPanel#ToolbarRoot > ToggleButton:disabled Image">
-			<Setter Property="Opacity" Value="0.35" />
-		</Style>
-		<!-- SplitButton's primary half lives in a nested template-internal Button, so the
-		     descendant selector above doesn't reach the Image. Match it explicitly. -->
-		<Style Selector="StackPanel#ToolbarRoot > SplitButton:disabled Image">
-			<Setter Property="Opacity" Value="0.35" />
 		</Style>
 		<!-- Default Fluent SplitButton paints both halves with an opaque dark fill on press
 		     (looks black against our white toolbar). Replace with the toolbar accent palette
@@ -185,7 +179,7 @@
 			             Theme="{StaticResource ToolbarSplitButton}"
 			             ToolTip.Tip="Back (Alt+Left)"
 			             Command="{Binding DockWorkspace.NavigateBackCommand}">
-				<Image Source="{x:Static images:Images.Back}" Width="16" Height="16" />
+				<controls:GrayscaleAwareImage Source="{x:Static images:Images.Back}" Width="16" Height="16" />
 				<SplitButton.Flyout>
 					<MenuFlyout Placement="BottomEdgeAlignedLeft" />
 				</SplitButton.Flyout>
@@ -194,7 +188,7 @@
 			             Theme="{StaticResource ToolbarSplitButton}"
 			             ToolTip.Tip="Forward (Alt+Right)"
 			             Command="{Binding DockWorkspace.NavigateForwardCommand}">
-				<Image Source="{x:Static images:Images.Forward}" Width="16" Height="16" />
+				<controls:GrayscaleAwareImage Source="{x:Static images:Images.Forward}" Width="16" Height="16" />
 				<SplitButton.Flyout>
 					<MenuFlyout Placement="BottomEdgeAlignedLeft" />
 				</SplitButton.Flyout>
@@ -206,17 +200,17 @@
 			<ToggleButton Name="ShowPublicOnlyButton"
 			              ToolTip.Tip="Show only public types and members"
 			              IsChecked="{Binding LanguageSettings.ApiVisPublicOnly, Mode=TwoWay}">
-				<Image Source="{x:Static images:Images.ShowPublicOnly}" Width="16" Height="16" />
+				<controls:GrayscaleAwareImage Source="{x:Static images:Images.ShowPublicOnly}" Width="16" Height="16" />
 			</ToggleButton>
 			<ToggleButton Name="ShowPrivateInternalButton"
 			              ToolTip.Tip="Show public, private and internal"
 			              IsChecked="{Binding LanguageSettings.ApiVisPublicAndInternal, Mode=TwoWay}">
-				<Image Source="{x:Static images:Images.ShowPrivateInternal}" Width="16" Height="16" />
+				<controls:GrayscaleAwareImage Source="{x:Static images:Images.ShowPrivateInternal}" Width="16" Height="16" />
 			</ToggleButton>
 			<ToggleButton Name="ShowAllButton"
 			              ToolTip.Tip="Show all types and members"
 			              IsChecked="{Binding LanguageSettings.ApiVisAll, Mode=TwoWay}">
-				<Image Source="{x:Static images:Images.ShowAll}" Width="16" Height="16" />
+				<controls:GrayscaleAwareImage Source="{x:Static images:Images.ShowAll}" Width="16" Height="16" />
 			</ToggleButton>
 			<Separator />
 			<!-- MEF-driven toolbar buttons (Open etc.) get inserted by MainToolBar.axaml.cs.

@@ -26,6 +26,7 @@ using Avalonia.Media;
 using ILSpy.AppEnv;
 using ILSpy.Commands;
 using ILSpy.ViewModels;
+using ILSpy.Views.Controls;
 
 namespace ILSpy;
 
@@ -135,7 +136,7 @@ public partial class MainToolBar : UserControl
 		var icon = ResolveIcon(entry.Metadata.ToolbarIcon);
 		if (icon != null)
 		{
-			button.Content = new Image {
+			button.Content = new GrayscaleAwareImage {
 				Width = 16,
 				Height = 16,
 				Source = icon,
