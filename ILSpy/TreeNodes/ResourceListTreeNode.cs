@@ -44,6 +44,8 @@ namespace ILSpy.TreeNodes
 
 		public override object Text => Resources._Resources;
 
+		public override object? NavigationText => $"{Text} ({module.Name})";
+
 		public override object Icon => IsExpanded ? Images.Images.FolderOpen : Images.Images.FolderClosed;
 
 		protected override void OnExpanding()
@@ -62,6 +64,18 @@ namespace ILSpy.TreeNodes
 		{
 			foreach (var r in module.Resources.OrderBy(m => m.Name, NaturalStringComparer.Instance))
 				Children.Add(ResourceTreeNode.Create(r));
+		}
+
+		public override FilterResult Filter(LanguageSettings settings)
+		{
+			// WPF's variant short-circuits on string.IsNullOrEmpty(SearchTerm) — when no term
+			// is set the folder reads as a plain match, otherwise the tree walks into resources
+			// to surface only matching ones. We use the same shape so a future search pane
+			// behaves identically.
+			if (string.IsNullOrEmpty(settings.SearchTerm))
+				return FilterResult.MatchAndRecurse;
+			else
+				return FilterResult.Recurse;
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)

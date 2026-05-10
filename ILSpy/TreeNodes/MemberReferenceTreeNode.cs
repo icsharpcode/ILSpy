@@ -52,6 +52,8 @@ namespace ILSpy.TreeNodes
 
 		public override object Text => Signature;
 
+		public override object NavigationText => $"{Text} ({ICSharpCode.ILSpy.Properties.Resources.ReferencedTypes})";
+
 		public override object Icon => r.MemberReferenceKind switch {
 			MemberReferenceKind.Method => Images.Images.MethodReference,
 			MemberReferenceKind.Field => Images.Images.FieldReference,

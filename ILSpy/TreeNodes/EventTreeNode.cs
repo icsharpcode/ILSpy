@@ -46,6 +46,9 @@ namespace ILSpy.TreeNodes
 		}
 
 		public override object Text => Language.EntityToString(EventDefinition, ConversionFlags.None);
+
+		public override object NavigationText => Language.EntityToString(EventDefinition, ConversionFlags.ShowDeclaringType);
+
 		public override object Icon => Images.Images.GetIcon(Images.Images.Event,
 			Images.Images.GetOverlay(EventDefinition.Accessibility), EventDefinition.IsStatic);
 
@@ -61,9 +64,10 @@ namespace ILSpy.TreeNodes
 		{
 			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
 				return FilterResult.Hidden;
-			if (settings.ShowApiLevel == ApiVisibility.All || Language.ShowMember(EventDefinition))
+			if (settings.SearchTermMatches(EventDefinition.Name) && (settings.ShowApiLevel == ApiVisibility.All || LanguageService.CurrentLanguage.ShowMember(EventDefinition)))
 				return FilterResult.Match;
-			return FilterResult.Hidden;
+			else
+				return FilterResult.Hidden;
 		}
 
 		public override string ToString() => "Event " + EventDefinition.Name;

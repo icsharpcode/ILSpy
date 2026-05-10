@@ -78,6 +78,10 @@ namespace ILSpy.Images
 		public static readonly IImage ShowPrivateInternal = LoadSvg(nameof(ShowPrivateInternal));
 		public static readonly IImage ShowAll = LoadSvg(nameof(ShowAll));
 
+		// Type-relation tree nodes (Base Types / Derived Types).
+		public static readonly IImage SuperTypes = LoadSvg(nameof(SuperTypes));
+		public static readonly IImage SubTypes = LoadSvg(nameof(SubTypes));
+
 		// Containers
 		public static readonly IImage Namespace = LoadSvg(nameof(Namespace));
 		public static readonly IImage ReferenceFolder = LoadSvg(nameof(ReferenceFolder));

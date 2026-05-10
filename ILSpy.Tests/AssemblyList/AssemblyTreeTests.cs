@@ -1332,4 +1332,124 @@ public class AssemblyTreeTests
 		((MethodTreeNode)resolved!).MethodDefinition.MetadataToken
 			.Should().Be(getter.MetadataToken);
 	}
+
+	[AvaloniaTest]
+	public async Task Type_Tree_Node_Exposes_BaseTypes_Subtree_Listing_Object_For_System_Exception()
+	{
+		// Each type node should surface a "Base Types" sub-tree listing its base classes /
+		// interfaces, mirroring the WPF tree. System.Exception extends only System.Object so we
+		// expect a single BaseTypesEntryNode whose label ends in "Object".
+
+		// Arrange — boot, wait for assemblies, drill into System.Exception.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			coreLibName, "System", "System.Exception");
+		typeNode.IsExpanded = true;
+
+		// Assert — BaseTypes child exists, expanding it yields entries, Object is among them.
+		var baseTypes = typeNode.Children.OfType<BaseTypesTreeNode>().Single();
+		baseTypes.IsExpanded = true;
+		baseTypes.Children.OfType<BaseTypesEntryNode>().Should().NotBeEmpty();
+		baseTypes.Children.OfType<BaseTypesEntryNode>()
+			.Should().Contain(e => e.Text.ToString()!.EndsWith("Object"),
+				"System.Exception's base-type chain must include Object");
+	}
+
+	[AvaloniaTest]
+	public async Task BaseTypesEntryNode_Activate_Navigates_To_The_Base_Type()
+	{
+		// Activating a BaseTypesEntryNode jumps the assembly-tree selection to the underlying
+		// type node — same gesture the WPF tree uses to walk an inheritance chain.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			coreLibName, "System", "System.Exception");
+		typeNode.IsExpanded = true;
+		var baseTypes = typeNode.Children.OfType<BaseTypesTreeNode>().Single();
+		baseTypes.IsExpanded = true;
+		var objectEntry = baseTypes.Children.OfType<BaseTypesEntryNode>()
+			.First(e => e.Text.ToString()!.EndsWith("Object"));
+
+		// Act — activate via the stub routed-args (mirrors a double-click).
+		var args = new StubRoutedEventArgs();
+		objectEntry.ActivateItem(args);
+
+		// Assert — selection moved off System.Exception and onto a TypeTreeNode for Object.
+		// Cast through object to bypass SharpTreeNodeAssertions' restricted member set.
+		((object?)vm.AssemblyTreeModel.SelectedItem).Should().BeOfType<TypeTreeNode>();
+		((object?)vm.AssemblyTreeModel.SelectedItem).Should().NotBeSameAs(typeNode);
+		((TypeTreeNode)vm.AssemblyTreeModel.SelectedItem!).Text.ToString()
+			.Should().Be("Object");
+	}
+
+	[AvaloniaTest]
+	public async Task Type_Tree_Node_Exposes_DerivedTypes_Subtree_For_Non_Sealed_Class()
+	{
+		// Non-sealed types get a "Derived Types" sub-tree listing classes that extend them. We
+		// scan the assembly list synchronously — for the small fixture loaded in tests this
+		// yields a few hits per common base (e.g. SystemException is derived from Exception).
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			coreLibName, "System", "System.Exception");
+		typeNode.IsExpanded = true;
+
+		var derived = typeNode.Children.OfType<DerivedTypesTreeNode>().Single();
+		derived.IsExpanded = true;
+		derived.Children.OfType<DerivedTypesEntryNode>().Should().NotBeEmpty(
+			"the loaded assembly list contains several Exception subclasses (e.g. SystemException, ArgumentException)");
+	}
+
+	[AvaloniaTest]
+	public async Task Sealed_Class_Has_No_DerivedTypes_Node()
+	{
+		// Sealed types can't be derived from, so the DerivedTypes sub-tree must not appear.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			coreLibName, "System", "System.String");
+		stringNode.IsExpanded = true;
+
+		stringNode.Children.OfType<DerivedTypesTreeNode>()
+			.Should().BeEmpty("System.String is sealed");
+	}
+
+	[AvaloniaTest]
+	public async Task Object_Has_No_BaseTypes_Node()
+	{
+		// System.Object has no base types, so the BaseTypes sub-tree must not appear.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var objectNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			coreLibName, "System", "System.Object");
+		objectNode.IsExpanded = true;
+
+		objectNode.Children.OfType<BaseTypesTreeNode>()
+			.Should().BeEmpty("System.Object has no base types");
+	}
 }

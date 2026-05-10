@@ -40,6 +40,9 @@ namespace ILSpy.TreeNodes
 		}
 
 		public override object Text => Language.EntityToString(FieldDefinition, ConversionFlags.None);
+
+		public override object NavigationText => Language.EntityToString(FieldDefinition, ConversionFlags.ShowDeclaringType);
+
 		public override object Icon => Images.Images.GetIcon(Images.Images.Field,
 			Images.Images.GetOverlay(FieldDefinition.Accessibility), FieldDefinition.IsStatic);
 		public override bool ShowExpander => false;
@@ -56,9 +59,10 @@ namespace ILSpy.TreeNodes
 		{
 			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
 				return FilterResult.Hidden;
-			if (settings.ShowApiLevel == ApiVisibility.All || Language.ShowMember(FieldDefinition))
+			if (settings.SearchTermMatches(FieldDefinition.Name) && (settings.ShowApiLevel == ApiVisibility.All || LanguageService.CurrentLanguage.ShowMember(FieldDefinition)))
 				return FilterResult.Match;
-			return FilterResult.Hidden;
+			else
+				return FilterResult.Hidden;
 		}
 
 		public override string ToString() => "Field " + FieldDefinition.Name;

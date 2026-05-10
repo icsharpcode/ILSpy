@@ -46,6 +46,8 @@ namespace ILSpy.TreeNodes
 
 		public override object Text => Resources.References;
 
+		public override object? NavigationText => $"{Text} ({module.Name})";
+
 		public override object Icon => Images.Images.ReferenceFolder;
 
 		protected override void LoadChildren()

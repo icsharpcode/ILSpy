@@ -44,6 +44,9 @@ namespace ILSpy.TreeNodes
 		}
 
 		public override object Text => Language.EntityToString(PropertyDefinition, ConversionFlags.None);
+
+		public override object NavigationText => Language.EntityToString(PropertyDefinition, ConversionFlags.ShowDeclaringType);
+
 		public override object Icon => Images.Images.GetIcon(Images.Images.Property,
 			Images.Images.GetOverlay(PropertyDefinition.Accessibility), PropertyDefinition.IsStatic);
 
@@ -59,9 +62,10 @@ namespace ILSpy.TreeNodes
 		{
 			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
 				return FilterResult.Hidden;
-			if (settings.ShowApiLevel == ApiVisibility.All || Language.ShowMember(PropertyDefinition))
+			if (settings.SearchTermMatches(PropertyDefinition.Name) && (settings.ShowApiLevel == ApiVisibility.All || LanguageService.CurrentLanguage.ShowMember(PropertyDefinition)))
 				return FilterResult.Match;
-			return FilterResult.Hidden;
+			else
+				return FilterResult.Hidden;
 		}
 
 		public override string ToString()

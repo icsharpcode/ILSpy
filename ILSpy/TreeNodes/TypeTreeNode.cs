@@ -27,6 +27,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
 using ILSpy;
+using ILSpy.AppEnv;
+using ILSpy.AssemblyTree;
 using ILSpy.Languages;
 
 namespace ILSpy.TreeNodes
@@ -99,9 +101,17 @@ namespace ILSpy.TreeNodes
 			var typeDef = ResolveTypeDefinition();
 			if (typeDef == null)
 				return FilterResult.Match;
-			if (settings.ShowApiLevel == ApiVisibility.All || Language.ShowMember(typeDef))
-				return FilterResult.Match;
-			return FilterResult.Hidden;
+			if (settings.SearchTermMatches(typeDef.Name))
+			{
+				if (settings.ShowApiLevel == ApiVisibility.All || LanguageService.CurrentLanguage.ShowMember(typeDef))
+					return FilterResult.Match;
+				else
+					return FilterResult.Hidden;
+			}
+			else
+			{
+				return FilterResult.Recurse;
+			}
 		}
 
 		// Stable identity for SessionSettings.ActiveTreeViewPath. ReflectionName is
@@ -110,6 +120,18 @@ namespace ILSpy.TreeNodes
 		{
 			var typeDef = ResolveTypeDefinition();
 			return typeDef?.ReflectionName ?? module.Metadata.GetString(module.Metadata.GetTypeDefinition(handle).Name);
+		}
+
+		// Sealed / static / value-type / enum / delegate cannot be the base of another class,
+		// so a DerivedTypes child would always show up empty. Suppress it for those kinds.
+		static bool CanHaveDerivedTypes(ITypeDefinition typeDef)
+		{
+			if (typeDef.IsSealed)
+				return false;
+			return typeDef.Kind switch {
+				TypeKind.Class or TypeKind.Interface => true,
+				_ => false,
+			};
 		}
 
 		ITypeDefinition? ResolveTypeDefinition()
@@ -125,6 +147,20 @@ namespace ILSpy.TreeNodes
 			var typeDef = ResolveTypeDefinition();
 			if (typeDef == null)
 				return;
+
+			// Inheritance-relation siblings come first so they sit above the type's own members.
+			// BaseTypes is skipped for System.Object (no upstream chain) and for value types'
+			// implicit System.ValueType base when there's nothing else to show — the AddBaseTypes
+			// pass produces an empty set, which collapses the node.
+			if (typeDef.DirectBaseTypes.Any())
+				Children.Add(new BaseTypesTreeNode(module, typeDef));
+
+			// DerivedTypes is meaningful only for non-sealed reference types (and abstract
+			// classes / interfaces). Sealed classes can't be derived from; static classes are
+			// implicitly sealed.
+			var assemblyList = AppComposition.Current.GetExport<AssemblyTreeModel>().AssemblyList;
+			if (assemblyList != null && CanHaveDerivedTypes(typeDef))
+				Children.Add(new DerivedTypesTreeNode(assemblyList, typeDef));
 
 			foreach (var nestedType in typeDef.NestedTypes
 				.OrderBy(t => t.Name, NaturalStringComparer.Instance))

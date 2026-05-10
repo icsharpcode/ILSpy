@@ -85,5 +85,15 @@ namespace ILSpy
 
 		[ObservableProperty]
 		string? languageVersionId;
+
+		// SearchTerm is currently a placeholder mirroring WPF — the Avalonia search pane isn't
+		// ported yet, but several tree-node Filter overrides reference SearchTermMatches when
+		// porting the WPF logic verbatim. Returning string.Empty + always-true SearchTermMatches
+		// means the Filter cascade collapses to "match if visibility passes", same as no-term-set
+		// in WPF. When the search pane lands, swap these for a real backing field bound to the
+		// pane's text box.
+		public string SearchTerm => string.Empty;
+
+		public bool SearchTermMatches(string value) => true;
 	}
 }

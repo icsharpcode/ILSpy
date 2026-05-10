@@ -70,6 +70,8 @@ namespace ILSpy.TreeNodes
 
 		public override object Text => moduleName;
 
+		public override object? NavigationText => $"{Text} ({ICSharpCode.ILSpy.Properties.Resources.References})";
+
 		public override object Icon => Images.Images.Library;
 
 		public override void ActivateItem(IPlatformRoutedEventArgs e)

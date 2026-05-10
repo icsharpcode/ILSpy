@@ -162,6 +162,7 @@ namespace ILSpy.TreeNodes
 					child.IsHidden = false;
 					break;
 				case FilterResult.Recurse:
+				case FilterResult.MatchAndRecurse:
 					child.EnsureChildrenFiltered();
 					child.IsHidden = child.Children.All(c => c.IsHidden);
 					break;

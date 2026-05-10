@@ -18,17 +18,20 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 
 using AvaloniaEdit.Highlighting;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.Abstractions;
 
 namespace ILSpy.Languages
 {
@@ -37,11 +40,48 @@ namespace ILSpy.Languages
 	/// Subclasses override formatting for their target syntax. Implementations must be
 	/// thread-safe.
 	/// </summary>
-	public abstract class Language
+	public abstract class Language : ILanguage
 	{
 		public abstract string Name { get; }
 
 		public abstract string FileExtension { get; }
+
+		/// <summary>
+		/// Versions selectable for this language (e.g. C# 1.0 → C# 14). Default is empty;
+		/// <see cref="HasLanguageVersions"/> reports whether any are available so toolbar UI
+		/// can hide the version picker for languages that don't differentiate.
+		/// </summary>
+		public virtual IReadOnlyList<LanguageVersion> LanguageVersions => System.Array.Empty<LanguageVersion>();
+
+		public bool HasLanguageVersions => LanguageVersions.Count > 0;
+
+		/// <summary>
+		/// Token-to-source-line mapping for navigation. Default returns a no-op CodeMappingInfo —
+		/// language subclasses with full decompilation override and produce a real one.
+		/// </summary>
+		public virtual CodeMappingInfo GetCodeMappingInfo(MetadataFile module, EntityHandle member)
+			=> new(module, (TypeDefinitionHandle)member);
+
+		/// <summary>
+		/// Stable name string for an entity reachable only by metadata token. Falls back to the
+		/// language's <see cref="EntityToString"/> path so subclasses don't have to repeat the
+		/// formatting rules — overrideable when a language wants a tokenless name (e.g. C# uses a
+		/// disassembler-friendly form).
+		/// </summary>
+		public virtual string GetEntityName(MetadataFile module, EntityHandle handle, bool fullName, bool omitGenerics)
+		{
+			ArgumentNullException.ThrowIfNull(module);
+			var typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
+			var entity = typeSystem.MainModule.ResolveEntity(handle);
+			if (entity == null)
+				return string.Empty;
+			var flags = ConversionFlags.ShowParameterList | ConversionFlags.ShowParameterModifiers;
+			if (fullName)
+				flags |= ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames;
+			if (!omitGenerics)
+				flags |= ConversionFlags.ShowTypeParameterList;
+			return entity is IType type ? TypeToString(type, flags) : EntityToString((IEntity)entity, flags);
+		}
 
 		public virtual string TypeToString(IType type, ConversionFlags conversionFlags = ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames)
 		{

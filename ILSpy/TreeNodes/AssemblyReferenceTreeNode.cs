@@ -60,6 +60,8 @@ namespace ILSpy.TreeNodes
 
 		public override object Text => ILAmbience.EscapeName(reference.Name);
 
+		public override object? NavigationText => $"{Text} ({ICSharpCode.ILSpy.Properties.Resources.References})";
+
 		public override object Icon {
 			get {
 				if (state == LoadState.Unloaded)

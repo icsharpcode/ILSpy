@@ -492,6 +492,23 @@ namespace ILSpy.AssemblyTree
 			SelectedItem = node;
 		}
 
+		/// <summary>
+		/// Resolves <paramref name="type"/> to the matching <see cref="TypeTreeNode"/> in the
+		/// loaded assembly list and selects it. Returns false when the type's parent module is
+		/// not loaded (or the namespace / nested-type chain can't be walked) — used by the
+		/// Base/Derived Types entry nodes to jump along an inheritance chain.
+		/// </summary>
+		public bool JumpToType(ITypeDefinition? type)
+		{
+			if (type == null || assemblyListTreeNode == null)
+				return false;
+			var node = FindTypeNode(assemblyListTreeNode, type);
+			if (node == null)
+				return false;
+			SelectNode(node);
+			return true;
+		}
+
 		public void OpenFiles(string[] fileNames, bool focusNode = true)
 		{
 			ArgumentNullException.ThrowIfNull(fileNames);

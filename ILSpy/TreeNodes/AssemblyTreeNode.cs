@@ -277,6 +277,14 @@ namespace ILSpy.TreeNodes
 				Children.Add(new TypeTreeNode(t, module));
 		}
 
+		public override FilterResult Filter(LanguageSettings settings)
+		{
+			if (settings.SearchTermMatches(LoadedAssembly.ShortName))
+				return FilterResult.Match;
+			else
+				return FilterResult.Recurse;
+		}
+
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			void HandleException(Exception ex, string message)

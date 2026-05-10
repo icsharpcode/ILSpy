@@ -41,6 +41,8 @@ namespace ILSpy.TreeNodes
 
 		public override object Text => Language.EntityToString(MethodDefinition, ConversionFlags.None);
 
+		public override object NavigationText => Language.EntityToString(MethodDefinition, ConversionFlags.ShowDeclaringType);
+
 		public override object Icon {
 			get {
 				var baseImage = MethodDefinition.IsConstructor ? Images.Images.Constructor :
@@ -67,9 +69,13 @@ namespace ILSpy.TreeNodes
 		{
 			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
 				return FilterResult.Hidden;
-			if (settings.ShowApiLevel == ApiVisibility.All || Language.ShowMember(MethodDefinition))
+			// WPF additionally hides extension-block implementation methods when the
+			// ExtensionMembers decompiler setting is on; tracked as `methodtreenode-extension-gate`
+			// in the parity TODO and reinstated when the DecompilerSettings UI lands.
+			if (settings.SearchTermMatches(MethodDefinition.Name) && (settings.ShowApiLevel == ApiVisibility.All || LanguageService.CurrentLanguage.ShowMember(MethodDefinition)))
 				return FilterResult.Match;
-			return FilterResult.Hidden;
+			else
+				return FilterResult.Hidden;
 		}
 
 		// Stable identity for SessionSettings.ActiveTreeViewPath; format must round-trip

@@ -135,10 +135,14 @@ public class NavigationTests
 
 		// Assert 1 — newest-first ordering: index 0 is the immediate previous selection
 		// (methodB), index 1 is the one before that (methodA). Each menu item carries a
-		// TreeNodeEntry wrapping the original tree node.
+		// TreeNodeEntry wrapping the original tree node, and the header reads the richer
+		// NavigationText (mirrors WPF — disambiguates "Empty" from other "Empty" methods by
+		// prefixing the declaring type).
 		var items = flyout.Items.OfType<MenuItem>().ToList();
-		((string)items[0].Header!).Should().Be((string)methodB.Text);
-		((string)items[1].Header!).Should().Be((string)methodA.Text);
+		((string)items[0].Header!).Should().Be((string)methodB.NavigationText);
+		((string)items[1].Header!).Should().Be((string)methodA.NavigationText);
+		((string)items[0].Header!).Should().Contain("Enumerable",
+			"NavigationText must include the declaring type");
 		items[1].CommandParameter.Should().BeOfType<global::ILSpy.Navigation.TreeNodeEntry>();
 		var entry = (global::ILSpy.Navigation.TreeNodeEntry)items[1].CommandParameter!;
 		ReferenceEquals(entry.Node, methodA).Should().BeTrue();
@@ -150,5 +154,53 @@ public class NavigationTests
 		// Assert 2 — the two displaced entries (methodC, methodB) are now on the forward stack,
 		// so Forward becomes available.
 		vm.DockWorkspace.NavigateForwardCommand.CanExecute(null).Should().BeTrue();
+	}
+
+	[AvaloniaTest]
+	public async Task Back_History_Dropdown_Uses_NavigationText_For_Generic_Tree_Nodes()
+	{
+		// Bare Text on grouping nodes ("Base Types", "Derived Types", "References") reads
+		// ambiguously in the back-history dropdown — the user can't tell which type's bases
+		// they're looking at. ILSpyTreeNode.NavigationText carries the richer disambiguated
+		// form ("Base Types (System.Exception)"), and TreeNodeEntry.DisplayText must use it
+		// when the node implements ILSpyTreeNode.
+
+		// Arrange — boot, wait for assemblies, expand System.Exception so we can select its
+		// BaseTypesTreeNode child.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			coreLibName, "System", "System.Exception");
+		typeNode.IsExpanded = true;
+		var baseTypes = typeNode.Children.OfType<BaseTypesTreeNode>().Single();
+
+		// Act — select the grouping node, wait for decompile, navigate elsewhere so the
+		// grouping lands on the back stack.
+		vm.AssemblyTreeModel.SelectNode(baseTypes);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await Task.Delay(600);
+		vm.AssemblyTreeModel.SelectNode(typeNode);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		// Open the back-history flyout and read the entry header.
+		var backSplit = window.GetVisualDescendants().OfType<SplitButton>()
+			.Single(sb => sb.Name == "BackSplitButton");
+		var flyout = (MenuFlyout)backSplit.Flyout!;
+		flyout.ShowAt(backSplit);
+		await Waiters.WaitForAsync(() => flyout.Items.OfType<MenuItem>().Any());
+
+		// Assert — the entry shows the richer "Base Types (System.Exception)" form, NOT the
+		// bare "Base Types" Text.
+		var items = flyout.Items.OfType<MenuItem>().ToList();
+		var baseTypesEntry = items.First(i =>
+			((string)i.Header!).StartsWith((string)baseTypes.Text));
+		((string)baseTypesEntry.Header!).Should().Contain("Exception",
+			"the dropdown header must disambiguate generic grouping nodes via NavigationText");
+		((string)baseTypesEntry.Header!).Should().NotBe((string)baseTypes.Text,
+			"falling back to bare Text would reproduce the WPF parity gap");
 	}
 }

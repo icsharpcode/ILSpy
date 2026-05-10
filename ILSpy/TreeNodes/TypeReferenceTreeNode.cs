@@ -47,6 +47,8 @@ namespace ILSpy.TreeNodes
 
 		public override object Text => Language.TypeToString(resolvedType, ConversionFlags.None);
 
+		public override object NavigationText => $"{Text} ({ICSharpCode.ILSpy.Properties.Resources.ReferencedTypes})";
+
 		public override object Icon => Images.Images.TypeReference;
 
 		protected override void LoadChildren()

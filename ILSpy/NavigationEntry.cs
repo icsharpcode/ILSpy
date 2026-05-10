@@ -23,6 +23,7 @@ using Avalonia.Media;
 
 using ICSharpCode.ILSpyX.TreeView;
 
+using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 
 namespace ILSpy.Navigation
@@ -68,7 +69,10 @@ namespace ILSpy.Navigation
 			Node = node ?? throw new ArgumentNullException(nameof(node));
 		}
 
-		public override object DisplayText => Node.Text ?? string.Empty;
+		// ILSpyTreeNode exposes a richer NavigationText for nodes whose generic Text ("Base
+		// Types", "Derived Types", "References", …) reads ambiguously without context. Plain
+		// SharpTreeNode entries fall back to Text.
+		public override object DisplayText => (Node is ILSpyTreeNode ilspy ? ilspy.NavigationText : Node.Text) ?? string.Empty;
 
 		public override IImage? DisplayIcon => Node.Icon as IImage;
 

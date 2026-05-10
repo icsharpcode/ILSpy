@@ -98,9 +98,10 @@ namespace ILSpy.TreeNodes
 
 		public override FilterResult Filter(LanguageSettings settings)
 		{
-			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
-				return FilterResult.Hidden;
-			return FilterResult.Match;
+			if (settings.SearchTermMatches(name))
+				return FilterResult.MatchAndRecurse;
+			else
+				return FilterResult.Recurse;
 		}
 	}
 }
