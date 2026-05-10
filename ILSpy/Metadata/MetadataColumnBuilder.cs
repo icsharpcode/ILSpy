@@ -168,27 +168,33 @@ namespace ILSpy.Metadata
 				&& Attribute.IsDefined(propertyType, typeof(FlagsAttribute));
 
 			Popup? popup = null;
-			Control inputRow;
+			TextBox? textBox = null;
+			Control headerContent;
 			if (isFlagsColumn)
 			{
-				(inputRow, popup) = BuildFlagsDropdownTrigger(filter, propertyType);
+				// Flags columns: label stays visible always — the funnel icon alone is the
+				// popup trigger, no separate dropdown chevron needed since the popup carries
+				// the entire filter UI. PlacementTarget is the funnel itself so the popup
+				// drops below the icon's hit area.
+				popup = BuildFlagsPopup(filter, propertyType, filterIconHost);
+				headerContent = label;
 			}
 			else
 			{
-				inputRow = BuildFilterTextBox(filter);
+				// Text columns: hover/focus reveal the TextBox in the same slot as the label.
+				// The label hides while the input is shown so the column header stays one row.
+				textBox = BuildFilterTextBox(filter);
+				textBox.IsVisible = false;
+				var swap = new Panel { HorizontalAlignment = HorizontalAlignment.Stretch };
+				swap.Children.Add(label);
+				swap.Children.Add(textBox);
+				headerContent = swap;
 			}
-			inputRow.IsVisible = false;
-
-			// Both occupy the same slot; only one is visible at a time. Children inside a
-			// Panel overlap by default, so this is the cheapest way to swap.
-			var swap = new Panel { HorizontalAlignment = HorizontalAlignment.Stretch };
-			swap.Children.Add(label);
-			swap.Children.Add(inputRow);
 
 			var headerRow = new DockPanel { LastChildFill = true };
 			DockPanel.SetDock(filterIconHost, global::Avalonia.Controls.Dock.Right);
 			headerRow.Children.Add(filterIconHost);
-			headerRow.Children.Add(swap);
+			headerRow.Children.Add(headerContent);
 
 			filterIconHost.PointerPressed += (_, e) => {
 				bool isActive = !string.IsNullOrWhiteSpace(filter.Text)
@@ -205,9 +211,9 @@ namespace ILSpy.Metadata
 				{
 					popup.IsOpen = true;
 				}
-				else if (inputRow is TextBox tb)
+				else if (textBox != null)
 				{
-					tb.Focus();
+					textBox.Focus();
 				}
 				e.Handled = true;
 			};
@@ -228,8 +234,14 @@ namespace ILSpy.Metadata
 				bool active = !string.IsNullOrWhiteSpace(filter.Text)
 					|| (filter.FlagsState != null && !filter.FlagsState.IsEmpty);
 				bool showInput = hovered || active || popupOpen || focusInside;
-				inputRow.IsVisible = showInput;
-				label.IsVisible = !showInput;
+				if (textBox != null)
+				{
+					// Text columns swap label / TextBox in the same slot.
+					textBox.IsVisible = showInput;
+					label.IsVisible = !showInput;
+				}
+				// Flag columns leave label IsVisible alone — it stays on for sort clicks while
+				// the funnel icon owns the popup-open gesture.
 				// Active state swaps the funnel out for an X — icon becomes the "clear filter"
 				// affordance. Funnel uses Fill (closed shape); X is two crossing strokes, so
 				// it has no Fill and instead paints with Stroke. Toggle both modes in lockstep.
@@ -249,12 +261,17 @@ namespace ILSpy.Metadata
 			}
 			root.PointerEntered += (_, _) => { hovered = true; Update(); };
 			root.PointerExited += (_, _) => { hovered = false; Update(); };
-			// Focus tracking: clicking the funnel calls inputRow.Focus(), and the user then
-			// reaches for the (now visible) TextBox. Without keeping the input visible while
-			// it has focus, the pointer leaving the header on the way to the TextBox would
-			// fire PointerExited and hide it again — making the TextBox unclickable.
-			inputRow.GotFocus += (_, _) => { focusInside = true; Update(); };
-			inputRow.LostFocus += (_, _) => { focusInside = false; Update(); };
+			if (textBox != null)
+			{
+				// Focus tracking: clicking the funnel calls textBox.Focus(), and the user
+				// then reaches for the (now visible) TextBox. Without keeping the input
+				// visible while it has focus, the pointer leaving the header on the way to
+				// the TextBox would fire PointerExited and hide it again — making the
+				// TextBox unclickable. Flag columns don't have a TextBox so this hook is
+				// a no-op for them.
+				textBox.GotFocus += (_, _) => { focusInside = true; Update(); };
+				textBox.LostFocus += (_, _) => { focusInside = false; Update(); };
+			}
 			filter.PropertyChanged += (_, _) => Update();
 			if (popup != null)
 			{
@@ -291,23 +308,16 @@ namespace ILSpy.Metadata
 			return box;
 		}
 
-		static (Control Trigger, Popup Popup) BuildFlagsDropdownTrigger(ColumnFilter filter, Type enumType)
+		static Popup BuildFlagsPopup(ColumnFilter filter, Type enumType, Control placementTarget)
 		{
-			// Schema-driven dropdown: FlagsFilterPopup distinguishes mutex sub-ranges
+			// Schema-driven popup: FlagsFilterPopup distinguishes mutex sub-ranges
 			// (multi-select chips) from independent flags (tri-state pills) and drives
-			// ColumnFilter.FlagsState. No accompanying TextBox — the popup is the entire
-			// filter UI for [Flags] columns.
+			// ColumnFilter.FlagsState. The funnel icon owns the open gesture, so this
+			// helper only assembles the Popup itself — no separate trigger button needed.
 			var schema = ILSpy.Metadata.Filters.FlagsSchemaInferer.For(enumType);
 			filter.FlagsState ??= new ILSpy.Metadata.Filters.FilterState(schema);
 			var popupContent = new ILSpy.Views.Filters.FlagsFilterPopup(filter.FlagsState);
 
-			var openButton = new Button {
-				Content = "▾",
-				Padding = new Thickness(4, 0),
-				MinHeight = 0,
-				HorizontalAlignment = HorizontalAlignment.Right,
-				VerticalAlignment = VerticalAlignment.Center,
-			};
 			var popupRoot = new Border {
 				BorderBrush = Brushes.Gray,
 				BorderThickness = new Thickness(1),
@@ -329,14 +339,12 @@ namespace ILSpy.Metadata
 			popupRoot.AddHandler(global::Avalonia.Input.InputElement.PointerWheelChangedEvent,
 				(_, e) => e.Handled = true,
 				handledEventsToo: true);
-			var popup = new Popup {
-				PlacementTarget = openButton,
+			return new Popup {
+				PlacementTarget = placementTarget,
 				Placement = PlacementMode.BottomEdgeAlignedLeft,
 				IsLightDismissEnabled = true,
 				Child = popupRoot,
 			};
-			openButton.Click += (_, _) => popup.IsOpen = true;
-			return (openButton, popup);
 		}
 
 		static DataGridTextColumn BuildTextColumn(PropertyInfo prop, ColumnInfoAttribute? info)
