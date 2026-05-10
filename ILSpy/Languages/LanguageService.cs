@@ -22,6 +22,8 @@ using System.Linq;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using ICSharpCode.ILSpyX;
+
 namespace ILSpy.Languages
 {
 	/// <summary>
@@ -33,10 +35,18 @@ namespace ILSpy.Languages
 	{
 		readonly SettingsService settingsService;
 
+		// Per-language remembered version selection. After flipping C# → IL → C# the user
+		// expects their last C# version back, not a reset to the latest. WPF carries the same
+		// dictionary on its LanguageService for the same reason.
+		readonly Dictionary<Language, LanguageVersion?> versionHistory = new();
+
 		public IReadOnlyList<Language> Languages { get; }
 
 		[ObservableProperty]
 		private Language currentLanguage;
+
+		[ObservableProperty]
+		private LanguageVersion? currentVersion;
 
 		[ImportingConstructor]
 		public LanguageService([ImportMany] IEnumerable<Language> languages, SettingsService settingsService)
@@ -47,6 +57,12 @@ namespace ILSpy.Languages
 			currentLanguage = Languages.FirstOrDefault(l => l.Name == saved)
 				?? Languages.FirstOrDefault(l => l.Name == "C#")
 				?? Languages.First();
+
+			// Restore the last-saved version for the current language; fall back to the latest
+			// available so a fresh install lands on the most useful default.
+			var savedVersionId = settingsService.SessionSettings.LanguageSettings.LanguageVersionId;
+			currentVersion = currentLanguage.LanguageVersions.FirstOrDefault(v => v.Version == savedVersionId)
+				?? currentLanguage.LanguageVersions.LastOrDefault();
 		}
 
 		/// <summary>
@@ -56,10 +72,35 @@ namespace ILSpy.Languages
 		public Language GetLanguage(string? name)
 			=> Languages.FirstOrDefault(l => l.Name == name) ?? Languages.First();
 
-		partial void OnCurrentLanguageChanged(Language value)
+		partial void OnCurrentLanguageChanged(Language? oldValue, Language newValue)
 		{
-			if (value != null)
-				settingsService.SessionSettings.ActiveLanguageName = value.Name;
+			if (newValue == null)
+				return;
+			settingsService.SessionSettings.ActiveLanguageName = newValue.Name;
+
+			// Stash the outgoing language's chosen version so a later flip-back restores it.
+			if (oldValue is { HasLanguageVersions: true })
+				versionHistory[oldValue] = currentVersion;
+
+			// Pull the new language's previously-selected version (or the latest if first time
+			// here, or null if the language doesn't differentiate versions at all).
+			if (newValue.HasLanguageVersions)
+			{
+				CurrentVersion = versionHistory.TryGetValue(newValue, out var remembered)
+					? remembered
+					: newValue.LanguageVersions.LastOrDefault();
+			}
+			else
+			{
+				CurrentVersion = null;
+			}
+		}
+
+		partial void OnCurrentVersionChanged(LanguageVersion? value)
+		{
+			if (currentLanguage is { HasLanguageVersions: true })
+				versionHistory[currentLanguage] = value;
+			settingsService.SessionSettings.LanguageSettings.LanguageVersionId = value?.Version;
 		}
 	}
 }

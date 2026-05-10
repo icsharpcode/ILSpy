@@ -40,6 +40,11 @@ using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX;
 
 using ConversionFlags = ICSharpCode.Decompiler.Output.ConversionFlags;
+// Two unrelated `LanguageVersion` types are in scope: a DTO in ILSpyX (toolbar dropdown
+// items) and an enum in Decompiler.CSharp (the version key the decompiler reads). Alias
+// the enum to disambiguate; the DTO keeps its plain name to match WPF's call sites.
+using CSharpLanguageVersion = ICSharpCode.Decompiler.CSharp.LanguageVersion;
+using LanguageVersionDto = ICSharpCode.ILSpyX.LanguageVersion;
 
 namespace ILSpy.Languages
 {
@@ -50,6 +55,28 @@ namespace ILSpy.Languages
 		public override string Name => "C#";
 
 		public override string FileExtension => ".cs";
+
+		static IReadOnlyList<LanguageVersionDto>? cachedVersions;
+
+		public override IReadOnlyList<LanguageVersionDto> LanguageVersions => cachedVersions ??= new List<LanguageVersionDto> {
+			new(CSharpLanguageVersion.CSharp1.ToString(), "C# 1.0 / VS .NET"),
+			new(CSharpLanguageVersion.CSharp2.ToString(), "C# 2.0 / VS 2005"),
+			new(CSharpLanguageVersion.CSharp3.ToString(), "C# 3.0 / VS 2008"),
+			new(CSharpLanguageVersion.CSharp4.ToString(), "C# 4.0 / VS 2010"),
+			new(CSharpLanguageVersion.CSharp5.ToString(), "C# 5.0 / VS 2012"),
+			new(CSharpLanguageVersion.CSharp6.ToString(), "C# 6.0 / VS 2015"),
+			new(CSharpLanguageVersion.CSharp7.ToString(), "C# 7.0 / VS 2017"),
+			new(CSharpLanguageVersion.CSharp7_1.ToString(), "C# 7.1 / VS 2017.3"),
+			new(CSharpLanguageVersion.CSharp7_2.ToString(), "C# 7.2 / VS 2017.4"),
+			new(CSharpLanguageVersion.CSharp7_3.ToString(), "C# 7.3 / VS 2017.7"),
+			new(CSharpLanguageVersion.CSharp8_0.ToString(), "C# 8.0 / VS 2019"),
+			new(CSharpLanguageVersion.CSharp9_0.ToString(), "C# 9.0 / VS 2019.8"),
+			new(CSharpLanguageVersion.CSharp10_0.ToString(), "C# 10.0 / VS 2022"),
+			new(CSharpLanguageVersion.CSharp11_0.ToString(), "C# 11.0 / VS 2022.4"),
+			new(CSharpLanguageVersion.CSharp12_0.ToString(), "C# 12.0 / VS 2022.8"),
+			new(CSharpLanguageVersion.CSharp13_0.ToString(), "C# 13.0 / VS 2022.12"),
+			new(CSharpLanguageVersion.CSharp14_0.ToString(), "C# 14.0 / VS 2026"),
+		};
 
 		static CSharpAmbience CreateAmbience() => new() {
 			ConversionFlags = ConversionFlags.ShowTypeParameterList | ConversionFlags.PlaceReturnTypeAfterParameterList,
