@@ -1452,4 +1452,34 @@ public class AssemblyTreeTests
 		objectNode.Children.OfType<BaseTypesTreeNode>()
 			.Should().BeEmpty("System.Object has no base types");
 	}
+
+	[AvaloniaTest]
+	public void ExitCommand_Is_Exported_To_File_Menu_With_Resources_E_xit_Header()
+	{
+		// File → Exit must be MEF-discovered and parented to the File menu at MenuOrder=99999
+		// (last entry, mirrors WPF). Headless app lifetime isn't IClassicDesktopStyleApplicationLifetime,
+		// so Execute() is a safe no-op under tests — we don't actually shut down the test runner,
+		// but the metadata + CanExecute path is the regression-worthy surface.
+
+		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
+		var entry = registry.Commands
+			.SingleOrDefault(c => c.Metadata.Header == nameof(Resources.E_xit));
+		((object?)entry).Should().NotBeNull("File → Exit must be exported via [ExportMainMenuCommand]");
+
+		entry!.Metadata.ParentMenuID.Should().Be(nameof(Resources._File),
+			"Exit lives under the File menu");
+		entry.Metadata.MenuCategory.Should().Be(nameof(Resources.Exit),
+			"Exit's MenuCategory pins it to its own separator group");
+		entry.Metadata.MenuOrder.Should().Be(99999,
+			"Exit must be the last entry in the File menu (matches WPF MenuOrder)");
+
+		// Resolve the command, confirm it can execute (SimpleCommand default), and that calling
+		// Execute under the headless lifetime doesn't blow up — the cast to
+		// IClassicDesktopStyleApplicationLifetime returns null in headless and the Shutdown call
+		// is a safe no-op.
+		var command = entry.CreateExport().Value;
+		command.CanExecute(null).Should().BeTrue();
+		command.Invoking(c => c.Execute(null)).Should().NotThrow(
+			"Execute under headless must be a no-op rather than crash");
+	}
 }
