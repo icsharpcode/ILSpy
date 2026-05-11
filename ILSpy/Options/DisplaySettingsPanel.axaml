@@ -1,0 +1,94 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ILSpy.Options"
+             xmlns:res="using:ICSharpCode.ILSpy.Properties"
+             mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="500"
+             x:Class="ILSpy.Options.Panels.DisplaySettingsPanel"
+             x:DataType="vm:DisplaySettingsViewModel">
+	<ScrollViewer Padding="6">
+		<StackPanel Spacing="10">
+			<Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="4">
+				<TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
+				           Text="{x:Static res:Resources.Font}" />
+				<ComboBox Grid.Row="0" Grid.Column="1" MinWidth="200"
+				          ItemsSource="{Binding AvailableFonts}"
+				          SelectedItem="{Binding Settings.SelectedFont, Mode=TwoWay}" />
+				<NumericUpDown Grid.Row="0" Grid.Column="2" Width="100"
+				               Minimum="6" Maximum="72" Increment="1"
+				               Value="{Binding Settings.SelectedFontSize, Mode=TwoWay}" />
+				<Border Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+				        BorderBrush="#FFCCCEDB" BorderThickness="1" Padding="6" Margin="0,2,0,0">
+					<TextBlock Text="The quick brown fox jumps over the lazy dog"
+					           FontFamily="{Binding Settings.SelectedFont}"
+					           FontSize="{Binding Settings.SelectedFontSize}" />
+				</Border>
+			</Grid>
+
+			<HeaderedContentControl Header="{x:Static res:Resources.Indentation}">
+				<StackPanel Spacing="4" Margin="12,4,0,0">
+					<CheckBox IsChecked="{Binding Settings.IndentationUseTabs, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.UseTabsInsteadOfSpaces}" />
+					<Grid ColumnDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="6">
+						<TextBlock Grid.Column="0" VerticalAlignment="Center"
+						           Text="{x:Static res:Resources.IndentSize}" />
+						<NumericUpDown Grid.Column="1" Width="80" Minimum="1" Maximum="16"
+						               Value="{Binding Settings.IndentationSize, Mode=TwoWay}" />
+						<TextBlock Grid.Column="2" VerticalAlignment="Center" Margin="12,0,0,0"
+						           Text="{x:Static res:Resources.TabSize}" />
+						<NumericUpDown Grid.Column="3" Width="80" Minimum="1" Maximum="16"
+						               Value="{Binding Settings.IndentationTabSize, Mode=TwoWay}" />
+					</Grid>
+				</StackPanel>
+			</HeaderedContentControl>
+
+			<HeaderedContentControl Header="{x:Static res:Resources.DecompilationViewOptions}">
+				<StackPanel Spacing="2" Margin="12,4,0,0">
+					<CheckBox IsChecked="{Binding Settings.ShowLineNumbers, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.ShowLineNumbers}" />
+					<CheckBox IsChecked="{Binding Settings.EnableWordWrap, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.EnableWordWrap}" />
+					<CheckBox IsChecked="{Binding Settings.FoldBraces, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.EnableFoldingBlocksBraces}" />
+					<CheckBox IsChecked="{Binding Settings.HighlightMatchingBraces, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.HighlightMatchingBraces}" />
+					<CheckBox IsChecked="{Binding Settings.HighlightCurrentLine, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.HighlightCurrentLine}" />
+					<CheckBox IsChecked="{Binding Settings.ExpandMemberDefinitions, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.ExpandMemberDefinitionsAfterDecompilation}" />
+					<CheckBox IsChecked="{Binding Settings.ExpandUsingDeclarations, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.ExpandUsingDeclarationsAfterDecompilation}" />
+					<CheckBox IsChecked="{Binding Settings.ShowDebugInfo, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.ShowInfoFromDebugSymbolsAvailable}" />
+					<CheckBox IsChecked="{Binding Settings.ShowRawOffsetsAndBytesBeforeInstruction, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.ShowRawOffsetsAndBytesBeforeInstruction}" />
+					<CheckBox IsChecked="{Binding Settings.DecodeCustomAttributeBlobs, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.DecodeCustomAttributeBlobs}" />
+					<CheckBox IsChecked="{Binding Settings.EnableSmoothScrolling, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.EnableSmoothScrolling}" />
+				</StackPanel>
+			</HeaderedContentControl>
+
+			<HeaderedContentControl Header="{x:Static res:Resources.TreeViewOptions}">
+				<StackPanel Spacing="2" Margin="12,4,0,0">
+					<CheckBox IsChecked="{Binding Settings.ShowMetadataTokens, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.ShowMetadataTokens}" />
+					<CheckBox IsChecked="{Binding Settings.ShowMetadataTokensInBase10, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.ShowMetadataTokensInBase10}" />
+					<CheckBox IsChecked="{Binding Settings.HideEmptyMetadataTables, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.HideEmptyMetadataTables}" />
+					<CheckBox IsChecked="{Binding Settings.UseNestedNamespaceNodes, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.UseNestedNamespaceNodes}" />
+				</StackPanel>
+			</HeaderedContentControl>
+
+			<HeaderedContentControl Header="{x:Static res:Resources.Other}">
+				<StackPanel Spacing="2" Margin="12,4,0,0">
+					<CheckBox IsChecked="{Binding Settings.SortResults, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.SortResultsFitness}" />
+				</StackPanel>
+			</HeaderedContentControl>
+		</StackPanel>
+	</ScrollViewer>
+</UserControl>

@@ -1,0 +1,50 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ILSpy.Options"
+             xmlns:panels="using:ILSpy.Options.Panels"
+             xmlns:res="using:ICSharpCode.ILSpy.Properties"
+             mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="500"
+             x:Class="ILSpy.Options.OptionsPageView"
+             x:DataType="vm:OptionsPageModel">
+	<DockPanel LastChildFill="True">
+		<!-- Apply / Reset live in the page footer rather than per-panel. Functionally
+		     identical to a per-panel Apply (every Apply commits the full snapshot);
+		     keeps the buttons accessible regardless of which inner tab is active and
+		     avoids parent-binding gymnastics from inside each panel's DataContext. -->
+		<Border DockPanel.Dock="Bottom" BorderBrush="#FFC8CDD3" BorderThickness="0,1,0,0" Padding="8">
+			<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+				<Button Content="{x:Static res:Resources.ResetToDefaults}"
+				        Command="{Binding ResetCurrentPageCommand}" />
+				<Button Content="{x:Static res:Resources.OK}"
+				        Command="{Binding ApplyCommand}" />
+			</StackPanel>
+		</Border>
+		<TabControl ItemsSource="{Binding Pages}"
+		            SelectedItem="{Binding SelectedPage, Mode=TwoWay}">
+			<TabControl.ItemTemplate>
+				<DataTemplate x:DataType="vm:IOptionPage">
+					<TextBlock Text="{Binding Title}" />
+				</DataTemplate>
+			</TabControl.ItemTemplate>
+			<TabControl.ContentTemplate>
+				<DataTemplate>
+					<ContentControl Content="{Binding}">
+						<ContentControl.DataTemplates>
+							<DataTemplate x:DataType="vm:DecompilerSettingsViewModel">
+								<panels:DecompilerSettingsPanel />
+							</DataTemplate>
+							<DataTemplate x:DataType="vm:DisplaySettingsViewModel">
+								<panels:DisplaySettingsPanel />
+							</DataTemplate>
+							<DataTemplate x:DataType="vm:MiscSettingsViewModel">
+								<panels:MiscSettingsPanel />
+							</DataTemplate>
+						</ContentControl.DataTemplates>
+					</ContentControl>
+				</DataTemplate>
+			</TabControl.ContentTemplate>
+		</TabControl>
+	</DockPanel>
+</UserControl>

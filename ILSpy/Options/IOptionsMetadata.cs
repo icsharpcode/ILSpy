@@ -16,29 +16,18 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
-
-using ICSharpCode.ILSpy.Properties;
-
-using ILSpy.AssemblyTree;
-
-namespace ILSpy.Commands
+namespace ILSpy.Options
 {
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources.SortAssembly_listName), MenuIcon = "Images/Sort", MenuCategory = nameof(Resources.View))]
-	[Shared]
-	[method: ImportingConstructor]
-	sealed class SortAssemblyListCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
+	/// <summary>
+	/// Strongly-typed metadata view for <see cref="IOptionPage"/> exports — <see cref="Order"/>
+	/// drives the tab order inside the Options page (lowest first). Concrete class with a
+	/// parameterless constructor because System.Composition (MEF2) requires that for
+	/// metadata views — the WPF host's same-named interface doesn't translate. The "I"
+	/// prefix is kept to mirror the WPF naming so the call sites read identically across
+	/// platforms.
+	/// </summary>
+	public sealed class IOptionsMetadata
 	{
-		public override void Execute(object? parameter) => assemblyTreeModel.SortAssemblyList();
+		public int Order { get; set; }
 	}
-
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources._CollapseTreeNodes), MenuIcon = "Images/CollapseAll", MenuCategory = nameof(Resources.View))]
-	[Shared]
-	[method: ImportingConstructor]
-	sealed class CollapseAllCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
-	{
-		public override void Execute(object? parameter) => assemblyTreeModel.CollapseAll();
-	}
-
-	// ShowOptionsCommand moved to its own file (Commands/ShowOptionsCommand.cs) — see there.
 }

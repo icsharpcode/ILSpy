@@ -16,29 +16,40 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
+using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.Settings;
 
-using ICSharpCode.ILSpy.Properties;
-
-using ILSpy.AssemblyTree;
-
-namespace ILSpy.Commands
+namespace ILSpy.Options
 {
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources.SortAssembly_listName), MenuIcon = "Images/Sort", MenuCategory = nameof(Resources.View))]
-	[Shared]
-	[method: ImportingConstructor]
-	sealed class SortAssemblyListCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
+	/// <summary>
+	/// In-memory copy of the persisted settings, used by the Options tab so panel edits
+	/// don't reach the live <see cref="ILSpy.SettingsService"/> until the user
+	/// clicks Apply. Inherits the standard <see cref="SettingsServiceBase.GetSettings{T}"/>
+	/// load+subscribe machinery from the shared base — sections materialise on first
+	/// access reading from the same XML root as the parent service, but are independent
+	/// object graphs. <see cref="Save"/> writes those graphs back through the parent's
+	/// <see cref="ISettingsProvider"/> and asks the parent to reload so subscribers see
+	/// the new values.
+	/// </summary>
+	public sealed class SettingsSnapshot : SettingsServiceBase
 	{
-		public override void Execute(object? parameter) => assemblyTreeModel.SortAssemblyList();
-	}
+		readonly SettingsService parent;
 
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources._CollapseTreeNodes), MenuIcon = "Images/CollapseAll", MenuCategory = nameof(Resources.View))]
-	[Shared]
-	[method: ImportingConstructor]
-	sealed class CollapseAllCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
-	{
-		public override void Execute(object? parameter) => assemblyTreeModel.CollapseAll();
-	}
+		public SettingsSnapshot(SettingsService parent, ISettingsProvider spySettings) : base(spySettings)
+		{
+			this.parent = parent;
+		}
 
-	// ShowOptionsCommand moved to its own file (Commands/ShowOptionsCommand.cs) — see there.
+		public void Save()
+		{
+			SpySettings.Update(root => {
+				foreach (var section in sections.Values)
+				{
+					SaveSection(section, root);
+				}
+			});
+
+			parent.Reload();
+		}
+	}
 }

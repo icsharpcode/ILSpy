@@ -62,6 +62,11 @@ namespace ILSpy.Docking
 
 		public IFactory Factory => factory;
 
+		/// <summary>The documents dock — direct access to the carve-out tabs collection.
+		/// Used by commands that need to scan existing tabs for ensure-single-instance
+		/// behaviour (e.g. ShowOptionsCommand).</summary>
+		public IDocumentDock? Documents => factory.Documents;
+
 		public IRelayCommand NavigateBackCommand { get; }
 		public IRelayCommand NavigateForwardCommand { get; }
 		public IRelayCommand<NavigationEntry> NavigateToHistoryCommand { get; }

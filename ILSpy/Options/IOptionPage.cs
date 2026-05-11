@@ -16,29 +16,20 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
-
-using ICSharpCode.ILSpy.Properties;
-
-using ILSpy.AssemblyTree;
-
-namespace ILSpy.Commands
+namespace ILSpy.Options
 {
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources.SortAssembly_listName), MenuIcon = "Images/Sort", MenuCategory = nameof(Resources.View))]
-	[Shared]
-	[method: ImportingConstructor]
-	sealed class SortAssemblyListCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
+	/// <summary>
+	/// Plugin contract for individual panels in the Options tab. Each implementation is
+	/// MEF-discovered via <see cref="ExportOptionPageAttribute"/>; the host calls
+	/// <see cref="Load"/> with a snapshot of the current settings when the tab opens, and
+	/// <see cref="LoadDefaults"/> when the user clicks the per-panel reset button.
+	/// </summary>
+	public interface IOptionPage
 	{
-		public override void Execute(object? parameter) => assemblyTreeModel.SortAssemblyList();
-	}
+		string Title { get; }
 
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources._CollapseTreeNodes), MenuIcon = "Images/CollapseAll", MenuCategory = nameof(Resources.View))]
-	[Shared]
-	[method: ImportingConstructor]
-	sealed class CollapseAllCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
-	{
-		public override void Execute(object? parameter) => assemblyTreeModel.CollapseAll();
-	}
+		void Load(SettingsSnapshot settings);
 
-	// ShowOptionsCommand moved to its own file (Commands/ShowOptionsCommand.cs) — see there.
+		void LoadDefaults();
+	}
 }

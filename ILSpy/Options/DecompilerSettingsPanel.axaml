@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ILSpy.Options"
+             mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="500"
+             x:Class="ILSpy.Options.Panels.DecompilerSettingsPanel"
+             x:DataType="vm:DecompilerSettingsViewModel">
+	<ScrollViewer Padding="6">
+		<ItemsControl ItemsSource="{Binding Settings}">
+			<ItemsControl.ItemTemplate>
+				<DataTemplate x:DataType="vm:DecompilerSettingsGroupViewModel">
+					<Expander Header="{Binding Category}" IsExpanded="True" Margin="0,2">
+						<ItemsControl ItemsSource="{Binding Settings}" Margin="12,4,0,0">
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="vm:DecompilerSettingsItemViewModel">
+									<CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+									          Content="{Binding Description}"
+									          Margin="0,1" />
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+					</Expander>
+				</DataTemplate>
+			</ItemsControl.ItemTemplate>
+		</ItemsControl>
+	</ScrollViewer>
+</UserControl>

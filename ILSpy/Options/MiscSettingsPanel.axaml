@@ -1,0 +1,16 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ILSpy.Options"
+             xmlns:res="using:ICSharpCode.ILSpy.Properties"
+             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="300"
+             x:Class="ILSpy.Options.Panels.MiscSettingsPanel"
+             x:DataType="vm:MiscSettingsViewModel">
+	<StackPanel Spacing="6" Margin="6">
+		<CheckBox IsChecked="{Binding Settings.AllowMultipleInstances, Mode=TwoWay}"
+		          Content="{x:Static res:Resources.AllowMultipleInstances}" />
+		<CheckBox IsChecked="{Binding Settings.LoadPreviousAssemblies, Mode=TwoWay}"
+		          Content="Load previously open assemblies on startup" />
+	</StackPanel>
+</UserControl>

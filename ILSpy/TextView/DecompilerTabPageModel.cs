@@ -262,9 +262,15 @@ namespace ILSpy.TextView
 
 			try
 			{
+				// Pull a fresh clone of the live DecompilerSettings so Options-panel commits
+				// reach the next decompile without restart. Cloning isolates this run's
+				// settings from concurrent edits in an open Options tab.
+				var decompilerSettings = TryGetLiveDecompilerSettings();
 				var (output, _) = await Task.Run(() => {
 					var output = new AvaloniaEditTextOutput();
-					var options = new DecompilationOptions { CancellationToken = cts.Token };
+					var options = decompilerSettings != null
+						? new DecompilationOptions(decompilerSettings) { CancellationToken = cts.Token }
+						: new DecompilationOptions { CancellationToken = cts.Token };
 					try
 					{
 						for (int i = 0; i < nodes.Count; i++)
@@ -369,6 +375,21 @@ namespace ILSpy.TextView
 				if (token.IsCancellationRequested || !IsDecompiling)
 					return;
 				Title = ComposeSpinnerTitle(frame++, ComposeBaseTitle());
+			}
+		}
+
+		// Pulls the live DecompilerSettings via MEF and returns a clone for this run. MEF
+		// resolve is wrapped in try/catch so design-time / minimal test hosts that bypass
+		// composition fall back to default settings rather than throwing.
+		static ICSharpCode.Decompiler.DecompilerSettings? TryGetLiveDecompilerSettings()
+		{
+			try
+			{
+				return AppEnv.AppComposition.Current.GetExport<SettingsService>().DecompilerSettings.Clone();
+			}
+			catch
+			{
+				return null;
 			}
 		}
 	}

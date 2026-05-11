@@ -16,10 +16,13 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Composition;
 
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Settings;
+
+using ILSpy.Options;
 
 namespace ILSpy
 {
@@ -33,12 +36,49 @@ namespace ILSpy
 
 		public SessionSettings SessionSettings => GetSettings<SessionSettings>();
 
+		public DecompilerSettings DecompilerSettings => GetSettings<DecompilerSettings>();
+
+		public DisplaySettings DisplaySettings => GetSettings<DisplaySettings>();
+
+		public MiscSettings MiscSettings => GetSettings<MiscSettings>();
+
 		AssemblyListManager? assemblyListManager;
 		public AssemblyListManager AssemblyListManager => assemblyListManager ??= new(SpySettings);
 
+		/// <summary>Fired after <see cref="Reload"/> propagates fresh values from disk into the
+		/// live section instances. Subscribers (e.g. the assembly tree, the decompiler view)
+		/// observe this to refresh derived UI state.</summary>
+		public event EventHandler? SettingsChanged;
+
+		/// <summary>
+		/// Creates a parallel <see cref="SettingsSnapshot"/> bound to the same XML root. The
+		/// snapshot returns fresh, independent section instances on first access — Options
+		/// panels mutate those copies so the live service stays untouched until
+		/// <see cref="SettingsSnapshot.Save"/>.
+		/// </summary>
+		public SettingsSnapshot CreateSnapshot() => new(this, SpySettings);
+
+		/// <summary>
+		/// Reloads every materialised section from <see cref="SpySettings"/>. Called after a
+		/// snapshot commits so the live instances pick up the just-written values without
+		/// rebuilding the dictionary (subscribers see PropertyChanged for every changed field).
+		/// </summary>
+		public void Reload()
+		{
+			foreach (var section in sections.Values)
+			{
+				var element = SpySettings[section.SectionName];
+				section.LoadFromXml(element);
+			}
+			SettingsChanged?.Invoke(this, EventArgs.Empty);
+		}
+
 		public void Save()
 		{
-			SpySettings.Update(root => SaveSection(SessionSettings, root));
+			SpySettings.Update(root => {
+				foreach (var section in sections.Values)
+					SaveSection(section, root);
+			});
 		}
 	}
 }

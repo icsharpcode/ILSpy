@@ -21,6 +21,7 @@ using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
+using ILSpy.Options;
 using ILSpy.TextView;
 using ILSpy.ViewModels;
 
@@ -28,21 +29,23 @@ namespace ILSpy.Views
 {
 	/// <summary>
 	/// View for <see cref="ContentTabPage"/>. Toggles which pre-realised inner view shows
-	/// (decompiler text or metadata grid) based on <see cref="ContentTabPage.Content"/>'s
-	/// runtime type — both inner views live in the visual tree from construction time so
-	/// the dock's visual swap is just a visibility flip.
+	/// (decompiler text, metadata grid, or Options page) based on
+	/// <see cref="ContentTabPage.Content"/>'s runtime type — all inner views live in the
+	/// visual tree from construction time so the dock's visual swap is just a visibility flip.
 	/// </summary>
 	public partial class ContentTabPageView : UserControl
 	{
 		ContentTabPage? boundPage;
 		DecompilerTextView decompilerView = null!;
 		MetadataTablePage metadataView = null!;
+		OptionsPageView optionsView = null!;
 
 		public ContentTabPageView()
 		{
 			InitializeComponent();
 			decompilerView = this.FindControl<DecompilerTextView>("DecompilerView")!;
 			metadataView = this.FindControl<MetadataTablePage>("MetadataView")!;
+			optionsView = this.FindControl<OptionsPageView>("OptionsView")!;
 			DataContextChanged += (_, _) => RebindPage();
 		}
 
@@ -88,6 +91,17 @@ namespace ILSpy.Views
 			{
 				metadataView.IsVisible = false;
 				metadataView.DataContext = null;
+			}
+
+			if (content is OptionsPageModel options)
+			{
+				optionsView.DataContext = options;
+				optionsView.IsVisible = true;
+			}
+			else
+			{
+				optionsView.IsVisible = false;
+				optionsView.DataContext = null;
 			}
 		}
 	}

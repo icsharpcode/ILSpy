@@ -16,29 +16,18 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
+using global::Avalonia.Controls;
+using global::Avalonia.Markup.Xaml;
 
-using ICSharpCode.ILSpy.Properties;
-
-using ILSpy.AssemblyTree;
-
-namespace ILSpy.Commands
+namespace ILSpy.Options.Panels
 {
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources.SortAssembly_listName), MenuIcon = "Images/Sort", MenuCategory = nameof(Resources.View))]
-	[Shared]
-	[method: ImportingConstructor]
-	sealed class SortAssemblyListCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
+	public partial class DecompilerSettingsPanel : UserControl
 	{
-		public override void Execute(object? parameter) => assemblyTreeModel.SortAssemblyList();
-	}
+		public DecompilerSettingsPanel()
+		{
+			InitializeComponent();
+		}
 
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources._CollapseTreeNodes), MenuIcon = "Images/CollapseAll", MenuCategory = nameof(Resources.View))]
-	[Shared]
-	[method: ImportingConstructor]
-	sealed class CollapseAllCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
-	{
-		public override void Execute(object? parameter) => assemblyTreeModel.CollapseAll();
+		void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 	}
-
-	// ShowOptionsCommand moved to its own file (Commands/ShowOptionsCommand.cs) — see there.
 }

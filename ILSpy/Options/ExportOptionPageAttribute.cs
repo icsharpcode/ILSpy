@@ -16,29 +16,24 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Composition;
 
-using ICSharpCode.ILSpy.Properties;
-
-using ILSpy.AssemblyTree;
-
-namespace ILSpy.Commands
+namespace ILSpy.Options
 {
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources.SortAssembly_listName), MenuIcon = "Images/Sort", MenuCategory = nameof(Resources.View))]
-	[Shared]
-	[method: ImportingConstructor]
-	sealed class SortAssemblyListCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
+	/// <summary>
+	/// Marks a class as an Options-tab panel. MEF discovers all such exports under the
+	/// shared contract "OptionPages" with metadata <see cref="IOptionsMetadata"/>; the
+	/// Options host orders them by <see cref="Order"/> and renders them as inner tabs.
+	/// </summary>
+	[MetadataAttribute]
+	[AttributeUsage(AttributeTargets.Class)]
+	public sealed class ExportOptionPageAttribute() : ExportAttribute("OptionPages", typeof(IOptionPage))
 	{
-		public override void Execute(object? parameter) => assemblyTreeModel.SortAssemblyList();
+		// Public property is reflected by System.Composition into the IOptionsMetadata
+		// metadata view (matched by name). The metadata view is a concrete class in this
+		// MEF host, so there's no "implements IOptionsMetadata" — the wire-up is purely
+		// nominal property matching.
+		public int Order { get; set; }
 	}
-
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources._CollapseTreeNodes), MenuIcon = "Images/CollapseAll", MenuCategory = nameof(Resources.View))]
-	[Shared]
-	[method: ImportingConstructor]
-	sealed class CollapseAllCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
-	{
-		public override void Execute(object? parameter) => assemblyTreeModel.CollapseAll();
-	}
-
-	// ShowOptionsCommand moved to its own file (Commands/ShowOptionsCommand.cs) — see there.
 }

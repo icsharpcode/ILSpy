@@ -16,29 +16,33 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
+using System.Xml.Linq;
+
+using CommunityToolkit.Mvvm.ComponentModel;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.AssemblyTree;
-
-namespace ILSpy.Commands
+namespace ILSpy.Options
 {
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources.SortAssembly_listName), MenuIcon = "Images/Sort", MenuCategory = nameof(Resources.View))]
-	[Shared]
-	[method: ImportingConstructor]
-	sealed class SortAssemblyListCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
+	/// <summary>Viewmodel for the Misc panel. WPF additionally exposes a shell-integration
+	/// command (Add/Remove "Open with ILSpy" registry keys); deferred for v1 since
+	/// Avalonia's WinExe doesn't register file associations yet.</summary>
+	[ExportOptionPage(Order = 30)]
+	public sealed partial class MiscSettingsViewModel : ObservableObject, IOptionPage
 	{
-		public override void Execute(object? parameter) => assemblyTreeModel.SortAssemblyList();
-	}
+		public string Title => Resources.Misc;
 
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources._CollapseTreeNodes), MenuIcon = "Images/CollapseAll", MenuCategory = nameof(Resources.View))]
-	[Shared]
-	[method: ImportingConstructor]
-	sealed class CollapseAllCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
-	{
-		public override void Execute(object? parameter) => assemblyTreeModel.CollapseAll();
-	}
+		[ObservableProperty]
+		MiscSettings settings = null!;
 
-	// ShowOptionsCommand moved to its own file (Commands/ShowOptionsCommand.cs) — see there.
+		public void Load(SettingsSnapshot snapshot)
+		{
+			Settings = snapshot.GetSettings<MiscSettings>();
+		}
+
+		public void LoadDefaults()
+		{
+			Settings.LoadFromXml(new XElement("MiscSettings"));
+		}
+	}
 }
