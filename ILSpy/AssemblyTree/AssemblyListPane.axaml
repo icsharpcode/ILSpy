@@ -24,12 +24,12 @@
 	          HeadersVisibility="None"
 	          HierarchicalRowsEnabled="True"
 	          GridLinesVisibility="None"
-	          IsReadOnly="True"
 	          CanUserResizeColumns="False"
 	          SelectionMode="Extended"
 	          SelectionChanged="OnTreeGridSelectionChanged">
 		<DataGrid.Columns>
 			<DataGridHierarchicalColumn Header="Name" Width="*"
+			                            IsReadOnly="True"
 			                            x:CompileBindings="False"
 			                            Binding="{Binding Item}">
 				<DataGridHierarchicalColumn.CellTemplate>

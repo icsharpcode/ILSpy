@@ -24,6 +24,7 @@ using System.Linq;
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.DataGridDragDrop;
 using Avalonia.Controls.DataGridHierarchical;
 using Avalonia.Input;
 using Avalonia.Threading;
@@ -72,6 +73,14 @@ namespace ILSpy.AssemblyTree
 			TreeGrid.AddHandler(PointerPressedEvent, OnTreeGridPointerPressed,
 				global::Avalonia.Interactivity.RoutingStrategies.Bubble,
 				handledEventsToo: true);
+
+			// Drag-reorder of top-level assembly rows. The actual reorder lives in
+			// AssemblyRowDropHandler (wired to the live AssemblyList in BindTree); the
+			// RowDragStarting hook here just cancels drags that originate from non-eligible
+			// rows so the user never even sees a pickup cursor on a type or namespace.
+			TreeGrid.CanUserReorderRows = true;
+			TreeGrid.RowDragHandle = DataGridRowDragHandle.Row;
+			TreeGrid.RowDragStarting += OnTreeGridRowDragStarting;
 
 			// Context-menu host. Tests bypass this and re-attach via AttachContextMenu so they
 			// can inject stub entries — at app-runtime we resolve the registry through the
@@ -457,6 +466,27 @@ namespace ILSpy.AssemblyTree
 			hierarchicalModel.SetRoots(root.Children);
 
 			TreeGrid.HierarchicalModel = hierarchicalModel;
+
+			// Re-target the drop handler whenever the active AssemblyList changes (the user
+			// can switch lists from the dropdown), so the next reorder mutates the right list.
+			if (root is AssemblyListTreeNode listRoot)
+				TreeGrid.RowDropHandler = new AssemblyRowDropHandler(listRoot.AssemblyList);
+		}
+
+		void OnTreeGridRowDragStarting(object? sender, DataGridRowDragStartingEventArgs e)
+		{
+			// Refuse the gesture for anything other than a top-level AssemblyTreeNode owned by
+			// the user (not a nuget-nested entry). Cancelling here stops the drag visuals from
+			// ever showing — the user gets immediate feedback that the row is not movable.
+			foreach (var item in e.Items)
+			{
+				if (!AssemblyRowDropHandler.TryUnwrapTopLevelAssemblyNode(item, out var node)
+					|| node.PackageEntry != null)
+				{
+					e.Cancel = true;
+					return;
+				}
+			}
 		}
 	}
 }
