@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Xml.Linq;
 
@@ -47,9 +48,31 @@ namespace ILSpy.Options
 			.OrderBy(n => n, System.StringComparer.OrdinalIgnoreCase)
 			.ToArray();
 
-		public void Load(SettingsSnapshot snapshot)
+		/// <summary>
+		/// Derived FontFamily for the preview TextBlock. Avalonia's runtime binding pipeline
+		/// doesn't auto-coerce a <c>string</c> source to <see cref="FontFamily"/> (the implicit
+		/// conversion fires at XAML parse time, not on binding evaluation), so the preview
+		/// goes through this property — recomputed on every <see cref="DisplaySettings.SelectedFont"/>
+		/// change via the PropertyChanged subscription in <see cref="Load"/>.
+		/// </summary>
+		public FontFamily CurrentFontFamily =>
+			Settings != null && !string.IsNullOrEmpty(Settings.SelectedFont)
+				? new FontFamily(Settings.SelectedFont)
+				: FontFamily.Default;
+
+		public void Load(SettingsService service)
 		{
-			Settings = snapshot.GetSettings<DisplaySettings>();
+			if (Settings != null)
+				Settings.PropertyChanged -= OnSettingsPropertyChanged;
+			Settings = service.DisplaySettings;
+			Settings.PropertyChanged += OnSettingsPropertyChanged;
+			OnPropertyChanged(nameof(CurrentFontFamily));
+		}
+
+		void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(DisplaySettings.SelectedFont))
+				OnPropertyChanged(nameof(CurrentFontFamily));
 		}
 
 		public void LoadDefaults()

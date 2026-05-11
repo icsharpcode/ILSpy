@@ -21,14 +21,17 @@ namespace ILSpy.Options
 	/// <summary>
 	/// Plugin contract for individual panels in the Options tab. Each implementation is
 	/// MEF-discovered via <see cref="ExportOptionPageAttribute"/>; the host calls
-	/// <see cref="Load"/> with a snapshot of the current settings when the tab opens, and
-	/// <see cref="LoadDefaults"/> when the user clicks the per-panel reset button.
+	/// <see cref="Load"/> with the live settings service when the tab opens, and
+	/// <see cref="LoadDefaults"/> when the user clicks the per-panel reset button. Panels
+	/// bind directly to the live section instances — every toggle is immediately visible
+	/// to other consumers (the decompiler view, the tree, etc.). XML persistence rides on
+	/// <see cref="ILSpy.SettingsService.Save"/> at app exit.
 	/// </summary>
 	public interface IOptionPage
 	{
 		string Title { get; }
 
-		void Load(SettingsSnapshot settings);
+		void Load(SettingsService settings);
 
 		void LoadDefaults();
 	}

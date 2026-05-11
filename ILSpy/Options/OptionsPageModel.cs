@@ -28,30 +28,31 @@ using ICSharpCode.ILSpy.Properties;
 namespace ILSpy.Options
 {
 	/// <summary>
-	/// Content viewmodel for the Options document tab. Wraps a <see cref="SettingsSnapshot"/>,
-	/// MEF-discovered <see cref="IOptionPage"/> panels (ordered by <see cref="IOptionsMetadata.Order"/>),
-	/// and the page-level Apply / Reset commands the panel views bind to.
+	/// Content viewmodel for the Options document tab. Wraps the live
+	/// <see cref="SettingsService"/>, MEF-discovered <see cref="IOptionPage"/> panels
+	/// (ordered by <see cref="IOptionsMetadata.Order"/>), and a Reset command that
+	/// rolls the currently-selected panel back to its built-in defaults.
+	/// <para>
+	/// Panels bind two-way to the live section instances, so every toggle takes effect
+	/// immediately — there's no Apply step. XML persistence rides on
+	/// <see cref="SettingsService.Save"/> at app exit.
+	/// </para>
 	/// </summary>
 	public sealed partial class OptionsPageModel : ObservableObject
 	{
-		readonly SettingsSnapshot snapshot;
-
 		public OptionsPageModel(SettingsService settingsService, IEnumerable<ExportFactory<IOptionPage, IOptionsMetadata>> pageFactories)
 		{
-			snapshot = settingsService.CreateSnapshot();
-
 			Pages = pageFactories
 				.OrderBy(f => f.Metadata.Order)
 				.Select(f => f.CreateExport().Value)
 				.ToArray();
 
 			foreach (var page in Pages)
-				page.Load(snapshot);
+				page.Load(settingsService);
 
 			selectedPage = Pages.FirstOrDefault();
 			Title = Resources._Options;
 
-			ApplyCommand = new RelayCommand(Apply);
 			ResetCurrentPageCommand = new RelayCommand(ResetCurrentPage);
 		}
 
@@ -67,11 +68,7 @@ namespace ILSpy.Options
 		[ObservableProperty]
 		IOptionPage? selectedPage;
 
-		public IRelayCommand ApplyCommand { get; }
-
 		public IRelayCommand ResetCurrentPageCommand { get; }
-
-		void Apply() => snapshot.Save();
 
 		void ResetCurrentPage() => SelectedPage?.LoadDefaults();
 	}

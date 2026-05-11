@@ -35,9 +35,9 @@ namespace ILSpy.Options
 		[ObservableProperty]
 		MiscSettings settings = null!;
 
-		public void Load(SettingsSnapshot snapshot)
+		public void Load(SettingsService service)
 		{
-			Settings = snapshot.GetSettings<MiscSettings>();
+			Settings = service.MiscSettings;
 		}
 
 		public void LoadDefaults()

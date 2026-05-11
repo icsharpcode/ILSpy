@@ -128,12 +128,13 @@ public class OptionsTabTests
 	}
 
 	[AvaloniaTest]
-	public async Task Apply_Writes_Snapshot_Through_To_Live_DecompilerSettings()
+	public void Panel_Edits_Take_Effect_Immediately_On_Live_DecompilerSettings()
 	{
-		// Snapshot pattern: changes in the panel's settings instance don't reach the live
-		// service until Apply. After Apply, SettingsService.DecompilerSettings reflects the
-		// new value. Toggling a property on the snapshot copy alone shouldn't affect the
-		// live instance until Apply is called.
+		// Live-binding architecture (no snapshot): toggling a checkbox in the Decompiler
+		// panel mutates the live SettingsService.DecompilerSettings instance directly. No
+		// Apply step. Subscribers to DecompilerSettings.PropertyChanged see the change
+		// immediately; the next decompile pulls the new value via Clone() in
+		// DecompilerTabPageModel.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var settings = AppComposition.Current.GetExport<SettingsService>();
@@ -149,26 +150,17 @@ public class OptionsTabTests
 			.OfType<ContentTabPage>().First(t => t.Content is OptionsPageModel).Content!;
 		var decompilerPage = (DecompilerSettingsViewModel)model.Pages[0];
 
-		// Find the UsingDeclarations item in the reflection-built tree and flip it.
+		// Flip UsingDeclarations through the panel viewmodel.
 		var usingDecl = decompilerPage.Settings
 			.SelectMany(g => g.Settings)
 			.First(s => s.Property.Name == nameof(global::ICSharpCode.Decompiler.DecompilerSettings.UsingDeclarations));
 		usingDecl.IsEnabled = !liveBefore;
 
-		// Live service unaffected so far — only the snapshot copy changed.
-		// Snapshot edits must not leak into the live service before Apply.
-		settings.DecompilerSettings.UsingDeclarations.Should().Be(liveBefore);
-
-		// Apply — flushes snapshot to XML and reloads sections so live values match.
-		model.ApplyCommand.Execute(null);
-		await Task.Yield();
-
-		// After Apply, the live service must see the panel's toggled value.
+		// Live service must see the change immediately — no Apply needed.
 		settings.DecompilerSettings.UsingDeclarations.Should().Be(!liveBefore);
 
-		// Clean-up: restore the original so the persisted XML doesn't pollute later tests.
+		// Clean-up: restore the original so the next test sees a clean slate.
 		usingDecl.IsEnabled = liveBefore;
-		model.ApplyCommand.Execute(null);
 	}
 
 	[AvaloniaTest]

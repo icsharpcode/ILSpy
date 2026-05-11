@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Composition;
 
 using ICSharpCode.ILSpyX;
@@ -45,34 +44,11 @@ namespace ILSpy
 		AssemblyListManager? assemblyListManager;
 		public AssemblyListManager AssemblyListManager => assemblyListManager ??= new(SpySettings);
 
-		/// <summary>Fired after <see cref="Reload"/> propagates fresh values from disk into the
-		/// live section instances. Subscribers (e.g. the assembly tree, the decompiler view)
-		/// observe this to refresh derived UI state.</summary>
-		public event EventHandler? SettingsChanged;
-
 		/// <summary>
-		/// Creates a parallel <see cref="SettingsSnapshot"/> bound to the same XML root. The
-		/// snapshot returns fresh, independent section instances on first access — Options
-		/// panels mutate those copies so the live service stays untouched until
-		/// <see cref="SettingsSnapshot.Save"/>.
+		/// Persists every materialised section to disk. Options panels bind two-way to the
+		/// live instances so no in-memory commit is needed — <see cref="Save"/> just flushes
+		/// current state to XML. Called at app-exit from <c>App.axaml.cs</c>.
 		/// </summary>
-		public SettingsSnapshot CreateSnapshot() => new(this, SpySettings);
-
-		/// <summary>
-		/// Reloads every materialised section from <see cref="SpySettings"/>. Called after a
-		/// snapshot commits so the live instances pick up the just-written values without
-		/// rebuilding the dictionary (subscribers see PropertyChanged for every changed field).
-		/// </summary>
-		public void Reload()
-		{
-			foreach (var section in sections.Values)
-			{
-				var element = SpySettings[section.SectionName];
-				section.LoadFromXml(element);
-			}
-			SettingsChanged?.Invoke(this, EventArgs.Empty);
-		}
-
 		public void Save()
 		{
 			SpySettings.Update(root => {

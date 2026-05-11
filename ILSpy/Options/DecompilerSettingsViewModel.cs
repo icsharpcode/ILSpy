@@ -58,9 +58,9 @@ namespace ILSpy.Options
 
 		DecompilerSettings decompilerSettings = null!;
 
-		public void Load(SettingsSnapshot snapshot)
+		public void Load(SettingsService settings)
 		{
-			decompilerSettings = snapshot.GetSettings<DecompilerSettings>();
+			decompilerSettings = settings.DecompilerSettings;
 			LoadSettings();
 		}
 
