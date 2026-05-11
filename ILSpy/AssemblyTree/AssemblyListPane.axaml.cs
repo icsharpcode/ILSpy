@@ -553,9 +553,10 @@ namespace ILSpy.AssemblyTree
 		/// <summary>
 		/// Opens each path through <see cref="AssemblyList.OpenAssembly(string, bool)"/> and
 		/// — when a top-level <paramref name="target"/> row is supplied — moves the opened set
-		/// to the slot indicated by <paramref name="position"/>. Mirrors the WPF
-		/// <c>AssemblyListTreeNode.Drop</c> code path so paths arriving from Explorer behave
-		/// the same as <c>File → Open</c> with a follow-up reorder.
+		/// to the slot indicated by <paramref name="position"/>. Selects the newly opened
+		/// nodes so the decompiler view starts rendering them immediately (forcing the
+		/// LoadAsync task to surface). Mirrors the WPF <c>AssemblyListTreeNode.Drop</c> code
+		/// path.
 		/// </summary>
 		internal void HandleFileDrop(IReadOnlyList<string> files,
 			AssemblyTreeNode? target, DataGridRowDropPosition position)
@@ -571,17 +572,39 @@ namespace ILSpy.AssemblyTree
 				if (asm != null && !opened.Contains(asm))
 					opened.Add(asm);
 			}
-			if (opened.Count == 0 || target == null)
+			if (opened.Count == 0)
 				return;
 
-			var ordering = list.GetAssemblies();
-			int targetIndex = Array.IndexOf(ordering, target.LoadedAssembly);
-			if (targetIndex < 0)
+			if (target != null)
+			{
+				var ordering = list.GetAssemblies();
+				int targetIndex = Array.IndexOf(ordering, target.LoadedAssembly);
+				if (targetIndex >= 0)
+				{
+					int insertIndex = position == DataGridRowDropPosition.After
+						? targetIndex + 1
+						: targetIndex;
+					list.Move(opened.ToArray(), insertIndex);
+				}
+			}
+
+			// Replace the selection with the freshly-opened nodes (resolved AFTER any Move
+			// above — Move recreates AssemblyTreeNode wrappers, so a pre-Move reference would
+			// be stale). The selection drives the decompiler view to render the assembly,
+			// which forces the underlying LoadAsync task to surface.
+			var listRoot = model.Root as AssemblyListTreeNode;
+			if (listRoot == null)
 				return;
-			int insertIndex = position == DataGridRowDropPosition.After
-				? targetIndex + 1
-				: targetIndex;
-			list.Move(opened.ToArray(), insertIndex);
+			var newNodes = opened
+				.Select(listRoot.FindAssemblyNode)
+				.Where(n => n != null)
+				.Cast<SharpTreeNode>()
+				.ToList();
+			if (newNodes.Count == 0)
+				return;
+			model.SelectedItems.Clear();
+			foreach (var node in newNodes)
+				model.SelectedItems.Add(node);
 		}
 	}
 }

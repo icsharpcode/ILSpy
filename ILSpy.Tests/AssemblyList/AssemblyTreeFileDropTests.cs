@@ -152,6 +152,42 @@ public class AssemblyTreeFileDropTests
 	}
 
 	[AvaloniaTest]
+	public async Task File_Drop_Selects_The_Newly_Opened_Assembly_Nodes()
+	{
+		// Selecting the freshly-opened assemblies after a drop mirrors WPF's
+		// AssemblyListTreeNode.Drop (which ends in AssemblyTreeModel.SelectNodes).
+		// Without this, the user gets no visual confirmation that the drop took, and
+		// the decompiler view stays parked on whatever was selected before.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var list = vm.AssemblyTreeModel.AssemblyList!;
+
+		var tempPath = CloneCoreLibToTemp();
+		try
+		{
+			pane.HandleFileDrop(new[] { tempPath }, target: null,
+				DataGridRowDropPosition.After);
+
+			var newAsm = list.GetAssemblies()
+				.First(a => string.Equals(a.FileName, tempPath, StringComparison.OrdinalIgnoreCase));
+			var expectedNode = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>()
+				.First(n => n.LoadedAssembly == newAsm);
+
+			vm.AssemblyTreeModel.SelectedItems.Should().HaveCount(1);
+			ReferenceEquals(vm.AssemblyTreeModel.SelectedItems[0], expectedNode)
+				.Should().BeTrue();
+		}
+		finally
+		{
+			TryUnload(list, tempPath);
+			TryDelete(tempPath);
+		}
+	}
+
+	[AvaloniaTest]
 	public async Task File_Drop_With_A_Path_That_Cannot_Be_Opened_Does_Not_Mutate_The_List()
 	{
 		// AssemblyList.OpenAssembly returns null for non-existent / non-PE paths; the
