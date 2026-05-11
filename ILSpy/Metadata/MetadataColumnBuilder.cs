@@ -121,9 +121,10 @@ namespace ILSpy.Metadata
 		{
 			// Header is a single row: the funnel icon docks right; the remaining space is
 			// shared by the column-name label and the filter input, with exactly one of
-			// them visible at a time. Replacing the label with the input on hover (or
-			// while the filter is set / a popup is open) keeps the header height constant —
-			// no two-row stack that would push the data rows down. For [Flags] columns the
+			// them visible at a time. The input only takes over the slot when the user
+			// asks for it — clicking the funnel focuses the textbox, after which it stays
+			// visible while focused or while a filter is set — so brushing the cursor
+			// across the column name does not swap the label out. For [Flags] columns the
 			// input is just the dropdown trigger; the popup is parked invisibly so it can
 			// remain anchored to the trigger button.
 			var label = new TextBlock {
@@ -181,13 +182,18 @@ namespace ILSpy.Metadata
 			}
 			else
 			{
-				// Text columns: hover/focus reveal the TextBox in the same slot as the label.
-				// The label hides while the input is shown so the column header stays one row.
+				// Text columns: focusing the TextBox (via funnel click) or having an active
+				// filter reveals it in the same slot as the label; the label hides while the
+				// input is shown so the column header stays one row. The TextBox stays in
+				// the layout pass at rest (Opacity=0 instead of IsVisible=false) so the
+				// header row's height is pinned to the larger of the two children — without
+				// this, showing the TextBox would grow the row and bounce the layout.
 				textBox = BuildFilterTextBox(filter);
-				textBox.IsVisible = false;
+				textBox.Opacity = 0;
+				textBox.IsHitTestVisible = false;
 				var swap = new Panel { HorizontalAlignment = HorizontalAlignment.Stretch };
-				swap.Children.Add(label);
 				swap.Children.Add(textBox);
+				swap.Children.Add(label);
 				headerContent = swap;
 			}
 
@@ -228,18 +234,20 @@ namespace ILSpy.Metadata
 			if (popup != null)
 				root.Children.Add(popup);
 
-			bool hovered = false;
 			bool popupOpen = false;
 			bool focusInside = false;
 			void Update()
 			{
 				bool active = !string.IsNullOrWhiteSpace(filter.Text)
 					|| (filter.FlagsState != null && !filter.FlagsState.IsEmpty);
-				bool showInput = hovered || active || popupOpen || focusInside;
+				bool showInput = active || popupOpen || focusInside;
 				if (textBox != null)
 				{
-					// Text columns swap label / TextBox in the same slot.
-					textBox.IsVisible = showInput;
+					// Text columns swap label / TextBox in the same slot. The TextBox stays in
+					// the layout pass either way (see swap construction above); we toggle its
+					// Opacity + hit-test instead of IsVisible so the row height is stable.
+					textBox.Opacity = showInput ? 1 : 0;
+					textBox.IsHitTestVisible = showInput;
 					label.IsVisible = !showInput;
 				}
 				// Flag columns leave label IsVisible alone — it stays on for sort clicks while
@@ -264,16 +272,12 @@ namespace ILSpy.Metadata
 					filterIcon.Stroke = null;
 				}
 			}
-			root.PointerEntered += (_, _) => { hovered = true; Update(); };
-			root.PointerExited += (_, _) => { hovered = false; Update(); };
 			if (textBox != null)
 			{
-				// Focus tracking: clicking the funnel calls textBox.Focus(), and the user
-				// then reaches for the (now visible) TextBox. Without keeping the input
-				// visible while it has focus, the pointer leaving the header on the way to
-				// the TextBox would fire PointerExited and hide it again — making the
-				// TextBox unclickable. Flag columns don't have a TextBox so this hook is
-				// a no-op for them.
+				// Focus tracking: clicking the funnel calls textBox.Focus(), so we need to
+				// react to that to swap label → input. The TextBox also has to stay visible
+				// until focus moves elsewhere (or a filter is set). Flag columns don't have
+				// a TextBox so this hook is a no-op for them.
 				textBox.GotFocus += (_, _) => { focusInside = true; Update(); };
 				textBox.LostFocus += (_, _) => { focusInside = false; Update(); };
 			}
