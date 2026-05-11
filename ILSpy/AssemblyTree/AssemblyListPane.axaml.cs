@@ -27,8 +27,11 @@ using Avalonia.Controls;
 using Avalonia.Controls.DataGridDragDrop;
 using Avalonia.Controls.DataGridHierarchical;
 using Avalonia.Input;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+
+using ICSharpCode.ILSpyX;
 
 using ICSharpCode.ILSpyX.TreeView;
 
@@ -81,6 +84,13 @@ namespace ILSpy.AssemblyTree
 			TreeGrid.CanUserReorderRows = true;
 			TreeGrid.RowDragHandle = DataGridRowDragHandle.Row;
 			TreeGrid.RowDragStarting += OnTreeGridRowDragStarting;
+
+			// Explorer → tree file drop: ProDataGrid's row-drag pipeline doesn't see external
+			// drops, so we wire Avalonia's standard DragDrop pipeline alongside it. Drops with
+			// a target row honour Before/After to control where the opened assembly lands.
+			DragDrop.SetAllowDrop(TreeGrid, true);
+			TreeGrid.AddHandler(DragDrop.DragOverEvent, OnTreeGridDragOver);
+			TreeGrid.AddHandler(DragDrop.DropEvent, OnTreeGridDrop);
 
 			// Context-menu host. Tests bypass this and re-attach via AttachContextMenu so they
 			// can inject stub entries — at app-runtime we resolve the registry through the
@@ -487,6 +497,91 @@ namespace ILSpy.AssemblyTree
 					return;
 				}
 			}
+		}
+
+		void OnTreeGridDragOver(object? sender, DragEventArgs e)
+		{
+			if (!e.DataTransfer.Contains(DataFormat.File))
+				return;
+			e.DragEffects = DragDropEffects.Copy;
+			e.Handled = true;
+		}
+
+		void OnTreeGridDrop(object? sender, DragEventArgs e)
+		{
+			if (!e.DataTransfer.Contains(DataFormat.File))
+				return;
+			var storageItems = e.DataTransfer.TryGetFiles();
+			if (storageItems == null || storageItems.Length == 0)
+				return;
+			var files = storageItems
+				.Select(f => f.TryGetLocalPath())
+				.Where(p => !string.IsNullOrEmpty(p))
+				.Select(p => p!)
+				.ToList();
+			if (files.Count == 0)
+				return;
+			var (target, position) = HitTestTopLevelRow(e);
+			HandleFileDrop(files, target, position);
+			e.DragEffects = DragDropEffects.Copy;
+			e.Handled = true;
+		}
+
+		(AssemblyTreeNode? target, DataGridRowDropPosition position) HitTestTopLevelRow(DragEventArgs e)
+		{
+			// Walk up from the pointer's visual to find the DataGridRow we landed on, then
+			// pick Before / After by which half of the row contains the pointer. Drops on
+			// empty space or onto deeper rows fall back to "append" — target == null.
+			if (e.Source is not Visual hit)
+				return (null, DataGridRowDropPosition.After);
+			Visual? row = hit;
+			while (row != null && row is not DataGridRow)
+				row = row.GetVisualParent();
+			if (row is not DataGridRow dataRow
+				|| dataRow.DataContext is not HierarchicalNode hn
+				|| hn.Item is not AssemblyTreeNode atn
+				|| atn.Parent is not AssemblyListTreeNode)
+				return (null, DataGridRowDropPosition.After);
+
+			var pointer = e.GetPosition(dataRow);
+			var position = pointer.Y < dataRow.Bounds.Height / 2
+				? DataGridRowDropPosition.Before
+				: DataGridRowDropPosition.After;
+			return (atn, position);
+		}
+
+		/// <summary>
+		/// Opens each path through <see cref="AssemblyList.OpenAssembly(string, bool)"/> and
+		/// — when a top-level <paramref name="target"/> row is supplied — moves the opened set
+		/// to the slot indicated by <paramref name="position"/>. Mirrors the WPF
+		/// <c>AssemblyListTreeNode.Drop</c> code path so paths arriving from Explorer behave
+		/// the same as <c>File → Open</c> with a follow-up reorder.
+		/// </summary>
+		internal void HandleFileDrop(IReadOnlyList<string> files,
+			AssemblyTreeNode? target, DataGridRowDropPosition position)
+		{
+			if (DataContext is not AssemblyTreeModel model || model.AssemblyList is not { } list)
+				return;
+			var opened = new List<LoadedAssembly>();
+			foreach (var path in files)
+			{
+				if (string.IsNullOrEmpty(path))
+					continue;
+				var asm = list.OpenAssembly(path);
+				if (asm != null && !opened.Contains(asm))
+					opened.Add(asm);
+			}
+			if (opened.Count == 0 || target == null)
+				return;
+
+			var ordering = list.GetAssemblies();
+			int targetIndex = Array.IndexOf(ordering, target.LoadedAssembly);
+			if (targetIndex < 0)
+				return;
+			int insertIndex = position == DataGridRowDropPosition.After
+				? targetIndex + 1
+				: targetIndex;
+			list.Move(opened.ToArray(), insertIndex);
 		}
 	}
 }
