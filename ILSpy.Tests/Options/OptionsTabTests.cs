@@ -30,6 +30,8 @@ using ILSpy.AppEnv;
 using ILSpy.Commands;
 using ILSpy.Docking;
 using ILSpy.Options;
+using ILSpy.TextView;
+using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 using ILSpy.Views;
 
@@ -198,5 +200,37 @@ public class OptionsTabTests
 			.First(s => s.Property.Name == nameof(global::ICSharpCode.Decompiler.DecompilerSettings.UsingDeclarations));
 		// Reset must restore the panel's settings to `new DecompilerSettings()` defaults.
 		refreshedItem.IsEnabled.Should().Be(defaultValue);
+	}
+
+	[AvaloniaTest]
+	public async Task Display_Setting_Change_Live_Updates_Decompiler_Editor()
+	{
+		// DisplaySettings → DecompilerTextView wire-up: mutating SelectedFontSize on the live
+		// settings instance flows immediately into Editor.FontSize without any Apply or
+		// re-decompile step. Covers the broader live-bind contract for font / size / line
+		// numbers / word wrap / highlight current line / indentation.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var settings = AppComposition.Current.GetExport<SettingsService>();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		// Materialise a DecompilerTextView by selecting a node.
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		vm.AssemblyTreeModel.SelectNode(typeNode);
+		var view = await window.WaitForComponent<DecompilerTextView>();
+		var editor = await view.WaitForComponent<AvaloniaEdit.TextEditor>();
+
+		var originalSize = settings.DisplaySettings.SelectedFontSize;
+		var newSize = originalSize + 5;
+
+		// Act — change the live setting; subscriber should write through to Editor.FontSize.
+		settings.DisplaySettings.SelectedFontSize = newSize;
+
+		editor.FontSize.Should().Be(newSize);
+
+		// Clean-up: restore so later tests see the original.
+		settings.DisplaySettings.SelectedFontSize = originalSize;
 	}
 }

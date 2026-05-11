@@ -77,6 +77,15 @@ namespace ILSpy.TreeNodes
 		public Language Language => LanguageService.CurrentLanguage;
 
 		/// <summary>
+		/// Long-form label used in navigation surfaces — back/forward history dropdowns, future
+		/// breadcrumb rendering, etc. Defaults to <see cref="SharpTreeNode.Text"/>; override on
+		/// nodes whose <see cref="SharpTreeNode.Text"/> is too generic to be useful out of
+		/// context (e.g. "Base Types" → "Base Types (System.Exception)") so the user can tell
+		/// dropdown entries apart at a glance.
+		/// </summary>
+		public override object? NavigationText => Text;
+
+		/// <summary>
 		/// True for nodes that represent assemblies the user did not open explicitly — the
 		/// decompiler resolved them as part of another assembly's references and added them to
 		/// the tree as a side effect. The list pane renders these in a distinct foreground so

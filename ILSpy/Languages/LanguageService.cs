@@ -72,6 +72,9 @@ namespace ILSpy.Languages
 		public Language GetLanguage(string? name)
 			=> Languages.FirstOrDefault(l => l.Name == name) ?? Languages.First();
 
+		// The MVVM-toolkit source generator declares the partial method with nullable
+		// reference types (the backing field is a nullable T). Match the signature exactly
+		// to avoid a CS8611 nullability mismatch.
 		partial void OnCurrentLanguageChanged(Language? oldValue, Language newValue)
 		{
 			if (newValue == null)

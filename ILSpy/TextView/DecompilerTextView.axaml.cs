@@ -44,6 +44,7 @@ using ICSharpCode.ILSpyX;
 
 using ILSpy;
 using ILSpy.AppEnv;
+using ILSpy.Options;
 
 namespace ILSpy.TextView
 {
@@ -152,6 +153,71 @@ namespace ILSpy.TextView
 			richPopup.Closed += OnRichPopupClosed;
 			// Popup.Open uses PlacementTarget to find its TopLevel, so the popup itself doesn't
 			// need to be in any visual tree of ours.
+
+			WireUpDisplaySettings();
+		}
+
+		/// <summary>
+		/// Mirrors the live <see cref="DisplaySettings"/> into the editor on construction and on
+		/// every <c>PropertyChanged</c> after that. Lets the Options Display panel produce
+		/// immediate visual feedback without a re-decompile.
+		/// </summary>
+		void WireUpDisplaySettings()
+		{
+			var settings = TryGetDisplaySettings();
+			if (settings == null)
+				return;
+			ApplyAllDisplaySettings(settings);
+			settings.PropertyChanged += (_, e) => ApplyDisplaySetting(settings, e.PropertyName);
+		}
+
+		static DisplaySettings? TryGetDisplaySettings()
+		{
+			try
+			{ return AppComposition.Current.GetExport<SettingsService>().DisplaySettings; }
+			catch { return null; }
+		}
+
+		void ApplyAllDisplaySettings(DisplaySettings s)
+		{
+			ApplyDisplaySetting(s, nameof(DisplaySettings.SelectedFont));
+			ApplyDisplaySetting(s, nameof(DisplaySettings.SelectedFontSize));
+			ApplyDisplaySetting(s, nameof(DisplaySettings.ShowLineNumbers));
+			ApplyDisplaySetting(s, nameof(DisplaySettings.EnableWordWrap));
+			ApplyDisplaySetting(s, nameof(DisplaySettings.HighlightCurrentLine));
+			ApplyDisplaySetting(s, nameof(DisplaySettings.IndentationSize));
+			ApplyDisplaySetting(s, nameof(DisplaySettings.IndentationUseTabs));
+		}
+
+		void ApplyDisplaySetting(DisplaySettings s, string? propertyName)
+		{
+			switch (propertyName)
+			{
+				case nameof(DisplaySettings.SelectedFont):
+					if (!string.IsNullOrEmpty(s.SelectedFont))
+						Editor.FontFamily = new FontFamily(s.SelectedFont);
+					break;
+				case nameof(DisplaySettings.SelectedFontSize):
+					if (s.SelectedFontSize > 0)
+						Editor.FontSize = s.SelectedFontSize;
+					break;
+				case nameof(DisplaySettings.ShowLineNumbers):
+					Editor.ShowLineNumbers = s.ShowLineNumbers;
+					break;
+				case nameof(DisplaySettings.EnableWordWrap):
+					Editor.WordWrap = s.EnableWordWrap;
+					break;
+				case nameof(DisplaySettings.HighlightCurrentLine):
+					Editor.Options.HighlightCurrentLine = s.HighlightCurrentLine;
+					break;
+				case nameof(DisplaySettings.IndentationSize):
+					if (s.IndentationSize > 0)
+						Editor.Options.IndentationSize = s.IndentationSize;
+					break;
+				case nameof(DisplaySettings.IndentationUseTabs):
+					Editor.Options.ConvertTabsToSpaces = !s.IndentationUseTabs;
+					break;
+			}
 		}
 
 		static IReadOnlyList<IContextMenuEntryExport> TryGetContextMenuEntries()
