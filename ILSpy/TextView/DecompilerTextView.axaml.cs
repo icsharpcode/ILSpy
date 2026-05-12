@@ -78,9 +78,20 @@ namespace ILSpy.TextView
 		readonly Popup richPopup;
 		double distanceToPopupLimit;
 
+		/// <summary>
+		/// AvaloniaEdit's Ctrl+F search overlay, attached to the editor's TextArea at
+		/// construction time. Public for tests; runtime users go through Ctrl+F.
+		/// </summary>
+		public AvaloniaEdit.Search.SearchPanel SearchPanel { get; }
+
 		public DecompilerTextView()
 		{
 			InitializeComponent();
+
+			// Ctrl+F find overlay. SearchPanel.Install registers the SearchInputHandler with
+			// the TextArea's nested-handler chain so the gesture surfaces a search bar without
+			// us wiring KeyBindings manually. Stored for tests; runtime path is the gesture.
+			SearchPanel = AvaloniaEdit.Search.SearchPanel.Install(Editor);
 
 			// AvaloniaEdit defaults to "Ctrl+Click to follow hyperlink" on its built-in
 			// LinkElementGenerator and propagates that flag onto every VisualLineLinkText it
@@ -263,28 +274,19 @@ namespace ILSpy.TextView
 			};
 			menu.Items.Clear();
 
-			// Always-available editor commands first — Copy / Select All come "for free" on
-			// AvaloniaEdit via keyboard shortcuts but the default control template doesn't
-			// ship a context menu, so right-click in plain text would otherwise produce
-			// nothing. The MEF-discovered entries (Show in metadata, etc.) follow.
-			var copyItem = new MenuItem { Header = "Copy", InputGesture = new KeyGesture(Key.C, KeyModifiers.Control) };
-			copyItem.Click += (_, _) => Editor.Copy();
-			copyItem.IsEnabled = !string.IsNullOrEmpty(Editor.SelectedText);
-			menu.Items.Add(copyItem);
-
-			var selectAllItem = new MenuItem { Header = "Select All", InputGesture = new KeyGesture(Key.A, KeyModifiers.Control) };
-			selectAllItem.Click += (_, _) => Editor.SelectAll();
-			menu.Items.Add(selectAllItem);
-
+			// Copy / Select All come from MEF-exported entries in EditorCommands.cs (Category =
+			// "Editor", Order 100/110 so they appear at the top). The remaining
+			// MEF-discovered entries (Show in metadata, etc.) follow.
 			var built = ContextMenuProvider.Build(contextMenuEntries, ctx);
-			if (built != null)
+			if (built == null)
 			{
-				menu.Items.Add(new Separator());
-				foreach (var item in built.Items.Cast<Control>().ToArray())
-				{
-					built.Items.Remove(item);
-					menu.Items.Add(item);
-				}
+				e.Cancel = true;
+				return;
+			}
+			foreach (var item in built.Items.Cast<Control>().ToArray())
+			{
+				built.Items.Remove(item);
+				menu.Items.Add(item);
 			}
 		}
 
