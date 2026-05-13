@@ -114,7 +114,15 @@ namespace ILSpy.Search
 			currentSearch = null;
 			Results.Clear();
 
-			var term = SearchTerm;
+			var term = SearchTerm ?? string.Empty;
+
+			// Push the term into LanguageSettings so the assembly-tree filter cascade
+			// (every Filter override calls SearchTermMatches) hides non-matching rows
+			// while a search is active. Clearing the term restores the full tree.
+			var settings = TryGetSettings()?.SessionSettings?.LanguageSettings;
+			if (settings != null)
+				settings.SearchTerm = term;
+
 			if (string.IsNullOrWhiteSpace(term))
 				return;
 

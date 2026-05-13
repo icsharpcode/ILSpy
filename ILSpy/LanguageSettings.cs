@@ -86,14 +86,26 @@ namespace ILSpy
 		[ObservableProperty]
 		string? languageVersionId;
 
-		// SearchTerm is currently a placeholder mirroring WPF — the Avalonia search pane isn't
-		// ported yet, but several tree-node Filter overrides reference SearchTermMatches when
-		// porting the WPF logic verbatim. Returning string.Empty + always-true SearchTermMatches
-		// means the Filter cascade collapses to "match if visibility passes", same as no-term-set
-		// in WPF. When the search pane lands, swap these for a real backing field bound to the
-		// pane's text box.
-		public string SearchTerm => string.Empty;
+		/// <summary>
+		/// Active search-pane query. The assembly tree's <c>Filter</c> cascade calls
+		/// <see cref="SearchTermMatches"/> on every visible row; setting this property
+		/// triggers the cascade through <see cref="ObservableObject.PropertyChanged"/>.
+		/// An empty string disables the filter (everything matches).
+		/// </summary>
+		[ObservableProperty]
+		public partial string SearchTerm { get; set; } = string.Empty;
 
-		public bool SearchTermMatches(string value) => true;
+		/// <summary>
+		/// Case-insensitive substring match against the active <see cref="SearchTerm"/>.
+		/// Empty term matches anything so the assembly tree shows its full contents when
+		/// no search is active.
+		/// </summary>
+		public bool SearchTermMatches(string value)
+		{
+			var term = SearchTerm;
+			if (string.IsNullOrEmpty(term))
+				return true;
+			return value.Contains(term, System.StringComparison.OrdinalIgnoreCase);
+		}
 	}
 }
