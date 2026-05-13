@@ -6,7 +6,34 @@
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
              x:Class="ILSpy.Search.SearchPane"
              x:DataType="search:SearchPaneModel">
-	<TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
-	           Foreground="Gray" FontStyle="Italic"
-	           Text="Search results will appear here." />
+	<Grid RowDefinitions="Auto,*" Margin="4">
+		<Grid Grid.Row="0" ColumnDefinitions="*,8,Auto" Margin="0,0,0,4">
+			<TextBox Grid.Column="0" Name="SearchInput"
+			         PlaceholderText="Search…"
+			         Text="{Binding SearchTerm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+			<ComboBox Grid.Column="2" Name="SearchModePicker"
+			          ItemsSource="{Binding SearchModes}"
+			          SelectedItem="{Binding SelectedSearchMode, Mode=TwoWay}"
+			          MinWidth="150">
+				<ComboBox.ItemTemplate>
+					<DataTemplate DataType="search:SearchModeEntry">
+						<TextBlock Text="{Binding Name}" />
+					</DataTemplate>
+				</ComboBox.ItemTemplate>
+			</ComboBox>
+		</Grid>
+		<ListBox Grid.Row="1" Name="SearchResults"
+		         ItemsSource="{Binding Results}"
+		         x:CompileBindings="False">
+			<ListBox.ItemTemplate>
+				<DataTemplate>
+					<Grid ColumnDefinitions="*,8,Auto,8,Auto" Margin="2,1">
+						<TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+						<TextBlock Grid.Column="2" Text="{Binding Location}" Foreground="Gray" TextTrimming="CharacterEllipsis" />
+						<TextBlock Grid.Column="4" Text="{Binding Assembly}" Foreground="Gray" TextTrimming="CharacterEllipsis" />
+					</Grid>
+				</DataTemplate>
+			</ListBox.ItemTemplate>
+		</ListBox>
+	</Grid>
 </UserControl>
