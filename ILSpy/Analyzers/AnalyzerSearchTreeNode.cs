@@ -18,56 +18,202 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
+using Avalonia.Threading;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Analyzers;
+using ICSharpCode.ILSpyX.TreeView;
+
+using ILSpy.Analyzers.TreeNodes;
 
 namespace ILSpy.Analyzers
 {
 	/// <summary>
-	/// Row that runs a single <see cref="IAnalyzer"/> against an analysed symbol and
-	/// shows its results as its lazy-loaded children. The shell defined here holds the
-	/// analyser + symbol + header triple; the background-fetch wiring (Task.Run,
-	/// "Loading…" placeholder, count + elapsed-time text update, cancellation) lands in
-	/// a follow-up commit.
+	/// Row that runs a single <see cref="IAnalyzer"/> against an analysed symbol and shows
+	/// its results as its lazy-loaded children. On expansion a <see cref="Task.Run"/> calls
+	/// <see cref="IAnalyzer.Analyze"/> off the UI thread and posts each result back through
+	/// <see cref="Dispatcher.UIThread"/> so the tree updates incrementally. Collapsing the
+	/// row cancels the in-flight task and re-arms <see cref="SharpTreeNode.LazyLoading"/>
+	/// so the next expand starts a fresh fetch.
 	/// </summary>
 	public class AnalyzerSearchTreeNode : AnalyzerTreeNode
 	{
 		readonly ISymbol analyzedSymbol;
 		readonly IAnalyzer analyzer;
+		readonly string headerText;
+		readonly Stopwatch stopwatch = new Stopwatch();
+		CancellationTokenSource? cancellation;
+		Task? loadTask;
 
 		public AnalyzerSearchTreeNode(ISymbol analyzedSymbol, IAnalyzer analyzer, string? analyzerHeader)
 		{
 			this.analyzedSymbol = analyzedSymbol ?? throw new ArgumentNullException(nameof(analyzedSymbol));
 			this.analyzer = analyzer ?? throw new ArgumentNullException(nameof(analyzer));
-			AnalyzerHeader = analyzerHeader ?? string.Empty;
+			this.headerText = analyzerHeader ?? string.Empty;
 			LazyLoading = true;
 		}
 
-		/// <summary>The analyser whose <see cref="IAnalyzer.Analyze"/> drives this row.</summary>
 		public IAnalyzer Analyzer => analyzer;
-
-		/// <summary>The symbol being analysed (a type, method, field, …).</summary>
 		public ISymbol AnalyzedSymbol => analyzedSymbol;
 
-		/// <summary>
-		/// The header string this row started with (e.g. "Used By"). Updated in-place by
-		/// the background-fetch pipeline to include the result count and elapsed time
-		/// once the analyser completes.
-		/// </summary>
-		public string AnalyzerHeader { get; protected set; }
+		/// <summary>The header string this row started with (e.g. "Used By").</summary>
+		public string AnalyzerHeader => headerText;
 
-		public override object Text => AnalyzerHeader;
+		/// <summary>True while the background fetch is in flight.</summary>
+		public bool IsLoading => loadTask is { IsCompleted: false };
+
+		public override object Text => IsLoading || Children.Count == 0
+			? headerText
+			: headerText + " (" + Children.Count + " in " + stopwatch.ElapsedMilliseconds + " ms)";
+
+		protected override void LoadChildren()
+		{
+			cancellation?.Cancel();
+			cancellation?.Dispose();
+			cancellation = new CancellationTokenSource();
+			var token = cancellation.Token;
+
+			// "Loading…" placeholder. Removed once the task settles. Posted synchronously
+			// so users who expand a long-running analysis see immediate feedback.
+			Children.Add(new LoadingPlaceholderNode());
+
+			stopwatch.Restart();
+			loadTask = Task.Run(() => RunAnalyzer(token), token);
+		}
+
+		void RunAnalyzer(CancellationToken ct)
+		{
+			var assemblyList = CurrentAssemblyList;
+			if (assemblyList == null)
+			{
+				FinishOnUIThread(error: "no active assembly list");
+				return;
+			}
+			var context = new AnalyzerContext {
+				CancellationToken = ct,
+				Language = Language,
+				AssemblyList = assemblyList,
+			};
+			try
+			{
+				foreach (var resultSymbol in analyzer.Analyze(analyzedSymbol, context))
+				{
+					if (ct.IsCancellationRequested)
+						return;
+					var child = WrapResult(resultSymbol);
+					Dispatcher.UIThread.Post(() => {
+						if (ct.IsCancellationRequested)
+							return;
+						// Insert before the trailing placeholder.
+						var index = Math.Max(0, Children.Count - 1);
+						Children.Insert(index, child);
+					});
+				}
+				FinishOnUIThread(error: null);
+			}
+			catch (OperationCanceledException)
+			{
+				// Expected on collapse; OnCollapsing has already cleared state.
+			}
+			catch (Exception ex)
+			{
+				FinishOnUIThread(error: ex.Message);
+			}
+		}
+
+		void FinishOnUIThread(string? error)
+		{
+			Dispatcher.UIThread.Post(() => {
+				stopwatch.Stop();
+				// Drop the placeholder if it's still the trailing child.
+				if (Children.Count > 0 && Children[Children.Count - 1] is LoadingPlaceholderNode)
+					Children.RemoveAt(Children.Count - 1);
+				if (error != null)
+					Children.Add(new AnalyzerErrorNode(error));
+				RaisePropertyChanged(nameof(Text));
+			});
+		}
+
+		AnalyzerTreeNode WrapResult(ISymbol resultSymbol)
+		{
+			var sourceEntity = analyzedSymbol as IEntity;
+			return resultSymbol switch {
+				IModule module => new AnalyzedModuleTreeNode(module, sourceEntity),
+				ITypeDefinition type => new AnalyzedTypeTreeNode(type, sourceEntity),
+				IField field => new AnalyzedFieldTreeNode(field, sourceEntity),
+				IMethod method => new AnalyzedMethodTreeNode(method, sourceEntity),
+				IProperty property => new AnalyzedPropertyTreeNode(property, sourceEntity),
+				IEvent ev => new AnalyzedEventTreeNode(ev, sourceEntity),
+				_ => throw new ArgumentOutOfRangeException(nameof(resultSymbol),
+					$"Symbol {resultSymbol.GetType().FullName} is not supported.")
+			};
+		}
+
+		protected override void OnCollapsing()
+		{
+			base.OnCollapsing();
+			if (loadTask == null)
+				return;
+			cancellation?.Cancel();
+			cancellation?.Dispose();
+			cancellation = null;
+			loadTask = null;
+			stopwatch.Reset();
+			Children.Clear();
+			LazyLoading = true;
+			RaisePropertyChanged(nameof(Text));
+		}
 
 		public override bool HandleAssemblyListChanged(
 			ICollection<LoadedAssembly> removedAssemblies,
 			ICollection<LoadedAssembly> addedAssemblies)
 		{
-			this.Children.RemoveAll(node =>
-				node is not AnalyzerTreeNode an
-				|| !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies));
+			bool manualAdd = addedAssemblies.Any(a => !a.IsAutoLoaded);
+			if (removedAssemblies.Count > 0 || manualAdd)
+			{
+				cancellation?.Cancel();
+				cancellation?.Dispose();
+				cancellation = null;
+				loadTask = null;
+				stopwatch.Reset();
+				LazyLoading = true;
+				Children.Clear();
+				RaisePropertyChanged(nameof(Text));
+			}
 			return true;
+		}
+
+		sealed class LoadingPlaceholderNode : AnalyzerTreeNode
+		{
+			public override object Text => "Loading…";
+
+			public override bool HandleAssemblyListChanged(
+				ICollection<LoadedAssembly> removedAssemblies,
+				ICollection<LoadedAssembly> addedAssemblies) => true;
+		}
+
+		sealed class AnalyzerErrorNode : AnalyzerTreeNode
+		{
+			readonly string message;
+
+			public AnalyzerErrorNode(string message)
+			{
+				this.message = message;
+			}
+
+			public override object Text => message;
+
+			public override object Icon => Images.Images.AssemblyWarning;
+
+			public override bool HandleAssemblyListChanged(
+				ICollection<LoadedAssembly> removedAssemblies,
+				ICollection<LoadedAssembly> addedAssemblies) => true;
 		}
 	}
 }

@@ -24,6 +24,7 @@ using ICSharpCode.ILSpyX.Analyzers;
 using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy.AppEnv;
+using ILSpy.AssemblyTree;
 using ILSpy.Languages;
 
 namespace ILSpy.Analyzers
@@ -38,6 +39,7 @@ namespace ILSpy.Analyzers
 	{
 		static LanguageService? cachedLanguageService;
 		static AnalyzerRegistry? cachedRegistry;
+		static AssemblyTreeModel? cachedAssemblyTreeModel;
 
 		/// <summary>
 		/// The active language used to format entity text. Resolved lazily through the
@@ -45,6 +47,13 @@ namespace ILSpy.Analyzers
 		/// </summary>
 		protected static Languages.Language Language
 			=> (cachedLanguageService ??= AppComposition.Current.GetExport<LanguageService>()).CurrentLanguage;
+
+		/// <summary>
+		/// The active <see cref="AssemblyList"/> backing the assembly tree. Search nodes pass
+		/// it into <c>AnalyzerContext</c> so each analyser can iterate the loaded modules.
+		/// </summary>
+		protected static AssemblyList? CurrentAssemblyList
+			=> (cachedAssemblyTreeModel ??= AppComposition.Current.GetExport<AssemblyTreeModel>()).AssemblyList;
 
 		/// <summary>
 		/// All MEF-registered <see cref="IAnalyzer"/> exports, ordered by their declared
