@@ -111,31 +111,54 @@ namespace ILSpy.Search
 				var strategy = GetStrategy(request);
 				if (strategy == null)
 					return;
-				foreach (var assembly in assemblies)
-				{
-					ct.ThrowIfCancellationRequested();
-					// Force the load so search hits the metadata even for assemblies the user
-					// hasn't expanded in the tree yet. Failed loads are already surfaced in
-					// the assembly tree with the AssemblyWarning icon — don't double-report
-					// here, just skip so the search keeps streaming results from the
-					// healthy assemblies.
-					MetadataFile? module;
-					try
-					{
-						module = await assembly.GetMetadataFileAsync().ConfigureAwait(false);
-					}
-					catch (Exception ex) when (IsExpectedLoadFailure(ex))
-					{
-						continue;
-					}
-					if (module == null)
-						continue;
-					strategy.Search(module, ct);
-				}
+				// Parallelise per-assembly: each strategy.Search is CPU-bound metadata walk,
+				// each GetMetadataFileAsync is I/O. Running them sequentially makes early
+				// rows arrive instantly then pause while later assemblies load — looks like
+				// a stall to the user. The shared ConcurrentQueue is thread-safe; the strategy
+				// has no mutable per-call state so concurrent Search invocations on different
+				// modules are safe.
+				await Parallel.ForEachAsync(
+					assemblies,
+					new ParallelOptions {
+						MaxDegreeOfParallelism = Math.Min(4, Math.Max(1, Environment.ProcessorCount)),
+						CancellationToken = ct,
+					},
+					async (assembly, token) => {
+						MetadataFile? module;
+						try
+						{
+							module = await assembly.GetMetadataFileAsync().ConfigureAwait(false);
+						}
+						catch (Exception ex) when (IsExpectedLoadFailure(ex))
+						{
+							// Broken DLL / missing reference — already surfaced in the assembly
+							// tree with AssemblyWarning, so don't double-report here.
+							return;
+						}
+						if (module == null)
+							return;
+						try
+						{
+							strategy.Search(module, token);
+						}
+						catch (OperationCanceledException)
+						{
+							throw;
+						}
+						catch
+						{
+							// One assembly's strategy walker hit something it didn't expect
+							// (malformed metadata, missing dependency, internal Debug.Assert
+							// outside Debug-build defaults, …). Skip just that assembly so the
+							// rest of the search keeps streaming results from healthy ones —
+							// without this catch, ONE bad assembly faults the entire run and
+							// the user sees the partial results stall after a handful of hits.
+						}
+					}).ConfigureAwait(false);
 			}
 			catch (OperationCanceledException)
 			{
-				// Expected on user-driven term/mode change.
+				// Expected on user-driven term/mode change, or when the cap fires below.
 			}
 		}
 
@@ -220,6 +243,13 @@ namespace ILSpy.Search
 					if (batch.Count > 0)
 					{
 						Dispatcher.UIThread.Post(() => {
+							// Defensive: by the time this Post body runs, the run that
+							// produced the batch may already have been cancelled (user kept
+							// typing) and the sink Cleared and re-used by a fresh run.
+							// Without this check, stale results would leak into the new
+							// search's visible list.
+							if (ct.IsCancellationRequested)
+								return;
 							foreach (var r in batch)
 							{
 								if (sink.Count >= MaxResults)
