@@ -17,6 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using Avalonia.Controls;
+using Avalonia.Input;
+
+using ICSharpCode.ILSpyX.Search;
 
 namespace ILSpy.Search
 {
@@ -25,6 +28,30 @@ namespace ILSpy.Search
 		public SearchPane()
 		{
 			InitializeComponent();
+			SearchResults.DoubleTapped += OnResultDoubleTapped;
+			SearchResults.KeyDown += OnResultKeyDown;
+		}
+
+		void OnResultDoubleTapped(object? sender, TappedEventArgs e)
+		{
+			if (SearchResults.SelectedItem is SearchResult result && DataContext is SearchPaneModel vm)
+			{
+				vm.Activate(result);
+				e.Handled = true;
+			}
+		}
+
+		void OnResultKeyDown(object? sender, KeyEventArgs e)
+		{
+			// Enter as the keyboard equivalent of double-tap so users navigating the list
+			// with arrow keys can activate without reaching for the mouse.
+			if (e.Key != Key.Enter)
+				return;
+			if (SearchResults.SelectedItem is SearchResult result && DataContext is SearchPaneModel vm)
+			{
+				vm.Activate(result);
+				e.Handled = true;
+			}
 		}
 	}
 }

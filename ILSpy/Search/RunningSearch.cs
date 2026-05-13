@@ -141,29 +141,41 @@ namespace ILSpy.Search
 
 		SearchRequest BuildRequest()
 		{
-			// Minimal keyword parser: split on whitespace. The WPF pane supports a richer
-			// prefix DSL (inassembly:, t:, /regex/, =exact, ~fuzzy, …) — that lands as a
-			// follow-up. Plain-keyword search covers the common case end-to-end.
-			var keywords = (searchTerm ?? string.Empty)
+			// Lightweight parser: split on whitespace, pull off the two scope prefixes
+			// (inassembly: / innamespace:) when they appear. The full WPF prefix DSL
+			// (/regex/, =exact, ~fuzzy, t: / m:, @token, …) is out of scope; plain
+			// keyword + scope-to context-menu integration covers the common cases.
+			var tokens = (searchTerm ?? string.Empty)
 				.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+			var keywords = new List<string>(tokens.Length);
+			string? inAssembly = null;
+			string? inNamespace = null;
+			foreach (var token in tokens)
+			{
+				if (token.StartsWith("inassembly:", StringComparison.OrdinalIgnoreCase))
+					inAssembly = token.Substring("inassembly:".Length).Trim('"');
+				else if (token.StartsWith("innamespace:", StringComparison.OrdinalIgnoreCase))
+					inNamespace = token.Substring("innamespace:".Length).Trim('"');
+				else
+					keywords.Add(token);
+			}
 			return new SearchRequest {
 				Mode = mode,
-				Keywords = keywords,
+				Keywords = keywords.ToArray(),
 				SearchResultFactory = resultFactory,
 				// MemberSearchStrategy.Search resolves a type system via
 				// module.GetTypeSystemWithDecompilerSettingsOrNull(request.DecompilerSettings);
 				// passing null short-circuits to zero results. Default settings are fine for
-				// search — we only need the type system to materialise, not specific
-				// decompiler behaviour.
+				// search — we only need the type system to materialise.
 				DecompilerSettings = new DecompilerSettings(),
 				FullNameSearch = false,
 				OmitGenerics = false,
-				// IsInNamespaceOrAssembly treats null as "no filter, accept everything";
-				// the EMPTY STRING would restrict to the global namespace (Namespace.Length
-				// == 0), which matches almost nothing. The DSL prefixes that flip these on
-				// (innamespace:, inassembly:) are out of scope for the minimal parser.
-				InNamespace = null!,
-				InAssembly = null!,
+				// IsInNamespaceOrAssembly: null means "no filter, accept everything";
+				// the EMPTY STRING would restrict to the global namespace, matching almost
+				// nothing. The scope-to context-menu entries set these via the DSL prefixes
+				// parsed above.
+				InNamespace = inNamespace!,
+				InAssembly = inAssembly!,
 			};
 		}
 

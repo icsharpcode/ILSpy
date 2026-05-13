@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.ObjectModel;
 using System.Composition;
 
@@ -105,6 +106,26 @@ namespace ILSpy.Search
 		/// <c>Dispatcher.UIThread.Post</c> as the strategies emit them.
 		/// </summary>
 		public ObservableCollection<SearchResult> Results { get; } = new();
+
+		/// <summary>
+		/// User clicked (or double-tapped) a result row. Walks the result's <c>Reference</c>
+		/// to the matching assembly-tree node via <see cref="AssemblyTreeModel.FindTreeNode"/>
+		/// and moves selection there. Silently no-ops when the reference can't be resolved
+		/// (resource and assembly results have non-entity references that the assembly tree
+		/// doesn't index — a follow-up commit can extend FindTreeNode to cover them).
+		/// </summary>
+		public void Activate(SearchResult result)
+		{
+			ArgumentNullException.ThrowIfNull(result);
+			if (result.Reference is null)
+				return;
+			var atm = TryGetAssemblyTreeModel();
+			if (atm == null)
+				return;
+			var node = atm.FindTreeNode(result.Reference);
+			if (node != null)
+				atm.SelectedItem = node;
+		}
 
 		RunningSearch? currentSearch;
 
