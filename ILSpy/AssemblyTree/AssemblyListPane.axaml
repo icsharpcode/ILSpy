@@ -25,6 +25,7 @@
 	          HierarchicalRowsEnabled="True"
 	          GridLinesVisibility="None"
 	          CanUserResizeColumns="False"
+	          RowHeight="22"
 	          SelectionMode="Extended"
 	          SelectionChanged="OnTreeGridSelectionChanged">
 		<DataGrid.Columns>
