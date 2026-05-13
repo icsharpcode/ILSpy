@@ -40,6 +40,8 @@ namespace ICSharpCode.ILSpy.Tests.Metadata;
 [TestFixture]
 public class EmbeddedPdbTreeTests
 {
+	// audit (2026-05-12): catches changing the "Debug Metadata (Embedded)" label string in
+	// DebugDirectoryTreeNode.cs (~line 90) — the Text equality assertion in the test fails.
 	[AvaloniaTest]
 	public async Task Expanding_DebugDirectory_Surfaces_Embedded_PDB_Metadata_Subtree()
 	{
@@ -73,7 +75,11 @@ public class EmbeddedPdbTreeTests
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(loaded.ShortName);
 		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
+		// AssemblyTreeNode now surfaces two MetadataTreeNode children for assemblies with an
+		// embedded PDB (host metadata + a top-level PDB sibling). This test cares about the
+		// nested-under-DebugDirectory path, so pick the host metadata explicitly by label.
+		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>()
+			.Single(n => (string?)n.Text == Resources.Metadata);
 		metadataNode.EnsureLazyChildren();
 
 		var debugDirectoryNode = metadataNode.Children.OfType<DebugDirectoryTreeNode>().Single();
@@ -91,5 +97,44 @@ public class EmbeddedPdbTreeTests
 		pdbTables.EnsureLazyChildren();
 		pdbTables.Children.OfType<DocumentTableTreeNode>().Should().NotBeEmpty(
 			"the embedded PDB's Tables subtree must expose the Document table — the lead debug-only table that always has rows in a populated PDB");
+	}
+
+	[AvaloniaTest]
+	public async Task Embedded_PDB_Metadata_Is_Exposed_As_A_Top_Level_Sibling_Of_The_Host_Metadata_Node()
+	{
+		// Sibling-discoverability path: the embedded PDB's metadata should also be reachable
+		// directly under the AssemblyTreeNode (as a sibling of the host module's "Metadata"
+		// folder), not only nested under DebugDirectory. Without this, users have to drill
+		// three levels deep to reach PDB metadata — same content, harder to find.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var testDllPath = typeof(ICSharpCode.Decompiler.Metadata.MetadataFile).Assembly.Location;
+		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
+		var openCommand = registry.Commands
+			.Single(c => c.Metadata.Header == nameof(Resources._Open))
+			.CreateExport().Value;
+		openCommand.Execute(testDllPath);
+
+		await Waiters.WaitForAsync(() =>
+			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a =>
+				string.Equals(a.FileName, testDllPath, System.StringComparison.OrdinalIgnoreCase)));
+		var loaded = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
+			.First(a => string.Equals(a.FileName, testDllPath, System.StringComparison.OrdinalIgnoreCase));
+		await loaded.GetLoadResultAsync();
+
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(loaded.ShortName);
+		assemblyNode.EnsureLazyChildren();
+
+		var topLevelMetadataNodes = assemblyNode.Children.OfType<MetadataTreeNode>().ToList();
+		topLevelMetadataNodes.Should().HaveCount(2,
+			"the assembly node must expose two MetadataTreeNode children: the host's PE metadata "
+			+ "and the embedded portable PDB's metadata as a sibling");
+		topLevelMetadataNodes.Select(n => n.Text.ToString())
+			.Should().Contain("Debug Metadata (Embedded)",
+				"the embedded PDB sibling must use the same label as the nested one for consistency");
 	}
 }

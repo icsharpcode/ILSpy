@@ -103,7 +103,11 @@ public class MetadataTabSessionRestoreTests
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(loaded.ShortName);
 		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
+		// AssemblyTreeNode surfaces the embedded PDB's metadata as a second top-level
+		// MetadataTreeNode sibling, so disambiguate by label — this test exercises the
+		// nested-under-DebugDirectory path.
+		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>()
+			.Single(n => (string?)n.Text == ICSharpCode.ILSpy.Properties.Resources.Metadata);
 		metadataNode.EnsureLazyChildren();
 		var debugDirectoryNode = metadataNode.Children.OfType<DebugDirectoryTreeNode>().Single();
 		debugDirectoryNode.EnsureLazyChildren();

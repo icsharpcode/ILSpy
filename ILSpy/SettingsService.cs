@@ -42,7 +42,10 @@ namespace ILSpy
 		public MiscSettings MiscSettings => GetSettings<MiscSettings>();
 
 		AssemblyListManager? assemblyListManager;
-		public AssemblyListManager AssemblyListManager => assemblyListManager ??= new(SpySettings);
+		public AssemblyListManager AssemblyListManager => assemblyListManager ??= new(SpySettings) {
+			ApplyWinRTProjections = DecompilerSettings.ApplyWindowsRuntimeProjections,
+			UseDebugSymbols = DecompilerSettings.UseDebugSymbols,
+		};
 
 		/// <summary>
 		/// Persists every materialised section to disk. Options panels bind two-way to the

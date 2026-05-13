@@ -31,6 +31,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.FileLoaders;
+using ICSharpCode.ILSpyX.PdbProvider;
 
 using ILSpy;
 using ILSpy.Languages;
@@ -249,6 +250,18 @@ namespace ILSpy.TreeNodes
 			}
 
 			Children.Add(new ILSpy.Metadata.MetadataTreeNode(module, ICSharpCode.ILSpy.Properties.Resources.Metadata));
+
+			// Surface portable PDB metadata (embedded or side-by-side) as a top-level sibling
+			// of the host Metadata folder so PDB browsing is one click away instead of buried
+			// under Metadata → Debug Directory. Reuses the cached PdbProvider that the rest of
+			// the app already opened for decompilation — no second parse of the PDB blob.
+			var debugInfo = assembly.GetDebugInfoOrNull();
+			if (debugInfo is PortableDebugInfoProvider ppdb
+				&& ppdb.GetMetadataReader() is not null)
+			{
+				var label = $"Debug Metadata ({(ppdb.IsEmbedded ? "Embedded" : "From portable PDB")})";
+				Children.Add(new ILSpy.Metadata.MetadataTreeNode(ppdb.ToMetadataFile(), label));
+			}
 
 			Children.Add(new ReferenceFolderTreeNode(module, this));
 
