@@ -1,14 +1,14 @@
-// Copyright (c) 2018 Siegfried Pammer
-// 
+// Copyright (c) 2024 Andreas Weizel
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -16,34 +16,27 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Collections.Generic;
+using System.Linq;
 
-using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX.Analyzers;
 
-namespace ICSharpCode.ILSpyX.Analyzers
+using NUnit.Framework;
+
+namespace ICSharpCode.ILSpy.Tests.Analyzers.Library;
+
+[TestFixture]
+public class ExportAnalyzerAttributeTests
 {
-	/// <summary>
-	/// Base interface for all analyzers. You can register an analyzer for any <see cref="ISymbol"/> by implementing
-	/// this interface and adding an <see cref="ExportAnalyzerAttribute"/>.
-	/// </summary>
-	public interface IAnalyzer
+	[Test]
+	public void CollectAnalyzers()
 	{
-		/// <summary>
-		/// Returns true, if the analyzer should be shown for a symbol, otherwise false.
-		/// Implementations must tolerate a null argument and return false.
-		/// </summary>
-		bool Show(ISymbol? symbol);
-
-		/// <summary>
-		/// Returns all symbols found by this analyzer.
-		/// </summary>
-		IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context);
-	}
-
-	public interface IAnalyzerMetadata
-	{
-		string Header { get; }
-
-		int Order { get; }
+		var analyzerNames = ExportAnalyzerAttribute.GetAnnotatedAnalyzers()
+			.Select(analyzer => analyzer.AnalyzerType.Name)
+			.ToArray();
+		Assert.That(analyzerNames.Contains("AttributeAppliedToAnalyzer"));
+		Assert.That(analyzerNames.Contains("EventImplementedByAnalyzer"));
+		Assert.That(analyzerNames.Contains("MethodUsedByAnalyzer"));
+		Assert.That(analyzerNames.Contains("PropertyOverriddenByAnalyzer"));
+		Assert.That(analyzerNames.Contains("TypeInstantiatedByAnalyzer"));
 	}
 }

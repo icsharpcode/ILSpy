@@ -66,7 +66,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			this.showWrites = showWrites;
 		}
 
-		public bool Show(ISymbol symbol)
+		public bool Show(ISymbol? symbol)
 		{
 			return symbol is IField field && (!showWrites || !field.IsConst);
 		}

@@ -66,7 +66,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			}
 		}
 
-		public bool Show(ISymbol entity)
+		public bool Show(ISymbol? entity)
 		{
 			return entity is IProperty property && property.IsOverridable && property.DeclaringType.Kind != TypeKind.Interface;
 		}

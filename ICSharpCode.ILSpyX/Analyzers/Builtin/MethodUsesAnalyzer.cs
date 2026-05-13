@@ -36,7 +36,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 	[Shared]
 	class MethodUsesAnalyzer : IAnalyzer
 	{
-		public bool Show(ISymbol symbol) => symbol is IMethod method && method.HasBody;
+		public bool Show(ISymbol? symbol) => symbol is IMethod method && method.HasBody;
 
 		public IEnumerable<ISymbol> Analyze(ISymbol symbol, AnalyzerContext context)
 		{

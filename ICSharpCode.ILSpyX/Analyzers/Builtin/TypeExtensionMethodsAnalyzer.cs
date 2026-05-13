@@ -31,7 +31,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 	[Shared]
 	class TypeExtensionMethodsAnalyzer : IAnalyzer
 	{
-		public bool Show(ISymbol symbol) => symbol is ITypeDefinition entity && !entity.IsStatic;
+		public bool Show(ISymbol? symbol) => symbol is ITypeDefinition entity && !entity.IsStatic;
 
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{

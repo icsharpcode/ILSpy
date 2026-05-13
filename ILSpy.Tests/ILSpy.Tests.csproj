@@ -7,6 +7,11 @@
     <IsPackable>false</IsPackable>
     <RootNamespace>ICSharpCode.ILSpy.Tests</RootNamespace>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+
+    <!-- Strong-named with the shared snk so ICSharpCode.ILSpyX can grant
+         InternalsVisibleTo for the analyzer-library tests (mirrors ILSpy.Tests). -->
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +24,7 @@
     <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
     <PackageReference Include="Microsoft.Testing.Extensions.VSTestBridge" />
     <PackageReference Include="AwesomeAssertions" />
+    <PackageReference Include="NSubstitute" />
   </ItemGroup>
 
   <ItemGroup>

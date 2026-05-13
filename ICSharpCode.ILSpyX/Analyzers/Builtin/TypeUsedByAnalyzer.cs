@@ -390,7 +390,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			}
 		}
 
-		public bool Show(ISymbol symbol) => symbol is ITypeDefinition;
+		public bool Show(ISymbol? symbol) => symbol is ITypeDefinition;
 	}
 
 	class TypeDefinitionUsedVisitor : TypeVisitor

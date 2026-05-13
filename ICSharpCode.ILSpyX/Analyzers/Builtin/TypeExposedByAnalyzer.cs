@@ -31,7 +31,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 	[Shared]
 	class TypeExposedByAnalyzer : IAnalyzer
 	{
-		public bool Show(ISymbol entity) => entity is ITypeDefinition;
+		public bool Show(ISymbol? entity) => entity is ITypeDefinition;
 
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{

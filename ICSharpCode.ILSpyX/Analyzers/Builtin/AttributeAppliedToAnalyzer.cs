@@ -190,7 +190,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			return decoder.GetTypeFromEntity(metadata, declaringAttributeType);
 		}
 
-		public bool Show(ISymbol symbol)
+		public bool Show(ISymbol? symbol)
 		{
 			return symbol is ITypeDefinition type && type.GetNonInterfaceBaseTypes()
 				.Any(t => t.IsKnownType(KnownTypeCode.Attribute));

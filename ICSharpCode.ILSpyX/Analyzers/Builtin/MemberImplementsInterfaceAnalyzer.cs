@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			return baseMembers.Where(m => m.DeclaringTypeDefinition?.Kind == TypeKind.Interface);
 		}
 
-		public bool Show(ISymbol symbol)
+		public bool Show(ISymbol? symbol)
 		{
 			switch (symbol?.SymbolKind)
 			{
