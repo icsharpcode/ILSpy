@@ -92,7 +92,7 @@ namespace ILSpy.Analyzers
 			var assemblyList = CurrentAssemblyList;
 			if (assemblyList == null)
 			{
-				FinishOnUIThread(error: "no active assembly list");
+				FinishOnUIThread(error: new InvalidOperationException("no active assembly list"));
 				return;
 			}
 			var context = new AnalyzerContext {
@@ -123,11 +123,11 @@ namespace ILSpy.Analyzers
 			}
 			catch (Exception ex)
 			{
-				FinishOnUIThread(error: ex.Message);
+				FinishOnUIThread(error: ex);
 			}
 		}
 
-		void FinishOnUIThread(string? error)
+		void FinishOnUIThread(Exception? error)
 		{
 			Dispatcher.UIThread.Post(() => {
 				stopwatch.Stop();
@@ -192,24 +192,6 @@ namespace ILSpy.Analyzers
 		sealed class LoadingPlaceholderNode : AnalyzerTreeNode
 		{
 			public override object Text => "Loading…";
-
-			public override bool HandleAssemblyListChanged(
-				ICollection<LoadedAssembly> removedAssemblies,
-				ICollection<LoadedAssembly> addedAssemblies) => true;
-		}
-
-		sealed class AnalyzerErrorNode : AnalyzerTreeNode
-		{
-			readonly string message;
-
-			public AnalyzerErrorNode(string message)
-			{
-				this.message = message;
-			}
-
-			public override object Text => message;
-
-			public override object Icon => Images.Images.AssemblyWarning;
 
 			public override bool HandleAssemblyListChanged(
 				ICollection<LoadedAssembly> removedAssemblies,
