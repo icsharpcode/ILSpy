@@ -56,11 +56,21 @@ namespace ILSpy.Languages
 		public bool HasLanguageVersions => LanguageVersions.Count > 0;
 
 		/// <summary>
-		/// Token-to-source-line mapping for navigation. Default returns a no-op CodeMappingInfo —
-		/// language subclasses with full decompilation override and produce a real one.
+		/// Token-to-source-line mapping for navigation. Default walks <paramref name="member"/>
+		/// up to its declaring type and hands back a <see cref="CodeMappingInfo"/> keyed on
+		/// that type. The <see cref="EntityHandle"/> the caller passes may name any member
+		/// kind (method, field, …) — analyzers like <c>MethodUsesAnalyzer</c> pass the
+		/// method's own token and expect the language to walk to the type itself, not crash
+		/// trying to cast the method handle. Subclasses with full decompilation override and
+		/// build the mapping from the decompiler pipeline.
 		/// </summary>
 		public virtual CodeMappingInfo GetCodeMappingInfo(MetadataFile module, EntityHandle member)
-			=> new(module, (TypeDefinitionHandle)member);
+		{
+			var declaringType = (TypeDefinitionHandle)member.GetDeclaringType(module.Metadata);
+			if (declaringType.IsNil && member.Kind == HandleKind.TypeDefinition)
+				declaringType = (TypeDefinitionHandle)member;
+			return new CodeMappingInfo(module, declaringType);
+		}
 
 		/// <summary>
 		/// Stable name string for an entity reachable only by metadata token. Falls back to the
