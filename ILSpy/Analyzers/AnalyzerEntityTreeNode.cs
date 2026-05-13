@@ -21,6 +21,10 @@ using System.Collections.Generic;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
+using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
+
+using ILSpy.AppEnv;
+using ILSpy.AssemblyTree;
 
 namespace ILSpy.Analyzers
 {
@@ -33,6 +37,23 @@ namespace ILSpy.Analyzers
 	/// </summary>
 	public abstract class AnalyzerEntityTreeNode : AnalyzerTreeNode
 	{
+		public override void ActivateItem(IPlatformRoutedEventArgs e)
+		{
+			e.Handled = true;
+			if (Member == null || Member.MetadataToken.IsNil)
+				return;
+			try
+			{
+				var assemblyTreeModel = AppComposition.Current.GetExport<AssemblyTreeModel>();
+				if (assemblyTreeModel.FindTreeNode(Member) is { } resolved)
+					assemblyTreeModel.SelectedItem = resolved;
+			}
+			catch
+			{
+				// Composition isn't available in design-time previews — gesture is a no-op there.
+			}
+		}
+
 		/// <summary>
 		/// The entity this row analyses (or represents as an analyser result). Subclasses
 		/// return <see langword="null"/> only for non-entity rows such as

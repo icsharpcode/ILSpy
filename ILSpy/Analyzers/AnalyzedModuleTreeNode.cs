@@ -18,9 +18,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
+
+using ILSpy.AppEnv;
+using ILSpy.AssemblyTree;
+using ILSpy.TreeNodes;
 
 namespace ILSpy.Analyzers.TreeNodes
 {
@@ -49,6 +55,32 @@ namespace ILSpy.Analyzers.TreeNodes
 		public override object? ToolTip => analyzedModule.MetadataFile?.FileName;
 
 		public IModule Module => analyzedModule;
+
+		public override void ActivateItem(IPlatformRoutedEventArgs e)
+		{
+			e.Handled = true;
+			if (analyzedModule.MetadataFile == null)
+				return;
+			try
+			{
+				var assemblyTreeModel = AppComposition.Current.GetExport<AssemblyTreeModel>();
+				var loaded = assemblyTreeModel.AssemblyList?
+					.GetAssemblies()
+					.FirstOrDefault(a => a.GetMetadataFileOrNull() == analyzedModule.MetadataFile);
+				if (loaded == null)
+					return;
+				var listRoot = assemblyTreeModel.Root as AssemblyListTreeNode;
+				if (listRoot == null)
+					return;
+				var node = listRoot.FindAssemblyNode(loaded);
+				if (node != null)
+					assemblyTreeModel.SelectedItem = node;
+			}
+			catch
+			{
+				// Design-time / minimal-test path.
+			}
+		}
 
 		protected override void LoadChildren()
 		{

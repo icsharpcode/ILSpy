@@ -21,10 +21,16 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.DataGridHierarchical;
+using Avalonia.Input;
+using Avalonia.VisualTree;
 
 using ICSharpCode.ILSpyX.TreeView;
+using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
+
+using ILSpy.AppEnv;
 
 namespace ILSpy.Analyzers
 {
@@ -32,10 +38,85 @@ namespace ILSpy.Analyzers
 	{
 		bool syncingSelection;
 		AnalyzerTreeViewModel? boundModel;
+		IReadOnlyList<IContextMenuEntryExport> contextMenuEntries = Array.Empty<IContextMenuEntryExport>();
 
 		public AnalyzerTreeView()
 		{
 			InitializeComponent();
+			TreeGrid.DoubleTapped += OnTreeGridDoubleTapped;
+			var registry = TryGetContextMenuRegistry();
+			AttachContextMenu(registry?.Entries ?? Array.Empty<IContextMenuEntryExport>());
+		}
+
+		static ContextMenuEntryRegistry? TryGetContextMenuRegistry()
+		{
+			try
+			{
+				return AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
+			}
+			catch
+			{
+				return null;
+			}
+		}
+
+		internal void AttachContextMenu(IReadOnlyList<IContextMenuEntryExport> entries)
+		{
+			contextMenuEntries = entries;
+			var menu = new ContextMenu();
+			menu.Opening += OnContextMenuOpening;
+			TreeGrid.ContextMenu = menu;
+		}
+
+		void OnContextMenuOpening(object? sender, System.ComponentModel.CancelEventArgs e)
+		{
+			if (sender is not ContextMenu menu)
+				return;
+			var built = BuildContextMenuForCurrentState(contextMenuEntries);
+			if (built == null)
+			{
+				e.Cancel = true;
+				return;
+			}
+			menu.Items.Clear();
+			foreach (var item in built.Items.OfType<Control>().ToArray())
+			{
+				built.Items.Remove(item);
+				menu.Items.Add(item);
+			}
+		}
+
+		internal ContextMenu? BuildContextMenuForCurrentState(IReadOnlyList<IContextMenuEntryExport> entries)
+			=> ContextMenuProvider.Build(entries, CreateContextMenuContext());
+
+		TextViewContext CreateContextMenuContext()
+		{
+			var nodes = boundModel?.SelectedItems.ToArray() ?? Array.Empty<SharpTreeNode>();
+			return new TextViewContext {
+				TreeGrid = TreeGrid,
+				SelectedTreeNodes = nodes,
+			};
+		}
+
+		void OnTreeGridDoubleTapped(object? sender, TappedEventArgs e)
+		{
+			// Walk up the visual tree to find the row's HierarchicalNode wrapper, unwrap it
+			// to the SharpTreeNode, then route to ActivateItem so the entity row navigates
+			// back to its node in the assembly tree.
+			var visual = e.Source as Visual;
+			while (visual != null && visual.DataContext is not HierarchicalNode)
+				visual = visual.GetVisualParent();
+			if (visual?.DataContext is not HierarchicalNode hn)
+				return;
+			if (hn.Item is not SharpTreeNode node)
+				return;
+			node.ActivateItem(new StubRoutedEventArgs());
+			e.Handled = true;
+		}
+
+		sealed class StubRoutedEventArgs : IPlatformRoutedEventArgs
+		{
+			public bool Handled { get; set; }
 		}
 
 		protected override void OnDataContextChanged(EventArgs e)
