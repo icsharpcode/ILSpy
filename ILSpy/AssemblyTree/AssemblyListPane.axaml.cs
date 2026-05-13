@@ -196,18 +196,49 @@ namespace ILSpy.AssemblyTree
 
 		void OnTreeGridKeyDown(object? sender, KeyEventArgs e)
 		{
-			if (e.Key != Key.Delete || DataContext is not AssemblyTreeModel model || model.AssemblyList is not { } list)
+			if (DataContext is not AssemblyTreeModel model)
 				return;
-			// Snapshot before mutation — Unload mutates the list and indirectly the model's
-			// selection.
-			var assemblies = model.SelectedItems.OfType<AssemblyTreeNode>()
-				.Select(n => n.LoadedAssembly)
-				.ToList();
-			if (assemblies.Count == 0)
+			if (e.Key == Key.Delete && model.AssemblyList is { } list)
+			{
+				// Snapshot before mutation — Unload mutates the list and indirectly the
+				// model's selection.
+				var assemblies = model.SelectedItems.OfType<AssemblyTreeNode>()
+					.Select(n => n.LoadedAssembly)
+					.ToList();
+				if (assemblies.Count == 0)
+					return;
+				foreach (var asm in assemblies)
+					list.Unload(asm);
+				e.Handled = true;
 				return;
-			foreach (var asm in assemblies)
-				list.Unload(asm);
-			e.Handled = true;
+			}
+			if (e.Key == Key.R && e.KeyModifiers == KeyModifiers.Control)
+			{
+				var members = model.SelectedItems.OfType<IMemberTreeNode>()
+					.Select(n => n.Member)
+					.Where(m => m is not null and not ICSharpCode.Decompiler.TypeSystem.IField { IsConst: true })
+					.ToList();
+				if (members.Count == 0)
+					return;
+				var analyzerVm = TryGetAnalyzerTreeViewModel();
+				if (analyzerVm == null)
+					return;
+				foreach (var member in members)
+					analyzerVm.Analyze(member!);
+				e.Handled = true;
+			}
+		}
+
+		static ILSpy.Analyzers.AnalyzerTreeViewModel? TryGetAnalyzerTreeViewModel()
+		{
+			try
+			{
+				return AppComposition.Current.GetExport<ILSpy.Analyzers.AnalyzerTreeViewModel>();
+			}
+			catch
+			{
+				return null;
+			}
 		}
 
 		void OnTreeGridSelectionChanged(object? sender, SelectionChangedEventArgs e)
