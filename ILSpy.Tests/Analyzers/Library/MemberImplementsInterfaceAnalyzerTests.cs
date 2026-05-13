@@ -62,7 +62,10 @@ public class MemberImplementsInterfaceAnalyzerTests
 	public void VerifyDoesNotShowForNoSymbol()
 	{
 		var analyzer = new MemberImplementsInterfaceAnalyzer();
-		var shouldShow = analyzer.Show(symbol: null);
+		// IAnalyzer.Show declares its parameter non-nullable; the contract this test
+		// pins is "the implementation guards against null callers even though the
+		// signature says it can't happen". null-forgiving silences the CS8625.
+		var shouldShow = analyzer.Show(symbol: null!);
 		Assert.That(!shouldShow, "The analyzer will be unexpectedly shown for no symbol");
 	}
 
@@ -141,6 +144,10 @@ public class MemberImplementsInterfaceAnalyzerTests
 	{
 		var memberMock = Substitute.For<IMember>();
 		memberMock.SymbolKind.Returns(symbolKind);
+		// NSubstitute's fluent path setup: Returns reads memberMock.DeclaringTypeDefinition
+		// as if it were a real reference, building the expectation in place. The compiler
+		// flags it as a possibly-null deref; the suppression is required for the mock to
+		// configure the chained property.
 		memberMock.DeclaringTypeDefinition!.Kind.Returns(typeKind);
 		memberMock.IsStatic.Returns(isStatic);
 		return memberMock;

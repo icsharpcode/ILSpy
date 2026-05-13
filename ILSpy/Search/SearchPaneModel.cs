@@ -21,9 +21,13 @@ using System.Composition;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Search;
 
+using ILSpy.AppEnv;
+using ILSpy.AssemblyTree;
 using ILSpy.Commands;
+using ILSpy.Languages;
 using ILSpy.ViewModels;
 
 namespace ILSpy.Search
@@ -51,6 +55,13 @@ namespace ILSpy.Search
 			Id = PaneContentId;
 			Title = "Search";
 			SelectedSearchMode = SearchModes[0];
+			PropertyChanged += OnPropertyChangedDispatch;
+		}
+
+		void OnPropertyChangedDispatch(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName is nameof(SearchTerm) or nameof(SelectedSearchMode))
+				RestartSearch();
 		}
 
 		/// <summary>
@@ -94,5 +105,75 @@ namespace ILSpy.Search
 		/// <c>Dispatcher.UIThread.Post</c> as the strategies emit them.
 		/// </summary>
 		public ObservableCollection<SearchResult> Results { get; } = new();
+
+		RunningSearch? currentSearch;
+
+		void RestartSearch()
+		{
+			currentSearch?.Cancel();
+			currentSearch = null;
+			Results.Clear();
+
+			var term = SearchTerm;
+			if (string.IsNullOrWhiteSpace(term))
+				return;
+
+			var assemblyTreeModel = TryGetAssemblyTreeModel();
+			var assemblyList = assemblyTreeModel?.AssemblyList;
+			if (assemblyList == null)
+				return;
+			var language = TryGetLanguage();
+			if (language == null)
+				return;
+			var apiVisibility = TryGetSettings()?.SessionSettings?.LanguageSettings?.ShowApiLevel
+				?? ApiVisibility.PublicOnly;
+
+			var factory = new AvaloniaSearchResultFactory(language);
+			currentSearch = new RunningSearch(
+				assemblyList.GetAssemblies(),
+				term,
+				SelectedSearchMode.Mode,
+				language,
+				apiVisibility,
+				factory,
+				Results);
+			currentSearch.Start();
+		}
+
+		static AssemblyTreeModel? TryGetAssemblyTreeModel()
+		{
+			try
+			{
+				return AppComposition.Current.GetExport<AssemblyTreeModel>();
+			}
+			catch
+			{
+				return null;
+			}
+		}
+
+		static Language? TryGetLanguage()
+		{
+			try
+			{
+				return AppComposition.Current.GetExport<LanguageService>().CurrentLanguage;
+			}
+			catch
+			{
+				return null;
+			}
+		}
+
+		static SettingsService? TryGetSettings()
+		{
+			try
+			{
+				return AppComposition.Current.GetExport<SettingsService>();
+			}
+			catch
+			{
+				return null;
+			}
+		}
 	}
 }
