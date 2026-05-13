@@ -19,7 +19,9 @@
 using System.Linq;
 using System.Threading.Tasks;
 
+using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
+using Avalonia.Interactivity;
 
 using AwesomeAssertions;
 
@@ -28,6 +30,7 @@ using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy;
 using ILSpy.AppEnv;
+using ILSpy.AssemblyTree;
 using ILSpy.Commands;
 using ILSpy.Docking;
 using ILSpy.TextView;
@@ -58,42 +61,52 @@ public class DecompileInNewViewTests
 			e => e.Metadata.Header == nameof(Resources.DecompileToNewPanel));
 	}
 
+	// audit (2026-05-12): converted 📦 → 🧪. Was calling `entry.IsVisible(synthetic ctx)`
+	// directly with hand-built TextViewContexts; now drives the live `BuildContextMenuForCurrentState`
+	// path with real selection states. The entry's presence/absence in the built menu IS the
+	// integration-level expression of IsVisible (the builder drops hidden entries before
+	// creating their MenuItems).
 	[AvaloniaTest]
-	public async Task DecompileInNewView_Is_Visible_When_Selection_Has_ILSpyTreeNodes()
+	public async Task DecompileInNewView_Appears_In_The_Right_Click_Menu_Only_When_Tree_Nodes_Are_Selected()
 	{
-		// IsVisible: any non-empty selection of ILSpyTreeNodes makes the entry surface — the
-		// action runs against whatever the user picked.
-
-		// Arrange — boot, locate the registered entry.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
-		var entry = registry.Entries
-			.Single(e => e.Metadata.Header == nameof(Resources.DecompileToNewPanel)
-				&& e.Value is DecompileInNewViewCommand)
-			.Value;
 
 		var asm = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
+		var header = ICSharpCode.ILSpy.Properties.Resources.DecompileToNewPanel;
 
-		// Assert — visible with a tree node, hidden with no selection.
-		entry.IsVisible(new TextViewContext { SelectedTreeNodes = new[] { (SharpTreeNode)asm } })
-			.Should().BeTrue();
-		entry.IsVisible(new TextViewContext { SelectedTreeNodes = null })
-			.Should().BeFalse();
-		entry.IsVisible(new TextViewContext { SelectedTreeNodes = System.Array.Empty<SharpTreeNode>() })
-			.Should().BeFalse();
+		window.CaptureForReview(1, "initial-no-selection");
+
+		// With an assembly node selected → the menu surfaces "Decompile in new tab".
+		vm.AssemblyTreeModel.SelectNode(asm);
+		window.CaptureForReview(2, "assembly-selected");
+		var withSelection = pane.BuildContextMenuForCurrentState(registry.Entries);
+		withSelection.Should().NotBeNull();
+		withSelection!.Items.OfType<MenuItem>().Select(i => (string?)i.Header)
+			.Should().Contain(header);
+
+		// With no selection → the entry is filtered out of the built menu.
+		vm.AssemblyTreeModel.SelectedItems.Clear();
+		window.CaptureForReview(3, "selection-cleared");
+		var withoutSelection = pane.BuildContextMenuForCurrentState(registry.Entries);
+		// `Build` returns null when no entry would be visible; otherwise it may still build a
+		// menu (other entries don't gate on selection). Either way, the header must not appear.
+		(withoutSelection?.Items.OfType<MenuItem>().Select(i => (string?)i.Header) ?? System.Linq.Enumerable.Empty<string?>())
+			.Should().NotContain(header);
 	}
 
+	// audit (2026-05-12): converted 📦 → 🧪. Was firing `entry.Execute(synthetic ctx)`
+	// directly; now selects the second method via the model and clicks the
+	// "Decompile in new tab" MenuItem produced by the live menu-build path. The Click
+	// routed event hits the same handler ContextMenuProvider attached during Build —
+	// matching what the user's right-click → menu-item-click triggers.
 	[AvaloniaTest]
-	public async Task DecompileInNewView_Execute_Opens_A_New_Tab_With_The_Selected_Nodes_Decompiled()
+	public async Task Clicking_DecompileInNewView_Spawns_A_New_Tab_For_The_Selected_Method()
 	{
-		// Execute opens a fresh document tab in the dock workspace, populated with the
-		// decompilation of the supplied nodes — without disturbing the currently-active tab.
-
-		// Arrange — boot, decompile a method into the existing tab so we have a "current"
-		// document to compare against.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
@@ -105,31 +118,42 @@ public class DecompileInNewViewTests
 			.Single(m => m.MethodDefinition.Name == "AsEnumerable");
 		var secondMethod = typeNode.Children.OfType<MethodTreeNode>()
 			.First(m => m.MethodDefinition.Name == "Empty");
+
+		// Seed an existing decompile in the active tab so we have a "current" tab on screen
+		// before the gesture; that tab will be reused by the right-click's selection move
+		// (production behaviour — right-clicking a row in the DataGrid moves selection there
+		// before the menu opens), so the assertion we care about is "a *new* tab spawned in
+		// addition to the existing one and shows the dispatched method".
 		vm.AssemblyTreeModel.SelectNode(firstMethod);
 		var firstTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		window.CaptureForReview(1, "first-method-decompiled-into-active-tab");
 
+		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
-		var entry = registry.Entries
-			.Single(e => e.Metadata.Header == nameof(Resources.DecompileToNewPanel)
-				&& e.Value is DecompileInNewViewCommand)
-			.Value;
-
 		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
 		var initialCount = documents.VisibleDockables?.Count ?? 0;
 
-		// Act — invoke Execute with the second method as the selection.
-		entry.Execute(new TextViewContext {
-			SelectedTreeNodes = new[] { (SharpTreeNode)secondMethod },
-		});
+		// Select the second method and click the menu entry through the live context-menu path.
+		vm.AssemblyTreeModel.SelectNode(secondMethod);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		window.CaptureForReview(2, "second-method-replaced-active-tab");
 
-		// Assert — a new tab landed and now decompiles "Empty"; the original tab still
-		// shows AsEnumerable.
+		var menu = pane.BuildContextMenuForCurrentState(registry.Entries);
+		menu.Should().NotBeNull();
+		var item = menu!.Items.OfType<MenuItem>()
+			.Single(i => (string?)i.Header == Resources.DecompileToNewPanel);
+		item.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+
 		await Waiters.WaitForAsync(
 			() => (documents.VisibleDockables?.Count ?? 0) > initialCount);
 		var newTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		ReferenceEquals(newTab, firstTab).Should().BeFalse(
 			"a fresh decompiler tab must be created instead of reusing the existing one");
 		newTab.Text.Should().Contain("Empty");
-		firstTab.Text.Should().Contain("AsEnumerable");
+		// Count grew by one — the click added a tab on top of the right-click selection's reuse
+		// of firstTab. (The right-click selection move into secondMethod re-uses firstTab; the
+		// menu-click then creates an additional tab. Net effect: +1 dockable.)
+		documents.VisibleDockables!.Count.Should().Be(initialCount + 1);
+		window.CaptureForReview(3, "after-click-new-tab-spawned");
 	}
 }

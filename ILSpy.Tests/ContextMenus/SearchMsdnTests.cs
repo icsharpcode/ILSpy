@@ -19,6 +19,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 
+using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
@@ -28,6 +29,7 @@ using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy;
 using ILSpy.AppEnv;
+using ILSpy.AssemblyTree;
 using ILSpy.Commands;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
@@ -84,27 +86,41 @@ public class SearchMsdnTests
 			.Should().BeFalse();
 	}
 
+	// audit (2026-05-12): partial 📦 → 🧪 conversion. Execute opens a system browser
+	// (Process.Start with the URL) which is unsafe to fire in a headless test, so the URL
+	// payload is still verified via the public `GetMsdnUrl` helper (that's the testable seam
+	// production Execute itself calls). Adds an integration assertion that the entry surfaces
+	// in the right-click menu for the same selection — catches the wiring path between the
+	// IsVisible predicate and the menu builder that the original GetMsdnUrl-only assertion
+	// would have missed.
 	[AvaloniaTest]
-	public async Task SearchMsdn_Builds_The_Expected_Microsoft_Docs_URL()
+	public async Task Right_Clicking_A_Type_Surfaces_SearchMSDN_And_The_Entry_Builds_The_Expected_URL()
 	{
-		// The URL is `https://learn.microsoft.com/dotnet/api/<reflection-name>`, lowercased,
-		// with backticks turned into hyphens (generic arity) and `+` into `.` (nested types).
-		// Constructors get a `..ctor` → `-ctor` rename so the docs site resolves them.
-
-		// Arrange — boot.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
-		var entry = (SearchMsdnContextMenuEntry)registry.Entries
-			.Single(e => e.Metadata.Header == nameof(Resources.SearchMSDN))
-			.Value;
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 
-		// Assert — the type's docs URL.
+		window.CaptureForReview(1, "initial-tree");
+
+		// Selecting the type and building the live menu must surface "Search Microsoft Docs…".
+		vm.AssemblyTreeModel.SelectNode(typeNode);
+		window.CaptureForReview(2, "enumerable-type-selected");
+
+		var menu = pane.BuildContextMenuForCurrentState(registry.Entries);
+		menu.Should().NotBeNull();
+		menu!.Items.OfType<MenuItem>().Select(i => (string?)i.Header)
+			.Should().Contain(Resources.SearchMSDN);
+
+		// The URL the entry would open (kept as a helper because Execute itself launches the
+		// browser via Process.Start).
+		var entry = (SearchMsdnContextMenuEntry)registry.Entries
+			.Single(e => e.Metadata.Header == nameof(Resources.SearchMSDN)).Value;
 		entry.GetMsdnUrl(typeNode)
 			.Should().Be("https://learn.microsoft.com/dotnet/api/system.linq.enumerable");
 	}

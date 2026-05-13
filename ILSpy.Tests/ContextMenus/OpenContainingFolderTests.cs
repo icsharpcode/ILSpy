@@ -19,6 +19,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 
+using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
@@ -28,6 +29,7 @@ using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy;
 using ILSpy.AppEnv;
+using ILSpy.AssemblyTree;
 using ILSpy.Commands;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
@@ -56,33 +58,46 @@ public class OpenContainingFolderTests
 			e => e.Metadata.Header == nameof(Resources._OpenContainingFolder));
 	}
 
+	// audit (2026-05-12): partial 📦 → 🧪 conversion. Execute launches the OS file manager
+	// (Process.Start with the directory) which is unsafe in a headless test, so the path
+	// payload is still verified via the public `GetPathsToReveal` helper (the testable seam
+	// production Execute itself calls). Added an integration assertion that the entry surfaces
+	// in the right-click menu when a deep descendant is selected — confirms the IsVisible
+	// predicate (which also calls `GetPathsToReveal`) wires through the menu builder.
 	[AvaloniaTest]
-	public async Task OpenContainingFolder_Walks_Up_To_The_Containing_AssemblyTreeNode()
+	public async Task Right_Clicking_A_Deep_Node_Surfaces_OpenContainingFolder_For_Its_Parent_Assembly()
 	{
-		// The reveal works on any descendant of an AssemblyTreeNode (member, type, namespace),
-		// not just the assembly node itself. Verifies the helper walks the parent chain to
-		// find the enclosing assembly and uses its file path.
-
-		// Arrange — boot, find a deep tree node + the registered entry.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
-		var entry = (OpenContainingFolderContextMenuEntry)registry.Entries
-			.Single(e => e.Metadata.Header == nameof(Resources._OpenContainingFolder))
-			.Value;
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		var expectedPath = assemblyNode.LoadedAssembly.FileName;
 
-		// Act — collect the paths the entry would reveal for a deep selection.
-		var paths = entry.GetPathsToReveal(new TextViewContext { SelectedTreeNodes = new[] { (SharpTreeNode)typeNode } });
+		window.CaptureForReview(1, "initial-tree");
 
-		// Assert — the deep selection traces back to the parent assembly's file path.
-		paths.Should().Equal(expectedPath);
+		// Selecting the deep TypeTreeNode must still surface "Open Containing Folder" in the
+		// live menu (the entry's IsVisible walks up to the assembly).
+		vm.AssemblyTreeModel.SelectNode(typeNode);
+		window.CaptureForReview(2, "enumerable-type-selected-deep-node");
+
+		var menu = pane.BuildContextMenuForCurrentState(registry.Entries);
+		menu.Should().NotBeNull();
+		menu!.Items.OfType<MenuItem>().Select(i => (string?)i.Header)
+			.Should().Contain(Resources._OpenContainingFolder);
+
+		// The path the entry would reveal (Process.Start target — kept in a helper so we can
+		// assert without spawning the OS file manager).
+		var entry = (OpenContainingFolderContextMenuEntry)registry.Entries
+			.Single(e => e.Metadata.Header == nameof(Resources._OpenContainingFolder)).Value;
+		entry.GetPathsToReveal(new TextViewContext {
+			SelectedTreeNodes = new[] { (SharpTreeNode)typeNode },
+		}).Should().Equal(expectedPath);
 	}
 
 	[AvaloniaTest]

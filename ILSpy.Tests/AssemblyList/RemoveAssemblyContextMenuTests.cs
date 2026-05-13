@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
+using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 
 using AwesomeAssertions;
@@ -98,31 +99,40 @@ public class RemoveAssemblyContextMenuTests
 		removeEntry.IsVisible(new TextViewContext { SelectedTreeNodes = null }).Should().BeFalse();
 	}
 
+	// audit (2026-05-12): converted 📦 → 🧪. Was calling `removeEntry.Execute(synthetic ctx)`
+	// directly; now selects the assembly via the model (production dispatch), builds the
+	// context menu via the same `BuildContextMenuForCurrentState` path the live `Opening`
+	// event invokes, finds the "Remove" MenuItem, and fires the `Click` routed event — the
+	// same RoutedEvent `ContextMenu`'s MenuItem fires when the user clicks. Catches both the
+	// "Execute removes the assembly" behavior AND any regression that breaks the
+	// menu-building → click-handler-attachment chain.
 	[AvaloniaTest]
-	public async Task Remove_Entry_Execute_Unloads_All_Selected_Assemblies()
+	public async Task Right_Click_Then_Remove_On_An_Assembly_Unloads_It_From_The_List()
 	{
-		// Execute on the entry must unload every assembly in the selection from the active
-		// AssemblyList — the same behaviour the Del key already provides, now also reachable
-		// via right-click.
-
 		// Arrange — boot, snapshot a sacrificial assembly + a survivor.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
-		var removeEntry = registry.Entries
-			.Single(e => e.Metadata.Header == nameof(Resources._Remove))
-			.Value;
 
 		var sacrificialName = typeof(System.Linq.Enumerable).Assembly.GetName().Name!;
 		var survivorName = typeof(object).Assembly.GetName().Name!;
 		var sacrificial = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(sacrificialName);
 
-		// Act — fire Execute with the assembly node in the context.
-		removeEntry.Execute(new TextViewContext {
-			SelectedTreeNodes = new[] { (ICSharpCode.ILSpyX.TreeView.SharpTreeNode)sacrificial }
-		});
+		window.CaptureForReview(1, "initial-tree-three-assemblies");
+
+		// Act — select the row, build the menu the way the live Opening event would, find
+		// the Remove item, and click it.
+		vm.AssemblyTreeModel.SelectNode(sacrificial);
+		window.CaptureForReview(2, "sacrificial-selected");
+
+		var menu = pane.BuildContextMenuForCurrentState(registry.Entries);
+		menu.Should().NotBeNull();
+		var removeItem = menu!.Items.OfType<MenuItem>()
+			.Single(i => (string?)i.Header == Resources._Remove);
+		removeItem.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
 
 		// Assert — the assembly is gone from the list; the survivor is still there.
 		await Waiters.WaitForAsync(() =>
@@ -130,6 +140,8 @@ public class RemoveAssemblyContextMenuTests
 				.Any(a => string.Equals(a.ShortName, sacrificialName, StringComparison.Ordinal)));
 		vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
 			.Should().Contain(a => a.ShortName == survivorName);
+
+		window.CaptureForReview(3, "after-remove-sacrificial-gone");
 	}
 
 	[AvaloniaTest]
