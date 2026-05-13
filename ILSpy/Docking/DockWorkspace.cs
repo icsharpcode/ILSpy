@@ -99,8 +99,7 @@ namespace ILSpy.Docking
 			NavigateForwardCommand = new RelayCommand(NavigateForward, () => history.CanNavigateForward);
 			NavigateToHistoryCommand = new RelayCommand<NavigationEntry>(NavigateToHistory,
 				entry => entry != null && (history.BackEntries.Contains(entry) || history.ForwardEntries.Contains(entry)));
-			ShowSearchCommand = new RelayCommand(
-				() => ShowToolPane(ILSpy.Search.SearchPaneModel.PaneContentId));
+			ShowSearchCommand = new RelayCommand(ExecuteShowSearch);
 			using (ILSpy.AppEnv.StartupLog.Phase("ILSpyDockFactory ctor + CreateLayout"))
 			{
 				factory = new ILSpyDockFactory(toolPaneRegistry);
@@ -580,6 +579,26 @@ namespace ILSpy.Docking
 						factory.SetFocusedDockable(owner, toolPane);
 					return;
 				}
+			}
+		}
+
+		void ExecuteShowSearch()
+		{
+			ShowToolPane(ILSpy.Search.SearchPaneModel.PaneContentId);
+			// Hand keyboard focus to the search input AFTER activating the pane — the view's
+			// code-behind subscribes to FocusRequested and posts the focus shift onto the
+			// dispatcher so the freshly-active pane has a frame to surface in the layout
+			// first. Resolving the pane through AppComposition (instead of injecting it)
+			// keeps the dock-workspace decoupled from the search namespace.
+			try
+			{
+				var search = AppEnv.AppComposition.Current.GetExport<ILSpy.Search.SearchPaneModel>();
+				search.RequestFocus();
+			}
+			catch
+			{
+				// Composition isn't available in design-time previews / minimal tests; the
+				// activation alone is enough to be useful there.
 			}
 		}
 

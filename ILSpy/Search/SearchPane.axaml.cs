@@ -16,8 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Threading;
 
 using ICSharpCode.ILSpyX.Search;
 
@@ -25,11 +28,32 @@ namespace ILSpy.Search
 {
 	public partial class SearchPane : UserControl
 	{
+		SearchPaneModel? boundModel;
+
 		public SearchPane()
 		{
 			InitializeComponent();
 			SearchResults.DoubleTapped += OnResultDoubleTapped;
 			SearchResults.KeyDown += OnResultKeyDown;
+		}
+
+		protected override void OnDataContextChanged(EventArgs e)
+		{
+			base.OnDataContextChanged(e);
+			if (boundModel != null)
+				boundModel.FocusRequested -= OnFocusRequested;
+			boundModel = DataContext as SearchPaneModel;
+			if (boundModel != null)
+				boundModel.FocusRequested += OnFocusRequested;
+		}
+
+		void OnFocusRequested()
+		{
+			// Post the focus shift instead of running synchronously: ShowSearchCommand fires
+			// in the middle of SetActiveDockable, when the pane may not yet be the focusable
+			// visual root. A dispatcher tick lets the activation settle so .Focus() actually
+			// takes — without it the focus call no-ops because the TextBox isn't visible yet.
+			Dispatcher.UIThread.Post(() => SearchInput.Focus(), DispatcherPriority.Input);
 		}
 
 		void OnResultDoubleTapped(object? sender, TappedEventArgs e)

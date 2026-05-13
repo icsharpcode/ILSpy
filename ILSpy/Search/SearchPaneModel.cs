@@ -118,6 +118,17 @@ namespace ILSpy.Search
 		public partial bool IsSearching { get; set; }
 
 		/// <summary>
+		/// Raised when the pane should hand keyboard focus to its search input. The view's
+		/// code-behind subscribes and calls <c>SearchInput.Focus()</c> on the dispatcher;
+		/// the VM stays UI-framework-agnostic. Fires from <see cref="RequestFocus"/>, which
+		/// <see cref="Docking.DockWorkspace.ShowSearchCommand"/> calls after bringing the
+		/// pane to active.
+		/// </summary>
+		public event Action? FocusRequested;
+
+		public void RequestFocus() => FocusRequested?.Invoke();
+
+		/// <summary>
 		/// User clicked (or double-tapped) a result row. Walks the result's <c>Reference</c>
 		/// to the matching assembly-tree node via <see cref="AssemblyTreeModel.FindTreeNode"/>
 		/// and moves selection there. Silently no-ops when the reference can't be resolved
