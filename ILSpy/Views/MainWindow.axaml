@@ -23,6 +23,10 @@
 		     Avalonia 12 yet, so we wire keyboard only for now. -->
 		<KeyBinding Gesture="Alt+Left" Command="{Binding DockWorkspace.NavigateBackCommand}" />
 		<KeyBinding Gesture="Alt+Right" Command="{Binding DockWorkspace.NavigateForwardCommand}" />
+		<!-- Search pane shortcuts. Ctrl+Shift+F is the WPF default; Ctrl+E mirrors the
+		     "search box" gesture VS uses. Both bring the bottom search pane to focus. -->
+		<KeyBinding Gesture="Ctrl+Shift+F" Command="{Binding DockWorkspace.ShowSearchCommand}" />
+		<KeyBinding Gesture="Ctrl+E" Command="{Binding DockWorkspace.ShowSearchCommand}" />
 	</Window.KeyBindings>
 
 	<DockPanel>

@@ -71,6 +71,12 @@ namespace ILSpy.Docking
 		public IRelayCommand NavigateForwardCommand { get; }
 		public IRelayCommand<NavigationEntry> NavigateToHistoryCommand { get; }
 
+		/// <summary>
+		/// Brings the search tool pane to focus. Wired to Ctrl+Shift+F and Ctrl+E on the
+		/// main window. Idempotent — re-firing on an already-active pane is a no-op.
+		/// </summary>
+		public IRelayCommand ShowSearchCommand { get; }
+
 		// Read-only history snapshots for the Back/Forward split-button dropdowns; oldest-first.
 		// The UI reverses these for newest-first display.
 		public IReadOnlyList<NavigationEntry> BackHistory => history.BackEntries;
@@ -93,6 +99,8 @@ namespace ILSpy.Docking
 			NavigateForwardCommand = new RelayCommand(NavigateForward, () => history.CanNavigateForward);
 			NavigateToHistoryCommand = new RelayCommand<NavigationEntry>(NavigateToHistory,
 				entry => entry != null && (history.BackEntries.Contains(entry) || history.ForwardEntries.Contains(entry)));
+			ShowSearchCommand = new RelayCommand(
+				() => ShowToolPane(ILSpy.Search.SearchPaneModel.PaneContentId));
 			using (ILSpy.AppEnv.StartupLog.Phase("ILSpyDockFactory ctor + CreateLayout"))
 			{
 				factory = new ILSpyDockFactory(toolPaneRegistry);
@@ -555,6 +563,41 @@ namespace ILSpy.Docking
 		/// so <see cref="OnActiveDockableChanged"/> can pick it up and pull the tree's
 		/// selection across — setting it after-the-fact misses the activation event.
 		/// </param>
+		/// <summary>
+		/// Brings the tool pane with the given <paramref name="contentId"/> to focus. Walks
+		/// every <see cref="IDockable"/> in the layout via <see cref="GetAllDockables"/> and
+		/// matches on <see cref="IDockable.Id"/>. Silently no-ops when the pane isn't in the
+		/// layout — e.g. it was closed via its X button and hasn't been re-added.
+		/// </summary>
+		public void ShowToolPane(string contentId)
+		{
+			foreach (var dockable in GetAllDockables(Layout))
+			{
+				if (dockable is ToolPaneModel toolPane && toolPane.Id == contentId)
+				{
+					factory.SetActiveDockable(toolPane);
+					if (toolPane.Owner is IDock owner)
+						factory.SetFocusedDockable(owner, toolPane);
+					return;
+				}
+			}
+		}
+
+		static System.Collections.Generic.IEnumerable<IDockable> GetAllDockables(IDockable? root)
+		{
+			if (root == null)
+				yield break;
+			yield return root;
+			if (root is IDock dock && dock.VisibleDockables != null)
+			{
+				foreach (var child in dock.VisibleDockables)
+				{
+					foreach (var descendant in GetAllDockables(child))
+						yield return descendant;
+				}
+			}
+		}
+
 		public ContentTabPage OpenNewTab(object content, SharpTreeNode? sourceNode = null)
 		{
 			var tab = new ContentTabPage { Content = content, SourceNode = sourceNode };
