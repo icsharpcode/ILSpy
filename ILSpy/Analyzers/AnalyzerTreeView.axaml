@@ -6,7 +6,34 @@
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
              x:Class="ILSpy.Analyzers.AnalyzerTreeView"
              x:DataType="analyzers:AnalyzerTreeViewModel">
-	<TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
-	           Foreground="Gray" FontStyle="Italic"
-	           Text="Analyzer results will appear here." />
+	<DataGrid Name="TreeGrid"
+	          Classes="hierarchical"
+	          AutoGenerateColumns="False"
+	          HeadersVisibility="None"
+	          HierarchicalRowsEnabled="True"
+	          GridLinesVisibility="None"
+	          CanUserResizeColumns="False"
+	          SelectionMode="Extended"
+	          SelectionChanged="OnTreeGridSelectionChanged">
+		<DataGrid.Columns>
+			<DataGridHierarchicalColumn Header="Name" Width="*"
+			                            IsReadOnly="True"
+			                            x:CompileBindings="False"
+			                            Binding="{Binding Item}">
+				<DataGridHierarchicalColumn.CellTemplate>
+					<DataTemplate>
+						<Grid ColumnDefinitions="Auto,7,*"
+						      VerticalAlignment="Center" Margin="4,0"
+						      ToolTip.Tip="{Binding ToolTip}">
+							<Image Grid.Column="0" Source="{Binding Icon}"
+							       Width="16" Height="16"
+							       VerticalAlignment="Center" />
+							<TextBlock Grid.Column="2" Text="{Binding Text}"
+							           VerticalAlignment="Center" />
+						</Grid>
+					</DataTemplate>
+				</DataGridHierarchicalColumn.CellTemplate>
+			</DataGridHierarchicalColumn>
+		</DataGrid.Columns>
+	</DataGrid>
 </UserControl>
