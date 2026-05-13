@@ -108,6 +108,16 @@ namespace ILSpy.Search
 		public ObservableCollection<SearchResult> Results { get; } = new();
 
 		/// <summary>
+		/// True while the background search is in flight. Bound to the pane's
+		/// <c>ProgressBar.IsIndeterminate</c> so the user sees activity for long-running
+		/// scans (large assembly lists can take a few seconds). Flips to true at
+		/// <see cref="RunningSearch.Start"/> and back to false when
+		/// <see cref="RunningSearch.Completed"/> fires.
+		/// </summary>
+		[ObservableProperty]
+		public partial bool IsSearching { get; set; }
+
+		/// <summary>
 		/// User clicked (or double-tapped) a result row. Walks the result's <c>Reference</c>
 		/// to the matching assembly-tree node via <see cref="AssemblyTreeModel.FindTreeNode"/>
 		/// and moves selection there. Silently no-ops when the reference can't be resolved
@@ -134,6 +144,7 @@ namespace ILSpy.Search
 			currentSearch?.Cancel();
 			currentSearch = null;
 			Results.Clear();
+			IsSearching = false;
 
 			var term = SearchTerm ?? string.Empty;
 
@@ -158,7 +169,7 @@ namespace ILSpy.Search
 				?? ApiVisibility.PublicOnly;
 
 			var factory = new AvaloniaSearchResultFactory(language);
-			currentSearch = new RunningSearch(
+			var run = new RunningSearch(
 				assemblyList.GetAssemblies(),
 				term,
 				SelectedSearchMode.Mode,
@@ -166,7 +177,18 @@ namespace ILSpy.Search
 				apiVisibility,
 				factory,
 				Results);
-			currentSearch.Start();
+			run.Completed += OnRunCompleted;
+			currentSearch = run;
+			IsSearching = true;
+			run.Start();
+		}
+
+		void OnRunCompleted(RunningSearch sender)
+		{
+			// Ignore late completions from cancelled runs — those are noise.
+			if (!ReferenceEquals(sender, currentSearch))
+				return;
+			IsSearching = false;
 		}
 
 		static AssemblyTreeModel? TryGetAssemblyTreeModel()

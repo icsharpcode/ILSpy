@@ -79,6 +79,14 @@ namespace ILSpy.Search
 
 		public bool IsCompleted => runTask is { IsCompleted: true };
 
+		/// <summary>
+		/// Fires on the UI thread when the run finishes (success, error, or cancellation).
+		/// Always fires exactly once — the search-pane VM uses it to flip its IsSearching
+		/// flag back to false. Subscribers are invoked AFTER the drain loop has flushed
+		/// the queue so post-completion result reads see the final state.
+		/// </summary>
+		public event Action<RunningSearch>? Completed;
+
 		public void Start()
 		{
 			var token = cts.Token;
@@ -221,14 +229,28 @@ namespace ILSpy.Search
 						});
 					}
 					if (runTask is { IsCompleted: true } && queue.IsEmpty)
+					{
+						RaiseCompletedOnUIThread();
 						return;
+					}
 					await Task.Delay(50, ct).ConfigureAwait(false);
 				}
 			}
 			catch (OperationCanceledException)
 			{
-				// Expected when the run is replaced or cleared.
+				// Expected when the run is replaced or cleared. Still raise Completed so the
+				// pane's IsSearching flag flips off — cancellation is a kind of completion
+				// from the VM's perspective.
+				RaiseCompletedOnUIThread();
 			}
+		}
+
+		void RaiseCompletedOnUIThread()
+		{
+			var handler = Completed;
+			if (handler == null)
+				return;
+			Dispatcher.UIThread.Post(() => handler(this));
 		}
 	}
 }

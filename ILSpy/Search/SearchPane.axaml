@@ -6,7 +6,7 @@
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
              x:Class="ILSpy.Search.SearchPane"
              x:DataType="search:SearchPaneModel">
-	<Grid RowDefinitions="Auto,*" Margin="4">
+	<Grid RowDefinitions="Auto,Auto,*" Margin="4">
 		<Grid Grid.Row="0" ColumnDefinitions="*,8,Auto" Margin="0,0,0,4">
 			<TextBox Grid.Column="0" Name="SearchInput"
 			         PlaceholderText="Search…"
@@ -22,15 +22,45 @@
 				</ComboBox.ItemTemplate>
 			</ComboBox>
 		</Grid>
-		<ListBox Grid.Row="1" Name="SearchResults"
+		<!-- Indeterminate progress strip: lights up while RunningSearch is in flight. Mirrors
+		     WPF's searchProgressBar; the height is just enough to be noticed without stealing
+		     space from the results list. -->
+		<ProgressBar Grid.Row="1" Name="SearchProgress"
+		             IsIndeterminate="True"
+		             IsVisible="{Binding IsSearching}"
+		             Height="3" Margin="0,0,0,2"
+		             BorderThickness="0" />
+		<ListBox Grid.Row="2" Name="SearchResults"
 		         ItemsSource="{Binding Results}"
 		         x:CompileBindings="False">
 			<ListBox.ItemTemplate>
 				<DataTemplate>
+					<!-- Three icon+text cells: Name | Location | Assembly. Each cell is a
+					     two-column Grid so the icon doesn't compress when the text gets
+					     ellipsised. -->
 					<Grid ColumnDefinitions="*,8,Auto,8,Auto" Margin="2,1">
-						<TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-						<TextBlock Grid.Column="2" Text="{Binding Location}" Foreground="Gray" TextTrimming="CharacterEllipsis" />
-						<TextBlock Grid.Column="4" Text="{Binding Assembly}" Foreground="Gray" TextTrimming="CharacterEllipsis" />
+						<Grid Grid.Column="0" ColumnDefinitions="Auto,4,*">
+							<Image Grid.Column="0" Source="{Binding Image}" Width="16" Height="16"
+							       VerticalAlignment="Center" />
+							<TextBlock Grid.Column="2" Text="{Binding Name}"
+							           ToolTip.Tip="{Binding ToolTip}"
+							           VerticalAlignment="Center"
+							           TextTrimming="CharacterEllipsis" />
+						</Grid>
+						<Grid Grid.Column="2" ColumnDefinitions="Auto,4,*">
+							<Image Grid.Column="0" Source="{Binding LocationImage}" Width="16" Height="16"
+							       VerticalAlignment="Center" />
+							<TextBlock Grid.Column="2" Text="{Binding Location}" Foreground="Gray"
+							           VerticalAlignment="Center"
+							           TextTrimming="CharacterEllipsis" />
+						</Grid>
+						<Grid Grid.Column="4" ColumnDefinitions="Auto,4,*">
+							<Image Grid.Column="0" Source="{Binding AssemblyImage}" Width="16" Height="16"
+							       VerticalAlignment="Center" />
+							<TextBlock Grid.Column="2" Text="{Binding Assembly}" Foreground="Gray"
+							           VerticalAlignment="Center"
+							           TextTrimming="CharacterEllipsis" />
+						</Grid>
 					</Grid>
 				</DataTemplate>
 			</ListBox.ItemTemplate>
