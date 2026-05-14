@@ -42,7 +42,7 @@ namespace ILSpy.TextView
 	/// Reference markers, fold ranges, and inline UI elements are intentionally dropped here —
 	/// those land when we add hyperlinks and folding support.
 	/// </summary>
-	sealed class AvaloniaEditTextOutput : ISmartTextOutput
+	public sealed class AvaloniaEditTextOutput : ISmartTextOutput
 	{
 		readonly StringBuilder builder = new();
 		readonly Stack<(int Offset, HighlightingColor Color)> openSpans = new();

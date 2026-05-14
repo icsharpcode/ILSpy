@@ -95,6 +95,15 @@ namespace ILSpy.TextView
 		private bool isDecompiling;
 
 		/// <summary>
+		/// Title displayed inside the wait adorner while a long-running operation runs. Defaults
+		/// to the localised "Decompiling…" string; <see cref="RunWithCancellation"/> overrides it
+		/// for non-decompile tasks (e.g. "Creating diagram…", "Building CFG…") so the user knows
+		/// what's actually running.
+		/// </summary>
+		[ObservableProperty]
+		private string progressTitle = ICSharpCode.ILSpy.Properties.Resources.Decompiling;
+
+		/// <summary>
 		/// Hyperlink targets emitted alongside the decompiled text. Cleared between decompiles.
 		/// </summary>
 		[ObservableProperty]
@@ -341,6 +350,7 @@ namespace ILSpy.TextView
 			}
 
 			var newSyntaxExtension = language.FileExtension;
+			ProgressTitle = ICSharpCode.ILSpy.Properties.Resources.Decompiling;
 			IsDecompiling = true;
 
 			// Spinner appears as a glyph prefix on the tab title while the decompile runs;
@@ -480,6 +490,69 @@ namespace ILSpy.TextView
 					return;
 				Title = ComposeSpinnerTitle(frame++, ComposeBaseTitle());
 			}
+		}
+
+		/// <summary>
+		/// Runs <paramref name="taskCreation"/> with the wait adorner visible and a custom
+		/// <paramref name="progressTitle"/> (defaults to "Decompiling…"). Any in-flight
+		/// decompile or prior <see cref="RunWithCancellation"/> task is cancelled first so the
+		/// wait UI represents exactly the latest request. The returned task completes with the
+		/// caller's value once the user-supplied task finishes, faults, or cancels — and the
+		/// wait adorner is restored either way.
+		/// </summary>
+		public async Task<T> RunWithCancellation<T>(
+			Func<CancellationToken, Task<T>> taskCreation,
+			string? progressTitle = null)
+		{
+			ArgumentNullException.ThrowIfNull(taskCreation);
+			activeCts?.Cancel();
+			var cts = activeCts = new CancellationTokenSource();
+			ProgressTitle = progressTitle ?? ICSharpCode.ILSpy.Properties.Resources.Decompiling;
+			IsDecompiling = true;
+			TaskbarProgress?.SetState(TaskbarProgressState.Indeterminate);
+			try
+			{
+				return await taskCreation(cts.Token).ConfigureAwait(true);
+			}
+			finally
+			{
+				if (ReferenceEquals(activeCts, cts))
+				{
+					void StopSpinner()
+					{
+						IsDecompiling = false;
+						TaskbarProgress?.SetState(TaskbarProgressState.None);
+						ProgressTitle = ICSharpCode.ILSpy.Properties.Resources.Decompiling;
+					}
+					if (Dispatcher.UIThread.CheckAccess())
+						StopSpinner();
+					else
+						await Dispatcher.UIThread.InvokeAsync(StopSpinner);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Pushes <paramref name="output"/> directly into the editor — bypasses
+		/// <see cref="DecompileAsync"/>. Cancels any in-flight decompile so the new content
+		/// isn't overwritten when the cancelled task's continuation lands. Used for
+		/// command-driven reports (Create Diagram, Generate PDB, etc.) that produce text
+		/// without going through a tree-node selection.
+		/// </summary>
+		public void ShowText(AvaloniaEditTextOutput output)
+		{
+			ArgumentNullException.ThrowIfNull(output);
+			activeCts?.Cancel();
+			activeCts = null;
+			SyntaxExtension = output.SyntaxExtensionOverride ?? Language?.FileExtension ?? string.Empty;
+			HighlightingModel = output.HighlightingModel;
+			Foldings = output.Foldings;
+			References = output.References;
+			DefinitionLookup = output.DefinitionLookup;
+			UIElements = output.UIElements;
+			Text = output.GetText();
+			currentNodes = System.Array.Empty<ILSpyTreeNode>();
+			Title = string.IsNullOrEmpty(output.Title) ? "(report)" : output.Title;
 		}
 
 		// Pulls the live DecompilerSettings via MEF and returns a clone for this run. MEF

@@ -24,6 +24,8 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
+using System.Threading;
+using System.Threading.Tasks;
 
 using CommunityToolkit.Mvvm.Input;
 
@@ -594,6 +596,32 @@ namespace ILSpy.Docking
 
 		public DecompilerTabPageModel? ActiveDecompilerTab
 			=> factory.MainTab?.Content as DecompilerTabPageModel is { IsStaticContent: false } d ? d : null;
+
+		/// <summary>
+		/// Forwards to <see cref="DecompilerTabPageModel.RunWithCancellation"/> on the active
+		/// decompiler tab. Convenience wrapper used by long-running commands (Create Diagram,
+		/// CFG, etc.) that need a wait UI with a custom title. Returns a faulted task if no
+		/// active decompiler tab is available.
+		/// </summary>
+		public Task<T> RunWithCancellation<T>(
+			Func<CancellationToken, Task<T>> taskCreation,
+			string? progressTitle = null)
+		{
+			var tab = ActiveDecompilerTab;
+			if (tab == null)
+				return Task.FromException<T>(new InvalidOperationException("No active decompiler tab"));
+			return tab.RunWithCancellation(taskCreation, progressTitle);
+		}
+
+		/// <summary>
+		/// Forwards to <see cref="DecompilerTabPageModel.ShowText"/> on the active decompiler
+		/// tab. Convenience wrapper used by command-driven reports (Create Diagram, Generate
+		/// PDB, etc.) to surface their output where the user is looking.
+		/// </summary>
+		public void ShowText(TextView.AvaloniaEditTextOutput output)
+		{
+			ActiveDecompilerTab?.ShowText(output);
+		}
 
 		/// <summary>
 		/// Opens a fresh sibling tab whose <see cref="ContentTabPage.Content"/> is the

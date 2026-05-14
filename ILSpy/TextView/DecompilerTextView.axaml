@@ -31,7 +31,7 @@
 					           TextWrapping="Wrap"
 					           HorizontalAlignment="Center"
 					           TextAlignment="Center"
-					           Text="Decompiling…" />
+					           Text="{Binding ProgressTitle}" />
 					<ProgressBar Name="ProgressBar"
 					             IsIndeterminate="True"
 					             Height="16" />
