@@ -123,4 +123,62 @@ public class SearchPaneStreamingTests
 		await Waiters.WaitForAsync(() => search.Results.Count == 0, timeout: TimeSpan.FromSeconds(5));
 		search.Results.Should().BeEmpty("an empty search term must clear stale results");
 	}
+
+	[AvaloniaTest]
+	public async Task Minus_Operator_Excludes_Names_Containing_The_Term()
+	{
+		// `-` keyword prefix is interpreted by AbstractSearchStrategy.IsMatch as "must NOT
+		// contain". Confirm end-to-end: a Type search for "String -Builder" returns names
+		// containing "String" (System.String, StringComparer, …) but never StringBuilder.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var search = AppComposition.Current.GetExport<SearchPaneModel>();
+		search.Results.Clear();
+		search.SelectedSearchMode = search.SearchModes.First(m => m.Mode == SearchMode.Type);
+		search.SearchTerm = "String -Builder";
+
+		await Waiters.WaitForAsync(
+			() => search.Results.Any(r => r.Name.Contains("String", StringComparison.OrdinalIgnoreCase)),
+			timeout: TimeSpan.FromSeconds(30));
+
+		search.Results.Should().NotBeEmpty();
+		search.Results.Should().OnlyContain(
+			r => r.Name.Contains("String", StringComparison.OrdinalIgnoreCase)
+				&& !r.Name.Contains("Builder", StringComparison.OrdinalIgnoreCase),
+			"'-Builder' must filter every result whose name contains 'Builder'");
+	}
+
+	[AvaloniaTest]
+	public async Task Equals_Operator_Requires_Exact_Name_Match()
+	{
+		// `=` keyword prefix is interpreted by AbstractSearchStrategy.IsMatch as exact match
+		// (length-aware; ignores IL backtick generic arity). Confirm: =String must match
+		// System.String but NOT StringBuilder or StringComparer.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var search = AppComposition.Current.GetExport<SearchPaneModel>();
+		search.Results.Clear();
+		search.SelectedSearchMode = search.SearchModes.First(m => m.Mode == SearchMode.Type);
+		search.SearchTerm = "=String";
+
+		await Waiters.WaitForAsync(
+			() => search.Results.Any(r => r.Name.Equals("String", StringComparison.OrdinalIgnoreCase)),
+			timeout: TimeSpan.FromSeconds(30));
+
+		search.Results.Should().Contain(r => r.Name.Equals("String", StringComparison.OrdinalIgnoreCase));
+		search.Results.Should().NotContain(
+			r => r.Name.Contains("Builder", StringComparison.OrdinalIgnoreCase),
+			"'=String' must reject names that aren't exactly 'String'");
+		search.Results.Should().NotContain(
+			r => r.Name.Equals("StringComparer", StringComparison.OrdinalIgnoreCase),
+			"'=String' is an exact match, not a prefix match");
+	}
 }
