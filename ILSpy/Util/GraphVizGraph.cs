@@ -1,0 +1,204 @@
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Text.RegularExpressions;
+
+namespace ILSpy.Util
+{
+#if DEBUG
+	/// <summary>
+	/// Minimal GraphViz DOT-language emitter. Used by the DEBUG-only CFG viewer to dump
+	/// a method's control-flow graph and then call out to <c>dot</c> on PATH to render
+	/// it as PNG. Pure-text producer here; process spawning lives in <see cref="Show"/>.
+	/// </summary>
+	internal sealed class GraphVizGraph
+	{
+		readonly List<GraphVizNode> nodes = new();
+		readonly List<GraphVizEdge> edges = new();
+
+		public string? rankdir;
+		public string? Title;
+
+		public void AddEdge(GraphVizEdge edge) => edges.Add(edge);
+		public void AddNode(GraphVizNode node) => nodes.Add(node);
+
+		public void Save(string fileName)
+		{
+			using var writer = new StreamWriter(fileName);
+			Save(writer);
+		}
+
+		public void Show() => Show(null);
+
+		public void Show(string? name)
+		{
+			name ??= Title;
+			if (name != null)
+				foreach (var c in Path.GetInvalidFileNameChars())
+					name = name.Replace(c, '-');
+			var fileName = name != null ? Path.Combine(Path.GetTempPath(), name) : Path.GetTempFileName();
+			Save(fileName + ".gv");
+			// `dot` is from Graphviz; the user must have it on PATH for this to work.
+			// Same precondition as WPF — we surface the failure as an exception so the
+			// context-menu entry's catch can render an informative message.
+			Process.Start("dot", $"\"{fileName}.gv\" -Tpng -o \"{fileName}.png\"")?.WaitForExit();
+			// Cross-platform "open file with default app": Process.Start with
+			// UseShellExecute=true works on Windows and Mac; on Linux fall back to xdg-open.
+			OpenWithDefaultApplication(fileName + ".png");
+		}
+
+		static void OpenWithDefaultApplication(string path)
+		{
+			if (OperatingSystem.IsWindows() || OperatingSystem.IsMacOS())
+			{
+				Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+			}
+			else
+			{
+				Process.Start(new ProcessStartInfo("xdg-open", path) { UseShellExecute = false });
+			}
+		}
+
+		static string Escape(string text)
+		{
+			if (Regex.IsMatch(text, @"^[\w\d]+$"))
+				return text;
+			return "\"" + text.Replace("\\", "\\\\").Replace("\r", "").Replace("\n", "\\n").Replace("\"", "\\\"") + "\"";
+		}
+
+		static void WriteGraphAttribute(TextWriter writer, string name, string? value)
+		{
+			if (value != null)
+				writer.WriteLine("{0}={1};", name, Escape(value));
+		}
+
+		internal static void WriteAttribute(TextWriter writer, string name, double? value, ref bool isFirst)
+		{
+			if (value != null)
+				WriteAttribute(writer, name, value.Value.ToString(CultureInfo.InvariantCulture), ref isFirst);
+		}
+
+		internal static void WriteAttribute(TextWriter writer, string name, bool? value, ref bool isFirst)
+		{
+			if (value != null)
+				WriteAttribute(writer, name, value.Value ? "true" : "false", ref isFirst);
+		}
+
+		internal static void WriteAttribute(TextWriter writer, string name, string? value, ref bool isFirst)
+		{
+			if (value != null)
+			{
+				if (isFirst)
+					isFirst = false;
+				else
+					writer.Write(',');
+				writer.Write("{0}={1}", name, Escape(value));
+			}
+		}
+
+		public void Save(TextWriter writer)
+		{
+			ArgumentNullException.ThrowIfNull(writer);
+			writer.WriteLine("digraph G {");
+			writer.WriteLine("node [fontsize = 16];");
+			WriteGraphAttribute(writer, "rankdir", rankdir);
+			foreach (var node in nodes)
+				node.Save(writer);
+			foreach (var edge in edges)
+				edge.Save(writer);
+			writer.WriteLine("}");
+		}
+	}
+
+	internal sealed class GraphVizEdge
+	{
+		public readonly string Source, Target;
+
+		public string? color;
+		public bool? constraint;
+		public string? label;
+		public string? style;
+		public int? fontsize;
+
+		public GraphVizEdge(string source, string target)
+		{
+			this.Source = source ?? throw new ArgumentNullException(nameof(source));
+			this.Target = target ?? throw new ArgumentNullException(nameof(target));
+		}
+
+		public GraphVizEdge(int source, int target)
+		{
+			this.Source = source.ToString(CultureInfo.InvariantCulture);
+			this.Target = target.ToString(CultureInfo.InvariantCulture);
+		}
+
+		public void Save(TextWriter writer)
+		{
+			writer.Write("{0} -> {1} [", Source, Target);
+			bool isFirst = true;
+			GraphVizGraph.WriteAttribute(writer, "label", label, ref isFirst);
+			GraphVizGraph.WriteAttribute(writer, "style", style, ref isFirst);
+			GraphVizGraph.WriteAttribute(writer, "fontsize", fontsize, ref isFirst);
+			GraphVizGraph.WriteAttribute(writer, "color", color, ref isFirst);
+			GraphVizGraph.WriteAttribute(writer, "constraint", constraint, ref isFirst);
+			writer.WriteLine("];");
+		}
+	}
+
+	internal sealed class GraphVizNode
+	{
+		public readonly string ID;
+		public string? label;
+		public string? labelloc;
+		public int? fontsize;
+		public double? height;
+		public string? margin;
+		public string? shape;
+
+		public GraphVizNode(string id)
+		{
+			this.ID = id ?? throw new ArgumentNullException(nameof(id));
+		}
+
+		public GraphVizNode(int id)
+		{
+			this.ID = id.ToString(CultureInfo.InvariantCulture);
+		}
+
+		public void Save(TextWriter writer)
+		{
+			writer.Write(ID);
+			writer.Write(" [");
+			bool isFirst = true;
+			GraphVizGraph.WriteAttribute(writer, "label", label, ref isFirst);
+			GraphVizGraph.WriteAttribute(writer, "labelloc", labelloc, ref isFirst);
+			GraphVizGraph.WriteAttribute(writer, "fontsize", fontsize, ref isFirst);
+			GraphVizGraph.WriteAttribute(writer, "margin", margin, ref isFirst);
+			GraphVizGraph.WriteAttribute(writer, "shape", shape, ref isFirst);
+			writer.WriteLine("];");
+		}
+	}
+#endif
+}
