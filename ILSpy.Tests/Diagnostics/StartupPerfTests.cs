@@ -148,6 +148,57 @@ public class StartupPerfTests
 		}
 	}
 
+	/// <summary>
+	/// CI-runnable variant of <see cref="BindTree_With_Large_AssemblyList_Reports_Phase_Timings"/>.
+	/// Same shape but with a much smaller assembly count (8 vs 200) so it can run inside the
+	/// regular suite — catches order-of-magnitude regressions in the open + load pipeline
+	/// without the 30+ second cost of the full benchmark. NOT [Explicit] on purpose.
+	/// </summary>
+	[AvaloniaTest]
+	public async Task BindTree_With_Small_AssemblyList_Settles_In_Reasonable_Time()
+	{
+		const int Copies = 8;
+		var tempDir = Path.Combine(Path.GetTempPath(), "ILSpy.PerfTest.CI", Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempDir);
+		try
+		{
+			var sourcePath = typeof(object).Assembly.Location;
+			var clones = new string[Copies];
+			for (int i = 0; i < Copies; i++)
+			{
+				clones[i] = Path.Combine(tempDir, $"copy{i:D2}.dll");
+				File.Copy(sourcePath, clones[i]);
+			}
+
+			var window = AppComposition.Current.GetExport<MainWindow>();
+			window.Show();
+			var vm = (MainWindowViewModel)window.DataContext!;
+			await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+			var baselineCount = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Length;
+
+			var swTotal = Stopwatch.StartNew();
+			foreach (var path in clones)
+				vm.AssemblyTreeModel.AssemblyList!.OpenAssembly(path);
+			await Waiters.WaitForAsync(
+				() => vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Length >= baselineCount + Copies,
+				timeout: TimeSpan.FromSeconds(60));
+			swTotal.Stop();
+
+			// Relaxed CI threshold — 8 assemblies should never take more than 15s, even on a
+			// shared CI runner. A 10× regression of the open-and-settle pipeline trips this.
+			swTotal.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(15),
+				"opening + settling 8 LoadedAssembly entries should complete in well under 15s");
+			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Length
+				.Should().BeGreaterThanOrEqualTo(baselineCount + Copies);
+		}
+		finally
+		{
+			try
+			{ Directory.Delete(tempDir, recursive: true); }
+			catch { /* cleanup must never fail */ }
+		}
+	}
+
 	const int ResponsivenessAssemblyCount = 200;
 
 	[Explicit("Perf benchmark — emits dispatcher-latency stats for manual inspection")]
