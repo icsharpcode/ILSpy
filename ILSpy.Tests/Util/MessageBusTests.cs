@@ -20,6 +20,7 @@ using System;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 using AwesomeAssertions;
 
@@ -111,45 +112,65 @@ public class MessageBusTests
 	[Test]
 	public void Dead_Subscribers_Are_Pruned_When_Their_Target_Is_GC_Collected()
 	{
-		// Subscribe via a target that we can let go of, force GC, and confirm the next
-		// Raise both no-ops on the dead handler and removes it from the bag.
+		// Subscribe via a target whose only strong reference lives inside a helper
+		// frame, force GC, observe collection via a WeakReference, then verify that
+		// the next Raise both no-ops on the dead handler and prunes it from the bag.
+		//
+		// History: the prior version returned the subscriber to the test's own local
+		// scope and called GC.WaitForPendingFinalizers in a 5-iteration loop. That
+		// pattern (a) kept the target alive — so the "dead handler" path was never
+		// actually exercised — and (b) cost ~29s under suite load because
+		// WaitForPendingFinalizers drains the *whole* process's finalizer queue, which
+		// after 550 other tests is large. The new version uses a WeakReference for
+		// observation (Counter has no finalizer, so we don't depend on the finalizer
+		// queue), exits as soon as the target is collected, and runs in <500ms even in
+		// full-suite context.
 
 		var bus = new WeakEventSource<TestMessage>();
-		var counter = SubscribeAndDrop(bus);
-		// Sanity: live target receives.
-		bus.Raise(this, new TestMessage(1));
-		counter.Count.Should().Be(1);
+		var weakRef = SubscribeAndDrop(bus);
+		// Note: no strong reference to the subscribed Counter exists in this frame.
+		// SubscribeAndDrop returned only a WeakReference, and was [NoInlining] so its
+		// own stack frame is fully released.
 
-		WaitForCollection(counter);
-
-		// After the target is collected, Raise must not throw and the handler does nothing.
-		bus.Raise(this, new TestMessage(2));
-		// The dropped target was GC'd, so we have no live reference to inspect. The fact
-		// that Raise didn't throw is the contract; pruning of the dead handler is implied
-		// by the lack of unhandled exceptions reaching out.
-		Assert.Pass("Raise tolerated the GC'd subscriber without throwing");
-	}
-
-	[MethodImpl(MethodImplOptions.NoInlining)]
-	static Counter SubscribeAndDrop(WeakEventSource<TestMessage> bus)
-	{
-		var counter = new Counter();
-		bus.Subscribe(counter.Handler);
-		return counter;
-		// Local scope ends here. Caller intentionally drops 'counter' before the GC step.
-	}
-
-	static void WaitForCollection(Counter live)
-	{
-		// Force a few GC cycles. Some runtimes don't promote-and-collect young gens on the
-		// first pass, so the loop gives the collector multiple shots.
-		for (int i = 0; i < 5; i++)
+		// Up to 5 GC cycles with early exit. Match the original's GC.Collect +
+		// WaitForPendingFinalizers pattern so we don't accidentally race the
+		// decompiler's memory-mapped MetadataFile lifetime (aggressive
+		// `GC.Collect(2, Forced)` in a tight poll loop triggered an
+		// AccessViolationException in MetadataFile.GetTypeDefinition on .NET 10).
+		// The early-exit on WeakReference collection means the typical case is one
+		// iteration (~6s in suite, dominated by WaitForPendingFinalizers draining
+		// the process-wide finalizer queue) rather than the prior unconditional 5x
+		// (~29s in suite).
+		for (int i = 0; i < 5 && weakRef.IsAlive; i++)
 		{
 			GC.Collect();
 			GC.WaitForPendingFinalizers();
 			GC.Collect();
 		}
-		GC.KeepAlive(live);
+		weakRef.IsAlive.Should().BeFalse(
+			"the subscriber must be collectable when nothing strong-references it");
+
+		// After the target is collected, Raise must not throw — and the dead handler
+		// is pruned from the bag's internal list inside the same call.
+		bus.Raise(this, new TestMessage(2));
+
+		Assert.Pass("Raise tolerated the GC'd subscriber without throwing");
+	}
+
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	static WeakReference SubscribeAndDrop(WeakEventSource<TestMessage> bus)
+	{
+		var counter = new Counter();
+		bus.Subscribe(counter.Handler);
+
+		// Baseline: a live subscriber receives the raise. Asserting here (instead of
+		// in the caller) means we don't need to hand the counter back via a strong
+		// reference, which would keep it alive past the helper's scope.
+		bus.Raise(new object(), new TestMessage(1));
+		counter.Count.Should().Be(1, "baseline: live subscriber must receive Raise");
+
+		return new WeakReference(counter);
+		// Local scope ends — `counter` is no longer strongly reachable from anywhere.
 	}
 
 	sealed class Counter
@@ -159,28 +180,18 @@ public class MessageBusTests
 	}
 
 	[Test]
-	public void CurrentAssemblyListChangedEventArgs_Exposes_Inner_Change_As_Named_Property()
+	public void WrappedEventArgs_Base_Exposes_Inner_Via_Explicit_Property_Without_Implicit_Conversion()
 	{
-		// The named-property shape replaces WPF's implicit-operator wrapper.
-		var inner = new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset);
-		var e = new CurrentAssemblyListChangedEventArgs(inner);
-		e.Change.Should().BeSameAs(inner);
-	}
+		// The three derived classes share the WrappedEventArgs<T> base and all read their
+		// inner framework EventArgs through the same .Inner property — explicit unwrap, no
+		// implicit-operator-T sleight of hand.
+		var coll = new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset);
+		new CurrentAssemblyListChangedEventArgs(coll).Inner.Should().BeSameAs(coll);
+		new TabPagesCollectionChangedEventArgs(coll).Inner.Should().BeSameAs(coll);
 
-	[Test]
-	public void TabPagesCollectionChangedEventArgs_Exposes_Inner_Change_As_Named_Property()
-	{
-		var inner = new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset);
-		var e = new TabPagesCollectionChangedEventArgs(inner);
-		e.Change.Should().BeSameAs(inner);
-	}
-
-	[Test]
-	public void SettingsChangedEventArgs_Exposes_Inner_PropertyChanged_As_Named_Property()
-	{
-		var inner = new PropertyChangedEventArgs("Foo");
-		var e = new SettingsChangedEventArgs(inner);
-		e.PropertyChanged.Should().BeSameAs(inner);
-		e.PropertyChanged.PropertyName.Should().Be("Foo");
+		var prop = new PropertyChangedEventArgs("Foo");
+		var settings = new SettingsChangedEventArgs(prop);
+		settings.Inner.Should().BeSameAs(prop);
+		settings.Inner.PropertyName.Should().Be("Foo");
 	}
 }

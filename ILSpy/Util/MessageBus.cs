@@ -59,31 +59,26 @@ namespace ILSpy.Util
 	}
 
 	/// <summary>
-	/// Raised when the active <c>AssemblyList</c>'s contents change. <see cref="Change"/>
-	/// carries the underlying <see cref="NotifyCollectionChangedEventArgs"/>; subscribers
-	/// inspect <c>Change.Action</c> / <c>Change.NewItems</c> / <c>Change.OldItems</c>
-	/// directly.
+	/// Base for messages that wrap a framework-supplied <see cref="EventArgs"/> derivative.
+	/// The inner value is exposed via the explicit <see cref="Inner"/> property — there is
+	/// no implicit conversion operator, so the unwrap step is visible at every read site.
 	/// </summary>
-	public class CurrentAssemblyListChangedEventArgs(NotifyCollectionChangedEventArgs change) : EventArgs
+	public abstract class WrappedEventArgs<T>(T inner) : EventArgs where T : EventArgs
 	{
-		public NotifyCollectionChangedEventArgs Change { get; } = change;
+		public T Inner { get; } = inner;
 	}
+
+	/// <summary>Raised when the active <c>AssemblyList</c>'s contents change.</summary>
+	public class CurrentAssemblyListChangedEventArgs(NotifyCollectionChangedEventArgs inner)
+		: WrappedEventArgs<NotifyCollectionChangedEventArgs>(inner);
 
 	/// <summary>Raised when the open-tabs collection mutates.</summary>
-	public class TabPagesCollectionChangedEventArgs(NotifyCollectionChangedEventArgs change) : EventArgs
-	{
-		public NotifyCollectionChangedEventArgs Change { get; } = change;
-	}
+	public class TabPagesCollectionChangedEventArgs(NotifyCollectionChangedEventArgs inner)
+		: WrappedEventArgs<NotifyCollectionChangedEventArgs>(inner);
 
-	/// <summary>
-	/// Raised when any settings section's property changes. <see cref="PropertyChanged"/>
-	/// carries the underlying <see cref="System.ComponentModel.PropertyChangedEventArgs"/>;
-	/// subscribers read <c>PropertyChanged.PropertyName</c> to dispatch on which setting moved.
-	/// </summary>
-	public class SettingsChangedEventArgs(PropertyChangedEventArgs propertyChanged) : EventArgs
-	{
-		public PropertyChangedEventArgs PropertyChanged { get; } = propertyChanged;
-	}
+	/// <summary>Raised when any settings section's property changes.</summary>
+	public class SettingsChangedEventArgs(PropertyChangedEventArgs inner)
+		: WrappedEventArgs<PropertyChangedEventArgs>(inner);
 
 	/// <summary>
 	/// Request to navigate to an entity / metadata token / other reference. Decoupled
