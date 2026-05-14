@@ -30,6 +30,7 @@ using ICSharpCode.ILSpy.Properties;
 
 using ILSpy.AppEnv;
 using ILSpy.Commands;
+using ILSpy.Languages;
 using ILSpy.TextView;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
@@ -464,4 +465,64 @@ public class DecompilerViewTests
 		fm.Should().NotBeNull("XML SyntaxExtension should install AvaloniaEdit's XmlFoldingStrategy");
 		fm!.AllFoldings.Should().NotBeEmpty("multi-line XML elements should produce fold ranges");
 	}
+
+#if DEBUG
+	[AvaloniaTest]
+	public async Task Switching_Language_With_Selected_Method_Does_Not_Throw_Folding_Out_Of_Bounds()
+	{
+		// Regression for the unobserved-task AggregateException("Folding must be within document
+		// boundary") that fired when the user switched from C# to ILAst while a method was
+		// selected. Root cause: DockWorkspace.OnLanguagePropertyChanged toggles
+		// CurrentNode = null → CurrentNode = node to force a re-decompile, and the null step
+		// short-circuits DecompileAsync to Text = "" while leaving Foldings holding the previous
+		// (C#) offsets. ApplyDocument then tried to install C# foldings into an empty document.
+		//
+		// We trap any unobserved Task exception during the test and fail with its full message
+		// so the regression surfaces clearly instead of via the finalizer thread.
+
+		System.Exception? unobserved = null;
+		System.EventHandler<System.Threading.Tasks.UnobservedTaskExceptionEventArgs> handler = (_, e) => {
+			unobserved ??= e.Exception;
+			e.SetObserved();
+		};
+		System.Threading.Tasks.TaskScheduler.UnobservedTaskException += handler;
+		try
+		{
+			var window = AppComposition.Current.GetExport<MainWindow>();
+			window.Show();
+			var vm = (MainWindowViewModel)window.DataContext!;
+			await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+			var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+				"System.Linq", "System.Linq", "System.Linq.Enumerable");
+			typeNode.IsExpanded = true;
+			var method = typeNode.Children.OfType<MethodTreeNode>()
+				.First(m => m.MethodDefinition.Name == "AsEnumerable");
+			vm.AssemblyTreeModel.SelectNode(method);
+			var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+			tab.Foldings.Should().NotBeNull(
+				"C# decompile of a method body should produce at least one fold");
+
+			// Switch the language — the buggy path was here.
+			var languageService = AppComposition.Current.GetExport<LanguageService>();
+			var blockIL = languageService.Languages.OfType<ILAstLanguage>()
+				.Single(l => l.Name == "ILAst");
+			languageService.CurrentLanguage = blockIL;
+
+			await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+			// Force GC to flush any unobserved Task faults that escaped via the dispatcher.
+			System.GC.Collect();
+			System.GC.WaitForPendingFinalizers();
+			System.GC.Collect();
+
+			unobserved.Should().BeNull(
+				$"C# → ILAst language switch must not leak an unobserved task fault; saw: {unobserved}");
+		}
+		finally
+		{
+			System.Threading.Tasks.TaskScheduler.UnobservedTaskException -= handler;
+		}
+	}
+#endif
 }

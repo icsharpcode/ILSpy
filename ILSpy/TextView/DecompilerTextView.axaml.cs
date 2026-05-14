@@ -206,6 +206,49 @@ namespace ILSpy.TextView
 
 		void OnEditorKeyDownForZoom(object? sender, KeyEventArgs e)
 		{
+			// Folding keyboard commands (Ctrl+M family). Mirrors typical IDE conventions:
+			// Ctrl+M Ctrl+M-ish toggle for the fold nearest the caret; Ctrl+Shift+M for
+			// collapse-all / expand-all by parity check. Implemented as single-key chords
+			// (Ctrl+M / Ctrl+Shift+M) — full two-key chord support would need a key-state
+			// machine wired through the TextArea which AvaloniaEdit doesn't ship.
+			if ((e.KeyModifiers & KeyModifiers.Control) == KeyModifiers.Control && e.Key == Key.M)
+			{
+				if (activeFoldingManager is { } mgr)
+				{
+					bool shift = (e.KeyModifiers & KeyModifiers.Shift) == KeyModifiers.Shift;
+					if (shift)
+					{
+						// Collapse all when any fold is open; expand all otherwise.
+						bool anyOpen = false;
+						foreach (var f in mgr.AllFoldings)
+						{
+							if (!f.IsFolded)
+							{ anyOpen = true; break; }
+						}
+						foreach (var f in mgr.AllFoldings)
+							f.IsFolded = anyOpen;
+					}
+					else
+					{
+						// Toggle the innermost fold containing the caret offset.
+						var caret = Editor.TextArea.Caret.Offset;
+						FoldingSection? target = null;
+						foreach (var f in mgr.AllFoldings)
+						{
+							if (f.StartOffset <= caret && caret <= f.EndOffset)
+							{
+								if (target == null || f.StartOffset > target.StartOffset)
+									target = f;
+							}
+						}
+						if (target != null)
+							target.IsFolded = !target.IsFolded;
+					}
+					e.Handled = true;
+					return;
+				}
+			}
+
 			if ((e.KeyModifiers & KeyModifiers.Control) != KeyModifiers.Control)
 				return;
 			if (currentDisplaySettings == null)
@@ -479,15 +522,27 @@ namespace ILSpy.TextView
 			model.PendingFoldings = null;
 			if (model.Foldings is { Count: > 0 } foldings)
 			{
-				activeFoldingManager = FoldingManager.Install(Editor.TextArea);
-				var ordered = foldings.OrderBy(f => f.StartOffset).ToList();
-				// Project the saved snapshot onto the freshly-built list so each NewFolding's
-				// DefaultClosed reflects the previous state BEFORE UpdateFoldings installs them.
-				// The checksum inside Restore guards against the document having shifted under
-				// our feet (Refresh / settings change / etc).
-				if (pendingFoldings is { } pending)
-					FoldingsViewState.Restore(ordered, pending);
-				activeFoldingManager.UpdateFoldings(ordered, -1);
+				// Defensive clamp: drop foldings that fall outside [0, TextLength]. Without
+				// this, a stale Foldings collection from an earlier decompile combined with a
+				// shorter (or empty) document — see DecompilerTabPageModel.DecompileAsync's
+				// empty-nodes short-circuit — would trip AvaloniaEdit's
+				// "Folding must be within document boundary" guard inside CreateFolding.
+				int textLength = Editor.Document.TextLength;
+				var ordered = foldings
+					.Where(f => f.StartOffset >= 0 && f.EndOffset <= textLength && f.StartOffset < f.EndOffset)
+					.OrderBy(f => f.StartOffset)
+					.ToList();
+				if (ordered.Count > 0)
+				{
+					activeFoldingManager = FoldingManager.Install(Editor.TextArea);
+					// Project the saved snapshot onto the freshly-built list so each NewFolding's
+					// DefaultClosed reflects the previous state BEFORE UpdateFoldings installs them.
+					// The checksum inside Restore guards against the document having shifted under
+					// our feet (Refresh / settings change / etc).
+					if (pendingFoldings is { } pending)
+						FoldingsViewState.Restore(ordered, pending);
+					activeFoldingManager.UpdateFoldings(ordered, -1);
+				}
 			}
 			else if (model.SyntaxExtension == ".xml" && !string.IsNullOrEmpty(model.Text))
 			{

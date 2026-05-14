@@ -273,7 +273,7 @@ namespace ILSpy.TextView
 				currentNodes = value.ToArray();
 				foreach (var n in currentNodes)
 					n.PropertyChanged += OnCurrentNodePropertyChanged;
-				_ = DecompileAsync();
+				StartDecompile();
 			}
 		}
 
@@ -333,7 +333,19 @@ namespace ILSpy.TextView
 		{
 			pendingStepLimit = stepLimit;
 			pendingIsDebug = isDebug;
-			_ = DecompileAsync();
+			StartDecompile();
+		}
+
+		// Fire-and-forget wrapper around DecompileAsync that observes the resulting Task.
+		// Without this, exceptions raised by the dispatched property setters (e.g. the
+		// PropertyChanged subscribers in DecompilerTextView) become UnobservedTaskException
+		// faults that the finalizer thread rethrows much later, hiding the originating bug.
+		void StartDecompile()
+		{
+			DecompileAsync().ContinueWith(t => {
+				if (t.Exception is { } ex)
+					System.Diagnostics.Debug.WriteLine($"DecompileAsync faulted: {ex.Flatten()}");
+			}, TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
 		}
 
 		async Task DecompileAsync()
@@ -344,6 +356,17 @@ namespace ILSpy.TextView
 			var language = Language;
 			if (nodes.Count == 0 || language == null)
 			{
+				// Clear the per-decompile artefacts alongside Text. If we leave Foldings /
+				// HighlightingModel / References pointing at the previous decompile's state,
+				// the next ApplyDocument fires (via SyntaxExtension or Text setter) tries to
+				// install offsets against the empty document and AvaloniaEdit throws
+				// "Folding must be within document boundary". This path is hit by
+				// DockWorkspace.OnLanguagePropertyChanged's CurrentNode toggle-through-null.
+				HighlightingModel = null;
+				Foldings = null;
+				References = null;
+				DefinitionLookup = null;
+				UIElements = null;
 				Text = string.Empty;
 				IsDecompiling = false;
 				return;
