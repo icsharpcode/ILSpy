@@ -653,10 +653,13 @@ namespace ILSpy.TextView
 			{
 				if (entity.ParentModule?.MetadataFile is not { } metadata)
 					return;
-				var docProvider = XmlDocLoader.LoadDocumentation(metadata);
-				if (docProvider == null)
-					return;
-				var documentation = docProvider.GetDocumentation(entity.GetIdString());
+				var idString = entity.GetIdString();
+				// First-cut: try the shared XmlDocLoader (handles "xml beside dll" + .NET
+				// Framework reference pack paths). When that returns null — typical for
+				// modern .NET runtime DLLs whose XML lives in the parallel ref pack — fall
+				// back to ModernXmlDocLookup which walks dotnet/packs/...
+				var documentation = XmlDocLoader.LoadDocumentation(metadata)?.GetDocumentation(idString)
+					?? ModernXmlDocLookup.TryGetProvider(metadata)?.GetDocumentation(idString);
 				if (documentation == null)
 					return;
 				// First-cut: no cref resolver, so <see cref="..."/> falls back to printing the
