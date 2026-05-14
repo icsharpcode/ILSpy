@@ -153,6 +153,27 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 			TargetDirectory = targetDirectory;
 			directories.Clear();
+			// Pre-populate `directories` with the namespace folders we'll create for code files later.
+			// WriteResourceFilesInProject runs BEFORE WriteCodeFilesInProject, but its file-name matcher
+			// (GetFileNameForResource) relies on `directories` to decide whether a manifest resource like
+			// "Be.Windows.Forms.HexBox.bmp" can be split into a directory part + file part. Without this
+			// pre-pass the matcher would see an empty `directories` set and leave the resource flat in
+			// the project root next to a same-named namespace directory created later -- which is
+			// confusing in Solution Explorer and breaks the original-source layout convention.
+			if (file.Metadata != null)
+			{
+				foreach (var typeHandle in file.Metadata.TypeDefinitions)
+				{
+					var typeDef = file.Metadata.GetTypeDefinition(typeHandle);
+					if (typeDef.IsNested) continue;
+					if (!IncludeTypeWhenDecompilingProject(file, typeHandle)) continue;
+					string ns = file.Metadata.GetString(typeDef.Namespace);
+					if (string.IsNullOrEmpty(ns)) continue;
+					string dir = Settings.UseNestedDirectoriesForNamespaces ? CleanUpPath(ns) : CleanUpDirectoryName(ns);
+					if (directories.Add(dir))
+						CreateDirectory(Path.Combine(TargetDirectory, dir));
+				}
+			}
 			var resources = WriteResourceFilesInProject(file).ToList();
 			var files = WriteCodeFilesInProject(file, resources.SelectMany(r => r.PartialTypes ?? Enumerable.Empty<PartialTypeInfo>()).ToList(), cancellationToken).ToList();
 			files.AddRange(resources);
@@ -401,6 +422,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				else
 				{
 					string fileName = GetFileNameForResource(r.Name);
+					// `directories` only contains the dir name; if GetFileNameForResource chose a
+					// namespace-derived directory, create it on disk now (code-files step would
+					// create it later but resources are written first).
+					string resDir = Path.GetDirectoryName(fileName);
+					if (!string.IsNullOrEmpty(resDir))
+						CreateDirectory(Path.Combine(TargetDirectory, resDir));
 					using (FileStream fs = new FileStream(Path.Combine(TargetDirectory, fileName), FileMode.Create, FileAccess.Write))
 					{
 						stream.Position = 0;
@@ -413,6 +440,13 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		protected virtual IEnumerable<ProjectItemInfo> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 		{
+			// Ensure the resource's directory exists on disk. GetFileNameForResource may have chosen
+			// a namespace-derived path (e.g. "ps4_debug_DX_watch\PS4DbgDXW.resx") whose directory
+			// would normally be created later when code files for that namespace are written -- but
+			// resources are written FIRST, so create the dir now.
+			string resourceDir = Path.GetDirectoryName(fileName);
+			if (!string.IsNullOrEmpty(resourceDir))
+				CreateDirectory(Path.Combine(TargetDirectory, resourceDir));
 			if (fileName.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
 			{
 				string resx = Path.ChangeExtension(fileName, ".resx");
@@ -454,16 +488,49 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			// the directory part Namespace1\Namespace2\... reuses as many existing directories as
 			// possible, and only the remaining name parts are used as prefix for the filename.
 			// This is not affected by the UseNestedDirectoriesForNamespaces setting.
-			string[] splitName = fullName.Split('\\', '/');
+			// Manifest resource names are conventionally dot-separated (e.g. "Be.Windows.Forms.HexBox.bmp"),
+			// so when the input lacks path separators we also split by '.', keeping the final segment
+			// (the file extension) attached to the last name part.
+			string[] splitName;
+			if (fullName.IndexOf('\\') < 0 && fullName.IndexOf('/') < 0 && fullName.IndexOf('.') >= 0)
+			{
+				int lastDot = fullName.LastIndexOf('.');
+				string body = fullName.Substring(0, lastDot);
+				string ext = fullName.Substring(lastDot); // includes the leading '.'
+				string[] bodyParts = body.Split('.');
+				if (bodyParts.Length > 1)
+				{
+					splitName = new string[bodyParts.Length];
+					Array.Copy(bodyParts, splitName, bodyParts.Length - 1);
+					splitName[splitName.Length - 1] = bodyParts[bodyParts.Length - 1] + ext;
+				}
+				else
+				{
+					splitName = new[] { fullName };
+				}
+			}
+			else
+			{
+				splitName = fullName.Split('\\', '/');
+			}
 			string fileName = string.Join(".", splitName);
-			string separator = Path.DirectorySeparatorChar.ToString();
+			string slashSep = Path.DirectorySeparatorChar.ToString();
+			// Try matching `directories` with BOTH the slash-joined form (when UseNestedDirectoriesForNamespaces
+			// is true, dirs were created as "Be\Windows\Forms") AND the dot-joined form (when the setting is
+			// false, dirs were created as "Be.Windows.Forms"). Slash form wins if both exist (preferred layout).
 			for (int i = splitName.Length - 1; i > 0; i--)
 			{
-				string ns = string.Join(separator, splitName, 0, i);
-				if (directories.Contains(ns))
+				string slashNs = string.Join(slashSep, splitName, 0, i);
+				string dotNs = string.Join(".", splitName, 0, i);
+				string matchedNs = null;
+				if (directories.Contains(slashNs))
+					matchedNs = slashNs;
+				else if (directories.Contains(dotNs))
+					matchedNs = dotNs;
+				if (matchedNs != null)
 				{
 					string name = string.Join(".", splitName, i, splitName.Length - i);
-					fileName = Path.Combine(ns, name);
+					fileName = Path.Combine(matchedNs, name);
 					break;
 				}
 			}
