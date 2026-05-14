@@ -269,25 +269,19 @@ namespace ILSpy.TreeNodes
 				Children.Add(new ResourceListTreeNode(module));
 
 			var metadata = module.Metadata;
+			// Every top-level namespace string in the module — INCLUDING the empty string for
+			// types declared at module scope. The empty namespace becomes a NamespaceTreeNode
+			// whose Text renders as "-"; without that path, global-namespace types (every PE's
+			// <Module> pseudo-type plus any user-declared ones) would have no parent node to
+			// live under, and the long-standing tree shape would break.
 			var namespaces = metadata.TypeDefinitions
 				.Where(t => metadata.GetTypeDefinition(t).GetDeclaringType().IsNil)
 				.Select(t => metadata.GetString(metadata.GetTypeDefinition(t).Namespace))
-				.Where(ns => !string.IsNullOrEmpty(ns))
 				.Distinct()
 				.OrderBy(ns => ns, NaturalStringComparer.Instance);
 
 			foreach (var ns in namespaces)
 				Children.Add(new NamespaceTreeNode(ns, module));
-
-			var globalTypes = metadata.TypeDefinitions
-				.Where(t => {
-					var td = metadata.GetTypeDefinition(t);
-					return td.GetDeclaringType().IsNil
-						&& string.IsNullOrEmpty(metadata.GetString(td.Namespace));
-				});
-
-			foreach (var t in globalTypes)
-				Children.Add(new TypeTreeNode(t, module));
 		}
 
 		public override FilterResult Filter(LanguageSettings settings)

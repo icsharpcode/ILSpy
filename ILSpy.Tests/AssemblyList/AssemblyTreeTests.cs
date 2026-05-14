@@ -1482,4 +1482,43 @@ public class AssemblyTreeTests
 		command.Invoking(c => c.Execute(null)).Should().NotThrow(
 			"Execute under headless must be a no-op rather than crash");
 	}
+
+	[AvaloniaTest]
+	public async Task Global_Namespace_Types_Appear_Under_Dash_Node()
+	{
+		// Every PE module carries a <Module> pseudo-type in the global (empty) namespace.
+		// To match the long-standing tree shape, those types must live under a
+		// NamespaceTreeNode whose Name is the empty string and whose displayed Text is "-",
+		// NOT as bare TypeTreeNodes hanging directly off the assembly node.
+
+		// Arrange — boot, wait for assemblies, locate CoreLib.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
+		assemblyNode.EnsureLazyChildren();
+
+		// Assert — exactly one global-namespace node, labelled "-", non-empty contents.
+		// Plain null check rather than .Should().NotBeNull() because the AwesomeAssertions
+		// SharpTreeNode-targeted extension hijacks Should() on NamespaceTreeNode? and lacks
+		// NotBeNull.
+		var globalNs = assemblyNode.Children.OfType<NamespaceTreeNode>()
+			.SingleOrDefault(n => n.Name.Length == 0);
+		Assert.That(globalNs, Is.Not.Null,
+			"types in the global namespace must be grouped under a NamespaceTreeNode with an empty Name");
+		globalNs!.Text.Should().Be("-",
+			"NamespaceTreeNode renders the empty namespace as '-' to match the long-standing tree shape");
+
+		// And no bare TypeTreeNodes should hang directly off the assembly — every type must
+		// route through one of the namespace nodes.
+		assemblyNode.Children.OfType<TypeTreeNode>().Should().BeEmpty(
+			"global-namespace types must live under the '-' node, not as direct assembly children");
+
+		globalNs.EnsureLazyChildren();
+		globalNs.Children.OfType<TypeTreeNode>().Should().NotBeEmpty(
+			"<Module> (and any other global types) belong under the '-' node");
+	}
 }
