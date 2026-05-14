@@ -53,6 +53,21 @@ namespace ILSpy.TreeNodes
 		/// </summary>
 		public PackageEntry? PackageEntry { get; }
 
+		/// <summary>
+		/// If this assembly is itself a bundle/package (nuget .zip or .NET single-file
+		/// bundle), returns the package kind. Returns <see langword="null"/> for plain
+		/// stand-alone assemblies and for any assembly that hasn't finished loading yet
+		/// or failed to load.
+		/// </summary>
+		public LoadedPackage.PackageKind? PackageKind {
+			get {
+				if (LoadedAssembly.HasLoadError || !LoadedAssembly.IsLoaded)
+					return null;
+				var loadResult = LoadedAssembly.GetLoadResultAsync().GetAwaiter().GetResult();
+				return loadResult.Package?.Kind;
+			}
+		}
+
 		public AssemblyTreeNode(LoadedAssembly assembly) : this(assembly, null)
 		{
 		}
