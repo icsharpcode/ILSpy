@@ -164,6 +164,10 @@ namespace ILSpy.Metadata
 				HorizontalAlignment = HorizontalAlignment.Right,
 				Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Hand),
 			};
+			// Tooltip on the funnel hit area. Avalonia 11+ ships ToolTip as an attached
+			// property; setting it here means hovering the funnel (10×9 glyph + 8/4 padding)
+			// surfaces "Filter <ColumnName>" — useful because the glyph itself has no text.
+			global::Avalonia.Controls.ToolTip.SetTip(filterIconHost, "Filter " + columnName);
 
 			bool isFlagsColumn = propertyType.IsEnum
 				&& Attribute.IsDefined(propertyType, typeof(FlagsAttribute));
