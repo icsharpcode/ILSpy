@@ -57,11 +57,27 @@ namespace ILSpy.Navigation
 
 	/// <summary>
 	/// History entry for a tree-node selection. Replaying activates the recorded tab and sets
-	/// the assembly-tree selection to <see cref="Node"/>.
+	/// the assembly-tree selection to <see cref="Node"/>. The optional caret + scroll fields
+	/// capture the editor's view state when the user navigated AWAY from this entry, so
+	/// Back/Forward restores cursor position and scroll position alongside the selection.
 	/// </summary>
 	public sealed class TreeNodeEntry : NavigationEntry
 	{
 		public SharpTreeNode Node { get; }
+
+		/// <summary>
+		/// Caret offset (character index into the decompiled text) captured when the user
+		/// navigated away from this entry. <c>null</c> means "no capture yet" — entries
+		/// land with null and are filled in by <see cref="Docking.DockWorkspace"/>'s
+		/// record-history hook just before a new entry takes over.
+		/// </summary>
+		public int? CaretOffset { get; set; }
+
+		/// <summary>Vertical scroll offset captured at navigate-away time.</summary>
+		public double? VerticalOffset { get; set; }
+
+		/// <summary>Horizontal scroll offset captured at navigate-away time.</summary>
+		public double? HorizontalOffset { get; set; }
 
 		public TreeNodeEntry(TabPageModel tab, SharpTreeNode node)
 			: base(tab)

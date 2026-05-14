@@ -166,6 +166,28 @@ namespace ILSpy.TextView
 			// need to be in any visual tree of ours.
 
 			WireUpDisplaySettings();
+
+			// Push caret + scroll positions onto the bound tab model on every change so
+			// DockWorkspace can read the live state when recording a navigation away. Cheap
+			// — both events fire only on actual user motion and the model write is two
+			// integer / double assignments.
+			Editor.TextArea.Caret.PositionChanged += OnCaretPositionChanged;
+			Editor.TextArea.TextView.ScrollOffsetChanged += OnScrollOffsetChanged;
+		}
+
+		void OnCaretPositionChanged(object? sender, EventArgs e)
+		{
+			if (DataContext is DecompilerTabPageModel m)
+				m.LastKnownCaretOffset = Editor.TextArea.Caret.Offset;
+		}
+
+		void OnScrollOffsetChanged(object? sender, EventArgs e)
+		{
+			if (DataContext is DecompilerTabPageModel m)
+			{
+				m.LastKnownVerticalOffset = Editor.VerticalOffset;
+				m.LastKnownHorizontalOffset = Editor.HorizontalOffset;
+			}
 		}
 
 		/// <summary>
@@ -384,6 +406,29 @@ namespace ILSpy.TextView
 			// node's decompile finishes; this is where the marks finally land on the new text.
 			if (model.HighlightedReference != null)
 				HighlightLocalReferences(model, model.HighlightedReference);
+
+			// Restore caret + scroll position captured when the user previously navigated
+			// away from this node. Back/Forward (and the dropdown-history "GoTo") set the
+			// Pending* fields just before triggering the decompile; here we read them once
+			// and clear them so a subsequent user-initiated decompile doesn't jump the
+			// cursor again. Clamp to the new document length — text-changed-since-capture
+			// is the common case for Refresh.
+			if (model.PendingCaretOffset is { } caret)
+			{
+				model.PendingCaretOffset = null;
+				Editor.TextArea.Caret.Offset = Math.Clamp(caret, 0, Editor.Document.TextLength);
+				Editor.TextArea.Caret.BringCaretToView();
+			}
+			if (model.PendingVerticalOffset is { } vy)
+			{
+				model.PendingVerticalOffset = null;
+				Editor.ScrollToVerticalOffset(vy);
+			}
+			if (model.PendingHorizontalOffset is { } hx)
+			{
+				model.PendingHorizontalOffset = null;
+				Editor.ScrollToHorizontalOffset(hx);
+			}
 
 			// Swap any tab-contributed visual-line element generators (e.g. About-page hyperlink
 			// generators). Tracked separately from the always-on referenceElementGenerator and

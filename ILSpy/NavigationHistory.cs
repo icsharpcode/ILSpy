@@ -39,6 +39,14 @@ namespace ILSpy.Navigation
 		public bool CanNavigateBack => back.Count > 0;
 		public bool CanNavigateForward => forward.Count > 0;
 
+		/// <summary>
+		/// The most recently navigated-to entry, or null if no navigation has happened
+		/// yet. Mutable callers (e.g. <c>DockWorkspace.CaptureCurrentViewState</c>) reach
+		/// in here to stamp the editor's caret + scroll state into the entry just before
+		/// it gets pushed onto the back stack — so a subsequent Back restores the position.
+		/// </summary>
+		public T? Current => current;
+
 		// Read-only views over the history stacks for the toolbar's split-button dropdowns.
 		// Both lists are oldest-first (matches push/append order); the UI reverses for "newest
 		// first" display.

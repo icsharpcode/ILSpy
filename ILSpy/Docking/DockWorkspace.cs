@@ -225,10 +225,36 @@ namespace ILSpy.Docking
 
 		void RecordHistoryEntry(NavigationEntry entry)
 		{
+			// Snapshot the editor's caret + scroll state into the OUTGOING entry — at this
+			// point the editor still shows the previous selection's content, so the values
+			// describe where the user was looking before this new entry takes over. The
+			// captured state is then restored if/when the user navigates Back/Forward to it.
+			CaptureCurrentViewState();
 			history.Record(entry);
 			NavigateBackCommand.NotifyCanExecuteChanged();
 			NavigateForwardCommand.NotifyCanExecuteChanged();
 		}
+
+		void CaptureCurrentViewState()
+		{
+			if (history.Current is not TreeNodeEntry current)
+				return;
+			var decompTab = UnwrapDecompilerTab(current.Tab);
+			if (decompTab == null)
+				return;
+			current.CaretOffset = decompTab.LastKnownCaretOffset;
+			current.VerticalOffset = decompTab.LastKnownVerticalOffset;
+			current.HorizontalOffset = decompTab.LastKnownHorizontalOffset;
+		}
+
+		// The recorded TabPageModel in TreeNodeEntry can be either a DecompilerTabPageModel
+		// directly OR a ContentTabPage whose Content is one — `factory.Documents.ActiveDockable`
+		// returns the latter in the normal layout. Try both shapes.
+		static TextView.DecompilerTabPageModel? UnwrapDecompilerTab(ViewModels.TabPageModel? tab) => tab switch {
+			TextView.DecompilerTabPageModel d => d,
+			ViewModels.ContentTabPage c => c.Content as TextView.DecompilerTabPageModel,
+			_ => null,
+		};
 
 		void NavigateBack() => NavigateHistory(forward: false);
 		void NavigateForward() => NavigateHistory(forward: true);
@@ -261,7 +287,18 @@ namespace ILSpy.Docking
 				if (factory.Documents?.VisibleDockables is { } docs && docs.Contains(target.Tab))
 					factory.SetActiveDockable(target.Tab);
 				if (target is TreeNodeEntry treeNode)
+				{
+					// Stash the captured view state on the tab BEFORE setting SelectedItem.
+					// SelectedItem triggers the decompile; the editor's ApplyDocument reads
+					// the Pending* fields right after Text lands and restores caret + scroll.
+					if (UnwrapDecompilerTab(treeNode.Tab) is { } decompTab)
+					{
+						decompTab.PendingCaretOffset = treeNode.CaretOffset;
+						decompTab.PendingVerticalOffset = treeNode.VerticalOffset;
+						decompTab.PendingHorizontalOffset = treeNode.HorizontalOffset;
+					}
 					assemblyTreeModel.SelectedItem = treeNode.Node;
+				}
 				// StaticPageEntry: just reactivating the tab is enough — its content was
 				// preserved because IsStaticContent kept tree-node selections from targeting it.
 			}

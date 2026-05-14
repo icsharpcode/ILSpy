@@ -136,6 +136,37 @@ namespace ILSpy.TextView
 		private object? highlightedReference;
 
 		/// <summary>
+		/// Last caret offset the editor view reported. The text view writes this on every
+		/// caret-position change so <see cref="Docking.DockWorkspace"/> can read the current
+		/// position when recording a navigation away from this tab. Zero until the view
+		/// reports its first caret position; that's a safe default because a freshly-shown
+		/// document also has caret at zero.
+		/// </summary>
+		public int LastKnownCaretOffset { get; set; }
+
+		/// <summary>Last vertical scroll offset the editor view reported. See <see cref="LastKnownCaretOffset"/>.</summary>
+		public double LastKnownVerticalOffset { get; set; }
+
+		/// <summary>Last horizontal scroll offset the editor view reported. See <see cref="LastKnownCaretOffset"/>.</summary>
+		public double LastKnownHorizontalOffset { get; set; }
+
+		/// <summary>
+		/// Caret offset the editor view should restore on the next document apply. Set when
+		/// Back/Forward navigation lands on an entry that carries a captured caret position
+		/// (see <see cref="Navigation.TreeNodeEntry.CaretOffset"/>); cleared by the view
+		/// after it reads the value. The pattern mirrors <see cref="HighlightedReference"/> —
+		/// the editor consumes this in its <c>ApplyDocument</c> path so the value survives
+		/// the async gap between Back firing and the decompile finishing.
+		/// </summary>
+		public int? PendingCaretOffset { get; set; }
+
+		/// <summary>Vertical scroll offset to restore alongside <see cref="PendingCaretOffset"/>.</summary>
+		public double? PendingVerticalOffset { get; set; }
+
+		/// <summary>Horizontal scroll offset to restore alongside <see cref="PendingCaretOffset"/>.</summary>
+		public double? PendingHorizontalOffset { get; set; }
+
+		/// <summary>
 		/// Fired when the user clicks a cross-document reference. The host (DockWorkspace)
 		/// resolves the target on the assembly tree side.
 		/// </summary>
