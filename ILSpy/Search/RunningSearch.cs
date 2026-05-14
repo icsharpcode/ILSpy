@@ -20,9 +20,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
-using System.Linq;
-using System.Reflection;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -31,6 +29,7 @@ using Avalonia.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.Extensions;
 using ICSharpCode.ILSpyX.Search;
 
 using ILSpy.Languages;
@@ -38,15 +37,19 @@ using ILSpy.Languages;
 namespace ILSpy.Search
 {
 	/// <summary>
-	/// Orchestrates one search across the loaded <see cref="AssemblyList"/>. Builds a
-	/// <see cref="SearchRequest"/>, picks the matching <see cref="AbstractSearchStrategy"/>,
-	/// runs it on a background task, and streams each emitted <see cref="SearchResult"/>
-	/// into the supplied UI-thread <see cref="ObservableCollection{T}"/> via
-	/// <see cref="Dispatcher.UIThread"/>.
+	/// Orchestrates one search across the loaded <see cref="AssemblyList"/>. Walks
+	/// the assemblies serially on a background <see cref="Task"/>, pushes results into
+	/// a thread-safe queue, and the UI thread drains that queue once per render frame
+	/// with a wall-clock budget — the same shape as the WPF SearchPane.
 	/// </summary>
 	internal sealed class RunningSearch
 	{
 		const int MaxResults = 1000;
+		// 60 fps tick. Matches the cadence WPF's CompositionTarget.Rendering gives.
+		const int RefreshIntervalMs = 16;
+		// Hard cap on time spent inserting per tick. Keeps the UI responsive even
+		// when the queue is jammed with thousands of late-arriving hits.
+		const int RefreshTimeBudgetMs = 10;
 
 		readonly IReadOnlyList<LoadedAssembly> assemblies;
 		readonly SearchMode mode;
@@ -57,7 +60,11 @@ namespace ILSpy.Search
 		readonly ObservableCollection<SearchResult> sink;
 		readonly ConcurrentQueue<SearchResult> queue = new();
 		readonly CancellationTokenSource cts = new();
+		DispatcherTimer? drainTimer;
 		Task? runTask;
+		volatile bool externalCancel;
+		bool capReached;
+		bool completedRaised;
 
 		public RunningSearch(
 			IReadOnlyList<LoadedAssembly> assemblies,
@@ -80,30 +87,38 @@ namespace ILSpy.Search
 		public bool IsCompleted => runTask is { IsCompleted: true };
 
 		/// <summary>
-		/// Fires on the UI thread when the run finishes (success, error, or cancellation).
-		/// Always fires exactly once — the search-pane VM uses it to flip its IsSearching
-		/// flag back to false. Subscribers are invoked AFTER the drain loop has flushed
-		/// the queue so post-completion result reads see the final state.
+		/// Fires once on the UI thread when the run finishes (success, error, cap, or
+		/// external cancel). The pane VM uses it to flip its IsSearching flag back.
 		/// </summary>
 		public event Action<RunningSearch>? Completed;
 
 		public void Start()
 		{
 			var token = cts.Token;
-			// Task.Run with an async lambda wraps the inner Task so runTask only completes
-			// after RunSearchAsync actually finishes — without the wrapping, runTask would
-			// complete the moment Task.Run returned the inner Task to the caller, and the
-			// drain loop would exit before any results landed.
-			runTask = Task.Run(async () => await RunSearchAsync(token).ConfigureAwait(false), token);
-			_ = DrainQueueAsync(token);
+			runTask = Task.Run(() => RunSearch(token), token);
+			// Per-frame UI-thread drain. Render priority puts it alongside layout/render
+			// work rather than ahead of input. The timer ticks on the UI thread, so the
+			// drain body never needs Dispatcher.UIThread.Post — one less hop per batch.
+			drainTimer = new DispatcherTimer(
+				TimeSpan.FromMilliseconds(RefreshIntervalMs),
+				DispatcherPriority.Render,
+				OnDrainTick);
+			drainTimer.Start();
 		}
 
 		public void Cancel()
 		{
+			// externalCancel distinguishes "user typed a new char" from "cap was hit
+			// internally". External cancel bails the drain immediately so we don't keep
+			// inserting into a sink the VM has handed off to a fresh RunningSearch.
+			externalCancel = true;
 			cts.Cancel();
+			drainTimer?.Stop();
+			drainTimer = null;
+			RaiseCompletedIfFirst();
 		}
 
-		async Task RunSearchAsync(CancellationToken ct)
+		void RunSearch(CancellationToken ct)
 		{
 			try
 			{
@@ -111,64 +126,119 @@ namespace ILSpy.Search
 				var strategy = GetStrategy(request);
 				if (strategy == null)
 					return;
-				// Parallelise per-assembly: each strategy.Search is CPU-bound metadata walk,
-				// each GetMetadataFileAsync is I/O. Running them sequentially makes early
-				// rows arrive instantly then pause while later assemblies load — looks like
-				// a stall to the user. The shared ConcurrentQueue is thread-safe; the strategy
-				// has no mutable per-call state so concurrent Search invocations on different
-				// modules are safe.
-				await Parallel.ForEachAsync(
-					assemblies,
-					new ParallelOptions {
-						MaxDegreeOfParallelism = Math.Min(4, Math.Max(1, Environment.ProcessorCount)),
-						CancellationToken = ct,
-					},
-					async (assembly, token) => {
-						MetadataFile? module;
-						try
-						{
-							module = await assembly.GetMetadataFileAsync().ConfigureAwait(false);
-						}
-						catch (Exception ex) when (IsExpectedLoadFailure(ex))
-						{
-							// Broken DLL / missing reference — already surfaced in the assembly
-							// tree with AssemblyWarning, so don't double-report here.
-							return;
-						}
-						if (module == null)
-							return;
-						try
-						{
-							strategy.Search(module, token);
-						}
-						catch (OperationCanceledException)
-						{
-							throw;
-						}
-						catch
-						{
-							// One assembly's strategy walker hit something it didn't expect
-							// (malformed metadata, missing dependency, internal Debug.Assert
-							// outside Debug-build defaults, …). Skip just that assembly so the
-							// rest of the search keeps streaming results from healthy ones —
-							// without this catch, ONE bad assembly faults the entire run and
-							// the user sees the partial results stall after a handful of hits.
-						}
-					}).ConfigureAwait(false);
+				// Serial walk: per-assembly metadata walk is allocation-dominated, and 4
+				// parallel producers fighting for the ConcurrentQueue + the resulting UI
+				// batching jitter end up slower than serial in practice.
+				foreach (var assembly in assemblies)
+				{
+					if (ct.IsCancellationRequested)
+						break;
+					MetadataFile? module;
+					try
+					{
+						// Block here — we're already on a worker thread (Task.Run) and
+						// this matches the WPF call shape. ConfigureAwait in an async
+						// state machine would just add overhead for the same effect.
+						module = assembly.GetMetadataFileAsync().GetAwaiter().GetResult();
+					}
+					catch (OperationCanceledException)
+					{
+						throw;
+					}
+					catch
+					{
+						// Load failure (broken DLL, missing reference, IO problem). Already
+						// surfaced in the assembly tree via the AssemblyWarning icon — skip
+						// this assembly and continue with the next.
+						continue;
+					}
+					if (module == null)
+						continue;
+					try
+					{
+						strategy.Search(module, ct);
+					}
+					catch (OperationCanceledException)
+					{
+						throw;
+					}
+					catch
+					{
+						// One bad assembly's strategy walker (malformed metadata, missing
+						// dependency, internal assert) — keep the run going instead of
+						// faulting the whole search.
+					}
+				}
 			}
 			catch (OperationCanceledException)
 			{
-				// Expected on user-driven term/mode change, or when the cap fires below.
+				// Expected on user-driven term/mode change, or when the cap fires.
+			}
+			catch
+			{
+				// Run-wide failure (parser, strategy construction). Treat as a no-result run.
 			}
 		}
 
-		static bool IsExpectedLoadFailure(Exception ex) => ex is
-			BadImageFormatException
-			or IOException
-			or InvalidOperationException
-			or UnauthorizedAccessException
-			or NotSupportedException
-			or ReflectionTypeLoadException;
+		void OnDrainTick(object? sender, EventArgs e)
+		{
+			// External cancel: the VM has cleared and re-used 'sink' for a new run.
+			// Inserting now would contaminate someone else's results — bail.
+			if (externalCancel)
+			{
+				drainTimer?.Stop();
+				drainTimer = null;
+				return;
+			}
+
+			// 10ms wall-clock budget per tick. While there's still budget left and
+			// the visible cap hasn't been hit, drain as much of the queue as we can.
+			// Stopwatch is high-resolution; Environment.TickCount has ~15ms grain
+			// on Windows which is too coarse for a 10ms budget.
+			var sw = Stopwatch.StartNew();
+			while (sink.Count < MaxResults && sw.ElapsedMilliseconds < RefreshTimeBudgetMs)
+			{
+				if (!queue.TryDequeue(out var result))
+					break;
+				// Sorted insert: results land in fitness order so the most relevant hit
+				// rises to the top while later, less relevant matches are still streaming
+				// in. ObservableCollection<T> implements IList<T>, so the InsertSorted
+				// extension binary-searches and Inserts at the right index — O(log n)
+				// compare + O(n) shift.
+				sink.InsertSorted(result, SearchResult.ComparerByFitness);
+			}
+
+			if (sink.Count >= MaxResults)
+			{
+				if (!capReached)
+				{
+					capReached = true;
+					// Stop the producer — anything it pushes from here would just be
+					// discarded, so why burn CPU on it.
+					cts.Cancel();
+				}
+				// Drain-discard any items still queued: without this the termination
+				// condition (runTask done + queue empty) never fires and the timer
+				// spins forever after the cap is hit.
+				while (queue.TryDequeue(out _))
+				{ }
+			}
+
+			if (runTask is { IsCompleted: true } && queue.IsEmpty)
+			{
+				drainTimer?.Stop();
+				drainTimer = null;
+				RaiseCompletedIfFirst();
+			}
+		}
+
+		void RaiseCompletedIfFirst()
+		{
+			if (completedRaised)
+				return;
+			completedRaised = true;
+			Completed?.Invoke(this);
+		}
 
 		SearchRequest BuildRequest()
 		{
@@ -229,58 +299,6 @@ namespace ILSpy.Search
 				// Resource search needs ITreeNodeFactory infrastructure — deferred to a follow-up.
 				_ => null,
 			};
-		}
-
-		async Task DrainQueueAsync(CancellationToken ct)
-		{
-			try
-			{
-				while (!ct.IsCancellationRequested)
-				{
-					var batch = new List<SearchResult>();
-					while (queue.TryDequeue(out var result) && batch.Count < 100)
-						batch.Add(result);
-					if (batch.Count > 0)
-					{
-						Dispatcher.UIThread.Post(() => {
-							// Defensive: by the time this Post body runs, the run that
-							// produced the batch may already have been cancelled (user kept
-							// typing) and the sink Cleared and re-used by a fresh run.
-							// Without this check, stale results would leak into the new
-							// search's visible list.
-							if (ct.IsCancellationRequested)
-								return;
-							foreach (var r in batch)
-							{
-								if (sink.Count >= MaxResults)
-									break;
-								sink.Add(r);
-							}
-						});
-					}
-					if (runTask is { IsCompleted: true } && queue.IsEmpty)
-					{
-						RaiseCompletedOnUIThread();
-						return;
-					}
-					await Task.Delay(50, ct).ConfigureAwait(false);
-				}
-			}
-			catch (OperationCanceledException)
-			{
-				// Expected when the run is replaced or cleared. Still raise Completed so the
-				// pane's IsSearching flag flips off — cancellation is a kind of completion
-				// from the VM's perspective.
-				RaiseCompletedOnUIThread();
-			}
-		}
-
-		void RaiseCompletedOnUIThread()
-		{
-			var handler = Completed;
-			if (handler == null)
-				return;
-			Dispatcher.UIThread.Post(() => handler(this));
 		}
 	}
 }
