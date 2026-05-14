@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:ILSpy.ViewModels"
         xmlns:local="using:ILSpy"
+        xmlns:views="using:ILSpy.Views"
         xmlns:tree="using:ILSpy.AssemblyTree"
         xmlns:dock="using:Dock.Avalonia.Controls"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -35,6 +36,9 @@
 
 		<!-- Toolbar -->
 		<local:MainToolBar DockPanel.Dock="Top" />
+
+		<!-- Update banner: docks under the toolbar, IsVisible-bound to the panel viewmodel. -->
+		<views:UpdatePanel DockPanel.Dock="Top" DataContext="{Binding UpdatePanel}" />
 
 		<!-- Status bar (hidden by default, like WPF) -->
 		<Border DockPanel.Dock="Bottom" Height="26" IsVisible="False" Name="statusBar">

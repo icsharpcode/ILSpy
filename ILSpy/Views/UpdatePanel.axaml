@@ -1,0 +1,16 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ILSpy.ViewModels"
+             x:Class="ILSpy.Views.UpdatePanel"
+             x:DataType="vm:UpdatePanelViewModel"
+             IsVisible="{Binding IsPanelVisible}">
+	<Border Background="#FFFFE08A" BorderBrush="#FFCC8800" BorderThickness="0,0,0,1" Padding="8,4">
+		<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+			<TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{Binding Message}" />
+			<Button Grid.Column="1" Content="{Binding ButtonText}"
+			        Command="{Binding DownloadOrCheckUpdateCommand}" />
+			<Button Grid.Column="2" Content="&#x2715;" Width="24" Padding="0"
+			        ToolTip.Tip="Close" Command="{Binding CloseCommand}" />
+		</Grid>
+	</Border>
+</UserControl>

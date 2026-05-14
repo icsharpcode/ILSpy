@@ -39,6 +39,8 @@ namespace ILSpy.ViewModels
 
 		public LanguageSettings LanguageSettings { get; }
 
+		public UpdatePanelViewModel UpdatePanel { get; }
+
 		public IFactory DockFactory => DockWorkspace.Factory;
 
 		public IRootDock DockLayout => DockWorkspace.Layout;
@@ -52,13 +54,20 @@ namespace ILSpy.ViewModels
 			AssemblyTreeModel assemblyTreeModel,
 			LanguageService languageService,
 			DockWorkspace dockWorkspace,
-			SettingsService settingsService)
+			SettingsService settingsService,
+			UpdatePanelViewModel updatePanel)
 		{
 			AppEnv.StartupLog.Mark("MainWindowViewModel ctor entered (deps already resolved)");
 			AssemblyTreeModel = assemblyTreeModel;
 			LanguageService = languageService;
 			DockWorkspace = dockWorkspace;
 			LanguageSettings = settingsService.SessionSettings.LanguageSettings;
+			UpdatePanel = updatePanel;
+			// Auto-throttled background update check; respects user's
+			// AutomaticUpdateCheckEnabled preference + 7-day cooldown. Fire-and-forget so
+			// startup isn't blocked on the HTTP call. The panel stays hidden unless an
+			// actual update is available.
+			_ = updatePanel.CheckIfUpdatesAvailableAsync();
 			AppEnv.StartupLog.Mark("MainWindowViewModel ctor exited");
 		}
 	}

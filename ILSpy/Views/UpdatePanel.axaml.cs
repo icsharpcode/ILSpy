@@ -16,29 +16,23 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
+using Avalonia.Controls;
+using Avalonia.Markup.Xaml;
 
-using ICSharpCode.ILSpy.Properties;
-
-using ILSpy.ViewModels;
-
-namespace ILSpy.Commands
+namespace ILSpy.Views
 {
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._Help), Header = nameof(Resources._CheckUpdates), MenuOrder = 5000)]
-	[Shared]
-	sealed class CheckForUpdatesCommand : SimpleCommand
+	/// <summary>
+	/// Toolbar-strip banner shown under the main toolbar when an update is available
+	/// or the user explicitly invoked Help → Check For Updates and asked to see the
+	/// outcome. View is data-template-driven by <see cref="ViewModels.UpdatePanelViewModel"/>.
+	/// </summary>
+	public partial class UpdatePanel : UserControl
 	{
-		readonly UpdatePanelViewModel updatePanel;
-
-		[ImportingConstructor]
-		public CheckForUpdatesCommand(UpdatePanelViewModel updatePanel)
+		public UpdatePanel()
 		{
-			this.updatePanel = updatePanel;
+			InitializeComponent();
 		}
 
-		// Force-checks regardless of the 7-day throttle and surfaces the result in the panel,
-		// including an explicit "up to date" banner when no newer version is found.
-		public override void Execute(object? parameter)
-			=> _ = updatePanel.CheckIfUpdatesAvailableAsync(notifyOnUpToDate: true);
+		void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 	}
 }

@@ -57,6 +57,8 @@ namespace ILSpy
 
 		public MiscSettings MiscSettings => GetSettings<MiscSettings>();
 
+		public Updates.UpdateSettings UpdateSettings => GetSettings<Updates.UpdateSettings>();
+
 		AssemblyListManager? assemblyListManager;
 		public AssemblyListManager AssemblyListManager => assemblyListManager ??= new(SpySettings) {
 			ApplyWinRTProjections = DecompilerSettings.ApplyWindowsRuntimeProjections,
