@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Composition;
@@ -75,14 +76,23 @@ namespace ICSharpCode.ILSpy.Search
 			InitializeComponent();
 
 			ContextMenuProvider.Add(listBox);
-			MessageBus<CurrentAssemblyListChangedEventArgs>.Subscribers += (sender, e) => CurrentAssemblyList_Changed();
+			MessageBus<CurrentAssemblyListChangedEventArgs>.Subscribers += (sender, e) => CurrentAssemblyList_Changed(e);
 			MessageBus<SettingsChangedEventArgs>.Subscribers += (sender, e) => Settings_PropertyChanged(sender, e);
 
 			CompositionTarget.Rendering += UpdateResults;
 		}
 
-		void CurrentAssemblyList_Changed()
+		void CurrentAssemblyList_Changed(CurrentAssemblyListChangedEventArgs e)
 		{
+			// Don't restart the search when only auto-loaded (dependency) assemblies are added;
+			// this avoids flickering when navigating to a result in a large assembly.
+			System.Collections.Specialized.NotifyCollectionChangedEventArgs collectionChange = e;
+			if (collectionChange.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add
+				&& collectionChange.NewItems?.Cast<LoadedAssembly>().All(asm => asm.IsAutoLoaded) == true)
+			{
+				return;
+			}
+
 			if (IsVisible)
 			{
 				StartSearch(this.SearchTerm);
