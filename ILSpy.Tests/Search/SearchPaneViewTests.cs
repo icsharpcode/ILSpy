@@ -73,4 +73,32 @@ public class SearchPaneViewTests
 		vm.SearchTerm.Should().Be("Enumerable",
 			"the TextBox is bound two-way to SearchPaneModel.SearchTerm");
 	}
+
+	[AvaloniaTest]
+	public async Task Pressing_Escape_In_The_Search_Input_Clears_SearchTerm()
+	{
+		// The clear-X button's tooltip advertises "Clear (Esc)". Pressing Esc while the
+		// SearchInput TextBox has focus must wipe the term — same path as clicking the
+		// button. Goes through the bound view-model so the orchestrator's cancel-and-
+		// restart path fires too.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var pane = await window.WaitForComponent<SearchPane>();
+		var vm = (SearchPaneModel)pane.DataContext!;
+
+		var input = pane.FindControl<TextBox>("SearchInput");
+		input!.Text = "Enumerable";
+		vm.SearchTerm.Should().Be("Enumerable",
+			"baseline: the test setup must put a value in the box before testing the clear");
+
+		input.RaiseEvent(new global::Avalonia.Input.KeyEventArgs {
+			Key = global::Avalonia.Input.Key.Escape,
+			KeyModifiers = global::Avalonia.Input.KeyModifiers.None,
+			RoutedEvent = global::Avalonia.Input.InputElement.KeyDownEvent,
+			Source = input,
+		});
+
+		vm.SearchTerm.Should().BeEmpty("Escape in the search input must clear the term");
+	}
 }

@@ -36,6 +36,21 @@ namespace ILSpy.Search
 			InitializeComponent();
 			SearchResults.DoubleTapped += OnResultDoubleTapped;
 			SearchResults.KeyDown += OnResultKeyDown;
+			SearchInput.KeyDown += OnSearchInputKeyDown;
+		}
+
+		void OnSearchInputKeyDown(object? sender, KeyEventArgs e)
+		{
+			// Escape mirrors the clear-X button. Goes through the bound view-model so the
+			// orchestrator's cancel-and-restart path fires the same way it does when the
+			// user backspaces the box empty by hand.
+			if (e.Key != Key.Escape)
+				return;
+			if (DataContext is SearchPaneModel vm && vm.SearchTerm.Length > 0)
+			{
+				vm.SearchTerm = string.Empty;
+				e.Handled = true;
+			}
 		}
 
 		void OnClearSearchClicked(object? sender, RoutedEventArgs e)

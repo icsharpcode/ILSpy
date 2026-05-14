@@ -52,8 +52,9 @@
 		<ProgressBar Grid.Row="1" Name="SearchProgress"
 		             IsIndeterminate="True"
 		             IsVisible="{Binding IsSearching}"
-		             Height="3" Margin="0,0,0,2"
-		             BorderThickness="0" />
+		             Height="2" Margin="0,0,0,1"
+		             BorderThickness="0"
+		             MinHeight="2" />
 		<ListBox Grid.Row="2" Name="SearchResults"
 		         ItemsSource="{Binding Results}"
 		         x:CompileBindings="False">
