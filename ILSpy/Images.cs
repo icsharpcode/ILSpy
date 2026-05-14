@@ -107,6 +107,7 @@ namespace ILSpy.Images
 		public static readonly IImage Field = LoadSvg(nameof(Field));
 		public static readonly IImage Property = LoadSvg(nameof(Property));
 		public static readonly IImage Event = LoadSvg(nameof(Event));
+		public static readonly IImage Literal = LoadSvg(nameof(Literal));
 
 		// Reference overlays (small badge layered onto a base icon for TypeRef/MemberRef nodes).
 		internal static readonly IImage ReferenceOverlay = LoadSvg(nameof(ReferenceOverlay));

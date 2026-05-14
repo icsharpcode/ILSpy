@@ -20,6 +20,7 @@ using System;
 
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 
 using ICSharpCode.ILSpyX.Search;
@@ -35,6 +36,17 @@ namespace ILSpy.Search
 			InitializeComponent();
 			SearchResults.DoubleTapped += OnResultDoubleTapped;
 			SearchResults.KeyDown += OnResultKeyDown;
+		}
+
+		void OnClearSearchClicked(object? sender, RoutedEventArgs e)
+		{
+			// Empty the query and return focus to the input so the user can start typing
+			// straight away. Setting SearchTerm = "" triggers the same cancel-and-restart
+			// path as deleting the text by hand.
+			if (DataContext is SearchPaneModel vm)
+				vm.SearchTerm = string.Empty;
+			SearchInput.Focus();
+			e.Handled = true;
 		}
 
 		protected override void OnDataContextChanged(EventArgs e)

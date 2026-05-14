@@ -9,15 +9,39 @@
 	<Grid RowDefinitions="Auto,Auto,*" Margin="4">
 		<Grid Grid.Row="0" ColumnDefinitions="*,8,Auto" Margin="0,0,0,4">
 			<TextBox Grid.Column="0" Name="SearchInput"
-			         PlaceholderText="Search…"
-			         Text="{Binding SearchTerm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+			         PlaceholderText="Search for t:TypeName, m:Member or c:Constant; use exact match (=term), 'should not contain' (-term) or 'must contain' (+term); use /reg(ular)?Ex(pressions)?/ or both - t:/Type(Name)?/..."
+			         ToolTip.Tip="Search"
+			         Text="{Binding SearchTerm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+				<TextBox.InnerRightContent>
+					<!-- Visibility comes from string.Length via the StringConverters.IsNotNullOrEmpty
+					     static — Avalonia's built-in null/empty converter doesn't ship with this
+					     specific name, so the IsVisible binds to SearchTerm directly using a length
+					     check via x:Static is overkill; the button hides itself when SearchTerm == "".
+					     Click handler in the code-behind sets SearchTerm = "" via the view-model. -->
+					<Button Name="ClearSearchButton"
+					        IsVisible="{Binding SearchTerm, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+					        Background="Transparent" BorderThickness="0"
+					        Padding="4,0" Margin="0"
+					        ToolTip.Tip="Clear (Esc)"
+					        Click="OnClearSearchClicked">
+						<TextBlock Text="✕" FontSize="11" VerticalAlignment="Center" />
+					</Button>
+				</TextBox.InnerRightContent>
+			</TextBox>
 			<ComboBox Grid.Column="2" Name="SearchModePicker"
 			          ItemsSource="{Binding SearchModes}"
 			          SelectedItem="{Binding SelectedSearchMode, Mode=TwoWay}"
-			          MinWidth="150">
+			          MinWidth="180">
 				<ComboBox.ItemTemplate>
 					<DataTemplate DataType="search:SearchModeEntry">
-						<TextBlock Text="{Binding Name}" />
+						<!-- Icon + label, matching the result-row template — Grid (not StackPanel)
+						     keeps the icon column un-compressed even when the dropdown is narrow. -->
+						<Grid ColumnDefinitions="Auto,4,*">
+							<Image Grid.Column="0" Source="{Binding Image}" Width="16" Height="16"
+							       VerticalAlignment="Center" />
+							<TextBlock Grid.Column="2" Text="{Binding Name}"
+							           VerticalAlignment="Center" />
+						</Grid>
 					</DataTemplate>
 				</ComboBox.ItemTemplate>
 			</ComboBox>
