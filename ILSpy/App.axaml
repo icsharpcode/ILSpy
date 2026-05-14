@@ -5,6 +5,7 @@
              xmlns:tree="using:ILSpy.AssemblyTree"
              xmlns:search="using:ILSpy.Search"
              xmlns:analyzers="using:ILSpy.Analyzers"
+             xmlns:compare="using:ILSpy.Compare"
              xmlns:textView="using:ILSpy.TextView"
              xmlns:metaViews="using:ILSpy.Views"
              xmlns:vm="using:ILSpy.ViewModels"
@@ -56,6 +57,9 @@
         </DataTemplate>
         <DataTemplate DataType="vm:DebugStepsPaneModel">
             <metaViews:DebugSteps />
+        </DataTemplate>
+        <DataTemplate DataType="compare:CompareTabPageModel">
+            <compare:CompareView />
         </DataTemplate>
         <local:ViewLocator/>
     </Application.DataTemplates>
