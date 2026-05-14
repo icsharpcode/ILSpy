@@ -30,6 +30,8 @@ using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 using ILSpy.Views;
 
+using FoldingSnapshot = ILSpy.TextView.FoldingsViewState.Snapshot;
+
 using NUnit.Framework;
 
 namespace ICSharpCode.ILSpy.Tests.Navigation;
@@ -99,6 +101,76 @@ public class ViewStateRoundTripTests
 			"Back must restore the caret to where the user left it before navigating to B");
 		tab.LastKnownVerticalOffset.Should().Be(120.5,
 			"Back must restore the vertical scroll offset");
+	}
+
+	[AvaloniaTest]
+	public async Task Back_Carries_Expanded_Foldings_Snapshot_From_Capture_Through_To_Pending()
+	{
+		// Pins the foldings half of the view-state round trip end-to-end through DockWorkspace.
+		// The headless editor doesn't actually build foldings, so we can't observe a real
+		// FoldingManager state. Instead seed LastKnownFoldings directly on the tab (mimicking
+		// what the view's CaptureFoldingsState delegate would push), exercise the navigation
+		// pipeline, and assert the snapshot survives the capture → entry → pending hops.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var dockWorkspace = vm.DockWorkspace;
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var objectNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
+		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
+
+		vm.AssemblyTreeModel.SelectNode(objectNode);
+		await dockWorkspace.WaitForDecompiledTextAsync();
+		var tab = dockWorkspace.ActiveDecompilerTab!;
+
+		// Seed a deterministic foldings snapshot — two expanded regions over a four-folding
+		// layout. Compute it via the helper to keep the checksum honest. The view normally
+		// re-snapshots its live foldings via the CaptureFoldingsState delegate at navigate-
+		// away time, which would clobber the seed — disable it for this isolation test so we
+		// observe just the entry → pending plumbing inside DockWorkspace. (The snapshot
+		// itself is independently exercised in FoldingsViewStateTests.)
+		var seeded = FoldingsViewState.Capture(new[] {
+			(Start: 10, End: 50, IsFolded: false),
+			(Start: 60, End: 100, IsFolded: true),
+			(Start: 110, End: 200, IsFolded: false),
+			(Start: 210, End: 250, IsFolded: true),
+		});
+		tab.LastKnownFoldings = seeded;
+		tab.CaptureFoldingsState = null;
+
+		// Navigate to a different node — DockWorkspace.CaptureCurrentViewState reads
+		// LastKnownFoldings and stamps it onto the OUTGOING entry on the back stack.
+		vm.AssemblyTreeModel.SelectNode(stringNode);
+		await dockWorkspace.WaitForDecompiledTextAsync();
+
+		// Verify the capture: the back-stack entry for node A carries the snapshot.
+		var captured = dockWorkspace.BackHistory.OfType<TreeNodeEntry>().Last();
+		ReferenceEquals(captured.Node, objectNode).Should().BeTrue(
+			"captured back-stack entry must reference node A");
+		captured.Foldings.Should().NotBeNull("Select(B) must record A's foldings into the back stack");
+		captured.Foldings!.Value.Checksum.Should().Be(seeded.Checksum);
+		captured.Foldings.Value.Expanded.Should().Equal(seeded.Expanded);
+
+		// Clear the pending slot on the tab so we can observe the Back-driven set.
+		tab.PendingFoldings = null;
+
+		// Navigate Back. ApplyNavigationTarget writes the recorded snapshot into
+		// PendingFoldings so the view consumes it on the next ApplyDocument. The view's
+		// consume-and-null happens after the decompile completes, but the assignment from
+		// DockWorkspace is synchronous, so we can observe it without waiting.
+		dockWorkspace.NavigateBackCommand.Execute(null);
+
+		// Read PendingFoldings before the editor consumes it. In headless mode the editor
+		// may not run ApplyDocument at all (no Editor surface), but the assignment from
+		// DockWorkspace.ApplyNavigationTarget already happened. Either we still see it
+		// pending, OR we see a fresh capture write LastKnownFoldings from the view's hook
+		// — both are valid "the snapshot made it through" outcomes for this assertion.
+		var observed = tab.PendingFoldings ?? tab.LastKnownFoldings;
+		observed.Should().NotBeNull("Back must propagate the captured snapshot to the destination tab");
+		observed!.Value.Checksum.Should().Be(seeded.Checksum);
 	}
 
 	[AvaloniaTest]

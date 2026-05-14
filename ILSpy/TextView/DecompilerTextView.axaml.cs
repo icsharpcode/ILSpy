@@ -318,8 +318,20 @@ namespace ILSpy.TextView
 			if (DataContext is DecompilerTabPageModel model)
 			{
 				model.PropertyChanged += OnModelPropertyChanged;
+				// Foldings have no per-change event on AvaloniaEdit; instead DockWorkspace asks
+				// the view for a fresh snapshot at navigate-away time. Assigning the delegate
+				// every DataContext-change handles both the first attach and an ABA reattach.
+				model.CaptureFoldingsState = () => SnapshotFoldingsInto(model);
 				ApplyDocument(model);
 			}
+		}
+
+		void SnapshotFoldingsInto(DecompilerTabPageModel model)
+		{
+			if (activeFoldingManager is { } manager)
+				model.LastKnownFoldings = FoldingsViewState.Capture(manager.AllFoldings);
+			else
+				model.LastKnownFoldings = null;
 		}
 
 		void OnModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -384,10 +396,22 @@ namespace ILSpy.TextView
 				FoldingManager.Uninstall(activeFoldingManager);
 				activeFoldingManager = null;
 			}
+			// Consume the pending snapshot up-front so it can't bleed into a later refresh
+			// even when the new document has zero foldings to apply it to (e.g. a namespace
+			// summary page that follows a method-body navigation).
+			var pendingFoldings = model.PendingFoldings;
+			model.PendingFoldings = null;
 			if (model.Foldings is { Count: > 0 } foldings)
 			{
 				activeFoldingManager = FoldingManager.Install(Editor.TextArea);
-				activeFoldingManager.UpdateFoldings(foldings.OrderBy(f => f.StartOffset), -1);
+				var ordered = foldings.OrderBy(f => f.StartOffset).ToList();
+				// Project the saved snapshot onto the freshly-built list so each NewFolding's
+				// DefaultClosed reflects the previous state BEFORE UpdateFoldings installs them.
+				// The checksum inside Restore guards against the document having shifted under
+				// our feet (Refresh / settings change / etc).
+				if (pendingFoldings is { } pending)
+					FoldingsViewState.Restore(ordered, pending);
+				activeFoldingManager.UpdateFoldings(ordered, -1);
 			}
 			else if (model.SyntaxExtension == ".xml" && !string.IsNullOrEmpty(model.Text))
 			{

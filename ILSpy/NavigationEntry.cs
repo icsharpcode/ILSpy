@@ -23,6 +23,7 @@ using Avalonia.Media;
 
 using ICSharpCode.ILSpyX.TreeView;
 
+using ILSpy.TextView;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 
@@ -78,6 +79,14 @@ namespace ILSpy.Navigation
 
 		/// <summary>Horizontal scroll offset captured at navigate-away time.</summary>
 		public double? HorizontalOffset { get; set; }
+
+		/// <summary>
+		/// Snapshot of which code-folding regions the user had expanded when navigating
+		/// away from this entry. <c>null</c> means "no capture yet" (entries land null and
+		/// are populated by the record-history hook). Restoration is checksum-gated, so a
+		/// snapshot saved against a different document is safely ignored at Back-apply time.
+		/// </summary>
+		public FoldingsViewState.Snapshot? Foldings { get; set; }
 
 		public TreeNodeEntry(TabPageModel tab, SharpTreeNode node)
 			: base(tab)

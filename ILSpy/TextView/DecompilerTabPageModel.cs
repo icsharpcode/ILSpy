@@ -167,6 +167,31 @@ namespace ILSpy.TextView
 		public double? PendingHorizontalOffset { get; set; }
 
 		/// <summary>
+		/// Snapshot of the editor's currently expanded foldings + a layout checksum, kept
+		/// up to date by <see cref="CaptureFoldingsState"/>. Read by
+		/// <see cref="Docking.DockWorkspace"/>'s capture-on-navigate hook so the outgoing
+		/// history entry records which regions the user had open.
+		/// </summary>
+		public FoldingsViewState.Snapshot? LastKnownFoldings { get; set; }
+
+		/// <summary>
+		/// Foldings snapshot to apply on the next document apply. Set by
+		/// <see cref="Docking.DockWorkspace"/> when Back/Forward lands on an entry that
+		/// carries a captured foldings snapshot. The text view consumes this in its
+		/// ApplyDocument path right before installing the new FoldingManager.
+		/// </summary>
+		public FoldingsViewState.Snapshot? PendingFoldings { get; set; }
+
+		/// <summary>
+		/// Invoked by <see cref="Docking.DockWorkspace"/> just before recording a navigation
+		/// entry, so the text view can push its current foldings into
+		/// <see cref="LastKnownFoldings"/> synchronously. AvaloniaEdit's FoldingManager has
+		/// no foldings-changed event we can subscribe to, so we snapshot on demand instead
+		/// of mirroring the per-event caret/scroll pattern.
+		/// </summary>
+		public System.Action? CaptureFoldingsState { get; set; }
+
+		/// <summary>
 		/// Fired when the user clicks a cross-document reference. The host (DockWorkspace)
 		/// resolves the target on the assembly tree side.
 		/// </summary>
