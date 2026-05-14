@@ -145,4 +145,117 @@ public class AnalyzeContextMenuTests
 		analyzerVm.Root.Children.Count.Should().Be(beforeCount + 1,
 			"Ctrl+R with a type selected must analyse it");
 	}
+
+	[AvaloniaTest]
+	public async Task Execute_Surfaces_The_Analyzer_Pane_So_Hidden_Panes_Become_Visible()
+	{
+		// Logged follow-up from earlier live-testing: analysing an entity adds it to the
+		// pane's Root.Children, but if the pane is hidden the user doesn't see anything
+		// happen. Execute should call DockWorkspace.ShowToolPane so the pane surfaces.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var dockWorkspace = AppComposition.Current.GetExport<global::ILSpy.Docking.DockWorkspace>();
+		var analyzerVm = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
+		var entry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>()
+			.Entries.Single(e => e.Metadata.Header == nameof(Resources.Analyze)).Value;
+
+		// Pick a method that won't already be in the analyzer pane.
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		typeNode.IsExpanded = true;
+		var methodNode = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "Count");
+
+		// Walk the dock layout to find the analyzer pane's current visibility state.
+		var analyzerPane = FindAnalyzerPane(dockWorkspace);
+		Assert.That(analyzerPane, Is.Not.Null, "the analyzer pane must be in the dock layout");
+		var owningDock = analyzerPane!.Owner as global::Dock.Model.Core.IDock;
+		Assert.That(owningDock, Is.Not.Null, "the analyzer pane must have a dock parent");
+
+		// Pick any sibling dockable and force it to be active first, so the analyzer pane
+		// starts in the inactive state — that's the regression we're testing.
+		var sibling = owningDock!.VisibleDockables?
+			.FirstOrDefault(d => !ReferenceEquals(d, analyzerPane));
+		if (sibling != null)
+		{
+			owningDock.ActiveDockable = sibling;
+			((object?)owningDock.ActiveDockable).Should().NotBeSameAs(analyzerPane,
+				"baseline: sibling-active must really make the analyzer pane inactive");
+		}
+
+		entry.Execute(new TextViewContext {
+			SelectedTreeNodes = new ICSharpCode.ILSpyX.TreeView.SharpTreeNode[] { methodNode }
+		});
+
+		// After Execute, the active dockable in the analyzer pane's owning dock should be
+		// the analyzer pane itself — that's what ShowToolPane does.
+		((object?)owningDock.ActiveDockable).Should().BeSameAs(analyzerPane,
+			"Execute must call ShowToolPane so the analyzer pane surfaces");
+	}
+
+	[AvaloniaTest]
+	public async Task Every_Analyzer_Tree_Row_Surfaces_A_Non_Null_Icon()
+	{
+		// Logged follow-up from earlier live-testing: analyzer rows render without icons.
+		// The Analyzed{Type,Method,Field,Property,Event,Accessor,Module}TreeNode types all
+		// have Icon overrides returning real IImages. The "Used By" / "Uses" search-result
+		// header rows (AnalyzerSearchTreeNode), however, didn't override Icon and inherited
+		// null from SharpTreeNode — so the row's Image element rendered empty even though
+		// the leaf result rows below had perfectly good icons. Every materialised node in
+		// the analyzer tree must report a non-null Icon for the cell template to render.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var analyzerVm = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
+		var entry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>()
+			.Entries.Single(e => e.Metadata.Header == nameof(Resources.Analyze)).Value;
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		typeNode.IsExpanded = true;
+		var methodNode = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "Empty");
+
+		entry.Execute(new TextViewContext {
+			SelectedTreeNodes = new ICSharpCode.ILSpyX.TreeView.SharpTreeNode[] { methodNode }
+		});
+
+		// Walk every materialised node under the analyzer root and assert each has Icon.
+		var entityRow = analyzerVm.Root.Children.OfType<AnalyzerEntityTreeNode>().Last();
+		((object?)entityRow.Icon).Should().NotBeNull("the analysed-entity row needs an icon");
+		entityRow.EnsureLazyChildren();
+		foreach (var searchHeader in entityRow.Children.OfType<AnalyzerSearchTreeNode>())
+		{
+			((object?)searchHeader.Icon).Should().NotBeNull(
+				$"'{searchHeader.AnalyzerHeader}' analyzer-search row needs an icon — was the regression");
+		}
+	}
+
+	static AnalyzerTreeViewModel? FindAnalyzerPane(global::ILSpy.Docking.DockWorkspace dockWorkspace)
+	{
+		foreach (var dockable in WalkDockables(dockWorkspace.Layout))
+		{
+			if (dockable is AnalyzerTreeViewModel apm)
+				return apm;
+		}
+		return null;
+	}
+
+	static System.Collections.Generic.IEnumerable<global::Dock.Model.Core.IDockable> WalkDockables(global::Dock.Model.Core.IDockable? root)
+	{
+		if (root == null)
+			yield break;
+		yield return root;
+		if (root is global::Dock.Model.Core.IDock dock && dock.VisibleDockables != null)
+			foreach (var child in dock.VisibleDockables)
+				foreach (var descendant in WalkDockables(child))
+					yield return descendant;
+	}
 }

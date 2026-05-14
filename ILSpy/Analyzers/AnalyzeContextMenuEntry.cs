@@ -22,6 +22,7 @@ using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Properties;
 
+using ILSpy.Docking;
 using ILSpy.TreeNodes;
 
 namespace ILSpy.Analyzers
@@ -41,11 +42,13 @@ namespace ILSpy.Analyzers
 	public sealed class AnalyzeContextMenuEntry : IContextMenuEntry
 	{
 		readonly AnalyzerTreeViewModel analyzerTreeViewModel;
+		readonly DockWorkspace dockWorkspace;
 
 		[ImportingConstructor]
-		public AnalyzeContextMenuEntry(AnalyzerTreeViewModel analyzerTreeViewModel)
+		public AnalyzeContextMenuEntry(AnalyzerTreeViewModel analyzerTreeViewModel, DockWorkspace dockWorkspace)
 		{
 			this.analyzerTreeViewModel = analyzerTreeViewModel;
+			this.dockWorkspace = dockWorkspace;
 		}
 
 		public bool IsVisible(TextViewContext context)
@@ -66,12 +69,17 @@ namespace ILSpy.Analyzers
 		{
 			if (context.SelectedTreeNodes is not { Length: > 0 } nodes)
 				return;
-			foreach (var member in nodes.OfType<IMemberTreeNode>()
+			var analysable = nodes.OfType<IMemberTreeNode>()
 				.Select(n => n.Member)
-				.Where(IsAnalysable))
-			{
+				.Where(IsAnalysable)
+				.ToList();
+			foreach (var member in analysable)
 				analyzerTreeViewModel.Analyze(member!);
-			}
+			// Bring the analyzer pane to the front so the user can see the entity they just
+			// added. AnalyzerTreeViewModel.Analyze deliberately leaves dock-activation to its
+			// caller — that's this entry's job.
+			if (analysable.Count > 0)
+				dockWorkspace.ShowToolPane(AnalyzerTreeViewModel.PaneContentId);
 		}
 
 		/// <summary>

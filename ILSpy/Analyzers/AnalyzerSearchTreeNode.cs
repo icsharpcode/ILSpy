@@ -72,6 +72,14 @@ namespace ILSpy.Analyzers
 			? headerText
 			: headerText + " (" + Children.Count + " in " + stopwatch.ElapsedMilliseconds + " ms)";
 
+		/// <summary>
+		/// Semantic icon for an analyzer-search header row ("Used By", "Uses", "Exposed By",
+		/// etc.). Without this override the row inherits null from <see cref="SharpTreeNode"/>
+		/// and renders an empty icon slot next to the header text — visually mismatched with
+		/// the result rows underneath, which all carry entity-kind icons.
+		/// </summary>
+		public override object Icon => Images.Images.Search;
+
 		protected override void LoadChildren()
 		{
 			cancellation?.Cancel();
