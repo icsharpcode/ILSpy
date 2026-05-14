@@ -75,4 +75,13 @@
     <ProjectReference Include="..\ICSharpCode.ILSpyX\ICSharpCode.ILSpyX.csproj" />
     <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
   </ItemGroup>
+
+  <!-- The Debug Steps pane is a DEBUG-only diagnostic. The code-behind and viewmodel
+       are wrapped in `#if DEBUG`, so the C# type vanishes under Release; but Avalonia
+       compiles every .axaml file regardless of preprocessor state, and the XamlIl
+       compiler then fails resolving x:Class="ILSpy.Views.DebugSteps". Removing the
+       AXAML from the build under non-Debug configurations matches the C# gating. -->
+  <ItemGroup Condition="'$(Configuration)' != 'Debug'">
+    <AvaloniaXaml Remove="Views\DebugSteps.axaml" />
+  </ItemGroup>
 </Project>

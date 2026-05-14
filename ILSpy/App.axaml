@@ -54,6 +54,9 @@
         <DataTemplate DataType="vm:MetadataTablePageModel">
             <metaViews:MetadataTablePage />
         </DataTemplate>
+        <DataTemplate DataType="vm:DebugStepsPaneModel">
+            <metaViews:DebugSteps />
+        </DataTemplate>
         <local:ViewLocator/>
     </Application.DataTemplates>
 

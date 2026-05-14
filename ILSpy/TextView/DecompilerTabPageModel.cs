@@ -238,6 +238,26 @@ namespace ILSpy.TextView
 
 		public Language Language { get; set; } = null!;
 
+		// Per-run overrides consumed by DecompileAsync. Reset to defaults at the start of
+		// every run; set non-default by RestartDecompileWithStepLimit before kicking off a
+		// debug-stepper decompile. Set on the UI thread only — no inter-thread access.
+		int pendingStepLimit = int.MaxValue;
+		bool pendingIsDebug;
+
+		/// <summary>
+		/// Force a fresh decompile of the same nodes with the IL-transform pipeline halted
+		/// after <paramref name="stepLimit"/> steps. Used by the Debug Steps pane to render
+		/// the partial IL after a chosen step (or full pipeline when <paramref name="stepLimit"/>
+		/// is <see cref="int.MaxValue"/>). <paramref name="isDebug"/> toggles the transforms'
+		/// verbose-debug emission. No-op when there's nothing currently being decompiled.
+		/// </summary>
+		public void RestartDecompileWithStepLimit(int stepLimit, bool isDebug)
+		{
+			pendingStepLimit = stepLimit;
+			pendingIsDebug = isDebug;
+			_ = DecompileAsync();
+		}
+
 		async Task DecompileAsync()
 		{
 			activeCts?.Cancel();
@@ -266,11 +286,26 @@ namespace ILSpy.TextView
 				// reach the next decompile without restart. Cloning isolates this run's
 				// settings from concurrent edits in an open Options tab.
 				var decompilerSettings = TryGetLiveDecompilerSettings();
+				// Snapshot the per-run debug-stepper overrides so the inner closure sees a
+				// stable value, and reset the fields to defaults so the NEXT decompile runs
+				// at full fidelity unless RestartDecompileWithStepLimit sets them again.
+				var stepLimit = pendingStepLimit;
+				var isDebug = pendingIsDebug;
+				pendingStepLimit = int.MaxValue;
+				pendingIsDebug = false;
 				var (output, _) = await Task.Run(() => {
 					var output = new AvaloniaEditTextOutput();
 					var options = decompilerSettings != null
-						? new DecompilationOptions(decompilerSettings) { CancellationToken = cts.Token }
-						: new DecompilationOptions { CancellationToken = cts.Token };
+						? new DecompilationOptions(decompilerSettings) {
+							CancellationToken = cts.Token,
+							StepLimit = stepLimit,
+							IsDebug = isDebug,
+						}
+						: new DecompilationOptions {
+							CancellationToken = cts.Token,
+							StepLimit = stepLimit,
+							IsDebug = isDebug,
+						};
 					try
 					{
 						for (int i = 0; i < nodes.Count; i++)

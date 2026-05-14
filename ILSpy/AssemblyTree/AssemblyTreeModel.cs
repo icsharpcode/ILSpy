@@ -130,6 +130,10 @@ namespace ILSpy.AssemblyTree
 			// notified, and the saved path must follow the new primary.
 			OnPropertyChanged(nameof(SelectedItem));
 			settingsService.SessionSettings.ActiveTreeViewPath = GetPathForNode(SelectedItem);
+
+			// Pub-sub fan-out: panes (e.g. Debug Steps) that need to invalidate their state
+			// when the selection moves listen on this message.
+			Util.MessageBus.Send(this, new Util.AssemblyTreeSelectionChangedEventArgs());
 		}
 
 		// Walks already-materialized children and re-raises Text PropertyChanged so the cell

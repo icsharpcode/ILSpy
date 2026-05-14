@@ -42,6 +42,21 @@ namespace ILSpy
 		/// <summary>Escape invalid C# identifiers so the output compiles.</summary>
 		public bool EscapeInvalidIdentifiers { get; set; }
 
+		/// <summary>
+		/// Stop the IL-transform pipeline after this many steps. <see cref="int.MaxValue"/>
+		/// means "run all transforms". The Debug Steps pane sets this to the index of a
+		/// chosen step so it can show the partial state at that point. Honoured by
+		/// <see cref="Languages.BlockILLanguage"/>; ignored by every other language.
+		/// </summary>
+		public int StepLimit { get; set; } = int.MaxValue;
+
+		/// <summary>
+		/// When true, transforms emit verbose debug information about their behaviour. Only
+		/// meaningful in combination with <see cref="StepLimit"/> — the Debug Steps pane sets
+		/// it on the "Debug this step" context-menu action.
+		/// </summary>
+		public bool IsDebug { get; set; }
+
 		public DecompilationOptions(DecompilerSettings settings)
 		{
 			DecompilerSettings = settings;

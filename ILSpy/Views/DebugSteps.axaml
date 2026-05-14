@@ -1,0 +1,41 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ILSpy.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
+             x:Class="ILSpy.Views.DebugSteps"
+             x:DataType="vm:DebugStepsPaneModel">
+	<DockPanel>
+		<StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="2">
+			<CheckBox Margin="3" Content="Field sugar"
+			          IsChecked="{Binding Options.UseFieldSugar, Mode=TwoWay}" />
+			<CheckBox Margin="3" Content="Logic operation sugar"
+			          IsChecked="{Binding Options.UseLogicOperationSugar, Mode=TwoWay}" />
+			<CheckBox Margin="3" Content="Show IL ranges"
+			          IsChecked="{Binding Options.ShowILRanges, Mode=TwoWay}" />
+			<CheckBox Margin="3" Content="Show child index in block"
+			          IsChecked="{Binding Options.ShowChildIndexInBlock, Mode=TwoWay}" />
+		</StackPanel>
+		<TreeView Name="StepsTree"
+		          DoubleTapped="OnShowStateAfter"
+		          KeyDown="OnStepsTreeKeyDown"
+		          x:CompileBindings="False">
+			<TreeView.ItemTemplate>
+				<TreeDataTemplate ItemsSource="{Binding Children}">
+					<TextBlock Text="{Binding Description}" />
+				</TreeDataTemplate>
+			</TreeView.ItemTemplate>
+			<TreeView.ContextMenu>
+				<ContextMenu>
+					<MenuItem Header="Show state before this step (Shift+Enter)"
+					          Click="OnShowStateBefore" />
+					<MenuItem Header="Show state after this step (Enter)"
+					          Click="OnShowStateAfter" />
+					<MenuItem Header="Debug this step"
+					          Click="OnDebugStep" />
+				</ContextMenu>
+			</TreeView.ContextMenu>
+		</TreeView>
+	</DockPanel>
+</UserControl>

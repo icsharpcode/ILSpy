@@ -16,12 +16,14 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.ComponentModel;
 using System.Composition;
 
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Settings;
 
 using ILSpy.Options;
+using ILSpy.Util;
 
 namespace ILSpy
 {
@@ -31,6 +33,20 @@ namespace ILSpy
 	{
 		public SettingsService() : base(ILSpySettings.Load())
 		{
+		}
+
+		/// <summary>
+		/// Override the base's per-section PropertyChanged forwarder to also fan out via
+		/// <see cref="MessageBus{T}"/>. Panes (Debug Steps, future updater banner, …) that
+		/// react to settings changes without holding a reference to the SettingsService
+		/// subscribe on <see cref="SettingsChangedEventArgs"/>. The sender is the section
+		/// instance (DecompilerSettings / DisplaySettings / LanguageSettings / …) so
+		/// subscribers can dispatch on which section changed.
+		/// </summary>
+		protected override void Section_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			base.Section_PropertyChanged(sender, e);
+			MessageBus.Send(sender, new SettingsChangedEventArgs(e));
 		}
 
 		public SessionSettings SessionSettings => GetSettings<SessionSettings>();
