@@ -124,6 +124,16 @@ namespace ICSharpCode.Decompiler.Documentation
 
 		#region Constructor / Redirection support
 		/// <summary>
+		/// Constructor for subclasses that aggregate multiple <see cref="XmlDocumentationProvider"/>
+		/// instances (see the modern .NET ref-pack lookup in <see cref="XmlDocLoader"/>).
+		/// The base class's index stays empty; subclasses must override
+		/// <see cref="GetDocumentation(string)"/> to fan out across their contributors.
+		/// </summary>
+		protected XmlDocumentationProvider()
+		{
+		}
+
+		/// <summary>
 		/// Creates a new XmlDocumentationProvider.
 		/// </summary>
 		/// <param name="fileName">Name of the .xml file.</param>
@@ -313,7 +323,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <summary>
 		/// Get the documentation for the member with the specified documentation key.
 		/// </summary>
-		public string GetDocumentation(string key)
+		public virtual string GetDocumentation(string key)
 		{
 			if (key == null)
 				throw new ArgumentNullException(nameof(key));
@@ -323,7 +333,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <summary>
 		/// Get the documentation for the specified member.
 		/// </summary>
-		public string GetDocumentation(IEntity entity)
+		public virtual string GetDocumentation(IEntity entity)
 		{
 			if (entity == null)
 				throw new ArgumentNullException(nameof(entity));

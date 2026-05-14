@@ -17,9 +17,11 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 using ICSharpCode.Decompiler.Metadata;
@@ -64,15 +66,143 @@ namespace ICSharpCode.Decompiler.Documentation
 					if (xmlDocFile != null)
 					{
 						xmlDoc = new XmlDocumentationProvider(xmlDocFile);
-						cache.Add(module, xmlDoc);
 					}
 					else
 					{
-						cache.Add(module, null); // add missing documentation files as well
-						xmlDoc = null;
+						// Last resort for modern .NET (.NET 5+): runtime DLLs ship under
+						// dotnet/shared/Microsoft.NETCore.App/<version>/ with no .xml beside
+						// them. The matching XML lives in the parallel ref pack under
+						// dotnet/packs/Microsoft.NETCore.App.Ref/<version>/ref/<tfm>/. Aggregate
+						// every *.xml in the matching tfm folder into a single provider so
+						// type-forwarded entities (System.String docs live in System.Runtime.xml
+						// but the metadata token comes from System.Private.CoreLib.dll) resolve
+						// transparently.
+						xmlDoc = TryLoadModernRefPackDocumentation(module.FileName);
 					}
+					cache.Add(module, xmlDoc); // cache null misses too — avoids re-scanning disk
 				}
 				return xmlDoc;
+			}
+		}
+
+		static XmlDocumentationProvider TryLoadModernRefPackDocumentation(string assemblyFileName)
+		{
+			var refPackTfmDir = ResolveModernRefPackTfmDirectory(assemblyFileName);
+			if (refPackTfmDir == null)
+				return null;
+			List<XmlDocumentationProvider> providers = null;
+			foreach (var xmlPath in SafeGetXmlFiles(refPackTfmDir))
+			{
+				XmlDocumentationProvider p;
+				try
+				{
+					p = new XmlDocumentationProvider(xmlPath);
+				}
+				catch
+				{
+					// One bad XML doesn't disable the rest — skip and continue.
+					continue;
+				}
+				(providers ??= new List<XmlDocumentationProvider>()).Add(p);
+			}
+			return providers is { Count: > 0 } ? new AggregatingXmlDocumentationProvider(providers) : null;
+		}
+
+		/// <summary>
+		/// Maps a runtime-DLL path like
+		/// <c>X:\Program Files\dotnet\shared\Microsoft.NETCore.App\10.0.0\System.Private.CoreLib.dll</c>
+		/// to the matching ref-pack tfm directory
+		/// <c>X:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\10.0.0\ref\net10.0</c>.
+		/// Returns <c>null</c> when the assembly isn't laid out under
+		/// <c>shared/Microsoft.NETCore.App/&lt;version&gt;/</c> or when the parallel ref pack
+		/// isn't installed.
+		/// </summary>
+		internal static string ResolveModernRefPackTfmDirectory(string assemblyFileName)
+		{
+			if (string.IsNullOrEmpty(assemblyFileName))
+				return null;
+			var versionDir = Path.GetDirectoryName(assemblyFileName);
+			if (versionDir == null)
+				return null;
+			var sharedFramework = Path.GetDirectoryName(versionDir);
+			if (sharedFramework == null || !string.Equals(Path.GetFileName(sharedFramework), "Microsoft.NETCore.App", StringComparison.OrdinalIgnoreCase))
+				return null;
+			var sharedDir = Path.GetDirectoryName(sharedFramework);
+			if (sharedDir == null || !string.Equals(Path.GetFileName(sharedDir), "shared", StringComparison.OrdinalIgnoreCase))
+				return null;
+			var dotnetRoot = Path.GetDirectoryName(sharedDir);
+			if (dotnetRoot == null)
+				return null;
+			var version = Path.GetFileName(versionDir);
+			var refPackRoot = Path.Combine(dotnetRoot, "packs", "Microsoft.NETCore.App.Ref", version, "ref");
+			if (!Directory.Exists(refPackRoot))
+				return null;
+			// One tfm folder per pack version (e.g. "net10.0"). Sort by parsed
+			// (Major, Minor) — lexicographic compare puts "net10.0" behind "net9.0" because
+			// '1' < '9'. Multiple tfms only show up across pack versions, not within one.
+			return Directory.GetDirectories(refPackRoot)
+				.OrderByDescending(d => ParseTfm(Path.GetFileName(d)))
+				.FirstOrDefault();
+		}
+
+		static (int Major, int Minor) ParseTfm(string tfm)
+		{
+			// Avoid Span overloads — the shared library targets older TFMs that don't have
+			// int.TryParse(ReadOnlySpan<char>, out int).
+			if (tfm == null || !tfm.StartsWith("net", StringComparison.OrdinalIgnoreCase))
+				return (-1, -1);
+			var rest = tfm.Substring(3);
+			var dot = rest.IndexOf('.');
+			if (dot < 0)
+				return (-1, -1);
+			if (!int.TryParse(rest.Substring(0, dot), out int major))
+				return (-1, -1);
+			if (!int.TryParse(rest.Substring(dot + 1), out int minor))
+				return (-1, -1);
+			return (major, minor);
+		}
+
+		static IEnumerable<string> SafeGetXmlFiles(string directory)
+		{
+			try
+			{
+				return Directory.GetFiles(directory, "*.xml");
+			}
+			catch
+			{
+				return Array.Empty<string>();
+			}
+		}
+
+		/// <summary>
+		/// Aggregates several <see cref="XmlDocumentationProvider"/> instances behind one
+		/// <see cref="XmlDocumentationProvider"/> surface. Used by
+		/// <see cref="TryLoadModernRefPackDocumentation"/> because in modern .NET an
+		/// entity's metadata-token-bearing assembly (<c>System.Private.CoreLib.dll</c>) is
+		/// different from the assembly whose XML contains its docs (<c>System.Runtime.xml</c>):
+		/// we have to probe every ref-pack XML for the same id string until one matches.
+		/// First non-empty answer wins; id strings are unique across the pack.
+		/// </summary>
+		sealed class AggregatingXmlDocumentationProvider : XmlDocumentationProvider
+		{
+			readonly IReadOnlyList<XmlDocumentationProvider> providers;
+
+			public AggregatingXmlDocumentationProvider(IReadOnlyList<XmlDocumentationProvider> providers) : base()
+			{
+				this.providers = providers;
+			}
+
+			public override string GetDocumentation(string key)
+			{
+				if (key == null)
+					throw new ArgumentNullException(nameof(key));
+				foreach (var p in providers)
+				{
+					var doc = p.GetDocumentation(key);
+					if (!string.IsNullOrEmpty(doc))
+						return doc;
+				}
+				return null;
 			}
 		}
 

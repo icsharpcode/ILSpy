@@ -27,7 +27,6 @@ using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
 
 using ILSpy.AppEnv;
-using ILSpy.TextView;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 using ILSpy.Views;
@@ -67,13 +66,14 @@ public class XmlDocumentationTests
 		Assert.That(concat!.ParentModule, Is.Not.Null);
 		Assert.That(concat.ParentModule!.MetadataFile, Is.Not.Null);
 
-		// Modern .NET runtime DLLs don't ship .xml beside them — XmlDocLoader can't find
-		// CoreLib's docs at runtime. The Avalonia ModernXmlDocLookup walks the parallel
-		// ref pack (<dotnet>/packs/Microsoft.NETCore.App.Ref/<version>/ref/<tfm>/*.xml)
-		// and aggregates every XML there into a single provider.
-		var provider = ModernXmlDocLookup.TryGetProvider(concat.ParentModule.MetadataFile!);
+		// XmlDocLoader's modern-.NET fallback (added in the shared decompiler library) walks
+		// the parallel ref pack — <dotnet>/packs/Microsoft.NETCore.App.Ref/<version>/ref/<tfm>/*.xml
+		// — and aggregates every XML there into a single provider, since each entity's
+		// metadata-token-bearing assembly (System.Private.CoreLib.dll) differs from the one
+		// whose XML carries its docs (System.Runtime.xml).
+		var provider = XmlDocLoader.LoadDocumentation(concat.ParentModule.MetadataFile!);
 		((object?)provider).Should().NotBeNull(
-			"ModernXmlDocLookup must locate the ref-pack XML for the test-host runtime layout");
+			"XmlDocLoader's modern-.NET ref-pack fallback must locate XMLs for the test-host runtime layout");
 
 		var documentation = provider!.GetDocumentation(concat.GetIdString());
 		documentation.Should().NotBeNullOrEmpty(
