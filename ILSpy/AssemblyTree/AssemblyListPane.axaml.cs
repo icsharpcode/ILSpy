@@ -394,12 +394,24 @@ namespace ILSpy.AssemblyTree
 
 		void OnTreeGridPointerPressed(object? sender, PointerPressedEventArgs e)
 		{
-			// Middle-click on a tree row → "open in new tab", matching the WPF gesture
-			// (DecompileInNewViewCommand advertises InputGestureText = "MMB"). MMB does
-			// not move the tree's selection on its own, so hit-test the row from e.Source
-			// rather than reading SelectedItem.
-			if (e.Source is not Visual hit
-				|| !e.GetCurrentPoint(hit).Properties.IsMiddleButtonPressed)
+			// Three gestures all map to "open the row's node in a new tab":
+			//   • MMB single-click — primary, WPF DecompileInNewViewCommand's InputGestureText.
+			//   • Ctrl + LMB single-click — modern editor convention.
+			//   • LMB double-click — only when the row is already selected (so the first click
+			//     selecting the row doesn't accidentally also open a new tab).
+			// MMB doesn't move selection on its own, so we hit-test the row from e.Source
+			// in every case rather than reading SelectedItem.
+			if (e.Source is not Visual hit)
+				return;
+			var point = e.GetCurrentPoint(hit).Properties;
+			bool isMmb = point.IsMiddleButtonPressed;
+			bool isCtrlClick = point.IsLeftButtonPressed
+				&& (e.KeyModifiers & KeyModifiers.Control) == KeyModifiers.Control
+				&& e.ClickCount == 1;
+			bool isDoubleClick = point.IsLeftButtonPressed
+				&& e.ClickCount == 2
+				&& (e.KeyModifiers & KeyModifiers.Control) == 0;
+			if (!isMmb && !isCtrlClick && !isDoubleClick)
 				return;
 			var visual = hit;
 			while (visual != null && visual.DataContext is not HierarchicalNode)
