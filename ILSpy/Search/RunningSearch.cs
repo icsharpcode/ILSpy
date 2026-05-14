@@ -21,6 +21,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -242,49 +243,214 @@ namespace ILSpy.Search
 
 		SearchRequest BuildRequest()
 		{
-			// Lightweight parser: split on whitespace, pull off the two scope prefixes
-			// (inassembly: / innamespace:) when they appear. The full WPF prefix DSL
-			// (/regex/, =exact, ~fuzzy, t: / m:, @token, …) is out of scope; plain
-			// keyword + scope-to context-menu integration covers the common cases.
-			var tokens = (searchTerm ?? string.Empty)
-				.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-			var keywords = new List<string>(tokens.Length);
-			string? inAssembly = null;
-			string? inNamespace = null;
-			foreach (var token in tokens)
+			var request = ParseInput(searchTerm ?? string.Empty, mode);
+			request.SearchResultFactory = resultFactory;
+			// MemberSearchStrategy.Search resolves a type system via
+			// module.GetTypeSystemWithDecompilerSettingsOrNull(request.DecompilerSettings);
+			// passing null short-circuits to zero results. Default settings are fine for
+			// search — we only need the type system to materialise.
+			request.DecompilerSettings = new DecompilerSettings();
+			return request;
+		}
+
+		/// <summary>
+		/// Parses the user's freeform query into a <see cref="SearchRequest"/>. Recognises
+		/// the prefix DSL surfaced in the watermark:
+		/// <list type="bullet">
+		/// <item><c>t:</c>, <c>tm:</c>, <c>m:</c>, <c>md:</c>, <c>f:</c>, <c>p:</c>, <c>e:</c>,
+		///       <c>c:</c>, <c>n:</c>, <c>r:</c> — set <see cref="SearchRequest.Mode"/>.</item>
+		/// <item><c>a:</c>, <c>af:</c>, <c>an:</c> — assembly mode + <see cref="AssemblySearchKind"/>.</item>
+		/// <item><c>@</c> (single character) — metadata-token mode.</item>
+		/// <item><c>inassembly:</c>, <c>innamespace:</c> — scope filters.</item>
+		/// <item><c>/.../</c> — regex match via <see cref="SearchRequest.RegEx"/>.</item>
+		/// <item>Double-quoted tokens — survive whitespace split, quotes stripped from the term.</item>
+		/// </list>
+		/// Auto-sets <see cref="SearchRequest.FullNameSearch"/> when any keyword has a dot,
+		/// and <see cref="SearchRequest.OmitGenerics"/> when any keyword lacks generic angles
+		/// and IL-arity backtick. The match operators <c>=</c> / <c>+</c> / <c>-</c> / <c>~</c>
+		/// are NOT consumed here — they live on as keyword prefixes for
+		/// <see cref="AbstractSearchStrategy.IsMatch"/> to interpret per term.
+		/// </summary>
+		internal static SearchRequest ParseInput(string input, SearchMode defaultMode)
+		{
+			var request = new SearchRequest { Mode = defaultMode };
+			var keywords = new List<string>();
+			Regex? regex = null;
+			foreach (var part in TokenizeQuoted(input))
 			{
-				if (token.StartsWith("inassembly:", StringComparison.OrdinalIgnoreCase))
-					inAssembly = token.Substring("inassembly:".Length).Trim('"');
-				else if (token.StartsWith("innamespace:", StringComparison.OrdinalIgnoreCase))
-					inNamespace = token.Substring("innamespace:".Length).Trim('"');
+				string? prefix;
+				string term;
+				if (part.StartsWith("@", StringComparison.Ordinal))
+				{
+					prefix = "@";
+					term = part.Substring(1);
+				}
 				else
-					keywords.Add(token);
+				{
+					// Find the colon that opens a prefix. It has to come before any quote
+					// or regex slash — otherwise it's a colon inside the term itself.
+					int quoteOrSlash = part.IndexOfAny(new[] { '"', '/' });
+					int searchEnd = quoteOrSlash < 0 ? part.Length : quoteOrSlash;
+					int colon = part.IndexOf(':', 0, searchEnd);
+					if (colon > 0)
+					{
+						prefix = part.Substring(0, colon);
+						term = part.Substring(colon + 1);
+					}
+					else
+					{
+						prefix = null;
+						term = part;
+					}
+				}
+
+				// Strip surrounding double quotes from the term, if present.
+				if (term.Length >= 2 && term[0] == '"' && term[^1] == '"')
+					term = term.Substring(1, term.Length - 2);
+
+				// If the prefix was followed by nothing useful, drop it and treat the whole
+				// part as a keyword instead.
+				if (prefix != null && term.Length == 0)
+				{
+					prefix = null;
+					term = part;
+				}
+
+				// Term goes into keywords/regex regardless of prefix — the prefix only flips
+				// mode/scope, the keyword is still what gets matched.
+				if (regex == null && term.StartsWith("/", StringComparison.Ordinal) && term.Length > 1)
+				{
+					// Wrapped /regex/ form. Closing slash is optional; if present, strip it.
+					var innerEnd = term.EndsWith("/", StringComparison.Ordinal) && term.Length > 2
+						? term.Length - 1
+						: term.Length;
+					var inner = term.Substring(1, innerEnd - 1);
+					if (inner.Contains("\\."))
+						request.FullNameSearch = true;
+					regex = TryCreateRegex(inner);
+				}
+				else
+				{
+					if (term.Contains('.'))
+						request.FullNameSearch = true;
+					keywords.Add(term);
+				}
+				if (!(term.Contains('<') || term.Contains('`')))
+					request.OmitGenerics = true;
+
+				switch (prefix?.ToUpperInvariant())
+				{
+					case "@":
+						request.Mode = SearchMode.Token;
+						break;
+					case "INNAMESPACE":
+						if (request.InNamespace == null)
+							request.InNamespace = term;
+						break;
+					case "INASSEMBLY":
+						if (request.InAssembly == null)
+							request.InAssembly = term;
+						break;
+					case "A":
+						request.AssemblySearchKind = AssemblySearchKind.NameOrFileName;
+						request.Mode = SearchMode.Assembly;
+						break;
+					case "AF":
+						request.AssemblySearchKind = AssemblySearchKind.FilePath;
+						request.Mode = SearchMode.Assembly;
+						break;
+					case "AN":
+						request.AssemblySearchKind = AssemblySearchKind.FullName;
+						request.Mode = SearchMode.Assembly;
+						break;
+					case "N":
+						request.Mode = SearchMode.Namespace;
+						break;
+					case "TM":
+						request.Mode = SearchMode.TypeAndMember;
+						break;
+					case "T":
+						request.Mode = SearchMode.Type;
+						break;
+					case "M":
+						request.Mode = SearchMode.Member;
+						break;
+					case "MD":
+						request.Mode = SearchMode.Method;
+						break;
+					case "F":
+						request.Mode = SearchMode.Field;
+						break;
+					case "P":
+						request.Mode = SearchMode.Property;
+						break;
+					case "E":
+						request.Mode = SearchMode.Event;
+						break;
+					case "C":
+						request.Mode = SearchMode.Literal;
+						break;
+					case "R":
+						request.Mode = SearchMode.Resource;
+						break;
+				}
 			}
-			return new SearchRequest {
-				Mode = mode,
-				Keywords = keywords.ToArray(),
-				SearchResultFactory = resultFactory,
-				// MemberSearchStrategy.Search resolves a type system via
-				// module.GetTypeSystemWithDecompilerSettingsOrNull(request.DecompilerSettings);
-				// passing null short-circuits to zero results. Default settings are fine for
-				// search — we only need the type system to materialise.
-				DecompilerSettings = new DecompilerSettings(),
-				FullNameSearch = false,
-				OmitGenerics = false,
-				// IsInNamespaceOrAssembly: null means "no filter, accept everything";
-				// the EMPTY STRING would restrict to the global namespace, matching almost
-				// nothing. The scope-to context-menu entries set these via the DSL prefixes
-				// parsed above.
-				InNamespace = inNamespace!,
-				InAssembly = inAssembly!,
-			};
+			request.Keywords = keywords.ToArray();
+			request.RegEx = regex;
+			return request;
+		}
+
+		static Regex? TryCreateRegex(string pattern)
+		{
+			try
+			{
+				return new Regex(pattern, RegexOptions.Compiled);
+			}
+			catch (ArgumentException)
+			{
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Splits the input on whitespace, treating double-quoted spans as a single token
+		/// (so <c>"hello world"</c> stays together). Quotes inside the token are kept so the
+		/// prefix-detection step can still tell a colon-inside-quotes (<c>t:"a:b"</c>) from
+		/// a prefix-opening colon.
+		/// </summary>
+		static IEnumerable<string> TokenizeQuoted(string input)
+		{
+			var sb = new System.Text.StringBuilder();
+			bool inQuotes = false;
+			foreach (var c in input)
+			{
+				if (c == '"')
+				{
+					inQuotes = !inQuotes;
+					sb.Append(c);
+				}
+				else if (!inQuotes && char.IsWhiteSpace(c))
+				{
+					if (sb.Length > 0)
+					{
+						yield return sb.ToString();
+						sb.Clear();
+					}
+				}
+				else
+				{
+					sb.Append(c);
+				}
+			}
+			if (sb.Length > 0)
+				yield return sb.ToString();
 		}
 
 		AbstractSearchStrategy? GetStrategy(SearchRequest request)
 		{
 			if (request.Keywords.Length == 0 && request.RegEx is null)
 				return null;
-			return mode switch {
+			return request.Mode switch {
 				SearchMode.TypeAndMember => new MemberSearchStrategy(language, apiVisibility, request, queue),
 				SearchMode.Type => new MemberSearchStrategy(language, apiVisibility, request, queue, MemberSearchKind.Type),
 				SearchMode.Member => new MemberSearchStrategy(language, apiVisibility, request, queue, MemberSearchKind.Member),
@@ -294,7 +460,7 @@ namespace ILSpy.Search
 				SearchMode.Event => new MemberSearchStrategy(language, apiVisibility, request, queue, MemberSearchKind.Event),
 				SearchMode.Literal => new LiteralSearchStrategy(language, apiVisibility, request, queue),
 				SearchMode.Token => new MetadataTokenSearchStrategy(language, apiVisibility, request, queue),
-				SearchMode.Assembly => new AssemblySearchStrategy(request, queue, AssemblySearchKind.NameOrFileName),
+				SearchMode.Assembly => new AssemblySearchStrategy(request, queue, request.AssemblySearchKind),
 				SearchMode.Namespace => new NamespaceSearchStrategy(request, queue),
 				// Resource search needs ITreeNodeFactory infrastructure — deferred to a follow-up.
 				_ => null,
