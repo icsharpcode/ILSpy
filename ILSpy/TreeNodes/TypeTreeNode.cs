@@ -168,6 +168,20 @@ namespace ILSpy.TreeNodes
 				Children.Add(new TypeTreeNode((TypeDefinitionHandle)nestedType.MetadataToken, module));
 			}
 
+			// C# 14 explicit-extension declaration blocks surface as their own container nodes
+			// — one per (marker, type-params) tuple inside this static class. Filter()-hidden
+			// when the user runs an older C# language version that doesn't recognise them, or
+			// when DecompilerSettings.ExtensionMembers is off.
+			if (typeDef.ExtensionInfo is { } ext)
+			{
+				var parentAssemblyNode = this.Ancestors().OfType<AssemblyTreeNode>().FirstOrDefault();
+				if (parentAssemblyNode != null)
+				{
+					foreach (var group in ext.ExtensionGroups)
+						Children.Add(new ExtensionTreeNode(typeDef, group, parentAssemblyNode));
+				}
+			}
+
 			// Enums look more useful in declaration order than alphabetical.
 			var fields = typeDef.Kind == TypeKind.Enum
 				? typeDef.Fields

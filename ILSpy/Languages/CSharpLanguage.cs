@@ -198,6 +198,49 @@ namespace ILSpy.Languages
 			}
 		}
 
+		/// <summary>
+		/// Decompiles a C# 14 explicit-extension declaration block back to source. Used by
+		/// <see cref="TreeNodes.ExtensionTreeNode"/> when the user activates an extension
+		/// container; the type-level overload is what the node actually calls. The method
+		/// and property overloads exist so individual members can also be decompiled in
+		/// isolation (e.g. when navigated to by analyzer results in a future commit).
+		/// </summary>
+		public void DecompileExtension(ITypeDefinition extension, ITextOutput output, DecompilationOptions options)
+		{
+			MetadataFile assembly = extension.ParentModule!.MetadataFile!;
+			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
+			AddReferenceAssemblyWarningMessage(assembly, output);
+			AddReferenceWarningMessage(assembly, output);
+			WriteCommentLine(output, assembly.FullName);
+			WriteCommentLine(output, TypeToString(extension,
+				ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.SupportExtensionDeclarations));
+			WriteCode(output, options.DecompilerSettings, decompiler.DecompileExtension(extension.MetadataToken), decompiler.TypeSystem);
+		}
+
+		public void DecompileExtension(IMethod extension, ITextOutput output, DecompilationOptions options)
+		{
+			MetadataFile assembly = extension.ParentModule!.MetadataFile!;
+			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
+			AddReferenceAssemblyWarningMessage(assembly, output);
+			AddReferenceWarningMessage(assembly, output);
+			WriteCommentLine(output, assembly.FullName);
+			WriteCommentLine(output, TypeToString(extension.DeclaringType,
+				ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.SupportExtensionDeclarations));
+			WriteCode(output, options.DecompilerSettings, decompiler.DecompileExtension(extension.MetadataToken), decompiler.TypeSystem);
+		}
+
+		public void DecompileExtension(IProperty extension, ITextOutput output, DecompilationOptions options)
+		{
+			MetadataFile assembly = extension.ParentModule!.MetadataFile!;
+			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
+			AddReferenceAssemblyWarningMessage(assembly, output);
+			AddReferenceWarningMessage(assembly, output);
+			WriteCommentLine(output, assembly.FullName);
+			WriteCommentLine(output, TypeToString(extension.DeclaringType,
+				ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.SupportExtensionDeclarations));
+			WriteCode(output, options.DecompilerSettings, decompiler.DecompileExtension(extension.MetadataToken), decompiler.TypeSystem);
+		}
+
 		public override void DecompileEvent(IEvent ev, ITextOutput output, DecompilationOptions options)
 		{
 			MetadataFile assembly = ev.ParentModule!.MetadataFile!;
