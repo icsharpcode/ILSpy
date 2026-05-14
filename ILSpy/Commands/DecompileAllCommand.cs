@@ -109,6 +109,78 @@ namespace ILSpy.Commands
 	}
 
 	/// <summary>
+	/// DEBUG-only File-menu stress test: disassemble every loaded assembly to
+	/// <c>c:\temp\disassembled\&lt;Name&gt;.il</c> in parallel. Same shape as
+	/// <see cref="DecompileAllCommand"/> but routes through <see cref="ILLanguage"/>.
+	/// CanExecute gates on the output directory existing.
+	/// </summary>
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDisassemble), MenuCategory = nameof(Resources.Open), MenuOrder = 2.55)]
+	[Shared]
+	sealed class DisassembleAllCommand : SimpleCommand
+	{
+		const string OutputDir = @"c:\temp\disassembled";
+
+		readonly AssemblyTreeModel assemblyTreeModel;
+		readonly DockWorkspace dockWorkspace;
+
+		[ImportingConstructor]
+		public DisassembleAllCommand(AssemblyTreeModel assemblyTreeModel, DockWorkspace dockWorkspace)
+		{
+			this.assemblyTreeModel = assemblyTreeModel;
+			this.dockWorkspace = dockWorkspace;
+		}
+
+		public override bool CanExecute(object? parameter) => Directory.Exists(OutputDir);
+
+		public override void Execute(object? parameter) => _ = ExecuteAsync();
+
+		async Task ExecuteAsync()
+		{
+			try
+			{
+				var report = await dockWorkspace.RunWithCancellation(token => Task.Run(() => {
+					var output = new AvaloniaEditTextOutput { Title = "Disassemble All" };
+					var bag = new ConcurrentBag<string>();
+					Parallel.ForEach(
+						Partitioner.Create(assemblyTreeModel.AssemblyList!.GetAssemblies(), loadBalance: true),
+						new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = token },
+						asm => {
+							if (asm.HasLoadError)
+								return;
+							var watch = Stopwatch.StartNew();
+							Exception? ex = null;
+							var safeName = (asm.Text?.ToString() ?? asm.ShortName).Replace("(", "").Replace(")", "").Replace(' ', '_');
+							var path = Path.Combine(OutputDir, safeName + ".il");
+							try
+							{
+								using var writer = new StreamWriter(path);
+								var options = new DecompilationOptions {
+									CancellationToken = token,
+									FullDecompilation = true,
+								};
+								new ILLanguage().DecompileAssembly(asm, new PlainTextOutput(writer), options);
+							}
+							catch (Exception caught)
+							{
+								ex = caught;
+							}
+							watch.Stop();
+							bag.Add(asm.ShortName + " - " + watch.Elapsed + (ex != null ? " - " + ex.GetType().Name : ""));
+						});
+					foreach (var line in bag.OrderBy(s => s, StringComparer.OrdinalIgnoreCase))
+					{
+						output.Write(line);
+						output.WriteLine();
+					}
+					return output;
+				}, token), "Disassembling all assemblies…");
+				dockWorkspace.ShowText(report);
+			}
+			catch (OperationCanceledException) { }
+		}
+	}
+
+	/// <summary>
 	/// DEBUG-only stress test: re-decompile the current selection 100 times in series
 	/// and report average wall-clock time. Used for tracking decompilation perf
 	/// regressions across changes.

@@ -110,12 +110,8 @@ namespace ILSpy.Commands
 	// DEBUG-only DecompileAllCommand + Decompile100TimesCommand live in DecompileAllCommand.cs;
 	// the stubs that lived here were replaced with the real implementations in `<commit>`.
 
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDisassemble), MenuCategory = nameof(Resources.Open), MenuOrder = 2.5)]
-	[Shared]
-	sealed class DisassembleAllCommand : SimpleCommand
-	{
-		public override void Execute(object? parameter) => NotImplementedDialog.Show(Resources.DEBUGDisassemble);
-	}
+	// DEBUG-only DisassembleAllCommand also moved to DecompileAllCommand.cs to keep all
+	// three parallel-decompile/disassemble stress-test commands in one place.
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDumpPDBAsXML), MenuCategory = nameof(Resources.Open), MenuOrder = 2.6)]
 	[Shared]
