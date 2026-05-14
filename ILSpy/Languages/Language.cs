@@ -47,6 +47,15 @@ namespace ILSpy.Languages
 		public abstract string FileExtension { get; }
 
 		/// <summary>
+		/// Extension for the language's project file (e.g. <c>.csproj</c>). <c>null</c> when
+		/// the language doesn't support multi-file project export — File → Save Code only
+		/// offers single-file save in that case. <see cref="ICSharpCode.Decompiler.CSharp.ProjectDecompiler.WholeProjectDecompiler"/>
+		/// runs against the live <see cref="MetadataFile"/> when this is non-null and
+		/// <see cref="DecompilationOptions.SaveAsProjectDirectory"/> is set.
+		/// </summary>
+		public virtual string? ProjectFileExtension => null;
+
+		/// <summary>
 		/// Versions selectable for this language (e.g. C# 1.0 → C# 14). Default is empty;
 		/// <see cref="HasLanguageVersions"/> reports whether any are available so toolbar UI
 		/// can hide the version picker for languages that don't differentiate.

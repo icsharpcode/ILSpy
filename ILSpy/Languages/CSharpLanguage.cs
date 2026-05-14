@@ -29,6 +29,7 @@ using AvaloniaEdit.Highlighting;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.IL;
@@ -55,6 +56,8 @@ namespace ILSpy.Languages
 		public override string Name => "C#";
 
 		public override string FileExtension => ".cs";
+
+		public override string ProjectFileExtension => ".csproj";
 
 		static IReadOnlyList<LanguageVersionDto>? cachedVersions;
 
@@ -240,7 +243,7 @@ namespace ILSpy.Languages
 			if (module == null)
 				return null;
 			if (options.FullDecompilation && options.SaveAsProjectDirectory != null)
-				throw new NotSupportedException($"Language '{Name}' does not support exporting assemblies as projects in the Avalonia host yet.");
+				return DecompileAsProject(assembly, module, output, options);
 
 			AddReferenceAssemblyWarningMessage(module, output);
 			AddReferenceWarningMessage(module, output);
@@ -319,6 +322,36 @@ namespace ILSpy.Languages
 				: decompiler.DecompileModuleAndAssemblyAttributes();
 			WriteCode(output, options.DecompilerSettings, st, decompiler.TypeSystem);
 			return null;
+		}
+
+		/// <summary>
+		/// Runs <see cref="WholeProjectDecompiler"/> against the loaded assembly and emits a
+		/// buildable .csproj + per-type .cs files under
+		/// <see cref="DecompilationOptions.SaveAsProjectDirectory"/>. The <paramref name="output"/>
+		/// ITextOutput is the buffer the caller will display when the export finishes — we
+		/// write a short summary into it so the user gets feedback in the editor tab. The
+		/// project file's name is derived from the assembly's <see cref="MetadataFile.Name"/>
+		/// via <see cref="WholeProjectDecompiler.CleanUpFileName"/>.
+		/// </summary>
+		ProjectId? DecompileAsProject(LoadedAssembly assembly, MetadataFile module, ITextOutput output, DecompilationOptions options)
+		{
+			var targetDirectory = options.SaveAsProjectDirectory!;
+			var resolver = assembly.GetAssemblyResolver(loadOnDemand: options.DecompilerSettings.AutoLoadAssemblyReferences);
+			var debugInfo = assembly.GetDebugInfoOrNull();
+			var decompiler = new WholeProjectDecompiler(
+				options.DecompilerSettings,
+				resolver,
+				projectWriter: null,
+				assemblyReferenceClassifier: null,
+				debugInfoProvider: debugInfo);
+			var projectFileName = System.IO.Path.Combine(
+				targetDirectory,
+				WholeProjectDecompiler.CleanUpFileName(module.Name, ProjectFileExtension));
+			ProjectId? id;
+			using (var writer = new System.IO.StreamWriter(projectFileName))
+				id = decompiler.DecompileProject(module, targetDirectory, writer, options.CancellationToken);
+			output.WriteLine("// Project written to " + targetDirectory);
+			return id;
 		}
 
 		static List<EntityHandle> CollectFieldsAndCtors(ITypeDefinition type, bool isStatic)

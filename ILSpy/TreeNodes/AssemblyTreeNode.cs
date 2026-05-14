@@ -113,6 +113,78 @@ namespace ILSpy.TreeNodes
 
 		public override void DeleteCore() => assembly.AssemblyList.Unload(assembly);
 
+		public override bool Save()
+		{
+			// Intercept the File → Save Code flow for valid managed assemblies whose active
+			// language supports project export (e.g. C#). Offers both the .csproj and the
+			// single-file filter; the picked extension drives the export mode. Languages
+			// without a ProjectFileExtension (the IL disassembler) fall through to the base
+			// single-file path.
+			if (!assembly.IsLoadedAsValidAssembly)
+				return false;
+			var languageService = TryGetLanguageService();
+			if (languageService == null)
+				return false;
+			var language = languageService.CurrentLanguage;
+			if (string.IsNullOrEmpty(language.ProjectFileExtension))
+				return false;
+			_ = SaveAsProjectOrSingleFileAsync(language);
+			return true;
+		}
+
+		async Task SaveAsProjectOrSingleFileAsync(Language language)
+		{
+			var shortName = CleanSuggestedFileName(assembly.ShortName);
+			var filter = $"{language.Name} project (*{language.ProjectFileExtension})|*{language.ProjectFileExtension}"
+				+ $"|{language.Name} (*{language.FileExtension})|*{language.FileExtension}"
+				+ "|All files (*.*)|*.*";
+			var defaultName = shortName + language.ProjectFileExtension;
+			var path = await Commands.FilePickers.SaveAsync(filter, defaultName, "Save Code").ConfigureAwait(false);
+			if (string.IsNullOrEmpty(path))
+				return;
+
+			var ext = Path.GetExtension(path);
+			var isProject = string.Equals(ext, language.ProjectFileExtension, StringComparison.OrdinalIgnoreCase);
+
+			await Task.Run(() => {
+				var options = new DecompilationOptions {
+					FullDecompilation = true,
+					EscapeInvalidIdentifiers = true,
+				};
+				if (isProject)
+					options.SaveAsProjectDirectory = Path.GetDirectoryName(path);
+				using var writer = new StreamWriter(path);
+				var output = new PlainTextOutput(writer);
+				try
+				{
+					language.DecompileAssembly(assembly, output, options);
+				}
+				catch (Exception ex)
+				{
+					output.WriteLine();
+					output.WriteLine("/* Save failed:");
+					output.WriteLine(ex.ToString());
+					output.WriteLine("*/");
+				}
+			}).ConfigureAwait(false);
+		}
+
+		static string CleanSuggestedFileName(string name)
+		{
+			var invalid = Path.GetInvalidFileNameChars();
+			var clean = name;
+			foreach (var c in invalid)
+				clean = clean.Replace(c, '_');
+			return clean;
+		}
+
+		static LanguageService? TryGetLanguageService()
+		{
+			try
+			{ return AppEnv.AppComposition.Current.GetExport<LanguageService>(); }
+			catch { return null; }
+		}
+
 		public override object Text => assembly.Text;
 
 		// ToString is the stable identity used by SessionSettings.ActiveTreeViewPath — must not
