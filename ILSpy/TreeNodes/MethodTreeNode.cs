@@ -69,13 +69,36 @@ namespace ILSpy.TreeNodes
 		{
 			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
 				return FilterResult.Hidden;
-			// WPF additionally hides extension-block implementation methods when the
-			// ExtensionMembers decompiler setting is on; tracked as `methodtreenode-extension-gate`
-			// in the parity TODO and reinstated when the DecompilerSettings UI lands.
+			// Hide implementation methods of C# 14 extension blocks when ExtensionMembers is on
+			// — those land as ExtensionTreeNode children of the static container instead, so
+			// surfacing them on the outer class would be duplicate UI. Pair to the
+			// `extension-methods-tree` work in ea56a80cd.
+			if (LanguageService.CurrentLanguage is Languages.CSharpLanguage
+				&& MethodDefinition.DeclaringTypeDefinition?.ExtensionInfo is { } extInfo)
+			{
+				var decompilerSettings = TryGetDecompilerSettings();
+				if (decompilerSettings?.ExtensionMembers == true
+					&& extInfo.InfoOfImplementationMember((IMethod)MethodDefinition.MemberDefinition).HasValue)
+				{
+					return FilterResult.Hidden;
+				}
+			}
 			if (settings.SearchTermMatches(MethodDefinition.Name) && (settings.ShowApiLevel == ApiVisibility.All || LanguageService.CurrentLanguage.ShowMember(MethodDefinition)))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;
+		}
+
+		static ICSharpCode.Decompiler.DecompilerSettings? TryGetDecompilerSettings()
+		{
+			try
+			{
+				return AppEnv.AppComposition.Current.GetExport<SettingsService>().DecompilerSettings.Clone();
+			}
+			catch
+			{
+				return null;
+			}
 		}
 
 		// Stable identity for SessionSettings.ActiveTreeViewPath; format must round-trip
