@@ -41,6 +41,7 @@ using ILSpy.Commands;
 using ILSpy.Docking;
 using ILSpy.Metadata;
 using ILSpy.Metadata.CorTables;
+using ILSpy.Search;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 using ILSpy.Views;
@@ -1481,6 +1482,42 @@ public class AssemblyTreeTests
 		command.CanExecute(null).Should().BeTrue();
 		command.Invoking(c => c.Execute(null)).Should().NotThrow(
 			"Execute under headless must be a no-op rather than crash");
+	}
+
+	[AvaloniaTest]
+	public async Task Active_Search_Term_Does_Not_Hide_Member_Tree_Nodes()
+	{
+		// Pre-existing port misstep: commit 45461ddde wired the search-pane's term into
+		// LanguageSettings.SearchTerm and made SearchTermMatches gate visibility on it.
+		// WPF intentionally makes SearchTermMatches a no-op (returns true) so the assembly
+		// tree stays independent of the search pane. After fixing parity, FieldTreeNode.Filter
+		// must NOT return Hidden purely because the field's name doesn't contain the active
+		// SearchTerm — only ShowApiLevel + ShowMember remain valid hiding criteria.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var settings = AppComposition.Current.GetExport<SettingsService>()
+			.SessionSettings.LanguageSettings;
+		settings.SearchTerm = "ZZZ_DefinitelyNotAnEnumName";
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var dayOfWeek = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			coreLibName, "System", "System.DayOfWeek");
+		Assert.That(dayOfWeek, Is.Not.Null, "System.DayOfWeek must be discoverable in CoreLib");
+
+		dayOfWeek!.EnsureLazyChildren();
+		var monday = dayOfWeek.Children.OfType<FieldTreeNode>()
+			.FirstOrDefault(f => f.FieldDefinition.Name == "Monday");
+		Assert.That(monday, Is.Not.Null,
+			"Monday must be present as a FieldTreeNode child of System.DayOfWeek");
+
+		// Direct Filter() invocation bypasses the IsVisible gate that the implicit cascade
+		// honours, so the assertion exercises the policy independent of view-tree state.
+		monday!.Filter(settings).Should().NotBe(FilterResult.Hidden,
+			"an active search term must not hide member tree nodes — WPF's SearchTermMatches is a no-op");
 	}
 
 	[AvaloniaTest]

@@ -96,16 +96,15 @@ namespace ILSpy
 		public partial string SearchTerm { get; set; } = string.Empty;
 
 		/// <summary>
-		/// Case-insensitive substring match against the active <see cref="SearchTerm"/>.
-		/// Empty term matches anything so the assembly tree shows its full contents when
-		/// no search is active.
+		/// Tree-filter no-op. The search pane runs against the loaded assemblies directly
+		/// (see <see cref="ICSharpCode.ILSpyX.Search.MemberSearchStrategy"/> + friends);
+		/// piping its term through the assembly-tree filter cascade would hide member rows
+		/// whose names don't contain the term — even when their parent type *does* match —
+		/// because the cascade only resets the "match" bit one level deep. The matcher
+		/// stays as a parameter-taking shim so existing <c>FieldTreeNode.Filter</c> /
+		/// <c>MethodTreeNode.Filter</c> / etc. overrides keep their structure (the
+		/// <c>ShowApiLevel</c> + <c>ShowMember</c> checks they wrap are still meaningful).
 		/// </summary>
-		public bool SearchTermMatches(string value)
-		{
-			var term = SearchTerm;
-			if (string.IsNullOrEmpty(term))
-				return true;
-			return value.Contains(term, System.StringComparison.OrdinalIgnoreCase);
-		}
+		public bool SearchTermMatches(string value) => true;
 	}
 }

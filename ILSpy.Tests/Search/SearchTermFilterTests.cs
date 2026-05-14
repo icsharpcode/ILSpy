@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Linq;
 using System.Threading.Tasks;
 
 using Avalonia.Headless.NUnit;
@@ -35,28 +34,30 @@ namespace ICSharpCode.ILSpy.Tests.Search;
 public class SearchTermFilterTests
 {
 	[AvaloniaTest]
-	public Task SearchTermMatches_Empty_Term_Matches_Anything()
+	public Task SearchTermMatches_Is_A_No_Op_That_Always_Returns_True()
 	{
-		var settings = AppComposition.Current.GetExport<SettingsService>().SessionSettings.LanguageSettings;
-		settings.SearchTerm = string.Empty;
-		settings.SearchTermMatches("Object").Should().BeTrue();
-		settings.SearchTermMatches("IEnumerable").Should().BeTrue();
-		settings.SearchTermMatches(string.Empty).Should().BeTrue();
-		return Task.CompletedTask;
-	}
+		// Pins the WPF-parity contract: the search pane drives its own results via the
+		// ILSpyX search strategies; LanguageSettings.SearchTermMatches deliberately ignores
+		// SearchTerm so the assembly-tree filter cascade stays independent of the search
+		// pane. Without this, typing a term into the search box would hide tree rows whose
+		// names don't match it — including member rows under a type whose own name DOES
+		// match — because the cascade only resets the match bit one level deep.
 
-	[AvaloniaTest]
-	public Task SearchTermMatches_Is_Case_Insensitive_Substring()
-	{
 		var settings = AppComposition.Current.GetExport<SettingsService>().SessionSettings.LanguageSettings;
-		settings.SearchTerm = "enum";
 		try
 		{
-			settings.SearchTermMatches("IEnumerable").Should().BeTrue(
-				"contains check is case-insensitive — IEnumerable contains 'enum'");
-			settings.SearchTermMatches("Enumerator").Should().BeTrue();
-			settings.SearchTermMatches("Object").Should().BeFalse(
-				"Object does not contain 'enum'");
+			settings.SearchTerm = string.Empty;
+			settings.SearchTermMatches("Object").Should().BeTrue();
+			settings.SearchTermMatches("IEnumerable").Should().BeTrue();
+			settings.SearchTermMatches(string.Empty).Should().BeTrue();
+
+			settings.SearchTerm = "enum";
+			settings.SearchTermMatches("IEnumerable").Should().BeTrue();
+			settings.SearchTermMatches("Object").Should().BeTrue(
+				"WPF parity: SearchTermMatches must NOT honour the SearchTerm — it's a no-op shim");
+
+			settings.SearchTerm = "ZZZ_NoMatchAnywhere";
+			settings.SearchTermMatches("Anything").Should().BeTrue();
 		}
 		finally
 		{
@@ -66,8 +67,14 @@ public class SearchTermFilterTests
 	}
 
 	[AvaloniaTest]
-	public Task Typing_In_The_Search_Pane_Pushes_The_Term_Into_LanguageSettings()
+	public Task Typing_In_The_Search_Pane_Does_Not_Bleed_Into_LanguageSettings_SearchTerm()
 	{
+		// The search pane is decoupled from the assembly-tree filter cascade. Earlier port
+		// commits pushed SearchPaneModel.SearchTerm into LanguageSettings.SearchTerm to drive
+		// a tree-filter cascade — that path hid member rows users expected to see (e.g. enum
+		// literals under their matched-by-name enum type). Reverted to WPF parity: typing in
+		// the search pane drives the orchestrator only.
+
 		var search = AppComposition.Current.GetExport<SearchPaneModel>();
 		var settings = AppComposition.Current.GetExport<SettingsService>().SessionSettings.LanguageSettings;
 		settings.SearchTerm.Should().Be(string.Empty,
@@ -76,8 +83,8 @@ public class SearchTermFilterTests
 		search.SearchTerm = "Enumerable";
 		try
 		{
-			settings.SearchTerm.Should().Be("Enumerable",
-				"SearchPaneModel must push the term to LanguageSettings so the assembly-tree filter cascade activates");
+			settings.SearchTerm.Should().Be(string.Empty,
+				"SearchPaneModel must not bleed its term into LanguageSettings; the cascade stays independent");
 		}
 		finally
 		{
