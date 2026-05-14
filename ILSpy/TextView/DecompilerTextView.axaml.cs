@@ -68,6 +68,7 @@ namespace ILSpy.TextView
 		readonly ReferenceElementGenerator referenceElementGenerator;
 		readonly UIElementGenerator uiElementGenerator;
 		readonly TextMarkerService textMarkerService;
+		readonly BracketHighlightRenderer bracketHighlightRenderer;
 		readonly List<TextMarker> localReferenceMarks = new();
 		readonly List<AvaloniaEdit.Rendering.VisualLineElementGenerator> activeCustomGenerators = new();
 		RichTextColorizer? activeColorizer;
@@ -115,6 +116,11 @@ namespace ILSpy.TextView
 			// lifetime of the view; the marks themselves are cleared and rebuilt per click.
 			textMarkerService = new TextMarkerService(Editor.TextArea.TextView);
 			Editor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
+
+			// Bracket-pair highlight: also a BackgroundRenderer; paints a soft outline
+			// around the (.../[.../{... matching its pair when the caret sits next to one.
+			// SetHighlight runs on every caret-position-changed event below.
+			bracketHighlightRenderer = new BracketHighlightRenderer(Editor.TextArea.TextView);
 
 			// Subscribe to AvaloniaEdit's built-in PointerHover routed event (fires after the
 			// cursor settles inside a small box for ~400 ms) and resolve the segment fresh at
@@ -231,6 +237,22 @@ namespace ILSpy.TextView
 		{
 			if (DataContext is DecompilerTabPageModel m)
 				m.LastKnownCaretOffset = Editor.TextArea.Caret.Offset;
+			UpdateBracketHighlight();
+		}
+
+		void UpdateBracketHighlight()
+		{
+			// Skip when the user disabled the feature in Display Settings, and clear any
+			// existing highlight so a previous one doesn't linger after the toggle flips.
+			if (currentDisplaySettings is { HighlightMatchingBraces: false })
+			{
+				bracketHighlightRenderer.SetHighlight(null);
+				return;
+			}
+			var language = (DataContext as DecompilerTabPageModel)?.Language;
+			var searcher = language?.BracketSearcher ?? DefaultBracketSearcher.DefaultInstance;
+			var result = searcher.SearchBracket(Editor.Document, Editor.TextArea.Caret.Offset);
+			bracketHighlightRenderer.SetHighlight(result);
 		}
 
 		void OnScrollOffsetChanged(object? sender, EventArgs e)

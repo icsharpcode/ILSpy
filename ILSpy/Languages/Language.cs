@@ -56,6 +56,14 @@ namespace ILSpy.Languages
 		public virtual string? ProjectFileExtension => null;
 
 		/// <summary>
+		/// Bracket-pair matcher used by the text view for caret-side bracket highlighting.
+		/// Languages without a matching-bracket concept (IL, IL-AST) return the no-op
+		/// default; <see cref="CSharpLanguage"/> overrides to <see cref="CSharpBracketSearcher"/>.
+		/// </summary>
+		public virtual ILSpy.TextView.IBracketSearcher BracketSearcher
+			=> ILSpy.TextView.DefaultBracketSearcher.DefaultInstance;
+
+		/// <summary>
 		/// Versions selectable for this language (e.g. C# 1.0 → C# 14). Default is empty;
 		/// <see cref="HasLanguageVersions"/> reports whether any are available so toolbar UI
 		/// can hide the version picker for languages that don't differentiate.

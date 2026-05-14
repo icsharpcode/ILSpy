@@ -59,6 +59,8 @@ namespace ILSpy.Languages
 
 		public override string ProjectFileExtension => ".csproj";
 
+		public override ILSpy.TextView.IBracketSearcher BracketSearcher { get; } = new CSharpBracketSearcher();
+
 		static IReadOnlyList<LanguageVersionDto>? cachedVersions;
 
 		public override IReadOnlyList<LanguageVersionDto> LanguageVersions => cachedVersions ??= new List<LanguageVersionDto> {
