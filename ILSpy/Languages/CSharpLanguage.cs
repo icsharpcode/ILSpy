@@ -338,7 +338,9 @@ namespace ILSpy.Languages
 			var targetDirectory = options.SaveAsProjectDirectory!;
 			var resolver = assembly.GetAssemblyResolver(loadOnDemand: options.DecompilerSettings.AutoLoadAssemblyReferences);
 			var debugInfo = assembly.GetDebugInfoOrNull();
-			var decompiler = new WholeProjectDecompiler(
+			var decompiler = new ResourceHandlerProjectDecompiler(
+				assembly,
+				options,
 				options.DecompilerSettings,
 				resolver,
 				projectWriter: null,
@@ -352,6 +354,67 @@ namespace ILSpy.Languages
 				id = decompiler.DecompileProject(module, targetDirectory, writer, options.CancellationToken);
 			output.WriteLine("// Project written to " + targetDirectory);
 			return id;
+		}
+
+		/// <summary>
+		/// <see cref="WholeProjectDecompiler"/> subclass that delegates resource entries to
+		/// MEF-discovered <see cref="IResourceFileHandler"/> implementations. The first
+		/// handler whose <c>CanHandle</c> returns true wins; its emitted file plus any
+		/// partial-type info or extra MSBuild properties land in the produced .csproj.
+		/// Falls through to <see cref="WholeProjectDecompiler.WriteResourceToFile"/>'s
+		/// default "raw bytes as embedded resource" behaviour when no handler claims it.
+		/// </summary>
+		sealed class ResourceHandlerProjectDecompiler : WholeProjectDecompiler
+		{
+			readonly LoadedAssembly assembly;
+			readonly DecompilationOptions options;
+			static readonly IReadOnlyList<IResourceFileHandler> handlers = TryDiscoverHandlers();
+
+			public ResourceHandlerProjectDecompiler(
+				LoadedAssembly assembly,
+				DecompilationOptions options,
+				DecompilerSettings settings,
+				IAssemblyResolver resolver,
+				IProjectFileWriter? projectWriter,
+				AssemblyReferenceClassifier? assemblyReferenceClassifier,
+				ICSharpCode.Decompiler.DebugInfo.IDebugInfoProvider? debugInfoProvider)
+				: base(settings, resolver, projectWriter!, assemblyReferenceClassifier!, debugInfoProvider!)
+			{
+				this.assembly = assembly;
+				this.options = options;
+			}
+
+			protected override IEnumerable<ProjectItemInfo> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
+			{
+				var context = new ResourceFileHandlerContext(options);
+				foreach (var handler in handlers)
+				{
+					if (!handler.CanHandle(fileName, context))
+						continue;
+					entryStream.Position = 0;
+					fileName = handler.WriteResourceToFile(assembly, fileName, entryStream, context);
+					var item = new ProjectItemInfo(handler.EntryType, fileName) { PartialTypes = context.PartialTypes };
+					foreach (var (k, v) in context.AdditionalProperties)
+						item.AdditionalProperties.Add(k, v);
+					return new[] { item };
+				}
+				return base.WriteResourceToFile(fileName, resourceName, entryStream);
+			}
+
+			static IReadOnlyList<IResourceFileHandler> TryDiscoverHandlers()
+			{
+				try
+				{
+					return AppEnv.AppComposition.Current.GetExports<IResourceFileHandler>().ToArray();
+				}
+				catch
+				{
+					// Composition isn't available in tests that bypass the host (e.g. invoking
+					// DecompileAsProject directly with a self-built LoadedAssembly). Fall back
+					// to the raw-bytes behaviour from the base class.
+					return System.Array.Empty<IResourceFileHandler>();
+				}
+			}
 		}
 
 		static List<EntityHandle> CollectFieldsAndCtors(ITypeDefinition type, bool isStatic)

@@ -74,6 +74,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ICSharpCode.ILSpyX\ICSharpCode.ILSpyX.csproj" />
     <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
+    <ProjectReference Include="..\ICSharpCode.BamlDecompiler\ICSharpCode.BamlDecompiler.csproj" />
   </ItemGroup>
 
   <!-- The Debug Steps pane is a DEBUG-only diagnostic. The code-behind and viewmodel

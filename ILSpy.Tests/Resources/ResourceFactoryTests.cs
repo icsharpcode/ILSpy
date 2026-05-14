@@ -54,6 +54,7 @@ public class ResourceFactoryTests
 	[TestCase("config.xml")]
 	[TestCase("transform.xslt")]
 	[TestCase("Window.xaml")]
+	[TestCase("MainWindow.baml")]
 	[TestCase("logo.png")]
 	[TestCase("logo.gif")]
 	[TestCase("logo.bmp")]
