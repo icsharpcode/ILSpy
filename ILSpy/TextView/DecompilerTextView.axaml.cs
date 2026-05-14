@@ -312,6 +312,24 @@ namespace ILSpy.TextView
 			{
 				ApplyDocument(model);
 			}
+			// HighlightedReference can change independently of a re-decompile (e.g. the analyzer
+			// pane sets it while the user is already on the right tab). Apply it directly without
+			// rebuilding the document.
+			else if (sender is DecompilerTabPageModel m
+				&& e.PropertyName == nameof(DecompilerTabPageModel.HighlightedReference))
+			{
+				ApplyHighlightedReference(m);
+			}
+		}
+
+		void ApplyHighlightedReference(DecompilerTabPageModel model)
+		{
+			if (model.HighlightedReference == null)
+			{
+				ClearLocalReferenceMarks();
+				return;
+			}
+			HighlightLocalReferences(model, model.HighlightedReference);
 		}
 
 		void ApplyDocument(DecompilerTabPageModel model)
@@ -360,6 +378,12 @@ namespace ILSpy.TextView
 
 			referenceElementGenerator.References = model.References;
 			uiElementGenerator.UIElements = model.UIElements;
+
+			// Re-apply any pending reference highlight against the fresh References collection.
+			// The analyzer-result-activation path sets HighlightedReference before the navigated
+			// node's decompile finishes; this is where the marks finally land on the new text.
+			if (model.HighlightedReference != null)
+				HighlightLocalReferences(model, model.HighlightedReference);
 
 			// Swap any tab-contributed visual-line element generators (e.g. About-page hyperlink
 			// generators). Tracked separately from the always-on referenceElementGenerator and

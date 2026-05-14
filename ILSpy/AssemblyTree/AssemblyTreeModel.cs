@@ -111,10 +111,40 @@ namespace ILSpy.AssemblyTree
 					NotifyTextChanged(Root);
 			};
 			SelectedItems.CollectionChanged += OnSelectedItemsChanged;
+			// Single hub for "navigate to this reference, optionally highlighting that source"
+			// — mirrors WPF AssemblyTreeModel's JumpToReference subscription. The analyzer
+			// pane, metadata tables, and future decompile commands all push through this same
+			// channel.
+			Util.MessageBus<Util.NavigateToReferenceEventArgs>.Subscribers += OnNavigateToReference;
 			Id = PaneContentId;
 			Title = "Assemblies";
 			CanClose = false;
 			AppEnv.StartupLog.Mark("AssemblyTreeModel ctor exited");
+		}
+
+		void OnNavigateToReference(object? sender, Util.NavigateToReferenceEventArgs e)
+		{
+			if (e.Reference is not IEntity entity)
+				return;
+			var resolved = FindTreeNode(entity);
+			if (resolved == null)
+				return;
+			SelectedItem = resolved;
+			// Source is the originally-analysed entity (set by AnalyzerEntityTreeNode.ActivateItem).
+			// Push it onto the active decompiler tab's HighlightedReference so the editor view
+			// paints local-reference marks on every match once the new Text lands.
+			if (e.Source is null)
+				return;
+			var dockWorkspace = TryGetExport<Docking.DockWorkspace>();
+			if (dockWorkspace?.ActiveDecompilerTab is { } decompTab)
+				decompTab.HighlightedReference = e.Source;
+		}
+
+		static T? TryGetExport<T>() where T : class
+		{
+			try
+			{ return AppEnv.AppComposition.Current.GetExport<T>(); }
+			catch { return null; }
 		}
 
 		void OnSelectedItemsChanged(object? sender, NotifyCollectionChangedEventArgs e)

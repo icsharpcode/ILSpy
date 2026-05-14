@@ -25,6 +25,7 @@ using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 using ILSpy.AppEnv;
 using ILSpy.AssemblyTree;
+using ILSpy.Util;
 
 namespace ILSpy.Analyzers
 {
@@ -42,16 +43,12 @@ namespace ILSpy.Analyzers
 			e.Handled = true;
 			if (Member == null || Member.MetadataToken.IsNil)
 				return;
-			try
-			{
-				var assemblyTreeModel = AppComposition.Current.GetExport<AssemblyTreeModel>();
-				if (assemblyTreeModel.FindTreeNode(Member) is { } resolved)
-					assemblyTreeModel.SelectedItem = resolved;
-			}
-			catch
-			{
-				// Composition isn't available in design-time previews — gesture is a no-op there.
-			}
+			// One message carries both halves: Reference drives the assembly-tree navigation,
+			// Source carries the originally-analysed entity so the receiving subscriber can
+			// paint local-reference marks on it in the navigated-to body. The subscription
+			// lives in AssemblyTreeModel (mirrors WPF) so the highlight stays decoupled from
+			// the tree-node code path.
+			MessageBus.Send(this, new NavigateToReferenceEventArgs(Member, SourceMember));
 		}
 
 		/// <summary>

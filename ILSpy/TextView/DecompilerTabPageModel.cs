@@ -123,6 +123,19 @@ namespace ILSpy.TextView
 		private IReadOnlyList<VisualLineElementGenerator>? customElementGenerators;
 
 		/// <summary>
+		/// Reference whose every match in <see cref="Text"/> should get the local-reference
+		/// background mark applied after the next decompile completes. Set by the analyzer
+		/// pane when the user activates a result row: the row's parent-chain analysed entity
+		/// goes here so the user can see which call site in the decompiled output corresponds
+		/// to their result selection. The decompiler text view watches this property and
+		/// applies the highlight both on assignment and after each fresh decompile, so the
+		/// mark survives the async gap between setting it and the new <see cref="Text"/>
+		/// landing.
+		/// </summary>
+		[ObservableProperty]
+		private object? highlightedReference;
+
+		/// <summary>
 		/// Fired when the user clicks a cross-document reference. The host (DockWorkspace)
 		/// resolves the target on the assembly tree side.
 		/// </summary>
