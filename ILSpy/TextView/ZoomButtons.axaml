@@ -1,0 +1,19 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="ILSpy.TextView.ZoomButtons"
+             HorizontalAlignment="Right" VerticalAlignment="Bottom"
+             Margin="0,0,12,12">
+	<Border Background="#E0FFFFE1" BorderBrush="#80808080" BorderThickness="1"
+	        CornerRadius="3" Padding="2">
+		<StackPanel Orientation="Horizontal" Spacing="2">
+			<Button Name="MinusButton" Content="&#8722;" Width="22" Height="22"
+			        Padding="0" ToolTip.Tip="Zoom out" />
+			<TextBlock Name="PercentLabel" VerticalAlignment="Center"
+			           MinWidth="42" TextAlignment="Center" FontSize="11" />
+			<Button Name="PlusButton" Content="&#43;" Width="22" Height="22"
+			        Padding="0" ToolTip.Tip="Zoom in" />
+			<Button Name="ResetButton" Content="100%" Width="42" Height="22"
+			        Padding="0" FontSize="11" ToolTip.Tip="Reset to default zoom" />
+		</StackPanel>
+	</Border>
+</UserControl>

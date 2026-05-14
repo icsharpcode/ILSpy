@@ -72,6 +72,7 @@ namespace ILSpy.TextView
 		readonly List<AvaloniaEdit.Rendering.VisualLineElementGenerator> activeCustomGenerators = new();
 		RichTextColorizer? activeColorizer;
 		FoldingManager? activeFoldingManager;
+		DisplaySettings? currentDisplaySettings;
 		ReferenceSegment? lastTooltipSegment;
 		ReferenceSegment? lastRightClickedSegment;
 		IReadOnlyList<IContextMenuEntryExport> contextMenuEntries = Array.Empty<IContextMenuEntryExport>();
@@ -173,6 +174,57 @@ namespace ILSpy.TextView
 			// integer / double assignments.
 			Editor.TextArea.Caret.PositionChanged += OnCaretPositionChanged;
 			Editor.TextArea.TextView.ScrollOffsetChanged += OnScrollOffsetChanged;
+
+			// Ctrl+Wheel zoom (matches WPF's ZoomScrollViewer.OnPreviewMouseWheel). Tunnel
+			// routing so we see it before AvaloniaEdit's scroll handler; Handled=true on
+			// hit suppresses the scroll. Ctrl+0/Plus/Minus are Avalonia-side extras —
+			// keyboard zoom is a standard modern-editor expectation that WPF ILSpy doesn't
+			// happen to ship.
+			Editor.AddHandler(InputElement.PointerWheelChangedEvent,
+				OnEditorPointerWheelChanged,
+				RoutingStrategies.Tunnel,
+				handledEventsToo: false);
+			Editor.KeyDown += OnEditorKeyDownForZoom;
+		}
+
+		void OnEditorPointerWheelChanged(object? sender, PointerWheelEventArgs e)
+		{
+			if ((e.KeyModifiers & KeyModifiers.Control) != KeyModifiers.Control)
+				return;
+			if (currentDisplaySettings == null)
+				return;
+			var step = e.Delta.Y > 0 ? (System.Func<double, double>)EditorZoom.ZoomIn : EditorZoom.ZoomOut;
+			currentDisplaySettings.SelectedFontSize = step(currentDisplaySettings.SelectedFontSize);
+			e.Handled = true;
+		}
+
+		void OnEditorKeyDownForZoom(object? sender, KeyEventArgs e)
+		{
+			if ((e.KeyModifiers & KeyModifiers.Control) != KeyModifiers.Control)
+				return;
+			if (currentDisplaySettings == null)
+				return;
+			// OemPlus is the unmodified key on the same physical button as "+"; with Shift it
+			// produces "+", without it produces "=". Accept both so Ctrl+Plus and Ctrl+=
+			// (which most users actually type) both zoom in. Add (numeric keypad) covers numpad.
+			switch (e.Key)
+			{
+				case Key.OemPlus:
+				case Key.Add:
+					currentDisplaySettings.SelectedFontSize = EditorZoom.ZoomIn(currentDisplaySettings.SelectedFontSize);
+					e.Handled = true;
+					break;
+				case Key.OemMinus:
+				case Key.Subtract:
+					currentDisplaySettings.SelectedFontSize = EditorZoom.ZoomOut(currentDisplaySettings.SelectedFontSize);
+					e.Handled = true;
+					break;
+				case Key.D0:
+				case Key.NumPad0:
+					currentDisplaySettings.SelectedFontSize = EditorZoom.Reset();
+					e.Handled = true;
+					break;
+			}
 		}
 
 		void OnCaretPositionChanged(object? sender, EventArgs e)
@@ -200,6 +252,8 @@ namespace ILSpy.TextView
 			var settings = TryGetDisplaySettings();
 			if (settings == null)
 				return;
+			currentDisplaySettings = settings;
+			ZoomButtons.Bind(settings);
 			ApplyAllDisplaySettings(settings);
 			settings.PropertyChanged += (_, e) => ApplyDisplaySetting(settings, e.PropertyName);
 		}

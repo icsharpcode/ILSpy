@@ -42,5 +42,9 @@
 				</StackPanel>
 			</Grid>
 		</Border>
+		<!-- Zoom-buttons overlay: bottom-right corner of the editor, auto-hides at default
+		     font size unless DisplaySettings.AlwaysShowZoomButtons is on. Bound at code-
+		     behind time once DisplaySettings is resolvable from composition. -->
+		<textView:ZoomButtons Name="ZoomButtons" />
 	</Grid>
 </UserControl>
