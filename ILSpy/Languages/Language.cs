@@ -73,24 +73,60 @@ namespace ILSpy.Languages
 		}
 
 		/// <summary>
-		/// Stable name string for an entity reachable only by metadata token. Falls back to the
-		/// language's <see cref="EntityToString"/> path so subclasses don't have to repeat the
-		/// formatting rules — overrideable when a language wants a tokenless name (e.g. C# uses a
-		/// disassembler-friendly form).
+		/// Cheap name string used by <see cref="ICSharpCode.ILSpyX.Search.MemberSearchStrategy"/>
+		/// and friends as a pre-filter before resolving the full entity. Called once per
+		/// type / method / field / property / event handle in the module — must stay metadata-
+		/// only (no <see cref="DecompilerTypeSystem"/>, no <c>IAssemblyResolver</c>) so a
+		/// large assembly like mscorlib remains sub-second instead of tens of seconds.
+		/// Returns <c>null</c> for handle kinds we don't recognise; the strategy skips its
+		/// pre-filter for those handles and falls through to the slower resolve.
 		/// </summary>
 		public virtual string GetEntityName(MetadataFile module, EntityHandle handle, bool fullName, bool omitGenerics)
 		{
 			ArgumentNullException.ThrowIfNull(module);
-			var typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
-			var entity = typeSystem.MainModule.ResolveEntity(handle);
-			if (entity == null)
-				return string.Empty;
-			var flags = ConversionFlags.ShowParameterList | ConversionFlags.ShowParameterModifiers;
-			if (fullName)
-				flags |= ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames;
-			if (!omitGenerics)
-				flags |= ConversionFlags.ShowTypeParameterList;
-			return entity is IType type ? TypeToString(type, flags) : EntityToString((IEntity)entity, flags);
+			MetadataReader metadata = module.Metadata;
+			switch (handle.Kind)
+			{
+				case HandleKind.TypeDefinition:
+					if (fullName)
+						return ILAmbience.EscapeName(((TypeDefinitionHandle)handle).GetFullTypeName(metadata).ToILNameString(omitGenerics));
+					var td = metadata.GetTypeDefinition((TypeDefinitionHandle)handle);
+					return ILAmbience.EscapeName(metadata.GetString(td.Name));
+				case HandleKind.FieldDefinition:
+					var fd = metadata.GetFieldDefinition((FieldDefinitionHandle)handle);
+					if (fullName)
+						return ILAmbience.EscapeName(fd.GetDeclaringType().GetFullTypeName(metadata).ToILNameString(omitGenerics) + "." + metadata.GetString(fd.Name));
+					return ILAmbience.EscapeName(metadata.GetString(fd.Name));
+				case HandleKind.MethodDefinition:
+					var md = metadata.GetMethodDefinition((MethodDefinitionHandle)handle);
+					string methodName = metadata.GetString(md.Name);
+					if (!omitGenerics)
+					{
+						int genericParamCount = md.GetGenericParameters().Count;
+						if (genericParamCount > 0)
+							methodName += "``" + genericParamCount;
+					}
+					if (fullName)
+						return ILAmbience.EscapeName(md.GetDeclaringType().GetFullTypeName(metadata).ToILNameString(omitGenerics) + "." + methodName);
+					return ILAmbience.EscapeName(methodName);
+				case HandleKind.EventDefinition:
+					var ed = metadata.GetEventDefinition((EventDefinitionHandle)handle);
+					var declaringType = metadata.GetMethodDefinition(ed.GetAccessors().GetAny()).GetDeclaringType();
+					if (fullName && !declaringType.IsNil)
+						return ILAmbience.EscapeName(declaringType.GetFullTypeName(metadata).ToILNameString(omitGenerics) + "." + metadata.GetString(ed.Name));
+					return ILAmbience.EscapeName(metadata.GetString(ed.Name));
+				case HandleKind.PropertyDefinition:
+					var pd = metadata.GetPropertyDefinition((PropertyDefinitionHandle)handle);
+					declaringType = metadata.GetMethodDefinition(pd.GetAccessors().GetAny()).GetDeclaringType();
+					if (fullName && !declaringType.IsNil)
+						return ILAmbience.EscapeName(declaringType.GetFullTypeName(metadata).ToILNameString(omitGenerics) + "." + metadata.GetString(pd.Name));
+					return ILAmbience.EscapeName(metadata.GetString(pd.Name));
+				default:
+					// MemberSearchStrategy call sites explicitly tolerate null (the IsMatch
+					// pre-filter is skipped when the language doesn't recognise the handle
+					// kind) — see ICSharpCode.ILSpyX/Search/MemberSearchStrategy.cs.
+					return null!;
+			}
 		}
 
 		public virtual string TypeToString(IType type, ConversionFlags conversionFlags = ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames)
