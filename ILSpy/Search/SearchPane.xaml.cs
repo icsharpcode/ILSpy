@@ -86,6 +86,7 @@ namespace ICSharpCode.ILSpy.Search
 		{
 			// Don't restart the search when only auto-loaded (dependency) assemblies are added;
 			// this avoids flickering when navigating to a result in a large assembly.
+			// Explicit variable assignment necessary bc  implicit operator T on WrappedEventArgs<T>
 			System.Collections.Specialized.NotifyCollectionChangedEventArgs collectionChange = e;
 			if (collectionChange.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add
 				&& collectionChange.NewItems?.Cast<LoadedAssembly>().All(asm => asm.IsAutoLoaded) == true)
