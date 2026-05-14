@@ -156,6 +156,24 @@ namespace ILSpy.TreeNodes
 			}
 		}
 
+		/// <summary>
+		/// Re-applies the filter cascade to every realised child when this node becomes
+		/// visible. <see cref="OnChildrenChanged"/> only fires for newly-added children, and
+		/// only when the parent was visible at the time — so children added under a hidden
+		/// parent inherit stale <see cref="SharpTreeNode.IsHidden"/> states. Without this
+		/// trigger, expanding a node that ShowApiLevel had hidden leaves its accessor
+		/// children reading as visible even though the cascade would mark them hidden.
+		/// Mirrors WPF's identical override on <c>ILSpyTreeNode</c>.
+		/// </summary>
+		protected override void OnIsVisibleChanged()
+		{
+			base.OnIsVisibleChanged();
+			if (!IsVisible)
+				return;
+			foreach (var child in Children.OfType<ILSpyTreeNode>())
+				ApplyFilterToChild(child);
+		}
+
 		void ApplyFilterToChild(ILSpyTreeNode child)
 		{
 			var settings = CurrentLanguageSettings;
