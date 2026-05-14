@@ -352,12 +352,25 @@ namespace ILSpy.Metadata
 			popupRoot.AddHandler(global::Avalonia.Input.InputElement.PointerWheelChangedEvent,
 				(_, e) => e.Handled = true,
 				handledEventsToo: true);
-			return new Popup {
+			var popup = new Popup {
 				PlacementTarget = placementTarget,
 				Placement = PlacementMode.BottomEdgeAlignedLeft,
 				IsLightDismissEnabled = true,
 				Child = popupRoot,
 			};
+			// Escape closes the popup — matches the standard popup convention. Tunnel
+			// routing on the popup root so the key is intercepted before any inner control
+			// (e.g. the TextBox in a flag-name search field) tries to consume it.
+			popupRoot.AddHandler(global::Avalonia.Input.InputElement.KeyDownEvent,
+				(_, e) => {
+					if (e.Key == global::Avalonia.Input.Key.Escape)
+					{
+						popup.IsOpen = false;
+						e.Handled = true;
+					}
+				},
+				global::Avalonia.Interactivity.RoutingStrategies.Tunnel);
+			return popup;
 		}
 
 		static DataGridTextColumn BuildTextColumn(PropertyInfo prop, ColumnInfoAttribute? info)
