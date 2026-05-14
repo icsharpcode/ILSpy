@@ -63,6 +63,28 @@ namespace ILSpy.Commands
 			return file?.TryGetLocalPath();
 		}
 
+		/// <summary>
+		/// Shows a folder-picker dialog. <paramref name="title"/> appears in the dialog
+		/// chrome. Returns the selected folder's absolute path, or <c>null</c> if the user
+		/// cancelled or the storage provider refused to give a local path (e.g. cloud
+		/// folder).
+		/// </summary>
+		public static async Task<string?> PickFolderAsync(string? title = null)
+		{
+			var owner = (global::Avalonia.Application.Current?.ApplicationLifetime
+				as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+			if (owner == null)
+				return null;
+
+			var folders = await owner.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions {
+				Title = title,
+				AllowMultiple = false,
+			});
+			if (folders.Count == 0)
+				return null;
+			return folders[0].TryGetLocalPath();
+		}
+
 		/// <summary>"PNG (*.png)|*.png|All files|*.*" → two file types.</summary>
 		internal static IReadOnlyList<FilePickerFileType> ParseFilter(string filter)
 		{
