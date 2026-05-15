@@ -36,6 +36,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ILSpy", "ILSpy\ILSpy.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ILSpy.Tests", "ILSpy.Tests\ILSpy.Tests.csproj", "{818CA2D4-175F-4DC1-9C83-189D2CA74ABA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ILSpy.Tests.Windows", "ILSpy.Tests.Windows\ILSpy.Tests.Windows.csproj", "{20AF56FB-DC0F-4048-B75D-83FEE0D669B2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -154,6 +156,18 @@ Global
 		{818CA2D4-175F-4DC1-9C83-189D2CA74ABA}.Release|x64.Build.0 = Release|Any CPU
 		{818CA2D4-175F-4DC1-9C83-189D2CA74ABA}.Release|x86.ActiveCfg = Release|Any CPU
 		{818CA2D4-175F-4DC1-9C83-189D2CA74ABA}.Release|x86.Build.0 = Release|Any CPU
+		{20AF56FB-DC0F-4048-B75D-83FEE0D669B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{20AF56FB-DC0F-4048-B75D-83FEE0D669B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{20AF56FB-DC0F-4048-B75D-83FEE0D669B2}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{20AF56FB-DC0F-4048-B75D-83FEE0D669B2}.Debug|x64.Build.0 = Debug|Any CPU
+		{20AF56FB-DC0F-4048-B75D-83FEE0D669B2}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{20AF56FB-DC0F-4048-B75D-83FEE0D669B2}.Debug|x86.Build.0 = Debug|Any CPU
+		{20AF56FB-DC0F-4048-B75D-83FEE0D669B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{20AF56FB-DC0F-4048-B75D-83FEE0D669B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{20AF56FB-DC0F-4048-B75D-83FEE0D669B2}.Release|x64.ActiveCfg = Release|Any CPU
+		{20AF56FB-DC0F-4048-B75D-83FEE0D669B2}.Release|x64.Build.0 = Release|Any CPU
+		{20AF56FB-DC0F-4048-B75D-83FEE0D669B2}.Release|x86.ActiveCfg = Release|Any CPU
+		{20AF56FB-DC0F-4048-B75D-83FEE0D669B2}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
