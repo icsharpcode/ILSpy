@@ -60,7 +60,7 @@ namespace ILSpy.Metadata
 		{
 			ArgumentNullException.ThrowIfNull(entryType);
 			return descriptorCache.GetOrAdd(entryType, BuildDescriptors)
-				.Select(d => BuildColumn(d, filter: null))
+				.Select(d => BuildColumn(d, filter: null, pageKey: null))
 				.ToArray();
 		}
 
@@ -78,12 +78,17 @@ namespace ILSpy.Metadata
 			ArgumentNullException.ThrowIfNull(entryType);
 			var descriptors = descriptorCache.GetOrAdd(entryType, BuildDescriptors);
 			page.ColumnFilters.Clear();
+			// Per-table page key for the FilterState persistence cache. Using the entry
+			// type's full name means the same filter applies across all loaded assemblies'
+			// instances of this table — which matches the UX the schema-driven dropdowns
+			// already imply (predicate is column-shape-driven, not assembly-driven).
+			var pageKey = entryType.FullName ?? entryType.Name;
 			var columns = new List<DataGridColumn>(descriptors.Length);
 			foreach (var d in descriptors)
 			{
 				var filter = new ColumnFilter(d.Name);
 				page.ColumnFilters.Add(filter);
-				columns.Add(BuildColumn(d, filter));
+				columns.Add(BuildColumn(d, filter, pageKey));
 			}
 			page.Columns = columns;
 		}
@@ -104,12 +109,12 @@ namespace ILSpy.Metadata
 			return list.ToArray();
 		}
 
-		static DataGridColumn BuildColumn(ColumnDescriptor d, ColumnFilter? filter)
+		static DataGridColumn BuildColumn(ColumnDescriptor d, ColumnFilter? filter, string? pageKey)
 		{
 			var column = d.Info?.Kind == ColumnKind.Token
 				? (DataGridColumn)BuildTokenColumn(d.Property, d.Info)
 				: BuildTextColumn(d.Property, d.Info);
-			column.Header = filter is null ? d.Name : (object)BuildHeader(d.Name, filter, d.Property.PropertyType);
+			column.Header = filter is null ? d.Name : (object)BuildHeader(d.Name, filter, d.Property.PropertyType, pageKey);
 			// Header is a Panel when filters are wired, so callers can't recover the column
 			// name via Header.ToString(). Stash the name on Tag for hover-tooltip lookup,
 			// "Go to token" context-menu resolution, and any future cell-level navigation.
@@ -117,7 +122,7 @@ namespace ILSpy.Metadata
 			return column;
 		}
 
-		static Control BuildHeader(string columnName, ColumnFilter filter, Type propertyType)
+		static Control BuildHeader(string columnName, ColumnFilter filter, Type propertyType, string? pageKey)
 		{
 			// Header is a single row: the funnel icon docks right; the remaining space is
 			// shared by the column-name label and the filter input, with exactly one of
@@ -181,7 +186,7 @@ namespace ILSpy.Metadata
 				// popup trigger, no separate dropdown chevron needed since the popup carries
 				// the entire filter UI. PlacementTarget is the funnel itself so the popup
 				// drops below the icon's hit area.
-				popup = BuildFlagsPopup(filter, propertyType, filterIconHost);
+				popup = BuildFlagsPopup(filter, propertyType, filterIconHost, pageKey, columnName);
 				headerContent = label;
 			}
 			else
@@ -321,14 +326,20 @@ namespace ILSpy.Metadata
 			return box;
 		}
 
-		static Popup BuildFlagsPopup(ColumnFilter filter, Type enumType, Control placementTarget)
+		static Popup BuildFlagsPopup(ColumnFilter filter, Type enumType, Control placementTarget, string? pageKey, string columnName)
 		{
 			// Schema-driven popup: FlagsFilterPopup distinguishes mutex sub-ranges
 			// (multi-select chips) from independent flags (tri-state pills) and drives
 			// ColumnFilter.FlagsState. The funnel icon owns the open gesture, so this
 			// helper only assembles the Popup itself — no separate trigger button needed.
 			var schema = ILSpy.Metadata.Filters.FlagsSchemaInferer.For(enumType);
+			bool freshlyCreated = filter.FlagsState is null;
 			filter.FlagsState ??= new ILSpy.Metadata.Filters.FilterState(schema);
+			// On first-popup-open, restore any persisted state for this (table, column).
+			// Subsequent opens already carry the live state in-memory. Then subscribe so
+			// later mutations write back to SessionSettings.
+			if (freshlyCreated && pageKey != null)
+				ApplyPersistedFilterState(filter.FlagsState, pageKey, columnName);
 			var popupContent = new ILSpy.Views.Filters.FlagsFilterPopup(filter.FlagsState);
 
 			var popupRoot = new Border {
@@ -371,6 +382,42 @@ namespace ILSpy.Metadata
 				},
 				global::Avalonia.Interactivity.RoutingStrategies.Tunnel);
 			return popup;
+		}
+
+		/// <summary>
+		/// Restores any saved FilterState XML from SessionSettings into <paramref name="state"/>
+		/// on first creation, then subscribes to its property-changed stream so subsequent
+		/// mutations write back. Wrapped in a try/catch — composition isn't available in
+		/// design-time previews or in some isolated unit-test paths, and failing the
+		/// restore is strictly less bad than failing the popup build entirely.
+		/// </summary>
+		static void ApplyPersistedFilterState(
+			ILSpy.Metadata.Filters.FilterState state,
+			string pageKey,
+			string columnName)
+		{
+			SessionSettings settings;
+			try
+			{
+				settings = AppEnv.AppComposition.Current
+					.GetExport<SettingsService>()
+					.SessionSettings;
+			}
+			catch
+			{
+				return;
+			}
+			var key = (pageKey, columnName);
+			if (settings.FilterStates.TryGetValue(key, out var savedXml))
+			{
+				ILSpy.Metadata.Filters.FilterStatePersistence.ApplyXml(state, savedXml);
+			}
+			state.PropertyChanged += (_, _) => {
+				if (state.IsEmpty)
+					settings.FilterStates.Remove(key);
+				else
+					settings.FilterStates[key] = ILSpy.Metadata.Filters.FilterStatePersistence.ToXml(state);
+			};
 		}
 
 		static DataGridTextColumn BuildTextColumn(PropertyInfo prop, ColumnInfoAttribute? info)

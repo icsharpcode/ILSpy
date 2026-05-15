@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Xml.Linq;
@@ -77,6 +78,16 @@ namespace ILSpy
 
 		public Size WindowSize { get; set; } = DefaultWindowSize;
 
+		/// <summary>
+		/// Per-(page-key, column-name) cache of serialised <c>FilterState</c>s, so the
+		/// schema-driven flag-filter dropdowns remember the user's selections across
+		/// sessions. Page key = entry-type full name (one filter set per metadata table,
+		/// shared across all loaded assemblies). Mutated by
+		/// <see cref="Metadata.Filters.FilterStatePersistence"/>; round-tripped to XML below.
+		/// </summary>
+		public Dictionary<(string PageKey, string ColumnName), XElement> FilterStates { get; }
+			= new();
+
 		public void LoadFromXml(XElement section)
 		{
 			XElement filterSettings = section.Element("FilterSettings") ?? new XElement("FilterSettings");
@@ -102,6 +113,22 @@ namespace ILSpy
 				WindowPosition = new PixelPoint(left, top);
 				WindowSize = new Size(width, height);
 			}
+
+			FilterStates.Clear();
+			foreach (var page in section.Elements("FilterStates").Elements("Page"))
+			{
+				var pageKey = (string?)page.Attribute("key");
+				if (string.IsNullOrEmpty(pageKey))
+					continue;
+				foreach (var column in page.Elements("Column"))
+				{
+					var columnName = (string?)column.Attribute("name");
+					var stateXml = column.Element("FilterState");
+					if (string.IsNullOrEmpty(columnName) || stateXml is null)
+						continue;
+					FilterStates[(pageKey, columnName)] = new XElement(stateXml);
+				}
+			}
 		}
 
 		public XElement SaveToXml()
@@ -126,6 +153,23 @@ namespace ILSpy
 				section.Add(new XElement(nameof(Theme), Theme));
 			if (!string.IsNullOrEmpty(CurrentCulture))
 				section.Add(new XElement(nameof(CurrentCulture), CurrentCulture));
+
+			if (FilterStates.Count > 0)
+			{
+				var filterStates = new XElement("FilterStates");
+				foreach (var byPage in FilterStates.GroupBy(kv => kv.Key.PageKey).OrderBy(g => g.Key, StringComparer.Ordinal))
+				{
+					var page = new XElement("Page", new XAttribute("key", byPage.Key));
+					foreach (var kv in byPage.OrderBy(kv => kv.Key.ColumnName, StringComparer.Ordinal))
+					{
+						page.Add(new XElement("Column",
+							new XAttribute("name", kv.Key.ColumnName),
+							new XElement(kv.Value)));
+					}
+					filterStates.Add(page);
+				}
+				section.Add(filterStates);
+			}
 			return section;
 		}
 
