@@ -48,6 +48,20 @@ namespace ILSpy.Views.Filters
 		readonly Dictionary<uint, ToggleButton> valueChips = new();
 		bool suppress;
 
+		/// <summary>
+		/// Every user-facing chip in document order — the Any-chip first, then each
+		/// value chip. Used by the popup's arrow-key navigation to skip past internal
+		/// template parts (ComboBox toggle buttons etc.) that descendant-walking would
+		/// otherwise pick up.
+		/// </summary>
+		public IEnumerable<Control> NavigableElements {
+			get {
+				yield return anyChip;
+				foreach (var (_, chip) in valueChips)
+					yield return chip;
+			}
+		}
+
 		public MutexChipGroup(FilterState state, MutexGroup group)
 		{
 			this.state = state ?? throw new ArgumentNullException(nameof(state));

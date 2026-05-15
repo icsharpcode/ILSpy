@@ -41,6 +41,12 @@ namespace ILSpy.Views.Filters
 		readonly Dictionary<string, Button> pills = new();
 		readonly ComboBox modeBox;
 
+		/// <summary>
+		/// Every user-facing pill in document order. Used by the popup's arrow-key
+		/// navigation to skip past internal template parts of the All/Any ComboBox.
+		/// </summary>
+		public IEnumerable<Control> NavigableElements => pills.Values;
+
 		public IndependentFlagGroup(FilterState state, IReadOnlyList<IndependentFlag> flags)
 		{
 			this.state = state ?? throw new ArgumentNullException(nameof(state));

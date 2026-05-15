@@ -25,9 +25,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
+using Avalonia.VisualTree;
 
 using ILSpy.Metadata.Filters;
 
@@ -104,8 +107,91 @@ namespace ILSpy.Views.Filters
 				Child = stack,
 			};
 
+			// Arrow-key nav between chips. Avalonia doesn't ship WPF's DirectionalNavigation
+			// attached property, so we handle Left/Right/Up/Down ourselves. Tunnel so we
+			// intercept before inner controls (the Clear button consumes Enter; arrow keys
+			// otherwise pass through to whatever has focus and do nothing).
+			AddHandler(KeyDownEvent, OnArrowKeyDown, RoutingStrategies.Tunnel);
+
 			state.PropertyChanged += OnStateChanged;
 			RefreshSummary();
+		}
+
+		void OnArrowKeyDown(object? sender, KeyEventArgs e)
+		{
+			if (e.Key is not (Key.Left or Key.Right or Key.Up or Key.Down))
+				return;
+			// e.Source on a tunneled key event is the focused element about to receive it,
+			// regardless of whether FocusManager has stabilised in this headless tick.
+			// Fall back to FocusManager for completeness — both should usually agree.
+			var focused = (e.Source as Control)
+				?? (TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() as Control);
+			if (focused is null)
+				return;
+
+			var groups = this.GetVisualDescendants()
+				.Where(c => c is MutexChipGroup or IndependentFlagGroup)
+				.OfType<Control>()
+				.ToList();
+			if (groups.Count == 0)
+				return;
+
+			Control? target = null;
+			if (e.Key is Key.Left or Key.Right)
+			{
+				// Flat document-order traversal: every chip / pill across the whole popup
+				// is one sequence. Left = previous, Right = next, wrap at ends so the user
+				// doesn't get stuck.
+				var flat = ChipsInDocumentOrder(groups).ToList();
+				int idx = flat.IndexOf(focused);
+				if (idx < 0)
+					return;
+				int step = e.Key == Key.Right ? 1 : -1;
+				target = flat[(idx + step + flat.Count) % flat.Count];
+			}
+			else
+			{
+				// Up / Down: jump to the previous / next group's first chip. Lets the user
+				// hop between axes without arrowing through every value chip in between.
+				int currentGroup = FindGroupContaining(groups, focused);
+				if (currentGroup < 0)
+					return;
+				int step = e.Key == Key.Down ? 1 : -1;
+				int newGroup = currentGroup + step;
+				if (newGroup < 0 || newGroup >= groups.Count)
+					return;
+				target = ChipsIn(groups[newGroup]).FirstOrDefault();
+			}
+
+			if (target is not null)
+			{
+				target.Focus();
+				e.Handled = true;
+			}
+		}
+
+		static int FindGroupContaining(IReadOnlyList<Control> groups, Control element)
+		{
+			for (int i = 0; i < groups.Count; i++)
+				if (groups[i] == element || groups[i].GetVisualDescendants().Contains(element))
+					return i;
+			return -1;
+		}
+
+		// Each group exposes its own NavigableElements list — using that instead of a
+		// blanket descendant-walk skips past internal template parts (e.g. ComboBox's
+		// own toggle button) so arrow nav lands only on user-facing chips/pills.
+		static IEnumerable<Control> ChipsIn(Control group) => group switch {
+			MutexChipGroup mutex => mutex.NavigableElements,
+			IndependentFlagGroup indep => indep.NavigableElements,
+			_ => Enumerable.Empty<Control>(),
+		};
+
+		static IEnumerable<Control> ChipsInDocumentOrder(IEnumerable<Control> groups)
+		{
+			foreach (var group in groups)
+				foreach (var chip in ChipsIn(group))
+					yield return chip;
 		}
 
 		void OnStateChanged(object? sender, PropertyChangedEventArgs e) => RefreshSummary();
