@@ -18,8 +18,10 @@
 			          IsChecked="{Binding Options.ShowChildIndexInBlock, Mode=TwoWay}" />
 		</StackPanel>
 		<TreeView Name="StepsTree"
-		          DoubleTapped="OnShowStateAfter"
-		          KeyDown="OnStepsTreeKeyDown"
+		          ItemsSource="{Binding Steps}"
+		          SelectedItem="{Binding SelectedStep, Mode=TwoWay}"
+		          DoubleTapped="OnTreeDoubleTapped"
+		          KeyDown="OnTreeKeyDown"
 		          x:CompileBindings="False">
 			<TreeView.ItemTemplate>
 				<TreeDataTemplate ItemsSource="{Binding Children}">
@@ -29,11 +31,11 @@
 			<TreeView.ContextMenu>
 				<ContextMenu>
 					<MenuItem Header="Show state before this step (Shift+Enter)"
-					          Click="OnShowStateBefore" />
+					          Command="{Binding ShowStateBeforeCommand}" />
 					<MenuItem Header="Show state after this step (Enter)"
-					          Click="OnShowStateAfter" />
+					          Command="{Binding ShowStateAfterCommand}" />
 					<MenuItem Header="Debug this step"
-					          Click="OnDebugStep" />
+					          Command="{Binding DebugStepCommand}" />
 				</ContextMenu>
 			</TreeView.ContextMenu>
 		</TreeView>

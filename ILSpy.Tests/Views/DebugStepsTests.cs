@@ -21,13 +21,19 @@
 using System.Linq;
 using System.Threading.Tasks;
 
+using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
+using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
+using ILSpy;
 using ILSpy.AppEnv;
+using ILSpy.Docking;
 using ILSpy.Languages;
+using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
+using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -65,6 +71,52 @@ public class DebugStepsTests
 		options.ShowILRanges.Should().BeFalse();
 		options.ShowChildIndexInBlock.Should().BeFalse();
 		return Task.CompletedTask;
+	}
+
+	[AvaloniaTest]
+	public async Task Debug_Steps_VM_Populates_After_ILAst_Decompile_Regardless_Of_View_Lifecycle()
+	{
+		// End-to-end repro of the user-reported "Debug Steps pane is empty" bug:
+		// 1. Boot the window, load assemblies.
+		// 2. Select a method.
+		// 3. Switch the active language to BlockIL (ILAst).
+		// 4. Wait for the BlockIL decompile to finish — its OnStepperUpdated event fires.
+		// 5. Assert the DebugStepsPaneModel's Steps property is populated.
+		//
+		// Asserting against the VM (not the View) decouples this test from the dock layout's
+		// view-realisation timing — which is the whole point of the fix that moved state
+		// from the View into the VM. If `Steps` is populated, any view that binds to it (now
+		// or later) will render the correct content.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		typeNode.IsExpanded = true;
+		var method = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "AsEnumerable");
+		vm.AssemblyTreeModel.SelectNode(method);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		var languageService = AppComposition.Current.GetExport<LanguageService>();
+		var blockIL = languageService.Languages.OfType<ILAstLanguage>()
+			.Single(l => l.Name == "ILAst");
+		languageService.CurrentLanguage = blockIL;
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		blockIL.Stepper.Steps.Should().NotBeEmpty(
+			"BlockILLanguage.DecompileMethod must populate context.Stepper.Steps when STEP is defined");
+
+		var debugStepsVm = AppComposition.Current.GetExport<DebugStepsPaneModel>();
+		await Waiters.WaitForAsync(
+			() => debugStepsVm.Steps?.Count > 0,
+			description: "DebugStepsPaneModel.Steps to be populated after the ILAst decompile");
+
+		debugStepsVm.Steps.Should().NotBeNullOrEmpty(
+			"after switching to ILAst and decompiling, the VM's Steps must list the stepper's recorded transforms");
 	}
 
 	[AvaloniaTest]
