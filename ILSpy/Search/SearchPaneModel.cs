@@ -18,7 +18,9 @@
 
 using System;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Composition;
+using System.Linq;
 
 using Avalonia.Media;
 
@@ -61,6 +63,24 @@ namespace ILSpy.Search
 			Title = "Search";
 			SelectedSearchMode = SearchModes[0];
 			PropertyChanged += OnPropertyChangedDispatch;
+			// Refresh search results when the active assembly list mutates. Skip the
+			// restart when ONLY auto-loaded (dependency) assemblies are added — those
+			// fire from navigating through results in a large assembly and would cause
+			// a tight feedback loop / flicker. Mirrors WPF's #3734 fix.
+			Util.MessageBus<Util.CurrentAssemblyListChangedEventArgs>.Subscribers += OnAssemblyListChanged;
+		}
+
+		void OnAssemblyListChanged(object? sender, Util.CurrentAssemblyListChangedEventArgs e)
+		{
+			var inner = e.Inner;
+			if (inner.Action == NotifyCollectionChangedAction.Add
+				&& inner.NewItems?.Cast<LoadedAssembly>().All(asm => asm.IsAutoLoaded) == true)
+			{
+				return;
+			}
+			if (string.IsNullOrEmpty(SearchTerm))
+				return;
+			RestartSearch();
 		}
 
 		void OnPropertyChangedDispatch(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

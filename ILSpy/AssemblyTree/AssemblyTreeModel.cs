@@ -303,7 +303,15 @@ namespace ILSpy.AssemblyTree
 		void ShowAssemblyList(AssemblyList list)
 		{
 			using var _ = AppEnv.StartupLog.Phase("ShowAssemblyList(list)");
+			// Detach the previous list's collection-changed wiring so the MessageBus
+			// republisher and the navigation-history pruning don't fire against a stale
+			// list. Re-attach on the new list so panes (DockWorkspace, SearchPaneModel)
+			// that subscribe to CurrentAssemblyListChangedEventArgs see add/remove events
+			// from the live list.
+			if (AssemblyList is { } previous)
+				previous.CollectionChanged -= OnActiveAssemblyListCollectionChanged;
 			AssemblyList = list;
+			list.CollectionChanged += OnActiveAssemblyListCollectionChanged;
 			if (list.GetAssemblies().Length == 0 && list.ListName == AssemblyListManager.DefaultListName)
 			{
 				using (AppEnv.StartupLog.Phase("LoadInitialAssemblies"))
@@ -728,7 +736,39 @@ namespace ILSpy.AssemblyTree
 			}
 		}
 
-		public void Refresh() => _ = RefreshInternalAsync();
+		/// <summary>
+		/// Fan-out for changes to the currently-active assembly list (assemblies added or
+		/// removed). Re-publishes via <see cref="Util.MessageBus"/> so panes that don't
+		/// directly hold a reference to <see cref="AssemblyList"/> can react — the search
+		/// pane restarts, the dock workspace prunes orphaned tabs. Mirrors WPF's
+		/// <c>assemblyList_CollectionChanged</c> shape.
+		/// </summary>
+		void OnActiveAssemblyListCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+		{
+			Util.MessageBus.Send(this, new Util.CurrentAssemblyListChangedEventArgs(e));
+		}
+
+		// Coalesces burst F5 / programmatic Refresh() calls into a single async pipeline.
+		// Without the gate, two Refresh() in quick succession would run two parallel
+		// ShowAssemblyList + GetMetadataFileAsync cycles, doubling the work and producing
+		// visible flicker. The gate is a simple "running flag" — a queued refresh becomes
+		// a no-op while the previous one is still in flight.
+		bool refreshInFlight;
+
+		public void Refresh()
+		{
+			if (refreshInFlight)
+				return;
+			_ = RunRefresh();
+
+			async Task RunRefresh()
+			{
+				refreshInFlight = true;
+				try
+				{ await RefreshInternalAsync(); }
+				finally { refreshInFlight = false; }
+			}
+		}
 
 		async Task RefreshInternalAsync()
 		{
