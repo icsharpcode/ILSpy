@@ -77,22 +77,52 @@ namespace ILSpy.Metadata
 		{
 			foreach (var entry in module.Reader.ReadDebugDirectory())
 			{
-				if (entry.Type != DebugDirectoryEntryType.EmbeddedPortablePdb)
-					continue;
-				try
+				switch (entry.Type)
 				{
-					var provider = module.Reader.ReadEmbeddedPortablePdbDebugDirectoryData(entry);
-					var pdbMetadata = new MetadataFile(
-						MetadataFile.MetadataFileKind.ProgramDebugDatabase,
-						module.FileName,
-						provider,
-						isEmbedded: true);
-					Children.Add(new MetadataTreeNode(pdbMetadata, "Debug Metadata (Embedded)"));
-				}
-				catch (BadImageFormatException)
-				{
-					// A corrupt embedded PDB shouldn't take the whole tree down — skip it
-					// silently; the entry is still visible in the grid view above.
+					case DebugDirectoryEntryType.CodeView:
+						try
+						{
+							var cv = module.Reader.ReadCodeViewDebugDirectoryData(entry);
+							Children.Add(new CodeViewTreeNode(module, entry, cv));
+						}
+						catch (BadImageFormatException)
+						{
+							Children.Add(new DebugDirectoryEntryTreeNode(module, entry));
+						}
+						break;
+					case DebugDirectoryEntryType.PdbChecksum:
+						try
+						{
+							var sum = module.Reader.ReadPdbChecksumDebugDirectoryData(entry);
+							Children.Add(new PdbChecksumTreeNode(module, entry, sum));
+						}
+						catch (BadImageFormatException)
+						{
+							Children.Add(new DebugDirectoryEntryTreeNode(module, entry));
+						}
+						break;
+					case DebugDirectoryEntryType.EmbeddedPortablePdb:
+						try
+						{
+							var provider = module.Reader.ReadEmbeddedPortablePdbDebugDirectoryData(entry);
+							var pdbMetadata = new MetadataFile(
+								MetadataFile.MetadataFileKind.ProgramDebugDatabase,
+								module.FileName,
+								provider,
+								isEmbedded: true);
+							Children.Add(new MetadataTreeNode(pdbMetadata, "Debug Metadata (Embedded)"));
+						}
+						catch (BadImageFormatException)
+						{
+							// A corrupt embedded PDB shouldn't take the whole tree down — skip it
+							// silently; the entry is still visible in the grid view above.
+						}
+						break;
+					default:
+						// Reproducible, Vendor-specific, Mpx, ExtendedDllCharacteristics, …
+						// The generic fallback shows the type + raw hex dump in Decompile.
+						Children.Add(new DebugDirectoryEntryTreeNode(module, entry));
+						break;
 				}
 			}
 		}
