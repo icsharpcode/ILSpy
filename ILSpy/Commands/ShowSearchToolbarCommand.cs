@@ -16,31 +16,42 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Composition;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.AssemblyTree;
+using ILSpy.Docking;
 
 namespace ILSpy.Commands
 {
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources.SortAssembly_listName), MenuIcon = "Images/Sort", MenuCategory = nameof(Resources.View))]
-	[ExportToolbarCommand(ToolTip = nameof(Resources.SortAssemblyListName), ToolbarIcon = "Images/Sort", ToolbarCategory = nameof(Resources.View))]
+	/// <summary>
+	/// Toolbar-surface adapter for the existing <see cref="DockWorkspace.ShowSearchCommand"/>.
+	/// Wraps it so the [ExportToolbarCommand] discovery picks up a single ICommand entry; both
+	/// the magnifier toolbar button and the Ctrl+Shift+F / Ctrl+E key bindings end up routed
+	/// through the same workspace command.
+	/// </summary>
+	[ExportToolbarCommand(
+		ToolTip = nameof(Resources.SearchCtrlShiftFOrCtrlE),
+		ToolbarIcon = "Images/Search",
+		ToolbarCategory = nameof(Resources.View),
+		ToolbarOrder = 100)]
 	[Shared]
-	[method: ImportingConstructor]
-	sealed class SortAssemblyListCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
+	sealed class ShowSearchToolbarCommand : SimpleCommand
 	{
-		public override void Execute(object? parameter) => assemblyTreeModel.SortAssemblyList();
-	}
+		readonly DockWorkspace dockWorkspace;
 
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources._CollapseTreeNodes), MenuIcon = "Images/CollapseAll", MenuCategory = nameof(Resources.View))]
-	[ExportToolbarCommand(ToolTip = nameof(Resources.CollapseTreeNodes), ToolbarIcon = "Images/CollapseAll", ToolbarCategory = nameof(Resources.View))]
-	[Shared]
-	[method: ImportingConstructor]
-	sealed class CollapseAllCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
-	{
-		public override void Execute(object? parameter) => assemblyTreeModel.CollapseAll();
-	}
+		[ImportingConstructor]
+		public ShowSearchToolbarCommand(DockWorkspace dockWorkspace)
+		{
+			this.dockWorkspace = dockWorkspace;
+			dockWorkspace.ShowSearchCommand.CanExecuteChanged += (_, _) => RaiseCanExecuteChanged();
+		}
 
-	// ShowOptionsCommand moved to its own file (Commands/ShowOptionsCommand.cs) — see there.
+		public override bool CanExecute(object? parameter)
+			=> dockWorkspace.ShowSearchCommand.CanExecute(parameter);
+
+		public override void Execute(object? parameter)
+			=> dockWorkspace.ShowSearchCommand.Execute(parameter);
+	}
 }

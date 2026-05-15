@@ -194,6 +194,30 @@
 				</SplitButton.Flyout>
 			</SplitButton>
 			<Separator />
+			<!-- Anchor for MEF "Open" category buttons (Open, Refresh). The anchor itself is
+			     removed when buttons are inserted; if no buttons exist for this category, the
+			     anchor remains as a visible separator (matches WPF's behaviour). -->
+			<Separator Name="OpenCategoryAnchor" />
+			<Separator />
+			<!-- The invisible ItemsControl ghost behind each ComboBox forces the grid cell
+			     to size to the widest item so the closed combo's width doesn't change as
+			     the user picks different entries. Margin=15,0 reserves space for the
+			     ComboBox's dropdown chevron on the right. -->
+			<Grid Margin="2,0">
+				<ItemsControl ItemsSource="{Binding AssemblyTreeModel.AssemblyLists}"
+				              Height="0" Margin="15,0" />
+				<ComboBox Name="AssemblyListComboBox" MinWidth="160"
+				          ToolTip.Tip="Select an assembly list"
+				          ItemsSource="{Binding AssemblyTreeModel.AssemblyLists}"
+				          SelectedItem="{Binding AssemblyTreeModel.ActiveListName, Mode=TwoWay}" />
+			</Grid>
+			<!-- Inline manage-lists icon button — mirrors WPF MainToolBar.xaml:44-49. The Command
+			     is assigned in code-behind from the MEF main-menu registry so the button reuses
+			     the same handler as File > Manage Assembly Lists. -->
+			<Button Name="ManageAssemblyListsButton">
+				<controls:GrayscaleAwareImage Source="{x:Static images:Images.AssemblyList}" Width="16" Height="16" />
+			</Button>
+			<Separator />
 			<!-- Three radio-style ToggleButtons for ShowApiLevel, mirroring the View menu radios.
 			     Each binds to a mutually-exclusive bool projection on LanguageSettings; flipping
 			     one to true clears the others through the property-change cascade. -->
@@ -212,22 +236,6 @@
 			              IsChecked="{Binding LanguageSettings.ApiVisAll, Mode=TwoWay}">
 				<controls:GrayscaleAwareImage Source="{x:Static images:Images.ShowAll}" Width="16" Height="16" />
 			</ToggleButton>
-			<Separator />
-			<!-- MEF-driven toolbar buttons (Open etc.) get inserted by MainToolBar.axaml.cs.
-			     Anything between these two separators is replaced on Loaded. -->
-			<Separator Name="ToolbarMefAnchor" />
-			<!-- The invisible ItemsControl ghost behind each ComboBox forces the grid cell
-			     to size to the widest item so the closed combo's width doesn't change as
-			     the user picks different entries. Margin=15,0 reserves space for the
-			     ComboBox's dropdown chevron on the right. -->
-			<Grid Margin="2,0">
-				<ItemsControl ItemsSource="{Binding AssemblyTreeModel.AssemblyLists}"
-				              Height="0" Margin="15,0" />
-				<ComboBox Name="AssemblyListComboBox" MinWidth="160"
-				          ToolTip.Tip="Select an assembly list"
-				          ItemsSource="{Binding AssemblyTreeModel.AssemblyLists}"
-				          SelectedItem="{Binding AssemblyTreeModel.ActiveListName, Mode=TwoWay}" />
-			</Grid>
 			<Separator />
 			<Grid Margin="2,0">
 				<ItemsControl ItemsSource="{Binding LanguageService.Languages}"
@@ -263,6 +271,10 @@
 					</ComboBox.ItemTemplate>
 				</ComboBox>
 			</Grid>
+			<!-- Anchor for MEF "View" category buttons (Sort, CollapseAll, Search). WPF prepends
+			     a Separator before this group (MainToolBar.xaml.cs:83); the code-behind inserts
+			     it dynamically only when there are View buttons to render. -->
+			<Separator Name="ViewCategoryAnchor" />
 		</StackPanel>
 	</Border>
 </UserControl>

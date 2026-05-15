@@ -17,6 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
+using System.Composition;
 using System.Linq;
 using System.Reflection;
 
@@ -39,7 +41,9 @@ public partial class MainToolBar : UserControl
 	public MainToolBar()
 	{
 		InitializeComponent();
-		Loaded += (_, _) => {
+		// AttachedToVisualTree fires reliably in both the live app and the Avalonia.Headless
+		// test harness; Loaded did not in headless, leaving the MEF anchors un-replaced.
+		AttachedToVisualTree += (_, _) => {
 			InitializeButtons();
 			WireHistoryUpdates();
 		};
@@ -91,42 +95,104 @@ public partial class MainToolBar : UserControl
 			return;
 		initialized = true;
 
-		ToolbarCommandRegistry registry;
+		ToolbarCommandRegistry? toolbarRegistry = null;
+		MainMenuCommandRegistry? menuRegistry = null;
 		try
 		{
-			registry = AppComposition.Current.GetExport<ToolbarCommandRegistry>();
+			toolbarRegistry = AppComposition.Current.GetExport<ToolbarCommandRegistry>();
+			menuRegistry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
 		}
 		catch
 		{
-			// Design-time / test contexts that bypass composition just keep the static layout.
+			// Design-time / test contexts that bypass composition keep the static layout.
+		}
+
+		if (toolbarRegistry != null)
+			DispatchToolbarCommands(toolbarRegistry);
+
+		if (menuRegistry != null)
+			WireManageAssemblyListsButton(menuRegistry);
+	}
+
+	void DispatchToolbarCommands(ToolbarCommandRegistry registry)
+	{
+		// Mirrors the WPF dispatch in MainToolBar.xaml.cs:55-90 — Navigation is hand-coded
+		// (Back/Forward SplitButtons in the AXAML), Open goes at OpenCategoryAnchor, every
+		// other category (View etc.) is appended after ViewCategoryAnchor.
+		var byCategory = registry.Commands
+			.GroupBy(c => c.Metadata.ToolbarCategory ?? string.Empty)
+			.ToDictionary(g => g.Key, g => g.OrderBy(c => c.Metadata.ToolbarOrder).ToList());
+
+		var openCategory = nameof(ICSharpCode.ILSpy.Properties.Resources.Open);
+		var viewCategory = nameof(ICSharpCode.ILSpy.Properties.Resources.View);
+
+		if (byCategory.TryGetValue(openCategory, out var openCommands))
+			ReplaceAnchor(OpenCategoryAnchor, openCommands, leadingSeparator: false);
+
+		// "View" group + any other unknown categories go at the View anchor with a leading
+		// Separator so they read as a distinct trailing group.
+		var trailingCategories = byCategory
+			.Where(kv => kv.Key != openCategory)
+			.OrderBy(kv => kv.Key == viewCategory ? 0 : 1)
+			.ThenBy(kv => kv.Key)
+			.ToList();
+
+		if (trailingCategories.Count == 0)
+		{
+			// Hide the bare anchor so we don't leave a trailing Separator on its own.
+			ToolbarRoot.Children.Remove(ViewCategoryAnchor);
 			return;
 		}
 
-		int insertAt = ToolbarRoot.Children.IndexOf(ToolbarMefAnchor);
-		if (insertAt < 0)
-			return;
+		var firstTrailingCommands = trailingCategories[0].Value;
+		ReplaceAnchor(ViewCategoryAnchor, firstTrailingCommands, leadingSeparator: true);
 
-		// Insert one Button per [ExportToolbarCommand], grouped by Category, separated by
-		// a thin Separator between categories. Order within a category honours ToolbarOrder.
-		var groups = registry.Commands
-			.GroupBy(c => c.Metadata.ToolbarCategory ?? string.Empty)
-			.OrderBy(g => g.Key);
-		bool firstGroup = true;
-		foreach (var group in groups)
+		// Any additional categories (rare, only via plugins) get their own separator + buttons
+		// appended at the end so the WPF "else: add Separator + commands" branch is preserved.
+		for (int i = 1; i < trailingCategories.Count; i++)
 		{
-			if (!firstGroup)
-				ToolbarRoot.Children.Insert(insertAt++, new Separator());
-			firstGroup = false;
-			foreach (var entry in group.OrderBy(c => c.Metadata.ToolbarOrder))
+			ToolbarRoot.Children.Add(new Separator());
+			foreach (var entry in trailingCategories[i].Value)
 			{
 				var button = BuildButton(entry);
 				if (button != null)
-					ToolbarRoot.Children.Insert(insertAt++, button);
+					ToolbarRoot.Children.Add(button);
 			}
 		}
 	}
 
-	static Button? BuildButton(System.Composition.ExportFactory<System.Windows.Input.ICommand, ToolbarCommandMetadata> entry)
+	void ReplaceAnchor(
+		Separator anchor,
+		IReadOnlyList<ExportFactory<System.Windows.Input.ICommand, ToolbarCommandMetadata>> commands,
+		bool leadingSeparator)
+	{
+		var index = ToolbarRoot.Children.IndexOf(anchor);
+		if (index < 0)
+			return;
+		ToolbarRoot.Children.RemoveAt(index);
+		int insertAt = index;
+		if (leadingSeparator)
+			ToolbarRoot.Children.Insert(insertAt++, new Separator());
+		foreach (var entry in commands)
+		{
+			var button = BuildButton(entry);
+			if (button != null)
+				ToolbarRoot.Children.Insert(insertAt++, button);
+		}
+	}
+
+	void WireManageAssemblyListsButton(MainMenuCommandRegistry registry)
+	{
+		// Match the export by its main-menu header — File > Manage Assembly Lists.
+		var entry = registry.Commands.FirstOrDefault(
+			c => c.Metadata.Header == nameof(ICSharpCode.ILSpy.Properties.Resources.ManageAssembly_Lists));
+		if (entry == null)
+			return;
+		ManageAssemblyListsButton.Command = entry.CreateExport().Value;
+		ToolTip.SetTip(ManageAssemblyListsButton, ICSharpCode.ILSpy.Properties.Resources.ManageAssemblyLists);
+	}
+
+	static Button? BuildButton(ExportFactory<System.Windows.Input.ICommand, ToolbarCommandMetadata> entry)
 	{
 		var command = entry.CreateExport().Value;
 		var button = new Button {
@@ -158,7 +224,7 @@ public partial class MainToolBar : UserControl
 	{
 		if (string.IsNullOrEmpty(iconPath))
 			return null;
-		var name = iconPath.StartsWith("Images/", System.StringComparison.Ordinal)
+		var name = iconPath.StartsWith("Images/", StringComparison.Ordinal)
 			? iconPath["Images/".Length..]
 			: iconPath;
 		var prop = typeof(Images.Images).GetField(name, BindingFlags.Public | BindingFlags.Static);

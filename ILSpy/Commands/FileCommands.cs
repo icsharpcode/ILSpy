@@ -148,6 +148,7 @@ namespace ILSpy.Commands
 	}
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources._Reload), MenuIcon = "Images/Refresh", MenuCategory = nameof(Resources.Open), MenuOrder = 2, InputGestureText = "F5")]
+	[ExportToolbarCommand(ToolTip = nameof(Resources.RefreshCommand_ReloadAssemblies), ToolbarIcon = "Images/Refresh", ToolbarCategory = nameof(Resources.Open), ToolbarOrder = 2)]
 	[Shared]
 	[method: ImportingConstructor]
 	sealed class RefreshCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
