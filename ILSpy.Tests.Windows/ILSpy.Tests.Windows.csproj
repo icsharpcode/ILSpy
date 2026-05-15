@@ -45,6 +45,10 @@
     <PackageReference Include="Microsoft.Testing.Extensions.VSTestBridge" />
     <PackageReference Include="AwesomeAssertions" />
     <PackageReference Include="NSubstitute" />
+    <!-- PreserializedResourceWriter — required by the ImageList integration tests to
+         build .resources fixtures with typed serialized-object entries (NRBF-wrapped
+         ImageListStreamer blobs) without depending on the obsolete BinaryFormatter. -->
+    <PackageReference Include="System.Resources.Extensions" />
 
     <!-- Windows-only native packages that the matching ILSpy commands gate
          behind `Debug + IsOSPlatform(Windows)`. Available unconditionally here because

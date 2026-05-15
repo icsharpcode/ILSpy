@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpyX.Abstractions
 {
@@ -28,5 +29,12 @@ namespace ICSharpCode.ILSpyX.Abstractions
 		// Null means "this factory doesn't claim the resource"; callers iterate factories until
 		// one returns non-null and otherwise fall back to a generic node.
 		ITreeNode? CreateNode(Resource resource);
+
+		/// <summary>
+		/// Builds a node for a serialized-object entry inside an embedded <c>.resources</c>
+		/// file (e.g. an <c>ImageListStreamer</c> blob). Default no-op — only factories that
+		/// understand a specific serialized payload type need to override this.
+		/// </summary>
+		ITreeNode? CreateNode(string key, ResourceSerializedObject serializedObject) => null;
 	}
 }

@@ -100,7 +100,8 @@ namespace ILSpy.TreeNodes
 					otherEntries.Add(new SerializedObjectRepresentation(entry.Key, "null", string.Empty));
 					break;
 				case ResourceSerializedObject so:
-					otherEntries.Add(new SerializedObjectRepresentation(entry.Key, so.TypeName ?? string.Empty, "<serialized>"));
+					if (!TryDispatchSerializedObject(entry.Key, so))
+						otherEntries.Add(new SerializedObjectRepresentation(entry.Key, so.TypeName ?? string.Empty, "<serialized>"));
 					break;
 				default:
 					otherEntries.Add(new SerializedObjectRepresentation(
@@ -109,6 +110,26 @@ namespace ILSpy.TreeNodes
 						entry.Value.ToString() ?? string.Empty));
 					break;
 			}
+		}
+
+		/// <summary>
+		/// Walks <see cref="ILSpyTreeNode.ResourceNodeFactories"/> for a specialised tree
+		/// node that claims this serialized-object entry (e.g. an <c>ImageListStreamer</c>
+		/// blob). Returns true and adds the node to <see cref="Children"/> when claimed;
+		/// returns false to let the caller fall back to the generic "&lt;serialized&gt;"
+		/// representation.
+		/// </summary>
+		bool TryDispatchSerializedObject(string key, ResourceSerializedObject so)
+		{
+			foreach (var factory in ResourceNodeFactories)
+			{
+				if (factory.CreateNode(key, so) is ILSpyTreeNode node)
+				{
+					Children.Add(node);
+					return true;
+				}
+			}
+			return false;
 		}
 
 		public override bool Save()
