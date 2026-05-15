@@ -1,0 +1,21 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="ILSpy.Views.ManageAssemblyListsDialog"
+        Width="480" Height="350" MinWidth="480" MinHeight="250"
+        WindowStartupLocation="CenterOwner"
+        Title="Manage Assembly Lists">
+	<Grid Margin="12,8" ColumnDefinitions="*,Auto" RowDefinitions="*,Auto">
+		<ListBox Grid.Row="0" Grid.Column="0" Name="ListsBox" Margin="0,8,8,8" SelectionMode="Single" />
+		<StackPanel Grid.Row="0" Grid.Column="1" Margin="4,8" Spacing="4" MinWidth="100">
+			<Button Name="NewButton" Content="_New" />
+			<Button Name="CloneButton" Content="C_lone" />
+			<Button Name="RenameButton" Content="R_ename" />
+			<Button Name="DeleteButton" Content="_Delete" />
+			<Button Name="ResetButton" Margin="0,12,0,0" Content="_Reset" />
+		</StackPanel>
+		<StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+			<Button Name="SelectButton" Content="Select" IsDefault="True" MinWidth="72" />
+			<Button Name="CloseButton" Content="Close" IsCancel="True" MinWidth="72" />
+		</StackPanel>
+	</Grid>
+</Window>

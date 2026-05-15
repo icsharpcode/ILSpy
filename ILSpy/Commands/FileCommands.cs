@@ -96,7 +96,23 @@ namespace ILSpy.Commands
 	[Shared]
 	sealed class ManageAssemblyListsCommand : SimpleCommand
 	{
-		public override void Execute(object? parameter) => NotImplementedDialog.Show(Resources.ManageAssembly_Lists);
+		readonly SettingsService settingsService;
+
+		[ImportingConstructor]
+		public ManageAssemblyListsCommand(SettingsService settingsService)
+		{
+			this.settingsService = settingsService;
+		}
+
+		public override void Execute(object? parameter)
+		{
+			var owner = (global::Avalonia.Application.Current?.ApplicationLifetime
+				as global::Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+			if (owner == null)
+				return;
+			var dlg = new Views.ManageAssemblyListsDialog(settingsService);
+			_ = dlg.ShowDialog(owner);
+		}
 	}
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources._Reload), MenuIcon = "Images/Refresh", MenuCategory = nameof(Resources.Open), MenuOrder = 2, InputGestureText = "F5")]
