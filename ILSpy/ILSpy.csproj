@@ -77,6 +77,18 @@
     <ProjectReference Include="..\ICSharpCode.BamlDecompiler\ICSharpCode.BamlDecompiler.csproj" />
   </ItemGroup>
 
+  <!-- DEBUG-only Pdb2Xml command requires Microsoft.DiaSymReader, which uses native COM
+       interop and is Windows-only. The PackageReference is gated on the build host
+       being Windows AND the configuration being Debug; the consuming command file is
+       additionally `#if DEBUG && WINDOWS` so the symbols only resolve when both
+       conditions are true. Matches WPF's `#if DEBUG && WINDOWS` gating of the same
+       feature. -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug' AND $([MSBuild]::IsOSPlatform('Windows'))">
+    <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" />
+    <PackageReference Include="Microsoft.DiaSymReader" />
+    <PackageReference Include="Microsoft.DiaSymReader.Native" />
+  </ItemGroup>
+
   <!-- The Debug Steps pane is a DEBUG-only diagnostic. The code-behind and viewmodel
        are wrapped in `#if DEBUG`, so the C# type vanishes under Release; but Avalonia
        compiles every .axaml file regardless of preprocessor state, and the XamlIl
@@ -85,4 +97,7 @@
   <ItemGroup Condition="'$(Configuration)' != 'Debug'">
     <AvaloniaXaml Remove="Views\DebugSteps.axaml" />
   </ItemGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug' AND $([MSBuild]::IsOSPlatform('Windows'))">
+    <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
+  </PropertyGroup>
 </Project>

@@ -129,12 +129,8 @@ namespace ILSpy.Commands
 	// DEBUG-only DisassembleAllCommand also moved to DecompileAllCommand.cs to keep all
 	// three parallel-decompile/disassemble stress-test commands in one place.
 
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDumpPDBAsXML), MenuCategory = nameof(Resources.Open), MenuOrder = 2.6)]
-	[Shared]
-	sealed class Pdb2XmlCommand : SimpleCommand
-	{
-		public override void Execute(object? parameter) => NotImplementedDialog.Show(Resources.DEBUGDumpPDBAsXML);
-	}
+	// DEBUG-only Pdb2XmlCommand moved to its own file with `#if DEBUG && WINDOWS` gating.
+	// On non-Windows or non-Debug builds the entry simply isn't compiled.
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources._RemoveAssembliesWithLoadErrors), MenuCategory = nameof(Resources.Remove), MenuOrder = 2.6)]
 	[Shared]
