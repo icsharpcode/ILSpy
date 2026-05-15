@@ -74,6 +74,7 @@
     <PackageVersion Include="System.Memory" Version="4.6.3" />
     <PackageVersion Include="System.Reflection.Metadata" Version="$(NetPackageVersion)" />
     <PackageVersion Include="System.Resources.Extensions" Version="$(NetPackageVersion)" />
+    <PackageVersion Include="System.Formats.Nrbf" Version="$(NetPackageVersion)" />
     <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="$(NetPackageVersion)" />
     <PackageVersion Include="TomsToolbox.Composition.MicrosoftExtensions" Version="$(TomsToolboxVersion)" />

@@ -14,10 +14,12 @@
     <RootNamespace>ICSharpCode.ILSpy.Tests.Windows</RootNamespace>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 
-    <!-- Avalonia tests don't need WPF / WinForms reference assemblies even on the
-         -windows TFM. Suppress so the project doesn't pull in unused frameworks. -->
+    <!-- Avalonia tests don't need WPF on the -windows TFM. WinForms IS needed
+         though — the ImageList decoder tests use real
+         System.Windows.Forms.ImageList to generate reference fixtures at runtime,
+         then compare against the Avalonia decoder's output pixel-by-pixel. -->
     <UseWPF>false</UseWPF>
-    <UseWindowsForms>false</UseWindowsForms>
+    <UseWindowsForms>true</UseWindowsForms>
 
     <!-- Strong-named with the shared snk so ICSharpCode.ILSpyX can grant
          InternalsVisibleTo for the analyzer-library tests, mirroring the main

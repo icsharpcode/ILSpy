@@ -67,6 +67,13 @@
     <PackageReference Include="System.Composition.Hosting" />
     <PackageReference Include="System.Composition.TypedParts" />
 
+    <!-- NRBF decoder for the ImageList resource viewer — first-party Microsoft MIT
+         package, netstandard2.0+, parses BinaryFormatter-shape payloads without
+         instantiating the contained types. Lets us decode
+         System.Windows.Forms.ImageListStreamer blobs on Linux/macOS without
+         referencing WinForms. -->
+    <PackageReference Include="System.Formats.Nrbf" />
+
     <!-- CLI parsing -->
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" />
   </ItemGroup>
