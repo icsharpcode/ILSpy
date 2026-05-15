@@ -84,6 +84,21 @@ namespace ILSpy.Docking
 		public IReadOnlyList<NavigationEntry> BackHistory => history.BackEntries;
 		public IReadOnlyList<NavigationEntry> ForwardHistory => history.ForwardEntries;
 
+		/// <summary>
+		/// Prunes navigation-history entries whose tree-node ancestor matches
+		/// <paramref name="predicateOnNode"/>. Called from the assembly-tree model
+		/// when the active assembly list emits a CollectionChanged with removals:
+		/// every history entry pointing at a node that lived in one of the removed
+		/// assemblies is dropped so Back/Forward can't surface a detached node.
+		/// Static-page entries are left alone (they don't reference removed assemblies).
+		/// </summary>
+		public void PruneHistory(Predicate<SharpTreeNode> predicateOnNode)
+		{
+			ArgumentNullException.ThrowIfNull(predicateOnNode);
+			history.RemoveAll(entry =>
+				entry is TreeNodeEntry t && predicateOnNode(t.Node));
+		}
+
 		public IRootDock Layout { get; }
 
 		public IReadOnlyList<ToolPaneMenuItem> ToolPaneMenuItems { get; }
@@ -126,7 +141,46 @@ namespace ILSpy.Docking
 			factory.DockableClosed += OnDocumentMembershipChanged;
 			factory.DockableClosing += OnDockableClosing;
 			factory.ActiveDockableChanged += OnActiveDockableChanged;
+			// Close orphaned carve-out tabs when their assembly is removed. The persistent
+			// MainTab slot is left alone — its content will swap to whatever the user selects
+			// next via the assembly tree. Mirrors WPF's DockWorkspace.CurrentAssemblyList_Changed.
+			ILSpy.Util.MessageBus<ILSpy.Util.CurrentAssemblyListChangedEventArgs>.Subscribers
+				+= OnAssemblyListChanged;
 			ILSpy.AppEnv.StartupLog.Mark("DockWorkspace ctor exited");
+		}
+
+		void OnAssemblyListChanged(object? sender, ILSpy.Util.CurrentAssemblyListChangedEventArgs e)
+		{
+			var inner = e.Inner;
+			if (inner.OldItems is not { Count: > 0 } oldItems)
+				return;
+			var removed = new HashSet<ICSharpCode.ILSpyX.LoadedAssembly>(
+				oldItems.OfType<ICSharpCode.ILSpyX.LoadedAssembly>());
+			if (removed.Count == 0)
+				return;
+			if (factory.Documents?.VisibleDockables is not { } visible)
+				return;
+
+			foreach (var dockable in visible.OfType<ViewModels.ContentTabPage>().ToArray())
+			{
+				// Skip the persistent MainTab — its content swaps with tree selection. Also
+				// skip static content (About page etc.) which doesn't reference assemblies.
+				if (ReferenceEquals(dockable, factory.MainTab))
+					continue;
+				if (dockable.Content is not TextView.DecompilerTabPageModel tab || tab.IsStaticContent)
+					continue;
+				var nodes = tab.CurrentNodes;
+				if (nodes.Count == 0)
+					continue;
+				// "Some node in the tab still lives in a non-removed assembly" → keep.
+				// "Every node points at a removed assembly" → close.
+				bool anyAlive = nodes.Any(n =>
+					n.AncestorsAndSelf()
+					 .OfType<TreeNodes.AssemblyTreeNode>()
+					 .LastOrDefault() is { } owner && !removed.Contains(owner.LoadedAssembly));
+				if (!anyAlive)
+					factory.CloseDockable(dockable);
+			}
 
 			// TODO: layout persistence (load on startup, save on exit). DockSerializer.SystemTextJson
 			// trips System.Text.Json's MaxDepth=64 limit on our layout because Dock's JsonConverterList<T>
@@ -383,6 +437,22 @@ namespace ILSpy.Docking
 		DecompilerTabPageModel? decompilerContent;
 
 		ILSpyTreeNode[]? lastShownNodes;
+
+		/// <summary>
+		/// Force a re-decompile of the active tree selection even if it equals the last
+		/// rendered selection. Called by <see cref="AssemblyTree.AssemblyTreeModel"/> at
+		/// the end of <c>RefreshInternalAsync</c>: when F5 reloads the same assembly list,
+		/// the tree isn't rebuilt and the SelectedItem reference is preserved, so the
+		/// normal selection-change cascade would no-op and the editor would keep stale
+		/// decompiled text. Resetting <c>lastShownNodes</c> defeats the
+		/// dedup short-circuit inside <see cref="ShowSelectedNode"/>. Mirrors WPF's
+		/// <c>RefreshDecompiledView()</c> call.
+		/// </summary>
+		public void ForceRefreshActiveTab()
+		{
+			lastShownNodes = null;
+			ShowSelectedNode();
+		}
 
 		void ShowSelectedNode()
 		{

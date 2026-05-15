@@ -98,6 +98,22 @@ namespace ILSpy.Navigation
 			current = null;
 		}
 
+		/// <summary>
+		/// Removes every entry matched by <paramref name="predicate"/> from both stacks
+		/// AND from <see cref="Current"/>. Used by the assembly-list-changed handler to
+		/// drop history entries pointing at tree nodes whose containing assembly was
+		/// just unloaded — without this, Back/Forward could surface a stale entry whose
+		/// Node reference is now detached from the live tree.
+		/// </summary>
+		public void RemoveAll(Predicate<T> predicate)
+		{
+			ArgumentNullException.ThrowIfNull(predicate);
+			back.RemoveAll(predicate);
+			forward.RemoveAll(predicate);
+			if (current != null && predicate(current))
+				current = null;
+		}
+
 		/// <summary>Records a new history entry. Discards the forward stack.</summary>
 		public void Record(T entry)
 		{

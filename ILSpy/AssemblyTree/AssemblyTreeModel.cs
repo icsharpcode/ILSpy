@@ -745,6 +745,22 @@ namespace ILSpy.AssemblyTree
 		/// </summary>
 		void OnActiveAssemblyListCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
+			// Prune navigation-history entries that pointed at tree nodes inside removed
+			// assemblies BEFORE re-publishing — Back/Forward consumers (the toolbar
+			// commands + dropdowns) re-evaluate their CanExecute when the bus fires, so
+			// they must see the post-prune state. Mirrors WPF's history.RemoveAll(...)
+			// inside assemblyList_CollectionChanged.
+			if (e.OldItems is { Count: > 0 } oldItems)
+			{
+				var removed = new HashSet<LoadedAssembly>(oldItems.OfType<LoadedAssembly>());
+				if (removed.Count > 0)
+				{
+					TryGetExport<Docking.DockWorkspace>()?.PruneHistory(node =>
+						node.AncestorsAndSelf()
+							.OfType<AssemblyTreeNode>()
+							.Any(a => removed.Contains(a.LoadedAssembly)));
+				}
+			}
 			Util.MessageBus.Send(this, new Util.CurrentAssemblyListChangedEventArgs(e));
 		}
 
@@ -799,6 +815,13 @@ namespace ILSpy.AssemblyTree
 			}
 
 			SelectNode(FindNodeByPath(path, returnBestMatch: true));
+
+			// Defensive re-decompile: F5 on the same assembly list doesn't rebuild the
+			// tree, so FindNodeByPath returns the same tree-node reference, the
+			// SelectedItem setter early-outs, and DockWorkspace.ShowSelectedNode's
+			// dedup short-circuits — leaving stale decompiled text. Force a fresh
+			// render. Mirrors WPF's RefreshDecompiledView() call.
+			TryGetExport<Docking.DockWorkspace>()?.ForceRefreshActiveTab();
 		}
 	}
 }
