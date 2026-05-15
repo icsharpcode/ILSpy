@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
@@ -57,6 +58,26 @@ namespace ILSpy.Metadata
 		{
 			language.WriteCommentLine(output, title);
 			DumpMetadataInfo(language, output, metadataFile.Metadata);
+		}
+
+		/// <summary>
+		/// Resolves a <see cref="HandleKind"/> to the per-table tree node under this metadata
+		/// folder, or <c>null</c> when the handle has no table (e.g. heap handles: String /
+		/// UserString / Blob / Guid). Used by <c>MetadataProtocolHandler</c> to drill into
+		/// the right table when navigating a <c>metadata://</c> reference. Cast from
+		/// <see cref="HandleKind"/> to <see cref="TableIndex"/> relies on the two enums sharing
+		/// numeric values for the 0..44 metadata-table range.
+		/// </summary>
+		public MetadataTableTreeNode? FindNodeByHandleKind(HandleKind kind)
+		{
+			EnsureLazyChildren();
+			var tables = Children.OfType<MetadataTablesTreeNode>().FirstOrDefault();
+			if (tables is null)
+				return null;
+			tables.EnsureLazyChildren();
+			return tables.Children
+				.OfType<MetadataTableTreeNode>()
+				.FirstOrDefault(x => x.Kind == (TableIndex)kind);
 		}
 
 		internal static void DumpMetadataInfo(Language language, ITextOutput output, MetadataReader metadata)

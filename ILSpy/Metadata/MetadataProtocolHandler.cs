@@ -52,18 +52,23 @@ namespace ILSpy.Metadata
 			newTabPage = true;
 			if (protocol != "metadata")
 				return null;
-			var assemblyNode = assemblyTreeModel.FindTreeNode(module) as AssemblyTreeNode;
+			// AssemblyTreeModel.FindTreeNode only resolves EntityReference/ITypeDefinition/IMember,
+			// not MetadataFile — walk the assembly-tree root manually here. Same lookup pattern
+			// FindTypeNode uses internally.
+			var assemblyNode = (assemblyTreeModel.Root as AssemblyListTreeNode)?.Children
+				.OfType<AssemblyTreeNode>()
+				.FirstOrDefault(a => a.LoadedAssembly.GetMetadataFileOrNull() == module);
 			if (assemblyNode == null)
 				return null;
 			assemblyNode.EnsureLazyChildren();
 			var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().FirstOrDefault();
 			if (metadataNode == null)
 				return null;
-			// WPF additionally drills into the matching table for the handle kind. The
-			// Avalonia MetadataTreeNode doesn't yet expose a FindNodeByHandleKind helper;
-			// surfacing the MetadataTreeNode itself is enough to land the user inside the
-			// per-assembly metadata view. Specific-table drill-down is a follow-up.
-			return metadataNode;
+			// Drill into the matching metadata table when the handle is table-backed. Heap
+			// handles (String / UserString / Blob / Guid) have no per-table node, so we fall
+			// back to the per-assembly Metadata folder — the user can expand the right heap
+			// sibling from there.
+			return (ILSpyTreeNode?)metadataNode.FindNodeByHandleKind(handle.Kind) ?? metadataNode;
 		}
 	}
 }
