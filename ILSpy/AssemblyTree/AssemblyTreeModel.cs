@@ -728,14 +728,36 @@ namespace ILSpy.AssemblyTree
 			}
 		}
 
-		public void Refresh() => RefreshInternal();
+		public void Refresh() => _ = RefreshInternalAsync();
 
-		void RefreshInternal()
+		async Task RefreshInternalAsync()
 		{
 			if (AssemblyList == null || listManager == null)
 				return;
 			var path = GetPathForNode(SelectedItem);
 			ShowAssemblyList(listManager.LoadList(AssemblyList.ListName));
+
+			// Ensure the assembly's children are realised before FindNodeByPath walks them.
+			// Lazy-loaded resource children (e.g. .baml entries inside an embedded
+			// .resources file) only materialise after the assembly's metadata-file is
+			// loaded; without this await the path-walk runs against an empty resource
+			// folder and the selection collapses to the resources folder itself (#3705 in
+			// the WPF tree). If the user navigated to a different node while we waited,
+			// honour that new selection rather than overwriting it with the pre-refresh path.
+			if (path is { Length: > 0 })
+			{
+				var rootAssembly = AssemblyList.FindAssembly(path[0]);
+				if (rootAssembly != null)
+				{
+					var preAwaitSelection = SelectedItem;
+					try
+					{ await rootAssembly.GetMetadataFileAsync().ConfigureAwait(true); }
+					catch { /* corrupt assembly — let FindNodeByPath best-match below */ }
+					if (!ReferenceEquals(SelectedItem, preAwaitSelection))
+						return;
+				}
+			}
+
 			SelectNode(FindNodeByPath(path, returnBestMatch: true));
 		}
 	}
