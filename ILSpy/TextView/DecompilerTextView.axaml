@@ -12,12 +12,14 @@
 	<!-- Wait-adorner: a translucent overlay above the editor with a centred title +
 	     progress bar + cancel button while a decompilation is in flight. -->
 	<Grid>
-		<ae:TextEditor Name="Editor"
-		               IsReadOnly="True"
-		               ShowLineNumbers="True"
-		               Background="#FFFFE1"
-		               FontFamily="Consolas, Menlo, Monospace"
-		               FontSize="13" />
+		<!-- DecompilerTextEditor subclasses ae:TextEditor to install ThemeAwareHighlightingColorizer
+		     and to redraw the text view when the active theme variant changes. -->
+		<textView:DecompilerTextEditor Name="Editor"
+		                               IsReadOnly="True"
+		                               ShowLineNumbers="True"
+		                               Background="#FFFFE1"
+		                               FontFamily="Consolas, Menlo, Monospace"
+		                               FontSize="13" />
 		<Border Name="WaitAdorner"
 		        Background="#80FFFFFF"
 		        IsVisible="{Binding IsDecompiling}">
