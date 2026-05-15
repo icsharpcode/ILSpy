@@ -30,6 +30,7 @@ using ICSharpCode.ILSpy.Properties;
 
 using ILSpy;
 using ILSpy.AppEnv;
+using ILSpy.Commands;
 using ILSpy.Search;
 using ILSpy.ViewModels;
 using ILSpy.Views;
@@ -113,6 +114,31 @@ public class MainToolBarLayoutTests
 
 		search.IsActive.Should().BeTrue(
 			"clicking the Show-Search toolbar button must activate the search tool pane");
+	}
+
+	[AvaloniaTest]
+	public void Every_ExportToolbarCommand_Resolves_An_Icon()
+	{
+		// `MainToolBar.BuildButton` falls back to a text label when `ResolveIcon` can't find
+		// the `Images/<Name>` asset — that's a UX regression (and a silent one, since the
+		// button still works). Pin every MEF-exported toolbar command to a real IImage so the
+		// next "we forgot to import the SVG" lands as a test failure, not a user report.
+		var registry = AppComposition.Current.GetExport<ToolbarCommandRegistry>();
+		foreach (var entry in registry.Commands)
+		{
+			var iconPath = entry.Metadata.ToolbarIcon;
+			iconPath.Should().NotBeNullOrEmpty(
+				"every toolbar command must declare a ToolbarIcon");
+			var name = iconPath!.StartsWith("Images/", System.StringComparison.Ordinal)
+				? iconPath["Images/".Length..]
+				: iconPath;
+			var field = typeof(global::ILSpy.Images.Images)
+				.GetField(name, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+			field.Should().NotBeNull(
+				$"toolbar command with ToolTip='{entry.Metadata.ToolTip}' references Images/{name} but no static field with that name exists in ILSpy.Images.Images");
+			field!.GetValue(null).Should().NotBeNull(
+				$"the Images.{name} field is declared but null at runtime");
+		}
 	}
 
 	[AvaloniaTest]
