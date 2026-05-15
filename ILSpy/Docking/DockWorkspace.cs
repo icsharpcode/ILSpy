@@ -340,9 +340,41 @@ namespace ILSpy.Docking
 			// reference (only types/members/EntityReferences are supported today).
 			if (segment.Reference == null)
 				return;
+			// EntityReferences with a non-"decompile" protocol (e.g. metadata://) get a first
+			// pass through registered IProtocolHandler exports. The first handler returning a
+			// non-null node wins; if none match we fall through to the default resolver.
+			if (segment.Reference is global::ILSpy.EntityReference entity
+				&& entity.Protocol != "decompile")
+			{
+				var module = entity.ResolveAssembly(assemblyTreeModel.AssemblyList!);
+				if (module != null)
+				{
+					foreach (var handler in TryGetProtocolHandlers())
+					{
+						var resolved = handler.Resolve(entity.Protocol, module, entity.Handle, out _);
+						if (resolved != null)
+						{
+							assemblyTreeModel.SelectedItem = resolved;
+							return;
+						}
+					}
+				}
+			}
 			var node = assemblyTreeModel.FindTreeNode(segment.Reference);
 			if (node != null)
 				assemblyTreeModel.SelectedItem = node;
+		}
+
+		static IEnumerable<Commands.IProtocolHandler> TryGetProtocolHandlers()
+		{
+			try
+			{
+				return AppEnv.AppComposition.Current.GetExports<Commands.IProtocolHandler>();
+			}
+			catch
+			{
+				return System.Array.Empty<Commands.IProtocolHandler>();
+			}
 		}
 
 		// Long-lived decompiler viewmodel — kept alive across metadata interludes so going
