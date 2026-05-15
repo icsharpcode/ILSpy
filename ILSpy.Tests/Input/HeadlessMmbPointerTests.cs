@@ -91,4 +91,55 @@ public class HeadlessMmbPointerTests
 
 		(documents.VisibleDockables?.Count ?? 0).Should().Be(before + 1);
 	}
+
+	[AvaloniaTest]
+	public async Task LMB_Double_Click_On_An_Internal_Tree_Row_Expands_Without_Opening_A_New_Tab()
+	{
+		// LMB double-click is WPF's expand/collapse gesture. The OnTreeGridDoubleTapped handler
+		// is supposed to be the only path that fires; an earlier patch had OnTreeGridPointerPressed
+		// also treating double-click as a third "open in new tab" gesture (alongside MMB +
+		// Ctrl+LMB), which produced both effects at once. Pin the behaviour so it doesn't drift
+		// back: double-click on an internal (non-leaf) row must change neither the tab count
+		// nor the dock topology.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<DataGrid>();
+
+		// Any realised DataGridRow whose data wraps an ILSpyTreeNode is a fine target; the
+		// non-leaf assembly node row (depth 0) is always present and never confused with a
+		// method row whose tree-toggle area is null.
+		await Waiters.WaitForAsync(() => grid.GetVisualDescendants().OfType<DataGridRow>()
+			.Any(r => r.DataContext is HierarchicalNode { Item: ILSpyTreeNode }));
+		var row = grid.GetVisualDescendants().OfType<DataGridRow>()
+			.First(r => r.DataContext is HierarchicalNode { Item: ILSpyTreeNode });
+
+		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
+		int before = documents.VisibleDockables?.Count ?? 0;
+
+		var topLevel = TopLevel.GetTopLevel(row)!;
+		var rowBounds = row.Bounds;
+		var centreInRow = new Point(rowBounds.Width / 2, rowBounds.Height / 2);
+		var centreInTopLevel = row.TranslatePoint(centreInRow, topLevel)
+			?? throw new System.InvalidOperationException("Row not in TopLevel visual tree");
+
+		// Drive two LMB clicks at the same coordinate — Avalonia.Headless interprets the
+		// second click within the double-click threshold as a real double-click event.
+		topLevel.MouseDown(centreInTopLevel, MouseButton.Left);
+		topLevel.MouseUp(centreInTopLevel, MouseButton.Left);
+		topLevel.MouseDown(centreInTopLevel, MouseButton.Left);
+		topLevel.MouseUp(centreInTopLevel, MouseButton.Left);
+
+		// Give the decompile path a beat — if a tab is going to spawn, it will have queued by
+		// now. (We can't `WaitForAsync` on "did NOT spawn", so wait a short fixed budget.)
+		await Task.Delay(250);
+		global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+		(documents.VisibleDockables?.Count ?? 0).Should().Be(before,
+			"LMB double-click must not open a new tab — only MMB and Ctrl+LMB do");
+	}
 }
