@@ -89,6 +89,19 @@ namespace ILSpy.Views
 					session.WindowSize = new Size(Width, Height);
 				}
 			}
+			// Persist the dock layout to ILSpy.Layout.json so the user's pane positions
+			// + splitter ratios survive the next launch. Resolved via composition so the
+			// window doesn't need to be wired with a direct DockWorkspace reference.
+			try
+			{
+				ILSpy.AppEnv.AppComposition.Current
+					.GetExport<ILSpy.Docking.DockWorkspace>()
+					.SaveLayout();
+			}
+			catch (System.Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"[MainWindow] SaveLayout on close failed: {ex}");
+			}
 			base.OnClosing(e);
 		}
 	}

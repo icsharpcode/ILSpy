@@ -101,6 +101,33 @@ namespace ILSpy.Docking
 
 		public IRootDock Layout { get; }
 
+		/// <summary>
+		/// Persists the current dock layout to the JSON sidecar next to ILSpy.xml.
+		/// Called from <c>MainWindow.OnClosing</c> so the user's pane positions,
+		/// splitter ratios, and pinned panels survive a restart. Best-effort: any
+		/// serialization failure is logged and swallowed — losing the saved layout
+		/// is strictly less bad than blocking shutdown.
+		/// </summary>
+		public void SaveLayout() => ILSpyDockFactory.SaveLayout(GetLayoutFilePath(), Layout);
+
+		/// <summary>
+		/// Resolves <c>ILSpy.Layout.json</c> as a sidecar in the same directory the
+		/// XML <c>ILSpy.xml</c> settings file lives in — local-to-binary on portable
+		/// installs, %APPDATA%/ICSharpCode/ otherwise. Keeping it next to the XML
+		/// makes "delete settings to reset" still work as a single-folder action.
+		/// WPF stays XML; this is Avalonia-side only.
+		/// </summary>
+		static string GetLayoutFilePath()
+		{
+			var xmlPath = ICSharpCode.ILSpyX.Settings.ILSpySettings.SettingsFilePathProvider?.Invoke();
+			if (string.IsNullOrEmpty(xmlPath))
+				return "ILSpy.Layout.json";
+			var dir = System.IO.Path.GetDirectoryName(xmlPath);
+			return string.IsNullOrEmpty(dir)
+				? "ILSpy.Layout.json"
+				: System.IO.Path.Combine(dir, "ILSpy.Layout.json");
+		}
+
 		public IReadOnlyList<ToolPaneMenuItem> ToolPaneMenuItems { get; }
 
 		[ImportingConstructor]
@@ -120,7 +147,11 @@ namespace ILSpy.Docking
 			using (ILSpy.AppEnv.StartupLog.Phase("ILSpyDockFactory ctor + CreateLayout"))
 			{
 				factory = new ILSpyDockFactory(toolPaneRegistry);
-				Layout = factory.CreateLayout();
+				// Prefer the user's saved layout (ILSpy.Layout.json sidecar next to
+				// ILSpy.xml); fall back to the default layout if there is no saved one
+				// or it failed to deserialize. The fallback path is the same shape the
+				// app uses on first launch.
+				Layout = factory.LoadLayout(GetLayoutFilePath()) ?? factory.CreateLayout();
 			}
 
 			assemblyTreeModel.PropertyChanged += OnAssemblyTreePropertyChanged;
