@@ -89,7 +89,39 @@ namespace ILSpy.Commands
 	[Shared]
 	sealed class OpenFromGacCommand : SimpleCommand
 	{
-		public override void Execute(object? parameter) => NotImplementedDialog.Show(Resources.OpenFrom_GAC);
+		readonly AssemblyTreeModel assemblyTreeModel;
+
+		[ImportingConstructor]
+		public OpenFromGacCommand(AssemblyTreeModel assemblyTreeModel)
+		{
+			this.assemblyTreeModel = assemblyTreeModel;
+		}
+
+		// The Windows GAC doesn't exist on Linux/macOS. WPF gates this command on
+		// `AppEnvironment.IsWindows`; Avalonia uses the BCL runtime check that already
+		// returns the right answer per OS.
+		public override bool CanExecute(object? parameter) => System.OperatingSystem.IsWindows();
+
+		public override void Execute(object? parameter)
+		{
+			if (!CanExecute(parameter))
+				return;
+			var owner = (global::Avalonia.Application.Current?.ApplicationLifetime
+				as global::Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+			if (owner == null)
+				return;
+			_ = ShowAsync(owner);
+		}
+
+		async System.Threading.Tasks.Task ShowAsync(global::Avalonia.Controls.Window owner)
+		{
+			var dlg = new Views.OpenFromGacDialog();
+			var fileNames = await dlg.ShowDialog<string[]>(owner);
+			if (fileNames == null || fileNames.Length == 0)
+				return;
+			foreach (var name in fileNames)
+				assemblyTreeModel.AssemblyList?.OpenAssembly(name);
+		}
 	}
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.ManageAssembly_Lists), MenuIcon = "Images/AssemblyList", MenuCategory = nameof(Resources.Open), MenuOrder = 1.7)]
