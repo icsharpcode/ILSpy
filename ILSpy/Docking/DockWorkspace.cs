@@ -183,12 +183,24 @@ namespace ILSpy.Docking
 		void OnAssemblyListChanged(object? sender, ILSpy.Util.CurrentAssemblyListChangedEventArgs e)
 		{
 			var inner = e.Inner;
+
+			// On Reset (assembly list wholesale-cleared), drop ALL history — every entry is
+			// stale by definition. Mirrors WPF's assemblyList_CollectionChanged.
+			if (inner.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
+			{
+				PruneHistoryAfterAssemblyListChange(removed: null);
+				return;
+			}
+
 			if (inner.OldItems is not { Count: > 0 } oldItems)
 				return;
 			var removed = new HashSet<ICSharpCode.ILSpyX.LoadedAssembly>(
 				oldItems.OfType<ICSharpCode.ILSpyX.LoadedAssembly>());
 			if (removed.Count == 0)
 				return;
+
+			PruneHistoryAfterAssemblyListChange(removed);
+
 			if (factory.Documents?.VisibleDockables is not { } visible)
 				return;
 
@@ -212,14 +224,29 @@ namespace ILSpy.Docking
 				if (!anyAlive)
 					factory.CloseDockable(dockable);
 			}
+		}
 
-			// TODO: layout persistence (load on startup, save on exit). DockSerializer.SystemTextJson
-			// trips System.Text.Json's MaxDepth=64 limit on our layout because Dock's JsonConverterList<T>
-			// calls JsonSerializer.Serialize per list element, which doesn't preserve the writer's
-			// reference-tracking state between calls — so Owner/Factory back-refs aren't deduplicated as
-			// $ref. Options when revisiting: try Dock.Serializer.Newtonsoft (better cycle handling),
-			// or build a custom JsonSerializerOptions with MaxDepth raised + replicate Dock's internal
-			// polymorphic resolver.
+		// Drops history entries whose tree node lives inside a now-removed assembly. With
+		// <paramref name="removed"/> == null, drops everything (used for the Reset action).
+		// Without this, Back/Forward would surface entries whose Node reference has been
+		// detached from the live tree, and formatting their DisplayText routes through
+		// language-specific formatters that NRE on a stale IEntity.ParentModule.
+		void PruneHistoryAfterAssemblyListChange(HashSet<ICSharpCode.ILSpyX.LoadedAssembly>? removed)
+		{
+			if (removed == null)
+			{
+				history.RemoveAll(_ => true);
+			}
+			else
+			{
+				history.RemoveAll(entry =>
+					entry is Navigation.TreeNodeEntry t
+					&& t.Node.AncestorsAndSelf()
+						.OfType<TreeNodes.AssemblyTreeNode>()
+						.Any(a => removed.Contains(a.LoadedAssembly)));
+			}
+			NavigateBackCommand.NotifyCanExecuteChanged();
+			NavigateForwardCommand.NotifyCanExecuteChanged();
 		}
 
 		void OnDocumentMembershipChanged(object? sender, EventArgs e) => UpdateLastDocumentCanClose();

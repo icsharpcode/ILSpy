@@ -53,10 +53,22 @@ namespace ICSharpCode.Decompiler.IL
 
 		void ConvertSymbol(StringWriter writer, ISymbol symbol)
 		{
-			var metadata = (symbol as IEntity)?.ParentModule!.MetadataFile?.Metadata;
-			var token = (symbol as IEntity)?.MetadataToken ?? default;
+			var entity = symbol as IEntity;
+			var metadata = entity?.ParentModule?.MetadataFile?.Metadata;
+			var token = entity?.MetadataToken ?? default;
 
 			var output = new PlainTextOutput(writer);
+
+			// When the symbol's owning module has been torn down (stale entity pinned in
+			// navigation history after the assembly was unloaded/reloaded), the rest of
+			// the switch can't read its metadata reader. Fall back to the symbol's name
+			// so callers still get sensible display text — the NRE would otherwise
+			// surface up through every consumer that formats a stale history entry.
+			if (metadata == null)
+			{
+				writer.Write(symbol?.Name ?? string.Empty);
+				return;
+			}
 
 			switch (symbol)
 			{
