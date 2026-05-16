@@ -1,0 +1,166 @@
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.IO;
+
+namespace ILSpy.AppEnv
+{
+	/// <summary>
+	/// Categorized diagnostic log. Two surfaces:
+	/// <list type="bullet">
+	/// <item><see cref="Mark"/> / <see cref="Phase"/> — startup-timing helpers. Each line
+	/// gets a <c>[startup +Nms]</c> prefix where N is milliseconds since the first
+	/// <see cref="AppLog"/> reference (process-wide). The <see cref="Category.Startup"/>
+	/// category is default-enabled so these emit without any opt-in.</item>
+	/// <item><see cref="Write(string, string)"/> / <see cref="Write(string, Func{string})"/> —
+	/// general category-based logging. Off by default; enable with the
+	/// <c>ILSPY_LOG=Cat1,Cat2</c> environment variable at process start, or
+	/// <see cref="Enable(string)"/> at runtime.</item>
+	/// </list>
+	/// Output goes to both <see cref="Debug.WriteLine(string)"/> (so DbgView / IDE
+	/// Debug Output captures it) and <c>%TEMP%\ilspy-avalonia.log</c> (truncated at
+	/// the first write of each process). Use the <see cref="Func{T}"/> overload of
+	/// <see cref="Write(string, Func{string})"/> for messages that interpolate non-
+	/// trivial state — the factory is only invoked when the category is enabled,
+	/// keeping the call site zero-cost when off.
+	/// </summary>
+	public static class AppLog
+	{
+		/// <summary>
+		/// Well-known category names. Free-form strings work too — these constants exist
+		/// so call sites are typo-resistant and so adding a new category doesn't require
+		/// updating callers (just add a constant + start writing).
+		/// </summary>
+		public static class Category
+		{
+			/// <summary>Process startup timeline. Default on so <see cref="Mark"/> / <see cref="Phase"/> emit without env-var opt-in.</summary>
+			public const string Startup = "Startup";
+
+			/// <summary>Dock chrome activity — view-recycling cache, layout save/load, drag/drop transitions.</summary>
+			public const string Docking = "Docking";
+		}
+
+		static readonly Stopwatch sw = Stopwatch.StartNew();
+		static readonly ConcurrentDictionary<string, bool> enabled = LoadFromEnvironment();
+		static readonly object fileLock = new();
+		static readonly string logFilePath = Path.Combine(Path.GetTempPath(), "ilspy-avalonia.log");
+		static bool fileTruncated;
+
+		/// <summary>Returns true if the given category is currently enabled.</summary>
+		public static bool IsEnabled(string category)
+			=> enabled.TryGetValue(category, out var on) && on;
+
+		/// <summary>Enables a category. Idempotent.</summary>
+		public static void Enable(string category) => enabled[category] = true;
+
+		/// <summary>Disables a category. Idempotent.</summary>
+		public static void Disable(string category) => enabled[category] = false;
+
+		/// <summary>
+		/// Writes a message under <paramref name="category"/> if enabled. Prefer the
+		/// <see cref="Write(string, Func{string})"/> overload for messages built with
+		/// string interpolation — this overload pays formatting cost at the call site
+		/// regardless of whether the category is on.
+		/// </summary>
+		public static void Write(string category, string message)
+		{
+			if (!IsEnabled(category))
+				return;
+			EmitLine($"[{DateTime.Now:HH:mm:ss.fff}] [{category}] {message}");
+		}
+
+		/// <summary>
+		/// Writes a message under <paramref name="category"/> if enabled. The factory
+		/// delegate is only invoked when the category is on, so the caller's string
+		/// interpolation is zero-cost when off.
+		/// </summary>
+		public static void Write(string category, Func<string> messageFactory)
+		{
+			if (!IsEnabled(category))
+				return;
+			EmitLine($"[{DateTime.Now:HH:mm:ss.fff}] [{category}] {messageFactory()}");
+		}
+
+		/// <summary>
+		/// Emits a single startup-timing line: <c>[startup +Nms] message</c>, where N
+		/// is milliseconds since the process started. No-op if <see cref="Category.Startup"/>
+		/// has been disabled.
+		/// </summary>
+		public static void Mark(string message)
+		{
+			if (!IsEnabled(Category.Startup))
+				return;
+			EmitLine($"[startup +{sw.ElapsedMilliseconds,5}ms] {message}");
+		}
+
+		/// <summary>
+		/// Brackets a scope with BEGIN/END startup markers carrying the duration spent
+		/// inside. Use with <c>using var _ = AppLog.Phase("...");</c>. No-op if
+		/// <see cref="Category.Startup"/> has been disabled (the returned disposable is
+		/// still safe to use; its Dispose is a no-op).
+		/// </summary>
+		public static IDisposable Phase(string name)
+		{
+			Mark($"BEGIN {name}");
+			return new PhaseScope(name, Stopwatch.StartNew());
+		}
+
+		sealed class PhaseScope(string name, Stopwatch local) : IDisposable
+		{
+			public void Dispose() => Mark($"END   {name} ({local.ElapsedMilliseconds}ms)");
+		}
+
+		static void EmitLine(string line)
+		{
+			Debug.WriteLine(line);
+			lock (fileLock)
+			{
+				try
+				{
+					if (!fileTruncated)
+					{
+						File.WriteAllText(logFilePath, $"[AppLog started {DateTime.Now:O}]" + Environment.NewLine);
+						fileTruncated = true;
+					}
+					File.AppendAllText(logFilePath, line + Environment.NewLine);
+				}
+				catch
+				{
+					// Logging failures must not bubble — diagnostic only.
+				}
+			}
+		}
+
+		static ConcurrentDictionary<string, bool> LoadFromEnvironment()
+		{
+			var dict = new ConcurrentDictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+			// Startup category is default-on so the existing pattern of unconditional
+			// Mark/Phase calls in the startup path keeps working without env-var setup.
+			dict[Category.Startup] = true;
+			var env = Environment.GetEnvironmentVariable("ILSPY_LOG");
+			if (string.IsNullOrWhiteSpace(env))
+				return dict;
+			foreach (var raw in env.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+				dict[raw] = true;
+			return dict;
+		}
+	}
+}

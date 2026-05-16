@@ -57,7 +57,7 @@ namespace ILSpy.ViewModels
 			SettingsService settingsService,
 			UpdatePanelViewModel updatePanel)
 		{
-			AppEnv.StartupLog.Mark("MainWindowViewModel ctor entered (deps already resolved)");
+			AppEnv.AppLog.Mark("MainWindowViewModel ctor entered (deps already resolved)");
 			AssemblyTreeModel = assemblyTreeModel;
 			LanguageService = languageService;
 			DockWorkspace = dockWorkspace;
@@ -68,7 +68,7 @@ namespace ILSpy.ViewModels
 			// startup isn't blocked on the HTTP call. The panel stays hidden unless an
 			// actual update is available.
 			_ = updatePanel.CheckIfUpdatesAvailableAsync();
-			AppEnv.StartupLog.Mark("MainWindowViewModel ctor exited");
+			AppEnv.AppLog.Mark("MainWindowViewModel ctor exited");
 		}
 	}
 }

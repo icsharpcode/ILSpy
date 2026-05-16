@@ -41,30 +41,30 @@ namespace ILSpy.Views
 			// Layout.CanDrag, Layout.CanDrop, Layout.DockGroup template bindings) sees a
 			// non-null source on first evaluation. Without that ordering, every binding
 			// throws + logs at startup, which adds up to ~30 errors per launch.
-			StartupLog.Mark("MainWindow parameterless ctor entered (XAML inflation about to start)");
+			AppLog.Mark("MainWindow parameterless ctor entered (XAML inflation about to start)");
 			InitializeComponent();
-			StartupLog.Mark("MainWindow parameterless ctor exited (XAML inflation done)");
+			AppLog.Mark("MainWindow parameterless ctor exited (XAML inflation done)");
 		}
 
 		[ImportingConstructor]
 		public MainWindow(MainWindowViewModel viewModel, SettingsService settingsService)
 		{
-			StartupLog.Mark("MainWindow ctor entered");
+			AppLog.Mark("MainWindow ctor entered");
 			this.settingsService = settingsService;
 			DataContext = viewModel;
-			StartupLog.Mark("MainWindow XAML inflation about to start (DataContext set)");
+			AppLog.Mark("MainWindow XAML inflation about to start (DataContext set)");
 			InitializeComponent();
-			StartupLog.Mark("MainWindow XAML inflation done");
+			AppLog.Mark("MainWindow XAML inflation done");
 			ApplySessionSettings(settingsService.SessionSettings);
 			Opened += async (_, _) => {
-				StartupLog.Mark("MainWindow.Opened fired");
-				using (StartupLog.Phase("AssemblyTreeModel.Initialize"))
+				AppLog.Mark("MainWindow.Opened fired");
+				using (AppLog.Phase("AssemblyTreeModel.Initialize"))
 					viewModel.AssemblyTreeModel.Initialize();
-				StartupLog.Mark("MainWindow.Opened handler returning");
+				AppLog.Mark("MainWindow.Opened handler returning");
 				if (App.CommandLineArguments is { } args)
 					await viewModel.AssemblyTreeModel.HandleCommandLineArgumentsAsync(args);
 			};
-			StartupLog.Mark("MainWindow ctor exited");
+			AppLog.Mark("MainWindow ctor exited");
 		}
 
 		void ApplySessionSettings(SessionSettings session)

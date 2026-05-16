@@ -51,11 +51,11 @@ namespace ILSpy.AssemblyTree
 
 		public AssemblyListPane()
 		{
-			AppEnv.StartupLog.Mark("AssemblyListPane ctor entered");
+			AppEnv.AppLog.Mark("AssemblyListPane ctor entered");
 			InitializeComponent();
-			AttachedToVisualTree += (_, _) => AppEnv.StartupLog.Mark("AssemblyListPane attached to visual tree");
+			AttachedToVisualTree += (_, _) => AppEnv.AppLog.Mark("AssemblyListPane attached to visual tree");
 			Loaded += (_, _) => {
-				AppEnv.StartupLog.Mark("AssemblyListPane Loaded");
+				AppEnv.AppLog.Mark("AssemblyListPane Loaded");
 				if (DataContext is AssemblyTreeModel m)
 					m.MarkTreeReady();
 			};
@@ -64,7 +64,7 @@ namespace ILSpy.AssemblyTree
 			// output appearing.
 			void OnFirstRowLoaded(object? sender, DataGridRowEventArgs args)
 			{
-				AppEnv.StartupLog.Mark("Assembly tree DataGrid: first row realised");
+				AppEnv.AppLog.Mark("Assembly tree DataGrid: first row realised");
 				TreeGrid.LoadingRow -= OnFirstRowLoaded;
 			}
 			TreeGrid.LoadingRow += OnFirstRowLoaded;
@@ -377,7 +377,6 @@ namespace ILSpy.AssemblyTree
 			() => syncingSelection = false,
 			DispatcherPriority.Background);
 
-
 		void OnTreeGridDoubleTapped(object? sender, TappedEventArgs e)
 		{
 			if (TreeGrid.HierarchicalModel is not IHierarchicalModel model)
@@ -443,13 +442,13 @@ namespace ILSpy.AssemblyTree
 
 		protected override void OnDataContextChanged(System.EventArgs e)
 		{
-			using var _ = AppEnv.StartupLog.Phase("AssemblyListPane.OnDataContextChanged");
+			using var _ = AppEnv.AppLog.Phase("AssemblyListPane.OnDataContextChanged");
 			base.OnDataContextChanged(e);
 
 			if (DataContext is AssemblyTreeModel model)
 			{
 				model.PropertyChanged += Model_PropertyChanged;
-				AppEnv.StartupLog.Mark($"AssemblyListPane DataContext is AssemblyTreeModel; Root={(model.Root != null ? "set" : "null")}");
+				AppEnv.AppLog.Mark($"AssemblyListPane DataContext is AssemblyTreeModel; Root={(model.Root != null ? "set" : "null")}");
 				if (model.Root != null)
 				{
 					BindTree(model.Root);
@@ -491,7 +490,7 @@ namespace ILSpy.AssemblyTree
 
 		void BindTree(SharpTreeNode root)
 		{
-			using var _ = AppEnv.StartupLog.Phase("AssemblyListPane.BindTree");
+			using var _ = AppEnv.AppLog.Phase("AssemblyListPane.BindTree");
 			var settings = languageSettings;
 			var options = new HierarchicalOptions<SharpTreeNode> {
 				ChildrenSelector = node => {

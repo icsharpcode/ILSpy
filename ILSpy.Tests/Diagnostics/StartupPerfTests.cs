@@ -138,7 +138,7 @@ public class StartupPerfTests
 
 			// Surface the StartupLog elapsed (ms since process start) so the test output also
 			// captures the big-picture timing alongside the per-phase deltas above.
-			StartupLog.Mark("StartupPerfTests benchmark completed");
+			AppLog.Mark("StartupPerfTests benchmark completed");
 		}
 		finally
 		{

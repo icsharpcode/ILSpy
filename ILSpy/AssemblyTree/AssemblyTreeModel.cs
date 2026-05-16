@@ -103,7 +103,7 @@ namespace ILSpy.AssemblyTree
 		[ImportingConstructor]
 		public AssemblyTreeModel(SettingsService settingsService, LanguageService languageService)
 		{
-			AppEnv.StartupLog.Mark("AssemblyTreeModel ctor entered");
+			AppEnv.AppLog.Mark("AssemblyTreeModel ctor entered");
 			this.settingsService = settingsService;
 			this.languageService = languageService;
 			languageService.PropertyChanged += (_, e) => {
@@ -119,7 +119,7 @@ namespace ILSpy.AssemblyTree
 			Id = PaneContentId;
 			Title = "Assemblies";
 			CanClose = false;
-			AppEnv.StartupLog.Mark("AssemblyTreeModel ctor exited");
+			AppEnv.AppLog.Mark("AssemblyTreeModel ctor exited");
 		}
 
 		void OnNavigateToReference(object? sender, Util.NavigateToReferenceEventArgs e)
@@ -197,14 +197,14 @@ namespace ILSpy.AssemblyTree
 		internal void MarkTreeReady()
 		{
 			if (treeReadyTcs.TrySetResult(true))
-				AppEnv.StartupLog.Mark("AssemblyTreeModel.TreeReady completed");
+				AppEnv.AppLog.Mark("AssemblyTreeModel.TreeReady completed");
 		}
 
 		public void Initialize()
 		{
-			using var _ = AppEnv.StartupLog.Phase("AssemblyTreeModel.Initialize body");
+			using var _ = AppEnv.AppLog.Phase("AssemblyTreeModel.Initialize body");
 			listManager = settingsService.AssemblyListManager;
-			using (AppEnv.StartupLog.Phase("CreateDefaultAssemblyLists"))
+			using (AppEnv.AppLog.Phase("CreateDefaultAssemblyLists"))
 				listManager.CreateDefaultAssemblyLists();
 
 			SyncListNames();
@@ -244,7 +244,7 @@ namespace ILSpy.AssemblyTree
 
 		async Task RestoreSelectedPathAsync(string[] path)
 		{
-			using var _ = AppEnv.StartupLog.Phase($"RestoreSelectedPathAsync ({path.Length} segments)");
+			using var _ = AppEnv.AppLog.Phase($"RestoreSelectedPathAsync ({path.Length} segments)");
 			try
 			{
 				if (Root == null)
@@ -262,10 +262,10 @@ namespace ILSpy.AssemblyTree
 					// Once the load completes the .GetAwaiter().GetResult() returns instantly.
 					if (node is AssemblyTreeNode asm)
 					{
-						using (AppEnv.StartupLog.Phase($"await GetLoadResultAsync ({asm.LoadedAssembly.ShortName})"))
+						using (AppEnv.AppLog.Phase($"await GetLoadResultAsync ({asm.LoadedAssembly.ShortName})"))
 							await asm.LoadedAssembly.GetLoadResultAsync().ConfigureAwait(true);
 					}
-					using (AppEnv.StartupLog.Phase($"EnsureLazyChildren ({node.GetType().Name} \"{element}\")"))
+					using (AppEnv.AppLog.Phase($"EnsureLazyChildren ({node.GetType().Name} \"{element}\")"))
 						node.EnsureLazyChildren();
 					node = node.Children.FirstOrDefault(c => c.ToString() == element);
 				}
@@ -275,7 +275,7 @@ namespace ILSpy.AssemblyTree
 				// BEFORE the assembly tree has rendered — a confusing reverse order.
 				// The 5-second timeout is a safety net for environments where the pane
 				// never loads (headless tests, design-time previews).
-				using (AppEnv.StartupLog.Phase("await TreeReady before SelectedItem assignment"))
+				using (AppEnv.AppLog.Phase("await TreeReady before SelectedItem assignment"))
 				{
 					await Task.WhenAny(TreeReady, Task.Delay(TimeSpan.FromSeconds(5)))
 						.ConfigureAwait(true);
@@ -294,7 +294,7 @@ namespace ILSpy.AssemblyTree
 			if (listManager == null)
 				return;
 			AssemblyList list;
-			using (AppEnv.StartupLog.Phase($"LoadList({name})"))
+			using (AppEnv.AppLog.Phase($"LoadList({name})"))
 				list = listManager.LoadList(name);
 			if (AssemblyList == null || list.ListName != AssemblyList.ListName)
 				ShowAssemblyList(list);
@@ -302,7 +302,7 @@ namespace ILSpy.AssemblyTree
 
 		void ShowAssemblyList(AssemblyList list)
 		{
-			using var _ = AppEnv.StartupLog.Phase("ShowAssemblyList(list)");
+			using var _ = AppEnv.AppLog.Phase("ShowAssemblyList(list)");
 			// Detach the previous list's collection-changed wiring so the MessageBus
 			// republisher and the navigation-history pruning don't fire against a stale
 			// list. Re-attach on the new list so panes (DockWorkspace, SearchPaneModel)
@@ -314,14 +314,14 @@ namespace ILSpy.AssemblyTree
 			list.CollectionChanged += OnActiveAssemblyListCollectionChanged;
 			if (list.GetAssemblies().Length == 0 && list.ListName == AssemblyListManager.DefaultListName)
 			{
-				using (AppEnv.StartupLog.Phase("LoadInitialAssemblies"))
+				using (AppEnv.AppLog.Phase("LoadInitialAssemblies"))
 					LoadInitialAssemblies(list);
 			}
-			AppEnv.StartupLog.Mark($"AssemblyList contains {list.GetAssemblies().Length} assemblies");
-			using (AppEnv.StartupLog.Phase("new AssemblyListTreeNode"))
+			AppEnv.AppLog.Mark($"AssemblyList contains {list.GetAssemblies().Length} assemblies");
+			using (AppEnv.AppLog.Phase("new AssemblyListTreeNode"))
 				assemblyListTreeNode = new AssemblyListTreeNode(list);
 			Root = assemblyListTreeNode;
-			AppEnv.StartupLog.Mark("Root assigned");
+			AppEnv.AppLog.Mark("Root assigned");
 			ScheduleBackgroundLoadSweep(list);
 		}
 
@@ -349,7 +349,7 @@ namespace ILSpy.AssemblyTree
 					// — kicking off 122 metadata loads the same frame the tree appears would
 					// steal cycles from the layout pass that just brought it on screen.
 					await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(false);
-					AppEnv.StartupLog.Mark("Background-load sweep starting");
+					AppEnv.AppLog.Mark("Background-load sweep starting");
 					foreach (var assembly in list.GetAssemblies())
 					{
 						// Calling GetLoadResultAsync triggers the Lazy<Task> creation. We don't
@@ -357,7 +357,7 @@ namespace ILSpy.AssemblyTree
 						// on the thread pool, just delayed past the active-assembly window.
 						_ = assembly.GetLoadResultAsync();
 					}
-					AppEnv.StartupLog.Mark("Background-load sweep dispatched");
+					AppEnv.AppLog.Mark("Background-load sweep dispatched");
 				}
 				catch (Exception ex)
 				{

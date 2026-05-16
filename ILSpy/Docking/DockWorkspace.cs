@@ -136,7 +136,7 @@ namespace ILSpy.Docking
 			ToolPaneRegistry toolPaneRegistry,
 			LanguageService languageService)
 		{
-			ILSpy.AppEnv.StartupLog.Mark("DockWorkspace ctor entered");
+			ILSpy.AppEnv.AppLog.Mark("DockWorkspace ctor entered");
 			this.assemblyTreeModel = assemblyTreeModel;
 			this.languageService = languageService;
 			NavigateBackCommand = new RelayCommand(NavigateBack, () => history.CanNavigateBack);
@@ -144,7 +144,7 @@ namespace ILSpy.Docking
 			NavigateToHistoryCommand = new RelayCommand<NavigationEntry>(NavigateToHistory,
 				entry => entry != null && (history.BackEntries.Contains(entry) || history.ForwardEntries.Contains(entry)));
 			ShowSearchCommand = new RelayCommand(ExecuteShowSearch);
-			using (ILSpy.AppEnv.StartupLog.Phase("ILSpyDockFactory ctor + CreateLayout"))
+			using (ILSpy.AppEnv.AppLog.Phase("ILSpyDockFactory ctor + CreateLayout"))
 			{
 				factory = new ILSpyDockFactory(toolPaneRegistry);
 				// Prefer the user's saved layout (ILSpy.Layout.json sidecar next to
@@ -177,7 +177,7 @@ namespace ILSpy.Docking
 			// next via the assembly tree. Mirrors WPF's DockWorkspace.CurrentAssemblyList_Changed.
 			ILSpy.Util.MessageBus<ILSpy.Util.CurrentAssemblyListChangedEventArgs>.Subscribers
 				+= OnAssemblyListChanged;
-			ILSpy.AppEnv.StartupLog.Mark("DockWorkspace ctor exited");
+			ILSpy.AppEnv.AppLog.Mark("DockWorkspace ctor exited");
 		}
 
 		void OnAssemblyListChanged(object? sender, ILSpy.Util.CurrentAssemblyListChangedEventArgs e)

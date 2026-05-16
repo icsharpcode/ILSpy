@@ -63,7 +63,7 @@ namespace ILSpy.TextView
 			if (!string.IsNullOrEmpty(newValue)
 				&& System.Threading.Interlocked.Exchange(ref firstTextMarked, 1) == 0)
 			{
-				ILSpy.AppEnv.StartupLog.Mark("DecompilerTabPageModel: first non-empty Text set");
+				ILSpy.AppEnv.AppLog.Mark("DecompilerTabPageModel: first non-empty Text set");
 			}
 		}
 
