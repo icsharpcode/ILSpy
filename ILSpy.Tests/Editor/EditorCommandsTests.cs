@@ -79,13 +79,20 @@ public class EditorCommandsTests
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		// Single-method target — decompiling the full Enumerable class can exceed
+		// Waiters.WaitForAsync's 15s timeout (300+ LINQ methods); a single method body
+		// is sub-second. Uses the strong completion signal (IsDecompiling: false +
+		// non-empty Text) instead of polling the editor's TextLength, which races the
+		// model→view binding and can latch on stale state from previous tests.
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
-		vm.AssemblyTreeModel.SelectNode(typeNode);
+		typeNode.IsExpanded = true;
+		var methodNode = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "AsEnumerable");
+		vm.AssemblyTreeModel.SelectNode(methodNode);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		var view = await window.WaitForComponent<DecompilerTextView>();
 		await view.WaitForComponent<TextEditor>();
-		// Editor needs a non-empty document; wait for the decompile to finish writing it.
-		await Waiters.WaitForAsync(() => view.Editor.Document.TextLength > 0);
 
 		var copy = LocateEntry(nameof(Resources.Copy));
 		var ctx = new TextViewContext { TextView = view };
@@ -110,10 +117,13 @@ public class EditorCommandsTests
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
-		vm.AssemblyTreeModel.SelectNode(typeNode);
+		typeNode.IsExpanded = true;
+		var methodNode = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "AsEnumerable");
+		vm.AssemblyTreeModel.SelectNode(methodNode);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		var view = await window.WaitForComponent<DecompilerTextView>();
 		await view.WaitForComponent<TextEditor>();
-		await Waiters.WaitForAsync(() => view.Editor.Document.TextLength >= 8);
 
 		var copy = LocateEntry(nameof(Resources.Copy));
 		view.Editor.Select(0, 6);
@@ -135,10 +145,13 @@ public class EditorCommandsTests
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
-		vm.AssemblyTreeModel.SelectNode(typeNode);
+		typeNode.IsExpanded = true;
+		var methodNode = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "AsEnumerable");
+		vm.AssemblyTreeModel.SelectNode(methodNode);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		var view = await window.WaitForComponent<DecompilerTextView>();
 		await view.WaitForComponent<TextEditor>();
-		await Waiters.WaitForAsync(() => view.Editor.Document.TextLength > 0);
 
 		var selectAll = LocateEntry(nameof(Resources.Select));
 		view.Editor.Select(0, 0);
