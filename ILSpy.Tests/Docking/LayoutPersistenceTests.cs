@@ -21,11 +21,11 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-using Dock.Model.Core;
-
 using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
+
+using Dock.Model.Core;
 
 using ILSpy.AppEnv;
 using ILSpy.Docking;

@@ -21,9 +21,9 @@ using System.ComponentModel;
 using System.Linq;
 using System.Xml.Linq;
 
-using global::Avalonia.Media;
-
 using CommunityToolkit.Mvvm.ComponentModel;
+
+using global::Avalonia.Media;
 
 using ICSharpCode.ILSpy.Properties;
 

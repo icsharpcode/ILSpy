@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Reflection;
 
 using Avalonia;
 using Avalonia.Collections;
@@ -28,8 +29,6 @@ using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Markup.Xaml;
 using Avalonia.VisualTree;
-
-using System.Reflection;
 
 using ILSpy.AppEnv;
 using ILSpy.Commands;

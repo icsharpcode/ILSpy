@@ -24,6 +24,7 @@ using ICSharpCode.ILSpyX.Settings;
 using ILSpy.AppEnv;
 
 using ProductionApp = ILSpy.App;
+using SettingsService = ILSpy.SettingsService;
 
 namespace ICSharpCode.ILSpy.Tests;
 

@@ -30,9 +30,9 @@ using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 using ILSpy.Views;
 
-using FoldingSnapshot = ILSpy.TextView.FoldingsViewState.Snapshot;
-
 using NUnit.Framework;
+
+using FoldingSnapshot = ILSpy.TextView.FoldingsViewState.Snapshot;
 
 namespace ICSharpCode.ILSpy.Tests.Navigation;
 

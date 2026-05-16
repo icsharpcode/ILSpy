@@ -19,13 +19,13 @@
 using System;
 using System.Diagnostics;
 
+using AvaloniaEdit.Editing;
+using AvaloniaEdit.Rendering;
+
 using global::Avalonia;
 using global::Avalonia.Controls.Documents;
 using global::Avalonia.Media;
 using global::Avalonia.Threading;
-
-using AvaloniaEdit.Editing;
-using AvaloniaEdit.Rendering;
 
 namespace ILSpy.TextView
 {

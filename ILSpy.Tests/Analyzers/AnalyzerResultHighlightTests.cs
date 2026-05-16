@@ -27,8 +27,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 using ILSpy.Analyzers;
-using ILSpy.AppEnv;
 using ILSpy.Analyzers.TreeNodes;
+using ILSpy.AppEnv;
 using ILSpy.Docking;
 using ILSpy.TextView;
 using ILSpy.TreeNodes;
