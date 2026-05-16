@@ -18,12 +18,16 @@
 
 using System.ComponentModel;
 
+using Avalonia.Controls;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using Dock.Controls.DeferredContentControl;
 using Dock.Model.Core;
 
 using ICSharpCode.ILSpyX.TreeView;
+
+using ILSpy.Docking;
 
 namespace ILSpy.ViewModels
 {
@@ -34,8 +38,11 @@ namespace ILSpy.ViewModels
 	/// which is visible — Dock.Avalonia's add+close-in-the-same-tick semantics otherwise
 	/// leave the previous view rendered when the tab type changes.
 	/// </summary>
-	public sealed partial class ContentTabPage : TabPageModel, IDeferredContentPresentation
+	public sealed partial class ContentTabPage : TabPageModel, IDeferredContentPresentation, IDockableViewOwner
 	{
+		// Each document tab owns its view; it is released for GC when the tab is dropped.
+		public Control? OwnedView { get; set; }
+
 		public ContentTabPage()
 		{
 			// Same reason as ToolPaneModel — Dock's chrome template binds against

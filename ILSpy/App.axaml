@@ -10,11 +10,21 @@
              xmlns:metaViews="using:ILSpy.Views"
              xmlns:vm="using:ILSpy.ViewModels"
              xmlns:dockTheme="using:Dock.Avalonia.Themes.Simple"
+             xmlns:recycling="using:Avalonia.Controls.Recycling"
+             xmlns:docking="using:ILSpy.Docking"
              xmlns:controls="using:ILSpy.Controls"
              RequestedThemeVariant="Default">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.Resources>
+        <!-- Every dockable owns its view (IDockableViewOwner): the dock chrome must render one
+             view per dockable identity, not one per slot, or two panes sharing a ToolDock slot
+             (e.g. Analyzer + Debug Steps both Bottom-aligned) render each other's content. This
+             resolver hands back the dockable's own view instead of pinning views in a global,
+             never-evicting cache (a leak for transient document tabs). Wired to every DockControl
+             via the style below. -->
+        <docking:DockableViewRecycling x:Key="ControlRecyclingKey" />
+
         <!-- Override ProDataGrid's hierarchical expander to a classic Windows-Explorer-sized 9x9 box,
              plus 4px of left padding (so the ToggleButton itself is 13x9). -->
         <x:Double x:Key="DataGridHierarchicalExpanderSize">13</x:Double>
@@ -69,6 +79,12 @@
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Simple.v2.xaml" />
         <StyleInclude Source="avares://AvaloniaEdit/Themes/Simple/AvaloniaEdit.xaml" />
         <dockTheme:DockSimpleTheme />
+
+        <!-- Hook the ControlRecycling instance onto every DockControl so the dock chrome
+             resolves views per dockable identity instead of caching one view per dock slot. -->
+        <Style Selector="DockControl">
+            <Setter Property="(recycling:ControlRecyclingDataTemplate.ControlRecycling)" Value="{StaticResource ControlRecyclingKey}" />
+        </Style>
 
         <!-- Suppress the column header's hover / pressed fill while the user is interacting
              with content INSIDE the header (e.g. typing into a per-column filter TextBox).

@@ -56,6 +56,7 @@
     <PackageReference Include="Avalonia.Xaml.Behaviors" />
     <PackageReference Include="Dock.Avalonia" />
     <PackageReference Include="Dock.Avalonia.Themes.Simple" />
+    <PackageReference Include="Dock.Controls.Recycling" />
     <PackageReference Include="Dock.Model.Mvvm" />
     <PackageReference Include="Dock.Serializer.SystemTextJson" />
     <PackageReference Include="ProDataGrid" />

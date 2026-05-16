@@ -17,42 +17,81 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 
+using Dock.Model.Core;
+
+using ILSpy.Analyzers;
+using ILSpy.AssemblyTree;
+using ILSpy.Compare;
+using ILSpy.Search;
+using ILSpy.TextView;
 using ILSpy.ViewModels;
+using ILSpy.Views;
 
 namespace ILSpy
 {
 	/// <summary>
-	/// Given a view model, returns the corresponding view if possible.
+	/// Single application-wide IDataTemplate that resolves a view-model to its view. Two
+	/// resolution paths:
+	///   1. Explicit <see cref="s_views"/> map (Dock-hosted view-models). Dispatched via
+	///      a parameter-less ctor delegate — equivalent to MvvmSample's compile-time
+	///      <c>[StaticViewLocator]</c>-generated dictionary.
+	///   2. Convention fallback for any <see cref="ViewModelBase"/>-derived viewmodel:
+	///      <c>SomeViewModel</c> → <c>SomeView</c> resolved via <see cref="Type.GetType(string)"/>.
+	///
+	/// <para>
+	/// One locator instance handles every <see cref="IDockable"/> (and any
+	/// <see cref="ViewModelBase"/>) rather than N typed
+	/// <c>&lt;DataTemplate DataType="..."/&gt;</c> blocks in App.axaml: the owned-view
+	/// resolver (<c>DockableViewRecycling</c>) builds each dockable's view through this map
+	/// once, and a single shared template keeps view resolution uniform across the dock
+	/// chrome. Mirrors <c>samples/DockMvvmSample</c>'s StaticViewLocator shape.
+	/// </para>
 	/// </summary>
 	[RequiresUnreferencedCode(
-		"Default implementation of ViewLocator involves reflection which may be trimmed away.",
+		"Convention fallback uses reflection (Type.GetType) which may be trimmed.",
 		Url = "https://docs.avaloniaui.net/docs/concepts/view-locator")]
 	public class ViewLocator : IDataTemplate
 	{
+		static readonly Dictionary<Type, Func<Control>> s_views = new() {
+			{ typeof(AssemblyTreeModel),       () => new AssemblyListPane() },
+			{ typeof(SearchPaneModel),         () => new SearchPane() },
+			{ typeof(AnalyzerTreeViewModel),   () => new AnalyzerTreeView() },
+			{ typeof(ContentTabPage),          () => new ContentTabPageView() },
+			{ typeof(DecompilerTabPageModel),  () => new DecompilerTextView() },
+			{ typeof(MetadataTablePageModel),  () => new MetadataTablePage() },
+			{ typeof(CompareTabPageModel),     () => new CompareView() },
+#if DEBUG
+			{ typeof(DebugStepsPaneModel),     () => new DebugSteps() },
+#endif
+		};
+
 		public Control? Build(object? param)
 		{
 			if (param is null)
 				return null;
-
+			if (s_views.TryGetValue(param.GetType(), out var ctor))
+				return ctor();
+			// Convention fallback for ViewModelBase-derived VMs not in the explicit map.
 			var name = param.GetType().FullName!.Replace("ViewModel", "View", StringComparison.Ordinal);
 			var type = Type.GetType(name);
-
 			if (type != null)
-			{
 				return (Control)Activator.CreateInstance(type)!;
-			}
-
 			return new TextBlock { Text = "Not Found: " + name };
 		}
 
 		public bool Match(object? data)
 		{
-			return data is ViewModelBase;
+			if (data is null)
+				return false;
+			return data is IDockable
+				|| data is ViewModelBase
+				|| s_views.ContainsKey(data.GetType());
 		}
 	}
 }

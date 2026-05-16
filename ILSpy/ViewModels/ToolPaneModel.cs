@@ -16,9 +16,13 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using Avalonia.Controls;
+
 using Dock.Controls.DeferredContentControl;
 using Dock.Model.Core;
 using Dock.Model.Mvvm.Controls;
+
+using ILSpy.Docking;
 
 namespace ILSpy.ViewModels
 {
@@ -37,7 +41,7 @@ namespace ILSpy.ViewModels
 	/// startup logs a <c>[Binding]</c> error per property — adds up to ~30 errors per
 	/// launch.
 	/// </summary>
-	public abstract class ToolPaneModel : Tool, IDeferredContentPresentation
+	public abstract class ToolPaneModel : Tool, IDeferredContentPresentation, IDockableViewOwner
 	{
 		protected ToolPaneModel()
 		{
@@ -45,5 +49,8 @@ namespace ILSpy.ViewModels
 		}
 
 		bool IDeferredContentPresentation.DeferContentPresentation => false;
+
+		// Each tool pane is a singleton, so this holds its one view for the app's life.
+		public Control? OwnedView { get; set; }
 	}
 }

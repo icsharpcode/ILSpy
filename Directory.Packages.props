@@ -28,6 +28,7 @@
     <PackageVersion Include="Dock.Avalonia" Version="$(DockVersion)" />
     <PackageVersion Include="Dock.Avalonia.Themes.Fluent" Version="$(DockVersion)" />
     <PackageVersion Include="Dock.Avalonia.Themes.Simple" Version="$(DockVersion)" />
+    <PackageVersion Include="Dock.Controls.Recycling" Version="$(DockVersion)" />
     <PackageVersion Include="Dock.Model" Version="$(DockVersion)" />
     <PackageVersion Include="Dock.Model.Mvvm" Version="$(DockVersion)" />
     <PackageVersion Include="Dock.Serializer.SystemTextJson" Version="$(DockVersion)" />
