@@ -1831,6 +1831,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Enable menu animations.
+        /// </summary>
+        public static string EnableMenuAnimations {
+            get {
+                return ResourceManager.GetString("EnableMenuAnimations", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Enable word wrap.
         /// </summary>
         public static string EnableWordWrap {

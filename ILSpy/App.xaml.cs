@@ -29,6 +29,7 @@ using System.Windows.Threading;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX.Analyzers;
 
 using Medo.Application;
@@ -109,6 +110,7 @@ namespace ICSharpCode.ILSpy
 			Resources.MergedDictionaries.Add(DataTemplateManager.CreateDynamicDataTemplates(ExportProvider));
 
 			var sessionSettings = settingsService.SessionSettings;
+			MenuPopupAnimationHelper.Apply(settingsService.DisplaySettings.EnableMenuAnimations);
 			ThemeManager.Current.Theme = sessionSettings.Theme;
 			if (!string.IsNullOrEmpty(sessionSettings.CurrentCulture))
 			{

@@ -19,6 +19,7 @@
 using System.Windows.Media;
 using System.Xml.Linq;
 
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX.Settings;
 
 using TomsToolbox.Wpf;
@@ -156,6 +157,12 @@ namespace ICSharpCode.ILSpy.Options
 			set => SetProperty(ref enableSmoothScrolling, value);
 		}
 
+		private bool enableMenuAnimations;
+		public bool EnableMenuAnimations {
+			get => enableMenuAnimations;
+			set => SetProperty(ref enableMenuAnimations, value);
+		}
+
 		private bool decodeCustomAttributeBlobs;
 		public bool DecodeCustomAttributeBlobs {
 			get => decodeCustomAttributeBlobs;
@@ -187,6 +194,7 @@ namespace ICSharpCode.ILSpy.Options
 			ShowRawOffsetsAndBytesBeforeInstruction = (bool?)section.Attribute("ShowRawOffsetsAndBytesBeforeInstruction") ?? false;
 			StyleWindowTitleBar = (bool?)section.Attribute("StyleWindowTitleBar") ?? false;
 			EnableSmoothScrolling = (bool?)section.Attribute("EnableSmoothScrolling") ?? true;
+			EnableMenuAnimations = (bool?)section.Attribute("EnableMenuAnimations") ?? MenuPopupAnimationHelper.DefaultFromSystem();
 			DecodeCustomAttributeBlobs = (bool?)section.Attribute("DecodeCustomAttributeBlobs") ?? false;
 		}
 
@@ -215,6 +223,7 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("ShowRawOffsetsAndBytesBeforeInstruction", ShowRawOffsetsAndBytesBeforeInstruction);
 			section.SetAttributeValue("StyleWindowTitleBar", StyleWindowTitleBar);
 			section.SetAttributeValue("EnableSmoothScrolling", EnableSmoothScrolling);
+			section.SetAttributeValue("EnableMenuAnimations", EnableMenuAnimations);
 			section.SetAttributeValue("DecodeCustomAttributeBlobs", DecodeCustomAttributeBlobs);
 
 			return section;
