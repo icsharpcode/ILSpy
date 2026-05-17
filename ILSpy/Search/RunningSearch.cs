@@ -337,6 +337,13 @@ namespace ILSpy.Search
 				}
 				if (!(term.Contains('<') || term.Contains('`')))
 					request.OmitGenerics = true;
+				// Angle brackets are characteristic of compiler-generated names
+				// (`<X>d__N`, `<>c__DisplayClass`, etc.) and rare in everyday API
+				// names — treat them as the user opting in to private /
+				// compiler-generated entities even when the global visibility
+				// setting is PublicOnly.
+				if (term.Contains('<') || term.Contains('>'))
+					request.IncludePrivateApi = true;
 
 				switch (prefix?.ToUpperInvariant())
 				{
