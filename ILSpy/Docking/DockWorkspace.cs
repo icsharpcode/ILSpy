@@ -144,7 +144,7 @@ namespace ILSpy.Docking
 			NavigateToHistoryCommand = new RelayCommand<NavigationEntry>(NavigateToHistory,
 				entry => entry != null && (history.BackEntries.Contains(entry) || history.ForwardEntries.Contains(entry)));
 			ShowSearchCommand = new RelayCommand(ExecuteShowSearch);
-			using (ILSpy.AppEnv.AppLog.Phase("ILSpyDockFactory ctor + CreateLayout"))
+			using (ILSpy.AppEnv.AppLog.Phase("ILSpyDockFactory ctor + CreateLayout + InitLayout"))
 			{
 				factory = new ILSpyDockFactory(toolPaneRegistry);
 				// Prefer the user's saved layout (ILSpy.Layout.json sidecar next to
@@ -152,6 +152,11 @@ namespace ILSpy.Docking
 				// or it failed to deserialize. The fallback path is the same shape the
 				// app uses on first launch.
 				Layout = factory.LoadLayout(GetLayoutFilePath()) ?? factory.CreateLayout();
+				// Build the layout, then InitLayout BEFORE the chrome ever sees it, rather than
+				// letting the DockControl's InitializeFactory / InitializeLayout flags run it
+				// post-template-apply. Wiring owners/factories/locators up front means the
+				// layout is fully resolvable before the first DeferredContentControl attaches.
+				factory.InitLayout(Layout);
 			}
 
 			assemblyTreeModel.PropertyChanged += OnAssemblyTreePropertyChanged;
@@ -160,8 +165,6 @@ namespace ILSpy.Docking
 					ShowSelectedNode();
 			};
 			languageService.PropertyChanged += OnLanguagePropertyChanged;
-			// Layout/factory initialization (locators, parent/factory wiring) is done by
-			// the DockControl in MainWindow.axaml via InitializeFactory/InitializeLayout.
 
 			ToolPaneMenuItems = toolPaneRegistry.Panes
 				.Select(p => new ToolPaneMenuItem(p.Pane, factory))

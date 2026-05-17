@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
+using Dock.Avalonia.Controls;
 using Dock.Model.Controls;
 using Dock.Model.Core;
 using Dock.Model.Mvvm;
@@ -47,6 +48,53 @@ namespace ILSpy.Docking
 		public ILSpyDockFactory(ToolPaneRegistry registry)
 		{
 			this.panes = registry.Panes;
+		}
+
+		/// <summary>
+		/// Populate the locator dictionaries with explicit id-to-factory mappings before the
+		/// base init wires owners/factories down the tree, rather than relying on
+		/// <see cref="DockControl.InitializeFactory"/> to populate them post-template-apply.
+		/// Wiring the locators (and the HostWindowLocator) up front means the layout is fully
+		/// resolvable before the chrome realises any content.
+		///
+		/// <para>
+		/// Tool panes are <c>[Shared]</c> MEF singletons, so the lambdas in
+		/// <see cref="IFactory.ContextLocator"/> / <see cref="IFactory.DockableLocator"/>
+		/// can safely return the cached pane instance for both context and dockable
+		/// lookup. Documents and the root dock get explicit entries for navigate-by-id
+		/// (<c>root.Navigate.Execute("Documents")</c>).
+		/// </para>
+		/// </summary>
+		public override void InitLayout(IDockable layout)
+		{
+			ContextLocator = new Dictionary<string, Func<object?>>();
+			DockableLocator = new Dictionary<string, Func<IDockable?>>();
+			HostWindowLocator = new Dictionary<string, Func<IHostWindow?>> {
+				[nameof(IDockWindow)] = () => new HostWindow()
+			};
+
+			// Tool panes: the VM is its own context (no separate model class), and the
+			// dockable IS the pane instance, so both locators map id → same singleton.
+			foreach (var entry in panes)
+			{
+				var pane = entry.Pane;
+				if (string.IsNullOrEmpty(pane.Id))
+					continue;
+				ContextLocator[pane.Id] = () => pane;
+				DockableLocator[pane.Id] = () => pane;
+			}
+
+			// Documents dock + the persistent main content tab — these are the structural
+			// slots ShowSelectedNode / OpenNewTab target. Carve-out tabs (per-node spawned
+			// ContentTabPages) don't get id mappings because they're transient.
+			if (Documents is { Id: { Length: > 0 } docsId } docs)
+				DockableLocator[docsId] = () => docs;
+			if (MainTab is { Id: { Length: > 0 } tabId } mainTab)
+				DockableLocator[tabId] = () => mainTab;
+			if (layout is IRootDock { Id: { Length: > 0 } rootId } root)
+				DockableLocator[rootId] = () => root;
+
+			base.InitLayout(layout);
 		}
 
 		/// <summary>

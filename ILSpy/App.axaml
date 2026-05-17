@@ -8,7 +8,6 @@
              xmlns:compare="using:ILSpy.Compare"
              xmlns:textView="using:ILSpy.TextView"
              xmlns:metaViews="using:ILSpy.Views"
-             xmlns:vm="using:ILSpy.ViewModels"
              xmlns:dockTheme="using:Dock.Avalonia.Themes.Simple"
              xmlns:recycling="using:Avalonia.Controls.Recycling"
              xmlns:docking="using:ILSpy.Docking"
@@ -47,30 +46,9 @@
     </Application.Resources>
 
     <Application.DataTemplates>
-        <DataTemplate DataType="tree:AssemblyTreeModel">
-            <tree:AssemblyListPane />
-        </DataTemplate>
-        <DataTemplate DataType="search:SearchPaneModel">
-            <search:SearchPane />
-        </DataTemplate>
-        <DataTemplate DataType="analyzers:AnalyzerTreeViewModel">
-            <analyzers:AnalyzerTreeView />
-        </DataTemplate>
-        <DataTemplate DataType="vm:ContentTabPage">
-            <metaViews:ContentTabPageView />
-        </DataTemplate>
-        <DataTemplate DataType="textView:DecompilerTabPageModel">
-            <textView:DecompilerTextView />
-        </DataTemplate>
-        <DataTemplate DataType="vm:MetadataTablePageModel">
-            <metaViews:MetadataTablePage />
-        </DataTemplate>
-        <DataTemplate DataType="vm:DebugStepsPaneModel">
-            <metaViews:DebugSteps />
-        </DataTemplate>
-        <DataTemplate DataType="compare:CompareTabPageModel">
-            <compare:CompareView />
-        </DataTemplate>
+        <!-- ViewLocator handles every dockable VM (tool panes, document tab content,
+             ContentTabPage) plus any ViewModelBase-derived viewmodel, with one IDataTemplate
+             instance for all of them (see ViewLocator.cs). -->
         <local:ViewLocator/>
     </Application.DataTemplates>
 

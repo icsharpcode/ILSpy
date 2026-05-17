@@ -46,9 +46,6 @@
 			           Margin="8,0" Name="statusLabel" Text="Stand by..." />
 		</Border>
 
-		<dock:DockControl Layout="{Binding DockLayout}"
-		                  Factory="{Binding DockFactory}"
-		                  InitializeFactory="True"
-		                  InitializeLayout="True" />
+		<dock:DockControl Layout="{Binding DockLayout}" />
 	</DockPanel>
 </Window>

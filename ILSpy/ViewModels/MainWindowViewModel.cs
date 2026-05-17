@@ -19,7 +19,6 @@
 using System.Composition;
 
 using Dock.Model.Controls;
-using Dock.Model.Core;
 
 using ILSpy.AssemblyTree;
 using ILSpy.Docking;
@@ -40,8 +39,6 @@ namespace ILSpy.ViewModels
 		public LanguageSettings LanguageSettings { get; }
 
 		public UpdatePanelViewModel UpdatePanel { get; }
-
-		public IFactory DockFactory => DockWorkspace.Factory;
 
 		public IRootDock DockLayout => DockWorkspace.Layout;
 
