@@ -97,7 +97,20 @@ namespace ILSpy.ViewModels
 			Title = "Debug Steps";
 			ShowStateBeforeCommand = new RelayCommand(() => RequestRedecompile(SelectedStep?.BeginStep ?? int.MaxValue, isDebug: false));
 			ShowStateAfterCommand = new RelayCommand(() => RequestRedecompile(SelectedStep?.EndStep ?? int.MaxValue, isDebug: false));
-			DebugStepCommand = new RelayCommand(() => RequestRedecompile(SelectedStep?.BeginStep ?? int.MaxValue, isDebug: true));
+			DebugStepCommand = new RelayCommand(() => {
+				// "Debug this step" relies on Stepper.Step calling Debugger.Break() when
+				// step == StepLimit — which is a silent no-op without a debugger attached.
+				// Attempt to attach one first so the gesture actually does something for the
+				// common case of running ILSpy from a terminal. On Windows this pops
+				// the JIT-debugger prompt; on Linux/macOS Debugger.Launch is a no-op so the
+				// break is still silent — log a hint so the user knows why.
+				if (!System.Diagnostics.Debugger.IsAttached)
+				{
+					if (!System.Diagnostics.Debugger.Launch())
+						AppEnv.AppLog.Mark("DebugStep: Debugger.Launch returned false; the upcoming Stepper.Step break is a no-op without a debugger attached.");
+				}
+				RequestRedecompile(SelectedStep?.BeginStep ?? int.MaxValue, isDebug: true);
+			});
 		}
 
 		[ImportingConstructor]
