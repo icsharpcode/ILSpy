@@ -41,6 +41,10 @@ namespace ILSpy.Languages
 
 		public override string FileExtension => ".il";
 
+		// Disassembled IL uses the same `{}/()/[]` bracket conventions plus C#-style
+		// `//` comments and `"..."` strings — reuse CSharpBracketSearcher's logic.
+		public override ILSpy.TextView.IBracketSearcher BracketSearcher { get; } = new CSharpBracketSearcher();
+
 		// DisplaySettings (ShowMetadataTokens / ShowRawRVAOffsetAndBytes /
 		// DecodeCustomAttributeBlobs / ShowMetadataTokensInBase10) aren't wired yet — once
 		// they are, plumb them in here. All four default to false.

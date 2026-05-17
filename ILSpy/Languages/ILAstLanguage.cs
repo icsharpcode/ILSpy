@@ -57,6 +57,11 @@ namespace ILSpy.Languages
 			this.name = name;
 		}
 
+		// ILAst output uses the same `{}/()/[]` bracket conventions as C#, plus C#-style
+		// `//` comments and `"..."` strings. Reusing CSharpBracketSearcher gives the
+		// language correct bracket highlighting without a per-grammar implementation.
+		public override ILSpy.TextView.IBracketSearcher BracketSearcher { get; } = new CSharpBracketSearcher();
+
 		/// <summary>
 		/// Fires after a <see cref="DecompileMethod"/> run installs a fresh <see cref="Stepper"/>.
 		/// The Debug Steps pane subscribes here so it can rebind its TreeView to the new
