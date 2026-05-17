@@ -267,17 +267,36 @@ namespace ILSpy.Docking
 			}
 		}
 
-		// When only one document is open, make it un-closeable so the user can't end up with an
-		// empty document area.
+		// When only one document is open across the entire workspace, make it un-closeable so
+		// the user can't end up with an empty document area. Counts across ALL IDocumentDocks
+		// in the layout tree — not just factory.Documents — so a split into side-by-side
+		// document docks (each with one tab) still lets the user close either one.
 		void UpdateLastDocumentCanClose()
 		{
-			var docs = factory.Documents?.VisibleDockables;
-			if (docs == null)
+			if (Layout is not IDockable root)
 				return;
-			bool canClose = docs.Count > 1;
-			foreach (var d in docs)
+			var allDocs = FlattenDocumentDocks(root).ToList();
+			int totalTabs = allDocs.Sum(d => d.VisibleDockables?.Count ?? 0);
+			bool canClose = totalTabs > 1;
+			foreach (var dock in allDocs)
 			{
-				d.CanClose = canClose;
+				if (dock.VisibleDockables is { } kids)
+				{
+					foreach (var d in kids)
+						d.CanClose = canClose;
+				}
+			}
+		}
+
+		static IEnumerable<IDocumentDock> FlattenDocumentDocks(IDockable root)
+		{
+			if (root is IDocumentDock doc)
+				yield return doc;
+			if (root is IDock dock && dock.VisibleDockables is { } kids)
+			{
+				foreach (var k in kids)
+					foreach (var d in FlattenDocumentDocks(k))
+						yield return d;
 			}
 		}
 
