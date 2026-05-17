@@ -156,7 +156,7 @@ Examples:
 			include = generateDiagrammerCmd + "-include";
 
 		[Option(generateDiagrammerCmd, "Generates an interactive HTML diagrammer app from selected types in the target assembly" +
-			" - to the --outputdir or in a 'diagrammer' folder next to to the assembly by default.", CommandOptionType.NoValue)]
+			" - to the --outputdir or in a 'diagrammer' folder next to the assembly by default.", CommandOptionType.NoValue)]
 		public bool GenerateDiagrammer { get; }
 
 		[Option(include, "An optional regular expression matching Type.FullName used to whitelist types to include in the generated diagrammer.", CommandOptionType.SingleValue)]
@@ -171,8 +171,8 @@ Examples:
 		public bool ReportExcludedTypes { get; set; }
 
 		[Option(generateDiagrammerCmd + "-docs", "The path or file:// URI of the XML file containing the target assembly's documentation comments." +
-			" You only need to set this if a) you want your diagrams annotated with them and b) the file name differs from that of the assmbly." +
-			" To enable XML documentation output for your assmbly, see https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/xmldoc/#create-xml-documentation-output",
+			" You only need to set this if a) you want your diagrams annotated with them and b) the file name differs from that of the assembly." +
+			" To enable XML documentation output for your assembly, see https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/xmldoc/#create-xml-documentation-output",
 			CommandOptionType.SingleValue)]
 		public string XmlDocs { get; set; }
 

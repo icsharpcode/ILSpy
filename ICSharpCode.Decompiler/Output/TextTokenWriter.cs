@@ -240,7 +240,33 @@ namespace ICSharpCode.Decompiler
 					return;
 				}
 			}
+			if (keyword == "override")
+			{
+				var overriddenMember = GetOverrideMemberFromNodeStack();
+				if (overriddenMember != null)
+				{
+					var baseMember = InheritanceHelper.GetBaseMember(overriddenMember);
+					if (baseMember != null)
+					{
+						output.WriteReference(baseMember, keyword);
+						return;
+					}
+				}
+			}
 			output.Write(keyword);
+		}
+
+		IMember? GetOverrideMemberFromNodeStack()
+		{
+			foreach (var node in nodeStack)
+			{
+				if (node is EntityDeclaration entityDeclaration
+					&& entityDeclaration.GetSymbol() is IMember { IsOverride: true } member)
+				{
+					return member;
+				}
+			}
+			return null;
 		}
 
 		static bool NeedsFold(AstNode node)

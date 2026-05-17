@@ -57,7 +57,7 @@ Options:
   --disable-updatecheck                   If using ilspycmd in a tight loop or fully automated scenario, you might want
                                           to disable the automatic update check.
   --generate-diagrammer                   Generates an interactive HTML diagrammer app from selected types in the target
-                                          assembly - to the --outputdir or in a 'diagrammer' folder next to to the
+                                          assembly - to the --outputdir or in a 'diagrammer' folder next to the
                                           assembly by default.
   --generate-diagrammer-include           An optional regular expression matching Type.FullName used to whitelist types
                                           to include in the generated diagrammer.
@@ -70,8 +70,8 @@ Options:
                                           your regular expressions.
   --generate-diagrammer-docs              The path or file:// URI of the XML file containing the target assembly's
                                           documentation comments. You only need to set this if a) you want your diagrams
-                                          annotated with them and b) the file name differs from that of the assmbly. To
-                                          enable XML documentation output for your assmbly, see
+                                          annotated with them and b) the file name differs from that of the assembly. To
+                                          enable XML documentation output for your assembly, see
                                           https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/xmldoc/#create-xml-documentation-output
   --generate-diagrammer-strip-namespaces  Optional space-separated namespace names that are removed for brevity from XML
                                           documentation comments. Note that the order matters: e.g. replace
