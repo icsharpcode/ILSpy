@@ -578,14 +578,31 @@ namespace ILSpy.TextView
 			Title = string.IsNullOrEmpty(output.Title) ? "(report)" : output.Title;
 		}
 
-		// Pulls the live DecompilerSettings via MEF and returns a clone for this run. MEF
-		// resolve is wrapped in try/catch so design-time / minimal test hosts that bypass
-		// composition fall back to default settings rather than throwing.
+		// Pulls the live DecompilerSettings via MEF and returns a clone for this run. Also
+		// bakes the active LanguageService.CurrentVersion into the clone — without this the
+		// toolbar's Language-Version dropdown writes-through to LanguageSettings but never
+		// reaches the decompiler. MEF resolves are wrapped in try/catch so design-time /
+		// minimal test hosts that bypass composition fall back to default settings rather
+		// than throwing.
 		static ICSharpCode.Decompiler.DecompilerSettings? TryGetLiveDecompilerSettings()
 		{
 			try
 			{
-				return AppEnv.AppComposition.Current.GetExport<SettingsService>().DecompilerSettings.Clone();
+				var settings = AppEnv.AppComposition.Current.GetExport<SettingsService>().DecompilerSettings.Clone();
+				try
+				{
+					var version = AppEnv.AppComposition.Current.GetExport<Languages.LanguageService>().CurrentVersion;
+					if (Enum.TryParse<ICSharpCode.Decompiler.CSharp.LanguageVersion>(version?.Version, out var languageVersion))
+						settings.SetLanguageVersion(languageVersion);
+					else
+						settings.SetLanguageVersion(ICSharpCode.Decompiler.CSharp.LanguageVersion.Latest);
+				}
+				catch
+				{
+					// No LanguageService available (non-C# language or minimal host) — leave the
+					// settings at whatever default the source DecompilerSettings carried.
+				}
+				return settings;
 			}
 			catch
 			{

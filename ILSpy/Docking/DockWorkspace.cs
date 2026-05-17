@@ -461,12 +461,14 @@ namespace ILSpy.Docking
 
 		void OnLanguagePropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(LanguageService.CurrentLanguage))
+			if (e.PropertyName is nameof(LanguageService.CurrentLanguage) or nameof(LanguageService.CurrentVersion))
 			{
 				if (ActiveDecompilerTab is { } tab)
 				{
 					tab.Language = languageService.CurrentLanguage;
-					// Re-decompile by re-assigning the same node so the tab refreshes for the new language.
+					// Re-decompile by re-assigning the same node so the tab refreshes for the new
+					// language or language version (the version is read inside
+					// TryGetLiveDecompilerSettings, which builds the per-run DecompilerSettings).
 					var node = tab.CurrentNode;
 					tab.CurrentNode = null;
 					tab.CurrentNode = node;
