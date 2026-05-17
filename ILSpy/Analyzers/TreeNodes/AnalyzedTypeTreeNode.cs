@@ -39,7 +39,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 
 		public override object Icon => TypeTreeNode.GetIcon(analyzedType);
 
-		public override object Text => CreateHighlightedSignatureText(Language.TypeToString(analyzedType));
+		public override object Text => CreateHighlightedMemberText("", ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames);
 
 		protected override void LoadChildren()
 		{

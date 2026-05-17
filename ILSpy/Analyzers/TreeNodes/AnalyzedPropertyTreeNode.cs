@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 		public override object Icon => PropertyTreeNode.GetIcon(analyzedProperty);
 
 		// TODO: This way of formatting is not suitable for properties which explicitly implement interfaces.
-		public override object Text => CreateHighlightedSignatureText(prefix + Language.EntityToString(analyzedProperty, ConversionFlags.ShowDeclaringType | ConversionFlags.UseFullyQualifiedEntityNames));
+		public override object Text => CreateHighlightedMemberText(prefix, ConversionFlags.ShowDeclaringType | ConversionFlags.UseFullyQualifiedEntityNames);
 
 		protected override void LoadChildren()
 		{
