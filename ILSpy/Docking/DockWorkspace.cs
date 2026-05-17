@@ -171,7 +171,12 @@ namespace ILSpy.Docking
 			factory.DockableRemoved += OnDocumentMembershipChanged;
 			factory.DockableClosed += OnDocumentMembershipChanged;
 			factory.DockableClosing += OnDockableClosing;
-			factory.ActiveDockableChanged += OnActiveDockableChanged;
+			// Dock's IFactory.ActiveDockableChanged only fires from InitActiveDockable (layout
+			// structural init), not when the user clicks a different tab — that path sets
+			// dock.ActiveDockable = X directly on the dock model. Subscribe to the model's own
+			// PropertyChanged so tab clicks reach our sync-tree-to-tab handler.
+			if (factory.Documents is INotifyPropertyChanged documentsNotify)
+				documentsNotify.PropertyChanged += OnDocumentsPropertyChanged;
 			// Close orphaned carve-out tabs when their assembly is removed. The persistent
 			// MainTab slot is left alone — its content will swap to whatever the user selects
 			// next via the assembly tree. Mirrors WPF's DockWorkspace.CurrentAssemblyList_Changed.
@@ -291,12 +296,14 @@ namespace ILSpy.Docking
 			}
 		}
 
-		void OnActiveDockableChanged(object? sender, ActiveDockableChangedEventArgs e)
+		void OnDocumentsPropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
+			if (e.PropertyName != nameof(IDocumentDock.ActiveDockable))
+				return;
 			// Carve-out tab → active: pull the tree's selection over to whatever entity the
-			// tab is showing. The same hook fires when the user clicks a different tab in
-			// the tab strip, keeping the tree in lockstep with the visible content.
-			if (e.Dockable is not ContentTabPage tab || tab.SourceNode is not { } node)
+			// new active tab is showing. Fires on user-driven tab clicks (via the dock model's
+			// ActiveDockable setter) and on programmatic SetActiveDockable calls.
+			if (factory.Documents?.ActiveDockable is not ContentTabPage tab || tab.SourceNode is not { } node)
 				return;
 			if (ReferenceEquals(assemblyTreeModel.SelectedItem, node))
 				return;
