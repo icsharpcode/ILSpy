@@ -53,7 +53,7 @@ jobs:
     - name: Install wix (locked version)
       run: dotnet tool install --global wix --version 6.0.2
       
-    - name: Install wix extesnion (locked version)
+    - name: Install wix extension (locked version)
       run: wix.exe extension add -g WixToolset.UI.wixext/6.0.2
 
     - name: Get Version
@@ -83,7 +83,7 @@ jobs:
         path: 'test-results/${{ matrix.configuration }}/*.trx'
 
     - name: Create Test Report
-      uses: icsharpcode/test-summary-action@dist
+      uses: test-summary/action@v2
       if: always()
       with:
         paths: "test-results/${{ matrix.configuration }}/*.trx"
