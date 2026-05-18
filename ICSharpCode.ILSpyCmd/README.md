@@ -70,8 +70,8 @@ Options:
                                           your regular expressions.
   --generate-diagrammer-docs              The path or file:// URI of the XML file containing the target assembly's
                                           documentation comments. You only need to set this if a) you want your diagrams
-                                          annotated with them and b) the file name differs from that of the assmbly. To
-                                          enable XML documentation output for your assmbly, see
+                                          annotated with them and b) the file name differs from that of the assembly. To
+                                          enable XML documentation output for your assembly, see
                                           https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/xmldoc/#create-xml-documentation-output
   --generate-diagrammer-strip-namespaces  Optional space-separated namespace names that are removed for brevity from XML
                                           documentation comments. Note that the order matters: e.g. replace
