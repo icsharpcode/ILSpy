@@ -414,6 +414,42 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				await Task.Yield();
 			}
 		}
+#if RUNTIMEASYNC
+		// The state-machine async lowering doesn't recognize return-from-try-with-await-in-finally
+		// and decompiles these as `int result; try { ... } finally { ... } return result;`. The
+		// runtime-async exception rewrite recovers the source-level form. Gate these tests so the
+		// (state-machine) Async test doesn't run them against the more aggressive output.
+		public async Task<int> ReturnFromTryFinally()
+		{
+			try
+			{
+				return 42;
+			}
+			finally
+			{
+				await Task.CompletedTask;
+			}
+		}
+
+		public async Task<int> ReturnFromInsideNestedTryFinally()
+		{
+			try
+			{
+				try
+				{
+					return 42;
+				}
+				finally
+				{
+					await Task.CompletedTask;
+				}
+			}
+			finally
+			{
+				await Task.CompletedTask;
+			}
+		}
+#endif
 #endif
 
 		public static async Task<int> GetIntegerSumAsync(IEnumerable<int> items)

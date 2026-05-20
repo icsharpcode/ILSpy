@@ -501,6 +501,10 @@ namespace System.Runtime.CompilerServices
 				preprocessorSymbols.Add("LEGACY_CSC");
 				preprocessorSymbols.Add("LEGACY_VBC");
 			}
+			if (flags.HasFlag(CompilerOptions.EnableRuntimeAsync))
+			{
+				preprocessorSymbols.Add("RUNTIMEASYNC");
+			}
 			return preprocessorSymbols;
 		}
 

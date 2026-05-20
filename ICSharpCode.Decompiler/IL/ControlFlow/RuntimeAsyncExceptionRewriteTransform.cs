@@ -22,6 +22,7 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -1007,45 +1008,56 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (parentBlock.Parent is not BlockContainer container)
 				return false;
-
-			// The TryFinally is followed in parentBlock by either nothing (fall-through into the next block)
-			// or a single `br checkBlock` we appended ourselves. Locate the post-try check block.
-			Block checkBlock;
+			// The TryFinally is followed in parentBlock by either a `br checkBlock` or an inline
+			// IfInstruction (when Roslyn merges the flag check into the parent block). Identify the
+			// (block, startIndex) pair where the flag-check sequence lives.
 			int tryFinallyIdx = tryFinally.ChildIndex;
 			if (tryFinallyIdx == parentBlock.Instructions.Count - 1)
 				return false;
-			if (parentBlock.Instructions[tryFinallyIdx + 1] is Branch br)
-				checkBlock = br.TargetBlock;
-			else
-				return false;
-			if (checkBlock?.Parent != container)
-				return false;
 
-			// Block checkBlock { if (flagVar == K) br earlyBlock; br normalBlock }
-			//             or:  { if (flagVar != K) br normalBlock; br earlyBlock }
-			if (checkBlock.Instructions.Count != 2)
+			Block checkBlock;
+			int checkStartIndex;
+			bool checkInline;
+			if (parentBlock.Instructions[tryFinallyIdx + 1] is Branch brToCheck
+				&& brToCheck.TargetBlock?.Parent == container)
+			{
+				checkBlock = brToCheck.TargetBlock;
+				checkStartIndex = 0;
+				checkInline = false;
+			}
+			else if (parentBlock.Instructions[tryFinallyIdx + 1] is IfInstruction)
+			{
+				checkBlock = parentBlock;
+				checkStartIndex = tryFinallyIdx + 1;
+				checkInline = true;
+			}
+			else
+			{
 				return false;
-			if (checkBlock.Instructions[0] is not IfInstruction ifInst)
+			}
+			// The flag-check sequence is two consecutive instructions: an IfInstruction guarding on
+			// `flagVar` and a fall-through. Identify the "early" path (taken when flag == K) and the
+			// "normal" path (the other) — each can be either a Branch to a block (we then need to
+			// follow it via ResolveEarlyReturnValue), or a direct Leave / Throw.
+			if (checkStartIndex + 1 >= checkBlock.Instructions.Count)
 				return false;
-			if (ifInst.TrueInst is not Branch toIfTrue)
-				return false;
-			if (!checkBlock.Instructions[1].MatchBranch(out var fallthroughBlock))
+			if (checkBlock.Instructions[checkStartIndex] is not IfInstruction ifInst)
 				return false;
 
 			ILVariable flagVar;
 			int targetK;
-			Block earlyBlock, normalBlock;
+			ILInstruction earlyAction, normalAction;
 			if (ifInst.Condition.MatchCompEquals(out var lhs, out var rhs)
 				&& lhs.MatchLdLoc(out flagVar) && rhs.MatchLdcI4(out targetK))
 			{
-				earlyBlock = toIfTrue.TargetBlock;
-				normalBlock = fallthroughBlock;
+				earlyAction = ifInst.TrueInst;
+				normalAction = checkBlock.Instructions[checkStartIndex + 1];
 			}
 			else if (ifInst.Condition.MatchCompNotEquals(out lhs, out rhs)
 				&& lhs.MatchLdLoc(out flagVar) && rhs.MatchLdcI4(out targetK))
 			{
-				normalBlock = toIfTrue.TargetBlock;
-				earlyBlock = fallthroughBlock;
+				normalAction = ifInst.TrueInst;
+				earlyAction = checkBlock.Instructions[checkStartIndex + 1];
 			}
 			else
 			{
@@ -1053,31 +1065,49 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			if (!flagVar.Type.IsKnownType(KnownTypeCode.Int32))
 				return false;
-			if (earlyBlock?.Parent != container || normalBlock?.Parent != container)
-				return false;
 
-			// earlyBlock chain: optional `stloc returnVar(ldloc capture); br leaveBlock` followed by
-			// `leave outer (ldloc returnVar)` (or a direct leave with the capture).
-			if (!ResolveEarlyReturnValue(earlyBlock, container, out var captureVar, out var returnVar, out var leaveBlock))
+			// Resolve the early-action into a list of instructions to splice into each flag-setter.
+			List<ILInstruction> earlyActionTemplate;
+			if (earlyAction is Leave earlyLeave && IsLeaveToContainerOrAncestor(earlyLeave, container))
+			{
+				earlyActionTemplate = new List<ILInstruction> { earlyLeave };
+			}
+			else if (earlyAction is Branch earlyBranch
+				&& earlyBranch.TargetBlock?.Parent == container
+				&& TryGetEarlyActionTemplate(earlyBranch.TargetBlock, container, out earlyActionTemplate))
+			{
+				// templated
+			}
+			else
+			{
 				return false;
+			}
 
-			// Inside the try-block find the flag-setter block(s): `stloc flagVar(K); leave-tryBlock`.
-			// There may be multiple — e.g. several catches in a multi-handler try each with its own
-			// early-return — but for the simple case we only need one.
+			// Find flag-setter blocks anywhere inside the try-block (including nested containers).
+			// Shape: zero or more capture-forwarding stores, then `stloc flagVar(K); leave tryBlock`.
+			// Walking descendants picks up the post-rewrite spliced inner-flag-setters in the nested
+			// try-finally case — those live inside the inner try-block container but still leave to
+			// the outer try-block (because the splice inlined the outer's flag-set + leave).
 			if (tryFinally.TryBlock is not BlockContainer tryBlockContainer)
 				return false;
 			var flagSetters = new List<Block>();
-			foreach (var b in tryBlockContainer.Blocks)
+			foreach (var b in tryBlockContainer.Descendants.OfType<Block>())
 			{
-				if (b.Instructions.Count == 2
-					&& b.Instructions[0] is StLoc setStore
-					&& setStore.Variable == flagVar
-					&& setStore.Value.MatchLdcI4(targetK)
-					&& b.Instructions[1] is Leave leaveFromTry
-					&& leaveFromTry.TargetContainer == tryBlockContainer)
+				int n = b.Instructions.Count;
+				if (n < 2)
+					continue;
+				if (b.Instructions[n - 2] is not StLoc setStore
+					|| !FlagVariableMatches(setStore.Variable, flagVar)
+					|| !setStore.Value.MatchLdcI4(targetK))
 				{
-					flagSetters.Add(b);
+					continue;
 				}
+				if (b.Instructions[n - 1] is not Leave leaveFromTry
+					|| leaveFromTry.TargetContainer != tryBlockContainer)
+				{
+					continue;
+				}
+				flagSetters.Add(b);
 			}
 			if (flagSetters.Count == 0)
 				return false;
@@ -1092,40 +1122,72 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			}
 
-			// Build the leave instruction shape: leave outer (ldloc captureSource).
-			var outerContainer = (BlockContainer)leaveBlock.Parent;
-			var outerLeave = (Leave)leaveBlock.Instructions[^1];
-			if (outerLeave.TargetContainer != outerContainer)
-				return false;
-
 			context.StepStartGroup("Reduce runtime-async flag-based early return", tryFinally);
 
-			// Single pass over the try body: every Branch targeting a flag-setter is the tail of an
-			// early-return site (`...; stloc capture(value); br fs`). Replace each with a direct
-			// `leave outer (ldloc capture)`. The capture store stays and feeds the leave value via the
-			// variable read. Then drop the flag-setter blocks; they're unreachable post-rewrite.
-			var flagSetterSet = new HashSet<Block>(flagSetters);
-			foreach (var pred in tryBlockContainer.Descendants.OfType<Branch>().ToArray())
-			{
-				if (!flagSetterSet.Contains(pred.TargetBlock))
-					continue;
-				pred.ReplaceWith(new Leave(outerContainer, new LdLoc(captureVar)).WithILRange(pred));
-			}
+			// Replace each flag-setter's leave-tryBlock with a leave directly to leaveTargetContainer
+			// (and, for value-returning sites, with the captured value). The capture-forwarding stores
+			// before the flag setter stay; downstream cleanup drops them once the read in `earlyBlock`
+			// disappears. Clear the spliced clones' top-level ILRange so each splice site keeps its
+			// own sequence points instead of all claiming the source offset of the early-action.
 			foreach (var fs in flagSetters)
-				fs.Remove();
+			{
+				int n = fs.Instructions.Count;
+				// Drop the stloc flagVar(K) and the trailing leave-tryBlock. Splice in a clone of
+				// the early-action template so the flag-setter's capture-forwarding stores flow
+				// directly into the early-action's stores + final leave.
+				fs.Instructions.RemoveAt(n - 1);
+				fs.Instructions.RemoveAt(n - 2);
+				foreach (var inst in earlyActionTemplate)
+				{
+					var spliced = inst.Clone();
+					spliced.SetILRange(new Interval());
+					fs.Instructions.Add(spliced);
+				}
+			}
 
-			// The post-flag-check block can now be replaced with `br normalBlock`. The flag write/read,
-			// the early-return chain and (eventually) the captureVar/returnVar become unreferenced.
-			checkBlock.Instructions.Clear();
-			checkBlock.Instructions.Add(new Branch(normalBlock));
+			// Replace the flag-check sequence with the normal-path action. The early-path is now
+			// taken by the rewritten flag-setters themselves, so the only remaining successor is
+			// the normal path. Clone the normal-action so we don't have to worry about whose tree
+			// it currently belongs to (it may be a child of the if-instruction we're tearing down),
+			// and clear its ILRange — the clone lives at a different location than the original.
+			var normalActionClone = normalAction.Clone();
+			normalActionClone.SetILRange(new Interval());
+			if (checkInline)
+			{
+				parentBlock.Instructions.RemoveAt(checkStartIndex + 1);
+				parentBlock.Instructions.RemoveAt(checkStartIndex);
+				parentBlock.Instructions.Add(normalActionClone);
+			}
+			else
+			{
+				checkBlock.Instructions.Clear();
+				checkBlock.Instructions.Add(normalActionClone);
+			}
+
+			// After the splice each flag-setter exits via a Leave that doesn't return to the
+			// surrounding try-block, so any block whose only entry was the now-cleared check-block
+			// is now unreachable. Drop those so the HasFlag check below sees the post-rewrite truth.
+			tryBlockContainer.SortBlocks(deleteUnreachableBlocks: true);
+
+			// After rewrite, the TryFinally may have unreachable endpoint (all flag-setter sites
+			// became Leaves to an ancestor container, so the try-body no longer has a Leave-to-tryBlock).
+			// The post-TryFinally instructions in parentBlock are then dead — and leaving them in place
+			// would put a non-final unreachable-endpoint instruction in the block, violating the block
+			// invariant. Drop everything after the TryFinally in that case.
+			if (tryFinally.HasFlag(InstructionFlags.EndPointUnreachable))
+			{
+				while (parentBlock.Instructions.Count > tryFinally.ChildIndex + 1)
+					parentBlock.Instructions.RemoveAt(parentBlock.Instructions.Count - 1);
+			}
 
 			// Drop the pre-try `stloc flagVar(0)`.
-			for (int i = 0; i < tryFinallyIdx; i++)
+			for (int i = 0; i < parentBlock.Instructions.Count; i++)
 			{
-				if (parentBlock.Instructions[i] is StLoc s && s.Variable == flagVar && s.Value.MatchLdcI4(0))
+				if (parentBlock.Instructions[i] is StLoc s
+					&& FlagVariableMatches(s.Variable, flagVar)
+					&& s.Value.MatchLdcI4(0))
 				{
 					parentBlock.Instructions.RemoveAt(i);
-					tryFinallyIdx--;
 					i--;
 				}
 			}
@@ -1134,47 +1196,141 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return true;
 		}
 
-		// earlyBlock should be either:
-		//   `stloc returnVar(ldloc capture); br leaveBlock` followed by leaveBlock = `leave outer (ldloc returnVar)`
-		//   or a direct `leave outer (ldloc capture)`.
+		// True when `candidate` is the same slot/kind/type as `flagVar` — handles SplitVariables splitting
+		// the pre-init off from the in-try set.
+		static bool FlagVariableMatches(ILVariable candidate, ILVariable flagVar)
+		{
+			if (candidate == flagVar)
+				return true;
+			return candidate.Index == flagVar.Index
+				&& candidate.Kind == flagVar.Kind
+				&& candidate.Type.IsKnownType(KnownTypeCode.Int32);
+		}
+
+		// Build a template of instructions to splice into each flag-setter when the early-action is
+		// a Branch to a helper block. Follows a chain of "stores + br to next block" until reaching
+		// a block whose last instruction is a Leave to `container` or an ancestor. The final template
+		// is the concatenation of all the stores encountered, followed by the terminating Leave.
+		//
+		// Shapes covered:
+		//   - [Leave container (value?)]                       — direct leave
+		//   - [br leaveBlock]; leaveBlock = [Leave container]  — one-hop forwarding
+		//   - [stloc returnVar(...); br leaveBlock]            — indirected value return
+		//   - [stloc r(...); br fwd]; fwd = [stloc f(K); Leave outer]
+		//                                                      — nested forwarding (sets the
+		//     enclosing try-finally's flag and leaves outer, so the next round of this transform
+		//     picks it up at that outer level)
+		static bool TryGetEarlyActionTemplate(Block earlyBlock, BlockContainer container, out List<ILInstruction> template)
+		{
+			template = new List<ILInstruction>();
+			var visited = new HashSet<Block>();
+			var current = earlyBlock;
+			while (true)
+			{
+				if (!visited.Add(current))
+				{
+					template = null;
+					return false;
+				}
+				if (current.Instructions.Count == 0)
+				{
+					template = null;
+					return false;
+				}
+				for (int i = 0; i < current.Instructions.Count - 1; i++)
+					template.Add(current.Instructions[i]);
+				var last = current.Instructions[^1];
+				if (last is Leave leave && IsLeaveToContainerOrAncestor(leave, container))
+				{
+					template.Add(leave);
+					return true;
+				}
+				if (last.MatchBranch(out var next))
+				{
+					current = next;
+					continue;
+				}
+				template = null;
+				return false;
+			}
+		}
+
+		// Resolve `earlyBlock` to (captureVar?, leaveTargetContainer). Used by the simpler shapes;
+		// callers that need to handle the multi-instruction nested-forwarding form use
+		// `TryGetEarlyActionTemplate` instead.
+		//   - direct leave:           `[Leave container (value?)]`
+		//   - direct branch-to-leave: `[br leaveBlock]` where `leaveBlock = [Leave container (void)]`
+		//   - indirected:             `[stloc returnVar(ldloc capture); br leaveBlock]` where
+		//                             `leaveBlock = [Leave container (ldloc returnVar)]`
+		// The target container can be the function body (top-level return) or any ancestor of the
+		// surrounding container — break/continue across a try-finally lower to a Leave to the loop
+		// or its parent.
 		static bool ResolveEarlyReturnValue(Block earlyBlock, BlockContainer container,
-			out ILVariable captureVar, out ILVariable returnVar, out Block leaveBlock)
+			out ILVariable captureVar, out BlockContainer leaveTargetContainer)
 		{
 			captureVar = null;
-			returnVar = null;
-			leaveBlock = null;
+			leaveTargetContainer = null;
 
-			// Direct shape: earlyBlock is just `leave outer (ldloc capture)`.
+			// Direct leave: earlyBlock is just `Leave container (value?)`.
 			if (earlyBlock.Instructions.Count == 1
 				&& earlyBlock.Instructions[0] is Leave directLeave
-				&& directLeave.IsLeavingFunction
-				&& directLeave.Value.MatchLdLoc(out captureVar))
+				&& IsLeaveToContainerOrAncestor(directLeave, container))
 			{
-				leaveBlock = earlyBlock;
+				leaveTargetContainer = directLeave.TargetContainer;
+				if (directLeave.Value.MatchLdLoc(out captureVar))
+					return true;
+				if (directLeave.Value.OpCode == OpCode.Nop)
+				{
+					captureVar = null;
+					return true;
+				}
+				return false;
+			}
+
+			// Direct branch-to-leave (void return shape): earlyBlock is `[br leaveBlock]` where
+			// `leaveBlock = [Leave container (void)]`.
+			if (earlyBlock.Instructions.Count == 1
+				&& earlyBlock.Instructions[0].MatchBranch(out var brTarget)
+				&& brTarget.Instructions.Count == 1
+				&& brTarget.Instructions[0] is Leave brLeave
+				&& IsLeaveToContainerOrAncestor(brLeave, container)
+				&& brLeave.Value.OpCode == OpCode.Nop)
+			{
+				leaveTargetContainer = brLeave.TargetContainer;
+				captureVar = null;
 				return true;
 			}
 
 			// Indirected shape: earlyBlock copies the capture into a returnVar and branches to a
-			// one-instruction `leave outer (ldloc returnVar)` block.
+			// one-instruction `Leave container (ldloc returnVar)` block.
 			if (earlyBlock.Instructions.Count != 2)
 				return false;
-			if (!earlyBlock.Instructions[0].MatchStLoc(out returnVar, out var rvValue))
+			if (!earlyBlock.Instructions[0].MatchStLoc(out var returnVar, out var rvValue))
 				return false;
 			if (!rvValue.MatchLdLoc(out captureVar))
 				return false;
-			if (!earlyBlock.Instructions[1].MatchBranch(out leaveBlock))
-				return false;
-			if (leaveBlock.Parent != container)
+			if (!earlyBlock.Instructions[1].MatchBranch(out var leaveBlock))
 				return false;
 			if (leaveBlock.Instructions.Count != 1)
 				return false;
 			if (leaveBlock.Instructions[0] is not Leave finalLeave)
 				return false;
-			if (!finalLeave.IsLeavingFunction)
+			if (!IsLeaveToContainerOrAncestor(finalLeave, container))
 				return false;
 			if (!finalLeave.Value.MatchLdLoc(returnVar))
 				return false;
+			leaveTargetContainer = finalLeave.TargetContainer;
 			return true;
+		}
+
+		// True when `leave` exits the immediate `container` or any of its ancestor BlockContainers.
+		// Self-leave (TargetContainer == container) is required for the top-level return case where
+		// the early-return leaves the function body container itself.
+		static bool IsLeaveToContainerOrAncestor(Leave leave, BlockContainer container)
+		{
+			if (leave.TargetContainer == container)
+				return true;
+			return container.IsDescendantOf(leave.TargetContainer);
 		}
 
 		static void ReplaceDispatchIdiomWithRethrow(Block block, ILVariable handlerVariable, ILTransformContext context)
