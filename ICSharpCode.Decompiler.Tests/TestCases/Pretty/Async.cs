@@ -414,6 +414,60 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				await Task.Yield();
 			}
 		}
+
+		public async Task HeterogeneousMultiCatch1()
+		{
+			try
+			{
+				await Task.Yield();
+			}
+			catch (InvalidOperationException ex)
+			{
+				await Task.Yield();
+				Console.WriteLine(ex.Message);
+			}
+			catch (ArgumentException ex2)
+			{
+				await Task.Yield();
+				Console.WriteLine(ex2.Message);
+			}
+		}
+
+		public async Task HeterogeneousMultiCatch2()
+		{
+			try
+			{
+				await Task.Yield();
+			}
+			catch (InvalidOperationException ex)
+			{
+				await Task.Yield();
+				Console.WriteLine(ex.Message);
+			}
+			catch
+			{
+				await Task.Yield();
+				Console.WriteLine("other");
+			}
+		}
+
+		public async Task HeterogeneousMultiCatch3()
+		{
+			try
+			{
+				await Task.Yield();
+			}
+			catch (InvalidOperationException ex)
+			{
+				await Task.Yield();
+				Console.WriteLine(ex.Message);
+			}
+			catch (Exception)
+			{
+				await Task.Yield();
+				throw;
+			}
+		}
 #if RUNTIMEASYNC
 		// The state-machine async lowering doesn't recognize return-from-try-with-await-in-finally
 		// and decompiles these as `int result; try { ... } finally { ... } return result;`. The

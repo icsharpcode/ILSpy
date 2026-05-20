@@ -800,7 +800,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (flagInitStore == null)
 				return false;
 			// Block continuation { switch (ldloc num) { case K: br case_K ... ; default: leave outer } }
-			if (!MatchSwitchDispatch(continuation, numVariable, out var caseBlocks, out var defaultExit))
+			// — or, for a small number of handlers (typically 2) where Roslyn emits an if-chain
+			// instead of a switch — a chain of `if (num == K_i) br case_K_i` blocks ending in a leave.
+			if (!MatchSwitchDispatch(continuation, numVariable, out var caseBlocks, out var defaultExit)
+				&& !MatchIfChainDispatch(continuation, numVariable, container, out caseBlocks, out defaultExit))
 				return false;
 			// Every K we recorded must have a case in the switch.
 			foreach (var info in handlerInfos)
@@ -837,17 +840,74 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					ReplaceDispatchIdiomWithRethrow(b, handler.Variable, context);
 			}
 
-			// Replace continuation with the default exit (leave outer).
-			// Clear() already detached defaultExit via the SwitchInstruction's release-ref cascade,
-			// so we can re-add it directly.
+			// Replace continuation with the default exit (leave outer). Clone the default-exit so
+			// we don't worry about whose tree it currently belongs to (the switch instruction we're
+			// tearing down, or a later block in an if-chain dispatch). Clear the clone's ILRange —
+			// it now sits at a different location than the original, so reusing the source offset
+			// would produce wrong sequence points.
+			var defaultExitClone = defaultExit.Clone();
+			defaultExitClone.SetILRange(new Interval());
 			continuation.Instructions.Clear();
-			continuation.Instructions.Add(defaultExit);
+			continuation.Instructions.Add(defaultExitClone);
 
 			// Remove the pre-try `stloc num(0)`.
 			parentBlock.Instructions.RemoveAt(flagInitStore.ChildIndex);
 
 			context.StepEndGroup(keepIfEmpty: true);
 			return true;
+		}
+
+		// For 2-handler multi-catches, Roslyn emits an if-chain rather than a switch:
+		//   Block continuation {
+		//     if (ldloc num == K_1) br case_K_1
+		//     br nextBlock
+		//   }
+		//   Block nextBlock {
+		//     if (ldloc num == K_2) br case_K_2
+		//     <leave outer | br defaultExitBlock>
+		//   }
+		// Where the chain may extend beyond two if-blocks.
+		static bool MatchIfChainDispatch(Block continuation, ILVariable numVariable,
+			BlockContainer container, out Dictionary<int, Block> caseBlocks, out ILInstruction defaultExit)
+		{
+			caseBlocks = new Dictionary<int, Block>();
+			defaultExit = null;
+			var visited = new HashSet<Block>();
+			var current = continuation;
+			while (true)
+			{
+				if (!visited.Add(current))
+					return false;
+				if (current.Instructions.Count != 2)
+					return false;
+				if (current.Instructions[0] is not IfInstruction ifInst)
+					return false;
+				if (!ifInst.Condition.MatchCompEquals(out var lhs, out var rhs)
+					|| !lhs.MatchLdLoc(numVariable)
+					|| !rhs.MatchLdcI4(out int k))
+					return false;
+				if (!ifInst.TrueInst.MatchBranch(out var caseBlock))
+					return false;
+				if (caseBlocks.ContainsKey(k))
+					return false;
+				caseBlocks[k] = caseBlock;
+				var fallthrough = current.Instructions[1];
+				if (fallthrough is Leave directLeave && IsLeaveToContainerOrAncestor(directLeave, container))
+				{
+					defaultExit = directLeave;
+					return caseBlocks.Count > 0;
+				}
+				if (!fallthrough.MatchBranch(out var nextBlock) || nextBlock.Parent != container)
+					return false;
+				// One-instruction leave block ends the chain — typical for "switch default" / "no case matched".
+				if (nextBlock.Instructions.Count == 1 && nextBlock.Instructions[0] is Leave finalLeave
+					&& IsLeaveToContainerOrAncestor(finalLeave, container))
+				{
+					defaultExit = finalLeave;
+					return caseBlocks.Count > 0;
+				}
+				current = nextBlock;
+			}
 		}
 
 		// Block continuation { switch (ldloc num) { case [K..K+1): br case_K ... ; default: <leave outer | br end> } }
