@@ -75,8 +75,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					continue;
 				if (parentBlock.Parent is not BlockContainer container)
 					continue;
-				if (tryCatch.ChildIndex != parentBlock.Instructions.Count - 1)
-					continue;
 
 				if (tryCatch.Handlers.Count == 1)
 				{
@@ -392,6 +390,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return null;
 		}
 
+		// True when `leave` exits `container` itself or any ancestor container — i.e. control transfers
+		// out of `container`. Replaces the older `IsLeavingFunction` gate, which only matched the
+		// top-level case; nested runtime-async patterns also leave to intermediate containers.
+		static bool LeaveExitsContainer(Leave leave, BlockContainer container)
+		{
+			if (leave.TargetContainer == container)
+				return true;
+			return container.IsDescendantOf(leave.TargetContainer);
+		}
+
 		// Remove `stloc v(ldc.i4 0)` instructions immediately preceding `tryFinally` whose target
 		// variable is never read.
 		static void RemoveDeadFlagStores(Block parentBlock, TryFinally tryFinally)
@@ -623,9 +631,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (prefixCount != 0)
 				return false;
 
-			// Pre-try: somewhere before the TryCatch we expect `stloc num(ldc.i4 0)`.
+			// Pre-try: somewhere before the TryCatch we expect `stloc num(ldc.i4 0)`. After
+			// SplitVariables the pre-init's local may be a separate ILVariable, so match the slot
+			// and type rather than the ILVariable identity (same workaround as the multi-handler
+			// matcher).
 			var flagInitStore = FindFlagInitStore(parentBlock, tryCatch,
-				s => s.Variable == numVariable && s.Value.MatchLdcI4(0));
+				s => s.Variable.Index == numVariable.Index
+					&& s.Variable.Kind == numVariable.Kind
+					&& s.Variable.Type.IsKnownType(KnownTypeCode.Int32)
+					&& s.Value.MatchLdcI4(0));
 			if (flagInitStore == null)
 				return false;
 
@@ -866,9 +880,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		}
 
 		// Block continuation {
-		//   Variant A: if (comp.i4(num != 1)) leave outer; br catchBody
-		//   Variant B: if (comp.i4(num == 1)) br catchBody; leave outer
+		//   Variant A: if (comp.i4(num != 1)) <exit>; br catchBody
+		//   Variant B: if (comp.i4(num == 1)) br catchBody; <exit>
 		// }
+		// <exit> is either a direct Leave that exits `container` (or any ancestor) — which is the
+		// top-level shape where "no exception" leaves the function — or a Branch to a leave-block
+		// in `container`. The Branch form arises when the try-catch is nested (e.g. inside an
+		// outer try-finally), where "no exception" branches to the outer try-block's exit point.
 		static bool MatchCatchEntryCheck(Block continuation, ILVariable numVariable, BlockContainer container,
 			out Block catchBodyEntry, out ILInstruction afterCatchExit)
 		{
@@ -880,28 +898,57 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (continuation.Instructions[0] is not IfInstruction ifInst)
 				return false;
 
-			// Equals form: if (num == 1) br catchBody ; <fallthrough leave outer>
+			// Equals form: if (num == 1) br catchBody ; <exit>
 			if (ifInst.Condition.MatchCompEquals(out var lhs, out var rhs)
 				&& lhs.MatchLdLoc(numVariable) && rhs.MatchLdcI4(1)
 				&& ifInst.TrueInst is Branch eqBranch
-				&& continuation.Instructions[1] is Leave eqLeave && eqLeave.IsLeavingFunction)
+				&& IsContainerExit(continuation.Instructions[1], container))
 			{
 				catchBodyEntry = eqBranch.TargetBlock;
-				afterCatchExit = eqLeave;
+				afterCatchExit = continuation.Instructions[1];
 				return catchBodyEntry?.Parent == container;
 			}
 
-			// Not-equals form: if (num != 1) leave outer ; br catchBody
+			// Not-equals form: if (num != 1) <exit> ; br catchBody
 			if (ifInst.Condition.MatchCompNotEquals(out lhs, out rhs)
 				&& lhs.MatchLdLoc(numVariable) && rhs.MatchLdcI4(1)
-				&& ifInst.TrueInst is Leave neLeave && neLeave.IsLeavingFunction
+				&& IsContainerExit(ifInst.TrueInst, container)
 				&& continuation.Instructions[1] is Branch neBranch)
 			{
 				catchBodyEntry = neBranch.TargetBlock;
-				afterCatchExit = neLeave;
+				afterCatchExit = ifInst.TrueInst;
 				return catchBodyEntry?.Parent == container;
 			}
 
+			return false;
+		}
+
+		// True when `inst` transfers control out of `container`. Accepts three shapes that all
+		// arise from runtime-async lowering:
+		//  - direct `Leave` to `container` or any ancestor;
+		//  - cross-container `Branch` whose target lives in a strict ancestor of `container` (the
+		//    inner-try-catch-inside-outer-try-finally case, where Roslyn emits a single branch that
+		//    spans the inner container);
+		//  - `Branch` to a one-instruction leave-block in `container` (the indirected canonical
+		//    leave-via-helper-block form).
+		static bool IsContainerExit(ILInstruction inst, BlockContainer container)
+		{
+			if (inst is Leave leave)
+				return LeaveExitsContainer(leave, container);
+			if (inst is Branch br && br.TargetBlock != null)
+			{
+				var targetContainer = br.TargetBlock.Parent as BlockContainer;
+				if (targetContainer == null)
+					return false;
+				if (targetContainer != container && container.IsDescendantOf(targetContainer))
+					return true;
+				if (targetContainer == container
+					&& br.TargetBlock.Instructions.Count == 1
+					&& br.TargetBlock.Instructions[0] is Leave brLeave)
+				{
+					return LeaveExitsContainer(brLeave, container);
+				}
+			}
 			return false;
 		}
 

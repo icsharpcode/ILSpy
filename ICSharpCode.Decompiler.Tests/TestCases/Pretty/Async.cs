@@ -383,6 +383,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			return new object();
 		}
+
+		public async Task TryCatchFinallyAllAwait()
+		{
+			try
+			{
+				await Task.CompletedTask;
+				Console.WriteLine("try");
+			}
+			catch (Exception)
+			{
+				await Task.CompletedTask;
+				Console.WriteLine("catch");
+			}
+			finally
+			{
+				await Task.CompletedTask;
+				Console.WriteLine("finally");
+			}
+		}
 #endif
 
 		public static async Task<int> GetIntegerSumAsync(IEnumerable<int> items)
