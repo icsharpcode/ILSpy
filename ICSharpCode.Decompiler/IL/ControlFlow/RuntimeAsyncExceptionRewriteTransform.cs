@@ -279,14 +279,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 
 			// Pre-try: somewhere among the instructions preceding the TryCatch we expect
-			// an `stloc obj(ldnull)`. Other (unrelated) stores may be interleaved. After
-			// SplitVariables, when the try body always throws the pre-init's local is a separate
-			// ILVariable from the in-handler store, so match by slot/kind/type rather than identity.
-			var flagInitStore = FindFlagInitStore(parentBlock, tryCatch,
-				s => s.Variable.Index == objectVariable.Index
-					&& s.Variable.Kind == objectVariable.Kind
-					&& s.Variable.Type.IsKnownType(KnownTypeCode.Object)
-					&& s.Value.MatchLdNull());
+			// an `stloc obj(ldnull)`. Other (unrelated) stores may be interleaved.
+			var flagInitStore = FindFlagInitStore(parentBlock, tryCatch, objectVariable, v => v.MatchLdNull());
 			if (flagInitStore == null)
 				return false;
 
@@ -383,18 +377,26 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return true;
 		}
 
-		// Scan instructions before `tryCatch` for the runtime-async flag-init store that matches
-		// `predicate`. The lowering inserts an `stloc obj(ldnull)` (try-finally) or
-		// `stloc num(ldc.i4 0)` (try-catch) before the try region; the catch handler overwrites it,
-		// the continuation reads it to decide whether an exception occurred (and which case).
-		// Returns null when no matching store is found.
-		static StLoc FindFlagInitStore(Block parentBlock, TryCatch tryCatch, Predicate<StLoc> predicate)
+		// Scan instructions before `tryCatch` for the runtime-async flag-init store. The lowering
+		// inserts an `stloc obj(ldnull)` (try-finally) or `stloc num(ldc.i4 0)` (try-catch) before
+		// the try region; the catch handler overwrites it, and the continuation reads it to decide
+		// whether an exception occurred (and which case). Match by `referenceVar`'s slot/kind/type
+		// rather than identity — after SplitVariables, the pre-init's ILVariable may differ from
+		// the in-handler one. Returns null when no matching store is found.
+		static StLoc FindFlagInitStore(Block parentBlock, TryCatch tryCatch, ILVariable referenceVar, Predicate<ILInstruction> matchInitValue)
 		{
 			int tryIndex = tryCatch.ChildIndex;
 			for (int i = 0; i < tryIndex; i++)
 			{
-				if (parentBlock.Instructions[i] is StLoc s && predicate(s))
-					return s;
+				if (parentBlock.Instructions[i] is not StLoc s)
+					continue;
+				if (s.Variable.Index != referenceVar.Index || s.Variable.Kind != referenceVar.Kind)
+					continue;
+				if (!s.Variable.Type.Equals(referenceVar.Type))
+					continue;
+				if (!matchInitValue(s.Value))
+					continue;
+				return s;
 			}
 			return null;
 		}
@@ -640,15 +642,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (prefixCount != 0)
 				return false;
 
-			// Pre-try: somewhere before the TryCatch we expect `stloc num(ldc.i4 0)`. After
-			// SplitVariables the pre-init's local may be a separate ILVariable, so match the slot
-			// and type rather than the ILVariable identity (same workaround as the multi-handler
-			// matcher).
-			var flagInitStore = FindFlagInitStore(parentBlock, tryCatch,
-				s => s.Variable.Index == numVariable.Index
-					&& s.Variable.Kind == numVariable.Kind
-					&& s.Variable.Type.IsKnownType(KnownTypeCode.Int32)
-					&& s.Value.MatchLdcI4(0));
+			// Pre-try: somewhere before the TryCatch we expect `stloc num(ldc.i4 0)`.
+			var flagInitStore = FindFlagInitStore(parentBlock, tryCatch, numVariable, v => v.MatchLdcI4(0));
 			if (flagInitStore == null)
 				return false;
 
@@ -789,14 +784,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				handlerInfos.Add((handler, k, bodyObj, bodyTmp));
 			}
 
-			// Pre-try: stloc num(ldc.i4 0). After SplitVariables the pre-init's local may be a
-			// separate ILVariable (the in-handler stores form a disjoint use that gets split off),
-			// so match the slot and type rather than the ILVariable identity.
-			var flagInitStore = FindFlagInitStore(parentBlock, tryCatch,
-				s => s.Variable.Index == numVariable.Index
-					&& s.Variable.Kind == numVariable.Kind
-					&& s.Variable.Type.IsKnownType(KnownTypeCode.Int32)
-					&& s.Value.MatchLdcI4(0));
+			// Pre-try: stloc num(ldc.i4 0).
+			var flagInitStore = FindFlagInitStore(parentBlock, tryCatch, numVariable, v => v.MatchLdcI4(0));
 			if (flagInitStore == null)
 				return false;
 			// Block continuation { switch (ldloc num) { case K: br case_K ... ; default: leave outer } }
