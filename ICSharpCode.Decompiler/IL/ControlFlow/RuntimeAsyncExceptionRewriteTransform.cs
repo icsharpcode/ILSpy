@@ -278,18 +278,23 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 
 			// Pre-try: somewhere among the instructions preceding the TryCatch we expect
-			// an `stloc obj(ldnull)`. Other (unrelated) stores may be interleaved.
+			// an `stloc obj(ldnull)`. Other (unrelated) stores may be interleaved. After
+			// SplitVariables, when the try body always throws the pre-init's local is a separate
+			// ILVariable from the in-handler store, so match by slot/kind/type rather than identity.
 			var flagInitStore = FindFlagInitStore(parentBlock, tryCatch,
-				s => s.Variable == objectVariable && s.Value.MatchLdNull());
+				s => s.Variable.Index == objectVariable.Index
+					&& s.Variable.Kind == objectVariable.Kind
+					&& s.Variable.Type.IsKnownType(KnownTypeCode.Object)
+					&& s.Value.MatchLdNull());
 			if (flagInitStore == null)
 				return false;
 
 			// Every outward exit of the try body must branch to `continuation`. The runtime-async
 			// lowering rewrites every return / fallthrough to `br continuation` and routes throws
 			// through the synthetic catch, so a Leave or a Branch to anything else means we're not
-			// looking at a lowered shape. We also require at least one such exit, to reject try
-			// bodies with no outward control flow at all.
-			bool seenExit = false;
+			// looking at a lowered shape. A try body with no outward exit at all is also fine —
+			// the user wrote `try { throw ...; } finally { await ... }`, which lowers to a try body
+			// whose only exit is the throw (handled by the synthetic catch).
 			foreach (var inst in tryCatch.TryBlock.Descendants.OfType<IBranchOrLeaveInstruction>())
 			{
 				// Skip intra-tryBody control flow: inst.TargetContainer being tryBody itself or any
@@ -298,12 +303,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (inst.TargetContainer.IsDescendantOf(tryCatch.TryBlock))
 					continue;
 				if (inst is Branch branch && branch.TargetBlock == continuation)
-					seenExit = true;
-				else
-					return false;
-			}
-			if (!seenExit)
+					continue;
 				return false;
+			}
 
 			// Find the dispatch idiom at the end of the finally body.
 			// Pattern: a block ending with "if (obj == null) leave outer; br dispatchHead"
@@ -355,11 +357,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Append a successor instruction so the parent block remains EndPointUnreachable.
 			// If there was a separate leave-block, branch to it (it stays in the outer container);
 			// otherwise reuse the original Leave-with-value — RewriteFinallyExit already detached
-			// it from the if-instruction that previously held it.
-			if (leaveBlock != null)
-				parentBlock.Instructions.Add(new Branch(leaveBlock).WithILRange(afterFinallyExit));
-			else
-				parentBlock.Instructions.Add(afterFinallyExit);
+			// it from the if-instruction that previously held it. Skip when the try body always
+			// throws — the resulting TryFinally's endpoint is unreachable and a successor
+			// instruction after it would put a non-final unreachable-endpoint instruction in the
+			// block, violating the block invariant.
+			if (!tryFinally.HasFlag(InstructionFlags.EndPointUnreachable))
+			{
+				if (leaveBlock != null)
+					parentBlock.Instructions.Add(new Branch(leaveBlock).WithILRange(afterFinallyExit));
+				else
+					parentBlock.Instructions.Add(afterFinallyExit);
+			}
 
 			// Remove the pre-init `stloc obj(ldnull)`. Also remove any dead
 			// `stloc <int>(ldc.i4 0)` immediately preceding the TryFinally — the runtime-async

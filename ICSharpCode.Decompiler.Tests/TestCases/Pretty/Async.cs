@@ -402,6 +402,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("finally");
 			}
 		}
+
+		public async Task ThrowInsideTryFinally()
+		{
+			try
+			{
+				throw new InvalidOperationException();
+			}
+			finally
+			{
+				await Task.Yield();
+			}
+		}
 #endif
 
 		public static async Task<int> GetIntegerSumAsync(IEnumerable<int> items)
