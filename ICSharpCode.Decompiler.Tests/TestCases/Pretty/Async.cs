@@ -74,6 +74,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("After");
 		}
 
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		public async Task NoInliningTaskMethod()
+		{
+			await Task.Yield();
+		}
+
 		public async Task TaskMethodWithoutAwait()
 		{
 			Console.WriteLine("No Await");
@@ -113,6 +119,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			{
 				Console.WriteLine("Body");
 			}
+		}
+
+		public async Task AwaitConfigureAwaitFalse(Task<int> task)
+		{
+#if ROSLYN2
+			Console.WriteLine(await task.ConfigureAwait(continueOnCapturedContext: false));
+#else
+			Console.WriteLine(await task.ConfigureAwait(false));
+#endif
+		}
+
+		public async Task<int> AwaitConfigureAwaitMixed(Task<int> task1, Task<int> task2)
+		{
+#if ROSLYN2
+			return await task1.ConfigureAwait(continueOnCapturedContext: false) + await task2.ConfigureAwait(continueOnCapturedContext: true);
+#else
+			return await task1.ConfigureAwait(false) + await task2.ConfigureAwait(true);
+#endif
 		}
 
 #if CS60
@@ -359,6 +383,127 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			return new object();
 		}
+
+		public async Task TryCatchFinallyAllAwait()
+		{
+			try
+			{
+				await Task.CompletedTask;
+				Console.WriteLine("try");
+			}
+			catch (Exception)
+			{
+				await Task.CompletedTask;
+				Console.WriteLine("catch");
+			}
+			finally
+			{
+				await Task.CompletedTask;
+				Console.WriteLine("finally");
+			}
+		}
+
+		public async Task ThrowInsideTryFinally()
+		{
+			try
+			{
+				throw new InvalidOperationException();
+			}
+			finally
+			{
+				await Task.Yield();
+			}
+		}
+
+		public async Task HeterogeneousMultiCatch1()
+		{
+			try
+			{
+				await Task.Yield();
+			}
+			catch (InvalidOperationException ex)
+			{
+				await Task.Yield();
+				Console.WriteLine(ex.Message);
+			}
+			catch (ArgumentException ex2)
+			{
+				await Task.Yield();
+				Console.WriteLine(ex2.Message);
+			}
+		}
+
+		public async Task HeterogeneousMultiCatch2()
+		{
+			try
+			{
+				await Task.Yield();
+			}
+			catch (InvalidOperationException ex)
+			{
+				await Task.Yield();
+				Console.WriteLine(ex.Message);
+			}
+			catch
+			{
+				await Task.Yield();
+				Console.WriteLine("other");
+			}
+		}
+
+		public async Task HeterogeneousMultiCatch3()
+		{
+			try
+			{
+				await Task.Yield();
+			}
+			catch (InvalidOperationException ex)
+			{
+				await Task.Yield();
+				Console.WriteLine(ex.Message);
+			}
+			catch (Exception)
+			{
+				await Task.Yield();
+				throw;
+			}
+		}
+#if RUNTIMEASYNC
+		// The state-machine async lowering doesn't recognize return-from-try-with-await-in-finally
+		// and decompiles these as `int result; try { ... } finally { ... } return result;`. The
+		// runtime-async exception rewrite recovers the source-level form. Gate these tests so the
+		// (state-machine) Async test doesn't run them against the more aggressive output.
+		public async Task<int> ReturnFromTryFinally()
+		{
+			try
+			{
+				return 42;
+			}
+			finally
+			{
+				await Task.CompletedTask;
+			}
+		}
+
+		public async Task<int> ReturnFromInsideNestedTryFinally()
+		{
+			try
+			{
+				try
+				{
+					return 42;
+				}
+				finally
+				{
+					await Task.CompletedTask;
+				}
+			}
+			finally
+			{
+				await Task.CompletedTask;
+			}
+		}
+#endif
 #endif
 
 		public static async Task<int> GetIntegerSumAsync(IEnumerable<int> items)

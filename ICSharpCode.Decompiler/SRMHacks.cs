@@ -15,6 +15,7 @@ namespace ICSharpCode.Decompiler
 	public static partial class SRMExtensions
 	{
 		internal const GenericParameterAttributes AllowByRefLike = (GenericParameterAttributes)0x0020;
+		internal const MethodImplAttributes MethodImplAsync = (MethodImplAttributes)0x2000;
 
 		public static ImmutableArray<MethodImplementationHandle> GetMethodImplementations(
 			this MethodDefinitionHandle handle, MetadataReader reader)

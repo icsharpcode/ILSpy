@@ -154,12 +154,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		ExtensionMembers = 0x80000,
 		/// <summary>
+		/// If this option is active, methods with the MethodImplAttribute(MethodImplOptions.Async) are treated as async methods.
+		/// </summary>
+		RuntimeAsync = 0x100000,
+		/// <summary>
 		/// Default settings: typical options for the decompiler, with all C# language features enabled.
 		/// </summary>
 		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants | ReadOnlyStructsAndParameters
 			| RefStructs | UnmanagedConstraints | NullabilityAnnotations | ReadOnlyMethods
 			| NativeIntegers | FunctionPointers | ScopedRef | NativeIntegersWithoutAttribute
 			| RefReadOnlyParameters | ParamsCollections | FirstClassSpanTypes | ExtensionMembers
+			| RuntimeAsync
 	}
 
 	/// <summary>
@@ -207,6 +212,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				typeSystemOptions |= TypeSystemOptions.FirstClassSpanTypes;
 			if (settings.ExtensionMembers)
 				typeSystemOptions |= TypeSystemOptions.ExtensionMembers;
+			if (settings.RuntimeAsync)
+				typeSystemOptions |= TypeSystemOptions.RuntimeAsync;
 			return typeSystemOptions;
 		}
 

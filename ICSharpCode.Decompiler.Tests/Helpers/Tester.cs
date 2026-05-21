@@ -73,6 +73,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		CheckForOverflowUnderflow = 0x20000,
 		ProcessXmlDoc = 0x40000,
 		UseRoslyn4_14_0 = 0x80000,
+		EnableRuntimeAsync = 0x100000,
 		UseMcsMask = UseMcs2_6_4 | UseMcs5_23,
 		UseRoslynMask = UseRoslyn1_3_2 | UseRoslyn2_10_0 | UseRoslyn3_11_0 | UseRoslyn4_14_0 | UseRoslynLatest
 	}
@@ -500,6 +501,10 @@ namespace System.Runtime.CompilerServices
 				preprocessorSymbols.Add("LEGACY_CSC");
 				preprocessorSymbols.Add("LEGACY_VBC");
 			}
+			if (flags.HasFlag(CompilerOptions.EnableRuntimeAsync))
+			{
+				preprocessorSymbols.Add("RUNTIMEASYNC");
+			}
 			return preprocessorSymbols;
 		}
 
@@ -605,12 +610,17 @@ namespace System.Runtime.CompilerServices
 				if (roslynVersion != "legacy")
 				{
 					otherOptions += "/shared ";
-					if (!targetNet40 && Version.Parse(RoslynToolset.SanitizeVersion(roslynVersion)).Major > 2)
+					var version = Version.Parse(RoslynToolset.SanitizeVersion(roslynVersion));
+					if (!targetNet40 && version.Major > 2)
 					{
 						if (flags.HasFlag(CompilerOptions.NullableEnable))
 							otherOptions += "/nullable+ ";
 						else
 							otherOptions += "/nullable- ";
+					}
+					if (!targetNet40 && roslynVersion == roslynLatestVersion && flags.HasFlag(CompilerOptions.EnableRuntimeAsync))
+					{
+						otherOptions += "/features:runtime-async=on ";
 					}
 				}
 
@@ -842,6 +852,8 @@ namespace System.Runtime.CompilerServices
 				suffix += ".mcs2";
 			if ((cscOptions & CompilerOptions.UseMcs5_23) != 0)
 				suffix += ".mcs5";
+			if ((cscOptions & CompilerOptions.EnableRuntimeAsync) != 0)
+				suffix += ".runtimeasync";
 			return suffix;
 		}
 

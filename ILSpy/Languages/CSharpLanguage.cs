@@ -24,8 +24,6 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
-using System.Windows;
-using System.Windows.Controls;
 
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler;
@@ -119,6 +117,7 @@ namespace ICSharpCode.ILSpy
 						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp12_0.ToString(), "C# 12.0 / VS 2022.8"),
 						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp13_0.ToString(), "C# 13.0 / VS 2022.12"),
 						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp14_0.ToString(), "C# 14.0 / VS 2026"),
+						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp15_0.ToString(), "C# 15.0 / VS 202x.yy"),
 					};
 				}
 				return versions;

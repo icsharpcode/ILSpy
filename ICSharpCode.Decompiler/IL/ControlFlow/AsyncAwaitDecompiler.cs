@@ -121,7 +121,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			awaitDebugInfos.Clear();
 			moveNextLeaves.Clear();
 			if (!MatchTaskCreationPattern(function) && !MatchAsyncEnumeratorCreationPattern(function))
+			{
+				if (function.IsAsync && context.Settings.RuntimeAsync)
+				{
+					TranslateThisCopyAccess(function);
+					RuntimeAsyncManualAwaitTransform.Run(function, context);
+					RuntimeAsyncExceptionRewriteTransform.Run(function, context);
+				}
 				return;
+			}
 			try
 			{
 				AnalyzeMoveNext();
@@ -172,6 +180,57 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			awaitDebugInfos.SortBy(row => row.YieldOffset);
 			function.AsyncDebugInfo = new AsyncDebugInfo(catchHandlerOffset, awaitDebugInfos.ToImmutableArray());
+		}
+
+		// Runtime-async analog of fieldToParameterMap's `<>4__this` capture: in a struct method,
+		// Roslyn lowers `this` references to a single ldobj at function entry stored into a local.
+		// Match the entry instruction `stloc V_X(ldobj T(ldloc this))` and rewrite every later
+		// `ldloc V_X` / `ldloca V_X` to go through the `this` parameter again, so AST emission
+		// renders accesses as plain `this.field` / `field` rather than `<copy>.field`.
+		static bool TranslateThisCopyAccess(ILFunction function)
+		{
+			// Only applies to struct methods — that's the only shape where Roslyn copies *this
+			// at entry to keep the managed ref off the async resume path.
+			if (function.Method?.DeclaringTypeDefinition?.Kind != TypeKind.Struct)
+				return false;
+			var thisParam = function.Variables.FirstOrDefault(v => v.Kind == VariableKind.Parameter && v.Index == -1);
+			if (thisParam == null)
+				return false;
+			if (thisParam.Type is not ByReferenceType thisRef)
+				return false;
+			if (function.Body is not BlockContainer body || body.Blocks.Count == 0)
+				return false;
+			var entry = body.EntryPoint;
+			if (entry.Instructions.Count == 0)
+				return false;
+			if (!entry.Instructions[0].MatchStLoc(out var copyVar, out var copyValue))
+				return false;
+			if (copyVar.Kind != VariableKind.Local)
+				return false;
+			if (copyVar.StoreInstructions.Count != 1)
+				return false;
+			if (copyValue is not LdObj ldobj)
+				return false;
+			if (!ldobj.Target.MatchLdLoc(thisParam))
+				return false;
+			if (!copyVar.Type.Equals(ldobj.Type) || !thisRef.ElementType.Equals(ldobj.Type))
+				return false;
+
+			foreach (var ldloc in function.Descendants.OfType<LdLoc>().ToArray())
+			{
+				if (ldloc.Variable != copyVar)
+					continue;
+				ldloc.ReplaceWith(new LdObj(new LdLoc(thisParam), ldobj.Type).WithILRange(ldloc));
+			}
+			foreach (var ldloca in function.Descendants.OfType<LdLoca>().ToArray())
+			{
+				if (ldloca.Variable != copyVar)
+					continue;
+				ldloca.ReplaceWith(new LdLoc(thisParam).WithILRange(ldloca));
+			}
+
+			entry.Instructions.RemoveAt(0);
+			return true;
 		}
 
 		private void CleanUpBodyOfMoveNext(ILFunction function)

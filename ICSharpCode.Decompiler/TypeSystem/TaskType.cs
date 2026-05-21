@@ -41,6 +41,28 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		/// <summary>
+		/// Gets the element type of any task-like type (Task, Task&lt;T&gt;, ValueTask,
+		/// ValueTask&lt;T&gt;, or any [AsyncMethodBuilder]-attributed custom task type).
+		/// Returns void for non-generic task-likes. Any other type is returned unmodified.
+		/// </summary>
+		public static IType UnpackAnyTask(ICompilation compilation, IType type)
+		{
+			if (IsTask(type))
+			{
+				return type.TypeParameterCount == 0
+					? compilation.FindType(KnownTypeCode.Void)
+					: type.TypeArguments[0];
+			}
+			if (IsCustomTask(type, out _))
+			{
+				return type.TypeParameterCount == 0
+					? compilation.FindType(KnownTypeCode.Void)
+					: type.TypeArguments[0];
+			}
+			return type;
+		}
+
+		/// <summary>
 		/// Gets whether the specified type is Task or Task&lt;T&gt;.
 		/// </summary>
 		public static bool IsTask(IType type)

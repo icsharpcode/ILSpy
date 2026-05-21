@@ -173,6 +173,39 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
+		protected internal override void VisitCall(Call inst)
+		{
+			base.VisitCall(inst);
+			TransformAsyncHelpersAwaitToAwait(inst, context);
+		}
+
+		// runtime-async lowering emits `call AsyncHelpers.Await(value)` in place of the IL Await
+		// instruction. Convert it back so downstream transforms (UsingTransform's MatchDisposeBlock
+		// and friends pattern-match on Await via UnwrapAwait) see the canonical shape that the
+		// state-machine async pipeline also produces. Gate on the current function actually being
+		// a runtime-async method — ILReader sets IsAsync iff the MethodImpl.Async bit is present —
+		// so a non-async method that calls the helper directly (legal, just unusual) doesn't get
+		// rewritten into IL that the surrounding non-async control flow can't represent.
+		internal static bool TransformAsyncHelpersAwaitToAwait(Call inst, ILTransformContext context)
+		{
+			if (!context.Settings.RuntimeAsync || !context.Function.IsAsync)
+				return false;
+			if (!inst.Method.IsStatic || inst.Arguments.Count != 1 || !IsAsyncHelpersMethod(inst.Method, "Await"))
+				return false;
+			context.Step("call AsyncHelpers.Await(value) => await(value)", inst);
+			var awaitInst = new Await(inst.Arguments[0]).WithILRange(inst);
+			awaitInst.GetAwaiterMethod = null;
+			awaitInst.GetResultMethod = inst.Method;
+			inst.ReplaceWith(awaitInst);
+			return true;
+		}
+
+		internal static bool IsAsyncHelpersMethod(IMethod method, string name)
+		{
+			return method.Name == name
+				&& method.DeclaringType?.FullName == "System.Runtime.CompilerServices.AsyncHelpers";
+		}
+
 		protected internal override void VisitNewObj(NewObj inst)
 		{
 			if (TransformDecimalCtorToConstant(inst, out LdcDecimal decimalConstant))

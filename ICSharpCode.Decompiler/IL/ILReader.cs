@@ -159,6 +159,7 @@ namespace ICSharpCode.Decompiler.IL
 		BitSet isBranchTarget = null!;
 		BlockContainer mainContainer = null!;
 		int currentInstructionStart;
+		bool isRuntimeAsync;
 
 		Dictionary<int, ImportedBlock> blocksByOffset = new Dictionary<int, ImportedBlock>();
 		Queue<ImportedBlock> importQueue = new Queue<ImportedBlock>();
@@ -172,6 +173,8 @@ namespace ICSharpCode.Decompiler.IL
 			if (methodDefinitionHandle.IsNil)
 				throw new ArgumentException("methodDefinitionHandle.IsNil");
 			this.method = module.GetDefinition(methodDefinitionHandle);
+			this.isRuntimeAsync = (module.TypeSystemOptions & TypeSystemOptions.RuntimeAsync) != 0
+				&& (module.metadata.GetMethodDefinition(methodDefinitionHandle).ImplAttributes & SRMExtensions.MethodImplAsync) != 0;
 			if (genericContext.ClassTypeParameters == null && genericContext.MethodTypeParameters == null)
 			{
 				// no generic context specified: use the method's own type parameters
@@ -187,7 +190,14 @@ namespace ICSharpCode.Decompiler.IL
 			this.reader = body.GetILReader();
 			this.currentStack = ImmutableStack<ILVariable>.Empty;
 			this.expressionStack.Clear();
-			this.methodReturnStackType = method.ReturnType.GetStackType();
+			if (isRuntimeAsync)
+			{
+				this.methodReturnStackType = TaskType.UnpackAnyTask(compilation, method.ReturnType).GetStackType();
+			}
+			else
+			{
+				this.methodReturnStackType = method.ReturnType.GetStackType();
+			}
 			InitParameterVariables();
 			localVariables = InitLocalVariables();
 			foreach (var v in localVariables)
@@ -715,6 +725,10 @@ namespace ICSharpCode.Decompiler.IL
 			var blockBuilder = new BlockBuilder(body, variableByExceptionHandler, compilation);
 			blockBuilder.CreateBlocks(mainContainer, blocksByOffset.Values.Select(ib => ib.Block), cancellationToken);
 			var function = new ILFunction(this.method, body.GetCodeSize(), this.genericContext, mainContainer, kind);
+			if (isRuntimeAsync)
+			{
+				function.AsyncReturnType = TaskType.UnpackAnyTask(compilation, this.method.ReturnType);
+			}
 			function.Variables.AddRange(parameterVariables);
 			function.Variables.AddRange(localVariables);
 			function.LocalVariableSignatureLength = localVariables.Length;
