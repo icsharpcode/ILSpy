@@ -101,7 +101,7 @@ namespace ILSpy.TextView
 		/// Wraps the accumulated content in a chrome border + scroll viewer and returns the
 		/// final control tree for use in a popup.
 		/// </summary>
-		public Control CreateView(double maxWidth = 600, double maxHeight = 400)
+		public Control CreateView(double maxWidth = 900, double maxHeight = 400)
 		{
 			FlushAddedText(true);
 
@@ -127,10 +127,15 @@ namespace ILSpy.TextView
 			FlushAddedText(true);
 			inlineCollection = null;
 
+			// Wrap rather than NoWrap so a signature wider than the popup's MaxWidth folds
+			// to multiple lines instead of being clipped at the right edge — the outer
+			// ScrollViewer disables horizontal scrolling, so NoWrap meant "the right half
+			// of long generic method signatures is invisible". WPF parity: the equivalent
+			// FlowDocument Paragraph wraps by default (Paragraph doesn't even support NoWrap).
 			var block = new SelectableTextBlock {
 				FontFamily = codeFont,
 				FontSize = fontSize,
-				TextWrapping = TextWrapping.NoWrap,
+				TextWrapping = TextWrapping.Wrap,
 				Margin = new Thickness(0, 0, 0, 6),
 				Inlines = new InlineCollection(),
 			};
