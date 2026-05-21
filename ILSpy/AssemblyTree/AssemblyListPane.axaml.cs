@@ -393,20 +393,16 @@ namespace ILSpy.AssemblyTree
 
 		void OnTreeGridPointerPressed(object? sender, PointerPressedEventArgs e)
 		{
-			// Two gestures map to "open the row's node in a new tab":
-			//   • MMB single-click — primary, WPF DecompileInNewViewCommand's InputGestureText.
-			//   • Ctrl + LMB single-click — modern editor convention.
-			// LMB double-click is reserved for expand/collapse — handled by OnTreeGridDoubleTapped.
-			// MMB doesn't move selection on its own, so we hit-test the row from e.Source
-			// in every case rather than reading SelectedItem.
+			// MMB single-click is the only "open the row's node in a new tab" pointer gesture —
+			// matches WPF's DecompileInNewViewCommand InputGestureText. Ctrl+LMB is left to
+			// ProDataGrid's Extended-selection mode so multi-selection by toggle isn't ambushed
+			// by an unwanted new tab. LMB double-click is reserved for expand/collapse,
+			// handled by OnTreeGridDoubleTapped. MMB doesn't move selection on its own, so we
+			// hit-test the row from e.Source rather than reading SelectedItem.
 			if (e.Source is not Visual hit)
 				return;
 			var point = e.GetCurrentPoint(hit).Properties;
-			bool isMmb = point.IsMiddleButtonPressed;
-			bool isCtrlClick = point.IsLeftButtonPressed
-				&& (e.KeyModifiers & KeyModifiers.Control) == KeyModifiers.Control
-				&& e.ClickCount == 1;
-			if (!isMmb && !isCtrlClick)
+			if (!point.IsMiddleButtonPressed)
 				return;
 			var visual = hit;
 			while (visual != null && visual.DataContext is not HierarchicalNode)

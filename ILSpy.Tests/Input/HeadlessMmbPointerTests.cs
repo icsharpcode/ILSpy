@@ -93,14 +93,57 @@ public class HeadlessMmbPointerTests
 	}
 
 	[AvaloniaTest]
+	public async Task Ctrl_LMB_On_An_Assembly_Tree_Row_Does_Not_Open_A_New_Tab()
+	{
+		// Ctrl+LMB previously did double duty: ProDataGrid's Extended-selection mode treats
+		// it as "toggle this row in the multi-selection", and our OnTreeGridPointerPressed
+		// also treated it as "open in new tab". Both fired on a single click, so users
+		// trying to extend a multi-selection ended up spawning unwanted tabs. The intended
+		// gesture for "open in new tab" is MMB (matches WPF's DecompileInNewViewCommand
+		// InputGestureText). Pin the corrected behaviour: Ctrl+LMB must NOT open a tab —
+		// any future regression that re-adds the branch fails this test.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<DataGrid>();
+
+		await Waiters.WaitForAsync(() => grid.GetVisualDescendants().OfType<DataGridRow>()
+			.Any(r => r.DataContext is HierarchicalNode { Item: ILSpyTreeNode }));
+		var row = grid.GetVisualDescendants().OfType<DataGridRow>()
+			.First(r => r.DataContext is HierarchicalNode { Item: ILSpyTreeNode });
+
+		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
+		int before = documents.VisibleDockables?.Count ?? 0;
+
+		var topLevel = TopLevel.GetTopLevel(row)!;
+		var rowBounds = row.Bounds;
+		var centreInRow = new Point(rowBounds.Width / 2, rowBounds.Height / 2);
+		var centreInTopLevel = row.TranslatePoint(centreInRow, topLevel)
+			?? throw new System.InvalidOperationException("Row not in TopLevel visual tree");
+
+		topLevel.MouseDown(centreInTopLevel, MouseButton.Left, RawInputModifiers.Control);
+		topLevel.MouseUp(centreInTopLevel, MouseButton.Left, RawInputModifiers.Control);
+
+		// Give the (former) "open new tab" path a beat to land if it were going to.
+		await Task.Delay(250);
+		global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+		(documents.VisibleDockables?.Count ?? 0).Should().Be(before,
+			"Ctrl+LMB must be reserved for ProDataGrid's multi-selection toggle — only MMB opens a new tab");
+	}
+
+	[AvaloniaTest]
 	public async Task LMB_Double_Click_On_An_Internal_Tree_Row_Expands_Without_Opening_A_New_Tab()
 	{
 		// LMB double-click is WPF's expand/collapse gesture. The OnTreeGridDoubleTapped handler
 		// is supposed to be the only path that fires; an earlier patch had OnTreeGridPointerPressed
-		// also treating double-click as a third "open in new tab" gesture (alongside MMB +
-		// Ctrl+LMB), which produced both effects at once. Pin the behaviour so it doesn't drift
-		// back: double-click on an internal (non-leaf) row must change neither the tab count
-		// nor the dock topology.
+		// also treating double-click as a "open in new tab" gesture, which produced both effects
+		// at once. Pin the behaviour so it doesn't drift back: double-click on an internal
+		// (non-leaf) row must change neither the tab count nor the dock topology.
 
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
@@ -140,6 +183,6 @@ public class HeadlessMmbPointerTests
 		global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
 		(documents.VisibleDockables?.Count ?? 0).Should().Be(before,
-			"LMB double-click must not open a new tab — only MMB and Ctrl+LMB do");
+			"LMB double-click must not open a new tab — only MMB does");
 	}
 }
