@@ -21,6 +21,7 @@ using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
+using ILSpy.Compare;
 using ILSpy.Options;
 using ILSpy.TextView;
 using ILSpy.ViewModels;
@@ -39,6 +40,7 @@ namespace ILSpy.Views
 		DecompilerTextView decompilerView = null!;
 		MetadataTablePage metadataView = null!;
 		OptionsPageView optionsView = null!;
+		CompareView compareView = null!;
 
 		public ContentTabPageView()
 		{
@@ -46,6 +48,7 @@ namespace ILSpy.Views
 			decompilerView = this.FindControl<DecompilerTextView>("DecompilerView")!;
 			metadataView = this.FindControl<MetadataTablePage>("MetadataView")!;
 			optionsView = this.FindControl<OptionsPageView>("OptionsView")!;
+			compareView = this.FindControl<CompareView>("CompareViewSlot")!;
 			DataContextChanged += (_, _) => RebindPage();
 		}
 
@@ -102,6 +105,17 @@ namespace ILSpy.Views
 			{
 				optionsView.IsVisible = false;
 				optionsView.DataContext = null;
+			}
+
+			if (content is CompareTabPageModel compare)
+			{
+				compareView.DataContext = compare;
+				compareView.IsVisible = true;
+			}
+			else
+			{
+				compareView.IsVisible = false;
+				compareView.DataContext = null;
 			}
 		}
 	}

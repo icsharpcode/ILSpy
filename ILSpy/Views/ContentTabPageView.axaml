@@ -6,6 +6,7 @@
              xmlns:textView="using:ILSpy.TextView"
              xmlns:metaViews="using:ILSpy.Views"
              xmlns:options="using:ILSpy.Options"
+             xmlns:compare="using:ILSpy.Compare"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
              x:Class="ILSpy.Views.ContentTabPageView"
              x:DataType="vm:ContentTabPage">
@@ -19,6 +20,7 @@
 		<textView:DecompilerTextView Name="DecompilerView" />
 		<metaViews:MetadataTablePage Name="MetadataView" />
 		<options:OptionsPageView Name="OptionsView" />
+		<compare:CompareView Name="CompareViewSlot" />
 	</Panel>
 
 </UserControl>

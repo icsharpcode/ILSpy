@@ -22,8 +22,7 @@
 		          HierarchicalRowsEnabled="True"
 		          GridLinesVisibility="None"
 		          CanUserResizeColumns="False"
-		          SelectionMode="Single"
-		          ItemsSource="{Binding RootEntry.Children}">
+		          SelectionMode="Single">
 			<DataGrid.Columns>
 				<DataGridHierarchicalColumn Header="Diff" Width="*"
 				                            IsReadOnly="True"

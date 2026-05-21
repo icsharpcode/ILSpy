@@ -16,15 +16,79 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.ComponentModel;
+
 using Avalonia.Controls;
+using Avalonia.Controls.DataGridHierarchical;
+
+using ICSharpCode.ILSpyX.TreeView;
 
 namespace ILSpy.Compare
 {
 	public partial class CompareView : UserControl
 	{
+		CompareTabPageModel? boundModel;
+
 		public CompareView()
 		{
 			InitializeComponent();
+		}
+
+		protected override void OnDataContextChanged(EventArgs e)
+		{
+			base.OnDataContextChanged(e);
+			DetachFromModel();
+			if (DataContext is CompareTabPageModel model)
+				AttachToModel(model);
+		}
+
+		void AttachToModel(CompareTabPageModel model)
+		{
+			boundModel = model;
+			model.PropertyChanged += OnModelPropertyChanged;
+			Rebind();
+		}
+
+		void DetachFromModel()
+		{
+			if (boundModel == null)
+				return;
+			boundModel.PropertyChanged -= OnModelPropertyChanged;
+			boundModel = null;
+		}
+
+		void OnModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			// ShowIdentical toggles which rows are filtered out — re-running the cascade
+			// through Rebind makes the DataGrid re-evaluate visibility on the next layout
+			// pass without us having to walk the tree by hand.
+			if (e.PropertyName == nameof(CompareTabPageModel.ShowIdentical))
+				Rebind();
+		}
+
+		void Rebind()
+		{
+			var root = boundModel?.RootEntry;
+			if (root == null)
+				return;
+			root.EnsureChildrenFiltered();
+
+			var options = new HierarchicalOptions<SharpTreeNode> {
+				ChildrenSelector = node => {
+					if (node is TreeNodes.ILSpyTreeNode ilspy)
+						ilspy.EnsureChildrenFiltered();
+					else
+						node.EnsureLazyChildren();
+					return node.Children;
+				},
+				IsLeafSelector = node => !node.ShowExpander,
+				VirtualizeChildren = false,
+				IsExpandedPropertyPath = nameof(SharpTreeNode.IsExpanded),
+			};
+			var model = new HierarchicalModel<SharpTreeNode>(options);
+			model.SetRoots(root.Children);
+			DiffGrid.HierarchicalModel = model;
 		}
 	}
 }
