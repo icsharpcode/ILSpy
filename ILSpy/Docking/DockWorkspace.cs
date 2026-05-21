@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Composition;
 using System.Linq;
@@ -130,6 +131,15 @@ namespace ILSpy.Docking
 
 		public IReadOnlyList<ToolPaneMenuItem> ToolPaneMenuItems { get; }
 
+		/// <summary>
+		/// Live list of one <see cref="TabPageMenuItem"/> per open document tab. Kept in
+		/// sync with <see cref="Documents"/>.<c>VisibleDockables</c> by the
+		/// <see cref="OnDocumentMembershipChanged"/> handler — adds/removes mutate this in
+		/// place so subscribers (the Window menu) can hook
+		/// <see cref="ObservableCollection{T}.CollectionChanged"/> and patch their own items.
+		/// </summary>
+		public ObservableCollection<TabPageMenuItem> TabPageMenuItems { get; } = new();
+
 		[ImportingConstructor]
 		public DockWorkspace(
 			AssemblyTreeModel assemblyTreeModel,
@@ -174,6 +184,10 @@ namespace ILSpy.Docking
 			factory.DockableRemoved += OnDocumentMembershipChanged;
 			factory.DockableClosed += OnDocumentMembershipChanged;
 			factory.DockableClosing += OnDockableClosing;
+			// Seed TabPageMenuItems with whatever the loaded layout already contains
+			// (typically MainTab) — InitLayout ran before the subscriptions above were
+			// in place, so no DockableAdded event fired for those initial members.
+			SyncTabPageMenuItems();
 			// Dock's IFactory.ActiveDockableChanged only fires from InitActiveDockable (layout
 			// structural init), not when the user clicks a different tab — that path sets
 			// dock.ActiveDockable = X directly on the dock model. Subscribe to the model's own
@@ -257,7 +271,58 @@ namespace ILSpy.Docking
 			NavigateForwardCommand.NotifyCanExecuteChanged();
 		}
 
-		void OnDocumentMembershipChanged(object? sender, EventArgs e) => UpdateLastDocumentCanClose();
+		void OnDocumentMembershipChanged(object? sender, EventArgs e)
+		{
+			UpdateLastDocumentCanClose();
+			SyncTabPageMenuItems();
+		}
+
+		// Mirror factory.Documents.VisibleDockables into TabPageMenuItems. Mutates in place so
+		// existing items keep their PropertyChanged subscriptions and the bound Window-menu
+		// entries don't re-bind for tabs that didn't move.
+		void SyncTabPageMenuItems()
+		{
+			if (factory.Documents is not { } docDock)
+				return;
+			var present = docDock.VisibleDockables?.OfType<ContentTabPage>().ToList()
+				?? new List<ContentTabPage>();
+
+			// Drop items for tabs that have left the dock (close / re-parent).
+			for (int i = TabPageMenuItems.Count - 1; i >= 0; i--)
+			{
+				if (!present.Contains(TabPageMenuItems[i].Tab))
+				{
+					TabPageMenuItems[i].Detach();
+					TabPageMenuItems.RemoveAt(i);
+				}
+			}
+
+			// Append items for newly arrived tabs, preserving the dock's order so the menu
+			// reads left-to-right the same as the tab strip.
+			for (int i = 0; i < present.Count; i++)
+			{
+				var tab = present[i];
+				int existing = -1;
+				for (int j = 0; j < TabPageMenuItems.Count; j++)
+				{
+					if (ReferenceEquals(TabPageMenuItems[j].Tab, tab))
+					{
+						existing = j;
+						break;
+					}
+				}
+				if (existing == -1)
+				{
+					TabPageMenuItems.Insert(i, new TabPageMenuItem(tab, factory, docDock));
+				}
+				else if (existing != i)
+				{
+					var item = TabPageMenuItems[existing];
+					TabPageMenuItems.RemoveAt(existing);
+					TabPageMenuItems.Insert(i, item);
+				}
+			}
+		}
 
 		// Convert a tool pane's "close" (X button) into "hide" so the Window menu can restore it.
 		// Documents are still closed for real — they get garbage-collected.
@@ -322,6 +387,11 @@ namespace ILSpy.Docking
 		{
 			if (e.PropertyName != nameof(IDocumentDock.ActiveDockable))
 				return;
+			// Tell each TabPageMenuItem to re-raise IsActive so the Window menu's checkmark
+			// follows the dock's selection. Items resolve "am I active?" against the dock's
+			// current ActiveDockable on read; this notify just kicks the binding.
+			foreach (var item in TabPageMenuItems)
+				item.NotifyActiveChanged();
 			// Carve-out tab → active: pull the tree's selection over to whatever entity the
 			// new active tab is showing. Fires on user-driven tab clicks (via the dock model's
 			// ActiveDockable setter) and on programmatic SetActiveDockable calls.

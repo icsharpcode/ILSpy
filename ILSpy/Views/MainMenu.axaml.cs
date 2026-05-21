@@ -192,24 +192,117 @@ public partial class MainMenu : UserControl
 		// At this point InitMainMenu has already appended any MEF-driven Window-menu commands
 		// (CloseAllDocuments / ResetLayout). Append tool-pane toggles after a separator so
 		// they sit at the bottom of the Window menu.
-		// (Tab pages aren't yet exposed observably on DockWorkspace; revisit later.)
-		if (dockWorkspace.ToolPaneMenuItems.Count == 0)
-			return;
-		if (windowMenuItem.Items.Count > 0)
-			windowMenuItem.Items.Add(new Separator());
+		if (dockWorkspace.ToolPaneMenuItems.Count > 0)
+		{
+			if (windowMenuItem.Items.Count > 0)
+				windowMenuItem.Items.Add(new Separator());
 
-		foreach (var pane in dockWorkspace.ToolPaneMenuItems)
+			foreach (var pane in dockWorkspace.ToolPaneMenuItems)
+			{
+				var item = new MenuItem {
+					Header = pane.Title,
+					ToggleType = MenuItemToggleType.CheckBox,
+					DataContext = pane,
+				};
+				item.Bind(MenuItem.IsCheckedProperty, new Binding(nameof(ToolPaneMenuItem.IsPaneVisible)) {
+					Mode = BindingMode.TwoWay,
+				});
+				windowMenuItem.Items.Add(item);
+			}
+		}
+
+		// Tab section: one MenuItem per open document. Separator only if other items already
+		// exist so we don't lead with a stray rule when both prior blocks were empty.
+		AppendTabSection(windowMenuItem, dockWorkspace);
+	}
+
+	static void AppendTabSection(MenuItem windowMenuItem, DockWorkspace dockWorkspace)
+	{
+		var tabItems = dockWorkspace.TabPageMenuItems;
+		Separator? separator = null;
+		var perItem = new Dictionary<TabPageMenuItem, MenuItem>();
+
+		void EnsureSeparator()
+		{
+			if (separator != null)
+				return;
+			if (windowMenuItem.Items.Count == 0)
+				return;
+			separator = new Separator();
+			windowMenuItem.Items.Add(separator);
+		}
+
+		MenuItem CreateMenuItem(TabPageMenuItem vm)
 		{
 			var item = new MenuItem {
-				Header = pane.Title,
-				ToggleType = MenuItemToggleType.CheckBox,
-				DataContext = pane,
+				Header = vm.Title,
+				ToggleType = MenuItemToggleType.Radio,
+				DataContext = vm,
 			};
-			item.Bind(MenuItem.IsCheckedProperty, new Binding(nameof(ToolPaneMenuItem.IsPaneVisible)) {
+			// Header tracks the tab's Title (e.g. swaps from "(no selection)" → "MyType" when
+			// the user navigates).
+			item.Bind(MenuItem.HeaderProperty, new Binding(nameof(TabPageMenuItem.Title)));
+			// IsActive: setter activates the tab, getter mirrors the dock's ActiveDockable.
+			item.Bind(MenuItem.IsCheckedProperty, new Binding(nameof(TabPageMenuItem.IsActive)) {
 				Mode = BindingMode.TwoWay,
 			});
-			windowMenuItem.Items.Add(item);
+			return item;
 		}
+
+		void AddItem(TabPageMenuItem vm)
+		{
+			EnsureSeparator();
+			var menuItem = CreateMenuItem(vm);
+			perItem.Add(vm, menuItem);
+			windowMenuItem.Items.Add(menuItem);
+		}
+
+		void RemoveItem(TabPageMenuItem vm)
+		{
+			if (!perItem.TryGetValue(vm, out var menuItem))
+				return;
+			windowMenuItem.Items.Remove(menuItem);
+			perItem.Remove(vm);
+			// Drop the separator if no tabs remain — the next AddItem will re-create one.
+			if (perItem.Count == 0 && separator != null)
+			{
+				windowMenuItem.Items.Remove(separator);
+				separator = null;
+			}
+		}
+
+		foreach (var vm in tabItems)
+			AddItem(vm);
+
+		tabItems.CollectionChanged += (_, args) => {
+			switch (args.Action)
+			{
+				case System.Collections.Specialized.NotifyCollectionChangedAction.Add:
+					if (args.NewItems != null)
+						foreach (TabPageMenuItem vm in args.NewItems)
+							AddItem(vm);
+					break;
+				case System.Collections.Specialized.NotifyCollectionChangedAction.Remove:
+					if (args.OldItems != null)
+						foreach (TabPageMenuItem vm in args.OldItems)
+							RemoveItem(vm);
+					break;
+				case System.Collections.Specialized.NotifyCollectionChangedAction.Reset:
+					foreach (var vm in perItem.Keys.ToList())
+						RemoveItem(vm);
+					foreach (var vm in tabItems)
+						AddItem(vm);
+					break;
+				case System.Collections.Specialized.NotifyCollectionChangedAction.Move:
+					// Move keeps identity; the menu's relative order matters only for the tab
+					// listing. Rebuild the tab subrange to keep them aligned with the tab strip.
+					foreach (var vm in perItem.Keys.ToList())
+						RemoveItem(vm);
+					foreach (var vm in tabItems)
+						AddItem(vm);
+					break;
+			}
+		};
 	}
 
 	static bool TryParseGesture(string? text, out KeyGesture gesture)
