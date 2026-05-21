@@ -196,6 +196,12 @@ namespace ILSpy.Search
 				?? ApiVisibility.PublicOnly;
 
 			var factory = new AvaloniaSearchResultFactory(language);
+			// Capture the comparer at start-of-search (matches WPF SearchPane.xaml.cs:288).
+			// Toggling "Sort results by fitness" mid-run won't reshuffle results already on
+			// screen — it only takes effect on the next search.
+			var sortComparer = (TryGetSettings()?.DisplaySettings.SortResults ?? true)
+				? SearchResult.ComparerByFitness
+				: SearchResult.ComparerByName;
 			var run = new RunningSearch(
 				assemblyList.GetAssemblies(),
 				term,
@@ -203,7 +209,8 @@ namespace ILSpy.Search
 				language,
 				apiVisibility,
 				factory,
-				Results);
+				Results,
+				sortComparer);
 			run.Completed += OnRunCompleted;
 			currentSearch = run;
 			IsSearching = true;

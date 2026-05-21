@@ -59,6 +59,7 @@ namespace ILSpy.Search
 		readonly ApiVisibility apiVisibility;
 		readonly ISearchResultFactory resultFactory;
 		readonly ObservableCollection<SearchResult> sink;
+		readonly IComparer<SearchResult> sortComparer;
 		readonly ConcurrentQueue<SearchResult> queue = new();
 		readonly CancellationTokenSource cts = new();
 		DispatcherTimer? drainTimer;
@@ -74,7 +75,8 @@ namespace ILSpy.Search
 			Language language,
 			ApiVisibility apiVisibility,
 			ISearchResultFactory resultFactory,
-			ObservableCollection<SearchResult> sink)
+			ObservableCollection<SearchResult> sink,
+			IComparer<SearchResult> sortComparer)
 		{
 			this.assemblies = assemblies;
 			this.searchTerm = searchTerm;
@@ -83,6 +85,7 @@ namespace ILSpy.Search
 			this.apiVisibility = apiVisibility;
 			this.resultFactory = resultFactory;
 			this.sink = sink;
+			this.sortComparer = sortComparer;
 		}
 
 		public bool IsCompleted => runTask is { IsCompleted: true };
@@ -201,12 +204,12 @@ namespace ILSpy.Search
 			{
 				if (!queue.TryDequeue(out var result))
 					break;
-				// Sorted insert: results land in fitness order so the most relevant hit
-				// rises to the top while later, less relevant matches are still streaming
-				// in. ObservableCollection<T> implements IList<T>, so the InsertSorted
-				// extension binary-searches and Inserts at the right index — O(log n)
-				// compare + O(n) shift.
-				sink.InsertSorted(result, SearchResult.ComparerByFitness);
+				// Sorted insert against the run's captured comparer. The Display-Settings
+				// "Sort results by fitness" checkbox picks between ComparerByFitness (the
+				// default — shorter names rise to the top) and ComparerByName (ordinal asc).
+				// ObservableCollection<T> implements IList<T>, so the InsertSorted extension
+				// binary-searches and Inserts at the right index — O(log n) compare + O(n) shift.
+				sink.InsertSorted(result, sortComparer);
 			}
 
 			if (sink.Count >= MaxResults)
