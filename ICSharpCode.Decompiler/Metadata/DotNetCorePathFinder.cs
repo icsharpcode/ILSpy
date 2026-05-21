@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -232,14 +233,36 @@ namespace ICSharpCode.Decompiler.Metadata
 				string basePath = Path.Combine(dotnetBasePath, "shared", pack);
 				if (!Directory.Exists(basePath))
 					continue;
-				var closestVersion = GetClosestVersionFolder(basePath, targetFrameworkVersion);
-				if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".dll")))
+				var foundVersions = new DirectoryInfo(basePath).GetDirectories()
+					.Select(ConvertToVersion)
+					.Where(v => v.version != null);
+				foreach (var folder in foundVersions.OrderBy(v => v.version))
 				{
-					return Path.Combine(basePath, closestVersion, name.Name + ".dll");
-				}
-				else if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".exe")))
-				{
-					return Path.Combine(basePath, closestVersion, name.Name + ".exe");
+					if (folder.version >= targetFrameworkVersion
+						&& folder.directory.EnumerateFiles("*.dll", SearchOption.AllDirectories).Any())
+					{
+						var closestVersion = folder.directory.Name;
+						string[] exts = { ".dll", ".exe" };
+						foreach (var ext in exts)
+						{
+							var path = Path.Combine(basePath, closestVersion, name.Name + ext);
+							if (File.Exists(path))
+							{
+								try
+								{
+									AssemblyName assemblyName = AssemblyName.GetAssemblyName(path);
+									if (assemblyName.Version >= name.Version)
+									{
+										return path;
+									}
+								}
+								catch (Exception ex)
+								{
+									Trace.TraceWarning(ex.ToString());
+								}
+							}
+						}
+					}
 				}
 			}
 			runtimePack = null;
