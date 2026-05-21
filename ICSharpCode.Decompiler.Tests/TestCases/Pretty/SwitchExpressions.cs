@@ -159,5 +159,59 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				_ => "default",
 			};
 		}
+#pragma warning disable CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
+		public static int Issue3382(StringComparison c)
+		{
+			return c switch {
+				StringComparison.Ordinal => 0,
+				StringComparison.OrdinalIgnoreCase => 1,
+			};
+		}
+
+		public static void Issue3382b(ref StringComparison? c)
+		{
+			StringComparison? stringComparison = c;
+			c = stringComparison switch {
+				null => StringComparison.Ordinal,
+				StringComparison.Ordinal => StringComparison.OrdinalIgnoreCase,
+				StringComparison.OrdinalIgnoreCase => StringComparison.InvariantCulture,
+			};
+		}
+
+		public static void Issue3382c(StringComparison? c)
+		{
+			c = c switch {
+				null => StringComparison.Ordinal,
+				StringComparison.Ordinal => StringComparison.OrdinalIgnoreCase,
+				StringComparison.OrdinalIgnoreCase => StringComparison.InvariantCulture,
+			};
+		}
+
+		public static void Issue3382d(ref StringComparison c)
+		{
+			StringComparison stringComparison = c;
+			c = stringComparison switch {
+				StringComparison.Ordinal => StringComparison.OrdinalIgnoreCase,
+				StringComparison.OrdinalIgnoreCase => StringComparison.InvariantCulture,
+			};
+		}
+
+		public static int SwitchOnStringImplicitDefault(string s)
+		{
+			return s switch {
+				"Hello" => 42,
+				"World" => 4711,
+				"!" => 7,
+				"Foo" => 13,
+				"Bar" => 21,
+				"Baz" => 84,
+				"Qux" => 168,
+				"Quux" => 336,
+				"Corge" => 672,
+				"Grault" => 1344,
+				"Garply" => 2688,
+			};
+		}
+#pragma warning restore CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
 	}
 }
