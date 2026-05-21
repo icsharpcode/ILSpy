@@ -163,11 +163,27 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		public override void VisitFieldDeclaration(FieldDeclaration fieldDeclaration)
+		{
+			foreach (var variable in fieldDeclaration.Variables)
+			{
+				if (!variable.Initializer.IsNull)
+				{
+					VisitAsSequencePoint(variable.Initializer);
+				}
+			}
+			base.VisitFieldDeclaration(fieldDeclaration);
+		}
+
 		public override void VisitPropertyDeclaration(PropertyDeclaration propertyDeclaration)
 		{
 			if (!propertyDeclaration.ExpressionBody.IsNull)
 			{
 				VisitAsSequencePoint(propertyDeclaration.ExpressionBody);
+			}
+			else if (!propertyDeclaration.Initializer.IsNull)
+			{
+				VisitAsSequencePoint(propertyDeclaration.Initializer);
 			}
 			else
 			{
@@ -200,6 +216,18 @@ namespace ICSharpCode.Decompiler.CSharp
 				VisitAsSequencePoint(inc);
 			}
 			VisitAsSequencePoint(forStatement.EmbeddedStatement);
+		}
+
+		public override void VisitEventDeclaration(EventDeclaration eventDeclaration)
+		{
+			foreach (var variable in eventDeclaration.Variables)
+			{
+				if (!variable.Initializer.IsNull)
+				{
+					VisitAsSequencePoint(variable.Initializer);
+				}
+			}
+			base.VisitEventDeclaration(eventDeclaration);
 		}
 
 		public override void VisitSwitchStatement(SwitchStatement switchStatement)
