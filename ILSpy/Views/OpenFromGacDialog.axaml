@@ -1,25 +1,46 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="ILSpy.Views.OpenFromGacDialog"
-        Width="600" Height="450" MinWidth="500" MinHeight="300"
+        Width="750" Height="350" MinWidth="200" MinHeight="150"
         WindowStartupLocation="CenterOwner"
-        Title="Open from GAC">
-	<Grid Margin="12,8" RowDefinitions="Auto,*,Auto,Auto" RowSpacing="6">
+        CanResize="True">
+	<Grid Margin="12,8" RowDefinitions="Auto,*,Auto" RowSpacing="6">
 		<Grid Grid.Row="0" ColumnDefinitions="Auto,*">
-			<TextBlock Grid.Column="0" Text="Filter:" VerticalAlignment="Center" Margin="0,0,8,0" />
+			<Label Grid.Column="0" Name="FilterLabel" Target="{Binding #FilterBox}"
+			       VerticalAlignment="Center" Margin="0,0,8,0" />
 			<TextBox Grid.Column="1" Name="FilterBox" />
 		</Grid>
-		<ListBox Grid.Row="1" Name="EntriesList" SelectionMode="Multiple">
-			<ListBox.ItemTemplate>
-				<DataTemplate>
-					<TextBlock Text="{Binding}" />
-				</DataTemplate>
-			</ListBox.ItemTemplate>
-		</ListBox>
-		<ProgressBar Grid.Row="2" Name="LoadingBar" Height="6" IsIndeterminate="True" />
-		<StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
-			<Button Name="OkButton" Content="Open" IsDefault="True" IsEnabled="False" MinWidth="72" />
-			<Button Name="CancelButton" Content="Cancel" IsCancel="True" MinWidth="72" />
+		<DataGrid Grid.Row="1" Name="EntriesGrid"
+		          AutoGenerateColumns="False"
+		          CanUserResizeColumns="True"
+		          CanUserSortColumns="True"
+		          GridLinesVisibility="None"
+		          HeadersVisibility="Column"
+		          IsReadOnly="True"
+		          SelectionMode="Extended">
+			<DataGrid.Columns>
+				<DataGridTextColumn Width="300" CanUserSort="True"
+				                    x:CompileBindings="False"
+				                    Binding="{Binding ShortName}" />
+				<DataGridTextColumn Width="75" CanUserSort="True"
+				                    x:CompileBindings="False"
+				                    Binding="{Binding FormattedVersion}" />
+				<DataGridTextColumn Width="65" CanUserSort="True"
+				                    x:CompileBindings="False"
+				                    Binding="{Binding Culture}" />
+				<DataGridTextColumn Width="115" CanUserSort="True"
+				                    x:CompileBindings="False"
+				                    Binding="{Binding PublicKeyToken}" />
+				<DataGridTextColumn Width="*" CanUserSort="True"
+				                    x:CompileBindings="False"
+				                    Binding="{Binding FileName}" />
+			</DataGrid.Columns>
+		</DataGrid>
+		<ProgressBar Grid.Row="1" Name="LoadingBar" Height="6"
+		             VerticalAlignment="Bottom" Margin="0,0,0,0" />
+		<StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+			<Button Name="OkButton" IsDefault="True" IsEnabled="False" MinWidth="72" />
+			<Button Name="CancelButton" IsCancel="True" MinWidth="72" />
 		</StackPanel>
 	</Grid>
 </Window>
