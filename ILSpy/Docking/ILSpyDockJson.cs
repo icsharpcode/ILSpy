@@ -178,12 +178,20 @@ namespace ILSpy.Docking
 			// "Id": "..." } per dockable, enough for the factory to look up the singleton
 			// on Load via CreateObject below.
 			bool isSingletonDockable = IsCompositionResolvableDockable(typeInfo.Type);
+			bool isDocumentDock = typeof(IDocumentDock).IsAssignableFrom(typeInfo.Type);
+			// On IRootDock we strip the per-dock-active-pointer trio too because they
+			// transitively reference a ContentTabPage (the focused/active document on the
+			// previous session). Keeping IRootDock.VisibleDockables intact preserves the
+			// proportional layout tree — only the focus pointers are dropped.
+			bool isRootDock = typeof(IRootDock).IsAssignableFrom(typeInfo.Type);
 			for (int i = typeInfo.Properties.Count - 1; i >= 0; i--)
 			{
 				var prop = typeInfo.Properties[i];
 				bool drop = IsCycleProneType(prop.PropertyType)
 					|| IsBackReferenceProperty(typeInfo.Type, prop.Name)
-					|| (isSingletonDockable && prop.Name is not "Id" and not "Title");
+					|| (isSingletonDockable && prop.Name is not "Id" and not "Title")
+					|| (isDocumentDock && IsDocumentChildSlot(prop.Name))
+					|| (isRootDock && IsActivePointerSlot(prop.Name));
 				if (drop)
 					typeInfo.Properties.RemoveAt(i);
 			}
@@ -241,6 +249,28 @@ namespace ILSpy.Docking
 					$"Could not resolve composition singleton for {type.FullName}: "
 					+ "AppComposition has no export for this type and Activator.CreateInstance failed too.");
 		}
+
+		// Document children (decompiler text, metadata grid, compare diff, options page)
+		// are session-only: their viewmodels hold live IEntity references, decompiler Tasks,
+		// CancellationTokenSources, and AssemblyLoaded contexts that can't survive a
+		// process restart. Persisting the ContentTabPage shells through Activator brings
+		// them back with Content=null, which renders blank tabs — the user-reported
+		// "documents are broken except the first tab" symptom. Strip every IDocumentDock
+		// child slot at save-time so only the structural document slot survives; the
+		// factory repopulates a fresh MainTab on load.
+		static bool IsDocumentChildSlot(string propertyName)
+			=> propertyName is "VisibleDockables"
+				or "ActiveDockable"
+				or "FocusedDockable"
+				or "DefaultDockable";
+
+		// The three "currently selected child" pointers on a dock. Used by IRootDock-only
+		// stripping — the strict-stronger IsDocumentChildSlot above also covers
+		// VisibleDockables, which we must keep on IRootDock.
+		static bool IsActivePointerSlot(string propertyName)
+			=> propertyName is "ActiveDockable"
+				or "FocusedDockable"
+				or "DefaultDockable";
 
 		static bool IsCycleProneType(Type type)
 		{

@@ -169,6 +169,77 @@ public class LayoutPersistenceTests
 	}
 
 	[AvaloniaTest]
+	public async Task Documents_Beyond_MainTab_Are_Not_Persisted_Across_Save_And_Load()
+	{
+		// The user-reported bug: opening multiple document tabs in a session and restarting
+		// brings them all back "broken except the first one". Reason: every
+		// ContentTabPage in the DocumentDock gets serialised, but their Content is a
+		// runtime-only TabPageModel (live decompiler/metadata/compare state, Tasks,
+		// CancellationTokenSources, IEntity refs) that can't survive a process restart —
+		// Activator reconstructs the ContentTabPage shell with Content=null, and the
+		// chrome shows a blank tab.
+		//
+		// Correct behaviour: persist the *structural* layout (tool docks, splitter ratios,
+		// pinned panes) but treat document children as session-only. On load the
+		// DocumentDock comes back with a single fresh MainTab; user's tree selection
+		// re-projects through ShowSelectedNode as on first launch.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
+
+		// Open two extra documents on top of the persistent MainTab. Content type is
+		// irrelevant for this test — the bug is structural, about ContentTabPage shells
+		// being persisted at all.
+		dockWorkspace.OpenNewTab(new object());
+		dockWorkspace.OpenNewTab(new object());
+		var sourceDocs = dockWorkspace.Documents!.VisibleDockables!
+			.OfType<ContentTabPage>().Count();
+		sourceDocs.Should().Be(3, "test must open 3 tabs (MainTab + 2 extras) before saving");
+
+		var path = Path.Combine(Path.GetTempPath(), $"ILSpy.Layout.test.{System.Guid.NewGuid():N}.json");
+
+		try
+		{
+			ILSpyDockFactory.SaveLayout(path, dockWorkspace.Layout);
+
+			// JSON shape: the saved file must not embed any ContentTabPage entries at all.
+			// Stripping at the IDocumentDock.VisibleDockables level is the only way to
+			// guarantee no broken-tab shells survive a restart.
+			var json = File.ReadAllText(path);
+			json.Should().NotContain("ContentTabPage",
+				"document children must be excluded from persistence so broken tab shells "
+				+ "can't come back after a restart");
+
+			// Round-trip with a fresh factory. The loaded DocumentDock must contain exactly
+			// one ContentTabPage (the fresh MainTab repopulated by the load path); none of
+			// the extras may resurrect.
+			var registry = AppComposition.Current.GetExport<global::ILSpy.Commands.ToolPaneRegistry>();
+			var factory = new ILSpyDockFactory(registry);
+			var loaded = factory.LoadLayout(path);
+			((object?)loaded).Should().NotBeNull();
+
+			factory.Documents.Should().NotBeNull(
+				"a DocumentDock must still exist post-load so navigation has a target");
+			factory.MainTab.Should().NotBeNull(
+				"a fresh MainTab must be in place post-load so tree selections still decompile");
+			var loadedDocs = factory.Documents!.VisibleDockables!
+				.OfType<ContentTabPage>().Count();
+			loadedDocs.Should().Be(1,
+				"only the freshly-created MainTab must exist; persisted document children "
+				+ "must not survive the round-trip");
+		}
+		finally
+		{
+			if (File.Exists(path))
+				File.Delete(path);
+		}
+	}
+
+	[AvaloniaTest]
 	public void LoadLayout_Returns_Null_When_The_File_Does_Not_Exist()
 	{
 		// The "no saved layout yet" path on first launch. DockWorkspace falls back

@@ -186,6 +186,20 @@ namespace ILSpy.Docking
 			MainTab = Documents?.VisibleDockables?
 				.OfType<ContentTabPage>()
 				.FirstOrDefault();
+
+			// Documents aren't persisted (ILSpyDockJson strips IDocumentDock child slots),
+			// so the loaded Documents.VisibleDockables comes back null/empty. Repopulate
+			// with a fresh MainTab here so the user lands in the same "(no selection)"
+			// state as on first launch — DockWorkspace.ShowSelectedNode then re-projects
+			// the tree selection through this fresh tab as normal.
+			if (Documents is { } docs && MainTab is null)
+			{
+				MainTab = new ContentTabPage { Title = "(no selection)" };
+				docs.VisibleDockables ??= CreateList<IDockable>(MainTab);
+				if (docs.VisibleDockables.Count == 0)
+					docs.VisibleDockables.Add(MainTab);
+				docs.ActiveDockable = MainTab;
+			}
 		}
 
 		// Matches a deserialised stand-in against the matching member of its dock's
