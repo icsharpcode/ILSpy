@@ -52,7 +52,15 @@ namespace ILSpy.Languages
 		public LanguageService([ImportMany] IEnumerable<Language> languages, SettingsService settingsService)
 		{
 			this.settingsService = settingsService;
-			Languages = languages.OrderBy(l => l.Name).ToList();
+			var ordered = languages.OrderBy(l => l.Name).ToList();
+#if DEBUG
+			// Under DEBUG, append one C# language per AST transform step so the dropdown
+			// surfaces the decompiler's intermediate output. Mirrors WPF's LanguageService —
+			// the variants aren't [Export]-ed because they're factory-built from the live
+			// CSharpDecompiler.GetAstTransforms() list, which only the static helper knows.
+			ordered.AddRange(CSharpLanguage.GetDebugLanguages());
+#endif
+			Languages = ordered;
 			var saved = settingsService.SessionSettings.ActiveLanguageName;
 			currentLanguage = Languages.FirstOrDefault(l => l.Name == saved)
 				?? Languages.FirstOrDefault(l => l.Name == "C#")

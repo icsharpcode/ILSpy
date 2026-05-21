@@ -53,7 +53,18 @@ namespace ILSpy.Languages
 	[Shared]
 	public sealed class CSharpLanguage : Language
 	{
-		public override string Name => "C#";
+		// Per-instance fields so the DEBUG-only AST-pipeline-step variants (see
+		// GetDebugLanguages below) can each carry their own name, transform-stop point, and
+		// member-visibility override without subclassing. The single MEF-resolved Release
+		// instance keeps the defaults: Name="C#", all transforms run, ShowMember honours
+		// the hide-compiler-generated filter.
+		string name = "C#";
+		int transformCount = int.MaxValue;
+		// Initialiser silences CS0649 in Release builds (where GetDebugLanguages is
+		// excluded by #if DEBUG, leaving no write site).
+		bool showAllMembers = false;
+
+		public override string Name => name;
 
 		public override string FileExtension => ".cs";
 
@@ -82,6 +93,42 @@ namespace ILSpy.Languages
 			new(CSharpLanguageVersion.CSharp13_0.ToString(), "C# 13.0 / VS 2022.12"),
 			new(CSharpLanguageVersion.CSharp14_0.ToString(), "C# 14.0 / VS 2026"),
 		};
+
+#if DEBUG
+		/// <summary>
+		/// Generates one additional <see cref="CSharpLanguage"/> per AST transform step in
+		/// the C# decompiler pipeline. The dropdown entries are named "C# - no transforms",
+		/// "C# - after <em>FirstTransformName</em>", … "C# - after <em>LastTransformName</em>".
+		/// Selecting a step makes <see cref="CreateDecompiler"/> stop running AST transforms
+		/// at that point, so the editor renders the AST as it looked mid-pipeline — handy
+		/// for diagnosing transform regressions. Each variant also flips
+		/// <see cref="showAllMembers"/> so compiler-generated members stay visible in the
+		/// tree even when a transform would normally have hidden them by this stage.
+		/// Compiled only under DEBUG; Release builds keep a single "C#" entry.
+		/// </summary>
+		internal static IEnumerable<CSharpLanguage> GetDebugLanguages()
+		{
+			string lastTransformName = "no transforms";
+			int transformCount = 0;
+			foreach (var transform in CSharpDecompiler.GetAstTransforms())
+			{
+				yield return new CSharpLanguage {
+					transformCount = transformCount,
+					name = "C# - " + lastTransformName,
+					showAllMembers = true,
+				};
+				lastTransformName = "after " + transform.GetType().Name;
+				transformCount++;
+			}
+			// One final variant whose transformCount equals the full transform list length —
+			// equivalent output to the regular "C#" language but with showAllMembers on, so
+			// the tree exposes everything that lived through the entire pipeline.
+			yield return new CSharpLanguage {
+				name = "C# - " + lastTransformName,
+				showAllMembers = true,
+			};
+		}
+#endif
 
 		static CSharpAmbience CreateAmbience() => new() {
 			ConversionFlags = ConversionFlags.ShowTypeParameterList | ConversionFlags.PlaceReturnTypeAfterParameterList,
@@ -118,7 +165,10 @@ namespace ILSpy.Languages
 			var assembly = member.ParentModule?.MetadataFile;
 			if (assembly == null)
 				return true;
-			return !CSharpDecompiler.MemberIsHidden(assembly, member.MetadataToken, new DecompilerSettings());
+			// showAllMembers is set by the DEBUG pipeline-step variants — bypassing the
+			// hide-compiler-generated filter lets the developer see synthetic members
+			// (closure classes, fixed-buffer helpers, …) the transforms consume.
+			return showAllMembers || !CSharpDecompiler.MemberIsHidden(assembly, member.MetadataToken, new DecompilerSettings());
 		}
 
 		public override RichText GetRichTextTooltip(IEntity entity)
@@ -140,6 +190,12 @@ namespace ILSpy.Languages
 				CancellationToken = options.CancellationToken,
 				DebugInfoProvider = module.GetDebugInfoOrNull(),
 			};
+			// Pop AST transforms from the end until the count matches transformCount.
+			// transformCount is int.MaxValue for the regular C# language (no pops), but the
+			// DEBUG pipeline-step variants set it to 0, 1, 2 … N to stop the AST mid-pipeline
+			// so the user sees the tree as it looked before/after a specific transform.
+			while (decompiler.AstTransforms.Count > transformCount)
+				decompiler.AstTransforms.RemoveAt(decompiler.AstTransforms.Count - 1);
 			if (options.EscapeInvalidIdentifiers)
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 			return decompiler;
