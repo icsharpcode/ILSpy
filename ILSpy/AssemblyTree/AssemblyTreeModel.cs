@@ -25,6 +25,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -417,18 +418,34 @@ namespace ILSpy.AssemblyTree
 				try
 				{
 					await TreeReady.ConfigureAwait(false);
-					// Small grace period after Loaded so the first paint has time to settle
-					// — kicking off 122 metadata loads the same frame the tree appears would
-					// steal cycles from the layout pass that just brought it on screen.
-					await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(false);
+					// Generous cooldown so the first decompile (selected via path-restore or
+					// --navigateto) has fully landed in the editor before the sweep fires.
+					// The earlier 500 ms cooldown overlapped with the decompile's
+					// Dispatcher.InvokeAsync marshal-back, triggering Server-GC pauses on the
+					// UI thread mid-apply-text. 5 s puts the sweep solidly past the typical
+					// foreground-work window without making sibling-icon population feel
+					// unreasonably delayed to a user scanning the list.
+					await Task.Delay(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
 					AppEnv.AppLog.Mark("Background-load sweep starting");
+					// Cap concurrent loads so a 200-assembly list doesn't kick off 200
+					// simultaneous Task.Run + GetLoadResultAsync chains. Each load reads PE
+					// headers + metadata tables; mostly IO-bound but not zero CPU/memory.
+					// Throttling to 4 keeps the peak allocation rate predictable so Server GC
+					// has fewer reasons to pause the UI thread if the user clicks back into
+					// the tree mid-sweep.
+					using var throttle = new SemaphoreSlim(4);
+					var loadTasks = new List<Task>();
 					foreach (var assembly in list.GetAssemblies())
 					{
-						// Calling GetLoadResultAsync triggers the Lazy<Task> creation. We don't
-						// await — fire-and-forget so all 122/200/whatever loads run in parallel
-						// on the thread pool, just delayed past the active-assembly window.
-						_ = assembly.GetLoadResultAsync();
+						await throttle.WaitAsync().ConfigureAwait(false);
+						loadTasks.Add(Task.Run(async () => {
+							try
+							{ await assembly.GetLoadResultAsync().ConfigureAwait(false); }
+							finally
+							{ throttle.Release(); }
+						}));
 					}
+					await Task.WhenAll(loadTasks).ConfigureAwait(false);
 					AppEnv.AppLog.Mark("Background-load sweep dispatched");
 				}
 				catch (Exception ex)
