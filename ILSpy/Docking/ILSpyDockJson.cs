@@ -115,17 +115,47 @@ namespace ILSpy.Docking
 			typeInfo.PolymorphismOptions = options;
 		}
 
-		static IEnumerable<Type> GetConcreteDescendantsOf(Type baseType)
-			=> AppDomain.CurrentDomain.GetAssemblies()
-				.Where(a => !a.IsDynamic)
+		// One-shot scan of every loaded assembly for concrete, public, non-generic candidate
+		// types. The result feeds <see cref="GetConcreteDescendantsOf"/> which previously
+		// re-scanned the entire AppDomain once per polymorphic base type — 6 base types, ~100
+		// loaded assemblies, ~500 ms of repeated reflection. With the cache, the scan runs
+		// exactly once and each per-base lookup is a fast LINQ filter over the cached list.
+		static readonly Lazy<IReadOnlyList<Type>> CandidateTypes = new(ScanCandidateTypes);
+
+		static IReadOnlyList<Type> ScanCandidateTypes()
+		{
+			// Filter at the assembly level so we don't call GetTypes() on assemblies that
+			// couldn't possibly contain Dock-model types — System.*, Avalonia.*, Microsoft.*,
+			// AvaloniaEdit, ICSharpCode.Decompiler, etc. all qualify as "won't define an
+			// IDockable". Keep Dock.* (the dock library), the ILSpy assembly itself,
+			// and *.Plugin.dll (which can add custom panes).
+			return AppDomain.CurrentDomain.GetAssemblies()
+				.Where(IsRelevantAssembly)
 				.SelectMany(SafeTypes)
 				.Where(t => t != null
 					&& t.IsClass && !t.IsAbstract
 					&& !t.ContainsGenericParameters
-					&& (t.IsPublic || t.IsNestedPublic)
-					&& baseType.IsAssignableFrom(t))
+					&& (t.IsPublic || t.IsNestedPublic))
 				.Cast<Type>()
 				.Distinct()
+				.ToArray();
+		}
+
+		static bool IsRelevantAssembly(Assembly a)
+		{
+			if (a.IsDynamic)
+				return false;
+			var name = a.GetName().Name;
+			if (string.IsNullOrEmpty(name))
+				return false;
+			return name.StartsWith("Dock.", StringComparison.Ordinal)
+				|| name == "ILSpy"
+				|| name.EndsWith(".Plugin", StringComparison.Ordinal);
+		}
+
+		static IEnumerable<Type> GetConcreteDescendantsOf(Type baseType)
+			=> CandidateTypes.Value
+				.Where(t => baseType.IsAssignableFrom(t))
 				.OrderBy(t => t.FullName, StringComparer.Ordinal);
 
 		static IEnumerable<Type?> SafeTypes(Assembly assembly)
