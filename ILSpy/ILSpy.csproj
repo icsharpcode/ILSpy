@@ -15,6 +15,14 @@
          [NonShared] attribute (the absence of [Shared] *is* the non-shared semantic), so
          the warning is a false positive on every Options panel viewmodel. -->
     <NoWarn>$(NoWarn);MEF002;MEF004;CA1001;CA2213</NoWarn>
+    <!-- Server GC: spawns one GC heap per CPU core and runs collections on dedicated
+         GC threads, which keeps the UI thread responsive when background work
+         allocates aggressively. Workstation GC (the default) would pause the UI
+         thread on every Gen-1/2 collection caused by allocations on ANY thread.
+         Concurrent stays on (the default) so even server collections don't
+         stop-the-world for long. -->
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
   </PropertyGroup>
 
   <ItemGroup>
