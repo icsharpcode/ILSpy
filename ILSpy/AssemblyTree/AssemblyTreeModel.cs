@@ -301,6 +301,14 @@ namespace ILSpy.AssemblyTree
 			// crosses an AssemblyTreeNode whose EnsureLazyChildren synchronously blocks on
 			// GetLoadResultAsync — by going async here and awaiting the load, we let the
 			// initial paint happen first and the UI stays responsive while metadata loads.
+			//
+			// Skipped when --navigateto was supplied on the command line: the user explicitly
+			// asked us to navigate somewhere else, and racing the saved-path restore against
+			// the explicit target produces two concurrent decompiles (the saved one then the
+			// requested one — last write wins on SelectedItem). For perf-benchmarking via
+			// `-n T:Some.Type` this matters: the saved decompile pollutes the measurement.
+			if (App.CommandLineArguments?.NavigateTo is { Length: > 0 })
+				return;
 			var savedPath = settingsService.SessionSettings.ActiveTreeViewPath;
 			if (savedPath is { Length: > 0 })
 				_ = RestoreSelectedPathAsync(savedPath);
