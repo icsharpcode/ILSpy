@@ -116,6 +116,10 @@ namespace ILSpy.AssemblyTree
 			// pane, metadata tables, and future decompile commands all push through this same
 			// channel.
 			Util.MessageBus<Util.NavigateToReferenceEventArgs>.Subscribers += OnNavigateToReference;
+			// Live re-render when Display Settings change. WPF leaves these as apply-on-next-
+			// load; Avalonia opts into reactivity because the Options dialog stays open while
+			// the user toggles. Property dispatch keeps the work narrow to the affected nodes.
+			Util.MessageBus<Util.SettingsChangedEventArgs>.Subscribers += OnSettingsChanged;
 			Id = PaneContentId;
 			Title = "Assemblies";
 			CanClose = false;
@@ -177,6 +181,66 @@ namespace ILSpy.AssemblyTree
 				return;
 			foreach (var child in node.Children)
 				NotifyTextChanged(child);
+		}
+
+		void OnSettingsChanged(object? sender, Util.SettingsChangedEventArgs e)
+		{
+			if (sender is not Options.DisplaySettings)
+				return;
+			if (Root == null)
+				return;
+			switch (e.Inner.PropertyName)
+			{
+				case nameof(Options.DisplaySettings.ShowMetadataTokens):
+				case nameof(Options.DisplaySettings.ShowMetadataTokensInBase10):
+					// Text suffix on member nodes is computed at read time — just fire the
+					// notification so bound cell templates re-pull.
+					NotifyTextChanged(Root);
+					break;
+				case nameof(Options.DisplaySettings.UseNestedNamespaceNodes):
+					// Tree shape changes — every loaded AssemblyTreeNode's namespace subtree
+					// needs rebuilding. Reset Children + LazyLoading and re-trigger the load.
+					foreach (var asm in Root.Children.OfType<TreeNodes.AssemblyTreeNode>())
+					{
+						if (asm.LazyLoading)
+							continue;
+						asm.Children.Clear();
+						asm.LazyLoading = true;
+						asm.EnsureLazyChildren();
+					}
+					// AssemblyListPane caches a snapshot of each expanded node's children via
+					// the HierarchicalOptions.ChildrenSelector — mid-expand mutations of
+					// node.Children aren't observed. Re-raising Root forces BindTree to fire,
+					// which creates a fresh HierarchicalModel that re-reads children on demand.
+					OnPropertyChanged(nameof(Root));
+					break;
+				case nameof(Options.DisplaySettings.HideEmptyMetadataTables):
+					// Visible MetadataTablesTreeNode instances get their children regenerated;
+					// untouched (lazy) ones already pick up the new value on first expand.
+					RebuildMetadataTablesIn(Root);
+					// Same DataGrid-snapshot problem as the UseNestedNamespaceNodes branch —
+					// force a re-bind so the rebuilt children make it into the visible grid.
+					OnPropertyChanged(nameof(Root));
+					break;
+			}
+		}
+
+		static void RebuildMetadataTablesIn(SharpTreeNode node)
+		{
+			if (node is Metadata.MetadataTablesTreeNode tables)
+			{
+				if (!tables.LazyLoading)
+				{
+					tables.Children.Clear();
+					tables.LazyLoading = true;
+					tables.EnsureLazyChildren();
+				}
+				return;
+			}
+			if (node.LazyLoading)
+				return;
+			foreach (var child in node.Children)
+				RebuildMetadataTablesIn(child);
 		}
 
 		readonly TaskCompletionSource<bool> treeReadyTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);

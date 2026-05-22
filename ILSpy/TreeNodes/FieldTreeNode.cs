@@ -39,7 +39,7 @@ namespace ILSpy.TreeNodes
 			FieldDefinition = field ?? throw new ArgumentNullException(nameof(field));
 		}
 
-		public override object Text => Language.EntityToString(FieldDefinition, ConversionFlags.None);
+		public override object Text => Language.EntityToString(FieldDefinition, ConversionFlags.None) + GetSuffixString(FieldDefinition);
 
 		public override object NavigationText => Language.EntityToString(FieldDefinition, ConversionFlags.ShowDeclaringType);
 

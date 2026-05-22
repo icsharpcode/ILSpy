@@ -39,7 +39,7 @@ namespace ILSpy.TreeNodes
 			MethodDefinition = method ?? throw new ArgumentNullException(nameof(method));
 		}
 
-		public override object Text => Language.EntityToString(MethodDefinition, ConversionFlags.None);
+		public override object Text => Language.EntityToString(MethodDefinition, ConversionFlags.None) + GetSuffixString(MethodDefinition);
 
 		public override object NavigationText => Language.EntityToString(MethodDefinition, ConversionFlags.ShowDeclaringType);
 

@@ -32,13 +32,36 @@ namespace ILSpy.TreeNodes
 	sealed class NamespaceTreeNode : ILSpyTreeNode
 	{
 		readonly string name;
+		readonly string fullName;
 		readonly MetadataFile module;
 
+		/// <summary>
+		/// Display label for this namespace node. In flat mode this is the full dotted
+		/// namespace path; in nested mode it's just the last segment (the parent chain
+		/// supplies the rest). Tests use this to distinguish the two modes.
+		/// </summary>
 		public string Name => name;
 
+		/// <summary>
+		/// Full dotted namespace path used to query metadata for member types. Equals
+		/// <see cref="Name"/> in flat mode; in nested mode it stays the dotted path
+		/// even though the display label is the last segment only.
+		/// </summary>
+		public string FullName => fullName;
+
 		public NamespaceTreeNode(string name, MetadataFile module)
+			: this(name, name, module)
 		{
-			this.name = name ?? throw new ArgumentNullException(nameof(name));
+		}
+
+		/// <summary>
+		/// Nested-mode constructor: separates the display label (last segment) from the
+		/// full dotted path used to locate types in metadata.
+		/// </summary>
+		public NamespaceTreeNode(string displayName, string fullName, MetadataFile module)
+		{
+			this.name = displayName ?? throw new ArgumentNullException(nameof(displayName));
+			this.fullName = fullName ?? throw new ArgumentNullException(nameof(fullName));
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			LazyLoading = true;
 		}
@@ -50,7 +73,9 @@ namespace ILSpy.TreeNodes
 		// Stable identity for SessionSettings.ActiveTreeViewPath (used by AssemblyTreeModel.
 		// FindNodeByPath / GetPathForNode). Without this override the default Object.ToString
 		// returns the type name, which makes save/restore of namespace selections silently fail.
-		public override string ToString() => name;
+		// Uses the full dotted path so saved-and-restored selections survive a toggle of the
+		// nested-namespace setting.
+		public override string ToString() => fullName;
 
 		protected override void LoadChildren()
 		{
@@ -59,7 +84,7 @@ namespace ILSpy.TreeNodes
 				.Where(t => {
 					var td = metadata.GetTypeDefinition(t);
 					return td.GetDeclaringType().IsNil
-						&& metadata.GetString(td.Namespace) == name;
+						&& metadata.GetString(td.Namespace) == fullName;
 				})
 				.OrderBy(t => metadata.GetString(metadata.GetTypeDefinition(t).Name), NaturalStringComparer.Instance);
 

@@ -19,8 +19,11 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.Abstractions;
 using ICSharpCode.ILSpyX.TreeView;
 
@@ -75,6 +78,35 @@ namespace ILSpy.TreeNodes
 			= AppComposition.Current.GetExports<IResourceNodeFactory>().ToArray();
 
 		public Language Language => LanguageService.CurrentLanguage;
+
+		/// <summary>
+		/// Optional " @xNNNNNNNN" (hex) or " @NNNNN" (decimal) suffix appended to entity tree-node
+		/// <see cref="SharpTreeNode.Text"/> values when the user enables Display Settings →
+		/// "Show metadata tokens". Mirrors WPF's <c>ILSpyTreeNode.GetSuffixString</c>; format
+		/// matches byte-for-byte so cross-tool grep on token strings keeps working.
+		/// </summary>
+		protected static string GetSuffixString(IMember member) => GetSuffixString(member.MetadataToken);
+
+		protected static string GetSuffixString(EntityHandle handle)
+		{
+			try
+			{
+				// Resolve fresh each call — the static cachedSettingsService can hold a
+				// previous test's composition root in headless test sweeps, and the cost of
+				// MEF GetExport on a warm composition is a dictionary lookup.
+				var settings = AppComposition.Current.GetExport<SettingsService>().DisplaySettings;
+				if (!settings.ShowMetadataTokens)
+					return string.Empty;
+				int token = MetadataTokens.GetToken(handle);
+				if (settings.ShowMetadataTokensInBase10)
+					return " @" + token;
+				return " @" + token.ToString("x8");
+			}
+			catch
+			{
+				return string.Empty;
+			}
+		}
 
 		/// <summary>
 		/// Long-form label used in navigation surfaces — back/forward history dropdowns, future

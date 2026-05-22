@@ -55,9 +55,10 @@ namespace ILSpy.TreeNodes
 		public override object Text {
 			get {
 				var typeDef = ResolveTypeDefinition();
-				if (typeDef != null)
-					return Language.TypeToString(typeDef, ConversionFlags.None);
-				return module.Metadata.GetString(module.Metadata.GetTypeDefinition(handle).Name);
+				string baseText = typeDef != null
+					? Language.TypeToString(typeDef, ConversionFlags.None)
+					: module.Metadata.GetString(module.Metadata.GetTypeDefinition(handle).Name);
+				return baseText + GetSuffixString(handle);
 			}
 		}
 

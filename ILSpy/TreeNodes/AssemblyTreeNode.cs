@@ -18,6 +18,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -34,6 +35,7 @@ using ICSharpCode.ILSpyX.FileLoaders;
 using ICSharpCode.ILSpyX.PdbProvider;
 
 using ILSpy;
+using ILSpy.AppEnv;
 using ILSpy.Languages;
 
 namespace ILSpy.TreeNodes
@@ -367,8 +369,58 @@ namespace ILSpy.TreeNodes
 				.Distinct()
 				.OrderBy(ns => ns, NaturalStringComparer.Instance);
 
-			foreach (var ns in namespaces)
-				Children.Add(new NamespaceTreeNode(ns, module));
+			if (TryGetUseNestedNamespaceNodes())
+			{
+				// Build the nested chain: every dotted namespace string becomes a node whose
+				// parent is the namespace one segment shorter. Intermediate ancestors that
+				// don't appear in the namespaces list themselves (e.g. an assembly that has
+				// "System.Collections.Generic" but no types directly in "System") still get
+				// created — EnsureNested walks the parent chain.
+				var byFullName = new Dictionary<string, NamespaceTreeNode>(StringComparer.Ordinal);
+				foreach (var ns in namespaces)
+					EnsureNested(ns, byFullName);
+			}
+			else
+			{
+				foreach (var ns in namespaces)
+					Children.Add(new NamespaceTreeNode(ns, module));
+			}
+
+			NamespaceTreeNode EnsureNested(string fullNs, Dictionary<string, NamespaceTreeNode> byFullName)
+			{
+				if (byFullName.TryGetValue(fullNs, out var existing))
+					return existing;
+				int dot = fullNs.LastIndexOf('.');
+				NamespaceTreeNode node;
+				if (dot < 0)
+				{
+					// Top-level: display equals full name. The empty-namespace case lands here
+					// too, mapping to the "-" display.
+					node = new NamespaceTreeNode(fullNs, module);
+					Children.Add(node);
+				}
+				else
+				{
+					var parent = EnsureNested(fullNs.Substring(0, dot), byFullName);
+					var displayName = fullNs.Substring(dot + 1);
+					node = new NamespaceTreeNode(displayName, fullNs, module);
+					parent.Children.Add(node);
+				}
+				byFullName[fullNs] = node;
+				return node;
+			}
+		}
+
+		static bool TryGetUseNestedNamespaceNodes()
+		{
+			try
+			{
+				return AppComposition.Current.GetExport<SettingsService>().DisplaySettings.UseNestedNamespaceNodes;
+			}
+			catch
+			{
+				return false;
+			}
 		}
 
 		public override FilterResult Filter(LanguageSettings settings)

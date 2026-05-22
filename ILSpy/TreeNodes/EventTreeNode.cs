@@ -45,7 +45,7 @@ namespace ILSpy.TreeNodes
 				Children.Add(new MethodTreeNode(ev.InvokeAccessor));
 		}
 
-		public override object Text => Language.EntityToString(EventDefinition, ConversionFlags.None);
+		public override object Text => Language.EntityToString(EventDefinition, ConversionFlags.None) + GetSuffixString(EventDefinition);
 
 		public override object NavigationText => Language.EntityToString(EventDefinition, ConversionFlags.ShowDeclaringType);
 

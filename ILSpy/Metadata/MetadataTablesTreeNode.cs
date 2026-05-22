@@ -77,9 +77,9 @@ namespace ILSpy.Metadata
 		{
 			// Composition isn't always available (design-time previews, isolated tests that
 			// build the tree directly without booting the app); fall back to the same default
-			// SessionSettings exposes — keep empty tables hidden to match decade-old WPF UX.
+			// DisplaySettings exposes — keep empty tables hidden to match decade-old WPF UX.
 			try
-			{ return AppComposition.Current.GetExport<SettingsService>().SessionSettings.HideEmptyMetadataTables; }
+			{ return AppComposition.Current.GetExport<SettingsService>().DisplaySettings.HideEmptyMetadataTables; }
 			catch { return true; }
 		}
 

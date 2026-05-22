@@ -43,7 +43,7 @@ namespace ILSpy.TreeNodes
 				Children.Add(new MethodTreeNode(property.Setter));
 		}
 
-		public override object Text => Language.EntityToString(PropertyDefinition, ConversionFlags.None);
+		public override object Text => Language.EntityToString(PropertyDefinition, ConversionFlags.None) + GetSuffixString(PropertyDefinition);
 
 		public override object NavigationText => Language.EntityToString(PropertyDefinition, ConversionFlags.ShowDeclaringType);
 
