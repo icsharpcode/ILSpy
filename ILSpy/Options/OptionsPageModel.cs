@@ -51,7 +51,9 @@ namespace ILSpy.Options
 				page.Load(settingsService);
 
 			selectedPage = Pages.FirstOrDefault();
-			Title = Resources._Options;
+			// Bare "Options" string — the menu item's Resources._Options carries the
+			// accelerator underscore + "..." suffix which are menu-only conventions.
+			Title = Resources.Options;
 
 			ResetCurrentPageCommand = new RelayCommand(ResetCurrentPage);
 		}

@@ -628,7 +628,13 @@ namespace ILSpy.Docking
 			// same selection — the second one's columns would replace the first's, but the
 			// first's filter wiring would be left dangling on stale ColumnFilter instances.
 			if (lastShownNodes is { } prev && prev.SequenceEqual(nodes))
+			{
+				// Content didn't change, but the user may have returned to the tree from a
+				// sibling static tab (Options / About) — pull MainTab forward so re-clicking
+				// the same node still feels responsive.
+				ActivateMainTabIfNeeded(main);
 				return;
+			}
 			lastShownNodes = nodes;
 
 			// Tree-node selections always reuse the single document slot. The Document
@@ -650,6 +656,7 @@ namespace ILSpy.Docking
 				else
 					AttachCustomContent(main, customContent);
 				main.SourceNode = nodes[0];
+				ActivateMainTabIfNeeded(main);
 				return;
 			}
 
@@ -658,6 +665,23 @@ namespace ILSpy.Docking
 			decTab.Language = languageService.CurrentLanguage;
 			decTab.CurrentNodes = nodes;
 			main.SourceNode = nodes.Length == 1 ? nodes[0] : null;
+			ActivateMainTabIfNeeded(main);
+		}
+
+		// Brings MainTab to the front of the documents dock so the just-updated content is
+		// what the user sees. No-op when MainTab is already active, when there's no
+		// documents dock, or when a Back/Forward navigation is in flight (ApplyNavigationTarget
+		// has already chosen which tab to activate, including possibly a sibling tab — our
+		// activation would override that intent).
+		void ActivateMainTabIfNeeded(ContentTabPage main)
+		{
+			if (suppressHistoryRecording)
+				return;
+			if (factory.Documents is not { } docs)
+				return;
+			if (ReferenceEquals(docs.ActiveDockable, main))
+				return;
+			factory.SetActiveDockable(main);
 		}
 
 		void AttachCustomContent(ContentTabPage main, TabPageModel newContent)
@@ -713,7 +737,9 @@ namespace ILSpy.Docking
 		/// reuse path applies via <see cref="AttachCustomContent"/>; otherwise a fresh
 		/// <see cref="DecompilerTabPageModel"/> is spawned and asked to decompile the
 		/// node. Shared between the assembly-tree MMB handler, the metadata-grid MMB
-		/// handler, and the "Decompile to new tab" context-menu entry.
+		/// handler, and the "Decompile to new tab" context-menu entry. The created tab
+		/// is pinned (born with <see cref="ContentTabPage.IsPreview"/> false) — see
+		/// <see cref="OpenNewTab"/>.
 		/// </summary>
 		public void OpenNodeInNewTab(ILSpyTreeNode node)
 		{
@@ -951,7 +977,9 @@ namespace ILSpy.Docking
 
 		public ContentTabPage OpenNewTab(object content, SharpTreeNode? sourceNode = null)
 		{
-			var tab = new ContentTabPage { Content = content, SourceNode = sourceNode };
+			// Carve-outs are born pinned — they survive tree-node selections instead of
+			// being replaced like the preview MainTab.
+			var tab = new ContentTabPage { Content = content, SourceNode = sourceNode, IsPreview = false };
 			if (factory.Documents != null)
 			{
 				factory.AddDockable(factory.Documents, tab);
@@ -959,6 +987,25 @@ namespace ILSpy.Docking
 				factory.SetFocusedDockable(factory.Documents, tab);
 			}
 			return tab;
+		}
+
+		/// <summary>
+		/// VS-style "promote preview tab" gesture. The current <c>factory.MainTab</c> keeps
+		/// its position and content but flips to pinned (<see cref="ContentTabPage.IsPreview"/>
+		/// false); a fresh preview <c>MainTab</c> is created and inserted beside it (rightmost),
+		/// becoming the new target for tree-node selections. The just-pinned tab stays active
+		/// so the user keeps looking at what they pinned.
+		/// </summary>
+		public void PinCurrentTab()
+		{
+			if (factory.PromotePreviewMainTab() is null)
+				return;
+			// Cached decompiler viewmodel was bound to the previous MainTab — drop it so the
+			// next tree click materialises a fresh one inside the new MainTab.
+			decompilerContent = null;
+			// Defeat the same-selection dedupe so re-clicking the just-pinned node's path
+			// actually populates the new MainTab.
+			lastShownNodes = null;
 		}
 
 		public void CloseAllTabs()

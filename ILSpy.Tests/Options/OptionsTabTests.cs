@@ -85,6 +85,71 @@ public class OptionsTabTests
 	}
 
 	[AvaloniaTest]
+	public async Task Tree_Selection_Activates_MainTab_Even_When_Options_Is_The_Focused_Document()
+	{
+		// Scenario: user has the Options tab open and active. They click a node in the
+		// assembly tree. The new content lands on MainTab as usual, but the focused
+		// document is still Options — so the user sees no visible change. The fix:
+		// ShowSelectedNode pulls focus back to MainTab whenever a tree-selection writes
+		// new content there.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		// Open Options and confirm it's the active document.
+		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
+		registry.Commands.Single(c => c.Metadata.Header == nameof(Resources._Options))
+			.CreateExport().Value.Execute(null);
+
+		var documents = vm.DockWorkspace.Documents!;
+		var optionsTab = documents.VisibleDockables!.OfType<ContentTabPage>()
+			.Single(t => t.Content is OptionsPageModel);
+		documents.ActiveDockable.Should().BeSameAs(optionsTab,
+			"baseline: opening Options must make it the active document");
+
+		// Click a tree node — fires the same path as a real user mouse-click.
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		vm.AssemblyTreeModel.SelectNode(typeNode);
+
+		// MainTab now carries the new content. Without the fix, ActiveDockable still
+		// points at Options and the user sees nothing change.
+		var mainTab = ((ILSpyDockFactory)vm.DockWorkspace.Factory).MainTab!;
+		documents.ActiveDockable.Should().BeSameAs(mainTab,
+			"tree selection must pull focus onto MainTab so the user sees the new content");
+
+		// Options must still be in the documents dock — we changed focus, not closed it.
+		documents.VisibleDockables!.OfType<ContentTabPage>()
+			.Should().Contain(t => t.Content is OptionsPageModel,
+			"focus change must not close the Options tab");
+	}
+
+	[AvaloniaTest]
+	public void Options_Tab_Title_Is_Plain_Options_Not_The_Menu_String()
+	{
+		// The menu-item resource includes the accelerator underscore + ellipsis
+		// ("_Options...") which is meaningful on a menu but wrong on a tab header. The
+		// tab should use the bare Resources.Options ("Options") instead.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
+		registry.Commands.Single(c => c.Metadata.Header == nameof(Resources._Options))
+			.CreateExport().Value.Execute(null);
+
+		var vm = (MainWindowViewModel)window.DataContext!;
+		var model = (OptionsPageModel)vm.DockWorkspace.Documents!.VisibleDockables!
+			.OfType<ContentTabPage>().First(t => t.Content is OptionsPageModel).Content!;
+
+		model.Title.Should().Be(Resources.Options,
+			"the tab title must be the bare 'Options' string, not the menu's '_Options...'");
+		model.Title.Should().NotContain("_",
+			"a tab header doesn't have an accelerator key, so the underscore would render literally");
+		model.Title.Should().NotEndWith("...",
+			"the ellipsis is a menu-item convention indicating 'opens a dialog' — not appropriate on the dialog itself");
+	}
+
+	[AvaloniaTest]
 	public void OptionsPageModel_Surfaces_The_Three_Panels_In_MEF_Order()
 	{
 		// Decompiler / Display / Misc, ordered by ExportOptionPage(Order=10/20/30).

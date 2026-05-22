@@ -39,4 +39,19 @@ namespace ILSpy.Commands
 	{
 		public override void Execute(object? parameter) => dockWorkspace.ResetLayout();
 	}
+
+	/// <summary>
+	/// VS-style "promote preview tab" command. The persistent MainTab starts as preview
+	/// (its content is replaced by tree-node selections); pinning makes it a regular tab
+	/// that keeps its content, and a fresh preview MainTab takes over the
+	/// tree-selection slot. <see cref="DockWorkspace.PinCurrentTab"/> is a no-op when
+	/// there's nothing pinnable (no MainTab, or MainTab already pinned).
+	/// </summary>
+	[ExportMainMenuCommand(Header = nameof(Resources.Window_PinCurrentTab), ParentMenuID = nameof(Resources._Window))]
+	[Shared]
+	[method: ImportingConstructor]
+	sealed class PinCurrentTabCommand(DockWorkspace dockWorkspace) : SimpleCommand
+	{
+		public override void Execute(object? parameter) => dockWorkspace.PinCurrentTab();
+	}
 }

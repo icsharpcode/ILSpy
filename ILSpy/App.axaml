@@ -9,9 +9,11 @@
              xmlns:textView="using:ILSpy.TextView"
              xmlns:metaViews="using:ILSpy.Views"
              xmlns:dockTheme="using:Dock.Avalonia.Themes.Simple"
+             xmlns:dockControls="using:Dock.Avalonia.Controls"
              xmlns:recycling="using:Avalonia.Controls.Recycling"
              xmlns:docking="using:ILSpy.Docking"
              xmlns:controls="using:ILSpy.Controls"
+             xmlns:themes="using:ILSpy.Themes"
              RequestedThemeVariant="Default">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
@@ -114,6 +116,49 @@
         <!-- Selected row text in white so it reads against the accent-color highlight. -->
         <Style Selector="DataGridRow:selected">
             <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!-- VS-style preview tab: italicise the title of any DocumentTabStripItem whose
+             dockable is a ContentTabPage with IsPreview=true. Tool-pane tabs and pinned
+             document tabs fall through to Normal via the converter's null/false branch.
+             FontStyle inherits to the title TextBlock inside the tab template. -->
+        <Style Selector="DocumentTabStripItem">
+            <Setter Property="FontStyle"
+                    Value="{Binding IsPreview, Converter={x:Static themes:BoolToFontStyleConverter.Italic}, FallbackValue=Normal, Mode=OneWay, x:CompileBindings=False}" />
+            <!-- 3px accent stripe on the left edge while the tab is preview, otherwise no
+                 extra border. Stripe brush + thickness both resolve via the same IsPreview
+                 source so they always appear / disappear together. -->
+            <Setter Property="BorderBrush"
+                    Value="{Binding IsPreview, Converter={x:Static themes:BoolToBrushConverter.PreviewAccent}, FallbackValue={x:Null}, Mode=OneWay, x:CompileBindings=False}" />
+            <Setter Property="BorderThickness"
+                    Value="{Binding IsPreview, Converter={x:Static themes:BoolToThicknessConverter.LeftStripe}, FallbackValue=0, Mode=OneWay, x:CompileBindings=False}" />
+            <!-- Per-tab right-click "Pin tab" entry. The Behavior creates a fresh
+                 ContextMenu per attachment (visuals can have only one parent) and toggles
+                 the entry's IsVisible on the tab's IsPreview. -->
+            <Setter Property="themes:PreviewTabContextMenuBehavior.Enable" Value="True" />
+            <!-- Inline pin icon in the tab strip. Dock's tab template is compiled into the
+                 theme DLL; the Behavior walks the visual tree and injects a Button between
+                 the title and the close button. Bound to IsPreview so the icon hides once
+                 the tab is pinned. -->
+            <Setter Property="themes:PreviewTabPinButtonBehavior.Enable" Value="True" />
+        </Style>
+
+        <!-- Styling for the injected pin button. Routed through a class selector (not
+             local setters on the Button) so the :pointerover style still applies — local
+             property values beat Style setters in Avalonia precedence. -->
+        <Style Selector="Button.preview-pin">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.preview-pin:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#33000000" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.preview-pin:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#55000000" />
+            <Setter Property="BorderBrush" Value="Transparent" />
         </Style>
 
         <!-- Override the presenter template so we can layer classic Windows-Explorer tree

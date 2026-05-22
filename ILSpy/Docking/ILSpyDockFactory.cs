@@ -42,8 +42,36 @@ namespace ILSpy.Docking
 		/// The single persistent Document the host puts in <see cref="Documents"/>. Its
 		/// <see cref="ContentTabPage.Content"/> swaps between viewmodels (decompiler text /
 		/// metadata grid) on tree-node selection — DockWorkspace owns the population.
+		/// Identity rotates through <see cref="PromotePreviewMainTab"/> — after a pin, the
+		/// just-pinned tab keeps its position and content while MainTab points at a fresh
+		/// preview tab beside it.
 		/// </summary>
 		public ContentTabPage? MainTab { get; private set; }
+
+		/// <summary>
+		/// VS-style preview-tab promotion. Flips the current <see cref="MainTab"/> to pinned
+		/// (<see cref="ContentTabPage.IsPreview"/> = false), creates a new placeholder
+		/// preview tab, appends it to <see cref="Documents"/>.<c>VisibleDockables</c>, and
+		/// updates <see cref="MainTab"/> to point at the new one. The active dockable is
+		/// left as-is — the user keeps looking at what they just pinned. Returns the new
+		/// MainTab, or <see langword="null"/> when there's nothing to promote (no current
+		/// MainTab, MainTab already pinned, or Documents missing).
+		/// </summary>
+		public ContentTabPage? PromotePreviewMainTab()
+		{
+			if (MainTab is not { IsPreview: true } previous)
+				return null;
+			if (Documents is not { } docs)
+				return null;
+			previous.IsPreview = false;
+			var fresh = new ContentTabPage { Title = "(no selection)" };
+			// Use the framework's AddDockable so owner/factory wiring matches every other
+			// add path; default insertion is at the end (rightmost — VS convention for the
+			// preview slot).
+			AddDockable(docs, fresh);
+			MainTab = fresh;
+			return fresh;
+		}
 
 		public ILSpyDockFactory(ToolPaneRegistry registry)
 		{
