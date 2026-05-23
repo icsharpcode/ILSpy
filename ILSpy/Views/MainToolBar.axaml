@@ -243,7 +243,8 @@
 				<ComboBox Name="LanguageComboBox" MinWidth="100"
 				          ToolTip.Tip="Select output language"
 				          ItemsSource="{Binding LanguageService.Languages}"
-				          SelectedItem="{Binding LanguageService.CurrentLanguage, Mode=TwoWay}" />
+				          SelectedItem="{Binding LanguageService.CurrentLanguage, Mode=TwoWay}"
+				          IsEnabled="{Binding DockWorkspace.ActiveContentTabPage.SupportsLanguageSwitching, FallbackValue=True, TargetNullValue=True}" />
 			</Grid>
 			<!-- Hidden when the active language doesn't differentiate versions (e.g. IL).
 			     Avalonia's IsVisible binding stands in for WPF's BooleanToVisibilityConverter.
@@ -263,7 +264,8 @@
 				          ToolTip.Tip="Select C# language version"
 				          ItemsSource="{Binding LanguageService.CurrentLanguage.LanguageVersions}"
 				          SelectedItem="{Binding LanguageService.CurrentVersion, Mode=TwoWay}"
-				          IsVisible="{Binding LanguageService.CurrentLanguage.HasLanguageVersions}">
+				          IsVisible="{Binding LanguageService.CurrentLanguage.HasLanguageVersions}"
+				          IsEnabled="{Binding DockWorkspace.ActiveContentTabPage.SupportsLanguageSwitching, FallbackValue=True, TargetNullValue=True}">
 					<ComboBox.ItemTemplate>
 						<DataTemplate>
 							<TextBlock Text="{Binding DisplayName}" />

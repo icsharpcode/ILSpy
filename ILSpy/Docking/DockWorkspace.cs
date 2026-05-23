@@ -28,6 +28,7 @@ using System.Reflection.Metadata.Ecma335;
 using System.Threading;
 using System.Threading.Tasks;
 
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Dock.Model.Controls;
@@ -52,8 +53,18 @@ namespace ILSpy.Docking
 {
 	[Export]
 	[Shared]
-	public class DockWorkspace
+	public partial class DockWorkspace : ObservableObject
 	{
+		/// <summary>
+		/// The active <see cref="ContentTabPage"/> in the documents dock, or null when no
+		/// content tab is active (transient layout states, tool-pane focus, etc.). Updated
+		/// whenever <c>factory.Documents.ActiveDockable</c> changes via the existing
+		/// <see cref="OnDocumentsPropertyChanged"/> subscription. The main-toolbar pickers
+		/// bind through this — see <c>ActiveContentTabPage.SupportsLanguageSwitching</c>.
+		/// </summary>
+		[ObservableProperty]
+		private ContentTabPage? activeContentTabPage;
+
 		readonly ILSpyDockFactory factory;
 		readonly AssemblyTreeModel assemblyTreeModel;
 		readonly LanguageService languageService;
@@ -202,6 +213,10 @@ namespace ILSpy.Docking
 			// (typically MainTab) — InitLayout ran before the subscriptions above were
 			// in place, so no DockableAdded event fired for those initial members.
 			SyncTabPageMenuItems();
+			// Seed ActiveContentTabPage from the freshly-initialised layout so the toolbar
+			// pickers' IsEnabled bindings have the right value at first paint. The
+			// subscription below will keep it in sync from here on.
+			ActiveContentTabPage = factory.Documents?.ActiveDockable as ContentTabPage;
 			// Dock's IFactory.ActiveDockableChanged only fires from InitActiveDockable (layout
 			// structural init), not when the user clicks a different tab — that path sets
 			// dock.ActiveDockable = X directly on the dock model. Subscribe to the model's own
@@ -401,6 +416,10 @@ namespace ILSpy.Docking
 		{
 			if (e.PropertyName != nameof(IDocumentDock.ActiveDockable))
 				return;
+			// Mirror the dock's active document into ActiveContentTabPage. Tool-pane
+			// dockables and non-content dockables fall through to null, which the toolbar
+			// reads as "no language-aware tab is active" — pickers stay enabled by default.
+			ActiveContentTabPage = factory.Documents?.ActiveDockable as ContentTabPage;
 			// Tell each TabPageMenuItem to re-raise IsActive so the Window menu's checkmark
 			// follows the dock's selection. Items resolve "am I active?" against the dock's
 			// current ActiveDockable on read; this notify just kicks the binding.

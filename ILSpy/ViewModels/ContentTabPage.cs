@@ -82,7 +82,9 @@ namespace ILSpy.ViewModels
 
 		// Bubble the inner content's Title up to the Document's Title so the tab strip
 		// reflects whatever the active page chose (e.g. the decompiler tab's spinner glyph
-		// or "DOS Header" for a metadata grid).
+		// or "DOS Header" for a metadata grid). Also mirror the Content's
+		// SupportsLanguageSwitching flag so the toolbar pickers can bind to the wrapper
+		// without drilling into Content's runtime type.
 		partial void OnContentChanged(object? oldValue, object? newValue)
 		{
 			if (oldValue is INotifyPropertyChanged oldNotify)
@@ -90,12 +92,24 @@ namespace ILSpy.ViewModels
 			if (newValue is INotifyPropertyChanged newNotify)
 				newNotify.PropertyChanged += OnContentPropertyChanged;
 			SyncTitleFromContent();
+			SyncSupportsLanguageSwitchingFromContent();
 		}
 
 		void OnContentPropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(Title))
 				SyncTitleFromContent();
+			else if (e.PropertyName == nameof(SupportsLanguageSwitching))
+				SyncSupportsLanguageSwitchingFromContent();
+		}
+
+		void SyncSupportsLanguageSwitchingFromContent()
+		{
+			// Default true when Content is null or isn't a TabPageModel-derived viewmodel
+			// (e.g. the OptionsPageModel which inherits ObservableObject directly). The
+			// toolbar binds to this property; null/non-TabPageModel content means "no
+			// language-aware tab is active" — leave the pickers enabled.
+			SupportsLanguageSwitching = (Content as TabPageModel)?.SupportsLanguageSwitching ?? true;
 		}
 
 		void SyncTitleFromContent()

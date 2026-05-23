@@ -74,6 +74,11 @@ namespace ILSpy.ViewModels
 
 		public MetadataTablePageModel()
 		{
+			// Metadata grids render PE-header / table fields straight from the metadata —
+			// they're language-agnostic, so the toolbar's Language / Language-Version pickers
+			// don't affect what's shown. Mirror WPF's per-tab SupportsLanguageSwitching=false
+			// on every metadata tree node.
+			SupportsLanguageSwitching = false;
 			ColumnFilters.CollectionChanged += OnColumnFiltersCollectionChanged;
 		}
 

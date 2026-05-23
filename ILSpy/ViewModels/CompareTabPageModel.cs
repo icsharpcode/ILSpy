@@ -52,6 +52,10 @@ namespace ILSpy.Compare
 
 		public CompareTabPageModel(LoadedAssembly left, LoadedAssembly right)
 		{
+			// Compare view shows a structural metadata diff — language-agnostic, so the
+			// toolbar's Language / Language-Version pickers shouldn't affect anything while
+			// this tab is active. Mirrors WPF's CompareViewModel.SupportsLanguageSwitching=false.
+			SupportsLanguageSwitching = false;
 			leftAssembly = left;
 			rightAssembly = right;
 			Title = $"Compare {left.Text} - {right.Text}";

@@ -16,11 +16,22 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using CommunityToolkit.Mvvm.ComponentModel;
+
 using Dock.Model.Mvvm.Controls;
 
 namespace ILSpy.ViewModels
 {
-	public abstract class TabPageModel : Document
+	public abstract partial class TabPageModel : Document
 	{
+		/// <summary>
+		/// True when the toolbar's Language / Language-Version pickers should be enabled while
+		/// this tab is active. Defaults to <see langword="true"/> — meaningful for decompiler
+		/// output (C# / IL / ILAst). Metadata views and the compare view set this to
+		/// <see langword="false"/> in their ctors because language choice doesn't affect what
+		/// they render. Mirrors WPF's <c>TabPageModel.SupportsLanguageSwitching</c>.
+		/// </summary>
+		[ObservableProperty]
+		private bool supportsLanguageSwitching = true;
 	}
 }
