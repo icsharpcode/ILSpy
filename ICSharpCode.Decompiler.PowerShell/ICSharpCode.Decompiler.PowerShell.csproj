@@ -11,6 +11,10 @@
   <ItemGroup>
     <PackageReference Include="PowerShellStandard.Library" />
     <PackageReference Include="Mono.Cecil" />
+    <!-- Unify System.Memory with the version ICSharpCode.Decompiler binds to;
+         without this, PowerShellStandard.Library's transitive 4.5.5 wins as
+         "primary" and conflicts with Decompiler.dll's 4.6.x binding (MSB3277). -->
+    <PackageReference Include="System.Memory" />
   </ItemGroup>
 
   <ItemGroup>
