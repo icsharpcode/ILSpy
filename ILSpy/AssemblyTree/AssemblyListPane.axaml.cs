@@ -16,8 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections;
 using System.ComponentModel;
+using System.Linq;
 
 using Avalonia;
 using Avalonia.Controls;
@@ -33,8 +35,8 @@ namespace ILSpy.AssemblyTree
 {
 	public partial class AssemblyListPane : UserControl
 	{
-		// Set while propagating model.SelectedItem → DataGrid.SelectedItem so the resulting
-		// SelectionChanged event doesn't bounce right back into the model.
+		// Suppresses the SelectionChanged → model bounce while we're pushing the model's
+		// selection into the DataGrid.
 		bool syncingSelection;
 
 		public AssemblyListPane()
@@ -72,15 +74,12 @@ namespace ILSpy.AssemblyTree
 			if (TreeGrid.HierarchicalModel is not IHierarchicalModel hm)
 				return;
 
-			// Build the SharpTreeNode path from a root (a child of the hidden AssemblyListTreeNode)
-			// down to the target.
 			var path = new System.Collections.Generic.List<SharpTreeNode>();
 			for (var n = target; n.Parent != null; n = n.Parent)
 				path.Add(n);
 			path.Reverse();
 
-			// Walk top-down: ProDataGrid only materialises children of expanded nodes, so each
-			// ancestor must be expanded before FindNode can locate the next level's wrapper.
+			// Each ancestor must be expanded before FindNode can locate the next level's wrapper.
 			BeginSync();
 			HierarchicalNode? hNode = null;
 			for (int i = 0; i < path.Count; i++)
@@ -101,15 +100,46 @@ namespace ILSpy.AssemblyTree
 				return;
 			}
 			TreeGrid.SelectedItem = target;
-			TreeGrid.ScrollIntoView(target, TreeGrid.Columns[0]);
+			// Pass the HierarchicalNode wrapper (DataGrid.IndexOf is against the wrappers, not
+			// the underlying SharpTreeNodes), and defer past Expand's pending child-realization
+			// notifications — synchronously the wrapper isn't in the visible list yet.
+			var scrollTarget = hNode!;
+			global::Avalonia.Threading.Dispatcher.UIThread.Post(
+				() => CenterRowInView(scrollTarget),
+				global::Avalonia.Threading.DispatcherPriority.Background);
 			EndSync();
+		}
+
+		// DataGrid.ScrollIntoView only brings the row to the nearest viewport edge; we want
+		// it centred (matching the WPF host).
+		void CenterRowInView(HierarchicalNode node)
+		{
+			TreeGrid.ScrollIntoView(node, TreeGrid.Columns[0]);
+
+			var row = TreeGrid.GetVisualDescendants().OfType<DataGridRow>()
+				.FirstOrDefault(r => ReferenceEquals(r.DataContext, node));
+			if (row is null)
+				return;
+
+			var scrollViewer = TreeGrid.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+			if (scrollViewer is null)
+				return;
+
+			var rowTopInViewer = row.TranslatePoint(new Point(0, 0), scrollViewer);
+			if (rowTopInViewer is null)
+				return;
+
+			var desiredTop = (scrollViewer.Viewport.Height - row.Bounds.Height) / 2;
+			var newOffsetY = scrollViewer.Offset.Y + (rowTopInViewer.Value.Y - desiredTop);
+			var maxOffset = Math.Max(0, scrollViewer.Extent.Height - scrollViewer.Viewport.Height);
+			newOffsetY = Math.Clamp(newOffsetY, 0, maxOffset);
+			scrollViewer.Offset = new Vector(scrollViewer.Offset.X, newOffsetY);
 		}
 
 		void BeginSync() => syncingSelection = true;
 
-		// Hold the guard across one dispatch tick so any deferred SelectionChanged emits the
-		// DataGrid raises in response to our programmatic Expand / SelectedItem / ScrollIntoView
-		// calls don't bounce back into model.SelectedItem and cancel the navigation.
+		// Released on a Background dispatch tick so any DataGrid SelectionChanged the Expand /
+		// SelectedItem / ScrollIntoView calls trigger doesn't bounce back into the model.
 		void EndSync() => global::Avalonia.Threading.Dispatcher.UIThread.Post(
 			() => syncingSelection = false,
 			global::Avalonia.Threading.DispatcherPriority.Background);

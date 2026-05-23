@@ -46,6 +46,11 @@ namespace ILSpy.TreeNodes
 
 		public override object Icon => Images.Images.Namespace;
 
+		// Stable identity for SessionSettings.ActiveTreeViewPath (used by AssemblyTreeModel.
+		// FindNodeByPath / GetPathForNode). Without this override the default Object.ToString
+		// returns the type name, which makes save/restore of namespace selections silently fail.
+		public override string ToString() => name;
+
 		protected override void LoadChildren()
 		{
 			var metadata = module.Metadata;

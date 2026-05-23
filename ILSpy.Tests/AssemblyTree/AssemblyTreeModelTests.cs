@@ -46,7 +46,10 @@ public class AssemblyTreeModelTests
 		model.Initialize();
 
 		model.AssemblyList.Should().NotBeNull("Initialize loads or creates the default AssemblyList.");
-		model.Root.Should().NotBeNull("Initialize wires Root to an AssemblyListTreeNode of the loaded list.");
+		// Cast through object so the generic AwesomeAssertions Should() resolves, not the
+		// TreeNodeAssertionsExtensions.Should(SharpTreeNode) shadow that landed in this commit
+		// (its TreeNodeAssertions surface doesn't expose NotBeNull).
+		((object?)model.Root).Should().NotBeNull("Initialize wires Root to an AssemblyListTreeNode of the loaded list.");
 	}
 
 	[AvaloniaTest]
