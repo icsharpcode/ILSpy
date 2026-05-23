@@ -78,17 +78,40 @@ namespace ILSpy
 				StartupExceptions.Items.Add(new ExceptionData(ex));
 			}
 
-			if (Composition?.GetExport<SettingsService>() is { } settingsService)
+			try
 			{
-				ThemeManager.Current.Attach(settingsService.SessionSettings);
-				ApplyCulture(settingsService.SessionSettings.CurrentCulture);
+				if (Composition?.GetExport<SettingsService>() is { } settingsService)
+				{
+					ThemeManager.Current.Attach(settingsService.SessionSettings);
+					ApplyCulture(settingsService.SessionSettings.CurrentCulture);
+				}
+			}
+			catch (Exception ex)
+			{
+				StartupExceptions.Items.Add(new ExceptionData(ex));
 			}
 
 			if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
 			{
-				AppLog.Mark("MainWindow about to be resolved from MEF");
-				desktop.MainWindow = Composition?.GetExport<MainWindow>()
-					?? new MainWindow();
+				MainWindow? mainWindow = null;
+				try
+				{
+					AppLog.Mark("MainWindow about to be resolved from MEF");
+					mainWindow = Composition?.GetExport<MainWindow>();
+				}
+				catch (Exception ex)
+				{
+					StartupExceptions.Items.Add(new ExceptionData(ex));
+				}
+
+				// Without this fallback, anything thrown by MEF resolution above propagates out of
+				// OnFrameworkInitializationCompleted before the dispatcher pump starts -- so the
+				// AppDomain.UnhandledException dialog posted by GlobalExceptionHandler never gets
+				// a chance to run, and the user sees a silent exit. Hand the user a window that
+				// shows the captured exceptions instead.
+				desktop.MainWindow = StartupExceptions.Items.Count > 0
+					? new StartupErrorWindow(StartupExceptions.Items)
+					: mainWindow ?? new MainWindow();
 				AppLog.Mark("MainWindow assigned to desktop.MainWindow");
 				desktop.Exit += (_, _) => {
 					try
