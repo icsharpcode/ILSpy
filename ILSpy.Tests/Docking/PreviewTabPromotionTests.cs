@@ -75,8 +75,12 @@ public class PreviewTabPromotionTests
 	}
 
 	[AvaloniaTest]
-	public async Task PinCurrentTab_Promotes_MainTab_And_Spawns_A_New_Preview_MainTab()
+	public async Task PinCurrentTab_Flips_IsPreview_Without_Spawning_A_New_Tab()
 	{
+		// New semantics: Pin only flips IsPreview=false on the current MainTab. No new
+		// preview tab spawns at pin time. A fresh preview tab opens lazily later, when a
+		// tree-selection change finds the active tab frozen — see
+		// Selecting_A_Different_Node_After_Pin_Opens_A_New_Preview_Tab below.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
@@ -90,34 +94,36 @@ public class PreviewTabPromotionTests
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.AssemblyTreeModel.SelectNode(typeNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync(System.TimeSpan.FromSeconds(30));
+		await vm.DockWorkspace.WaitForDecompiledTextAsync(System.TimeSpan.FromSeconds(60));
 		ReferenceEquals(previousMainTab.SourceNode, typeNode).Should().BeTrue(
 			"baseline: tree selection populated MainTab with the chosen node");
+
+		var tabCountBefore = vm.DockWorkspace.Documents!.VisibleDockables!.Count;
 
 		// Pin.
 		vm.DockWorkspace.PinCurrentTab();
 
-		// Promoted tab keeps its content and identity, just loses preview status.
+		// Tab is now pinned, content preserved.
 		previousMainTab.IsPreview.Should().BeFalse(
 			"after pin, the previously-preview MainTab becomes a regular pinned tab");
 		ReferenceEquals(previousMainTab.SourceNode, typeNode).Should().BeTrue(
 			"pin must not throw away the tab's content");
 
-		// A new preview MainTab takes its place.
-		factory.MainTab.Should().NotBeSameAs(previousMainTab,
-			"factory.MainTab must rotate to a fresh preview tab after pin");
-		factory.MainTab!.IsPreview.Should().BeTrue(
-			"the new MainTab is the next preview slot");
+		// factory.MainTab still points at the same (now-pinned) tab — no rotation.
+		factory.MainTab.Should().BeSameAs(previousMainTab,
+			"pin alone must not rotate factory.MainTab — the pinned tab keeps the slot until a selection change spawns a new preview");
 
-		// Both tabs live in the documents dock.
-		var docTabs = vm.DockWorkspace.Documents!.VisibleDockables!.OfType<ContentTabPage>().ToList();
-		docTabs.Should().Contain(previousMainTab).And.Contain(factory.MainTab,
-			"the documents dock must hold both the promoted tab and the fresh MainTab");
+		// And critically: no new tab spawned.
+		vm.DockWorkspace.Documents!.VisibleDockables!.Count.Should().Be(tabCountBefore,
+			"pinning alone must not open a new tab; new tabs open lazily on the next selection change");
 	}
 
 	[AvaloniaTest]
-	public async Task After_Pin_Tree_Selection_Writes_To_New_MainTab_Not_Promoted_One()
+	public async Task Selecting_A_Different_Node_After_Pin_Opens_A_New_Preview_Tab()
 	{
+		// Pin holds the current tab's content. Selecting a different tree node while
+		// the (now-pinned) tab is active must spawn a fresh preview tab beside it and
+		// route the new content there — never overwrite the pinned tab.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
@@ -129,23 +135,34 @@ public class PreviewTabPromotionTests
 		var typeA = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.AssemblyTreeModel.SelectNode(typeA);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync(System.TimeSpan.FromSeconds(30));
+		await vm.DockWorkspace.WaitForDecompiledTextAsync(System.TimeSpan.FromSeconds(60));
 		var pinnedTab = factory.MainTab!;
 		var pinnedContent = pinnedTab.Content;
 
-		// Phase 2: pin.
+		// Phase 2: pin. factory.MainTab still points at the same (now-pinned) tab —
+		// no spawn yet (covered by PinCurrentTab_Flips_IsPreview_Without_Spawning_A_New_Tab).
+		var tabCountBeforeSelection = vm.DockWorkspace.Documents!.VisibleDockables!.Count;
 		vm.DockWorkspace.PinCurrentTab();
-		var newMainTab = factory.MainTab!;
-		newMainTab.Should().NotBeSameAs(pinnedTab);
+		factory.MainTab.Should().BeSameAs(pinnedTab, "pin alone keeps the slot");
 
-		// Phase 3: select a different type — should land in the NEW MainTab.
+		// Phase 3: select a different type — NOW a new preview tab should spawn AND
+		// receive the new content.
 		var typeB = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Private.Uri", "System", "System.Uri");
 		vm.AssemblyTreeModel.SelectNode(typeB);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync(System.TimeSpan.FromSeconds(30));
+		await vm.DockWorkspace.WaitForDecompiledTextAsync(System.TimeSpan.FromSeconds(60));
 
+		// New tab spawned beside the pinned one.
+		vm.DockWorkspace.Documents!.VisibleDockables!.Count.Should().Be(tabCountBeforeSelection + 1,
+			"selecting a different node while the active tab is pinned must spawn a new preview tab");
+
+		var newMainTab = factory.MainTab!;
+		newMainTab.Should().NotBeSameAs(pinnedTab,
+			"factory.MainTab must rotate to the freshly-spawned preview tab once a selection change forces it");
+		newMainTab.IsPreview.Should().BeTrue(
+			"the freshly-spawned tab is itself a preview tab (the user can pin it next)");
 		ReferenceEquals(newMainTab.SourceNode, typeB).Should().BeTrue(
-			"new tree selection must land in the freshly-spawned preview MainTab");
+			"new tree selection must land in the freshly-spawned preview tab");
 		ReferenceEquals(pinnedTab.SourceNode, typeA).Should().BeTrue(
 			"the pinned tab must keep type A — not be overwritten by the new selection");
 		pinnedTab.Content.Should().BeSameAs(pinnedContent,
@@ -372,17 +389,19 @@ public class PreviewTabPromotionTests
 		pinButton.IsVisible.Should().BeTrue("pin button must show while the tab is preview");
 
 		var previousMainTab = factory.MainTab!;
+		var tabCountBefore = vm.DockWorkspace.Documents!.VisibleDockables!.Count;
 
 		// Simulate a user click on the pin button.
 		pinButton.RaiseEvent(new global::Avalonia.Interactivity.RoutedEventArgs(
 			global::Avalonia.Controls.Button.ClickEvent));
 
-		// The previous MainTab should now be pinned; factory.MainTab should point at a new
-		// preview tab.
+		// New semantics: clicking pin flips IsPreview, doesn't spawn a new tab.
 		previousMainTab.IsPreview.Should().BeFalse(
-			"clicking the pin button must promote the previous MainTab");
-		factory.MainTab.Should().NotBeSameAs(previousMainTab,
-			"factory.MainTab must rotate to a fresh preview tab after the click");
+			"clicking the pin button must flip IsPreview=false on the current MainTab");
+		factory.MainTab.Should().BeSameAs(previousMainTab,
+			"pin alone must not rotate factory.MainTab; the new preview tab opens lazily on the next tree selection");
+		vm.DockWorkspace.Documents!.VisibleDockables!.Count.Should().Be(tabCountBefore,
+			"pin alone must not change tab count");
 	}
 
 	[AvaloniaTest]
@@ -450,25 +469,75 @@ public class PreviewTabPromotionTests
 	[AvaloniaTest]
 	public void PinCurrentTab_Is_Noop_When_MainTab_Already_Pinned()
 	{
-		// Idempotency: calling Pin twice in a row only promotes the first time. The second
-		// call sees IsPreview=false on the (new) MainTab — actually, on the *new* preview
-		// MainTab — so it should NOT promote that one. Wait — the new MainTab IS preview.
-		// So a second pin DOES promote it. Let me restate: a single pin promotes once;
-		// calling pin again creates a second pinned tab. That's the intended behaviour.
-		// The actual noop case is when there's literally nothing pinnable. Test that.
+		// Idempotency: a second pin against an already-pinned MainTab is a no-op. The new
+		// "pin = flip-only, spawn-lazy" semantics make this simpler than the old version:
+		// PinCurrentMainTab() returns null when MainTab.IsPreview is already false, and
+		// PinCurrentTab early-returns.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
 
-		// Manually flip the current MainTab to pinned, simulating a state where there's
-		// no preview to promote.
+		// Manually flip the current MainTab to pinned, simulating the post-pin state.
 		factory.MainTab!.IsPreview = false;
 		var before = factory.MainTab;
 
 		vm.DockWorkspace.PinCurrentTab();
 
 		factory.MainTab.Should().BeSameAs(before,
-			"with no preview MainTab to promote, PinCurrentTab must leave the factory state untouched");
+			"with no preview MainTab to flip, PinCurrentTab must leave the factory state untouched");
+		factory.MainTab.IsPreview.Should().BeFalse(
+			"the already-pinned tab stays pinned");
+	}
+
+	[AvaloniaTest]
+	public async Task Tree_Selection_While_Frozen_Tab_Active_Opens_A_New_Preview_Tab()
+	{
+		// "Frozen" covers: (a) user-pinned tabs (IsPreview=false via PinCurrentTab),
+		// (b) carve-out tabs (born IsPreview=false via OpenNodeInNewTab), and (c) static
+		// content tabs (Options, About) whose Content is a static viewmodel. Tree-node
+		// selections while any of those are active must spawn a fresh preview tab and
+		// route the new content there. This test uses a carve-out as a stand-in for the
+		// frozen-tab family — the IsWritablePreview check returns null for all three.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
+
+		// Open a carve-out (born pinned) and let it become the active dockable.
+		var typeA = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		vm.DockWorkspace.OpenNodeInNewTab(typeA);
+		var carveOut = vm.DockWorkspace.Documents!.VisibleDockables!
+			.OfType<ContentTabPage>()
+			.Last(t => t.SourceNode == typeA);
+		factory.SetActiveDockable(carveOut);
+		carveOut.IsPreview.Should().BeFalse("baseline: carve-out tab is frozen");
+		ReferenceEquals(vm.DockWorkspace.Documents.ActiveDockable, carveOut).Should().BeTrue(
+			"baseline: the carve-out is the active document");
+
+		var tabCountBefore = vm.DockWorkspace.Documents!.VisibleDockables!.Count;
+
+		// Select a different tree node — the carve-out is frozen, so this must NOT
+		// overwrite it.
+		var typeB = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Private.Uri", "System", "System.Uri");
+		vm.AssemblyTreeModel.SelectNode(typeB);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync(System.TimeSpan.FromSeconds(60));
+
+		vm.DockWorkspace.Documents!.VisibleDockables!.Count.Should().Be(tabCountBefore + 1,
+			"selecting a tree node while a frozen tab is active must spawn a new preview tab");
+		ReferenceEquals(carveOut.SourceNode, typeA).Should().BeTrue(
+			"the frozen carve-out tab must keep its original content");
+
+		var newPreview = factory.MainTab!;
+		newPreview.Should().NotBeSameAs(carveOut,
+			"the freshly-spawned preview must be a separate tab from the frozen one");
+		newPreview.IsPreview.Should().BeTrue(
+			"the freshly-spawned tab is itself a preview tab");
+		ReferenceEquals(newPreview.SourceNode, typeB).Should().BeTrue(
+			"the new preview tab must host the just-selected node's content");
 	}
 }

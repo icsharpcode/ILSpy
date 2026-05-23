@@ -156,17 +156,31 @@ namespace ILSpy.Docking
 			ShowSearchCommand = new RelayCommand(ExecuteShowSearch);
 			using (ILSpy.AppEnv.AppLog.Phase("ILSpyDockFactory ctor + CreateLayout + InitLayout"))
 			{
-				factory = new ILSpyDockFactory(toolPaneRegistry);
+				using (ILSpy.AppEnv.AppLog.Phase("ILSpyDockFactory ctor"))
+					factory = new ILSpyDockFactory(toolPaneRegistry);
 				// Prefer the user's saved layout (ILSpy.Layout.json sidecar next to
 				// ILSpy.xml); fall back to the default layout if there is no saved one
 				// or it failed to deserialize. The fallback path is the same shape the
 				// app uses on first launch.
-				Layout = factory.LoadLayout(GetLayoutFilePath()) ?? factory.CreateLayout();
+				IRootDock? loaded;
+				using (ILSpy.AppEnv.AppLog.Phase("ILSpyDockFactory.LoadLayout"))
+					loaded = factory.LoadLayout(GetLayoutFilePath());
+				if (loaded != null)
+				{
+					Layout = loaded;
+					ILSpy.AppEnv.AppLog.Mark("ILSpyDockFactory: using LOADED layout");
+				}
+				else
+				{
+					using (ILSpy.AppEnv.AppLog.Phase("ILSpyDockFactory.CreateLayout (default)"))
+						Layout = factory.CreateLayout();
+				}
 				// Build the layout, then InitLayout BEFORE the chrome ever sees it, rather than
 				// letting the DockControl's InitializeFactory / InitializeLayout flags run it
 				// post-template-apply. Wiring owners/factories/locators up front means the
 				// layout is fully resolvable before the first DeferredContentControl attaches.
-				factory.InitLayout(Layout);
+				using (ILSpy.AppEnv.AppLog.Phase("ILSpyDockFactory.InitLayout"))
+					factory.InitLayout(Layout);
 			}
 
 			assemblyTreeModel.PropertyChanged += OnAssemblyTreePropertyChanged;
@@ -615,27 +629,46 @@ namespace ILSpy.Docking
 
 		void ShowSelectedNode()
 		{
+			using var _ = ILSpy.AppEnv.AppLog.Phase("DockWorkspace.ShowSelectedNode");
 			var nodes = assemblyTreeModel.SelectedItems.OfType<ILSpyTreeNode>().ToArray();
 			if (nodes.Length == 0)
 			{
 				lastShownNodes = null;
 				return;
 			}
-			if (factory.MainTab is not { } main)
-				return;
 			// SelectedItems.CollectionChanged and SelectedItem PropertyChanged both fan into
 			// here on a single click, so dedupe to avoid creating two TabPageModels for the
 			// same selection — the second one's columns would replace the first's, but the
 			// first's filter wiring would be left dangling on stale ColumnFilter instances.
+			// Dedupe is also what makes "re-clicking the same node after pin" a no-op: the
+			// pinned tab stays active, no new preview tab spawns.
 			if (lastShownNodes is { } prev && prev.SequenceEqual(nodes))
 			{
-				// Content didn't change, but the user may have returned to the tree from a
-				// sibling static tab (Options / About) — pull MainTab forward so re-clicking
-				// the same node still feels responsive.
-				ActivateMainTabIfNeeded(main);
+				if (factory.MainTab is { } existingMain)
+					ActivateMainTabIfNeeded(existingMain);
 				return;
 			}
 			lastShownNodes = nodes;
+
+			// Pick or spawn the target tab. If the currently-active document tab is a
+			// writable preview ContentTabPage we replace its content in place. Anything
+			// else — pinned tab, Options page, About page, no Documents dock — counts as
+			// frozen and gets a brand-new preview tab spawned beside it.
+			ContentTabPage? main;
+			if (IsWritablePreview(factory.Documents?.ActiveDockable) is ContentTabPage activePreview)
+			{
+				main = activePreview;
+				factory.MainTab = main;
+			}
+			else
+			{
+				main = factory.CreateAndAttachPreviewTab();
+				if (main == null)
+					return;
+				// Fresh tab needs a fresh DecompilerTabPageModel — the cached one (if any)
+				// belongs to a previous tab and must not be re-assigned across tabs.
+				decompilerContent = null;
+			}
 
 			// Tree-node selections always reuse the single document slot. The Document
 			// instance never changes; its inner Content swaps between viewmodels. The
@@ -644,7 +677,9 @@ namespace ILSpy.Docking
 			// deterministic without going through Dock's add+close lifecycle.
 			// Carve-outs ("Open in new tab", "Freeze tab") aren't implemented yet and would
 			// branch off this path before the Content swap.
-			var customContent = nodes.Length == 1 ? nodes[0].CreateTab() : null;
+			TabPageModel? customContent;
+			using (ILSpy.AppEnv.AppLog.Phase("ShowSelectedNode: node.CreateTab"))
+				customContent = nodes.Length == 1 ? nodes[0].CreateTab() : null;
 
 			if (customContent != null)
 			{
@@ -660,12 +695,37 @@ namespace ILSpy.Docking
 				return;
 			}
 
-			var decTab = decompilerContent ??= CreateDecompilerContent();
-			main.Content = decTab;
+			DecompilerTabPageModel decTab;
+			using (ILSpy.AppEnv.AppLog.Phase("ShowSelectedNode: get/create decompilerContent"))
+				decTab = decompilerContent ??= CreateDecompilerContent();
+			using (ILSpy.AppEnv.AppLog.Phase("ShowSelectedNode: main.Content = decTab (Dock view-recycling)"))
+				main.Content = decTab;
 			decTab.Language = languageService.CurrentLanguage;
-			decTab.CurrentNodes = nodes;
+			using (ILSpy.AppEnv.AppLog.Phase("ShowSelectedNode: decTab.CurrentNodes = nodes (kicks off DecompileAsync)"))
+				decTab.CurrentNodes = nodes;
 			main.SourceNode = nodes.Length == 1 ? nodes[0] : null;
-			ActivateMainTabIfNeeded(main);
+			using (ILSpy.AppEnv.AppLog.Phase("ShowSelectedNode: ActivateMainTabIfNeeded"))
+				ActivateMainTabIfNeeded(main);
+		}
+
+		// Returns the active document tab if it's a writable preview ContentTabPage — meaning
+		// IsPreview=true AND not hosting static-content (Options, About). Otherwise returns
+		// null, signalling that ShowSelectedNode must spawn a fresh preview tab instead of
+		// overwriting the active one. Options pages and About pages are born with
+		// IsPreview=false (carve-out semantics) AND carry IsStaticContent=true on their
+		// content viewmodel — either flag alone would suffice, both check guards against
+		// drift.
+		static ContentTabPage? IsWritablePreview(IDockable? dockable)
+		{
+			if (dockable is not ContentTabPage tab)
+				return null;
+			if (!tab.IsPreview)
+				return null;
+			if (tab.Content is DecompilerTabPageModel { IsStaticContent: true })
+				return null;
+			if (tab.Content is Options.OptionsPageModel)
+				return null;
+			return tab;
 		}
 
 		// Brings MainTab to the front of the documents dock so the just-updated content is
@@ -990,22 +1050,21 @@ namespace ILSpy.Docking
 		}
 
 		/// <summary>
-		/// VS-style "promote preview tab" gesture. The current <c>factory.MainTab</c> keeps
-		/// its position and content but flips to pinned (<see cref="ContentTabPage.IsPreview"/>
-		/// false); a fresh preview <c>MainTab</c> is created and inserted beside it (rightmost),
-		/// becoming the new target for tree-node selections. The just-pinned tab stays active
-		/// so the user keeps looking at what they pinned.
+		/// VS-style "pin tab" gesture. The current <c>factory.MainTab</c> keeps its position,
+		/// content, and active state but flips to pinned
+		/// (<see cref="ContentTabPage.IsPreview"/> = false). No new tab spawns at pin time:
+		/// the next tree-node selection that finds the active tab frozen will lazily spawn
+		/// a fresh preview tab inside <see cref="ShowSelectedNode"/>. Re-clicking the same
+		/// node after pin is a no-op (the dedupe activates the pinned tab).
 		/// </summary>
 		public void PinCurrentTab()
 		{
-			if (factory.PromotePreviewMainTab() is null)
+			if (factory.PinCurrentMainTab() is null)
 				return;
-			// Cached decompiler viewmodel was bound to the previous MainTab — drop it so the
-			// next tree click materialises a fresh one inside the new MainTab.
+			// Cached decompiler viewmodel was bound to the just-pinned tab — drop the cache
+			// so the next selection-change-into-frozen path materialises a fresh
+			// DecompilerTabPageModel for the newly-spawned preview tab.
 			decompilerContent = null;
-			// Defeat the same-selection dedupe so re-clicking the just-pinned node's path
-			// actually populates the new MainTab.
-			lastShownNodes = null;
 		}
 
 		public void CloseAllTabs()

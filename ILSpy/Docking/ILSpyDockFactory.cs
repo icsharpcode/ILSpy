@@ -46,24 +46,36 @@ namespace ILSpy.Docking
 		/// just-pinned tab keeps its position and content while MainTab points at a fresh
 		/// preview tab beside it.
 		/// </summary>
-		public ContentTabPage? MainTab { get; private set; }
+		public ContentTabPage? MainTab { get; internal set; }
 
 		/// <summary>
-		/// VS-style preview-tab promotion. Flips the current <see cref="MainTab"/> to pinned
-		/// (<see cref="ContentTabPage.IsPreview"/> = false), creates a new placeholder
-		/// preview tab, appends it to <see cref="Documents"/>.<c>VisibleDockables</c>, and
-		/// updates <see cref="MainTab"/> to point at the new one. The active dockable is
-		/// left as-is — the user keeps looking at what they just pinned. Returns the new
-		/// MainTab, or <see langword="null"/> when there's nothing to promote (no current
-		/// MainTab, MainTab already pinned, or Documents missing).
+		/// Flips the current <see cref="MainTab"/> to pinned
+		/// (<see cref="ContentTabPage.IsPreview"/> = false). Returns the pinned tab, or
+		/// <see langword="null"/> when there's nothing to pin (no current MainTab, MainTab
+		/// already pinned). Does NOT spawn a new preview tab — the next selection change
+		/// that finds the active tab frozen will spawn one lazily via
+		/// <see cref="CreateAndAttachPreviewTab"/>.
 		/// </summary>
-		public ContentTabPage? PromotePreviewMainTab()
+		public ContentTabPage? PinCurrentMainTab()
 		{
-			if (MainTab is not { IsPreview: true } previous)
+			if (MainTab is not { IsPreview: true } current)
 				return null;
+			current.IsPreview = false;
+			return current;
+		}
+
+		/// <summary>
+		/// Creates a fresh preview <see cref="ContentTabPage"/>, attaches it to
+		/// <see cref="Documents"/>, and sets <see cref="MainTab"/> to it. Used when a
+		/// tree-node selection changes while the active tab is frozen (pinned, Options,
+		/// About, …) — a brand-new preview slot is needed to host the new content.
+		/// Returns the new tab, or <see langword="null"/> if <see cref="Documents"/> is
+		/// missing.
+		/// </summary>
+		public ContentTabPage? CreateAndAttachPreviewTab()
+		{
 			if (Documents is not { } docs)
 				return null;
-			previous.IsPreview = false;
 			var fresh = new ContentTabPage { Title = "(no selection)" };
 			// Use the framework's AddDockable so owner/factory wiring matches every other
 			// add path; default insertion is at the end (rightmost — VS convention for the
