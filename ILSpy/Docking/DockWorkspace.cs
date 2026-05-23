@@ -1076,6 +1076,17 @@ namespace ILSpy.Docking
 		/// a fresh preview tab inside <see cref="ShowSelectedNode"/>. Re-clicking the same
 		/// node after pin is a no-op (the dedupe activates the pinned tab).
 		/// </summary>
+		/// <summary>
+		/// Pump dispatcher jobs so synchronously-set selection state (SourceNode, IsPreview,
+		/// tab count, Content reference) finishes propagating, without awaiting the
+		/// fire-and-forget DecompileAsync. Tests that assert on dock structure can use this
+		/// instead of WaitForDecompiledTextAsync to avoid the multi-second decompile wait.
+		/// </summary>
+		public void SettleSelection()
+		{
+			Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+		}
+
 		public void PinCurrentTab()
 		{
 			if (factory.PinCurrentMainTab() is null)

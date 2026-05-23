@@ -94,7 +94,7 @@ public class PreviewTabPromotionTests
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.AssemblyTreeModel.SelectNode(typeNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync(System.TimeSpan.FromSeconds(60));
+		vm.DockWorkspace.SettleSelection();
 		ReferenceEquals(previousMainTab.SourceNode, typeNode).Should().BeTrue(
 			"baseline: tree selection populated MainTab with the chosen node");
 
@@ -135,7 +135,7 @@ public class PreviewTabPromotionTests
 		var typeA = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.AssemblyTreeModel.SelectNode(typeA);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync(System.TimeSpan.FromSeconds(60));
+		vm.DockWorkspace.SettleSelection();
 		var pinnedTab = factory.MainTab!;
 		var pinnedContent = pinnedTab.Content;
 
@@ -150,7 +150,7 @@ public class PreviewTabPromotionTests
 		var typeB = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Private.Uri", "System", "System.Uri");
 		vm.AssemblyTreeModel.SelectNode(typeB);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync(System.TimeSpan.FromSeconds(60));
+		vm.DockWorkspace.SettleSelection();
 
 		// New tab spawned beside the pinned one.
 		vm.DockWorkspace.Documents!.VisibleDockables!.Count.Should().Be(tabCountBeforeSelection + 1,
@@ -595,7 +595,7 @@ public class PreviewTabPromotionTests
 		var typeB = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Private.Uri", "System", "System.Uri");
 		vm.AssemblyTreeModel.SelectNode(typeB);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync(System.TimeSpan.FromSeconds(60));
+		vm.DockWorkspace.SettleSelection();
 
 		vm.DockWorkspace.Documents!.VisibleDockables!.Count.Should().Be(tabCountBefore + 1,
 			"selecting a tree node while a frozen tab is active must spawn a new preview tab");
