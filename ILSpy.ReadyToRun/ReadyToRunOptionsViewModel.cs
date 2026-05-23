@@ -1,14 +1,14 @@
 // Copyright (c) 2018 Siegfried Pammer
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -17,46 +17,32 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Composition;
+using System.Xml.Linq;
 
-using ICSharpCode.ILSpy.Options;
-using ICSharpCode.ILSpy.Util;
+using CommunityToolkit.Mvvm.ComponentModel;
 
-using TomsToolbox.Wpf;
-using TomsToolbox.Wpf.Composition.AttributedModel;
+using ILSpy;
+using ILSpy.Options;
 
 namespace ICSharpCode.ILSpy.ReadyToRun
 {
-	[DataTemplate(typeof(ReadyToRunOptionsViewModel))]
-	[NonShared]
-	partial class ReadyToRunOptionPage
-	{
-		public ReadyToRunOptionPage()
-		{
-			InitializeComponent();
-		}
-	}
-
 	[ExportOptionPage(Order = 40)]
-	[NonShared]
-	class ReadyToRunOptionsViewModel : ObservableObjectBase, IOptionPage
+	[Shared]
+	internal sealed partial class ReadyToRunOptionsViewModel : ObservableObject, IOptionPage
 	{
-		private ReadyToRunOptions options;
-
-		public ReadyToRunOptions Options {
-			get => options;
-			set => SetProperty(ref options, value);
-		}
+		[ObservableProperty]
+		ReadyToRunOptions options = null!;
 
 		public string Title => global::ILSpy.ReadyToRun.Properties.Resources.ReadyToRun;
 
-		public void Load(SettingsSnapshot snapshot)
+		public void Load(SettingsService service)
 		{
-			Options = snapshot.GetSettings<ReadyToRunOptions>();
+			Options = service.GetSettings<ReadyToRunOptions>();
 		}
 
 		public void LoadDefaults()
 		{
-			Options.LoadFromXml(new("empty"));
+			Options.LoadFromXml(new XElement("ReadyToRunOptions"));
 		}
 	}
 }

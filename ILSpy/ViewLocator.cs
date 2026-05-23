@@ -28,6 +28,7 @@ using Dock.Model.Core;
 using ILSpy.Analyzers;
 using ILSpy.AssemblyTree;
 using ILSpy.Compare;
+using ILSpy.Options;
 using ILSpy.Search;
 using ILSpy.TextView;
 using ILSpy.ViewModels;
@@ -77,9 +78,21 @@ namespace ILSpy
 				return null;
 			if (s_views.TryGetValue(param.GetType(), out var ctor))
 				return ctor();
-			// Convention fallback for ViewModelBase-derived VMs not in the explicit map.
+			// Convention fallback: SomeViewModel -> SomeView. Type.GetType only searches the
+			// calling assembly + corelib, so a plugin viewmodel (loaded into the AppDomain
+			// at runtime by AppComposition.LoadPlugins) wouldn't be found via that path
+			// alone. Walk every loaded assembly to find the matching View type.
 			var name = param.GetType().FullName!.Replace("ViewModel", "View", StringComparison.Ordinal);
 			var type = Type.GetType(name);
+			if (type == null)
+			{
+				foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+				{
+					type = asm.GetType(name);
+					if (type != null)
+						break;
+				}
+			}
 			if (type != null)
 				return (Control)Activator.CreateInstance(type)!;
 			return new TextBlock { Text = "Not Found: " + name };
@@ -91,6 +104,7 @@ namespace ILSpy
 				return false;
 			return data is IDockable
 				|| data is ViewModelBase
+				|| data is IOptionPage
 				|| s_views.ContainsKey(data.GetType());
 		}
 	}

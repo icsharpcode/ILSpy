@@ -1,0 +1,33 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ICSharpCode.ILSpy.ReadyToRun"
+             xmlns:res="using:ILSpy.ReadyToRun.Properties"
+             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="300"
+             x:Class="ICSharpCode.ILSpy.ReadyToRun.ReadyToRunOptionsView"
+             x:DataType="vm:ReadyToRunOptionsViewModel">
+	<Grid Margin="6" ColumnDefinitions="Auto,*" RowSpacing="6" ColumnSpacing="6"
+	      RowDefinitions="Auto,Auto,Auto,Auto">
+		<TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
+		           Text="{x:Static res:Resources.DisassemblyFormat}" />
+		<ComboBox Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch"
+		          ItemsSource="{Binding Options.DisassemblyFormats}"
+		          SelectedItem="{Binding Options.DisassemblyFormat, Mode=TwoWay}" />
+
+		<TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center"
+		           Text="{x:Static res:Resources.ShowStackUnwindInfo}" />
+		<CheckBox Grid.Row="1" Grid.Column="1"
+		          IsChecked="{Binding Options.IsShowUnwindInfo, Mode=TwoWay}" />
+
+		<TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center"
+		           Text="{x:Static res:Resources.ShowDebugInfo}" />
+		<CheckBox Grid.Row="2" Grid.Column="1"
+		          IsChecked="{Binding Options.IsShowDebugInfo, Mode=TwoWay}" />
+
+		<TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center"
+		           Text="{x:Static res:Resources.ShowGCInfo}" />
+		<CheckBox Grid.Row="3" Grid.Column="1"
+		          IsChecked="{Binding Options.IsShowGCInfo, Mode=TwoWay}" />
+	</Grid>
+</UserControl>
