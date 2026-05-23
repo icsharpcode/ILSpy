@@ -92,6 +92,7 @@ namespace ILSpy.Languages
 			new(CSharpLanguageVersion.CSharp12_0.ToString(), "C# 12.0 / VS 2022.8"),
 			new(CSharpLanguageVersion.CSharp13_0.ToString(), "C# 13.0 / VS 2022.12"),
 			new(CSharpLanguageVersion.CSharp14_0.ToString(), "C# 14.0 / VS 2026"),
+			new(CSharpLanguageVersion.CSharp15_0.ToString(), "C# 15.0 / VS 202x.yy"),
 		};
 
 #if DEBUG
