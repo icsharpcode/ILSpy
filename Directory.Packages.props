@@ -7,7 +7,7 @@
     <RoslynVersion>5.7.0-1.26230.115</RoslynVersion>
     <NetPackageVersion>10.0.8</NetPackageVersion>
     <TomsToolboxVersion>2.24.0</TomsToolboxVersion>
-    <AvaloniaVersion>12.0.1</AvaloniaVersion>
+    <AvaloniaVersion>12.0.3</AvaloniaVersion>
     <DockVersion>12.0.0.1</DockVersion>
   </PropertyGroup>
   <ItemGroup>
