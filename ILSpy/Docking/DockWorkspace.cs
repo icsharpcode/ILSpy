@@ -257,23 +257,46 @@ namespace ILSpy.Docking
 
 			foreach (var dockable in visible.OfType<ViewModels.ContentTabPage>().ToArray())
 			{
-				// Skip the persistent MainTab — its content swaps with tree selection. Also
-				// skip static content (About page etc.) which doesn't reference assemblies.
-				if (ReferenceEquals(dockable, factory.MainTab))
-					continue;
 				if (dockable.Content is not TextView.DecompilerTabPageModel tab || tab.IsStaticContent)
 					continue;
 				var nodes = tab.CurrentNodes;
 				if (nodes.Count == 0)
 					continue;
-				// "Some node in the tab still lives in a non-removed assembly" → keep.
-				// "Every node points at a removed assembly" → close.
-				bool anyAlive = nodes.Any(n =>
-					n.AncestorsAndSelf()
-					 .OfType<TreeNodes.AssemblyTreeNode>()
-					 .LastOrDefault() is { } owner && !removed.Contains(owner.LoadedAssembly));
-				if (!anyAlive)
+				bool anyTouchesRemoved = false;
+				bool anyAlive = false;
+				foreach (var n in nodes)
+				{
+					var owner = n.AncestorsAndSelf().OfType<TreeNodes.AssemblyTreeNode>().LastOrDefault();
+					if (owner is null)
+						continue;
+					if (removed.Contains(owner.LoadedAssembly))
+						anyTouchesRemoved = true;
+					else
+						anyAlive = true;
+				}
+				if (!anyTouchesRemoved)
+					continue;
+				// Cancel synchronously, BEFORE AssemblyList.Unload reaches assembly.Dispose().
+				// The decompile worker checks its CancellationToken between transforms; the
+				// spinner exits when its Task.Delay sees the cancellation. After this returns
+				// no managed reader should hold a live handle into the MetadataFile that's
+				// about to be unmapped. (LoadedAssembly.Text additionally returns its cached
+				// value once isDisposed flips, covering any residual cooperative-cancel race.)
+				tab.CancelDecompilationCommand.Execute(null);
+				if (anyAlive)
+					continue;
+				if (ReferenceEquals(dockable, factory.MainTab))
+				{
+					// Persistent slot: empty it. The CurrentNodes setter unsubscribes from each
+					// node's PropertyChanged, so a delayed AssemblyTreeNode.RaisePropertyChanged
+					// post-Dispose has no listener to drag into a metadata read.
+					tab.CurrentNodes = System.Array.Empty<ILSpyTreeNode>();
+					dockable.SourceNode = null;
+				}
+				else
+				{
 					factory.CloseDockable(dockable);
+				}
 			}
 		}
 

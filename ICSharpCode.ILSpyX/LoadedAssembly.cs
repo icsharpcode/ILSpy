@@ -283,13 +283,25 @@ namespace ICSharpCode.ILSpyX
 
 		public string ShortName => shortName;
 
+		// Cached once a successful Text computation completes. Reads after Dispose return
+		// this value (or ShortName fallback) instead of re-walking the metadata, whose
+		// MemoryMappedFile may have been unmapped -- a dereference AVs and the CLR fails
+		// fast on the resulting CorruptingStateException.
+		string? cachedText;
+		volatile bool isDisposed;
+
 		public string Text {
 			get {
+				if (cachedText is not null)
+					return cachedText;
+				if (isDisposed)
+					return ShortName;
 				if (IsLoaded && !HasLoadError)
 				{
 					var result = GetLoadResultAsync().GetAwaiter().GetResult();
 					if (result.MetadataFile != null)
 					{
+						string computed;
 						switch (result.MetadataFile.Kind)
 						{
 							case MetadataFile.MetadataFileKind.PortableExecutable:
@@ -306,16 +318,22 @@ namespace ICSharpCode.ILSpyX
 								{
 									versionOrInfo = ".netmodule";
 								}
-								if (versionOrInfo == null)
-									return ShortName;
-								return string.Format("{0} ({1})", ShortName, versionOrInfo);
+								computed = versionOrInfo == null
+									? ShortName
+									: string.Format("{0} ({1})", ShortName, versionOrInfo);
+								break;
 							case MetadataFile.MetadataFileKind.ProgramDebugDatabase:
-								return ShortName + " (Debug Metadata)";
+								computed = ShortName + " (Debug Metadata)";
+								break;
 							case MetadataFile.MetadataFileKind.Metadata:
-								return ShortName + " (Metadata)";
+								computed = ShortName + " (Metadata)";
+								break;
 							default:
-								return ShortName;
+								computed = ShortName;
+								break;
 						}
+						cachedText = computed;
+						return computed;
 					}
 				}
 				return ShortName;
@@ -695,6 +713,12 @@ namespace ICSharpCode.ILSpyX
 
 		public void Dispose()
 		{
+			// Order matters: set the flag BEFORE unmapping the metadata, so any concurrent
+			// Text reader that hasn't yet cached a value bails to ShortName instead of
+			// dereferencing the about-to-be-freed MemoryMappedFile pages. Once set, the flag
+			// also short-circuits future Text getter walks even if cachedText is still null
+			// (load never completed).
+			isDisposed = true;
 			// Only inspect the load task if it's been started. Disposing a never-loaded
 			// LoadedAssembly must not synchronously kick off the load just to dispose its
 			// (still-non-existent) MetadataFile.

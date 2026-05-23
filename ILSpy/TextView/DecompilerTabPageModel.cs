@@ -232,6 +232,14 @@ namespace ILSpy.TextView
 
 		IReadOnlyList<ILSpyTreeNode> currentNodes = System.Array.Empty<ILSpyTreeNode>();
 
+		// Snapshot of the tab title derived from currentNodes' Text values, taken on the
+		// UI thread at the moment CurrentNodes is set (and refreshed when a node raises
+		// PropertyChanged(Text)). Spinner ticks, post-decompile InvokeAsync, and the
+		// cancel-cleanup path read this cached string instead of re-walking node.Text ->
+		// LoadedAssembly.Text -> metadata, which AVs when an assembly was unloaded
+		// between selection and the title update.
+		string cachedBaseTitle = "(unnamed)";
+
 		/// <summary>
 		/// True for tabs whose content is a static page (e.g. About) rather than the result
 		/// of decompiling a tree-node selection. Static tabs are excluded from the lookup
@@ -271,6 +279,7 @@ namespace ILSpy.TextView
 				foreach (var n in currentNodes)
 					n.PropertyChanged -= OnCurrentNodePropertyChanged;
 				currentNodes = value.ToArray();
+				cachedBaseTitle = ComposeBaseTitle();
 				foreach (var n in currentNodes)
 					n.PropertyChanged += OnCurrentNodePropertyChanged;
 				StartDecompile();
@@ -285,8 +294,8 @@ namespace ILSpy.TextView
 			// just refresh the suffix; otherwise replace the title outright.
 			if (e.PropertyName != nameof(ILSpyTreeNode.Text))
 				return;
-			var baseTitle = ComposeBaseTitle();
-			Title = IsDecompiling ? ComposeSpinnerTitle(0, baseTitle) : baseTitle;
+			cachedBaseTitle = ComposeBaseTitle();
+			Title = IsDecompiling ? ComposeSpinnerTitle(0, cachedBaseTitle) : cachedBaseTitle;
 		}
 
 		string ComposeBaseTitle()
@@ -387,7 +396,7 @@ namespace ILSpy.TextView
 
 			// Spinner appears as a glyph prefix on the tab title while the decompile runs;
 			// editor state is left untouched so cancellation falls back cleanly.
-			Title = ComposeSpinnerTitle(0, ComposeBaseTitle());
+			Title = ComposeSpinnerTitle(0, cachedBaseTitle);
 			TaskbarProgress?.SetState(TaskbarProgressState.Indeterminate);
 			_ = RunSpinnerAsync(cts.Token);
 
@@ -463,10 +472,7 @@ namespace ILSpy.TextView
 				ILSpy.AppEnv.AppLog.Mark($"DecompileAsync #{callNumber}: {rendered.Length} chars, {(collectedFoldings?.Count ?? 0)} foldings, {(collectedReferences?.Count ?? 0)} refs");
 				using (ILSpy.AppEnv.AppLog.Phase($"DecompileAsync #{callNumber}: Dispatcher.InvokeAsync (apply Text + props, triggers ApplyDocument)"))
 					await Dispatcher.UIThread.InvokeAsync(() => {
-						// Re-read Text now (instead of capturing it before decompile started) — for
-						// freshly-opened assemblies, Text only has the rich "(version, tfm)" form
-						// after the load completes during decompile.
-						Title = ComposeBaseTitle();
+						Title = cachedBaseTitle;
 						SyntaxExtension = effectiveSyntaxExtension;
 						HighlightingModel = model;
 						Foldings = collectedFoldings;
@@ -494,7 +500,7 @@ namespace ILSpy.TextView
 						// If we cancelled before producing fresh output, drop the spinner glyph
 						// from the title — the editor still shows the previous decompile.
 						if (currentNodes.Count > 0)
-							Title = ComposeBaseTitle();
+							Title = cachedBaseTitle;
 						TaskbarProgress?.SetState(TaskbarProgressState.None);
 					}
 					if (Dispatcher.UIThread.CheckAccess())
@@ -528,7 +534,7 @@ namespace ILSpy.TextView
 				}
 				if (token.IsCancellationRequested || !IsDecompiling)
 					return;
-				Title = ComposeSpinnerTitle(frame++, ComposeBaseTitle());
+				Title = ComposeSpinnerTitle(frame++, cachedBaseTitle);
 			}
 		}
 
