@@ -106,4 +106,56 @@ public class CompareViewRenderTests
 			() => grid.GetVisualDescendants().OfType<DataGridRow>().Any(),
 			description: "the diff grid must render at least one row once the merged tree is bound");
 	}
+
+	[AvaloniaTest]
+	public async Task CompareView_ShowIdentical_Toggle_Changes_Visible_Row_Set()
+	{
+		// Comparing an assembly with itself yields only identical rows. With ShowIdentical=false
+		// (default) every row should be hidden; flipping ShowIdentical=true must surface them.
+		// Regression: the bug was that the HierarchicalModel's ChildrenSelector returned
+		// node.Children unfiltered, so IsHidden flags set by ApplyFilterToChild had no effect
+		// on what the DataGrid actually rendered.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var assembly = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
+			.First(a => a.IsLoadedAsValidAssembly);
+
+		// Construct the compare model directly with the same assembly on both sides so every
+		// entry collapses to DiffKind.None. The View renders via the standard OpenNewTab path.
+		var page = new CompareTabPageModel(assembly, assembly);
+		vm.DockWorkspace.OpenNewTab(page);
+
+		var view = await window.WaitForComponent<CompareView>();
+		var grid = await view.WaitForComponent<DataGrid>();
+		await Waiters.WaitForAsync(() => grid.HierarchicalModel != null);
+		global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+		// Baseline: ShowIdentical=false. All rows are identical-only, so the visible row count
+		// must be zero (every entry filters to Hidden).
+		page.ShowIdentical.Should().BeFalse("baseline state");
+		var rowsBeforeToggle = grid.GetVisualDescendants().OfType<DataGridRow>().Count();
+		rowsBeforeToggle.Should().Be(0,
+			"with ShowIdentical=false and only-identical content, no rows must be visible");
+
+		// Flip ShowIdentical=true and re-evaluate.
+		page.ShowIdentical = true;
+		global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+		await Waiters.WaitForAsync(
+			() => grid.GetVisualDescendants().OfType<DataGridRow>().Any(),
+			description: "flipping ShowIdentical=true must surface previously-hidden identical rows");
+
+		var rowsAfterToggle = grid.GetVisualDescendants().OfType<DataGridRow>().Count();
+		rowsAfterToggle.Should().BeGreaterThan(0,
+			"with ShowIdentical=true, identical rows must surface in the grid");
+
+		// Flip back and verify it returns to the hidden state.
+		page.ShowIdentical = false;
+		global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+		await Waiters.WaitForAsync(
+			() => grid.GetVisualDescendants().OfType<DataGridRow>().Count() == 0,
+			description: "flipping ShowIdentical=false again must re-hide all identical rows");
+	}
 }

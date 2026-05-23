@@ -18,6 +18,7 @@
 
 using System;
 using System.ComponentModel;
+using System.Linq;
 
 using Avalonia.Controls;
 using Avalonia.Controls.DataGridHierarchical;
@@ -80,15 +81,24 @@ namespace ILSpy.Compare
 						ilspy.EnsureChildrenFiltered();
 					else
 						node.EnsureLazyChildren();
-					return node.Children;
+					return FilterHidden(node.Children);
 				},
 				IsLeafSelector = node => !node.ShowExpander,
 				VirtualizeChildren = false,
 				IsExpandedPropertyPath = nameof(SharpTreeNode.IsExpanded),
 			};
 			var model = new HierarchicalModel<SharpTreeNode>(options);
-			model.SetRoots(root.Children);
+			model.SetRoots(FilterHidden(root.Children));
 			DiffGrid.HierarchicalModel = model;
 		}
+
+		// ShowIdentical=false hides identical rows by setting IsHidden=true via
+		// ComparisonEntryTreeNode.Filter, but the DataGrid's HierarchicalModel only sees
+		// what ChildrenSelector / SetRoots feed it — IsHidden alone has no effect on the
+		// rendered row set. Filter the children here so the cascade-set IsHidden flags
+		// actually reach the grid. Same pattern AssemblyListPane.FilterChildren uses for
+		// the assembly tree's ShowApiLevel cascade.
+		static System.Collections.Generic.IEnumerable<SharpTreeNode> FilterHidden(System.Collections.Generic.IEnumerable<SharpTreeNode> children)
+			=> children.Where(c => c is not TreeNodes.ILSpyTreeNode it || !it.IsHidden).ToList();
 	}
 }
