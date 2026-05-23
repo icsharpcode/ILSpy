@@ -68,7 +68,8 @@ namespace ILSpy.AppEnv
 				typeof(IAnalyzer).Assembly,
 				typeof(AppComposition).Assembly,
 			};
-			assemblies.AddRange(LoadPlugins());
+			using (AppLog.Phase("AppComposition.LoadPlugins"))
+				assemblies.AddRange(LoadPlugins());
 			composedAssemblies = assemblies;
 		}
 
@@ -82,9 +83,10 @@ namespace ILSpy.AppEnv
 				throw new InvalidOperationException($"{nameof(RegisterPluginResolver)} must be called before {nameof(CreateContainer)}.");
 
 			current?.Dispose();
-			current = new ContainerConfiguration()
-				.WithAssemblies(composedAssemblies)
-				.CreateContainer();
+			using (AppLog.Phase($"AppComposition.CreateContainer ({composedAssemblies.Count} assemblies)"))
+				current = new ContainerConfiguration()
+					.WithAssemblies(composedAssemblies)
+					.CreateContainer();
 
 			return current;
 		}

@@ -45,10 +45,18 @@ namespace ILSpy.Commands
 		public ToolPaneRegistry(
 			[ImportMany("ToolPane")] IEnumerable<ExportFactory<ToolPaneModel, ToolPaneMetadata>> panes)
 		{
-			Panes = panes
-				.OrderBy(p => p.Metadata.Order)
-				.Select(p => new ToolPaneEntry(p.CreateExport().Value, p.Metadata))
-				.ToArray();
+			using var _ = ILSpy.AppEnv.AppLog.Phase("ToolPaneRegistry ctor (materialise tool panes)");
+			var ordered = panes.OrderBy(p => p.Metadata.Order).ToArray();
+			var entries = new ToolPaneEntry[ordered.Length];
+			for (int i = 0; i < ordered.Length; i++)
+			{
+				var factory = ordered[i];
+				var id = factory.Metadata.ContentId ?? $"#{i}";
+				using (ILSpy.AppEnv.AppLog.Phase($"ToolPane materialise: {id}"))
+					entries[i] = new ToolPaneEntry(factory.CreateExport().Value, factory.Metadata);
+			}
+			Panes = entries;
+			ILSpy.AppEnv.AppLog.Mark($"ToolPaneRegistry: {Panes.Count} panes resolved");
 		}
 
 		public IReadOnlyList<ToolPaneEntry> Panes { get; }

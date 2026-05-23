@@ -24,23 +24,26 @@ using System.IO;
 namespace ILSpy.AppEnv
 {
 	/// <summary>
-	/// Categorized diagnostic log. Two surfaces:
+	/// Categorized diagnostic log. All categories are off by default; production runs
+	/// incur near-zero cost from existing call sites because <see cref="IsEnabled"/>
+	/// short-circuits before allocations.
 	/// <list type="bullet">
 	/// <item><see cref="Mark"/> / <see cref="Phase"/> — startup-timing helpers. Each line
 	/// gets a <c>[startup +Nms]</c> prefix where N is milliseconds since the first
-	/// <see cref="AppLog"/> reference (process-wide). The <see cref="Category.Startup"/>
-	/// category is default-enabled so these emit without any opt-in.</item>
+	/// <see cref="AppLog"/> reference (process-wide). Gated on the
+	/// <see cref="Category.Startup"/> category; emits nothing unless that category is
+	/// enabled.</item>
 	/// <item><see cref="Write(string, string)"/> / <see cref="Write(string, Func{string})"/> —
-	/// general category-based logging. Off by default; enable with the
-	/// <c>ILSPY_LOG=Cat1,Cat2</c> environment variable at process start, or
-	/// <see cref="Enable(string)"/> at runtime.</item>
+	/// general category-based logging. Use the <see cref="Func{T}"/> overload for
+	/// messages that interpolate non-trivial state — the factory is only invoked when
+	/// the category is enabled.</item>
 	/// </list>
-	/// Output goes to both <see cref="Debug.WriteLine(string)"/> (so DbgView / IDE
-	/// Debug Output captures it) and <c>%TEMP%\ilspy-avalonia.log</c> (truncated at
-	/// the first write of each process). Use the <see cref="Func{T}"/> overload of
-	/// <see cref="Write(string, Func{string})"/> for messages that interpolate non-
-	/// trivial state — the factory is only invoked when the category is enabled,
-	/// keeping the call site zero-cost when off.
+	/// Enable categories with the <c>ILSPY_LOG=Cat1,Cat2</c> environment variable at
+	/// process start (e.g. <c>ILSPY_LOG=Startup</c> to capture the startup timeline) or
+	/// call <see cref="Enable(string)"/> at runtime. Output goes to both
+	/// <see cref="Debug.WriteLine(string)"/> (so DbgView / IDE Debug Output captures it)
+	/// and <c>%TEMP%\ilspy-avalonia.log</c> (created on first emit; truncated at the
+	/// first write of each process).
 	/// </summary>
 	public static class AppLog
 	{
@@ -51,7 +54,7 @@ namespace ILSpy.AppEnv
 		/// </summary>
 		public static class Category
 		{
-			/// <summary>Process startup timeline. Default on so <see cref="Mark"/> / <see cref="Phase"/> emit without env-var opt-in.</summary>
+			/// <summary>Process startup timeline. Off by default — opt in with <c>ILSPY_LOG=Startup</c>.</summary>
 			public const string Startup = "Startup";
 
 			/// <summary>Dock chrome activity — view-recycling cache, layout save/load, drag/drop transitions.</summary>
@@ -152,9 +155,11 @@ namespace ILSpy.AppEnv
 		static ConcurrentDictionary<string, bool> LoadFromEnvironment()
 		{
 			var dict = new ConcurrentDictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
-			// Startup category is default-on so the existing pattern of unconditional
-			// Mark/Phase calls in the startup path keeps working without env-var setup.
-			dict[Category.Startup] = true;
+			// All categories default off; production runs incur zero cost from the existing
+			// Mark/Phase call sites because IsEnabled short-circuits before any allocation.
+			// Opt in via ILSPY_LOG=Startup,Docking,... at process launch, or call
+			// AppLog.Enable("Startup") at runtime. The %TEMP%\ilspy-avalonia.log file is
+			// only created on the first emitted line.
 			var env = Environment.GetEnvironmentVariable("ILSPY_LOG");
 			if (string.IsNullOrWhiteSpace(env))
 				return dict;

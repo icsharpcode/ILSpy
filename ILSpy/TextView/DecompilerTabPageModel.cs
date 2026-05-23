@@ -348,8 +348,17 @@ namespace ILSpy.TextView
 			}, TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
 		}
 
+		// Process-wide counter so the AppLog markers can distinguish "first decompile after
+		// boot" (carries the JIT / pipeline-init cold cost) from subsequent runs. Incremented
+		// at the top of every DecompileAsync invocation including the empty-node short-circuit
+		// path — that way a no-op restore still bumps the count and the next real decompile is
+		// labelled #2 rather than #1.
+		static int decompileInvocationCount;
+
 		async Task DecompileAsync()
 		{
+			var callNumber = System.Threading.Interlocked.Increment(ref decompileInvocationCount);
+			using var _phase = ILSpy.AppEnv.AppLog.Phase($"DecompileAsync #{callNumber}");
 			activeCts?.Cancel();
 			var cts = activeCts = new CancellationTokenSource();
 			var nodes = currentNodes;
@@ -395,48 +404,54 @@ namespace ILSpy.TextView
 				var isDebug = pendingIsDebug;
 				pendingStepLimit = int.MaxValue;
 				pendingIsDebug = false;
-				var (output, _) = await Task.Run(() => {
-					var output = new AvaloniaEditTextOutput();
-					var options = decompilerSettings != null
-						? new DecompilationOptions(decompilerSettings) {
-							CancellationToken = cts.Token,
-							StepLimit = stepLimit,
-							IsDebug = isDebug,
-						}
-						: new DecompilationOptions {
-							CancellationToken = cts.Token,
-							StepLimit = stepLimit,
-							IsDebug = isDebug,
-						};
-					try
-					{
-						for (int i = 0; i < nodes.Count; i++)
+				AvaloniaEditTextOutput output;
+				using (ILSpy.AppEnv.AppLog.Phase($"DecompileAsync #{callNumber}: Task.Run decompile body ({nodes.Count} node(s), language={language.Name})"))
+				{
+					(output, _) = await Task.Run(() => {
+						var output = new AvaloniaEditTextOutput();
+						var options = decompilerSettings != null
+							? new DecompilationOptions(decompilerSettings) {
+								CancellationToken = cts.Token,
+								StepLimit = stepLimit,
+								IsDebug = isDebug,
+							}
+							: new DecompilationOptions {
+								CancellationToken = cts.Token,
+								StepLimit = stepLimit,
+								IsDebug = isDebug,
+							};
+						try
 						{
-							if (cts.Token.IsCancellationRequested)
-								break;
-							if (i > 0)
-								output.WriteLine();
-							nodes[i].Decompile(language, output, options);
+							for (int i = 0; i < nodes.Count; i++)
+							{
+								if (cts.Token.IsCancellationRequested)
+									break;
+								if (i > 0)
+									output.WriteLine();
+								nodes[i].Decompile(language, output, options);
+							}
 						}
-					}
-					catch (OperationCanceledException)
-					{
-						// expected on cancel — just return whatever we got
-					}
-					catch (Exception ex)
-					{
-						output.WriteLine();
-						output.WriteLine("/* Decompilation failed:");
-						output.WriteLine(ex.ToString());
-						output.WriteLine("*/");
-					}
-					return (output, cts.Token);
-				}, cts.Token).ConfigureAwait(true);
+						catch (OperationCanceledException)
+						{
+							// expected on cancel — just return whatever we got
+						}
+						catch (Exception ex)
+						{
+							output.WriteLine();
+							output.WriteLine("/* Decompilation failed:");
+							output.WriteLine(ex.ToString());
+							output.WriteLine("*/");
+						}
+						return (output, cts.Token);
+					}, cts.Token).ConfigureAwait(true);
+				}
 
 				if (cts.Token.IsCancellationRequested)
 					return;
 
-				var rendered = output.GetText();
+				string rendered;
+				using (ILSpy.AppEnv.AppLog.Phase($"DecompileAsync #{callNumber}: collect output (GetText + collateral)"))
+					rendered = output.GetText();
 				var model = output.HighlightingModel;
 				var collectedFoldings = output.Foldings;
 				var collectedReferences = output.References;
@@ -445,19 +460,21 @@ namespace ILSpy.TextView
 				// Resource nodes (XML/XAML/…) override the highlighter so their content reads as
 				// the embedded format, not as the active language.
 				var effectiveSyntaxExtension = output.SyntaxExtensionOverride ?? newSyntaxExtension;
-				await Dispatcher.UIThread.InvokeAsync(() => {
-					// Re-read Text now (instead of capturing it before decompile started) — for
-					// freshly-opened assemblies, Text only has the rich "(version, tfm)" form
-					// after the load completes during decompile.
-					Title = ComposeBaseTitle();
-					SyntaxExtension = effectiveSyntaxExtension;
-					HighlightingModel = model;
-					Foldings = collectedFoldings;
-					References = collectedReferences;
-					DefinitionLookup = collectedLookup;
-					UIElements = collectedUIElements;
-					Text = rendered;
-				});
+				ILSpy.AppEnv.AppLog.Mark($"DecompileAsync #{callNumber}: {rendered.Length} chars, {(collectedFoldings?.Count ?? 0)} foldings, {(collectedReferences?.Count ?? 0)} refs");
+				using (ILSpy.AppEnv.AppLog.Phase($"DecompileAsync #{callNumber}: Dispatcher.InvokeAsync (apply Text + props, triggers ApplyDocument)"))
+					await Dispatcher.UIThread.InvokeAsync(() => {
+						// Re-read Text now (instead of capturing it before decompile started) — for
+						// freshly-opened assemblies, Text only has the rich "(version, tfm)" form
+						// after the load completes during decompile.
+						Title = ComposeBaseTitle();
+						SyntaxExtension = effectiveSyntaxExtension;
+						HighlightingModel = model;
+						Foldings = collectedFoldings;
+						References = collectedReferences;
+						DefinitionLookup = collectedLookup;
+						UIElements = collectedUIElements;
+						Text = rendered;
+					});
 			}
 			catch (OperationCanceledException)
 			{
