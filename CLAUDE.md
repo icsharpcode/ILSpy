@@ -64,8 +64,8 @@ Solutions & filters: `ILSpy.sln` builds everything; `ILSpy.XPlat.slnf` is the de
 
 ## Commit workflow
 
-- Subject: `Avalonia: <lowercase phrase>` for UI-side changes. **Keep it succinct** (target <= 72 chars). Subject says *what area*; the body carries the substance.
-- **Body explains the *why*** and the non-diff context: the constraint, the prior incident, the decision, what was tried and rejected, the invariant that motivated the change. The diff already shows the *what* — don't restate it.
+- **Subject** is a succinct phrase describing the change. Target <= 72 chars. No area prefix; the subject itself should make the change clear.
+- **Body explains the *why*** and the non-diff context only: the constraint, the prior incident, the decision, what was tried and rejected, the invariant that motivated the change. Keep it short — one short paragraph is usually enough. The diff already shows the *what* — don't restate it, and don't enumerate per-file changes.
 - `Fix #NNNN: ...` closes an issue. `#NNNN` references one without closing.
 - **Small follow-up fixes against a commit still on the branch get squashed back** via `git commit --fixup` + `git rebase --autosquash`, not appended as "fix X" commits.
 - **en-US English** in subject and body. ASCII-only unless a non-ASCII character is genuinely required for what the message describes.
