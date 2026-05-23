@@ -21,6 +21,7 @@ using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Shapes;
 using Avalonia.Data;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -101,30 +102,32 @@ namespace ILSpy.Themes
 			// on top of it.
 			titleStack.ClipToBounds = true;
 
-			// Segoe Fluent Icons / Segoe MDL2 Assets "Pin" glyph (U+E718) — the same
-			// tilted-pushpin silhouette Visual Studio uses for preview tabs. Foreground
-			// inherits through TextElement, so the glyph always contrasts the current tab
-			// background (dark on unselected, light on selected).
-			var glyph = new TextBlock {
-				Text = "",
-				FontFamily = new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets, Symbols"),
-				FontSize = 12,
+			// Tilted-pushpin silhouette matching the Visual Studio preview-tab affordance.
+			// Vector path (not a font glyph): the previous Segoe Fluent Icons U+E718
+			// fallback was Windows-only and rendered as a tofu box on Linux / macOS.
+			// Path with bound Fill is what restores per-tab Foreground inheritance that
+			// the intermediate SVG-image variant lost - Avalonia.Svg.Skia honors the
+			// asset's literal fill, not the consuming control's theme color. RotateTransform
+			// at -45 deg orients the upright pin path so its tip points to the lower-left.
+			var glyph = new Path {
+				Data = StreamGeometry.Parse("M5 2h6v1h-1v4l2 2v1H9v3l-1 2-1-2v-3H4V9l2-2V3H5z"),
+				Stretch = Stretch.Uniform,
+				Width = 12,
+				Height = 12,
 				HorizontalAlignment = HorizontalAlignment.Center,
 				VerticalAlignment = VerticalAlignment.Center,
-				ClipToBounds = false,
+				RenderTransform = new RotateTransform(45),
+				RenderTransformOrigin = RelativePoint.Center,
 			};
-			glyph.Bind(TextBlock.ForegroundProperty, new Binding(nameof(TemplatedControl.Foreground)) {
+			glyph.Bind(Shape.FillProperty, new Binding(nameof(TemplatedControl.Foreground)) {
 				Source = item,
 				Mode = BindingMode.OneWay,
 			});
 			var pin = new Button {
 				Tag = PinButtonTag,
 				Content = glyph,
-				// Bumped from 18x18 to 22x22 so the glyph's visual extent has comfortable
-				// headroom on all sides.
-				Width = 22,
-				Height = 22,
-				Padding = new Thickness(3),
+				// Left margin preserves the gap between pin and close (~4px) regardless of
+				// what the inherited ControlTheme decides for its own Margin.
 				Margin = new Thickness(4, 0, 0, 0),
 				VerticalAlignment = VerticalAlignment.Center,
 				HorizontalAlignment = HorizontalAlignment.Center,
@@ -135,12 +138,15 @@ namespace ILSpy.Themes
 				// right edge at the content-area boundary.
 				ClipToBounds = false,
 			};
-			// Class-based styling — the App.axaml Style for Button.preview-pin keeps the
-			// button transparent in normal state and gives it a subtle background tint on
-			// :pointerover. Local Background/BorderBrush setters here would beat the
-			// :pointerover style (local > style in Avalonia property precedence), so the
-			// styling is routed entirely through the class selector instead.
-			pin.Classes.Add("preview-pin");
+			// Copy the close button's ControlTheme so pin renders at the same size and uses
+			// the same :pointerover background. The close button (a plain Avalonia.Controls.Button
+			// with no classes, theme applied by Dock's tab template) sits as a sibling under
+			// the same Grid. Without this, pin defaulted to a class-styled custom look that
+			// was bigger and used a different hover tint than its neighbour.
+			var closeButton = item.GetVisualDescendants().OfType<Button>()
+				.FirstOrDefault(b => (b.Tag as string) != PinButtonTag);
+			if (closeButton?.Theme is { } closeTheme)
+				pin.Theme = closeTheme;
 			ToolTip.SetTip(pin, "Pin tab");
 
 			// IsVisible follows IsPreview — the button hides once the tab is pinned.

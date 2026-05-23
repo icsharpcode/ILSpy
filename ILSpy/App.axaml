@@ -143,23 +143,6 @@
             <Setter Property="themes:PreviewTabPinButtonBehavior.Enable" Value="True" />
         </Style>
 
-        <!-- Styling for the injected pin button. Routed through a class selector (not
-             local setters on the Button) so the :pointerover style still applies — local
-             property values beat Style setters in Avalonia precedence. -->
-        <Style Selector="Button.preview-pin">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.preview-pin:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#33000000" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.preview-pin:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="#55000000" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-        </Style>
 
         <!-- Override the presenter template so we can layer classic Windows-Explorer tree
              lines behind the indent / expander / content. -->

@@ -491,6 +491,46 @@ public class PreviewTabPromotionTests
 	}
 
 	[AvaloniaTest]
+	public async Task Pin_Button_Inherits_The_Close_Button_Theme()
+	{
+		// Visual parity: the pin button should look like the close button — same size, same
+		// hover background. Both are plain Avalonia.Controls.Button instances; the close
+		// button gets its visual identity from a ControlTheme applied by Dock's tab
+		// template. Pin should copy that Theme rather than carry its own custom style.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		// Open a carve-out so the close button is visible alongside the pin (single-tab
+		// scenario hides the close button).
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		vm.DockWorkspace.OpenNodeInNewTab(typeNode);
+
+		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<DocumentTabStripItem>().Count() >= 2,
+			System.TimeSpan.FromSeconds(10));
+		global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
+		var mainTabItem = window.GetVisualDescendants().OfType<DocumentTabStripItem>()
+			.Single(item => ReferenceEquals(item.DataContext, factory.MainTab));
+
+		var pinButton = mainTabItem.GetVisualDescendants()
+			.OfType<global::Avalonia.Controls.Button>()
+			.Single(b => (b.Tag as string) == "PreviewTabPinButton");
+		var closeButton = mainTabItem.GetVisualDescendants()
+			.OfType<global::Avalonia.Controls.Button>()
+			.FirstOrDefault(b => (b.Tag as string) != "PreviewTabPinButton");
+		closeButton.Should().NotBeNull("baseline: close button exists as a sibling of the pin");
+
+		pinButton.Theme.Should().BeSameAs(closeButton!.Theme,
+			"pin button must use the same ControlTheme as the close button so size + hover bg match");
+		pinButton.Classes.Should().NotContain("preview-pin",
+			"after the Theme-copy refactor the custom class-based styling is unused; the Theme drives all visuals");
+	}
+
+	[AvaloniaTest]
 	public async Task Tree_Selection_While_Frozen_Tab_Active_Opens_A_New_Preview_Tab()
 	{
 		// "Frozen" covers: (a) user-pinned tabs (IsPreview=false via PinCurrentTab),
