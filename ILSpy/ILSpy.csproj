@@ -28,6 +28,15 @@
 
   <ItemGroup>
     <EmbeddedResource Include="TextView\*.xshd" />
+    <EmbeddedResource Include="..\doc\ILSpyAboutPage.txt">
+      <LogicalName>ILSpyAboutPage.txt</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\doc\third-party-notices.txt">
+      <LogicalName>third-party-notices.txt</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\LICENSE">
+      <LogicalName>license.txt</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
