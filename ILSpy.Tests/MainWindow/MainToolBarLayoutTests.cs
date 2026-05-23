@@ -132,12 +132,17 @@ public class MainToolBarLayoutTests
 			var name = iconPath!.StartsWith("Images/", System.StringComparison.Ordinal)
 				? iconPath["Images/".Length..]
 				: iconPath;
-			var field = typeof(global::ILSpy.Images.Images)
-				.GetField(name, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-			field.Should().NotBeNull(
-				$"toolbar command with ToolTip='{entry.Metadata.ToolTip}' references Images/{name} but no static field with that name exists in ILSpy.Images.Images");
-			field!.GetValue(null).Should().NotBeNull(
-				$"the Images.{name} field is declared but null at runtime");
+			// Icons may be declared as either static-readonly fields (eager) or static
+			// properties with a lazy backing field (post-perf-pass). Look up either shape.
+			var bindingFlags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static;
+			var imagesType = typeof(global::ILSpy.Images.Images);
+			var field = imagesType.GetField(name, bindingFlags);
+			var property = field is null ? imagesType.GetProperty(name, bindingFlags) : null;
+			(field is not null || property is not null).Should().BeTrue(
+				$"toolbar command with ToolTip='{entry.Metadata.ToolTip}' references Images/{name} but no static member with that name exists in ILSpy.Images.Images");
+			var value = field is not null ? field.GetValue(null) : property!.GetValue(null);
+			value.Should().NotBeNull(
+				$"the Images.{name} member is declared but null at runtime");
 		}
 	}
 
