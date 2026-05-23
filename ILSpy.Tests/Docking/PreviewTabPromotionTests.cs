@@ -491,33 +491,25 @@ public class PreviewTabPromotionTests
 	}
 
 	[AvaloniaTest]
-	public async Task File_Menu_Separators_Have_A_Visible_Background()
+	public async Task File_Menu_Separates_MenuCategory_Groups()
 	{
-		// Regression for the "no groups in the menus" report: separators were inserted at
-		// MenuCategory boundaries (Open / Save / Remove / Exit in File menu, etc.) but the
-		// Simple-theme default rendered them nearly invisible against the menu chrome.
-		// App.axaml applies a Style for MenuItem Separator that gives them a visible
-		// brush + height. This test pins that style at the rendered-Separator level.
+		// Regression: the MainMenu builder must emit separators at MenuCategory boundaries
+		// (Open / Save / Remove / Exit groups in the File menu, ...). With the menu now living
+		// as a NativeMenu, separator rendering is the platform's job; this test pins only
+		// the structural claim that separators are inserted between groups.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 
-		var fileMenu = window.GetVisualDescendants().OfType<global::Avalonia.Controls.MenuItem>()
-			.Single(m => (m.Tag as string) == "_File");
-		fileMenu.Open();
-		global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-		await Waiters.WaitForAsync(() => fileMenu.Items.Count > 0, System.TimeSpan.FromSeconds(5));
+		var nativeMenu = global::Avalonia.Controls.NativeMenu.GetMenu(window)
+			?? throw new System.InvalidOperationException("MainMenu.Attach should have set NativeMenu on the window");
+		var fileMenu = nativeMenu.Items.OfType<global::Avalonia.Controls.NativeMenuItem>()
+			.Single(m => string.Equals(m.Header, ICSharpCode.ILSpy.Properties.Resources._File, System.StringComparison.Ordinal));
 
-		var separators = fileMenu.Items.OfType<global::Avalonia.Controls.Separator>().ToList();
+		var separators = fileMenu.Menu!.Items.OfType<global::Avalonia.Controls.NativeMenuItemSeparator>().ToList();
 		separators.Should().HaveCountGreaterThanOrEqualTo(2,
 			"File menu's MenuCategory groups (Open / Save / Remove / Exit) must produce at least two separators");
-
-		foreach (var sep in separators)
-		{
-			sep.Background.Should().NotBeNull(
-				"the App.axaml MenuItem Separator style must set a visible Background brush");
-		}
 	}
 
 	[AvaloniaTest]

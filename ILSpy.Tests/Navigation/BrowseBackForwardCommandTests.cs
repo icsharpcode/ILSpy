@@ -92,15 +92,13 @@ public class BrowseBackForwardCommandTests
 		var secondMethod = typeNode.Children.OfType<MethodTreeNode>()
 			.First(m => m.MethodDefinition.Name == "Empty");
 
-		// Locate the View > Back menu item.
-		var menu = await window.WaitForComponent<Menu>();
-		var viewMenu = menu.Items.OfType<MenuItem>()
-			.Single(m => (string?)m.Tag == nameof(Resources._View));
-		// expand the View menu so its child items are realised.
-		viewMenu.Open();
-		await Waiters.WaitForAsync(() => viewMenu.Items.OfType<MenuItem>().Any());
-		var backItem = viewMenu.Items.OfType<MenuItem>()
-			.Single(m => string.Equals(m.Header as string, Resources.Back, System.StringComparison.Ordinal));
+		// Locate the View > Back NativeMenuItem.
+		var nativeMenu = NativeMenu.GetMenu(window)
+			?? throw new System.InvalidOperationException("MainMenu.Attach should have set NativeMenu on the window");
+		var viewMenu = nativeMenu.Items.OfType<NativeMenuItem>()
+			.Single(m => string.Equals(m.Header, Resources._View, System.StringComparison.Ordinal));
+		var backItem = viewMenu.Menu!.Items.OfType<NativeMenuItem>()
+			.Single(m => string.Equals(m.Header, Resources.Back, System.StringComparison.Ordinal));
 
 		// Initially nothing on the stack — back must be disabled.
 		backItem.Command!.CanExecute(null).Should().BeFalse(
@@ -124,30 +122,24 @@ public class BrowseBackForwardCommandTests
 	}
 
 	[AvaloniaTest]
-	public async Task BrowseBack_MenuItem_Carries_The_Alt_Left_Hot_Key_And_Gesture()
+	public void BrowseBack_MenuItem_Carries_The_Alt_Left_Gesture()
 	{
-		// MEF metadata's InputGestureText must be picked up by the menu builder and applied to
-		// both InputGesture (displayed text) and HotKey (window-wide accelerator).
+		// MEF metadata's InputGestureText flows through MainMenu.Attach into the
+		// NativeMenuItem.Gesture property -- this is what NativeMenuBar renders inline on
+		// Windows / Linux and what macOS projects into the system menu bar.
 
-		// Arrange — boot, locate the View menu, wait for both nav items to materialise.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
-		var menu = await window.WaitForComponent<Menu>();
-		var viewMenu = menu.Items.OfType<MenuItem>()
-			.Single(m => (string?)m.Tag == nameof(Resources._View));
-		viewMenu.Open();
-		await Waiters.WaitForAsync(() =>
-			viewMenu.Items.OfType<MenuItem>().Any(m => (string?)m.Header == Resources.Back)
-				&& viewMenu.Items.OfType<MenuItem>().Any(m => (string?)m.Header == Resources.Forward));
-		var backItem = viewMenu.Items.OfType<MenuItem>()
-			.Single(m => string.Equals(m.Header as string, Resources.Back, System.StringComparison.Ordinal));
-		var forwardItem = viewMenu.Items.OfType<MenuItem>()
-			.Single(m => string.Equals(m.Header as string, Resources.Forward, System.StringComparison.Ordinal));
+		var nativeMenu = NativeMenu.GetMenu(window)
+			?? throw new System.InvalidOperationException("MainMenu.Attach should have set NativeMenu on the window");
+		var viewMenu = nativeMenu.Items.OfType<NativeMenuItem>()
+			.Single(m => string.Equals(m.Header, Resources._View, System.StringComparison.Ordinal));
+		var backItem = viewMenu.Menu!.Items.OfType<NativeMenuItem>()
+			.Single(m => string.Equals(m.Header, Resources.Back, System.StringComparison.Ordinal));
+		var forwardItem = viewMenu.Menu!.Items.OfType<NativeMenuItem>()
+			.Single(m => string.Equals(m.Header, Resources.Forward, System.StringComparison.Ordinal));
 
-		// Assert — Alt+Left / Alt+Right round-trip through both InputGesture and HotKey.
-		backItem.InputGesture.Should().Be(KeyGesture.Parse("Alt+Left"));
-		backItem.HotKey.Should().Be(KeyGesture.Parse("Alt+Left"));
-		forwardItem.InputGesture.Should().Be(KeyGesture.Parse("Alt+Right"));
-		forwardItem.HotKey.Should().Be(KeyGesture.Parse("Alt+Right"));
+		backItem.Gesture.Should().Be(KeyGesture.Parse("Alt+Left"));
+		forwardItem.Gesture.Should().Be(KeyGesture.Parse("Alt+Right"));
 	}
 }

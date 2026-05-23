@@ -31,8 +31,10 @@
 	</Window.KeyBindings>
 
 	<DockPanel>
-		<!-- Main menu -->
-		<local:MainMenu DockPanel.Dock="Top" />
+		<!-- Main menu. NativeMenu.Menu is set from code (ILSpy.MainMenu.Attach); on macOS
+		     Avalonia projects it into the system menu bar and NativeMenuBar renders empty,
+		     on Windows / Linux NativeMenuBar paints the menu inline at the top of the window. -->
+		<NativeMenuBar DockPanel.Dock="Top" />
 
 		<!-- Toolbar -->
 		<local:MainToolBar DockPanel.Dock="Top" />

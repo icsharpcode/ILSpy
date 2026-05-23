@@ -1,6 +1,7 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="ILSpy.App"
+             Name="ILSpy"
              xmlns:local="using:ILSpy"
              xmlns:tree="using:ILSpy.AssemblyTree"
              xmlns:search="using:ILSpy.Search"

@@ -55,6 +55,7 @@ namespace ILSpy.Views
 			AppLog.Mark("MainWindow XAML inflation about to start (DataContext set)");
 			InitializeComponent();
 			AppLog.Mark("MainWindow XAML inflation done");
+			ILSpy.MainMenu.Attach(this);
 			ApplySessionSettings(settingsService.SessionSettings);
 			Opened += async (_, _) => {
 				AppLog.Mark("MainWindow.Opened fired");

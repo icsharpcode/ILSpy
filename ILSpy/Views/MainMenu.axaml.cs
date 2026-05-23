@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Composition;
 using System.Linq;
@@ -25,6 +26,10 @@ using global::Avalonia.Controls;
 using global::Avalonia.Data;
 using global::Avalonia.Input;
 
+using CommunityToolkit.Mvvm.Input;
+
+using ICSharpCode.ILSpy.Properties;
+
 using ILSpy.AppEnv;
 using ILSpy.Commands;
 using ILSpy.Docking;
@@ -33,219 +38,264 @@ using ILSpy.ViewModels;
 
 namespace ILSpy;
 
-public partial class MainMenu : UserControl
+/// <summary>
+/// Builds the application's main menu as a NativeMenu and attaches it to a window.
+/// A NativeMenuBar control rendered inside the window decides at runtime whether to
+/// draw the menu inline (Windows / Linux) or hand it off to the macOS system menu bar.
+/// </summary>
+public static class MainMenu
 {
-	bool initialized;
-
-	public MainMenu()
+	public static void Attach(Window window)
 	{
-		InitializeComponent();
+		ArgumentNullException.ThrowIfNull(window);
 
-		// Tests / design-time previews don't bootstrap the composition host; bail out so the
-		// XAML can still render (the static View entries don't need DI).
-		if (!TryGetSettingsService(out var settings))
+		// Tests and design-time previews don't bootstrap the composition host. Without it
+		// we have nothing to populate the menu with, so bail and let the empty NativeMenuBar
+		// in the XAML render as a thin spacer.
+		if (!TryGetExports(out var settings, out var registry, out var dockWorkspace, out var setThemeCommand))
 			return;
 
-		DataContext = settings.SessionSettings;
-		Loaded += (_, _) => InitializeMenus();
+		var menu = new NativeMenu();
+		var topLevelByTag = new Dictionary<string, NativeMenuItem>(StringComparer.Ordinal);
+
+		// Pre-build the three known top-level slots so MEF commands with ParentMenuID set
+		// to "_File" / "_View" / "_Window" attach to them. Additional top-level groups
+		// can still be created later from MEF metadata.
+		AddTopLevel(menu, topLevelByTag, "_File", nameof(Resources._File));
+		var viewItem = AddTopLevel(menu, topLevelByTag, "_View", nameof(Resources._View));
+		var windowItem = AddTopLevel(menu, topLevelByTag, "_Window", nameof(Resources._Window));
+
+		PopulateViewMenu(viewItem.Menu!, settings.SessionSettings, setThemeCommand);
+		AppendRegistryCommands(menu, topLevelByTag, registry.Commands);
+		AppendWindowDynamicContent(windowItem.Menu!, dockWorkspace);
+
+		if (OperatingSystem.IsMacOS())
+			TranslateGesturesForMacOS(menu);
+
+		NativeMenu.SetMenu(window, menu);
 	}
 
-	void InitializeMenus()
-	{
-		if (initialized)
-			return;
-		initialized = true;
-
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
-		var setThemeCommand = AppComposition.Current.GetExport<SetThemeCommand>();
-
-		PopulateThemeSubmenu(setThemeCommand);
-		InitMainMenu(MainMenuRoot, registry.Commands);
-		InitWindowMenu(WindowMenuItem, dockWorkspace);
-	}
-
-	static bool TryGetSettingsService(out SettingsService settings)
+	static bool TryGetExports(
+		out SettingsService settings,
+		out MainMenuCommandRegistry registry,
+		out DockWorkspace dockWorkspace,
+		out SetThemeCommand setThemeCommand)
 	{
 		try
 		{
 			settings = AppComposition.Current.GetExport<SettingsService>();
-			return settings != null;
+			registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
+			dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
+			setThemeCommand = AppComposition.Current.GetExport<SetThemeCommand>();
+			return true;
 		}
 		catch
 		{
 			settings = null!;
+			registry = null!;
+			dockWorkspace = null!;
+			setThemeCommand = null!;
 			return false;
 		}
 	}
 
-	void PopulateThemeSubmenu(SetThemeCommand setThemeCommand)
+	static NativeMenuItem AddTopLevel(NativeMenu root, Dictionary<string, NativeMenuItem> byTag, string menuId, string resourceKey)
 	{
-		var current = (SessionSettings)DataContext!;
-		var items = new List<MenuItem>();
-		foreach (var theme in ThemeManager.AllThemes)
-		{
-			var item = new MenuItem {
-				Header = theme,
-				Command = setThemeCommand,
-				CommandParameter = theme,
-				ToggleType = MenuItemToggleType.Radio,
-			};
-			// Track the active theme via a one-way binding on Theme; setting from the menu
-			// flows back through CommandParameter, not through IsChecked.
-			item.Bind(MenuItem.IsCheckedProperty, new Binding(nameof(SessionSettings.Theme)) {
-				Source = current,
-				Converter = ThemeEqualityConverter.Instance,
-				ConverterParameter = theme,
-				Mode = BindingMode.OneWay,
-			});
-			items.Add(item);
-		}
-		ThemeMenuItem.ItemsSource = items;
+		var item = new NativeMenuItem {
+			Header = ResourceHelper.GetString(resourceKey),
+			Menu = new NativeMenu(),
+		};
+		byTag[menuId] = item;
+		root.Items.Add(item);
+		return item;
 	}
 
-	static void InitMainMenu(Menu mainMenu, IReadOnlyList<ExportFactory<ICommand, MainMenuCommandMetadata>> mainMenuCommands)
+	static void PopulateViewMenu(NativeMenu view, SessionSettings session, SetThemeCommand setThemeCommand)
 	{
-		var parentMenuItems = new Dictionary<string, MenuItem>();
-		var menuGroups = mainMenuCommands
+		var languageSettings = session.LanguageSettings;
+
+		view.Items.Add(MakeRadio(Resources.Show_publiconlyTypesMembers, languageSettings, nameof(LanguageSettings.ApiVisPublicOnly)));
+		view.Items.Add(MakeRadio(Resources.Show_internalTypesMembers, languageSettings, nameof(LanguageSettings.ApiVisPublicAndInternal)));
+		view.Items.Add(MakeRadio(Resources.Show_allTypesAndMembers, languageSettings, nameof(LanguageSettings.ApiVisAll)));
+
+		view.Items.Add(new NativeMenuItemSeparator());
+
+		var theme = new NativeMenuItem {
+			Header = Resources.Theme,
+			Menu = new NativeMenu(),
+		};
+		PopulateThemeSubmenu(theme.Menu!, session, setThemeCommand);
+		view.Items.Add(theme);
+	}
+
+	static NativeMenuItem MakeRadio(string header, object source, string path)
+	{
+		var item = new NativeMenuItem {
+			Header = header,
+			ToggleType = MenuItemToggleType.Radio,
+		};
+		// IsChecked is purely for *displaying* the checkmark (OneWay). The write
+		// path lives in Command, because Avalonia's macOS NativeMenu bridge maps
+		// NativeMenuItem -> NSMenuItem only when Command != null; without it the
+		// item gets greyed out by NSMenuValidation and no click ever reaches the
+		// IsChecked binding. Mutual exclusion across sibling radios is handled by
+		// the bound property's setter.
+		item.Bind(NativeMenuItem.IsCheckedProperty, new Binding(path) {
+			Source = source,
+			Mode = BindingMode.OneWay,
+		});
+		var property = source.GetType().GetProperty(path);
+		item.Command = new RelayCommand(() => property?.SetValue(source, true));
+		return item;
+	}
+
+	static void PopulateThemeSubmenu(NativeMenu theme, SessionSettings session, SetThemeCommand setThemeCommand)
+	{
+		foreach (var themeName in ThemeManager.AllThemes)
+		{
+			var item = new NativeMenuItem {
+				Header = themeName,
+				Command = setThemeCommand,
+				CommandParameter = themeName,
+				ToggleType = MenuItemToggleType.Radio,
+			};
+			item.Bind(NativeMenuItem.IsCheckedProperty, new Binding(nameof(SessionSettings.Theme)) {
+				Source = session,
+				Converter = ThemeEqualityConverter.Instance,
+				ConverterParameter = themeName,
+				Mode = BindingMode.OneWay,
+			});
+			theme.Items.Add(item);
+		}
+	}
+
+	static void AppendRegistryCommands(
+		NativeMenu rootMenu,
+		Dictionary<string, NativeMenuItem> topLevelByTag,
+		IReadOnlyList<ExportFactory<ICommand, MainMenuCommandMetadata>> commands)
+	{
+		var menuGroups = commands
 			.OrderBy(c => c.Metadata?.MenuOrder)
 			.GroupBy(c => c.Metadata?.ParentMenuID ?? string.Empty)
 			.ToArray();
 
-		foreach (var menu in menuGroups)
+		foreach (var group in menuGroups)
 		{
-			var parentMenuItem = GetOrAddParentMenuItem(menu.Key, menu.Key);
-			foreach (var category in menu.GroupBy(c => c.Metadata?.MenuCategory))
+			var parentItem = GetOrAddParentItem(group.Key, group.Key);
+			var parentMenu = parentItem.Menu!;
+
+			foreach (var category in group.GroupBy(c => c.Metadata?.MenuCategory))
 			{
-				if (parentMenuItem.Items.Count > 0)
-					parentMenuItem.Items.Add(new Separator { Tag = category.Key });
+				if (parentMenu.Items.Count > 0)
+					parentMenu.Items.Add(new NativeMenuItemSeparator());
 
 				foreach (var entry in category)
 				{
 					var entryMenuId = entry.Metadata?.MenuID;
 					if (entryMenuId != null && menuGroups.Any(g => g.Key == entryMenuId))
 					{
-						// This entry's contract is the parent of another group — surface it as a submenu.
-						var nested = GetOrAddParentMenuItem(entryMenuId, entry.Metadata?.Header);
+						// This entry is itself the parent of another group; surface it as a submenu.
+						var nested = GetOrAddParentItem(entryMenuId, entry.Metadata?.Header);
 						nested.Header = ResourceHelper.GetString(entry.Metadata?.Header);
-						parentMenuItem.Items.Add(nested);
+						parentMenu.Items.Add(nested);
 					}
 					else
 					{
 						var command = entry.CreateExport().Value;
-
-						var menuItem = new MenuItem {
-							Command = command,
-							Tag = entry.Metadata?.MenuID,
+						var menuItem = new NativeMenuItem {
 							Header = ResourceHelper.GetString(entry.Metadata?.Header),
+							Command = command,
 							IsEnabled = entry.Metadata?.IsEnabled ?? true,
 						};
 
-						// Wire up the keyboard accelerator if the export declared one. HotKey
-						// registers the window-scoped shortcut; InputGesture is what actually
-						// renders the gesture text on the right side of the menu item — both
-						// are needed for "Ctrl+O" to appear AND fire from the keyboard.
 						if (TryParseGesture(entry.Metadata?.InputGestureText, out var gesture))
-						{
-							menuItem.HotKey = gesture;
-							menuItem.InputGesture = gesture;
-						}
+							menuItem.Gesture = gesture;
 
 						if (command is IProvideParameterBinding parameterBinding)
-							menuItem.Bind(MenuItem.CommandParameterProperty, parameterBinding.ParameterBinding);
+							menuItem.Bind(NativeMenuItem.CommandParameterProperty, parameterBinding.ParameterBinding);
 
-						parentMenuItem.Items.Add(menuItem);
+						parentMenu.Items.Add(menuItem);
 					}
 				}
 			}
 		}
 
-		// Attach any newly-created top-level menus (those not already declared in XAML).
-		foreach (var item in parentMenuItems.Values.Where(item => item.Parent == null))
-			mainMenu.Items.Add(item);
-
-		MenuItem GetOrAddParentMenuItem(string menuId, string? resourceKey)
+		NativeMenuItem GetOrAddParentItem(string menuId, string? resourceKey)
 		{
-			if (!parentMenuItems.TryGetValue(menuId, out var parentMenuItem))
+			if (!topLevelByTag.TryGetValue(menuId, out var existing))
 			{
-				var topLevelMenuItem = mainMenu.Items.OfType<MenuItem>().FirstOrDefault(m => (string?)m.Tag == menuId);
-				if (topLevelMenuItem == null)
-				{
-					parentMenuItem = new MenuItem {
-						Header = ResourceHelper.GetString(resourceKey),
-						Tag = menuId,
-					};
-					parentMenuItems.Add(menuId, parentMenuItem);
-				}
-				else
-				{
-					parentMenuItems.Add(menuId, topLevelMenuItem);
-					parentMenuItem = topLevelMenuItem;
-				}
+				existing = new NativeMenuItem {
+					Header = ResourceHelper.GetString(resourceKey),
+					Menu = new NativeMenu(),
+				};
+				topLevelByTag[menuId] = existing;
+				rootMenu.Items.Add(existing);
 			}
-			return parentMenuItem;
+			return existing;
 		}
 	}
 
-	static void InitWindowMenu(MenuItem windowMenuItem, DockWorkspace dockWorkspace)
+	static void AppendWindowDynamicContent(NativeMenu windowMenu, DockWorkspace dockWorkspace)
 	{
-		// At this point InitMainMenu has already appended any MEF-driven Window-menu commands
-		// (CloseAllDocuments / ResetLayout). Append tool-pane toggles after a separator so
-		// they sit at the bottom of the Window menu.
+		// Tool-pane toggles sit below any MEF-driven Window commands (CloseAllDocuments / ResetLayout).
 		if (dockWorkspace.ToolPaneMenuItems.Count > 0)
 		{
-			if (windowMenuItem.Items.Count > 0)
-				windowMenuItem.Items.Add(new Separator());
+			if (windowMenu.Items.Count > 0)
+				windowMenu.Items.Add(new NativeMenuItemSeparator());
 
 			foreach (var pane in dockWorkspace.ToolPaneMenuItems)
 			{
-				var item = new MenuItem {
+				var item = new NativeMenuItem {
 					Header = pane.Title,
 					ToggleType = MenuItemToggleType.CheckBox,
-					DataContext = pane,
 				};
-				item.Bind(MenuItem.IsCheckedProperty, new Binding(nameof(ToolPaneMenuItem.IsPaneVisible)) {
-					Mode = BindingMode.TwoWay,
+				// OneWay binding + Command — see MakeRadio for why TwoWay alone
+				// doesn't drive macOS clickability.
+				item.Bind(NativeMenuItem.IsCheckedProperty, new Binding(nameof(ToolPaneMenuItem.IsPaneVisible)) {
+					Source = pane,
+					Mode = BindingMode.OneWay,
 				});
-				windowMenuItem.Items.Add(item);
+				var capturedPane = pane;
+				item.Command = new RelayCommand(() => capturedPane.IsPaneVisible = !capturedPane.IsPaneVisible);
+				windowMenu.Items.Add(item);
 			}
 		}
 
-		// Tab section: one MenuItem per open document. Separator only if other items already
-		// exist so we don't lead with a stray rule when both prior blocks were empty.
-		AppendTabSection(windowMenuItem, dockWorkspace);
+		AppendTabSection(windowMenu, dockWorkspace);
 	}
 
-	static void AppendTabSection(MenuItem windowMenuItem, DockWorkspace dockWorkspace)
+	static void AppendTabSection(NativeMenu windowMenu, DockWorkspace dockWorkspace)
 	{
 		var tabItems = dockWorkspace.TabPageMenuItems;
-		Separator? separator = null;
-		var perItem = new Dictionary<TabPageMenuItem, MenuItem>();
+		NativeMenuItemSeparator? separator = null;
+		var perItem = new Dictionary<TabPageMenuItem, NativeMenuItem>();
 
 		void EnsureSeparator()
 		{
 			if (separator != null)
 				return;
-			if (windowMenuItem.Items.Count == 0)
+			if (windowMenu.Items.Count == 0)
 				return;
-			separator = new Separator();
-			windowMenuItem.Items.Add(separator);
+			separator = new NativeMenuItemSeparator();
+			windowMenu.Items.Add(separator);
 		}
 
-		MenuItem CreateMenuItem(TabPageMenuItem vm)
+		NativeMenuItem CreateMenuItem(TabPageMenuItem vm)
 		{
-			var item = new MenuItem {
+			var item = new NativeMenuItem {
 				Header = vm.Title,
 				ToggleType = MenuItemToggleType.Radio,
-				DataContext = vm,
 			};
-			// Header tracks the tab's Title (e.g. swaps from "(no selection)" → "MyType" when
-			// the user navigates).
-			item.Bind(MenuItem.HeaderProperty, new Binding(nameof(TabPageMenuItem.Title)));
-			// IsActive: setter activates the tab, getter mirrors the dock's ActiveDockable.
-			item.Bind(MenuItem.IsCheckedProperty, new Binding(nameof(TabPageMenuItem.IsActive)) {
-				Mode = BindingMode.TwoWay,
+			item.Bind(NativeMenuItem.HeaderProperty, new Binding(nameof(TabPageMenuItem.Title)) {
+				Source = vm,
 			});
+			// OneWay binding + Command — see MakeRadio for why TwoWay alone
+			// doesn't drive macOS clickability.
+			item.Bind(NativeMenuItem.IsCheckedProperty, new Binding(nameof(TabPageMenuItem.IsActive)) {
+				Source = vm,
+				Mode = BindingMode.OneWay,
+			});
+			item.Command = new RelayCommand(() => vm.IsActive = true);
 			return item;
 		}
 
@@ -254,19 +304,18 @@ public partial class MainMenu : UserControl
 			EnsureSeparator();
 			var menuItem = CreateMenuItem(vm);
 			perItem.Add(vm, menuItem);
-			windowMenuItem.Items.Add(menuItem);
+			windowMenu.Items.Add(menuItem);
 		}
 
 		void RemoveItem(TabPageMenuItem vm)
 		{
 			if (!perItem.TryGetValue(vm, out var menuItem))
 				return;
-			windowMenuItem.Items.Remove(menuItem);
+			windowMenu.Items.Remove(menuItem);
 			perItem.Remove(vm);
-			// Drop the separator if no tabs remain — the next AddItem will re-create one.
 			if (perItem.Count == 0 && separator != null)
 			{
-				windowMenuItem.Items.Remove(separator);
+				windowMenu.Items.Remove(separator);
 				separator = null;
 			}
 		}
@@ -288,14 +337,7 @@ public partial class MainMenu : UserControl
 							RemoveItem(vm);
 					break;
 				case System.Collections.Specialized.NotifyCollectionChangedAction.Reset:
-					foreach (var vm in perItem.Keys.ToList())
-						RemoveItem(vm);
-					foreach (var vm in tabItems)
-						AddItem(vm);
-					break;
 				case System.Collections.Specialized.NotifyCollectionChangedAction.Move:
-					// Move keeps identity; the menu's relative order matters only for the tab
-					// listing. Rebuild the tab subrange to keep them aligned with the tab strip.
 					foreach (var vm in perItem.Keys.ToList())
 						RemoveItem(vm);
 					foreach (var vm in tabItems)
@@ -303,6 +345,27 @@ public partial class MainMenu : UserControl
 					break;
 			}
 		};
+	}
+
+	// macOS renders KeyModifiers.Control as the caret glyph; users expect Cmd for menu
+	// shortcuts. Avalonia maps Meta to Cmd on Apple platforms (and to Win on Windows /
+	// Linux), so swapping Control for Meta gives the right symbol on macOS without
+	// changing keyboard semantics elsewhere -- this code only runs on macOS.
+	static void TranslateGesturesForMacOS(NativeMenu menu)
+	{
+		foreach (var item in menu.Items)
+		{
+			if (item is NativeMenuItem ni)
+			{
+				if (ni.Gesture is { } g && (g.KeyModifiers & KeyModifiers.Control) != 0)
+				{
+					var modifiers = (g.KeyModifiers & ~KeyModifiers.Control) | KeyModifiers.Meta;
+					ni.Gesture = new KeyGesture(g.Key, modifiers);
+				}
+				if (ni.Menu != null)
+					TranslateGesturesForMacOS(ni.Menu);
+			}
+		}
 	}
 
 	static bool TryParseGesture(string? text, out KeyGesture gesture)
@@ -325,17 +388,16 @@ public partial class MainMenu : UserControl
 	{
 		public static readonly ThemeEqualityConverter Instance = new();
 
-		public object Convert(object? value, System.Type targetType, object? parameter, System.Globalization.CultureInfo culture)
+		public object Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
 		{
 			var v = value as string;
 			var p = parameter as string;
-			// Treat null/empty as the default theme so the default item still highlights at startup.
 			if (string.IsNullOrEmpty(v))
 				v = ThemeManager.Current.DefaultTheme;
-			return string.Equals(v, p, System.StringComparison.OrdinalIgnoreCase);
+			return string.Equals(v, p, StringComparison.OrdinalIgnoreCase);
 		}
 
-		public object? ConvertBack(object? value, System.Type targetType, object? parameter, System.Globalization.CultureInfo culture)
+		public object? ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
 			=> BindingOperations.DoNothing;
 	}
 }

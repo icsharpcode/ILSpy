@@ -16,13 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Linq;
-using System.Threading.Tasks;
 
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
 using Avalonia.Input;
-using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
@@ -45,39 +44,83 @@ public class MainMenuTests
 	[AvaloniaTest]
 	public void MainMenu_top_level_items_are_File_View_Window_in_order()
 	{
-		var mainMenu = new global::ILSpy.MainMenu();
-		var menu = mainMenu.FindControl<Menu>("MainMenuRoot");
-		menu.Should().NotBeNull();
-
-		var headers = menu!.Items.OfType<MenuItem>().Select(m => m.Header as string).ToList();
-		headers.Should().Equal("_File", "_View", "_Window");
-	}
-
-	[AvaloniaTest]
-	public async Task Main_Menu_Items_Display_Input_Gestures()
-	{
-		// File → Open carries an InputGestureText="Ctrl+O" attribute on its
-		// [ExportMainMenuCommand]; verifies both the displayed gesture (right side of the menu
-		// item) and the actual HotKey are wired up so Ctrl+O fires from the keyboard too.
-
-		// Arrange — boot MainWindow and wait for the File menu to be populated by MEF.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 
-		var menu = await window.WaitForComponent<Menu>();
-		await Waiters.WaitForAsync(() =>
-			menu.Items.OfType<MenuItem>().Any(m => (string?)m.Tag == nameof(Resources._File))
-				&& menu.Items.OfType<MenuItem>().Single(m => (string?)m.Tag == nameof(Resources._File))
-					.Items.OfType<MenuItem>().Any());
+		var nativeMenu = NativeMenu.GetMenu(window)
+			?? throw new InvalidOperationException("MainMenu.Attach should have set NativeMenu on the window");
 
-		// Act — locate the Open MenuItem under File.
-		var fileMenu = menu.Items.OfType<MenuItem>().Single(m => (string?)m.Tag == nameof(Resources._File));
-		var openItem = fileMenu.Items.OfType<MenuItem>()
-			.Single(m => string.Equals(m.Header as string, Resources._Open, System.StringComparison.Ordinal));
+		var headers = nativeMenu.Items.OfType<NativeMenuItem>().Select(i => i.Header).ToList();
+		headers.Should().Equal("_File", "_View", "_Window", "_Help");
+	}
 
-		// Assert — both display gesture and hot-key bind to Ctrl+O.
-		openItem.InputGesture.Should().NotBeNull();
-		openItem.InputGesture!.Should().Be(KeyGesture.Parse("Ctrl+O"));
-		openItem.HotKey.Should().Be(KeyGesture.Parse("Ctrl+O"));
+	[AvaloniaTest]
+	public void File_Open_Carries_The_Ctrl_O_Gesture()
+	{
+		// MEF metadata's InputGestureText="Ctrl+O" on File -> Open must flow through
+		// MainMenu.Attach into NativeMenuItem.Gesture. On macOS Avalonia projects this
+		// into the system menu bar; on Windows / Linux NativeMenuBar renders inline.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+
+		var nativeMenu = NativeMenu.GetMenu(window)
+			?? throw new InvalidOperationException("MainMenu.Attach should have set NativeMenu on the window");
+
+		var fileMenu = nativeMenu.Items.OfType<NativeMenuItem>()
+			.Single(m => string.Equals(m.Header, Resources._File, StringComparison.Ordinal));
+		var openItem = fileMenu.Menu!.Items.OfType<NativeMenuItem>()
+			.Single(m => string.Equals(m.Header, Resources._Open, StringComparison.Ordinal));
+
+		openItem.Gesture.Should().NotBeNull();
+		openItem.Gesture!.Should().Be(KeyGesture.Parse("Ctrl+O"));
+	}
+
+	// Avalonia's macOS NativeMenu bridge maps NativeMenuItem to NSMenuItem and sets
+	// NSMenuItem.action ONLY when Command != null. Without it, NSMenuValidation marks
+	// the item disabled (greyed out) and no click ever reaches managed code - which
+	// means any IsChecked TwoWay binding silently never fires either. So every leaf
+	// NativeMenuItem (one that doesn't open a submenu) must have Command set.
+	[AvaloniaTest]
+	public void Every_Leaf_NativeMenuItem_Has_A_Command_So_macOS_Clicks_Through()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+
+		var nativeMenu = NativeMenu.GetMenu(window)
+			?? throw new InvalidOperationException("MainMenu.Attach should have set NativeMenu on the window");
+
+		var leavesMissingCommand = new System.Collections.Generic.List<string>();
+		CollectLeavesMissingCommand(nativeMenu, parentPath: "", leavesMissingCommand);
+
+		leavesMissingCommand.Should().BeEmpty(
+			"every leaf NativeMenuItem must set Command, otherwise on macOS the item is "
+			+ "disabled by NSMenuValidation and clicks never reach Avalonia. Sites historically "
+			+ "missing this: MakeRadio (ApiVis radios), ToolPaneMenuItem checkboxes, and "
+			+ "TabPageMenuItem radios in AppendWindowDynamicContent / AppendTabSection.");
+	}
+
+	static void CollectLeavesMissingCommand(NativeMenu menu, string parentPath, System.Collections.Generic.List<string> missing)
+	{
+		foreach (var element in menu.Items)
+		{
+			// NativeMenuItemSeparator inherits from NativeMenuItem in Avalonia 12 (its
+			// Header defaults to "-"), so the type filter has to exclude separators
+			// explicitly - otherwise they look like leaves-without-Command and trip
+			// the assertion.
+			if (element is NativeMenuItemSeparator)
+				continue;
+			if (element is not NativeMenuItem item)
+				continue;
+			var path = string.IsNullOrEmpty(parentPath) ? (item.Header ?? "<unnamed>") : $"{parentPath} > {item.Header}";
+			if (item.Menu is { Items.Count: > 0 } sub)
+			{
+				CollectLeavesMissingCommand(sub, path, missing);
+			}
+			else if (item.Command == null)
+			{
+				missing.Add(path);
+			}
+		}
 	}
 }
