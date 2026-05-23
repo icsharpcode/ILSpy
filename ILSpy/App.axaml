@@ -118,6 +118,18 @@
             <Setter Property="Foreground" Value="White" />
         </Style>
 
+        <!-- Menu separators between MenuCategory groups. Simple theme's default is a thin
+             line at very low contrast against the menu background — barely visible. Boost
+             height and use a more contrasting brush so the MEF-injected groups (Save vs
+             Remove vs Exit in File menu, View vs Navigation vs Options in View menu, etc.)
+             read as distinct sections. Scoped to MenuItem-descendant separators so it
+             doesn't catch toolbar separators or the docking-chrome ones. -->
+        <Style Selector="MenuItem Separator">
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Margin" Value="0,4" />
+            <Setter Property="Background" Value="Gray" />
+        </Style>
+
         <!-- VS-style preview tab: italicise the title of any DocumentTabStripItem whose
              dockable is a ContentTabPage with IsPreview=true. Tool-pane tabs and pinned
              document tabs fall through to Normal via the converter's null/false branch.
