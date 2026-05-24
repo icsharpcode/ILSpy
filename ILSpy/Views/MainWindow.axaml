@@ -20,6 +20,9 @@
 		<!-- Main menu -->
 		<local:MainMenu DockPanel.Dock="Top" />
 
+		<!-- Toolbar -->
+		<local:MainToolBar DockPanel.Dock="Top" />
+
 		<!-- Status bar (hidden by default, like WPF) -->
 		<Border DockPanel.Dock="Bottom" Height="26" IsVisible="False" Name="statusBar">
 			<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
