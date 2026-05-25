@@ -1,26 +1,45 @@
 #!/bin/sh
 #
 # To enable this hook, copy/symlink this file to ".git/hooks/pre-commit".
-#  mklink .git\hooks\pre-commit ..\..\BuildTools\pre-commit
+#  Windows:   mklink .git\hooks\pre-commit ..\..\BuildTools\pre-commit
+#  Linux/Mac: ln -s ../../BuildTools/pre-commit .git/hooks/pre-commit
 
 set -eu
 
 DOTNET_FORMAT_VERSION=10.0.100-rtm.25531.102
 DOTNET_FORMAT_SOURCE="https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet10-transport/nuget/v3/index.json"
-DOTNET_PATH="$LOCALAPPDATA/ICSharpCode/ILSpy/dotnet-format-$DOTNET_FORMAT_VERSION"
+
+# Per-OS tool cache location + binary suffix. Windows uses %LOCALAPPDATA% and a .exe
+# suffix; Unix-likes follow the XDG basedir spec (falling back to ~/.local/share) and
+# drop the suffix. Keeping the tool installed under the same logical path on both
+# platforms means a single repo clone can host hook installs from either OS.
+case "$(uname -s 2>/dev/null)" in
+	MINGW*|MSYS*|CYGWIN*|Windows*)
+		DOTNET_CACHE_ROOT="$LOCALAPPDATA"
+		EXE_SUFFIX=".exe"
+		;;
+	*)
+		DOTNET_CACHE_ROOT="${XDG_DATA_HOME:-$HOME/.local/share}"
+		EXE_SUFFIX=""
+		;;
+esac
+
+DOTNET_PATH="$DOTNET_CACHE_ROOT/ICSharpCode/ILSpy/dotnet-format-$DOTNET_FORMAT_VERSION"
 if [ ! -d "$DOTNET_PATH" ]; then
  echo "Downloading dotnet-format $DOTNET_FORMAT_VERSION..."
  dotnet tool install --tool-path "$DOTNET_PATH" dotnet-format --version "$DOTNET_FORMAT_VERSION" --add-source "$DOTNET_FORMAT_SOURCE"
 fi
 
-"$DOTNET_PATH/dotnet-format.exe" --version
+DOTNET_FORMAT="$DOTNET_PATH/dotnet-format$EXE_SUFFIX"
+
+"$DOTNET_FORMAT" --version
 if [ "${1:-}" = "--format" ]; then
 	# called via format.bat
-	"$DOTNET_PATH/dotnet-format.exe" whitespace --no-restore --verbosity detailed ILSpy.sln
+	"$DOTNET_FORMAT" whitespace --no-restore --verbosity detailed ILSpy.sln
 elif git diff --quiet --ignore-submodules; then
-	"$DOTNET_PATH/dotnet-format.exe" whitespace --no-restore --verbosity detailed ILSpy.sln
+	"$DOTNET_FORMAT" whitespace --no-restore --verbosity detailed ILSpy.sln
 	git add -u -- \*\*.cs
 else
 	echo Partial commit: only verifying formatting
-	exec "$DOTNET_PATH/dotnet-format.exe" whitespace --verify-no-changes --no-restore --verbosity detailed ILSpy.sln
+	exec "$DOTNET_FORMAT" whitespace --verify-no-changes --no-restore --verbosity detailed ILSpy.sln
 fi

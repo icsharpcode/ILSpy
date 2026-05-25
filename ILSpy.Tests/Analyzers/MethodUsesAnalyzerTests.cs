@@ -14,7 +14,7 @@ using NUnit.Framework;
 
 namespace ICSharpCode.ILSpy.Tests.Analyzers
 {
-	[TestFixture, Parallelizable(ParallelScope.All)]
+	[TestFixture]
 	public class MethodUsesAnalyzerTests
 	{
 		AssemblyList assemblyList;

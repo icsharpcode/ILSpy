@@ -34,7 +34,7 @@ using NUnit.Framework;
 
 namespace ICSharpCode.ILSpy.Tests.Analyzers
 {
-	[TestFixture, Parallelizable(ParallelScope.All)]
+	[TestFixture]
 	public class MemberImplementsInterfaceAnalyzerTests
 	{
 		static readonly SymbolKind[] ValidSymbolKinds = { SymbolKind.Event, SymbolKind.Indexer, SymbolKind.Method, SymbolKind.Property };

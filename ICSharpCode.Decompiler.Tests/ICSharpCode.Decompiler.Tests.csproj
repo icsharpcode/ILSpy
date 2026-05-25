@@ -2,15 +2,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <IsWindowsX64 Condition="$([MSBuild]::IsOsPlatform('Windows')) And $([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) == X64">true</IsWindowsX64>
-    <IsWindowsARM64 Condition="$([MSBuild]::IsOsPlatform('Windows')) And $([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) == ARM64">true</IsWindowsARM64>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <TargetFramework>net11.0-windows</TargetFramework>
+    <TargetFramework>net11.0</TargetFramework>
     <LangVersion>preview</LangVersion>
-    <RuntimeIdentifier Condition="$(IsWindowsX64) == true">win-x64</RuntimeIdentifier>
-    <RuntimeIdentifier Condition="$(IsWindowsARM64) == true">win-arm64</RuntimeIdentifier>
+    <RuntimeIdentifier>$([System.Runtime.InteropServices.RuntimeInformation]::RuntimeIdentifier)</RuntimeIdentifier>
 
     <IsPackable>false</IsPackable>
 
@@ -21,7 +15,11 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 
     <!-- NU1902/1903 are "Package 'X' has a known security vulnerability". In our tests, we don't care. -->
-    <NoWarn>$(NoWarn);1701;1702;1705,67,169,1058,728,1720,649,168,251,660,661,675;1998;162;8632;626;8618;8714;8602;8981;NU1902;NU1903</NoWarn>
+    <!-- CA1416 fires because the TFM dropped its -windows suffix: Windows-only helpers (SdkUtility,
+         Tester.SignAssembly/FindMSBuild/RunWithTestRunner) and Windows-only test inputs (Console.CapsLock
+         in Async/Switch fixtures) are reachable from non-Windows in principle, but gated by
+         OperatingSystem.IsWindows() + Assert.Ignore at runtime. The analyzer can't see that. -->
+    <NoWarn>$(NoWarn);1701;1702;1705,67,169,1058,728,1720,649,168,251,660,661,675;1998;162;8632;626;8618;8714;8602;8981;NU1902;NU1903;CA1416</NoWarn>
     <DefineConstants>ROSLYN;ROSLYN2;ROSLYN3;ROSLYN4;NET60;CS60;CS70;CS71;CS72;CS73;CS80;CS90;CS100;CS110;CS120;CS130</DefineConstants>
 
     <GenerateAssemblyVersionAttribute>False</GenerateAssemblyVersionAttribute>
@@ -65,7 +63,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" />
     <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" />
     <PackageReference Include="Microsoft.DiaSymReader" />
-    <PackageReference Include="Microsoft.DiaSymReader.Native" />
+    <PackageReference Include="Microsoft.DiaSymReader.Native" Condition="$([MSBuild]::IsOsPlatform('Windows'))" />
     <PackageReference Include="NUnit3TestAdapter" />
     <PackageReference Include="coverlet.MTP" />
     <PackageReference Include="NUnit" />
