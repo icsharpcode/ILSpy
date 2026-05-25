@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
@@ -45,9 +46,9 @@ namespace ILSpy.Metadata.DebugTables
 	/// <summary>
 	/// View of the CustomDebugInformation table — extensible per-entity payloads used for
 	/// async/iterator state-machine info, embedded source, source-link JSON, and similar
-	/// debug-time data. Each row carries a Parent token, a Kind GUID (decoded to a friendly
-	/// name in the Kind column), and an opaque Value blob whose parsed contents show as the
-	/// row's details.
+	/// debug-time data. Each row carries a Parent token, a Kind GUID (surfaced as heap
+	/// offset, raw GUID, and decoded friendly name in the Kind / KindGUID / KindString
+	/// columns), and an opaque Value blob whose parsed contents show as the row's details.
 	/// </summary>
 	public sealed class CustomDebugInformationTableTreeNode : MetadataTableTreeNode<CustomDebugInformationTableTreeNode.CustomDebugInformationEntry>
 	{
@@ -131,36 +132,58 @@ namespace ILSpy.Metadata.DebugTables
 				(KnownGuids.TypeDefinitionDocuments, "Type Definition Documents (C# / VB)"),
 			};
 
+			[ColumnInfo("X2", Kind = ColumnKind.HeapOffset)]
+			public int Kind => MetadataTokens.GetHeapOffset(debugInfo.Kind);
+
+			[ColumnInfo("D")]
+			public Guid KindGUID => metadataFile.Metadata.GetGuid(debugInfo.Kind);
+
 			string? kindString;
 
-			/// <summary>
-			/// One cell carrying the GUID heap offset, the decoded friendly name of well-known
-			/// kind GUIDs, and the raw GUID, e.g.
-			/// <c>0000000B - Source Link (C# / VB) [cc110556-...]</c>. Plain text (instead of a
-			/// bare heap offset plus tooltip) so the column filter matches the friendly names.
-			/// </summary>
-			public string Kind {
+			public string KindString {
 				get {
 					if (kindString != null)
 						return kindString;
 					if (debugInfo.Kind.IsNil)
 						return kindString = "";
 					var guid = metadataFile.Metadata.GetGuid(debugInfo.Kind);
-					string name = "Unknown";
 					foreach (var (knownGuid, knownName) in knownKindNames)
 					{
 						if (guid == knownGuid)
-						{
-							name = knownName;
-							break;
-						}
+							return kindString = knownName;
 					}
-					return kindString = $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - {name} [{guid}]";
+					return kindString = "Unknown";
 				}
+			}
+
+			public string? Info => !debugInfo.Kind.IsNil && KindGUID == KnownGuids.EmbeddedSource
+				? GetEmbeddedSourceFormat()
+				: null;
+
+			string GetEmbeddedSourceFormat()
+			{
+				if (debugInfo.Value.IsNil)
+					return "{nil blob}";
+
+				var reader = metadataFile.Metadata.GetBlobReader(debugInfo.Value);
+
+				if (reader.RemainingBytes < 4)
+					return "{blob too short}";
+
+				var format = reader.ReadInt32();
+
+				return format switch {
+					< 0 => $"Unknown format '{format}', {reader.Length} bytes",
+					0 => $"Raw, {reader.Length} bytes",
+					> 0 => $"DEFLATE, {reader.Length} bytes, {format} uncompressed",
+				};
 			}
 
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Value => MetadataTokens.GetHeapOffset(debugInfo.Value);
+
+			[ColumnInfo("X8")]
+			public int ValueLength => metadataFile.Metadata.GetBlobReader(debugInfo.Value).Length;
 
 			public string ValueTooltip {
 				get {
@@ -174,9 +197,9 @@ namespace ILSpy.Metadata.DebugTables
 
 			/// <summary>
 			/// Parsed view of the Value blob for the row-details area. Structured kinds become
-			/// typed row lists, source-link blobs the decoded JSON text, everything else
-			/// (including malformed structured blobs) a hex dump. Cached — the details area
-			/// re-requests it on every selection change.
+			/// typed row lists, source-link blobs the decoded JSON text, embedded source the
+			/// (decompressed) document text, everything else (including malformed blobs) a hex
+			/// dump. Cached — the details area re-requests it on every selection change.
 			/// </summary>
 			public object? RowDetails {
 				get {
@@ -190,7 +213,7 @@ namespace ILSpy.Metadata.DebugTables
 					{
 						return rowDetails = ParseRowDetails(ref reader);
 					}
-					catch (BadImageFormatException)
+					catch (Exception ex) when (ex is BadImageFormatException or InvalidDataException)
 					{
 						return rowDetails = metadataFile.Metadata.GetBlobReader(debugInfo.Value).ToHexString();
 					}
@@ -209,6 +232,22 @@ namespace ILSpy.Metadata.DebugTables
 				}
 				if (kind == KnownGuids.SourceLink)
 					return reader.ReadUTF8(reader.RemainingBytes);
+				if (kind == KnownGuids.EmbeddedSource)
+				{
+					var embeddedSourceFormat = reader.ReadInt32();
+
+					if (embeddedSourceFormat < 0) // unknown format, show raw data as hex
+						return reader.ToHexString();
+
+					var embeddedSourceBytes = reader.ReadBytes(reader.RemainingBytes);
+					Stream embeddedSourceByteStream = new MemoryStream(embeddedSourceBytes);
+
+					if (embeddedSourceFormat > 0) // positive length means the data is compressed using DEFLATE
+						embeddedSourceByteStream = new System.IO.Compression.DeflateStream(embeddedSourceByteStream, System.IO.Compression.CompressionMode.Decompress);
+
+					var textReader = new StreamReader(embeddedSourceByteStream, detectEncodingFromByteOrderMarks: true);
+					return textReader.ReadToEnd();
+				}
 				if (kind == KnownGuids.CompilationOptions)
 				{
 					var list = new List<CompilationOptionDetail>();

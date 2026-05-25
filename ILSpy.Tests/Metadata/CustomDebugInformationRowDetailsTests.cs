@@ -21,6 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -48,14 +49,16 @@ namespace ICSharpCode.ILSpy.Tests.Metadata;
 public class CustomDebugInformationRowDetailsTests
 {
 	const string SourceLinkJson = /*lang=json,strict*/ """{"documents":{"/src/*":"https://example.invalid/*"}}""";
+	const string EmbeddedSourceText = "class Embedded { void M() { } }";
 	static readonly Guid UnknownKindGuid = new Guid("1c46e7c9-0631-44eb-a78a-f8e8e1e0c0a1");
 	static readonly Guid ReferenceMvid = new Guid("8e2c021c-1f4e-4a40-a3a8-9785b2a99f9c");
+	static readonly byte[] EmbeddedSourceDeflateBlob = BuildEmbeddedSourceDeflateBlob(EmbeddedSourceText);
 
 	static MetadataFile BuildPdbFixture()
 	{
 		// Synthesize a standalone portable PDB whose CustomDebugInformation table holds one
 		// row per row-details scenario: a text kind (Source Link), an unrecognized kind
-		// GUID, an embedded-source blob (opaque at this layer), and the four structured
+		// GUID, embedded source in both formats (raw and DEFLATE), and the four structured
 		// kinds that parse into typed rows. Parents use ascending MethodDef tokens so the
 		// (parent-sorted) table preserves this row order.
 		var builder = new MetadataBuilder();
@@ -68,9 +71,10 @@ public class CustomDebugInformationRowDetailsTests
 		AddRow(6, KnownGuids.CompilationMetadataReferences, MetadataReferenceBlob(
 			"System.Runtime.dll", "global", flags: 1, timestamp: 0x12345678, fileSize: 1024, ReferenceMvid));
 		AddRow(7, KnownGuids.TupleElementNames, NullTerminatedStrings("Item1", "Name"));
+		AddRow(8, KnownGuids.EmbeddedSource, EmbeddedSourceDeflateBlob);
 
 		var rowCounts = new int[MetadataTokens.TableCount];
-		rowCounts[(int)TableIndex.MethodDef] = 7;
+		rowCounts[(int)TableIndex.MethodDef] = 8;
 		var pdbBuilder = new PortablePdbBuilder(builder, rowCounts.ToImmutableArray(), entryPoint: default);
 		var blob = new BlobBuilder();
 		pdbBuilder.Serialize(blob);
@@ -85,6 +89,20 @@ public class CustomDebugInformationRowDetailsTests
 				builder.GetOrAddGuid(kind),
 				builder.GetOrAddBlob(value));
 		}
+	}
+
+	static byte[] BuildEmbeddedSourceDeflateBlob(string text)
+	{
+		// Embedded-source blob: an int32 format header, then the document bytes. A positive
+		// header is the uncompressed size and marks the payload as DEFLATE-compressed.
+		var content = Encoding.UTF8.GetBytes(text);
+		using var ms = new MemoryStream();
+		ms.Write(BitConverter.GetBytes(content.Length), 0, 4);
+		using (var deflate = new DeflateStream(ms, CompressionMode.Compress, leaveOpen: true))
+		{
+			deflate.Write(content, 0, content.Length);
+		}
+		return ms.ToArray();
 	}
 
 	static byte[] HoistedScopesBlob(params (uint StartOffset, uint Length)[] scopes)
@@ -139,22 +157,26 @@ public class CustomDebugInformationRowDetailsTests
 			.ToList();
 
 	[Test]
-	public void Offset_And_Friendly_Kind_Columns_Match_The_Tables_Conventions()
+	public void Offset_And_Split_Kind_Columns_Match_The_Tables_Conventions()
 	{
-		// The Kind column carries the GUID heap offset, the decoded friendly name, and the
-		// raw GUID in one cell; Offset positions the row within the metadata stream like
+		// The kind surfaces as three columns — the GUID heap offset (Kind), the raw GUID
+		// (KindGUID), and the decoded friendly name (KindString) — so each is independently
+		// sortable and filterable. Offset positions the row within the metadata stream like
 		// every other table's Offset column.
 		var metadataFile = BuildPdbFixture();
 		var entries = LoadEntries(metadataFile);
 
-		entries[0].Kind.Should().MatchRegex("^[0-9A-F]{8} - Source Link \\(C# / VB\\) \\[cc110556-a091-4d38-9fec-25ab9a351a6a\\]$");
-		entries[1].Kind.Should().EndWith($"- Unknown [{UnknownKindGuid}]");
-		entries[3].Kind.Should().Contain("State Machine Hoisted Local Scopes (C# / VB)");
+		entries[0].Kind.Should().BePositive("the Kind column is the 1-based GUID heap offset");
+		entries[0].KindGUID.Should().Be(KnownGuids.SourceLink);
+		entries[0].KindString.Should().Be("Source Link (C# / VB)");
+		entries[1].KindGUID.Should().Be(UnknownKindGuid);
+		entries[1].KindString.Should().Be("Unknown");
+		entries[3].KindString.Should().Be("State Machine Hoisted Local Scopes (C# / VB)");
 
 		int rowSize = metadataFile.Metadata.GetTableRowSize(TableIndex.CustomDebugInformation);
 		entries[0].Offset.Should().BePositive("the table lives at a real offset inside the PDB metadata");
 		entries.Select(e => e.Offset).Should().BeInAscendingOrder()
-			.And.HaveCount(7);
+			.And.HaveCount(8);
 		(entries[1].Offset - entries[0].Offset).Should().Be(rowSize);
 	}
 
@@ -192,8 +214,28 @@ public class CustomDebugInformationRowDetailsTests
 
 		entries[0].RowDetails.Should().Be(SourceLinkJson, "source link blobs are UTF-8 JSON");
 		entries[1].RowDetails.Should().Be("01-02-03", "unrecognized kinds degrade to a hex dump");
-		entries[2].RowDetails.Should().Be("00-00-00-00-41",
-			"embedded source is an opaque payload to the row-details parser and dumps as hex");
+	}
+
+	[Test]
+	public void RowDetails_Decodes_Embedded_Source_To_The_Document_Text()
+	{
+		var metadataFile = BuildPdbFixture();
+		var entries = LoadEntries(metadataFile);
+
+		entries[2].RowDetails.Should().Be("A", "a zero format header means the document bytes follow uncompressed");
+		entries[7].RowDetails.Should().Be(EmbeddedSourceText, "a positive format header means the document is DEFLATE-compressed");
+	}
+
+	[Test]
+	public void Info_Summarizes_The_Embedded_Source_Format()
+	{
+		var metadataFile = BuildPdbFixture();
+		var entries = LoadEntries(metadataFile);
+
+		entries[0].Info.Should().BeNull("only embedded source carries a format header to summarize");
+		entries[2].Info.Should().Be("Raw, 5 bytes");
+		entries[7].Info.Should().Be(
+			$"DEFLATE, {EmbeddedSourceDeflateBlob.Length} bytes, {Encoding.UTF8.GetByteCount(EmbeddedSourceText)} uncompressed");
 	}
 
 	[AvaloniaTest]
