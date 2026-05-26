@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Windows;
@@ -175,44 +176,59 @@ namespace ICSharpCode.ILSpy.Metadata
 			string parentTooltip;
 			public string ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, debugInfo.Parent);
 
-			string kindString;
-			public string Kind {
-				get {
-					if (kindString != null)
-						return kindString;
+			[ColumnInfo("X2", Kind = ColumnKind.HeapOffset)]
+			public int Kind => MetadataTokens.GetHeapOffset(debugInfo.Kind);
 
-					Guid guid;
-					if (kind != CustomDebugInformationKind.None)
-					{
-						guid = metadataFile.Metadata.GetGuid(debugInfo.Kind);
-					}
-					else
-					{
-						guid = Guid.Empty;
-					}
-					kindString = kind switch {
-						CustomDebugInformationKind.None => "",
-						CustomDebugInformationKind.StateMachineHoistedLocalScopes => $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - State Machine Hoisted Local Scopes (C# / VB) [{guid}]",
-						CustomDebugInformationKind.DynamicLocalVariables => $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Dynamic Local Variables (C#) [{guid}]",
-						CustomDebugInformationKind.DefaultNamespaces => $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Default Namespaces (VB) [{guid}]",
-						CustomDebugInformationKind.EditAndContinueLocalSlotMap => $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Edit And Continue Local Slot Map (C# / VB) [{guid}]",
-						CustomDebugInformationKind.EditAndContinueLambdaAndClosureMap => $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Edit And Continue Lambda And Closure Map (C# / VB) [{guid}]",
-						CustomDebugInformationKind.EncStateMachineStateMap => $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Edit And Continue State Machine State Map (C# / VB) [{guid}]",
-						CustomDebugInformationKind.EmbeddedSource => $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Embedded Source (C# / VB) [{guid}]",
-						CustomDebugInformationKind.SourceLink => $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Source Link (C# / VB) [{guid}]",
-						CustomDebugInformationKind.MethodSteppingInformation => $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Method Stepping Information (C# / VB) [{guid}]",
-						CustomDebugInformationKind.CompilationOptions => $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Compilation Options (C# / VB) [{guid}]",
-						CustomDebugInformationKind.CompilationMetadataReferences => $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Compilation Metadata References (C# / VB) [{guid}]",
-						CustomDebugInformationKind.TupleElementNames => $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Tuple Element Names (C#) [{guid}]",
-						CustomDebugInformationKind.TypeDefinitionDocuments => $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Type Definition Documents (C# / VB) [{guid}]",
-						_ => $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Unknown [{guid}]",
-					};
-					return kindString;
-				}
+			[ColumnInfo("D")]
+			public Guid KindGUID => metadataFile.Metadata.GetGuid(debugInfo.Kind);
+
+			public string KindString => kind switch {
+				CustomDebugInformationKind.None => "",
+				CustomDebugInformationKind.StateMachineHoistedLocalScopes => "State Machine Hoisted Local Scopes (C# / VB)",
+				CustomDebugInformationKind.DynamicLocalVariables => "Dynamic Local Variables (C#)",
+				CustomDebugInformationKind.DefaultNamespaces => "Default Namespaces (VB)",
+				CustomDebugInformationKind.EditAndContinueLocalSlotMap => "Edit And Continue Local Slot Map (C# / VB)",
+				CustomDebugInformationKind.EditAndContinueLambdaAndClosureMap => "Edit And Continue Lambda And Closure Map (C# / VB)",
+				CustomDebugInformationKind.EncStateMachineStateMap => "Edit And Continue State Machine State Map (C# / VB)",
+				CustomDebugInformationKind.EmbeddedSource => "Embedded Source (C# / VB)",
+				CustomDebugInformationKind.SourceLink => "Source Link (C# / VB)",
+				CustomDebugInformationKind.MethodSteppingInformation => "Method Stepping Information (C# / VB)",
+				CustomDebugInformationKind.CompilationOptions => "Compilation Options (C# / VB)",
+				CustomDebugInformationKind.CompilationMetadataReferences => "Compilation Metadata References (C# / VB)",
+				CustomDebugInformationKind.TupleElementNames => "Tuple Element Names (C#)",
+				CustomDebugInformationKind.TypeDefinitionDocuments => "Type Definition Documents (C# / VB)",
+				_ => "Unknown",
+			};
+
+			public string Info => kind switch {
+				CustomDebugInformationKind.EmbeddedSource => GetEmbeddedSourceFormat(),
+				_ => null,
+			};
+
+			string GetEmbeddedSourceFormat()
+			{
+				if (debugInfo.Value.IsNil)
+					return "{nill blob}";
+
+				var reader = metadataFile.Metadata.GetBlobReader(debugInfo.Value);
+
+				if (reader.RemainingBytes < 4)
+					return "{blob too short}";
+
+				var format = reader.ReadInt32();
+
+				return format switch {
+					< 0 => $"Unknown format '{format}', {reader.Length} bytes",
+					0 => $"Raw, {reader.Length} bytes",
+					> 1 => $"DEFLATE, {reader.Length} bytes, {format} uncompressed",
+				};
 			}
 
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Value => MetadataTokens.GetHeapOffset(debugInfo.Value);
+
+			[ColumnInfo("X8")]
+			public int ValueLength => metadataFile.Metadata.GetBlobReader(debugInfo.Value).Length;
 
 			public string ValueTooltip {
 				get {
@@ -285,6 +301,22 @@ namespace ICSharpCode.ILSpy.Metadata
 								list.Add(new { ElementName = reader.ReadUTF8StringNullTerminated() });
 							}
 							return rowDetails = list;
+
+						case CustomDebugInformationKind.EmbeddedSource:
+							var embeddedSourceFormat = reader.ReadInt32();
+
+							if (embeddedSourceFormat < 0) // unknown format, show raw data as hex
+								return reader.ToHexString();
+
+							var embeddedSourceBytes = reader.ReadBytes(reader.RemainingBytes);
+							Stream embeddedSourceByteStream = new MemoryStream(embeddedSourceBytes);
+
+							if (embeddedSourceFormat >= 0) // positive length means the data is compressed using DEFLATE
+								embeddedSourceByteStream = new System.IO.Compression.DeflateStream(embeddedSourceByteStream, System.IO.Compression.CompressionMode.Decompress);
+
+							var textReader = new StreamReader(embeddedSourceByteStream, detectEncodingFromByteOrderMarks: true);
+							return textReader.ReadToEnd();
+
 						default:
 							return reader.ToHexString();
 					}
