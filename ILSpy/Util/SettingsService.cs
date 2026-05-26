@@ -99,6 +99,7 @@ namespace ICSharpCode.ILSpy.Util
 			finally
 			{
 				reloading = false;
+				MenuPopupAnimationHelper.Apply(DisplaySettings.EnableMenuAnimations);
 			}
 		}
 
@@ -127,6 +128,12 @@ namespace ICSharpCode.ILSpy.Util
 			{
 				assemblyListManager.ApplyWinRTProjections = decompilerSettings.ApplyWindowsRuntimeProjections;
 				assemblyListManager.UseDebugSymbols = decompilerSettings.UseDebugSymbols;
+			}
+
+			if (sender is DisplaySettings displaySettings
+				&& e.PropertyName == nameof(DisplaySettings.EnableMenuAnimations))
+			{
+				MenuPopupAnimationHelper.Apply(displaySettings.EnableMenuAnimations);
 			}
 
 			MessageBus.Send(sender, new SettingsChangedEventArgs(e));
