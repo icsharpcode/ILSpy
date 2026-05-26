@@ -156,7 +156,7 @@ Examples:
 			include = generateDiagrammerCmd + "-include";
 
 		[Option(generateDiagrammerCmd, "Generates an interactive HTML diagrammer app from selected types in the target assembly" +
-			" - to the --outputdir or in a 'diagrammer' folder next to to the assembly by default.", CommandOptionType.NoValue)]
+			" - to the --outputdir or in a 'diagrammer' folder next to the assembly by default.", CommandOptionType.NoValue)]
 		public bool GenerateDiagrammer { get; }
 
 		[Option(include, "An optional regular expression matching Type.FullName used to whitelist types to include in the generated diagrammer.", CommandOptionType.SingleValue)]

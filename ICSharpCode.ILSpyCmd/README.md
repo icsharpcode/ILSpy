@@ -57,7 +57,7 @@ Options:
   --disable-updatecheck                   If using ilspycmd in a tight loop or fully automated scenario, you might want
                                           to disable the automatic update check.
   --generate-diagrammer                   Generates an interactive HTML diagrammer app from selected types in the target
-                                          assembly - to the --outputdir or in a 'diagrammer' folder next to to the
+                                          assembly - to the --outputdir or in a 'diagrammer' folder next to the
                                           assembly by default.
   --generate-diagrammer-include           An optional regular expression matching Type.FullName used to whitelist types
                                           to include in the generated diagrammer.
