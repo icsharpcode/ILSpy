@@ -42,7 +42,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 
 		public override object Icon => MethodTreeNode.GetIcon(analyzedMethod);
 
-		public override object Text => prefix + Language.EntityToString(analyzedMethod, ConversionFlags.ShowDeclaringType | ConversionFlags.UseFullyQualifiedEntityNames);
+		public override object Text => CreateHighlightedMemberText(prefix, ConversionFlags.ShowDeclaringType | ConversionFlags.UseFullyQualifiedEntityNames);
 
 		protected override void LoadChildren()
 		{

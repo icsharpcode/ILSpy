@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 
 		public override object Icon => FieldTreeNode.GetIcon(analyzedField);
 
-		public override object Text => Language.EntityToString(analyzedField, ConversionFlags.ShowDeclaringType | ConversionFlags.UseFullyQualifiedEntityNames);
+		public override object Text => CreateHighlightedMemberText("", ConversionFlags.ShowDeclaringType | ConversionFlags.UseFullyQualifiedEntityNames);
 
 		protected override void LoadChildren()
 		{
