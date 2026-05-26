@@ -19,7 +19,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Controls;
 
+using ICSharpCode.AvalonEdit.Document;
+using ICSharpCode.AvalonEdit.Highlighting;
+using ICSharpCode.AvalonEdit.Utils;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpyX;
@@ -56,6 +60,22 @@ namespace ICSharpCode.ILSpy.Analyzers
 		}
 
 		public override object? ToolTip => Member?.ParentModule?.MetadataFile?.FileName;
+
+		/// <summary>
+		/// Renders a member signature with C# syntax highlighting for the Analyze tree view.
+		/// </summary>
+		protected object CreateHighlightedSignatureText(string signature)
+		{
+			IHighlightingDefinition? highlighting = Language.SyntaxHighlighting;
+			if (highlighting == null)
+				return signature;
+
+			var document = new TextDocument(signature);
+			var richText = DocumentPrinter.ConvertTextDocumentToRichText(document, new DocumentHighlighter(document, highlighting)).ToRichTextModel();
+			var textBlock = new TextBlock();
+			textBlock.Inlines.AddRange(richText.CreateRuns(document));
+			return textBlock;
+		}
 
 		public override bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies)
 		{
