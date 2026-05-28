@@ -2,6 +2,10 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
+    <!-- RIDs we publish the app for. Declared here (not solution-wide) so the lock
+         file stays in sync for these targets without forcing per-RID restore onto
+         the ILSpyCmd tool (PackAsTool + GeneratePackageOnBuild) or the test projects. -->
+    <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;osx-arm64</RuntimeIdentifiers>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
@@ -32,6 +36,10 @@
   <ItemGroup>
     <AvaloniaResource Remove="Assets\ILSpy-Large.ico" />
     <AvaloniaResource Remove="Assets\ILSpy.pdn" />
+    <!-- macOS bundle inputs: copied into ILSpy.app at publish-time by BuildMacAppBundle.
+         Excluded from avares:// because they're consumed by the OS loader, not the app. -->
+    <AvaloniaResource Remove="Assets\ILSpy.icns" />
+    <AvaloniaResource Remove="Assets\macos\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -116,4 +124,35 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug' AND $([MSBuild]::IsOSPlatform('Windows'))">
     <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
   </PropertyGroup>
+
+  <!-- macOS .app bundle.
+       The Avalonia Window.Icon property doesn't reach the Dock on macOS; the Dock
+       reads CFBundleIconFile from Info.plist and loads <name>.icns from Resources/.
+       Bundle layout under bin/<config>/<tfm>/<rid>/:
+         ILSpy.app/Contents/Info.plist
+         ILSpy.app/Contents/MacOS/<published files, with apphost made executable>
+         ILSpy.app/Contents/Resources/ILSpy.icns
+       Trigger: any osx-* RuntimeIdentifier after the standard Publish target. -->
+  <Target Name="BuildMacAppBundle"
+          AfterTargets="Publish"
+          Condition="$(RuntimeIdentifier.StartsWith('osx-'))">
+    <PropertyGroup>
+      <_MacBundleRoot>$([System.IO.Path]::GetFullPath('$(PublishDir)..'))/$(AssemblyName).app</_MacBundleRoot>
+      <_MacBundleContents>$(_MacBundleRoot)/Contents</_MacBundleContents>
+    </PropertyGroup>
+    <ItemGroup>
+      <_MacPublishFiles Include="$(PublishDir)**/*" />
+    </ItemGroup>
+    <RemoveDir Directories="$(_MacBundleRoot)" />
+    <MakeDir Directories="$(_MacBundleContents);$(_MacBundleContents)/MacOS;$(_MacBundleContents)/Resources" />
+    <Copy SourceFiles="@(_MacPublishFiles)"
+          DestinationFiles="@(_MacPublishFiles->'$(_MacBundleContents)/MacOS/%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)/Assets/ILSpy.icns"
+          DestinationFolder="$(_MacBundleContents)/Resources" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)/Assets/macos/Info.plist"
+          DestinationFolder="$(_MacBundleContents)" />
+    <Exec Command="chmod +x &quot;$(_MacBundleContents)/MacOS/$(AssemblyName)&quot;"
+          Condition="!$([MSBuild]::IsOSPlatform('Windows'))" />
+    <Message Importance="high" Text="macOS bundle written to $(_MacBundleRoot)" />
+  </Target>
 </Project>
