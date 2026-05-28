@@ -37,8 +37,8 @@ namespace ILSpy.Commands
 	/// </summary>
 	[ExportContextMenuEntry(
 		Header = nameof(Resources.DecompileToNewPanel),
-		Category = "Metadata",
-		Order = 110)]
+		Category = "Navigation",
+		Order = 100)]
 	[Shared]
 	internal sealed class DecompileMetadataRowInNewTabCommand : IContextMenuEntry
 	{

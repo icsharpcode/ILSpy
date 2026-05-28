@@ -35,7 +35,7 @@ namespace ILSpy.Commands
 	/// writes it as a GraphViz <c>.gv</c> file in the temp dir, shells out to <c>dot</c>
 	/// to render PNG, and opens the result with the OS default image viewer.
 	/// </summary>
-	[ExportContextMenuEntry(Header = "DEBUG -- Show CFG")]
+	[ExportContextMenuEntry(Header = "DEBUG -- Show CFG", Category = "Diagnostics", Order = 9000)]
 	[Shared]
 	internal sealed class ShowCFGContextMenuEntry : IContextMenuEntry
 	{

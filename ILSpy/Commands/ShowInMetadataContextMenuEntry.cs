@@ -33,7 +33,7 @@ namespace ILSpy.Commands
 	/// <see cref="IEntity"/> backed by a real metadata file; firing it routes through the
 	/// dock workspace to open the matching CLI metadata table at the entity's row.
 	/// </summary>
-	[ExportContextMenuEntry(Header = nameof(Resources.GoToToken), Category = "Metadata", Order = 200)]
+	[ExportContextMenuEntry(Header = nameof(Resources.GoToToken), Category = "Navigation", Order = 200)]
 	[Shared]
 	public sealed class ShowInMetadataContextMenuEntry : IContextMenuEntry
 	{
