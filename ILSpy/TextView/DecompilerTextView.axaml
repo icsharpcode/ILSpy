@@ -17,11 +17,11 @@
 		<textView:DecompilerTextEditor Name="Editor"
 		                               IsReadOnly="True"
 		                               ShowLineNumbers="True"
-		                               Background="#FFFFE1"
+		                               Background="{DynamicResource ILSpy.EditorBackground}"
 		                               FontFamily="Consolas, Menlo, Monospace"
 		                               FontSize="13" />
 		<Border Name="WaitAdorner"
-		        Background="#80FFFFFF"
+		        Background="{DynamicResource ILSpy.EditorWaitAdornerBackground}"
 		        IsVisible="{Binding IsDecompiling}">
 			<Grid ColumnDefinitions="*,Auto,*">
 				<StackPanel Grid.Column="1"

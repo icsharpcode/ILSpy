@@ -3,7 +3,9 @@
              x:Class="ILSpy.TextView.ZoomButtons"
              HorizontalAlignment="Right" VerticalAlignment="Bottom"
              Margin="0,0,12,12">
-	<Border Background="#E0FFFFE1" BorderBrush="#80808080" BorderThickness="1"
+	<Border Background="{DynamicResource ILSpy.ZoomButtonsBackground}"
+	        BorderBrush="{DynamicResource ILSpy.ZoomButtonsBorder}"
+	        BorderThickness="1"
 	        CornerRadius="3" Padding="2">
 		<StackPanel Orientation="Horizontal" Spacing="2">
 			<Button Name="MinusButton" Content="&#8722;" Width="22" Height="22"

@@ -19,33 +19,74 @@
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.Resources>
-        <!-- Every dockable owns its view (IDockableViewOwner): the dock chrome must render one
-             view per dockable identity, not one per slot, or two panes sharing a ToolDock slot
-             (e.g. Analyzer + Debug Steps both Bottom-aligned) render each other's content. This
-             resolver hands back the dockable's own view instead of pinning views in a global,
-             never-evicting cache (a leak for transient document tabs). Wired to every DockControl
-             via the style below. -->
-        <docking:DockableViewRecycling x:Key="ControlRecyclingKey" />
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <!-- Light / Dark variant brushes for the surfaces ILSpy paints directly
+                     (the editor canvas and the toolbar chrome). The Simple theme itself
+                     ships no Dark resource dictionary, so chrome painted by Simple (menu,
+                     scrollbars, tree, status bar) stays Light regardless of the user's
+                     theme choice. Intentional, partial dark mode targeting only the
+                     surfaces a reader spends most time looking at. -->
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="ILSpy.EditorBackground" Color="#FFFFE1" />
+                    <SolidColorBrush x:Key="ILSpy.EditorWaitAdornerBackground" Color="#80FFFFFF" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarBackground" Color="White" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarBorder" Color="#FFA9B0B7" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarSeparator" Color="#FFC8CDD3" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarComboBoxBorder" Color="#FFCCCEDB" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarDisabledFill" Color="#22000000" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarDisabledBorder" Color="#33000000" />
+                    <SolidColorBrush x:Key="ILSpy.ZoomButtonsBackground" Color="#E0FFFFE1" />
+                    <SolidColorBrush x:Key="ILSpy.ZoomButtonsBorder" Color="#80808080" />
+                    <SolidColorBrush x:Key="ILSpy.TooltipBackground" Color="#FFFFE1" />
+                    <SolidColorBrush x:Key="ILSpy.TooltipForeground" Color="Black" />
+                    <SolidColorBrush x:Key="ILSpy.TooltipBorder" Color="#FF767676" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="ILSpy.EditorBackground" Color="#1E1E1E" />
+                    <SolidColorBrush x:Key="ILSpy.EditorWaitAdornerBackground" Color="#A0000000" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarBackground" Color="#2D2D30" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarBorder" Color="#3F3F46" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarSeparator" Color="#3F3F46" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarComboBoxBorder" Color="#3F3F46" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarDisabledFill" Color="#22FFFFFF" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarDisabledBorder" Color="#33FFFFFF" />
+                    <SolidColorBrush x:Key="ILSpy.ZoomButtonsBackground" Color="#E01E1E1E" />
+                    <SolidColorBrush x:Key="ILSpy.ZoomButtonsBorder" Color="#80A0A0A0" />
+                    <SolidColorBrush x:Key="ILSpy.TooltipBackground" Color="#252526" />
+                    <SolidColorBrush x:Key="ILSpy.TooltipForeground" Color="#DCDCDC" />
+                    <SolidColorBrush x:Key="ILSpy.TooltipBorder" Color="#3F3F46" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
 
-        <!-- Override ProDataGrid's hierarchical expander to a classic Windows-Explorer-sized 9x9 box,
-             plus 4px of left padding (so the ToggleButton itself is 13x9). -->
-        <x:Double x:Key="DataGridHierarchicalExpanderSize">13</x:Double>
-        <x:Double x:Key="DataGridHierarchicalExpanderGlyphSize">5</x:Double>
+            <!-- Every dockable owns its view (IDockableViewOwner): the dock chrome must render one
+                 view per dockable identity, not one per slot, or two panes sharing a ToolDock slot
+                 (e.g. Analyzer + Debug Steps both Bottom-aligned) render each other's content. This
+                 resolver hands back the dockable's own view instead of pinning views in a global,
+                 never-evicting cache (a leak for transient document tabs). Wired to every DockControl
+                 via the style below. -->
+            <docking:DockableViewRecycling x:Key="ControlRecyclingKey" />
 
-        <!-- Suppress the cell focus rectangle — selected rows already get the highlight background. -->
-        <SolidColorBrush x:Key="DataGridCellFocusVisualPrimaryBrush" Color="Transparent" />
-        <SolidColorBrush x:Key="DataGridCellFocusVisualSecondaryBrush" Color="Transparent" />
+            <!-- Override ProDataGrid's hierarchical expander to a classic Windows-Explorer-sized 9x9 box,
+                 plus 4px of left padding (so the ToggleButton itself is 13x9). -->
+            <x:Double x:Key="DataGridHierarchicalExpanderSize">13</x:Double>
+            <x:Double x:Key="DataGridHierarchicalExpanderGlyphSize">5</x:Double>
 
-        <!-- Suppress the gray pointer-over highlight on rows and cells. -->
-        <SolidColorBrush x:Key="DataGridRowHoveredBackgroundBrush" Color="Transparent" />
-        <SolidColorBrush x:Key="DataGridCellHoveredBackgroundBrush" Color="Transparent" />
+            <!-- Suppress the cell focus rectangle — selected rows already get the highlight background. -->
+            <SolidColorBrush x:Key="DataGridCellFocusVisualPrimaryBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="DataGridCellFocusVisualSecondaryBrush" Color="Transparent" />
 
-        <!-- Replace the Simple theme's saturated dark fill on column-header hover/press
-             with the toolbar accent palette (#330078D7 hover, #660078D7 pressed). The
-             default makes header text unreadable while sorting / resizing; the lighter
-             translucent accent matches MainToolBar.axaml's button hover treatment. -->
-        <SolidColorBrush x:Key="DataGridColumnHeaderHoveredBackgroundBrush" Color="#330078D7" />
-        <SolidColorBrush x:Key="DataGridColumnHeaderPressedBackgroundBrush" Color="#660078D7" />
+            <!-- Suppress the gray pointer-over highlight on rows and cells. -->
+            <SolidColorBrush x:Key="DataGridRowHoveredBackgroundBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="DataGridCellHoveredBackgroundBrush" Color="Transparent" />
+
+            <!-- Replace the Simple theme's saturated dark fill on column-header hover/press
+                 with the toolbar accent palette (#330078D7 hover, #660078D7 pressed). The
+                 default makes header text unreadable while sorting / resizing; the lighter
+                 translucent accent matches MainToolBar.axaml's button hover treatment. -->
+            <SolidColorBrush x:Key="DataGridColumnHeaderHoveredBackgroundBrush" Color="#330078D7" />
+            <SolidColorBrush x:Key="DataGridColumnHeaderPressedBackgroundBrush" Color="#660078D7" />
+        </ResourceDictionary>
     </Application.Resources>
 
     <Application.DataTemplates>
@@ -65,6 +106,16 @@
              resolves views per dockable identity instead of caching one view per dock slot. -->
         <Style Selector="DockControl">
             <Setter Property="(recycling:ControlRecyclingDataTemplate.ControlRecycling)" Value="{StaticResource ControlRecyclingKey}" />
+        </Style>
+
+        <!-- Tooltips: Simple theme paints them with hardcoded fills that don't respond to
+             RequestedThemeVariant. Restyle ToolTip so background, foreground, and border
+             route through our ILSpy.Tooltip* brushes and swap with the active theme. -->
+        <Style Selector="ToolTip">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.TooltipBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.TooltipForeground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ILSpy.TooltipBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
         </Style>
 
         <!-- Suppress the column header's hover / pressed fill while the user is interacting

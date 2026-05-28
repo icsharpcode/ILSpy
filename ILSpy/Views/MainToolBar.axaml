@@ -97,8 +97,8 @@
 			<Setter Property="Cursor" Value="Arrow" />
 		</Style>
 		<Style Selector="StackPanel#ToolbarRoot > Button:disabled /template/ ContentPresenter, StackPanel#ToolbarRoot > ToggleButton:disabled /template/ ContentPresenter">
-			<Setter Property="Background" Value="#22000000" />
-			<Setter Property="BorderBrush" Value="#33000000" />
+			<Setter Property="Background" Value="{DynamicResource ILSpy.ToolbarDisabledFill}" />
+			<Setter Property="BorderBrush" Value="{DynamicResource ILSpy.ToolbarDisabledBorder}" />
 		</Style>
 		<!-- Default Fluent SplitButton paints both halves with an opaque dark fill on press
 		     (looks black against our white toolbar). Replace with the toolbar accent palette
@@ -125,7 +125,7 @@
 			<Setter Property="Width" Value="1" />
 			<Setter Property="Height" Value="18" />
 			<Setter Property="Margin" Value="4,3" />
-			<Setter Property="Background" Value="#FFC8CDD3" />
+			<Setter Property="Background" Value="{DynamicResource ILSpy.ToolbarSeparator}" />
 		</Style>
 
 		<!-- Keep the combos flush with the buttons; soften the default border so it sits
@@ -136,7 +136,7 @@
 			<Setter Property="MinHeight" Value="22" />
 			<Setter Property="Padding" Value="6,1" />
 			<Setter Property="VerticalContentAlignment" Value="Center" />
-			<Setter Property="BorderBrush" Value="#FFCCCEDB" />
+			<Setter Property="BorderBrush" Value="{DynamicResource ILSpy.ToolbarComboBoxBorder}" />
 		</Style>
 		<!-- The Simple theme's ComboBox template (this project uses Avalonia.Themes.Simple,
 		     not Fluent) places a separate ToggleButton named "toggle" in the chevron column
@@ -168,9 +168,9 @@
 		</Style>
 	</UserControl.Styles>
 
-	<Border BorderThickness="0,0,0,1" BorderBrush="#FFA9B0B7"
+	<Border BorderThickness="0,0,0,1" BorderBrush="{DynamicResource ILSpy.ToolbarBorder}"
 	        MinHeight="29" Padding="3"
-	        Background="White">
+	        Background="{DynamicResource ILSpy.ToolbarBackground}">
 		<StackPanel Name="ToolbarRoot" Orientation="Horizontal">
 			<!-- Navigation: Back / Forward as web-browser-style split buttons. The primary half
 			     navigates one step; the chevron drops a menu of recent history entries built on
