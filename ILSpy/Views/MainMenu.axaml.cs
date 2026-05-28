@@ -22,6 +22,7 @@ using System.Composition;
 using System.Linq;
 using System.Windows.Input;
 
+using global::Avalonia;
 using global::Avalonia.Controls;
 using global::Avalonia.Data;
 using global::Avalonia.Input;
@@ -70,9 +71,35 @@ public static class MainMenu
 		AppendWindowDynamicContent(windowItem.Menu!, dockWorkspace);
 
 		if (OperatingSystem.IsMacOS())
+		{
 			TranslateGesturesForMacOS(menu);
+			PromoteHelpToMacAppMenu(menu, topLevelByTag);
+		}
 
 		NativeMenu.SetMenu(window, menu);
+	}
+
+	// macOS convention puts About / Check for Updates under the bold app-named menu
+	// next to the Apple logo, not under a separate "Help" top-level. Avalonia's Cocoa
+	// menu exporter watches NativeMenu.MenuProperty on Application.Current as the
+	// channel for that menu; setting a NativeMenu there prepends our items above
+	// the auto-inserted Services / Hide / Quit block. We then remove _Help from the
+	// window menu so the items don't appear in both places.
+	static void PromoteHelpToMacAppMenu(NativeMenu rootMenu, Dictionary<string, NativeMenuItem> topLevelByTag)
+	{
+		if (!topLevelByTag.TryGetValue("_Help", out var helpItem) || helpItem.Menu is null)
+			return;
+		if (Application.Current is null)
+			return;
+		var appMenu = new NativeMenu();
+		foreach (var item in helpItem.Menu.Items.ToArray())
+		{
+			helpItem.Menu.Items.Remove(item);
+			appMenu.Items.Add(item);
+		}
+		NativeMenu.SetMenu(Application.Current, appMenu);
+		rootMenu.Items.Remove(helpItem);
+		topLevelByTag.Remove("_Help");
 	}
 
 	static bool TryGetExports(
