@@ -125,6 +125,16 @@ namespace ILSpy
 						InputGesture = TryParseGesture(export.Metadata.InputGestureText),
 						HotKey = TryParseGesture(export.Metadata.InputGestureText),
 					};
+					// MenuItem.Icon takes any Control here (unlike NativeMenuItem.Icon which
+					// requires Bitmap), so we pass the IImage directly via an Image control.
+					if (Images.Images.ResolveByPath(export.Metadata.Icon) is { } icon)
+					{
+						item.Icon = new Image {
+							Width = 16,
+							Height = 16,
+							Source = icon,
+						};
+					}
 					if (entry.IsEnabled(context))
 					{
 						// Capture entry + context for the click handler — entries are stateless

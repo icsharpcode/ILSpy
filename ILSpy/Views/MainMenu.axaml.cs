@@ -208,6 +208,13 @@ public static class MainMenu
 							IsEnabled = entry.Metadata?.IsEnabled ?? true,
 						};
 
+						// NativeMenuItem.Icon is Bitmap (macOS NSImage has no vector form),
+						// so SVG-backed metadata icons get rasterised at attach-time. Silently
+						// skips when the metadata is empty or the named field isn't registered
+						// in Images.cs - keeps the menu item rendering, just without an icon.
+						if (Images.Images.LoadBitmap(entry.Metadata?.MenuIcon) is { } bitmap)
+							menuItem.Icon = bitmap;
+
 						if (TryParseGesture(entry.Metadata?.InputGestureText, out var gesture))
 							menuItem.Gesture = gesture;
 

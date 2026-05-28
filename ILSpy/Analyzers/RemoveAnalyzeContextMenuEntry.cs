@@ -28,7 +28,7 @@ namespace ILSpy.Analyzers
 	/// pane root. Only visible on rows whose parent is the analyzer root (the per-entity
 	/// rows); search-tree-node headers and result rows can't be removed individually.
 	/// </summary>
-	[ExportContextMenuEntry(Header = "Remove", Order = 9200)]
+	[ExportContextMenuEntry(Header = "Remove", Icon = "Images/Delete", Order = 9200)]
 	[Shared]
 	public sealed class RemoveAnalyzeContextMenuEntry : IContextMenuEntry
 	{

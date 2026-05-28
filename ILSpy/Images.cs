@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 using Avalonia;
 using Avalonia.Media;
@@ -79,6 +80,7 @@ namespace ILSpy.Images
 		public static readonly IImage Refresh = LoadSvg(nameof(Refresh));
 		public static readonly IImage Sort = LoadSvg(nameof(Sort));
 		public static readonly IImage CollapseAll = LoadSvg(nameof(CollapseAll));
+		public static readonly IImage Delete = LoadSvg(nameof(Delete));
 		public static readonly IImage ShowPublicOnly = LoadSvg(nameof(ShowPublicOnly));
 		public static readonly IImage ShowPrivateInternal = LoadSvg(nameof(ShowPrivateInternal));
 		public static readonly IImage ShowAll = LoadSvg(nameof(ShowAll));
@@ -181,6 +183,48 @@ namespace ILSpy.Images
 			AccessOverlayIcon.CompilerControlled => OverlayCompilerControlled,
 			_ => null, // Public — no overlay
 		};
+
+		/// <summary>
+		/// Resolve an "Images/Foo" string (from MEF metadata like <c>MenuIcon</c>,
+		/// <c>Icon</c>, or <c>ToolbarIcon</c>) to the corresponding static <see cref="IImage"/>
+		/// field on <see cref="Images"/>. Returns <see langword="null"/> when the path is
+		/// empty or the named field doesn't exist, so callers can skip-and-continue without
+		/// breaking the menu/toolbar build.
+		/// </summary>
+		public static IImage? ResolveByPath(string? path)
+		{
+			if (string.IsNullOrEmpty(path))
+				return null;
+			var name = path.StartsWith("Images/", StringComparison.Ordinal)
+				? path["Images/".Length..]
+				: path;
+			var field = typeof(Images).GetField(name, BindingFlags.Public | BindingFlags.Static);
+			return field?.GetValue(null) as IImage;
+		}
+
+		/// <summary>
+		/// Rasterise an <see cref="IImage"/> (typically an <see cref="SvgImage"/>) into a
+		/// fixed-size <see cref="Bitmap"/>. Needed for surfaces whose Icon contract is
+		/// <see cref="Bitmap"/> rather than the broader <see cref="IImage"/>, notably
+		/// <c>NativeMenuItem.Icon</c>, where the macOS native-menu bridge talks to
+		/// <c>NSImage</c> which has no vector form.
+		/// </summary>
+		public static Bitmap? RenderToBitmap(IImage? image, int size = 16)
+		{
+			if (image == null)
+				return null;
+			var bmp = new RenderTargetBitmap(new PixelSize(size, size));
+			using var ctx = bmp.CreateDrawingContext();
+			image.Draw(ctx, new Rect(image.Size), new Rect(0, 0, size, size));
+			return bmp;
+		}
+
+		/// <summary>
+		/// Convenience: <see cref="ResolveByPath"/> composed with <see cref="RenderToBitmap"/>.
+		/// For call sites that need a Bitmap straight from the "Images/Foo" metadata string.
+		/// </summary>
+		public static Bitmap? LoadBitmap(string? path, int size = 16)
+			=> RenderToBitmap(ResolveByPath(path), size);
 	}
 
 	/// <summary>

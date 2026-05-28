@@ -219,15 +219,7 @@ public partial class MainToolBar : UserControl
 	}
 
 	// "Images/Open" → looks up "Open" on Images.Images via reflection so the metadata can
-	// stay declarative.
-	static IImage? ResolveIcon(string? iconPath)
-	{
-		if (string.IsNullOrEmpty(iconPath))
-			return null;
-		var name = iconPath.StartsWith("Images/", StringComparison.Ordinal)
-			? iconPath["Images/".Length..]
-			: iconPath;
-		var prop = typeof(Images.Images).GetField(name, BindingFlags.Public | BindingFlags.Static);
-		return prop?.GetValue(null) as IImage;
-	}
+	// stay declarative. Delegates to the shared resolver in Images.cs, which other menu
+	// builders (MainMenu, ContextMenuProvider) also consume.
+	static IImage? ResolveIcon(string? iconPath) => Images.Images.ResolveByPath(iconPath);
 }

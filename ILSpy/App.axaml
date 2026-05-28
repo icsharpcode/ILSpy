@@ -123,9 +123,12 @@
              line at very low contrast against the menu background — barely visible. Boost
              height and use a more contrasting brush so the MEF-injected groups (Save vs
              Remove vs Exit in File menu, View vs Navigation vs Options in View menu, etc.)
-             read as distinct sections. Scoped to MenuItem-descendant separators so it
-             doesn't catch toolbar separators or the docking-chrome ones. -->
-        <Style Selector="MenuItem Separator">
+             read as distinct sections. Scoped to menu-descendant separators so toolbar
+             separators and docking-chrome ones don't get the same treatment. The two
+             selectors cover both surfaces: main-menu submenu separators live inside
+             MenuItem.Items; ContextMenuProvider adds Separator directly to ContextMenu.Items
+             (and to nested MenuItem.Items for sub-menus). -->
+        <Style Selector="MenuItem Separator, ContextMenu Separator">
             <Setter Property="Height" Value="1" />
             <Setter Property="Margin" Value="0,4" />
             <Setter Property="Background" Value="Gray" />
