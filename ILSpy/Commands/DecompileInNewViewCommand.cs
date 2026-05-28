@@ -38,6 +38,7 @@ namespace ILSpy.Commands
 		Header = nameof(Resources.DecompileToNewPanel),
 		Category = "Navigate",
 		Icon = "Images/ViewCode",
+		InputGestureText = "MMB",
 		Order = 100)]
 	[Shared]
 	internal sealed class DecompileInNewViewCommand : IContextMenuEntry

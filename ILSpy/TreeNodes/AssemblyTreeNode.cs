@@ -599,5 +599,44 @@ namespace ILSpy.TreeNodes
 				}
 			}
 		}
+
+		// Right-click → "Load Dependencies" — resolves every AssemblyReference on every
+		// selected assembly through that assembly's resolver, in parallel. Useful when
+		// IL references types from assemblies that haven't been loaded yet; running this
+		// first turns "unresolved type" placeholders into linked, decompilable nodes.
+		// Visible when the selection is exactly one or more valid loaded assemblies.
+		[ExportContextMenuEntry(Header = nameof(ICSharpCode.ILSpy.Properties.Resources._LoadDependencies), Category = nameof(ICSharpCode.ILSpy.Properties.Resources.Dependencies), Order = 700)]
+		[System.Composition.Shared]
+		[method: System.Composition.ImportingConstructor]
+		sealed class LoadDependencies(AssemblyTree.AssemblyTreeModel assemblyTreeModel) : IContextMenuEntry
+		{
+			public bool IsVisible(TextViewContext context)
+			{
+				var nodes = context.SelectedTreeNodes;
+				return nodes is { Length: > 0 }
+					&& nodes.All(n => n is AssemblyTreeNode { LoadedAssembly.IsLoadedAsValidAssembly: true });
+			}
+
+			public bool IsEnabled(TextViewContext context) => true;
+
+			public async void Execute(TextViewContext context)
+			{
+				if (context.SelectedTreeNodes == null)
+					return;
+				var tasks = new List<Task>();
+				foreach (var node in context.SelectedTreeNodes)
+				{
+					var la = ((AssemblyTreeNode)node).LoadedAssembly;
+					var resolver = la.GetAssemblyResolver();
+					var module = la.GetMetadataFileOrNull();
+					if (module is null)
+						continue;
+					foreach (var assyRef in module.Metadata.AssemblyReferences)
+						tasks.Add(resolver.ResolveAsync(new AssemblyReference(module, assyRef)));
+				}
+				await Task.WhenAll(tasks);
+				assemblyTreeModel.Refresh();
+			}
+		}
 	}
 }
