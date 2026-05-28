@@ -43,8 +43,27 @@ namespace ILSpy.TreeNodes
 
 		public override object NavigationText => Language.EntityToString(FieldDefinition, ConversionFlags.ShowDeclaringType);
 
-		public override object Icon => Images.Images.GetIcon(Images.Images.Field,
-			Images.Images.GetOverlay(FieldDefinition.Accessibility), FieldDefinition.IsStatic);
+		public override object Icon => GetIcon(FieldDefinition);
+
+		// Distinguish enum members and const fields from regular instance/static fields so the
+		// tree reads the way the C# source does. The IsReadOnly / FieldReadOnly variant from
+		// the WPF era isn't ported because we don't have a dedicated SVG for it yet -- such
+		// fields fall through to the base Field icon.
+		public static Avalonia.Media.IImage GetIcon(IField field)
+		{
+			// EnumValue: the field's declaring type is an enum and its return type is the enum
+			// itself -- this excludes the synthesised int32 'value__' backing field.
+			if (field.DeclaringType.Kind == TypeKind.Enum && field.ReturnType.Kind == TypeKind.Enum)
+				return Images.Images.GetIcon(Images.Images.Enum,
+					Images.Images.GetOverlay(field.Accessibility));
+
+			if (field.IsConst)
+				return Images.Images.GetIcon(Images.Images.Literal,
+					Images.Images.GetOverlay(field.Accessibility));
+
+			return Images.Images.GetIcon(Images.Images.Field,
+				Images.Images.GetOverlay(field.Accessibility), field.IsStatic);
+		}
 		public override bool ShowExpander => false;
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
