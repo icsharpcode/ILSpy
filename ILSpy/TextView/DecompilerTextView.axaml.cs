@@ -73,6 +73,11 @@ namespace ILSpy.TextView
 		readonly List<AvaloniaEdit.Rendering.VisualLineElementGenerator> activeCustomGenerators = new();
 		RichTextColorizer? activeColorizer;
 		FoldingManager? activeFoldingManager;
+		// Outgoing model tracked so OnDataContextChanged can detach handlers and snapshot
+		// folding state before the new DataContext takes over -- Avalonia doesn't surface
+		// the previous DataContext to the event handler, and Dock recycles the view across
+		// tabs (see App.axaml ControlRecyclingKey).
+		DecompilerTabPageModel? boundModel;
 		DisplaySettings? currentDisplaySettings;
 		ReferenceSegment? lastTooltipSegment;
 		ReferenceSegment? lastRightClickedSegment;
@@ -434,7 +439,30 @@ namespace ILSpy.TextView
 		protected override void OnDataContextChanged(System.EventArgs e)
 		{
 			base.OnDataContextChanged(e);
-			if (DataContext is DecompilerTabPageModel model)
+
+			// Snapshot the outgoing model's folding state and detach its property handler
+			// BEFORE binding to the new one. Dock recycles a single DecompilerTextView across
+			// every document tab, so a tab switch lands here with the FoldingManager still
+			// holding the previous tab's collapsed / expanded state. Capture that into the
+			// outgoing model's LastKnownFoldings so the next ApplyDocument can restore it
+			// when the user clicks back. Without this the foldings reset to their default
+			// (open) state on every tab toggle.
+			if (boundModel is { } previous && !ReferenceEquals(previous, DataContext))
+			{
+				previous.PropertyChanged -= OnModelPropertyChanged;
+				if (activeFoldingManager is { } outgoingManager)
+					previous.LastKnownFoldings = FoldingsViewState.Capture(outgoingManager.AllFoldings);
+				// The delegate closes over `activeFoldingManager` (the view field), not the
+				// model's own state. Once we've switched to a new model the field is about
+				// to point at someone else's FoldingManager, so a late invocation from
+				// DockWorkspace.CaptureCurrentViewState would write THIS tab's foldings into
+				// the outgoing model's LastKnownFoldings. Drop the delegate so that path is
+				// a no-op; the snapshot we just took is correct and shouldn't be clobbered.
+				previous.CaptureFoldingsState = null;
+			}
+
+			boundModel = DataContext as DecompilerTabPageModel;
+			if (boundModel is { } model)
 			{
 				model.PropertyChanged += OnModelPropertyChanged;
 				// Foldings have no per-change event on AvaloniaEdit; instead DockWorkspace asks
@@ -517,8 +545,11 @@ namespace ILSpy.TextView
 			}
 			// Consume the pending snapshot up-front so it can't bleed into a later refresh
 			// even when the new document has zero foldings to apply it to (e.g. a namespace
-			// summary page that follows a method-body navigation).
-			var pendingFoldings = model.PendingFoldings;
+			// summary page that follows a method-body navigation). PendingFoldings is set
+			// by Back / Forward navigation; LastKnownFoldings is captured on tab-switch so
+			// raw tab toggles restore state too -- prefer the explicit Pending if both
+			// exist (the history path wins over the recycled tab path).
+			var pendingFoldings = model.PendingFoldings ?? model.LastKnownFoldings;
 			model.PendingFoldings = null;
 			if (model.Foldings is { Count: > 0 } foldings)
 			{
@@ -564,22 +595,24 @@ namespace ILSpy.TextView
 
 			// Restore caret + scroll position captured when the user previously navigated
 			// away from this node. Back/Forward (and the dropdown-history "GoTo") set the
-			// Pending* fields just before triggering the decompile; here we read them once
-			// and clear them so a subsequent user-initiated decompile doesn't jump the
-			// cursor again. Clamp to the new document length — text-changed-since-capture
+			// Pending* fields just before triggering the decompile; tab switches don't,
+			// but LastKnown* is kept fresh by the per-event push from the view, so falling
+			// through Pending -> LastKnown lets a raw tab toggle restore the same state.
+			// Clear Pending* so a subsequent user-initiated decompile doesn't jump the
+			// cursor again. Clamp to the new document length -- text-changed-since-capture
 			// is the common case for Refresh.
-			if (model.PendingCaretOffset is { } caret)
+			if ((model.PendingCaretOffset ?? model.LastKnownCaretOffset) is { } caret)
 			{
 				model.PendingCaretOffset = null;
 				Editor.TextArea.Caret.Offset = Math.Clamp(caret, 0, Editor.Document.TextLength);
 				Editor.TextArea.Caret.BringCaretToView();
 			}
-			if (model.PendingVerticalOffset is { } vy)
+			if ((model.PendingVerticalOffset ?? model.LastKnownVerticalOffset) is { } vy)
 			{
 				model.PendingVerticalOffset = null;
 				Editor.ScrollToVerticalOffset(vy);
 			}
-			if (model.PendingHorizontalOffset is { } hx)
+			if ((model.PendingHorizontalOffset ?? model.LastKnownHorizontalOffset) is { } hx)
 			{
 				model.PendingHorizontalOffset = null;
 				Editor.ScrollToHorizontalOffset(hx);
