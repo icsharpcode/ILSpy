@@ -25,7 +25,7 @@ using ILSpy.AssemblyTree;
 namespace ILSpy.Commands
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources.SortAssembly_listName), MenuIcon = "Images/Sort", MenuCategory = "Tree", MenuOrder = 10)]
-	[ExportToolbarCommand(ToolTip = nameof(Resources.SortAssemblyListName), ToolbarIcon = "Images/Sort", ToolbarCategory = nameof(Resources.View))]
+	[ExportToolbarCommand(ToolTip = nameof(Resources.SortAssemblyListName), ToolbarIcon = "Images/Sort", ToolbarCategory = nameof(Resources.View), ToolbarOrder = 0)]
 	[Shared]
 	[method: ImportingConstructor]
 	sealed class SortAssemblyListCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
@@ -34,7 +34,7 @@ namespace ILSpy.Commands
 	}
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._View), Header = nameof(Resources._CollapseTreeNodes), MenuIcon = "Images/CollapseAll", MenuCategory = "Tree", MenuOrder = 11)]
-	[ExportToolbarCommand(ToolTip = nameof(Resources.CollapseTreeNodes), ToolbarIcon = "Images/CollapseAll", ToolbarCategory = nameof(Resources.View))]
+	[ExportToolbarCommand(ToolTip = nameof(Resources.CollapseTreeNodes), ToolbarIcon = "Images/CollapseAll", ToolbarCategory = nameof(Resources.View), ToolbarOrder = 1)]
 	[Shared]
 	[method: ImportingConstructor]
 	sealed class CollapseAllCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
