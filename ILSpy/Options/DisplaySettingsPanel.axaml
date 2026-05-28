@@ -7,8 +7,14 @@
              mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="500"
              x:Class="ILSpy.Options.Panels.DisplaySettingsPanel"
              x:DataType="vm:DisplaySettingsViewModel">
-	<ScrollViewer Padding="6">
-		<StackPanel Spacing="10">
+	<!-- ScrollViewer Padding is collapsed on the vertical axis by the Simple-theme
+	     ScrollContentPresenter when a vertical scrollbar is present, and the outer
+	     StackPanel's measure also under-counts a trailing HeaderedContentControl's
+	     content. Wrapping in a Border with explicit Padding makes the padding part
+	     of the measured content so the last child stays reachable at max scroll. -->
+	<ScrollViewer>
+		<Border Padding="6,6,6,12">
+			<StackPanel Spacing="10">
 			<Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="4">
 				<TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
 				           Text="{x:Static res:Resources.Font}" />
@@ -94,6 +100,7 @@
 					          Content="{x:Static res:Resources.SortResultsFitness}" />
 				</StackPanel>
 			</HeaderedContentControl>
-		</StackPanel>
+			</StackPanel>
+		</Border>
 	</ScrollViewer>
 </UserControl>
