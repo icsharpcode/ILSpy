@@ -35,7 +35,7 @@ namespace ILSpy.Commands
 	/// enclosing <see cref="AssemblyTreeNode"/> (so it works on members and namespaces, not
 	/// just the assembly row itself) and asks the OS file manager to reveal that file.
 	/// </summary>
-	[ExportContextMenuEntry(Header = nameof(Resources._OpenContainingFolder), Category = nameof(Resources.Shell))]
+	[ExportContextMenuEntry(Header = nameof(Resources._OpenContainingFolder), Category = nameof(Resources.Shell), Icon = "Images/FolderOpen", Order = 500)]
 	[Shared]
 	public sealed class OpenContainingFolderContextMenuEntry : IContextMenuEntry
 	{

@@ -37,7 +37,7 @@ namespace ILSpy.Commands
 	/// associates it with the assembly's debug-info provider, then refreshes the
 	/// decompiled view so the new symbols feed back into the output.
 	/// </summary>
-	[ExportContextMenuEntry(Header = nameof(Resources.SelectPDB))]
+	[ExportContextMenuEntry(Header = nameof(Resources.SelectPDB), Category = "Debug", Icon = "Images/ProgramDebugDatabase", Order = 400)]
 	[Shared]
 	public sealed class SelectPdbContextMenuEntry : IContextMenuEntry
 	{

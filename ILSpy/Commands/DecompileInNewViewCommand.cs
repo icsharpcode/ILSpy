@@ -36,8 +36,9 @@ namespace ILSpy.Commands
 	/// </summary>
 	[ExportContextMenuEntry(
 		Header = nameof(Resources.DecompileToNewPanel),
-		Category = nameof(Resources.Analyze),
-		Order = 90)]
+		Category = "Navigate",
+		Icon = "Images/ViewCode",
+		Order = 100)]
 	[Shared]
 	internal sealed class DecompileInNewViewCommand : IContextMenuEntry
 	{

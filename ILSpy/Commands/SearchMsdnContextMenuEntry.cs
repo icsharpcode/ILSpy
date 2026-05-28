@@ -35,7 +35,7 @@ namespace ILSpy.Commands
 	/// entity-bearing tree-node kinds plus <see cref="NamespaceTreeNode"/>; enabled only when
 	/// the entity is publicly accessible (private members aren't on the docs site).
 	/// </summary>
-	[ExportContextMenuEntry(Header = nameof(Resources.SearchMSDN), Order = 9999)]
+	[ExportContextMenuEntry(Header = nameof(Resources.SearchMSDN), Category = nameof(Resources.Analyze), Icon = "Images/Search", Order = 230)]
 	[Shared]
 	public sealed class SearchMsdnContextMenuEntry : IContextMenuEntry
 	{

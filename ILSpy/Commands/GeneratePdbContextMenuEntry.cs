@@ -43,7 +43,7 @@ namespace ILSpy.Commands
 	/// CodeView debug-directory entry. Output report (per-file success / fail / total
 	/// elapsed time) lands in the active decompiler tab via <see cref="DockWorkspace.ShowText"/>.
 	/// </summary>
-	[ExportContextMenuEntry(Header = nameof(Resources.GeneratePortable))]
+	[ExportContextMenuEntry(Header = nameof(Resources.GeneratePortable), Category = "Debug", Icon = "Images/ProgramDebugDatabase", Order = 410)]
 	[Shared]
 	public sealed class GeneratePdbContextMenuEntry : IContextMenuEntry
 	{

@@ -31,7 +31,7 @@ namespace ILSpy.Search
 	/// matches are restricted to that namespace. Same parser/filter path as
 	/// <see cref="ScopeSearchToAssemblyContextMenuEntry"/>.
 	/// </summary>
-	[ExportContextMenuEntry(Header = nameof(Resources.ScopeSearchToThisNamespace), Order = 1101)]
+	[ExportContextMenuEntry(Header = nameof(Resources.ScopeSearchToThisNamespace), Category = nameof(Resources.Analyze), Icon = "Images/Namespace", Order = 220)]
 	[Shared]
 	public sealed class ScopeSearchToNamespaceContextMenuEntry : IContextMenuEntry
 	{

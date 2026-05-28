@@ -40,7 +40,7 @@ namespace ILSpy.Commands
 	/// into the active decompiler tab via <see cref="DockWorkspace.ShowText"/>. Visible
 	/// only when exactly one valid loaded assembly is selected.
 	/// </summary>
-	[ExportContextMenuEntry(Header = nameof(Resources._CreateDiagram), Category = nameof(Resources.Save), Icon = "Images/Save")]
+	[ExportContextMenuEntry(Header = nameof(Resources._CreateDiagram), Category = nameof(Resources.Save), Icon = "Images/Save", Order = 310)]
 	[Shared]
 	public sealed class CreateDiagramContextMenuEntry : IContextMenuEntry
 	{

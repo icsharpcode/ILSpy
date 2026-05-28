@@ -534,7 +534,7 @@ namespace ILSpy.TreeNodes
 		// visible when the entire selection is assembly nodes, so it doesn't pollute right-click
 		// menus opened on member / namespace / resource rows. MEF discovers this via the
 		// [ExportContextMenuEntry] attribute and surfaces it through ContextMenuEntryRegistry.
-		[ExportContextMenuEntry(Header = nameof(ICSharpCode.ILSpy.Properties.Resources._Remove), Icon = "Images/Delete")]
+		[ExportContextMenuEntry(Header = nameof(ICSharpCode.ILSpy.Properties.Resources._Remove), Icon = "Images/Delete", Order = 910)]
 		[System.Composition.Shared]
 		sealed class RemoveAssembly : IContextMenuEntry
 		{
@@ -560,7 +560,7 @@ namespace ILSpy.TreeNodes
 		// pick up edits made by an external build without restarting ILSpy. Same visibility
 		// shape as Remove (assembly nodes only). The model's existing path-restoration plumbing
 		// handles re-selecting equivalent nodes after the reload churns the tree.
-		[ExportContextMenuEntry(Header = nameof(ICSharpCode.ILSpy.Properties.Resources._Reload), Icon = "Images/Refresh")]
+		[ExportContextMenuEntry(Header = nameof(ICSharpCode.ILSpy.Properties.Resources._Reload), Icon = "Images/Refresh", Order = 900)]
 		[System.Composition.Shared]
 		[method: System.Composition.ImportingConstructor]
 		sealed class ReloadAssembly(AssemblyTree.AssemblyTreeModel assemblyTreeModel) : IContextMenuEntry

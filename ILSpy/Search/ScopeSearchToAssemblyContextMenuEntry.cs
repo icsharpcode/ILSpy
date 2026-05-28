@@ -32,7 +32,7 @@ namespace ILSpy.Search
 	/// <see cref="RunningSearch"/> recognises the prefix and feeds it into the
 	/// <c>SearchRequest.InAssembly</c> filter the ILSpyX strategies consult.
 	/// </summary>
-	[ExportContextMenuEntry(Header = nameof(Resources.ScopeSearchToThisAssembly), Order = 1100)]
+	[ExportContextMenuEntry(Header = nameof(Resources.ScopeSearchToThisAssembly), Category = nameof(Resources.Analyze), Icon = "Images/FindAssembly", Order = 210)]
 	[Shared]
 	public sealed class ScopeSearchToAssemblyContextMenuEntry : IContextMenuEntry
 	{

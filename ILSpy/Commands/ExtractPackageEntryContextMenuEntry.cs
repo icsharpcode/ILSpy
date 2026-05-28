@@ -44,7 +44,7 @@ namespace ILSpy.Commands
 	/// (assemblies, resource entries, package folders) to disk. Single-item selection
 	/// pops a file-save dialog; multi-item or folder selection pops a folder-pick.
 	/// </summary>
-	[ExportContextMenuEntry(Header = nameof(Resources.ExtractPackageEntry), Category = nameof(Resources.Save), Icon = "Images/Save")]
+	[ExportContextMenuEntry(Header = nameof(Resources.ExtractPackageEntry), Category = nameof(Resources.Save), Icon = "Images/FolderOpen", Order = 320)]
 	[Shared]
 	public sealed class ExtractPackageEntryContextMenuEntry : IContextMenuEntry
 	{
@@ -244,7 +244,7 @@ namespace ILSpy.Commands
 	/// every entry inside the bundle into the picked folder. Shortcut for the multi-
 	/// select case in <see cref="ExtractPackageEntryContextMenuEntry"/>.
 	/// </summary>
-	[ExportContextMenuEntry(Header = nameof(Resources.ExtractAllPackageEntries), Category = nameof(Resources.Save), Icon = "Images/Save")]
+	[ExportContextMenuEntry(Header = nameof(Resources.ExtractAllPackageEntries), Category = nameof(Resources.Save), Icon = "Images/FolderOpen", Order = 330)]
 	[Shared]
 	public sealed class ExtractAllPackageEntriesContextMenuEntry : IContextMenuEntry
 	{

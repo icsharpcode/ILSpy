@@ -37,7 +37,7 @@ namespace ILSpy.Analyzers
 		Header = nameof(Resources.Analyze),
 		Category = nameof(Resources.Analyze),
 		InputGestureText = "Ctrl+R",
-		Order = 100)]
+		Order = 200)]
 	[Shared]
 	public sealed class AnalyzeContextMenuEntry : IContextMenuEntry
 	{

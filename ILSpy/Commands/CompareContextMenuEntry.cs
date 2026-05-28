@@ -33,7 +33,7 @@ namespace ILSpy.Commands
 	/// <see cref="CompareEngine"/>. Order matters: the first-selected node becomes the
 	/// "left" side, the second becomes the "right".
 	/// </summary>
-	[ExportContextMenuEntry(Header = "Compare...", Order = 9999)]
+	[ExportContextMenuEntry(Header = "Compare...", Category = "Navigate", Order = 110)]
 	[Shared]
 	public sealed class CompareContextMenuEntry : IContextMenuEntry
 	{

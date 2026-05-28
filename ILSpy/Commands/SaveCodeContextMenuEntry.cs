@@ -33,7 +33,7 @@ namespace ILSpy.Commands
 	/// node falls through to the generic single-file decompile in the existing
 	/// <c>FileCommands.SaveCommand</c>.
 	/// </summary>
-	[ExportContextMenuEntry(Header = nameof(Resources._SaveCode), Category = nameof(Resources.Save), Icon = "Images/Save")]
+	[ExportContextMenuEntry(Header = nameof(Resources._SaveCode), Category = nameof(Resources.Save), Icon = "Images/Save", Order = 300)]
 	[Shared]
 	public sealed class SaveCodeContextMenuEntry : IContextMenuEntry
 	{
