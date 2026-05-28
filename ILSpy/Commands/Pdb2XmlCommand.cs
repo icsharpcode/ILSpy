@@ -40,7 +40,7 @@ namespace ILSpy.Commands
 	/// <c>Microsoft.DiaSymReader</c> uses native COM interop. WPF gates this command
 	/// identically (<c>#if DEBUG &amp;&amp; WINDOWS</c>).
 	/// </summary>
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDumpPDBAsXML), MenuCategory = nameof(Resources.Open), MenuOrder = 2.7)]
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDumpPDBAsXML), MenuCategory = "Debug", MenuOrder = 33)]
 	[Shared]
 	sealed class Pdb2XmlCommand : SimpleCommand
 	{

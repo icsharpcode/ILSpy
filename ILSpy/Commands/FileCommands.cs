@@ -124,7 +124,7 @@ namespace ILSpy.Commands
 		}
 	}
 
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.ManageAssembly_Lists), MenuIcon = "Images/AssemblyList", MenuCategory = nameof(Resources.Open), MenuOrder = 1.7)]
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.ManageAssembly_Lists), MenuIcon = "Images/AssemblyList", MenuCategory = "AssemblyList", MenuOrder = 10)]
 	[Shared]
 	sealed class ManageAssemblyListsCommand : SimpleCommand
 	{
@@ -165,7 +165,7 @@ namespace ILSpy.Commands
 	// DEBUG-only Pdb2XmlCommand moved to its own file with `#if DEBUG && WINDOWS` gating.
 	// On non-Windows or non-Debug builds the entry simply isn't compiled.
 
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources._RemoveAssembliesWithLoadErrors), MenuCategory = nameof(Resources.Remove), MenuOrder = 2.6)]
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources._RemoveAssembliesWithLoadErrors), MenuCategory = "AssemblyList", MenuOrder = 11)]
 	[Shared]
 	[method: ImportingConstructor]
 	sealed class RemoveAssembliesWithLoadErrors(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
@@ -186,7 +186,7 @@ namespace ILSpy.Commands
 		}
 	}
 
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.ClearAssemblyList), MenuCategory = nameof(Resources.Remove), MenuOrder = 2.6)]
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.ClearAssemblyList), MenuCategory = "AssemblyList", MenuOrder = 12)]
 	[Shared]
 	[method: ImportingConstructor]
 	sealed class ClearAssemblyListCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
@@ -197,7 +197,7 @@ namespace ILSpy.Commands
 		public override void Execute(object? parameter) => assemblyTreeModel.AssemblyList?.Clear();
 	}
 
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources._SaveCode), MenuIcon = "Images/Save", MenuCategory = nameof(Resources.Save), MenuOrder = 0, InputGestureText = "Ctrl+S")]
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources._SaveCode), MenuIcon = "Images/Save", MenuCategory = nameof(Resources.Save), MenuOrder = 20, InputGestureText = "Ctrl+S")]
 	[Shared]
 	[method: ImportingConstructor]
 	internal sealed class SaveCommand(
@@ -275,7 +275,7 @@ namespace ILSpy.Commands
 		}
 	}
 
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.GeneratePortable), MenuCategory = nameof(Resources.Save))]
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.GeneratePortable), MenuCategory = nameof(Resources.Save), MenuOrder = 21)]
 	[Shared]
 	sealed class GeneratePdbCommand : SimpleCommand
 	{

@@ -43,7 +43,7 @@ namespace ILSpy.Commands
 	/// timing in a results tab. Hard-coded output path matches WPF — the command's
 	/// CanExecute gates on that directory existing so it's effectively opt-in.
 	/// </summary>
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile), MenuCategory = nameof(Resources.Open), MenuOrder = 2.5)]
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile), MenuCategory = "Debug", MenuOrder = 30)]
 	[Shared]
 	sealed class DecompileAllCommand : SimpleCommand
 	{
@@ -114,7 +114,7 @@ namespace ILSpy.Commands
 	/// <see cref="DecompileAllCommand"/> but routes through <see cref="ILLanguage"/>.
 	/// CanExecute gates on the output directory existing.
 	/// </summary>
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDisassemble), MenuCategory = nameof(Resources.Open), MenuOrder = 2.55)]
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDisassemble), MenuCategory = "Debug", MenuOrder = 31)]
 	[Shared]
 	sealed class DisassembleAllCommand : SimpleCommand
 	{
@@ -185,7 +185,7 @@ namespace ILSpy.Commands
 	/// and report average wall-clock time. Used for tracking decompilation perf
 	/// regressions across changes.
 	/// </summary>
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile100x), MenuCategory = nameof(Resources.Open), MenuOrder = 2.6)]
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile100x), MenuCategory = "Debug", MenuOrder = 32)]
 	[Shared]
 	sealed class Decompile100TimesCommand : SimpleCommand
 	{
