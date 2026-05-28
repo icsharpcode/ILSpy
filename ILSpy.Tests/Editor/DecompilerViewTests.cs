@@ -213,15 +213,20 @@ public class DecompilerViewTests
 	}
 
 	[AvaloniaTest]
-	public async Task Selecting_Namespace_Node_Decompiles_Namespace()
+	public async Task Selecting_Namespace_Node_In_IL_Lists_Its_Types()
 	{
-		// NamespaceTreeNode → decompiled namespace contents (the small types it contains).
+		// Under the IL disassembler, selecting a NamespaceTreeNode lists the namespace's
+		// types — ILLanguage overrides DecompileNamespace to disassemble them, matching the
+		// WPF app where IL mode disassembles the namespace.
 
-		// Arrange — boot, wait for assemblies, locate System.Runtime.Versioning.
+		// Arrange — boot, wait for assemblies, switch to IL, locate System.Runtime.Versioning.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var languageService = AppComposition.Current.GetExport<LanguageService>();
+		languageService.CurrentLanguage = languageService.GetLanguage("IL");
 
 		var coreLib = typeof(object).Assembly.GetName().Name!;
 		var namespaceNode = vm.AssemblyTreeModel.FindNode<NamespaceTreeNode>(
@@ -231,9 +236,40 @@ public class DecompilerViewTests
 		vm.AssemblyTreeModel.SelectNode(namespaceNode);
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
-		// Assert — representative type names land in the output.
+		// Assert — representative type names land in the IL output.
 		tab.Text.Should().Contain("TargetFrameworkAttribute");
 		tab.Text.Should().Contain("SupportedOSPlatformAttribute");
+	}
+
+	[AvaloniaTest]
+	public async Task Selecting_Namespace_Node_In_CSharp_Shows_Only_The_Namespace_Comment()
+	{
+		// The C# language does NOT override DecompileNamespace, so selecting a namespace node
+		// falls through to the base Language.DecompileNamespace, which writes just a
+		// "// <namespace>" comment — not the contained types. Matches WPF, and keeps a single
+		// click from triggering a multi-second decompile of the whole namespace.
+
+		// Arrange — boot, wait for assemblies, ensure C#, locate System.Runtime.Versioning.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var languageService = AppComposition.Current.GetExport<LanguageService>();
+		languageService.CurrentLanguage = languageService.GetLanguage("C#");
+
+		var coreLib = typeof(object).Assembly.GetName().Name!;
+		var namespaceNode = vm.AssemblyTreeModel.FindNode<NamespaceTreeNode>(
+			coreLib, "System.Runtime.Versioning");
+
+		// Act — select the namespace, wait for the decompile.
+		vm.AssemblyTreeModel.SelectNode(namespaceNode);
+		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		// Assert — only the namespace comment, none of the contained types.
+		tab.Text.Should().Contain("System.Runtime.Versioning");
+		tab.Text.Should().NotContain("TargetFrameworkAttribute");
+		tab.Text.Should().NotContain("SupportedOSPlatformAttribute");
 	}
 
 	[AvaloniaTest]

@@ -320,25 +320,6 @@ namespace ILSpy.Languages
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(type.MetadataToken), decompiler.TypeSystem);
 		}
 
-		public override void DecompileNamespace(string nameSpace, IEnumerable<ITypeDefinition> types, ITextOutput output, DecompilationOptions options)
-		{
-			var typesByModule = types.GroupBy(t => t.ParentModule!.MetadataFile);
-			bool first = true;
-			foreach (var group in typesByModule)
-			{
-				if (!first)
-					output.WriteLine();
-				first = false;
-				MetadataFile assembly = group.Key!;
-				CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
-				AddReferenceAssemblyWarningMessage(assembly, output);
-				AddReferenceWarningMessage(assembly, output);
-				WriteCommentLine(output, assembly.FullName);
-				WriteCommentLine(output, nameSpace);
-				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(group.Select(t => t.MetadataToken)), decompiler.TypeSystem);
-			}
-		}
-
 		public override ProjectId? DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			var module = assembly.GetMetadataFileOrNull();
