@@ -45,21 +45,22 @@ namespace ILSpy.TreeNodes
 
 		public override object Icon => GetIcon(FieldDefinition);
 
-		// Distinguish enum members and const fields from regular instance/static fields so the
-		// tree reads the way the C# source does. The IsReadOnly / FieldReadOnly variant from
-		// the WPF era isn't ported because we don't have a dedicated SVG for it yet -- such
-		// fields fall through to the base Field icon.
+		// Mirrors WPF's discriminator: enum value, const literal, readonly, plain field.
 		public static Avalonia.Media.IImage GetIcon(IField field)
 		{
-			// EnumValue: the field's declaring type is an enum and its return type is the enum
-			// itself -- this excludes the synthesised int32 'value__' backing field.
+			// EnumValue: declaring type is an enum and the return type is the enum itself --
+			// this excludes the synthesised int32 'value__' backing field.
 			if (field.DeclaringType.Kind == TypeKind.Enum && field.ReturnType.Kind == TypeKind.Enum)
-				return Images.Images.GetIcon(Images.Images.Enum,
+				return Images.Images.GetIcon(Images.Images.EnumValue,
 					Images.Images.GetOverlay(field.Accessibility));
 
 			if (field.IsConst)
 				return Images.Images.GetIcon(Images.Images.Literal,
 					Images.Images.GetOverlay(field.Accessibility));
+
+			if (field.IsReadOnly)
+				return Images.Images.GetIcon(Images.Images.FieldReadOnly,
+					Images.Images.GetOverlay(field.Accessibility), field.IsStatic);
 
 			return Images.Images.GetIcon(Images.Images.Field,
 				Images.Images.GetOverlay(field.Accessibility), field.IsStatic);

@@ -110,13 +110,22 @@ namespace ILSpy.Images
 		public static readonly IImage Method = LoadSvg(nameof(Method));
 		public static readonly IImage Constructor = LoadSvg(nameof(Constructor));
 		public static readonly IImage Operator = LoadSvg(nameof(Operator));
+		public static readonly IImage VirtualMethod = LoadSvg(nameof(VirtualMethod));
+		public static readonly IImage ExtensionMethod = LoadSvg(nameof(ExtensionMethod));
+		public static readonly IImage PInvokeMethod = LoadSvg(nameof(PInvokeMethod));
 
 		// Fields / properties / events
 		public static readonly IImage Field = LoadSvg(nameof(Field));
+		public static readonly IImage FieldReadOnly = LoadSvg(nameof(FieldReadOnly));
+		public static readonly IImage EnumValue = LoadSvg(nameof(EnumValue));
 		public static readonly IImage Property = LoadSvg(nameof(Property));
+		public static readonly IImage Indexer = LoadSvg(nameof(Indexer));
 		public static readonly IImage Event = LoadSvg(nameof(Event));
 		public static readonly IImage Literal = LoadSvg(nameof(Literal));
 		public static readonly IImage ViewCode = LoadSvg(nameof(ViewCode));
+
+		// Editing / context-menu icons
+		public static readonly IImage Copy = LoadSvg(nameof(Copy));
 
 		// Reference overlays (small badge layered onto a base icon for TypeRef/MemberRef nodes).
 		internal static readonly IImage ReferenceOverlay = LoadSvg(nameof(ReferenceOverlay));

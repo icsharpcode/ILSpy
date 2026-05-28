@@ -43,16 +43,37 @@ namespace ILSpy.TreeNodes
 
 		public override object NavigationText => Language.EntityToString(MethodDefinition, ConversionFlags.ShowDeclaringType);
 
-		public override object Icon {
-			get {
-				var baseImage = MethodDefinition.IsConstructor ? Images.Images.Constructor :
-					MethodDefinition.IsOperator ? Images.Images.Operator :
-					Images.Images.Method;
-				return Images.Images.GetIcon(baseImage,
-					Images.Images.GetOverlay(MethodDefinition.Accessibility),
-					MethodDefinition.IsStatic,
-					MethodDefinition.IsExtensionMethod);
-			}
+		public override object Icon => GetIcon(MethodDefinition);
+
+		// Mirrors WPF's dispatch order: operator, extension method, constructor,
+		// P/Invoke (DllImport without a body), virtual, plain method. Tested against
+		// every kind in the analyzers fixtures.
+		public static Avalonia.Media.IImage GetIcon(IMethod method)
+		{
+			bool isExtensionMethod = method.IsExtensionMethod
+				|| (method.ResolveExtensionInfo()?.InfoOfExtensionMember((IMethod)method.MemberDefinition).HasValue == true);
+
+			if (method.IsOperator)
+				return Images.Images.GetIcon(Images.Images.Operator,
+					Images.Images.GetOverlay(method.Accessibility), false, isExtensionMethod);
+
+			if (isExtensionMethod)
+				return Images.Images.GetIcon(Images.Images.Method,
+					Images.Images.GetOverlay(method.Accessibility), false, true);
+
+			if (method.IsConstructor)
+				return Images.Images.GetIcon(Images.Images.Constructor,
+					Images.Images.GetOverlay(method.Accessibility), method.IsStatic);
+
+			// P/Invoke: extern method tagged with [DllImport]. !HasBody filters out the
+			// managed wrappers that also carry the attribute via attribute-forwarding.
+			if (!method.HasBody && method.HasAttribute(KnownAttribute.DllImport))
+				return Images.Images.GetIcon(Images.Images.PInvokeMethod,
+					Images.Images.GetOverlay(method.Accessibility), true);
+
+			return Images.Images.GetIcon(
+				method.IsVirtual ? Images.Images.VirtualMethod : Images.Images.Method,
+				Images.Images.GetOverlay(method.Accessibility), method.IsStatic);
 		}
 
 		public override bool ShowExpander => false;

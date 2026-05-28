@@ -47,8 +47,21 @@ namespace ILSpy.TreeNodes
 
 		public override object NavigationText => Language.EntityToString(PropertyDefinition, ConversionFlags.ShowDeclaringType);
 
-		public override object Icon => Images.Images.GetIcon(Images.Images.Property,
-			Images.Images.GetOverlay(PropertyDefinition.Accessibility), PropertyDefinition.IsStatic);
+		public override object Icon => GetIcon(PropertyDefinition);
+
+		// Mirrors WPF: indexers get a distinct base glyph; extension properties (C# 14
+		// extension blocks) layer the Extension overlay on top.
+		public static Avalonia.Media.IImage GetIcon(IProperty property)
+		{
+			IMethod? accessor = property.Getter ?? property.Setter;
+			bool isExtension = accessor is not null
+				&& property.ResolveExtensionInfo()?.InfoOfExtensionMember((IMethod)accessor.MemberDefinition) != null;
+			return Images.Images.GetIcon(
+				property.IsIndexer ? Images.Images.Indexer : Images.Images.Property,
+				Images.Images.GetOverlay(property.Accessibility),
+				property.IsStatic,
+				isExtension);
+		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 			=> language.DecompileProperty(PropertyDefinition, output, options);

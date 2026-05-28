@@ -34,7 +34,7 @@ namespace ILSpy.Commands
 	/// Copies the entity's <see cref="ICSharpCode.Decompiler.TypeSystem.IEntity.ReflectionName"/>
 	/// — the language-independent identifier used by FindNodeByPath etc. — to the clipboard.
 	/// </summary>
-	[ExportContextMenuEntry(Header = nameof(Resources.CopyName), Category = "Edit", Order = 600)]
+	[ExportContextMenuEntry(Header = nameof(Resources.CopyName), Category = "Edit", Icon = "Images/Copy", Order = 600)]
 	[Shared]
 	public sealed class CopyFullyQualifiedNameContextMenuEntry : IContextMenuEntry
 	{
