@@ -8,13 +8,13 @@
              x:DataType="tree:AssemblyTreeModel">
 	<UserControl.Styles>
 		<Style Selector="TextBlock.autoloaded">
-			<Setter Property="Foreground" Value="SteelBlue" />
+			<Setter Property="Foreground" Value="{DynamicResource ILSpy.TreeAutoloadedForeground}" />
 		</Style>
 		<!-- Non-public members (private / internal / etc.) read in gray so the visible API
 		     surface stands out at a glance. The class is applied via Classes.nonPublicAPI
 		     binding on the cell-template TextBlock. -->
 		<Style Selector="TextBlock.nonPublicAPI">
-			<Setter Property="Foreground" Value="Gray" />
+			<Setter Property="Foreground" Value="{DynamicResource ILSpy.TreeNonPublicForeground}" />
 		</Style>
 	</UserControl.Styles>
 

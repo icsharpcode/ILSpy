@@ -11,6 +11,7 @@
              xmlns:metaViews="using:ILSpy.Views"
              xmlns:dockTheme="using:Dock.Avalonia.Themes.Simple"
              xmlns:dockControls="using:Dock.Avalonia.Controls"
+             xmlns:aeFolding="using:AvaloniaEdit.Folding"
              xmlns:recycling="using:Avalonia.Controls.Recycling"
              xmlns:docking="using:ILSpy.Docking"
              xmlns:controls="using:ILSpy.Controls"
@@ -41,6 +42,28 @@
                     <SolidColorBrush x:Key="ILSpy.TooltipBackground" Color="#FFFFE1" />
                     <SolidColorBrush x:Key="ILSpy.TooltipForeground" Color="Black" />
                     <SolidColorBrush x:Key="ILSpy.TooltipBorder" Color="#FF767676" />
+                    <SolidColorBrush x:Key="ILSpy.WindowBackground" Color="#F0F0F0" />
+                    <SolidColorBrush x:Key="ILSpy.WindowForeground" Color="Black" />
+                    <SolidColorBrush x:Key="ILSpy.PaneBackground" Color="White" />
+                    <SolidColorBrush x:Key="ILSpy.TreeAutoloadedForeground" Color="SteelBlue" />
+                    <SolidColorBrush x:Key="ILSpy.TreeNonPublicForeground" Color="Gray" />
+                    <SolidColorBrush x:Key="ILSpy.ChromeBorder" Color="#FFC8CDD3" />
+                    <SolidColorBrush x:Key="ILSpy.SecondaryForeground" Color="Gray" />
+                    <SolidColorBrush x:Key="ILSpy.MenuBackground" Color="White" />
+                    <SolidColorBrush x:Key="ILSpy.MenuForeground" Color="Black" />
+                    <SolidColorBrush x:Key="ILSpy.InputBackground" Color="White" />
+                    <SolidColorBrush x:Key="ILSpy.InputForeground" Color="Black" />
+                    <SolidColorBrush x:Key="ILSpy.InputBorder" Color="#ABADB3" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabStripBackground" Color="#ECECEC" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabItemBackground" Color="#ECECEC" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabItemForeground" Color="Black" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabItemSelectedBackground" Color="White" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabItemActiveBackground" Color="#007ACC" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabItemActiveForeground" Color="White" />
+                    <SolidColorBrush x:Key="ILSpy.FoldingMarkerBackground" Color="#FFFFE1" />
+                    <SolidColorBrush x:Key="ILSpy.FoldingMarkerForeground" Color="#808080" />
+                    <SolidColorBrush x:Key="ILSpy.FoldingMarkerSelectedBackground" Color="White" />
+                    <SolidColorBrush x:Key="ILSpy.FoldingMarkerSelectedForeground" Color="Black" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="ILSpy.EditorBackground" Color="#1E1E1E" />
@@ -56,6 +79,28 @@
                     <SolidColorBrush x:Key="ILSpy.TooltipBackground" Color="#252526" />
                     <SolidColorBrush x:Key="ILSpy.TooltipForeground" Color="#DCDCDC" />
                     <SolidColorBrush x:Key="ILSpy.TooltipBorder" Color="#3F3F46" />
+                    <SolidColorBrush x:Key="ILSpy.WindowBackground" Color="#252526" />
+                    <SolidColorBrush x:Key="ILSpy.WindowForeground" Color="#DCDCDC" />
+                    <SolidColorBrush x:Key="ILSpy.PaneBackground" Color="#1E1E1E" />
+                    <SolidColorBrush x:Key="ILSpy.TreeAutoloadedForeground" Color="#6FA8DC" />
+                    <SolidColorBrush x:Key="ILSpy.TreeNonPublicForeground" Color="#9AA0A6" />
+                    <SolidColorBrush x:Key="ILSpy.ChromeBorder" Color="#3F3F46" />
+                    <SolidColorBrush x:Key="ILSpy.SecondaryForeground" Color="#A0A0A0" />
+                    <SolidColorBrush x:Key="ILSpy.MenuBackground" Color="#2D2D30" />
+                    <SolidColorBrush x:Key="ILSpy.MenuForeground" Color="#DCDCDC" />
+                    <SolidColorBrush x:Key="ILSpy.InputBackground" Color="#3C3C3C" />
+                    <SolidColorBrush x:Key="ILSpy.InputForeground" Color="#DCDCDC" />
+                    <SolidColorBrush x:Key="ILSpy.InputBorder" Color="#555555" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabStripBackground" Color="#252526" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabItemBackground" Color="#2D2D30" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabItemForeground" Color="#DCDCDC" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabItemSelectedBackground" Color="#1E1E1E" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabItemActiveBackground" Color="#007ACC" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabItemActiveForeground" Color="White" />
+                    <SolidColorBrush x:Key="ILSpy.FoldingMarkerBackground" Color="#1E1E1E" />
+                    <SolidColorBrush x:Key="ILSpy.FoldingMarkerForeground" Color="#A0A0A0" />
+                    <SolidColorBrush x:Key="ILSpy.FoldingMarkerSelectedBackground" Color="#2D2D30" />
+                    <SolidColorBrush x:Key="ILSpy.FoldingMarkerSelectedForeground" Color="#DCDCDC" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 
@@ -116,6 +161,107 @@
             <Setter Property="Foreground" Value="{DynamicResource ILSpy.TooltipForeground}" />
             <Setter Property="BorderBrush" Value="{DynamicResource ILSpy.TooltipBorder}" />
             <Setter Property="BorderThickness" Value="1" />
+        </Style>
+
+        <!-- Window-level chrome: every top-level window picks up these brushes for the
+             canvas behind the menu / toolbar / dock area. Foreground propagates by
+             inheritance so default-styled text inside the window goes light on dark. -->
+        <Style Selector="Window">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.WindowBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.WindowForeground}" />
+        </Style>
+
+        <!-- Pane-level surfaces (assembly tree DataGrid, search results, etc.). The grid's
+             own row fills come from the Simple theme; we override the canvas behind the
+             rows so the dark pane reads as a coherent block rather than a light island. -->
+        <Style Selector="DataGrid">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.PaneBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.WindowForeground}" />
+        </Style>
+
+        <!-- Menu surfaces: the inline NativeMenuBar on Linux / Windows, plus every dropdown,
+             flyout, and context menu. macOS uses the native AppKit menu bar so these
+             selectors only affect the in-window menus there. -->
+        <Style Selector="Menu">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.MenuBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.MenuForeground}" />
+        </Style>
+        <!-- Menu items stay transparent so they show whatever surface hosts them: the
+             NativeMenuBar at the top, or the flyout/context-menu background in dropdowns.
+             A solid background here paints lighter rectangles over the menu bar. -->
+        <Style Selector="MenuItem">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.MenuForeground}" />
+        </Style>
+        <Style Selector="ContextMenu">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.MenuBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.MenuForeground}" />
+        </Style>
+        <Style Selector="MenuFlyoutPresenter">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.MenuBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.MenuForeground}" />
+        </Style>
+
+        <!-- Input controls used across dialogs (Options, Open from GAC, Manage Assembly
+             Lists). The Simple theme paints these with white-on-light fills; route them
+             through theme-aware brushes so dark mode doesn't leave glaring rectangles. -->
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.InputBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.InputForeground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ILSpy.InputBorder}" />
+        </Style>
+        <Style Selector="ComboBox">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.InputBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.InputForeground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ILSpy.InputBorder}" />
+        </Style>
+        <Style Selector="ComboBoxItem">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.InputBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.InputForeground}" />
+        </Style>
+        <Style Selector="ListBox">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.InputBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.InputForeground}" />
+        </Style>
+        <Style Selector="ListBoxItem">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.InputBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.InputForeground}" />
+        </Style>
+
+        <!-- Dock chrome: tab strips for the document area and tool panes, plus the
+             selected-tab content area. Without this Simple paints the strip white,
+             which clashes against a dark document background. -->
+        <Style Selector="dockControls|DocumentTabStrip, dockControls|ToolTabStrip">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.DockTabStripBackground}" />
+        </Style>
+        <Style Selector="dockControls|DocumentTabStripItem, dockControls|ToolTabStripItem">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.DockTabItemBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.DockTabItemForeground}" />
+        </Style>
+        <!-- A merely-selected (but not focused) tab gets the seam-matching fill. The active
+             tab keeps Dock's accent highlight (see below). Splitting the two states is
+             required: an application-level Style outranks Dock's DocumentTabStripItem
+             ControlTheme, so a plain :selected setter here would also clobber Dock's
+             ^:active:selected accent fill, flattening the active tab to the seam color. -->
+        <Style Selector="dockControls|DocumentTabStripItem:selected:not(:active), dockControls|ToolTabStripItem:selected:not(:active)">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.DockTabItemSelectedBackground}" />
+        </Style>
+        <!-- Active (focused-dock) selected tab: re-assert Dock's accent fill at app level,
+             since our base DocumentTabStripItem style would otherwise win over the theme. -->
+        <Style Selector="dockControls|DocumentTabStripItem:selected:active, dockControls|ToolTabStripItem:selected:active">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.DockTabItemActiveBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.DockTabItemActiveForeground}" />
+        </Style>
+
+        <!-- AvaloniaEdit folding margin: the +/- toggle squares are painted by FoldingMargin
+             with its own brush properties (Background, Marker, plus selected variants for
+             pointer-over). Default Light values are hardcoded white-on-gray; route them
+             through our theme so the gutter goes dark with the editor. -->
+        <Style Selector="aeFolding|FoldingMargin">
+            <Setter Property="FoldingMarkerBackgroundBrush" Value="{DynamicResource ILSpy.FoldingMarkerBackground}" />
+            <Setter Property="FoldingMarkerBrush" Value="{DynamicResource ILSpy.FoldingMarkerForeground}" />
+            <Setter Property="SelectedFoldingMarkerBackgroundBrush" Value="{DynamicResource ILSpy.FoldingMarkerSelectedBackground}" />
+            <Setter Property="SelectedFoldingMarkerBrush" Value="{DynamicResource ILSpy.FoldingMarkerSelectedForeground}" />
         </Style>
 
         <!-- Suppress the column header's hover / pressed fill while the user is interacting

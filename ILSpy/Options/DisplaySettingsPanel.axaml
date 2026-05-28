@@ -25,7 +25,7 @@
 				               Minimum="6" Maximum="72" Increment="1"
 				               Value="{Binding Settings.SelectedFontSize, Mode=TwoWay}" />
 				<Border Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
-				        BorderBrush="#FFCCCEDB" BorderThickness="1" Padding="6" Margin="0,2,0,0">
+				        BorderBrush="{DynamicResource ILSpy.ChromeBorder}" BorderThickness="1" Padding="6" Margin="0,2,0,0">
 					<!-- FontFamily binds to a derived FontFamily property because Avalonia's
 					     runtime binding pipeline doesn't coerce string → FontFamily (the
 					     implicit conversion only fires at XAML parse time). The viewmodel

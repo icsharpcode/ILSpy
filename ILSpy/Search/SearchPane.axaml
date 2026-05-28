@@ -75,14 +75,14 @@
 						<Grid Grid.Column="2" ColumnDefinitions="Auto,4,*">
 							<Image Grid.Column="0" Source="{Binding LocationImage}" Width="16" Height="16"
 							       VerticalAlignment="Center" />
-							<TextBlock Grid.Column="2" Text="{Binding Location}" Foreground="Gray"
+							<TextBlock Grid.Column="2" Text="{Binding Location}" Foreground="{DynamicResource ILSpy.SecondaryForeground}"
 							           VerticalAlignment="Center"
 							           TextTrimming="CharacterEllipsis" />
 						</Grid>
 						<Grid Grid.Column="4" ColumnDefinitions="Auto,4,*">
 							<Image Grid.Column="0" Source="{Binding AssemblyImage}" Width="16" Height="16"
 							       VerticalAlignment="Center" />
-							<TextBlock Grid.Column="2" Text="{Binding Assembly}" Foreground="Gray"
+							<TextBlock Grid.Column="2" Text="{Binding Assembly}" Foreground="{DynamicResource ILSpy.SecondaryForeground}"
 							           VerticalAlignment="Center"
 							           TextTrimming="CharacterEllipsis" />
 						</Grid>
