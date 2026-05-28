@@ -134,6 +134,26 @@
             <Setter Property="Background" Value="Gray" />
         </Style>
 
+        <!-- Suppress upstream Simple-theme menu scroll chevrons (the two RepeatButtons
+             docked Top/Bottom inside the SimpleMenuScrollViewer template). Their
+             IsVisible binding feeds through MenuScrollingVisibilityConverter, which
+             does an AreClose comparison on Extent vs Viewport; at non-100% DPI
+             scaling the layout-rounding leaves a tiny gap so the converter returns
+             true and the chevrons render even when content fits the popup. Bug
+             tracked upstream as AvaloniaUI/Avalonia#9501. Hiding unconditionally is
+             safe because the popup positioner already clamps menu height to screen
+             bounds, and ILSpy's menus are all small enough to fit without scrolling.
+             Height = 0 collapses the DockPanel slot the buttons would otherwise
+             reserve before the visibility flip propagates. -->
+        <Style Selector="MenuFlyoutPresenter /template/ ScrollViewer /template/ RepeatButton">
+            <Setter Property="IsVisible" Value="False" />
+            <Setter Property="Height" Value="0" />
+        </Style>
+        <Style Selector="ContextMenu /template/ ScrollViewer /template/ RepeatButton">
+            <Setter Property="IsVisible" Value="False" />
+            <Setter Property="Height" Value="0" />
+        </Style>
+
         <!-- VS-style preview tab: italicise the title of any DocumentTabStripItem whose
              dockable is a ContentTabPage with IsPreview=true. Tool-pane tabs and pinned
              document tabs fall through to Normal via the converter's null/false branch.
