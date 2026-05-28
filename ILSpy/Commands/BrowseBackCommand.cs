@@ -32,7 +32,7 @@ namespace ILSpy.Commands
 		MenuIcon = "Images/Back",
 		MenuCategory = nameof(Resources.Navigation),
 		InputGestureText = "Alt+Left",
-		MenuOrder = 100)]
+		MenuOrder = 0)]
 	[Shared]
 	[method: ImportingConstructor]
 	sealed class BrowseBackCommand(DockWorkspace dockWorkspace) : ICommand
@@ -54,7 +54,7 @@ namespace ILSpy.Commands
 		MenuIcon = "Images/Forward",
 		MenuCategory = nameof(Resources.Navigation),
 		InputGestureText = "Alt+Right",
-		MenuOrder = 101)]
+		MenuOrder = 1)]
 	[Shared]
 	[method: ImportingConstructor]
 	sealed class BrowseForwardCommand(DockWorkspace dockWorkspace) : ICommand
