@@ -24,7 +24,7 @@ using ILSpy.Docking;
 
 namespace ILSpy.Commands
 {
-	[ExportMainMenuCommand(Header = nameof(Resources.Window_CloseAllDocuments), ParentMenuID = nameof(Resources._Window))]
+	[ExportMainMenuCommand(Header = nameof(Resources.Window_CloseAllDocuments), ParentMenuID = nameof(Resources._Window), MenuCategory = "Window", MenuOrder = 1)]
 	[Shared]
 	[method: ImportingConstructor]
 	sealed class CloseAllDocumentsCommand(DockWorkspace dockWorkspace) : SimpleCommand
@@ -32,7 +32,7 @@ namespace ILSpy.Commands
 		public override void Execute(object? parameter) => dockWorkspace.CloseAllTabs();
 	}
 
-	[ExportMainMenuCommand(Header = nameof(Resources.Window_ResetLayout), ParentMenuID = nameof(Resources._Window))]
+	[ExportMainMenuCommand(Header = nameof(Resources.Window_ResetLayout), ParentMenuID = nameof(Resources._Window), MenuCategory = "Window", MenuOrder = 2)]
 	[Shared]
 	[method: ImportingConstructor]
 	sealed class ResetLayoutCommand(DockWorkspace dockWorkspace) : SimpleCommand
@@ -47,7 +47,7 @@ namespace ILSpy.Commands
 	/// tree-selection slot. <see cref="DockWorkspace.PinCurrentTab"/> is a no-op when
 	/// there's nothing pinnable (no MainTab, or MainTab already pinned).
 	/// </summary>
-	[ExportMainMenuCommand(Header = nameof(Resources.Window_PinCurrentTab), ParentMenuID = nameof(Resources._Window))]
+	[ExportMainMenuCommand(Header = nameof(Resources.Window_PinCurrentTab), ParentMenuID = nameof(Resources._Window), MenuCategory = "Window", MenuOrder = 0)]
 	[Shared]
 	[method: ImportingConstructor]
 	sealed class PinCurrentTabCommand(DockWorkspace dockWorkspace) : SimpleCommand
