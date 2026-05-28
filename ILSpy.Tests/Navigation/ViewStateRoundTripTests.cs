@@ -88,19 +88,24 @@ public class ViewStateRoundTripTests
 		captured.VerticalOffset.Should().Be(120.5);
 		captured.HorizontalOffset.Should().Be(7.25);
 
-		// Navigate Back. The handler should set Pending* on the tab; the editor view
-		// applies them once Text lands.
+		// Navigate Back. ApplyNavigationTarget synchronously sets PendingVerticalOffset
+		// from the recorded entry before the async decompile runs; the editor view
+		// consumes it in ApplyDocument once Text lands. Assert the scroll-restore intent
+		// here, before the await lets the view consume and null it. We can't assert the
+		// applied result: the headless editor has no rendered viewport (extent 0), so
+		// ScrollToVerticalOffset(120.5) clamps to 0 and LastKnownVerticalOffset reads back
+		// 0. Applying the scroll is the view's job, covered by the real UI, not this test.
 		dockWorkspace.NavigateBackCommand.Execute(null);
+		tab.PendingVerticalOffset.Should().Be(120.5,
+			"Back must schedule a restore of the vertical scroll offset the user left on A");
+
 		await dockWorkspace.WaitForDecompiledTextAsync();
 
-		// After the decompile lands the view consumes Pending* and clears them. To
-		// verify the round-trip without a real editor in headless mode, assert directly
-		// on the tab's LastKnown* — the view's caret-change handler writes those when
-		// it programmatically moves the caret in ApplyDocument.
+		// The caret is a document position, so it round-trips even headless: the view's
+		// caret-change handler writes LastKnownCaretOffset when it programmatically moves
+		// the caret in ApplyDocument.
 		tab.LastKnownCaretOffset.Should().Be(500,
 			"Back must restore the caret to where the user left it before navigating to B");
-		tab.LastKnownVerticalOffset.Should().Be(120.5,
-			"Back must restore the vertical scroll offset");
 	}
 
 	[AvaloniaTest]

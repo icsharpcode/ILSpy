@@ -18,6 +18,7 @@
 
 using System.Composition;
 
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy.AppEnv;
@@ -33,7 +34,7 @@ namespace ILSpy.Commands
 	/// <see cref="CompareEngine"/>. Order matters: the first-selected node becomes the
 	/// "left" side, the second becomes the "right".
 	/// </summary>
-	[ExportContextMenuEntry(Header = "Compare...", Category = "Navigate", Order = 110)]
+	[ExportContextMenuEntry(Header = "Compare...", Category = nameof(Resources.Analyze), Order = 220)]
 	[Shared]
 	public sealed class CompareContextMenuEntry : IContextMenuEntry
 	{
