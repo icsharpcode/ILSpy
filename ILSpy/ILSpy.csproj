@@ -11,6 +11,12 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <RootNamespace>ICSharpCode.ILSpy</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Properties/AssemblyInfo.cs sets [assembly: AssemblyVersion(...)] from
+         DecompilerVersionInfo (which the build pipeline rewrites with the live
+         git revision). The SDK auto-generated AssemblyInfo would overwrite those
+         with whatever <Version> resolves to in the project, defeating the dynamic
+         version injection. -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <!-- ILSpy is committed to System.Composition with attribute-driven discovery
          (matching the WPF host); MEF002 nudges toward code-based DI which doesn't apply.
          CA1001/CA2213 are suppressed in the WPF csproj for the same reason — tab page

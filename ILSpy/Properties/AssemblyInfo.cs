@@ -16,6 +16,29 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+using System.Resources;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
+[assembly: AssemblyTitle("ILSpy")]
+[assembly: AssemblyDescription(".NET assembly inspector and decompiler")]
+[assembly: AssemblyCompany("ic#code")]
+[assembly: AssemblyProduct("ILSpy")]
+[assembly: AssemblyCopyright("Copyright 2011-2026 AlphaSierraPapa for the SharpDevelop Team")]
+[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCulture("")]
+
+// COM visibility: assembly is not exposed to COM. Harmless on non-Windows platforms;
+// mirrors master's contract so the metadata flows identically on Windows builds.
+[assembly: ComVisible(false)]
+
+[assembly: AssemblyVersion(DecompilerVersionInfo.Major + "." + DecompilerVersionInfo.Minor + "." + DecompilerVersionInfo.Build + "." + DecompilerVersionInfo.Revision)]
+[assembly: AssemblyInformationalVersion(DecompilerVersionInfo.FullVersionWithCommitHash)]
+[assembly: NeutralResourcesLanguage("en-US")]
 
 [assembly: InternalsVisibleTo("ILSpy.Tests")]
+
+[assembly: SuppressMessage("Microsoft.Usage", "CA2243:AttributeStringLiteralsShouldParseCorrectly",
+	Justification = "AssemblyInformationalVersion does not need to be a parsable version")]
