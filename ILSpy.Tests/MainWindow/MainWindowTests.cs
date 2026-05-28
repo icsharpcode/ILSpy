@@ -53,7 +53,9 @@ public class MainWindowTests
 
 		// Assert — visible, titled, with the correct DataContext.
 		window.IsVisible.Should().BeTrue();
-		window.Title.Should().Be("ILSpy");
+		// DEBUG builds append the full version (e.g. "ILSpy 11.0.0.x-<branch>-pre") to the
+		// title bar, so match the prefix rather than the exact string.
+		window.Title.Should().StartWith("ILSpy");
 		window.DataContext.Should().BeOfType<MainWindowViewModel>();
 	}
 

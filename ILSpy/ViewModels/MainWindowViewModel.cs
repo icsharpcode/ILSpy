@@ -44,7 +44,12 @@ namespace ILSpy.ViewModels
 
 		public System.Collections.Generic.IReadOnlyList<ToolPaneMenuItem> ToolPaneMenuItems => DockWorkspace.ToolPaneMenuItems;
 
-		public string Title => "ILSpy";
+		public string Title =>
+#if DEBUG
+			$"ILSpy {DecompilerVersionInfo.FullVersion}";
+#else
+			"ILSpy";
+#endif
 
 		[ImportingConstructor]
 		public MainWindowViewModel(
