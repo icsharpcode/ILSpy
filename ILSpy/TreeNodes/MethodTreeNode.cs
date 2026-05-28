@@ -79,7 +79,17 @@ namespace ILSpy.TreeNodes
 		public override bool ShowExpander => false;
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-			=> language.DecompileMethod(MethodDefinition, output, options);
+		{
+			// When the user clicks a method that lives under an ExtensionTreeNode (the C# 14
+			// extension-block container), emit the whole extension declaration via the
+			// dedicated DecompileExtension path so the output reads as source-faithful
+			// `extension(T) { ... }` syntax, not the lowered static method we'd get from
+			// DecompileMethod. Falls through to the regular method path for everything else.
+			if (Parent is ExtensionTreeNode && language is CSharpLanguage cs)
+				cs.DecompileExtension(MethodDefinition, output, options);
+			else
+				language.DecompileMethod(MethodDefinition, output, options);
+		}
 
 		public override bool IsPublicAPI => MethodDefinition.Accessibility switch {
 			Accessibility.Public or Accessibility.Protected or Accessibility.ProtectedOrInternal => true,
