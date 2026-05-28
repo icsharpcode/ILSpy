@@ -34,7 +34,7 @@ using ILSpy.ViewModels;
 
 namespace ILSpy.Commands
 {
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._Help), Header = nameof(Resources._About), MenuOrder = 99999)]
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._Help), Header = nameof(Resources._About), MenuCategory = "Help", MenuOrder = 99999)]
 	[Shared]
 	sealed class AboutCommand : SimpleCommand
 	{

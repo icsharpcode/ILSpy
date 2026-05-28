@@ -24,7 +24,7 @@ using ILSpy.ViewModels;
 
 namespace ILSpy.Commands
 {
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._Help), Header = nameof(Resources._CheckUpdates), MenuOrder = 5000)]
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._Help), Header = nameof(Resources._CheckUpdates), MenuCategory = "Help", MenuOrder = 0)]
 	[Shared]
 	sealed class CheckForUpdatesCommand : SimpleCommand
 	{
