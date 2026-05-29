@@ -112,8 +112,9 @@
                  via the style below. -->
             <docking:DockableViewRecycling x:Key="ControlRecyclingKey" />
 
-            <!-- Override ProDataGrid's hierarchical expander to a classic Windows-Explorer-sized 9x9 box,
-                 plus 4px of left padding (so the ToggleButton itself is 13x9). -->
+            <!-- Override ProDataGrid's hierarchical expander to a classic Windows-Explorer-sized 9x9 box.
+                 13 is the laid-out column footprint (glyph + 4px left padding); the actual click target
+                 is grown to 16x16 in the PART_Expander template below without disturbing this footprint. -->
             <x:Double x:Key="DataGridHierarchicalExpanderSize">13</x:Double>
             <x:Double x:Key="DataGridHierarchicalExpanderGlyphSize">5</x:Double>
 
@@ -275,30 +276,37 @@
 
         <!-- Classic Windows-Explorer +/- expander. Colors are hardcoded because the
              presenter's :checked style forces Background/BorderBrush to Transparent
-             through TemplateBinding. The Margin offsets the visible glyph from the
-             presenter cell's left edge — the presenter itself overwrites its Padding
-             from Level * Indent in code. -->
+             through TemplateBinding. The 4px left margin (Left-aligned, not centred)
+             pins the visible glyph at x=4..13 inside the 16px-wide hit target, i.e.
+             centred at +8.5 — the position TreeLines draws to — regardless of the
+             enlarged button. The presenter overwrites its Padding from Level * Indent
+             in code. -->
         <Style Selector="DataGridHierarchicalPresenter /template/ ToggleButton#PART_Expander">
             <Setter Property="Padding" Value="0" />
             <Setter Property="Template">
                 <ControlTemplate TargetType="ToggleButton">
-                    <Border Width="9" Height="9"
-                            Margin="4,0,0,0"
-                            BorderThickness="1"
-                            BorderBrush="#828790"
-                            CornerRadius="1"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                <GradientStop Color="White" Offset="0.2" />
-                                <GradientStop Color="#FFC0B7A6" Offset="1" />
-                            </LinearGradientBrush>
-                        </Border.Background>
-                        <Path Name="ExpandPath"
-                              Margin="1"
-                              Fill="Black"
-                              Data="M 0 2 L 0 3 L 2 3 L 2 5 L 3 5 L 3 3 L 5 3 L 5 2 L 3 2 L 3 0 L 2 0 L 2 2 Z" />
+                    <!-- Transparent surface filling the whole 16x16 button so the entire target
+                         is hit-testable, not just the 9x9 glyph. Disabled (leaf) rows don't
+                         hit-test, so this never steals clicks from non-expandable rows. -->
+                    <Border Background="Transparent">
+                        <Border Width="9" Height="9"
+                                Margin="4,0,0,0"
+                                BorderThickness="1"
+                                BorderBrush="#828790"
+                                CornerRadius="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                    <GradientStop Color="White" Offset="0.2" />
+                                    <GradientStop Color="#FFC0B7A6" Offset="1" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Path Name="ExpandPath"
+                                  Margin="1"
+                                  Fill="Black"
+                                  Data="M 0 2 L 0 3 L 2 3 L 2 5 L 3 5 L 3 3 L 5 3 L 5 2 L 3 2 L 3 0 L 2 0 L 2 2 Z" />
+                        </Border>
                     </Border>
                 </ControlTemplate>
             </Setter>
@@ -387,12 +395,20 @@
                                             Level="{Binding Level, RelativeSource={RelativeSource TemplatedParent}}" />
                         <Border Padding="{TemplateBinding Padding}">
                             <Grid ColumnDefinitions="Auto,*">
+                                <!-- Hit target is 16x16 for reliable tapping, but the negative
+                                     right margin keeps the laid-out width at 13 (16 - 3) so the
+                                     Auto column, content offset, and TreeLines (which assume a
+                                     13px expander column, glyph centred at +8.5) are unchanged.
+                                     The 3px overflow falls into the content-margin gap on the
+                                     right; growing leftwards would land outside the row at level 0.
+                                     The button's own template keeps the visible glyph a 9x9 box. -->
                                 <ToggleButton x:Name="PART_Expander"
-                                              Width="{DynamicResource DataGridHierarchicalExpanderSize}"
-                                              Height="{DynamicResource DataGridHierarchicalExpanderSize}"
+                                              Width="16"
+                                              Height="16"
+                                              Margin="0,0,-3,0"
                                               Theme="{DynamicResource DataGridHierarchicalExpanderTheme}"
                                               IsEnabled="{TemplateBinding IsExpandable}"
-                                              HorizontalAlignment="Center"
+                                              HorizontalAlignment="Left"
                                               VerticalAlignment="Center"
                                               IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}" />
                                 <ContentPresenter Grid.Column="1"
