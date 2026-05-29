@@ -58,6 +58,27 @@ namespace ILSpy.Commands
 
 		public override void Execute(object? parameter)
 		{
+			var output = BuildAboutOutput();
+			var content = CreateTabContent(Resources.About, output, ".txt", isStaticContent: true);
+			var tab = dockWorkspace.OpenNewTab(content);
+			dockWorkspace.RecordStaticPage(tab, new Uri("resource:aboutpage"));
+		}
+
+		/// <summary>
+		/// Renders the About page into the reusable main tab as the startup welcome screen.
+		/// The content is non-static so the first tree-node selection cleanly reuses the tab
+		/// and replaces it. Invoked by <see cref="AssemblyTree.AssemblyTreeModel"/> when ILSpy
+		/// launches with no node selected and nothing to restore.
+		/// </summary>
+		public void ShowWelcome()
+		{
+			var output = BuildAboutOutput();
+			var content = CreateTabContent(Resources.About, output, ".txt", isStaticContent: false);
+			dockWorkspace.ShowWelcomePage(content);
+		}
+
+		AvaloniaEditTextOutput BuildAboutOutput()
+		{
 			var output = new AvaloniaEditTextOutput { Title = Resources.About };
 			output.WriteLine(Resources.ILSpyVersion + DecompilerVersionInfo.FullVersionWithCommitHash);
 			output.WriteLine(Resources.NETFrameworkVersion + GetDotnetProductVersion());
@@ -81,11 +102,10 @@ namespace ILSpy.Commands
 			foreach (var (phrase, uri) in Links)
 				output.AddVisualLineElementGenerator(new ResourceLinkGenerator(phrase, uri));
 
-			var (tab, _) = OpenInNewTab(Resources.About, output, ".txt");
-			dockWorkspace.RecordStaticPage(tab, new Uri("resource:aboutpage"));
+			return output;
 		}
 
-		(ContentTabPage Tab, DecompilerTabPageModel Content) OpenInNewTab(string title, AvaloniaEditTextOutput output, string syntaxExtension)
+		DecompilerTabPageModel CreateTabContent(string title, AvaloniaEditTextOutput output, string syntaxExtension, bool isStaticContent)
 		{
 			var content = new DecompilerTabPageModel {
 				Title = title,
@@ -96,13 +116,13 @@ namespace ILSpy.Commands
 				DefinitionLookup = output.DefinitionLookup,
 				UIElements = output.UIElements,
 				Foldings = output.Foldings,
-				IsStaticContent = true,
+				IsStaticContent = isStaticContent,
 				CustomElementGenerators = output.ElementGenerators.Count > 0
 					? new List<VisualLineElementGenerator>(output.ElementGenerators)
 					: null,
 			};
 			content.OpenUriRequested += OnOpenUri;
-			return (dockWorkspace.OpenNewTab(content), content);
+			return content;
 		}
 
 		bool OnOpenUri(Uri uri)
@@ -122,7 +142,8 @@ namespace ILSpy.Commands
 			using var reader = new StreamReader(stream);
 			var output = new AvaloniaEditTextOutput { Title = resourceName };
 			output.Write(reader.ReadToEnd());
-			var (tab, _) = OpenInNewTab(resourceName, output, ".txt");
+			var content = CreateTabContent(resourceName, output, ".txt", isStaticContent: true);
+			var tab = dockWorkspace.OpenNewTab(content);
 			dockWorkspace.RecordStaticPage(tab, new Uri("resource:" + resourceName));
 		}
 

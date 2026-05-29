@@ -41,6 +41,10 @@ public class TestApp : ProductionApp
 
 	public override void OnFrameworkInitializationCompleted()
 	{
+		// Tests boot the app repeatedly; seeding the entire shared framework (~150 assemblies)
+		// per test is ~10x slower. Opt into the minimal default-list seed instead.
+		ProductionApp.SeedFullFrameworkDefaultList = false;
+
 		var sessionsRoot = Path.Combine(Path.GetTempPath(), "ILSpy.Tests");
 		// Sweep any leftover session dirs from previous runs first — ProcessExit-time cleanup
 		// is best-effort and the active session's settings file is sometimes still locked when

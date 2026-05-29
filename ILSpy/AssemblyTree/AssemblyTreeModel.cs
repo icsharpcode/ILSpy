@@ -56,6 +56,9 @@ namespace ILSpy.AssemblyTree
 		readonly SettingsService settingsService;
 		readonly LanguageService languageService;
 		AssemblyListManager? listManager;
+		// True until the first assembly-list activation completes — gates the startup-only
+		// About-page greeting so switching lists later never re-triggers it.
+		bool initialActivation = true;
 		AssemblyListTreeNode? assemblyListTreeNode;
 
 		[ObservableProperty]
@@ -298,6 +301,11 @@ namespace ILSpy.AssemblyTree
 			settingsService.SessionSettings.ActiveAssemblyList = value;
 			ShowAssemblyList(value);
 
+			// First activation is the startup one; a later switch to a different list isn't.
+			// Only startup gets the empty-selection About-page greeting.
+			bool isInitial = initialActivation;
+			initialActivation = false;
+
 			// Restore the previously-selected tree node off the UI critical path. The walk
 			// crosses an AssemblyTreeNode whose EnsureLazyChildren synchronously blocks on
 			// GetLoadResultAsync — by going async here and awaiting the load, we let the
@@ -311,36 +319,37 @@ namespace ILSpy.AssemblyTree
 			if (App.CommandLineArguments?.NavigateTo is { Length: > 0 })
 				return;
 			var savedPath = settingsService.SessionSettings.ActiveTreeViewPath;
-			if (savedPath is { Length: > 0 })
-				_ = RestoreSelectedPathAsync(savedPath);
+			_ = RestoreSelectedPathAsync(savedPath, isInitial);
 		}
 
-		async Task RestoreSelectedPathAsync(string[] path)
+		async Task RestoreSelectedPathAsync(string[]? path, bool isInitial)
 		{
-			using var _ = AppEnv.AppLog.Phase($"RestoreSelectedPathAsync ({path.Length} segments)");
+			using var _ = AppEnv.AppLog.Phase($"RestoreSelectedPathAsync ({path?.Length ?? 0} segments, initial={isInitial})");
 			try
 			{
-				if (Root == null)
-					return;
 				// Snapshot — if the user selects something else before the restore completes,
 				// don't yank their selection out from under them.
 				var initialSelection = SelectedItem;
-				SharpTreeNode? node = Root;
-				foreach (var element in path)
+				SharpTreeNode? node = null;
+				if (path is { Length: > 0 } && Root != null)
 				{
-					if (node == null)
-						break;
-					// Awaiting GetLoadResultAsync keeps EnsureLazyChildren — which itself does
-					// GetAwaiter().GetResult() on the same task — from blocking the UI thread.
-					// Once the load completes the .GetAwaiter().GetResult() returns instantly.
-					if (node is AssemblyTreeNode asm)
+					node = Root;
+					foreach (var element in path)
 					{
-						using (AppEnv.AppLog.Phase($"await GetLoadResultAsync ({asm.LoadedAssembly.ShortName})"))
-							await asm.LoadedAssembly.GetLoadResultAsync().ConfigureAwait(true);
+						if (node == null)
+							break;
+						// Awaiting GetLoadResultAsync keeps EnsureLazyChildren — which itself does
+						// GetAwaiter().GetResult() on the same task — from blocking the UI thread.
+						// Once the load completes the .GetAwaiter().GetResult() returns instantly.
+						if (node is AssemblyTreeNode asm)
+						{
+							using (AppEnv.AppLog.Phase($"await GetLoadResultAsync ({asm.LoadedAssembly.ShortName})"))
+								await asm.LoadedAssembly.GetLoadResultAsync().ConfigureAwait(true);
+						}
+						using (AppEnv.AppLog.Phase($"EnsureLazyChildren ({node.GetType().Name} \"{element}\")"))
+							node.EnsureLazyChildren();
+						node = node.Children.FirstOrDefault(c => c.ToString() == element);
 					}
-					using (AppEnv.AppLog.Phase($"EnsureLazyChildren ({node.GetType().Name} \"{element}\")"))
-						node.EnsureLazyChildren();
-					node = node.Children.FirstOrDefault(c => c.ToString() == element);
 				}
 				// Wait for the tree view to be Loaded before assigning SelectedItem. Without
 				// this, the SelectedItem assignment runs ShowSelectedNode → CurrentNodes →
@@ -353,13 +362,37 @@ namespace ILSpy.AssemblyTree
 					await Task.WhenAny(TreeReady, Task.Delay(TimeSpan.FromSeconds(5)))
 						.ConfigureAwait(true);
 				}
-				if (node != null && node != Root && ReferenceEquals(SelectedItem, initialSelection))
+				// Bail if the user selected something else while we were resolving.
+				if (!ReferenceEquals(SelectedItem, initialSelection))
+					return;
+				if (node != null && node != Root)
+				{
 					SelectedItem = node;
+				}
+				else if (isInitial && SelectedItem == null)
+				{
+					// Launched with nothing to restore (no saved path, or it no longer resolves):
+					// greet the user with the About page in the main tab instead of a blank view.
+					ShowAboutWelcomePage();
+				}
 			}
 			catch (Exception ex)
 			{
 				System.Diagnostics.Debug.WriteLine($"[AssemblyTreeModel] saved-path restore failed: {ex}");
 			}
+		}
+
+		// Open the About page as the startup welcome screen. The command is resolved lazily
+		// through the menu registry (it's an ExportFactory, not instantiated until needed),
+		// and its instance IS the AboutCommand, so we can drive its welcome path directly.
+		void ShowAboutWelcomePage()
+		{
+			var registry = TryGetExport<MainMenuCommandRegistry>();
+			var export = registry?.Commands
+				.FirstOrDefault(c => c.Metadata.Header == nameof(ICSharpCode.ILSpy.Properties.Resources._About))
+				?.CreateExport();
+			if (export?.Value is Commands.AboutCommand about)
+				about.ShowWelcome();
 		}
 
 		void ShowAssemblyList(string name)
@@ -388,7 +421,7 @@ namespace ILSpy.AssemblyTree
 			if (list.GetAssemblies().Length == 0 && list.ListName == AssemblyListManager.DefaultListName)
 			{
 				using (AppEnv.AppLog.Phase("LoadInitialAssemblies"))
-					LoadInitialAssemblies(list);
+					LoadInitialAssemblies(list, listManager);
 			}
 			AppEnv.AppLog.Mark($"AssemblyList contains {list.GetAssemblies().Length} assemblies");
 			using (AppEnv.AppLog.Phase("new AssemblyListTreeNode"))
@@ -602,18 +635,38 @@ namespace ILSpy.AssemblyTree
 				.FirstOrDefault(n => n.MethodDefinition.MetadataToken == method.MetadataToken);
 		}
 
-		static void LoadInitialAssemblies(AssemblyList assemblyList)
+		static void LoadInitialAssemblies(AssemblyList assemblyList, AssemblyListManager? manager)
 		{
-			System.Reflection.Assembly[] initialAssemblies = {
-				typeof(object).Assembly,
-				typeof(Uri).Assembly,
-				typeof(System.Linq.Enumerable).Assembly,
-			};
-			foreach (var asm in initialAssemblies)
+			// Headless tests opt out of the full-framework seed (it would re-open ~150 assemblies
+			// per test); they fall back to the minimal trio the previous version shipped so their
+			// expectations and runtime stay unchanged.
+			if (!App.SeedFullFrameworkDefaultList || manager == null)
 			{
-				if (!string.IsNullOrEmpty(asm.Location))
-					assemblyList.OpenAssembly(asm.Location);
+				System.Reflection.Assembly[] minimal = {
+					typeof(object).Assembly,
+					typeof(Uri).Assembly,
+					typeof(System.Linq.Enumerable).Assembly,
+				};
+				foreach (var asm in minimal)
+				{
+					if (!string.IsNullOrEmpty(asm.Location))
+						assemblyList.OpenAssembly(asm.Location);
+				}
+				return;
 			}
+
+			// First-run default: seed the .NET framework assemblies ILSpy itself is running on -
+			// every managed assembly in the shared-framework directory that hosts the running
+			// runtime (the folder containing System.Private.CoreLib). The manager applies the
+			// same managed-PE filter the preconfigured runtime lists use, so native runtime
+			// libraries (coreclr, clrjit, *_cor3.dll, ...) are skipped.
+			var coreLibLocation = typeof(object).Assembly.Location;
+			if (string.IsNullOrEmpty(coreLibLocation))
+				return;
+			var frameworkDirectory = System.IO.Path.GetDirectoryName(coreLibLocation);
+			if (string.IsNullOrEmpty(frameworkDirectory))
+				return;
+			manager.AddFrameworkAssembliesFromDirectory(assemblyList, frameworkDirectory);
 		}
 
 		public void SelectNode(SharpTreeNode? node)

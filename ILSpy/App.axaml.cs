@@ -38,6 +38,12 @@ namespace ILSpy
 		public static CommandLineArguments? CommandLineArguments { get; private set; }
 		public static CompositionHost? Composition { get; private set; }
 
+		// On first run the default assembly list is seeded with the entire shared-framework
+		// directory the running runtime lives in (~150 assemblies). Headless tests flip this
+		// off so each test boots with a minimal default instead of re-seeding the whole
+		// framework per test (which is ~10x slower); see TestApp.
+		public static bool SeedFullFrameworkDefaultList { get; set; } = true;
+
 		public override void Initialize()
 		{
 			AvaloniaXamlLoader.Load(this);

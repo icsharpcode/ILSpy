@@ -1092,6 +1092,32 @@ namespace ILSpy.Docking
 		}
 
 		/// <summary>
+		/// Renders <paramref name="content"/> in the reusable MainTab as a transient welcome
+		/// page (the About page shown at startup when nothing is selected). Unlike Help &gt;
+		/// About this does not pin a static page: the content is non-static, so the first
+		/// tree-node selection reuses the MainTab and replaces it, leaving the user with a
+		/// single tab rather than a stray empty one.
+		/// </summary>
+		/// <remarks>
+		/// The greeting is fired asynchronously at startup (after the tree signals ready), so by
+		/// the time it runs the user may already have opened a document tab that doesn't move the
+		/// tree selection (e.g. Compare...). Only greet when the MainTab is still empty AND still
+		/// the active document; otherwise stealing activation would yank the user off whatever
+		/// they just opened.
+		/// </remarks>
+		public void ShowWelcomePage(TextView.DecompilerTabPageModel content)
+		{
+			if (factory.MainTab is not { } main)
+				return;
+			if (main.Content != null)
+				return;
+			if (factory.Documents is { } docs && !ReferenceEquals(docs.ActiveDockable, main))
+				return;
+			main.Content = content;
+			ActivateMainTabIfNeeded(main);
+		}
+
+		/// <summary>
 		/// VS-style "pin tab" gesture. The current <c>factory.MainTab</c> keeps its position,
 		/// content, and active state but flips to pinned
 		/// (<see cref="ContentTabPage.IsPreview"/> = false). No new tab spawns at pin time:
