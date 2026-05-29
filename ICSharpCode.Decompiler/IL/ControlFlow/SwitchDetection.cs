@@ -208,7 +208,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 				controlFlowGraph = null; // control flow graph is no-longer valid
 				blockContainerNeedsCleanup = true;
-				SortSwitchSections(sw);
+				SortSwitchSections(sw, context);
 			}
 			else
 			{
@@ -249,16 +249,23 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 				});
 			AdjustLabels(sw, context);
-			SortSwitchSections(sw);
+			SortSwitchSections(sw, context);
 		}
 
-		static void SortSwitchSections(SwitchInstruction sw)
+		static void SortSwitchSections(SwitchInstruction sw, ILTransformContext context)
 		{
-			sw.Sections.ReplaceList(sw.Sections.OrderBy(s => s.Body switch {
-				Branch b => b.TargetILOffset,
-				Leave l => l.StartILOffset,
-				_ => (int?)null
-			}).ThenBy(s => s.Labels.Values.FirstOrDefault()));
+			if (context.Settings.SortSwitchSections)
+			{
+				sw.Sections.ReplaceList(sw.Sections.OrderBy(s => s.Labels.Values.FirstOrDefault()));
+			}
+			else
+			{
+				sw.Sections.ReplaceList(sw.Sections.OrderBy(s => s.Body switch {
+					Branch b => b.TargetILOffset,
+					Leave l => l.StartILOffset,
+					_ => (int?)null
+				}).ThenBy(s => s.Labels.Values.FirstOrDefault()));
+			}
 		}
 
 		static void AdjustLabels(SwitchInstruction sw, ILTransformContext context)
