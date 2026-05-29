@@ -13,9 +13,13 @@
 			<Button Name="DeleteButton" Content="_Delete" />
 			<Button Name="ResetButton" Margin="0,12,0,0" Content="_Reset" />
 		</StackPanel>
-		<StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
-			<Button Name="SelectButton" Content="Select" IsDefault="True" MinWidth="72" />
-			<Button Name="CloseButton" Content="Close" IsCancel="True" MinWidth="72" />
-		</StackPanel>
+		<Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto">
+			<Button Grid.Column="0" Name="AddPreconfiguredButton" HorizontalAlignment="Left"
+			        Content="Add preconfigured list..." />
+			<StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+				<Button Name="SelectButton" Content="Select" IsDefault="True" MinWidth="72" />
+				<Button Name="CloseButton" Content="Close" IsCancel="True" MinWidth="72" />
+			</StackPanel>
+		</Grid>
 	</Grid>
 </Window>

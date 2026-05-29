@@ -17,12 +17,16 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX;
 
 namespace ILSpy.Views
@@ -65,8 +69,23 @@ namespace ILSpy.Views
 			this.FindControl<Button>("RenameButton")!.Click += async (_, _) => await RenameListAsync();
 			this.FindControl<Button>("DeleteButton")!.Click += (_, _) => DeleteList();
 			this.FindControl<Button>("ResetButton")!.Click += (_, _) => ResetLists();
+			var addPreconfigured = this.FindControl<Button>("AddPreconfiguredButton")!;
+			addPreconfigured.Click += (_, _) => ShowPreconfiguredMenu(addPreconfigured);
 			this.FindControl<Button>("SelectButton")!.Click += (_, _) => SelectAndClose();
 			this.FindControl<Button>("CloseButton")!.Click += (_, _) => Close();
+		}
+
+		void ShowPreconfiguredMenu(Button anchor)
+		{
+			var flyout = new MenuFlyout();
+			foreach (var config in GetPreconfiguredAssemblyLists())
+			{
+				var captured = config;
+				var item = new MenuItem { Header = captured.Name };
+				item.Click += async (_, _) => await AddPreconfiguredListAsync(captured);
+				flyout.Items.Add(item);
+			}
+			flyout.ShowAt(anchor);
 		}
 
 		string? SelectedListName => listsBox.SelectedItem as string;
@@ -136,5 +155,89 @@ namespace ILSpy.Views
 				settingsService.SessionSettings.ActiveAssemblyList = selected;
 			Close();
 		}
+
+		/// <summary>
+		/// The list of preconfigured assembly lists offered by the "Add preconfigured list..."
+		/// menu: the three GAC-based framework lists (only when a GAC is actually present, i.e.
+		/// on Windows) plus one entry per installed .NET runtime discovered under the dotnet
+		/// install's <c>shared</c> folder (works on every platform). Mirrors WPF's
+		/// ManageAssemblyListsViewModel.ResolvePreconfiguredAssemblyLists.
+		/// </summary>
+		internal IEnumerable<PreconfiguredAssemblyList> GetPreconfiguredAssemblyLists()
+		{
+			if (IsGacAvailable())
+			{
+				yield return new PreconfiguredAssemblyList(AssemblyListManager.DotNet4List);
+				yield return new PreconfiguredAssemblyList(AssemblyListManager.DotNet35List);
+				yield return new PreconfiguredAssemblyList(AssemblyListManager.ASPDotNetMVC3List);
+			}
+
+			var basePath = DotNetCorePathFinder.FindDotNetExeDirectory();
+			if (basePath == null)
+				yield break;
+
+			var sharedRoot = Path.Combine(basePath, "shared");
+			if (!Directory.Exists(sharedRoot))
+				yield break;
+
+			var foundVersions = new Dictionary<string, string>();
+			var latestRevision = new Dictionary<string, int>();
+			foreach (var sdkDir in Directory.GetDirectories(sharedRoot))
+			{
+				if (sdkDir.EndsWith(".Ref", StringComparison.OrdinalIgnoreCase))
+					continue;
+				foreach (var versionDir in Directory.GetDirectories(sdkDir))
+				{
+					var match = Regex.Match(versionDir, @"[/\\](?<name>[A-z0-9.]+)[/\\](?<version>\d+\.\d+)(.(?<revision>\d+))?(?<suffix>-.*)?$");
+					if (!match.Success)
+						continue;
+					string name = match.Groups["name"].Value;
+					int index = name.LastIndexOfAny(new[] { '/', '\\' });
+					if (index >= 0)
+						name = name.Substring(index + 1);
+					string text = name + " " + match.Groups["version"].Value;
+					if (!latestRevision.TryGetValue(text, out int revision))
+						revision = -1;
+					int newRevision = int.Parse(match.Groups["revision"].Value);
+					if (newRevision > revision)
+					{
+						latestRevision[text] = newRevision;
+						foundVersions[text] = versionDir;
+					}
+				}
+			}
+
+			foreach (var pair in foundVersions)
+				yield return new PreconfiguredAssemblyList($"{pair.Key}(.{latestRevision[pair.Key]})", pair.Value);
+		}
+
+		static bool IsGacAvailable()
+			=> UniversalAssemblyResolver.GetGacPaths().Any(Directory.Exists);
+
+		async Task AddPreconfiguredListAsync(PreconfiguredAssemblyList config)
+		{
+			var name = await PromptAsync("Add preconfigured list...", config.Name);
+			if (string.IsNullOrWhiteSpace(name) || manager.AssemblyLists.Contains(name))
+				return;
+			CreatePreconfiguredList(config, name);
+		}
+
+		/// <summary>
+		/// Builds the preconfigured list via the shared <see cref="AssemblyListManager"/> and
+		/// registers it under <paramref name="newName"/>, but only if it actually resolved any
+		/// assemblies (the GAC-based lists yield nothing off Windows). Returns the created list,
+		/// or <see langword="null"/> when nothing was added. Separated from the prompt so it can
+		/// be driven directly by tests.
+		/// </summary>
+		internal AssemblyList? CreatePreconfiguredList(PreconfiguredAssemblyList config, string newName)
+		{
+			var list = manager.CreateDefaultList(config.Name, config.Path, newName);
+			if (list.Count == 0)
+				return null;
+			manager.AddListIfNotExists(list);
+			return list;
+		}
+
+		internal sealed record PreconfiguredAssemblyList(string Name, string? Path = null);
 	}
 }
