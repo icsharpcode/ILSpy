@@ -2375,6 +2375,26 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool sortSwitchSections = false;
+
+		/// <summary>
+		/// Sort switch sections by their label value instead of by IL offset.
+		/// Useful when diffing decompiler output across rebuilds of obfuscated assemblies,
+		/// where IL block layout is unstable but the case-to-value mapping is not.
+		/// </summary>
+		[Category("DecompilerSettings.Other")]
+		[Description("DecompilerSettings.SortSwitchSections")]
+		public bool SortSwitchSections {
+			get { return sortSwitchSections; }
+			set {
+				if (sortSwitchSections != value)
+				{
+					sortSwitchSections = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool checkForOverflowUnderflow = false;
 
 		/// <summary>
