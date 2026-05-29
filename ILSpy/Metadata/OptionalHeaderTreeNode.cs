@@ -43,7 +43,7 @@ namespace ILSpy.Metadata
 		}
 
 		public override object Text => "Optional Header";
-		public override object Icon => Images.Images.MetadataTable;
+		public override object Icon => Images.Images.Header;
 		public override string ToString() => "Optional Header";
 
 		public override TabPageModel CreateTab()

@@ -49,7 +49,7 @@ namespace ILSpy.Metadata
 
 		public override object Text => title;
 
-		public override object Icon => Images.Images.MetadataFile;
+		public override object Icon => Images.Images.Metadata;
 
 		// Stable identity for SessionSettings.ActiveTreeViewPath.
 		public override string ToString() => "Metadata: " + title;

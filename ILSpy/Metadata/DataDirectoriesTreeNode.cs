@@ -43,7 +43,8 @@ namespace ILSpy.Metadata
 		}
 
 		public override object Text => "Data Directories";
-		public override object Icon => Images.Images.MetadataTable;
+		public override object Icon => Images.Images.ListFolder;
+		public override object ExpandedIcon => Images.Images.ListFolderOpen;
 		public override string ToString() => "Data Directories";
 
 		public override TabPageModel CreateTab()

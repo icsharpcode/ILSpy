@@ -47,7 +47,7 @@ namespace ILSpy.Metadata
 		}
 
 		public override object Text => "Tables";
-		public override object Icon => Images.Images.MetadataTable;
+		public override object Icon => Images.Images.MetadataTableGroup;
 		public override string ToString() => "Tables";
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)

@@ -41,7 +41,7 @@ namespace ILSpy.Metadata
 		}
 
 		public override object Text => "DOS Header";
-		public override object Icon => Images.Images.MetadataTable;
+		public override object Icon => Images.Images.Header;
 		public override string ToString() => "DOS Header";
 
 		public override TabPageModel CreateTab()

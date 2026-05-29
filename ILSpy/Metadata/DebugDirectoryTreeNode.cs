@@ -47,8 +47,8 @@ namespace ILSpy.Metadata
 		}
 
 		public override object Text => "Debug Directory";
-		public override object Icon => Images.Images.FolderClosed;
-		public override object ExpandedIcon => Images.Images.FolderOpen;
+		public override object Icon => Images.Images.ListFolder;
+		public override object ExpandedIcon => Images.Images.ListFolderOpen;
 		public override string ToString() => "Debug Directory";
 
 		public override TabPageModel CreateTab()

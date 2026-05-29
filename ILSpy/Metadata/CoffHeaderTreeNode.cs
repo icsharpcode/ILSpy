@@ -42,7 +42,7 @@ namespace ILSpy.Metadata
 		}
 
 		public override object Text => "COFF Header";
-		public override object Icon => Images.Images.MetadataTable;
+		public override object Icon => Images.Images.Header;
 		public override string ToString() => "COFF Header";
 
 		public override TabPageModel CreateTab()

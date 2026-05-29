@@ -44,6 +44,6 @@ namespace ILSpy.Metadata
 			this.metadataFile = metadataFile ?? throw new ArgumentNullException(nameof(metadataFile));
 		}
 
-		public override object Icon => Images.Images.MetadataTable;
+		public override object Icon => Images.Images.Heap;
 	}
 }

@@ -94,8 +94,14 @@ namespace ILSpy.Images
 		public static readonly IImage Namespace = LoadSvg(nameof(Namespace));
 		public static readonly IImage ReferenceFolder = LoadSvg(nameof(ReferenceFolder));
 		public static readonly IImage MetadataTable = LoadSvg(nameof(MetadataTable));
+		public static readonly IImage MetadataTableGroup = LoadSvg(nameof(MetadataTableGroup));
+		public static readonly IImage Metadata = LoadSvg(nameof(Metadata));
+		public static readonly IImage Heap = LoadSvg(nameof(Heap));
+		public static readonly IImage Header = LoadSvg(nameof(Header));
 		public static readonly IImage FolderClosed = LoadSvg(nameof(FolderClosed));
 		public static readonly IImage FolderOpen = LoadSvg(nameof(FolderOpen));
+		public static readonly IImage ListFolder = LoadSvg(nameof(ListFolder));
+		public static readonly IImage ListFolderOpen = LoadSvg(nameof(ListFolderOpen));
 		public static readonly IImage Resource = LoadSvg(nameof(Resource));
 		public static readonly IImage ResourceResourcesFile = LoadSvg(nameof(ResourceResourcesFile));
 
