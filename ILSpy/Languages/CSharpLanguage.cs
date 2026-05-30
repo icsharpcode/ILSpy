@@ -158,6 +158,144 @@ namespace ILSpy.Languages
 
 		public override void WriteCommentLine(ITextOutput output, string comment) => output.WriteLine("// " + comment);
 
+		// Parity with WPF's CSharpLanguage: map an IL member back to its C# source via the
+		// decompiler, so compiler-generated members (lambdas, async/iterator state machines)
+		// resolve to their declaring method/part rather than only the declaring type (the
+		// base Language fallback). Used by analyzers / navigation.
+		public override CodeMappingInfo GetCodeMappingInfo(MetadataFile module, EntityHandle member)
+		{
+			return CSharpDecompiler.GetCodeMappingInfo(module, member);
+		}
+
+		// Parity with WPF's CSharpLanguage: produce C#-styled entity names (generics as
+		// <T>, nested types joined with '.'). Without this the base Language emits IL-style
+		// names (`1 arity suffixes, escaped identifiers).
+		public override string GetEntityName(MetadataFile module, EntityHandle handle, bool fullName, bool omitGenerics)
+		{
+			MetadataReader metadata = module.Metadata;
+			switch (handle.Kind)
+			{
+				case HandleKind.TypeDefinition:
+					return ToCSharpString(metadata, (TypeDefinitionHandle)handle, fullName, omitGenerics);
+				case HandleKind.FieldDefinition:
+					var fd = metadata.GetFieldDefinition((FieldDefinitionHandle)handle);
+					var declaringType = fd.GetDeclaringType();
+					if (fullName)
+						return ToCSharpString(metadata, declaringType, fullName, omitGenerics) + "." + metadata.GetString(fd.Name);
+					return metadata.GetString(fd.Name);
+				case HandleKind.MethodDefinition:
+					var md = metadata.GetMethodDefinition((MethodDefinitionHandle)handle);
+					declaringType = md.GetDeclaringType();
+					string methodName = metadata.GetString(md.Name);
+					switch (methodName)
+					{
+						case ".ctor":
+						case ".cctor":
+							var td = metadata.GetTypeDefinition(declaringType);
+							methodName = ReflectionHelper.SplitTypeParameterCountFromReflectionName(metadata.GetString(td.Name));
+							break;
+						case "Finalize":
+							const System.Reflection.MethodAttributes finalizerAttributes = (System.Reflection.MethodAttributes.Virtual | System.Reflection.MethodAttributes.Family | System.Reflection.MethodAttributes.HideBySig);
+							if ((md.Attributes & finalizerAttributes) != finalizerAttributes)
+								goto default;
+							MethodSignature<IType> methodSignature = md.DecodeSignature(MetadataExtensions.MinimalSignatureTypeProvider, default);
+							if (methodSignature.GenericParameterCount != 0 || methodSignature.ParameterTypes.Length != 0)
+								goto default;
+							td = metadata.GetTypeDefinition(declaringType);
+							methodName = "~" + ReflectionHelper.SplitTypeParameterCountFromReflectionName(metadata.GetString(td.Name));
+							break;
+						default:
+							var genericParams = md.GetGenericParameters();
+							if (!omitGenerics && genericParams.Count > 0)
+							{
+								methodName += "<";
+								int i = 0;
+								foreach (var h in genericParams)
+								{
+									if (i > 0)
+										methodName += ",";
+									var gp = metadata.GetGenericParameter(h);
+									methodName += metadata.GetString(gp.Name);
+								}
+								methodName += ">";
+							}
+							break;
+					}
+					if (fullName)
+						return ToCSharpString(metadata, declaringType, fullName, omitGenerics) + "." + methodName;
+					return methodName;
+				case HandleKind.EventDefinition:
+					var ed = metadata.GetEventDefinition((EventDefinitionHandle)handle);
+					declaringType = metadata.GetMethodDefinition(ed.GetAccessors().GetAny()).GetDeclaringType();
+					if (fullName && !declaringType.IsNil)
+						return ToCSharpString(metadata, declaringType, fullName, omitGenerics) + "." + metadata.GetString(ed.Name);
+					return metadata.GetString(ed.Name);
+				case HandleKind.PropertyDefinition:
+					var pd = metadata.GetPropertyDefinition((PropertyDefinitionHandle)handle);
+					declaringType = metadata.GetMethodDefinition(pd.GetAccessors().GetAny()).GetDeclaringType();
+					if (fullName && !declaringType.IsNil)
+						return ToCSharpString(metadata, declaringType, fullName, omitGenerics) + "." + metadata.GetString(pd.Name);
+					return metadata.GetString(pd.Name);
+				default:
+					// Unrecognised handle kind: callers (e.g. MemberSearchStrategy) tolerate a null
+					// name and skip the pre-filter, matching the base Language.GetEntityName.
+					return null!;
+			}
+		}
+
+		static string ToCSharpString(MetadataReader metadata, TypeDefinitionHandle handle, bool fullName, bool omitGenerics)
+		{
+			var currentTypeDefHandle = handle;
+			var typeDef = metadata.GetTypeDefinition(currentTypeDefHandle);
+			List<string> builder = new List<string>();
+
+			while (!currentTypeDefHandle.IsNil)
+			{
+				if (builder.Count > 0)
+					builder.Add(".");
+				typeDef = metadata.GetTypeDefinition(currentTypeDefHandle);
+				var part = ReflectionHelper.SplitTypeParameterCountFromReflectionName(metadata.GetString(typeDef.Name), out int typeParamCount);
+				var genericParams = typeDef.GetGenericParameters();
+				if (!omitGenerics && genericParams.Count > 0)
+				{
+					builder.Add(">");
+					int firstIndex = genericParams.Count - typeParamCount;
+					for (int i = genericParams.Count - 1; i >= genericParams.Count - typeParamCount; i--)
+					{
+						builder.Add(metadata.GetString(metadata.GetGenericParameter(genericParams[i]).Name));
+						builder.Add(i == firstIndex ? "<" : ",");
+					}
+				}
+				builder.Add(part);
+				currentTypeDefHandle = typeDef.GetDeclaringType();
+				if (!fullName)
+					break;
+			}
+
+			if (fullName && !typeDef.Namespace.IsNil)
+			{
+				builder.Add(".");
+				builder.Add(metadata.GetString(typeDef.Namespace));
+			}
+
+			switch (builder.Count)
+			{
+				case 0:
+					return string.Empty;
+				case 1:
+					return builder[0];
+				case 2:
+					return builder[1] + builder[0];
+				case 3:
+					return builder[2] + builder[1] + builder[0];
+				case 4:
+					return builder[3] + builder[2] + builder[1] + builder[0];
+				default:
+					builder.Reverse();
+					return string.Concat(builder);
+			}
+		}
+
 		public override bool ShowMember(IEntity member)
 		{
 			ArgumentNullException.ThrowIfNull(member);
