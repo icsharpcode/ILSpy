@@ -300,6 +300,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.CheckedOperators" xml:space="preserve">
     <value>User-defined checked operators</value>
   </data>
+  <data name="DecompilerSettings.CovariantReturns" xml:space="preserve">
+    <value>Covariant return types</value>
+  </data>
   <data name="DecompilerSettings.DecompileAnonymousMethodsLambdas" xml:space="preserve">
     <value>Decompile anonymous methods/lambdas</value>
   </data>
@@ -369,6 +372,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.ExpandParamsArguments" xml:space="preserve">
     <value>Expand params arguments by removing explicit array creation</value>
   </data>
+  <data name="DecompilerSettings.ExtensionMembers" xml:space="preserve">
+    <value>Decompile extension members</value>
+  </data>
   <data name="DecompilerSettings.FSpecificOptions" xml:space="preserve">
     <value>F#-specific options</value>
   </data>
@@ -392,6 +398,9 @@ Are you sure you want to continue?</value>
   </data>
   <data name="DecompilerSettings.InitAccessors" xml:space="preserve">
     <value>Allow init; accessors</value>
+  </data>
+  <data name="DecompilerSettings.InlineArrays" xml:space="preserve">
+    <value>Inline arrays</value>
   </data>
   <data name="DecompilerSettings.InsertUsingDeclarations" xml:space="preserve">
     <value>Insert using declarations</value>
