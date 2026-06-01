@@ -229,10 +229,14 @@ public static class MainMenu
 					else
 					{
 						var command = entry.CreateExport().Value;
+						// No explicit IsEnabled: assigning Command lets NativeMenuItem track the
+						// command's CanExecute, so OS-gated commands (e.g. Open from GAC, which is
+						// Windows-only) grey out correctly. A hard-coded IsEnabled would override
+						// that, and the macOS native menu reads it directly -- leaving the item
+						// wrongly enabled there even though invoking it is a no-op.
 						var menuItem = new NativeMenuItem {
 							Header = ResourceHelper.GetString(entry.Metadata?.Header),
 							Command = command,
-							IsEnabled = entry.Metadata?.IsEnabled ?? true,
 						};
 
 						// NativeMenuItem.Icon is Bitmap (macOS NSImage has no vector form),
