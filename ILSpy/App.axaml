@@ -146,7 +146,11 @@
         <SimpleTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Simple.v2.xaml" />
         <StyleInclude Source="avares://AvaloniaEdit/Themes/Simple/AvaloniaEdit.xaml" />
-        <dockTheme:DockSimpleTheme />
+        <!-- Cache each document tab's content (keep it realized) instead of rebuilding it on
+             every tab switch. Without this, switching documents detaches the inactive tab's view
+             and reattaches it on return, which resets transient control state that doesn't survive
+             reattach (e.g. the Options page's TabControl selection). -->
+        <dockTheme:DockSimpleTheme CacheDocumentTabContent="True" />
 
         <!-- Hook the ControlRecycling instance onto every DockControl so the dock chrome
              resolves views per dockable identity instead of caching one view per dock slot. -->

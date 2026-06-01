@@ -67,6 +67,10 @@ namespace ILSpy
 			{ typeof(DecompilerTabPageModel),  () => new DecompilerTextView() },
 			{ typeof(MetadataTablePageModel),  () => new MetadataTablePage() },
 			{ typeof(CompareTabPageModel),     () => new CompareView() },
+			// OptionsPageModel is an ObservableObject, not a TabPageModel/ViewModelBase, and its
+			// name doesn't fit the *ViewModel->*View convention, so it needs an explicit entry to
+			// be resolvable as ContentTabPage.Content inside ContentTabPageView's ContentControl.
+			{ typeof(OptionsPageModel),        () => new OptionsPageView() },
 #if DEBUG
 			{ typeof(DebugStepsPaneModel),     () => new DebugSteps() },
 #endif

@@ -50,7 +50,6 @@ namespace ILSpy.ViewModels
 
 		bool IDeferredContentPresentation.DeferContentPresentation => false;
 
-		// Each tool pane is a singleton, so this holds its one view for the app's life.
 		public Control? OwnedView { get; set; }
 	}
 }

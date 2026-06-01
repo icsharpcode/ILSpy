@@ -21,46 +21,49 @@ using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-using ILSpy.Compare;
-using ILSpy.Options;
-using ILSpy.TextView;
 using ILSpy.ViewModels;
 
 namespace ILSpy.Views
 {
 	/// <summary>
-	/// View for <see cref="ContentTabPage"/>. Toggles which pre-realised inner view shows
-	/// (decompiler text, metadata grid, or Options page) based on
-	/// <see cref="ContentTabPage.Content"/>'s runtime type — all inner views live in the
-	/// visual tree from construction time so the dock's visual swap is just a visibility flip.
+	/// View for <see cref="ContentTabPage"/>. Hosts the active <see cref="ContentTabPage.Content"/>
+	/// (a <see cref="TabPageModel"/>) in a single ContentControl; the application-wide ViewLocator
+	/// resolves it to the matching view. Only the active content's view is realised, so each tab
+	/// carries exactly one inner view rather than one of every kind.
 	/// </summary>
 	public partial class ContentTabPageView : UserControl
 	{
 		ContentTabPage? boundPage;
-		DecompilerTextView decompilerView = null!;
-		MetadataTablePage metadataView = null!;
-		OptionsPageView optionsView = null!;
-		CompareView compareView = null!;
+		ContentControl contentHost = null!;
 
 		public ContentTabPageView()
 		{
 			InitializeComponent();
-			decompilerView = this.FindControl<DecompilerTextView>("DecompilerView")!;
-			metadataView = this.FindControl<MetadataTablePage>("MetadataView")!;
-			optionsView = this.FindControl<OptionsPageView>("OptionsView")!;
-			compareView = this.FindControl<CompareView>("CompareViewSlot")!;
+			contentHost = this.FindControl<ContentControl>("ContentHost")!;
 			DataContextChanged += (_, _) => RebindPage();
 		}
 
 		void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 
+		// Exposed for tests: the ContentTabPage this view is currently bound to. The RebindPage
+		// guard keeps this stable across the transient null / same-page DataContext churn Dock
+		// produces on a tab switch.
+		internal ContentTabPage? BoundPage => boundPage;
+
 		void RebindPage()
 		{
+			var newPage = DataContext as ContentTabPage;
+			// Each ContentTabPage owns its own view, but Dock still nulls and re-sets this view's
+			// DataContext as it detaches/reattaches the active document on a tab switch. Ignore the
+			// transient null, and ignore a rebind to the SAME page: reassigning Content would rebuild
+			// the inner view and re-fire DecompilerTextView.ApplyDocument, resetting scroll / foldings
+			// / caret on a mere tab switch. Only a genuine change of page rebinds.
+			if (newPage is null || ReferenceEquals(newPage, boundPage))
+				return;
 			if (boundPage != null)
 				boundPage.PropertyChanged -= OnPagePropertyChanged;
-			boundPage = DataContext as ContentTabPage;
-			if (boundPage != null)
-				boundPage.PropertyChanged += OnPagePropertyChanged;
+			boundPage = newPage;
+			boundPage.PropertyChanged += OnPagePropertyChanged;
 			ApplyContent();
 		}
 
@@ -70,53 +73,10 @@ namespace ILSpy.Views
 				ApplyContent();
 		}
 
-		void ApplyContent()
-		{
-			var content = boundPage?.Content;
-
-			if (content is DecompilerTabPageModel decompiler)
-			{
-				decompilerView.DataContext = decompiler;
-				decompilerView.IsVisible = true;
-			}
-			else
-			{
-				decompilerView.IsVisible = false;
-				decompilerView.DataContext = null;
-			}
-
-			if (content is MetadataTablePageModel metadata)
-			{
-				metadataView.DataContext = metadata;
-				metadataView.IsVisible = true;
-			}
-			else
-			{
-				metadataView.IsVisible = false;
-				metadataView.DataContext = null;
-			}
-
-			if (content is OptionsPageModel options)
-			{
-				optionsView.DataContext = options;
-				optionsView.IsVisible = true;
-			}
-			else
-			{
-				optionsView.IsVisible = false;
-				optionsView.DataContext = null;
-			}
-
-			if (content is CompareTabPageModel compare)
-			{
-				compareView.DataContext = compare;
-				compareView.IsVisible = true;
-			}
-			else
-			{
-				compareView.IsVisible = false;
-				compareView.DataContext = null;
-			}
-		}
+		// Hand the active content to the host. The ViewLocator (App.axaml DataTemplates) resolves it
+		// to its view and the ContentPresenter sets that view's DataContext. Same-type navigation
+		// reuses the same Content instance, so the ContentControl keeps the existing view (and its
+		// scroll / foldings); a content-type change swaps in the new type's view.
+		void ApplyContent() => contentHost.Content = boundPage?.Content;
 	}
 }

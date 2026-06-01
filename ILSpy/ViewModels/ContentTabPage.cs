@@ -33,14 +33,13 @@ namespace ILSpy.ViewModels
 {
 	/// <summary>
 	/// One Document hosted by the dock workspace. <see cref="Content"/> holds the active
-	/// inner viewmodel (decompiler text or metadata grid). The wrapper view
-	/// (<c>ContentTabPageView</c>) keeps both possible inner views pre-realised and toggles
-	/// which is visible — Dock.Avalonia's add+close-in-the-same-tick semantics otherwise
-	/// leave the previous view rendered when the tab type changes.
+	/// inner viewmodel (decompiler text, metadata grid, compare, or Options page). The wrapper
+	/// view (<c>ContentTabPageView</c>) hosts it in a single ContentControl and lets the
+	/// application-wide ViewLocator resolve it to its view, so the tab realises only the active
+	/// content's view.
 	/// </summary>
 	public sealed partial class ContentTabPage : TabPageModel, IDeferredContentPresentation, IDockableViewOwner
 	{
-		// Each document tab owns its view; it is released for GC when the tab is dropped.
 		public Control? OwnedView { get; set; }
 
 		public ContentTabPage()
@@ -52,9 +51,9 @@ namespace ILSpy.ViewModels
 			DockCapabilityOverrides = new DockCapabilityOverrides();
 		}
 
-		// Opt out of Dock's deferred presentation: the inner views are already pre-realised
-		// by the wrapper view, and headless tests can't reach descendants of a control
-		// that's still queued for realisation.
+		// Opt out of Dock's deferred presentation so the wrapper view (and the ContentControl
+		// that hosts the active content) is realised immediately: headless tests can't reach
+		// descendants of a control that's still queued for realisation.
 		bool IDeferredContentPresentation.DeferContentPresentation => false;
 
 		[ObservableProperty]
