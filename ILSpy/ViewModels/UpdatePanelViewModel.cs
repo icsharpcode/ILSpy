@@ -51,6 +51,7 @@ namespace ILSpy.ViewModels
 		[ObservableProperty]
 		[NotifyPropertyChangedFor(nameof(ButtonText))]
 		[NotifyPropertyChangedFor(nameof(Message))]
+		[NotifyPropertyChangedFor(nameof(UpdateAvailable))]
 		string? updateAvailableDownloadUrl;
 
 		[ObservableProperty]
@@ -63,6 +64,10 @@ namespace ILSpy.ViewModels
 		public string Message => UpdateAvailableDownloadUrl != null
 			? "A new version of ILSpy is available."
 			: "ILSpy is up to date.";
+
+		/// <summary>True once a download URL is known. Drives the banner colour: amber when an
+		/// update is available, green when ILSpy is up to date.</summary>
+		public bool UpdateAvailable => UpdateAvailableDownloadUrl != null;
 
 		[RelayCommand]
 		void Close() => IsPanelVisible = false;
