@@ -58,10 +58,14 @@ namespace ILSpy.Commands
 
 		public override void Execute(object? parameter)
 		{
-			var output = BuildAboutOutput();
-			var content = CreateTabContent(Resources.About, output, ".txt", isStaticContent: true);
-			var tab = dockWorkspace.OpenNewTab(content);
-			dockWorkspace.RecordStaticPage(tab, new Uri("resource:aboutpage"));
+			// Singleton: one retained About tab, reused across close/reopen rather than rebuilt.
+			dockWorkspace.OpenSingletonTab("resource:aboutpage", () => {
+				var output = BuildAboutOutput();
+				var content = CreateTabContent(Resources.About, output, ".txt", isStaticContent: true);
+				var tab = dockWorkspace.OpenNewTab(content);
+				dockWorkspace.RecordStaticPage(tab, new Uri("resource:aboutpage"));
+				return tab;
+			});
 		}
 
 		/// <summary>
@@ -140,11 +144,16 @@ namespace ILSpy.Commands
 			if (stream == null)
 				return;
 			using var reader = new StreamReader(stream);
-			var output = new AvaloniaEditTextOutput { Title = resourceName };
-			output.Write(reader.ReadToEnd());
-			var content = CreateTabContent(resourceName, output, ".txt", isStaticContent: true);
-			var tab = dockWorkspace.OpenNewTab(content);
-			dockWorkspace.RecordStaticPage(tab, new Uri("resource:" + resourceName));
+			var text = reader.ReadToEnd();
+			// Singleton per resource: reopening the same embedded page reuses its retained tab.
+			dockWorkspace.OpenSingletonTab("resource:" + resourceName, () => {
+				var output = new AvaloniaEditTextOutput { Title = resourceName };
+				output.Write(text);
+				var content = CreateTabContent(resourceName, output, ".txt", isStaticContent: true);
+				var tab = dockWorkspace.OpenNewTab(content);
+				dockWorkspace.RecordStaticPage(tab, new Uri("resource:" + resourceName));
+				return tab;
+			});
 		}
 
 		static string GetDotnetProductVersion()

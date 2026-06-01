@@ -18,7 +18,6 @@
 
 using System.Collections.Generic;
 using System.Composition;
-using System.Linq;
 
 using ICSharpCode.ILSpy.Properties;
 
@@ -46,24 +45,10 @@ namespace ILSpy.Commands
 	{
 		public override void Execute(object? parameter)
 		{
-			var existing = FindExistingOptionsTab();
-			if (existing != null && dockWorkspace.Documents != null)
-			{
-				dockWorkspace.Factory.SetActiveDockable(existing);
-				dockWorkspace.Factory.SetFocusedDockable(dockWorkspace.Documents, existing);
-				return;
-			}
-
-			var model = new OptionsPageModel(settingsService, optionPages);
-			dockWorkspace.OpenNewTab(model);
-		}
-
-		ContentTabPage? FindExistingOptionsTab()
-		{
-			var docs = dockWorkspace.Documents?.VisibleDockables;
-			if (docs == null)
-				return null;
-			return docs.OfType<ContentTabPage>().FirstOrDefault(t => t.Content is OptionsPageModel);
+			// Singleton: one retained Options tab for the session. Reopening after close reuses
+			// the same ContentTabPage (and its OptionsPageModel, so the selected page survives).
+			dockWorkspace.OpenSingletonTab("options",
+				() => dockWorkspace.OpenNewTab(new OptionsPageModel(settingsService, optionPages)));
 		}
 	}
 }

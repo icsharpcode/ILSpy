@@ -651,6 +651,11 @@ namespace ILSpy.Docking
 		// Created lazily on first need.
 		DecompilerTabPageModel? decompilerContent;
 
+		// Retained static-content singleton tabs (Options, About, embedded resource pages).
+		// Keeping the ContentTabPage instance across close/reopen preserves its owned view and
+		// content state (e.g. the selected options page) instead of rebuilding the tab each time.
+		readonly Dictionary<string, ContentTabPage> singletonTabs = new();
+
 		ILSpyTreeNode[]? lastShownNodes;
 
 		/// <summary>
@@ -1089,6 +1094,36 @@ namespace ILSpy.Docking
 				factory.SetFocusedDockable(factory.Documents, tab);
 			}
 			return tab;
+		}
+
+		/// <summary>
+		/// Open a retained static-content singleton tab (Options, About, an embedded resource
+		/// page). If the tab already exists -- visible or previously closed -- the same instance
+		/// is reactivated / re-added, so its owned view and content state survive close/reopen.
+		/// Otherwise <paramref name="create"/> builds it once and it is retained for the session.
+		/// </summary>
+		public ContentTabPage OpenSingletonTab(string key, Func<ContentTabPage> create)
+		{
+			if (singletonTabs.TryGetValue(key, out var existing))
+			{
+				ReopenTab(existing);
+				return existing;
+			}
+			var tab = create();
+			singletonTabs[key] = tab;
+			return tab;
+		}
+
+		// Re-display a retained tab: re-add it to the Documents dock if it was closed, then make
+		// it active. The dockable (and the view it owns) is the same instance throughout.
+		void ReopenTab(ContentTabPage tab)
+		{
+			if (factory.Documents is not { } docs)
+				return;
+			if (docs.VisibleDockables?.Contains(tab) != true)
+				factory.AddDockable(docs, tab);
+			factory.SetActiveDockable(tab);
+			factory.SetFocusedDockable(docs, tab);
 		}
 
 		/// <summary>
