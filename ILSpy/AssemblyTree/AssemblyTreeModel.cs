@@ -928,6 +928,40 @@ namespace ILSpy.AssemblyTree
 			}
 		}
 
+		/// <summary>
+		/// Re-runs decompilation of the active tab WITHOUT reloading the assembly list. Mirrors
+		/// WPF's RefreshDecompiledView(). Unlike <see cref="Refresh"/> (F5), this must not rebuild
+		/// the list from persisted state -- that would discard on-demand auto-loaded assemblies
+		/// (e.g. the ones <see cref="LoadDependenciesAsync"/> just resolved).
+		/// </summary>
+		public void RefreshDecompiledView()
+			=> TryGetExport<Docking.DockWorkspace>()?.ForceRefreshActiveTab();
+
+		/// <summary>
+		/// Resolves every assembly reference of each supplied assembly node through that
+		/// assembly's own resolver -- which auto-loads the targets into the live list -- then
+		/// re-decompiles the active tab so newly available references render. Mirrors WPF's
+		/// LoadDependencies command.
+		/// </summary>
+		public async Task LoadDependenciesAsync(IReadOnlyList<SharpTreeNode> nodes)
+		{
+			var tasks = new List<Task>();
+			foreach (var node in nodes)
+			{
+				if (node is not AssemblyTreeNode { LoadedAssembly: { } la })
+					continue;
+				var resolver = la.GetAssemblyResolver();
+				var module = la.GetMetadataFileOrNull();
+				if (module is null)
+					continue;
+				foreach (var assyRef in module.Metadata.AssemblyReferences)
+					tasks.Add(resolver.ResolveAsync(
+						new ICSharpCode.Decompiler.Metadata.AssemblyReference(module, assyRef)));
+			}
+			await Task.WhenAll(tasks);
+			RefreshDecompiledView();
+		}
+
 		async Task RefreshInternalAsync()
 		{
 			if (AssemblyList == null || listManager == null)

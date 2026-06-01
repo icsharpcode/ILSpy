@@ -1659,4 +1659,55 @@ public class AssemblyTreeTests
 		ReferenceEquals(modelSelection[0], targetNode).Should().BeTrue(
 			"the surviving selection must be the row the user clicked");
 	}
+
+	[AvaloniaTest]
+	public async Task Load_Dependencies_Resolves_References_And_Keeps_Them_In_The_List()
+	{
+		// "Load Dependencies" must resolve every reference of the selected assembly and leave
+		// the resolved (auto-loaded) assemblies in the list. Regression: the command used to
+		// finish with a full list Refresh (F5), which rebuilds the list from persisted state and
+		// silently drops the just-resolved auto-loaded dependencies -- so the command appeared
+		// to do nothing.
+
+		// Arrange -- boot, open System.Net.Http (it references many assemblies not in the list).
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var newAsmPath = typeof(System.Net.Http.HttpClient).Assembly.Location;
+		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
+		var openCommand = registry.Commands
+			.Single(c => c.Metadata.Header == nameof(Resources._Open))
+			.CreateExport().Value;
+		openCommand.Execute(newAsmPath);
+		await Waiters.WaitForAsync(() =>
+			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a =>
+				string.Equals(a.FileName, newAsmPath, System.StringComparison.OrdinalIgnoreCase)));
+
+		var httpNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(
+			System.IO.Path.GetFileNameWithoutExtension(newAsmPath));
+		await httpNode.LoadedAssembly.GetLoadResultAsync();
+
+		var before = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
+			.Select(a => a.FileName)
+			.ToHashSet(System.StringComparer.OrdinalIgnoreCase);
+
+		// Act -- run Load Dependencies on the System.Net.Http node.
+		await vm.AssemblyTreeModel.LoadDependenciesAsync(new SharpTreeNode[] { httpNode });
+		for (int i = 0; i < 8; i++)
+		{
+			Dispatcher.UIThread.RunJobs();
+			await Task.Delay(25);
+		}
+
+		// Assert -- references were resolved AND survive in the list as auto-loaded entries.
+		var added = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
+			.Where(a => !before.Contains(a.FileName))
+			.ToList();
+		added.Should().NotBeEmpty(
+			"Load Dependencies must resolve referenced assemblies and keep them in the list");
+		added.Should().OnlyContain(a => a.IsAutoLoaded,
+			"freshly resolved dependencies are auto-loaded");
+	}
 }

@@ -623,19 +623,7 @@ namespace ILSpy.TreeNodes
 			{
 				if (context.SelectedTreeNodes == null)
 					return;
-				var tasks = new List<Task>();
-				foreach (var node in context.SelectedTreeNodes)
-				{
-					var la = ((AssemblyTreeNode)node).LoadedAssembly;
-					var resolver = la.GetAssemblyResolver();
-					var module = la.GetMetadataFileOrNull();
-					if (module is null)
-						continue;
-					foreach (var assyRef in module.Metadata.AssemblyReferences)
-						tasks.Add(resolver.ResolveAsync(new AssemblyReference(module, assyRef)));
-				}
-				await Task.WhenAll(tasks);
-				assemblyTreeModel.Refresh();
+				await assemblyTreeModel.LoadDependenciesAsync(context.SelectedTreeNodes);
 			}
 		}
 	}
