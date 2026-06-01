@@ -47,6 +47,13 @@ namespace ILSpy.AssemblyTree
 		// selection into the DataGrid.
 		bool syncingSelection;
 
+		// A plain left-click on one row of a multi-selection: ProDataGrid keeps the whole
+		// selection on press (so the user can drag every selected row together), so the
+		// collapse-to-the-clicked-row has to happen on release if it turned out to be a click,
+		// not a drag. Recorded on press, resolved on release.
+		SharpTreeNode? pendingClickCollapseNode;
+		Point pendingClickCollapsePos;
+
 		LanguageSettings? languageSettings;
 
 		public AssemblyListPane()
@@ -74,6 +81,11 @@ namespace ILSpy.AssemblyTree
 			// PointerPressed handled before bubble reaches our subscription, so we have to
 			// opt into "see handled events too" to react.
 			TreeGrid.AddHandler(PointerPressedEvent, OnTreeGridPointerPressed,
+				global::Avalonia.Interactivity.RoutingStrategies.Bubble,
+				handledEventsToo: true);
+			// Same handledEventsToo opt-in for release: the press that preserves a multi-selection
+			// for a potential row-drag marks itself handled, so we'd miss the release otherwise.
+			TreeGrid.AddHandler(PointerReleasedEvent, OnTreeGridPointerReleased,
 				global::Avalonia.Interactivity.RoutingStrategies.Bubble,
 				handledEventsToo: true);
 
@@ -399,18 +411,79 @@ namespace ILSpy.AssemblyTree
 			// by an unwanted new tab. LMB double-click is reserved for expand/collapse,
 			// handled by OnTreeGridDoubleTapped. MMB doesn't move selection on its own, so we
 			// hit-test the row from e.Source rather than reading SelectedItem.
+			pendingClickCollapseNode = null;
 			if (e.Source is not Visual hit)
 				return;
 			var point = e.GetCurrentPoint(hit).Properties;
-			if (!point.IsMiddleButtonPressed)
+			if (point.IsMiddleButtonPressed)
+			{
+				var visual = hit;
+				while (visual != null && visual.DataContext is not HierarchicalNode)
+					visual = visual.GetVisualParent();
+				if (visual?.DataContext is not HierarchicalNode hn || hn.Item is not ILSpyTreeNode node)
+					return;
+				OpenNodeInNewTab(node);
+				e.Handled = true;
 				return;
-			var visual = hit;
+			}
+
+			// Plain LMB on a row that's already part of a multi-selection: the grid keeps the
+			// whole selection on press (for a potential drag of all rows), so remember the row
+			// and collapse to it on release if the gesture was a click rather than a drag.
+			// Clicking the expander glyph or holding a modifier are excluded — those have their
+			// own meaning (toggle / extend selection).
+			if (point.IsLeftButtonPressed
+				&& e.KeyModifiers == KeyModifiers.None
+				&& !IsExpanderHit(hit)
+				&& DataContext is AssemblyTreeModel model
+				&& model.SelectedItems.Count > 1)
+			{
+				var clicked = HitTestRowNode(hit);
+				if (clicked != null && model.SelectedItems.Contains(clicked))
+				{
+					pendingClickCollapseNode = clicked;
+					pendingClickCollapsePos = e.GetPosition(TreeGrid);
+				}
+			}
+		}
+
+		void OnTreeGridPointerReleased(object? sender, PointerReleasedEventArgs e)
+		{
+			var node = pendingClickCollapseNode;
+			pendingClickCollapseNode = null;
+			if (node == null || e.InitialPressMouseButton != MouseButton.Left)
+				return;
+			// A pointer that moved beyond the drag threshold was a drag (reorder), not a click —
+			// leave the multi-selection intact so the drop can move every selected row.
+			var delta = e.GetPosition(TreeGrid) - pendingClickCollapsePos;
+			if (Math.Abs(delta.X) > 4 || Math.Abs(delta.Y) > 4)
+				return;
+			if (DataContext is not AssemblyTreeModel model || !model.SelectedItems.Contains(node))
+				return;
+
+			// Collapse to just the clicked row. Setting SelectedItem to the row that's already the
+			// grid's primary would no-op (DirectProperty SetAndRaise), so clear first in that case;
+			// otherwise SelectedItem's SelectCurrent action clears the rest for us. The resulting
+			// SelectionChanged feeds the model through OnTreeGridSelectionChanged as usual.
+			if (ReferenceEquals(TreeGrid.SelectedItem, node))
+				TreeGrid.SelectedItem = null!;
+			TreeGrid.SelectedItem = node;
+		}
+
+		static bool IsExpanderHit(Visual? source)
+		{
+			for (var v = source; v != null; v = v.GetVisualParent())
+				if (v is global::Avalonia.Controls.Primitives.ToggleButton { Name: "PART_Expander" })
+					return true;
+			return false;
+		}
+
+		static SharpTreeNode? HitTestRowNode(Visual? source)
+		{
+			var visual = source;
 			while (visual != null && visual.DataContext is not HierarchicalNode)
 				visual = visual.GetVisualParent();
-			if (visual?.DataContext is not HierarchicalNode hn || hn.Item is not ILSpyTreeNode node)
-				return;
-			OpenNodeInNewTab(node);
-			e.Handled = true;
+			return (visual?.DataContext as HierarchicalNode)?.Item as SharpTreeNode;
 		}
 
 		/// <summary>
@@ -467,6 +540,12 @@ namespace ILSpy.AssemblyTree
 			}
 			else if (e.PropertyName == nameof(AssemblyTreeModel.SelectedItem))
 			{
+				// Skip the bounce-back while we're pushing the grid's own selection into the
+				// model. SelectedItem is the LAST entry of SelectedItems, so a multi-row grid
+				// change (e.g. Ctrl+A select-all) raises this notification; reacting to it would
+				// assign the singular SelectedItem and collapse the grid back to that one row.
+				if (syncingSelection)
+					return;
 				SyncSelectionFromModel(model.SelectedItem);
 			}
 		}

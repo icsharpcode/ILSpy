@@ -24,7 +24,10 @@ using System.Xml.Linq;
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.DataGridHierarchical;
+using Avalonia.Headless;
 using Avalonia.Headless.NUnit;
+using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
@@ -33,6 +36,7 @@ using AwesomeAssertions;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy;
 using ILSpy.AppEnv;
@@ -1557,5 +1561,102 @@ public class AssemblyTreeTests
 		globalNs.EnsureLazyChildren();
 		globalNs.Children.OfType<TypeTreeNode>().Should().NotBeEmpty(
 			"<Module> (and any other global types) belong under the '-' node");
+	}
+
+	[AvaloniaTest]
+	public async Task CtrlA_Selects_Every_Top_Level_Row_On_The_First_Press()
+	{
+		// Ctrl+A in the assembly tree must select all rows on the FIRST press, not just move
+		// the current cell to the last row (the user reported having to press it twice).
+
+		// Arrange — boot, wait for assemblies, realise the grid.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<DataGrid>();
+		grid.UpdateLayout();
+
+		var topLevelCount = vm.AssemblyTreeModel.Root!.Children.Count;
+		topLevelCount.Should().BeGreaterThan(1, "the test needs several top-level rows to be meaningful");
+
+		// Give the grid keyboard focus WITHOUT clicking a cell first — this is the state the
+		// tree is in right after the user tabs/clicks into the pane but before establishing a
+		// current cell. The DataGrid only handles Ctrl+A when a focused element lives inside it.
+		grid.Focus();
+		Dispatcher.UIThread.RunJobs();
+
+		// First press.
+		window.KeyPress(Key.A, RawInputModifiers.Control, PhysicalKey.A, keySymbol: "a");
+		Dispatcher.UIThread.RunJobs();
+		await Task.Delay(50);
+		Dispatcher.UIThread.RunJobs();
+		// What the USER sees is the grid's selection. A feedback loop through the model's
+		// singular SelectedItem can collapse the grid back to one row even while the model's
+		// SelectedItems still holds all of them — so assert on the grid, not the model.
+		int gridAfterFirst = grid.SelectedItems.Count;
+		int modelAfterFirst = vm.AssemblyTreeModel.SelectedItems.Count;
+
+		// Second press.
+		window.KeyPress(Key.A, RawInputModifiers.Control, PhysicalKey.A, keySymbol: "a");
+		Dispatcher.UIThread.RunJobs();
+		await Task.Delay(50);
+		Dispatcher.UIThread.RunJobs();
+		int gridAfterSecond = grid.SelectedItems.Count;
+
+		// Assert — every top-level row is selected in the grid after the FIRST press.
+		gridAfterFirst.Should().Be(topLevelCount,
+			$"Ctrl+A must select all {topLevelCount} assembly rows on the first press "
+			+ $"(grid after 1st={gridAfterFirst}, model after 1st={modelAfterFirst}, grid after 2nd={gridAfterSecond})");
+	}
+
+	[AvaloniaTest]
+	public async Task Plain_Click_On_A_Row_Reduces_A_Multi_Selection_To_That_Row()
+	{
+		// With several rows selected (e.g. after Ctrl+A), a plain left-click (no modifier) on
+		// one row must collapse the selection down to just that row.
+
+		// Arrange — boot, wait for assemblies, realise the grid, select everything.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<DataGrid>();
+		grid.UpdateLayout();
+
+		var topLevelCount = vm.AssemblyTreeModel.Root!.Children.Count;
+		topLevelCount.Should().BeGreaterThan(1, "the test needs several top-level rows to be meaningful");
+
+		grid.Focus();
+		Dispatcher.UIThread.RunJobs();
+		window.KeyPress(Key.A, RawInputModifiers.Control, PhysicalKey.A, keySymbol: "a");
+		Dispatcher.UIThread.RunJobs();
+		await Waiters.WaitForAsync(() => grid.SelectedItems.Count == topLevelCount);
+
+		// Act — plain left-click on the second visible row.
+		var targetRow = grid.GetVisualDescendants().OfType<DataGridRow>()
+			.OrderBy(r => r.TranslatePoint(new Point(0, 0), grid)?.Y ?? double.MaxValue)
+			.Skip(1).First();
+		var targetNode = (targetRow.DataContext as HierarchicalNode)?.Item as SharpTreeNode;
+		Assert.That(targetNode, Is.Not.Null, "the clicked row must wrap a tree node");
+		var rowCentre = targetRow.TranslatePoint(
+			new Point(targetRow.Bounds.Width / 2, targetRow.Bounds.Height / 2), window)!.Value;
+		HeadlessWindowExtensions.MouseDown(window, rowCentre, MouseButton.Left);
+		HeadlessWindowExtensions.MouseUp(window, rowCentre, MouseButton.Left);
+		Dispatcher.UIThread.RunJobs();
+		await Task.Delay(50);
+		Dispatcher.UIThread.RunJobs();
+
+		// Assert — selection collapsed to exactly the clicked row, in both grid and model.
+		grid.SelectedItems.Count.Should().Be(1,
+			$"a plain click must reduce the selection to one row (grid has {grid.SelectedItems.Count})");
+		var modelSelection = vm.AssemblyTreeModel.SelectedItems;
+		modelSelection.Count.Should().Be(1, "the model selection must collapse to the clicked node too");
+		ReferenceEquals(modelSelection[0], targetNode).Should().BeTrue(
+			"the surviving selection must be the row the user clicked");
 	}
 }
