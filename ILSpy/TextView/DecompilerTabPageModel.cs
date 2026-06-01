@@ -145,60 +145,22 @@ namespace ILSpy.TextView
 		private object? highlightedReference;
 
 		/// <summary>
-		/// Last caret offset the editor view reported. The text view writes this on every
-		/// caret-position change so <see cref="Docking.DockWorkspace"/> can read the current
-		/// position when recording a navigation away from this tab. Zero until the view
-		/// reports its first caret position; that's a safe default because a freshly-shown
-		/// document also has caret at zero.
+		/// Pulls the editor's current view state (caret, scroll, expanded foldings) on demand.
+		/// Set by the text view when it binds to this model; invoked by
+		/// <see cref="Docking.DockWorkspace"/> when it records a navigation away from this tab.
+		/// Null until a view is attached. Reading on demand -- rather than mirroring every caret /
+		/// scroll event onto the model -- avoids capturing the programmatic caret-to-end that
+		/// AvaloniaEdit performs when the document text is replaced.
 		/// </summary>
-		public int LastKnownCaretOffset { get; set; }
-
-		/// <summary>Last vertical scroll offset the editor view reported. See <see cref="LastKnownCaretOffset"/>.</summary>
-		public double LastKnownVerticalOffset { get; set; }
-
-		/// <summary>Last horizontal scroll offset the editor view reported. See <see cref="LastKnownCaretOffset"/>.</summary>
-		public double LastKnownHorizontalOffset { get; set; }
+		public System.Func<DecompilerTextViewState>? CaptureViewState { get; set; }
 
 		/// <summary>
-		/// Caret offset the editor view should restore on the next document apply. Set when
-		/// Back/Forward navigation lands on an entry that carries a captured caret position
-		/// (see <see cref="Navigation.TreeNodeEntry.CaretOffset"/>); cleared by the view
-		/// after it reads the value. The pattern mirrors <see cref="HighlightedReference"/> —
-		/// the editor consumes this in its <c>ApplyDocument</c> path so the value survives
-		/// the async gap between Back firing and the decompile finishing.
+		/// View state to restore on the next document apply. Set by <see cref="Docking.DockWorkspace"/>
+		/// when Back/Forward/GoTo lands on an entry that carries a captured state; consumed (and
+		/// cleared) by the text view in its <c>ApplyDocument</c> path so the value survives the
+		/// async gap between the navigation firing and the decompile finishing.
 		/// </summary>
-		public int? PendingCaretOffset { get; set; }
-
-		/// <summary>Vertical scroll offset to restore alongside <see cref="PendingCaretOffset"/>.</summary>
-		public double? PendingVerticalOffset { get; set; }
-
-		/// <summary>Horizontal scroll offset to restore alongside <see cref="PendingCaretOffset"/>.</summary>
-		public double? PendingHorizontalOffset { get; set; }
-
-		/// <summary>
-		/// Snapshot of the editor's currently expanded foldings + a layout checksum, kept
-		/// up to date by <see cref="CaptureFoldingsState"/>. Read by
-		/// <see cref="Docking.DockWorkspace"/>'s capture-on-navigate hook so the outgoing
-		/// history entry records which regions the user had open.
-		/// </summary>
-		public FoldingsViewState.Snapshot? LastKnownFoldings { get; set; }
-
-		/// <summary>
-		/// Foldings snapshot to apply on the next document apply. Set by
-		/// <see cref="Docking.DockWorkspace"/> when Back/Forward lands on an entry that
-		/// carries a captured foldings snapshot. The text view consumes this in its
-		/// ApplyDocument path right before installing the new FoldingManager.
-		/// </summary>
-		public FoldingsViewState.Snapshot? PendingFoldings { get; set; }
-
-		/// <summary>
-		/// Invoked by <see cref="Docking.DockWorkspace"/> just before recording a navigation
-		/// entry, so the text view can push its current foldings into
-		/// <see cref="LastKnownFoldings"/> synchronously. AvaloniaEdit's FoldingManager has
-		/// no foldings-changed event we can subscribe to, so we snapshot on demand instead
-		/// of mirroring the per-event caret/scroll pattern.
-		/// </summary>
-		public System.Action? CaptureFoldingsState { get; set; }
+		public DecompilerTextViewState? PendingViewState { get; set; }
 
 		/// <summary>
 		/// Fired when the user clicks a cross-document reference. The host (DockWorkspace)

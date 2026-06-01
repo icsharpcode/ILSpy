@@ -31,6 +31,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 using AvaloniaEdit.Folding;
 using AvaloniaEdit.Highlighting;
@@ -78,6 +79,11 @@ namespace ILSpy.TextView
 		// the previous DataContext to the event handler, and Dock recycles the view across
 		// tabs (see App.axaml ControlRecyclingKey).
 		DecompilerTabPageModel? boundModel;
+		// The editor's template ScrollViewer. AvaloniaEdit's TextEditor.ScrollViewer is internal,
+		// and its ScrollToVerticalOffset/ScrollToHorizontalOffset are no-ops in 12.0.0
+		// (AvaloniaUI/AvaloniaEdit#594) -- so we reach the ScrollViewer ourselves and set Offset.
+		// TODO: drop this field and use Editor.ScrollToVerticalOffset once #594 ships and we bump the package.
+		ScrollViewer? editorScrollViewer;
 		DisplaySettings? currentDisplaySettings;
 		ReferenceSegment? lastTooltipSegment;
 		ReferenceSegment? lastRightClickedSegment;
@@ -179,12 +185,12 @@ namespace ILSpy.TextView
 
 			WireUpDisplaySettings();
 
-			// Push caret + scroll positions onto the bound tab model on every change so
-			// DockWorkspace can read the live state when recording a navigation away. Cheap
-			// — both events fire only on actual user motion and the model write is two
-			// integer / double assignments.
+			// Caret-position changes drive the bracket-pair highlight. View state (caret + scroll
+			// + foldings) is NOT pushed onto the model here -- DockWorkspace pulls it on demand via
+			// the model's CaptureViewState delegate when it records a navigation away, so a
+			// programmatic caret move (AvaloniaEdit jumps the caret to the end on a text replace)
+			// is never mistaken for the user's position.
 			Editor.TextArea.Caret.PositionChanged += OnCaretPositionChanged;
-			Editor.TextArea.TextView.ScrollOffsetChanged += OnScrollOffsetChanged;
 
 			// Ctrl+Wheel zoom (matches WPF's ZoomScrollViewer.OnPreviewMouseWheel). Tunnel
 			// routing so we see it before AvaloniaEdit's scroll handler; Handled=true on
@@ -283,8 +289,6 @@ namespace ILSpy.TextView
 
 		void OnCaretPositionChanged(object? sender, EventArgs e)
 		{
-			if (DataContext is DecompilerTabPageModel m)
-				m.LastKnownCaretOffset = Editor.TextArea.Caret.Offset;
 			UpdateBracketHighlight();
 		}
 
@@ -301,15 +305,6 @@ namespace ILSpy.TextView
 			var searcher = language?.BracketSearcher ?? DefaultBracketSearcher.DefaultInstance;
 			var result = searcher.SearchBracket(Editor.Document, Editor.TextArea.Caret.Offset);
 			bracketHighlightRenderer.SetHighlight(result);
-		}
-
-		void OnScrollOffsetChanged(object? sender, EventArgs e)
-		{
-			if (DataContext is DecompilerTabPageModel m)
-			{
-				m.LastKnownVerticalOffset = Editor.VerticalOffset;
-				m.LastKnownHorizontalOffset = Editor.HorizontalOffset;
-			}
 		}
 
 		/// <summary>
@@ -440,46 +435,40 @@ namespace ILSpy.TextView
 		{
 			base.OnDataContextChanged(e);
 
-			// Snapshot the outgoing model's folding state and detach its property handler
-			// BEFORE binding to the new one. Dock recycles a single DecompilerTextView across
-			// every document tab, so a tab switch lands here with the FoldingManager still
-			// holding the previous tab's collapsed / expanded state. Capture that into the
-			// outgoing model's LastKnownFoldings so the next ApplyDocument can restore it
-			// when the user clicks back. Without this the foldings reset to their default
-			// (open) state on every tab toggle.
+			// Detach the outgoing model's handlers before binding to the new one. Avalonia doesn't
+			// surface the previous DataContext to this event, so we track it ourselves.
 			if (boundModel is { } previous && !ReferenceEquals(previous, DataContext))
 			{
 				previous.PropertyChanged -= OnModelPropertyChanged;
-				if (activeFoldingManager is { } outgoingManager)
-					previous.LastKnownFoldings = FoldingsViewState.Capture(outgoingManager.AllFoldings);
-				// The delegate closes over `activeFoldingManager` (the view field), not the
-				// model's own state. Once we've switched to a new model the field is about
-				// to point at someone else's FoldingManager, so a late invocation from
-				// DockWorkspace.CaptureCurrentViewState would write THIS tab's foldings into
-				// the outgoing model's LastKnownFoldings. Drop the delegate so that path is
-				// a no-op; the snapshot we just took is correct and shouldn't be clobbered.
-				previous.CaptureFoldingsState = null;
+				previous.CaptureViewState = null;
 			}
 
 			boundModel = DataContext as DecompilerTabPageModel;
 			if (boundModel is { } model)
 			{
 				model.PropertyChanged += OnModelPropertyChanged;
-				// Foldings have no per-change event on AvaloniaEdit; instead DockWorkspace asks
-				// the view for a fresh snapshot at navigate-away time. Assigning the delegate
-				// every DataContext-change handles both the first attach and an ABA reattach.
-				model.CaptureFoldingsState = () => SnapshotFoldingsInto(model);
+				// Let DockWorkspace pull the live view state from this editor on demand when it
+				// records a navigation away. (Re)assigning every DataContext-change handles both
+				// the first attach and an ABA reattach.
+				model.CaptureViewState = GetCurrentViewState;
 				ApplyDocument(model);
 			}
 		}
 
-		void SnapshotFoldingsInto(DecompilerTabPageModel model)
-		{
-			if (activeFoldingManager is { } manager)
-				model.LastKnownFoldings = FoldingsViewState.Capture(manager.AllFoldings);
-			else
-				model.LastKnownFoldings = null;
-		}
+		// Reads the editor's live caret + scroll + expanded-foldings state. Invoked by
+		// DockWorkspace via DecompilerTabPageModel.CaptureViewState when it writes a navigation
+		// record, so the captured position reflects exactly what the user is looking at now.
+		DecompilerTextViewState GetCurrentViewState() => new(
+			Editor.TextArea.Caret.Offset,
+			Editor.VerticalOffset,
+			Editor.HorizontalOffset,
+			activeFoldingManager is { } manager ? FoldingsViewState.Capture(manager.AllFoldings) : null);
+
+		// The editor's template ScrollViewer (cached once found). ?? re-evaluates while null so it
+		// resolves once the template is applied.
+		ScrollViewer? EditorScrollViewer =>
+			editorScrollViewer ??= Editor.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+
 
 		void OnModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
@@ -491,7 +480,9 @@ namespace ILSpy.TextView
 				&& (e.PropertyName == nameof(DecompilerTabPageModel.Text)
 					|| e.PropertyName == nameof(DecompilerTabPageModel.SyntaxExtension)))
 			{
-				ApplyDocument(model);
+				// Restore caret/scroll/foldings only on the Text change (the final content);
+				// SyntaxExtension fires an intermediate rebuild that must not move the scroll.
+				ApplyDocument(model, restoreViewState: e.PropertyName == nameof(DecompilerTabPageModel.Text));
 			}
 			// HighlightedReference can change independently of a re-decompile (e.g. the analyzer
 			// pane sets it while the user is already on the right tab). Apply it directly without
@@ -513,7 +504,11 @@ namespace ILSpy.TextView
 			HighlightLocalReferences(model, model.HighlightedReference);
 		}
 
-		void ApplyDocument(DecompilerTabPageModel model)
+		// restoreViewState: only the Text change carries the final decompiled content, so only it
+		// should consume PendingViewState and restore (or reset) caret/scroll/foldings. The
+		// intermediate SyntaxExtension change rebuilds the display but must NOT touch the scroll,
+		// or it resets to the top before the Text pass restores -- a visible flicker on Back.
+		void ApplyDocument(DecompilerTabPageModel model, bool restoreViewState = true)
 		{
 			// A new decompile invalidates any tooltip resolved against the previous document —
 			// force-close even if the popup currently wants to stay (mouseClick: true).
@@ -543,14 +538,15 @@ namespace ILSpy.TextView
 				FoldingManager.Uninstall(activeFoldingManager);
 				activeFoldingManager = null;
 			}
-			// Consume the pending snapshot up-front so it can't bleed into a later refresh
-			// even when the new document has zero foldings to apply it to (e.g. a namespace
-			// summary page that follows a method-body navigation). PendingFoldings is set
-			// by Back / Forward navigation; LastKnownFoldings is captured on tab-switch so
-			// raw tab toggles restore state too -- prefer the explicit Pending if both
-			// exist (the history path wins over the recycled tab path).
-			var pendingFoldings = model.PendingFoldings ?? model.LastKnownFoldings;
-			model.PendingFoldings = null;
+			// Consume the pending view state up-front so it can't bleed into a later refresh even
+			// when the new document has zero foldings to apply it to (e.g. a namespace summary page
+			// that follows a method-body navigation). PendingViewState is set by Back/Forward/GoTo
+			// navigation; null on a fresh navigation, in which case the caret/scroll reset below
+			// puts the new document at the top.
+			var pendingState = restoreViewState ? model.PendingViewState : null;
+			if (restoreViewState)
+				model.PendingViewState = null;
+			var pendingFoldings = pendingState?.Foldings;
 			if (model.Foldings is { Count: > 0 } foldings)
 			{
 				// Defensive clamp: drop foldings that fall outside [0, TextLength]. Without
@@ -593,29 +589,32 @@ namespace ILSpy.TextView
 			if (model.HighlightedReference != null)
 				HighlightLocalReferences(model, model.HighlightedReference);
 
-			// Restore caret + scroll position captured when the user previously navigated
-			// away from this node. Back/Forward (and the dropdown-history "GoTo") set the
-			// Pending* fields just before triggering the decompile; tab switches don't,
-			// but LastKnown* is kept fresh by the per-event push from the view, so falling
-			// through Pending -> LastKnown lets a raw tab toggle restore the same state.
-			// Clear Pending* so a subsequent user-initiated decompile doesn't jump the
-			// cursor again. Clamp to the new document length -- text-changed-since-capture
-			// is the common case for Refresh.
-			if ((model.PendingCaretOffset ?? model.LastKnownCaretOffset) is { } caret)
+			// Restore caret + scroll for Back/Forward/GoTo (PendingViewState carries the position
+			// captured when the user left this node). On a fresh navigation there's no pending
+			// state, so reset to the top: the editor is reused across navigations and AvaloniaEdit
+			// keeps the previous document's caret/scroll when the text is replaced, which would
+			// otherwise leave a new node scrolled to wherever the previous one was. Clamp the caret
+			// to the new document length (text may have changed since capture, e.g. Refresh).
+			// AvaloniaEdit's ScrollToVerticalOffset/ScrollToHorizontalOffset are no-ops in 12.0.0
+			// (fixed upstream in AvaloniaUI/AvaloniaEdit#594), so set the ScrollViewer's Offset
+			// directly. Avalonia re-coerces Offset against the scroll extent on the next layout,
+			// so this sticks even though the freshly-set document isn't measured yet.
+			if (restoreViewState)
 			{
-				model.PendingCaretOffset = null;
-				Editor.TextArea.Caret.Offset = Math.Clamp(caret, 0, Editor.Document.TextLength);
-				Editor.TextArea.Caret.BringCaretToView();
-			}
-			if ((model.PendingVerticalOffset ?? model.LastKnownVerticalOffset) is { } vy)
-			{
-				model.PendingVerticalOffset = null;
-				Editor.ScrollToVerticalOffset(vy);
-			}
-			if ((model.PendingHorizontalOffset ?? model.LastKnownHorizontalOffset) is { } hx)
-			{
-				model.PendingHorizontalOffset = null;
-				Editor.ScrollToHorizontalOffset(hx);
+				if (pendingState is { } state)
+				{
+					Editor.TextArea.Caret.Offset = Math.Clamp(state.CaretOffset, 0, Editor.Document.TextLength);
+					if (EditorScrollViewer is { } scrollViewer)
+						scrollViewer.Offset = new Vector(state.HorizontalOffset, state.VerticalOffset);
+				}
+				else
+				{
+					// Fresh navigation: reset caret + scroll to the top. The reused editor keeps the
+					// previous document's position when the text is replaced, so reset explicitly.
+					Editor.TextArea.Caret.Offset = 0;
+					if (EditorScrollViewer is { } scrollViewer)
+						scrollViewer.Offset = default;
+				}
 			}
 
 			// Swap any tab-contributed visual-line element generators (e.g. About-page hyperlink
@@ -635,8 +634,6 @@ namespace ILSpy.TextView
 			}
 
 			Editor.TextArea.TextView.Redraw();
-
-			Editor.ScrollToHome();
 		}
 
 		void OnHyperlinkOpenUri(object? sender, AvaloniaEdit.Rendering.OpenUriRoutedEventArgs e)

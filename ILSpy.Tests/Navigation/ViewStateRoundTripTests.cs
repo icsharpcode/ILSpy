@@ -64,21 +64,18 @@ public class ViewStateRoundTripTests
 		await dockWorkspace.WaitForDecompiledTextAsync();
 		var tab = dockWorkspace.ActiveDecompilerTab!;
 
-		// Simulate the user moving the caret on node A. The view's PositionChanged handler
-		// is wired to push LastKnownCaretOffset onto the model, but headless tests don't
-		// fire that event by simulating user clicks — write the LastKnown values directly
-		// to model the post-interaction state.
-		tab.LastKnownCaretOffset = 500;
-		tab.LastKnownVerticalOffset = 120.5;
-		tab.LastKnownHorizontalOffset = 7.25;
+		// State is pulled from the editor on demand (CaptureViewState) when DockWorkspace records
+		// a navigation away -- not pushed per caret/scroll event. Headless has no laid-out editor,
+		// so override the pull delegate to report the position the user "left" on node A.
+		tab.CaptureViewState = () => new DecompilerTextViewState(500, 120.5, 7.25, null);
 
-		// Navigate to a different node — captures A's state into the history's current
+		// Navigate to a different node — DockWorkspace pulls A's state into the current history
 		// entry and records B as the new current.
 		vm.AssemblyTreeModel.SelectNode(stringNode);
 		await dockWorkspace.WaitForDecompiledTextAsync();
 
-		// Verify the capture: the back stack's most recent entry should be A's, with
-		// the caret + scroll values we set.
+		// Verify the capture: the back stack's most recent entry should be A's, with the pulled
+		// caret + scroll values.
 		var backEntries = dockWorkspace.BackHistory.OfType<TreeNodeEntry>().ToList();
 		backEntries.Should().NotBeEmpty("Select(B) must push A onto the back stack");
 		var captured = backEntries.Last();
@@ -88,34 +85,31 @@ public class ViewStateRoundTripTests
 		captured.VerticalOffset.Should().Be(120.5);
 		captured.HorizontalOffset.Should().Be(7.25);
 
-		// Navigate Back. ApplyNavigationTarget synchronously sets PendingVerticalOffset
-		// from the recorded entry before the async decompile runs; the editor view
-		// consumes it in ApplyDocument once Text lands. Assert the scroll-restore intent
-		// here, before the await lets the view consume and null it. We can't assert the
-		// applied result: the headless editor has no rendered viewport (extent 0), so
-		// ScrollToVerticalOffset(120.5) clamps to 0 and LastKnownVerticalOffset reads back
-		// 0. Applying the scroll is the view's job, covered by the real UI, not this test.
+		// Navigate Back. ApplyNavigationTarget synchronously stashes the recorded state on the tab
+		// as PendingViewState before the async decompile runs; the editor consumes it in
+		// ApplyDocument once Text lands. Assert the restore intent here, before the await lets the
+		// view consume it -- applying caret/scroll to the live editor is the view's job (covered by
+		// the real UI; headless has no rendered viewport).
 		dockWorkspace.NavigateBackCommand.Execute(null);
-		tab.PendingVerticalOffset.Should().Be(120.5,
-			"Back must schedule a restore of the vertical scroll offset the user left on A");
+		tab.PendingViewState.Should().NotBeNull("Back must stash the recorded view state for the editor to apply");
+		tab.PendingViewState!.Value.CaretOffset.Should().Be(500,
+			"Back must restore the caret to where the user left it before navigating to B");
+		tab.PendingViewState!.Value.VerticalOffset.Should().Be(120.5,
+			"Back must restore the vertical scroll offset the user left on A");
 
 		await dockWorkspace.WaitForDecompiledTextAsync();
 
-		// The caret is a document position, so it round-trips even headless: the view's
-		// caret-change handler writes LastKnownCaretOffset when it programmatically moves
-		// the caret in ApplyDocument.
-		tab.LastKnownCaretOffset.Should().Be(500,
-			"Back must restore the caret to where the user left it before navigating to B");
+		// The editor consumes and clears PendingViewState once the document lands.
+		tab.PendingViewState.Should().BeNull("the editor must consume the pending state after applying it");
 	}
 
 	[AvaloniaTest]
 	public async Task Back_Carries_Expanded_Foldings_Snapshot_From_Capture_Through_To_Pending()
 	{
 		// Pins the foldings half of the view-state round trip end-to-end through DockWorkspace.
-		// The headless editor doesn't actually build foldings, so we can't observe a real
-		// FoldingManager state. Instead seed LastKnownFoldings directly on the tab (mimicking
-		// what the view's CaptureFoldingsState delegate would push), exercise the navigation
-		// pipeline, and assert the snapshot survives the capture → entry → pending hops.
+		// The headless editor doesn't build real foldings, so override the pull delegate to report
+		// a deterministic snapshot, exercise the navigation pipeline, and assert the snapshot
+		// survives the capture -> entry -> pending hops.
 
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
@@ -131,23 +125,19 @@ public class ViewStateRoundTripTests
 		await dockWorkspace.WaitForDecompiledTextAsync();
 		var tab = dockWorkspace.ActiveDecompilerTab!;
 
-		// Seed a deterministic foldings snapshot — two expanded regions over a four-folding
-		// layout. Compute it via the helper to keep the checksum honest. The view normally
-		// re-snapshots its live foldings via the CaptureFoldingsState delegate at navigate-
-		// away time, which would clobber the seed — disable it for this isolation test so we
-		// observe just the entry → pending plumbing inside DockWorkspace. (The snapshot
-		// itself is independently exercised in FoldingsViewStateTests.)
+		// Deterministic foldings snapshot — two expanded regions over a four-folding layout.
+		// Compute via the helper to keep the checksum honest. (The snapshot itself is exercised
+		// independently in FoldingsViewStateTests.)
 		var seeded = FoldingsViewState.Capture(new[] {
 			(Start: 10, End: 50, IsFolded: false),
 			(Start: 60, End: 100, IsFolded: true),
 			(Start: 110, End: 200, IsFolded: false),
 			(Start: 210, End: 250, IsFolded: true),
 		});
-		tab.LastKnownFoldings = seeded;
-		tab.CaptureFoldingsState = null;
+		tab.CaptureViewState = () => new DecompilerTextViewState(0, 0, 0, seeded);
 
-		// Navigate to a different node — DockWorkspace.CaptureCurrentViewState reads
-		// LastKnownFoldings and stamps it onto the OUTGOING entry on the back stack.
+		// Navigate to a different node — DockWorkspace pulls the state and stamps the foldings
+		// onto the OUTGOING entry on the back stack.
 		vm.AssemblyTreeModel.SelectNode(stringNode);
 		await dockWorkspace.WaitForDecompiledTextAsync();
 
@@ -159,23 +149,13 @@ public class ViewStateRoundTripTests
 		captured.Foldings!.Value.Checksum.Should().Be(seeded.Checksum);
 		captured.Foldings.Value.Expanded.Should().Equal(seeded.Expanded);
 
-		// Clear the pending slot on the tab so we can observe the Back-driven set.
-		tab.PendingFoldings = null;
-
-		// Navigate Back. ApplyNavigationTarget writes the recorded snapshot into
-		// PendingFoldings so the view consumes it on the next ApplyDocument. The view's
-		// consume-and-null happens after the decompile completes, but the assignment from
-		// DockWorkspace is synchronous, so we can observe it without waiting.
+		// Navigate Back. ApplyNavigationTarget stashes the recorded snapshot into PendingViewState
+		// for the view to consume on the next ApplyDocument. The assignment is synchronous, so we
+		// can observe it before the await lets the editor consume it.
 		dockWorkspace.NavigateBackCommand.Execute(null);
-
-		// Read PendingFoldings before the editor consumes it. In headless mode the editor
-		// may not run ApplyDocument at all (no Editor surface), but the assignment from
-		// DockWorkspace.ApplyNavigationTarget already happened. Either we still see it
-		// pending, OR we see a fresh capture write LastKnownFoldings from the view's hook
-		// — both are valid "the snapshot made it through" outcomes for this assertion.
-		var observed = tab.PendingFoldings ?? tab.LastKnownFoldings;
-		observed.Should().NotBeNull("Back must propagate the captured snapshot to the destination tab");
-		observed!.Value.Checksum.Should().Be(seeded.Checksum);
+		tab.PendingViewState.Should().NotBeNull("Back must propagate the captured state to the destination tab");
+		tab.PendingViewState!.Value.Foldings.Should().NotBeNull();
+		tab.PendingViewState!.Value.Foldings!.Value.Checksum.Should().Be(seeded.Checksum);
 	}
 
 	[AvaloniaTest]

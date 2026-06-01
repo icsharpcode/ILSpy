@@ -508,17 +508,16 @@ namespace ILSpy.Docking
 		{
 			if (history.Current is not TreeNodeEntry current)
 				return;
-			var decompTab = UnwrapDecompilerTab(current.Tab);
-			if (decompTab == null)
+			// Pull the editor's live view state (caret + scroll + foldings) on demand. Reading it
+			// only at this point -- when we record the navigation away -- avoids the poisoned
+			// captures a per-event push suffered (AvaloniaEdit jumps the caret to the end on a
+			// text replace). Null when no view is attached / nothing to capture.
+			if (UnwrapDecompilerTab(current.Tab)?.CaptureViewState?.Invoke() is not { } state)
 				return;
-			// Foldings have no model-side property-change event we can mirror onto, so the
-			// text view's snapshot delegate has to be invoked synchronously here. Caret and
-			// scroll values are kept fresh by per-event push from the view; foldings aren't.
-			decompTab.CaptureFoldingsState?.Invoke();
-			current.CaretOffset = decompTab.LastKnownCaretOffset;
-			current.VerticalOffset = decompTab.LastKnownVerticalOffset;
-			current.HorizontalOffset = decompTab.LastKnownHorizontalOffset;
-			current.Foldings = decompTab.LastKnownFoldings;
+			current.CaretOffset = state.CaretOffset;
+			current.VerticalOffset = state.VerticalOffset;
+			current.HorizontalOffset = state.HorizontalOffset;
+			current.Foldings = state.Foldings;
 		}
 
 		// The recorded TabPageModel in TreeNodeEntry can be either a DecompilerTabPageModel
@@ -567,10 +566,11 @@ namespace ILSpy.Docking
 					// the Pending* fields right after Text lands and restores caret + scroll.
 					if (UnwrapDecompilerTab(treeNode.Tab) is { } decompTab)
 					{
-						decompTab.PendingCaretOffset = treeNode.CaretOffset;
-						decompTab.PendingVerticalOffset = treeNode.VerticalOffset;
-						decompTab.PendingHorizontalOffset = treeNode.HorizontalOffset;
-						decompTab.PendingFoldings = treeNode.Foldings;
+						decompTab.PendingViewState = new TextView.DecompilerTextViewState(
+							treeNode.CaretOffset ?? 0,
+							treeNode.VerticalOffset ?? 0,
+							treeNode.HorizontalOffset ?? 0,
+							treeNode.Foldings);
 					}
 					assemblyTreeModel.SelectedItem = treeNode.Node;
 				}
