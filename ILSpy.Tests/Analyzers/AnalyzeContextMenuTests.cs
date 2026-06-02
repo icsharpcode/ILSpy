@@ -43,10 +43,7 @@ public class AnalyzeContextMenuTests
 	[AvaloniaTest]
 	public async Task Analyze_Entry_Is_Registered_With_The_Localised_Header()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		await TestHarness.BootAsync();
 
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
 		registry.Entries.Should().Contain(e => e.Metadata.Header == nameof(Resources.Analyze),
@@ -59,15 +56,10 @@ public class AnalyzeContextMenuTests
 		// AnalyzeContextMenuEntry visibility contract: visible when every selected node is
 		// an IMemberTreeNode (types, methods, fields, properties, events), hidden otherwise.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
-		var entry = registry.Entries
-			.Single(e => e.Metadata.Header == nameof(Resources.Analyze))
-			.Value;
+		var entry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>()
+			.GetEntry(nameof(Resources.Analyze));
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
@@ -91,15 +83,10 @@ public class AnalyzeContextMenuTests
 		// selection. The pane's Root.Children must hold one AnalyzedTypeTreeNode wrapping
 		// the same type definition after the call.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
-		var entry = registry.Entries
-			.Single(e => e.Metadata.Header == nameof(Resources.Analyze))
-			.Value;
+		var entry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>()
+			.GetEntry(nameof(Resources.Analyze));
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
@@ -121,10 +108,7 @@ public class AnalyzeContextMenuTests
 		// Ctrl+R while a member is selected on the assembly tree pane must surface the
 		// member in the analyzer pane — the same end-state as right-click + Analyze.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (window, vm) = await TestHarness.BootAsync();
 
 		var pane = await window.WaitForComponent<global::ILSpy.AssemblyTree.AssemblyListPane>();
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -153,15 +137,12 @@ public class AnalyzeContextMenuTests
 		// pane's Root.Children, but if the pane is hidden the user doesn't see anything
 		// happen. Execute should call DockWorkspace.ShowToolPane so the pane surfaces.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var dockWorkspace = AppComposition.Current.GetExport<global::ILSpy.Docking.DockWorkspace>();
 		var analyzerVm = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
 		var entry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>()
-			.Entries.Single(e => e.Metadata.Header == nameof(Resources.Analyze)).Value;
+			.GetEntry(nameof(Resources.Analyze));
 
 		// Pick a method that won't already be in the analyzer pane.
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -208,14 +189,11 @@ public class AnalyzeContextMenuTests
 		// the leaf result rows below had perfectly good icons. Every materialised node in
 		// the analyzer tree must report a non-null Icon for the cell template to render.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var analyzerVm = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
 		var entry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>()
-			.Entries.Single(e => e.Metadata.Header == nameof(Resources.Analyze)).Value;
+			.GetEntry(nameof(Resources.Analyze));
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");

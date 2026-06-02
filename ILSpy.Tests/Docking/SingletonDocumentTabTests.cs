@@ -45,8 +45,7 @@ public class SingletonDocumentTabTests
 {
 	static void Invoke(MainWindow window, string header)
 	{
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		registry.Commands.Single(c => c.Metadata.Header == header).CreateExport().Value.Execute(null);
+		AppComposition.Current.GetExport<MainMenuCommandRegistry>().GetCommand(header).Execute(null);
 		Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 	}
 

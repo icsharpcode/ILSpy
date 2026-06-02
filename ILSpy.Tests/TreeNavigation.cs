@@ -22,6 +22,7 @@ using System.Linq;
 using ICSharpCode.ILSpyX.TreeView;
 
 using global::ILSpy.AssemblyTree;
+using global::ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Tests;
 
@@ -36,6 +37,56 @@ namespace ICSharpCode.ILSpy.Tests;
 /// </summary>
 public static class TreeNavigation
 {
+	/// <summary>
+	/// Short name of the runtime core library (e.g. <c>System.Private.CoreLib</c>) — the one
+	/// assembly the headless suite is guaranteed to have loaded. Use as the first path segment.
+	/// </summary>
+	public static string CoreLibName { get; } = typeof(object).Assembly.GetName().Name!;
+
+	/// <summary>
+	/// Resolves the core-library <see cref="AssemblyTreeNode"/>, the fixture every test can rely
+	/// on. Replaces the repeated <c>FindNode&lt;AssemblyTreeNode&gt;(typeof(object).Assembly...)</c>.
+	/// </summary>
+	internal static AssemblyTreeNode FindCoreLib(this AssemblyTreeModel atm)
+		=> atm.FindNode<AssemblyTreeNode>(CoreLibName);
+
+	/// <summary>
+	/// Materialises <paramref name="parent"/>'s lazy children and returns the single child of type
+	/// <typeparamref name="T"/>. The workhorse for drilling metadata sub-trees, replacing the
+	/// <c>node.EnsureLazyChildren(); node.Children.OfType&lt;T&gt;().Single()</c> pair. Chains.
+	/// </summary>
+	public static T GetChild<T>(this SharpTreeNode parent) where T : SharpTreeNode
+	{
+		ArgumentNullException.ThrowIfNull(parent);
+		parent.EnsureLazyChildren();
+		return parent.Children.OfType<T>().Single();
+	}
+
+	/// <summary>
+	/// Materialises lazy children and returns the single child of type <typeparamref name="T"/>
+	/// matching <paramref name="predicate"/> (e.g. a method picked by name).
+	/// </summary>
+	public static T GetChild<T>(this SharpTreeNode parent, Func<T, bool> predicate) where T : SharpTreeNode
+	{
+		ArgumentNullException.ThrowIfNull(parent);
+		ArgumentNullException.ThrowIfNull(predicate);
+		parent.EnsureLazyChildren();
+		return parent.Children.OfType<T>().Single(predicate);
+	}
+
+	/// <summary>
+	/// Materialises lazy children, flips <see cref="SharpTreeNode.IsExpanded"/>, and returns the
+	/// node so callers can keep drilling. Replaces the
+	/// <c>node.EnsureLazyChildren(); node.IsExpanded = true;</c> pair.
+	/// </summary>
+	public static T Expand<T>(this T node) where T : SharpTreeNode
+	{
+		ArgumentNullException.ThrowIfNull(node);
+		node.EnsureLazyChildren();
+		node.IsExpanded = true;
+		return node;
+	}
+
 	public static SharpTreeNode FindNode(this AssemblyTreeModel atm, params string[] segments)
 	{
 		ArgumentNullException.ThrowIfNull(atm);

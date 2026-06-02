@@ -28,11 +28,8 @@ using AwesomeAssertions;
 using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy;
-using ILSpy.AppEnv;
 using ILSpy.AssemblyTree;
 using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -49,10 +46,7 @@ public class AssemblyTreeContextMenuTests
 		// without further per-entry plumbing.
 
 		// Arrange + Act — boot the window so the pane materialises.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (window, vm) = await TestHarness.BootAsync();
 
 		// Assert — TreeGrid carries a ContextMenu. (The menu may be empty if no entries are
 		// registered yet; verifies only that the host is in place.)
@@ -71,10 +65,7 @@ public class AssemblyTreeContextMenuTests
 
 		// Arrange — boot, select an assembly node, install a stub entry that records the
 		// context it sees on Execute.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (window, vm) = await TestHarness.BootAsync();
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		vm.AssemblyTreeModel.SelectNode(assemblyNode);

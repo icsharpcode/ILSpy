@@ -24,11 +24,7 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
 using ILSpy.Metadata;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -45,15 +41,9 @@ public class MetadataTablesTreeTests
 		// Phase 1 lazy-loads its children with a generic placeholder per table; Phase 1e
 		// replaces them with per-table typed leaves carrying the actual row data.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
+		var metadataNode = vm.AssemblyTreeModel.FindCoreLib().GetChild<MetadataTreeNode>();
 		metadataNode.EnsureLazyChildren();
 
 		var tablesNode = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
@@ -68,17 +58,11 @@ public class MetadataTablesTreeTests
 	[AvaloniaTest]
 	public async Task MetadataTablesTreeNode_LazyLoads_One_Child_Per_NonEmpty_Table()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var tablesNode = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
+		var tablesNode = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<MetadataTablesTreeNode>();
 		tablesNode.EnsureLazyChildren();
 
 		var tableChildren = tablesNode.Children.OfType<MetadataTableTreeNode>().ToList();
@@ -93,17 +77,11 @@ public class MetadataTablesTreeTests
 	[AvaloniaTest]
 	public async Task MetadataTablesTreeNode_Decompiles_To_A_Per_Table_Row_Count_Summary()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var tablesNode = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
+		var tablesNode = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<MetadataTablesTreeNode>();
 
 		vm.AssemblyTreeModel.SelectNode(tablesNode);
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();

@@ -50,10 +50,7 @@ public class AnalyzerNavigationTests
 		// Double-click on an analyser result must navigate back to the entity's home in
 		// the assembly tree — same UX as clicking a hyperlink in the decompiler view.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
@@ -69,10 +66,7 @@ public class AnalyzerNavigationTests
 	[AvaloniaTest]
 	public async Task ActivateItem_On_An_AnalyzedMethodTreeNode_Selects_The_MethodTreeNode_Sibling()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");

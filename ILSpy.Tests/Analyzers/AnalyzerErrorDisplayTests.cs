@@ -75,22 +75,16 @@ public class AnalyzerErrorDisplayTests
 	[AvaloniaTest]
 	public async Task CopyErrorMessage_Entry_Is_Visible_Only_For_Error_Nodes()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
-		var entry = registry.Entries
-			.Single(e => e.Metadata.Header == nameof(Resources.CopyErrorMessage))
-			.Value;
+		var entry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>()
+			.GetEntry(nameof(Resources.CopyErrorMessage));
 
 		var errorNode = new AnalyzerErrorNode(new InvalidOperationException("boom"));
 		entry.IsVisible(new TextViewContext { SelectedTreeNodes = new SharpTreeNode[] { errorNode } })
 			.Should().BeTrue("Copy Error Message must surface for AnalyzerErrorNode rows");
 
-		var unrelatedNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(
-			typeof(object).Assembly.GetName().Name!);
+		var unrelatedNode = vm.AssemblyTreeModel.FindCoreLib();
 		entry.IsVisible(new TextViewContext { SelectedTreeNodes = new SharpTreeNode[] { unrelatedNode } })
 			.Should().BeFalse("non-error rows must not see the Copy Error Message entry");
 	}

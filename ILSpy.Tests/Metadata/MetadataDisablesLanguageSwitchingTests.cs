@@ -26,11 +26,9 @@ using Avalonia.VisualTree;
 using AwesomeAssertions;
 
 using ILSpy;
-using ILSpy.AppEnv;
 using ILSpy.Metadata;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -88,10 +86,7 @@ public class MetadataDisablesLanguageSwitchingTests
 		// DockWorkspace.ActiveContentTabPage.SupportsLanguageSwitching must flip to false.
 		// Selecting a decompilable type after that must flip it back to true.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (window, vm) = await TestHarness.BootAsync();
 
 		var toolbar = await window.WaitForComponent<MainToolBar>();
 		var languageCombo = toolbar.GetVisualDescendants().OfType<ComboBox>()
@@ -103,11 +98,9 @@ public class MetadataDisablesLanguageSwitchingTests
 
 		// Navigate to a metadata node (DOS Header is a stable choice — every PE has one).
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var dosHeader = metadataNode.Children.OfType<DosHeaderTreeNode>().Single();
+		var dosHeader = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<DosHeaderTreeNode>();
 
 		vm.AssemblyTreeModel.SelectNode(dosHeader);
 		await Waiters.WaitForAsync(

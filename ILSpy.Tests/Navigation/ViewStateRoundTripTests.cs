@@ -23,12 +23,9 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
 using ILSpy.Navigation;
 using ILSpy.TextView;
 using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -47,10 +44,7 @@ public class ViewStateRoundTripTests
 	[AvaloniaTest]
 	public async Task Back_Restores_Caret_Position_The_User_Left_On_The_Previous_Node()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var dockWorkspace = vm.DockWorkspace;
 
@@ -111,10 +105,7 @@ public class ViewStateRoundTripTests
 		// a deterministic snapshot, exercise the navigation pipeline, and assert the snapshot
 		// survives the capture -> entry -> pending hops.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var dockWorkspace = vm.DockWorkspace;
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
@@ -165,10 +156,7 @@ public class ViewStateRoundTripTests
 		// as missing, but it was already implemented. This test makes a regression in any
 		// of the three wirings (command, toolbar button, Alt+Right) detectable.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		((object?)vm.DockWorkspace.NavigateForwardCommand).Should().NotBeNull();
 		((object?)vm.DockWorkspace.NavigateBackCommand).Should().NotBeNull();

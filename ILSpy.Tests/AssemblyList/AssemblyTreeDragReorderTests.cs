@@ -29,11 +29,8 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpyX;
 
-using ILSpy.AppEnv;
 using ILSpy.AssemblyTree;
 using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -48,10 +45,7 @@ public class AssemblyTreeDragReorderTests
 		// Mirrors WPF's SharpTreeView AllowDropOrder=True — the assembly tree must opt in to
 		// ProDataGrid's row-drag-drop machinery (otherwise the handler we wire below is never
 		// asked to validate anything).
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (window, vm) = await TestHarness.BootAsync();
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<DataGrid>();
 
@@ -71,10 +65,7 @@ public class AssemblyTreeDragReorderTests
 	{
 		// The pane owns the handler instance — it builds one from the model's AssemblyList so
 		// dropping into the grid mutates the same list that file-open and Unload mutate.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (window, vm) = await TestHarness.BootAsync();
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<DataGrid>();
 
@@ -88,10 +79,7 @@ public class AssemblyTreeDragReorderTests
 		// the underlying AssemblyList reordered. The handler is responsible for turning
 		// HierarchicalNode wrappers (or bare AssemblyTreeNodes) into LoadedAssembly refs and
 		// calling AssemblyList.Move with the correct insert index.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 2);
+		var (window, vm) = await TestHarness.BootAsync(2);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<DataGrid>();
 		var list = vm.AssemblyTreeModel.AssemblyList!;
@@ -123,10 +111,7 @@ public class AssemblyTreeDragReorderTests
 		// "Inside" would mean dropping one assembly as a child of another — there's no such
 		// relationship in the model, so the handler must refuse it (the grid then renders the
 		// "not allowed" cursor).
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 2);
+		var (window, vm) = await TestHarness.BootAsync(2);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<DataGrid>();
 
@@ -143,10 +128,7 @@ public class AssemblyTreeDragReorderTests
 	{
 		// Dropping onto a child of an assembly (a namespace or type) must not reorder anything
 		// — that target doesn't live in AssemblyList at all.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (window, vm) = await TestHarness.BootAsync();
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<DataGrid>();
 
@@ -165,10 +147,7 @@ public class AssemblyTreeDragReorderTests
 	{
 		// Sub-nodes (namespaces, types, etc.) must not be picked up by the reorder gesture —
 		// only top-level AssemblyTreeNodes are eligible source items.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 2);
+		var (window, vm) = await TestHarness.BootAsync(2);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<DataGrid>();
 

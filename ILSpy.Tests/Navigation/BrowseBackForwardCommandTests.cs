@@ -79,10 +79,7 @@ public class BrowseBackForwardCommandTests
 		// Execute pops one entry. Verifies via the live MenuItem that ends up in the View menu.
 
 		// Arrange — boot the window, load assemblies, expand Enumerable, capture two methods.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");

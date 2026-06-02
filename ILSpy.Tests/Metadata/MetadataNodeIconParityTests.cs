@@ -24,11 +24,7 @@ using Avalonia.Media;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
 using ILSpy.Metadata;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -47,15 +43,9 @@ public class MetadataNodeIconParityTests
 		// restored per-node parity.
 
 		// Arrange — boot, expand CoreLib's Metadata folder.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
+		var metadataNode = vm.AssemblyTreeModel.FindCoreLib().GetChild<MetadataTreeNode>();
 		metadataNode.EnsureLazyChildren();
 		var children = metadataNode.Children;
 

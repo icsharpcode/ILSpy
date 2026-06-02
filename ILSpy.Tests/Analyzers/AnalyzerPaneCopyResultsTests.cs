@@ -42,15 +42,10 @@ public class AnalyzerPaneCopyResultsTests
 	[AvaloniaTest]
 	public async Task CopyResults_Entry_Is_Visible_For_AnalyzerSearchTreeNode_And_Hidden_Otherwise()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
-		var entry = registry.Entries
-			.Single(e => e.Metadata.Header == "Copy results")
-			.Value;
+		var entry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>()
+			.GetEntry("Copy results");
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
@@ -71,15 +66,10 @@ public class AnalyzerPaneCopyResultsTests
 	[AvaloniaTest]
 	public async Task CopyResults_Execute_Writes_Each_Child_On_Its_Own_Line()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
-		var entry = registry.Entries
-			.Single(e => e.Metadata.Header == "Copy results")
-			.Value;
+		var entry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>()
+			.GetEntry("Copy results");
 
 		// Build a search node and stuff some deterministic children in directly, bypassing
 		// the analyzer altogether — the copy entry should only care about Text values.

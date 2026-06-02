@@ -23,11 +23,8 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
 using ILSpy.Metadata;
 using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -45,17 +42,12 @@ public class MetadataTreeShapeTests
 		// MetadataTreeNode instance ready to lazy-load its children.
 
 		// Arrange — boot, wait for assemblies, expand CoreLib (always a PE).
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
+		var assemblyNode = vm.AssemblyTreeModel.FindCoreLib();
 
 		// Assert — exactly one MetadataTreeNode child and it precedes the References folder.
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
+		var metadataNode = assemblyNode.GetChild<MetadataTreeNode>();
 		var children = assemblyNode.Children.ToList();
 		children.IndexOf(metadataNode).Should().BeLessThan(
 			children.IndexOf(assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single()),
@@ -71,15 +63,9 @@ public class MetadataTreeShapeTests
 		// pipeline rather than introducing a new tab type for v1.
 
 		// Arrange — boot, find the Metadata folder under CoreLib.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
+		var metadataNode = vm.AssemblyTreeModel.FindCoreLib().GetChild<MetadataTreeNode>();
 
 		// Act — select it through the helper that mirrors a click (loads lazy children + assigns
 		// SelectedItem), wait for the decompile to finish.

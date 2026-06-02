@@ -24,10 +24,8 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
 using ILSpy.Metadata;
 using ILSpy.Metadata.CorTables;
-using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 using ILSpy.Views;
 
@@ -45,19 +43,12 @@ public class MetadataTokenNavigationTests
 		// must dispatch through the docking host to the TypeRef / TypeDef / TypeSpec table
 		// the token belongs to and scroll the receiving grid to the referenced row.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var tablesNode = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
-		tablesNode.EnsureLazyChildren();
-		var typeDefNode = tablesNode.Children.OfType<TypeDefTableTreeNode>().Single();
+		var typeDefNode = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<MetadataTablesTreeNode>()
+			.GetChild<TypeDefTableTreeNode>();
 
 		vm.AssemblyTreeModel.SelectNode(typeDefNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
@@ -94,19 +85,12 @@ public class MetadataTokenNavigationTests
 		// entry. It should fire the same NavigateToCellRequested path as the hyperlink-style
 		// click, with the focused (or last-clicked) token cell as the target.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (window, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var tablesNode = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
-		tablesNode.EnsureLazyChildren();
-		var typeDefNode = tablesNode.Children.OfType<TypeDefTableTreeNode>().Single();
+		var typeDefNode = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<MetadataTablesTreeNode>()
+			.GetChild<TypeDefTableTreeNode>();
 
 		vm.AssemblyTreeModel.SelectNode(typeDefNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();

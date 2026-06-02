@@ -30,7 +30,6 @@ using Dock.Model.Core;
 using ILSpy.AppEnv;
 using ILSpy.Docking;
 using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -59,10 +58,7 @@ public class LayoutPersistenceTests
 	[AvaloniaTest]
 	public async Task SaveLayout_Followed_By_LoadLayout_Round_Trips_The_Live_Layout()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		_ = await TestHarness.BootAsync();
 
 		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
 		var path = Path.Combine(Path.GetTempPath(), $"ILSpy.Layout.test.{System.Guid.NewGuid():N}.json");
@@ -127,10 +123,7 @@ public class LayoutPersistenceTests
 		// `if (factory.MainTab is not { } main) return;` and the user sees an empty
 		// editor when they click a tree node.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		_ = await TestHarness.BootAsync();
 
 		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
 		var path = Path.Combine(Path.GetTempPath(), $"ILSpy.Layout.test.{System.Guid.NewGuid():N}.json");
@@ -184,10 +177,7 @@ public class LayoutPersistenceTests
 		// DocumentDock comes back with a single fresh MainTab; user's tree selection
 		// re-projects through ShowSelectedNode as on first launch.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		_ = await TestHarness.BootAsync();
 
 		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
 

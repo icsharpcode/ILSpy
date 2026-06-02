@@ -42,10 +42,7 @@ public class ShowSearchCommandTests
 		// MainWindow.KeyBindings. Here we drive the command directly and verify the
 		// activation reaches the SearchPaneModel.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		await TestHarness.BootAsync();
 
 		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
 		var search = AppComposition.Current.GetExport<SearchPaneModel>();

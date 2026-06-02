@@ -28,11 +28,8 @@ using Avalonia.Input;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
 using ILSpy.AssemblyTree;
 using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -47,10 +44,7 @@ public class AssemblyTreeFileDropTests
 		// Avalonia's standard drag-drop pipeline routes Explorer file drops through
 		// DragDrop.AllowDrop / DragDrop.DropEvent. The grid must opt in or external drops
 		// produce a "no" cursor and never reach our handler.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (window, vm) = await TestHarness.BootAsync();
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<DataGrid>();
 
@@ -63,10 +57,7 @@ public class AssemblyTreeFileDropTests
 		// Simulating Windows Explorer dropping a .dll on empty space inside the tree.
 		// No target row → the new entry is appended (WPF's AssemblyListTreeNode.Drop with
 		// no target index does the same).
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var list = vm.AssemblyTreeModel.AssemblyList!;
 
@@ -92,10 +83,7 @@ public class AssemblyTreeFileDropTests
 	{
 		// Drop position is honoured: dragging onto the first row with Position=Before lands
 		// the opened assembly at index 0.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var list = vm.AssemblyTreeModel.AssemblyList!;
 
@@ -125,10 +113,7 @@ public class AssemblyTreeFileDropTests
 	public async Task File_Drop_After_A_Target_Row_Inserts_Past_That_Index()
 	{
 		// Position=After: insertion lands at targetIndex + 1.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var list = vm.AssemblyTreeModel.AssemblyList!;
 
@@ -158,10 +143,7 @@ public class AssemblyTreeFileDropTests
 		// AssemblyListTreeNode.Drop (which ends in AssemblyTreeModel.SelectNodes).
 		// Without this, the user gets no visual confirmation that the drop took, and
 		// the decompiler view stays parked on whatever was selected before.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var list = vm.AssemblyTreeModel.AssemblyList!;
 
@@ -192,10 +174,7 @@ public class AssemblyTreeFileDropTests
 	{
 		// AssemblyList.OpenAssembly returns null for non-existent / non-PE paths; the
 		// handler must filter those out and never raise on the caller's behalf.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var list = vm.AssemblyTreeModel.AssemblyList!;
 

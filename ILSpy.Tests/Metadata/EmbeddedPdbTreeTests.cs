@@ -25,13 +25,9 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.AppEnv;
-using ILSpy.Commands;
 using ILSpy.Metadata;
 using ILSpy.Metadata.DebugTables;
 using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -51,38 +47,21 @@ public class EmbeddedPdbTreeTests
 		// own Tables subtree contains the PDB-only tables (Document and friends) — the
 		// canonical entry point for browsing debug metadata in the live app.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		// ICSharpCode.Decompiler ships with an embedded portable PDB (no separate .pdb in
 		// the build output) — use it as the fixture rather than the test DLL itself, which
 		// the test SDK builds with portable + sidecar PDB.
 		var testDllPath = typeof(ICSharpCode.Decompiler.Metadata.MetadataFile).Assembly.Location;
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		var openCommand = registry.Commands
-			.Single(c => c.Metadata.Header == nameof(Resources._Open))
-			.CreateExport().Value;
-		openCommand.Execute(testDllPath);
-
-		await Waiters.WaitForAsync(() =>
-			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a =>
-				string.Equals(a.FileName, testDllPath, System.StringComparison.OrdinalIgnoreCase)));
-		var loaded = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
-			.First(a => string.Equals(a.FileName, testDllPath, System.StringComparison.OrdinalIgnoreCase));
-		await loaded.GetLoadResultAsync();
+		var loaded = await vm.OpenAssemblyAsync(testDllPath);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(loaded.ShortName);
-		assemblyNode.EnsureLazyChildren();
 		// AssemblyTreeNode now surfaces two MetadataTreeNode children for assemblies with an
 		// embedded PDB (host metadata + a top-level PDB sibling). This test cares about the
 		// nested-under-DebugDirectory path, so pick the host metadata explicitly by label.
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>()
-			.Single(n => (string?)n.Text == Resources.Metadata);
-		metadataNode.EnsureLazyChildren();
+		var metadataNode = assemblyNode.GetChild<MetadataTreeNode>(n => (string?)n.Text == Resources.Metadata);
 
-		var debugDirectoryNode = metadataNode.Children.OfType<DebugDirectoryTreeNode>().Single();
+		var debugDirectoryNode = metadataNode.GetChild<DebugDirectoryTreeNode>();
 		debugDirectoryNode.EnsureLazyChildren();
 
 		// The embedded-PDB sub-tree is a MetadataTreeNode whose own children include a
@@ -92,8 +71,7 @@ public class EmbeddedPdbTreeTests
 			"the test DLL ships with an embedded portable PDB, so the Debug Directory must expose its metadata as a nested MetadataTreeNode");
 		embeddedPdbNode!.Text.Should().Be("Debug Metadata (Embedded)");
 
-		embeddedPdbNode.EnsureLazyChildren();
-		var pdbTables = embeddedPdbNode.Children.OfType<MetadataTablesTreeNode>().Single();
+		var pdbTables = embeddedPdbNode.GetChild<MetadataTablesTreeNode>();
 		pdbTables.EnsureLazyChildren();
 		pdbTables.Children.OfType<DocumentTableTreeNode>().Should().NotBeEmpty(
 			"the embedded PDB's Tables subtree must expose the Document table — the lead debug-only table that always has rows in a populated PDB");
@@ -107,24 +85,10 @@ public class EmbeddedPdbTreeTests
 		// folder), not only nested under DebugDirectory. Without this, users have to drill
 		// three levels deep to reach PDB metadata — same content, harder to find.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var testDllPath = typeof(ICSharpCode.Decompiler.Metadata.MetadataFile).Assembly.Location;
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		var openCommand = registry.Commands
-			.Single(c => c.Metadata.Header == nameof(Resources._Open))
-			.CreateExport().Value;
-		openCommand.Execute(testDllPath);
-
-		await Waiters.WaitForAsync(() =>
-			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a =>
-				string.Equals(a.FileName, testDllPath, System.StringComparison.OrdinalIgnoreCase)));
-		var loaded = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
-			.First(a => string.Equals(a.FileName, testDllPath, System.StringComparison.OrdinalIgnoreCase));
-		await loaded.GetLoadResultAsync();
+		var loaded = await vm.OpenAssemblyAsync(testDllPath);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(loaded.ShortName);
 		assemblyNode.EnsureLazyChildren();

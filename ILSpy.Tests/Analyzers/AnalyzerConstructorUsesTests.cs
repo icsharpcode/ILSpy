@@ -49,10 +49,7 @@ public class AnalyzerConstructorUsesTests
 	[AvaloniaTest]
 	public async Task Used_By_Analyzer_Runs_Over_A_Constructor_Without_Throwing()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		// Pick any concrete type with at least one public instance ctor; the type itself
 		// doesn't matter — what matters is that the symbol fed to the analyzer is a method
@@ -93,10 +90,7 @@ public class AnalyzerConstructorUsesTests
 		// MethodUsesAnalyzer can return type/method/field/property/event ISymbols — the
 		// path most likely to surface a switch-arm hole for some result shape we missed.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Lookup`2");
@@ -122,10 +116,7 @@ public class AnalyzerConstructorUsesTests
 	[AvaloniaTest]
 	public async Task Analyze_Pushes_A_Constructor_Onto_The_Pane_Without_Throwing()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Lookup`2");

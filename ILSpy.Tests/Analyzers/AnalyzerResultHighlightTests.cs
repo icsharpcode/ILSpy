@@ -57,10 +57,7 @@ public class AnalyzerResultHighlightTests
 		// MessageBus → AssemblyTreeModel's subscription selects the Reference's tree node
 		// AND pushes Source onto the active decompiler tab's HighlightedReference.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
 		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -94,10 +91,7 @@ public class AnalyzerResultHighlightTests
 		// so the subscriber must skip the HighlightedReference assignment rather than blow
 		// away an active highlight.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
 		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(

@@ -25,10 +25,7 @@ using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
 using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -46,10 +43,7 @@ public class NavigationTests
 
 		// Arrange — boot the window, wait for assemblies, expand Enumerable, capture two methods
 		// that we'll bounce between.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
@@ -98,10 +92,7 @@ public class NavigationTests
 		// displaced entries pushed onto the forward stack).
 
 		// Arrange — boot, wait for assemblies, expand Enumerable, capture three methods.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
@@ -167,10 +158,7 @@ public class NavigationTests
 
 		// Arrange — boot, wait for assemblies, expand System.Exception so we can select its
 		// BaseTypesTreeNode child.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(

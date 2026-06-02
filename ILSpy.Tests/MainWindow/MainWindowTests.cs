@@ -137,10 +137,7 @@ public class MainWindowTests
 		// transition to Indeterminate, and once done it must drop back to None.
 
 		// Arrange — boot window, wait for assemblies, subscribe to TaskbarProgressService events.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var service = AppComposition.Current.GetExport<TaskbarProgressService>();
 		var states = new List<TaskbarProgressState>();

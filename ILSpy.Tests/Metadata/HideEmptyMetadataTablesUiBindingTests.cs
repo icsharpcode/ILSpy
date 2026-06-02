@@ -28,7 +28,6 @@ using ILSpy.AppEnv;
 using ILSpy.Metadata;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -46,10 +45,7 @@ public class HideEmptyMetadataTablesUiBindingTests
 		// SessionSettings.HideEmptyMetadataTables (an orphaned parallel setting).
 
 		var settings = AppComposition.Current.GetExport<SettingsService>();
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
 
@@ -80,10 +76,9 @@ public class HideEmptyMetadataTablesUiBindingTests
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(assemblyName);
 		assemblyNode.Children.Clear();
 		assemblyNode.LazyLoading = true;
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var tables = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
+		var tables = assemblyNode
+			.GetChild<MetadataTreeNode>()
+			.GetChild<MetadataTablesTreeNode>();
 		tables.EnsureLazyChildren();
 		return tables.Children.OfType<MetadataTableTreeNode>().Count();
 	}

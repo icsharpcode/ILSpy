@@ -42,10 +42,7 @@ public class AnalyzerPaneRemoveTests
 	[AvaloniaTest]
 	public async Task Remove_Entry_Is_Visible_Only_For_Top_Level_Analysed_Entities()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
 		var entry = registry.Entries
@@ -68,10 +65,7 @@ public class AnalyzerPaneRemoveTests
 	[AvaloniaTest]
 	public async Task Remove_Execute_Drops_The_Selected_Root_Children()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
 		var entry = registry.Entries

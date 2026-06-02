@@ -44,10 +44,7 @@ public class SearchProgressTests
 	[AvaloniaTest]
 	public async Task IsSearching_Flips_True_When_A_Search_Starts_And_False_When_It_Finishes()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		await TestHarness.BootAsync();
 
 		var search = AppComposition.Current.GetExport<SearchPaneModel>();
 		search.SearchTerm = string.Empty;
@@ -84,10 +81,7 @@ public class SearchProgressTests
 	[AvaloniaTest]
 	public async Task SearchResult_Image_Properties_Are_Non_Null_So_Row_Icons_Render()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		await TestHarness.BootAsync();
 
 		var search = AppComposition.Current.GetExport<SearchPaneModel>();
 		search.SearchTerm = string.Empty;

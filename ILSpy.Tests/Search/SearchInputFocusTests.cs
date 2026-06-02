@@ -44,10 +44,7 @@ public class SearchInputFocusTests
 		// can start typing immediately. The VM raises FocusRequested; the SearchPane
 		// code-behind subscribes and calls Focus() on the TextBox.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		await TestHarness.BootAsync();
 
 		var search = AppComposition.Current.GetExport<SearchPaneModel>();
 		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
@@ -64,10 +61,7 @@ public class SearchInputFocusTests
 	[AvaloniaTest]
 	public async Task SearchInput_Is_Focused_After_ShowSearchCommand_Pumps_Through_The_Dispatcher()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (window, _) = await TestHarness.BootAsync();
 
 		var pane = await window.WaitForComponent<SearchPane>();
 		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();

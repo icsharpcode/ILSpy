@@ -23,11 +23,7 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
 using ILSpy.Metadata;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -96,37 +92,26 @@ public class DebugDirectoryChildNodesTests
 
 	static async Task<DebugDirectoryTreeNode> GetDebugDirectoryForCoreLib()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var debugDir = metadataNode.Children.OfType<DebugDirectoryTreeNode>().Single();
+		var debugDir = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<DebugDirectoryTreeNode>();
 		debugDir.EnsureLazyChildren();
 		return debugDir;
 	}
 
 	static async Task<(DebugDirectoryTreeNode node, int rawCount)> GetDebugDirectoryAndRawCountForCoreLib()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
+		var assemblyNode = vm.AssemblyTreeModel.FindCoreLib();
 		var module = (ICSharpCode.Decompiler.Metadata.PEFile)assemblyNode.LoadedAssembly.GetMetadataFileOrNull()!;
 		int rawCount = module.Reader.ReadDebugDirectory().Length;
 
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var debugDir = metadataNode.Children.OfType<DebugDirectoryTreeNode>().Single();
+		var debugDir = assemblyNode
+			.GetChild<MetadataTreeNode>()
+			.GetChild<DebugDirectoryTreeNode>();
 		debugDir.EnsureLazyChildren();
 		return (debugDir, rawCount);
 	}

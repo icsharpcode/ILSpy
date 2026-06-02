@@ -47,13 +47,9 @@ public class AnalyzedTypeTreeNodeTests
 		// the rest of the assembly tree uses — so users see "System.Object" exactly the way
 		// it appears under the assembly node, not a raw ReflectionName.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
+		var assemblyNode = vm.AssemblyTreeModel.FindCoreLib();
 		var module = assemblyNode.LoadedAssembly.GetMetadataFileOrNull();
 		module.Should().NotBeNull();
 		var typeSystem = module!.GetTypeSystemOrNull();
@@ -76,13 +72,9 @@ public class AnalyzedTypeTreeNodeTests
 		// non-static reference type like System.Object, "Used By", "Instantiated By", "Exposed
 		// By", and "Extension Methods" all match.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
+		var assemblyNode = vm.AssemblyTreeModel.FindCoreLib();
 		var module = assemblyNode.LoadedAssembly.GetMetadataFileOrNull();
 		module.Should().NotBeNull();
 		var typeSystem = module!.GetTypeSystemOrNull();

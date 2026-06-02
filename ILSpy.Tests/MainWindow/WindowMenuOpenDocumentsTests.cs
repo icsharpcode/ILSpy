@@ -27,11 +27,9 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.AppEnv;
 using ILSpy.Docking;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -49,10 +47,7 @@ public class WindowMenuOpenDocumentsTests
 		// (NativeMenuBar's visual presenter renders these on Windows / Linux, and the
 		// system menu bar projects them on macOS).
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 
 		var firstAsm = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		vm.AssemblyTreeModel.SelectNode(firstAsm);

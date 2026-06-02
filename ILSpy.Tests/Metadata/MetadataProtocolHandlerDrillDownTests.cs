@@ -28,7 +28,6 @@ using AwesomeAssertions;
 using ILSpy.AppEnv;
 using ILSpy.Metadata;
 using ILSpy.Metadata.CorTables;
-using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 using ILSpy.Views;
 
@@ -117,18 +116,11 @@ public class MetadataProtocolHandlerDrillDownTests
 
 	static async Task<MetadataTreeNode> GetMetadataTreeNodeForCoreLib()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
+		var metadataNode = vm.AssemblyTreeModel.FindCoreLib().GetChild<MetadataTreeNode>();
 		// Drill-down needs the children realised; EnsureLazyChildren cascades only one level.
-		metadataNode.EnsureLazyChildren();
-		var tablesNode = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
+		var tablesNode = metadataNode.GetChild<MetadataTablesTreeNode>();
 		tablesNode.EnsureLazyChildren();
 		return metadataNode;
 	}
@@ -137,8 +129,7 @@ public class MetadataProtocolHandlerDrillDownTests
 	{
 		var metadataNode = await GetMetadataTreeNodeForCoreLib();
 		var vm = (MainWindowViewModel)AppComposition.Current.GetExport<MainWindow>().DataContext!;
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
+		var assemblyNode = vm.AssemblyTreeModel.FindCoreLib();
 		var module = assemblyNode.LoadedAssembly.GetMetadataFileOrNull()!;
 		// The handler is exported as IProtocolHandler, not as itself — fish out the
 		// MetadataProtocolHandler concrete impl from the contract list.

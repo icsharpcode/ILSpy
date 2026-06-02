@@ -50,10 +50,7 @@ public class AnalyzerSearchTreeNodeTests
 		// the elapsed-time stamp ("Used By (N in M ms)"). This single test exercises all
 		// three contracts on a small fixture so it stays fast.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		// Pick a small target so the analyzer completes quickly in headless. The "Used By"
 		// analyzer applies to every concrete type; we use a relatively unused type from
@@ -96,14 +93,10 @@ public class AnalyzerSearchTreeNodeTests
 		// a clean fetch. The "Used By" analyzer over a deeply-referenced type takes long
 		// enough that we can race a collapse against it.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		// Object is referenced by almost every type — the analyzer streams for a while.
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
+		var assemblyNode = vm.AssemblyTreeModel.FindCoreLib();
 		var module = assemblyNode.LoadedAssembly.GetMetadataFileOrNull();
 		module.Should().NotBeNull();
 		var typeSystem = module!.GetTypeSystemOrNull();

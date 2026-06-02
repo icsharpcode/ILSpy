@@ -26,8 +26,6 @@ using Avalonia.Threading;
 using ILSpy;
 using ILSpy.AppEnv;
 using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -43,10 +41,7 @@ public class UseNestedNamespaceNodesScreenshot
 		var settings = AppComposition.Current.GetExport<SettingsService>().DisplaySettings;
 		settings.UseNestedNamespaceNodes = false;
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		assemblyNode.IsExpanded = true;

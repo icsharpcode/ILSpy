@@ -28,10 +28,8 @@ using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
 using ILSpy.Metadata;
 using ILSpy.Metadata.CorTables;
-using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 using ILSpy.Views;
 
@@ -295,19 +293,12 @@ public class MetadataFilterTests
 		// assert on the live DataGridCollectionView's Count (what the user actually sees on
 		// screen) — not on the predicate evaluated over Items, which can pass even when the
 		// CollectionView's Filter is silently null.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (window, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var tablesNode = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
-		tablesNode.EnsureLazyChildren();
-		var typeDefNode = tablesNode.Children.OfType<TypeDefTableTreeNode>().Single();
+		var typeDefNode = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<MetadataTablesTreeNode>()
+			.GetChild<TypeDefTableTreeNode>();
 
 		vm.AssemblyTreeModel.SelectNode(typeDefNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();

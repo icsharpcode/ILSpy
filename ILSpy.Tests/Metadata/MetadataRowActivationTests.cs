@@ -47,19 +47,12 @@ public class MetadataRowActivationTests
 		// RowActivated, and confirm the assembly tree's TypeTreeNode for System.Object
 		// is now selected — that's the gateway to the decompiler view.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var tablesNode = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
-		tablesNode.EnsureLazyChildren();
-		var typeDefNode = tablesNode.Children.OfType<TypeDefTableTreeNode>().Single();
+		var typeDefNode = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<MetadataTablesTreeNode>()
+			.GetChild<TypeDefTableTreeNode>();
 
 		vm.AssemblyTreeModel.SelectNode(typeDefNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
@@ -84,19 +77,12 @@ public class MetadataRowActivationTests
 		// Shift+double-click on a metadata row should NOT replace the active tab — it should
 		// open a brand-new decompiler tab containing the row's entity. The single-tab-reuse
 		// path stays put.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var tablesNode = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
-		tablesNode.EnsureLazyChildren();
-		var typeDefNode = tablesNode.Children.OfType<TypeDefTableTreeNode>().Single();
+		var typeDefNode = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<MetadataTablesTreeNode>()
+			.GetChild<TypeDefTableTreeNode>();
 
 		vm.AssemblyTreeModel.SelectNode(typeDefNode);
 		var metadataTab = await vm.DockWorkspace.WaitForMetadataTabAsync();

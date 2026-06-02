@@ -43,15 +43,10 @@ public class ScopeSearchToTests
 	[AvaloniaTest]
 	public async Task Scope_Search_To_Assembly_Prepends_InAssembly_To_The_Search_Term()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
-		var entry = registry.Entries
-			.Single(e => e.Metadata.Header == nameof(Resources.ScopeSearchToThisAssembly))
-			.Value;
+		var entry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>()
+			.GetEntry(nameof(Resources.ScopeSearchToThisAssembly));
 
 		var asm = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		var search = AppComposition.Current.GetExport<SearchPaneModel>();
@@ -71,15 +66,10 @@ public class ScopeSearchToTests
 	[AvaloniaTest]
 	public async Task Scope_Search_To_Namespace_Prepends_InNamespace_To_The_Search_Term()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
-		var entry = registry.Entries
-			.Single(e => e.Metadata.Header == nameof(Resources.ScopeSearchToThisNamespace))
-			.Value;
+		var entry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>()
+			.GetEntry(nameof(Resources.ScopeSearchToThisNamespace));
 
 		var ns = vm.AssemblyTreeModel.FindNode<NamespaceTreeNode>("System.Linq", "System.Linq");
 		var search = AppComposition.Current.GetExport<SearchPaneModel>();

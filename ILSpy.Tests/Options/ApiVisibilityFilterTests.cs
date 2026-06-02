@@ -153,10 +153,7 @@ public class ApiVisibilityFilterTests
 		// re-evaluates visibility when ShowApiLevel changes.
 
 		// Arrange — boot, find a CoreLib type with mixed accessibility (String has many).
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
 		var stringType = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
@@ -187,10 +184,7 @@ public class ApiVisibilityFilterTests
 		// new HierarchicalModel reference whenever the setting changes.
 
 		// Arrange — boot, locate the pane.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (window, _) = await TestHarness.BootAsync();
 		await Waiters.WaitForAsync(
 			() => window.GetVisualDescendants().OfType<AssemblyListPane>().Any());
 		var pane = await window.WaitForComponent<AssemblyListPane>();
@@ -219,10 +213,7 @@ public class ApiVisibilityFilterTests
 		// than Foreground brush) avoids depending on theme brush resolution.
 
 		// Arrange — boot, ensure ShowApiLevel=All so non-public methods are visible at all.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (window, vm) = await TestHarness.BootAsync();
 		var settings = AppComposition.Current.GetExport<SettingsService>().SessionSettings.LanguageSettings;
 		settings.ShowApiLevel = ApiVisibility.All;
 
@@ -308,10 +299,7 @@ public class ApiVisibilityFilterTests
 
 	static async Task<(MainWindowViewModel vm, TypeTreeNode enumerableNode)> BootAndExpandEnumerableAsync()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 		var node = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		node.IsExpanded = true;

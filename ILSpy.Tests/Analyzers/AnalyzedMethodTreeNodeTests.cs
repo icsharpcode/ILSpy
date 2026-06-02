@@ -47,10 +47,7 @@ public class AnalyzedMethodTreeNodeTests
 		// in the pane rather than the bare method name. An optional `prefix` argument lets
 		// accessor / event-helper nodes prepend a tag without touching the entity string.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
@@ -74,10 +71,7 @@ public class AnalyzedMethodTreeNodeTests
 		// are "Uses" (MethodUsesAnalyzer, body scanner) and "Used By" (MethodUsedByAnalyzer,
 		// call-site scanner).
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");

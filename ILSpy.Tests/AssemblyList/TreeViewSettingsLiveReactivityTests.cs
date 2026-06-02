@@ -29,8 +29,6 @@ using ICSharpCode.ILSpyX.TreeView;
 using ILSpy;
 using ILSpy.AppEnv;
 using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -48,10 +46,7 @@ public class TreeViewSettingsLiveReactivityTests
 		// 'Text' fires when the setting flips.
 
 		var settings = AppComposition.Current.GetExport<SettingsService>().DisplaySettings;
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");

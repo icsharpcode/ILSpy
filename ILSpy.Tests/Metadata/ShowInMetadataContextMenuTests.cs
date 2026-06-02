@@ -27,14 +27,9 @@ using AwesomeAssertions;
 using ICSharpCode.Decompiler.TypeSystem;
 
 using ILSpy;
-using ILSpy.AppEnv;
 using ILSpy.Commands;
 using ILSpy.Metadata;
-using ILSpy.Metadata.CorTables;
 using ILSpy.TextView;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -51,13 +46,9 @@ public class ShowInMetadataContextMenuTests
 		// verify the entry's IsVisible/Execute drives the dock workspace into the right
 		// metadata table for the entity's MetadataToken.kind.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
+		var assemblyNode = vm.AssemblyTreeModel.FindCoreLib();
 
 		// Resolve System.Object's IEntity via the type system, since the entry only acts
 		// on IEntity-bearing references.

@@ -66,10 +66,8 @@ public class OptionsTabTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		var command = registry.Commands
-			.Single(c => c.Metadata.Header == nameof(Resources._Options))
-			.CreateExport().Value;
+		var command = AppComposition.Current.GetExport<MainMenuCommandRegistry>()
+			.GetCommand(nameof(Resources._Options));
 
 		command.Execute(null);
 
@@ -92,15 +90,11 @@ public class OptionsTabTests
 		// document is still Options — so the user sees no visible change. The fix:
 		// ShowSelectedNode pulls focus back to MainTab whenever a tree-selection writes
 		// new content there.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		// Open Options and confirm it's the active document.
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		registry.Commands.Single(c => c.Metadata.Header == nameof(Resources._Options))
-			.CreateExport().Value.Execute(null);
+		AppComposition.Current.GetExport<MainMenuCommandRegistry>()
+			.GetCommand(nameof(Resources._Options)).Execute(null);
 
 		var documents = vm.DockWorkspace.Documents!;
 		var optionsTab = documents.VisibleDockables!.OfType<ContentTabPage>()
@@ -133,9 +127,8 @@ public class OptionsTabTests
 		// tab should use the bare Resources.Options ("Options") instead.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		registry.Commands.Single(c => c.Metadata.Header == nameof(Resources._Options))
-			.CreateExport().Value.Execute(null);
+		AppComposition.Current.GetExport<MainMenuCommandRegistry>()
+			.GetCommand(nameof(Resources._Options)).Execute(null);
 
 		var vm = (MainWindowViewModel)window.DataContext!;
 		var model = (OptionsPageModel)vm.DockWorkspace.Documents!.VisibleDockables!
@@ -157,10 +150,8 @@ public class OptionsTabTests
 		// byte-for-byte.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		var command = registry.Commands
-			.Single(c => c.Metadata.Header == nameof(Resources._Options))
-			.CreateExport().Value;
+		var command = AppComposition.Current.GetExport<MainMenuCommandRegistry>()
+			.GetCommand(nameof(Resources._Options));
 		command.Execute(null);
 
 		var vm = (MainWindowViewModel)window.DataContext!;
@@ -181,10 +172,8 @@ public class OptionsTabTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		var command = registry.Commands
-			.Single(c => c.Metadata.Header == nameof(Resources._Options))
-			.CreateExport().Value;
+		var command = AppComposition.Current.GetExport<MainMenuCommandRegistry>()
+			.GetCommand(nameof(Resources._Options));
 
 		command.Execute(null);
 		command.Execute(null);
@@ -205,12 +194,11 @@ public class OptionsTabTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var settings = AppComposition.Current.GetExport<SettingsService>();
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
 
 		var liveBefore = settings.DecompilerSettings.UsingDeclarations;
 
-		registry.Commands.Single(c => c.Metadata.Header == nameof(Resources._Options))
-			.CreateExport().Value.Execute(null);
+		AppComposition.Current.GetExport<MainMenuCommandRegistry>()
+			.GetCommand(nameof(Resources._Options)).Execute(null);
 
 		var vm = (MainWindowViewModel)window.DataContext!;
 		var model = (OptionsPageModel)vm.DockWorkspace.Documents!.VisibleDockables!
@@ -238,9 +226,8 @@ public class OptionsTabTests
 		// default; Display and Misc panels are untouched (verified by leaving them alone).
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		registry.Commands.Single(c => c.Metadata.Header == nameof(Resources._Options))
-			.CreateExport().Value.Execute(null);
+		AppComposition.Current.GetExport<MainMenuCommandRegistry>()
+			.GetCommand(nameof(Resources._Options)).Execute(null);
 
 		var vm = (MainWindowViewModel)window.DataContext!;
 		var model = (OptionsPageModel)vm.DockWorkspace.Documents!.VisibleDockables!

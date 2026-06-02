@@ -23,11 +23,7 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
 using ILSpy.Metadata;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -44,15 +40,9 @@ public class PEHeaderTreeTests
 		// user shifting between hosts sees the same tree shape. Each node is the entry point
 		// to a header / table view; Phase 1 renders text, Phase 2 swaps to a DataGrid.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
+		var metadataNode = vm.AssemblyTreeModel.FindCoreLib().GetChild<MetadataTreeNode>();
 		metadataNode.EnsureLazyChildren();
 
 		metadataNode.Children.OfType<DosHeaderTreeNode>().Should().ContainSingle();
@@ -78,17 +68,11 @@ public class PEHeaderTreeTests
 		// row per field, columns reflected from the Entry shape (Member / Offset / Size /
 		// Value / Meaning).
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var dosNode = metadataNode.Children.OfType<DosHeaderTreeNode>().Single();
+		var dosNode = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<DosHeaderTreeNode>();
 
 		vm.AssemblyTreeModel.SelectNode(dosNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
@@ -113,17 +97,12 @@ public class PEHeaderTreeTests
 		// decompiler tab but never restored it as the user-visible page. Both round-trip
 		// directions should swap the active dockable to the right tab type.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var dosNode = metadataNode.Children.OfType<DosHeaderTreeNode>().Single();
+		var assemblyNode = vm.AssemblyTreeModel.FindCoreLib();
+		var dosNode = assemblyNode
+			.GetChild<MetadataTreeNode>()
+			.GetChild<DosHeaderTreeNode>();
 
 		// Step 1 — pick a regular entity node (the assembly itself decompiles to its
 		// AssemblyDef metadata via the decompiler text path). Decompiler tab should be active.
@@ -151,17 +130,12 @@ public class PEHeaderTreeTests
 		// the docking host can lazily create and activate the decompiler tab even when the
 		// document area starts out holding only the metadata grid.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var dosNode = metadataNode.Children.OfType<DosHeaderTreeNode>().Single();
+		var assemblyNode = vm.AssemblyTreeModel.FindCoreLib();
+		var dosNode = assemblyNode
+			.GetChild<MetadataTreeNode>()
+			.GetChild<DosHeaderTreeNode>();
 
 		vm.AssemblyTreeModel.SelectNode(dosNode);
 		await vm.DockWorkspace.WaitForMetadataTabAsync();
@@ -183,18 +157,12 @@ public class PEHeaderTreeTests
 		// previous inner view rendered (the user would see a "Decompiling" spinner that
 		// never goes away because the prior decompiler tab is still on screen).
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var dosNode = metadataNode.Children.OfType<DosHeaderTreeNode>().Single();
-		var coffNode = metadataNode.Children.OfType<CoffHeaderTreeNode>().Single();
+		var assemblyNode = vm.AssemblyTreeModel.FindCoreLib();
+		var metadataNode = assemblyNode.GetChild<MetadataTreeNode>();
+		var dosNode = metadataNode.GetChild<DosHeaderTreeNode>();
+		var coffNode = metadataNode.GetChild<CoffHeaderTreeNode>();
 		var factoryFactory = (global::ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory;
 		var documents = factoryFactory.Documents!;
 		var mainTab = factoryFactory.MainTab!;
@@ -228,19 +196,12 @@ public class PEHeaderTreeTests
 		// decompiler tab reuses itself across tree-node selections. Otherwise every click
 		// piles up a new dockable and the tab strip grows without bound.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
+		var metadataNode = vm.AssemblyTreeModel.FindCoreLib().GetChild<MetadataTreeNode>();
 
-		var dosNode = metadataNode.Children.OfType<DosHeaderTreeNode>().Single();
-		var coffNode = metadataNode.Children.OfType<CoffHeaderTreeNode>().Single();
+		var dosNode = metadataNode.GetChild<DosHeaderTreeNode>();
+		var coffNode = metadataNode.GetChild<CoffHeaderTreeNode>();
 
 		vm.AssemblyTreeModel.SelectNode(dosNode);
 		var firstTab = await vm.DockWorkspace.WaitForMetadataTabAsync();
@@ -263,17 +224,11 @@ public class PEHeaderTreeTests
 	[AvaloniaTest]
 	public async Task CoffHeaderTreeNode_Opens_A_DataGrid_Tab_With_Machine_And_Characteristics_Rows()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var coffNode = metadataNode.Children.OfType<CoffHeaderTreeNode>().Single();
+		var coffNode = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<CoffHeaderTreeNode>();
 
 		vm.AssemblyTreeModel.SelectNode(coffNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();

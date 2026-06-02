@@ -45,13 +45,9 @@ public class SearchPaneStreamingTests
 		// logic works for the fixture. If this fails, the bug is in the strategy / fixture;
 		// if it passes but the orchestrator test below fails, the bug is in our wiring.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<global::ILSpy.TreeNodes.AssemblyTreeNode>(coreLibName);
+		var assemblyNode = vm.AssemblyTreeModel.FindCoreLib();
 		var module = await assemblyNode.LoadedAssembly.GetMetadataFileAsync();
 
 		var queue = new System.Collections.Concurrent.ConcurrentQueue<ICSharpCode.ILSpyX.Search.SearchResult>();
@@ -82,10 +78,7 @@ public class SearchPaneStreamingTests
 		// search across the loaded fixture assemblies, and wait for at least one matching
 		// result to land in the Results collection.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		await TestHarness.BootAsync();
 
 		var search = AppComposition.Current.GetExport<SearchPaneModel>();
 		search.Results.Clear();
@@ -107,10 +100,7 @@ public class SearchPaneStreamingTests
 		// Switching to an empty term tears down the running search and clears the visible
 		// results. The user shouldn't see stale rows after they've explicitly cleared the box.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		await TestHarness.BootAsync();
 
 		var search = AppComposition.Current.GetExport<SearchPaneModel>();
 		search.Results.Clear();
@@ -131,10 +121,7 @@ public class SearchPaneStreamingTests
 		// contain". Confirm end-to-end: a Type search for "String -Builder" returns names
 		// containing "String" (System.String, StringComparer, …) but never StringBuilder.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		await TestHarness.BootAsync();
 
 		var search = AppComposition.Current.GetExport<SearchPaneModel>();
 		search.Results.Clear();
@@ -159,10 +146,7 @@ public class SearchPaneStreamingTests
 		// (length-aware; ignores IL backtick generic arity). Confirm: =String must match
 		// System.String but NOT StringBuilder or StringComparer.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		await TestHarness.BootAsync();
 
 		var search = AppComposition.Current.GetExport<SearchPaneModel>();
 		search.Results.Clear();

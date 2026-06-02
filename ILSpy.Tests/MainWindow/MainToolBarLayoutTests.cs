@@ -32,7 +32,6 @@ using ILSpy;
 using ILSpy.AppEnv;
 using ILSpy.Commands;
 using ILSpy.Search;
-using ILSpy.ViewModels;
 using ILSpy.Views;
 
 using NUnit.Framework;
@@ -92,10 +91,7 @@ public class MainToolBarLayoutTests
 		// Avalonia port only had the key-binding wiring — this test pins the toolbar surface area
 		// and verifies executing the button activates the search pane.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (window, _) = await TestHarness.BootAsync();
 
 		var toolbar = await window.WaitForComponent<MainToolBar>();
 		var rootPanel = toolbar.GetVisualDescendants().OfType<StackPanel>()
@@ -160,10 +156,7 @@ public class MainToolBarLayoutTests
 		// the assembly-list combo each live inside a Grid wrapper (axaml lines 223 / 232 / 245),
 		// so we tag those positions by descending into the Grid for the ComboBox name.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (window, _) = await TestHarness.BootAsync();
 
 		var toolbar = await window.WaitForComponent<MainToolBar>();
 		var rootPanel = toolbar.GetVisualDescendants().OfType<StackPanel>()

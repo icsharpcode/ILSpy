@@ -49,10 +49,7 @@ public class AnalyzerTreeNodeTests
 		// reaches the list, (b) the order is monotonically non-decreasing by Metadata.Order
 		// so users see headers in the same sequence the WPF host produces.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		await TestHarness.BootAsync();
 
 		var analyzers = AnalyzerTreeNode.Analyzers.ToArray();
 		analyzers.Should().HaveCountGreaterThanOrEqualTo(15,
@@ -76,14 +73,10 @@ public class AnalyzerTreeNodeTests
 		// every Analyzed*TreeNode's symbol references a module the new list may not
 		// contain. The root must wipe its children rather than risk a stale navigation.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var root = new AnalyzerRootNode();
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
+		var assemblyNode = vm.AssemblyTreeModel.FindCoreLib();
 		var module = assemblyNode.LoadedAssembly.GetMetadataFileOrNull();
 		module.Should().NotBeNull("the test needs a loaded CoreLib module to seed a sample analyzed entry");
 

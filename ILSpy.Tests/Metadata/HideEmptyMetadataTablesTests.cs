@@ -29,7 +29,6 @@ using ILSpy.AppEnv;
 using ILSpy.Metadata;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -47,10 +46,7 @@ public class HideEmptyMetadataTablesTests
 		var settings = AppComposition.Current.GetExport<SettingsService>().DisplaySettings;
 		settings.HideEmptyMetadataTables = true;
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
 		var tables = LoadTablesNode(vm, coreLibName, out var metadata);
@@ -71,10 +67,7 @@ public class HideEmptyMetadataTablesTests
 		settings.HideEmptyMetadataTables = false;
 		try
 		{
-			var window = AppComposition.Current.GetExport<MainWindow>();
-			window.Show();
-			var vm = (MainWindowViewModel)window.DataContext!;
-			await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+			var (_, vm) = await TestHarness.BootAsync();
 
 			var coreLibName = typeof(object).Assembly.GetName().Name!;
 			var tables = LoadTablesNode(vm, coreLibName, out var _);
@@ -94,10 +87,9 @@ public class HideEmptyMetadataTablesTests
 		out System.Reflection.Metadata.MetadataReader metadata)
 	{
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(assemblyName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var tables = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
+		var tables = assemblyNode
+			.GetChild<MetadataTreeNode>()
+			.GetChild<MetadataTablesTreeNode>();
 		tables.EnsureLazyChildren();
 		metadata = assemblyNode.LoadedAssembly.GetMetadataFileOrNull()!.Metadata;
 		return tables;

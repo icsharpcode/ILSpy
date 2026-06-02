@@ -33,7 +33,6 @@ using ILSpy;
 using ILSpy.AppEnv;
 using ILSpy.AssemblyTree;
 using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
 using ILSpy.Views;
 
 using NUnit.Framework;
@@ -69,14 +68,9 @@ public class RemoveAssemblyContextMenuTests
 		// e.g. method/type tree contexts.
 
 		// Arrange — boot, locate the registered entry.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
-		var removeEntry = registry.Entries
-			.Single(e => e.Metadata.Header == nameof(Resources._Remove))
-			.Value;
+		var removeEntry = registry.GetEntry(nameof(Resources._Remove));
 
 		var asm = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -110,10 +104,7 @@ public class RemoveAssemblyContextMenuTests
 	public async Task Right_Click_Then_Remove_On_An_Assembly_Unloads_It_From_The_List()
 	{
 		// Arrange — boot, snapshot a sacrificial assembly + a survivor.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
 
@@ -152,10 +143,7 @@ public class RemoveAssemblyContextMenuTests
 		// when right-clicking on a selected assembly node.
 
 		// Arrange — boot, select an assembly node.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (window, vm) = await TestHarness.BootAsync();
 		await Waiters.WaitForAsync(
 			() => window.GetVisualDescendants().OfType<AssemblyListPane>().Any());
 		var pane = await window.WaitForComponent<AssemblyListPane>();

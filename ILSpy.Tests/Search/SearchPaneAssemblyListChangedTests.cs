@@ -48,10 +48,7 @@ public class SearchPaneAssemblyListChangedTests
 	[AvaloniaTest]
 	public async Task Search_Restarts_When_A_User_Loaded_Assembly_Is_Added()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var search = AppComposition.Current.GetExport<SearchPaneModel>();
 		search.SearchTerm = "Object";
@@ -82,10 +79,7 @@ public class SearchPaneAssemblyListChangedTests
 		// Auto-loaded dependencies fire from result navigation in a large assembly; restarting
 		// the search there would feed back into more loads → more events → flicker. The
 		// handler MUST take the early-out path.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var search = AppComposition.Current.GetExport<SearchPaneModel>();
 		search.SearchTerm = "Object";

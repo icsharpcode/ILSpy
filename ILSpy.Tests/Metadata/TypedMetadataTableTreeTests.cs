@@ -24,12 +24,9 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
 using ILSpy.Metadata;
 using ILSpy.Metadata.CorTables;
 using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -46,18 +43,12 @@ public class TypedMetadataTableTreeTests
 		// tab whose Items list mirrors the table's rows; a known reference's display name
 		// must show up on at least one row.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var tablesNode = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
-		tablesNode.EnsureLazyChildren();
-		var assemblyRefNode = tablesNode.Children.OfType<AssemblyRefTableTreeNode>().Single();
+		var assemblyRefNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq")
+			.GetChild<MetadataTreeNode>()
+			.GetChild<MetadataTablesTreeNode>()
+			.GetChild<AssemblyRefTableTreeNode>();
 
 		assemblyRefNode.Kind.Should().Be(TableIndex.AssemblyRef);
 		assemblyRefNode.RowCount.Should().BeGreaterThan(0);
@@ -76,19 +67,12 @@ public class TypedMetadataTableTreeTests
 	[AvaloniaTest]
 	public async Task TypeDefTableTreeNode_Opens_A_Grid_Including_System_Object()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var tablesNode = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
-		tablesNode.EnsureLazyChildren();
-		var typeDefNode = tablesNode.Children.OfType<TypeDefTableTreeNode>().Single();
+		var typeDefNode = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<MetadataTablesTreeNode>()
+			.GetChild<TypeDefTableTreeNode>();
 
 		typeDefNode.Kind.Should().Be(TableIndex.TypeDef);
 		typeDefNode.RowCount.Should().BeGreaterThan(1000);
@@ -107,17 +91,11 @@ public class TypedMetadataTableTreeTests
 		// Field / MethodDef are by far the largest tables in any real assembly. The typed
 		// leaves should report the right kind and expose row data through the grid view.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var tablesNode = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
+		var tablesNode = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<MetadataTablesTreeNode>();
 		tablesNode.EnsureLazyChildren();
 
 		tablesNode.Children.OfType<FieldTableTreeNode>().Should().ContainSingle();
@@ -137,19 +115,12 @@ public class TypedMetadataTableTreeTests
 	[AvaloniaTest]
 	public async Task ModuleTableTreeNode_Opens_A_Grid_With_The_Single_Module_Row()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var tablesNode = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
-		tablesNode.EnsureLazyChildren();
-		var moduleNode = tablesNode.Children.OfType<ModuleTableTreeNode>().Single();
+		var moduleNode = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<MetadataTablesTreeNode>()
+			.GetChild<ModuleTableTreeNode>();
 
 		moduleNode.RowCount.Should().Be(1, "Module is a one-row table by spec");
 

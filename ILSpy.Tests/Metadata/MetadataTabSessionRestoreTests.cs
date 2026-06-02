@@ -25,12 +25,9 @@ using AwesomeAssertions;
 
 using ILSpy;
 using ILSpy.AppEnv;
-using ILSpy.Commands;
 using ILSpy.Metadata;
 using ILSpy.Metadata.CorTables;
 using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -46,19 +43,12 @@ public class MetadataTabSessionRestoreTests
 		// restart (or a tree-path lookup) can land back on the same node. The metadata
 		// sub-tree's ToString() values must be stable for that round-trip to work.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var tablesNode = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
-		tablesNode.EnsureLazyChildren();
-		var typeDefNode = tablesNode.Children.OfType<TypeDefTableTreeNode>().Single();
+		var typeDefNode = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<MetadataTablesTreeNode>()
+			.GetChild<TypeDefTableTreeNode>();
 
 		vm.AssemblyTreeModel.SelectNode(typeDefNode);
 
@@ -82,40 +72,21 @@ public class MetadataTabSessionRestoreTests
 		// The path-restore must walk through both Metadata folders and land on a debug-only
 		// table.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var testDllPath = typeof(ICSharpCode.Decompiler.Metadata.MetadataFile).Assembly.Location;
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		var openCommand = registry.Commands
-			.Single(c => c.Metadata.Header == nameof(ICSharpCode.ILSpy.Properties.Resources._Open))
-			.CreateExport().Value;
-		openCommand.Execute(testDllPath);
-
-		await Waiters.WaitForAsync(() =>
-			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a =>
-				string.Equals(a.FileName, testDllPath, System.StringComparison.OrdinalIgnoreCase)));
-		var loaded = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
-			.First(a => string.Equals(a.FileName, testDllPath, System.StringComparison.OrdinalIgnoreCase));
-		await loaded.GetLoadResultAsync();
+		var loaded = await vm.OpenAssemblyAsync(testDllPath);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(loaded.ShortName);
-		assemblyNode.EnsureLazyChildren();
 		// AssemblyTreeNode surfaces the embedded PDB's metadata as a second top-level
 		// MetadataTreeNode sibling, so disambiguate by label — this test exercises the
 		// nested-under-DebugDirectory path.
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>()
-			.Single(n => (string?)n.Text == ICSharpCode.ILSpy.Properties.Resources.Metadata);
-		metadataNode.EnsureLazyChildren();
-		var debugDirectoryNode = metadataNode.Children.OfType<DebugDirectoryTreeNode>().Single();
-		debugDirectoryNode.EnsureLazyChildren();
-		var embeddedPdbNode = debugDirectoryNode.Children.OfType<MetadataTreeNode>().Single();
-		embeddedPdbNode.EnsureLazyChildren();
-		var pdbTables = embeddedPdbNode.Children.OfType<MetadataTablesTreeNode>().Single();
-		pdbTables.EnsureLazyChildren();
-		var documentTable = pdbTables.Children.OfType<global::ILSpy.Metadata.DebugTables.DocumentTableTreeNode>().Single();
+		var documentTable = assemblyNode
+			.GetChild<MetadataTreeNode>(n => (string?)n.Text == ICSharpCode.ILSpy.Properties.Resources.Metadata)
+			.GetChild<DebugDirectoryTreeNode>()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<MetadataTablesTreeNode>()
+			.GetChild<global::ILSpy.Metadata.DebugTables.DocumentTableTreeNode>();
 
 		vm.AssemblyTreeModel.SelectNode(documentTable);
 

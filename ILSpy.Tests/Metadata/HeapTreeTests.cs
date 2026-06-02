@@ -23,11 +23,7 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
 using ILSpy.Metadata;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -45,15 +41,9 @@ public class HeapTreeTests
 		// reachable from the Metadata folder regardless of whether the file's debug
 		// metadata is present.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
+		var metadataNode = vm.AssemblyTreeModel.FindCoreLib().GetChild<MetadataTreeNode>();
 		metadataNode.EnsureLazyChildren();
 
 		metadataNode.Children.OfType<StringHeapTreeNode>().Should().ContainSingle();
@@ -69,17 +59,11 @@ public class HeapTreeTests
 		// row through Avalonia's built-in row virtualisation, so unlike the Phase 1 text
 		// dump there's no preview cap and no truncation footer.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var heapNode = metadataNode.Children.OfType<StringHeapTreeNode>().Single();
+		var heapNode = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<StringHeapTreeNode>();
 
 		vm.AssemblyTreeModel.SelectNode(heapNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
@@ -93,17 +77,11 @@ public class HeapTreeTests
 	[AvaloniaTest]
 	public async Task GuidHeapTreeNode_Opens_Grid_Tab_With_Index_Length_Value_Columns()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var heapNode = metadataNode.Children.OfType<GuidHeapTreeNode>().Single();
+		var heapNode = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<GuidHeapTreeNode>();
 
 		vm.AssemblyTreeModel.SelectNode(heapNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
@@ -118,17 +96,11 @@ public class HeapTreeTests
 	[AvaloniaTest]
 	public async Task BlobHeapTreeNode_Opens_Grid_Tab_With_Offset_Length_Value_Columns()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var heapNode = metadataNode.Children.OfType<BlobHeapTreeNode>().Single();
+		var heapNode = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<BlobHeapTreeNode>();
 
 		vm.AssemblyTreeModel.SelectNode(heapNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();

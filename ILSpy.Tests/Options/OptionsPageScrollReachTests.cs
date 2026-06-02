@@ -58,10 +58,8 @@ public class OptionsPageScrollReachTests
 		window.Show();
 		Dispatcher.UIThread.RunJobs();
 
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		var command = registry.Commands
-			.Single(c => c.Metadata.Header == nameof(Resources._Options))
-			.CreateExport().Value;
+		var command = AppComposition.Current.GetExport<MainMenuCommandRegistry>()
+			.GetCommand(nameof(Resources._Options));
 		command.Execute(null);
 		Dispatcher.UIThread.RunJobs();
 

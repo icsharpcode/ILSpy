@@ -32,7 +32,6 @@ using ILSpy;
 using ILSpy.AppEnv;
 using ILSpy.AssemblyTree;
 using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
 using ILSpy.Views;
 
 using NUnit.Framework;
@@ -68,14 +67,9 @@ public class ReloadAssemblyContextMenuTests
 		// pollute their right-click menus.
 
 		// Arrange — boot, locate the registered entry.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
-		var reloadEntry = registry.Entries
-			.Single(e => e.Metadata.Header == nameof(Resources._Reload))
-			.Value;
+		var reloadEntry = registry.GetEntry(nameof(Resources._Reload));
 
 		var asm = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -106,10 +100,7 @@ public class ReloadAssemblyContextMenuTests
 		// the same file name.
 
 		// Arrange — boot, snapshot the LoadedAssembly we'll reload.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
 

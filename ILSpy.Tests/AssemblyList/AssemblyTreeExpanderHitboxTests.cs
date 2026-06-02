@@ -33,11 +33,8 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.AppEnv;
 using ILSpy.AssemblyTree;
 using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -56,14 +53,10 @@ public class AssemblyTreeExpanderHitboxTests
 		// occupy 16x16 of layout while only the 9x9 glyph receives input.
 
 		// Arrange — boot, wait for assemblies, expand a node so an expandable row is realised.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		assemblyNode.EnsureLazyChildren();
-		assemblyNode.IsExpanded = true;
+		assemblyNode.Expand();
 		vm.AssemblyTreeModel.SelectNode(assemblyNode);
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();

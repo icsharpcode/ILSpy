@@ -58,10 +58,7 @@ public class PreviewTabPromotionTests
 	{
 		// Open-in-new-tab tabs are explicit user intent — they should never be replaced
 		// by subsequent tree-node selections, so they're born pinned (IsPreview=false).
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
@@ -81,10 +78,7 @@ public class PreviewTabPromotionTests
 		// preview tab spawns at pin time. A fresh preview tab opens lazily later, when a
 		// tree-selection change finds the active tab frozen — see
 		// Selecting_A_Different_Node_After_Pin_Opens_A_New_Preview_Tab below.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
 		var previousMainTab = factory.MainTab!;
@@ -124,10 +118,7 @@ public class PreviewTabPromotionTests
 		// Pin holds the current tab's content. Selecting a different tree node while
 		// the (now-pinned) tab is active must spawn a fresh preview tab beside it and
 		// route the new content there — never overwrite the pinned tab.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
 
@@ -175,10 +166,7 @@ public class PreviewTabPromotionTests
 		// Visual contract: the DocumentTabStripItem for the preview MainTab binds its
 		// FontStyle to ContentTabPage.IsPreview via BoolToFontStyleConverter.Italic.
 		// Pinned tabs and tool-pane tabs fall through to FontStyle.Normal.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (window, vm) = await TestHarness.BootAsync();
 
 		// Wait for the tab strip to realise its items.
 		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<DocumentTabStripItem>().Any(),
@@ -223,10 +211,7 @@ public class PreviewTabPromotionTests
 		// tab so both MainTab and carve-out exist; close button becomes visible; verify
 		// the pin's right edge stays inside the tab's right edge.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 
 		// Open a carve-out so close buttons become visible on both tabs.
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -297,10 +282,7 @@ public class PreviewTabPromotionTests
 		// width if the title isn't capped. The pin button must still fit inside the tab's
 		// right edge regardless of title length.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 
 		// Open carve-out so close button is visible.
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -365,10 +347,7 @@ public class PreviewTabPromotionTests
 	[AvaloniaTest]
 	public async Task Inline_Pin_Button_Appears_On_Preview_Tab_And_Pins_When_Clicked()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (window, vm) = await TestHarness.BootAsync();
 
 		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<DocumentTabStripItem>().Any(),
 			System.TimeSpan.FromSeconds(10));
@@ -409,10 +388,7 @@ public class PreviewTabPromotionTests
 	{
 		// The right-click context-menu Pin entry must be visible on the preview MainTab
 		// and hidden (its IsVisible flips) on pinned carve-out tabs.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.DockWorkspace.OpenNodeInNewTab(typeNode);
@@ -442,10 +418,7 @@ public class PreviewTabPromotionTests
 		// because the App.axaml setter used a static `FontStyle="Italic"` value instead
 		// of the binding to IsPreview. A carve-out tab (IsPreview=false) must render
 		// Normal, even when sitting next to a preview MainTab.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 
 		// Open a carve-out tab via the production code path.
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -497,10 +470,7 @@ public class PreviewTabPromotionTests
 		// (Open / Save / Remove / Exit groups in the File menu, ...). With the menu now living
 		// as a NativeMenu, separator rendering is the platform's job; this test pins only
 		// the structural claim that separators are inserted between groups.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (window, _) = await TestHarness.BootAsync();
 
 		var nativeMenu = global::Avalonia.Controls.NativeMenu.GetMenu(window)
 			?? throw new System.InvalidOperationException("MainMenu.Attach should have set NativeMenu on the window");
@@ -519,10 +489,7 @@ public class PreviewTabPromotionTests
 		// hover background. Both are plain Avalonia.Controls.Button instances; the close
 		// button gets its visual identity from a ControlTheme applied by Dock's tab
 		// template. Pin should copy that Theme rather than carry its own custom style.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 
 		// Open a carve-out so the close button is visible alongside the pin (single-tab
 		// scenario hides the close button).
@@ -561,10 +528,7 @@ public class PreviewTabPromotionTests
 		// selections while any of those are active must spawn a fresh preview tab and
 		// route the new content there. This test uses a carve-out as a stand-in for the
 		// frozen-tab family — the IsWritablePreview check returns null for all three.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
 

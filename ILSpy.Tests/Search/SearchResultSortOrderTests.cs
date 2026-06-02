@@ -47,10 +47,7 @@ public class SearchResultSortOrderTests
 		// Name asc (StringComparer.Ordinal). Mirrors WPF's SearchPane.xaml.cs:288-290
 		// which captures the comparer at start-of-search based on DisplaySettings.SortResults.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		await TestHarness.BootAsync();
 
 		var settings = AppComposition.Current.GetExport<SettingsService>();
 		var originalSortResults = settings.DisplaySettings.SortResults;

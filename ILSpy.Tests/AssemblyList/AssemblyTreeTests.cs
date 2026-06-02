@@ -48,7 +48,6 @@ using ILSpy.Metadata.CorTables;
 using ILSpy.Search;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
-using ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -66,22 +65,16 @@ public class AssemblyTreeTests
 		// ResourceTreeNode — both are ILSpyTreeNodes).
 
 		// Arrange — boot, wait for assemblies.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		// Act — pick CoreLib (always ships localised error-message tables), expand it.
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		assemblyNode.IsExpanded = true;
+		var assemblyNode = vm.AssemblyTreeModel.FindCoreLib();
+		assemblyNode.Expand();
 
 		// Assert — exactly one Resources folder, named, non-empty, every child an ILSpyTreeNode.
 		var resources = assemblyNode.Children.OfType<ResourceListTreeNode>().Single();
 		resources.Text.Should().Be(Resources._Resources);
-		resources.EnsureLazyChildren();
-		resources.IsExpanded = true;
+		resources.Expand();
 		resources.Children.Should().NotBeEmpty();
 		resources.Children.Should().AllBeAssignableTo<ILSpyTreeNode>();
 	}
@@ -93,10 +86,7 @@ public class AssemblyTreeTests
 		// Ctrl-click to multi-select rows.
 
 		// Arrange — boot, wait for assemblies + AssemblyListPane to materialise.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 
 		// Act — locate the realised DataGrid inside the AssemblyListPane.
 		var pane = await window.WaitForComponent<AssemblyListPane>();
@@ -115,15 +105,11 @@ public class AssemblyTreeTests
 		// flip its IsSelected back without affecting siblings.
 
 		// Arrange — boot, wait for assemblies, expand Enumerable, grab two methods.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
-		typeNode.EnsureLazyChildren();
-		typeNode.IsExpanded = true;
+		typeNode.Expand();
 		var first = typeNode.Children.OfType<MethodTreeNode>()
 			.First(m => m.MethodDefinition.Name == "ElementAt");
 		var second = typeNode.Children.OfType<MethodTreeNode>()
@@ -155,10 +141,7 @@ public class AssemblyTreeTests
 
 		// Arrange — boot, wait for assemblies, build a fixture zip with a flat file + two
 		// folders containing one file each.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var tempDir = Path.Combine(Path.GetTempPath(), "ILSpy.Tests", System.Guid.NewGuid().ToString("N"));
 		Directory.CreateDirectory(tempDir);
@@ -174,22 +157,10 @@ public class AssemblyTreeTests
 		}
 
 		// Act — open the zip via the OpenCommand and wait for it to load.
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		var openCommand = registry.Commands
-			.Single(c => c.Metadata.Header == nameof(Resources._Open))
-			.CreateExport().Value;
-		openCommand.Execute(zipPath);
-
-		await Waiters.WaitForAsync(() =>
-			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a =>
-				string.Equals(a.FileName, zipPath, System.StringComparison.OrdinalIgnoreCase)));
-		var loaded = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
-			.First(a => string.Equals(a.FileName, zipPath, System.StringComparison.OrdinalIgnoreCase));
-		await loaded.GetLoadResultAsync();
+		var loaded = await vm.OpenAssemblyAsync(zipPath);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(loaded.ShortName);
-		assemblyNode.EnsureLazyChildren();
-		assemblyNode.IsExpanded = true;
+		assemblyNode.Expand();
 
 		// Assert — both nested folders show as PackageFolderTreeNodes; the flat file shows as
 		// a ResourceTreeNode with its original entry name.
@@ -212,18 +183,12 @@ public class AssemblyTreeTests
 		// string-table or inner ResourceEntryNode children (depending on payload type).
 
 		// Arrange — boot, wait for assemblies, expand CoreLib's Resources folder.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		assemblyNode.IsExpanded = true;
+		var assemblyNode = vm.AssemblyTreeModel.FindCoreLib();
+		assemblyNode.Expand();
 		var resources = assemblyNode.Children.OfType<ResourceListTreeNode>().Single();
-		resources.EnsureLazyChildren();
-		resources.IsExpanded = true;
+		resources.Expand();
 
 		// Act — look up the first .resources file and select it.
 		var resourceFileNode = resources.Children.OfType<ResourcesFileTreeNode>().FirstOrDefault();
@@ -246,14 +211,10 @@ public class AssemblyTreeTests
 		// AssemblyReferenceTreeNodes — one per AssemblyRef row.
 
 		// Arrange — boot, wait for assemblies, expand System.Linq.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		assemblyNode.EnsureLazyChildren();
-		assemblyNode.IsExpanded = true;
+		assemblyNode.Expand();
 
 		// Act — find the References folder.
 		var refFolder = assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single();
@@ -261,8 +222,7 @@ public class AssemblyTreeTests
 		// Assert — folder is named, expands to non-empty AssemblyReferenceTreeNode children.
 		refFolder.Text.Should().Be(Resources.References);
 
-		refFolder.EnsureLazyChildren();
-		refFolder.IsExpanded = true;
+		refFolder.Expand();
 		refFolder.Children.Should().NotBeEmpty();
 		refFolder.Children.Should().AllBeAssignableTo<AssemblyReferenceTreeNode>();
 	}
@@ -277,14 +237,10 @@ public class AssemblyTreeTests
 		// Arrange — boot, wait for assemblies, force lazy children on assembly + References.
 		// Stay model-only (no IsExpanded = true) — visually expanding rows would render the
 		// icons, triggering the resolver and losing the lazy "loading" state we're asserting.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		assemblyNode.EnsureLazyChildren();
-		var refFolder = assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single();
+		var refFolder = assemblyNode.GetChild<ReferenceFolderTreeNode>();
 		refFolder.EnsureLazyChildren();
 
 		var refNode = refFolder.Children.OfType<AssemblyReferenceTreeNode>()
@@ -309,27 +265,20 @@ public class AssemblyTreeTests
 		// TypeRef rows the host assembly imports from that reference.
 
 		// Arrange — boot, wait for assemblies, expand System.Linq → References → System.Runtime.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		assemblyNode.EnsureLazyChildren();
-		assemblyNode.IsExpanded = true;
+		assemblyNode.Expand();
 		var refFolder = assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single();
-		refFolder.EnsureLazyChildren();
-		refFolder.IsExpanded = true;
+		refFolder.Expand();
 
 		var refNode = refFolder.Children.OfType<AssemblyReferenceTreeNode>()
 			.First(n => n.AssemblyReference.Name == "System.Runtime");
-		refNode.EnsureLazyChildren();
-		refNode.IsExpanded = true;
+		refNode.Expand();
 
 		// Act — find the ReferencedTypes subnode and expand it.
 		var typesNode = refNode.Children.OfType<AssemblyReferenceReferencedTypesTreeNode>().Single();
-		typesNode.EnsureLazyChildren();
-		typesNode.IsExpanded = true;
+		typesNode.Expand();
 
 		// Assert — header text contains the expected label, and the children include at least
 		// one TypeReferenceTreeNode.
@@ -345,14 +294,10 @@ public class AssemblyTreeTests
 		// search to land on a specific namespace.
 
 		// Arrange — boot, wait for assemblies, expand System.Linq.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		assemblyNode.EnsureLazyChildren();
-		assemblyNode.IsExpanded = true;
+		assemblyNode.Expand();
 
 		// Act — look up the System.Linq namespace.
 		var ns = assemblyNode.FindNamespaceNode("System.Linq");
@@ -370,14 +315,10 @@ public class AssemblyTreeTests
 		// to land on a specific type by ITypeDefinition.
 
 		// Arrange — boot, wait for assemblies, expand System.Linq.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		assemblyNode.EnsureLazyChildren();
-		assemblyNode.IsExpanded = true;
+		assemblyNode.Expand();
 
 		// Act — resolve System.Linq.Enumerable's ITypeDefinition, then look up its tree node.
 		var module = assemblyNode.LoadedAssembly.GetMetadataFileOrNull()!;
@@ -399,17 +340,12 @@ public class AssemblyTreeTests
 		// top of the underlying Method/Field glyph — verifies that overlay routing works.
 
 		// Arrange — boot, wait for assemblies, expand System.Linq → References.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		assemblyNode.EnsureLazyChildren();
-		assemblyNode.IsExpanded = true;
+		assemblyNode.Expand();
 		var refFolder = assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single();
-		refFolder.EnsureLazyChildren();
-		refFolder.IsExpanded = true;
+		refFolder.Expand();
 
 		// Act — walk every reference's ReferencedTypes subtree until we find a TypeRef with
 		// at least one MemberReference. System.Linq imports plenty (delegates, Func ctors)
@@ -417,17 +353,14 @@ public class AssemblyTreeTests
 		MemberReferenceTreeNode? memberRefNode = null;
 		foreach (var refNode in refFolder.Children.OfType<AssemblyReferenceTreeNode>())
 		{
-			refNode.EnsureLazyChildren();
-			refNode.IsExpanded = true;
+			refNode.Expand();
 			var typesNode = refNode.Children.OfType<AssemblyReferenceReferencedTypesTreeNode>().FirstOrDefault();
 			if (typesNode == null)
 				continue;
-			typesNode.EnsureLazyChildren();
-			typesNode.IsExpanded = true;
+			typesNode.Expand();
 			foreach (var typeRef in typesNode.Children.OfType<TypeReferenceTreeNode>())
 			{
-				typeRef.EnsureLazyChildren();
-				typeRef.IsExpanded = true;
+				typeRef.Expand();
 				memberRefNode = typeRef.Children.OfType<MemberReferenceTreeNode>().FirstOrDefault();
 				if (memberRefNode != null)
 					break;
@@ -452,10 +385,7 @@ public class AssemblyTreeTests
 
 		// Arrange — boot, wait for assemblies. Open mscorlib explicitly: it's the canonical
 		// type-forwarder facade and we need a known forwarder regardless of default startup.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var coreLibDir = System.IO.Path.GetDirectoryName(typeof(object).Assembly.Location)!;
 		var mscorlibPath = System.IO.Path.Combine(coreLibDir, "mscorlib.dll");
@@ -464,37 +394,22 @@ public class AssemblyTreeTests
 			Assert.Inconclusive($"mscorlib.dll not present next to System.Private.CoreLib at {coreLibDir} — runtime layout differs.");
 			return;
 		}
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		var openCommand = registry.Commands
-			.Single(c => c.Metadata.Header == nameof(Resources._Open))
-			.CreateExport().Value;
-		openCommand.Execute(mscorlibPath);
-
-		await Waiters.WaitForAsync(() =>
-			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a =>
-				string.Equals(a.FileName, mscorlibPath, System.StringComparison.OrdinalIgnoreCase)));
-		var loaded = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
-			.First(a => string.Equals(a.FileName, mscorlibPath, System.StringComparison.OrdinalIgnoreCase));
-		await loaded.GetLoadResultAsync();
+		var loaded = await vm.OpenAssemblyAsync(mscorlibPath);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(loaded.ShortName);
-		assemblyNode.EnsureLazyChildren();
-		assemblyNode.IsExpanded = true;
+		assemblyNode.Expand();
 		var refFolder = assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single();
-		refFolder.EnsureLazyChildren();
-		refFolder.IsExpanded = true;
+		refFolder.Expand();
 
 		// Act — walk every reference's ReferencedTypes for an ExportedTypeTreeNode.
 		ExportedTypeTreeNode? exportedNode = null;
 		foreach (var refNode in refFolder.Children.OfType<AssemblyReferenceTreeNode>())
 		{
-			refNode.EnsureLazyChildren();
-			refNode.IsExpanded = true;
+			refNode.Expand();
 			var typesNode = refNode.Children.OfType<AssemblyReferenceReferencedTypesTreeNode>().FirstOrDefault();
 			if (typesNode == null)
 				continue;
-			typesNode.EnsureLazyChildren();
-			typesNode.IsExpanded = true;
+			typesNode.Expand();
 			exportedNode = typesNode.Children.OfType<ExportedTypeTreeNode>().FirstOrDefault();
 			if (exportedNode != null)
 				break;
@@ -514,25 +429,19 @@ public class AssemblyTreeTests
 		// — building a transitive reference tree the user can drill into.
 
 		// Arrange — boot, wait for assemblies, expand System.Linq → References.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		assemblyNode.EnsureLazyChildren();
-		assemblyNode.IsExpanded = true;
+		assemblyNode.Expand();
 		var refFolder = assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single();
-		refFolder.EnsureLazyChildren();
-		refFolder.IsExpanded = true;
+		refFolder.Expand();
 
 		// Act — many BCL refs resolve to facade assemblies with zero transitive references;
 		// iterate until we find one that has its own AssemblyRefs.
 		bool foundTransitive = false;
 		foreach (var refNode in refFolder.Children.OfType<AssemblyReferenceTreeNode>())
 		{
-			refNode.EnsureLazyChildren();
-			refNode.IsExpanded = true;
+			refNode.Expand();
 			if (refNode.Children.OfType<AssemblyReferenceTreeNode>().Any())
 			{
 				foundTransitive = true;
@@ -551,17 +460,12 @@ public class AssemblyTreeTests
 		// assembly's AssemblyTreeNode in the tree — auto-loading it if necessary.
 
 		// Arrange — boot, wait for assemblies, expand System.Linq → References.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		assemblyNode.EnsureLazyChildren();
-		assemblyNode.IsExpanded = true;
+		assemblyNode.Expand();
 		var refFolder = assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single();
-		refFolder.EnsureLazyChildren();
-		refFolder.IsExpanded = true;
+		refFolder.Expand();
 
 		var refNode = refFolder.Children.OfType<AssemblyReferenceTreeNode>()
 			.Single(n => n.AssemblyReference.Name == "System.Runtime");
@@ -591,25 +495,10 @@ public class AssemblyTreeTests
 
 		// Arrange — boot, wait for assemblies, open System.Net.Http (its CancelPendingRequests
 		// pulls in plenty of currently-unreferenced types).
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var newAsmPath = typeof(System.Net.Http.HttpClient).Assembly.Location;
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		var openCommand = registry.Commands
-			.Single(c => c.Metadata.Header == nameof(Resources._Open))
-			.CreateExport().Value;
-		openCommand.Execute(newAsmPath);
-
-		await Waiters.WaitForAsync(() =>
-			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a =>
-				string.Equals(a.FileName, newAsmPath, System.StringComparison.OrdinalIgnoreCase)));
-
-		var loaded = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
-			.First(a => string.Equals(a.FileName, newAsmPath, System.StringComparison.OrdinalIgnoreCase));
-		await loaded.GetLoadResultAsync();
+		var loaded = await vm.OpenAssemblyAsync(newAsmPath);
 
 		var initialFiles = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
 			.Select(a => a.FileName)
@@ -619,8 +508,7 @@ public class AssemblyTreeTests
 		// assemblies to appear.
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			loaded.ShortName, "System.Net.Http", "System.Net.Http.HttpClient");
-		typeNode.EnsureLazyChildren();
-		typeNode.IsExpanded = true;
+		typeNode.Expand();
 		var methodNode = typeNode.Children.OfType<MethodTreeNode>()
 			.First(m => m.MethodDefinition.Name == "CancelPendingRequests");
 
@@ -653,30 +541,14 @@ public class AssemblyTreeTests
 		// user actually opened.
 
 		// Arrange — boot, wait for assemblies, open + select a method that triggers auto-load.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var newAsmPath = typeof(System.Net.Http.HttpClient).Assembly.Location;
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		var openCommand = registry.Commands
-			.Single(c => c.Metadata.Header == nameof(Resources._Open))
-			.CreateExport().Value;
-		openCommand.Execute(newAsmPath);
-
-		await Waiters.WaitForAsync(() =>
-			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a =>
-				string.Equals(a.FileName, newAsmPath, System.StringComparison.OrdinalIgnoreCase)));
-
-		var loaded = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
-			.First(a => string.Equals(a.FileName, newAsmPath, System.StringComparison.OrdinalIgnoreCase));
-		await loaded.GetLoadResultAsync();
+		var loaded = await vm.OpenAssemblyAsync(newAsmPath);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			loaded.ShortName, "System.Net.Http", "System.Net.Http.HttpClient");
-		typeNode.EnsureLazyChildren();
-		typeNode.IsExpanded = true;
+		typeNode.Expand();
 		var methodNode = typeNode.Children.OfType<MethodTreeNode>()
 			.First(m => m.MethodDefinition.Name == "CancelPendingRequests");
 
@@ -717,28 +589,13 @@ public class AssemblyTreeTests
 		// matching tree node, and select that node so the user sees their newly-opened file.
 
 		// Arrange — boot, wait for assemblies, snapshot the initial count.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var newAsmPath = typeof(System.Net.Http.HttpClient).Assembly.Location;
 		var initialCount = vm.AssemblyTreeModel.AssemblyList!.Count;
 
 		// Act — fire OpenCommand on a new path and wait for the load to complete.
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		var openCommand = registry.Commands
-			.Single(c => c.Metadata.Header == nameof(Resources._Open))
-			.CreateExport().Value;
-		openCommand.Execute(newAsmPath);
-
-		await Waiters.WaitForAsync(() =>
-			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a =>
-				string.Equals(a.FileName, newAsmPath, System.StringComparison.OrdinalIgnoreCase)));
-
-		var loaded = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
-			.First(a => string.Equals(a.FileName, newAsmPath, System.StringComparison.OrdinalIgnoreCase));
-		await loaded.GetLoadResultAsync();
+		var loaded = await vm.OpenAssemblyAsync(newAsmPath);
 
 		// Assert — count incremented by one; the corresponding tree node points at the
 		// freshly-loaded assembly and is selected.
@@ -758,24 +615,18 @@ public class AssemblyTreeTests
 
 		// Arrange — boot, wait for assemblies, expand a sub-tree large enough to scroll. Park
 		// the viewport mid-list so clicks are at non-zero offset.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 
 		var enumerable = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
-		enumerable.EnsureLazyChildren();
-		enumerable.IsExpanded = true;
+		enumerable.Expand();
 		var ns = (NamespaceTreeNode)enumerable.Parent!;
-		ns.EnsureLazyChildren();
-		ns.IsExpanded = true;
+		ns.Expand();
 		var asm = (AssemblyTreeNode)ns.Parent!;
 		asm.IsExpanded = true;
 		foreach (var child in ns.Children.OfType<TypeTreeNode>())
 		{
-			child.EnsureLazyChildren();
-			child.IsExpanded = true;
+			child.Expand();
 		}
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
@@ -838,19 +689,13 @@ public class AssemblyTreeTests
 		// method — that's how nodes (e.g. resources) opt into a custom save dialog/format.
 
 		// Arrange — boot, wait for assemblies, plant a probe node that records when Save runs.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var probe = new SaveProbeNode();
 		vm.AssemblyTreeModel.SelectNode(probe);
 
 		// Act — fire the Save Code main-menu command.
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		var saveCmd = registry.Commands
-			.Single(c => c.Metadata.Header == nameof(Resources._SaveCode))
-			.CreateExport().Value;
+		var saveCmd = AppComposition.Current.GetExport<MainMenuCommandRegistry>().GetCommand(nameof(Resources._SaveCode));
 		saveCmd.Execute(null);
 
 		// Assert — probe's Save() ran.
@@ -877,15 +722,11 @@ public class AssemblyTreeTests
 		// write the resulting C# to the user-picked path.
 
 		// Arrange — boot, wait for assemblies, select a method, wait for the in-tab decompile.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
-		typeNode.EnsureLazyChildren();
-		typeNode.IsExpanded = true;
+		typeNode.Expand();
 		var method = typeNode.Children.OfType<MethodTreeNode>()
 			.First(m => m.MethodDefinition.Name == "AsEnumerable");
 		vm.AssemblyTreeModel.SelectNode(method);
@@ -929,10 +770,7 @@ public class AssemblyTreeTests
 
 		// Arrange — boot, wait for assemblies, pick the assembly to evict + a sibling we
 		// expect to survive, select the sacrificial one, focus the grid.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 
 		var sacrificialName = typeof(System.Linq.Enumerable).Assembly.GetName().Name!;
 		var survivorName = typeof(object).Assembly.GetName().Name!;
@@ -980,17 +818,11 @@ public class AssemblyTreeTests
 		// The Clear Assembly List menu command must drop every entry from the active list.
 
 		// Arrange — boot, wait for assemblies, baseline the non-empty count.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 		vm.AssemblyTreeModel.AssemblyList!.Count.Should().BeGreaterThan(0);
 
 		// Act — fire the Clear command.
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		var clearCmd = registry.Commands
-			.Single(c => c.Metadata.Header == nameof(Resources.ClearAssemblyList))
-			.CreateExport().Value;
+		var clearCmd = AppComposition.Current.GetExport<MainMenuCommandRegistry>().GetCommand(nameof(Resources.ClearAssemblyList));
 		clearCmd.CanExecute(null).Should().BeTrue("non-empty list must enable Clear");
 		clearCmd.Execute(null);
 
@@ -1008,10 +840,7 @@ public class AssemblyTreeTests
 		// Arrange — boot, wait for assemblies, plant a "broken" entry: a real file that isn't
 		// a PE binary. AssemblyList records it but the load fails — that's the state the
 		// command targets.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var brokenPath = System.IO.Path.Combine(
 			System.IO.Path.GetTempPath(),
@@ -1035,10 +864,7 @@ public class AssemblyTreeTests
 			validBefore.Should().NotBeEmpty("at least one real assembly must remain to verify it's spared");
 
 			// Act — fire the command.
-			var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-			var cmd = registry.Commands
-				.Single(c => c.Metadata.Header == nameof(Resources._RemoveAssembliesWithLoadErrors))
-				.CreateExport().Value;
+			var cmd = AppComposition.Current.GetExport<MainMenuCommandRegistry>().GetCommand(nameof(Resources._RemoveAssembliesWithLoadErrors));
 			cmd.CanExecute(null).Should().BeTrue("a broken entry must enable the command");
 			cmd.Execute(null);
 
@@ -1069,10 +895,7 @@ public class AssemblyTreeTests
 
 		// Arrange — boot, wait for assemblies, locate the realised DataGrid and the
 		// HierarchicalModel wrapper for the assembly node.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<DataGrid>();
@@ -1084,8 +907,7 @@ public class AssemblyTreeTests
 		hNode!.IsExpanded.Should().BeFalse("baseline: top-level assembly rows start collapsed");
 
 		// Act — production-shaped action: just toggle the model property.
-		assemblyNode.EnsureLazyChildren();
-		assemblyNode.IsExpanded = true;
+		assemblyNode.Expand();
 
 		// Drain the dispatcher so the wiring (PropertyChanged → hm.Expand) settles.
 		for (int i = 0; i < 5; i++)
@@ -1106,10 +928,7 @@ public class AssemblyTreeTests
 		// tab opens with the supplied node decompiled, the existing tab keeps its content,
 		// and the assembly-tree selection is pulled across to the new tab's source node
 		// (the active tab and the tree are kept in lockstep).
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
@@ -1147,10 +966,7 @@ public class AssemblyTreeTests
 	{
 		// Activate two tabs (each carrying a different SourceNode), then flip the active
 		// dockable back to the first one and confirm the assembly-tree selection follows.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
@@ -1188,19 +1004,12 @@ public class AssemblyTreeTests
 		// DecompilerTabPageModel. Exercises the regression behind "there can't be multiple
 		// metadata views": before the OpenNodeInNewTab consolidation, the new-tab path
 		// always built a decompiler tab and the metadata page-type couldn't be carved out.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
-		assemblyNode.EnsureLazyChildren();
-		var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().Single();
-		metadataNode.EnsureLazyChildren();
-		var tablesNode = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
-		tablesNode.EnsureLazyChildren();
-		var typeDefNode = tablesNode.Children.OfType<TypeDefTableTreeNode>().Single();
+		var tablesNode = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<MetadataTablesTreeNode>();
+		var typeDefNode = tablesNode.GetChild<TypeDefTableTreeNode>();
 
 		// First metadata view via tree-selection (active tab gets MetadataTablePageModel content).
 		vm.AssemblyTreeModel.SelectNode(typeDefNode);
@@ -1229,10 +1038,7 @@ public class AssemblyTreeTests
 		// ILSpy. Without this, tree-based navigation can't reach get_X / set_X — and
 		// MMB on a property-accessor row in the metadata grid silently no-ops because
 		// FindTreeNode can't resolve the IMethod to a tree node.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
 		var stringTypeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -1257,10 +1063,7 @@ public class AssemblyTreeTests
 		// Events surface add_X / remove_X (and invoke_X if present) as MethodTreeNode
 		// children, mirroring WPF ILSpy. Same regression-protection as the property
 		// case above.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
 		// AppDomain.AssemblyLoad is a public, well-known event in CoreLib.
@@ -1285,10 +1088,7 @@ public class AssemblyTreeTests
 		// the per-node Filter must hide them under the default ShowApiLevel — they're
 		// rendered as part of the parent property in the C# surface, so the tree should
 		// not duplicate them as standalone rows. ShowAll is the explicit opt-in.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
 		var stringTypeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -1317,10 +1117,7 @@ public class AssemblyTreeTests
 		// an IMethod whose AccessorOwner is the IProperty. Without the AccessorOwner-aware
 		// branch in FindMemberNode, the lookup falls through to "MethodTreeNode child of the
 		// type" and returns null because accessors live under the property, not the type.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
 		var stringTypeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -1346,10 +1143,7 @@ public class AssemblyTreeTests
 		// expect a single BaseTypesEntryNode whose label ends in "Object".
 
 		// Arrange — boot, wait for assemblies, drill into System.Exception.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -1371,10 +1165,7 @@ public class AssemblyTreeTests
 		// Activating a BaseTypesEntryNode jumps the assembly-tree selection to the underlying
 		// type node — same gesture the WPF tree uses to walk an inheritance chain.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -1404,10 +1195,7 @@ public class AssemblyTreeTests
 		// scan the assembly list synchronously — for the small fixture loaded in tests this
 		// yields a few hits per common base (e.g. SystemException is derived from Exception).
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -1425,10 +1213,7 @@ public class AssemblyTreeTests
 	{
 		// Sealed types can't be derived from, so the DerivedTypes sub-tree must not appear.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
 		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -1444,10 +1229,7 @@ public class AssemblyTreeTests
 	{
 		// System.Object has no base types, so the BaseTypes sub-tree must not appear.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
 		var objectNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -1498,10 +1280,7 @@ public class AssemblyTreeTests
 		// must NOT return Hidden purely because the field's name doesn't contain the active
 		// SearchTerm — only ShowApiLevel + ShowMember remain valid hiding criteria.
 
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var settings = AppComposition.Current.GetExport<SettingsService>()
 			.SessionSettings.LanguageSettings;
@@ -1533,13 +1312,9 @@ public class AssemblyTreeTests
 		// NOT as bare TypeTreeNodes hanging directly off the assembly node.
 
 		// Arrange — boot, wait for assemblies, locate CoreLib.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
+		var assemblyNode = vm.AssemblyTreeModel.FindCoreLib();
 		assemblyNode.EnsureLazyChildren();
 
 		// Assert — exactly one global-namespace node, labelled "-", non-empty contents.
@@ -1570,10 +1345,7 @@ public class AssemblyTreeTests
 		// the current cell to the last row (the user reported having to press it twice).
 
 		// Arrange — boot, wait for assemblies, realise the grid.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<DataGrid>();
@@ -1619,10 +1391,7 @@ public class AssemblyTreeTests
 		// one row must collapse the selection down to just that row.
 
 		// Arrange — boot, wait for assemblies, realise the grid, select everything.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (window, vm) = await TestHarness.BootAsync(3);
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<DataGrid>();
@@ -1670,16 +1439,10 @@ public class AssemblyTreeTests
 		// to do nothing.
 
 		// Arrange -- boot, open System.Net.Http (it references many assemblies not in the list).
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var newAsmPath = typeof(System.Net.Http.HttpClient).Assembly.Location;
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		var openCommand = registry.Commands
-			.Single(c => c.Metadata.Header == nameof(Resources._Open))
-			.CreateExport().Value;
+		var openCommand = AppComposition.Current.GetExport<MainMenuCommandRegistry>().GetCommand(nameof(Resources._Open));
 		openCommand.Execute(newAsmPath);
 		await Waiters.WaitForAsync(() =>
 			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a =>
