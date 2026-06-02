@@ -57,6 +57,7 @@ public class ApiVisibilityFilterTests
 		var (vm, enumerableNode) = await BootAndExpandEnumerableAsync();
 		var publicMethod = enumerableNode.Children.OfType<MethodTreeNode>()
 			.Single(m => m.MethodDefinition.Name == "Empty");
+		TestCapture.Step("before-public-api-checks");
 
 		// Act + Assert — Empty<T> is public static.
 		publicMethod.IsPublicAPI.Should().BeTrue("Enumerable.Empty<T> is public");
@@ -159,6 +160,7 @@ public class ApiVisibilityFilterTests
 		var stringType = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
 		stringType.IsExpanded = true;
 		await Waiters.WaitForAsync(() => stringType.Children.OfType<MethodTreeNode>().Any());
+		TestCapture.Step("string-type-expanded");
 
 		var settings = AppComposition.Current.GetExport<SettingsService>().SessionSettings.LanguageSettings;
 		settings.ShowApiLevel = ApiVisibility.All;
@@ -167,6 +169,7 @@ public class ApiVisibilityFilterTests
 		// Act — switch to PublicOnly.
 		settings.ShowApiLevel = ApiVisibility.PublicOnly;
 		var publicCount = CountVisibleMethods(stringType, settings);
+		TestCapture.Step("api-visibility-public-only");
 
 		// Assert — strictly fewer methods at PublicOnly than at All (String has internal/private
 		// helpers we expect to disappear).
@@ -199,6 +202,7 @@ public class ApiVisibilityFilterTests
 		settings.ShowApiLevel = settings.ShowApiLevel == ApiVisibility.PublicOnly
 			? ApiVisibility.All
 			: ApiVisibility.PublicOnly;
+		TestCapture.Step("api-visibility-flipped");
 
 		// Assert — model reference changed, indicating BindTree ran again with new filter state.
 		grid.HierarchicalModel.Should().NotBeSameAs(modelBefore,
@@ -222,6 +226,7 @@ public class ApiVisibilityFilterTests
 		var stringType = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
 		stringType.IsExpanded = true;
 		await Waiters.WaitForAsync(() => stringType.Children.OfType<MethodTreeNode>().Any());
+		TestCapture.Step("string-type-expanded");
 
 		var publicMethod = stringType.Children.OfType<MethodTreeNode>().First(m => m.IsPublicAPI);
 		var nonPublicMethod = stringType.Children.OfType<MethodTreeNode>().First(m => !m.IsPublicAPI);
@@ -238,6 +243,7 @@ public class ApiVisibilityFilterTests
 		vm.AssemblyTreeModel.SelectNode(nonPublicMethod);
 		await Waiters.WaitForAsync(() => FindRowTextBlock(grid, (string)nonPublicMethod.Text!) != null);
 		var nonPublicLabel = FindRowTextBlock(grid, (string)nonPublicMethod.Text!);
+		TestCapture.Step("non-public-method-selected");
 
 		// Assert — non-public row's TextBlock carries the class; public row does not.
 		publicLabel.Should().NotBeNull();
@@ -267,6 +273,7 @@ public class ApiVisibilityFilterTests
 		// Arrange — boot.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
+		TestCapture.Step("booted");
 		var toggles = window.GetVisualDescendants().OfType<ToggleButton>()
 			.Where(t => t.Name is "ShowPublicOnlyButton" or "ShowPrivateInternalButton" or "ShowAllButton")
 			.ToDictionary(t => t.Name!);
@@ -281,6 +288,7 @@ public class ApiVisibilityFilterTests
 		toggles["ShowPrivateInternalButton"].IsChecked.Should().BeTrue("baseline before click");
 
 		toggles["ShowPublicOnlyButton"].IsChecked = true;
+		TestCapture.Step("show-public-only-checked");
 		settings.ShowApiLevel.Should().Be(ApiVisibility.PublicOnly);
 		toggles["ShowPrivateInternalButton"].IsChecked.Should().BeFalse(
 			"flipping ShowPublicOnly must propagate-cancel ShowPrivateInternal via OnPropertyChanged");
@@ -288,6 +296,7 @@ public class ApiVisibilityFilterTests
 
 		// Act + Assert — same but flipping the All button.
 		toggles["ShowAllButton"].IsChecked = true;
+		TestCapture.Step("show-all-checked");
 		settings.ShowApiLevel.Should().Be(ApiVisibility.All);
 		toggles["ShowPublicOnlyButton"].IsChecked.Should().BeFalse();
 		toggles["ShowPrivateInternalButton"].IsChecked.Should().BeFalse();

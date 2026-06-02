@@ -80,6 +80,7 @@ public class AnalyzerConstructorUsesTests
 			AssemblyList = assemblyList,
 		};
 		var results = analyzer.Analyze(ctor, context).Take(20).ToList();
+		TestCapture.Step("before-used-by-results");
 		results.Should().NotBeEmpty("constructors of public LINQ types must have at least one in-tree caller");
 	}
 
@@ -110,6 +111,7 @@ public class AnalyzerConstructorUsesTests
 			AssemblyList = assemblyList,
 		};
 		var results = analyzer.Analyze(ctor, context).Take(20).ToList();
+		TestCapture.Step("before-uses-results");
 		results.Should().NotBeEmpty();
 	}
 
@@ -129,6 +131,7 @@ public class AnalyzerConstructorUsesTests
 
 		// This was the user-reported throw point.
 		analyzerVm.Analyze(ctor);
+		TestCapture.Step("constructor-pushed-to-pane");
 
 		analyzerVm.Root.Children.Count.Should().Be(beforeCount + 1);
 	}

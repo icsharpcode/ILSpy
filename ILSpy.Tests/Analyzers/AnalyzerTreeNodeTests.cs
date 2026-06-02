@@ -94,6 +94,7 @@ public class AnalyzerTreeNodeTests
 		var snapshot = assemblyList.GetAssemblies();
 		// Clearing then re-adding the assemblies emits a Reset on the underlying ObservableCollection.
 		assemblyList.Clear();
+		TestCapture.Step("assembly-list-cleared");
 		root.Children.Should().BeEmpty(
 			"AnalyzerRootNode.CurrentAssemblyList_Changed must wipe children on Reset");
 

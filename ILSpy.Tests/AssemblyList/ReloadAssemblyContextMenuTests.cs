@@ -108,23 +108,24 @@ public class ReloadAssemblyContextMenuTests
 		var originalAssembly = node.LoadedAssembly;
 		var fileName = originalAssembly.FileName;
 
-		window.CaptureForReview(1, "initial-tree");
+		window.Capture("initial-tree");
 
 		// Act — select the row, build the live context menu, click Reload.
 		vm.AssemblyTreeModel.SelectNode(node);
-		window.CaptureForReview(2, "system-linq-selected");
+		window.Capture("system-linq-selected");
 
 		var menu = pane.BuildContextMenuForCurrentState(registry.Entries);
 		menu.Should().NotBeNull();
 		var reloadItem = menu!.Items.OfType<MenuItem>()
 			.Single(i => (string?)i.Header == Resources._Reload);
 		reloadItem.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+		window.Capture("reload-clicked");
 
 		// Assert — the LoadedAssembly for that file name is a different instance now.
 		await Waiters.WaitForAsync(() =>
 			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a =>
 				a.FileName == fileName && !ReferenceEquals(a, originalAssembly)));
 
-		window.CaptureForReview(3, "after-reload-same-file-fresh-instance");
+		window.Capture("after-reload-same-file-fresh-instance");
 	}
 }

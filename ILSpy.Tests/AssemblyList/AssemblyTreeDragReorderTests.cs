@@ -96,6 +96,7 @@ public class AssemblyTreeDragReorderTests
 			position: DataGridRowDropPosition.After);
 		handler.Validate(args).Should().BeTrue();
 		handler.Execute(args).Should().BeTrue();
+		TestCapture.Step("after-reorder-first-after-second");
 
 		var after = list.GetAssemblies();
 		after[0].Should().BeSameAs(before[1]);
@@ -134,6 +135,7 @@ public class AssemblyTreeDragReorderTests
 
 		var topLevel = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>().First();
 		topLevel.IsExpanded = true;
+		TestCapture.Step("top-level-expanded");
 		var childNode = topLevel.Children.First();
 
 		var handler = (AssemblyRowDropHandler)grid.RowDropHandler;
@@ -153,6 +155,7 @@ public class AssemblyTreeDragReorderTests
 
 		var topLevel = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>().ToArray();
 		topLevel[0].IsExpanded = true;
+		TestCapture.Step("first-assembly-expanded");
 		var childOfFirst = topLevel[0].Children.First();
 
 		var handler = (AssemblyRowDropHandler)grid.RowDropHandler;

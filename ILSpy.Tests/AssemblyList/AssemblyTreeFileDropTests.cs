@@ -66,6 +66,7 @@ public class AssemblyTreeFileDropTests
 		try
 		{
 			pane.HandleFileDrop(new[] { tempPath }, target: null, DataGridRowDropPosition.After);
+			TestCapture.Step("file-dropped-no-target");
 
 			var after = list.GetAssemblies();
 			after.Should().HaveCount(beforeCount + 1);
@@ -97,6 +98,7 @@ public class AssemblyTreeFileDropTests
 		{
 			pane.HandleFileDrop(new[] { tempPath }, target: firstNode,
 				DataGridRowDropPosition.Before);
+			TestCapture.Step("file-dropped-before-first-row");
 
 			var after = list.GetAssemblies();
 			after.Should().HaveCount(beforeCount + 1);
@@ -125,6 +127,7 @@ public class AssemblyTreeFileDropTests
 		{
 			pane.HandleFileDrop(new[] { tempPath }, target: firstNode,
 				DataGridRowDropPosition.After);
+			TestCapture.Step("file-dropped-after-first-row");
 
 			var after = list.GetAssemblies();
 			after[1].FileName.Should().Be(tempPath);
@@ -152,6 +155,7 @@ public class AssemblyTreeFileDropTests
 		{
 			pane.HandleFileDrop(new[] { tempPath }, target: null,
 				DataGridRowDropPosition.After);
+			TestCapture.Step("file-dropped-new-node-selected");
 
 			var newAsm = list.GetAssemblies()
 				.First(a => string.Equals(a.FileName, tempPath, StringComparison.OrdinalIgnoreCase));
@@ -187,6 +191,7 @@ public class AssemblyTreeFileDropTests
 
 		pane.HandleFileDrop(new[] { bogusPath }, target: null,
 			DataGridRowDropPosition.After);
+		TestCapture.Step("bogus-path-dropped");
 
 		// OpenAssembly does add the entry (it lazy-loads), so the count may grow. The contract
 		// we exercise here is "the call returns without throwing" — verified by reaching this

@@ -122,6 +122,7 @@ public class MetadataProtocolHandlerDrillDownTests
 		// Drill-down needs the children realised; EnsureLazyChildren cascades only one level.
 		var tablesNode = metadataNode.GetChild<MetadataTablesTreeNode>();
 		tablesNode.EnsureLazyChildren();
+		TestCapture.Step("tables-tree-expanded");
 		return metadataNode;
 	}
 

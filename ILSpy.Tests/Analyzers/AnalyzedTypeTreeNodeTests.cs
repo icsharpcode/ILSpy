@@ -59,6 +59,7 @@ public class AnalyzedTypeTreeNodeTests
 			.Single(t => t.FullName == "System.Object");
 
 		var node = new AnalyzedTypeTreeNode(objectType, source: null);
+		TestCapture.Step("before-type-text");
 		node.Text.ToString().Should().Contain("Object");
 		node.Member.Should().BeSameAs(objectType);
 		node.Icon.Should().NotBeNull("every entity node must surface a non-null icon");
@@ -90,6 +91,7 @@ public class AnalyzedTypeTreeNodeTests
 			.Select(c => c.AnalyzerHeader)
 			.ToArray();
 
+		TestCapture.Step("before-type-analyzer-headers");
 		headers.Should().Contain("Used By", "TypeUsedByAnalyzer applies to every TypeDefinition");
 		headers.Should().Contain("Exposed By", "TypeExposedByAnalyzer applies to public types");
 		headers.Should().Contain("Extension Methods",

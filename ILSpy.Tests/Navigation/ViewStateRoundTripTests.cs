@@ -57,6 +57,7 @@ public class ViewStateRoundTripTests
 		vm.AssemblyTreeModel.SelectNode(objectNode);
 		await dockWorkspace.WaitForDecompiledTextAsync();
 		var tab = dockWorkspace.ActiveDecompilerTab!;
+		TestCapture.Step("object-decompiled");
 
 		// State is pulled from the editor on demand (CaptureViewState) when DockWorkspace records
 		// a navigation away -- not pushed per caret/scroll event. Headless has no laid-out editor,
@@ -67,6 +68,7 @@ public class ViewStateRoundTripTests
 		// entry and records B as the new current.
 		vm.AssemblyTreeModel.SelectNode(stringNode);
 		await dockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("string-decompiled");
 
 		// Verify the capture: the back stack's most recent entry should be A's, with the pulled
 		// caret + scroll values.
@@ -85,6 +87,7 @@ public class ViewStateRoundTripTests
 		// view consume it -- applying caret/scroll to the live editor is the view's job (covered by
 		// the real UI; headless has no rendered viewport).
 		dockWorkspace.NavigateBackCommand.Execute(null);
+		TestCapture.Step("navigated-back");
 		tab.PendingViewState.Should().NotBeNull("Back must stash the recorded view state for the editor to apply");
 		tab.PendingViewState!.Value.CaretOffset.Should().Be(500,
 			"Back must restore the caret to where the user left it before navigating to B");
@@ -115,6 +118,7 @@ public class ViewStateRoundTripTests
 		vm.AssemblyTreeModel.SelectNode(objectNode);
 		await dockWorkspace.WaitForDecompiledTextAsync();
 		var tab = dockWorkspace.ActiveDecompilerTab!;
+		TestCapture.Step("object-decompiled");
 
 		// Deterministic foldings snapshot — two expanded regions over a four-folding layout.
 		// Compute via the helper to keep the checksum honest. (The snapshot itself is exercised
@@ -131,6 +135,7 @@ public class ViewStateRoundTripTests
 		// onto the OUTGOING entry on the back stack.
 		vm.AssemblyTreeModel.SelectNode(stringNode);
 		await dockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("string-decompiled");
 
 		// Verify the capture: the back-stack entry for node A carries the snapshot.
 		var captured = dockWorkspace.BackHistory.OfType<TreeNodeEntry>().Last();
@@ -144,6 +149,7 @@ public class ViewStateRoundTripTests
 		// for the view to consume on the next ApplyDocument. The assignment is synchronous, so we
 		// can observe it before the await lets the editor consume it.
 		dockWorkspace.NavigateBackCommand.Execute(null);
+		TestCapture.Step("navigated-back");
 		tab.PendingViewState.Should().NotBeNull("Back must propagate the captured state to the destination tab");
 		tab.PendingViewState!.Value.Foldings.Should().NotBeNull();
 		tab.PendingViewState!.Value.Foldings!.Value.Checksum.Should().Be(seeded.Checksum);
@@ -169,14 +175,17 @@ public class ViewStateRoundTripTests
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		vm.AssemblyTreeModel.SelectNode(stringNode);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("string-decompiled");
 
 		vm.DockWorkspace.NavigateBackCommand.Execute(null);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("navigated-back");
 		vm.DockWorkspace.NavigateForwardCommand.CanExecute(null).Should().BeTrue(
 			"Forward must be enabled after Back leaves an entry on the forward stack");
 
 		vm.DockWorkspace.NavigateForwardCommand.Execute(null);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("navigated-forward");
 
 		// Back through Forward should land on B again.
 		ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, stringNode).Should().BeTrue(

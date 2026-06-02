@@ -91,6 +91,7 @@ public class HideEmptyMetadataTablesTests
 			.GetChild<MetadataTreeNode>()
 			.GetChild<MetadataTablesTreeNode>();
 		tables.EnsureLazyChildren();
+		TestCapture.Step("tables-tree-expanded");
 		metadata = assemblyNode.LoadedAssembly.GetMetadataFileOrNull()!.Metadata;
 		return tables;
 	}

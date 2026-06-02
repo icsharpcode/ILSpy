@@ -54,6 +54,7 @@ public class AnalyzerPaneRemoveTests
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		var analyzerVm = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
 		var added = analyzerVm.Analyze((ICSharpCode.Decompiler.TypeSystem.IEntity)typeNode.Member!);
+		TestCapture.Step("entity-analysed");
 
 		entry.IsVisible(new TextViewContext { SelectedTreeNodes = new SharpTreeNode[] { added } })
 			.Should().BeTrue("Remove applies to top-level analysed entities");
@@ -80,6 +81,7 @@ public class AnalyzerPaneRemoveTests
 		var beforeCount = analyzerVm.Root.Children.Count;
 
 		entry.Execute(new TextViewContext { SelectedTreeNodes = new SharpTreeNode[] { added } });
+		TestCapture.Step("entity-removed-from-pane");
 
 		analyzerVm.Root.Children.Should().NotContain(added,
 			"Execute on Remove must drop the row from the pane root");

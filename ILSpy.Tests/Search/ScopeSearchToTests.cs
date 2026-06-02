@@ -55,6 +55,7 @@ public class ScopeSearchToTests
 		entry.IsVisible(new TextViewContext { SelectedTreeNodes = new SharpTreeNode[] { asm } })
 			.Should().BeTrue("the entry must surface on AssemblyTreeNode selections");
 		entry.Execute(new TextViewContext { SelectedTreeNodes = new SharpTreeNode[] { asm } });
+		TestCapture.Step("scoped-to-assembly");
 
 		search.SearchTerm.Should().Contain("inassembly:",
 			"Execute must inject the inassembly: prefix into the live search term");
@@ -78,6 +79,7 @@ public class ScopeSearchToTests
 		entry.IsVisible(new TextViewContext { SelectedTreeNodes = new SharpTreeNode[] { ns } })
 			.Should().BeTrue("the entry must surface on NamespaceTreeNode selections");
 		entry.Execute(new TextViewContext { SelectedTreeNodes = new SharpTreeNode[] { ns } });
+		TestCapture.Step("scoped-to-namespace");
 
 		search.SearchTerm.Should().Contain("innamespace:");
 		search.SearchTerm.Should().Contain("System.Linq");

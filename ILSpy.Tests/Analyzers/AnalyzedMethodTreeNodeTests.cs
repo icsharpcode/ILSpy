@@ -56,6 +56,7 @@ public class AnalyzedMethodTreeNodeTests
 			.First(m => m.MethodDefinition.Name == "Empty").Member!;
 
 		var node = new AnalyzedMethodTreeNode(emptyMethod, source: null);
+		TestCapture.Step("before-method-text");
 		node.Member.Should().BeSameAs(emptyMethod);
 		node.Text.ToString().Should().Contain("Empty");
 		node.Text.ToString().Should().Contain("Enumerable",
@@ -86,6 +87,7 @@ public class AnalyzedMethodTreeNodeTests
 			.Select(c => c.AnalyzerHeader)
 			.ToArray();
 
+		TestCapture.Step("before-uses-and-used-by-headers");
 		headers.Should().Contain("Used By",
 			"MethodUsedByAnalyzer is the headline reverse-lookup for any concrete method");
 		headers.Should().Contain("Uses",

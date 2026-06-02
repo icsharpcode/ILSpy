@@ -59,17 +59,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ILSpy.Tests\ILSpy.Tests.csproj" />
     <ProjectReference Include="..\ILSpy\ILSpy.csproj" />
-  </ItemGroup>
-
-  <!-- Share TestApp + TestAppBuilder with the cross-platform test project. Linked
-       rather than duplicated so changes in the main project (data templates, theme
-       stack, settings sandbox) automatically apply here. -->
-  <ItemGroup>
-    <Compile Include="..\ILSpy.Tests\TestApp.axaml.cs" Link="TestApp.axaml.cs" />
-    <Compile Include="..\ILSpy.Tests\TestAppBuilder.cs" Link="TestAppBuilder.cs" />
-    <Compile Include="..\ILSpy.Tests\ResetAppStateAttribute.cs" Link="ResetAppStateAttribute.cs" />
-    <AvaloniaResource Include="..\ILSpy.Tests\TestApp.axaml" Link="TestApp.axaml" />
   </ItemGroup>
 
 </Project>

@@ -50,6 +50,7 @@ public class CreateDiagramContextMenuTests
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		TestCapture.Step("booted");
 
 		var entry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>().Entries
 			.Select(e => e.Value).OfType<CreateDiagramContextMenuEntry>().Single();
@@ -67,6 +68,7 @@ public class CreateDiagramContextMenuTests
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		TestCapture.Step("booted");
 
 		var entry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>().Entries
 			.Select(e => e.Value).OfType<CreateDiagramContextMenuEntry>().Single();
@@ -85,6 +87,7 @@ public class CreateDiagramContextMenuTests
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		TestCapture.Step("booted");
 
 		var entry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>().Entries
 			.Select(e => e.Value).OfType<CreateDiagramContextMenuEntry>().Single();

@@ -54,9 +54,11 @@ public class HideEmptyMetadataTablesUiBindingTests
 			// Disable via the same property the checkbox writes to.
 			settings.DisplaySettings.HideEmptyMetadataTables = false;
 			var withAll = CountVisibleTables(vm, coreLibName);
+			TestCapture.Step("hide-empty-off");
 
 			settings.DisplaySettings.HideEmptyMetadataTables = true;
 			var withoutEmpty = CountVisibleTables(vm, coreLibName);
+			TestCapture.Step("hide-empty-on");
 
 			withAll.Should().BeGreaterThan(withoutEmpty,
 				"flipping the Display-Settings flag must cause additional empty tables to surface in the tree");

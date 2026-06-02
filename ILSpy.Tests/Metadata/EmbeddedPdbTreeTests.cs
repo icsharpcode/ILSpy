@@ -54,6 +54,7 @@ public class EmbeddedPdbTreeTests
 		// the test SDK builds with portable + sidecar PDB.
 		var testDllPath = typeof(ICSharpCode.Decompiler.Metadata.MetadataFile).Assembly.Location;
 		var loaded = await vm.OpenAssemblyAsync(testDllPath);
+		TestCapture.Step("opened-decompiler-dll");
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(loaded.ShortName);
 		// AssemblyTreeNode now surfaces two MetadataTreeNode children for assemblies with an
@@ -63,6 +64,7 @@ public class EmbeddedPdbTreeTests
 
 		var debugDirectoryNode = metadataNode.GetChild<DebugDirectoryTreeNode>();
 		debugDirectoryNode.EnsureLazyChildren();
+		TestCapture.Step("debug-directory-expanded");
 
 		// The embedded-PDB sub-tree is a MetadataTreeNode whose own children include a
 		// MetadataTablesTreeNode listing the debug-only tables.
@@ -89,9 +91,11 @@ public class EmbeddedPdbTreeTests
 
 		var testDllPath = typeof(ICSharpCode.Decompiler.Metadata.MetadataFile).Assembly.Location;
 		var loaded = await vm.OpenAssemblyAsync(testDllPath);
+		TestCapture.Step("opened-decompiler-dll");
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(loaded.ShortName);
 		assemblyNode.EnsureLazyChildren();
+		TestCapture.Step("assembly-node-expanded");
 
 		var topLevelMetadataNodes = assemblyNode.Children.OfType<MetadataTreeNode>().ToList();
 		topLevelMetadataNodes.Should().HaveCount(2,

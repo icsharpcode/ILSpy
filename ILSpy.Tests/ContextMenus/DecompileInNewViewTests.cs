@@ -79,11 +79,11 @@ public class DecompileInNewViewTests
 		var asm = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		var header = ICSharpCode.ILSpy.Properties.Resources.DecompileToNewPanel;
 
-		window.CaptureForReview(1, "initial-no-selection");
+		window.Capture("initial-no-selection");
 
 		// With an assembly node selected → the menu surfaces "Decompile in new tab".
 		vm.AssemblyTreeModel.SelectNode(asm);
-		window.CaptureForReview(2, "assembly-selected");
+		window.Capture("assembly-selected");
 		var withSelection = pane.BuildContextMenuForCurrentState(registry.Entries);
 		withSelection.Should().NotBeNull();
 		withSelection!.Items.OfType<MenuItem>().Select(i => (string?)i.Header)
@@ -91,7 +91,7 @@ public class DecompileInNewViewTests
 
 		// With no selection → the entry is filtered out of the built menu.
 		vm.AssemblyTreeModel.SelectedItems.Clear();
-		window.CaptureForReview(3, "selection-cleared");
+		window.Capture("selection-cleared");
 		var withoutSelection = pane.BuildContextMenuForCurrentState(registry.Entries);
 		// `Build` returns null when no entry would be visible; otherwise it may still build a
 		// menu (other entries don't gate on selection). Either way, the header must not appear.
@@ -126,7 +126,7 @@ public class DecompileInNewViewTests
 		// addition to the existing one and shows the dispatched method".
 		vm.AssemblyTreeModel.SelectNode(firstMethod);
 		var firstTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		window.CaptureForReview(1, "first-method-decompiled-into-active-tab");
+		window.Capture("first-method-decompiled-into-active-tab");
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
@@ -136,7 +136,7 @@ public class DecompileInNewViewTests
 		// Select the second method and click the menu entry through the live context-menu path.
 		vm.AssemblyTreeModel.SelectNode(secondMethod);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		window.CaptureForReview(2, "second-method-replaced-active-tab");
+		window.Capture("second-method-replaced-active-tab");
 
 		var menu = pane.BuildContextMenuForCurrentState(registry.Entries);
 		menu.Should().NotBeNull();
@@ -154,6 +154,6 @@ public class DecompileInNewViewTests
 		// of firstTab. (The right-click selection move into secondMethod re-uses firstTab; the
 		// menu-click then creates an additional tab. Net effect: +1 dockable.)
 		documents.VisibleDockables!.Count.Should().Be(initialCount + 1);
-		window.CaptureForReview(3, "after-click-new-tab-spawned");
+		window.Capture("after-click-new-tab-spawned");
 	}
 }

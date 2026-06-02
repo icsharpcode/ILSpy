@@ -69,6 +69,7 @@ public class AssemblyTreeContextMenuTests
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		vm.AssemblyTreeModel.SelectNode(assemblyNode);
+		TestCapture.Step("system-linq-selected");
 
 		TextViewContext? executionContext = null;
 		var entry = new RecordingEntry(c => executionContext = c);
@@ -81,6 +82,7 @@ public class AssemblyTreeContextMenuTests
 
 		// Trigger the build path the live Opening event would take.
 		var built = pane.BuildContextMenuForCurrentState(new IContextMenuEntryExport[] { export });
+		TestCapture.Step("context-menu-built");
 
 		// Assert 1 — menu carries our entry.
 		built.Should().NotBeNull();
@@ -89,6 +91,7 @@ public class AssemblyTreeContextMenuTests
 
 		// Act 2 — invoke the click handler that the Build attached.
 		item.RaiseEvent(new global::Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
+		TestCapture.Step("probe-entry-clicked");
 
 		// Assert 2 — entry's Execute saw the right context: the tree grid + the selection.
 		executionContext.Should().NotBeNull();

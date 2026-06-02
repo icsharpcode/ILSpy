@@ -65,6 +65,7 @@ public class SearchResultSortOrderTests
 				() => !search.IsSearching && search.Results.Count >= 2,
 				timeout: TimeSpan.FromSeconds(30));
 
+			TestCapture.Step("search-results-name-sorted");
 			// Drop assembly/namespace results — they share a unit Fitness with all peers in
 			// their bucket, so any tie-break is ambiguous between fitness- and name-sort.
 			// Member results are where Fitness varies (1/Name.Length), so their order is

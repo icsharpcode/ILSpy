@@ -48,6 +48,7 @@ public class PreviewTabPromotionTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
+		TestCapture.Step("booted");
 		var mainTab = ((ILSpyDockFactory)vm.DockWorkspace.Factory).MainTab!;
 		mainTab.IsPreview.Should().BeTrue(
 			"the freshly-created MainTab is the preview slot until the user pins it");
@@ -63,6 +64,7 @@ public class PreviewTabPromotionTests
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.DockWorkspace.OpenNodeInNewTab(typeNode);
+		TestCapture.Step("carve-out-tab-opened");
 
 		var carveOut = vm.DockWorkspace.Documents!.VisibleDockables!
 			.OfType<ContentTabPage>()
@@ -89,6 +91,7 @@ public class PreviewTabPromotionTests
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.AssemblyTreeModel.SelectNode(typeNode);
 		vm.DockWorkspace.SettleSelection();
+		TestCapture.Step("enumerable-selected");
 		ReferenceEquals(previousMainTab.SourceNode, typeNode).Should().BeTrue(
 			"baseline: tree selection populated MainTab with the chosen node");
 
@@ -96,6 +99,7 @@ public class PreviewTabPromotionTests
 
 		// Pin.
 		vm.DockWorkspace.PinCurrentTab();
+		TestCapture.Step("tab-pinned");
 
 		// Tab is now pinned, content preserved.
 		previousMainTab.IsPreview.Should().BeFalse(
@@ -127,6 +131,7 @@ public class PreviewTabPromotionTests
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.AssemblyTreeModel.SelectNode(typeA);
 		vm.DockWorkspace.SettleSelection();
+		TestCapture.Step("type-a-selected");
 		var pinnedTab = factory.MainTab!;
 		var pinnedContent = pinnedTab.Content;
 
@@ -134,6 +139,7 @@ public class PreviewTabPromotionTests
 		// no spawn yet (covered by PinCurrentTab_Flips_IsPreview_Without_Spawning_A_New_Tab).
 		var tabCountBeforeSelection = vm.DockWorkspace.Documents!.VisibleDockables!.Count;
 		vm.DockWorkspace.PinCurrentTab();
+		TestCapture.Step("tab-pinned");
 		factory.MainTab.Should().BeSameAs(pinnedTab, "pin alone keeps the slot");
 
 		// Phase 3: select a different type — NOW a new preview tab should spawn AND
@@ -142,6 +148,7 @@ public class PreviewTabPromotionTests
 			"System.Private.Uri", "System", "System.Uri");
 		vm.AssemblyTreeModel.SelectNode(typeB);
 		vm.DockWorkspace.SettleSelection();
+		TestCapture.Step("type-b-opens-new-preview");
 
 		// New tab spawned beside the pinned one.
 		vm.DockWorkspace.Documents!.VisibleDockables!.Count.Should().Be(tabCountBeforeSelection + 1,
@@ -175,6 +182,7 @@ public class PreviewTabPromotionTests
 		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
 		var mainTabItem = window.GetVisualDescendants().OfType<DocumentTabStripItem>()
 			.Single(item => ReferenceEquals(item.DataContext, factory.MainTab));
+		TestCapture.Step("before-italic-header-check");
 
 		mainTabItem.FontStyle.Should().Be(FontStyle.Italic,
 			"the App.axaml Style for DocumentTabStripItem must apply, italicising the tab title via FontStyle inheritance");
@@ -188,6 +196,7 @@ public class PreviewTabPromotionTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		await ((MainWindowViewModel)window.DataContext!).AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		TestCapture.Step("booted");
 
 		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<DocumentTabStripItem>().Any(),
 			System.TimeSpan.FromSeconds(10));
@@ -195,6 +204,7 @@ public class PreviewTabPromotionTests
 		var factory = (ILSpyDockFactory)((MainWindowViewModel)window.DataContext!).DockWorkspace.Factory;
 		var mainTabItem = window.GetVisualDescendants().OfType<DocumentTabStripItem>()
 			.Single(item => ReferenceEquals(item.DataContext, factory.MainTab));
+		TestCapture.Step("before-accent-stripe-check");
 
 		((object?)mainTabItem.BorderBrush).Should().NotBeNull(
 			"the preview MainTab must carry the accent BorderBrush");
@@ -217,6 +227,7 @@ public class PreviewTabPromotionTests
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.DockWorkspace.OpenNodeInNewTab(typeNode);
+		TestCapture.Step("carve-out-tab-opened");
 
 		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<DocumentTabStripItem>().Count() >= 2,
 			System.TimeSpan.FromSeconds(10));
@@ -288,6 +299,7 @@ public class PreviewTabPromotionTests
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.DockWorkspace.OpenNodeInNewTab(typeNode);
+		TestCapture.Step("carve-out-tab-opened");
 
 		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<DocumentTabStripItem>().Count() >= 2,
 			System.TimeSpan.FromSeconds(10));
@@ -298,6 +310,7 @@ public class PreviewTabPromotionTests
 		mainTab.Title = "This.Is.An.Extremely.Long.Tab.Title.That.Would.Normally.Overflow<Foo, Bar, Baz>";
 
 		global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+		TestCapture.Step("long-title-applied");
 		var mainTabItem = window.GetVisualDescendants().OfType<DocumentTabStripItem>()
 			.Single(item => ReferenceEquals(item.DataContext, mainTab));
 		// Constrain the tab to 200px (mimics production where the document strip shares
@@ -373,6 +386,7 @@ public class PreviewTabPromotionTests
 		// Simulate a user click on the pin button.
 		pinButton.RaiseEvent(new global::Avalonia.Interactivity.RoutedEventArgs(
 			global::Avalonia.Controls.Button.ClickEvent));
+		TestCapture.Step("pin-button-clicked");
 
 		// New semantics: clicking pin flips IsPreview, doesn't spawn a new tab.
 		previousMainTab.IsPreview.Should().BeFalse(
@@ -392,6 +406,7 @@ public class PreviewTabPromotionTests
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.DockWorkspace.OpenNodeInNewTab(typeNode);
+		TestCapture.Step("carve-out-tab-opened");
 
 		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<DocumentTabStripItem>().Count() >= 2,
 			System.TimeSpan.FromSeconds(10));
@@ -424,6 +439,7 @@ public class PreviewTabPromotionTests
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.DockWorkspace.OpenNodeInNewTab(typeNode);
+		TestCapture.Step("carve-out-tab-opened");
 
 		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<DocumentTabStripItem>().Any(),
 			System.TimeSpan.FromSeconds(10));
@@ -450,12 +466,14 @@ public class PreviewTabPromotionTests
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
+		TestCapture.Step("booted");
 
 		// Manually flip the current MainTab to pinned, simulating the post-pin state.
 		factory.MainTab!.IsPreview = false;
 		var before = factory.MainTab;
 
 		vm.DockWorkspace.PinCurrentTab();
+		TestCapture.Step("pin-noop");
 
 		factory.MainTab.Should().BeSameAs(before,
 			"with no preview MainTab to flip, PinCurrentTab must leave the factory state untouched");
@@ -496,6 +514,7 @@ public class PreviewTabPromotionTests
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.DockWorkspace.OpenNodeInNewTab(typeNode);
+		TestCapture.Step("carve-out-tab-opened");
 
 		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<DocumentTabStripItem>().Count() >= 2,
 			System.TimeSpan.FromSeconds(10));
@@ -540,6 +559,7 @@ public class PreviewTabPromotionTests
 			.OfType<ContentTabPage>()
 			.Last(t => t.SourceNode == typeA);
 		factory.SetActiveDockable(carveOut);
+		TestCapture.Step("carve-out-active");
 		carveOut.IsPreview.Should().BeFalse("baseline: carve-out tab is frozen");
 		ReferenceEquals(vm.DockWorkspace.Documents.ActiveDockable, carveOut).Should().BeTrue(
 			"baseline: the carve-out is the active document");
@@ -552,6 +572,7 @@ public class PreviewTabPromotionTests
 			"System.Private.Uri", "System", "System.Uri");
 		vm.AssemblyTreeModel.SelectNode(typeB);
 		vm.DockWorkspace.SettleSelection();
+		TestCapture.Step("type-b-opens-new-preview");
 
 		vm.DockWorkspace.Documents!.VisibleDockables!.Count.Should().Be(tabCountBefore + 1,
 			"selecting a tree node while a frozen tab is active must spawn a new preview tab");

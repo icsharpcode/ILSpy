@@ -45,6 +45,7 @@ public class HeapTreeTests
 
 		var metadataNode = vm.AssemblyTreeModel.FindCoreLib().GetChild<MetadataTreeNode>();
 		metadataNode.EnsureLazyChildren();
+		TestCapture.Step("metadata-node-expanded");
 
 		metadataNode.Children.OfType<StringHeapTreeNode>().Should().ContainSingle();
 		metadataNode.Children.OfType<UserStringHeapTreeNode>().Should().ContainSingle();
@@ -67,6 +68,7 @@ public class HeapTreeTests
 
 		vm.AssemblyTreeModel.SelectNode(heapNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("string-heap-grid");
 
 		tab.Title.Should().Be("String Heap");
 		tab.Columns.Select(c => c.Tag).Should().Equal("Offset", "Length", "Value");
@@ -85,6 +87,7 @@ public class HeapTreeTests
 
 		vm.AssemblyTreeModel.SelectNode(heapNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("guid-heap-grid");
 
 		tab.Title.Should().Be("Guid Heap");
 		tab.Columns.Select(c => c.Tag).Should().Equal("Index", "Length", "Value");
@@ -104,6 +107,7 @@ public class HeapTreeTests
 
 		vm.AssemblyTreeModel.SelectNode(heapNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("blob-heap-grid");
 
 		tab.Title.Should().Be("Blob Heap");
 		tab.Columns.Select(c => c.Tag).Should().Equal("Offset", "Length", "Value");

@@ -55,6 +55,8 @@ public static class TestHarness
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumAssemblies, timeout);
+		// First visual breakpoint of every UI test: the booted window with its assembly list loaded.
+		window.Capture("booted");
 		return (window, vm);
 	}
 

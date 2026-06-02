@@ -44,6 +44,7 @@ public class PEHeaderTreeTests
 
 		var metadataNode = vm.AssemblyTreeModel.FindCoreLib().GetChild<MetadataTreeNode>();
 		metadataNode.EnsureLazyChildren();
+		TestCapture.Step("metadata-node-expanded");
 
 		metadataNode.Children.OfType<DosHeaderTreeNode>().Should().ContainSingle();
 		metadataNode.Children.OfType<CoffHeaderTreeNode>().Should().ContainSingle();
@@ -76,6 +77,7 @@ public class PEHeaderTreeTests
 
 		vm.AssemblyTreeModel.SelectNode(dosNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("dos-header-grid");
 
 		tab.Title.Should().Be("DOS Header");
 		tab.Items.Should().HaveCount(31);
@@ -108,14 +110,17 @@ public class PEHeaderTreeTests
 		// AssemblyDef metadata via the decompiler text path). Decompiler tab should be active.
 		vm.AssemblyTreeModel.SelectNode(assemblyNode);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("decompiler-tab");
 
 		// Step 2 — pick the DOS-header metadata node. Metadata tab takes the active slot.
 		vm.AssemblyTreeModel.SelectNode(dosNode);
 		await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("dos-header-grid");
 
 		// Step 3 — back to the entity node. The decompiler tab must come back into view.
 		vm.AssemblyTreeModel.SelectNode(assemblyNode);
 		var decompilerTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("decompiler-tab-restored");
 		decompilerTab.Should().NotBeNull();
 
 		var mainTab = ((global::ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory).MainTab!;
@@ -139,9 +144,11 @@ public class PEHeaderTreeTests
 
 		vm.AssemblyTreeModel.SelectNode(dosNode);
 		await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("dos-header-grid");
 
 		vm.AssemblyTreeModel.SelectNode(assemblyNode);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("decompiler-tab");
 
 		var mainTab = ((global::ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory).MainTab!;
 		mainTab.Content.Should().BeOfType<global::ILSpy.TextView.DecompilerTabPageModel>();
@@ -169,16 +176,19 @@ public class PEHeaderTreeTests
 
 		vm.AssemblyTreeModel.SelectNode(dosNode);
 		await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("dos-header-grid");
 		documents.VisibleDockables!.Should().HaveCount(1).And.Contain(mainTab);
 		mainTab.Content.Should().BeOfType<global::ILSpy.ViewModels.MetadataTablePageModel>();
 
 		vm.AssemblyTreeModel.SelectNode(assemblyNode);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("decompiler-tab");
 		documents.VisibleDockables!.Should().HaveCount(1).And.Contain(mainTab);
 		mainTab.Content.Should().BeOfType<global::ILSpy.TextView.DecompilerTabPageModel>();
 
 		vm.AssemblyTreeModel.SelectNode(coffNode);
 		await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("coff-header-grid");
 		documents.VisibleDockables!.Should().HaveCount(1).And.Contain(mainTab);
 		mainTab.Content.Should().BeOfType<global::ILSpy.ViewModels.MetadataTablePageModel>();
 
@@ -205,15 +215,18 @@ public class PEHeaderTreeTests
 
 		vm.AssemblyTreeModel.SelectNode(dosNode);
 		var firstTab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("dos-header-grid");
 		firstTab.Title.Should().Be("DOS Header");
 
 		vm.AssemblyTreeModel.SelectNode(coffNode);
 		var secondTab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("coff-header-grid");
 		secondTab.Should().BeSameAs(firstTab, "metadata clicks reuse the existing grid tab");
 		secondTab.Title.Should().Be("COFF Header");
 
 		vm.AssemblyTreeModel.SelectNode(dosNode);
 		var thirdTab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("dos-header-grid-again");
 		thirdTab.Should().BeSameAs(firstTab);
 		thirdTab.Title.Should().Be("DOS Header");
 
@@ -232,6 +245,7 @@ public class PEHeaderTreeTests
 
 		vm.AssemblyTreeModel.SelectNode(coffNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("coff-header-grid");
 
 		tab.Title.Should().Be("COFF Header");
 		var members = tab.Items.Cast<Entry>().Select(e => e.Member).ToList();

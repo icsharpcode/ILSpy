@@ -59,6 +59,7 @@ public class MainToolBarLayoutTests
 
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
+		TestCapture.Step("booted");
 
 		var toolbar = await window.WaitForComponent<MainToolBar>();
 		var combo = toolbar.GetVisualDescendants().OfType<ComboBox>()
@@ -107,6 +108,7 @@ public class MainToolBarLayoutTests
 		var search = AppComposition.Current.GetExport<SearchPaneModel>();
 		searchButton!.Command!.CanExecute(null).Should().BeTrue();
 		searchButton.Command.Execute(null);
+		TestCapture.Step("search-pane-activated");
 
 		search.IsActive.Should().BeTrue(
 			"clicking the Show-Search toolbar button must activate the search tool pane");
@@ -162,6 +164,7 @@ public class MainToolBarLayoutTests
 		var rootPanel = toolbar.GetVisualDescendants().OfType<StackPanel>()
 			.Single(s => s.Name == "ToolbarRoot");
 		var labels = rootPanel.Children.Select(Label).ToList();
+		TestCapture.Step("before-toolbar-order-check");
 
 		labels.Should().Equal(
 			"BackSplitButton",

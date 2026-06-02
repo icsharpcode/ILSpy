@@ -16,33 +16,16 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Diagnostics;
-
-using Avalonia;
 using Avalonia.Headless;
 
 using ICSharpCode.ILSpy.Tests;
 
+// ILSpy.Tests.Windows reuses the headless app + builder from ILSpy.Tests so its [AvaloniaTest]
+// methods boot the same MEF-composed app (which runs AppComposition.Initialize). These attributes
+// are assembly-scoped and do NOT carry across the ILSpy.Tests project reference, so they must be
+// declared here too -- without them [AvaloniaTest] runs without an app and AppComposition.Current
+// throws "Composition host is not yet initialized."
 [assembly: AvaloniaTestApplication(typeof(TestAppBuilder))]
 [assembly: AvaloniaTestIsolation(AvaloniaTestIsolationLevel.PerAssembly)]
 [assembly: ResetAppState]
 [assembly: CaptureContext]
-
-namespace ICSharpCode.ILSpy.Tests;
-
-public static class TestAppBuilder
-{
-	// Visible mode (debugger attached or ILSPY_TESTS_VISIBLE=1) flips Skia drawing on so
-	// CaptureAndShow can save a real PNG; otherwise headless drawing keeps tests cheap.
-	public static AppBuilder BuildAvaloniaApp()
-	{
-		var visible = Debugger.IsAttached
-			|| string.Equals(Environment.GetEnvironmentVariable("ILSPY_TESTS_VISIBLE"), "1", StringComparison.Ordinal);
-		return AppBuilder.Configure<TestApp>()
-			.UseSkia()
-			.UseHeadless(new AvaloniaHeadlessPlatformOptions {
-				UseHeadlessDrawing = !visible,
-			});
-	}
-}

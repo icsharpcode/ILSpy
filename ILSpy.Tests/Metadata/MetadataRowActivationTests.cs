@@ -56,11 +56,13 @@ public class MetadataRowActivationTests
 
 		vm.AssemblyTreeModel.SelectNode(typeDefNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("typedef-grid");
 
 		var objectRow = tab.Items.Cast<TypeDefTableTreeNode.TypeDefEntry>()
 			.First(e => e.Name == "Object" && e.Namespace == "System");
 
 		tab.RaiseRowActivated(objectRow);
+		TestCapture.Step("activated-object-row");
 
 		await Waiters.WaitForAsync(
 			() => vm.AssemblyTreeModel.SelectedItem is TypeTreeNode tn
@@ -86,6 +88,7 @@ public class MetadataRowActivationTests
 
 		vm.AssemblyTreeModel.SelectNode(typeDefNode);
 		var metadataTab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("typedef-grid");
 		var objectRow = metadataTab.Items.Cast<TypeDefTableTreeNode.TypeDefEntry>()
 			.First(e => e.Name == "Object" && e.Namespace == "System");
 
@@ -97,6 +100,7 @@ public class MetadataRowActivationTests
 		await Waiters.WaitForAsync(
 			() => (documents.VisibleDockables?.Count ?? 0) > initialCount);
 		var decompiledTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("new-decompiler-tab");
 		decompiledTab.Text.Should().Contain("System.Object");
 	}
 

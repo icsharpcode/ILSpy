@@ -69,6 +69,7 @@ public class SearchMsdnTests
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		TestCapture.Step("booted");
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
 		var entry = (SearchMsdnContextMenuEntry)registry.Entries
 			.Single(e => e.Metadata.Header == nameof(Resources.SearchMSDN))
@@ -106,13 +107,14 @@ public class SearchMsdnTests
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 
-		window.CaptureForReview(1, "initial-tree");
+		window.Capture("initial-tree");
 
 		// Selecting the type and building the live menu must surface "Search Microsoft Docs…".
 		vm.AssemblyTreeModel.SelectNode(typeNode);
-		window.CaptureForReview(2, "enumerable-type-selected");
+		window.Capture("enumerable-type-selected");
 
 		var menu = pane.BuildContextMenuForCurrentState(registry.Entries);
+		TestCapture.Step("context-menu-built");
 		menu.Should().NotBeNull();
 		menu!.Items.OfType<MenuItem>().Select(i => (string?)i.Header)
 			.Should().Contain(Resources.SearchMSDN);

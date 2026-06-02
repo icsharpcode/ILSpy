@@ -50,6 +50,7 @@ public class MainWindowTests
 		// Arrange + Act — resolve and show.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
+		TestCapture.Step("booted");
 
 		// Assert — visible, titled, with the correct DataContext.
 		window.IsVisible.Should().BeTrue();
@@ -71,6 +72,7 @@ public class MainWindowTests
 
 		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<AssemblyListPane>().Any());
 		var pane = await window.WaitForComponent<AssemblyListPane>();
+		TestCapture.Step("before-assembly-pane-check");
 
 		// Assert — visible with positive width and height.
 		pane.IsVisible.Should().BeTrue();
@@ -95,6 +97,7 @@ public class MainWindowTests
 			.OfType<Button>()
 			.Any(b => !b.IsEffectivelyEnabled
 				&& b.GetVisualDescendants().OfType<Image>().Any()));
+		TestCapture.Step("before-disabled-icon-check");
 
 		// Assert — every disabled toolbar icon is the grayscale-aware variant, not a plain Image.
 		var disabledIcons = window.GetVisualDescendants()
@@ -124,6 +127,7 @@ public class MainWindowTests
 		var openButton = window.GetVisualDescendants()
 			.OfType<Button>()
 			.Single(b => (string?)b.Tag == nameof(ICSharpCode.ILSpy.Properties.Resources.Open));
+		TestCapture.Step("before-open-button-check");
 
 		// Assert — Command is wired and CanExecute is true.
 		openButton.Command.Should().NotBeNull();
@@ -148,6 +152,7 @@ public class MainWindowTests
 		var node = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		vm.AssemblyTreeModel.SelectNode(node);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("linq-decompiled");
 
 		service.StateChanged -= Observe;
 

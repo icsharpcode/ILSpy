@@ -70,6 +70,7 @@ public class OptionsTabTests
 			.GetCommand(nameof(Resources._Options));
 
 		command.Execute(null);
+		TestCapture.Step("options-tab-opened");
 
 		var docs = vm.DockWorkspace.Documents?.VisibleDockables;
 		((object?)docs).Should().NotBeNull();
@@ -95,6 +96,7 @@ public class OptionsTabTests
 		// Open Options and confirm it's the active document.
 		AppComposition.Current.GetExport<MainMenuCommandRegistry>()
 			.GetCommand(nameof(Resources._Options)).Execute(null);
+		TestCapture.Step("options-active");
 
 		var documents = vm.DockWorkspace.Documents!;
 		var optionsTab = documents.VisibleDockables!.OfType<ContentTabPage>()
@@ -106,6 +108,7 @@ public class OptionsTabTests
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.AssemblyTreeModel.SelectNode(typeNode);
+		TestCapture.Step("tree-node-selected");
 
 		// MainTab now carries the new content. Without the fix, ActiveDockable still
 		// points at Options and the user sees nothing change.
@@ -129,6 +132,7 @@ public class OptionsTabTests
 		window.Show();
 		AppComposition.Current.GetExport<MainMenuCommandRegistry>()
 			.GetCommand(nameof(Resources._Options)).Execute(null);
+		TestCapture.Step("options-opened");
 
 		var vm = (MainWindowViewModel)window.DataContext!;
 		var model = (OptionsPageModel)vm.DockWorkspace.Documents!.VisibleDockables!
@@ -153,6 +157,7 @@ public class OptionsTabTests
 		var command = AppComposition.Current.GetExport<MainMenuCommandRegistry>()
 			.GetCommand(nameof(Resources._Options));
 		command.Execute(null);
+		TestCapture.Step("options-opened");
 
 		var vm = (MainWindowViewModel)window.DataContext!;
 		var model = (OptionsPageModel)vm.DockWorkspace.Documents!.VisibleDockables!
@@ -177,6 +182,7 @@ public class OptionsTabTests
 
 		command.Execute(null);
 		command.Execute(null);
+		TestCapture.Step("options-reinvoked");
 
 		var optionsTabs = vm.DockWorkspace.Documents!.VisibleDockables!
 			.OfType<ContentTabPage>().Where(t => t.Content is OptionsPageModel).ToList();
@@ -199,6 +205,7 @@ public class OptionsTabTests
 
 		AppComposition.Current.GetExport<MainMenuCommandRegistry>()
 			.GetCommand(nameof(Resources._Options)).Execute(null);
+		TestCapture.Step("options-opened");
 
 		var vm = (MainWindowViewModel)window.DataContext!;
 		var model = (OptionsPageModel)vm.DockWorkspace.Documents!.VisibleDockables!
@@ -210,6 +217,7 @@ public class OptionsTabTests
 			.SelectMany(g => g.Settings)
 			.First(s => s.Property.Name == nameof(global::ICSharpCode.Decompiler.DecompilerSettings.UsingDeclarations));
 		usingDecl.IsEnabled = !liveBefore;
+		TestCapture.Step("using-declarations-toggled");
 
 		// Live service must see the change immediately — no Apply needed.
 		settings.DecompilerSettings.UsingDeclarations.Should().Be(!liveBefore);
@@ -234,6 +242,7 @@ public class OptionsTabTests
 			.OfType<ContentTabPage>().First(t => t.Content is OptionsPageModel).Content!;
 		var decompilerPage = (DecompilerSettingsViewModel)model.Pages[0];
 		model.SelectedPage = decompilerPage;
+		TestCapture.Step("decompiler-page-selected");
 
 		// Flip a known-default-true setting to false.
 		var item = decompilerPage.Settings
@@ -243,8 +252,10 @@ public class OptionsTabTests
 		item.IsEnabled = !defaultValue;
 		// Sanity: precondition flip took effect.
 		item.IsEnabled.Should().Be(!defaultValue);
+		TestCapture.Step("setting-flipped");
 
 		model.ResetCurrentPageCommand.Execute(null);
+		TestCapture.Step("page-reset");
 
 		// After reset, the reflection-rebuilt item list has the snapshot's defaults.
 		var refreshedItem = decompilerPage.Settings
@@ -266,6 +277,7 @@ public class OptionsTabTests
 		var settings = AppComposition.Current.GetExport<SettingsService>();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		TestCapture.Step("booted");
 
 		// Materialise a DecompilerTextView by selecting a node.
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -273,12 +285,14 @@ public class OptionsTabTests
 		vm.AssemblyTreeModel.SelectNode(typeNode);
 		var view = await window.WaitForComponent<DecompilerTextView>();
 		var editor = await view.WaitForComponent<AvaloniaEdit.TextEditor>();
+		TestCapture.Step("enumerable-decompiled");
 
 		var originalSize = settings.DisplaySettings.SelectedFontSize;
 		var newSize = originalSize + 5;
 
 		// Act — change the live setting; subscriber should write through to Editor.FontSize.
 		settings.DisplaySettings.SelectedFontSize = newSize;
+		TestCapture.Step("font-size-increased");
 
 		editor.FontSize.Should().Be(newSize);
 

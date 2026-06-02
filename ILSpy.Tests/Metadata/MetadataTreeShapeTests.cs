@@ -49,6 +49,7 @@ public class MetadataTreeShapeTests
 		// Assert — exactly one MetadataTreeNode child and it precedes the References folder.
 		var metadataNode = assemblyNode.GetChild<MetadataTreeNode>();
 		var children = assemblyNode.Children.ToList();
+		TestCapture.Step("corelib-children");
 		children.IndexOf(metadataNode).Should().BeLessThan(
 			children.IndexOf(assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single()),
 			"Metadata folder should sit above References, mirroring WPF AssemblyTreeNode ordering");
@@ -71,6 +72,7 @@ public class MetadataTreeShapeTests
 		// SelectedItem), wait for the decompile to finish.
 		vm.AssemblyTreeModel.SelectNode(metadataNode);
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("metadata-summary-text");
 
 		// Assert — text contains the metadata kind line and at least one table row count.
 		tab.Text.Should().Contain("MetadataKind:");

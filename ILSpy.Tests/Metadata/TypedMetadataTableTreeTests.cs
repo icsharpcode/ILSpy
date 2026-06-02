@@ -55,6 +55,7 @@ public class TypedMetadataTableTreeTests
 
 		vm.AssemblyTreeModel.SelectNode(assemblyRefNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("assemblyref-grid");
 
 		tab.Title.Should().StartWith("AssemblyRef");
 		tab.Items.Should().HaveCount(assemblyRefNode.RowCount);
@@ -79,6 +80,7 @@ public class TypedMetadataTableTreeTests
 
 		vm.AssemblyTreeModel.SelectNode(typeDefNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("typedef-grid");
 
 		tab.Title.Should().StartWith("TypeDef");
 		tab.Items.Cast<TypeDefTableTreeNode.TypeDefEntry>()
@@ -97,6 +99,7 @@ public class TypedMetadataTableTreeTests
 			.GetChild<MetadataTreeNode>()
 			.GetChild<MetadataTablesTreeNode>();
 		tablesNode.EnsureLazyChildren();
+		TestCapture.Step("tables-tree-expanded");
 
 		tablesNode.Children.OfType<FieldTableTreeNode>().Should().ContainSingle();
 		tablesNode.Children.OfType<MethodTableTreeNode>().Should().ContainSingle();
@@ -108,6 +111,7 @@ public class TypedMetadataTableTreeTests
 		var methodNode = tablesNode.Children.OfType<MethodTableTreeNode>().Single();
 		vm.AssemblyTreeModel.SelectNode(methodNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("methoddef-grid");
 		tab.Title.Should().StartWith("MethodDef");
 		tab.Columns.Select(c => c.Tag).Should().Contain("RID");
 	}
@@ -126,6 +130,7 @@ public class TypedMetadataTableTreeTests
 
 		vm.AssemblyTreeModel.SelectNode(moduleNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("module-grid");
 
 		tab.Title.Should().StartWith("Module");
 		tab.Items.Should().HaveCount(1);

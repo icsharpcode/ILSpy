@@ -79,14 +79,15 @@ public class OpenContainingFolderTests
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		var expectedPath = assemblyNode.LoadedAssembly.FileName;
 
-		window.CaptureForReview(1, "initial-tree");
+		window.Capture("initial-tree");
 
 		// Selecting the deep TypeTreeNode must still surface "Open Containing Folder" in the
 		// live menu (the entry's IsVisible walks up to the assembly).
 		vm.AssemblyTreeModel.SelectNode(typeNode);
-		window.CaptureForReview(2, "enumerable-type-selected-deep-node");
+		window.Capture("enumerable-type-selected-deep-node");
 
 		var menu = pane.BuildContextMenuForCurrentState(registry.Entries);
+		TestCapture.Step("context-menu-built");
 		menu.Should().NotBeNull();
 		menu!.Items.OfType<MenuItem>().Select(i => (string?)i.Header)
 			.Should().Contain(Resources._OpenContainingFolder);
@@ -112,6 +113,7 @@ public class OpenContainingFolderTests
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		TestCapture.Step("booted");
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
 		var entry = registry.Entries
 			.Single(e => e.Metadata.Header == nameof(Resources._OpenContainingFolder))

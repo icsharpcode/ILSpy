@@ -67,6 +67,7 @@ public class SearchPaneStreamingTests
 			ICSharpCode.ILSpyX.Search.MemberSearchKind.Type);
 
 		strategy.Search(module, default);
+		TestCapture.Step("before-strategy-results");
 		queue.Count.Should().BeGreaterThan(0,
 			"if the strategy can't find Enumerable in the fixture, the orchestrator certainly won't either");
 	}
@@ -89,6 +90,7 @@ public class SearchPaneStreamingTests
 			() => search.Results.Any(r => r.Name.Contains("Enumerable", StringComparison.OrdinalIgnoreCase)),
 			timeout: TimeSpan.FromSeconds(30));
 
+		TestCapture.Step("search-results-for-enumerable");
 		search.Results.Should().NotBeEmpty(
 			"the Type search strategy must have surfaced at least one match within the timeout");
 		search.Results.Should().Contain(r => r.Name.Contains("Enumerable", StringComparison.OrdinalIgnoreCase));
@@ -108,9 +110,11 @@ public class SearchPaneStreamingTests
 		search.SearchTerm = "Enumerable";
 
 		await Waiters.WaitForAsync(() => search.Results.Count > 0, timeout: TimeSpan.FromSeconds(30));
+		TestCapture.Step("search-results-populated");
 
 		search.SearchTerm = string.Empty;
 		await Waiters.WaitForAsync(() => search.Results.Count == 0, timeout: TimeSpan.FromSeconds(5));
+		TestCapture.Step("results-cleared");
 		search.Results.Should().BeEmpty("an empty search term must clear stale results");
 	}
 
@@ -132,6 +136,7 @@ public class SearchPaneStreamingTests
 			() => search.Results.Any(r => r.Name.Contains("String", StringComparison.OrdinalIgnoreCase)),
 			timeout: TimeSpan.FromSeconds(30));
 
+		TestCapture.Step("string-minus-builder-results");
 		search.Results.Should().NotBeEmpty();
 		search.Results.Should().OnlyContain(
 			r => r.Name.Contains("String", StringComparison.OrdinalIgnoreCase)
@@ -157,6 +162,7 @@ public class SearchPaneStreamingTests
 			() => search.Results.Any(r => r.Name.Equals("String", StringComparison.OrdinalIgnoreCase)),
 			timeout: TimeSpan.FromSeconds(30));
 
+		TestCapture.Step("exact-string-results");
 		search.Results.Should().Contain(r => r.Name.Equals("String", StringComparison.OrdinalIgnoreCase));
 		search.Results.Should().NotContain(
 			r => r.Name.Contains("Builder", StringComparison.OrdinalIgnoreCase),

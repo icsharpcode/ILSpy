@@ -85,6 +85,7 @@ public class AnalyzerPaneCopyResultsTests
 		search.Children.Add(new StubResultNode("beta"));
 
 		entry.Execute(new TextViewContext { SelectedTreeNodes = new SharpTreeNode[] { search } });
+		TestCapture.Step("copy-results-executed");
 
 		// We can't inspect the clipboard contract in a headless test without a window with
 		// a real lifetime — the test asserts the entry handled execution without throwing

@@ -112,18 +112,19 @@ public class RemoveAssemblyContextMenuTests
 		var survivorName = typeof(object).Assembly.GetName().Name!;
 		var sacrificial = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(sacrificialName);
 
-		window.CaptureForReview(1, "initial-tree-three-assemblies");
+		window.Capture("initial-tree-three-assemblies");
 
 		// Act — select the row, build the menu the way the live Opening event would, find
 		// the Remove item, and click it.
 		vm.AssemblyTreeModel.SelectNode(sacrificial);
-		window.CaptureForReview(2, "sacrificial-selected");
+		window.Capture("sacrificial-selected");
 
 		var menu = pane.BuildContextMenuForCurrentState(registry.Entries);
 		menu.Should().NotBeNull();
 		var removeItem = menu!.Items.OfType<MenuItem>()
 			.Single(i => (string?)i.Header == Resources._Remove);
 		removeItem.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+		window.Capture("remove-clicked");
 
 		// Assert — the assembly is gone from the list; the survivor is still there.
 		await Waiters.WaitForAsync(() =>
@@ -132,7 +133,7 @@ public class RemoveAssemblyContextMenuTests
 		vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
 			.Should().Contain(a => a.ShortName == survivorName);
 
-		window.CaptureForReview(3, "after-remove-sacrificial-gone");
+		window.Capture("after-remove-sacrificial-gone");
 	}
 
 	[AvaloniaTest]
@@ -149,11 +150,13 @@ public class RemoveAssemblyContextMenuTests
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		vm.AssemblyTreeModel.SelectNode(assemblyNode);
+		window.Capture("system-linq-selected");
 
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
 
 		// Act — drive the same build path the live Opening event uses.
 		var built = pane.BuildContextMenuForCurrentState(registry.Entries);
+		window.Capture("context-menu-built");
 
 		// Assert — the live menu contains a "Remove" item (resolved to its localized form by
 		// the menu builder).

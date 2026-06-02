@@ -52,6 +52,7 @@ public class MetadataTokenNavigationTests
 
 		vm.AssemblyTreeModel.SelectNode(typeDefNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("typedef-grid");
 
 		// Pick a row whose BaseType is non-zero (skip <Module>) and resolve the expected
 		// target table from the handle's runtime kind.
@@ -65,6 +66,7 @@ public class MetadataTokenNavigationTests
 		await Waiters.WaitForAsync(
 			() => vm.AssemblyTreeModel.SelectedItem is MetadataTableTreeNode m
 				&& m.Kind == expectedTableIndex);
+		TestCapture.Step("navigated-to-token-table");
 
 		// Assert — host swapped the tree selection + Content to the table matching the
 		// handle's kind. The actual scroll-into-view runs through MetadataTablePage's
@@ -94,6 +96,7 @@ public class MetadataTokenNavigationTests
 
 		vm.AssemblyTreeModel.SelectNode(typeDefNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("typedef-grid");
 
 		var rowWithBase = tab.Items.Cast<TypeDefTableTreeNode.TypeDefEntry>()
 			.First(e => e.BaseType != 0);
@@ -114,6 +117,7 @@ public class MetadataTokenNavigationTests
 		await Waiters.WaitForAsync(
 			() => vm.AssemblyTreeModel.SelectedItem is MetadataTableTreeNode m
 				&& m.Kind == expectedTableIndex);
+		TestCapture.Step("navigated-to-token-table");
 	}
 }
 

@@ -514,6 +514,7 @@ public class AssemblyTreeTests
 
 		vm.AssemblyTreeModel.SelectNode(methodNode);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("method-decompiled");
 
 		await Waiters.WaitForAsync(() =>
 			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a => !initialFiles.Contains(a.FileName)));
@@ -649,6 +650,7 @@ public class AssemblyTreeTests
 		Dispatcher.UIThread.RunJobs();
 		scrollViewer.Offset.Y.Should().BeGreaterThan(5,
 			"the test scenario requires the viewport be parked mid-list");
+		TestCapture.Step("viewport-parked-mid-list");
 
 		// Pick the bottom-most visible non-selected row — that's the strictest probe. If the
 		// bug regressed, CenterRowInView would scroll it up to the middle and offset would
@@ -670,6 +672,7 @@ public class AssemblyTreeTests
 			window)!.Value;
 		global::Avalonia.Headless.HeadlessWindowExtensions.MouseDown(window, rowCentre, global::Avalonia.Input.MouseButton.Left);
 		global::Avalonia.Headless.HeadlessWindowExtensions.MouseUp(window, rowCentre, global::Avalonia.Input.MouseButton.Left);
+		TestCapture.Step("visible-row-clicked");
 
 		for (int i = 0; i < 8; i++)
 		{
@@ -731,6 +734,7 @@ public class AssemblyTreeTests
 			.First(m => m.MethodDefinition.Name == "AsEnumerable");
 		vm.AssemblyTreeModel.SelectNode(method);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("asenumerable-decompiled");
 
 		// Act — invoke SaveCodeAsync with a temp path (bypassing the file picker so the test
 		// is deterministic).
@@ -777,6 +781,7 @@ public class AssemblyTreeTests
 		var sacrificialNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(sacrificialName);
 		vm.AssemblyTreeModel.SelectNode(sacrificialNode);
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, sacrificialNode));
+		TestCapture.Step("sacrificial-selected");
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<DataGrid>();
@@ -793,6 +798,7 @@ public class AssemblyTreeTests
 			global::Avalonia.Input.RawInputModifiers.None,
 			global::Avalonia.Input.PhysicalKey.Delete,
 			null);
+		TestCapture.Step("delete-key-pressed");
 
 		// Assert — the sacrificial assembly is gone from the data list AND the grid's bound
 		// ItemsSource drops by one. Both halves matter: a passing AssemblyList assertion alone
@@ -915,6 +921,7 @@ public class AssemblyTreeTests
 			Dispatcher.UIThread.RunJobs();
 			await Task.Delay(20);
 		}
+		TestCapture.Step("assembly-row-expanded");
 
 		// Assert — the grid wrapper now reports IsExpanded == true.
 		hm.FindNode(assemblyNode)!.IsExpanded.Should().BeTrue(
@@ -939,6 +946,7 @@ public class AssemblyTreeTests
 			.First(m => m.MethodDefinition.Name == "Empty");
 		vm.AssemblyTreeModel.SelectNode(pinned);
 		var firstTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("asenumerable-in-first-tab");
 
 		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<AssemblyListPane>().Any());
 		var pane = await window.WaitForComponent<AssemblyListPane>();
@@ -951,6 +959,7 @@ public class AssemblyTreeTests
 		await Waiters.WaitForAsync(
 			() => (documents.VisibleDockables?.Count ?? 0) > initialCount);
 		var newTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("empty-spawned-in-new-tab");
 		ReferenceEquals(newTab, firstTab).Should().BeFalse(
 			"a fresh decompiler tab must be created instead of reusing the existing one");
 		newTab.Text.Should().Contain("Empty");
@@ -986,12 +995,14 @@ public class AssemblyTreeTests
 		vm.DockWorkspace.OpenNodeInNewTab(second);
 		await Waiters.WaitForAsync(() =>
 			ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, second));
+		TestCapture.Step("second-tab-active");
 
 		// Re-activate the first tab — selection must swing back.
 		vm.DockWorkspace.Factory.SetActiveDockable(firstTab!);
 
 		await Waiters.WaitForAsync(() =>
 			ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, first));
+		TestCapture.Step("switched-back-to-first-tab");
 		ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, first).Should().BeTrue(
 			"clicking back to the previous tab must pull the tree selection with it");
 	}
@@ -1014,6 +1025,7 @@ public class AssemblyTreeTests
 		// First metadata view via tree-selection (active tab gets MetadataTablePageModel content).
 		vm.AssemblyTreeModel.SelectNode(typeDefNode);
 		var firstMeta = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("typedef-metadata-tab");
 
 		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
 		var initialCount = documents.VisibleDockables?.Count ?? 0;
@@ -1027,6 +1039,7 @@ public class AssemblyTreeTests
 		await Waiters.WaitForAsync(
 			() => (documents.VisibleDockables?.Count ?? 0) > initialCount);
 		var secondMeta = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("method-table-second-metadata-tab");
 		ReferenceEquals(secondMeta, firstMeta).Should().BeFalse(
 			"a fresh metadata tab must be created — the previous one keeps its TypeDef state");
 	}
@@ -1370,6 +1383,7 @@ public class AssemblyTreeTests
 		// SelectedItems still holds all of them — so assert on the grid, not the model.
 		int gridAfterFirst = grid.SelectedItems.Count;
 		int modelAfterFirst = vm.AssemblyTreeModel.SelectedItems.Count;
+		TestCapture.Step("after-first-ctrl-a");
 
 		// Second press.
 		window.KeyPress(Key.A, RawInputModifiers.Control, PhysicalKey.A, keySymbol: "a");
@@ -1405,6 +1419,7 @@ public class AssemblyTreeTests
 		window.KeyPress(Key.A, RawInputModifiers.Control, PhysicalKey.A, keySymbol: "a");
 		Dispatcher.UIThread.RunJobs();
 		await Waiters.WaitForAsync(() => grid.SelectedItems.Count == topLevelCount);
+		TestCapture.Step("all-rows-selected");
 
 		// Act — plain left-click on the second visible row.
 		var targetRow = grid.GetVisualDescendants().OfType<DataGridRow>()
@@ -1419,6 +1434,7 @@ public class AssemblyTreeTests
 		Dispatcher.UIThread.RunJobs();
 		await Task.Delay(50);
 		Dispatcher.UIThread.RunJobs();
+		TestCapture.Step("plain-click-collapsed-selection");
 
 		// Assert — selection collapsed to exactly the clicked row, in both grid and model.
 		grid.SelectedItems.Count.Should().Be(1,

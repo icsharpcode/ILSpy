@@ -49,6 +49,7 @@ public class ShowSearchCommandTests
 
 		dockWorkspace.ShowSearchCommand.CanExecute(null).Should().BeTrue();
 		dockWorkspace.ShowSearchCommand.Execute(null);
+		TestCapture.Step("search-pane-activated");
 
 		// The dock factory's ActiveDockable should now be the search pane. We can't
 		// assert against the factory's deep state easily (IDockable identity), so check

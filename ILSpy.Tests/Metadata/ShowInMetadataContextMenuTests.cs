@@ -72,6 +72,7 @@ public class ShowInMetadataContextMenuTests
 		await Waiters.WaitForAsync(
 			() => vm.AssemblyTreeModel.SelectedItem is MetadataTableTreeNode m
 				&& m.Kind == expectedTable);
+		TestCapture.Step("show-in-metadata-table");
 		((MetadataTableTreeNode)vm.AssemblyTreeModel.SelectedItem!).Kind.Should().Be(expectedTable);
 	}
 

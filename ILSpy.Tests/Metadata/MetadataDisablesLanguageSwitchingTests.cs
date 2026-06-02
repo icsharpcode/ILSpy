@@ -106,6 +106,7 @@ public class MetadataDisablesLanguageSwitchingTests
 		await Waiters.WaitForAsync(
 			() => vm.DockWorkspace.ActiveContentTabPage?.Content is MetadataTablePageModel,
 			System.TimeSpan.FromSeconds(10));
+		TestCapture.Step("metadata-tab-active");
 
 		languageCombo.IsEnabled.Should().BeFalse(
 			"with a MetadataTablePageModel as the active content, the LanguageComboBox must disable");
@@ -115,6 +116,7 @@ public class MetadataDisablesLanguageSwitchingTests
 			coreLibName, "System", "System.Object");
 		vm.AssemblyTreeModel.SelectNode(typeNode);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync(System.TimeSpan.FromSeconds(30));
+		TestCapture.Step("decompiler-tab-active");
 
 		languageCombo.IsEnabled.Should().BeTrue(
 			"swapping back to a decompiler tab must re-enable the LanguageComboBox");

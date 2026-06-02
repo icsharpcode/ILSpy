@@ -56,18 +56,22 @@ public class SingletonDocumentTabTests
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		var dock = vm.DockWorkspace;
+		TestCapture.Step("booted");
 
 		Invoke(window, nameof(Resources._Options));
+		TestCapture.Step("options-opened");
 		var first = dock.Documents!.VisibleDockables!.OfType<ContentTabPage>()
 			.Single(t => t.Content is OptionsPageModel);
 		var firstContent = first.Content;
 
 		dock.Factory.CloseDockable(first);
 		Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+		TestCapture.Step("options-closed");
 		dock.Documents!.VisibleDockables!.OfType<ContentTabPage>()
 			.Any(t => t.Content is OptionsPageModel).Should().BeFalse("closing must remove the Options tab");
 
 		Invoke(window, nameof(Resources._Options));
+		TestCapture.Step("options-reopened");
 		var second = dock.Documents!.VisibleDockables!.OfType<ContentTabPage>()
 			.Single(t => t.Content is OptionsPageModel);
 
@@ -84,16 +88,20 @@ public class SingletonDocumentTabTests
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		var dock = vm.DockWorkspace;
+		TestCapture.Step("booted");
 
 		bool IsAbout(ContentTabPage t) => t.Content is DecompilerTabPageModel { Title: var title } && title == Resources.About;
 
 		Invoke(window, nameof(Resources._About));
+		TestCapture.Step("about-opened");
 		var first = dock.Documents!.VisibleDockables!.OfType<ContentTabPage>().Single(IsAbout);
 
 		dock.Factory.CloseDockable(first);
 		Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+		TestCapture.Step("about-closed");
 
 		Invoke(window, nameof(Resources._About));
+		TestCapture.Step("about-reopened");
 		var second = dock.Documents!.VisibleDockables!.OfType<ContentTabPage>().Single(IsAbout);
 
 		second.Should().BeSameAs(first,

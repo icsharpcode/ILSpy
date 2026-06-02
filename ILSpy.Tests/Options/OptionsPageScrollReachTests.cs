@@ -57,11 +57,13 @@ public class OptionsPageScrollReachTests
 		window.Height = 600;
 		window.Show();
 		Dispatcher.UIThread.RunJobs();
+		TestCapture.Step("booted");
 
 		var command = AppComposition.Current.GetExport<MainMenuCommandRegistry>()
 			.GetCommand(nameof(Resources._Options));
 		command.Execute(null);
 		Dispatcher.UIThread.RunJobs();
+		TestCapture.Step("options-opened");
 
 		var view = window.GetVisualDescendants().OfType<OptionsPageView>().Single();
 		var model = (OptionsPageModel)((ContentTabPage)((MainWindowViewModel)window.DataContext!)
@@ -69,6 +71,7 @@ public class OptionsPageScrollReachTests
 			.OfType<ContentTabPage>().Single(t => t.Content is OptionsPageModel)).Content!;
 		model.SelectedPage = model.Pages.OfType<DisplaySettingsViewModel>().Single();
 		Dispatcher.UIThread.RunJobs();
+		TestCapture.Step("display-page-selected");
 
 		// Each panel now declares its own ScrollViewer (so per-tab scroll offset is
 		// independent), so the visual tree may contain multiple ScrollViewer instances
@@ -77,6 +80,7 @@ public class OptionsPageScrollReachTests
 			.First(sv => sv.IsEffectivelyVisible && sv.Bounds.Height > 0);
 		scrollViewer.Offset = new Vector(0, scrollViewer.Extent.Height);
 		Dispatcher.UIThread.RunJobs();
+		TestCapture.Step("scrolled-to-max");
 
 		// The "Sort results by fitness" checkbox sits inside the last HeaderedContentControl
 		// of the Display panel. After scrolling to max, its rendered bottom edge in

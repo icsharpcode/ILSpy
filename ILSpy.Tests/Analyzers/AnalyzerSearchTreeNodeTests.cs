@@ -74,6 +74,7 @@ public class AnalyzerSearchTreeNodeTests
 			() => search.Children.Count > 0 && !search.IsLoading,
 			timeout: TimeSpan.FromSeconds(30));
 
+		TestCapture.Step("before-search-results");
 		search.Children.Should().NotBeEmpty(
 			"the Used By analyzer must surface at least one entity that references Enumerable");
 		search.Children.Should().AllBeAssignableTo<AnalyzerTreeNode>(
@@ -115,6 +116,7 @@ public class AnalyzerSearchTreeNodeTests
 
 		// Collapse before completion to exercise the cancellation path.
 		search.IsExpanded = false;
+		TestCapture.Step("before-collapse-cancelled");
 		search.IsLoading.Should().BeFalse(
 			"cancellation must stop the background task synchronously from the collapse handler");
 		search.Children.Should().BeEmpty(

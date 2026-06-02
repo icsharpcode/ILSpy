@@ -95,6 +95,7 @@ public class AnalyzeContextMenuTests
 		var beforeCount = analyzerVm.Root.Children.Count;
 
 		entry.Execute(new TextViewContext { SelectedTreeNodes = new[] { (SharpTreeNode)typeNode } });
+		TestCapture.Step("analyze-executed");
 
 		analyzerVm.Root.Children.Count.Should().Be(beforeCount + 1,
 			"Execute on the analyze entry must add exactly one new row to the pane root");
@@ -114,6 +115,7 @@ public class AnalyzeContextMenuTests
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.AssemblyTreeModel.SelectNode(typeNode);
+		TestCapture.Step("type-selected");
 
 		var analyzerVm = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
 		var beforeCount = analyzerVm.Root.Children.Count;
@@ -125,6 +127,7 @@ public class AnalyzeContextMenuTests
 			RoutedEvent = global::Avalonia.Input.InputElement.KeyDownEvent,
 			Source = grid,
 		});
+		TestCapture.Step("ctrl-r-pressed");
 
 		analyzerVm.Root.Children.Count.Should().Be(beforeCount + 1,
 			"Ctrl+R with a type selected must analyse it");
@@ -171,6 +174,7 @@ public class AnalyzeContextMenuTests
 		entry.Execute(new TextViewContext {
 			SelectedTreeNodes = new ICSharpCode.ILSpyX.TreeView.SharpTreeNode[] { methodNode }
 		});
+		TestCapture.Step("analyzer-pane-surfaced");
 
 		// After Execute, the active dockable in the analyzer pane's owning dock should be
 		// the analyzer pane itself — that's what ShowToolPane does.
@@ -204,6 +208,7 @@ public class AnalyzeContextMenuTests
 		entry.Execute(new TextViewContext {
 			SelectedTreeNodes = new ICSharpCode.ILSpyX.TreeView.SharpTreeNode[] { methodNode }
 		});
+		TestCapture.Step("analyzer-results-populated");
 
 		// Walk every materialised node under the analyzer root and assert each has Icon.
 		var entityRow = analyzerVm.Root.Children.OfType<AnalyzerEntityTreeNode>().Last();

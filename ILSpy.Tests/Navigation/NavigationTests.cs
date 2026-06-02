@@ -57,6 +57,7 @@ public class NavigationTests
 		vm.AssemblyTreeModel.SelectNode(firstMethod);
 		var firstTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		firstTab.Text.Should().Contain("AsEnumerable");
+		TestCapture.Step("as-enumerable-decompiled");
 
 		// NavigationHistory collapses selections that happen within 0.5s into one entry. Wait
 		// past that window so the second selection records a real back-history entry.
@@ -67,11 +68,13 @@ public class NavigationTests
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, secondMethod));
 		var secondTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		secondTab.Text.Should().Contain("Empty");
+		TestCapture.Step("empty-decompiled");
 
 		// Act 3 — fire NavigateBack.
 		vm.DockWorkspace.NavigateBackCommand.CanExecute(null).Should().BeTrue();
 		// execute vm.DockWorkspace.NavigateBackCommand
 		vm.DockWorkspace.NavigateBackCommand.Execute(null);
+		TestCapture.Step("navigated-back");
 
 		// Assert — selection restores to AsEnumerable, the document re-decompiles to its body,
 		// and the row is centred back into view.
@@ -114,6 +117,7 @@ public class NavigationTests
 		await Task.Delay(600);
 		vm.AssemblyTreeModel.SelectNode(methodC);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("range-decompiled");
 
 		// Act 2 — open the Back SplitButton's flyout. The Opening handler populates the menu
 		// from the current back history.
@@ -123,6 +127,7 @@ public class NavigationTests
 		// open flyout on backSplit
 		flyout.ShowAt(backSplit);
 		await Waiters.WaitForAsync(() => flyout.Items.OfType<MenuItem>().Count() >= 2);
+		TestCapture.Step("back-history-flyout-open");
 
 		// Assert 1 — newest-first ordering: index 0 is the immediate previous selection
 		// (methodB), index 1 is the one before that (methodA). Each menu item carries a
@@ -141,6 +146,7 @@ public class NavigationTests
 		// Act 3 — multi-step jump: clicking methodA pops two entries off the back stack in one go.
 		items[1].Command!.Execute(items[1].CommandParameter);
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, methodA));
+		TestCapture.Step("jumped-to-as-enumerable");
 
 		// Assert 2 — the two displaced entries (methodC, methodB) are now on the forward stack,
 		// so Forward becomes available.
@@ -173,6 +179,7 @@ public class NavigationTests
 		await Task.Delay(600);
 		vm.AssemblyTreeModel.SelectNode(typeNode);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("exception-type-decompiled");
 
 		// Open the back-history flyout and read the entry header.
 		var backSplit = window.GetVisualDescendants().OfType<SplitButton>()
@@ -180,6 +187,7 @@ public class NavigationTests
 		var flyout = (MenuFlyout)backSplit.Flyout!;
 		flyout.ShowAt(backSplit);
 		await Waiters.WaitForAsync(() => flyout.Items.OfType<MenuItem>().Any());
+		TestCapture.Step("back-history-flyout-open");
 
 		// Assert — the entry shows the richer "Base Types (System.Exception)" form, NOT the
 		// bare "Base Types" Text.

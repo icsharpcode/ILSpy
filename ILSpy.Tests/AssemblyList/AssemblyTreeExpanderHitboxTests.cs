@@ -58,6 +58,7 @@ public class AssemblyTreeExpanderHitboxTests
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		assemblyNode.Expand();
 		vm.AssemblyTreeModel.SelectNode(assemblyNode);
+		TestCapture.Step("system-linq-expanded-and-selected");
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<DataGrid>();
@@ -103,6 +104,7 @@ public class AssemblyTreeExpanderHitboxTests
 		hitPoint.Should().NotBeNull();
 		HeadlessWindowExtensions.MouseDown(window, hitPoint!.Value, MouseButton.Left);
 		HeadlessWindowExtensions.MouseUp(window, hitPoint.Value, MouseButton.Left);
+		TestCapture.Step("clicked-enlarged-expander-area");
 
 		await Waiters.WaitForAsync(() => !assemblyNode.IsExpanded,
 			description: "clicking the enlarged expander area (below the glyph) must toggle the node");

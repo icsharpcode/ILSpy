@@ -55,6 +55,7 @@ public class UseNestedNamespaceNodesGridVerification
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		assemblyNode.IsExpanded = true;
 		await Waiters.WaitForAsync(() => grid.HierarchicalModel != null);
+		TestCapture.Step("system-linq-expanded-flat");
 
 		try
 		{
@@ -66,6 +67,7 @@ public class UseNestedNamespaceNodesGridVerification
 			await Waiters.WaitForAsync(
 				() => !ReferenceEquals(grid.HierarchicalModel, modelBefore),
 				System.TimeSpan.FromSeconds(5));
+			TestCapture.Step("nested-namespaces-rebound");
 
 			grid.HierarchicalModel.Should().NotBeSameAs(modelBefore,
 				"toggling UseNestedNamespaceNodes must force AssemblyListPane.BindTree, "

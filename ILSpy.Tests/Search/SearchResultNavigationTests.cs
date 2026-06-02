@@ -55,10 +55,12 @@ public class SearchResultNavigationTests
 		await Waiters.WaitForAsync(() => search.Results.Any(r => r is MemberSearchResult),
 			timeout: TimeSpan.FromSeconds(30));
 
+		TestCapture.Step("search-results-for-enumerable");
 		var hit = (MemberSearchResult)search.Results.First(r => r is MemberSearchResult);
 		search.Activate(hit);
 
 		await Waiters.WaitForAsync(() => vm.AssemblyTreeModel.SelectedItem is TypeTreeNode);
+		TestCapture.Step("navigated-to-result");
 		((object?)vm.AssemblyTreeModel.SelectedItem).Should().NotBeNull(
 			"Activate must move the assembly-tree selection to the result's underlying entity");
 		(vm.AssemblyTreeModel.SelectedItem is TypeTreeNode).Should().BeTrue(

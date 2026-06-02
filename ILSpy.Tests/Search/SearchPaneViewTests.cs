@@ -46,6 +46,7 @@ public class SearchPaneViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var pane = await window.WaitForComponent<SearchPane>();
+		TestCapture.Step("booted");
 
 		var input = pane.FindControl<TextBox>("SearchInput");
 		((object?)input).Should().NotBeNull("the query TextBox is what the user types into");
@@ -65,10 +66,12 @@ public class SearchPaneViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var pane = await window.WaitForComponent<SearchPane>();
+		TestCapture.Step("booted");
 		var vm = (SearchPaneModel)pane.DataContext!;
 
 		var input = pane.FindControl<TextBox>("SearchInput");
 		input!.Text = "Enumerable";
+		TestCapture.Step("typed-enumerable");
 
 		vm.SearchTerm.Should().Be("Enumerable",
 			"the TextBox is bound two-way to SearchPaneModel.SearchTerm");
@@ -85,6 +88,7 @@ public class SearchPaneViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var pane = await window.WaitForComponent<SearchPane>();
+		TestCapture.Step("booted");
 		var vm = (SearchPaneModel)pane.DataContext!;
 
 		var input = pane.FindControl<TextBox>("SearchInput");
@@ -98,6 +102,7 @@ public class SearchPaneViewTests
 			RoutedEvent = global::Avalonia.Input.InputElement.KeyDownEvent,
 			Source = input,
 		});
+		TestCapture.Step("escape-cleared-term");
 
 		vm.SearchTerm.Should().BeEmpty("Escape in the search input must clear the term");
 	}

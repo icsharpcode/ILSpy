@@ -72,12 +72,14 @@ public class AnalyzerResultHighlightTests
 		// DockWorkspace.ActiveDecompilerTab is null and the highlight path has no sink.
 		vm.AssemblyTreeModel.SelectNode(stringNode);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("string-decompiled");
 		var decompTab = vm.DockWorkspace.ActiveDecompilerTab;
 		Assert.That(decompTab, Is.Not.Null, "selecting a type must materialise the decompiler tab");
 		decompTab!.HighlightedReference = null;
 
 		var resultNode = new AnalyzedMethodTreeNode(toStringNode.MethodDefinition, source: concatNode.MethodDefinition);
 		resultNode.ActivateItem(new StubArgs());
+		TestCapture.Step("highlighted-source-member");
 
 		((object?)decompTab.HighlightedReference).Should().BeSameAs(concatNode.MethodDefinition,
 			"NavigateToReferenceEventArgs.Source (= SourceMember) must land in HighlightedReference so the editor view can paint local-reference marks");
@@ -103,6 +105,7 @@ public class AnalyzerResultHighlightTests
 		// Same materialisation as the first test.
 		vm.AssemblyTreeModel.SelectNode(stringNode);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("string-decompiled");
 		var decompTab = vm.DockWorkspace.ActiveDecompilerTab!;
 		decompTab.HighlightedReference = lengthProp.PropertyDefinition;
 
@@ -110,6 +113,7 @@ public class AnalyzerResultHighlightTests
 			stringNode.Children.OfType<MethodTreeNode>().First().MethodDefinition,
 			source: null);
 		topLevel.ActivateItem(new StubArgs());
+		TestCapture.Step("activated-top-level-entity");
 
 		((object?)decompTab.HighlightedReference).Should().BeSameAs(lengthProp.PropertyDefinition,
 			"top-level analysed-entity rows have no SourceMember and must not overwrite the active highlight");

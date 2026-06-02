@@ -52,10 +52,12 @@ public class WindowMenuOpenDocumentsTests
 		var firstAsm = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		vm.AssemblyTreeModel.SelectNode(firstAsm);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("first-assembly-decompiled");
 
 		var secondAsm = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Private.Uri");
 		vm.DockWorkspace.OpenNodeInNewTab(secondAsm);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("second-assembly-in-new-tab");
 
 		var nativeMenu = NativeMenu.GetMenu(window)
 			?? throw new InvalidOperationException("MainMenu.Attach should have set NativeMenu on the window");

@@ -68,6 +68,7 @@ public class SearchPaneAssemblyListChangedTests
 		MessageBus.Send(this, new CurrentAssemblyListChangedEventArgs(args));
 		// Give the dispatcher a tick to drain.
 		await Waiters.WaitForAsync(() => true, System.TimeSpan.FromMilliseconds(50));
+		TestCapture.Step("search-restarted-on-user-load");
 
 		// If we got here without throwing, the handler ran. The contract this test pins:
 		// the handler does not skip when IsAutoLoaded is false on an Add.
@@ -93,6 +94,7 @@ public class SearchPaneAssemblyListChangedTests
 		// (A real regression would manifest as the search-pane endlessly restarting on
 		// every auto-load event.)
 		var act = () => MessageBus.Send(this, new CurrentAssemblyListChangedEventArgs(args));
+		TestCapture.Step("before-autoloaded-add");
 		act.Should().NotThrow();
 	}
 }

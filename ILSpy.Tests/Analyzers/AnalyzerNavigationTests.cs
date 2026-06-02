@@ -58,6 +58,7 @@ public class AnalyzerNavigationTests
 
 		var analyzed = new AnalyzedTypeTreeNode(entity, source: null);
 		analyzed.ActivateItem(new StubRoutedEventArgs());
+		TestCapture.Step("navigated-to-type-node");
 
 		((object?)vm.AssemblyTreeModel.SelectedItem).Should().BeSameAs(typeNode,
 			"ActivateItem must move the assembly-tree selection to the entity's tree node");
@@ -77,6 +78,7 @@ public class AnalyzerNavigationTests
 
 		var analyzed = new AnalyzedMethodTreeNode(method, source: null);
 		analyzed.ActivateItem(new StubRoutedEventArgs());
+		TestCapture.Step("navigated-to-method-node");
 
 		((object?)vm.AssemblyTreeModel.SelectedItem).Should().BeSameAs(methodTreeNode,
 			"ActivateItem must walk down to the right method tree-node under its declaring type");

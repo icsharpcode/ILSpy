@@ -47,6 +47,7 @@ public class MetadataNodeIconParityTests
 
 		var metadataNode = vm.AssemblyTreeModel.FindCoreLib().GetChild<MetadataTreeNode>();
 		metadataNode.EnsureLazyChildren();
+		TestCapture.Step("metadata-node-expanded");
 		var children = metadataNode.Children;
 
 		// Assert — root + PE header nodes.

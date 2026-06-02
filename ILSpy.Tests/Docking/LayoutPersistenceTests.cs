@@ -186,6 +186,7 @@ public class LayoutPersistenceTests
 		// being persisted at all.
 		dockWorkspace.OpenNewTab(new object());
 		dockWorkspace.OpenNewTab(new object());
+		TestCapture.Step("three-document-tabs-open");
 		var sourceDocs = dockWorkspace.Documents!.VisibleDockables!
 			.OfType<ContentTabPage>().Count();
 		sourceDocs.Should().Be(3, "test must open 3 tabs (MainTab + 2 extras) before saving");

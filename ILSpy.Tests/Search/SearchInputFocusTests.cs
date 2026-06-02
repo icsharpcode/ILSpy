@@ -53,6 +53,7 @@ public class SearchInputFocusTests
 		search.FocusRequested += () => fired++;
 
 		dockWorkspace.ShowSearchCommand.Execute(null);
+		TestCapture.Step("show-search-executed");
 
 		fired.Should().BeGreaterThan(0,
 			"ShowSearchCommand must request focus on the search input, not just activate the pane");
@@ -71,6 +72,7 @@ public class SearchInputFocusTests
 		// Focus shifts via a Dispatcher.UIThread.Post so the view has a frame for the
 		// pane to surface in the layout — pump the dispatcher before asserting.
 		Dispatcher.UIThread.RunJobs();
+		TestCapture.Step("search-input-focused");
 
 		var input = pane.FindControl<TextBox>("SearchInput");
 		((object?)input).Should().NotBeNull();

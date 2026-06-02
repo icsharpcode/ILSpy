@@ -68,6 +68,7 @@ public class CopyFullyQualifiedNameTests
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		TestCapture.Step("booted");
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
 		var entry = registry.Entries
 			.Single(e => e.Metadata.Header == nameof(Resources.CopyName))
@@ -101,6 +102,7 @@ public class CopyFullyQualifiedNameTests
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		TestCapture.Step("booted");
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
 		var entry = (CopyFullyQualifiedNameContextMenuEntry)registry.Entries
 			.Single(e => e.Metadata.Header == nameof(Resources.CopyName))

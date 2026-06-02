@@ -302,6 +302,7 @@ public class MetadataFilterTests
 
 		vm.AssemblyTreeModel.SelectNode(typeDefNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
+		TestCapture.Step("typedef-grid");
 
 		// The header layout swaps in the per-column TextBox only on hover or when the
 		// filter is active (the label and the input share the same slot so the header
@@ -342,6 +343,7 @@ public class MetadataFilterTests
 		// (TextProperty AvaloniaObject change → builder's PropertyChanged handler →
 		// ColumnFilter.Text → page.ColumnFilterChanged → view.Refresh()).
 		headerBox!.Text = "System";
+		TestCapture.Step("filtered-by-system");
 
 		nameFilter.Text.Should().Be("System",
 			"setting the rendered TextBox.Text must propagate to ColumnFilter.Text");
@@ -353,6 +355,7 @@ public class MetadataFilterTests
 
 		// Clearing through the rendered TextBox must restore every row.
 		headerBox.Text = "";
+		TestCapture.Step("filter-cleared");
 		nameFilter.Text.Should().BeEmpty();
 		view.Count.Should().Be(totalRows,
 			"clearing the filter must restore every row in the visible grid view");

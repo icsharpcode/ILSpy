@@ -104,13 +104,16 @@ public class BrowseBackForwardCommandTests
 		// Build history: select two methods with a delay so they record as separate entries.
 		vm.AssemblyTreeModel.SelectNode(firstMethod);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("first-method-decompiled");
 		await Task.Delay(600);
 		vm.AssemblyTreeModel.SelectNode(secondMethod);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("second-method-decompiled");
 
 		// Act — fire the menu command (mirrors clicking View → Back).
 		backItem.Command.CanExecute(null).Should().BeTrue();
 		backItem.Command.Execute(null);
+		TestCapture.Step("navigated-back");
 
 		// Assert — selection rewinds to the first method (NavigateBack walked one step).
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, firstMethod));

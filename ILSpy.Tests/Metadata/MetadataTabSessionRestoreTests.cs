@@ -51,6 +51,7 @@ public class MetadataTabSessionRestoreTests
 			.GetChild<TypeDefTableTreeNode>();
 
 		vm.AssemblyTreeModel.SelectNode(typeDefNode);
+		TestCapture.Step("selected-typedef-table");
 
 		var settings = AppComposition.Current.GetExport<SettingsService>().SessionSettings;
 		var savedPath = settings.ActiveTreeViewPath;
@@ -76,6 +77,7 @@ public class MetadataTabSessionRestoreTests
 
 		var testDllPath = typeof(ICSharpCode.Decompiler.Metadata.MetadataFile).Assembly.Location;
 		var loaded = await vm.OpenAssemblyAsync(testDllPath);
+		TestCapture.Step("opened-decompiler-dll");
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(loaded.ShortName);
 		// AssemblyTreeNode surfaces the embedded PDB's metadata as a second top-level
@@ -89,6 +91,7 @@ public class MetadataTabSessionRestoreTests
 			.GetChild<global::ILSpy.Metadata.DebugTables.DocumentTableTreeNode>();
 
 		vm.AssemblyTreeModel.SelectNode(documentTable);
+		TestCapture.Step("selected-document-table");
 
 		var settings = AppComposition.Current.GetExport<SettingsService>().SessionSettings;
 		var savedPath = settings.ActiveTreeViewPath;

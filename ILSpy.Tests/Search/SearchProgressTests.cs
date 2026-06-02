@@ -69,6 +69,7 @@ public class SearchProgressTests
 				"the spinner must light up while the orchestrator is running");
 
 			await Waiters.WaitForAsync(() => !search.IsSearching, timeout: TimeSpan.FromSeconds(30));
+			TestCapture.Step("search-completed");
 			search.IsSearching.Should().BeFalse("the spinner must turn off once the run completes");
 		}
 		finally
@@ -90,6 +91,7 @@ public class SearchProgressTests
 
 		await Waiters.WaitForAsync(() => search.Results.Any(), timeout: TimeSpan.FromSeconds(30));
 
+		TestCapture.Step("search-results-with-icons");
 		var first = search.Results.First();
 		((object?)first.Image).Should().NotBeNull(
 			"every search result needs a glyph in the Name column");
@@ -105,6 +107,7 @@ public class SearchProgressTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var pane = await window.WaitForComponent<SearchPane>();
+		TestCapture.Step("booted");
 
 		var progress = pane.FindControl<ProgressBar>("SearchProgress");
 		((object?)progress).Should().NotBeNull(

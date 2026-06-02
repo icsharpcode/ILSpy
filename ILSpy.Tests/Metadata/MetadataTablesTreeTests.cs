@@ -45,6 +45,7 @@ public class MetadataTablesTreeTests
 
 		var metadataNode = vm.AssemblyTreeModel.FindCoreLib().GetChild<MetadataTreeNode>();
 		metadataNode.EnsureLazyChildren();
+		TestCapture.Step("metadata-node-expanded");
 
 		var tablesNode = metadataNode.Children.OfType<MetadataTablesTreeNode>().Single();
 		var children = metadataNode.Children.ToList();
@@ -64,6 +65,7 @@ public class MetadataTablesTreeTests
 			.GetChild<MetadataTreeNode>()
 			.GetChild<MetadataTablesTreeNode>();
 		tablesNode.EnsureLazyChildren();
+		TestCapture.Step("tables-tree-expanded");
 
 		var tableChildren = tablesNode.Children.OfType<MetadataTableTreeNode>().ToList();
 		// CoreLib has well over 10 non-empty tables (Module, TypeRef, TypeDef, Field, ...).
@@ -85,6 +87,7 @@ public class MetadataTablesTreeTests
 
 		vm.AssemblyTreeModel.SelectNode(tablesNode);
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		TestCapture.Step("tables-summary-text");
 
 		tab.Text.Should().Contain("Tables");
 		tab.Text.Should().MatchRegex(@"\bTypeDef\s*[:|]\s*\d+");

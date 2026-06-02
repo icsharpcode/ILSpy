@@ -98,6 +98,7 @@ public class DebugDirectoryChildNodesTests
 			.GetChild<MetadataTreeNode>()
 			.GetChild<DebugDirectoryTreeNode>();
 		debugDir.EnsureLazyChildren();
+		TestCapture.Step("debug-directory-children");
 		return debugDir;
 	}
 
@@ -113,6 +114,7 @@ public class DebugDirectoryChildNodesTests
 			.GetChild<MetadataTreeNode>()
 			.GetChild<DebugDirectoryTreeNode>();
 		debugDir.EnsureLazyChildren();
+		TestCapture.Step("debug-directory-children");
 		return (debugDir, rawCount);
 	}
 }

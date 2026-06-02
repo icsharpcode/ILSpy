@@ -70,7 +70,7 @@ public class ImageListResourceEntryNodeTests
 		node.EnsureLazyChildren();
 
 		node.Children.Should().HaveCount(1, "the .resources file held exactly one entry");
-		node.Children[0].Should().BeOfType<ImageListResourceEntryNode>(
+		((object?)node.Children[0]).Should().BeOfType<ImageListResourceEntryNode>(
 			"an ImageListStreamer typed entry should be claimed by ImageListResourceNodeFactory");
 	}
 
