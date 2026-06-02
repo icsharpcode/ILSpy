@@ -19,6 +19,14 @@
              RequestedThemeVariant="Default">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
+    <!-- Empty placeholder for the macOS application menu (the bold app-named menu). Only the
+         Cocoa menu exporter reads this; on Windows / Linux it is inert. It must exist before
+         the exporter samples it at startup, so MainMenu.PromoteHelpToMacAppMenu can populate
+         this same instance in place rather than replacing it (a replacement is never observed). -->
+    <NativeMenu.Menu>
+        <NativeMenu />
+    </NativeMenu.Menu>
+
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.ThemeDictionaries>

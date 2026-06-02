@@ -80,24 +80,28 @@ public static class MainMenu
 	}
 
 	// macOS convention puts About / Check for Updates under the bold app-named menu
-	// next to the Apple logo, not under a separate "Help" top-level. Avalonia's Cocoa
-	// menu exporter watches NativeMenu.MenuProperty on Application.Current as the
-	// channel for that menu; setting a NativeMenu there prepends our items above
-	// the auto-inserted Services / Hide / Quit block. We then remove _Help from the
-	// window menu so the items don't appear in both places.
+	// next to the Apple logo, not under a separate "Help" top-level. The Cocoa exporter
+	// samples Application.Current's NativeMenu ONCE at startup (before this window exists)
+	// and never watches the property afterwards -- so swapping in a fresh menu here would
+	// be ignored. Instead we populate the empty NativeMenu declared in App.axaml IN PLACE:
+	// the exporter subscribes to that instance's Items, so inserting fires a re-export.
+	// Items go at the top, above the Services / Hide / Quit block the exporter appended.
+	// We then remove _Help from the window menu so the items don't appear in both places.
 	static void PromoteHelpToMacAppMenu(NativeMenu rootMenu, Dictionary<string, NativeMenuItem> topLevelByTag)
 	{
 		if (!topLevelByTag.TryGetValue("_Help", out var helpItem) || helpItem.Menu is null)
 			return;
 		if (Application.Current is null)
 			return;
-		var appMenu = new NativeMenu();
+		var appMenu = NativeMenu.GetMenu(Application.Current);
+		if (appMenu is null)
+			return;
+		var index = 0;
 		foreach (var item in helpItem.Menu.Items.ToArray())
 		{
 			helpItem.Menu.Items.Remove(item);
-			appMenu.Items.Add(item);
+			appMenu.Items.Insert(index++, item);
 		}
-		NativeMenu.SetMenu(Application.Current, appMenu);
 		rootMenu.Items.Remove(helpItem);
 		topLevelByTag.Remove("_Help");
 	}
