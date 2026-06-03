@@ -71,10 +71,10 @@ namespace ILSpy.ViewModels
 		/// <summary>
 		/// VS-style "preview" / transient tab flag. The persistent <c>MainTab</c> starts as
 		/// preview (true): every tree-node click replaces its <see cref="Content"/> in
-		/// place. The user can pin it via <c>DockWorkspace.PinCurrentTab</c>, which flips
+		/// place. The user can freeze it via <c>DockWorkspace.FreezeCurrentTab</c>, which flips
 		/// this to false and creates a new preview-state MainTab beside it. Carved-out
 		/// tabs (created via <c>OpenNewTab</c> / "Open in new tab" / "Freeze tab") are
-		/// born pinned — they're never replaced by tree-selection content.
+		/// born frozen — they're never replaced by tree-selection content.
 		/// </summary>
 		[ObservableProperty]
 		private bool isPreview = true;

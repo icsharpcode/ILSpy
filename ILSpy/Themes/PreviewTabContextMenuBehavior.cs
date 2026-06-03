@@ -31,10 +31,10 @@ namespace ILSpy.Themes
 {
 	/// <summary>
 	/// Attached property that wires a per-instance <see cref="ContextMenu"/> onto every
-	/// <see cref="DocumentTabStripItem"/>. The menu hosts a single "Pin tab" entry whose
+	/// <see cref="DocumentTabStripItem"/>. The menu hosts a single "Freeze tab" entry whose
 	/// <see cref="MenuItem.IsVisible"/> tracks <see cref="ContentTabPage.IsPreview"/> on
 	/// the tab's underlying viewmodel — invoking it routes to
-	/// <see cref="DockWorkspace.PinCurrentTab"/>. Each tab gets a fresh ContextMenu so
+	/// <see cref="DockWorkspace.FreezeCurrentTab"/>. Each tab gets a fresh ContextMenu so
 	/// the popup has a unique parent (Avalonia visuals must have at most one parent).
 	/// </summary>
 	public static class PreviewTabContextMenuBehavior
@@ -75,23 +75,23 @@ namespace ILSpy.Themes
 				return;
 			}
 
-			var pinItem = new MenuItem {
-				Header = "Pin tab",
+			var freezeItem = new MenuItem {
+				Header = "Freeze tab",
 				IsVisible = tab.IsPreview,
 			};
-			pinItem.Click += (_, _) => TryGetDockWorkspace()?.PinCurrentTab();
+			freezeItem.Click += (_, _) => TryGetDockWorkspace()?.FreezeCurrentTab();
 
 			// Keep IsVisible in sync with IsPreview so the entry hides once the tab is
-			// pinned (or after promotion happens through some other code path).
+			// frozen (freeze is one-way — there's no matching unfreeze entry).
 			tab.PropertyChanged += OnTabPropertyChanged;
 			void OnTabPropertyChanged(object? _, PropertyChangedEventArgs args)
 			{
 				if (args.PropertyName == nameof(ContentTabPage.IsPreview))
-					pinItem.IsVisible = tab.IsPreview;
+					freezeItem.IsVisible = tab.IsPreview;
 			}
 
 			item.DocumentContextMenu = new ContextMenu {
-				ItemsSource = new[] { pinItem },
+				ItemsSource = new[] { freezeItem },
 			};
 		}
 

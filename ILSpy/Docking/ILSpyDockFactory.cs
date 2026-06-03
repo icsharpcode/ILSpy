@@ -42,21 +42,21 @@ namespace ILSpy.Docking
 		/// The single persistent Document the host puts in <see cref="Documents"/>. Its
 		/// <see cref="ContentTabPage.Content"/> swaps between viewmodels (decompiler text /
 		/// metadata grid) on tree-node selection — DockWorkspace owns the population.
-		/// Identity rotates through <see cref="PromotePreviewMainTab"/> — after a pin, the
-		/// just-pinned tab keeps its position and content while MainTab points at a fresh
+		/// Identity rotates through <see cref="FreezeCurrentMainTab"/> — after a freeze, the
+		/// just-frozen tab keeps its position and content while MainTab points at a fresh
 		/// preview tab beside it.
 		/// </summary>
 		public ContentTabPage? MainTab { get; internal set; }
 
 		/// <summary>
-		/// Flips the current <see cref="MainTab"/> to pinned
-		/// (<see cref="ContentTabPage.IsPreview"/> = false). Returns the pinned tab, or
-		/// <see langword="null"/> when there's nothing to pin (no current MainTab, MainTab
-		/// already pinned). Does NOT spawn a new preview tab — the next selection change
+		/// Flips the current <see cref="MainTab"/> to frozen
+		/// (<see cref="ContentTabPage.IsPreview"/> = false). Returns the frozen tab, or
+		/// <see langword="null"/> when there's nothing to freeze (no current MainTab, MainTab
+		/// already frozen). Does NOT spawn a new preview tab — the next selection change
 		/// that finds the active tab frozen will spawn one lazily via
 		/// <see cref="CreateAndAttachPreviewTab"/>.
 		/// </summary>
-		public ContentTabPage? PinCurrentMainTab()
+		public ContentTabPage? FreezeCurrentMainTab()
 		{
 			if (MainTab is not { IsPreview: true } current)
 				return null;
@@ -67,7 +67,7 @@ namespace ILSpy.Docking
 		/// <summary>
 		/// Creates a fresh preview <see cref="ContentTabPage"/>, attaches it to
 		/// <see cref="Documents"/>, and sets <see cref="MainTab"/> to it. Used when a
-		/// tree-node selection changes while the active tab is frozen (pinned, Options,
+		/// tree-node selection changes while the active tab is frozen (frozen, Options,
 		/// About, …) — a brand-new preview slot is needed to host the new content.
 		/// Returns the new tab, or <see langword="null"/> if <see cref="Documents"/> is
 		/// missing.

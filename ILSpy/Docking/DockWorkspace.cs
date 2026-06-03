@@ -696,8 +696,8 @@ namespace ILSpy.Docking
 			// here on a single click, so dedupe to avoid creating two TabPageModels for the
 			// same selection — the second one's columns would replace the first's, but the
 			// first's filter wiring would be left dangling on stale ColumnFilter instances.
-			// Dedupe is also what makes "re-clicking the same node after pin" a no-op: the
-			// pinned tab stays active, no new preview tab spawns.
+			// Dedupe is also what makes "re-clicking the same node after freeze" a no-op: the
+			// frozen tab stays active, no new preview tab spawns.
 			if (lastShownNodes is { } prev && prev.SequenceEqual(nodes))
 			{
 				if (factory.MainTab is { } existingMain)
@@ -708,7 +708,7 @@ namespace ILSpy.Docking
 
 			// Pick or spawn the target tab. If the currently-active document tab is a
 			// writable preview ContentTabPage we replace its content in place. Anything
-			// else — pinned tab, Options page, About page, no Documents dock — counts as
+			// else — frozen tab, Options page, About page, no Documents dock — counts as
 			// frozen and gets a brand-new preview tab spawned beside it.
 			ContentTabPage? main;
 			if (IsWritablePreview(factory.Documents?.ActiveDockable) is ContentTabPage activePreview)
@@ -854,7 +854,7 @@ namespace ILSpy.Docking
 		/// <see cref="DecompilerTabPageModel"/> is spawned and asked to decompile the
 		/// node. Shared between the assembly-tree MMB handler, the metadata-grid MMB
 		/// handler, and the "Decompile to new tab" context-menu entry. The created tab
-		/// is pinned (born with <see cref="ContentTabPage.IsPreview"/> false) — see
+		/// is frozen (born with <see cref="ContentTabPage.IsPreview"/> false) — see
 		/// <see cref="OpenNewTab"/>.
 		/// </summary>
 		public void OpenNodeInNewTab(ILSpyTreeNode node)
@@ -1093,7 +1093,7 @@ namespace ILSpy.Docking
 
 		public ContentTabPage OpenNewTab(object content, SharpTreeNode? sourceNode = null)
 		{
-			// Carve-outs are born pinned — they survive tree-node selections instead of
+			// Carve-outs are born frozen — they survive tree-node selections instead of
 			// being replaced like the preview MainTab.
 			var tab = new ContentTabPage { Content = content, SourceNode = sourceNode, IsPreview = false };
 			if (factory.Documents != null)
@@ -1138,7 +1138,7 @@ namespace ILSpy.Docking
 		/// <summary>
 		/// Renders <paramref name="content"/> in the reusable MainTab as a transient welcome
 		/// page (the About page shown at startup when nothing is selected). Unlike Help &gt;
-		/// About this does not pin a static page: the content is non-static, so the first
+		/// About this does not freeze a static page: the content is non-static, so the first
 		/// tree-node selection reuses the MainTab and replaces it, leaving the user with a
 		/// single tab rather than a stray empty one.
 		/// </summary>
@@ -1162,12 +1162,12 @@ namespace ILSpy.Docking
 		}
 
 		/// <summary>
-		/// VS-style "pin tab" gesture. The current <c>factory.MainTab</c> keeps its position,
-		/// content, and active state but flips to pinned
-		/// (<see cref="ContentTabPage.IsPreview"/> = false). No new tab spawns at pin time:
+		/// VS-style "freeze tab" gesture. The current <c>factory.MainTab</c> keeps its position,
+		/// content, and active state but flips to frozen
+		/// (<see cref="ContentTabPage.IsPreview"/> = false). No new tab spawns at freeze time:
 		/// the next tree-node selection that finds the active tab frozen will lazily spawn
 		/// a fresh preview tab inside <see cref="ShowSelectedNode"/>. Re-clicking the same
-		/// node after pin is a no-op (the dedupe activates the pinned tab).
+		/// node after freeze is a no-op (the dedupe activates the frozen tab).
 		/// </summary>
 		/// <summary>
 		/// Pump dispatcher jobs so synchronously-set selection state (SourceNode, IsPreview,
@@ -1180,11 +1180,11 @@ namespace ILSpy.Docking
 			Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 		}
 
-		public void PinCurrentTab()
+		public void FreezeCurrentTab()
 		{
-			if (factory.PinCurrentMainTab() is null)
+			if (factory.FreezeCurrentMainTab() is null)
 				return;
-			// Cached decompiler viewmodel was bound to the just-pinned tab — drop the cache
+			// Cached decompiler viewmodel was bound to the just-frozen tab — drop the cache
 			// so the next selection-change-into-frozen path materialises a fresh
 			// DecompilerTabPageModel for the newly-spawned preview tab.
 			decompilerContent = null;

@@ -44,21 +44,21 @@ public class PreviewTabPromotionTests
 	public void MainTab_Starts_In_Preview_State()
 	{
 		// The persistent MainTab is the preview slot; tree-node clicks should replace its
-		// Content in place until the user explicitly pins it.
+		// Content in place until the user explicitly freezes it.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		TestCapture.Step("booted");
 		var mainTab = ((ILSpyDockFactory)vm.DockWorkspace.Factory).MainTab!;
 		mainTab.IsPreview.Should().BeTrue(
-			"the freshly-created MainTab is the preview slot until the user pins it");
+			"the freshly-created MainTab is the preview slot until the user freezes it");
 	}
 
 	[AvaloniaTest]
-	public async Task Carve_Out_Tabs_Are_Born_Pinned()
+	public async Task Carve_Out_Tabs_Are_Born_Frozen()
 	{
 		// Open-in-new-tab tabs are explicit user intent — they should never be replaced
-		// by subsequent tree-node selections, so they're born pinned (IsPreview=false).
+		// by subsequent tree-node selections, so they're born frozen (IsPreview=false).
 		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
@@ -74,19 +74,19 @@ public class PreviewTabPromotionTests
 	}
 
 	[AvaloniaTest]
-	public async Task PinCurrentTab_Flips_IsPreview_Without_Spawning_A_New_Tab()
+	public async Task FreezeCurrentTab_Flips_IsPreview_Without_Spawning_A_New_Tab()
 	{
-		// New semantics: Pin only flips IsPreview=false on the current MainTab. No new
-		// preview tab spawns at pin time. A fresh preview tab opens lazily later, when a
+		// New semantics: Freeze only flips IsPreview=false on the current MainTab. No new
+		// preview tab spawns at freeze time. A fresh preview tab opens lazily later, when a
 		// tree-selection change finds the active tab frozen — see
-		// Selecting_A_Different_Node_After_Pin_Opens_A_New_Preview_Tab below.
+		// Selecting_A_Different_Node_After_Freeze_Opens_A_New_Preview_Tab below.
 		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
 		var previousMainTab = factory.MainTab!;
 		previousMainTab.IsPreview.Should().BeTrue("baseline");
 
-		// Load content into MainTab so the pin has something meaningful to keep.
+		// Load content into MainTab so the freeze has something meaningful to keep.
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.AssemblyTreeModel.SelectNode(typeNode);
@@ -97,31 +97,31 @@ public class PreviewTabPromotionTests
 
 		var tabCountBefore = vm.DockWorkspace.Documents!.VisibleDockables!.Count;
 
-		// Pin.
-		vm.DockWorkspace.PinCurrentTab();
-		TestCapture.Step("tab-pinned");
+		// Freeze.
+		vm.DockWorkspace.FreezeCurrentTab();
+		TestCapture.Step("tab-frozen");
 
-		// Tab is now pinned, content preserved.
+		// Tab is now frozen, content preserved.
 		previousMainTab.IsPreview.Should().BeFalse(
-			"after pin, the previously-preview MainTab becomes a regular pinned tab");
+			"after freeze, the previously-preview MainTab becomes a regular frozen tab");
 		ReferenceEquals(previousMainTab.SourceNode, typeNode).Should().BeTrue(
-			"pin must not throw away the tab's content");
+			"freeze must not throw away the tab's content");
 
-		// factory.MainTab still points at the same (now-pinned) tab — no rotation.
+		// factory.MainTab still points at the same (now-frozen) tab — no rotation.
 		factory.MainTab.Should().BeSameAs(previousMainTab,
-			"pin alone must not rotate factory.MainTab — the pinned tab keeps the slot until a selection change spawns a new preview");
+			"freeze alone must not rotate factory.MainTab — the frozen tab keeps the slot until a selection change spawns a new preview");
 
 		// And critically: no new tab spawned.
 		vm.DockWorkspace.Documents!.VisibleDockables!.Count.Should().Be(tabCountBefore,
-			"pinning alone must not open a new tab; new tabs open lazily on the next selection change");
+			"freezing alone must not open a new tab; new tabs open lazily on the next selection change");
 	}
 
 	[AvaloniaTest]
-	public async Task Selecting_A_Different_Node_After_Pin_Opens_A_New_Preview_Tab()
+	public async Task Selecting_A_Different_Node_After_Freeze_Opens_A_New_Preview_Tab()
 	{
-		// Pin holds the current tab's content. Selecting a different tree node while
-		// the (now-pinned) tab is active must spawn a fresh preview tab beside it and
-		// route the new content there — never overwrite the pinned tab.
+		// Freeze holds the current tab's content. Selecting a different tree node while
+		// the (now-frozen) tab is active must spawn a fresh preview tab beside it and
+		// route the new content there — never overwrite the frozen tab.
 		var (_, vm) = await TestHarness.BootAsync(3);
 
 		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
@@ -132,15 +132,15 @@ public class PreviewTabPromotionTests
 		vm.AssemblyTreeModel.SelectNode(typeA);
 		vm.DockWorkspace.SettleSelection();
 		TestCapture.Step("type-a-selected");
-		var pinnedTab = factory.MainTab!;
-		var pinnedContent = pinnedTab.Content;
+		var frozenTab = factory.MainTab!;
+		var frozenContent = frozenTab.Content;
 
-		// Phase 2: pin. factory.MainTab still points at the same (now-pinned) tab —
-		// no spawn yet (covered by PinCurrentTab_Flips_IsPreview_Without_Spawning_A_New_Tab).
+		// Phase 2: freeze. factory.MainTab still points at the same (now-frozen) tab —
+		// no spawn yet (covered by FreezeCurrentTab_Flips_IsPreview_Without_Spawning_A_New_Tab).
 		var tabCountBeforeSelection = vm.DockWorkspace.Documents!.VisibleDockables!.Count;
-		vm.DockWorkspace.PinCurrentTab();
-		TestCapture.Step("tab-pinned");
-		factory.MainTab.Should().BeSameAs(pinnedTab, "pin alone keeps the slot");
+		vm.DockWorkspace.FreezeCurrentTab();
+		TestCapture.Step("tab-frozen");
+		factory.MainTab.Should().BeSameAs(frozenTab, "freeze alone keeps the slot");
 
 		// Phase 3: select a different type — NOW a new preview tab should spawn AND
 		// receive the new content.
@@ -150,21 +150,21 @@ public class PreviewTabPromotionTests
 		vm.DockWorkspace.SettleSelection();
 		TestCapture.Step("type-b-opens-new-preview");
 
-		// New tab spawned beside the pinned one.
+		// New tab spawned beside the frozen one.
 		vm.DockWorkspace.Documents!.VisibleDockables!.Count.Should().Be(tabCountBeforeSelection + 1,
-			"selecting a different node while the active tab is pinned must spawn a new preview tab");
+			"selecting a different node while the active tab is frozen must spawn a new preview tab");
 
 		var newMainTab = factory.MainTab!;
-		newMainTab.Should().NotBeSameAs(pinnedTab,
+		newMainTab.Should().NotBeSameAs(frozenTab,
 			"factory.MainTab must rotate to the freshly-spawned preview tab once a selection change forces it");
 		newMainTab.IsPreview.Should().BeTrue(
-			"the freshly-spawned tab is itself a preview tab (the user can pin it next)");
+			"the freshly-spawned tab is itself a preview tab (the user can freeze it next)");
 		ReferenceEquals(newMainTab.SourceNode, typeB).Should().BeTrue(
 			"new tree selection must land in the freshly-spawned preview tab");
-		ReferenceEquals(pinnedTab.SourceNode, typeA).Should().BeTrue(
-			"the pinned tab must keep type A — not be overwritten by the new selection");
-		pinnedTab.Content.Should().BeSameAs(pinnedContent,
-			"pinned tab's Content reference must survive subsequent tree selections");
+		ReferenceEquals(frozenTab.SourceNode, typeA).Should().BeTrue(
+			"the frozen tab must keep type A — not be overwritten by the new selection");
+		frozenTab.Content.Should().BeSameAs(frozenContent,
+			"frozen tab's Content reference must survive subsequent tree selections");
 	}
 
 	[AvaloniaTest]
@@ -172,7 +172,7 @@ public class PreviewTabPromotionTests
 	{
 		// Visual contract: the DocumentTabStripItem for the preview MainTab binds its
 		// FontStyle to ContentTabPage.IsPreview via BoolToFontStyleConverter.Italic.
-		// Pinned tabs and tool-pane tabs fall through to FontStyle.Normal.
+		// Frozen tabs and tool-pane tabs fall through to FontStyle.Normal.
 		var (window, vm) = await TestHarness.BootAsync();
 
 		// Wait for the tab strip to realise its items.
@@ -213,13 +213,13 @@ public class PreviewTabPromotionTests
 	}
 
 	[AvaloniaTest]
-	public async Task Pin_Button_Fits_Inside_The_Tab_When_Close_Button_Is_Visible()
+	public async Task Freeze_Button_Fits_Inside_The_Tab_When_Close_Button_Is_Visible()
 	{
 		// The single-tab scenario hides the close button (UpdateLastDocumentCanClose sets
-		// CanClose=false), so the pin has lots of room. The bug shows up only when the
+		// CanClose=false), so the freeze has lots of room. The bug shows up only when the
 		// close button is visible and competes for horizontal space. Open a carve-out
 		// tab so both MainTab and carve-out exist; close button becomes visible; verify
-		// the pin's right edge stays inside the tab's right edge.
+		// the freeze's right edge stays inside the tab's right edge.
 
 		var (window, vm) = await TestHarness.BootAsync(3);
 
@@ -242,12 +242,12 @@ public class PreviewTabPromotionTests
 		mainTabItem.Arrange(new global::Avalonia.Rect(mainTabItem.DesiredSize));
 		global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-		var pinButton = mainTabItem.GetVisualDescendants()
+		var freezeButton = mainTabItem.GetVisualDescendants()
 			.OfType<global::Avalonia.Controls.Button>()
-			.Single(b => (b.Tag as string) == "PreviewTabPinButton");
+			.Single(b => (b.Tag as string) == "PreviewTabFreezeButton");
 
 		// Walk up the visual tree summing each ancestor's bounds origin until we reach
-		// mainTabItem — gives the pin's top-left in tab coordinates without depending on
+		// mainTabItem — gives the freeze's top-left in tab coordinates without depending on
 		// TranslatePoint (which lives on different namespaces across Avalonia versions).
 		static global::Avalonia.Point OriginRelativeTo(global::Avalonia.Visual node, global::Avalonia.Visual ancestor)
 		{
@@ -261,36 +261,36 @@ public class PreviewTabPromotionTests
 			}
 			return new global::Avalonia.Point(x, y);
 		}
-		var pinTopLeft = OriginRelativeTo(pinButton, mainTabItem);
-		var pinRight = pinTopLeft.X + pinButton.Bounds.Width;
+		var freezeTopLeft = OriginRelativeTo(freezeButton, mainTabItem);
+		var freezeRight = freezeTopLeft.X + freezeButton.Bounds.Width;
 		var tabRight = mainTabItem.Bounds.Width;
 
 		// Also find the close button so we can include it in the failure message for context.
 		var closeButton = mainTabItem.GetVisualDescendants()
 			.OfType<global::Avalonia.Controls.Button>()
-			.Where(b => (b.Tag as string) != "PreviewTabPinButton")
+			.Where(b => (b.Tag as string) != "PreviewTabFreezeButton")
 			.Select(b => new { b, p = OriginRelativeTo(b, mainTabItem) })
 			.OrderByDescending(x => x.p.X)
 			.FirstOrDefault();
 		var closeInfo = closeButton == null ? "no close button found"
 			: $"close at x={closeButton.p.X:0}-{closeButton.p.X + closeButton.b.Bounds.Width:0}";
 
-		TestContext.WriteLine($"tab width={tabRight:0}; pin at x={pinTopLeft.X:0}-{pinRight:0}; {closeInfo}");
+		TestContext.WriteLine($"tab width={tabRight:0}; freeze at x={freezeTopLeft.X:0}-{freezeRight:0}; {closeInfo}");
 
-		pinRight.Should().BeLessThanOrEqualTo(tabRight,
-			"pin button's right edge must fit inside the tab's right edge (cut-off bug)");
+		freezeRight.Should().BeLessThanOrEqualTo(tabRight,
+			"freeze button's right edge must fit inside the tab's right edge (cut-off bug)");
 		if (closeButton != null && closeButton.b.Bounds.Width > 0)
 		{
-			pinRight.Should().BeLessThanOrEqualTo(closeButton.p.X + 0.5,
-				"pin button must sit to the LEFT of the close button, not overlap it");
+			freezeRight.Should().BeLessThanOrEqualTo(closeButton.p.X + 0.5,
+				"freeze button must sit to the LEFT of the close button, not overlap it");
 		}
 	}
 
 	[AvaloniaTest]
-	public async Task Pin_Button_Fits_Inside_The_Tab_Even_With_A_Long_Title()
+	public async Task Freeze_Button_Fits_Inside_The_Tab_Even_With_A_Long_Title()
 	{
 		// Production stress case: tabs with long titles can exceed the tab strip's available
-		// width if the title isn't capped. The pin button must still fit inside the tab's
+		// width if the title isn't capped. The freeze button must still fit inside the tab's
 		// right edge regardless of title length.
 
 		var (window, vm) = await TestHarness.BootAsync(3);
@@ -320,9 +320,9 @@ public class PreviewTabPromotionTests
 		mainTabItem.Arrange(new global::Avalonia.Rect(0, 0, 200, mainTabItem.DesiredSize.Height));
 		global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-		var pinButton = mainTabItem.GetVisualDescendants()
+		var freezeButton = mainTabItem.GetVisualDescendants()
 			.OfType<global::Avalonia.Controls.Button>()
-			.Single(b => (b.Tag as string) == "PreviewTabPinButton");
+			.Single(b => (b.Tag as string) == "PreviewTabFreezeButton");
 
 		static global::Avalonia.Point OriginRelativeTo(global::Avalonia.Visual node, global::Avalonia.Visual ancestor)
 		{
@@ -336,29 +336,29 @@ public class PreviewTabPromotionTests
 			}
 			return new global::Avalonia.Point(x, y);
 		}
-		var pinTopLeft = OriginRelativeTo(pinButton, mainTabItem);
-		var pinRight = pinTopLeft.X + pinButton.Bounds.Width;
+		var freezeTopLeft = OriginRelativeTo(freezeButton, mainTabItem);
+		var freezeRight = freezeTopLeft.X + freezeButton.Bounds.Width;
 		var tabRight = mainTabItem.Bounds.Width;
-		TestContext.WriteLine($"long-title scenario: tab={tabRight:0}, pin x={pinTopLeft.X:0}-{pinRight:0}");
+		TestContext.WriteLine($"long-title scenario: tab={tabRight:0}, freeze x={freezeTopLeft.X:0}-{freezeRight:0}");
 
-		pinRight.Should().BeLessThanOrEqualTo(tabRight,
-			$"pin must fit inside tab width even with long titles (tab={tabRight:0}, pinRight={pinRight:0})");
+		freezeRight.Should().BeLessThanOrEqualTo(tabRight,
+			$"freeze must fit inside tab width even with long titles (tab={tabRight:0}, freezeRight={freezeRight:0})");
 
 		// Lock the rendering fixes in:
 		// 1. The title StackPanel must clip — otherwise a long title TextBlock measures
-		//    at its full unconstrained width and paints over the pin and close buttons.
+		//    at its full unconstrained width and paints over the freeze and close buttons.
 		var titleStack = mainTabItem.GetVisualDescendants().OfType<global::Avalonia.Controls.StackPanel>().First();
 		titleStack.ClipToBounds.Should().BeTrue(
-			"the title StackPanel must clip its content so a long title TextBlock doesn't render over the pin button");
-		// 2. The pin Button itself must NOT clip — Avalonia Buttons default to ClipToBounds=true
+			"the title StackPanel must clip its content so a long title TextBlock doesn't render over the freeze button");
+		// 2. The freeze Button itself must NOT clip — Avalonia Buttons default to ClipToBounds=true
 		//    which cuts the right edge of Segoe Fluent Icon glyphs (whose visual extent
 		//    exceeds the reported advance width).
-		pinButton.ClipToBounds.Should().BeFalse(
-			"pin button must not clip so the glyph's visual extent (often wider than the font advance width) survives");
+		freezeButton.ClipToBounds.Should().BeFalse(
+			"freeze button must not clip so the glyph's visual extent (often wider than the font advance width) survives");
 	}
 
 	[AvaloniaTest]
-	public async Task Inline_Pin_Button_Appears_On_Preview_Tab_And_Pins_When_Clicked()
+	public async Task Inline_Freeze_Button_Appears_On_Preview_Tab_And_Freezes_When_Clicked()
 	{
 		var (window, vm) = await TestHarness.BootAsync();
 
@@ -369,39 +369,39 @@ public class PreviewTabPromotionTests
 		var mainTabItem = window.GetVisualDescendants().OfType<DocumentTabStripItem>()
 			.Single(item => ReferenceEquals(item.DataContext, factory.MainTab));
 
-		// Pin button is injected via PreviewTabPinButtonBehavior — find it by Tag.
+		// Freeze button is injected via PreviewTabFreezeButtonBehavior — find it by Tag.
 		await Waiters.WaitForAsync(() => mainTabItem.GetVisualDescendants()
 			.OfType<global::Avalonia.Controls.Button>()
-			.Any(b => (b.Tag as string) == "PreviewTabPinButton"),
+			.Any(b => (b.Tag as string) == "PreviewTabFreezeButton"),
 			System.TimeSpan.FromSeconds(5));
 
-		var pinButton = mainTabItem.GetVisualDescendants()
+		var freezeButton = mainTabItem.GetVisualDescendants()
 			.OfType<global::Avalonia.Controls.Button>()
-			.Single(b => (b.Tag as string) == "PreviewTabPinButton");
-		pinButton.IsVisible.Should().BeTrue("pin button must show while the tab is preview");
+			.Single(b => (b.Tag as string) == "PreviewTabFreezeButton");
+		freezeButton.IsVisible.Should().BeTrue("freeze button must show while the tab is preview");
 
 		var previousMainTab = factory.MainTab!;
 		var tabCountBefore = vm.DockWorkspace.Documents!.VisibleDockables!.Count;
 
-		// Simulate a user click on the pin button.
-		pinButton.RaiseEvent(new global::Avalonia.Interactivity.RoutedEventArgs(
+		// Simulate a user click on the freeze button.
+		freezeButton.RaiseEvent(new global::Avalonia.Interactivity.RoutedEventArgs(
 			global::Avalonia.Controls.Button.ClickEvent));
-		TestCapture.Step("pin-button-clicked");
+		TestCapture.Step("freeze-button-clicked");
 
-		// New semantics: clicking pin flips IsPreview, doesn't spawn a new tab.
+		// New semantics: clicking freeze flips IsPreview, doesn't spawn a new tab.
 		previousMainTab.IsPreview.Should().BeFalse(
-			"clicking the pin button must flip IsPreview=false on the current MainTab");
+			"clicking the freeze button must flip IsPreview=false on the current MainTab");
 		factory.MainTab.Should().BeSameAs(previousMainTab,
-			"pin alone must not rotate factory.MainTab; the new preview tab opens lazily on the next tree selection");
+			"freeze alone must not rotate factory.MainTab; the new preview tab opens lazily on the next tree selection");
 		vm.DockWorkspace.Documents!.VisibleDockables!.Count.Should().Be(tabCountBefore,
-			"pin alone must not change tab count");
+			"freeze alone must not change tab count");
 	}
 
 	[AvaloniaTest]
-	public async Task Pin_Entry_Appears_In_Tab_Context_Menu_Only_When_Preview()
+	public async Task Freeze_Entry_Appears_In_Tab_Context_Menu_Only_When_Preview()
 	{
-		// The right-click context-menu Pin entry must be visible on the preview MainTab
-		// and hidden (its IsVisible flips) on pinned carve-out tabs.
+		// The right-click context-menu Freeze entry must be visible on the preview MainTab
+		// and hidden (its IsVisible flips) on frozen carve-out tabs.
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
@@ -417,17 +417,17 @@ public class PreviewTabPromotionTests
 		var carveOutItem = window.GetVisualDescendants().OfType<DocumentTabStripItem>()
 			.Single(item => item.DataContext is ContentTabPage t && t.SourceNode == typeNode);
 
-		var mainPinEntry = mainTabItem.DocumentContextMenu!.Items.OfType<global::Avalonia.Controls.MenuItem>().Single();
-		mainPinEntry.Header.Should().Be("Pin tab");
-		mainPinEntry.IsVisible.Should().BeTrue("MainTab is preview — Pin tab entry must be visible");
+		var mainFreezeEntry = mainTabItem.DocumentContextMenu!.Items.OfType<global::Avalonia.Controls.MenuItem>().Single();
+		mainFreezeEntry.Header.Should().Be("Freeze tab");
+		mainFreezeEntry.IsVisible.Should().BeTrue("MainTab is preview — Freeze tab entry must be visible");
 
-		var carvePinEntry = carveOutItem.DocumentContextMenu!.Items.OfType<global::Avalonia.Controls.MenuItem>().Single();
-		carvePinEntry.IsVisible.Should().BeFalse(
-			"carve-out tabs are already pinned — the Pin entry must hide");
+		var carveFreezeEntry = carveOutItem.DocumentContextMenu!.Items.OfType<global::Avalonia.Controls.MenuItem>().Single();
+		carveFreezeEntry.IsVisible.Should().BeFalse(
+			"carve-out tabs are already frozen — the Freeze entry must hide");
 	}
 
 	[AvaloniaTest]
-	public async Task Pinned_Carve_Out_Tab_Header_Renders_Upright()
+	public async Task Frozen_Carve_Out_Tab_Header_Renders_Upright()
 	{
 		// Regression guard for the bug where every DocumentTabStripItem got italicised
 		// because the App.axaml setter used a static `FontStyle="Italic"` value instead
@@ -447,38 +447,38 @@ public class PreviewTabPromotionTests
 		var carveOutModel = vm.DockWorkspace.Documents!.VisibleDockables!
 			.OfType<ContentTabPage>()
 			.Last(t => t.SourceNode == typeNode);
-		carveOutModel.IsPreview.Should().BeFalse("baseline: carve-out tab is pinned");
+		carveOutModel.IsPreview.Should().BeFalse("baseline: carve-out tab is frozen");
 
 		var carveOutItem = window.GetVisualDescendants().OfType<DocumentTabStripItem>()
 			.Single(item => ReferenceEquals(item.DataContext, carveOutModel));
 		carveOutItem.FontStyle.Should().Be(FontStyle.Normal,
-			"a pinned (IsPreview=false) document tab must render with upright FontStyle");
+			"a frozen (IsPreview=false) document tab must render with upright FontStyle");
 	}
 
 	[AvaloniaTest]
-	public void PinCurrentTab_Is_Noop_When_MainTab_Already_Pinned()
+	public void FreezeCurrentTab_Is_Noop_When_MainTab_Already_Frozen()
 	{
-		// Idempotency: a second pin against an already-pinned MainTab is a no-op. The new
-		// "pin = flip-only, spawn-lazy" semantics make this simpler than the old version:
-		// PinCurrentMainTab() returns null when MainTab.IsPreview is already false, and
-		// PinCurrentTab early-returns.
+		// Idempotency: a second freeze against an already-frozen MainTab is a no-op. The new
+		// "freeze = flip-only, spawn-lazy" semantics make this simpler than the old version:
+		// FreezeCurrentMainTab() returns null when MainTab.IsPreview is already false, and
+		// FreezeCurrentTab early-returns.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
 		TestCapture.Step("booted");
 
-		// Manually flip the current MainTab to pinned, simulating the post-pin state.
+		// Manually flip the current MainTab to frozen, simulating the post-freeze state.
 		factory.MainTab!.IsPreview = false;
 		var before = factory.MainTab;
 
-		vm.DockWorkspace.PinCurrentTab();
-		TestCapture.Step("pin-noop");
+		vm.DockWorkspace.FreezeCurrentTab();
+		TestCapture.Step("freeze-noop");
 
 		factory.MainTab.Should().BeSameAs(before,
-			"with no preview MainTab to flip, PinCurrentTab must leave the factory state untouched");
+			"with no preview MainTab to flip, FreezeCurrentTab must leave the factory state untouched");
 		factory.MainTab.IsPreview.Should().BeFalse(
-			"the already-pinned tab stays pinned");
+			"the already-frozen tab stays frozen");
 	}
 
 	[AvaloniaTest]
@@ -501,15 +501,15 @@ public class PreviewTabPromotionTests
 	}
 
 	[AvaloniaTest]
-	public async Task Pin_Button_Inherits_The_Close_Button_Theme()
+	public async Task Freeze_Button_Inherits_The_Close_Button_Theme()
 	{
-		// Visual parity: the pin button should look like the close button — same size, same
+		// Visual parity: the freeze button should look like the close button — same size, same
 		// hover background. Both are plain Avalonia.Controls.Button instances; the close
 		// button gets its visual identity from a ControlTheme applied by Dock's tab
-		// template. Pin should copy that Theme rather than carry its own custom style.
+		// template. Freeze should copy that Theme rather than carry its own custom style.
 		var (window, vm) = await TestHarness.BootAsync(3);
 
-		// Open a carve-out so the close button is visible alongside the pin (single-tab
+		// Open a carve-out so the close button is visible alongside the freeze (single-tab
 		// scenario hides the close button).
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
@@ -524,24 +524,24 @@ public class PreviewTabPromotionTests
 		var mainTabItem = window.GetVisualDescendants().OfType<DocumentTabStripItem>()
 			.Single(item => ReferenceEquals(item.DataContext, factory.MainTab));
 
-		var pinButton = mainTabItem.GetVisualDescendants()
+		var freezeButton = mainTabItem.GetVisualDescendants()
 			.OfType<global::Avalonia.Controls.Button>()
-			.Single(b => (b.Tag as string) == "PreviewTabPinButton");
+			.Single(b => (b.Tag as string) == "PreviewTabFreezeButton");
 		var closeButton = mainTabItem.GetVisualDescendants()
 			.OfType<global::Avalonia.Controls.Button>()
-			.FirstOrDefault(b => (b.Tag as string) != "PreviewTabPinButton");
-		closeButton.Should().NotBeNull("baseline: close button exists as a sibling of the pin");
+			.FirstOrDefault(b => (b.Tag as string) != "PreviewTabFreezeButton");
+		closeButton.Should().NotBeNull("baseline: close button exists as a sibling of the freeze");
 
-		pinButton.Theme.Should().BeSameAs(closeButton!.Theme,
-			"pin button must use the same ControlTheme as the close button so size + hover bg match");
-		pinButton.Classes.Should().NotContain("preview-pin",
+		freezeButton.Theme.Should().BeSameAs(closeButton!.Theme,
+			"freeze button must use the same ControlTheme as the close button so size + hover bg match");
+		freezeButton.Classes.Should().NotContain("preview-freeze",
 			"after the Theme-copy refactor the custom class-based styling is unused; the Theme drives all visuals");
 	}
 
 	[AvaloniaTest]
 	public async Task Tree_Selection_While_Frozen_Tab_Active_Opens_A_New_Preview_Tab()
 	{
-		// "Frozen" covers: (a) user-pinned tabs (IsPreview=false via PinCurrentTab),
+		// "Frozen" covers: (a) user-frozen tabs (IsPreview=false via FreezeCurrentTab),
 		// (b) carve-out tabs (born IsPreview=false via OpenNodeInNewTab), and (c) static
 		// content tabs (Options, About) whose Content is a static viewmodel. Tree-node
 		// selections while any of those are active must spawn a fresh preview tab and
@@ -551,7 +551,7 @@ public class PreviewTabPromotionTests
 
 		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
 
-		// Open a carve-out (born pinned) and let it become the active dockable.
+		// Open a carve-out (born frozen) and let it become the active dockable.
 		var typeA = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.DockWorkspace.OpenNodeInNewTab(typeA);

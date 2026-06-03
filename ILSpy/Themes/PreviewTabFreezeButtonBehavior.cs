@@ -36,24 +36,24 @@ using ILSpy.ViewModels;
 namespace ILSpy.Themes
 {
 	/// <summary>
-	/// Injects an inline "pin" Button into the tab header of every <see cref="DocumentTabStripItem"/>.
+	/// Injects an inline "freeze" Button into the tab header of every <see cref="DocumentTabStripItem"/>.
 	/// Dock's tab template is compiled into the theme DLL and not directly overridable without
 	/// reproducing the whole template, so the button is added at runtime by walking the visual
 	/// tree to the inner title StackPanel and appending a child there. The button's
 	/// <see cref="Visual.IsVisible"/> is bound to <see cref="ContentTabPage.IsPreview"/> on the
-	/// tab's underlying viewmodel and the click handler routes to
-	/// <see cref="DockWorkspace.PinCurrentTab"/>. Styling lives in App.axaml under the
-	/// <c>Button.preview-pin</c> class selector so the theme's <c>:pointerover</c> states still
-	/// apply (local Background/BorderBrush values here would block them).
+	/// tab's underlying viewmodel — so it shows only on the One preview tab — and the click
+	/// handler routes to <see cref="DockWorkspace.FreezeCurrentTab"/>. It reuses the sibling
+	/// close button's ControlTheme so it renders at the same size and inherits the same
+	/// <c>:pointerover</c> states.
 	/// </summary>
-	public static class PreviewTabPinButtonBehavior
+	public static class PreviewTabFreezeButtonBehavior
 	{
-		const string PinButtonTag = "PreviewTabPinButton";
+		const string FreezeButtonTag = "PreviewTabFreezeButton";
 
 		public static readonly AttachedProperty<bool> EnableProperty =
 			AvaloniaProperty.RegisterAttached<DocumentTabStripItem, bool>(
 				"Enable",
-				typeof(PreviewTabPinButtonBehavior));
+				typeof(PreviewTabFreezeButtonBehavior));
 
 		public static void SetEnable(DocumentTabStripItem element, bool value)
 			=> element.SetValue(EnableProperty, value);
@@ -61,7 +61,7 @@ namespace ILSpy.Themes
 		public static bool GetEnable(DocumentTabStripItem element)
 			=> element.GetValue(EnableProperty);
 
-		static PreviewTabPinButtonBehavior()
+		static PreviewTabFreezeButtonBehavior()
 		{
 			EnableProperty.Changed.AddClassHandler<DocumentTabStripItem>(OnEnableChanged);
 		}
@@ -78,16 +78,16 @@ namespace ILSpy.Themes
 		static void TryInject(DocumentTabStripItem item)
 		{
 			// Idempotent: bail if our button is already in the tree.
-			if (item.GetVisualDescendants().OfType<Button>().Any(b => (b.Tag as string) == PinButtonTag))
+			if (item.GetVisualDescendants().OfType<Button>().Any(b => (b.Tag as string) == FreezeButtonTag))
 				return;
 			if (item.DataContext is not ContentTabPage)
 				return;
 			// Anchor: the Grid that's the parent of the title StackPanel. The Grid also hosts
-			// the close-button ContentPresenter as a sibling column. We inject pin as a new
-			// Auto-sized column between the two so the title can't push pin past the tab's
-			// right edge — appending to the StackPanel puts pin inside the title column,
-			// where the unconstrained title TextBlock claims all the space and the pin
-			// overflows behind the close button.
+			// the close-button ContentPresenter as a sibling column. We inject the freeze button
+			// as a new Auto-sized column between the two so the title can't push it past the tab's
+			// right edge — appending to the StackPanel puts it inside the title column, where the
+			// unconstrained title TextBlock claims all the space and the button overflows behind
+			// the close button.
 			var titleStack = item.GetVisualDescendants().OfType<StackPanel>().FirstOrDefault();
 			if (titleStack is null)
 				return;
@@ -97,9 +97,9 @@ namespace ILSpy.Themes
 
 			// Clip the StackPanel's content so the title TextBlock (which measures at its
 			// full unconstrained text width — 900px+ for long type signatures) doesn't
-			// render OVER the pin and close buttons that sit in adjacent Grid columns.
-			// Without this, the pin appears "cut off" because the title's pixels paint
-			// on top of it.
+			// render OVER the freeze and close buttons that sit in adjacent Grid columns.
+			// Without this, the freeze button appears "cut off" because the title's pixels
+			// paint on top of it.
 			titleStack.ClipToBounds = true;
 
 			// Tilted-pushpin silhouette matching the Visual Studio preview-tab affordance.
@@ -123,11 +123,11 @@ namespace ILSpy.Themes
 				Source = item,
 				Mode = BindingMode.OneWay,
 			});
-			var pin = new Button {
-				Tag = PinButtonTag,
+			var freezeButton = new Button {
+				Tag = FreezeButtonTag,
 				Content = glyph,
-				// Left margin preserves the gap between pin and close (~4px) regardless of
-				// what the inherited ControlTheme decides for its own Margin.
+				// Left margin preserves the gap between the freeze and close buttons (~4px)
+				// regardless of what the inherited ControlTheme decides for its own Margin.
 				Margin = new Thickness(4, 0, 0, 0),
 				VerticalAlignment = VerticalAlignment.Center,
 				HorizontalAlignment = HorizontalAlignment.Center,
@@ -138,28 +138,28 @@ namespace ILSpy.Themes
 				// right edge at the content-area boundary.
 				ClipToBounds = false,
 			};
-			// Copy the close button's ControlTheme so pin renders at the same size and uses
-			// the same :pointerover background. The close button (a plain Avalonia.Controls.Button
-			// with no classes, theme applied by Dock's tab template) sits as a sibling under
-			// the same Grid. Without this, pin defaulted to a class-styled custom look that
-			// was bigger and used a different hover tint than its neighbour.
+			// Copy the close button's ControlTheme so the freeze button renders at the same size
+			// and uses the same :pointerover background. The close button (a plain
+			// Avalonia.Controls.Button with no classes, theme applied by Dock's tab template)
+			// sits as a sibling under the same Grid. Without this, it defaulted to a class-styled
+			// custom look that was bigger and used a different hover tint than its neighbour.
 			var closeButton = item.GetVisualDescendants().OfType<Button>()
-				.FirstOrDefault(b => (b.Tag as string) != PinButtonTag);
+				.FirstOrDefault(b => (b.Tag as string) != FreezeButtonTag);
 			if (closeButton?.Theme is { } closeTheme)
-				pin.Theme = closeTheme;
-			ToolTip.SetTip(pin, "Pin tab");
+				freezeButton.Theme = closeTheme;
+			ToolTip.SetTip(freezeButton, "Freeze tab");
 
-			// IsVisible follows IsPreview — the button hides once the tab is pinned.
-			pin.Bind(Visual.IsVisibleProperty, new Binding(nameof(ContentTabPage.IsPreview)) {
+			// IsVisible follows IsPreview — the button hides once the tab is frozen.
+			freezeButton.Bind(Visual.IsVisibleProperty, new Binding(nameof(ContentTabPage.IsPreview)) {
 				Source = item.DataContext,
 				Mode = BindingMode.OneWay,
 			});
 
-			pin.Click += (_, _) => TryGetDockWorkspace()?.PinCurrentTab();
+			freezeButton.Click += (_, _) => TryGetDockWorkspace()?.FreezeCurrentTab();
 
 			// Insert a new Auto-sized column right before the last (close) column, bump any
-			// existing children at or past that index by +1, and dock pin there. This gives
-			// pin a dedicated cell the title can't encroach on.
+			// existing children at or past that index by +1, and dock the freeze button there.
+			// This gives it a dedicated cell the title can't encroach on.
 			int newColIndex = grid.ColumnDefinitions.Count - 1;
 			grid.ColumnDefinitions.Insert(newColIndex, new ColumnDefinition(GridLength.Auto));
 			foreach (var child in grid.Children)
@@ -168,8 +168,8 @@ namespace ILSpy.Themes
 				if (col >= newColIndex)
 					Grid.SetColumn(child, col + 1);
 			}
-			Grid.SetColumn(pin, newColIndex);
-			grid.Children.Add(pin);
+			Grid.SetColumn(freezeButton, newColIndex);
+			grid.Children.Add(freezeButton);
 		}
 
 		static DockWorkspace? TryGetDockWorkspace()

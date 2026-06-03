@@ -387,7 +387,7 @@
                     Value="{Binding IsPreview, Converter={x:Static themes:BoolToBrushConverter.PreviewAccent}, FallbackValue={x:Null}, Mode=OneWay, x:CompileBindings=False}" />
             <Setter Property="BorderThickness"
                     Value="{Binding IsPreview, Converter={x:Static themes:BoolToThicknessConverter.LeftStripe}, FallbackValue=0, Mode=OneWay, x:CompileBindings=False}" />
-            <!-- Per-tab right-click "Pin tab" entry. The Behavior creates a fresh
+            <!-- Per-tab right-click "Freeze tab" entry. The Behavior creates a fresh
                  ContextMenu per attachment (visuals can have only one parent) and toggles
                  the entry's IsVisible on the tab's IsPreview. -->
             <Setter Property="themes:PreviewTabContextMenuBehavior.Enable" Value="True" />
@@ -395,7 +395,7 @@
                  theme DLL; the Behavior walks the visual tree and injects a Button between
                  the title and the close button. Bound to IsPreview so the icon hides once
                  the tab is pinned. -->
-            <Setter Property="themes:PreviewTabPinButtonBehavior.Enable" Value="True" />
+            <Setter Property="themes:PreviewTabFreezeButtonBehavior.Enable" Value="True" />
         </Style>
 
 

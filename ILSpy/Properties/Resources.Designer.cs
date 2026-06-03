@@ -3163,9 +3163,9 @@ namespace ICSharpCode.ILSpy.Properties {
         /// <summary>
         ///   Looks up a localized string similar to _Pin current tab.
         /// </summary>
-        public static string Window_PinCurrentTab {
+        public static string Window_FreezeCurrentTab {
             get {
-                return ResourceManager.GetString("Window_PinCurrentTab", resourceCulture);
+                return ResourceManager.GetString("Window_FreezeCurrentTab", resourceCulture);
             }
         }
 
