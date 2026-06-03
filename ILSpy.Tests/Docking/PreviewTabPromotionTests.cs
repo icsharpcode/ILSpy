@@ -625,4 +625,55 @@ public class PreviewTabPromotionTests
 		docs.VisibleDockables!.IndexOf(frozen).Should().BeGreaterThan(0,
 			"the frozen ex-One slides to the right of the new One");
 	}
+
+	[AvaloniaTest]
+	public async Task Preview_Cannot_Be_Reordered_Out_Of_Slot_0()
+	{
+		// The in-strip reorder drag commits through the same-dock MoveDockable; it's overridden to
+		// refuse moving the One out of slot 0. Drive that commit directly (what ItemDragHelper does).
+		var (_, vm) = await TestHarness.BootAsync(3);
+		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
+		var docs = vm.DockWorkspace.Documents!;
+
+		var typeA = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		vm.AssemblyTreeModel.SelectNode(typeA);
+		vm.DockWorkspace.SettleSelection();
+		var theOne = factory.MainTab!;
+		var typeC = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Private.Uri", "System", "System.Uri");
+		vm.DockWorkspace.OpenNodeInNewTab(typeC);
+		var frozen = docs.VisibleDockables!.OfType<ContentTabPage>().Last(t => t.SourceNode == typeC);
+		docs.VisibleDockables!.IndexOf(theOne).Should().Be(0, "precondition: the One is at index 0");
+
+		factory.MoveDockable(docs, theOne, frozen);
+
+		docs.VisibleDockables!.IndexOf(theOne).Should().Be(0,
+			"the One must stay at index 0 -- it is immovable");
+	}
+
+	[AvaloniaTest]
+	public async Task Frozen_Tab_Cannot_Be_Reordered_Before_The_Preview()
+	{
+		var (_, vm) = await TestHarness.BootAsync(3);
+		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
+		var docs = vm.DockWorkspace.Documents!;
+
+		var typeA = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		vm.AssemblyTreeModel.SelectNode(typeA);
+		vm.DockWorkspace.SettleSelection();
+		var theOne = factory.MainTab!;
+		var typeC = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Private.Uri", "System", "System.Uri");
+		vm.DockWorkspace.OpenNodeInNewTab(typeC);
+		var frozen = docs.VisibleDockables!.OfType<ContentTabPage>().Last(t => t.SourceNode == typeC);
+
+		factory.MoveDockable(docs, frozen, theOne);
+
+		docs.VisibleDockables!.IndexOf(theOne).Should().Be(0,
+			"the One must remain at index 0; a frozen tab cannot slip before it");
+		docs.VisibleDockables!.IndexOf(frozen).Should().BeGreaterThan(0,
+			"the frozen tab is clamped to a position after the One");
+	}
 }

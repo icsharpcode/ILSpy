@@ -83,6 +83,55 @@ namespace ILSpy.Docking
 			return fresh;
 		}
 
+		// The One is immovable at documents-dock index 0. A within-strip reorder drag commits
+		// through this same-dock MoveDockable (Dock's DocumentTabStripItem/ItemDragHelper does NOT
+		// consult IDockable.CanDrag), so overriding it is the choke point that pins the One to
+		// slot 0 and keeps frozen tabs to its right.
+		public override void MoveDockable(IDock dock, IDockable sourceDockable, IDockable targetDockable)
+		{
+			if (ReferenceEquals(dock, Documents))
+			{
+				// Never drag the One out of slot 0.
+				if (ReferenceEquals(sourceDockable, MainTab))
+					return;
+				// A frozen tab must not land at or before the One: retarget to the tab at index 1
+				// so the source lands at position 1, not 0.
+				if (ReferenceEquals(targetDockable, MainTab))
+				{
+					var kids = dock.VisibleDockables;
+					if (kids is { Count: > 1 })
+						targetDockable = kids[1];
+					else
+						return;
+				}
+			}
+			base.MoveDockable(dock, sourceDockable, targetDockable);
+		}
+
+		// Cross-dock move: never pull the One into another document dock (only reachable if the
+		// document area is ever split).
+		public override void MoveDockable(IDock sourceDock, IDock targetDock, IDockable sourceDockable, IDockable? targetDockable)
+		{
+			if (ReferenceEquals(sourceDockable, MainTab))
+				return;
+			base.MoveDockable(sourceDock, targetDock, sourceDockable, targetDockable);
+		}
+
+		// Self-healing insurance: whatever drag path ran, re-assert the One at index 0. Idempotent
+		// and cheap -- guards against a future Dock version routing a reorder past MoveDockable.
+		public override void OnDockableMoved(IDockable? dockable)
+		{
+			base.OnDockableMoved(dockable);
+			if (MainTab is not { } one || Documents?.VisibleDockables is not { } kids)
+				return;
+			int idx = kids.IndexOf(one);
+			if (idx > 0)
+			{
+				kids.RemoveAt(idx);
+				kids.Insert(0, one);
+			}
+		}
+
 		public ILSpyDockFactory(ToolPaneRegistry registry)
 		{
 			this.panes = registry.Panes;
