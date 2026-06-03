@@ -451,14 +451,23 @@ namespace ILSpy.Docking
 			// Carve-out tab → active: pull the tree's selection over to whatever entity the
 			// new active tab is showing. Fires on user-driven tab clicks (via the dock model's
 			// ActiveDockable setter) and on programmatic SetActiveDockable calls.
-			if (factory.Documents?.ActiveDockable is not ContentTabPage tab || tab.SourceNode is not { } node)
+			if (factory.Documents?.ActiveDockable is not ContentTabPage tab)
 				return;
-			if (ReferenceEquals(assemblyTreeModel.SelectedItem, node))
+			// Restore the tab's FULL selection. A decompiler tab carries its node(s) in
+			// CurrentNodes (one or many) — a multi-node tab has no single SourceNode, so reading
+			// CurrentNodes is what lets the tree restore the whole multi-selection. Other content
+			// (metadata, compare) carries a single SourceNode.
+			System.Collections.Generic.IReadOnlyList<SharpTreeNode> nodes;
+			if (UnwrapDecompilerTab(tab) is { CurrentNodes.Count: > 0 } dec)
+				nodes = dec.CurrentNodes;
+			else if (tab.SourceNode is { } single)
+				nodes = new[] { single };
+			else
 				return;
 			syncingTreeFromActiveTab = true;
 			try
 			{
-				assemblyTreeModel.SelectedItem = node;
+				assemblyTreeModel.SelectNodes(nodes);
 			}
 			finally
 			{

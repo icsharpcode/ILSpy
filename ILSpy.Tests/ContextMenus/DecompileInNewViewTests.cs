@@ -283,7 +283,172 @@ public class DecompileInNewViewTests
 			"B's highlight must be gone");
 	}
 
+	[AvaloniaTest]
+	public async Task Opening_A_Node_In_A_New_Tab_Syncs_The_Tree_Selection_To_It()
+	{
+		// Activating the new tab must pull the tree selection over to its node -- both the model
+		// selection AND the grid's visual selection. Previously masked because the right-click
+		// already moved the selection; now that right-click leaves it put, the tab-activation
+		// sync has to do the work.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<DataGrid>();
+
+		var nodeA = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
+		var nodeB = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(TreeNavigation.CoreLibName);
+
+		vm.AssemblyTreeModel.SelectNode(nodeA);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		for (int i = 0; i < 6; i++)
+		{
+			Dispatcher.UIThread.RunJobs();
+			grid.UpdateLayout();
+			await Task.Delay(20);
+		}
+
+		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
+		var menu = pane.BuildContextMenuForCurrentState(registry.Entries, rightClickedNode: nodeB);
+		menu!.ClickItem(Resources.DecompileToNewPanel);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		for (int i = 0; i < 6; i++)
+		{
+			Dispatcher.UIThread.RunJobs();
+			grid.UpdateLayout();
+			await Task.Delay(20);
+		}
+
+		// The model selection follows the new active tab...
+		ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, nodeB).Should().BeTrue(
+			"the tree model selection must follow the newly-activated tab");
+		// ...and so does the grid's visual selection (the grid stores either the raw node or its
+		// HierarchicalNode wrapper depending on the path that set it).
+		ReferenceEquals(GridSelectedNode(grid), nodeB).Should().BeTrue(
+			"the grid's visual selection must follow the newly-activated tab");
+	}
+
+	[AvaloniaTest]
+	public async Task Activating_A_Single_Node_Tab_Syncs_The_Tree_After_A_Multi_Node_Selection()
+	{
+		// Regression: once the tree has held a multi-selection (e.g. a tab decompiled from
+		// several nodes), activating a single-node tab must still pull the tree selection over.
+		// The SelectedItem setter replaces the collection via Clear()+Add(); for the count>1 case
+		// that exposed a transient empty selection, whose grid sync deferred its done-flag and
+		// then suppressed the sync for the real value -- so the tree stopped following the tab.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<DataGrid>();
+
+		var assemblies = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>().Take(3).ToArray();
+		assemblies.Length.Should().BeGreaterThanOrEqualTo(3, "need three top-level rows");
+		var nodeA = assemblies[0];
+		var nodeB = assemblies[1];
+		var nodeC = assemblies[2];
+
+		// Hold a multi-selection (A + B), as a multi-node decompile tab would.
+		vm.AssemblyTreeModel.SelectedItems.Clear();
+		vm.AssemblyTreeModel.SelectedItems.Add(nodeA);
+		vm.AssemblyTreeModel.SelectedItems.Add(nodeB);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		for (int i = 0; i < 6; i++)
+		{
+			Dispatcher.UIThread.RunJobs();
+			grid.UpdateLayout();
+			await Task.Delay(20);
+		}
+		vm.AssemblyTreeModel.SelectedItems.Count.Should().Be(2, "precondition: a multi-selection is held");
+
+		// Open C in a new tab -> activates it -> the tree must follow to C.
+		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
+		var menu = pane.BuildContextMenuForCurrentState(registry.Entries, rightClickedNode: nodeC);
+		menu!.ClickItem(Resources.DecompileToNewPanel);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		for (int i = 0; i < 6; i++)
+		{
+			Dispatcher.UIThread.RunJobs();
+			grid.UpdateLayout();
+			await Task.Delay(20);
+		}
+
+		ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, nodeC).Should().BeTrue(
+			"the tree model selection must follow the newly-activated single-node tab");
+		vm.AssemblyTreeModel.SelectedItems.Count.Should().Be(1,
+			"activating the single-node tab must collapse the multi-selection to that one node");
+		ReferenceEquals(GridSelectedNode(grid), nodeC).Should().BeTrue(
+			"the grid's visual selection must follow even after a prior multi-selection");
+	}
+
+	[AvaloniaTest]
+	public async Task Activating_A_Multi_Node_Tab_Restores_Its_Multi_Selection_In_The_Tree()
+	{
+		// A tab decompiled from several nodes carries no single SourceNode, so activating it has
+		// to restore the WHOLE set in the tree -- not nothing, and not just one. Scenario: select
+		// two nodes (multi-node preview tab), open a third in a new tab, then re-activate the
+		// multi-node tab; the tree selection must come back to both original nodes.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<DataGrid>();
+		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
+
+		var assemblies = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>().Take(3).ToArray();
+		assemblies.Length.Should().BeGreaterThanOrEqualTo(3, "need three top-level rows");
+		var nodeA = assemblies[0];
+		var nodeB = assemblies[1];
+		var nodeC = assemblies[2];
+
+		// 1) Multi-select A + B -> the active (preview) tab decompiles both.
+		vm.AssemblyTreeModel.SelectedItems.Clear();
+		vm.AssemblyTreeModel.SelectedItems.Add(nodeA);
+		vm.AssemblyTreeModel.SelectedItems.Add(nodeB);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		var multiTab = (ContentTabPage)documents.ActiveDockable!;
+
+		// 2) Open C in a new (single-node) tab -> it becomes active, tree -> C.
+		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
+		var menu = pane.BuildContextMenuForCurrentState(registry.Entries, rightClickedNode: nodeC);
+		menu!.ClickItem(Resources.DecompileToNewPanel);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		ReferenceEquals(multiTab, documents.ActiveDockable).Should().BeFalse(
+			"precondition: the new single-node tab is active, not the multi-node one");
+
+		// 3) Re-activate the multi-node tab.
+		vm.DockWorkspace.Factory.SetActiveDockable(multiTab);
+		for (int i = 0; i < 8; i++)
+		{
+			Dispatcher.UIThread.RunJobs();
+			grid.UpdateLayout();
+			await Task.Delay(20);
+		}
+
+		// 4) The tree selection must contain BOTH original nodes again -- in the model...
+		vm.AssemblyTreeModel.SelectedItems.Should().Contain(nodeA)
+			.And.Contain(nodeB);
+		vm.AssemblyTreeModel.SelectedItems.Count.Should().Be(2,
+			"re-activating the multi-node tab restores exactly its two nodes");
+		// ...and visually in the grid (both rows highlighted, not just the primary).
+		GridSelectedNodes(grid).Should().Contain(nodeA).And.Contain(nodeB);
+		GridSelectedNodes(grid).Should().HaveCount(2,
+			"the grid must visually highlight every restored node");
+	}
+
 	static bool RowNodeEquals(DataGridRow row, SharpTreeNode node)
 		=> row.DataContext is HierarchicalNode hn && ReferenceEquals(hn.Item, node);
 
+	static SharpTreeNode? GridSelectedNode(DataGrid grid)
+		=> grid.SelectedItem is HierarchicalNode hn ? hn.Item as SharpTreeNode : grid.SelectedItem as SharpTreeNode;
+
+	static System.Collections.Generic.List<SharpTreeNode> GridSelectedNodes(DataGrid grid)
+		=> grid.SelectedItems.Cast<object?>()
+			.Select(o => o is HierarchicalNode hn ? hn.Item as SharpTreeNode : o as SharpTreeNode)
+			.Where(n => n != null)
+			.Select(n => n!)
+			.ToList();
 }

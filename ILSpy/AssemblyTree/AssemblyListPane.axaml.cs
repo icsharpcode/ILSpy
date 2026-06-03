@@ -383,40 +383,90 @@ namespace ILSpy.AssemblyTree
 			if (TreeGrid.HierarchicalModel is not IHierarchicalModel hm)
 				return;
 
+			// Everything that can touch the grid -- including the ancestor Expand calls, which
+			// realise rows and can fire a SelectionChanged -- must run inside BeginSync so that
+			// echo doesn't bounce back into the model and disturb the in-flight navigation.
+			BeginSync();
+			try
+			{
+				var primaryWrapper = ExpandAncestors(hm, target);
+				if (primaryWrapper == null)
+					return;
+				if (!ReferenceEquals(TreeGrid.SelectedItem, target))
+				{
+					TreeGrid.SelectedItem = target;
+					// Defer past Expand's pending child-realization notifications — synchronously
+					// the wrapper isn't in the visible list yet.
+					var scrollTarget = primaryWrapper;
+					Dispatcher.UIThread.Post(
+						() => CenterRowInView(scrollTarget),
+						DispatcherPriority.Background);
+				}
+				// Multi-selection: mirror every OTHER selected node into the grid so a tab
+				// restored from several nodes highlights all of them, not just the primary set
+				// above. Single selection makes this a no-op.
+				if (DataContext is AssemblyTreeModel model && model.SelectedItems.Count > 1)
+					MirrorMultiSelectionToGrid(hm, model, target);
+			}
+			finally
+			{
+				EndSync();
+			}
+		}
+
+		// Expands every ancestor of <paramref name="node"/> so its row is realised, returning the
+		// node's own wrapper (or null if any level can't be located yet).
+		static HierarchicalNode? ExpandAncestors(IHierarchicalModel hm, SharpTreeNode node)
+		{
 			var path = new System.Collections.Generic.List<SharpTreeNode>();
-			for (var n = target; n.Parent != null; n = n.Parent)
+			for (var n = node; n.Parent != null; n = n.Parent)
 				path.Add(n);
 			path.Reverse();
 
-			// Each ancestor must be expanded before FindNode can locate the next level's wrapper.
-			BeginSync();
 			HierarchicalNode? hNode = null;
 			for (int i = 0; i < path.Count; i++)
 			{
 				hNode = hm.FindNode(path[i]);
 				if (hNode == null)
-				{
-					EndSync();
-					return;
-				}
+					return null;
 				if (i < path.Count - 1 && !hNode.IsExpanded)
 					hm.Expand(hNode);
 			}
+			return hNode;
+		}
 
-			if (ReferenceEquals(TreeGrid.SelectedItem, target))
+		// Brings the grid's selected set in line with the model's multi-selection: adds each
+		// selected node's wrapper that isn't highlighted yet (expanding its ancestors first) and
+		// drops any grid row no longer selected in the model. The primary is the caller's job.
+		void MirrorMultiSelectionToGrid(IHierarchicalModel hm, AssemblyTreeModel model, SharpTreeNode primary)
+		{
+			foreach (var node in model.SelectedItems)
 			{
-				EndSync();
-				return;
+				if (ReferenceEquals(node, primary))
+					continue;
+				var wrapper = ExpandAncestors(hm, node);
+				if (wrapper != null && !GridSelectionContains(node))
+					TreeGrid.SelectedItems.Add(wrapper);
 			}
-			TreeGrid.SelectedItem = target;
-			// Pass the HierarchicalNode wrapper (DataGrid.IndexOf is against the wrappers, not
-			// the underlying SharpTreeNodes), and defer past Expand's pending child-realization
-			// notifications — synchronously the wrapper isn't in the visible list yet.
-			var scrollTarget = hNode!;
-			Dispatcher.UIThread.Post(
-				() => CenterRowInView(scrollTarget),
-				DispatcherPriority.Background);
-			EndSync();
+			for (int i = TreeGrid.SelectedItems.Count - 1; i >= 0; i--)
+			{
+				var node = GridItemNode(TreeGrid.SelectedItems[i]);
+				if (node != null && !model.SelectedItems.Contains(node))
+					TreeGrid.SelectedItems.RemoveAt(i);
+			}
+		}
+
+		static SharpTreeNode? GridItemNode(object? item)
+			=> item is HierarchicalNode hn ? hn.Item as SharpTreeNode : item as SharpTreeNode;
+
+		bool GridSelectionContains(SharpTreeNode node)
+		{
+			foreach (var item in TreeGrid.SelectedItems)
+			{
+				if (ReferenceEquals(GridItemNode(item), node))
+					return true;
+			}
+			return false;
 		}
 
 		// DataGrid.ScrollIntoView only brings the row to the nearest viewport edge; we want

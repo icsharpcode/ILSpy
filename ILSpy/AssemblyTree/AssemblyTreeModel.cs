@@ -88,10 +88,52 @@ namespace ILSpy.AssemblyTree
 			set {
 				if (SelectedItem == value)
 					return;
-				SelectedItems.Clear();
-				if (value != null)
-					SelectedItems.Add(value);
+				SelectNodes(value == null ? System.Array.Empty<SharpTreeNode>() : new[] { value });
 			}
+		}
+
+		/// <summary>
+		/// Replaces the whole selection with <paramref name="nodes"/> in ONE logical change. The
+		/// collection can't be swapped atomically (Clear()+Add() passes through a transient empty,
+		/// add-before-remove through a transient multi), so the selection-changed fan-out is
+		/// batched: per-element IsSelected toggling still happens, but the PropertyChanged / path /
+		/// message-bus notifications fire once, AFTER, with the final set. Without this a transient
+		/// empty poisons the grid sync's deferred guard (tree stops following tab activation) and a
+		/// transient multi confuses count-sensitive consumers (metadata-tab reuse). Drives both the
+		/// single-node <see cref="SelectedItem"/> setter and multi-node tab-activation restore.
+		/// </summary>
+		public void SelectNodes(IReadOnlyList<SharpTreeNode> nodes)
+		{
+			ArgumentNullException.ThrowIfNull(nodes);
+			if (SelectionMatches(nodes))
+				return;
+			batchingSelectionChange = true;
+			try
+			{
+				SelectedItems.Clear();
+				foreach (var node in nodes)
+				{
+					if (node != null && !SelectedItems.Contains(node))
+						SelectedItems.Add(node);
+				}
+			}
+			finally
+			{
+				batchingSelectionChange = false;
+			}
+			RaiseSelectionChanged();
+		}
+
+		bool SelectionMatches(IReadOnlyList<SharpTreeNode> nodes)
+		{
+			if (SelectedItems.Count != nodes.Count)
+				return false;
+			for (int i = 0; i < nodes.Count; i++)
+			{
+				if (!SelectedItems.Contains(nodes[i]))
+					return false;
+			}
+			return true;
 		}
 
 		[ObservableProperty]
@@ -155,6 +197,11 @@ namespace ILSpy.AssemblyTree
 			catch { return null; }
 		}
 
+		// True while the SelectedItem setter is replacing the collection via Clear()+Add();
+		// suppresses the selection-changed fan-out until the final state is in place so consumers
+		// never observe the transient empty/multi mid-replace.
+		bool batchingSelectionChange;
+
 		void OnSelectedItemsChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
 			if (e.NewItems != null)
@@ -164,6 +211,15 @@ namespace ILSpy.AssemblyTree
 				foreach (SharpTreeNode n in e.OldItems)
 					n.IsSelected = false;
 
+			// During a SelectedItem-setter batch the fan-out is deferred to the single
+			// RaiseSelectionChanged() the setter issues once the final selection is in place.
+			if (batchingSelectionChange)
+				return;
+			RaiseSelectionChanged();
+		}
+
+		void RaiseSelectionChanged()
+		{
 			// SelectedItem is a wrapper over this collection — anyone bound to it must be
 			// notified, and the saved path must follow the new primary.
 			OnPropertyChanged(nameof(SelectedItem));
