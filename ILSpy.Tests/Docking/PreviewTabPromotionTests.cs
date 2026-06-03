@@ -544,19 +544,21 @@ public class PreviewTabPromotionTests
 	}
 
 	[AvaloniaTest]
-	public async Task Tree_Selection_While_Frozen_Tab_Active_Opens_A_New_Preview_Tab()
+	public async Task Tree_Selection_While_Frozen_Tab_Active_Reuses_The_One()
 	{
-		// "Frozen" covers: (a) user-frozen tabs (IsPreview=false via FreezeCurrentTab),
-		// (b) carve-out tabs (born IsPreview=false via OpenNodeInNewTab), and (c) static
-		// content tabs (Options, About) whose Content is a static viewmodel. Tree-node
-		// selections while any of those are active must spawn a fresh preview tab and
-		// route the new content there. This test uses a carve-out as a stand-in for the
-		// frozen-tab family — the IsWritablePreview check returns null for all three.
+		// Exactly one preview tab ("the One"): even when a frozen tab (carve-out / Options /
+		// About) is the active document, a tree-node selection routes to the EXISTING One --
+		// reuse + activate it -- and never spawns a second preview. This is the regression test
+		// for the stray-preview bug (selecting while a frozen tab was active used to pile up
+		// previews).
 		var (_, vm) = await TestHarness.BootAsync(3);
-
 		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
 
-		// Open a carve-out (born frozen) and let it become the active dockable.
+		// The One exists from boot.
+		var theOne = factory.MainTab!;
+		theOne.IsPreview.Should().BeTrue("baseline: the One is a preview tab");
+
+		// Open a carve-out (born frozen) and make it the active dockable.
 		var typeA = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.DockWorkspace.OpenNodeInNewTab(typeA);
@@ -571,25 +573,56 @@ public class PreviewTabPromotionTests
 
 		var tabCountBefore = vm.DockWorkspace.Documents!.VisibleDockables!.Count;
 
-		// Select a different tree node — the carve-out is frozen, so this must NOT
-		// overwrite it.
+		// Select a different tree node while the frozen carve-out is active.
 		var typeB = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Private.Uri", "System", "System.Uri");
 		vm.AssemblyTreeModel.SelectNode(typeB);
 		vm.DockWorkspace.SettleSelection();
-		TestCapture.Step("type-b-opens-new-preview");
+		TestCapture.Step("type-b-reuses-the-one");
 
-		vm.DockWorkspace.Documents!.VisibleDockables!.Count.Should().Be(tabCountBefore + 1,
-			"selecting a tree node while a frozen tab is active must spawn a new preview tab");
+		// No new tab -- the existing One was reused, not a second preview spawned.
+		vm.DockWorkspace.Documents!.VisibleDockables!.Count.Should().Be(tabCountBefore,
+			"selecting while a frozen tab is active must reuse the One, not spawn a second preview");
+		ReferenceEquals(factory.MainTab, theOne).Should().BeTrue(
+			"the One must be the same instance -- no fresh preview spawned");
+		ReferenceEquals(theOne.SourceNode, typeB).Should().BeTrue(
+			"the One now hosts the just-selected node");
+		// The frozen carve-out is untouched, and the One was brought to the front.
 		ReferenceEquals(carveOut.SourceNode, typeA).Should().BeTrue(
-			"the frozen carve-out tab must keep its original content");
+			"the frozen carve-out must keep its original content");
+		ReferenceEquals(vm.DockWorkspace.Documents.ActiveDockable, theOne).Should().BeTrue(
+			"reusing the One activates it");
+	}
 
-		var newPreview = factory.MainTab!;
-		newPreview.Should().NotBeSameAs(carveOut,
-			"the freshly-spawned preview must be a separate tab from the frozen one");
-		newPreview.IsPreview.Should().BeTrue(
-			"the freshly-spawned tab is itself a preview tab");
-		ReferenceEquals(newPreview.SourceNode, typeB).Should().BeTrue(
-			"the new preview tab must host the just-selected node's content");
+	[AvaloniaTest]
+	public async Task The_Preview_Is_Always_At_Index_0()
+	{
+		// The One lives at documents-dock index 0. After it is frozen, the next selection forges
+		// a fresh One -- which must again land at index 0 (the frozen ex-One slides to the right).
+		var (_, vm) = await TestHarness.BootAsync(3);
+		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
+		var docs = vm.DockWorkspace.Documents!;
+
+		var typeA = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		vm.AssemblyTreeModel.SelectNode(typeA);
+		vm.DockWorkspace.SettleSelection();
+		docs.VisibleDockables!.IndexOf(factory.MainTab!).Should().Be(0,
+			"the One is the leftmost document tab");
+
+		// Freeze it, then select a different node -> a fresh One must appear at index 0.
+		vm.DockWorkspace.FreezeCurrentTab();
+		var frozen = factory.MainTab!;
+		var typeB = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Private.Uri", "System", "System.Uri");
+		vm.AssemblyTreeModel.SelectNode(typeB);
+		vm.DockWorkspace.SettleSelection();
+
+		ReferenceEquals(factory.MainTab, frozen).Should().BeFalse("a fresh One was forged");
+		factory.MainTab!.IsPreview.Should().BeTrue("the fresh One is a preview tab");
+		docs.VisibleDockables!.IndexOf(factory.MainTab!).Should().Be(0,
+			"the fresh One must be created at index 0, leftmost");
+		docs.VisibleDockables!.IndexOf(frozen).Should().BeGreaterThan(0,
+			"the frozen ex-One slides to the right of the new One");
 	}
 }

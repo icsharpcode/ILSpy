@@ -706,25 +706,10 @@ namespace ILSpy.Docking
 			}
 			lastShownNodes = nodes;
 
-			// Pick or spawn the target tab. If the currently-active document tab is a
-			// writable preview ContentTabPage we replace its content in place. Anything
-			// else — frozen tab, Options page, About page, no Documents dock — counts as
-			// frozen and gets a brand-new preview tab spawned beside it.
-			ContentTabPage? main;
-			if (IsWritablePreview(factory.Documents?.ActiveDockable) is ContentTabPage activePreview)
-			{
-				main = activePreview;
-				factory.MainTab = main;
-			}
-			else
-			{
-				main = factory.CreateAndAttachPreviewTab();
-				if (main == null)
-					return;
-				// Fresh tab needs a fresh DecompilerTabPageModel — the cached one (if any)
-				// belongs to a previous tab and must not be re-assigned across tabs.
-				decompilerContent = null;
-			}
+			// Route to THE single preview tab ("the One") and replace its content in place.
+			var main = GetOrCreateThePreview();
+			if (main == null)
+				return;
 
 			// Tree-node selections always reuse the single document slot. The Document
 			// instance never changes; its inner Content swaps between viewmodels. The
@@ -764,13 +749,32 @@ namespace ILSpy.Docking
 				ActivateMainTabIfNeeded(main);
 		}
 
-		// Returns the active document tab if it's a writable preview ContentTabPage — meaning
-		// IsPreview=true AND not hosting static-content (Options, About). Otherwise returns
-		// null, signalling that ShowSelectedNode must spawn a fresh preview tab instead of
-		// overwriting the active one. Options pages and About pages are born with
-		// IsPreview=false (carve-out semantics) AND carry IsStaticContent=true on their
-		// content viewmodel — either flag alone would suffice, both check guards against
-		// drift.
+		// The "exactly one preview tab" rule: tree selections always route to the single preview
+		// ("the One"), tracked by factory.MainTab. Reuse it wherever it sits -- even if a frozen
+		// tab is currently active, ActivateMainTabIfNeeded brings it forward -- as long as it is
+		// still a writable preview AND still lives in the dock. Otherwise the One was frozen-away
+		// or closed, so forge a fresh one at index 0. This is what stops a selection-while-frozen
+		// from spawning a SECOND preview.
+		ContentTabPage? GetOrCreateThePreview()
+		{
+			if (factory.Documents is not { } docs)
+				return null;
+			if (factory.MainTab is { } current
+				&& IsWritablePreview(current) is not null
+				&& docs.VisibleDockables?.Contains(current) == true)
+			{
+				return current;
+			}
+			// A fresh One needs a fresh DecompilerTabPageModel -- the cached one (if any) belongs
+			// to a previous tab and must not be re-assigned across tabs.
+			decompilerContent = null;
+			return factory.CreateThePreviewTab();
+		}
+
+		// Pure predicate: returns the tab if it is a writable preview ContentTabPage -- IsPreview
+		// true AND not hosting static content (Options, About). Otherwise null. Options/About are
+		// born frozen (IsPreview=false) AND carry IsStaticContent=true; either flag alone would
+		// suffice, both guard against drift.
 		static ContentTabPage? IsWritablePreview(IDockable? dockable)
 		{
 			if (dockable is not ContentTabPage tab)

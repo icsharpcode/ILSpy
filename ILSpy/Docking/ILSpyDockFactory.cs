@@ -53,8 +53,8 @@ namespace ILSpy.Docking
 		/// (<see cref="ContentTabPage.IsPreview"/> = false). Returns the frozen tab, or
 		/// <see langword="null"/> when there's nothing to freeze (no current MainTab, MainTab
 		/// already frozen). Does NOT spawn a new preview tab — the next selection change
-		/// that finds the active tab frozen will spawn one lazily via
-		/// <see cref="CreateAndAttachPreviewTab"/>.
+		/// finds no preview to reuse and forges a fresh One lazily via
+		/// <see cref="CreateThePreviewTab"/>.
 		/// </summary>
 		public ContentTabPage? FreezeCurrentMainTab()
 		{
@@ -65,22 +65,20 @@ namespace ILSpy.Docking
 		}
 
 		/// <summary>
-		/// Creates a fresh preview <see cref="ContentTabPage"/>, attaches it to
-		/// <see cref="Documents"/>, and sets <see cref="MainTab"/> to it. Used when a
-		/// tree-node selection changes while the active tab is frozen (frozen, Options,
-		/// About, …) — a brand-new preview slot is needed to host the new content.
-		/// Returns the new tab, or <see langword="null"/> if <see cref="Documents"/> is
-		/// missing.
+		/// Creates THE single preview <see cref="ContentTabPage"/> ("the One"), attaches it to
+		/// <see cref="Documents"/> at index 0, and sets <see cref="MainTab"/> to it. Called when a
+		/// tree-node selection has no preview to reuse (the previous One was frozen, closed, or
+		/// none exists yet). Returns the new tab, or <see langword="null"/> if
+		/// <see cref="Documents"/> is missing.
 		/// </summary>
-		public ContentTabPage? CreateAndAttachPreviewTab()
+		public ContentTabPage? CreateThePreviewTab()
 		{
 			if (Documents is not { } docs)
 				return null;
 			var fresh = new ContentTabPage { Title = "(no selection)" };
-			// Use the framework's AddDockable so owner/factory wiring matches every other
-			// add path; default insertion is at the end (rightmost — VS convention for the
-			// preview slot).
-			AddDockable(docs, fresh);
+			// The One always occupies index 0 (leftmost); frozen tabs live to its right. Use
+			// InsertDockable (not AddDockable, which appends) so it lands at the front.
+			InsertDockable(docs, fresh, 0);
 			MainTab = fresh;
 			return fresh;
 		}
