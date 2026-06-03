@@ -116,9 +116,7 @@ public class ReloadAssemblyContextMenuTests
 
 		var menu = pane.BuildContextMenuForCurrentState(registry.Entries);
 		menu.Should().NotBeNull();
-		var reloadItem = menu!.Items.OfType<MenuItem>()
-			.Single(i => (string?)i.Header == Resources._Reload);
-		reloadItem.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+		menu!.ClickItem(Resources._Reload);
 		window.Capture("reload-clicked");
 
 		// Assert — the LoadedAssembly for that file name is a different instance now.

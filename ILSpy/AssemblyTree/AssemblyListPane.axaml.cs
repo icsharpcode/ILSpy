@@ -54,6 +54,33 @@ namespace ILSpy.AssemblyTree
 		SharpTreeNode? pendingClickCollapseNode;
 		Point pendingClickCollapsePos;
 
+		// The row a right-click is targeting for the context menu, recorded in the tunnel phase
+		// (see OnTreeGridPointerPressedPreview). Thunderbird-style: the menu acts on this row
+		// without it becoming the real selection. Null = no pending right-click target, so the
+		// menu falls back to the actual selection (keyboard-invoked menus, or right-click inside
+		// the existing selection). Cleared on any non-right press and when the menu closes.
+		SharpTreeNode? contextMenuTargetNode;
+
+		// The realised DataGridRow for contextMenuTargetNode, carrying the ".contextTarget" style
+		// class that draws the Thunderbird-style focus box. Tracked separately so we can strip the
+		// class off again when the target changes or the menu closes.
+		DataGridRow? contextTargetRow;
+
+		// The row the currently-open menu was opened for, captured at Opening. Its Closed handler
+		// clears the highlight only if contextTargetRow still points at this same row; if a newer
+		// right-click has already moved the target elsewhere, this (now stale) menu's close must
+		// leave that fresh highlight alone.
+		DataGridRow? contextMenuOpenRow;
+
+		void SetContextTargetRow(DataGridRow? row)
+		{
+			if (ReferenceEquals(contextTargetRow, row))
+				return;
+			contextTargetRow?.Classes.Remove("contextTarget");
+			contextTargetRow = row;
+			contextTargetRow?.Classes.Add("contextTarget");
+		}
+
 		LanguageSettings? languageSettings;
 
 		public AssemblyListPane()
@@ -83,6 +110,17 @@ namespace ILSpy.AssemblyTree
 			TreeGrid.AddHandler(PointerPressedEvent, OnTreeGridPointerPressed,
 				global::Avalonia.Interactivity.RoutingStrategies.Bubble,
 				handledEventsToo: true);
+			// Tunnel (preview) phase so we run BEFORE ProDataGrid's row-level pointer handler,
+			// which would otherwise select the right-clicked row on press and drag the preview
+			// document to it before the context menu opens. We capture the row as the menu target
+			// and swallow the right press so the selection never moves.
+			TreeGrid.AddHandler(PointerPressedEvent, OnTreeGridPointerPressedPreview,
+				global::Avalonia.Interactivity.RoutingStrategies.Tunnel);
+			// Capture the right-click's target row when the menu is requested (not at press): a
+			// press over an already-open menu is swallowed by that menu's light-dismiss popup and
+			// never reaches the press handler, but ContextRequested still fires for the reopen.
+			TreeGrid.AddHandler(ContextRequestedEvent, OnTreeGridContextRequested,
+				global::Avalonia.Interactivity.RoutingStrategies.Tunnel, handledEventsToo: true);
 			// Same handledEventsToo opt-in for release: the press that preserves a multi-selection
 			// for a potential row-drag marks itself handled, so we'd miss the release otherwise.
 			TreeGrid.AddHandler(PointerReleasedEvent, OnTreeGridPointerReleased,
@@ -165,6 +203,18 @@ namespace ILSpy.AssemblyTree
 			contextMenuEntries = entries;
 			var menu = new ContextMenu();
 			menu.Opening += OnContextMenuOpening;
+			// Drop the right-click target once the menu is gone so a later keyboard-invoked menu
+			// (Shift+F10 / Menu key, no pointer target) acts on the real selection instead, and
+			// remove the focus box from the targeted row -- but only if this menu's target is
+			// still the current one. A right-press on another row light-dismisses this menu AND
+			// sets a new target+highlight first; without the generation guard this Closed would
+			// then wipe that newer highlight, breaking every right-click after the first.
+			menu.Closed += (_, _) => {
+				if (!ReferenceEquals(contextTargetRow, contextMenuOpenRow))
+					return;
+				contextMenuTargetNode = null;
+				SetContextTargetRow(null);
+			};
 			TreeGrid.ContextMenu = menu;
 		}
 
@@ -172,6 +222,9 @@ namespace ILSpy.AssemblyTree
 		{
 			if (sender is not ContextMenu menu)
 				return;
+			// Remember which row this menu belongs to, so its later Closed only clears the
+			// highlight if no newer right-click has moved the target to a different row.
+			contextMenuOpenRow = contextTargetRow;
 			var built = BuildContextMenuForCurrentState(contextMenuEntries);
 			if (built == null)
 			{
@@ -196,10 +249,38 @@ namespace ILSpy.AssemblyTree
 		internal ContextMenu? BuildContextMenuForCurrentState(IReadOnlyList<IContextMenuEntryExport> entries)
 			=> ContextMenuProvider.Build(entries, CreateContextMenuContext());
 
+		/// <summary>
+		/// Test seam: builds the menu as if <paramref name="rightClickedNode"/> had been
+		/// right-clicked (the Thunderbird-style context target), without simulating a pointer
+		/// gesture on a possibly-unrealised deep row. Production sets the same target from the
+		/// tunnel right-press handler. The built menu captures the resulting context, so the
+		/// target is cleared again before returning.
+		/// </summary>
+		internal ContextMenu? BuildContextMenuForCurrentState(
+			IReadOnlyList<IContextMenuEntryExport> entries, SharpTreeNode? rightClickedNode)
+		{
+			contextMenuTargetNode = rightClickedNode;
+			try
+			{
+				return ContextMenuProvider.Build(entries, CreateContextMenuContext());
+			}
+			finally
+			{
+				contextMenuTargetNode = null;
+			}
+		}
+
 		TextViewContext CreateContextMenuContext()
 		{
-			var nodes = (DataContext as AssemblyTreeModel)?.SelectedItems.ToArray()
+			var selection = (DataContext as AssemblyTreeModel)?.SelectedItems.ToArray()
 				?? System.Array.Empty<SharpTreeNode>();
+			// A right-click outside the current selection targets just the clicked row, leaving
+			// the real selection (and preview document) untouched. A right-click inside the
+			// selection, or a keyboard-invoked menu (no target), acts on the whole selection.
+			var target = contextMenuTargetNode;
+			var nodes = target != null && !System.Array.Exists(selection, n => ReferenceEquals(n, target))
+				? new SharpTreeNode[] { target }
+				: selection;
 			return new TextViewContext {
 				TreeGrid = TreeGrid,
 				SelectedTreeNodes = nodes,
@@ -401,6 +482,43 @@ namespace ILSpy.AssemblyTree
 				model.Toggle(node);
 				e.Handled = true;
 			}
+		}
+
+		void OnTreeGridContextRequested(object? sender, ContextRequestedEventArgs e)
+		{
+			// Resolve the row under the pointer (mouse / touch context gesture). A keyboard-invoked
+			// menu (Shift+F10 / Menu key) carries no position -> no target -> the menu acts on the
+			// real selection. Each request is a new generation so a stale menu's Closed can't wipe
+			// this fresh highlight.
+			SharpTreeNode? node = null;
+			DataGridRow? row = null;
+			if (e.TryGetPosition(TreeGrid, out var pos) && TreeGrid.InputHitTest(pos) is Visual hit)
+			{
+				node = HitTestRowNode(hit);
+				row = hit.GetVisualAncestors().OfType<DataGridRow>().FirstOrDefault();
+			}
+			contextMenuTargetNode = node;
+			SetContextTargetRow(node != null ? row : null);
+		}
+
+		void OnTreeGridPointerPressedPreview(object? sender, PointerPressedEventArgs e)
+		{
+			if (e.Source is not Visual hit)
+				return;
+			if (!e.GetCurrentPoint(hit).Properties.IsRightButtonPressed)
+			{
+				// Any non-right press (left navigation, middle new-tab) starts a fresh gesture —
+				// drop a stale right-click target and its focus box.
+				contextMenuTargetNode = null;
+				SetContextTargetRow(null);
+				return;
+			}
+			// Right press over a row: swallow it so ProDataGrid doesn't move the selection there.
+			// We do NOT capture the menu target here — when a previous menu is open this press is
+			// eaten by that menu's light-dismiss popup and never reaches us, so capture happens in
+			// OnTreeGridContextRequested instead (it fires on every menu open, including reopens).
+			if (HitTestRowNode(hit) != null)
+				e.Handled = true;
 		}
 
 		void OnTreeGridPointerPressed(object? sender, PointerPressedEventArgs e)

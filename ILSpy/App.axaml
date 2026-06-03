@@ -55,6 +55,7 @@
                     <SolidColorBrush x:Key="ILSpy.PaneBackground" Color="White" />
                     <SolidColorBrush x:Key="ILSpy.TreeAutoloadedForeground" Color="SteelBlue" />
                     <SolidColorBrush x:Key="ILSpy.TreeNonPublicForeground" Color="Gray" />
+                    <SolidColorBrush x:Key="ILSpy.ContextTargetRowBackground" Color="#2E007ACC" />
                     <SolidColorBrush x:Key="ILSpy.ChromeBorder" Color="#FFC8CDD3" />
                     <SolidColorBrush x:Key="ILSpy.SecondaryForeground" Color="Gray" />
                     <SolidColorBrush x:Key="ILSpy.MenuBackground" Color="White" />
@@ -92,6 +93,7 @@
                     <SolidColorBrush x:Key="ILSpy.PaneBackground" Color="#1E1E1E" />
                     <SolidColorBrush x:Key="ILSpy.TreeAutoloadedForeground" Color="#6FA8DC" />
                     <SolidColorBrush x:Key="ILSpy.TreeNonPublicForeground" Color="#9AA0A6" />
+                    <SolidColorBrush x:Key="ILSpy.ContextTargetRowBackground" Color="#33007ACC" />
                     <SolidColorBrush x:Key="ILSpy.ChromeBorder" Color="#3F3F46" />
                     <SolidColorBrush x:Key="ILSpy.SecondaryForeground" Color="#A0A0A0" />
                     <SolidColorBrush x:Key="ILSpy.MenuBackground" Color="#2D2D30" />

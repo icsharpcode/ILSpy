@@ -16,6 +16,15 @@
 		<Style Selector="TextBlock.nonPublicAPI">
 			<Setter Property="Foreground" Value="{DynamicResource ILSpy.TreeNonPublicForeground}" />
 		</Style>
+		<!-- Thunderbird-style context-menu target highlight. A right-click marks its target row
+		     with this class WITHOUT moving the selection, so the menu's target is visible while
+		     the real selection (and the decompiled document) stays put. Deliberately distinct
+		     from the solid-accent selection highlight: a faint accent fill. No border on purpose:
+		     BorderThickness adds to the row's layout box and makes the row grow by 2px when
+		     targeted. Applied/cleared from SetContextTargetRow in the code-behind. -->
+		<Style Selector="DataGridRow.contextTarget">
+			<Setter Property="Background" Value="{DynamicResource ILSpy.ContextTargetRowBackground}" />
+		</Style>
 	</UserControl.Styles>
 
 	<DataGrid Name="TreeGrid"

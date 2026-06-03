@@ -121,9 +121,7 @@ public class RemoveAssemblyContextMenuTests
 
 		var menu = pane.BuildContextMenuForCurrentState(registry.Entries);
 		menu.Should().NotBeNull();
-		var removeItem = menu!.Items.OfType<MenuItem>()
-			.Single(i => (string?)i.Header == Resources._Remove);
-		removeItem.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+		menu!.ClickItem(Resources._Remove);
 		window.Capture("remove-clicked");
 
 		// Assert — the assembly is gone from the list; the survivor is still there.

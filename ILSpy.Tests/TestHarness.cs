@@ -21,6 +21,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
+using Avalonia.Controls;
+using Avalonia.Interactivity;
+
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX;
 
@@ -81,6 +84,23 @@ public static class TestHarness
 		return registry.Entries
 			.Single(e => string.Equals(e.Metadata.Header, header, StringComparison.Ordinal))
 			.Value;
+	}
+
+	/// <summary>
+	/// Finds the <see cref="MenuItem"/> whose <c>Header</c> equals <paramref name="header"/> (pass
+	/// the resolved resource string, e.g. <c>Resources._Reload</c>) in a menu built by
+	/// <c>AssemblyListPane.BuildContextMenuForCurrentState</c> and raises its <c>Click</c> — the
+	/// same routed event the production menu fires when the user picks the item. Collapses the
+	/// <c>Items.OfType&lt;MenuItem&gt;().Single(...).RaiseEvent(...)</c> dance every context-menu
+	/// test repeats.
+	/// </summary>
+	public static void ClickItem(this ContextMenu menu, string header)
+	{
+		ArgumentNullException.ThrowIfNull(menu);
+		ArgumentNullException.ThrowIfNull(header);
+		var item = menu.Items.OfType<MenuItem>()
+			.Single(i => string.Equals((string?)i.Header, header, StringComparison.Ordinal));
+		item.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
 	}
 
 	/// <summary>
