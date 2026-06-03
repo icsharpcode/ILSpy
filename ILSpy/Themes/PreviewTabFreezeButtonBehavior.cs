@@ -102,24 +102,27 @@ namespace ILSpy.Themes
 			// paint on top of it.
 			titleStack.ClipToBounds = true;
 
-			// Tilted-pushpin silhouette matching the Visual Studio preview-tab affordance.
-			// Vector path (not a font glyph): the previous Segoe Fluent Icons U+E718
-			// fallback was Windows-only and rendered as a tofu box on Linux / macOS.
-			// Path with bound Fill is what restores per-tab Foreground inheritance that
-			// the intermediate SVG-image variant lost - Avalonia.Svg.Skia honors the
-			// asset's literal fill, not the consuming control's theme color. RotateTransform
-			// at -45 deg orients the upright pin path so its tip points to the lower-left.
+			// Snowflake glyph for "freeze". A STROKED vector Path (not a font glyph): the
+			// previous Segoe Fluent fallback was Windows-only and rendered as tofu on Linux /
+			// macOS. Six spokes + tip barbs in a 16x16 box (inset so the stroke isn't clipped
+			// at the tips). Stroke (not Fill) is bound to the tab's Foreground so the glyph
+			// inherits the per-tab theme colour.
 			var glyph = new Path {
-				Data = StreamGeometry.Parse("M5 2h6v1h-1v4l2 2v1H9v3l-1 2-1-2v-3H4V9l2-2V3H5z"),
+				Data = StreamGeometry.Parse(
+					"M8,1.5 L8,14.5 M2.37,4.75 L13.63,11.25 M2.37,11.25 L13.63,4.75 " +
+					"M8,4.2 L6.6,2.9 M8,4.2 L9.4,2.9 M8,11.8 L6.6,13.1 M8,11.8 L9.4,13.1 " +
+					"M5.0,5.9 L3.4,5.5 M5.0,5.9 L4.6,7.5 M11.0,10.1 L12.6,10.5 M11.0,10.1 L11.4,8.5 " +
+					"M5.0,10.1 L3.4,10.5 M5.0,10.1 L4.6,8.5 M11.0,5.9 L12.6,5.5 M11.0,5.9 L11.4,7.5"),
 				Stretch = Stretch.Uniform,
+				StrokeThickness = 1.3,
+				StrokeLineCap = PenLineCap.Round,
+				StrokeJoin = PenLineJoin.Round,
 				Width = 12,
 				Height = 12,
 				HorizontalAlignment = HorizontalAlignment.Center,
 				VerticalAlignment = VerticalAlignment.Center,
-				RenderTransform = new RotateTransform(45),
-				RenderTransformOrigin = RelativePoint.Center,
 			};
-			glyph.Bind(Shape.FillProperty, new Binding(nameof(TemplatedControl.Foreground)) {
+			glyph.Bind(Shape.StrokeProperty, new Binding(nameof(TemplatedControl.Foreground)) {
 				Source = item,
 				Mode = BindingMode.OneWay,
 			});

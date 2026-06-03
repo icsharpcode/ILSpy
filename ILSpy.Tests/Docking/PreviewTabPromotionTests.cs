@@ -210,6 +210,11 @@ public class PreviewTabPromotionTests
 			"the preview MainTab must carry the accent BorderBrush");
 		mainTabItem.BorderThickness.Should().Be(new global::Avalonia.Thickness(3, 0, 0, 0),
 			"the preview MainTab must carry the left-only 3px accent stripe");
+		// The accent is purple (#9B59B6) -- deliberately not the selection/toolbar blue, so the
+		// One stays distinct from a blue-highlighted selected tab.
+		(mainTabItem.BorderBrush as global::Avalonia.Media.ISolidColorBrush)!.Color
+			.Should().Be(global::Avalonia.Media.Color.FromRgb(0x9B, 0x59, 0xB6),
+				"the preview accent stripe must be purple, not blue");
 	}
 
 	[AvaloniaTest]

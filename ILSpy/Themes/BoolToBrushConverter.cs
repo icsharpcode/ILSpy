@@ -33,10 +33,12 @@ namespace ILSpy.Themes
 	/// </summary>
 	public sealed class BoolToBrushConverter : IValueConverter
 	{
-		/// <summary>Static accent for the preview-tab left-edge stripe — matches the
-		/// toolbar accent palette (#0078D7).</summary>
+		/// <summary>Static accent for the preview-tab left-edge stripe. Purple (#9B59B6),
+		/// deliberately NOT the selection/toolbar blue — so the One preview tab stays visually
+		/// distinct from a blue-highlighted *selected* tab even when it is itself selected. Reads
+		/// against both light and dark tab-strip backgrounds.</summary>
 		public static readonly BoolToBrushConverter PreviewAccent = new() {
-			TrueBrush = new ImmutableSolidColorBrush(Color.FromRgb(0x00, 0x78, 0xD7)),
+			TrueBrush = new ImmutableSolidColorBrush(Color.FromRgb(0x9B, 0x59, 0xB6)),
 		};
 
 		public IBrush? TrueBrush { get; init; }
