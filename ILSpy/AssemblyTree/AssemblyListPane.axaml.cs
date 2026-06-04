@@ -338,6 +338,27 @@ namespace ILSpy.AssemblyTree
 				e.Handled = true;
 				return;
 			}
+			if (e.Key is Key.Add or Key.Subtract or Key.Multiply && e.KeyModifiers == KeyModifiers.None
+				&& model.SelectedItem is { } expandTarget
+				&& TreeGrid.HierarchicalModel is IHierarchicalModel hmExpand
+				&& hmExpand.FindNode(expandTarget) is { } expandNode)
+			{
+				switch (e.Key)
+				{
+					case Key.Add:
+						if (!expandNode.IsLeaf)
+							hmExpand.Expand(expandNode);
+						break;
+					case Key.Subtract:
+						hmExpand.Collapse(expandNode);
+						break;
+					case Key.Multiply:
+						ExpandRecursively(hmExpand, expandNode);
+						break;
+				}
+				e.Handled = true;
+				return;
+			}
 			if (e.Key == Key.R && e.KeyModifiers == KeyModifiers.Control)
 			{
 				var members = model.SelectedItems.OfType<IMemberTreeNode>()
@@ -352,6 +373,22 @@ namespace ILSpy.AssemblyTree
 				foreach (var member in members)
 					analyzerVm.Analyze(member!);
 				e.Handled = true;
+			}
+		}
+
+		// Numpad-* recursive expand. Expands the node, then recurses into children that opt in via
+		// SharpTreeNode.CanExpandRecursively -- which is false for lazy-loading nodes, so this stays
+		// bounded (it won't try to materialise a whole assembly's members). Mirrors WPF SharpTreeView.
+		static void ExpandRecursively(IHierarchicalModel hm, HierarchicalNode node)
+		{
+			if (node.IsLeaf)
+				return;
+			hm.Expand(node);
+			foreach (var child in node.Children)
+			{
+				if (child.Item is SharpTreeNode { CanExpandRecursively: false })
+					continue;
+				ExpandRecursively(hm, child);
 			}
 		}
 

@@ -895,6 +895,33 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
+	public async Task Numpad_Add_Subtract_Multiply_Expand_And_Collapse_The_Node()
+	{
+		// Numpad + expands, - collapses, * expands (recursively where the node allows it).
+		var (window, vm) = await TestHarness.BootAsync(3);
+		var model = vm.AssemblyTreeModel;
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<DataGrid>();
+		grid.Focus();
+		Dispatcher.UIThread.RunJobs();
+
+		var assembly = model.FindNode<AssemblyTreeNode>("System.Linq");
+		assembly.EnsureLazyChildren();
+		model.SelectNode(assembly);
+		await Waiters.WaitForAsync(() => ReferenceEquals(model.SelectedItem, assembly));
+		assembly.IsExpanded.Should().BeFalse("precondition: starts collapsed");
+
+		window.KeyPress(Key.Add, RawInputModifiers.None, PhysicalKey.NumPadAdd, null);
+		await Waiters.WaitForAsync(() => assembly.IsExpanded, description: "Numpad + expands");
+
+		window.KeyPress(Key.Subtract, RawInputModifiers.None, PhysicalKey.NumPadSubtract, null);
+		await Waiters.WaitForAsync(() => !assembly.IsExpanded, description: "Numpad - collapses");
+
+		window.KeyPress(Key.Multiply, RawInputModifiers.None, PhysicalKey.NumPadMultiply, null);
+		await Waiters.WaitForAsync(() => assembly.IsExpanded, description: "Numpad * expands");
+	}
+
+	[AvaloniaTest]
 	public async Task Clear_Assembly_List_Command_Empties_The_Active_List()
 	{
 		// The Clear Assembly List menu command must drop every entry from the active list.
