@@ -569,7 +569,15 @@ namespace ILSpy.TextView
 		{
 			try
 			{
-				var settings = AppEnv.AppComposition.Current.GetExport<SettingsService>().DecompilerSettings.Clone();
+				var settingsService = AppEnv.AppComposition.Current.GetExport<SettingsService>();
+				var settings = settingsService.DecompilerSettings.Clone();
+				// Bridge the Display-options fold-expansion flags into the decompiler settings:
+				// TextTokenWriter reads settings.ExpandUsingDeclarations / ExpandMemberDefinitions
+				// to set each fold's DefaultClosed. Without this the "Expand using declarations /
+				// member definitions after decompilation" options would have no effect.
+				var display = settingsService.DisplaySettings;
+				settings.ExpandUsingDeclarations = display.ExpandUsingDeclarations;
+				settings.ExpandMemberDefinitions = display.ExpandMemberDefinitions;
 				try
 				{
 					var version = AppEnv.AppComposition.Current.GetExport<Languages.LanguageService>().CurrentVersion;

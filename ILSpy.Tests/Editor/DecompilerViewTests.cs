@@ -476,6 +476,41 @@ public class DecompilerViewTests
 		fm!.AllFoldings.Should().NotBeEmpty("multi-line XML elements should produce fold ranges");
 	}
 
+	[AvaloniaTest]
+	public async Task Expand_Display_Settings_Reach_The_Decompiler_Foldings()
+	{
+		// The Display-options "Expand using declarations / member definitions after decompilation"
+		// flags only take effect by riding DecompilerSettings into the decompile: TextTokenWriter
+		// sets each fold's DefaultClosed from settings.ExpandUsingDeclarations /
+		// ExpandMemberDefinitions. So the live decompile must bridge them in from DisplaySettings;
+		// without the bridge they default false and every fold comes back collapsed.
+		var (_, vm) = await TestHarness.BootAsync(3);
+
+		var settings = AppComposition.Current.GetExport<global::ILSpy.SettingsService>();
+		settings.DisplaySettings.ExpandMemberDefinitions = true;
+		settings.DisplaySettings.ExpandUsingDeclarations = true;
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			TreeNavigation.CoreLibName, "System", "System.Version");
+		vm.AssemblyTreeModel.SelectNode(typeNode);
+		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		tab.Foldings.Should().NotBeNull();
+		var foldings = tab.Foldings!;
+		foldings.Should().NotBeEmpty("decompiling a type must produce foldings");
+
+		var memberFolds = foldings.Where(f => f.IsDefinition).ToList();
+		memberFolds.Should().NotBeEmpty("a type with members must produce member-definition foldings");
+		memberFolds.Should().OnlyContain(f => !f.DefaultClosed,
+			"ExpandMemberDefinitions=true must leave member-definition foldings expanded (DefaultClosed=false)");
+
+		// The top-most fold is the using-declarations block (offset 0, not a member definition).
+		var usingFold = foldings.OrderBy(f => f.StartOffset).First();
+		usingFold.IsDefinition.Should().BeFalse("the top-most fold is the using block, not a member");
+		usingFold.DefaultClosed.Should().BeFalse(
+			"ExpandUsingDeclarations=true must leave the using block expanded");
+	}
+
 #if DEBUG
 	[AvaloniaTest]
 	public async Task Switching_Language_With_Selected_Method_Does_Not_Throw_Folding_Out_Of_Bounds()
