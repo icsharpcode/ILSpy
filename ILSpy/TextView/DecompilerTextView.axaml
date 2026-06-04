@@ -3,11 +3,22 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ae="using:AvaloniaEdit"
+             xmlns:aeediting="using:AvaloniaEdit.Editing"
              xmlns:textView="using:ILSpy.TextView"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
              Name="self"
              x:Class="ILSpy.TextView.DecompilerTextView"
              x:DataType="textView:DecompilerTabPageModel">
+
+	<!-- Selected-text highlighting (ports icsharpcode/ILSpy#2938): keep the syntax colours of
+	     selected text by leaving SelectionForeground unset, and draw a flat, translucent
+	     highlight (square corners, no border) instead of recolouring the run. -->
+	<UserControl.Styles>
+		<Style Selector="aeediting|TextArea">
+			<Setter Property="SelectionCornerRadius" Value="0" />
+			<Setter Property="SelectionBrush" Value="{DynamicResource ILSpy.EditorSelectionBrush}" />
+		</Style>
+	</UserControl.Styles>
 
 	<!-- Wait-adorner: a translucent overlay above the editor with a centred title +
 	     progress bar + cancel button while a decompilation is in flight. -->

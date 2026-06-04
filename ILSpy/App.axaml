@@ -38,6 +38,9 @@
                      surfaces a reader spends most time looking at. -->
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="ILSpy.EditorBackground" Color="#FFFFE1" />
+                    <!-- Translucent selection so selected text keeps its syntax colours (the
+                         TextArea style leaves SelectionForeground unset). -->
+                    <SolidColorBrush x:Key="ILSpy.EditorSelectionBrush" Color="#007ACC" Opacity="0.3" />
                     <SolidColorBrush x:Key="ILSpy.EditorWaitAdornerBackground" Color="#80FFFFFF" />
                     <SolidColorBrush x:Key="ILSpy.ToolbarBackground" Color="White" />
                     <SolidColorBrush x:Key="ILSpy.ToolbarBorder" Color="#FFA9B0B7" />
@@ -86,6 +89,9 @@
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="ILSpy.EditorBackground" Color="#1E1E1E" />
+                    <!-- Brighter, slightly stronger so the translucent selection still reads on the
+                         dark editor background. -->
+                    <SolidColorBrush x:Key="ILSpy.EditorSelectionBrush" Color="#3794FF" Opacity="0.35" />
                     <SolidColorBrush x:Key="ILSpy.EditorWaitAdornerBackground" Color="#A0000000" />
                     <SolidColorBrush x:Key="ILSpy.ToolbarBackground" Color="#2D2D30" />
                     <SolidColorBrush x:Key="ILSpy.ToolbarBorder" Color="#3F3F46" />
