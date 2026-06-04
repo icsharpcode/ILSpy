@@ -40,6 +40,7 @@ namespace ICSharpCode.ILSpy.Tests;
 [TestFixture]
 public class PreviewTabPromotionTests
 {
+
 	[AvaloniaTest]
 	public void MainTab_Starts_In_Preview_State()
 	{
@@ -170,9 +171,10 @@ public class PreviewTabPromotionTests
 	[AvaloniaTest]
 	public async Task Preview_MainTab_Header_Renders_Italic()
 	{
-		// Visual contract: the DocumentTabStripItem for the preview MainTab binds its
-		// FontStyle to ContentTabPage.IsPreview via BoolToFontStyleConverter.Italic.
-		// Frozen tabs and tool-pane tabs fall through to FontStyle.Normal.
+		// Visual contract: the One carries the `previewTab` style class (toggled by
+		// PreviewTabClassBehavior from ContentTabPage.IsPreview), and the App.axaml
+		// `.previewTab` Style italicises the title. Frozen / tool-pane tabs lack the class
+		// and fall through to FontStyle.Normal.
 		var (window, vm) = await TestHarness.BootAsync();
 
 		// Wait for the tab strip to realise its items.
@@ -184,37 +186,28 @@ public class PreviewTabPromotionTests
 			.Single(item => ReferenceEquals(item.DataContext, factory.MainTab));
 		TestCapture.Step("before-italic-header-check");
 
+		mainTabItem.Classes.Should().Contain("previewTab",
+			"the One must carry the previewTab style class that drives all of its accent visuals");
 		mainTabItem.FontStyle.Should().Be(FontStyle.Italic,
-			"the App.axaml Style for DocumentTabStripItem must apply, italicising the tab title via FontStyle inheritance");
+			"the .previewTab App.axaml Style must apply, italicising the tab title via FontStyle inheritance");
 	}
 
-	[AvaloniaTest]
-	public async Task Preview_MainTab_Header_Has_Left_Edge_Accent_Stripe()
+	[Test]
+	public void Active_Tab_Fill_Converter_Is_Purple_For_The_One_And_Blue_For_Others()
 	{
-		// Border companion to the italic check: the preview MainTab carries a non-null
-		// BorderBrush and a 3px left-only BorderThickness via the accent-stripe converters.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		await ((MainWindowViewModel)window.DataContext!).AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
-		TestCapture.Step("booted");
-
-		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<DocumentTabStripItem>().Any(),
-			System.TimeSpan.FromSeconds(10));
-
-		var factory = (ILSpyDockFactory)((MainWindowViewModel)window.DataContext!).DockWorkspace.Factory;
-		var mainTabItem = window.GetVisualDescendants().OfType<DocumentTabStripItem>()
-			.Single(item => ReferenceEquals(item.DataContext, factory.MainTab));
-		TestCapture.Step("before-accent-stripe-check");
-
-		((object?)mainTabItem.BorderBrush).Should().NotBeNull(
-			"the preview MainTab must carry the accent BorderBrush");
-		mainTabItem.BorderThickness.Should().Be(new global::Avalonia.Thickness(3, 0, 0, 0),
-			"the preview MainTab must carry the left-only 3px accent stripe");
-		// The accent is purple (#9B59B6) -- deliberately not the selection/toolbar blue, so the
-		// One stays distinct from a blue-highlighted selected tab.
-		(mainTabItem.BorderBrush as global::Avalonia.Media.ISolidColorBrush)!.Color
+		// The One's active highlight is purple, every other document tab's is blue. The
+		// :selected:active Background binds to this converter on IsPreview; the (theme-unreliable)
+		// :active state makes a rendered assertion flaky, so verify the converter directly.
+		var conv = global::ILSpy.Themes.BoolToBrushConverter.PreviewOrActiveTabBackground;
+		var culture = global::System.Globalization.CultureInfo.InvariantCulture;
+		(conv.Convert(true, typeof(global::Avalonia.Media.IBrush), null, culture)
+			as global::Avalonia.Media.ISolidColorBrush)!.Color
 			.Should().Be(global::Avalonia.Media.Color.FromRgb(0x9B, 0x59, 0xB6),
-				"the preview accent stripe must be purple, not blue");
+				"the One (IsPreview=true) gets the purple active fill");
+		(conv.Convert(false, typeof(global::Avalonia.Media.IBrush), null, culture)
+			as global::Avalonia.Media.ISolidColorBrush)!.Color
+			.Should().Be(global::Avalonia.Media.Color.FromRgb(0x00, 0x7A, 0xCC),
+				"any other (frozen) document tab keeps the blue active fill");
 	}
 
 	[AvaloniaTest]
@@ -456,6 +449,8 @@ public class PreviewTabPromotionTests
 
 		var carveOutItem = window.GetVisualDescendants().OfType<DocumentTabStripItem>()
 			.Single(item => ReferenceEquals(item.DataContext, carveOutModel));
+		carveOutItem.Classes.Should().NotContain("previewTab",
+			"a frozen tab must not carry the previewTab class, so the One's accent styles never touch it");
 		carveOutItem.FontStyle.Should().Be(FontStyle.Normal,
 			"a frozen (IsPreview=false) document tab must render with upright FontStyle");
 	}

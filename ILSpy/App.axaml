@@ -69,6 +69,15 @@
                     <SolidColorBrush x:Key="ILSpy.DockTabItemSelectedBackground" Color="White" />
                     <SolidColorBrush x:Key="ILSpy.DockTabItemActiveBackground" Color="#007ACC" />
                     <SolidColorBrush x:Key="ILSpy.DockTabItemActiveForeground" Color="White" />
+                    <!-- The One (preview tab) identity: purple family. Single values that read on
+                         both themes (mirrored in the Dark dictionary so dark stays an explicit knob).
+                         PreviewTabActiveBackground must match BoolToBrushConverter's purple. -->
+                    <SolidColorBrush x:Key="ILSpy.PreviewTabActiveBackground" Color="#9B59B6" />
+                    <SolidColorBrush x:Key="ILSpy.PreviewTabHoverBackground" Color="#BB8FCE" />
+                    <!-- Focused tool pane: a subtle neutral header tint + readable title, instead of
+                         the theme's saturated system accent. -->
+                    <SolidColorBrush x:Key="ILSpy.ToolChromeActiveHeaderBackground" Color="#DCDCDC" />
+                    <SolidColorBrush x:Key="ILSpy.ToolChromeActiveTitleForeground" Color="#1E1E1E" />
                     <SolidColorBrush x:Key="ILSpy.FoldingMarkerBackground" Color="#FFFFE1" />
                     <SolidColorBrush x:Key="ILSpy.FoldingMarkerForeground" Color="#808080" />
                     <SolidColorBrush x:Key="ILSpy.FoldingMarkerSelectedBackground" Color="White" />
@@ -107,6 +116,13 @@
                     <SolidColorBrush x:Key="ILSpy.DockTabItemSelectedBackground" Color="#1E1E1E" />
                     <SolidColorBrush x:Key="ILSpy.DockTabItemActiveBackground" Color="#007ACC" />
                     <SolidColorBrush x:Key="ILSpy.DockTabItemActiveForeground" Color="White" />
+                    <!-- The One (preview tab): same purple as light; #9B59B6 / #BB8FCE read fine on
+                         the dark chrome. Keep in sync with BoolToBrushConverter's purple. -->
+                    <SolidColorBrush x:Key="ILSpy.PreviewTabActiveBackground" Color="#9B59B6" />
+                    <SolidColorBrush x:Key="ILSpy.PreviewTabHoverBackground" Color="#BB8FCE" />
+                    <!-- Focused tool pane: neutral header tint + readable (light) title for dark. -->
+                    <SolidColorBrush x:Key="ILSpy.ToolChromeActiveHeaderBackground" Color="#3F3F46" />
+                    <SolidColorBrush x:Key="ILSpy.ToolChromeActiveTitleForeground" Color="#DCDCDC" />
                     <SolidColorBrush x:Key="ILSpy.FoldingMarkerBackground" Color="#1E1E1E" />
                     <SolidColorBrush x:Key="ILSpy.FoldingMarkerForeground" Color="#A0A0A0" />
                     <SolidColorBrush x:Key="ILSpy.FoldingMarkerSelectedBackground" Color="#2D2D30" />
@@ -249,6 +265,16 @@
         <Style Selector="dockControls|DocumentTabStrip, dockControls|ToolTabStrip">
             <Setter Property="Background" Value="{DynamicResource ILSpy.DockTabStripBackground}" />
         </Style>
+        <!-- The full-width accent line under the document tab strip is the DocumentControl
+             template's Panel#PART_DocumentSeperator. The Simple theme fills it with the blue
+             active-indicator brush whenever the dock is :active; re-assert it at app level (app
+             styles outrank the theme's ControlTheme) so the line follows the active tab: purple
+             when the One is selected, the same blue otherwise. Bound to the DocumentControl
+             DataContext (the IDocumentDock) ActiveDockable.IsPreview. -->
+        <Style Selector="dockControls|DocumentControl:active /template/ Panel#PART_DocumentSeperator">
+            <Setter Property="Background"
+                    Value="{Binding ActiveDockable.IsPreview, Converter={x:Static themes:BoolToBrushConverter.PreviewOrActiveTabBackground}, FallbackValue={DynamicResource ILSpy.DockTabItemActiveBackground}, Mode=OneWay, x:CompileBindings=False}" />
+        </Style>
         <Style Selector="dockControls|DocumentTabStripItem, dockControls|ToolTabStripItem">
             <Setter Property="Background" Value="{DynamicResource ILSpy.DockTabItemBackground}" />
             <Setter Property="Foreground" Value="{DynamicResource ILSpy.DockTabItemForeground}" />
@@ -261,11 +287,60 @@
         <Style Selector="dockControls|DocumentTabStripItem:selected:not(:active), dockControls|ToolTabStripItem:selected:not(:active)">
             <Setter Property="Background" Value="{DynamicResource ILSpy.DockTabItemSelectedBackground}" />
         </Style>
-        <!-- Active (focused-dock) selected tab: re-assert Dock's accent fill at app level,
-             since our base DocumentTabStripItem style would otherwise win over the theme. -->
-        <Style Selector="dockControls|DocumentTabStripItem:selected:active, dockControls|ToolTabStripItem:selected:active">
+        <!-- Active (focused-dock) selected DOCUMENT tab: the blue accent fill. Tool panes are split
+             out below so they stay neutral. -->
+        <Style Selector="dockControls|DocumentTabStripItem:selected:active">
             <Setter Property="Background" Value="{DynamicResource ILSpy.DockTabItemActiveBackground}" />
             <Setter Property="Foreground" Value="{DynamicResource ILSpy.DockTabItemActiveForeground}" />
+        </Style>
+        <!-- The One (preview tab) carries the previewTab style class (toggled by
+             PreviewTabClassBehavior from IsPreview). Every visual that distinguishes the One hangs
+             off that class, so these selectors match ONLY the One; frozen tabs never match and keep
+             their blue/theme states untouched. The extra class outranks the plain document selectors
+             above, so purple wins for the One without any ordering or converter tricks. -->
+        <Style Selector="dockControls|DocumentTabStripItem.previewTab:selected:active">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.PreviewTabActiveBackground}" />
+        </Style>
+        <!-- Selecting a tree node moves focus to the tool pane, so the One becomes selected but its
+             dock is not active. The shared :selected:not(:active) rule would flatten it to the neutral
+             seam fill (gray/white), jarring for a tab that should stay recognisably the One. Keep it
+             purple regardless of which pane holds focus; the active/inactive distinction is still
+             carried by the accent line under the strip (which only shows while the dock is active). -->
+        <Style Selector="dockControls|DocumentTabStripItem.previewTab:selected:not(:active)">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.PreviewTabActiveBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.DockTabItemActiveForeground}" />
+        </Style>
+        <Style Selector="dockControls|DocumentTabStripItem.previewTab:pointerover:not(:selected):not(:dragging)">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.PreviewTabHoverBackground}" />
+        </Style>
+        <Style Selector="dockControls|DocumentTabStripItem.previewTab">
+            <Setter Property="FontStyle" Value="Italic" />
+        </Style>
+        <!-- Tool panes stay neutral: a focused tool's selected tab gets the seam fill, not the
+             document accent (split out from the shared :selected:active rule above). -->
+        <Style Selector="dockControls|ToolTabStripItem:selected:active">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.DockTabItemSelectedBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.DockTabItemForeground}" />
+        </Style>
+        <!-- The injected freeze (snowflake) button only exists on the One; give its hover the One's
+             purple instead of the blue it would inherit from the copied close-button ControlTheme. -->
+        <Style Selector="Button.previewFreezeButton:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.PreviewTabHoverBackground}" />
+        </Style>
+        <!-- Focused tool pane (ToolChromeControl :active): the Simple theme paints the title grip
+             with the saturated system accent and leaves PART_Title's background white even while its
+             active foreground turns light (white-on-white, unreadable). Replace the grip with a
+             subtle neutral tint, force the title background transparent in both states so the grip
+             tint shows through, and give the active title a readable neutral foreground. -->
+        <Style Selector="dockControls|ToolChromeControl:active /template/ Grid#PART_Grip">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.ToolChromeActiveHeaderBackground}" />
+        </Style>
+        <Style Selector="dockControls|ToolChromeControl /template/ TextBlock#PART_Title">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="dockControls|ToolChromeControl:active /template/ TextBlock#PART_Title">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.ToolChromeActiveTitleForeground}" />
         </Style>
 
         <!-- AvaloniaEdit folding margin: the +/- toggle squares are painted by FoldingMargin
@@ -373,28 +448,20 @@
             <Setter Property="Height" Value="0" />
         </Style>
 
-        <!-- VS-style preview tab: italicise the title of any DocumentTabStripItem whose
-             dockable is a ContentTabPage with IsPreview=true. Tool-pane tabs and pinned
-             document tabs fall through to Normal via the converter's null/false branch.
-             FontStyle inherits to the title TextBlock inside the tab template. -->
+        <!-- Per-DocumentTabStripItem behaviors that distinguish the One (preview tab). The
+             previewTab style class (toggled by PreviewTabClassBehavior from IsPreview) carries the
+             One's visuals via the .previewTab selectors above (purple fill/hover, italic title); the
+             other two behaviors inject the per-tab "Freeze tab" context-menu entry and the inline
+             snowflake button. -->
         <Style Selector="DocumentTabStripItem">
-            <Setter Property="FontStyle"
-                    Value="{Binding IsPreview, Converter={x:Static themes:BoolToFontStyleConverter.Italic}, FallbackValue=Normal, Mode=OneWay, x:CompileBindings=False}" />
-            <!-- 3px accent stripe on the left edge while the tab is preview, otherwise no
-                 extra border. Stripe brush + thickness both resolve via the same IsPreview
-                 source so they always appear / disappear together. -->
-            <Setter Property="BorderBrush"
-                    Value="{Binding IsPreview, Converter={x:Static themes:BoolToBrushConverter.PreviewAccent}, FallbackValue={x:Null}, Mode=OneWay, x:CompileBindings=False}" />
-            <Setter Property="BorderThickness"
-                    Value="{Binding IsPreview, Converter={x:Static themes:BoolToThicknessConverter.LeftStripe}, FallbackValue=0, Mode=OneWay, x:CompileBindings=False}" />
-            <!-- Per-tab right-click "Freeze tab" entry. The Behavior creates a fresh
-                 ContextMenu per attachment (visuals can have only one parent) and toggles
-                 the entry's IsVisible on the tab's IsPreview. -->
+            <Setter Property="themes:PreviewTabClassBehavior.Enable" Value="True" />
+            <!-- Per-tab right-click "Freeze tab" entry. The behavior creates a fresh ContextMenu per
+                 attachment (visuals can have only one parent) and toggles the entry's IsVisible on
+                 the tab's IsPreview. -->
             <Setter Property="themes:PreviewTabContextMenuBehavior.Enable" Value="True" />
-            <!-- Inline pin icon in the tab strip. Dock's tab template is compiled into the
-                 theme DLL; the Behavior walks the visual tree and injects a Button between
-                 the title and the close button. Bound to IsPreview so the icon hides once
-                 the tab is pinned. -->
+            <!-- Inline snowflake freeze button. Dock's tab template is compiled into the theme DLL;
+                 the behavior walks the visual tree and injects a Button between the title and the
+                 close button, bound to IsPreview so it hides once the tab is frozen. -->
             <Setter Property="themes:PreviewTabFreezeButtonBehavior.Enable" Value="True" />
         </Style>
 
