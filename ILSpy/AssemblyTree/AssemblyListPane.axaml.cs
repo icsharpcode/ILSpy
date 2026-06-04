@@ -310,6 +310,34 @@ namespace ILSpy.AssemblyTree
 				Dispatcher.UIThread.Post(() => ReselectAfterDelete(reselectIndex), DispatcherPriority.Background);
 				return;
 			}
+			if (e.Key is Key.Left or Key.Right && e.KeyModifiers == KeyModifiers.None
+				&& model.SelectedItem is { } current
+				&& TreeGrid.HierarchicalModel is IHierarchicalModel hmNav
+				&& hmNav.FindNode(current) is { } currentNode)
+			{
+				if (e.Key == Key.Left)
+				{
+					// Collapse if open; otherwise step out to the parent (unless it's the hidden root).
+					if (currentNode.IsExpanded)
+						hmNav.Collapse(currentNode);
+					else if (current.Parent is { } parent && hmNav.FindNode(parent) is not null)
+						model.SelectNode(parent);
+					else
+						return;
+				}
+				else
+				{
+					// Expand if closed and has children; otherwise step into the first child.
+					if (!currentNode.IsExpanded && !currentNode.IsLeaf)
+						hmNav.Expand(currentNode);
+					else if (currentNode.IsExpanded && currentNode.Children.Count > 0)
+						model.SelectNode(currentNode.Children[0].Item as SharpTreeNode);
+					else
+						return;
+				}
+				e.Handled = true;
+				return;
+			}
 			if (e.Key == Key.R && e.KeyModifiers == KeyModifiers.Control)
 			{
 				var members = model.SelectedItems.OfType<IMemberTreeNode>()

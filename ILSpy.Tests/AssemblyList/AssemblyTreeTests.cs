@@ -857,6 +857,44 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
+	public async Task Left_And_Right_Keys_Collapse_Expand_And_Navigate_The_Tree()
+	{
+		// Standard tree keyboard nav: Right expands a collapsed node then steps into its first
+		// child; Left collapses an expanded node, or moves to the parent when already collapsed.
+		var (window, vm) = await TestHarness.BootAsync(3);
+		var model = vm.AssemblyTreeModel;
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<DataGrid>();
+		grid.Focus();
+		Dispatcher.UIThread.RunJobs();
+
+		var assembly = model.FindNode<AssemblyTreeNode>("System.Linq");
+		assembly.EnsureLazyChildren();
+		model.SelectNode(assembly);
+		await Waiters.WaitForAsync(() => ReferenceEquals(model.SelectedItem, assembly));
+		assembly.IsExpanded.Should().BeFalse("precondition: the assembly starts collapsed");
+
+		// Right expands.
+		window.KeyPress(Key.Right, RawInputModifiers.None, PhysicalKey.ArrowRight, null);
+		await Waiters.WaitForAsync(() => assembly.IsExpanded, description: "Right expands the collapsed node");
+
+		// Right again steps into the first child.
+		window.KeyPress(Key.Right, RawInputModifiers.None, PhysicalKey.ArrowRight, null);
+		await Waiters.WaitForAsync(
+			() => model.SelectedItem is { } s && !ReferenceEquals(s, assembly) && ReferenceEquals(s.Parent, assembly),
+			description: "Right on an expanded node selects its first child");
+
+		// Left on the (collapsed/leaf) child moves selection back to the parent.
+		window.KeyPress(Key.Left, RawInputModifiers.None, PhysicalKey.ArrowLeft, null);
+		await Waiters.WaitForAsync(() => ReferenceEquals(model.SelectedItem, assembly),
+			description: "Left on a collapsed child selects the parent");
+
+		// Left on the expanded parent collapses it.
+		window.KeyPress(Key.Left, RawInputModifiers.None, PhysicalKey.ArrowLeft, null);
+		await Waiters.WaitForAsync(() => !assembly.IsExpanded, description: "Left collapses the expanded node");
+	}
+
+	[AvaloniaTest]
 	public async Task Clear_Assembly_List_Command_Empties_The_Active_List()
 	{
 		// The Clear Assembly List menu command must drop every entry from the active list.
