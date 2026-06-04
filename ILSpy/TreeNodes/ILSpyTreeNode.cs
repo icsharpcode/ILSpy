@@ -240,5 +240,21 @@ namespace ILSpy.TreeNodes
 			foreach (var child in Children.OfType<ILSpyTreeNode>())
 				ApplyFilterToChild(child);
 		}
+
+		/// <summary>
+		/// Re-applies the filter to already-realised children (without forcing lazy children to
+		/// load) and recurses into realised subtrees. Called when ShowApiLevel changes so the
+		/// visible tree updates in place -- a <c>TreeFlattener</c> then drops anything newly hidden.
+		/// </summary>
+		internal void RefreshRealizedFilter()
+		{
+			if (LazyLoading)
+				return;
+			foreach (var child in Children.OfType<ILSpyTreeNode>())
+			{
+				ApplyFilterToChild(child);
+				child.RefreshRealizedFilter();
+			}
+		}
 	}
 }

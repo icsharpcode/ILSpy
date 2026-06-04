@@ -36,7 +36,7 @@
 		<Setter Property="Padding" Value="2,0" />
 		<Setter Property="HorizontalContentAlignment" Value="Stretch" />
 		<Setter Property="ContentTemplate">
-			<DataTemplate x:DataType="ilspyx:SharpTreeNode">
+			<DataTemplate x:CompileBindings="False">
 				<StackPanel Orientation="Horizontal" Background="Transparent"
 				            ToolTip.Tip="{Binding ToolTip}">
 					<!-- Indent spacer = Level * step. -->
@@ -49,10 +49,20 @@
 					<Border Width="13" IsVisible="{Binding !ShowExpander}" />
 					<Image Source="{Binding Icon}" Width="16" Height="16"
 					       Margin="0,0,4,0" VerticalAlignment="Center" />
-					<TextBlock Text="{Binding Text}" VerticalAlignment="Center" />
+					<TextBlock Text="{Binding Text}" VerticalAlignment="Center"
+					           Classes.autoloaded="{Binding IsAutoLoaded}"
+					           Classes.nonPublicAPI="{Binding IsNonPublicAPI}" />
 				</StackPanel>
 			</DataTemplate>
 		</Setter>
+		<!-- Dim auto-loaded assemblies / non-public API, but never let the dim colour bleed
+		     through a selected row's highlight (mirrors the old DataGridRow:not(:selected) rule). -->
+		<Style Selector="^:not(:selected) TextBlock.autoloaded">
+			<Setter Property="Foreground" Value="{DynamicResource ILSpy.TreeAutoloadedForeground}" />
+		</Style>
+		<Style Selector="^:not(:selected) TextBlock.nonPublicAPI">
+			<Setter Property="Foreground" Value="{DynamicResource ILSpy.TreeNonPublicForeground}" />
+		</Style>
 	</ControlTheme>
 
 </ResourceDictionary>
