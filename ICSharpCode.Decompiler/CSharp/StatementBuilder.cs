@@ -412,7 +412,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (expectedType == SpecialType.Dynamic)
 				return true;
 			if (givenType == SpecialType.NullType)
-				return true;
+				return !expectedType.ContainsAnonymousType();
 			return false;
 		}
 
