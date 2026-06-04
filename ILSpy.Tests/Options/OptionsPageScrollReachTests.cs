@@ -107,4 +107,46 @@ public class OptionsPageScrollReachTests
 			+ "obscures it. Indicates either ScrollViewer.Extent under-measures the StackPanel "
 			+ "content or the ContentPresenter under-allocates the TabControl's vertical room.");
 	}
+
+	[AvaloniaTest]
+	public void Each_Decompiler_Settings_Group_Has_A_Header_Checkbox()
+	{
+		// Every Decompiler-settings category (the C# language-version groups) carries a tri-state
+		// header checkbox bound to AreAllItemsChecked that bulk-toggles the group. The group
+		// viewmodel has the whole plumbing, but the panel's Expander header had been reduced to
+		// plain category text, so each group rendered WITHOUT its checkbox. Realize the panel and
+		// assert each group's header checkbox is present (its Content is the Category string,
+		// distinct from the per-item checkboxes whose Content is a setting Description).
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Width = 900;
+		window.Height = 600;
+		window.Show();
+		Dispatcher.UIThread.RunJobs();
+
+		var command = AppComposition.Current.GetExport<MainMenuCommandRegistry>()
+			.GetCommand(nameof(Resources._Options));
+		command.Execute(null);
+		Dispatcher.UIThread.RunJobs();
+
+		var view = window.GetVisualDescendants().OfType<OptionsPageView>().Single();
+		var model = (OptionsPageModel)((ContentTabPage)((MainWindowViewModel)window.DataContext!)
+			.DockWorkspace.Documents!.VisibleDockables!
+			.OfType<ContentTabPage>().Single(t => t.Content is OptionsPageModel)).Content!;
+		var decompilerPage = model.Pages.OfType<DecompilerSettingsViewModel>().Single();
+		model.SelectedPage = decompilerPage;
+		Dispatcher.UIThread.RunJobs();
+
+		var renderedCheckboxContents = view.GetVisualDescendants().OfType<CheckBox>()
+			.Select(cb => cb.Content?.ToString())
+			.Where(s => !string.IsNullOrEmpty(s))
+			.ToHashSet();
+
+		decompilerPage.Settings.Should().NotBeEmpty("baseline: the Decompiler panel must have groups");
+		foreach (var group in decompilerPage.Settings)
+		{
+			renderedCheckboxContents.Should().Contain(group.Category,
+				$"the '{group.Category}' group must render a header checkbox (the bulk-toggle), "
+				+ "not just the category text");
+		}
+	}
 }

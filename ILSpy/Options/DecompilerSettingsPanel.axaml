@@ -16,7 +16,16 @@
 			<ItemsControl ItemsSource="{Binding Settings}">
 				<ItemsControl.ItemTemplate>
 					<DataTemplate x:DataType="vm:DecompilerSettingsGroupViewModel">
-						<Expander Header="{Binding Category}" IsExpanded="True" Margin="0,2">
+						<Expander IsExpanded="True" Margin="0,2">
+							<!-- The header is a tri-state checkbox (all/none/some) that bulk-toggles
+							     every item in the group, not just a label. AreAllItemsChecked drives
+							     it; OnAreAllItemsCheckedChanged cascades to the items. -->
+							<Expander.Header>
+								<CheckBox FontWeight="Bold"
+								          VerticalContentAlignment="Center"
+								          Content="{Binding Category}"
+								          IsChecked="{Binding AreAllItemsChecked, Mode=TwoWay}" />
+							</Expander.Header>
 							<ItemsControl ItemsSource="{Binding Settings}" Margin="12,4,0,0">
 								<ItemsControl.ItemTemplate>
 									<DataTemplate x:DataType="vm:DecompilerSettingsItemViewModel">
