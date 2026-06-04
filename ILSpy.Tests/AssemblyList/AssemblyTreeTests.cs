@@ -922,6 +922,77 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
+	public async Task Shift_Up_After_Shift_Down_Shrinks_The_Selection_Toward_The_Anchor()
+	{
+		// Anchor at A, Shift+Down twice -> A,B,C. Shift+Up must SHRINK back to A,B (not keep C).
+		var (window, vm) = await TestHarness.BootAsync(3);
+		var model = vm.AssemblyTreeModel;
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<DataGrid>();
+		grid.Focus();
+		Dispatcher.UIThread.RunJobs();
+
+		var hm = (global::Avalonia.Controls.DataGridHierarchical.IHierarchicalModel)grid.HierarchicalModel!;
+		var a = (SharpTreeNode)hm.Flattened[0].Item;
+		var b = (SharpTreeNode)hm.Flattened[1].Item;
+		var c = (SharpTreeNode)hm.Flattened[2].Item;
+
+		model.SelectNode(a);
+		await Waiters.WaitForAsync(() => ReferenceEquals(model.SelectedItem, a));
+
+		window.KeyPress(Key.Down, RawInputModifiers.Shift, PhysicalKey.ArrowDown, null);
+		Dispatcher.UIThread.RunJobs();
+		window.KeyPress(Key.Down, RawInputModifiers.Shift, PhysicalKey.ArrowDown, null);
+		Dispatcher.UIThread.RunJobs();
+		model.SelectedItems.Should().BeEquivalentTo(new[] { a, b, c }, "precondition: A,B,C selected");
+
+		window.KeyPress(Key.Up, RawInputModifiers.Shift, PhysicalKey.ArrowUp, null);
+		Dispatcher.UIThread.RunJobs();
+		model.SelectedItems.Should().BeEquivalentTo(new[] { a, b },
+			"Shift+Up must shrink the range back toward the anchor (A,B), dropping C");
+	}
+
+	[AvaloniaTest]
+	public async Task Shift_Down_Then_Shift_Up_In_The_Middle_Shrinks_Without_Drifting_The_Anchor()
+	{
+		// Start mid-list, Shift+Down x3 then Shift+Up x2. The anchor must stay put, so the net is
+		// the [anchor..anchor+1] range -- not a range that drifted up past the anchor.
+		var (window, vm) = await TestHarness.BootAsync(3);
+		var model = vm.AssemblyTreeModel;
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<DataGrid>();
+		grid.Focus();
+		Dispatcher.UIThread.RunJobs();
+
+		var hm = (global::Avalonia.Controls.DataGridHierarchical.IHierarchicalModel)grid.HierarchicalModel!;
+		// Expand the first assembly so there are plenty of rows and a real "middle".
+		var firstAsm = (SharpTreeNode)hm.Flattened[0].Item;
+		firstAsm.EnsureLazyChildren();
+		firstAsm.IsExpanded = true;
+		Dispatcher.UIThread.RunJobs();
+		await Waiters.WaitForAsync(() => hm.Flattened.Count >= 7);
+
+		var start = (SharpTreeNode)hm.Flattened[3].Item;
+		var below = (SharpTreeNode)hm.Flattened[4].Item;
+		model.SelectNode(start);
+		await Waiters.WaitForAsync(() => ReferenceEquals(model.SelectedItem, start));
+
+		for (int d = 0; d < 3; d++)
+		{
+			window.KeyPress(Key.Down, RawInputModifiers.Shift, PhysicalKey.ArrowDown, null);
+			Dispatcher.UIThread.RunJobs();
+		}
+		for (int u = 0; u < 2; u++)
+		{
+			window.KeyPress(Key.Up, RawInputModifiers.Shift, PhysicalKey.ArrowUp, null);
+			Dispatcher.UIThread.RunJobs();
+		}
+
+		model.SelectedItems.Should().BeEquivalentTo(new[] { start, below },
+			"net of +3/-2 from a fixed anchor is the anchor plus one row below it");
+	}
+
+	[AvaloniaTest]
 	public async Task Type_Ahead_Jumps_To_The_Node_Matching_The_Typed_Text()
 	{
 		// Typing a name jumps the selection to the visible node whose text matches.

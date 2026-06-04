@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 using Avalonia.Controls;
 using Avalonia.Controls.DataGridHierarchical;
@@ -54,6 +55,10 @@ namespace ILSpy.Controls
 		readonly DispatcherTimer searchResetTimer;
 		string searchBuffer = string.Empty;
 
+		// ProDataGrid internals reached reflectively to fix shift-range shrinking (see OnShiftRangeKey).
+		static readonly MethodInfo? setRowSelectionMethod =
+			typeof(DataGrid).GetMethod("SetRowSelection", BindingFlags.NonPublic | BindingFlags.Instance);
+
 		public TreeKeyboardController(DataGrid grid)
 		{
 			this.grid = grid ?? throw new ArgumentNullException(nameof(grid));
@@ -61,6 +66,8 @@ namespace ILSpy.Controls
 			searchResetTimer.Tick += (_, _) => { searchResetTimer.Stop(); searchBuffer = string.Empty; };
 			grid.AddHandler(InputElement.KeyDownEvent, OnKeyDown, RoutingStrategies.Bubble);
 			grid.AddHandler(InputElement.TextInputEvent, OnTextInput, RoutingStrategies.Bubble);
+			// Runs even after the DataGrid marks the key handled, so we can repair its selection.
+			grid.AddHandler(InputElement.KeyDownEvent, OnShiftRangeKey, RoutingStrategies.Bubble, handledEventsToo: true);
 		}
 
 		// The model is the grid's DataContext (the tree's UserControl sets it). Resolved per
@@ -172,6 +179,68 @@ namespace ILSpy.Controls
 				}
 			}
 			return null;
+		}
+
+		// Workaround for a ProDataGrid bug: a shift+nav key moves the grid's current row and anchor
+		// correctly, but SelectFromAnchorToCurrent only ADDS the [anchor..current] range and never
+		// deselects rows outside it -- so shrinking a shift-selection (Shift+Up after extending down)
+		// is a no-op and the dropped rows stay selected. After the grid has processed the key, prune
+		// the selection back to exactly the [anchor..current] range.
+		//
+		// The prune uses the internal SetRowSelection(slot, isSelected:false, setAnchorSlot:false),
+		// NOT SelectedItems.Remove: removing an item makes the grid re-derive its current row (which
+		// corrupts the anchor for the next key), whereas SetRowSelection deselects a slot in place
+		// and leaves current/anchor untouched.
+		void OnShiftRangeKey(object? sender, KeyEventArgs e)
+		{
+			if ((e.KeyModifiers & KeyModifiers.Shift) == 0
+				|| grid.SelectionMode != DataGridSelectionMode.Extended
+				|| setRowSelectionMethod is null
+				|| e.Key is not (Key.Up or Key.Down or Key.Home or Key.End or Key.PageUp or Key.PageDown))
+				return;
+			Dispatcher.UIThread.Post(PruneToShiftRange);
+		}
+
+		void PruneToShiftRange()
+		{
+			if (Model is not { } hm || setRowSelectionMethod is null)
+				return;
+			int anchor = ReadGridSlot("AnchorSlot");
+			int current = ReadGridSlot("CurrentSlot");
+			if (anchor < 0 || current < 0)
+				return;
+			int lo = Math.Min(anchor, current), hi = Math.Max(anchor, current);
+			var flattened = hm.Flattened;
+			if (hi >= flattened.Count)
+				return;
+			// Collect first (don't mutate the selection while iterating it), then deselect.
+			var slotsToDrop = new List<int>();
+			foreach (var item in grid.SelectedItems)
+			{
+				var node = item is HierarchicalNode hn ? hn.Item as SharpTreeNode : item as SharpTreeNode;
+				if (node is null)
+					continue;
+				int slot = IndexOf(flattened, node);
+				if (slot >= 0 && (slot < lo || slot > hi))
+					slotsToDrop.Add(slot);
+			}
+			foreach (int slot in slotsToDrop)
+				setRowSelectionMethod.Invoke(grid, new object[] { slot, false, false });
+		}
+
+		// Reads a DataGrid slot property/field by name; -1 if unavailable (defensive against a
+		// future ProDataGrid that renames or removes it -- the worst case is the pre-fix behaviour).
+		int ReadGridSlot(string name)
+		{
+			var type = grid.GetType();
+			var member = (object?)type.GetProperty(name, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
+				?? type.GetField(name, BindingFlags.NonPublic | BindingFlags.Instance);
+			object? value = member switch {
+				PropertyInfo pi => pi.GetValue(grid),
+				FieldInfo fi => fi.GetValue(grid),
+				_ => null,
+			};
+			return value is int slot ? slot : -1;
 		}
 
 		// Numpad-* recursive expand. Recurses only into children that opt in via
