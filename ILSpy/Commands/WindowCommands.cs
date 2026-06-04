@@ -39,19 +39,4 @@ namespace ILSpy.Commands
 	{
 		public override void Execute(object? parameter) => dockWorkspace.ResetLayout();
 	}
-
-	/// <summary>
-	/// VS-style "promote preview tab" command. The persistent MainTab starts as preview
-	/// (its content is replaced by tree-node selections); freezing makes it a regular tab
-	/// that keeps its content, and a fresh preview MainTab takes over the
-	/// tree-selection slot. <see cref="DockWorkspace.FreezeCurrentTab"/> is a no-op when
-	/// there's nothing freezable (no MainTab, or MainTab already frozen).
-	/// </summary>
-	[ExportMainMenuCommand(Header = nameof(Resources.Window_FreezeCurrentTab), ParentMenuID = nameof(Resources._Window), MenuCategory = "Window", MenuOrder = 0)]
-	[Shared]
-	[method: ImportingConstructor]
-	sealed class FreezeCurrentTabCommand(DockWorkspace dockWorkspace) : SimpleCommand
-	{
-		public override void Execute(object? parameter) => dockWorkspace.FreezeCurrentTab();
-	}
 }

@@ -1084,9 +1084,6 @@ Do you want to continue?</value>
   <data name="Window_CloseAllDocuments" xml:space="preserve">
     <value>_Close all documents</value>
   </data>
-  <data name="Window_FreezeCurrentTab" xml:space="preserve">
-    <value>_Freeze current tab</value>
-  </data>
   <data name="Window_ResetLayout" xml:space="preserve">
     <value>_Reset layout</value>
   </data>
