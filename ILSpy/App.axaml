@@ -74,9 +74,10 @@
                          PreviewTabActiveBackground must match BoolToBrushConverter's purple. -->
                     <SolidColorBrush x:Key="ILSpy.PreviewTabActiveBackground" Color="#9B59B6" />
                     <SolidColorBrush x:Key="ILSpy.PreviewTabHoverBackground" Color="#BB8FCE" />
-                    <!-- Focused tool pane: a subtle neutral header tint + readable title, instead of
-                         the theme's saturated system accent. -->
-                    <SolidColorBrush x:Key="ILSpy.ToolChromeActiveHeaderBackground" Color="#C4C4C4" />
+                    <!-- Focused tool pane: the #007ACC document-active blue at ~70% strength over the
+                         light background (so tools read clearly but stay a step below documents) +
+                         readable title, instead of the theme's saturated system accent. -->
+                    <SolidColorBrush x:Key="ILSpy.ToolChromeActiveHeaderBackground" Color="#4DA2DB" />
                     <SolidColorBrush x:Key="ILSpy.ToolChromeActiveTitleForeground" Color="#1E1E1E" />
                     <SolidColorBrush x:Key="ILSpy.FoldingMarkerBackground" Color="#FFFFE1" />
                     <SolidColorBrush x:Key="ILSpy.FoldingMarkerForeground" Color="#808080" />
@@ -120,8 +121,9 @@
                          the dark chrome. Keep in sync with BoolToBrushConverter's purple. -->
                     <SolidColorBrush x:Key="ILSpy.PreviewTabActiveBackground" Color="#9B59B6" />
                     <SolidColorBrush x:Key="ILSpy.PreviewTabHoverBackground" Color="#BB8FCE" />
-                    <!-- Focused tool pane: neutral header tint + readable (light) title for dark. -->
-                    <SolidColorBrush x:Key="ILSpy.ToolChromeActiveHeaderBackground" Color="#3F3F46" />
+                    <!-- Focused tool pane: the #007ACC document-active blue at ~70% strength over the
+                         dark background + readable (light) title for dark. -->
+                    <SolidColorBrush x:Key="ILSpy.ToolChromeActiveHeaderBackground" Color="#0B609A" />
                     <SolidColorBrush x:Key="ILSpy.ToolChromeActiveTitleForeground" Color="#DCDCDC" />
                     <SolidColorBrush x:Key="ILSpy.FoldingMarkerBackground" Color="#1E1E1E" />
                     <SolidColorBrush x:Key="ILSpy.FoldingMarkerForeground" Color="#A0A0A0" />
