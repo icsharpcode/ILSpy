@@ -295,14 +295,19 @@ namespace ILSpy.AssemblyTree
 			{
 				// Snapshot before mutation — Unload mutates the list and indirectly the
 				// model's selection.
-				var assemblies = model.SelectedItems.OfType<AssemblyTreeNode>()
-					.Select(n => n.LoadedAssembly)
-					.ToList();
-				if (assemblies.Count == 0)
+				var selectedAssemblyNodes = model.SelectedItems.OfType<AssemblyTreeNode>().ToList();
+				if (selectedAssemblyNodes.Count == 0)
 					return;
-				foreach (var asm in assemblies)
-					list.Unload(asm);
+				// Remember where the topmost selected assembly sits in the visible (flattened) tree
+				// so we can re-select its neighbour after the unload. Without this, Unload clears the
+				// model selection while the grid keeps a row visually selected -- the two desync and
+				// the next Delete reads an empty selection and no-ops ("spamming Delete breaks").
+				int reselectIndex = FlattenedIndexOf(selectedAssemblyNodes[0]);
+				foreach (var node in selectedAssemblyNodes)
+					list.Unload(node.LoadedAssembly);
 				e.Handled = true;
+				// The flattened list rebuilds in response to the list change; re-select after it settles.
+				Dispatcher.UIThread.Post(() => ReselectAfterDelete(reselectIndex), DispatcherPriority.Background);
 				return;
 			}
 			if (e.Key == Key.R && e.KeyModifiers == KeyModifiers.Control)
@@ -320,6 +325,38 @@ namespace ILSpy.AssemblyTree
 					analyzerVm.Analyze(member!);
 				e.Handled = true;
 			}
+		}
+
+		// Flattened (visible) index of a tree node, or -1 if not currently realized/visible.
+		int FlattenedIndexOf(SharpTreeNode node)
+		{
+			if (TreeGrid.HierarchicalModel is not IHierarchicalModel hm || hm.FindNode(node) is not { } hNode)
+				return -1;
+			var flattened = hm.Flattened;
+			for (int i = 0; i < flattened.Count; i++)
+			{
+				if (ReferenceEquals(flattened[i], hNode))
+					return i;
+			}
+			return -1;
+		}
+
+		// After a Delete-unload, put the selection back on the node that now occupies the deleted
+		// node's slot (clamped to the new end), so grid and model stay in sync and repeated Delete
+		// keeps working. Selects nothing when the list is empty.
+		void ReselectAfterDelete(int index)
+		{
+			if (DataContext is not AssemblyTreeModel model)
+				return;
+			if (TreeGrid.HierarchicalModel is not IHierarchicalModel hm)
+				return;
+			var flattened = hm.Flattened;
+			if (flattened.Count == 0 || index < 0)
+			{
+				model.SelectNode(null);
+				return;
+			}
+			model.SelectNode(flattened[System.Math.Clamp(index, 0, flattened.Count - 1)].Item as SharpTreeNode);
 		}
 
 		static ILSpy.Analyzers.AnalyzerTreeViewModel? TryGetAnalyzerTreeViewModel()

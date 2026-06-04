@@ -819,6 +819,44 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
+	public async Task Delete_Reselects_The_Next_Node_So_Repeated_Delete_Keeps_Working()
+	{
+		// Regression for the "spamming Delete breaks" bug: Unload cleared the model selection but
+		// the grid kept showing a row selected, so model.SelectedItems went empty and the next
+		// Delete read an empty selection and no-op'd. Delete must re-select the nearest remaining
+		// node (grid + model in sync) so repeated Delete keeps unloading.
+		var (window, vm) = await TestHarness.BootAsync(3);
+		var model = vm.AssemblyTreeModel;
+
+		var firstAssembly = model.FindNode<AssemblyTreeNode>("System.Linq");
+		model.SelectNode(firstAssembly);
+		await Waiters.WaitForAsync(() => ReferenceEquals(model.SelectedItem, firstAssembly));
+
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<DataGrid>();
+		grid.Focus();
+		Dispatcher.UIThread.RunJobs();
+
+		int loadedBefore = model.AssemblyList!.GetAssemblies().Count();
+
+		window.KeyPress(Key.Delete, RawInputModifiers.None, PhysicalKey.Delete, null);
+		await Waiters.WaitForAsync(() => model.AssemblyList!.GetAssemblies().Count() == loadedBefore - 1);
+		Dispatcher.UIThread.RunJobs();
+
+		// The bug: after the first Delete the selection must still point at a (different) node.
+		model.SelectedItems.Should().NotBeEmpty(
+			"after Delete the selection must move to the nearest remaining node, not unset");
+		((object?)model.SelectedItem).Should().NotBeNull();
+		ReferenceEquals(model.SelectedItem, firstAssembly).Should().BeFalse(
+			"the deleted node must not stay selected");
+
+		// Spamming Delete: a second press must unload another assembly (it couldn't before).
+		window.KeyPress(Key.Delete, RawInputModifiers.None, PhysicalKey.Delete, null);
+		await Waiters.WaitForAsync(() => model.AssemblyList!.GetAssemblies().Count() == loadedBefore - 2,
+			description: "a second Delete must unload another assembly; the selection didn't desync");
+	}
+
+	[AvaloniaTest]
 	public async Task Clear_Assembly_List_Command_Empties_The_Active_List()
 	{
 		// The Clear Assembly List menu command must drop every entry from the active list.
