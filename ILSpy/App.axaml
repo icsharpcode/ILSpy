@@ -138,6 +138,11 @@
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Custom SharpTreeView control theme (ListBox-based tree). -->
+                <ResourceInclude Source="avares://ILSpy/Controls/TreeView/SharpTreeView.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+
             <!-- Every dockable owns its view (IDockableViewOwner): the dock chrome must render one
                  view per dockable identity, not one per slot, or two panes sharing a ToolDock slot
                  (e.g. Analyzer + Debug Steps both Bottom-aligned) render each other's content. This

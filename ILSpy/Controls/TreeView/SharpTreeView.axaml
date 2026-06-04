@@ -1,0 +1,58 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:tv="using:ILSpy.Controls.TreeView"
+                    xmlns:ilspyx="using:ICSharpCode.ILSpyX.TreeView">
+
+	<!-- Chevron expander: points right when collapsed, down when expanded. -->
+	<ControlTheme x:Key="TreeExpanderToggleTheme" TargetType="ToggleButton">
+		<Setter Property="Width" Value="13" />
+		<Setter Property="Height" Value="16" />
+		<Setter Property="Background" Value="Transparent" />
+		<Setter Property="Focusable" Value="False" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Background="Transparent" Width="13" Height="16">
+					<Path Name="Chevron"
+					      Width="5" Height="9"
+					      Fill="{DynamicResource ThemeForegroundBrush}"
+					      Data="M 0 0 L 4 4 L 0 8 Z"
+					      HorizontalAlignment="Center" VerticalAlignment="Center"
+					      RenderTransformOrigin="0.5,0.5" />
+				</Border>
+			</ControlTemplate>
+		</Setter>
+		<Style Selector="^:checked /template/ Path#Chevron">
+			<Setter Property="RenderTransform" Value="rotate(90deg)" />
+		</Style>
+	</ControlTheme>
+
+	<!-- SharpTreeView inherits the Simple-theme ListBox chrome. -->
+	<ControlTheme x:Key="{x:Type tv:SharpTreeView}" TargetType="tv:SharpTreeView"
+	              BasedOn="{StaticResource {x:Type ListBox}}" />
+
+	<!-- Each row: the ListBoxItem selection chrome (from BasedOn) wraps our node content. -->
+	<ControlTheme x:Key="{x:Type tv:SharpTreeViewItem}" TargetType="tv:SharpTreeViewItem"
+	              BasedOn="{StaticResource {x:Type ListBoxItem}}">
+		<Setter Property="Padding" Value="2,0" />
+		<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+		<Setter Property="ContentTemplate">
+			<DataTemplate x:DataType="ilspyx:SharpTreeNode">
+				<StackPanel Orientation="Horizontal" Background="Transparent"
+				            ToolTip.Tip="{Binding ToolTip}">
+					<!-- Indent spacer = Level * step. -->
+					<Border Width="{Binding Level, Converter={x:Static tv:TreeIndentConverter.Instance}}" />
+					<ToggleButton Theme="{StaticResource TreeExpanderToggleTheme}"
+					              VerticalAlignment="Center"
+					              IsChecked="{Binding IsExpanded, Mode=TwoWay}"
+					              IsVisible="{Binding ShowExpander}" />
+					<!-- Reserve the expander column even when there is no expander. -->
+					<Border Width="13" IsVisible="{Binding !ShowExpander}" />
+					<Image Source="{Binding Icon}" Width="16" Height="16"
+					       Margin="0,0,4,0" VerticalAlignment="Center" />
+					<TextBlock Text="{Binding Text}" VerticalAlignment="Center" />
+				</StackPanel>
+			</DataTemplate>
+		</Setter>
+	</ControlTheme>
+
+</ResourceDictionary>
