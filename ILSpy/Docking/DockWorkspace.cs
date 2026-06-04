@@ -1045,24 +1045,13 @@ namespace ILSpy.Docking
 		/// selection across — setting it after-the-fact misses the activation event.
 		/// </param>
 		/// <summary>
-		/// Brings the tool pane with the given <paramref name="contentId"/> to focus. Walks
-		/// every <see cref="IDockable"/> in the layout via <see cref="GetAllDockables"/> and
-		/// matches on <see cref="IDockable.Id"/>. Silently no-ops when the pane isn't in the
-		/// layout — e.g. it was closed via its X button and hasn't been re-added.
+		/// Brings the tool pane with the given <paramref name="contentId"/> into view and
+		/// activates it. Delegates to <see cref="ILSpyDockFactory.ShowToolPane"/>, which
+		/// re-materialises the pane (and recreates its home dock) when it was closed or is hidden
+		/// by default -- so "Show Search" / "Analyze" reliably reveal the pane even after the user
+		/// closed it.
 		/// </summary>
-		public void ShowToolPane(string contentId)
-		{
-			foreach (var dockable in GetAllDockables(Layout))
-			{
-				if (dockable is ToolPaneModel toolPane && toolPane.Id == contentId)
-				{
-					factory.SetActiveDockable(toolPane);
-					if (toolPane.Owner is IDock owner)
-						factory.SetFocusedDockable(owner, toolPane);
-					return;
-				}
-			}
-		}
+		public void ShowToolPane(string contentId) => factory.ShowToolPane(contentId);
 
 		void ExecuteShowSearch()
 		{
@@ -1081,21 +1070,6 @@ namespace ILSpy.Docking
 			{
 				// Composition isn't available in design-time previews / minimal tests; the
 				// activation alone is enough to be useful there.
-			}
-		}
-
-		static System.Collections.Generic.IEnumerable<IDockable> GetAllDockables(IDockable? root)
-		{
-			if (root == null)
-				yield break;
-			yield return root;
-			if (root is IDock dock && dock.VisibleDockables != null)
-			{
-				foreach (var child in dock.VisibleDockables)
-				{
-					foreach (var descendant in GetAllDockables(child))
-						yield return descendant;
-				}
 			}
 		}
 

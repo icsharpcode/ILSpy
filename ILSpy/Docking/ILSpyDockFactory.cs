@@ -447,5 +447,109 @@ namespace ILSpy.Docking
 				remaining -= right.Proportion;
 			return remaining > 0 ? remaining : 0.5;
 		}
+
+		static (string Id, Alignment DockAlignment, double Proportion) ToolDockSpec(ToolPaneAlignment alignment)
+			=> alignment switch {
+				ToolPaneAlignment.Left => ("LeftTools", Alignment.Left, 0.25),
+				ToolPaneAlignment.Right => ("RightTools", Alignment.Right, 0.25),
+				ToolPaneAlignment.Top => ("TopTools", Alignment.Top, 0.2),
+				_ => ("BottomTools", Alignment.Bottom, 0.2),
+			};
+
+		/// <summary>
+		/// Brings a tool pane into view: activates it if it is already shown, otherwise
+		/// materialises it -- (re)creating its home <see cref="ToolDock"/> at the pane's
+		/// alignment and splicing that dock back into the layout if it was never built or was
+		/// removed when the user closed its last pane. This is the single entry point both for
+		/// "Show Search / Analyze" and for revealing a pane that is hidden by default.
+		/// Returns the pane, or null when <paramref name="contentId"/> matches no registered pane.
+		/// </summary>
+		public ToolPaneModel? ShowToolPane(string contentId)
+		{
+			var entry = panes.FirstOrDefault(e => string.Equals(e.Pane.Id, contentId, StringComparison.Ordinal));
+			if (entry?.Pane is not { } pane)
+				return null;
+
+			// Already live in the layout -> just activate it where it sits.
+			if (pane.Owner is IDock current && current.VisibleDockables?.Contains(pane) == true)
+			{
+				SetActiveDockable(pane);
+				SetFocusedDockable(current, pane);
+				return pane;
+			}
+
+			var dock = FindOrCreateToolDock(entry.Metadata.Alignment);
+			if (dock is null)
+				return pane;
+			AddDockable(dock, pane);
+			SetActiveDockable(pane);
+			SetFocusedDockable(dock, pane);
+			return pane;
+		}
+
+		// Finds the live ToolDock for an alignment, or builds an empty one and splices it into the
+		// layout at the same position CreateLayout would have (top/bottom inside the documents'
+		// vertical column; left/right inside the outer horizontal row), separated by a splitter.
+		ToolDock? FindOrCreateToolDock(ToolPaneAlignment alignment)
+		{
+			var (id, dockAlignment, proportion) = ToolDockSpec(alignment);
+
+			var root = GetRootDock();
+			if (root != null)
+			{
+				var existing = Flatten(root).OfType<ToolDock>()
+					.FirstOrDefault(t => t.Alignment == dockAlignment);
+				if (existing != null)
+					return existing;
+			}
+
+			// vertical = the documents' column (top/bottom siblings); horizontal = the outer row.
+			if (Documents?.Owner is not IDock vertical || vertical.VisibleDockables is null)
+				return null;
+
+			var dock = new ToolDock {
+				Id = id,
+				Proportion = proportion,
+				Alignment = dockAlignment,
+				VisibleDockables = CreateList(System.Array.Empty<IDockable>()),
+				DockCapabilityPolicy = new DockCapabilityPolicy(),
+			};
+
+			switch (alignment)
+			{
+				case ToolPaneAlignment.Bottom:
+					AddDockable(vertical, new ProportionalDockSplitter { Id = "BottomSplitter" });
+					AddDockable(vertical, dock);
+					break;
+				case ToolPaneAlignment.Top:
+					InsertDockable(vertical, new ProportionalDockSplitter { Id = "TopSplitter" }, 0);
+					InsertDockable(vertical, dock, 0);
+					break;
+				case ToolPaneAlignment.Left:
+				case ToolPaneAlignment.Right:
+					if (vertical.Owner is not IDock horizontal)
+						return null;
+					if (alignment == ToolPaneAlignment.Left)
+					{
+						InsertDockable(horizontal, new ProportionalDockSplitter { Id = "LeftSplitter" }, 0);
+						InsertDockable(horizontal, dock, 0);
+					}
+					else
+					{
+						AddDockable(horizontal, new ProportionalDockSplitter { Id = "RightSplitter" });
+						AddDockable(horizontal, dock);
+					}
+					break;
+			}
+			return dock;
+		}
+
+		IDock? GetRootDock()
+		{
+			IDockable? d = Documents;
+			while (d?.Owner is { } owner)
+				d = owner;
+			return d as IDock;
+		}
 	}
 }
