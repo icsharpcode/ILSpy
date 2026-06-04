@@ -55,6 +55,8 @@ namespace ILSpy.Controls.TreeView
 		TreeFlattener? flattener;
 		bool updatesLocked;
 		bool doNotScrollOnExpanding;
+		string searchBuffer = string.Empty;
+		DispatcherTimer? searchResetTimer;
 
 		static SharpTreeView()
 		{
@@ -286,6 +288,62 @@ namespace ILSpy.Controls.TreeView
 			node.IsExpanded = true;
 			foreach (var child in node.Children)
 				ExpandRecursively(child);
+		}
+
+		protected override void OnTextInput(TextInputEventArgs e)
+		{
+			var text = e.Text;
+			if (!string.IsNullOrEmpty(text) && !char.IsControl(text[0]) && flattener is { Count: > 0 })
+			{
+				searchBuffer += text;
+				RestartSearchTimer();
+				// A fresh single keystroke advances past the current row (so repeating a letter
+				// cycles); a growing prefix re-matches from the current row so a settled match stays.
+				int anchor = SelectedItem is SharpTreeNode current ? flattener.IndexOf(current) : -1;
+				int from = searchBuffer.Length <= 1 ? anchor + 1 : anchor;
+				if (FindPrefixMatch(from) is { } match)
+				{
+					SelectedItem = match;
+					FocusNode(match);
+				}
+				e.Handled = true;
+			}
+			if (!e.Handled)
+				base.OnTextInput(e);
+		}
+
+		SharpTreeNode? FindPrefixMatch(int from)
+		{
+			if (flattener is null)
+				return null;
+			int count = flattener.Count;
+			if (from < 0)
+				from = 0;
+			for (int k = 0; k < count; k++)
+			{
+				if (flattener[(from + k) % count] is SharpTreeNode node
+					&& node.Text?.ToString() is { } text
+					&& text.StartsWith(searchBuffer, StringComparison.OrdinalIgnoreCase))
+				{
+					return node;
+				}
+			}
+			return null;
+		}
+
+		void RestartSearchTimer()
+		{
+			searchResetTimer ??= new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+			searchResetTimer.Stop();
+			searchResetTimer.Tick -= OnSearchTimeout;
+			searchResetTimer.Tick += OnSearchTimeout;
+			searchResetTimer.Start();
+		}
+
+		void OnSearchTimeout(object? sender, EventArgs e)
+		{
+			searchResetTimer?.Stop();
+			searchBuffer = string.Empty;
 		}
 
 		/// <summary>Selected items with no selected ancestor (used by Delete).</summary>
