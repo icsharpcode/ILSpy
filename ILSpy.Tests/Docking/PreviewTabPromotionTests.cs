@@ -539,6 +539,82 @@ public class PreviewTabPromotionTests
 	}
 
 	[AvaloniaTest]
+	public async Task Close_Button_Has_A_Ctrl_W_Tooltip()
+	{
+		// Dock's tab template gives the close button no tooltip. PreviewTabFreezeButtonBehavior
+		// names its Ctrl+W shortcut so the gesture is discoverable on hover.
+		var (window, vm) = await TestHarness.BootAsync(3);
+
+		// Open a carve-out so the close button is realised (single-tab scenario hides it).
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		vm.DockWorkspace.OpenNodeInNewTab(typeNode);
+		TestCapture.Step("carve-out-tab-opened");
+
+		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<DocumentTabStripItem>().Count() >= 2,
+			System.TimeSpan.FromSeconds(10));
+		global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
+		var mainTabItem = window.GetVisualDescendants().OfType<DocumentTabStripItem>()
+			.Single(item => ReferenceEquals(item.DataContext, factory.MainTab));
+
+		var closeButton = mainTabItem.GetVisualDescendants()
+			.OfType<global::Avalonia.Controls.Button>()
+			.FirstOrDefault(b => (b.Tag as string) != "PreviewTabFreezeButton");
+		closeButton.Should().NotBeNull("baseline: close button exists as a sibling of the freeze");
+
+		global::Avalonia.Controls.ToolTip.GetTip(closeButton!).Should().Be("Close (Ctrl+W)",
+			"the close button must name its Ctrl+W shortcut on hover");
+	}
+
+	[AvaloniaTest]
+	public async Task Ctrl_W_Closes_The_Active_Document_And_Reforges_The_One()
+	{
+		// Ctrl+W (CloseActiveDocumentCommand) closes whatever document is active. Closing a frozen
+		// carve-out leaves the One untouched; closing the One drops the cached decompiler VM so the
+		// next tree selection forges a fresh preview at index 0.
+		var (_, vm) = await TestHarness.BootAsync(3);
+		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
+		var docs = vm.DockWorkspace.Documents!;
+
+		var typeA = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		vm.AssemblyTreeModel.SelectNode(typeA);
+		vm.DockWorkspace.SettleSelection();
+		var theOne = factory.MainTab!;
+		theOne.IsPreview.Should().BeTrue("precondition: the One starts as the preview");
+
+		// A frozen carve-out keeps the dock non-empty so the One isn't the last tab when closed.
+		var typeC = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Private.Uri", "System", "System.Uri");
+		vm.DockWorkspace.OpenNodeInNewTab(typeC);
+		var frozen = docs.VisibleDockables!.OfType<ContentTabPage>().Last(t => t.SourceNode == typeC);
+
+		// Closing the One while it is active removes it from the dock; the frozen tab survives.
+		factory.SetActiveDockable(theOne);
+		vm.DockWorkspace.CloseActiveDocument();
+		docs.VisibleDockables!.Should().NotContain(theOne, "Ctrl+W closes the One when it is active");
+		docs.VisibleDockables!.Should().Contain(frozen, "the frozen carve-out must survive closing the One");
+
+		// The next selection forges a brand-new One (the closed one is not resurrected).
+		var typeD = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Private.Uri", "System", "System.UriBuilder");
+		vm.AssemblyTreeModel.SelectNode(typeD);
+		vm.DockWorkspace.SettleSelection();
+		var freshOne = factory.MainTab;
+		freshOne.Should().NotBeNull("a fresh One is forged on the next selection");
+		freshOne.Should().NotBeSameAs(theOne, "the forged One is a new instance, not the closed tab");
+		freshOne!.IsPreview.Should().BeTrue("the forged One is a preview tab");
+
+		// Closing a frozen carve-out leaves the (fresh) One untouched.
+		factory.SetActiveDockable(frozen);
+		vm.DockWorkspace.CloseActiveDocument();
+		docs.VisibleDockables!.Should().NotContain(frozen, "Ctrl+W closes the active frozen tab");
+		factory.MainTab.Should().BeSameAs(freshOne, "closing a frozen tab must not disturb the One");
+	}
+
+	[AvaloniaTest]
 	public async Task Tree_Selection_While_Frozen_Tab_Active_Reuses_The_One()
 	{
 		// Exactly one preview tab ("the One"): even when a frozen tab (carve-out / Options /
@@ -622,10 +698,11 @@ public class PreviewTabPromotionTests
 	}
 
 	[AvaloniaTest]
-	public async Task Preview_Cannot_Be_Reordered_Out_Of_Slot_0()
+	public async Task Dragging_The_Preview_Freezes_It()
 	{
-		// The in-strip reorder drag commits through the same-dock MoveDockable; it's overridden to
-		// refuse moving the One out of slot 0. Drive that commit directly (what ItemDragHelper does).
+		// The in-strip reorder drag commits through the same-dock MoveDockable; it's overridden so
+		// that dragging the One freezes it (instead of refusing the move). Drive that commit
+		// directly (what ItemDragHelper does).
 		var (_, vm) = await TestHarness.BootAsync(3);
 		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
 		var docs = vm.DockWorkspace.Documents!;
@@ -635,6 +712,7 @@ public class PreviewTabPromotionTests
 		vm.AssemblyTreeModel.SelectNode(typeA);
 		vm.DockWorkspace.SettleSelection();
 		var theOne = factory.MainTab!;
+		theOne.IsPreview.Should().BeTrue("precondition: the One starts as the preview");
 		var typeC = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Private.Uri", "System", "System.Uri");
 		vm.DockWorkspace.OpenNodeInNewTab(typeC);
@@ -643,8 +721,10 @@ public class PreviewTabPromotionTests
 
 		factory.MoveDockable(docs, theOne, frozen);
 
-		docs.VisibleDockables!.IndexOf(theOne).Should().Be(0,
-			"the One must stay at index 0 -- it is immovable");
+		theOne.IsPreview.Should().BeFalse(
+			"dragging the One must freeze it -- it becomes an ordinary, movable tab");
+		factory.MainTab.Should().BeSameAs(theOne,
+			"freeze-on-drag does not rotate MainTab; the next tree selection forges a fresh One");
 	}
 
 	[AvaloniaTest]

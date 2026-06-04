@@ -102,6 +102,17 @@ namespace ILSpy.Themes
 			// paint on top of it.
 			titleStack.ClipToBounds = true;
 
+			// Cap the title and ellipsise overruns so a long type signature can't make a giant tab;
+			// the full title is surfaced in the tab tooltip (App.axaml). Applied to the specific
+			// realised title TextBlock here rather than via a `DocumentTabStripItem TextBlock` style
+			// selector, which also matched -- and trimmed -- the tooltip's own TextBlock.
+			var titleText = titleStack.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault();
+			if (titleText is not null)
+			{
+				titleText.MaxWidth = 240;
+				titleText.TextTrimming = TextTrimming.CharacterEllipsis;
+			}
+
 			// Snowflake glyph for "freeze" (Font Awesome Free v7 "snowflake", CC-BY-4.0). A filled
 			// vector Path (not a font glyph): a Segoe Fluent fallback was Windows-only and rendered
 			// as tofu on Linux / macOS. Fill is bound to the tab Foreground so the glyph inherits
@@ -147,6 +158,11 @@ namespace ILSpy.Themes
 			if (closeButton?.Theme is { } closeTheme)
 				freezeButton.Theme = closeTheme;
 			ToolTip.SetTip(freezeButton, "Freeze tab");
+			// The close button carries no tooltip from Dock's template; name its Ctrl+W shortcut.
+			// TryInject runs for every document tab (the freeze button is injected on all of them,
+			// just hidden when not the One), so this covers preview and frozen tabs alike.
+			if (closeButton is not null)
+				ToolTip.SetTip(closeButton, "Close (Ctrl+W)");
 
 			// IsVisible follows IsPreview — the button hides once the tab is frozen.
 			freezeButton.Bind(Visual.IsVisibleProperty, new Binding(nameof(ContentTabPage.IsPreview)) {

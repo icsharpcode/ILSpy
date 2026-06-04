@@ -76,7 +76,7 @@
                     <SolidColorBrush x:Key="ILSpy.PreviewTabHoverBackground" Color="#BB8FCE" />
                     <!-- Focused tool pane: a subtle neutral header tint + readable title, instead of
                          the theme's saturated system accent. -->
-                    <SolidColorBrush x:Key="ILSpy.ToolChromeActiveHeaderBackground" Color="#DCDCDC" />
+                    <SolidColorBrush x:Key="ILSpy.ToolChromeActiveHeaderBackground" Color="#C4C4C4" />
                     <SolidColorBrush x:Key="ILSpy.ToolChromeActiveTitleForeground" Color="#1E1E1E" />
                     <SolidColorBrush x:Key="ILSpy.FoldingMarkerBackground" Color="#FFFFE1" />
                     <SolidColorBrush x:Key="ILSpy.FoldingMarkerForeground" Color="#808080" />
@@ -278,6 +278,14 @@
         <Style Selector="dockControls|DocumentTabStripItem, dockControls|ToolTabStripItem">
             <Setter Property="Background" Value="{DynamicResource ILSpy.DockTabItemBackground}" />
             <Setter Property="Foreground" Value="{DynamicResource ILSpy.DockTabItemForeground}" />
+        </Style>
+        <!-- Full title in a tooltip on every document tab. The on-tab ellipsis is applied to the
+             realised title TextBlock by PreviewTabFreezeButtonBehavior, NOT with a descendant
+             selector here: a `DocumentTabStripItem TextBlock` selector also matched the tooltip's
+             own TextBlock and trimmed it to the same ellipsised text. Tool panes have short fixed
+             names, so this is document-only. -->
+        <Style Selector="dockControls|DocumentTabStripItem">
+            <Setter Property="ToolTip.Tip" Value="{Binding Title, Mode=OneWay, x:CompileBindings=False}" />
         </Style>
         <!-- A merely-selected (but not focused) tab gets the seam-matching fill. The active
              tab keeps Dock's accent highlight (see below). Splitting the two states is

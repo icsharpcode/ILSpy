@@ -83,20 +83,25 @@ namespace ILSpy.Docking
 			return fresh;
 		}
 
-		// The One is immovable at documents-dock index 0. A within-strip reorder drag commits
-		// through this same-dock MoveDockable (Dock's DocumentTabStripItem/ItemDragHelper does NOT
-		// consult IDockable.CanDrag), so overriding it is the choke point that pins the One to
-		// slot 0 and keeps frozen tabs to its right.
+		// The One sits at documents-dock index 0. A within-strip reorder drag commits through this
+		// same-dock MoveDockable (Dock's DocumentTabStripItem/ItemDragHelper does NOT consult
+		// IDockable.CanDrag), so this override is the choke point: dragging the One FREEZES it (it
+		// then moves like any other tab), and while it is still the preview no frozen tab may slip
+		// in front of it.
 		public override void MoveDockable(IDock dock, IDockable sourceDockable, IDockable targetDockable)
 		{
 			if (ReferenceEquals(dock, Documents))
 			{
-				// Never drag the One out of slot 0.
-				if (ReferenceEquals(sourceDockable, MainTab))
-					return;
-				// A frozen tab must not land at or before the One: retarget to the tab at index 1
-				// so the source lands at position 1, not 0.
-				if (ReferenceEquals(targetDockable, MainTab))
+				// Dragging the One freezes it (replacing the old "refuse the move" behaviour): it
+				// stops being the preview slot and lands wherever it's dropped; the next tree
+				// selection forges a fresh One at index 0.
+				if (ReferenceEquals(sourceDockable, MainTab) && MainTab is { IsPreview: true })
+				{
+					FreezeCurrentMainTab();
+				}
+				// While the One is still the preview, a frozen tab must not land at or before it:
+				// retarget to the tab at index 1 so the source lands at position 1, not 0.
+				else if (ReferenceEquals(targetDockable, MainTab) && MainTab is { IsPreview: true })
 				{
 					var kids = dock.VisibleDockables;
 					if (kids is { Count: > 1 })
@@ -108,21 +113,23 @@ namespace ILSpy.Docking
 			base.MoveDockable(dock, sourceDockable, targetDockable);
 		}
 
-		// Cross-dock move: never pull the One into another document dock (only reachable if the
-		// document area is ever split).
+		// Cross-dock move (only reachable if the document area is ever split): dragging the One out
+		// freezes it too, consistent with the in-strip case.
 		public override void MoveDockable(IDock sourceDock, IDock targetDock, IDockable sourceDockable, IDockable? targetDockable)
 		{
-			if (ReferenceEquals(sourceDockable, MainTab))
-				return;
+			if (ReferenceEquals(sourceDockable, MainTab) && MainTab is { IsPreview: true })
+				FreezeCurrentMainTab();
 			base.MoveDockable(sourceDock, targetDock, sourceDockable, targetDockable);
 		}
 
-		// Self-healing insurance: whatever drag path ran, re-assert the One at index 0. Idempotent
-		// and cheap -- guards against a future Dock version routing a reorder past MoveDockable.
+		// Self-healing insurance: re-assert the One at index 0 after any drag -- but ONLY while it is
+		// still the preview. Once dragged (which freezes it) it's an ordinary tab and must stay where
+		// the user dropped it. Idempotent; guards against a future Dock version routing a reorder
+		// past MoveDockable.
 		public override void OnDockableMoved(IDockable? dockable)
 		{
 			base.OnDockableMoved(dockable);
-			if (MainTab is not { } one || Documents?.VisibleDockables is not { } kids)
+			if (MainTab is not { IsPreview: true } one || Documents?.VisibleDockables is not { } kids)
 				return;
 			int idx = kids.IndexOf(one);
 			if (idx > 0)

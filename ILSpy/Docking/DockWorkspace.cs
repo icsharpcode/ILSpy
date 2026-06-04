@@ -91,6 +91,11 @@ namespace ILSpy.Docking
 		/// </summary>
 		public IRelayCommand ShowSearchCommand { get; }
 
+		/// <summary>Closes the active document tab. Wired to Ctrl+W on the main window. The
+		/// documents dock only ever holds <see cref="ContentTabPage"/>s, so this never touches a
+		/// tool pane.</summary>
+		public IRelayCommand CloseActiveDocumentCommand { get; }
+
 		// Read-only history snapshots for the Back/Forward split-button dropdowns; oldest-first.
 		// The UI reverses these for newest-first display.
 		public IReadOnlyList<NavigationEntry> BackHistory => history.BackEntries;
@@ -165,6 +170,7 @@ namespace ILSpy.Docking
 			NavigateToHistoryCommand = new RelayCommand<NavigationEntry>(NavigateToHistory,
 				entry => entry != null && (history.BackEntries.Contains(entry) || history.ForwardEntries.Contains(entry)));
 			ShowSearchCommand = new RelayCommand(ExecuteShowSearch);
+			CloseActiveDocumentCommand = new RelayCommand(CloseActiveDocument);
 			using (ILSpy.AppEnv.AppLog.Phase("ILSpyDockFactory ctor + CreateLayout + InitLayout"))
 			{
 				using (ILSpy.AppEnv.AppLog.Phase("ILSpyDockFactory ctor"))
@@ -1202,6 +1208,19 @@ namespace ILSpy.Docking
 			// Snapshot first — CloseDockable mutates VisibleDockables.
 			foreach (var doc in System.Linq.Enumerable.ToArray(docs))
 				factory.CloseDockable(doc);
+		}
+
+		/// <summary>Closes the active document tab (Ctrl+W). The documents dock only holds
+		/// <see cref="ContentTabPage"/>s, so tool panes are never affected. Closing the One drops
+		/// the cached decompiler viewmodel so the next selection forges a fresh preview tab.</summary>
+		public void CloseActiveDocument()
+		{
+			if (factory.Documents?.ActiveDockable is not ContentTabPage active)
+				return;
+			bool wasTheOne = ReferenceEquals(active, factory.MainTab);
+			factory.CloseDockable(active);
+			if (wasTheOne)
+				decompilerContent = null;
 		}
 
 		public void ResetLayout()

@@ -28,6 +28,8 @@
 		     "search box" gesture VS uses. Both bring the bottom search pane to focus. -->
 		<KeyBinding Gesture="Ctrl+Shift+F" Command="{Binding DockWorkspace.ShowSearchCommand}" />
 		<KeyBinding Gesture="Ctrl+E" Command="{Binding DockWorkspace.ShowSearchCommand}" />
+		<!-- Close the active document tab (documents only; tool panes are unaffected). -->
+		<KeyBinding Gesture="Ctrl+W" Command="{Binding DockWorkspace.CloseActiveDocumentCommand}" />
 	</Window.KeyBindings>
 
 	<DockPanel>
