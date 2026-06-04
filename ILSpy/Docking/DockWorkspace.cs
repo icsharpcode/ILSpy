@@ -724,7 +724,7 @@ namespace ILSpy.Docking
 			// deterministic without going through Dock's add+close lifecycle.
 			// Carve-outs ("Open in new tab", "Freeze tab") aren't implemented yet and would
 			// branch off this path before the Content swap.
-			TabPageModel? customContent;
+			ContentPageModel? customContent;
 			using (ILSpy.AppEnv.AppLog.Phase("ShowSelectedNode: node.CreateTab"))
 				customContent = nodes.Length == 1 ? nodes[0].CreateTab() : null;
 
@@ -778,7 +778,7 @@ namespace ILSpy.Docking
 		}
 
 		// Pure predicate: returns the tab if it is a writable preview ContentTabPage -- IsPreview
-		// true AND not hosting static content (Options, About). Otherwise null. Options/About are
+		// true AND not hosting static content (Options, About). Otherwise null. Static pages are
 		// born frozen (IsPreview=false) AND carry IsStaticContent=true; either flag alone would
 		// suffice, both guard against drift.
 		static ContentTabPage? IsWritablePreview(IDockable? dockable)
@@ -787,9 +787,7 @@ namespace ILSpy.Docking
 				return null;
 			if (!tab.IsPreview)
 				return null;
-			if (tab.Content is DecompilerTabPageModel { IsStaticContent: true })
-				return null;
-			if (tab.Content is Options.OptionsPageModel)
+			if (tab.Content is { IsStaticContent: true })
 				return null;
 			return tab;
 		}
@@ -810,7 +808,7 @@ namespace ILSpy.Docking
 			factory.SetActiveDockable(main);
 		}
 
-		void AttachCustomContent(ContentTabPage main, TabPageModel newContent)
+		void AttachCustomContent(ContentTabPage main, ContentPageModel newContent)
 		{
 			// Detach navigation handlers from the outgoing content; subscribe on the
 			// incoming one so token clicks route through OnMetadataCellClicked and
@@ -996,7 +994,7 @@ namespace ILSpy.Docking
 			return tab;
 		}
 
-		static void CopyContentState(object source, object target)
+		static void CopyContentState(ContentPageModel source, ContentPageModel target)
 		{
 			if (source is MetadataTablePageModel newMeta && target is MetadataTablePageModel oldMeta)
 			{
@@ -1101,7 +1099,7 @@ namespace ILSpy.Docking
 			}
 		}
 
-		public ContentTabPage OpenNewTab(object content, SharpTreeNode? sourceNode = null)
+		public ContentTabPage OpenNewTab(ContentPageModel content, SharpTreeNode? sourceNode = null)
 		{
 			// Carve-outs are born frozen — they survive tree-node selections instead of
 			// being replaced like the preview MainTab.

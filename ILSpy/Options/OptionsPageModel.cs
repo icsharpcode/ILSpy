@@ -25,6 +25,8 @@ using CommunityToolkit.Mvvm.Input;
 
 using ICSharpCode.ILSpy.Properties;
 
+using ILSpy.ViewModels;
+
 namespace ILSpy.Options
 {
 	/// <summary>
@@ -38,7 +40,7 @@ namespace ILSpy.Options
 	/// <see cref="SettingsService.Save"/> at app exit.
 	/// </para>
 	/// </summary>
-	public sealed partial class OptionsPageModel : ObservableObject
+	public sealed partial class OptionsPageModel : ContentPageModel
 	{
 		public OptionsPageModel(SettingsService settingsService, IEnumerable<ExportFactory<IOptionPage, IOptionsMetadata>> pageFactories)
 		{
@@ -54,16 +56,11 @@ namespace ILSpy.Options
 			// Bare "Options" string — the menu item's Resources._Options carries the
 			// accelerator underscore + "..." suffix which are menu-only conventions.
 			Title = Resources.Options;
+			// Tree-node selections must not replace the Options tab (ContentPageModel.IsStaticContent).
+			IsStaticContent = true;
 
 			ResetCurrentPageCommand = new RelayCommand(ResetCurrentPage);
 		}
-
-		public string Title { get; }
-
-		/// <summary>Marker for the dock router: tree-node selections must not replace this
-		/// tab. Mirrors the <see cref="ILSpy.TextView.DecompilerTabPageModel.IsStaticContent"/>
-		/// convention used for the About tab.</summary>
-		public bool IsStaticContent => true;
 
 		public IReadOnlyList<IOptionPage> Pages { get; }
 

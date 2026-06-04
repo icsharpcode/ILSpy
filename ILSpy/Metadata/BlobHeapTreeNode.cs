@@ -45,7 +45,7 @@ namespace ILSpy.Metadata
 		public override object Text => $"Blob Heap ({EnsureEntries().Count})";
 		public override string ToString() => "Blob Heap";
 
-		public override TabPageModel CreateTab()
+		public override ContentPageModel CreateTab()
 		{
 			var page = new MetadataTablePageModel {
 				Title = "Blob Heap",

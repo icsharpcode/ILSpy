@@ -51,7 +51,7 @@ namespace ILSpy.Metadata
 		public override object ExpandedIcon => Images.Images.ListFolderOpen;
 		public override string ToString() => "Debug Directory";
 
-		public override TabPageModel CreateTab()
+		public override ContentPageModel CreateTab()
 		{
 			var page = new MetadataTablePageModel {
 				Title = "Debug Directory",

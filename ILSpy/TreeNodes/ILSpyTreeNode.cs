@@ -166,7 +166,7 @@ namespace ILSpy.TreeNodes
 		/// through the decompiler-text path. Lets metadata-table nodes show their own
 		/// DataGrid view while the rest of the tree keeps decompiling.
 		/// </summary>
-		public virtual TabPageModel? CreateTab() => null;
+		public virtual ContentPageModel? CreateTab() => null;
 
 		/// <summary>
 		/// Applies <see cref="Filter"/> to every newly-added child and writes the result

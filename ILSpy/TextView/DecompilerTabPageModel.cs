@@ -47,7 +47,7 @@ namespace ILSpy.TextView
 	/// <see cref="CurrentNode"/> changes; previous in-flight decompilations are cancelled so a
 	/// rapid tree-selection sweep doesn't pile up background work.
 	/// </summary>
-	public sealed partial class DecompilerTabPageModel : TabPageModel
+	public sealed partial class DecompilerTabPageModel : ContentPageModel
 	{
 		CancellationTokenSource? activeCts;
 
@@ -202,13 +202,9 @@ namespace ILSpy.TextView
 		// between selection and the title update.
 		string cachedBaseTitle = "(unnamed)";
 
-		/// <summary>
-		/// True for tabs whose content is a static page (e.g. About) rather than the result
-		/// of decompiling a tree-node selection. Static tabs are excluded from the lookup
-		/// that resolves "the current decompile target", so subsequent tree-node clicks open
-		/// or reuse a different tab and leave the static content intact.
-		/// </summary>
-		public bool IsStaticContent { get; set; }
+		// IsStaticContent is inherited from ContentPageModel: true for static pages (e.g. About)
+		// excludes this tab from the "current decompile target" lookup, so later tree-node
+		// clicks reuse a different tab and leave the static content intact.
 
 		[RelayCommand]
 		void CancelDecompilation()

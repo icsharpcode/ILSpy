@@ -31,7 +31,7 @@ namespace ILSpy.Compare
 	/// assemblies and picks "Compare…". Static content (no language switching, no
 	/// re-decompile) — the merge is computed once at construction.
 	/// </summary>
-	public sealed partial class CompareTabPageModel : TabPageModel
+	public sealed partial class CompareTabPageModel : ContentPageModel
 	{
 		readonly LoadedAssembly leftAssembly;
 		readonly LoadedAssembly rightAssembly;

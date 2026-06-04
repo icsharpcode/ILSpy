@@ -72,7 +72,7 @@ namespace ILSpy.Metadata
 
 		protected abstract IReadOnlyList<TEntry> LoadTable();
 
-		public override TabPageModel CreateTab()
+		public override ContentPageModel CreateTab()
 		{
 			// IReadOnlyList<T> is covariant on T, so a strongly-typed list passes through to
 			// MetadataTablePageModel.Items (declared as IReadOnlyList<object>) without a

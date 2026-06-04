@@ -183,9 +183,9 @@ public class LayoutPersistenceTests
 
 		// Open two extra documents on top of the persistent MainTab. Content type is
 		// irrelevant for this test — the bug is structural, about ContentTabPage shells
-		// being persisted at all.
-		dockWorkspace.OpenNewTab(new object());
-		dockWorkspace.OpenNewTab(new object());
+		// being persisted at all — so any ContentPageModel will do.
+		dockWorkspace.OpenNewTab(new global::ILSpy.TextView.DecompilerTabPageModel());
+		dockWorkspace.OpenNewTab(new global::ILSpy.TextView.DecompilerTabPageModel());
 		TestCapture.Step("three-document-tabs-open");
 		var sourceDocs = dockWorkspace.Documents!.VisibleDockables!
 			.OfType<ContentTabPage>().Count();

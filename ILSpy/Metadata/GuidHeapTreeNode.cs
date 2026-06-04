@@ -44,7 +44,7 @@ namespace ILSpy.Metadata
 		public override object Text => $"Guid Heap ({EnsureEntries().Count})";
 		public override string ToString() => "Guid Heap";
 
-		public override TabPageModel CreateTab()
+		public override ContentPageModel CreateTab()
 		{
 			var page = new MetadataTablePageModel {
 				Title = "Guid Heap",

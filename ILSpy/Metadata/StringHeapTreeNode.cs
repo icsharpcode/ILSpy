@@ -45,7 +45,7 @@ namespace ILSpy.Metadata
 		public override object Text => $"String Heap ({EnsureEntries().Count})";
 		public override string ToString() => "String Heap";
 
-		public override TabPageModel CreateTab()
+		public override ContentPageModel CreateTab()
 		{
 			var page = new MetadataTablePageModel {
 				Title = "String Heap",

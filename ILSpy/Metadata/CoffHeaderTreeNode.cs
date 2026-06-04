@@ -45,7 +45,7 @@ namespace ILSpy.Metadata
 		public override object Icon => Images.Images.Header;
 		public override string ToString() => "COFF Header";
 
-		public override TabPageModel CreateTab()
+		public override ContentPageModel CreateTab()
 		{
 			var page = new MetadataTablePageModel {
 				Title = "COFF Header",

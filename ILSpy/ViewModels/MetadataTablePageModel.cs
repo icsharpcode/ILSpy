@@ -39,7 +39,7 @@ namespace ILSpy.ViewModels
 	/// <c>Columns</c> collection isn't an Avalonia property, so the model can't bind it
 	/// declaratively — the view assigns it imperatively from <see cref="Columns"/>.
 	/// </summary>
-	public sealed partial class MetadataTablePageModel : TabPageModel
+	public sealed partial class MetadataTablePageModel : ContentPageModel
 	{
 		[ObservableProperty]
 		private IReadOnlyList<object> items = Array.Empty<object>();

@@ -57,7 +57,7 @@ namespace ILSpy.ViewModels
 		bool IDeferredContentPresentation.DeferContentPresentation => false;
 
 		[ObservableProperty]
-		private object? content;
+		private ContentPageModel? content;
 
 		/// <summary>
 		/// The assembly-tree node this tab represents. Used by <c>DockWorkspace</c> to
@@ -84,12 +84,12 @@ namespace ILSpy.ViewModels
 		// or "DOS Header" for a metadata grid). Also mirror the Content's
 		// SupportsLanguageSwitching flag so the toolbar pickers can bind to the wrapper
 		// without drilling into Content's runtime type.
-		partial void OnContentChanged(object? oldValue, object? newValue)
+		partial void OnContentChanged(ContentPageModel? oldValue, ContentPageModel? newValue)
 		{
-			if (oldValue is INotifyPropertyChanged oldNotify)
-				oldNotify.PropertyChanged -= OnContentPropertyChanged;
-			if (newValue is INotifyPropertyChanged newNotify)
-				newNotify.PropertyChanged += OnContentPropertyChanged;
+			if (oldValue is not null)
+				oldValue.PropertyChanged -= OnContentPropertyChanged;
+			if (newValue is not null)
+				newValue.PropertyChanged += OnContentPropertyChanged;
 			SyncTitleFromContent();
 			SyncSupportsLanguageSwitchingFromContent();
 		}
@@ -104,19 +104,15 @@ namespace ILSpy.ViewModels
 
 		void SyncSupportsLanguageSwitchingFromContent()
 		{
-			// Default true when Content is null or isn't a TabPageModel-derived viewmodel
-			// (e.g. the OptionsPageModel which inherits ObservableObject directly). The
-			// toolbar binds to this property; null/non-TabPageModel content means "no
-			// language-aware tab is active" — leave the pickers enabled.
-			SupportsLanguageSwitching = (Content as TabPageModel)?.SupportsLanguageSwitching ?? true;
+			// The toolbar binds to this property. Default true when no content is set — "no
+			// language-aware tab is active" leaves the pickers enabled; otherwise mirror the
+			// content's own flag (metadata / compare / options report false).
+			SupportsLanguageSwitching = Content?.SupportsLanguageSwitching ?? true;
 		}
 
 		void SyncTitleFromContent()
 		{
-			if (Content is null)
-				return;
-			var titleProp = Content.GetType().GetProperty(nameof(Title), typeof(string));
-			if (titleProp?.GetValue(Content) is string s)
+			if (Content?.Title is { } s)
 				Title = s;
 		}
 	}
