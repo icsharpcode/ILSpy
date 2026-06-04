@@ -728,6 +728,31 @@ public class PreviewTabPromotionTests
 	}
 
 	[AvaloniaTest]
+	public async Task Floating_The_Preview_Out_Freezes_It()
+	{
+		// Tearing the One out into its own floating window does NOT go through MoveDockable -- the
+		// drag-to-float gesture funnels through CreateWindowFrom (FloatDockable -> SplitToWindow ->
+		// CreateWindowFrom). That override must freeze the One just like an in-strip drag. Drive
+		// CreateWindowFrom directly (what the float gesture ultimately calls).
+		var (_, vm) = await TestHarness.BootAsync(3);
+		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
+
+		var typeA = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		vm.AssemblyTreeModel.SelectNode(typeA);
+		vm.DockWorkspace.SettleSelection();
+		var theOne = factory.MainTab!;
+		theOne.IsPreview.Should().BeTrue("precondition: the One starts as the preview");
+
+		factory.CreateWindowFrom(theOne);
+
+		theOne.IsPreview.Should().BeFalse(
+			"floating the One out must freeze it -- it becomes an ordinary, movable tab");
+		factory.MainTab.Should().BeSameAs(theOne,
+			"float-out does not rotate MainTab; the next tree selection forges a fresh One");
+	}
+
+	[AvaloniaTest]
 	public async Task Frozen_Tab_Cannot_Be_Reordered_Before_The_Preview()
 	{
 		var (_, vm) = await TestHarness.BootAsync(3);

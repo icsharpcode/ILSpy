@@ -122,6 +122,17 @@ namespace ILSpy.Docking
 			base.MoveDockable(sourceDock, targetDock, sourceDockable, targetDockable);
 		}
 
+		// Tearing the One out into its own floating window doesn't go through MoveDockable -- the
+		// drag-to-float gesture funnels through CreateWindowFrom (FloatDockable -> SplitToWindow ->
+		// CreateWindowFrom), with the torn-off document passed straight through before it's wrapped
+		// in a fresh dock. Freeze the One here too so a float-out is just another way to keep it.
+		public override IDockWindow? CreateWindowFrom(IDockable dockable)
+		{
+			if (ReferenceEquals(dockable, MainTab) && MainTab is { IsPreview: true })
+				FreezeCurrentMainTab();
+			return base.CreateWindowFrom(dockable);
+		}
+
 		// Self-healing insurance: re-assert the One at index 0 after any drag -- but ONLY while it is
 		// still the preview. Once dragged (which freezes it) it's an ordinary tab and must stay where
 		// the user dropped it. Idempotent; guards against a future Dock version routing a reorder
