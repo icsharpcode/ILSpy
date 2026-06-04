@@ -47,6 +47,9 @@ namespace ILSpy.AssemblyTree
 		// selection into the DataGrid.
 		bool syncingSelection;
 
+		// Shared tree keyboard gestures (Left/Right, numpad, type-ahead); kept alive for the view.
+		readonly ILSpy.Controls.TreeKeyboardController treeKeyboard;
+
 		// A plain left-click on one row of a multi-selection: ProDataGrid keeps the whole
 		// selection on press (so the user can drag every selected row together), so the
 		// collapse-to-the-clicked-row has to happen on release if it turned out to be a click,
@@ -104,6 +107,9 @@ namespace ILSpy.AssemblyTree
 			TreeGrid.LoadingRow += OnFirstRowLoaded;
 			TreeGrid.DoubleTapped += OnTreeGridDoubleTapped;
 			TreeGrid.KeyDown += OnTreeGridKeyDown;
+			// Standard tree keyboard gestures (Left/Right, numpad +/-/*, type-ahead) shared with
+			// the analyzer tree. Held in a field so it isn't collected.
+			treeKeyboard = new ILSpy.Controls.TreeKeyboardController(TreeGrid);
 			// Bubble + handledEventsToo: ProDataGrid's row-level pointer handlers mark
 			// PointerPressed handled before bubble reaches our subscription, so we have to
 			// opt into "see handled events too" to react.
@@ -310,55 +316,8 @@ namespace ILSpy.AssemblyTree
 				Dispatcher.UIThread.Post(() => ReselectAfterDelete(reselectIndex), DispatcherPriority.Background);
 				return;
 			}
-			if (e.Key is Key.Left or Key.Right && e.KeyModifiers == KeyModifiers.None
-				&& model.SelectedItem is { } current
-				&& TreeGrid.HierarchicalModel is IHierarchicalModel hmNav
-				&& hmNav.FindNode(current) is { } currentNode)
-			{
-				if (e.Key == Key.Left)
-				{
-					// Collapse if open; otherwise step out to the parent (unless it's the hidden root).
-					if (currentNode.IsExpanded)
-						hmNav.Collapse(currentNode);
-					else if (current.Parent is { } parent && hmNav.FindNode(parent) is not null)
-						model.SelectNode(parent);
-					else
-						return;
-				}
-				else
-				{
-					// Expand if closed and has children; otherwise step into the first child.
-					if (!currentNode.IsExpanded && !currentNode.IsLeaf)
-						hmNav.Expand(currentNode);
-					else if (currentNode.IsExpanded && currentNode.Children.Count > 0)
-						model.SelectNode(currentNode.Children[0].Item as SharpTreeNode);
-					else
-						return;
-				}
-				e.Handled = true;
-				return;
-			}
-			if (e.Key is Key.Add or Key.Subtract or Key.Multiply && e.KeyModifiers == KeyModifiers.None
-				&& model.SelectedItem is { } expandTarget
-				&& TreeGrid.HierarchicalModel is IHierarchicalModel hmExpand
-				&& hmExpand.FindNode(expandTarget) is { } expandNode)
-			{
-				switch (e.Key)
-				{
-					case Key.Add:
-						if (!expandNode.IsLeaf)
-							hmExpand.Expand(expandNode);
-						break;
-					case Key.Subtract:
-						hmExpand.Collapse(expandNode);
-						break;
-					case Key.Multiply:
-						ExpandRecursively(hmExpand, expandNode);
-						break;
-				}
-				e.Handled = true;
-				return;
-			}
+			// Left/Right expand-collapse + parent/child nav, numpad +/-/*, and type-ahead search are
+			// handled by the shared TreeKeyboardController (created in the constructor).
 			if (e.Key == Key.R && e.KeyModifiers == KeyModifiers.Control)
 			{
 				var members = model.SelectedItems.OfType<IMemberTreeNode>()
@@ -373,22 +332,6 @@ namespace ILSpy.AssemblyTree
 				foreach (var member in members)
 					analyzerVm.Analyze(member!);
 				e.Handled = true;
-			}
-		}
-
-		// Numpad-* recursive expand. Expands the node, then recurses into children that opt in via
-		// SharpTreeNode.CanExpandRecursively -- which is false for lazy-loading nodes, so this stays
-		// bounded (it won't try to materialise a whole assembly's members). Mirrors WPF SharpTreeView.
-		static void ExpandRecursively(IHierarchicalModel hm, HierarchicalNode node)
-		{
-			if (node.IsLeaf)
-				return;
-			hm.Expand(node);
-			foreach (var child in node.Children)
-			{
-				if (child.Item is SharpTreeNode { CanExpandRecursively: false })
-					continue;
-				ExpandRecursively(hm, child);
 			}
 		}
 

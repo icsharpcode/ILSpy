@@ -49,8 +49,11 @@ namespace ILSpy.AssemblyTree
 	[Export]
 	[ExportToolPane(ContentId = PaneContentId, Alignment = ToolPaneAlignment.Left, Order = 0)]
 	[Shared]
-	public partial class AssemblyTreeModel : ToolPaneModel
+	public partial class AssemblyTreeModel : ToolPaneModel, ILSpy.Controls.ITreeKeyboardTarget
 	{
+		// ITreeKeyboardTarget: the primary (last) selected node drives TreeKeyboardController.
+		SharpTreeNode? ILSpy.Controls.ITreeKeyboardTarget.PrimarySelectedNode => SelectedItem;
+
 		public const string PaneContentId = "AssemblyTree";
 
 		readonly SettingsService settingsService;

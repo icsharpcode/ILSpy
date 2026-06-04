@@ -40,10 +40,14 @@ namespace ILSpy.Analyzers
 		AnalyzerTreeViewModel? boundModel;
 		IReadOnlyList<IContextMenuEntryExport> contextMenuEntries = Array.Empty<IContextMenuEntryExport>();
 
+		// Shared tree keyboard gestures (Left/Right, numpad, type-ahead) -- same as the assembly tree.
+		readonly ILSpy.Controls.TreeKeyboardController treeKeyboard;
+
 		public AnalyzerTreeView()
 		{
 			InitializeComponent();
 			TreeGrid.DoubleTapped += OnTreeGridDoubleTapped;
+			treeKeyboard = new ILSpy.Controls.TreeKeyboardController(TreeGrid);
 			var registry = TryGetContextMenuRegistry();
 			AttachContextMenu(registry?.Entries ?? Array.Empty<IContextMenuEntryExport>());
 		}

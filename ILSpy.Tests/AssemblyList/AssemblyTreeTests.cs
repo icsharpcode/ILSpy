@@ -922,6 +922,39 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
+	public async Task Type_Ahead_Jumps_To_The_Node_Matching_The_Typed_Text()
+	{
+		// Typing a name jumps the selection to the visible node whose text matches.
+		var (window, vm) = await TestHarness.BootAsync(3);
+		var model = vm.AssemblyTreeModel;
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<DataGrid>();
+		grid.Focus();
+		Dispatcher.UIThread.RunJobs();
+
+		var target = model.FindNode<AssemblyTreeNode>("System.Linq");
+		var targetText = target.Text?.ToString()!;
+		// Start the selection on a different assembly so the jump is observable.
+		var other = model.FindNode<AssemblyTreeNode>(typeof(object).Assembly.GetName().Name!);
+		model.SelectNode(other);
+		await Waiters.WaitForAsync(() => ReferenceEquals(model.SelectedItem, other));
+
+		foreach (char ch in targetText)
+		{
+			grid.RaiseEvent(new global::Avalonia.Input.TextInputEventArgs {
+				RoutedEvent = global::Avalonia.Input.InputElement.TextInputEvent,
+				Text = ch.ToString(),
+				Source = grid,
+			});
+		}
+		Dispatcher.UIThread.RunJobs();
+
+		await Waiters.WaitForAsync(
+			() => (model.SelectedItem as SharpTreeNode)?.Text?.ToString() == targetText,
+			description: "type-ahead must select the node whose text matches what was typed");
+	}
+
+	[AvaloniaTest]
 	public async Task Clear_Assembly_List_Command_Empties_The_Active_List()
 	{
 		// The Clear Assembly List menu command must drop every entry from the active list.
