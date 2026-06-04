@@ -67,6 +67,10 @@
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.Themes.Simple" />
     <PackageReference Include="Svg.Controls.Skia.Avalonia" />
+    <!-- Avalonia 12 DevTools: the in-app bridge half. Pairs with the AvaloniaUI.DeveloperTools
+         global tool (the inspector UI process) that connects over this bridge. DEBUG-only: the
+         assets are dropped in Release so nothing diagnostic ships. The matching WithDeveloperTools
+         and AttachDeveloperTools calls live in Program.cs / App.axaml.cs, also under #if DEBUG. -->
     <PackageReference Include="AvaloniaUI.DiagnosticsSupport">
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>

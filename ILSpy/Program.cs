@@ -33,8 +33,17 @@ namespace ILSpy
 
 		// Avalonia configuration, don't remove; also used by visual designer.
 		public static AppBuilder BuildAvaloniaApp()
-			=> AppBuilder.Configure<App>()
-				.UsePlatformDetect()
-				.LogToTrace();
+		{
+			var builder = AppBuilder.Configure<App>()
+				.UsePlatformDetect();
+#if DEBUG
+			// Enables and attaches the Avalonia 12 DevTools bridge (it calls AttachDeveloperTools
+			// internally, so no separate App-level attach is needed -- a second call throws
+			// "already attached"). The avdt global tool connects over this bridge. Gated on DEBUG
+			// because the DiagnosticsSupport assets are excluded from Release.
+			builder = builder.WithDeveloperTools();
+#endif
+			return builder.LogToTrace();
+		}
 	}
 }
