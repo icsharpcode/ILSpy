@@ -56,8 +56,8 @@ public class AnalyzerTreeKeyboardTests
 
 		dockWorkspace.ShowToolPane(AnalyzerTreeViewModel.PaneContentId);
 		var view = await window.WaitForComponent<global::ILSpy.Analyzers.AnalyzerTreeView>();
-		var grid = await view.WaitForComponent<DataGrid>();
-		grid.Focus();
+		var tree = await view.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+		tree.Focus();
 		Dispatcher.UIThread.RunJobs();
 
 		analyzed.IsExpanded.Should().BeFalse("precondition: the analyzed node starts collapsed");

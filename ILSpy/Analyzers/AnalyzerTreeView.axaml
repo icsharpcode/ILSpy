@@ -3,37 +3,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:analyzers="using:ILSpy.Analyzers"
+             xmlns:tv="using:ILSpy.Controls.TreeView"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
              x:Class="ILSpy.Analyzers.AnalyzerTreeView"
              x:DataType="analyzers:AnalyzerTreeViewModel">
-	<DataGrid Name="TreeGrid"
-	          Classes="hierarchical"
-	          AutoGenerateColumns="False"
-	          HeadersVisibility="None"
-	          HierarchicalRowsEnabled="True"
-	          GridLinesVisibility="None"
-	          CanUserResizeColumns="False"
-	          SelectionMode="Extended"
-	          SelectionChanged="OnTreeGridSelectionChanged">
-		<DataGrid.Columns>
-			<DataGridHierarchicalColumn Header="Name" Width="*"
-			                            IsReadOnly="True"
-			                            x:CompileBindings="False"
-			                            Binding="{Binding Item}">
-				<DataGridHierarchicalColumn.CellTemplate>
-					<DataTemplate>
-						<Grid ColumnDefinitions="Auto,7,*"
-						      VerticalAlignment="Center" Margin="4,0"
-						      ToolTip.Tip="{Binding ToolTip}">
-							<Image Grid.Column="0" Source="{Binding Icon}"
-							       Width="16" Height="16"
-							       VerticalAlignment="Center" />
-							<TextBlock Grid.Column="2" Text="{Binding Text}"
-							           VerticalAlignment="Center" />
-						</Grid>
-					</DataTemplate>
-				</DataGridHierarchicalColumn.CellTemplate>
-			</DataGridHierarchicalColumn>
-		</DataGrid.Columns>
-	</DataGrid>
+	<tv:SharpTreeView Name="Tree" ShowRoot="False" ShowLines="False" />
 </UserControl>

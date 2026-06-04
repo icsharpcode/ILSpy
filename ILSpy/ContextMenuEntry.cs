@@ -52,8 +52,8 @@ namespace ILSpy
 		/// <summary>The selected nodes in the assembly-tree DataGrid, or null when the menu wasn't opened on the tree.</summary>
 		public SharpTreeNode[]? SelectedTreeNodes { get; init; }
 
-		/// <summary>The assembly-tree <see cref="DataGrid"/> the menu was opened on, or null otherwise.</summary>
-		public DataGrid? TreeGrid { get; init; }
+		/// <summary>The tree control the menu was opened on (a DataGrid or the SharpTreeView), or null otherwise.</summary>
+		public Control? TreeGrid { get; init; }
 
 		/// <summary>The decompiler text view the menu was opened on, or null otherwise.</summary>
 		public DecompilerTextView? TextView { get; init; }

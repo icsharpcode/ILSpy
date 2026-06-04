@@ -21,14 +21,9 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.DataGridHierarchical;
-using Avalonia.Input;
-using Avalonia.VisualTree;
 
 using ICSharpCode.ILSpyX.TreeView;
-using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 using ILSpy.AppEnv;
 
@@ -40,14 +35,10 @@ namespace ILSpy.Analyzers
 		AnalyzerTreeViewModel? boundModel;
 		IReadOnlyList<IContextMenuEntryExport> contextMenuEntries = Array.Empty<IContextMenuEntryExport>();
 
-		// Shared tree keyboard gestures (Left/Right, numpad, type-ahead) -- same as the assembly tree.
-		readonly ILSpy.Controls.TreeKeyboardController treeKeyboard;
-
 		public AnalyzerTreeView()
 		{
 			InitializeComponent();
-			TreeGrid.DoubleTapped += OnTreeGridDoubleTapped;
-			treeKeyboard = new ILSpy.Controls.TreeKeyboardController(TreeGrid);
+			Tree.SelectionChanged += OnTreeSelectionChanged;
 			var registry = TryGetContextMenuRegistry();
 			AttachContextMenu(registry?.Entries ?? Array.Empty<IContextMenuEntryExport>());
 		}
@@ -69,7 +60,7 @@ namespace ILSpy.Analyzers
 			contextMenuEntries = entries;
 			var menu = new ContextMenu();
 			menu.Opening += OnContextMenuOpening;
-			TreeGrid.ContextMenu = menu;
+			Tree.ContextMenu = menu;
 		}
 
 		void OnContextMenuOpening(object? sender, System.ComponentModel.CancelEventArgs e)
@@ -97,30 +88,9 @@ namespace ILSpy.Analyzers
 		{
 			var nodes = boundModel?.SelectedItems.ToArray() ?? Array.Empty<SharpTreeNode>();
 			return new TextViewContext {
-				TreeGrid = TreeGrid,
+				TreeGrid = Tree,
 				SelectedTreeNodes = nodes,
 			};
-		}
-
-		void OnTreeGridDoubleTapped(object? sender, TappedEventArgs e)
-		{
-			// Walk up the visual tree to find the row's HierarchicalNode wrapper, unwrap it
-			// to the SharpTreeNode, then route to ActivateItem so the entity row navigates
-			// back to its node in the assembly tree.
-			var visual = e.Source as Visual;
-			while (visual != null && visual.DataContext is not HierarchicalNode)
-				visual = visual.GetVisualParent();
-			if (visual?.DataContext is not HierarchicalNode hn)
-				return;
-			if (hn.Item is not SharpTreeNode node)
-				return;
-			node.ActivateItem(new StubRoutedEventArgs());
-			e.Handled = true;
-		}
-
-		sealed class StubRoutedEventArgs : IPlatformRoutedEventArgs
-		{
-			public bool Handled { get; set; }
 		}
 
 		protected override void OnDataContextChanged(EventArgs e)
@@ -134,8 +104,11 @@ namespace ILSpy.Analyzers
 		void AttachToModel(AnalyzerTreeViewModel model)
 		{
 			boundModel = model;
-			BindTree(model.Root);
+			Tree.Root = model.Root;
 			model.SelectedItems.CollectionChanged += OnModelSelectionChanged;
+			// The model may already carry a selection (analysed before the view was realised).
+			if (model.SelectedItems.Count > 0)
+				SyncModelSelectionToTree();
 		}
 
 		void DetachFromModel()
@@ -146,38 +119,15 @@ namespace ILSpy.Analyzers
 			boundModel = null;
 		}
 
-		void BindTree(SharpTreeNode root)
-		{
-			var options = new HierarchicalOptions<SharpTreeNode> {
-				ChildrenSelector = node => {
-					node.EnsureLazyChildren();
-					return node.Children;
-				},
-				IsLeafSelector = node => !node.ShowExpander,
-				VirtualizeChildren = false,
-				// Two-way sync of SharpTreeNode.IsExpanded with the row chevron.
-				IsExpandedPropertyPath = nameof(SharpTreeNode.IsExpanded),
-			};
-			var hierarchicalModel = new HierarchicalModel<SharpTreeNode>(options);
-			hierarchicalModel.SetRoots(root.Children);
-			TreeGrid.HierarchicalModel = hierarchicalModel;
-		}
-
-		void OnTreeGridSelectionChanged(object? sender, SelectionChangedEventArgs e)
+		// Tree -> model: mirror the ListBox selection (already SharpTreeNodes) into the view-model.
+		void OnTreeSelectionChanged(object? sender, SelectionChangedEventArgs e)
 		{
 			if (syncingSelection || boundModel == null)
 				return;
 			syncingSelection = true;
 			try
 			{
-				var current = new HashSet<SharpTreeNode>();
-				foreach (var item in TreeGrid.SelectedItems)
-				{
-					var node = item is HierarchicalNode hn && hn.Item is SharpTreeNode t ? t
-						: item as SharpTreeNode;
-					if (node != null)
-						current.Add(node);
-				}
+				var current = Tree.SelectedItems!.OfType<SharpTreeNode>().ToHashSet();
 				for (int i = boundModel.SelectedItems.Count - 1; i >= 0; i--)
 				{
 					if (!current.Contains(boundModel.SelectedItems[i]))
@@ -195,25 +145,31 @@ namespace ILSpy.Analyzers
 			}
 		}
 
+		// Model -> tree: a programmatic selection (e.g. a freshly analysed node) is shown and revealed.
 		void OnModelSelectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
 			if (syncingSelection || boundModel == null)
 				return;
+			SyncModelSelectionToTree();
+		}
+
+		void SyncModelSelectionToTree()
+		{
+			if (boundModel == null)
+				return;
 			syncingSelection = true;
 			try
 			{
-				var current = TreeGrid.SelectedItems.OfType<object>().ToList();
-				foreach (var item in current)
-					TreeGrid.SelectedItems.Remove(item);
-				if (TreeGrid.HierarchicalModel is IHierarchicalModel model)
+				Tree.SelectedItems!.Clear();
+				SharpTreeNode? primary = null;
+				foreach (var node in boundModel.SelectedItems)
 				{
-					foreach (var node in boundModel.SelectedItems)
-					{
-						var hNode = model.FindNode(node);
-						if (hNode != null)
-							TreeGrid.SelectedItems.Add(hNode);
-					}
+					Tree.ScrollIntoNodeView(node);
+					Tree.SelectedItems.Add(node);
+					primary = node;
 				}
+				if (primary != null)
+					Tree.FocusNode(primary);
 			}
 			finally
 			{

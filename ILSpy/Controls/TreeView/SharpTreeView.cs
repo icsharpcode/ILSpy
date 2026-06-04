@@ -69,6 +69,7 @@ namespace ILSpy.Controls.TreeView
 		public SharpTreeView()
 		{
 			SelectionChanged += OnSelectionChanged;
+			DoubleTapped += OnDoubleTapped;
 		}
 
 		public SharpTreeNode? Root {
@@ -179,6 +180,22 @@ namespace ILSpy.Controls.TreeView
 				node.IsSelected = false;
 			foreach (SharpTreeNode node in e.AddedItems)
 				node.IsSelected = true;
+		}
+
+		void OnDoubleTapped(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+		{
+			var node = (e.Source as Visual)?.FindAncestorOfType<SharpTreeViewItem>(includeSelf: true)?.Node;
+			if (node == null)
+				return;
+			// Let the node act first (e.g. an analyzer entity row navigates); only when it doesn't
+			// handle the gesture do we fall back to toggling expansion.
+			var args = new AvaloniaPlatformRoutedEventArgs(e);
+			node.ActivateItem(args);
+			if (!e.Handled && node.ShowExpander)
+			{
+				node.IsExpanded = !node.IsExpanded;
+				e.Handled = true;
+			}
 		}
 
 		/// <summary>

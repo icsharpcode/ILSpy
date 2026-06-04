@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using Avalonia.Controls;
-using Avalonia.Input;
 
 using ICSharpCode.ILSpyX.TreeView;
 
@@ -25,22 +24,12 @@ namespace ILSpy.Controls.TreeView
 {
 	/// <summary>
 	/// Container for a single <see cref="SharpTreeNode"/> row in a <see cref="SharpTreeView"/>.
+	/// Double-tap (activate / expand) is handled by the owning <see cref="SharpTreeView"/>.
 	/// </summary>
 	public class SharpTreeViewItem : ListBoxItem
 	{
 		public SharpTreeView? ParentTreeView { get; internal set; }
 
 		public SharpTreeNode? Node => DataContext as SharpTreeNode;
-
-		protected override void OnDoubleTapped(TappedEventArgs e)
-		{
-			// Double-click toggles expansion (when not on the expander itself).
-			if (Node is { ShowExpander: true } node && !e.Handled)
-			{
-				node.IsExpanded = !node.IsExpanded;
-				e.Handled = true;
-			}
-			base.OnDoubleTapped(e);
-		}
 	}
 }
