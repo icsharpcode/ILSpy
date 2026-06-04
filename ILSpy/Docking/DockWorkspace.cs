@@ -282,12 +282,12 @@ namespace ILSpy.Docking
 				}
 				if (!anyTouchesRemoved)
 					continue;
-				// Cancel synchronously, BEFORE AssemblyList.Unload reaches assembly.Dispose().
-				// The decompile worker checks its CancellationToken between transforms; the
-				// spinner exits when its Task.Delay sees the cancellation. After this returns
-				// no managed reader should hold a live handle into the MetadataFile that's
-				// about to be unmapped. (LoadedAssembly.Text additionally returns its cached
-				// value once isDisposed flips, covering any residual cooperative-cancel race.)
+				// Cancel the in-flight decompile of an assembly the user just removed -- no point
+				// finishing work on something no longer in the list. The decompile worker checks
+				// its CancellationToken between transforms; the spinner exits when its Task.Delay
+				// sees the cancellation. Note AssemblyList.Unload no longer disposes the
+				// LoadedAssembly / MetadataFile (its lifetime can't be known safely), so this is a
+				// courtesy cancel, not a guard against unmapping a file out from under a reader.
 				tab.CancelDecompilationCommand.Execute(null);
 				if (anyAlive)
 					continue;
