@@ -116,6 +116,7 @@ namespace ILSpy.Commands
 				SyntaxExtension = syntaxExtension,
 				Text = output.GetText(),
 				HighlightingModel = output.HighlightingModel,
+				HighlightingSpans = output.HighlightingSpans,
 				References = output.References,
 				DefinitionLookup = output.DefinitionLookup,
 				UIElements = output.UIElements,

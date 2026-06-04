@@ -23,6 +23,8 @@ using System.Xml;
 using AvaloniaEdit.Highlighting;
 using AvaloniaEdit.Highlighting.Xshd;
 
+using ILSpy.Themes;
+
 namespace ILSpy.TextView
 {
 	/// <summary>
@@ -73,7 +75,12 @@ namespace ILSpy.TextView
 				.GetManifestResourceStream(ResourcePrefix + resourceName)
 				?? throw new InvalidOperationException($"Highlighting resource not found: {resourceName}");
 			using var reader = XmlReader.Create(stream);
-			return HighlightingLoader.Load(reader, HighlightingManager.Instance);
+			var definition = HighlightingLoader.Load(reader, HighlightingManager.Instance);
+			// Hand the freshly-loaded definition to the theme manager: it applies the active
+			// theme's colours now (so the first decompile is themed) and re-themes it on every
+			// later theme switch.
+			ThemeManager.Current.RegisterThemableDefinition(definition);
+			return definition;
 		}
 	}
 }

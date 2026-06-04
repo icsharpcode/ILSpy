@@ -202,6 +202,30 @@ namespace ILSpy.TextView
 				RoutingStrategies.Tunnel,
 				handledEventsToo: false);
 			Editor.KeyDown += OnEditorKeyDownForZoom;
+
+			// A theme switch re-colours the shared named HighlightingColors in place, but the
+			// semantic RichTextModel cloned them at decompile time (RichTextModel.SetHighlighting
+			// clones). Rebuild the model from the captured spans -- which still reference the live,
+			// re-coloured instances -- so the already-decompiled output repaints with the new palette.
+			ILSpy.Themes.ThemeManager.Current.ThemeChanged += OnThemeChangedRebuildHighlighting;
+		}
+
+		void OnThemeChangedRebuildHighlighting(object? sender, System.EventArgs e)
+		{
+			if (boundModel?.HighlightingSpans is not { Count: > 0 } spans)
+				return;
+			var transformers = Editor.TextArea.TextView.LineTransformers;
+			if (activeColorizer != null)
+			{
+				transformers.Remove(activeColorizer);
+				activeColorizer = null;
+			}
+			var model = new RichTextModel();
+			foreach (var (start, length, color) in spans)
+				model.SetHighlighting(start, length, color);
+			activeColorizer = new RichTextColorizer(model);
+			transformers.Add(activeColorizer);
+			Editor.TextArea.TextView.Redraw();
 		}
 
 		void OnEditorPointerWheelChanged(object? sender, PointerWheelEventArgs e)

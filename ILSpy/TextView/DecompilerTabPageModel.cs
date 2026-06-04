@@ -81,6 +81,13 @@ namespace ILSpy.TextView
 		private RichTextModel? highlightingModel;
 
 		/// <summary>
+		/// The highlighting spans behind <see cref="HighlightingModel"/>, referencing the live
+		/// named colours (the model itself clones them). The view rebuilds the model from these on
+		/// a theme switch so the re-coloured palette reaches the already-decompiled output.
+		/// </summary>
+		public System.Collections.Generic.IReadOnlyList<(int Start, int Length, AvaloniaEdit.Highlighting.HighlightingColor Color)>? HighlightingSpans { get; set; }
+
+		/// <summary>
 		/// Multi-line fold ranges collected by the decompiler (member bodies, attribute blocks,
 		/// hidden compiler-generated regions, …). Fed to a <c>FoldingManager</c> on the editor.
 		/// </summary>
@@ -339,6 +346,7 @@ namespace ILSpy.TextView
 				// "Folding must be within document boundary". This path is hit by
 				// DockWorkspace.OnLanguagePropertyChanged's CurrentNode toggle-through-null.
 				HighlightingModel = null;
+				HighlightingSpans = null;
 				Foldings = null;
 				References = null;
 				DefinitionLookup = null;
@@ -420,6 +428,7 @@ namespace ILSpy.TextView
 				using (ILSpy.AppEnv.AppLog.Phase($"DecompileAsync #{callNumber}: collect output (GetText + collateral)"))
 					rendered = output.GetText();
 				var model = output.HighlightingModel;
+				var collectedSpans = output.HighlightingSpans;
 				var collectedFoldings = output.Foldings;
 				var collectedReferences = output.References;
 				var collectedLookup = output.DefinitionLookup;
@@ -433,6 +442,7 @@ namespace ILSpy.TextView
 						Title = cachedBaseTitle;
 						SyntaxExtension = effectiveSyntaxExtension;
 						HighlightingModel = model;
+						HighlightingSpans = collectedSpans;
 						Foldings = collectedFoldings;
 						References = collectedReferences;
 						DefinitionLookup = collectedLookup;
@@ -550,6 +560,7 @@ namespace ILSpy.TextView
 			activeCts = null;
 			SyntaxExtension = output.SyntaxExtensionOverride ?? Language?.FileExtension ?? string.Empty;
 			HighlightingModel = output.HighlightingModel;
+			HighlightingSpans = output.HighlightingSpans;
 			Foldings = output.Foldings;
 			References = output.References;
 			DefinitionLookup = output.DefinitionLookup;

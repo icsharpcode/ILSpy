@@ -40,6 +40,12 @@ namespace ILSpy.Themes
 		// declares its own dark palette in two variants).
 		const string IsThemeAwareKey = "ILSpy.IsThemeAware";
 
+		// Highlighting definitions whose named colours we re-theme on every theme switch, plus a
+		// snapshot of each definition's ORIGINAL (light, .xshd-default) colours so switching back
+		// to Light restores them exactly. Keyed by colour name within each definition.
+		readonly List<IHighlightingDefinition> themableDefinitions = new();
+		readonly Dictionary<IHighlightingDefinition, Dictionary<string, HighlightingColor>> originalColors = new();
+
 		public static ThemeManager Current { get; } = new();
 
 		public string DefaultTheme => "Light";
@@ -87,7 +93,76 @@ namespace ILSpy.Themes
 			{
 				app.RequestedThemeVariant = Theme == "Dark" ? ThemeVariant.Dark : ThemeVariant.Light;
 			}
+			// Re-theme the syntax colours BEFORE notifying the editors, so their Redraw on
+			// ThemeChanged repaints against the new palette.
+			foreach (var definition in themableDefinitions)
+				ApplyHighlightingColors(definition);
 			ThemeChanged?.Invoke(this, EventArgs.Empty);
+		}
+
+		/// <summary>
+		/// Registers a highlighting definition for theme-aware colouring and applies the current
+		/// theme to it immediately. Called by <c>HighlightingService</c> when a definition is first
+		/// loaded; from then on the definition is re-themed on every theme switch.
+		/// </summary>
+		public void RegisterThemableDefinition(IHighlightingDefinition definition)
+		{
+			ArgumentNullException.ThrowIfNull(definition);
+			if (!themableDefinitions.Contains(definition))
+				themableDefinitions.Add(definition);
+			ApplyHighlightingColors(definition);
+		}
+
+		/// <summary>
+		/// Writes the active theme's colours onto a definition's named <see cref="HighlightingColor"/>
+		/// instances IN PLACE -- the same instances the semantic RichTextModel references, so the
+		/// decompiled output and the .xshd colorizer both pick up the change. Light restores the
+		/// original .xshd colours; Dark applies the hand-authored palette where one exists and the
+		/// algorithmic conversion elsewhere. Marks the definition theme-aware so the per-paint
+		/// colorizer doesn't additionally remap it.
+		/// </summary>
+		public void ApplyHighlightingColors(IHighlightingDefinition definition)
+		{
+			ArgumentNullException.ThrowIfNull(definition);
+			if (!originalColors.TryGetValue(definition, out var snapshot))
+			{
+				snapshot = new Dictionary<string, HighlightingColor>();
+				foreach (var color in definition.NamedHighlightingColors)
+					snapshot[color.Name] = color.Clone();
+				originalColors[definition] = snapshot;
+			}
+
+			var darkPalette = definition.Name == "C#" ? SyntaxColorPalettes.CSharpDark : null;
+			foreach (var color in definition.NamedHighlightingColors)
+			{
+				if (!snapshot.TryGetValue(color.Name, out var original))
+					continue;
+				if (IsDarkTheme)
+				{
+					if (darkPalette is not null && darkPalette.TryGetValue(color.Name, out var syntaxColor))
+						syntaxColor.ApplyTo(color);
+					else
+						CopyColor(GetColorForDarkTheme(original), color);
+				}
+				else
+				{
+					CopyColor(original, color);
+				}
+			}
+
+			definition.Properties[IsThemeAwareKey] = bool.TrueString;
+		}
+
+		// Copies colour/style fields from one HighlightingColor onto another. Used instead of
+		// swapping instances because the RichTextModel holds references to the targets.
+		static void CopyColor(HighlightingColor source, HighlightingColor target)
+		{
+			target.Foreground = source.Foreground;
+			target.Background = source.Background;
+			target.FontWeight = source.FontWeight;
+			target.FontStyle = source.FontStyle;
+			target.Underline = source.Underline;
+			target.Strikethrough = source.Strikethrough;
 		}
 
 		/// <summary>

@@ -54,6 +54,15 @@ namespace ILSpy.TextView
 
 		public RichTextModel HighlightingModel { get; } = new RichTextModel();
 
+		// The same spans that build HighlightingModel, but holding the SHARED named
+		// HighlightingColor instances (RichTextModel.SetHighlighting clones them, so the model
+		// itself freezes the colours at decompile time). Kept so the view can rebuild the model
+		// on a theme switch -- the shared instances are re-coloured in place by ThemeManager.
+		readonly List<(int Start, int Length, HighlightingColor Color)> highlightingSpans = new();
+
+		/// <summary>The highlighting spans referencing the live named colours; see the field note.</summary>
+		public IReadOnlyList<(int Start, int Length, HighlightingColor Color)> HighlightingSpans => highlightingSpans;
+
 		/// <summary>Foldings collected during writing — only ones spanning more than one line.</summary>
 		public IReadOnlyList<NewFolding> Foldings => foldings;
 
@@ -226,7 +235,10 @@ namespace ILSpy.TextView
 			var (start, color) = openSpans.Pop();
 			var length = builder.Length - start;
 			if (length > 0)
+			{
 				HighlightingModel.SetHighlighting(start, length, color);
+				highlightingSpans.Add((start, length, color));
+			}
 		}
 	}
 }
