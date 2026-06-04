@@ -7,13 +7,18 @@
              x:Class="ILSpy.AssemblyTree.AssemblyListPane"
              x:DataType="tree:AssemblyTreeModel">
 	<UserControl.Styles>
-		<Style Selector="TextBlock.autoloaded">
+		<!-- Custom node text colours (auto-loaded, non-public) apply only while the row is NOT
+		     selected: on a selected row the selection's own foreground must win so the text stays
+		     legible against the accent fill instead of the dim colour bleeding through. The
+		     :not(:selected) ancestor guard drops the override on selection, letting the TextBlock
+		     inherit the selected-row foreground like every other node. -->
+		<Style Selector="DataGridRow:not(:selected) TextBlock.autoloaded">
 			<Setter Property="Foreground" Value="{DynamicResource ILSpy.TreeAutoloadedForeground}" />
 		</Style>
 		<!-- Non-public members (private / internal / etc.) read in gray so the visible API
 		     surface stands out at a glance. The class is applied via Classes.nonPublicAPI
 		     binding on the cell-template TextBlock. -->
-		<Style Selector="TextBlock.nonPublicAPI">
+		<Style Selector="DataGridRow:not(:selected) TextBlock.nonPublicAPI">
 			<Setter Property="Foreground" Value="{DynamicResource ILSpy.TreeNonPublicForeground}" />
 		</Style>
 		<!-- Thunderbird-style context-menu target highlight. A right-click marks its target row
