@@ -61,6 +61,9 @@ public class LayoutPersistenceTests
 		_ = await TestHarness.BootAsync();
 
 		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
+		// Search is hidden by default; surface it so the round-trip covers a tool pane that
+		// lives in a materialised-on-demand dock, not just the assembly tree.
+		dockWorkspace.ShowToolPane(global::ILSpy.Search.SearchPaneModel.PaneContentId);
 		var path = Path.Combine(Path.GetTempPath(), $"ILSpy.Layout.test.{System.Guid.NewGuid():N}.json");
 
 		try

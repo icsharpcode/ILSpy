@@ -416,8 +416,12 @@ namespace ILSpy.Docking
 
 		ToolDock? BuildToolDock(string id, ToolPaneAlignment alignment, double proportion)
 		{
+			// Only panes that opt into the default layout are placed up front; the rest
+			// (Search, Analyzer, Debug Steps) are materialised on demand by ShowToolPane, so the
+			// default config shows just the assembly-tree pane while keeping every pane's home
+			// location intact for when it is first opened.
 			var dockables = panes
-				.Where(p => p.Metadata.Alignment == alignment)
+				.Where(p => p.Metadata.Alignment == alignment && p.Metadata.IsVisibleByDefault)
 				.OrderBy(p => p.Metadata.Order)
 				.Select(p => (IDockable)p.Pane)
 				.ToArray();

@@ -74,19 +74,19 @@ public class ToolPaneRegistryTests
 	[AvaloniaTest]
 	public void DockFactory_Builds_Layout_Zones_Driven_By_The_Registry()
 	{
-		// ILSpyDockFactory iterates the registry instead of taking each pane in its ctor —
-		// verifies via the live DockWorkspace that the same three docks (Left/Top/Bottom)
-		// still get created and contain the right panes.
+		// ILSpyDockFactory iterates the registry instead of taking each pane in its ctor.
+		// The default config places only the visible-by-default assembly-tree pane; Search and
+		// Analyzer are hidden (IsVisibleByDefault = false) and materialised on demand.
 
 		// Arrange + Act — DockWorkspace is constructed by the composition host; its layout is
 		// built eagerly in the constructor.
 		var workspace = AppComposition.Current.GetExport<DockWorkspace>();
 		var allDockables = FlattenDockables(workspace.Layout).ToArray();
 
-		// Assert — each pane is registered as a dockable inside the layout.
+		// Assert — only the assembly-tree pane is placed up front.
 		allDockables.OfType<AssemblyTreeModel>().Should().ContainSingle();
-		allDockables.OfType<SearchPaneModel>().Should().ContainSingle();
-		allDockables.OfType<AnalyzerTreeViewModel>().Should().ContainSingle();
+		allDockables.OfType<SearchPaneModel>().Should().BeEmpty("Search is hidden until invoked");
+		allDockables.OfType<AnalyzerTreeViewModel>().Should().BeEmpty("Analyzer is hidden until invoked");
 	}
 
 	static System.Collections.Generic.IEnumerable<Dock.Model.Core.IDockable> FlattenDockables(Dock.Model.Core.IDockable root)

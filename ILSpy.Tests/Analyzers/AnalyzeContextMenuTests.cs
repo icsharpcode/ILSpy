@@ -154,32 +154,23 @@ public class AnalyzeContextMenuTests
 		var methodNode = typeNode.Children.OfType<MethodTreeNode>()
 			.First(m => m.MethodDefinition.Name == "Count");
 
-		// Walk the dock layout to find the analyzer pane's current visibility state.
-		var analyzerPane = FindAnalyzerPane(dockWorkspace);
-		Assert.That(analyzerPane, Is.Not.Null, "the analyzer pane must be in the dock layout");
-		var owningDock = analyzerPane!.Owner as global::Dock.Model.Core.IDock;
-		Assert.That(owningDock, Is.Not.Null, "the analyzer pane must have a dock parent");
-
-		// Pick any sibling dockable and force it to be active first, so the analyzer pane
-		// starts in the inactive state — that's the regression we're testing.
-		var sibling = owningDock!.VisibleDockables?
-			.FirstOrDefault(d => !ReferenceEquals(d, analyzerPane));
-		if (sibling != null)
-		{
-			owningDock.ActiveDockable = sibling;
-			((object?)owningDock.ActiveDockable).Should().NotBeSameAs(analyzerPane,
-				"baseline: sibling-active must really make the analyzer pane inactive");
-		}
+		// The analyzer pane is hidden by default — not in the layout until something surfaces it.
+		FindAnalyzerPane(dockWorkspace).Should().BeNull(
+			"baseline: the analyzer pane is hidden until invoked");
 
 		entry.Execute(new TextViewContext {
 			SelectedTreeNodes = new ICSharpCode.ILSpyX.TreeView.SharpTreeNode[] { methodNode }
 		});
 		TestCapture.Step("analyzer-pane-surfaced");
 
-		// After Execute, the active dockable in the analyzer pane's owning dock should be
-		// the analyzer pane itself — that's what ShowToolPane does.
-		((object?)owningDock.ActiveDockable).Should().BeSameAs(analyzerPane,
-			"Execute must call ShowToolPane so the analyzer pane surfaces");
+		// After Execute, the pane is materialised into the layout and active in its dock —
+		// that's what ShowToolPane does, so the user sees the entity they just analysed.
+		var analyzerPane = FindAnalyzerPane(dockWorkspace);
+		analyzerPane.Should().NotBeNull("Execute must surface (materialise) the analyzer pane");
+		var owningDock = analyzerPane!.Owner as global::Dock.Model.Core.IDock;
+		owningDock.Should().NotBeNull("the surfaced analyzer pane must have a dock parent");
+		((object?)owningDock!.ActiveDockable).Should().BeSameAs(analyzerPane,
+			"Execute must call ShowToolPane so the analyzer pane surfaces and is active");
 	}
 
 	[AvaloniaTest]

@@ -51,7 +51,7 @@ namespace ILSpy.Search
 	}
 
 	[Export]
-	[ExportToolPane(ContentId = PaneContentId, Alignment = ToolPaneAlignment.Top, Order = 0)]
+	[ExportToolPane(ContentId = PaneContentId, Alignment = ToolPaneAlignment.Top, Order = 0, IsVisibleByDefault = false)]
 	[Shared]
 	public partial class SearchPaneModel : ToolPaneModel
 	{

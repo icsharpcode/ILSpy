@@ -31,7 +31,7 @@ using ILSpy.ViewModels;
 namespace ILSpy.Analyzers
 {
 	[Export]
-	[ExportToolPane(ContentId = PaneContentId, Alignment = ToolPaneAlignment.Bottom, Order = 0)]
+	[ExportToolPane(ContentId = PaneContentId, Alignment = ToolPaneAlignment.Bottom, Order = 0, IsVisibleByDefault = false)]
 	[Shared]
 	public class AnalyzerTreeViewModel : ToolPaneModel
 	{

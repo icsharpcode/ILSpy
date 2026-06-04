@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 using Avalonia.Headless.NUnit;
@@ -59,8 +60,10 @@ public class AnalyzerPaneVisibilityTests
 		var analyzer = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
 		var factory = (ILSpyDockFactory)dockWorkspace.Factory;
 
+		// The analyzer pane is hidden by default; show it so the user has it open.
+		dockWorkspace.ShowToolPane(AnalyzerTreeViewModel.PaneContentId);
 		AllDockables(dockWorkspace.Layout).Should().Contain(analyzer,
-			"baseline: the analyzer pane is in the default layout");
+			"showing the analyzer pane adds it to the layout");
 
 		// The user closes the bottom Analyzer panel (its close button calls CloseDockable).
 		factory.CloseDockable(analyzer);
@@ -74,5 +77,32 @@ public class AnalyzerPaneVisibilityTests
 			"Analyze must restore the closed analyzer pane so the user sees the entity they added");
 		(analyzer.Owner as IDock)?.ActiveDockable.Should().BeSameAs(analyzer,
 			"the restored pane must be the active dockable in its dock");
+	}
+
+	[AvaloniaTest]
+	public async Task Default_Layout_Shows_Only_The_Assembly_Tree_Pane()
+	{
+		// The default dock config shows just the assembly-tree pane: Search, Analyzer and Debug
+		// Steps are hidden until invoked (IsVisibleByDefault = false), while keeping their home
+		// locations for when they are first opened.
+		var (_, vm) = await TestHarness.BootAsync(3);
+		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
+		var analyzer = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
+		var search = AppComposition.Current.GetExport<global::ILSpy.Search.SearchPaneModel>();
+
+		var paneIds = AllDockables(dockWorkspace.Layout)
+			.OfType<global::ILSpy.ViewModels.ToolPaneModel>()
+			.Select(p => p.Id)
+			.ToList();
+		paneIds.Should().Contain("AssemblyTree", "the assembly-tree pane is visible by default");
+		paneIds.Should().NotContain("Search", "Search is hidden until invoked");
+		paneIds.Should().NotContain("Analyzer", "Analyzer is hidden until invoked");
+
+		// ...but showing one materialises it into its home location.
+		dockWorkspace.ShowToolPane(global::ILSpy.Search.SearchPaneModel.PaneContentId);
+		AllDockables(dockWorkspace.Layout).Should().Contain(search,
+			"Show Search must materialise the hidden Search pane");
+		(search.Owner as IDock)!.Id.Should().Be("TopTools",
+			"Search keeps its top-edge home dock");
 	}
 }

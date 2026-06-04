@@ -64,8 +64,10 @@ public class SearchInputFocusTests
 	{
 		var (window, _) = await TestHarness.BootAsync();
 
-		var pane = await window.WaitForComponent<SearchPane>();
 		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
+		// Search is hidden by default; surface it so its view realises.
+		dockWorkspace.ShowToolPane(global::ILSpy.Search.SearchPaneModel.PaneContentId);
+		var pane = await window.WaitForComponent<SearchPane>();
 
 		dockWorkspace.ShowSearchCommand.Execute(null);
 

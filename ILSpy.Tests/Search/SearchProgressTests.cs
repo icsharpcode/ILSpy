@@ -106,6 +106,9 @@ public class SearchProgressTests
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
+		// Search is hidden by default; surface it so its view realises.
+		AppComposition.Current.GetExport<global::ILSpy.Docking.DockWorkspace>()
+			.ShowToolPane(global::ILSpy.Search.SearchPaneModel.PaneContentId);
 		var pane = await window.WaitForComponent<SearchPane>();
 		TestCapture.Step("booted");
 
