@@ -90,7 +90,10 @@ public class SingletonDocumentTabTests
 		var dock = vm.DockWorkspace;
 		TestCapture.Step("booted");
 
-		bool IsAbout(ContentTabPage t) => t.Content is DecompilerTabPageModel { Title: var title } && title == Resources.About;
+		// Match the singleton menu-About tab specifically (IsStaticContent), NOT the transient boot
+		// "welcome" page, which also carries Title == About but is a non-static main-tab page. The
+		// welcome page's presence races with boot, so matching it too made this a ~50% flake.
+		bool IsAbout(ContentTabPage t) => t.Content is DecompilerTabPageModel { Title: var title, IsStaticContent: true } && title == Resources.About;
 
 		Invoke(window, nameof(Resources._About));
 		TestCapture.Step("about-opened");
