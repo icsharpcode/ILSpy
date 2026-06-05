@@ -1,0 +1,124 @@
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
+using System.Collections;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.Linq;
+
+using Avalonia.Controls;
+
+using ICSharpCode.ILSpyX.TreeView;
+
+namespace ILSpy.Controls.TreeView
+{
+	/// <summary>
+	/// Two-way binds a <see cref="SharpTreeView"/>'s selection to a view-model's
+	/// <see cref="ObservableCollection{SharpTreeNode}"/>: user selection flows into the model, and a
+	/// model-driven change (restore, navigate, freshly-opened nodes) reveals + focuses the primary in
+	/// the tree. One implementation shared by every tree pane, replacing the per-pane sync code.
+	/// </summary>
+	public sealed class TreeSelectionBinder : IDisposable
+	{
+		readonly SharpTreeView tree;
+		readonly ObservableCollection<SharpTreeNode> modelSelection;
+		bool syncing;
+
+		public TreeSelectionBinder(SharpTreeView tree, ObservableCollection<SharpTreeNode> modelSelection)
+		{
+			this.tree = tree ?? throw new ArgumentNullException(nameof(tree));
+			this.modelSelection = modelSelection ?? throw new ArgumentNullException(nameof(modelSelection));
+			tree.SelectionChanged += OnTreeSelectionChanged;
+			modelSelection.CollectionChanged += OnModelSelectionChanged;
+			// The model may already carry a selection (restored before the view was realised).
+			if (modelSelection.Count > 0)
+				SyncModelToTree();
+		}
+
+		public void Dispose()
+		{
+			tree.SelectionChanged -= OnTreeSelectionChanged;
+			modelSelection.CollectionChanged -= OnModelSelectionChanged;
+		}
+
+		/// <summary>Re-applies the model selection to the tree (e.g. after the tree's Root rebinds).</summary>
+		public void Refresh() => SyncModelToTree();
+
+		// Tree -> model: mirror the ListBox selection (already SharpTreeNodes) into the view-model.
+		void OnTreeSelectionChanged(object? sender, SelectionChangedEventArgs e)
+		{
+			if (syncing)
+				return;
+			syncing = true;
+			try
+			{
+				var current = tree.SelectedItems!.OfType<SharpTreeNode>().ToHashSet();
+				for (int i = modelSelection.Count - 1; i >= 0; i--)
+				{
+					if (!current.Contains(modelSelection[i]))
+						modelSelection.RemoveAt(i);
+				}
+				foreach (var node in current)
+				{
+					if (!modelSelection.Contains(node))
+						modelSelection.Add(node);
+				}
+			}
+			finally
+			{
+				syncing = false;
+			}
+		}
+
+		void OnModelSelectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+		{
+			if (syncing)
+				return;
+			SyncModelToTree();
+		}
+
+		void SyncModelToTree()
+		{
+			syncing = true;
+			try
+			{
+				tree.SelectedItems!.Clear();
+				SharpTreeNode? primary = null;
+				var items = tree.ItemsSource as IList;
+				foreach (var node in modelSelection)
+				{
+					tree.ScrollIntoNodeView(node);
+					// Only select rows the flattener actually contains; adding an off-list node
+					// corrupts the ListBox SelectionModel (it throws on later enumeration).
+					if (items != null && items.Contains(node))
+					{
+						tree.SelectedItems.Add(node);
+						primary = node;
+					}
+				}
+				if (primary != null)
+					tree.FocusNode(primary);
+			}
+			finally
+			{
+				syncing = false;
+			}
+		}
+	}
+}

@@ -25,5 +25,13 @@
 		</Style>
 	</UserControl.Styles>
 
-	<tv:SharpTreeView Name="Tree" ShowRoot="False" ShowLines="True" />
+	<Panel>
+		<tv:SharpTreeView Name="Tree" ShowRoot="False" ShowLines="True" />
+		<!-- Drag-reorder drop indicator: a thin accent line at the Before/After edge of the target
+		     row, positioned from code in UpdateInsertMarker during a reorder DragOver. -->
+		<Border Name="InsertMarker" IsVisible="False" IsHitTestVisible="False"
+		        Height="2" Width="0"
+		        HorizontalAlignment="Left" VerticalAlignment="Top"
+		        Background="#FF0078D7" />
+	</Panel>
 </UserControl>

@@ -42,7 +42,7 @@ namespace ILSpy.AssemblyTree
 		// Where a dropped set of assemblies lands relative to the target row.
 		internal enum DropPosition { Before, After, Append }
 
-		bool syncingSelection;
+		ILSpy.Controls.TreeView.TreeSelectionBinder? selectionBinder;
 		LanguageSettings? languageSettings;
 		IReadOnlyList<IContextMenuEntryExport> contextMenuEntries = Array.Empty<IContextMenuEntryExport>();
 
@@ -69,7 +69,6 @@ namespace ILSpy.AssemblyTree
 				if (DataContext is AssemblyTreeModel m)
 					m.MarkTreeReady();
 			};
-			Tree.SelectionChanged += OnTreeSelectionChanged;
 			// Right-press marks the context target without moving selection; MMB opens a new tab.
 			Tree.AddHandler(PointerPressedEvent, OnTreePointerPressed, RoutingStrategies.Tunnel);
 			Tree.AddHandler(ContextRequestedEvent, OnTreeContextRequested, RoutingStrategies.Bubble, handledEventsToo: true);
@@ -82,6 +81,7 @@ namespace ILSpy.AssemblyTree
 			DragDrop.SetAllowDrop(Tree, true);
 			Tree.AddHandler(DragDrop.DragOverEvent, OnTreeDragOver);
 			Tree.AddHandler(DragDrop.DropEvent, OnTreeDrop);
+			Tree.AddHandler(DragDrop.DragLeaveEvent, (_, _) => HideInsertMarker());
 
 			var registry = TryGetContextMenuRegistry();
 			AttachContextMenu(registry?.Entries ?? Array.Empty<IContextMenuEntryExport>());
@@ -370,87 +370,25 @@ namespace ILSpy.AssemblyTree
 		protected override void OnDataContextChanged(EventArgs e)
 		{
 			base.OnDataContextChanged(e);
+			selectionBinder?.Dispose();
+			selectionBinder = null;
 			if (DataContext is AssemblyTreeModel model)
 			{
 				model.PropertyChanged += Model_PropertyChanged;
 				if (model.Root != null)
-				{
 					Tree.Root = model.Root;
-					SyncModelSelectionToTree();
-				}
+				selectionBinder = new ILSpy.Controls.TreeView.TreeSelectionBinder(Tree, model.SelectedItems);
 			}
 		}
 
 		void Model_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (sender is not AssemblyTreeModel model)
-				return;
-			if (e.PropertyName == nameof(AssemblyTreeModel.Root) && model.Root != null)
+			if (sender is AssemblyTreeModel model
+				&& e.PropertyName == nameof(AssemblyTreeModel.Root) && model.Root != null)
 			{
 				Tree.Root = model.Root;
-				SyncModelSelectionToTree();
-			}
-			else if (e.PropertyName == nameof(AssemblyTreeModel.SelectedItem))
-			{
-				if (syncingSelection)
-					return;
-				SyncModelSelectionToTree();
-			}
-		}
-
-		// Tree -> model: mirror the ListBox selection (already SharpTreeNodes) into the model.
-		void OnTreeSelectionChanged(object? sender, SelectionChangedEventArgs e)
-		{
-			if (syncingSelection || DataContext is not AssemblyTreeModel model)
-				return;
-			syncingSelection = true;
-			try
-			{
-				var current = Tree.SelectedItems!.OfType<SharpTreeNode>().ToHashSet();
-				for (int i = model.SelectedItems.Count - 1; i >= 0; i--)
-				{
-					if (!current.Contains(model.SelectedItems[i]))
-						model.SelectedItems.RemoveAt(i);
-				}
-				foreach (var node in current)
-				{
-					if (!model.SelectedItems.Contains(node))
-						model.SelectedItems.Add(node);
-				}
-			}
-			finally
-			{
-				syncingSelection = false;
-			}
-		}
-
-		// Model -> tree: reveal + select the model's nodes (e.g. restored / navigated selection).
-		void SyncModelSelectionToTree()
-		{
-			if (DataContext is not AssemblyTreeModel model)
-				return;
-			syncingSelection = true;
-			try
-			{
-				Tree.SelectedItems!.Clear();
-				SharpTreeNode? primary = null;
-				foreach (var node in model.SelectedItems)
-				{
-					Tree.ScrollIntoNodeView(node);
-					// Only add rows the flattener actually contains; adding an off-list node
-					// corrupts the ListBox SelectionModel (it throws on later enumeration).
-					if (Flattened is { } items && items.Contains(node))
-					{
-						Tree.SelectedItems.Add(node);
-						primary = node;
-					}
-				}
-				if (primary != null)
-					Tree.FocusNode(primary);
-			}
-			finally
-			{
-				syncingSelection = false;
+				// The flattener rebuilt; re-apply the model selection to the new rows.
+				selectionBinder?.Refresh();
 			}
 		}
 
@@ -463,9 +401,9 @@ namespace ILSpy.AssemblyTree
 			if (draggingAssemblies is { } dragged && e.DataTransfer.Contains(AssemblyReorderFormat))
 			{
 				var (target, position) = HitTestTopLevelRow(e);
-				e.DragEffects = target != null && CanReorder(dragged, target, position)
-					? DragDropEffects.Move
-					: DragDropEffects.None;
+				bool valid = target != null && CanReorder(dragged, target, position);
+				e.DragEffects = valid ? DragDropEffects.Move : DragDropEffects.None;
+				UpdateInsertMarker(e, valid ? position : null);
 				e.Handled = true;
 				return;
 			}
@@ -479,6 +417,7 @@ namespace ILSpy.AssemblyTree
 		{
 			if (draggingAssemblies is { } dragged && e.DataTransfer.Contains(AssemblyReorderFormat))
 			{
+				HideInsertMarker();
 				var (reorderTarget, reorderPosition) = HitTestTopLevelRow(e);
 				if (reorderTarget != null)
 					ReorderAssemblies(dragged, reorderTarget, reorderPosition);
@@ -515,6 +454,24 @@ namespace ILSpy.AssemblyTree
 			var position = pointer.Y < item.Bounds.Height / 2 ? DropPosition.Before : DropPosition.After;
 			return (atn, position);
 		}
+
+		// Positions the drop indicator at the top (Before) or bottom (After) edge of the target row.
+		void UpdateInsertMarker(DragEventArgs e, DropPosition? position)
+		{
+			if (position is not { } pos || pos == DropPosition.Append
+				|| (e.Source as Visual)?.FindAncestorOfType<SharpTreeViewItem>(includeSelf: true) is not { } item)
+			{
+				HideInsertMarker();
+				return;
+			}
+			var topLeft = item.TranslatePoint(new Point(0, 0), this) ?? default;
+			double y = topLeft.Y + (pos == DropPosition.After ? item.Bounds.Height : 0);
+			InsertMarker.Margin = new Thickness(topLeft.X, y - 1, 0, 0);
+			InsertMarker.Width = item.Bounds.Width;
+			InsertMarker.IsVisible = true;
+		}
+
+		void HideInsertMarker() => InsertMarker.IsVisible = false;
 
 		/// <summary>
 		/// Whether <paramref name="dragged"/> can be reordered to land Before/After

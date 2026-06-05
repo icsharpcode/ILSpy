@@ -31,14 +31,13 @@ namespace ILSpy.Analyzers
 {
 	public partial class AnalyzerTreeView : UserControl
 	{
-		bool syncingSelection;
 		AnalyzerTreeViewModel? boundModel;
+		ILSpy.Controls.TreeView.TreeSelectionBinder? selectionBinder;
 		IReadOnlyList<IContextMenuEntryExport> contextMenuEntries = Array.Empty<IContextMenuEntryExport>();
 
 		public AnalyzerTreeView()
 		{
 			InitializeComponent();
-			Tree.SelectionChanged += OnTreeSelectionChanged;
 			var registry = TryGetContextMenuRegistry();
 			AttachContextMenu(registry?.Entries ?? Array.Empty<IContextMenuEntryExport>());
 		}
@@ -105,76 +104,14 @@ namespace ILSpy.Analyzers
 		{
 			boundModel = model;
 			Tree.Root = model.Root;
-			model.SelectedItems.CollectionChanged += OnModelSelectionChanged;
-			// The model may already carry a selection (analysed before the view was realised).
-			if (model.SelectedItems.Count > 0)
-				SyncModelSelectionToTree();
+			selectionBinder = new ILSpy.Controls.TreeView.TreeSelectionBinder(Tree, model.SelectedItems);
 		}
 
 		void DetachFromModel()
 		{
-			if (boundModel == null)
-				return;
-			boundModel.SelectedItems.CollectionChanged -= OnModelSelectionChanged;
+			selectionBinder?.Dispose();
+			selectionBinder = null;
 			boundModel = null;
-		}
-
-		// Tree -> model: mirror the ListBox selection (already SharpTreeNodes) into the view-model.
-		void OnTreeSelectionChanged(object? sender, SelectionChangedEventArgs e)
-		{
-			if (syncingSelection || boundModel == null)
-				return;
-			syncingSelection = true;
-			try
-			{
-				var current = Tree.SelectedItems!.OfType<SharpTreeNode>().ToHashSet();
-				for (int i = boundModel.SelectedItems.Count - 1; i >= 0; i--)
-				{
-					if (!current.Contains(boundModel.SelectedItems[i]))
-						boundModel.SelectedItems.RemoveAt(i);
-				}
-				foreach (var node in current)
-				{
-					if (!boundModel.SelectedItems.Contains(node))
-						boundModel.SelectedItems.Add(node);
-				}
-			}
-			finally
-			{
-				syncingSelection = false;
-			}
-		}
-
-		// Model -> tree: a programmatic selection (e.g. a freshly analysed node) is shown and revealed.
-		void OnModelSelectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-		{
-			if (syncingSelection || boundModel == null)
-				return;
-			SyncModelSelectionToTree();
-		}
-
-		void SyncModelSelectionToTree()
-		{
-			if (boundModel == null)
-				return;
-			syncingSelection = true;
-			try
-			{
-				Tree.SelectedItems!.Clear();
-				SharpTreeNode? primary = null;
-				foreach (var node in boundModel.SelectedItems)
-				{
-					Tree.ScrollIntoNodeView(node);
-					Tree.SelectedItems.Add(node);
-					primary = node;
-				}
-				if (primary != null)
-					Tree.FocusNode(primary);
-			}
-			finally
-			{
-				syncingSelection = false;
-			}
 		}
 	}
 }
