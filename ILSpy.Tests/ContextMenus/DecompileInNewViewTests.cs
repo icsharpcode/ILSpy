@@ -21,7 +21,6 @@ using System.Threading.Tasks;
 
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.DataGridHierarchical;
 using Avalonia.Headless;
 using Avalonia.Headless.NUnit;
 using Avalonia.Input;
@@ -163,17 +162,17 @@ public class DecompileInNewViewTests
 	public async Task Right_Clicking_An_Unselected_Row_Does_Not_Move_The_Selection()
 	{
 		// Thunderbird-style context target: right-clicking a row the user has NOT selected must
-		// leave the real selection (and therefore the preview document) untouched. Today
-		// ProDataGrid's default selects the right-clicked row on press, which yanks the preview
-		// to B before the menu opens — so "Decompile to new tab" ends up with B twice instead of
-		// the intended A + B. This probe asserts the selection stays put under a real right-click.
+		// leave the real selection (and therefore the preview document) untouched. A ListBox's
+		// default selects the row on press, which would yank the preview to B before the menu opens
+		// -- so "Decompile to new tab" would end up with B twice instead of the intended A + B. The
+		// pane suppresses the right-press to prevent that; this probe asserts the selection stays put.
 
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 
 		var nodeA = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		var nodeB = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(TreeNavigation.CoreLibName);
@@ -189,7 +188,7 @@ public class DecompileInNewViewTests
 			await Task.Delay(25);
 		}
 
-		var rowB = grid.GetVisualDescendants().OfType<DataGridRow>()
+		var rowB = grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.FirstOrDefault(r => RowNodeEquals(r, nodeB));
 		rowB.Should().NotBeNull("the top-level CoreLib row must be realised");
 
@@ -199,8 +198,10 @@ public class DecompileInNewViewTests
 		grid.AddHandler(Control.ContextRequestedEvent, (_, _) => menuRequested = true,
 			handledEventsToo: true);
 
-		// Right-click the centre of B's row (clear of the far-left expander glyph).
-		var point = rowB!.TranslatePoint(new Point(rowB.Bounds.Width / 2, rowB.Bounds.Height / 2), window);
+		// Right-click the centre of B's row (clear of the far-left expander glyph). Tree rows
+		// stretch to content width, so clamp X to the visible grid viewport.
+		var clickX = System.Math.Min(rowB!.Bounds.Width, grid.Bounds.Width) / 2;
+		var point = rowB.TranslatePoint(new Point(clickX, rowB.Bounds.Height / 2), window);
 		point.Should().NotBeNull();
 		HeadlessWindowExtensions.MouseDown(window, point!.Value, MouseButton.Right);
 		HeadlessWindowExtensions.MouseUp(window, point.Value, MouseButton.Right);
@@ -229,7 +230,7 @@ public class DecompileInNewViewTests
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 
 		var assemblies = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>().Take(3).ToArray();
 		assemblies.Length.Should().BeGreaterThanOrEqualTo(3, "need three top-level rows to click");
@@ -245,13 +246,15 @@ public class DecompileInNewViewTests
 			await Task.Delay(25);
 		}
 
-		DataGridRow Row(SharpTreeNode node) => grid.GetVisualDescendants().OfType<DataGridRow>()
+		global::ILSpy.Controls.TreeView.SharpTreeViewItem Row(SharpTreeNode node) => grid.GetVisualDescendants()
+			.OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.First(r => RowNodeEquals(r, node));
 
 		async Task RightClick(SharpTreeNode node)
 		{
 			var row = Row(node);
-			var pt = row.TranslatePoint(new Point(row.Bounds.Width / 2, row.Bounds.Height / 2), window);
+			var clickX = System.Math.Min(row.Bounds.Width, grid.Bounds.Width) / 2;
+			var pt = row.TranslatePoint(new Point(clickX, row.Bounds.Height / 2), window);
 			HeadlessWindowExtensions.MouseDown(window, pt!.Value, MouseButton.Right);
 			HeadlessWindowExtensions.MouseUp(window, pt.Value, MouseButton.Right);
 			for (int i = 0; i < 4; i++)
@@ -295,7 +298,7 @@ public class DecompileInNewViewTests
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 
 		var nodeA = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		var nodeB = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(TreeNavigation.CoreLibName);
@@ -323,8 +326,7 @@ public class DecompileInNewViewTests
 		// The model selection follows the new active tab...
 		ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, nodeB).Should().BeTrue(
 			"the tree model selection must follow the newly-activated tab");
-		// ...and so does the grid's visual selection (the grid stores either the raw node or its
-		// HierarchicalNode wrapper depending on the path that set it).
+		// ...and so does the tree's visual selection (SharpTreeView selects the SharpTreeNode directly).
 		ReferenceEquals(GridSelectedNode(grid), nodeB).Should().BeTrue(
 			"the grid's visual selection must follow the newly-activated tab");
 	}
@@ -342,7 +344,7 @@ public class DecompileInNewViewTests
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 
 		var assemblies = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>().Take(3).ToArray();
 		assemblies.Length.Should().BeGreaterThanOrEqualTo(3, "need three top-level rows");
@@ -395,7 +397,7 @@ public class DecompileInNewViewTests
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
 
 		var assemblies = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>().Take(3).ToArray();
@@ -439,16 +441,14 @@ public class DecompileInNewViewTests
 			"the grid must visually highlight every restored node");
 	}
 
-	static bool RowNodeEquals(DataGridRow row, SharpTreeNode node)
-		=> row.DataContext is HierarchicalNode hn && ReferenceEquals(hn.Item, node);
+	static bool RowNodeEquals(global::ILSpy.Controls.TreeView.SharpTreeViewItem row, SharpTreeNode node)
+		=> ReferenceEquals(row.DataContext, node);
 
-	static SharpTreeNode? GridSelectedNode(DataGrid grid)
-		=> grid.SelectedItem is HierarchicalNode hn ? hn.Item as SharpTreeNode : grid.SelectedItem as SharpTreeNode;
+	static SharpTreeNode? GridSelectedNode(global::ILSpy.Controls.TreeView.SharpTreeView grid)
+		=> grid.SelectedItem as SharpTreeNode;
 
-	static System.Collections.Generic.List<SharpTreeNode> GridSelectedNodes(DataGrid grid)
-		=> grid.SelectedItems.Cast<object?>()
-			.Select(o => o is HierarchicalNode hn ? hn.Item as SharpTreeNode : o as SharpTreeNode)
-			.Where(n => n != null)
-			.Select(n => n!)
+	static System.Collections.Generic.List<SharpTreeNode> GridSelectedNodes(global::ILSpy.Controls.TreeView.SharpTreeView grid)
+		=> grid.SelectedItems!.Cast<object?>()
+			.OfType<SharpTreeNode>()
 			.ToList();
 }

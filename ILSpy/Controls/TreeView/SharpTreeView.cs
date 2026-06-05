@@ -222,7 +222,52 @@ namespace ILSpy.Controls.TreeView
 			foreach (var ancestor in node.Ancestors())
 				ancestor.IsExpanded = true;
 			doNotScrollOnExpanding = false;
+			CenterNodeInView(node);
+		}
+
+		/// <summary>
+		/// Reveals <paramref name="node"/> centred in the viewport so the user's eye lands on a
+		/// newly selected row, rather than at the nearest edge (where <see cref="ListBox.ScrollIntoView"/>
+		/// leaves it). Skips the move when the row is already fully visible, so clicking a visible
+		/// row -- or selecting a freshly-loaded top-level entry that's already on screen -- never
+		/// yanks the viewport.
+		/// </summary>
+		void CenterNodeInView(SharpTreeNode node)
+		{
+			var scrollViewer = this.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+			if (scrollViewer is null)
+			{
+				ScrollIntoView(node);
+				return;
+			}
+
+			// If the row is already realised and roughly centred, leave the viewport alone -- this
+			// keeps a re-selection of an already-centred row from twitching. We deliberately do NOT
+			// skip a merely-visible row sitting at an edge: the ListBox's AutoScrollToSelectedItem
+			// drags the selected row to the nearest edge first, and a reveal should still pull it to
+			// the centre from there.
+			if (ContainerFromItem(node) is Control visible && visible.IsVisible
+				&& visible.TranslatePoint(new Point(0, 0), scrollViewer) is { } top)
+			{
+				var rowMid = top.Y + visible.Bounds.Height / 2;
+				var viewportMid = scrollViewer.Viewport.Height / 2;
+				if (Math.Abs(rowMid - viewportMid) <= visible.Bounds.Height)
+					return;
+			}
+
+			// Bring it on screen (edge), force layout so the container realises, then offset so the
+			// row sits at the vertical centre.
 			ScrollIntoView(node);
+			UpdateLayout();
+			if (ContainerFromItem(node) is not Control row)
+				return;
+			if (row.TranslatePoint(new Point(0, 0), scrollViewer) is not { } rowTop)
+				return;
+			var desiredTop = (scrollViewer.Viewport.Height - row.Bounds.Height) / 2;
+			var newOffsetY = scrollViewer.Offset.Y + (rowTop.Y - desiredTop);
+			var maxOffset = Math.Max(0, scrollViewer.Extent.Height - scrollViewer.Viewport.Height);
+			newOffsetY = Math.Clamp(newOffsetY, 0, maxOffset);
+			scrollViewer.Offset = new Vector(scrollViewer.Offset.X, newOffsetY);
 		}
 
 		protected override void OnKeyDown(KeyEventArgs e)
