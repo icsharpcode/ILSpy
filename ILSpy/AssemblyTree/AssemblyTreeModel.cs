@@ -498,8 +498,8 @@ namespace ILSpy.AssemblyTree
 		/// quietly into "the user never sees a populated icon for assemblies they don't
 		/// touch".
 		///
-		/// To strike a middle ground, schedule a one-shot sweep that fires after the tree
-		/// view is on screen (<see cref="TreeReady"/>) plus a small visibility cooldown.
+		/// To strike a middle ground, schedule a one-shot sweep that fires once the tree
+		/// view is on screen (<see cref="TreeReady"/>).
 		/// Gating on <see cref="TreeReady"/> rather than a wall-clock delay keeps the sweep
 		/// off slow startups (heavy layout, debugger attached) and ensures the user has
 		/// genuinely seen the tree before the thread pool fills with sibling-assembly loads.
@@ -510,14 +510,6 @@ namespace ILSpy.AssemblyTree
 				try
 				{
 					await TreeReady.ConfigureAwait(false);
-					// Generous cooldown so the first decompile (selected via path-restore or
-					// --navigateto) has fully landed in the editor before the sweep fires.
-					// The earlier 500 ms cooldown overlapped with the decompile's
-					// Dispatcher.InvokeAsync marshal-back, triggering Server-GC pauses on the
-					// UI thread mid-apply-text. 5 s puts the sweep solidly past the typical
-					// foreground-work window without making sibling-icon population feel
-					// unreasonably delayed to a user scanning the list.
-					await Task.Delay(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
 					AppEnv.AppLog.Mark("Background-load sweep starting");
 					// Cap concurrent loads so a 200-assembly list doesn't kick off 200
 					// simultaneous Task.Run + GetLoadResultAsync chains. Each load reads PE
