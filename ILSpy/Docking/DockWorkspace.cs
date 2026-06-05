@@ -426,6 +426,26 @@ namespace ILSpy.Docking
 			}
 		}
 
+		/// <summary>
+		/// Cancels every in-flight decompile across all document tabs and returns a task that
+		/// completes once they have unwound. Drives the workspace to quiescence so a background
+		/// decompile can't keep running and post a continuation later -- e.g. on app shutdown, or
+		/// between headless tests where it would otherwise land in the next test's rebuilt
+		/// composition and read the swapped-in singletons.
+		/// </summary>
+		internal Task CancelPendingOperationsAsync()
+		{
+			if (Layout is not IDockable root)
+				return Task.CompletedTask;
+			var pending = FlattenDocumentDocks(root)
+				.SelectMany(dock => dock.VisibleDockables?.OfType<ContentTabPage>() ?? Enumerable.Empty<ContentTabPage>())
+				.Select(tab => tab.Content)
+				.OfType<TextView.DecompilerTabPageModel>()
+				.Select(tab => tab.CancelPendingAsync())
+				.ToArray();
+			return pending.Length == 0 ? Task.CompletedTask : Task.WhenAll(pending);
+		}
+
 		// Set true while syncing the tree's selection FROM the active tab so the
 		// SelectionChanged handler doesn't bounce back into ShowSelectedNode and overwrite
 		// MainTab.Content with the carved-out tab's node.

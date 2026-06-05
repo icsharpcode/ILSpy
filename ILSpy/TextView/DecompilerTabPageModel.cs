@@ -50,6 +50,9 @@ namespace ILSpy.TextView
 	public sealed partial class DecompilerTabPageModel : ContentPageModel
 	{
 		CancellationTokenSource? activeCts;
+		// The in-flight fire-and-forget decompile, kept so a caller (e.g. teardown / shutdown) can
+		// cancel it and await its completion instead of letting it post continuations later.
+		Task? pendingDecompile;
 
 		[ObservableProperty]
 		private string text = string.Empty;
@@ -316,10 +319,22 @@ namespace ILSpy.TextView
 		// faults that the finalizer thread rethrows much later, hiding the originating bug.
 		void StartDecompile()
 		{
-			DecompileAsync().ContinueWith(t => {
+			pendingDecompile = DecompileAsync().ContinueWith(t => {
 				if (t.Exception is { } ex)
 					System.Diagnostics.Debug.WriteLine($"DecompileAsync faulted: {ex.Flatten()}");
 			}, TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
+		}
+
+		/// <summary>
+		/// Cancels any in-flight decompile and returns a task that completes once it has unwound, so
+		/// callers can drive the work to quiescence instead of leaving a background continuation to
+		/// land later (e.g. on app shutdown, or between headless tests where it would otherwise post
+		/// into the next test's freshly-rebuilt composition).
+		/// </summary>
+		internal Task CancelPendingAsync()
+		{
+			activeCts?.Cancel();
+			return pendingDecompile ?? Task.CompletedTask;
 		}
 
 		// Process-wide counter so the AppLog markers can distinguish "first decompile after

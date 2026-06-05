@@ -19,6 +19,8 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -90,12 +92,45 @@ public sealed class ResetAppStateAttribute : Attribute, ITestAction
 		if (Application.Current == null || !Dispatcher.UIThread.CheckAccess())
 			return;
 
+		// Drive background work to quiescence BEFORE the next test rebuilds the composition. A test
+		// that triggers a decompile spawns a Task.Run plus dispatcher continuations and rarely awaits
+		// them to completion; left running, that continuation lands during the next test and reads
+		// the swapped-in AppComposition.Current -- the dominant source of order-dependent flakiness.
+		// Cancel the in-flight decompiles and pump the dispatcher until they unwind (bounded).
+		DrainPendingWork();
+
 		// Close any windows the test showed so their view-models (alive and weakly subscribed to
-		// MessageBus) can't react to events raised by later tests, then drain the dispatcher.
+		// MessageBus) can't react to events raised by later tests, then drain once more.
 		if (Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
 		{
 			foreach (var window in desktop.Windows.ToArray())
 				window.Close();
+		}
+		Dispatcher.UIThread.RunJobs();
+	}
+
+	static void DrainPendingWork()
+	{
+		Task quiesce;
+		try
+		{
+			quiesce = AppComposition.Current.GetExport<global::ILSpy.Docking.DockWorkspace>().CancelPendingOperationsAsync();
+		}
+		catch
+		{
+			// Composition not available (a plain [Test], or a boot that never built the workspace).
+			Dispatcher.UIThread.RunJobs();
+			return;
+		}
+
+		// We're on the dispatcher thread, so we can't block-await: pump the queue (which runs the
+		// cancelled decompiles' continuations) and let the worker threads post, until everything has
+		// settled or a safety deadline passes.
+		var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+		while (!quiesce.IsCompleted && DateTime.UtcNow < deadline)
+		{
+			Dispatcher.UIThread.RunJobs();
+			Thread.Sleep(5);
 		}
 		Dispatcher.UIThread.RunJobs();
 	}
