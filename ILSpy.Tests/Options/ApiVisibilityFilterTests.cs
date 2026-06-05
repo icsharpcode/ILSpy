@@ -21,7 +21,6 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 
 using Avalonia.Controls;
-using Avalonia.Controls.DataGridHierarchical;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.NUnit;
 using Avalonia.VisualTree;

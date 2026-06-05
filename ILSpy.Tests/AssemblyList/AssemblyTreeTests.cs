@@ -24,7 +24,6 @@ using System.Xml.Linq;
 
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.DataGridHierarchical;
 using Avalonia.Headless;
 using Avalonia.Headless.NUnit;
 using Avalonia.Input;
@@ -90,10 +89,10 @@ public class AssemblyTreeTests
 
 		// Act — locate the realised DataGrid inside the AssemblyListPane.
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var treeGrid = await pane.WaitForComponent<DataGrid>();
+		var treeGrid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 
 		// Assert — SelectionMode is Extended.
-		treeGrid.SelectionMode.Should().Be(DataGridSelectionMode.Extended,
+		treeGrid.SelectionMode.Should().Be(global::Avalonia.Controls.SelectionMode.Multiple,
 			"the assembly tree must let users Ctrl-click multiple rows");
 	}
 
@@ -631,7 +630,7 @@ public class AssemblyTreeTests
 		}
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 
 		vm.AssemblyTreeModel.SelectNode(enumerable);
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, enumerable));
@@ -655,7 +654,7 @@ public class AssemblyTreeTests
 		// Pick the bottom-most visible non-selected row — that's the strictest probe. If the
 		// bug regressed, CenterRowInView would scroll it up to the middle and offset would
 		// change.
-		var candidateRow = grid.GetVisualDescendants().OfType<DataGridRow>()
+		var candidateRow = grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.Where(r => !r.IsSelected
 				&& r.TranslatePoint(new Point(0, 0), scrollViewer) is { } p
 				&& p.Y >= 0 && p.Y + r.Bounds.Height <= scrollViewer.Viewport.Height)
@@ -784,7 +783,7 @@ public class AssemblyTreeTests
 		TestCapture.Step("sacrificial-selected");
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.Focus();
 		Dispatcher.UIThread.RunJobs();
 
@@ -833,7 +832,7 @@ public class AssemblyTreeTests
 		await Waiters.WaitForAsync(() => ReferenceEquals(model.SelectedItem, firstAssembly));
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.Focus();
 		Dispatcher.UIThread.RunJobs();
 
@@ -864,7 +863,7 @@ public class AssemblyTreeTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var model = vm.AssemblyTreeModel;
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.Focus();
 		Dispatcher.UIThread.RunJobs();
 
@@ -901,7 +900,7 @@ public class AssemblyTreeTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var model = vm.AssemblyTreeModel;
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.Focus();
 		Dispatcher.UIThread.RunJobs();
 
@@ -928,14 +927,14 @@ public class AssemblyTreeTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var model = vm.AssemblyTreeModel;
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.Focus();
 		Dispatcher.UIThread.RunJobs();
 
-		var hm = (global::Avalonia.Controls.DataGridHierarchical.IHierarchicalModel)grid.HierarchicalModel!;
-		var a = (SharpTreeNode)hm.Flattened[0].Item;
-		var b = (SharpTreeNode)hm.Flattened[1].Item;
-		var c = (SharpTreeNode)hm.Flattened[2].Item;
+		var flat = (System.Collections.IList)grid.ItemsSource!;
+		var a = (SharpTreeNode)flat[0]!;
+		var b = (SharpTreeNode)flat[1]!;
+		var c = (SharpTreeNode)flat[2]!;
 
 		model.SelectNode(a);
 		await Waiters.WaitForAsync(() => ReferenceEquals(model.SelectedItem, a));
@@ -960,20 +959,20 @@ public class AssemblyTreeTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var model = vm.AssemblyTreeModel;
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.Focus();
 		Dispatcher.UIThread.RunJobs();
 
-		var hm = (global::Avalonia.Controls.DataGridHierarchical.IHierarchicalModel)grid.HierarchicalModel!;
+		var flat = (System.Collections.IList)grid.ItemsSource!;
 		// Expand the first assembly so there are plenty of rows and a real "middle".
-		var firstAsm = (SharpTreeNode)hm.Flattened[0].Item;
+		var firstAsm = (SharpTreeNode)flat[0]!;
 		firstAsm.EnsureLazyChildren();
 		firstAsm.IsExpanded = true;
 		Dispatcher.UIThread.RunJobs();
-		await Waiters.WaitForAsync(() => hm.Flattened.Count >= 7);
+		await Waiters.WaitForAsync(() => flat.Count >= 7);
 
-		var start = (SharpTreeNode)hm.Flattened[3].Item;
-		var below = (SharpTreeNode)hm.Flattened[4].Item;
+		var start = (SharpTreeNode)flat[3]!;
+		var below = (SharpTreeNode)flat[4]!;
 		model.SelectNode(start);
 		await Waiters.WaitForAsync(() => ReferenceEquals(model.SelectedItem, start));
 
@@ -999,7 +998,7 @@ public class AssemblyTreeTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var model = vm.AssemblyTreeModel;
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.Focus();
 		Dispatcher.UIThread.RunJobs();
 
@@ -1099,40 +1098,27 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
-	public async Task Setting_SharpTreeNode_IsExpanded_Expands_Row_In_Grid()
+	public async Task Setting_SharpTreeNode_IsExpanded_Reveals_Children_In_The_Tree()
 	{
-		// ProDataGrid's HierarchicalOptions.IsExpandedPropertyPath wires SharpTreeNode.IsExpanded
-		// to the grid's wrapper expansion state via reflection + INotifyPropertyChanged. Setting
-		// IsExpanded on the model must propagate to the grid wrapper without any manual
-		// subscription bookkeeping.
-
-		// Arrange — boot, wait for assemblies, locate the realised DataGrid and the
-		// HierarchicalModel wrapper for the assembly node.
+		// SharpTreeView binds the TreeFlattener directly, so toggling SharpTreeNode.IsExpanded
+		// reveals the node's children in the flattened row list with no wrapper bookkeeping.
 		var (window, vm) = await TestHarness.BootAsync(3);
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		var hm = (global::Avalonia.Controls.DataGridHierarchical.IHierarchicalModel)grid.HierarchicalModel!;
-		var hNode = hm.FindNode(assemblyNode);
-		hNode.Should().NotBeNull();
-		hNode!.IsExpanded.Should().BeFalse("baseline: top-level assembly rows start collapsed");
+		assemblyNode.IsExpanded.Should().BeFalse("baseline: top-level assembly rows start collapsed");
+		var flat = (System.Collections.IList)grid.ItemsSource!;
+		int before = flat.Count;
 
 		// Act — production-shaped action: just toggle the model property.
 		assemblyNode.Expand();
-
-		// Drain the dispatcher so the wiring (PropertyChanged → hm.Expand) settles.
-		for (int i = 0; i < 5; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(20);
-		}
 		TestCapture.Step("assembly-row-expanded");
 
-		// Assert — the grid wrapper now reports IsExpanded == true.
-		hm.FindNode(assemblyNode)!.IsExpanded.Should().BeTrue(
-			"setting SharpTreeNode.IsExpanded must propagate to the HierarchicalModel wrapper");
+		// Assert — the node's children now appear in the flattened tree.
+		await Waiters.WaitForAsync(() => flat.Count > before,
+			description: "setting SharpTreeNode.IsExpanded must reveal its children in the flattened tree");
 	}
 
 	[AvaloniaTest]
@@ -1568,7 +1554,7 @@ public class AssemblyTreeTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.UpdateLayout();
 
 		var topLevelCount = vm.AssemblyTreeModel.Root!.Children.Count;
@@ -1615,7 +1601,7 @@ public class AssemblyTreeTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.UpdateLayout();
 
 		var topLevelCount = vm.AssemblyTreeModel.Root!.Children.Count;
@@ -1629,13 +1615,16 @@ public class AssemblyTreeTests
 		TestCapture.Step("all-rows-selected");
 
 		// Act — plain left-click on the second visible row.
-		var targetRow = grid.GetVisualDescendants().OfType<DataGridRow>()
+		var targetRow = grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.OrderBy(r => r.TranslatePoint(new Point(0, 0), grid)?.Y ?? double.MaxValue)
 			.Skip(1).First();
-		var targetNode = (targetRow.DataContext as HierarchicalNode)?.Item as SharpTreeNode;
+		var targetNode = targetRow.DataContext as SharpTreeNode;
 		Assert.That(targetNode, Is.Not.Null, "the clicked row must wrap a tree node");
+		// Tree rows stretch to content width (with horizontal scroll), so a row can be wider than
+		// the grid viewport. Click within the visible viewport, not at the (off-screen) row centre.
+		var clickX = System.Math.Min(targetRow.Bounds.Width, grid.Bounds.Width) / 2;
 		var rowCentre = targetRow.TranslatePoint(
-			new Point(targetRow.Bounds.Width / 2, targetRow.Bounds.Height / 2), window)!.Value;
+			new Point(clickX, targetRow.Bounds.Height / 2), window)!.Value;
 		HeadlessWindowExtensions.MouseDown(window, rowCentre, MouseButton.Left);
 		HeadlessWindowExtensions.MouseUp(window, rowCentre, MouseButton.Left);
 		Dispatcher.UIThread.RunJobs();

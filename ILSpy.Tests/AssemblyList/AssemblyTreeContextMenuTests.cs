@@ -51,7 +51,7 @@ public class AssemblyTreeContextMenuTests
 		// Assert — TreeGrid carries a ContextMenu. (The menu may be empty if no entries are
 		// registered yet; verifies only that the host is in place.)
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.ContextMenu.Should().NotBeNull();
 	}
 
@@ -77,7 +77,7 @@ public class AssemblyTreeContextMenuTests
 
 		// Act 1 — re-attach the context menu with our stub entries.
 		pane.AttachContextMenu(new IContextMenuEntryExport[] { export });
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 		var menu = grid.ContextMenu!;
 
 		// Trigger the build path the live Opening event would take.

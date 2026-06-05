@@ -21,7 +21,6 @@ using System.Threading.Tasks;
 
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.DataGridHierarchical;
 using Avalonia.Headless;
 using Avalonia.Headless.NUnit;
 using Avalonia.Input;
@@ -60,16 +59,14 @@ public class HeadlessMmbPointerTests
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 
-		// Any realised DataGridRow whose DataContext wraps an ILSpyTreeNode is a valid click
+		// Any realised SharpTreeViewItem whose DataContext is an ILSpyTreeNode is a valid click
 		// target — the exact node doesn't matter, only that the gesture pipeline fires.
-		// ProDataGrid wraps each row's data in a HierarchicalNode (`{ Item: ILSpyTreeNode }`),
-		// so we walk that surface rather than comparing against the tree node directly.
-		await Waiters.WaitForAsync(() => grid.GetVisualDescendants().OfType<DataGridRow>()
-			.Any(r => r.DataContext is HierarchicalNode { Item: ILSpyTreeNode }));
-		var row = grid.GetVisualDescendants().OfType<DataGridRow>()
-			.First(r => r.DataContext is HierarchicalNode { Item: ILSpyTreeNode });
+		await Waiters.WaitForAsync(() => grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
+			.Any(r => r.DataContext is ILSpyTreeNode));
+		var row = grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
+			.First(r => r.DataContext is ILSpyTreeNode);
 
 		// Snapshot the tab count BEFORE the gesture so we can assert a strict +1 after.
 		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
@@ -78,11 +75,13 @@ public class HeadlessMmbPointerTests
 		// Translate the row's centre into TopLevel coordinates so MouseDown lands inside it.
 		var topLevel = TopLevel.GetTopLevel(row)!;
 		var rowBounds = row.Bounds;
-		var centreInRow = new Point(rowBounds.Width / 2, rowBounds.Height / 2);
+		// Tree rows stretch to content width (with horizontal scroll), so clamp the click X to the
+		// visible grid viewport — the row centre can sit off-screen past the grid's right edge.
+		var centreInRow = new Point(System.Math.Min(rowBounds.Width, grid.Bounds.Width) / 2, rowBounds.Height / 2);
 		var centreInTopLevel = row.TranslatePoint(centreInRow, topLevel)
 			?? throw new System.InvalidOperationException("Row not in TopLevel visual tree");
 
-		// Real pointer event — exercises bubble + handledEventsToo routing through ProDataGrid.
+		// Real pointer event — exercises bubble + handledEventsToo routing through SharpTreeView.
 		topLevel.MouseDown(centreInTopLevel, MouseButton.Middle);
 		topLevel.MouseUp(centreInTopLevel, MouseButton.Middle);
 
@@ -95,8 +94,8 @@ public class HeadlessMmbPointerTests
 	[AvaloniaTest]
 	public async Task Ctrl_LMB_On_An_Assembly_Tree_Row_Does_Not_Open_A_New_Tab()
 	{
-		// Ctrl+LMB previously did double duty: ProDataGrid's Extended-selection mode treats
-		// it as "toggle this row in the multi-selection", and our OnTreeGridPointerPressed
+		// Ctrl+LMB previously did double duty: the tree's Extended-selection mode treats
+		// it as "toggle this row in the multi-selection", and our OnTreePointerPressed
 		// also treated it as "open in new tab". Both fired on a single click, so users
 		// trying to extend a multi-selection ended up spawning unwanted tabs. The intended
 		// gesture for "open in new tab" is MMB (matches WPF's DecompileInNewViewCommand
@@ -109,19 +108,21 @@ public class HeadlessMmbPointerTests
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 
-		await Waiters.WaitForAsync(() => grid.GetVisualDescendants().OfType<DataGridRow>()
-			.Any(r => r.DataContext is HierarchicalNode { Item: ILSpyTreeNode }));
-		var row = grid.GetVisualDescendants().OfType<DataGridRow>()
-			.First(r => r.DataContext is HierarchicalNode { Item: ILSpyTreeNode });
+		await Waiters.WaitForAsync(() => grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
+			.Any(r => r.DataContext is ILSpyTreeNode));
+		var row = grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
+			.First(r => r.DataContext is ILSpyTreeNode);
 
 		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
 		int before = documents.VisibleDockables?.Count ?? 0;
 
 		var topLevel = TopLevel.GetTopLevel(row)!;
 		var rowBounds = row.Bounds;
-		var centreInRow = new Point(rowBounds.Width / 2, rowBounds.Height / 2);
+		// Tree rows stretch to content width (with horizontal scroll), so clamp the click X to the
+		// visible grid viewport — the row centre can sit off-screen past the grid's right edge.
+		var centreInRow = new Point(System.Math.Min(rowBounds.Width, grid.Bounds.Width) / 2, rowBounds.Height / 2);
 		var centreInTopLevel = row.TranslatePoint(centreInRow, topLevel)
 			?? throw new System.InvalidOperationException("Row not in TopLevel visual tree");
 
@@ -133,7 +134,7 @@ public class HeadlessMmbPointerTests
 		global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
 		(documents.VisibleDockables?.Count ?? 0).Should().Be(before,
-			"Ctrl+LMB must be reserved for ProDataGrid's multi-selection toggle — only MMB opens a new tab");
+			"Ctrl+LMB must be reserved for the tree's multi-selection toggle — only MMB opens a new tab");
 	}
 
 	[AvaloniaTest]
@@ -151,22 +152,24 @@ public class HeadlessMmbPointerTests
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 
-		// Any realised DataGridRow whose data wraps an ILSpyTreeNode is a fine target; the
+		// Any realised SharpTreeViewItem whose data is an ILSpyTreeNode is a fine target; the
 		// non-leaf assembly node row (depth 0) is always present and never confused with a
 		// method row whose tree-toggle area is null.
-		await Waiters.WaitForAsync(() => grid.GetVisualDescendants().OfType<DataGridRow>()
-			.Any(r => r.DataContext is HierarchicalNode { Item: ILSpyTreeNode }));
-		var row = grid.GetVisualDescendants().OfType<DataGridRow>()
-			.First(r => r.DataContext is HierarchicalNode { Item: ILSpyTreeNode });
+		await Waiters.WaitForAsync(() => grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
+			.Any(r => r.DataContext is ILSpyTreeNode));
+		var row = grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
+			.First(r => r.DataContext is ILSpyTreeNode);
 
 		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
 		int before = documents.VisibleDockables?.Count ?? 0;
 
 		var topLevel = TopLevel.GetTopLevel(row)!;
 		var rowBounds = row.Bounds;
-		var centreInRow = new Point(rowBounds.Width / 2, rowBounds.Height / 2);
+		// Tree rows stretch to content width (with horizontal scroll), so clamp the click X to the
+		// visible grid viewport — the row centre can sit off-screen past the grid's right edge.
+		var centreInRow = new Point(System.Math.Min(rowBounds.Width, grid.Bounds.Width) / 2, rowBounds.Height / 2);
 		var centreInTopLevel = row.TranslatePoint(centreInRow, topLevel)
 			?? throw new System.InvalidOperationException("Row not in TopLevel visual tree");
 

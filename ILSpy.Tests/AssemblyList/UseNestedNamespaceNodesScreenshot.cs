@@ -54,7 +54,7 @@ public class UseNestedNamespaceNodesScreenshot
 		await Waiters.WaitForAsync(() =>
 			assemblyNode.Children.Count > 0
 				&& assemblyNode.Children[assemblyNode.Children.Count - 1] is NamespaceTreeNode);
-		// Re-expand — BindTree replaces the HierarchicalModel and resets visible expansion.
+		// Re-expand — the namespace subtree was rebuilt, so make it visible again.
 		assemblyNode.IsExpanded = true;
 		Dispatcher.UIThread.RunJobs();
 

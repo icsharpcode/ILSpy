@@ -72,6 +72,9 @@ namespace ILSpy.Controls.TreeView
 
 		public SharpTreeView()
 		{
+			// Take keyboard focus directly so gestures like Ctrl+A work the moment the user tabs
+			// or clicks into the pane, before any row becomes the current item.
+			Focusable = true;
 			SelectionChanged += OnSelectionChanged;
 			DoubleTapped += OnDoubleTapped;
 			// Drag-drop is handled generically here and delegated to SharpTreeNode.CanDrop/Drop.
@@ -204,6 +207,14 @@ namespace ILSpy.Controls.TreeView
 				Dispatcher.UIThread.Post(() => (ContainerFromItem(node))?.Focus(), DispatcherPriority.Loaded);
 		}
 
+		/// <summary>Moves the (single) selection to <paramref name="node"/> and focuses it.
+		/// Used by keyboard navigation where selection must follow the caret.</summary>
+		void SelectAndFocus(SharpTreeNode node)
+		{
+			SelectedItem = node;
+			FocusNode(node);
+		}
+
 		public void ScrollIntoNodeView(SharpTreeNode node)
 		{
 			ArgumentNullException.ThrowIfNull(node);
@@ -216,6 +227,16 @@ namespace ILSpy.Controls.TreeView
 
 		protected override void OnKeyDown(KeyEventArgs e)
 		{
+			// Ctrl+A select-all must work on the first press even before a current item is
+			// established (right after the tree gains focus). The base ListBox only selects all
+			// when a focused item lives inside it, so drive it explicitly here.
+			if (e.Key == Key.A && e.KeyModifiers == KeyModifiers.Control
+				&& SelectionMode.HasFlag(SelectionMode.Multiple))
+			{
+				SelectAll();
+				e.Handled = true;
+				return;
+			}
 			var node = (e.Source as Visual)?.FindAncestorOfType<SharpTreeViewItem>(includeSelf: true)?.Node
 				?? SelectedItem as SharpTreeNode;
 			if (node != null && e.KeyModifiers == KeyModifiers.None)
@@ -226,7 +247,7 @@ namespace ILSpy.Controls.TreeView
 						if (node.IsExpanded)
 							node.IsExpanded = false;
 						else if (node.Parent != null && !node.Parent.IsRoot)
-							FocusNode(node.Parent);
+							SelectAndFocus(node.Parent);
 						else
 							break;
 						e.Handled = true;
@@ -235,7 +256,7 @@ namespace ILSpy.Controls.TreeView
 						if (!node.IsExpanded && node.ShowExpander)
 							node.IsExpanded = true;
 						else if (node.Children.Count > 0)
-							FocusNode(node.Children.First(c => c.IsVisible));
+							SelectAndFocus(node.Children.First(c => c.IsVisible));
 						else
 							break;
 						e.Handled = true;

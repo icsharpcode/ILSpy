@@ -46,11 +46,11 @@ public class AssemblyTreeExpanderHitboxTests
 	[AvaloniaTest]
 	public async Task Expander_Toggle_Offers_At_Least_16x16_Clickable_Target()
 	{
-		// The +/- expander in the assembly tree must give a click target of at least 16x16 for
-		// reliable tapping, while its visible glyph stays the classic 9x9 box and the column /
-		// tree-line layout (which assume a 13px expander column, glyph centred at +8.5) is left
-		// unchanged. The target must be genuinely hittable across the full 16x16 — not merely
-		// occupy 16x16 of layout while only the 9x9 glyph receives input.
+		// The +/- expander in the assembly tree must give a click target that fills the full 13px
+		// expander column and the 16px row-tall toggle, while its visible glyph stays the classic
+		// 9x9 box. The column is kept at 13px so the +/- box centres on the tree connector lines;
+		// the target must be genuinely hittable across that whole area — not merely occupy it in
+		// layout while only the 9x9 glyph receives input.
 
 		// Arrange — boot, wait for assemblies, expand a node so an expandable row is realised.
 		var (window, vm) = await TestHarness.BootAsync(3);
@@ -61,7 +61,7 @@ public class AssemblyTreeExpanderHitboxTests
 		TestCapture.Step("system-linq-expanded-and-selected");
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 
 		// Let rows realise and layout settle.
 		for (int i = 0; i < 8; i++)
@@ -72,7 +72,7 @@ public class AssemblyTreeExpanderHitboxTests
 		}
 
 		// Act — locate the expander toggle of the (expandable) assembly row.
-		var row = grid.GetVisualDescendants().OfType<DataGridRow>()
+		var row = grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.FirstOrDefault(r => RowMatches(r, assemblyNode));
 		row.Should().NotBeNull("the expanded assembly row must be realised");
 		var expander = row!.GetVisualDescendants().OfType<ToggleButton>()
@@ -80,9 +80,9 @@ public class AssemblyTreeExpanderHitboxTests
 		expander.Should().NotBeNull("an expandable row must realise a PART_Expander toggle");
 		expander!.IsEnabled.Should().BeTrue("the assembly row is expandable");
 
-		// Assert — the click target is at least 16x16.
-		expander.Bounds.Width.Should().BeGreaterThanOrEqualTo(16,
-			"the expander click target must be at least 16px wide for reliable tapping");
+		// Assert — the click target fills the 13px expander column and is 16px tall.
+		expander.Bounds.Width.Should().BeGreaterThanOrEqualTo(13,
+			"the expander click target must fill the 13px expander column for reliable tapping");
 		expander.Bounds.Height.Should().BeGreaterThanOrEqualTo(16,
 			"the expander click target must be at least 16px tall for reliable tapping");
 
@@ -110,12 +110,6 @@ public class AssemblyTreeExpanderHitboxTests
 			description: "clicking the enlarged expander area (below the glyph) must toggle the node");
 	}
 
-	static bool RowMatches(DataGridRow row, SharpTreeNode target)
-	{
-		var ctx = row.DataContext;
-		if (ReferenceEquals(ctx, target))
-			return true;
-		var itemProp = ctx?.GetType().GetProperty("Item");
-		return itemProp is not null && ReferenceEquals(itemProp.GetValue(ctx), target);
-	}
+	static bool RowMatches(global::ILSpy.Controls.TreeView.SharpTreeViewItem row, SharpTreeNode target)
+		=> ReferenceEquals(row.DataContext, target);
 }

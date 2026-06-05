@@ -59,7 +59,8 @@
 					<StackPanel Orientation="Horizontal" Height="20">
 						<!-- Indent spacer = (Level - 1) * step (top level sits flush left). -->
 						<Border Width="{Binding Level, Converter={x:Static tv:TreeIndentConverter.Instance}}" />
-						<ToggleButton Theme="{StaticResource TreeExpanderToggleTheme}"
+						<ToggleButton Name="PART_Expander"
+						              Theme="{StaticResource TreeExpanderToggleTheme}"
 						              VerticalAlignment="Center"
 						              IsChecked="{Binding IsExpanded, Mode=TwoWay}"
 						              IsVisible="{Binding ShowExpander}" />

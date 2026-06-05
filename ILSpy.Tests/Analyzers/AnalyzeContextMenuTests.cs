@@ -120,7 +120,7 @@ public class AnalyzeContextMenuTests
 		var analyzerVm = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
 		var beforeCount = analyzerVm.Root.Children.Count;
 
-		var grid = await pane.WaitForComponent<global::Avalonia.Controls.DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.RaiseEvent(new global::Avalonia.Input.KeyEventArgs {
 			Key = global::Avalonia.Input.Key.R,
 			KeyModifiers = global::Avalonia.Input.KeyModifiers.Control,

@@ -16,12 +16,15 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections;
+using System.Linq;
 using System.Threading.Tasks;
 
-using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
+
+using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy;
 using ILSpy.AppEnv;
@@ -36,42 +39,53 @@ namespace ICSharpCode.ILSpy.Tests;
 public class UseNestedNamespaceNodesGridVerification
 {
 	[AvaloniaTest]
-	public async Task Toggling_UseNestedNamespaceNodes_Triggers_BindTree_So_The_Grid_Sees_The_New_Shape()
+	public async Task Toggling_UseNestedNamespaceNodes_Reshapes_The_Visible_Tree_In_Place()
 	{
-		// The pane caches a snapshot of each expanded node's children via the
-		// HierarchicalOptions.ChildrenSelector — mid-expand mutations to AssemblyTreeNode.
-		// Children aren't observed by the live grid. The fix raises AssemblyTreeModel.Root
-		// PropertyChanged so AssemblyListPane.BindTree fires and replaces the
-		// HierarchicalModel; this test verifies that re-bind happens.
+		// Toggling UseNestedNamespaceNodes rebuilds each loaded assembly's namespace subtree.
+		// SharpTreeView's flattener observes node.Children mutations live, so the rebuilt shape
+		// surfaces in the visible row list without any model re-bind (the ProDataGrid snapshot
+		// problem that used to need a HierarchicalModel rebind is gone). This pins that the
+		// flat-mode -> nested-mode switch is reflected in the SharpTreeView's ItemsSource.
 
 		var settings = AppComposition.Current.GetExport<SettingsService>().DisplaySettings;
 		settings.UseNestedNamespaceNodes = false;
 
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = pane.FindControl<DataGrid>("TreeGrid")!;
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 
-		// Expand an assembly to force the ChildrenSelector to fire and cache its snapshot.
+		// Expand an assembly so its namespace children become visible rows.
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		assemblyNode.IsExpanded = true;
-		await Waiters.WaitForAsync(() => grid.HierarchicalModel != null);
+		await Waiters.WaitForAsync(() => assemblyNode.Children.OfType<NamespaceTreeNode>().Any());
 		TestCapture.Step("system-linq-expanded-flat");
+
+		var flat = (IList)grid.ItemsSource!;
+		bool VisibleNamespace(string name) => flat.Cast<SharpTreeNode>()
+			.OfType<NamespaceTreeNode>()
+			.Any(n => string.Equals(n.Text?.ToString(), name, System.StringComparison.Ordinal));
+
+		// In flat mode the full dotted namespace is a single visible row.
+		await Waiters.WaitForAsync(() => VisibleNamespace("System.Collections.Generic"),
+			description: "flat mode shows the dotted namespace as one row");
 
 		try
 		{
-			var modelBefore = grid.HierarchicalModel;
-			((object?)modelBefore).Should().NotBeNull("baseline: the grid must have a HierarchicalModel before the toggle");
-
 			settings.UseNestedNamespaceNodes = true;
+			assemblyNode.IsExpanded = true;
+			TestCapture.Step("nested-namespaces-rebuilt");
 
+			// In nested mode the leaf segment ("Generic") becomes its own row nested under
+			// "System" -> "Collections"; the live flattener must surface that without a re-bind.
 			await Waiters.WaitForAsync(
-				() => !ReferenceEquals(grid.HierarchicalModel, modelBefore),
-				System.TimeSpan.FromSeconds(5));
-			TestCapture.Step("nested-namespaces-rebound");
+				() => assemblyNode.Children.OfType<NamespaceTreeNode>()
+						.Any(n => string.Equals(n.Text?.ToString(), "System", System.StringComparison.Ordinal)),
+				System.TimeSpan.FromSeconds(5),
+				"toggling UseNestedNamespaceNodes must rebuild the namespace subtree into nested nodes");
 
-			grid.HierarchicalModel.Should().NotBeSameAs(modelBefore,
-				"toggling UseNestedNamespaceNodes must force AssemblyListPane.BindTree, "
-				+ "replacing the HierarchicalModel with one that reads the rebuilt children");
+			VisibleNamespace("System").Should().BeTrue(
+				"the rebuilt nested 'System' namespace node must appear in the SharpTreeView's visible rows "
+				+ "without any model re-bind (the live flattener observes the child mutations directly)");
 		}
 		finally
 		{

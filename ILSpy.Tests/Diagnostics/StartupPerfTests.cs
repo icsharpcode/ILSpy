@@ -121,13 +121,13 @@ public class StartupPerfTests
 				+ $"({swLoad.ElapsedMilliseconds / (double)allAssemblies.Length:0.##} ms/asm)");
 
 			// Act 4 — the assembly-tree pane should still be responsive. Measure how long it
-			// takes the AssemblyListPane to produce a fresh DataGrid descendant from this point
+			// takes the AssemblyListPane to produce a fresh SharpTreeView descendant from this point
 			// (proxy for "tree is interactive").
 			var pane = await window.WaitForComponent<AssemblyListPane>();
 			var swGrid = Stopwatch.StartNew();
-			var grid = await pane.WaitForComponent<DataGrid>();
+			var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 			swGrid.Stop();
-			TestContext.Out.WriteLine($"DataGrid descendant available: {swGrid.ElapsedMilliseconds} ms");
+			TestContext.Out.WriteLine($"SharpTreeView descendant available: {swGrid.ElapsedMilliseconds} ms");
 
 			// Sanity assertions — large enough to never trip on slow machines, but tight
 			// enough to flag a 10× regression.
