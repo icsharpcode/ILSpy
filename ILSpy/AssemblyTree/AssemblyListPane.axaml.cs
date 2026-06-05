@@ -52,6 +52,16 @@ namespace ILSpy.AssemblyTree
 		SharpTreeViewItem? contextMenuOpenItem;
 		SharpTreeNode? contextMenuTargetNode;
 
+		// Assembly drag-reorder. It's an internal move, so the dragged set is kept in a field rather
+		// than serialised; the DataTransfer just carries a marker so DragOver/Drop can tell a reorder
+		// drag from an Explorer file drop.
+		static readonly DataFormat<string> AssemblyReorderFormat =
+			DataFormat.CreateStringApplicationFormat("ilspy-assembly-reorder");
+		IReadOnlyList<AssemblyTreeNode>? draggingAssemblies;
+		AssemblyTreeNode? pressedAssembly;
+		PointerPressedEventArgs? dragPress;
+		Point dragStartPos;
+
 		public AssemblyListPane()
 		{
 			InitializeComponent();
@@ -63,10 +73,12 @@ namespace ILSpy.AssemblyTree
 			// Right-press marks the context target without moving selection; MMB opens a new tab.
 			Tree.AddHandler(PointerPressedEvent, OnTreePointerPressed, RoutingStrategies.Tunnel);
 			Tree.AddHandler(ContextRequestedEvent, OnTreeContextRequested, RoutingStrategies.Bubble, handledEventsToo: true);
+			Tree.AddHandler(PointerMovedEvent, OnTreePointerMoved, RoutingStrategies.Bubble, handledEventsToo: true);
+			Tree.AddHandler(PointerReleasedEvent, OnTreePointerReleased, RoutingStrategies.Bubble, handledEventsToo: true);
 			Tree.KeyDown += OnTreeKeyDown;
 
-			// Explorer -> tree file drop (the tree only receives drops; assembly reorder is a
-			// separate follow-up on the new control).
+			// Explorer file drop AND internal assembly drag-reorder both arrive through Avalonia's
+			// DragDrop pipeline; OnTreeDragOver/OnTreeDrop dispatch on the data format.
 			DragDrop.SetAllowDrop(Tree, true);
 			Tree.AddHandler(DragDrop.DragOverEvent, OnTreeDragOver);
 			Tree.AddHandler(DragDrop.DropEvent, OnTreeDrop);
@@ -225,12 +237,74 @@ namespace ILSpy.AssemblyTree
 			// Any non-right press starts a fresh gesture -- drop a stale right-click target.
 			contextMenuTargetNode = null;
 			SetContextTargetItem(null);
-			if (point.IsMiddleButtonPressed
-				&& hit.FindAncestorOfType<SharpTreeViewItem>(includeSelf: true)?.Node is ILSpyTreeNode node)
+			pressedAssembly = null;
+			dragPress = null;
+			var pressedNode = hit.FindAncestorOfType<SharpTreeViewItem>(includeSelf: true)?.Node;
+			if (point.IsMiddleButtonPressed && pressedNode is ILSpyTreeNode node)
 			{
 				OpenNodeInNewTab(node);
 				e.Handled = true;
+				return;
 			}
+			// Remember a top-level assembly row so a subsequent drag can reorder it.
+			if (point.IsLeftButtonPressed && pressedNode is AssemblyTreeNode { Parent: AssemblyListTreeNode, PackageEntry: null } asm)
+			{
+				pressedAssembly = asm;
+				dragPress = e;
+				dragStartPos = e.GetPosition(Tree);
+			}
+		}
+
+		void OnTreePointerReleased(object? sender, PointerReleasedEventArgs e)
+		{
+			pressedAssembly = null;
+			dragPress = null;
+		}
+
+		async void OnTreePointerMoved(object? sender, PointerEventArgs e)
+		{
+			if (pressedAssembly is not { } pressed || dragPress is not { } press)
+				return;
+			if (!e.GetCurrentPoint(Tree).Properties.IsLeftButtonPressed)
+			{
+				pressedAssembly = null;
+				dragPress = null;
+				return;
+			}
+			var delta = e.GetPosition(Tree) - dragStartPos;
+			if (Math.Abs(delta.X) < 4 && Math.Abs(delta.Y) < 4)
+				return;
+
+			var dragged = ResolveDraggedAssemblies(pressed);
+			pressedAssembly = null;
+			dragPress = null;
+			if (dragged.Count == 0)
+				return;
+
+			draggingAssemblies = dragged;
+			try
+			{
+				var data = new DataTransfer();
+				data.Add(DataTransferItem.Create(AssemblyReorderFormat, "1"));
+				await DragDrop.DoDragDropAsync(press, data, DragDropEffects.Move);
+			}
+			finally
+			{
+				draggingAssemblies = null;
+			}
+		}
+
+		// The dragged set: the whole selection when the pressed row is part of it, otherwise just
+		// the pressed row -- filtered to movable top-level assemblies.
+		IReadOnlyList<AssemblyTreeNode> ResolveDraggedAssemblies(AssemblyTreeNode pressed)
+		{
+			IEnumerable<AssemblyTreeNode> candidates =
+				DataContext is AssemblyTreeModel model && model.SelectedItems.Contains(pressed)
+					? model.SelectedItems.OfType<AssemblyTreeNode>()
+					: new[] { pressed };
+			return candidates
+				.Where(n => n.Parent is AssemblyListTreeNode && n.PackageEntry == null)
+				.ToList();
 		}
 
 		#endregion
@@ -382,10 +456,19 @@ namespace ILSpy.AssemblyTree
 
 		#endregion
 
-		#region File drop
+		#region Drag-reorder + file drop
 
 		void OnTreeDragOver(object? sender, DragEventArgs e)
 		{
+			if (draggingAssemblies is { } dragged && e.DataTransfer.Contains(AssemblyReorderFormat))
+			{
+				var (target, position) = HitTestTopLevelRow(e);
+				e.DragEffects = target != null && CanReorder(dragged, target, position)
+					? DragDropEffects.Move
+					: DragDropEffects.None;
+				e.Handled = true;
+				return;
+			}
 			if (!e.DataTransfer.Contains(DataFormat.File))
 				return;
 			e.DragEffects = DragDropEffects.Copy;
@@ -394,6 +477,15 @@ namespace ILSpy.AssemblyTree
 
 		void OnTreeDrop(object? sender, DragEventArgs e)
 		{
+			if (draggingAssemblies is { } dragged && e.DataTransfer.Contains(AssemblyReorderFormat))
+			{
+				var (reorderTarget, reorderPosition) = HitTestTopLevelRow(e);
+				if (reorderTarget != null)
+					ReorderAssemblies(dragged, reorderTarget, reorderPosition);
+				e.DragEffects = DragDropEffects.Move;
+				e.Handled = true;
+				return;
+			}
 			if (!e.DataTransfer.Contains(DataFormat.File))
 				return;
 			var storageItems = e.DataTransfer.TryGetFiles();
@@ -422,6 +514,42 @@ namespace ILSpy.AssemblyTree
 			var pointer = e.GetPosition(item);
 			var position = pointer.Y < item.Bounds.Height / 2 ? DropPosition.Before : DropPosition.After;
 			return (atn, position);
+		}
+
+		/// <summary>
+		/// Whether <paramref name="dragged"/> can be reordered to land Before/After
+		/// <paramref name="target"/>. Only top-level (non-package) assemblies reorder, never onto a
+		/// child or onto themselves. Mirrors the old AssemblyRowDropHandler validation.
+		/// </summary>
+		internal bool CanReorder(IReadOnlyList<AssemblyTreeNode> dragged, AssemblyTreeNode? target, DropPosition position)
+		{
+			if (position == DropPosition.Append || target is not { Parent: AssemblyListTreeNode } || dragged.Count == 0)
+				return false;
+			foreach (var node in dragged)
+			{
+				if (node.Parent is not AssemblyListTreeNode || node.PackageEntry != null || ReferenceEquals(node, target))
+					return false;
+			}
+			return true;
+		}
+
+		/// <summary>
+		/// Moves <paramref name="dragged"/> to the slot indicated by <paramref name="target"/> /
+		/// <paramref name="position"/> via <see cref="ICSharpCode.ILSpyX.AssemblyList.Move"/> (the same
+		/// persistence path as the rest of the app). Returns false if the move isn't valid.
+		/// </summary>
+		internal bool ReorderAssemblies(IReadOnlyList<AssemblyTreeNode> dragged, AssemblyTreeNode target, DropPosition position)
+		{
+			if (!CanReorder(dragged, target, position)
+				|| DataContext is not AssemblyTreeModel model || model.AssemblyList is not { } list)
+				return false;
+			var ordering = list.GetAssemblies();
+			int targetIndex = Array.IndexOf(ordering, target.LoadedAssembly);
+			if (targetIndex < 0)
+				return false;
+			int insertIndex = position == DropPosition.After ? targetIndex + 1 : targetIndex;
+			list.Move(dragged.Select(n => n.LoadedAssembly).ToArray(), insertIndex);
+			return true;
 		}
 
 		internal void HandleFileDrop(IReadOnlyList<string> files, AssemblyTreeNode? target, DropPosition position)
