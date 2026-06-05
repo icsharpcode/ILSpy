@@ -37,15 +37,15 @@ namespace ILSpy.TreeNodes
 	{
 		IEnumerable<ITreeNode> ITreeNode.Children => Children.OfType<ILSpyTreeNode>();
 
-		static LanguageService? cachedLanguageService;
-		static SettingsService? cachedSettingsService;
-
 		/// <summary>
 		/// Resolves the LanguageService from the MEF composition. Tree nodes use this to access
 		/// the active <see cref="Language"/> for formatting their <see cref="SharpTreeNode.Text"/>.
+		/// Resolved fresh each call: a static cache can hold a previous test's composition root in
+		/// headless sweeps (the container is rebuilt per test), and a warm GetExport is a dictionary
+		/// lookup. See <see cref="GetSuffixString(EntityHandle)"/> for the same rationale.
 		/// </summary>
 		protected static LanguageService LanguageService
-			=> cachedLanguageService ??= AppComposition.Current.GetExport<LanguageService>();
+			=> AppComposition.Current.GetExport<LanguageService>();
 
 		/// <summary>
 		/// The active <see cref="LanguageSettings"/>, or <see langword="null"/> when composition
@@ -58,8 +58,11 @@ namespace ILSpy.TreeNodes
 			get {
 				try
 				{
-					var service = cachedSettingsService ??= AppComposition.Current.GetExport<SettingsService>();
-					return service.SessionSettings.LanguageSettings;
+					// Resolve fresh each call -- a static cache can hold a previous test's composition
+					// root in headless sweeps (the container is rebuilt per test, so a cached
+					// SettingsService reports a stale ShowApiLevel and the filter cascade hides nodes
+					// that the current settings would show). A warm GetExport is a dictionary lookup.
+					return AppComposition.Current.GetExport<SettingsService>().SessionSettings.LanguageSettings;
 				}
 				catch
 				{
