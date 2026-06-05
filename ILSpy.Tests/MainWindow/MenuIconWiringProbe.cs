@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 using Avalonia.Controls;
@@ -44,9 +45,9 @@ public class MenuIconWiringProbe
 		var nativeMenu = NativeMenu.GetMenu(window)
 			?? throw new InvalidOperationException("MainMenu.Attach should have set NativeMenu on the window");
 
-		int totalLeaves = 0, withIcon = 0;
-		Walk(nativeMenu, "", ref totalLeaves, ref withIcon);
-		TestContext.Out.WriteLine($"Total leaf items: {totalLeaves}  with Icon: {withIcon}");
+		var leaves = new List<(string Path, bool HasIcon)>();
+		Collect(nativeMenu, "", leaves);
+		var withIcon = leaves.Where(l => l.HasIcon).Select(l => l.Path).ToList();
 
 		// Spot-check: File -> Open (which has MenuIcon="Images/Open" in MEF metadata).
 		var fileMenu = nativeMenu.Items.OfType<NativeMenuItem>()
@@ -58,31 +59,24 @@ public class MenuIconWiringProbe
 			+ "must rasterise that into NativeMenuItem.Icon.");
 
 		// Sanity: at least 5 leaves with icons (we have ~12+ MEF declarations with MenuIcon).
-		withIcon.Should().BeGreaterThanOrEqualTo(5,
-			$"At least 5 main-menu items have MenuIcon metadata; found {withIcon} with Icon set.");
+		// On failure, name the items that DID get an icon so the regression is diagnosable without
+		// dumping the whole menu on every (passing) run.
+		withIcon.Count.Should().BeGreaterThanOrEqualTo(5,
+			$"at least 5 main-menu items have MenuIcon metadata; found {withIcon.Count} of {leaves.Count} "
+			+ $"leaves with an icon [{string.Join(", ", withIcon)}]");
 	}
 
-	static void Walk(NativeMenu menu, string parentPath, ref int totalLeaves, ref int withIcon)
+	static void Collect(NativeMenu menu, string parentPath, List<(string Path, bool HasIcon)> leaves)
 	{
 		foreach (var element in menu.Items)
 		{
-			if (element is NativeMenuItemSeparator)
-				continue;
 			if (element is not NativeMenuItem item)
 				continue;
 			var path = string.IsNullOrEmpty(parentPath) ? (item.Header ?? "<unnamed>") : $"{parentPath} > {item.Header}";
 			if (item.Menu is { Items.Count: > 0 } sub)
-			{
-				Walk(sub, path, ref totalLeaves, ref withIcon);
-			}
+				Collect(sub, path, leaves);
 			else
-			{
-				totalLeaves++;
-				var hasIcon = item.Icon != null;
-				if (hasIcon)
-					withIcon++;
-				TestContext.Out.WriteLine($"  {(hasIcon ? "[icon] " : "       ")}{path}");
-			}
+				leaves.Add((path, item.Icon != null));
 		}
 	}
 }

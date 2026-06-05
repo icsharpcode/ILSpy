@@ -202,14 +202,29 @@ namespace ILSpy.TextView
 				RoutingStrategies.Tunnel,
 				handledEventsToo: false);
 			Editor.KeyDown += OnEditorKeyDownForZoom;
+		}
 
-			// A theme switch re-colours the shared named HighlightingColors in place, but the
-			// semantic RichTextModel cloned them at decompile time (RichTextModel.SetHighlighting
-			// clones). Rebuild the model from the captured spans -- which still reference the live,
-			// re-coloured instances -- so the already-decompiled output repaints with the new palette.
+		// ThemeManager.Current is a process-lived singleton, so subscribing to its ThemeChanged in
+		// the constructor and never detaching would root every DecompilerTextView for the lifetime of
+		// the process -- one leaked view per decompiler tab. Bind the handler to the visual-tree
+		// lifetime instead: subscribe while attached, drop it on detach. Dock hides and re-shows tab
+		// content, so this re-subscribes on every attach.
+		protected override void OnAttachedToVisualTree(global::Avalonia.VisualTreeAttachmentEventArgs e)
+		{
+			base.OnAttachedToVisualTree(e);
 			ILSpy.Themes.ThemeManager.Current.ThemeChanged += OnThemeChangedRebuildHighlighting;
 		}
 
+		protected override void OnDetachedFromVisualTree(global::Avalonia.VisualTreeAttachmentEventArgs e)
+		{
+			ILSpy.Themes.ThemeManager.Current.ThemeChanged -= OnThemeChangedRebuildHighlighting;
+			base.OnDetachedFromVisualTree(e);
+		}
+
+		// A theme switch re-colours the shared named HighlightingColors in place, but the
+		// semantic RichTextModel cloned them at decompile time (RichTextModel.SetHighlighting
+		// clones). Rebuild the model from the captured spans -- which still reference the live,
+		// re-coloured instances -- so the already-decompiled output repaints with the new palette.
 		void OnThemeChangedRebuildHighlighting(object? sender, System.EventArgs e)
 		{
 			if (boundModel?.HighlightingSpans is not { Count: > 0 } spans)
