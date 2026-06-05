@@ -913,7 +913,37 @@ namespace ILSpy.AssemblyTree
 		}
 
 		public void SortAssemblyList()
-			=> AssemblyList?.Sort(AssemblyComparer.Instance);
+		{
+			if (AssemblyList == null)
+				return;
+
+			// Sorting rebuilds every top-level assembly node, which drops the selection and snaps
+			// the list back to the top -- the user sees the tree visibly reshuffle. Capture the
+			// selected assemblies first and re-select them afterwards so the view settles on the
+			// same items (the selection binder reveals one of them) instead of jumping to the top.
+			var selectedAssemblies = SelectedItems
+				.Select(AssemblyOf)
+				.Where(a => a != null)
+				.Distinct()
+				.ToList();
+
+			AssemblyList.Sort(AssemblyComparer.Instance);
+
+			if (selectedAssemblies.Count == 0 || assemblyListTreeNode == null)
+				return;
+			var nodes = selectedAssemblies
+				.Select(a => assemblyListTreeNode.FindAssemblyNode(a!))
+				.Where(n => n != null)
+				.Cast<SharpTreeNode>()
+				.ToList();
+			if (nodes.Count > 0)
+				SelectNodes(nodes);
+		}
+
+		// Maps a selected node to the assembly it belongs to: the node itself when an assembly is
+		// selected, otherwise the assembly ancestor of a selected member/namespace/type.
+		static LoadedAssembly? AssemblyOf(SharpTreeNode node)
+			=> (node as AssemblyTreeNode ?? node.Ancestors().OfType<AssemblyTreeNode>().FirstOrDefault())?.LoadedAssembly;
 
 		sealed class AssemblyComparer : IComparer<LoadedAssembly>
 		{
