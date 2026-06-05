@@ -46,9 +46,9 @@ public class AssemblyTreeFileDropTests
 		// produce a "no" cursor and never reach our handler.
 		var (window, vm) = await TestHarness.BootAsync();
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var tree = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 
-		DragDrop.GetAllowDrop(grid).Should().BeTrue();
+		DragDrop.GetAllowDrop(tree).Should().BeTrue();
 	}
 
 	[AvaloniaTest]
@@ -65,7 +65,7 @@ public class AssemblyTreeFileDropTests
 		var tempPath = CloneCoreLibToTemp();
 		try
 		{
-			pane.HandleFileDrop(new[] { tempPath }, target: null, DataGridRowDropPosition.After);
+			pane.HandleFileDrop(new[] { tempPath }, target: null, global::ILSpy.AssemblyTree.AssemblyListPane.DropPosition.After);
 			TestCapture.Step("file-dropped-no-target");
 
 			var after = list.GetAssemblies();
@@ -97,7 +97,7 @@ public class AssemblyTreeFileDropTests
 		try
 		{
 			pane.HandleFileDrop(new[] { tempPath }, target: firstNode,
-				DataGridRowDropPosition.Before);
+				global::ILSpy.AssemblyTree.AssemblyListPane.DropPosition.Before);
 			TestCapture.Step("file-dropped-before-first-row");
 
 			var after = list.GetAssemblies();
@@ -126,7 +126,7 @@ public class AssemblyTreeFileDropTests
 		try
 		{
 			pane.HandleFileDrop(new[] { tempPath }, target: firstNode,
-				DataGridRowDropPosition.After);
+				global::ILSpy.AssemblyTree.AssemblyListPane.DropPosition.After);
 			TestCapture.Step("file-dropped-after-first-row");
 
 			var after = list.GetAssemblies();
@@ -154,7 +154,7 @@ public class AssemblyTreeFileDropTests
 		try
 		{
 			pane.HandleFileDrop(new[] { tempPath }, target: null,
-				DataGridRowDropPosition.After);
+				global::ILSpy.AssemblyTree.AssemblyListPane.DropPosition.After);
 			TestCapture.Step("file-dropped-new-node-selected");
 
 			var newAsm = list.GetAssemblies()
@@ -190,7 +190,7 @@ public class AssemblyTreeFileDropTests
 		var beforeCount = list.GetAssemblies().Length;
 
 		pane.HandleFileDrop(new[] { bogusPath }, target: null,
-			DataGridRowDropPosition.After);
+			global::ILSpy.AssemblyTree.AssemblyListPane.DropPosition.After);
 		TestCapture.Step("bogus-path-dropped");
 
 		// OpenAssembly does add the entry (it lazy-loads), so the count may grow. The contract

@@ -3,66 +3,27 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:tree="using:ILSpy.AssemblyTree"
+             xmlns:tv="using:ILSpy.Controls.TreeView"
              mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="450"
              x:Class="ILSpy.AssemblyTree.AssemblyListPane"
              x:DataType="tree:AssemblyTreeModel">
 	<UserControl.Styles>
-		<!-- Custom node text colours (auto-loaded, non-public) apply only while the row is NOT
-		     selected: on a selected row the selection's own foreground must win so the text stays
-		     legible against the accent fill instead of the dim colour bleeding through. The
-		     :not(:selected) ancestor guard drops the override on selection, letting the TextBlock
-		     inherit the selected-row foreground like every other node. -->
-		<Style Selector="DataGridRow:not(:selected) TextBlock.autoloaded">
+		<!-- Thunderbird-style context-menu target highlight: a right-click marks its target row
+		     with this class WITHOUT moving the selection, so the menu's target is visible while the
+		     real selection (and the decompiled document) stays put. Distinct from the solid-accent
+		     selection highlight: a faint accent fill. Applied/cleared from SetContextTargetItem. -->
+		<Style Selector="tv|SharpTreeViewItem.contextTarget">
+			<Setter Property="Background" Value="{DynamicResource ILSpy.ContextTargetRowBackground}" />
+		</Style>
+		<!-- Dim auto-loaded assemblies / non-public API, but never let the dim colour bleed
+		     through a selected row's highlight (mirrors the old DataGridRow:not(:selected) rule). -->
+		<Style Selector="tv|SharpTreeViewItem:not(:selected) TextBlock.autoloaded">
 			<Setter Property="Foreground" Value="{DynamicResource ILSpy.TreeAutoloadedForeground}" />
 		</Style>
-		<!-- Non-public members (private / internal / etc.) read in gray so the visible API
-		     surface stands out at a glance. The class is applied via Classes.nonPublicAPI
-		     binding on the cell-template TextBlock. -->
-		<Style Selector="DataGridRow:not(:selected) TextBlock.nonPublicAPI">
+		<Style Selector="tv|SharpTreeViewItem:not(:selected) TextBlock.nonPublicAPI">
 			<Setter Property="Foreground" Value="{DynamicResource ILSpy.TreeNonPublicForeground}" />
-		</Style>
-		<!-- Thunderbird-style context-menu target highlight. A right-click marks its target row
-		     with this class WITHOUT moving the selection, so the menu's target is visible while
-		     the real selection (and the decompiled document) stays put. Deliberately distinct
-		     from the solid-accent selection highlight: a faint accent fill. No border on purpose:
-		     BorderThickness adds to the row's layout box and makes the row grow by 2px when
-		     targeted. Applied/cleared from SetContextTargetRow in the code-behind. -->
-		<Style Selector="DataGridRow.contextTarget">
-			<Setter Property="Background" Value="{DynamicResource ILSpy.ContextTargetRowBackground}" />
 		</Style>
 	</UserControl.Styles>
 
-	<DataGrid Name="TreeGrid"
-	          Classes="hierarchical"
-	          AutoGenerateColumns="False"
-	          HeadersVisibility="None"
-	          HierarchicalRowsEnabled="True"
-	          GridLinesVisibility="None"
-	          CanUserResizeColumns="False"
-	          RowHeight="22"
-	          SelectionMode="Extended"
-	          SelectionChanged="OnTreeGridSelectionChanged">
-		<DataGrid.Columns>
-			<DataGridHierarchicalColumn Header="Name" Width="*"
-			                            IsReadOnly="True"
-			                            x:CompileBindings="False"
-			                            Binding="{Binding Item}">
-				<DataGridHierarchicalColumn.CellTemplate>
-					<DataTemplate>
-						<Grid ColumnDefinitions="Auto,7,*"
-						      VerticalAlignment="Center" Margin="4,0"
-						      ToolTip.Tip="{Binding ToolTip}">
-							<Image Grid.Column="0" Source="{Binding Icon}"
-							       Width="16" Height="16"
-							       VerticalAlignment="Center" />
-							<TextBlock Grid.Column="2" Text="{Binding Text}"
-							           Classes.autoloaded="{Binding IsAutoLoaded}"
-							           Classes.nonPublicAPI="{Binding IsNonPublicAPI}"
-							           VerticalAlignment="Center" />
-						</Grid>
-					</DataTemplate>
-				</DataGridHierarchicalColumn.CellTemplate>
-			</DataGridHierarchicalColumn>
-		</DataGrid.Columns>
-	</DataGrid>
+	<tv:SharpTreeView Name="Tree" ShowRoot="False" ShowLines="True" />
 </UserControl>

@@ -179,34 +179,35 @@ public class ApiVisibilityFilterTests
 	}
 
 	[AvaloniaTest]
-	public async Task AssemblyListPane_Rebinds_When_ShowApiLevel_Changes()
+	public async Task AssemblyListPane_Refilters_The_Tree_In_Place_When_ShowApiLevel_Changes()
 	{
-		// The pane subscribes to LanguageSettings.PropertyChanged so toggling ShowApiLevel
-		// triggers a tree rebind — without that wire-up, the menu radio would still flip the
-		// setting but the grid would never re-evaluate visibility. Asserts the pane swaps in a
-		// new HierarchicalModel reference whenever the setting changes.
+		// The pane subscribes to LanguageSettings.PropertyChanged and re-applies the API-level
+		// filter to the already-realised tree (ILSpyTreeNode.RefreshRealizedFilter). Without that
+		// wire-up the menu radio would flip the setting but already-expanded members would keep
+		// their old visibility. Asserts non-public methods become hidden in place after the flip.
 
-		// Arrange — boot, locate the pane.
-		var (window, _) = await TestHarness.BootAsync();
+		var (window, vm) = await TestHarness.BootAsync();
 		await Waiters.WaitForAsync(
 			() => window.GetVisualDescendants().OfType<AssemblyListPane>().Any());
-		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		await window.WaitForComponent<AssemblyListPane>();
 
-		// Force any pending DataContext propagation so the initial HierarchicalModel is set.
 		var settings = AppComposition.Current.GetExport<SettingsService>().SessionSettings.LanguageSettings;
-		await Waiters.WaitForAsync(() => grid.HierarchicalModel != null);
-		var modelBefore = grid.HierarchicalModel;
+		settings.ShowApiLevel = ApiVisibility.All;
 
-		// Act — flip the setting; pane should swap the model.
-		settings.ShowApiLevel = settings.ShowApiLevel == ApiVisibility.PublicOnly
-			? ApiVisibility.All
-			: ApiVisibility.PublicOnly;
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var stringType = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
+		stringType.IsExpanded = true;
+		await Waiters.WaitForAsync(() => stringType.Children.OfType<MethodTreeNode>().Any());
+		int allVisible = stringType.Children.OfType<MethodTreeNode>().Count(m => !m.IsHidden);
+		allVisible.Should().BeGreaterThan(0);
+
+		// Act — flip to PublicOnly; the pane must re-filter the already-expanded members in place.
+		settings.ShowApiLevel = ApiVisibility.PublicOnly;
 		TestCapture.Step("api-visibility-flipped");
 
-		// Assert — model reference changed, indicating BindTree ran again with new filter state.
-		grid.HierarchicalModel.Should().NotBeSameAs(modelBefore,
-			"flipping ShowApiLevel must rebind the HierarchicalModel so the grid re-evaluates child visibility");
+		await Waiters.WaitForAsync(
+			() => stringType.Children.OfType<MethodTreeNode>().Count(m => !m.IsHidden) < allVisible,
+			description: "flipping ShowApiLevel must hide non-public methods in the already-realised tree");
 	}
 
 	[AvaloniaTest]
@@ -233,7 +234,7 @@ public class ApiVisibilityFilterTests
 
 		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<AssemblyListPane>().Any());
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<DataGrid>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
 
 		// Selecting each node scrolls it into view; that's how the row's TextBlock realises.
 		vm.AssemblyTreeModel.SelectNode(publicMethod);
@@ -259,7 +260,7 @@ public class ApiVisibilityFilterTests
 		settings.ShowApiLevel = ApiVisibility.PublicAndInternal;
 	}
 
-	static TextBlock? FindRowTextBlock(DataGrid grid, string label)
+	static TextBlock? FindRowTextBlock(Control grid, string label)
 		=> grid.GetVisualDescendants().OfType<TextBlock>()
 			.FirstOrDefault(tb => string.Equals(tb.Text, label, System.StringComparison.Ordinal));
 

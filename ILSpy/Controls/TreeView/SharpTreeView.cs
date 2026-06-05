@@ -53,7 +53,6 @@ namespace ILSpy.Controls.TreeView
 			AvaloniaProperty.Register<SharpTreeView, bool>(nameof(ShowLines), defaultValue: true);
 
 		TreeFlattener? flattener;
-		bool updatesLocked;
 		bool doNotScrollOnExpanding;
 		string searchBuffer = string.Empty;
 		DispatcherTimer? searchResetTimer;
@@ -104,7 +103,6 @@ namespace ILSpy.Controls.TreeView
 			if (flattener != null)
 			{
 				flattener.Stop();
-				flattener.CollectionChanged -= flattener_CollectionChanged;
 				flattener = null;
 			}
 			if (Root != null)
@@ -112,53 +110,14 @@ namespace ILSpy.Controls.TreeView
 				if (!(ShowRoot && ShowRootExpander))
 					Root.IsExpanded = true;
 				flattener = new TreeFlattener(Root, ShowRoot);
-				flattener.CollectionChanged += flattener_CollectionChanged;
 				ItemsSource = flattener;
 			}
 			else
 			{
 				ItemsSource = null;
 			}
-		}
-
-		void flattener_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-		{
-			// Deselect nodes that are being hidden (their ancestor collapsed), keeping the rest.
-			if (e.Action == NotifyCollectionChangedAction.Remove && e.OldItems != null && ItemCount > 0 && !updatesLocked)
-			{
-				List<SharpTreeNode>? hidden = null;
-				foreach (SharpTreeNode node in e.OldItems)
-				{
-					if (node.IsSelected)
-						(hidden ??= new List<SharpTreeNode>()).Add(node);
-				}
-				if (hidden != null)
-				{
-					var remaining = SelectedItems!.Cast<SharpTreeNode>().Except(hidden).ToList();
-					UpdateFocusedNode(remaining, Math.Max(0, e.OldStartingIndex - 1));
-				}
-			}
-		}
-
-		void UpdateFocusedNode(List<SharpTreeNode>? newSelection, int topSelectedIndex)
-		{
-			if (updatesLocked)
-				return;
-			SetSelectedNodes(newSelection ?? Enumerable.Empty<SharpTreeNode>());
-			if (SelectedItem == null && IsKeyboardFocusWithin)
-			{
-				// All selected nodes were hidden: move focus to the node preceding the first removed.
-				SelectedIndex = topSelectedIndex;
-				if (SelectedItem is SharpTreeNode node)
-					FocusNode(node);
-			}
-		}
-
-		public void SetSelectedNodes(IEnumerable<SharpTreeNode> nodes)
-		{
-			SelectedItems!.Clear();
-			foreach (var node in nodes)
-				SelectedItems.Add(node);
+			// Avalonia's ListBox removes items from the selection automatically when they leave the
+			// source (a collapsed ancestor hides them), so no manual deselect-on-hide is needed.
 		}
 
 		protected override Control CreateContainerForItemOverride(object? item, int index, object? recycleKey)

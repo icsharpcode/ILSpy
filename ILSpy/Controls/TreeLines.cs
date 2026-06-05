@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -32,9 +34,11 @@ namespace ILSpy.Controls
 	//   - expander glyph centred at +8.5 px inside its column
 	public class TreeLines : Control
 	{
-		const double IndentStep = 16;
-		const double ExpanderCenterOffset = 8.5;
-		const double HorizontalStubLength = 10;
+		// 18.5 = icon centre (25) - expander centre (6.5): one step puts a child's +/- box directly
+		// under its parent's icon, so the vertical line passes through both.
+		const double IndentStep = 18.5;
+		const double ExpanderCenterOffset = 6.5;   // the +/- box centre within a level
+		const double IconLeftOffset = 17;          // expander column (13) + icon left margin (4)
 
 		static readonly IPen Pen;
 
@@ -46,7 +50,8 @@ namespace ILSpy.Controls
 
 		static TreeLines()
 		{
-			var pen = new Pen(Brushes.LightGray, 1);
+			// Classic Windows-Explorer dotted connector lines.
+			var pen = new Pen(Brushes.Gray, 1) { DashStyle = new DashStyle(new double[] { 1, 1 }, 0) };
 			Pen = pen.ToImmutable();
 			AffectsRender<TreeLines>(NodeProperty, LevelProperty);
 			IsHitTestVisibleProperty.OverrideDefaultValue<TreeLines>(false);
@@ -62,30 +67,42 @@ namespace ILSpy.Controls
 			set => SetValue(LevelProperty, value);
 		}
 
+		// Centre a 1px stroke on a pixel boundary.
+		static double Snap(double v) => Math.Floor(v) + 0.5;
+
 		public override void Render(DrawingContext context)
 		{
 			var node = Node;
 			if (node == null || node.IsRoot)
 				return;
 
-			var height = Bounds.Height;
-			var midY = height / 2;
-			var x = Level * IndentStep + ExpanderCenterOffset;
+			double height = Bounds.Height;
+			double midY = Snap(height / 2);
 
-			context.DrawLine(Pen, new Point(x, midY), new Point(x + HorizontalStubLength, midY));
+			// The node's vertical runs through its own +/- box; because a step is exactly the
+			// icon-to-expander distance, that x is also under the parent's icon one row up, so the
+			// line visually connects the node to its parent. The +/- box is centred on it.
+			double x = (Level - 1) * IndentStep + ExpanderCenterOffset;
+			double xs = Snap(x);
 
-			if (node.IsLast)
-				context.DrawLine(Pen, new Point(x, 0), new Point(x, midY));
-			else
-				context.DrawLine(Pen, new Point(x, 0), new Point(x, height));
+			// Horizontal connector from the +/- box to this node's icon.
+			context.DrawLine(Pen, new Point(xs, midY), new Point(Snap((Level - 1) * IndentStep + IconLeftOffset), midY));
 
+			// The node's own vertical: up to the parent's icon, down to the next sibling (last child
+			// stops at the elbow).
+			context.DrawLine(Pen, new Point(xs, 0), new Point(xs, node.IsLast ? midY : height));
+
+			// Continuation verticals for ancestors that still have a sibling below them.
 			var current = node;
-			while (current.Parent != null && !current.Parent.IsRoot)
+			double ax = x;
+			while (true)
 			{
+				ax -= IndentStep;
 				current = current.Parent;
-				x -= IndentStep;
+				if (ax < 0 || current is null || current.IsRoot)
+					break;
 				if (!current.IsLast)
-					context.DrawLine(Pen, new Point(x, 0), new Point(x, height));
+					context.DrawLine(Pen, new Point(Snap(ax), 0), new Point(Snap(ax), height));
 			}
 		}
 	}
