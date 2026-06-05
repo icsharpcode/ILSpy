@@ -23,78 +23,81 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.AssemblyTree;
+using ILSpy.Controls.TreeView;
 using ILSpy.TreeNodes;
 
 using NUnit.Framework;
-
-using DropPosition = ILSpy.AssemblyTree.AssemblyListPane.DropPosition;
 
 namespace ICSharpCode.ILSpy.Tests;
 
 [TestFixture]
 public class AssemblyTreeDragReorderTests
 {
-	static AssemblyTreeNode[] TopLevel(AssemblyTreeModel model)
-		=> model.Root!.Children.OfType<AssemblyTreeNode>().ToArray();
-
-	[AvaloniaTest]
-	public async Task CanReorder_Accepts_A_TopLevel_Assembly_Dropped_After_Another()
+	// Reorder + file drop are handled generically by SharpTreeView, which delegates to
+	// AssemblyListTreeNode.CanDrop/Drop. The drag payload is always assembly file paths, so a reorder
+	// re-opens (deduping to the existing LoadedAssembly) and moves to the drop index.
+	static AvaloniaPlatformDragEventArgs ReorderArgs(params string[] fileNames)
 	{
-		var (window, vm) = await TestHarness.BootAsync(2);
-		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var top = TopLevel(vm.AssemblyTreeModel);
-
-		pane.CanReorder(new[] { top[0] }, top[1], DropPosition.After).Should().BeTrue(
-			"a top-level assembly may be reordered before/after another");
+		var data = new AvaloniaDataObject();
+		data.SetData(AssemblyTreeNode.DataFormat, fileNames);
+		return new AvaloniaPlatformDragEventArgs(data);
 	}
 
 	[AvaloniaTest]
 	public async Task Dropping_An_Assembly_After_Another_Reorders_The_AssemblyList()
 	{
-		// End-to-end on the reorder path: "drag assembly[0] After assembly[1]" must move it through
-		// AssemblyList.Move (the same persistence path file-open / Unload use).
-		var (window, vm) = await TestHarness.BootAsync(2);
-		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var (_, vm) = await TestHarness.BootAsync(2);
 		var list = vm.AssemblyTreeModel.AssemblyList!;
+		var root = (AssemblyListTreeNode)vm.AssemblyTreeModel.Root!;
 
 		var before = list.GetAssemblies();
-		var first = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>()
-			.First(n => n.LoadedAssembly == before[0]);
-		var second = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>()
-			.First(n => n.LoadedAssembly == before[1]);
+		var first = root.FindAssemblyNode(before[0])!;
+		var second = root.FindAssemblyNode(before[1])!;
 
-		pane.ReorderAssemblies(new[] { first }, second, DropPosition.After).Should().BeTrue();
+		// "Drop first AFTER second" -> insert at second's index + 1.
+		var args = ReorderArgs(first.LoadedAssembly.FileName);
+		int afterSecond = root.Children.IndexOf(second) + 1;
+		root.CanDrop(args, afterSecond).Should().BeTrue();
+		root.Drop(args, afterSecond);
 		TestCapture.Step("after-reorder-first-after-second");
 
+		// Robust to other assemblies in the shared list: second must now come before first.
 		var after = list.GetAssemblies();
-		after[0].Should().BeSameAs(before[1]);
-		after[1].Should().BeSameAs(before[0]);
+		System.Array.IndexOf(after, before[1]).Should().BeLessThan(System.Array.IndexOf(after, before[0]),
+			"dropping first after second puts second ahead of first");
 
-		// Restore the original order for following tests.
-		list.Move(new[] { after[1] }, 0);
+		list.Move(new[] { before[0] }, 0); // restore original order
 	}
 
 	[AvaloniaTest]
-	public async Task CanReorder_Rejects_Dropping_A_Node_Onto_Itself()
+	public async Task CanDrop_Accepts_Assembly_File_Path_Payload()
 	{
-		var (window, vm) = await TestHarness.BootAsync(2);
-		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var top = TopLevel(vm.AssemblyTreeModel);
-
-		pane.CanReorder(new[] { top[0] }, top[0], DropPosition.After).Should().BeFalse();
+		var (_, vm) = await TestHarness.BootAsync(2);
+		var root = (AssemblyListTreeNode)vm.AssemblyTreeModel.Root!;
+		root.CanDrop(ReorderArgs("anything.dll"), 0).Should().BeTrue();
 	}
 
 	[AvaloniaTest]
-	public async Task CanReorder_Rejects_Append_Without_A_Before_After_Target()
+	public async Task CanDrop_Rejects_When_There_Is_No_Assembly_Or_File_Payload()
 	{
-		// Append (a drop on empty space / a non-assembly row, where the hit-test yields no target)
-		// is an open, not a reorder.
-		var (window, vm) = await TestHarness.BootAsync(2);
-		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var top = TopLevel(vm.AssemblyTreeModel);
+		var (_, vm) = await TestHarness.BootAsync(2);
+		var root = (AssemblyListTreeNode)vm.AssemblyTreeModel.Root!;
+		root.CanDrop(new AvaloniaPlatformDragEventArgs(new AvaloniaDataObject()), 0).Should().BeFalse();
+	}
 
-		pane.CanReorder(new[] { top[0] }, top[1], DropPosition.Append).Should().BeFalse();
-		pane.CanReorder(new[] { top[0] }, null, DropPosition.Before).Should().BeFalse();
+	[AvaloniaTest]
+	public async Task AssemblyTreeNode_CanDrag_Only_Allows_TopLevel_NonPackage_Assemblies()
+	{
+		var (_, vm) = await TestHarness.BootAsync(2);
+		var root = (AssemblyListTreeNode)vm.AssemblyTreeModel.Root!;
+		var top = root.Children.OfType<AssemblyTreeNode>().ToArray();
+
+		top[0].CanDrag(new global::ICSharpCode.ILSpyX.TreeView.SharpTreeNode[] { top[0], top[1] })
+			.Should().BeTrue("top-level non-package assemblies are draggable");
+
+		top[0].IsExpanded = true;
+		await Waiters.WaitForAsync(() => top[0].Children.Count > 0);
+		var child = top[0].Children[0];
+		top[0].CanDrag(new[] { child }).Should().BeFalse("sub-nodes are not draggable");
 	}
 }

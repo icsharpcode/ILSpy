@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 
@@ -62,5 +63,44 @@ namespace ILSpy.TreeNodes
 
 		public AssemblyTreeNode? FindAssemblyNode(MetadataFile? module)
 			=> module == null ? null : FindAssemblyNode(module.GetLoadedAssembly());
+
+		// Drop target for top-level assemblies (handled generically by SharpTreeView). The payload is
+		// always a set of file paths -- from a reorder drag (AssemblyTreeNode.Copy) or an external
+		// file drop -- so both unify: open each (OpenAssembly dedupes already-loaded ones) then Move
+		// to the drop index. View-level selection of the result is delegated back via the seam below.
+		internal Action<IReadOnlyList<LoadedAssembly>>? SelectAssembliesAfterDrop;
+
+		// Set by SharpTreeView for an external Explorer file drop (the internal reorder payload uses
+		// AssemblyTreeNode.DataFormat); both carry a string[] of file paths.
+		internal const string FileDropFormat = "FileDrop";
+
+		public override bool CanDrop(
+			ICSharpCode.ILSpyX.TreeView.PlatformAbstractions.IPlatformDragEventArgs e, int index)
+		{
+			if (e.Data.GetDataPresent(AssemblyTreeNode.DataFormat) || e.Data.GetDataPresent(FileDropFormat))
+			{
+				e.Effects = ICSharpCode.ILSpyX.TreeView.PlatformAbstractions.XPlatDragDropEffects.Move;
+				return true;
+			}
+			e.Effects = ICSharpCode.ILSpyX.TreeView.PlatformAbstractions.XPlatDragDropEffects.None;
+			return false;
+		}
+
+		public override void Drop(
+			ICSharpCode.ILSpyX.TreeView.PlatformAbstractions.IPlatformDragEventArgs e, int index)
+		{
+			if ((e.Data.GetData(AssemblyTreeNode.DataFormat) ?? e.Data.GetData(FileDropFormat)) is not string[] files)
+				return;
+			var opened = files
+				.Where(f => !string.IsNullOrEmpty(f))
+				.Select(f => assemblyList.OpenAssembly(f))
+				.Where(a => a != null)
+				.Distinct()
+				.ToArray();
+			if (opened.Length == 0)
+				return;
+			assemblyList.Move(opened, index);
+			SelectAssembliesAfterDrop?.Invoke(opened);
+		}
 	}
 }

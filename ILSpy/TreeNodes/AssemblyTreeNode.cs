@@ -33,6 +33,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.FileLoaders;
 using ICSharpCode.ILSpyX.PdbProvider;
+using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy;
 using ILSpy.AppEnv;
@@ -72,6 +73,21 @@ namespace ILSpy.TreeNodes
 
 		public AssemblyTreeNode(LoadedAssembly assembly) : this(assembly, null)
 		{
+		}
+
+		// Drag-drop (handled generically by SharpTreeView, which delegates to these). The drag
+		// payload is the assemblies' file paths so a reorder and an external file drop unify through
+		// AssemblyListTreeNode.Drop -> OpenAssembly (which dedupes) + Move.
+		internal const string DataFormat = "ILSpyAssemblies";
+
+		public override bool CanDrag(SharpTreeNode[] nodes)
+			=> nodes.All(n => n is AssemblyTreeNode { PackageEntry: null });
+
+		public override ICSharpCode.ILSpyX.TreeView.PlatformAbstractions.IPlatformDataObject Copy(SharpTreeNode[] nodes)
+		{
+			var data = new ILSpy.Controls.TreeView.AvaloniaDataObject();
+			data.SetData(DataFormat, nodes.OfType<AssemblyTreeNode>().Select(n => n.LoadedAssembly.FileName).ToArray());
+			return data;
 		}
 
 		internal AssemblyTreeNode(LoadedAssembly assembly, PackageEntry? packageEntry)

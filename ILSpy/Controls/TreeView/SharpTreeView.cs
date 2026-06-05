@@ -23,11 +23,16 @@ using System.Linq;
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
 using ICSharpCode.ILSpyX.TreeView;
+using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 namespace ILSpy.Controls.TreeView
 {
@@ -69,6 +74,14 @@ namespace ILSpy.Controls.TreeView
 		{
 			SelectionChanged += OnSelectionChanged;
 			DoubleTapped += OnDoubleTapped;
+			// Drag-drop is handled generically here and delegated to SharpTreeNode.CanDrop/Drop.
+			AddHandler(PointerPressedEvent, OnDragPointerPressed, RoutingStrategies.Tunnel);
+			AddHandler(PointerMovedEvent, OnDragPointerMoved, RoutingStrategies.Bubble, handledEventsToo: true);
+			AddHandler(PointerReleasedEvent, OnDragPointerReleased, RoutingStrategies.Bubble, handledEventsToo: true);
+			DragDrop.SetAllowDrop(this, true);
+			AddHandler(DragDrop.DragOverEvent, OnDragOver);
+			AddHandler(DragDrop.DropEvent, OnDrop);
+			AddHandler(DragDrop.DragLeaveEvent, (_, _) => HideInsertMarker());
 		}
 
 		public SharpTreeNode? Root {
@@ -328,5 +341,190 @@ namespace ILSpy.Controls.TreeView
 			var selection = SelectedItems!.OfType<SharpTreeNode>().ToHashSet();
 			return selection.Where(item => item.Ancestors().All(a => !selection.Contains(a)));
 		}
+
+		#region Drag and drop
+
+		// External Explorer drops are presented to the node under this format (the internal reorder
+		// payload carries its own node-defined format from SharpTreeNode.Copy).
+		const string FileDropFormat = "FileDrop";
+		static readonly DataFormat<string> InternalDragFormat =
+			DataFormat.CreateStringApplicationFormat("sharptreeview-drag");
+
+		enum DropPlace { Before, Inside, After }
+
+		SharpTreeNode[]? draggedNodes;
+		IPlatformDataObject? dragData;
+		SharpTreeNode? pressedNode;
+		PointerPressedEventArgs? dragPress;
+		Point dragStartPoint;
+		Border? insertMarker;
+
+		void OnDragPointerReleased(object? sender, PointerReleasedEventArgs e)
+		{
+			pressedNode = null;
+			dragPress = null;
+		}
+
+		void OnDragPointerPressed(object? sender, PointerPressedEventArgs e)
+		{
+			pressedNode = null;
+			dragPress = null;
+			if (e.Source is not Visual hit || !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+				return;
+			if (hit.FindAncestorOfType<SharpTreeViewItem>(includeSelf: true)?.Node is { } node)
+			{
+				pressedNode = node;
+				dragPress = e;
+				dragStartPoint = e.GetPosition(this);
+			}
+		}
+
+		async void OnDragPointerMoved(object? sender, PointerEventArgs e)
+		{
+			if (pressedNode is null || dragPress is not { } press)
+				return;
+			if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+			{
+				pressedNode = null;
+				dragPress = null;
+				return;
+			}
+			var delta = e.GetPosition(this) - dragStartPoint;
+			if (Math.Abs(delta.X) < 4 && Math.Abs(delta.Y) < 4)
+				return;
+
+			var nodes = ResolveDraggedSet(pressedNode);
+			pressedNode = null;
+			dragPress = null;
+			if (nodes.Length == 0 || !nodes[0].CanDrag(nodes))
+				return;
+
+			draggedNodes = nodes;
+			dragData = nodes[0].Copy(nodes);
+			try
+			{
+				var data = new DataTransfer();
+				data.Add(DataTransferItem.Create(InternalDragFormat, "1"));
+				await DragDrop.DoDragDropAsync(press, data, DragDropEffects.Move | DragDropEffects.Copy);
+			}
+			finally
+			{
+				draggedNodes = null;
+				dragData = null;
+				HideInsertMarker();
+			}
+		}
+
+		// The dragged set: the whole selection when the pressed row is part of it, else the pressed row.
+		SharpTreeNode[] ResolveDraggedSet(SharpTreeNode pressed)
+		{
+			var selection = SelectedItems!.OfType<SharpTreeNode>().ToArray();
+			return selection.Contains(pressed) ? selection : new[] { pressed };
+		}
+
+		void OnDragOver(object? sender, DragEventArgs e)
+		{
+			if (ResolveDropTarget(e) is not { } target)
+			{
+				e.DragEffects = DragDropEffects.None;
+				HideInsertMarker();
+				e.Handled = true;
+				return;
+			}
+			var args = new AvaloniaPlatformDragEventArgs(BuildPlatformData(e));
+			if (target.Node.CanDrop(args, target.Index))
+			{
+				e.DragEffects = args.Effects.ToAvalonia();
+				ShowInsertMarker(target.Item, target.Place);
+			}
+			else
+			{
+				e.DragEffects = DragDropEffects.None;
+				HideInsertMarker();
+			}
+			e.Handled = true;
+		}
+
+		void OnDrop(object? sender, DragEventArgs e)
+		{
+			HideInsertMarker();
+			if (ResolveDropTarget(e) is not { } target)
+				return;
+			var args = new AvaloniaPlatformDragEventArgs(BuildPlatformData(e));
+			if (target.Node.CanDrop(args, target.Index))
+			{
+				target.Node.InternalDrop(args, target.Index);
+				e.DragEffects = args.Effects.ToAvalonia();
+			}
+			e.Handled = true;
+		}
+
+		readonly record struct DropTarget(SharpTreeNode Node, int Index, DropPlace Place, SharpTreeViewItem Item);
+
+		DropTarget? ResolveDropTarget(DragEventArgs e)
+		{
+			if (e.Source is not Visual hit
+				|| hit.FindAncestorOfType<SharpTreeViewItem>(includeSelf: true) is not { Node: { } node } item)
+				return null;
+			double h = item.Bounds.Height;
+			double y = e.GetPosition(item).Y;
+			DropPlace place = y < h * 0.25 ? DropPlace.Before : y > h * 0.75 ? DropPlace.After : DropPlace.Inside;
+			switch (place)
+			{
+				case DropPlace.Inside:
+					return new DropTarget(node, node.Children.Count, place, item);
+				default:
+					if (node.Parent is not { } parent)
+						return new DropTarget(node, node.Children.Count, DropPlace.Inside, item);
+					int idx = parent.Children.IndexOf(node);
+					return new DropTarget(parent, place == DropPlace.After ? idx + 1 : idx, place, item);
+			}
+		}
+
+		IPlatformDataObject BuildPlatformData(DragEventArgs e)
+		{
+			// Internal drag: the node-built payload from Copy. External: pack the dropped file paths.
+			if (dragData != null)
+				return dragData;
+			var data = new AvaloniaDataObject();
+			if (e.DataTransfer.Contains(DataFormat.File) && e.DataTransfer.TryGetFiles() is { } storageItems)
+			{
+				var files = storageItems
+					.Select(f => f.TryGetLocalPath())
+					.Where(p => !string.IsNullOrEmpty(p))
+					.Select(p => p!)
+					.ToArray();
+				if (files.Length > 0)
+					data.SetData(FileDropFormat, files);
+			}
+			return data;
+		}
+
+		void ShowInsertMarker(SharpTreeViewItem item, DropPlace place)
+		{
+			if (place == DropPlace.Inside || AdornerLayer.GetAdornerLayer(this) is not { } layer)
+			{
+				HideInsertMarker();
+				return;
+			}
+			if (insertMarker == null)
+			{
+				insertMarker = new Border { IsHitTestVisible = false, BorderBrush = Brushes.DodgerBlue };
+				layer.Children.Add(insertMarker);
+			}
+			AdornerLayer.SetAdornedElement(insertMarker, item);
+			insertMarker.BorderThickness = place == DropPlace.After
+				? new Thickness(0, 0, 0, 2)
+				: new Thickness(0, 2, 0, 0);
+			insertMarker.IsVisible = true;
+		}
+
+		void HideInsertMarker()
+		{
+			if (insertMarker != null)
+				insertMarker.IsVisible = false;
+		}
+
+		#endregion
 	}
 }

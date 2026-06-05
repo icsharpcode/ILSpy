@@ -29,6 +29,7 @@ using Avalonia.Input;
 using AwesomeAssertions;
 
 using ILSpy.AssemblyTree;
+using ILSpy.Controls.TreeView;
 using ILSpy.TreeNodes;
 
 using NUnit.Framework;
@@ -38,6 +39,22 @@ namespace ICSharpCode.ILSpy.Tests;
 [TestFixture]
 public class AssemblyTreeFileDropTests
 {
+	enum DropPos { Before, After }
+
+	// External file drops are handled generically by SharpTreeView -> AssemblyListTreeNode.Drop with
+	// the dropped paths under FileDropFormat; this drives that path the way the control would.
+	static void Drop(AssemblyTreeModel model, string[] files, AssemblyTreeNode? target, DropPos position)
+	{
+		var root = (AssemblyListTreeNode)model.Root!;
+		var data = new AvaloniaDataObject();
+		data.SetData(AssemblyListTreeNode.FileDropFormat, files);
+		var args = new AvaloniaPlatformDragEventArgs(data);
+		int index = target == null
+			? root.Children.Count
+			: root.Children.IndexOf(target) + (position == DropPos.After ? 1 : 0);
+		root.Drop(args, index);
+	}
+
 	[AvaloniaTest]
 	public async Task DataGrid_Is_Configured_As_A_File_Drop_Target()
 	{
@@ -65,7 +82,7 @@ public class AssemblyTreeFileDropTests
 		var tempPath = CloneCoreLibToTemp();
 		try
 		{
-			pane.HandleFileDrop(new[] { tempPath }, target: null, global::ILSpy.AssemblyTree.AssemblyListPane.DropPosition.After);
+			Drop(vm.AssemblyTreeModel, new[] { tempPath }, target: null, DropPos.After);
 			TestCapture.Step("file-dropped-no-target");
 
 			var after = list.GetAssemblies();
@@ -96,8 +113,8 @@ public class AssemblyTreeFileDropTests
 		var tempPath = CloneCoreLibToTemp();
 		try
 		{
-			pane.HandleFileDrop(new[] { tempPath }, target: firstNode,
-				global::ILSpy.AssemblyTree.AssemblyListPane.DropPosition.Before);
+			Drop(vm.AssemblyTreeModel, new[] { tempPath }, target: firstNode,
+				DropPos.Before);
 			TestCapture.Step("file-dropped-before-first-row");
 
 			var after = list.GetAssemblies();
@@ -125,8 +142,8 @@ public class AssemblyTreeFileDropTests
 		var tempPath = CloneCoreLibToTemp();
 		try
 		{
-			pane.HandleFileDrop(new[] { tempPath }, target: firstNode,
-				global::ILSpy.AssemblyTree.AssemblyListPane.DropPosition.After);
+			Drop(vm.AssemblyTreeModel, new[] { tempPath }, target: firstNode,
+				DropPos.After);
 			TestCapture.Step("file-dropped-after-first-row");
 
 			var after = list.GetAssemblies();
@@ -153,8 +170,8 @@ public class AssemblyTreeFileDropTests
 		var tempPath = CloneCoreLibToTemp();
 		try
 		{
-			pane.HandleFileDrop(new[] { tempPath }, target: null,
-				global::ILSpy.AssemblyTree.AssemblyListPane.DropPosition.After);
+			Drop(vm.AssemblyTreeModel, new[] { tempPath }, target: null,
+				DropPos.After);
 			TestCapture.Step("file-dropped-new-node-selected");
 
 			var newAsm = list.GetAssemblies()
@@ -189,8 +206,8 @@ public class AssemblyTreeFileDropTests
 		// in the list. The cleaner non-PE check is "file simply doesn't exist".
 		var beforeCount = list.GetAssemblies().Length;
 
-		pane.HandleFileDrop(new[] { bogusPath }, target: null,
-			global::ILSpy.AssemblyTree.AssemblyListPane.DropPosition.After);
+		Drop(vm.AssemblyTreeModel, new[] { bogusPath }, target: null,
+			DropPos.After);
 		TestCapture.Step("bogus-path-dropped");
 
 		// OpenAssembly does add the entry (it lazy-loads), so the count may grow. The contract

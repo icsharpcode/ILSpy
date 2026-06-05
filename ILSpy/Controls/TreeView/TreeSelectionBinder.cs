@@ -23,6 +23,7 @@ using System.Collections.Specialized;
 using System.Linq;
 
 using Avalonia.Controls;
+using Avalonia.Threading;
 
 using ICSharpCode.ILSpyX.TreeView;
 
@@ -103,17 +104,27 @@ namespace ILSpy.Controls.TreeView
 				var items = tree.ItemsSource as IList;
 				foreach (var node in modelSelection)
 				{
-					tree.ScrollIntoNodeView(node);
-					// Only select rows the flattener actually contains; adding an off-list node
-					// corrupts the ListBox SelectionModel (it throws on later enumeration).
+					// Expand ancestors (no scroll) so the row exists in the flattener; only select
+					// rows it actually contains -- adding an off-list node corrupts the ListBox
+					// SelectionModel (it throws on later enumeration).
+					foreach (var ancestor in node.Ancestors())
+						ancestor.IsExpanded = true;
 					if (items != null && items.Contains(node))
 					{
 						tree.SelectedItems.Add(node);
 						primary = node;
 					}
 				}
-				if (primary != null)
-					tree.FocusNode(primary);
+				// Reveal + focus the primary AFTER layout settles -- a model change that also reshapes
+				// the tree (a reorder rebuilds the flattener) leaves the panel mid-arrange, and a
+				// synchronous ScrollIntoView would throw "Invalid Arrange rectangle".
+				if (primary is { } toReveal)
+				{
+					Dispatcher.UIThread.Post(() => {
+						tree.ScrollIntoNodeView(toReveal);
+						tree.FocusNode(toReveal);
+					});
+				}
 			}
 			finally
 			{
