@@ -59,6 +59,14 @@ namespace ILSpy.AppEnv
 
 			/// <summary>Dock chrome activity — view-recycling cache, layout save/load, drag/drop transitions.</summary>
 			public const string Docking = "Docking";
+
+			/// <summary>
+			/// Mouse/keyboard interaction trail plus unwrapped DBus exception reports, for
+			/// correlating an unobserved <c>Tmds.DBus</c> error (which surfaces asynchronously on
+			/// the finalizer thread) with the interaction that triggered the DBus call. Off by
+			/// default; opt in with <c>ILSPY_LOG=DBUSDEBUG</c> (matched case-insensitively).
+			/// </summary>
+			public const string DBusDebug = "DBusDebug";
 		}
 
 		static readonly Stopwatch sw = Stopwatch.StartNew();

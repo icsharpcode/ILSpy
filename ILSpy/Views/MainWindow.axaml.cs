@@ -55,6 +55,10 @@ namespace ILSpy.Views
 			AppLog.Mark("MainWindow XAML inflation about to start (DataContext set)");
 			InitializeComponent();
 			AppLog.Mark("MainWindow XAML inflation done");
+			// Records every mouse/keyboard interaction under ILSPY_LOG=DBUSDEBUG so an unobserved
+			// DBus error (which surfaces later on the finalizer thread) can be traced back to the
+			// gesture that triggered the DBus call. No-op unless that category is enabled.
+			InputDiagnostics.Attach(this);
 			ILSpy.MainMenu.Attach(this);
 			ApplySessionSettings(settingsService.SessionSettings);
 			Opened += async (_, _) => {

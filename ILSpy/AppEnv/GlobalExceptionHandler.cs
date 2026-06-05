@@ -66,7 +66,22 @@ namespace ILSpy.AppEnv
 		static void OnUnobservedTask(object? sender, UnobservedTaskExceptionEventArgs e)
 		{
 			e.SetObserved();
+			// The Linux DBus failures arrive here: a fire-and-forget Tmds.DBus call faults and the
+			// AggregateException is rethrown by the finalizer. Log the unwrapped chain plus the
+			// recent input trail so the triggering gesture can be read off (ILSPY_LOG=DBUSDEBUG).
+			LogDBusDiagnostics(e.Exception);
 			Report(e.Exception);
+		}
+
+		static void LogDBusDiagnostics(Exception exception)
+		{
+			if (!AppLog.IsEnabled(AppLog.Category.DBusDebug))
+				return;
+			AppLog.Write(AppLog.Category.DBusDebug,
+				"UNOBSERVED TASK EXCEPTION (finalizer thread)" + Environment.NewLine
+				+ InputDiagnostics.DescribeException(exception) + Environment.NewLine
+				+ "Recent input trail (newest last):" + Environment.NewLine
+				+ InputDiagnostics.DumpRecent());
 		}
 
 		static void OnDispatcherUnhandled(object sender, DispatcherUnhandledExceptionEventArgs e)
@@ -153,13 +168,21 @@ namespace ILSpy.AppEnv
 
 		static (Control root, TextBox details) BuildContent(Exception exception, Window window, string clipboardText)
 		{
+			// For DBus failures the bare ToString() hides the ServiceUnknown/ErrorName detail inside
+			// nested aggregates; append the fully unwrapped chain so the dialog carries it too.
+			var detailText = exception.ToString();
+			if (InputDiagnostics.ContainsDBusException(exception))
+				detailText += Environment.NewLine + Environment.NewLine
+					+ "--- unwrapped DBus chain ---" + Environment.NewLine
+					+ InputDiagnostics.DescribeException(exception);
+
 			var details = new TextBox {
 				IsReadOnly = true,
 				AcceptsReturn = true,
 				TextWrapping = TextWrapping.NoWrap,
 				FontFamily = new FontFamily("Consolas, Menlo, Monospace"),
 				FontSize = 12,
-				Text = exception.ToString(),
+				Text = detailText,
 			};
 
 			var summary = new TextBlock {
@@ -197,7 +220,14 @@ namespace ILSpy.AppEnv
 		}
 
 		static string FormatForClipboard(Exception exception)
-			=> exception.GetType().FullName + ": " + exception.Message + Environment.NewLine + exception;
+		{
+			var text = exception.GetType().FullName + ": " + exception.Message + Environment.NewLine + exception;
+			if (InputDiagnostics.ContainsDBusException(exception))
+				text += Environment.NewLine + Environment.NewLine
+					+ "--- unwrapped DBus chain ---" + Environment.NewLine
+					+ InputDiagnostics.DescribeException(exception);
+			return text;
+		}
 
 		static void CopyToClipboard(Window window, string text)
 		{
