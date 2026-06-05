@@ -46,15 +46,27 @@ namespace ILSpy.Controls.TreeView
 			this.tree = tree ?? throw new ArgumentNullException(nameof(tree));
 			this.modelSelection = modelSelection ?? throw new ArgumentNullException(nameof(modelSelection));
 			tree.SelectionChanged += OnTreeSelectionChanged;
+			tree.Loaded += OnTreeLoaded;
 			modelSelection.CollectionChanged += OnModelSelectionChanged;
-			// The model may already carry a selection (restored before the view was realised).
+			// The model may already carry a selection (restored, or set by Analyze, before the view
+			// was realised). Apply it now; if the tree isn't attached yet the ListBox drops the
+			// SelectedItems add, so OnTreeLoaded re-applies once it is.
 			if (modelSelection.Count > 0)
+				SyncModelToTree();
+		}
+
+		// A selection applied before the tree was attached doesn't stick (the ListBox isn't an
+		// initialised ItemsControl yet); re-apply once it loads so the row shows selected/focused.
+		void OnTreeLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+		{
+			if (modelSelection.Count > 0 && tree.SelectedItems!.Count == 0)
 				SyncModelToTree();
 		}
 
 		public void Dispose()
 		{
 			tree.SelectionChanged -= OnTreeSelectionChanged;
+			tree.Loaded -= OnTreeLoaded;
 			modelSelection.CollectionChanged -= OnModelSelectionChanged;
 		}
 
