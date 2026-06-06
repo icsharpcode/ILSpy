@@ -228,6 +228,9 @@ namespace ILSpy.AssemblyTree
 			// Pub-sub fan-out: panes (e.g. Debug Steps) that need to invalidate their state
 			// when the selection moves listen on this message.
 			Util.MessageBus.Send(this, new Util.AssemblyTreeSelectionChangedEventArgs());
+
+			// Selection-dependent menu commands (Save, Analyze-via-menu, ...) re-evaluate CanExecute.
+			Commands.CommandManager.InvalidateRequerySuggested();
 		}
 
 		// Walks already-materialized children and re-raises Text PropertyChanged so the cell
@@ -528,6 +531,9 @@ namespace ILSpy.AssemblyTree
 					}
 					await Task.WhenAll(loadTasks).ConfigureAwait(false);
 					AppEnv.AppLog.Mark("Background-load sweep dispatched");
+					// Load errors only surface once a load completes (no list change fires for them),
+					// so re-evaluate now -- this is what enables "Remove assemblies with load errors".
+					Commands.CommandManager.InvalidateRequerySuggested();
 				}
 				catch (Exception ex)
 				{
@@ -982,6 +988,10 @@ namespace ILSpy.AssemblyTree
 				}
 			}
 			Util.MessageBus.Send(this, new Util.CurrentAssemblyListChangedEventArgs(e));
+
+			// List-dependent menu commands (Clear assembly list, Remove assemblies with load errors)
+			// re-evaluate CanExecute now that the list gained or lost entries.
+			Commands.CommandManager.InvalidateRequerySuggested();
 		}
 
 		// Coalesces burst F5 / programmatic Refresh() calls into a single async pipeline.

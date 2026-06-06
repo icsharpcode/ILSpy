@@ -24,22 +24,26 @@ using global::Avalonia.Data;
 namespace ILSpy.Commands
 {
 	/// <summary>
-	/// Minimal ICommand base. Avalonia has no global RequerySuggested signal like WPF's
-	/// CommandManager, so derived commands fire CanExecuteChanged themselves when they care.
-	/// MenuItems also re-query CanExecute when the parent menu opens, which covers most cases.
+	/// Minimal ICommand base. Avalonia has no global RequerySuggested signal like WPF's CommandManager,
+	/// so CanExecuteChanged is routed through our own <see cref="CommandManager"/> (mirroring how WPF's
+	/// SimpleCommand routed it through CommandManager.RequerySuggested). State-change sites call
+	/// <see cref="CommandManager.InvalidateRequerySuggested"/> and every bound command re-evaluates --
+	/// no per-command wiring, and the menu/toolbar item updates its enabled state on every platform.
 	/// </summary>
 	public abstract class SimpleCommand : ICommand
 	{
-		public event EventHandler? CanExecuteChanged;
+		public event EventHandler? CanExecuteChanged {
+			add { if (value is not null) CommandManager.AddRequerySuggested(value); }
+			remove { if (value is not null) CommandManager.RemoveRequerySuggested(value); }
+		}
 
 		public abstract void Execute(object? parameter);
 
 		public virtual bool CanExecute(object? parameter) => true;
 
-		protected void RaiseCanExecuteChanged()
-		{
-			CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-		}
+		/// <summary>Asks all bound commands to re-evaluate CanExecute (a global invalidate -- the
+		/// re-query is shared, so this is not scoped to this single command).</summary>
+		protected static void RaiseCanExecuteChanged() => CommandManager.InvalidateRequerySuggested();
 	}
 
 	/// <summary>
