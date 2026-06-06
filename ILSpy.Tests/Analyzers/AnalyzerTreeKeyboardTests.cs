@@ -44,8 +44,8 @@ public class AnalyzerTreeKeyboardTests
 	[AvaloniaTest]
 	public async Task Right_Key_Expands_A_Node_In_The_Analyzer_Tree()
 	{
-		// The analyzer tree shares the same TreeKeyboardController as the assembly tree, so the
-		// standard gestures work there too -- here, Right expands the focused node.
+		// The analyzer tree is a SharpTreeView like the assembly tree, so the standard tree gestures
+		// work there too via SharpTreeView.OnKeyDown -- here, Right expands the focused node.
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
 		var analyzerVm = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
@@ -67,7 +67,7 @@ public class AnalyzerTreeKeyboardTests
 
 		window.KeyPress(Key.Right, RawInputModifiers.None, PhysicalKey.ArrowRight, null);
 		await Waiters.WaitForAsync(() => analyzed.IsExpanded,
-			description: "Right must expand the node via the shared TreeKeyboardController on the analyzer tree");
+			description: "Right must expand the node via SharpTreeView.OnKeyDown on the analyzer tree");
 	}
 
 	[AvaloniaTest]

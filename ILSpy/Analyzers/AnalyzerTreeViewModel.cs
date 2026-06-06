@@ -33,20 +33,9 @@ namespace ILSpy.Analyzers
 	[Export]
 	[ExportToolPane(ContentId = PaneContentId, Alignment = ToolPaneAlignment.Bottom, Order = 0, IsVisibleByDefault = false)]
 	[Shared]
-	public class AnalyzerTreeViewModel : ToolPaneModel, ILSpy.Controls.ITreeKeyboardTarget
+	public class AnalyzerTreeViewModel : ToolPaneModel
 	{
 		public const string PaneContentId = "Analyzer";
-
-		// ITreeKeyboardTarget: lets the shared TreeKeyboardController drive the analyzer tree's
-		// keyboard navigation, the same as the assembly tree.
-		SharpTreeNode? ILSpy.Controls.ITreeKeyboardTarget.PrimarySelectedNode
-			=> SelectedItems.Count > 0 ? SelectedItems[^1] : null;
-
-		void ILSpy.Controls.ITreeKeyboardTarget.SelectNode(SharpTreeNode? node)
-		{
-			if (node != null)
-				SyncSelection(node);
-		}
 
 		public AnalyzerTreeViewModel()
 		{
