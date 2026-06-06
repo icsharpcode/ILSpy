@@ -88,6 +88,9 @@ namespace ILSpy.Analyzers
 			}
 			var node = Wrap(entity);
 			Root.Children.Add(node);
+			// Auto-expand the freshly-added node so its analyzers (Used By, Uses, ...) are visible
+			// immediately, instead of leaving the user to expand it by hand after every Analyze.
+			node.IsExpanded = true;
 			SyncSelection(node);
 			return node;
 		}
