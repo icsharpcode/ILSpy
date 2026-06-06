@@ -254,6 +254,47 @@ namespace ILSpy.TextView
 			e.Handled = true;
 		}
 
+		/// <summary>True when the active document has any code foldings (gates the folding menu entries).</summary>
+		public bool HasFoldings => activeFoldingManager is { } mgr && mgr.AllFoldings.Any();
+
+		/// <summary>Number of currently-collapsed folds (test observation point for the folding commands).</summary>
+		internal int FoldedFoldingCount => activeFoldingManager is { } mgr ? mgr.AllFoldings.Count(f => f.IsFolded) : 0;
+
+		/// <summary>Toggles the innermost fold containing the caret (the "Toggle folding" command / Ctrl+M).</summary>
+		public void ToggleFoldingAtCaret()
+		{
+			if (activeFoldingManager is not { } mgr)
+				return;
+			var caret = Editor.TextArea.Caret.Offset;
+			FoldingSection? target = null;
+			foreach (var f in mgr.AllFoldings)
+			{
+				if (f.StartOffset <= caret && caret <= f.EndOffset)
+				{
+					if (target == null || f.StartOffset > target.StartOffset)
+						target = f;
+				}
+			}
+			if (target != null)
+				target.IsFolded = !target.IsFolded;
+		}
+
+		/// <summary>Collapses every fold when any is open, otherwise expands them all ("Toggle all folding"
+		/// / Ctrl+Shift+M).</summary>
+		public void ToggleAllFoldings()
+		{
+			if (activeFoldingManager is not { } mgr)
+				return;
+			bool anyOpen = false;
+			foreach (var f in mgr.AllFoldings)
+			{
+				if (!f.IsFolded)
+				{ anyOpen = true; break; }
+			}
+			foreach (var f in mgr.AllFoldings)
+				f.IsFolded = anyOpen;
+		}
+
 		void OnEditorKeyDownForZoom(object? sender, KeyEventArgs e)
 		{
 			// Folding keyboard commands (Ctrl+M family). Mirrors typical IDE conventions:
@@ -263,37 +304,12 @@ namespace ILSpy.TextView
 			// machine wired through the TextArea which AvaloniaEdit doesn't ship.
 			if ((e.KeyModifiers & KeyModifiers.Control) == KeyModifiers.Control && e.Key == Key.M)
 			{
-				if (activeFoldingManager is { } mgr)
+				if (activeFoldingManager is not null)
 				{
-					bool shift = (e.KeyModifiers & KeyModifiers.Shift) == KeyModifiers.Shift;
-					if (shift)
-					{
-						// Collapse all when any fold is open; expand all otherwise.
-						bool anyOpen = false;
-						foreach (var f in mgr.AllFoldings)
-						{
-							if (!f.IsFolded)
-							{ anyOpen = true; break; }
-						}
-						foreach (var f in mgr.AllFoldings)
-							f.IsFolded = anyOpen;
-					}
+					if ((e.KeyModifiers & KeyModifiers.Shift) == KeyModifiers.Shift)
+						ToggleAllFoldings();
 					else
-					{
-						// Toggle the innermost fold containing the caret offset.
-						var caret = Editor.TextArea.Caret.Offset;
-						FoldingSection? target = null;
-						foreach (var f in mgr.AllFoldings)
-						{
-							if (f.StartOffset <= caret && caret <= f.EndOffset)
-							{
-								if (target == null || f.StartOffset > target.StartOffset)
-									target = f;
-							}
-						}
-						if (target != null)
-							target.IsFolded = !target.IsFolded;
-					}
+						ToggleFoldingAtCaret();
 					e.Handled = true;
 					return;
 				}
