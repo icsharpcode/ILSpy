@@ -196,15 +196,33 @@ namespace ILSpy.Controls.TreeView
 			}
 		}
 
-		/// <summary>Scrolls the node into view and gives it keyboard focus.</summary>
-		public void FocusNode(SharpTreeNode node)
+		/// <summary>Scrolls the node into view (unless <paramref name="scroll"/> is false) and gives it
+		/// keyboard focus. Pass <c>scroll: false</c> to focus a row that is already visible without
+		/// disturbing the scroll position.</summary>
+		public void FocusNode(SharpTreeNode node, bool scroll = true)
 		{
 			ArgumentNullException.ThrowIfNull(node);
-			ScrollIntoNodeView(node);
+			if (scroll)
+				ScrollIntoNodeView(node);
 			if (ContainerFromItem(node) is { } container)
 				container.Focus();
 			else
 				Dispatcher.UIThread.Post(() => (ContainerFromItem(node))?.Focus(), DispatcherPriority.Loaded);
+		}
+
+		/// <summary>True when the node's row is realised and lies fully within the scroll viewport.
+		/// Used to decide, before a selection change scrolls the list, whether a reveal is needed at
+		/// all -- an already-visible row should not be pulled to the centre.</summary>
+		public bool IsNodeFullyVisible(SharpTreeNode node)
+		{
+			ArgumentNullException.ThrowIfNull(node);
+			var scrollViewer = this.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+			if (scrollViewer is null)
+				return false;
+			if (ContainerFromItem(node) is Control row && row.IsVisible
+				&& row.TranslatePoint(new Point(0, 0), scrollViewer) is { } top)
+				return top.Y >= 0 && top.Y + row.Bounds.Height <= scrollViewer.Viewport.Height;
+			return false;
 		}
 
 		/// <summary>Moves the (single) selection to <paramref name="node"/> and focuses it.
@@ -245,7 +263,8 @@ namespace ILSpy.Controls.TreeView
 			// keeps a re-selection of an already-centred row from twitching. We deliberately do NOT
 			// skip a merely-visible row sitting at an edge: the ListBox's AutoScrollToSelectedItem
 			// drags the selected row to the nearest edge first, and a reveal should still pull it to
-			// the centre from there.
+			// the centre from there. (Skipping an already-visible row is decided one level up, before
+			// AutoScroll runs, in the model->tree sync -- see TreeSelectionBinder.SyncModelToTree.)
 			if (ContainerFromItem(node) is Control visible && visible.IsVisible
 				&& visible.TranslatePoint(new Point(0, 0), scrollViewer) is { } top)
 			{

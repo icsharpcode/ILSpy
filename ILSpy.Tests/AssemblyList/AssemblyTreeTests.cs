@@ -685,6 +685,74 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
+	public async Task Selecting_A_Visible_Row_Via_The_Model_Does_Not_Recentre_Viewport()
+	{
+		// "Decompile to new tab" (and any model-driven navigation) selects the node in the tree, which
+		// syncs through TreeSelectionBinder -> ScrollIntoNodeView -> CenterNodeInView. Unlike a real
+		// mouse click, that path DOES run the centring code, so the in-viewport early-return must also
+		// cover it -- otherwise opening an already-visible item in a new tab yanks the tree to the centre.
+
+		var (window, vm) = await TestHarness.BootAsync(3);
+
+		var enumerable = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		enumerable.Expand();
+		var ns = (NamespaceTreeNode)enumerable.Parent!;
+		ns.Expand();
+		var asm = (AssemblyTreeNode)ns.Parent!;
+		asm.IsExpanded = true;
+		foreach (var child in ns.Children.OfType<TypeTreeNode>())
+		{
+			child.Expand();
+		}
+
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+
+		vm.AssemblyTreeModel.SelectNode(enumerable);
+		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, enumerable));
+		for (int i = 0; i < 8; i++)
+		{
+			Dispatcher.UIThread.RunJobs();
+			await Task.Delay(25);
+		}
+		grid.UpdateLayout();
+
+		var scrollViewer = await grid.WaitForComponent<ScrollViewer>();
+		(scrollViewer.Extent.Height - scrollViewer.Viewport.Height).Should().BeGreaterThan(50,
+			"the grid must have something to scroll for this test to be meaningful");
+		scrollViewer.Offset = new Vector(scrollViewer.Offset.X, 50);
+		grid.UpdateLayout();
+		Dispatcher.UIThread.RunJobs();
+		scrollViewer.Offset.Y.Should().BeGreaterThan(5,
+			"the test scenario requires the viewport be parked mid-list");
+
+		// Pick the bottom-most fully-visible non-selected row -- the strictest probe for an unwanted recentre.
+		var candidateRow = grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
+			.Where(r => !r.IsSelected
+				&& r.TranslatePoint(new Point(0, 0), scrollViewer) is { } p
+				&& p.Y >= 0 && p.Y + r.Bounds.Height <= scrollViewer.Viewport.Height)
+			.OrderByDescending(r => r.TranslatePoint(new Point(0, 0), scrollViewer)!.Value.Y)
+			.FirstOrDefault();
+		candidateRow.Should().NotBeNull("the test needs a visible non-selected row to select");
+		var candidateNode = candidateRow!.Node;
+		((object?)candidateNode).Should().NotBeNull();
+
+		var offsetBefore = scrollViewer.Offset.Y;
+
+		// Act — model-driven selection (the open-in-new-tab path), NOT a mouse click.
+		vm.AssemblyTreeModel.SelectNode(candidateNode);
+		for (int i = 0; i < 8; i++)
+		{
+			Dispatcher.UIThread.RunJobs();
+			await Task.Delay(25);
+		}
+
+		scrollViewer.Offset.Y.Should().BeApproximately(offsetBefore, 1.0,
+			"selecting an already-visible row via the model (e.g. Decompile to new tab) must not move the viewport");
+	}
+
+	[AvaloniaTest]
 	public async Task Save_Code_Command_Dispatches_Single_Selected_Node_Save_Override()
 	{
 		// SaveCommand on a single ILSpyTreeNode selection must call the node's own Save()

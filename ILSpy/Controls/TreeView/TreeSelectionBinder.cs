@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
@@ -111,6 +112,16 @@ namespace ILSpy.Controls.TreeView
 			syncing = true;
 			try
 			{
+				// Snapshot which selected rows are already fully visible BEFORE mutating the selection:
+				// the change triggers the ListBox's AutoScrollToSelectedItem, which drags an off-screen
+				// row to an edge and would make it look "visible" by reveal time. A row that was already
+				// on screen must not be revealed/recentred (e.g. Decompile to new tab on a visible row);
+				// a genuinely off-screen one still gets centred (Back navigation, go-to-definition).
+				var visibleBefore = new HashSet<SharpTreeNode>(ReferenceEqualityComparer.Instance);
+				foreach (var node in modelSelection)
+					if (tree.IsNodeFullyVisible(node))
+						visibleBefore.Add(node);
+
 				tree.SelectedItems!.Clear();
 				SharpTreeNode? primary = null;
 				var items = tree.ItemsSource as IList;
@@ -132,9 +143,11 @@ namespace ILSpy.Controls.TreeView
 				// synchronous ScrollIntoView would throw "Invalid Arrange rectangle".
 				if (primary is { } toReveal)
 				{
+					bool wasVisible = visibleBefore.Contains(toReveal);
 					Dispatcher.UIThread.Post(() => {
-						tree.ScrollIntoNodeView(toReveal);
-						tree.FocusNode(toReveal);
+						if (!wasVisible)
+							tree.ScrollIntoNodeView(toReveal);
+						tree.FocusNode(toReveal, scroll: !wasVisible);
 					});
 				}
 			}
