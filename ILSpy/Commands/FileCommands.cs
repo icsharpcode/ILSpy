@@ -110,7 +110,7 @@ namespace ILSpy.Commands
 				as global::Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.MainWindow;
 			if (owner == null)
 				return;
-			_ = ShowAsync(owner);
+			ShowAsync(owner).HandleExceptions();
 		}
 
 		async System.Threading.Tasks.Task ShowAsync(global::Avalonia.Controls.Window owner)
@@ -300,8 +300,8 @@ namespace ILSpy.Commands
 		{
 			if (!ProjectExport.TryGetExportableAssemblies(assemblyTreeModel.SelectedItems, out var assemblies, out var solutionMode))
 				return;
-			_ = ProjectExport.PromptAndExportAsync(assemblies, solutionMode,
-				languageService.CurrentLanguage, dockWorkspace, settingsService);
+			ProjectExport.PromptAndExportAsync(assemblies, solutionMode,
+				languageService.CurrentLanguage, dockWorkspace, settingsService).HandleExceptions();
 		}
 	}
 

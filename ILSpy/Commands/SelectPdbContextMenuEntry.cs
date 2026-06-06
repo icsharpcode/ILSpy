@@ -61,7 +61,7 @@ namespace ILSpy.Commands
 			var assembly = (context.SelectedTreeNodes?.FirstOrDefault() as AssemblyTreeNode)?.LoadedAssembly;
 			if (assembly == null)
 				return;
-			_ = ExecuteAsync(assembly);
+			ExecuteAsync(assembly).HandleExceptions();
 		}
 
 		async Task ExecuteAsync(ICSharpCode.ILSpyX.LoadedAssembly assembly)

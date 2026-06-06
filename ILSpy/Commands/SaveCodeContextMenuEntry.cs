@@ -64,7 +64,7 @@ namespace ILSpy.Commands
 
 			if (SolutionExport.TryGetAssemblies(nodes, out var assemblies))
 			{
-				_ = SolutionExport.PromptAndExportAsync(assemblies, languageService.CurrentLanguage, dockWorkspace);
+				SolutionExport.PromptAndExportAsync(assemblies, languageService.CurrentLanguage, dockWorkspace).HandleExceptions();
 				return;
 			}
 

@@ -66,7 +66,7 @@ namespace ILSpy.TreeNodes
 
 		public override bool Save()
 		{
-			_ = SaveAsync();
+			SaveAsync().HandleExceptions();
 			return true;
 		}
 

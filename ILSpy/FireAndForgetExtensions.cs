@@ -16,29 +16,40 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Composition;
+using System;
+using System.Threading.Tasks;
 
-using ICSharpCode.ILSpy.Properties;
+using ILSpy.AppEnv;
 
-using ILSpy.ViewModels;
-
-namespace ILSpy.Commands
+namespace ILSpy
 {
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._Help), Header = nameof(Resources._CheckUpdates), MenuCategory = "Help", MenuOrder = 0)]
-	[Shared]
-	sealed class CheckForUpdatesCommand : SimpleCommand
+	public static class FireAndForgetExtensions
 	{
-		readonly UpdatePanelViewModel updatePanel;
-
-		[ImportingConstructor]
-		public CheckForUpdatesCommand(UpdatePanelViewModel updatePanel)
+		/// <summary>
+		/// Observes a fire-and-forget task started from a command or event handler. Awaits it on the
+		/// captured (UI) context and routes any failure to <see cref="GlobalExceptionHandler"/>
+		/// immediately, at the point of failure. Without this, a discarded faulted task
+		/// (<c>_ = SomethingAsync()</c>) only surfaces via
+		/// <see cref="TaskScheduler.UnobservedTaskException"/> after the GC finalizes it — late, on
+		/// the finalizer thread, and disconnected from the gesture that triggered it.
+		/// <see cref="OperationCanceledException"/> is treated as a normal cooperative cancel, not an
+		/// error.
+		/// </summary>
+		public static async void HandleExceptions(this Task task)
 		{
-			this.updatePanel = updatePanel;
+			ArgumentNullException.ThrowIfNull(task);
+			try
+			{
+				await task.ConfigureAwait(true);
+			}
+			catch (OperationCanceledException)
+			{
+				// Cooperative cancellation is an expected outcome, not a failure.
+			}
+			catch (Exception ex)
+			{
+				GlobalExceptionHandler.Show(ex);
+			}
 		}
-
-		// Force-checks regardless of the 7-day throttle and surfaces the result in the panel,
-		// including an explicit "up to date" banner when no newer version is found.
-		public override void Execute(object? parameter)
-			=> updatePanel.CheckIfUpdatesAvailableAsync(notifyOnUpToDate: true).HandleExceptions();
 	}
 }

@@ -161,7 +161,7 @@ namespace ILSpy.TreeNodes
 			var language = languageService.CurrentLanguage;
 			if (string.IsNullOrEmpty(language.ProjectFileExtension))
 				return false;
-			_ = SaveAsProjectOrSingleFileAsync(language);
+			SaveAsProjectOrSingleFileAsync(language).HandleExceptions();
 			return true;
 		}
 

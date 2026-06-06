@@ -73,7 +73,7 @@ namespace ILSpy.Commands
 				.FirstOrDefault(asm => asm.PackageEntry == null);
 			if (bundleNode == null)
 				return;
-			_ = ExecuteAsync(selectedNodes);
+			ExecuteAsync(selectedNodes).HandleExceptions();
 		}
 
 		async Task ExecuteAsync(SharpTreeNode[] selectedNodes)
@@ -267,7 +267,7 @@ namespace ILSpy.Commands
 		{
 			if (context.SelectedTreeNodes is not [AssemblyTreeNode { PackageEntry: null } asm])
 				return;
-			_ = ExecuteAsync(asm);
+			ExecuteAsync(asm).HandleExceptions();
 		}
 
 		async Task ExecuteAsync(AssemblyTreeNode asm)

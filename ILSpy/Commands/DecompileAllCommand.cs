@@ -61,7 +61,7 @@ namespace ILSpy.Commands
 
 		public override bool CanExecute(object? parameter) => Directory.Exists(OutputDir);
 
-		public override void Execute(object? parameter) => _ = ExecuteAsync();
+		public override void Execute(object? parameter) => ExecuteAsync().HandleExceptions();
 
 		async Task ExecuteAsync()
 		{
@@ -132,7 +132,7 @@ namespace ILSpy.Commands
 
 		public override bool CanExecute(object? parameter) => Directory.Exists(OutputDir);
 
-		public override void Execute(object? parameter) => _ = ExecuteAsync();
+		public override void Execute(object? parameter) => ExecuteAsync().HandleExceptions();
 
 		async Task ExecuteAsync()
 		{
@@ -203,7 +203,7 @@ namespace ILSpy.Commands
 			this.dockWorkspace = dockWorkspace;
 		}
 
-		public override void Execute(object? parameter) => _ = ExecuteAsync();
+		public override void Execute(object? parameter) => ExecuteAsync().HandleExceptions();
 
 		async Task ExecuteAsync()
 		{

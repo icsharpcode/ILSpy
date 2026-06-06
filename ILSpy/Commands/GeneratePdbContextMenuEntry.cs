@@ -69,7 +69,7 @@ namespace ILSpy.Commands
 			var selectedNodes = context.SelectedTreeNodes?.OfType<AssemblyTreeNode>().ToArray();
 			if (selectedNodes == null || selectedNodes.Length == 0)
 				return;
-			_ = ExecuteAsync(selectedNodes.Select(n => n.LoadedAssembly).ToArray());
+			ExecuteAsync(selectedNodes.Select(n => n.LoadedAssembly).ToArray()).HandleExceptions();
 		}
 
 		async Task ExecuteAsync(LoadedAssembly[] assemblies)

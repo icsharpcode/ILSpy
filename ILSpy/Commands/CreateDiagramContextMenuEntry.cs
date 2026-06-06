@@ -66,7 +66,7 @@ namespace ILSpy.Commands
 			var assembly = (context.SelectedTreeNodes?.FirstOrDefault() as AssemblyTreeNode)?.LoadedAssembly;
 			if (assembly == null)
 				return;
-			_ = ExecuteAsync(assembly.FileName);
+			ExecuteAsync(assembly.FileName).HandleExceptions();
 		}
 
 		async Task ExecuteAsync(string assemblyFile)

@@ -57,8 +57,8 @@ namespace ILSpy.Commands
 		{
 			if (!ProjectExport.TryGetExportableAssemblies(context.SelectedTreeNodes, out var assemblies, out var solutionMode))
 				return;
-			_ = ProjectExport.PromptAndExportAsync(assemblies, solutionMode,
-				languageService.CurrentLanguage, dockWorkspace, settingsService);
+			ProjectExport.PromptAndExportAsync(assemblies, solutionMode,
+				languageService.CurrentLanguage, dockWorkspace, settingsService).HandleExceptions();
 		}
 	}
 }

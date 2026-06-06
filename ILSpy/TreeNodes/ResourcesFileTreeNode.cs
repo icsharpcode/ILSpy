@@ -134,7 +134,7 @@ namespace ILSpy.TreeNodes
 
 		public override bool Save()
 		{
-			_ = SaveDialogAsync();
+			SaveDialogAsync().HandleExceptions();
 			return true;
 		}
 
