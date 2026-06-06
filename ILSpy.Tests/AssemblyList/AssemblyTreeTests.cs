@@ -1642,7 +1642,7 @@ public class AssemblyTreeTests
 		// What the USER sees is the grid's selection. A feedback loop through the model's
 		// singular SelectedItem can collapse the grid back to one row even while the model's
 		// SelectedItems still holds all of them — so assert on the grid, not the model.
-		int gridAfterFirst = grid.SelectedItems.Count;
+		int gridAfterFirst = grid.SelectedItems!.Count;
 		int modelAfterFirst = vm.AssemblyTreeModel.SelectedItems.Count;
 		TestCapture.Step("after-first-ctrl-a");
 
@@ -1651,7 +1651,7 @@ public class AssemblyTreeTests
 		Dispatcher.UIThread.RunJobs();
 		await Task.Delay(50);
 		Dispatcher.UIThread.RunJobs();
-		int gridAfterSecond = grid.SelectedItems.Count;
+		int gridAfterSecond = grid.SelectedItems!.Count;
 
 		// Assert — every top-level row is selected in the grid after the FIRST press.
 		gridAfterFirst.Should().Be(topLevelCount,
@@ -1679,7 +1679,7 @@ public class AssemblyTreeTests
 		Dispatcher.UIThread.RunJobs();
 		window.KeyPress(Key.A, RawInputModifiers.Control, PhysicalKey.A, keySymbol: "a");
 		Dispatcher.UIThread.RunJobs();
-		await Waiters.WaitForAsync(() => grid.SelectedItems.Count == topLevelCount);
+		await Waiters.WaitForAsync(() => grid.SelectedItems!.Count == topLevelCount);
 		TestCapture.Step("all-rows-selected");
 
 		// Act — plain left-click on the second visible row.
@@ -1701,8 +1701,8 @@ public class AssemblyTreeTests
 		TestCapture.Step("plain-click-collapsed-selection");
 
 		// Assert — selection collapsed to exactly the clicked row, in both grid and model.
-		grid.SelectedItems.Count.Should().Be(1,
-			$"a plain click must reduce the selection to one row (grid has {grid.SelectedItems.Count})");
+		grid.SelectedItems!.Count.Should().Be(1,
+			$"a plain click must reduce the selection to one row (grid has {grid.SelectedItems!.Count})");
 		var modelSelection = vm.AssemblyTreeModel.SelectedItems;
 		modelSelection.Count.Should().Be(1, "the model selection must collapse to the clicked node too");
 		ReferenceEquals(modelSelection[0], targetNode).Should().BeTrue(
