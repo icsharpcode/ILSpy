@@ -521,7 +521,25 @@ namespace ICSharpCode.ILSpy.Properties {
                 return ResourceManager.GetString("Close", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Close all but this.
+        /// </summary>
+        public static string CloseAllButThisTab {
+            get {
+                return ResourceManager.GetString("CloseAllButThisTab", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Close all.
+        /// </summary>
+        public static string CloseAllTabs {
+            get {
+                return ResourceManager.GetString("CloseAllTabs", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Collapse all tree nodes.
         /// </summary>

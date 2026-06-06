@@ -115,5 +115,29 @@ namespace ILSpy.ViewModels
 			if (Content?.Title is { } s)
 				Title = s;
 		}
+
+		// Document tab context-menu commands (bound from the DocumentTabStripItem in App.axaml,
+		// whose DataContext is this tab). The DockWorkspace owns the dock, so resolve it from the
+		// composition container rather than threading a reference through every tab creation site.
+		static DockWorkspace? Workspace()
+		{
+			try
+			{
+				return ILSpy.AppEnv.AppComposition.Current.GetExport<DockWorkspace>();
+			}
+			catch
+			{
+				return null;
+			}
+		}
+
+		[CommunityToolkit.Mvvm.Input.RelayCommand]
+		private void Close() => Workspace()?.CloseTab(this);
+
+		[CommunityToolkit.Mvvm.Input.RelayCommand]
+		private void CloseAllButThis() => Workspace()?.CloseAllTabsExcept(this);
+
+		[CommunityToolkit.Mvvm.Input.RelayCommand]
+		private void CloseAll() => Workspace()?.CloseAllTabs();
 	}
 }

@@ -16,6 +16,7 @@
              xmlns:docking="using:ILSpy.Docking"
              xmlns:controls="using:ILSpy.Controls"
              xmlns:themes="using:ILSpy.Themes"
+             xmlns:res="using:ICSharpCode.ILSpy.Properties"
              RequestedThemeVariant="Default">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
@@ -305,6 +306,19 @@
              names, so this is document-only. -->
         <Style Selector="dockControls|DocumentTabStripItem">
             <Setter Property="ToolTip.Tip" Value="{Binding Title, Mode=OneWay, x:CompileBindings=False}" />
+            <!-- Right-click a document tab: Close / Close all but this / Close all. The tab strip item's
+                 DataContext is the ContentTabPage, which carries these commands (delegating to DockWorkspace). -->
+            <Setter Property="ContextMenu">
+                <ContextMenu>
+                    <MenuItem Header="{x:Static res:Resources.Close}"
+                              Command="{Binding CloseCommand, x:CompileBindings=False}" />
+                    <Separator />
+                    <MenuItem Header="{x:Static res:Resources.CloseAllButThisTab}"
+                              Command="{Binding CloseAllButThisCommand, x:CompileBindings=False}" />
+                    <MenuItem Header="{x:Static res:Resources.CloseAllTabs}"
+                              Command="{Binding CloseAllCommand, x:CompileBindings=False}" />
+                </ContextMenu>
+            </Setter>
         </Style>
         <!-- A merely-selected (but not focused) tab gets the seam-matching fill. The active
              tab keeps Dock's accent highlight (see below). Splitting the two states is

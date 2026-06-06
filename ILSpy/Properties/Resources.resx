@@ -192,6 +192,12 @@ Are you sure you want to continue?</value>
   <data name="Close" xml:space="preserve">
     <value>Close</value>
   </data>
+  <data name="CloseAllButThisTab" xml:space="preserve">
+    <value>Close all but this</value>
+  </data>
+  <data name="CloseAllTabs" xml:space="preserve">
+    <value>Close all</value>
+  </data>
   <data name="CollapseTreeNodes" xml:space="preserve">
     <value>Collapse all tree nodes</value>
   </data>

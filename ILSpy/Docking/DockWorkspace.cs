@@ -1231,9 +1231,41 @@ namespace ILSpy.Docking
 			var docs = factory.Documents?.VisibleDockables;
 			if (docs == null)
 				return;
-			// Snapshot first — CloseDockable mutates VisibleDockables.
-			foreach (var doc in System.Linq.Enumerable.ToArray(docs))
-				factory.CloseDockable(doc);
+			// Close every carve-out tab but keep the One (the persistent preview/home tab that the
+			// rest of the app relies on always existing -- ShowSelectedNode reuses it). This also keeps
+			// the document area non-empty, sidestepping Dock's "can't close the last dockable" veto.
+			// Snapshot first -- CloseDockable mutates the list.
+			foreach (var doc in docs.OfType<ContentTabPage>().ToArray())
+			{
+				if (!ReferenceEquals(doc, factory.MainTab))
+					CloseTab(doc);
+			}
+		}
+
+		/// <summary>Closes one document tab (e.g. the tab context menu's "Close"). Closing the One
+		/// drops the cached decompiler viewmodel so the next selection forges a fresh preview tab.</summary>
+		public void CloseTab(ContentTabPage tab)
+		{
+			ArgumentNullException.ThrowIfNull(tab);
+			bool wasTheOne = ReferenceEquals(tab, factory.MainTab);
+			factory.CloseDockable(tab);
+			if (wasTheOne)
+				decompilerContent = null;
+		}
+
+		/// <summary>Closes every document tab except <paramref name="keep"/> (the tab context menu's
+		/// "Close all but this").</summary>
+		public void CloseAllTabsExcept(ContentTabPage keep)
+		{
+			ArgumentNullException.ThrowIfNull(keep);
+			var docs = factory.Documents?.VisibleDockables;
+			if (docs == null)
+				return;
+			foreach (var doc in docs.OfType<ContentTabPage>().ToArray())
+			{
+				if (!ReferenceEquals(doc, keep))
+					CloseTab(doc);
+			}
 		}
 
 		/// <summary>Closes the active document tab (Ctrl+W). The documents dock only holds
