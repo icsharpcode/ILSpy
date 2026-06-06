@@ -50,6 +50,46 @@
 		<Setter Property="Margin" Value="0" />
 		<Setter Property="MinHeight" Value="20" />
 		<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+		<!-- Replace the framework's default focus adorner (a dotted, fill-less rectangle) with one that
+		     fills the row in the selection colour and keeps the dotted, darker-blue border. Rendered on
+		     the adorner layer on keyboard focus only, exactly where the default appeared. -->
+		<Setter Property="FocusAdorner">
+			<FocusAdornerTemplate>
+				<Rectangle Fill="{DynamicResource ILSpy.TreeFocusFill}"
+				           Stroke="{DynamicResource ILSpy.TreeFocusBorder}"
+				           StrokeThickness="1" StrokeDashArray="1,2" Margin="1" />
+			</FocusAdornerTemplate>
+		</Setter>
+		<!-- Override the item template (the Simple theme's is a bare ContentPresenter) to add the
+		     ContextTargetVisual overlay as a sibling template part. It cannot live in the ContentTemplate:
+		     a descendant style selector does not cross the ContentPresenter into its templated content, so
+		     a .contextTarget rule there never reaches it. As a template part, the .contextTarget /template/
+		     rule below does reach it. The ContentPresenter keeps its name so the inherited :selected /
+		     :pointerover background rules still match. -->
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Panel>
+					<ContentPresenter Name="PART_ContentPresenter"
+					                  Padding="{TemplateBinding Padding}"
+					                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+					                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+					                  Background="{TemplateBinding Background}"
+					                  BorderBrush="{TemplateBinding BorderBrush}"
+					                  BorderThickness="{TemplateBinding BorderThickness}"
+					                  Content="{TemplateBinding Content}"
+					                  ContentTemplate="{TemplateBinding ContentTemplate}"
+					                  CornerRadius="{TemplateBinding CornerRadius}" />
+					<!-- Right-click context-menu target visual: the same selection-coloured fill and
+					     dotted, darker-blue border as the keyboard-focus adorner, so a right-clicked row
+					     reads identically to a focused one. Hidden until the .contextTarget rule flips it;
+					     drawn over the content (translucent) like the adorner; never hit-testable. -->
+					<Rectangle Name="ContextTargetVisual" IsVisible="False" IsHitTestVisible="False"
+					           Fill="{DynamicResource ILSpy.TreeFocusFill}"
+					           Stroke="{DynamicResource ILSpy.TreeFocusBorder}"
+					           StrokeThickness="1" StrokeDashArray="1,2" Margin="1" />
+				</Panel>
+			</ControlTemplate>
+		</Setter>
 		<Setter Property="ContentTemplate">
 			<DataTemplate x:CompileBindings="False">
 				<Panel Background="Transparent" ToolTip.Tip="{Binding ToolTip}">

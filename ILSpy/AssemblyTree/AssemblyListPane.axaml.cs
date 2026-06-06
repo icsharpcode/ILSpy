@@ -48,6 +48,13 @@ namespace ILSpy.AssemblyTree
 		SharpTreeViewItem? contextTargetItem;
 		SharpTreeViewItem? contextMenuOpenItem;
 		SharpTreeNode? contextMenuTargetNode;
+		// For a keyboard-invoked menu (Shift+F10 / Apps), the row to re-focus when the menu closes
+		// (closing the popup otherwise drops the keyboard focus and its focus adorner). Null for
+		// pointer-invoked menus.
+		SharpTreeViewItem? focusToRestoreAfterMenu;
+		// Whether the last ContextRequested came from the keyboard (no pointer position). The keyboard
+		// path carries no target row, so the menu adopts the selected row (see OnContextMenuOpening).
+		bool lastContextRequestWasKeyboard;
 
 		public AssemblyListPane()
 		{
@@ -123,6 +130,7 @@ namespace ILSpy.AssemblyTree
 			var menu = new ContextMenu();
 			menu.Opening += OnContextMenuOpening;
 			menu.Closed += (_, _) => {
+				RestoreFocusAfterKeyboardMenu();
 				if (!ReferenceEquals(contextTargetItem, contextMenuOpenItem))
 					return;
 				contextMenuTargetNode = null;
@@ -135,10 +143,28 @@ namespace ILSpy.AssemblyTree
 		{
 			if (sender is not ContextMenu menu)
 				return;
+			// A keyboard-invoked menu (Shift+F10 / Apps) carries no pointer position, so OnTreeContextRequested
+			// set no transient target. Adopt the keyboard-FOCUSED row (which may differ from the selection
+			// after Ctrl+Arrow) as the target: opening the popup steals focus and drops the row's focus
+			// adorner, so we mark that row with the same context-target highlight the mouse gives the
+			// right-clicked row, and restore its focus + adorner on close (Avalonia's ContextMenu does not).
+			// Captured here, before the popup opens and takes focus (Opening fires ahead of it), and before
+			// contextMenuOpenItem is latched so the Closed handler still clears the highlight.
+			var focusedRow = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() as SharpTreeViewItem;
+			if (lastContextRequestWasKeyboard && focusedRow?.Node != null)
+			{
+				contextMenuTargetNode = focusedRow.Node;
+				SetContextTargetItem(focusedRow);
+				focusToRestoreAfterMenu = focusedRow;
+			}
 			contextMenuOpenItem = contextTargetItem;
 			var built = BuildContextMenuForCurrentState(contextMenuEntries);
 			if (built == null)
 			{
+				// Menu won't open (so Closed won't fire) -- undo the transient target + captured focus.
+				focusToRestoreAfterMenu = null;
+				contextMenuTargetNode = null;
+				SetContextTargetItem(null);
 				e.Cancel = true;
 				return;
 			}
@@ -148,6 +174,17 @@ namespace ILSpy.AssemblyTree
 				built.Items.Remove(item);
 				menu.Items.Add(item);
 			}
+		}
+
+		void RestoreFocusAfterKeyboardMenu()
+		{
+			if (focusToRestoreAfterMenu is not { } toFocus)
+				return;
+			focusToRestoreAfterMenu = null;
+			// Re-focus with a keyboard navigation method so the focus visual (the adorner) comes back,
+			// not just the logical focus. Posted so it runs after the popup has fully torn down.
+			global::Avalonia.Threading.Dispatcher.UIThread.Post(
+				() => toFocus.Focus(NavigationMethod.Tab));
 		}
 
 		internal ContextMenu? BuildContextMenuForCurrentState(IReadOnlyList<IContextMenuEntryExport> entries)
@@ -195,7 +232,9 @@ namespace ILSpy.AssemblyTree
 		void OnTreeContextRequested(object? sender, ContextRequestedEventArgs e)
 		{
 			SharpTreeViewItem? item = null;
-			if (e.TryGetPosition(Tree, out var pos) && Tree.InputHitTest(pos) is Visual hit)
+			// Keyboard invocation (Shift+F10 / Apps) raises ContextRequested with no pointer position.
+			lastContextRequestWasKeyboard = !e.TryGetPosition(Tree, out var pos);
+			if (!lastContextRequestWasKeyboard && Tree.InputHitTest(pos) is Visual hit)
 				item = hit.FindAncestorOfType<SharpTreeViewItem>(includeSelf: true);
 			contextMenuTargetNode = item?.Node;
 			SetContextTargetItem(item?.Node != null ? item : null);
